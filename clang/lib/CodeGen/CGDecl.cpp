@@ -85,9 +85,9 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
 
   case Decl::Var: {
     const VarDecl &VD = cast<VarDecl>(D);
-    assert(VD.isBlockVarDecl() &&
+    assert(VD.isLocalVarDecl() &&
            "Should not see file-scope variables inside a function!");
-    return EmitBlockVarDecl(VD);
+    return EmitVarDecl(VD);
   }
 
   case Decl::Typedef: {   // typedef int X;
@@ -100,9 +100,9 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   }
 }
 
-/// EmitBlockVarDecl - This method handles emission of any variable declaration
+/// EmitVarDecl - This method handles emission of any variable declaration
 /// inside a function, including static vars etc.
-void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
+void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
   if (D.hasAttr<AsmLabelAttr>())
     CGM.ErrorUnsupported(&D, "__asm__");
 
@@ -110,7 +110,7 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
   case SC_None:
   case SC_Auto:
   case SC_Register:
-    return EmitLocalBlockVarDecl(D);
+    return EmitAutoVarDecl(D);
   case SC_Static: {
     llvm::GlobalValue::LinkageTypes Linkage = 
       llvm::GlobalValue::InternalLinkage;
@@ -124,7 +124,7 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
       if (llvm::GlobalValue::isWeakForLinker(CurFn->getLinkage()))
         Linkage = CurFn->getLinkage();
     
-    return EmitStaticBlockVarDecl(D, Linkage);
+    return EmitStaticVarDecl(D, Linkage);
   }
   case SC_Extern:
   case SC_PrivateExtern:
@@ -157,9 +157,9 @@ static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
 }
 
 llvm::GlobalVariable *
-CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
-                                          const char *Separator,
-                                      llvm::GlobalValue::LinkageTypes Linkage) {
+CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
+                                     const char *Separator,
+                                     llvm::GlobalValue::LinkageTypes Linkage) {
   QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
 
@@ -175,13 +175,13 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
   return GV;
 }
 
-/// AddInitializerToGlobalBlockVarDecl - Add the initializer for 'D' to the
+/// AddInitializerToStaticVarDecl - Add the initializer for 'D' to the
 /// global variable that has already been created for it.  If the initializer
 /// has a different type than GV does, this may free GV and return a different
 /// one.  Otherwise it just returns GV.
 llvm::GlobalVariable *
-CodeGenFunction::AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
-                                                    llvm::GlobalVariable *GV) {
+CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
+                                               llvm::GlobalVariable *GV) {
   llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), D.getType(), this);
 
   // If constant emission failed, then this should be a C++ static
@@ -228,12 +228,12 @@ CodeGenFunction::AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
   return GV;
 }
 
-void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
+void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
                                       llvm::GlobalValue::LinkageTypes Linkage) {
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
 
-  llvm::GlobalVariable *GV = CreateStaticBlockVarDecl(D, ".", Linkage);
+  llvm::GlobalVariable *GV = CreateStaticVarDecl(D, ".", Linkage);
 
   // Store into LocalDeclMap before generating initializer to handle
   // circular references.
@@ -251,7 +251,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
 
   // If this value has an initializer, emit it.
   if (D.getInit())
-    GV = AddInitializerToGlobalBlockVarDecl(D, GV);
+    GV = AddInitializerToStaticVarDecl(D, GV);
 
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
 
@@ -492,11 +492,11 @@ namespace {
   };
 }
 
-/// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
+/// EmitLocalVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
-void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
-                                            SpecialInitFn *SpecialInit) {
+void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
+                                      SpecialInitFn *SpecialInit) {
   QualType Ty = D.getType();
   unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
   bool isByRef = D.hasAttr<BlocksAttr>();
@@ -521,7 +521,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
         // If this variable is marked 'const', emit the value as a global.
         if (CGM.getCodeGenOpts().MergeAllConstants &&
             Ty.isConstant(getContext())) {
-          EmitStaticBlockVarDecl(D, llvm::GlobalValue::InternalLinkage);
+          EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
           return;
         }
         
@@ -570,9 +570,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
       // Targets that don't support recursion emit locals as globals.
       const char *Class =
         D.getStorageClass() == SC_Register ? ".reg." : ".auto.";
-      DeclPtr = CreateStaticBlockVarDecl(D, Class,
-                                         llvm::GlobalValue
-                                         ::InternalLinkage);
+      DeclPtr = CreateStaticVarDecl(D, Class,
+                                    llvm::GlobalValue::InternalLinkage);
     }
 
     // FIXME: Can this happen?

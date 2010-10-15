@@ -4239,7 +4239,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
   // Get the decls type and save a reference for later, since
   // CheckInitializerTypes may change it.
   QualType DclT = VDecl->getType(), SavT = DclT;
-  if (VDecl->isBlockVarDecl()) {
+  if (VDecl->isLocalVarDecl()) {
     if (VDecl->hasExternalStorage()) { // C99 6.7.8p5
       Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
       VDecl->setInvalidDecl();
@@ -4478,7 +4478,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       // Block scope. C99 6.7p7: If an identifier for an object is
       // declared with no linkage (C99 6.2.2p6), the type for the
       // object shall be complete.
-      if (!Type->isDependentType() && Var->isBlockVarDecl() && 
+      if (!Type->isDependentType() && Var->isLocalVarDecl() && 
           !Var->getLinkage() && !Var->isInvalidDecl() &&
           RequireCompleteType(Var->getLocation(), Type,
                               diag::err_typecheck_decl_incomplete_type))

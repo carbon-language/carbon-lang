@@ -1064,8 +1064,7 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
   
   if (const DeclRefExpr *Exp = dyn_cast<DeclRefExpr>(E)) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(Exp->getDecl())) {
-      if ((VD->isBlockVarDecl() && !VD->hasLocalStorage()) ||
-          VD->isFileVarDecl()) {
+      if (VD->hasGlobalStorage()) {
         LV.setGlobalObjCRef(true);
         LV.setThreadLocalRef(VD->isThreadSpecified());
       }

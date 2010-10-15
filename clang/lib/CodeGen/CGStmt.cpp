@@ -320,7 +320,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   RunCleanupsScope ConditionScope(*this);
 
   if (S.getConditionVariable())
-    EmitLocalBlockVarDecl(*S.getConditionVariable());
+    EmitAutoVarDecl(*S.getConditionVariable());
 
   // If the condition constant folds and can be elided, try to avoid emitting
   // the condition and the dead arm of the if/else.
@@ -395,7 +395,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   RunCleanupsScope ConditionScope(*this);
 
   if (S.getConditionVariable())
-    EmitLocalBlockVarDecl(*S.getConditionVariable());
+    EmitAutoVarDecl(*S.getConditionVariable());
   
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The
   // evaluation of the controlling expression takes place before each
@@ -527,7 +527,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     // declaration.
     llvm::BasicBlock *ExitBlock = LoopExit.getBlock();
     if (S.getConditionVariable()) {
-      EmitLocalBlockVarDecl(*S.getConditionVariable());
+      EmitAutoVarDecl(*S.getConditionVariable());
     }
 
     // If there are any cleanups between here and the loop-exit scope,
@@ -798,7 +798,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   RunCleanupsScope ConditionScope(*this);
 
   if (S.getConditionVariable())
-    EmitLocalBlockVarDecl(*S.getConditionVariable());
+    EmitAutoVarDecl(*S.getConditionVariable());
 
   llvm::Value *CondV = EmitScalarExpr(S.getCond());
 

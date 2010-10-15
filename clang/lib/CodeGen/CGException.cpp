@@ -1300,7 +1300,7 @@ static void BeginCatch(CodeGenFunction &CGF,
   }
 
   // Emit the local.
-  CGF.EmitLocalBlockVarDecl(*CatchParam, &InitCatchParam);
+  CGF.EmitAutoVarDecl(*CatchParam, &InitCatchParam);
 }
 
 namespace {

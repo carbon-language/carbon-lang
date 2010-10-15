@@ -3105,7 +3105,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         CodeGenFunction::RunCleanupsScope CatchVarCleanups(CGF);
 
         if (CatchParam) {
-          CGF.EmitLocalBlockVarDecl(*CatchParam);
+          CGF.EmitAutoVarDecl(*CatchParam);
           assert(CGF.HaveInsertPoint() && "DeclStmt destroyed insert point?");
 
           // These types work out because ConvertType(id) == i8*.
@@ -3149,7 +3149,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // the end of the catch body.
       CodeGenFunction::RunCleanupsScope CatchVarCleanups(CGF);
 
-      CGF.EmitLocalBlockVarDecl(*CatchParam);
+      CGF.EmitAutoVarDecl(*CatchParam);
       assert(CGF.HaveInsertPoint() && "DeclStmt destroyed insert point?");
 
       // Initialize the catch variable.
@@ -6137,7 +6137,7 @@ void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       const llvm::Type *CatchType = CGF.ConvertType(CatchParam->getType());
       llvm::Value *CastExn = CGF.Builder.CreateBitCast(Exn, CatchType);
 
-      CGF.EmitLocalBlockVarDecl(*CatchParam);
+      CGF.EmitAutoVarDecl(*CatchParam);
       CGF.Builder.CreateStore(CastExn, CGF.GetAddrOfLocalVar(CatchParam));
     }
 

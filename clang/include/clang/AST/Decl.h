@@ -630,13 +630,13 @@ public:
   /// external, C linkage.
   bool isExternC() const;
 
-  /// isBlockVarDecl - Returns true for local variable declarations.  Note that
-  /// this includes static variables inside of functions. It also includes
-  /// variables inside blocks.
+  /// isLocalVarDecl - Returns true for local variable declarations
+  /// other than parameters.  Note that this includes static variables
+  /// inside of functions. It also includes variables inside blocks.
   ///
   ///   void foo() { int x; static int y; extern int z; }
   ///
-  bool isBlockVarDecl() const {
+  bool isLocalVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
     if (const DeclContext *DC = getDeclContext())
@@ -644,8 +644,8 @@ public:
     return false;
   }
 
-  /// isFunctionOrMethodVarDecl - Similar to isBlockVarDecl, but excludes
-  /// variables declared in blocks.
+  /// isFunctionOrMethodVarDecl - Similar to isLocalVarDecl, but
+  /// excludes variables declared in blocks.
   bool isFunctionOrMethodVarDecl() const {
     if (getKind() != Decl::Var)
       return false;

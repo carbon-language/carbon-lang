@@ -87,7 +87,7 @@ static const bool Uninitialized = true;
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
 
   if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
-    if (VD->isBlockVarDecl()) {
+    if (VD->isLocalVarDecl()) {
 
       if (AD.Observer)
         AD.Observer->ObserveDeclRefExpr(V, AD, DR, VD);
@@ -112,7 +112,7 @@ static VarDecl* FindBlockVarDecl(Expr* E) {
 
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
     if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
-      if (VD->isBlockVarDecl()) return VD;
+      if (VD->isLocalVarDecl()) return VD;
 
   return NULL;
 }
@@ -133,7 +133,7 @@ bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
 bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
   for (DeclStmt::decl_iterator I=S->decl_begin(), E=S->decl_end(); I!=E; ++I) {
     VarDecl *VD = dyn_cast<VarDecl>(*I);
-    if (VD && VD->isBlockVarDecl()) {
+    if (VD && VD->isLocalVarDecl()) {
       if (Stmt* I = VD->getInit()) {
         // Visit the subexpression to check for uses of uninitialized values,
         // even if we don't propagate that value.
@@ -170,7 +170,7 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   switch (U->getOpcode()) {
     case UO_AddrOf: {
       VarDecl* VD = FindBlockVarDecl(U->getSubExpr());
-      if (VD && VD->isBlockVarDecl())
+      if (VD && VD->isLocalVarDecl())
         return V(VD,AD) = Initialized;
       break;
     }

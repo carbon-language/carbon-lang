@@ -914,7 +914,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
            DI!=DE; ++DI) {
         VarDecl *VD = dyn_cast<VarDecl>(*DI);
-        if (VD && VD->isBlockVarDecl() && !VD->hasLocalStorage())
+        if (VD && VD->isLocalVarDecl() && !VD->hasLocalStorage())
           VD = 0;
         if (VD == 0)
           Diag((*DI)->getLocation(), diag::err_non_variable_decl_in_for);
@@ -962,7 +962,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       // declare identifiers for objects having storage class 'auto' or
       // 'register'.
       VarDecl *VD = cast<VarDecl>(D);
-      if (VD->isBlockVarDecl() && !VD->hasLocalStorage())
+      if (VD->isLocalVarDecl() && !VD->hasLocalStorage())
         return StmtError(Diag(VD->getLocation(),
                               diag::err_non_variable_decl_in_for));
     } else {

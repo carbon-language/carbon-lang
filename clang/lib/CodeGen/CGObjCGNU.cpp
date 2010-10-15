@@ -2008,7 +2008,7 @@ void CGObjCGNU::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       const llvm::Type *CatchType = CGF.ConvertType(CatchParam->getType());
       Exn = CGF.Builder.CreateBitCast(Exn, CatchType);
 
-      CGF.EmitLocalBlockVarDecl(*CatchParam);
+      CGF.EmitAutoVarDecl(*CatchParam);
       CGF.Builder.CreateStore(Exn, CGF.GetAddrOfLocalVar(CatchParam));
     }
 

@@ -1227,21 +1227,21 @@ public:
   /// This function can be called with a null (unreachable) insert point.
   void EmitDecl(const Decl &D);
 
-  /// EmitBlockVarDecl - Emit a block variable declaration.
+  /// EmitVarDecl - Emit a local variable declaration.
   ///
   /// This function can be called with a null (unreachable) insert point.
-  void EmitBlockVarDecl(const VarDecl &D);
+  void EmitVarDecl(const VarDecl &D);
 
   typedef void SpecialInitFn(CodeGenFunction &Init, const VarDecl &D,
                              llvm::Value *Address);
 
-  /// EmitLocalBlockVarDecl - Emit a local block variable declaration.
+  /// EmitAutoVarDecl - Emit an auto variable declaration.
   ///
   /// This function can be called with a null (unreachable) insert point.
-  void EmitLocalBlockVarDecl(const VarDecl &D, SpecialInitFn *SpecialInit = 0);
+  void EmitAutoVarDecl(const VarDecl &D, SpecialInitFn *SpecialInit = 0);
 
-  void EmitStaticBlockVarDecl(const VarDecl &D,
-                              llvm::GlobalValue::LinkageTypes Linkage);
+  void EmitStaticVarDecl(const VarDecl &D,
+                         llvm::GlobalValue::LinkageTypes Linkage);
 
   /// EmitParmDecl - Emit a ParmVarDecl or an ImplicitParamDecl.
   void EmitParmDecl(const VarDecl &D, llvm::Value *Arg);
@@ -1593,19 +1593,19 @@ public:
   /// LoadComplexFromAddr - Load a complex number from the specified address.
   ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
 
-  /// CreateStaticBlockVarDecl - Create a zero-initialized LLVM global for a
-  /// static block var decl.
-  llvm::GlobalVariable *CreateStaticBlockVarDecl(const VarDecl &D,
-                                                 const char *Separator,
+  /// CreateStaticVarDecl - Create a zero-initialized LLVM global for
+  /// a static local variable.
+  llvm::GlobalVariable *CreateStaticVarDecl(const VarDecl &D,
+                                            const char *Separator,
                                        llvm::GlobalValue::LinkageTypes Linkage);
   
-  /// AddInitializerToGlobalBlockVarDecl - Add the initializer for 'D' to the
+  /// AddInitializerToStaticVarDecl - Add the initializer for 'D' to the
   /// global variable that has already been created for it.  If the initializer
   /// has a different type than GV does, this may free GV and return a different
   /// one.  Otherwise it just returns GV.
   llvm::GlobalVariable *
-  AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
-                                     llvm::GlobalVariable *GV);
+  AddInitializerToStaticVarDecl(const VarDecl &D,
+                                llvm::GlobalVariable *GV);
   
 
   /// EmitCXXGlobalVarDeclInit - Create the initializer for a C++

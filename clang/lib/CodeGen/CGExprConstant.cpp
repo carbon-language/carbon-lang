@@ -755,7 +755,7 @@ public:
         if (!VD->hasLocalStorage()) {
           if (VD->isFileVarDecl() || VD->hasExternalStorage())
             return CGM.GetAddrOfGlobalVar(VD);
-          else if (VD->isBlockVarDecl()) {
+          else if (VD->isLocalVarDecl()) {
             assert(CGF && "Can't access static local vars without CGF");
             return CGF->GetAddrOfStaticLocalVar(VD);
           }

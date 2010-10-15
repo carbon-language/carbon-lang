@@ -589,7 +589,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       
       // Emit the block variables for the array indices, if any.
       for (unsigned I = 0, N = MemberInit->getNumArrayIndices(); I != N; ++I)
-        CGF.EmitLocalBlockVarDecl(*MemberInit->getArrayIndex(I));
+        CGF.EmitAutoVarDecl(*MemberInit->getArrayIndex(I));
     }
     
     EmitAggMemberInitializer(CGF, LHS, ArrayIndexVar, MemberInit, FieldType, 0);

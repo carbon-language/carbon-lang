@@ -90,7 +90,7 @@ namespace {
       // C++ [dcl.fct.default]p7
       //   Local variables shall not be used in default argument
       //   expressions.
-      if (VDecl->isBlockVarDecl())
+      if (VDecl->isLocalVarDecl())
         return S->Diag(DRE->getSourceRange().getBegin(),
                        diag::err_param_default_argument_references_local)
           << VDecl->getDeclName() << DefaultArg->getSourceRange();
