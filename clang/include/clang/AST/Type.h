@@ -795,23 +795,23 @@ private:
     /// Dependent - Whether this type is a dependent type (C++ [temp.dep.type]).
     /// Note that this should stay at the end of the ivars for Type so that
     /// subclasses can pack their bitfields into the same word.
-    bool Dependent : 1;
+    unsigned Dependent : 1;
   
     /// \brief Whether this type is a variably-modified type (C99 6.7.5).
-    bool VariablyModified : 1;
+    unsigned VariablyModified : 1;
   
     /// \brief Whether the linkage of this type along with the presence of any
     /// local or unnamed types is already known.
-    mutable bool LinkageKnown : 1;
+    mutable unsigned LinkageKnown : 1;
   
     /// \brief Linkage of this type.
     mutable unsigned CachedLinkage : 2;
 
     /// \brief Whether this type involves and local or unnamed types. 
-    mutable bool CachedLocalOrUnnamed : 1;
+    mutable unsigned CachedLocalOrUnnamed : 1;
   
     /// \brief FromAST - Whether this type comes from an AST file.
-    mutable bool FromAST : 1;
+    mutable unsigned FromAST : 1;
 
     unsigned SpareBit : 1;
   };
@@ -855,7 +855,7 @@ protected:
     unsigned ExtInfo : 8;
 
     /// A bit to be used by the subclass.
-    bool SubclassInfo : 1;
+    unsigned SubclassInfo : 1;
 
     /// TypeQuals - Used only by FunctionProtoType, put here to pack with the
     /// other bitfields.
@@ -892,11 +892,11 @@ protected:
     ///   ref &&a;             // lvalue, inner ref
     ///   rvref &a;            // lvalue, inner ref, spelled lvalue
     ///   rvref &&a;           // rvalue, inner ref
-    bool SpelledAsLValue : 1;
+    unsigned SpelledAsLValue : 1;
 
     /// True if the inner type is a reference type.  This only happens
     /// in non-canonical forms.
-    bool InnerRef : 1;
+    unsigned InnerRef : 1;
   };
 
   class VectorTypeBitfields {
