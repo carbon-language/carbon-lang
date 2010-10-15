@@ -147,6 +147,8 @@ BREAKPOINT_HIT_ONCE = "Breakpoint resolved with hit cout = 1"
 
 BREAKPOINT_HIT_TWICE = "Breakpoint resolved with hit cout = 2"
 
+BREAKPOINT_HIT_THRICE = "Breakpoint resolved with hit cout = 3"
+
 STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
 
 STOPPED_DUE_TO_BREAKPOINT = "Process state is stopped due to breakpoint"
@@ -568,7 +570,6 @@ class TestBase(unittest2.TestCase):
             with recording(self, trace) as sbuf:
                 print >> sbuf, "%s start string: %s" % (heading, startstr)
                 print >> sbuf, "Matched" if matched else "Not matched"
-                print >> sbuf
 
         # Look for sub strings, if specified.
         keepgoing = matched if matching else not matched
@@ -581,8 +582,6 @@ class TestBase(unittest2.TestCase):
                 keepgoing = matched if matching else not matched
                 if not keepgoing:
                     break
-            with recording(self, trace) as sbuf:
-                print >> sbuf
 
         # Search for regular expression patterns, if specified.
         keepgoing = matched if matching else not matched
@@ -596,8 +595,6 @@ class TestBase(unittest2.TestCase):
                 keepgoing = matched if matching else not matched
                 if not keepgoing:
                     break
-            with recording(self, trace) as sbuf:
-                print >> sbuf
 
         self.assertTrue(matched if matching else not matched,
                         msg if msg else CMD_MSG(str, exe))
