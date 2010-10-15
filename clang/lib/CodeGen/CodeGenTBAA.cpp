@@ -77,6 +77,10 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     }
   }
 
+  // For now, treat all pointers as equivalent to each other.
+  if (Ty->isPointerType())
+    return MetadataCache[Ty] = getTBAAInfoForNamedType("TBAA.pointer", Char);
+
   // For now, handle any other kind of type conservatively.
   return MetadataCache[Ty] = Char;
 }
