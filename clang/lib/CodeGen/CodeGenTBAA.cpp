@@ -85,9 +85,10 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     }
   }
 
-  // For now, treat all pointers as equivalent to each other.
+  // TODO: Implement C++'s type "similarity" and consider dis-"similar"
+  // pointers distinct.
   if (Ty->isPointerType())
-    return MetadataCache[Ty] = getTBAAInfoForNamedType("TBAA.pointer", Char);
+    return MetadataCache[Ty] = getTBAAInfoForNamedType("any pointer", Char);
 
   // Enum types are distinct types. In C++ they have "underlying types",
   // however they aren't related for TBAA.
