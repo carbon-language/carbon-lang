@@ -152,7 +152,7 @@ def fdata_sections : Flag<"-fdata-sections">,
 def funroll_loops : Flag<"-funroll-loops">,
   HelpText<"Turn on loop unroller">;
 def relaxed_aliasing : Flag<"-relaxed-aliasing">,
-  HelpText<"Turn off TBAA">;
+  HelpText<"Turn off Type Based Alias Analysis">;
 def masm_verbose : Flag<"-masm-verbose">,
   HelpText<"Generate verbose assembly output">;
 def mcode_model : Separate<"-mcode-model">,
