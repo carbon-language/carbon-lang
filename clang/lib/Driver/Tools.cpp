@@ -256,16 +256,6 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       if (FoundPCH || FoundPTH) {
         if (IsFirstImplicitInclude) {
           A->claim();
-          if (P.isDirectory()) {
-            // Expect to find a precompiled header matching the current input type
-            P.appendComponent(types::getTypeName(Inputs[0].getType()));
-            if (!P.exists()) {
-              D.Diag(clang::diag::warn_drv_pch_missing_language)
-                  << A->getAsString(Args) << P.str()
-                  << types::getTypeName(Inputs[0].getType());
-              continue;
-            }
-          }
           if (UsePCH)
             CmdArgs.push_back("-include-pch");
           else

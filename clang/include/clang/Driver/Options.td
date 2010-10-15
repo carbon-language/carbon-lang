@@ -426,7 +426,6 @@ def iframework : JoinedOrSeparate<"-iframework">, Group<clang_i_Group>;
 def imacros : JoinedOrSeparate<"-imacros">, Group<clang_i_Group>;
 def image__base : Separate<"-image_base">;
 def include_ : JoinedOrSeparate<"-include">, Group<clang_i_Group>, EnumName<"include">;
-def include_pch : Separate<"-include-pch">, Group<clang_i_Group>;
 def init : Separate<"-init">;
 def install__name : Separate<"-install_name">;
 def integrated_as : Flag<"-integrated-as">, Flags<[DriverOption]>;
