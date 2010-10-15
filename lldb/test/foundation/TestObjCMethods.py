@@ -23,7 +23,7 @@ class FoundationTestCase(TestBase):
         self.buildDwarf()
         self.break_on_objc_methods()
 
-    @unittest2.expectedFailure
+    #@unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
     def test_data_type_and_expr_with_dsym(self):
@@ -31,7 +31,7 @@ class FoundationTestCase(TestBase):
         self.buildDsym()
         self.data_type_and_expr_objc()
 
-    @unittest2.expectedFailure
+    #@unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
     def test_data_type_and_expr_with_dwarf(self):
@@ -173,8 +173,7 @@ class FoundationTestCase(TestBase):
         # Test new feature with r115115:
         # Add "-o" option to "expression" which prints the object description if available.
         self.expect("expr -o -- my", "Object description displayed correctly",
-            startstr = "Hello from ",
-            substrs = ["a.out", "with timestamp: "])
+            patterns = ["Hello from.*a.out.*with timestamp: "])
 
 
 if __name__ == '__main__':
