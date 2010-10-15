@@ -2591,6 +2591,27 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
 
   if (Record->isDynamicClass())
     DynamicClasses.push_back(Record);
+
+  if (Record->getIdentifier()) {
+    // C++ [class.mem]p13:
+    //   If T is the name of a class, then each of the following shall have a 
+    //   name different from T:
+    //     - every member of every anonymous union that is a member of class T.
+    //
+    // C++ [class.mem]p14:
+    //   In addition, if class T has a user-declared constructor (12.1), every 
+    //   non-static data member of class T shall have a name different from T.
+    for (DeclContext::lookup_result R = Record->lookup(Record->getDeclName());
+         R.first != R.second; ++R.first)
+      if (FieldDecl *Field = dyn_cast<FieldDecl>(*R.first)) {
+        if (Record->hasUserDeclaredConstructor() ||
+            !Field->getDeclContext()->Equals(Record)) {
+        Diag(Field->getLocation(), diag::err_member_name_of_class)
+          << Field->getDeclName();
+        break;
+      }
+      }
+  }
 }
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,

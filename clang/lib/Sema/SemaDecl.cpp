@@ -2300,7 +2300,24 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
         D.setInvalidType();
     }
   }
-
+  
+  // C++ [class.mem]p13:
+  //   If T is the name of a class, then each of the following shall have a 
+  //   name different from T:
+  //     - every static data member of class T;
+  //     - every member function of class T
+  //     - every member of class T that is itself a type;
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC)) 
+    if (Record->getIdentifier() && Record->getDeclName() == Name) {
+      Diag(D.getIdentifierLoc(), diag::err_member_name_of_class)
+        << Name;
+      
+      // If this is a typedef, we'll end up spewing multiple diagnostics.
+      // Just return early; it's safer.
+      if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
+        return 0;
+    }
+  
   NamedDecl *New;
 
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
@@ -7172,6 +7189,17 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl,
     }
   }
 
+  // C++ [class.mem]p13:
+  //   If T is the name of a class, then each of the following shall have a 
+  //   name different from T:
+  //     - every enumerator of every member of class T that is an enumerated 
+  //       type
+  if (CXXRecordDecl *Record
+                      = dyn_cast<CXXRecordDecl>(
+                             TheEnumDecl->getDeclContext()->getRedeclContext()))
+    if (Record->getIdentifier() && Record->getIdentifier() == Id)
+      Diag(IdLoc, diag::err_member_name_of_class) << Id;
+  
   EnumConstantDecl *New = CheckEnumConstant(TheEnumDecl, LastEnumConst,
                                             IdLoc, Id, Val);
 
