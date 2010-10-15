@@ -586,8 +586,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         .addReg(0)
         .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ? ARM_AM::lsr
                                      : ARM_AM::asr), 1)))
-        .addReg(ARM::CPSR);
-      TransferImpOps(MI, MIB, MIB);
+        .addReg(ARM::CPSR, getDefRegState(true));
       MI.eraseFromParent();
       break;
     }
