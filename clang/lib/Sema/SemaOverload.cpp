@@ -5255,9 +5255,9 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     // contextually converted to bool long ago. The candidates below are
     // therefore added as binary.
     //
-    // C++ [over.built]p24:
-    //   For every type T, where T is a pointer or pointer-to-member type,
-    //   there exist candidate operator functions of the form
+    // C++ [over.built]p25:
+    //   For every type T, where T is a pointer, pointer-to-member, or scoped
+    //   enumeration type, there exist candidate operator functions of the form
     //
     //        T        operator?(bool, T, T);
     //
@@ -5271,6 +5271,15 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
          E = CandidateTypes.member_pointer_end(); Ptr != E; ++Ptr) {
       QualType ParamTypes[2] = { *Ptr, *Ptr };
       AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
+    }
+    if (getLangOptions().CPlusPlus0x)
+    for (BuiltinCandidateTypeSet::iterator Enum =
+         CandidateTypes.enumeration_begin(),
+         E = CandidateTypes.enumeration_end(); Enum != E; ++Enum) {
+      if (!(*Enum)->getAs<EnumType>()->getDecl()->isScoped())
+        continue;
+      QualType ParamTypes[2] = { *Enum, *Enum };
+      AddBuiltinCandidate(*Enum, ParamTypes, Args, 2, CandidateSet);
     }
     goto Conditional;
   }
