@@ -7,7 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the code that manages TBAA information.
+// This is the code that manages TBAA information. Relevant standards
+// text includes:
+//
+//   C99 6.5p7
+//   C++ [basic.lval] (p10 in n3126, p15 in some earlier versions)
 //
 //===----------------------------------------------------------------------===//
 
