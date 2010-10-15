@@ -411,7 +411,9 @@ class TestBase(unittest2.TestCase):
         self.old_stderr = sys.stderr
         sys.stderr = self.session
 
-        # Optimistically set self.failed to False initially.
+        # Optimistically set self.__failed__ to False initially.  If the test
+        # failed, the session info (self.session) is then dumped into a session
+        # specific file for diagnosis.
         self.__failed__ = False
 
     def setTearDownCleanup(self, dictionary=None):
@@ -422,7 +424,8 @@ class TestBase(unittest2.TestCase):
         """Callback invoked when we (the test case instance) failed."""
         self.__failed__ = True
         with recording(self, False) as sbuf:
-            # False because there's no need to write "FAIL" to the stderr again.
+            # False because there's no need to write "FAIL" to the stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
             print >> sbuf, "FAIL"
 
     def dumpSessionInfo(self):
