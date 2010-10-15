@@ -227,6 +227,242 @@ template <> struct hash<std::error_code>;
 #ifdef LLVM_ON_WIN32
   // VS 2008 needs this for some of the defines below.
 # include <WinSock2.h>
+
+  // The following numbers were taken from VS2010.
+# ifndef EAFNOSUPPORT
+#   define EAFNOSUPPORT WSAEAFNOSUPPORT
+# endif
+# ifndef EADDRINUSE
+#   define EADDRINUSE WSAEADDRINUSE
+# endif
+# ifndef EADDRNOTAVAIL
+#   define EADDRNOTAVAIL WSAEADDRNOTAVAIL
+# endif
+# ifndef EISCONN
+#   define EISCONN WSAEISCONN
+# endif
+# ifndef E2BIG
+#   define E2BIG WSAE2BIG
+# endif
+# ifndef EDOM
+#   define EDOM WSAEDOM
+# endif
+# ifndef EFAULT
+#   define EFAULT WSAEFAULT
+# endif
+# ifndef EBADF
+#   define EBADF WSAEBADF
+# endif
+# ifndef EBADMSG
+#   define EBADMSG 104
+# endif
+# ifndef EPIPE
+#   define EPIPE WSAEPIPE
+# endif
+# ifndef ECONNABORTED
+#   define ECONNABORTED WSAECONNABORTED
+# endif
+# ifndef EALREADY
+#   define EALREADY WSAEALREADY
+# endif
+# ifndef ECONNREFUSED
+#   define ECONNREFUSED WSAECONNREFUSED
+# endif
+# ifndef ECONNRESET
+#   define ECONNRESET WSAECONNRESET
+# endif
+# ifndef EXDEV
+#   define EXDEV WSAEXDEV
+# endif
+# ifndef EDESTADDRREQ
+#   define EDESTADDRREQ WSAEDESTADDRREQ
+# endif
+# ifndef EBUSY
+#   define EBUSY WSAEBUSY
+# endif
+# ifndef ENOTEMPTY
+#   define ENOTEMPTY WSAENOTEMPTY
+# endif
+# ifndef ENOEXEC
+#   define ENOEXEC WSAENOEXEC
+# endif
+# ifndef EEXIST
+#   define EEXIST WSAEEXIST
+# endif
+# ifndef EFBIG
+#   define EFBIG WSAEFBIG
+# endif
+# ifndef ENAMETOOLONG
+#   define ENAMETOOLONG WSAENAMETOOLONG
+# endif
+# ifndef ENOSYS
+#   define ENOSYS WSAENOSYS
+# endif
+# ifndef EHOSTUNREACH
+#   define EHOSTUNREACH WSAEHOSTUNREACH
+# endif
+# ifndef EIDRM
+#   define EIDRM 111
+# endif
+# ifndef EILSEQ
+#   define EILSEQ WSAEILSEQ
+# endif
+# ifndef ENOTTY
+#   define ENOTTY WSAENOTTY
+# endif
+# ifndef EINTR
+#   define EINTR WSAEINTR
+# endif
+# ifndef EINVAL
+#   define EINVAL WSAEINVAL
+# endif
+# ifndef ESPIPE
+#   define ESPIPE WSAESPIPE
+# endif
+# ifndef EIO
+#   define EIO WSAEIO
+# endif
+# ifndef EISDIR
+#   define EISDIR WSAEISDIR
+# endif
+# ifndef EMSGSIZE
+#   define EMSGSIZE WSAEMSGSIZE
+# endif
+# ifndef ENETDOWN
+#   define ENETDOWN WSAENETDOWN
+# endif
+# ifndef ENETRESET
+#   define ENETRESET WSAENETRESET
+# endif
+# ifndef ENETUNREACH
+#   define ENETUNREACH WSAENETUNREACH
+# endif
+# ifndef ENOBUFS
+#   define ENOBUFS WSAENOBUFS
+# endif
+# ifndef ECHILD
+#   define ECHILD WSAECHILD
+# endif
+# ifndef ENOLINK
+#   define ENOLINK 121
+# endif
+# ifndef ENOLCK
+#   define ENOLCK WSAENOLCK
+# endif
+# ifndef ENODATA
+#   define ENODATA 120
+# endif
+# ifndef ENOMSG
+#   define ENOMSG 122
+# endif
+# ifndef ENOPROTOOPT
+#   define ENOPROTOOPT WSAENOPROTOOPT
+# endif
+# ifndef ENOSPC
+#   define ENOSPC WSAENOSPC
+# endif
+# ifndef ENOSR
+#   define ENOSR 124
+# endif
+# ifndef ENXIO
+#   define ENXIO WSAENXIO
+# endif
+# ifndef ENODEV
+#   define ENODEV WSAENODEV
+# endif
+# ifndef ENOENT
+#   define ENOENT WSAENOENT
+# endif
+# ifndef ESRCH
+#   define ESRCH WSAESRCH
+# endif
+# ifndef ENOTDIR
+#   define ENOTDIR WSAENOTDIR
+# endif
+# ifndef ENOTSOCK
+#   define ENOTSOCK WSAENOTSOCK
+# endif
+# ifndef ENOSTR
+#   define ENOSTR 125
+# endif
+# ifndef ENOTCONN
+#   define ENOTCONN WSAENOTCONN
+# endif
+# ifndef ENOMEM
+#   define ENOMEM WSAENOMEM
+# endif
+# ifndef ENOTSUP
+#   define ENOTSUP 129
+# endif
+# ifndef ECANCELED
+#   define ECANCELED 105
+# endif
+# ifndef EINPROGRESS
+#   define EINPROGRESS WSAEINPROGRESS
+# endif
+# ifndef EPERM
+#   define EPERM WSAEPERM
+# endif
+# ifndef EOPNOTSUPP
+#   define EOPNOTSUPP WSAEOPNOTSUPP
+# endif
+# ifndef EWOULDBLOCK
+#   define EWOULDBLOCK WSAEWOULDBLOCK
+# endif
+# ifndef EOWNERDEAD
+#   define EOWNERDEAD 133
+# endif
+# ifndef EACCES
+#   define EACCES WSAEACCES
+# endif
+# ifndef EPROTO
+#   define EPROTO 134
+# endif
+# ifndef EPROTONOSUPPORT
+#   define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+# endif
+# ifndef EROFS
+#   define EROFS WSAEROFS
+# endif
+# ifndef EDEADLK
+#   define EDEADLK WSAEDEADLK
+# endif
+# ifndef EAGAIN
+#   define EAGAIN WSAEAGAIN
+# endif
+# ifndef ERANGE
+#   define ERANGE WSAERANGE
+# endif
+# ifndef ENOTRECOVERABLE
+#   define ENOTRECOVERABLE 127
+# endif
+# ifndef ETIME
+#   define ETIME 137
+# endif
+# ifndef ETXTBSY
+#   define ETXTBSY 139
+# endif
+# ifndef ETIMEDOUT
+#   define ETIMEDOUT WSAETIMEDOUT
+# endif
+# ifndef ENFILE
+#   define ENFILE WSAENFILE
+# endif
+# ifndef EMFILE
+#   define EMFILE WSAEMFILE
+# endif
+# ifndef EMLINK
+#   define EMLINK WSAEMLINK
+# endif
+# ifndef ELOOP
+#   define ELOOP WSAELOOP
+# endif
+# ifndef EOVERFLOW
+#   define EOVERFLOW 132
+# endif
+# ifndef EPROTOTYPE
+#   define EPROTOTYPE WSAEPROTOTYPE
+# endif
 #endif
 
 namespace llvm {
