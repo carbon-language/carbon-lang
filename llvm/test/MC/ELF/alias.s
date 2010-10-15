@@ -25,7 +25,7 @@ bar4 = foo4
 // CHECK-NEXT:   ('st_size', 0)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 2
-// CHECK-NEXT: (('st_name', 34) # 'bar4'
+// CHECK-NEXT: (('st_name', 29) # 'bar4'
 // CHECK-NEXT:  ('st_bind', 0)
 // CHECK-NEXT:  ('st_type', 2)
 // CHECK-NEXT:  ('st_other', 0)
@@ -43,7 +43,7 @@ bar4 = foo4
 // CHECK-NEXT:   ('st_size', 0)
 // CHECK-NEXT: ),
 // CHECK-NEXT:  # Symbol 4
-// CHECK-NEXT:  (('st_name', 19) # 'foo3'
+// CHECK-NEXT:  (('st_name', 14) # 'foo3'
 // CHECK-NEXT:   ('st_bind', 0)
 // CHECK-NEXT:   ('st_type', 0)
 // CHECK-NEXT:   ('st_other', 0)
@@ -52,7 +52,7 @@ bar4 = foo4
 // CHECK-NEXT:   ('st_size', 0)
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Symbol 5
-// CHECK-NEXT: (('st_name', 29) # 'foo4'
+// CHECK-NEXT: (('st_name', 24) # 'foo4'
 // CHECK-NEXT:  ('st_bind', 0)
 // CHECK-NEXT:  ('st_type', 2)
 // CHECK-NEXT:  ('st_other', 0)
@@ -67,7 +67,7 @@ bar4 = foo4
 // CHECK:       # Symbol 8
 // CHECK-NEXT:  (('st_name', 0) # ''
 // CHECK:       # Symbol 9
-// CHECK-NEXT:  (('st_name', 24) # 'bar3'
+// CHECK-NEXT:  (('st_name', 19) # 'bar3'
 // CHECK-NEXT:   ('st_bind', 1)
 // CHECK-NEXT:   ('st_type', 0)
 // CHECK-NEXT:   ('st_other', 0)
@@ -75,7 +75,7 @@ bar4 = foo4
 // CHECK-NEXT:   ('st_value', 0)
 // CHECK-NEXT:   ('st_size', 0)
 // CHECK:       # Symbol 10
-// CHECK-NEXT:  (('st_name', 14) # 'bar2'
+// CHECK-NEXT:  (('st_name', 9) # 'bar2'
 // CHECK-NEXT:   ('st_bind', 1)
 // CHECK-NEXT:   ('st_type', 0)
 // CHECK-NEXT:   ('st_other', 0)

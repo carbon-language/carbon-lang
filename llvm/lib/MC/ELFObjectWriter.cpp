@@ -789,28 +789,18 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     if (!isInSymtab(Asm, *it, UsedInReloc.count(&Symbol)))
       continue;
 
-    uint64_t &Entry = StringIndexMap[Symbol.getName()];
-    if (!Entry) {
-      Entry = StringTable.size();
-      StringTable += Symbol.getName();
-      StringTable += '\x00';
-    }
-
     ELFSymbolData MSD;
     MSD.SymbolData = it;
-    MSD.StringIndex = Entry;
     bool Local = isLocal(*it);
 
+    bool Add = false;
     if (it->isCommon()) {
       assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
-      ExternalSymbolData.push_back(MSD);
+      Add = true;
     } else if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
-      if (Local)
-        LocalSymbolData.push_back(MSD);
-      else
-        ExternalSymbolData.push_back(MSD);
+      Add = true;
     } else if (Symbol.isVariable()) {
       const MCExpr *Value = Symbol.getVariableValue();
       assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
@@ -819,10 +809,7 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       if (RefSymbol.isDefined()) {
         MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
         assert(MSD.SectionIndex && "Invalid section index!");
-        if (Local)
-          LocalSymbolData.push_back(MSD);
-        else
-          ExternalSymbolData.push_back(MSD);
+        Add = true;
       }
     } else if (Symbol.isUndefined()) {
       assert(!Local);
@@ -831,11 +818,24 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       // are able to set it.
       if (GetBinding(*it) == ELF::STB_LOCAL)
         SetBinding(*it, ELF::STB_GLOBAL);
-      UndefinedSymbolData.push_back(MSD);
+      Add = true;
     } else {
       MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());
       assert(MSD.SectionIndex && "Invalid section index!");
-      if (Local)
+      Add = true;
+    }
+
+    if (Add) {
+      uint64_t &Entry = StringIndexMap[Symbol.getName()];
+      if (!Entry) {
+        Entry = StringTable.size();
+        StringTable += Symbol.getName();
+        StringTable += '\x00';
+      }
+      MSD.StringIndex = Entry;
+      if (MSD.SectionIndex == ELF::SHN_UNDEF)
+        UndefinedSymbolData.push_back(MSD);
+      else if (Local)
         LocalSymbolData.push_back(MSD);
       else
         ExternalSymbolData.push_back(MSD);
