@@ -41,7 +41,7 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, Exec
 {
 
     // ObjC objects can only be pointers:
-    if (!ClangASTContext::IsPointerType (object.GetClangType()))
+    if (!object.IsPointerType())
         return NULL;
     
     // Make the argument list: we pass one arg, the address of our pointer, to the print function.
