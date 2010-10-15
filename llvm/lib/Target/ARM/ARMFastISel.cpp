@@ -838,7 +838,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
                             TLI.getRegClassFor(VT), TM.getRegisterInfo());
   // The thumb addressing mode has operands swapped from the arm addressing
   // mode, the floating point one only has two operands.
-  if (isFloat || isThumb)
+  else if (isFloat || isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
                     .addReg(SrcReg).addReg(Base.Reg).addImm(Offset));
