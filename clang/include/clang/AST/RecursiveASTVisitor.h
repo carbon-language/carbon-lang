@@ -1251,7 +1251,7 @@ DEF_TRAVERSE_DECL(TemplateTypeParmDecl, {
   })
 
 DEF_TRAVERSE_DECL(TypedefDecl, {
-    TRY_TO(TraverseType(D->getUnderlyingType()));
+    TRY_TO(TraverseTypeLoc(D->getTypeSourceInfo()->getTypeLoc()));
     // We shouldn't traverse D->getTypeForDecl(); it's a result of
     // declaring the typedef, not something that was written in the
     // source.
