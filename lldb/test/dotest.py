@@ -616,7 +616,6 @@ for ia in range(len(archs) if iterArchs else 1):
                 method = getattr(test, "markFailure", None)
                 if method:
                     method()
-                setattr(test, "__failed__", True)
 
         result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
                                           resultclass=LLDBTestResult).run(suite)

@@ -411,12 +411,16 @@ class TestBase(unittest2.TestCase):
         self.old_stderr = sys.stderr
         sys.stderr = self.session
 
+        # Optimistically set self.failed to False initially.
+        self.__failed__ = False
+
     def setTearDownCleanup(self, dictionary=None):
         self.dict = dictionary
         self.doTearDownCleanup = True
 
     def markFailure(self):
         """Callback invoked when we (the test case instance) failed."""
+        self.__failed__ = True
         with recording(self, False) as sbuf:
             # False because there's no need to write "FAIL" to the stderr again.
             print >> sbuf, "FAIL"
@@ -454,10 +458,10 @@ class TestBase(unittest2.TestCase):
             if not module.cleanup(dictionary=self.dict):
                 raise Exception("Don't know how to do cleanup")
 
-        # lldb.test_result is an instance of unittest2.TextTestResult enforced
-        # as a singleton.  During tearDown(), lldb.test_result can be consulted
-        # in order to determine whether we failed for the current test instance.
-        if getattr(self, "__failed__", False):
+        # See also LLDBTestResult (dotest.py) which is a singlton class derived
+        # from TextTestResult and overwrites addFailure() method to allow us to
+        # to check the failure status here.
+        if self.__failed__:
             self.dumpSessionInfo()
 
         # Restore the sys.stderr to what it was before.
