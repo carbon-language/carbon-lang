@@ -491,7 +491,7 @@ class TestBase(unittest2.TestCase):
             with recording(self, trace) as sbuf:
                 print >> sbuf, "runCmd:", cmd
                 if not check:
-                    print >> sbuf, "checking of return status not required"
+                    print >> sbuf, "check of return status not required"
                 if self.res.Succeeded():
                     print >> sbuf, "output:", self.res.GetOutput()
                 else:
