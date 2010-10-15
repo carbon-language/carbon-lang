@@ -4,7 +4,7 @@ This LLDB module contains miscellaneous utilities.
 
 import lldb
 import sys
-import cStringIO
+import StringIO
 
 ################################################
 #                                              #
@@ -167,7 +167,7 @@ def GetStackFrames(thread):
 def PrintStackTrace(thread, string_buffer = False):
     """Prints a simple stack trace of this thread."""
 
-    output = cStringIO.StringIO() if string_buffer else sys.stdout
+    output = StringIO.StringIO() if string_buffer else sys.stdout
     target = thread.GetProcess().GetTarget()
 
     depth = thread.GetNumFrames()
@@ -196,14 +196,13 @@ def PrintStackTrace(thread, string_buffer = False):
                 num=i, addr=load_addr, mod=mods[i], func=funcs[i], file=files[i], line=lines[i])
 
     if string_buffer:
-        with output:
-            return output.getvalue()
+        return output.getvalue()
 
 
 def PrintStackTraces(process, string_buffer = False):
     """Prints the stack traces of all the threads."""
 
-    output = cStringIO.StringIO() if string_buffer else sys.stdout
+    output = StringIO.StringIO() if string_buffer else sys.stdout
 
     print >> output, "Stack traces for " + repr(process)
 
@@ -211,5 +210,4 @@ def PrintStackTraces(process, string_buffer = False):
         print >> output, PrintStackTrace(process.GetThreadAtIndex(i), string_buffer=True)
 
     if string_buffer:
-        with output:
-            return output.getvalue()
+        return output.getvalue()
