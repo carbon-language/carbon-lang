@@ -54,6 +54,10 @@ class ConditionalBreakTestCase(TestBase):
         self.assertTrue(self.process.GetState() == lldb.eStateStopped,
                         STOPPED_DUE_TO_BREAKPOINT)
 
+        # Find the line number where a's parent frame function is c.
+        line = line_number('main.c',
+            "// Find the line number where a's parent frame function is c here.")
+
         # Suppose we are only interested in the call scenario where c()'s
         # immediate caller is a() and we want to find out the value passed from
         # a().
@@ -71,11 +75,11 @@ class ConditionalBreakTestCase(TestBase):
                 #lldbutil.PrintStackTrace(thread)
                 self.assertTrue(name0 == "c", "Break on function c()")
                 if (name1 == "a"):
-                    line = frame1.GetLineEntry().GetLine()
                     # By design, we know that a() calls c() only from main.c:27.
                     # In reality, similar logic can be used to find out the call
                     # site.
-                    self.assertTrue(line == 27, "Immediate caller a() at main.c:27")
+                    self.assertTrue(frame1.GetLineEntry().GetLine() == line,
+                                    "Immediate caller a() at main.c:%d" % line)
 
                     # And the local variable 'val' should have a value of (int) 3.
                     val = frame1.LookupVar("val")
