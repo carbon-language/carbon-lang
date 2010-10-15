@@ -435,17 +435,22 @@ static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
   return 0;
 }
 
+static const MCSymbol &AliasedSymbol(const MCSymbol &Symbol) {
+  const MCSymbol *S = &Symbol;
+  while (S->isVariable()) {
+    const MCExpr *Value = S->getVariableValue();
+    assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
+    const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
+    S = &Ref->getSymbol();
+  }
+  return *S;
+}
+
 void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
                                       const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
-  MCSymbolData *AliasData = NULL;
-  if (OrigData.Symbol->isVariable()) {
-    const MCExpr *Value = OrigData.getSymbol().getVariableValue();
-    assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
-    const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
-    AliasData = &Layout.getAssembler().getSymbolData(Ref->getSymbol());
-  }
-  MCSymbolData &Data = AliasData ? *AliasData : OrigData;
+  MCSymbolData &Data =
+    Layout.getAssembler().getSymbolData(AliasedSymbol(OrigData.getSymbol()));
 
   uint8_t Binding = GetBinding(OrigData);
   uint8_t Visibility = GetVisibility(OrigData);
@@ -592,7 +597,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
 
   bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
   if (!Target.isAbsolute()) {
-    Symbol = &Target.getSymA()->getSymbol();
+    Symbol = &AliasedSymbol(Target.getSymA()->getSymbol());
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     MCFragment *F = SD.getFragment();
 
@@ -802,10 +807,7 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       MSD.SectionIndex = ELF::SHN_ABS;
       Add = true;
     } else if (Symbol.isVariable()) {
-      const MCExpr *Value = Symbol.getVariableValue();
-      assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
-      const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
-      const MCSymbol &RefSymbol = Ref->getSymbol();
+      const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
       if (RefSymbol.isDefined()) {
         MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
         assert(MSD.SectionIndex && "Invalid section index!");
