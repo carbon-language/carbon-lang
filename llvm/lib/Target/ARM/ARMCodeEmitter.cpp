@@ -140,8 +140,6 @@ namespace {
 
     void emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI);
 
-    void emitMiscInstruction(const MachineInstr &MI);
-
     void emitNEONLaneInstruction(const MachineInstr &MI);
     void emitNEONDupInstruction(const MachineInstr &MI);
     void emitNEON1RegModImmInstruction(const MachineInstr &MI);
@@ -437,9 +435,7 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   case ARMII::VFPLdStMulFrm:
     emitVFPLoadStoreMultipleInstruction(MI);
     break;
-  case ARMII::VFPMiscFrm:
-    emitMiscInstruction(MI);
-    break;
+
   // NEON instructions.
   case ARMII::NGetLnFrm:
   case ARMII::NSetLnFrm:
@@ -1585,46 +1581,6 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
     Binary |= NumRegs * 2;
   else
     Binary |= NumRegs;
-
-  emitWordLE(Binary);
-}
-
-void ARMCodeEmitter::emitMiscInstruction(const MachineInstr &MI) {
-  unsigned Opcode = MI.getDesc().Opcode;
-  // Part of binary is determined by TableGn.
-  unsigned Binary = getBinaryCodeForInstr(MI);
-
-  // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
-
-  switch (Opcode) {
-  default:
-    llvm_unreachable("ARMCodeEmitter::emitMiscInstruction");
-
-  case ARM::FCONSTD:
-  case ARM::FCONSTS: {
-    // Encode Dd / Sd.
-    Binary |= encodeVFPRd(MI, 0);
-
-    // Encode imm., Table A7-18 VFP modified immediate constants
-    const MachineOperand &MO1 = MI.getOperand(1);
-    unsigned Imm = static_cast<unsigned>(MO1.getFPImm()->getValueAPF()
-                      .bitcastToAPInt().getHiBits(32).getLimitedValue());
-    unsigned ModifiedImm;
-
-    if(Opcode == ARM::FCONSTS)
-      ModifiedImm = (Imm & 0x80000000) >> 24 | // a
-                    (Imm & 0x03F80000) >> 19;  // bcdefgh
-    else // Opcode == ARM::FCONSTD
-      ModifiedImm = (Imm & 0x80000000) >> 24 | // a
-                    (Imm & 0x007F0000) >> 16;  // bcdefgh
-
-    // Insts{19-16} = abcd, Insts{3-0} = efgh
-    Binary |= ((ModifiedImm & 0xF0) >> 4) << 16;
-    Binary |= (ModifiedImm & 0xF);
-    break;
-  }
-  }
 
   emitWordLE(Binary);
 }
