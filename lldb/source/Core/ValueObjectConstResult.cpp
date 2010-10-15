@@ -47,6 +47,7 @@ ValueObjectConstResult::ValueObjectConstResult
     m_value.SetContext(Value::eContextTypeOpaqueClangQualType, clang_type);
     m_name = name;
     SetIsConstant ();
+    SetValueIsValid(true);
 }
 
 ValueObjectConstResult::ValueObjectConstResult (const Error& error) :
