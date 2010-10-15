@@ -1830,81 +1830,141 @@ defm ADCS : AI1_adde_sube_s_irs<0b0101, "adcs",
 defm SBCS : AI1_adde_sube_s_irs<0b0110, "sbcs",
                           BinOpFrag<(sube_live_carry node:$LHS, node:$RHS) >>;
 
-def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
-                 IIC_iALUi, "rsb", "\t$dst, $a, $b",
-                 [(set GPR:$dst, (sub so_imm:$b, GPR:$a))]> {
-    let Inst{25} = 1;
+def RSBri : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
+                 IIC_iALUi, "rsb", "\t$Rd, $Rn, $imm",
+                 [(set GPR:$Rd, (sub so_imm:$imm, GPR:$Rn))]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> imm;
+  let Inst{25} = 1;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{11-0} = imm;
 }
 
 // The reg/reg form is only defined for the disassembler; for codegen it is
 // equivalent to SUBrr.
-def RSBrr : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
-                 IIC_iALUr, "rsb", "\t$dst, $a, $b",
+def RSBrr : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
+                 IIC_iALUr, "rsb", "\t$Rd, $Rn, $Rm",
                  [/* For disassembly only; pattern left blank */]> {
-    let Inst{25} = 0;
-    let Inst{11-4} = 0b00000000;
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+  let Inst{11-4} = 0b00000000;
+  let Inst{25} = 0;
+  let Inst{3-0} = Rm;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
 }
 
-def RSBrs : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
-                 IIC_iALUsr, "rsb", "\t$dst, $a, $b",
-                 [(set GPR:$dst, (sub so_reg:$b, GPR:$a))]> {
-    let Inst{25} = 0;
+def RSBrs : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                 DPSoRegFrm, IIC_iALUsr, "rsb", "\t$Rd, $Rn, $shift",
+                 [(set GPR:$Rd, (sub so_reg:$shift, GPR:$Rn))]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> shift;
+  let Inst{25} = 0;
+  let Inst{11-0} = shift;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
 }
 
 // RSB with 's' bit set.
 let Defs = [CPSR] in {
-def RSBSri : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
-                 IIC_iALUi, "rsbs", "\t$dst, $a, $b",
-                 [(set GPR:$dst, (subc so_imm:$b, GPR:$a))]> {
-    let Inst{20} = 1;
-    let Inst{25} = 1;
+def RSBSri : AI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
+                 IIC_iALUi, "rsbs", "\t$Rd, $Rn, $imm",
+                 [(set GPR:$Rd, (subc so_imm:$imm, GPR:$Rn))]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> imm;
+  let Inst{25} = 1;
+  let Inst{20} = 1;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{11-0} = imm;
 }
-def RSBSrs : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
-                 IIC_iALUsr, "rsbs", "\t$dst, $a, $b",
-                 [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]> {
-    let Inst{20} = 1;
-    let Inst{25} = 0;
+def RSBSrs : AI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                 DPSoRegFrm, IIC_iALUsr, "rsbs", "\t$Rd, $Rn, $shift",
+                 [(set GPR:$Rd, (subc so_reg:$shift, GPR:$Rn))]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> shift;
+  let Inst{25} = 0;
+  let Inst{20} = 1;
+  let Inst{11-0} = shift;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
 }
 }
 
 let Uses = [CPSR] in {
-def RSCri : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
-                 DPFrm, IIC_iALUi, "rsc", "\t$dst, $a, $b",
-                 [(set GPR:$dst, (sube_dead_carry so_imm:$b, GPR:$a))]>,
+def RSCri : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+                 DPFrm, IIC_iALUi, "rsc", "\t$Rd, $Rn, $imm",
+                 [(set GPR:$Rd, (sube_dead_carry so_imm:$imm, GPR:$Rn))]>,
                  Requires<[IsARM]> {
-    let Inst{25} = 1;
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> imm;
+  let Inst{25} = 1;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{11-0} = imm;
 }
 // The reg/reg form is only defined for the disassembler; for codegen it is
 // equivalent to SUBrr.
-def RSCrr : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-                 DPFrm, IIC_iALUr, "rsc", "\t$dst, $a, $b",
+def RSCrr : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                 DPFrm, IIC_iALUr, "rsc", "\t$Rd, $Rn, $Rm",
                  [/* For disassembly only; pattern left blank */]> {
-    let Inst{25} = 0;
-    let Inst{11-4} = 0b00000000;
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+  let Inst{11-4} = 0b00000000;
+  let Inst{25} = 0;
+  let Inst{3-0} = Rm;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
 }
-def RSCrs : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
-                 DPSoRegFrm, IIC_iALUsr, "rsc", "\t$dst, $a, $b",
-                 [(set GPR:$dst, (sube_dead_carry so_reg:$b, GPR:$a))]>,
+def RSCrs : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                 DPSoRegFrm, IIC_iALUsr, "rsc", "\t$Rd, $Rn, $shift",
+                 [(set GPR:$Rd, (sube_dead_carry so_reg:$shift, GPR:$Rn))]>,
                  Requires<[IsARM]> {
-    let Inst{25} = 0;
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> shift;
+  let Inst{25} = 0;
+  let Inst{11-0} = shift;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
 }
 }
 
 // FIXME: Allow these to be predicated.
 let Defs = [CPSR], Uses = [CPSR] in {
-def RSCSri : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
-                  DPFrm, IIC_iALUi, "rscs\t$dst, $a, $b",
-                  [(set GPR:$dst, (sube_dead_carry so_imm:$b, GPR:$a))]>,
+def RSCSri : AXI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+                  DPFrm, IIC_iALUi, "rscs\t$Rd, $Rn, $imm",
+                  [(set GPR:$Rd, (sube_dead_carry so_imm:$imm, GPR:$Rn))]>,
                   Requires<[IsARM]> {
-    let Inst{20} = 1;
-    let Inst{25} = 1;
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> imm;
+  let Inst{25} = 1;
+  let Inst{20} = 1;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{11-0} = imm;
 }
-def RSCSrs : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
-                  DPSoRegFrm, IIC_iALUsr, "rscs\t$dst, $a, $b",
-                  [(set GPR:$dst, (sube_dead_carry so_reg:$b, GPR:$a))]>,
+def RSCSrs : AXI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                  DPSoRegFrm, IIC_iALUsr, "rscs\t$Rd, $Rn, $shift",
+                  [(set GPR:$Rd, (sube_dead_carry so_reg:$shift, GPR:$Rn))]>,
                   Requires<[IsARM]> {
-    let Inst{20} = 1;
-    let Inst{25} = 0;
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> shift;
+  let Inst{25} = 0;
+  let Inst{20} = 1;
+  let Inst{11-0} = shift;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = Rn;
 }
 }
 
