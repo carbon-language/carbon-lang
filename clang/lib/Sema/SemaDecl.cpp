@@ -4395,9 +4395,19 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
   // global/static definition.
   if (VDecl->hasLocalStorage())
     if (const RecordType *RT = VDecl->getType()->getAs<RecordType>())
-      if (RT->getDecl()->hasFlexibleArrayMember() && isa<InitListExpr>(Init)) {
-        Diag(VDecl->getLocation(), diag::err_nonstatic_flexible_variable);
-        VDecl->setInvalidDecl();
+      if (RT->getDecl()->hasFlexibleArrayMember()) {
+        // Check whether the initializer tries to initialize the flexible
+        // array member itself to anything other than an empty initializer list.
+        if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
+          unsigned Index = std::distance(RT->getDecl()->field_begin(),
+                                         RT->getDecl()->field_end()) - 1;
+          if (Index < ILE->getNumInits() &&
+              !(isa<InitListExpr>(ILE->getInit(Index)) &&
+                cast<InitListExpr>(ILE->getInit(Index))->getNumInits() == 0)) {
+            Diag(VDecl->getLocation(), diag::err_nonstatic_flexible_variable);
+            VDecl->setInvalidDecl();
+          }
+        }
       }
   
   // Check any implicit conversions within the expression.
