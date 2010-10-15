@@ -2266,6 +2266,27 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
     = CXXUnit->getSourceManager().getLocation(
                                         static_cast<const FileEntry *>(file),
                                               line, column);
+  if (SLoc.isInvalid()) return clang_getNullLocation();
+
+  return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);
+}
+
+CXSourceLocation clang_getLocationForOffset(CXTranslationUnit tu,
+                                            CXFile file,
+                                            unsigned offset) {
+  if (!tu || !file)
+    return clang_getNullLocation();
+  
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu);
+  SourceLocation Start 
+    = CXXUnit->getSourceManager().getLocation(
+                                        static_cast<const FileEntry *>(file),
+                                              1, 1);
+  if (Start.isInvalid()) return clang_getNullLocation();
+
+  SourceLocation SLoc = Start.getFileLocWithOffset(offset);
+
+  if (SLoc.isInvalid()) return clang_getNullLocation();
 
   return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);
 }

@@ -301,6 +301,13 @@ CINDEX_LINKAGE CXSourceLocation clang_getLocation(CXTranslationUnit tu,
                                                   CXFile file,
                                                   unsigned line,
                                                   unsigned column);
+/**
+ * \brief Retrieves the source location associated with a given character offset
+ * in a particular translation unit.
+ */
+CINDEX_LINKAGE CXSourceLocation clang_getLocationForOffset(CXTranslationUnit tu,
+                                                           CXFile file,
+                                                           unsigned offset);
 
 /**
  * \brief Retrieve a NULL (invalid) source range.

@@ -71,6 +71,7 @@ _clang_getIBOutletCollectionType
 _clang_getInclusions
 _clang_getInstantiationLocation
 _clang_getLocation
+_clang_getLocationForOffset
 _clang_getNullCursor
 _clang_getNullLocation
 _clang_getNullRange
