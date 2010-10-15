@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenTBAA.h"
+#include "Mangle.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
@@ -19,14 +20,15 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenTBAA::CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext& VMContext,
-                         const LangOptions &Features)
-  : Context(Ctx), VMContext(VMContext), Features(Features), Root(0), Char(0) {
+                         const LangOptions &Features, MangleContext &MContext)
+  : Context(Ctx), VMContext(VMContext), Features(Features), MContext(MContext),
+    Root(0), Char(0) {
 }
 
 CodeGenTBAA::~CodeGenTBAA() {
 }
 
-llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(const char *NameStr,
+llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(llvm::StringRef NameStr,
                                                    llvm::MDNode *Parent) {
   llvm::Value *Ops[] = {
     llvm::MDString::get(VMContext, NameStr),
@@ -84,6 +86,32 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // For now, treat all pointers as equivalent to each other.
   if (Ty->isPointerType())
     return MetadataCache[Ty] = getTBAAInfoForNamedType("TBAA.pointer", Char);
+
+  // Enum types are distinct types. In C++ they have "underlying types",
+  // however they aren't related for TBAA.
+  if (const EnumType *ETy = dyn_cast<EnumType>(Ty)) {
+    // In C mode, two anonymous enums are compatible iff their members
+    // are the same -- see C99 6.2.7p1. For now, be conservative. We could
+    // theoretically implement this by combining information about all the
+    // members into a single identifying MDNode.
+    if (!Features.CPlusPlus &&
+        ETy->getDecl()->getTypedefForAnonDecl())
+      return MetadataCache[Ty] = Char;
+
+    // In C++ mode, types have linkage, so we can rely on the ODR and
+    // on their mangled names, if they're external.
+    // TODO: Is there a way to get a program-wide unique name for a
+    // decl with local linkage or no linkage?
+    if (Features.CPlusPlus &&
+        ETy->getDecl()->getLinkage() != ExternalLinkage)
+      return MetadataCache[Ty] = Char;
+
+    // TODO: This is using the RTTI name. Is there a better way to get
+    // a unique string for a type?
+    llvm::SmallString<256> OutName;
+    MContext.mangleCXXRTTIName(QualType(ETy, 0), OutName);
+    return MetadataCache[Ty] = getTBAAInfoForNamedType(OutName, Char);
+  }
 
   // For now, handle any other kind of type conservatively.
   return MetadataCache[Ty] = Char;

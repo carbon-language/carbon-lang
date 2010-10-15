@@ -29,7 +29,7 @@ namespace clang {
   class Type;
 
 namespace CodeGen {
-  class CGCXXABI;
+  class MangleContext;
   class CGRecordLayout;
 
 /// CodeGenTBAA - This class organizes the cross-module state that is used
@@ -38,6 +38,7 @@ class CodeGenTBAA {
   ASTContext &Context;
   llvm::LLVMContext& VMContext;
   const LangOptions &Features;
+  MangleContext &MContext;
 
   /// MetadataCache - This maps clang::Types to llvm::MDNodes describing them.
   llvm::DenseMap<const Type *, llvm::MDNode *> MetadataCache;
@@ -50,12 +51,13 @@ class CodeGenTBAA {
   /// considered to be equivalent to it.
   llvm::MDNode *Char;
 
-  llvm::MDNode *getTBAAInfoForNamedType(const char *NameStr,
+  llvm::MDNode *getTBAAInfoForNamedType(llvm::StringRef NameStr,
                                         llvm::MDNode *Parent);
 
 public:
   CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext &VMContext,
-              const LangOptions &Features);
+              const LangOptions &Features,
+              MangleContext &MContext);
   ~CodeGenTBAA();
 
   llvm::MDNode *getTBAAInfo(QualType QTy);

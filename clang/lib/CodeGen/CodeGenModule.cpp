@@ -83,7 +83,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 
   // Enable TBAA unless it's suppressed.
   if (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0)
-    TBAA = new CodeGenTBAA(Context, VMContext, getLangOptions());
+    TBAA = new CodeGenTBAA(Context, VMContext, getLangOptions(),
+                           ABI.getMangleContext());
 
   // If debug info generation is enabled, create the CGDebugInfo object.
   DebugInfo = CodeGenOpts.DebugInfo ? new CGDebugInfo(*this) : 0;
