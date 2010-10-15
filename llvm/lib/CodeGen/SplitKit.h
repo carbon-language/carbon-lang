@@ -69,8 +69,6 @@ public:
   /// split.
   void analyze(const LiveInterval *li);
 
-  const LiveInterval *getCurLI() { return curli_; }
-
   /// clear - clear all data structures so SplitAnalysis is ready to analyze a
   /// new interval.
   void clear();
