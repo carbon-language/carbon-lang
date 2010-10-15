@@ -55,7 +55,12 @@ public:
   iterator begin() const { return newRegs_.begin()+firstNew_; }
   iterator end() const { return newRegs_.end(); }
 
-  /// create - Create a new register with the same class as parentReg_.
+  /// assignStackSlot - Ensure a stack slot is assigned to parent.
+  /// @return the assigned stack slot number.
+  int assignStackSlot(VirtRegMap&);
+
+  /// create - Create a new register with the same class and stack slot as
+  /// parent.
   LiveInterval &create(MachineRegisterInfo&, LiveIntervals&, VirtRegMap&);
 
   /// allUsesAvailableAt - Return true if all registers used by OrigMI at

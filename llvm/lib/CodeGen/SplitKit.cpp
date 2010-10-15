@@ -591,12 +591,6 @@ SplitEditor::SplitEditor(SplitAnalysis &sa, LiveIntervals &lis, VirtRegMap &vrm,
     openli_(lis_, *curli_)
 {
   assert(curli_ && "SplitEditor created from empty SplitAnalysis");
-
-  // Make sure curli_ is assigned a stack slot, so all our intervals get the
-  // same slot as curli_.
-  if (vrm_.getStackSlot(curli_->reg) == VirtRegMap::NO_STACK_SLOT)
-    vrm_.assignVirt2StackSlot(curli_->reg);
-
 }
 
 bool SplitEditor::intervalsLiveAt(SlotIndex Idx) const {

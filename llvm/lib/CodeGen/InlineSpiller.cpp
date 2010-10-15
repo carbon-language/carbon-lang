@@ -371,9 +371,7 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
     return;
 
   rc_ = mri_.getRegClass(edit.getReg());
-  stackSlot_ = vrm_.getStackSlot(edit.getReg());
-  if (stackSlot_ == VirtRegMap::NO_STACK_SLOT)
-    stackSlot_ = vrm_.assignVirt2StackSlot(edit.getReg());
+  stackSlot_ = edit.assignStackSlot(vrm_);
 
   // Iterate over instructions using register.
   for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(edit.getReg());
