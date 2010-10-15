@@ -213,58 +213,6 @@ ConstString::~ConstString ()
 {
 }
 
-//----------------------------------------------------------------------
-// Convert to pointer operator. This allows code to check any
-// ConstString objects to see if they contain anything (not empty)
-// valid using code such as:
-//
-//  ConstString str(...);
-//  if (str)
-//  { ...
-//----------------------------------------------------------------------
-ConstString::operator void*() const
-{
-    return IsEmpty() ? NULL : const_cast<ConstString*>(this);
-}
-
-//----------------------------------------------------------------------
-// Assignment operator
-//
-// Assigns the string in this object with the value from "rhs"
-// and increments the reference count of that string.
-//
-// The previously contained string will be get its reference count
-// decremented and removed from the string pool if its reference
-// count reaches zero.
-//----------------------------------------------------------------------
-const ConstString&
-ConstString::operator=(const ConstString& rhs)
-{
-    m_string = rhs.m_string;
-    return *this;
-}
-
-//----------------------------------------------------------------------
-// Equal to operator
-//
-// Returns true if this string is equal to that in "rhs". This is
-// very fast as it results in a pointer comparison since all strings
-// are in a uniqued and reference counted string pool.
-//------------------------------------------------------------------
-bool
-ConstString::operator == (const ConstString& rhs) const
-{
-    // We can do a pointer compare to compare these strings since they
-    // must come from the same pool in order to be equal.
-    return m_string == rhs.m_string;
-}
-
-bool
-ConstString::operator != (const ConstString& rhs) const
-{
-    return m_string != rhs.m_string;
-}
-
 bool
 ConstString::operator < (const ConstString& rhs) const
 {
@@ -295,43 +243,10 @@ lldb_private::operator << (Stream& s, const ConstString& str)
     return s;
 }
 
-//----------------------------------------------------------------------
-// Get the value of the contained string as a NULL terminated C
-// string value. Return "fail_value" if the string is empty.
-//----------------------------------------------------------------------
-const char *
-ConstString::AsCString(const char *fail_value) const
-{
-    if (m_string == NULL)
-        return fail_value;
-    return m_string;
-}
-
-const char *
-ConstString::GetCString () const
-{
-    return m_string;
-}
-
 size_t
 ConstString::GetLength () const
 {
     return StringPool().GetConstCStringLength (m_string);
-}
-
-
-//----------------------------------------------------------------------
-// Clear any contained string and reset the value to the an empty
-// string value.
-//
-// The previously contained string will be get its reference count
-// decremented and removed from the string pool if its reference
-// count reaches zero.
-//----------------------------------------------------------------------
-void
-ConstString::Clear ()
-{
-    m_string = NULL;
 }
 
 //----------------------------------------------------------------------

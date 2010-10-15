@@ -22,19 +22,16 @@ ClangPersistentVariables::ClangPersistentVariables () :
 }
 
 void
-ClangPersistentVariables::GetNextResultName (std::string &name)
+ClangPersistentVariables::GetNextResultName (ConstString &name)
 {
-    StreamString s;
-    s.Printf("$%llu", m_result_counter);
-    
-    m_result_counter++;
-    
-    name = s.GetString();
+    char result_name[256];
+    ::snprintf (result_name, sizeof(result_name), "$%llu", m_result_counter++);
+    name.SetCString(result_name);
 }
 
 bool
-ClangPersistentVariables::CreatePersistentVariable(const char *name,
-                                                   TypeFromUser user_type)
+ClangPersistentVariables::CreatePersistentVariable (const ConstString &name,
+                                                    TypeFromUser user_type)
 {
     if (GetVariable(name))
             return false;

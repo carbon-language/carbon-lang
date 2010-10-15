@@ -127,7 +127,7 @@ ClangExpressionVariable::GetExpressionResult (ExecutionContext *exe_ctx)
             }
             result_sp.reset (new ValueObjectConstResult (m_user_type.GetASTContext(),
                                                          m_user_type.GetOpaqueQualType(),
-                                                         ConstString (m_name.c_str()),
+                                                         m_name,
                                                          m_data_sp,// TODO: sean can you get this to be valid?
                                                          byte_order,
                                                          addr_byte_size));

@@ -21,6 +21,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Core/ConstString.h"
 #include "lldb/Symbol/TaggedASTType.h"
 
 namespace llvm {
@@ -88,7 +89,7 @@ struct ClangExpressionVariable
     //----------------------------------------------------------------------
     /// The following values should stay valid for the life of the variable
     //----------------------------------------------------------------------
-    std::string             m_name;         ///< The name of the variable
+    ConstString             m_name;         ///< The name of the variable
     TypeFromUser            m_user_type;    ///< The type of the variable according to some LLDB context; 
                                             ///< NULL if the type hasn't yet been migrated to one
     
@@ -231,12 +232,12 @@ public:
     /// @return
     ///     The variable requested, or NULL if that variable is not in the list.
     //----------------------------------------------------------------------
-    ClangExpressionVariable *GetVariable (const char *name)
+    ClangExpressionVariable *GetVariable (const ConstString &name)
     {
         for (uint64_t index = 0, size = Size(); index < size; ++index)
         {
             ClangExpressionVariable &candidate (VariableAtIndex(index));
-            if (!candidate.m_name.compare(name))
+            if (candidate.m_name == name)
                 return &candidate;
         }
         return NULL;

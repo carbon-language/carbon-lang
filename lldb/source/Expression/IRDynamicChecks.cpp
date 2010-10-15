@@ -26,18 +26,15 @@ using namespace lldb_private;
 
 static char ID;
 
-static const char valid_pointer_check_name[] = 
-"___clang_valid_pointer_check";
+#define VALID_POINTER_CHECK_NAME "$__lldb_valid_pointer_check"
+#define VALID_OBJC_OBJECT_CHECK_NAME "$__lldb_objc_object_check"
 
-static const char valid_pointer_check_text[] = 
-    "extern \"C\" void "
-    "___clang_valid_pointer_check (unsigned char *ptr)"
-    "{"
-        "unsigned char val = *ptr;"
-    "}";
-
-static const char objc_object_check_name[] =
-    "___clang_objc_object_check";
+static const char g_valid_pointer_check_text[] = 
+"extern \"C\" void\n"
+VALID_POINTER_CHECK_NAME " (unsigned char *ptr)\n"
+"{\n"
+"    unsigned char val = *ptr;\n"
+"}";
 
 static bool FunctionExists(const SymbolContext &sym_ctx, const char *name)
 {
@@ -55,14 +52,14 @@ static const char *objc_object_check_text(ExecutionContext &exe_ctx)
     std::string ret;
     
     if (!exe_ctx.frame)
-        return "extern \"C\" void ___clang_objc_object_check (unsigned char *obj) { }";
+        return "extern \"C\" void $__lldb_objc_object_check (unsigned char *obj) { }";
     
     const SymbolContext &sym_ctx(exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextEverything));
 
     if (FunctionExists(sym_ctx, "gdb_object_getClass"))
     {
         return  "extern \"C\" void "
-                "___clang_objc_object_check(uint8_t *obj)"
+                "$__lldb_objc_object_check(uint8_t *obj)"
                 "{"
                     ""
                 "}";
@@ -70,7 +67,7 @@ static const char *objc_object_check_text(ExecutionContext &exe_ctx)
     else if (FunctionExists(sym_ctx, "gdb_class_getClass"))
     {
         return  "extern \"C\" void "
-                "___clang_objc_object_check(uint8_t *obj)"
+                "$__lldb_objc_object_check(uint8_t *obj)"
                 "{"
                     ""
                 "}";
@@ -78,7 +75,7 @@ static const char *objc_object_check_text(ExecutionContext &exe_ctx)
     else
     {
         return  "extern \"C\" void "
-                "___clang_objc_object_check(uint8_t *obj)"
+                "$__lldb_objc_object_check(uint8_t *obj)"
                 "{"
                     ""
                 "}";
@@ -97,8 +94,8 @@ bool
 DynamicCheckerFunctions::Install(Stream &error_stream,
                                  ExecutionContext &exe_ctx)
 {
-    m_valid_pointer_check.reset(new ClangUtilityFunction(valid_pointer_check_text,
-                                                         valid_pointer_check_name));
+    m_valid_pointer_check.reset(new ClangUtilityFunction(g_valid_pointer_check_text,
+                                                         VALID_POINTER_CHECK_NAME));
     
     if (!m_valid_pointer_check->Install(error_stream, exe_ctx))
         return false;

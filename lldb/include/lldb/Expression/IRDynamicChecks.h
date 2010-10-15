@@ -105,8 +105,8 @@ public:
     ///     The mapping used to look up entities in the target process. In
     ///     this case, used to find objc_msgSend
     //------------------------------------------------------------------
-    IRDynamicChecks(DynamicCheckerFunctions &checker_functions,
-                    const char* func_name = "___clang_expr");
+    IRDynamicChecks (DynamicCheckerFunctions &checker_functions,
+                     const char* func_name = "$__lldb_expr");
     
     //------------------------------------------------------------------
     /// Destructor
@@ -118,7 +118,7 @@ public:
     ///
     /// @param[in] M
     ///     The module to run on.  This module is searched for the function
-    ///     ___clang_expr, and that function is passed to the passes one by 
+    ///     $__lldb_expr, and that function is passed to the passes one by 
     ///     one.
     ///
     /// @return

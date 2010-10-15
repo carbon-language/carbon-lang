@@ -128,7 +128,7 @@ public:
     const char *
     FunctionName ()
     {
-        return "___clang_expr";
+        return "$__lldb_expr";
     }
     
     //------------------------------------------------------------------

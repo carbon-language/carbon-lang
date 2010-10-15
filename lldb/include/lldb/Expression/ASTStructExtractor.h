@@ -71,7 +71,7 @@ public:
     void Initialize(clang::ASTContext &Context);
     
     //----------------------------------------------------------------------
-    /// Examine a list of Decls to find the function ___clang_expr and 
+    /// Examine a list of Decls to find the function $__lldb_expr and 
     /// transform its code
     ///
     /// @param[in] D

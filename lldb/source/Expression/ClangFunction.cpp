@@ -45,11 +45,14 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // ClangFunction constructor
 //----------------------------------------------------------------------
-ClangFunction::ClangFunction(const char *target_triple, 
-                             ClangASTContext *ast_context, 
-                             void *return_qualtype, 
-                             const Address& functionAddress, 
-                             const ValueList &arg_value_list) :
+ClangFunction::ClangFunction 
+(
+    const char *target_triple, 
+    ClangASTContext *ast_context, 
+    void *return_qualtype, 
+    const Address& functionAddress, 
+    const ValueList &arg_value_list
+) :
     m_target_triple (target_triple),
     m_function_ptr (NULL),
     m_function_addr (functionAddress),
@@ -65,10 +68,13 @@ ClangFunction::ClangFunction(const char *target_triple,
 {
 }
 
-ClangFunction::ClangFunction(const char *target_triple, 
-                             Function &function, 
-                             ClangASTContext *ast_context, 
-                             const ValueList &arg_value_list) :
+ClangFunction::ClangFunction
+(
+    const char *target_triple, 
+    Function &function, 
+    ClangASTContext *ast_context, 
+    const ValueList &arg_value_list
+) :
     m_target_triple (target_triple),
     m_function_ptr (&function),
     m_function_addr (),

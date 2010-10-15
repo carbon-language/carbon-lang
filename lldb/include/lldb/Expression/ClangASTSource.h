@@ -29,8 +29,8 @@ class ClangExpressionDeclMap;
 /// the actual lookups.
 //----------------------------------------------------------------------
 class ClangASTSource : public clang::ExternalSemaSource {
-	clang::ASTContext &Context;         ///< The parser's AST context, for copying types into
-	ClangExpressionDeclMap &DeclMap;    ///< The object that looks up named entities in LLDB
+	clang::ASTContext &m_ast_context;   ///< The parser's AST context, for copying types into
+	ClangExpressionDeclMap &m_decl_map; ///< The object that looks up named entities in LLDB
 public:
     friend struct NameSearchContext;
     
@@ -46,9 +46,11 @@ public:
     ///     A reference to the LLDB object that handles entity lookup.
     //------------------------------------------------------------------
 	ClangASTSource(clang::ASTContext &context,
-                   ClangExpressionDeclMap &declMap) : 
-        Context(context),
-        DeclMap(declMap) {}
+                   ClangExpressionDeclMap &decl_map) : 
+        m_ast_context(context),
+        m_decl_map(decl_map) 
+    {
+    }
     
     //------------------------------------------------------------------
     /// Destructor
@@ -123,10 +125,10 @@ public:
 /// Decls given appropriate type information.
 //----------------------------------------------------------------------
 struct NameSearchContext {
-    ClangASTSource &ASTSource;                          ///< The AST source making the request
-    llvm::SmallVectorImpl<clang::NamedDecl*> &Decls;    ///< The list of declarations already constructed
-    clang::DeclarationName &Name;                       ///< The name being looked for
-    const clang::DeclContext *DC;                       ///< The DeclContext to put declarations into
+    ClangASTSource &m_ast_source;                       ///< The AST source making the request
+    llvm::SmallVectorImpl<clang::NamedDecl*> &m_decls;  ///< The list of declarations already constructed
+    const clang::DeclarationName &m_decl_name;          ///< The name being looked for
+    const clang::DeclContext *m_decl_context;           ///< The DeclContext to put declarations into
     
     //------------------------------------------------------------------
     /// Constructor
@@ -150,10 +152,10 @@ struct NameSearchContext {
                        llvm::SmallVectorImpl<clang::NamedDecl*> &decls,
                        clang::DeclarationName &name,
                        const clang::DeclContext *dc) :
-        ASTSource(astSource),
-        Decls(decls),
-        Name(name),
-        DC(dc) {}
+        m_ast_source(astSource),
+        m_decls(decls),
+        m_decl_name(name),
+        m_decl_context(dc) {}
     
     //------------------------------------------------------------------
     /// Return the AST context for the current search.  Useful when copying

@@ -22,7 +22,7 @@ namespace lldb_private {
 /// Users expect the expression "i + 3" to return a result, even if a result
 /// variable wasn't specifically declared.  To fulfil this requirement, LLDB adds
 /// a result variable to the expression, transforming it to 
-/// "int ___clang_expr_result = i + 3."  The IR transformers ensure that the
+/// "int $__lldb_expr_result = i + 3."  The IR transformers ensure that the
 /// resulting variable is mapped to the right piece of memory.
 /// ASTResultSynthesizer's job is to add the variable and its initialization to
 /// the ASTs for the expression, and it does so by acting as a SemaConsumer for
@@ -57,7 +57,7 @@ public:
     void Initialize(clang::ASTContext &Context);
     
     //----------------------------------------------------------------------
-    /// Examine a list of Decls to find the function ___clang_expr and 
+    /// Examine a list of Decls to find the function $__lldb_expr and 
     /// transform its code
     ///
     /// @param[in] D
@@ -107,7 +107,7 @@ public:
     void ForgetSema();
 private:
     //----------------------------------------------------------------------
-    /// Hunt the given Decl for FunctionDecls named ___clang_expr, recursing
+    /// Hunt the given Decl for FunctionDecls named $__lldb_expr, recursing
     /// as necessary through LinkageSpecDecls, and calling SynthesizeResult on
     /// anything that was found
     ///

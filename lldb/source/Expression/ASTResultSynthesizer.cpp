@@ -70,7 +70,7 @@ ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
     
     if (m_ast_context &&
         function_decl &&
-        !function_decl->getNameInfo().getAsString().compare("___clang_expr"))
+        !function_decl->getNameInfo().getAsString().compare("$__lldb_expr"))
     {
         SynthesizeResult(function_decl);
     }
@@ -164,7 +164,7 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
         log->Printf("Last statement's type: %s", s.c_str());
     }
     
-    IdentifierInfo &result_id = Ctx.Idents.get("___clang_expr_result");
+    IdentifierInfo &result_id = Ctx.Idents.get("$__lldb_expr_result");
         
     clang::VarDecl *result_decl = VarDecl::Create(Ctx, 
                                                   function_decl, 

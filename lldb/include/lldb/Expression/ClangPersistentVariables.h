@@ -33,17 +33,19 @@ public:
     /// @param[in] name
     ///     A string to place the variable name in.
     //----------------------------------------------------------------------
-    void GetNextResultName (std::string &name);
+    void
+    GetNextResultName (ConstString &name);
     
     //----------------------------------------------------------------------
     /// Constructor
     //----------------------------------------------------------------------
     ClangPersistentVariables ();
 
-    bool CreatePersistentVariable(const char   *name,
-                                  TypeFromUser  user_type);
+    bool 
+    CreatePersistentVariable (const ConstString &name,
+                              TypeFromUser user_type);
 private:
-    uint64_t                        m_result_counter;   ///< The counter used by GetNextResultName().
+    uint64_t m_result_counter;   ///< The counter used by GetNextResultName().
 };
 
 }

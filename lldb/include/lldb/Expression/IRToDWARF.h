@@ -67,7 +67,7 @@ public:
     IRToDWARF(lldb_private::ClangExpressionVariableStore &local_vars, 
               lldb_private::ClangExpressionDeclMap *decl_map,
               lldb_private::StreamString &strm,
-              const char* func_name = "___clang_expr");
+              const char* func_name = "$__lldb_expr");
     
     //------------------------------------------------------------------
     /// Destructor
@@ -79,7 +79,7 @@ public:
     ///
     /// @param[in] M
     ///     The module to run on.  This module is searched for the function
-    ///     ___clang_expr, and that function is converted to a location
+    ///     $__lldb_expr, and that function is converted to a location
     ///     expression.
     ///
     /// @return

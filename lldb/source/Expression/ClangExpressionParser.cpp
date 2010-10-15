@@ -272,7 +272,7 @@ ClangExpressionParser::ClangExpressionParser(const char *target_triple,
     
     m_compiler->setASTContext(ast_context.release());
     
-    std::string module_name("___clang_module");
+    std::string module_name("$__lldb_module");
 
     m_code_generator.reset(CreateLLVMCodeGen(m_compiler->getDiagnostics(),
                                              module_name,

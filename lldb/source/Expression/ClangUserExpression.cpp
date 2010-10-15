@@ -88,7 +88,7 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     if (m_cplusplus)
     {
         m_transformed_stream.Printf("void                                   \n"
-                                    "___clang_class::%s(void *___clang_arg) \n"
+                                    "$__lldb_class::%s(void *$__lldb_arg) \n"
                                     "{                                      \n"
                                     "    %s;                                \n" 
                                     "}                                      \n",
@@ -100,7 +100,7 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     else
     {
         m_transformed_stream.Printf("void                           \n"
-                                    "%s(void *___clang_arg)         \n"
+                                    "%s(void *$__lldb_arg)         \n"
                                     "{                              \n"
                                     "    %s;                        \n" 
                                     "}                              \n",

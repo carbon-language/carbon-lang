@@ -21,8 +21,8 @@ ClangASTSource::~ClangASTSource() {}
 
 void ClangASTSource::StartTranslationUnit(ASTConsumer *Consumer) {
     // Tell Sema to ask us when looking into the translation unit's decl.
-    Context.getTranslationUnitDecl()->setHasExternalVisibleStorage();
-    Context.getTranslationUnitDecl()->setHasExternalLexicalStorage();
+    m_ast_context.getTranslationUnitDecl()->setHasExternalVisibleStorage();
+    m_ast_context.getTranslationUnitDecl()->setHasExternalLexicalStorage();
 }
 
 // These are only required for AST source that want to lazily load
@@ -41,13 +41,15 @@ uint32_t ClangASTSource::GetNumExternalSelectors() { return 0; }
 DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName
 (
     const DeclContext *decl_ctx, 
-    DeclarationName decl_name
+    DeclarationName clang_decl_name
 ) 
 {
-    switch (decl_name.getNameKind()) {
+    switch (clang_decl_name.getNameKind()) {
     // Normal identifiers.
     case DeclarationName::Identifier:
-      break;
+        if (clang_decl_name.getAsIdentifierInfo()->getBuiltinID() != 0)
+            return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        break;
             
     // Operator names.  Not important for now.
     case DeclarationName::CXXOperatorName:
@@ -57,7 +59,7 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName
     // Using directives found in this context.
     // Tell Sema we didn't find any or we'll end up getting asked a *lot*.
     case DeclarationName::CXXUsingDirective:
-      return SetNoExternalVisibleDeclsForName(decl_ctx, decl_name);
+      return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
             
     // These aren't looked up like this.
     case DeclarationName::ObjCZeroArgSelector:
@@ -72,33 +74,28 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName
       return DeclContext::lookup_result();
     }
 
-        
-    std::string name (decl_name.getAsString());
-    if (0 == name.compare ("__va_list_tag")      ||
-        0 == name.compare ("__int128_t")         ||
-        0 == name.compare ("__uint128_t")        ||
-        0 == name.compare ("SEL")                ||
-        0 == name.compare ("id")                 ||
-        0 == name.compare ("Class")              ||
-        0 == name.compare ("nil")                ||
-        0 == name.compare ("gp_offset")          ||
-        0 == name.compare ("fp_offset")          ||
-        0 == name.compare ("overflow_arg_area")  ||
-        0 == name.compare ("reg_save_area")      ||
-        0 == name.find    ("__builtin")          )
-    {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-        if (log)
-            log->Printf("Ignoring built-in in find external declarations for name: '%s'", name.c_str());
+    std::string decl_name (clang_decl_name.getAsString());
 
-        return SetNoExternalVisibleDeclsForName(decl_ctx, decl_name);
+    if (!m_decl_map.GetLookupsEnabled())
+    {
+        // Wait until we see a '$' at the start of a name before we start doing 
+        // any lookups so we can avoid lookup up all of the builtin types.
+        if (!decl_name.empty() && decl_name[0] == '$')
+        {
+            m_decl_map.SetLookupsEnabled (true);
+        }
+        else
+        {               
+            return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        }
     }
+
+	llvm::SmallVector<NamedDecl*, 4> name_decls;
     
-	llvm::SmallVector<NamedDecl*, 4> Decls;
-    
-    NameSearchContext NSC(*this, Decls, decl_name, decl_ctx);
-    DeclMap.GetDecls(NSC, name.c_str());
-    return SetExternalVisibleDeclsForName(decl_ctx, decl_name, Decls);
+    NameSearchContext name_search_context(*this, name_decls, clang_decl_name, decl_ctx);
+    ConstString const_decl_name(decl_name.c_str());
+    m_decl_map.GetDecls(name_search_context, const_decl_name);
+    return SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, name_decls);
 }
 
 void ClangASTSource::MaterializeVisibleDecls(const DeclContext *DC)
@@ -114,103 +111,101 @@ bool ClangASTSource::FindExternalLexicalDecls(const DeclContext *DC, llvm::Small
 }
 
 clang::ASTContext *NameSearchContext::GetASTContext() {
-    return &ASTSource.Context;
+    return &m_ast_source.m_ast_context;
 }
 
 clang::NamedDecl *NameSearchContext::AddVarDecl(void *type) {
-    IdentifierInfo *ii = Name.getAsIdentifierInfo();
+    IdentifierInfo *ii = m_decl_name.getAsIdentifierInfo();
         
-    clang::NamedDecl *Decl = VarDecl::Create(ASTSource.Context, 
-                                             const_cast<DeclContext*>(DC), 
+    clang::NamedDecl *Decl = VarDecl::Create(m_ast_source.m_ast_context, 
+                                             const_cast<DeclContext*>(m_decl_context), 
                                              SourceLocation(), 
                                              ii, 
                                              QualType::getFromOpaquePtr(type), 
                                              0, 
                                              SC_Static, 
                                              SC_Static);
-    Decls.push_back(Decl);
+    m_decls.push_back(Decl);
     
     return Decl;
 }
 
-clang::NamedDecl *NameSearchContext::AddFunDecl(void *type) {
-    clang::FunctionDecl *Decl = FunctionDecl::Create(ASTSource.Context,
-                                                     const_cast<DeclContext*>(DC),
-                                                     SourceLocation(),
-                                                     Name.getAsIdentifierInfo(),
-                                                     QualType::getFromOpaquePtr(type),
-                                                     NULL,
-                                                     SC_Static,
-                                                     SC_Static,
-                                                     false,
-                                                     true);
+clang::NamedDecl *NameSearchContext::AddFunDecl (void *type) {
+    clang::FunctionDecl *func_decl = FunctionDecl::Create (m_ast_source.m_ast_context,
+                                                           const_cast<DeclContext*>(m_decl_context),
+                                                           SourceLocation(),
+                                                           m_decl_name.getAsIdentifierInfo(),
+                                                           QualType::getFromOpaquePtr(type),
+                                                           NULL,
+                                                           SC_Static,
+                                                           SC_Static,
+                                                           false,
+                                                           true);
     
     // We have to do more than just synthesize the FunctionDecl.  We have to
     // synthesize ParmVarDecls for all of the FunctionDecl's arguments.  To do
     // this, we raid the function's FunctionProtoType for types.
     
-    QualType QT = QualType::getFromOpaquePtr(type);
-    clang::Type *T = QT.getTypePtr();
-    const FunctionProtoType *FPT = T->getAs<FunctionProtoType>();
+    QualType qual_type (QualType::getFromOpaquePtr(type));
+    const FunctionProtoType *func_proto_type = qual_type->getAs<FunctionProtoType>();
     
-    if (FPT)
+    if (func_proto_type)
     {        
-        unsigned NumArgs = FPT->getNumArgs();
+        unsigned NumArgs = func_proto_type->getNumArgs();
         unsigned ArgIndex;
         
-        ParmVarDecl **ParmVarDecls = new ParmVarDecl*[NumArgs];
+        ParmVarDecl **param_var_decls = new ParmVarDecl*[NumArgs];
         
         for (ArgIndex = 0; ArgIndex < NumArgs; ++ArgIndex)
         {
-            QualType ArgQT = FPT->getArgType(ArgIndex);
+            QualType arg_qual_type (func_proto_type->getArgType(ArgIndex));
             
-            ParmVarDecls[ArgIndex] = ParmVarDecl::Create(ASTSource.Context,
-                                                         const_cast<DeclContext*>(DC),
-                                                         SourceLocation(),
-                                                         NULL,
-                                                         ArgQT,
-                                                         NULL,
-                                                         SC_Static,
-                                                         SC_Static,
-                                                         NULL);
+            param_var_decls[ArgIndex] = ParmVarDecl::Create (m_ast_source.m_ast_context,
+                                                             const_cast<DeclContext*>(m_decl_context),
+                                                             SourceLocation(),
+                                                             NULL,
+                                                             arg_qual_type,
+                                                             NULL,
+                                                             SC_Static,
+                                                             SC_Static,
+                                                             NULL);
         }
         
-        Decl->setParams(ParmVarDecls, NumArgs);
+        func_decl->setParams(param_var_decls, NumArgs);
         
-        delete [] ParmVarDecls;
+        delete [] param_var_decls;
     }
     
-    Decls.push_back(Decl);
+    m_decls.push_back(func_decl);
     
-    return Decl;
+    return func_decl;
 }
 
 clang::NamedDecl *NameSearchContext::AddGenericFunDecl()
 {
-    QualType generic_function_type(ASTSource.Context.getFunctionType(ASTSource.Context.getSizeType(),   // result
-                                                                     NULL,                              // argument types
-                                                                     0,                                 // number of arguments
-                                                                     true,                              // variadic?
-                                                                     0,                                 // type qualifiers
-                                                                     false,                             // has exception specification?
-                                                                     false,                             // has any exception specification?
-                                                                     0,                                 // number of exceptions
-                                                                     NULL,                              // exceptions
-                                                                     FunctionType::ExtInfo()));         // defaults for noreturn, regparm, calling convention
-
+    QualType generic_function_type(m_ast_source.m_ast_context.getFunctionType (m_ast_source.m_ast_context.getSizeType(),   // result
+                                                                               NULL,                              // argument types
+                                                                               0,                                 // number of arguments
+                                                                               true,                              // variadic?
+                                                                               0,                                 // type qualifiers
+                                                                               false,                             // has exception specification?
+                                                                               false,                             // has any exception specification?
+                                                                               0,                                 // number of exceptions
+                                                                               NULL,                              // exceptions
+                                                                               FunctionType::ExtInfo()));         // defaults for noreturn, regparm, calling convention
+    
     return AddFunDecl(generic_function_type.getAsOpaquePtr());
 }
 
 clang::NamedDecl *NameSearchContext::AddTypeDecl(void *type)
 {
-    QualType QT = QualType::getFromOpaquePtr(type);
-    clang::Type *T = QT.getTypePtr();
+    QualType qual_type = QualType::getFromOpaquePtr(type);
 
-    if (TagType *tag_type = dyn_cast<clang::TagType>(T))
+    if (TagType *tag_type = dyn_cast<clang::TagType>(qual_type))
     {
         TagDecl *tag_decl = tag_type->getDecl();
         
-        Decls.push_back(tag_decl);
+        m_decls.push_back(tag_decl);
         
         return tag_decl;
     }

@@ -19,6 +19,7 @@
 
 #include "clang/AST/ASTContext.h"
 
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Scalar.h"
@@ -73,8 +74,7 @@ IRForTarget::~IRForTarget()
 }
 
 bool 
-IRForTarget::createResultVariable(llvm::Module &M,
-                                  llvm::Function &F)
+IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &llvm_function)
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
@@ -83,7 +83,7 @@ IRForTarget::createResultVariable(llvm::Module &M,
     
     // Find the result variable.  If it doesn't exist, we can give up right here.
     
-    ValueSymbolTable& value_symbol_table = M.getValueSymbolTable();
+    ValueSymbolTable& value_symbol_table = llvm_module.getValueSymbolTable();
     
     const char *result_name = NULL;
     
@@ -91,7 +91,7 @@ IRForTarget::createResultVariable(llvm::Module &M,
          vi != ve;
          ++vi)
     {
-        if (strstr(vi->first(), "___clang_expr_result") &&
+        if (strstr(vi->first(), "$__lldb_expr_result") &&
             !strstr(vi->first(), "GV")) 
         {
             result_name = vi->first();
@@ -110,7 +110,7 @@ IRForTarget::createResultVariable(llvm::Module &M,
     if (log)
         log->Printf("Result name: %s", result_name);
     
-    Value *result_value = M.getNamedValue(result_name);
+    Value *result_value = llvm_module.getNamedValue(result_name);
     
     if (!result_value)
     {
@@ -134,7 +134,7 @@ IRForTarget::createResultVariable(llvm::Module &M,
     
     // Find the metadata and follow it to the VarDecl
     
-    NamedMDNode *named_metadata = M.getNamedMetadata("clang.global.decl.ptrs");
+    NamedMDNode *named_metadata = llvm_module.getNamedMetadata("clang.global.decl.ptrs");
     
     if (!named_metadata)
     {
@@ -180,27 +180,26 @@ IRForTarget::createResultVariable(llvm::Module &M,
     
     lldb_private::TypeFromParser result_decl_type (result_decl->getType().getAsOpaquePtr(),
                                                    &result_decl->getASTContext());
-    std::string new_result_name;
-    
-    m_decl_map->GetPersistentResultName(new_result_name);
-    m_decl_map->AddPersistentVariable(result_decl, new_result_name.c_str(), result_decl_type);
+
+    lldb_private::ConstString new_result_name (m_decl_map->GetPersistentResultName());
+    m_decl_map->AddPersistentVariable(result_decl, new_result_name, result_decl_type);
     
     if (log)
-        log->Printf("Creating a new result global: %s", new_result_name.c_str());
+        log->Printf("Creating a new result global: %s", new_result_name.GetCString());
         
     // Construct a new result global and set up its metadata
     
-    GlobalVariable *new_result_global = new GlobalVariable(M, 
+    GlobalVariable *new_result_global = new GlobalVariable(llvm_module, 
                                                            result_global->getType()->getElementType(),
                                                            false, /* not constant */
                                                            GlobalValue::ExternalLinkage,
                                                            NULL, /* no initializer */
-                                                           new_result_name.c_str());
+                                                           new_result_name.GetCString ());
     
     // It's too late in compilation to create a new VarDecl for this, but we don't
     // need to.  We point the metadata at the old VarDecl.  This creates an odd
     // anomaly: a variable with a Value whose name is something like $0 and a
-    // Decl whose name is ___clang_expr_result.  This condition is handled in
+    // Decl whose name is $__lldb_expr_result.  This condition is handled in
     // ClangExpressionDeclMap::DoMaterialize, and the name of the variable is
     // fixed up.
     
@@ -212,7 +211,7 @@ IRForTarget::createResultVariable(llvm::Module &M,
     values[0] = new_result_global;
     values[1] = new_constant_int;
     
-    MDNode *persistent_global_md = MDNode::get(M.getContext(), values, 2);
+    MDNode *persistent_global_md = MDNode::get(llvm_module.getContext(), values, 2);
     named_metadata->addOperand(persistent_global_md);
     
     if (log)
@@ -225,7 +224,7 @@ IRForTarget::createResultVariable(llvm::Module &M,
         // We need to synthesize a store for this variable, because otherwise
         // there's nothing to put into its equivalent persistent variable.
         
-        BasicBlock &entry_block(F.getEntryBlock());
+        BasicBlock &entry_block(llvm_function.getEntryBlock());
         Instruction *first_entry_instruction(entry_block.getFirstNonPHIOrDbg());
         
         if (!first_entry_instruction)
@@ -332,7 +331,8 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
     {
         uint64_t srN_addr;
         
-        if (!m_decl_map->GetFunctionAddress("sel_registerName", srN_addr))
+        static lldb_private::ConstString g_sel_registerName_str ("sel_registerName");
+        if (!m_decl_map->GetFunctionAddress (g_sel_registerName_str, srN_addr))
             return false;
         
         // Build the function type: struct objc_selector *sel_registerName(uint8_t*)
@@ -418,7 +418,7 @@ IRForTarget::rewriteObjCSelectors(Module &M,
 
 bool 
 IRForTarget::RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
-                                    llvm::Module &M)
+                                    llvm::Module &llvm_module)
 {
     AllocaInst *alloc = dyn_cast<AllocaInst>(persistent_alloc);
     
@@ -441,10 +441,12 @@ IRForTarget::RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
     lldb_private::TypeFromParser result_decl_type (decl->getType().getAsOpaquePtr(),
                                                    &decl->getASTContext());
     
-    if (!m_decl_map->AddPersistentVariable(decl, decl->getName().str().c_str(), result_decl_type))
+    StringRef decl_name (decl->getName());
+    lldb_private::ConstString persistent_variable_name (decl_name.data(), decl_name.size());
+    if (!m_decl_map->AddPersistentVariable(decl, persistent_variable_name, result_decl_type))
         return false;
     
-    GlobalVariable *persistent_global = new GlobalVariable(M, 
+    GlobalVariable *persistent_global = new GlobalVariable(llvm_module, 
                                                            alloc->getType()->getElementType(),
                                                            false, /* not constant */
                                                            GlobalValue::ExternalLinkage,
@@ -454,13 +456,13 @@ IRForTarget::RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
     // What we're going to do here is make believe this was a regular old external
     // variable.  That means we need to make the metadata valid.
     
-    NamedMDNode *named_metadata = M.getNamedMetadata("clang.global.decl.ptrs");
+    NamedMDNode *named_metadata = llvm_module.getNamedMetadata("clang.global.decl.ptrs");
     
     llvm::Value* values[2];
     values[0] = persistent_global;
     values[1] = constant_int;
 
-    MDNode *persistent_global_md = MDNode::get(M.getContext(), values, 2);
+    MDNode *persistent_global_md = MDNode::get(llvm_module.getContext(), values, 2);
     named_metadata->addOperand(persistent_global_md);
     
     alloc->replaceAllUsesWith(persistent_global);
@@ -554,13 +556,16 @@ DeclForGlobalValue(Module &module,
 }
 
 bool 
-IRForTarget::MaybeHandleVariable(Module &M, 
-                                 Value *V,
-                                 bool Store)
+IRForTarget::MaybeHandleVariable 
+(
+    Module &llvm_module, 
+    Value *llvm_value_ptr,
+    bool Store
+)
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
-    if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(V))
+    if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(llvm_value_ptr))
     {
         switch (constant_expr->getOpcode())
         {
@@ -569,16 +574,16 @@ IRForTarget::MaybeHandleVariable(Module &M,
         case Instruction::GetElementPtr:
         case Instruction::BitCast:
             Value *s = constant_expr->getOperand(0);
-            MaybeHandleVariable(M, s, Store);
+            MaybeHandleVariable(llvm_module, s, Store);
         }
     }
-    if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(V))
+    if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(llvm_value_ptr))
     {
-        clang::NamedDecl *named_decl = DeclForGlobalValue(M, global_variable);
+        clang::NamedDecl *named_decl = DeclForGlobalValue(llvm_module, global_variable);
         
         if (!named_decl)
         {
-            if (isObjCSelectorRef(V))
+            if (isObjCSelectorRef(llvm_value_ptr))
                 return true;
             
             if (log)
@@ -586,7 +591,7 @@ IRForTarget::MaybeHandleVariable(Module &M,
             return false;
         }
         
-        std::string name = named_decl->getName().str();
+        std::string name (named_decl->getName().str());
         
         void *opaque_type = NULL;
         clang::ASTContext *ast_context = NULL;
@@ -618,8 +623,8 @@ IRForTarget::MaybeHandleVariable(Module &M,
 
         
         if (named_decl && !m_decl_map->AddValueToStruct(named_decl,
-                                                        name.c_str(),
-                                                        V,
+                                                        lldb_private::ConstString (name.c_str()),
+                                                        llvm_value_ptr,
                                                         value_size, 
                                                         value_alignment))
             return false;
@@ -644,16 +649,16 @@ IRForTarget::MaybeHandleCallArguments(Module &M,
 }
 
 bool
-IRForTarget::MaybeHandleCall(Module &M,
-                             CallInst *C)
+IRForTarget::MaybeHandleCall(Module &llvm_module,
+                             CallInst *llvm_call_inst)
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
-    Function *fun = C->getCalledFunction();
+    Function *fun = llvm_call_inst->getCalledFunction();
     
     if (fun == NULL)
     {
-        Value *val = C->getCalledValue();
+        Value *val = llvm_call_inst->getCalledValue();
         
         ConstantExpr *const_expr = dyn_cast<ConstantExpr>(val);
         
@@ -670,7 +675,7 @@ IRForTarget::MaybeHandleCall(Module &M,
         }
     }
     
-    std::string str;
+    lldb_private::ConstString str;
     
     if (fun->isIntrinsic())
     {
@@ -683,32 +688,35 @@ IRForTarget::MaybeHandleCall(Module &M,
                 log->Printf("Unresolved intrinsic %s", Intrinsic::getName(intrinsic_id).c_str());
             return false;
         case Intrinsic::memcpy:
-            str = "memcpy";
+            {
+                static lldb_private::ConstString g_memcpy_str ("memcpy");
+                str = g_memcpy_str;
+            }
             break;
         }
         
-        if (log)
-            log->Printf("Resolved intrinsic name %s", str.c_str());
+        if (log && str)
+            log->Printf("Resolved intrinsic name %s", str.GetCString());
     }
     else
     {
-        str = fun->getName().str();
+        str.SetCStringWithLength (fun->getName().data(), fun->getName().size());
     }
     
-    clang::NamedDecl *fun_decl = DeclForGlobalValue(M, fun);
+    clang::NamedDecl *fun_decl = DeclForGlobalValue (llvm_module, fun);
     uint64_t fun_addr;
     Value **fun_value_ptr = NULL;
     
     if (fun_decl)
     {
-        if (!m_decl_map->GetFunctionInfo(fun_decl, fun_value_ptr, fun_addr)) 
+        if (!m_decl_map->GetFunctionInfo (fun_decl, fun_value_ptr, fun_addr)) 
         {
             fun_value_ptr = NULL;
             
-            if (!m_decl_map->GetFunctionAddress(str.c_str(), fun_addr))
+            if (!m_decl_map->GetFunctionAddress (str, fun_addr))
             {
                 if (log)
-                    log->Printf("Function %s had no address", str.c_str());
+                    log->Printf("Function %s had no address", str.GetCString());
                 
                 return false;
             }
@@ -716,22 +724,22 @@ IRForTarget::MaybeHandleCall(Module &M,
     }
     else 
     {
-        if (!m_decl_map->GetFunctionAddress(str.c_str(), fun_addr))
+        if (!m_decl_map->GetFunctionAddress (str, fun_addr))
         {
             if (log)
-                log->Printf("Metadataless function %s had no address", str.c_str());
+                log->Printf ("Metadataless function %s had no address", str.GetCString());
         }
     }
         
     if (log)
-        log->Printf("Found %s at %llx", str.c_str(), fun_addr);
+        log->Printf("Found %s at %llx", str.GetCString(), fun_addr);
     
     Value *fun_addr_ptr;
             
     if (!fun_value_ptr || !*fun_value_ptr)
     {
-        const IntegerType *intptr_ty = Type::getIntNTy(M.getContext(),
-                                                       (M.getPointerSize() == Module::Pointer64) ? 64 : 32);
+        const IntegerType *intptr_ty = Type::getIntNTy(llvm_module.getContext(),
+                                                       (llvm_module.getPointerSize() == Module::Pointer64) ? 64 : 32);
         const FunctionType *fun_ty = fun->getFunctionType();
         PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
         Constant *fun_addr_int = ConstantInt::get(intptr_ty, fun_addr, false);
@@ -744,18 +752,18 @@ IRForTarget::MaybeHandleCall(Module &M,
     if (fun_value_ptr)
         fun_addr_ptr = *fun_value_ptr;
     
-    C->setCalledFunction(fun_addr_ptr);
+    llvm_call_inst->setCalledFunction(fun_addr_ptr);
     
-    ConstantArray *func_name = (ConstantArray*)ConstantArray::get(M.getContext(), str);
+    ConstantArray *func_name = (ConstantArray*)ConstantArray::get(llvm_module.getContext(), str.GetCString());
     
     Value *values[1];
     values[0] = func_name;
-    MDNode *func_metadata = MDNode::get(M.getContext(), values, 1);
+    MDNode *func_metadata = MDNode::get(llvm_module.getContext(), values, 1);
     
-    C->setMetadata("lldb.call.realName", func_metadata);
+    llvm_call_inst->setMetadata("lldb.call.realName", func_metadata);
     
     if (log)
-        log->Printf("Set metadata for %p [%d, %s]", C, func_name->isString(), func_name->getAsString().c_str());
+        log->Printf("Set metadata for %p [%d, %s]", llvm_call_inst, func_name->isString(), func_name->getAsString().c_str());
     
     return true;
 }
@@ -1048,7 +1056,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
         argument = iter;
     }
     
-    if (!argument->getName().equals("___clang_arg"))
+    if (!argument->getName().equals("$__lldb_arg"))
         return false;
     
     if (log)
@@ -1071,7 +1079,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
         const clang::NamedDecl *decl;
         Value *value;
         off_t offset;
-        const char *name;
+        lldb_private::ConstString name;
         
         if (!m_decl_map->GetStructElement (decl, value, offset, name, element_index))
             return false;
@@ -1079,7 +1087,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
         if (log)
             log->Printf("  %s [%s] (%s) placed at %d",
                         value->getName().str().c_str(),
-                        name,
+                        name.GetCString(),
                         PrintValue(value, true).c_str(),
                         offset);
         
@@ -1117,7 +1125,7 @@ IRForTarget::runOnModule(Module &M)
     Function::iterator bbi;
     
     ////////////////////////////////////////////////////////////
-    // Replace __clang_expr_result with a persistent variable
+    // Replace $__lldb_expr_result with a persistent variable
     //
     
     if (!createResultVariable(M, *function))

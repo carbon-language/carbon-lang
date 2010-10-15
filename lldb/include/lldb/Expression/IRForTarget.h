@@ -61,7 +61,7 @@ public:
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                 bool resolve_vars,
-                const char* func_name = "___clang_expr");
+                const char* func_name = "$__lldb_expr");
     
     //------------------------------------------------------------------
     /// Destructor
@@ -73,7 +73,7 @@ public:
     ///
     /// @param[in] M
     ///     The module to run on.  This module is searched for the function
-    ///     ___clang_expr, and that function is passed to the passes one by 
+    ///     $__lldb_expr, and that function is passed to the passes one by 
     ///     one.
     ///
     /// @return
@@ -94,7 +94,7 @@ public:
 private:
     //------------------------------------------------------------------
     /// A function-level pass to take the generated global value
-    /// ___clang_expr_result and make it into a persistent variable.
+    /// $__lldb_expr_result and make it into a persistent variable.
     /// Also see ASTResultSynthesizer.
     //------------------------------------------------------------------
 

@@ -122,7 +122,7 @@ public:
     };
 
     //------------------------------------------------------------------
-    /// Convert to pointer operator.
+    /// Convert to bool operator.
     ///
     /// This allows code to check a ConstString object to see if it
     /// contains a valid string using code such as:
@@ -137,8 +137,10 @@ public:
     ///     A pointer to this object if the string isn't empty, NULL
     ///     otherwise.
     //------------------------------------------------------------------
-    operator void*() const;
-
+    operator bool() const
+    {
+        return m_string && m_string[0];
+    }
 
     //------------------------------------------------------------------
     /// Assignment operator
@@ -157,7 +159,11 @@ public:
     ///     A const reference to this object.
     //------------------------------------------------------------------
     const ConstString&
-    operator = (const ConstString& rhs);
+    operator = (const ConstString& rhs)
+    {
+        m_string = rhs.m_string;
+        return *this;
+    }
 
     //------------------------------------------------------------------
     /// Equal to operator
@@ -175,7 +181,12 @@ public:
     ///     @li \b false if this object is not equal to \a rhs.
     //------------------------------------------------------------------
     bool
-    operator == (const ConstString& rhs) const;
+    operator == (const ConstString& rhs) const
+    {
+        // We can do a pointer compare to compare these strings since they
+        // must come from the same pool in order to be equal.
+        return m_string == rhs.m_string;
+    }
 
     //------------------------------------------------------------------
     /// Not equal to operator
@@ -193,7 +204,10 @@ public:
     ///     @li \b false if this object is equal to \a rhs.
     //------------------------------------------------------------------
     bool
-    operator != (const ConstString& rhs) const;
+    operator != (const ConstString& rhs) const
+    {
+        return m_string != rhs.m_string;
+    }
 
     bool
     operator < (const ConstString& rhs) const;
@@ -211,11 +225,19 @@ public:
     ///     the C string value contained in this object.
     //------------------------------------------------------------------
     const char *
-    AsCString(const char *value_if_empty = NULL) const;
-
+    AsCString(const char *value_if_empty = NULL) const
+    {
+        if (m_string == NULL)
+            return value_if_empty;
+        return m_string;
+    }
 
     const char *
-    GetCString () const;
+    GetCString () const
+    {
+        return m_string;
+    }
+
 
     size_t
     GetLength () const;
@@ -230,7 +252,10 @@ public:
     /// count reaches zero.
     //------------------------------------------------------------------
     void
-    Clear ();
+    Clear ()
+    {
+        m_string = NULL;
+    }
 
     //------------------------------------------------------------------
     /// Compare two string objects.
