@@ -1406,11 +1406,17 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-common");
 
   // -fsigned-bitfields is default, and clang doesn't yet support
-  // --funsigned-bitfields.
+  // -funsigned-bitfields.
   if (!Args.hasFlag(options::OPT_fsigned_bitfields,
                     options::OPT_funsigned_bitfields))
     D.Diag(clang::diag::warn_drv_clang_unsupported)
       << Args.getLastArg(options::OPT_funsigned_bitfields)->getAsString(Args);
+
+  // -fsigned-bitfields is default, and clang doesn't support -fno-for-scope.
+  if (!Args.hasFlag(options::OPT_ffor_scope,
+                    options::OPT_fno_for_scope))
+    D.Diag(clang::diag::err_drv_clang_unsupported)
+      << Args.getLastArg(options::OPT_fno_for_scope)->getAsString(Args);
 
   // -fcaret-diagnostics is default.
   if (!Args.hasFlag(options::OPT_fcaret_diagnostics,

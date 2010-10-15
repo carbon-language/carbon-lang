@@ -275,6 +275,10 @@ def fextdirs_EQ : Joined<"-fextdirs=">, Group<f_Group>;
 def fhosted : Flag<"-fhosted">, Group<f_Group>;
 def ffast_math : Flag<"-ffast-math">, Group<clang_ignored_f_Group>;
 def ffinite_math_only : Flag<"-ffinite-math-only">, Group<clang_ignored_f_Group>;
+
+def ffor_scope : Flag<"-ffor-scope">, Group<f_Group>;
+def fno_for_scope : Flag<"-fno-for-scope">, Group<f_Group>;
+
 def ffreestanding : Flag<"-ffreestanding">, Group<f_Group>;
 def fgnu_keywords : Flag<"-fgnu-keywords">, Group<f_Group>;
 def fgnu_runtime : Flag<"-fgnu-runtime">, Group<f_Group>;
