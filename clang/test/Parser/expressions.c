@@ -39,7 +39,8 @@ void test_sizeof(){
 
 // PR3418
 int test_leading_extension() {
-  __extension__ (*(char*)0) = 1;
+  __extension__ (*(char*)0) = 1; // expected-warning {{indirection of non-volatile null pointer}} \
+                                 // expected-note {{consider using __builtin_trap}}
   return 0;
 }
 

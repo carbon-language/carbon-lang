@@ -1554,10 +1554,19 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
 
 Expr* Expr::IgnoreParens() {
   Expr* E = this;
-  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
-    E = P->getSubExpr();
-
-  return E;
+  while (true) {
+    if (ParenExpr* P = dyn_cast<ParenExpr>(E)) {
+      E = P->getSubExpr();
+      continue;
+    }
+    if (UnaryOperator* P = dyn_cast<UnaryOperator>(E)) {
+      if (P->getOpcode() == UO_Extension) {
+        E = P->getSubExpr();
+        continue;
+      }
+    }
+    return E;
+  }
 }
 
 /// IgnoreParenCasts - Ignore parentheses and casts.  Strip off any ParenExpr
@@ -1565,24 +1574,42 @@ Expr* Expr::IgnoreParens() {
 Expr *Expr::IgnoreParenCasts() {
   Expr *E = this;
   while (true) {
-    if (ParenExpr *P = dyn_cast<ParenExpr>(E))
+    if (ParenExpr* P = dyn_cast<ParenExpr>(E)) {
       E = P->getSubExpr();
-    else if (CastExpr *P = dyn_cast<CastExpr>(E))
+      continue;
+    }
+    if (CastExpr *P = dyn_cast<CastExpr>(E)) {
       E = P->getSubExpr();
-    else
-      return E;
+      continue;
+    }
+    if (UnaryOperator* P = dyn_cast<UnaryOperator>(E)) {
+      if (P->getOpcode() == UO_Extension) {
+        E = P->getSubExpr();
+        continue;
+      }
+    }
+    return E;
   }
 }
 
 Expr *Expr::IgnoreParenImpCasts() {
   Expr *E = this;
   while (true) {
-    if (ParenExpr *P = dyn_cast<ParenExpr>(E))
+    if (ParenExpr *P = dyn_cast<ParenExpr>(E)) {
       E = P->getSubExpr();
-    else if (ImplicitCastExpr *P = dyn_cast<ImplicitCastExpr>(E))
+      continue;
+    }
+    if (ImplicitCastExpr *P = dyn_cast<ImplicitCastExpr>(E)) {
       E = P->getSubExpr();
-    else
-      return E;
+      continue;
+    }
+    if (UnaryOperator* P = dyn_cast<UnaryOperator>(E)) {
+      if (P->getOpcode() == UO_Extension) {
+        E = P->getSubExpr();
+        continue;
+      }
+    }
+    return E;
   }
 }
 
@@ -1607,12 +1634,19 @@ Expr *Expr::IgnoreParenNoopCasts(ASTContext &Ctx) {
         continue;
       }
 
-      if ((E->getType()->isPointerType() || 
+      if ((E->getType()->isPointerType() ||
            E->getType()->isIntegralType(Ctx)) &&
-          (SE->getType()->isPointerType() || 
+          (SE->getType()->isPointerType() ||
            SE->getType()->isIntegralType(Ctx)) &&
           Ctx.getTypeSize(E->getType()) == Ctx.getTypeSize(SE->getType())) {
         E = SE;
+        continue;
+      }
+    }
+
+    if (UnaryOperator* P = dyn_cast<UnaryOperator>(E)) {
+      if (P->getOpcode() == UO_Extension) {
+        E = P->getSubExpr();
         continue;
       }
     }
