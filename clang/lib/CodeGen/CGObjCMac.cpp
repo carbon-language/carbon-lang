@@ -462,7 +462,7 @@ public:
     // void objc_exception_rethrow(void)
     std::vector<const llvm::Type*> Args;
     llvm::FunctionType *FTy =
-      llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Args, true);
+      llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_exception_rethrow");
   }
   
