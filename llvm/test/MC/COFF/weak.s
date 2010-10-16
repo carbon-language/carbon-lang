@@ -1,7 +1,7 @@
 // This tests that default-null weak symbols (a GNU extension) are created
 // properly via the .weak directive.
 
-// RUN: llvm-mc -filetype=obj < %s | coff-dump.py | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 < %s | coff-dump.py | FileCheck %s
 
     .def    _main;
     .scl    2;
