@@ -245,9 +245,11 @@ void WinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
          : true) && "Got non COFF section in the COFF backend!");
   switch (Attribute) {
   case MCSA_WeakReference:
-    getAssembler().getOrCreateSymbolData(*Symbol).modifyFlags(
-      COFF::SF_WeakReference,
-      COFF::SF_WeakReference);
+  case MCSA_Weak: {
+      MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+      SD.modifyFlags(COFF::SF_WeakExternal, COFF::SF_WeakExternal);
+      SD.setExternal(true);
+    }
     break;
 
   case MCSA_Global:

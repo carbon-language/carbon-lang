@@ -69,7 +69,7 @@ namespace COFF {
     SF_ClassMask = 0x00FF0000,
     SF_ClassShift = 16,
 
-    SF_WeakReference = 0x01000000
+    SF_WeakExternal = 0x01000000
   };
 
   enum SymbolSectionNumber {
