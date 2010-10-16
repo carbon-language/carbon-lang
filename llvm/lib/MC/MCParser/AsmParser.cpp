@@ -236,6 +236,7 @@ public:
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveFile>(".file");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLine>(".line");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLoc>(".loc");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveStabs>(".stabs");
 
     // Macro directives.
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveMacrosOnOff>(
@@ -253,6 +254,7 @@ public:
   bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveStabs(StringRef, SMLoc DirectiveLoc);
 
   bool ParseDirectiveMacrosOnOff(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveMacro(StringRef, SMLoc DirectiveLoc);
@@ -2079,6 +2081,13 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
   getContext().setCurrentDwarfLoc(FileNumber, LineNumber, ColumnPos, Flags,Isa);
 
   return false;
+}
+
+/// ParseDirectiveStabs
+/// ::= .stabs string, number, number, number
+bool GenericAsmParser::ParseDirectiveStabs(StringRef Directive,
+                                           SMLoc DirectiveLoc) {
+  return TokError("unsupported directive '" + Directive + "'");
 }
 
 /// ParseDirectiveMacrosOnOff
