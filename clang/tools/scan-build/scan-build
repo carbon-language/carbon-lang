@@ -889,6 +889,7 @@ sub RunBuildCommand {
   if ($Cmd =~ /(.*\/?gcc[^\/]*$)/ or 
       $Cmd =~ /(.*\/?cc[^\/]*$)/ or
       $Cmd =~ /(.*\/?llvm-gcc[^\/]*$)/ or
+      $Cmd =~ /(.*\/?clang$)/ or 
       $Cmd =~ /(.*\/?ccc-analyzer[^\/]*$)/) {
 
     if (!($Cmd =~ /ccc-analyzer/) and !defined $ENV{"CCC_CC"}) {
@@ -901,6 +902,7 @@ sub RunBuildCommand {
   elsif ($Cmd =~ /(.*\/?g\+\+[^\/]*$)/ or 
         $Cmd =~ /(.*\/?c\+\+[^\/]*$)/ or
         $Cmd =~ /(.*\/?llvm-g\+\+[^\/]*$)/ or
+        $Cmd =~ /(.*\/?clang\+\+$)/ or
         $Cmd =~ /(.*\/?c\+\+-analyzer[^\/]*$)/) {
     if (!($Cmd =~ /c\+\+-analyzer/) and !defined $ENV{"CCC_CXX"}) {
       $ENV{"CCC_CXX"} = $1;      
