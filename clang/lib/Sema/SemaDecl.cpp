@@ -5447,8 +5447,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (TUK != TUK_Reference) {
     if (TemplateParameterList *TemplateParams
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
-                        (TemplateParameterList**)TemplateParameterLists.get(),
-                                              TemplateParameterLists.size(),
+                                                TemplateParameterLists.get(),
+                                               TemplateParameterLists.size(),
                                                     TUK == TUK_Friend,
                                                     isExplicitSpecialization,
                                                     Invalid)) {

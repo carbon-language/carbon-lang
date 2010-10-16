@@ -6262,7 +6262,7 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation FriendLoc,
 /// parameters present at all, require proper matching, i.e.
 ///   template <> template <class T> friend class A<int>::B;
 Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
-                                          MultiTemplateParamsArg TempParams) {
+                                MultiTemplateParamsArg TempParams) {
   SourceLocation Loc = DS.getSourceRange().getBegin();
 
   assert(DS.isFriendSpecified());
@@ -6312,7 +6312,7 @@ Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   if (unsigned NumTempParamLists = TempParams.size())
     D = FriendTemplateDecl::Create(Context, CurContext, Loc,
                                    NumTempParamLists,
-                                 (TemplateParameterList**) TempParams.release(),
+                                   TempParams.release(),
                                    TSI,
                                    DS.getFriendSpecLoc());
   else
