@@ -6167,6 +6167,8 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                                            const ObjCAtThrowStmt &S) {
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
     llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
+    Exception = CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy,
+                                          "tmp");
     llvm::Value *Args[] = { Exception };
     CGF.EmitCallOrInvoke(ObjCTypes.getExceptionThrowFn(),
                          Args, Args+1)

@@ -11,3 +11,7 @@ void protos() {
     @throw;
   }
 }
+
+void throwing() {
+  @throw(@"error!");
+}
