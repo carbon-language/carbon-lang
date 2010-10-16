@@ -31,9 +31,9 @@ static char ID;
 
 static const char g_valid_pointer_check_text[] = 
 "extern \"C\" void\n"
-VALID_POINTER_CHECK_NAME " (unsigned char *ptr)\n"
+"$__lldb_valid_pointer_check (unsigned char *$__lldb_arg_ptr)\n"
 "{\n"
-"    unsigned char val = *ptr;\n"
+"    unsigned char $__lldb_local_val = *__lldb_arg_ptr;\n"
 "}";
 
 static bool FunctionExists(const SymbolContext &sym_ctx, const char *name)
@@ -59,7 +59,7 @@ static const char *objc_object_check_text(ExecutionContext &exe_ctx)
     if (FunctionExists(sym_ctx, "gdb_object_getClass"))
     {
         return  "extern \"C\" void "
-                "$__lldb_objc_object_check(uint8_t *obj)"
+                "$__lldb_objc_object_check(uint8_t *$__lldb_arg_obj)"
                 "{"
                     ""
                 "}";
@@ -67,7 +67,7 @@ static const char *objc_object_check_text(ExecutionContext &exe_ctx)
     else if (FunctionExists(sym_ctx, "gdb_class_getClass"))
     {
         return  "extern \"C\" void "
-                "$__lldb_objc_object_check(uint8_t *obj)"
+                "$__lldb_objc_object_check(uint8_t *$__lldb_arg_obj)"
                 "{"
                     ""
                 "}";
@@ -75,7 +75,7 @@ static const char *objc_object_check_text(ExecutionContext &exe_ctx)
     else
     {
         return  "extern \"C\" void "
-                "$__lldb_objc_object_check(uint8_t *obj)"
+                "$__lldb_objc_object_check(uint8_t *$__lldb_arg_obj)"
                 "{"
                     ""
                 "}";
