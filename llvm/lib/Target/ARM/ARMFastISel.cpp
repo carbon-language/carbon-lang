@@ -819,7 +819,9 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
       VT = MVT::i32;
       StrOpc = isThumb ? ARM::t2STRHi8 : ARM::STRH;
       break;
-    case MVT::i32: StrOpc = isThumb ? ARM::t2STRi8 : ARM::STR; break;
+    case MVT::i32:
+      StrOpc = isThumb ? ARM::t2STRi8 : ARM::STR;
+      break;
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
       StrOpc = ARM::VSTRS;
