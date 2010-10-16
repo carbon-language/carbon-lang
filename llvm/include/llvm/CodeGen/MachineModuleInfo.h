@@ -57,7 +57,7 @@ class MachineFunction;
 class Module;
 class PointerType;
 class StructType;
-  
+
 /// MachineModuleInfoImpl - This class can be derived from and used by targets
 /// to hold private target-specific information for each Module.  Objects of
 /// type are accessed/created with MMI::getInfo and destroyed when the
@@ -70,8 +70,8 @@ public:
 protected:
   static SymbolListTy GetSortedStubs(const DenseMap<MCSymbol*, StubValueTy>&);
 };
-  
-  
+
+
 
 //===----------------------------------------------------------------------===//
 /// LandingPadInfo - This structure is used to retain landing pad info for
@@ -90,19 +90,19 @@ struct LandingPadInfo {
 };
 
 class MMIAddrLabelMap;
-  
+
 //===----------------------------------------------------------------------===//
 /// MachineModuleInfo - This class contains meta information specific to a
-/// module.  Queries can be made by different debugging and exception handling 
+/// module.  Queries can be made by different debugging and exception handling
 /// schemes and reformated for specific use.
 ///
 class MachineModuleInfo : public ImmutablePass {
   /// Context - This is the MCContext used for the entire code generator.
   MCContext Context;
-  
+
   /// TheModule - This is the LLVM Module being worked on.
   const Module *TheModule;
-  
+
   /// ObjFileMMI - This is the object-file-format-specific implementation of
   /// MachineModuleInfoImpl, which lets targets accumulate whatever info they
   /// want.
@@ -111,7 +111,7 @@ class MachineModuleInfo : public ImmutablePass {
   // FrameMoves - List of moves done by a function's prolog.  Used to construct
   // frame maps by debug and exception handling consumers.
   std::vector<MachineMove> FrameMoves;
-  
+
   // LandingPads - List of LandingPadInfo describing the landing pad information
   // in the current function.
   std::vector<LandingPadInfo> LandingPads;
@@ -145,14 +145,14 @@ class MachineModuleInfo : public ImmutablePass {
   /// llvm.compiler.used.
   SmallPtrSet<const Function *, 32> UsedFunctions;
 
-  
+
   /// AddrLabelSymbols - This map keeps track of which symbol is being used for
   /// the specified basic block's address of label.
   MMIAddrLabelMap *AddrLabelSymbols;
-  
+
   bool CallsEHReturn;
   bool CallsUnwindInit;
- 
+
   /// DbgInfoAvailable - True if debugging information is available
   /// in this module.
   bool DbgInfoAvailable;
@@ -168,20 +168,20 @@ public:
   MachineModuleInfo();  // DUMMY CONSTRUCTOR, DO NOT CALL.
   MachineModuleInfo(const MCAsmInfo &MAI);  // Real constructor.
   ~MachineModuleInfo();
-  
+
   bool doInitialization();
   bool doFinalization();
 
   /// EndFunction - Discard function meta information.
   ///
   void EndFunction();
-  
+
   const MCContext &getContext() const { return Context; }
   MCContext &getContext() { return Context; }
 
   void setModule(const Module *M) { TheModule = M; }
   const Module *getModule() const { return TheModule; }
-  
+
   /// getInfo - Keep track of various per-function pieces of information for
   /// backends that would like to do so.
   ///
@@ -191,16 +191,16 @@ public:
       ObjFileMMI = new Ty(*this);
     return *static_cast<Ty*>(ObjFileMMI);
   }
-  
+
   template<typename Ty>
   const Ty &getObjFileInfo() const {
     return const_cast<MachineModuleInfo*>(this)->getObjFileInfo<Ty>();
   }
-  
+
   /// AnalyzeModule - Scan the module for global debug information.
   ///
   void AnalyzeModule(const Module &M);
-  
+
   /// hasDebugInfo - Returns true if valid debug info is present.
   ///
   bool hasDebugInfo() const { return DbgInfoAvailable; }
@@ -216,7 +216,7 @@ public:
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
   std::vector<MachineMove> &getFrameMoves() { return FrameMoves; }
-  
+
   /// getAddrLabelSymbol - Return the symbol to be used for the specified basic
   /// block when its address is taken.  This cannot be its normal LBB label
   /// because the block may be accessed outside its containing function.
@@ -226,15 +226,15 @@ public:
   /// basic block when its address is taken.  If other blocks were RAUW'd to
   /// this one, we may have to emit them as well, return the whole set.
   std::vector<MCSymbol*> getAddrLabelSymbolToEmit(const BasicBlock *BB);
-  
+
   /// takeDeletedSymbolsForFunction - If the specified function has had any
   /// references to address-taken blocks generated, but the block got deleted,
   /// return the symbol now so we can emit it.  This prevents emitting a
   /// reference to a symbol that has no definition.
-  void takeDeletedSymbolsForFunction(const Function *F, 
+  void takeDeletedSymbolsForFunction(const Function *F,
                                      std::vector<MCSymbol*> &Result);
 
-  
+
   //===- EH ---------------------------------------------------------------===//
 
   /// getOrCreateLandingPadInfo - Find or create an LandingPadInfo for the
@@ -245,11 +245,11 @@ public:
   /// associate it with a try landing pad block.
   void addInvoke(MachineBasicBlock *LandingPad,
                  MCSymbol *BeginLabel, MCSymbol *EndLabel);
-  
-  /// addLandingPad - Add a new panding pad.  Returns the label ID for the 
+
+  /// addLandingPad - Add a new panding pad.  Returns the label ID for the
   /// landing pad entry.
   MCSymbol *addLandingPad(MachineBasicBlock *LandingPad);
-  
+
   /// addPersonality - Provide the personality function for the exception
   /// information.
   void addPersonality(MachineBasicBlock *LandingPad,
@@ -285,7 +285,7 @@ public:
   ///
   void addCleanup(MachineBasicBlock *LandingPad);
 
-  /// getTypeIDFor - Return the type id for the specified typeinfo.  This is 
+  /// getTypeIDFor - Return the type id for the specified typeinfo.  This is
   /// function wide.
   unsigned getTypeIDFor(const GlobalVariable *TI);
 
@@ -296,7 +296,7 @@ public:
   /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
   /// pads.
   void TidyLandingPads(DenseMap<MCSymbol*, uintptr_t> *LPMap = 0);
-                        
+
   /// getLandingPads - Return a reference to the landing pad info for the
   /// current function.
   const std::vector<LandingPadInfo> &getLandingPads() const {
