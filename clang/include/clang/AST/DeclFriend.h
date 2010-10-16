@@ -48,6 +48,11 @@ private:
   // Location of the 'friend' specifier.
   SourceLocation FriendLoc;
 
+  /// True if this 'friend' declaration is unsupported.  Eventually we
+  /// will support every possible friend declaration, but for now we
+  /// silently ignore some and set this flag to authorize all access.
+  bool UnsupportedFriend;
+
   friend class CXXRecordDecl::friend_iterator;
   friend class CXXRecordDecl;
 
@@ -56,7 +61,8 @@ private:
     : Decl(Decl::Friend, DC, L),
       Friend(Friend),
       NextFriend(0),
-      FriendLoc(FriendL) {
+      FriendLoc(FriendL),
+      UnsupportedFriend(false) {
   }
 
   explicit FriendDecl(EmptyShell Empty)
@@ -85,6 +91,14 @@ public:
   /// Retrieves the location of the 'friend' keyword.
   SourceLocation getFriendLoc() const {
     return FriendLoc;
+  }
+
+  /// Determines if this friend kind is unsupported.
+  bool isUnsupportedFriend() const {
+    return UnsupportedFriend;
+  }
+  void setUnsupportedFriend(bool Unsupported) {
+    UnsupportedFriend = Unsupported;
   }
 
   // Implement isa/cast/dyncast/etc.

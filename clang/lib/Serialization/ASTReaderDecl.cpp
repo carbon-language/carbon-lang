@@ -908,6 +908,7 @@ void ASTDeclReader::VisitFriendDecl(FriendDecl *D) {
   else
     D->Friend = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
   D->NextFriend = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
+  D->UnsupportedFriend = (Record[Idx++] != 0);
   D->FriendLoc = ReadSourceLocation(Record, Idx);
 }
 

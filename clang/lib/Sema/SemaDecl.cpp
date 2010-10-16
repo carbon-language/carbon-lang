@@ -3410,11 +3410,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
                                   D.getCXXScopeSpec(),
-                           (TemplateParameterList**)TemplateParamLists.get(),
-                                                  TemplateParamLists.size(),
-                                                  isFriend,
-                                                  isExplicitSpecialization,
-                                                  Invalid)) {
+                                  TemplateParamLists.get(),
+                                  TemplateParamLists.size(),
+                                  isFriend,
+                                  isExplicitSpecialization,
+                                  Invalid)) {
     // All but one template parameter lists have been matching.
     --NumMatchedTemplateParamLists;
 
@@ -3462,7 +3462,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (NumMatchedTemplateParamLists > 0 && D.getCXXScopeSpec().isSet()) {
     NewFD->setTemplateParameterListsInfo(Context,
                                          NumMatchedTemplateParamLists,
-                        (TemplateParameterList**)TemplateParamLists.release());
+                                         TemplateParamLists.release());
   }
 
   if (Invalid) {
@@ -3732,14 +3732,20 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     // Qualified decls generally require a previous declaration.
     if (D.getCXXScopeSpec().isSet()) {
-      // ...with the major exception of dependent friend declarations.
-      // In theory, this condition could be whether the qualifier
-      // is dependent;  in practice, the way we nest template parameters
-      // prevents this sort of matching from working, so we have to base it
-      // on the general dependence of the context.
-      if (isFriend && CurContext->isDependentContext()) {
-        // ignore these
+      // ...with the major exception of templated-scope or
+      // dependent-scope friend declarations.
 
+      // TODO: we currently also suppress this check in dependent
+      // contexts because (1) the parameter depth will be off when
+      // matching friend templates and (2) we might actually be
+      // selecting a friend based on a dependent factor.  But there
+      // are situations where these conditions don't apply and we
+      // can actually do this check immediately.
+      if (isFriend &&
+          (NumMatchedTemplateParamLists ||
+           D.getCXXScopeSpec().getScopeRep()->isDependent() ||
+           CurContext->isDependentContext())) {
+        // ignore these
       } else {
         // The user tried to provide an out-of-line definition for a
         // function that is a member of a class or namespace, but there

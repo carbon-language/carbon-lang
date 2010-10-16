@@ -6532,6 +6532,17 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
 
   if (ND->isInvalidDecl())
     FrD->setInvalidDecl();
+  else {
+    FunctionDecl *FD;
+    if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
+      FD = FTD->getTemplatedDecl();
+    else
+      FD = cast<FunctionDecl>(ND);
+
+    // Mark templated-scope function declarations as unsupported.
+    if (FD->getNumTemplateParameterLists())
+      FrD->setUnsupportedFriend(true);
+  }
 
   return ND;
 }

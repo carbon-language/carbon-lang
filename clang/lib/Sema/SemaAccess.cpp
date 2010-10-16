@@ -516,8 +516,9 @@ static AccessResult MatchesFriend(Sema &S,
 static AccessResult MatchesFriend(Sema &S,
                                   const EffectiveContext &EC,
                                   FriendDecl *FriendD) {
-  // Whitelist accesses if there's an invalid friend declaration.
-  if (FriendD->isInvalidDecl())
+  // Whitelist accesses if there's an invalid or unsupported friend
+  // declaration.
+  if (FriendD->isInvalidDecl() || FriendD->isUnsupportedFriend())
     return AR_accessible;
 
   if (TypeSourceInfo *T = FriendD->getFriendType())

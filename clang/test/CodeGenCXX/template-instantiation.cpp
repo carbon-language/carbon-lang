@@ -92,3 +92,20 @@ namespace test3 {
   // don't have key functions.
   template void S<int>::m();
 }
+
+namespace test4 {
+  template <class T> struct A { static void foo(); };
+
+  class B {
+    template <class T> friend void A<T>::foo();
+    B();
+  };
+
+  template <class T> void A<T>::foo() {
+    B b;
+  }
+
+  unsigned test() {
+    A<int>::foo();
+  }
+}
