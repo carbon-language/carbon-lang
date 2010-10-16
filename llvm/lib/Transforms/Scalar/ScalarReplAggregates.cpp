@@ -1446,7 +1446,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
         Type *NewOtherPTy = PointerType::get(PTy->getElementType(),
                                              OtherPTy->getAddressSpace());
         OtherElt = new BitCastInst(OtherElt, NewOtherPTy,
-                                   OtherElt->getNameStr(), MI);
+                                   OtherElt->getName(), MI);
       }
     }
     
