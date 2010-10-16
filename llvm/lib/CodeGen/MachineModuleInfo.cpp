@@ -256,7 +256,8 @@ void MMIAddrLabelMapCallbackPtr::allUsesReplacedWith(Value *V2) {
 MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI)
 : ImmutablePass(ID), Context(MAI),
   ObjFileMMI(0),
-  CurCallSite(0), CallsEHReturn(0), CallsUnwindInit(0), DbgInfoAvailable(false){
+  CurCallSite(0), CallsEHReturn(0), CallsUnwindInit(0), DbgInfoAvailable(false),
+  CallsExternalFunctionWithFloatingPointArguments(false) {
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(NULL);
   AddrLabelSymbols = 0;

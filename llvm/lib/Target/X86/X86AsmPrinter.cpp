@@ -580,6 +580,13 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
   }
 
+  if (Subtarget->isTargetWindows()
+   && !Subtarget->isTargetCygMing()
+   && MMI->callsExternalFunctionWithFloatingPointArguments()) {
+    MCSymbol *S = MMI->getContext().GetOrCreateSymbol(StringRef("__fltused"));
+    OutStreamer.EmitSymbolAttribute(S, MCSA_Global);
+  }
+
   if (Subtarget->isTargetCOFF()) {
     X86COFFMachineModuleInfo &COFFMMI =
       MMI->getObjFileInfo<X86COFFMachineModuleInfo>();

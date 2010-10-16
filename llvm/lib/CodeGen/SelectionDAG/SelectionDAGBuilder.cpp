@@ -15,6 +15,7 @@
 #include "SDNodeDbgValue.h"
 #include "SelectionDAGBuilder.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -5016,6 +5017,25 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
         RenameFn = visitIntrinsicCall(I, IID);
         if (!RenameFn)
           return;
+      }
+    }
+
+    // See if any floating point values are being passed to this external
+    // function. This is used to emit an undefined reference to fltused on
+    // Windows.
+    if (!F->hasLocalLinkage() && F->hasName()) {
+      MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
+      for (unsigned i = 0, e = I.getNumArgOperands(); i != e &&
+                  !MMI.callsExternalFunctionWithFloatingPointArguments(); ++i) {
+        const Type* T = I.getArgOperand(i)->getType();
+        for (po_iterator<const Type*> i = po_begin(T),
+                                      e = po_end(T);
+                                      i != e; ++i) {
+          if (i->isFloatingPointTy()) {
+            MMI.setCallsExternalFunctionWithFloatingPointArguments(true);
+            break;
+          }
+        }
       }
     }
 

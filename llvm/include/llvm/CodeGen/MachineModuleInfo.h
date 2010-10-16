@@ -157,6 +157,11 @@ class MachineModuleInfo : public ImmutablePass {
   /// in this module.
   bool DbgInfoAvailable;
 
+  /// True if this module calls an external function with floating point
+  /// arguments. This is used to emit an undefined reference to fltused on
+  /// Windows targets.
+  bool CallsExternalFunctionWithFloatingPointArguments;
+
 public:
   static char ID; // Pass identification, replacement for typeid
 
@@ -211,7 +216,15 @@ public:
 
   bool callsUnwindInit() const { return CallsUnwindInit; }
   void setCallsUnwindInit(bool b) { CallsUnwindInit = b; }
-  
+
+  bool callsExternalFunctionWithFloatingPointArguments() const {
+    return CallsExternalFunctionWithFloatingPointArguments;
+  }
+
+  void setCallsExternalFunctionWithFloatingPointArguments(bool b) {
+    CallsExternalFunctionWithFloatingPointArguments = b;
+  }
+
   /// getFrameMoves - Returns a reference to a list of moves done in the current
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
