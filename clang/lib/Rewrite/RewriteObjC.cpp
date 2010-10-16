@@ -247,7 +247,8 @@ namespace {
                                  ObjCCategoryImplDecl *CID);
     void RewriteInterfaceDecl(ObjCInterfaceDecl *Dcl);
     void RewriteImplementationDecl(Decl *Dcl);
-    void RewriteObjCMethodDecl(ObjCMethodDecl *MDecl, std::string &ResultStr);
+    void RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
+                               ObjCMethodDecl *MDecl, std::string &ResultStr);
     void RewriteTypeIntoString(QualType T, std::string &ResultStr,
                                const FunctionType *&FPRetType);
     void RewriteByRefString(std::string &ResultStr, const std::string &Name,
@@ -344,8 +345,7 @@ namespace {
                                          std::string &Result);
     void SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                       std::string &Result);
-    void SynthesizeIvarOffsetComputation(ObjCContainerDecl *IDecl,
-                                         ObjCIvarDecl *ivar,
+    void SynthesizeIvarOffsetComputation(ObjCIvarDecl *ivar,
                                          std::string &Result);
     void RewriteImplementations();
     void SynthesizeMetaDataIntoBuffer(std::string &Result);
@@ -733,8 +733,8 @@ void RewriteObjC::RewriteInclude() {
   }
 }
 
-static std::string getIvarAccessString(ObjCInterfaceDecl *ClassDecl,
-                                       ObjCIvarDecl *OID) {
+static std::string getIvarAccessString(ObjCIvarDecl *OID) {
+  const ObjCInterfaceDecl *ClassDecl = OID->getContainingInterface();
   std::string S;
   S = "((struct ";
   S += ClassDecl->getIdentifier()->getName();
@@ -762,7 +762,6 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
 
   // Generate the 'getter' function.
   ObjCPropertyDecl *PD = PID->getPropertyDecl();
-  ObjCInterfaceDecl *ClassDecl = PD->getGetterMethodDecl()->getClassInterface();
   ObjCIvarDecl *OID = PID->getPropertyIvarDecl();
 
   if (!OID)
@@ -778,7 +777,8 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
     Getr = "\nextern \"C\" __declspec(dllimport) "
            "id objc_getProperty(id, SEL, long, bool);\n";
   }
-  RewriteObjCMethodDecl(PD->getGetterMethodDecl(), Getr);
+  RewriteObjCMethodDecl(OID->getContainingInterface(),  
+                        PD->getGetterMethodDecl(), Getr);
   Getr += "{ ";
   // Synthesize an explicit cast to gain access to the ivar.
   // See objc-act.c:objc_synthesize_new_getter() for details.
@@ -812,11 +812,11 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
     Getr += ";\n";
     Getr += "return (_TYPE)";
     Getr += "objc_getProperty(self, _cmd, ";
-    SynthesizeIvarOffsetComputation(ClassDecl, OID, Getr);
+    SynthesizeIvarOffsetComputation(OID, Getr);
     Getr += ", 1)";
   }
   else
-    Getr += "return " + getIvarAccessString(ClassDecl, OID);
+    Getr += "return " + getIvarAccessString(OID);
   Getr += "; }";
   InsertText(onePastSemiLoc, Getr);
   if (PD->isReadOnly())
@@ -833,13 +833,14 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
     "void objc_setProperty (id, SEL, long, id, bool, bool);\n";
   }
   
-  RewriteObjCMethodDecl(PD->getSetterMethodDecl(), Setr);
+  RewriteObjCMethodDecl(OID->getContainingInterface(), 
+                        PD->getSetterMethodDecl(), Setr);
   Setr += "{ ";
   // Synthesize an explicit cast to initialize the ivar.
   // See objc-act.c:objc_synthesize_new_setter() for details.
   if (GenSetProperty) {
     Setr += "objc_setProperty (self, _cmd, ";
-    SynthesizeIvarOffsetComputation(ClassDecl, OID, Setr);
+    SynthesizeIvarOffsetComputation(OID, Setr);
     Setr += ", (id)";
     Setr += PD->getName();
     Setr += ", ";
@@ -853,7 +854,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
       Setr += "0)";
   }
   else {
-    Setr += getIvarAccessString(ClassDecl, OID) + " = ";
+    Setr += getIvarAccessString(OID) + " = ";
     Setr += PD->getName();
   }
   Setr += "; }";
@@ -1018,7 +1019,8 @@ void RewriteObjC::RewriteTypeIntoString(QualType T, std::string &ResultStr,
     ResultStr += T.getAsString(Context->PrintingPolicy);
 }
 
-void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
+void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
+                                        ObjCMethodDecl *OMD,
                                         std::string &ResultStr) {
   //fprintf(stderr,"In RewriteObjCMethodDecl\n");
   const FunctionType *FPRetType = 0;
@@ -1034,7 +1036,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   else
     NameStr += "_C_";
 
-  NameStr += OMD->getClassInterface()->getNameAsString();
+  NameStr += IDecl->getNameAsString();
   NameStr += "_";
 
   if (ObjCCategoryImplDecl *CID =
@@ -1060,14 +1062,14 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
 
   // invisible arguments
   if (OMD->isInstanceMethod()) {
-    QualType selfTy = Context->getObjCInterfaceType(OMD->getClassInterface());
+    QualType selfTy = Context->getObjCInterfaceType(IDecl);
     selfTy = Context->getPointerType(selfTy);
     if (!LangOpts.Microsoft) {
-      if (ObjCSynthesizedStructs.count(OMD->getClassInterface()))
+      if (ObjCSynthesizedStructs.count(const_cast<ObjCInterfaceDecl*>(IDecl)))
         ResultStr += "struct ";
     }
     // When rewriting for Microsoft, explicitly omit the structure name.
-    ResultStr += OMD->getClassInterface()->getNameAsString();
+    ResultStr += IDecl->getNameAsString();
     ResultStr += " *";
   }
   else
@@ -1135,7 +1137,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
        I != E; ++I) {
     std::string ResultStr;
     ObjCMethodDecl *OMD = *I;
-    RewriteObjCMethodDecl(OMD, ResultStr);
+    RewriteObjCMethodDecl(OMD->getClassInterface(), OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getCompoundBody()->getLocStart();
 
@@ -1150,7 +1152,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
        I != E; ++I) {
     std::string ResultStr;
     ObjCMethodDecl *OMD = *I;
-    RewriteObjCMethodDecl(OMD, ResultStr);
+    RewriteObjCMethodDecl(OMD->getClassInterface(), OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getCompoundBody()->getLocStart();
 
@@ -3706,8 +3708,7 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
 
 /// SynthesizeIvarOffsetComputation - This rutine synthesizes computation of
 /// ivar offset.
-void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCContainerDecl *IDecl,
-                                                  ObjCIvarDecl *ivar,
+void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCIvarDecl *ivar,
                                                   std::string &Result) {
   if (ivar->isBitField()) {
     // FIXME: The hack below doesn't work for bitfields. For now, we simply
@@ -3715,7 +3716,7 @@ void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCContainerDecl *IDecl,
     Result += "0";
   } else {
     Result += "__OFFSETOFIVAR__(struct ";
-    Result += IDecl->getNameAsString();
+    Result += ivar->getContainingInterface()->getNameAsString();
     if (LangOpts.Microsoft)
       Result += "_IMPL";
     Result += ", ";
@@ -3798,7 +3799,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     QuoteDoublequotes(TmpString, StrEncoding);
     Result += StrEncoding;
     Result += "\", ";
-    SynthesizeIvarOffsetComputation(IDecl, *IVI, Result);
+    SynthesizeIvarOffsetComputation(*IVI, Result);
     Result += "}\n";
     for (++IVI; IVI != IVE; ++IVI) {
       Result += "\t  ,{\"";
@@ -3809,7 +3810,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
       QuoteDoublequotes(TmpString, StrEncoding);
       Result += StrEncoding;
       Result += "\", ";
-      SynthesizeIvarOffsetComputation(IDecl, (*IVI), Result);
+      SynthesizeIvarOffsetComputation((*IVI), Result);
       Result += "}\n";
     }
 
