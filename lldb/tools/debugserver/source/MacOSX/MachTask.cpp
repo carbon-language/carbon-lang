@@ -86,14 +86,18 @@ MachTask::Resume()
 {
     struct task_basic_info task_info;
     task_t task = TaskPort();
+	if (task == TASK_NULL)
+		return KERN_INVALID_ARGUMENT;
 
     DNBError err;
     err = BasicInfo(task, &task_info);
 
     if (err.Success())
     {
-        integer_t i;
-        for (i=0; i<task_info.suspend_count; i++)
+		// task_resume isn't counted like task_suspend calls are, are, so if the 
+		// task is not suspended, don't try and resume it since it is already 
+		// running
+		if (task_info.suspend_count > 0)
         {
             err = ::task_resume (task);
             if (DNBLogCheckLogBit(LOG_TASK) || err.Fail())
