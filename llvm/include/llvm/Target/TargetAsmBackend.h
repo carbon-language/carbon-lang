@@ -16,6 +16,7 @@ namespace llvm {
 class MCDataFragment;
 class MCFixup;
 class MCInst;
+class MCObjectFormat;
 class MCObjectWriter;
 class MCSection;
 template<typename T>
@@ -33,7 +34,6 @@ protected: // Can only create subclasses.
   /// TheTarget - The Target that this machine was created for.
   const Target &TheTarget;
 
-  unsigned HasAbsolutizedSet : 1;
   unsigned HasReliableSymbolDifference : 1;
   unsigned HasScatteredSymbols : 1;
 
@@ -42,22 +42,11 @@ public:
 
   const Target &getTarget() const { return TheTarget; }
 
+  virtual const MCObjectFormat &getObjectFormat() const = 0;
+
   /// createObjectWriter - Create a new MCObjectWriter instance for use by the
   /// assembler backend to emit the final object file.
   virtual MCObjectWriter *createObjectWriter(raw_ostream &OS) const = 0;
-
-  /// hasAbsolutizedSet - Check whether this target "absolutizes"
-  /// assignments. That is, given code like:
-  ///   a:
-  ///   ...
-  ///   b:
-  ///   tmp = a - b
-  ///       .long tmp
-  /// will the value of 'tmp' be a relocatable expression, or the assembly time
-  /// value of L0 - L1. This distinction is only relevant for platforms that
-  /// support scattered symbols, since in the absence of scattered symbols (a -
-  /// b) cannot change after assembly.
-  bool hasAbsolutizedSet() const { return HasAbsolutizedSet; }
 
   /// hasReliableSymbolDifference - Check whether this target implements
   /// accurate relocations for differences between symbols. If not, differences
@@ -68,7 +57,7 @@ public:
   /// This should always be true (since it results in fewer relocations with no
   /// loss of functionality), but is currently supported as a way to maintain
   /// exact object compatibility with Darwin 'as' (on non-x86_64). It should
-  /// eventually should be eliminated. See also \see hasAbsolutizedSet.
+  /// eventually should be eliminated.
   bool hasReliableSymbolDifference() const {
     return HasReliableSymbolDifference;
   }

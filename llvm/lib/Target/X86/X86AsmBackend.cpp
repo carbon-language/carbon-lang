@@ -14,6 +14,7 @@
 #include "llvm/MC/ELFObjectWriter.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFormat.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -186,13 +187,18 @@ bool X86AsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
 
 namespace {
 class ELFX86AsmBackend : public X86AsmBackend {
+  MCELFObjectFormat Format;
+
 public:
   Triple::OSType OSType;
   ELFX86AsmBackend(const Target &T, Triple::OSType _OSType)
     : X86AsmBackend(T), OSType(_OSType) {
-    HasAbsolutizedSet = true;
     HasScatteredSymbols = true;
     HasReliableSymbolDifference = true;
+  }
+
+  virtual const MCObjectFormat &getObjectFormat() const {
+    return Format;
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
@@ -242,11 +248,17 @@ public:
 
 class WindowsX86AsmBackend : public X86AsmBackend {
   bool Is64Bit;
+  MCCOFFObjectFormat Format;
+
 public:
   WindowsX86AsmBackend(const Target &T, bool is64Bit)
     : X86AsmBackend(T)
     , Is64Bit(is64Bit) {
     HasScatteredSymbols = true;
+  }
+
+  virtual const MCObjectFormat &getObjectFormat() const {
+    return Format;
   }
 
   unsigned getPointerSize() const {
@@ -267,11 +279,16 @@ public:
 };
 
 class DarwinX86AsmBackend : public X86AsmBackend {
+  MCMachOObjectFormat Format;
+
 public:
   DarwinX86AsmBackend(const Target &T)
     : X86AsmBackend(T) {
-    HasAbsolutizedSet = true;
     HasScatteredSymbols = true;
+  }
+
+  virtual const MCObjectFormat &getObjectFormat() const {
+    return Format;
   }
 
   bool isVirtualSection(const MCSection &Section) const {

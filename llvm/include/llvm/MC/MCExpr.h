@@ -43,6 +43,8 @@ private:
 protected:
   explicit MCExpr(ExprKind _Kind) : Kind(_Kind) {}
 
+  bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAsmLayout *Layout,
+                                 bool InSet) const;
 public:
   /// @name Accessors
   /// @{
