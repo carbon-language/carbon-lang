@@ -458,7 +458,7 @@ class TestBase(unittest2.TestCase):
         # Perform registered teardown cleanup.
         if doCleanup and self.doTearDownCleanup:
             module = __import__(sys.platform)
-            if not module.cleanup(dictionary=self.dict):
+            if not module.cleanup(self, dictionary=self.dict):
                 raise Exception("Don't know how to do cleanup")
 
         # See also LLDBTestResult (dotest.py) which is a singlton class derived
