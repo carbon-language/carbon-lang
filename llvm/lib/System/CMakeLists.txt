@@ -1,3 +1,8 @@
+set(LLVM_REQUIRES_RTTI 1)
+if( MINGW )
+  set(LLVM_REQUIRES_EH 1)
+endif()
+
 add_llvm_library(LLVMSystem
   Alarm.cpp
   Atomic.cpp

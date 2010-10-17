@@ -1,3 +1,5 @@
+set(LLVM_REQUIRES_RTTI 1)
+
 add_llvm_library(LLVMCore
   AsmWriter.cpp
   Attributes.cpp

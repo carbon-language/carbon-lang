@@ -1,3 +1,6 @@
+## FIXME: This only requires RTTI because tblgen uses it.  Fix that.
+set(LLVM_REQUIRES_RTTI 1)
+
 add_llvm_library(LLVMSupport
   APFloat.cpp
   APInt.cpp

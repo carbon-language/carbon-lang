@@ -36,6 +36,19 @@ function(llvm_process_sources OUT_VAR)
     add_td_sources(sources)
     add_header_files(sources)
   endif()
+
+  # Set common compiler options:
+  if( NOT LLVM_REQUIRES_EH )
+    if( CMAKE_COMPILER_IS_GNUCXX )
+      add_definitions( -fno-exceptions )
+    endif()
+  endif()
+  if( NOT LLVM_REQUIRES_RTTI )
+    if( CMAKE_COMPILER_IS_GNUCXX )
+      add_definitions( -fno-rtti )
+    endif()
+  endif()
+
   set( ${OUT_VAR} ${sources} PARENT_SCOPE )
 endfunction(llvm_process_sources)
 
