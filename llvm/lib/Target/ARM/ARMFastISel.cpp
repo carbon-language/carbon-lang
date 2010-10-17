@@ -730,17 +730,17 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
       // This is mostly going to be Neon/vector support.
       return false;
     case MVT::i16:
-      Opc = isThumb ? ARM::t2LDRHi8 : ARM::LDRH;
+      Opc = isThumb ? ARM::t2LDRHi12 : ARM::LDRH;
       RC = ARM::GPRRegisterClass;
       VT = MVT::i32;
       break;
     case MVT::i8:
-      Opc = isThumb ? ARM::t2LDRBi8 : ARM::LDRB;
+      Opc = isThumb ? ARM::t2LDRBi12 : ARM::LDRB;
       RC = ARM::GPRRegisterClass;
       VT = MVT::i32;
       break;
     case MVT::i32:
-      Opc = isThumb ? ARM::t2LDRi8 : ARM::LDR;
+      Opc = isThumb ? ARM::t2LDRi12 : ARM::LDR;
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::f32:
@@ -813,14 +813,14 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
     case MVT::i1:
     case MVT::i8:
       VT = MVT::i32;
-      StrOpc = isThumb ? ARM::t2STRBi8 : ARM::STRB;
+      StrOpc = isThumb ? ARM::t2STRBi12 : ARM::STRB;
       break;
     case MVT::i16:
       VT = MVT::i32;
-      StrOpc = isThumb ? ARM::t2STRHi8 : ARM::STRH;
+      StrOpc = isThumb ? ARM::t2STRHi12 : ARM::STRH;
       break;
     case MVT::i32:
-      StrOpc = isThumb ? ARM::t2STRi8 : ARM::STR;
+      StrOpc = isThumb ? ARM::t2STRi12 : ARM::STR;
       break;
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
