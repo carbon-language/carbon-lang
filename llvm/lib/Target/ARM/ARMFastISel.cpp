@@ -758,7 +758,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   ResultReg = createResultReg(RC);
 
   // For now with the additions above the offset should be zero - thus we
-  // can always fit into an i8.
+  // can always fit into an i12.
   assert((Base.Reg == ARM::SP || Offset == 0) &&
           "Offset not zero and not a stack load!");
 
