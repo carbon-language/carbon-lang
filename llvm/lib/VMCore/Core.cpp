@@ -587,7 +587,7 @@ LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
                                       LLVMBool DontNullTerminate) {
   /* Inverted the sense of AddNull because ', 0)' is a
      better mnemonic for null termination than ', 1)'. */
-  return wrap(ConstantArray::get(*unwrap(C), std::string(Str, Length),
+  return wrap(ConstantArray::get(*unwrap(C), StringRef(Str, Length),
                                  DontNullTerminate == 0));
 }
 LLVMValueRef LLVMConstStructInContext(LLVMContextRef C, 
