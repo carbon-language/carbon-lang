@@ -33,7 +33,9 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -658,21 +660,13 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, AddrBase &Base,
       break;
     }
     case Instruction::Alloca: {
-      // TODO: Fix this to do intermediate loads, etc.
-      if (Offset != 0) return false;
-
       const AllocaInst *AI = cast<AllocaInst>(Obj);
-      DenseMap<const AllocaInst*, int>::iterator SI =
-        FuncInfo.StaticAllocaMap.find(AI);
-      if (SI != FuncInfo.StaticAllocaMap.end()) {
-        Base.Reg = ARM::SP;
-        Base.FrameIndex = SI->second;
-        return true;
-      }
-      // Don't handle dynamic allocas.
-      assert(!FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(Obj)) &&
-             "Alloca should have been handled earlier!");
-      return false;
+      unsigned Reg = TargetMaterializeAlloca(AI);
+
+      if (Reg == 0) return false;
+
+      Base.Reg = Reg;
+      return true;
     }
   }
 
@@ -766,6 +760,24 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
     TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
                              ResultReg, Base.FrameIndex, RC,
                              TM.getRegisterInfo());
+  else if (Base.Reg == ARM::SP) {
+    // TODO: This won't work for NEON.
+    unsigned FI = Base.FrameIndex;
+    MachineMemOperand *MMO =
+      FuncInfo.MF->getMachineMemOperand(
+                              MachinePointerInfo::getFixedStack(FI, Offset),
+                              MachineMemOperand::MOLoad,
+                              MFI.getObjectSize(FI),
+                              MFI.getObjectAlignment(FI));
+    if (isFloat || isThumb)
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(Opc), ResultReg)
+                    .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO));
+    else
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(Opc), ResultReg)
+                  .addFrameIndex(FI).addReg(0).addImm(Offset).addMemOperand(MMO));
+  }
   // The thumb and floating point instructions both take 2 operands, ARM takes
   // another register.
   else if (isFloat || isThumb)
@@ -838,6 +850,26 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
     TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
                             SrcReg, true /*isKill*/, Base.FrameIndex,
                             TLI.getRegClassFor(VT), TM.getRegisterInfo());
+  else if (Base.Reg == ARM::SP) {
+    // TODO: This won't work for NEON.
+    unsigned FI = Base.FrameIndex;
+    MachineMemOperand *MMO =
+      FuncInfo.MF->getMachineMemOperand(
+                              MachinePointerInfo::getFixedStack(FI, Offset),
+                              MachineMemOperand::MOStore,
+                              MFI.getObjectSize(FI),
+                              MFI.getObjectAlignment(FI));
+    if (isFloat || isThumb)
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(StrOpc))
+                      .addReg(SrcReg, getKillRegState(true))
+                      .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO));
+    else
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(StrOpc))
+		      .addReg(SrcReg,  getKillRegState(true))
+                .addFrameIndex(FI).addReg(0).addImm(Offset).addMemOperand(MMO));
+  }
   // The thumb addressing mode has operands swapped from the arm addressing
   // mode, the floating point one only has two operands.
   else if (isFloat || isThumb)
