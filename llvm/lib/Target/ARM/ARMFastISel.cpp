@@ -632,7 +632,7 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, AddrBase &Base,
             if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
               // Constant-offset addressing.
               TmpOffset += CI->getSExtValue() * S;
-            } else if (0 && isa<AddOperator>(Op) &&
+            } else if (isa<AddOperator>(Op) &&
                        isa<ConstantInt>(cast<AddOperator>(Op)->getOperand(1))) {
               // An add with a constant operand. Fold the constant.
               ConstantInt *CI =
