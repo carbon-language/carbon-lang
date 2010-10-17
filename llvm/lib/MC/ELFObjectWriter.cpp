@@ -472,10 +472,8 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
       const MCBinaryExpr *BE = static_cast<const MCBinaryExpr *>(ESize);
 
       if (BE->EvaluateAsRelocatable(Res, &Layout)) {
-        const llvm::MCSymbolRefExpr *A = Res.getSymA();
-        const llvm::MCSymbolRefExpr *B = Res.getSymA();
-        assert(!A || !A->getSymbol().isDefined());
-        assert(!B || !B->getSymbol().isDefined());
+        assert(!Res.getSymA() || !Res.getSymA()->getSymbol().isDefined());
+        assert(!Res.getSymB() || !Res.getSymB()->getSymbol().isDefined());
         Size = Res.getConstant();
       }
     } else if (ESize->getKind() == MCExpr::Constant) {
