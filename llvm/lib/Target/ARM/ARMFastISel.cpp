@@ -56,11 +56,6 @@ namespace {
 
 class ARMFastISel : public FastISel {
 
-  typedef struct AddrBase {
-    unsigned Reg;
-    unsigned FrameIndex;
-  } AddrBase;
-
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.
   const ARMSubtarget *Subtarget;
@@ -142,10 +137,10 @@ class ARMFastISel : public FastISel {
   private:
     bool isTypeLegal(const Type *Ty, EVT &VT);
     bool isLoadTypeLegal(const Type *Ty, EVT &VT);
-    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, AddrBase Base, int Offset);
-    bool ARMEmitStore(EVT VT, unsigned SrcReg, AddrBase Base, int Offset);
-    bool ARMComputeRegOffset(const Value *Obj, AddrBase &Base, int &Offset);
-    void ARMSimplifyRegOffset(AddrBase &Base, int &Offset, EVT VT);
+    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Base, int Offset);
+    bool ARMEmitStore(EVT VT, unsigned SrcReg, unsigned Base, int Offset);
+    bool ARMComputeRegOffset(const Value *Obj, unsigned &Base, int &Offset);
+    void ARMSimplifyRegOffset(unsigned &Base, int &Offset, EVT VT);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C, EVT VT);
     unsigned ARMMaterializeGV(const GlobalValue *GV, EVT VT);
@@ -567,7 +562,7 @@ bool ARMFastISel::isLoadTypeLegal(const Type *Ty, EVT &VT) {
 }
 
 // Computes the Reg+Offset to get to an object.
-bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, AddrBase &Base,
+bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Base,
                                       int &Offset) {
   // Some boilerplate from the X86 FastISel.
   const User *U = NULL;
@@ -612,7 +607,7 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, AddrBase &Base,
     }
     case Instruction::GetElementPtr: {
       int SavedOffset = Offset;
-      AddrBase SavedBase = Base;
+      unsigned SavedBase = Base;
       int TmpOffset = Offset;
 
       // Iterate through the GEP folding the constants into offsets where
@@ -665,7 +660,7 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, AddrBase &Base,
 
       if (Reg == 0) return false;
 
-      Base.Reg = Reg;
+      Base = Reg;
       return true;
     }
   }
@@ -676,20 +671,22 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, AddrBase &Base,
     unsigned Tmp = ARMMaterializeGV(GV, TLI.getValueType(Obj->getType()));
     if (Tmp == 0) return false;
 
-    Base.Reg = Tmp;
+    Base = Tmp;
     return true;
   }
 
   // Try to get this in a register if nothing else has worked.
-  if (Base.Reg == 0) Base.Reg = getRegForValue(Obj);
-  return Base.Reg != 0;
+  if (Base == 0) Base  = getRegForValue(Obj);
+  return Base != 0;
 }
 
-void ARMFastISel::ARMSimplifyRegOffset(AddrBase &Base, int &Offset, EVT VT) {
+void ARMFastISel::ARMSimplifyRegOffset(unsigned &Base, int &Offset, EVT VT) {
 
+  assert (Base != ARM::SP && "How'd we get a stack pointer here?");
+  
   // Since the offset may be too large for the load instruction
   // get the reg+offset into a register.
-  if (Base.Reg != ARM::SP && Offset != 0) {
+  if (Offset != 0) {
     ARMCC::CondCodes Pred = ARMCC::AL;
     unsigned PredReg = 0;
 
@@ -699,21 +696,21 @@ void ARMFastISel::ARMSimplifyRegOffset(AddrBase &Base, int &Offset, EVT VT) {
 
     if (!isThumb)
       emitARMRegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                              BaseReg, Base.Reg, Offset, Pred, PredReg,
+                              BaseReg, Base, Offset, Pred, PredReg,
                               static_cast<const ARMBaseInstrInfo&>(TII));
     else {
       assert(AFI->isThumb2Function());
       emitT2RegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                             BaseReg, Base.Reg, Offset, Pred, PredReg,
+                             BaseReg, Base, Offset, Pred, PredReg,
                              static_cast<const ARMBaseInstrInfo&>(TII));
     }
     Offset = 0;
-    Base.Reg = BaseReg;
+    Base = BaseReg;
   }
 }
 
 bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
-                              AddrBase Base, int Offset) {
+                              unsigned Base, int Offset) {
 
   assert(VT.isSimple() && "Non-simple types are invalid here!");
   unsigned Opc;
@@ -750,44 +747,24 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   }
 
   ResultReg = createResultReg(RC);
+  
+  // All SP loads should already have been lowered to another reg.
+  assert(Base != ARM::SP && "No stack stores this late!");
 
   // For now with the additions above the offset should be zero - thus we
   // can always fit into an i12.
-  assert((Base.Reg == ARM::SP || Offset == 0) &&
-          "Offset not zero and not a stack load!");
+  assert(Offset == 0 && "Offset should be zero at this point!");
 
-  if (Base.Reg == ARM::SP && Offset == 0)
-    TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
-                             ResultReg, Base.FrameIndex, RC,
-                             TM.getRegisterInfo());
-  else if (Base.Reg == ARM::SP) {
-    // TODO: This won't work for NEON.
-    unsigned FI = Base.FrameIndex;
-    MachineMemOperand *MMO =
-      FuncInfo.MF->getMachineMemOperand(
-                              MachinePointerInfo::getFixedStack(FI, Offset),
-                              MachineMemOperand::MOLoad,
-                              MFI.getObjectSize(FI),
-                              MFI.getObjectAlignment(FI));
-    if (isFloat || isThumb)
-      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                              TII.get(Opc), ResultReg)
-                    .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO));
-    else
-      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                              TII.get(Opc), ResultReg)
-                  .addFrameIndex(FI).addReg(0).addImm(Offset).addMemOperand(MMO));
-  }
   // The thumb and floating point instructions both take 2 operands, ARM takes
   // another register.
-  else if (isFloat || isThumb)
+  if (isFloat || isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
-                    .addReg(Base.Reg).addImm(Offset));
+                    .addReg(Base).addImm(Offset));
   else
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
-                    .addReg(Base.Reg).addReg(0).addImm(Offset));
+                    .addReg(Base).addReg(0).addImm(Offset));
   return true;
 }
 
@@ -798,7 +775,7 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
     return false;
 
   // Our register and offset with innocuous defaults.
-  AddrBase Base = { 0, 0 };
+  unsigned Base = 0;
   int Offset = 0;
 
   // See if we can handle this as Reg + Offset
@@ -815,7 +792,7 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
 }
 
 bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
-                               AddrBase Base, int Offset) {
+                               unsigned Base, int Offset) {
   unsigned StrOpc;
   bool isFloat = false;
   // VT is set here only for use in the alloca stores below - those are promoted
@@ -846,40 +823,23 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
       break;
   }
 
-  if (Base.Reg == ARM::SP && Offset == 0)
-    TII.storeRegToStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
-                            SrcReg, true /*isKill*/, Base.FrameIndex,
-                            TLI.getRegClassFor(VT), TM.getRegisterInfo());
-  else if (Base.Reg == ARM::SP) {
-    // TODO: This won't work for NEON.
-    unsigned FI = Base.FrameIndex;
-    MachineMemOperand *MMO =
-      FuncInfo.MF->getMachineMemOperand(
-                              MachinePointerInfo::getFixedStack(FI, Offset),
-                              MachineMemOperand::MOStore,
-                              MFI.getObjectSize(FI),
-                              MFI.getObjectAlignment(FI));
-    if (isFloat || isThumb)
-      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                              TII.get(StrOpc))
-                      .addReg(SrcReg, getKillRegState(true))
-                      .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO));
-    else
-      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                              TII.get(StrOpc))
-		      .addReg(SrcReg,  getKillRegState(true))
-                .addFrameIndex(FI).addReg(0).addImm(Offset).addMemOperand(MMO));
-  }
+  // All SP stores should already have been lowered to another reg.
+  assert(Base != ARM::SP && "No stack stores this late!");
+
+  // For now with the additions above the offset should be zero - thus we
+  // can always fit into an i12.
+  assert(Offset == 0 && "Offset should be zero at this point!");
+
   // The thumb addressing mode has operands swapped from the arm addressing
   // mode, the floating point one only has two operands.
-  else if (isFloat || isThumb)
+  if (isFloat || isThumb)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
-                    .addReg(SrcReg).addReg(Base.Reg).addImm(Offset));
+                    .addReg(SrcReg).addReg(Base).addImm(Offset));
   else
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
-                    .addReg(SrcReg).addReg(Base.Reg).addReg(0).addImm(Offset));
+                    .addReg(SrcReg).addReg(Base).addReg(0).addImm(Offset));
 
   return true;
 }
@@ -899,7 +859,7 @@ bool ARMFastISel::SelectStore(const Instruction *I) {
     return false;
 
   // Our register and offset with innocuous defaults.
-  AddrBase Base = { 0, 0 };
+  unsigned Base = 0;
   int Offset = 0;
 
   // See if we can handle this as Reg + Offset
