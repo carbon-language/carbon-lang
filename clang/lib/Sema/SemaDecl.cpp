@@ -3208,6 +3208,28 @@ static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD) {
   }
 }
 
+/// CheckClassMemberNameAttributes - Check for class member name checking
+/// attributes according to [dcl.attr.override]
+static void 
+CheckClassMemberNameAttributes(Sema& SemaRef, const FunctionDecl *FD) {
+  const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
+  if (!MD || !MD->isVirtual())
+    return;
+
+  bool HasOverrideAttr = MD->hasAttr<OverrideAttr>();
+  bool HasOverriddenMethods = 
+    MD->begin_overridden_methods() != MD->end_overridden_methods();
+
+  /// C++ [dcl.attr.override]p2:
+  ///   If a virtual member function f is marked override and does not override
+  ///   a member function of a base class the program is ill-formed.
+  if (HasOverrideAttr && !HasOverriddenMethods) {
+    SemaRef.Diag(MD->getLocation(), diag::err_override_function_not_overriding)
+      << MD->getDeclName();
+    return;
+  }
+}
+
 NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, TypeSourceInfo *TInfo,
@@ -3854,6 +3876,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     return FunctionTemplate;
 
   MarkUnusedFileScopedDecl(NewFD);
+
+  CheckClassMemberNameAttributes(*this, NewFD);
 
   return NewFD;
 }
@@ -6789,7 +6813,7 @@ void Sema::ActOnFields(Scope* S,
       // Flexible array member.
       // Microsoft is more permissive regarding flexible array.
       // It will accept flexible array in union and also
-	    // as the sole element of a struct/class.
+      // as the sole element of a struct/class.
       if (getLangOptions().Microsoft) {
         if (Record->isUnion()) 
           Diag(FD->getLocation(), diag::ext_flexible_array_union)

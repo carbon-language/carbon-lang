@@ -830,6 +830,10 @@ def err_final_function_overridden : Error<
 def err_final_base : Error<
   "derivation from 'final' %0">;
 
+// C++0x [[override]]
+def err_override_function_not_overriding : Error<
+  "%0 marked 'override' but does not override any member functions">;
+
 // C++0x scoped enumerations
 def err_enum_invalid_underlying : Error<
   "non-integral type %0 is an invalid underlying type">;
