@@ -402,7 +402,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
         {
 
             FileSpec bundle_executable(executable_sp->GetFileSpec());
-            if (Host::ResolveExecutableInBundle (&bundle_executable))
+            if (Host::ResolveExecutableInBundle (bundle_executable))
             {
                 ModuleSP bundle_exe_module_sp(GetSharedModule(bundle_executable,
                                                               exe_arch));

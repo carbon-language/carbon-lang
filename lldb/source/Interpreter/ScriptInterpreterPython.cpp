@@ -164,34 +164,42 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     // Find the module that owns this code and use that path we get to
     // set the PYTHONPATH appropriately.
 
-    FileSpec this_module (Host::GetModuleFileSpecForHostAddress ((void *)init_lldb));
-    std::string python_path;
-
-    if (this_module.GetDirectory())
+    FileSpec file_spec;
+    char python_dir_path[PATH_MAX];
+    if (Host::GetLLDBPath (ePathTypePythonDir, file_spec))
     {
-        // Append the directory that the module that loaded this code
-        // belongs to
-        python_path += this_module.GetDirectory().AsCString("");
-
-#if defined (__APPLE__)
-        // If we are running on MacOSX we might be in a framework and should
-        // add an appropriate path so Resource can be found in a bundle
-
-        if (::strstr(this_module.GetDirectory().AsCString(""), ".framework"))
+        std::string python_path;
+        const char *curr_python_path = ::getenv ("PYTHONPATH");
+        if (curr_python_path)
         {
-            python_path.append(1, ':');
-            python_path.append(this_module.GetDirectory().AsCString(""));
-            python_path.append("/Resources/Python");
+            // We have a current value for PYTHONPATH, so lets append to it
+            python_path.append (curr_python_path);
         }
-#endif
-        // The the PYTHONPATH environment variable so that Python can find
-        // our lldb.py module and our _lldb.so.
-        ::setenv ("PYTHONPATH", python_path.c_str(), 1);
+
+        if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
+        {
+            if (!python_path.empty())
+                python_path.append (1, ':');
+            python_path.append (python_dir_path);
+        }
+        
+        if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, file_spec))
+        {
+            if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
+            {
+                if (!python_path.empty())
+                    python_path.append (1, ':');
+                python_path.append (python_dir_path);
+            }
+        }
+        const char *pathon_path_env_cstr = python_path.c_str();
+        ::setenv ("PYTHONPATH", pathon_path_env_cstr, 1);
     }
 
     Py_Initialize ();
 
-    PyObject *compiled_module = Py_CompileString (embedded_interpreter_string, "embedded_interpreter.py",
+    PyObject *compiled_module = Py_CompileString (embedded_interpreter_string, 
+                                                  "embedded_interpreter.py",
                                                   Py_file_input);
 
     m_compiled_module = static_cast<void*>(compiled_module);
@@ -310,14 +318,15 @@ ScriptInterpreterPython::InputReaderCallback
             int input_fd;
             FILE *input_fh = reader.GetDebugger().GetInputFileHandle();
             if (input_fh != NULL)
-              input_fd = ::fileno (input_fh);
+                input_fd = ::fileno (input_fh);
             else
-              input_fd = STDIN_FILENO;
+                input_fd = STDIN_FILENO;
 
             script_interpreter->m_termios_valid = ::tcgetattr (input_fd, &script_interpreter->m_termios) == 0;
-            struct termios tmp_termios;
-            if (::tcgetattr (input_fd, &tmp_termios) == 0)
+            
+            if (script_interpreter->m_termios_valid)
             {
+                struct termios tmp_termios = script_interpreter->m_termios;
                 tmp_termios.c_cc[VEOF] = _POSIX_VDISABLE;
                 ::tcsetattr (input_fd, TCSANOW, &tmp_termios);
             }
@@ -352,9 +361,9 @@ ScriptInterpreterPython::InputReaderCallback
             int input_fd;
             FILE *input_fh = reader.GetDebugger().GetInputFileHandle();
             if (input_fh != NULL)
-              input_fd = ::fileno (input_fh);
+                input_fd = ::fileno (input_fh);
             else
-              input_fd = STDIN_FILENO;
+                input_fd = STDIN_FILENO;
             
             ::tcsetattr (input_fd, TCSANOW, &script_interpreter->m_termios);
         }

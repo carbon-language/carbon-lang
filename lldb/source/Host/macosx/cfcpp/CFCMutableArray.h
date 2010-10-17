@@ -29,6 +29,11 @@ public:
     const void *    GetValueAtIndex(CFIndex idx) const;
     bool            SetValueAtIndex(CFIndex idx, const void *value);
     bool            AppendValue(const void *value, bool can_create = true); // Appends value and optionally creates a CFCMutableArray if this class doesn't contain one
+    bool            AppendCStringAsCFString (const char *cstr, 
+                                             CFStringEncoding encoding = kCFStringEncodingUTF8, 
+                                             bool can_create = true);
+    bool            AppendFileSystemRepresentationAsCFString (const char *s, 
+                                                              bool can_create = true);
 };
 
 #endif // #ifndef CoreFoundationCPP_CFMutableArray_h_

@@ -33,7 +33,7 @@ static const char g_valid_pointer_check_text[] =
 "extern \"C\" void\n"
 "$__lldb_valid_pointer_check (unsigned char *$__lldb_arg_ptr)\n"
 "{\n"
-"    unsigned char $__lldb_local_val = *__lldb_arg_ptr;\n"
+"    unsigned char $__lldb_local_val = *$__lldb_arg_ptr;\n"
 "}";
 
 static bool FunctionExists(const SymbolContext &sym_ctx, const char *name)

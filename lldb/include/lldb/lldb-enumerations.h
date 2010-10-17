@@ -597,6 +597,19 @@ typedef enum SortOrder
     eSortOrderByName,
 } SortOrder;
 
+
+//----------------------------------------------------------------------
+// Used in conjunction with Host::GetLLDBResource () to find files that
+// are related to 
+//----------------------------------------------------------------------
+typedef enum PathType
+{
+    ePathTypeLLDBShlibDir,          // The directory where the lldb.so (unix) or LLDB mach-o file in LLDB.framework (MacOSX) exists
+    ePathTypeSupportExecutableDir,  // Find LLDB support executable directory (debugserver, etc)
+    ePathTypeHeaderDir,             // Find LLDB header file directory
+    ePathTypePythonDir              // Find Python modules (PYTHONPATH) directory
+} PathType;
+
 } // namespace lldb
 
 

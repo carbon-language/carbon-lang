@@ -21,6 +21,8 @@
 		261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */; };
 		261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
+		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
+		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		26424E3D125986CB0016D82C /* ValueObjectConstResult.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */; };
 		26424E3F125986D30016D82C /* ValueObjectConstResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 26424E3E125986D30016D82C /* ValueObjectConstResult.h */; };
 		264723A611FA076E00DE380C /* CleanUp.h in Headers */ = {isa = PBXBuildFile; fileRef = 264723A511FA076E00DE380C /* CleanUp.h */; };
@@ -415,6 +417,13 @@
 			remoteGlobalIDString = 26CE0593115C31C20022F371;
 			remoteInfo = debugserver;
 		};
+		26368AF5126B95FA00E8659F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26579F67126A25920007C5CB /* darwin-debug */;
+			remoteInfo = "darwin-debug";
+		};
 		266803611160110D008E1FE4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -562,6 +571,7 @@
 		261E18CD1148966100BADCD3 /* GDBRemoteRegisterContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GDBRemoteRegisterContext.cpp; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.cpp"; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; };
+		26368A3B126B697600E8659F /* darwin-debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "darwin-debug.cpp"; path = "tools/darwin-debug/darwin-debug.cpp"; sourceTree = "<group>"; };
 		263FEDA5112CC1DA00E4C208 /* ThreadSafeSTLMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeSTLMap.h; path = include/lldb/Core/ThreadSafeSTLMap.h; sourceTree = "<group>"; };
 		26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectConstResult.cpp; path = source/Core/ValueObjectConstResult.cpp; sourceTree = "<group>"; };
 		26424E3E125986D30016D82C /* ValueObjectConstResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectConstResult.h; path = include/lldb/Core/ValueObjectConstResult.h; sourceTree = "<group>"; };
@@ -570,6 +580,7 @@
 		264723A511FA076E00DE380C /* CleanUp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CleanUp.h; path = include/lldb/Utility/CleanUp.h; sourceTree = "<group>"; };
 		264AD83711095BA600E0B039 /* CommandObjectLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectLog.cpp; path = source/Commands/CommandObjectLog.cpp; sourceTree = "<group>"; };
 		264AD83911095BBD00E0B039 /* CommandObjectLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectLog.h; path = source/Commands/CommandObjectLog.h; sourceTree = "<group>"; };
+		26579F68126A25920007C5CB /* darwin-debug */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "darwin-debug"; sourceTree = BUILT_PRODUCTS_DIR; };
 		265ABF6210F42EE900531910 /* DebugSymbols.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DebugSymbols.framework; path = /System/Library/PrivateFrameworks/DebugSymbols.framework; sourceTree = "<absolute>"; };
 		265E9BE1115C2BAA00D0DCCB /* debugserver.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = debugserver.xcodeproj; path = tools/debugserver/debugserver.xcodeproj; sourceTree = "<group>"; };
 		2660D9F611922A1300958FBD /* StringExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractor.cpp; path = source/Utility/StringExtractor.cpp; sourceTree = "<group>"; };
@@ -1123,6 +1134,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		26579F66126A25920007C5CB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		26680205115FD0ED008E1FE4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -1196,6 +1214,7 @@
 			children = (
 				26F5C26A10F3D9A4009D5894 /* lldb */,
 				26680207115FD0ED008E1FE4 /* LLDB.framework */,
+				26579F68126A25920007C5CB /* darwin-debug */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1541,6 +1560,14 @@
 				9A35758D116CFE0F00E8ED2F /* SBValueList.cpp */,
 			);
 			name = API;
+			sourceTree = "<group>";
+		};
+		26579F55126A255E0007C5CB /* darwin-debug */ = {
+			isa = PBXGroup;
+			children = (
+				26368A3B126B697600E8659F /* darwin-debug.cpp */,
+			);
+			name = "darwin-debug";
 			sourceTree = "<group>";
 		};
 		265E9BE0115C2B8500D0DCCB /* debugserver */ = {
@@ -2112,6 +2139,7 @@
 		26F5C22410F3D950009D5894 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				26579F55126A255E0007C5CB /* darwin-debug */,
 				265E9BE0115C2B8500D0DCCB /* debugserver */,
 				26F5C22510F3D956009D5894 /* Driver */,
 			);
@@ -2397,6 +2425,22 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		26579F67126A25920007C5CB /* darwin-debug */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 26579F6D126A25BF0007C5CB /* Build configuration list for PBXNativeTarget "darwin-debug" */;
+			buildPhases = (
+				26579F65126A25920007C5CB /* Sources */,
+				26579F66126A25920007C5CB /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "darwin-debug";
+			productName = "lldb-launcher";
+			productReference = 26579F68126A25920007C5CB /* darwin-debug */;
+			productType = "com.apple.product-type.tool";
+		};
 		26680206115FD0ED008E1FE4 /* LLDB */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2668020B115FD0EE008E1FE4 /* Build configuration list for PBXNativeTarget "LLDB" */;
@@ -2414,6 +2458,7 @@
 			);
 			dependencies = (
 				262CFC7211A450CB00946C6C /* PBXTargetDependency */,
+				26368AF6126B95FA00E8659F /* PBXTargetDependency */,
 			);
 			name = LLDB;
 			productName = LLDB;
@@ -2462,6 +2507,7 @@
 			targets = (
 				26F5C26910F3D9A4009D5894 /* lldb-tool */,
 				26680206115FD0ED008E1FE4 /* LLDB */,
+				26579F67126A25920007C5CB /* darwin-debug */,
 			);
 		};
 /* End PBXProject section */
@@ -2482,6 +2528,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				262CFC7711A4510000946C6C /* debugserver in Resources */,
+				26368AF7126B960500E8659F /* darwin-debug in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2557,6 +2604,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		26579F65126A25920007C5CB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		26680204115FD0ED008E1FE4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2885,6 +2940,11 @@
 			name = debugserver;
 			targetProxy = 262CFC7111A450CB00946C6C /* PBXContainerItemProxy */;
 		};
+		26368AF6126B95FA00E8659F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26579F67126A25920007C5CB /* darwin-debug */;
+			targetProxy = 26368AF5126B95FA00E8659F /* PBXContainerItemProxy */;
+		};
 		266803621160110D008E1FE4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 26680206115FD0ED008E1FE4 /* LLDB */;
@@ -2943,6 +3003,48 @@
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = Release;
+		};
+		26579F6A126A25920007C5CB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = "darwin-debug";
+			};
+			name = Debug;
+		};
+		26579F6B126A25920007C5CB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = "darwin-debug";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		26579F6C126A25920007C5CB /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = "darwin-debug";
+			};
+			name = BuildAndIntegration;
 		};
 		26680209115FD0ED008E1FE4 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -3247,6 +3349,16 @@
 				1DEB91F008733DB70010E9CD /* Debug */,
 				1DEB91F108733DB70010E9CD /* Release */,
 				268A89B211963ECA00D953EB /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
+		};
+		26579F6D126A25BF0007C5CB /* Build configuration list for PBXNativeTarget "darwin-debug" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26579F6A126A25920007C5CB /* Debug */,
+				26579F6B126A25920007C5CB /* Release */,
+				26579F6C126A25920007C5CB /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;

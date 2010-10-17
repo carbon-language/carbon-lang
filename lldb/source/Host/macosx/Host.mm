@@ -8,10 +8,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/Host.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/StreamFile.h"
+#include "lldb/Core/StreamString.h"
 
 #include "cfcpp/CFCBundle.h"
+#include "cfcpp/CFCMutableArray.h"
 #include "cfcpp/CFCMutableDictionary.h"
 #include "cfcpp/CFCReleaser.h"
 #include "cfcpp/CFCString.h"
@@ -90,26 +98,26 @@ Host::ThreadCreated (const char *thread_name)
 
 
 bool
-Host::ResolveExecutableInBundle (FileSpec *file)
+Host::ResolveExecutableInBundle (FileSpec &file)
 {
 #if defined (__APPLE__)
-  if (file->GetFileType () == FileSpec::eFileTypeDirectory)
-  {
-    char path[PATH_MAX];
-    if (file->GetPath(path, sizeof(path)))
+    if (file.GetFileType () == FileSpec::eFileTypeDirectory)
     {
-      CFCBundle bundle (path);
-      CFCReleaser<CFURLRef> url(bundle.CopyExecutableURL ());
-      if (url.get())
-      {
-        if (::CFURLGetFileSystemRepresentation (url.get(), YES, (UInt8*)path, sizeof(path)))
+        char path[PATH_MAX];
+        if (file.GetPath(path, sizeof(path)))
         {
-          file->SetFile(path);
-          return true;
+            CFCBundle bundle (path);
+            CFCReleaser<CFURLRef> url(bundle.CopyExecutableURL ());
+            if (url.get())
+            {
+                if (::CFURLGetFileSystemRepresentation (url.get(), YES, (UInt8*)path, sizeof(path)))
+                {
+                    file.SetFile(path);
+                    return true;
+                }
+            }
         }
-      }
     }
-  }
 #endif
   return false;
 }
@@ -124,8 +132,8 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
     ::bzero (&app_params, sizeof (app_params));
     app_params.flags = kLSLaunchDefaults | 
                        kLSLaunchDontAddToRecents | 
-                       kLSLaunchDontSwitch |
-                       kLSLaunchNewInstance;// | 0x00001000;
+                       kLSLaunchNewInstance;
+    
     
     FSRef app_fsref;
     CFCString app_cfstr (app_path, kCFStringEncodingUTF8);
@@ -141,6 +149,122 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
     ProcessSerialNumber psn;
 
     error = ::LSOpenApplication (&app_params, &psn);
+
+    if (error != noErr)
+        return LLDB_INVALID_PROCESS_ID;
+
+    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
+    error = ::GetProcessPID(&psn, &pid);
+    return pid;
+}
+
+lldb::pid_t
+Host::LaunchInNewTerminal 
+(
+    const char **argv, 
+    const char **envp,
+    const ArchSpec *arch_spec,
+    bool stop_at_entry,
+    bool disable_aslr
+)
+{
+    if (!argv || !argv[0])
+        return LLDB_INVALID_PROCESS_ID;
+
+    OSStatus error = 0;
+    
+    FileSpec program (argv[0]);
+    
+    
+    char temp_file_path[PATH_MAX];
+    const char *tmpdir = ::getenv ("TMPDIR");
+    if (tmpdir == NULL)
+        tmpdir = "/tmp/";
+    ::snprintf (temp_file_path, sizeof(temp_file_path), "%s%s-XXXXXX", tmpdir, program.GetFilename().AsCString());
+    
+    if (::mktemp (temp_file_path) == NULL)
+        return LLDB_INVALID_PROCESS_ID;
+
+    ::strncat (temp_file_path, ".command", sizeof (temp_file_path));
+
+    StreamFile command_file (temp_file_path, "w");
+    
+    FileSpec darwin_debug_file_spec;
+    if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
+        return LLDB_INVALID_PROCESS_ID;
+    darwin_debug_file_spec.GetFilename().SetCString("darwin-debug");
+        
+    if (!darwin_debug_file_spec.Exists())
+        return LLDB_INVALID_PROCESS_ID;
+    
+    char launcher_path[PATH_MAX];
+    darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
+    command_file.Printf("\"%s\" ", launcher_path);
+    
+    if (arch_spec && arch_spec->IsValid())
+    {
+        command_file.Printf("--arch=%s ", arch_spec->AsCString());
+    }
+
+    if (disable_aslr)
+    {
+        command_file.PutCString("--disable-aslr ");
+    }
+        
+    command_file.PutCString("-- ");
+
+    if (argv)
+    {
+        for (size_t i=0; argv[i] != NULL; ++i)
+        {
+            command_file.Printf("\"%s\" ", argv[i]);
+        }
+    }
+    command_file.EOL();
+    command_file.Close();
+    if (::chmod (temp_file_path, S_IRWXU | S_IRWXG) != 0)
+        return LLDB_INVALID_PROCESS_ID;
+            
+    CFCMutableDictionary cf_env_dict;
+    
+    const bool can_create = true;
+    if (envp)
+    {
+        for (size_t i=0; envp[i] != NULL; ++i)
+        {
+            const char *env_entry = envp[i];            
+            const char *equal_pos = strchr(env_entry, '=');
+            if (equal_pos)
+            {
+                std::string env_key (env_entry, equal_pos);
+                std::string env_val (equal_pos + 1);
+                CFCString cf_env_key (env_key.c_str(), kCFStringEncodingUTF8);
+                CFCString cf_env_val (env_val.c_str(), kCFStringEncodingUTF8);
+                cf_env_dict.AddValue (cf_env_key.get(), cf_env_val.get(), can_create);
+            }
+        }
+    }
+    
+    LSApplicationParameters app_params;
+    ::bzero (&app_params, sizeof (app_params));
+    app_params.flags = kLSLaunchDontAddToRecents | kLSLaunchAsync;
+    app_params.argv = NULL;
+    app_params.environment = (CFDictionaryRef)cf_env_dict.get();
+
+    CFCReleaser<CFURLRef> command_file_url (::CFURLCreateFromFileSystemRepresentation (NULL, 
+                                                                                       (const UInt8 *)temp_file_path, 
+                                                                                       strlen (temp_file_path), 
+                                                                                       false));
+    
+    CFCMutableArray urls;
+    
+    // Terminal.app will open the ".command" file we have created
+    // and run our process inside it which will wait at the entry point
+    // for us to attach.
+    urls.AppendValue(command_file_url.get());
+
+    ProcessSerialNumber psn;
+    error = LSOpenURLsWithRole(urls.get(), kLSRolesShell, NULL, &app_params, &psn, 1);
 
     if (error != noErr)
         return LLDB_INVALID_PROCESS_ID;

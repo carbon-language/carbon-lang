@@ -626,11 +626,139 @@ Host::GetModuleFileSpecForHostAddress (const void *host_addr)
 
 #if !defined (__APPLE__) // see Host.mm
 bool
-Host::ResolveExecutableInBundle (FileSpec *file)
+Host::ResolveExecutableInBundle (FileSpec &file)
 {
-  return false;
+    return false;
 }
 #endif
+
+
+bool
+Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
+{
+    // To get paths related to LLDB we get the path to the exectuable that
+    // contains this function. On MacOSX this will be "LLDB.framework/.../LLDB",
+    // on linux this is assumed to be the "lldb" main executable. If LLDB on
+    // linux is actually in a shared library (lldb.so??) then this function will
+    // need to be modified to "do the right thing".
+
+    switch (path_type)
+    {
+    case ePathTypeLLDBShlibDir:
+        {
+            static ConstString g_lldb_so_dir;
+            if (!g_lldb_so_dir)
+            {
+                FileSpec lldb_file_spec (Host::GetModuleFileSpecForHostAddress ((void *)Host::GetLLDBPath));
+                g_lldb_so_dir = lldb_file_spec.GetDirectory();
+            }
+            file_spec.GetDirectory() = g_lldb_so_dir;
+            return file_spec.GetDirectory();
+        }
+        break;
+
+    case ePathTypeSupportExecutableDir:  
+        {
+            static ConstString g_lldb_support_exe_dir;
+            if (!g_lldb_support_exe_dir)
+            {
+                FileSpec lldb_file_spec;
+                if (GetLLDBPath (ePathTypeLLDBShlibDir, lldb_file_spec))
+                {
+                    char raw_path[PATH_MAX];
+                    char resolved_path[PATH_MAX];
+                    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+
+#if defined (__APPLE__)
+                    char *framework_pos = ::strstr (raw_path, "LLDB.framework");
+                    if (framework_pos)
+                    {
+                        framework_pos += strlen("LLDB.framework");
+                        ::strncpy (framework_pos, "/Resources", PATH_MAX - (framework_pos - raw_path));
+                    }
+#endif
+                    FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
+                    g_lldb_support_exe_dir.SetCString(resolved_path);
+                }
+            }
+            file_spec.GetDirectory() = g_lldb_support_exe_dir;
+            return file_spec.GetDirectory();
+        }
+        break;
+
+    case ePathTypeHeaderDir:
+        {
+            static ConstString g_lldb_headers_dir;
+            if (!g_lldb_headers_dir)
+            {
+#if defined (__APPLE__)
+                FileSpec lldb_file_spec;
+                if (GetLLDBPath (ePathTypeLLDBShlibDir, lldb_file_spec))
+                {
+                    char raw_path[PATH_MAX];
+                    char resolved_path[PATH_MAX];
+                    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+
+                    char *framework_pos = ::strstr (raw_path, "LLDB.framework");
+                    if (framework_pos)
+                    {
+                        framework_pos += strlen("LLDB.framework");
+                        ::strncpy (framework_pos, "/Headers", PATH_MAX - (framework_pos - raw_path));
+                    }
+                    FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
+                    g_lldb_headers_dir.SetCString(resolved_path);
+                }
+#else
+                // TODO: Anyone know how we can determine this for linux??
+                g_lldb_headers_dir.SetCString ("/opt/local/include/lldb");
+#endif
+            }
+            file_spec.GetDirectory() = g_lldb_headers_dir;
+            return file_spec.GetDirectory();
+        }
+        break;
+
+    case ePathTypePythonDir:                
+        {
+            // TODO: Anyone know how we can determine this for linux??
+            // For linux we are currently assuming the location of the lldb
+            // binary that contains this function is the directory that will 
+            // contain lldb.so, lldb.py and embedded_interpreter.py...
+
+            static ConstString g_lldb_python_dir;
+            if (!g_lldb_python_dir)
+            {
+                FileSpec lldb_file_spec;
+                if (GetLLDBPath (ePathTypeLLDBShlibDir, lldb_file_spec))
+                {
+                    char raw_path[PATH_MAX];
+                    char resolved_path[PATH_MAX];
+                    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+
+#if defined (__APPLE__)
+                    char *framework_pos = ::strstr (raw_path, "LLDB.framework");
+                    if (framework_pos)
+                    {
+                        framework_pos += strlen("LLDB.framework");
+                        ::strncpy (framework_pos, "/Resources/Python", PATH_MAX - (framework_pos - raw_path));
+                    }
+#endif
+                    FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
+                    g_lldb_python_dir.SetCString(resolved_path);
+                }
+            }
+            file_spec.GetDirectory() = g_lldb_python_dir;
+            return file_spec.GetDirectory();
+        }
+        break;
+    
+    default:
+        assert (!"Unhandled PathType");
+        break;
+    }
+
+    return false;
+}
 
 uint32_t
 Host::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
@@ -727,4 +855,25 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
 {
     return false;
 }
+
+
+lldb::pid_t
+LaunchApplication (const FileSpec &app_file_spec)
+{
+    return LLDB_INVALID_PROCESS_ID;
+}
+
+lldb::pid_t
+Host::LaunchInNewTerminal 
+(
+    const char **argv, 
+    const char **envp,
+    const ArchSpec *arch_spec,
+    bool stop_at_entry,
+    bool disable_aslr
+)
+{
+    return LLDB_INVALID_PROCESS_ID;
+}
+
 #endif

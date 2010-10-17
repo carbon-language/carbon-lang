@@ -574,42 +574,37 @@ FileSpec::GetFilename() const
 bool
 FileSpec::GetPath(char *path, size_t max_path_length) const
 {
-    if (max_path_length == 0)
-        return false;
-
+    if (max_path_length)
+    {
+        const char *dirname = m_directory.AsCString();
+        const char *filename = m_filename.AsCString();
+        if (dirname)
+        {
+            if (filename)
+            {
+                return (size_t)::snprintf (path, max_path_length, "%s/%s", dirname, filename) < max_path_length;
+            }
+            else
+            {
+                size_t dir_len = m_directory.GetLength() + 1;
+                if (dir_len < max_path_length)
+                {
+                    ::memcpy (path, dirname, dir_len);
+                    return true;
+                }
+            }
+        }
+        else if (filename)
+        {
+            size_t filename_len = m_filename.GetLength() + 1;
+            if (filename_len < max_path_length)
+            {
+                ::memcpy (path, filename, filename_len);
+                return true;
+            }
+        }
+    }
     path[0] = '\0';
-    const char *dirname = m_directory.AsCString();
-    const char *filename = m_filename.AsCString();
-    if (dirname)
-    {
-        if (filename && filename[0])
-        {
-            return (size_t)::snprintf (path, max_path_length, "%s/%s", dirname, filename) < max_path_length;
-        }
-        else
-        {
-            ::strncpy (path, dirname, max_path_length);
-        }
-    }
-    else if (filename)
-    {
-        ::strncpy (path, filename, max_path_length);
-    }
-    else
-    {
-        return false;
-    }
-
-    // Any code paths that reach here assume that strncpy, or a similar function was called
-    // where any remaining bytes will be filled with NULLs and that the string won't be
-    // NULL terminated if it won't fit in the buffer.
-
-    // If the last character is NULL, then all went well
-    if (path[max_path_length-1] == '\0')
-        return true;
-
-        // Make sure the path is terminated, as it didn't fit into "path"
-    path[max_path_length-1] = '\0';
     return false;
 }
 

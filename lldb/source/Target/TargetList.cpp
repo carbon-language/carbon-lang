@@ -75,7 +75,7 @@ TargetList::CreateTarget
         if (!resolved_file.Exists())
             resolved_file.ResolveExecutableLocation ();
             
-        if (!Host::ResolveExecutableInBundle (&resolved_file))
+        if (!Host::ResolveExecutableInBundle (resolved_file))
             resolved_file = file;
 
         error = ModuleList::GetSharedModule(resolved_file, 

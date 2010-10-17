@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CFCMutableArray.h"
+#include "CFCString.h"
 
 //----------------------------------------------------------------------
 // CFCString constructor
@@ -117,6 +118,48 @@ CFCMutableArray::AppendValue(const void *value, bool can_create)
     if (array != NULL)
     {
         ::CFArrayAppendValue(array, value);
+        return true;
+    }
+    return false;
+}
+
+
+bool
+CFCMutableArray::AppendCStringAsCFString (const char *s, CFStringEncoding encoding, bool can_create)
+{
+    CFMutableArrayRef array = get();
+    if (array == NULL)
+    {
+        if (can_create == false)
+            return false;
+        array = ::CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+        reset ( array );
+    }
+    if (array != NULL)
+    {
+        CFCString cf_str (s, encoding);
+        ::CFArrayAppendValue (array, cf_str.get());
+        return true;
+    }
+    return false;
+}
+
+bool
+CFCMutableArray::AppendFileSystemRepresentationAsCFString (const char *s, bool can_create)
+{
+    CFMutableArrayRef array = get();
+    if (array == NULL)
+    {
+        if (can_create == false)
+            return false;
+        array = ::CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+        reset ( array );
+    }
+    if (array != NULL)
+    {
+        CFCString cf_path;
+        cf_path.SetFileSystemRepresentation(s);
+        ::CFArrayAppendValue (array, cf_path.get());
         return true;
     }
     return false;

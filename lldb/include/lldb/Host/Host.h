@@ -256,8 +256,46 @@ public:
     static FileSpec
     GetModuleFileSpecForHostAddress (const void *host_addr);
 
+
+    //------------------------------------------------------------------
+    /// When executable files may live within a directory, where the 
+    /// directory represents an executable bundle (like the MacOSX 
+    /// app bundles), the locate the executable within the containing
+    /// bundle.
+    ///
+    /// @param[in,out] file
+    ///     A file spec that currently points to the bundle that will
+    ///     be filled in with the executable path within the bundle
+    ///     if \b true is returned. Otherwise \a file is left untouched.
+    ///
+    /// @return
+    ///     \b true if \a file was resolved, \b false if this function
+    ///     was not able to resolve the path.
+    //------------------------------------------------------------------
     static bool
-    ResolveExecutableInBundle (FileSpec *file);
+    ResolveExecutableInBundle (FileSpec &file);
+
+    //------------------------------------------------------------------
+    /// Find a resource files that are related to LLDB.
+    ///
+    /// Operating systems have different ways of storing shared 
+    /// libraries and related resources. This function abstracts the
+    /// access to these paths.
+    ///
+    /// @param[in] path_type
+    ///     The type of LLDB resource path you are looking for. If the
+    ///     enumeration ends with "Dir", then only the \a file_spec's 
+    ///     directory member gets filled in.
+    ///
+    /// @param[in] file_spec
+    ///     A file spec that gets filled in with the appriopriate path.
+    ///
+    /// @return
+    ///     \b true if \a resource_path was resolved, \a false otherwise.
+    //------------------------------------------------------------------
+    static bool
+    GetLLDBPath (lldb::PathType path_type,
+                 FileSpec &file_spec);
 
     static uint32_t
     ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
@@ -269,7 +307,14 @@ public:
     GetArchSpecForExistingProcess (const char *process_name);
     
     static lldb::pid_t
-    LaunchApplication (const FileSpec &file_spec);
+    LaunchApplication (const FileSpec &app_file_spec);
+
+    static lldb::pid_t
+    LaunchInNewTerminal (const char **argv,   // argv[0] is executable
+                         const char **envp,
+                         const ArchSpec *arch_spec,
+                         bool stop_at_entry,
+                         bool disable_aslr);
     
     static bool
     OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no);
