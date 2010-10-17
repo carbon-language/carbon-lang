@@ -35,7 +35,6 @@ add_clang_executable(clang
 
 if(UNIX)
   set(CLANGXX_LINK_OR_COPY create_symlink)
-  set(CLANGXX_DESTDIR $ENV{DESTDIR}/)
 else()
   set(CLANGXX_LINK_OR_COPY copy)
 endif()
@@ -51,4 +50,4 @@ install(TARGETS clang
   RUNTIME DESTINATION bin)
 
 # Create the clang++ symlink at installation time.
-install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E ${CLANGXX_LINK_OR_COPY} \"${CMAKE_INSTALL_PREFIX}/bin/clang${CMAKE_EXECUTABLE_SUFFIX}\" \"${CLANGXX_DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/clang++${CMAKE_EXECUTABLE_SUFFIX}\")")
+install(SCRIPT clang_symlink.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
