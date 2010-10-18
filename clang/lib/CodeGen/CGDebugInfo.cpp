@@ -102,6 +102,8 @@ llvm::StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
   const DeclContext *DC = OMD->getDeclContext();
   if (const ObjCImplementationDecl *OID = dyn_cast<const ObjCImplementationDecl>(DC)) {
      OS << OID->getName();
+  } else if (const ObjCInterfaceDecl *OID = dyn_cast<const ObjCInterfaceDecl>(DC)) {
+      OS << OID->getName();
   } else if (const ObjCCategoryImplDecl *OCD = dyn_cast<const ObjCCategoryImplDecl>(DC)){
       OS << ((NamedDecl *)OCD)->getIdentifier()->getNameStart() << '(' <<
           OCD->getIdentifier()->getNameStart() << ')';
