@@ -1469,6 +1469,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_spell_checking))
     CmdArgs.push_back("-fno-spell-checking");
 
+
+  // -fasm-blocks is disallowed except on X86, where we just ignore it.
+  if (Args.hasFlag(options::OPT_fasm_blocks, options::OPT_fno_asm_blocks,
+                   false)) {
+    if (getToolChain().getTriple().getArch() != llvm::Triple::x86 &&
+        getToolChain().getTriple().getArch() != llvm::Triple::x86_64)
+      D.Diag(clang::diag::err_drv_clang_unsupported_per_platform)
+        << "-fasm-blocks";
+  }
+
+  // -fasm-blocks is disallowed except on X86, where we just ignore it.
+
   if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
     A->render(Args, CmdArgs);
 
@@ -1577,7 +1589,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     (*it)->claim();
     D.Diag(clang::diag::warn_drv_clang_unsupported) << (*it)->getAsString(Args);
   }
-
+  
   // Claim some arguments which clang supports automatically.
 
   // -fpch-preprocess is used with gcc to add a special marker in the output to
