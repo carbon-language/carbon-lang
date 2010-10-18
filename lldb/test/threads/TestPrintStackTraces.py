@@ -35,7 +35,7 @@ class ThreadsStackTracesTestCase(TestBase):
             self.fail("SBTarget.LaunchProcess() failed")
 
         if self.process.GetState() != lldb.eStateStopped:
-            self.fail("Process should be in the 'Stopped' state, "
+            self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
                       lldbutil.StateTypeString(self.process.GetState()))
 

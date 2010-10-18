@@ -58,7 +58,7 @@ class ArrayTypesTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is Stopped',
+            substrs = ['state is stopped',
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
@@ -116,7 +116,7 @@ class ArrayTypesTestCase(TestBase):
         # Sanity check the print representation of process.
         proc = repr(self.process)
         self.expect(proc, msg="Process looks good", exe=False,
-            substrs = ["state = Stopped",
+            substrs = ["state = stopped",
                        "executable = a.out"])
 
         # The stop reason of the thread should be breakpoint.

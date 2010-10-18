@@ -52,7 +52,7 @@ class BitfieldsTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is Stopped',
+            substrs = ['state is stopped',
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.

@@ -80,7 +80,7 @@ class ClassTypesTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is Stopped',
+            substrs = ['state is stopped',
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
@@ -127,7 +127,7 @@ class ClassTypesTestCase(TestBase):
             self.fail("SBTarget.LaunchProcess() failed")
 
         if self.process.GetState() != lldb.eStateStopped:
-            self.fail("Process should be in the 'Stopped' state, "
+            self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
                       lldbutil.StateTypeString(self.process.GetState()))
 
@@ -167,7 +167,7 @@ class ClassTypesTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is Stopped',
+            substrs = ['state is stopped',
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.

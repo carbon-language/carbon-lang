@@ -42,10 +42,10 @@ class StdCXXDisassembleTestCase(TestBase):
         target = self.dbg.GetSelectedTarget()
         process = target.GetProcess()
 
-        # The process should be in a 'Stopped' state.
+        # The process should be in a 'stopped' state.
         self.expect(repr(process), STOPPED_DUE_TO_BREAKPOINT, exe=False,
             substrs = ["a.out",
-                       "Stopped"])
+                       "stopped"])
 
         # Disassemble the functions on the call stack.
         self.runCmd("thread backtrace")

@@ -30,7 +30,7 @@ class LoadUnloadTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint and at a_function.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is Stopped',
+            substrs = ['state is stopped',
                        'a_function',
                        'stop reason = breakpoint'])
 
@@ -42,7 +42,7 @@ class LoadUnloadTestCase(TestBase):
         # The stop reason of the thread should be breakpoint and at a_function.
         self.runCmd("continue")
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is Stopped',
+            substrs = ['state is stopped',
                        'a_function',
                        'stop reason = breakpoint'])
 

@@ -43,7 +43,7 @@ class SendSignalTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is Stopped',
+            substrs = ['state is stopped',
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
@@ -52,7 +52,7 @@ class SendSignalTestCase(TestBase):
 
         self.runCmd("process status")
         output = self.res.GetOutput()
-        pid = re.match("Process (.*) Stopped", output).group(1)
+        pid = re.match("Process (.*) stopped", output).group(1)
 
         # After resuming the process, send it a SIGUSR1 signal.
 
@@ -73,7 +73,7 @@ class SendSignalTestCase(TestBase):
         # Make the interaction mode be synchronous again.
         self.dbg.SetAsync(False)
         self.expect("process status", STOPPED_DUE_TO_SIGNAL,
-            startstr = "Process %s Stopped" % pid,
+            startstr = "Process %s stopped" % pid,
             substrs = ['stop reason = signal SIGUSR1'])
         self.expect("thread backtrace", STOPPED_DUE_TO_SIGNAL,
             substrs = ['stop reason = signal SIGUSR1'])
