@@ -43,3 +43,9 @@ void test_C(C *c) {
 // CHECK-CC3: ObjCInstanceMethodDecl:{ResultType id}{TypedText method3:}{Placeholder ^int(void)b} (20)
 // RUN: c-index-test -code-completion-at=%s:33:6 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: ObjCInstanceMethodDecl:{ResultType id}{TypedText method4:}{Placeholder ^(void)arg} (20)
+// RUN: c-index-test -code-completion-at=%s:25:15 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// CHECK-CC5: TypedefDecl:{TypedText block_t} (50)
+// CHECK-CC5: TypedefDecl:{TypedText Class} (50)
+// CHECK-CC5-NOT: test_A
+// CHECK-CC5: {TypedText union} (50)
+
