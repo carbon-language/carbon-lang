@@ -36,6 +36,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -187,9 +188,10 @@ namespace {
     /// pointerInvalidatedByLoop - Return true if the body of this loop may
     /// store into the memory location pointed to by V.
     ///
-    bool pointerInvalidatedByLoop(Value *V, unsigned Size) {
+    bool pointerInvalidatedByLoop(Value *V, unsigned Size,
+                                  const MDNode *TBAAInfo) {
       // Check to see if any of the basic blocks in CurLoop invalidate *V.
-      return CurAST->getAliasSetForPointer(V, Size).isMod();
+      return CurAST->getAliasSetForPointer(V, Size, TBAAInfo).isMod();
     }
 
     bool canSinkOrHoistInst(Instruction &I);
@@ -402,7 +404,8 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
     unsigned Size = 0;
     if (LI->getType()->isSized())
       Size = AA->getTypeStoreSize(LI->getType());
-    return !pointerInvalidatedByLoop(LI->getOperand(0), Size);
+    return !pointerInvalidatedByLoop(LI->getOperand(0), Size,
+                                     LI->getMetadata(LLVMContext::MD_tbaa));
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Handle obvious cases efficiently.
     AliasAnalysis::ModRefBehavior Behavior = AA->getModRefBehavior(CI);

@@ -41,9 +41,10 @@ class AliasSet : public ilist_node<AliasSet> {
     PointerRec **PrevInList, *NextInList;
     AliasSet *AS;
     unsigned Size;
+    const MDNode *TBAAInfo;
   public:
     PointerRec(Value *V)
-      : Val(V), PrevInList(0), NextInList(0), AS(0), Size(0) {}
+      : Val(V), PrevInList(0), NextInList(0), AS(0), Size(0), TBAAInfo(0) {}
 
     Value *getValue() const { return Val; }
     
@@ -55,11 +56,18 @@ class AliasSet : public ilist_node<AliasSet> {
       return &NextInList;
     }
 
-    void updateSize(unsigned NewSize) {
+    void updateSizeAndTBAAInfo(unsigned NewSize, const MDNode *NewTBAAInfo) {
       if (NewSize > Size) Size = NewSize;
+
+      if (!TBAAInfo)
+        TBAAInfo = NewTBAAInfo;
+      else if (TBAAInfo != NewTBAAInfo)
+        TBAAInfo = reinterpret_cast<const MDNode *>(-1);
     }
 
     unsigned getSize() const { return Size; }
+
+    const MDNode *getTBAAInfo() const { return TBAAInfo; }
 
     AliasSet *getAliasSet(AliasSetTracker &AST) {
       assert(AS && "No AliasSet yet!");
@@ -187,6 +195,7 @@ public:
 
     Value *getPointer() const { return CurNode->getValue(); }
     unsigned getSize() const { return CurNode->getSize(); }
+    const MDNode *getTBAAInfo() const { return CurNode->getTBAAInfo(); }
 
     iterator& operator++() {                // Preincrement
       assert(CurNode && "Advancing past AliasSet.end()!");
@@ -231,6 +240,7 @@ private:
   void removeFromTracker(AliasSetTracker &AST);
 
   void addPointer(AliasSetTracker &AST, PointerRec &Entry, unsigned Size,
+                  const MDNode *TBAAInfo,
                   bool KnownMustAlias = false);
   void addCallSite(CallSite CS, AliasAnalysis &AA);
   void removeCallSite(CallSite CS) {
@@ -245,7 +255,8 @@ private:
   /// aliasesPointer - Return true if the specified pointer "may" (or must)
   /// alias one of the members in the set.
   ///
-  bool aliasesPointer(const Value *Ptr, unsigned Size, AliasAnalysis &AA) const;
+  bool aliasesPointer(const Value *Ptr, unsigned Size, const MDNode *TBAAInfo,
+                      AliasAnalysis &AA) const;
   bool aliasesCallSite(CallSite CS, AliasAnalysis &AA) const;
 };
 
@@ -298,7 +309,7 @@ public:
   /// These methods return true if inserting the instruction resulted in the
   /// addition of a new alias set (i.e., the pointer did not alias anything).
   ///
-  bool add(Value *Ptr, unsigned Size);  // Add a location
+  bool add(Value *Ptr, unsigned Size, const MDNode *TBAAInfo); // Add a location
   bool add(LoadInst *LI);
   bool add(StoreInst *SI);
   bool add(VAArgInst *VAAI);
@@ -312,7 +323,8 @@ public:
   /// remove methods - These methods are used to remove all entries that might
   /// be aliased by the specified instruction.  These methods return true if any
   /// alias sets were eliminated.
-  bool remove(Value *Ptr, unsigned Size);  // Remove a location
+  // Remove a location
+  bool remove(Value *Ptr, unsigned Size, const MDNode *TBAAInfo);
   bool remove(LoadInst *LI);
   bool remove(StoreInst *SI);
   bool remove(VAArgInst *VAAI);
@@ -332,18 +344,21 @@ public:
   /// lives in.  If the New argument is non-null, this method sets the value to
   /// true if a new alias set is created to contain the pointer (because the
   /// pointer didn't alias anything).
-  AliasSet &getAliasSetForPointer(Value *P, unsigned Size, bool *New = 0);
+  AliasSet &getAliasSetForPointer(Value *P, unsigned Size,
+                                  const MDNode *TBAAInfo,
+                                  bool *New = 0);
 
   /// getAliasSetForPointerIfExists - Return the alias set containing the
   /// location specified if one exists, otherwise return null.
-  AliasSet *getAliasSetForPointerIfExists(Value *P, unsigned Size) {
-    return findAliasSetForPointer(P, Size);
+  AliasSet *getAliasSetForPointerIfExists(Value *P, unsigned Size,
+                                          const MDNode *TBAAInfo) {
+    return findAliasSetForPointer(P, Size, TBAAInfo);
   }
 
   /// containsPointer - Return true if the specified location is represented by
   /// this alias set, false otherwise.  This does not modify the AST object or
   /// alias sets.
-  bool containsPointer(Value *P, unsigned Size) const;
+  bool containsPointer(Value *P, unsigned Size, const MDNode *TBAAInfo) const;
 
   /// getAliasAnalysis - Return the underlying alias analysis object used by
   /// this tracker.
@@ -390,14 +405,16 @@ private:
     return *Entry;
   }
 
-  AliasSet &addPointer(Value *P, unsigned Size, AliasSet::AccessType E,
+  AliasSet &addPointer(Value *P, unsigned Size, const MDNode *TBAAInfo,
+                       AliasSet::AccessType E,
                        bool &NewSet) {
     NewSet = false;
-    AliasSet &AS = getAliasSetForPointer(P, Size, &NewSet);
+    AliasSet &AS = getAliasSetForPointer(P, Size, TBAAInfo, &NewSet);
     AS.AccessTy |= E;
     return AS;
   }
-  AliasSet *findAliasSetForPointer(const Value *Ptr, unsigned Size);
+  AliasSet *findAliasSetForPointer(const Value *Ptr, unsigned Size,
+                                   const MDNode *TBAAInfo);
 
   AliasSet *findAliasSetForCallSite(CallSite CS);
 };

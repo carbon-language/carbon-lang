@@ -152,7 +152,7 @@ namespace {
       (void)new llvm::ScalarEvolution();
       ((llvm::Function*)0)->viewCFGOnly();
       llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)0);
-      X.add((llvm::Value*)0, 0);  // for -print-alias-sets
+      X.add((llvm::Value*)0, 0, 0);  // for -print-alias-sets
     }
   } ForcePassLinking; // Force link by creating a global definition.
 }
