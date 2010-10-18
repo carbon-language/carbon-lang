@@ -3228,6 +3228,29 @@ CheckClassMemberNameAttributes(Sema& SemaRef, const FunctionDecl *FD) {
       << MD->getDeclName();
     return;
   }
+
+  if (!MD->getParent()->hasAttr<BaseCheckAttr>())
+    return;
+
+  /// C++ [dcl.attr.override]p6:
+  ///   In a class definition marked base_check, if a virtual member function
+  ///    that is neither implicitly-declared nor a destructor overrides a 
+  ///    member function of a base class and it is not marked override, the
+  ///    program is ill-formed.
+  if (HasOverriddenMethods && !HasOverrideAttr && !MD->isImplicit() &&
+      !isa<CXXDestructorDecl>(MD)) {
+    llvm::SmallVector<const CXXMethodDecl*, 4> 
+      OverriddenMethods(MD->begin_overridden_methods(), 
+                        MD->end_overridden_methods());
+
+    SemaRef.Diag(MD->getLocation(), 
+                 diag::err_function_overriding_without_override)
+      << MD->getDeclName() << (unsigned)OverriddenMethods.size();
+
+    for (unsigned I = 0; I != OverriddenMethods.size(); ++I)
+      SemaRef.Diag(OverriddenMethods[I]->getLocation(),
+                   diag::note_overridden_virtual_function);
+  }
 }
 
 NamedDecl*
