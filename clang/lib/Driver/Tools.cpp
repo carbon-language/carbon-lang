@@ -762,10 +762,25 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                       !IsOpt))
       CmdArgs.push_back("-mrelax-all");
 
-    // When using an integrated assembler, we send -Wa, and -Xassembler options
-    // to -cc1.
-    Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
-                         options::OPT_Xassembler);
+    // When using an integrated assembler, translate -Wa, and -Xassembler
+    // options.
+    for (arg_iterator it = Args.filtered_begin(options::OPT_Wa_COMMA,
+                                               options::OPT_Xassembler),
+           ie = Args.filtered_end(); it != ie; ++it) {
+      const Arg *A = *it;
+      A->claim();
+
+      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i) {
+        llvm::StringRef Value = A->getValue(Args, i);
+
+        if (Value == "-force_cpusubtype_ALL") {
+          // Do nothing, this is the default and we don't support anything else.
+        } else {
+          D.Diag(clang::diag::err_drv_unsupported_option_argument)
+            << A->getOption().getName() << Value;
+        }
+      }
+    }
   } else if (isa<PrecompileJobAction>(JA)) {
     // Use PCH if the user requested it.
     bool UsePCH = D.CCCUsePCH;
