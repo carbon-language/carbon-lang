@@ -829,7 +829,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             ScratchReg = RS->scavengeRegister(RC, I, SPAdj);
             ++NumScavengedRegs;
           }
-          // replace this reference to the virtual register with the
+          // Replace this reference to the virtual register with the
           // scratch register.
           assert (ScratchReg && "Missing scratch register!");
           MI->getOperand(i).setReg(ScratchReg);
