@@ -128,6 +128,9 @@ static void CrashRecoverySignalHandler(int Signal) {
     // This call of Disable isn't thread safe, but it doesn't actually matter.
     CrashRecoveryContext::Disable();
     raise(Signal);
+
+    // The signal will be thrown once the signal mask is restored.
+    return;
   }
 
   // Unblock the signal we received.
