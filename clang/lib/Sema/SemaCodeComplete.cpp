@@ -2589,9 +2589,15 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
       
   case Sema::PCC_RecoveryInFunction:
     return CodeCompletionContext::CCC_Recovery;
-      
-  case Sema::PCC_Expression:
+
   case Sema::PCC_ForInit:
+    if (S.getLangOptions().CPlusPlus || S.getLangOptions().C99 ||
+        S.getLangOptions().ObjC1)
+      return CodeCompletionContext::CCC_ParenthesizedExpression;
+    else
+      return CodeCompletionContext::CCC_Expression;
+
+  case Sema::PCC_Expression:
   case Sema::PCC_Condition:
     return CodeCompletionContext::CCC_Expression;
       
