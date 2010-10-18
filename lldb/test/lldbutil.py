@@ -42,48 +42,48 @@ def lldb_iter(obj, getsize, getelem):
 def StateTypeString(enum):
     """Returns the stateType string given an enum."""
     if enum == lldb.eStateInvalid:
-        return "Invalid"
+        return "invalid"
     elif enum == lldb.eStateUnloaded:
-        return "Unloaded"
+        return "unloaded"
     elif enum == lldb.eStateAttaching:
-        return "Attaching"
+        return "attaching"
     elif enum == lldb.eStateLaunching:
-        return "Launching"
+        return "launching"
     elif enum == lldb.eStateStopped:
-        return "Stopped"
+        return "stopped"
     elif enum == lldb.eStateRunning:
-        return "Running"
+        return "running"
     elif enum == lldb.eStateStepping:
-        return "Stepping"
+        return "stepping"
     elif enum == lldb.eStateCrashed:
-        return "Crashed"
+        return "crashed"
     elif enum == lldb.eStateDetached:
-        return "Detached"
+        return "detached"
     elif enum == lldb.eStateExited:
-        return "Exited"
+        return "exited"
     elif enum == lldb.eStateSuspended:
-        return "Suspended"
+        return "suspended"
     else:
         raise Exception("Unknown stopReason enum")
 
 def StopReasonString(enum):
     """Returns the stopReason string given an enum."""
     if enum == lldb.eStopReasonInvalid:
-        return "Invalid"
+        return "invalid"
     elif enum == lldb.eStopReasonNone:
-        return "None"
+        return "none"
     elif enum == lldb.eStopReasonTrace:
-        return "Trace"
+        return "trace"
     elif enum == lldb.eStopReasonBreakpoint:
-        return "Breakpoint"
+        return "breakpoint"
     elif enum == lldb.eStopReasonWatchpoint:
-        return "Watchpoint"
+        return "watchpoint"
     elif enum == lldb.eStopReasonSignal:
-        return "Signal"
+        return "signal"
     elif enum == lldb.eStopReasonException:
-        return "Exception"
+        return "exception"
     elif enum == lldb.eStopReasonPlanComplete:
-        return "PlanComplete"
+        return "plancomplete"
     else:
         raise Exception("Unknown stopReason enum")
 
