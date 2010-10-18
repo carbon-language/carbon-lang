@@ -48,8 +48,8 @@
 using namespace llvm;
 
 static cl::opt<bool>
-EnableARMFastISel("arm-fast-isel",
-                    cl::desc("Turn on experimental ARM fast-isel support"),
+DisableARMFastISel("disable-arm-fast-isel",
+                    cl::desc("Turn off experimental ARM fast-isel support"),
                     cl::init(false), cl::Hidden);
 
 namespace {
@@ -1660,7 +1660,7 @@ namespace llvm {
     // Completely untested on non-darwin.
     const TargetMachine &TM = funcInfo.MF->getTarget();
     const ARMSubtarget *Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    if (Subtarget->isTargetDarwin() && EnableARMFastISel)
+    if (Subtarget->isTargetDarwin() && !DisableARMFastISel)
       return new ARMFastISel(funcInfo);
     return 0;
   }
