@@ -47,6 +47,31 @@ class SettingsCommandTestCase(TestBase):
         self.expect("settings show",
             substrs = ["term-width (int) = '70'"])
 
+    def test_set_auto_confirm(self):
+        """Test that after 'set auto-confirm true', manual confirmation should not kick in."""
+        self.buildDefault()
+
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # No '-o' option is needed for static setting.
+        self.runCmd("settings set auto-confirm true")
+
+        # Immediately test the setting.
+        self.expect("settings show auto-confirm",
+            startstr = "auto-confirm (boolean) = 'true'")
+
+        # Now 'breakpoint delete' should just work fine without confirmation
+        # prompt from the command interpreter.
+        self.runCmd("breakpoint set -n main")
+        self.expect("breakpoint delete",
+            startstr = "All breakpoints removed")
+
+        # Restore the original setting of auto-confirm.
+        self.runCmd("settings set -r auto-confirm")
+        self.expect("settings show auto-confirm",
+            startstr = "auto-confirm (boolean) = 'false'")
+
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
         """Test that run-args and env-vars are passed to the launched process."""
@@ -95,6 +120,10 @@ class SettingsCommandTestCase(TestBase):
             startstr = "target.process.output-path (string) = 'stdout.txt'")
 
         self.runCmd("run", RUN_SUCCEEDED)
+
+        # The 'stdout.txt' file should now exist.
+        self.assertTrue(os.path.isfile("stdout.txt"),
+                        "'stdout.txt' exists due to target.process.output-path.")
 
         # Read the output file produced by running the program.
         with open('stdout.txt', 'r') as f:
