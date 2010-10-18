@@ -1355,6 +1355,8 @@ class VisualStudioWindowsX86_32TargetInfo : public WindowsX86_32TargetInfo {
 public:
   VisualStudioWindowsX86_32TargetInfo(const std::string& triple)
     : WindowsX86_32TargetInfo(triple) {
+    LongDoubleWidth = 64;
+    LongDoubleFormat = &llvm::APFloat::IEEEdouble;
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
