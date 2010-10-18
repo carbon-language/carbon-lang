@@ -44,7 +44,8 @@ class AliasSet : public ilist_node<AliasSet> {
     const MDNode *TBAAInfo;
   public:
     PointerRec(Value *V)
-      : Val(V), PrevInList(0), NextInList(0), AS(0), Size(0), TBAAInfo(0) {}
+      : Val(V), PrevInList(0), NextInList(0), AS(0), Size(0),
+        TBAAInfo(DenseMapInfo<const MDNode *>::getEmptyKey()) {}
 
     Value *getValue() const { return Val; }
     
@@ -59,26 +60,22 @@ class AliasSet : public ilist_node<AliasSet> {
     void updateSizeAndTBAAInfo(unsigned NewSize, const MDNode *NewTBAAInfo) {
       if (NewSize > Size) Size = NewSize;
 
-      if (!TBAAInfo)
+      if (TBAAInfo == DenseMapInfo<const MDNode *>::getEmptyKey())
+        // We don't have a TBAAInfo yet. Set it to NewTBAAInfo.
         TBAAInfo = NewTBAAInfo;
       else if (TBAAInfo != NewTBAAInfo)
-        TBAAInfo = reinterpret_cast<const MDNode *>(-1);
+        // NewTBAAInfo conflicts with TBAAInfo.
+        TBAAInfo = DenseMapInfo<const MDNode *>::getTombstoneKey();
     }
 
     unsigned getSize() const { return Size; }
 
-    /// getRawTBAAInfo - Return the raw TBAAInfo member. In addition to
-    /// being null or a pointer to an MDNode, this could be -1, meaning
-    /// there was conflicting information.
-    const MDNode *getRawTBAAInfo() const {
-      return TBAAInfo;
-    }
-
     /// getTBAAInfo - Return the TBAAInfo, or null if there is no
     /// information or conflicting information.
     const MDNode *getTBAAInfo() const {
-      // If we have conflicting TBAAInfo, return null.
-      if (TBAAInfo == reinterpret_cast<const MDNode *>(-1))
+      // If we have missing or conflicting TBAAInfo, return null.
+      if (TBAAInfo == DenseMapInfo<const MDNode *>::getEmptyKey() ||
+          TBAAInfo == DenseMapInfo<const MDNode *>::getTombstoneKey())
         return 0;
       return TBAAInfo;
     }
@@ -209,7 +206,6 @@ public:
 
     Value *getPointer() const { return CurNode->getValue(); }
     unsigned getSize() const { return CurNode->getSize(); }
-    const MDNode *getRawTBAAInfo() const { return CurNode->getRawTBAAInfo(); }
     const MDNode *getTBAAInfo() const { return CurNode->getTBAAInfo(); }
 
     iterator& operator++() {                // Preincrement

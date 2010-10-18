@@ -377,7 +377,7 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
     bool X;
     for (AliasSet::iterator ASI = AS.begin(), E = AS.end(); ASI != E; ++ASI) {
       AliasSet &NewAS = addPointer(ASI.getPointer(), ASI.getSize(),
-                                   ASI.getRawTBAAInfo(),
+                                   ASI.getTBAAInfo(),
                                    (AliasSet::AccessType)AS.AccessTy, X);
       if (AS.isVolatile()) NewAS.setVolatile();
     }
@@ -533,7 +533,7 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   I = PointerMap.find(From);
   AliasSet *AS = I->second->getAliasSet(*this);
   AS->addPointer(*this, Entry, I->second->getSize(),
-                 I->second->getRawTBAAInfo(),
+                 I->second->getTBAAInfo(),
                  true);
 }
 
