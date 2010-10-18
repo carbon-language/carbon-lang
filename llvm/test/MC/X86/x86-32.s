@@ -590,3 +590,67 @@ pshufw $14, %mm4, %mm0
 // PR8288
 pshufw $90, %mm4, %mm0
 
+// rdar://8416805
+// CHECK: aaa
+// CHECK:  encoding: [0x37]
+        	aaa
+
+// CHECK: aad	$1
+// CHECK:  encoding: [0xd5,0x01]
+        	aad	$1
+
+// CHECK: aad	$10
+// CHECK:  encoding: [0xd5,0x0a]
+        	aad	$0xA
+
+// CHECK: aad	$10
+// CHECK:  encoding: [0xd5,0x0a]
+        	aad
+
+// CHECK: aam	$2
+// CHECK:  encoding: [0xd4,0x02]
+        	aam	$2
+
+// CHECK: aam	$10
+// CHECK:  encoding: [0xd4,0x0a]
+        	aam	$0xA
+
+// CHECK: aam	$10
+// CHECK:  encoding: [0xd4,0x0a]
+        	aam
+
+// CHECK: aas
+// CHECK:  encoding: [0x3f]
+        	aas
+
+// CHECK: daa
+// CHECK:  encoding: [0x27]
+        	daa
+
+// CHECK: das
+// CHECK:  encoding: [0x2f]
+        	das
+
+// CHECK: retw	$31438
+// CHECK:  encoding: [0x66,0xc2,0xce,0x7a]
+        	retw	$0x7ace
+
+// CHECK: lretw	$31438
+// CHECK:  encoding: [0x66,0xca,0xce,0x7a]
+        	lretw	$0x7ace
+
+// CHECK: bound	2(%eax), %bx
+// CHECK:  encoding: [0x66,0x62,0x58,0x02]
+        	bound	2(%eax),%bx
+
+// CHECK: bound	4(%ebx), %ecx
+// CHECK:  encoding: [0x62,0x4b,0x04]
+        	bound	4(%ebx),%ecx
+
+// CHECK: arpl	%bx, %bx
+// CHECK:  encoding: [0x63,0xdb]
+        	arpl	%bx,%bx
+
+// CHECK: arpl	%bx, 6(%ecx)
+// CHECK:  encoding: [0x63,0x59,0x06]
+        	arpl	%bx,6(%ecx)

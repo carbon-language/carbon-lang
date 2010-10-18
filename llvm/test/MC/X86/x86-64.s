@@ -714,6 +714,15 @@ iretq
 // CHECK: iretq
 // CHECK: encoding: [0x48,0xcf]
 
+// rdar://8416805
+// CHECK: retw	$31438
+// CHECK:  encoding: [0x66,0xc2,0xce,0x7a]
+        	retw	$0x7ace
+
+// CHECK: lretw	$31438
+// CHECK:  encoding: [0x66,0xca,0xce,0x7a]
+        	lretw	$0x7ace
+
 // rdar://8403907
 sysret
 // CHECK: sysretl

@@ -1082,6 +1082,13 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands[0] = X86Operand::CreateToken("xor", NameLoc);
   }
 
+  // FIXME: Hack to handle recognize "aa[dm]" -> "aa[dm] $0xA".
+  if ((Name.startswith("aad") || Name.startswith("aam")) &&
+      Operands.size() == 1) {
+    const MCExpr *A = MCConstantExpr::Create(0xA, getParser().getContext());
+    Operands.push_back(X86Operand::CreateImm(A, NameLoc, NameLoc));
+  }
+
   return false;
 }
 

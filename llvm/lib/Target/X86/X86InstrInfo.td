@@ -1182,7 +1182,45 @@ def CLTS : I<0x06, RawFrm, (outs), (ins), "clts", []>, TB;
 // Table lookup instructions
 def XLAT : I<0xD7, RawFrm, (outs), (ins), "xlatb", []>;
 
+// ASCII Adjust After Addition
+// sets AL, AH and CF and AF of EFLAGS and uses AL and AF of EFLAGS
+def AAA : I<0x37, RawFrm, (outs), (ins), "aaa", []>, Requires<[In32BitMode]>;
 
+// ASCII Adjust AX Before Division
+// sets AL, AH and EFLAGS and uses AL and AH
+def AAD8i8 : Ii8<0xD5, RawFrm, (outs), (ins i8imm:$src),
+                 "aad\t$src", []>, Requires<[In32BitMode]>;
+
+// ASCII Adjust AX After Multiply
+// sets AL, AH and EFLAGS and uses AL
+def AAM8i8 : Ii8<0xD4, RawFrm, (outs), (ins i8imm:$src),
+                 "aam\t$src", []>, Requires<[In32BitMode]>;
+
+// ASCII Adjust AL After Subtraction - sets 
+// sets AL, AH and CF and AF of EFLAGS and uses AL and AF of EFLAGS
+def AAS : I<0x3F, RawFrm, (outs), (ins), "aas", []>, Requires<[In32BitMode]>;
+
+// Decimal Adjust AL after Addition
+// sets AL, CF and AF of EFLAGS and uses AL, CF and AF of EFLAGS
+def DAA : I<0x27, RawFrm, (outs), (ins), "daa", []>, Requires<[In32BitMode]>;
+
+// Decimal Adjust AL after Subtraction
+// sets AL, CF and AF of EFLAGS and uses AL, CF and AF of EFLAGS
+def DAS : I<0x2F, RawFrm, (outs), (ins), "das", []>, Requires<[In32BitMode]>;
+
+// Check Array Index Against Bounds
+def BOUNDS16rm : I<0x62, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
+                   "bound\t{$src, $dst|$dst, $src}", []>, OpSize,
+                   Requires<[In32BitMode]>; 
+def BOUNDS32rm : I<0x62, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+                   "bound\t{$src, $dst|$dst, $src}", []>,
+                   Requires<[In32BitMode]>; 
+
+// Adjust RPL Field of Segment Selector
+def ARPL16rr : I<0x63, MRMDestReg, (outs GR16:$src), (ins GR16:$dst),
+                 "arpl\t{$src, $dst|$dst, $src}", []>, Requires<[In32BitMode]>; 
+def ARPL16mr : I<0x63, MRMSrcMem, (outs GR16:$src), (ins i16mem:$dst),
+                 "arpl\t{$src, $dst|$dst, $src}", []>, Requires<[In32BitMode]>; 
 
 //===----------------------------------------------------------------------===//
 // Subsystems.
