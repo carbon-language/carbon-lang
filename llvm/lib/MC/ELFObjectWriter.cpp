@@ -707,7 +707,12 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
           break;
         }
         break;
-      case FK_Data_4: Type = ELF::R_386_32; break;
+      case FK_Data_4:
+        if (Symbol->getName() == "_GLOBAL_OFFSET_TABLE_")
+          Type = ELF::R_386_GOTPC;
+        else
+          Type = ELF::R_386_32;
+        break;
       case FK_Data_2: Type = ELF::R_386_16; break;
       case X86::reloc_pcrel_1byte:
       case FK_Data_1: Type = ELF::R_386_8; break;

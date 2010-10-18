@@ -16,6 +16,12 @@
 // CHECK-NEXT: (('r_offset',
 // CHECK-NEXT:  ('r_sym',
 // CHECK-NEXT:  ('r_type', 4)
+// CHECK-NEXT: ),
+// CHECK-NEXT:  # Relocation 2
+// CHECK-NEXT: (('r_offset',
+// CHECK-NEXT:  ('r_sym',
+// CHECK-NEXT:  ('r_type', 10)
+// CHECK-NEXT: ),
 
         .text
 bar:
@@ -24,6 +30,7 @@ bar:
         .global bar2
 bar2:
 	calll	bar2@PLT
+	addl	$_GLOBAL_OFFSET_TABLE_, %ebx
 
         .section	.rodata.str1.16,"aMS",@progbits,1
 .Lfoo:
