@@ -2504,6 +2504,12 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_m_Separate);
   Args.AddAllArgs(CmdArgs, options::OPT_r);
 
+  // Forward -ObjC when either -ObjC or -ObjC++ is used, to force loading
+  // members of static archive libraries which implement Objective-C classes or
+  // categories.
+  if (Args.hasArg(options::OPT_ObjC) || Args.hasArg(options::OPT_ObjCXX))
+    CmdArgs.push_back("-ObjC");
+    
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
 
