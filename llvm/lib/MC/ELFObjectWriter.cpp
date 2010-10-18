@@ -684,8 +684,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     if (IsPCRel) {
       switch (Modifier) {
       default:
+        llvm_unreachable("Unimplemented");
+      case MCSymbolRefExpr::VK_None:
         Type = ELF::R_386_PC32;
-        //llvm_unreachable("Unimplemented");
         break;
       case MCSymbolRefExpr::VK_PLT:
         Type = ELF::R_386_PLT32;
