@@ -833,8 +833,7 @@ class X86_64ABIInfo : public ABIInfo {
 
   ABIArgInfo classifyArgumentType(QualType Ty,
                                   unsigned &neededInt,
-                                  unsigned &neededSSE,
-                                  unsigned &neededMMX) const;
+                                  unsigned &neededSSE) const;
 
 public:
   X86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
@@ -1681,8 +1680,7 @@ classifyReturnType(QualType RetTy) const {
 }
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
-                                               unsigned &neededSSE,
-                                               unsigned &neededMMX) const {
+                                               unsigned &neededSSE) const {
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, 0, Lo, Hi);
 
@@ -1693,7 +1691,6 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
 
   neededInt = 0;
   neededSSE = 0;
-  neededMMX = 0;
   const llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
@@ -1747,15 +1744,13 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // order from %xmm0 to %xmm7.
   case SSE: {
     const llvm::Type *IRType = CGT.ConvertTypeRecursive(Ty);
-    if (Hi != NoClass || !UseX86_MMXType(IRType)) {
+    if (Hi != NoClass || !UseX86_MMXType(IRType))
       ResType = GetSSETypeAtOffset(IRType, 0, Ty, 0);
-      ++neededSSE;
-    } else {
+    else
       // This is an MMX type. Treat it as such.
       ResType = llvm::Type::getX86_MMXTy(getVMContext());
-      ++neededMMX;
-    }
 
+    ++neededSSE;
     break;
   }
   }
@@ -1817,7 +1812,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
 
   // Keep track of the number of assigned registers.
-  unsigned freeIntRegs = 6, freeSSERegs = 8, freeMMXRegs = 8;
+  unsigned freeIntRegs = 6, freeSSERegs = 8;
 
   // If the return value is indirect, then the hidden argument is consuming one
   // integer register.
@@ -1828,18 +1823,16 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   // get assigned (in left-to-right order) for passing as follows...
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
-    unsigned neededInt, neededSSE, neededMMX;
-    it->info = classifyArgumentType(it->type, neededInt, neededSSE, neededMMX);
+    unsigned neededInt, neededSSE;
+    it->info = classifyArgumentType(it->type, neededInt, neededSSE);
 
     // AMD64-ABI 3.2.3p3: If there are no registers available for any
     // eightbyte of an argument, the whole argument is passed on the
     // stack. If registers have already been assigned for some
     // eightbytes of such an argument, the assignments get reverted.
-    if (freeIntRegs >= neededInt && freeSSERegs >= neededSSE &&
-        freeMMXRegs >= neededMMX) {
+    if (freeIntRegs >= neededInt && freeSSERegs >= neededSSE) {
       freeIntRegs -= neededInt;
       freeSSERegs -= neededSSE;
-      freeMMXRegs -= neededMMX;
     } else {
       it->info = getIndirectResult(it->type);
     }
@@ -1908,13 +1901,10 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   //   i8* overflow_arg_area;
   //   i8* reg_save_area;
   // };
-  unsigned neededInt, neededSSE, neededMMX;
+  unsigned neededInt, neededSSE;
 
   Ty = CGF.getContext().getCanonicalType(Ty);
-  ABIArgInfo AI = classifyArgumentType(Ty, neededInt, neededSSE, neededMMX);
-
-  // Lump the MMX in with SSE.
-  neededSSE += neededMMX;
+  ABIArgInfo AI = classifyArgumentType(Ty, neededInt, neededSSE);
 
   // AMD64-ABI 3.5.7p5: Step 1. Determine whether type may be passed
   // in the registers. If not go to step 7.
