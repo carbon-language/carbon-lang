@@ -99,14 +99,14 @@ void MiscNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
 
 namespace {
 
-static const DeclContext *GetLocalClassFunctionDeclContext(
-                                                      const DeclContext *DC) {
-  if (isa<CXXRecordDecl>(DC)) {
-    while (!DC->isNamespace() && !DC->isTranslationUnit() &&
-           !isa<FunctionDecl>(DC))
-      DC = DC->getParent();
-    if (isa<FunctionDecl>(DC))
-      return DC;
+static const CXXRecordDecl *GetLocalClassDecl(const NamedDecl *ND) {
+  const DeclContext *DC = dyn_cast<DeclContext>(ND);
+  if (!DC)
+    DC = ND->getDeclContext();
+  while (!DC->isNamespace() && !DC->isTranslationUnit()) {
+    if (isa<FunctionDecl>(DC->getParent()))
+      return dyn_cast<CXXRecordDecl>(DC);
+    DC = DC->getParent();
   }
   return 0;
 }
@@ -433,16 +433,15 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   //
   const DeclContext *DC = ND->getDeclContext();
 
-  if (GetLocalClassFunctionDeclContext(DC)) {
-    mangleLocalName(ND);
-    return;
-  }
-
   // If this is an extern variable declared locally, the relevant DeclContext
   // is that of the containing namespace, or the translation unit.
   if (isa<FunctionDecl>(DC) && ND->hasLinkage())
     while (!DC->isNamespace() && !DC->isTranslationUnit())
       DC = DC->getParent();
+  else if (GetLocalClassDecl(ND)) {
+    mangleLocalName(ND);
+    return;
+  }
 
   while (isa<LinkageSpecDecl>(DC))
     DC = DC->getParent();
@@ -853,15 +852,18 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
 
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(DC)) {
    mangleObjCMethodName(MD);
-  }
-  else if (const DeclContext *CDC = GetLocalClassFunctionDeclContext(DC)) {
-    mangleFunctionEncoding(cast<FunctionDecl>(CDC));
+  } else if (const CXXRecordDecl *RD = GetLocalClassDecl(ND)) {
+    mangleFunctionEncoding(cast<FunctionDecl>(RD->getDeclContext()));
     Out << 'E';
-    mangleNestedName(ND, DC, true /*NoFunction*/);
 
-    // FIXME. This still does not cover all cases.
+    // Mangle the name relative to the closest enclosing function.
+    if (ND == RD) // equality ok because RD derived from ND above
+      mangleUnqualifiedName(ND);
+    else
+      mangleNestedName(ND, DC, true /*NoFunction*/);
+
     unsigned disc;
-    if (Context.getNextDiscriminator(ND, disc)) {
+    if (Context.getNextDiscriminator(RD, disc)) {
       if (disc < 10)
         Out << '_' << disc;
       else
