@@ -556,16 +556,18 @@ static bool ShouldRelocOnSymbol(const MCSymbolData &SD,
   if (SD.isExternal())
     return true;
 
-  if (Section.getFlags() & MCSectionELF::SHF_MERGE)
-    return Target.getConstant() != 0;
-
   MCSymbolRefExpr::VariantKind Kind = Target.getSymA()->getKind();
   const MCSectionELF &Sec2 =
     static_cast<const MCSectionELF&>(F.getParent()->getSection());
 
   if (&Sec2 != &Section &&
-      (Kind == MCSymbolRefExpr::VK_PLT || Kind == MCSymbolRefExpr::VK_GOTPCREL))
+      (Kind == MCSymbolRefExpr::VK_PLT ||
+       Kind == MCSymbolRefExpr::VK_GOTPCREL ||
+       Kind == MCSymbolRefExpr::VK_GOTOFF))
     return true;
+
+  if (Section.getFlags() & MCSectionELF::SHF_MERGE)
+    return Target.getConstant() != 0;
 
   return false;
 }
@@ -663,7 +665,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         case MCSymbolRefExpr::VK_GOT:
           Type = ELF::R_X86_64_GOT32;
           break;
-        case llvm::MCSymbolRefExpr::VK_GOTPCREL:
+        case MCSymbolRefExpr::VK_GOTPCREL:
           Type = ELF::R_X86_64_GOTPCREL;
           break;
         default:
@@ -689,6 +691,14 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       // instead?
       case X86::reloc_signed_4byte:
       case X86::reloc_pcrel_4byte:
+        switch (Modifier) {
+        case MCSymbolRefExpr::VK_GOTOFF:
+          Type = ELF::R_386_GOTOFF;
+          break;
+        default:
+          llvm_unreachable("Unimplemented");
+        }
+        break;
       case FK_Data_4: Type = ELF::R_386_32; break;
       case FK_Data_2: Type = ELF::R_386_16; break;
       case X86::reloc_pcrel_1byte:
