@@ -62,6 +62,7 @@ public:
                 case 'i':   stdin_path  = option_arg;   break;
                 case 'o':   stdout_path = option_arg;   break;
                 case 'p':   plugin_name = option_arg;   break;
+                case 't':   in_new_tty = true; break;
                 default:
                     error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
                     break;
@@ -75,6 +76,7 @@ public:
         {
             Options::ResetOptionValues();
             stop_at_entry = false;
+            in_new_tty = false;
             stdin_path.clear();
             stdout_path.clear();
             stderr_path.clear();
@@ -94,6 +96,7 @@ public:
         // Instance variables to hold the values for command options.
 
         bool stop_at_entry;
+        bool in_new_tty;
         std::string stderr_path;
         std::string stdin_path;
         std::string stdout_path;
@@ -146,7 +149,7 @@ public:
 
         // If our listener is NULL, users aren't allows to launch
         char filename[PATH_MAX];
-        Module *exe_module = target->GetExecutableModule().get();
+        const Module *exe_module = target->GetExecutableModule().get();
         exe_module->GetFileSpec().GetPath(filename, sizeof(filename));
 
         Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
@@ -181,6 +184,21 @@ public:
                 launch_args = process->GetRunArguments();
         }
         
+        if (m_options.in_new_tty)
+        {
+            char exec_file_path[PATH_MAX];
+            if (exe_module->GetFileSpec().GetPath(exec_file_path, sizeof(exec_file_path)))
+            {
+                launch_args.InsertArgumentAtIndex(0, exec_file_path);
+            }
+            else
+            {
+                result.AppendError("invalid executable");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+
         Args environment;
         
         process->GetEnvironmentAsArgs (environment);
@@ -189,48 +207,83 @@ public:
         
         if (process->GetDisableASLR())
             launch_flags |= eLaunchFlagDisableASLR;
+    
+        const char **inferior_argv = launch_args.GetArgumentCount() ? launch_args.GetConstArgumentVector() : NULL;
+        const char **inferior_envp = environment.GetArgumentCount() ? environment.GetConstArgumentVector() : NULL;
 
-        const char *archname = exe_module->GetArchitecture().AsCString();
+        Error error;
 
-        const char * stdin_path = NULL;
-        const char * stdout_path = NULL;
-        const char * stderr_path = NULL;
-
-        // Were any standard input/output/error paths given on the command line?
-        if (m_options.stdin_path.empty() &&
-            m_options.stdout_path.empty() &&
-            m_options.stderr_path.empty())
+        if (m_options.in_new_tty)
         {
-            // No standard file handles were given on the command line, check
-            // with the process object in case they were give using "set settings"
-            stdin_path = process->GetStandardInputPath();
-            stdout_path = process->GetStandardOutputPath(); 
-            stderr_path = process->GetStandardErrorPath(); 
+        
+            lldb::pid_t terminal_pid = Host::LaunchInNewTerminal (inferior_argv,
+                                                                  inferior_envp,
+                                                                  &exe_module->GetArchitecture(),
+                                                                  true,
+                                                                  process->GetDisableASLR());
+            
+            // Let the app get launched and stopped...
+            const char *process_name = exe_module->GetFileSpec().GetFilename().AsCString("<invalid>");
+
+            if (terminal_pid == LLDB_INVALID_PROCESS_ID)
+            {
+                error.SetErrorStringWithFormat ("failed to launch '%s' in new terminal", process_name);
+            }
+            else
+            {
+                for (int i=0; i<20; i++)
+                {
+                    usleep (250000);
+                    error = process->Attach (process_name, false);
+                    if (error.Success())
+                        break;
+                }
+            }
         }
         else
         {
-            stdin_path = m_options.stdin_path.empty()  ? NULL : m_options.stdin_path.c_str();
-            stdout_path = m_options.stdout_path.empty() ? NULL : m_options.stdout_path.c_str();
-            stderr_path = m_options.stderr_path.empty() ? NULL : m_options.stderr_path.c_str();
+            const char * stdin_path = NULL;
+            const char * stdout_path = NULL;
+            const char * stderr_path = NULL;
+
+            // Were any standard input/output/error paths given on the command line?
+            if (m_options.stdin_path.empty() &&
+                m_options.stdout_path.empty() &&
+                m_options.stderr_path.empty())
+            {
+                // No standard file handles were given on the command line, check
+                // with the process object in case they were give using "set settings"
+                stdin_path = process->GetStandardInputPath();
+                stdout_path = process->GetStandardOutputPath(); 
+                stderr_path = process->GetStandardErrorPath(); 
+            }
+            else
+            {
+                stdin_path = m_options.stdin_path.empty()  ? NULL : m_options.stdin_path.c_str();
+                stdout_path = m_options.stdout_path.empty() ? NULL : m_options.stdout_path.c_str();
+                stderr_path = m_options.stderr_path.empty() ? NULL : m_options.stderr_path.c_str();
+            }
+
+            if (stdin_path == NULL)
+                stdin_path = "/dev/null";
+            if (stdout_path == NULL)
+                stdout_path = "/dev/null";
+            if (stderr_path == NULL)
+                stderr_path = "/dev/null";
+
+            error = process->Launch (inferior_argv,
+                                     inferior_envp,
+                                     launch_flags,
+                                     stdin_path,
+                                     stdout_path,
+                                     stderr_path);
         }
-
-        if (stdin_path == NULL)
-            stdin_path = "/dev/null";
-        if (stdout_path == NULL)
-            stdout_path = "/dev/null";
-        if (stderr_path == NULL)
-            stderr_path = "/dev/null";
-
-        Error error (process->Launch (launch_args.GetArgumentCount() ? launch_args.GetConstArgumentVector() : NULL,
-                                      environment.GetArgumentCount() ? environment.GetConstArgumentVector() : NULL,
-                                      launch_flags,
-                                      stdin_path,
-                                      stdout_path,
-                                      stderr_path));
                      
         if (error.Success())
         {
-            result.AppendMessageWithFormat ("Launching '%s'  (%s)\n", filename, archname);
+            const char *archname = exe_module->GetArchitecture().AsCString();
+
+            result.AppendMessageWithFormat ("Process %i launched: '%s' (%s)\n", process->GetID(), filename, archname);
             result.SetDidChangeProcessState (true);
             if (m_options.stop_at_entry == false)
             {
@@ -273,17 +326,23 @@ protected:
 };
 
 
+#define SET1 LLDB_OPT_SET_1
+#define SET2 LLDB_OPT_SET_2
+
 lldb::OptionDefinition
 CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,        "Stop at the entry point of the program when launching a process."},
-{ LLDB_OPT_SET_1, false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
-{ LLDB_OPT_SET_1, false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
-{ LLDB_OPT_SET_1, false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
-{ LLDB_OPT_SET_1, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
-{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+{ SET1 | SET2, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,    "Stop at the entry point of the program when launching a process."},
+{ SET1       , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
+{ SET1       , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
+{ SET1       , false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
+{ SET1 | SET2, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
+{        SET2, false, "tty",           't', no_argument,       NULL, 0, eArgTypeNone,    "Start the process in a new terminal (tty)."},
+{ 0,           false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
 };
 
+#undef SET1
+#undef SET2
 
 //-------------------------------------------------------------------------
 // CommandObjectProcessAttach
@@ -722,7 +781,7 @@ public:
             Error error(process->Resume());
             if (error.Success())
             {
-                result.AppendMessageWithFormat ("Resuming process %i\n", process->GetID());
+                result.AppendMessageWithFormat ("Process %i resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
                     state = process->WaitForProcessToStop (NULL);

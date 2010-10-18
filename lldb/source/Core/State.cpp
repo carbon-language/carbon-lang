@@ -22,17 +22,17 @@ lldb_private::StateAsCString (StateType state)
 {
     switch (state)
     {
-    case eStateInvalid:     return "Invalid";
-    case eStateUnloaded:    return "Unloaded";
-    case eStateAttaching:   return "Attaching";
-    case eStateLaunching:   return "Launching";
-    case eStateStopped:     return "Stopped";
-    case eStateRunning:     return "Running";
-    case eStateStepping:    return "Stepping";
-    case eStateCrashed:     return "Crashed";
-    case eStateDetached:    return "Detached";
-    case eStateExited:      return "Exited";
-    case eStateSuspended:   return "Suspended";
+    case eStateInvalid:     return "invalid";
+    case eStateUnloaded:    return "unloaded";
+    case eStateAttaching:   return "attaching";
+    case eStateLaunching:   return "launching";
+    case eStateStopped:     return "stopped";
+    case eStateRunning:     return "running";
+    case eStateStepping:    return "stepping";
+    case eStateCrashed:     return "crashed";
+    case eStateDetached:    return "detached";
+    case eStateExited:      return "exited";
+    case eStateSuspended:   return "suspended";
     }
     static char unknown_state_string[64];
     snprintf(unknown_state_string, sizeof (unknown_state_string), "StateType = %i", state);

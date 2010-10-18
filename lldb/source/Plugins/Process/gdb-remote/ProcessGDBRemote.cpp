@@ -366,7 +366,6 @@ ProcessGDBRemote::WillLaunchOrAttach ()
     return error;
 }
 
-//#define LAUNCH_WITH_LAUNCH_SERVICES 1
 //----------------------------------------------------------------------
 // Process Control
 //----------------------------------------------------------------------
@@ -383,30 +382,6 @@ ProcessGDBRemote::DoLaunch
 )
 {
     Error error;
-#if defined (LAUNCH_WITH_LAUNCH_SERVICES)
-    ArchSpec inferior_arch(module->GetArchitecture());
-
-    //FileSpec app_file_spec (argv[0]);
-    pid_t pid = Host::LaunchInNewTerminal (argv,
-                                           envp,
-                                           &inferior_arch,
-                                           true, // stop at entry
-                                           (launch_flags & eLaunchFlagDisableASLR) != 0);
-    
-    // Let the app get launched and stopped...
-    sleep (1);
-
-    if (pid != LLDB_INVALID_PROCESS_ID)
-    {
-        FileSpec program(argv[0]);
-        error = DoAttachToProcessWithName (program.GetFilename().AsCString(), false);
-        //error = DoAttachToProcessWithID (pid);
-    }
-    else
-    {
-        error.SetErrorString("Host::LaunchApplication(() failed to launch process");
-    }
-#else
     //  ::LogSetBitMask (GDBR_LOG_DEFAULT);
     //  ::LogSetOptions (LLDB_LOG_OPTION_THREADSAFE | LLDB_LOG_OPTION_PREPEND_TIMESTAMP | LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD);
     //  ::LogSetLogFile ("/dev/stdout");
@@ -522,7 +497,6 @@ ProcessGDBRemote::DoLaunch
         SetID(LLDB_INVALID_PROCESS_ID);
         error.SetErrorStringWithFormat("Failed to get object file from '%s' for arch %s.\n", module->GetFileSpec().GetFilename().AsCString(), module->GetArchitecture().AsCString());
     }
-#endif
     return error;
 
 }
@@ -646,13 +620,9 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 void
 ProcessGDBRemote::DidLaunch ()
 {
-#if defined (LAUNCH_WITH_LAUNCH_SERVICES)
-    DidAttach ();
-#else
     DidLaunchOrAttach ();
     if (m_dynamic_loader_ap.get())
         m_dynamic_loader_ap->DidLaunch();
-#endif
 }
 
 Error
@@ -795,9 +765,10 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
             {
                 StreamString packet;
                 
-                packet.PutCString("vAttach");
                 if (wait_for_launch)
-                    packet.PutCString("Wait");
+                    packet.PutCString("vAttachWait");
+                else
+                    packet.PutCString("vAttachName");
                 packet.PutChar(';');
                 packet.PutBytesAsRawHex8(process_name, strlen(process_name), eByteOrderHost, eByteOrderHost);
                 StringExtractorGDBRemote response;
@@ -835,7 +806,11 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
     if (pid == LLDB_INVALID_PROCESS_ID)
     {
         KillDebugserverProcess();
+        
+        if (error.Success())
+            error.SetErrorStringWithFormat("unable to attach to process named '%s'", process_name);
     }
+    
     return error;
 }
 

@@ -61,8 +61,9 @@ public:
         single_step_with_sig,           // 'S'
         search_mem_backwards,           // 't'
         thread_alive_p,                 // 'T'
-        vattach,                        // 'vAttach'
-        vattachwait,                    // 'vAttachWait'
+        vattach,                        // 'vAttach;pid'
+        vattachwait,                    // 'vAttachWait:XX...' where XX is one or more hex encoded process name ASCII bytes
+        vattachname,                    // 'vAttachName:XX...' where XX is one or more hex encoded process name ASCII bytes
         vcont,                          // 'vCont'
         vcont_list_actions,             // 'vCont?'
         write_data_to_memory,           // 'X'

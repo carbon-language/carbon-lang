@@ -138,6 +138,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (thread_alive_p,                &RNBRemote::HandlePacket_T,             NULL, "T", "Is thread alive"));
     t.push_back (Packet (vattach,                       &RNBRemote::HandlePacket_v,             NULL, "vAttach", "Attach to a new process"));
     t.push_back (Packet (vattachwait,                   &RNBRemote::HandlePacket_v,             NULL, "vAttachWait", "Wait for a process to start up then attach to it"));
+    t.push_back (Packet (vattachname,                   &RNBRemote::HandlePacket_v,             NULL, "vAttachName", "Attach to an existing process by name"));
     t.push_back (Packet (vcont_list_actions,            &RNBRemote::HandlePacket_v,             NULL, "vCont;", "Verbose resume with thread actions"));
     t.push_back (Packet (vcont_list_actions,            &RNBRemote::HandlePacket_v,             NULL, "vCont?", "List valid continue-with-thread-actions actions"));
     // The X packet doesn't currently work. If/when it does, remove the line above and uncomment out the line below
@@ -2549,6 +2550,31 @@ RNBRemote::HandlePacket_v (const char *p)
             }
 
             attach_pid = DNBProcessAttachWait(attach_name.c_str (), m_ctx.LaunchFlavor(), NULL, 1000, err_str, sizeof(err_str), RNBRemoteShouldCancelCallback);
+
+        }
+        if (strstr (p, "vAttachName;") == p)
+        {
+            p += strlen("vAttachName;");
+            std::string attach_name;
+            while (*p != '\0')
+            {
+                char smallbuf[3];
+                smallbuf[0] = *p;
+                smallbuf[1] = *(p + 1);
+                smallbuf[2] = '\0';
+
+                errno = 0;
+                int ch = strtoul (smallbuf, NULL, 16);
+                if (errno != 0 && ch == 0)
+                {
+                    return HandlePacket_ILLFORMED ("non-hex char in arg on 'vAttachWait' pkt");
+                }
+
+                attach_name.push_back(ch);
+                p += 2;
+            }
+
+            attach_pid = DNBProcessAttachByName (attach_name.c_str(), NULL, err_str, sizeof(err_str));
 
         }
         else if (strstr (p, "vAttach;") == p)

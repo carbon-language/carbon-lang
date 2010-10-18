@@ -1109,6 +1109,12 @@ Error
 Process::CompleteAttach ()
 {
     Error error;
+
+    if (GetID() == LLDB_INVALID_PROCESS_ID)
+    {
+        error.SetErrorString("no process");
+    }
+
     EventSP event_sp;
     StateType state = WaitForProcessStopPrivate(NULL, event_sp);
     if (state == eStateStopped || state == eStateCrashed)
@@ -1205,7 +1211,7 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     if (!wait_for_launch)
     {
         ArchSpec attach_spec = GetArchSpecForExistingProcess (process_name);
-        if (attach_spec != GetTarget().GetArchitecture())
+        if (attach_spec.IsValid() && attach_spec != GetTarget().GetArchitecture())
         {
             // Set the architecture on the target.
             GetTarget().SetArchitecture(attach_spec);

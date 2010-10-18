@@ -220,7 +220,7 @@ Host::LaunchInNewTerminal
             command_file.Printf("\"%s\" ", argv[i]);
         }
     }
-    command_file.EOL();
+    command_file.PutCString("\necho Process exited with status $?\n");
     command_file.Close();
     if (::chmod (temp_file_path, S_IRWXU | S_IRWXG) != 0)
         return LLDB_INVALID_PROCESS_ID;

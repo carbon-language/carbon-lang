@@ -433,9 +433,12 @@ GetAllInfosMatchingName(const char *full_process_name, std::vector<struct kinfo_
 }
 
 nub_process_t
-DNBProcessAttachWait (const char *waitfor_process_name, nub_launch_flavor_t launch_flavor,
-                      struct timespec *timeout_abstime, useconds_t waitfor_interval,
-                      char *err_str, size_t err_len,
+DNBProcessAttachWait (const char *waitfor_process_name, 
+                      nub_launch_flavor_t launch_flavor,
+                      struct timespec *timeout_abstime, 
+                      useconds_t waitfor_interval,
+                      char *err_str, 
+                      size_t err_len,
                       DNBShouldCancelCallback should_cancel_callback,
                       void *callback_data)
 {

@@ -924,7 +924,7 @@ public:
             Error error (process->Resume());
             if (error.Success())
             {
-                result.AppendMessageWithFormat ("Resuming process %i\n", process->GetID());
+                result.AppendMessageWithFormat ("Process %i resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
                     state = process->WaitForProcessToStop (NULL);
@@ -1223,7 +1223,7 @@ public:
             Error error (process->Resume ());
             if (error.Success())
             {
-                result.AppendMessageWithFormat ("Resuming process %i\n", process->GetID());
+                result.AppendMessageWithFormat ("Process %i resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
                     StateType state = process->WaitForProcessToStop (NULL);
