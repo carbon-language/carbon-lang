@@ -98,7 +98,7 @@ const char *TargetInfo::getTypeConstantSuffix(IntType T) {
   }
 }
 
-/// getTypeWidth - Return the width (in bits) of the specified integer type 
+/// getTypeWidth - Return the width (in bits) of the specified integer type
 /// enum. For example, SignedInt -> getIntWidth().
 unsigned TargetInfo::getTypeWidth(IntType T) const {
   switch (T) {
@@ -114,7 +114,7 @@ unsigned TargetInfo::getTypeWidth(IntType T) const {
   };
 }
 
-/// getTypeAlign - Return the alignment (in bits) of the specified integer type 
+/// getTypeAlign - Return the alignment (in bits) of the specified integer type
 /// enum. For example, SignedInt -> getIntAlign().
 unsigned TargetInfo::getTypeAlign(IntType T) const {
   switch (T) {
@@ -138,12 +138,12 @@ bool TargetInfo::isTypeSigned(IntType T) const {
   case SignedShort:
   case SignedInt:
   case SignedLong:
-  case SignedLongLong:   
+  case SignedLongLong:
     return true;
   case UnsignedShort:
   case UnsignedInt:
   case UnsignedLong:
-  case UnsignedLongLong: 
+  case UnsignedLongLong:
     return false;
   };
 }
@@ -164,7 +164,7 @@ void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
 static llvm::StringRef removeGCCRegisterPrefix(llvm::StringRef Name) {
   if (Name[0] == '%' || Name[0] == '#')
     Name = Name.substr(1);
-  
+
   return Name;
 }
 
@@ -174,7 +174,7 @@ static llvm::StringRef removeGCCRegisterPrefix(llvm::StringRef Name) {
 bool TargetInfo::isValidGCCRegisterName(llvm::StringRef Name) const {
   if (Name.empty())
     return false;
-  
+
   const char * const *Names;
   unsigned NumNames;
 
@@ -216,7 +216,7 @@ bool TargetInfo::isValidGCCRegisterName(llvm::StringRef Name) const {
   return false;
 }
 
-llvm::StringRef 
+llvm::StringRef
 TargetInfo::getNormalizedGCCRegisterName(llvm::StringRef Name) const {
   assert(isValidGCCRegisterName(Name) && "Invalid register passed in");
 

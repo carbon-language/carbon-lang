@@ -139,7 +139,7 @@ public:
   IntType getSigAtomicType() const { return SigAtomicType; }
 
 
-  /// getTypeWidth - Return the width (in bits) of the specified integer type 
+  /// getTypeWidth - Return the width (in bits) of the specified integer type
   /// enum. For example, SignedInt -> getIntWidth().
   unsigned getTypeWidth(IntType T) const;
 
@@ -306,7 +306,7 @@ public:
     std::string Name;           // Operand name: [foo] with no []'s.
   public:
     ConstraintInfo(llvm::StringRef ConstraintStr, llvm::StringRef Name)
-      : Flags(0), TiedOperand(-1), ConstraintStr(ConstraintStr.str()), 
+      : Flags(0), TiedOperand(-1), ConstraintStr(ConstraintStr.str()),
       Name(Name.str()) {}
 
     const std::string &getConstraintStr() const { return ConstraintStr; }
@@ -391,7 +391,7 @@ public:
     return "__OBJC,__cstring_object,regular,no_dead_strip";
   }
 
-  /// getNSStringNonFragileABISection - Return the section to use for 
+  /// getNSStringNonFragileABISection - Return the section to use for
   /// NSString literals, or 0 if no special section is used (NonFragile ABI).
   virtual const char *getNSStringNonFragileABISection() const {
     return "__DATA, __objc_stringobj, regular, no_dead_strip";
@@ -499,7 +499,7 @@ public:
   bool isTLSSupported() const {
     return TLSSupported;
   }
-  
+
   /// hasNoAsmVariants - Return true if {|} are normal characters in the
   /// asm string.  If this returns false (the default), then {abc|xyz} is syntax
   /// that says that when compiling for asm variant #0, "abc" should be
@@ -508,19 +508,19 @@ public:
   bool hasNoAsmVariants() const {
     return NoAsmVariants;
   }
-  
+
   /// getEHDataRegisterNumber - Return the register number that
   /// __builtin_eh_return_regno would return with the specified argument.
   virtual int getEHDataRegisterNumber(unsigned RegNo) const {
-    return -1; 
+    return -1;
   }
-  
-  /// getStaticInitSectionSpecifier - Return the section to use for C++ static 
+
+  /// getStaticInitSectionSpecifier - Return the section to use for C++ static
   /// initialization functions.
   virtual const char *getStaticInitSectionSpecifier() const {
     return 0;
   }
-  
+
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
     return PointerWidth;

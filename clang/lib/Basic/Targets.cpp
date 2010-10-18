@@ -1184,7 +1184,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   case NoMMXSSE:
     break;
   }
-  
+
   // Each case falls through to the previous one here.
   switch (AMD3DNowLevel) {
   case AMD3DNowAthlon:
@@ -1461,7 +1461,7 @@ public:
            "} __va_list_tag;"
            "typedef __va_list_tag __builtin_va_list[1];";
   }
-  
+
   int getEHDataRegisterNumber(unsigned RegNo) const {
     if (RegNo == 0) return 0;
     if (RegNo == 1) return 1;
@@ -1479,7 +1479,7 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     LongWidth = LongAlign = 32;
-    DoubleAlign = LongLongAlign = 64;      
+    DoubleAlign = LongLongAlign = 64;
     IntMaxType = SignedLongLong;
     UIntMaxType = UnsignedLongLong;
     Int64Type = SignedLongLong;
