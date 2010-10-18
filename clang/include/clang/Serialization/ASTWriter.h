@@ -279,7 +279,7 @@ private:
   void WriteSelectors(Sema &SemaRef);
   void WriteReferencedSelectorsPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
-  void WriteAttributeRecord(const AttrVec &Attrs);
+  void WriteAttributes(const AttrVec &Attrs, RecordData &Record);
   void WriteDeclUpdateBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
   void WriteAdditionalTemplateSpecializations();

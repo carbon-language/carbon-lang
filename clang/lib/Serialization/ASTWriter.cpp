@@ -684,7 +684,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_OBJC_INTERFACE);
   RECORD(TYPE_OBJC_OBJECT);
   RECORD(TYPE_OBJC_OBJECT_POINTER);
-  RECORD(DECL_ATTR);
   RECORD(DECL_TRANSLATION_UNIT);
   RECORD(DECL_TYPEDEF);
   RECORD(DECL_ENUM);
@@ -2168,8 +2167,8 @@ void ASTWriter::WriteAdditionalTemplateSpecializations() {
 //===----------------------------------------------------------------------===//
 
 /// \brief Write a record containing the given attributes.
-void ASTWriter::WriteAttributeRecord(const AttrVec &Attrs) {
-  RecordData Record;
+void ASTWriter::WriteAttributes(const AttrVec &Attrs, RecordData &Record) {
+  Record.push_back(Attrs.size());
   for (AttrVec::const_iterator i = Attrs.begin(), e = Attrs.end(); i != e; ++i){
     const Attr * A = *i;
     Record.push_back(A->getKind()); // FIXME: stable encoding, target attrs
@@ -2179,8 +2178,6 @@ void ASTWriter::WriteAttributeRecord(const AttrVec &Attrs) {
 #include "clang/Serialization/AttrPCHWrite.inc"
 
   }
-
-  Stream.EmitRecord(DECL_ATTR, Record);
 }
 
 void ASTWriter::AddString(llvm::StringRef Str, RecordData &Record) {

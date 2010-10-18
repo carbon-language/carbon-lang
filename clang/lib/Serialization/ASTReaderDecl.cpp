@@ -172,9 +172,9 @@ void ASTDeclReader::VisitDecl(Decl *D) {
                      cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++])));
   D->setLocation(ReadSourceLocation(Record, Idx));
   D->setInvalidDecl(Record[Idx++]);
-  if (Record[Idx++]) {
+  if (Record[Idx++]) { // hasAttrs
     AttrVec Attrs;
-    Reader.ReadAttributes(F, Attrs);
+    Reader.ReadAttributes(F, Attrs, Record, Idx);
     D->setAttrs(Attrs);
   }
   D->setImplicit(Record[Idx++]);
@@ -1200,19 +1200,9 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
 //===----------------------------------------------------------------------===//
 
 /// \brief Reads attributes from the current stream position.
-void ASTReader::ReadAttributes(PerFileData &F, AttrVec &Attrs) {
-  llvm::BitstreamCursor &DeclsCursor = F.DeclsCursor;
-  unsigned Code = DeclsCursor.ReadCode();
-  assert(Code == llvm::bitc::UNABBREV_RECORD &&
-         "Expected unabbreviated record"); (void)Code;
-
-  RecordData Record;
-  unsigned Idx = 0;
-  unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-  assert(RecCode == DECL_ATTR && "Expected attribute record");
-  (void)RecCode;
-
-  while (Idx < Record.size()) {
+void ASTReader::ReadAttributes(PerFileData &F, AttrVec &Attrs,
+                               const RecordData &Record, unsigned &Idx) {
+  for (unsigned i = 0, e = Record[Idx++]; i != e; ++i) {
     Attr *New = 0;
     attr::Kind Kind = (attr::Kind)Record[Idx++];
     SourceLocation Loc = ReadSourceLocation(F, Record, Idx);
@@ -1299,7 +1289,6 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
 
   Decl *D = 0;
   switch ((DeclCode)DeclsCursor.ReadRecord(Code, Record)) {
-  case DECL_ATTR:
   case DECL_CONTEXT_LEXICAL:
   case DECL_CONTEXT_VISIBLE:
     assert(false && "Record cannot be de-serialized with ReadDeclRecord");

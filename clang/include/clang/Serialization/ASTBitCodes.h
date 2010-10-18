@@ -579,10 +579,8 @@ namespace clang {
     /// constant describes a record for a specific declaration class
     /// in the AST.
     enum DeclCode {
-      /// \brief Attributes attached to a declaration.
-      DECL_ATTR = 50,
       /// \brief A TranslationUnitDecl record.
-      DECL_TRANSLATION_UNIT,
+      DECL_TRANSLATION_UNIT = 50,
       /// \brief A TypedefDecl record.
       DECL_TYPEDEF,
       /// \brief An EnumDecl record.

@@ -133,6 +133,8 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
   Writer.AddSourceLocation(D->getLocation(), Record);
   Record.push_back(D->isInvalidDecl());
   Record.push_back(D->hasAttrs());
+  if (D->hasAttrs())
+    Writer.WriteAttributes(D->getAttrs(), Record);
   Record.push_back(D->isImplicit());
   Record.push_back(D->isUsed(false));
   Record.push_back(D->getAccess());
@@ -1211,10 +1213,6 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
     llvm::report_fatal_error(llvm::StringRef("unexpected declaration kind '") +
                             D->getDeclKindName() + "'");
   Stream.EmitRecord(W.Code, Record, W.AbbrevToUse);
-
-  // If the declaration had any attributes, write them now.
-  if (D->hasAttrs())
-    WriteAttributeRecord(D->getAttrs());
 
   // Flush any expressions that were written as part of this declaration.
   FlushStmts();

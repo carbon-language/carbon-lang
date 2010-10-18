@@ -1095,7 +1095,8 @@ public:
   CXXTemporary *ReadCXXTemporary(const RecordData &Record, unsigned &Idx);
       
   /// \brief Reads attributes from the current stream position.
-  void ReadAttributes(PerFileData &F, AttrVec &Attrs);
+  void ReadAttributes(PerFileData &F, AttrVec &Attrs,
+                      const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads a statement.
   Stmt *ReadStmt(PerFileData &F);
