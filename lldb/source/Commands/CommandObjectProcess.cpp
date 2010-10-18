@@ -877,7 +877,7 @@ public:
         CommandArgumentData signal_arg;
         
         // Define the first (and only) variant of this arg.
-        signal_arg.arg_type = eArgTypeUnixSignalNumber;
+        signal_arg.arg_type = eArgTypeUnixSignal;
         signal_arg.arg_repetition = eArgRepeatPlain;
         
         // There is only one variant this argument could be; put it into the argument entry.
@@ -1219,12 +1219,12 @@ public:
     {
         SetHelpLong ("If no signals are specified, update them all.  If no update option is specified, list the current values.\n");
         CommandArgumentEntry arg;
-        CommandArgumentData signal_name_arg;
+        CommandArgumentData signal_arg;
 
-        signal_name_arg.arg_type = eArgTypeSignalName;
-        signal_name_arg.arg_repetition = eArgRepeatStar;
+        signal_arg.arg_type = eArgTypeUnixSignal;
+        signal_arg.arg_repetition = eArgRepeatStar;
 
-        arg.push_back (signal_name_arg);
+        arg.push_back (signal_arg);
         
         m_arguments.push_back (arg);
     }
