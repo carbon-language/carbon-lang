@@ -149,6 +149,8 @@ class ARMFastISel : public FastISel {
 
     // Call handling routines.
   private:
+    bool FastEmitExtend(ISD::NodeType Opc, EVT DstVT, unsigned Src, EVT SrcVT,
+                        unsigned &ResultReg);
     CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool Return);
     bool ProcessCallArgs(SmallVectorImpl<Value*> &Args,
                          SmallVectorImpl<unsigned> &ArgRegs,
@@ -1234,6 +1236,18 @@ bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
 
 // Call Handling Code
 
+bool ARMFastISel::FastEmitExtend(ISD::NodeType Opc, EVT DstVT, unsigned Src,
+                                 EVT SrcVT, unsigned &ResultReg) {
+  unsigned RR = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(), Opc,
+                           Src, /*TODO: Kill=*/false);
+  
+  if (RR != 0) {
+    ResultReg = RR;
+    return true;
+  } else
+    return false;                                   
+}
+
 // This is largely taken directly from CCAssignFnForNode - we don't support
 // varargs in FastISel so that part has been removed.
 // TODO: We may not support all of this.
@@ -1290,9 +1304,49 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     // Handle arg promotion, etc.
     switch (VA.getLocInfo()) {
       case CCValAssign::Full: break;
-      default:
-      // TODO: Handle arg promotion.
-      return false;
+      case CCValAssign::SExt: {
+        bool Emitted = FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
+                                         Arg, ArgVT, Arg);
+        assert(Emitted && "Failed to emit a sext!"); Emitted=Emitted;
+        Emitted = true;
+        ArgVT = VA.getLocVT();
+        break;
+      }
+      case CCValAssign::ZExt: {
+        bool Emitted = FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
+                                         Arg, ArgVT, Arg);
+        assert(Emitted && "Failed to emit a zext!"); Emitted=Emitted;
+        Emitted = true;
+        ArgVT = VA.getLocVT();
+        break;
+      }
+      case CCValAssign::AExt: {
+        // We don't handle NEON or f64 parameters yet.
+        if (VA.getLocVT().isVector() && VA.getLocVT().getSizeInBits() >= 64)
+          return false;
+        bool Emitted = FastEmitExtend(ISD::ANY_EXTEND, VA.getLocVT(),
+                                         Arg, ArgVT, Arg);
+        if (!Emitted)
+          Emitted = FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
+                                      Arg, ArgVT, Arg);
+        if (!Emitted)
+          Emitted = FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
+                                      Arg, ArgVT, Arg);
+
+        assert(Emitted && "Failed to emit a aext!"); Emitted=Emitted;
+        ArgVT = VA.getLocVT();
+        break;
+      }
+      case CCValAssign::BCvt: {
+        unsigned BC = FastEmit_r(ArgVT.getSimpleVT(),
+                                 VA.getLocVT().getSimpleVT(),
+                                 ISD::BIT_CONVERT, Arg, /*TODO: Kill=*/false);
+        assert(BC != 0 && "Failed to emit a bitcast!");
+        Arg = BC;
+        ArgVT = VA.getLocVT();
+        break;
+      }
+      default: llvm_unreachable("Unknown arg promotion!");
     }
 
     // Now copy/store arg to correct locations.
