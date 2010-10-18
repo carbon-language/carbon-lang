@@ -2306,10 +2306,8 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
         Keyword += ":";
         if (Idx < StartParameter || AllParametersAreInformative)
           Result->AddInformativeChunk(Keyword);
-        else if (Idx == StartParameter)
+        else 
           Result->AddTypedTextChunk(Keyword);
-        else
-          Result->AddTextChunk(Keyword);
       }
       
       // If we're before the starting parameter, skip the placeholder.
@@ -2523,6 +2521,7 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
   typedef CodeCompletionResult Result;
   
   Results.EnterNewScope();
+  
   for (Preprocessor::macro_iterator M = PP.macro_begin(), 
                                  MEnd = PP.macro_end();
        M != MEnd; ++M) {
@@ -2531,7 +2530,9 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
                                                    PP.getLangOptions(),
                                                    TargetTypeIsPointer)));
   }
+  
   Results.ExitScope();
+  
 }
 
 static void AddPrettyFunctionResults(const LangOptions &LangOpts, 
@@ -2539,6 +2540,7 @@ static void AddPrettyFunctionResults(const LangOptions &LangOpts,
   typedef CodeCompletionResult Result;
   
   Results.EnterNewScope();
+  
   Results.AddResult(Result("__PRETTY_FUNCTION__", CCP_Constant));
   Results.AddResult(Result("__FUNCTION__", CCP_Constant));
   if (LangOpts.C99 || LangOpts.CPlusPlus0x)
@@ -5300,11 +5302,11 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
          P != PEnd; (void)++P, ++I) {
       // Add the part of the selector name.
       if (I == 0)
-        Pattern->AddChunk(CodeCompletionString::CK_Colon);
+        Pattern->AddTypedTextChunk(":");
       else if (I < Sel.getNumArgs()) {
         Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-        Pattern->AddTextChunk(Sel.getIdentifierInfoForSlot(I)->getName());
-        Pattern->AddChunk(CodeCompletionString::CK_Colon);
+        Pattern->AddTypedTextChunk((Sel.getIdentifierInfoForSlot(I)->getName()
+                                    + ":").str());
       } else
         break;
 

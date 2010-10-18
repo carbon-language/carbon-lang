@@ -523,6 +523,49 @@ clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *ResultsIn,
 
 } // end extern "C"
 
+/// \brief Simple utility function that appends a \p New string to the given
+/// \p Old string, using the \p Buffer for storage.
+///
+/// \param Old The string to which we are appending. This parameter will be
+/// updated to reflect the complete string.
+///
+///
+/// \param New The string to append to \p Old.
+///
+/// \param Buffer A buffer that stores the actual, concatenated string. It will
+/// be used if the old string is already-non-empty.
+static void AppendToString(llvm::StringRef &Old, llvm::StringRef New,
+                           llvm::SmallString<256> &Buffer) {
+  if (Old.empty()) {
+    Old = New;
+    return;
+  }
+  
+  if (Buffer.empty())
+    Buffer.append(Old.begin(), Old.end());
+  Buffer.append(New.begin(), New.end());
+  Old = Buffer.str();
+}
+
+/// \brief Get the typed-text blocks from the given code-completion string
+/// and return them as a single string.
+///
+/// \param String The code-completion string whose typed-text blocks will be
+/// concatenated.
+///
+/// \param Buffer A buffer used for storage of the completed name.
+static llvm::StringRef GetTypedName(CodeCompletionString *String,
+                                    llvm::SmallString<256> &Buffer) {
+  llvm::StringRef Result;
+  for (CodeCompletionString::iterator C = String->begin(), CEnd = String->end();
+       C != CEnd; ++C) {
+    if (C->Kind == CodeCompletionString::CK_TypedText)
+      AppendToString(Result, C->Text, Buffer);
+  }
+  
+  return Result;
+}
+
 namespace {
   struct OrderCompletionResults {
     bool operator()(const CXCompletionResult &XR, 
@@ -532,18 +575,21 @@ namespace {
       CXStoredCodeCompletionString *Y
         = (CXStoredCodeCompletionString *)YR.CompletionString;
       
-      const char *XText = X->getTypedText();
-      const char *YText = Y->getTypedText();
-      if (!XText || !YText)
-        return XText != 0;
+      llvm::SmallString<256> XBuffer;
+      llvm::StringRef XText = GetTypedName(X, XBuffer);
+      llvm::SmallString<256> YBuffer;      
+      llvm::StringRef YText = GetTypedName(Y, YBuffer);
       
-      int result = llvm::StringRef(XText).compare_lower(YText);
+      if (XText.empty() || YText.empty())
+        return !XText.empty();
+            
+      int result = XText.compare_lower(YText);
       if (result < 0)
         return true;
       if (result > 0)
         return false;
       
-      result = llvm::StringRef(XText).compare(YText);
+      result = XText.compare(YText);
       return result < 0;
     }
   };
