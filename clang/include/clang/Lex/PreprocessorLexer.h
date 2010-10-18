@@ -155,6 +155,18 @@ public:
   /// getFileEntry - Return the FileEntry corresponding to this FileID.  Like
   /// getFileID(), this only works for lexers with attached preprocessors.
   const FileEntry *getFileEntry() const;
+
+  /// \brief Iterator that traverses the current stack of preprocessor
+  /// conditional directives (#if/#ifdef/#ifndef).
+  typedef llvm::SmallVectorImpl<PPConditionalInfo>::const_iterator 
+    conditional_iterator;
+
+  conditional_iterator conditional_begin() const { 
+    return ConditionalStack.begin(); 
+  }
+  conditional_iterator conditional_end() const { 
+    return ConditionalStack.end(); 
+  }
 };
 
 }  // end namespace clang
