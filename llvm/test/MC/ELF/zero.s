@@ -3,14 +3,14 @@
 .zero 4
 .zero 1,42
 
-// CHECK: ('sh_name', 1) # '.text'
-// CHECK: ('sh_type', 1)
-// CHECK: ('sh_flags', 6)
-// CHECK: ('sh_addr', 0)
-// CHECK: ('sh_offset', 64)
-// CHECK: ('sh_size', 5)
-// CHECK: ('sh_link', 0)
-// CHECK: ('sh_info', 0)
-// CHECK: ('sh_addralign', 4)
-// CHECK: ('sh_entsize', 0)
+// CHECK: ('sh_name', 0x1) # '.text'
+// CHECK: ('sh_type', 0x1)
+// CHECK: ('sh_flags', 0x6)
+// CHECK: ('sh_addr', 0x0)
+// CHECK: ('sh_offset', 0x40)
+// CHECK: ('sh_size', 0x5)
+// CHECK: ('sh_link', 0x0)
+// CHECK: ('sh_info', 0x0)
+// CHECK: ('sh_addralign', 0x4)
+// CHECK: ('sh_entsize', 0x0)
 // CHECK: ('_section_data', '00000000 2a')

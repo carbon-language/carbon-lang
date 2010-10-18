@@ -19,9 +19,9 @@ foo:
 
 	.sleb128        8193
 
-// ELF_32: ('sh_name', 1) # '.text'
+// ELF_32: ('sh_name', 0x1) # '.text'
 // ELF_32: ('_section_data', '00017f3f 40c000bf 7fff3f80 4081c000')
-// ELF_64: ('sh_name', 1) # '.text'
+// ELF_64: ('sh_name', 0x1) # '.text'
 // ELF_64: ('_section_data', '00017f3f 40c000bf 7fff3f80 4081c000')
 // MACHO_32: ('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // MACHO_32: ('_section_data', '00017f3f 40c000bf 7fff3f80 4081c000')

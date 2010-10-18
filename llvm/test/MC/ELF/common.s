@@ -8,13 +8,13 @@
 	.local	common1
 	.comm	common1,1,1
 
-// CHECK: ('st_name', 1) # 'common1'
-// CHECK-NEXT: ('st_bind', 0)
-// CHECK-NEXT: ('st_type', 1)
-// CHECK-NEXT: ('st_other', 0)
+// CHECK: ('st_name', 0x1) # 'common1'
+// CHECK-NEXT: ('st_bind', 0x0)
+// CHECK-NEXT: ('st_type', 0x1)
+// CHECK-NEXT: ('st_other', 0x0)
 // CHECK-NEXT: ('st_shndx',
-// CHECK-NEXT: ('st_value', 0)
-// CHECK-NEXT: ('st_size', 1)
+// CHECK-NEXT: ('st_value', 0x0)
+// CHECK-NEXT: ('st_size', 0x1)
 
 
 // Same as common1, but with directives in a different order.
@@ -22,25 +22,25 @@
 	.type	common2,@object
 	.comm	common2,1,1
 
-// CHECK: ('st_name', 9) # 'common2'
-// CHECK-NEXT: ('st_bind', 0)
-// CHECK-NEXT: ('st_type', 1)
-// CHECK-NEXT: ('st_other', 0)
+// CHECK: ('st_name', 0x9) # 'common2'
+// CHECK-NEXT: ('st_bind', 0x0)
+// CHECK-NEXT: ('st_type', 0x1)
+// CHECK-NEXT: ('st_other', 0x0)
 // CHECK-NEXT: ('st_shndx',
-// CHECK-NEXT: ('st_value', 1)
-// CHECK-NEXT: ('st_size', 1)
+// CHECK-NEXT: ('st_value', 0x1)
+// CHECK-NEXT: ('st_size', 0x1)
 
 // Test that without an explicit .local we produce a global.
 	.type	common3,@object
 	.comm	common3,4,4
 
-// CHECK: ('st_name', 17) # 'common3'
-// CHECK-NEXT: ('st_bind', 1)
-// CHECK-NEXT: ('st_type', 1)
-// CHECK-NEXT: ('st_other', 0)
-// CHECK-NEXT: ('st_shndx', 65522)
-// CHECK-NEXT: ('st_value', 4)
-// CHECK-NEXT: ('st_size', 4)
+// CHECK: ('st_name', 0x11) # 'common3'
+// CHECK-NEXT: ('st_bind', 0x1)
+// CHECK-NEXT: ('st_type', 0x1)
+// CHECK-NEXT: ('st_other', 0x0)
+// CHECK-NEXT: ('st_shndx', 0xfff2)
+// CHECK-NEXT: ('st_value', 0x4)
+// CHECK-NEXT: ('st_size', 0x4)
 
 
 // Test that without an explicit .local we produce a global, even if the first
@@ -54,10 +54,10 @@ foo:
 	.type	common4,@object
 	.comm	common4,40,16
 
-// CHECK: ('st_name', 29) # 'common4'
-// CHECK-NEXT: ('st_bind', 1)
-// CHECK-NEXT: ('st_type', 1)
-// CHECK-NEXT: ('st_other', 0)
-// CHECK-NEXT: ('st_shndx', 65522)
-// CHECK-NEXT: ('st_value', 16)
-// CHECK-NEXT: ('st_size', 40)
+// CHECK: ('st_name', 0x1d) # 'common4'
+// CHECK-NEXT: ('st_bind', 0x1)
+// CHECK-NEXT: ('st_type', 0x1)
+// CHECK-NEXT: ('st_other', 0x0)
+// CHECK-NEXT: ('st_shndx', 0xfff2)
+// CHECK-NEXT: ('st_value', 0x10)
+// CHECK-NEXT: ('st_size', 0x28)

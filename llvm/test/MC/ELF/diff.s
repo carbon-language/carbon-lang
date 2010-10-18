@@ -8,8 +8,8 @@ bar:
 zed:
         mov zed+(bar-foo), %eax
 
-// CHECK:       # Relocation 0
-// CHECK-NEXT:  (('r_offset', 5)
-// CHECK-NEXT:   ('r_sym', 6)
-// CHECK-NEXT:   ('r_type', 11)
-// CHECK-NEXT:   ('r_addend', 1)
+// CHECK:       # Relocation 0x0
+// CHECK-NEXT:  (('r_offset', 0x5)
+// CHECK-NEXT:   ('r_sym', 0x6)
+// CHECK-NEXT:   ('r_type', 0xb)
+// CHECK-NEXT:   ('r_addend', 0x1)

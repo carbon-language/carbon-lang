@@ -9,12 +9,12 @@
         .zero 1
 	.align	8
 
-// CHECK:      (('sh_name', 13) # '.bss'
+// CHECK:      (('sh_name', 0xd) # '.bss'
 // CHECK-NEXT:  ('sh_type',
 // CHECK-NEXT:  ('sh_flags'
 // CHECK-NEXT:  ('sh_addr',
 // CHECK-NEXT:  ('sh_offset',
-// CHECK-NEXT:  ('sh_size', 9)
+// CHECK-NEXT:  ('sh_size', 0x9)
 // CHECK-NEXT:  ('sh_link',
 // CHECK-NEXT:  ('sh_info',
 // CHECK-NEXT:  ('sh_addralign',

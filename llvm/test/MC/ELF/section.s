@@ -6,6 +6,6 @@
 .section	.note.GNU-,"",@progbits
 .section	-.note.GNU,"",@progbits
 
-// CHECK: ('sh_name', 18) # '.note.GNU-stack'
-// CHECK: ('sh_name', 34) # '.note.GNU-'
-// CHECK: ('sh_name', 45) # '-.note.GNU'
+// CHECK: ('sh_name', 0x12) # '.note.GNU-stack'
+// CHECK: ('sh_name', 0x22) # '.note.GNU-'
+// CHECK: ('sh_name', 0x2d) # '-.note.GNU'

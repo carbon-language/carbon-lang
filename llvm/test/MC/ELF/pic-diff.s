@@ -1,21 +1,21 @@
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck %s
 
-// CHECK:         # Symbol 5
-// CHECK-NEXT:    (('st_name', 5) # 'baz'
-// CHECK-NEXT:     ('st_bind', 1)
-// CHECK-NEXT:     ('st_type', 0)
-// CHECK-NEXT:     ('st_other', 0)
-// CHECK-NEXT:     ('st_shndx', 0)
-// CHECK-NEXT:     ('st_value', 0)
-// CHECK-NEXT:     ('st_size', 0)
+// CHECK:         # Symbol 0x5
+// CHECK-NEXT:    (('st_name', 0x5) # 'baz'
+// CHECK-NEXT:     ('st_bind', 0x1)
+// CHECK-NEXT:     ('st_type', 0x0)
+// CHECK-NEXT:     ('st_other', 0x0)
+// CHECK-NEXT:     ('st_shndx', 0x0)
+// CHECK-NEXT:     ('st_value', 0x0)
+// CHECK-NEXT:     ('st_size', 0x0)
 // CHECK-NEXT:    ),
 
 // CHECK:       ('_relocations', [
-// CHECK-NEXT:    # Relocation 0
-// CHECK-NEXT:    (('r_offset', 12)
-// CHECK-NEXT:     ('r_sym', 5)
-// CHECK-NEXT:     ('r_type', 2)
-// CHECK-NEXT:     ('r_addend', 8)
+// CHECK-NEXT:    # Relocation 0x0
+// CHECK-NEXT:    (('r_offset', 0xc)
+// CHECK-NEXT:     ('r_sym', 0x5)
+// CHECK-NEXT:     ('r_type', 0x2)
+// CHECK-NEXT:     ('r_addend', 0x8)
 // CHECK-NEXT:    ),
 // CHECK-NEXT:   ])
 
