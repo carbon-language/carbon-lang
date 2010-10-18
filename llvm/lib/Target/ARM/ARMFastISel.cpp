@@ -1518,11 +1518,8 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   // Check the calling convention.
   ImmutableCallSite CS(CI);
   CallingConv::ID CC = CS.getCallingConv();
+
   // TODO: Avoid some calling conventions?
-  if (CC != CallingConv::C) {
-    // errs() << "Can't handle calling convention: " << CC << "\n";
-    return false;
-  }
 
   // Let SDISel handle vararg functions.
   const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
