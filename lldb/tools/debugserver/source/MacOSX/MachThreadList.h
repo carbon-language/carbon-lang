@@ -53,6 +53,7 @@ public:
     bool            DisableHardwareBreakpoint (const DNBBreakpoint *bp) const;
     uint32_t        EnableHardwareWatchpoint (const DNBBreakpoint *wp) const;
     bool            DisableHardwareWatchpoint (const DNBBreakpoint *wp) const;
+    uint32_t        GetThreadIndexForThreadStoppedWithSignal (const int signo) const;
 
 protected:
     typedef std::vector<MachThreadSP>   collection;

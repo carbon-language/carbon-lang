@@ -421,7 +421,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 26579F67126A25920007C5CB /* darwin-debug */;
+			remoteGlobalIDString = 26579F67126A25920007C5CB;
 			remoteInfo = "darwin-debug";
 		};
 		266803611160110D008E1FE4 /* PBXContainerItemProxy */ = {

@@ -167,6 +167,7 @@ RNBContext::ThreadFunctionProcessStatus(void *arg)
 
                 case eStateInvalid:
                 case eStateExited:
+                case eStateDetached:
                     done = true;
                     break;
                 }

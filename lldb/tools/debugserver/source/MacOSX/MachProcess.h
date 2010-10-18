@@ -141,7 +141,7 @@ public:
     uint32_t                GetThreadIndexFromThreadID (nub_thread_t tid);
     nub_thread_t            GetCurrentThread ();
     nub_thread_t            SetCurrentThread (nub_thread_t tid);
-    MachThreadList &        GetThreadList() { return m_threadList; }
+    MachThreadList &        GetThreadList() { return m_thread_list; }
     bool                    GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInfo *stop_info) const;
     void                    DumpThreadStoppedReason(nub_thread_t tid) const;
     const char *            GetThreadInfo (nub_thread_t tid) const;
@@ -243,7 +243,7 @@ private:
                                 m_exception_messages;       // A collection of exception messages caught when listening to the exception port
     PThreadMutex                m_exception_messages_mutex; // Multithreaded protection for m_exception_messages
 
-    MachThreadList              m_threadList;               // A list of threads that is maintained/updated after each stop
+    MachThreadList              m_thread_list;               // A list of threads that is maintained/updated after each stop
     nub_state_t                 m_state;                    // The state of our process
     PThreadMutex                m_state_mutex;              // Multithreaded protection for m_state
     PThreadEvent                m_events;                   // Process related events in the child processes lifetime can be waited upon

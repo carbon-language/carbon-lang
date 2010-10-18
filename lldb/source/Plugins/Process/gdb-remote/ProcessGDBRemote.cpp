@@ -1139,13 +1139,25 @@ ProcessGDBRemote::WillDetach ()
     {
         bool timed_out = false;
         Mutex::Locker locker;
+        PausePrivateStateThread();
+        m_thread_list.DiscardThreadPlans();
+        m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
         if (!m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
         {
             if (timed_out)
                 error.SetErrorString("timed out sending interrupt packet");
             else
                 error.SetErrorString("unknown error sending interrupt packet");
+            ResumePrivateStateThread();
         }
+        TimeValue timeout_time;
+        timeout_time = TimeValue::Now();
+        timeout_time.OffsetWithSeconds(2);
+
+        EventSP event_sp;
+        StateType state = WaitForStateChangedEventsPrivate (&timeout_time, event_sp);
+        if (state != eStateStopped)
+            error.SetErrorString("unable to stop target");
     }
     return error;
 }
@@ -1160,30 +1172,26 @@ ProcessGDBRemote::DoDetach()
 
     DisableAllBreakpointSites ();
 
-    StringExtractorGDBRemote response;
-    size_t response_size = m_gdb_comm.SendPacketAndWaitForResponse("D", response, 2, false);
-    if (response_size)
-    {
-        if (response.IsOKPacket())
-        {
-            if (log)
-                log->Printf ("ProcessGDBRemote::DoDetach() detach was successful");
+    m_thread_list.DiscardThreadPlans();
 
-        }
-        else if (log)
-        {
-            log->Printf ("ProcessGDBRemote::DoDestroy() detach failed: %s", response.GetStringRef().c_str());
-        }
-    }
-    else if (log)
+    size_t response_size = m_gdb_comm.SendPacket ("D", 1);
+    if (log)
     {
-        log->PutCString ("ProcessGDBRemote::DoDestroy() detach failed for unknown reasons");
+        if (response_size)
+            log->PutCString ("ProcessGDBRemote::DoDetach() detach packet sent successfully");
+        else
+            log->PutCString ("ProcessGDBRemote::DoDetach() detach packet send failed");
     }
+    // Sleep for one second to let the process get all detached...
     StopAsyncThread ();
+
     m_gdb_comm.StopReadThread();
-    KillDebugserverProcess ();
     m_gdb_comm.Disconnect();    // Disconnect from the debug server.
-    SetPublicState (eStateDetached);
+
+    SetPrivateState (eStateDetached);
+    ResumePrivateStateThread();
+
+    //KillDebugserverProcess ();
     return error;
 }
 
@@ -1922,7 +1930,13 @@ ProcessGDBRemote::MonitorDebugserverProcess
         usleep (500000);
         // If our process hasn't yet exited, debugserver might have died.
         // If the process did exit, the we are reaping it.
-        if (process->GetState() != eStateExited)
+        const StateType state = process->GetState();
+        
+        if (process->m_debugserver_pid != LLDB_INVALID_PROCESS_ID &&
+            state != eStateInvalid &&
+            state != eStateUnloaded &&
+            state != eStateExited &&
+            state != eStateDetached)
         {
             char error_str[1024];
             if (signo)
@@ -1940,15 +1954,12 @@ ProcessGDBRemote::MonitorDebugserverProcess
 
             process->SetExitStatus (-1, error_str);
         }
-        else
-        {
-            // Debugserver has exited we need to let our ProcessGDBRemote
-            // know that it no longer has a debugserver instance
-            process->m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
-            // We are returning true to this function below, so we can
-            // forget about the monitor handle.
-            process->m_debugserver_thread = LLDB_INVALID_HOST_THREAD;
-        }
+        // Debugserver has exited we need to let our ProcessGDBRemote
+        // know that it no longer has a debugserver instance
+        process->m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
+        // We are returning true to this function below, so we can
+        // forget about the monitor handle.
+        process->m_debugserver_thread = LLDB_INVALID_HOST_THREAD;
     }
     return true;
 }

@@ -429,4 +429,17 @@ MachThreadList::DisableHardwareWatchpoint (const DNBBreakpoint* wp) const
     return false;
 }
 
+uint32_t
+MachThreadList::GetThreadIndexForThreadStoppedWithSignal (const int signo) const
+{
+    uint32_t should_stop = false;
+    const uint32_t num_threads = m_threads.size();
+    uint32_t idx = 0;
+    for (idx = 0; !should_stop && idx < num_threads; ++idx)
+    {
+        if (m_threads[idx]->GetStopException().SoftSignal () == signo)
+            return idx;
+    }
+    return UINT32_MAX;
+}
 

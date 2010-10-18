@@ -87,9 +87,11 @@ exit_with_errno (int err, const char *prefix)
 }
 
 pid_t
-posix_spawn_for_debug (const char *path, char *const *argv, char *const *envp, cpu_type_t cpu_type, int disable_aslr)
+posix_spawn_for_debug (char *const *argv, char *const *envp, cpu_type_t cpu_type, int disable_aslr)
 {
     pid_t pid = 0;
+
+    const char *path = argv[0];
 
     posix_spawnattr_t attr;
 
@@ -203,13 +205,7 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
         printf ("argv[%u] = '%s'\n", i, argv[i]);
 #endif
 
-    const char *exe_path = argv[0];
-
-    // Skip this inferior program name...
-    ++argv;
-
-    posix_spawn_for_debug (exe_path, 
-                           argv, 
+    posix_spawn_for_debug (argv, 
                            pass_env ? envp : NULL, 
                            cpu_type, 
                            disable_aslr);

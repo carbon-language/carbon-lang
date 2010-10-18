@@ -101,7 +101,7 @@ MachProcess::MachProcess() :
     m_stdio_thread      (0),
     m_stdio_mutex       (PTHREAD_MUTEX_RECURSIVE),
     m_stdout_data       (),
-    m_threadList        (),
+    m_thread_list        (),
     m_exception_messages (),
     m_exception_messages_mutex (PTHREAD_MUTEX_RECURSIVE),
     m_state             (eStateUnloaded),
@@ -147,62 +147,62 @@ MachProcess::GetState()
 const char *
 MachProcess::ThreadGetName(nub_thread_t tid)
 {
-    return m_threadList.GetName(tid);
+    return m_thread_list.GetName(tid);
 }
 
 nub_state_t
 MachProcess::ThreadGetState(nub_thread_t tid)
 {
-    return m_threadList.GetState(tid);
+    return m_thread_list.GetState(tid);
 }
 
 
 nub_size_t
 MachProcess::GetNumThreads () const
 {
-    return m_threadList.NumThreads();
+    return m_thread_list.NumThreads();
 }
 
 nub_thread_t
 MachProcess::GetThreadAtIndex (nub_size_t thread_idx) const
 {
-    return m_threadList.ThreadIDAtIndex(thread_idx);
+    return m_thread_list.ThreadIDAtIndex(thread_idx);
 }
 
 uint32_t
 MachProcess::GetThreadIndexFromThreadID (nub_thread_t tid)
 {
-    return m_threadList.GetThreadIndexByID(tid);
+    return m_thread_list.GetThreadIndexByID(tid);
 }
 
 nub_thread_t
 MachProcess::GetCurrentThread ()
 {
-    return m_threadList.CurrentThreadID();
+    return m_thread_list.CurrentThreadID();
 }
 
 nub_thread_t
 MachProcess::SetCurrentThread(nub_thread_t tid)
 {
-    return m_threadList.SetCurrentThread(tid);
+    return m_thread_list.SetCurrentThread(tid);
 }
 
 bool
 MachProcess::GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInfo *stop_info) const
 {
-    return m_threadList.GetThreadStoppedReason(tid, stop_info);
+    return m_thread_list.GetThreadStoppedReason(tid, stop_info);
 }
 
 void
 MachProcess::DumpThreadStoppedReason(nub_thread_t tid) const
 {
-    return m_threadList.DumpThreadStoppedReason(tid);
+    return m_thread_list.DumpThreadStoppedReason(tid);
 }
 
 const char *
 MachProcess::GetThreadInfo(nub_thread_t tid) const
 {
-    return m_threadList.GetThreadInfo(tid);
+    return m_thread_list.GetThreadInfo(tid);
 }
 
 const DNBRegisterSetInfo *
@@ -214,13 +214,13 @@ MachProcess::GetRegisterSetInfo(nub_thread_t tid, nub_size_t *num_reg_sets ) con
 bool
 MachProcess::GetRegisterValue ( nub_thread_t tid, uint32_t set, uint32_t reg, DNBRegisterValue *value ) const
 {
-    return m_threadList.GetRegisterValue(tid, set, reg, value);
+    return m_thread_list.GetRegisterValue(tid, set, reg, value);
 }
 
 bool
 MachProcess::SetRegisterValue ( nub_thread_t tid, uint32_t set, uint32_t reg, const DNBRegisterValue *value ) const
 {
-    return m_threadList.SetRegisterValue(tid, set, reg, value);
+    return m_thread_list.SetRegisterValue(tid, set, reg, value);
 }
 
 void
@@ -273,7 +273,7 @@ MachProcess::Clear()
     SetState(eStateUnloaded);
     m_flags = eMachProcessFlagsNone;
     m_stop_count = 0;
-    m_threadList.Clear();
+    m_thread_list.Clear();
     {
         PTHREAD_MUTEX_LOCKER(locker, m_exception_messages_mutex);
         m_exception_messages.clear();
@@ -373,7 +373,13 @@ MachProcess::DoSIGSTOP (bool clear_bps_and_wps)
             clear_bps_and_wps = false;
         }
 
-        // Resume our process
+        // If we already have a thread stopped due to a SIGSTOP, we don't have
+        // to do anything...
+        if (m_thread_list.GetThreadIndexForThreadStoppedWithSignal (SIGSTOP) != UINT32_MAX)
+            return GetState();
+
+        // No threads were stopped with a SIGSTOP, we need to run and halt the
+        // process with a signal
         DNBLogThreadedIf(LOG_PROCESS, "MachProcess::DoSIGSTOP() state = %s -- resuming process", DNBStateAsString (state));
         PrivateResume (DNBThreadResumeActions (eStateRunning, 0));
 
@@ -406,11 +412,15 @@ MachProcess::Detach()
     nub_state_t state = DoSIGSTOP(true);
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Detach() DoSIGSTOP() returned %s", DNBStateAsString(state));
 
+    {
+        DNBThreadResumeActions thread_actions (eStateRunning, 0);
+        PTHREAD_MUTEX_LOCKER (locker, m_exception_messages_mutex);
 
-    // Don't reply to our SIGSTOP exception, just make sure no threads
-    // are still suspended.
-    PrivateResume (DNBThreadResumeActions (eStateRunning, 0));
+        ReplyToAllExceptions (thread_actions);
 
+    }
+
+    m_task.ShutDownExcecptionThread();
 
     // Detach from our process
     errno = 0;
@@ -423,13 +433,14 @@ MachProcess::Detach()
     // Resume our task
     m_task.Resume();
 
-    SetState(eStateDetached);
-
     // NULL our task out as we have already retored all exception ports
     m_task.Clear();
 
     // Clear out any notion of the process we once were
     Clear();
+
+    SetState(eStateDetached);
+
     return true;
 }
 
@@ -604,7 +615,7 @@ MachProcess::PrivateResume (const DNBThreadResumeActions& thread_actions)
     // Let the thread prepare to resume and see if any threads want us to
     // step over a breakpoint instruction (ProcessWillResume will modify
     // the value of stepOverBreakInstruction).
-    m_threadList.ProcessWillResume (this, thread_actions);
+    m_thread_list.ProcessWillResume (this, thread_actions);
 
     // Set our state accordingly
     if (thread_actions.NumActionsWithState(eStateStepping))
@@ -718,7 +729,7 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
 
         if (bp->IsHardware())
         {
-            bool hw_disable_result = m_threadList.DisableHardwareBreakpoint (bp);
+            bool hw_disable_result = m_thread_list.DisableHardwareBreakpoint (bp);
 
             if (hw_disable_result == true)
             {
@@ -726,7 +737,7 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
                 // Let the thread list know that a breakpoint has been modified
                 if (remove)
                 {
-                    m_threadList.NotifyBreakpointChanged(bp);
+                    m_thread_list.NotifyBreakpointChanged(bp);
                     m_breakpoints.Remove(breakID);
                 }
                 DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx (hardware) => success", breakID, remove, (uint64_t)addr);
@@ -794,7 +805,7 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
                             // Let the thread list know that a breakpoint has been modified
                             if (remove)
                             {
-                                m_threadList.NotifyBreakpointChanged(bp);
+                                m_thread_list.NotifyBreakpointChanged(bp);
                                 m_breakpoints.Remove(breakID);
                             }
                             DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx => success", breakID, remove, (uint64_t)addr);
@@ -839,7 +850,7 @@ MachProcess::DisableWatchpoint(nub_watch_t watchID, bool remove)
 
         if (wp->IsHardware())
         {
-            bool hw_disable_result = m_threadList.DisableHardwareWatchpoint (wp);
+            bool hw_disable_result = m_thread_list.DisableHardwareWatchpoint (wp);
 
             if (hw_disable_result == true)
             {
@@ -916,7 +927,7 @@ MachProcess::EnableBreakpoint(nub_break_t breakID)
         {
             if (bp->HardwarePreferred())
             {
-                bp->SetHardwareIndex(m_threadList.EnableHardwareBreakpoint(bp));
+                bp->SetHardwareIndex(m_thread_list.EnableHardwareBreakpoint(bp));
                 if (bp->IsHardware())
                 {
                     bp->SetEnabled(true);
@@ -942,7 +953,7 @@ MachProcess::EnableBreakpoint(nub_break_t breakID)
                             {
                                 bp->SetEnabled(true);
                                 // Let the thread list know that a breakpoint has been modified
-                                m_threadList.NotifyBreakpointChanged(bp);
+                                m_thread_list.NotifyBreakpointChanged(bp);
                                 DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::EnableBreakpoint ( breakID = %d ) addr = 0x%8.8llx: SUCCESS.", breakID, (uint64_t)addr);
                                 return true;
                             }
@@ -991,7 +1002,7 @@ MachProcess::EnableWatchpoint(nub_watch_t watchID)
         else
         {
             // Currently only try and set hardware watchpoints.
-            wp->SetHardwareIndex(m_threadList.EnableHardwareWatchpoint(wp));
+            wp->SetHardwareIndex(m_thread_list.EnableHardwareWatchpoint(wp));
             if (wp->IsHardware())
             {
                 wp->SetEnabled(true);
@@ -1031,7 +1042,7 @@ MachProcess::ExceptionMessageBundleComplete()
     {
         // Let all threads recover from stopping and do any clean up based
         // on the previous thread state (if any).
-        m_threadList.ProcessDidStop(this);
+        m_thread_list.ProcessDidStop(this);
 
         // Let each thread know of any exceptions
         task_t task = m_task.TaskPort();
@@ -1041,16 +1052,16 @@ MachProcess::ExceptionMessageBundleComplete()
             // Let the thread list figure use the MachProcess to forward all exceptions
             // on down to each thread.
             if (m_exception_messages[i].state.task_port == task)
-                m_threadList.NotifyException(m_exception_messages[i].state);
+                m_thread_list.NotifyException(m_exception_messages[i].state);
             if (DNBLogCheckLogBit(LOG_EXCEPTIONS))
                 m_exception_messages[i].Dump();
         }
 
         if (DNBLogCheckLogBit(LOG_THREAD))
-            m_threadList.Dump();
+            m_thread_list.Dump();
 
         bool step_more = false;
-        if (m_threadList.ShouldStop(step_more))
+        if (m_thread_list.ShouldStop(step_more))
         {
             // Wait for the eEventProcessRunningStateChanged event to be reset
             // before changing state to stopped to avoid race condition with

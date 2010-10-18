@@ -1222,7 +1222,6 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     if (error.Success())
     {
         SetPublicState (eStateAttaching);
-        StartPrivateStateThread();
         error = DoAttachToProcessWithName (process_name, wait_for_launch);
         if (error.Fail())
         {
@@ -1635,7 +1634,9 @@ Process::RunPrivateStateThread ()
             HandlePrivateEvent (event_sp);
         }
 
-        if (internal_state == eStateInvalid || internal_state == eStateExited)
+        if (internal_state == eStateInvalid || 
+            internal_state == eStateExited  ||
+            internal_state == eStateDetached )
             break;
     }
 
