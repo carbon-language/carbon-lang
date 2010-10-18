@@ -826,7 +826,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     }
 
     // If stack and double are 8-byte aligned and we are spilling an odd number
-    // of GPRs. Spill one extra callee save GPR so we won't have to pad between
+    // of GPRs, spill one extra callee save GPR so we won't have to pad between
     // the integer and double callee save areas.
     unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
     if (TargetAlign == 8 && (NumGPRSpills & 1)) {
