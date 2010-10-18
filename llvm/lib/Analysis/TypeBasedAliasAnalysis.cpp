@@ -32,7 +32,11 @@
 #include "llvm/Module.h"
 #include "llvm/Metadata.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+// For testing purposes, enable TBAA only via a special option.
+static cl::opt<bool> EnableTBAA("enable-tbaa");
 
 namespace {
   /// TBAANode - This is a simple wrapper around an MDNode which provides a
@@ -122,6 +126,9 @@ TypeBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 AliasAnalysis::AliasResult
 TypeBasedAliasAnalysis::alias(const Location &LocA,
                               const Location &LocB) {
+  if (!EnableTBAA)
+    return AliasAnalysis::alias(LocA, LocB);
+
   // Get the attached MDNodes. If either value lacks a tbaa MDNode, we must
   // be conservative.
   const MDNode *AM = LocA.TBAATag;
@@ -168,6 +175,9 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
 }
 
 bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
+  if (!EnableTBAA)
+    return AliasAnalysis::pointsToConstantMemory(Loc);
+
   const MDNode *M = Loc.TBAATag;
   if (!M) return false;
 
