@@ -555,7 +555,7 @@ CommandInterpreter::HandleCommand
                         if (command_args.GetCommandString (aliased_cmd_str))
                         {
                             command_line = aliased_cmd_str.c_str();
-                            command_cstr = command_obj->GetCommandName();
+                            command_cstr = command_args.GetArgumentAtIndex (0);
                         }
                     }
                 }
