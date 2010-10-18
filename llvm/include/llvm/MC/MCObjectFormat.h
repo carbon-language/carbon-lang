@@ -15,6 +15,8 @@ class MCSymbol;
 
 class MCObjectFormat {
 public:
+  virtual ~MCObjectFormat() {}
+
   /// isAbsolute - Check if A - B is an absolute value
   ///
   /// \param InSet - True if this expression is in a set. For example:
