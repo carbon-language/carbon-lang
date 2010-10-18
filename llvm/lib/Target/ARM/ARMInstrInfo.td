@@ -2059,50 +2059,94 @@ def UHSUB8  : AAI<0b01100111, 0b11111111, "uhsub8">;
 
 // Unsigned Sum of Absolute Differences [and Accumulate] -- for disassembly only
 
-def USAD8  : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b),
+def USAD8  : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                 MulFrm /* for convenience */, NoItinerary, "usad8",
-                "\t$dst, $a, $b", []>,
+                "\t$Rd, $Rn, $Rm", []>,
              Requires<[IsARM, HasV6]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
   let Inst{27-20} = 0b01111000;
   let Inst{15-12} = 0b1111;
   let Inst{7-4} = 0b0001;
+  let Inst{19-16} = Rd;
+  let Inst{11-8} = Rm;
+  let Inst{3-0} = Rn;
 }
-def USADA8 : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
+def USADA8 : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
                 MulFrm /* for convenience */, NoItinerary, "usada8",
-                "\t$dst, $a, $b, $acc", []>,
+                "\t$Rd, $Rn, $Rm, $Ra", []>,
              Requires<[IsARM, HasV6]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+  bits<4> Ra;
   let Inst{27-20} = 0b01111000;
   let Inst{7-4} = 0b0001;
+  let Inst{19-16} = Rd;
+  let Inst{15-12} = Ra;
+  let Inst{11-8} = Rm;
+  let Inst{3-0} = Rn;
 }
 
 // Signed/Unsigned saturate -- for disassembly only
 
-def SSAT : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, shift_imm:$sh),
-              SatFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a$sh",
+def SSAT : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$a, shift_imm:$sh),
+              SatFrm, NoItinerary, "ssat", "\t$Rd, $sat_imm, $a$sh",
               [/* For disassembly only; pattern left blank */]> {
+  bits<4> Rd;
+  bits<5> sat_imm;
+  bits<4> Rn;
+  bits<8> sh;
   let Inst{27-21} = 0b0110101;
   let Inst{5-4} = 0b01;
+  let Inst{20-16} = sat_imm;
+  let Inst{15-12} = Rd;
+  let Inst{11-7} = sh{7-3};
+  let Inst{6} = sh{0};
+  let Inst{3-0} = Rn;
 }
 
-def SSAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), SatFrm,
-                NoItinerary, "ssat16", "\t$dst, $bit_pos, $a",
+def SSAT16 : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$Rn), SatFrm,
+                NoItinerary, "ssat16", "\t$Rd, $sat_imm, $Rn",
                 [/* For disassembly only; pattern left blank */]> {
+  bits<4> Rd;
+  bits<4> sat_imm;
+  bits<4> Rn;
   let Inst{27-20} = 0b01101010;
-  let Inst{7-4} = 0b0011;
+  let Inst{11-4} = 0b11110011;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = sat_imm;
+  let Inst{3-0} = Rn;
 }
 
-def USAT : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, shift_imm:$sh),
-              SatFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a$sh",
+def USAT : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$a, shift_imm:$sh),
+              SatFrm, NoItinerary, "usat", "\t$Rd, $sat_imm, $a$sh",
               [/* For disassembly only; pattern left blank */]> {
+  bits<4> Rd;
+  bits<5> sat_imm;
+  bits<4> Rn;
+  bits<8> sh;
   let Inst{27-21} = 0b0110111;
   let Inst{5-4} = 0b01;
+  let Inst{15-12} = Rd;
+  let Inst{11-7} = sh{7-3};
+  let Inst{6} = sh{0};
+  let Inst{20-16} = sat_imm;
+  let Inst{3-0} = Rn;
 }
 
-def USAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), SatFrm,
-                NoItinerary, "usat16", "\t$dst, $bit_pos, $a",
+def USAT16 : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$a), SatFrm,
+                NoItinerary, "usat16", "\t$Rd, $sat_imm, $a",
                 [/* For disassembly only; pattern left blank */]> {
+  bits<4> Rd;
+  bits<4> sat_imm;
+  bits<4> Rn;
   let Inst{27-20} = 0b01101110;
-  let Inst{7-4} = 0b0011;
+  let Inst{11-4} = 0b11110011;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = sat_imm;
+  let Inst{3-0} = Rn;
 }
 
 def : ARMV6Pat<(int_arm_ssat GPR:$a, imm:$pos), (SSAT imm:$pos, GPR:$a, 0)>;
