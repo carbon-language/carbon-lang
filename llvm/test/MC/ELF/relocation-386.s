@@ -3,9 +3,22 @@
 // Test that we produce the correct relocation types and that the relocation
 // to .Lfoo uses the symbol and not the section.
 
+// Section 3 is bss
+// CHECK:      # Section 3
+// CHECK-NEXT: (('sh_name', 13) # '.bss'
 
 // CHECK:      # Symbol 1
 // CHECK-NEXT: (('st_name', 5) # '.Lfoo'
+
+// Symbol 6 is section 3
+// CHECK:      # Symbol 6
+// CHECK-NEXT: (('st_name', 0) # ''
+// CHECK-NEXT:  ('st_value', 0)
+// CHECK-NEXT:  ('st_size', 0)
+// CHECK-NEXT:  ('st_bind', 0)
+// CHECK-NEXT:  ('st_type', 3)
+// CHECK-NEXT:  ('st_other', 0)
+// CHECK-NEXT:  ('st_shndx', 3)
 
 // CHECK:      # Relocation 0
 // CHECK-NEXT: (('r_offset', 2)
@@ -23,6 +36,13 @@
 // CHECK-NEXT:  ('r_type', 10)
 // CHECK-NEXT: ),
 
+// Relocation 3 (bar3@GOTOFF) is done symbol 6 (bss)
+// CHECK-NEXT:  # Relocation 3
+// CHECK-NEXT: (('r_offset',
+// CHECK-NEXT:  ('r_sym', 6
+// CHECK-NEXT:  ('r_type',
+// CHECK-NEXT: ),
+
         .text
 bar:
 	leal	.Lfoo@GOTOFF(%ebx), %eax
@@ -31,6 +51,11 @@ bar:
 bar2:
 	calll	bar2@PLT
 	addl	$_GLOBAL_OFFSET_TABLE_, %ebx
+	movb	bar3@GOTOFF(%ebx), %al
+
+	.type	bar3,@object
+	.local	bar3
+	.comm	bar3,1,1
 
         .section	.rodata.str1.16,"aMS",@progbits,1
 .Lfoo:

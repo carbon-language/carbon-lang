@@ -560,6 +560,9 @@ static bool ShouldRelocOnSymbol(const MCSymbolData &SD,
   const MCSectionELF &Sec2 =
     static_cast<const MCSectionELF&>(F.getParent()->getSection());
 
+  if (Section.getKind().isBSS())
+    return false;
+
   if (&Sec2 != &Section &&
       (Kind == MCSymbolRefExpr::VK_PLT ||
        Kind == MCSymbolRefExpr::VK_GOTPCREL ||
