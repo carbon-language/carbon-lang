@@ -542,11 +542,22 @@ CommandInterpreter::HandleCommand
                 
             if (command_obj != NULL)
             {
+                std::string aliased_cmd_str;
                 if (command_obj->IsAlias())
                 {
                     BuildAliasCommandArgs (command_obj, command_cstr, command_args, result);
                     if (!result.Succeeded())
                         return false;
+                    else
+                    {
+                        // We need to transfer the newly constructed args back into the command_line, in case
+                        // this happens to be an alias for a command that takes raw input.
+                        if (command_args.GetCommandString (aliased_cmd_str))
+                        {
+                            command_line = aliased_cmd_str.c_str();
+                            command_cstr = command_obj->GetCommandName();
+                        }
+                    }
                 }
 
                 if (add_to_history)
