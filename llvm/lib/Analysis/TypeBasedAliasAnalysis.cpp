@@ -173,5 +173,8 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
 
   // If this is an "immutable" type, we can assume the pointer is pointing
   // to constant memory.
-  return TBAANode(M).TypeIsImmutable();
+  if (TBAANode(M).TypeIsImmutable())
+    return true;
+
+  return AliasAnalysis::pointsToConstantMemory(Loc);
 }
