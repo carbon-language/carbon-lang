@@ -36,21 +36,34 @@
   <!--*********************************************************************-->
 
 <p>
-This is more of a synopsis than a true description.  The compiler supplies all
-of the intrinsics as described below.  This list of intrinsics roughly parallels
-the requirements of the C and C++ atomics proposals.  The C and C++ library
-imlpementations simply drop through to these intrinsics.  Anything the platform
-does not support in hardware, the compiler arranges for a (compiler-rt) library
-call to be made which will do the job with a mutex, and in this case ignoring
-the memory ordering parameter.
+The compiler supplies all of the intrinsics as described below.  This list of
+intrinsics roughly parallels the requirements of the C and C++ atomics
+proposals.  The C and C++ library imlpementations simply drop through to these
+intrinsics.  Anything the platform does not support in hardware, the compiler
+arranges for a (compiler-rt) library call to be made which will do the job with
+a mutex, and in this case ignoring the memory ordering parameter (effectively
+implementing <tt>memory_order_seq_cst</tt>).
+</p>
+
+<p>
+Ultimate efficiency is preferred over run time error checking.  Undefined
+behavior is acceptable when the inputs do not conform as defined below.
 </p>
 
 <blockquote><pre>
 <font color="#C80000">// In every intrinsic signature below, type* atomic_obj may be a pointer to a</font>
 <font color="#C80000">//    volatile-qualifed type.</font>
+<font color="#C80000">// Memory ordering values map to the following meanings:</font>
+<font color="#C80000">//   memory_order_relaxed == 0</font>
+<font color="#C80000">//   memory_order_consume == 1</font>
+<font color="#C80000">//   memory_order_acquire == 2</font>
+<font color="#C80000">//   memory_order_release == 3</font>
+<font color="#C80000">//   memory_order_acq_rel == 4</font>
+<font color="#C80000">//   memory_order_seq_cst == 5</font>
 
 <font color="#C80000">// type must be trivially copyable</font>
-bool __atomic_is_lock_free(const type* atomic_obj);
+<font color="#C80000">// type represents a "type argument"</font>
+bool __atomic_is_lock_free(type);
 
 <font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_ord = 0, 1, 2, 5</font>
@@ -67,6 +80,8 @@ type __atomic_exchange(type* atomic_obj, type desired, int mem_ord);
 <font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_success = [0 ... 5],</font>
 <font color="#C80000">//   mem_falure &lt;= mem_success</font>
+<font color="#C80000">//   mem_falure != 3</font>
+<font color="#C80000">//   mem_falure != 4</font>
 bool __atomic_compare_exchange_strong(type* atomic_obj,
                                       type* expected, type desired,
                                       int mem_success, int mem_failure);
@@ -74,6 +89,8 @@ bool __atomic_compare_exchange_strong(type* atomic_obj,
 <font color="#C80000">// type must be trivially copyable</font>
 <font color="#C80000">// Behavior is defined for mem_success = [0 ... 5],</font>
 <font color="#C80000">//   mem_falure &lt;= mem_success</font>
+<font color="#C80000">//   mem_falure != 3</font>
+<font color="#C80000">//   mem_falure != 4</font>
 bool __atomic_compare_exchange_weak(type* atomic_obj,
                                     type* expected, type desired,
                                     int mem_success, int mem_failure);
@@ -124,9 +141,25 @@ this argument to 5.
 
 <p>
 If desired the intrinsics taking two ordering parameters can default
-<tt>mem_success</tt> to 5, and <tt>mem_failure</tt> to <tt>mem_success</tt>.
+<tt>mem_success</tt> to 5, and <tt>mem_failure</tt> to
+<tt>translate_memory_order(mem_success)</tt> where
+<tt>translate_memory_order(mem_success)</tt> is defined as:
 </p>
 
+<blockquote><pre>
+int
+translate_memory_order(int o)
+{
+    switch (o)
+    {
+    case 4:
+        return 2;
+    case 3:
+        return 0;
+    }
+    return o;
+}
+</pre></blockquote>
 </div>
 </body>
 </html>
