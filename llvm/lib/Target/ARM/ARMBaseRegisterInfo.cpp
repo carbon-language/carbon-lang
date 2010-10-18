@@ -661,8 +661,9 @@ ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
           if (hasFP(MF) && AFI->hasStackFrame())
             Limit = std::min(Limit, (1U << 8) - 1);
           break;
+        case ARMII::AddrMode4:
         case ARMII::AddrMode6:
-          // Addressing mode 6 (load/store) instructions can't encode an
+          // Addressing modes 4 & 6 (load/store) instructions can't encode an
           // immediate offset for stack references.
           return 0;
         default:
