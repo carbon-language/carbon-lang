@@ -5156,7 +5156,6 @@ static void FindImplementableMethods(ASTContext &Context,
                                      ObjCContainerDecl *Container,
                                      bool WantInstanceMethods,
                                      QualType ReturnType,
-                                     bool IsInImplementation,
                                      KnownMethodsMap &KnownMethods,
                                      bool InOriginalClass = true) {
   if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)) {
@@ -5164,28 +5163,23 @@ static void FindImplementableMethods(ASTContext &Context,
     const ObjCList<ObjCProtocolDecl> &Protocols
       = IFace->getReferencedProtocols();
     for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-           E = Protocols.end(); 
+                                              E = Protocols.end(); 
          I != E; ++I)
       FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods,
-                               InOriginalClass);
+                               KnownMethods, InOriginalClass);
 
-    // If we're not in the implementation of a class, also visit the
-    // superclass.
-    if (!IsInImplementation && IFace->getSuperClass())
-      FindImplementableMethods(Context, IFace->getSuperClass(), 
-                               WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods,
-                               false);
-
-    // Add methods from any class extensions (but not from categories;
-    // those should go into category implementations).
-    for (const ObjCCategoryDecl *Cat = IFace->getFirstClassExtension(); Cat;
-         Cat = Cat->getNextClassExtension())
+    // Add methods from any class extensions and categories.
+    for (const ObjCCategoryDecl *Cat = IFace->getCategoryList(); Cat;
+         Cat = Cat->getNextClassCategory())
       FindImplementableMethods(Context, const_cast<ObjCCategoryDecl*>(Cat), 
                                WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods,
-                               InOriginalClass);      
+                               KnownMethods, false);      
+    
+    // Visit the superclass.
+    if (IFace->getSuperClass())
+      FindImplementableMethods(Context, IFace->getSuperClass(), 
+                               WantInstanceMethods, ReturnType,
+                               KnownMethods, false);
   }
 
   if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Container)) {
@@ -5193,11 +5187,16 @@ static void FindImplementableMethods(ASTContext &Context,
     const ObjCList<ObjCProtocolDecl> &Protocols
       = Category->getReferencedProtocols();
     for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-           E = Protocols.end(); 
+                                              E = Protocols.end(); 
          I != E; ++I)
       FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods,
-                               InOriginalClass);
+                               KnownMethods, InOriginalClass);
+    
+    // If this category is the original class, jump to the interface.
+    if (InOriginalClass && Category->getClassInterface())
+      FindImplementableMethods(Context, Category->getClassInterface(), 
+                               WantInstanceMethods, ReturnType, KnownMethods,
+                               false);
   }
 
   if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
@@ -5208,7 +5207,7 @@ static void FindImplementableMethods(ASTContext &Context,
            E = Protocols.end(); 
          I != E; ++I)
       FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods, false);
+                               KnownMethods, false);
   }
 
   // Add methods in this container. This operation occurs last because
@@ -5235,33 +5234,27 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   // provided.
   QualType ReturnType = GetTypeFromParser(ReturnTy);
 
-  // Determine where we should start searching for methods, and where we 
-  ObjCContainerDecl *SearchDecl = 0, *CurrentDecl = 0;
+  // Determine where we should start searching for methods.
+  ObjCContainerDecl *SearchDecl = 0;
   bool IsInImplementation = false;
   if (Decl *D = IDecl) {
     if (ObjCImplementationDecl *Impl = dyn_cast<ObjCImplementationDecl>(D)) {
       SearchDecl = Impl->getClassInterface();
-      CurrentDecl = Impl;
       IsInImplementation = true;
     } else if (ObjCCategoryImplDecl *CatImpl 
-                                       = dyn_cast<ObjCCategoryImplDecl>(D)) {
+                                         = dyn_cast<ObjCCategoryImplDecl>(D)) {
       SearchDecl = CatImpl->getCategoryDecl();
-      CurrentDecl = CatImpl;
       IsInImplementation = true;
-    } else {
+    } else
       SearchDecl = dyn_cast<ObjCContainerDecl>(D);
-      CurrentDecl = SearchDecl;
-    }
   }
 
   if (!SearchDecl && S) {
-    if (DeclContext *DC = static_cast<DeclContext *>(S->getEntity())) {
+    if (DeclContext *DC = static_cast<DeclContext *>(S->getEntity()))
       SearchDecl = dyn_cast<ObjCContainerDecl>(DC);
-      CurrentDecl = SearchDecl;
-    }
   }
 
-  if (!SearchDecl || !CurrentDecl) {
+  if (!SearchDecl) {
     HandleCodeCompleteResults(this, CodeCompleter, 
                               CodeCompletionContext::CCC_Other,
                               0, 0);
@@ -5271,21 +5264,8 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   // Find all of the methods that we could declare/implement here.
   KnownMethodsMap KnownMethods;
   FindImplementableMethods(Context, SearchDecl, IsInstanceMethod, 
-                           ReturnType, IsInImplementation, KnownMethods);
+                           ReturnType, KnownMethods);
   
-  // Erase any methods that have already been declared or
-  // implemented here.
-  for (ObjCContainerDecl::method_iterator M = CurrentDecl->meth_begin(),
-                                       MEnd = CurrentDecl->meth_end();
-       M != MEnd; ++M) {
-    if ((*M)->isInstanceMethod() != IsInstanceMethod)
-      continue;
-    
-    KnownMethodsMap::iterator Pos = KnownMethods.find((*M)->getSelector());
-    if (Pos != KnownMethods.end())
-      KnownMethods.erase(Pos);
-  }
-
   // Add declarations or definitions for each of the known methods.
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this, CodeCompletionContext::CCC_Other);
