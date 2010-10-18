@@ -639,6 +639,8 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   if (Is64Bit) {
     if (IsPCRel) {
       switch (Modifier) {
+      default:
+        llvm_unreachable("Unimplemented");
       case MCSymbolRefExpr::VK_None:
         Type = ELF::R_X86_64_PC32;
         break;
@@ -648,8 +650,6 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       case llvm::MCSymbolRefExpr::VK_GOTPCREL:
         Type = ELF::R_X86_64_GOTPCREL;
         break;
-      default:
-        llvm_unreachable("Unimplemented");
       }
     } else {
       switch ((unsigned)Fixup.getKind()) {
@@ -659,6 +659,8 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       case X86::reloc_pcrel_4byte:
         assert(isInt<32>(Target.getConstant()));
         switch (Modifier) {
+        default:
+          llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
           Type = ELF::R_X86_64_32S;
           break;
@@ -668,8 +670,6 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         case MCSymbolRefExpr::VK_GOTPCREL:
           Type = ELF::R_X86_64_GOTPCREL;
           break;
-        default:
-          llvm_unreachable("Unimplemented");
         }
         break;
       case FK_Data_4:
@@ -682,7 +682,13 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     }
   } else {
     if (IsPCRel) {
-      Type = ELF::R_386_PC32;
+      switch (Modifier) {
+      default:
+        llvm_unreachable("Unimplemented");
+      case MCSymbolRefExpr::VK_PLT:
+        Type = ELF::R_386_PLT32;
+        break;
+      }
     } else {
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
@@ -692,11 +698,11 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       case X86::reloc_signed_4byte:
       case X86::reloc_pcrel_4byte:
         switch (Modifier) {
+        default:
+          llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_GOTOFF:
           Type = ELF::R_386_GOTOFF;
           break;
-        default:
-          llvm_unreachable("Unimplemented");
         }
         break;
       case FK_Data_4: Type = ELF::R_386_32; break;
