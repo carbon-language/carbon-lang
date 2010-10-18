@@ -953,8 +953,16 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
       return FPOffset;
     } else if (MFI->hasVarSizedObjects()) {
       assert(hasBasePointer(MF) && "missing base pointer!");
-      // Use the base register since we have it.
-      FrameReg = BasePtr;
+      // Try to use the frame pointer if we can, else use the base pointer
+      // since it's available. This is handy for the emergency spill slot, in
+      // particular.
+      if (AFI->isThumb2Function()) {
+        if (FPOffset >= -255 && FPOffset < 0) {
+          FrameReg = getFrameRegister(MF);
+          return FPOffset;
+        }
+      } else
+        FrameReg = BasePtr;
     } else if (AFI->isThumb2Function()) {
       // In Thumb2 mode, the negative offset is very limited. Try to avoid
       // out of range references.
