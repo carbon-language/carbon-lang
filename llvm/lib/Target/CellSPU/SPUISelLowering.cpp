@@ -2642,11 +2642,16 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG)
                  DAG.getNode(SPUISD::PREFSLOT2VEC, dl, mvt, Op0, Op0),
                  DAG.getConstant(31, MVT::i32));
 
+  // reinterpret as a i128 (SHUFB requires it). This gets lowered away.
+  SDValue extended = SDValue(DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS, 
+                                        dl, Op0VT, Op0,
+                                        DAG.getTargetConstant(
+                                                  SPU::GPRCRegClass.getID(), 
+                                                  MVT::i32)), 0);
   // Shuffle bytes - Copy the sign bits into the upper 64 bits
   // and the input value into the lower 64 bits.
   SDValue extShuffle = DAG.getNode(SPUISD::SHUFB, dl, mvt,
-      DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i128, Op0), sraVal, shufMask);
-
+        extended, sraVal, shufMask);
   return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, extShuffle);
 }
 
