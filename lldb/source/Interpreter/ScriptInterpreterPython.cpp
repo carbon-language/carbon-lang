@@ -161,6 +161,17 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
 {
 
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
+
+    // Save terminal settings if we can
+    int input_fd;
+    FILE *input_fh = m_interpreter.GetDebugger().GetInputFileHandle();
+    if (input_fh != NULL)
+        input_fd = ::fileno (input_fh);
+    else
+        input_fd = STDIN_FILENO;
+    
+    m_termios_valid = ::tcgetattr (input_fd, &m_termios) == 0;
+            
     // Find the module that owns this code and use that path we get to
     // set the PYTHONPATH appropriately.
 
@@ -221,9 +232,9 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     const char *pty_slave_name = GetScriptInterpreterPtyName ();
     FILE *out_fh = interpreter.GetDebugger().GetOutputFileHandle();
     
-    PyObject *pmod = PyImport_ExecCodeModule(
-                         const_cast<char*>("embedded_interpreter"),
-                         static_cast<PyObject*>(m_compiled_module));
+    PyObject *pmod = PyImport_ExecCodeModule (const_cast<char*> ("embedded_interpreter"),
+                                              static_cast<PyObject*>(m_compiled_module));
+
     if (pmod != NULL)
     {
         PyRun_SimpleString ("ConsoleDict = locals()");
@@ -231,11 +242,6 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         PyRun_SimpleString ("import sys");
         PyRun_SimpleString ("from termios import *");
       
-        StreamString run_string;
-        run_string.Printf ("new_stdin = open('%s', 'r')", pty_slave_name);
-        PyRun_SimpleString (run_string.GetData());
-        PyRun_SimpleString ("sys.stdin = new_stdin");
-
         if (out_fh != NULL)
         {
             PyObject *new_sysout = PyFile_FromFile (out_fh, (char *) "", (char *) "w", 
@@ -254,6 +260,11 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
                 PyErr_Clear();
         }
 
+        StreamString run_string;
+        run_string.Printf ("new_stdin = open('%s', 'r')", pty_slave_name);
+        PyRun_SimpleString (run_string.GetData());
+        PyRun_SimpleString ("sys.stdin = new_stdin");
+
         PyRun_SimpleString ("new_mode = tcgetattr(new_stdin)");
         PyRun_SimpleString ("new_mode[3] = new_mode[3] | ECHO | ICANON");
         PyRun_SimpleString ("new_mode[6][VEOF] = 255");
@@ -265,6 +276,11 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     }
 
 
+    // Restore terminal settings if they were validly saved
+    if (m_termios_valid)
+    {
+        ::tcsetattr (input_fd, TCSANOW, &m_termios);
+    }
 }
 
 ScriptInterpreterPython::~ScriptInterpreterPython ()
@@ -279,9 +295,25 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
     {
         int success;
 
+
+        // Save the current input file handle state before executing the command.
+        int input_fd;
+        struct termios tmp_termios;
+        bool valid_termios = false;
+        FILE *input_fh = m_interpreter.GetDebugger().GetInputFileHandle();
+        if (input_fh != NULL)
+        {
+            input_fd = ::fileno (input_fh);
+            valid_termios = ::tcgetattr (input_fd, &tmp_termios) == 0;
+        }
+
         success = PyRun_SimpleString (command);
         if (success == 0)
             return true;
+
+        // Restore the input file handle state after executing the command.
+        if (valid_termios)
+            ::tcsetattr (input_fd, TCSANOW, &tmp_termios);
 
         // The one-liner failed.  Append the error message.
         if (result)
