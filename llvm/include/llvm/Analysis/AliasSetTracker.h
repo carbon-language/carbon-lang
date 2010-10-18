@@ -67,7 +67,21 @@ class AliasSet : public ilist_node<AliasSet> {
 
     unsigned getSize() const { return Size; }
 
-    const MDNode *getTBAAInfo() const { return TBAAInfo; }
+    /// getRawTBAAInfo - Return the raw TBAAInfo member. In addition to
+    /// being null or a pointer to an MDNode, this could be -1, meaning
+    /// there was conflicting information.
+    const MDNode *getRawTBAAInfo() const {
+      return TBAAInfo;
+    }
+
+    /// getTBAAInfo - Return the TBAAInfo, or null if there is no
+    /// information or conflicting information.
+    const MDNode *getTBAAInfo() const {
+      // If we have conflicting TBAAInfo, return null.
+      if (TBAAInfo == reinterpret_cast<const MDNode *>(-1))
+        return 0;
+      return TBAAInfo;
+    }
 
     AliasSet *getAliasSet(AliasSetTracker &AST) {
       assert(AS && "No AliasSet yet!");
@@ -195,6 +209,7 @@ public:
 
     Value *getPointer() const { return CurNode->getValue(); }
     unsigned getSize() const { return CurNode->getSize(); }
+    const MDNode *getRawTBAAInfo() const { return CurNode->getRawTBAAInfo(); }
     const MDNode *getTBAAInfo() const { return CurNode->getTBAAInfo(); }
 
     iterator& operator++() {                // Preincrement

@@ -158,7 +158,8 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
   // to be sure it doesn't alias the set...
   for (iterator I = begin(), E = end(); I != E; ++I)
     if (AA.alias(AliasAnalysis::Location(Ptr, Size, TBAAInfo),
-                 AliasAnalysis::Location(I.getPointer(), I.getSize(), I.getTBAAInfo())))
+                 AliasAnalysis::Location(I.getPointer(), I.getSize(),
+                                         I.getTBAAInfo())))
       return true;
 
   // Check the call sites list and invoke list...
@@ -376,7 +377,7 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
     bool X;
     for (AliasSet::iterator ASI = AS.begin(), E = AS.end(); ASI != E; ++ASI) {
       AliasSet &NewAS = addPointer(ASI.getPointer(), ASI.getSize(),
-                                   ASI.getTBAAInfo(),
+                                   ASI.getRawTBAAInfo(),
                                    (AliasSet::AccessType)AS.AccessTy, X);
       if (AS.isVolatile()) NewAS.setVolatile();
     }
@@ -531,7 +532,8 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   // Add it to the alias set it aliases...
   I = PointerMap.find(From);
   AliasSet *AS = I->second->getAliasSet(*this);
-  AS->addPointer(*this, Entry, I->second->getSize(), I->second->getTBAAInfo(),
+  AS->addPointer(*this, Entry, I->second->getSize(),
+                 I->second->getRawTBAAInfo(),
                  true);
 }
 
