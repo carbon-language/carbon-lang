@@ -706,6 +706,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         switch (Modifier) {
         default:
           llvm_unreachable("Unimplemented");
+        case MCSymbolRefExpr::VK_GOT:
+          Type = ELF::R_386_GOT32;
+          break;
         case MCSymbolRefExpr::VK_GOTOFF:
           Type = ELF::R_386_GOTOFF;
           break;

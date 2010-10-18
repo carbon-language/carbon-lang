@@ -36,11 +36,18 @@
 // CHECK-NEXT:  ('r_type', 10)
 // CHECK-NEXT: ),
 
-// Relocation 3 (bar3@GOTOFF) is done symbol 6 (bss)
+// Relocation 3 (bar3@GOTOFF) is done with symbol 6 (bss)
 // CHECK-NEXT:  # Relocation 3
 // CHECK-NEXT: (('r_offset',
 // CHECK-NEXT:  ('r_sym', 6
 // CHECK-NEXT:  ('r_type',
+// CHECK-NEXT: ),
+
+// Relocation 4 (bar2@GOT) is of type R_386_GOT32
+// CHECK-NEXT:  # Relocation 4
+// CHECK-NEXT: (('r_offset',
+// CHECK-NEXT:  ('r_sym',
+// CHECK-NEXT:  ('r_type', 3
 // CHECK-NEXT: ),
 
         .text
@@ -56,6 +63,8 @@ bar2:
 	.type	bar3,@object
 	.local	bar3
 	.comm	bar3,1,1
+
+        movl	bar2j@GOT(%eax), %eax
 
         .section	.rodata.str1.16,"aMS",@progbits,1
 .Lfoo:
