@@ -36,7 +36,6 @@ class SettingsCommandTestCase(TestBase):
     def test_set_term_width(self):
         """Test that 'set term-width' actually changes the term-width."""
 
-        # No '-o' option is needed for static setting.
         self.runCmd("settings set term-width 70")
 
         # Immediately test the setting.
@@ -54,7 +53,6 @@ class SettingsCommandTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        # No '-o' option is needed for static setting.
         self.runCmd("settings set auto-confirm true")
 
         # Immediately test the setting.
