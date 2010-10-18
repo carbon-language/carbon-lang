@@ -320,6 +320,7 @@ NODE_XML(LinkageSpecDecl, "LinkageSpec")
 	  ENUM_XML(LinkageSpecDecl::lang_c, "C")
 	  ENUM_XML(LinkageSpecDecl::lang_cxx, "CXX")
   END_ENUM_XML
+  SUB_NODE_XML(DeclContext)
 END_NODE_XML
 
 NODE_XML(TemplateDecl, "Template")

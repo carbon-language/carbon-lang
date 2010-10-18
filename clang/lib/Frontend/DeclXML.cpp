@@ -104,7 +104,7 @@ class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter> {
       Doc.PrintStmt(argDecl->getDefaultArg());
   }
 
-  void addSubNodes(NamespaceDecl* ns) {
+  void addSubNodes(DeclContext* ns) {
 
     for (DeclContext::decl_iterator 
            d    = ns->decls_begin(), 
