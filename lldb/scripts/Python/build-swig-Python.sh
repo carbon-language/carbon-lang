@@ -30,6 +30,11 @@ fi
 
 
 HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-include.h"\
+" ${SRC_ROOT}/include/lldb/lldb-defines.h"\
+" ${SRC_ROOT}/include/lldb/lldb-enumerations.h"\
+" ${SRC_ROOT}/include/lldb/lldb-forward.h"\
+" ${SRC_ROOT}/include/lldb/lldb-forward-rtti.h"\
+" ${SRC_ROOT}/include/lldb/lldb-types.h"\
 " ${SRC_ROOT}/include/lldb/API/SBAddress.h"\
 " ${SRC_ROOT}/include/lldb/API/SBBlock.h"\
 " ${SRC_ROOT}/include/lldb/API/SBBreakpoint.h"\
