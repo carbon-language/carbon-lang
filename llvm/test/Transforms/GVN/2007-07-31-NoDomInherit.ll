@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -S | grep {tmp47 = phi i32 }
+; RUN: opt < %s -basicaa -gvn -S | grep {tmp47 = phi i32 }
 
 	%struct.anon = type { i32 (i32, i32, i32)*, i32, i32, [3 x i32], i8*, i8*, i8* }
 @debug = external constant i32		; <i32*> [#uses=0]

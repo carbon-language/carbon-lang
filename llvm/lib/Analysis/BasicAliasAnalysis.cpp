@@ -190,7 +190,7 @@ namespace {
 char NoAA::ID = 0;
 INITIALIZE_AG_PASS(NoAA, AliasAnalysis, "no-aa",
                    "No Alias Analysis (always returns 'may' alias)",
-                   true, true, false)
+                   true, true, true)
 
 ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 
@@ -492,6 +492,14 @@ namespace {
     static char ID; // Class identification, replacement for typeinfo
     BasicAliasAnalysis() : NoAA(ID) {}
 
+    virtual void initializePass() {
+      InitializeAliasAnalysis(this);
+    }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<AliasAnalysis>();
+    }
+
     virtual AliasResult alias(const Location &LocA,
                               const Location &LocB) {
       assert(Visited.empty() && "Visited must be cleared after use!");
@@ -561,7 +569,7 @@ namespace {
 char BasicAliasAnalysis::ID = 0;
 INITIALIZE_AG_PASS(BasicAliasAnalysis, AliasAnalysis, "basicaa",
                    "Basic Alias Analysis (default AA impl)",
-                   false, true, true)
+                   false, true, false)
 
 ImmutablePass *llvm::createBasicAliasAnalysisPass() {
   return new BasicAliasAnalysis();
@@ -578,7 +586,7 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
     // GV may even be a declaration, not a definition.
     return GV->isConstant();
 
-  return NoAA::pointsToConstantMemory(Loc);
+  return AliasAnalysis::pointsToConstantMemory(Loc);
 }
 
 /// getModRefBehavior - Return the behavior when calling the given call site.
@@ -611,7 +619,7 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   if (unsigned id = F->getIntrinsicID())
     return getIntrinsicModRefBehavior(id);
 
-  return NoAA::getModRefBehavior(F);
+  return AliasAnalysis::getModRefBehavior(F);
 }
 
 /// getModRefInfo - Check to see if the specified callsite can clobber the
@@ -1065,24 +1073,30 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
     std::swap(V1Size, V2Size);
     std::swap(O1, O2);
   }
-  if (const GEPOperator *GV1 = dyn_cast<GEPOperator>(V1))
-    return aliasGEP(GV1, V1Size, V2, V2Size, O1, O2);
+  if (const GEPOperator *GV1 = dyn_cast<GEPOperator>(V1)) {
+    AliasResult Result = aliasGEP(GV1, V1Size, V2, V2Size, O1, O2);
+    if (Result != MayAlias) return Result;
+  }
 
   if (isa<PHINode>(V2) && !isa<PHINode>(V1)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
   }
-  if (const PHINode *PN = dyn_cast<PHINode>(V1))
-    return aliasPHI(PN, V1Size, V2, V2Size);
+  if (const PHINode *PN = dyn_cast<PHINode>(V1)) {
+    AliasResult Result = aliasPHI(PN, V1Size, V2, V2Size);
+    if (Result != MayAlias) return Result;
+  }
 
   if (isa<SelectInst>(V2) && !isa<SelectInst>(V1)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
   }
-  if (const SelectInst *S1 = dyn_cast<SelectInst>(V1))
-    return aliasSelect(S1, V1Size, V2, V2Size);
+  if (const SelectInst *S1 = dyn_cast<SelectInst>(V1)) {
+    AliasResult Result = aliasSelect(S1, V1Size, V2, V2Size);
+    if (Result != MayAlias) return Result;
+  }
 
-  return NoAA::alias(Location(V1, V1Size), Location(V2, V2Size));
+  return AliasAnalysis::alias(Location(V1, V1Size), Location(V2, V2Size));
 }
 
 // Make sure that anything that uses AliasAnalysis pulls in this file.

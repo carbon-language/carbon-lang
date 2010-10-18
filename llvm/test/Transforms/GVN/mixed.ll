@@ -1,5 +1,5 @@
-; RUN: opt < %s -gvn -S | not grep DEADLOAD
-; RUN: opt < %s -gvn -S | not grep DEADGEP
+; RUN: opt < %s -basicaa -gvn -S | not grep DEADLOAD
+; RUN: opt < %s -basicaa -gvn -S | not grep DEADGEP
 
 define i32 @main(i32** %p) {
 block1:

@@ -1,4 +1,4 @@
-; RUN: opt < %s -sink -S | FileCheck %s
+; RUN: opt < %s -basicaa -sink -S | FileCheck %s
 
 @A = external global i32
 @B = external global i32

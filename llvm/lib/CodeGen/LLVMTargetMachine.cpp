@@ -14,6 +14,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
@@ -253,6 +254,9 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
                                                bool DisableVerify,
                                                MCContext *&OutContext) {
   // Standard LLVM-Level Passes.
+
+  // Basic AliasAnalysis support.
+  PM.add(createBasicAliasAnalysisPass());
 
   // Before running any passes, run the verifier to determine if the input
   // coming from the front-end and/or optimizer is valid.

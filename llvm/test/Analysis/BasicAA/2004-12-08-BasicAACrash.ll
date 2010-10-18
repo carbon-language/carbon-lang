@@ -1,4 +1,4 @@
-; RUN: opt < %s -licm
+; RUN: opt < %s -basicaa -licm
 
 %"java/lang/Object" = type { %struct.llvm_java_object_base }
 %"java/lang/StringBuffer" = type { "java/lang/Object", i32, { "java/lang/Object", i32, [0 x i8] }*, i1 }

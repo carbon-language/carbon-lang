@@ -1,4 +1,4 @@
-; RUN: opt < %s -tbaa -gvn -S | FileCheck %s
+; RUN: opt < %s -basicaa -tbaa -gvn -S | FileCheck %s
 
 ; CHECK: @test0_yes
 ; CHECK: add i8 %x, %x

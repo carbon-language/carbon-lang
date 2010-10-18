@@ -1,4 +1,4 @@
-; RUN: opt %s -dse -S | FileCheck %s
+; RUN: opt %s -basicaa -dse -S | FileCheck %s
 
 %t = type { i32 }
 

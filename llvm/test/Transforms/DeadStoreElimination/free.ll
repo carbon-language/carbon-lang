@@ -1,4 +1,4 @@
-; RUN: opt < %s -dse -S | not grep DEAD
+; RUN: opt < %s -basicaa -dse -S | not grep DEAD
 
 define void @test(i32* %Q, i32* %P) {
         %DEAD = load i32* %Q            ; <i32> [#uses=1]

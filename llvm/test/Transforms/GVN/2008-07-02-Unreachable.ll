@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -S | grep {ret i8 \[%\]tmp3}
+; RUN: opt < %s -basicaa -gvn -S | grep {ret i8 \[%\]tmp3}
 ; PR2503
 
 @g_3 = external global i8		; <i8*> [#uses=2]

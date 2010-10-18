@@ -1,7 +1,7 @@
 ; This testcase consists of alias relations which should be completely
 ; resolvable by basicaa.
 
-; RUN: opt < %s -aa-eval -print-may-aliases -disable-output \
+; RUN: opt < %s -basicaa -aa-eval -print-may-aliases -disable-output \
 ; RUN: |& not grep May:
 
 %T = type { i32, [10 x i8] }

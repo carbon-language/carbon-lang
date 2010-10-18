@@ -1,4 +1,4 @@
-; RUN: opt < %s -globalsmodref-aa -gvn -S | not grep load
+; RUN: opt < %s -basicaa -globalsmodref-aa -gvn -S | not grep load
 @X = internal global i32 4		; <i32*> [#uses=1]
 
 define i32 @test(i32* %P) {

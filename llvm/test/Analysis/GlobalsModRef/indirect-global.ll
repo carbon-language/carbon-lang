@@ -1,4 +1,4 @@
-; RUN: opt < %s -globalsmodref-aa -gvn -instcombine -S | \
+; RUN: opt < %s -basicaa -globalsmodref-aa -gvn -instcombine -S | \
 ; RUN:   grep {ret i32 0}
 
 @G = internal global i32* null		; <i32**> [#uses=3]

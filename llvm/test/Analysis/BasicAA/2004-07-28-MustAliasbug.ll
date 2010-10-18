@@ -1,4 +1,4 @@
-; RUN: opt < %s -dse -S | grep {store i32 0}
+; RUN: opt < %s -basicaa -dse -S | grep {store i32 0}
 
 define void @test({i32,i32 }* %P) {
 	%Q = getelementptr {i32,i32}* %P, i32 1

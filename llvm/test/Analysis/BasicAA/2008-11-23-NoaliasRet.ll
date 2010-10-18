@@ -1,4 +1,4 @@
-; RUN: opt < %s -aa-eval |& grep {1 no alias response}
+; RUN: opt < %s -basicaa -aa-eval |& grep {1 no alias response}
 
 declare noalias i32* @_Znwj(i32 %x) nounwind
 

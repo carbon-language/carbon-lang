@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -S | FileCheck %s
+; RUN: opt < %s -basicaa -gvn -S | FileCheck %s
 
 define i32 @main(i32** %p) {
 block1:

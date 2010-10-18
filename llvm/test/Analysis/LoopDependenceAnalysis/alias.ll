@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -lda | FileCheck %s
+; RUN: opt < %s -analyze -basicaa -lda | FileCheck %s
 
 ;; x[5] = x[6] // with x being a pointer passed as argument
 

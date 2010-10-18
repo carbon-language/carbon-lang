@@ -1,4 +1,4 @@
-; RUN: opt < %s -aa-eval -print-all-alias-modref-info -disable-output \
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output \
 ; RUN:   |& grep {NoAlias:	double\\* \[%\]a, double\\* \[%\]b\$} | count 4
 
 ; BasicAA should detect NoAliases in PHIs and Selects.

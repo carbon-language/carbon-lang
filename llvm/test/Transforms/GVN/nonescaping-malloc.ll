@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -stats -disable-output |& grep {Number of loads deleted}
+; RUN: opt < %s -basicaa -gvn -stats -disable-output |& grep {Number of loads deleted}
 ; rdar://7363102
 
 ; GVN should be able to eliminate load %tmp22.i, because it is redundant with

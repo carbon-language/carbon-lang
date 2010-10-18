@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -S | grep {DEAD = phi i32 }
+; RUN: opt < %s -basicaa -gvn -S | grep {DEAD = phi i32 }
 
 ; GVN should eliminate the fully redundant %9 GEP which 
 ; allows DEAD to be removed.  This is PR3198.

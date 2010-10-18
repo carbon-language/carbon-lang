@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -instcombine -S | grep {ret i32 0}
+; RUN: opt < %s -basicaa -gvn -instcombine -S | grep {ret i32 0}
 ; PR4189
 @G = external constant [4 x i32]
 
