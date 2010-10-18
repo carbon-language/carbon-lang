@@ -839,6 +839,9 @@ def err_enum_invalid_underlying : Error<
   "non-integral type %0 is an invalid underlying type">;
 def err_enumerator_too_large : Error<
   "enumerator value is not representable in the underlying type %0">;
+def ext_enumerator_too_large : ExtWarn<
+  "enumerator value is not representable in the underlying type %0">,
+  InGroup<Microsoft>;
 def err_enumerator_wrapped : Error<
   "enumerator value %0 is not representable in the underlying type %1">;
 def err_enum_redeclare_type_mismatch : Error<

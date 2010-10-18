@@ -5526,7 +5526,9 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // Recover by falling back to int.
         EnumUnderlying = Context.IntTy.getTypePtr();
       }
-    }
+    } else if (getLangOptions().Microsoft)
+      // Microsoft enums are always of int type.
+      EnumUnderlying = Context.IntTy.getTypePtr();
   }
 
   DeclContext *SearchDC = CurContext;
@@ -7080,10 +7082,14 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
           // C++0x [dcl.enum]p5:
           //   ... if the initializing value of an enumerator cannot be
           //   represented by the underlying type, the program is ill-formed.
-          if (!isRepresentableIntegerValue(Context, EnumVal, EltTy))
-            Diag(IdLoc, diag::err_enumerator_too_large)
-              << EltTy;
-          else
+          if (!isRepresentableIntegerValue(Context, EnumVal, EltTy)) {
+            if (getLangOptions().Microsoft) {
+              Diag(IdLoc, diag::ext_enumerator_too_large) << EltTy;
+              ImpCastExprToType(Val, EltTy, CK_IntegralCast);
+            } else 
+              Diag(IdLoc, diag::err_enumerator_too_large)
+                << EltTy;
+          } else
             ImpCastExprToType(Val, EltTy, CK_IntegralCast);
         }
         else {
