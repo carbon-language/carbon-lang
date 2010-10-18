@@ -1490,13 +1490,13 @@ static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
 /// iterator *only* if a transformation took place.
 bool ARMBaseInstrInfo::
 OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
-                     int CmpValue, MachineBasicBlock::iterator &MII) const {
+                     int CmpValue, const MachineRegisterInfo *MRI,
+                     MachineBasicBlock::iterator &MII) const {
   if (CmpValue != 0)
     return false;
 
-  MachineRegisterInfo &MRI = CmpInstr->getParent()->getParent()->getRegInfo();
-  MachineRegisterInfo::def_iterator DI = MRI.def_begin(SrcReg);
-  if (llvm::next(DI) != MRI.def_end())
+  MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg);
+  if (llvm::next(DI) != MRI->def_end())
     // Only support one definition.
     return false;
 
@@ -1506,8 +1506,8 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   if (CmpMask != ~0) {
     if (!isSuitableForMask(MI, SrcReg, CmpMask, false)) {
       MI = 0;
-      for (MachineRegisterInfo::use_iterator UI = MRI.use_begin(SrcReg),
-           UE = MRI.use_end(); UI != UE; ++UI) {
+      for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SrcReg),
+           UE = MRI->use_end(); UI != UE; ++UI) {
         if (UI->getParent() != CmpInstr->getParent()) continue;
         MachineInstr *PotentialAND = &*UI;
         if (!isSuitableForMask(PotentialAND, SrcReg, CmpMask, true))

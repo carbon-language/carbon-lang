@@ -600,6 +600,7 @@ public:
   /// *only* if a transformation took place.
   virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr,
                                     unsigned SrcReg, int Mask, int Value,
+                                    const MachineRegisterInfo *MRI,
                                     MachineBasicBlock::iterator &) const {
     return false;
   }

@@ -247,7 +247,7 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
     return false;
 
   // Attempt to optimize the comparison instruction.
-  if (TII->OptimizeCompareInstr(MI, SrcReg, CmpMask, CmpValue, NextIter)) {
+  if (TII->OptimizeCompareInstr(MI, SrcReg, CmpMask, CmpValue, MRI, NextIter)) {
     ++NumEliminated;
     return true;
   }
