@@ -6,7 +6,6 @@ import AbstractBase
 import unittest2
 import lldb
 
-#@unittest2.skip("rdar://problem/8562563 ./dotest.py -v . 2> ~/Developer/Log/lldbtest.log now hangs (very consistently) when executing test/types")
 class FloatTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
