@@ -8019,6 +8019,10 @@ namespace {
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
       S.MarkDeclarationReferenced(E->getLocation(), E->getDecl());
     }
+    
+    void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
+      Visit(E->getExpr());
+    }
   };
 }
 

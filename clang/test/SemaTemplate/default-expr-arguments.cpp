@@ -274,3 +274,21 @@ namespace rdar8427926 {
     x->g();
   }
 }
+
+namespace PR8401 {
+  template<typename T> 
+  struct A { 
+    A() { T* x = 1; } // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}}
+  };
+
+  template<typename T>
+  struct B {
+    B(const A<T>& a = A<T>()); // expected-note{{in instantiation of}}
+  };
+
+  void f(B<int> b = B<int>());
+
+  void g() {
+    f();
+  }
+}
