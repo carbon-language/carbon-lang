@@ -23,11 +23,11 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("settings set prompt 'lldb2'")
 
         # Immediately test the setting.
-        self.expect("settings show prompt",
+        self.expect("settings show prompt", SETTING_MSG("prompt"),
             startstr = "prompt (string) = 'lldb2'")
 
         # The overall display should also reflect the new setting.
-        self.expect("settings show",
+        self.expect("settings show", SETTING_MSG("prompt"),
             substrs = ["prompt (string) = 'lldb2'"])
 
         # Use '-r' option to reset to the original default prompt.
@@ -39,11 +39,11 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("settings set term-width 70")
 
         # Immediately test the setting.
-        self.expect("settings show term-width",
+        self.expect("settings show term-width", SETTING_MSG("term-width"),
             startstr = "term-width (int) = '70'")
 
         # The overall display should also reflect the new setting.
-        self.expect("settings show",
+        self.expect("settings show", SETTING_MSG("term-width"),
             substrs = ["term-width (int) = '70'"])
 
     def test_set_auto_confirm(self):
@@ -56,7 +56,7 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("settings set auto-confirm true")
 
         # Immediately test the setting.
-        self.expect("settings show auto-confirm",
+        self.expect("settings show auto-confirm", SETTING_MSG("auto-confirm"),
             startstr = "auto-confirm (boolean) = 'true'")
 
         # Now 'breakpoint delete' should just work fine without confirmation
@@ -67,7 +67,7 @@ class SettingsCommandTestCase(TestBase):
 
         # Restore the original setting of auto-confirm.
         self.runCmd("settings set -r auto-confirm")
-        self.expect("settings show auto-confirm",
+        self.expect("settings show auto-confirm", SETTING_MSG("auto-confirm"),
             startstr = "auto-confirm (boolean) = 'false'")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
