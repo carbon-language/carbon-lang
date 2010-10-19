@@ -369,10 +369,35 @@ LaunchInNewTerminalWithCommandFile
     return pid;
 }
 
+const char *applscript_in_new_tty = 
+"tell application \"Terminal\"\n"
+"	do script \"%s\"\n"
+"end tell\n";
+
+
+const char *applscript_in_existing_tty = "\
+set the_shell_script to \"%s\"\n\
+tell application \"Terminal\"\n\
+	repeat with the_window in (get windows)\n\
+		repeat with the_tab in tabs of the_window\n\
+			set the_tty to tty in the_tab\n\
+			if the_tty contains \"%s\" then\n\
+				if the_tab is not busy then\n\
+					set selected of the_tab to true\n\
+					set frontmost of the_window to true\n\
+					do script the_shell_script in the_tab\n\
+					return\n\
+				end if\n\
+			end if\n\
+		end repeat\n\
+	end repeat\n\
+	do script the_shell_script\n\
+end tell\n";
 
 lldb::pid_t
 LaunchInNewTerminalWithAppleScript
 (
+    const char *tty_name,
     const char **argv, 
     const char **envp,
     const ArchSpec *arch_spec,
@@ -392,7 +417,6 @@ LaunchInNewTerminalWithAppleScript
     unix_socket_name.assign (temp_file_path);
     
     StreamString command;
-    
     FileSpec darwin_debug_file_spec;
     if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
         return LLDB_INVALID_PROCESS_ID;
@@ -403,19 +427,14 @@ LaunchInNewTerminalWithAppleScript
     
     char launcher_path[PATH_MAX];
     darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
-    command.Printf ("tell application \"Terminal\"\n    do script \"'%s'", launcher_path);
-    
-    command.Printf(" --unix-socket=%s", unix_socket_name.c_str());
+
+    command.Printf("'%s' --unix-socket=%s", launcher_path, unix_socket_name.c_str());
 
     if (arch_spec && arch_spec->IsValid())
-    {
         command.Printf(" --arch=%s", arch_spec->AsCString());
-    }
 
     if (disable_aslr)
-    {
         command.PutCString(" --disable-aslr");
-    }
         
     command.PutCString(" --");
 
@@ -426,8 +445,26 @@ LaunchInNewTerminalWithAppleScript
             command.Printf(" '%s'", argv[i]);
         }
     }
-    command.PutCString (" ; echo Process exited with status $?\"\nend tell\n");
-    const char *script_source = command.GetString().c_str();
+    command.PutCString (" ; echo Process exited with status $?");
+    
+    StreamString applescript_source;
+
+    if (tty_name && tty_name[0])
+    {
+        applescript_source.Printf (applscript_in_existing_tty, 
+                                   command.GetString().c_str(),
+                                   tty_name);
+    }
+    else
+    {
+        applescript_source.Printf (applscript_in_new_tty, 
+                                   command.GetString().c_str());
+    }
+
+    
+
+    const char *script_source = applescript_source.GetString().c_str();
+    //puts (script_source);
     NSAppleScript* applescript = [[NSAppleScript alloc] initWithSource:[NSString stringWithCString:script_source encoding:NSUTF8StringEncoding]];
 
     lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
@@ -461,6 +498,7 @@ LaunchInNewTerminalWithAppleScript
             WaitForProcessToSIGSTOP (pid, 5);
         }
     }
+    ::unlink (unix_socket_name.c_str());
     [applescript release];
     return pid;
 }
@@ -471,6 +509,7 @@ LaunchInNewTerminalWithAppleScript
 lldb::pid_t
 Host::LaunchInNewTerminal 
 (
+    const char *tty_name,
     const char **argv, 
     const char **envp,
     const ArchSpec *arch_spec,
@@ -479,7 +518,7 @@ Host::LaunchInNewTerminal
 )
 {
 #if defined (LLDB_HOST_USE_APPLESCRIPT)
-    return LaunchInNewTerminalWithAppleScript (argv, envp, arch_spec, stop_at_entry, disable_aslr);
+    return LaunchInNewTerminalWithAppleScript (tty_name, argv, envp, arch_spec, stop_at_entry, disable_aslr);
 #else
     return LaunchInNewTerminalWithCommandFile (argv, envp, arch_spec, stop_at_entry, disable_aslr);
 #endif

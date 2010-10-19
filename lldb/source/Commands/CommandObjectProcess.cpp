@@ -62,7 +62,11 @@ public:
                 case 'i':   stdin_path  = option_arg;   break;
                 case 'o':   stdout_path = option_arg;   break;
                 case 'p':   plugin_name = option_arg;   break;
-                case 't':   in_new_tty = true; break;
+                case 't':   
+                    if (option_arg && option_arg[0])
+                        tty_name.assign (option_arg);
+                    in_new_tty = true; 
+                    break;
                 default:
                     error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
                     break;
@@ -77,6 +81,7 @@ public:
             Options::ResetOptionValues();
             stop_at_entry = false;
             in_new_tty = false;
+            tty_name.clear();
             stdin_path.clear();
             stdout_path.clear();
             stderr_path.clear();
@@ -97,6 +102,7 @@ public:
 
         bool stop_at_entry;
         bool in_new_tty;
+        std::string tty_name;
         std::string stderr_path;
         std::string stdin_path;
         std::string stdout_path;
@@ -216,7 +222,8 @@ public:
         if (m_options.in_new_tty)
         {
         
-            lldb::pid_t pid = Host::LaunchInNewTerminal (inferior_argv,
+            lldb::pid_t pid = Host::LaunchInNewTerminal (m_options.tty_name.c_str(),
+                                                         inferior_argv,
                                                          inferior_envp,
                                                          &exe_module->GetArchitecture(),
                                                          true,
@@ -322,7 +329,7 @@ CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
 { SET1       , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
 { SET1       , false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
 { SET1 | SET2, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
-{        SET2, false, "tty",           't', no_argument,       NULL, 0, eArgTypeNone,    "Start the process in a new terminal (tty)."},
+{        SET2, false, "tty",           't', optional_argument, NULL, 0, eArgTypePath,    "Start the process in a terminal. If <path> is specified, look for a terminal whose name contains <path>, else start the process in a new terminal."},
 { 0,           false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
 };
 

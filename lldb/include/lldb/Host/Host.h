@@ -310,7 +310,8 @@ public:
     LaunchApplication (const FileSpec &app_file_spec);
 
     static lldb::pid_t
-    LaunchInNewTerminal (const char **argv,   // argv[0] is executable
+    LaunchInNewTerminal (const char *tty_name,  // Optional partial or full tty name ("/dev/ttys000" or "ttys000")
+                         const char **argv,   // argv[0] is executable
                          const char **envp,
                          const ArchSpec *arch_spec,
                          bool stop_at_entry,
