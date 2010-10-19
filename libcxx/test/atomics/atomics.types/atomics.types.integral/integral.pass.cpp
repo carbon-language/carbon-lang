@@ -126,7 +126,7 @@
 
 template <class A, class T>
 void
-test()
+do_test()
 {
     A obj(T(0));
     assert(obj == T(0));
@@ -160,6 +160,25 @@ test()
     assert(x == T(1));
     assert((obj = T(0)) == T(0));
     assert(obj == T(0));
+    assert(obj++ == T(0));
+    assert(obj == T(1));
+    assert(++obj == T(2));
+    assert(obj == T(2));
+    assert(--obj == T(1));
+    assert(obj == T(1));
+    assert(obj-- == T(1));
+    assert(obj == T(0));
+    obj = T(2);
+    assert((obj += T(3)) == T(5));
+    assert(obj == T(5));
+    assert((obj -= T(3)) == T(2));
+    assert(obj == T(2));
+    assert((obj |= T(5)) == T(7));
+    assert(obj == T(7));
+    assert((obj &= T(0xF)) == T(7));
+    assert(obj == T(7));
+    assert((obj ^= T(0xF)) == T(8));
+    assert(obj == T(8));
 
     std::atomic_init(&obj, T(1));
     assert(obj == T(1));
@@ -205,10 +224,53 @@ test()
     assert(x == T(3));
     assert((obj = T(1)) == T(1));
     assert(obj == T(1));
+    obj = T(2);
+    assert(std::atomic_fetch_add(&obj, T(3)) == T(2));
+    assert(obj == T(5));
+    assert(std::atomic_fetch_add_explicit(&obj, T(3), std::memory_order_seq_cst) == T(5));
+    assert(obj == T(8));
+    assert(std::atomic_fetch_sub(&obj, T(3)) == T(8));
+    assert(obj == T(5));
+    assert(std::atomic_fetch_sub_explicit(&obj, T(3), std::memory_order_seq_cst) == T(5));
+    assert(obj == T(2));
+    assert(std::atomic_fetch_or(&obj, T(5)) == T(2));
+    assert(obj == T(7));
+    assert(std::atomic_fetch_or_explicit(&obj, T(8), std::memory_order_seq_cst) == T(7));
+    assert(obj == T(0xF));
+    assert(std::atomic_fetch_and(&obj, T(7)) == T(0xF));
+    assert(obj == T(7));
+    assert(std::atomic_fetch_and_explicit(&obj, T(3), std::memory_order_seq_cst) == T(7));
+    assert(obj == T(3));
+    assert(std::atomic_fetch_xor(&obj, T(7)) == T(3));
+    assert(obj == T(4));
+    assert(std::atomic_fetch_xor_explicit(&obj, T(7), std::memory_order_seq_cst) == T(4));
+    assert(obj == T(3));
 }
+
+template <class A, class T>
+void test()
+{
+    do_test<A, T>();
+    do_test<volatile A, T>();
+}
+
 
 int main()
 {
     test<std::atomic_char, char>();
-    test<volatile std::atomic_char, char>();
+    test<std::atomic_schar, signed char>();
+    test<std::atomic_uchar, unsigned char>();
+    test<std::atomic_short, short>();
+    test<std::atomic_ushort, unsigned short>();
+    test<std::atomic_int, int>();
+    test<std::atomic_uint, unsigned int>();
+    test<std::atomic_long, long>();
+    test<std::atomic_ulong, unsigned long>();
+    test<std::atomic_llong, long long>();
+    test<std::atomic_ullong, unsigned long long>();
+#ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
+    test<std::atomic_char16_t, char16_t>();
+    test<std::atomic_char32_t, char32_t>();
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
+    test<std::atomic_wchar_t, wchar_t>();
 }
