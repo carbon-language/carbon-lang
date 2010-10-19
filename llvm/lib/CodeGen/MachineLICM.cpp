@@ -604,7 +604,7 @@ void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
       if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
         continue;
 
-      bool isNew = !RegSeen.insert(Reg);
+      bool isNew = RegSeen.insert(Reg);
       const TargetRegisterClass *RC = MRI->getRegClass(Reg);
       EVT VT = *RC->vt_begin();
       unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
@@ -634,7 +634,7 @@ void MachineLICM::UpdateRegPressureBefore(const MachineInstr *MI) {
     if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
       continue;
 
-    bool isNew = !RegSeen.insert(Reg);
+    bool isNew = RegSeen.insert(Reg);
     if (NoImpact)
       continue;
 
