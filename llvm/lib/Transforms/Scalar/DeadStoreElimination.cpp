@@ -59,7 +59,7 @@ namespace {
     bool handleFreeWithNonTrivialDependency(const CallInst *F,
                                             MemDepResult Dep);
     bool handleEndBlock(BasicBlock &BB);
-    bool RemoveUndeadPointers(Value *Ptr, uint64_t killPointerSize,
+    bool RemoveUndeadPointers(Value *Ptr, unsigned killPointerSize,
                               BasicBlock::iterator &BBI,
                               SmallPtrSet<Value*, 64> &deadPointers);
     void DeleteDeadInstruction(Instruction *I,
@@ -371,7 +371,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     }
     
     Value *killPointer = 0;
-    uint64_t killPointerSize = ~0UL;
+    unsigned killPointerSize = AliasAnalysis::UnknownSize;
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
@@ -470,7 +470,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
 /// RemoveUndeadPointers - check for uses of a pointer that make it
 /// undead when scanning for dead stores to alloca's.
-bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
+bool DSE::RemoveUndeadPointers(Value *killPointer, unsigned killPointerSize,
                                BasicBlock::iterator &BBI,
                                SmallPtrSet<Value*, 64> &deadPointers) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
@@ -575,5 +575,5 @@ unsigned DSE::getPointerSize(Value *V) const {
       return TD->getTypeAllocSize(PT->getElementType());
     }
   }
-  return ~0U;
+  return AliasAnalysis::UnknownSize;
 }

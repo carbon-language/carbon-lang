@@ -191,7 +191,8 @@ void Lint::visitCallSite(CallSite CS) {
   Instruction &I = *CS.getInstruction();
   Value *Callee = CS.getCalledValue();
 
-  visitMemoryReference(I, Callee, ~0u, 0, 0, MemRef::Callee);
+  visitMemoryReference(I, Callee, AliasAnalysis::UnknownSize,
+                       0, 0, MemRef::Callee);
 
   if (Function *F = dyn_cast<Function>(findValue(Callee, /*OffsetOk=*/false))) {
     Assert1(CS.getCallingConv() == F->getCallingConv(),
@@ -264,9 +265,11 @@ void Lint::visitCallSite(CallSite CS) {
     case Intrinsic::memcpy: {
       MemCpyInst *MCI = cast<MemCpyInst>(&I);
       // TODO: If the size is known, use it.
-      visitMemoryReference(I, MCI->getDest(), ~0u, MCI->getAlignment(), 0,
+      visitMemoryReference(I, MCI->getDest(), AliasAnalysis::UnknownSize,
+                           MCI->getAlignment(), 0,
                            MemRef::Write);
-      visitMemoryReference(I, MCI->getSource(), ~0u, MCI->getAlignment(), 0,
+      visitMemoryReference(I, MCI->getSource(), AliasAnalysis::UnknownSize,
+                           MCI->getAlignment(), 0,
                            MemRef::Read);
 
       // Check that the memcpy arguments don't overlap. The AliasAnalysis API
@@ -286,16 +289,19 @@ void Lint::visitCallSite(CallSite CS) {
     case Intrinsic::memmove: {
       MemMoveInst *MMI = cast<MemMoveInst>(&I);
       // TODO: If the size is known, use it.
-      visitMemoryReference(I, MMI->getDest(), ~0u, MMI->getAlignment(), 0,
+      visitMemoryReference(I, MMI->getDest(), AliasAnalysis::UnknownSize,
+                           MMI->getAlignment(), 0,
                            MemRef::Write);
-      visitMemoryReference(I, MMI->getSource(), ~0u, MMI->getAlignment(), 0,
+      visitMemoryReference(I, MMI->getSource(), AliasAnalysis::UnknownSize,
+                           MMI->getAlignment(), 0,
                            MemRef::Read);
       break;
     }
     case Intrinsic::memset: {
       MemSetInst *MSI = cast<MemSetInst>(&I);
       // TODO: If the size is known, use it.
-      visitMemoryReference(I, MSI->getDest(), ~0u, MSI->getAlignment(), 0,
+      visitMemoryReference(I, MSI->getDest(), AliasAnalysis::UnknownSize,
+                           MSI->getAlignment(), 0,
                            MemRef::Write);
       break;
     }
@@ -305,24 +311,26 @@ void Lint::visitCallSite(CallSite CS) {
               "Undefined behavior: va_start called in a non-varargs function",
               &I);
 
-      visitMemoryReference(I, CS.getArgument(0), ~0u, 0, 0,
-                           MemRef::Read | MemRef::Write);
+      visitMemoryReference(I, CS.getArgument(0), AliasAnalysis::UnknownSize,
+                           0, 0, MemRef::Read | MemRef::Write);
       break;
     case Intrinsic::vacopy:
-      visitMemoryReference(I, CS.getArgument(0), ~0u, 0, 0, MemRef::Write);
-      visitMemoryReference(I, CS.getArgument(1), ~0u, 0, 0, MemRef::Read);
+      visitMemoryReference(I, CS.getArgument(0), AliasAnalysis::UnknownSize,
+                           0, 0, MemRef::Write);
+      visitMemoryReference(I, CS.getArgument(1), AliasAnalysis::UnknownSize,
+                           0, 0, MemRef::Read);
       break;
     case Intrinsic::vaend:
-      visitMemoryReference(I, CS.getArgument(0), ~0u, 0, 0,
-                           MemRef::Read | MemRef::Write);
+      visitMemoryReference(I, CS.getArgument(0), AliasAnalysis::UnknownSize,
+                           0, 0, MemRef::Read | MemRef::Write);
       break;
 
     case Intrinsic::stackrestore:
       // Stackrestore doesn't read or write memory, but it sets the
       // stack pointer, which the compiler may read from or write to
       // at any time, so check it for both readability and writeability.
-      visitMemoryReference(I, CS.getArgument(0), ~0u, 0, 0,
-                           MemRef::Read | MemRef::Write);
+      visitMemoryReference(I, CS.getArgument(0), AliasAnalysis::UnknownSize,
+                           0, 0, MemRef::Read | MemRef::Write);
       break;
     }
 }
@@ -495,12 +503,13 @@ void Lint::visitAllocaInst(AllocaInst &I) {
 }
 
 void Lint::visitVAArgInst(VAArgInst &I) {
-  visitMemoryReference(I, I.getOperand(0), ~0u, 0, 0,
+  visitMemoryReference(I, I.getOperand(0), AliasAnalysis::UnknownSize, 0, 0,
                        MemRef::Read | MemRef::Write);
 }
 
 void Lint::visitIndirectBrInst(IndirectBrInst &I) {
-  visitMemoryReference(I, I.getAddress(), ~0u, 0, 0, MemRef::Branchee);
+  visitMemoryReference(I, I.getAddress(), AliasAnalysis::UnknownSize, 0, 0,
+                       MemRef::Branchee);
 
   Assert1(I.getNumDestinations() != 0,
           "Undefined behavior: indirectbr with no destinations", &I);

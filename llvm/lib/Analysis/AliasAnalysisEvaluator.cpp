@@ -166,12 +166,12 @@ bool AAEval::runOnFunction(Function &F) {
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
   for (SetVector<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
        I1 != E; ++I1) {
-    unsigned I1Size = ~0u;
+    unsigned I1Size = AliasAnalysis::UnknownSize;
     const Type *I1ElTy = cast<PointerType>((*I1)->getType())->getElementType();
     if (I1ElTy->isSized()) I1Size = AA.getTypeStoreSize(I1ElTy);
 
     for (SetVector<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2) {
-      unsigned I2Size = ~0u;
+      unsigned I2Size = AliasAnalysis::UnknownSize;
       const Type *I2ElTy =cast<PointerType>((*I2)->getType())->getElementType();
       if (I2ElTy->isSized()) I2Size = AA.getTypeStoreSize(I2ElTy);
 
@@ -198,7 +198,7 @@ bool AAEval::runOnFunction(Function &F) {
 
     for (SetVector<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
          V != Ve; ++V) {
-      unsigned Size = ~0u;
+      unsigned Size = AliasAnalysis::UnknownSize;
       const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
       if (ElTy->isSized()) Size = AA.getTypeStoreSize(ElTy);
 
