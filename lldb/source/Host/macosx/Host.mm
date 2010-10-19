@@ -159,7 +159,96 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
     error = ::GetProcessPID(&psn, &pid);
     return pid;
 }
+#define LLDB_HOST_USE_APPLESCRIPT
+#if defined (LLDB_HOST_USE_APPLESCRIPT)
 
+lldb::pid_t
+Host::LaunchInNewTerminal 
+(
+    const char **argv, 
+    const char **envp,
+    const ArchSpec *arch_spec,
+    bool stop_at_entry,
+    bool disable_aslr
+)
+{
+    if (!argv || !argv[0])
+        return LLDB_INVALID_PROCESS_ID;
+    
+    std::string unix_socket_name;
+
+    char temp_file_path[PATH_MAX] = "/tmp/XXXXXX";    
+    if (::mktemp (temp_file_path) == NULL)
+        return LLDB_INVALID_PROCESS_ID;
+
+    unix_socket_name.assign (temp_file_path);
+    
+    StreamString command;
+    
+    FileSpec darwin_debug_file_spec;
+    if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
+        return LLDB_INVALID_PROCESS_ID;
+    darwin_debug_file_spec.GetFilename().SetCString("darwin-debug");
+        
+    if (!darwin_debug_file_spec.Exists())
+        return LLDB_INVALID_PROCESS_ID;
+    
+    char launcher_path[PATH_MAX];
+    darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
+    command.Printf ("tell application \"Terminal\"\n    do script \"'%s'", launcher_path);
+    
+    command.Printf(" --unix-socket=%s", unix_socket_name.c_str());
+
+    if (arch_spec && arch_spec->IsValid())
+    {
+        command.Printf(" --arch=%s", arch_spec->AsCString());
+    }
+
+    if (disable_aslr)
+    {
+        command.PutCString(" --disable-aslr");
+    }
+        
+    command.PutCString(" --");
+
+    if (argv)
+    {
+        for (size_t i=0; argv[i] != NULL; ++i)
+        {
+            command.Printf(" '%s'", argv[i]);
+        }
+    }
+    command.PutCString (" ; exit\"\nend tell\n");
+    const char *script_source = command.GetString().c_str();
+    NSAppleScript* applescript = [[NSAppleScript alloc] initWithSource:[NSString stringWithCString:script_source encoding:NSUTF8StringEncoding]];
+
+    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+
+    Error lldb_error;
+    // Sleep and wait a bit for debugserver to start to listen...
+    ConnectionFileDescriptor file_conn;
+    char connect_url[128];
+    ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name.c_str());
+
+    [applescript executeAndReturnError:nil];
+    if (file_conn.Connect(connect_url, &lldb_error) == eConnectionStatusSuccess)
+    {
+        char pid_str[256];
+        ::bzero (pid_str, sizeof(pid_str));
+        ConnectionStatus status;
+        const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), status, NULL);
+        if (pid_str_len > 0)
+        {
+            pid = atoi (pid_str);
+            // Sleep for a bit to allow the process to exec and stop at the entry point...
+            sleep(1);
+        }
+    }
+    [applescript release];
+    return pid;
+}
+
+#else
 lldb::pid_t
 Host::LaunchInNewTerminal 
 (
@@ -300,6 +389,7 @@ Host::LaunchInNewTerminal
     }
     return pid;
 }
+#endif
 
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
