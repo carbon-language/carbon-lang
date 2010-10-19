@@ -171,6 +171,10 @@ ThreadPlanCallFunction::ValidatePlan (Stream *error)
 bool
 ThreadPlanCallFunction::PlanExplainsStop ()
 {
+    // If the subplan is running, any crashes are attributable to us.
+    
+    return (m_subplan_sp.get() != NULL);
+    
     if (!m_subplan_sp)
         return false;
     else
