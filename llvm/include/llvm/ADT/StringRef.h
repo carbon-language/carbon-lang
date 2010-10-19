@@ -142,11 +142,16 @@ namespace llvm {
     /// operation, rather than as two operations (an insertion and a
     /// removal).
     ///
+    /// \param MaxEditDistance If non-zero, the maximum edit distance that
+    /// this routine is allowed to compute. If the edit distance will exceed
+    /// that maximum, returns \c MaxEditDistance+1.
+    ///
     /// \returns the minimum number of character insertions, removals,
     /// or (if \p AllowReplacements is \c true) replacements needed to
     /// transform one of the given strings into the other. If zero,
     /// the strings are identical.
-    unsigned edit_distance(StringRef Other, bool AllowReplacements = true);
+    unsigned edit_distance(StringRef Other, bool AllowReplacements = true,
+                           unsigned MaxEditDistance = 0);
 
     /// str - Get the contents as an std::string.
     std::string str() const {

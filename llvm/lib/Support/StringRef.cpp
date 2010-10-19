@@ -68,7 +68,8 @@ int StringRef::compare_numeric(StringRef RHS) const {
 
 // Compute the edit distance between the two given strings.
 unsigned StringRef::edit_distance(llvm::StringRef Other, 
-                                  bool AllowReplacements) {
+                                  bool AllowReplacements,
+                                  unsigned MaxEditDistance) {
   // The algorithm implemented below is the "classic"
   // dynamic-programming algorithm for computing the Levenshtein
   // distance, which is described here:
@@ -94,6 +95,8 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
 
   for (size_type y = 1; y <= m; ++y) {
     current[0] = y;
+    unsigned BestThisRow = current[0];
+    
     for (size_type x = 1; x <= n; ++x) {
       if (AllowReplacements) {
         current[x] = min(previous[x-1] + ((*this)[y-1] == Other[x-1]? 0u:1u),
@@ -103,7 +106,11 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
         if ((*this)[y-1] == Other[x-1]) current[x] = previous[x-1];
         else current[x] = min(current[x-1], previous[x]) + 1;
       }
+      BestThisRow = min(BestThisRow, current[x]);
     }
+    
+    if (MaxEditDistance && BestThisRow > MaxEditDistance)
+      return MaxEditDistance + 1;
     
     unsigned *tmp = current;
     current = previous;
