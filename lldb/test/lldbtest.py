@@ -411,14 +411,24 @@ class TestBase(unittest2.TestCase):
         # test case specific file if test failure is encountered.
         self.session = StringIO.StringIO()
 
-        # Optimistically set self.__failed__ to False initially.  If the test
-        # failed, the session info (self.session) is then dumped into a session
-        # specific file for diagnosis.
+        # Optimistically set self.__errored__ and self.__failed__ to False
+        # initially.  If the test errored/failed, the session info
+        # (self.session) is then dumped into a session specific file for
+        # diagnosis.
+        self.__errored__ = False
         self.__failed__ = False
 
     def setTearDownCleanup(self, dictionary=None):
         self.dict = dictionary
         self.doTearDownCleanup = True
+
+    def markError(self):
+        """Callback invoked when we (the test case instance) errored."""
+        self.__errored__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "ERROR" to the stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "ERROR"
 
     def markFailure(self):
         """Callback invoked when we (the test case instance) failed."""
@@ -430,14 +440,21 @@ class TestBase(unittest2.TestCase):
 
     def dumpSessionInfo(self):
         """
-        Dump the debugger interactions leading to a test failure.  This allows
-        for more convenient postmortem analysis.
+        Dump the debugger interactions leading to a test error/failure.  This
+        allows for more convenient postmortem analysis.
         """
+        for test, err in lldb.test_result.errors:
+            if test is self:
+                print >> self.session, err
         for test, err in lldb.test_result.failures:
             if test is self:
                 print >> self.session, err
 
-        fname = os.path.join(os.environ["LLDB_TEST"], ".session-" + self.id())
+        dname = os.path.join(os.environ["LLDB_TEST"],
+                             os.environ["LLDB_TIMESTAMP"])
+        if not os.path.isdir(dname):
+            os.mkdir(dname)
+        fname = os.path.join(dname, "%s.log" % self.id())
         with open(fname, "w") as f:
             print >> f, self.session.getvalue()
 
@@ -462,9 +479,9 @@ class TestBase(unittest2.TestCase):
                 raise Exception("Don't know how to do cleanup")
 
         # See also LLDBTestResult (dotest.py) which is a singlton class derived
-        # from TextTestResult and overwrites addFailure() method to allow us to
-        # to check the failure status here.
-        if self.__failed__:
+        # from TextTestResult and overwrites addError()/addFailure() methods to
+        # allow us to to check the error/failure status here.
+        if self.__errored__ or self.__failed__:
             self.dumpSessionInfo()
 
     def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):

@@ -502,6 +502,15 @@ lldbLoggings()
 # Install the control-c handler.
 unittest2.signals.installHandler()
 
+# Now get a timestamp string and export it as LLDB_TIMESTAMP environment var.
+# This will be useful when/if we want to dump the session info of individual
+# test cases later on.
+#
+# See also TestBase.dumpSessionInfo() in lldbtest.py.
+import datetime
+raw_timestamp = str(datetime.datetime.today())
+os.environ["LLDB_TIMESTAMP"] = raw_timestamp.replace(' ', '-')
+
 #
 # Invoke the default TextTestRunner to run the test suite, possibly iterating
 # over different configurations.
@@ -610,6 +619,12 @@ for ia in range(len(archs) if iterArchs else 1):
                 LLDBTestResult.__singleton__ = self
                 # Now put this singleton into the lldb module namespace.
                 lldb.test_result = self
+
+            def addError(self, test, err):
+                super(LLDBTestResult, self).addError(test, err)
+                method = getattr(test, "markError", None)
+                if method:
+                    method()
 
             def addFailure(self, test, err):
                 super(LLDBTestResult, self).addFailure(test, err)
