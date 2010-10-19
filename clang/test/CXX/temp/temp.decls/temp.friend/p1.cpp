@@ -293,3 +293,17 @@ namespace test13 {
 
   template class Foo<0>;
 }
+
+namespace test14 {
+  template <class T> class B;
+  template <class T> class A {
+    friend void B<T>::foo();
+    static void foo(); // expected-note {{declared private here}}
+  };
+
+  template <class T> class B {
+    void foo() { return A<long>::foo(); } // expected-error {{'foo' is a private member of 'test14::A<long>'}}
+  };
+
+  template class B<int>; // expected-note {{in instantiation}}
+}

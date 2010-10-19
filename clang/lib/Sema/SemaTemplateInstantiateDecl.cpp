@@ -1333,6 +1333,9 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
       SS.setScopeRep(Qualifier);
       SS.setRange(D->getQualifierRange());
       DC = SemaRef.computeDeclContext(SS);
+
+      if (DC && SemaRef.RequireCompleteDeclContext(SS, DC))
+        return 0;
     } else {
       DC = SemaRef.FindInstantiatedContext(D->getLocation(),
                                            D->getDeclContext(),
