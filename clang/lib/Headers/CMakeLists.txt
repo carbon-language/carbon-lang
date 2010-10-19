@@ -18,7 +18,7 @@ set(files
   tmmintrin.h
   xmmintrin.h)
 
-set(output_dir ${LLVM_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR}/clang/${CLANG_VERSION}/include)
+set(output_dir ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/include)
 
 # If we are in an IDE that has a configuration directory, we need to
 # create a second copy of the headers so that 'clang' can find them if
