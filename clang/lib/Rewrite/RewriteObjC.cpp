@@ -1285,7 +1285,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
 Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
   // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr or ImplicitGetter.
   // This allows us to reuse all the fun and games in SynthMessageExpr().
-  Stmt *Receiver;
+  Stmt *Receiver = 0;
   ObjCMethodDecl *OMD = 0;
   QualType Ty;
   Selector Sel;
