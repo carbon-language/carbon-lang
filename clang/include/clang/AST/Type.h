@@ -899,6 +899,15 @@ protected:
     unsigned InnerRef : 1;
   };
 
+  class TypeWithKeywordBitfields {
+    friend class TypeWithKeyword;
+
+    unsigned : NumTypeBits;
+
+    /// An ElaboratedTypeKeyword.  8 bits for efficient access.
+    unsigned Keyword : 8;
+  };
+
   class VectorTypeBitfields {
     friend class VectorType;
 
@@ -919,6 +928,7 @@ protected:
     FunctionTypeBitfields FunctionTypeBits;
     ObjCObjectTypeBitfields ObjCObjectTypeBits;
     ReferenceTypeBitfields ReferenceTypeBits;
+    TypeWithKeywordBitfields TypeWithKeywordBits;
     VectorTypeBitfields VectorTypeBits;
   };
 
@@ -2486,20 +2496,20 @@ public:
 
 class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
   unsigned Depth : 15;
-  unsigned Index : 16;
   unsigned ParameterPack : 1;
+  unsigned Index : 16;
   IdentifierInfo *Name;
 
   TemplateTypeParmType(unsigned D, unsigned I, bool PP, IdentifierInfo *N,
                        QualType Canon)
     : Type(TemplateTypeParm, Canon, /*Dependent=*/true,
            /*VariablyModified=*/false),
-      Depth(D), Index(I), ParameterPack(PP), Name(N) { }
+      Depth(D), ParameterPack(PP), Index(I), Name(N) { }
 
   TemplateTypeParmType(unsigned D, unsigned I, bool PP)
     : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true,
            /*VariablyModified=*/false),
-      Depth(D), Index(I), ParameterPack(PP), Name(0) { }
+      Depth(D), ParameterPack(PP), Index(I), Name(0) { }
 
   friend class ASTContext;  // ASTContext creates these
 
@@ -2778,20 +2788,18 @@ enum ElaboratedTypeKeyword {
 /// Also provides a few static helpers for converting and printing
 /// elaborated type keyword and tag type kind enumerations.
 class TypeWithKeyword : public Type {
-  /// Keyword - Encodes an ElaboratedTypeKeyword enumeration constant.
-  unsigned Keyword : 3;
-
 protected:
   TypeWithKeyword(ElaboratedTypeKeyword Keyword, TypeClass tc,
                   QualType Canonical, bool Dependent, bool VariablyModified)
-    : Type(tc, Canonical, Dependent, VariablyModified), 
-      Keyword(Keyword) {}
+    : Type(tc, Canonical, Dependent, VariablyModified) {
+    TypeWithKeywordBits.Keyword = Keyword;
+  }
 
 public:
   virtual ~TypeWithKeyword(); // pin vtable to Type.cpp
 
   ElaboratedTypeKeyword getKeyword() const {
-    return static_cast<ElaboratedTypeKeyword>(Keyword);
+    return static_cast<ElaboratedTypeKeyword>(TypeWithKeywordBits.Keyword);
   }
 
   /// getKeywordForTypeSpec - Converts a type specifier (DeclSpec::TST)
