@@ -80,12 +80,39 @@ public:
   inline bool hasInitializer() const { return !isDeclaration(); }
 
   /// hasDefinitiveInitializer - Whether the global variable has an initializer,
-  /// and this is the initializer that will be used in the final executable.
+  /// and any other instances of the global (this can happen due to weak
+  /// linkage) are guaranteed to have the same initializer.
+  ///
+  /// Note that if you want to transform a global, you must use
+  /// hasUniqueInitializer() instead, because of the *_odr linkage type.
+  ///
+  /// Example:
+  ///
+  /// @a = global SomeType* null - Initializer is both definitive and unique.
+  ///
+  /// @b = global weak SomeType* null - Initializer is neither definitive nor
+  /// unique.
+  ///
+  /// @c = global weak_odr SomeType* null - Initializer is definitive, but not
+  /// unique.
   inline bool hasDefinitiveInitializer() const {
     return hasInitializer() &&
       // The initializer of a global variable with weak linkage may change at
       // link time.
       !mayBeOverridden();
+  }
+
+  /// hasUniqueInitializer - Whether the global variable has an initializer, and
+  /// any changes made to the initializer will turn up in the final executable.
+  inline bool hasUniqueInitializer() const {
+    return hasInitializer() &&
+      // It's not safe to modify initializers of global variables with weak
+      // linkage, because the linker might choose to discard the initializer and
+      // use the initializer from another instance of the global variable
+      // instead. It is wrong to modify the initializer of a global variable
+      // with *_odr linkage because then different instances of the global may
+      // have different initializers, breaking the One Definition Rule.
+      !isWeakForLinker();
   }
 
   /// getInitializer - Return the initializer for this global variable.  It is

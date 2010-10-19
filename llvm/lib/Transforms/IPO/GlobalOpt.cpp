@@ -1944,8 +1944,9 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
           FTy->isVarArg() || FTy->getNumParams() != 0)
         return 0;
 
-      // Verify that the initializer is simple enough for us to handle.
-      if (!I->hasDefinitiveInitializer()) return 0;
+      // Verify that the initializer is simple enough for us to handle. We are
+      // only allowed to optimize the initializer if it is unique.
+      if (!I->hasUniqueInitializer()) return 0;
       ConstantArray *CA = dyn_cast<ConstantArray>(I->getInitializer());
       if (!CA) return 0;
       for (User::op_iterator i = CA->op_begin(), e = CA->op_end(); i != e; ++i)
@@ -2062,9 +2063,9 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
     return false;
 
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
-    // Do not allow weak/linkonce/dllimport/dllexport linkage or
+    // Do not allow weak/*_odr/linkonce/dllimport/dllexport linkage or
     // external globals.
-    return GV->hasDefinitiveInitializer();
+    return GV->hasUniqueInitializer();
 
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     // Handle a constantexpr gep.
@@ -2072,9 +2073,9 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
         isa<GlobalVariable>(CE->getOperand(0)) &&
         cast<GEPOperator>(CE)->isInBounds()) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
-      // Do not allow weak/linkonce/dllimport/dllexport linkage or
+      // Do not allow weak/*_odr/linkonce/dllimport/dllexport linkage or
       // external globals.
-      if (!GV->hasDefinitiveInitializer())
+      if (!GV->hasUniqueInitializer())
         return false;
 
       // The first index must be zero.
