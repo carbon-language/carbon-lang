@@ -243,10 +243,10 @@ Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp)
         log->Printf ("Process::%s (timeout = %p, event_sp)...", __FUNCTION__, timeout);
 
     StateType state = eStateInvalid;
-    if (m_listener.WaitForEventForBroadcasterWithType(timeout,
-                                                      this,
-                                                      eBroadcastBitStateChanged,
-                                                      event_sp))
+    if (m_listener.WaitForEventForBroadcasterWithType (timeout,
+                                                       this,
+                                                       eBroadcastBitStateChanged,
+                                                       event_sp))
         state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
 
     if (log)
@@ -266,8 +266,8 @@ Process::PeekAtStateChangedEvents ()
         log->Printf ("Process::%s...", __FUNCTION__);
 
     Event *event_ptr;
-    event_ptr = m_listener.PeekAtNextEventForBroadcasterWithType(this,
-                                                      eBroadcastBitStateChanged);
+    event_ptr = m_listener.PeekAtNextEventForBroadcasterWithType (this,
+                                                                  eBroadcastBitStateChanged);
     if (log)
     {
         if (event_ptr)

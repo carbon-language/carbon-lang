@@ -30,6 +30,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
+#include <string>
 
 #ifndef _POSIX_SPAWN_DISABLE_ASLR
 #define _POSIX_SPAWN_DISABLE_ASLR       0x0100
@@ -44,6 +49,7 @@ static struct option g_long_options[] =
 	{ "no-env",         no_argument,		NULL,           'e'		},
 	{ "help",           no_argument,		NULL,           'h'		},
 	{ "setsid",         no_argument,		NULL,           's'		},
+	{ "unix-socket",    required_argument,  NULL,           'u'		},
 	{ NULL,				0,					NULL,            0		}
 };
 
@@ -56,7 +62,7 @@ usage()
 "                    for debugging.\n"
 "\n"
 "SYNOPSIS\n"
-"    darwin-debug [--arch=<ARCH>] [--disable-aslr] [--no-env] [--setsid] [--help] -- <PROGRAM> [<PROGRAM-ARG> <PROGRAM-ARG> ....]\n"
+"    darwin-debug --unix-socket=<SOCKET> [--arch=<ARCH>] [--disable-aslr] [--no-env] [--setsid] [--help] -- <PROGRAM> [<PROGRAM-ARG> <PROGRAM-ARG> ....]\n"
 "\n"
 "DESCRIPTION\n"
 "    darwin-debug will exec itself into a child process <PROGRAM> that is\n"
@@ -65,7 +71,9 @@ usage()
 "    stop at the program entry point. Any program arguments <PROGRAM-ARG> are\n"
 "    passed on to the exec as the arguments for the new process. The current\n"
 "    environment will be passed to the new process unless the \"--no-env\"\n"
-"    option is used.\n"
+"    option is used. A unix socket must be supplied using the\n"
+"    --unix-socket=<SOCKET> option so the calling program can handshake with\n"
+"    this process and get its process id.\n"
 "\n"
 "EXAMPLE\n"
 "   darwin-debug --arch=i386 -- /bin/ls -al /tmp\n"
@@ -148,7 +156,8 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     char ch;
     int disable_aslr = 0; // By default we disable ASLR
     int pass_env = 1;
-	while ((ch = getopt_long(argc, argv, "a:dfh?", g_long_options, NULL)) != -1)
+    std::string unix_socket_name;
+	while ((ch = getopt_long(argc, argv, "a:dehsu:?", g_long_options, NULL)) != -1)
 	{
 		switch (ch) 
 		{
@@ -186,6 +195,10 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
             ::setsid();
             break;
 
+        case 'u':
+            unix_socket_name.assign (optarg);
+            break;
+
 		case 'h':
 		case '?':
 		default:
@@ -196,7 +209,7 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
 	argc -= optind;
 	argv += optind;
 
-    if (show_usage || argc <= 0)
+    if (show_usage || argc <= 0 || unix_socket_name.empty())
         usage();
 
 #if defined (DEBUG_LLDB_LAUNCHER)
@@ -205,6 +218,43 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
         printf ("argv[%u] = '%s'\n", i, argv[i]);
 #endif
 
+    // Open the socket that was passed in as an argument
+    struct sockaddr_un saddr_un;
+    int s = ::socket (AF_UNIX, SOCK_STREAM, 0);
+    if (s < 0)
+    {
+        perror("error: socket (AF_UNIX, SOCK_STREAM, 0)");
+        exit(1);
+    }
+
+    saddr_un.sun_family = AF_UNIX;
+    ::strncpy(saddr_un.sun_path, unix_socket_name.c_str(), sizeof(saddr_un.sun_path) - 1);
+    saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
+    saddr_un.sun_len = SUN_LEN (&saddr_un);
+
+    if (::connect (s, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) < 0) 
+    {
+        perror("error: connect (socket, &saddr_un, saddr_un_len)");
+        exit(1);
+    }
+    
+    // We were able to connect to the socket, now write our PID so whomever
+    // launched us will know this process's ID
+    char pid_str[64];
+    const int pid_str_len = ::snprintf (pid_str, sizeof(pid_str), "%i", ::getpid());
+    const int bytes_sent = ::send (s, pid_str, pid_str_len, 0);
+    
+    if (pid_str_len != bytes_sent)
+    {
+        perror("error: send (s, pid_str, pid_str_len, 0)");
+        exit (1);
+    }
+
+    // We are done with the socket
+    close (s);
+
+    // Now we posix spawn to exec this process into the inferior that we want
+    // to debug.
     posix_spawn_for_debug (argv, 
                            pass_env ? envp : NULL, 
                            cpu_type, 

@@ -1377,6 +1377,7 @@ main (int argc, char const *argv[])
     
     SBHostOS::ThreadCreated ("[main]");
 
+    signal (SIGPIPE, SIG_IGN);
     signal (SIGWINCH, sigwinch_handler);
 
     // Create a scope for driver so that the driver object will destroy itself

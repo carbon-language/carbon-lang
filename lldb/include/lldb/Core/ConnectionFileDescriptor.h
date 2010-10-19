@@ -56,6 +56,9 @@ protected:
     SocketConnect (const char *host_and_port, Error *error_ptr);
 
     lldb::ConnectionStatus
+    NamedSocketAccept (const char *socket_name, Error *error_ptr);
+
+    lldb::ConnectionStatus
     Close (int& fd, Error *error);
 
     int m_fd;    // Socket we use to communicate once conn established

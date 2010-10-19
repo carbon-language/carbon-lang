@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/Communication.h"
+#include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamFile.h"
@@ -176,6 +178,8 @@ Host::LaunchInNewTerminal
     FileSpec program (argv[0]);
     
     
+    std::string unix_socket_name;
+
     char temp_file_path[PATH_MAX];
     const char *tmpdir = ::getenv ("TMPDIR");
     if (tmpdir == NULL)
@@ -184,6 +188,8 @@ Host::LaunchInNewTerminal
     
     if (::mktemp (temp_file_path) == NULL)
         return LLDB_INVALID_PROCESS_ID;
+
+    unix_socket_name.assign (temp_file_path);
 
     ::strncat (temp_file_path, ".command", sizeof (temp_file_path));
 
@@ -200,6 +206,8 @@ Host::LaunchInNewTerminal
     char launcher_path[PATH_MAX];
     darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
     command_file.Printf("\"%s\" ", launcher_path);
+    
+    command_file.Printf("--unix-socket=%s ", unix_socket_name.c_str());
     
     if (arch_spec && arch_spec->IsValid())
     {
@@ -253,7 +261,7 @@ Host::LaunchInNewTerminal
 
     CFCReleaser<CFURLRef> command_file_url (::CFURLCreateFromFileSystemRepresentation (NULL, 
                                                                                        (const UInt8 *)temp_file_path, 
-                                                                                       strlen (temp_file_path), 
+                                                                                       strlen(temp_file_path),
                                                                                        false));
     
     CFCMutableArray urls;
@@ -263,14 +271,33 @@ Host::LaunchInNewTerminal
     // for us to attach.
     urls.AppendValue(command_file_url.get());
 
+
+    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+
+    Error lldb_error;
+    // Sleep and wait a bit for debugserver to start to listen...
+    ConnectionFileDescriptor file_conn;
+    char connect_url[128];
+    ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name.c_str());
+
     ProcessSerialNumber psn;
     error = LSOpenURLsWithRole(urls.get(), kLSRolesShell, NULL, &app_params, &psn, 1);
-
-    if (error != noErr)
-        return LLDB_INVALID_PROCESS_ID;
-
-    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
-    error = ::GetProcessPID(&psn, &pid);
+    if (error == noErr)
+    {
+        if (file_conn.Connect(connect_url, &lldb_error) == eConnectionStatusSuccess)
+        {
+            char pid_str[256];
+            ::bzero (pid_str, sizeof(pid_str));
+            ConnectionStatus status;
+            const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), status, NULL);
+            if (pid_str_len > 0)
+            {
+                pid = atoi (pid_str);
+                // Sleep for a bit to allow the process to exec and stop at the entry point...
+                sleep(1);
+            }
+        }
+    }
     return pid;
 }
 

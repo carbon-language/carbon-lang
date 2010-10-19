@@ -18,6 +18,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/un.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -84,6 +85,11 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
             // listen://HOST:PORT
             unsigned long listen_port = ::strtoul(s + strlen("listen://"), &end, 0);
             return SocketListen (listen_port, error_ptr);
+        }
+        else if (strstr(s, "unix-accept://"))
+        {
+            // unix://SOCKNAME
+            return NamedSocketAccept (s + strlen("unix-accept://"), error_ptr);
         }
         else if (strstr(s, "connect://"))
         {
@@ -397,6 +403,53 @@ ConnectionFileDescriptor::Close (int& fd, Error *error_ptr)
         return eConnectionStatusSuccess;
     else
         return eConnectionStatusError;
+}
+
+ConnectionStatus
+ConnectionFileDescriptor::NamedSocketAccept (const char *socket_name, Error *error_ptr)
+{
+    ConnectionStatus result = eConnectionStatusError;
+    struct sockaddr_un saddr_un;
+
+    m_is_socket = true;
+    
+    int listen_socket = ::socket (AF_UNIX, SOCK_STREAM, 0);
+    if (listen_socket == -1)
+    {
+        if (error_ptr)
+            error_ptr->SetErrorToErrno();
+        return eConnectionStatusError;
+    }
+
+    saddr_un.sun_family = AF_UNIX;
+    ::strncpy(saddr_un.sun_path, socket_name, sizeof(saddr_un.sun_path) - 1);
+    saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
+    saddr_un.sun_len = SUN_LEN (&saddr_un);
+
+    if (::bind (listen_socket, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) == 0) 
+    {
+        if (::listen (listen_socket, 5) == 0) 
+        {
+            m_fd = ::accept (listen_socket, NULL, 0);
+            if (m_fd > 0)
+            {
+                m_should_close_fd = true;
+
+                if (error_ptr)
+                    error_ptr->Clear();
+                result = eConnectionStatusSuccess;
+            }
+        }
+    }
+    
+    if (result != eConnectionStatusSuccess)
+    {
+        if (error_ptr)
+            error_ptr->SetErrorToErrno();
+    }
+    // We are done with the listen port
+    Close (listen_socket, NULL);
+    return result;
 }
 
 ConnectionStatus

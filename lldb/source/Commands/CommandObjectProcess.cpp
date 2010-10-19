@@ -216,29 +216,14 @@ public:
         if (m_options.in_new_tty)
         {
         
-            lldb::pid_t terminal_pid = Host::LaunchInNewTerminal (inferior_argv,
-                                                                  inferior_envp,
-                                                                  &exe_module->GetArchitecture(),
-                                                                  true,
-                                                                  process->GetDisableASLR());
+            lldb::pid_t pid = Host::LaunchInNewTerminal (inferior_argv,
+                                                         inferior_envp,
+                                                         &exe_module->GetArchitecture(),
+                                                         true,
+                                                         process->GetDisableASLR());
             
-            // Let the app get launched and stopped...
-            const char *process_name = exe_module->GetFileSpec().GetFilename().AsCString("<invalid>");
-
-            if (terminal_pid == LLDB_INVALID_PROCESS_ID)
-            {
-                error.SetErrorStringWithFormat ("failed to launch '%s' in new terminal", process_name);
-            }
-            else
-            {
-                for (int i=0; i<20; i++)
-                {
-                    usleep (250000);
-                    error = process->Attach (process_name, false);
-                    if (error.Success())
-                        break;
-                }
-            }
+            if (pid != LLDB_INVALID_PROCESS_ID)
+                error = process->Attach (pid);
         }
         else
         {
