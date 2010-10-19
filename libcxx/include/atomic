@@ -43,10 +43,6 @@ template <class T> T kill_dependency(T y);
 #define ATOMIC_LLONG_LOCK_FREE unspecified
 #define ATOMIC_ADDRESS_LOCK_FREE unspecified
 
-// operations on atomic types
-
-#define ATOMIC_VAR_INIT(value) see below
-
 // flag type and operations
 
 typedef struct atomic_flag
@@ -71,6 +67,7 @@ void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order);
 void atomic_flag_clear_explicit(atomic_flag*, memory_order);
 
 #define ATOMIC_FLAG_INIT see below
+#define ATOMIC_VAR_INIT(value) see below
 
 // atomic_bool
 
@@ -106,6 +103,7 @@ typedef struct atomic_bool
     atomic_bool& operator=(const atomic_bool&) = delete;
     atomic_bool& operator=(const atomic_bool&) volatile = delete;
     bool operator=(bool) volatile;
+    bool operator=(bool);
 } atomic_bool;
 
 bool atomic_is_lock_free(const volatile atomic_bool*);
@@ -149,8 +147,7 @@ typedef struct atomic_char
     char load(memory_order = memory_order_seq_cst) const;
     operator char() const volatile;
     operator char() const;
-    char exchange(char,
-    memory_order = memory_order_seq_cst) volatile;
+    char exchange(char, memory_order = memory_order_seq_cst) volatile;
     char exchange(char, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(char&, char, memory_order,
                                memory_order) volatile;
@@ -205,8 +202,8 @@ typedef struct atomic_char
 
 bool atomic_is_lock_free(const volatile atomic_char*);
 bool atomic_is_lock_free(const atomic_char*);
-void atomic_init(volatile atomic_char*, itype);
-void atomic_init(atomic_char*, itype);
+void atomic_init(volatile atomic_char*, char);
+void atomic_init(atomic_char*, char);
 void atomic_store(volatile atomic_char*, char);
 void atomic_store(atomic_char*, char);
 void atomic_store_explicit(volatile atomic_char*, char, memory_order);
@@ -265,7 +262,7 @@ typedef struct atomic_schar
     operator signed char() const volatile;
     operator signed char() const;
     signed char exchange(signed char,
-    memory_order = memory_order_seq_cst) volatile;
+                         memory_order = memory_order_seq_cst) volatile;
     signed char exchange(signed char, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(signed char&, signed char, memory_order,
                                memory_order) volatile;
@@ -327,8 +324,8 @@ typedef struct atomic_schar
 
 bool atomic_is_lock_free(const volatile atomic_schar*);
 bool atomic_is_lock_free(const atomic_schar*);
-void atomic_init(volatile atomic_schar*, itype);
-void atomic_init(atomic_schar*, itype);
+void atomic_init(volatile atomic_schar*, signed char);
+void atomic_init(atomic_schar*, signed char);
 void atomic_store(volatile atomic_schar*, signed char);
 void atomic_store(atomic_schar*, signed char);
 void atomic_store_explicit(volatile atomic_schar*, signed char, memory_order);
@@ -398,7 +395,7 @@ typedef struct atomic_uchar
     operator unsigned char() const volatile;
     operator unsigned char() const;
     unsigned char exchange(unsigned char,
-    memory_order = memory_order_seq_cst) volatile;
+                           memory_order = memory_order_seq_cst) volatile;
     unsigned char exchange(unsigned char, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(unsigned char&, unsigned char, memory_order,
                                memory_order) volatile;
@@ -460,8 +457,8 @@ typedef struct atomic_uchar
 
 bool atomic_is_lock_free(const volatile atomic_uchar*);
 bool atomic_is_lock_free(const atomic_uchar*);
-void atomic_init(volatile atomic_uchar*, itype);
-void atomic_init(atomic_uchar*, itype);
+void atomic_init(volatile atomic_uchar*, unsigned char);
+void atomic_init(atomic_uchar*, unsigned char);
 void atomic_store(volatile atomic_uchar*, unsigned char);
 void atomic_store(atomic_uchar*, unsigned char);
 void atomic_store_explicit(volatile atomic_uchar*, unsigned char, memory_order);
@@ -538,8 +535,7 @@ typedef struct atomic_short
     short load(memory_order = memory_order_seq_cst) const;
     operator short() const volatile;
     operator short() const;
-    short exchange(short,
-    memory_order = memory_order_seq_cst) volatile;
+    short exchange(short, memory_order = memory_order_seq_cst) volatile;
     short exchange(short, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(short&, short, memory_order,
                                memory_order) volatile;
@@ -594,8 +590,8 @@ typedef struct atomic_short
 
 bool atomic_is_lock_free(const volatile atomic_short*);
 bool atomic_is_lock_free(const atomic_short*);
-void atomic_init(volatile atomic_short*, itype);
-void atomic_init(atomic_short*, itype);
+void atomic_init(volatile atomic_short*, short);
+void atomic_init(atomic_short*, short);
 void atomic_store(volatile atomic_short*, short);
 void atomic_store(atomic_short*, short);
 void atomic_store_explicit(volatile atomic_short*, short, memory_order);
@@ -654,7 +650,7 @@ typedef struct atomic_ushort
     operator unsigned short() const volatile;
     operator unsigned short() const;
     unsigned short exchange(unsigned short,
-    memory_order = memory_order_seq_cst) volatile;
+                            memory_order = memory_order_seq_cst) volatile;
     unsigned short exchange(unsigned short,
                             memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(unsigned short&, unsigned short, memory_order,
@@ -722,8 +718,8 @@ typedef struct atomic_ushort
 
 bool atomic_is_lock_free(const volatile atomic_ushort*);
 bool atomic_is_lock_free(const atomic_ushort*);
-void atomic_init(volatile atomic_ushort*, itype);
-void atomic_init(atomic_ushort*, itype);
+void atomic_init(volatile atomic_ushort*, unsigned short);
+void atomic_init(atomic_ushort*, unsigned short);
 void atomic_store(volatile atomic_ushort*, unsigned short);
 void atomic_store(atomic_ushort*, unsigned short);
 void atomic_store_explicit(volatile atomic_ushort*, unsigned short,
@@ -803,8 +799,7 @@ typedef struct atomic_int
     int load(memory_order = memory_order_seq_cst) const;
     operator int() const volatile;
     operator int() const;
-    int exchange(int,
-    memory_order = memory_order_seq_cst) volatile;
+    int exchange(int, memory_order = memory_order_seq_cst) volatile;
     int exchange(int, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(int&, int, memory_order, memory_order) volatile;
     bool compare_exchange_weak(int&, int, memory_order, memory_order);
@@ -857,8 +852,8 @@ typedef struct atomic_int
 
 bool atomic_is_lock_free(const volatile atomic_int*);
 bool atomic_is_lock_free(const atomic_int*);
-void atomic_init(volatile atomic_int*, itype);
-void atomic_init(atomic_int*, itype);
+void atomic_init(volatile atomic_int*, int);
+void atomic_init(atomic_int*, int);
 void atomic_store(volatile atomic_int*, int);
 void atomic_store(atomic_int*, int);
 void atomic_store_explicit(volatile atomic_int*, int, memory_order);
@@ -917,7 +912,7 @@ typedef struct atomic_uint
     operator unsigned int() const volatile;
     operator unsigned int() const;
     unsigned int exchange(unsigned int,
-    memory_order = memory_order_seq_cst) volatile;
+                          memory_order = memory_order_seq_cst) volatile;
     unsigned int exchange(unsigned int, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(unsigned int&, unsigned int, memory_order,
                                memory_order) volatile;
@@ -979,8 +974,8 @@ typedef struct atomic_uint
 
 bool atomic_is_lock_free(const volatile atomic_uint*);
 bool atomic_is_lock_free(const atomic_uint*);
-void atomic_init(volatile atomic_uint*, itype);
-void atomic_init(atomic_uint*, itype);
+void atomic_init(volatile atomic_uint*, unsigned int);
+void atomic_init(atomic_uint*, unsigned int);
 void atomic_store(volatile atomic_uint*, unsigned int);
 void atomic_store(atomic_uint*, unsigned int);
 void atomic_store_explicit(volatile atomic_uint*, unsigned int, memory_order);
@@ -1054,8 +1049,7 @@ typedef struct atomic_long
     long load(memory_order = memory_order_seq_cst) const;
     operator long() const volatile;
     operator long() const;
-    long exchange(long,
-    memory_order = memory_order_seq_cst) volatile;
+    long exchange(long, memory_order = memory_order_seq_cst) volatile;
     long exchange(long, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(long&, long, memory_order,
                                memory_order) volatile;
@@ -1110,8 +1104,8 @@ typedef struct atomic_long
 
 bool atomic_is_lock_free(const volatile atomic_long*);
 bool atomic_is_lock_free(const atomic_long*);
-void atomic_init(volatile atomic_long*, itype);
-void atomic_init(atomic_long*, itype);
+void atomic_init(volatile atomic_long*, long);
+void atomic_init(atomic_long*, long);
 void atomic_store(volatile atomic_long*, long);
 void atomic_store(atomic_long*, long);
 void atomic_store_explicit(volatile atomic_long*, long, memory_order);
@@ -1170,7 +1164,7 @@ typedef struct atomic_ulong
     operator unsigned long() const volatile;
     operator unsigned long() const;
     unsigned long exchange(unsigned long,
-    memory_order = memory_order_seq_cst) volatile;
+                           memory_order = memory_order_seq_cst) volatile;
     unsigned long exchange(unsigned long, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(unsigned long&, unsigned long, memory_order,
                                memory_order) volatile;
@@ -1232,8 +1226,8 @@ typedef struct atomic_ulong
 
 bool atomic_is_lock_free(const volatile atomic_ulong*);
 bool atomic_is_lock_free(const atomic_ulong*);
-void atomic_init(volatile atomic_ulong*, itype);
-void atomic_init(atomic_ulong*, itype);
+void atomic_init(volatile atomic_ulong*, unsigned long);
+void atomic_init(atomic_ulong*, unsigned long);
 void atomic_store(volatile atomic_ulong*, unsigned long);
 void atomic_store(atomic_ulong*, unsigned long);
 void atomic_store_explicit(volatile atomic_ulong*, unsigned long, memory_order);
@@ -1310,8 +1304,7 @@ typedef struct atomic_llong
     long long load(memory_order = memory_order_seq_cst) const;
     operator long long() const volatile;
     operator long long() const;
-    long long exchange(long long,
-    memory_order = memory_order_seq_cst) volatile;
+    long long exchange(long long, memory_order = memory_order_seq_cst) volatile;
     long long exchange(long long, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(long long&, long long, memory_order,
                                memory_order) volatile;
@@ -1372,8 +1365,8 @@ typedef struct atomic_llong
 
 bool atomic_is_lock_free(const volatile atomic_llong*);
 bool atomic_is_lock_free(const atomic_llong*);
-void atomic_init(volatile atomic_llong*, itype);
-void atomic_init(atomic_llong*, itype);
+void atomic_init(volatile atomic_llong*, long long);
+void atomic_init(atomic_llong*, long long);
 void atomic_store(volatile atomic_llong*, long long);
 void atomic_store(atomic_llong*, long long);
 void atomic_store_explicit(volatile atomic_llong*, long long, memory_order);
@@ -1444,7 +1437,7 @@ typedef struct atomic_ullong
     operator unsigned long long() const volatile;
     operator unsigned long long() const;
     unsigned long long exchange(unsigned long long,
-    memory_order = memory_order_seq_cst) volatile;
+                                memory_order = memory_order_seq_cst) volatile;
     unsigned long long exchange(unsigned long long,
                                 memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(unsigned long long&, unsigned long long,
@@ -1512,8 +1505,8 @@ typedef struct atomic_ullong
 
 bool atomic_is_lock_free(const volatile atomic_ullong*);
 bool atomic_is_lock_free(const atomic_ullong*);
-void atomic_init(volatile atomic_ullong*, itype);
-void atomic_init(atomic_ullong*, itype);
+void atomic_init(volatile atomic_ullong*, unsigned long long);
+void atomic_init(atomic_ullong*, unsigned long long);
 void atomic_store(volatile atomic_ullong*, unsigned long long);
 void atomic_store(atomic_ullong*, unsigned long long);
 void atomic_store_explicit(volatile atomic_ullong*, unsigned long long,
@@ -1600,8 +1593,7 @@ typedef struct atomic_char16_t
     char16_t load(memory_order = memory_order_seq_cst) const;
     operator char16_t() const volatile;
     operator char16_t() const;
-    char16_t exchange(char16_t,
-    memory_order = memory_order_seq_cst) volatile;
+    char16_t exchange(char16_t, memory_order = memory_order_seq_cst) volatile;
     char16_t exchange(char16_t, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(char16_t&, char16_t, memory_order,
                                memory_order) volatile;
@@ -1657,8 +1649,8 @@ typedef struct atomic_char16_t
 
 bool atomic_is_lock_free(const volatile atomic_char16_t*);
 bool atomic_is_lock_free(const atomic_char16_t*);
-void atomic_init(volatile atomic_char16_t*, itype);
-void atomic_init(atomic_char16_t*, itype);
+void atomic_init(volatile atomic_char16_t*, char16_t);
+void atomic_init(atomic_char16_t*, char16_t);
 void atomic_store(volatile atomic_char16_t*, char16_t);
 void atomic_store(atomic_char16_t*, char16_t);
 void atomic_store_explicit(volatile atomic_char16_t*, char16_t, memory_order);
@@ -1728,8 +1720,7 @@ typedef struct atomic_char32_t
     char32_t load(memory_order = memory_order_seq_cst) const;
     operator char32_t() const volatile;
     operator char32_t() const;
-    char32_t exchange(char32_t,
-    memory_order = memory_order_seq_cst) volatile;
+    char32_t exchange(char32_t, memory_order = memory_order_seq_cst) volatile;
     char32_t exchange(char32_t, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(char32_t&, char32_t, memory_order,
                                memory_order) volatile;
@@ -1785,8 +1776,8 @@ typedef struct atomic_char32_t
 
 bool atomic_is_lock_free(const volatile atomic_char32_t*);
 bool atomic_is_lock_free(const atomic_char32_t*);
-void atomic_init(volatile atomic_char32_t*, itype);
-void atomic_init(atomic_char32_t*, itype);
+void atomic_init(volatile atomic_char32_t*, char32_t);
+void atomic_init(atomic_char32_t*, char32_t);
 void atomic_store(volatile atomic_char32_t*, char32_t);
 void atomic_store(atomic_char32_t*, char32_t);
 void atomic_store_explicit(volatile atomic_char32_t*, char32_t, memory_order);
@@ -1856,8 +1847,7 @@ typedef struct atomic_wchar_t
     wchar_t load(memory_order = memory_order_seq_cst) const;
     operator wchar_t() const volatile;
     operator wchar_t() const;
-    wchar_t exchange(wchar_t,
-    memory_order = memory_order_seq_cst) volatile;
+    wchar_t exchange(wchar_t, memory_order = memory_order_seq_cst) volatile;
     wchar_t exchange(wchar_t, memory_order = memory_order_seq_cst);
     bool compare_exchange_weak(wchar_t&, wchar_t, memory_order,
                                memory_order) volatile;
@@ -1912,8 +1902,8 @@ typedef struct atomic_wchar_t
 
 bool atomic_is_lock_free(const volatile atomic_wchar_t*);
 bool atomic_is_lock_free(const atomic_wchar_t*);
-void atomic_init(volatile atomic_wchar_t*, itype);
-void atomic_init(atomic_wchar_t*, itype);
+void atomic_init(volatile atomic_wchar_t*, wchar_t);
+void atomic_init(atomic_wchar_t*, wchar_t);
 void atomic_store(volatile atomic_wchar_t*, wchar_t);
 void atomic_store(atomic_wchar_t*, wchar_t);
 void atomic_store_explicit(volatile atomic_wchar_t*, wchar_t, memory_order);
@@ -2690,12 +2680,16 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool operator=(bool __v) volatile
         {store(__v); return __v;}
+    _LIBCPP_INLINE_VISIBILITY
+    bool operator=(bool __v)
+        {store(__v); return __v;}
 } atomic_bool;
 
 inline _LIBCPP_INLINE_VISIBILITY
 bool atomic_is_lock_free(const volatile atomic_bool*)
 {
-    return __atomic_is_lock_free(bool);
+    typedef bool type;
+    return __atomic_is_lock_free(type);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -2858,6 +2852,587 @@ bool atomic_compare_exchange_strong_explicit(atomic_bool* __obj, bool* __exp,
 {
     return atomic_compare_exchange_strong_explicit(
              const_cast<volatile atomic_bool*>(__obj), __exp, __desr, __s, __f);
+}
+
+// atomic_char
+
+struct atomic_char;
+
+bool atomic_is_lock_free(const volatile atomic_char*);
+bool atomic_is_lock_free(const atomic_char*);
+void atomic_init(volatile atomic_char*, char);
+void atomic_init(atomic_char*, char);
+void atomic_store(volatile atomic_char*, char);
+void atomic_store(atomic_char*, char);
+void atomic_store_explicit(volatile atomic_char*, char, memory_order);
+void atomic_store_explicit(atomic_char*, char, memory_order);
+char atomic_load(const volatile atomic_char*);
+char atomic_load(const atomic_char*);
+char atomic_load_explicit(const volatile atomic_char*, memory_order);
+char atomic_load_explicit(const atomic_char*, memory_order);
+char atomic_exchange(volatile atomic_char*, char);
+char atomic_exchange(atomic_char*, char);
+char atomic_exchange_explicit(volatile atomic_char*, char, memory_order);
+char atomic_exchange_explicit(atomic_char*, char, memory_order);
+bool atomic_compare_exchange_weak(volatile atomic_char*, char*, char);
+bool atomic_compare_exchange_weak(atomic_char*, char*, char);
+bool atomic_compare_exchange_strong(volatile atomic_char*, char*, char);
+bool atomic_compare_exchange_strong(atomic_char*, char*, char);
+bool atomic_compare_exchange_weak_explicit(volatile atomic_char*, char*, char,
+                                           memory_order, memory_order);
+bool atomic_compare_exchange_weak_explicit(atomic_char*, char*, char,
+                                           memory_order, memory_order);
+bool atomic_compare_exchange_strong_explicit(volatile atomic_char*, char*, char,
+                                             memory_order, memory_order);
+bool atomic_compare_exchange_strong_explicit(atomic_char*, char*, char,
+                                             memory_order, memory_order);
+char atomic_fetch_add(volatile atomic_char*, char);
+char atomic_fetch_add(atomic_char*, char);
+char atomic_fetch_add_explicit(volatile atomic_char*, char, memory_order);
+char atomic_fetch_add_explicit(atomic_char*, char, memory_order);
+char atomic_fetch_sub(volatile atomic_char*, char);
+char atomic_fetch_sub(atomic_char*, char);
+char atomic_fetch_sub_explicit(volatile atomic_char*, char, memory_order);
+char atomic_fetch_sub_explicit(atomic_char*, char, memory_order);
+char atomic_fetch_and(volatile atomic_char*, char);
+char atomic_fetch_and(atomic_char*, char);
+char atomic_fetch_and_explicit(volatile atomic_char*, char, memory_order);
+char atomic_fetch_and_explicit(atomic_char*, char, memory_order);
+char atomic_fetch_or(volatile atomic_char*, char);
+char atomic_fetch_or(atomic_char*, char);
+char atomic_fetch_or_explicit(volatile atomic_char*, char, memory_order);
+char atomic_fetch_or_explicit(atomic_char*, char, memory_order);
+char atomic_fetch_xor(volatile atomic_char*, char);
+char atomic_fetch_xor(atomic_char*, char);
+char atomic_fetch_xor_explicit(volatile atomic_char*, char, memory_order);
+char atomic_fetch_xor_explicit(atomic_char*, char, memory_order);
+
+typedef struct atomic_char
+{
+    char __v_;
+
+    _LIBCPP_INLINE_VISIBILITY
+    bool is_lock_free() const volatile
+        {return atomic_is_lock_free(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool is_lock_free() const
+        {return atomic_is_lock_free(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    void store(char __v, memory_order __o = memory_order_seq_cst) volatile
+        {atomic_store_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void store(char __v, memory_order __o = memory_order_seq_cst)
+        {atomic_store_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char load(memory_order __o = memory_order_seq_cst) const volatile
+        {return atomic_load_explicit(this, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char load(memory_order __o = memory_order_seq_cst) const
+        {return atomic_load_explicit(this, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    operator char() const volatile
+        {return load();}
+    _LIBCPP_INLINE_VISIBILITY
+    operator char() const
+        {return load();}
+    _LIBCPP_INLINE_VISIBILITY
+    char exchange(char __v, memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_exchange_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char exchange(char __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_exchange_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(char& __v, char __e, memory_order __s,
+                               memory_order __f) volatile
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(char& __v, char __e, memory_order __s,
+                               memory_order __f)
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(char& __v, char __e, memory_order __s,
+                                 memory_order __f) volatile
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(char& __v, char __e, memory_order __s,
+                                 memory_order __f)
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(char& __v, char __e,
+                               memory_order __s = memory_order_seq_cst) volatile
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(char& __v, char __e,
+                               memory_order __s = memory_order_seq_cst)
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(char& __v, char __e,
+                               memory_order __s = memory_order_seq_cst) volatile
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(char& __v, char __e,
+                                 memory_order __s = memory_order_seq_cst)
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_add(char __v, memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_fetch_add_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_add(char __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_fetch_add_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_sub(char __v, memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_fetch_sub_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_sub(char __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_fetch_sub_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_and(char __v, memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_fetch_and_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_and(char __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_fetch_and_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_or(char __v, memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_fetch_or_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_or(char __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_fetch_or_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_xor(char __v, memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_fetch_xor_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    char fetch_xor(char __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_fetch_xor_explicit(this, __v, __o);}
+#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+    atomic_char() = default;
+#else
+    _LIBCPP_INLINE_VISIBILITY
+    atomic_char() {}
+#endif
+    _LIBCPP_INLINE_VISIBILITY
+    /*constexpr*/ atomic_char(char __v)
+        : __v_(__v) {}
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    atomic_char(const atomic_char&) = delete;
+    atomic_char& operator=(const atomic_char&) = delete;
+    atomic_char& operator=(const atomic_char&) volatile = delete;
+#else
+private:
+    atomic_char(const atomic_char&);
+    atomic_char& operator=(const atomic_char&);
+    atomic_char& operator=(const atomic_char&) volatile;
+public:
+#endif
+    _LIBCPP_INLINE_VISIBILITY
+    char operator=(char __v) volatile
+        {store(__v); return __v;}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator=(char __v)
+        {store(__v); return __v;}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator++(int) volatile
+        {return fetch_add(char(1));}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator++(int)
+        {return fetch_add(char(1));}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator--(int) volatile
+        {return fetch_sub(char(1));}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator--(int)
+        {return fetch_sub(char(1));}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator++() volatile
+        {return char(fetch_add(char(1)) + 1);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator++()
+        {return char(fetch_add(char(1)) + 1);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator--() volatile
+        {return char(fetch_sub(char(1)) - 1);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator--()
+        {return char(fetch_sub(char(1)) - 1);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator+=(char __v) volatile
+        {return char(fetch_add(__v) + __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator+=(char __v)
+        {return char(fetch_add(__v) + __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator-=(char __v) volatile
+        {return char(fetch_sub(__v) - __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator-=(char __v)
+        {return char(fetch_sub(__v) - __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator&=(char __v) volatile
+        {return char(fetch_and(__v) & __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator&=(char __v)
+        {return char(fetch_and(__v) & __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator|=(char __v) volatile
+        {return char(fetch_or(__v) | __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator|=(char __v)
+        {return char(fetch_or(__v) | __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator^=(char __v) volatile
+        {return char(fetch_xor(__v) ^ __v);}
+    _LIBCPP_INLINE_VISIBILITY
+    char operator^=(char __v)
+        {return char(fetch_xor(__v) ^ __v);}
+} atomic_char;
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_is_lock_free(const volatile atomic_char*)
+{
+    typedef char type;
+    return __atomic_is_lock_free(type);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_is_lock_free(const atomic_char* __obj)
+{
+    return atomic_is_lock_free(const_cast<volatile atomic_char*>(__obj));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_init(volatile atomic_char* __obj, char __desr)
+{
+    __obj->__v_ = __desr;
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_init(atomic_char* __obj, char __desr)
+{
+    __obj->__v_ = __desr;
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store(volatile atomic_char* __obj, char __desr)
+{
+    __atomic_store(&__obj->__v_, __desr, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store(atomic_char* __obj, char __desr)
+{
+    atomic_store(const_cast<volatile atomic_char*>(__obj), __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store_explicit(volatile atomic_char* __obj, char __desr,
+                      memory_order __o)
+{
+    __atomic_store(&__obj->__v_, __desr, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store_explicit(atomic_char* __obj, char __desr, memory_order __o)
+{
+    atomic_store_explicit(const_cast<volatile atomic_char*>(__obj), __desr,
+                                                                           __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_load(const volatile atomic_char* __obj)
+{
+    return __atomic_load(&__obj->__v_, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_load(const atomic_char* __obj)
+{
+    return atomic_load(const_cast<const volatile atomic_char*>(__obj));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_load_explicit(const volatile atomic_char* __obj, memory_order __o)
+{
+    return __atomic_load(&__obj->__v_, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_load_explicit(const atomic_char* __obj, memory_order __o)
+{
+    return atomic_load_explicit(const_cast<const volatile atomic_char*>
+                                                                  (__obj), __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_exchange(volatile atomic_char* __obj, char __desr)
+{
+    return __atomic_exchange(&__obj->__v_, __desr, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_exchange(atomic_char* __obj, char __desr)
+{
+    return atomic_exchange(const_cast<volatile atomic_char*>(__obj), __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_exchange_explicit(volatile atomic_char* __obj, char __desr,
+                         memory_order __o)
+{
+    return __atomic_exchange(&__obj->__v_, __desr, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_exchange_explicit(atomic_char* __obj, char __desr, memory_order __o)
+{
+    return atomic_exchange_explicit(const_cast<volatile atomic_char*>
+                                                          (__obj), __desr, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak(volatile atomic_char* __obj, char* __exp,
+                             char __desr)
+{
+    return __atomic_compare_exchange_weak(&__obj->__v_, __exp, __desr,
+                                    memory_order_seq_cst, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak(atomic_char* __obj, char* __exp, char __desr)
+{
+    return atomic_compare_exchange_weak(const_cast<volatile atomic_char*>
+                                                        (__obj), __exp, __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong(volatile atomic_char* __obj, char* __exp,
+                               char __desr)
+{
+    return __atomic_compare_exchange_strong(&__obj->__v_, __exp, __desr,
+                                    memory_order_seq_cst, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong(atomic_char* __obj, char* __exp, char __desr)
+{
+    return atomic_compare_exchange_strong(const_cast<volatile atomic_char*>
+                                                        (__obj), __exp, __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak_explicit(volatile atomic_char* __obj, char* __exp,
+                                      char __desr, memory_order __s,
+                                      memory_order __f)
+{
+    return __atomic_compare_exchange_weak(&__obj->__v_, __exp, __desr, __s,
+                                                                           __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak_explicit(atomic_char* __obj, char* __exp,
+                                      char __desr, memory_order __s,
+                                      memory_order __f)
+{
+    return atomic_compare_exchange_weak_explicit(
+             const_cast<volatile atomic_char*>(__obj), __exp, __desr, __s, __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong_explicit(volatile atomic_char* __obj,
+                                        char* __exp, char __desr,
+                                        memory_order __s, memory_order __f)
+{
+    return __atomic_compare_exchange_strong(&__obj->__v_, __exp, __desr, __s,
+                                                                           __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong_explicit(atomic_char* __obj, char* __exp,
+                                        char __desr, memory_order __s,
+                                        memory_order __f)
+{
+    return atomic_compare_exchange_strong_explicit(
+             const_cast<volatile atomic_char*>(__obj), __exp, __desr, __s, __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_add(volatile atomic_char* __obj, char __v)
+{
+    return __atomic_fetch_add(&__obj->__v_, __v, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_add(atomic_char* __obj, char __v)
+{
+    return atomic_fetch_add(const_cast<volatile atomic_char*>(__obj), __v);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_add_explicit(volatile atomic_char* __obj, char __v,
+                          memory_order __o)
+{
+    return __atomic_fetch_add(&__obj->__v_, __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_add_explicit(atomic_char* __obj, char __v, memory_order __o)
+{
+    return atomic_fetch_add_explicit(const_cast<volatile atomic_char*>(__obj),
+                                                                      __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_sub(volatile atomic_char* __obj, char __v)
+{
+    return __atomic_fetch_sub(&__obj->__v_, __v, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_sub(atomic_char* __obj, char __v)
+{
+    return atomic_fetch_sub(const_cast<volatile atomic_char*>(__obj), __v);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_sub_explicit(volatile atomic_char* __obj, char __v,
+                          memory_order __o)
+{
+    return __atomic_fetch_sub(&__obj->__v_, __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_sub_explicit(atomic_char* __obj, char __v, memory_order __o)
+{
+    return atomic_fetch_sub_explicit(const_cast<volatile atomic_char*>(__obj),
+                                                                      __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_and(volatile atomic_char* __obj, char __v)
+{
+    return __atomic_fetch_and(&__obj->__v_, __v, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_and(atomic_char* __obj, char __v)
+{
+    return atomic_fetch_and(const_cast<volatile atomic_char*>(__obj), __v);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_and_explicit(volatile atomic_char* __obj, char __v,
+                          memory_order __o)
+{
+    return __atomic_fetch_and(&__obj->__v_, __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_and_explicit(atomic_char* __obj, char __v, memory_order __o)
+{
+    return atomic_fetch_and_explicit(const_cast<volatile atomic_char*>(__obj),
+                                                                      __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_or(volatile atomic_char* __obj, char __v)
+{
+    return __atomic_fetch_or(&__obj->__v_, __v, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_or(atomic_char* __obj, char __v)
+{
+    return atomic_fetch_or(const_cast<volatile atomic_char*>(__obj), __v);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_or_explicit(volatile atomic_char* __obj, char __v,
+                         memory_order __o)
+{
+    return __atomic_fetch_or(&__obj->__v_, __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_or_explicit(atomic_char* __obj, char __v, memory_order __o)
+{
+    return atomic_fetch_or_explicit(const_cast<volatile atomic_char*>(__obj),
+                                                                      __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_xor(volatile atomic_char* __obj, char __v)
+{
+    return __atomic_fetch_xor(&__obj->__v_, __v, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_xor(atomic_char* __obj, char __v)
+{
+    return atomic_fetch_xor(const_cast<volatile atomic_char*>(__obj), __v);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_xor_explicit(volatile atomic_char* __obj, char __v,
+                          memory_order __o)
+{
+    return __atomic_fetch_xor(&__obj->__v_, __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+char
+atomic_fetch_xor_explicit(atomic_char* __obj, char __v, memory_order __o)
+{
+    return atomic_fetch_xor_explicit(const_cast<volatile atomic_char*>(__obj),
+                                                                      __v, __o);
 }
 
 _LIBCPP_END_NAMESPACE_STD
