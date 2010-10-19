@@ -67,7 +67,7 @@ public:
   /// UnknownSize - This is a special value which can be used with the
   /// size arguments in alias queries to indicate that the caller does not
   /// know the sizes of the potential memory references.
-  static unsigned const UnknownSize = ~0u;
+  static uint64_t const UnknownSize = ~UINT64_C(0);
 
   /// getTargetData - Return a pointer to the current TargetData object, or
   /// null if no TargetData object is available.
@@ -77,7 +77,7 @@ public:
   /// getTypeStoreSize - Return the TargetData store size for the given type,
   /// if known, or a conservative value otherwise.
   ///
-  unsigned getTypeStoreSize(const Type *Ty);
+  uint64_t getTypeStoreSize(const Type *Ty);
 
   //===--------------------------------------------------------------------===//
   /// Alias Queries...
@@ -88,13 +88,13 @@ public:
     /// Ptr - The address of the start of the location.
     const Value *Ptr;
     /// Size - The size of the location.
-    unsigned Size;
+    uint64_t Size;
     /// TBAATag - The metadata node which describes the TBAA type of
     /// the location, or null if there is no (unique) tag.
     const MDNode *TBAATag;
 
     explicit Location(const Value *P = 0,
-                      unsigned S = UnknownSize,
+                      uint64_t S = UnknownSize,
                       const MDNode *N = 0)
       : Ptr(P), Size(S), TBAATag(N) {}
 
@@ -129,8 +129,8 @@ public:
   virtual AliasResult alias(const Location &LocA, const Location &LocB);
 
   /// alias - A convenience wrapper.
-  AliasResult alias(const Value *V1, unsigned V1Size,
-                    const Value *V2, unsigned V2Size) {
+  AliasResult alias(const Value *V1, uint64_t V1Size,
+                    const Value *V2, uint64_t V2Size) {
     return alias(Location(V1, V1Size), Location(V2, V2Size));
   }
 
@@ -146,8 +146,8 @@ public:
   }
 
   /// isNoAlias - A convenience wrapper.
-  bool isNoAlias(const Value *V1, unsigned V1Size,
-                 const Value *V2, unsigned V2Size) {
+  bool isNoAlias(const Value *V1, uint64_t V1Size,
+                 const Value *V2, uint64_t V2Size) {
     return isNoAlias(Location(V1, V1Size), Location(V2, V2Size));
   }
 
@@ -278,7 +278,7 @@ public:
 
   /// getModRefInfo - A convenience wrapper.
   ModRefResult getModRefInfo(const Instruction *I,
-                             const Value *P, unsigned Size) {
+                             const Value *P, uint64_t Size) {
     return getModRefInfo(I, Location(P, Size));
   }
 
@@ -289,7 +289,7 @@ public:
 
   /// getModRefInfo (for call sites) - A convenience wrapper.
   ModRefResult getModRefInfo(ImmutableCallSite CS,
-                             const Value *P, unsigned Size) {
+                             const Value *P, uint64_t Size) {
     return getModRefInfo(CS, Location(P, Size));
   }
 
@@ -300,7 +300,7 @@ public:
   }
 
   /// getModRefInfo (for calls) - A convenience wrapper.
-  ModRefResult getModRefInfo(const CallInst *C, const Value *P, unsigned Size) {
+  ModRefResult getModRefInfo(const CallInst *C, const Value *P, uint64_t Size) {
     return getModRefInfo(C, Location(P, Size));
   }
 
@@ -313,7 +313,7 @@ public:
 
   /// getModRefInfo (for invokes) - A convenience wrapper.
   ModRefResult getModRefInfo(const InvokeInst *I,
-                             const Value *P, unsigned Size) {
+                             const Value *P, uint64_t Size) {
     return getModRefInfo(I, Location(P, Size));
   }
 
@@ -322,7 +322,7 @@ public:
   ModRefResult getModRefInfo(const LoadInst *L, const Location &Loc);
 
   /// getModRefInfo (for loads) - A convenience wrapper.
-  ModRefResult getModRefInfo(const LoadInst *L, const Value *P, unsigned Size) {
+  ModRefResult getModRefInfo(const LoadInst *L, const Value *P, uint64_t Size) {
     return getModRefInfo(L, Location(P, Size));
   }
 
@@ -331,7 +331,7 @@ public:
   ModRefResult getModRefInfo(const StoreInst *S, const Location &Loc);
 
   /// getModRefInfo (for stores) - A convenience wrapper.
-  ModRefResult getModRefInfo(const StoreInst *S, const Value *P, unsigned Size) {
+  ModRefResult getModRefInfo(const StoreInst *S, const Value *P, uint64_t Size) {
     return getModRefInfo(S, Location(P, Size));
   }
 
@@ -340,7 +340,7 @@ public:
   ModRefResult getModRefInfo(const VAArgInst* I, const Location &Loc);
 
   /// getModRefInfo (for va_args) - A convenience wrapper.
-  ModRefResult getModRefInfo(const VAArgInst* I, const Value* P, unsigned Size) {
+  ModRefResult getModRefInfo(const VAArgInst* I, const Value* P, uint64_t Size) {
     return getModRefInfo(I, Location(P, Size));
   }
 
@@ -360,7 +360,7 @@ public:
   bool canBasicBlockModify(const BasicBlock &BB, const Location &Loc);
 
   /// canBasicBlockModify - A convenience wrapper.
-  bool canBasicBlockModify(const BasicBlock &BB, const Value *P, unsigned Size){
+  bool canBasicBlockModify(const BasicBlock &BB, const Value *P, uint64_t Size){
     return canBasicBlockModify(BB, Location(P, Size));
   }
 
@@ -373,7 +373,7 @@ public:
 
   /// canInstructionRangeModify - A convenience wrapper.
   bool canInstructionRangeModify(const Instruction &I1, const Instruction &I2,
-                                 const Value *Ptr, unsigned Size) {
+                                 const Value *Ptr, uint64_t Size) {
     return canInstructionRangeModify(I1, I2, Location(Ptr, Size));
   }
 

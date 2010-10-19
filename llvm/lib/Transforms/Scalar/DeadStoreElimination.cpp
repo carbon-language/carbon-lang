@@ -79,7 +79,7 @@ namespace {
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
 
-    unsigned getPointerSize(Value *V) const;
+    uint64_t getPointerSize(Value *V) const;
   };
 }
 
@@ -373,7 +373,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     }
     
     Value *killPointer = 0;
-    unsigned killPointerSize = AliasAnalysis::UnknownSize;
+    uint64_t killPointerSize = AliasAnalysis::UnknownSize;
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
@@ -565,7 +565,7 @@ void DSE::DeleteDeadInstruction(Instruction *I,
   } while (!NowDeadInsts.empty());
 }
 
-unsigned DSE::getPointerSize(Value *V) const {
+uint64_t DSE::getPointerSize(Value *V) const {
   if (TD) {
     if (AllocaInst *A = dyn_cast<AllocaInst>(V)) {
       // Get size information for the alloca
