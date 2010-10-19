@@ -422,13 +422,13 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, const char *expr_cstr)
             }
             else
             {
-                error.SetErrorString ("NULL expression result");
+                error.SetErrorString ("Expression did not return a result");
             }
         }
     }
+    
     if (result_valobj_sp.get() == NULL)
         result_valobj_sp.reset (new ValueObjectConstResult (error));
 
     return result_valobj_sp;
-
 }
