@@ -143,7 +143,7 @@ private:
       tmp = initialized; \
       sys::MemoryFence(); \
     } \
-  } \
+  }
 
 #define INITIALIZE_PASS(passName, arg, name, cfg, analysis) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
