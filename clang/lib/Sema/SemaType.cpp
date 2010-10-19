@@ -1408,11 +1408,15 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     //   for a nonstatic member function, the function type to which a pointer
     //   to member refers, or the top-level function type of a function typedef
     //   declaration.
-    bool FreeFunction = 
-        (D.getContext() != Declarator::MemberContext ||
-         D.getDeclSpec().isFriendSpecified()) &&
-        (!D.getCXXScopeSpec().isSet() ||
-         !computeDeclContext(D.getCXXScopeSpec(), /*FIXME:*/true)->isRecord());
+    bool FreeFunction;
+    if (!D.getCXXScopeSpec().isSet()) {
+      FreeFunction = (D.getContext() != Declarator::MemberContext ||
+                      D.getDeclSpec().isFriendSpecified());
+    } else {
+      DeclContext *DC = computeDeclContext(D.getCXXScopeSpec());
+      FreeFunction = (DC && !DC->isRecord());
+    }
+
     if (FnTy->getTypeQuals() != 0 &&
         D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
         (FreeFunction ||
