@@ -58,11 +58,7 @@ MacroInfo *Preprocessor::CloneMacroInfo(const MacroInfo &MacroToClone) {
 ///  be reused for allocating new MacroInfo objects.
 void Preprocessor::ReleaseMacroInfo(MacroInfo *MI) {
   MICache.push_back(MI);
-  // We need to call 'Destroy' as opposed to 'FreeArgumentList' because
-  // the MICache object will get reused with a placement new.  This does
-  // not cause the underlying SmallVector to get it's memory released, so
-  // we need to call Destroy() here.
-  MI->Destroy();
+  MI->FreeArgumentList();
 }
 
 
