@@ -46,13 +46,16 @@ typedef __WCHAR_TYPE__ wchar_t;
 #define NULL ((void*)0)
 #endif
 
-// Some C libraries expect to see a wint_t here. Others (notably MinGW) will use
-// __WINT_TYPE__ directly; accomodate both by requiring __need_wint_t
-#if defined(__need_wint_t) && !defined(_WINT_T)
-#define _WINT_T
-typedef __WINT_TYPE__ wint_t;
-#endif
-
 #define offsetof(t, d) __builtin_offsetof(t, d)
 
 #endif /* __STDDEF_H */
+
+/* Some C libraries expect to see a wint_t here. Others (notably MinGW) will use
+__WINT_TYPE__ directly; accomodate both by requiring __need_wint_t */
+#if defined(__need_wint_t)
+#if !defined(_WINT_T)
+#define _WINT_T
+typedef __WINT_TYPE__ wint_t;
+#endif /* _WINT_T */
+#undef __need_wint_t
+#endif /* __need_wint_t */
