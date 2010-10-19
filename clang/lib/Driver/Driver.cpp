@@ -81,11 +81,16 @@ Driver::Driver(llvm::StringRef _ClangExecutable,
   Dir = Executable.getDirname();
 
   // Compute the path to the resource directory.
+  llvm::StringRef ClangResourceDir(CLANG_RESOURCE_DIR);
   llvm::sys::Path P(Dir);
-  P.eraseComponent(); // Remove /bin from foo/bin
-  P.appendComponent("lib");
-  P.appendComponent("clang");
-  P.appendComponent(CLANG_VERSION_STRING);
+  if (ClangResourceDir != "") {
+    P.appendComponent(ClangResourceDir);
+  } else {
+    P.appendComponent(".."); // Walk up from a 'bin' subdirectory.
+    P.appendComponent("lib");
+    P.appendComponent("clang");
+    P.appendComponent(CLANG_VERSION_STRING);
+  }
   ResourceDir = P.str();
 }
 
