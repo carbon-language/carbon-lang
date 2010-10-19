@@ -2,16 +2,17 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -relocation-model=pic -disable-fp-elim -arm-vdup-splat | FileCheck %s 
 ; Modified version of machine-licm.ll with -arm-vdup-splat turned on, 8003375.
 ; Eventually this should become the default and be moved into machine-licm.ll.
+; FIXME: the vdup should be hoisted out of the loop, 8248029.
 
 define void @t2(i8* %ptr1, i8* %ptr2) nounwind {
 entry:
 ; CHECK: t2:
 ; CHECK: mov.w r3, #1065353216
-; CHECK: vdup.32 q{{.*}}, r3
   br i1 undef, label %bb1, label %bb2
 
 bb1:
 ; CHECK-NEXT: %bb1
+; CHECK: vdup.32 q{{.*}}, r3
   %indvar = phi i32 [ %indvar.next, %bb1 ], [ 0, %entry ]
   %tmp1 = shl i32 %indvar, 2
   %gep1 = getelementptr i8* %ptr1, i32 %tmp1

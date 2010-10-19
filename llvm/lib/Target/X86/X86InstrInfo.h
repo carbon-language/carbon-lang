@@ -864,11 +864,6 @@ public:
                                       unsigned OpNum,
                                       const SmallVectorImpl<MachineOperand> &MOs,
                                       unsigned Size, unsigned Alignment) const;
-
-  bool hasHighOperandLatency(const InstrItineraryData *ItinData,
-                             const MachineRegisterInfo *MRI,
-                             const MachineInstr *DefMI, unsigned DefIdx,
-                             const MachineInstr *UseMI, unsigned UseIdx) const;
   
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,

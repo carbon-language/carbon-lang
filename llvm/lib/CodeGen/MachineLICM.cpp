@@ -43,6 +43,11 @@
 
 using namespace llvm;
 
+static cl::opt<bool>
+TrackRegPressure("rp-aware-machine-licm",
+                 cl::desc("Register pressure aware machine LICM"),
+                 cl::init(false), cl::Hidden);
+
 STATISTIC(NumHoisted,
           "Number of machine instructions hoisted out of loops");
 STATISTIC(NumLowRP,
@@ -119,7 +124,6 @@ namespace {
       RegSeen.clear();
       RegPressure.clear();
       RegLimit.clear();
-      BackTrace.clear();
       for (DenseMap<unsigned,std::vector<const MachineInstr*> >::iterator
              CI = CSEMap.begin(), CE = CSEMap.end(); CI != CE; ++CI)
         CI->second.clear();
@@ -167,10 +171,9 @@ namespace {
     /// 
     bool IsLoopInvariantInst(MachineInstr &I);
 
-    /// HasHighOperandLatency - Compute operand latency between a def of 'Reg'
-    /// and an use in the current loop, return true if the target considered
-    /// it 'high'.
-    bool HasHighOperandLatency(MachineInstr &MI, unsigned DefIdx, unsigned Reg);
+    /// ComputeOperandLatency - Compute operand latency between a def of 'Reg'
+    /// and an use in the current loop.
+    int ComputeOperandLatency(MachineInstr &MI, unsigned DefIdx, unsigned Reg);
 
     /// IncreaseHighRegPressure - Visit BBs from preheader to current BB, check
     /// if hoisting an instruction of the given cost matrix can cause high
@@ -553,24 +556,28 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
   if (!Preheader)
     return;
 
-  if (IsHeader) {
-    // Compute registers which are liveout of preheader.
-    RegSeen.clear();
-    BackTrace.clear();
-    InitRegPressure(Preheader);
-  }
+  if (TrackRegPressure) {
+    if (IsHeader) {
+      // Compute registers which are liveout of preheader.
+      RegSeen.clear();
+      BackTrace.clear();
+      InitRegPressure(Preheader);
+    }
 
-  // Remember livein register pressure.
-  BackTrace.push_back(RegPressure);
+    // Remember livein register pressure.
+    BackTrace.push_back(RegPressure);
+  }
 
   for (MachineBasicBlock::iterator
          MII = BB->begin(), E = BB->end(); MII != E; ) {
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
     MachineInstr *MI = &*MII;
 
-    UpdateRegPressureBefore(MI);
+    if (TrackRegPressure)
+      UpdateRegPressureBefore(MI);
     Hoist(MI, Preheader);
-    UpdateRegPressureAfter(MI);
+    if (TrackRegPressure)
+      UpdateRegPressureAfter(MI);
 
     MII = NextMII;
   }
@@ -584,7 +591,8 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
       HoistRegion(Children[I]);
   }
 
-  BackTrace.pop_back();
+  if (TrackRegPressure)
+    BackTrace.pop_back();
 }
 
 /// InitRegPressure - Find all virtual register references that are liveout of
@@ -780,14 +788,15 @@ bool MachineLICM::isLoadFromConstantMemory(MachineInstr *MI) {
   }
 }
 
-/// HasHighOperandLatency - Compute operand latency between a def of 'Reg'
-/// and an use in the current loop, return true if the target considered
-/// it 'high'.
-bool MachineLICM::HasHighOperandLatency(MachineInstr &MI,
-                                        unsigned DefIdx, unsigned Reg) {
+/// ComputeOperandLatency - Compute operand latency between a def of 'Reg'
+/// and an use in the current loop.
+int MachineLICM::ComputeOperandLatency(MachineInstr &MI,
+                                       unsigned DefIdx, unsigned Reg) {
   if (MRI->use_nodbg_empty(Reg))
-    return false;
+    // No use? Return arbitrary large number!
+    return 300;
 
+  int Latency = -1;
   for (MachineRegisterInfo::use_nodbg_iterator I = MRI->use_nodbg_begin(Reg),
          E = MRI->use_nodbg_end(); I != E; ++I) {
     MachineInstr *UseMI = &*I;
@@ -801,15 +810,18 @@ bool MachineLICM::HasHighOperandLatency(MachineInstr &MI,
       if (MOReg != Reg)
         continue;
 
-      if (TII->hasHighOperandLatency(InstrItins, MRI, &MI, DefIdx, UseMI, i))
-        return true;
+      int UseCycle = TII->getOperandLatency(InstrItins, &MI, DefIdx, UseMI, i);
+      Latency = std::max(Latency, UseCycle);
     }
 
-    // Only look at the first in loop use.
-    break;
+    if (Latency != -1)
+      break;
   }
 
-  return false;
+  if (Latency == -1)
+    Latency = InstrItins->getOperandCycle(MI.getDesc().getSchedClass(), DefIdx);
+
+  return Latency;
 }
 
 /// IncreaseHighRegPressure - Visit BBs from preheader to current BB, check
@@ -843,19 +855,19 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
   if (MI.isImplicitDef())
     return true;
 
-  // If the instruction is cheap, only hoist if it is re-materilizable. LICM
-  // will increase register pressure. It's probably not worth it if the
-  // instruction is cheap.
+  // FIXME: For now, only hoist re-materilizable instructions. LICM will
+  // increase register pressure. We want to make sure it doesn't increase
+  // spilling.
   // Also hoist loads from constant memory, e.g. load from stubs, GOT. Hoisting
   // these tend to help performance in low register pressure situation. The
   // trade off is it may cause spill in high pressure situation. It will end up
   // adding a store in the loop preheader. But the reload is no more expensive.
   // The side benefit is these loads are frequently CSE'ed.
-  if (MI.getDesc().isAsCheapAsAMove()) {
-    if (!TII->isTriviallyReMaterializable(&MI, AA))
+  if (!TrackRegPressure || MI.getDesc().isAsCheapAsAMove()) {
+    if (!TII->isTriviallyReMaterializable(&MI, AA) &&
+        !isLoadFromConstantMemory(&MI))
       return false;
   } else {
-    // Estimate register pressure to determine whether to LICM the instruction.
     // In low register pressure situation, we can be more aggressive about 
     // hoisting. Also, favors hoisting long latency instructions even in
     // moderately high pressure situation.
@@ -868,9 +880,13 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
       if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
         continue;
       if (MO.isDef()) {
-        if (HasHighOperandLatency(MI, i, Reg)) {
-          ++NumHighLatency;
-          return true;
+        if (InstrItins && !InstrItins->isEmpty()) {
+          int Cycle = ComputeOperandLatency(MI, i, Reg);
+          if (Cycle > 3) {
+            // FIXME: Target specific high latency limit?
+            ++NumHighLatency;
+            return true;
+          }
         }
 
         const TargetRegisterClass *RC = MRI->getRegClass(Reg);
