@@ -964,13 +964,18 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
     bool IsDependent = false;
 
+    // Don't pass down template parameter lists if this is just a tag
+    // reference.  For example, we don't need the template parameters here:
+    //   template <class T> class A *makeA(T t);
+    MultiTemplateParamsArg TParams;
+    if (TUK != Sema::TUK_Reference && TemplateParams)
+      TParams =
+        MultiTemplateParamsArg(&(*TemplateParams)[0], TemplateParams->size());
+
     // Declaration or definition of a class type
     TagOrTempResult = Actions.ActOnTag(getCurScope(), TagType, TUK, StartLoc,
                                        SS, Name, NameLoc, AttrList, AS,
-                                       MultiTemplateParamsArg(Actions,
-                                    TemplateParams? &(*TemplateParams)[0] : 0,
-                                    TemplateParams? TemplateParams->size() : 0),
-                                       Owned, IsDependent, false,
+                                       TParams, Owned, IsDependent, false,
                                        clang::TypeResult());
 
     // If ActOnTag said the type was dependent, try again with the
