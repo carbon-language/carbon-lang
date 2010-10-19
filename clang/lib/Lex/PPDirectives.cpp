@@ -28,18 +28,23 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 MacroInfo *Preprocessor::AllocateMacroInfo() {
-  MacroInfo *MI;
+  MacroInfoChain *MIChain;
 
-  if (!MICache.empty()) {
-    MI = MICache.back();
-    MICache.pop_back();
-  } else {
-    MacroInfoChain *MIChain = BP.Allocate<MacroInfoChain>();
-    MIChain->Next = MIChainHead;
-    MIChainHead = MIChain;
-    MI = &(MIChain->MI);
+  if (MICache) {
+    MIChain = MICache;
+    MICache = MICache->Next;
   }
-  return MI;
+  else {
+    MIChain = BP.Allocate<MacroInfoChain>();
+  }
+
+  MIChain->Next = MIChainHead;
+  MIChain->Prev = 0;
+  if (MIChainHead)
+    MIChainHead->Prev = MIChain;
+  MIChainHead = MIChain;
+
+  return &(MIChain->MI);
 }
 
 MacroInfo *Preprocessor::AllocateMacroInfo(SourceLocation L) {
@@ -57,10 +62,23 @@ MacroInfo *Preprocessor::CloneMacroInfo(const MacroInfo &MacroToClone) {
 /// ReleaseMacroInfo - Release the specified MacroInfo.  This memory will
 ///  be reused for allocating new MacroInfo objects.
 void Preprocessor::ReleaseMacroInfo(MacroInfo *MI) {
-  MICache.push_back(MI);
-  MI->FreeArgumentList();
-}
+  MacroInfoChain *MIChain = (MacroInfoChain*) MI;
+  if (MacroInfoChain *Prev = MIChain->Prev) {
+    MacroInfoChain *Next = MIChain->Next;
+    Prev->Next = Next;
+    if (Next)
+      Next->Prev = Prev;
+  }
+  else {
+    assert(MIChainHead == MIChain);
+    MIChainHead = MIChain->Next;
+    MIChainHead->Prev = 0;
+  }
+  MIChain->Next = MICache;
+  MICache = MIChain;
 
+  MI->Destroy();
+}
 
 /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
 /// current line until the tok::eom token is found.

@@ -195,11 +195,6 @@ class Preprocessor {
   /// to the actual definition of the macro.
   llvm::DenseMap<IdentifierInfo*, MacroInfo*> Macros;
 
-  /// MICache - A "freelist" of MacroInfo objects that can be reused for quick
-  /// allocation.
-  /// FIXME: why not use a singly linked list?
-  std::vector<MacroInfo*> MICache;
-
   /// MacroArgCache - This is a "freelist" of MacroArg objects that can be
   /// reused for quick allocation.
   MacroArgs *MacroArgCache;
@@ -255,11 +250,16 @@ private:  // Cached tokens state.
   struct MacroInfoChain {
     MacroInfo MI;
     MacroInfoChain *Next;
+    MacroInfoChain *Prev;
   };
 
   /// MacroInfos are managed as a chain for easy disposal.  This is the head
   /// of that list.
   MacroInfoChain *MIChainHead;
+
+  /// MICache - A "freelist" of MacroInfo objects that can be reused for quick
+  /// allocation.
+  MacroInfoChain *MICache;
 
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts,

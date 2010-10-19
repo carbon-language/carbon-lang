@@ -56,7 +56,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
     SourceMgr(SM), HeaderInfo(Headers), ExternalSource(0),
     Identifiers(opts, IILookup), BuiltinInfo(Target), CodeComplete(0),
     CodeCompletionFile(0), SkipMainFilePreamble(0, true), CurPPLexer(0), 
-    CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0), MIChainHead(0) {
+    CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0), MIChainHead(0),
+    MICache(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
   OwnsHeaderSearch = OwnsHeaders;
