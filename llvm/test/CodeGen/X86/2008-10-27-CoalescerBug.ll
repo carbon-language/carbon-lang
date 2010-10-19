@@ -1,6 +1,9 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -stats |& not grep {Number of register spills}
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -stats |& FileCheck %s
+; Now this test spills one register. But a reload in the loop is cheaper than
+; the divsd so it's a win.
 
 define fastcc void @fourn(double* %data, i32 %isign) nounwind {
+; CHECK: fourn
 entry:
 	br label %bb
 
@@ -11,6 +14,11 @@ bb:		; preds = %bb, %entry
 	%1 = icmp sgt i32 %0, 2		; <i1> [#uses=1]
 	br i1 %1, label %bb30.loopexit, label %bb
 
+; CHECK: %bb30.loopexit
+; CHECK: divsd %xmm0
+; CHECK: movsd %xmm0, 16(%esp)
+; CHECK: .align
+; CHECK-NEXT: %bb3
 bb3:		; preds = %bb30.loopexit, %bb25, %bb3
 	%2 = load i32* null, align 4		; <i32> [#uses=1]
 	%3 = mul i32 %2, 0		; <i32> [#uses=1]
