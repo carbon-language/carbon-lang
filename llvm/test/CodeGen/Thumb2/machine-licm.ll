@@ -55,8 +55,8 @@ return:                                           ; preds = %bb, %entry
 define void @t2(i8* %ptr1, i8* %ptr2) nounwind {
 entry:
 ; CHECK: t2:
-; CHECK: adr r{{.}}, #LCPI1_0
-; CHECK: vldmia r3, {d16, d17}
+; CHECK: mov.w r3, #1065353216
+; CHECK: vdup.32 q{{.*}}, r3
   br i1 undef, label %bb1, label %bb2
 
 bb1:
@@ -76,8 +76,8 @@ bb2:
   ret void
 }
 
-; CHECK: LCPI1_0:
-; CHECK: .section
+; CHECK-NOT: LCPI1_0:
+; CHECK: .subsections_via_symbols
 
 declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
 

@@ -59,13 +59,6 @@ EnableARMTailCalls("arm-tail-calls", cl::Hidden,
   cl::desc("Generate tail calls (TEMPORARY OPTION)."),
   cl::init(false));
 
-// This option should go away when Machine LICM is smart enough to hoist a
-// reg-to-reg VDUP.
-static cl::opt<bool>
-EnableARMVDUPsplat("arm-vdup-splat", cl::Hidden,
-  cl::desc("Generate VDUP for integer constant splats (TEMPORARY OPTION)."),
-  cl::init(false));
-
 static cl::opt<bool>
 EnableARMLongCalls("arm-long-calls", cl::Hidden,
   cl::desc("Generate calls via indirect call instructions"),
@@ -3442,26 +3435,24 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
 
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();
 
-  if (EnableARMVDUPsplat) {
-    // Use VDUP for non-constant splats.  For f32 constant splats, reduce to
-    // i32 and try again.
-    if (usesOnlyOneValue && EltSize <= 32) {
-      if (!isConstant)
-        return DAG.getNode(ARMISD::VDUP, dl, VT, Value);
-      if (VT.getVectorElementType().isFloatingPoint()) {
-        SmallVector<SDValue, 8> Ops;
-        for (unsigned i = 0; i < NumElts; ++i)
-          Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32,
-                                    Op.getOperand(i)));
-        SDValue Val = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &Ops[0],
-                                  NumElts);
-        return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
-                           LowerBUILD_VECTOR(Val, DAG, ST));
-      }
-      SDValue Val = IsSingleInstrConstant(Value, DAG, ST, dl);
-      if (Val.getNode())
-        return DAG.getNode(ARMISD::VDUP, dl, VT, Val);
+  // Use VDUP for non-constant splats.  For f32 constant splats, reduce to
+  // i32 and try again.
+  if (usesOnlyOneValue && EltSize <= 32) {
+    if (!isConstant)
+      return DAG.getNode(ARMISD::VDUP, dl, VT, Value);
+    if (VT.getVectorElementType().isFloatingPoint()) {
+      SmallVector<SDValue, 8> Ops;
+      for (unsigned i = 0; i < NumElts; ++i)
+        Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32,
+                                  Op.getOperand(i)));
+      SDValue Val = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &Ops[0],
+                                NumElts);
+      return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
+                         LowerBUILD_VECTOR(Val, DAG, ST));
     }
+    SDValue Val = IsSingleInstrConstant(Value, DAG, ST, dl);
+    if (Val.getNode())
+      return DAG.getNode(ARMISD::VDUP, dl, VT, Val);
   }
 
   // If all elements are constants and the case above didn't get hit, fall back
@@ -3469,12 +3460,6 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   // pool.
   if (isConstant)
     return SDValue();
-
-  if (!EnableARMVDUPsplat) {
-    // Use VDUP for non-constant splats.
-    if (usesOnlyOneValue && EltSize <= 32)
-      return DAG.getNode(ARMISD::VDUP, dl, VT, Value);
-  }
 
   // Vectors with 32- or 64-bit elements can be built by directly assigning
   // the subregisters.  Lower it to an ARMISD::BUILD_VECTOR so the operands
