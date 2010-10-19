@@ -83,7 +83,7 @@ unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
   assert((SI == &MemberOffsets[0] || *(SI-1) <= Offset) &&
          (SI+1 == &MemberOffsets[NumElements] || *(SI+1) > Offset) &&
          "Upper bound didn't work!");
-  
+
   // Multiple fields can have the same offset if any of them are zero sized.
   // For example, in { i32, [0 x i32], i32 }, searching for offset 4 will stop
   // at the i32 element, because it is the last element at that offset.  This is
@@ -153,16 +153,16 @@ void TargetData::init(StringRef Desc) {
     std::pair<StringRef, StringRef> Split = Desc.split('-');
     StringRef Token = Split.first;
     Desc = Split.second;
-    
+
     if (Token.empty())
       continue;
-    
+
     Split = Token.split(':');
     StringRef Specifier = Split.first;
     Token = Split.second;
-    
+
     assert(!Specifier.empty() && "Can't be empty here");
-    
+
     switch (Specifier[0]) {
     case 'E':
       LittleEndian = false;
@@ -197,7 +197,7 @@ void TargetData::init(StringRef Desc) {
       unsigned Size = getInt(Specifier.substr(1));
       Split = Token.split(':');
       unsigned ABIAlign = getInt(Split.first) / 8;
-      
+
       Split = Split.second.split(':');
       unsigned PrefAlign = getInt(Split.first) / 8;
       if (PrefAlign == 0)
@@ -215,7 +215,7 @@ void TargetData::init(StringRef Desc) {
         Token = Split.second;
       } while (!Specifier.empty() || !Token.empty());
       break;
-        
+
     default:
       break;
     }
@@ -231,7 +231,7 @@ TargetData::TargetData() : ImmutablePass(ID) {
                     "Tool did not specify a TargetData to use?");
 }
 
-TargetData::TargetData(const Module *M) 
+TargetData::TargetData(const Module *M)
   : ImmutablePass(ID) {
   init(M->getDataLayout());
 }
@@ -249,14 +249,14 @@ TargetData::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
       return;
     }
   }
-  
+
   Alignments.push_back(TargetAlignElem::get(align_type, abi_align,
                                             pref_align, bit_width));
 }
 
-/// getAlignmentInfo - Return the alignment (either ABI if ABIInfo = true or 
+/// getAlignmentInfo - Return the alignment (either ABI if ABIInfo = true or
 /// preferred if ABIInfo = false) the target wants for the specified datatype.
-unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType, 
+unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
                                       uint32_t BitWidth, bool ABIInfo,
                                       const Type *Ty) const {
   // Check to see if we have an exact match and remember the best match we see.
@@ -266,18 +266,18 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
     if (Alignments[i].AlignType == AlignType &&
         Alignments[i].TypeBitWidth == BitWidth)
       return ABIInfo ? Alignments[i].ABIAlign : Alignments[i].PrefAlign;
-    
+
     // The best match so far depends on what we're looking for.
-     if (AlignType == INTEGER_ALIGN && 
+     if (AlignType == INTEGER_ALIGN &&
          Alignments[i].AlignType == INTEGER_ALIGN) {
       // The "best match" for integers is the smallest size that is larger than
       // the BitWidth requested.
-      if (Alignments[i].TypeBitWidth > BitWidth && (BestMatchIdx == -1 || 
+      if (Alignments[i].TypeBitWidth > BitWidth && (BestMatchIdx == -1 ||
            Alignments[i].TypeBitWidth < Alignments[BestMatchIdx].TypeBitWidth))
         BestMatchIdx = i;
       // However, if there isn't one that's larger, then we must use the
       // largest one we have (see below)
-      if (LargestInt == -1 || 
+      if (LargestInt == -1 ||
           Alignments[i].TypeBitWidth > Alignments[LargestInt].TypeBitWidth)
         LargestInt = i;
     }
@@ -322,8 +322,8 @@ class StructLayoutMap : public AbstractTypeUser {
       I->first->removeAbstractTypeUser(this);
     LayoutInfo.erase(I);
   }
-  
-  
+
+
   /// refineAbstractType - The callback method invoked when an abstract type is
   /// resolved to another type.  An object must override this method to update
   /// its internal state to reference NewType instead of OldType.
@@ -385,21 +385,21 @@ TargetData::~TargetData() {
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
   if (!LayoutMap)
     LayoutMap = new StructLayoutMap();
-  
+
   StructLayoutMap *STM = static_cast<StructLayoutMap*>(LayoutMap);
   StructLayout *&SL = (*STM)[Ty];
   if (SL) return SL;
 
-  // Otherwise, create the struct layout.  Because it is variable length, we 
+  // Otherwise, create the struct layout.  Because it is variable length, we
   // malloc it, then use placement new.
   int NumElts = Ty->getNumElements();
   StructLayout *L =
     (StructLayout *)malloc(sizeof(StructLayout)+(NumElts-1) * sizeof(uint64_t));
-  
+
   // Set SL before calling StructLayout's ctor.  The ctor could cause other
   // entries to be added to TheMap, invalidating our reference.
   SL = L;
-  
+
   new (L) StructLayout(Ty, *this);
 
   if (Ty->isAbstract())
@@ -414,14 +414,14 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 /// avoid a dangling pointer in this cache.
 void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
   if (!LayoutMap) return;  // No cache.
-  
+
   static_cast<StructLayoutMap*>(LayoutMap)->InvalidateEntry(Ty);
 }
 
 std::string TargetData::getStringRepresentation() const {
   std::string Result;
   raw_string_ostream OS(Result);
-  
+
   OS << (LittleEndian ? "e" : "E")
      << "-p:" << PointerMemSize*8 << ':' << PointerABIAlign*8
      << ':' << PointerPrefAlign*8;
@@ -430,10 +430,10 @@ std::string TargetData::getStringRepresentation() const {
     OS << '-' << (char)AI.AlignType << AI.TypeBitWidth << ':'
        << AI.ABIAlign*8 << ':' << AI.PrefAlign*8;
   }
-  
+
   if (!LegalIntWidths.empty()) {
     OS << "-n" << (unsigned)LegalIntWidths[0];
-    
+
     for (unsigned i = 1, e = LegalIntWidths.size(); i != e; ++i)
       OS << ':' << (unsigned)LegalIntWidths[i];
   }

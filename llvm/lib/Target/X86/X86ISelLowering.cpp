@@ -7602,7 +7602,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
 
   if (ArgMode == 2) {
     // Sanity Check: Make sure using fp_offset makes sense.
-    assert(!UseSoftFloat && 
+    assert(!UseSoftFloat &&
            !(DAG.getMachineFunction()
                 .getFunction()->hasFnAttr(Attribute::NoImplicitFloat)) &&
            Subtarget->hasSSE1());
