@@ -1,9 +1,5 @@
 // RUN: %clang_cc1 %s -O3 -triple=x86_64-apple-darwin -target-feature +ssse3 -S -o - | FileCheck %s
 
-// FIXME: Disable inclusion of mm_malloc.h, our current implementation is broken
-// on win32 since we don't generally know how to find errno.h.
-#define __MM_MALLOC_H
-
 #include <tmmintrin.h>
 
 __m64 test1(__m64 a, __m64 b) {
