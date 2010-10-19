@@ -1298,6 +1298,17 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   EVT VT = IsLoad ? N->getValueType(0) : N->getOperand(3).getValueType();
   bool is64BitVector = VT.is64BitVector();
 
+  if (NumVecs != 3) {
+    unsigned Alignment = cast<MemIntrinsicSDNode>(N)->getAlignment();
+    unsigned NumBytes = NumVecs * VT.getVectorElementType().getSizeInBits()/8;
+    if (Alignment > NumBytes)
+      Alignment = NumBytes;
+    // Alignment must be a power of two; make sure of that.
+    Alignment = (Alignment & -Alignment);
+    if (Alignment > 1)
+      Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
+  }
+
   unsigned OpcodeIndex;
   switch (VT.getSimpleVT().SimpleTy) {
   default: llvm_unreachable("unhandled vld/vst lane type");
