@@ -377,6 +377,11 @@ private:
                         unsigned DefIdx, unsigned DefAlign,
                         const TargetInstrDesc &UseTID,
                         unsigned UseIdx, unsigned UseAlign) const;
+
+  bool hasHighOperandLatency(const InstrItineraryData *ItinData,
+                             const MachineRegisterInfo *MRI,
+                             const MachineInstr *DefMI, unsigned DefIdx,
+                             const MachineInstr *UseMI, unsigned UseIdx) const;
 };
 
 static inline

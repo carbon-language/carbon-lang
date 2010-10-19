@@ -24,6 +24,7 @@ class InstrItineraryData;
 class LiveVariables;
 class MCAsmInfo;
 class MachineMemOperand;
+class MachineRegisterInfo;
 class MDNode;
 class MCInst;
 class SDNode;
@@ -625,6 +626,19 @@ public:
   int getOperandLatency(const InstrItineraryData *ItinData,
                         SDNode *DefNode, unsigned DefIdx,
                         SDNode *UseNode, unsigned UseIdx) const;
+
+  /// hasHighOperandLatency - Compute operand latency between a def of 'Reg'
+  /// and an use in the current loop, return true if the target considered
+  /// it 'high'. This is used by optimization passes such as machine LICM to
+  /// determine whether it makes sense to hoist an instruction out even in
+  /// high register pressure situation.
+  virtual
+  bool hasHighOperandLatency(const InstrItineraryData *ItinData,
+                             const MachineRegisterInfo *MRI,
+                             const MachineInstr *DefMI, unsigned DefIdx,
+                             const MachineInstr *UseMI, unsigned UseIdx) const {
+    return false;
+  }
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of

@@ -3152,6 +3152,41 @@ void X86InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.setOpcode(X86::NOOP);
 }
 
+bool X86InstrInfo::
+hasHighOperandLatency(const InstrItineraryData *ItinData,
+                      const MachineRegisterInfo *MRI,
+                      const MachineInstr *DefMI, unsigned DefIdx,
+                      const MachineInstr *UseMI, unsigned UseIdx) const {
+  switch (DefMI->getOpcode()) {
+  default: return false;
+  case X86::DIVSDrm:
+  case X86::DIVSDrm_Int:
+  case X86::DIVSDrr:
+  case X86::DIVSDrr_Int:
+  case X86::DIVSSrm:
+  case X86::DIVSSrm_Int:
+  case X86::DIVSSrr:
+  case X86::DIVSSrr_Int:
+  case X86::SQRTPDm:
+  case X86::SQRTPDm_Int:
+  case X86::SQRTPDr:
+  case X86::SQRTPDr_Int:
+  case X86::SQRTPSm:
+  case X86::SQRTPSm_Int:
+  case X86::SQRTPSr:
+  case X86::SQRTPSr_Int:
+  case X86::SQRTSDm:
+  case X86::SQRTSDm_Int:
+  case X86::SQRTSDr:
+  case X86::SQRTSDr_Int:
+  case X86::SQRTSSm:
+  case X86::SQRTSSm_Int:
+  case X86::SQRTSSr:
+  case X86::SQRTSSr_Int:
+    return true;
+  }
+}
+
 namespace {
   /// CGBR - Create Global Base Reg pass. This initializes the PIC
   /// global base register for x86-32.
