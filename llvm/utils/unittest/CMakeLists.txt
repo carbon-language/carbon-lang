@@ -26,9 +26,6 @@ endif()
 
 set(LLVM_REQUIRES_RTTI 1)
 add_definitions( -DGTEST_HAS_RTTI=0 )
-# libstdc++'s TR1 <tuple> header depends on RTTI and uses C++'0x features not
-# supported by Clang, so force googletest to use its own tuple implementation.
-add_definitions( -DGTEST_USE_OWN_TR1_TUPLE )
 
 add_llvm_library(gtest
   googletest/gtest.cc
