@@ -106,11 +106,8 @@ Preprocessor::~Preprocessor() {
   }
 
   // Free any macro definitions.
-  for (MacroInfoChain *I = MIChainHead ; I ; ) {
-    MacroInfoChain *Next = I->Next;
+  for (MacroInfoChain *I = MIChainHead ; I ; I = I->Next)
     I->MI.Destroy();
-    I = Next;
-  }
 
   // Free any cached macro expanders.
   for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
