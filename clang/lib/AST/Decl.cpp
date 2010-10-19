@@ -1580,8 +1580,6 @@ void TagDecl::completeDefinition() {
 TagDecl* TagDecl::getDefinition() const {
   if (isDefinition())
     return const_cast<TagDecl *>(this);
-  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(this))
-    return CXXRD->getDefinition();
 
   for (redecl_iterator R = redecls_begin(), REnd = redecls_end();
        R != REnd; ++R)
