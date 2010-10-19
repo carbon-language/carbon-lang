@@ -115,6 +115,7 @@ class SettingsCommandTestCase(TestBase):
         # Set the output-path and verify it is set.
         self.runCmd("settings set target.process.output-path 'stdout.txt'")
         self.expect("settings show target.process.output-path",
+                    SETTING_MSG("target.process.output-path"),
             startstr = "target.process.output-path (string) = 'stdout.txt'")
 
         self.runCmd("run", RUN_SUCCEEDED)

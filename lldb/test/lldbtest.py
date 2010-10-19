@@ -180,6 +180,12 @@ def CMD_MSG(str, exe):
         return "'%s' compares successfully" % str
 
 #
+# And a generic "Value of setting '%s' is correct" message generator.
+#
+def SETTING_MSG(setting):
+    return "Value of setting '%s' is correct" % setting
+
+#
 # Returns an env variable array from the os.environ map object.
 #
 def EnvArray():
