@@ -101,9 +101,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setLibcallName(RTLIB::SDIV_I64, "_alldiv");
     setLibcallName(RTLIB::UDIV_I64, "_aulldiv");
     setLibcallName(RTLIB::FPTOUINT_F64_I64, "_ftol2");
+    setLibcallName(RTLIB::FPTOUINT_F32_I64, "_ftol2");
     setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::X86_StdCall);
     setLibcallCallingConv(RTLIB::UDIV_I64, CallingConv::X86_StdCall);
     setLibcallCallingConv(RTLIB::FPTOUINT_F64_I64, CallingConv::X86_StdCall);
+    setLibcallCallingConv(RTLIB::FPTOUINT_F32_I64, CallingConv::X86_StdCall);
   }
 
   if (Subtarget->isTargetDarwin()) {
