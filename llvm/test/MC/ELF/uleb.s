@@ -12,9 +12,9 @@ foo:
 	.uleb128	16383
 	.uleb128	16384
 
-// ELF_32: ('sh_name', 0x1) # '.text'
+// ELF_32: ('sh_name', 1) # '.text'
 // ELF_32: ('_section_data', '00017f80 01ff7f80 8001')
-// ELF_64: ('sh_name', 0x1) # '.text'
+// ELF_64: ('sh_name', 1) # '.text'
 // ELF_64: ('_section_data', '00017f80 01ff7f80 8001')
 // MACHO_32: ('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // MACHO_32: ('_section_data', '00017f80 01ff7f80 8001')

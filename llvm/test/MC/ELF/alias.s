@@ -15,70 +15,70 @@ bar3 = foo3
 foo4:
 bar4 = foo4
 
-// CHECK:       # Symbol 0x1
-// CHECK-NEXT:  (('st_name', 0x5) # 'bar'
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x0)
-// CHECK-NEXT:   ('st_shndx', 0x1)
-// CHECK-NEXT:   ('st_value', 0x0)
-// CHECK-NEXT:   ('st_size', 0x0)
+// CHECK:       # Symbol 1
+// CHECK-NEXT:  (('st_name', 5) # 'bar'
+// CHECK-NEXT:   ('st_bind', 0)
+// CHECK-NEXT:   ('st_type', 0)
+// CHECK-NEXT:   ('st_other', 0)
+// CHECK-NEXT:   ('st_shndx', 1)
+// CHECK-NEXT:   ('st_value', 0)
+// CHECK-NEXT:   ('st_size', 0)
 // CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 0x2
-// CHECK-NEXT: (('st_name', 0x1d) # 'bar4'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x2)
-// CHECK-NEXT:  ('st_other', 0x0)
-// CHECK-NEXT:  ('st_shndx', 0x1)
-// CHECK-NEXT:  ('st_value', 0x0)
-// CHECK-NEXT:  ('st_size', 0x0)
+// CHECK-NEXT:  # Symbol 2
+// CHECK-NEXT: (('st_name', 29) # 'bar4'
+// CHECK-NEXT:  ('st_bind', 0)
+// CHECK-NEXT:  ('st_type', 2)
+// CHECK-NEXT:  ('st_other', 0)
+// CHECK-NEXT:  ('st_shndx', 1)
+// CHECK-NEXT:  ('st_value', 0)
+// CHECK-NEXT:  ('st_size', 0)
 // CHECK-NEXT: ),
-// CHECK-NEXT:  # Symbol 0x3
-// CHECK-NEXT:  (('st_name', 0x1) # 'foo'
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x0)
-// CHECK-NEXT:   ('st_shndx', 0x1)
-// CHECK-NEXT:   ('st_value', 0x0)
-// CHECK-NEXT:   ('st_size', 0x0)
+// CHECK-NEXT:  # Symbol 3
+// CHECK-NEXT:  (('st_name', 1) # 'foo'
+// CHECK-NEXT:   ('st_bind', 0)
+// CHECK-NEXT:   ('st_type', 0)
+// CHECK-NEXT:   ('st_other', 0)
+// CHECK-NEXT:   ('st_shndx', 1)
+// CHECK-NEXT:   ('st_value', 0)
+// CHECK-NEXT:   ('st_size', 0)
 // CHECK-NEXT: ),
-// CHECK-NEXT:  # Symbol 0x4
-// CHECK-NEXT:  (('st_name', 0xe) # 'foo3'
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x0)
-// CHECK-NEXT:   ('st_shndx', 0x1)
-// CHECK-NEXT:   ('st_value', 0x0)
-// CHECK-NEXT:   ('st_size', 0x0)
+// CHECK-NEXT:  # Symbol 4
+// CHECK-NEXT:  (('st_name', 14) # 'foo3'
+// CHECK-NEXT:   ('st_bind', 0)
+// CHECK-NEXT:   ('st_type', 0)
+// CHECK-NEXT:   ('st_other', 0)
+// CHECK-NEXT:   ('st_shndx', 1)
+// CHECK-NEXT:   ('st_value', 0)
+// CHECK-NEXT:   ('st_size', 0)
 // CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 0x5
-// CHECK-NEXT: (('st_name', 0x18) # 'foo4'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x2)
-// CHECK-NEXT:  ('st_other', 0x0)
-// CHECK-NEXT:  ('st_shndx', 0x1)
-// CHECK-NEXT:  ('st_value', 0x0)
-// CHECK-NEXT:  ('st_size', 0x0)
+// CHECK-NEXT: # Symbol 5
+// CHECK-NEXT: (('st_name', 24) # 'foo4'
+// CHECK-NEXT:  ('st_bind', 0)
+// CHECK-NEXT:  ('st_type', 2)
+// CHECK-NEXT:  ('st_other', 0)
+// CHECK-NEXT:  ('st_shndx', 1)
+// CHECK-NEXT:  ('st_value', 0)
+// CHECK-NEXT:  ('st_size', 0)
 // CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 0x6
-// CHECK-NEXT: (('st_name', 0x0) # ''
-// CHECK:       # Symbol 0x7
-// CHECK-NEXT:  (('st_name', 0x0) # ''
-// CHECK:       # Symbol 0x8
-// CHECK-NEXT:  (('st_name', 0x0) # ''
-// CHECK:       # Symbol 0x9
-// CHECK-NEXT:  (('st_name', 0x13) # 'bar3'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x0)
-// CHECK-NEXT:   ('st_shndx', 0x1)
-// CHECK-NEXT:   ('st_value', 0x0)
-// CHECK-NEXT:   ('st_size', 0x0)
-// CHECK:       # Symbol 0xa
-// CHECK-NEXT:  (('st_name', 0x9) # 'bar2'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x0)
-// CHECK-NEXT:   ('st_shndx', 0x0)
-// CHECK-NEXT:   ('st_value', 0x0)
-// CHECK-NEXT:   ('st_size', 0x0)
+// CHECK-NEXT: # Symbol 6
+// CHECK-NEXT: (('st_name', 0) # ''
+// CHECK:       # Symbol 7
+// CHECK-NEXT:  (('st_name', 0) # ''
+// CHECK:       # Symbol 8
+// CHECK-NEXT:  (('st_name', 0) # ''
+// CHECK:       # Symbol 9
+// CHECK-NEXT:  (('st_name', 19) # 'bar3'
+// CHECK-NEXT:   ('st_bind', 1)
+// CHECK-NEXT:   ('st_type', 0)
+// CHECK-NEXT:   ('st_other', 0)
+// CHECK-NEXT:   ('st_shndx', 1)
+// CHECK-NEXT:   ('st_value', 0)
+// CHECK-NEXT:   ('st_size', 0)
+// CHECK:       # Symbol 10
+// CHECK-NEXT:  (('st_name', 9) # 'bar2'
+// CHECK-NEXT:   ('st_bind', 1)
+// CHECK-NEXT:   ('st_type', 0)
+// CHECK-NEXT:   ('st_other', 0)
+// CHECK-NEXT:   ('st_shndx', 0)
+// CHECK-NEXT:   ('st_value', 0)
+// CHECK-NEXT:   ('st_size', 0)

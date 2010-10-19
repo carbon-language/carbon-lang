@@ -4,50 +4,50 @@
 // to .Lfoo uses the symbol and not the section.
 
 // Section 3 is bss
-// CHECK:      # Section 0x3
-// CHECK-NEXT: (('sh_name', 0xd) # '.bss'
+// CHECK:      # Section 3
+// CHECK-NEXT: (('sh_name', 13) # '.bss'
 
-// CHECK:      # Symbol 0x1
-// CHECK-NEXT: (('st_name', 0x5) # '.Lfoo'
+// CHECK:      # Symbol 1
+// CHECK-NEXT: (('st_name', 5) # '.Lfoo'
 
 // Symbol 6 is section 3
-// CHECK:      # Symbol 0x6
-// CHECK-NEXT: (('st_name', 0x0) # ''
-// CHECK-NEXT:  ('st_value', 0x0)
-// CHECK-NEXT:  ('st_size', 0x0)
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x3)
-// CHECK-NEXT:  ('st_other', 0x0)
-// CHECK-NEXT:  ('st_shndx', 0x3)
+// CHECK:      # Symbol 6
+// CHECK-NEXT: (('st_name', 0) # ''
+// CHECK-NEXT:  ('st_value', 0)
+// CHECK-NEXT:  ('st_size', 0)
+// CHECK-NEXT:  ('st_bind', 0)
+// CHECK-NEXT:  ('st_type', 3)
+// CHECK-NEXT:  ('st_other', 0)
+// CHECK-NEXT:  ('st_shndx', 3)
 
-// CHECK:      # Relocation 0x0
-// CHECK-NEXT: (('r_offset', 0x2)
-// CHECK-NEXT:  ('r_sym', 0x1)
-// CHECK-NEXT:  ('r_type', 0x9)
+// CHECK:      # Relocation 0
+// CHECK-NEXT: (('r_offset', 2)
+// CHECK-NEXT:  ('r_sym', 1)
+// CHECK-NEXT:  ('r_type', 9)
 // CHECK-NEXT: ),
-// CHECK-NEXT:  # Relocation 0x1
+// CHECK-NEXT:  # Relocation 1
 // CHECK-NEXT: (('r_offset',
 // CHECK-NEXT:  ('r_sym',
-// CHECK-NEXT:  ('r_type', 0x4)
+// CHECK-NEXT:  ('r_type', 4)
 // CHECK-NEXT: ),
-// CHECK-NEXT:  # Relocation 0x2
+// CHECK-NEXT:  # Relocation 2
 // CHECK-NEXT: (('r_offset',
 // CHECK-NEXT:  ('r_sym',
-// CHECK-NEXT:  ('r_type', 0xa)
+// CHECK-NEXT:  ('r_type', 10)
 // CHECK-NEXT: ),
 
 // Relocation 3 (bar3@GOTOFF) is done with symbol 6 (bss)
-// CHECK-NEXT:  # Relocation 0x3
+// CHECK-NEXT:  # Relocation 3
 // CHECK-NEXT: (('r_offset',
-// CHECK-NEXT:  ('r_sym', 0x6
+// CHECK-NEXT:  ('r_sym', 6
 // CHECK-NEXT:  ('r_type',
 // CHECK-NEXT: ),
 
 // Relocation 4 (bar2@GOT) is of type R_386_GOT32
-// CHECK-NEXT:  # Relocation 0x4
+// CHECK-NEXT:  # Relocation 4
 // CHECK-NEXT: (('r_offset',
 // CHECK-NEXT:  ('r_sym',
-// CHECK-NEXT:  ('r_type', 0x3
+// CHECK-NEXT:  ('r_type', 3
 // CHECK-NEXT: ),
 
         .text

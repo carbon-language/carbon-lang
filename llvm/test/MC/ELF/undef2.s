@@ -5,6 +5,6 @@
         je	.Lfoo
 
 // CHECK: ('_symbols', [
-// CHECK:      (('st_name', 0x1) # '.Lfoo'
-// CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK: (('sh_name', 0x24) # '.strtab'
+// CHECK:      (('st_name', 1) # '.Lfoo'
+// CHECK-NEXT:  ('st_bind', 1)
+// CHECK: (('sh_name', 36) # '.strtab'

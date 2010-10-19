@@ -12,27 +12,27 @@ foo:
         jmp bar
         jmp foo
 
-// CHECK: ('sh_name', 0x1) # '.text'
-// CHECK-NEXT: ('sh_type', 0x1)
-// CHECK-NEXT: ('sh_flags', 0x6)
-// CHECK-NEXT: ('sh_addr', 0x0)
-// CHECK-NEXT: ('sh_offset', 0x40)
-// CHECK-NEXT: ('sh_size', 0x7)
-// CHECK-NEXT: ('sh_link', 0x0)
-// CHECK-NEXT: ('sh_info', 0x0)
-// CHECK-NEXT: ('sh_addralign', 0x4)
-// CHECK-NEXT: ('sh_entsize', 0x0)
+// CHECK: ('sh_name', 1) # '.text'
+// CHECK-NEXT: ('sh_type', 1)
+// CHECK-NEXT: ('sh_flags', 6)
+// CHECK-NEXT: ('sh_addr', 0)
+// CHECK-NEXT: ('sh_offset', 64)
+// CHECK-NEXT: ('sh_size', 7)
+// CHECK-NEXT: ('sh_link', 0)
+// CHECK-NEXT: ('sh_info', 0)
+// CHECK-NEXT: ('sh_addralign', 4)
+// CHECK-NEXT: ('sh_entsize', 0)
 // CHECK-NEXT: ('_section_data', 'ebfee900 000000')
 
-// CHECK:       # Symbol 0x5
-// CHECK-NEXT: (('st_name', 0x5) # 'foo'
+// CHECK:       # Symbol 5
+// CHECK-NEXT: (('st_name', 5) # 'foo'
 
 // CHECK: .rela.text
 // CHECK: ('_relocations', [
-// CHECK-NEXT: Relocation 0x0
-// CHECK-NEXT:  (('r_offset', 0x3)
-// CHECK-NEXT:   ('r_sym', 0x5)
-// CHECK-NEXT:   ('r_type', 0x2)
-// CHECK-NEXT:   ('r_addend', -0x4)
+// CHECK-NEXT: Relocation 0
+// CHECK-NEXT:  (('r_offset', 3)
+// CHECK-NEXT:   ('r_sym', 5)
+// CHECK-NEXT:   ('r_type', 2)
+// CHECK-NEXT:   ('r_addend', -4)
 // CHECK-NEXT:  ),
 // CHECK-NEXT: ])

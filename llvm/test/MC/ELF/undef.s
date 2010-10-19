@@ -19,27 +19,27 @@
         movsd   .Lsym8(%rip), %xmm1
 
 // CHECK:      ('_symbols', [
-// CHECK-NEXT:  # Symbol 0x0
-// CHECK-NEXT:  (('st_name', 0x0) # ''
-// CHECK:       # Symbol 0x1
-// CHECK-NEXT:  (('st_name', 0xd) # '.Lsym8'
-// CHECK:       # Symbol 0x2
-// CHECK-NEXT:  (('st_name', 0x0) # ''
-// CHECK:       # Symbol 0x3
-// CHECK-NEXT:  (('st_name', 0x0) # ''
-// CHECK:       # Symbol 0x4
-// CHECK-NEXT:  (('st_name', 0x0) # ''
-// CHECK:       # Symbol 0x5
-// CHECK-NEXT:  (('st_name', 0x0) # ''
-// CHECK:       # Symbol 0x6
-// CHECK-NEXT:  (('st_name', 0x1) # '.Lsym1'
-// CHECK:       # Symbol 0x7
-// CHECK-NEXT:  (('st_name', 0x8) # 'sym6'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x1)
-// CHECK-NEXT:   ('st_other', 0x0)
-// CHECK-NEXT:   ('st_shndx', 0x0)
-// CHECK-NEXT:   ('st_value', 0x0)
-// CHECK-NEXT:   ('st_size', 0x0)
+// CHECK-NEXT:  # Symbol 0
+// CHECK-NEXT:  (('st_name', 0) # ''
+// CHECK:       # Symbol 1
+// CHECK-NEXT:  (('st_name', 13) # '.Lsym8'
+// CHECK:       # Symbol 2
+// CHECK-NEXT:  (('st_name', 0) # ''
+// CHECK:       # Symbol 3
+// CHECK-NEXT:  (('st_name', 0) # ''
+// CHECK:       # Symbol 4
+// CHECK-NEXT:  (('st_name', 0) # ''
+// CHECK:       # Symbol 5
+// CHECK-NEXT:  (('st_name', 0) # ''
+// CHECK:       # Symbol 6
+// CHECK-NEXT:  (('st_name', 1) # '.Lsym1'
+// CHECK:       # Symbol 7
+// CHECK-NEXT:  (('st_name', 8) # 'sym6'
+// CHECK-NEXT:   ('st_bind', 1)
+// CHECK-NEXT:   ('st_type', 1)
+// CHECK-NEXT:   ('st_other', 0)
+// CHECK-NEXT:   ('st_shndx', 0)
+// CHECK-NEXT:   ('st_value', 0)
+// CHECK-NEXT:   ('st_size', 0)
 // CHECK-NEXT:   ),
 // CHECK-NEXT:  ])

@@ -20,25 +20,25 @@ declare void @foo(i64* nocapture) nounwind
 
 ;;;;;
 
-; 64: (('sh_name', 0x12) # '.rodata.str1.1'
-; 64-NEXT:   ('sh_type', 0x1)
-; 64-NEXT:   ('sh_flags', 0x32)
+; 64: (('sh_name', 18) # '.rodata.str1.1'
+; 64-NEXT:   ('sh_type', 1)
+; 64-NEXT:   ('sh_flags', 50)
 ; 64-NEXT:   ('sh_addr',
 ; 64-NEXT:   ('sh_offset',
-; 64-NEXT:   ('sh_size', 0xd)
+; 64-NEXT:   ('sh_size', 13)
 ; 64-NEXT:   ('sh_link',
 ; 64-NEXT:   ('sh_info',
-; 64-NEXT:   ('sh_addralign', 0x1)
-; 64-NEXT:   ('sh_entsize', 0x1)
+; 64-NEXT:   ('sh_addralign', 1)
+; 64-NEXT:   ('sh_entsize', 1)
 
-; 64: (('sh_name', 0x21) # '.rodata.cst8'
-; 64-NEXT:   ('sh_type', 0x1)
-; 64-NEXT:   ('sh_flags', 0x12)
+; 64: (('sh_name', 33) # '.rodata.cst8'
+; 64-NEXT:   ('sh_type', 1)
+; 64-NEXT:   ('sh_flags', 18)
 ; 64-NEXT:   ('sh_addr',
 ; 64-NEXT:   ('sh_offset',
-; 64-NEXT:   ('sh_size', 0x10)
+; 64-NEXT:   ('sh_size', 16)
 ; 64-NEXT:   ('sh_link',
 ; 64-NEXT:   ('sh_info',
-; 64-NEXT:   ('sh_addralign', 0x8)
-; 64-NEXT:   ('sh_entsize', 0x8)
+; 64-NEXT:   ('sh_addralign', 8)
+; 64-NEXT:   ('sh_entsize', 8)
 
