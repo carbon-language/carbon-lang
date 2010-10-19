@@ -804,6 +804,13 @@ case "$withval" in
   *) AC_MSG_ERROR([Invalid path for --with-ocaml-libdir. Provide full path]) ;;
 esac
 
+AC_ARG_WITH(clang-resource-dir,
+  AS_HELP_STRING([--with-clang-resource-dir],
+    [Relative directory from the Clang binary for resource files]),,
+    withval="")
+AC_DEFINE_UNQUOTED(CLANG_RESOURCE_DIR,"$withval",
+                   [Relative directory for resource files])
+
 AC_ARG_WITH(c-include-dirs,
   AS_HELP_STRING([--with-c-include-dirs],
     [Colon separated list of directories clang will search for headers]),,

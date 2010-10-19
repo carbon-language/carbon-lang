@@ -80,6 +80,9 @@ else( MSVC )
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 endif( MSVC )
 
+set(CLANG_RESOURCE_DIR "" CACHE STRING
+  "Relative directory from the Clang binary to its resource files.")
+
 set(C_INCLUDE_DIRS "" CACHE STRING
   "Colon separated list of directories clang will search for headers.")
 

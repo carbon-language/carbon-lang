@@ -1442,6 +1442,9 @@ Optional Packages:
   --with-extra-options    Specify additional options to compile LLVM with
   --with-ocaml-libdir     Specify install location for ocaml bindings (default
                           is stdlib)
+  --with-clang-resource-dir
+                          Relative directory from the Clang binary for
+                          resource files
   --with-c-include-dirs   Colon separated list of directories clang will
                           search for headers
   --with-cxx-include-root Directory with the libstdc++ headers.
@@ -5277,6 +5280,20 @@ case "$withval" in
 echo "$as_me: error: Invalid path for --with-ocaml-libdir. Provide full path" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
+
+
+# Check whether --with-clang-resource-dir was given.
+if test "${with_clang_resource_dir+set}" = set; then
+  withval=$with_clang_resource_dir;
+else
+  withval=""
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define CLANG_RESOURCE_DIR "$withval"
+_ACEOF
+
 
 
 # Check whether --with-c-include-dirs was given.
@@ -11450,7 +11467,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11453 "configure"
+#line 11470 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
