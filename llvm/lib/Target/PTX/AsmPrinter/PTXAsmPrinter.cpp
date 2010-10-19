@@ -32,6 +32,8 @@ namespace {
 
       virtual void EmitInstruction(const MachineInstr *MI);
 
+      void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
+
       // autogen'd.
       void printInstruction(const MachineInstr *MI, raw_ostream &OS);
       static const char *getRegisterName(unsigned RegNo);
@@ -40,10 +42,27 @@ namespace {
 
 void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   SmallString<128> str;
-  raw_svector_ostream os(str);
-  printInstruction(MI, os);
-  os << ';';
-  OutStreamer.EmitRawText(os.str());
+  raw_svector_ostream OS(str);
+  printInstruction(MI, OS);
+  OS << ';';
+  OutStreamer.EmitRawText(OS.str());
+}
+
+void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
+                                 raw_ostream &OS) {
+  const MachineOperand &MO = MI->getOperand(opNum);
+
+  switch (MO.getType()) {
+    default:
+      llvm_unreachable("<unknown operand type>");
+      break;
+    case MachineOperand::MO_Register:
+      OS << getRegisterName(MO.getReg());
+      break;
+    case MachineOperand::MO_Immediate:
+      OS << (int) MO.getImm();
+      break;
+  }
 }
 
 #include "PTXGenAsmWriter.inc"

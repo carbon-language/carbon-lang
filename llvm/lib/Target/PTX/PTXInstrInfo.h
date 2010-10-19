@@ -29,6 +29,22 @@ class PTXInstrInfo : public TargetInstrInfoImpl {
     explicit PTXInstrInfo(PTXTargetMachine &_TM);
 
     virtual const PTXRegisterInfo &getRegisterInfo() const { return RI; }
+
+    virtual void copyPhysReg(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator I, DebugLoc DL,
+                             unsigned DstReg, unsigned SrcReg,
+                             bool KillSrc) const;
+
+    virtual bool copyRegToReg(MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I,
+                              unsigned DstReg, unsigned SrcReg,
+                              const TargetRegisterClass *DstRC,
+                              const TargetRegisterClass *SrcRC,
+                              DebugLoc DL) const;
+
+    virtual bool isMoveInstr(const MachineInstr& MI,
+                             unsigned &SrcReg, unsigned &DstReg,
+                             unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
   }; // class PTXInstrInfo
 } // namespace llvm
 

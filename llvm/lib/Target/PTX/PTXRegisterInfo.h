@@ -40,10 +40,11 @@ struct PTXRegisterInfo : public PTXGenRegisterInfo {
 
   virtual bool hasFP(const MachineFunction &MF) const { return false; }
 
-  // FIXME: Given that PTX does not support stack frame, what should we do here?
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                    int SPAdj,
-                                   RegScavenger *RS = NULL) const {}
+                                   RegScavenger *RS = NULL) const {
+    llvm_unreachable("PTX does not support general function call");
+  }
 
   virtual void emitPrologue(MachineFunction &MF) const {}
   virtual void emitEpilogue(MachineFunction &MF,
