@@ -92,7 +92,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
                               unsigned DestReg, unsigned BaseReg,
                               int NumBytes, bool CanChangeCC,
                               const TargetInstrInfo &TII,
-                              const Thumb1RegisterInfo& MRI,
+                              const ARMBaseRegisterInfo& MRI,
                               DebugLoc dl) {
     MachineFunction &MF = *MBB.getParent();
     bool isHigh = !isARMLowRegister(DestReg) ||
@@ -162,13 +162,12 @@ static unsigned calcNumMI(int Opc, int ExtraOpc, unsigned Bytes,
 
 /// emitThumbRegPlusImmediate - Emits a series of instructions to materialize
 /// a destreg = basereg + immediate in Thumb code.
-static
-void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
-                               MachineBasicBlock::iterator &MBBI,
-                               unsigned DestReg, unsigned BaseReg,
-                               int NumBytes, const TargetInstrInfo &TII,
-                               const Thumb1RegisterInfo& MRI,
-                               DebugLoc dl) {
+void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator &MBBI,
+                                     unsigned DestReg, unsigned BaseReg,
+                                     int NumBytes, const TargetInstrInfo &TII,
+                                     const ARMBaseRegisterInfo& MRI,
+                                     DebugLoc dl) {
   bool isSub = NumBytes < 0;
   unsigned Bytes = (unsigned)NumBytes;
   if (isSub) Bytes = -NumBytes;

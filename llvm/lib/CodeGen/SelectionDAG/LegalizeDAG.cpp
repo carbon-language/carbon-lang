@@ -865,6 +865,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::FRAME_TO_ARGS_OFFSET:
   case ISD::EH_SJLJ_SETJMP:
   case ISD::EH_SJLJ_LONGJMP:
+  case ISD::EH_SJLJ_DISPATCHSETUP:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be expanded.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
@@ -2541,9 +2542,14 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::PREFETCH:
   case ISD::VAEND:
   case ISD::EH_SJLJ_LONGJMP:
+  case ISD::EH_SJLJ_DISPATCHSETUP:
+    // If the target didn't expand these, there's nothing to do, so just
+    // preserve the chain and be done.
     Results.push_back(Node->getOperand(0));
     break;
   case ISD::EH_SJLJ_SETJMP:
+    // If the target didn't expand this, just return 'zero' and preserve the
+    // chain.
     Results.push_back(DAG.getConstant(0, MVT::i32));
     Results.push_back(Node->getOperand(0));
     break;

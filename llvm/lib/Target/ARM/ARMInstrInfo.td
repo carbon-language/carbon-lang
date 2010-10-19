@@ -58,6 +58,8 @@ def SDT_ARMEH_SJLJ_Setjmp : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisPtrTy<1>,
                                                  SDTCisInt<2>]>;
 def SDT_ARMEH_SJLJ_Longjmp: SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
 
+def SDT_ARMEH_SJLJ_DispatchSetup: SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+
 def SDT_ARMMEMBARRIER     : SDTypeProfile<0, 0, []>;
 def SDT_ARMSYNCBARRIER    : SDTypeProfile<0, 0, []>;
 def SDT_ARMMEMBARRIERMCR  : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
@@ -122,7 +124,10 @@ def ARMthread_pointer: SDNode<"ARMISD::THREAD_POINTER", SDT_ARMThreadPointer>;
 def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP",
                                SDT_ARMEH_SJLJ_Setjmp, [SDNPHasChain]>;
 def ARMeh_sjlj_longjmp: SDNode<"ARMISD::EH_SJLJ_LONGJMP",
-                                SDT_ARMEH_SJLJ_Longjmp, [SDNPHasChain]>;
+                               SDT_ARMEH_SJLJ_Longjmp, [SDNPHasChain]>;
+def ARMeh_sjlj_dispatchsetup: SDNode<"ARMISD::EH_SJLJ_DISPATCHSETUP",
+                               SDT_ARMEH_SJLJ_DispatchSetup, [SDNPHasChain]>;
+
 
 def ARMMemBarrier     : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIER,
                                [SDNPHasChain]>;
@@ -3009,6 +3014,16 @@ def Int_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
                          [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
                                 Requires<[IsARM, IsDarwin]>;
 }
+
+// eh.sjlj.dispatchsetup pseudo-instruction.
+// This pseudo is usef for ARM, Thumb1 and Thumb2. Any differences are
+// handled when the pseudo is expanded (which happens before any passes
+// that need the instruction size).
+let isBarrier = 1, hasSideEffects = 1 in
+def Int_eh_sjlj_dispatchsetup :
+ PseudoInst<(outs), (ins GPR:$src), NoItinerary, "",
+            [(ARMeh_sjlj_dispatchsetup GPR:$src)]>,
+              Requires<[IsDarwin]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

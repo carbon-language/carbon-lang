@@ -447,6 +447,12 @@ void emitT2RegPlusImmediate(MachineBasicBlock &MBB,
                             unsigned DestReg, unsigned BaseReg, int NumBytes,
                             ARMCC::CondCodes Pred, unsigned PredReg,
                             const ARMBaseInstrInfo &TII);
+void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator &MBBI,
+                               unsigned DestReg, unsigned BaseReg,
+                               int NumBytes, const TargetInstrInfo &TII,
+                               const ARMBaseRegisterInfo& MRI,
+                               DebugLoc dl);
 
 
 /// rewriteARMFrameIndex / rewriteT2FrameIndex -

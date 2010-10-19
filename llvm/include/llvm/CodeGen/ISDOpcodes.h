@@ -107,6 +107,13 @@ namespace ISD {
     // and returns an outchain.
     EH_SJLJ_LONGJMP,
 
+    // OUTCHAIN = EH_SJLJ_DISPATCHSETUP(INCHAIN, context)
+    // This corresponds to the eh.sjlj.dispatchsetup intrinsic. It takes an
+    // incput chain and a pointer to the sjlj function context as inputs and
+    // returns an outchain. By default, this does nothing. Targets can lower
+    // this to unwind setup code if needed.
+    EH_SJLJ_DISPATCHSETUP,
+
     // TargetConstant* - Like Constant*, but the DAG does not do any folding,
     // simplification, or lowering of the constant. They are used for constants
     // which are known to fit in the immediate fields of their users, or for
