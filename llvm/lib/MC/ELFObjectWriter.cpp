@@ -703,9 +703,16 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       // instead?
       case X86::reloc_signed_4byte:
       case X86::reloc_pcrel_4byte:
+      case FK_Data_4:
         switch (Modifier) {
         default:
           llvm_unreachable("Unimplemented");
+        case MCSymbolRefExpr::VK_None:
+          if (Symbol->getName() == "_GLOBAL_OFFSET_TABLE_")
+            Type = ELF::R_386_GOTPC;
+          else
+            Type = ELF::R_386_32;
+          break;
         case MCSymbolRefExpr::VK_GOT:
           Type = ELF::R_386_GOT32;
           break;
@@ -713,12 +720,6 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
           Type = ELF::R_386_GOTOFF;
           break;
         }
-        break;
-      case FK_Data_4:
-        if (Symbol->getName() == "_GLOBAL_OFFSET_TABLE_")
-          Type = ELF::R_386_GOTPC;
-        else
-          Type = ELF::R_386_32;
         break;
       case FK_Data_2: Type = ELF::R_386_16; break;
       case X86::reloc_pcrel_1byte:
@@ -761,11 +762,14 @@ ELFObjectWriterImpl::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
 
 static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
                        bool Used) {
+  if (Used)
+    return true;
+
   const MCSymbol &Symbol = Data.getSymbol();
   if (!Asm.isSymbolLinkerVisible(Symbol) && !Symbol.isUndefined())
     return false;
 
-  if (!Used && Symbol.isTemporary())
+  if (Symbol.isTemporary())
     return false;
 
   return true;
