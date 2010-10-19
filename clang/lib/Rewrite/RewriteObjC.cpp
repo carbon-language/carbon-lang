@@ -767,59 +767,62 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   if (!OID)
     return;
   unsigned Attributes = PD->getPropertyAttributes();
-  bool GenGetProperty = !(Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) &&
-                         (Attributes & (ObjCPropertyDecl::OBJC_PR_retain | 
-                                        ObjCPropertyDecl::OBJC_PR_copy));
-  std::string Getr;
-  if (GenGetProperty && !objcGetPropertyDefined) {
-    objcGetPropertyDefined = true;
-    // FIXME. Is this attribute correct in all cases?
-    Getr = "\nextern \"C\" __declspec(dllimport) "
-           "id objc_getProperty(id, SEL, long, bool);\n";
-  }
-  RewriteObjCMethodDecl(OID->getContainingInterface(),  
-                        PD->getGetterMethodDecl(), Getr);
-  Getr += "{ ";
-  // Synthesize an explicit cast to gain access to the ivar.
-  // See objc-act.c:objc_synthesize_new_getter() for details.
-  if (GenGetProperty) {
-    // return objc_getProperty(self, _cmd, offsetof(ClassDecl, OID), 1)
-    Getr += "typedef ";
-    const FunctionType *FPRetType = 0;
-    RewriteTypeIntoString(PD->getGetterMethodDecl()->getResultType(), Getr, 
-                          FPRetType);
-    Getr += " _TYPE";
-    if (FPRetType) {
-      Getr += ")"; // close the precedence "scope" for "*".
-      
-      // Now, emit the argument types (if any).
-      if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FPRetType)){
-        Getr += "(";
-        for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
-          if (i) Getr += ", ";
-          std::string ParamStr = FT->getArgType(i).getAsString(
-            Context->PrintingPolicy);
-          Getr += ParamStr;
-        }
-        if (FT->isVariadic()) {
-          if (FT->getNumArgs()) Getr += ", ";
-          Getr += "...";
-        }
-        Getr += ")";
-      } else
-        Getr += "()";
+  if (!PD->getGetterMethodDecl()->isDefined()) {
+    bool GenGetProperty = !(Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) &&
+                          (Attributes & (ObjCPropertyDecl::OBJC_PR_retain | 
+                                         ObjCPropertyDecl::OBJC_PR_copy));
+    std::string Getr;
+    if (GenGetProperty && !objcGetPropertyDefined) {
+      objcGetPropertyDefined = true;
+      // FIXME. Is this attribute correct in all cases?
+      Getr = "\nextern \"C\" __declspec(dllimport) "
+            "id objc_getProperty(id, SEL, long, bool);\n";
     }
-    Getr += ";\n";
-    Getr += "return (_TYPE)";
-    Getr += "objc_getProperty(self, _cmd, ";
-    SynthesizeIvarOffsetComputation(OID, Getr);
-    Getr += ", 1)";
+    RewriteObjCMethodDecl(OID->getContainingInterface(),  
+                          PD->getGetterMethodDecl(), Getr);
+    Getr += "{ ";
+    // Synthesize an explicit cast to gain access to the ivar.
+    // See objc-act.c:objc_synthesize_new_getter() for details.
+    if (GenGetProperty) {
+      // return objc_getProperty(self, _cmd, offsetof(ClassDecl, OID), 1)
+      Getr += "typedef ";
+      const FunctionType *FPRetType = 0;
+      RewriteTypeIntoString(PD->getGetterMethodDecl()->getResultType(), Getr, 
+                            FPRetType);
+      Getr += " _TYPE";
+      if (FPRetType) {
+        Getr += ")"; // close the precedence "scope" for "*".
+      
+        // Now, emit the argument types (if any).
+        if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FPRetType)){
+          Getr += "(";
+          for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
+            if (i) Getr += ", ";
+            std::string ParamStr = FT->getArgType(i).getAsString(
+                                                          Context->PrintingPolicy);
+            Getr += ParamStr;
+          }
+          if (FT->isVariadic()) {
+            if (FT->getNumArgs()) Getr += ", ";
+            Getr += "...";
+          }
+          Getr += ")";
+        } else
+          Getr += "()";
+      }
+      Getr += ";\n";
+      Getr += "return (_TYPE)";
+      Getr += "objc_getProperty(self, _cmd, ";
+      SynthesizeIvarOffsetComputation(OID, Getr);
+      Getr += ", 1)";
+    }
+    else
+      Getr += "return " + getIvarAccessString(OID);
+    Getr += "; }";
+    InsertText(onePastSemiLoc, Getr);
   }
-  else
-    Getr += "return " + getIvarAccessString(OID);
-  Getr += "; }";
-  InsertText(onePastSemiLoc, Getr);
-  if (PD->isReadOnly())
+  
+  if (PD->isReadOnly() || PD->getSetterMethodDecl()->isDefined())
     return;
 
   // Generate the 'setter' function.
@@ -3834,11 +3837,13 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     if (!PD)
       continue;
     if (ObjCMethodDecl *Getter = PD->getGetterMethodDecl())
-      InstanceMethods.push_back(Getter);
+      if (!Getter->isDefined())
+        InstanceMethods.push_back(Getter);
     if (PD->isReadOnly())
       continue;
     if (ObjCMethodDecl *Setter = PD->getSetterMethodDecl())
-      InstanceMethods.push_back(Setter);
+      if (!Setter->isDefined())
+        InstanceMethods.push_back(Setter);
   }
   RewriteObjCMethodsMetaData(InstanceMethods.begin(), InstanceMethods.end(),
                              true, "", IDecl->getName(), Result);
