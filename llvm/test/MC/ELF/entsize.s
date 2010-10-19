@@ -32,38 +32,38 @@
     .quad 42
     .quad 42
 
-// CHECK: # Section 4
-// CHECK-NEXT:   ('sh_name', 18) # '.rodata.str1.1'
-// CHECK-NEXT:   ('sh_type', 1)
-// CHECK-NEXT:   ('sh_flags', 50)
+// CHECK: # Section 0x00000004
+// CHECK-NEXT:   ('sh_name', 0x00000012) # '.rodata.str1.1'
+// CHECK-NEXT:   ('sh_type', 0x00000001)
+// CHECK-NEXT:   ('sh_flags', 0x00000032)
 // CHECK-NEXT:   ('sh_addr',
 // CHECK-NEXT:   ('sh_offset',
-// CHECK-NEXT:   ('sh_size', 13)
+// CHECK-NEXT:   ('sh_size', 0x0000000d)
 // CHECK-NEXT:   ('sh_link',
 // CHECK-NEXT:   ('sh_info',
-// CHECK-NEXT:   ('sh_addralign', 1)
-// CHECK-NEXT:   ('sh_entsize', 1)
+// CHECK-NEXT:   ('sh_addralign', 0x00000001)
+// CHECK-NEXT:   ('sh_entsize', 0x00000001)
 
-// CHECK: # Section 5
-// CHECK-NEXT:   ('sh_name', 33) # '.rodata.str2.1'
-// CHECK-NEXT:   ('sh_type', 1)
-// CHECK-NEXT:   ('sh_flags', 50)
+// CHECK: # Section 0x00000005
+// CHECK-NEXT:   ('sh_name', 0x00000021) # '.rodata.str2.1'
+// CHECK-NEXT:   ('sh_type', 0x00000001)
+// CHECK-NEXT:   ('sh_flags', 0x00000032)
 // CHECK-NEXT:   ('sh_addr',
 // CHECK-NEXT:   ('sh_offset',
-// CHECK-NEXT:   ('sh_size', 16)
+// CHECK-NEXT:   ('sh_size', 0x00000010)
 // CHECK-NEXT:   ('sh_link',
 // CHECK-NEXT:   ('sh_info',
-// CHECK-NEXT:   ('sh_addralign', 1)
-// CHECK-NEXT:   ('sh_entsize', 2)
+// CHECK-NEXT:   ('sh_addralign', 0x00000001)
+// CHECK-NEXT:   ('sh_entsize', 0x00000002)
 
-// CHECK: # Section 6
-// CHECK-NEXT:   ('sh_name', 48) # '.rodata.cst8
-// CHECK-NEXT:   ('sh_type', 1)
-// CHECK-NEXT:   ('sh_flags', 18)
+// CHECK: # Section 0x00000006
+// CHECK-NEXT:   ('sh_name', 0x00000030) # '.rodata.cst8
+// CHECK-NEXT:   ('sh_type', 0x00000001)
+// CHECK-NEXT:   ('sh_flags', 0x00000012)
 // CHECK-NEXT:   ('sh_addr',
 // CHECK-NEXT:   ('sh_offset',
-// CHECK-NEXT:   ('sh_size', 16)
+// CHECK-NEXT:   ('sh_size', 0x00000010)
 // CHECK-NEXT:   ('sh_link',
 // CHECK-NEXT:   ('sh_info',
-// CHECK-NEXT:   ('sh_addralign', 1)
-// CHECK-NEXT:   ('sh_entsize', 8)
+// CHECK-NEXT:   ('sh_addralign', 0x00000001)
+// CHECK-NEXT:   ('sh_entsize', 0x00000008)

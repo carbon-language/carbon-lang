@@ -7,26 +7,26 @@
 	.section	.rodata,"a",@progbits
 	.align	8
 
-// CHECK: # Section 3
-// CHECK-NEXT:  (('sh_name', 13) # '.bss'
-// CHECK-NEXT:   ('sh_type', 8)
-// CHECK-NEXT:   ('sh_flags', 3)
-// CHECK-NEXT:   ('sh_addr', 0)
-// CHECK-NEXT:   ('sh_offset', 68)
-// CHECK-NEXT:   ('sh_size', 0)
-// CHECK-NEXT:   ('sh_link', 0)
-// CHECK-NEXT:   ('sh_info', 0)
-// CHECK-NEXT:   ('sh_addralign', 4)
-// CHECK-NEXT:   ('sh_entsize', 0)
+// CHECK: # Section 0x00000003
+// CHECK-NEXT:  (('sh_name', 0x0000000d) # '.bss'
+// CHECK-NEXT:   ('sh_type', 0x00000008)
+// CHECK-NEXT:   ('sh_flags', 0x00000003)
+// CHECK-NEXT:   ('sh_addr', 0x00000000)
+// CHECK-NEXT:   ('sh_offset', 0x00000044)
+// CHECK-NEXT:   ('sh_size', 0x00000000)
+// CHECK-NEXT:   ('sh_link', 0x00000000)
+// CHECK-NEXT:   ('sh_info', 0x00000000)
+// CHECK-NEXT:   ('sh_addralign', 0x00000004)
+// CHECK-NEXT:   ('sh_entsize', 0x00000000)
 // CHECK-NEXT:  ),
-// CHECK-NEXT:  # Section 4
-// CHECK-NEXT:  (('sh_name', 18) # '.rodata'
-// CHECK-NEXT:   ('sh_type', 1)
-// CHECK-NEXT:   ('sh_flags', 2)
-// CHECK-NEXT:   ('sh_addr', 0)
-// CHECK-NEXT:   ('sh_offset', 72)
-// CHECK-NEXT:   ('sh_size', 0)
-// CHECK-NEXT:   ('sh_link', 0)
-// CHECK-NEXT:   ('sh_info', 0)
-// CHECK-NEXT:   ('sh_addralign', 8)
-// CHECK-NEXT:   ('sh_entsize', 0)
+// CHECK-NEXT:  # Section 0x00000004
+// CHECK-NEXT:  (('sh_name', 0x00000012) # '.rodata'
+// CHECK-NEXT:   ('sh_type', 0x00000001)
+// CHECK-NEXT:   ('sh_flags', 0x00000002)
+// CHECK-NEXT:   ('sh_addr', 0x00000000)
+// CHECK-NEXT:   ('sh_offset', 0x00000048)
+// CHECK-NEXT:   ('sh_size', 0x00000000)
+// CHECK-NEXT:   ('sh_link', 0x00000000)
+// CHECK-NEXT:   ('sh_info', 0x00000000)
+// CHECK-NEXT:   ('sh_addralign', 0x00000008)
+// CHECK-NEXT:   ('sh_entsize', 0x00000000)

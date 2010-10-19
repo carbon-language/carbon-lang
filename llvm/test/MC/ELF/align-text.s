@@ -6,14 +6,14 @@
         .text
         .zero 1
 
-// CHECK:      (('sh_name', 1) # '.text'
-// CHECK-NEXT:  ('sh_type', 1)
-// CHECK-NEXT:  ('sh_flags', 6)
-// CHECK-NEXT:   ('sh_addr', 0)
-// CHECK-NEXT:   ('sh_offset', 64)
-// CHECK-NEXT:   ('sh_size', 2)
-// CHECK-NEXT:   ('sh_link', 0)
-// CHECK-NEXT:   ('sh_info', 0)
-// CHECK-NEXT:   ('sh_addralign', 4)
-// CHECK-NEXT:   ('sh_entsize', 0)
+// CHECK:      (('sh_name', 0x00000001) # '.text'
+// CHECK-NEXT:  ('sh_type', 0x00000001)
+// CHECK-NEXT:  ('sh_flags', 0x00000006)
+// CHECK-NEXT:   ('sh_addr', 0x00000000)
+// CHECK-NEXT:   ('sh_offset', 0x00000040)
+// CHECK-NEXT:   ('sh_size', 0x00000002)
+// CHECK-NEXT:   ('sh_link', 0x00000000)
+// CHECK-NEXT:   ('sh_info', 0x00000000)
+// CHECK-NEXT:   ('sh_addralign', 0x00000004)
+// CHECK-NEXT:   ('sh_entsize', 0x00000000)
 // CHECK-NEXT:  ),

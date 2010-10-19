@@ -2,8 +2,8 @@
 
 // Mostly a test that this doesn't crash anymore.
 
-// CHECK:        # Symbol 4
-// CHECK-NEXT:    (('st_name', 1) # 'foo'
-// CHECK-NEXT:     ('st_bind', 1)
+// CHECK:        # Symbol 0x00000004
+// CHECK-NEXT:    (('st_name', 0x00000001) # 'foo'
+// CHECK-NEXT:     ('st_bind', 0x00000001)
 
 	.size	foo, .Lbar-foo

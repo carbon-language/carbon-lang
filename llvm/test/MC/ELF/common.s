@@ -8,13 +8,13 @@
 	.local	common1
 	.comm	common1,1,1
 
-// CHECK: ('st_name', 1) # 'common1'
-// CHECK-NEXT: ('st_bind', 0)
-// CHECK-NEXT: ('st_type', 1)
-// CHECK-NEXT: ('st_other', 0)
+// CHECK: ('st_name', 0x00000001) # 'common1'
+// CHECK-NEXT: ('st_bind', 0x00000000)
+// CHECK-NEXT: ('st_type', 0x00000001)
+// CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx',
-// CHECK-NEXT: ('st_value', 0)
-// CHECK-NEXT: ('st_size', 1)
+// CHECK-NEXT: ('st_value', 0x00000000)
+// CHECK-NEXT: ('st_size', 0x00000001)
 
 
 // Same as common1, but with directives in a different order.
@@ -22,25 +22,25 @@
 	.type	common2,@object
 	.comm	common2,1,1
 
-// CHECK: ('st_name', 9) # 'common2'
-// CHECK-NEXT: ('st_bind', 0)
-// CHECK-NEXT: ('st_type', 1)
-// CHECK-NEXT: ('st_other', 0)
+// CHECK: ('st_name', 0x00000009) # 'common2'
+// CHECK-NEXT: ('st_bind', 0x00000000)
+// CHECK-NEXT: ('st_type', 0x00000001)
+// CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx',
-// CHECK-NEXT: ('st_value', 1)
-// CHECK-NEXT: ('st_size', 1)
+// CHECK-NEXT: ('st_value', 0x00000001)
+// CHECK-NEXT: ('st_size', 0x00000001)
 
 // Test that without an explicit .local we produce a global.
 	.type	common3,@object
 	.comm	common3,4,4
 
-// CHECK: ('st_name', 17) # 'common3'
-// CHECK-NEXT: ('st_bind', 1)
-// CHECK-NEXT: ('st_type', 1)
-// CHECK-NEXT: ('st_other', 0)
-// CHECK-NEXT: ('st_shndx', 65522)
-// CHECK-NEXT: ('st_value', 4)
-// CHECK-NEXT: ('st_size', 4)
+// CHECK: ('st_name', 0x00000011) # 'common3'
+// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_type', 0x00000001)
+// CHECK-NEXT: ('st_other', 0x00000000)
+// CHECK-NEXT: ('st_shndx', 0x0000fff2)
+// CHECK-NEXT: ('st_value', 0x00000004)
+// CHECK-NEXT: ('st_size', 0x00000004)
 
 
 // Test that without an explicit .local we produce a global, even if the first
@@ -54,10 +54,10 @@ foo:
 	.type	common4,@object
 	.comm	common4,40,16
 
-// CHECK: ('st_name', 29) # 'common4'
-// CHECK-NEXT: ('st_bind', 1)
-// CHECK-NEXT: ('st_type', 1)
-// CHECK-NEXT: ('st_other', 0)
-// CHECK-NEXT: ('st_shndx', 65522)
-// CHECK-NEXT: ('st_value', 16)
-// CHECK-NEXT: ('st_size', 40)
+// CHECK: ('st_name', 0x0000001d) # 'common4'
+// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_type', 0x00000001)
+// CHECK-NEXT: ('st_other', 0x00000000)
+// CHECK-NEXT: ('st_shndx', 0x0000fff2)
+// CHECK-NEXT: ('st_value', 0x00000010)
+// CHECK-NEXT: ('st_size', 0x00000028)

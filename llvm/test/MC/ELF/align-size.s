@@ -5,9 +5,9 @@
 	.zero 4
 	.align	8
 
-// CHECK:      (('sh_name', 1) # '.text'
-// CHECK-NEXT:  ('sh_type', 1)
-// CHECK-NEXT:  ('sh_flags', 6)
-// CHECK-NEXT:  ('sh_addr', 0)
-// CHECK-NEXT:  ('sh_offset', 64)
-// CHECK-NEXT:  ('sh_size', 8)
+// CHECK:      (('sh_name', 0x00000001) # '.text'
+// CHECK-NEXT:  ('sh_type', 0x00000001)
+// CHECK-NEXT:  ('sh_flags', 0x00000006)
+// CHECK-NEXT:  ('sh_addr', 0x00000000)
+// CHECK-NEXT:  ('sh_offset', 0x00000040)
+// CHECK-NEXT:  ('sh_size', 0x00000008)
