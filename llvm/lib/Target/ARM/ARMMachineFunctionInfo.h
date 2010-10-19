@@ -55,8 +55,8 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// spill stack offset.
   unsigned FramePtrSpillOffset;
 
-  /// GPRCSOffset, GPRCS2Offset, DPRCSOffset - Starting offset of callee saved
-  /// register spills areas (excluding R9 for Mac OS X):
+  /// GPRCSOffset, DPRCSOffset - Starting offset of callee saved register
+  /// spills areas (excluding R9 for Mac OS X):
   ///
   /// GPR callee-saved (1) : r4, r5, r6, r7, r8, r9, r10, r11, lr
   /// --------------------------------------------
@@ -64,13 +64,12 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   unsigned GPRCSOffset;
   unsigned DPRCSOffset;
 
-  /// GPRCSSize, GPRCS2Size, DPRCSSize - Sizes of callee saved register spills
-  /// areas.
+  /// GPRCSSize, DPRCSSize - Sizes of callee saved register spills areas.
   unsigned GPRCSSize;
   unsigned DPRCSSize;
 
-  /// GPRCSFrames, GPRCS2Frames, DPRCSFrames - Keeps track of frame indices
-  /// which belong to these spill areas.
+  /// GPRCSFrames, DPRCSFrames - Keeps track of frame indices which belong
+  /// to these spill areas.
   BitVector GPRCSFrames;
   BitVector DPRCSFrames;
 
