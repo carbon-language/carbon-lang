@@ -424,10 +424,6 @@ class TestBase(unittest2.TestCase):
         self.__errored__ = False
         self.__failed__ = False
 
-    def setTearDownCleanup(self, dictionary=None):
-        self.dict = dictionary
-        self.doTearDownCleanup = True
-
     def markError(self):
         """Callback invoked when we (the test case instance) errored."""
         self.__errored__ = True
@@ -463,6 +459,11 @@ class TestBase(unittest2.TestCase):
         fname = os.path.join(dname, "%s.log" % self.id())
         with open(fname, "w") as f:
             print >> f, self.session.getvalue()
+
+    def setTearDownCleanup(self, dictionary=None):
+        """Register a cleanup action at tearDown() time with a dictinary"""
+        self.dict = dictionary
+        self.doTearDownCleanup = True
 
     def tearDown(self):
         #import traceback
