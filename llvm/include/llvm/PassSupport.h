@@ -129,6 +129,22 @@ private:
   PassInfo(const PassInfo &);       // do not implement
 };
 
+#define CALL_ONCE_INITIALIZATION(function) \
+  static volatile sys::cas_flag initialized = 0; \
+  sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
+  if (old_val == 0) { \
+    function(Registry); \
+    sys::MemoryFence(); \
+    initialized = 2; \
+  } else { \
+    sys::cas_flag tmp = initialized; \
+    sys::MemoryFence(); \
+    while (tmp != 2) { \
+      tmp = initialized; \
+      sys::MemoryFence(); \
+    } \
+  } \
+
 #define INITIALIZE_PASS(passName, arg, name, cfg, analysis) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
@@ -137,20 +153,7 @@ private:
     return PI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    static volatile sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) { \
-      initialize##passName##PassOnce(Registry); \
-      sys::MemoryFence(); \
-      initialized = 2; \
-    } else { \
-      sys::cas_flag tmp = initialized; \
-      sys::MemoryFence(); \
-      while (tmp != 2) { \
-        tmp = initialized; \
-        sys::MemoryFence(); \
-      } \
-    } \
+    CALL_ONCE_INITIALIZATION(initialize##passName##PassOnce) \
   }
 
 #define INITIALIZE_PASS_BEGIN(passName, arg, name, cfg, analysis) \
@@ -168,20 +171,7 @@ private:
     return PI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    static volatile sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) { \
-      initialize##passName##PassOnce(Registry); \
-      sys::MemoryFence(); \
-      initialized = 2; \
-    } else { \
-      sys::cas_flag tmp = initialized; \
-      sys::MemoryFence(); \
-      while (tmp != 2) { \
-        tmp = initialized; \
-        sys::MemoryFence(); \
-      } \
-    } \
+    CALL_ONCE_INITIALIZATION(initialize##passName##PassOnce) \
   }
 
 template<typename PassName>
@@ -266,20 +256,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##agName##AnalysisGroup(PassRegistry &Registry) { \
-    static volatile sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) { \
-      initialize##agName##AnalysisGroupOnce(Registry); \
-      sys::MemoryFence(); \
-      initialized = 2; \
-    } else { \
-      sys::cas_flag tmp = initialized; \
-      sys::MemoryFence(); \
-      while (tmp != 2) { \
-        tmp = initialized; \
-        sys::MemoryFence(); \
-      } \
-    } \
+    CALL_ONCE_INITIALIZATION(initialize##agName##AnalysisGroupOnce) \
   }
 
 
@@ -295,20 +272,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    static volatile sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) { \
-      initialize##passName##PassOnce(Registry); \
-      sys::MemoryFence(); \
-      initialized = 2; \
-    } else { \
-      sys::cas_flag tmp = initialized; \
-      sys::MemoryFence(); \
-      while (tmp != 2) { \
-        tmp = initialized; \
-        sys::MemoryFence(); \
-      } \
-    } \
+    CALL_ONCE_INITIALIZATION(initialize##passName##PassOnce) \
   }
 
 
@@ -326,20 +290,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     return AI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    static volatile sys::cas_flag initialized = 0; \
-    sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
-    if (old_val == 0) { \
-      initialize##passName##PassOnce(Registry); \
-      sys::MemoryFence(); \
-      initialized = 2; \
-    } else { \
-      sys::cas_flag tmp = initialized; \
-      sys::MemoryFence(); \
-      while (tmp != 2) { \
-        tmp = initialized; \
-        sys::MemoryFence(); \
-      } \
-    } \
+    CALL_ONCE_INITIALIZATION(initialize##passName##PassOnce) \
   }
 
 //===---------------------------------------------------------------------------
