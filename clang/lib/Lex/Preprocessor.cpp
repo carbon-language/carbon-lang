@@ -56,7 +56,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
     SourceMgr(SM), HeaderInfo(Headers), ExternalSource(0),
     Identifiers(opts, IILookup), BuiltinInfo(Target), CodeComplete(0),
     CodeCompletionFile(0), SkipMainFilePreamble(0, true), CurPPLexer(0), 
-    CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0) {
+    CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0), MIChainHead(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
   OwnsHeaderSearch = OwnsHeaders;
@@ -106,29 +106,10 @@ Preprocessor::~Preprocessor() {
   }
 
   // Free any macro definitions.
-  for (llvm::DenseMap<IdentifierInfo*, MacroInfo*>::iterator I =
-       Macros.begin(), E = Macros.end(); I != E; ++I) {
-    // We don't need to free the MacroInfo objects directly.  These
-    // will be released when the BumpPtrAllocator 'BP' object gets
-    // destroyed.  We still need to run the dtor, however, to free
-    // memory alocated by MacroInfo.
-    I->second->Destroy();
-    I->first->setHasMacroDefinition(false);
-  }
-  for (std::vector<MacroInfo*>::iterator I = MICache.begin(),
-                                         E = MICache.end(); I != E; ++I) {
-    // We don't need to free the MacroInfo objects directly.  These
-    // will be released when the BumpPtrAllocator 'BP' object gets
-    // destroyed.  We still need to run the dtor, however, to free
-    // memory alocated by MacroInfo.
-    (*I)->Destroy();
-  }
-  for (llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> >::iterator I =
-         PragmaPushMacroInfo.begin(), E = PragmaPushMacroInfo.end(); I!=E; ++I){
-    for (std::vector<MacroInfo*>::iterator I2 = I->second.begin(), E2 = I->second.end();
-         I2 != E2; ++I2) {
-      (*I2)->Destroy();
-    }
+  for (MacroInfoChain *I = MIChainHead ; I ; ) {
+    MacroInfoChain *Next = I->Next;
+    I->MI.Destroy();
+    I = Next;
   }
 
   // Free any cached macro expanders.

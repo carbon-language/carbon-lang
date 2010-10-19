@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSOR_H
 #define LLVM_CLANG_LEX_PREPROCESSOR_H
 
+#include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Lex/PPCallbacks.h"
@@ -250,6 +251,15 @@ private:  // Cached tokens state.
   /// indicate where CachedLexPos should be set when the BackTrack() method is
   /// invoked (at which point the last position is popped).
   std::vector<CachedTokensTy::size_type> BacktrackPositions;
+
+  struct MacroInfoChain {
+    MacroInfo MI;
+    MacroInfoChain *Next;
+  };
+
+  /// MacroInfos are managed as a chain for easy disposal.  This is the head
+  /// of that list.
+  MacroInfoChain *MIChainHead;
 
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts,

@@ -33,8 +33,12 @@ MacroInfo *Preprocessor::AllocateMacroInfo() {
   if (!MICache.empty()) {
     MI = MICache.back();
     MICache.pop_back();
-  } else
-    MI = (MacroInfo*) BP.Allocate<MacroInfo>();
+  } else {
+    MacroInfoChain *MIChain = BP.Allocate<MacroInfoChain>();
+    MIChain->Next = MIChainHead;
+    MIChainHead = MIChain;
+    MI = &(MIChainHead->MI);
+  }
   return MI;
 }
 
