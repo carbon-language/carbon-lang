@@ -6244,6 +6244,110 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation FriendLoc,
   return FriendDecl::Create(Context, CurContext, FriendLoc, TSInfo, FriendLoc);
 }
 
+/// Handle a friend tag declaration where the scope specifier was
+/// templated.
+Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
+                                    unsigned TagSpec, SourceLocation TagLoc,
+                                    CXXScopeSpec &SS,
+                                    IdentifierInfo *Name, SourceLocation NameLoc,
+                                    AttributeList *Attr,
+                                    MultiTemplateParamsArg TempParamLists) {
+  TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
+
+  bool isExplicitSpecialization = false;
+  unsigned NumMatchedTemplateParamLists = TempParamLists.size();
+  bool Invalid = false;
+
+  if (TemplateParameterList *TemplateParams
+        = MatchTemplateParametersToScopeSpecifier(TagLoc, SS,
+                                                  TempParamLists.get(),
+                                                  TempParamLists.size(),
+                                                  /*friend*/ true,
+                                                  isExplicitSpecialization,
+                                                  Invalid)) {
+    --NumMatchedTemplateParamLists;
+
+    if (TemplateParams->size() > 0) {
+      // This is a declaration of a class template.
+      if (Invalid)
+        return 0;
+        
+      return CheckClassTemplate(S, TagSpec, TUK_Friend, TagLoc,
+                                SS, Name, NameLoc, Attr,
+                                TemplateParams, AS_public).take();
+    } else {
+      // The "template<>" header is extraneous.
+      Diag(TemplateParams->getTemplateLoc(), diag::err_template_tag_noparams)
+        << TypeWithKeyword::getTagTypeKindName(Kind) << Name;
+      isExplicitSpecialization = true;
+    }
+  }
+
+  if (Invalid) return 0;
+
+  assert(SS.isNotEmpty() && "valid templated tag with no SS and no direct?");
+
+  bool isAllExplicitSpecializations = true;
+  for (unsigned I = 0; I != NumMatchedTemplateParamLists; ++I) {
+    if (TempParamLists.get()[I]->size()) {
+      isAllExplicitSpecializations = false;
+      break;
+    }
+  }
+
+  // FIXME: don't ignore attributes.
+
+  // If it's explicit specializations all the way down, just forget
+  // about the template header and build an appropriate non-templated
+  // friend.  TODO: for source fidelity, remember the headers.
+  if (isAllExplicitSpecializations) {
+    ElaboratedTypeKeyword Keyword
+      = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
+    QualType T = CheckTypenameType(Keyword, SS.getScopeRep(), *Name,
+                                   TagLoc, SS.getRange(), NameLoc);
+    if (T.isNull())
+      return 0;
+
+    TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
+    if (isa<DependentNameType>(T)) {
+      DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
+      TL.setKeywordLoc(TagLoc);
+      TL.setQualifierRange(SS.getRange());
+      TL.setNameLoc(NameLoc);
+    } else {
+      ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
+      TL.setKeywordLoc(TagLoc);
+      TL.setQualifierRange(SS.getRange());
+      cast<TypeSpecTypeLoc>(TL.getNamedTypeLoc()).setNameLoc(NameLoc);
+    }
+
+    FriendDecl *Friend = FriendDecl::Create(Context, CurContext, NameLoc,
+                                            TSI, FriendLoc);
+    Friend->setAccess(AS_public);
+    CurContext->addDecl(Friend);
+    return Friend;
+  }
+
+  // Handle the case of a templated-scope friend class.  e.g.
+  //   template <class T> class A<T>::B;
+  // FIXME: we don't support these right now.
+  ElaboratedTypeKeyword ETK = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
+  QualType T = Context.getDependentNameType(ETK, SS.getScopeRep(), Name);
+  TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
+  DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
+  TL.setKeywordLoc(TagLoc);
+  TL.setQualifierRange(SS.getRange());
+  TL.setNameLoc(NameLoc);
+
+  FriendDecl *Friend = FriendDecl::Create(Context, CurContext, NameLoc,
+                                          TSI, FriendLoc);
+  Friend->setAccess(AS_public);
+  Friend->setUnsupportedFriend(true);
+  CurContext->addDecl(Friend);
+  return Friend;
+}
+
+
 /// Handle a friend type declaration.  This works in tandem with
 /// ActOnTag.
 ///

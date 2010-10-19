@@ -1623,9 +1623,9 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   }
 
   if (DS.isFriendSpecified()) {
-    // If we're dealing with a class template decl, assume that the
-    // template routines are handling it.
-    if (TagD && isa<ClassTemplateDecl>(TagD))
+    // If we're dealing with a decl but not a TagDecl, assume that
+    // whatever routines created it handled the friendship aspect.
+    if (TagD && !Tag)
       return 0;
     return ActOnFriendTypeDecl(S, DS, MultiTemplateParamsArg(*this, 0, 0));
   }
@@ -2797,8 +2797,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
                                                   D.getCXXScopeSpec(),
-                        (TemplateParameterList**)TemplateParamLists.get(),
-                                                   TemplateParamLists.size(),
+                                                  TemplateParamLists.get(),
+                                                  TemplateParamLists.size(),
                                                   /*never a friend*/ false,
                                                   isExplicitSpecialization,
                                                   Invalid)) {
@@ -2836,7 +2836,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (NumMatchedTemplateParamLists > 0 && D.getCXXScopeSpec().isSet()) {
     NewVD->setTemplateParameterListsInfo(Context,
                                          NumMatchedTemplateParamLists,
-                        (TemplateParameterList**)TemplateParamLists.release());
+                                         TemplateParamLists.release());
   }
 
   if (D.getDeclSpec().isThreadSpecified()) {
@@ -5483,6 +5483,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TUK == TUK_Definition) &&
          "Nameless record must be a definition!");
+  assert(TemplateParameterLists.size() == 0 || TUK != TUK_Reference);
 
   OwnedDecl = false;
   TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
@@ -5491,7 +5492,12 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   bool isExplicitSpecialization = false;
   unsigned NumMatchedTemplateParamLists = TemplateParameterLists.size();
   bool Invalid = false;
-  if (TUK != TUK_Reference) {
+
+  // We only need to do this matching if we have template parameters
+  // or a scope specifier, which also conveniently avoids this work
+  // for non-C++ cases.
+  if (NumMatchedTemplateParamLists ||
+      (SS.isNotEmpty() && TUK != TUK_Reference)) {
     if (TemplateParameterList *TemplateParams
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
                                                 TemplateParameterLists.get(),
@@ -5606,7 +5612,9 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // and that current instantiation has any dependent base
       // classes, we might find something at instantiation time: treat
       // this as a dependent elaborated-type-specifier.
-      if (Previous.wasNotFoundInCurrentInstantiation()) {
+      // But this only makes any sense for reference-like lookups.
+      if (Previous.wasNotFoundInCurrentInstantiation() &&
+          (TUK == TUK_Reference || TUK == TUK_Friend)) {
         IsDependent = true;
         return 0;
       }

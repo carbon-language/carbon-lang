@@ -799,6 +799,13 @@ public:
                  bool &OwnedDecl, bool &IsDependent, bool ScopedEnum,
                  TypeResult UnderlyingType);
 
+  Decl *ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
+                                unsigned TagSpec, SourceLocation TagLoc,
+                                CXXScopeSpec &SS,
+                                IdentifierInfo *Name, SourceLocation NameLoc,
+                                AttributeList *Attr,
+                                MultiTemplateParamsArg TempParamLists);
+
   TypeResult ActOnDependentTag(Scope *S,
                                unsigned TagSpec,
                                TagUseKind TUK,

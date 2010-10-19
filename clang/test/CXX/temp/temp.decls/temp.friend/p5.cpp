@@ -56,3 +56,25 @@ namespace test2 {
     void f() { C::foo(); }
   };
 }
+
+// rdar://problem/8540527
+namespace test3 {
+  template <class T> struct A {
+    struct Inner {
+      static int foo();
+    };
+  };
+
+  template <class U> class C {
+    int i;
+    template <class T> friend struct A<T>::Inner;
+  };
+
+  template <class T> int A<T>::Inner::foo() {
+    C<int> c;
+    c.i = 0;
+    return 0;
+  }
+
+  int test = A<int>::Inner::foo();
+}

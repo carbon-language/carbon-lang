@@ -947,6 +947,15 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                            TemplateInfo.TemplateLoc,
                                            TagType, StartLoc, SS, Name,
                                            NameLoc, AttrList);
+  } else if (TUK == Sema::TUK_Friend &&
+             TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) {
+    TagOrTempResult =
+      Actions.ActOnTemplatedFriendTag(getCurScope(), DS.getFriendSpecLoc(),
+                                      TagType, StartLoc, SS,
+                                      Name, NameLoc, AttrList,
+                                      MultiTemplateParamsArg(Actions,
+                                    TemplateParams? &(*TemplateParams)[0] : 0,
+                                 TemplateParams? TemplateParams->size() : 0));
   } else {
     if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
         TUK == Sema::TUK_Definition) {
@@ -956,8 +965,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     bool IsDependent = false;
 
     // Declaration or definition of a class type
-    TagOrTempResult = Actions.ActOnTag(getCurScope(), TagType, TUK, StartLoc, SS,
-                                       Name, NameLoc, AttrList, AS,
+    TagOrTempResult = Actions.ActOnTag(getCurScope(), TagType, TUK, StartLoc,
+                                       SS, Name, NameLoc, AttrList, AS,
                                        MultiTemplateParamsArg(Actions,
                                     TemplateParams? &(*TemplateParams)[0] : 0,
                                     TemplateParams? TemplateParams->size() : 0),
@@ -966,9 +975,11 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
     // If ActOnTag said the type was dependent, try again with the
     // less common call.
-    if (IsDependent)
+    if (IsDependent) {
+      assert(TUK == Sema::TUK_Reference || TUK == Sema::TUK_Friend);
       TypeResult = Actions.ActOnDependentTag(getCurScope(), TagType, TUK,
                                              SS, Name, StartLoc, NameLoc);
+    }
   }
 
   // If there is a body, parse it and inform the actions module.
