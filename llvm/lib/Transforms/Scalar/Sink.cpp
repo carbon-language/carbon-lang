@@ -157,7 +157,7 @@ static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
     if (L->isVolatile()) return false;
 
     Value *Ptr = L->getPointerOperand();
-    unsigned Size = AA->getTypeStoreSize(L->getType());
+    uint64_t Size = AA->getTypeStoreSize(L->getType());
     for (SmallPtrSet<Instruction *, 8>::iterator I = Stores.begin(),
          E = Stores.end(); I != E; ++I)
       if (AA->getModRefInfo(*I, Ptr, Size) & AliasAnalysis::Mod)

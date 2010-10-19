@@ -283,7 +283,7 @@ void AliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 /// getTypeStoreSize - Return the TargetData store size for the given type,
 /// if known, or a conservative value otherwise.
 ///
-unsigned AliasAnalysis::getTypeStoreSize(const Type *Ty) {
+uint64_t AliasAnalysis::getTypeStoreSize(const Type *Ty) {
   return TD ? TD->getTypeStoreSize(Ty) : UnknownSize;
 }
 

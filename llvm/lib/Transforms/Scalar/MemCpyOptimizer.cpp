@@ -772,7 +772,7 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
 
   // If the memmove is a constant size, use it for the alias query, this allows
   // us to optimize things like: memmove(P, P+64, 64);
-  unsigned MemMoveSize = AliasAnalysis::UnknownSize;
+  uint64_t MemMoveSize = AliasAnalysis::UnknownSize;
   if (ConstantInt *Len = dyn_cast<ConstantInt>(M->getLength()))
     MemMoveSize = Len->getZExtValue();
   

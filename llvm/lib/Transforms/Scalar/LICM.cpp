@@ -190,7 +190,7 @@ namespace {
     /// pointerInvalidatedByLoop - Return true if the body of this loop may
     /// store into the memory location pointed to by V.
     ///
-    bool pointerInvalidatedByLoop(Value *V, unsigned Size,
+    bool pointerInvalidatedByLoop(Value *V, uint64_t Size,
                                   const MDNode *TBAAInfo) {
       // Check to see if any of the basic blocks in CurLoop invalidate *V.
       return CurAST->getAliasSetForPointer(V, Size, TBAAInfo).isMod();
@@ -402,7 +402,7 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
       return true;
     
     // Don't hoist loads which have may-aliased stores in loop.
-    unsigned Size = 0;
+    uint64_t Size = 0;
     if (LI->getType()->isSized())
       Size = AA->getTypeStoreSize(LI->getType());
     return !pointerInvalidatedByLoop(LI->getOperand(0), Size,

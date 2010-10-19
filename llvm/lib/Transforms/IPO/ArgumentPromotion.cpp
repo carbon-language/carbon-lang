@@ -451,7 +451,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
 
     const PointerType *LoadTy =
       cast<PointerType>(Load->getPointerOperand()->getType());
-    unsigned LoadSize =(unsigned)TD->getTypeStoreSize(LoadTy->getElementType());
+    uint64_t LoadSize = TD->getTypeStoreSize(LoadTy->getElementType());
 
     if (AA.canInstructionRangeModify(BB->front(), *Load, Arg, LoadSize))
       return false;  // Pointer is invalidated!

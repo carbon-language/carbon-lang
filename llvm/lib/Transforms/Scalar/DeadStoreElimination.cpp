@@ -61,7 +61,7 @@ namespace {
     bool handleFreeWithNonTrivialDependency(const CallInst *F,
                                             MemDepResult Dep);
     bool handleEndBlock(BasicBlock &BB);
-    bool RemoveUndeadPointers(Value *Ptr, unsigned killPointerSize,
+    bool RemoveUndeadPointers(Value *Ptr, uint64_t killPointerSize,
                               BasicBlock::iterator &BBI,
                               SmallPtrSet<Value*, 64> &deadPointers);
     void DeleteDeadInstruction(Instruction *I,
@@ -79,7 +79,7 @@ namespace {
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
 
-    unsigned getPointerSize(Value *V) const;
+    uint64_t getPointerSize(Value *V) const;
   };
 }
 
@@ -142,11 +142,11 @@ static Value *getPointerOperand(Instruction *I) {
 }
 
 /// getStoreSize - Return the length in bytes of the write by the clobbering
-/// instruction. If variable or unknown, returns -1.
-static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
+/// instruction. If variable or unknown, returns AliasAnalysis::UnknownSize.
+static uint64_t getStoreSize(Instruction *I, const TargetData *TD) {
   assert(doesClobberMemory(I));
   if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-    if (!TD) return -1u;
+    if (!TD) return AliasAnalysis::UnknownSize;
     return TD->getTypeStoreSize(SI->getOperand(0)->getType());
   }
 
@@ -158,7 +158,7 @@ static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
     switch (II->getIntrinsicID()) {
     default: assert(false && "Unexpected intrinsic!");
     case Intrinsic::init_trampoline:
-      return -1u;
+      return AliasAnalysis::UnknownSize;
     case Intrinsic::lifetime_end:
       Len = II->getArgOperand(0);
       break;
@@ -167,7 +167,7 @@ static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
   if (ConstantInt *LenCI = dyn_cast<ConstantInt>(Len))
     if (!LenCI->isAllOnesValue())
       return LenCI->getZExtValue();
-  return -1u;
+  return AliasAnalysis::UnknownSize;
 }
 
 /// isStoreAtLeastAsWideAs - Return true if the size of the store in I1 is
@@ -182,10 +182,12 @@ static bool isStoreAtLeastAsWideAs(Instruction *I1, Instruction *I2,
   // Exactly the same type, must have exactly the same size.
   if (I1Ty == I2Ty) return true;
   
-  int I1Size = getStoreSize(I1, TD);
-  int I2Size = getStoreSize(I2, TD);
+  uint64_t I1Size = getStoreSize(I1, TD);
+  uint64_t I2Size = getStoreSize(I2, TD);
   
-  return I1Size != -1 && I2Size != -1 && I1Size >= I2Size;
+  return I1Size != AliasAnalysis::UnknownSize &&
+         I2Size != AliasAnalysis::UnknownSize &&
+         I1Size >= I2Size;
 }
 
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
@@ -373,7 +375,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     }
     
     Value *killPointer = 0;
-    unsigned killPointerSize = AliasAnalysis::UnknownSize;
+    uint64_t killPointerSize = AliasAnalysis::UnknownSize;
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
@@ -472,7 +474,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
 /// RemoveUndeadPointers - check for uses of a pointer that make it
 /// undead when scanning for dead stores to alloca's.
-bool DSE::RemoveUndeadPointers(Value *killPointer, unsigned killPointerSize,
+bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
                                BasicBlock::iterator &BBI,
                                SmallPtrSet<Value*, 64> &deadPointers) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
@@ -565,7 +567,7 @@ void DSE::DeleteDeadInstruction(Instruction *I,
   } while (!NowDeadInsts.empty());
 }
 
-unsigned DSE::getPointerSize(Value *V) const {
+uint64_t DSE::getPointerSize(Value *V) const {
   if (TD) {
     if (AllocaInst *A = dyn_cast<AllocaInst>(V)) {
       // Get size information for the alloca
