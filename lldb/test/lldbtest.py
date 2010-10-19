@@ -310,7 +310,7 @@ class TestBase(unittest2.TestCase):
     maxLaunchCount = 3;
 
     # Time to wait before the next launching attempt in second(s).
-    # Can be overridden by the LLDB_TIME_WAIT environment variable.
+    # Can be overridden by the LLDB_TIME_WAIT_NEXT_LAUNCH environment variable.
     timeWait = 1.0;
 
     # Keep track of the old current working directory.
@@ -375,8 +375,8 @@ class TestBase(unittest2.TestCase):
         if "LLDB_MAX_LAUNCH_COUNT" in os.environ:
             self.maxLaunchCount = int(os.environ["LLDB_MAX_LAUNCH_COUNT"])
 
-        if "LLDB_TIME_WAIT" in os.environ:
-            self.timeWait = float(os.environ["LLDB_TIME_WAIT"])
+        if "LLDB_TIME_WAIT_NEXT_LAUNCH" in os.environ:
+            self.timeWait = float(os.environ["LLDB_TIME_WAIT_NEXT_LAUNCH"])
 
         # Create the debugger instance if necessary.
         try:
