@@ -15,7 +15,7 @@ class MCSymbol;
 
 class MCObjectFormat {
 public:
-  virtual ~MCObjectFormat() {}
+  virtual ~MCObjectFormat();
 
   /// isAbsolute - Check if A - B is an absolute value
   ///

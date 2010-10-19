@@ -12,6 +12,9 @@
 
 using namespace llvm;
 
+MCObjectFormat::~MCObjectFormat() {
+}
+
 bool MCELFObjectFormat::isAbsolute(bool IsSet, const MCSymbol &A,
                                    const MCSymbol &B) const {
   // On ELF A - B is absolute if A and B are in the same section.
