@@ -9,8 +9,10 @@
 
 #include "lldb/Host/Host.h"
 
-#include <sys/types.h>
+#include <libproc.h>
+#include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Communication.h"
@@ -159,79 +161,15 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
     error = ::GetProcessPID(&psn, &pid);
     return pid;
 }
-#define LLDB_HOST_USE_APPLESCRIPT
-#if defined (LLDB_HOST_USE_APPLESCRIPT)
 
-lldb::pid_t
-Host::LaunchInNewTerminal 
-(
-    const char **argv, 
-    const char **envp,
-    const ArchSpec *arch_spec,
-    bool stop_at_entry,
-    bool disable_aslr
-)
+
+static void *
+AcceptPIDFromInferior (void *arg)
 {
-    if (!argv || !argv[0])
-        return LLDB_INVALID_PROCESS_ID;
-    
-    std::string unix_socket_name;
-
-    char temp_file_path[PATH_MAX] = "/tmp/XXXXXX";    
-    if (::mktemp (temp_file_path) == NULL)
-        return LLDB_INVALID_PROCESS_ID;
-
-    unix_socket_name.assign (temp_file_path);
-    
-    StreamString command;
-    
-    FileSpec darwin_debug_file_spec;
-    if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
-        return LLDB_INVALID_PROCESS_ID;
-    darwin_debug_file_spec.GetFilename().SetCString("darwin-debug");
-        
-    if (!darwin_debug_file_spec.Exists())
-        return LLDB_INVALID_PROCESS_ID;
-    
-    char launcher_path[PATH_MAX];
-    darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
-    command.Printf ("tell application \"Terminal\"\n    do script \"'%s'", launcher_path);
-    
-    command.Printf(" --unix-socket=%s", unix_socket_name.c_str());
-
-    if (arch_spec && arch_spec->IsValid())
-    {
-        command.Printf(" --arch=%s", arch_spec->AsCString());
-    }
-
-    if (disable_aslr)
-    {
-        command.PutCString(" --disable-aslr");
-    }
-        
-    command.PutCString(" --");
-
-    if (argv)
-    {
-        for (size_t i=0; argv[i] != NULL; ++i)
-        {
-            command.Printf(" '%s'", argv[i]);
-        }
-    }
-    command.PutCString (" ; exit\"\nend tell\n");
-    const char *script_source = command.GetString().c_str();
-    NSAppleScript* applescript = [[NSAppleScript alloc] initWithSource:[NSString stringWithCString:script_source encoding:NSUTF8StringEncoding]];
-
-    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
-
-    Error lldb_error;
-    // Sleep and wait a bit for debugserver to start to listen...
+    const char *connect_url = (const char *)arg;
     ConnectionFileDescriptor file_conn;
-    char connect_url[128];
-    ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name.c_str());
-
-    [applescript executeAndReturnError:nil];
-    if (file_conn.Connect(connect_url, &lldb_error) == eConnectionStatusSuccess)
+    Error error;
+    if (file_conn.Connect (connect_url, &error) == eConnectionStatusSuccess)
     {
         char pid_str[256];
         ::bzero (pid_str, sizeof(pid_str));
@@ -239,18 +177,48 @@ Host::LaunchInNewTerminal
         const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), status, NULL);
         if (pid_str_len > 0)
         {
-            pid = atoi (pid_str);
-            // Sleep for a bit to allow the process to exec and stop at the entry point...
-            sleep(1);
+            int pid = atoi (pid_str);
+            return (void *)(intptr_t)pid;
         }
     }
-    [applescript release];
-    return pid;
+    return NULL;
 }
 
-#else
-lldb::pid_t
-Host::LaunchInNewTerminal 
+static bool
+WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
+{
+    const int time_delta_usecs = 100000;
+    const int num_retries = timeout_in_seconds/time_delta_usecs;
+    for (int i=0; i<num_retries; i++)
+    {
+        struct proc_bsdinfo bsd_info;
+        int error = ::proc_pidinfo (pid, PROC_PIDTBSDINFO, 
+                                    (uint64_t) 0, 
+                                    &bsd_info, 
+                                    PROC_PIDTBSDINFO_SIZE);
+        
+        switch (error)
+        {
+        case EINVAL:
+        case ENOTSUP:
+        case ESRCH:
+        case EPERM:
+            return false;
+        
+        default:
+            break;
+
+        case 0:
+            if (bsd_info.pbi_status == SSTOP)
+                return true;
+        }
+        ::usleep (time_delta_usecs);
+    }
+    return false;
+}
+
+static lldb::pid_t
+LaunchInNewTerminalWithCommandFile 
 (
     const char **argv, 
     const char **envp,
@@ -365,31 +333,158 @@ Host::LaunchInNewTerminal
 
     Error lldb_error;
     // Sleep and wait a bit for debugserver to start to listen...
-    ConnectionFileDescriptor file_conn;
     char connect_url[128];
     ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name.c_str());
 
+    // Spawn a new thread to accept incoming connection on the connect_url
+    // so we can grab the pid from the inferior
+    lldb::thread_t accept_thread = Host::ThreadCreate (unix_socket_name.c_str(),
+                                                       AcceptPIDFromInferior,
+                                                       connect_url,
+                                                       &lldb_error);
+    
     ProcessSerialNumber psn;
     error = LSOpenURLsWithRole(urls.get(), kLSRolesShell, NULL, &app_params, &psn, 1);
     if (error == noErr)
     {
-        if (file_conn.Connect(connect_url, &lldb_error) == eConnectionStatusSuccess)
+        thread_result_t accept_thread_result = NULL;
+        if (Host::ThreadJoin (accept_thread, &accept_thread_result, &lldb_error))
         {
-            char pid_str[256];
-            ::bzero (pid_str, sizeof(pid_str));
-            ConnectionStatus status;
-            const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), status, NULL);
-            if (pid_str_len > 0)
+            if (accept_thread_result)
             {
-                pid = atoi (pid_str);
-                // Sleep for a bit to allow the process to exec and stop at the entry point...
-                sleep(1);
+                pid = (intptr_t)accept_thread_result;
+            
+                // Wait for process to be stopped the the entry point by watching
+                // for the process status to be set to SSTOP which indicates it it
+                // SIGSTOP'ed at the entry point
+                WaitForProcessToSIGSTOP (pid, 5);
             }
         }
     }
+    else
+    {
+        Host::ThreadCancel (accept_thread, &lldb_error);
+    }
+
     return pid;
 }
+
+
+lldb::pid_t
+LaunchInNewTerminalWithAppleScript
+(
+    const char **argv, 
+    const char **envp,
+    const ArchSpec *arch_spec,
+    bool stop_at_entry,
+    bool disable_aslr
+)
+{
+    if (!argv || !argv[0])
+        return LLDB_INVALID_PROCESS_ID;
+    
+    std::string unix_socket_name;
+
+    char temp_file_path[PATH_MAX] = "/tmp/XXXXXX";    
+    if (::mktemp (temp_file_path) == NULL)
+        return LLDB_INVALID_PROCESS_ID;
+
+    unix_socket_name.assign (temp_file_path);
+    
+    StreamString command;
+    
+    FileSpec darwin_debug_file_spec;
+    if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
+        return LLDB_INVALID_PROCESS_ID;
+    darwin_debug_file_spec.GetFilename().SetCString("darwin-debug");
+        
+    if (!darwin_debug_file_spec.Exists())
+        return LLDB_INVALID_PROCESS_ID;
+    
+    char launcher_path[PATH_MAX];
+    darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
+    command.Printf ("tell application \"Terminal\"\n    do script \"'%s'", launcher_path);
+    
+    command.Printf(" --unix-socket=%s", unix_socket_name.c_str());
+
+    if (arch_spec && arch_spec->IsValid())
+    {
+        command.Printf(" --arch=%s", arch_spec->AsCString());
+    }
+
+    if (disable_aslr)
+    {
+        command.PutCString(" --disable-aslr");
+    }
+        
+    command.PutCString(" --");
+
+    if (argv)
+    {
+        for (size_t i=0; argv[i] != NULL; ++i)
+        {
+            command.Printf(" '%s'", argv[i]);
+        }
+    }
+    command.PutCString (" ; echo Process exited with status $?\"\nend tell\n");
+    const char *script_source = command.GetString().c_str();
+    NSAppleScript* applescript = [[NSAppleScript alloc] initWithSource:[NSString stringWithCString:script_source encoding:NSUTF8StringEncoding]];
+
+    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+
+    Error lldb_error;
+    // Sleep and wait a bit for debugserver to start to listen...
+    ConnectionFileDescriptor file_conn;
+    char connect_url[128];
+    ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name.c_str());
+
+    // Spawn a new thread to accept incoming connection on the connect_url
+    // so we can grab the pid from the inferior
+    lldb::thread_t accept_thread = Host::ThreadCreate (unix_socket_name.c_str(),
+                                                       AcceptPIDFromInferior,
+                                                       connect_url,
+                                                       &lldb_error);
+    
+
+    [applescript executeAndReturnError:nil];
+    
+    thread_result_t accept_thread_result = NULL;
+    if (Host::ThreadJoin (accept_thread, &accept_thread_result, &lldb_error))
+    {
+        if (accept_thread_result)
+        {
+            pid = (intptr_t)accept_thread_result;
+        
+            // Wait for process to be stopped the the entry point by watching
+            // for the process status to be set to SSTOP which indicates it it
+            // SIGSTOP'ed at the entry point
+            WaitForProcessToSIGSTOP (pid, 5);
+        }
+    }
+    [applescript release];
+    return pid;
+}
+
+
+#define LLDB_HOST_USE_APPLESCRIPT
+
+lldb::pid_t
+Host::LaunchInNewTerminal 
+(
+    const char **argv, 
+    const char **envp,
+    const ArchSpec *arch_spec,
+    bool stop_at_entry,
+    bool disable_aslr
+)
+{
+#if defined (LLDB_HOST_USE_APPLESCRIPT)
+    return LaunchInNewTerminalWithAppleScript (argv, envp, arch_spec, stop_at_entry, disable_aslr);
+#else
+    return LaunchInNewTerminalWithCommandFile (argv, envp, arch_spec, stop_at_entry, disable_aslr);
 #endif
+}
+
 
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)

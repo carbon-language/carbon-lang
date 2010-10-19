@@ -253,6 +253,11 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     // We are done with the socket
     close (s);
 
+    system("clear");
+    printf ("Launching '%s' for debug with %u arguments:\n", argv[0], argc);
+    for (int i=0; i<argc; ++i)
+        printf ("argv[%u] = '%s'\n", i, argv[i]);
+
     // Now we posix spawn to exec this process into the inferior that we want
     // to debug.
     posix_spawn_for_debug (argv, 
