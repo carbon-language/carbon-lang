@@ -91,7 +91,9 @@ class LoopDependenceAnalysis : public LoopPass {
 
 public:
   static char ID; // Class identification, replacement for typeinfo
-  LoopDependenceAnalysis() : LoopPass(ID) {}
+  LoopDependenceAnalysis() : LoopPass(ID) {
+    initializeLoopDependenceAnalysisPass(*PassRegistry::getPassRegistry());
+  }
 
   /// isDependencePair - Check whether two values can possibly give rise to
   /// a data dependence: that is the case if both are instructions accessing

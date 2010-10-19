@@ -258,6 +258,7 @@ MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI)
   ObjFileMMI(0),
   CurCallSite(0), CallsEHReturn(0), CallsUnwindInit(0), DbgInfoAvailable(false),
   CallsExternalFunctionWithFloatingPointArguments(false) {
+  initializeMachineModuleInfoPass(*PassRegistry::getPassRegistry());
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(NULL);
   AddrLabelSymbols = 0;

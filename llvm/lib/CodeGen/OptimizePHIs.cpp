@@ -33,7 +33,9 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    OptimizePHIs() : MachineFunctionPass(ID) {}
+    OptimizePHIs() : MachineFunctionPass(ID) {
+      initializeOptimizePHIsPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

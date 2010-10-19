@@ -140,8 +140,10 @@ namespace {
   ///
   struct NoAA : public ImmutablePass, public AliasAnalysis {
     static char ID; // Class identification, replacement for typeinfo
-    NoAA() : ImmutablePass(ID) {}
-    explicit NoAA(char &PID) : ImmutablePass(PID) { }
+    NoAA() : ImmutablePass(ID) {
+      initializeNoAAPass(*PassRegistry::getPassRegistry());
+    }
+    explicit NoAA(char &PID) : ImmutablePass(PID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     }
@@ -490,7 +492,9 @@ namespace {
   /// derives from the NoAA class.
   struct BasicAliasAnalysis : public NoAA {
     static char ID; // Class identification, replacement for typeinfo
-    BasicAliasAnalysis() : NoAA(ID) {}
+    BasicAliasAnalysis() : NoAA(ID) {
+      initializeBasicAliasAnalysisPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void initializePass() {
       InitializeAliasAnalysis(this);

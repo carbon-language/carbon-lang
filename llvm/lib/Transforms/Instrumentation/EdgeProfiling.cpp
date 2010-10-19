@@ -34,7 +34,9 @@ namespace {
     bool runOnModule(Module &M);
   public:
     static char ID; // Pass identification, replacement for typeid
-    EdgeProfiler() : ModulePass(ID) {}
+    EdgeProfiler() : ModulePass(ID) {
+      initializeEdgeProfilerPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual const char *getPassName() const {
       return "Edge Profiler";

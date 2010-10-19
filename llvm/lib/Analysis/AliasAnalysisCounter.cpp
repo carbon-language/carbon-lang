@@ -35,6 +35,7 @@ namespace {
   public:
     static char ID; // Class identification, replacement for typeinfo
     AliasAnalysisCounter() : ModulePass(ID) {
+      initializeAliasAnalysisCounterPass(*PassRegistry::getPassRegistry());
       No = May = Must = 0;
       NoMR = JustRef = JustMod = MR = 0;
     }

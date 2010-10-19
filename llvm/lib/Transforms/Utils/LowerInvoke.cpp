@@ -79,7 +79,9 @@ namespace {
     explicit LowerInvoke(const TargetLowering *tli = NULL,
                          bool useExpensiveEHSupport = ExpensiveEHSupport)
       : FunctionPass(ID), useExpensiveEHSupport(useExpensiveEHSupport),
-        TLI(tli) { }
+        TLI(tli) {
+      initializeLowerInvokePass(*PassRegistry::getPassRegistry());
+    }
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
 

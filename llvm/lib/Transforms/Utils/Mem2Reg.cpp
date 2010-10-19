@@ -27,7 +27,9 @@ STATISTIC(NumPromoted, "Number of alloca's promoted");
 namespace {
   struct PromotePass : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    PromotePass() : FunctionPass(ID) {}
+    PromotePass() : FunctionPass(ID) {
+      initializePromotePassPass(*PassRegistry::getPassRegistry());
+    }
 
     // runOnFunction - To run this pass, first we calculate the alloca
     // instructions that are safe for promotion, then we promote each one.

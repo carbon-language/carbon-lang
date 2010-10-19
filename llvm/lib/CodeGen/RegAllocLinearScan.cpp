@@ -91,6 +91,17 @@ namespace {
   struct RALinScan : public MachineFunctionPass {
     static char ID;
     RALinScan() : MachineFunctionPass(ID) {
+      initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
+      initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
+      initializeRegisterCoalescerAnalysisGroup(
+        *PassRegistry::getPassRegistry());
+      initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
+      initializePreAllocSplittingPass(*PassRegistry::getPassRegistry());
+      initializeLiveStacksPass(*PassRegistry::getPassRegistry());
+      initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
+      initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
+      initializeMachineDominatorTreePass(*PassRegistry::getPassRegistry());
+      
       // Initialize the queue to record recently-used registers.
       if (NumRecentlyUsedRegs > 0)
         RecentRegs.resize(NumRecentlyUsedRegs, 0);

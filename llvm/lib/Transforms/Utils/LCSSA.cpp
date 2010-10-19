@@ -47,7 +47,9 @@ STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 namespace {
   struct LCSSA : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
-    LCSSA() : LoopPass(ID) {}
+    LCSSA() : LoopPass(ID) {
+      initializeLCSSAPass(*PassRegistry::getPassRegistry());
+    }
 
     // Cached analysis information for the current function.
     DominatorTree *DT;

@@ -91,8 +91,9 @@ namespace {
 
   public:
     static char ID;
-    PreAllocSplitting()
-      : MachineFunctionPass(ID) {}
+    PreAllocSplitting() : MachineFunctionPass(ID) {
+      initializePreAllocSplittingPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

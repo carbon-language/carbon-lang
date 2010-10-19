@@ -34,7 +34,10 @@ namespace {
 
   public:
     static char ID; // Class identification, replacement for typeinfo
-    ScalarEvolutionAliasAnalysis() : FunctionPass(ID), SE(0) {}
+    ScalarEvolutionAliasAnalysis() : FunctionPass(ID), SE(0) {
+      initializeScalarEvolutionAliasAnalysisPass(
+        *PassRegistry::getPassRegistry());
+    }
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it

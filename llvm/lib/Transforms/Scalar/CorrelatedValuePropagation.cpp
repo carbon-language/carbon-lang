@@ -39,7 +39,9 @@ namespace {
     
   public:
     static char ID;
-    CorrelatedValuePropagation(): FunctionPass(ID) { }
+    CorrelatedValuePropagation(): FunctionPass(ID) {
+     initializeCorrelatedValuePropagationPass(*PassRegistry::getPassRegistry());
+    }
     
     bool runOnFunction(Function &F);
     

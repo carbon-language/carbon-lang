@@ -41,7 +41,9 @@ STATISTIC(NumMoved, "Number of basic blocks moved");
 namespace {
   struct BlockPlacement : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    BlockPlacement() : FunctionPass(ID) {}
+    BlockPlacement() : FunctionPass(ID) {
+      initializeBlockPlacementPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnFunction(Function &F);
 

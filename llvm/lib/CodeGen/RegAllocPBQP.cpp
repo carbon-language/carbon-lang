@@ -84,7 +84,18 @@ public:
   static char ID;
 
   /// Construct a PBQP register allocator.
-  RegAllocPBQP(std::auto_ptr<PBQPBuilder> b) : MachineFunctionPass(ID), builder(b) {}
+  RegAllocPBQP(std::auto_ptr<PBQPBuilder> b)
+      : MachineFunctionPass(ID), builder(b) {
+    initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
+    initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
+    initializeRegisterCoalescerAnalysisGroup(*PassRegistry::getPassRegistry());
+    initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
+    initializeLiveStacksPass(*PassRegistry::getPassRegistry());
+    initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
+    initializeLoopSplitterPass(*PassRegistry::getPassRegistry());
+    initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
+    initializeRenderMachineFunctionPass(*PassRegistry::getPassRegistry());
+  }
 
   /// Return the pass name.
   virtual const char* getPassName() const {

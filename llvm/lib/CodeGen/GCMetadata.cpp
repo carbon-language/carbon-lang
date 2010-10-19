@@ -69,7 +69,9 @@ GCFunctionInfo::~GCFunctionInfo() {}
 char GCModuleInfo::ID = 0;
 
 GCModuleInfo::GCModuleInfo()
-  : ImmutablePass(ID) {}
+    : ImmutablePass(ID) {
+  initializeGCModuleInfoPass(*PassRegistry::getPassRegistry());
+}
 
 GCModuleInfo::~GCModuleInfo() {
   clear();

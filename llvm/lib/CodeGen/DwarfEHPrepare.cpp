@@ -100,7 +100,9 @@ namespace {
     DwarfEHPrepare(const TargetMachine *tm) :
       FunctionPass(ID), TM(tm), TLI(TM->getTargetLowering()),
       ExceptionValueIntrinsic(0), SelectorIntrinsic(0),
-      URoR(0), EHCatchAllValue(0), RewindFunction(0) {}
+      URoR(0), EHCatchAllValue(0), RewindFunction(0) {
+        initializeDominatorTreePass(*PassRegistry::getPassRegistry());
+      }
 
     virtual bool runOnFunction(Function &Fn);
 

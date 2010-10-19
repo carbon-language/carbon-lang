@@ -177,8 +177,10 @@ SelectionDAGISel::SelectionDAGISel(const TargetMachine &tm, CodeGenOpt::Level OL
   SDB(new SelectionDAGBuilder(*CurDAG, *FuncInfo, OL)),
   GFI(),
   OptLevel(OL),
-  DAGSize(0)
-{}
+  DAGSize(0) {
+    initializeGCModuleInfoPass(*PassRegistry::getPassRegistry());
+    initializeAliasAnalysisAnalysisGroup(*PassRegistry::getPassRegistry());
+  }
 
 SelectionDAGISel::~SelectionDAGISel() {
   delete SDB;

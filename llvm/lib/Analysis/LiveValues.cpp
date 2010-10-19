@@ -29,7 +29,9 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_END(LiveValues, "live-values",
                 "Value Liveness Analysis", false, true)
 
-LiveValues::LiveValues() : FunctionPass(ID) {}
+LiveValues::LiveValues() : FunctionPass(ID) {
+  initializeLiveValuesPass(*PassRegistry::getPassRegistry());
+}
 
 void LiveValues::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTree>();

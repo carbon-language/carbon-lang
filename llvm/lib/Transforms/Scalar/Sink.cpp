@@ -35,7 +35,9 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    Sinking() : FunctionPass(ID) {}
+    Sinking() : FunctionPass(ID) {
+      initializeSinkingPass(*PassRegistry::getPassRegistry());
+    }
     
     virtual bool runOnFunction(Function &F);
     

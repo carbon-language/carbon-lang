@@ -39,7 +39,9 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripSymbols(bool ODI = false) 
-      : ModulePass(ID), OnlyDebugInfo(ODI) {}
+      : ModulePass(ID), OnlyDebugInfo(ODI) {
+        initializeStripSymbolsPass(*PassRegistry::getPassRegistry());
+      }
 
     virtual bool runOnModule(Module &M);
 
@@ -52,7 +54,9 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripNonDebugSymbols()
-      : ModulePass(ID) {}
+      : ModulePass(ID) {
+        initializeStripNonDebugSymbolsPass(*PassRegistry::getPassRegistry());
+      }
 
     virtual bool runOnModule(Module &M);
 
@@ -65,7 +69,9 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripDebugDeclare()
-      : ModulePass(ID) {}
+      : ModulePass(ID) {
+        initializeStripDebugDeclarePass(*PassRegistry::getPassRegistry());
+      }
 
     virtual bool runOnModule(Module &M);
 
@@ -78,7 +84,9 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripDeadDebugInfo()
-      : ModulePass(ID) {}
+      : ModulePass(ID) {
+        initializeStripDeadDebugInfoPass(*PassRegistry::getPassRegistry());
+      }
 
     virtual bool runOnModule(Module &M);
 

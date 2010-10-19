@@ -95,9 +95,13 @@ namespace {
   public:
     static char ID; // Pass identification
     StackSlotColoring() :
-      MachineFunctionPass(ID), ColorWithRegs(false), NextColor(-1) {}
+      MachineFunctionPass(ID), ColorWithRegs(false), NextColor(-1) {
+        initializeStackSlotColoringPass(*PassRegistry::getPassRegistry());
+      }
     StackSlotColoring(bool RegColor) :
-      MachineFunctionPass(ID), ColorWithRegs(RegColor), NextColor(-1) {}
+      MachineFunctionPass(ID), ColorWithRegs(RegColor), NextColor(-1) {
+        initializeStackSlotColoringPass(*PassRegistry::getPassRegistry());
+      }
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();

@@ -72,7 +72,9 @@ STATISTIC(NumAccumAdded, "Number of accumulators introduced");
 namespace {
   struct TailCallElim : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    TailCallElim() : FunctionPass(ID) {}
+    TailCallElim() : FunctionPass(ID) {
+      initializeTailCallElimPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnFunction(Function &F);
 

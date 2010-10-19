@@ -36,7 +36,9 @@ namespace llvm {
   public:
     static char ID;
 
-    LoopSplitter() : MachineFunctionPass(ID) {}
+    LoopSplitter() : MachineFunctionPass(ID) {
+      initializeLoopSplitterPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &au) const;
 

@@ -939,7 +939,9 @@ class LoopInfo : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  LoopInfo() : FunctionPass(ID) {}
+  LoopInfo() : FunctionPass(ID) {
+    initializeLoopInfoPass(*PassRegistry::getPassRegistry());
+  }
 
   LoopInfoBase<BasicBlock, Loop>& getBase() { return LI; }
 

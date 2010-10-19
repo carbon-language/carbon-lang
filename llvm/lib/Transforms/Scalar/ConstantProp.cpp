@@ -34,7 +34,9 @@ STATISTIC(NumInstKilled, "Number of instructions killed");
 namespace {
   struct ConstantPropagation : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    ConstantPropagation() : FunctionPass(ID) {}
+    ConstantPropagation() : FunctionPass(ID) {
+      initializeConstantPropagationPass(*PassRegistry::getPassRegistry());
+    }
 
     bool runOnFunction(Function &F);
 

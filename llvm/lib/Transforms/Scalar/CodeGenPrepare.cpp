@@ -63,7 +63,9 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit CodeGenPrepare(const TargetLowering *tli = 0)
-      : FunctionPass(ID), TLI(tli) {}
+      : FunctionPass(ID), TLI(tli) {
+        initializeCodeGenPreparePass(*PassRegistry::getPassRegistry());
+      }
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

@@ -77,7 +77,9 @@ namespace {
   public:
     static char ID;
     CBackendNameAllUsedStructsAndMergeFunctions()
-      : ModulePass(ID) {}
+        : ModulePass(ID) {
+          initializeFindUsedTypesPass(*PassRegistry::getPassRegistry());
+        }
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FindUsedTypes>();
     }
@@ -117,6 +119,7 @@ namespace {
       : FunctionPass(ID), Out(o), IL(0), Mang(0), LI(0),
         TheModule(0), TAsm(0), TCtx(0), TD(0), OpaqueCounter(0),
         NextAnonValueNumber(0) {
+      initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       FPCounter = 0;
     }
 

@@ -39,7 +39,9 @@ using namespace llvm;
 namespace {
   struct StrongPHIElimination : public MachineFunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    StrongPHIElimination() : MachineFunctionPass(ID) {}
+    StrongPHIElimination() : MachineFunctionPass(ID) {
+      initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
+    }
 
     // Waiting stores, for each MBB, the set of copies that need to
     // be inserted into that MBB

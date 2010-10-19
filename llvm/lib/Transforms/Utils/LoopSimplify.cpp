@@ -65,7 +65,9 @@ STATISTIC(NumNested  , "Number of nested loops split out");
 namespace {
   struct LoopSimplify : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
-    LoopSimplify() : LoopPass(ID) {}
+    LoopSimplify() : LoopPass(ID) {
+      initializeLoopSimplifyPass(*PassRegistry::getPassRegistry());
+    }
 
     // AA - If we have an alias analysis object to update, this is it, otherwise
     // this is null.
@@ -111,11 +113,6 @@ INITIALIZE_PASS_BEGIN(LoopSimplify, "loopsimplify",
                 "Canonicalize natural loops", true, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_DEPENDENCY(BreakCriticalEdges)
-INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
-INITIALIZE_PASS_DEPENDENCY(LCSSA)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(LoopSimplify, "loopsimplify",
                 "Canonicalize natural loops", true, false)
 

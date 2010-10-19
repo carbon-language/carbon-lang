@@ -138,7 +138,9 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    TwoAddressInstructionPass() : MachineFunctionPass(ID) {}
+    TwoAddressInstructionPass() : MachineFunctionPass(ID) {
+      initializeTwoAddressInstructionPassPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();

@@ -1374,7 +1374,9 @@ namespace {
     bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
-    SimplifyLibCalls() : FunctionPass(ID), StrCpy(false), StrCpyChk(true) {}
+    SimplifyLibCalls() : FunctionPass(ID), StrCpy(false), StrCpyChk(true) {
+      initializeSimplifyLibCallsPass(*PassRegistry::getPassRegistry());
+    }
     void InitOptimizations();
     bool runOnFunction(Function &F);
 

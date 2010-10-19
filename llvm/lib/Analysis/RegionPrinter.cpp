@@ -121,14 +121,18 @@ namespace {
 struct RegionViewer
   : public DOTGraphTraitsViewer<RegionInfo, false> {
   static char ID;
-  RegionViewer() : DOTGraphTraitsViewer<RegionInfo, false>("reg", ID){}
+  RegionViewer() : DOTGraphTraitsViewer<RegionInfo, false>("reg", ID){
+    initializeRegionViewerPass(*PassRegistry::getPassRegistry());
+  }
 };
 char RegionViewer::ID = 0;
 
 struct RegionOnlyViewer
   : public DOTGraphTraitsViewer<RegionInfo, true> {
   static char ID;
-  RegionOnlyViewer() : DOTGraphTraitsViewer<RegionInfo, true>("regonly", ID){}
+  RegionOnlyViewer() : DOTGraphTraitsViewer<RegionInfo, true>("regonly", ID) {
+    initializeRegionOnlyViewerPass(*PassRegistry::getPassRegistry());
+  }
 };
 char RegionOnlyViewer::ID = 0;
 
@@ -136,7 +140,9 @@ struct RegionPrinter
   : public DOTGraphTraitsPrinter<RegionInfo, false> {
   static char ID;
   RegionPrinter() :
-    DOTGraphTraitsPrinter<RegionInfo, false>("reg", ID) {}
+    DOTGraphTraitsPrinter<RegionInfo, false>("reg", ID) {
+      initializeRegionPrinterPass(*PassRegistry::getPassRegistry());
+    }
 };
 char RegionPrinter::ID = 0;
 } //end anonymous namespace
@@ -157,7 +163,9 @@ struct RegionOnlyPrinter
   : public DOTGraphTraitsPrinter<RegionInfo, true> {
   static char ID;
   RegionOnlyPrinter() :
-    DOTGraphTraitsPrinter<RegionInfo, true>("reg", ID) {}
+    DOTGraphTraitsPrinter<RegionInfo, true>("reg", ID) {
+      initializeRegionOnlyPrinterPass(*PassRegistry::getPassRegistry());
+    }
 };
 
 }

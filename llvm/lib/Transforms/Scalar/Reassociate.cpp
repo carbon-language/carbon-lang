@@ -77,7 +77,9 @@ namespace {
     bool MadeChange;
   public:
     static char ID; // Pass identification, replacement for typeid
-    Reassociate() : FunctionPass(ID) {}
+    Reassociate() : FunctionPass(ID) {
+      initializeReassociatePass(*PassRegistry::getPassRegistry());
+    }
 
     bool runOnFunction(Function &F);
 

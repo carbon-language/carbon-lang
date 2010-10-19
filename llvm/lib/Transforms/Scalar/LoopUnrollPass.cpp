@@ -43,7 +43,9 @@ namespace {
   class LoopUnroll : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopUnroll() : LoopPass(ID) {}
+    LoopUnroll() : LoopPass(ID) {
+      initializeLoopUnrollPass(*PassRegistry::getPassRegistry());
+    }
 
     /// A magic value for use with the Threshold parameter to indicate
     /// that the loop unroll should be performed regardless of how much

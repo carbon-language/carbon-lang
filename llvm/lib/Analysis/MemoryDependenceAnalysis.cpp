@@ -55,6 +55,7 @@ INITIALIZE_PASS_END(MemoryDependenceAnalysis, "memdep",
 
 MemoryDependenceAnalysis::MemoryDependenceAnalysis()
 : FunctionPass(ID), PredCache(0) {
+  initializeMemoryDependenceAnalysisPass(*PassRegistry::getPassRegistry());
 }
 MemoryDependenceAnalysis::~MemoryDependenceAnalysis() {
 }

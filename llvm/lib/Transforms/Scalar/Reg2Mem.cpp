@@ -36,7 +36,9 @@ STATISTIC(NumPhisDemoted, "Number of phi-nodes demoted");
 namespace {
   struct RegToMem : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    RegToMem() : FunctionPass(ID) {}
+    RegToMem() : FunctionPass(ID) {
+      initializeRegToMemPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);

@@ -33,7 +33,9 @@ namespace {
   class LowerSwitch : public FunctionPass {
   public:
     static char ID; // Pass identification, replacement for typeid
-    LowerSwitch() : FunctionPass(ID) {} 
+    LowerSwitch() : FunctionPass(ID) {
+      initializeLowerSwitchPass(*PassRegistry::getPassRegistry());
+    } 
 
     virtual bool runOnFunction(Function &F);
     

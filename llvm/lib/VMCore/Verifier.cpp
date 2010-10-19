@@ -72,7 +72,9 @@ namespace {  // Anonymous namespace for class
   struct PreVerifier : public FunctionPass {
     static char ID; // Pass ID, replacement for typeid
 
-    PreVerifier() : FunctionPass(ID) { }
+    PreVerifier() : FunctionPass(ID) {
+      initializePreVerifierPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -184,11 +186,15 @@ namespace {
     Verifier()
       : FunctionPass(ID), 
       Broken(false), RealPass(true), action(AbortProcessAction),
-      Mod(0), Context(0), DT(0), MessagesStr(Messages) {}
+      Mod(0), Context(0), DT(0), MessagesStr(Messages) {
+        initializeVerifierPass(*PassRegistry::getPassRegistry());
+      }
     explicit Verifier(VerifierFailureAction ctn)
       : FunctionPass(ID), 
       Broken(false), RealPass(true), action(ctn), Mod(0), Context(0), DT(0),
-      MessagesStr(Messages) {}
+      MessagesStr(Messages) {
+        initializeVerifierPass(*PassRegistry::getPassRegistry());
+      }
 
     bool doInitialization(Module &M) {
       Mod = &M;

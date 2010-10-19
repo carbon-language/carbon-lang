@@ -37,7 +37,9 @@ namespace {
     unsigned NumLoops;
 
     explicit LoopExtractor(unsigned numLoops = ~0) 
-      : LoopPass(ID), NumLoops(numLoops) {}
+      : LoopPass(ID), NumLoops(numLoops) {
+        initializeLoopExtractorPass(*PassRegistry::getPassRegistry());
+      }
 
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 

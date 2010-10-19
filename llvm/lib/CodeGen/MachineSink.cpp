@@ -57,7 +57,9 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    MachineSinking() : MachineFunctionPass(ID) {}
+    MachineSinking() : MachineFunctionPass(ID) {
+      initializeMachineSinkingPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

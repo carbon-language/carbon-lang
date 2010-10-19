@@ -41,7 +41,9 @@ STATISTIC(NumNoAlias, "Number of function returns marked noalias");
 namespace {
   struct FunctionAttrs : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
-    FunctionAttrs() : CallGraphSCCPass(ID) {}
+    FunctionAttrs() : CallGraphSCCPass(ID) {
+      initializeFunctionAttrsPass(*PassRegistry::getPassRegistry());
+    }
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
     bool runOnSCC(CallGraphSCC &SCC);

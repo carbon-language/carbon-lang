@@ -63,7 +63,9 @@ namespace llvm {
 
   public:
     static char ID; // Pass identifcation, replacement for typeid
-    SimpleRegisterCoalescing() : MachineFunctionPass(ID) {}
+    SimpleRegisterCoalescing() : MachineFunctionPass(ID) {
+      initializeSimpleRegisterCoalescingPass(*PassRegistry::getPassRegistry());
+    }
 
     struct InstrSlots {
       enum {

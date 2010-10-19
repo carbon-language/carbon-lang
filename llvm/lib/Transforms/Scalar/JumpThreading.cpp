@@ -86,7 +86,9 @@ namespace {
     };
   public:
     static char ID; // Pass identification
-    JumpThreading() : FunctionPass(ID) {}
+    JumpThreading() : FunctionPass(ID) {
+      initializeJumpThreadingPass(*PassRegistry::getPassRegistry());
+    }
 
     bool runOnFunction(Function &F);
     

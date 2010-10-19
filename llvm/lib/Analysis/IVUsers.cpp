@@ -149,7 +149,8 @@ IVStrideUse &IVUsers::AddUser(Instruction *User, Value *Operand) {
 }
 
 IVUsers::IVUsers()
- : LoopPass(ID) {
+    : LoopPass(ID) {
+  initializeIVUsersPass(*PassRegistry::getPassRegistry());
 }
 
 void IVUsers::getAnalysisUsage(AnalysisUsage &AU) const {

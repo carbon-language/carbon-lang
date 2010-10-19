@@ -46,7 +46,9 @@ namespace {
     InlineCostAnalyzer CA;
   public :
     static char ID; // Pass identification, replacement for typeid
-    PartSpec() : ModulePass(ID) {}
+    PartSpec() : ModulePass(ID) {
+      initializePartSpecPass(*PassRegistry::getPassRegistry());
+    }
     bool runOnModule(Module &M);
   };
 }

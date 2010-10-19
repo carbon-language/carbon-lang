@@ -151,8 +151,7 @@ private:
         sys::MemoryFence(); \
       } \
     } \
-  } \
-  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
+  }
 
 #define INITIALIZE_PASS_BEGIN(passName, arg, name, cfg, analysis) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) {
@@ -183,8 +182,7 @@ private:
         sys::MemoryFence(); \
       } \
     } \
-  } \
-  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis);
+  }
 
 template<typename PassName>
 Pass *callDefaultCtor() { return new PassName(); }
@@ -282,12 +280,12 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
         sys::MemoryFence(); \
       } \
     } \
-  } \
-  static RegisterAnalysisGroup<agName> agName##_info (name);
+  }
 
 
 #define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
+    if (!def) initialize##agName##AnalysisGroup(Registry); \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
     Registry.registerPass(*PI); \
@@ -311,13 +309,12 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
         sys::MemoryFence(); \
       } \
     } \
-  } \
-  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis); \
-  static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
+  }
 
 
 #define INITIALIZE_AG_PASS_BEGIN(passName, agName, arg, n, cfg, analysis, def) \
-  static void* initialize##passName##PassOnce(PassRegistry &Registry) {
+  static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
+    if (!def) initialize##agName##AnalysisGroup(Registry);
 
 #define INITIALIZE_AG_PASS_END(passName, agName, arg, n, cfg, analysis, def) \
     PassInfo *PI = new PassInfo(n, arg, & passName ::ID, \
@@ -343,9 +340,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
         sys::MemoryFence(); \
       } \
     } \
-  } \
-  static RegisterPass<passName> passName ## _info(arg, n, cfg, analysis); \
-  static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info);
+  }
 
 //===---------------------------------------------------------------------------
 /// PassRegistrationListener class - This class is meant to be derived from by

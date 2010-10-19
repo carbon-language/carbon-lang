@@ -123,6 +123,11 @@ GCFunctionInfo *GCStrategy::insertFunctionInfo(const Function &F) {
 
 // -----------------------------------------------------------------------------
 
+INITIALIZE_PASS_BEGIN(LowerIntrinsics, "gc-lowering", "GC Lowering",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(GCModuleInfo)
+INITIALIZE_PASS_END(LowerIntrinsics, "gc-lowering", "GC Lowering", false, false)
+
 FunctionPass *llvm::createGCLoweringPass() {
   return new LowerIntrinsics();
 }
@@ -130,7 +135,9 @@ FunctionPass *llvm::createGCLoweringPass() {
 char LowerIntrinsics::ID = 0;
 
 LowerIntrinsics::LowerIntrinsics()
-  : FunctionPass(ID) {}
+  : FunctionPass(ID) {
+    initializeLowerIntrinsicsPass(*PassRegistry::getPassRegistry());
+  }
 
 const char *LowerIntrinsics::getPassName() const {
   return "Lower Garbage Collection Instructions";

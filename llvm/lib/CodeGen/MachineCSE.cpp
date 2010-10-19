@@ -41,7 +41,9 @@ namespace {
     MachineRegisterInfo *MRI;
   public:
     static char ID; // Pass identification
-    MachineCSE() : MachineFunctionPass(ID), LookAheadLimit(5), CurrVN(0) {}
+    MachineCSE() : MachineFunctionPass(ID), LookAheadLimit(5), CurrVN(0) {
+      initializeMachineCSEPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     

@@ -51,7 +51,9 @@ namespace {
     }
   public:
     static char ID; // Pass identification, replacement for typeid
-    InstCount() : FunctionPass(ID) {}
+    InstCount() : FunctionPass(ID) {
+      initializeInstCountPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnFunction(Function &F);
 

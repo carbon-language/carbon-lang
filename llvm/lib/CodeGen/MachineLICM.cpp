@@ -101,10 +101,14 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     MachineLICM() :
-      MachineFunctionPass(ID), PreRegAlloc(true) {}
+      MachineFunctionPass(ID), PreRegAlloc(true) {
+        initializeMachineLICMPass(*PassRegistry::getPassRegistry());
+      }
 
     explicit MachineLICM(bool PreRA) :
-      MachineFunctionPass(ID), PreRegAlloc(PreRA) {}
+      MachineFunctionPass(ID), PreRegAlloc(PreRA) {
+        initializeMachineLICMPass(*PassRegistry::getPassRegistry());
+      }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

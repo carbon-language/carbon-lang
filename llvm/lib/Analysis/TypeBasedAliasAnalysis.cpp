@@ -85,7 +85,9 @@ namespace {
                                  public AliasAnalysis {
   public:
     static char ID; // Class identification, replacement for typeinfo
-    TypeBasedAliasAnalysis() : ImmutablePass(ID) {}
+    TypeBasedAliasAnalysis() : ImmutablePass(ID) {
+      initializeTypeBasedAliasAnalysisPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void initializePass() {
       InitializeAliasAnalysis(this);

@@ -158,7 +158,9 @@ namespace {
     int FnNum;
   public:
     static char ID;
-    IfConverter() : MachineFunctionPass(ID), FnNum(-1) {}
+    IfConverter() : MachineFunctionPass(ID), FnNum(-1) {
+      initializeIfConverterPass(*PassRegistry::getPassRegistry());
+    }
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineLoopInfo>();

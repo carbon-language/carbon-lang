@@ -77,7 +77,9 @@ namespace {
   public:
 
     static char ID; // Pass identification, replacement for typeid
-    IndVarSimplify() : LoopPass(ID) {}
+    IndVarSimplify() : LoopPass(ID) {
+      initializeIndVarSimplifyPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 

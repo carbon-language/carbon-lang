@@ -26,6 +26,7 @@ struct PostDominatorTree : public FunctionPass {
   DominatorTreeBase<BasicBlock>* DT;
 
   PostDominatorTree() : FunctionPass(ID) {
+    initializePostDominatorTreePass(*PassRegistry::getPassRegistry());
     DT = new DominatorTreeBase<BasicBlock>(true);
   }
 
@@ -106,7 +107,9 @@ template <> struct GraphTraits<PostDominatorTree*>
 struct PostDominanceFrontier : public DominanceFrontierBase {
   static char ID;
   PostDominanceFrontier()
-    : DominanceFrontierBase(ID, true) {}
+    : DominanceFrontierBase(ID, true) {
+      initializePostDominanceFrontierPass(*PassRegistry::getPassRegistry());
+    }
 
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();

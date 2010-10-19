@@ -62,7 +62,9 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    PeepholeOptimizer() : MachineFunctionPass(ID) {}
+    PeepholeOptimizer() : MachineFunctionPass(ID) {
+      initializePeepholeOptimizerPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

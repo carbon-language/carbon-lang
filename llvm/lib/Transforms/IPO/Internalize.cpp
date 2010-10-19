@@ -68,6 +68,7 @@ INITIALIZE_PASS(InternalizePass, "internalize",
 
 InternalizePass::InternalizePass(bool AllButMain)
   : ModulePass(ID), AllButMain(AllButMain){
+  initializeInternalizePassPass(*PassRegistry::getPassRegistry());
   if (!APIFile.empty())           // If a filename is specified, use it.
     LoadFile(APIFile.c_str());
   if (!APIList.empty())           // If a list is specified, use it as well.
@@ -76,6 +77,7 @@ InternalizePass::InternalizePass(bool AllButMain)
 
 InternalizePass::InternalizePass(const std::vector<const char *>&exportList)
   : ModulePass(ID), AllButMain(false){
+  initializeInternalizePassPass(*PassRegistry::getPassRegistry());
   for(std::vector<const char *>::const_iterator itr = exportList.begin();
         itr != exportList.end(); itr++) {
     ExternalNames.insert(*itr);

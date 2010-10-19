@@ -31,7 +31,9 @@ namespace {
     DepSetMap Deps;
 
     static char ID; // Pass identifcation, replacement for typeid
-    MemDepPrinter() : FunctionPass(ID) {}
+    MemDepPrinter() : FunctionPass(ID) {
+      initializeMemDepPrinterPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnFunction(Function &F);
 

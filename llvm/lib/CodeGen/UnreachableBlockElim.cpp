@@ -43,7 +43,9 @@ namespace {
     virtual bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid
-    UnreachableBlockElim() : FunctionPass(ID) {}
+    UnreachableBlockElim() : FunctionPass(ID) {
+      initializeUnreachableBlockElimPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<ProfileInfo>();

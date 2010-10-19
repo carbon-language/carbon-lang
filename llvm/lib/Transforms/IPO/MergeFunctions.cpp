@@ -151,7 +151,9 @@ namespace {
 class MergeFunctions : public ModulePass {
 public:
   static char ID;
-  MergeFunctions() : ModulePass(ID) {}
+  MergeFunctions() : ModulePass(ID) {
+    initializeMergeFunctionsPass(*PassRegistry::getPassRegistry());
+  }
 
   bool runOnModule(Module &M);
 

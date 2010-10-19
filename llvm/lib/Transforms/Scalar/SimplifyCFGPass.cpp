@@ -42,7 +42,9 @@ STATISTIC(NumSimpl, "Number of blocks simplified");
 namespace {
   struct CFGSimplifyPass : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    CFGSimplifyPass() : FunctionPass(ID) {}
+    CFGSimplifyPass() : FunctionPass(ID) {
+      initializeCFGSimplifyPassPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnFunction(Function &F);
   };

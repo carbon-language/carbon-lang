@@ -662,6 +662,7 @@ void RegionInfo::releaseMemory() {
 }
 
 RegionInfo::RegionInfo() : FunctionPass(ID) {
+  initializeRegionInfoPass(*PassRegistry::getPassRegistry());
   TopLevelRegion = 0;
 }
 

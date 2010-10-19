@@ -23,7 +23,9 @@ using namespace llvm;
 namespace {
   struct InstNamer : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    InstNamer() : FunctionPass(ID) {}
+    InstNamer() : FunctionPass(ID) {
+      initializeInstNamerPass(*PassRegistry::getPassRegistry());
+    }
     
     void getAnalysisUsage(AnalysisUsage &Info) const {
       Info.setPreservesAll();

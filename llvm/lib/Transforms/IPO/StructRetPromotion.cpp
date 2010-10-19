@@ -50,7 +50,9 @@ namespace {
 
     virtual bool runOnSCC(CallGraphSCC &SCC);
     static char ID; // Pass identification, replacement for typeid
-    SRETPromotion() : CallGraphSCCPass(ID) {}
+    SRETPromotion() : CallGraphSCCPass(ID) {
+      initializeSRETPromotionPass(*PassRegistry::getPassRegistry());
+    }
 
   private:
     CallGraphNode *PromoteReturn(CallGraphNode *CGN);

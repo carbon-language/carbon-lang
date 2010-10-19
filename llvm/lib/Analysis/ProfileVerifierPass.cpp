@@ -60,10 +60,12 @@ namespace llvm {
     static char ID; // Class identification, replacement for typeinfo
 
     explicit ProfileVerifierPassT () : FunctionPass(ID) {
+      initializeProfileVerifierPassPass(*PassRegistry::getPassRegistry());
       DisableAssertions = ProfileVerifierDisableAssertions;
     }
     explicit ProfileVerifierPassT (bool da) : FunctionPass(ID), 
                                               DisableAssertions(da) {
+      initializeProfileVerifierPassPass(*PassRegistry::getPassRegistry());
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {

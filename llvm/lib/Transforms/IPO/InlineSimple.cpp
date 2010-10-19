@@ -33,8 +33,12 @@ namespace {
     SmallPtrSet<const Function*, 16> NeverInline; 
     InlineCostAnalyzer CA;
   public:
-    SimpleInliner() : Inliner(ID) {}
-    SimpleInliner(int Threshold) : Inliner(ID, Threshold) {}
+    SimpleInliner() : Inliner(ID) {
+      initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
+    }
+    SimpleInliner(int Threshold) : Inliner(ID, Threshold) {
+      initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
+    }
     static char ID; // Pass identification, replacement for typeid
     InlineCost getInlineCost(CallSite CS) {
       return CA.getInlineCost(CS, NeverInline);

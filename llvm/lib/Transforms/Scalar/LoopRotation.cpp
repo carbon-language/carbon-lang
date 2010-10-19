@@ -35,7 +35,9 @@ namespace {
   class LoopRotate : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopRotate() : LoopPass(ID) {}
+    LoopRotate() : LoopPass(ID) {
+      initializeLoopRotatePass(*PassRegistry::getPassRegistry());
+    }
 
     // Rotate Loop L as many times as possible. Return true if
     // loop is rotated at least once.

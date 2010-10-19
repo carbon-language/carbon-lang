@@ -88,7 +88,9 @@ namespace {
 
   public:
     static char ID;
-    GlobalsModRef() : ModulePass(ID) {}
+    GlobalsModRef() : ModulePass(ID) {
+      initializeGlobalsModRefPass(*PassRegistry::getPassRegistry());
+    }
 
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);                 // set up super class

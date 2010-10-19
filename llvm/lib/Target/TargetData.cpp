@@ -131,6 +131,8 @@ static unsigned getInt(StringRef R) {
 }
 
 void TargetData::init(StringRef Desc) {
+  initializeTargetDataPass(*PassRegistry::getPassRegistry());
+  
   LayoutMap = 0;
   LittleEndian = false;
   PointerMemSize = 8;

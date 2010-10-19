@@ -86,27 +86,35 @@ namespace {
 struct DomViewer
   : public DOTGraphTraitsViewer<DominatorTree, false> {
   static char ID;
-  DomViewer() : DOTGraphTraitsViewer<DominatorTree, false>("dom", ID){}
+  DomViewer() : DOTGraphTraitsViewer<DominatorTree, false>("dom", ID){
+    initializeDomViewerPass(*PassRegistry::getPassRegistry());
+  }
 };
 
 struct DomOnlyViewer
   : public DOTGraphTraitsViewer<DominatorTree, true> {
   static char ID;
-  DomOnlyViewer() : DOTGraphTraitsViewer<DominatorTree, true>("domonly", ID){}
+  DomOnlyViewer() : DOTGraphTraitsViewer<DominatorTree, true>("domonly", ID){
+    initializeDomOnlyViewerPass(*PassRegistry::getPassRegistry());
+  }
 };
 
 struct PostDomViewer
   : public DOTGraphTraitsViewer<PostDominatorTree, false> {
   static char ID;
   PostDomViewer() :
-    DOTGraphTraitsViewer<PostDominatorTree, false>("postdom", ID){}
+    DOTGraphTraitsViewer<PostDominatorTree, false>("postdom", ID){
+      initializePostDomViewerPass(*PassRegistry::getPassRegistry());
+    }
 };
 
 struct PostDomOnlyViewer
   : public DOTGraphTraitsViewer<PostDominatorTree, true> {
   static char ID;
   PostDomOnlyViewer() :
-    DOTGraphTraitsViewer<PostDominatorTree, true>("postdomonly", ID){}
+    DOTGraphTraitsViewer<PostDominatorTree, true>("postdomonly", ID){
+      initializePostDomOnlyViewerPass(*PassRegistry::getPassRegistry());
+    }
 };
 } // end anonymous namespace
 
@@ -133,27 +141,35 @@ namespace {
 struct DomPrinter
   : public DOTGraphTraitsPrinter<DominatorTree, false> {
   static char ID;
-  DomPrinter() : DOTGraphTraitsPrinter<DominatorTree, false>("dom", ID) {}
+  DomPrinter() : DOTGraphTraitsPrinter<DominatorTree, false>("dom", ID) {
+    initializeDomPrinterPass(*PassRegistry::getPassRegistry());
+  }
 };
 
 struct DomOnlyPrinter
   : public DOTGraphTraitsPrinter<DominatorTree, true> {
   static char ID;
-  DomOnlyPrinter() : DOTGraphTraitsPrinter<DominatorTree, true>("domonly", ID) {}
+  DomOnlyPrinter() : DOTGraphTraitsPrinter<DominatorTree, true>("domonly", ID) {
+    initializeDomOnlyPrinterPass(*PassRegistry::getPassRegistry());
+  }
 };
 
 struct PostDomPrinter
   : public DOTGraphTraitsPrinter<PostDominatorTree, false> {
   static char ID;
   PostDomPrinter() :
-    DOTGraphTraitsPrinter<PostDominatorTree, false>("postdom", ID) {}
+    DOTGraphTraitsPrinter<PostDominatorTree, false>("postdom", ID) {
+      initializePostDomPrinterPass(*PassRegistry::getPassRegistry());
+    }
 };
 
 struct PostDomOnlyPrinter
   : public DOTGraphTraitsPrinter<PostDominatorTree, true> {
   static char ID;
   PostDomOnlyPrinter() :
-    DOTGraphTraitsPrinter<PostDominatorTree, true>("postdomonly", ID) {}
+    DOTGraphTraitsPrinter<PostDominatorTree, true>("postdomonly", ID) {
+      initializePostDomOnlyPrinterPass(*PassRegistry::getPassRegistry());
+    }
 };
 } // end anonymous namespace
 

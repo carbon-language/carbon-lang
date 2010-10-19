@@ -118,7 +118,9 @@ static bool LowerAtomicIntrinsic(IntrinsicInst *II) {
 namespace {
   struct LowerAtomic : public BasicBlockPass {
     static char ID;
-    LowerAtomic() : BasicBlockPass(ID) {}
+    LowerAtomic() : BasicBlockPass(ID) {
+      initializeLowerAtomicPass(*PassRegistry::getPassRegistry());
+    }
     bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;
       for (BasicBlock::iterator DI = BB.begin(), DE = BB.end(); DI != DE; )

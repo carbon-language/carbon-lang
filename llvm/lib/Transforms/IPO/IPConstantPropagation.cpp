@@ -35,7 +35,9 @@ namespace {
   ///
   struct IPCP : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
-    IPCP() : ModulePass(ID) {}
+    IPCP() : ModulePass(ID) {
+      initializeIPCPPass(*PassRegistry::getPassRegistry());
+    }
 
     bool runOnModule(Module &M);
   private:

@@ -93,7 +93,9 @@ namespace {
     explicit LoopUnswitch(bool Os = false) : 
       LoopPass(ID), OptimizeForSize(Os), redoLoop(false), 
       currentLoop(NULL), DT(NULL), loopHeader(NULL),
-      loopPreheader(NULL) {}
+      loopPreheader(NULL) {
+        initializeLoopUnswitchPass(*PassRegistry::getPassRegistry());
+      }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
     bool processCurrentLoop();

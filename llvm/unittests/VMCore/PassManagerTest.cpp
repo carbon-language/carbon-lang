@@ -32,7 +32,15 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "gtest/gtest.h"
 
+using namespace llvm;
+
 namespace llvm {
+  void initializeModuleNDMPass(PassRegistry&);
+  void initializeFPassPass(PassRegistry&);
+  void initializeCGPassPass(PassRegistry&);
+  void initializeLPassPass(PassRegistry&);
+  void initializeBPassPass(PassRegistry&);
+  
   namespace {
     // ND = no deps
     // NM = no modifications
@@ -40,7 +48,7 @@ namespace llvm {
     public:
       static char run;
       static char ID;
-      ModuleNDNM() : ModulePass(ID) {}
+      ModuleNDNM() : ModulePass(ID) { }
       virtual bool runOnModule(Module &M) {
         run++;
         return false;
@@ -64,7 +72,6 @@ namespace llvm {
     };
     char ModuleNDM::ID=0;
     char ModuleNDM::run=0;
-    RegisterPass<ModuleNDM> X("mndm","mndm",false,false);
 
     struct ModuleNDM2 : public ModulePass {
     public:
@@ -83,7 +90,9 @@ namespace llvm {
     public:
       static char run;
       static char ID;
-      ModuleDNM() : ModulePass(ID) {}
+      ModuleDNM() : ModulePass(ID) {
+        initializeModuleNDMPass(*PassRegistry::getPassRegistry());
+      }
       virtual bool runOnModule(Module &M) {
         EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
         run++;
@@ -154,13 +163,15 @@ namespace llvm {
 
     struct CGPass : public PassTest<CallGraph, CallGraphSCCPass> {
     public:
+      CGPass() {
+        initializeCGPassPass(*PassRegistry::getPassRegistry());
+      }
       virtual bool runOnSCC(CallGraphSCC &SCMM) {
         EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
         run();
         return false;
       }
     };
-    RegisterPass<CGPass> X1("cgp","cgp");
 
     struct FPass : public PassTest<Module, FunctionPass> {
     public:
@@ -171,7 +182,6 @@ namespace llvm {
         return false;
       }
     };
-    RegisterPass<FPass> X2("fp","fp");
 
     struct LPass : public PassTestBase<LoopPass> {
     private:
@@ -179,6 +189,7 @@ namespace llvm {
       static int fincount;
     public:
       LPass() {
+        initializeLPassPass(*PassRegistry::getPassRegistry());
         initcount = 0; fincount=0;
         EXPECT_FALSE(initialized);
       }
@@ -205,7 +216,6 @@ namespace llvm {
     };
     int LPass::initcount=0;
     int LPass::fincount=0;
-    RegisterPass<LPass> X3("lp","lp");
 
     struct BPass : public PassTestBase<BasicBlockPass> {
     private:
@@ -248,12 +258,13 @@ namespace llvm {
     };
     int BPass::inited=0;
     int BPass::fin=0;
-    RegisterPass<BPass> X4("bp","bp");
 
     struct OnTheFlyTest: public ModulePass {
     public:
       static char ID;
-      OnTheFlyTest() : ModulePass(ID) {}
+      OnTheFlyTest() : ModulePass(ID) {
+        initializeFPassPass(*PassRegistry::getPassRegistry());
+      }
       virtual bool runOnModule(Module &M) {
         EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
         for (Module::iterator I=M.begin(),E=M.end(); I != E; ++I) {
@@ -525,3 +536,13 @@ namespace llvm {
 
   }
 }
+
+INITIALIZE_PASS(ModuleNDM, "mndm", "mndm", false, false)
+INITIALIZE_PASS_BEGIN(CGPass, "cgp","cgp", false, false)
+INITIALIZE_AG_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_END(CGPass, "cgp","cgp", false, false)
+INITIALIZE_PASS(FPass, "fp","fp", false, false)
+INITIALIZE_PASS_BEGIN(LPass, "lp","lp", false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_END(LPass, "lp","lp", false, false)
+INITIALIZE_PASS(BPass, "bp","bp", false, false)

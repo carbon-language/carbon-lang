@@ -48,7 +48,10 @@ namespace {
   public:
     static char ID;
     RAFast() : MachineFunctionPass(ID), StackSlotForVirtReg(-1),
-               isBulkSpilling(false) {}
+               isBulkSpilling(false) {
+      initializePHIEliminationPass(*PassRegistry::getPassRegistry());
+      initializeTwoAddressInstructionPassPass(*PassRegistry::getPassRegistry());
+    }
   private:
     const TargetMachine *TM;
     MachineFunction *MF;

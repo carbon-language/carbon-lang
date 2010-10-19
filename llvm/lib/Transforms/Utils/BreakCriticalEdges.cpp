@@ -36,7 +36,9 @@ STATISTIC(NumBroken, "Number of blocks inserted");
 namespace {
   struct BreakCriticalEdges : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    BreakCriticalEdges() : FunctionPass(ID) {}
+    BreakCriticalEdges() : FunctionPass(ID) {
+      initializeBreakCriticalEdgesPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnFunction(Function &F);
 

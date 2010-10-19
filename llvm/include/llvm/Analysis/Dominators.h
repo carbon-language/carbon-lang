@@ -717,6 +717,7 @@ public:
   DominatorTreeBase<BasicBlock>* DT;
 
   DominatorTree() : FunctionPass(ID) {
+    initializeDominatorTreePass(*PassRegistry::getPassRegistry());
     DT = new DominatorTreeBase<BasicBlock>(false);
   }
 
@@ -1028,7 +1029,9 @@ class DominanceFrontier : public DominanceFrontierBase {
 public:
   static char ID; // Pass ID, replacement for typeid
   DominanceFrontier() :
-    DominanceFrontierBase(ID, false) {}
+    DominanceFrontierBase(ID, false) {
+      initializeDominanceFrontierPass(*PassRegistry::getPassRegistry());
+    }
 
   BasicBlock *getRoot() const {
     assert(Roots.size() == 1 && "Should always have entry node!");
