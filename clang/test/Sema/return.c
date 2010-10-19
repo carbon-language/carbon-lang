@@ -203,7 +203,7 @@ int test30() {
   if (j)
     longjmp(test30_j, 1);
   else
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
     longjmp(test30_j, 2);
 #else
     _longjmp(test30_j, 1);
