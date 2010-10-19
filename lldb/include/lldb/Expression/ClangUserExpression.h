@@ -95,11 +95,11 @@ public:
              
     ThreadPlan *
     GetThreadPlanToExecuteJITExpression (Stream &error_stream,
-                                 ExecutionContext &exe_ctx);
+                                         ExecutionContext &exe_ctx);
     bool
     FinalizeJITExecution (Stream &error_stream,
-                        ExecutionContext &exe_ctx,
-                        ClangExpressionVariable *&result);
+                          ExecutionContext &exe_ctx,
+                          ClangExpressionVariable *&result);
     
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
@@ -204,7 +204,7 @@ private:
     PrepareToExecuteJITExpression (Stream &error_stream,
                                        ExecutionContext &exe_ctx,
                                        lldb::addr_t &struct_address,
-                                       lldb::addr_t object_ptr);
+                                       lldb::addr_t &object_ptr);
     
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser

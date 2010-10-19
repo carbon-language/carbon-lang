@@ -216,9 +216,9 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
 
 bool
 ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
-                                       ExecutionContext &exe_ctx,
-                                       lldb::addr_t &struct_address,
-                                       lldb::addr_t object_ptr)
+                                                    ExecutionContext &exe_ctx,
+                                                    lldb::addr_t &struct_address,
+                                                    lldb::addr_t &object_ptr)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
