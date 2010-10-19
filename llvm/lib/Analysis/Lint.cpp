@@ -70,7 +70,7 @@ namespace {
 
     void visitCallSite(CallSite CS);
     void visitMemoryReference(Instruction &I, Value *Ptr,
-                              unsigned Size, unsigned Align,
+                              uint64_t Size, unsigned Align,
                               const Type *Ty, unsigned Flags);
 
     void visitCallInst(CallInst &I);
@@ -277,7 +277,7 @@ void Lint::visitCallSite(CallSite CS) {
       // Check that the memcpy arguments don't overlap. The AliasAnalysis API
       // isn't expressive enough for what we really want to do. Known partial
       // overlap is not distinguished from the case where nothing is known.
-      unsigned Size = 0;
+      uint64_t Size = 0;
       if (const ConstantInt *Len =
             dyn_cast<ConstantInt>(findValue(MCI->getLength(),
                                             /*OffsetOk=*/false)))
@@ -361,7 +361,7 @@ void Lint::visitReturnInst(ReturnInst &I) {
 // TODO: Check that the reference is in bounds.
 // TODO: Check readnone/readonly function attributes.
 void Lint::visitMemoryReference(Instruction &I,
-                                Value *Ptr, unsigned Size, unsigned Align,
+                                Value *Ptr, uint64_t Size, unsigned Align,
                                 const Type *Ty, unsigned Flags) {
   // If no memory is being referenced, it doesn't matter if the pointer
   // is valid.

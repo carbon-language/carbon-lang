@@ -88,7 +88,7 @@ void AliasSet::removeFromTracker(AliasSetTracker &AST) {
 }
 
 void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
-                          unsigned Size, const MDNode *TBAAInfo,
+                          uint64_t Size, const MDNode *TBAAInfo,
                           bool KnownMustAlias) {
   assert(!Entry.hasAliasSet() && "Entry already in set!");
 
@@ -138,7 +138,7 @@ void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
 /// aliasesPointer - Return true if the specified pointer "may" (or must)
 /// alias one of the members in the set.
 ///
-bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
+bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
                               const MDNode *TBAAInfo,
                               AliasAnalysis &AA) const {
   if (AliasTy == MustAlias) {
@@ -210,7 +210,7 @@ void AliasSetTracker::clear() {
 /// that may alias the pointer, merge them together and return the unified set.
 ///
 AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr,
-                                                  unsigned Size,
+                                                  uint64_t Size,
                                                   const MDNode *TBAAInfo) {
   AliasSet *FoundSet = 0;
   for (iterator I = begin(), E = end(); I != E; ++I) {
@@ -229,7 +229,7 @@ AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr,
 /// containsPointer - Return true if the specified location is represented by
 /// this alias set, false otherwise.  This does not modify the AST object or
 /// alias sets.
-bool AliasSetTracker::containsPointer(Value *Ptr, unsigned Size,
+bool AliasSetTracker::containsPointer(Value *Ptr, uint64_t Size,
                                       const MDNode *TBAAInfo) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     if (!I->Forward && I->aliasesPointer(Ptr, Size, TBAAInfo, AA))
@@ -258,7 +258,7 @@ AliasSet *AliasSetTracker::findAliasSetForCallSite(CallSite CS) {
 
 /// getAliasSetForPointer - Return the alias set that the specified pointer
 /// lives in.
-AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
+AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, uint64_t Size,
                                                  const MDNode *TBAAInfo,
                                                  bool *New) {
   AliasSet::PointerRec &Entry = getEntryFor(Pointer);
@@ -283,7 +283,7 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
   return AliasSets.back();
 }
 
-bool AliasSetTracker::add(Value *Ptr, unsigned Size, const MDNode *TBAAInfo) {
+bool AliasSetTracker::add(Value *Ptr, uint64_t Size, const MDNode *TBAAInfo) {
   bool NewPtr;
   addPointer(Ptr, Size, TBAAInfo, AliasSet::NoModRef, NewPtr);
   return NewPtr;
@@ -414,7 +414,7 @@ void AliasSetTracker::remove(AliasSet &AS) {
 }
 
 bool
-AliasSetTracker::remove(Value *Ptr, unsigned Size, const MDNode *TBAAInfo) {
+AliasSetTracker::remove(Value *Ptr, uint64_t Size, const MDNode *TBAAInfo) {
   AliasSet *AS = findAliasSetForPointer(Ptr, Size, TBAAInfo);
   if (!AS) return false;
   remove(*AS);
@@ -422,7 +422,7 @@ AliasSetTracker::remove(Value *Ptr, unsigned Size, const MDNode *TBAAInfo) {
 }
 
 bool AliasSetTracker::remove(LoadInst *LI) {
-  unsigned Size = AA.getTypeStoreSize(LI->getType());
+  uint64_t Size = AA.getTypeStoreSize(LI->getType());
   const MDNode *TBAAInfo = LI->getMetadata(LLVMContext::MD_tbaa);
   AliasSet *AS = findAliasSetForPointer(LI->getOperand(0), Size, TBAAInfo);
   if (!AS) return false;
@@ -431,7 +431,7 @@ bool AliasSetTracker::remove(LoadInst *LI) {
 }
 
 bool AliasSetTracker::remove(StoreInst *SI) {
-  unsigned Size = AA.getTypeStoreSize(SI->getOperand(0)->getType());
+  uint64_t Size = AA.getTypeStoreSize(SI->getOperand(0)->getType());
   const MDNode *TBAAInfo = SI->getMetadata(LLVMContext::MD_tbaa);
   AliasSet *AS = findAliasSetForPointer(SI->getOperand(1), Size, TBAAInfo);
   if (!AS) return false;
