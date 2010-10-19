@@ -89,6 +89,11 @@ class SettingsCommandTestCase(TestBase):
         # Set the run-args and the env-vars.
         self.runCmd('settings set target.process.run-args A B C')
         self.runCmd('settings set target.process.env-vars ["MY_ENV_VAR"]=YES')
+        # And add hooks to restore the settings during tearDown().
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set -r target.process.run-args"))
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set -r target.process.env-vars"))
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -114,14 +119,16 @@ class SettingsCommandTestCase(TestBase):
 
         # Set the output-path and verify it is set.
         self.runCmd("settings set target.process.output-path 'stdout.txt'")
+        # And add a hook to restore original setting of target.process.output-path
+        # later on during tearDown().
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set -r target.process.output-path"))
+
         self.expect("settings show target.process.output-path",
                     SETTING_MSG("target.process.output-path"),
             startstr = "target.process.output-path (string) = 'stdout.txt'")
 
         self.runCmd("run", RUN_SUCCEEDED)
-
-        # Restore the original setting now that the program has been run.
-        self.runCmd("settings set -r target.process.output-path")
 
         # The 'stdout.txt' file should now exist.
         self.assertTrue(os.path.isfile("stdout.txt"),

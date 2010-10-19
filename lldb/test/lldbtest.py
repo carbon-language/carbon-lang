@@ -424,6 +424,10 @@ class TestBase(unittest2.TestCase):
         self.__errored__ = False
         self.__failed__ = False
 
+        # See addTearDownHook(self, hook) which allows the client to add a hook
+        # function to be run during tearDown() time.
+        self.hooks = []
+
     def markError(self):
         """Callback invoked when we (the test case instance) errored."""
         self.__errored__ = True
@@ -465,9 +469,24 @@ class TestBase(unittest2.TestCase):
         self.dict = dictionary
         self.doTearDownCleanup = True
 
+    def addTearDownHook(self, hook):
+        """
+        Add a function to be run during tearDown() time.
+
+        Hooks are executed in a first come first serve manner.
+        """
+        self.hooks.append(hook)
+
     def tearDown(self):
         #import traceback
         #traceback.print_stack()
+
+        # Check and run any hook functions.
+        for hook in self.hooks:
+            #print "Executing hook:", hook
+            hook()
+
+        self.runCmd("settings show")
 
         # Terminate the current process being debugged, if any.
         if self.runStarted:
@@ -478,6 +497,7 @@ class TestBase(unittest2.TestCase):
             del self.process
 
         del self.dbg
+        del self.hooks
 
         # Perform registered teardown cleanup.
         if doCleanup and self.doTearDownCleanup:
