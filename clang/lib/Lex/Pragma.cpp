@@ -627,7 +627,7 @@ void Preprocessor::HandlePragmaPushMacro(Token &PushMacroTok) {
   PragmaPushMacroInfo[IdentInfo].push_back(MacroCopyToPush);
 }
 
-/// HandlePragmaPopMacro - Handle #pragma push_macro.  
+/// HandlePragmaPopMacro - Handle #pragma pop_macro.  
 /// The syntax is:
 ///   #pragma pop_macro("macro")
 void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
