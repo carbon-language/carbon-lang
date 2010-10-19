@@ -1276,6 +1276,20 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
       cast<Decl>(Owner)->isDefinedOutsideFunctionOrMethod());
   LocalInstantiationScope Scope(SemaRef, MergeWithParentScope);
 
+  // Instantiate enclosing template arguments for friends.
+  llvm::SmallVector<TemplateParameterList *, 4> TempParamLists;
+  unsigned NumTempParamLists = 0;
+  if (isFriend && (NumTempParamLists = D->getNumTemplateParameterLists())) {
+    TempParamLists.set_size(NumTempParamLists);
+    for (unsigned I = 0; I != NumTempParamLists; ++I) {
+      TemplateParameterList *TempParams = D->getTemplateParameterList(I);
+      TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
+      if (!InstParams)
+        return NULL;
+      TempParamLists[I] = InstParams;
+    }
+  }
+
   llvm::SmallVector<ParmVarDecl *, 4> Params;
   TypeSourceInfo *TInfo = D->getTypeSourceInfo();
   TInfo = SubstFunctionType(D, Params);
@@ -1402,6 +1416,11 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   // out-of-line, the instantiation will have the same lexical
   // context (which will be a namespace scope) as the template.
   if (isFriend) {
+    if (NumTempParamLists)
+      Method->setTemplateParameterListsInfo(SemaRef.Context,
+                                            NumTempParamLists,
+                                            TempParamLists.data());
+
     Method->setLexicalDeclContext(Owner);
     Method->setObjectOfFriendDecl(true);
   } else if (D->isOutOfLine())

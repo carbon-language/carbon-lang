@@ -57,7 +57,7 @@ namespace test2 {
   };
 }
 
-// rdar://problem/8540527
+// Tests 3, 4 and 5 were all noted in <rdar://problem/8540527>.
 namespace test3 {
   template <class T> struct A {
     struct Inner {
@@ -91,4 +91,13 @@ namespace test4 {
   void test() {   
     X<int>() += 1.0;
   }
+}
+
+namespace test5 {
+  template<template <class> class T> struct A {
+    template<template <class> class T> friend void A<T>::foo();
+  };
+
+  template <class> struct B {};
+  template class A<B>;
 }
