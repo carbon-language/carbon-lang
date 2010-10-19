@@ -981,12 +981,12 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 
 static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
   if (Kind.isText())
-    return ".text$linkonce";
+    return ".text$";
   if (Kind.isBSS ())
-    return ".bss$linkonce";
+    return ".bss$";
   if (Kind.isWriteable())
-    return ".data$linkonce";
-  return ".rdata$linkonce";
+    return ".data$";
+  return ".rdata$";
 }
 
 
@@ -1001,7 +1001,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Kind);
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
     MCSymbol *Sym = Mang->getSymbol(GV);
-    Name.append(Sym->getName().begin(), Sym->getName().end());
+    Name.append(Sym->getName().begin() + 1, Sym->getName().end());
 
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
