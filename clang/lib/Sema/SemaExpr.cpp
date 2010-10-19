@@ -1068,9 +1068,14 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
   ObjCPropertyDecl *property = SemaRef.LookupPropertyDecl(IDecl, II);
   if (!property)
     return 0;
-  if (ObjCPropertyImplDecl *PIDecl = ClassImpDecl->FindPropertyImplDecl(II))
+  if (ObjCPropertyImplDecl *PIDecl = ClassImpDecl->FindPropertyImplDecl(II)) {
     DynamicImplSeen = 
       (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic);
+    // property implementation has a designated ivar. No need to assume a new
+    // one.
+    if (!DynamicImplSeen && PIDecl->getPropertyIvarDecl())
+      return 0;
+  }
   if (!DynamicImplSeen) {
     QualType PropType = SemaRef.Context.getCanonicalType(property->getType());
     ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(SemaRef.Context, ClassImpDecl, 
