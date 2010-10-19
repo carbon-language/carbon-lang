@@ -74,6 +74,10 @@ class BreakpointCommandTestCase(TestBase):
 
         # Check that the file 'output.txt' exists and contains the string "lldb".
 
+        # The 'output.txt' file should now exist.
+        self.assertTrue(os.path.isfile("output.txt"),
+                        "'output.txt' exists due breakpoint command for breakpoint 2.")
+
         # Read the output file produced by running the program.
         with open('output.txt', 'r') as f:
             output = f.read()
