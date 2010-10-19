@@ -95,7 +95,7 @@ private:
   /// is available only for ConvertType(). CovertType() is preferred
   /// interface to convert type T into a llvm::Type.
   const llvm::Type *ConvertNewType(QualType T);
-  
+
   /// HandleLateResolvedPointers - For top-level ConvertType calls, this handles
   /// pointers that are referenced but have not been converted yet.  This is
   /// used to handle cyclic structures properly.
@@ -139,10 +139,10 @@ public:
   static const TagType *VerifyFuncTypeComplete(const Type* T);
 
   /// GetFunctionTypeForVTable - Get the LLVM function type for use in a vtable,
-  /// given a CXXMethodDecl. If the method to has an incomplete return type, 
+  /// given a CXXMethodDecl. If the method to has an incomplete return type,
   /// and/or incomplete argument types, this will return the opaque type.
   const llvm::Type *GetFunctionTypeForVTable(GlobalDecl GD);
-                                                     
+
   const CGRecordLayout &getCGRecordLayout(const RecordDecl*) const;
 
   /// UpdateCompletedType - When we find the full definition for a TagDecl,
@@ -151,7 +151,7 @@ public:
 
   /// getFunctionInfo - Get the function info for the specified function decl.
   const CGFunctionInfo &getFunctionInfo(GlobalDecl GD);
-  
+
   const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
   const CGFunctionInfo &getFunctionInfo(const CXXMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
@@ -176,7 +176,7 @@ public:
   /// pointers.
   const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
                                         const FunctionProtoType *FTP);
-  
+
   /// getFunctionInfo - Get the function info for a function described by a
   /// return type and argument types. If the calling convention is not
   /// specified, the "C" calling convention will be used.
@@ -188,7 +188,7 @@ public:
                                         const FunctionType::ExtInfo &Info);
 
   /// Retrieves the ABI information for the given function signature.
-  /// 
+  ///
   /// \param ArgTys - must all actually be canonical as params
   const CGFunctionInfo &getFunctionInfo(CanQualType RetTy,
                                const llvm::SmallVectorImpl<CanQualType> &ArgTys,
@@ -208,11 +208,11 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// ArgTys. See ABIArgInfo::Expand.
   void GetExpandedTypes(QualType Ty, std::vector<const llvm::Type*> &ArgTys,
                         bool IsRecursive);
-  
+
   /// IsZeroInitializable - Return whether a type can be
   /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
   bool isZeroInitializable(QualType T);
-  
+
   /// IsZeroInitializable - Return whether a record type can be
   /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
   bool isZeroInitializable(const CXXRecordDecl *RD);

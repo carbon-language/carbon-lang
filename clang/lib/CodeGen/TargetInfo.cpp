@@ -675,11 +675,11 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
       AAI.setCoerceToType(llvm::Type::getX86_MMXTy(getVMContext()));
       return AAI;
     }
-    
+
     return ABIArgInfo::getDirect();
   }
-  
-  
+
+
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
@@ -894,7 +894,7 @@ public:
 
     const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
     llvm::Value *Eight8 = llvm::ConstantInt::get(i8, 8);
-      
+
     // 0-15 are the 16 integer registers.
     // 16 is %rip.
     AssignToArrayRange(Builder, Address, Eight8, 0, 16);
@@ -1520,7 +1520,7 @@ GetX86_64ByValArgumentPair(const llvm::Type *Lo, const llvm::Type *Hi,
   unsigned HiAlign = TD.getABITypeAlignment(Hi);
   unsigned HiStart = llvm::TargetData::RoundUpAlignment(LoSize, HiAlign);
   assert(HiStart != 0 && HiStart <= 8 && "Invalid x86-64 argument pair!");
-  
+
   // To handle this, we have to increase the size of the low part so that the
   // second element will start at an 8 byte offset.  We can't increase the size
   // of the second element because it might make us access off the end of the
@@ -1536,11 +1536,11 @@ GetX86_64ByValArgumentPair(const llvm::Type *Lo, const llvm::Type *Hi,
       Lo = llvm::Type::getInt64Ty(Lo->getContext());
     }
   }
-  
-  const llvm::StructType *Result = 
+
+  const llvm::StructType *Result =
     llvm::StructType::get(Lo->getContext(), Lo, Hi, NULL);
-  
-  
+
+
   // Verify that the second element is at an 8-byte offset.
   assert(TD.getStructLayout(Result)->getElementOffset(1) == 8 &&
          "Invalid x86-64 argument pair!");
@@ -1669,7 +1669,7 @@ classifyReturnType(QualType RetTy) const {
     }
     break;
   }
-  
+
   // If a high part was specified, merge it together with the low part.  It is
   // known to pass in the high eightbyte of the result.  We do this by forming a
   // first class struct aggregate with the high and low part: {low, high}
@@ -1803,7 +1803,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   // first class struct aggregate with the high and low part: {low, high}
   if (HighPart)
     ResType = GetX86_64ByValArgumentPair(ResType, HighPart, getTargetData());
-  
+
   return ABIArgInfo::getDirect(ResType);
 }
 

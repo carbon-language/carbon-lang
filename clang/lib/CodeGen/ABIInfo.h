@@ -74,7 +74,7 @@ namespace clang {
     bool BoolData1;
 
     ABIArgInfo(Kind K, const llvm::Type *TD=0,
-               unsigned UI=0, bool B0 = false, bool B1 = false) 
+               unsigned UI=0, bool B0 = false, bool B1 = false)
       : TheKind(K), TypeData(TD), UIntData(UI), BoolData0(B0), BoolData1(B1) {}
 
   public:
@@ -107,7 +107,7 @@ namespace clang {
     bool canHaveCoerceToType() const {
       return TheKind == Direct || TheKind == Extend;
     }
-    
+
     // Direct/Extend accessors
     unsigned getDirectOffset() const {
       assert((isDirect() || isExtend()) && "Not a direct or extend kind");
@@ -117,12 +117,12 @@ namespace clang {
       assert(canHaveCoerceToType() && "Invalid kind!");
       return TypeData;
     }
-    
+
     void setCoerceToType(const llvm::Type *T) {
       assert(canHaveCoerceToType() && "Invalid kind!");
       TypeData = T;
     }
-    
+
     // Indirect accessors
     unsigned getIndirectAlign() const {
       assert(TheKind == Indirect && "Invalid kind!");
@@ -138,7 +138,7 @@ namespace clang {
       assert(TheKind == Indirect && "Invalid kind!");
       return BoolData1;
     }
-    
+
     void dump() const;
   };
 
@@ -147,10 +147,10 @@ namespace clang {
   class ABIInfo {
   public:
     CodeGen::CodeGenTypes &CGT;
-    
+
     ABIInfo(CodeGen::CodeGenTypes &cgt) : CGT(cgt) {}
     virtual ~ABIInfo();
-    
+
     ASTContext &getContext() const;
     llvm::LLVMContext &getVMContext() const;
     const llvm::TargetData &getTargetData() const;
