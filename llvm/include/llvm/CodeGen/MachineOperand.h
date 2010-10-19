@@ -94,6 +94,15 @@ private:
   /// not a real instruction.  Such uses should be ignored during codegen.
   bool IsDebug : 1;
 
+  /// SmallContents - Thisreally should be part of the Contents union, but lives
+  /// out here so we can get a better packed struct.
+  /// MO_Register: Register number.
+  /// OffsetedInfo: Low bits of offset.
+  union {
+    unsigned RegNo;           // For MO_Register.
+    unsigned OffsetLo;        // Matches Contents.OffsetedInfo.OffsetHi.
+  } SmallContents;
+
   /// ParentMI - This is the instruction that this operand is embedded into.
   /// This is valid for all operand types, when the operand is in an instr.
   MachineInstr *ParentMI;
@@ -107,7 +116,7 @@ private:
     MCSymbol *Sym;            // For MO_MCSymbol
 
     struct {                  // For MO_Register.
-      unsigned RegNo;
+      // Register number is in SmallContents.RegNo.
       MachineOperand **Prev;  // Access list for register.
       MachineOperand *Next;
     } Reg;
@@ -121,7 +130,8 @@ private:
         const GlobalValue *GV;    // For MO_GlobalAddress.
         const BlockAddress *BA;   // For MO_BlockAddress.
       } Val;
-      int64_t Offset;             // An offset from the object.
+      // Low bits of offset are in SmallContents.OffsetLo.
+      int OffsetHi;               // An offset from the object, high 32 bits.
     } OffsetedInfo;
   } Contents;
 
@@ -180,7 +190,7 @@ public:
   /// getReg - Returns the register number.
   unsigned getReg() const {
     assert(isReg() && "This is not a register operand!");
-    return Contents.Reg.RegNo;
+    return SmallContents.RegNo;
   }
 
   unsigned getSubReg() const {
@@ -349,7 +359,8 @@ public:
   int64_t getOffset() const {
     assert((isGlobal() || isSymbol() || isCPI() || isBlockAddress()) &&
            "Wrong MachineOperand accessor");
-    return Contents.OffsetedInfo.Offset;
+    return (int64_t(Contents.OffsetedInfo.OffsetHi) << 32) |
+           SmallContents.OffsetLo;
   }
 
   const char *getSymbolName() const {
@@ -374,7 +385,8 @@ public:
   void setOffset(int64_t Offset) {
     assert((isGlobal() || isSymbol() || isCPI() || isBlockAddress()) &&
         "Wrong MachineOperand accessor");
-    Contents.OffsetedInfo.Offset = Offset;
+    SmallContents.OffsetLo = unsigned(Offset);
+    Contents.OffsetedInfo.OffsetHi = int(Offset >> 32);
   }
 
   void setIndex(int Idx) {
@@ -438,7 +450,7 @@ public:
     Op.IsUndef = isUndef;
     Op.IsEarlyClobber = isEarlyClobber;
     Op.IsDebug = isDebug;
-    Op.Contents.Reg.RegNo = Reg;
+    Op.SmallContents.RegNo = Reg;
     Op.Contents.Reg.Prev = 0;
     Op.Contents.Reg.Next = 0;
     Op.SubReg = SubReg;

@@ -102,13 +102,13 @@ void MachineOperand::setReg(unsigned Reg) {
     if (MachineBasicBlock *MBB = MI->getParent())
       if (MachineFunction *MF = MBB->getParent()) {
         RemoveRegOperandFromRegInfo();
-        Contents.Reg.RegNo = Reg;
+        SmallContents.RegNo = Reg;
         AddRegOperandToRegInfo(&MF->getRegInfo());
         return;
       }
         
   // Otherwise, just change the register, no problem.  :)
-  Contents.Reg.RegNo = Reg;
+  SmallContents.RegNo = Reg;
 }
 
 void MachineOperand::substVirtReg(unsigned Reg, unsigned SubIdx,
@@ -159,7 +159,7 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   } else {
     // Otherwise, change this to a register and set the reg#.
     OpKind = MO_Register;
-    Contents.Reg.RegNo = Reg;
+    SmallContents.RegNo = Reg;
 
     // If this operand is embedded in a function, add the operand to the
     // register's use/def list.
