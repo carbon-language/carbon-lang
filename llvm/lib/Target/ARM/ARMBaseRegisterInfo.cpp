@@ -1672,7 +1672,7 @@ emitPrologue(MachineFunction &MF) const {
 
   // Determine the sizes of each callee-save spill areas and record which frame
   // belongs to which callee-save spill areas.
-  unsigned GPRCSSize = 0/*, GPRCS2Size = 0*/, DPRCSSize = 0;
+  unsigned GPRCSSize = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
 
   // Allocate the vararg register save area. This is not counted in NumBytes.
