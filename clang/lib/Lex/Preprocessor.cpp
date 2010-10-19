@@ -123,6 +123,13 @@ Preprocessor::~Preprocessor() {
     // memory alocated by MacroInfo.
     (*I)->Destroy();
   }
+  for (llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> >::iterator I =
+         PragmaPushMacroInfo.begin(), E = PragmaPushMacroInfo.end(); I!=E; ++I){
+    for (std::vector<MacroInfo*>::iterator I2 = I->second.begin(), E2 = I->second.end();
+         I2 != E2; ++I2) {
+      (*I2)->Destroy();
+    }
+  }
 
   // Free any cached macro expanders.
   for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
