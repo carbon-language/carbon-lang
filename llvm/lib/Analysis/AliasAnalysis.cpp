@@ -342,9 +342,3 @@ bool llvm::isIdentifiedObject(const Value *V) {
     return A->hasNoAliasAttr() || A->hasByValAttr();
   return false;
 }
-
-// Because of the way .a files work, we must force the BasicAA implementation to
-// be pulled in if the AliasAnalysis classes are pulled in.  Otherwise we run
-// the risk of AliasAnalysis being used, but the default implementation not
-// being linked into the tool that uses it.
-DEFINING_FILE_FOR(AliasAnalysis)

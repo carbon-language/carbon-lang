@@ -1,4 +1,4 @@
-//===- BasicAliasAnalysis.cpp - Local Alias Analysis Impl -----------------===//
+//===- BasicAliasAnalysis.cpp - Stateless Alias Analysis Impl -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the default implementation of the Alias Analysis interface
-// that simply implements a few identities (two different globals cannot alias,
-// etc), but otherwise does no analysis.
+// This file defines the primary stateless implementation of the
+// Alias Analysis interface that implements identities (two different
+// globals cannot alias, etc), but does no stateful analysis.
 //
 //===----------------------------------------------------------------------===//
 
@@ -127,74 +127,6 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
     return TD.getTypeAllocSize(AccessTy) < Size;
   return false;
 }
-
-//===----------------------------------------------------------------------===//
-// NoAA Pass
-//===----------------------------------------------------------------------===//
-
-namespace {
-  /// NoAA - This class implements the -no-aa pass, which always returns "I
-  /// don't know" for alias queries.  NoAA is unlike other alias analysis
-  /// implementations, in that it does not chain to a previous analysis.  As
-  /// such it doesn't follow many of the rules that other alias analyses must.
-  ///
-  struct NoAA : public ImmutablePass, public AliasAnalysis {
-    static char ID; // Class identification, replacement for typeinfo
-    NoAA() : ImmutablePass(ID) {
-      initializeNoAAPass(*PassRegistry::getPassRegistry());
-    }
-    explicit NoAA(char &PID) : ImmutablePass(PID) {}
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    }
-
-    virtual void initializePass() {
-      TD = getAnalysisIfAvailable<TargetData>();
-    }
-
-    virtual AliasResult alias(const Location &LocA, const Location &LocB) {
-      return MayAlias;
-    }
-
-    virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS) {
-      return UnknownModRefBehavior;
-    }
-    virtual ModRefBehavior getModRefBehavior(const Function *F) {
-      return UnknownModRefBehavior;
-    }
-
-    virtual bool pointsToConstantMemory(const Location &Loc) { return false; }
-    virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
-                                       const Location &Loc) {
-      return ModRef;
-    }
-    virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                                       ImmutableCallSite CS2) {
-      return ModRef;
-    }
-
-    virtual void deleteValue(Value *V) {}
-    virtual void copyValue(Value *From, Value *To) {}
-    
-    /// getAdjustedAnalysisPointer - This method is used when a pass implements
-    /// an analysis interface through multiple inheritance.  If needed, it
-    /// should override this to adjust the this pointer as needed for the
-    /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(const void *ID) {
-      if (ID == &AliasAnalysis::ID)
-        return (AliasAnalysis*)this;
-      return this;
-    }
-  };
-}  // End of anonymous namespace
-
-// Register this pass...
-char NoAA::ID = 0;
-INITIALIZE_AG_PASS(NoAA, AliasAnalysis, "no-aa",
-                   "No Alias Analysis (always returns 'may' alias)",
-                   true, true, true)
-
-ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 
 //===----------------------------------------------------------------------===//
 // GetElementPtr Instruction Decomposition and Analysis
@@ -487,12 +419,10 @@ static bool notDifferentParent(const Value *O1, const Value *O2) {
 #endif
 
 namespace {
-  /// BasicAliasAnalysis - This is the default alias analysis implementation.
-  /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
-  /// derives from the NoAA class.
-  struct BasicAliasAnalysis : public NoAA {
+  /// BasicAliasAnalysis - This is the primary alias analysis implementation.
+  struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
     static char ID; // Class identification, replacement for typeinfo
-    BasicAliasAnalysis() : NoAA(ID) {
+    BasicAliasAnalysis() : ImmutablePass(ID) {
       initializeBasicAliasAnalysisPass(*PassRegistry::getPassRegistry());
     }
 
@@ -580,7 +510,7 @@ namespace {
 // Register this pass...
 char BasicAliasAnalysis::ID = 0;
 INITIALIZE_AG_PASS(BasicAliasAnalysis, AliasAnalysis, "basicaa",
-                   "Basic Alias Analysis (default AA impl)",
+                   "Basic Alias Analysis (stateless AA impl)",
                    false, true, false)
 
 ImmutablePass *llvm::createBasicAliasAnalysisPass() {
@@ -1125,6 +1055,3 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   return AliasAnalysis::alias(Location(V1, V1Size, V1TBAAInfo),
                               Location(V2, V2Size, V2TBAAInfo));
 }
-
-// Make sure that anything that uses AliasAnalysis pulls in this file.
-DEFINING_FILE_FOR(BasicAliasAnalysis)

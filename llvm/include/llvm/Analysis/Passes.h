@@ -59,7 +59,7 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createBasicAliasAnalysisPass - This pass implements the default alias
+  // createBasicAliasAnalysisPass - This pass implements the stateless alias
   // analysis.
   //
   ImmutablePass *createBasicAliasAnalysisPass();
