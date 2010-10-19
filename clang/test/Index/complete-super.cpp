@@ -21,13 +21,13 @@ void B::bar(float real) {
 }
 
 // RUN: c-index-test -code-completion-at=%s:16:3 %s | FileCheck -check-prefix=CHECK-FOO-UNQUAL %s
-// CHECK-FOO-UNQUAL: CXXMethod:{Text A::}{TypedText foo}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (8)
+// CHECK-FOO-UNQUAL: CXXMethod:{Text A::}{TypedText foo}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (20)
 
 // RUN: c-index-test -code-completion-at=%s:20:3 %s | FileCheck -check-prefix=CHECK-BAR-UNQUAL %s
-// CHECK-BAR-UNQUAL: CXXMethod:{Text A::}{TypedText bar}{LeftParen (}{Placeholder real}{RightParen )} (8)
-// CHECK-BAR-UNQUAL: CXXMethod:{ResultType void}{TypedText bar}{LeftParen (}{Placeholder float real}{RightParen )} (19)
-// CHECK-BAR-UNQUAL: CXXMethod:{ResultType void}{Text A::}{TypedText bar}{LeftParen (}{Placeholder double x}{RightParen )} (21)
+// CHECK-BAR-UNQUAL: CXXMethod:{Text A::}{TypedText bar}{LeftParen (}{Placeholder real}{RightParen )} (20)
+// CHECK-BAR-UNQUAL: CXXMethod:{ResultType void}{TypedText bar}{LeftParen (}{Placeholder float real}{RightParen )} (34)
+// CHECK-BAR-UNQUAL: CXXMethod:{ResultType void}{Text A::}{TypedText bar}{LeftParen (}{Placeholder double x}{RightParen )} (36)
 
 // RUN: c-index-test -code-completion-at=%s:16:6 %s | FileCheck -check-prefix=CHECK-FOO-QUAL %s
-// CHECK-FOO-QUAL: CXXMethod:{TypedText foo}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (8)
+// CHECK-FOO-QUAL: CXXMethod:{TypedText foo}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (20)
 

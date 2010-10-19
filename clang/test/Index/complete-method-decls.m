@@ -78,10 +78,10 @@
 // CHECK-CC3: ObjCInstanceMethodDecl:{TypedText initWithInt}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}
 // CHECK-CC3: ObjCInstanceMethodDecl:{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:33:3 %s | FileCheck -check-prefix=CHECK-CC4 %s
-// CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText abc}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (32)
+// CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText abc}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (42)
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText getInt}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText getSecondValue}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
-// CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText getSelf}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (30)
+// CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText getSelf}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (40)
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText initWithInt}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText setValue}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
@@ -92,56 +92,56 @@
 // CHECK-CC5: ObjCInstanceMethodDecl:{TypedText setValue}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:37:7 %s | FileCheck -check-prefix=CHECK-CC6 %s
 // CHECK-CC6: ObjCInstanceMethodDecl:{TypedText abc}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
-// CHECK-CC6: ObjCInstanceMethodDecl:{TypedText getSelf}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (30)
+// CHECK-CC6: ObjCInstanceMethodDecl:{TypedText getSelf}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (40)
 // CHECK-CC6: ObjCInstanceMethodDecl:{TypedText initWithInt}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
 // CHECK-CC6: ObjCInstanceMethodDecl:{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:42:3 %s | FileCheck -check-prefix=CHECK-CC7 %s
-// CHECK-CC7: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText abc}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (32)
+// CHECK-CC7: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText abc}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (42)
 // CHECK-CC7: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText categoryFunction}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
-// CHECK-CC7: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText getSelf}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (32)
+// CHECK-CC7: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText getSelf}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (42)
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:52:21 %s | FileCheck -check-prefix=CHECK-CC8 %s
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{TypedText second2:}{Text (float)y2}{HorizontalSpace  }{TypedText third:}{Text (double)z} (20)
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType void *}{Informative first:}{TypedText second3:}{Text (float)y3}{HorizontalSpace  }{TypedText third:}{Text (double)z} (20)
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second:}{Text (float)y}{HorizontalSpace  }{TypedText third:}{Text (double)z} (5)
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{TypedText second2:}{Text (float)y2}{HorizontalSpace  }{TypedText third:}{Text (double)z} (35)
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType void *}{Informative first:}{TypedText second3:}{Text (float)y3}{HorizontalSpace  }{TypedText third:}{Text (double)z} (35)
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second:}{Text (float)y}{HorizontalSpace  }{TypedText third:}{Text (double)z} (8)
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:52:19 %s | FileCheck -check-prefix=CHECK-CC9 %s
-// CHECK-CC9: NotImplemented:{TypedText x} (30)
-// CHECK-CC9: NotImplemented:{TypedText xx} (30)
-// CHECK-CC9: NotImplemented:{TypedText xxx} (30)
+// CHECK-CC9: NotImplemented:{TypedText x} (40)
+// CHECK-CC9: NotImplemented:{TypedText xx} (40)
+// CHECK-CC9: NotImplemented:{TypedText xxx} (40)
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:52:36 %s | FileCheck -check-prefix=CHECK-CCA %s
-// CHECK-CCA: NotImplemented:{TypedText y2} (30)
+// CHECK-CCA: NotImplemented:{TypedText y2} (40)
 // RUN: c-index-test -code-completion-at=%s:56:3 %s | FileCheck -check-prefix=CHECK-CCB %s
-// CHECK-CCB: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText first}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second2:}{LeftParen (}{Text float}{RightParen )}{Text y}{HorizontalSpace  }{TypedText third:}{LeftParen (}{Text double}{RightParen )}{Text z} (30)
+// CHECK-CCB: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText first}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second2:}{LeftParen (}{Text float}{RightParen )}{Text y}{HorizontalSpace  }{TypedText third:}{LeftParen (}{Text double}{RightParen )}{Text z} (40)
 // RUN: c-index-test -code-completion-at=%s:56:8 %s | FileCheck -check-prefix=CHECK-CCC %s
-// CHECK-CCC: ObjCInstanceMethodDecl:{TypedText first}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second2:}{LeftParen (}{Text float}{RightParen )}{Text y}{HorizontalSpace  }{TypedText third:}{LeftParen (}{Text double}{RightParen )}{Text z} (30)
+// CHECK-CCC: ObjCInstanceMethodDecl:{TypedText first}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second2:}{LeftParen (}{Text float}{RightParen )}{Text y}{HorizontalSpace  }{TypedText third:}{LeftParen (}{Text double}{RightParen )}{Text z} (40)
 // RUN: c-index-test -code-completion-at=%s:56:21 %s | FileCheck -check-prefix=CHECK-CCD %s
-// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{TypedText second2:}{Text (float)y2}{HorizontalSpace  }{TypedText third:}{Text (double)z} (20)
-// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second2:}{Text (float)y}{HorizontalSpace  }{TypedText third:}{Text (double)z} (5)
-// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType void *}{Informative first:}{TypedText second3:}{Text (float)y3}{HorizontalSpace  }{TypedText third:}{Text (double)z} (20)
-// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second:}{Text (float)y}{HorizontalSpace  }{TypedText third:}{Text (double)z} (5)
+// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{TypedText second2:}{Text (float)y2}{HorizontalSpace  }{TypedText third:}{Text (double)z} (35)
+// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second2:}{Text (float)y}{HorizontalSpace  }{TypedText third:}{Text (double)z} (8)
+// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType void *}{Informative first:}{TypedText second3:}{Text (float)y3}{HorizontalSpace  }{TypedText third:}{Text (double)z} (35)
+// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second:}{Text (float)y}{HorizontalSpace  }{TypedText third:}{Text (double)z} (8)
 // RUN: c-index-test -code-completion-at=%s:56:38 %s | FileCheck -check-prefix=CHECK-CCE %s
-// CHECK-CCE: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{Informative second2:}{TypedText third:}{Text (double)z} (20)
-// CHECK-CCE: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{Informative second2:}{TypedText third:}{Text (double)z} (5)
+// CHECK-CCE: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{Informative second2:}{TypedText third:}{Text (double)z} (35)
+// CHECK-CCE: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{Informative second2:}{TypedText third:}{Text (double)z} (8)
 // RUN: c-index-test -code-completion-at=%s:60:4 %s | FileCheck -check-prefix=CHECK-CCF %s
 // CHECK-CCF: ObjCInterfaceDecl:{TypedText A} (50)
 // CHECK-CCF: ObjCInterfaceDecl:{TypedText B} (50)
-// CHECK-CCF: NotImplemented:{TypedText bycopy} (30)
-// CHECK-CCF: NotImplemented:{TypedText byref} (30)
-// CHECK-CCF: NotImplemented:{TypedText in} (30)
-// CHECK-CCF: NotImplemented:{TypedText inout} (30)
-// CHECK-CCF: NotImplemented:{TypedText oneway} (30)
-// CHECK-CCF: NotImplemented:{TypedText out} (30)
+// CHECK-CCF: NotImplemented:{TypedText bycopy} (40)
+// CHECK-CCF: NotImplemented:{TypedText byref} (40)
+// CHECK-CCF: NotImplemented:{TypedText in} (40)
+// CHECK-CCF: NotImplemented:{TypedText inout} (40)
+// CHECK-CCF: NotImplemented:{TypedText oneway} (40)
+// CHECK-CCF: NotImplemented:{TypedText out} (40)
 // CHECK-CCF: NotImplemented:{TypedText unsigned} (50)
 // CHECK-CCF: NotImplemented:{TypedText void} (50)
 // CHECK-CCF: NotImplemented:{TypedText volatile} (50)
 // RUN: c-index-test -code-completion-at=%s:60:11 %s | FileCheck -check-prefix=CHECK-CCG %s
 // CHECK-CCG: ObjCInterfaceDecl:{TypedText A} (50)
 // CHECK-CCG: ObjCInterfaceDecl:{TypedText B} (50)
-// CHECK-CCG-NOT: NotImplemented:{TypedText bycopy} (30)
-// CHECK-CCG-NOT: NotImplemented:{TypedText byref} (30)
-// CHECK-CCG: NotImplemented:{TypedText in} (30)
-// CHECK-CCG: NotImplemented:{TypedText inout} (30)
-// CHECK-CCG-NOT: NotImplemented:{TypedText oneway} (30)
-// CHECK-CCG: NotImplemented:{TypedText out} (30)
+// CHECK-CCG-NOT: NotImplemented:{TypedText bycopy} (40)
+// CHECK-CCG-NOT: NotImplemented:{TypedText byref} (40)
+// CHECK-CCG: NotImplemented:{TypedText in} (40)
+// CHECK-CCG: NotImplemented:{TypedText inout} (40)
+// CHECK-CCG-NOT: NotImplemented:{TypedText oneway} (40)
+// CHECK-CCG: NotImplemented:{TypedText out} (40)
 // CHECK-CCG: NotImplemented:{TypedText unsigned} (50)
 // CHECK-CCG: NotImplemented:{TypedText void} (50)
 // CHECK-CCG: NotImplemented:{TypedText volatile} (50)
@@ -149,12 +149,12 @@
 // RUN: c-index-test -code-completion-at=%s:60:26 %s | FileCheck -check-prefix=CHECK-CCH %s
 // CHECK-CCH: ObjCInterfaceDecl:{TypedText A} (50)
 // CHECK-CCH: ObjCInterfaceDecl:{TypedText B} (50)
-// CHECK-CCH: NotImplemented:{TypedText bycopy} (30)
-// CHECK-CCH: NotImplemented:{TypedText byref} (30)
-// CHECK-CCH-NOT: NotImplemented:{TypedText in} (30)
-// CHECK-CCH: NotImplemented:{TypedText inout} (30)
-// CHECK-CCH: NotImplemented:{TypedText oneway} (30)
-// CHECK-CCH: NotImplemented:{TypedText out} (30)
+// CHECK-CCH: NotImplemented:{TypedText bycopy} (40)
+// CHECK-CCH: NotImplemented:{TypedText byref} (40)
+// CHECK-CCH-NOT: NotImplemented:{TypedText in} (40)
+// CHECK-CCH: NotImplemented:{TypedText inout} (40)
+// CHECK-CCH: NotImplemented:{TypedText oneway} (40)
+// CHECK-CCH: NotImplemented:{TypedText out} (40)
 // CHECK-CCH: NotImplemented:{TypedText unsigned} (50)
 // CHECK-CCH: NotImplemented:{TypedText void} (50)
 // CHECK-CCH: NotImplemented:{TypedText volatile} (50)

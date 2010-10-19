@@ -30,15 +30,15 @@ void f5(float f) {
 // CHECK-CC1: macro definition:{TypedText __VERSION__} (70)
 // CHECK-CC1: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (12) (unavailable)
 // CHECK-CC1-NOT: NotImplemented:{TypedText float} (65)
-// CHECK-CC1: ParmDecl:{ResultType int}{TypedText j} (2)
-// CHECK-CC1: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (30)
+// CHECK-CC1: ParmDecl:{ResultType int}{TypedText j} (8)
+// CHECK-CC1: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:7:9 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: c-index-test -code-completion-at=%s:7:14 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:7:14 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: macro definition:{TypedText __VERSION__} (70)
 // CHECK-CC3: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (50)
 // CHECK-CC3-NOT: NotImplemented:{TypedText float}
-// CHECK-CC3: ParmDecl:{ResultType int}{TypedText j} (8)
+// CHECK-CC3: ParmDecl:{ResultType int}{TypedText j} (34)
 // CHECK-CC3: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expressio
 
 // RUN: c-index-test -code-completion-at=%s:7:18 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s
@@ -47,8 +47,8 @@ void f5(float f) {
 // CHECK-CC2: macro definition:{TypedText __VERSION__} (70)
 // CHECK-CC2: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (50)
 // CHECK-CC2: NotImplemented:{TypedText float} (50)
-// CHECK-CC2: ParmDecl:{ResultType int}{TypedText j} (8)
-// CHECK-CC2: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (30)
+// CHECK-CC2: ParmDecl:{ResultType int}{TypedText j} (34)
+// CHECK-CC2: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
 // RUN: c-index-test -code-completion-at=%s:11:16 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (50)
 // CHECK-CC4: VarDecl:{ResultType struct X}{TypedText f1} (50) (deprecated)
@@ -60,7 +60,7 @@ void f5(float f) {
 
 // RUN: c-index-test -code-completion-at=%s:24:4 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:24:4 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
-// CHECK-CC7: ParmDecl:{ResultType float}{TypedText f} (8)
+// CHECK-CC7: ParmDecl:{ResultType float}{TypedText f} (34)
 // CHECK-CC7: VarDecl:{ResultType struct X}{TypedText f1} (50) (deprecated)
 // CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f2}{LeftParen (}{RightParen )} (50)
 // CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder const char *, ...}{Text , NULL}{RightParen )} (50)

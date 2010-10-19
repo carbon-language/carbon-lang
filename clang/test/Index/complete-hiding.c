@@ -19,8 +19,8 @@ void f() {
 // RUN: c-index-test -code-completion-at=%s:16:3 %s > %t
 // RUN: FileCheck -check-prefix=CHECK-CC1 -input-file=%t %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:16:3 %s | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: VarDecl:{ResultType int}{TypedText StructA} (8)
-// CHECK-CC1: VarDecl:{ResultType int}{TypedText ValueA} (8)
+// CHECK-CC1: VarDecl:{ResultType int}{TypedText StructA} (34)
+// CHECK-CC1: VarDecl:{ResultType int}{TypedText ValueA} (34)
 // CHECK-CC1-NOT: VarDecl:{ResultType int}{TypedText ValueA} (50)
 // CHECK-CC1: VarDecl:{ResultType int}{TypedText ValueB} (50)
 // RUN: c-index-test -code-completion-at=%s:16:10 %s > %t

@@ -26,5 +26,5 @@ void test_props(Int* ptr) {
 // CHECK-CC1: ObjCPropertyDecl:{ResultType int}{TypedText prop1}
 // CHECK-CC1: ObjCPropertyDecl:{ResultType float}{TypedText ProtoProp}
 // RUN: c-index-test -code-completion-at=%s:22:8 %s | FileCheck -check-prefix=CHECK-CC2 %s
-// CHECK-CC2: ObjCIvarDecl:{ResultType int}{TypedText IVar} (20)
-// CHECK-CC2: ObjCIvarDecl:{ResultType int}{TypedText SuperIVar} (22)
+// CHECK-CC2: ObjCIvarDecl:{ResultType int}{TypedText IVar} (35)
+// CHECK-CC2: ObjCIvarDecl:{ResultType int}{TypedText SuperIVar} (37)

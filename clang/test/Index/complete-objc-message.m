@@ -248,13 +248,13 @@ void test_redundancy(C *c) {
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)}{HorizontalSpace  }{TypedText Arg1:}{Placeholder (int)}{HorizontalSpace  }{TypedText Arg2:}{Placeholder (int)}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType id}{TypedText protocolClassMethod}
 // RUN: c-index-test -code-completion-at=%s:134:6 %s | FileCheck -check-prefix=CHECK-CCI %s
-// CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method1} (22)
-// CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2} (20)
+// CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method1} (37)
+// CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2} (35)
 
 // RUN: c-index-test -code-completion-at=%s:150:5 %s | FileCheck -check-prefix=CHECK-REDUNDANT %s
-// CHECK-REDUNDANT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2} (20)
+// CHECK-REDUNDANT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2} (35)
 // CHECK-REDUNDANT-NOT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2}
-// CHECK-REDUNDANT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method3} (20)
+// CHECK-REDUNDANT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method3} (35)
 
 // Test code completion with a missing opening bracket:
 // RUN: c-index-test -code-completion-at=%s:135:5 %s | FileCheck -check-prefix=CHECK-CCI %s

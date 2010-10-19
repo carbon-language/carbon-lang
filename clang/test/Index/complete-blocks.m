@@ -37,12 +37,12 @@ void test_C(C *c) {
 // CHECK-CC1: FunctionDecl:{ResultType void}{TypedText f}{LeftParen (}{Placeholder ^int(int x, int y)block}{RightParen )} (50)
 // CHECK-CC1: FunctionDecl:{ResultType void}{TypedText g}{LeftParen (}{Placeholder ^(float f, double d)b}{RightParen )} (50)
 // RUN: c-index-test -code-completion-at=%s:17:6 %s | FileCheck -check-prefix=CHECK-CC2 %s
-// CHECK-CC2: ObjCInstanceMethodDecl:{ResultType id}{TypedText method2:}{Placeholder ^(float f, double d)b} (20)
-// CHECK-CC2: ObjCInstanceMethodDecl:{ResultType id}{TypedText method:}{Placeholder ^int(int x, int y)b} (20)
+// CHECK-CC2: ObjCInstanceMethodDecl:{ResultType id}{TypedText method2:}{Placeholder ^(float f, double d)b} (35)
+// CHECK-CC2: ObjCInstanceMethodDecl:{ResultType id}{TypedText method:}{Placeholder ^int(int x, int y)b} (35)
 // RUN: c-index-test -code-completion-at=%s:25:6 %s | FileCheck -check-prefix=CHECK-CC3 %s
-// CHECK-CC3: ObjCInstanceMethodDecl:{ResultType id}{TypedText method3:}{Placeholder ^int(void)b} (20)
+// CHECK-CC3: ObjCInstanceMethodDecl:{ResultType id}{TypedText method3:}{Placeholder ^int(void)b} (35)
 // RUN: c-index-test -code-completion-at=%s:33:6 %s | FileCheck -check-prefix=CHECK-CC4 %s
-// CHECK-CC4: ObjCInstanceMethodDecl:{ResultType id}{TypedText method4:}{Placeholder ^(void)arg} (20)
+// CHECK-CC4: ObjCInstanceMethodDecl:{ResultType id}{TypedText method4:}{Placeholder ^(void)arg} (35)
 // RUN: c-index-test -code-completion-at=%s:25:15 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: TypedefDecl:{TypedText block_t} (50)
 // CHECK-CC5: TypedefDecl:{TypedText Class} (50)

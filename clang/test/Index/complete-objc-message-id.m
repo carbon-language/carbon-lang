@@ -62,13 +62,13 @@ void message_qualified_id(id<P2> ip2) {
 
 
 // RUN: c-index-test -code-completion-at=%s:31:13 %s | FileCheck -check-prefix=CHECK-SELECTOR-PREF %s
-// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText alloc} (17)
-// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType Class}{TypedText class} (20)
-// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText init} (20)
-// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText new} (20)
-// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType Class}{TypedText superclass} (20)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText alloc} (32)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType Class}{TypedText class} (35)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText init} (35)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText new} (35)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType Class}{TypedText superclass} (35)
 
 // RUN: c-index-test -code-completion-at=%s:46:7 %s | FileCheck -check-prefix=CHECK-INSTANCE-QUAL-ID %s
 // RUN: c-index-test -code-completion-at=%s:47:7 %s | FileCheck -check-prefix=CHECK-INSTANCE-QUAL-ID %s
-// CHECK-INSTANCE-QUAL-ID: ObjCInstanceMethodDecl:{ResultType int}{TypedText P1_method1} (22)
-// CHECK-INSTANCE-QUAL-ID: ObjCInstanceMethodDecl:{ResultType int}{TypedText P2_method1} (20)
+// CHECK-INSTANCE-QUAL-ID: ObjCInstanceMethodDecl:{ResultType int}{TypedText P1_method1} (37)
+// CHECK-INSTANCE-QUAL-ID: ObjCInstanceMethodDecl:{ResultType int}{TypedText P2_method1} (35)

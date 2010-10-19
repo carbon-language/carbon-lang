@@ -29,7 +29,7 @@
 // CHECK-CC2: VarDecl:{ResultType A *}{TypedText a}
 // CHECK-CC2: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )}
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:12:11 %s | FileCheck -check-prefix=CHECK-CC3 %s
-// CHECK-CC3: ObjCInstanceMethodDecl:{ResultType void}{TypedText method:}{Placeholder (int)} (17)
+// CHECK-CC3: ObjCInstanceMethodDecl:{ResultType void}{TypedText method:}{Placeholder (int)} (32)
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:13:22 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:14:16 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:15:14 %s | FileCheck -check-prefix=CHECK-CC3 %s

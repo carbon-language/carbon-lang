@@ -5,9 +5,9 @@ int
 // Test driver errors with code completion
 // RUN: c-index-test -code-completion-at=%s:4:1 -std= %s 2> %t | FileCheck -check-prefix=CHECK-RESULTS %s
 // RUN: FileCheck -check-prefix=CHECK-DIAGS %s < %t
-// CHECK-RESULTS: NotImplemented:{TypedText const} (30)
-// CHECK-RESULTS: NotImplemented:{TypedText restrict} (30)
-// CHECK-RESULTS: NotImplemented:{TypedText volatile} (30)
+// CHECK-RESULTS: NotImplemented:{TypedText const} (40)
+// CHECK-RESULTS: NotImplemented:{TypedText restrict} (40)
+// CHECK-RESULTS: NotImplemented:{TypedText volatile} (40)
 
 // Test driver errors with parsing
 // RUN: c-index-test -test-load-source all -std= %s 2> %t | FileCheck -check-prefix=CHECK-LOAD %s

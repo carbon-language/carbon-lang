@@ -36,17 +36,17 @@ enum {
   /// list.
   CCP_NextInitializer = 7,
   /// \brief Priority for a send-to-super completion.
-  CCP_SuperCompletion = 8,
+  CCP_SuperCompletion = 20,
   /// \brief Priority for a declaration that is in the local scope.
-  CCP_LocalDeclaration = 8,
+  CCP_LocalDeclaration = 34,
   /// \brief Priority for a member declaration found from the current
   /// method or member function.
-  CCP_MemberDeclaration = 20,
+  CCP_MemberDeclaration = 35,
   /// \brief Priority for a language keyword (that isn't any of the other
   /// categories).
-  CCP_Keyword = 30,
+  CCP_Keyword = 40,
   /// \brief Priority for a code pattern.
-  CCP_CodePattern = 30,
+  CCP_CodePattern = 40,
   /// \brief Priority for a non-type declaration.
   CCP_Declaration = 50,
   /// \brief Priority for a type.
