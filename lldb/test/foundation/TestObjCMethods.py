@@ -140,21 +140,22 @@ class FoundationTestCase(TestBase):
                        "(NSDate *) date"])
 
         # This should fail expectedly.
-        self.expect("expr self->non_existent_member", COMMAND_FAILED_AS_EXPECTED, error=True,
+        self.expect("expression self->non_existent_member",
+                    COMMAND_FAILED_AS_EXPECTED, error=True,
             startstr = "error: 'MyString' does not have a member named 'non_existent_member'")
 
         # This currently fails.
         # rdar://problem/8492646
         #
         # Use expression parser.
-        #self.runCmd("expr self->str")
-        #self.runCmd("expr self->date")
+        #self.runCmd("expression self->str")
+        #self.runCmd("expression self->date")
 
-        # (lldb) expr self->str
+        # (lldb) expression self->str
         # error: instance variable 'str' is protected
         # error: 1 errors parsing expression
         #
-        # (lldb) expr self->date
+        # (lldb) expression self->date
         # error: instance variable 'date' is protected
         # error: 1 errors parsing expression
         #
@@ -172,7 +173,7 @@ class FoundationTestCase(TestBase):
         #
         # Test new feature with r115115:
         # Add "-o" option to "expression" which prints the object description if available.
-        self.expect("expr -o -- my", "Object description displayed correctly",
+        self.expect("expression -o -- my", "Object description displayed correctly",
             patterns = ["Hello from.*a.out.*with timestamp: "])
 
 

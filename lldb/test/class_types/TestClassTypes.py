@@ -185,7 +185,7 @@ class ClassTypesTestCase(TestBase):
         # expr this->m_c_int returns an incorrect value
         #
         # Verify that expr this->m_c_int behaves correctly.
-        self.expect("expr this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expression this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = ['\(int\) \$[0-9]+ = 66'])
 
 

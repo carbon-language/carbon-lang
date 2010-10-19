@@ -51,7 +51,7 @@ class ForwardDeclarationTestCase(TestBase):
                        '(int) b = 2'])
 
         # And so should this.
-        self.expect("expr *bar_ptr", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expression *bar_ptr", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(struct bar)',
                        '(int) a = 1',
                        '(int) b = 2'])

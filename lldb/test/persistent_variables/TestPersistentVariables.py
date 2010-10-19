@@ -21,19 +21,19 @@ class PersistentVariablesTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
-        self.expect("expr int $i = 5; $i + 1",
+        self.expect("expression int $i = 5; $i + 1",
             startstr = "(int) $0 = 6")
         # (int) $0 = 6
 
-        self.expect("expr $i + 3",
+        self.expect("expression $i + 3",
             startstr = "(int) $1 = 8")
         # (int) $1 = 8
 
-        self.expect("expr $1 + $0",
+        self.expect("expression $1 + $0",
             startstr = "(int) $2 = 14")
         # (int) $2 = 14
 
-        self.expect("expr $2",
+        self.expect("expression $2",
             startstr = "(int) $3 = 14")
         # (int) $3 =  14
 
