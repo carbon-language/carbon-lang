@@ -305,7 +305,7 @@ bool DarwinAsmParser::ParseSectionSwitch(const char *Segment,
   //
   // FIXME: This isn't really what 'as' does; I think it just uses the implicit
   // alignment on the section (e.g., if one manually inserts bytes into the
-  // section, then just issueing the section switch directive will not realign
+  // section, then just issuing the section switch directive will not realign
   // the section. However, this is arguably more reasonable behavior, and there
   // is no good reason for someone to intentionally emit incorrectly sized
   // values into the implicitly aligned sections.
