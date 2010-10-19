@@ -120,6 +120,9 @@ class SettingsCommandTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
+        # Restore the original setting now that the program has been run.
+        self.runCmd("settings set -r target.process.output-path")
+
         # The 'stdout.txt' file should now exist.
         self.assertTrue(os.path.isfile("stdout.txt"),
                         "'stdout.txt' exists due to target.process.output-path.")
