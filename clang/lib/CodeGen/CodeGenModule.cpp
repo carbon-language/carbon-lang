@@ -65,7 +65,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI),
     TBAA(0),
     VTables(*this), Runtime(0),
-    CFConstantStringClassRef(0), NSConstantStringClassRef(0),
+    CFConstantStringClassRef(0), ConstantStringClassRef(0),
     VMContext(M.getContext()),
     NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
@@ -1635,7 +1635,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
 }
 
 llvm::Constant *
-CodeGenModule::GetAddrOfConstantNSString(const StringLiteral *Literal) {
+CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
   bool isUTF16 = false;
   llvm::StringMapEntry<llvm::Constant*> &Entry =
@@ -1651,16 +1651,27 @@ CodeGenModule::GetAddrOfConstantNSString(const StringLiteral *Literal) {
   llvm::Constant *Zeros[] = { Zero, Zero };
   
   // If we don't already have it, get _NSConstantStringClassReference.
-  if (!NSConstantStringClassRef) {
+  if (!ConstantStringClassRef) {
+    std::string StringClass(getLangOptions().ObjCConstantStringClass);
     const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
     Ty = llvm::ArrayType::get(Ty, 0);
-    llvm::Constant *GV = CreateRuntimeVariable(Ty, 
-                                        Features.ObjCNonFragileABI ?
-                                        "OBJC_CLASS_$_NSConstantString" :
-                                        "_NSConstantStringClassReference");
+    llvm::Constant *GV;
+    if (StringClass.empty())
+      GV = CreateRuntimeVariable(Ty, 
+                                 Features.ObjCNonFragileABI ?
+                                 "OBJC_CLASS_$_NSConstantString" :
+                                 "_NSConstantStringClassReference");
+    else {
+      std::string str;
+      if (Features.ObjCNonFragileABI)
+        str = "OBJC_CLASS_$_" + StringClass;
+      else
+        str = "_" + StringClass + "ClassReference";
+      GV = CreateRuntimeVariable(Ty, str);
+    }
     // Decay array -> ptr
-    NSConstantStringClassRef = 
-      llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
+    ConstantStringClassRef = 
+    llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
   }
   
   QualType NSTy = getContext().getNSConstantStringType();
@@ -1671,7 +1682,7 @@ CodeGenModule::GetAddrOfConstantNSString(const StringLiteral *Literal) {
   std::vector<llvm::Constant*> Fields(3);
   
   // Class pointer.
-  Fields[0] = NSConstantStringClassRef;
+  Fields[0] = ConstantStringClassRef;
   
   // String pointer.
   llvm::Constant *C = llvm::ConstantArray::get(VMContext, Entry.getKey().str());

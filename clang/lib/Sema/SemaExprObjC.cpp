@@ -77,7 +77,14 @@ ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   if (!Ty.isNull()) {
     Ty = Context.getObjCObjectPointerType(Ty);
   } else if (getLangOptions().NoConstantCFStrings) {
-    IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
+    IdentifierInfo *NSIdent=0;
+    std::string StringClass(getLangOptions().ObjCConstantStringClass);
+    
+    if (StringClass.empty())
+      NSIdent = &Context.Idents.get("NSConstantString");
+    else
+      NSIdent = &Context.Idents.get(StringClass);
+    
     NamedDecl *IF = LookupSingleName(TUScope, NSIdent, AtLocs[0],
                                      LookupOrdinaryName);
     if (ObjCInterfaceDecl *StrIF = dyn_cast_or_null<ObjCInterfaceDecl>(IF)) {

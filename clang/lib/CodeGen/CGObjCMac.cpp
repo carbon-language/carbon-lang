@@ -1520,7 +1520,7 @@ llvm::Constant *CGObjCCommonMac::GenerateConstantString(
   const StringLiteral *SL) {
   return (CGM.getLangOptions().NoConstantCFStrings == 0 ? 
           CGM.GetAddrOfConstantCFString(SL) :
-          CGM.GetAddrOfConstantNSString(SL));
+          CGM.GetAddrOfConstantString(SL));
 }
 
 /// Generates a message send where the super is the receiver.  This is
