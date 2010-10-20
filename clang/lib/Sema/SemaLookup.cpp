@@ -3138,7 +3138,10 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   // If only a single name remains, return that result.
   if (Consumer.size() == 1) {
     IdentifierInfo *Name = &Context.Idents.get(Consumer.begin()->getKey());
-    if (!LastLookupWasAccepted) {
+    if (Consumer.begin()->second) {
+      Res.suppressDiagnostics();
+      Res.clear();
+    } else if (!LastLookupWasAccepted) {
       // Perform name lookup on this name.
       Res.suppressDiagnostics();
       Res.clear();
