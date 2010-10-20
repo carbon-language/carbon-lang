@@ -989,9 +989,9 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
       Decl *NewLatest = Reader.GetDecl(I->second);
       assert((LatestDecl->getLocation().isInvalid() ||
               NewLatest->getLocation().isInvalid()  ||
-              Reader.SourceMgr.isBeforeInTranslationUnit(
-                                                   LatestDecl->getLocation(),
-                                                   NewLatest->getLocation())) &&
+              !Reader.SourceMgr.isBeforeInTranslationUnit(
+                                                  NewLatest->getLocation(),
+                                                  LatestDecl->getLocation())) &&
              "The new latest is supposed to come after the previous latest");
       LatestDecl = cast<RedeclarableTemplateDecl>(NewLatest);
     }
@@ -1203,9 +1203,9 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
     Decl *NewLatest = Reader.GetDecl(I->second);
     assert((D->getMostRecentDeclaration()->getLocation().isInvalid() ||
             NewLatest->getLocation().isInvalid() ||
-            Reader.SourceMgr.isBeforeInTranslationUnit(
-                                   D->getMostRecentDeclaration()->getLocation(),
-                                   NewLatest->getLocation())) &&
+            !Reader.SourceMgr.isBeforeInTranslationUnit(
+                               NewLatest->getLocation(),
+                               D->getMostRecentDeclaration()->getLocation())) &&
            "The new latest is supposed to come after the previous latest");
     D->RedeclLink
         = typename Redeclarable<T>::LatestDeclLink(cast_or_null<T>(NewLatest));
