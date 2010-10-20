@@ -2079,6 +2079,12 @@ UserSettingsController::UpdateDictionaryVariable (lldb::VarSetOperationType op,
         case lldb::eVarSetOperationAppend:
         case lldb::eVarSetOperationAssign:
             {
+                // Clear the dictionary if it's an assign with new_value as NULL.
+                if (new_value == NULL && op == lldb::eVarSetOperationAssign)
+                {
+                    dictionary.clear ();
+                    break;
+                }
                 Args args (new_value);
                 size_t num_args = args.GetArgumentCount();
                 for (size_t i = 0; i < num_args; ++i)
