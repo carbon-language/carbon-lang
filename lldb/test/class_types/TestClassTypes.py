@@ -36,7 +36,6 @@ class ClassTypesTestCase(TestBase):
         self.breakpoint_creation_by_filespec_python()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @unittest2.expectedFailure
     # rdar://problem/8557478
     # test/class_types test failures: runCmd: expr this->m_c_int
     def test_with_dsym_and_expr_parser(self):
@@ -44,7 +43,6 @@ class ClassTypesTestCase(TestBase):
         self.buildDsym()
         self.class_types_expr_parser()
 
-    @unittest2.expectedFailure
     # rdar://problem/8557478
     # test/class_types test failures: runCmd: expr this->m_c_int
     def test_with_dwarf_and_expr_parser(self):
