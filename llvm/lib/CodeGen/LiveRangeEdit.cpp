@@ -15,6 +15,7 @@
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
 
@@ -36,6 +37,31 @@ LiveInterval &LiveRangeEdit::create(MachineRegisterInfo &mri,
   LiveInterval &li = lis.getOrCreateInterval(VReg);
   newRegs_.push_back(&li);
   return li;
+}
+
+void LiveRangeEdit::scanRemattable(LiveIntervals &lis,
+                                   const TargetInstrInfo &tii,
+                                   AliasAnalysis *aa) {
+  for (LiveInterval::vni_iterator I = parent_.vni_begin(),
+       E = parent_.vni_end(); I != E; ++I) {
+    VNInfo *VNI = *I;
+    if (VNI->isUnused())
+      continue;
+    MachineInstr *DefMI = lis.getInstructionFromIndex(VNI->def);
+    if (!DefMI)
+      continue;
+    if (tii.isTriviallyReMaterializable(DefMI, aa))
+      remattable_.insert(VNI);
+  }
+  scannedRemattable_ = true;
+}
+
+bool LiveRangeEdit::anyRematerializable(LiveIntervals &lis,
+                                        const TargetInstrInfo &tii,
+                                        AliasAnalysis *aa) {
+  if (!scannedRemattable_)
+    scanRemattable(lis, tii, aa);
+  return !remattable_.empty();
 }
 
 /// allUsesAvailableAt - Return true if all registers used by OrigMI at
@@ -69,5 +95,49 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
       return false;
   }
   return true;
+}
+
+LiveRangeEdit::Remat LiveRangeEdit::canRematerializeAt(VNInfo *ParentVNI,
+                                                       SlotIndex UseIdx,
+                                                       bool cheapAsAMove,
+                                                       LiveIntervals &lis) {
+  assert(scannedRemattable_ && "Call anyRematerializable first");
+  Remat RM = { 0, 0 };
+
+  // We could remat an undefined value as IMPLICIT_DEF, but all that should have
+  // been taken care of earlier.
+  if (!(RM.ParentVNI = parent_.getVNInfoAt(UseIdx)))
+    return RM;
+
+  // Use scanRemattable info.
+  if (!remattable_.count(RM.ParentVNI))
+    return RM;
+
+  // No defining instruction.
+  MachineInstr *OrigMI = lis.getInstructionFromIndex(RM.ParentVNI->def);
+  assert(OrigMI && "Defining instruction for remattable value disappeared");
+
+  // If only cheap remats were requested, bail out early.
+  if (cheapAsAMove && !OrigMI->getDesc().isAsCheapAsAMove())
+    return RM;
+
+  // Verify that all used registers are available with the same values.
+  if (!allUsesAvailableAt(OrigMI, RM.ParentVNI->def, UseIdx, lis))
+    return RM;
+
+  RM.OrigMI = OrigMI;
+  return RM;
+}
+
+SlotIndex LiveRangeEdit::rematerializeAt(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator MI,
+                                         unsigned DestReg,
+                                         const Remat &RM,
+                                         LiveIntervals &lis,
+                                         const TargetInstrInfo &tii,
+                                         const TargetRegisterInfo &tri) {
+  assert(RM.OrigMI && "Invalid remat");
+  tii.reMaterialize(MBB, MI, DestReg, 0, RM.OrigMI, tri);
+  return lis.InsertMachineInstrInMaps(--MI).getDefIndex();
 }
 

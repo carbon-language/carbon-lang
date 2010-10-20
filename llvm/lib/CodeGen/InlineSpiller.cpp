@@ -49,10 +49,7 @@ class InlineSpiller : public Spiller {
   const TargetRegisterClass *rc_;
   int stackSlot_;
 
-  // Values of the current interval that can potentially remat.
-  SmallPtrSet<VNInfo*, 8> reMattable_;
-
-  // Values in reMattable_ that failed to remat at some point.
+  // Values that failed to remat at some point.
   SmallPtrSet<VNInfo*, 8> usedValues_;
 
   ~InlineSpiller() {}
@@ -136,6 +133,7 @@ bool InlineSpiller::split() {
 bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
   SlotIndex UseIdx = lis_.getInstructionIndex(MI).getUseIndex();
   VNInfo *OrigVNI = edit_->getParent().getVNInfoAt(UseIdx);
+
   if (!OrigVNI) {
     DEBUG(dbgs() << "\tadding <undef> flags: ");
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -146,20 +144,17 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
     DEBUG(dbgs() << UseIdx << '\t' << *MI);
     return true;
   }
-  if (!reMattable_.count(OrigVNI)) {
-    DEBUG(dbgs() << "\tusing non-remat valno " << OrigVNI->id << ": "
-                 << UseIdx << '\t' << *MI);
-    return false;
-  }
-  MachineInstr *OrigMI = lis_.getInstructionFromIndex(OrigVNI->def);
-  if (!edit_->allUsesAvailableAt(OrigMI, OrigVNI->def, UseIdx, lis_)) {
+
+  LiveRangeEdit::Remat RM = edit_->canRematerializeAt(OrigVNI, UseIdx, false,
+                                                      lis_);
+  if (!RM) {
     usedValues_.insert(OrigVNI);
     DEBUG(dbgs() << "\tcannot remat for " << UseIdx << '\t' << *MI);
     return false;
   }
 
-  // If the instruction also writes edit_->getReg(), it had better not require the same
-  // register for uses and defs.
+  // If the instruction also writes edit_->getReg(), it had better not require
+  // the same register for uses and defs.
   bool Reads, Writes;
   SmallVector<unsigned, 8> Ops;
   tie(Reads, Writes) = MI->readsWritesVirtualRegister(edit_->getReg(), &Ops);
@@ -179,11 +174,9 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
   NewLI.markNotSpillable();
 
   // Finally we can rematerialize OrigMI before MI.
-  MachineBasicBlock &MBB = *MI->getParent();
-  tii_.reMaterialize(MBB, MI, NewLI.reg, 0, OrigMI, tri_);
-  MachineBasicBlock::iterator RematMI = MI;
-  SlotIndex DefIdx = lis_.InsertMachineInstrInMaps(--RematMI).getDefIndex();
-  DEBUG(dbgs() << "\tremat:  " << DefIdx << '\t' << *RematMI);
+  SlotIndex DefIdx = edit_->rematerializeAt(*MI->getParent(), MI, NewLI.reg, RM,
+                                            lis_, tii_, tri_);
+  DEBUG(dbgs() << "\tremat:  " << DefIdx << '\n');
 
   // Replace operands
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
@@ -205,22 +198,10 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
 /// and trim the live ranges after.
 void InlineSpiller::reMaterializeAll() {
   // Do a quick scan of the interval values to find if any are remattable.
-  reMattable_.clear();
-  usedValues_.clear();
-  for (LiveInterval::const_vni_iterator I = edit_->getParent().vni_begin(),
-       E = edit_->getParent().vni_end(); I != E; ++I) {
-    VNInfo *VNI = *I;
-    if (VNI->isUnused())
-      continue;
-    MachineInstr *DefMI = lis_.getInstructionFromIndex(VNI->def);
-    if (!DefMI || !tii_.isTriviallyReMaterializable(DefMI))
-      continue;
-    reMattable_.insert(VNI);
-  }
-
-  // Often, no defs are remattable.
-  if (reMattable_.empty())
+  if (!edit_->anyRematerializable(lis_, tii_, 0))
     return;
+
+  usedValues_.clear();
 
   // Try to remat before all uses of edit_->getReg().
   bool anyRemat = false;
@@ -234,10 +215,11 @@ void InlineSpiller::reMaterializeAll() {
 
   // Remove any values that were completely rematted.
   bool anyRemoved = false;
-  for (SmallPtrSet<VNInfo*, 8>::iterator I = reMattable_.begin(),
-       E = reMattable_.end(); I != E; ++I) {
+  for (LiveInterval::vni_iterator I = edit_->getParent().vni_begin(),
+       E = edit_->getParent().vni_end(); I != E; ++I) {
     VNInfo *VNI = *I;
-    if (VNI->hasPHIKill() || usedValues_.count(VNI))
+    if (VNI->hasPHIKill() || !edit_->didRematerialize(VNI) ||
+        usedValues_.count(VNI))
       continue;
     MachineInstr *DefMI = lis_.getInstructionFromIndex(VNI->def);
     DEBUG(dbgs() << "\tremoving dead def: " << VNI->def << '\t' << *DefMI);
