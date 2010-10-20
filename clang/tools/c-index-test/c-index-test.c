@@ -1234,6 +1234,7 @@ int perform_token_annotation(int argc, const char **argv) {
     printf("\n");
   }
   free(cursors);
+  clang_disposeTokens(TU, tokens, num_tokens);
 
  teardown:
   PrintDiagnostics(TU);
