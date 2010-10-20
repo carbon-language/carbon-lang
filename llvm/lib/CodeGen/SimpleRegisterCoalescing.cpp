@@ -1767,8 +1767,18 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         if (!MO.isReg() || !MO.isKill()) continue;
         unsigned reg = MO.getReg();
         if (!reg || !li_->hasInterval(reg)) continue;
-        if (!li_->getInterval(reg).killedAt(DefIdx))
+        if (!li_->getInterval(reg).killedAt(DefIdx)) {
           MO.setIsKill(false);
+          continue;
+        }
+        // When leaving a kill flag on a physreg, check if any subregs should
+        // remain alive.
+        if (!TargetRegisterInfo::isPhysicalRegister(reg))
+          continue;
+        for (const unsigned *SR = tri_->getSubRegisters(reg);
+             unsigned S = *SR; ++SR)
+          if (li_->hasInterval(S) && li_->getInterval(S).liveAt(DefIdx))
+            MI->addRegisterDefined(S, tri_);
       }
     }
   }
