@@ -84,11 +84,11 @@ class BreakpointLocationsTestCase(TestBase):
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ["stop reason = breakpoint 1."])
 
-        # At this point, the 3 locations should all have "hit count = 2".
-        self.expect("breakpoint list", "Expect all 3 breakpoints with hit count of 2",
-            patterns = ["1\.1: .+ resolved, hit count = 2 +Options: disabled",
-                        "1\.2: .+ resolved, hit count = 2",
-                        "1\.3: .+ resolved, hit count = 2"])
+        # At this point, 1.1 has a hit count of 0 and the other a hit count of 1".
+        self.expect("breakpoint list", "The breakpoints should report correct hit counts",
+            patterns = ["1\.1: .+ unresolved, hit count = 0 +Options: disabled",
+                        "1\.2: .+ resolved, hit count = 1",
+                        "1\.3: .+ resolved, hit count = 1"])
 
 
 if __name__ == '__main__':
