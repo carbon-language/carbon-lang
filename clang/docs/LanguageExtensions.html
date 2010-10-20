@@ -136,6 +136,30 @@ can be used like this:</p>
 <p>The feature tag is described along with the language feature below.</p>
 
 <!-- ======================================================================= -->
+<h3 id="__has_attribute">__has_attribute</h3>
+<!-- ======================================================================= -->
+
+<p>This function-like macro takes a single identifier argument that is the name
+of an attribute.  It evaluates to 1 if the attribute is supported or 0 if not.  It
+can be used like this:</p>
+
+<blockquote>
+<pre>
+#ifndef __has_attribute         // Optional of course.
+  #define __has_attribute(x) 0  // Compatibility with non-clang compilers.
+#endif
+
+...
+#if __has_attribute(override) || \
+#define OVERRIDE __attribute__((override))
+#else
+#define OVERRIDE
+#endif
+...
+</pre>
+</blockquote>
+
+<!-- ======================================================================= -->
 <h2 id="has_include">Include File Checking Macros</h2>
 <!-- ======================================================================= -->
 

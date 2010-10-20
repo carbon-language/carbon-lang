@@ -70,6 +70,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   // Clang Extensions.
   Ident__has_feature      = RegisterBuiltinMacro(*this, "__has_feature");
   Ident__has_builtin      = RegisterBuiltinMacro(*this, "__has_builtin");
+  Ident__has_attribute    = RegisterBuiltinMacro(*this, "__has_attribute");
   Ident__has_include      = RegisterBuiltinMacro(*this, "__has_include");
   Ident__has_include_next = RegisterBuiltinMacro(*this, "__has_include_next");
 
@@ -535,6 +536,14 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Default(false);
 }
 
+/// HasAttribute -  Return true if we recognize and implement the attribute
+/// specified by the given identifier.
+static bool HasAttribute(const IdentifierInfo *II) {
+    return llvm::StringSwitch<bool>(II->getName())
+#include "clang/Lex/AttrSpellings.inc"
+        .Default(false);
+}
+
 /// EvaluateHasIncludeCommon - Process a '__has_include("path")'
 /// or '__has_include_next("path")' expression.
 /// Returns true if successful.
@@ -767,7 +776,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     OS << CounterValue++;
     Tok.setKind(tok::numeric_constant);
   } else if (II == Ident__has_feature ||
-             II == Ident__has_builtin) {
+             II == Ident__has_builtin ||
+             II == Ident__has_attribute) {
     // The argument to these two builtins should be a parenthesized identifier.
     SourceLocation StartLoc = Tok.getLocation();
 
@@ -795,7 +805,9 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     else if (II == Ident__has_builtin) {
       // Check for a builtin is trivial.
       Value = FeatureII->getBuiltinID() != 0;
-    } else {
+    } else if (II == Ident__has_attribute)
+      Value = HasAttribute(FeatureII);
+    else {
       assert(II == Ident__has_feature && "Must be feature check");
       Value = HasFeature(*this, FeatureII);
     }

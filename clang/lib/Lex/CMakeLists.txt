@@ -26,4 +26,4 @@ add_clang_library(clangLex
   TokenLexer.cpp
   )
 
-add_dependencies(clangLex ClangDiagnosticLex)
+add_dependencies(clangLex ClangDiagnosticLex ClangAttrSpellings)
