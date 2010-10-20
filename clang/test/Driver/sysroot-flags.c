@@ -6,21 +6,23 @@
 
 // Check that we get both isysroot for headers, and pass --sysroot on to GCC to
 // produce the final binary.
-// RUN: %clang -### -triple x86_64-unknown-linux-gnu --sysroot=/foo/bar \
-// RUN:   -o /dev/null %s 2>&1 | FileCheck %s -check-prefix=SYSROOT_EQ
+// RUN: %clang -### -ccc-host-triple x86_64-unknown-linux-gnu \
+// RUN:   --sysroot=/foo/bar -o /dev/null %s 2>&1 | \
+// RUN:   FileCheck %s -check-prefix=SYSROOT_EQ
 // SYSROOT_EQ: "-isysroot" "/foo/bar"
 // SYSROOT_EQ: "--sysroot=/foo/bar"
 
 // Check for overriding the header sysroot by providing both --sysroot and
 // -isysroot.
-// RUN: %clang -### -triple x86_64-unknown-linux-gnu -isysroot /baz \
+// RUN: %clang -### -ccc-host-triple x86_64-unknown-linux-gnu -isysroot /baz \
 // RUN:   --sysroot=/foo/bar -o /dev/null %s 2>&1 | FileCheck %s \
 // RUN:   -check-prefix=ISYSROOT_AND_SYSROOT
 // ISYSROOT_AND_SYSROOT: "-isysroot" "/baz"
 // ISYSROOT_AND_SYSROOT: "--sysroot=/foo/bar"
 
 // Check that omitting the equals works as well.
-// RUN: %clang -### -triple x86_64-unknown-linux-gnu --sysroot /foo/bar \
-// RUN:   -o /dev/null %s 2>&1 | FileCheck %s -check-prefix=SYSROOT_SEPARATE
+// RUN: %clang -### -ccc-host-triple x86_64-unknown-linux-gnu \
+// RUN:   --sysroot /foo/bar -o /dev/null %s 2>&1 | \
+// RUN:   FileCheck %s -check-prefix=SYSROOT_SEPARATE
 // SYSROOT_SEPARATE: "-isysroot" "/foo/bar"
 // SYSROOT_SEPARATE: "--sysroot=/foo/bar"
