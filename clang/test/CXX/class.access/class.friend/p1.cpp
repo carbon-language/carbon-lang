@@ -258,13 +258,12 @@ namespace test7 {
 namespace test8 {
   class A {
     typedef int I; // expected-note 4 {{declared private here}}
-    static const I x = 0;
+    static const I x = 0; // expected-note {{implicitly declared private here}}
     friend I f(I i);
     template<typename T> friend I g(I i);
   };
 
-  // FIXME: This should be on line 264.
-  const A::I A::x; // expected-note {{declared private here}}
+  const A::I A::x;
   A::I f(A::I i = A::x) {}
   template<typename T> A::I g(A::I i) {
     T t;

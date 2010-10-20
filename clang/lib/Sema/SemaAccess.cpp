@@ -1008,9 +1008,51 @@ static void DiagnoseAccessPath(Sema &S,
           TryDiagnoseProtectedAccess(S, EC, Entity))
         return;
 
+      // Find an original declaration.
+      while (D->isOutOfLine()) {
+        NamedDecl *PrevDecl = 0;
+        if (isa<VarDecl>(D))
+          PrevDecl = cast<VarDecl>(D)->getPreviousDeclaration();
+        else if (isa<FunctionDecl>(D))
+          PrevDecl = cast<FunctionDecl>(D)->getPreviousDeclaration();
+        else if (isa<TypedefDecl>(D))
+          PrevDecl = cast<TypedefDecl>(D)->getPreviousDeclaration();
+        else if (isa<TagDecl>(D)) {
+          if (isa<RecordDecl>(D) && cast<RecordDecl>(D)->isInjectedClassName())
+            break;
+          PrevDecl = cast<TagDecl>(D)->getPreviousDeclaration();
+        }
+        if (!PrevDecl) break;
+        D = PrevDecl;
+      }
+
+      CXXRecordDecl *DeclaringClass = FindDeclaringClass(D);
+      Decl *ImmediateChild;
+      if (D->getDeclContext() == DeclaringClass)
+        ImmediateChild = D;
+      else {
+        DeclContext *DC = D->getDeclContext();
+        while (DC->getParent() != DeclaringClass)
+          DC = DC->getParent();
+        ImmediateChild = cast<Decl>(DC);
+      }
+      
+      // Check whether there's an AccessSpecDecl preceding this in the
+      // chain of the DeclContext.
+      bool Implicit = true;
+      for (CXXRecordDecl::decl_iterator
+             I = DeclaringClass->decls_begin(), E = DeclaringClass->decls_end();
+           I != E; ++I) {
+        if (*I == ImmediateChild) break;
+        if (isa<AccessSpecDecl>(*I)) {
+          Implicit = false;
+          break;
+        }
+      }
+
       S.Diag(D->getLocation(), diag::note_access_natural)
         << (unsigned) (Access == AS_protected)
-        << /*FIXME: not implicitly*/ 0;
+        << Implicit;
       return;
     }
 
