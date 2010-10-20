@@ -204,13 +204,6 @@ public:
     return VT.isSimple() && RegClassForVT[VT.getSimpleVT().SimpleTy] != 0;
   }
 
-  /// isTypeSynthesizable - Return true if it's OK for the compiler to create
-  /// new operations of this type.  All Legal types are synthesizable except
-  /// MMX vector types on X86.  Non-Legal types are not synthesizable.
-  bool isTypeSynthesizable(EVT VT) const {
-    return isTypeLegal(VT) && Synthesizable[VT.getSimpleVT().SimpleTy];
-  }
-
   class ValueTypeActionImpl {
     /// ValueTypeActions - For each value type, keep a LegalizeAction enum
     /// that indicates how instruction selection should deal with the type.
@@ -1037,12 +1030,10 @@ protected:
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
-  void addRegisterClass(EVT VT, TargetRegisterClass *RC,
-                        bool isSynthesizable = true) {
+  void addRegisterClass(EVT VT, TargetRegisterClass *RC) {
     assert((unsigned)VT.getSimpleVT().SimpleTy < array_lengthof(RegClassForVT));
     AvailableRegClasses.push_back(std::make_pair(VT, RC));
     RegClassForVT[VT.getSimpleVT().SimpleTy] = RC;
-    Synthesizable[VT.getSimpleVT().SimpleTy] = isSynthesizable;
   }
 
   /// findRepresentativeClass - Return the largest legal super-reg register class
@@ -1673,11 +1664,6 @@ private:
   /// register class for each ValueType. The cost is used by the scheduler to
   /// approximate register pressure.
   uint8_t RepRegClassCostForVT[MVT::LAST_VALUETYPE];
-
-  /// Synthesizable indicates whether it is OK for the compiler to create new
-  /// operations using this type.  All Legal types are Synthesizable except
-  /// MMX types on X86.  Non-Legal types are not Synthesizable.
-  bool Synthesizable[MVT::LAST_VALUETYPE];
 
   /// TransformToType - For any value types we are promoting or expanding, this
   /// contains the value type that we are changing to.  For Expanded types, this

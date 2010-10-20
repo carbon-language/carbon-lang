@@ -793,7 +793,7 @@ void TargetLowering::computeRegisterProperties() {
         EVT SVT = (MVT::SimpleValueType)nVT;
         if (SVT.getVectorElementType() == EltVT &&
             SVT.getVectorNumElements() > NElts && 
-            isTypeSynthesizable(SVT)) {
+            isTypeLegal(SVT)) {
           TransformToType[i] = SVT;
           RegisterTypeForVT[i] = SVT;
           NumRegistersForVT[i] = 1;
