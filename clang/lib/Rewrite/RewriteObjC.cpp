@@ -1250,11 +1250,6 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
   llvm::SmallVector<Expr *, 1> ExprVec;
   ExprVec.push_back(newStmt);
 
-  if (Expr *Exp = dyn_cast<Expr>(Receiver))
-    if (PropGetters[Exp])
-      // This allows us to handle chain/nested property/implicit getters.
-      Receiver = PropGetters[Exp];
-  
   ObjCMessageExpr *MsgExpr;
   if (Super)
     MsgExpr = ObjCMessageExpr::Create(*Context, 
@@ -1266,7 +1261,15 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
                                       Sel, OMD,
                                       &ExprVec[0], 1,
                                       /*FIXME:*/SourceLocation());
-  else
+  else {
+    // FIXME. Refactor this into common code with that in 
+    // RewritePropertyOrImplicitGetter
+    assert(Receiver && "RewritePropertyOrImplicitSetter - null Receiver");
+    if (Expr *Exp = dyn_cast<Expr>(Receiver))
+      if (PropGetters[Exp])
+        // This allows us to handle chain/nested property/implicit getters.
+        Receiver = PropGetters[Exp];
+  
     MsgExpr = ObjCMessageExpr::Create(*Context, 
                                       Ty.getNonReferenceType(),
                                       /*FIXME: */SourceLocation(),
@@ -1274,6 +1277,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
                                       Sel, OMD,
                                       &ExprVec[0], 1,
                                       /*FIXME:*/SourceLocation());
+  }
   Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
 
   // Now do the actual rewrite.
@@ -1325,11 +1329,6 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
   
   assert (OMD && "RewritePropertyOrImplicitGetter - OMD is null");
   
-  if (Expr *Exp = dyn_cast<Expr>(Receiver))
-    if (PropGetters[Exp])
-      // This allows us to handle chain/nested property/implicit getters.
-      Receiver = PropGetters[Exp];
-  
   ObjCMessageExpr *MsgExpr;
   if (Super)
     MsgExpr = ObjCMessageExpr::Create(*Context, 
@@ -1341,7 +1340,12 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
                                       Sel, OMD,
                                       0, 0, 
                                       /*FIXME:*/SourceLocation());
-  else
+  else {
+    assert (Receiver && "RewritePropertyOrImplicitGetter - Receiver is null");
+    if (Expr *Exp = dyn_cast<Expr>(Receiver))
+      if (PropGetters[Exp])
+        // This allows us to handle chain/nested property/implicit getters.
+        Receiver = PropGetters[Exp];
     MsgExpr = ObjCMessageExpr::Create(*Context, 
                                       Ty.getNonReferenceType(),
                                       /*FIXME:*/SourceLocation(),
@@ -1349,6 +1353,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
                                       Sel, OMD,
                                       0, 0, 
                                       /*FIXME:*/SourceLocation());
+  }
 
   Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
 
