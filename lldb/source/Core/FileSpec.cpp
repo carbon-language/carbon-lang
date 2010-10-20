@@ -732,25 +732,21 @@ FileSpec::ReadFileContents (off_t file_offset, size_t file_size) const
     return data_sp;
 }
 
-bool
+size_t
 FileSpec::ReadFileLines (STLStringArray &lines)
 {
-    bool ret_val = false;
     lines.clear();
-
-    std::string dir_str (m_directory.AsCString());
-    std::string file_str (m_filename.AsCString());
-    std::string full_name = dir_str + "/" + file_str;
-
-    ifstream file_stream (full_name.c_str());
-
-    if (file_stream)
+    char path[PATH_MAX];
+    if (GetPath(path, sizeof(path)))
     {
-        std::string line;
-        while (getline (file_stream, line))
-          lines.push_back (line);
-        ret_val = true;
-    }
+        ifstream file_stream (path);
 
-    return ret_val;
+        if (file_stream)
+        {
+            std::string line;
+            while (getline (file_stream, line))
+                lines.push_back (line);
+        }
+    }
+    return lines.size();
 }

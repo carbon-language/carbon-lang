@@ -462,8 +462,11 @@ public:
     ///
     /// @param[out] lines
     ///     The string array into which to read the file.
+    ///
+    /// @result
+    ///     Returns the number of lines that were read from the file.
     //------------------------------------------------------------------
-    bool
+    size_t
     ReadFileLines (STLStringArray &lines);
 
     //------------------------------------------------------------------
