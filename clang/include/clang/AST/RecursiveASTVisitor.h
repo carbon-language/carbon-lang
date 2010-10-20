@@ -143,7 +143,7 @@ public:
   /// \brief Return whether this visitor should recurse into
   /// template instantiations.
   bool shouldVisitTemplateInstantiations() const { return false; }
-  
+
   /// \brief Recursively visit a statement or expression, by
   /// dispatching to Traverse*() based on the argument's dynamic type.
   ///
@@ -368,7 +368,7 @@ private:
   bool TraverseTemplateParameterListHelper(TemplateParameterList *TPL);
   bool TraverseClassInstantiations(ClassTemplateDecl* D, Decl *Pattern);
   bool TraverseFunctionInstantiations(FunctionTemplateDecl* D) ;
-  bool TraverseTemplateArgumentLocsHelper(const TemplateArgumentLoc *TAL, 
+  bool TraverseTemplateArgumentLocsHelper(const TemplateArgumentLoc *TAL,
                                           unsigned Count);
   bool TraverseArrayTypeLocHelper(ArrayTypeLoc TL);
   bool TraverseRecordHelper(RecordDecl *D);
@@ -867,22 +867,16 @@ DEF_TRAVERSE_TYPELOC(FunctionNoProtoType, {
     TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
   })
 
-// FIXME: location of arguments, exception specifications (attributes?)
-// Note that we have the ParmVarDecl's here. Do we want to use them?
+// FIXME: location of exception specifications (attributes?)
 DEF_TRAVERSE_TYPELOC(FunctionProtoType, {
     TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
 
     FunctionProtoType *T = TL.getTypePtr();
-/*
+
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
       TRY_TO(TraverseDecl(TL.getArg(I)));
     }
-*/
-    for (FunctionProtoType::arg_type_iterator A = T->arg_type_begin(),
-                                           AEnd = T->arg_type_end();
-         A != AEnd; ++A) {
-      TRY_TO(TraverseType(*A));
-    }
+
     for (FunctionProtoType::exception_iterator E = T->exception_begin(),
                                             EEnd = T->exception_end();
          E != EEnd; ++E) {
@@ -1175,7 +1169,7 @@ DEF_TRAVERSE_DECL(ClassTemplateDecl, {
       if (D->isThisDeclarationADefinition())
         TRY_TO(TraverseClassInstantiations(D, D));
     }
-    
+
     // Note that getInstantiatedFromMemberTemplate() is just a link
     // from a template instantiation back to the template from which
     // it was instantiated, and thus should not be traversed.
@@ -1208,10 +1202,10 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionInstantiations(
       assert(false && "Unknown specialization kind.");
     }
   }
-  
+
   return true;
 }
-  
+
 DEF_TRAVERSE_DECL(FunctionTemplateDecl, {
     TRY_TO(TraverseDecl(D->getTemplatedDecl()));
     TRY_TO(TraverseTemplateParameterListHelper(D->getTemplateParameters()));
@@ -1412,47 +1406,11 @@ template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
   TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
 
-  // Visit the function type itself, which can be either
-  // FunctionNoProtoType or FunctionProtoType, or a typedef.  If it's
-  // not a Function*ProtoType, then it can't have a body or arguments,
-  // so we have to do less work.
-  Type *FuncType = D->getType().getTypePtr();
-  if (FunctionProtoType *FuncProto = dyn_cast<FunctionProtoType>(FuncType)) {
-    if (D->isThisDeclarationADefinition()) {
-      // Don't call Traverse*, or the result type and parameter types
-      // will be double counted.
-      TRY_TO(WalkUpFromFunctionProtoType(FuncProto));
-    } else {
-      // This works around a bug in Clang that does not add the parameters
-      // to decls_begin/end for function declarations (as opposed to
-      // definitions):
-      //    http://llvm.org/PR7442
-      // We work around this here by traversing the function type.
-      // This isn't perfect because we don't traverse the default
-      // values, if any.  It also may not interact great with
-      // templates.  But it's the best we can do until the bug is
-      // fixed.
-      // FIXME: replace the entire 'if' statement with
-      //   TRY_TO(WalkUpFromFunctionProtoType(FuncProto));
-      // when the bug is fixed.
-      TRY_TO(TraverseFunctionProtoType(FuncProto));
-      return true;
-    }
-  } else if (FunctionNoProtoType *FuncNoProto =
-      dyn_cast<FunctionNoProtoType>(FuncType)) {
-    // Don't call Traverse*, or the result type will be double
-    // counted.
-    TRY_TO(WalkUpFromFunctionNoProtoType(FuncNoProto));
-  } else {   // a typedef type, or who knows what
-    assert(!D->isThisDeclarationADefinition() && "Unexpected function type");
-    TRY_TO(TraverseType(D->getType()));
-    return true;
-  }
-
-  TRY_TO(TraverseType(D->getResultType()));
-
   // If we're an explicit template specialization, iterate over the
-  // template args that were explicitly specified.
+  // template args that were explicitly specified.  If we were doing
+  // this in typing order, we'd do it between the return type and
+  // the function args, but both are handled by the FunctionTypeLoc
+  // above, so we have to choose one side.  I've decided to do before.
   if (const FunctionTemplateSpecializationInfo *FTSI =
       D->getTemplateSpecializationInfo()) {
     if (FTSI->getTemplateSpecializationKind() != TSK_Undeclared &&
@@ -1467,28 +1425,11 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
     }
   }
 
-  for (FunctionDecl::param_iterator I = D->param_begin(), E = D->param_end();
-       I != E; ++I) {
-    TRY_TO(TraverseDecl(*I));
-  }
-
-  if (FunctionProtoType *FuncProto = dyn_cast<FunctionProtoType>(FuncType)) {
-    if (D->isThisDeclarationADefinition()) {
-      // This would be visited if we called TraverseType(D->getType())
-      // above, but we don't (at least, not in the
-      // declaration-is-a-definition case), in order to avoid duplicate
-      // visiting for parameters.  (We need to check parameters here,
-      // rather than letting D->getType() do it, so we visit default
-      // parameter values).  So we need to re-do some of the work the
-      // type would do.
-      for (FunctionProtoType::exception_iterator
-               E = FuncProto->exception_begin(),
-               EEnd = FuncProto->exception_end();
-           E != EEnd; ++E) {
-        TRY_TO(TraverseType(*E));
-      }
-    }
-  }
+  // Visit the function type itself, which can be either
+  // FunctionNoProtoType or FunctionProtoType, or a typedef.  This
+  // also covers the return type and the function parameters,
+  // including exception specifications.
+  TRY_TO(TraverseTypeLoc(D->getTypeSourceInfo()->getTypeLoc()));
 
   if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {
     // Constructor initializers.
