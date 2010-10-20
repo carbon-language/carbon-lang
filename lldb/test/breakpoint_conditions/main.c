@@ -21,7 +21,7 @@ int a(int val)
     if (val <= 1)
         return b(val);
     else if (val >= 3)
-        return c(val);
+        return c(val); // Find the line number of c's parent call here.
 
     return val;
 }

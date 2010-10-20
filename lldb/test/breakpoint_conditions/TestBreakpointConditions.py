@@ -27,7 +27,8 @@ class BreakpointConditionsTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to of function 'c'.
-        self.line = line_number('main.c', '// Find the line number of function "c" here.')
+        self.line1 = line_number('main.c', '// Find the line number of function "c" here.')
+        self.line2 = line_number('main.c', "// Find the line number of c's parent call here.")
 
     def breakpoint_conditions(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
@@ -55,10 +56,11 @@ class BreakpointConditionsTestCase(TestBase):
                        "hit count = 3"])
 
         # The frame #0 should correspond to main.c:36, the executable statement
-        # in function name 'c'.
-        self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ["stop reason = breakpoint"],
-            patterns = ["frame #0.*main.c:%d" % self.line])
+        # in function name 'c'.  And the parent frame should point to main.c:24.
+        self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT_CONDITION,
+            #substrs = ["stop reason = breakpoint"],
+            patterns = ["frame #0.*main.c:%d" % self.line1,
+                        "frame #1.*main.c:%d" % self.line2])
 
 
 if __name__ == '__main__':
