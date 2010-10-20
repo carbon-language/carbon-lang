@@ -769,15 +769,14 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // We need to allocate the DefinitionData struct ahead of VisitRecordDecl
   // so that the other CXXRecordDecls can get a pointer even when the owner
   // is still initializing.
-  bool OwnsDefinitionData = false;
   enum DataOwnership { Data_NoDefData, Data_Owner, Data_NotOwner };
-  switch ((DataOwnership)Record[Idx++]) {
+  DataOwnership DefOwnership = (DataOwnership)Record[Idx++];
+  switch (DefOwnership) {
   default:
     assert(0 && "Out of sync with ASTDeclWriter or messed up reading");
   case Data_NoDefData:
     break;
   case Data_Owner:
-    OwnsDefinitionData = true;
     D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
     break;
   case Data_NotOwner:
@@ -788,11 +787,11 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   VisitRecordDecl(D);
 
-  if (D->DefinitionData) {
-    // Synchronize the DefinitionData pointer among all redeclarations.
-    // This synchronization ends up being done multiple times but it's necessary
-    // because a chained PCH may introduce a definition that earlier
-    // redeclarations in another PCH have no information about.
+  // Spread the DefinitionData pointer if it's the definition (it may have
+  // come from a chained PCH and earlier redeclarations don't know it), or
+  // if it just acquired a pointer that it's not supposed to have (a definition
+  // from a chained PCH updated it).
+  if (D->DefinitionData && DefOwnership != Data_NotOwner) {
     llvm::SmallPtrSet<CXXRecordDecl *, 16> PrevRedecls;
     PrevRedecls.insert(D);
     CXXRecordDecl *Redecl = cast<CXXRecordDecl>(D->RedeclLink.getNext());
@@ -806,7 +805,7 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
     }
   }
 
-  if (OwnsDefinitionData) {
+  if (DefOwnership == Data_Owner) {
     assert(D->DefinitionData);
     struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
 
