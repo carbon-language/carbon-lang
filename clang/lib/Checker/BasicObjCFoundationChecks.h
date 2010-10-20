@@ -22,13 +22,6 @@ class ASTContext;
 class BugReporter;
 class Decl;
 class GRExprEngine;
-class GRSimpleAPICheck;
-
-GRSimpleAPICheck *CreateBasicObjCFoundationChecks(ASTContext& Ctx,
-                                                  BugReporter& BR);
-
-GRSimpleAPICheck *CreateAuditCFNumberCreate(ASTContext& Ctx,
-                                            BugReporter& BR);
 
 void RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng, const Decl &D);
 void RegisterNSAutoreleasePoolChecks(GRExprEngine &Eng);

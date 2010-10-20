@@ -16,7 +16,7 @@
 #include "BasicObjCFoundationChecks.h"
 
 #include "clang/Checker/PathSensitive/ExplodedGraph.h"
-#include "clang/Checker/PathSensitive/GRSimpleAPICheck.h"
+#include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
 #include "clang/Checker/PathSensitive/GRState.h"
 #include "clang/Checker/BugReporter/BugType.h"
@@ -30,25 +30,36 @@
 
 using namespace clang;
 
+namespace {
+class APIMisuse : public BugType {
+public:
+  APIMisuse(const char* name) : BugType(name, "API Misuse (Apple)") {}
+};
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// Utility functions.
+//===----------------------------------------------------------------------===//
+
 static const ObjCInterfaceType* GetReceiverType(const ObjCMessageExpr* ME) {
   QualType T;
   switch (ME->getReceiverKind()) {
-  case ObjCMessageExpr::Instance:
-    T = ME->getInstanceReceiver()->getType();
-    break;
-
-  case ObjCMessageExpr::SuperInstance:
-    T = ME->getSuperType();
-    break;
-
-  case ObjCMessageExpr::Class:
-  case ObjCMessageExpr::SuperClass:
-    return 0;
+    case ObjCMessageExpr::Instance:
+      T = ME->getInstanceReceiver()->getType();
+      break;
+      
+    case ObjCMessageExpr::SuperInstance:
+      T = ME->getSuperType();
+      break;
+      
+    case ObjCMessageExpr::Class:
+    case ObjCMessageExpr::SuperClass:
+      return 0;
   }
-
+  
   if (const ObjCObjectPointerType *PT = T->getAs<ObjCObjectPointerType>())
     return PT->getInterfaceType();
-
+  
   return NULL;
 }
 
@@ -58,72 +69,8 @@ static const char* GetReceiverNameType(const ObjCMessageExpr* ME) {
   return NULL;
 }
 
-namespace {
-
-class APIMisuse : public BugType {
-public:
-  APIMisuse(const char* name) : BugType(name, "API Misuse (Apple)") {}
-};
-
-class BasicObjCFoundationChecks : public GRSimpleAPICheck {
-  APIMisuse *BT;
-  BugReporter& BR;
-  ASTContext &Ctx;
-
-  bool isNSString(const ObjCInterfaceType *T, llvm::StringRef suffix);
-  bool AuditNSString(ExplodedNode* N, const ObjCMessageExpr* ME);
-
-  bool CheckNilArg(ExplodedNode* N, unsigned Arg);
-
-public:
-  BasicObjCFoundationChecks(ASTContext& ctx, BugReporter& br)
-    : BT(0), BR(br), Ctx(ctx) {}
-
-  bool Audit(ExplodedNode* N, GRStateManager&);
-
-private:
-  void WarnNilArg(ExplodedNode* N, const ObjCMessageExpr* ME, unsigned Arg) {
-    std::string sbuf;
-    llvm::raw_string_ostream os(sbuf);
-    os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
-       << ME->getSelector().getAsString() << "' cannot be nil.";
-
-    // Lazily create the BugType object for NilArg.  This will be owned
-    // by the BugReporter object 'BR' once we call BR.EmitWarning.
-    if (!BT) BT = new APIMisuse("nil argument");
-
-    RangedBugReport *R = new RangedBugReport(*BT, os.str(), N);
-    R->addRange(ME->getArg(Arg)->getSourceRange());
-    BR.EmitReport(R);
-  }
-};
-
-} // end anonymous namespace
-
-
-GRSimpleAPICheck*
-clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx, BugReporter& BR) {
-  return new BasicObjCFoundationChecks(Ctx, BR);
-}
-
-
-
-bool BasicObjCFoundationChecks::Audit(ExplodedNode* N,
-                                      GRStateManager&) {
-
-  const ObjCMessageExpr* ME =
-    cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
-
-  const ObjCInterfaceType *ReceiverType = GetReceiverType(ME);
-
-  if (!ReceiverType)
-    return false;
-
-  if (isNSString(ReceiverType,
-                 ReceiverType->getDecl()->getIdentifier()->getName()))
-    return AuditNSString(N, ME);
-
-  return false;
+static bool isNSString(llvm::StringRef ClassName) {
+  return ClassName == "NSString" || ClassName == "NSMutableString";
 }
 
 static inline bool isNil(SVal X) {
@@ -131,61 +78,73 @@ static inline bool isNil(SVal X) {
 }
 
 //===----------------------------------------------------------------------===//
-// Error reporting.
+// NilArgChecker - Check for prohibited nil arguments to ObjC method calls.
 //===----------------------------------------------------------------------===//
 
-bool BasicObjCFoundationChecks::CheckNilArg(ExplodedNode* N, unsigned Arg) {
-  const ObjCMessageExpr* ME =
-    cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
+class NilArgChecker : public CheckerVisitor<NilArgChecker> {
+  APIMisuse *BT;
+  void AuditNSString(CheckerContext &C, const ObjCMessageExpr* ME);
+  void WarnNilArg(CheckerContext &C, const ObjCMessageExpr* ME, unsigned Arg);
+public:
+  NilArgChecker() : BT(0) {}
+  static void *getTag() { static int x = 0; return &x; }
+  void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);
+};
 
-  const Expr * E = ME->getArg(Arg);
+void NilArgChecker::WarnNilArg(CheckerContext &C,
+                               const clang::ObjCMessageExpr *ME,
+                               unsigned int Arg)
+{
+  if (!BT)
+    BT = new APIMisuse("nil argument");
+  
+  if (ExplodedNode *N = C.GenerateSink()) {
+    llvm::SmallString<128> sbuf;
+    llvm::raw_svector_ostream os(sbuf);
+    os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
+       << ME->getSelector().getAsString() << "' cannot be nil";
 
-  if (isNil(N->getState()->getSVal(E))) {
-    WarnNilArg(N, ME, Arg);
-    return true;
+    RangedBugReport *R = new RangedBugReport(*BT, os.str(), N);
+    R->addRange(ME->getArg(Arg)->getSourceRange());
+    C.EmitReport(R);
   }
-
-  return false;
 }
 
-//===----------------------------------------------------------------------===//
-// NSString checking.
-//===----------------------------------------------------------------------===//
-
-bool BasicObjCFoundationChecks::isNSString(const ObjCInterfaceType *T,
-                                           llvm::StringRef ClassName) {
-  return ClassName == "NSString" || ClassName == "NSMutableString";
-}
-
-bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N,
-                                              const ObjCMessageExpr* ME) {
-
-  Selector S = ME->getSelector();
-
-  if (S.isUnarySelector())
-    return false;
-
-  // FIXME: This is going to be really slow doing these checks with
-  //  lexical comparisons.
-
-  std::string NameStr = S.getAsString();
-  llvm::StringRef Name(NameStr);
-  assert(!Name.empty());
-
-  // FIXME: Checking for initWithFormat: will not work in most cases
-  //  yet because [NSString alloc] returns id, not NSString*.  We will
-  //  need support for tracking expected-type information in the analyzer
-  //  to find these errors.
-  if (Name == "caseInsensitiveCompare:" ||
-      Name == "compare:" ||
-      Name == "compare:options:" ||
-      Name == "compare:options:range:" ||
-      Name == "compare:options:range:locale:" ||
-      Name == "componentsSeparatedByCharactersInSet:" ||
-      Name == "initWithFormat:")
-    return CheckNilArg(N, 0);
-
-  return false;
+void NilArgChecker::PreVisitObjCMessageExpr(CheckerContext &C,
+                                            const ObjCMessageExpr *ME)
+{
+  const ObjCInterfaceType *ReceiverType = GetReceiverType(ME);
+  if (!ReceiverType)
+    return;
+  
+  if (isNSString(ReceiverType->getDecl()->getIdentifier()->getName())) {
+    Selector S = ME->getSelector();
+    
+    if (S.isUnarySelector())
+      return;
+    
+    // FIXME: This is going to be really slow doing these checks with
+    //  lexical comparisons.
+    
+    std::string NameStr = S.getAsString();
+    llvm::StringRef Name(NameStr);
+    assert(!Name.empty());
+    
+    // FIXME: Checking for initWithFormat: will not work in most cases
+    //  yet because [NSString alloc] returns id, not NSString*.  We will
+    //  need support for tracking expected-type information in the analyzer
+    //  to find these errors.
+    if (Name == "caseInsensitiveCompare:" ||
+        Name == "compare:" ||
+        Name == "compare:options:" ||
+        Name == "compare:options:range:" ||
+        Name == "compare:options:range:locale:" ||
+        Name == "componentsSeparatedByCharactersInSet:" ||
+        Name == "initWithFormat:") {
+      if (isNil(C.getState()->getSVal(ME->getArg(0))))
+        WarnNilArg(C, ME, 0);
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -193,27 +152,16 @@ bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N,
 //===----------------------------------------------------------------------===//
 
 namespace {
-
-class AuditCFNumberCreate : public GRSimpleAPICheck {
+class CFNumberCreateChecker : public CheckerVisitor<CFNumberCreateChecker> {
   APIMisuse* BT;
-
-  // FIXME: Either this should be refactored into GRSimpleAPICheck, or
-  //   it should always be passed with a call to Audit.  The latter
-  //   approach makes this class more stateless.
-  ASTContext& Ctx;
   IdentifierInfo* II;
-  BugReporter& BR;
-
 public:
-  AuditCFNumberCreate(ASTContext& ctx, BugReporter& br)
-  : BT(0), Ctx(ctx), II(&Ctx.Idents.get("CFNumberCreate")), BR(br){}
-
-  ~AuditCFNumberCreate() {}
-
-  bool Audit(ExplodedNode* N, GRStateManager&);
-
+  CFNumberCreateChecker() : BT(0), II(0) {}
+  ~CFNumberCreateChecker() {}
+  static void *getTag() { static int x = 0; return &x; }
+  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
 private:
-  void AddError(const TypedRegion* R, const Expr* Ex, ExplodedNode *N,
+  void EmitError(const TypedRegion* R, const Expr* Ex,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);
 };
 } // end anonymous namespace
@@ -311,49 +259,54 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 }
 #endif
 
-bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){
-  const CallExpr* CE =
-    cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
+void CFNumberCreateChecker::PreVisitCallExpr(CheckerContext &C,
+                                             const CallExpr *CE)
+{
   const Expr* Callee = CE->getCallee();
-  SVal CallV = N->getState()->getSVal(Callee);
+  const GRState *state = C.getState();
+  SVal CallV = state->getSVal(Callee);
   const FunctionDecl* FD = CallV.getAsFunctionDecl();
 
-  if (!FD || FD->getIdentifier() != II || CE->getNumArgs()!=3)
-    return false;
+  if (!FD)
+    return;
+  
+  ASTContext &Ctx = C.getASTContext();
+  if (!II)
+    II = &Ctx.Idents.get("CFNumberCreate");
+
+  if (FD->getIdentifier() != II || CE->getNumArgs() != 3)
+    return;
 
   // Get the value of the "theType" argument.
-  SVal TheTypeVal = N->getState()->getSVal(CE->getArg(1));
+  SVal TheTypeVal = state->getSVal(CE->getArg(1));
 
-    // FIXME: We really should allow ranges of valid theType values, and
-    //   bifurcate the state appropriately.
+  // FIXME: We really should allow ranges of valid theType values, and
+  //   bifurcate the state appropriately.
   nonloc::ConcreteInt* V = dyn_cast<nonloc::ConcreteInt>(&TheTypeVal);
-
   if (!V)
-    return false;
+    return;
 
   uint64_t NumberKind = V->getValue().getLimitedValue();
   Optional<uint64_t> TargetSize = GetCFNumberSize(Ctx, NumberKind);
 
   // FIXME: In some cases we can emit an error.
   if (!TargetSize.isKnown())
-    return false;
+    return;
 
   // Look at the value of the integer being passed by reference.  Essentially
   // we want to catch cases where the value passed in is not equal to the
   // size of the type being created.
-  SVal TheValueExpr = N->getState()->getSVal(CE->getArg(2));
+  SVal TheValueExpr = state->getSVal(CE->getArg(2));
 
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
   loc::MemRegionVal* LV = dyn_cast<loc::MemRegionVal>(&TheValueExpr);
-
   if (!LV)
-    return false;
+    return;
 
   const TypedRegion* R = dyn_cast<TypedRegion>(LV->StripCasts());
-
   if (!R)
-    return false;
+    return;
 
   QualType T = Ctx.getCanonicalType(R->getValueType());
 
@@ -361,54 +314,45 @@ bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){
   //  People can do weird stuff with pointers.
 
   if (!T->isIntegerType())
-    return false;
+    return;
 
   uint64_t SourceSize = Ctx.getTypeSize(T);
 
   // CHECK: is SourceSize == TargetSize
-
   if (SourceSize == TargetSize)
-    return false;
+    return;
 
-  AddError(R, CE->getArg(2), N, SourceSize, TargetSize, NumberKind);
-
+  // Generate an error.  Only generate a sink if 'SourceSize < TargetSize';
+  // otherwise generate a regular node.
+  //
   // FIXME: We can actually create an abstract "CFNumber" object that has
   //  the bits initialized to the provided values.
-  return SourceSize < TargetSize;
-}
+  //
+  if (ExplodedNode *N = SourceSize < TargetSize ? C.GenerateSink() 
+                                                : C.GenerateNode()) {
+    llvm::SmallString<128> sbuf;
+    llvm::raw_svector_ostream os(sbuf);
+    
+    os << (SourceSize == 8 ? "An " : "A ")
+       << SourceSize << " bit integer is used to initialize a CFNumber "
+                        "object that represents "
+       << (TargetSize == 8 ? "an " : "a ")
+       << TargetSize << " bit integer. ";
+    
+    if (SourceSize < TargetSize)
+      os << (TargetSize - SourceSize)
+      << " bits of the CFNumber value will be garbage." ;
+    else
+      os << (SourceSize - TargetSize)
+      << " bits of the input integer will be lost.";
 
-void AuditCFNumberCreate::AddError(const TypedRegion* R, const Expr* Ex,
-                                   ExplodedNode *N,
-                                   uint64_t SourceSize, uint64_t TargetSize,
-                                   uint64_t NumberKind) {
-
-  std::string sbuf;
-  llvm::raw_string_ostream os(sbuf);
-
-  os << (SourceSize == 8 ? "An " : "A ")
-     << SourceSize << " bit integer is used to initialize a CFNumber "
-        "object that represents "
-     << (TargetSize == 8 ? "an " : "a ")
-     << TargetSize << " bit integer. ";
-
-  if (SourceSize < TargetSize)
-    os << (TargetSize - SourceSize)
-       << " bits of the CFNumber value will be garbage." ;
-  else
-    os << (SourceSize - TargetSize)
-       << " bits of the input integer will be lost.";
-
-  // Lazily create the BugType object.  This will be owned
-  // by the BugReporter object 'BR' once we call BR.EmitWarning.
-  if (!BT) BT = new APIMisuse("Bad use of CFNumberCreate");
-  RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
-  report->addRange(Ex->getSourceRange());
-  BR.EmitReport(report);
-}
-
-GRSimpleAPICheck*
-clang::CreateAuditCFNumberCreate(ASTContext& Ctx, BugReporter& BR) {
-  return new AuditCFNumberCreate(Ctx, BR);
+    if (!BT)
+      BT = new APIMisuse("Bad use of CFNumberCreate");
+    
+    RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
+    report->addRange(CE->getArg(2)->getSourceRange());
+    C.EmitReport(report);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -419,14 +363,9 @@ namespace {
 class CFRetainReleaseChecker : public CheckerVisitor<CFRetainReleaseChecker> {
   APIMisuse *BT;
   IdentifierInfo *Retain, *Release;
-
 public:
-  CFRetainReleaseChecker(ASTContext& Ctx): BT(NULL),
-    Retain(&Ctx.Idents.get("CFRetain")), Release(&Ctx.Idents.get("CFRelease"))
-    {}
-
+  CFRetainReleaseChecker(): BT(0), Retain(0), Release(0) {}
   static void *getTag() { static int x = 0; return &x; }
-
   void PreVisitCallExpr(CheckerContext& C, const CallExpr* CE);
 };
 } // end anonymous namespace
@@ -445,6 +384,13 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
 
   if (!FD)
     return;
+  
+  if (!BT) {
+    ASTContext &Ctx = C.getASTContext();
+    Retain = &Ctx.Idents.get("CFRetain");
+    Release = &Ctx.Idents.get("CFRelease");
+    BT = new APIMisuse("null passed to CFRetain/CFRelease");
+  }
 
   // Check if we called CFRetain/CFRelease.
   const IdentifierInfo *FuncII = FD->getIdentifier();
@@ -478,9 +424,6 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
     if (!N)
       return;
 
-    if (!BT)
-      BT = new APIMisuse("null passed to CFRetain/CFRelease");
-
     const char *description = (FuncII == Retain)
                             ? "Null pointer argument in call to CFRetain"
                             : "Null pointer argument in call to CFRelease";
@@ -488,7 +431,6 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
     EnhancedBugReport *report = new EnhancedBugReport(*BT, description, N);
     report->addRange(Arg->getSourceRange());
     report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, Arg);
-
     C.EmitReport(report);
     return;
   }
@@ -502,20 +444,15 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class ClassReleaseChecker :
-    public CheckerVisitor<ClassReleaseChecker> {
+class ClassReleaseChecker : public CheckerVisitor<ClassReleaseChecker> {
   Selector releaseS;
   Selector retainS;
   Selector autoreleaseS;
   Selector drainS;
   BugType *BT;
 public:
-  ClassReleaseChecker(ASTContext &Ctx)
-    : releaseS(GetNullarySelector("release", Ctx)),
-      retainS(GetNullarySelector("retain", Ctx)),
-      autoreleaseS(GetNullarySelector("autorelease", Ctx)),
-      drainS(GetNullarySelector("drain", Ctx)),
-      BT(0) {}
+  ClassReleaseChecker()
+    : BT(0) {}
 
   static void *getTag() { static int x = 0; return &x; }
       
@@ -525,16 +462,27 @@ public:
 
 void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
                                                   const ObjCMessageExpr *ME) {
+  
+  if (!BT) {
+    BT = new APIMisuse("message incorrectly sent to class instead of class "
+                       "instance");
+  
+    ASTContext &Ctx = C.getASTContext();
+    releaseS = GetNullarySelector("release", Ctx);
+    retainS = GetNullarySelector("retain", Ctx);
+    autoreleaseS = GetNullarySelector("autorelease", Ctx);
+    drainS = GetNullarySelector("drain", Ctx);
+  }
+  
   ObjCInterfaceDecl *Class = 0;
+
   switch (ME->getReceiverKind()) {
   case ObjCMessageExpr::Class:
     Class = ME->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
     break;
-
   case ObjCMessageExpr::SuperClass:
     Class = ME->getSuperType()->getAs<ObjCObjectType>()->getInterface();
     break;
-
   case ObjCMessageExpr::Instance:
   case ObjCMessageExpr::SuperInstance:
     return;
@@ -544,42 +492,29 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   if (!(S == releaseS || S == retainS || S == autoreleaseS || S == drainS))
     return;
   
-  if (!BT)
-    BT = new APIMisuse("message incorrectly sent to class instead of class "
-                       "instance");
-  
-  ExplodedNode *N = C.GenerateNode();
+  if (ExplodedNode *N = C.GenerateNode()) {
+    llvm::SmallString<200> buf;
+    llvm::raw_svector_ostream os(buf);
 
-  if (!N)
-    return;
+    os << "The '" << S.getAsString() << "' message should be sent to instances "
+          "of class '" << Class->getName()
+       << "' and not the class directly";
   
-  llvm::SmallString<200> buf;
-  llvm::raw_svector_ostream os(buf);
-
-  os << "The '" << S.getAsString() << "' message should be sent to instances "
-        "of class '" << Class->getName()
-     << "' and not the class directly";
-  
-  RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
-  report->addRange(ME->getSourceRange());
-  C.EmitReport(report);
+    RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
+    report->addRange(ME->getSourceRange());
+    C.EmitReport(report);
+  }
 }
 
 //===----------------------------------------------------------------------===//
 // Check registration.
 //===----------------------------------------------------------------------===//
-
+  
 void clang::RegisterAppleChecks(GRExprEngine& Eng, const Decl &D) {
-  ASTContext& Ctx = Eng.getContext();
-  BugReporter &BR = Eng.getBugReporter();
-
-  Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, BR),
-               Stmt::ObjCMessageExprClass);
-  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, BR), Stmt::CallExprClass);
-
-  RegisterNSErrorChecks(BR, Eng, D);
+  Eng.registerCheck(new NilArgChecker());
+  Eng.registerCheck(new CFNumberCreateChecker());
+  RegisterNSErrorChecks(Eng.getBugReporter(), Eng, D);
   RegisterNSAutoreleasePoolChecks(Eng);
-
-  Eng.registerCheck(new CFRetainReleaseChecker(Ctx));
-  Eng.registerCheck(new ClassReleaseChecker(Ctx));
+  Eng.registerCheck(new CFRetainReleaseChecker());
+  Eng.registerCheck(new ClassReleaseChecker());
 }
