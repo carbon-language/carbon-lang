@@ -297,7 +297,7 @@ public:
                 ModuleList matching_modules;
                 for (unsigned i = 0, e = m_options.m_modules.size(); i != e; i++)
                 {
-                    FileSpec module_spec(m_options.m_modules[i].c_str());
+                    FileSpec module_spec(m_options.m_modules[i].c_str(), false);
                     if (module_spec)
                     {
                         matching_modules.Clear();
@@ -471,7 +471,7 @@ public:
                 ModuleList matching_modules;
                 for (unsigned i = 0, e = m_options.m_modules.size(); i != e; i++)
                 {
-                    FileSpec module_spec(m_options.m_modules[i].c_str());
+                    FileSpec module_spec(m_options.m_modules[i].c_str(), false);
                     if (module_spec)
                     {
                         matching_modules.Clear();

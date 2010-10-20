@@ -581,14 +581,14 @@ Host::GetProgramFileSpec ()
         uint32_t len = sizeof(program_fullpath);
         int err = _NSGetExecutablePath (program_fullpath, &len);
         if (err == 0)
-            g_program_filespec.SetFile (program_fullpath);
+            g_program_filespec.SetFile (program_fullpath, true);
         else if (err == -1)
         {
             char *large_program_fullpath = (char *)::malloc (len + 1);
 
             err = _NSGetExecutablePath (large_program_fullpath, &len);
             if (err == 0)
-                g_program_filespec.SetFile (large_program_fullpath);
+                g_program_filespec.SetFile (large_program_fullpath, true);
 
             ::free (large_program_fullpath);
         }
@@ -619,7 +619,7 @@ Host::GetModuleFileSpecForHostAddress (const void *host_addr)
     if (::dladdr (host_addr, &info))
     {
         if (info.dli_fname)
-            module_filespec.SetFile(info.dli_fname);
+            module_filespec.SetFile(info.dli_fname, true);
     }
     return module_filespec;
 }

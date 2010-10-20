@@ -51,7 +51,7 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, lldb::addr_t file_
                     if (g_object_regex.GetMatchAtIndex (path_with_object, 1, path) &&
                         g_object_regex.GetMatchAtIndex (path_with_object, 2, object))
                     {
-                        archive_file.SetFile (path.c_str());
+                        archive_file.SetFile (path.c_str(), false);
                         file_size = archive_file.GetByteSize();
                         if (file_size > 0)
                             module->SetFileSpecAndObjectName (archive_file, ConstString(object.c_str()));

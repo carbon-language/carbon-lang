@@ -70,7 +70,7 @@ public:
 
             result.AppendMessageWithFormat ("Executing commands in '%s'.\n", filename);
 
-            FileSpec cmd_file (filename);
+            FileSpec cmd_file (filename, false);
             if (cmd_file.Exists())
             {
                 STLStringArray commands;

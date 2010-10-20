@@ -1412,7 +1412,7 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
                 // @rpath/.../file
                 if (path && path[0] != '@')
                 {
-                    FileSpec file_spec(path);
+                    FileSpec file_spec(path, true);
                     if (files.AppendIfUnique(file_spec))
                         count++;
                 }

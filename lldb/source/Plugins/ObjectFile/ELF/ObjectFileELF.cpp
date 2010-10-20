@@ -271,7 +271,7 @@ ObjectFileELF::ParseDependentModules()
 
             uint32_t str_index = static_cast<uint32_t>(symbol.d_val);
             const char *lib_name = dynstr_data.PeekCStr(str_index);
-            m_filespec_ap->Append(FileSpec(lib_name));
+            m_filespec_ap->Append(FileSpec(lib_name, true));
         }
     }
 

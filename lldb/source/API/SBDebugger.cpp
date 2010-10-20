@@ -381,7 +381,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
     if (m_opaque_sp)
     {
         ArchSpec arch;
-        FileSpec file_spec (filename);
+        FileSpec file_spec (filename, true);
         arch.SetArchFromTargetTriple(target_triple);
         TargetSP target_sp;
         Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file_spec, arch, NULL, true, target_sp));
@@ -396,7 +396,7 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
     SBTarget target;
     if (m_opaque_sp)
     {
-        FileSpec file (filename);
+        FileSpec file (filename, true);
         ArchSpec arch = lldb_private::Target::GetDefaultArchitecture ();
         TargetSP target_sp;
         Error error;
@@ -439,7 +439,7 @@ SBDebugger::CreateTarget (const char *filename)
     SBTarget target;
     if (m_opaque_sp)
     {
-        FileSpec file (filename);
+        FileSpec file (filename, true);
         ArchSpec arch = lldb_private::Target::GetDefaultArchitecture ();
         TargetSP target_sp;
         Error error;
@@ -495,7 +495,7 @@ SBDebugger::FindTargetWithFileAndArch (const char *filename, const char *arch_na
         ArchSpec arch;
         if (arch_name)
             arch.SetArch(arch_name);
-        TargetSP target_sp (m_opaque_sp->GetTargetList().FindTargetWithExecutableAndArchitecture (FileSpec(filename), arch_name ? &arch : NULL));
+        TargetSP target_sp (m_opaque_sp->GetTargetList().FindTargetWithExecutableAndArchitecture (FileSpec(filename, false), arch_name ? &arch : NULL));
         sb_target.reset(target_sp);
     }
     return sb_target;

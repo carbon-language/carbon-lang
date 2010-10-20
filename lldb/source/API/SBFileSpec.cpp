@@ -28,8 +28,14 @@ SBFileSpec::SBFileSpec (const SBFileSpec &rhs) :
         m_opaque_ap.reset (new FileSpec (rhs.get()));
 }
 
+// Deprected!!!
 SBFileSpec::SBFileSpec (const char *path) :
-    m_opaque_ap(new FileSpec (path))
+    m_opaque_ap(new FileSpec (path, true))
+{
+}
+
+SBFileSpec::SBFileSpec (const char *path, bool resolve) :
+    m_opaque_ap(new FileSpec (path, resolve))
 {
 }
 

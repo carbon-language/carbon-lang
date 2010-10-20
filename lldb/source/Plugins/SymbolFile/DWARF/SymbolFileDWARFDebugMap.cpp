@@ -137,7 +137,7 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
         Symbol *oso_symbol = comp_unit_info->oso_symbol;
         if (oso_symbol)
         {
-            FileSpec oso_file_spec(oso_symbol->GetMangled().GetName().AsCString());
+            FileSpec oso_file_spec(oso_symbol->GetMangled().GetName().AsCString(), true);
 
             ModuleList::GetSharedModule (oso_file_spec,
                                          m_obj_file->GetModule()->GetArchitecture(),
@@ -168,7 +168,7 @@ SymbolFileDWARFDebugMap::GetFileSpecForSO (uint32_t oso_idx, FileSpec &file_spec
             std::string so_path (m_compile_unit_infos[oso_idx].so_symbol->GetMangled().GetName().AsCString());
             if (m_compile_unit_infos[oso_idx].so_symbol[1].GetType() == eSymbolTypeSourceFile)
                 so_path += m_compile_unit_infos[oso_idx].so_symbol[1].GetMangled().GetName().AsCString();
-            m_compile_unit_infos[oso_idx].so_file.SetFile(so_path.c_str());
+            m_compile_unit_infos[oso_idx].so_file.SetFile(so_path.c_str(), true);
         }
         file_spec = m_compile_unit_infos[oso_idx].so_file;
         return true;

@@ -656,7 +656,7 @@ public:
                 const char *arg_cstr;
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
-                    FileSpec image_file(arg_cstr);
+                    FileSpec image_file(arg_cstr, false);
                     ModuleList matching_modules;
                     size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
 
@@ -861,7 +861,7 @@ public:
                 const char *arg_cstr;
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
-                    FileSpec image_file(arg_cstr);
+                    FileSpec image_file(arg_cstr, false);
                     ModuleList matching_modules;
                     size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
 
@@ -969,7 +969,7 @@ public:
                 const char *arg_cstr;
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
-                    FileSpec image_file(arg_cstr);
+                    FileSpec image_file(arg_cstr, false);
                     ModuleList matching_modules;
                     size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
 
@@ -1062,7 +1062,7 @@ public:
                 const char *arg_cstr;
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
-                    FileSpec file_spec(arg_cstr);
+                    FileSpec file_spec(arg_cstr, false);
                     const uint32_t num_modules = target->GetImages().GetSize();
                     if (num_modules > 0)
                     {
@@ -1381,7 +1381,7 @@ public:
                 break;
 
             case 'f':
-                m_file.SetFile (option_arg);
+                m_file.SetFile (option_arg, false);
                 m_type = eLookupTypeFileLine;
                 break;
 
@@ -1627,7 +1627,7 @@ public:
                 const char *arg_cstr;
                 for (i = 0; (arg_cstr = command.GetArgumentAtIndex(i)) != NULL && syntax_error == false; ++i)
                 {
-                    FileSpec image_file(arg_cstr);
+                    FileSpec image_file(arg_cstr, false);
                     ModuleList matching_modules;
                     size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
 

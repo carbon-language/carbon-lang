@@ -116,7 +116,7 @@ Host::ResolveExecutableInBundle (FileSpec &file)
             {
                 if (::CFURLGetFileSystemRepresentation (url.get(), YES, (UInt8*)path, sizeof(path)))
                 {
-                    file.SetFile(path);
+                    file.SetFile(path, false);
                     return true;
                 }
             }
@@ -232,7 +232,7 @@ LaunchInNewTerminalWithCommandFile
 
     OSStatus error = 0;
     
-    FileSpec program (argv[0]);
+    FileSpec program (argv[0], false);
     
     
     std::string unix_socket_name;

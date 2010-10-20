@@ -1074,7 +1074,7 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
         return;
 
     const char *init_file_path = in_cwd ? "./.lldbinit" : "~/.lldbinit";
-    FileSpec init_file (init_file_path);
+    FileSpec init_file (init_file_path, true);
     // If the file exists, tell HandleCommand to 'source' it; this will do the actual broadcasting
     // of the commands back to any appropriate listener (see CommandObjectSource::Execute for more details).
 

@@ -1674,7 +1674,7 @@ ProcessGDBRemote::StartDebugserverProcess
         // to the debugserver to use and use it if we do.
         const char *env_debugserver_path = getenv("LLDB_DEBUGSERVER_PATH");
         if (env_debugserver_path)
-            debugserver_file_spec.SetFile (env_debugserver_path);
+            debugserver_file_spec.SetFile (env_debugserver_path, false);
         else
             debugserver_file_spec = g_debugserver_file_spec;
         bool debugserver_exists = debugserver_file_spec.Exists();
@@ -2236,13 +2236,13 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
         {
             static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
             const Symbol *dispatch_queue_offsets_symbol = NULL;
-            ModuleSP module_sp(GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib")));
+            ModuleSP module_sp(GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib", false)));
             if (module_sp)
                 dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
             
             if (dispatch_queue_offsets_symbol == NULL)
             {
-                module_sp = GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib"));
+                module_sp = GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib", false));
                 if (module_sp)
                     dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
             }

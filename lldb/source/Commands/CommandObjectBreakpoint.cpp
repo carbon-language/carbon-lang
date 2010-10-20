@@ -307,7 +307,7 @@ CommandObjectBreakpointSet::Execute
 
     ModuleSP module_sp = target->GetExecutableModule();
     Breakpoint *bp = NULL;
-    FileSpec module;
+    FileSpec module_spec;
     bool use_module = false;
     int num_modules = m_options.m_modules.size();
 
@@ -354,15 +354,15 @@ CommandObjectBreakpointSet::Execute
                 }
                 else
                 {
-                    file.SetFile(m_options.m_filename.c_str());
+                    file.SetFile(m_options.m_filename.c_str(), false);
                 }
 
                 if (use_module)
                 {
                     for (int i = 0; i < num_modules; ++i)
                     {
-                        module.SetFile(m_options.m_modules[i].c_str());
-                        bp = target->CreateBreakpoint (&module,
+                        module_spec.SetFile(m_options.m_modules[i].c_str(), false);
+                        bp = target->CreateBreakpoint (&module_spec,
                                                        file,
                                                        m_options.m_line_num,
                                                        m_options.m_ignore_inlines).get();
@@ -405,8 +405,11 @@ CommandObjectBreakpointSet::Execute
                 {
                     for (int i = 0; i < num_modules; ++i)
                     {
-                        module.SetFile(m_options.m_modules[i].c_str());
-                        bp = target->CreateBreakpoint (&module, m_options.m_func_name.c_str(), name_type_mask, Breakpoint::Exact).get();
+                        module_spec.SetFile(m_options.m_modules[i].c_str(), false);
+                        bp = target->CreateBreakpoint (&module_spec, 
+                                                       m_options.m_func_name.c_str(), 
+                                                       name_type_mask, 
+                                                       Breakpoint::Exact).get();
                         if (bp)
                         {
                             StreamString &output_stream = result.GetOutputStream();
@@ -435,8 +438,8 @@ CommandObjectBreakpointSet::Execute
                 {
                     for (int i = 0; i < num_modules; ++i)
                     {
-                        module.SetFile(m_options.m_modules[i].c_str());
-                        bp = target->CreateBreakpoint (&module, regexp).get();
+                        module_spec.SetFile(m_options.m_modules[i].c_str(), false);
+                        bp = target->CreateBreakpoint (&module_spec, regexp).get();
                         if (bp)
                         {
                             StreamString &output_stream = result.GetOutputStream();

@@ -53,23 +53,11 @@ public:
     FileSpec();
 
     //------------------------------------------------------------------
-    /// Default constructor.
+    /// Constructor with path.
     ///
-    /// Takes an optional full path to a file. If \a path is valid,
-    /// this function will call FileSpec::SetFile (\a path).
-    ///
-    /// @param[in] path
-    ///     The full or partial path to a file.
-    ///
-    /// @see FileSpec::SetFile ()
-    //------------------------------------------------------------------
-    explicit FileSpec (const char *path);
-
-    //------------------------------------------------------------------
-    /// Default constructor.
-    ///
-    /// Takes an optional full path to a file. If \a path is valid,
-    /// this function will call FileSpec::SetFile (\a path).
+    /// Takes an path to a file which can be just a filename, or a full
+    /// path. If \a path is not NULL or empty, this function will call
+    /// FileSpec::SetFile (const char *path, bool resolve).
     ///
     /// @param[in] path
     ///     The full or partial path to a file.
@@ -78,7 +66,7 @@ public:
     ///     If \b true, then we resolve the path with realpath,
     ///     if \b false we trust the path is in canonical form already.
     ///
-    /// @see FileSpec::SetFile ()
+    /// @see FileSpec::SetFile (const char *path, bool resolve)
     //------------------------------------------------------------------
     explicit FileSpec (const char *path, bool resolve_path);
 
@@ -463,7 +451,7 @@ public:
     ///     the static FileSpec::Resolve.
     //------------------------------------------------------------------
     void
-    SetFile (const char *path, bool resolve = true);
+    SetFile (const char *path, bool resolve);
 
     //------------------------------------------------------------------
     /// Read the file into an array of strings, one per line.

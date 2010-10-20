@@ -405,9 +405,16 @@ ModuleList::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t res
 }
 
 uint32_t
-ModuleList::ResolveSymbolContextForFilePath (const char *file_path, uint32_t line, bool check_inlines, uint32_t resolve_scope, SymbolContextList& sc_list)
+ModuleList::ResolveSymbolContextForFilePath 
+(
+    const char *file_path, 
+    uint32_t line, 
+    bool check_inlines, 
+    uint32_t resolve_scope, 
+    SymbolContextList& sc_list
+)
 {
-    FileSpec file_spec(file_path);
+    FileSpec file_spec(file_path, false);
     return ResolveSymbolContextsForFileSpec (file_spec, line, check_inlines, resolve_scope, sc_list);
 }
 

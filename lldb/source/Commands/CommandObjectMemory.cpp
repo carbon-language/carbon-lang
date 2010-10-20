@@ -143,7 +143,7 @@ public:
                 break;
 
             case 'o':
-                m_outfile_filespec.SetFile (option_arg);
+                m_outfile_filespec.SetFile (option_arg, true);
                 break;
 
             case 'b':
@@ -462,7 +462,7 @@ public:
                 break;
 
             case 'i':
-                m_infile.SetFile (option_arg);
+                m_infile.SetFile (option_arg, true);
                 if (!m_infile.Exists())
                 {
                     m_infile.Clear();

@@ -18,7 +18,7 @@ using namespace lldb_private;
 
 CompileUnit::CompileUnit (Module *module, void *user_data, const char *pathname, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
     ModuleChild(module),
-    FileSpec (pathname),
+    FileSpec (pathname, false),
     UserID(cu_sym_id),
     Language (language),
     m_user_data (user_data),

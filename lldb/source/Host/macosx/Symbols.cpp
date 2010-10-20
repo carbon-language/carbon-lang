@@ -239,8 +239,7 @@ LocateDSYMMachFileInDSYMBundle
         DIR* dirp = ::opendir(path);
         if (dirp != NULL)
         {
-            const size_t path_len = strlen(path);
-            const int bytes_left = sizeof(path) - path_len - 1;
+            dsym_fspec.GetDirectory().SetCString(path);
             struct dirent* dp;
             while ((dp = readdir(dirp)) != NULL)
             {
@@ -256,9 +255,7 @@ LocateDSYMMachFileInDSYMBundle
 
                 if (dp->d_type == DT_REG || dp->d_type == DT_UNKNOWN)
                 {
-                    ::strncpy (&path[path_len], dp->d_name, bytes_left);
-
-                    dsym_fspec.SetFile(path);
+                    dsym_fspec.GetFilename().SetCString(dp->d_name);
                     if (FileAtPathContainsArchAndUUID (dsym_fspec, arch, uuid))
                         return dsym_fspec;
                 }
@@ -334,7 +331,7 @@ LocateMacOSXFilesUsingDebugSymbols
                     {
                         if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))
                         {
-                            out_dsym_fspec->SetFile(path);
+                            out_dsym_fspec->SetFile(path, false);
 
                             if (out_dsym_fspec->GetFileType () == FileSpec::eFileTypeDirectory)
                             {
@@ -358,7 +355,7 @@ LocateMacOSXFilesUsingDebugSymbols
                             if (exec_cf_path && ::CFStringGetFileSystemRepresentation (exec_cf_path, path, sizeof(path)))
                             {
                                 ++items_found;
-                                out_dsym_fspec->SetFile(path);
+                                out_dsym_fspec->SetFile(path, false);
                             }
                         }
                     }
@@ -384,7 +381,7 @@ LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* a
                 strncat(path, ".dSYM/Contents/Resources/DWARF/", sizeof(path));
                 strncat(path, exec_fspec->GetFilename().AsCString(), sizeof(path));
 
-                dsym_fspec.SetFile(path);
+                dsym_fspec.SetFile(path, false);
 
                 if (FileAtPathContainsArchAndUUID (dsym_fspec, arch, uuid))
                 {
@@ -403,7 +400,7 @@ LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* a
                             *next_slash = '\0';
                             strncat(path, ".dSYM/Contents/Resources/DWARF/", sizeof(path));
                             strncat(path, exec_fspec->GetFilename().AsCString(), sizeof(path));
-                            dsym_fspec.SetFile(path);
+                            dsym_fspec.SetFile(path, false);
                             if (dsym_fspec.Exists())
                                 return true;
                             else

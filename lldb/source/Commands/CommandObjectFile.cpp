@@ -127,7 +127,7 @@ CommandObjectFile::Execute
     const int argc = command.GetArgumentCount();
     if (argc == 1)
     {
-        FileSpec file_spec (file_path);
+        FileSpec file_spec (file_path, true);
 
         if (! file_spec.Exists() && !file_spec.ResolveExecutableLocation())
         {

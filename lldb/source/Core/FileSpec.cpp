@@ -174,18 +174,6 @@ FileSpec::FileSpec() :
 // Default constructor that can take an optional full path to a
 // file on disk.
 //------------------------------------------------------------------
-FileSpec::FileSpec(const char *pathname) :
-    m_directory(),
-    m_filename()
-{
-    if (pathname && pathname[0])
-        SetFile(pathname);
-}
-
-//------------------------------------------------------------------
-// Default constructor that can take an optional full path to a
-// file on disk.
-//------------------------------------------------------------------
 FileSpec::FileSpec(const char *pathname, bool resolve_path) :
     m_directory(),
     m_filename()
@@ -447,7 +435,7 @@ FileSpec::Exists () const
 bool
 FileSpec::ResolveExecutableLocation ()
 {
-    if (m_directory.GetLength() == 0)
+    if (!m_directory)
     {
         const std::string file_str (m_filename.AsCString());
         llvm::sys::Path path = llvm::sys::Program::FindProgramByName (file_str);
@@ -465,7 +453,7 @@ FileSpec::ResolveExecutableLocation ()
             {
                 // If FindProgramByName found the file, it returns the directory + filename in its return results.
                 // We need to separate them.
-                FileSpec tmp_file (dir_ref.data());
+                FileSpec tmp_file (dir_ref.data(), false);
                 if (tmp_file.Exists())
                 {
                     m_directory = tmp_file.m_directory;

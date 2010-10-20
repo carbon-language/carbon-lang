@@ -111,13 +111,13 @@ ThreadMacOSX::GetDispatchQueueName()
         DataExtractor data(memory_buffer, sizeof(memory_buffer), m_process.GetByteOrder(), m_process.GetAddressByteSize());
         static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
         const Symbol *dispatch_queue_offsets_symbol = NULL;
-        ModuleSP module_sp(m_process.GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib")));
+        ModuleSP module_sp(m_process.GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib", false)));
         if (module_sp)
             dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
         
         if (dispatch_queue_offsets_symbol == NULL)
         {
-            module_sp = m_process.GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib"));
+            module_sp = m_process.GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib", false));
             if (module_sp)
                 dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
         }

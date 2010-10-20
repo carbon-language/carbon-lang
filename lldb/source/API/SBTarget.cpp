@@ -355,7 +355,7 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
     {
         if (module_name && module_name[0])
         {
-            FileSpec module_file_spec(module_name);
+            FileSpec module_file_spec(module_name, false);
             *sb_bp = m_opaque_sp->CreateBreakpoint (&module_file_spec, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
         }
         else
@@ -376,7 +376,7 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
         
         if (module_name && module_name[0])
         {
-            FileSpec module_file_spec(module_name);
+            FileSpec module_file_spec(module_name, false);
             
             *sb_bp = m_opaque_sp->CreateBreakpoint (&module_file_spec, regexp, false);
         }
@@ -523,7 +523,7 @@ SBTarget::Disassemble (lldb::addr_t start_addr, lldb::addr_t end_addr, const cha
         ModuleSP module_sp;
         if (module_name != NULL)
         {
-            FileSpec module_file_spec (module_name);
+            FileSpec module_file_spec (module_name, false);
             module_sp = m_opaque_sp->GetImages().FindFirstModuleForFileSpec (module_file_spec, NULL);
         }
         
@@ -602,7 +602,7 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
         ModuleSP module_sp;
         if (module_name != NULL)
         {
-            FileSpec module_file_spec (module_name);
+            FileSpec module_file_spec (module_name, false);
             module_sp = m_opaque_sp->GetImages().FindFirstModuleForFileSpec (module_file_spec, NULL);
         }
 

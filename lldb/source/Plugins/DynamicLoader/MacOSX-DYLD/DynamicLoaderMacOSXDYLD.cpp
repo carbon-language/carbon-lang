@@ -543,7 +543,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 
                         char raw_path[PATH_MAX];
                         m_process->ReadMemory (path_addr, raw_path, sizeof(raw_path), error);
-                        m_dyld_image_infos[i].file_spec.SetFile(raw_path);
+                        m_dyld_image_infos[i].file_spec.SetFile(raw_path, true);
                     }
                     assert(i == m_dyld_all_image_infos.dylib_info_count);
 
@@ -787,7 +787,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
                 {
                     uint32_t name_offset = load_cmd_offset + data.GetU32 (&offset);
                     const char *path = data.PeekCStr (name_offset);
-                    lc_id_dylinker->SetFile (path);
+                    lc_id_dylinker->SetFile (path, true);
                 }
                 break;
 
