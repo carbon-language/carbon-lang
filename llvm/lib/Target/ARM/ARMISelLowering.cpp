@@ -3457,8 +3457,9 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
                                   Op.getOperand(i)));
       SDValue Val = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &Ops[0],
                                 NumElts);
-      return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
-                         LowerBUILD_VECTOR(Val, DAG, ST));
+      Val = LowerBUILD_VECTOR(Val, DAG, ST);
+      if (Val.getNode())
+        return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Val);
     }
     SDValue Val = IsSingleInstrConstant(Value, DAG, ST, dl);
     if (Val.getNode())
