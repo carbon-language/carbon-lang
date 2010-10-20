@@ -6,8 +6,6 @@ import StringIO
 
 import common_dump
 
-FormatOutput=hex
-
 class Reader:
     def __init__(self, path):
         if path == "-":
