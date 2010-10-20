@@ -106,6 +106,7 @@ enum PassDebuggingString {
   ON_BASICBLOCK_MSG, // "'  on BasicBlock '" + PassName + "'...\n"
   ON_FUNCTION_MSG, // "' on Function '" + FunctionName + "'...\n"
   ON_MODULE_MSG, // "' on Module '" + ModuleName + "'...\n"
+  ON_REGION_MSG, // " 'on Region ...\n'"
   ON_LOOP_MSG, // " 'on Loop ...\n'"
   ON_CG_MSG // "' on Call Graph ...\n'"
 };  

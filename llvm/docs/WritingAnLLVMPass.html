@@ -51,6 +51,14 @@
         <li><a href="#doFinalization_loop">The <tt>doFinalization()
                                             </tt> method</a></li>
         </ul></li>
+     <li><a href="#RegionPass">The <tt>RegionPass</tt> class</a>
+        <ul>
+        <li><a href="#doInitialization_region">The <tt>doInitialization(Region *,
+                                            RGPassManager &amp;)</tt> method</a></li>
+        <li><a href="#runOnRegion">The <tt>runOnRegion</tt> method</a></li>
+        <li><a href="#doFinalization_region">The <tt>doFinalization()
+                                            </tt> method</a></li>
+        </ul></li>
      <li><a href="#BasicBlockPass">The <tt>BasicBlockPass</tt> class</a>
         <ul>
         <li><a href="#doInitialization_fn">The <tt>doInitialization(Function
@@ -134,6 +142,7 @@ the <tt><a href="#ModulePass">ModulePass</a></tt>, <tt><a
 href="#CallGraphSCCPass">CallGraphSCCPass</a></tt>, <tt><a
 href="#FunctionPass">FunctionPass</a></tt>, or <tt><a
 href="#LoopPass">LoopPass</a></tt>, or <tt><a
+href="#RegionPass">RegionPass</a></tt>, or <tt><a
 href="#BasicBlockPass">BasicBlockPass</a></tt> classes, which gives the system
 more information about what your pass does, and how it can be combined with
 other passes.  One of the main features of the LLVM Pass Framework is that it
@@ -801,6 +810,84 @@ should be used to update loop nest.</p>
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
 called when the pass framework has finished calling <a
 href="#runOnLoop"><tt>runOnLoop</tt></a> for every loop in the
+program being compiled. </p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="RegionPass">The <tt>RegionPass</tt> class </a>
+</div>
+
+<div class="doc_text">
+
+<p> <tt>RegionPass</tt> is similar to <a href="#LoopPass"><tt>LoopPass</tt></a>,
+but executes on each single entry single exit region in the function.
+<tt>RegionPass</tt> processes regions in nested order such that the outer most
+region is processed last.  </p>
+
+<p> <tt>RegionPass</tt> subclasses are allowed to update the region tree by using
+the <tt>RGPassManager</tt> interface. You may overload three virtual methods of
+<tt>RegionPass</tt> to implementing your own region pass is usually. All these
+methods should return true if they modified the program, or false if they didn not.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="doInitialization_region">The <tt>doInitialization(Region *,
+                                                 RGPassManager &amp;)</tt>
+  method</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><pre>
+  <b>virtual bool</b> doInitialization(Region *, RGPassManager &amp;RGM);
+</pre></div>
+
+<p>The <tt>doInitialization</tt> method is designed to do simple initialization
+type of stuff that does not depend on the functions being processed.  The
+<tt>doInitialization</tt> method call is not scheduled to overlap with any
+other pass executions (thus it should be very fast). RPPassManager
+interface should be used to access Function or Module level analysis
+information.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="runOnRegion">The <tt>runOnRegion</tt> method</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><pre>
+  <b>virtual bool</b> runOnRegion(Region *, RGPassManager &amp;RGM) = 0;
+</pre></div><p>
+
+<p>The <tt>runOnRegion</tt> method must be implemented by your subclass to do
+the transformation or analysis work of your pass.  As usual, a true value should
+be returned if the region is modified. <tt>RGPassManager</tt> interface
+should be used to update region tree.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="doFinalization_region">The <tt>doFinalization()</tt> method</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><pre>
+  <b>virtual bool</b> doFinalization();
+</pre></div>
+
+<p>The <tt>doFinalization</tt> method is an infrequently used method that is
+called when the pass framework has finished calling <a
+href="#runOnRegion"><tt>runOnRegion</tt></a> for every region in the
 program being compiled. </p>
 
 </div>

@@ -57,6 +57,7 @@ enum PassManagerType {
   PMT_CallGraphPassManager,  ///< CGPassManager
   PMT_FunctionPassManager,   ///< FPPassManager
   PMT_LoopPassManager,       ///< LPPassManager
+  PMT_RegionPassManager,     ///< RGPassManager
   PMT_BasicBlockPassManager, ///< BBPassManager
   PMT_Last
 };
@@ -64,13 +65,14 @@ enum PassManagerType {
 // Different types of passes.
 enum PassKind {
   PT_BasicBlock,
+  PT_Region,
   PT_Loop,
   PT_Function,
   PT_CallGraphSCC,
   PT_Module,
   PT_PassManager
 };
-  
+
 //===----------------------------------------------------------------------===//
 /// Pass interface - Implemented by all 'passes'.  Subclass this if you are an
 /// interprocedural optimization or you do not fit into any of the more
