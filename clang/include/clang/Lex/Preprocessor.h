@@ -823,7 +823,8 @@ public:
   /// This code concatenates and consumes tokens up to the '>' token.  It
   /// returns false if the > was found, otherwise it returns true if it finds
   /// and consumes the EOM marker.
-  bool ConcatenateIncludeName(llvm::SmallString<128> &FilenameBuffer);
+  bool ConcatenateIncludeName(llvm::SmallString<128> &FilenameBuffer,
+                              SourceLocation &End);
 
 private:
 
@@ -972,12 +973,13 @@ private:
   void HandleIdentSCCSDirective(Token &Tok);
 
   // File inclusion.
-  void HandleIncludeDirective(Token &Tok,
+  void HandleIncludeDirective(SourceLocation HashLoc,
+                              Token &Tok,
                               const DirectoryLookup *LookupFrom = 0,
                               bool isImport = false);
-  void HandleIncludeNextDirective(Token &Tok);
-  void HandleIncludeMacrosDirective(Token &Tok);
-  void HandleImportDirective(Token &Tok);
+  void HandleIncludeNextDirective(SourceLocation HashLoc, Token &Tok);
+  void HandleIncludeMacrosDirective(SourceLocation HashLoc, Token &Tok);
+  void HandleImportDirective(SourceLocation HashLoc, Token &Tok);
 
   // Macro handling.
   void HandleDefineDirective(Token &Tok);

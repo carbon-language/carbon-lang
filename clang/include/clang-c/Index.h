@@ -1190,8 +1190,9 @@ enum CXCursorKind {
   CXCursor_PreprocessingDirective        = 500,
   CXCursor_MacroDefinition               = 501,
   CXCursor_MacroInstantiation            = 502,
+  CXCursor_InclusionDirective            = 503,
   CXCursor_FirstPreprocessing            = CXCursor_PreprocessingDirective,
-  CXCursor_LastPreprocessing             = CXCursor_MacroInstantiation
+  CXCursor_LastPreprocessing             = CXCursor_InclusionDirective
 };
 
 /**
@@ -1465,6 +1466,12 @@ CINDEX_LINKAGE void clang_getOverriddenCursors(CXCursor cursor,
  */
 CINDEX_LINKAGE void clang_disposeOverriddenCursors(CXCursor *overridden);
 
+/**
+ * \brief Retrieve the file that is included by the given inclusion directive
+ * cursor.
+ */
+CINDEX_LINKAGE CXFile clang_getIncludedFile(CXCursor cursor);
+  
 /**
  * @}
  */

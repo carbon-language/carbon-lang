@@ -591,9 +591,11 @@ TryAgain:
 
     // C99 6.10.2 - Source File Inclusion.
     case tok::pp_include:
-      return HandleIncludeDirective(Result);       // Handle #include.
+      // Handle #include.
+      return HandleIncludeDirective(SavedHash.getLocation(), Result);
     case tok::pp___include_macros:
-      return HandleIncludeMacrosDirective(Result); // Handle -imacros.
+      // Handle -imacros.
+      return HandleIncludeMacrosDirective(SavedHash.getLocation(), Result); 
 
     // C99 6.10.3 - Macro Replacement.
     case tok::pp_define:
@@ -615,9 +617,9 @@ TryAgain:
 
     // GNU Extensions.
     case tok::pp_import:
-      return HandleImportDirective(Result);
+      return HandleImportDirective(SavedHash.getLocation(), Result);
     case tok::pp_include_next:
-      return HandleIncludeNextDirective(Result);
+      return HandleIncludeNextDirective(SavedHash.getLocation(), Result);
 
     case tok::pp_warning:
       Diag(Result, diag::ext_pp_warning_directive);
@@ -1034,11 +1036,14 @@ bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
 /// false if the > was found, otherwise it returns true if it finds and consumes
 /// the EOM marker.
 bool Preprocessor::ConcatenateIncludeName(
-  llvm::SmallString<128> &FilenameBuffer) {
+                                        llvm::SmallString<128> &FilenameBuffer,
+                                          SourceLocation &End) {
   Token CurTok;
 
   Lex(CurTok);
   while (CurTok.isNot(tok::eom)) {
+    End = CurTok.getLocation();
+    
     // Append the spelling of this token to the buffer. If there was a space
     // before it, add it now.
     if (CurTok.hasLeadingSpace())
@@ -1077,7 +1082,8 @@ bool Preprocessor::ConcatenateIncludeName(
 /// routine with functionality shared between #include, #include_next and
 /// #import.  LookupFrom is set when this is a #include_next directive, it
 /// specifies the file to start searching from.
-void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
+void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc, 
+                                          Token &IncludeTok,
                                           const DirectoryLookup *LookupFrom,
                                           bool isImport) {
 
@@ -1087,7 +1093,8 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   // Reserve a buffer to get the spelling.
   llvm::SmallString<128> FilenameBuffer;
   llvm::StringRef Filename;
-
+  SourceLocation End;
+  
   switch (FilenameTok.getKind()) {
   case tok::eom:
     // If the token kind is EOM, the error has already been diagnosed.
@@ -1096,13 +1103,14 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   case tok::angle_string_literal:
   case tok::string_literal:
     Filename = getSpelling(FilenameTok, FilenameBuffer);
+    End = FilenameTok.getLocation();
     break;
 
   case tok::less:
     // This could be a <foo/bar.h> file coming from a macro expansion.  In this
     // case, glue the tokens together into FilenameBuffer and interpret those.
     FilenameBuffer.push_back('<');
-    if (ConcatenateIncludeName(FilenameBuffer))
+    if (ConcatenateIncludeName(FilenameBuffer, End))
       return;   // Found <eom> but no ">"?  Diagnostic already emitted.
     Filename = FilenameBuffer.str();
     break;
@@ -1141,6 +1149,11 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     return;
   }
 
+  // Notify the callback object that we've seen an inclusion directive.
+  if (Callbacks)
+    Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File, 
+                                  End);
+  
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include
   // header.
@@ -1170,7 +1183,8 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
 
 /// HandleIncludeNextDirective - Implements #include_next.
 ///
-void Preprocessor::HandleIncludeNextDirective(Token &IncludeNextTok) {
+void Preprocessor::HandleIncludeNextDirective(SourceLocation HashLoc,
+                                              Token &IncludeNextTok) {
   Diag(IncludeNextTok, diag::ext_pp_include_next_directive);
 
   // #include_next is like #include, except that we start searching after
@@ -1187,23 +1201,25 @@ void Preprocessor::HandleIncludeNextDirective(Token &IncludeNextTok) {
     ++Lookup;
   }
 
-  return HandleIncludeDirective(IncludeNextTok, Lookup);
+  return HandleIncludeDirective(HashLoc, IncludeNextTok, Lookup);
 }
 
 /// HandleImportDirective - Implements #import.
 ///
-void Preprocessor::HandleImportDirective(Token &ImportTok) {
+void Preprocessor::HandleImportDirective(SourceLocation HashLoc,
+                                         Token &ImportTok) {
   if (!Features.ObjC1)  // #import is standard for ObjC.
     Diag(ImportTok, diag::ext_pp_import_directive);
 
-  return HandleIncludeDirective(ImportTok, 0, true);
+  return HandleIncludeDirective(HashLoc, ImportTok, 0, true);
 }
 
 /// HandleIncludeMacrosDirective - The -imacros command line option turns into a
 /// pseudo directive in the predefines buffer.  This handles it by sucking all
 /// tokens through the preprocessor and discarding them (only keeping the side
 /// effects on the preprocessor).
-void Preprocessor::HandleIncludeMacrosDirective(Token &IncludeMacrosTok) {
+void Preprocessor::HandleIncludeMacrosDirective(SourceLocation HashLoc,
+                                                Token &IncludeMacrosTok) {
   // This directive should only occur in the predefines buffer.  If not, emit an
   // error and reject it.
   SourceLocation Loc = IncludeMacrosTok.getLocation();
@@ -1216,7 +1232,7 @@ void Preprocessor::HandleIncludeMacrosDirective(Token &IncludeMacrosTok) {
 
   // Treat this as a normal #include for checking purposes.  If this is
   // successful, it will push a new lexer onto the include stack.
-  HandleIncludeDirective(IncludeMacrosTok, 0, false);
+  HandleIncludeDirective(HashLoc, IncludeMacrosTok, 0, false);
 
   Token TmpTok;
   do {

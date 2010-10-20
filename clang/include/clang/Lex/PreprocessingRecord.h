@@ -35,6 +35,7 @@ void operator delete(void* ptr, clang::PreprocessingRecord& PR,
 
 namespace clang {
   class MacroDefinition;
+  class FileEntry;
 
   /// \brief Base class that describes a preprocessed entity, which may be a
   /// preprocessor directive or macro instantiation.
@@ -54,8 +55,12 @@ namespace clang {
       /// \brief A macro definition.
       MacroDefinitionKind,
       
+      /// \brief An inclusion directive, such as \c #include, \c
+      /// #import, or \c #include_next.
+      InclusionDirectiveKind,
+
       FirstPreprocessingDirective = PreprocessingDirectiveKind,
-      LastPreprocessingDirective = MacroDefinitionKind
+      LastPreprocessingDirective = InclusionDirectiveKind
     };
 
   private:
@@ -173,6 +178,68 @@ namespace clang {
     }
     static bool classof(const MacroDefinition *) { return true; }
   };
+
+  /// \brief Record the location of an inclusion directive, such as an
+  /// \c #include or \c #import statement.
+  class InclusionDirective : public PreprocessingDirective {
+  public:
+    /// \brief The kind of inclusion directives known to the
+    /// preprocessor.
+    enum InclusionKind {
+      /// \brief An \c #include directive.
+      Include,
+      /// \brief An Objective-C \c #import directive.
+      Import,
+      /// \brief A GNU \c #include_next directive.
+      IncludeNext,
+      /// \brief A Clang \c #__include_macros directive.
+      IncludeMacros
+    };
+
+  private:
+    /// \brief The name of the file that was included, as written in
+    /// the source.
+    std::string FileName;
+
+    /// \brief Whether the file name was in quotation marks; otherwise, it was
+    /// in angle brackets.
+    unsigned InQuotes : 1;
+
+    /// \brief The kind of inclusion directive we have.
+    ///
+    /// This is a value of type InclusionKind.
+    unsigned Kind : 2;
+
+    /// \brief The file that was included.
+    const FileEntry *File;
+
+  public:
+    explicit InclusionDirective(InclusionKind Kind,
+                                const std::string &FileName, bool InQuotes,
+                                const FileEntry *File, SourceRange Range)
+      : PreprocessingDirective(InclusionDirectiveKind, Range), 
+        FileName(FileName), InQuotes(InQuotes), Kind(Kind), File(File) { }
+    
+    /// \brief Determine what kind of inclusion directive this is.
+    InclusionKind getKind() const { return static_cast<InclusionKind>(Kind); }
+    
+    /// \brief Retrieve the included file name as it was written in the source.
+    llvm::StringRef getFileName() const { return FileName; }
+    
+    /// \brief Determine whether the included file name was written in quotes;
+    /// otherwise, it was written in angle brackets.
+    bool wasInQuotes() const { return InQuotes; }
+    
+    /// \brief Retrieve the file entry for the actual file that was included
+    /// by this directive.
+    const FileEntry *getFile() const { return File; }
+        
+    // Implement isa/cast/dyncast/etc.
+    static bool classof(const PreprocessedEntity *PE) {
+      return PE->getKind() == InclusionDirectiveKind;
+    }
+    static bool classof(const InclusionDirective *) { return true; }
+  };
   
   /// \brief An abstract class that should be subclassed by any external source
   /// of preprocessing record entries.
@@ -263,6 +330,12 @@ namespace clang {
     virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
     virtual void MacroUndefined(SourceLocation Loc, const IdentifierInfo *II,
                                 const MacroInfo *MI);
+    virtual void InclusionDirective(SourceLocation HashLoc,
+                                    const Token &IncludeTok,
+                                    llvm::StringRef FileName,
+                                    bool IsAngled,
+                                    const FileEntry *File,
+                                    SourceLocation EndLoc);
   };
 } // end namespace clang
 

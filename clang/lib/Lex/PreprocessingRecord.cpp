@@ -14,6 +14,8 @@
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Token.h"
+#include "clang/Basic/IdentifierTable.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
 
@@ -127,3 +129,38 @@ void PreprocessingRecord::MacroUndefined(SourceLocation Loc,
     MacroDefinitions.erase(Pos);
 }
 
+void PreprocessingRecord::InclusionDirective(SourceLocation HashLoc,
+                                             const clang::Token &IncludeTok, 
+                                             llvm::StringRef FileName, 
+                                             bool IsAngled, 
+                                             const FileEntry *File,
+                                           clang::SourceLocation EndLoc) {
+  InclusionDirective::InclusionKind Kind = InclusionDirective::Include;
+  
+  switch (IncludeTok.getIdentifierInfo()->getPPKeywordID()) {
+  case tok::pp_include: 
+    Kind = InclusionDirective::Include; 
+    break;
+    
+  case tok::pp_import: 
+    Kind = InclusionDirective::Import; 
+    break;
+    
+  case tok::pp_include_next: 
+    Kind = InclusionDirective::IncludeNext; 
+    break;
+    
+  case tok::pp___include_macros: 
+    Kind = InclusionDirective::IncludeMacros;
+    break;
+    
+  default:
+    llvm_unreachable("Unknown include directive kind");
+    return;
+  }
+  
+  clang::InclusionDirective *ID
+    = new (*this) clang::InclusionDirective(Kind, FileName, !IsAngled, File, 
+                                            SourceRange(HashLoc, EndLoc));
+  PreprocessedEntities.push_back(ID);
+}

@@ -54,6 +54,35 @@ public:
                            SrcMgr::CharacteristicKind FileType) {
   }
 
+  /// \brief This callback is invoked whenever an inclusion directive of
+  /// any kind (\c #include, \c #import, etc.) has been processed, regardless
+  /// of whether the inclusion will actually result in an inclusion.
+  ///
+  /// \param HashLoc The location of the '#' that starts the inclusion 
+  /// directive.
+  ///
+  /// \param IncludeTok The token that indicates the kind of inclusion 
+  /// directive, e.g., 'include' or 'import'.
+  ///
+  /// \param FileName The name of the file being included, as written in the 
+  /// source code.
+  ///
+  /// \param IsAngled Whether the file name was enclosed in angle brackets;
+  /// otherwise, it was enclosed in quotes.
+  ///
+  /// \param File The actual file that may be included by this inclusion 
+  /// directive.
+  ///
+  /// \param EndLoc The location of the last token within the inclusion
+  /// directive.
+  virtual void InclusionDirective(SourceLocation HashLoc,
+                                  const Token &IncludeTok,
+                                  llvm::StringRef FileName,
+                                  bool IsAngled,
+                                  const FileEntry *File,
+                                  SourceLocation EndLoc) {    
+  }
+                                  
   /// EndOfMainFile - This callback is invoked when the end of the main file is
   /// reach, no subsequent callbacks will be made.
   virtual void EndOfMainFile() {

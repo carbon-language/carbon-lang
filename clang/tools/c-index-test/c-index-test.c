@@ -271,6 +271,13 @@ static void PrintCursor(CXCursor Cursor) {
       printf("]");
       clang_disposeOverriddenCursors(overridden);
     }
+    
+    if (Cursor.kind == CXCursor_InclusionDirective) {
+      CXFile File = clang_getIncludedFile(Cursor);
+      CXString Included = clang_getFileName(File);
+      printf(" (%s)", clang_getCString(Included));
+      clang_disposeString(Included);
+    }
   }
 }
 

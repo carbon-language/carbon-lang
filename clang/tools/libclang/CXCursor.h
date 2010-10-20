@@ -28,6 +28,7 @@ class CXXBaseSpecifier;
 class Decl;
 class Expr;
 class FieldDecl;
+class InclusionDirective;
 class LabelStmt;
 class MacroDefinition;
 class MacroInstantiation;
@@ -132,6 +133,13 @@ CXCursor MakeMacroInstantiationCursor(MacroInstantiation *, ASTUnit *TU);
 /// \brief Unpack a given macro instantiation cursor to retrieve its
 /// source range.
 MacroInstantiation *getCursorMacroInstantiation(CXCursor C);
+
+/// \brief Create an inclusion directive cursor.
+CXCursor MakeInclusionDirectiveCursor(InclusionDirective *, ASTUnit *TU);
+
+/// \brief Unpack a given inclusion directive cursor to retrieve its
+/// source range.
+InclusionDirective *getCursorInclusionDirective(CXCursor C);
 
 /// \brief Create a label reference at the given location.
 CXCursor MakeCursorLabelRef(LabelStmt *Label, SourceLocation Loc, ASTUnit *TU);

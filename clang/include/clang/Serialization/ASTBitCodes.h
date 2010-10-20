@@ -372,7 +372,11 @@ namespace clang {
       PP_MACRO_INSTANTIATION = 4,
       
       /// \brief Describes a macro definition within the preprocessing record.
-      PP_MACRO_DEFINITION = 5
+      PP_MACRO_DEFINITION = 5,
+      
+      /// \brief Describes am inclusion directive within the preprocessing
+      /// record.
+      PP_INCLUSION_DIRECTIVE = 6
     };
 
     /// \defgroup ASTAST AST file AST constants

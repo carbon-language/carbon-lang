@@ -1337,18 +1337,21 @@ bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
   }
 
   while (true) {
+    uint64_t Offset = Cursor.GetCurrentBitNo();
     unsigned Code = Cursor.ReadCode();
-
+    
     // We expect all abbrevs to be at the start of the block.
-    if (Code != llvm::bitc::DEFINE_ABBREV)
+    if (Code != llvm::bitc::DEFINE_ABBREV) {
+      Cursor.JumpToBit(Offset);
       return false;
+    }
     Cursor.ReadAbbrevRecord();
   }
 }
 
 void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
   assert(PP && "Forgot to set Preprocessor ?");
-  llvm::BitstreamCursor &Stream = F.Stream;
+  llvm::BitstreamCursor &Stream = F.MacroCursor;
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this macro.
@@ -1381,9 +1384,12 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
     }
 
     // Read a record.
+    const char *BlobStart = 0;
+    unsigned BlobLen = 0;
     Record.clear();
     PreprocessorRecordTypes RecType =
-      (PreprocessorRecordTypes)Stream.ReadRecord(Code, Record);
+      (PreprocessorRecordTypes)Stream.ReadRecord(Code, Record, BlobStart, 
+                                                 BlobLen);
     switch (RecType) {
     case PP_MACRO_OBJECT_LIKE:
     case PP_MACRO_FUNCTION_LIKE: {
@@ -1524,6 +1530,41 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       
       return;
     }
+        
+    case PP_INCLUSION_DIRECTIVE: {
+      // If we already have a macro, that means that we've hit the end
+      // of the definition of the macro we were looking for. We're
+      // done.
+      if (Macro)
+        return;
+      
+      if (!PP->getPreprocessingRecord()) {
+        Error("missing preprocessing record in AST file");
+        return;
+      }
+      
+      PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
+      if (PPRec.getPreprocessedEntity(Record[0]))
+        return;
+
+      const char *FullFileNameStart = BlobStart + Record[3];
+      const FileEntry *File 
+        = PP->getFileManager().getFile(FullFileNameStart,
+                                     FullFileNameStart + (BlobLen - Record[3]));
+      
+      // FIXME: Stable encoding
+      InclusionDirective::InclusionKind Kind
+        = static_cast<InclusionDirective::InclusionKind>(Record[5]);
+      InclusionDirective *ID
+        = new (PPRec) InclusionDirective(Kind,
+                             llvm::StringRef(BlobStart, Record[3]),
+                                         Record[4],
+                                         File,
+                                 SourceRange(ReadSourceLocation(F, Record[1]),
+                                             ReadSourceLocation(F, Record[2])));
+      PPRec.SetPreallocatedEntity(Record[0], ID);
+      return;
+    }
     }
   }
 }
@@ -1538,22 +1579,14 @@ void ASTReader::ReadDefinedMacros() {
       continue;
 
     llvm::BitstreamCursor Cursor = MacroCursor;
-    if (Cursor.EnterSubBlock(PREPROCESSOR_BLOCK_ID)) {
-      Error("malformed preprocessor block record in AST file");
-      return;
-    }
-
+    Cursor.JumpToBit(F.MacroStartOffset);
+    
     RecordData Record;
     while (true) {
       uint64_t Offset = Cursor.GetCurrentBitNo();
       unsigned Code = Cursor.ReadCode();
-      if (Code == llvm::bitc::END_BLOCK) {
-        if (Cursor.ReadBlockEnd()) {
-          Error("error at end of preprocessor block in AST file");
-          return;
-        }
+      if (Code == llvm::bitc::END_BLOCK)
         break;
-      }
 
       if (Code == llvm::bitc::ENTER_SUBBLOCK) {
         // No known subblocks, always skip them.
@@ -1589,6 +1622,7 @@ void ASTReader::ReadDefinedMacros() {
         
       case PP_MACRO_INSTANTIATION:
       case PP_MACRO_DEFINITION:
+      case PP_INCLUSION_DIRECTIVE:
         // Read the macro record.
         // FIXME: That's a stupid way to do this. We should reuse this cursor.
         ReadMacroRecord(F, Offset);
@@ -1686,10 +1720,12 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         if (PP)
           PP->setExternalSource(this);
 
-        if (Stream.SkipBlock()) {
+        if (Stream.SkipBlock() ||
+            ReadBlockAbbrevs(F.MacroCursor, PREPROCESSOR_BLOCK_ID)) {
           Error("malformed block record in AST file");
           return Failure;
         }
+        F.MacroStartOffset = F.MacroCursor.GetCurrentBitNo();
         break;
 
       case SOURCE_MANAGER_BLOCK_ID:

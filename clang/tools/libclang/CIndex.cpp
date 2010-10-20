@@ -555,6 +555,13 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
           
           continue;
         }
+        
+        if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
+          if (Visit(MakeInclusionDirectiveCursor(ID, CXXUnit)))
+            return true;
+          
+          continue;
+        }
       }
     }
     return false;
@@ -2565,6 +2572,9 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return createCXString(getCursorMacroDefinition(C)->getName()
                                                            ->getNameStart());
 
+  if (C.kind == CXCursor_InclusionDirective)
+    return createCXString(getCursorInclusionDirective(C)->getFileName());
+      
   if (clang_isDeclaration(C.kind))
     return getDeclSpelling(getCursorDecl(C));
 
@@ -2757,6 +2767,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("macro definition");
   case CXCursor_MacroInstantiation:
     return createCXString("macro instantiation");
+  case CXCursor_InclusionDirective:
+    return createCXString("inclusion directive");
   case CXCursor_Namespace:
     return createCXString("Namespace");
   case CXCursor_LinkageSpec:
@@ -2977,7 +2989,13 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     SourceLocation L = cxcursor::getCursorMacroDefinition(C)->getLocation();
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
-  
+
+  if (C.kind == CXCursor_InclusionDirective) {
+    SourceLocation L
+      = cxcursor::getCursorInclusionDirective(C)->getSourceRange().getBegin();
+    return cxloc::translateSourceLocation(getCursorContext(C), L);
+  }
+
   if (C.kind < CXCursor_FirstDecl || C.kind > CXCursor_LastDecl)
     return clang_getNullLocation();
 
@@ -3043,12 +3061,14 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 
   if (C.kind == CXCursor_MacroDefinition)
     return cxcursor::getCursorMacroDefinition(C)->getSourceRange();
-  
+
+  if (C.kind == CXCursor_InclusionDirective)
+    return cxcursor::getCursorInclusionDirective(C)->getSourceRange();
+
   if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl)
     return getCursorDecl(C)->getSourceRange();
 
-  return SourceRange();
-}
+  return SourceRange();}
 
 extern "C" {
 
@@ -4149,6 +4169,14 @@ void clang_disposeOverriddenCursors(CXCursor *overridden) {
   delete [] overridden;
 }
 
+CXFile clang_getIncludedFile(CXCursor cursor) {
+  if (cursor.kind != CXCursor_InclusionDirective)
+    return 0;
+  
+  InclusionDirective *ID = getCursorInclusionDirective(cursor);
+  return (void *)ID->getFile();
+}
+  
 } // end: extern "C"
 
 

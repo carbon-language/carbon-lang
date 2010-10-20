@@ -1256,16 +1256,32 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   }
 
   // Enter the preprocessor block.
-  Stream.EnterSubblock(PREPROCESSOR_BLOCK_ID, 2);
+  Stream.EnterSubblock(PREPROCESSOR_BLOCK_ID, 3);
 
   // If the AST file contains __DATE__ or __TIME__ emit a warning about this.
   // FIXME: use diagnostics subsystem for localization etc.
   if (PP.SawDateOrTime())
     fprintf(stderr, "warning: precompiled header used __DATE__ or __TIME__.\n");
 
+
   // Loop over all the macro definitions that are live at the end of the file,
   // emitting each to the PP section.
   PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
+  unsigned InclusionAbbrev = 0;
+  if (PPRec) {
+    using namespace llvm;
+    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(PP_INCLUSION_DIRECTIVE));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // index
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // start location
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // end location
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // filename length
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // in quotes
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // kind
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    InclusionAbbrev = Stream.EmitAbbrev(Abbrev);    
+  }
+  
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
     // FIXME: This emits macros in hash table order, we should do it in a stable
@@ -1379,6 +1395,21 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
         AddIdentifierRef(MD->getName(), Record);
         AddSourceLocation(MD->getLocation(), Record);
         Stream.EmitRecord(PP_MACRO_DEFINITION, Record);
+        continue;
+      }
+      
+      if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
+        Record.push_back(PP_INCLUSION_DIRECTIVE);
+        Record.push_back(IndexBase + NumPreprocessingRecords++);
+        AddSourceLocation(ID->getSourceRange().getBegin(), Record);
+        AddSourceLocation(ID->getSourceRange().getEnd(), Record);
+        Record.push_back(ID->getFileName().size());
+        Record.push_back(ID->wasInQuotes());
+        Record.push_back(static_cast<unsigned>(ID->getKind()));
+        llvm::SmallString<64> Buffer;
+        Buffer += ID->getFileName();
+        Buffer += ID->getFile()->getName();
+        Stream.EmitRecordWithBlob(InclusionAbbrev, Record, Buffer);
         continue;
       }
     }

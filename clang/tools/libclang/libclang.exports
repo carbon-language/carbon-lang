@@ -68,6 +68,7 @@ clang_getFile
 clang_getFileName
 clang_getFileTime
 clang_getIBOutletCollectionType
+clang_getIncludedFile
 clang_getInclusions
 clang_getInstantiationLocation
 clang_getLocation

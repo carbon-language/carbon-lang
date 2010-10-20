@@ -68,7 +68,7 @@ void test() {
 // CHECK: Identifier: "BAR" [6:5 - 6:8] macro instantiation=BAR:3:9
 // CHECK: Identifier: "STILL_NOTHING" [6:9 - 6:22] macro instantiation=STILL_NOTHING:2:9
 // CHECK: Punctuation: ";" [6:22 - 6:23]
-// CHECK: Punctuation: "#" [7:1 - 7:2] preprocessing directive=
+// CHECK: Punctuation: "#" [7:1 - 7:2] inclusion directive=foo.h
 // CHECK: Identifier: "include" [7:2 - 7:9] preprocessing directive=
 // CHECK: Literal: ""foo.h"" [7:10 - 7:17] preprocessing directive=
 // CHECK: Punctuation: "#" [8:1 - 8:2] preprocessing directive=

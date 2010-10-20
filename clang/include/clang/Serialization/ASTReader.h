@@ -277,6 +277,9 @@ private:
     /// all of the macro definitions.
     llvm::BitstreamCursor MacroCursor;
 
+    /// \brief The offset of the start of the set of defined macros.
+    uint64_t MacroStartOffset;
+    
     /// \brief The number of macro definitions in this file.
     unsigned LocalNumMacroDefinitions;
 

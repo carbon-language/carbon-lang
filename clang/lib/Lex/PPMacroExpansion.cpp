@@ -570,7 +570,8 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
   // Reserve a buffer to get the spelling.
   llvm::SmallString<128> FilenameBuffer;
   llvm::StringRef Filename;
-
+  SourceLocation EndLoc;
+  
   switch (Tok.getKind()) {
   case tok::eom:
     // If the token kind is EOM, the error has already been diagnosed.
@@ -589,7 +590,7 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
     // This could be a <foo/bar.h> file coming from a macro expansion.  In this
     // case, glue the tokens together into FilenameBuffer and interpret those.
     FilenameBuffer.push_back('<');
-    if (PP.ConcatenateIncludeName(FilenameBuffer))
+    if (PP.ConcatenateIncludeName(FilenameBuffer, EndLoc))
       return false;   // Found <eom> but no ">"?  Diagnostic already emitted.
     Filename = FilenameBuffer.str();
     break;

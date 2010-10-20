@@ -363,6 +363,17 @@ MacroInstantiation *cxcursor::getCursorMacroInstantiation(CXCursor C) {
   return static_cast<MacroInstantiation *>(C.data[0]);
 }
 
+CXCursor cxcursor::MakeInclusionDirectiveCursor(InclusionDirective *ID, 
+                                                ASTUnit *TU) {
+  CXCursor C = { CXCursor_InclusionDirective, { ID, 0, TU } };
+  return C;
+}
+
+InclusionDirective *cxcursor::getCursorInclusionDirective(CXCursor C) {
+  assert(C.kind == CXCursor_InclusionDirective);
+  return static_cast<InclusionDirective *>(C.data[0]);  
+}
+
 CXCursor cxcursor::MakeCursorLabelRef(LabelStmt *Label, SourceLocation Loc, 
                                       ASTUnit *TU) {
   
