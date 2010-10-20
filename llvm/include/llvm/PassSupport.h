@@ -149,7 +149,7 @@ private:
   static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
-    Registry.registerPass(*PI); \
+    Registry.registerPass(*PI, true); \
     return PI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
@@ -167,7 +167,7 @@ private:
 #define INITIALIZE_PASS_END(passName, arg, name, cfg, analysis) \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
-    Registry.registerPass(*PI); \
+    Registry.registerPass(*PI, true); \
     return PI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
@@ -252,7 +252,7 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
   static void* initialize##agName##AnalysisGroupOnce(PassRegistry &Registry) { \
     initialize##defaultPass##Pass(Registry); \
     PassInfo *AI = new PassInfo(name, & agName :: ID); \
-    Registry.registerAnalysisGroup(& agName ::ID, 0, *AI, false); \
+    Registry.registerAnalysisGroup(& agName ::ID, 0, *AI, false, true); \
     return AI; \
   } \
   void llvm::initialize##agName##AnalysisGroup(PassRegistry &Registry) { \
@@ -265,10 +265,11 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
     if (!def) initialize##agName##AnalysisGroup(Registry); \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
-    Registry.registerPass(*PI); \
+    Registry.registerPass(*PI, true); \
     \
     PassInfo *AI = new PassInfo(name, & agName :: ID); \
-    Registry.registerAnalysisGroup(& agName ::ID, & passName ::ID, *AI, def); \
+    Registry.registerAnalysisGroup(& agName ::ID, & passName ::ID, \
+                                   *AI, def, true); \
     return AI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
@@ -283,10 +284,11 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
 #define INITIALIZE_AG_PASS_END(passName, agName, arg, n, cfg, analysis, def) \
     PassInfo *PI = new PassInfo(n, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis); \
-    Registry.registerPass(*PI); \
+    Registry.registerPass(*PI, true); \
     \
     PassInfo *AI = new PassInfo(n, & agName :: ID); \
-    Registry.registerAnalysisGroup(& agName ::ID, & passName ::ID, *AI, def); \
+    Registry.registerAnalysisGroup(& agName ::ID, & passName ::ID, \
+                                   *AI, def, true); \
     return AI; \
   } \
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
