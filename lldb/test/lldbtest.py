@@ -475,7 +475,11 @@ class TestBase(unittest2.TestCase):
 
         Hooks are executed in a first come first serve manner.
         """
-        self.hooks.append(hook)
+        if callable(hook):
+            with recording(self, traceAlways) as sbuf:
+                import inspect
+                print >> sbuf, "Adding tearDown hook:", inspect.getsource(hook)
+            self.hooks.append(hook)
 
     def tearDown(self):
         #import traceback
@@ -483,10 +487,10 @@ class TestBase(unittest2.TestCase):
 
         # Check and run any hook functions.
         for hook in self.hooks:
-            #print "Executing hook:", hook
+            with recording(self, traceAlways) as sbuf:
+                import inspect
+                print >> sbuf, "Executing tearDown hook:", inspect.getsource(hook)
             hook()
-
-        self.runCmd("settings show")
 
         # Terminate the current process being debugged, if any.
         if self.runStarted:
