@@ -295,6 +295,15 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   // -I- is a deprecated GCC feature, reject it.
   if (Arg *A = Args.getLastArg(options::OPT_I_))
     D.Diag(clang::diag::err_drv_I_dash_not_supported) << A->getAsString(Args);
+
+  // If we have a --sysroot, and don't have an explicit -isysroot flag, add an
+  // -isysroot to the CC1 invocation.
+  if (Arg *A = Args.getLastArg(options::OPT__sysroot_EQ)) {
+    if (!Args.hasArg(options::OPT_isysroot)) {
+      CmdArgs.push_back("-isysroot");
+      CmdArgs.push_back(A->getValue(Args));
+    }
+  }
 }
 
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targetting.
