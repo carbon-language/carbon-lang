@@ -16,6 +16,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/DeclContextInternals.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -636,7 +637,23 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
 
   if (Writer.hasChain() && !D->isOriginalNamespace() &&
       D->getOriginalNamespace()->getPCHLevel() > 0) {
-    Writer.AddUpdatedNamespace(D->getOriginalNamespace());
+    NamespaceDecl *NS = D->getOriginalNamespace();
+    Writer.AddUpdatedNamespace(NS);
+
+    // Make sure all visible decls are written. They will be recorded later.
+    NS->lookup(DeclarationName());
+    StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(NS->getLookupPtr());
+    if (Map) {
+      for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
+           D != DEnd; ++D) {
+        DeclarationName Name = D->first;
+        DeclContext::lookup_result Result = D->second.getLookupResult();
+        while (Result.first != Result.second) {
+          Writer.GetDeclRef(*Result.first);
+          ++Result.first;
+        }
+      }
+    }
   }
 }
 
