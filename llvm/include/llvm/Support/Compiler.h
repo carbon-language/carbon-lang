@@ -31,6 +31,14 @@
 #define ATTRIBUTE_USED
 #endif
 
+// Some compilers warn about unused functions. When a function is sometimes
+// used or not depending on build settings (e.g. a function only called from
+// within "assert"), this attribute can be used to suppress such warnings.
+//
+// However, it shouldn't be used for unused *variables*, as those have a much
+// more portable solution:
+//   (void)unused_var_name;
+// Prefer cast-to-void wherever it is sufficient.
 #if (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
 #define ATTRIBUTE_UNUSED __attribute__((__unused__))
 #else
