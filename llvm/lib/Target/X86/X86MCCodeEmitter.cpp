@@ -18,6 +18,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -193,6 +194,25 @@ static bool Is32BitMemOperand(const MCInst &MI, unsigned Op) {
   return false;
 }
 
+/// StartsWithGlobalOffsetTable - Return true for the simple cases where this
+/// expression starts with _GLOBAL_OFFSET_TABLE_. This is a needed to support
+/// PIC on ELF i386 as that symbol is magic. We check only simple case that
+/// are know to be used: _GLOBAL_OFFSET_TABLE_ by itself or at the start
+/// of a binary expression.
+static bool StartsWithGlobalOffsetTable(const MCExpr *Expr) {
+  if (Expr->getKind() == MCExpr::Binary) {
+    const MCBinaryExpr *BE = static_cast<const MCBinaryExpr *>(Expr);
+    Expr = BE->getLHS();
+  }
+
+  if (Expr->getKind() != MCExpr::SymbolRef)
+    return false;
+
+  const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Expr);
+  const MCSymbol &S = Ref->getSymbol();
+  return S.getName() == "_GLOBAL_OFFSET_TABLE_";
+}
+
 void X86MCCodeEmitter::
 EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
               unsigned &CurByte, raw_ostream &OS,
@@ -208,6 +228,13 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
 
   // If we have an immoffset, add it to the expression.
   const MCExpr *Expr = DispOp.getExpr();
+
+  if (StartsWithGlobalOffsetTable(Expr)) {
+    // FIXME: We should probably change the FixupKind to a special one so that
+    // other parts of MC don't have to check the symbol name.
+    assert(ImmOffset == 0);
+    ImmOffset = CurByte;
+  }
 
   // If the fixup is pc-relative, we need to bias the value to be relative to
   // the start of the field, not the end of the field.
