@@ -988,7 +988,7 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
     return;
   }
 
-  // Set bit I(25), because this is not in immediate enconding.
+  // Set bit I(25), because this is not in immediate encoding.
   Binary |= 1 << ARMII::I_BitShift;
   assert(TargetRegisterInfo::isPhysicalRegister(MO2.getReg()));
   // Set bit[3:0] to the corresponding Rm register

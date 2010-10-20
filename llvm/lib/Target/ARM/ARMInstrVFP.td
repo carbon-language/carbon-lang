@@ -51,9 +51,9 @@ def vfp_f64imm : Operand<f64>,
 //
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
-def VLDRD : ADI5<0b1101, 0b01, (outs DPR:$dst), (ins addrmode5:$addr),
-                 IIC_fpLoad64, "vldr", ".64\t$dst, $addr",
-                 [(set DPR:$dst, (f64 (load addrmode5:$addr)))]>;
+def VLDRD : ADI5<0b1101, 0b01, (outs DPR:$Dd), (ins addrmode5:$addr),
+                 IIC_fpLoad64, "vldr", ".64\t$Dd, $addr",
+                 [(set DPR:$Dd, (f64 (load addrmode5:$addr)))]>;
 
 def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$dst), (ins addrmode5:$addr),
                  IIC_fpLoad32, "vldr", ".32\t$dst, $addr",
@@ -469,13 +469,39 @@ def VMOVS  : ASuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
 // FP <-> GPR Copies.  Int <-> FP Conversions.
 //
 
-def VMOVRS : AVConv2I<0b11100001, 0b1010, (outs GPR:$dst), (ins SPR:$src),
-                 IIC_fpMOVSI, "vmov", "\t$dst, $src",
-                 [(set GPR:$dst, (bitconvert SPR:$src))]>;
+def VMOVRS : AVConv2I<0b11100001, 0b1010,
+                      (outs GPR:$Rt), (ins SPR:$Sn),
+                      IIC_fpMOVSI, "vmov", "\t$Rt, $Sn",
+                      [(set GPR:$Rt, (bitconvert SPR:$Sn))]> {
+  // Instruction operands.
+  bits<4> Rt;
+  bits<5> Sn;
 
-def VMOVSR : AVConv4I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
-                 IIC_fpMOVIS, "vmov", "\t$dst, $src",
-                 [(set SPR:$dst, (bitconvert GPR:$src))]>;
+  // Encode instruction operands.
+  let Inst{19-16} = Sn{4-1};
+  let Inst{7}     = Sn{0};
+  let Inst{15-12} = Rt;
+
+  let Inst{6-5}   = 0b00;
+  let Inst{3-0}   = 0b0000;
+}
+
+def VMOVSR : AVConv4I<0b11100000, 0b1010,
+                      (outs SPR:$Sn), (ins GPR:$Rt),
+                      IIC_fpMOVIS, "vmov", "\t$Sn, $Rt",
+                      [(set SPR:$Sn, (bitconvert GPR:$Rt))]> {
+  // Instruction operands.
+  bits<5> Sn;
+  bits<4> Rt;
+
+  // Encode instruction operands.
+  let Inst{19-16} = Sn{4-1};
+  let Inst{7}     = Sn{0};
+  let Inst{15-12} = Rt;
+
+  let Inst{6-5}   = 0b00;
+  let Inst{3-0}   = 0b0000;
+}
 
 let neverHasSideEffects = 1 in {
 def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
@@ -883,29 +909,29 @@ def : Pat<(fsub (fmul SPR:$a, SPR:$b), SPR:$dstin),
 //
 
 let neverHasSideEffects = 1 in {
-def VMOVDcc  : ADuI<0b11101, 0b11, 0b0000, 0b01, 0,
-                    (outs DPR:$dst), (ins DPR:$false, DPR:$true),
-                    IIC_fpUNA64, "vmov", ".f64\t$dst, $true",
-                [/*(set DPR:$dst, (ARMcmov DPR:$false, DPR:$true, imm:$cc))*/]>,
-                    RegConstraint<"$false = $dst">;
+def VMOVDcc  : ADuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
+                           (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                           IIC_fpUNA64, "vmov", ".f64\t$Dd, $Dm",
+                      [/*(set DPR:$Dd, (ARMcmov DPR:$Dn, DPR:$Dm, imm:$cc))*/]>,
+                           RegConstraint<"$Dn = $Dd">;
 
-def VMOVScc  : ASuI<0b11101, 0b11, 0b0000, 0b01, 0,
-                    (outs SPR:$dst), (ins SPR:$false, SPR:$true),
-                    IIC_fpUNA32, "vmov", ".f32\t$dst, $true",
-                [/*(set SPR:$dst, (ARMcmov SPR:$false, SPR:$true, imm:$cc))*/]>,
-                    RegConstraint<"$false = $dst">;
+def VMOVScc  : ASuI_Encode<0b11101, 0b11, 0b0000, 0b01, 0,
+                           (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                           IIC_fpUNA32, "vmov", ".f32\t$Sd, $Sm",
+                      [/*(set SPR:$Sd, (ARMcmov SPR:$Sn, SPR:$Sm, imm:$cc))*/]>,
+                           RegConstraint<"$Sn = $Sd">;
 
-def VNEGDcc  : ADuI<0b11101, 0b11, 0b0001, 0b01, 0,
-                    (outs DPR:$dst), (ins DPR:$false, DPR:$true),
-                    IIC_fpUNA64, "vneg", ".f64\t$dst, $true",
-                [/*(set DPR:$dst, (ARMcneg DPR:$false, DPR:$true, imm:$cc))*/]>,
-                    RegConstraint<"$false = $dst">;
+def VNEGDcc  : ADuI_Encode<0b11101, 0b11, 0b0001, 0b01, 0,
+                           (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                           IIC_fpUNA64, "vneg", ".f64\t$Dd, $Dm",
+                      [/*(set DPR:$Dd, (ARMcneg DPR:$Dn, DPR:$Dm, imm:$cc))*/]>,
+                           RegConstraint<"$Dn = $Dd">;
 
-def VNEGScc  : ASuI<0b11101, 0b11, 0b0001, 0b01, 0,
-                    (outs SPR:$dst), (ins SPR:$false, SPR:$true),
-                    IIC_fpUNA32, "vneg", ".f32\t$dst, $true",
-                [/*(set SPR:$dst, (ARMcneg SPR:$false, SPR:$true, imm:$cc))*/]>,
-                    RegConstraint<"$false = $dst">;
+def VNEGScc  : ASuI_Encode<0b11101, 0b11, 0b0001, 0b01, 0,
+                           (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                           IIC_fpUNA32, "vneg", ".f32\t$Sd, $Sm",
+                      [/*(set SPR:$Sd, (ARMcneg SPR:$Sn, SPR:$Sm, imm:$cc))*/]>,
+                           RegConstraint<"$Sn = $Sd">;
 } // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
