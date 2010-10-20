@@ -469,6 +469,15 @@ void LTOModule::lazyParseSymbols() {
     pos = inlineAsm.find(glbl, pend);
   }
 
+  // add aliases
+  for (Module::alias_iterator i = _module->alias_begin(),
+         e = _module->alias_end(); i != e; ++i) {
+    if (i->isDeclaration())
+      addPotentialUndefinedSymbol(i, mangler);
+    else
+      addDefinedDataSymbol(i, mangler);
+  }
+
   // make symbols for all undefines
   for (StringMap<NameAndAttributes>::iterator it=_undefines.begin();
        it != _undefines.end(); ++it) {
