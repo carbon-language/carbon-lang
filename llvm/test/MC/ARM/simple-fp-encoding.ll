@@ -423,3 +423,11 @@ entry:
 }
 
 declare void @g104(i32, i32, i32, i32, i32, i32)
+
+define double @f105(i32 %a) nounwind readnone {
+entry:
+; CHECK: f105
+; CHECK: vmov r0, r1, d16            @ encoding: [0x30,0x0b,0x51,0xec]
+  %conv = uitofp i32 %a to double
+  ret double %conv
+}

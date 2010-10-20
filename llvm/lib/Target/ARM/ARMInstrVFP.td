@@ -505,9 +505,20 @@ def VMOVSR : AVConv4I<0b11100000, 0b1010,
 
 let neverHasSideEffects = 1 in {
 def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
-                      (outs GPR:$wb, GPR:$dst2), (ins DPR:$src),
-                 IIC_fpMOVDI, "vmov", "\t$wb, $dst2, $src",
+                        (outs GPR:$Rt, GPR:$Rt2), (ins DPR:$Dm),
+                        IIC_fpMOVDI, "vmov", "\t$Rt, $Rt2, $Dm",
                  [/* FIXME: Can't write pattern for multiple result instr*/]> {
+  // Instruction operands.
+  bits<5> Dm;
+  bits<4> Rt;
+  bits<4> Rt2;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  let Inst{15-12} = Rt;
+  let Inst{19-16} = Rt2;
+
   let Inst{7-6} = 0b00;
 }
 
@@ -523,10 +534,21 @@ def VMOVRRS  : AVConv3I<0b11000101, 0b1010,
 // FMDLR: GPR -> SPR
 
 def VMOVDRR : AVConv5I<0b11000100, 0b1011,
-                     (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
-                IIC_fpMOVID, "vmov", "\t$dst, $src1, $src2",
-                [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]> {
-  let Inst{7-6} = 0b00;
+                      (outs DPR:$Dm), (ins GPR:$Rt, GPR:$Rt2),
+                      IIC_fpMOVID, "vmov", "\t$Dm, $Rt, $Rt2",
+                      [(set DPR:$Dm, (arm_fmdrr GPR:$Rt, GPR:$Rt2))]> {
+  // Instruction operands.
+  bits<5> Dm;
+  bits<4> Rt;
+  bits<4> Rt2;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  let Inst{15-12} = Rt;
+  let Inst{19-16} = Rt2;
+
+  let Inst{7-6}   = 0b00;
 }
 
 let neverHasSideEffects = 1 in
