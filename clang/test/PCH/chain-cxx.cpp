@@ -31,6 +31,9 @@ struct S { typedef int G; };
 template <typename T>
 struct S<T *> { typedef int H; };
 
+template <typename T> struct TS2;
+typedef TS2<int> TS2int;
+
 //===----------------------------------------------------------------------===//
 #elif not defined(HEADER2)
 #define HEADER2
@@ -68,6 +71,8 @@ struct S<int *> { typedef int K; };
 template <>
 struct S<int &> { typedef int L; };
 
+template <typename T> struct TS2 { };
+
 //===----------------------------------------------------------------------===//
 #else
 //===----------------------------------------------------------------------===//
@@ -89,6 +94,8 @@ void test() {
   typedef S<double &>::J T4;
   typedef S<int *>::K T5;
   typedef S<int &>::L T6;
+
+  TS2int ts2;
 }
 
 //===----------------------------------------------------------------------===//

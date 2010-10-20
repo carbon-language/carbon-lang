@@ -788,6 +788,24 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   VisitRecordDecl(D);
 
+  if (D->DefinitionData) {
+    // Synchronize the DefinitionData pointer among all redeclarations.
+    // This synchronization ends up being done multiple times but it's necessary
+    // because a chained PCH may introduce a definition that earlier
+    // redeclarations in another PCH have no information about.
+    llvm::SmallPtrSet<CXXRecordDecl *, 16> PrevRedecls;
+    PrevRedecls.insert(D);
+    CXXRecordDecl *Redecl = cast<CXXRecordDecl>(D->RedeclLink.getNext());
+    while (!PrevRedecls.count(Redecl)) {
+      PrevRedecls.insert(Redecl);
+      assert((!Redecl->DefinitionData ||
+              Redecl->DefinitionData == D->DefinitionData) &&
+             "Multiple definitions in the redeclaration chain ?");
+      Redecl->DefinitionData = D->DefinitionData;
+      Redecl = cast<CXXRecordDecl>(Redecl->RedeclLink.getNext());
+    }
+  }
+
   if (OwnsDefinitionData) {
     assert(D->DefinitionData);
     struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
