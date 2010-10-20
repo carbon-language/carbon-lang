@@ -41,6 +41,9 @@ class LoadUnloadTestCase(TestBase):
         # Issue the 'contnue' command.  We should stop agaian at a_function.
         # The stop reason of the thread should be breakpoint and at a_function.
         self.runCmd("continue")
+
+        # rdar://problem/8508987
+        # The a_function breakpoint should be encountered twice.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['state is stopped',
                        'a_function',
