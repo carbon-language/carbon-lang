@@ -2785,6 +2785,57 @@ void TypoCorrectionConsumer::addKeywordResult(ASTContext &Context,
   BestResults[Keyword] = true;
 }
 
+/// \brief Perform name lookup for a possible result for typo correction.
+static void LookupPotentialTypoResult(Sema &SemaRef,
+                                      LookupResult &Res,
+                                      IdentifierInfo *Name,
+                                      Scope *S, CXXScopeSpec *SS,
+                                      DeclContext *MemberContext,
+                                      bool EnteringContext,
+                                      Sema::CorrectTypoContext CTC) {
+  Res.suppressDiagnostics();
+  Res.clear();
+  Res.setLookupName(Name);
+  if (MemberContext) {    
+    if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(MemberContext)) {
+      if (CTC == Sema::CTC_ObjCIvarLookup) {
+        if (ObjCIvarDecl *Ivar = Class->lookupInstanceVariable(Name)) {
+          Res.addDecl(Ivar);
+          Res.resolveKind();
+          return;
+        }
+      }
+      
+      if (ObjCPropertyDecl *Prop = Class->FindPropertyDeclaration(Name)) {
+        Res.addDecl(Prop);
+        Res.resolveKind();
+        return;
+      }
+    }
+        
+    SemaRef.LookupQualifiedName(Res, MemberContext);
+    return;
+  }
+  
+  SemaRef.LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, 
+                           EnteringContext);
+  
+  // Fake ivar lookup; this should really be part of
+  // LookupParsedName.
+  if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl()) {
+    if (Method->isInstanceMethod() && Method->getClassInterface() &&
+        (Res.empty() || 
+         (Res.isSingleResult() &&
+          Res.getFoundDecl()->isDefinedOutsideFunctionOrMethod()))) {
+       if (ObjCIvarDecl *IV 
+             = Method->getClassInterface()->lookupInstanceVariable(Name)) {
+         Res.addDecl(IV);
+         Res.resolveKind();
+       }
+     }
+  }
+}
+
 /// \brief Try to "correct" a typo in the source code by finding
 /// visible declarations whose names are similar to the name that was
 /// present in the source code.
@@ -2946,9 +2997,16 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
       WantCXXNamedCasts = true;
       break;
       
+    case CTC_ObjCPropertyLookup:
+      // FIXME: Add "isa"?
+      break;
+      
     case CTC_MemberLookup:
       if (getLangOptions().CPlusPlus)
         Consumer.addKeywordResult(Context, "template");
+      break;
+      
+    case CTC_ObjCIvarLookup:
       break;
   }
 
@@ -3104,33 +3162,8 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     
     // Perform name lookup on this name.
     IdentifierInfo *Name = &Context.Idents.get(I->getKey());
-    Res.suppressDiagnostics();
-    Res.clear();
-    Res.setLookupName(Name);
-    if (MemberContext)
-      LookupQualifiedName(Res, MemberContext);
-    else {
-      LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, 
-                       EnteringContext);
-
-      // Fake ivar lookup; this should really be part of
-      // LookupParsedName.
-      if (ObjCMethodDecl *Method = getCurMethodDecl()) {
-        if (Method->isInstanceMethod() && Method->getClassInterface() &&
-            (Res.empty() || 
-             (Res.isSingleResult() &&
-              Res.getFoundDecl()->isDefinedOutsideFunctionOrMethod()))) {
-          ObjCInterfaceDecl *ClassDeclared = 0;
-          if (ObjCIvarDecl *IV 
-                = Method->getClassInterface()->lookupInstanceVariable(Name, 
-                                                               ClassDeclared)) {
-            Res.clear();
-            Res.addDecl(IV);
-            Res.resolveKind();
-          }
-        }
-      }
-    }
+    LookupPotentialTypoResult(*this, Res, Name, S, SS, MemberContext, 
+                              EnteringContext, CTC);
     
     switch (Res.getResultKind()) {
     case LookupResult::NotFound:
@@ -3152,7 +3185,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     case LookupResult::FoundOverloaded:
     case LookupResult::FoundUnresolvedValue:
       ++I;
-      LastLookupWasAccepted = false;
+      LastLookupWasAccepted = true;
       break;
     }
     
@@ -3172,39 +3205,14 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
       Res.clear();
     } else if (!LastLookupWasAccepted) {
       // Perform name lookup on this name.
-      Res.suppressDiagnostics();
-      Res.clear();
-      Res.setLookupName(Name);
-      if (MemberContext)
-        LookupQualifiedName(Res, MemberContext);
-      else {
-        LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, 
-                         EnteringContext);
-
-        // Fake ivar lookup; this should really be part of
-        // LookupParsedName.
-        if (ObjCMethodDecl *Method = getCurMethodDecl()) {
-          if (Method->isInstanceMethod() && Method->getClassInterface() &&
-              (Res.empty() || 
-               (Res.isSingleResult() &&
-                Res.getFoundDecl()->isDefinedOutsideFunctionOrMethod()))) {
-            ObjCInterfaceDecl *ClassDeclared = 0;
-            if (ObjCIvarDecl *IV 
-                = Method->getClassInterface()->lookupInstanceVariable(Name, 
-                                                              ClassDeclared)) {
-              Res.clear();
-              Res.addDecl(IV);
-              Res.resolveKind();
-            }
-          }
-        }
-      }
+      LookupPotentialTypoResult(*this, Res, Name, S, SS, MemberContext, 
+                                EnteringContext, CTC);
     }
 
     // Record the correction for unqualified lookup.
     if (IsUnqualifiedLookup)
       UnqualifiedTyposCorrected[Typo] 
-        = std::make_pair(Consumer.begin()->getKey(), Consumer.begin()->second);
+        = std::make_pair(Name->getName(), Consumer.begin()->second);
       
     return &Context.Idents.get(Consumer.begin()->getKey());  
   }
@@ -3218,7 +3226,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     // Record the correction for unqualified lookup.
     if (IsUnqualifiedLookup)
       UnqualifiedTyposCorrected[Typo]
-        = std::make_pair(Consumer.begin()->getKey(), Consumer.begin()->second);
+        = std::make_pair("super", Consumer.begin()->second);
     
     return &Context.Idents.get("super");
   }

@@ -1310,6 +1310,10 @@ public:
     CTC_CXXCasts,
     /// \brief A member lookup context.
     CTC_MemberLookup,
+    /// \brief An Objective-C ivar lookup context (e.g., self->ivar).
+    CTC_ObjCIvarLookup,
+    /// \brief An Objective-C property lookup context (e.g., self.prop).
+    CTC_ObjCPropertyLookup,
     /// \brief The receiver of an Objective-C message send within an
     /// Objective-C method where 'super' is a valid keyword.
     CTC_ObjCMessageReceiver

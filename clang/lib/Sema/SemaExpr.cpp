@@ -3231,7 +3231,9 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         // Attempt to correct for typos in ivar names.
         LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
                          LookupMemberName);
-        if (CorrectTypo(Res, 0, 0, IDecl, false, CTC_MemberLookup) &&
+        if (CorrectTypo(Res, 0, 0, IDecl, false, 
+                        IsArrow? CTC_ObjCIvarLookup
+                               : CTC_ObjCPropertyLookup) &&
             (IV = Res.getAsSingle<ObjCIvarDecl>())) {
           Diag(R.getNameLoc(),
                diag::err_typecheck_member_reference_ivar_suggest)
