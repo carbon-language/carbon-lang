@@ -52,7 +52,7 @@ namespace {
     /// getNode - Get the MDNode for this TBAANode.
     const MDNode *getNode() const { return Node; }
 
-    /// getParent - Get this TBAANode's Alias DAG parent.
+    /// getParent - Get this TBAANode's Alias tree parent.
     TBAANode getParent() const {
       if (Node->getNumOperands() < 2)
         return TBAANode();
@@ -141,7 +141,7 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
   // Keep track of the root node for A and B.
   TBAANode RootA, RootB;
 
-  // Climb the DAG from A to see if we reach B.
+  // Climb the tree from A to see if we reach B.
   for (TBAANode T(AM); ; ) {
     if (T.getNode() == BM)
       // B is an ancestor of A.
@@ -153,7 +153,7 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
       break;
   }
 
-  // Climb the DAG from B to see if we reach A.
+  // Climb the tree from B to see if we reach A.
   for (TBAANode T(BM); ; ) {
     if (T.getNode() == AM)
       // A is an ancestor of B.
