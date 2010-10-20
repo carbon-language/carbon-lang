@@ -19,7 +19,6 @@
 #include "clang/Checker/PathSensitive/ExplodedGraph.h"
 #include "clang/Checker/PathSensitive/GRWorkList.h"
 #include "clang/Checker/PathSensitive/GRBlockCounter.h"
-#include "clang/Checker/PathSensitive/GRAuditor.h"
 #include "clang/Checker/PathSensitive/GRSubEngine.h"
 #include "llvm/ADT/OwningPtr.h"
 
@@ -182,7 +181,6 @@ class GRStmtNodeBuilder {
   const unsigned Idx;
   ExplodedNode* Pred;
   GRStateManager& Mgr;
-  GRAuditor* Auditor;
 
 public:
   bool PurgingDeadSymbols;
@@ -272,8 +270,6 @@ public:
   const CFGBlock* getBlock() const { return &B; }
 
   unsigned getIndex() const { return Idx; }
-
-  void setAuditor(GRAuditor* A) { Auditor = A; }
 
   const GRState* GetState(ExplodedNode* Pred) const {
     if (Pred == getBasePredecessor())

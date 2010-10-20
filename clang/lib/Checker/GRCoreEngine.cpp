@@ -417,7 +417,7 @@ void GRCoreEngine::GenerateNode(const ProgramPoint& Loc,
 GRStmtNodeBuilder::GRStmtNodeBuilder(const CFGBlock* b, unsigned idx,
                                      ExplodedNode* N, GRCoreEngine* e,
                                      GRStateManager &mgr)
-  : Eng(*e), B(*b), Idx(idx), Pred(N), Mgr(mgr), Auditor(0),
+  : Eng(*e), B(*b), Idx(idx), Pred(N), Mgr(mgr),
     PurgingDeadSymbols(false), BuildSinks(false), HasGeneratedNode(false),
     PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
@@ -468,12 +468,8 @@ ExplodedNode* GRStmtNodeBuilder::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
   if (N) {
     if (BuildSinks)
       N->markAsSink();
-    else {
-      if (Auditor && Auditor->Audit(N, Mgr))
-        N->markAsSink();
-      
+    else
       Dst.Add(N);
-    }
   }
   
   return N;

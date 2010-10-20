@@ -20,7 +20,6 @@
 #include "clang/Checker/PathSensitive/GRSubEngine.h"
 #include "clang/Checker/PathSensitive/GRCoreEngine.h"
 #include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Checker/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Checker/PathSensitive/GRTransferFuncs.h"
 #include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/AST/Type.h"
@@ -73,8 +72,6 @@ class GRExprEngine : public GRSubEngine {
   // Obj-C Selectors.
   Selector* NSExceptionInstanceRaiseSelectors;
   Selector RaiseSel;
-
-  llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
 
   enum CallbackKind {
     PreVisitStmtCallback,
@@ -177,9 +174,6 @@ public:
   CHECKER *getChecker() const {
      return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
   }
-
-  void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C);
-  void AddCheck(GRSimpleAPICheck* A);
 
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.
