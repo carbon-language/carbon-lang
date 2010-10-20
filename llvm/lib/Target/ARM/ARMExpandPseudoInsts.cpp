@@ -607,7 +607,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
                                         *TII);
         }
         // If there's dynamic realignment, adjust for it.
-        if (!RI.needsStackRealignment(MF)) {
+        if (RI.needsStackRealignment(MF)) {
           MachineFrameInfo  *MFI = MF.getFrameInfo();
           unsigned MaxAlign = MFI->getMaxAlignment();
           assert (!AFI->isThumb1OnlyFunction());
