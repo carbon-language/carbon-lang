@@ -3518,6 +3518,17 @@ public:
   /// \brief The number of typos corrected by CorrectTypo.
   unsigned TyposCorrected;
 
+  typedef llvm::DenseMap<IdentifierInfo *, std::pair<llvm::StringRef, bool> >
+    UnqualifiedTyposCorrectedMap;
+  
+  /// \brief A cache containing the results of typo correction for unqualified
+  /// name lookup.
+  ///
+  /// The string is the string that we corrected to (which may be empty, if
+  /// there was no correction), while the boolean will be true when the
+  /// string represents a keyword.
+  UnqualifiedTyposCorrectedMap UnqualifiedTyposCorrected;
+  
   /// \brief Worker object for performing CFG-based warnings.
   sema::AnalysisBasedWarnings AnalysisWarnings;
 

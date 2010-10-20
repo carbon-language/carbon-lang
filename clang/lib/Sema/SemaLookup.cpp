@@ -2822,14 +2822,6 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
                                   const ObjCObjectPointerType *OPT) {
   if (Diags.hasFatalErrorOccurred() || !getLangOptions().SpellChecking)
     return DeclarationName();
-
-  // Provide a stop gap for files that are just seriously broken.  Trying
-  // to correct all typos can turn into a HUGE performance penalty, causing
-  // some files to take minutes to get rejected by the parser.
-  // FIXME: Is this the right solution?
-  if (TyposCorrected == 20)
-    return DeclarationName();
-  ++TyposCorrected;
   
   // We only attempt to correct typos for identifiers.
   IdentifierInfo *Typo = Res.getLookupName().getAsIdentifierInfo();
@@ -2849,6 +2841,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   TypoCorrectionConsumer Consumer(Typo);
   
   // Perform name lookup to find visible, similarly-named entities.
+  bool IsUnqualifiedLookup = false;
   if (MemberContext) {
     LookupVisibleDecls(MemberContext, Res.getLookupKind(), Consumer);
 
@@ -2864,26 +2857,52 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     if (!DC)
       return DeclarationName();
     
+    // Provide a stop gap for files that are just seriously broken.  Trying
+    // to correct all typos can turn into a HUGE performance penalty, causing
+    // some files to take minutes to get rejected by the parser.
+    if (TyposCorrected + UnqualifiedTyposCorrected.size() >= 20)
+      return DeclarationName();
+    ++TyposCorrected;
+
     LookupVisibleDecls(DC, Res.getLookupKind(), Consumer);
   } else {
-    // For unqualified lookup, look through all of the names that we have
-    // seen in this translation unit.
-    for (IdentifierTable::iterator I = Context.Idents.begin(), 
-                                IEnd = Context.Idents.end();
-         I != IEnd; ++I)
-      Consumer.FoundName(I->getKey());
-    
-    // Walk through identifiers in external identifier sources.
-    if (IdentifierInfoLookup *External
+    IsUnqualifiedLookup = true;
+    UnqualifiedTyposCorrectedMap::iterator Cached
+      = UnqualifiedTyposCorrected.find(Typo);
+    if (Cached == UnqualifiedTyposCorrected.end()) {
+      // Provide a stop gap for files that are just seriously broken.  Trying
+      // to correct all typos can turn into a HUGE performance penalty, causing
+      // some files to take minutes to get rejected by the parser.
+      if (TyposCorrected + UnqualifiedTyposCorrected.size() >= 20)
+        return DeclarationName();
+      
+      // For unqualified lookup, look through all of the names that we have
+      // seen in this translation unit.
+      for (IdentifierTable::iterator I = Context.Idents.begin(), 
+                                  IEnd = Context.Idents.end();
+           I != IEnd; ++I)
+        Consumer.FoundName(I->getKey());
+      
+      // Walk through identifiers in external identifier sources.
+      if (IdentifierInfoLookup *External
                               = Context.Idents.getExternalIdentifierLookup()) {
-      IdentifierIterator *Iter = External->getIdentifiers();
-      do {
-        llvm::StringRef Name = Iter->Next();
-        if (Name.empty())
-          break;
+        IdentifierIterator *Iter = External->getIdentifiers();
+        do {
+          llvm::StringRef Name = Iter->Next();
+          if (Name.empty())
+            break;
 
-        Consumer.FoundName(Name);
-      } while (true);
+          Consumer.FoundName(Name);
+        } while (true);
+      }
+    } else {
+      // Use the cached value, unless it's a keyword. In the keyword case, we'll
+      // end up adding the keyword below.
+      if (Cached->second.first.empty())
+        return DeclarationName();
+      
+      if (!Cached->second.second)
+        Consumer.FoundName(Cached->second.first);
     }
   }
 
@@ -3053,14 +3072,24 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   }
   
   // If we haven't found anything, we're done.
-  if (Consumer.empty())
+  if (Consumer.empty()) {
+    // If this was an unqualified lookup, note that no correction was found.
+    if (IsUnqualifiedLookup)
+      (void)UnqualifiedTyposCorrected[Typo];
+    
     return DeclarationName();
+  }
 
   // Make sure that the user typed at least 3 characters for each correction 
   // made. Otherwise, we don't even both looking at the results.
   unsigned ED = Consumer.getBestEditDistance();
-  if (ED > 0 && Typo->getName().size() / ED < 3)
+  if (ED > 0 && Typo->getName().size() / ED < 3) {
+    // If this was an unqualified lookup, note that no correction was found.
+    if (IsUnqualifiedLookup)
+      (void)UnqualifiedTyposCorrected[Typo];
+
     return DeclarationName();
+  }
 
   // Weed out any names that could not be found by name lookup.
   bool LastLookupWasAccepted = false;
@@ -3172,6 +3201,11 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
       }
     }
 
+    // Record the correction for unqualified lookup.
+    if (IsUnqualifiedLookup)
+      UnqualifiedTyposCorrected[Typo] 
+        = std::make_pair(Consumer.begin()->getKey(), Consumer.begin()->second);
+      
     return &Context.Idents.get(Consumer.begin()->getKey());  
   }
   else if (Consumer.size() > 1 && CTC == CTC_ObjCMessageReceiver 
@@ -3180,11 +3214,21 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     // context.
     Res.suppressDiagnostics();
     Res.clear();
+    
+    // Record the correction for unqualified lookup.
+    if (IsUnqualifiedLookup)
+      UnqualifiedTyposCorrected[Typo]
+        = std::make_pair(Consumer.begin()->getKey(), Consumer.begin()->second);
+    
     return &Context.Idents.get("super");
   }
            
   Res.suppressDiagnostics();
   Res.setLookupName(Typo);
   Res.clear();
+  // Record the correction for unqualified lookup.
+  if (IsUnqualifiedLookup)
+    (void)UnqualifiedTyposCorrected[Typo];
+
   return DeclarationName();
 }
