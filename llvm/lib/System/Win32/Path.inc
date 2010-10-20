@@ -68,7 +68,12 @@ Path::operator=(StringRef that) {
 struct ScopedNullTerminator {
   std::string &str;
   ScopedNullTerminator(std::string &s) : str(s) { str.push_back(0); }
-  ~ScopedNullTerminator() { str.pop_back(); }
+  ~ScopedNullTerminator() {
+    // str.pop_back(); But wait, C++03 doesn't have this...
+    assert(!str.empty() && str[str.size() - 1] == 0
+      && "Null char not present!");
+    str.resize(str.size() - 1);
+  }
 };
 
 bool
