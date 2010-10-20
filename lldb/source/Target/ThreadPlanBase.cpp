@@ -67,10 +67,10 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
     m_stop_vote = eVoteYes;
     m_run_vote = eVoteYes;
 
-    StopInfo *stop_info = m_thread.GetStopInfo();
-    if (stop_info)
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
     {
-        StopReason reason = stop_info->GetStopReason();
+        StopReason reason = stop_info_sp->GetStopReason();
         switch (reason)
         {
         case eStopReasonInvalid:
@@ -80,7 +80,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
             return false;
 
         case eStopReasonBreakpoint:
-            if (stop_info->ShouldStop(event_ptr))
+            if (stop_info_sp->ShouldStop(event_ptr))
             {
                 // If we are going to stop for a breakpoint, then unship the other plans
                 // at this point.  Don't force the discard, however, so Master plans can stay
@@ -92,7 +92,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
             // don't report this stop or the subsequent running event.  
             // Otherwise we will post the stopped & running, but the stopped event will get marked
             // with "restarted" so the UI will know to wait and expect the consequent "running".
-            if (stop_info->ShouldNotify (event_ptr))
+            if (stop_info_sp->ShouldNotify (event_ptr))
             {
                 m_stop_vote = eVoteYes;
                 m_run_vote = eVoteYes;
@@ -115,7 +115,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
             return true;
 
         case eStopReasonSignal:
-            if (stop_info->ShouldStop(event_ptr))
+            if (stop_info_sp->ShouldStop(event_ptr))
             {
                 m_thread.DiscardThreadPlans(false);
                 return true;
@@ -124,7 +124,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
             {
                 // We're not going to stop, but while we are here, let's figure out
                 // whether to report this.
-                 if (stop_info->ShouldNotify(event_ptr))
+                 if (stop_info_sp->ShouldNotify(event_ptr))
                     m_stop_vote = eVoteYes;
                 else
                     m_stop_vote = eVoteNo;

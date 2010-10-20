@@ -81,9 +81,9 @@ SBThread::GetStopReason()
 {
     if (m_opaque_sp)
     {
-        lldb_private::StopInfo *stop_info = m_opaque_sp->GetStopInfo ();
-        if (stop_info)
-            return stop_info->GetStopReason();
+        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        if (stop_info_sp)
+            return stop_info_sp->GetStopReason();
     }
     return eStopReasonInvalid;
 }
@@ -93,10 +93,10 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 {
     if (m_opaque_sp)
     {
-        lldb_private::StopInfo *stop_info = m_opaque_sp->GetStopInfo ();
-        if (stop_info)
+        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        if (stop_info_sp)
         {
-            const char *stop_desc = stop_info->GetDescription();
+            const char *stop_desc = stop_info_sp->GetDescription();
             if (stop_desc)
             {
                 if (dst)
@@ -110,7 +110,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
             else
             {
                 size_t stop_desc_len = 0;
-                switch (stop_info->GetStopReason())
+                switch (stop_info_sp->GetStopReason())
                 {
                 case eStopReasonTrace:
                 case eStopReasonPlanComplete:
@@ -139,7 +139,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 
                 case eStopReasonSignal:
                     {
-                        stop_desc = m_opaque_sp->GetProcess().GetUnixSignals ().GetSignalAsCString (stop_info->GetValue());
+                        stop_desc = m_opaque_sp->GetProcess().GetUnixSignals ().GetSignalAsCString (stop_info_sp->GetValue());
                         if (stop_desc == NULL || stop_desc[0] == '\0')
                         {
                             static char signal_desc[] = "signal";

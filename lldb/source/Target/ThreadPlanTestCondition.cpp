@@ -110,9 +110,9 @@ ThreadPlanTestCondition::ShouldStop (Event *event_ptr)
     Process::ProcessEventData *new_data = new Process::ProcessEventData (m_thread.GetProcess().GetSP(), eStateStopped);
     event_ptr->SetData(new_data);
     event_ptr->SetType(Process::eBroadcastBitStateChanged);
-    m_thread.SetStopInfo(StopInfo::CreateStopReasonWithBreakpointSiteID (m_thread, 
-                                                                         m_break_loc_sp->GetBreakpointSite()->GetID(),
-                                                                         m_did_stop));
+    SetStopInfo(StopInfo::CreateStopReasonWithBreakpointSiteID (m_thread, 
+                                                                m_break_loc_sp->GetBreakpointSite()->GetID(),
+                                                                m_did_stop));
     if (m_did_stop)
     {
         Process::ProcessEventData::SetRestartedInEvent (event_ptr, false);

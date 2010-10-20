@@ -104,16 +104,16 @@ ThreadPlanStepOut::PlanExplainsStop ()
 {
     // We don't explain signals or breakpoints (breakpoints that handle stepping in or
     // out will be handled by a child plan.
-    StopInfo *stop_info = m_thread.GetStopInfo();
-    if (stop_info)
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
     {
-        StopReason reason = stop_info->GetStopReason();
+        StopReason reason = stop_info_sp->GetStopReason();
         switch (reason)
         {
         case eStopReasonBreakpoint:
         {
             // If this is OUR breakpoint, we're fine, otherwise we don't know why this happened...
-            BreakpointSiteSP site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (stop_info->GetValue()));
+            BreakpointSiteSP site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (stop_info_sp->GetValue()));
             if (site_sp && site_sp->IsBreakpointAtThisSite (m_return_bp_id))
             {
                 // If there was only one owner, then we're done.  But if we also hit some

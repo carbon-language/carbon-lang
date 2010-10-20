@@ -18,6 +18,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Target/Thread.h"
 
 namespace lldb_private {
 
@@ -39,20 +40,6 @@ namespace lldb_private {
 //  The plan stack is never empty, there is always a Base Plan which persists through the life
 //  of the running process.
 //
-//
-//  DEPRECATED: This ended up causing a real hassle, too many cases where the immediate plan
-//  got stranded.  So the better way to do this is to post any plans you need to do right before
-//  running in the PrepareToResume method.
-//f
-//  Immediate Plans:
-//
-//  One other complexity of the plan stack is that sometimes you need to do a piece of work immediately
-//  on resume, regardless of what other plans have been pushed on the stack while the process has
-//  been stopped.  The classic example is stepping over a breakpoint.  To that end the plan stack is
-//  actually two stacks, an "immediate" plan stack and the normal plan stack.  A plan can indicate that it
-//  should go on the immediate plan stack by returning "true" from the IsImmediate method.
-//
-//  END DEPRECATED...
 //
 //  Creating Plans:
 //
@@ -247,18 +234,6 @@ public:
                     lldb::DescriptionLevel level) = 0;
 
     //------------------------------------------------------------------
-    /// Returns whether this plan needs to be executed immediatly on resume.
-    ///
-    /// @return
-    ///   \b true if the plan is immediate, \b false otherwise.
-    //------------------------------------------------------------------
-    virtual bool
-    IsImmediate() const
-    {
-        return false;
-    }
-
-    //------------------------------------------------------------------
     /// Returns whether this plan could be successfully created.
     ///
     /// @param[in] error
@@ -362,6 +337,21 @@ protected:
 
     ThreadPlan *
     GetPreviousPlan ();
+    
+    // This forwards the private Thread::GetPrivateStopReason which is generally what
+    // ThreadPlan's need to know.
+    
+    lldb::StopInfoSP 
+    GetPrivateStopReason()
+    {
+        return m_thread.GetPrivateStopReason();
+    }
+    
+    void
+    SetStopInfo (lldb::StopInfoSP stop_reason_sp)
+    {
+        m_thread.SetStopInfo (stop_reason_sp);
+    }
 
     Thread &m_thread;
     lldb::Vote m_stop_vote;

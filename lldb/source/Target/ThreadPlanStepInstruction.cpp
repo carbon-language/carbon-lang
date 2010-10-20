@@ -84,10 +84,10 @@ ThreadPlanStepInstruction::ValidatePlan (Stream *error)
 bool
 ThreadPlanStepInstruction::PlanExplainsStop ()
 {
-    StopInfo *stop_info = m_thread.GetStopInfo();
-    if (stop_info)
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
     {
-        StopReason reason = stop_info->GetStopReason();
+        StopReason reason = stop_info_sp->GetStopReason();
         if (reason == eStopReasonTrace || reason == eStopReasonNone)
             return true;
         else

@@ -662,10 +662,10 @@ ClangFunction::ExecuteFunction (
                         else
                             ts.Printf("[ip unknown] ");
                         
-                        StopInfo *stop_info = thread->GetStopInfo();
-                        if (stop_info)
+                        lldb::StopInfoSP stop_info_sp = thread->GetStopInfo();
+                        if (stop_info_sp)
                         {
-                            const char *stop_desc = stop_info->GetDescription();
+                            const char *stop_desc = stop_info_sp->GetDescription();
                             if (stop_desc)
                                 ts.PutCString (stop_desc);
                         }

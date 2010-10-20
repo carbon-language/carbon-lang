@@ -799,10 +799,10 @@ Debugger::FormatPrompt
                                     }
                                     else if (::strncmp (var_name_begin, "stop-reason}", strlen("stop-reason}")) == 0)
                                     {
-                                        lldb_private::StopInfo *stop_info = exe_ctx->thread->GetStopInfo ();
-                                        if (stop_info)
+                                        StopInfoSP stop_info_sp = exe_ctx->thread->GetStopInfo ();
+                                        if (stop_info_sp)
                                         {
-                                            cstr = stop_info->GetDescription();
+                                            cstr = stop_info_sp->GetDescription();
                                             if (cstr && cstr[0])
                                             {
                                                 s.PutCString(cstr);

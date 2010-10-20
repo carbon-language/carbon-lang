@@ -1734,10 +1734,10 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         {
             lldb::ThreadSP thread_sp = m_process_sp->GetThreadList().GetThreadAtIndex(idx);
 
-            StopInfo *stop_info = thread_sp->GetStopInfo ();
-            if (stop_info)
+            StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
+            if (stop_info_sp)
             {
-                stop_info->PerformAction(event_ptr);
+                stop_info_sp->PerformAction(event_ptr);
             }
         }
         

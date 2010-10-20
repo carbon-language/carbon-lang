@@ -62,10 +62,10 @@ ThreadPlanStepRange::PlanExplainsStop ()
 {
     // We don't explain signals or breakpoints (breakpoints that handle stepping in or
     // out will be handled by a child plan.
-    StopInfo *stop_info = m_thread.GetStopInfo();
-    if (stop_info)
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
     {
-        StopReason reason = stop_info->GetStopReason();
+        StopReason reason = stop_info_sp->GetStopReason();
 
         switch (reason)
         {

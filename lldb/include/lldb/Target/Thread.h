@@ -235,14 +235,8 @@ public:
     virtual bool
     MatchesSpec (const ThreadSpec *spec);
 
-    StopInfo *
+    lldb::StopInfoSP
     GetStopInfo ();
-
-    void
-    SetStopInfo (lldb::StopInfoSP stop_info_sp)
-    {
-        m_public_stop_info_sp = stop_info_sp;
-    }
 
     bool
     ThreadStoppedForAReason ();
@@ -650,18 +644,22 @@ protected:
     StackFrameList &
     GetStackFrameList ();
 
+    void
+    SetStopInfo (lldb::StopInfoSP stop_info_sp)
+    {
+        m_actual_stop_info_sp = stop_info_sp;
+    }
+
     //------------------------------------------------------------------
     // Classes that inherit from Process can see and modify these
     //------------------------------------------------------------------
     Process &           m_process;          ///< The process that owns this thread.
-    lldb::StopInfoSP    m_public_stop_info_sp;     ///< The public stop reason for this thread
     lldb::StopInfoSP    m_actual_stop_info_sp;     ///< The private stop reason for this thread
     const uint32_t      m_index_id;         ///< A unique 1 based index assigned to each thread for easy UI/command line access.
     lldb::RegisterContextSP   m_reg_context_sp;   ///< The register context for this thread's current register state.
     lldb::StateType     m_state;            ///< The state of our process.
     mutable Mutex       m_state_mutex;      ///< Multithreaded protection for m_state.
     plan_stack          m_plan_stack;       ///< The stack of plans this thread is executing.
-    plan_stack          m_immediate_plan_stack; ///< The plans that need to get executed before any other work gets done.
     plan_stack          m_completed_plan_stack;  ///< Plans that have been completed by this stop.  They get deleted when the thread resumes.
     plan_stack          m_discarded_plan_stack;  ///< Plans that have been discarded by this stop.  They get deleted when the thread resumes.
     std::auto_ptr<StackFrameList> m_curr_frames_ap; ///< The stack frames that get lazily populated after a thread stops.

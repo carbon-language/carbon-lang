@@ -430,15 +430,7 @@ ThreadList::WillResume ()
     for (pos = m_threads.begin(); pos != end; ++pos)
     {
         ThreadSP thread_sp(*pos);
-        if (thread_sp->GetCurrentPlan()->IsImmediate())
-        {
-            // We first do all the immediate plans, so if we find one, set
-            // immediate_thread_sp and break out, and we'll pick it up first thing
-            // when we're negotiating which threads get to run.
-            immediate_thread_sp = thread_sp;
-            break;
-        }
-        else if (thread_sp->GetResumeState() != eStateSuspended &&
+        if (thread_sp->GetResumeState() != eStateSuspended &&
                  thread_sp->GetCurrentPlan()->StopOthers())
         {
             // You can't say "stop others" and also want yourself to be suspended.

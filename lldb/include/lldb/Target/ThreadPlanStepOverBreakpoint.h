@@ -31,10 +31,6 @@ public:
     virtual bool ShouldStop (Event *event_ptr);
     virtual bool StopOthers ();
     virtual lldb::StateType RunState ();
-    virtual bool IsImmediate () const
-    {
-        return false;
-    }
     virtual bool WillResume (lldb::StateType resume_state, bool current_plan);
     virtual bool WillStop ();
     virtual bool MischiefManaged ();

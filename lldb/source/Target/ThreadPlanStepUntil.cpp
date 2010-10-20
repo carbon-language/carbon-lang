@@ -170,20 +170,20 @@ ThreadPlanStepUntil::AnalyzeStop()
     if (m_ran_analyze)
         return;
         
-    StopInfo *stop_info = m_thread.GetStopInfo();
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
     m_should_stop = true;
     m_explains_stop = false;
     
-    if (stop_info)
+    if (stop_info_sp)
     {
-        StopReason reason = stop_info->GetStopReason();
+        StopReason reason = stop_info_sp->GetStopReason();
 
         switch (reason)
         {
             case eStopReasonBreakpoint:
             {
                 // If this is OUR breakpoint, we're fine, otherwise we don't know why this happened...
-                BreakpointSiteSP this_site = m_thread.GetProcess().GetBreakpointSiteList().FindByID (stop_info->GetValue());
+                BreakpointSiteSP this_site = m_thread.GetProcess().GetBreakpointSiteList().FindByID (stop_info_sp->GetValue());
                 if (!this_site)
                 {
                     m_explains_stop = false;
@@ -275,8 +275,8 @@ ThreadPlanStepUntil::ShouldStop (Event *event_ptr)
     // do so here.  Otherwise, as long as this thread has stopped for a reason,
     // we will stop.
 
-    StopInfo *stop_info = m_thread.GetStopInfo ();
-    if (stop_info == NULL || stop_info->GetStopReason() == eStopReasonNone)
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp == NULL || stop_info_sp->GetStopReason() == eStopReasonNone)
         return false;
 
     AnalyzeStop();

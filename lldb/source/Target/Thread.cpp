@@ -44,14 +44,12 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     UserID (tid),
     ThreadInstanceSettings (*(Thread::GetSettingsController().get())),
     m_process (process),
-    m_public_stop_info_sp (),
     m_actual_stop_info_sp (),
     m_index_id (process.GetNextThreadIndexID ()),
     m_reg_context_sp (),
     m_state (eStateUnloaded),
     m_state_mutex (Mutex::eMutexTypeRecursive),
     m_plan_stack (),
-    m_immediate_plan_stack(),
     m_completed_plan_stack(),
     m_curr_frames_ap (),
     m_resume_signal (LLDB_INVALID_SIGNAL_NUMBER),
@@ -99,18 +97,14 @@ Thread::SetResumeState (StateType state)
     m_resume_state = state;
 }
 
-StopInfo *
+lldb::StopInfoSP
 Thread::GetStopInfo ()
 {
-    if (m_public_stop_info_sp.get() == NULL)
-    {
-        ThreadPlanSP plan_sp (GetCompletedPlan());
-        if (plan_sp)
-            m_public_stop_info_sp = StopInfo::CreateStopReasonWithPlan (plan_sp);
-        else
-            m_public_stop_info_sp = GetPrivateStopReason ();
-    }
-    return m_public_stop_info_sp.get();
+    ThreadPlanSP plan_sp (GetCompletedPlan());
+    if (plan_sp)
+        return StopInfo::CreateStopReasonWithPlan (plan_sp);
+    else
+        return GetPrivateStopReason ();
 }
 
 bool
@@ -210,7 +204,6 @@ Thread::WillResume (StateType resume_state)
         plan_ptr->WillResume (resume_state, false);
     }
     
-    m_public_stop_info_sp.reset();
     m_actual_stop_info_sp.reset();
     return true;
 }
@@ -353,10 +346,7 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
 {
     if (thread_plan_sp)
     {
-        if (thread_plan_sp->IsImmediate())
-            m_immediate_plan_stack.push_back (thread_plan_sp);
-        else
-            m_plan_stack.push_back (thread_plan_sp);
+        m_plan_stack.push_back (thread_plan_sp);
 
         thread_plan_sp->DidPush();
 
@@ -365,10 +355,9 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
         {
             StreamString s;
             thread_plan_sp->GetDescription (&s, lldb::eDescriptionLevelFull);
-            log->Printf("Pushing plan: \"%s\", tid = 0x%4.4x, immediate = %s.",
+            log->Printf("Pushing plan: \"%s\", tid = 0x%4.4x.",
                         s.GetData(),
-                        thread_plan_sp->GetThread().GetID(),
-                        thread_plan_sp->IsImmediate() ? "true" : "false");
+                        thread_plan_sp->GetThread().GetID());
         }
     }
 }
@@ -378,17 +367,7 @@ Thread::PopPlan ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
 
-    if (!m_immediate_plan_stack.empty())
-    {
-        ThreadPlanSP &plan = m_immediate_plan_stack.back();
-        if (log)
-        {
-            log->Printf("Popping plan: \"%s\", tid = 0x%4.4x, immediate = true.", plan->GetName(), plan->GetThread().GetID());
-        }
-        plan->WillPop();
-        m_immediate_plan_stack.pop_back();
-    }
-    else if (m_plan_stack.empty())
+    if (m_plan_stack.empty())
         return;
     else
     {
@@ -418,9 +397,7 @@ Thread::DiscardPlan ()
 ThreadPlan *
 Thread::GetCurrentPlan ()
 {
-    if (!m_immediate_plan_stack.empty())
-        return m_immediate_plan_stack.back().get();
-    else if (m_plan_stack.empty())
+    if (m_plan_stack.empty())
         return NULL;
     else
         return m_plan_stack.back().get();
@@ -487,22 +464,6 @@ Thread::GetPreviousPlan (ThreadPlan *current_plan)
     }
 
     if (stack_size > 0 && m_completed_plan_stack[0].get() == current_plan)
-    {
-        if (m_immediate_plan_stack.size() > 0)
-            return m_immediate_plan_stack.back().get();
-        else if (m_plan_stack.size() > 0)
-            return m_plan_stack.back().get();
-        else
-            return NULL;
-    }
-
-    stack_size = m_immediate_plan_stack.size();
-    for (int i = stack_size - 1; i > 0; i--)
-    {
-        if (current_plan == m_immediate_plan_stack[i].get())
-            return m_immediate_plan_stack[i-1].get();
-    }
-    if (stack_size > 0 && m_immediate_plan_stack[0].get() == current_plan)
     {
         if (m_plan_stack.size() > 0)
             return m_plan_stack.back().get();
@@ -747,17 +708,6 @@ Thread::DumpThreadPlans (lldb_private::Stream *s) const
         s->Printf ("Element %d: ", i);
         s->IndentMore();
         m_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
-        s->IndentLess();
-        s->EOL();
-    }
-
-    stack_size = m_immediate_plan_stack.size();
-    s->Printf ("Immediate Plan Stack: %d elements.\n", stack_size);
-    for (i = stack_size - 1; i >= 0; i--)
-    {
-        s->Printf ("Element %d: ", i);
-        s->IndentMore();
-        m_immediate_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
         s->IndentLess();
         s->EOL();
     }
