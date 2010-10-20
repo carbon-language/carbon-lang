@@ -1213,7 +1213,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
   ObjCMethodDecl *OMD = 0;
   QualType Ty;
   Selector Sel;
-  Stmt *Receiver;
+  Stmt *Receiver = 0;
   bool Super = false;
   QualType SuperTy;
   SourceLocation SuperLocation;
