@@ -1384,25 +1384,17 @@ bool ARMFastISel::FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
     if (RVLocs.size() == 2 && RetVT.getSimpleVT().SimpleTy == MVT::f64) {
       // For this move we copy into two registers and then move into the
       // double fp reg we want.
-      // TODO: Are the copies necessary?
-      TargetRegisterClass *CopyRC = TLI.getRegClassFor(MVT::i32);
-      unsigned Copy1 = createResultReg(CopyRC);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-              Copy1).addReg(RVLocs[0].getLocReg());
-      UsedRegs.push_back(RVLocs[0].getLocReg());
-
-      unsigned Copy2 = createResultReg(CopyRC);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-              Copy2).addReg(RVLocs[1].getLocReg());
-      UsedRegs.push_back(RVLocs[1].getLocReg());
-
       EVT DestVT = RVLocs[0].getValVT();
       TargetRegisterClass* DstRC = TLI.getRegClassFor(DestVT);
       unsigned ResultReg = createResultReg(DstRC);
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(ARM::VMOVDRR), ResultReg)
-                      .addReg(Copy1).addReg(Copy2));
+                      .addReg(RVLocs[0].getLocReg())
+                      .addReg(RVLocs[1].getLocReg()));
 
+      UsedRegs.push_back(RVLocs[0].getLocReg());
+      UsedRegs.push_back(RVLocs[1].getLocReg());
+      
       // Finally update the result.
       UpdateValueMap(I, ResultReg);
     } else {
