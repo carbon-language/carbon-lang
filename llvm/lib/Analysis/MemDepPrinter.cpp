@@ -150,7 +150,10 @@ void MemDepPrinter::print(raw_ostream &OS, const Module *M) const {
         WriteAsOperand(OS, DepBB, /*PrintType=*/false, M);
       }
       OS << " from: ";
-      DepInst->print(OS);
+      if (DepInst == Inst)
+        OS << "<unspecified>";
+      else
+        DepInst->print(OS);
       OS << "\n";
     }
 
