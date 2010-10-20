@@ -606,6 +606,19 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
                                         FramePtr, -NumBytes, ARMCC::AL, 0,
                                         *TII);
         }
+        // If there's dynamic realignment, adjust for it.
+        if (!RI.needsStackRealignment(MF)) {
+          MachineFrameInfo  *MFI = MF.getFrameInfo();
+          unsigned MaxAlign = MFI->getMaxAlignment();
+          assert (!AFI->isThumb1OnlyFunction());
+          // Emit bic r6, r6, MaxAlign
+          unsigned bicOpc = AFI->isThumbFunction() ?
+            ARM::t2BICri : ARM::BICri;
+          AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                                              TII->get(bicOpc), ARM::R6)
+                                      .addReg(ARM::R6, RegState::Kill)
+                                      .addImm(MaxAlign-1)));
+        }
 
       }
       MI.eraseFromParent();
