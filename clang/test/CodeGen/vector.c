@@ -18,6 +18,11 @@ void test3 ( vec4* a, char b, float c ) {
   (*a)[b] = c;
 }
 
+
+
+// Don't include mm_malloc.h, it's system specific.
+#define __MM_MALLOC_H
+
 #include <mmintrin.h>
 
 int test4(int argc, char *argv[]) {
