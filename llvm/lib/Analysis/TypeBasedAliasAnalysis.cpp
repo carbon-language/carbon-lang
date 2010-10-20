@@ -103,6 +103,8 @@ namespace {
       return this;
     }
 
+    bool Aliases(const MDNode *A, const MDNode *B) const;
+
   private:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual AliasResult alias(const Location &LocA, const Location &LocB);
@@ -125,6 +127,49 @@ TypeBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AliasAnalysis::getAnalysisUsage(AU);
 }
 
+/// Aliases - Test whether the type represented by A may alias the
+/// type represented by B.
+bool
+TypeBasedAliasAnalysis::Aliases(const MDNode *A,
+                                const MDNode *B) const {
+  // Keep track of the root node for A and B.
+  TBAANode RootA, RootB;
+
+  // Climb the tree from A to see if we reach B.
+  for (TBAANode T(A); ; ) {
+    if (T.getNode() == B)
+      // B is an ancestor of A.
+      return true;
+
+    RootA = T;
+    T = T.getParent();
+    if (!T.getNode())
+      break;
+  }
+
+  // Climb the tree from B to see if we reach A.
+  for (TBAANode T(B); ; ) {
+    if (T.getNode() == A)
+      // A is an ancestor of B.
+      return true;
+
+    RootB = T;
+    T = T.getParent();
+    if (!T.getNode())
+      break;
+  }
+
+  // Neither node is an ancestor of the other.
+  
+  // If they have different roots, they're part of different potentially
+  // unrelated type systems, so we must be conservative.
+  if (RootA.getNode() != RootB.getNode())
+    return true;
+
+  // If they have the same root, then we've proved there's no alias.
+  return false;
+}
+
 AliasAnalysis::AliasResult
 TypeBasedAliasAnalysis::alias(const Location &LocA,
                               const Location &LocB) {
@@ -138,42 +183,12 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
   const MDNode *BM = LocB.TBAATag;
   if (!BM) return AliasAnalysis::alias(LocA, LocB);
 
-  // Keep track of the root node for A and B.
-  TBAANode RootA, RootB;
+  // If they may alias, chain to the next AliasAnalysis.
+  if (Aliases(AM, BM))
+    return AliasAnalysis::alias(LocA, LocB);
 
-  // Climb the tree from A to see if we reach B.
-  for (TBAANode T(AM); ; ) {
-    if (T.getNode() == BM)
-      // B is an ancestor of A.
-      return AliasAnalysis::alias(LocA, LocB);
-
-    RootA = T;
-    T = T.getParent();
-    if (!T.getNode())
-      break;
-  }
-
-  // Climb the tree from B to see if we reach A.
-  for (TBAANode T(BM); ; ) {
-    if (T.getNode() == AM)
-      // A is an ancestor of B.
-      return AliasAnalysis::alias(LocA, LocB);
-
-    RootB = T;
-    T = T.getParent();
-    if (!T.getNode())
-      break;
-  }
-
-  // Neither node is an ancestor of the other.
-  
-  // If they have the same root, then we've proved there's no alias.
-  if (RootA.getNode() == RootB.getNode())
-    return NoAlias;
-
-  // If they have different roots, they're part of different potentially
-  // unrelated type systems, so we must be conservative.
-  return AliasAnalysis::alias(LocA, LocB);
+  // Otherwise return a definitive result.
+  return NoAlias;
 }
 
 bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
