@@ -55,7 +55,7 @@ public:
     //------------------------------------------------------------------
     /// Constructor with path.
     ///
-    /// Takes an path to a file which can be just a filename, or a full
+    /// Takes a path to a file which can be just a filename, or a full
     /// path. If \a path is not NULL or empty, this function will call
     /// FileSpec::SetFile (const char *path, bool resolve).
     ///
