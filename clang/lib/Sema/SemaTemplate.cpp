@@ -20,6 +20,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeVisitor.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ParsedTemplate.h"
@@ -1217,6 +1218,70 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
   return Invalid;
 }
 
+namespace {
+
+/// A class which looks for a use of a certain level of template
+/// parameter.
+struct DependencyChecker : RecursiveASTVisitor<DependencyChecker> {
+  typedef RecursiveASTVisitor<DependencyChecker> super;
+
+  unsigned Depth;
+  bool Match;
+
+  DependencyChecker(TemplateParameterList *Params) : Match(false) {
+    NamedDecl *ND = Params->getParam(0);
+    if (TemplateTypeParmDecl *PD = dyn_cast<TemplateTypeParmDecl>(ND)) {
+      Depth = PD->getDepth();
+    } else if (NonTypeTemplateParmDecl *PD =
+                 dyn_cast<NonTypeTemplateParmDecl>(ND)) {
+      Depth = PD->getDepth();
+    } else {
+      Depth = cast<TemplateTemplateParmDecl>(ND)->getDepth();
+    }
+  }
+
+  bool Matches(unsigned ParmDepth) {
+    if (ParmDepth >= Depth) {
+      Match = true;
+      return true;
+    }
+    return false;
+  }
+
+  bool VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
+    return !Matches(T->getDepth());
+  }
+
+  bool TraverseTemplateName(TemplateName N) {
+    if (TemplateTemplateParmDecl *PD =
+          dyn_cast_or_null<TemplateTemplateParmDecl>(N.getAsTemplateDecl()))
+      if (Matches(PD->getDepth())) return false;
+    return super::TraverseTemplateName(N);
+  }
+
+  bool VisitDeclRefExpr(DeclRefExpr *E) {
+    if (NonTypeTemplateParmDecl *PD =
+          dyn_cast<NonTypeTemplateParmDecl>(E->getDecl())) {
+      if (PD->getDepth() == Depth) {
+        Match = true;
+        return false;
+      }
+    }
+    return super::VisitDeclRefExpr(E);
+  }
+};
+}
+
+/// Determines whether a template-id depends on the given parameter
+/// list.
+static bool
+DependsOnTemplateParameters(const TemplateSpecializationType *TemplateId,
+                            TemplateParameterList *Params) {
+  DependencyChecker Checker(Params);
+  Checker.TraverseType(QualType(TemplateId, 0));
+  return Checker.Match;
+}
+
 /// \brief Match the given template parameter lists to the given scope
 /// specifier, returning the template parameter list that applies to the
 /// name.
@@ -1310,12 +1375,24 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
 
   // Match the template-ids found in the specifier to the template parameter
   // lists.
-  unsigned Idx = 0;
+  unsigned ParamIdx = 0, TemplateIdx = 0;
   for (unsigned NumTemplateIds = TemplateIdsInSpecifier.size();
-       Idx != NumTemplateIds; ++Idx) {
-    QualType TemplateId = QualType(TemplateIdsInSpecifier[Idx], 0);
+       TemplateIdx != NumTemplateIds; ++TemplateIdx) {
+    const TemplateSpecializationType *TemplateId
+      = TemplateIdsInSpecifier[TemplateIdx];
     bool DependentTemplateId = TemplateId->isDependentType();
-    if (Idx >= NumParamLists) {
+
+    // In friend declarations we can have template-ids which don't
+    // depend on the corresponding template parameter lists.  But
+    // assume that empty parameter lists are supposed to match this
+    // template-id.
+    if (IsFriend && ParamIdx < NumParamLists && ParamLists[ParamIdx]->size()) {
+      if (!DependentTemplateId ||
+          !DependsOnTemplateParameters(TemplateId, ParamLists[ParamIdx]))
+        continue;
+    }
+
+    if (ParamIdx >= NumParamLists) {
       // We have a template-id without a corresponding template parameter
       // list.
 
@@ -1329,7 +1406,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
         // FIXME: the location information here isn't great.
         Diag(SS.getRange().getBegin(),
              diag::err_template_spec_needs_template_parameters)
-          << TemplateId
+          << QualType(TemplateId, 0)
           << SS.getRange();
         Invalid = true;
       } else {
@@ -1358,35 +1435,38 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
       }
 
       if (ExpectedTemplateParams)
-        TemplateParameterListsAreEqual(ParamLists[Idx],
+        TemplateParameterListsAreEqual(ParamLists[ParamIdx],
                                        ExpectedTemplateParams,
                                        true, TPL_TemplateMatch);
 
-      CheckTemplateParameterList(ParamLists[Idx], 0, TPC_ClassTemplateMember);
-    } else if (ParamLists[Idx]->size() > 0)
-      Diag(ParamLists[Idx]->getTemplateLoc(),
+      CheckTemplateParameterList(ParamLists[ParamIdx], 0,
+                                 TPC_ClassTemplateMember);
+    } else if (ParamLists[ParamIdx]->size() > 0)
+      Diag(ParamLists[ParamIdx]->getTemplateLoc(),
            diag::err_template_param_list_matches_nontemplate)
         << TemplateId
-        << ParamLists[Idx]->getSourceRange();
+        << ParamLists[ParamIdx]->getSourceRange();
     else
       IsExplicitSpecialization = true;
+
+    ++ParamIdx;
   }
 
   // If there were at least as many template-ids as there were template
   // parameter lists, then there are no template parameter lists remaining for
   // the declaration itself.
-  if (Idx >= NumParamLists)
+  if (ParamIdx >= NumParamLists)
     return 0;
 
   // If there were too many template parameter lists, complain about that now.
-  if (Idx != NumParamLists - 1) {
-    while (Idx < NumParamLists - 1) {
-      bool isExplicitSpecHeader = ParamLists[Idx]->size() == 0;
-      Diag(ParamLists[Idx]->getTemplateLoc(),
+  if (ParamIdx != NumParamLists - 1) {
+    while (ParamIdx < NumParamLists - 1) {
+      bool isExplicitSpecHeader = ParamLists[ParamIdx]->size() == 0;
+      Diag(ParamLists[ParamIdx]->getTemplateLoc(),
            isExplicitSpecHeader? diag::warn_template_spec_extra_headers
                                : diag::err_template_spec_extra_headers)
-        << SourceRange(ParamLists[Idx]->getTemplateLoc(),
-                       ParamLists[Idx]->getRAngleLoc());
+        << SourceRange(ParamLists[ParamIdx]->getTemplateLoc(),
+                       ParamLists[ParamIdx]->getRAngleLoc());
 
       if (isExplicitSpecHeader && !ExplicitSpecializationsInSpecifier.empty()) {
         Diag(ExplicitSpecializationsInSpecifier.back()->getLocation(),
@@ -1401,7 +1481,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
       if (!isExplicitSpecHeader)
         Invalid = true;
       
-      ++Idx;
+      ++ParamIdx;
     }
   }
 

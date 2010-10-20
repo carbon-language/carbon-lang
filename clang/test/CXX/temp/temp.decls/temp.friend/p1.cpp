@@ -307,3 +307,28 @@ namespace test14 {
 
   template class B<int>; // expected-note {{in instantiation}}
 }
+
+namespace test15 {
+  template <class T> class B;
+  template <class T> class A {
+    friend void B<T>::foo();
+
+    // This shouldn't be misrecognized as a templated-scoped reference.
+    template <class U> friend void B<T>::bar(U);
+
+    static void foo(); // expected-note {{declared private here}}
+  };
+
+  template <class T> class B {
+    void foo() { return A<long>::foo(); } // expected-error {{'foo' is a private member of 'test15::A<long>'}}
+  };
+
+  template <> class B<float> {
+    void foo() { return A<float>::foo(); }
+    template <class U> void bar(U u) {
+      (void) A<float>::foo();
+    }
+  };
+
+  template class B<int>; // expected-note {{in instantiation}}
+}
