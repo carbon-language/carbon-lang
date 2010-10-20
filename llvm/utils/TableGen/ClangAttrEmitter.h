@@ -83,6 +83,19 @@ public:
   void run(raw_ostream &OS);
 };
 
+/// ClangAttrSpellingListEmitter - class emits the list of spellings for attributes for
+///   clang.
+class ClangAttrSpellingListEmitter : public TableGenBackend {
+  RecordKeeper &Records;
+
+ public:
+  explicit ClangAttrSpellingListEmitter(RecordKeeper &R)
+    : Records(R)
+    {}
+
+  void run(raw_ostream &OS);
+};
+
 }
 
 #endif
