@@ -37,7 +37,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -176,10 +175,15 @@ namespace {
     /// it 'high'.
     bool HasHighOperandLatency(MachineInstr &MI, unsigned DefIdx, unsigned Reg);
 
-    /// IncreaseHighRegPressure - Visit BBs from preheader to current BB, check
-    /// if hoisting an instruction of the given cost matrix can cause high
+    /// CanCauseHighRegPressure - Visit BBs from header to current BB,
+    /// check if hoisting an instruction of the given cost matrix can cause high
     /// register pressure.
-    bool IncreaseHighRegPressure(DenseMap<unsigned, int> &Cost);
+    bool CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost);
+
+    /// UpdateBackTraceRegPressure - Traverse the back trace from header to
+    /// the current block and update their register pressures to reflect the
+    /// effect of hoisting MI from the current block to the preheader.
+    void UpdateBackTraceRegPressure(const MachineInstr *MI);
 
     /// IsProfitableToHoist - Return true if it is potentially profitable to
     /// hoist the given loop invariant.
@@ -198,11 +202,9 @@ namespace {
     /// this does not count live through (livein but not used) registers.
     void InitRegPressure(MachineBasicBlock *BB);
 
-    /// UpdateRegPressureBefore / UpdateRegPressureAfter - Update estimate of
-    /// register pressure before and after executing a specifi instruction.
-    void UpdateRegPressureBefore(const MachineInstr *MI,
-                                 SmallVector<unsigned, 4> &Defs);
-    void UpdateRegPressureAfter(SmallVector<unsigned, 4> &Defs);
+    /// UpdateRegPressure - Update estimate of register pressure after the
+    /// specified instruction.
+    void UpdateRegPressure(const MachineInstr *MI);
 
     /// isLoadFromConstantMemory - Return true if the given instruction is a
     /// load from constant memory.
@@ -228,8 +230,8 @@ namespace {
 
     /// Hoist - When an instruction is found to only use loop invariant operands
     /// that is safe to hoist, this instruction is called to do the dirty work.
-    ///
-    void Hoist(MachineInstr *MI, MachineBasicBlock *Preheader);
+    /// It returns true if the instruction is hoisted.
+    bool Hoist(MachineInstr *MI, MachineBasicBlock *Preheader);
 
     /// InitCSEMap - Initialize the CSE map with instructions that are in the
     /// current loop preheader that may become duplicates of instructions that
@@ -559,7 +561,7 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
     return;
 
   if (IsHeader) {
-    // Compute registers which are liveout of preheader.
+    // Compute registers which are livein into the loop headers.
     RegSeen.clear();
     BackTrace.clear();
     InitRegPressure(Preheader);
@@ -568,17 +570,12 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
   // Remember livein register pressure.
   BackTrace.push_back(RegPressure);
 
-  SmallVector<unsigned, 4> Defs;
   for (MachineBasicBlock::iterator
          MII = BB->begin(), E = BB->end(); MII != E; ) {
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
     MachineInstr *MI = &*MII;
-
-    assert(Defs.empty());
-    UpdateRegPressureBefore(MI, Defs);
-    Hoist(MI, Preheader);
-    UpdateRegPressureAfter(Defs);
-
+    if (!Hoist(MI, Preheader))
+      UpdateRegPressure(MI);
     MII = NextMII;
   }
 
@@ -594,11 +591,26 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
   BackTrace.pop_back();
 }
 
+static bool isOperandKill(const MachineOperand &MO, MachineRegisterInfo *MRI) {
+  return MO.isKill() || MRI->hasOneNonDBGUse(MO.getReg());
+}
+
 /// InitRegPressure - Find all virtual register references that are liveout of
 /// the preheader to initialize the starting "register pressure". Note this
 /// does not count live through (livein but not used) registers.
 void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
   std::fill(RegPressure.begin(), RegPressure.end(), 0);
+
+  // If the preheader has only a single predecessor and it ends with a
+  // fallthrough or an unconditional branch, then scan its predecessor for live
+  // defs as well. This happens whenever the preheader is created by splitting
+  // the critical edge from the loop predecessor to the loop header.
+  if (BB->pred_size() == 1) {
+    MachineBasicBlock *TBB = 0, *FBB = 0;
+    SmallVector<MachineOperand, 4> Cond;
+    if (!TII->AnalyzeBranch(*BB, TBB, FBB, Cond, false) && Cond.empty())
+      InitRegPressure(*BB->pred_begin());
+  }
 
   for (MachineBasicBlock::iterator MII = BB->begin(), E = BB->end();
        MII != E; ++MII) {
@@ -618,22 +630,24 @@ void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
       if (MO.isDef())
         RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
       else {
-        if (isNew && !MO.isKill())
+        bool isKill = isOperandKill(MO, MRI);
+        if (isNew && !isKill)
           // Haven't seen this, it must be a livein.
           RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-        else if (!isNew && MO.isKill())
+        else if (!isNew && isKill)
           RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
       }
     }
   }
 }
 
-/// UpdateRegPressureBefore / UpdateRegPressureAfter - Update estimate of
-/// register pressure before and after executing a specifi instruction.
-void MachineLICM::UpdateRegPressureBefore(const MachineInstr *MI,
-                                          SmallVector<unsigned, 4> &Defs) {
-  bool NoImpact = MI->isImplicitDef() || MI->isPHI();
+/// UpdateRegPressure - Update estimate of register pressure after the
+/// specified instruction.
+void MachineLICM::UpdateRegPressure(const MachineInstr *MI) {
+  if (MI->isImplicitDef())
+    return;
 
+  SmallVector<unsigned, 4> Defs;
   for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || MO.isImplicit())
@@ -643,29 +657,23 @@ void MachineLICM::UpdateRegPressureBefore(const MachineInstr *MI,
       continue;
 
     bool isNew = RegSeen.insert(Reg);
-    if (NoImpact)
-      continue;
-
     if (MO.isDef())
       Defs.push_back(Reg);
-    else {
-      if (!isNew && MO.isKill()) {
-        const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-        EVT VT = *RC->vt_begin();
-        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        unsigned RCCost = TLI->getRepRegClassCostFor(VT);
+    else if (!isNew && isOperandKill(MO, MRI)) {
+      const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+      EVT VT = *RC->vt_begin();
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      unsigned RCCost = TLI->getRepRegClassCostFor(VT);
 
-        assert(RCCost <= RegPressure[RCId]);
+      if (RCCost > RegPressure[RCId])
+        RegPressure[RCId] = 0;
+      else
         RegPressure[RCId] -= RCCost;
-      }
     }
   }
-}
 
-void MachineLICM::UpdateRegPressureAfter(SmallVector<unsigned, 4> &Defs) {
   while (!Defs.empty()) {
     unsigned Reg = Defs.pop_back_val();
-    RegSeen.insert(Reg);
     const TargetRegisterClass *RC = MRI->getRegClass(Reg);
     EVT VT = *RC->vt_begin();
     unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
@@ -815,29 +823,72 @@ bool MachineLICM::HasHighOperandLatency(MachineInstr &MI,
   return false;
 }
 
-/// IncreaseHighRegPressure - Visit BBs from preheader to current BB, check
+/// CanCauseHighRegPressure - Visit BBs from header to current BB, check
 /// if hoisting an instruction of the given cost matrix can cause high
 /// register pressure.
-bool MachineLICM::IncreaseHighRegPressure(DenseMap<unsigned, int> &Cost) {
-  for (unsigned i = BackTrace.size(); i != 0; --i) {
-    bool AnyIncrease = false;
-    SmallVector<unsigned, 8> &RP = BackTrace[i-1];
-    for (DenseMap<unsigned, int>::iterator CI = Cost.begin(), CE = Cost.end();
-         CI != CE; ++CI) {
-      if (CI->second <= 0) 
-        continue;
-      AnyIncrease = true;
-      unsigned RCId = CI->first;
+bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost) {
+  for (DenseMap<unsigned, int>::iterator CI = Cost.begin(), CE = Cost.end();
+       CI != CE; ++CI) {
+    if (CI->second <= 0) 
+      continue;
+
+    unsigned RCId = CI->first;
+    for (unsigned i = BackTrace.size(); i != 0; --i) {
+      SmallVector<unsigned, 8> &RP = BackTrace[i-1];
       if (RP[RCId] + CI->second >= RegLimit[RCId])
         return true;
     }
-
-    if (!AnyIncrease)
-      // Hoisting the instruction doesn't increase register pressure.
-      return false;
   }
 
   return false;
+}
+
+/// UpdateBackTraceRegPressure - Traverse the back trace from header to the
+/// current block and update their register pressures to reflect the effect
+/// of hoisting MI from the current block to the preheader.
+void MachineLICM::UpdateBackTraceRegPressure(const MachineInstr *MI) {
+  if (MI->isImplicitDef())
+    return;
+
+  // First compute the 'cost' of the instruction, i.e. its contribution
+  // to register pressure.
+  DenseMap<unsigned, int> Cost;
+  for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || MO.isImplicit())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+
+    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+    EVT VT = *RC->vt_begin();
+    unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+    unsigned RCCost = TLI->getRepRegClassCostFor(VT);
+    if (MO.isDef()) {
+      DenseMap<unsigned, int>::iterator CI = Cost.find(RCId);
+      if (CI != Cost.end())
+        CI->second += RCCost;
+      else
+        Cost.insert(std::make_pair(RCId, RCCost));
+    } else if (isOperandKill(MO, MRI)) {
+      DenseMap<unsigned, int>::iterator CI = Cost.find(RCId);
+      if (CI != Cost.end())
+        CI->second -= RCCost;
+      else
+        Cost.insert(std::make_pair(RCId, -RCCost));
+    }
+  }
+
+  // Update register pressure of blocks from loop header to current block.
+  for (unsigned i = 0, e = BackTrace.size(); i != e; ++i) {
+    SmallVector<unsigned, 8> &RP = BackTrace[i];
+    for (DenseMap<unsigned, int>::iterator CI = Cost.begin(), CE = Cost.end();
+         CI != CE; ++CI) {
+      unsigned RCId = CI->first;
+      RP[RCId] += CI->second;
+    }
+  }
 }
 
 /// IsProfitableToHoist - Return true if it is potentially profitable to hoist
@@ -881,17 +932,14 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
         unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
         unsigned RCCost = TLI->getRepRegClassCostFor(VT);
         DenseMap<unsigned, int>::iterator CI = Cost.find(RCId);
-        // If the instruction is not register pressure neutrail (or better),
-        // check if hoisting it will cause high register pressure in BB's
-        // leading up to this point.
         if (CI != Cost.end())
           CI->second += RCCost;
         else
           Cost.insert(std::make_pair(RCId, RCCost));
-      } else if (MO.isKill()) {
+      } else if (isOperandKill(MO, MRI)) {
         // Is a virtual register use is a kill, hoisting it out of the loop
         // may actually reduce register pressure or be register pressure
-        // neutral
+        // neutral.
         const TargetRegisterClass *RC = MRI->getRegClass(Reg);
         EVT VT = *RC->vt_begin();
         unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
@@ -904,9 +952,9 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
       }
     }
 
-    // Visit BBs from preheader to current BB, if hoisting this doesn't cause
+    // Visit BBs from header to current BB, if hoisting this doesn't cause
     // high register pressure, then it's safe to proceed.
-    if (!IncreaseHighRegPressure(Cost)) {
+    if (!CanCauseHighRegPressure(Cost)) {
       ++NumLowRP;
       return true;
     }
@@ -979,6 +1027,10 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
     NewMIs[1]->eraseFromParent();
     return 0;
   }
+
+  // Update register pressure for the unfolded instruction.
+  UpdateRegPressure(NewMIs[1]);
+
   // Otherwise we successfully unfolded a load that we can hoist.
   MI->eraseFromParent();
   return NewMIs[0];
@@ -1053,12 +1105,12 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
-void MachineLICM::Hoist(MachineInstr *MI, MachineBasicBlock *Preheader) {
+bool MachineLICM::Hoist(MachineInstr *MI, MachineBasicBlock *Preheader) {
   // First check whether we should hoist this instruction.
   if (!IsLoopInvariantInst(*MI) || !IsProfitableToHoist(*MI)) {
     // If not, try unfolding a hoistable load.
     MI = ExtractHoistableLoad(MI);
-    if (!MI) return;
+    if (!MI) return false;
   }
 
   // Now move the instructions to the predecessor, inserting it before any
@@ -1089,6 +1141,9 @@ void MachineLICM::Hoist(MachineInstr *MI, MachineBasicBlock *Preheader) {
     // Otherwise, splice the instruction to the preheader.
     Preheader->splice(Preheader->getFirstTerminator(),MI->getParent(),MI);
 
+    // Update register pressure for BBs from header to this block.
+    UpdateBackTraceRegPressure(MI);
+
     // Clear the kill flags of any register this instruction defines,
     // since they may need to be live throughout the entire loop
     // rather than just live for part of it.
@@ -1110,6 +1165,8 @@ void MachineLICM::Hoist(MachineInstr *MI, MachineBasicBlock *Preheader) {
 
   ++NumHoisted;
   Changed = true;
+
+  return true;
 }
 
 MachineBasicBlock *MachineLICM::getCurPreheader() {
