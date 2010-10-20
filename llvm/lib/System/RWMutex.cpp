@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/System/RWMutex.h"
 #include <cstring>
 
@@ -72,8 +73,7 @@ RWMutexImpl::RWMutexImpl()
 #endif
 
     // Initialize the rwlock
-    int errorcode = pthread_rwlock_init(rwlock, NULL);
-    (void)errorcode;
+    int ATTRIBUTE_UNUSED errorcode = pthread_rwlock_init(rwlock, NULL);
     assert(errorcode == 0);
 
     // Assign the data member
