@@ -191,8 +191,10 @@ MachineFunction::DeleteMachineBasicBlock(MachineBasicBlock *MBB) {
 
 MachineMemOperand *
 MachineFunction::getMachineMemOperand(MachinePointerInfo PtrInfo, unsigned f,
-                                      uint64_t s, unsigned base_alignment) {
-  return new (Allocator) MachineMemOperand(PtrInfo, f, s, base_alignment);
+                                      uint64_t s, unsigned base_alignment,
+                                      const MDNode *TBAAInfo) {
+  return new (Allocator) MachineMemOperand(PtrInfo, f, s, base_alignment,
+                                           TBAAInfo);
 }
 
 MachineMemOperand *
@@ -201,7 +203,8 @@ MachineFunction::getMachineMemOperand(const MachineMemOperand *MMO,
   return new (Allocator)
              MachineMemOperand(MachinePointerInfo(MMO->getValue(),
                                                   MMO->getOffset()+Offset),
-                               MMO->getFlags(), Size, MMO->getBaseAlignment());
+                               MMO->getFlags(), Size,
+                               MMO->getBaseAlignment(), 0);
 }
 
 MachineInstr::mmo_iterator
@@ -231,7 +234,8 @@ MachineFunction::extractLoadMemRefs(MachineInstr::mmo_iterator Begin,
         MachineMemOperand *JustLoad =
           getMachineMemOperand((*I)->getPointerInfo(),
                                (*I)->getFlags() & ~MachineMemOperand::MOStore,
-                               (*I)->getSize(), (*I)->getBaseAlignment());
+                               (*I)->getSize(), (*I)->getBaseAlignment(),
+                               (*I)->getTBAAInfo());
         Result[Index] = JustLoad;
       }
       ++Index;
@@ -262,7 +266,8 @@ MachineFunction::extractStoreMemRefs(MachineInstr::mmo_iterator Begin,
         MachineMemOperand *JustStore =
           getMachineMemOperand((*I)->getPointerInfo(),
                                (*I)->getFlags() & ~MachineMemOperand::MOLoad,
-                               (*I)->getSize(), (*I)->getBaseAlignment());
+                               (*I)->getSize(), (*I)->getBaseAlignment(),
+                               (*I)->getTBAAInfo());
         Result[Index] = JustStore;
       }
       ++Index;

@@ -82,6 +82,7 @@ class MachineMemOperand {
   MachinePointerInfo PtrInfo;
   uint64_t Size;
   unsigned Flags;
+  const MDNode *TBAAInfo;
 
 public:
   /// Flags values. These may be or'd together.
@@ -101,7 +102,7 @@ public:
   /// MachineMemOperand - Construct an MachineMemOperand object with the
   /// specified PtrInfo, flags, size, and base alignment.
   MachineMemOperand(MachinePointerInfo PtrInfo, unsigned flags, uint64_t s,
-                    unsigned base_alignment);
+                    unsigned base_alignment, const MDNode *TBAAInfo = 0);
 
   const MachinePointerInfo &getPointerInfo() const { return PtrInfo; }
   
@@ -132,6 +133,9 @@ public:
   /// getBaseAlignment - Return the minimum known alignment in bytes of the
   /// base address, without the offset.
   uint64_t getBaseAlignment() const { return (1u << (Flags >> MOMaxBits)) >> 1; }
+
+  /// getTBAAInfo - Return the TBAA tag for the memory reference.
+  const MDNode *getTBAAInfo() const { return TBAAInfo; }
 
   bool isLoad() const { return Flags & MOLoad; }
   bool isStore() const { return Flags & MOStore; }

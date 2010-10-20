@@ -902,6 +902,9 @@ public:
   const Value *getSrcValue() const { return MMO->getValue(); }
   int64_t getSrcValueOffset() const { return MMO->getOffset(); }
 
+  /// Returns the TBAAInfo that describes the dereference.
+  const MDNode *getTBAAInfo() const { return MMO->getTBAAInfo(); }
+
   /// getMemoryVT - Return the type of the in-memory value.
   EVT getMemoryVT() const { return MemoryVT; }
 

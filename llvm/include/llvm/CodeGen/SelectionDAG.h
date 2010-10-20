@@ -631,18 +631,21 @@ public:
   ///
   SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                   MachinePointerInfo PtrInfo, bool isVolatile,
-                  bool isNonTemporal, unsigned Alignment);
+                  bool isNonTemporal, unsigned Alignment,
+                  const MDNode *TBAAInfo = 0);
   SDValue getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
                      SDValue Chain, SDValue Ptr, MachinePointerInfo PtrInfo,
                      EVT MemVT, bool isVolatile,
-                     bool isNonTemporal, unsigned Alignment);
+                     bool isNonTemporal, unsigned Alignment,
+                     const MDNode *TBAAInfo = 0);
   SDValue getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
                          SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                   EVT VT, DebugLoc dl,
                   SDValue Chain, SDValue Ptr, SDValue Offset,
                   MachinePointerInfo PtrInfo, EVT MemVT,
-                  bool isVolatile, bool isNonTemporal, unsigned Alignment);
+                  bool isVolatile, bool isNonTemporal, unsigned Alignment,
+                  const MDNode *TBAAInfo = 0);
   SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                   EVT VT, DebugLoc dl,
                   SDValue Chain, SDValue Ptr, SDValue Offset,
@@ -652,13 +655,15 @@ public:
   ///
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                    MachinePointerInfo PtrInfo, bool isVolatile,
-                   bool isNonTemporal, unsigned Alignment);
+                   bool isNonTemporal, unsigned Alignment,
+                   const MDNode *TBAAInfo = 0);
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                    MachineMemOperand *MMO);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                         MachinePointerInfo PtrInfo, EVT TVT,
                         bool isNonTemporal, bool isVolatile,
-                        unsigned Alignment);
+                        unsigned Alignment,
+                        const MDNode *TBAAInfo = 0);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                         EVT TVT, MachineMemOperand *MMO);
   SDValue getIndexedStore(SDValue OrigStoe, DebugLoc dl, SDValue Base,

@@ -248,16 +248,19 @@ namespace {
     bool isAlias(SDValue Ptr1, int64_t Size1,
                  const Value *SrcValue1, int SrcValueOffset1,
                  unsigned SrcValueAlign1,
+                 const MDNode *TBAAInfo1,
                  SDValue Ptr2, int64_t Size2,
                  const Value *SrcValue2, int SrcValueOffset2,
-                 unsigned SrcValueAlign2) const;
+                 unsigned SrcValueAlign2,
+                 const MDNode *TBAAInfo2) const;
 
     /// FindAliasInfo - Extracts the relevant alias information from the memory
     /// node.  Returns true if the operand was a load.
     bool FindAliasInfo(SDNode *N,
                        SDValue &Ptr, int64_t &Size,
                        const Value *&SrcValue, int &SrcValueOffset,
-                       unsigned &SrcValueAlignment) const;
+                       unsigned &SrcValueAlignment,
+                       const MDNode *&TBAAInfo) const;
 
     /// FindBetterChain - Walk up chain skipping non-aliasing memory nodes,
     /// looking for a better chain (aliasing node.)
@@ -7045,9 +7048,11 @@ static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset,
 bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
                           const Value *SrcValue1, int SrcValueOffset1,
                           unsigned SrcValueAlign1,
+                          const MDNode *TBAAInfo1,
                           SDValue Ptr2, int64_t Size2,
                           const Value *SrcValue2, int SrcValueOffset2,
-                          unsigned SrcValueAlign2) const {
+                          unsigned SrcValueAlign2,
+                          const MDNode *TBAAInfo2) const {
   // If they are the same then they must be aliases.
   if (Ptr1 == Ptr2) return true;
 
@@ -7101,7 +7106,8 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
     int64_t Overlap1 = Size1 + SrcValueOffset1 - MinOffset;
     int64_t Overlap2 = Size2 + SrcValueOffset2 - MinOffset;
     AliasAnalysis::AliasResult AAResult =
-                             AA.alias(SrcValue1, Overlap1, SrcValue2, Overlap2);
+      AA.alias(AliasAnalysis::Location(SrcValue1, Overlap1, TBAAInfo1),
+               AliasAnalysis::Location(SrcValue2, Overlap2, TBAAInfo2));
     if (AAResult == AliasAnalysis::NoAlias)
       return false;
   }
@@ -7116,13 +7122,15 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
                         SDValue &Ptr, int64_t &Size,
                         const Value *&SrcValue, 
                         int &SrcValueOffset,
-                        unsigned &SrcValueAlign) const {
+                        unsigned &SrcValueAlign,
+                        const MDNode *&TBAAInfo) const {
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
     Size = LD->getMemoryVT().getSizeInBits() >> 3;
     SrcValue = LD->getSrcValue();
     SrcValueOffset = LD->getSrcValueOffset();
     SrcValueAlign = LD->getOriginalAlignment();
+    TBAAInfo = LD->getTBAAInfo();
     return true;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     Ptr = ST->getBasePtr();
@@ -7130,6 +7138,7 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
     SrcValue = ST->getSrcValue();
     SrcValueOffset = ST->getSrcValueOffset();
     SrcValueAlign = ST->getOriginalAlignment();
+    TBAAInfo = ST->getTBAAInfo();
   } else {
     llvm_unreachable("FindAliasInfo expected a memory operand");
   }
@@ -7150,8 +7159,9 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
   const Value *SrcValue;
   int SrcValueOffset;
   unsigned SrcValueAlign;
+  const MDNode *SrcTBAAInfo;
   bool IsLoad = FindAliasInfo(N, Ptr, Size, SrcValue, SrcValueOffset, 
-                              SrcValueAlign);
+                              SrcValueAlign, SrcTBAAInfo);
 
   // Starting off.
   Chains.push_back(OriginalChain);
@@ -7195,15 +7205,18 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
       const Value *OpSrcValue;
       int OpSrcValueOffset;
       unsigned OpSrcValueAlign;
+      const MDNode *OpSrcTBAAInfo;
       bool IsOpLoad = FindAliasInfo(Chain.getNode(), OpPtr, OpSize,
                                     OpSrcValue, OpSrcValueOffset,
-                                    OpSrcValueAlign);
+                                    OpSrcValueAlign,
+                                    OpSrcTBAAInfo);
 
       // If chain is alias then stop here.
       if (!(IsLoad && IsOpLoad) &&
           isAlias(Ptr, Size, SrcValue, SrcValueOffset, SrcValueAlign,
+                  SrcTBAAInfo,
                   OpPtr, OpSize, OpSrcValue, OpSrcValueOffset,
-                  OpSrcValueAlign)) {
+                  OpSrcValueAlign, OpSrcTBAAInfo)) {
         Aliases.push_back(Chain);
       } else {
         // Look further up the chain.

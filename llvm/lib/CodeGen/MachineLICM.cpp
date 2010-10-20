@@ -777,7 +777,9 @@ bool MachineLICM::isLoadFromConstantMemory(MachineInstr *MI) {
     MachineFunction &MF = *MI->getParent()->getParent();
     return PSV->isConstant(MF.getFrameInfo());
   } else {
-    return AA->pointsToConstantMemory(MMO->getValue());
+    return AA->pointsToConstantMemory(AliasAnalysis::Location(MMO->getValue(),
+                                                              MMO->getSize(),
+                                                              MMO->getTBAAInfo()));
   }
 }
 

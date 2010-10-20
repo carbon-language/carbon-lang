@@ -371,7 +371,8 @@ public:
   /// explicitly deallocated.
   MachineMemOperand *getMachineMemOperand(MachinePointerInfo PtrInfo,
                                           unsigned f, uint64_t s,
-                                          unsigned base_alignment);
+                                          unsigned base_alignment,
+                                          const MDNode *TBAAInfo = 0);
   
   /// getMachineMemOperand - Allocate a new MachineMemOperand by copying
   /// an existing one, adjusting by an offset and using the given size.

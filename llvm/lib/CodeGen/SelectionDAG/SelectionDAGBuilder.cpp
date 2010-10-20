@@ -2934,6 +2934,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
   bool isVolatile = I.isVolatile();
   bool isNonTemporal = I.getMetadata("nontemporal") != 0;
   unsigned Alignment = I.getAlignment();
+  const MDNode *TBAAInfo = I.getMetadata(LLVMContext::MD_tbaa);
 
   SmallVector<EVT, 4> ValueVTs;
   SmallVector<uint64_t, 4> Offsets;
@@ -2947,7 +2948,8 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
   if (I.isVolatile())
     // Serialize volatile loads with other side effects.
     Root = getRoot();
-  else if (AA->pointsToConstantMemory(SV)) {
+  else if (AA->pointsToConstantMemory(
+             AliasAnalysis::Location(SV, AA->getTypeStoreSize(Ty), TBAAInfo))) {
     // Do not serialize (non-volatile) loads of constant memory with anything.
     Root = DAG.getEntryNode();
     ConstantMemory = true;
@@ -2965,7 +2967,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
                             DAG.getConstant(Offsets[i], PtrVT));
     SDValue L = DAG.getLoad(ValueVTs[i], getCurDebugLoc(), Root,
                             A, MachinePointerInfo(SV, Offsets[i]), isVolatile,
-                            isNonTemporal, Alignment);
+                            isNonTemporal, Alignment, TBAAInfo);
 
     Values[i] = L;
     Chains[i] = L.getValue(1);
@@ -3008,6 +3010,7 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
   bool isVolatile = I.isVolatile();
   bool isNonTemporal = I.getMetadata("nontemporal") != 0;
   unsigned Alignment = I.getAlignment();
+  const MDNode *TBAAInfo = I.getMetadata(LLVMContext::MD_tbaa);
 
   for (unsigned i = 0; i != NumValues; ++i) {
     SDValue Add = DAG.getNode(ISD::ADD, getCurDebugLoc(), PtrVT, Ptr,
@@ -3015,7 +3018,7 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
     Chains[i] = DAG.getStore(Root, getCurDebugLoc(),
                              SDValue(Src.getNode(), Src.getResNo() + i),
                              Add, MachinePointerInfo(PtrV, Offsets[i]),
-                             isVolatile, isNonTemporal, Alignment);
+                             isVolatile, isNonTemporal, Alignment, TBAAInfo);
   }
 
   DAG.setRoot(DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
