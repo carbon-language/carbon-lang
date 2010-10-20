@@ -260,7 +260,10 @@ BreakpointLocationList::ResolveAllBreakpointSites ()
     collection::iterator pos, end = m_locations.end();
 
     for (pos = m_locations.begin(); pos != end; ++pos)
-        (*pos)->ResolveBreakpointSite();
+    {
+        if ((*pos)->IsEnabled())
+            (*pos)->ResolveBreakpointSite();
+    }
 }
 
 uint32_t

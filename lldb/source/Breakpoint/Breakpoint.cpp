@@ -290,6 +290,8 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
             for (size_t j = 0; j < m_locations.GetSize(); j++)
             {
                 BreakpointLocationSP break_loc = m_locations.GetByIndex(j);
+                if (!break_loc->IsEnabled())
+                    continue;
                 const Section *section = break_loc->GetAddress().GetSection();
                 if (section == NULL || section->GetModule() == module)
                 {
