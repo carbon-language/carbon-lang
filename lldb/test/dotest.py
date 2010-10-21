@@ -525,6 +525,9 @@ unittest2.signals.installHandler()
 # See also TestBase.dumpSessionInfo() in lldbtest.py.
 import datetime
 raw_timestamp = str(datetime.datetime.today())
+usec_position = raw_timestamp.rfind('.')
+if usec_position != -1:
+    raw_timestamp = raw_timestamp[:usec_position]
 os.environ["LLDB_TIMESTAMP"] = raw_timestamp.replace(' ', '-')
 
 #
