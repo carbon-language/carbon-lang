@@ -49,3 +49,8 @@
 
 @end
 
+void rdar8575095(id a) {
+  [id<NSObject>(a) retain];
+  id<NSObject> x(id<NSObject>(0));
+  id<NSObject> x2(id<NSObject>(y)); // expected-warning{{parentheses were disambiguated as a function declarator}}
+}

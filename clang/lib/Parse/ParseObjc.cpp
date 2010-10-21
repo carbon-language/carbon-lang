@@ -1039,6 +1039,23 @@ ParseObjCProtocolReferences(llvm::SmallVectorImpl<Decl *> &Protocols,
   return false;
 }
 
+/// \brief Parse the Objective-C protocol qualifiers that follow a typename
+/// in a decl-specifier-seq, starting at the '<'.
+void Parser::ParseObjCProtocolQualifiers(DeclSpec &DS) {
+  assert(Tok.is(tok::less) && "Protocol qualifiers start with '<'");
+  assert(getLang().ObjC1 && "Protocol qualifiers only exist in Objective-C");
+  SourceLocation LAngleLoc, EndProtoLoc;
+  llvm::SmallVector<Decl *, 8> ProtocolDecl;
+  llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
+  ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
+                              LAngleLoc, EndProtoLoc);
+  DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
+                           ProtocolLocs.data(), LAngleLoc);
+  if (EndProtoLoc.isValid())
+    DS.SetRangeEnd(EndProtoLoc);
+}
+
+
 ///   objc-class-instance-variables:
 ///     '{' objc-instance-variable-decl-list[opt] '}'
 ///

@@ -948,6 +948,7 @@ private:
                                    bool WarnOnDeclarations,
                                    SourceLocation &LAngleLoc,
                                    SourceLocation &EndProtoLoc);
+  void ParseObjCProtocolQualifiers(DeclSpec &DS);
   void ParseObjCInterfaceDeclList(Decl *interfaceDecl,
                                   tok::ObjCKeywordKind contextKey);
   Decl *ParseObjCAtProtocolDeclaration(SourceLocation atLoc,
@@ -1423,6 +1424,7 @@ private:
   TPResult TryParseDeclarationSpecifier();
   TPResult TryParseSimpleDeclaration();
   TPResult TryParseTypeofSpecifier();
+  TPResult TryParseProtocolQualifiers();
   TPResult TryParseInitDeclaratorList();
   TPResult TryParseDeclarator(bool mayBeAbstract, bool mayHaveIdentifier=true);
   TPResult TryParseParameterDeclarationClause();

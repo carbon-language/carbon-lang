@@ -139,9 +139,13 @@ Parser::TPResult Parser::TryParseSimpleDeclaration() {
 
   if (Tok.is(tok::kw_typeof))
     TryParseTypeofSpecifier();
-  else
+  else {
     ConsumeToken();
-
+    
+    if (getLang().ObjC1 && Tok.is(tok::less))
+      TryParseProtocolQualifiers();
+  }
+  
   assert(Tok.is(tok::l_paren) && "Expected '('");
 
   TPResult TPR = TryParseInitDeclaratorList();
@@ -242,8 +246,12 @@ bool Parser::isCXXConditionDeclaration() {
   // type-specifier-seq
   if (Tok.is(tok::kw_typeof))
     TryParseTypeofSpecifier();
-  else
+  else {
     ConsumeToken();
+    
+    if (getLang().ObjC1 && Tok.is(tok::less))
+      TryParseProtocolQualifiers();
+  }
   assert(Tok.is(tok::l_paren) && "Expected '('");
 
   // declarator
@@ -313,8 +321,13 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
   // type-specifier-seq
   if (Tok.is(tok::kw_typeof))
     TryParseTypeofSpecifier();
-  else
+  else {
     ConsumeToken();
+    
+    if (getLang().ObjC1 && Tok.is(tok::less))
+      TryParseProtocolQualifiers();
+  }
+  
   assert(Tok.is(tok::l_paren) && "Expected '('");
 
   // declarator
@@ -808,6 +821,28 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
 
     // simple-type-specifier:
 
+  case tok::annot_typename:
+  case_typename:
+    // In Objective-C, we might have a protocol-qualified type.
+    if (getLang().ObjC1 && NextToken().is(tok::less)) {
+      // Tentatively parse the 
+      TentativeParsingAction PA(*this);
+      ConsumeToken(); // The type token
+      
+      TPResult TPR = TryParseProtocolQualifiers();
+      bool isFollowedByParen = Tok.is(tok::l_paren);
+      
+      PA.Revert();
+      
+      if (TPR == TPResult::Error())
+        return TPResult::Error();
+      
+      if (isFollowedByParen)
+        return TPResult::Ambiguous();
+      
+      return TPResult::True();
+    }
+      
   case tok::kw_char:
   case tok::kw_wchar_t:
   case tok::kw_char16_t:
@@ -821,8 +856,6 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_void:
-  case tok::annot_typename:
-  case_typename:
     if (NextToken().is(tok::l_paren))
       return TPResult::Ambiguous();
 
@@ -878,6 +911,30 @@ Parser::TPResult Parser::TryParseTypeofSpecifier() {
   return TPResult::Ambiguous();
 }
 
+/// [ObjC] protocol-qualifiers:
+////         '<' identifier-list '>'
+Parser::TPResult Parser::TryParseProtocolQualifiers() {
+  assert(Tok.is(tok::less) && "Expected '<' for qualifier list");
+  ConsumeToken();
+  do {
+    if (Tok.isNot(tok::identifier))
+      return TPResult::Error();
+    ConsumeToken();
+    
+    if (Tok.is(tok::comma)) {
+      ConsumeToken();
+      continue;
+    }
+    
+    if (Tok.is(tok::greater)) {
+      ConsumeToken();
+      return TPResult::Ambiguous();
+    }
+  } while (false);
+  
+  return TPResult::Error();
+}
+
 Parser::TPResult Parser::TryParseDeclarationSpecifier() {
   TPResult TPR = isCXXDeclarationSpecifier();
   if (TPR != TPResult::Ambiguous())
@@ -885,8 +942,12 @@ Parser::TPResult Parser::TryParseDeclarationSpecifier() {
 
   if (Tok.is(tok::kw_typeof))
     TryParseTypeofSpecifier();
-  else
+  else {
     ConsumeToken();
+    
+    if (getLang().ObjC1 && Tok.is(tok::less))
+      TryParseProtocolQualifiers();
+  }
 
   assert(Tok.is(tok::l_paren) && "Expected '('!");
   return TPResult::Ambiguous();

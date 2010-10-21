@@ -1093,20 +1093,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
       // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
-      // Objective-C interface.  If we don't have Objective-C or a '<', this is
-      // just a normal reference to a typedef name.
-      if (!Tok.is(tok::less) || !getLang().ObjC1)
-        continue;
-
-      SourceLocation LAngleLoc, EndProtoLoc;
-      llvm::SmallVector<Decl *, 8> ProtocolDecl;
-      llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
-      ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
-                                  LAngleLoc, EndProtoLoc);
-      DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
-                               ProtocolLocs.data(), LAngleLoc);
-
-      DS.SetRangeEnd(EndProtoLoc);
+      // Objective-C interface. 
+      if (Tok.is(tok::less) && getLang().ObjC1)
+        ParseObjCProtocolQualifiers(DS);
+      
       continue;
     }
 
@@ -1163,21 +1153,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
       // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
-      // Objective-C interface.  If we don't have Objective-C or a '<', this is
-      // just a normal reference to a typedef name.
-      if (!Tok.is(tok::less) || !getLang().ObjC1)
-        continue;
-
-      SourceLocation LAngleLoc, EndProtoLoc;
-      llvm::SmallVector<Decl *, 8> ProtocolDecl;
-      llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
-      ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
-                                  LAngleLoc, EndProtoLoc);
-      DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
-                               ProtocolLocs.data(), LAngleLoc);
-
-      DS.SetRangeEnd(EndProtoLoc);
-
+      // Objective-C interface. 
+      if (Tok.is(tok::less) && getLang().ObjC1)
+        ParseObjCProtocolQualifiers(DS);
+      
       // Need to support trailing type qualifiers (e.g. "id<p> const").
       // If a type specifier follows, it will be diagnosed elsewhere.
       continue;
@@ -1445,23 +1424,15 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (DS.hasTypeSpecifier() || !getLang().ObjC1)
         goto DoneWithDeclSpec;
 
-      {
-        SourceLocation LAngleLoc, EndProtoLoc;
-        llvm::SmallVector<Decl *, 8> ProtocolDecl;
-        llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
-        ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
-                                    LAngleLoc, EndProtoLoc);
-        DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
-                                 ProtocolLocs.data(), LAngleLoc);
-        DS.SetRangeEnd(EndProtoLoc);
+      ParseObjCProtocolQualifiers(DS);
 
-        Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
-          << FixItHint::CreateInsertion(Loc, "id")
-          << SourceRange(Loc, EndProtoLoc);
-        // Need to support trailing type qualifiers (e.g. "id<p> const").
-        // If a type specifier follows, it will be diagnosed elsewhere.
-        continue;
-      }
+      Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
+        << FixItHint::CreateInsertion(Loc, "id")
+        << SourceRange(Loc, DS.getSourceRange().getEnd());
+      
+      // Need to support trailing type qualifiers (e.g. "id<p> const").
+      // If a type specifier follows, it will be diagnosed elsewhere.
+      continue;
     }
     // If the specifier wasn't legal, issue a diagnostic.
     if (isInvalid) {
@@ -1576,18 +1547,9 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
     // Objective-C interface.  If we don't have Objective-C or a '<', this is
     // just a normal reference to a typedef name.
-    if (!Tok.is(tok::less) || !getLang().ObjC1)
-      return true;
-
-    SourceLocation LAngleLoc, EndProtoLoc;
-    llvm::SmallVector<Decl *, 8> ProtocolDecl;
-    llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
-    ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
-                                LAngleLoc, EndProtoLoc);
-    DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
-                             ProtocolLocs.data(), LAngleLoc);
-
-    DS.SetRangeEnd(EndProtoLoc);
+    if (Tok.is(tok::less) && getLang().ObjC1)
+      ParseObjCProtocolQualifiers(DS);
+    
     return true;
   }
 
