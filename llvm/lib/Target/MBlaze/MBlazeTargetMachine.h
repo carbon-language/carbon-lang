@@ -19,8 +19,6 @@
 #include "MBlazeISelLowering.h"
 #include "MBlazeSelectionDAGInfo.h"
 #include "MBlazeIntrinsicInfo.h"
-#include "MBlazeELFWriterInfo.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -36,7 +34,6 @@ namespace llvm {
     MBlazeTargetLowering  TLInfo;
     MBlazeSelectionDAGInfo TSInfo;
     MBlazeIntrinsicInfo IntrinsicInfo;
-    MBlazeELFWriterInfo    ELFWriterInfo;
   public:
     MBlazeTargetMachine(const Target &T, const std::string &TT,
                       const std::string &FS);
@@ -64,10 +61,6 @@ namespace llvm {
 
     const TargetIntrinsicInfo *getIntrinsicInfo() const
     { return &IntrinsicInfo; }
-
-    virtual const MBlazeELFWriterInfo *getELFWriterInfo() const {
-      return &ELFWriterInfo;
-    }
 
     // Pass Pipeline Configuration
     virtual bool addInstSelector(PassManagerBase &PM,

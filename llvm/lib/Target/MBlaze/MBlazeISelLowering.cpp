@@ -421,11 +421,13 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
   SDValue HiPart;
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
+  bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
+  unsigned char OpFlag = IsPIC ? MBlazeII::MO_GOT : MBlazeII::MO_ABS_HILO;
 
   EVT PtrVT = Op.getValueType();
   JumpTableSDNode *JT  = cast<JumpTableSDNode>(Op);
 
-  SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, 0 );
+  SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, OpFlag);
   return DAG.getNode(MBlazeISD::Wrap, dl, MVT::i32, JTI);
   //return JTI;
 }
@@ -438,7 +440,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
 
   SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                         N->getOffset(), 0 );
+                                         N->getOffset(), MBlazeII::MO_ABS_HILO);
   return DAG.getNode(MBlazeISD::Wrap, dl, MVT::i32, CP);
 }
 
@@ -616,12 +618,13 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
+  unsigned char OpFlag = MBlazeII::MO_NO_FLAG;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
-                                getPointerTy(), 0, 0 );
+                                getPointerTy(), 0, OpFlag);
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(),
-                                getPointerTy(), 0 );
+                                getPointerTy(), OpFlag);
 
   // MBlazeJmpLink = #chain, #target_address, #opt_in_flags...
   //             = Chain, Callee, Reg#1, Reg#2, ...

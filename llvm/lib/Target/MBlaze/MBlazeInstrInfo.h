@@ -134,47 +134,29 @@ namespace MBlaze {
 /// instruction info tracks.
 ///
 namespace MBlazeII {
-  enum {
-    // PseudoFrm - This represents an instruction that is a pseudo instruction
-    // or one that has not been implemented yet.  It is illegal to code generate
-    // it, but tolerated for intermediate implementation stages.
-    Pseudo         = 0,
-
-    RegRegReg      = 1,
-    RegRegImm      = 2,
-    RegImmReg      = 3,
-    FSL            = 4,
-    FSLD           = 5,
-    FSLT           = 6,
-    FSLTD          = 7,
-    Reg            = 8,
-    Imm            = 9,
-    RegReg         = 10,
-    RegImm         = 11,
-
-    FormMask       = 63
-
+  /// Target Operand Flag enum.
+  enum TOF {
     //===------------------------------------------------------------------===//
     // MBlaze Specific MachineOperand flags.
-    // MO_NO_FLAG,
+    MO_NO_FLAG,
 
     /// MO_GOT - Represents the offset into the global offset table at which
     /// the address the relocation entry symbol resides during execution.
-    // MO_GOT,
+    MO_GOT,
 
     /// MO_GOT_CALL - Represents the offset into the global offset table at
     /// which the address of a call site relocation entry symbol resides
     /// during execution. This is different from the above since this flag
     /// can only be present in call instructions.
-    // MO_GOT_CALL,
+    MO_GOT_CALL,
 
     /// MO_GPREL - Represents the offset from the current gp value to be used
     /// for the relocatable object file being produced.
-    // MO_GPREL,
+    MO_GPREL,
 
     /// MO_ABS_HILO - Represents the hi or low part of an absolute symbol
     /// address.
-    // MO_ABS_HILO
+    MO_ABS_HILO
 
   };
 }

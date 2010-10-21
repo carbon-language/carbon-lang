@@ -24,9 +24,9 @@ class LoadFM<bits<6> op, string instr_asm, PatFrag OpNode> :
                 [(set FGR32:$dst, (OpNode xaddr:$addr))], IILoad>;
 
 class LoadFMI<bits<6> op, string instr_asm, PatFrag OpNode> :
-              TB<op, (outs FGR32:$dst), (ins memri:$addr),
-                 !strconcat(instr_asm, "   $dst, $addr"),
-                 [(set FGR32:$dst, (OpNode iaddr:$addr))], IILoad>;
+              TAI<op, (outs FGR32:$dst), (ins memri:$addr),
+                  !strconcat(instr_asm, "   $dst, $addr"),
+                  [(set FGR32:$dst, (OpNode iaddr:$addr))], IILoad>;
 
 class StoreFM<bits<6> op, string instr_asm, PatFrag OpNode> :
               TA<op, 0x000, (outs), (ins FGR32:$dst, memrr:$addr),
@@ -34,9 +34,9 @@ class StoreFM<bits<6> op, string instr_asm, PatFrag OpNode> :
                  [(OpNode FGR32:$dst, xaddr:$addr)], IIStore>;
 
 class StoreFMI<bits<6> op, string instr_asm, PatFrag OpNode> :
-               TB<op, (outs), (ins FGR32:$dst, memrr:$addr),
-                  !strconcat(instr_asm, "   $dst, $addr"),
-                  [(OpNode FGR32:$dst, iaddr:$addr)], IIStore>;
+               TAI<op, (outs), (ins FGR32:$dst, memrr:$addr),
+                   !strconcat(instr_asm, "   $dst, $addr"),
+                   [(OpNode FGR32:$dst, iaddr:$addr)], IIStore>;
 
 class ArithF<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
              InstrItinClass itin> :
@@ -56,35 +56,35 @@ class ArithFR<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
                 !strconcat(instr_asm, "   $dst, $c, $b"),
                 [(set FGR32:$dst, (OpNode FGR32:$b, FGR32:$c))], itin>;
 
+class ArithF2<bits<6> op, bits<11> flags, string instr_asm,
+              InstrItinClass itin> :
+              TF<op, flags, (outs FGR32:$dst), (ins FGR32:$b),
+                 !strconcat(instr_asm, "   $dst, $b"),
+                 [], itin>;
+
+class ArithIF<bits<6> op, bits<11> flags, string instr_asm,
+              InstrItinClass itin> :
+              TF<op, flags, (outs FGR32:$dst), (ins CPURegs:$b),
+                 !strconcat(instr_asm, "   $dst, $b"),
+                 [], itin>;
+
+class ArithFI<bits<6> op, bits<11> flags, string instr_asm,
+              InstrItinClass itin> :
+              TF<op, flags, (outs CPURegs:$dst), (ins FGR32:$b),
+                 !strconcat(instr_asm, "   $dst, $b"),
+                 [], itin>;
+
 class LogicF<bits<6> op, string instr_asm> :
-             TB<op, (outs FGR32:$dst), (ins FGR32:$b, FGR32:$c),
-                !strconcat(instr_asm, "   $dst, $b, $c"),
-                [], IIAlu>;
+             TAI<op, (outs FGR32:$dst), (ins FGR32:$b, FGR32:$c),
+                 !strconcat(instr_asm, "   $dst, $b, $c"),
+                 [],
+                 IIAlu>;
 
 class LogicFI<bits<6> op, string instr_asm> :
-             TB<op, (outs FGR32:$dst), (ins FGR32:$b, fimm:$c),
-                !strconcat(instr_asm, "   $dst, $b, $c"),
-                [], IIAlu>;
-
-let rb=0 in {
-  class ArithF2<bits<6> op, bits<11> flags, string instr_asm,
-                InstrItinClass itin> :
-                TA<op, flags, (outs FGR32:$dst), (ins FGR32:$b),
-                   !strconcat(instr_asm, "   $dst, $b"),
-                   [], itin>;
-
-  class ArithIF<bits<6> op, bits<11> flags, string instr_asm,
-                InstrItinClass itin> :
-                TA<op, flags, (outs FGR32:$dst), (ins CPURegs:$b),
-                   !strconcat(instr_asm, "   $dst, $b"),
-                   [], itin>;
-
-  class ArithFI<bits<6> op, bits<11> flags, string instr_asm,
-                InstrItinClass itin> :
-                TA<op, flags, (outs CPURegs:$dst), (ins FGR32:$b),
-                   !strconcat(instr_asm, "   $dst, $b"),
-                   [], itin>;
-}
+             TAI<op, (outs FGR32:$dst), (ins FGR32:$b, fimm:$c),
+                 !strconcat(instr_asm, "   $dst, $b, $c"),
+                 [],
+                 IIAlu>;
 
 //===----------------------------------------------------------------------===//
 // Pseudo instructions

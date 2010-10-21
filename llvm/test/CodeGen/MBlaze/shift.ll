@@ -10,17 +10,17 @@ define i8 @test_i8(i8 %a, i8 %b) {
     ; SHT:        test_i8:
 
     %tmp.1 = shl i8 %a, %b
+    ; FUN-NOT:    bsll
     ; FUN:        andi
     ; FUN:        add
     ; FUN:        bnei
     ; SHT-NOT:    andi
     ; SHT-NOT:    bnei
+    ; SHT:        bsll
 
     ret i8 %tmp.1
     ; FUN:        rtsd
     ; SHT:        rtsd
-    ; FUN-NOT:    bsll
-    ; SHT-NEXT:   bsll
 }
 
 define i8 @testc_i8(i8 %a, i8 %b) {
@@ -28,18 +28,18 @@ define i8 @testc_i8(i8 %a, i8 %b) {
     ; SHT:        testc_i8:
 
     %tmp.1 = shl i8 %a, 5
+    ; FUN-NOT:    bsll
     ; FUN:        andi
     ; FUN:        add
     ; FUN:        bnei
     ; SHT-NOT:    andi
     ; SHT-NOT:    add
     ; SHT-NOT:    bnei
+    ; SHT:        bslli
 
     ret i8 %tmp.1
     ; FUN:        rtsd
     ; SHT:        rtsd
-    ; FUN-NOT:    bsll
-    ; SHT-NEXT:   bslli
 }
 
 define i16 @test_i16(i16 %a, i16 %b) {
@@ -47,17 +47,17 @@ define i16 @test_i16(i16 %a, i16 %b) {
     ; SHT:        test_i16:
 
     %tmp.1 = shl i16 %a, %b
+    ; FUN-NOT:    bsll
     ; FUN:        andi
     ; FUN:        add
     ; FUN:        bnei
     ; SHT-NOT:    andi
     ; SHT-NOT:    bnei
+    ; SHT:        bsll
 
     ret i16 %tmp.1
     ; FUN:        rtsd
     ; SHT:        rtsd
-    ; FUN-NOT:    bsll
-    ; SHT-NEXT:   bsll
 }
 
 define i16 @testc_i16(i16 %a, i16 %b) {
@@ -65,18 +65,18 @@ define i16 @testc_i16(i16 %a, i16 %b) {
     ; SHT:        testc_i16:
 
     %tmp.1 = shl i16 %a, 5
+    ; FUN-NOT:    bsll
     ; FUN:        andi
     ; FUN:        add
     ; FUN:        bnei
     ; SHT-NOT:    andi
     ; SHT-NOT:    add
     ; SHT-NOT:    bnei
+    ; SHT:        bslli
 
     ret i16 %tmp.1
     ; FUN:        rtsd
     ; SHT:        rtsd
-    ; FUN-NOT:    bsll
-    ; SHT-NEXT:   bslli
 }
 
 define i32 @test_i32(i32 %a, i32 %b) {
@@ -84,17 +84,17 @@ define i32 @test_i32(i32 %a, i32 %b) {
     ; SHT:        test_i32:
 
     %tmp.1 = shl i32 %a, %b
+    ; FUN-NOT:    bsll
     ; FUN:        andi
     ; FUN:        add
     ; FUN:        bnei
     ; SHT-NOT:    andi
     ; SHT-NOT:    bnei
+    ; SHT:        bsll
 
     ret i32 %tmp.1
     ; FUN:        rtsd
     ; SHT:        rtsd
-    ; FUN-NOT:    bsll
-    ; SHT-NEXT:   bsll
 }
 
 define i32 @testc_i32(i32 %a, i32 %b) {
@@ -102,16 +102,16 @@ define i32 @testc_i32(i32 %a, i32 %b) {
     ; SHT:        testc_i32:
 
     %tmp.1 = shl i32 %a, 5
+    ; FUN-NOT:    bsll
     ; FUN:        andi
     ; FUN:        add
     ; FUN:        bnei
     ; SHT-NOT:    andi
     ; SHT-NOT:    add
     ; SHT-NOT:    bnei
+    ; SHT:        bslli
 
     ret i32 %tmp.1
     ; FUN:        rtsd
     ; SHT:        rtsd
-    ; FUN-NOT:    bsll
-    ; SHT-NEXT:   bslli
 }

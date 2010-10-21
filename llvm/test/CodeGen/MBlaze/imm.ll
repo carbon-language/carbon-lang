@@ -7,21 +7,21 @@
 
 define i8 @retimm_i8() {
     ; CHECK:        retimm_i8:
-    ; CHECK:        rtsd
-    ; CHECK-NEXT:   add
+    ; CHECK:        add
+    ; CHECK-NEXT:   rtsd
     ; FPU:          retimm_i8:
-    ; FPU:          rtsd
-    ; FPU-NEXT:     add
+    ; FPU:          add
+    ; FPU-NEXT:     rtsd
     ret i8 123
 }
 
 define i16 @retimm_i16() {
     ; CHECK:        retimm_i16:
-    ; CHECK:        rtsd
-    ; CHECK-NEXT:   add
+    ; CHECK:        add
+    ; CHECK-NEXT:   rtsd
     ; FPU:          retimm_i16:
-    ; FPU:          rtsd
-    ; FPU-NEXT:     add
+    ; FPU:          add
+    ; FPU-NEXT:     rtsd
     ret i16 38212
 }
 
@@ -38,12 +38,12 @@ define i32 @retimm_i32() {
 define i64 @retimm_i64() {
     ; CHECK:        retimm_i64:
     ; CHECK:        add
-    ; CHECK-NEXT:   rtsd
     ; CHECK-NEXT:   add
+    ; CHECK-NEXT:   rtsd
     ; FPU:          retimm_i64:
     ; FPU:          add
-    ; FPU-NEXT:     rtsd
     ; FPU-NEXT:     add
+    ; FPU-NEXT:     rtsd
     ret i64 94581823
 }
 
@@ -53,7 +53,7 @@ define float @retimm_float() {
     ; CHECK-NEXT:   rtsd
     ; FPU:          retimm_float:
     ; FPU:          or
-    ; FPU-NEXT:     rtsd
+    ; FPU:          rtsd
     ret float 12.0
 }
 
