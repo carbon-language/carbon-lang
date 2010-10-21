@@ -114,4 +114,11 @@ entry:
   ret i32 %mul
 }
 
+define i32 @f12(i32 %a) {
+; CHECK: f12:
+; CHECK: bfc  r0, #4, #20             @ encoding: [0x1f,0x02,0xd7,0xe7]
+    %tmp = and i32 %a, 4278190095
+    ret i32 %tmp
+}
+
 declare void @llvm.trap() nounwind

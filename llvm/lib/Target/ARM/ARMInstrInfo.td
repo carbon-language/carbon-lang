@@ -232,6 +232,7 @@ def bf_inv_mask_imm : Operand<i32>,
                       PatLeaf<(imm), [{
   return ARM::isBitFieldInvertedMask(N->getZExtValue());
 }] > {
+  string EncoderMethod = "getBitfieldInvertedMaskOpValue";
   let PrintMethod = "printBitfieldInvMaskImmOperand";
 }
 
@@ -2174,24 +2175,36 @@ defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-def BFC    : I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
+def BFC    : I<(outs GPR:$Rd), (ins GPR:$src, bf_inv_mask_imm:$imm),
                AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
-               "bfc", "\t$dst, $imm", "$src = $dst",
-               [(set GPR:$dst, (and GPR:$src, bf_inv_mask_imm:$imm))]>,
+               "bfc", "\t$Rd, $imm", "$src = $Rd",
+               [(set GPR:$Rd, (and GPR:$src, bf_inv_mask_imm:$imm))]>,
                Requires<[IsARM, HasV6T2]> {
+  bits<4> Rd;
+  bits<10> imm;
   let Inst{27-21} = 0b0111110;
   let Inst{6-0}   = 0b0011111;
+  let Inst{15-12} = Rd;
+  let Inst{11-7}  = imm{4-0}; // lsb
+  let Inst{20-16} = imm{9-5}; // width
 }
 
 // A8.6.18  BFI - Bitfield insert (Encoding A1)
-def BFI    : I<(outs GPR:$dst), (ins GPR:$src, GPR:$val, bf_inv_mask_imm:$imm),
+def BFI    : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
                AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
-               "bfi", "\t$dst, $val, $imm", "$src = $dst",
-               [(set GPR:$dst, (ARMbfi GPR:$src, GPR:$val,
+               "bfi", "\t$Rd, $Rn, $imm", "$src = $Rd",
+               [(set GPR:$Rd, (ARMbfi GPR:$src, GPR:$Rn,
                                 bf_inv_mask_imm:$imm))]>,
                Requires<[IsARM, HasV6T2]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<10> imm;
   let Inst{27-21} = 0b0111110;
   let Inst{6-4}   = 0b001; // Rn: Inst{3-0} != 15
+  let Inst{15-12} = Rd;
+  let Inst{11-7}  = imm{4-0}; // lsb
+  let Inst{20-16} = imm{9-5}; // width
+  let Inst{3-0}   = Rn;
 }
 
 def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMVNr,
