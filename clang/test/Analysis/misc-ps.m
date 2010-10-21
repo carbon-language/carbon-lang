@@ -1110,6 +1110,20 @@ void rdar6351970_c() {
   @synchronized(x) {} // expected-warning{{Uninitialized value used as mutex for @synchronized}}
 }
 
+@interface Rdar8578650
+- (id) foo8578650;
+@end
+
+void rdar8578650(id x) {
+  @synchronized (x) {
+    [x foo8578650];
+  }
+  // At this point we should assume that 'x' is not nil, not
+  // the inverse.
+  @synchronized (x) { // no-warning
+  }
+}
+
 // <rdar://problem/6352035> rule request: direct structure member access null pointer dereference
 @interface RDar6352035 {
   int c;

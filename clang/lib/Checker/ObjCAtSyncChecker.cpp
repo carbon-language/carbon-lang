@@ -75,13 +75,15 @@ void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
                                   Ex);
 
         C.EmitReport(report);
+        return;
       }
     }
-    // From this point forward, we know that the mutex is null.
-    C.addTransition(nullState);
+    // Don't add a transition for 'nullState'.  If the value is
+    // under-constrained to be null or non-null, assume it is non-null
+    // afterwards.
   }
 
   if (notNullState)
     C.addTransition(notNullState);
 }
- 
+
