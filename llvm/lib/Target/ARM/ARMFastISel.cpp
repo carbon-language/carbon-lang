@@ -683,12 +683,30 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Base,
 }
 
 void ARMFastISel::ARMSimplifyRegOffset(unsigned &Base, int &Offset, EVT VT) {
-
-  assert (Base != ARM::SP && "How'd we get a stack pointer here?");
   
-  // Since the offset may be too large for the load instruction
+  assert(VT.isSimple() && "Non-simple types are invalid here!");
+  
+  bool needsLowering = false;
+  switch (VT.getSimpleVT().SimpleTy) {
+    default:
+      assert(false && "Unhandled load/store type!");
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+      // Integer loads/stores handle 12-bit offsets.
+      needsLowering = ((Offset & 0xfff) != Offset);
+      break;
+    case MVT::f32:
+    case MVT::f64:
+      // Floating point operands handle 8-bit offsets.
+      needsLowering = ((Offset & 0xff) != Offset);
+      break;
+  }
+  
+  // Since the offset is too large for the load/store instruction
   // get the reg+offset into a register.
-  if (Offset != 0) {
+  if (needsLowering) {
     ARMCC::CondCodes Pred = ARMCC::AL;
     unsigned PredReg = 0;
 
@@ -725,12 +743,10 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
     case MVT::i16:
       Opc = isThumb ? ARM::t2LDRHi12 : ARM::LDRH;
       RC = ARM::GPRRegisterClass;
-      VT = MVT::i32;
       break;
     case MVT::i8:
       Opc = isThumb ? ARM::t2LDRBi12 : ARM::LDRB;
       RC = ARM::GPRRegisterClass;
-      VT = MVT::i32;
       break;
     case MVT::i32:
       Opc = isThumb ? ARM::t2LDRi12 : ARM::LDR;
@@ -750,13 +766,13 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 
   ResultReg = createResultReg(RC);
   
-  // All SP loads should already have been lowered to another reg.
-  assert(Base != ARM::SP && "No stack stores this late!");
-
-  // For now with the additions above the offset should be zero - thus we
-  // can always fit into an i12.
-  assert(Offset == 0 && "Offset should be zero at this point!");
-
+  ARMSimplifyRegOffset(Base, Offset, VT);
+  
+  // addrmode5 output depends on the selection dag addressing dividing the
+  // offset by 4 that it then later multiplies. Do this here as well.
+  if (isFloat)
+    Offset /= 4;
+  
   // The thumb and floating point instructions both take 2 operands, ARM takes
   // another register.
   if (isFloat || isThumb)
@@ -784,8 +800,6 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
   if (!ARMComputeRegOffset(I->getOperand(0), Base, Offset))
     return false;
 
-  ARMSimplifyRegOffset(Base, Offset, VT);
-
   unsigned ResultReg;
   if (!ARMEmitLoad(VT, ResultReg, Base, Offset)) return false;
 
@@ -797,17 +811,13 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
                                unsigned Base, int Offset) {
   unsigned StrOpc;
   bool isFloat = false;
-  // VT is set here only for use in the alloca stores below - those are promoted
-  // to reg size always.
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
     case MVT::i1:
     case MVT::i8:
-      VT = MVT::i32;
       StrOpc = isThumb ? ARM::t2STRBi12 : ARM::STRB;
       break;
     case MVT::i16:
-      VT = MVT::i32;
       StrOpc = isThumb ? ARM::t2STRHi12 : ARM::STRH;
       break;
     case MVT::i32:
@@ -825,13 +835,13 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
       break;
   }
 
-  // All SP stores should already have been lowered to another reg.
-  assert(Base != ARM::SP && "No stack stores this late!");
-
-  // For now with the additions above the offset should be zero - thus we
-  // can always fit into an i12.
-  assert(Offset == 0 && "Offset should be zero at this point!");
-
+  ARMSimplifyRegOffset(Base, Offset, VT);
+  
+  // addrmode5 output depends on the selection dag addressing dividing the
+  // offset by 4 that it then later multiplies. Do this here as well.
+  if (isFloat)
+    Offset /= 4;
+  
   // The thumb addressing mode has operands swapped from the arm addressing
   // mode, the floating point one only has two operands.
   if (isFloat || isThumb)
@@ -867,8 +877,6 @@ bool ARMFastISel::SelectStore(const Instruction *I) {
   // See if we can handle this as Reg + Offset
   if (!ARMComputeRegOffset(I->getOperand(1), Base, Offset))
     return false;
-
-  ARMSimplifyRegOffset(Base, Offset, VT);
 
   if (!ARMEmitStore(VT, SrcReg, Base, Offset)) return false;
 
