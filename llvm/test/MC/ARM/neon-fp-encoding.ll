@@ -179,3 +179,251 @@ define <2 x i64> @vaddwu_2xi32(<2 x i64>* %A, <2 x i32>* %B) nounwind {
 	%tmp4 = add <2 x i64> %tmp1, %tmp3
 	ret <2 x i64> %tmp4
 }
+
+declare <8 x i8>  @llvm.arm.neon.vhadds.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vhadds.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vhadds.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vhadds_8xi8
+define <8 x i8> @vhadds_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vhadd.s8	d16, d16, d17   @ encoding: [0xa1,0x00,0x40,0xf2]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vhadds.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vhadds_4xi16
+define <4 x i16> @vhadds_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vhadd.s16	d16, d16, d17   @ encoding: [0xa1,0x00,0x50,0xf2]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vhadds.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vhadds_2xi32
+define <2 x i32> @vhadds_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vhadd.s32	d16, d16, d17   @ encoding: [0xa1,0x00,0x60,0xf2]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vhadds.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+declare <8 x i8>  @llvm.arm.neon.vhaddu.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vhaddu.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vhaddu.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vhaddu_8xi8
+define <8 x i8> @vhaddu_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vhadd.u8	d16, d16, d17   @ encoding: [0xa1,0x00,0x40,0xf3]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vhaddu_4xi16
+define <4 x i16> @vhaddu_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vhadd.u16	d16, d16, d17   @ encoding: [0xa1,0x00,0x50,0xf3]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vhaddu.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vhaddu_2xi32
+define <2 x i32> @vhaddu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vhadd.u32	d16, d16, d17   @ encoding: [0xa1,0x00,0x60,0xf3]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vhaddu.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+declare <16 x i8> @llvm.arm.neon.vhadds.v16i8(<16 x i8>, <16 x i8>) nounwind readnone
+declare <8 x i16> @llvm.arm.neon.vhadds.v8i16(<8 x i16>, <8 x i16>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vhadds.v4i32(<4 x i32>, <4 x i32>) nounwind readnone
+
+; CHECK: vhadds_16xi8
+define <16 x i8> @vhadds_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vhadd.s8	q8, q8, q9      @ encoding: [0xe2,0x00,0x40,0xf2]
+	%tmp3 = call <16 x i8> @llvm.arm.neon.vhadds.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
+	ret <16 x i8> %tmp3
+}
+
+; CHECK: vhadds_8xi16
+define <8 x i16> @vhadds_8xi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vhadd.s16	q8, q8, q9      @ encoding: [0xe2,0x00,0x50,0xf2]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vhadds.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
+	ret <8 x i16> %tmp3
+}
+
+; CHECK: vhadds_4xi32
+define <4 x i32> @vhadds_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vhadd.s32	q8, q8, q9      @ encoding: [0xe2,0x00,0x60,0xf2]
+	%tmp3 = call <4 x i32> @llvm.arm.neon.vhadds.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
+	ret <4 x i32> %tmp3
+}
+
+declare <16 x i8> @llvm.arm.neon.vhaddu.v16i8(<16 x i8>, <16 x i8>) nounwind readnone
+declare <8 x i16> @llvm.arm.neon.vhaddu.v8i16(<8 x i16>, <8 x i16>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vhaddu.v4i32(<4 x i32>, <4 x i32>) nounwind readnone
+
+; CHECK: vhaddu_16xi8
+define <16 x i8> @vhaddu_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vhadd.u8	q8, q8, q9      @ encoding: [0xe2,0x00,0x40,0xf3]
+	%tmp3 = call <16 x i8> @llvm.arm.neon.vhaddu.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
+	ret <16 x i8> %tmp3
+}
+
+; CHECK: vhaddu_8xi16
+define <8 x i16> @vhaddu_8xi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vhadd.u16	q8, q8, q9      @ encoding: [0xe2,0x00,0x50,0xf3]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vhaddu.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
+	ret <8 x i16> %tmp3
+}
+
+; CHECK: vhaddu_4xi32
+define <4 x i32> @vhaddu_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vhadd.u32	q8, q8, q9      @ encoding: [0xe2,0x00,0x60,0xf3]
+	%tmp3 = call <4 x i32> @llvm.arm.neon.vhaddu.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
+	ret <4 x i32> %tmp3
+}
+
+declare <8 x i8>  @llvm.arm.neon.vrhadds.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vrhadds.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vrhadds.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vrhadds_8xi8
+define <8 x i8> @vrhadds_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vrhadd.s8	d16, d16, d17   @ encoding: [0xa1,0x01,0x40,0xf2]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vrhadds.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vrhadds_4xi16
+define <4 x i16> @vrhadds_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vrhadd.s16	d16, d16, d17   @ encoding: [0xa1,0x01,0x50,0xf2]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vrhadds.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vrhadds_2xi32
+define <2 x i32> @vrhadds_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vrhadd.s32	d16, d16, d17   @ encoding: [0xa1,0x01,0x60,0xf2]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vrhadds.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+declare <8 x i8>  @llvm.arm.neon.vrhaddu.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vrhaddu.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vrhaddu.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vrhaddu_8xi8
+define <8 x i8> @vrhaddu_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vrhadd.u8	d16, d16, d17   @ encoding: [0xa1,0x01,0x40,0xf3]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vrhaddu.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vrhaddu_4xi16
+define <4 x i16> @vrhaddu_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vrhadd.u16	d16, d16, d17   @ encoding: [0xa1,0x01,0x50,0xf3]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vrhaddu.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vrhaddu_2xi32
+define <2 x i32> @vrhaddu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vrhadd.u32	d16, d16, d17   @ encoding: [0xa1,0x01,0x60,0xf3]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vrhaddu.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+declare <16 x i8> @llvm.arm.neon.vrhadds.v16i8(<16 x i8>, <16 x i8>) nounwind readnone
+declare <8 x i16> @llvm.arm.neon.vrhadds.v8i16(<8 x i16>, <8 x i16>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vrhadds.v4i32(<4 x i32>, <4 x i32>) nounwind readnone
+
+; CHECK: vrhadds_16xi8
+define <16 x i8> @vrhadds_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vrhadd.s8	q8, q8, q9      @ encoding: [0xe2,0x01,0x40,0xf2]
+	%tmp3 = call <16 x i8> @llvm.arm.neon.vrhadds.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
+	ret <16 x i8> %tmp3
+}
+
+; CHECK: vrhadds_8xi16
+define <8 x i16> @vrhadds_8xi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vrhadd.s16	q8, q8, q9      @ encoding: [0xe2,0x01,0x50,0xf2]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vrhadds.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
+	ret <8 x i16> %tmp3
+}
+
+; CHECK: vrhadds_4xi32
+define <4 x i32> @vrhadds_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vrhadd.s32	q8, q8, q9      @ encoding: [0xe2,0x01,0x60,0xf2]
+	%tmp3 = call <4 x i32> @llvm.arm.neon.vrhadds.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
+	ret <4 x i32> %tmp3
+}
+
+declare <16 x i8> @llvm.arm.neon.vrhaddu.v16i8(<16 x i8>, <16 x i8>) nounwind readnone
+declare <8 x i16> @llvm.arm.neon.vrhaddu.v8i16(<8 x i16>, <8 x i16>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vrhaddu.v4i32(<4 x i32>, <4 x i32>) nounwind readnone
+
+; CHECK: vrhaddu_16xi8
+define <16 x i8> @vrhaddu_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vrhadd.u8	q8, q8, q9      @ encoding: [0xe2,0x01,0x40,0xf3]
+	%tmp3 = call <16 x i8> @llvm.arm.neon.vrhaddu.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
+	ret <16 x i8> %tmp3
+}
+
+; CHECK: vrhaddu_8xi16
+define <8 x i16> @vrhaddu_8xi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vrhadd.u16	q8, q8, q9      @ encoding: [0xe2,0x01,0x50,0xf3]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vrhaddu.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
+	ret <8 x i16> %tmp3
+}
+
+; CHECK: vrhaddu_4xi32
+define <4 x i32> @vrhaddu_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vrhadd.u32	q8, q8, q9      @ encoding: [0xe2,0x01,0x60,0xf3]
+	%tmp3 = call <4 x i32> @llvm.arm.neon.vrhaddu.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
+	ret <4 x i32> %tmp3
+}
