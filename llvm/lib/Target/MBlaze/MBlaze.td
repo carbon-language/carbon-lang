@@ -32,35 +32,35 @@ def MBlazeInstrInfo : InstrInfo;
 //===----------------------------------------------------------------------===//
 
 def FeaturePipe3       : SubtargetFeature<"pipe3", "HasPipe3", "true",
-                                "Implements 3-stage pipeline.">;
+                                "Implements 3-stage pipeline">;
 def FeatureBarrel      : SubtargetFeature<"barrel", "HasBarrel", "true",
-                                "Implements barrel shifter.">;
+                                "Implements barrel shifter">;
 def FeatureDiv         : SubtargetFeature<"div", "HasDiv", "true",
-                                "Implements hardware divider.">;
+                                "Implements hardware divider">;
 def FeatureMul         : SubtargetFeature<"mul", "HasMul", "true",
-                                "Implements hardware multiplier.">;
+                                "Implements hardware multiplier">;
 def FeatureFSL         : SubtargetFeature<"fsl", "HasFSL", "true",
-                                "Implements FSL instructions.">;
+                                "Implements FSL instructions">;
 def FeatureEFSL        : SubtargetFeature<"efsl", "HasEFSL", "true",
-                                "Implements extended FSL instructions.">;
+                                "Implements extended FSL instructions">;
 def FeatureMSRSet      : SubtargetFeature<"msrset", "HasMSRSet", "true",
-                                "Implements MSR register set and clear.">;
+                                "Implements MSR register set and clear">;
 def FeatureException   : SubtargetFeature<"exception", "HasException", "true",
-                                "Implements hardware exception support.">;
+                                "Implements hardware exception support">;
 def FeaturePatCmp      : SubtargetFeature<"patcmp", "HasPatCmp", "true",
-                                "Implements pattern compare instruction.">;
+                                "Implements pattern compare instruction">;
 def FeatureFPU         : SubtargetFeature<"fpu", "HasFPU", "true",
-                                "Implements floating point unit.">;
+                                "Implements floating point unit">;
 def FeatureESR         : SubtargetFeature<"esr", "HasESR", "true",
                                 "Implements ESR and EAR registers">;
 def FeaturePVR         : SubtargetFeature<"pvr", "HasPVR", "true",
-                                "Implements processor version register.">;
+                                "Implements processor version register">;
 def FeatureMul64       : SubtargetFeature<"mul64", "HasMul64", "true",
                                 "Implements multiplier with 64-bit result">;
 def FeatureSqrt        : SubtargetFeature<"sqrt", "HasSqrt", "true",
-                                "Implements sqrt and floating point convert.">;
+                                "Implements sqrt and floating point convert">;
 def FeatureMMU         : SubtargetFeature<"mmu", "HasMMU", "true",
-                                "Implements memory management unit.">;
+                                "Implements memory management unit">;
 
 //===----------------------------------------------------------------------===//
 // MBlaze processors supported.
@@ -69,13 +69,26 @@ def FeatureMMU         : SubtargetFeature<"mmu", "HasMMU", "true",
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, MBlazeGenericItineraries, Features>;
 
-
 def : Proc<"v400", []>;
 def : Proc<"v500", []>;
 def : Proc<"v600", []>;
 def : Proc<"v700", []>;
 def : Proc<"v710", []>;
 
+//===----------------------------------------------------------------------===//
+// Instruction Descriptions
+//===----------------------------------------------------------------------===//
+
+def MBlazeAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// Target Declaration
+//===----------------------------------------------------------------------===//
+
 def MBlaze : Target {
   let InstructionSet = MBlazeInstrInfo;
+  let AssemblyWriters = [MBlazeAsmWriter];
 }

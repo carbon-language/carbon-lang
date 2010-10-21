@@ -10,14 +10,14 @@ define float @test_add(float %a, float %b) {
     ; FPU:        test_add:
 
     %tmp.1 = fadd float %a, %b
-    ; FUN-NOT:    fadd
     ; FUN:        brlid
     ; FPU-NOT:    brlid
-    ; FPU:        fadd
 
     ret float %tmp.1
     ; FUN:        rtsd
     ; FPU:        rtsd
+    ; FUN-NOT:    fadd
+    ; FPU-NEXT:   fadd
 }
 
 define float @test_sub(float %a, float %b) {
@@ -25,14 +25,14 @@ define float @test_sub(float %a, float %b) {
     ; FPU:        test_sub:
 
     %tmp.1 = fsub float %a, %b
-    ; FUN-NOT:    frsub
     ; FUN:        brlid
     ; FPU-NOT:    brlid
-    ; FPU:        frsub
 
     ret float %tmp.1
     ; FUN:        rtsd
     ; FPU:        rtsd
+    ; FUN-NOT:    frsub
+    ; FPU-NEXT:   frsub
 }
 
 define float @test_mul(float %a, float %b) {
@@ -40,14 +40,14 @@ define float @test_mul(float %a, float %b) {
     ; FPU:        test_mul:
 
     %tmp.1 = fmul float %a, %b
-    ; FUN-NOT:    fmul
     ; FUN:        brlid
     ; FPU-NOT:    brlid
-    ; FPU:        fmul
 
     ret float %tmp.1
     ; FUN:        rtsd
     ; FPU:        rtsd
+    ; FUN-NOT:    fmul
+    ; FPU-NEXT:   fmul
 }
 
 define float @test_div(float %a, float %b) {
@@ -55,12 +55,12 @@ define float @test_div(float %a, float %b) {
     ; FPU:        test_div:
 
     %tmp.1 = fdiv float %a, %b
-    ; FUN-NOT:    fdiv
     ; FUN:        brlid
     ; FPU-NOT:    brlid
-    ; FPU:        fdiv
 
     ret float %tmp.1
     ; FUN:        rtsd
     ; FPU:        rtsd
+    ; FUN-NOT:    fdiv
+    ; FPU-NEXT:   fdiv
 }

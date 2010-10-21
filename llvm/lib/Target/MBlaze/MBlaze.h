@@ -21,7 +21,15 @@ namespace llvm {
   class MBlazeTargetMachine;
   class FunctionPass;
   class MachineCodeEmitter;
+  class MCCodeEmitter;
+  class TargetAsmBackend;
   class formatted_raw_ostream;
+
+  MCCodeEmitter *createMBlazeMCCodeEmitter(const Target &,
+                                           TargetMachine &TM,
+                                           MCContext &Ctx);
+
+  TargetAsmBackend *createMBlazeAsmBackend(const Target &, const std::string &);
 
   FunctionPass *createMBlazeISelDag(MBlazeTargetMachine &TM);
   FunctionPass *createMBlazeDelaySlotFillerPass(MBlazeTargetMachine &TM);

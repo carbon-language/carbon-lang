@@ -28,32 +28,31 @@ loop:
                              label %L3,
                              label %L4,
                              label %L5 ]
-    ; CHECK:        br {{r[0-9]*}}
+    ; CHECK:        brd {{r[0-9]*}}
 
 L1:
     %tmp.1 = add i32 %a, %b
     br label %finish
-    ; CHECK:        br
+    ; CHECK:        brid
 
 L2:
     %tmp.2 = sub i32 %a, %b
     br label %finish
-    ; CHECK:        br
+    ; CHECK:        brid
 
 L3:
     %tmp.3 = mul i32 %a, %b
     br label %finish
-    ; CHECK:        br
+    ; CHECK:        brid
 
 L4:
     %tmp.4 = sdiv i32 %a, %b
     br label %finish
-    ; CHECK:        br
+    ; CHECK:        brid
 
 L5:
     %tmp.5 = srem i32 %a, %b
     br label %finish
-    ; CHECK:        br
 
 finish:
     %tmp.6 = phi i32 [ %tmp.1, %L1 ],
@@ -69,5 +68,5 @@ finish:
     %tmp.8 = urem i32 %tmp.7, 5
 
     br label %loop
-    ; CHECK:        br
+    ; CHECK:        brid
 }
