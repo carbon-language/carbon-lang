@@ -187,7 +187,16 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
       PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
     PIDecl->setSetterName(SetterSel);
   } else {
-    Diag(AtLoc, diag::err_use_continuation_class)
+    // Tailor the diagnostics for the common case where a readwrite
+    // property is declared both in the @interface and the continuation.
+    // This is a common error where the user often intended the original
+    // declaration to be readonly.
+    unsigned diag =
+      (Attributes & ObjCDeclSpec::DQ_PR_readwrite) &&
+      (PIkind & ObjCPropertyDecl::OBJC_PR_readwrite)
+      ? diag::err_use_continuation_class_redeclaration_readwrite
+      : diag::err_use_continuation_class;
+    Diag(AtLoc, diag)
       << CCPrimary->getDeclName();
     Diag(PIDecl->getLocation(), diag::note_property_declare);
   }

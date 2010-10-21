@@ -365,8 +365,12 @@ def warn_atomic_property_rule : Warning<
   "writable atomic property %0 cannot pair a synthesized setter/getter "
   "with a user defined setter/getter">;
 def err_use_continuation_class : Error<
-  "illegal declaration of property in continuation class %0"
-  ": attribute must be readwrite, while its primary must be readonly">;
+  "illegal redeclaration of property in continuation class %0"
+  " (attribute must be 'readwrite', while its primary must be 'readonly')">;
+def err_use_continuation_class_redeclaration_readwrite : Error<
+  "illegal redeclaration of 'readwrite' property in continuation class %0"
+  " (perhaps you intended this to be a 'readwrite' redeclaration of a "
+  "'readonly' public property?)">;
 def err_continuation_class : Error<"continuation class has no primary class">;
 def err_property_type : Error<"property cannot have array or function type %0">;
 def error_missing_property_context : Error<
