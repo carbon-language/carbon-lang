@@ -4436,7 +4436,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
     = Context.DeclarationNames.getCXXDestructorName(ClassType);
   DeclarationNameInfo NameInfo(Name, ClassDecl->getLocation());
   CXXDestructorDecl *Destructor
-    = CXXDestructorDecl::Create(Context, ClassDecl, NameInfo, Ty,
+      = CXXDestructorDecl::Create(Context, ClassDecl, NameInfo, Ty, 0,
                                 /*isInline=*/true,
                                 /*isImplicitlyDeclared=*/true);
   Destructor->setAccess(AS_public);

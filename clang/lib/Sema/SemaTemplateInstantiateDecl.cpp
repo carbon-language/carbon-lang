@@ -1358,7 +1358,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                         false);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
-                                       NameInfo, T,
+                                       NameInfo, T, TInfo,
                                        Destructor->isInlineSpecified(),
                                        false);
   } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
@@ -2856,4 +2856,3 @@ void Sema::PerformDependentDiagnostics(const DeclContext *Pattern,
     }
   }
 }
-

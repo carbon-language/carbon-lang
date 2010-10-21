@@ -1939,7 +1939,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   } else if (isa<CXXDestructorDecl>(D)) {
     ToFunction = CXXDestructorDecl::Create(Importer.getToContext(),
                                            cast<CXXRecordDecl>(DC),
-                                           NameInfo, T, 
+                                           NameInfo, T, TInfo,
                                            D->isInlineSpecified(),
                                            D->isImplicit());
   } else if (CXXConversionDecl *FromConversion

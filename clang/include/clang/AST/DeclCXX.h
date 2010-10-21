@@ -1492,8 +1492,9 @@ class CXXDestructorDecl : public CXXMethodDecl {
   FunctionDecl *OperatorDelete;
   
   CXXDestructorDecl(CXXRecordDecl *RD, const DeclarationNameInfo &NameInfo,
-                    QualType T, bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXDestructor, RD, NameInfo, T, /*TInfo=*/0, false,
+                    QualType T, TypeSourceInfo *TInfo,
+                    bool isInline, bool isImplicitlyDeclared)
+    : CXXMethodDecl(CXXDestructor, RD, NameInfo, T, TInfo, false,
                     SC_None, isInline),
       ImplicitlyDefined(false), OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
@@ -1503,7 +1504,8 @@ public:
   static CXXDestructorDecl *Create(ASTContext& C, EmptyShell Empty);
   static CXXDestructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                    const DeclarationNameInfo &NameInfo,
-                                   QualType T, bool isInline,
+                                   QualType T, TypeSourceInfo* TInfo,
+                                   bool isInline,
                                    bool isImplicitlyDeclared);
 
   /// isImplicitlyDefined - Whether this destructor was implicitly

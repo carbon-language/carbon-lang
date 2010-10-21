@@ -3353,11 +3353,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       NewFD = CXXDestructorDecl::Create(Context,
                                         cast<CXXRecordDecl>(DC),
-                                        NameInfo, R,
+                                        NameInfo, R, TInfo,
                                         isInline,
                                         /*isImplicitlyDeclared=*/false);
-      NewFD->setTypeSourceInfo(TInfo);
-
       isVirtualOkay = true;
     } else {
       Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);

@@ -1206,18 +1206,19 @@ bool CXXConstructorDecl::isCopyConstructorLikeSpecialization() const {
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) CXXDestructorDecl(0, DeclarationNameInfo(),
-                                   QualType(), false, false);
+                                   QualType(), 0, false, false);
 }
 
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           const DeclarationNameInfo &NameInfo,
-                          QualType T, bool isInline,
+                          QualType T, TypeSourceInfo *TInfo,
+                          bool isInline,
                           bool isImplicitlyDeclared) {
   assert(NameInfo.getName().getNameKind()
          == DeclarationName::CXXDestructorName &&
          "Name must refer to a destructor");
-  return new (C) CXXDestructorDecl(RD, NameInfo, T, isInline,
+  return new (C) CXXDestructorDecl(RD, NameInfo, T, TInfo, isInline,
                                    isImplicitlyDeclared);
 }
 
