@@ -2207,22 +2207,39 @@ def BFI    : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
   let Inst{3-0}   = Rn;
 }
 
-def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMVNr,
-                  "mvn", "\t$dst, $src",
-                  [(set GPR:$dst, (not GPR:$src))]>, UnaryDP {
+def  MVNr  : AsI1<0b1111, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMVNr,
+                  "mvn", "\t$Rd, $Rm",
+                  [(set GPR:$Rd, (not GPR:$Rm))]>, UnaryDP {
+  bits<4> Rd;
+  bits<4> Rm;
   let Inst{25} = 0;
+  let Inst{19-16} = 0b0000;
   let Inst{11-4} = 0b00000000;
+  let Inst{15-12} = Rd;
+  let Inst{3-0} = Rm;
 }
-def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
-                  IIC_iMVNsr, "mvn", "\t$dst, $src",
-                  [(set GPR:$dst, (not so_reg:$src))]>, UnaryDP {
+def  MVNs  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg:$shift), DPSoRegFrm,
+                  IIC_iMVNsr, "mvn", "\t$Rd, $shift",
+                  [(set GPR:$Rd, (not so_reg:$shift))]>, UnaryDP {
+  bits<4> Rd;
+  bits<4> Rm;
+  bits<12> shift;
   let Inst{25} = 0;
+  let Inst{19-16} = 0b0000;
+  let Inst{15-12} = Rd;
+  let Inst{11-0} = shift;
 }
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPFrm,
-                  IIC_iMVNi, "mvn", "\t$dst, $imm",
-                  [(set GPR:$dst, so_imm_not:$imm)]>,UnaryDP {
-    let Inst{25} = 1;
+def  MVNi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm,
+                  IIC_iMVNi, "mvn", "\t$Rd, $imm",
+                  [(set GPR:$Rd, so_imm_not:$imm)]>,UnaryDP {
+  bits<4> Rd;
+  bits<4> Rm;
+  bits<12> imm;
+  let Inst{25} = 1;
+  let Inst{19-16} = 0b0000;
+  let Inst{15-12} = Rd;
+  let Inst{11-0} = imm;
 }
 
 def : ARMPat<(and   GPR:$src, so_imm_not:$imm),

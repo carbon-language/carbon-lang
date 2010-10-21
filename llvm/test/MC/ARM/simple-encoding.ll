@@ -99,7 +99,7 @@ entry:
   ret i64 %shr
 }
 
-define i32 @f11([1 x i32] %A.coerce0, [1 x i32] %B.coerce0) nounwind readnone ssp {
+define i32 @f11([1 x i32] %A.coerce0, [1 x i32] %B.coerce0) {
 entry:
 ; CHECK: f11
 ; CHECK: ubfx  r1, r1, #8, #5         @ encoding: [0x51,0x14,0xe4,0xe7]
@@ -121,4 +121,11 @@ define i32 @f12(i32 %a) {
     ret i32 %tmp
 }
 
+define i64 @f13() {
+; CHECK: f13:
+; CHECK: mvn r0, #0                   @ encoding: [0x00,0x00,0xe0,0xe3]
+; CHECK: mvn r1, #2, 2                @ encoding: [0x02,0x11,0xe0,0xe3]
+entry:
+        ret i64 9223372036854775807
+}
 declare void @llvm.trap() nounwind
