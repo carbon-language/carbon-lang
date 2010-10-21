@@ -5030,16 +5030,16 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
     // See if any floating point values are being passed to this external
     // function. This is used to emit an undefined reference to fltused on
     // Windows.
-    if (!F->hasLocalLinkage() && F->hasName()) {
-      MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
-      for (unsigned i = 0, e = I.getNumArgOperands(); i != e &&
-                  !MMI.callsExternalFunctionWithFloatingPointArguments(); ++i) {
+    MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
+    if (F->isVarArg() &&
+        !MMI.callsExternalVAFunctionWithFloatingPointArguments()) {
+      for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
         const Type* T = I.getArgOperand(i)->getType();
         for (po_iterator<const Type*> i = po_begin(T),
                                       e = po_end(T);
                                       i != e; ++i) {
           if (i->isFloatingPointTy()) {
-            MMI.setCallsExternalFunctionWithFloatingPointArguments(true);
+            MMI.setCallsExternalVAFunctionWithFloatingPointArguments(true);
             break;
           }
         }

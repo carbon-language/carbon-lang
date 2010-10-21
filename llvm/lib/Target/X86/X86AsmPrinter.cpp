@@ -582,7 +582,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
 
   if (Subtarget->isTargetWindows()
    && !Subtarget->isTargetCygMing()
-   && MMI->callsExternalFunctionWithFloatingPointArguments()) {
+   && MMI->callsExternalVAFunctionWithFloatingPointArguments()) {
     MCSymbol *S = MMI->getContext().GetOrCreateSymbol(StringRef("__fltused"));
     OutStreamer.EmitSymbolAttribute(S, MCSA_Global);
   }
