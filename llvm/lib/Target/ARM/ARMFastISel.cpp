@@ -119,19 +119,19 @@ class ARMFastISel : public FastISel {
 
     // Instruction selection routines.
   private:
-    virtual bool SelectLoad(const Instruction *I);
-    virtual bool SelectStore(const Instruction *I);
-    virtual bool SelectBranch(const Instruction *I);
-    virtual bool SelectCmp(const Instruction *I);
-    virtual bool SelectFPExt(const Instruction *I);
-    virtual bool SelectFPTrunc(const Instruction *I);
-    virtual bool SelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
-    virtual bool SelectSIToFP(const Instruction *I);
-    virtual bool SelectFPToSI(const Instruction *I);
-    virtual bool SelectSDiv(const Instruction *I);
-    virtual bool SelectSRem(const Instruction *I);
-    virtual bool SelectCall(const Instruction *I);
-    virtual bool SelectSelect(const Instruction *I);
+    bool SelectLoad(const Instruction *I);
+    bool SelectStore(const Instruction *I);
+    bool SelectBranch(const Instruction *I);
+    bool SelectCmp(const Instruction *I);
+    bool SelectFPExt(const Instruction *I);
+    bool SelectFPTrunc(const Instruction *I);
+    bool SelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
+    bool SelectSIToFP(const Instruction *I);
+    bool SelectFPToSI(const Instruction *I);
+    bool SelectSDiv(const Instruction *I);
+    bool SelectSRem(const Instruction *I);
+    bool SelectCall(const Instruction *I);
+    bool SelectSelect(const Instruction *I);
 
     // Utility routines.
   private:
