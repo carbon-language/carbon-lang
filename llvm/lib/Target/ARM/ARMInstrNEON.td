@@ -1177,21 +1177,9 @@ class N3VD<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            InstrItinClass itin, string OpcodeStr, string Dt,
            ValueType ResTy, ValueType OpTy, SDNode OpNode, bit Commutable>
   : N3V<op24, op23, op21_20, op11_8, 0, op4,
-        (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm), N3RegFrm, itin,
-        OpcodeStr, Dt, "$Dd, $Dn, $Dm", "",
-        [(set DPR:$Dd, (ResTy (OpNode (OpTy DPR:$Dn), (OpTy DPR:$Dm))))]> {
-  // Instruction operands.
-  bits<5> Dd;
-  bits<5> Dn;
-  bits<5> Dm;
-  
-  let Inst{15-12} = Dd{3-0};
-  let Inst{22}    = Dd{4};
-  let Inst{19-16} = Dn{3-0};
-  let Inst{7}     = Dn{4};
-  let Inst{3-0}   = Dm{3-0};
-  let Inst{5}     = Dm{4};
-  
+        (outs DPR:$Vd), (ins DPR:$Vn, DPR:$Vm), N3RegFrm, itin,
+        OpcodeStr, Dt, "$Vd, $Vn, $Vm", "",
+        [(set DPR:$Vd, (ResTy (OpNode (OpTy DPR:$Vn), (OpTy DPR:$Vm))))]> {
   let isCommutable = Commutable;
 }
 // Same as N3VD but no data type.
@@ -1236,20 +1224,6 @@ class N3VQ<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
         OpcodeStr, Dt, "$Qd, $Qn, $Qm", "",
         [(set QPR:$Qd, (ResTy (OpNode (OpTy QPR:$Qn), (OpTy QPR:$Qm))))]> {
   let isCommutable = Commutable;
-  
-  bits<4> Qd;
-  bits<4> Qn;
-  bits<4> Qm;
-  
-  let Inst{15-13} = Qd{2-0};
-  let Inst{22}    = Qd{3};
-  let Inst{12}    = 0;
-  let Inst{19-17} = Qn{2-0};
-  let Inst{7}     = Qn{3};
-  let Inst{16}    = 0;
-  let Inst{3-1}   = Qm{2-0};
-  let Inst{5}     = Qm{3};
-  let Inst{0}     = 0;
 }
 class N3VQX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            InstrItinClass itin, string OpcodeStr,
@@ -1289,22 +1263,10 @@ class N3VDInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
               Format f, InstrItinClass itin, string OpcodeStr, string Dt,
               ValueType ResTy, ValueType OpTy, Intrinsic IntOp, bit Commutable>
   : N3V<op24, op23, op21_20, op11_8, 0, op4,
-        (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm), f, itin,
-        OpcodeStr, Dt, "$Dd, $Dn, $Dm", "",
-        [(set DPR:$Dd, (ResTy (IntOp (OpTy DPR:$Dn), (OpTy DPR:$Dm))))]> {
+        (outs DPR:$Vd), (ins DPR:$Vn, DPR:$Vm), f, itin,
+        OpcodeStr, Dt, "$Vd, $Vn, $Vm", "",
+        [(set DPR:$Vd, (ResTy (IntOp (OpTy DPR:$Vn), (OpTy DPR:$Vm))))]> {
   let isCommutable = Commutable;
-  
-  // Instruction operands.
-  bits<5> Dd;
-  bits<5> Dn;
-  bits<5> Dm;
-
-  let Inst{15-12} = Dd{3-0};
-  let Inst{22}    = Dd{4};
-  let Inst{19-16} = Dn{3-0};
-  let Inst{7}     = Dn{4};
-  let Inst{3-0}   = Dm{3-0};
-  let Inst{5}     = Dm{4};
 }
 class N3VDIntSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin, 
                 string OpcodeStr, string Dt, ValueType Ty, Intrinsic IntOp>
@@ -1332,25 +1294,10 @@ class N3VQInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
               Format f, InstrItinClass itin, string OpcodeStr, string Dt,
               ValueType ResTy, ValueType OpTy, Intrinsic IntOp, bit Commutable>
   : N3V<op24, op23, op21_20, op11_8, 1, op4,
-        (outs QPR:$Qd), (ins QPR:$Qn, QPR:$Qm), f, itin,
-        OpcodeStr, Dt, "$Qd, $Qn, $Qm", "",
-        [(set QPR:$Qd, (ResTy (IntOp (OpTy QPR:$Qn), (OpTy QPR:$Qm))))]> {
+        (outs QPR:$Vd), (ins QPR:$Vn, QPR:$Vm), f, itin,
+        OpcodeStr, Dt, "$Vd, $Vn, $Vm", "",
+        [(set QPR:$Vd, (ResTy (IntOp (OpTy QPR:$Vn), (OpTy QPR:$Vm))))]> {
   let isCommutable = Commutable;
-  
-  // Instruction operands.
-  bits<4> Qd;
-  bits<4> Qn;
-  bits<4> Qm;
-
-  let Inst{15-13} = Qd{2-0};
-  let Inst{22}    = Qd{3};
-  let Inst{12}    = 0;
-  let Inst{19-17} = Qn{2-0};
-  let Inst{7}     = Qn{3};
-  let Inst{16}    = 0;
-  let Inst{3-1}   = Qm{2-0};
-  let Inst{5}     = Qm{3};
-  let Inst{0}     = 0;
 }
 class N3VQIntSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin, 
                 string OpcodeStr, string Dt,
@@ -1629,21 +1576,6 @@ class N3VLExt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
         [(set QPR:$Qd, (OpNode (TyQ (ExtOp (TyD DPR:$Dn))),
                                 (TyQ (ExtOp (TyD DPR:$Dm)))))]> {
   let isCommutable = Commutable;
-  
-  // Instruction operands.
-  bits<4> Qd;
-  bits<5> Dn;
-  bits<5> Dm;
-  
-  let Inst{15-13} = Qd{2-0};
-  let Inst{22}    = Qd{3};
-  let Inst{12}    = 0;
-  let Inst{19-16} = Dn{3-0};
-  let Inst{7}     = Dn{4};
-  let Inst{3-0}   = Dm{3-0};
-  let Inst{5}     = Dm{4};
-  
-  let isCommutable = Commutable;
 }
 
 // Long 3-register intrinsics with explicit extend (VABDL).
@@ -1700,20 +1632,6 @@ class N3VW<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
         [(set QPR:$Qd, (OpNode (TyQ QPR:$Qn),
                                 (TyQ (ExtOp (TyD DPR:$Dm)))))]> {
   let isCommutable = Commutable;
-  
-  // Instruction operands.
-  bits<4> Qd;
-  bits<4> Qn;
-  bits<5> Dm;
-  
-  let Inst{15-13} = Qd{2-0};
-  let Inst{22}    = Qd{3};
-  let Inst{12}    = 0;
-  let Inst{19-17} = Qn{2-0};
-  let Inst{7}     = Qn{3};
-  let Inst{16}    = 0;
-  let Inst{3-0}   = Dm{3-0};
-  let Inst{5}     = Dm{4};
 }
 
 // Pairwise long 2-register intrinsics, both double- and quad-register.
