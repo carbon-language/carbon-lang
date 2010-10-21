@@ -386,8 +386,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       }
     }
 
-    // No pointer arguments?  The attribute in this case is
-    // trivially satisfied.
+    // No pointer arguments?
     if (NonNullArgs.empty()) {
       // Warn the trivial case only if attribute is not coming from a
       // macro instantiation.
