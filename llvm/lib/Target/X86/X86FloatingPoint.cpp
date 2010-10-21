@@ -1306,7 +1306,6 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
-  DebugLoc dl = MI->getDebugLoc();
   switch (MI->getOpcode()) {
   default: llvm_unreachable("Unknown SpecialFP instruction!");
   case X86::FpGET_ST0_32:// Appears immediately after a call returning FP type!
