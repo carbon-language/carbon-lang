@@ -11380,6 +11380,476 @@ atomic_fetch_xor_explicit(atomic_wchar_t* __obj, wchar_t __v,
                                                                       __v, __o);
 }
 
+// atomic_address
+
+struct atomic_address;
+
+bool atomic_is_lock_free(const volatile atomic_address*);
+bool atomic_is_lock_free(const atomic_address*);
+void atomic_init(volatile atomic_address*, void*);
+void atomic_init(atomic_address*, void*);
+void atomic_store(volatile atomic_address*, void*);
+void atomic_store(atomic_address*, void*);
+void atomic_store_explicit(volatile atomic_address*, void*, memory_order);
+void atomic_store_explicit(atomic_address*, void*, memory_order);
+void* atomic_load(const volatile atomic_address*);
+void* atomic_load(const atomic_address*);
+void* atomic_load_explicit(const volatile atomic_address*, memory_order);
+void* atomic_load_explicit(const atomic_address*, memory_order);
+void* atomic_exchange(volatile atomic_address*, void*);
+void* atomic_exchange(atomic_address*, void*);
+void* atomic_exchange_explicit(volatile atomic_address*, void*, memory_order);
+void* atomic_exchange_explicit(atomic_address*, void*, memory_order);
+bool atomic_compare_exchange_weak(volatile atomic_address*, void**, void*);
+bool atomic_compare_exchange_weak(atomic_address*, void**, void*);
+bool atomic_compare_exchange_strong(volatile atomic_address*, void**, void*);
+bool atomic_compare_exchange_strong(atomic_address*, void**, void*);
+bool atomic_compare_exchange_weak_explicit(volatile atomic_address*, void**,
+                                           void*, memory_order, memory_order);
+bool atomic_compare_exchange_weak_explicit(atomic_address*, void**,
+                                           void*, memory_order, memory_order);
+bool atomic_compare_exchange_strong_explicit(volatile atomic_address*, void**, 
+                                             void*, memory_order, memory_order);
+bool atomic_compare_exchange_strong_explicit(atomic_address*, void**,
+                                             void*, memory_order, memory_order);
+void* atomic_fetch_add(volatile atomic_address*, ptrdiff_t);
+void* atomic_fetch_add(atomic_address*, ptrdiff_t);
+void* atomic_fetch_add_explicit(volatile atomic_address*, ptrdiff_t,
+                                memory_order);
+void* atomic_fetch_add_explicit(atomic_address*, ptrdiff_t, memory_order);
+void* atomic_fetch_sub(volatile atomic_address*, ptrdiff_t);
+void* atomic_fetch_sub(atomic_address*, ptrdiff_t);
+void* atomic_fetch_sub_explicit(volatile atomic_address*, ptrdiff_t,
+                                memory_order);
+void* atomic_fetch_sub_explicit(atomic_address*, ptrdiff_t, memory_order);
+
+typedef struct atomic_address
+{
+    void* __v_;
+
+    _LIBCPP_INLINE_VISIBILITY
+    bool is_lock_free() const volatile
+        {return atomic_is_lock_free(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool is_lock_free() const
+        {return atomic_is_lock_free(this);}
+    _LIBCPP_INLINE_VISIBILITY
+    void store(void* __v, memory_order __o = memory_order_seq_cst) volatile
+        {atomic_store_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void store(void* __v, memory_order __o = memory_order_seq_cst)
+        {atomic_store_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void* load(memory_order __o = memory_order_seq_cst) const volatile
+        {return atomic_load_explicit(this, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void* load(memory_order __o = memory_order_seq_cst) const
+        {return atomic_load_explicit(this, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    operator void*() const volatile
+        {return load();}
+    _LIBCPP_INLINE_VISIBILITY
+    operator void*() const
+        {return load();}
+    _LIBCPP_INLINE_VISIBILITY
+    void* exchange(void* __v, memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_exchange_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void* exchange(void* __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_exchange_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(void*& __v, void* __e, memory_order __s,
+                               memory_order __f) volatile
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(void*& __v, void* __e, memory_order __s,
+                               memory_order __f)
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(void*& __v, void* __e, memory_order __s,
+                                 memory_order __f) volatile
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(void*& __v, void* __e, memory_order __s,
+                                 memory_order __f)
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                                          __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(void*& __v, void* __e,
+                               memory_order __s = memory_order_seq_cst) volatile
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(void*& __v, void* __e,
+                               memory_order __s = memory_order_seq_cst)
+        {return atomic_compare_exchange_weak_explicit(this, &__v, __e, __s,
+                                                __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(void*& __v, void* __e,
+                               memory_order __s = memory_order_seq_cst) volatile
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(void*& __v, void* __e,
+                                 memory_order __s = memory_order_seq_cst)
+        {return atomic_compare_exchange_strong_explicit(this, &__v, __e, __s,
+                                                __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(const void*& __v, const void* __e,
+                               memory_order __s, memory_order __f) volatile
+        {return atomic_compare_exchange_weak_explicit(this,
+                   &const_cast<void*&>(__v), const_cast<void*>(__e), __s, __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(const void*& __v, const void* __e,
+                               memory_order __s, memory_order __f)
+        {return atomic_compare_exchange_weak_explicit(this,
+                   &const_cast<void*&>(__v), const_cast<void*>(__e), __s, __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(const void*& __v, const void* __e,
+                                 memory_order __s, memory_order __f) volatile
+        {return atomic_compare_exchange_strong_explicit(this,
+                   &const_cast<void*&>(__v), const_cast<void*>(__e), __s, __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(const void*& __v, const void* __e,
+                                 memory_order __s, memory_order __f)
+        {return atomic_compare_exchange_strong_explicit(this,
+                   &const_cast<void*&>(__v), const_cast<void*>(__e), __s, __f);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(const void*& __v, const void* __e,
+                               memory_order __s = memory_order_seq_cst) volatile
+        {return atomic_compare_exchange_weak_explicit(this,
+                               &const_cast<void*&>(__v), const_cast<void*>(__e),
+                               __s, __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_weak(const void*& __v, const void* __e,
+                               memory_order __s = memory_order_seq_cst)
+        {return atomic_compare_exchange_weak_explicit(this,
+                               &const_cast<void*&>(__v), const_cast<void*>(__e),
+                               __s, __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(const void*& __v, const void* __e,
+                               memory_order __s = memory_order_seq_cst) volatile
+        {return atomic_compare_exchange_strong_explicit(this,
+                               &const_cast<void*&>(__v), const_cast<void*>(__e),
+                               __s, __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    bool compare_exchange_strong(const void*& __v, const void* __e,
+                                 memory_order __s = memory_order_seq_cst)
+        {return atomic_compare_exchange_strong_explicit(this,
+                               &const_cast<void*&>(__v), const_cast<void*>(__e),
+                               __s, __translate_memory_order(__s));}
+    _LIBCPP_INLINE_VISIBILITY
+    void* fetch_add(ptrdiff_t __v,
+                    memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_fetch_add_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void* fetch_add(ptrdiff_t __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_fetch_add_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void* fetch_sub(ptrdiff_t __v,
+                    memory_order __o = memory_order_seq_cst) volatile
+        {return atomic_fetch_sub_explicit(this, __v, __o);}
+    _LIBCPP_INLINE_VISIBILITY
+    void* fetch_sub(ptrdiff_t __v, memory_order __o = memory_order_seq_cst)
+        {return atomic_fetch_sub_explicit(this, __v, __o);}
+#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+    atomic_address() = default;
+#else
+    _LIBCPP_INLINE_VISIBILITY
+    atomic_address() {}
+#endif
+    _LIBCPP_INLINE_VISIBILITY
+    /*constexpr*/ atomic_address(void* __v)
+        : __v_(__v) {}
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    atomic_address(const atomic_address&) = delete;
+    atomic_address& operator=(const atomic_address&) = delete;
+    atomic_address& operator=(const atomic_address&) volatile = delete;
+#else
+private:
+    atomic_address(const atomic_address&);
+    atomic_address& operator=(const atomic_address&);
+    atomic_address& operator=(const atomic_address&) volatile;
+public:
+#endif
+    _LIBCPP_INLINE_VISIBILITY
+    void* operator=(const void* __v) volatile
+        {store(const_cast<void*>(__v)); return const_cast<void*>(__v);}
+    _LIBCPP_INLINE_VISIBILITY
+    void* operator=(const void* __v)
+        {store(const_cast<void*>(__v)); return const_cast<void*>(__v);}
+    _LIBCPP_INLINE_VISIBILITY
+    void* operator+=(ptrdiff_t __v) volatile
+        {return static_cast<char*>(fetch_add(__v)) + __v;}
+    _LIBCPP_INLINE_VISIBILITY
+    void* operator+=(ptrdiff_t __v)
+        {return static_cast<char*>(fetch_add(__v)) + __v;}
+    _LIBCPP_INLINE_VISIBILITY
+    void* operator-=(ptrdiff_t __v) volatile
+        {return static_cast<char*>(fetch_sub(__v)) - __v;}
+    _LIBCPP_INLINE_VISIBILITY
+    void* operator-=(ptrdiff_t __v)
+        {return static_cast<char*>(fetch_sub(__v)) - __v;}
+} atomic_address;
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_is_lock_free(const volatile atomic_address*)
+{
+    typedef void* type;
+    return __atomic_is_lock_free(type);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_is_lock_free(const atomic_address* __obj)
+{
+    return atomic_is_lock_free(const_cast<volatile atomic_address*>(__obj));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_init(volatile atomic_address* __obj, void* __desr)
+{
+    __obj->__v_ = __desr;
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_init(atomic_address* __obj, void* __desr)
+{
+    __obj->__v_ = __desr;
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store(volatile atomic_address* __obj, void* __desr)
+{
+    __atomic_store(&__obj->__v_, __desr, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store(atomic_address* __obj, void* __desr)
+{
+    atomic_store(const_cast<volatile atomic_address*>(__obj), __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store_explicit(volatile atomic_address* __obj, void* __desr,
+                      memory_order __o)
+{
+    __atomic_store(&__obj->__v_, __desr, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store_explicit(atomic_address* __obj, void* __desr, memory_order __o)
+{
+    atomic_store_explicit(const_cast<volatile atomic_address*>(__obj), __desr,
+                                                                           __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_load(const volatile atomic_address* __obj)
+{
+    return __atomic_load(&__obj->__v_, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_load(const atomic_address* __obj)
+{
+    return atomic_load(const_cast<const volatile atomic_address*>(__obj));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_load_explicit(const volatile atomic_address* __obj, memory_order __o)
+{
+    return __atomic_load(&__obj->__v_, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_load_explicit(const atomic_address* __obj, memory_order __o)
+{
+    return atomic_load_explicit(const_cast<const volatile atomic_address*>
+                                                                  (__obj), __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_exchange(volatile atomic_address* __obj, void* __desr)
+{
+    return __atomic_exchange(&__obj->__v_, __desr, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_exchange(atomic_address* __obj, void* __desr)
+{
+    return atomic_exchange(const_cast<volatile atomic_address*>(__obj), __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_exchange_explicit(volatile atomic_address* __obj, void* __desr,
+                         memory_order __o)
+{
+    return __atomic_exchange(&__obj->__v_, __desr, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_exchange_explicit(atomic_address* __obj, void* __desr, memory_order __o)
+{
+    return atomic_exchange_explicit(const_cast<volatile atomic_address*>
+                                                          (__obj), __desr, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak(volatile atomic_address* __obj, void** __exp,
+                             void* __desr)
+{
+    return __atomic_compare_exchange_weak(&__obj->__v_, __exp, __desr,
+                                    memory_order_seq_cst, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak(atomic_address* __obj, void** __exp, void* __desr)
+{
+    return atomic_compare_exchange_weak(const_cast<volatile atomic_address*>
+                                                        (__obj), __exp, __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong(volatile atomic_address* __obj, void** __exp,
+                               void* __desr)
+{
+    return __atomic_compare_exchange_strong(&__obj->__v_, __exp, __desr,
+                                    memory_order_seq_cst, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong(atomic_address* __obj, void** __exp,
+                               void* __desr)
+{
+    return atomic_compare_exchange_strong(const_cast<volatile atomic_address*>
+                                                        (__obj), __exp, __desr);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak_explicit(volatile atomic_address* __obj,
+                                      void** __exp, void* __desr,
+                                      memory_order __s, memory_order __f)
+{
+    return __atomic_compare_exchange_weak(&__obj->__v_, __exp, __desr, __s,
+                                                                           __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak_explicit(atomic_address* __obj, void** __exp,
+                                      void* __desr, memory_order __s,
+                                      memory_order __f)
+{
+    return atomic_compare_exchange_weak_explicit(
+             const_cast<volatile atomic_address*>(__obj), __exp, __desr, __s, __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong_explicit(volatile atomic_address* __obj,
+                                        void** __exp, void* __desr,
+                                        memory_order __s, memory_order __f)
+{
+    return __atomic_compare_exchange_strong(&__obj->__v_, __exp, __desr, __s,
+                                                                           __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong_explicit(atomic_address* __obj, void** __exp,
+                                        void* __desr, memory_order __s,
+                                        memory_order __f)
+{
+    return atomic_compare_exchange_strong_explicit(
+             const_cast<volatile atomic_address*>(__obj), __exp, __desr, __s, __f);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_fetch_add(volatile atomic_address* __obj, ptrdiff_t __v)
+{
+    return __atomic_fetch_add(&__obj->__v_, __v, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_fetch_add(atomic_address* __obj, ptrdiff_t __v)
+{
+    return atomic_fetch_add(const_cast<volatile atomic_address*>(__obj), __v);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_fetch_add_explicit(volatile atomic_address* __obj, ptrdiff_t __v,
+                          memory_order __o)
+{
+    return __atomic_fetch_add(&__obj->__v_, __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_fetch_add_explicit(atomic_address* __obj, ptrdiff_t __v,
+                          memory_order __o)
+{
+    return atomic_fetch_add_explicit(const_cast<volatile atomic_address*>(__obj),
+                                                                      __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_fetch_sub(volatile atomic_address* __obj, ptrdiff_t __v)
+{
+    return __atomic_fetch_sub(&__obj->__v_, __v, memory_order_seq_cst);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_fetch_sub(atomic_address* __obj, ptrdiff_t __v)
+{
+    return atomic_fetch_sub(const_cast<volatile atomic_address*>(__obj), __v);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_fetch_sub_explicit(volatile atomic_address* __obj, ptrdiff_t __v,
+                          memory_order __o)
+{
+    return __atomic_fetch_sub(&__obj->__v_, __v, __o);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void*
+atomic_fetch_sub_explicit(atomic_address* __obj, ptrdiff_t __v,
+                          memory_order __o)
+{
+    return atomic_fetch_sub_explicit(const_cast<volatile atomic_address*>(__obj),
+                                                                      __v, __o);
+}
+
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_ATOMIC
