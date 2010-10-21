@@ -628,14 +628,13 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
     case ARM::MOVsrl_flag:
     case ARM::MOVsra_flag: {
       // These are just fancy MOVs insructions.
-      MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
-                               MI.getOperand(0).getReg())
-        .addOperand(MI.getOperand(1))
-        .addReg(0)
-        .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ? ARM_AM::lsr
-                                     : ARM_AM::asr), 1)))
-        .addReg(ARM::CPSR, RegState::Define);
+      AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
+                             MI.getOperand(0).getReg())
+      .addOperand(MI.getOperand(1))
+      .addReg(0)
+      .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ? ARM_AM::lsr
+                                   : ARM_AM::asr), 1)))
+      .addReg(ARM::CPSR, RegState::Define);
       MI.eraseFromParent();
       break;
     }
