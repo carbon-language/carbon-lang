@@ -1177,9 +1177,21 @@ class N3VD<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            InstrItinClass itin, string OpcodeStr, string Dt,
            ValueType ResTy, ValueType OpTy, SDNode OpNode, bit Commutable>
   : N3V<op24, op23, op21_20, op11_8, 0, op4,
-        (outs DPR:$dst), (ins DPR:$src1, DPR:$src2), N3RegFrm, itin,
-        OpcodeStr, Dt, "$dst, $src1, $src2", "",
-        [(set DPR:$dst, (ResTy (OpNode (OpTy DPR:$src1), (OpTy DPR:$src2))))]> {
+        (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm), N3RegFrm, itin,
+        OpcodeStr, Dt, "$Dd, $Dn, $Dm", "",
+        [(set DPR:$Dd, (ResTy (OpNode (OpTy DPR:$Dn), (OpTy DPR:$Dm))))]> {
+  // Instruction operands.
+  bits<5> Dd;
+  bits<5> Dn;
+  bits<5> Dm;
+  
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+  let Inst{19-16} = Dn{3-0};
+  let Inst{7}     = Dn{4};
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  
   let isCommutable = Commutable;
 }
 // Same as N3VD but no data type.
@@ -1220,10 +1232,24 @@ class N3VQ<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            InstrItinClass itin, string OpcodeStr, string Dt,
            ValueType ResTy, ValueType OpTy, SDNode OpNode, bit Commutable>
   : N3V<op24, op23, op21_20, op11_8, 1, op4,
-        (outs QPR:$dst), (ins QPR:$src1, QPR:$src2), N3RegFrm, itin, 
-        OpcodeStr, Dt, "$dst, $src1, $src2", "",
-        [(set QPR:$dst, (ResTy (OpNode (OpTy QPR:$src1), (OpTy QPR:$src2))))]> {
+        (outs QPR:$Dd), (ins QPR:$Dn, QPR:$Dm), N3RegFrm, itin, 
+        OpcodeStr, Dt, "$Dd, $Dn, $Dm", "",
+        [(set QPR:$Dd, (ResTy (OpNode (OpTy QPR:$Dn), (OpTy QPR:$Dm))))]> {
   let isCommutable = Commutable;
+  
+  bits<4> Dd;
+  bits<4> Dn;
+  bits<4> Dm;
+  
+  let Inst{15-13} = Dd{2-0};
+  let Inst{22}    = Dd{3};
+  let Inst{12}    = 0;
+  let Inst{19-17} = Dn{2-0};
+  let Inst{7}     = Dn{3};
+  let Inst{16}    = 0;
+  let Inst{3-1}   = Dm{2-0};
+  let Inst{5}     = Dm{3};
+  let Inst{0}     = 0;
 }
 class N3VQX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            InstrItinClass itin, string OpcodeStr,
