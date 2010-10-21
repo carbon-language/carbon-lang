@@ -13,11 +13,11 @@ define i8 @test_i8(i8 %a, i8 %b) {
     ; FUN-NOT:    mul
     ; FUN:        brlid
     ; MUL-NOT:    brlid
-    ; MUL:        mul
 
     ret i8 %tmp.1
     ; FUN:        rtsd
     ; MUL:        rtsd
+    ; MUL:        mul
 }
 
 define i16 @test_i16(i16 %a, i16 %b) {
@@ -28,11 +28,11 @@ define i16 @test_i16(i16 %a, i16 %b) {
     ; FUN-NOT:    mul
     ; FUN:        brlid
     ; MUL-NOT:    brlid
-    ; MUL:        mul
 
     ret i16 %tmp.1
     ; FUN:        rtsd
     ; MUL:        rtsd
+    ; MUL:        mul
 }
 
 define i32 @test_i32(i32 %a, i32 %b) {
@@ -43,9 +43,9 @@ define i32 @test_i32(i32 %a, i32 %b) {
     ; FUN-NOT:    mul
     ; FUN:        brlid
     ; MUL-NOT:    brlid
-    ; MUL:        mul
 
     ret i32 %tmp.1
     ; FUN:        rtsd
     ; MUL:        rtsd
+    ; MUL:        mul
 }

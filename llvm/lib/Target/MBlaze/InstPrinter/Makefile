@@ -6,12 +6,11 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-
 LEVEL = ../../../..
 LIBRARYNAME = LLVMMBlazeAsmPrinter
 
 # Hack: we need to include 'main' MBlaze target directory to grab
-# private headers
+#       private headers
 CPP.Flags += -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LEVEL)/Makefile.common

@@ -19,6 +19,8 @@
 #include "MBlazeInstrInfo.h"
 #include "MBlazeTargetMachine.h"
 #include "MBlazeMachineFunction.h"
+#include "MBlazeMCInstLower.h"
+#include "InstPrinter/MBlazeInstPrinter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -27,6 +29,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
@@ -69,22 +72,15 @@ namespace {
 
     void emitFrameDirective();
 
-    void printInstruction(const MachineInstr *MI, raw_ostream &O);
-    void EmitInstruction(const MachineInstr *MI) { 
-      SmallString<128> Str;
-      raw_svector_ostream OS(Str);
-      printInstruction(MI, OS);
-      OutStreamer.EmitRawText(OS.str());
-    }
+    void EmitInstruction(const MachineInstr *MI); 
     virtual void EmitFunctionBodyStart();
     virtual void EmitFunctionBodyEnd();
-    static const char *getRegisterName(unsigned RegNo);
 
     virtual void EmitFunctionEntryLabel();
   };
 } // end of anonymous namespace
 
-#include "MBlazeGenAsmWriter.inc"
+// #include "MBlazeGenAsmWriter.inc"
 
 //===----------------------------------------------------------------------===//
 //
@@ -116,6 +112,15 @@ namespace {
 //    saved at address 48-8=40.
 //
 //===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+void MBlazeAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  MBlazeMCInstLower MCInstLowering(OutContext, *Mang, *this);
+
+  MCInst TmpInst;
+  MCInstLowering.Lower(MI, TmpInst);
+  OutStreamer.EmitInstruction(TmpInst);
+}
 
 //===----------------------------------------------------------------------===//
 // Mask directives
@@ -168,38 +173,41 @@ void MBlazeAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
 
 /// Frame Directive
 void MBlazeAsmPrinter::emitFrameDirective() {
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
+  // const TargetRegisterInfo &RI = *TM.getRegisterInfo();
 
-  unsigned stackReg  = RI.getFrameRegister(*MF);
-  unsigned returnReg = RI.getRARegister();
-  unsigned stackSize = MF->getFrameInfo()->getStackSize();
+  // unsigned stackReg  = RI.getFrameRegister(*MF);
+  // unsigned returnReg = RI.getRARegister();
+  // unsigned stackSize = MF->getFrameInfo()->getStackSize();
 
 
-  OutStreamer.EmitRawText("\t.frame\t" + Twine(getRegisterName(stackReg)) +
+  /*
+  OutStreamer.EmitRawText("\t.frame\t" + 
+                          Twine(MBlazeInstPrinter::getRegisterName(stackReg)) +
                           "," + Twine(stackSize) + "," +
-                          Twine(getRegisterName(returnReg)));
+                          Twine(MBlazeInstPrinter::getRegisterName(returnReg)));
+  */
 }
 
 void MBlazeAsmPrinter::EmitFunctionEntryLabel() {
-  OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
+  // OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 
 /// EmitFunctionBodyStart - Targets can override this to emit stuff before
 /// the first basic block in the function.
 void MBlazeAsmPrinter::EmitFunctionBodyStart() {
-  emitFrameDirective();
+  // emitFrameDirective();
   
-  SmallString<128> Str;
-  raw_svector_ostream OS(Str);
-  printSavedRegsBitmask(OS);
-  OutStreamer.EmitRawText(OS.str());
+  // SmallString<128> Str;
+  // raw_svector_ostream OS(Str);
+  // printSavedRegsBitmask(OS);
+  // OutStreamer.EmitRawText(OS.str());
 }
 
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
 /// the last basic block in the function.
 void MBlazeAsmPrinter::EmitFunctionBodyEnd() {
-  OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
+  // OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
 }
 
 // Print out an operand for an inline asm expression.
@@ -220,7 +228,7 @@ void MBlazeAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
 
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    O << getRegisterName(MO.getReg());
+    O << MBlazeInstPrinter::getRegisterName(MO.getReg());
     break;
 
   case MachineOperand::MO_Immediate:
@@ -248,7 +256,7 @@ void MBlazeAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
 
   case MachineOperand::MO_JumpTableIndex:
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-    << '_' << MO.getIndex();
+      << '_' << MO.getIndex();
     break;
 
   case MachineOperand::MO_ConstantPoolIndex:
@@ -289,7 +297,18 @@ printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
   printOperand(MI, opNum, O);
 }
 
+static MCInstPrinter *createMBlazeMCInstPrinter(const Target &T,
+                                                unsigned SyntaxVariant,
+                                                const MCAsmInfo &MAI) {
+  if (SyntaxVariant == 0)
+    return new MBlazeInstPrinter(MAI);
+  return 0;
+}
+
 // Force static initialization.
 extern "C" void LLVMInitializeMBlazeAsmPrinter() {
   RegisterAsmPrinter<MBlazeAsmPrinter> X(TheMBlazeTarget);
+  TargetRegistry::RegisterMCInstPrinter(TheMBlazeTarget,
+                                        createMBlazeMCInstPrinter);
+
 }
