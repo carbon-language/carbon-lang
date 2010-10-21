@@ -12,27 +12,33 @@
 //
 // In LLVM IR, memory does not have types, so LLVM's own type system is not
 // suitable for doing TBAA. Instead, metadata is added to the IR to describe
-// a type system of a higher level language.
+// a type system of a higher level language. This can be used to implement
+// typical C/C++ TBAA, but it can also be used to implement custom alias
+// analysis behavior for other languages.
 //
-// This pass is language-independent. The type system is encoded in
-// metadata. This allows this pass to support typical C and C++ TBAA, but
-// it can also support custom aliasing behavior for other languages.
+// The current metadata format is very simple. TBAA MDNodes have up to
+// three fields, e.g.:
+//   !0 = metadata !{ metadata !"an example type tree" }
+//   !1 = metadata !{ metadata !"int", metadata !0 }
+//   !2 = metadata !{ metadata !"float", metadata !0 }
+//   !3 = metadata !{ metadata !"const float", metadata !2, i64 1 }
 //
-// This is a work-in-progress. It doesn't work yet, and the metadata
-// format isn't stable.
+// The first field is an identity field. It can be any value, usually
+// an MDString, which uniquely identifies the type. The most important
+// name in the tree is the name of the root node. Two trees with
+// different root node names are entirely disjoint, even if they
+// have leaves with common names.
 //
-// The current metadata format is very simple. MDNodes have up to three
-// fields, e.g.:
-//   !0 = metadata !{ !"name", !1, 0 }
-// The first field is an identity field. It can be any MDString which
-// uniquely identifies the type. The second field identifies the type's
-// parent node in the tree, or is null or omitted for a root node.
+// The second field identifies the type's parent node in the tree, or
+// is null or omitted for a root node. A type is considered to alias
+// all of its decendents and all of its ancestors in the tree.
+//
 // If the third field is present, it's an integer which if equal to 1
-// indicates that the type is "constant" (meaning 
-// pointsToConstantMemory should return true; see
+// indicates that the type is "constant" (meaning pointsToConstantMemory
+// should return true; see
 // http://llvm.org/docs/AliasAnalysis.html#OtherItfs).
 //
-// TODO: The current metadata encoding scheme doesn't support struct
+// TODO: The current metadata format doesn't support struct
 // fields. For example:
 //   struct X {
 //     double d;
