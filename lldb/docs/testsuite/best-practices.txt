@@ -37,3 +37,35 @@ This tells the test harness that unless we are running "darwin", the test should
 be skipped.  This is because we are asking to build the binaries with dsym debug
 info, which is only available on the darwin platforms.
 
+o Cleanup after yourself.  A classic example of this can be found in test/types/
+  TestFloatTypes.py:
+
+    def test_float_types_with_dsym(self):
+        """Test that float-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'float.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.float_type()
+
+    ...
+
+    def test_double_type_with_dsym(self):
+        """Test that double-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'double.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.double_type()
+
+This tests different data structures composed of float types to verify that what
+the debugger prints out matches what the compiler does for different variables
+of these types.  We're using a dictionary to pass the build parameters to the
+build system.  After a particular test instance is done, it is a good idea to
+clean up the files built.  This eliminates the chance that some leftover files
+can interfere with the build phase for the next test instance and render it
+invalid.
+
+TestBase.setTearDownCleanup(self, dictionary) defined in lldbtest.py is created
+to cope with this use case by taking the same build parameters in order to do
+the cleanup when we are finished with a test instance, during
+TestBase.tearDown(self).
+
