@@ -1923,11 +1923,18 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     ConditionalOperator *C = cast<ConditionalOperator>(E);
 
     // Handle the GNU extension for missing LHS.
-    if (Expr *lhsExpr = C->getLHS())
-      if (DeclRefExpr* LHS = EvalAddr(lhsExpr))
-        return LHS;
+    if (Expr *lhsExpr = C->getLHS()) {
+    // In C++, we can have a throw-expression, which has 'void' type.
+      if (!lhsExpr->getType()->isVoidType())
+        if (DeclRefExpr* LHS = EvalAddr(lhsExpr))
+          return LHS;
+    }
 
-     return EvalAddr(C->getRHS());
+    // In C++, we can have a throw-expression, which has 'void' type.
+    if (C->getRHS()->getType()->isVoidType())
+      return NULL;
+
+    return EvalAddr(C->getRHS());
   }
 
   // For casts, we need to handle conversions from arrays to
