@@ -2248,46 +2248,88 @@ def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
 //===----------------------------------------------------------------------===//
 //  Multiply Instructions.
 //
+class AsMul1I32<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
+             string opc, string asm, list<dag> pattern>
+  : AsMul1I<opcod, oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  bits<4> Rm;
+  bits<4> Rn;
+  let Inst{19-16} = Rd;
+  let Inst{11-8}  = Rm;
+  let Inst{3-0}   = Rn;
+}
+class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
+             string opc, string asm, list<dag> pattern>
+  : AsMul1I<opcod, oops, iops, itin, opc, asm, pattern> {
+  bits<4> RdLo;
+  bits<4> RdHi;
+  bits<4> Rm;
+  bits<4> Rn;
+  let Inst{19-16} = RdLo;
+  let Inst{15-12} = RdHi;
+  let Inst{11-8}  = Rm;
+  let Inst{3-0}   = Rn;
+}
 
 let isCommutable = 1 in
-def MUL   : AsMul1I<0b0000000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-                   IIC_iMUL32, "mul", "\t$dst, $a, $b",
-                   [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
+def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                   IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
+                   [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>;
 
-def MLA   : AsMul1I<0b0000001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-                    IIC_iMAC32, "mla", "\t$dst, $a, $b, $c",
-                   [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
+def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
+                    IIC_iMAC32, "mla", "\t$Rd, $Rn, $Rm, $Ra",
+                   [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]> {
+  bits<4> Ra;
+  let Inst{15-12} = Ra;
+}
 
-def MLS   : AMul1I<0b0000011, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
+def MLS  : AMul1I<0b0000011, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
                    IIC_iMAC32, "mls", "\t$dst, $a, $b, $c",
                    [(set GPR:$dst, (sub GPR:$c, (mul GPR:$a, GPR:$b)))]>,
-                   Requires<[IsARM, HasV6T2]>;
+                   Requires<[IsARM, HasV6T2]> {
+  bits<4> Rd;
+  bits<4> Rm;
+  bits<4> Rn;
+  let Inst{19-16} = Rd;
+  let Inst{11-8}  = Rm;
+  let Inst{3-0}   = Rn;
+}
 
 // Extra precision multiplies with low / high results
+
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
-def SMULL : AsMul1I<0b0000110, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMUL64,
-                    "smull", "\t$ldst, $hdst, $a, $b", []>;
+def SMULL : AsMul1I64<0b0000110, (outs GPR:$RdLo, GPR:$RdHi),
+                               (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
+                    "smull", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
 
-def UMULL : AsMul1I<0b0000100, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMUL64,
-                    "umull", "\t$ldst, $hdst, $a, $b", []>;
+def UMULL : AsMul1I64<0b0000100, (outs GPR:$RdLo, GPR:$RdHi),
+                               (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
+                    "umull", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
 }
 
 // Multiply + accumulate
-def SMLAL : AsMul1I<0b0000111, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMAC64,
-                    "smlal", "\t$ldst, $hdst, $a, $b", []>;
+def SMLAL : AsMul1I64<0b0000111, (outs GPR:$RdLo, GPR:$RdHi),
+                               (ins GPR:$Rn, GPR:$Rm), IIC_iMAC64,
+                    "smlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
 
-def UMLAL : AsMul1I<0b0000101, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMAC64,
-                    "umlal", "\t$ldst, $hdst, $a, $b", []>;
+def UMLAL : AsMul1I64<0b0000101, (outs GPR:$RdLo, GPR:$RdHi),
+                               (ins GPR:$Rn, GPR:$Rm), IIC_iMAC64,
+                    "umlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
 
-def UMAAL : AMul1I <0b0000010, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMAC64,
-                    "umaal", "\t$ldst, $hdst, $a, $b", []>,
-                    Requires<[IsARM, HasV6]>;
+def UMAAL : AMul1I <0b0000010, (outs GPR:$RdLo, GPR:$RdHi),
+                               (ins GPR:$Rn, GPR:$Rm), IIC_iMAC64,
+                    "umaal", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                    Requires<[IsARM, HasV6]> {
+  bits<4> RdLo;
+  bits<4> RdHi;
+  bits<4> Rm;
+  bits<4> Rn;
+  let Inst{19-16} = RdLo;
+  let Inst{15-12} = RdHi;
+  let Inst{11-8}  = Rm;
+  let Inst{3-0}   = Rn;
+}
 } // neverHasSideEffects
 
 // Most significant word multiply
