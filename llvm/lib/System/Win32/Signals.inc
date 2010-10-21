@@ -1,10 +1,10 @@
 //===- Win32/Signals.cpp - Win32 Signals Implementation ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides the Win32 specific implementation of the Signals class.
@@ -54,7 +54,7 @@ static CRITICAL_SECTION CriticalSection;
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only Win32 specific code 
+//=== WARNING: Implementation here must contain only Win32 specific code
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
@@ -208,11 +208,11 @@ void llvm::sys::RunInterruptHandlers() {
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
   try {
     Cleanup();
-    
+
 #ifdef _WIN64
   // TODO: provide a x64 friendly version of the following
 #else
-    
+
     // Initialize the STACKFRAME structure.
     STACKFRAME StackFrame;
     memset(&StackFrame, 0, sizeof(StackFrame));
