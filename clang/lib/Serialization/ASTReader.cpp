@@ -74,6 +74,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_BENIGN(HexFloats);
   PARSE_LANGOPT_IMPORTANT(C99, diag::warn_pch_c99);
   PARSE_LANGOPT_IMPORTANT(Microsoft, diag::warn_pch_microsoft_extensions);
+  PARSE_LANGOPT_BENIGN(MSCVersion);
   PARSE_LANGOPT_IMPORTANT(CPlusPlus, diag::warn_pch_cplusplus);
   PARSE_LANGOPT_IMPORTANT(CPlusPlus0x, diag::warn_pch_cplusplus0x);
   PARSE_LANGOPT_BENIGN(CXXOperatorName);

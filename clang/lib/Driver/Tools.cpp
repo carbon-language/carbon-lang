@@ -1314,6 +1314,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    getToolChain().getTriple().getOS() == llvm::Triple::Win32))
     CmdArgs.push_back("-fms-extensions");
 
+  // -fmsc-version=1300 is default.
+  if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
+                   getToolChain().getTriple().getOS() == llvm::Triple::Win32) ||
+      Args.hasArg(options::OPT_fmsc_version)) {
+    llvm::StringRef msc_ver = Args.getLastArgValue(options::OPT_fmsc_version);
+    if (msc_ver.empty())
+      CmdArgs.push_back("-fmsc-version=1300");
+    else
+      CmdArgs.push_back(Args.MakeArgString("-fmsc-version=" + msc_ver));
+  }
+
+
   // -fborland-extensions=0 is default.
   if (Args.hasFlag(options::OPT_fborland_extensions,
                    options::OPT_fno_borland_extensions, false))

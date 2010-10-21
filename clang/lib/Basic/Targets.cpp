@@ -405,6 +405,54 @@ public:
     // FIXME: WIntType should be SignedLong
   }
 };
+
+// Windows target
+template<typename Target>
+class WindowsTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                            MacroBuilder &Builder) const {
+    if (Opts.CPlusPlus) {
+      if (Opts.RTTI)
+        Builder.defineMacro("_CPPRTTI");
+
+      if (Opts.Exceptions)
+        Builder.defineMacro("_CPPUNWIND");
+    }
+
+    if (!Opts.CharIsSigned)
+      Builder.defineMacro("_CHAR_UNSIGNED");
+
+    // FIXME: POSIXThreads isn't exactly the option this should be defined for,
+    //        but it works for now.
+    if (Opts.POSIXThreads)
+      Builder.defineMacro("_MT");
+      
+    if (Opts.MSCVersion != 0)
+      Builder.defineMacro("_MSC_VER", llvm::Twine(Opts.MSCVersion));
+
+    if (Opts.Microsoft) {
+      Builder.defineMacro("_MSC_EXTENSIONS");
+
+      if (Opts.CPlusPlus0x) {
+        Builder.defineMacro("_RVALUE_REFERENCES_V2_SUPPORTED");
+        Builder.defineMacro("_RVALUE_REFERENCES_SUPPORTED");
+        Builder.defineMacro("_NATIVE_NULLPTR_SUPPORTED");
+      }
+    }
+
+    Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
+    Builder.defineMacro("_WIN32");
+  }
+
+  virtual const char *getVAListDeclaration() const {
+    return "typedef char* __builtin_va_list;";
+  }
+public:
+  WindowsTargetInfo(const std::string &triple)
+    : OSTargetInfo<Target>(triple) {}
+};
+
 } // end anonymous namespace.
 
 //===----------------------------------------------------------------------===//
@@ -1185,6 +1233,21 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     break;
   }
 
+  if (Opts.Microsoft && PointerWidth == 32) {
+    Builder.defineMacro("_M_IX86", "600");
+
+    switch (SSELevel) {
+    case SSE2:
+      Builder.defineMacro("_M_IX86_FP", llvm::Twine(2));
+      break;
+    case SSE1:
+      Builder.defineMacro("_M_IX86_FP", llvm::Twine(1));
+      break;
+    default:
+      Builder.defineMacro("_M_IX86_FP", llvm::Twine(0));
+    }
+  }
+
   // Each case falls through to the previous one here.
   switch (AMD3DNowLevel) {
   case AMD3DNowAthlon:
@@ -1325,48 +1388,18 @@ public:
 
 namespace {
 // x86-32 Windows target
-class WindowsX86_32TargetInfo : public X86_32TargetInfo {
+class WindowsX86_32TargetInfo : public WindowsTargetInfo<X86_32TargetInfo> {
 public:
   WindowsX86_32TargetInfo(const std::string& triple)
-    : X86_32TargetInfo(triple) {
+    : WindowsTargetInfo<X86_32TargetInfo>(triple) {
     TLSSupported = false;
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
+    LongDoubleWidth = 64;
+    LongDoubleFormat = &llvm::APFloat::IEEEdouble;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-f80:128:128-v64:64:64-"
                         "v128:128:128-a0:0:64-f80:32:32-n8:16:32";
-  }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                MacroBuilder &Builder) const {
-    X86_32TargetInfo::getTargetDefines(Opts, Builder);
-    // This list is based off of the the list of things MingW defines
-    Builder.defineMacro("_WIN32");
-    DefineStd(Builder, "WIN32", Opts);
-    DefineStd(Builder, "WINNT", Opts);
-    Builder.defineMacro("_X86_");
-  }
-};
-} // end anonymous namespace
-
-namespace {
-
-// x86-32 Windows Visual Studio target
-class VisualStudioWindowsX86_32TargetInfo : public WindowsX86_32TargetInfo {
-public:
-  VisualStudioWindowsX86_32TargetInfo(const std::string& triple)
-    : WindowsX86_32TargetInfo(triple) {
-    LongDoubleWidth = 64;
-    LongDoubleFormat = &llvm::APFloat::IEEEdouble;
-  }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                MacroBuilder &Builder) const {
-    WindowsX86_32TargetInfo::getTargetDefines(Opts, Builder);
-    // The value of the following reflects processor type.
-    // 300=386, 400=486, 500=Pentium, 600=Blend (default)
-    // We lost the original triple, so we use the default.
-    Builder.defineMacro("_M_IX86", "600");
-    Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
-    Builder.defineMacro("_STDCALL_SUPPORTED");
   }
 };
 } // end anonymous namespace
@@ -1474,10 +1507,10 @@ public:
 
 namespace {
 // x86-64 Windows target
-class WindowsX86_64TargetInfo : public X86_64TargetInfo {
+class WindowsX86_64TargetInfo : public WindowsTargetInfo<X86_64TargetInfo> {
 public:
   WindowsX86_64TargetInfo(const std::string& triple)
-    : X86_64TargetInfo(triple) {
+    : WindowsTargetInfo<X86_64TargetInfo>(triple) {
     TLSSupported = false;
     WCharType = UnsignedShort;
     LongWidth = LongAlign = 32;
@@ -1491,25 +1524,11 @@ public:
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
-    X86_64TargetInfo::getTargetDefines(Opts, Builder);
-    Builder.defineMacro("_WIN64");
-    DefineStd(Builder, "WIN64", Opts);
-  }
-};
-} // end anonymous namespace
+    WindowsTargetInfo<X86_64TargetInfo>::getTargetDefines(Opts, Builder);
 
-namespace {
-// x86-64 Windows Visual Studio target
-class VisualStudioWindowsX86_64TargetInfo : public WindowsX86_64TargetInfo {
-public:
-  VisualStudioWindowsX86_64TargetInfo(const std::string& triple)
-    : WindowsX86_64TargetInfo(triple) {
-  }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                MacroBuilder &Builder) const {
-    WindowsX86_64TargetInfo::getTargetDefines(Opts, Builder);
+    Builder.defineMacro("_WIN64");
     Builder.defineMacro("_M_X64");
-    Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
+    Builder.defineMacro("_M_AMD64");
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
@@ -2523,7 +2542,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     case llvm::Triple::MinGW32:
       return new MinGWX86_32TargetInfo(T);
     case llvm::Triple::Win32:
-      return new VisualStudioWindowsX86_32TargetInfo(T);
+      return new WindowsX86_32TargetInfo(T);
     case llvm::Triple::Haiku:
       return new HaikuX86_32TargetInfo(T);
     default:
@@ -2551,7 +2570,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     case llvm::Triple::MinGW64:
       return new MinGWX86_64TargetInfo(T);
     case llvm::Triple::Win32:   // This is what Triple.h supports now.
-      return new VisualStudioWindowsX86_64TargetInfo(T);
+      return new WindowsX86_64TargetInfo(T);
     default:
       return new X86_64TargetInfo(T);
     }

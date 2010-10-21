@@ -175,6 +175,10 @@ Enable support for Pascal-style strings with "\pfoo".
 
 Enable support for Microsoft extensions.
 
+=item B<-fmsc-version=>
+
+Set _MSC_VER. Defaults to 1300 on Windows. Not set otherwise.
+
 =item B<-fborland-extensions>
 
 Enable support for Borland extensions.

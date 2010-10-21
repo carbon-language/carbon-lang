@@ -122,6 +122,11 @@ private:
 public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
+  // Version of Microsoft Visual C/C++ we are pretending to be. This is
+  // temporary until we support all MS extensions used in Windows SDK and stdlib
+  // headers. Sets _MSC_VER.
+  unsigned MSCVersion;
+
   std::string ObjCConstantStringClass;
 
   enum GCMode { NonGC, GCOnly, HybridGC };
