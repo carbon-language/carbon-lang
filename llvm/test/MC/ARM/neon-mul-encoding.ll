@@ -176,3 +176,80 @@ define <4 x i32> @vqrdmulh_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 	%tmp3 = call <4 x i32> @llvm.arm.neon.vqrdmulh.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
 	ret <4 x i32> %tmp3
 }
+
+; CHECK: vmulls_8xi16
+define <8 x i16> @vmulls_8xi16(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = sext <8 x i8> %tmp1 to <8 x i16>
+	%tmp4 = sext <8 x i8> %tmp2 to <8 x i16>
+; CHECK: vmull.s8	q8, d16, d17    @ encoding: [0xa1,0x0c,0xc0,0xf2]
+	%tmp5 = mul <8 x i16> %tmp3, %tmp4
+	ret <8 x i16> %tmp5
+}
+
+; CHECK: vmulls_4xi16
+define <4 x i32> @vmulls_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = sext <4 x i16> %tmp1 to <4 x i32>
+	%tmp4 = sext <4 x i16> %tmp2 to <4 x i32>
+; CHECK: vmull.s16	q8, d16, d17    @ encoding: [0xa1,0x0c,0xd0,0xf2]
+	%tmp5 = mul <4 x i32> %tmp3, %tmp4
+	ret <4 x i32> %tmp5
+}
+
+; CHECK: vmulls_2xi32
+define <2 x i64> @vmulls_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = sext <2 x i32> %tmp1 to <2 x i64>
+	%tmp4 = sext <2 x i32> %tmp2 to <2 x i64>
+; CHECK: vmull.s32	q8, d16, d17    @ encoding: [0xa1,0x0c,0xe0,0xf2]
+	%tmp5 = mul <2 x i64> %tmp3, %tmp4
+	ret <2 x i64> %tmp5
+}
+
+; CHECK: vmullu_8xi8
+define <8 x i16> @vmullu_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = zext <8 x i8> %tmp1 to <8 x i16>
+	%tmp4 = zext <8 x i8> %tmp2 to <8 x i16>
+; CHECK: vmull.u8	q8, d16, d17    @ encoding: [0xa1,0x0c,0xc0,0xf3]
+	%tmp5 = mul <8 x i16> %tmp3, %tmp4
+	ret <8 x i16> %tmp5
+}
+
+; CHECK: vmullu_4xi16
+define <4 x i32> @vmullu_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = zext <4 x i16> %tmp1 to <4 x i32>
+	%tmp4 = zext <4 x i16> %tmp2 to <4 x i32>
+; CHECK: vmull.u16	q8, d16, d17    @ encoding: [0xa1,0x0c,0xd0,0xf3]
+	%tmp5 = mul <4 x i32> %tmp3, %tmp4
+	ret <4 x i32> %tmp5
+}
+
+; CHECK: vmullu_2xi32
+define <2 x i64> @vmullu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = zext <2 x i32> %tmp1 to <2 x i64>
+	%tmp4 = zext <2 x i32> %tmp2 to <2 x i64>
+; CHECK: vmull.u32	q8, d16, d17    @ encoding: [0xa1,0x0c,0xe0,0xf3]
+	%tmp5 = mul <2 x i64> %tmp3, %tmp4
+	ret <2 x i64> %tmp5
+}
+
+declare <8 x i16>  @llvm.arm.neon.vmullp.v8i16(<8 x i8>, <8 x i8>) nounwind readnone
+
+; CHECK: vmullp_8xi8
+define <8 x i16> @vmullp_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vmull.p8	q8, d16, d17    @ encoding: [0xa1,0x0e,0xc0,0xf2]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vmullp.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i16> %tmp3
+}
