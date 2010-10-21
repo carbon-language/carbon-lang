@@ -5,11 +5,13 @@ Test that variable expressions of integer basic types are evaluated correctly.
 import AbstractBase
 import unittest2
 import lldb
+import sys
 
 class IntegerTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_char_type_with_dsym(self):
         """Test that char-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'char.cpp'}
@@ -24,6 +26,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.char_type_expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_char_type_with_dsym(self):
         """Test that 'unsigned_char'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_char.cpp'}
@@ -38,6 +41,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_char_type_expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_short_type_with_dsym(self):
         """Test that short-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'short.cpp'}
@@ -52,6 +56,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.short_type_expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_short_type_with_dsym(self):
         """Test that 'unsigned_short'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_short.cpp'}
@@ -66,6 +71,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_short_type_expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_int_type_with_dsym(self):
         """Test that int-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'int.cpp'}
@@ -80,6 +86,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.int_type_expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_int_type_with_dsym(self):
         """Test that 'unsigned_int'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_int.cpp'}
@@ -94,6 +101,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_int_type_expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_long_type_with_dsym(self):
         """Test that long-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'long.cpp'}
@@ -108,6 +116,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.long_type_expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_long_type_with_dsym(self):
         """Test that 'unsigned long'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_long.cpp'}
@@ -126,6 +135,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
     # test suite failure for types dir -- "long long" and "unsigned long long"
 
     @unittest2.expectedFailure
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_long_long_type_with_dsym(self):
         """Test that 'long long'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'long_long.cpp'}
@@ -142,6 +152,7 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.long_long_type_expr()
 
     @unittest2.expectedFailure
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_long_long_type_with_dsym(self):
         """Test that 'unsigned long long'-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'unsigned_long_long.cpp'}

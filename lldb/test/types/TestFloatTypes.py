@@ -5,11 +5,13 @@ Test that variables of floating point types are displayed correctly.
 import AbstractBase
 import unittest2
 import lldb
+import sys
 
 class FloatTypesTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_float_types_with_dsym(self):
         """Test that float-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'float.cpp'}
@@ -24,6 +26,7 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.float_type()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_double_type_with_dsym(self):
         """Test that double-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'double.cpp'}

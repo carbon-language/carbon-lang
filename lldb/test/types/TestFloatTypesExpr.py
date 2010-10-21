@@ -5,6 +5,7 @@ Test that variable expressions of floating point types are evaluated correctly.
 import AbstractBase
 import unittest2
 import lldb
+import sys
 
 class FloatTypesTestCase(AbstractBase.GenericTester):
 
@@ -13,6 +14,7 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
     # rdar://problem/8493023
     # test/types failures for Test*TypesExpr.py: element offset computed wrong and sign error?
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_float_types_with_dsym(self):
         """Test that float-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'float.cpp'}
@@ -27,6 +29,7 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.float_type_expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_double_type_with_dsym(self):
         """Test that double-type variable expressions are evaluated correctly."""
         d = {'CXX_SOURCES': 'double.cpp'}
