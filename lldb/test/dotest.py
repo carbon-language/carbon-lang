@@ -115,6 +115,22 @@ and:
 args : specify a list of directory names to search for python Test*.py scripts
        if empty, search from the curret working directory, instead
 
+This is an example of using the -f -g options to pinpoint to a specfic test
+method to be run:
+
+$ ./dotest.py -f ClassTypesTestCase.test_with_dsym_and_run_command -g
+----------------------------------------------------------------------
+Collected 1 test
+
+test_with_dsym_and_run_command (TestClassTypes.ClassTypesTestCase)
+Test 'frame variable this' when stopped on a class constructor. ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.396s
+
+OK
+$ 
+
 Running of this script also sets up the LLDB_TEST environment variable so that
 individual test cases can locate their supporting files correctly.  The script
 tries to set up Python's search paths for modules by looking at the build tree
