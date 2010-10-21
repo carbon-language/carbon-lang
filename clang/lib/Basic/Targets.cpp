@@ -446,7 +446,6 @@ protected:
     }
 
     Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
-    Builder.defineMacro("WIN32");
   }
 
 public:
