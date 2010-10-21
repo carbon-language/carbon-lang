@@ -459,11 +459,13 @@ class TestBase(unittest2.TestCase):
                 print >> self.session, err
 
         dname = os.path.join(os.environ["LLDB_TEST"],
-                             os.environ["LLDB_TIMESTAMP"])
+                             os.environ["LLDB_SESSION_DIRNAME"])
         if not os.path.isdir(dname):
             os.mkdir(dname)
         fname = os.path.join(dname, "%s.log" % self.id())
         with open(fname, "w") as f:
+            import datetime
+            print >> f, "Session info generated @", datetime.datetime.now().ctime()
             print >> f, self.session.getvalue()
 
     def setTearDownCleanup(self, dictionary=None):

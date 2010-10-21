@@ -106,7 +106,7 @@ class ClassTypesTestCase(TestBase):
         self.assertTrue(fsDir == os.getcwd() and fsFile == "a.out",
                         "FileSpec matches the executable")
 
-        bpfilespec = lldb.SBFileSpec("main.cpp")
+        bpfilespec = lldb.SBFileSpec("main.cpp", False)
 
         breakpoint = target.BreakpointCreateByLocation(bpfilespec, self.line)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)

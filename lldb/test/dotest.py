@@ -75,6 +75,11 @@ regexp = None
 # not exist yet.
 rdir = None
 
+# By default, recorded session info for errored/failed test are dumped into its
+# own file under a session directory named after the timestamp of the test suite
+# run.  Use '-s session-dir-name' to specify a specific dir name.
+sdir_name = None
+
 # Default verbosity is 0.
 verbose = 0
 
@@ -107,6 +112,9 @@ where options:
 -r   : specify a dir to relocate the tests and their intermediate files to;
        the directory must not exist before running this test driver;
        no cleanup of intermediate test files is performed in this case
+-s   : specify the name of the dir created to store the session files of tests
+       with errored or failed status; if not specified, the test driver uses the
+       timestamp as the session dir name
 -t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
 -w   : insert some wait time (currently 0.5 sec) between consecutive test cases
@@ -162,6 +170,7 @@ def parseOptionsAndInitTestdirs():
     global skipLongRunningTest
     global regexp
     global rdir
+    global sdir_name
     global verbose
     global testdirs
 
@@ -222,6 +231,13 @@ def parseOptionsAndInitTestdirs():
             if os.path.exists(rdir):
                 print "Relocated directory:", rdir, "must not exist!"
                 usage()
+            index += 1
+        elif sys.argv[index].startswith('-s'):
+            # Increment by 1 to fetch the session dir name.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            sdir_name = sys.argv[index]
             index += 1
         elif sys.argv[index].startswith('-t'):
             os.environ["LLDB_COMMAND_TRACE"] = "YES"
@@ -518,17 +534,18 @@ lldbLoggings()
 # Install the control-c handler.
 unittest2.signals.installHandler()
 
-# Now get a timestamp string and export it as LLDB_TIMESTAMP environment var.
-# This will be useful when/if we want to dump the session info of individual
-# test cases later on.
+# If sdir_name is not specified through the '-s sdir_name' option, get a
+# timestamp string and export it as LLDB_SESSION_DIR environment var.  This will
+# be used when/if we want to dump the session info of individual test cases
+# later on.
 #
 # See also TestBase.dumpSessionInfo() in lldbtest.py.
-import datetime
-raw_timestamp = str(datetime.datetime.today())
-usec_position = raw_timestamp.rfind('.')
-if usec_position != -1:
-    raw_timestamp = raw_timestamp[:usec_position]
-os.environ["LLDB_TIMESTAMP"] = raw_timestamp.replace(' ', '-')
+if not sdir_name:
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    sdir_name = timestamp
+os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
+sys.stderr.write("\nSession info for test errors or failures will go into directory %s\n" % sdir_name)
 
 #
 # Invoke the default TextTestRunner to run the test suite, possibly iterating
