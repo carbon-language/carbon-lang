@@ -740,10 +740,10 @@ void SplitEditor::rewrite(unsigned reg) {
         break;
       }
     }
+    DEBUG(dbgs() << "  rewr BB#" << MI->getParent()->getNumber() << '\t'<< Idx);
     assert(LI && "No register was live at use");
     MO.setReg(LI->reg);
-    DEBUG(dbgs() << "  rewrite BB#" << MI->getParent()->getNumber() << '\t'
-                 << Idx << '\t' << *MI);
+    DEBUG(dbgs() << '\t' << *MI);
   }
 }
 
@@ -755,6 +755,8 @@ SplitEditor::addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
   SmallVector<IIPair, 8> Iters;
   for (LiveRangeEdit::iterator LI = edit_.begin(), LE = edit_.end(); LI != LE;
        ++LI) {
+    if (*LI == dupli_.getLI())
+      continue;
     LiveInterval::const_iterator I = (*LI)->find(Start);
     LiveInterval::const_iterator E = (*LI)->end();
     if (I != E)
