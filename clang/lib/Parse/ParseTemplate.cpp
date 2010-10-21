@@ -540,7 +540,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   TemplateParamsTy *ParamList =
     Actions.ActOnTemplateParameterList(Depth, SourceLocation(),
                                        TemplateLoc, LAngleLoc,
-                                       &TemplateParams[0],
+                                       TemplateParams.data(),
                                        TemplateParams.size(),
                                        RAngleLoc);
 

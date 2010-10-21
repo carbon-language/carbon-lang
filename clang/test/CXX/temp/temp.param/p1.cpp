@@ -1,4 +1,6 @@
 // Suppress 'no run line' failure.
-// RUN: echo ok
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
-// Paragraph 1 is descriptive, and therefore requires no tests.
+template<template<> class C> class D; // expected-error{{template template parameter must have its own template parameters}}
+
+

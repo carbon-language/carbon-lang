@@ -1386,6 +1386,8 @@ def err_template_parameter_default_template_member : Error<
   "class template">;
 def err_template_parameter_default_friend_template : Error<
   "default template argument not permitted on a friend template">;
+def err_template_template_parm_no_parms : Error<
+  "template template parameter must have its own template parameters">;
 
 def err_template_variable : Error<"variable %0 declared as a template">;
 def err_template_variable_noparams : Error<

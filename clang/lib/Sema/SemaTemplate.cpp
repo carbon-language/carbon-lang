@@ -666,7 +666,7 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
     TemplateTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
                                      NameLoc.isInvalid()? TmpLoc : NameLoc, 
                                      Depth, Position, Name,
-                                     (TemplateParameterList*)Params);
+                                     Params);
 
   // If the template template parameter has a name, then link the identifier 
   // into the scope and lookup mechanisms.
@@ -694,6 +694,11 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
     Param->setDefaultArgument(DefaultArg, false);
   }
   
+  if (Params->size() == 0) {
+    Diag(Param->getLocation(), diag::err_template_template_parm_no_parms)
+      << SourceRange(Params->getLAngleLoc(), Params->getRAngleLoc());
+    Param->setInvalidDecl();
+  }
   return Param;
 }
 
