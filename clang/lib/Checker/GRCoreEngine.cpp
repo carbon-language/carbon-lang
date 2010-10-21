@@ -462,7 +462,6 @@ ExplodedNode* GRStmtNodeBuilder::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
                                           ExplodedNode* Pred, const GRState* St,
                                           ProgramPoint::Kind K) {
 
-  const GRState* PredState = GetState(Pred);
   ExplodedNode* N = generateNode(S, St, Pred, K);
 
   if (N) {
