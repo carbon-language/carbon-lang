@@ -721,11 +721,9 @@ static bool IsThunk(const Function *F) {
 
   // Verify that the terminator is a ret void (if we're void) or a ret of the
   // call's return, or a ret of a bitcast of the call's return.
-  const Value *RetOp = CI;
   if (const BitCastInst *BCI = dyn_cast<BitCastInst>(I)) {
     ++I;
     if (BCI->getOperand(0) != CI) return false;
-    RetOp = BCI;
   }
   if (RI != I) return false;
   if (RI->getNumOperands() == 0)
