@@ -494,7 +494,8 @@ IRForTarget::rewritePersistentAllocs(llvm::Module &M,
         Instruction &inst = *ii;
         
         if (AllocaInst *alloc = dyn_cast<AllocaInst>(&inst))
-            if (alloc->getName().startswith("$"))
+            if (alloc->getName().startswith("$") &&
+                !alloc->getName().startswith("$__lldb"))
                 pvar_allocs.push_back(alloc);
     }
     
