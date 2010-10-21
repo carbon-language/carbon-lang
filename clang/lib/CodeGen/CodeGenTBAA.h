@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the code that manages TBAA information.
+// This is the code that manages TBAA information and defines the TBAA policy
+// for the optimizer to use.
 //
 //===----------------------------------------------------------------------===//
 
@@ -60,6 +61,8 @@ public:
               MangleContext &MContext);
   ~CodeGenTBAA();
 
+  /// getTBAAInfo - Get the TBAA MDNode to be used for a dereference
+  /// of the given type.
   llvm::MDNode *getTBAAInfo(QualType QTy);
 };
 

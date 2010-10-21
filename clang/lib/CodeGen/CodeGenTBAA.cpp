@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the code that manages TBAA information. Relevant standards
-// text includes:
+// This is the code that manages TBAA information and defines the TBAA policy
+// for the optimizer to use. Relevant standards text includes:
 //
 //   C99 6.5p7
 //   C++ [basic.lval] (p10 in n3126, p15 in some earlier versions)
@@ -32,6 +32,8 @@ CodeGenTBAA::CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext& VMContext,
 CodeGenTBAA::~CodeGenTBAA() {
 }
 
+/// getTBAAInfoForNamedType - Create a TBAA tree node with the given string
+/// as its identifier, and the given Parent node as its tree parent.
 llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(llvm::StringRef NameStr,
                                                    llvm::MDNode *Parent) {
   llvm::Value *Ops[] = {
@@ -49,12 +51,22 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   if (llvm::MDNode *N = MetadataCache[Ty])
     return N;
 
+  // If this is our first node, create the initial tree.
   if (!Root) {
+    // Define the root of the tree. This identifies the tree, so that
+    // if our LLVM IR is linked with LLVM IR from a different front-end
+    // (or a different version of this front-end), their TBAA trees will
+    // remain distinct, and the optimizer will treat them conservatively.
     Root = getTBAAInfoForNamedType("Experimental TBAA", 0);
+
+    // Define the root of the tree for user-accessible memory. C and C++
+    // give special powers to char and certain similar types. However,
+    // these special powers only cover user-accessible memory, and doesn't
+    // include things like vtables.
     Char = getTBAAInfoForNamedType("omnipotent char", Root);
   }
 
-  // For now, just emit a very minimal tree.
+  // Handle builtin types.
   if (const BuiltinType *BTy = dyn_cast<BuiltinType>(Ty)) {
     switch (BTy->getKind()) {
     // Character types are special and can alias anything.
@@ -89,6 +101,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     }
   }
 
+  // Handle pointers.
   // TODO: Implement C++'s type "similarity" and consider dis-"similar"
   // pointers distinct.
   if (Ty->isPointerType())
