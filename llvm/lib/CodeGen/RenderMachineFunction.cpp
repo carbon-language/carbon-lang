@@ -463,14 +463,9 @@ namespace llvm {
          liItr != liEnd; ++liItr) {
       LiveInterval *li = liItr->second;
 
-      const TargetRegisterClass *liTRC;
-
       if (TargetRegisterInfo::isPhysicalRegister(li->reg))
         continue;
       
-      liTRC = mri->getRegClass(li->reg);
-     
-
       // For all ranges in the current interal.
       for (LiveInterval::iterator lrItr = li->begin(),
              lrEnd = li->end();
