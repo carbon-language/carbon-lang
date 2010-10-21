@@ -310,13 +310,13 @@ def LGS64rm : RI<0xb5, MRMSrcMem, (outs GR64:$dst), (ins opaque80mem:$src),
 
 
 def VERRr : I<0x00, MRM4r, (outs), (ins GR16:$seg),
-              "verr\t$seg", []>, TB;
+              "verr{w}\t$seg", []>, TB;
 def VERRm : I<0x00, MRM4m, (outs), (ins i16mem:$seg),
-              "verr\t$seg", []>, TB;
+              "verr{w}\t$seg", []>, TB;
 def VERWr : I<0x00, MRM5r, (outs), (ins GR16:$seg),
-              "verw\t$seg", []>, TB;
+              "verw{w}\t$seg", []>, TB;
 def VERWm : I<0x00, MRM5m, (outs), (ins i16mem:$seg),
-              "verw\t$seg", []>, TB;
+              "verw{w}\t$seg", []>, TB;
 
 //===----------------------------------------------------------------------===//
 // Descriptor-table support instructions
