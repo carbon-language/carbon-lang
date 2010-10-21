@@ -943,7 +943,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // toolchains which have the integrated assembler on by default.
   bool IsVerboseAsmDefault = getToolChain().IsIntegratedAssemblerDefault();
   if (Args.hasFlag(options::OPT_fverbose_asm, options::OPT_fno_verbose_asm,
-                   IsVerboseAsmDefault) || 
+                   IsVerboseAsmDefault) ||
       Args.hasArg(options::OPT_dA))
     CmdArgs.push_back("-masm-verbose");
 
@@ -1182,7 +1182,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddLastArg(CmdArgs, options::OPT_fvisibility_inlines_hidden);
-                        
+
   // -fhosted is default.
   if (KernelOrKext || Args.hasFlag(options::OPT_ffreestanding,
                                    options::OPT_fhosted,
@@ -1297,7 +1297,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-signed-char");
 
   // -fthreadsafe-static is default.
-  if (!Args.hasFlag(options::OPT_fthreadsafe_statics, 
+  if (!Args.hasFlag(options::OPT_fthreadsafe_statics,
                     options::OPT_fno_threadsafe_statics))
     CmdArgs.push_back("-fno-threadsafe-statics");
 
@@ -1327,7 +1327,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fnext-runtime defaults to on Darwin and when rewriting Objective-C, and is
   // -the -cc1 default.
-  bool NeXTRuntimeIsDefault = 
+  bool NeXTRuntimeIsDefault =
     IsRewriter || getToolChain().getTriple().getOS() == llvm::Triple::Darwin;
   if (!Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
                     NeXTRuntimeIsDefault))
@@ -1375,7 +1375,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         Version = 1;
       }
     }
-  
+
     if (Version == 2 || Version == 3) {
       if (Version == 2)
         CmdArgs.push_back("-fobjc-nonfragile-abi");
@@ -1598,7 +1598,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     (*it)->claim();
     D.Diag(clang::diag::warn_drv_clang_unsupported) << (*it)->getAsString(Args);
   }
-  
+
   // Claim some arguments which clang supports automatically.
 
   // -fpch-preprocess is used with gcc to add a special marker in the output to
@@ -1797,7 +1797,7 @@ void gcc::Compile::RenderExtraToolArgs(const JobAction &JA,
     if (JA.getType() != types::TY_PP_Asm)
       D.Diag(clang::diag::err_drv_invalid_gcc_output_type)
         << getTypeName(JA.getType());
-      
+
     CmdArgs.push_back("-S");
   }
 }
@@ -2545,7 +2545,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   // categories.
   if (Args.hasArg(options::OPT_ObjC) || Args.hasArg(options::OPT_ObjCXX))
     CmdArgs.push_back("-ObjC");
-    
+
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
 
@@ -2955,7 +2955,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getArchName() == "i386")
     CmdArgs.push_back("--32");
 
-  
+
   // Set byte order explicitly
   if (getToolChain().getArchName() == "mips")
     CmdArgs.push_back("-EB");

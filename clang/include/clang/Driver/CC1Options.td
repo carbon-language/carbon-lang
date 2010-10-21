@@ -88,7 +88,7 @@ def analyzer_output_EQ : Joined<"-analyzer-output=">,
 def analyzer_opt_analyze_headers : Flag<"-analyzer-opt-analyze-headers">,
   HelpText<"Force the static analyzer to analyze functions defined in header files">;
 def analyzer_opt_analyze_nested_blocks : Flag<"-analyzer-opt-analyze-nested-blocks">,
-  HelpText<"Analyze the definitions of blocks in addition to functions">;  
+  HelpText<"Analyze the definitions of blocks in addition to functions">;
 def analyzer_display_progress : Flag<"-analyzer-display-progress">,
   HelpText<"Emit verbose output about the analyzer's progress">;
 def analyzer_experimental_checks : Flag<"-analyzer-experimental-checks">,
@@ -230,7 +230,7 @@ def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">,
   HelpText<"Print diagnostic name with mappable diagnostics">;
 def fdiagnostics_show_category : Separate<"-fdiagnostics-show-category">,
   HelpText<"Print diagnostic category">;
-  
+
 def ftabstop : Separate<"-ftabstop">, MetaVarName<"<N>">,
   HelpText<"Set the tab stop distance.">;
 def ferror_limit : Separate<"-ferror-limit">, MetaVarName<"<N>">,
@@ -289,7 +289,7 @@ def load : Separate<"-load">, MetaVarName<"<dsopath>">,
   HelpText<"Load the named plugin (dynamic shared object)">;
 def plugin : Separate<"-plugin">, MetaVarName<"<name>">,
   HelpText<"Use the named plugin action (use \"help\" to list available options)">;
-def plugin_arg : JoinedAndSeparate<"-plugin-arg-">, 
+def plugin_arg : JoinedAndSeparate<"-plugin-arg-">,
     MetaVarName<"<name> <arg>">,
     HelpText<"Pass <arg> to plugin <name>">;
 def resource_dir : Separate<"-resource-dir">,
@@ -408,7 +408,7 @@ def femit_all_decls : Flag<"-femit-all-decls">,
   HelpText<"Emit all declarations, even if unused">;
 def fblocks : Flag<"-fblocks">,
   HelpText<"enable the 'blocks' language feature">;
-def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;  
+def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;
 def fexceptions : Flag<"-fexceptions">,
   HelpText<"Enable support for exception handling">;
 def fsjlj_exceptions : Flag<"-fsjlj-exceptions">,
@@ -438,7 +438,7 @@ def fno_operator_names : Flag<"-fno-operator-names">,
 def fno_signed_char : Flag<"-fno-signed-char">,
   HelpText<"Char is unsigned">;
 def fno_spell_checking : Flag<"-fno-spell-checking">,
-  HelpText<"Disable spell-checking">;  
+  HelpText<"Disable spell-checking">;
 def fno_use_cxa_atexit : Flag<"-fno-use-cxa-atexit">,
   HelpText<"Don't use __cxa_atexit for calling destructors">;
 def fconstant_string_class : Separate<"-fconstant-string-class">,
@@ -561,7 +561,7 @@ def undef : Flag<"-undef">, MetaVarName<"<macro>">,
   HelpText<"undef all system defines">;
 def detailed_preprocessing_record : Flag<"-detailed-preprocessing-record">,
   HelpText<"include a detailed record of preprocessing actions">;
-  
+
 //===----------------------------------------------------------------------===//
 // Preprocessed Output Options
 //===----------------------------------------------------------------------===//

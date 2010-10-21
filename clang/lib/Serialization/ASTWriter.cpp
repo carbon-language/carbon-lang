@@ -643,7 +643,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(MACRO_DEFINITION_OFFSETS);
   RECORD(CHAINED_METADATA);
   RECORD(REFERENCED_SELECTOR_POOL);
-  
+
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
   RECORD(SM_SLOC_FILE_ENTRY);
@@ -659,7 +659,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(PP_TOKEN);
   RECORD(PP_MACRO_INSTANTIATION);
   RECORD(PP_MACRO_DEFINITION);
-  
+
   // Decls and Types block.
   BLOCK(DECLTYPES_BLOCK);
   RECORD(TYPE_EXT_QUAL);
@@ -1279,9 +1279,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // in quotes
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // kind
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-    InclusionAbbrev = Stream.EmitAbbrev(Abbrev);    
+    InclusionAbbrev = Stream.EmitAbbrev(Abbrev);
   }
-  
+
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
     // FIXME: This emits macros in hash table order, we should do it in a stable
@@ -1296,7 +1296,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     // the macro comes from the original PCH but the identifier comes from a
     // chained PCH, by storing the offset into the original PCH rather than
     // writing the macro definition a second time.
-    if (MI->isBuiltinMacro() || 
+    if (MI->isBuiltinMacro() ||
         (Chain && I->first->isFromAST() && MI->isFromAST()))
       continue;
 
@@ -1318,12 +1318,12 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
            I != E; ++I)
         AddIdentifierRef(*I, Record);
     }
-    
+
     // If we have a detailed preprocessing record, record the macro definition
     // ID that corresponds to this macro.
     if (PPRec)
       Record.push_back(getMacroDefinitionID(PPRec->findMacroDefinition(MI)));
-    
+
     Stream.EmitRecord(Code, Record);
     Record.clear();
 
@@ -1351,7 +1351,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     }
     ++NumMacros;
   }
-  
+
   // If the preprocessor has a preprocessing record, emit it.
   unsigned NumPreprocessingRecords = 0;
   if (PPRec) {
@@ -1360,7 +1360,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
                                        EEnd = PPRec->end(Chain);
          E != EEnd; ++E) {
       Record.clear();
-      
+
       if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
         Record.push_back(IndexBase + NumPreprocessingRecords++);
         AddSourceLocation(MI->getSourceRange().getBegin(), Record);
@@ -1370,24 +1370,24 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
         Stream.EmitRecord(PP_MACRO_INSTANTIATION, Record);
         continue;
       }
-      
+
       if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
         // Record this macro definition's location.
         MacroID ID = getMacroDefinitionID(MD);
-        
+
         // Don't write the macro definition if it is from another AST file.
         if (ID < FirstMacroID)
           continue;
-        
+
         unsigned Position = ID - FirstMacroID;
         if (Position != MacroDefinitionOffsets.size()) {
           if (Position > MacroDefinitionOffsets.size())
             MacroDefinitionOffsets.resize(Position + 1);
-          
-          MacroDefinitionOffsets[Position] = Stream.GetCurrentBitNo();            
+
+          MacroDefinitionOffsets[Position] = Stream.GetCurrentBitNo();
         } else
           MacroDefinitionOffsets.push_back(Stream.GetCurrentBitNo());
-        
+
         Record.push_back(IndexBase + NumPreprocessingRecords++);
         Record.push_back(ID);
         AddSourceLocation(MD->getSourceRange().getBegin(), Record);
@@ -1397,7 +1397,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
         Stream.EmitRecord(PP_MACRO_DEFINITION, Record);
         continue;
       }
-      
+
       if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
         Record.push_back(PP_INCLUSION_DIRECTIVE);
         Record.push_back(IndexBase + NumPreprocessingRecords++);
@@ -1414,9 +1414,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
       }
     }
   }
-  
+
   Stream.ExitBlock();
-  
+
   // Write the offsets table for the preprocessing record.
   if (NumPreprocessingRecords > 0) {
     // Write the offsets table for identifier IDs.
@@ -1427,7 +1427,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of macro defs
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned MacroDefOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
-    
+
     Record.clear();
     Record.push_back(MACRO_DEFINITION_OFFSETS);
     Record.push_back(NumPreprocessingRecords);
@@ -3046,7 +3046,7 @@ void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
 }
 
 void ASTWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
-  TemplateName::NameKind Kind = Name.getKind(); 
+  TemplateName::NameKind Kind = Name.getKind();
   Record.push_back(Kind);
   switch (Kind) {
   case TemplateName::Template:
@@ -3061,7 +3061,7 @@ void ASTWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
       AddDeclRef(*I, Record);
     break;
   }
-    
+
   case TemplateName::QualifiedTemplate: {
     QualifiedTemplateName *QualT = Name.getAsQualifiedTemplateName();
     AddNestedNameSpecifier(QualT->getQualifier(), Record);
@@ -3069,7 +3069,7 @@ void ASTWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
     AddDeclRef(QualT->getTemplateDecl(), Record);
     break;
   }
-    
+
   case TemplateName::DependentTemplate: {
     DependentTemplateName *DepT = Name.getAsDependentTemplateName();
     AddNestedNameSpecifier(DepT->getQualifier(), Record);
@@ -3083,7 +3083,7 @@ void ASTWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
   }
 }
 
-void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg, 
+void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
                                     RecordData &Record) {
   Record.push_back(Arg.getKind());
   switch (Arg.getKind()) {
@@ -3206,7 +3206,7 @@ void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
 void ASTWriter::TypeRead(TypeIdx Idx, QualType T) {
   // Always take the highest-numbered type index. This copes with an interesting
   // case for chained AST writing where we schedule writing the type and then,
-  // later, deserialize the type from another AST. In this case, we want to 
+  // later, deserialize the type from another AST. In this case, we want to
   // keep the higher-numbered entry so that we can properly write it out to
   // the AST file.
   TypeIdx &StoredIdx = TypeIdxs[T];
@@ -3222,7 +3222,7 @@ void ASTWriter::SelectorRead(SelectorID ID, Selector S) {
   SelectorIDs[S] = ID;
 }
 
-void ASTWriter::MacroDefinitionRead(serialization::MacroID ID, 
+void ASTWriter::MacroDefinitionRead(serialization::MacroID ID,
                                     MacroDefinition *MD) {
   MacroDefinitions[MD] = ID;
 }

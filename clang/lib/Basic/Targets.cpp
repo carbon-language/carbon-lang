@@ -160,12 +160,12 @@ public:
     return llvm::MCSectionMachO::ParseSectionSpecifier(SR, Segment, Section,
                                                        TAA, StubSize);
   }
-  
+
   virtual const char *getStaticInitSectionSpecifier() const {
     // FIXME: We should return 0 when building kexts.
     return "__TEXT,__StaticInit,regular,pure_instructions";
   }
-  
+
 };
 
 
@@ -458,16 +458,16 @@ public:
     // FIXME: The following are added to allow parsing.
     // I just took a guess at what the actions should be.
     // Also, is more specific checking needed?  I.e. specific registers?
-    case 'd': // Floating point register (containing 64-bit value) 
+    case 'd': // Floating point register (containing 64-bit value)
     case 'v': // Altivec vector register
       Info.setAllowsRegister();
       break;
     case 'w':
       switch (Name[1]) {
-        case 'd':// VSX vector register to hold vector double data 
-        case 'f':// VSX vector register to hold vector float data 
-        case 's':// VSX vector register to hold scalar float data 
-        case 'a':// Any VSX register 
+        case 'd':// VSX vector register to hold vector double data
+        case 'f':// VSX vector register to hold vector float data
+        case 's':// VSX vector register to hold scalar float data
+        case 'a':// Any VSX register
           break;
         default:
           return false;
@@ -475,27 +475,27 @@ public:
       Info.setAllowsRegister();
       Name++; // Skip over 'w'.
       break;
-    case 'h': // `MQ', `CTR', or `LINK' register 
-    case 'q': // `MQ' register 
-    case 'c': // `CTR' register 
-    case 'l': // `LINK' register 
-    case 'x': // `CR' register (condition register) number 0 
-    case 'y': // `CR' register (condition register) 
-    case 'z': // `XER[CA]' carry bit (part of the XER register) 
+    case 'h': // `MQ', `CTR', or `LINK' register
+    case 'q': // `MQ' register
+    case 'c': // `CTR' register
+    case 'l': // `LINK' register
+    case 'x': // `CR' register (condition register) number 0
+    case 'y': // `CR' register (condition register)
+    case 'z': // `XER[CA]' carry bit (part of the XER register)
       Info.setAllowsRegister();
       break;
-    case 'I': // Signed 16-bit constant 
+    case 'I': // Signed 16-bit constant
     case 'J': // Unsigned 16-bit constant shifted left 16 bits
-              //  (use `L' instead for SImode constants) 
-    case 'K': // Unsigned 16-bit constant 
-    case 'L': // Signed 16-bit constant shifted left 16 bits 
-    case 'M': // Constant larger than 31 
-    case 'N': // Exact power of 2 
-    case 'P': // Constant whose negation is a signed 16-bit constant 
+              //  (use `L' instead for SImode constants)
+    case 'K': // Unsigned 16-bit constant
+    case 'L': // Signed 16-bit constant shifted left 16 bits
+    case 'M': // Constant larger than 31
+    case 'N': // Exact power of 2
+    case 'P': // Constant whose negation is a signed 16-bit constant
     case 'G': // Floating point constant that can be loaded into a
-              // register with one instruction per word 
+              // register with one instruction per word
     case 'H': // Integer/Floating point constant that can be loaded
-              // into a register using three instructions 
+              // into a register using three instructions
       break;
     case 'm': // Memory operand. Note that on PowerPC targets, m can
               // include addresses that update the base register. It
@@ -503,13 +503,13 @@ public:
               // if that asm statement accesses the operand exactly once.
               // The asm statement must also use `%U<opno>' as a
               // placeholder for the "update" flag in the corresponding
-              // load or store instruction. For example: 
+              // load or store instruction. For example:
               // asm ("st%U0 %1,%0" : "=m" (mem) : "r" (val));
-              // is correct but: 
+              // is correct but:
               // asm ("st %1,%0" : "=m" (mem) : "r" (val));
               // is not. Use es rather than m if you don't want the base
-              // register to be updated. 
-    case 'e': 
+              // register to be updated.
+    case 'e':
       if (Name[1] != 's')
           return false;
               // es: A "stable" memory operand; that is, one which does not
@@ -521,23 +521,23 @@ public:
       Name++; // Skip over 'e'.
       break;
     case 'Q': // Memory operand that is an offset from a register (it is
-              // usually better to use `m' or `es' in asm statements) 
+              // usually better to use `m' or `es' in asm statements)
     case 'Z': // Memory operand that is an indexed or indirect from a
               // register (it is usually better to use `m' or `es' in
-              // asm statements) 
+              // asm statements)
       Info.setAllowsMemory();
       Info.setAllowsRegister();
       break;
-    case 'R': // AIX TOC entry 
+    case 'R': // AIX TOC entry
     case 'a': // Address operand that is an indexed or indirect from a
-              // register (`p' is preferable for asm statements) 
-    case 'S': // Constant suitable as a 64-bit mask operand 
-    case 'T': // Constant suitable as a 32-bit mask operand 
-    case 'U': // System V Release 4 small data area reference 
+              // register (`p' is preferable for asm statements)
+    case 'S': // Constant suitable as a 64-bit mask operand
+    case 'T': // Constant suitable as a 32-bit mask operand
+    case 'U': // System V Release 4 small data area reference
     case 't': // AND masks that can be performed by two rldic{l, r}
-              // instructions 
-    case 'W': // Vector constant that does not require memory 
-    case 'j': // Vector constant that is all zeros. 
+              // instructions
+    case 'W': // Vector constant that does not require memory
+    case 'j': // Vector constant that is all zeros.
       break;
     // End FIXME.
     }
@@ -584,7 +584,7 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
 
   // FIXME: Should be controlled by command line option.
   Builder.defineMacro("__LONG_DOUBLE_128__");
-  
+
   if (Opts.AltiVec) {
     Builder.defineMacro("__VEC__", "10206");
     Builder.defineMacro("__ALTIVEC__");
@@ -1116,13 +1116,13 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
       .Case("mmx", MMX)
       .Default(NoMMXSSE);
     SSELevel = std::max(SSELevel, Level);
-    
-    AMD3DNowEnum ThreeDNowLevel = 
+
+    AMD3DNowEnum ThreeDNowLevel =
       llvm::StringSwitch<AMD3DNowEnum>(Features[i].substr(1))
         .Case("3dnowa", AMD3DNowAthlon)
         .Case("3dnow", AMD3DNow)
         .Default(NoAMD3DNow);
-    
+
     AMD3DNowLevel = std::max(AMD3DNowLevel, ThreeDNowLevel);
   }
 }
@@ -1284,7 +1284,7 @@ public:
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
   }
-  
+
   int getEHDataRegisterNumber(unsigned RegNo) const {
     if (RegNo == 0) return 0;
     if (RegNo == 1) return 2;
@@ -1595,7 +1595,7 @@ public:
     // {} in inline assembly are neon specifiers, not assembly variant
     // specifiers.
     NoAsmVariants = true;
-    
+
     // FIXME: Should we just treat this as a feature?
     IsThumb = getTriple().getArchName().startswith("thumb");
     if (IsThumb) {
@@ -1660,7 +1660,7 @@ public:
     else if (CPU == "cortex-a8" || CPU == "cortex-a9")
       Features["neon"] = true;
   }
-  
+
   virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  const std::string &Name,
                                  bool Enabled) const {
@@ -2335,7 +2335,7 @@ public:
 };
 
 const char * const MipsTargetInfo::GCCRegNames[] = {
-  "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7", 
+  "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7",
   "$8",   "$9",   "$10",  "$11",  "$12",  "$13",  "$14",  "$15",
   "$16",  "$17",  "$18",  "$19",  "$20",  "$21",  "$22",  "$23",
   "$24",  "$25",  "$26",  "$27",  "$28",  "$sp",  "$fp",  "$31",

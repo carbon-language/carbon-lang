@@ -152,7 +152,7 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   // TimePasses is only derived.
   // UnitAtATime is unused.
   // Inlining is only derived.
-  
+
   // UnrollLoops is derived, but also accepts an option, no
   // harm in pushing it back here.
   if (Opts.UnrollLoops)
@@ -577,7 +577,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
   switch (Opts.getSignedOverflowBehavior()) {
   case LangOptions::SOB_Undefined: break;
   case LangOptions::SOB_Defined:   Res.push_back("-fwrapv"); break;
-  case LangOptions::SOB_Trapping:  
+  case LangOptions::SOB_Trapping:
     Res.push_back("-ftrapv"); break;
     if (!Opts.OverflowHandler.empty()) {
       Res.push_back("-ftrapv-handler");
@@ -634,7 +634,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
   }
   if (Opts.InlineVisibilityHidden)
     Res.push_back("-fvisibility-inlines-hidden");
-  
+
   if (Opts.getStackProtectorMode() != 0) {
     Res.push_back("-stack-protector");
     Res.push_back(llvm::utostr(Opts.getStackProtectorMode()));
@@ -866,7 +866,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.OptimizeSize = Args.hasArg(OPT_Os);
   Opts.SimplifyLibCalls = !(Args.hasArg(OPT_fno_builtin) ||
                             Args.hasArg(OPT_ffreestanding));
-  Opts.UnrollLoops = Args.hasArg(OPT_funroll_loops) || 
+  Opts.UnrollLoops = Args.hasArg(OPT_funroll_loops) ||
                      (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
 
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
@@ -953,17 +953,17 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fdiagnostics_show_category)->getAsString(Args)
       << ShowCategory;
-  
+
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
   Opts.ShowParseableFixits = Args.hasArg(OPT_fdiagnostics_parseable_fixits);
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
   Opts.ErrorLimit = Args.getLastArgIntValue(OPT_ferror_limit, 0, Diags);
   Opts.MacroBacktraceLimit
-    = Args.getLastArgIntValue(OPT_fmacro_backtrace_limit, 
+    = Args.getLastArgIntValue(OPT_fmacro_backtrace_limit,
                          DiagnosticOptions::DefaultMacroBacktraceLimit, Diags);
   Opts.TemplateBacktraceLimit
-    = Args.getLastArgIntValue(OPT_ftemplate_backtrace_limit, 
-                         DiagnosticOptions::DefaultTemplateBacktraceLimit, 
+    = Args.getLastArgIntValue(OPT_ftemplate_backtrace_limit,
+                         DiagnosticOptions::DefaultTemplateBacktraceLimit,
                          Diags);
   Opts.TabStop = Args.getLastArgIntValue(OPT_ftabstop,
                                     DiagnosticOptions::DefaultTabStop, Diags);
@@ -1313,15 +1313,15 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   if (Args.hasArg(OPT_fvisibility_inlines_hidden))
     Opts.InlineVisibilityHidden = 1;
-  
+
   if (Args.hasArg(OPT_ftrapv)) {
-    Opts.setSignedOverflowBehavior(LangOptions::SOB_Trapping); 
+    Opts.setSignedOverflowBehavior(LangOptions::SOB_Trapping);
     // Set the handler, if one is specified.
     Opts.OverflowHandler =
         Args.getLastArgValue(OPT_ftrapv_handler);
   }
   else if (Args.hasArg(OPT_fwrapv))
-    Opts.setSignedOverflowBehavior(LangOptions::SOB_Defined); 
+    Opts.setSignedOverflowBehavior(LangOptions::SOB_Defined);
 
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
   // is specified, or -std is set to a conforming mode.
@@ -1423,7 +1423,7 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
     size_t Comma = Value.find(',');
     unsigned Bytes = 0;
     unsigned EndOfLine = 0;
-    
+
     if (Comma == llvm::StringRef::npos ||
         Value.substr(0, Comma).getAsInteger(10, Bytes) ||
         Value.substr(Comma + 1).getAsInteger(10, EndOfLine))
@@ -1433,7 +1433,7 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
       Opts.PrecompiledPreambleBytes.second = (EndOfLine != 0);
     }
   }
-    
+
   // Add macros from the command line.
   for (arg_iterator it = Args.filtered_begin(OPT_D, OPT_U),
          ie = Args.filtered_end(); it != ie; ++it) {

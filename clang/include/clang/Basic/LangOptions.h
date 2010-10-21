@@ -93,7 +93,7 @@ public:
                                   // smallest integer type with enough room.
 
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
-  
+
   unsigned AssumeSaneOperatorNew : 1; // Whether to add __attribute__((malloc))
                                       // to the declaration of C++'s new
                                       // operators
@@ -104,7 +104,7 @@ public:
   unsigned DumpVTableLayouts : 1; /// Dump the layouts of emitted vtables.
   unsigned NoConstantCFStrings : 1;  // Do not do CF strings
   unsigned InlineVisibilityHidden : 1; // Whether inline C++ methods have
-                                       // hidden visibility by default.  
+                                       // hidden visibility by default.
 
   unsigned SpellChecking : 1; // Whether to perform spell-checking for error
                               // recovery.
@@ -131,7 +131,7 @@ public:
     Protected,
     Hidden
   };
-  
+
   enum SignedOverflowBehaviorTy {
     SOB_Undefined,  // Default C standard behavior.
     SOB_Defined,    // -fwrapv
@@ -157,14 +157,14 @@ public:
     AltiVec = OpenCL = StackProtector = 0;
 
     SymbolVisibility = (unsigned) Default;
-      
+
     ThreadsafeStatics = 1;
     POSIXThreads = 0;
     Blocks = 0;
     EmitAllDecls = 0;
     MathErrno = 1;
     SignedOverflowBehavior = SOB_Undefined;
-    
+
     AssumeSaneOperatorNew = 1;
     AccessControl = 1;
     ElideConstructors = 1;
@@ -207,7 +207,7 @@ public:
     return (VisibilityMode) SymbolVisibility;
   }
   void setVisibilityMode(VisibilityMode v) { SymbolVisibility = (unsigned) v; }
-  
+
   SignedOverflowBehaviorTy getSignedOverflowBehavior() const {
     return (SignedOverflowBehaviorTy)SignedOverflowBehavior;
   }

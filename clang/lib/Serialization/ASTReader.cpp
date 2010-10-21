@@ -81,7 +81,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(ObjC2, diag::warn_pch_objective_c2);
   PARSE_LANGOPT_IMPORTANT(ObjCNonFragileABI, diag::warn_pch_nonfragile_abi);
   PARSE_LANGOPT_IMPORTANT(ObjCNonFragileABI2, diag::warn_pch_nonfragile_abi2);
-  PARSE_LANGOPT_IMPORTANT(NoConstantCFStrings, 
+  PARSE_LANGOPT_IMPORTANT(NoConstantCFStrings,
                           diag::warn_pch_no_constant_cfstrings);
   PARSE_LANGOPT_BENIGN(PascalStrings);
   PARSE_LANGOPT_BENIGN(WritableStrings);
@@ -791,7 +791,7 @@ public:
     case DeclarationName::CXXUsingDirective:
       break;
     }
-    
+
     return Key;
   }
 
@@ -853,7 +853,7 @@ public:
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
-      Key.Data = 
+      Key.Data =
          (uint64_t)Reader.DecodeSelector(ReadUnalignedLE32(d)).getAsOpaquePtr();
       break;
     case DeclarationName::CXXConstructorName:
@@ -870,7 +870,7 @@ public:
     case DeclarationName::CXXUsingDirective:
       break;
     }
-    
+
     return Key;
   }
 
@@ -1339,7 +1339,7 @@ bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
   while (true) {
     uint64_t Offset = Cursor.GetCurrentBitNo();
     unsigned Code = Cursor.ReadCode();
-    
+
     // We expect all abbrevs to be at the start of the block.
     if (Code != llvm::bitc::DEFINE_ABBREV) {
       Cursor.JumpToBit(Offset);
@@ -1388,7 +1388,7 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
     unsigned BlobLen = 0;
     Record.clear();
     PreprocessorRecordTypes RecType =
-      (PreprocessorRecordTypes)Stream.ReadRecord(Code, Record, BlobStart, 
+      (PreprocessorRecordTypes)Stream.ReadRecord(Code, Record, BlobStart,
                                                  BlobLen);
     switch (RecType) {
     case PP_MACRO_OBJECT_LIKE:
@@ -1436,13 +1436,13 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
       Macro = MI;
-      
+
       if (NextIndex + 1 == Record.size() && PP->getPreprocessingRecord()) {
         // We have a macro definition. Load it now.
         PP->getPreprocessingRecord()->RegisterMacroDefinition(Macro,
                                         getMacroDefinition(Record[NextIndex]));
       }
-      
+
       ++NumMacrosRead;
       break;
     }
@@ -1463,19 +1463,19 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       Macro->AddTokenToBody(Tok);
       break;
     }
-        
+
     case PP_MACRO_INSTANTIATION: {
       // If we already have a macro, that means that we've hit the end
       // of the definition of the macro we were looking for. We're
       // done.
       if (Macro)
         return;
-      
+
       if (!PP->getPreprocessingRecord()) {
         Error("missing preprocessing record in AST file");
         return;
       }
-        
+
       PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
       if (PPRec.getPreprocessedEntity(Record[0]))
         return;
@@ -1495,23 +1495,23 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       // done.
       if (Macro)
         return;
-      
+
       if (!PP->getPreprocessingRecord()) {
         Error("missing preprocessing record in AST file");
         return;
       }
-      
+
       PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
       if (PPRec.getPreprocessedEntity(Record[0]))
         return;
-        
+
       if (Record[1] > MacroDefinitionsLoaded.size()) {
         Error("out-of-bounds macro definition record");
         return;
       }
 
       // Decode the identifier info and then check again; if the macro is
-      // still defined and associated with the identifier, 
+      // still defined and associated with the identifier,
       IdentifierInfo *II = DecodeIdentifierInfo(Record[4]);
       if (!MacroDefinitionsLoaded[Record[1] - 1]) {
         MacroDefinition *MD
@@ -1520,38 +1520,38 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
                               SourceRange(
                                 ReadSourceLocation(F, Record[2]),
                                 ReadSourceLocation(F, Record[3])));
-        
+
         PPRec.SetPreallocatedEntity(Record[0], MD);
         MacroDefinitionsLoaded[Record[1] - 1] = MD;
-        
+
         if (DeserializationListener)
           DeserializationListener->MacroDefinitionRead(Record[1], MD);
       }
-      
+
       return;
     }
-        
+
     case PP_INCLUSION_DIRECTIVE: {
       // If we already have a macro, that means that we've hit the end
       // of the definition of the macro we were looking for. We're
       // done.
       if (Macro)
         return;
-      
+
       if (!PP->getPreprocessingRecord()) {
         Error("missing preprocessing record in AST file");
         return;
       }
-      
+
       PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
       if (PPRec.getPreprocessedEntity(Record[0]))
         return;
 
       const char *FullFileNameStart = BlobStart + Record[3];
-      const FileEntry *File 
+      const FileEntry *File
         = PP->getFileManager().getFile(FullFileNameStart,
                                      FullFileNameStart + (BlobLen - Record[3]));
-      
+
       // FIXME: Stable encoding
       InclusionDirective::InclusionKind Kind
         = static_cast<InclusionDirective::InclusionKind>(Record[5]);
@@ -1580,7 +1580,7 @@ void ASTReader::ReadDefinedMacros() {
 
     llvm::BitstreamCursor Cursor = MacroCursor;
     Cursor.JumpToBit(F.MacroStartOffset);
-    
+
     RecordData Record;
     while (true) {
       uint64_t Offset = Cursor.GetCurrentBitNo();
@@ -1619,7 +1619,7 @@ void ASTReader::ReadDefinedMacros() {
       case PP_TOKEN:
         // Ignore tokens.
         break;
-        
+
       case PP_MACRO_INSTANTIATION:
       case PP_MACRO_DEFINITION:
       case PP_INCLUSION_DIRECTIVE:
@@ -2805,7 +2805,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCObjectType(Base, Protos.data(), NumProtos);    
+    return Context->getObjCObjectType(Base, Protos.data(), NumProtos);
   }
 
   case TYPE_OBJC_OBJECT_POINTER: {
@@ -2831,7 +2831,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return
       QualType(new (*Context, TypeAlignment) InjectedClassNameType(D, TST), 0);
   }
-  
+
   case TYPE_TEMPLATE_TYPE_PARM: {
     unsigned Idx = 0;
     unsigned Depth = Record[Idx++];
@@ -2840,7 +2840,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     IdentifierInfo *Name = GetIdentifierInfo(Record, Idx);
     return Context->getTemplateTypeParmType(Depth, Index, Pack, Name);
   }
-  
+
   case TYPE_DEPENDENT_NAME: {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
@@ -2849,7 +2849,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     QualType Canon = GetType(Record[Idx++]);
     return Context->getDependentNameType(Keyword, NNS, Name, Canon);
   }
-  
+
   case TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION: {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
@@ -2863,7 +2863,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getDependentTemplateSpecializationType(Keyword, NNS, Name,
                                                       Args.size(), Args.data());
   }
-  
+
   case TYPE_DEPENDENT_SIZED_ARRAY: {
     unsigned Idx = 0;
 
@@ -3832,7 +3832,7 @@ Selector ASTReader::DecodeSelector(unsigned ID) {
   return SelectorsLoaded[ID - 1];
 }
 
-Selector ASTReader::GetExternalSelector(uint32_t ID) { 
+Selector ASTReader::GetExternalSelector(uint32_t ID) {
   return DecodeSelector(ID);
 }
 
@@ -3938,7 +3938,7 @@ void ASTReader::ReadQualifierInfo(PerFileData &F, QualifierInfo &Info,
 
 TemplateName
 ASTReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
-  TemplateName::NameKind Kind = (TemplateName::NameKind)Record[Idx++]; 
+  TemplateName::NameKind Kind = (TemplateName::NameKind)Record[Idx++];
   switch (Kind) {
   case TemplateName::Template:
     return TemplateName(cast_or_null<TemplateDecl>(GetDecl(Record[Idx++])));
@@ -3951,14 +3951,14 @@ ASTReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
 
     return Context->getOverloadedTemplateName(Decls.begin(), Decls.end());
   }
-    
+
   case TemplateName::QualifiedTemplate: {
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
     bool hasTemplKeyword = Record[Idx++];
     TemplateDecl *Template = cast<TemplateDecl>(GetDecl(Record[Idx++]));
     return Context->getQualifiedTemplateName(NNS, hasTemplKeyword, Template);
   }
-    
+
   case TemplateName::DependentTemplate: {
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
     if (Record[Idx++])  // isIdentifier
@@ -3968,7 +3968,7 @@ ASTReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
                                          (OverloadedOperatorKind)Record[Idx++]);
   }
   }
-  
+
   assert(0 && "Unhandled template name kind!");
   return TemplateName();
 }
@@ -4003,7 +4003,7 @@ ASTReader::ReadTemplateArgument(PerFileData &F,
     return TemplArg;
   }
   }
-  
+
   assert(0 && "Unhandled template argument kind!");
   return TemplateArgument();
 }
@@ -4020,8 +4020,8 @@ ASTReader::ReadTemplateParameterList(PerFileData &F,
   Params.reserve(NumParams);
   while (NumParams--)
     Params.push_back(cast<NamedDecl>(GetDecl(Record[Idx++])));
-    
-  TemplateParameterList* TemplateParams = 
+
+  TemplateParameterList* TemplateParams =
     TemplateParameterList::Create(*Context, TemplateLoc, LAngleLoc,
                                   Params.data(), Params.size(), RAngleLoc);
   return TemplateParams;
@@ -4075,7 +4075,7 @@ ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
       TypeSourceInfo *BaseClassInfo = 0;
       bool IsBaseVirtual = false;
       FieldDecl *Member = 0;
-  
+
       bool IsBaseInitializer = Record[Idx++];
       if (IsBaseInitializer) {
         BaseClassInfo = GetTypeSourceInfo(F, Record, Idx);
@@ -4100,7 +4100,7 @@ ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
         for (unsigned i=0; i != SourceOrderOrNumArrayIndices; ++i)
           Indices.push_back(cast<VarDecl>(GetDecl(Record[Idx++])));
       }
-      
+
       CXXBaseOrMemberInitializer *BOMInit;
       if (IsBaseInitializer) {
         BOMInit = new (C) CXXBaseOrMemberInitializer(C, BaseClassInfo,

@@ -294,11 +294,11 @@ def finstrument_functions : Flag<"-finstrument-functions">, Group<f_Group>;
 def fkeep_inline_functions : Flag<"-fkeep-inline-functions">, Group<clang_ignored_f_Group>;
 def flat__namespace : Flag<"-flat_namespace">;
 def flax_vector_conversions : Flag<"-flax-vector-conversions">, Group<f_Group>;
-def flimit_debug_info : Flag<"-flimit-debug-info">, Group<f_Group>, 
+def flimit_debug_info : Flag<"-flimit-debug-info">, Group<f_Group>,
   HelpText<"Limit debug information produced to reduce size of debug binary">;
 def flimited_precision_EQ : Joined<"-flimited-precision=">, Group<f_Group>;
 def flto : Flag<"-flto">, Group<f_Group>;
-def fmacro_backtrace_limit_EQ : Joined<"-fmacro-backtrace-limit=">, 
+def fmacro_backtrace_limit_EQ : Joined<"-fmacro-backtrace-limit=">,
                                 Group<f_Group>;
 def fmath_errno : Flag<"-fmath-errno">, Group<f_Group>;
 def fmerge_all_constants : Flag<"-fmerge-all-constants">, Group<f_Group>;
@@ -398,7 +398,7 @@ def fsyntax_only : Flag<"-fsyntax-only">, Flags<[DriverOption]>;
 def ftabstop_EQ : Joined<"-ftabstop=">, Group<f_Group>;
 def ferror_limit_EQ : Joined<"-ferror-limit=">, Group<f_Group>;
 def ftemplate_depth_ : Joined<"-ftemplate-depth-">, Group<f_Group>;
-def ftemplate_backtrace_limit_EQ : Joined<"-ftemplate-backtrace-limit=">, 
+def ftemplate_backtrace_limit_EQ : Joined<"-ftemplate-backtrace-limit=">,
                                    Group<f_Group>;
 def fterminated_vtables : Flag<"-fterminated-vtables">, Group<f_Group>;
 def fthreadsafe_statics : Flag<"-fthreadsafe-statics">, Group<f_Group>;
