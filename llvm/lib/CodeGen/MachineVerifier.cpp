@@ -359,6 +359,14 @@ void
 MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
+  // Count the number of landing pad successors.
+  unsigned LandingPadSuccs = 0;
+  for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
+       E = MBB->succ_end(); I != E; ++I)
+    LandingPadSuccs += (*I)->isLandingPad();
+  if (LandingPadSuccs > 1)
+    report("MBB has more than one landing pad successor", MBB);
+
   // Call AnalyzeBranch. If it succeeds, there several more conditions to check.
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
@@ -374,14 +382,14 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
         // It's possible that the block legitimately ends with a noreturn
         // call or an unreachable, in which case it won't actually fall
         // out the bottom of the function.
-      } else if (MBB->succ_empty()) {
+      } else if (MBB->succ_size() == LandingPadSuccs) {
         // It's possible that the block legitimately ends with a noreturn
         // call or an unreachable, in which case it won't actuall fall
         // out of the block.
-      } else if (MBB->succ_size() != 1) {
+      } else if (MBB->succ_size() != 1+LandingPadSuccs) {
         report("MBB exits via unconditional fall-through but doesn't have "
                "exactly one CFG successor!", MBB);
-      } else if (MBB->succ_begin()[0] != MBBI) {
+      } else if (!MBB->isSuccessor(MBBI)) {
         report("MBB exits via unconditional fall-through but its successor "
                "differs from its CFG successor!", MBB);
       }
@@ -396,10 +404,10 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
       }
     } else if (TBB && !FBB && Cond.empty()) {
       // Block unconditionally branches somewhere.
-      if (MBB->succ_size() != 1) {
+      if (MBB->succ_size() != 1+LandingPadSuccs) {
         report("MBB exits via unconditional branch but doesn't have "
                "exactly one CFG successor!", MBB);
-      } else if (MBB->succ_begin()[0] != TBB) {
+      } else if (!MBB->isSuccessor(TBB)) {
         report("MBB exits via unconditional branch but the CFG "
                "successor doesn't match the actual successor!", MBB);
       }
