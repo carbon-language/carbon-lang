@@ -56,9 +56,9 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   setBooleanContents(ZeroOrOneBooleanContent);
 
   // Set up the register classes
-  addRegisterClass(MVT::i32, MBlaze::CPURegsRegisterClass);
+  addRegisterClass(MVT::i32, MBlaze::GPRRegisterClass);
   if (Subtarget->hasFPU()) {
-    addRegisterClass(MVT::f32, MBlaze::FGR32RegisterClass);
+    addRegisterClass(MVT::f32, MBlaze::GPRRegisterClass);
     setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
   }
 
@@ -85,6 +85,10 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
+
+  // Sign extended loads must be expanded
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
 
   // MBlaze has no REM or DIVREM operations.
   setOperationAction(ISD::UREM,    MVT::i32, Expand);
@@ -253,12 +257,12 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     loop->addSuccessor(finish);
     loop->addSuccessor(loop);
 
-    unsigned IAMT = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
+    unsigned IAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
     BuildMI(BB, dl, TII->get(MBlaze::ANDI), IAMT)
       .addReg(MI->getOperand(2).getReg())
       .addImm(31);
 
-    unsigned IVAL = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
+    unsigned IVAL = R.createVirtualRegister(MBlaze::GPRRegisterClass);
     BuildMI(BB, dl, TII->get(MBlaze::ADDI), IVAL)
       .addReg(MI->getOperand(1).getReg())
       .addImm(0);
@@ -267,14 +271,14 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(IAMT)
       .addMBB(finish);
 
-    unsigned DST = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
-    unsigned NDST = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
+    unsigned DST = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+    unsigned NDST = R.createVirtualRegister(MBlaze::GPRRegisterClass);
     BuildMI(loop, dl, TII->get(MBlaze::PHI), DST)
       .addReg(IVAL).addMBB(BB)
       .addReg(NDST).addMBB(loop);
 
-    unsigned SAMT = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
-    unsigned NAMT = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
+    unsigned SAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+    unsigned NAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
     BuildMI(loop, dl, TII->get(MBlaze::PHI), SAMT)
       .addReg(IAMT).addMBB(BB)
       .addReg(NAMT).addMBB(loop);
@@ -427,7 +431,6 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, 0 );
   return DAG.getNode(MBlazeISD::Wrap, dl, MVT::i32, JTI);
-  //return JTI;
 }
 
 SDValue MBlazeTargetLowering::
@@ -474,11 +477,6 @@ static bool CC_MBlaze2(unsigned ValNo, EVT ValVT,
     MBlaze::R8, MBlaze::R9, MBlaze::R10
   };
 
-  static const unsigned FltRegs[] = {
-    MBlaze::F5, MBlaze::F6, MBlaze::F7,
-    MBlaze::F8, MBlaze::F9, MBlaze::F10
-  };
-
   unsigned Reg=0;
 
   // Promote i8 and i16
@@ -496,7 +494,7 @@ static bool CC_MBlaze2(unsigned ValNo, EVT ValVT,
     Reg = State.AllocateReg(IntRegs, RegsSize);
     LocVT = MVT::i32;
   } else if (ValVT == MVT::f32) {
-    Reg = State.AllocateReg(FltRegs, RegsSize);
+    Reg = State.AllocateReg(IntRegs, RegsSize);
     LocVT = MVT::f32;
   }
 
@@ -727,9 +725,9 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       TargetRegisterClass *RC = 0;
 
       if (RegVT == MVT::i32)
-        RC = MBlaze::CPURegsRegisterClass;
+        RC = MBlaze::GPRRegisterClass;
       else if (RegVT == MVT::f32)
-        RC = MBlaze::FGR32RegisterClass;
+        RC = MBlaze::GPRRegisterClass;
       else
         llvm_unreachable("RegVT not supported by LowerFormalArguments");
 
@@ -793,7 +791,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       StackPtr = DAG.getRegister(StackReg, getPointerTy());
 
     // The last register argument that must be saved is MBlaze::R10
-    TargetRegisterClass *RC = MBlaze::CPURegsRegisterClass;
+    TargetRegisterClass *RC = MBlaze::GPRRegisterClass;
 
     unsigned Begin = MBlazeRegisterInfo::getRegisterNumbering(MBlaze::R5);
     unsigned Start = MBlazeRegisterInfo::getRegisterNumbering(ArgRegEnd+1);
@@ -918,10 +916,10 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':
-      return std::make_pair(0U, MBlaze::CPURegsRegisterClass);
+      return std::make_pair(0U, MBlaze::GPRRegisterClass);
     case 'f':
       if (VT == MVT::f32)
-        return std::make_pair(0U, MBlaze::FGR32RegisterClass);
+        return std::make_pair(0U, MBlaze::GPRRegisterClass);
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
@@ -941,6 +939,7 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint, EVT VT) const {
     // GCC MBlaze Constraint Letters
     case 'd':
     case 'y':
+    case 'f':
       return make_vector<unsigned>(
         MBlaze::R3,  MBlaze::R4,  MBlaze::R5,  MBlaze::R6,
         MBlaze::R7,  MBlaze::R9,  MBlaze::R10, MBlaze::R11,
@@ -948,15 +947,6 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint, EVT VT) const {
         MBlaze::R22, MBlaze::R23, MBlaze::R24, MBlaze::R25,
         MBlaze::R26, MBlaze::R27, MBlaze::R28, MBlaze::R29,
         MBlaze::R30, MBlaze::R31, 0);
-
-    case 'f':
-      return make_vector<unsigned>(
-        MBlaze::F3,  MBlaze::F4,  MBlaze::F5,  MBlaze::F6,
-        MBlaze::F7,  MBlaze::F9,  MBlaze::F10, MBlaze::F11,
-        MBlaze::F12, MBlaze::F19, MBlaze::F20, MBlaze::F21,
-        MBlaze::F22, MBlaze::F23, MBlaze::F24, MBlaze::F25,
-        MBlaze::F26, MBlaze::F27, MBlaze::F28, MBlaze::F29,
-        MBlaze::F30, MBlaze::F31, 0);
   }
   return std::vector<unsigned>();
 }

@@ -15,6 +15,7 @@
 #ifndef MBlazeISELLOWERING_H
 #define MBlazeISELLOWERING_H
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 #include "MBlaze.h"
@@ -31,6 +32,30 @@ namespace llvm {
       GE,
       LE
     };
+
+    inline static CC getOppositeCondition(CC cc) {
+      switch (cc) {
+      default: llvm_unreachable("Unknown condition code");
+      case EQ: return NE;
+      case NE: return EQ;
+      case GT: return LE;
+      case LT: return GE;
+      case GE: return LT;
+      case LE: return GE;
+      }
+    }
+
+    inline static const char *MBlazeCCToString(CC cc) {
+      switch (cc) {
+      default: llvm_unreachable("Unknown condition code");
+      case EQ: return "eq";
+      case NE: return "ne";
+      case GT: return "gt";
+      case LT: return "lt";
+      case GE: return "ge";
+      case LE: return "le";
+      }
+    }
   }
 
   namespace MBlazeISD {

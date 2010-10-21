@@ -84,12 +84,12 @@ def fslimm      : Operand<i32> {
 // Address operand
 def memri : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops simm16, CPURegs);
+  let MIOperandInfo = (ops simm16, GPR);
 }
 
 def memrr : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops CPURegs, CPURegs);
+  let MIOperandInfo = (ops GPR, GPR);
 }
 
 // Node immediate fits as 16-bit sign extended on target immediate.
@@ -144,47 +144,47 @@ def ADJCALLSTACKUP   : MBlazePseudo<(outs),
 //===----------------------------------------------------------------------===//
 class Arith<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
             InstrItinClass itin> :
-            TA<op, flags, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
+            TA<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
                !strconcat(instr_asm, "   $dst, $b, $c"),
-               [(set CPURegs:$dst, (OpNode CPURegs:$b, CPURegs:$c))], itin>;
+               [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], itin>;
 
 class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
              Operand Od, PatLeaf imm_type> :
-             TB<op, (outs CPURegs:$dst), (ins CPURegs:$b, Od:$c),
+             TB<op, (outs GPR:$dst), (ins GPR:$b, Od:$c),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
-                [(set CPURegs:$dst, (OpNode CPURegs:$b, imm_type:$c))], IIAlu>;
+                [(set GPR:$dst, (OpNode GPR:$b, imm_type:$c))], IIAlu>;
 
 class ArithR<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
             InstrItinClass itin> :
-            TA<op, flags, (outs CPURegs:$dst), (ins CPURegs:$c, CPURegs:$b),
+            TA<op, flags, (outs GPR:$dst), (ins GPR:$c, GPR:$b),
                 !strconcat(instr_asm, "   $dst, $c, $b"),
-                [(set CPURegs:$dst, (OpNode CPURegs:$b, CPURegs:$c))], itin>;
+                [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], itin>;
 
 class ArithRI<bits<6> op, string instr_asm, SDNode OpNode,
              Operand Od, PatLeaf imm_type> :
-             TBR<op, (outs CPURegs:$dst), (ins Od:$b, CPURegs:$c),
+             TBR<op, (outs GPR:$dst), (ins Od:$b, GPR:$c),
                  !strconcat(instr_asm, "   $dst, $c, $b"),
-                 [(set CPURegs:$dst, (OpNode imm_type:$b, CPURegs:$c))], IIAlu>;
+                 [(set GPR:$dst, (OpNode imm_type:$b, GPR:$c))], IIAlu>;
 
 class ArithN<bits<6> op, bits<11> flags, string instr_asm,
             InstrItinClass itin> :
-            TA<op, flags, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
+            TA<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
                !strconcat(instr_asm, "   $dst, $b, $c"),
                [], itin>;
 
 class ArithNI<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
-             TB<op, (outs CPURegs:$dst), (ins CPURegs:$b, Od:$c),
+             TB<op, (outs GPR:$dst), (ins GPR:$b, Od:$c),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
                 [], IIAlu>;
 
 class ArithRN<bits<6> op, bits<11> flags, string instr_asm,
             InstrItinClass itin> :
-            TA<op, flags, (outs CPURegs:$dst), (ins CPURegs:$c, CPURegs:$b),
+            TA<op, flags, (outs GPR:$dst), (ins GPR:$c, GPR:$b),
                !strconcat(instr_asm, "   $dst, $b, $c"),
                [], itin>;
 
 class ArithRNI<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
-             TB<op, (outs CPURegs:$dst), (ins Od:$c, CPURegs:$b),
+             TB<op, (outs GPR:$dst), (ins Od:$c, GPR:$b),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
                 [], IIAlu>;
 
@@ -193,44 +193,44 @@ class ArithRNI<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
 //===----------------------------------------------------------------------===//
 
 class Logic<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode> :
-            TA<op, flags, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
+            TA<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
                !strconcat(instr_asm, "   $dst, $b, $c"),
-               [(set CPURegs:$dst, (OpNode CPURegs:$b, CPURegs:$c))], IIAlu>;
+               [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], IIAlu>;
 
 class LogicI<bits<6> op, string instr_asm, SDNode OpNode> :
-             TB<op, (outs CPURegs:$dst), (ins CPURegs:$b, uimm16:$c),
+             TB<op, (outs GPR:$dst), (ins GPR:$b, uimm16:$c),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
-                [(set CPURegs:$dst, (OpNode CPURegs:$b, immZExt16:$c))],
+                [(set GPR:$dst, (OpNode GPR:$b, immZExt16:$c))],
                 IIAlu>;
 
 //===----------------------------------------------------------------------===//
 // Memory Access Instructions
 //===----------------------------------------------------------------------===//
 class LoadM<bits<6> op, string instr_asm, PatFrag OpNode> :
-            TA<op, 0x000, (outs CPURegs:$dst), (ins memrr:$addr),
+            TA<op, 0x000, (outs GPR:$dst), (ins memrr:$addr),
                !strconcat(instr_asm, "   $dst, $addr"),
-               [(set CPURegs:$dst, (OpNode xaddr:$addr))], IILoad>;
+               [(set (i32 GPR:$dst), (OpNode xaddr:$addr))], IILoad>;
 
 class LoadMI<bits<6> op, string instr_asm, PatFrag OpNode> :
-             TBR<op, (outs CPURegs:$dst), (ins memri:$addr),
+             TBR<op, (outs GPR:$dst), (ins memri:$addr),
                  !strconcat(instr_asm, "   $dst, $addr"),
-                 [(set CPURegs:$dst, (OpNode iaddr:$addr))], IILoad>;
+                 [(set (i32 GPR:$dst), (OpNode iaddr:$addr))], IILoad>;
 
 class StoreM<bits<6> op, string instr_asm, PatFrag OpNode> :
-             TA<op, 0x000, (outs), (ins CPURegs:$dst, memrr:$addr),
+             TA<op, 0x000, (outs), (ins GPR:$dst, memrr:$addr),
                 !strconcat(instr_asm, "   $dst, $addr"),
-                [(OpNode CPURegs:$dst, xaddr:$addr)], IIStore>;
+                [(OpNode (i32 GPR:$dst), xaddr:$addr)], IIStore>;
 
 class StoreMI<bits<6> op, string instr_asm, PatFrag OpNode> :
-              TBR<op, (outs), (ins CPURegs:$dst, memri:$addr),
+              TBR<op, (outs), (ins GPR:$dst, memri:$addr),
                   !strconcat(instr_asm, "   $dst, $addr"),
-                  [(OpNode CPURegs:$dst, iaddr:$addr)], IIStore>;
+                  [(OpNode (i32 GPR:$dst), iaddr:$addr)], IIStore>;
 
 //===----------------------------------------------------------------------===//
 // Branch Instructions
 //===----------------------------------------------------------------------===//
 class Branch<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
-             TA<op, flags, (outs), (ins CPURegs:$target),
+             TA<op, flags, (outs), (ins GPR:$target),
                  !strconcat(instr_asm, "   $target"),
                  [], IIBranch> {
   let rd = 0x0;
@@ -249,7 +249,7 @@ class BranchI<bits<6> op, bits<5> br, string instr_asm> :
 // Branch and Link Instructions
 //===----------------------------------------------------------------------===//
 class BranchL<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
-              TA<op, flags, (outs), (ins CPURegs:$target),
+              TA<op, flags, (outs), (ins GPR:$target),
                  !strconcat(instr_asm, "   r15, $target"),
                  [], IIBranch> {
   let rd = 15;
@@ -270,14 +270,14 @@ class BranchLI<bits<6> op, bits<5> br, string instr_asm> :
 class BranchC<bits<6> op, bits<5> br, bits<11> flags, string instr_asm,
               PatFrag cond_op> :
               TA<op, flags, (outs),
-                 (ins CPURegs:$a, CPURegs:$b, brtarget:$offset),
+                 (ins GPR:$a, GPR:$b, brtarget:$offset),
                  !strconcat(instr_asm, "   $a, $b, $offset"),
                  [], IIBranch> {
   let rd = br;
 }
 
 class BranchCI<bits<6> op, bits<5> br, string instr_asm, PatFrag cond_op> :
-               TB<op, (outs), (ins CPURegs:$a, brtarget:$offset),
+               TB<op, (outs), (ins GPR:$a, brtarget:$offset),
                   !strconcat(instr_asm, "   $a, $offset"),
                   [], IIBranch> {
   let rd = br;
@@ -463,9 +463,9 @@ let isCall = 1, hasDelaySlot = 1, hasCtrlDep = 1, isIndirectBranch = 1,
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
     hasCtrlDep=1, rd=0x10, imm16=0x8, Form=FR in {
-  def RTSD   : TB<0x2D, (outs), (ins CPURegs:$target),
+  def RTSD   : TB<0x2D, (outs), (ins GPR:$target),
                   "rtsd      $target, 8",
-                  [(MBlazeRet CPURegs:$target)],
+                  [(MBlazeRet GPR:$target)],
                   IIBranch>;
 }
 
@@ -478,45 +478,45 @@ let neverHasSideEffects = 1 in {
 }
 
 let usesCustomInserter = 1 in {
-  def Select_CC : MBlazePseudo<(outs CPURegs:$dst),
-    (ins CPURegs:$T, CPURegs:$F, CPURegs:$CMP, i32imm:$CC),
+  def Select_CC : MBlazePseudo<(outs GPR:$dst),
+    (ins GPR:$T, GPR:$F, GPR:$CMP, i32imm:$CC),
     "; SELECT_CC PSEUDO!",
     []>;
 
-  def ShiftL : MBlazePseudo<(outs CPURegs:$dst),
-    (ins CPURegs:$L, CPURegs:$R),
+  def ShiftL : MBlazePseudo<(outs GPR:$dst),
+    (ins GPR:$L, GPR:$R),
     "; ShiftL PSEUDO!",
     []>;
 
-  def ShiftRA : MBlazePseudo<(outs CPURegs:$dst),
-    (ins CPURegs:$L, CPURegs:$R),
+  def ShiftRA : MBlazePseudo<(outs GPR:$dst),
+    (ins GPR:$L, GPR:$R),
     "; ShiftRA PSEUDO!",
     []>;
 
-  def ShiftRL : MBlazePseudo<(outs CPURegs:$dst),
-    (ins CPURegs:$L, CPURegs:$R),
+  def ShiftRL : MBlazePseudo<(outs GPR:$dst),
+    (ins GPR:$L, GPR:$R),
     "; ShiftRL PSEUDO!",
     []>;
 }
 
 
 let rb = 0 in {
-  def SEXT16 : TA<0x24, 0x061, (outs CPURegs:$dst), (ins CPURegs:$src),
+  def SEXT16 : TA<0x24, 0x061, (outs GPR:$dst), (ins GPR:$src),
                   "sext16  $dst, $src", [], IIAlu>;
-  def SEXT8  : TA<0x24, 0x060, (outs CPURegs:$dst), (ins CPURegs:$src),
+  def SEXT8  : TA<0x24, 0x060, (outs GPR:$dst), (ins GPR:$src),
                   "sext8   $dst, $src", [], IIAlu>;
-  def SRL    : TA<0x24, 0x041, (outs CPURegs:$dst), (ins CPURegs:$src),
+  def SRL    : TA<0x24, 0x041, (outs GPR:$dst), (ins GPR:$src),
                   "srl     $dst, $src", [], IIAlu>;
-  def SRA    : TA<0x24, 0x001, (outs CPURegs:$dst), (ins CPURegs:$src),
+  def SRA    : TA<0x24, 0x001, (outs GPR:$dst), (ins GPR:$src),
                   "sra     $dst, $src", [], IIAlu>;
-  def SRC    : TA<0x24, 0x021, (outs CPURegs:$dst), (ins CPURegs:$src),
+  def SRC    : TA<0x24, 0x021, (outs GPR:$dst), (ins GPR:$src),
                   "src     $dst, $src", [], IIAlu>;
 }
 
 let opcode=0x08 in {
-  def LEA_ADDI : TB<0x08, (outs CPURegs:$dst), (ins memri:$addr),
+  def LEA_ADDI : TB<0x08, (outs GPR:$dst), (ins memri:$addr),
                     "addi    $dst, ${addr:stackloc}",
-                    [(set CPURegs:$dst, iaddr:$addr)], IIAlu>;
+                    [(set GPR:$dst, iaddr:$addr)], IIAlu>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -524,143 +524,144 @@ let opcode=0x08 in {
 //===----------------------------------------------------------------------===//
 
 // Small immediates
-def : Pat<(i32 0), (ADD R0, R0)>;
-def : Pat<(i32 immSExt16:$imm), (ADDI R0, imm:$imm)>;
-def : Pat<(i32 immZExt16:$imm), (ORI R0, imm:$imm)>;
+def : Pat<(i32 0), (ADD (i32 R0), (i32 R0))>;
+def : Pat<(i32 immSExt16:$imm), (ADDI (i32 R0), imm:$imm)>;
+def : Pat<(i32 immZExt16:$imm), (ORI (i32 R0), imm:$imm)>;
 
 // Arbitrary immediates
-def : Pat<(i32 imm:$imm), (ADDI R0, imm:$imm)>;
+def : Pat<(i32 imm:$imm), (ADDI (i32 R0), imm:$imm)>;
 
 // In register sign extension
-def : Pat<(sext_inreg CPURegs:$src, i16), (SEXT16 CPURegs:$src)>;
-def : Pat<(sext_inreg CPURegs:$src, i8),  (SEXT8 CPURegs:$src)>;
+def : Pat<(sext_inreg GPR:$src, i16), (SEXT16 GPR:$src)>;
+def : Pat<(sext_inreg GPR:$src, i8),  (SEXT8 GPR:$src)>;
 
 // Call
 def : Pat<(MBlazeJmpLink (i32 tglobaladdr:$dst)), (BRLID tglobaladdr:$dst)>;
 def : Pat<(MBlazeJmpLink (i32 texternalsym:$dst)),(BRLID texternalsym:$dst)>;
-def : Pat<(MBlazeJmpLink CPURegs:$dst), (BRLD CPURegs:$dst)>;
+def : Pat<(MBlazeJmpLink GPR:$dst), (BRLD GPR:$dst)>;
 
 // Shift Instructions
-def : Pat<(shl CPURegs:$L, CPURegs:$R), (ShiftL CPURegs:$L, CPURegs:$R)>;
-def : Pat<(sra CPURegs:$L, CPURegs:$R), (ShiftRA CPURegs:$L, CPURegs:$R)>;
-def : Pat<(srl CPURegs:$L, CPURegs:$R), (ShiftRL CPURegs:$L, CPURegs:$R)>;
+def : Pat<(shl GPR:$L, GPR:$R), (ShiftL GPR:$L, GPR:$R)>;
+def : Pat<(sra GPR:$L, GPR:$R), (ShiftRA GPR:$L, GPR:$R)>;
+def : Pat<(srl GPR:$L, GPR:$R), (ShiftRL GPR:$L, GPR:$R)>;
 
 // SET_CC operations
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETEQ),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMP CPURegs:$L, CPURegs:$R), 1)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETNE),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMP CPURegs:$L, CPURegs:$R), 2)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETGT),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMP CPURegs:$L, CPURegs:$R), 3)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETLT),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMP CPURegs:$L, CPURegs:$R), 4)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETGE),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMP CPURegs:$L, CPURegs:$R), 5)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETLE),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMP CPURegs:$L, CPURegs:$R), 6)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETUGT),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMPU CPURegs:$L, CPURegs:$R), 3)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETULT),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMPU CPURegs:$L, CPURegs:$R), 4)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETUGE),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMPU CPURegs:$L, CPURegs:$R), 5)>;
-def : Pat<(setcc CPURegs:$L, CPURegs:$R, SETULE),
-          (Select_CC (ADDI R0, 1), (ADDI R0, 0), 
-                     (CMPU CPURegs:$L, CPURegs:$R), 6)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETEQ),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMP GPR:$L, GPR:$R), 1)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETNE),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMP GPR:$L, GPR:$R), 2)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETGT),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMP GPR:$L, GPR:$R), 3)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETLT),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMP GPR:$L, GPR:$R), 4)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETGE),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMP GPR:$L, GPR:$R), 5)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETLE),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMP GPR:$L, GPR:$R), 6)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETUGT),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMPU GPR:$L, GPR:$R), 3)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETULT),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMPU GPR:$L, GPR:$R), 4)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETUGE),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMPU GPR:$L, GPR:$R), 5)>;
+def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETULE),
+          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0), 
+                     (CMPU GPR:$L, GPR:$R), 6)>;
 
 // SELECT operations
-def : Pat<(select CPURegs:$C, CPURegs:$T, CPURegs:$F),
-          (Select_CC CPURegs:$T, CPURegs:$F, CPURegs:$C, 2)>;
+def : Pat<(select (i32 GPR:$C), (i32 GPR:$T), (i32 GPR:$F)),
+          (Select_CC GPR:$T, GPR:$F, GPR:$C, 2)>;
 
 // SELECT_CC 
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETEQ),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMP CPURegs:$L, CPURegs:$R), 1)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETNE),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMP CPURegs:$L, CPURegs:$R), 2)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETGT),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMP CPURegs:$L, CPURegs:$R), 3)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETLT),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMP CPURegs:$L, CPURegs:$R), 4)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETGE),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMP CPURegs:$L, CPURegs:$R), 5)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETLE),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMP CPURegs:$L, CPURegs:$R), 6)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETUGT),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMPU CPURegs:$L, CPURegs:$R), 3)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETULT),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMPU CPURegs:$L, CPURegs:$R), 4)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETUGE),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMPU CPURegs:$L, CPURegs:$R), 5)>;
-def : Pat<(selectcc CPURegs:$L, CPURegs:$R, CPURegs:$T, CPURegs:$F, SETULE),
-          (Select_CC CPURegs:$T, CPURegs:$F, (CMPU CPURegs:$L, CPURegs:$R), 6)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R), 
+                    (i32 GPR:$T), (i32 GPR:$F), SETEQ),
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 1)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETNE),
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 2)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETGT),
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 3)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETLT),
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 4)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETGE),
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 5)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETLE),
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 6)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETUGT),
+          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$L, GPR:$R), 3)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETULT),
+          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$L, GPR:$R), 4)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETUGE),
+          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$L, GPR:$R), 5)>;
+def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
+                    (i32 GPR:$T), (i32 GPR:$F), SETULE),
+          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$L, GPR:$R), 6)>;
 
 // BR instructions
 def : Pat<(br bb:$T), (BRID bb:$T)>;
-def : Pat<(brind CPURegs:$T), (BRD CPURegs:$T)>;
+def : Pat<(brind GPR:$T), (BRD GPR:$T)>;
 
 // BRCOND instructions
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETEQ), bb:$T),
-          (BEQID (CMP CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETNE), bb:$T),
-          (BNEID (CMP CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETGT), bb:$T),
-          (BGTID (CMP CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETLT), bb:$T),
-          (BLTID (CMP CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETGE), bb:$T),
-          (BGEID (CMP CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETLE), bb:$T),
-          (BLEID (CMP CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETUGT), bb:$T),
-          (BGTID (CMPU CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETULT), bb:$T),
-          (BLTID (CMPU CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETUGE), bb:$T),
-          (BGEID (CMPU CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond (setcc CPURegs:$L, CPURegs:$R, SETULE), bb:$T),
-          (BLEID (CMPU CPURegs:$R, CPURegs:$L), bb:$T)>;
-def : Pat<(brcond CPURegs:$C, bb:$T),
-          (BNEID CPURegs:$C, bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETEQ), bb:$T),
+          (BEQID (CMP GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETNE), bb:$T),
+          (BNEID (CMP GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETGT), bb:$T),
+          (BGTID (CMP GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETLT), bb:$T),
+          (BLTID (CMP GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETGE), bb:$T),
+          (BGEID (CMP GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETLE), bb:$T),
+          (BLEID (CMP GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETUGT), bb:$T),
+          (BGTID (CMPU GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETULT), bb:$T),
+          (BLTID (CMPU GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETUGE), bb:$T),
+          (BGEID (CMPU GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETULE), bb:$T),
+          (BLEID (CMPU GPR:$R, GPR:$L), bb:$T)>;
+def : Pat<(brcond (i32 GPR:$C), bb:$T),
+          (BNEID GPR:$C, bb:$T)>;
 
 // Jump tables, global addresses, and constant pools
-def : Pat<(MBWrapper tglobaladdr:$in), (ORI R0, tglobaladdr:$in)>;
-def : Pat<(MBWrapper tjumptable:$in),  (ORI R0, tjumptable:$in)>;
-def : Pat<(MBWrapper tconstpool:$in),  (ORI R0, tconstpool:$in)>;
+def : Pat<(MBWrapper tglobaladdr:$in), (ORI (i32 R0), tglobaladdr:$in)>;
+def : Pat<(MBWrapper tjumptable:$in),  (ORI (i32 R0), tjumptable:$in)>;
+def : Pat<(MBWrapper tconstpool:$in),  (ORI (i32 R0), tconstpool:$in)>;
 
 // Misc instructions
-def : Pat<(and CPURegs:$lh, (not CPURegs:$rh)),(ANDN CPURegs:$lh, CPURegs:$rh)>;
+def : Pat<(and (i32 GPR:$lh), (not (i32 GPR:$rh))),(ANDN GPR:$lh, GPR:$rh)>;
 
 // Arithmetic with immediates
-def : Pat<(add CPURegs:$in, imm:$imm),(ADDI CPURegs:$in, imm:$imm)>;
-def : Pat<(or CPURegs:$in, imm:$imm),(ORI CPURegs:$in, imm:$imm)>;
-def : Pat<(xor CPURegs:$in, imm:$imm),(XORI CPURegs:$in, imm:$imm)>;
+def : Pat<(add (i32 GPR:$in), imm:$imm),(ADDI GPR:$in, imm:$imm)>;
+def : Pat<(or (i32 GPR:$in), imm:$imm),(ORI GPR:$in, imm:$imm)>;
+def : Pat<(xor (i32 GPR:$in), imm:$imm),(XORI GPR:$in, imm:$imm)>;
 
-// extended load and stores
-def : Pat<(extloadi1  iaddr:$src), (LBUI iaddr:$src)>;
-def : Pat<(extloadi8  iaddr:$src), (LBUI iaddr:$src)>;
-def : Pat<(extloadi16 iaddr:$src), (LHUI iaddr:$src)>;
-def : Pat<(extloadi1  xaddr:$src), (LBU  xaddr:$src)>;
-def : Pat<(extloadi8  xaddr:$src), (LBU  xaddr:$src)>;
-def : Pat<(extloadi16 xaddr:$src), (LHU  xaddr:$src)>;
+// Convert any extend loads into zero extend loads
+def : Pat<(extloadi8  iaddr:$src), (i32 (LBUI iaddr:$src))>;
+def : Pat<(extloadi16 iaddr:$src), (i32 (LHUI iaddr:$src))>;
+def : Pat<(extloadi8  xaddr:$src), (i32 (LBU xaddr:$src))>;
+def : Pat<(extloadi16 xaddr:$src), (i32 (LHU xaddr:$src))>;
 
-def : Pat<(sextloadi1  iaddr:$src), (SEXT8  (LBUI iaddr:$src))>;
-def : Pat<(sextloadi8  iaddr:$src), (SEXT8  (LBUI iaddr:$src))>;
-def : Pat<(sextloadi16 iaddr:$src), (SEXT16 (LHUI iaddr:$src))>;
-def : Pat<(sextloadi1  xaddr:$src), (SEXT8  (LBU xaddr:$src))>;
-def : Pat<(sextloadi8  xaddr:$src), (SEXT8  (LBU xaddr:$src))>;
-def : Pat<(sextloadi16 xaddr:$src), (SEXT16 (LHU xaddr:$src))>;
-
-// peepholes
-def : Pat<(store (i32 0), iaddr:$dst), (SWI R0, iaddr:$dst)>;
+// Peepholes
+def : Pat<(store (i32 0), iaddr:$dst), (SWI (i32 R0), iaddr:$dst)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Support

@@ -68,15 +68,8 @@ namespace {
     void printFSLImm(const MachineInstr *MI, int opNum, raw_ostream &O);
     void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                          const char *Modifier = 0);
-    void printSavedRegsBitmask(raw_ostream &OS);
-
-    void emitFrameDirective();
 
     void EmitInstruction(const MachineInstr *MI); 
-    virtual void EmitFunctionBodyStart();
-    virtual void EmitFunctionBodyEnd();
-
-    virtual void EmitFunctionEntryLabel();
   };
 } // end of anonymous namespace
 
@@ -122,10 +115,6 @@ void MBlazeAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   OutStreamer.EmitInstruction(TmpInst);
 }
 
-//===----------------------------------------------------------------------===//
-// Mask directives
-//===----------------------------------------------------------------------===//
-
 // Print a 32 bit hex number with all numbers.
 static void printHex32(unsigned int Value, raw_ostream &O) {
   O << "0x";
@@ -133,82 +122,6 @@ static void printHex32(unsigned int Value, raw_ostream &O) {
     O << utohexstr((Value & (0xF << (i*4))) >> (i*4));
 }
 
-
-// Create a bitmask with all callee saved registers for CPU or Floating Point
-// registers. For CPU registers consider RA, GP and FP for saving if necessary.
-void MBlazeAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
-  const MBlazeFunctionInfo *MBlazeFI = MF->getInfo<MBlazeFunctionInfo>();
-
-  // CPU Saved Registers Bitmasks
-  unsigned int CPUBitmask = 0;
-
-  // Set the CPU Bitmasks
-  const MachineFrameInfo *MFI = MF->getFrameInfo();
-  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    unsigned RegNum = MBlazeRegisterInfo::getRegisterNumbering(Reg);
-    if (MBlaze::CPURegsRegisterClass->contains(Reg))
-      CPUBitmask |= (1 << RegNum);
-  }
-
-  // Return Address and Frame registers must also be set in CPUBitmask.
-  if (RI.hasFP(*MF))
-    CPUBitmask |= (1 << MBlazeRegisterInfo::
-                getRegisterNumbering(RI.getFrameRegister(*MF)));
-
-  if (MFI->adjustsStack())
-    CPUBitmask |= (1 << MBlazeRegisterInfo::
-                getRegisterNumbering(RI.getRARegister()));
-
-  // Print CPUBitmask
-  O << "\t.mask \t"; printHex32(CPUBitmask, O);
-  O << ',' << MBlazeFI->getCPUTopSavedRegOff() << '\n';
-}
-
-//===----------------------------------------------------------------------===//
-// Frame and Set directives
-//===----------------------------------------------------------------------===//
-
-/// Frame Directive
-void MBlazeAsmPrinter::emitFrameDirective() {
-  // const TargetRegisterInfo &RI = *TM.getRegisterInfo();
-
-  // unsigned stackReg  = RI.getFrameRegister(*MF);
-  // unsigned returnReg = RI.getRARegister();
-  // unsigned stackSize = MF->getFrameInfo()->getStackSize();
-
-
-  /*
-  OutStreamer.EmitRawText("\t.frame\t" + 
-                          Twine(MBlazeInstPrinter::getRegisterName(stackReg)) +
-                          "," + Twine(stackSize) + "," +
-                          Twine(MBlazeInstPrinter::getRegisterName(returnReg)));
-  */
-}
-
-void MBlazeAsmPrinter::EmitFunctionEntryLabel() {
-  // OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
-  OutStreamer.EmitLabel(CurrentFnSym);
-}
-
-/// EmitFunctionBodyStart - Targets can override this to emit stuff before
-/// the first basic block in the function.
-void MBlazeAsmPrinter::EmitFunctionBodyStart() {
-  // emitFrameDirective();
-  
-  // SmallString<128> Str;
-  // raw_svector_ostream OS(Str);
-  // printSavedRegsBitmask(OS);
-  // OutStreamer.EmitRawText(OS.str());
-}
-
-/// EmitFunctionBodyEnd - Targets can override this to emit stuff after
-/// the last basic block in the function.
-void MBlazeAsmPrinter::EmitFunctionBodyEnd() {
-  // OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
-}
 
 // Print out an operand for an inline asm expression.
 bool MBlazeAsmPrinter::

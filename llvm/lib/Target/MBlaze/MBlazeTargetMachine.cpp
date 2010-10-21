@@ -73,8 +73,7 @@ MBlazeTargetMachine(const Target &T, const std::string &TT,
                     const std::string &FS):
   LLVMTargetMachine(T, TT),
   Subtarget(TT, FS),
-  DataLayout("E-p:32:32-i8:8:8-i16:16:16-i64:32:32-"
-             "f64:32:32-v64:32:32-v128:32:32-n32"),
+  DataLayout("E-p:32:32:32-i8:8:8-i16:16:16"),
   InstrInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0),
   TLInfo(*this), TSInfo(*this), ELFWriterInfo(*this) {

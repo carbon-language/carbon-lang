@@ -11,9 +11,9 @@
 // FSL Instruction Formats
 //===----------------------------------------------------------------------===//
 class FSLGet<bits<6> op, bits<5> flags, string instr_asm, Intrinsic OpNode> :
-             MBlazeInst<op, FFSL, (outs CPURegs:$dst), (ins fslimm:$b),
+             MBlazeInst<op, FFSL, (outs GPR:$dst), (ins fslimm:$b),
                         !strconcat(instr_asm, " $dst, $b"),
-                        [(set CPURegs:$dst, (OpNode immZExt4:$b))],IIAlu>
+                        [(set GPR:$dst, (OpNode immZExt4:$b))],IIAlu>
 {
     bits<5> rd;
     bits<4> fslno;
@@ -27,9 +27,9 @@ class FSLGet<bits<6> op, bits<5> flags, string instr_asm, Intrinsic OpNode> :
 }
 
 class FSLGetD<bits<6> op, bits<5> flags, string instr_asm, Intrinsic OpNode> :
-              MBlazeInst<op, FFSLD, (outs CPURegs:$dst), (ins CPURegs:$b),
+              MBlazeInst<op, FFSLD, (outs GPR:$dst), (ins GPR:$b),
                          !strconcat(instr_asm, " $dst, $b"),
-                         [(set CPURegs:$dst, (OpNode CPURegs:$b))], IIAlu>
+                         [(set GPR:$dst, (OpNode GPR:$b))], IIAlu>
 {
     bits<5> rd;
     bits<5> rb;
@@ -43,9 +43,9 @@ class FSLGetD<bits<6> op, bits<5> flags, string instr_asm, Intrinsic OpNode> :
 }
 
 class FSLPut<bits<6> op, bits<4> flags, string instr_asm, Intrinsic OpNode> :
-             MBlazeInst<op, FFSL, (outs), (ins CPURegs:$v, fslimm:$b),
+             MBlazeInst<op, FFSL, (outs), (ins GPR:$v, fslimm:$b),
                         !strconcat(instr_asm, " $v, $b"),
-                        [(OpNode CPURegs:$v, immZExt4:$b)], IIAlu>
+                        [(OpNode GPR:$v, immZExt4:$b)], IIAlu>
 {
     bits<5> ra;
     bits<4> fslno;
@@ -59,9 +59,9 @@ class FSLPut<bits<6> op, bits<4> flags, string instr_asm, Intrinsic OpNode> :
 }
 
 class FSLPutD<bits<6> op, bits<4> flags, string instr_asm, Intrinsic OpNode> :
-              MBlazeInst<op, FFSLD, (outs), (ins CPURegs:$v, CPURegs:$b),
+              MBlazeInst<op, FFSLD, (outs), (ins GPR:$v, GPR:$b),
                          !strconcat(instr_asm, " $v, $b"),
-                         [(OpNode CPURegs:$v, CPURegs:$b)], IIAlu>
+                         [(OpNode GPR:$v, GPR:$b)], IIAlu>
 {
     bits<5> ra;
     bits<5> rb;
@@ -90,9 +90,9 @@ class FSLPutT<bits<6> op, bits<4> flags, string instr_asm, Intrinsic OpNode> :
 }
 
 class FSLPutTD<bits<6> op, bits<4> flags, string instr_asm, Intrinsic OpNode> :
-               MBlazeInst<op, FFSLTD, (outs), (ins CPURegs:$b),
+               MBlazeInst<op, FFSLTD, (outs), (ins GPR:$b),
                           !strconcat(instr_asm, " $b"),
-                          [(OpNode CPURegs:$b)], IIAlu>
+                          [(OpNode GPR:$b)], IIAlu>
 {
     bits<5> rb;
 

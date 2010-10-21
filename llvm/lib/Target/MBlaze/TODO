@@ -16,6 +16,10 @@
       branch += 32768 bytes (~8192 instructions). We should allow conditional
       branches to use 4-byte relocations but I'm not sure how to do that
       right now.
+    - Relocation records for indirect calls are not being generated
+      correctly. These should emit and IMM 0 directly before the ORI
+      instruction that loads the register (just like when a BRLID
+      instruction is used instead of an ORI).
 
 * Code generation seems to work relatively well now but the following
   needs to be examined more closely:
@@ -24,3 +28,5 @@
     - The delay slot filler is ad hoc but seems to work. Load and
       store instructions were prevented from being moved to delay
       slots but I'm not sure that is necessary.
+    - The processor itineraries are copied from a different backend
+      and need to be updated to model the MicroBlaze correctly.
