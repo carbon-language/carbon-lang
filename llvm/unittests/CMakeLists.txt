@@ -92,12 +92,13 @@ add_llvm_unittest(Support
   Support/Casting.cpp
   Support/CommandLineTest.cpp
   Support/ConstantRangeTest.cpp
+  Support/EndianTest.cpp
   Support/LeakDetectorTest.cpp
   Support/MathExtrasTest.cpp
   Support/raw_ostream_test.cpp
   Support/RegexTest.cpp
-  Support/System.cpp
   Support/SwapByteOrderTest.cpp
+  Support/System.cpp
   Support/TypeBuilderTest.cpp
   Support/ValueHandleTest.cpp
   )

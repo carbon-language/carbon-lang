@@ -3,6 +3,7 @@ include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckFunctionExists)
 include(CheckCXXSourceCompiles)
+include(TestBigEndian)
 
 if( UNIX AND NOT BEOS )
   # Used by check_symbol_exists:
@@ -256,6 +257,8 @@ if( LLVM_ENABLE_THREADS )
     set(ENABLE_THREADS 1)
   endif()
 endif()
+
+test_big_endian(LLVM_IS_TARGET_BIG_ENDIAN)
 
 if( ENABLE_THREADS )
   message(STATUS "Threads enabled.")
