@@ -1199,8 +1199,7 @@ bool LLParser::ParseOptionalCommaAlign(unsigned &Alignment,
     
     if (Lex.getKind() != lltok::kw_align)
       return Error(Lex.getLoc(), "expected metadata or 'align'");
-    
-    LocTy AlignLoc = Lex.getLoc();
+
     if (ParseOptionalAlignment(Alignment)) return true;
   }
 
