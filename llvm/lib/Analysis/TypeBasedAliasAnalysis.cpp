@@ -28,7 +28,9 @@
 // uniquely identifies the type. The second field identifies the type's
 // parent node in the tree, or is null or omitted for a root node.
 // If the third field is present, it's an integer which if equal to 1
-// indicates that the type is "constant".
+// indicates that the type is "constant" (meaning 
+// pointsToConstantMemory should return true; see
+// http://llvm.org/docs/AliasAnalysis.html#OtherItfs).
 //
 // TODO: The current metadata encoding scheme doesn't support struct
 // fields. For example:
