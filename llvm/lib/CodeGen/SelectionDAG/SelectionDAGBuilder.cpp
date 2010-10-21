@@ -5010,6 +5010,26 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
     return;
   }
 
+  // See if any floating point values are being passed to this function. This is
+  // used to emit an undefined reference to fltused on Windows.
+  const FunctionType *FT =
+    cast<FunctionType>(I.getCalledValue()->getType()->getContainedType(0));
+  MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
+  if (FT->isVarArg() &&
+      !MMI.callsExternalVAFunctionWithFloatingPointArguments()) {
+    for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
+      const Type* T = I.getArgOperand(i)->getType();
+      for (po_iterator<const Type*> i = po_begin(T),
+                                    e = po_end(T);
+                                    i != e; ++i) {
+        if (i->isFloatingPointTy()) {
+          MMI.setCallsExternalVAFunctionWithFloatingPointArguments(true);
+          break;
+        }
+      }
+    }
+  }
+
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {
     if (F->isDeclaration()) {
@@ -5024,25 +5044,6 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
         RenameFn = visitIntrinsicCall(I, IID);
         if (!RenameFn)
           return;
-      }
-    }
-
-    // See if any floating point values are being passed to this external
-    // function. This is used to emit an undefined reference to fltused on
-    // Windows.
-    MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
-    if (F->isVarArg() &&
-        !MMI.callsExternalVAFunctionWithFloatingPointArguments()) {
-      for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
-        const Type* T = I.getArgOperand(i)->getType();
-        for (po_iterator<const Type*> i = po_begin(T),
-                                      e = po_end(T);
-                                      i != e; ++i) {
-          if (i->isFloatingPointTy()) {
-            MMI.setCallsExternalVAFunctionWithFloatingPointArguments(true);
-            break;
-          }
-        }
       }
     }
 
