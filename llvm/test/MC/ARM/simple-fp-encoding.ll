@@ -269,7 +269,7 @@ entry:
 define float @f91(float %a, float %b, float %c) nounwind readnone {
 entry:
 ; CHECK: f91
-; CHECK: vmla.f32 s2, s1, s0         @ encoding: [0x80,0x1a,0x00,0xee]
+; CHECK: vmla.f32 s1, s2, s0         @ encoding: [0x00,0x0a,0x41,0xee]
   %mul = fmul float %a, %b
   %add = fadd float %mul, %c
   ret float %add
@@ -287,7 +287,7 @@ entry:
 define float @f93(float %a, float %b, float %c) nounwind readnone {
 entry:
 ; CHECK: f93
-; CHECK: vmls.f32 s2, s1, s0         @ encoding: [0xc0,0x1a,0x00,0xee]
+; CHECK: vmls.f32 s1, s2, s0         @ encoding: [0x40,0x0a,0x41,0xee]
   %mul = fmul float %a, %b
   %sub = fsub float %c, %mul
   ret float %sub
@@ -306,7 +306,7 @@ entry:
 define float @f95(float %a, float %b, float %c) nounwind readnone {
 entry:
 ; CHECK: f95
-; CHECK: vnmla.f32 s2, s1, s0        @ encoding: [0xc0,0x1a,0x10,0xee]
+; CHECK: vnmla.f32 s1, s2, s0        @ encoding: [0x40,0x0a,0x51,0xee]
   %mul = fmul float %a, %b
   %sub = fsub float -0.000000e+00, %mul
   %sub3 = fsub float %sub, %c
@@ -325,7 +325,7 @@ entry:
 define float @f97(float %a, float %b, float %c) nounwind readnone {
 entry:
 ; CHECK: f97
-; CHECK: vnmls.f32 s2, s1, s0        @ encoding: [0x80,0x1a,0x10,0xee]
+; CHECK: vnmls.f32 s1, s2, s0        @ encoding: [0x00,0x0a,0x51,0xee]
   %mul = fmul float %a, %b
   %sub = fsub float %mul, %c
   ret float %sub
@@ -404,10 +404,10 @@ entry:
 define void @f104(float %a, float %b, float %c, float %d, float %e, float %f) nounwind {
 entry:
 ; CHECK: f104
-; CHECK: vmov s2, r0                 @ encoding: [0x10,0x0a,0x01,0xee]
-; CHECK: vmov s3, r1                 @ encoding: [0x90,0x1a,0x01,0xee]
-; CHECK: vmov s4, r2                 @ encoding: [0x10,0x2a,0x02,0xee]
-; CHECK: vmov s5, r3                 @ encoding: [0x90,0x3a,0x02,0xee]
+; CHECK: vmov	s0, r0               @ encoding: [0x10,0x0a,0x00,0xee]
+; CHECK: vmov	s1, r1               @ encoding: [0x90,0x1a,0x00,0xee]
+; CHECK: vmov	s2, r2               @ encoding: [0x10,0x2a,0x01,0xee]
+; CHECK: vmov	s3, r3               @ encoding: [0x90,0x3a,0x01,0xee]
   %conv = fptosi float %a to i32
   %conv2 = fptosi float %b to i32
   %conv4 = fptosi float %c to i32
@@ -415,10 +415,10 @@ entry:
   %conv8 = fptosi float %e to i32
   %conv10 = fptosi float %f to i32
   tail call void @g104(i32 %conv, i32 %conv2, i32 %conv4, i32 %conv6, i32 %conv8, i32 %conv10) nounwind
-; CHECK: vmov r0, s2                 @ encoding: [0x10,0x0a,0x11,0xee]
-; CHECK: vmov r1, s3                 @ encoding: [0x90,0x1a,0x11,0xee]
-; CHECK: vmov r2, s4                 @ encoding: [0x10,0x2a,0x12,0xee]
-; CHECK: vmov r3, s5                 @ encoding: [0x90,0x3a,0x12,0xee]
+; CHECK: vmov	r0, s0			@ encoding: [0x10,0x0a,0x10,0xee]
+; CHECK: vmov	r1, s1			@ encoding: [0x90,0x1a,0x10,0xee]
+; CHECK: vmov	r2, s2			@ encoding: [0x10,0x2a,0x11,0xee]
+; CHECK: vmov	r3, s3                  @ encoding: [0x90,0x3a,0x11,0xee]
   ret void
 }
 
