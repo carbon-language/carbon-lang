@@ -306,7 +306,7 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     const MCSymbol &Sym = SRE->getSymbol();
 
     // Evaluate recursively if this is a variable.
-    if (Sym.isVariable())
+    if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None)
       return Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Layout,
                                                                true);
 
