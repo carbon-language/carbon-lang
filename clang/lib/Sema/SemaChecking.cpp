@@ -1603,9 +1603,12 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
     // or 'short' to an 'int'.  This is done because printf is a varargs
     // function.
     if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Ex))
-      if (ICE->getType() == S.Context.IntTy)
-        if (ATR.matchesType(S.Context, ICE->getSubExpr()->getType()))
+      if (ICE->getType() == S.Context.IntTy) {
+        // All further checking is done on the subexpression.
+        Ex = ICE->getSubExpr();
+        if (ATR.matchesType(S.Context, Ex->getType()))
           return true;
+      }
 
     // We may be able to offer a FixItHint if it is a supported type.
     PrintfSpecifier fixedFS = FS;

@@ -382,6 +382,18 @@ bool PrintfSpecifier::fixType(QualType QT) {
     LM.setKind(LengthModifier::None);
     break;
 
+  case BuiltinType::Char_U:
+  case BuiltinType::UChar:
+  case BuiltinType::Char_S:
+  case BuiltinType::SChar:
+    LM.setKind(LengthModifier::AsChar);
+    break;
+
+  case BuiltinType::Short:
+  case BuiltinType::UShort:
+    LM.setKind(LengthModifier::AsShort);
+    break;
+
   case BuiltinType::WChar:
   case BuiltinType::Long:
   case BuiltinType::ULong:
@@ -399,8 +411,10 @@ bool PrintfSpecifier::fixType(QualType QT) {
   }
 
   // Set conversion specifier and disable any flags which do not apply to it.
-  if (QT->isAnyCharacterType()) {
+  // Let typedefs to char fall through to int, as %c is silly for uint8_t.
+  if (isa<TypedefType>(QT) && QT->isAnyCharacterType()) {
     CS.setKind(ConversionSpecifier::cArg);
+    LM.setKind(LengthModifier::None);
     Precision.setHowSpecified(OptionalAmount::NotSpecified);
     HasAlternativeForm = 0;
     HasLeadingZeroes = 0;

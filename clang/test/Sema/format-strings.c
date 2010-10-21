@@ -174,7 +174,15 @@ void test10(int x, float f, int i, long long lli) {
   printf("%.0Lf", (long double) 1.0); // no-warning
   printf("%c\n", "x"); // expected-warning{{conversion specifies type 'int' but the argument has type 'char *'}}
   printf("%c\n", 1.23); // expected-warning{{conversion specifies type 'int' but the argument has type 'double'}}
-} 
+}
+
+typedef unsigned char uint8_t;
+
+void should_understand_small_integers() {
+  printf("%hhu", (short) 10); // expected-warning{{conversion specifies type 'unsigned char' but the argument has type 'short'}}
+  printf("%hu\n", (unsigned char) 1); // expected-warning{{conversion specifies type 'unsigned short' but the argument has type 'unsigned char'}}
+  printf("%hu\n", (uint8_t)1); // expected-warning{{conversion specifies type 'unsigned short' but the argument has type 'uint8_t'}}
+}
 
 void test11(void *p, char *s) {
   printf("%p", p); // no-warning
