@@ -688,7 +688,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   Reloc.Data.VirtualAddress += Fixup.getOffset();
 
-  switch (Fixup.getKind()) {
+  switch ((unsigned)Fixup.getKind()) {
   case X86::reloc_pcrel_4byte:
   case X86::reloc_riprel_4byte:
   case X86::reloc_riprel_4byte_movq_load:
