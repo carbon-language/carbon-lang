@@ -94,18 +94,18 @@ def VAARG_64 : I<0, Pseudo,
                     (X86vaarg64 addr:$ap, imm:$size, imm:$mode, imm:$align)),
                   (implicit EFLAGS)]>;
 
-// Dynamic stack allocation yields _alloca call for Cygwin/Mingw targets.  Calls
-// to _alloca is needed to probe the stack when allocating more than 4k bytes in
-// one go. Touching the stack at 4K increments is necessary to ensure that the
-// guard pages used by the OS virtual memory manager are allocated in correct
-// sequence.
+// Dynamic stack allocation yields a _chkstk or _alloca call for all Windows
+// targets.  These calls are needed to probe the stack when allocating more than
+// 4k bytes in one go. Touching the stack at 4K increments is necessary to
+// ensure that the guard pages used by the OS virtual memory manager are
+// allocated in correct sequence.
 // The main point of having separate instruction are extra unmodelled effects
 // (compared to ordinary calls) like stack pointer change.
 
 let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
-  def MINGW_ALLOCA : I<0, Pseudo, (outs), (ins),
-                       "# dynamic stack allocation",
-                       [(X86MingwAlloca)]>;
+  def WIN_ALLOCA : I<0, Pseudo, (outs), (ins),
+                     "# dynamic stack allocation",
+                     [(X86WinAlloca)]>;
 }
 
 

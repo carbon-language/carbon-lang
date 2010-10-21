@@ -424,7 +424,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
   if (Subtarget->is64Bit())
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
-  if (Subtarget->isTargetCygMing())
+  if (Subtarget->isTargetCygMing() || Subtarget->isTargetWindows())
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
   else
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
@@ -7483,8 +7483,8 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                            SelectionDAG &DAG) const {
-  assert(Subtarget->isTargetCygMing() &&
-         "This should be used only on Cygwin/Mingw targets");
+  assert(Subtarget->isTargetCygMing() || Subtarget->isTargetWindows() &&
+         "This should be used only on Windows targets");
   DebugLoc dl = Op.getDebugLoc();
 
   // Get the inputs.
@@ -7501,7 +7501,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
 
-  Chain = DAG.getNode(X86ISD::MINGW_ALLOCA, dl, NodeTys, Chain, Flag);
+  Chain = DAG.getNode(X86ISD::WIN_ALLOCA, dl, NodeTys, Chain, Flag);
   Flag = Chain.getValue(1);
 
   Chain = DAG.getCopyFromReg(Chain, dl, X86StackPtr, SPTy).getValue(1);
@@ -8911,7 +8911,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PUNPCKHQDQ:         return "X86ISD::PUNPCKHQDQ";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";
-  case X86ISD::MINGW_ALLOCA:       return "X86ISD::MINGW_ALLOCA";
+  case X86ISD::WIN_ALLOCA:         return "X86ISD::WIN_ALLOCA";
   }
 }
 
@@ -9874,7 +9874,7 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 }
 
 MachineBasicBlock *
-X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
+X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
                                           MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
@@ -9884,8 +9884,11 @@ X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
   // FIXME: The code should be tweaked as soon as we'll try to do codegen for
   // mingw-w64.
 
+  const char *StackProbeSymbol =
+      Subtarget->isTargetWindows() ? "_chkstk" : "_alloca";
+
   BuildMI(*BB, MI, DL, TII->get(X86::CALLpcrel32))
-    .addExternalSymbol("_alloca")
+    .addExternalSymbol(StackProbeSymbol)
     .addReg(X86::EAX, RegState::Implicit)
     .addReg(X86::ESP, RegState::Implicit)
     .addReg(X86::EAX, RegState::Define | RegState::Implicit)
@@ -9952,8 +9955,8 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
-  case X86::MINGW_ALLOCA:
-    return EmitLoweredMingwAlloca(MI, BB);
+  case X86::WIN_ALLOCA:
+    return EmitLoweredWinAlloca(MI, BB);
   case X86::TLSCall_32:
   case X86::TLSCall_64:
     return EmitLoweredTLSCall(MI, BB);

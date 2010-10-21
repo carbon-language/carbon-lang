@@ -202,9 +202,9 @@ def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags,
 
 def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 
-def X86MingwAlloca : SDNode<"X86ISD::MINGW_ALLOCA", SDTX86Void,
-                            [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
-                            
+def X86WinAlloca : SDNode<"X86ISD::WIN_ALLOCA", SDTX86Void,
+                          [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+
 def X86TLSCall : SDNode<"X86ISD::TLSCALL", SDT_X86TLSCALL,
                         []>;
 

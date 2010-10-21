@@ -253,8 +253,8 @@ namespace llvm {
       // with control flow.
       VASTART_SAVE_XMM_REGS,
 
-      // MINGW_ALLOCA - MingW's __alloca call to do stack probing.
-      MINGW_ALLOCA,
+      // WIN_ALLOCA - Windows's _chkstk call to do stack probing.
+      WIN_ALLOCA,
 
       // ATOMADD64_DAG, ATOMSUB64_DAG, ATOMOR64_DAG, ATOMAND64_DAG,
       // ATOMXOR64_DAG, ATOMNAND64_DAG, ATOMSWAP64_DAG -
@@ -870,7 +870,7 @@ namespace llvm {
     MachineBasicBlock *EmitLoweredSelect(MachineInstr *I,
                                          MachineBasicBlock *BB) const;
 
-    MachineBasicBlock *EmitLoweredMingwAlloca(MachineInstr *MI,
+    MachineBasicBlock *EmitLoweredWinAlloca(MachineInstr *MI,
                                               MachineBasicBlock *BB) const;
 
     MachineBasicBlock *EmitLoweredTLSCall(MachineInstr *MI,
