@@ -3657,6 +3657,7 @@ class AnnotateTokensWorker {
   CXCursor *Cursors;
   unsigned NumTokens;
   unsigned TokIdx;
+  unsigned PreprocessingTokIdx;
   CursorVisitor AnnotateVis;
   SourceManager &SrcMgr;
 
@@ -3672,7 +3673,7 @@ public:
                        CXToken *tokens, CXCursor *cursors, unsigned numTokens,
                        ASTUnit *CXXUnit, SourceRange RegionOfInterest)
     : Annotated(annotated), Tokens(tokens), Cursors(cursors),
-      NumTokens(numTokens), TokIdx(0),
+      NumTokens(numTokens), TokIdx(0), PreprocessingTokIdx(0),
       AnnotateVis(CXXUnit, AnnotateTokensVisitor, this,
                   Decl::MaxPCHLevel, RegionOfInterest),
       SrcMgr(CXXUnit->getSourceManager()) {}
@@ -3690,7 +3691,9 @@ void AnnotateTokensWorker::AnnotateTokens(CXCursor parent) {
 
   for (unsigned I = 0 ; I < TokIdx ; ++I) {
     AnnotateTokensData::iterator Pos = Annotated.find(Tokens[I].int_data[1]);
-    if (Pos != Annotated.end())
+    if (Pos != Annotated.end() && 
+        (clang_isInvalid(Cursors[I].kind) ||
+         Pos->second.kind != CXCursor_PreprocessingDirective))
       Cursors[I] = Pos->second;
   }
 
@@ -3706,16 +3709,66 @@ void AnnotateTokensWorker::AnnotateTokens(CXCursor parent) {
 }
 
 enum CXChildVisitResult
-AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
+AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {  
   CXSourceLocation Loc = clang_getCursorLocation(cursor);
-  // We can always annotate a preprocessing directive/macro instantiation.
-  if (clang_isPreprocessing(cursor.kind)) {
-    Annotated[Loc.int_data] = cursor;
+  SourceRange cursorRange = getRawCursorExtent(cursor);
+  
+  if (clang_isPreprocessing(cursor.kind)) {    
+    // For macro instantiations, just note where the beginning of the macro
+    // instantiation occurs.
+    if (cursor.kind == CXCursor_MacroInstantiation) {
+      Annotated[Loc.int_data] = cursor;
+      return CXChildVisit_Recurse;
+    }
+    
+    if (cursorRange.isInvalid())
+      return CXChildVisit_Continue;
+    
+    // Items in the preprocessing record are kept separate from items in
+    // declarations, so we keep a separate token index.
+    unsigned SavedTokIdx = TokIdx;
+    TokIdx = PreprocessingTokIdx;
+
+    // Skip tokens up until we catch up to the beginning of the preprocessing
+    // entry.
+    while (MoreTokens()) {
+      const unsigned I = NextToken();
+      SourceLocation TokLoc = GetTokenLoc(I);
+      switch (LocationCompare(SrcMgr, TokLoc, cursorRange)) {
+      case RangeBefore:
+        AdvanceToken();
+        continue;
+      case RangeAfter:
+      case RangeOverlap:
+        break;
+      }
+      break;
+    }
+    
+    // Look at all of the tokens within this range.
+    while (MoreTokens()) {
+      const unsigned I = NextToken();
+      SourceLocation TokLoc = GetTokenLoc(I);
+      switch (LocationCompare(SrcMgr, TokLoc, cursorRange)) {
+      case RangeBefore:
+        assert(0 && "Infeasible");
+      case RangeAfter:
+        break;
+      case RangeOverlap:
+        Cursors[I] = cursor;
+        AdvanceToken();
+        continue;
+      }
+      break;
+    }
+
+    // Save the preprocessing token index; restore the non-preprocessing
+    // token index.
+    PreprocessingTokIdx = TokIdx;
+    TokIdx = SavedTokIdx;
     return CXChildVisit_Recurse;
   }
 
-  SourceRange cursorRange = getRawCursorExtent(cursor);
-  
   if (cursorRange.isInvalid())
     return CXChildVisit_Continue;
   
@@ -3753,7 +3806,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
     // directive.  Here we assume that the default construction of CXCursor
     // results in CXCursor.kind being an initialized value (i.e., 0).  If
     // this isn't the case, we can fix by doing lookup + insertion.
-
+    
     CXCursor &oldC = Annotated[rawEncoding];
     if (!clang_isPreprocessing(oldC.kind))
       oldC = cursor;
@@ -3815,6 +3868,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   for (unsigned I = BeforeChildren; I != AfterChildren; ++I) {
     if (!clang_isInvalid(clang_getCursorKind(Cursors[I])))
       break;
+    
     Cursors[I] = cursor;
   }
   // Scan the tokens that are at the end of the cursor, but are not captured
@@ -3841,14 +3895,14 @@ void clang_annotateTokens(CXTranslationUnit TU,
   if (NumTokens == 0 || !Tokens || !Cursors)
     return;
 
+  // Any token we don't specifically annotate will have a NULL cursor.
+  CXCursor C = clang_getNullCursor();
+  for (unsigned I = 0; I != NumTokens; ++I)
+    Cursors[I] = C;
+
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
-  if (!CXXUnit) {
-    // Any token we don't specifically annotate will have a NULL cursor.
-    const CXCursor &C = clang_getNullCursor();
-    for (unsigned I = 0; I != NumTokens; ++I)
-      Cursors[I] = C;
+  if (!CXXUnit)
     return;
-  }
 
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 

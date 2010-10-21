@@ -285,7 +285,7 @@ void f() {
 // CHECK: Punctuation: "#" [63:1 - 63:2] preprocessing directive=
 // CHECK: Identifier: "define" [63:2 - 63:8] preprocessing directive=
 // CHECK: Identifier: "VAL" [63:9 - 63:12] macro definition=VAL
-// CHECK: Literal: "0" [63:13 - 63:14] preprocessing directive=
+// CHECK: Literal: "0" [63:13 - 63:14] macro definition=VAL
 // CHECK: Punctuation: "@" [65:1 - 65:2] ObjCInterfaceDecl=R7974151:65:12
 // CHECK: Keyword: "interface" [65:2 - 65:11] ObjCInterfaceDecl=R7974151:65:12
 // CHECK: Identifier: "R7974151" [65:12 - 65:20] ObjCInterfaceDecl=R7974151:65:12
