@@ -21,9 +21,29 @@
 // This is a work-in-progress. It doesn't work yet, and the metadata
 // format isn't stable.
 //
-// TODO: getModRefBehavior. The AliasAnalysis infrastructure will need to
-//       be extended.
-// TODO: struct fields
+// The current metadata format is very simple. MDNodes have up to three
+// fields, e.g.:
+//   !0 = metadata !{ !"name", !1, 0 }
+// The first field is an identity field. It can be any MDString which
+// uniquely identifies the type. The second field identifies the type's
+// parent node in the tree, or is null or omitted for a root node.
+// If the third field is present, it's an integer which if equal to 1
+// indicates that the type is "constant".
+//
+// TODO: The current metadata encoding scheme doesn't support struct
+// fields. For example:
+//   struct X {
+//     double d;
+//     int i;
+//   };
+//   void foo(struct X *x, struct X *y, double *p) {
+//     *x = *y;
+//     *p = 0.0;
+//   }
+// Struct X has a double member, so the store to *x can alias the store to *p.
+// Currently it's not possible to precisely describe all the things struct X
+// aliases, so struct assignments must use conservative TBAA nodes. There's
+// no scheme for attaching metadata to @llvm.memcpy yet either.
 //
 //===----------------------------------------------------------------------===//
 
