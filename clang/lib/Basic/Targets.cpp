@@ -412,6 +412,10 @@ class WindowsTargetInfo : public OSTargetInfo<Target> {
 protected:
   virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                             MacroBuilder &Builder) const {
+    Builder.defineMacro("_WIN32");
+  }
+  void getVisualStudioDefines(const LangOptions &Opts,
+                              MacroBuilder &Builder) const {
     if (Opts.CPlusPlus) {
       if (Opts.RTTI)
         Builder.defineMacro("_CPPRTTI");
@@ -427,7 +431,7 @@ protected:
     //        but it works for now.
     if (Opts.POSIXThreads)
       Builder.defineMacro("_MT");
-      
+
     if (Opts.MSCVersion != 0)
       Builder.defineMacro("_MSC_VER", llvm::Twine(Opts.MSCVersion));
 
@@ -442,12 +446,8 @@ protected:
     }
 
     Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
-    Builder.defineMacro("_WIN32");
   }
 
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
-  }
 public:
   WindowsTargetInfo(const std::string &triple)
     : OSTargetInfo<Target>(triple) {}
@@ -1234,9 +1234,11 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   }
 
   if (Opts.Microsoft && PointerWidth == 32) {
-    Builder.defineMacro("_M_IX86", "600");
-
     switch (SSELevel) {
+    case SSE42:
+    case SSE41:
+    case SSSE3:
+    case SSE3:
     case SSE2:
       Builder.defineMacro("_M_IX86_FP", llvm::Twine(2));
       break;
@@ -1395,11 +1397,35 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
-    LongDoubleWidth = 64;
-    LongDoubleFormat = &llvm::APFloat::IEEEdouble;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-f80:128:128-v64:64:64-"
                         "v128:128:128-a0:0:64-f80:32:32-n8:16:32";
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    WindowsTargetInfo<X86_32TargetInfo>::getTargetDefines(Opts, Builder);
+  }
+};
+} // end anonymous namespace
+
+namespace {
+
+// x86-32 Windows Visual Studio target
+class VisualStudioWindowsX86_32TargetInfo : public WindowsX86_32TargetInfo {
+public:
+  VisualStudioWindowsX86_32TargetInfo(const std::string& triple)
+    : WindowsX86_32TargetInfo(triple) {
+    LongDoubleWidth = 64;
+    LongDoubleFormat = &llvm::APFloat::IEEEdouble;
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    WindowsX86_32TargetInfo::getTargetDefines(Opts, Builder);
+    WindowsX86_32TargetInfo::getVisualStudioDefines(Opts, Builder);
+    // The value of the following reflects processor type.
+    // 300=386, 400=486, 500=Pentium, 600=Blend (default)
+    // We lost the original triple, so we use the default.
+    Builder.defineMacro("_M_IX86", "600");
   }
 };
 } // end anonymous namespace
@@ -1414,6 +1440,9 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
     WindowsX86_32TargetInfo::getTargetDefines(Opts, Builder);
+    DefineStd(Builder, "WIN32", Opts);
+    DefineStd(Builder, "WINNT", Opts);
+    Builder.defineMacro("_X86_");
     Builder.defineMacro("__MSVCRT__");
     Builder.defineMacro("__MINGW32__");
     Builder.defineMacro("__declspec", "__declspec");
@@ -1525,8 +1554,22 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
     WindowsTargetInfo<X86_64TargetInfo>::getTargetDefines(Opts, Builder);
-
     Builder.defineMacro("_WIN64");
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 Windows Visual Studio target
+class VisualStudioWindowsX86_64TargetInfo : public WindowsX86_64TargetInfo {
+public:
+  VisualStudioWindowsX86_64TargetInfo(const std::string& triple)
+    : WindowsX86_64TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    WindowsX86_64TargetInfo::getTargetDefines(Opts, Builder);
+    WindowsX86_64TargetInfo::getVisualStudioDefines(Opts, Builder);
     Builder.defineMacro("_M_X64");
     Builder.defineMacro("_M_AMD64");
   }
@@ -1546,6 +1589,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
     WindowsX86_64TargetInfo::getTargetDefines(Opts, Builder);
+    DefineStd(Builder, "WIN64", Opts);
     Builder.defineMacro("__MSVCRT__");
     Builder.defineMacro("__MINGW64__");
     Builder.defineMacro("__declspec");
@@ -2542,7 +2586,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     case llvm::Triple::MinGW32:
       return new MinGWX86_32TargetInfo(T);
     case llvm::Triple::Win32:
-      return new WindowsX86_32TargetInfo(T);
+      return new VisualStudioWindowsX86_32TargetInfo(T);
     case llvm::Triple::Haiku:
       return new HaikuX86_32TargetInfo(T);
     default:
@@ -2570,7 +2614,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     case llvm::Triple::MinGW64:
       return new MinGWX86_64TargetInfo(T);
     case llvm::Triple::Win32:   // This is what Triple.h supports now.
-      return new WindowsX86_64TargetInfo(T);
+      return new VisualStudioWindowsX86_64TargetInfo(T);
     default:
       return new X86_64TargetInfo(T);
     }
