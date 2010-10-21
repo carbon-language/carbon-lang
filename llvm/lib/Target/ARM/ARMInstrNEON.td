@@ -1668,11 +1668,25 @@ class N3VW<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            string OpcodeStr, string Dt, ValueType TyQ, ValueType TyD,
            SDNode OpNode, SDNode ExtOp, bit Commutable>
   : N3V<op24, op23, op21_20, op11_8, 0, op4,
-        (outs QPR:$dst), (ins QPR:$src1, DPR:$src2), N3RegFrm, IIC_VSUBiD,
-        OpcodeStr, Dt, "$dst, $src1, $src2", "",
-        [(set QPR:$dst, (OpNode (TyQ QPR:$src1),
-                                (TyQ (ExtOp (TyD DPR:$src2)))))]> {
+        (outs QPR:$Qd), (ins QPR:$Qn, DPR:$Dm), N3RegFrm, IIC_VSUBiD,
+        OpcodeStr, Dt, "$Qd, $Qn, $Dm", "",
+        [(set QPR:$Qd, (OpNode (TyQ QPR:$Qn),
+                                (TyQ (ExtOp (TyD DPR:$Dm)))))]> {
   let isCommutable = Commutable;
+  
+  // Instruction operands.
+  bits<4> Qd;
+  bits<4> Qn;
+  bits<5> Dm;
+  
+  let Inst{15-13} = Qd{2-0};
+  let Inst{22}    = Qd{3};
+  let Inst{12}    = 0;
+  let Inst{19-17} = Qn{2-0};
+  let Inst{7}     = Qn{3};
+  let Inst{16}    = 0;
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
 }
 
 // Pairwise long 2-register intrinsics, both double- and quad-register.

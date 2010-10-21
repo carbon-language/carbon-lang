@@ -119,3 +119,63 @@ define <2 x i64> @vaddlu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 	%tmp5 = add <2 x i64> %tmp3, %tmp4
 	ret <2 x i64> %tmp5
 }
+
+; CHECK: vaddws_8xi8
+define <8 x i16> @vaddws_8xi8(<8 x i16>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = sext <8 x i8> %tmp2 to <8 x i16>
+; CHECK: vaddw.s8	q8, q8, d18     @ encoding: [0xa2,0x01,0xc0,0xf2]
+	%tmp4 = add <8 x i16> %tmp1, %tmp3
+	ret <8 x i16> %tmp4
+}
+
+; CHECK: vaddws_4xi16
+define <4 x i32> @vaddws_4xi16(<4 x i32>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = sext <4 x i16> %tmp2 to <4 x i32>
+; CHECK: vaddw.s16	q8, q8, d18     @ encoding: [0xa2,0x01,0xd0,0xf2]
+	%tmp4 = add <4 x i32> %tmp1, %tmp3
+	ret <4 x i32> %tmp4
+}
+
+; CHECK: vaddws_2xi32
+define <2 x i64> @vaddws_2xi32(<2 x i64>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = sext <2 x i32> %tmp2 to <2 x i64>
+; CHECK: vaddw.s32	q8, q8, d18     @ encoding: [0xa2,0x01,0xe0,0xf2]
+	%tmp4 = add <2 x i64> %tmp1, %tmp3
+	ret <2 x i64> %tmp4
+}
+
+; CHECK: vaddwu_8xi8
+define <8 x i16> @vaddwu_8xi8(<8 x i16>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = zext <8 x i8> %tmp2 to <8 x i16>
+; CHECK: vaddw.u8	q8, q8, d18     @ encoding: [0xa2,0x01,0xc0,0xf3]
+	%tmp4 = add <8 x i16> %tmp1, %tmp3
+	ret <8 x i16> %tmp4
+}
+
+; CHECK: vaddwu_4xi16
+define <4 x i32> @vaddwu_4xi16(<4 x i32>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = zext <4 x i16> %tmp2 to <4 x i32>
+; CHECK: vaddw.u16	q8, q8, d18     @ encoding: [0xa2,0x01,0xd0,0xf3]
+	%tmp4 = add <4 x i32> %tmp1, %tmp3
+	ret <4 x i32> %tmp4
+}
+
+; CHECK: vaddwu_2xi32
+define <2 x i64> @vaddwu_2xi32(<2 x i64>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = zext <2 x i32> %tmp2 to <2 x i64>
+; CHECK: vaddw.u32	q8, q8, d18     @ encoding: [0xa2,0x01,0xe0,0xf3]
+	%tmp4 = add <2 x i64> %tmp1, %tmp3
+	ret <2 x i64> %tmp4
+}
