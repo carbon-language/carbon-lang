@@ -3,7 +3,10 @@
 // RUN: cat %t/*.html | FileCheck %s
 
 // CHECK: <h3>Annotated Source Code</h3>
-// CHECK: Dereference of null pointer
+
+// Without tweaking expr, the expr would hit to the line below
+// emitted to the output as comment.
+// CHECK: {{[D]ereference of null pointer}}
 
 void f0(int x) {
   int *p = &x;
