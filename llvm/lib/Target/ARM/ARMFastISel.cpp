@@ -1356,6 +1356,21 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
               VA.getLocReg())
       .addReg(Arg);
       RegArgs.push_back(VA.getLocReg());
+    } else if (VA.needsCustom()) {
+      // TODO: We need custom lowering for vector (v2f64) args.
+      if (VA.getLocVT() != MVT::f64) return false;
+      
+      CCValAssign &NextVA = ArgLocs[++i];
+
+      // TODO: Only handle register args for now.
+      if(!(VA.isRegLoc() && NextVA.isRegLoc())) return false;
+
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(ARM::VMOVRRD), VA.getLocReg())
+                      .addReg(NextVA.getLocReg(), RegState::Define)
+                      .addReg(Arg));
+      RegArgs.push_back(VA.getLocReg());
+      RegArgs.push_back(NextVA.getLocReg());
     } else {
       // Need to store
       return false;
