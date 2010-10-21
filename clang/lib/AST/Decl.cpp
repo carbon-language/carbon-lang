@@ -1001,7 +1001,7 @@ bool FunctionDecl::isExternC() const {
       break;
   }
 
-  return false;
+  return isMain();
 }
 
 bool FunctionDecl::isGlobal() const {

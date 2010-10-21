@@ -4182,6 +4182,11 @@ void Sema::CheckMain(FunctionDecl* FD) {
   if (nparams == 1 && !FD->isInvalidDecl()) {
     Diag(FD->getLocation(), diag::warn_main_one_arg);
   }
+  
+  if (!FD->isInvalidDecl() && FD->getDescribedFunctionTemplate()) {
+    Diag(FD->getLocation(), diag::err_main_template_decl);
+    FD->setInvalidDecl();
+  }
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {

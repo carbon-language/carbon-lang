@@ -964,7 +964,7 @@ public:
     Ovl_NonFunction
   };
   OverloadKind CheckOverload(Scope *S,
-                             FunctionDecl *New,
+                             FunctionDecl *New, 
                              const LookupResult &OldDecls,
                              NamedDecl *&OldDecl,
                              bool IsForUsingDecl);
