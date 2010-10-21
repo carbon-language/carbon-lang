@@ -1358,7 +1358,6 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     }
 
     // Now copy/store arg to correct locations.
-    // TODO: We need custom lowering for f64 args.
     if (VA.isRegLoc() && !VA.needsCustom()) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
               VA.getLocReg())
@@ -1380,11 +1379,14 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
       RegArgs.push_back(VA.getLocReg());
       RegArgs.push_back(NextVA.getLocReg());
     } else {
-      // Need to store
-      return false;
+      assert(VA.isMemLoc());
+      // Need to store on the stack.
+      unsigned Base = ARM::SP;
+      int Offset = VA.getLocMemOffset();
+
+      if (!ARMEmitStore(ArgVT, Arg, Base, Offset)) return false;
     }
   }
-
   return true;
 }
 
