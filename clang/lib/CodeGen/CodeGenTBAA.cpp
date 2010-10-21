@@ -57,7 +57,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     // if our LLVM IR is linked with LLVM IR from a different front-end
     // (or a different version of this front-end), their TBAA trees will
     // remain distinct, and the optimizer will treat them conservatively.
-    Root = getTBAAInfoForNamedType("Experimental TBAA", 0);
+    Root = getTBAAInfoForNamedType("Simple C/C++ TBAA", 0);
 
     // Define the root of the tree for user-accessible memory. C and C++
     // give special powers to char and certain similar types. However,
