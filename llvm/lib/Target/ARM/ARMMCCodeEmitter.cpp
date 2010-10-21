@@ -143,7 +143,18 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
 unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCOperand &MO) const {
   if (MO.isReg()) {
-    return getARMRegisterNumbering(MO.getReg());
+    unsigned regno = getARMRegisterNumbering(MO.getReg());
+    
+    // Q registers are encodes as 2x their register number.
+    switch (MO.getReg()) {
+      case ARM::Q0: case ARM::Q1: case ARM::Q2: case ARM::Q3:
+      case ARM::Q4: case ARM::Q5: case ARM::Q6: case ARM::Q7:
+      case ARM::Q8: case ARM::Q9: case ARM::Q10: case ARM::Q11:
+      case ARM::Q12: case ARM::Q13: case ARM::Q14: case ARM::Q15:
+        return 2 * regno;
+      default:
+        return regno;
+    }
   } else if (MO.isImm()) {
     return static_cast<unsigned>(MO.getImm());
   } else if (MO.isFPImm()) {
