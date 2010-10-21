@@ -87,6 +87,7 @@ extern "C" void LLVMLinkInJIT() {
 // values of an opaque key, used by libgcc to find dwarf tables.
 
 extern "C" void __register_frame(void*);
+extern "C" void __deregister_frame(void*);
 
 #if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED <= 1050
 # define USE_KEYMGR 1
@@ -318,8 +319,10 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
     LOI = (LibgccObjectInfo*)calloc(sizeof(struct LibgccObjectInfo), 1); 
   _keymgr_set_and_unlock_processwide_ptr(KEYMGR_GCC3_DW2_OBJ_LIST, LOI);
   InstallExceptionTableRegister(DarwinRegisterFrame);
+  // Not sure about how to deregister on Darwin.
 #else
   InstallExceptionTableRegister(__register_frame);
+  InstallExceptionTableDeregister(__deregister_frame);
 #endif // __APPLE__
 #endif // __GNUC__
   
@@ -328,6 +331,9 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
 }
 
 JIT::~JIT() {
+  // Unregister all exception tables registered by this JIT.
+  DeregisterAllTables();
+  // Cleanup.
   AllJits->Remove(this);
   delete jitstate;
   delete JCE;

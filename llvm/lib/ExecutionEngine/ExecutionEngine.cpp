@@ -47,12 +47,12 @@ ExecutionEngine *(*ExecutionEngine::JITCtor)(
   const SmallVectorImpl<std::string>& MAttrs) = 0;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
                                                 std::string *ErrorStr) = 0;
-ExecutionEngine::EERegisterFn ExecutionEngine::ExceptionTableRegister = 0;
-
 
 ExecutionEngine::ExecutionEngine(Module *M)
   : EEState(*this),
-    LazyFunctionCreator(0) {
+    LazyFunctionCreator(0),
+    ExceptionTableRegister(0), 
+    ExceptionTableDeregister(0) {
   CompilingLazily         = false;
   GVCompilationDisabled   = false;
   SymbolSearchingDisabled = false;
@@ -64,6 +64,16 @@ ExecutionEngine::~ExecutionEngine() {
   clearAllGlobalMappings();
   for (unsigned i = 0, e = Modules.size(); i != e; ++i)
     delete Modules[i];
+}
+
+void ExecutionEngine::DeregisterAllTables() {
+  if (ExceptionTableDeregister) {
+    std::vector<void*>::iterator it = AllExceptionTables.begin();
+    std::vector<void*>::iterator ite = AllExceptionTables.end();
+    for (; it != ite; ++it)
+      ExceptionTableDeregister(*it);
+    AllExceptionTables.clear();
+  }
 }
 
 namespace {

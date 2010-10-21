@@ -126,10 +126,12 @@ protected:
   /// pointer is invoked to create it. If this returns null, the JIT will abort.
   void* (*LazyFunctionCreator)(const std::string &);
   
-  /// ExceptionTableRegister - If Exception Handling is set, the JIT will 
-  /// register dwarf tables with this function
+  /// ExceptionTableRegister - If Exception Handling is set, the JIT will
+  /// register dwarf tables with this function.
   typedef void (*EERegisterFn)(void*);
-  static EERegisterFn ExceptionTableRegister;
+  EERegisterFn ExceptionTableRegister;
+  EERegisterFn ExceptionTableDeregister;
+  std::vector<void*> AllExceptionTables;
 
 public:
   /// lock - This lock is protects the ExecutionEngine, JIT, JITResolver and
@@ -373,16 +375,25 @@ public:
   
   /// InstallExceptionTableRegister - The JIT will use the given function
   /// to register the exception tables it generates.
-  static void InstallExceptionTableRegister(void (*F)(void*)) {
+  void InstallExceptionTableRegister(EERegisterFn F) {
     ExceptionTableRegister = F;
+  }
+  void InstallExceptionTableDeregister(EERegisterFn F) {
+    ExceptionTableDeregister = F;
   }
   
   /// RegisterTable - Registers the given pointer as an exception table. It uses
   /// the ExceptionTableRegister function.
-  static void RegisterTable(void* res) {
-    if (ExceptionTableRegister)
+  void RegisterTable(void* res) {
+    if (ExceptionTableRegister) {
       ExceptionTableRegister(res);
+      AllExceptionTables.push_back(res);
+    }
   }
+
+  /// DeregisterAllTables - Deregisters all previously registered pointers to an
+  /// exception tables. It uses the ExceptionTableoDeregister function.
+  void DeregisterAllTables();
 
 protected:
   explicit ExecutionEngine(Module *M);
