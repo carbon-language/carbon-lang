@@ -1187,25 +1187,42 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
     return To->getKind() == BuiltinType::UInt;
   }
 
-  // An rvalue of type wchar_t (3.9.1) or an enumeration type (7.2)
-  // can be converted to an rvalue of the first of the following types
-  // that can represent all the values of its underlying type: int,
-  // unsigned int, long, or unsigned long (C++ 4.5p2).
-
-  // We pre-calculate the promotion type for enum types.
+  // C++0x [conv.prom]p3: 
+  //   A prvalue of an unscoped enumeration type whose underlying type is not 
+  //   fixed (7.2) can be converted to an rvalue a prvalue of the first of the 
+  //   following types that can represent all the values of the enumeration 
+  //   (i.e., the values in the range bmin to bmax as described in 7.2): int, 
+  //   unsigned int, long int, unsigned long int, long long int, or unsigned 
+  //   long long int. If none of the types in that list can represent all the
+  //   values of the enumeration, an rvalue a prvalue of an unscoped enumeration 
+  //   type can be converted to an rvalue a prvalue of the extended integer type
+  //   with lowest integer conversion rank (4.13) greater than the rank of long 
+  //   long in which all the values of the enumeration can be represented. If 
+  //   there are two such extended types, the signed one is chosen.
   if (const EnumType *FromEnumType = FromType->getAs<EnumType>()) {
     // C++0x 7.2p9: Note that this implicit enum to int conversion is not
     // provided for a scoped enumeration.
     if (FromEnumType->getDecl()->isScoped())
       return false;
 
+    // We have already pre-calculated the promotion type, so this is trivial.
     if (ToType->isIntegerType() && 
         !RequireCompleteType(From->getLocStart(), FromType, PDiag()))
       return Context.hasSameUnqualifiedType(ToType,
                                 FromEnumType->getDecl()->getPromotionType());
   }
 
-  if (FromType->isWideCharType() && ToType->isIntegerType()) {
+  // C++0x [conv.prom]p2:
+  //   A prvalue of type char16_t, char32_t, or wchar_t (3.9.1) can be converted 
+  //   to an rvalue a prvalue of the first of the following types that can 
+  //   represent all the values of its underlying type: int, unsigned int, 
+  //   long int, unsigned long int, long long int, or unsigned long long int.
+  //   If none of the types in that list can represent all the values of its 
+  //   underlying type, an rvalue a prvalue of type char16_t, char32_t,
+  //   or wchar_t can be converted to an rvalue a prvalue of its underlying 
+  //   type.
+  if (FromType->isAnyCharacterType() && !FromType->isCharType() && 
+      ToType->isIntegerType()) {
     // Determine whether the type we're converting from is signed or
     // unsigned.
     bool FromIsSigned;
@@ -4490,15 +4507,15 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   // types; these types need to be first.
   // FIXME: What about complex?
   const unsigned FirstIntegralType = 0;
-  const unsigned LastIntegralType = 13;
-  const unsigned FirstPromotedIntegralType = 7,
-                 LastPromotedIntegralType = 13;
-  const unsigned FirstPromotedArithmeticType = 7,
-                 LastPromotedArithmeticType = 16;
-  const unsigned NumArithmeticTypes = 16;
+  const unsigned LastIntegralType = 15;
+  const unsigned FirstPromotedIntegralType = 9,
+                 LastPromotedIntegralType = 15;
+  const unsigned FirstPromotedArithmeticType = 9,
+                 LastPromotedArithmeticType = 18;
+  const unsigned NumArithmeticTypes = 18;
   QualType ArithmeticTypes[NumArithmeticTypes] = {
     Context.BoolTy, Context.CharTy, Context.WCharTy,
-// FIXME:   Context.Char16Ty, Context.Char32Ty,
+    Context.Char16Ty, Context.Char32Ty,
     Context.SignedCharTy, Context.ShortTy,
     Context.UnsignedCharTy, Context.UnsignedShortTy,
     Context.IntTy, Context.LongTy, Context.LongLongTy,
