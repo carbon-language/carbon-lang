@@ -497,7 +497,7 @@ bool ARMDAGToDAGISel::SelectAddrMode4(SDValue N, SDValue &Addr, SDValue &Mode) {
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectAddrMode5(SDValue N, 
+bool ARMDAGToDAGISel::SelectAddrMode5(SDValue N,
                                       SDValue &Base, SDValue &Offset) {
   if (N.getOpcode() != ISD::ADD) {
     Base = N;
@@ -1215,7 +1215,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
         RegSeq = SDValue(PairDRegs(MVT::v2i64, V0, V1), 0);
       else {
         SDValue V2 = N->getOperand(2+3);
-        // If it's a vld3, form a quad D-register and leave the last part as 
+        // If it's a vld3, form a quad D-register and leave the last part as
         // an undef.
         SDValue V3 = (NumVecs == 3)
           ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,dl,VT), 0)
@@ -1330,7 +1330,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   Ops.push_back(MemAddr);
   Ops.push_back(Align);
 
-  unsigned Opc = (is64BitVector ? DOpcodes[OpcodeIndex] : 
+  unsigned Opc = (is64BitVector ? DOpcodes[OpcodeIndex] :
                                   QOpcodes[OpcodeIndex]);
 
   SDValue SuperReg;
@@ -1397,7 +1397,7 @@ SDNode *ARMDAGToDAGISel::SelectVTBL(SDNode *N, bool IsExt, unsigned NumVecs,
     RegSeq = SDValue(PairDRegs(MVT::v16i8, V0, V1), 0);
   else {
     SDValue V2 = N->getOperand(FirstTblReg + 2);
-    // If it's a vtbl3, form a quad D-register and leave the last part as 
+    // If it's a vtbl3, form a quad D-register and leave the last part as
     // an undef.
     SDValue V3 = (NumVecs == 3)
       ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, VT), 0)
