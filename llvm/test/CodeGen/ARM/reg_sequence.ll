@@ -75,8 +75,7 @@ define <8 x i8> @t3(i8* %A, i8* %B) nounwind {
 ; CHECK:        t3:
 ; CHECK:        vld3.8
 ; CHECK:        vmul.i8
-; CHECK:        vmov r
-; CHECK-NOT:    vmov d
+; CHECK-NOT:    vmov
 ; CHECK:        vst3.8
   %tmp1 = call %struct.__neon_int8x8x3_t @llvm.arm.neon.vld3.v8i8(i8* %A, i32 1) ; <%struct.__neon_int8x8x3_t> [#uses=2]
   %tmp2 = extractvalue %struct.__neon_int8x8x3_t %tmp1, 0 ; <<8 x i8>> [#uses=1]

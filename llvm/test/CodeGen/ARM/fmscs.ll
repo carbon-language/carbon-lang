@@ -19,6 +19,6 @@ entry:
 ; NFP0: 	vnmls.f32	s2, s1, s0
 
 ; CORTEXA8: test:
-; CORTEXA8: 	vnmls.f32	s1, s2, s0
+; CORTEXA8: 	vnmls.f32	s2, s1, s0
 ; CORTEXA9: test:
 ; CORTEXA9: 	vnmls.f32	s0, s1, s2

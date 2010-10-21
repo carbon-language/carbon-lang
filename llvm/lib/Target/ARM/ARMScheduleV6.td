@@ -247,18 +247,6 @@ def ARMV6Itineraries : ProcessorItineraries<
   // Double-precision FP SQRT
   InstrItinData<IIC_fpSQRT64 , [InstrStage<29, [V6_Pipe]>], [34, 2, 2]>,
   //
-  // Integer to Single-precision Move
-  InstrItinData<IIC_fpMOVIS,  [InstrStage<1, [V6_Pipe]>], [10, 1]>,
-  //
-  // Integer to Double-precision Move
-  InstrItinData<IIC_fpMOVID,  [InstrStage<1, [V6_Pipe]>], [10, 1, 1]>,
-  //
-  // Single-precision to Integer Move
-  InstrItinData<IIC_fpMOVSI,  [InstrStage<1, [V6_Pipe]>], [10, 1]>,
-  //
-  // Double-precision to Integer Move
-  InstrItinData<IIC_fpMOVDI,  [InstrStage<1, [V6_Pipe]>], [10, 10, 1]>,
-  //
   // Single-precision FP Load
   InstrItinData<IIC_fpLoad32 , [InstrStage<1, [V6_Pipe]>], [5, 2, 2]>,
   //

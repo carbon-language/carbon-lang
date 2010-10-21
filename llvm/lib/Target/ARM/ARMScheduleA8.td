@@ -331,28 +331,6 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_fpSQRT64, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<29, [A8_NPipe], 0>,
                                InstrStage<29, [A8_NLSPipe]>], [29, 1]>,
-
-  //
-  // Integer to Single-precision Move
-  InstrItinData<IIC_fpMOVIS,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NPipe]>],
-                              [2, 1]>,
-  //
-  // Integer to Double-precision Move
-  InstrItinData<IIC_fpMOVID,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NPipe]>],
-                              [2, 1, 1]>,
-  //
-  // Single-precision to Integer Move
-  InstrItinData<IIC_fpMOVSI,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NPipe]>],
-                              [20, 1]>,
-  //
-  // Double-precision to Integer Move
-  InstrItinData<IIC_fpMOVDI,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<1, [A8_NPipe]>],
-                              [20, 20, 1]>,
-
   //
   // Single-precision FP Load
   InstrItinData<IIC_fpLoad32, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
