@@ -285,16 +285,6 @@ bool SimpleRegisterCoalescing::HasOtherReachingDefs(LiveInterval &IntA,
   return false;
 }
 
-static void
-TransferImplicitOps(MachineInstr *MI, MachineInstr *NewMI) {
-  for (unsigned i = MI->getDesc().getNumOperands(), e = MI->getNumOperands();
-       i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isImplicit())
-      NewMI->addOperand(MO);
-  }
-}
-
 /// RemoveCopyByCommutingDef - We found a non-trivially-coalescable copy with
 /// IntA being the source and IntB being the dest, thus this defines a value
 /// number in IntB.  If the source value number (in IntA) is defined by a
