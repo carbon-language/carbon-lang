@@ -95,6 +95,11 @@ namespace llvm {
   ///
   FunctionPass *createFastRegisterAllocator();
 
+  /// BasicRegisterAllocation Pass - This pass implements a degenerate global
+  /// register allocator using the basic regalloc framework.
+  ///
+  FunctionPass *createBasicRegisterAllocator();
+
   /// LinearScanRegisterAllocation Pass - This pass implements the linear scan
   /// register allocation algorithm, a global register allocator.
   ///

@@ -1,4 +1,4 @@
-//===---------- SplitKit.cpp - Toolkit for splitting live ranges ----------===//
+//===-------- SplitKit.cpp - Toolkit for splitting live ranges --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
