@@ -120,8 +120,11 @@ where options:
 -w   : insert some wait time (currently 0.5 sec) between consecutive test cases
 
 and:
-args : specify a list of directory names to search for python Test*.py scripts
+args : specify a list of directory names to search for test modules named after
+       Test*.py (test discovery)
        if empty, search from the curret working directory, instead
+
+Examples:
 
 This is an example of using the -f -g options to pinpoint to a specfic test
 method to be run:
@@ -137,7 +140,27 @@ Test 'frame variable this' when stopped on a class constructor. ... ok
 Ran 1 test in 1.396s
 
 OK
-$ 
+
+And this is an example of using the -p option to run a single file (the filename
+matches the pattern 'ObjC' and it happens to be 'TestObjCMethods.py'):
+
+$ ./dotest.py -v -p ObjC
+----------------------------------------------------------------------
+Collected 4 tests
+
+test_break_with_dsym (TestObjCMethods.FoundationTestCase)
+Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'. ... ok
+test_break_with_dwarf (TestObjCMethods.FoundationTestCase)
+Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'. ... ok
+test_data_type_and_expr_with_dsym (TestObjCMethods.FoundationTestCase)
+Lookup objective-c data types and evaluate expressions. ... ok
+test_data_type_and_expr_with_dwarf (TestObjCMethods.FoundationTestCase)
+Lookup objective-c data types and evaluate expressions. ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 16.661s
+
+OK
 
 Running of this script also sets up the LLDB_TEST environment variable so that
 individual test cases can locate their supporting files correctly.  The script
