@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_ENDIAN_H
 
 #include "llvm/Config/config.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/SwapByteOrder.h"
 #include "llvm/Support/type_traits.h"
 
@@ -23,19 +24,6 @@ namespace support {
 
 enum endianness {big, little};
 enum alignment {unaligned, aligned};
-
-template<typename value_type, int host, int target>
-static typename enable_if_c<host == target, value_type>::type
-SwapByteOrderIfDifferent(value_type value) {
-  // Target endianess is the same as the host. Just pass the value through.
-  return value;
-}
-
-template<typename value_type, int host, int target>
-static typename enable_if_c<host != target, value_type>::type
-SwapByteOrderIfDifferent(value_type value) {
-    return sys::SwapByteOrder<value_type>(value);
-}
 
 namespace detail {
 
@@ -60,52 +48,49 @@ struct alignment_access_helper<value_type, unaligned>
 
 } // end namespace detail
 
-#if defined(LLVM_IS_HOST_BIG_ENDIAN) \
- || defined(_BIG_ENDIAN) || defined(__BIG_ENDIAN__)
-static const endianness host_endianness = big;
-#else
-static const endianness host_endianness = little;
-#endif
-
-struct endian {
+namespace endian {
   template<typename value_type, alignment align>
   static value_type read_le(const void *memory) {
-    return SwapByteOrderIfDifferent<value_type, host_endianness, little>(
+    value_type t =
       reinterpret_cast<const detail::alignment_access_helper
-        <value_type, align> *>(memory)->val);
+        <value_type, align> *>(memory)->val;
+    if (sys::isBigEndianHost())
+      return sys::SwapByteOrder(t);
+    return t;
   }
 
   template<typename value_type, alignment align>
   static void write_le(void *memory, value_type value) {
+    if (sys::isBigEndianHost())
+      value = sys::SwapByteOrder(value);
     reinterpret_cast<detail::alignment_access_helper<value_type, align> *>
-      (memory)->val =
-        SwapByteOrderIfDifferent< value_type
-                                , host_endianness
-                                , little>(value);
+      (memory)->val = value;
   }
 
   template<typename value_type, alignment align>
   static value_type read_be(const void *memory) {
-    return SwapByteOrderIfDifferent<value_type, host_endianness, big>(
+    value_type t =
       reinterpret_cast<const detail::alignment_access_helper
-        <value_type, align> *>(memory)->val);
+        <value_type, align> *>(memory)->val;
+    if (sys::isLittleEndianHost())
+      return sys::SwapByteOrder(t);
+    return t;
   }
 
   template<typename value_type, alignment align>
   static void write_be(void *memory, value_type value) {
-    reinterpret_cast<detail::alignment_access_helper
-      <value_type, align> *>(memory)->val =
-        SwapByteOrderIfDifferent< value_type
-                                , host_endianness
-                                , big>(value);
+    if (sys::isLittleEndianHost())
+      value = sys::SwapByteOrder(value);
+    reinterpret_cast<detail::alignment_access_helper<value_type, align> *>
+      (memory)->val = value;
   }
 };
 
 namespace detail {
 
 template<typename value_type,
-         endianness target_endianness,
-         alignment target_alignment>
+         endianness endian,
+         alignment  align>
 class packed_endian_specific_integral;
 
 template<typename value_type>

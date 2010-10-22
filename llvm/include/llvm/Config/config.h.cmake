@@ -506,9 +506,6 @@
 /* Define if this is Win32ish platform */
 #cmakedefine LLVM_ON_WIN32 ${LLVM_ON_WIN32}
 
-/* Define if this is targeting a big endian system */
-#cmakedefine LLVM_IS_HOST_BIG_ENDIAN ${LLVM_IS_HOST_BIG_ENDIAN}
-
 /* Added by Kevin -- Maximum path length */
 #cmakedefine MAXPATHLEN ${MAXPATHLEN}
 
