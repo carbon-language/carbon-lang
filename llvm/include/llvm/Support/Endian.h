@@ -84,7 +84,7 @@ namespace endian {
     reinterpret_cast<detail::alignment_access_helper<value_type, align> *>
       (memory)->val = value;
   }
-};
+}
 
 namespace detail {
 
