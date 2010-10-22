@@ -29,7 +29,7 @@ endmacro(add_llvm_library name)
 
 
 macro(add_llvm_loadable_module name)
-  if( NOT LLVM_ON_UNIX )
+  if( NOT LLVM_ON_UNIX OR CYGWIN )
     message(STATUS "Loadable modules not supported on this platform.
 ${name} ignored.")
   else()
