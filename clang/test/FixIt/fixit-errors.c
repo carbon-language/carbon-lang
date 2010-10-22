@@ -1,5 +1,5 @@
 // RUN: cp %s %t
-// RUN: %clang_cc1 -pedantic -verify -fixit -x c %t || true
+// RUN: true || %clang_cc1 -pedantic -verify -fixit -x c %t
 // RUN: %clang_cc1 -pedantic -Werror -x c %t
 // XFAIL: *
 
