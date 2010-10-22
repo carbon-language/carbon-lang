@@ -505,7 +505,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
       emitGlobalAddress(GV, ARM::reloc_arm_absolute, isa<Function>(GV), false);
       emitWordLE(0);
     } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-      uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
+      uint32_t Val = uint32_t(*CI->getValue().getRawData());
       emitWordLE(Val);
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
       if (CFP->getType()->isFloatTy())
