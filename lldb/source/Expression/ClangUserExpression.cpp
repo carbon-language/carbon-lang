@@ -72,7 +72,26 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
         m_objectivec = true;
 }
 
-bool 
+// This is a really nasty hack, meant to fix Objective-C expressions of the form
+// (int)[myArray count].  Right now, because the type information for count is
+// not available, [myArray count] returns id, which can't be directly cast to
+// int without causing a clang error.
+static void
+ApplyObjcCastHack(std::string &expr)
+{
+#define OBJC_CAST_HACK_FROM "(int)["
+#define OBJC_CAST_HACK_TO   "(int)(long long)["
+
+    size_t from_offset;
+    
+    while ((from_offset = expr.find(OBJC_CAST_HACK_FROM)) != expr.npos)
+        expr.replace(from_offset, sizeof(OBJC_CAST_HACK_FROM) - 1, OBJC_CAST_HACK_TO);
+
+#undef OBJC_CAST_HACK_TO
+#undef OBJC_CAST_HACK_FROM
+}
+
+bool
 ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
@@ -84,11 +103,13 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     ////////////////////////////////////
     // Generate the expression
     //
+    
+    ApplyObjcCastHack(m_expr_text);
 
     if (m_cplusplus)
     {
         m_transformed_stream.Printf("void                                   \n"
-                                    "$__lldb_class::%s(void *$__lldb_arg) \n"
+                                    "$__lldb_class::%s(void *$__lldb_arg)   \n"
                                     "{                                      \n"
                                     "    %s;                                \n" 
                                     "}                                      \n",
@@ -100,7 +121,7 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     else
     {
         m_transformed_stream.Printf("void                           \n"
-                                    "%s(void *$__lldb_arg)         \n"
+                                    "%s(void *$__lldb_arg)          \n"
                                     "{                              \n"
                                     "    %s;                        \n" 
                                     "}                              \n",
