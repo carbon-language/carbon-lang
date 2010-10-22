@@ -934,15 +934,42 @@ class AMul2Ia<bits<7> opcod, bits<4> opc7_4, dag oops, dag iops,
 }
 
 // SMUL<x><y> / SMULW<y> / SMLA<x><y> / SMLAW<x><y>
-class AMulxyI<bits<7> opcod, bits<2> bit6_5, dag oops, dag iops,
+class AMulxyIbase<bits<7> opcod, bits<2> bit6_5, dag oops, dag iops,
               InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, itin,
       opc, asm, "", pattern> {
+  bits<4> Rn;
+  bits<4> Rm;
   let Inst{4}     = 0;
   let Inst{7}     = 1;
   let Inst{20}    = 0;
   let Inst{27-21} = opcod;
   let Inst{6-5}   = bit6_5;
+  let Inst{11-8}  = Rm;
+  let Inst{3-0}   = Rn;
+}
+class AMulxyI<bits<7> opcod, bits<2> bit6_5, dag oops, dag iops,
+              InstrItinClass itin, string opc, string asm, list<dag> pattern>
+  : AMulxyIbase<opcod, bit6_5, oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  let Inst{19-16} = Rd;
+}
+
+// AMulxyI with Ra operand
+class AMulxyIa<bits<7> opcod, bits<2> bit6_5, dag oops, dag iops,
+              InstrItinClass itin, string opc, string asm, list<dag> pattern>
+  : AMulxyI<opcod, bit6_5, oops, iops, itin, opc, asm, pattern> {
+  bits<4> Ra;
+  let Inst{15-12} = Ra;
+}
+// SMLAL*
+class AMulxyI64<bits<7> opcod, bits<2> bit6_5, dag oops, dag iops,
+              InstrItinClass itin, string opc, string asm, list<dag> pattern>
+  : AMulxyIbase<opcod, bit6_5, oops, iops, itin, opc, asm, pattern> {
+  bits<4> RdLo;
+  bits<4> RdHi;
+  let Inst{19-16} = RdHi;
+  let Inst{15-12} = RdLo;
 }
 
 // Extend instructions.

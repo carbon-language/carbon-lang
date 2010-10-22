@@ -150,4 +150,34 @@ define i32 @f15(i32 %x, i32 %y) {
         %tmp3.upgrd.2 = trunc i64 %tmp3 to i32
         ret i32 %tmp3.upgrd.2
 }
+
+define i32 @f16(i16 %x, i32 %y) {
+; CHECK: f16:
+; CHECK: smulbt r0, r0, r1            @ encoding: [0xc0,0x01,0x60,0xe1]
+        %tmp1 = add i16 %x, 2
+        %tmp2 = sext i16 %tmp1 to i32
+        %tmp3 = ashr i32 %y, 16
+        %tmp4 = mul i32 %tmp2, %tmp3
+        ret i32 %tmp4
+}
+
+define i32 @f17(i32 %x, i32 %y) {
+; CHECK: f17:
+; CHECK: smultt r0, r1, r0            @ encoding: [0xe1,0x00,0x60,0xe1]
+        %tmp1 = ashr i32 %x, 16
+        %tmp3 = ashr i32 %y, 16
+        %tmp4 = mul i32 %tmp3, %tmp1
+        ret i32 %tmp4
+}
+
+define i32 @f18(i32 %a, i16 %x, i32 %y) {
+; CHECK: f18:
+; CHECK: smlabt r0, r1, r2, r0        @ encoding: [0xc1,0x02,0x00,0xe1]
+        %tmp = sext i16 %x to i32
+        %tmp2 = ashr i32 %y, 16
+        %tmp3 = mul i32 %tmp2, %tmp
+        %tmp5 = add i32 %tmp3, %a
+        ret i32 %tmp5
+}
+
 declare void @llvm.trap() nounwind
