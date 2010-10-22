@@ -147,6 +147,23 @@ public:
 /// represents a value lvalue, this method emits the address of the lvalue,
 /// then loads the result into DestPtr.
 void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
+  if (CGF.getContext().getLangOptions().CPlusPlus) {
+    if (const CXXConstructExpr *CE = Dest.getCtorExpr()) {
+      // Perform copy initialization of Src into Dest.
+      const CXXConstructorDecl *CD = CE->getConstructor();
+      CXXCtorType Type = 
+        (CE->getConstructionKind() == CXXConstructExpr::CK_Complete) 
+        ? Ctor_Complete : Ctor_Base;
+      bool ForVirtualBase = 
+        CE->getConstructionKind() == CXXConstructExpr::CK_VirtualBase;
+      // Call the constructor.
+      const Stmt * S = dyn_cast<Stmt>(E);
+      clang::ConstExprIterator BegExp(&S);
+      CGF.EmitCXXConstructorCall(CD, Type, ForVirtualBase, Dest.getAddr(),
+                                 BegExp, (BegExp+1));
+      return;
+    }
+  }
   LValue LV = CGF.EmitLValue(E);
   EmitFinalDestCopy(E, LV);
 }
@@ -204,7 +221,6 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
         CGF.CGM.getLangOptions().CPlusPlus ||
         (IgnoreResult && Ignore))
       return;
-
     // If the source is volatile, we must read from it; to do that, we need
     // some place to put it.
     Dest = CGF.CreateAggTemp(E->getType(), "agg.tmp");
@@ -222,6 +238,7 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
                                                       SizeVal);
     return;
   }
+  
   // If the result of the assignment is used, copy the LHS there also.
   // FIXME: Pass VolatileDest as well.  I think we also need to merge volatile
   // from the source as well, as we can't eliminate it if either operand
