@@ -1,8 +1,10 @@
-; RUN: llc < %s -march=arm -mattr=+v5t | grep clz
+; RUN: llc < %s -march=arm -mattr=+v5t | FileCheck %s
 
 declare i32 @llvm.ctlz.i32(i32)
 
 define i32 @test(i32 %x) {
-        %tmp.1 = call i32 @llvm.ctlz.i32( i32 %x )              ; <i32> [#uses=1]
+; CHECK: test
+; CHECK: clz r0, r0
+        %tmp.1 = call i32 @llvm.ctlz.i32( i32 %x )
         ret i32 %tmp.1
 }
