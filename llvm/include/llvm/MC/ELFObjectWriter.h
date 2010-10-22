@@ -27,7 +27,8 @@ class ELFObjectWriter : public MCObjectWriter {
 
 public:
   ELFObjectWriter(raw_ostream &OS, bool Is64Bit, Triple::OSType OSType, 
-                  bool IsLittleEndian = true, bool HasRelocationAddend = true);
+                  uint16_t EMachine, bool IsLittleEndian = true,
+                  bool HasRelocationAddend = true);
 
   virtual ~ELFObjectWriter();
 

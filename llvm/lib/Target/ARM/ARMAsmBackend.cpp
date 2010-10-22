@@ -19,6 +19,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MachObjectWriter.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -90,7 +91,7 @@ public:
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return new ELFObjectWriter(OS, /*Is64Bit=*/false,
-                               OSType,
+                               OSType, ELF::EM_ARM,
                                /*IsLittleEndian=*/true,
                                /*HasRelocationAddend=*/false);
   }

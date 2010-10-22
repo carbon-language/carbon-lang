@@ -164,6 +164,8 @@ namespace {
 
     Triple::OSType OSType;
 
+    uint16_t EMachine;
+
     // This holds the symbol table index of the last local symbol.
     unsigned LastLocalSymbolIndex;
     // This holds the .strtab section index.
@@ -173,10 +175,11 @@ namespace {
 
   public:
     ELFObjectWriterImpl(ELFObjectWriter *_Writer, bool _Is64Bit,
-                        bool _HasRelAddend, Triple::OSType _OSType)
+                        uint16_t _EMachine, bool _HasRelAddend,
+                        Triple::OSType _OSType)
       : NeedsGOT(false), Writer(_Writer), OS(Writer->getStream()),
         Is64Bit(_Is64Bit), HasRelocationAddend(_HasRelAddend),
-        OSType(_OSType) {
+        OSType(_OSType), EMachine(_EMachine) {
     }
 
     void Write8(uint8_t Value) { Writer->Write8(Value); }
@@ -344,8 +347,7 @@ void ELFObjectWriterImpl::WriteHeader(uint64_t SectionDataSize,
 
   Write16(ELF::ET_REL);             // e_type
 
-  // FIXME: Make this configurable
-  Write16(Is64Bit ? ELF::EM_X86_64 : ELF::EM_386); // e_machine = target
+  Write16(EMachine); // e_machine = target
 
   Write32(ELF::EV_CURRENT);         // e_version
   WriteWord(0);                    // e_entry, no entry point in .o file
@@ -1221,11 +1223,13 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
 ELFObjectWriter::ELFObjectWriter(raw_ostream &OS,
                                  bool Is64Bit,
                                  Triple::OSType OSType,
+                                 uint16_t EMachine,
                                  bool IsLittleEndian,
                                  bool HasRelocationAddend)
   : MCObjectWriter(OS, IsLittleEndian)
 {
-  Impl = new ELFObjectWriterImpl(this, Is64Bit, HasRelocationAddend, OSType);
+  Impl = new ELFObjectWriterImpl(this, Is64Bit, EMachine,
+                                 HasRelocationAddend, OSType);
 }
 
 ELFObjectWriter::~ELFObjectWriter() {
