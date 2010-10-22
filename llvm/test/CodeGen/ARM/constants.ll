@@ -39,9 +39,8 @@ define i32 @f6() {
 define void @f7(i32 %a) {
 ; CHECK: f7
 ; CHECK: cmp r0, #1, 16
-        %b = icmp ugt i32 %a, 65536             ; <i1> [#uses=1]
+        %b = icmp ugt i32 %a, 65536
         br i1 %b, label %r, label %r
-
-r:              ; preds = %0, %0
+r:
         ret void
 }
