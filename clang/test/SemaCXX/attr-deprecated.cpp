@@ -190,3 +190,46 @@ namespace test5 {
     {}
   };
 }
+
+// rdar://problem/8518751
+namespace test6 {
+  enum __attribute__((deprecated)) A {
+    a0
+  };
+  void testA() {
+    A x; // expected-warning {{'A' is deprecated}}
+    x = a0;
+  }
+  
+  enum B {
+    b0 __attribute__((deprecated)),
+    b1
+  };
+  void testB() {
+    B x;
+    x = b0; // expected-warning {{'b0' is deprecated}}
+    x = b1;
+  }
+
+  template <class T> struct C {
+    enum __attribute__((deprecated)) Enum {
+      c0
+    };
+  };
+  void testC() {
+    C<int>::Enum x; // expected-warning {{'Enum' is deprecated}}
+    x = C<int>::c0;
+  }
+
+  template <class T> struct D {
+    enum Enum {
+      d0,
+      d1 __attribute__((deprecated)),
+    };
+  };
+  void testD() {
+    D<int>::Enum x;
+    x = D<int>::d0;
+    x = D<int>::d1; // expected-warning {{'d1' is deprecated}}
+  }
+}

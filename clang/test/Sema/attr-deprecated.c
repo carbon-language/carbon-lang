@@ -98,3 +98,14 @@ unsigned long test16 __attribute__((deprecated))
 foo_dep test17, // expected-warning {{'foo_dep' is deprecated}}
         test18 __attribute__((deprecated)),
         test19;
+
+// rdar://problem/8518751
+enum __attribute__((deprecated)) Test20 {
+  test20_a __attribute__((deprecated)),
+  test20_b
+};
+void test20() {
+  enum Test20 f; // expected-warning {{'Test20' is deprecated}}
+  f = test20_a; // expected-warning {{'test20_a' is deprecated}}
+  f = test20_b;
+}

@@ -619,6 +619,8 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     }
   }
 
+  SemaRef.InstantiateAttrs(TemplateArgs, D, Enum);
+
   Enum->setInstantiationOfMemberEnum(D);
   Enum->setAccess(D->getAccess());
   if (SubstQualifier(D, Enum)) return 0;
@@ -663,6 +665,8 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     }
 
     if (EnumConst) {
+      SemaRef.InstantiateAttrs(TemplateArgs, *EC, EnumConst);
+
       EnumConst->setAccess(Enum->getAccess());
       Enum->addDecl(EnumConst);
       Enumerators.push_back(EnumConst);

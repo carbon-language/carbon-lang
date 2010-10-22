@@ -2124,6 +2124,11 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     IdentifierInfo *Ident = Tok.getIdentifierInfo();
     SourceLocation IdentLoc = ConsumeToken();
 
+    // If attributes exist after the enumerator, parse them.
+    llvm::OwningPtr<AttributeList> Attr;
+    if (Tok.is(tok::kw___attribute))
+      Attr.reset(ParseGNUAttributes());
+
     SourceLocation EqualLoc;
     ExprResult AssignedVal;
     if (Tok.is(tok::equal)) {
@@ -2137,7 +2142,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     Decl *EnumConstDecl = Actions.ActOnEnumConstant(getCurScope(), EnumDecl,
                                                     LastEnumConstDecl,
                                                     IdentLoc, Ident,
-                                                    EqualLoc,
+                                                    Attr.get(), EqualLoc,
                                                     AssignedVal.release());
     EnumConstantDecls.push_back(EnumConstDecl);
     LastEnumConstDecl = EnumConstDecl;

@@ -7229,11 +7229,10 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
 }
 
 
-Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl,
-                                        Decl *lastEnumConst,
-                                        SourceLocation IdLoc,
-                                        IdentifierInfo *Id,
-                                        SourceLocation EqualLoc, ExprTy *val) {
+Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
+                              SourceLocation IdLoc, IdentifierInfo *Id,
+                              AttributeList *Attr,
+                              SourceLocation EqualLoc, ExprTy *val) {
   EnumDecl *TheEnumDecl = cast<EnumDecl>(theEnumDecl);
   EnumConstantDecl *LastEnumConst =
     cast_or_null<EnumConstantDecl>(lastEnumConst);
@@ -7280,11 +7279,14 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl,
     if (Record->getIdentifier() && Record->getIdentifier() == Id)
       Diag(IdLoc, diag::err_member_name_of_class) << Id;
   
-  EnumConstantDecl *New = CheckEnumConstant(TheEnumDecl, LastEnumConst,
-                                            IdLoc, Id, Val);
+  EnumConstantDecl *New =
+    CheckEnumConstant(TheEnumDecl, LastEnumConst, IdLoc, Id, Val);
 
-  // Register this decl in the current scope stack.
   if (New) {
+    // Process attributes.
+    if (Attr) ProcessDeclAttributeList(S, New, Attr);
+
+    // Register this decl in the current scope stack.
     New->setAccess(TheEnumDecl->getAccess());
     PushOnScopeChains(New, S);
   }
