@@ -766,7 +766,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                   MethodLinkageName,
                                   MethodDefUnit, MethodLine,
                                   MethodTy, /*isLocalToUnit=*/false, 
-                                  Method->hasInlineBody(),
+                                  /* isDefinition=*/ false,
                                   Virtuality, VIndex, ContainingType,
                                   Flags,
                                   CGM.getLangOptions().Optimize);
