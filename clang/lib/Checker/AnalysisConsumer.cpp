@@ -153,6 +153,10 @@ public:
       llvm::errs() << ' ' << "block(line:" << Loc.getLine() << ",col:"
                    << Loc.getColumn() << '\n';
     }
+    else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+      Selector S = MD->getSelector();
+      llvm::errs() << ' ' << S.getAsString();
+    }
   }
 
   void addCodeAction(CodeAction action) {
@@ -218,19 +222,6 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
       break;
     }
 
-    case Decl::ObjCMethod: {
-      ObjCMethodDecl* MD = cast<ObjCMethodDecl>(D);
-      
-      if (MD->isThisDeclarationADefinition()) {
-        if (!Opts.AnalyzeSpecificFunction.empty() &&
-            Opts.AnalyzeSpecificFunction != MD->getSelector().getAsString())
-          break;
-        DisplayFunction(MD);
-        HandleCode(MD, ObjCMethodActions);
-      }
-      break;
-    }
-
     case Decl::ObjCImplementation: {
       ObjCImplementationDecl* ID = cast<ObjCImplementationDecl>(*I);
       HandleCode(ID, ObjCImplementationActions);
@@ -241,6 +232,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
           if (!Opts.AnalyzeSpecificFunction.empty() &&
              Opts.AnalyzeSpecificFunction != (*MI)->getSelector().getAsString())
             break;
+          DisplayFunction(*MI);
           HandleCode(*MI, ObjCMethodActions);
         }
       }
