@@ -42,6 +42,7 @@
       <li><a href="#super-cast">Cast of super</a></li>
       <li><a href="#sizeof-interface">Size of interfaces</a></li>
       <li><a href="#objc_objs-cast">Internal Objective-C types</a></li>
+      <li><a href="#c_variables-class">C variables in @class or @protocol</a></li>
     </ul>
   </li>
   <li><a href="#c++">C++ compatibility</a>
@@ -281,6 +282,24 @@ void f(id x);
 
 <p>Code should use types <tt>id</tt>, <tt>SEL</tt>, and <tt>Class</tt>
 instead of the internal types.</p>
+
+<!-- ======================================================================= -->
+<h3 id="c_variables-class">C variables in @class or @protocol</h3>
+<!-- ======================================================================= -->
+
+<p>GCC allows declaration of C variables in a @class or @protocol, but not 
+C functions. Clang does not allow variable or C function declarations. External
+declarations, however, is allowed. Variables may only be declared in an
+@implementation.
+
+<pre>
+@interface XX
+int x;  //  not allowed in clang
+int one=1;  //  not allowed in clang
+extern int OK;
+@end
+
+</pre>
 
 <!-- ======================================================================= -->
 <h2 id="c++">C++ compatibility</h3>
