@@ -45,7 +45,7 @@ STATISTIC(numSimpleRegions, "The # of simple regions");
 /// PrintStyle - Print region in difference ways.
 enum PrintStyle { PrintNone, PrintBB, PrintRN  };
 
-cl::opt<enum PrintStyle> printStyle("print-region-style", cl::Hidden,
+static cl::opt<enum PrintStyle> printStyle("print-region-style", cl::Hidden,
   cl::desc("style of printing regions"),
   cl::values(
     clEnumValN(PrintNone, "none",  "print no details"),

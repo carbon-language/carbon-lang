@@ -40,6 +40,7 @@ static ManagedStatic<sys::SmartMutex<true> > Lock;
 // PassRegistryImpl
 //
 
+namespace {
 struct PassRegistryImpl {
   /// PassInfoMap - Keep track of the PassInfo object for each registered pass.
   typedef DenseMap<const void*, const PassInfo*> MapType;
@@ -57,6 +58,7 @@ struct PassRegistryImpl {
   std::vector<const PassInfo*> ToFree;
   std::vector<PassRegistrationListener*> Listeners;
 };
+} // end anonymous namespace
 
 void *PassRegistry::getImpl() const {
   if (!pImpl)

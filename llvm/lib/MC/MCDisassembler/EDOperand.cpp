@@ -260,23 +260,20 @@ int EDOperand::isMemory() {
 }
 
 #ifdef __BLOCKS__
-struct RegisterReaderWrapper {
-  EDOperand::EDRegisterBlock_t regBlock;
-};
+namespace {
+  struct RegisterReaderWrapper {
+    EDOperand::EDRegisterBlock_t regBlock;
+  };
+}
 
-int readerWrapperCallback(uint64_t *value, 
-                          unsigned regID, 
-                          void *arg) {
-  struct RegisterReaderWrapper *wrapper = (struct RegisterReaderWrapper *)arg;
+static int readerWrapperCallback(uint64_t *value, unsigned regID, void *arg) {
+  RegisterReaderWrapper *wrapper = (RegisterReaderWrapper *)arg;
   return wrapper->regBlock(value, regID);
 }
 
-int EDOperand::evaluate(uint64_t &result,
-                        EDRegisterBlock_t regBlock) {
-  struct RegisterReaderWrapper wrapper;
+int EDOperand::evaluate(uint64_t &result, EDRegisterBlock_t regBlock) {
+  RegisterReaderWrapper wrapper;
   wrapper.regBlock = regBlock;
-  return evaluate(result, 
-                  readerWrapperCallback, 
-                  (void*)&wrapper);
+  return evaluate(result, readerWrapperCallback, (void*)&wrapper);
 }
 #endif

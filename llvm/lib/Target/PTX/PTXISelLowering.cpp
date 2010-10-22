@@ -44,7 +44,8 @@ const char *PTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
 //                      Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-static struct argmap_entry {
+namespace {
+struct argmap_entry {
   MVT::SimpleValueType VT;
   TargetRegisterClass *RC;
   TargetRegisterClass::iterator loc;
@@ -52,12 +53,13 @@ static struct argmap_entry {
   argmap_entry(MVT::SimpleValueType _VT, TargetRegisterClass *_RC)
     : VT(_VT), RC(_RC), loc(_RC->begin()) {}
 
-  void reset(void) { loc = RC->begin(); }
-  bool operator==(MVT::SimpleValueType _VT) { return VT == _VT; }
+  void reset() { loc = RC->begin(); }
+  bool operator==(MVT::SimpleValueType _VT) const { return VT == _VT; }
 } argmap[] = {
   argmap_entry(MVT::i1,  PTX::PredsRegisterClass),
   argmap_entry(MVT::i32, PTX::RRegs32RegisterClass)
 };
+} // end anonymous namespace
 
 static SDValue lower_kernel_argument(int i,
                                      SDValue Chain,

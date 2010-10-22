@@ -365,7 +365,7 @@ void DisassemblerTables::emitContextDecision(
   uint32_t &i2,
   ContextDecision &decision,
   const char* name) const {
-  o2.indent(i2) << "struct ContextDecision " << name << " = {" << "\n";
+  o2.indent(i2) << "static struct ContextDecision " << name << " = {\n";
   i2++;
   o2.indent(i2) << "{ /* opcodeDecisions */" << "\n";
   i2++;
@@ -392,8 +392,7 @@ void DisassemblerTables::emitContextDecision(
 
 void DisassemblerTables::emitInstructionInfo(raw_ostream &o, uint32_t &i) 
   const {
-  o.indent(i * 2) << "struct InstructionSpecifier ";
-  o << INSTRUCTIONS_STR << "[";
+  o.indent(i * 2) << "static struct InstructionSpecifier " INSTRUCTIONS_STR "[";
   o << InstructionSpecifiers.size();
   o << "] = {" << "\n";
   
@@ -456,8 +455,7 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o, uint32_t &i)
 void DisassemblerTables::emitContextTable(raw_ostream &o, uint32_t &i) const {
   uint16_t index;
 
-  o.indent(i * 2) << "InstructionContext ";
-  o << CONTEXTS_STR << "[256] = {" << "\n";
+  o.indent(i * 2) << "static InstructionContext " CONTEXTS_STR "[256] = {\n";
   i++;
 
   for (index = 0; index < 256; ++index) {

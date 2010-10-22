@@ -106,7 +106,7 @@ namespace {  // Anonymous namespace for class
 char PreVerifier::ID = 0;
 INITIALIZE_PASS(PreVerifier, "preverify", "Preliminary module verification", 
                 false, false)
-char &PreVerifyID = PreVerifier::ID;
+static char &PreVerifyID = PreVerifier::ID;
 
 namespace {
   class TypeSet : public AbstractTypeUser {
