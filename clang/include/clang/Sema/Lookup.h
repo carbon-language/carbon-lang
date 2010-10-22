@@ -365,6 +365,11 @@ public:
     if (Decls.empty()) {
       if (ResultKind != NotFoundInCurrentInstantiation)
         ResultKind = NotFound;
+
+      if (Paths) {
+        deletePaths(Paths);
+        Paths = 0;
+      }
     } else {
       AmbiguityKind SavedAK = Ambiguity;
       ResultKind = Found;
