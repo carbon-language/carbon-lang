@@ -695,12 +695,14 @@ void RTTIBuilder::BuildSIClassTypeInfo(const CXXRecordDecl *RD) {
   Fields.push_back(BaseTypeInfo);
 }
 
-/// SeenBases - Contains virtual and non-virtual bases seen when traversing
-/// a class hierarchy.
-struct SeenBases {
-  llvm::SmallPtrSet<const CXXRecordDecl *, 16> NonVirtualBases;
-  llvm::SmallPtrSet<const CXXRecordDecl *, 16> VirtualBases;
-};
+namespace {
+  /// SeenBases - Contains virtual and non-virtual bases seen when traversing
+  /// a class hierarchy.
+  struct SeenBases {
+    llvm::SmallPtrSet<const CXXRecordDecl *, 16> NonVirtualBases;
+    llvm::SmallPtrSet<const CXXRecordDecl *, 16> VirtualBases;
+  };
+}
 
 /// ComputeVMIClassTypeInfoFlags - Compute the value of the flags member in
 /// abi::__vmi_class_type_info.

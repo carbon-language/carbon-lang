@@ -688,6 +688,7 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
   StoreAnyExprIntoOneUnit(CGF, E, NewPtr);
 }
 
+namespace {
 /// A utility class for saving an rvalue.
 class SavedRValue {
 public:
@@ -727,6 +728,7 @@ public:
   Kind getKind() const { return K; }
   llvm::Value *getValue() const { return Value; }
 };
+} // end anonymous namespace
 
 /// Given an r-value, perform the code necessary to make sure that a
 /// future RestoreRValue will be able to load the value without

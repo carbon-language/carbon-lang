@@ -39,6 +39,7 @@ using llvm::Value;
 //                         Scalar Expression Emitter
 //===----------------------------------------------------------------------===//
 
+namespace {
 struct BinOpInfo {
   Value *LHS;
   Value *RHS;
@@ -47,7 +48,6 @@ struct BinOpInfo {
   const Expr *E;      // Entire expr, for error unsupported.  May not be binop.
 };
 
-namespace {
 class ScalarExprEmitter
   : public StmtVisitor<ScalarExprEmitter, Value*> {
   CodeGenFunction &CGF;

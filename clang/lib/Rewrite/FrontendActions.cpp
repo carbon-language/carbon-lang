@@ -42,6 +42,7 @@ ASTConsumer *FixItAction::CreateASTConsumer(CompilerInstance &CI,
   return new ASTConsumer();
 }
 
+namespace {
 class FixItRewriteInPlace : public FixItOptions {
 public:
   std::string RewriteFilename(const std::string &Filename) { return Filename; }
@@ -64,6 +65,7 @@ public:
     return Path.c_str();
   }
 };
+} // end anonymous namespace
 
 bool FixItAction::BeginSourceFileAction(CompilerInstance &CI,
                                         llvm::StringRef Filename) {
