@@ -1670,7 +1670,7 @@ Debugger::SettingsController::instance_settings_table[] =
 //  NAME                    Setting variable type   Default                 Enum  Init'd Hidden Help
 //  ======================= ======================= ======================  ====  ====== ====== ======================
 {   "frame-format",         eSetVarTypeString,      DEFAULT_FRAME_FORMAT,   NULL, false, false, "The default frame format string to use when displaying thread information." },
-{   "prompt",               eSetVarTypeString,      "(lldb)",               NULL, false, false, "The debugger command line prompt displayed for the user." },
+{   "prompt",               eSetVarTypeString,      "(lldb) ",              NULL, false, false, "The debugger command line prompt displayed for the user." },
 {   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
 {   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
 {   "thread-format",        eSetVarTypeString,      DEFAULT_THREAD_FORMAT,  NULL, false, false, "The default thread format string to use when displaying thread information." },
