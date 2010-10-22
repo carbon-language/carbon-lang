@@ -132,6 +132,7 @@ class ARMFastISel : public FastISel {
     bool SelectSRem(const Instruction *I);
     bool SelectCall(const Instruction *I);
     bool SelectSelect(const Instruction *I);
+    bool SelectRet(const Instruction *I);
 
     // Utility routines.
   private:
@@ -1440,6 +1441,69 @@ bool ARMFastISel::FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
   return true;
 }
 
+bool ARMFastISel::SelectRet(const Instruction *I) {
+  const ReturnInst *Ret = cast<ReturnInst>(I);
+  const Function &F = *I->getParent()->getParent();
+  
+  if (!FuncInfo.CanLowerReturn)
+    return false;
+    
+  if (F.isVarArg())
+    return false;
+
+  CallingConv::ID CC = F.getCallingConv();
+  if (Ret->getNumOperands() > 0) {
+    SmallVector<ISD::OutputArg, 4> Outs;
+    GetReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
+                  Outs, TLI);
+
+    // Analyze operands of the call, assigning locations to each operand.
+    SmallVector<CCValAssign, 16> ValLocs;
+    CCState CCInfo(CC, F.isVarArg(), TM, ValLocs, I->getContext());
+    CCInfo.AnalyzeReturn(Outs, CCAssignFnForCall(CC, true /* is Ret */));
+
+    const Value *RV = Ret->getOperand(0);
+    unsigned Reg = getRegForValue(RV);
+    if (Reg == 0)
+      return false;
+
+    // Only handle a single return value for now.
+    if (ValLocs.size() != 1)
+      return false;
+
+    CCValAssign &VA = ValLocs[0];
+  
+    // Don't bother handling odd stuff for now.
+    if (VA.getLocInfo() != CCValAssign::Full)
+      return false;
+    // Only handle register returns for now.
+    if (!VA.isRegLoc())
+      return false;
+    // TODO: For now, don't try to handle cases where getLocInfo()
+    // says Full but the types don't match.
+    if (VA.getValVT() != TLI.getValueType(RV->getType()))
+      return false;
+    
+    // Make the copy.
+    unsigned SrcReg = Reg + VA.getValNo();
+    unsigned DstReg = VA.getLocReg();
+    const TargetRegisterClass* SrcRC = MRI.getRegClass(SrcReg);
+    // Avoid a cross-class copy. This is very unlikely.
+    if (!SrcRC->contains(DstReg))
+      return false;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            DstReg).addReg(SrcReg);
+
+    // Mark the register as live out of the function.
+    MRI.addLiveOut(VA.getLocReg());
+  }
+  
+  unsigned RetOpc = isThumb ? ARM::tBX_RET : ARM::BX_RET;
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(RetOpc)));
+  return true;
+}
+
 // A quick function that will emit a call for a named libcall in F with the
 // vector of passed arguments for the Instruction in I. We can assume that we
 // can emit a call for any libcall we can produce. This is an abridged version
@@ -1667,6 +1731,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectCall(I);
     case Instruction::Select:
       return SelectSelect(I);
+    case Instruction::Ret:
+      return SelectRet(I);
     default: break;
   }
   return false;
