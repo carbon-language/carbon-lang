@@ -87,6 +87,8 @@ protected:
 
   RegAllocBase(): tri_(0), vrm_(0), lis_(0) {}
 
+  virtual ~RegAllocBase() {}
+
   // A RegAlloc pass should call this before allocatePhysRegs.
   void init(const TargetRegisterInfo &tri, VirtRegMap &vrm, LiveIntervals &lis);
 
