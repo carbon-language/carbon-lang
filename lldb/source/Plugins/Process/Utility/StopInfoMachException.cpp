@@ -324,9 +324,15 @@ StopInfoMachException::CreateStopReasonWithMachException
                     lldb::BreakpointSiteSP bp_site_sp = thread.GetProcess().GetBreakpointSiteList().FindByAddress(pc);
                     if (bp_site_sp)
                     {
+                        // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
+                        // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
+                        // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
                         if (bp_site_sp->ValidForThisThread (&thread))
                             return StopInfo::CreateStopReasonWithBreakpointSiteID (thread, bp_site_sp->GetID());
+                        else
+                            return StopInfoSP();
                     }
+
                 }
             }
             break;
