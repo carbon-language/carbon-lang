@@ -83,8 +83,8 @@ CommandInterpreter::Initialize ()
 
     // Set up some initial aliases.
     result.Clear(); HandleCommand ("command alias q        quit", false, result);
-    result.Clear(); HandleCommand ("command alias run      process launch", false, result);
-    result.Clear(); HandleCommand ("command alias r        process launch", false, result);
+    result.Clear(); HandleCommand ("command alias run      process launch --", false, result);
+    result.Clear(); HandleCommand ("command alias r        process launch --", false, result);
     result.Clear(); HandleCommand ("command alias c        process continue", false, result);
     result.Clear(); HandleCommand ("command alias continue process continue", false, result);
     result.Clear(); HandleCommand ("command alias expr     expression", false, result);
@@ -102,6 +102,7 @@ CommandInterpreter::Initialize ()
     result.Clear(); HandleCommand ("command alias list     source list", false, result);
     result.Clear(); HandleCommand ("command alias p        frame variable", false, result);
     result.Clear(); HandleCommand ("command alias print    frame variable", false, result);
+    result.Clear(); HandleCommand ("command alias po       expression -o --", false, result);
 }
 
 const char *
@@ -454,7 +455,8 @@ CommandInterpreter::GetHelp (CommandReturnObject &result)
 
     if (m_alias_dict.size() > 0)
     {
-        result.AppendMessage("The following is a list of your current command abbreviations (see 'help commands alias' for more info):");
+        result.AppendMessage("The following is a list of your current command abbreviations "
+                             "(see 'help commands alias' for more info):");
         result.AppendMessage("");
         max_len = FindLongestCommandWord (m_alias_dict);
 
@@ -753,7 +755,8 @@ CommandInterpreter::HandleCompletion (const char *current_line,
         // put an empty string in element 0.
         std::string command_partial_str;
         if (cursor_index >= 0)
-            command_partial_str.assign(parsed_line.GetArgumentAtIndex(cursor_index), parsed_line.GetArgumentAtIndex(cursor_index) + cursor_char_position);
+            command_partial_str.assign(parsed_line.GetArgumentAtIndex(cursor_index), 
+                                       parsed_line.GetArgumentAtIndex(cursor_index) + cursor_char_position);
 
         std::string common_prefix;
         matches.LongestCommonPrefix (common_prefix);
