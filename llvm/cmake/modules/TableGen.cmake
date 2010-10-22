@@ -12,22 +12,24 @@ macro(tablegen ofn)
     set(LLVM_TARGET_DEFINITIONS_ABSOLUTE 
       ${CMAKE_CURRENT_SOURCE_DIR}/${LLVM_TARGET_DEFINITIONS})
   endif()
-  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
     # Generate tablegen output in a temporary file.
     COMMAND ${LLVM_TABLEGEN_EXE} ${ARGN} -I ${CMAKE_CURRENT_SOURCE_DIR}
     -I ${LLVM_MAIN_SRC_DIR}/lib/Target -I ${LLVM_MAIN_INCLUDE_DIR}
     ${LLVM_TARGET_DEFINITIONS_ABSOLUTE} 
     -o ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
+    DEPENDS tblgen ${local_tds} ${global_tds}
+    COMMENT "Building ${ofn}..."
+    )
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
     # Only update the real output file if there are any differences.
     # This prevents recompilation of all the files depending on it if there
     # aren't any.
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
         ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
-    # Either way, we no longer need the temporary file.
-    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
-    DEPENDS tblgen ${local_tds} ${global_tds}
-    COMMENT "Building ${ofn}..."
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
+    COMMENT ""
     )
   set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn})
   set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn} 
