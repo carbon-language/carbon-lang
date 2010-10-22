@@ -289,34 +289,6 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
   return Best;
 }
 
-/// getMultiUseBlocks - if curli has more than one use in a basic block, it
-/// may be an advantage to split curli for the duration of the block.
-bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
-  // If curli is local to one block, there is no point to splitting it.
-  if (usingBlocks_.size() <= 1)
-    return false;
-  // Add blocks with multiple uses.
-  for (BlockCountMap::iterator I = usingBlocks_.begin(), E = usingBlocks_.end();
-       I != E; ++I)
-    switch (I->second) {
-    case 0:
-    case 1:
-      continue;
-    case 2: {
-      // It doesn't pay to split a 2-instr block if it redefines curli.
-      VNInfo *VN1 = curli_->getVNInfoAt(lis_.getMBBStartIdx(I->first));
-      VNInfo *VN2 =
-        curli_->getVNInfoAt(lis_.getMBBEndIdx(I->first).getPrevIndex());
-      // live-in and live-out with a different value.
-      if (VN1 && VN2 && VN1 != VN2)
-        continue;
-    } // Fall through.
-    default:
-      Blocks.insert(I->first);
-    }
-  return !Blocks.empty();
-}
-
 //===----------------------------------------------------------------------===//
 //                               LiveIntervalMap
 //===----------------------------------------------------------------------===//
@@ -945,6 +917,35 @@ void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
 //===----------------------------------------------------------------------===//
 //                            Single Block Splitting
 //===----------------------------------------------------------------------===//
+
+/// getMultiUseBlocks - if curli has more than one use in a basic block, it
+/// may be an advantage to split curli for the duration of the block.
+bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
+  // If curli is local to one block, there is no point to splitting it.
+  if (usingBlocks_.size() <= 1)
+    return false;
+  // Add blocks with multiple uses.
+  for (BlockCountMap::iterator I = usingBlocks_.begin(), E = usingBlocks_.end();
+       I != E; ++I)
+    switch (I->second) {
+    case 0:
+    case 1:
+      continue;
+    case 2: {
+      // When there are only two uses and curli is both live in and live out,
+      // we don't really win anything by isolating the block since we would be
+      // inserting two copies.
+      // The remaing register would still have two uses in the block. (Unless it
+      // separates into disconnected components).
+      if (lis_.isLiveInToMBB(*curli_, I->first) &&
+          lis_.isLiveOutOfMBB(*curli_, I->first))
+        continue;
+    } // Fall through.
+    default:
+      Blocks.insert(I->first);
+    }
+  return !Blocks.empty();
+}
 
 /// splitSingleBlocks - Split curli into a separate live interval inside each
 /// basic block in Blocks.
