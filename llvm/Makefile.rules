@@ -301,7 +301,7 @@ ifneq ($(REQUIRES_RTTI), 1)
   CXX.Flags += -fno-rtti
 endif
 
-ifdef ENABLE_COVERAGE
+ifeq ($(ENABLE_COVERAGE),1)
   BuildMode := $(BuildMode)+Coverage
   CXX.Flags += -ftest-coverage -fprofile-arcs
   C.Flags   += -ftest-coverage -fprofile-arcs
@@ -309,17 +309,17 @@ endif
 
 # If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
 # then disable assertions by defining the appropriate preprocessor symbols.
-ifndef DISABLE_ASSERTIONS
+ifeq ($(DISABLE_ASSERTIONS),1)
+  CPP.Defines += -DNDEBUG
+else
   BuildMode := $(BuildMode)+Asserts
   CPP.Defines += -D_DEBUG
-else
-  CPP.Defines += -DNDEBUG
 endif
 
 # If ENABLE_EXPENSIVE_CHECKS=1 is specified (make command line or
 # configured), then enable expensive checks by defining the
 # appropriate preprocessor symbols.
-ifdef ENABLE_EXPENSIVE_CHECKS
+ifeq ($(ENABLE_EXPENSIVE_CHECKS),1)
   BuildMode := $(BuildMode)+Checks
   CPP.Defines += -D_GLIBCXX_DEBUG -DXDEBUG
 endif

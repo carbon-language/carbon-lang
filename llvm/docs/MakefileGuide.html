@@ -640,18 +640,18 @@
     generate dependencies when running the compiler. Use of this feature is
     discouraged and it may be removed at a later date.</dd>
     <dt><a name="ENABLE_OPTIMIZED"><tt>ENABLE_OPTIMIZED</tt></a></dt>
-    <dd>If set to any value, causes the build to generate optimized objects,
+    <dd>If set to 1, causes the build to generate optimized objects,
     libraries and executables. This alters the flags specified to the compilers
     and linkers. Generally debugging won't be a fun experience with an optimized
     build.</dd>
     <dt><a name="ENABLE_PROFILING"><tt>ENABLE_PROFILING</tt></a></dt>
-    <dd>If set to any value, causes the build to generate both optimized and 
+    <dd>If set to 1, causes the build to generate both optimized and 
     profiled objects, libraries and executables. This alters the flags specified
     to the compilers and linkers to ensure that profile data can be collected
     from the tools built. Use the <tt>gprof</tt> tool to analyze the output from
     the profiled tools (<tt>gmon.out</tt>).</dd>
     <dt><a name="DISABLE_ASSERTIONS"><tt>DISABLE_ASSERTIONS</tt></a></dt>
-    <dd>If set to any value, causes the build to disable assertions, even if 
+    <dd>If set to 1, causes the build to disable assertions, even if 
     building a debug or profile build.  This will exclude all assertion check
     code from the build. LLVM will execute faster, but with little help when
     things go wrong.</dd>
