@@ -69,6 +69,10 @@ ARMInterworking("arm-interworking", cl::Hidden,
   cl::desc("Enable / disable ARM interworking (for debugging only)"),
   cl::init(true));
 
+static cl::opt<bool>
+ARMFastCC("arm-fastcc", cl::Hidden,
+  cl::desc("Use AAPCS / AAPCS-VFP calling conventions for fastcc"));
+
 void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
                                        EVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
@@ -955,23 +959,29 @@ CCAssignFn *ARMTargetLowering::CCAssignFnForNode(CallingConv::ID CC,
   switch (CC) {
   default:
     llvm_unreachable("Unsupported calling convention");
-  case CallingConv::C:
   case CallingConv::Fast:
+    if (ARMFastCC && Subtarget->hasVFP2() && !isVarArg) {
+      if (!Subtarget->isAAPCS_ABI())
+        return (Return ? RetFastCC_ARM_APCS : FastCC_ARM_APCS);
+      // For AAPCS ABI targets, just use VFP variant of the calling convention.
+      return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
+    }
+    // Fallthrough
+  case CallingConv::C: {
     // Use target triple & subtarget features to do actual dispatch.
-    if (Subtarget->isAAPCS_ABI()) {
-      if (Subtarget->hasVFP2() &&
-          FloatABIType == FloatABI::Hard && !isVarArg)
-        return (Return ? RetCC_ARM_AAPCS_VFP: CC_ARM_AAPCS_VFP);
-      else
-        return (Return ? RetCC_ARM_AAPCS: CC_ARM_AAPCS);
-    } else
-        return (Return ? RetCC_ARM_APCS: CC_ARM_APCS);
+    if (!Subtarget->isAAPCS_ABI())
+      return (Return ? RetCC_ARM_APCS : CC_ARM_APCS);
+    else if (Subtarget->hasVFP2() &&
+             FloatABIType == FloatABI::Hard && !isVarArg)
+      return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
+    return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
+  }
   case CallingConv::ARM_AAPCS_VFP:
-    return (Return ? RetCC_ARM_AAPCS_VFP: CC_ARM_AAPCS_VFP);
+    return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
   case CallingConv::ARM_AAPCS:
-    return (Return ? RetCC_ARM_AAPCS: CC_ARM_AAPCS);
+    return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
   case CallingConv::ARM_APCS:
-    return (Return ? RetCC_ARM_APCS: CC_ARM_APCS);
+    return (Return ? RetCC_ARM_APCS : CC_ARM_APCS);
   }
 }
 
