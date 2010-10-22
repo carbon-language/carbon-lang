@@ -975,7 +975,7 @@ ValueObject::DumpValueObject
 
         if (err_cstr)
         {
-            s.Printf ("error: %s", err_cstr);
+            s.Printf (" %s\n", err_cstr);
         }
         else
         {
