@@ -3216,15 +3216,17 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
   if (II) {
     // C++ [namespace.def]p2:
-    // The identifier in an original-namespace-definition shall not have been
-    // previously defined in the declarative region in which the
-    // original-namespace-definition appears. The identifier in an
-    // original-namespace-definition is the name of the namespace. Subsequently
-    // in that declarative region, it is treated as an original-namespace-name.
-
-    NamedDecl *PrevDecl
-      = LookupSingleName(DeclRegionScope, II, IdentLoc, LookupOrdinaryName,
-                         ForRedeclaration);
+    //   The identifier in an original-namespace-definition shall not
+    //   have been previously defined in the declarative region in
+    //   which the original-namespace-definition appears. The
+    //   identifier in an original-namespace-definition is the name of
+    //   the namespace. Subsequently in that declarative region, it is
+    //   treated as an original-namespace-name.
+    //
+    // Since namespace names are unique in their scope, and we don't
+    // look through using directives, just
+    DeclContext::lookup_result R = CurContext->getRedeclContext()->lookup(II);
+    NamedDecl *PrevDecl = R.first == R.second? 0 : *R.first;
 
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
       // This is an extended namespace definition.
