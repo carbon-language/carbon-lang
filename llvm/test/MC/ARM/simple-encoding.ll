@@ -226,3 +226,12 @@ define i32 @f23(i32 %X, i32 %Y) {
 	%tmp3 = or i32 %tmp1, %tmp2
 	ret i32 %tmp3
 }
+
+define void @f24(i32 %a) {
+; CHECK: f24
+; CHECK: cmp r0, #1, 16               @ encoding: [0x01,0x08,0x50,0xe3]
+        %b = icmp ugt i32 %a, 65536
+        br i1 %b, label %r, label %r
+r:
+        ret void
+}
