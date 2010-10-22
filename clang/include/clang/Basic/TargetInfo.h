@@ -356,6 +356,9 @@ public:
                            unsigned NumOutputs, unsigned &Index) const;
 
   virtual std::string convertConstraint(const char Constraint) const {
+    // 'p' defaults to 'r', but can be overridden by targets.
+    if (Constraint == 'p')
+      return std::string("r");
     return std::string(1, Constraint);
   }
 
