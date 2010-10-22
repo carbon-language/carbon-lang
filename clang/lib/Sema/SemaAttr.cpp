@@ -288,6 +288,10 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
       continue;
     }
 
+    // Warn if this was used before being marked unused.
+    if (VD->isUsed())
+      Diag(PragmaLoc, diag::warn_used_but_marked_unused) << Name;
+
     VD->addAttr(::new (Context) UnusedAttr(Tok.getLocation(), Context));
   }
 }

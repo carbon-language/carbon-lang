@@ -97,6 +97,10 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
     }
   }
 
+  // Warn if this is used but marked unused.
+  if (D->hasAttr<UnusedAttr>())
+    Diag(Loc, diag::warn_used_but_marked_unused) << D->getDeclName();
+
   return false;
 }
 
@@ -7804,7 +7808,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   // -Wunused-parameters)
   if (isa<ParmVarDecl>(D) ||
       (isa<VarDecl>(D) && D->getDeclContext()->isFunctionOrMethod())) {
-    D->setUsed(true);
+    D->setUsed();
     return;
   }
 

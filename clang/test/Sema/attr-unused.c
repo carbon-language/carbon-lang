@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -Wunused-variable -fsyntax-only %s
+// RUN: %clang_cc1 -verify -Wunused -Wunused-parameter -Wunused -fsyntax-only %s
 
 static void (*fp0)(void) __attribute__((unused));
 
@@ -20,8 +20,24 @@ void test0() {
   int x; // expected-warning {{unused variable}}
 
   Int_not_unused i0; // expected-warning {{unused variable}}
-  Int_unused i1;
+  Int_unused i1; // expected-warning {{'Int_unused' was marked unused but was used}}
 
   struct Test0_not_unused s0; // expected-warning {{unused variable}}
-  struct Test0_unused s1;
+  struct Test0_unused s1; // expected-warning {{'Test0_unused' was marked unused but was used}}
+}
+
+int f3(int x) { // expected-warning{{unused parameter 'x'}}
+  return 0;
+}
+
+int f4(int x) {
+  return x;
+}
+
+int f5(int x __attribute__((__unused__))) {
+  return 0;
+}
+
+int f6(int x __attribute__((__unused__))) {
+  return x; // expected-warning{{'x' was marked unused but was used}}
 }

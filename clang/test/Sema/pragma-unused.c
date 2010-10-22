@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wunused-parameter -verify %s
 
 void f1(void) {
   int x, y, z;
@@ -41,3 +41,26 @@ void f7() {
   #pragma unused(undeclared, undefined, y) // expected-warning{{undeclared variable 'undeclared' used as an argument for '#pragma unused'}} expected-warning{{undeclared variable 'undefined' used as an argument for '#pragma unused'}}
 }
 
+int f8(int x) { // expected-warning{{unused parameter 'x'}}
+  return 0;
+}
+
+int f9(int x) {
+  return x;
+}
+
+int f10(int x) {
+  #pragma unused(x)
+  return 0;
+}
+
+int f11(int x) {
+  #pragma unused(x)
+  return x; // expected-warning{{'x' was marked unused but was used}}
+}
+
+int f12(int x) {
+  int y = x;
+  #pragma unused(x) // expected-warning{{'x' was marked unused but was used}}
+  return y;
+}
