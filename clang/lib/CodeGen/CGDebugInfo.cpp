@@ -691,6 +691,17 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
                                      llvm::DIType(), EltTypeArray);
 }
 
+/// isFunctionLocalClass - Return true if CXXRecordDecl is defined 
+/// inside a function.
+static bool isFunctionLocalClass(const CXXRecordDecl *RD) {
+  if (const CXXRecordDecl *NRD = 
+      dyn_cast<CXXRecordDecl>(RD->getDeclContext()))
+    return isFunctionLocalClass(NRD);
+  else if (isa<FunctionDecl>(RD->getDeclContext()))
+    return true;
+  return false;
+  
+}
 /// CreateCXXMemberFunction - A helper function to create a DISubprogram for
 /// a single member function GlobalDecl.
 llvm::DISubprogram
@@ -706,7 +717,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
   // Since a single ctor/dtor corresponds to multiple functions, it doesn't
   // make sense to give a single ctor/dtor a linkage name.
   llvm::StringRef MethodLinkageName;
-  if (!IsCtorOrDtor)
+  if (!IsCtorOrDtor && !isFunctionLocalClass(Method->getParent()))
     MethodLinkageName = CGM.getMangledName(Method);
 
   // Get the location for the method.
@@ -755,7 +766,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                   MethodLinkageName,
                                   MethodDefUnit, MethodLine,
                                   MethodTy, /*isLocalToUnit=*/false, 
-                                  /* isDefintion=*/ false,
+                                  Method->hasInlineBody(),
                                   Virtuality, VIndex, ContainingType,
                                   Flags,
                                   CGM.getLangOptions().Optimize);
@@ -1558,6 +1569,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     Name = getFunctionName(FD);
     // Use mangled name as linkage name for c/c++ functions.
     LinkageName = CGM.getMangledName(GD);
+    if (LinkageName == Name)
+      LinkageName = llvm::StringRef();
     if (FD->hasPrototype())
       Flags |= llvm::DIDescriptor::FlagPrototyped;
     if (const NamespaceDecl *NSDecl =
@@ -1565,12 +1578,10 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       FDContext = getOrCreateNameSpace(NSDecl, Unit);
   } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
     Name = getObjCMethodName(OMD);
-    LinkageName = Name;
     Flags |= llvm::DIDescriptor::FlagPrototyped;
   } else {
-    // Use llvm function name as linkage name.
+    // Use llvm function name.
     Name = Fn->getName();
-    LinkageName = Name;
     Flags |= llvm::DIDescriptor::FlagPrototyped;
   }
   if (!Name.empty() && Name[0] == '\01')
@@ -1952,6 +1963,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   llvm::StringRef LinkageName;
   if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext()))
     LinkageName = Var->getName();
+  if (LinkageName == DeclName)
+    LinkageName = llvm::StringRef();
   llvm::DIDescriptor DContext = 
     getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()), Unit);
   DebugFactory.CreateGlobalVariable(DContext, DeclName, DeclName, LinkageName,

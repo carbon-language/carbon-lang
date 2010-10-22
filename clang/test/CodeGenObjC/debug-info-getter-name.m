@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi2 -S -g %s -o %t
-// RUN: grep "\[InstanceVariablesEverywhereButTheInterface someString\]" %t | count 7
+// RUN: grep "\[InstanceVariablesEverywhereButTheInterface someString\]" %t | count 6
 
 //rdar: //8498026
 
