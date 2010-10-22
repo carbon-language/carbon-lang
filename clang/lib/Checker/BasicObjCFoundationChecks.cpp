@@ -81,15 +81,16 @@ static inline bool isNil(SVal X) {
 // NilArgChecker - Check for prohibited nil arguments to ObjC method calls.
 //===----------------------------------------------------------------------===//
 
-class NilArgChecker : public CheckerVisitor<NilArgChecker> {
-  APIMisuse *BT;
-  void AuditNSString(CheckerContext &C, const ObjCMessageExpr* ME);
-  void WarnNilArg(CheckerContext &C, const ObjCMessageExpr* ME, unsigned Arg);
-public:
-  NilArgChecker() : BT(0) {}
-  static void *getTag() { static int x = 0; return &x; }
-  void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);
-};
+namespace {
+  class NilArgChecker : public CheckerVisitor<NilArgChecker> {
+    APIMisuse *BT;
+    void WarnNilArg(CheckerContext &C, const ObjCMessageExpr* ME, unsigned Arg);
+  public:
+    NilArgChecker() : BT(0) {}
+    static void *getTag() { static int x = 0; return &x; }
+    void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);
+  };
+}
 
 void NilArgChecker::WarnNilArg(CheckerContext &C,
                                const clang::ObjCMessageExpr *ME,

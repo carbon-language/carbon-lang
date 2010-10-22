@@ -1603,15 +1603,17 @@ RecordLayoutBuilder::Diag(SourceLocation Loc, unsigned DiagID) {
                         FullSourceLoc(Loc, Context.getSourceManager()), DiagID);
 }
 
-// This class implements layout specific to the Microsoft ABI.
-class MSRecordLayoutBuilder: public RecordLayoutBuilder {
-public:
-  MSRecordLayoutBuilder(ASTContext& Ctx, EmptySubobjectMap *EmptySubobjects):
-    RecordLayoutBuilder(Ctx, EmptySubobjects) {}
+namespace {
+  // This class implements layout specific to the Microsoft ABI.
+  class MSRecordLayoutBuilder : public RecordLayoutBuilder {
+  public:
+    MSRecordLayoutBuilder(ASTContext& Ctx, EmptySubobjectMap *EmptySubobjects) :
+      RecordLayoutBuilder(Ctx, EmptySubobjects) {}
 
-  virtual bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
-  virtual uint64_t GetVirtualPointersSize(const CXXRecordDecl *RD) const;
-};
+    virtual bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
+    virtual uint64_t GetVirtualPointersSize(const CXXRecordDecl *RD) const;
+  };
+}
 
 bool MSRecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
   // FIXME: Audit the corners
