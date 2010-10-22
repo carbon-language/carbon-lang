@@ -1264,8 +1264,12 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC, bool Return) {
   switch (CC) {
   default:
     llvm_unreachable("Unsupported calling convention");
-  case CallingConv::C:
   case CallingConv::Fast:
+    // Ignore fastcc. Silence compiler warnings.
+    (void)RetFastCC_ARM_APCS;
+    (void)FastCC_ARM_APCS;
+    // Fallthrough
+  case CallingConv::C:
     // Use target triple & subtarget features to do actual dispatch.
     if (Subtarget->isAAPCS_ABI()) {
       if (Subtarget->hasVFP2() &&
