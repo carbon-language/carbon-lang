@@ -83,7 +83,7 @@ class BreakpointConditionsTestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
-        print "breakpoint:", breakpoint
+        #print "breakpoint:", breakpoint
         self.assertTrue(breakpoint.IsValid() and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
