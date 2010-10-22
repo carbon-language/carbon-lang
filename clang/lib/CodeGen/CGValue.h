@@ -26,7 +26,6 @@ namespace llvm {
 namespace clang {
   class ObjCPropertyRefExpr;
   class ObjCImplicitSetterGetterRefExpr;
-  class CXXConstructExpr;
 
 namespace CodeGen {
   class CGBitFieldInfo;
@@ -336,7 +335,6 @@ public:
 class AggValueSlot {
   /// The address.
   llvm::Value *Addr;
-  CXXConstructExpr *CtorExpr;
   
   // Associated flags.
   bool VolatileFlag : 1;
@@ -349,7 +347,6 @@ public:
   static AggValueSlot ignored() {
     AggValueSlot AV;
     AV.Addr = 0;
-    AV.CtorExpr = 0;
     AV.VolatileFlag = AV.LifetimeFlag = AV.RequiresGCollection = 0;
     return AV;
   }
@@ -367,7 +364,6 @@ public:
                               bool RequiresGCollection=false) {
     AggValueSlot AV;
     AV.Addr = Addr;
-    AV.CtorExpr = 0;
     AV.VolatileFlag = Volatile;
     AV.LifetimeFlag = LifetimeExternallyManaged;
     AV.RequiresGCollection = RequiresGCollection;
@@ -379,10 +375,7 @@ public:
     return forAddr(LV.getAddress(), LV.isVolatileQualified(),
                    LifetimeExternallyManaged, RequiresGCollection);
   }
-  
-  void setCtorExpr(CXXConstructExpr *E) { CtorExpr = E; }
-  CXXConstructExpr *getCtorExpr() const { return CtorExpr; }
-  
+
   bool isLifetimeExternallyManaged() const {
     return LifetimeFlag;
   }

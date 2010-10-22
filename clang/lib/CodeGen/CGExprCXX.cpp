@@ -299,7 +299,6 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
     assert(getContext().hasSameUnqualifiedType(E->getType(),
                                                E->getArg(0)->getType()));
     if (E->getArg(0)->isTemporaryObject(getContext(), CD->getParent())) {
-      Dest.setCtorExpr(const_cast<CXXConstructExpr*>(E));
       EmitAggExpr(E->getArg(0), Dest);
       return;
     }
