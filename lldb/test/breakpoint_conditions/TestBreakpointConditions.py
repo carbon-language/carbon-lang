@@ -18,10 +18,21 @@ class BreakpointConditionsTestCase(TestBase):
         self.buildDsym()
         self.breakpoint_conditions()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym_and_python_api(self):
+        """Use Python APIs to set breakpoint conditions."""
+        self.buildDsym()
+        self.breakpoint_conditions_python()
+
     def test_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDwarf()
         self.breakpoint_conditions()
+
+    def test_with_dwarf_and_python_api(self):
+        """Use Python APIs to set breakpoint conditions."""
+        self.buildDwarf()
+        self.breakpoint_conditions_python()
 
     def setUp(self):
         # Call super's setUp().
@@ -62,7 +73,51 @@ class BreakpointConditionsTestCase(TestBase):
             patterns = ["frame #0.*main.c:%d" % self.line1,
                         "frame #1.*main.c:%d" % self.line2])
 
+    def breakpoint_conditions_python(self):
+        """Use Python APIs to set breakpoint conditions."""
+        exe = os.path.join(os.getcwd(), "a.out")
 
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        # Now create a breakpoint on main.c by name 'c'.
+        breakpoint = target.BreakpointCreateByName('c', 'a.out')
+        print "breakpoint:", breakpoint
+        self.assertTrue(breakpoint.IsValid() and
+                        breakpoint.GetNumLocations() == 1,
+                        VALID_BREAKPOINT)
+
+        # Get the breakpoint location from breakpoint after we verified that,
+        # indeed, it has one location.
+        location = breakpoint.GetLocationAtIndex(0)
+        self.assertTrue(location.IsValid() and
+                        location.IsEnabled(),
+                        VALID_BREAKPOINT_LOCATION)
+
+        # Set the condition on the breakpoint location.
+        location.SetCondition('val == 3')
+        self.expect(location.GetCondition(), exe=False,
+            startstr = 'val == 3')
+
+        # Now launch the process, and do not stop at entry point.
+        self.process = target.LaunchProcess([''], [''], os.ctermid(), 0, False)
+
+        self.process = target.GetProcess()
+        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+
+        # Frame #0 should be on self.line1 and the break condition should hold.
+        frame0 = self.process.GetThreadAtIndex(0).GetFrameAtIndex(0)
+        var = frame0.LookupVarInScope('val', 'parameter')
+        self.assertTrue(frame0.GetLineEntry().GetLine() == self.line1 and
+                        var.GetValue(frame0) == '3')
+
+        # The hit count for the breakpoint should be 3.
+        self.assertTrue(breakpoint.GetHitCount() == 3)
+
+        self.process.Continue()
+
+        
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

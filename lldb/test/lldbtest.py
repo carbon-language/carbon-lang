@@ -163,6 +163,8 @@ DATA_TYPES_DISPLAYED_CORRECTLY = "Data type(s) displayed correctly"
 
 VALID_BREAKPOINT = "Got a valid breakpoint"
 
+VALID_BREAKPOINT_LOCATION = "Got a valid breakpoint location"
+
 VALID_FILESPEC = "Got a valid filespec"
 
 VALID_PROCESS = "Got a valid process"
