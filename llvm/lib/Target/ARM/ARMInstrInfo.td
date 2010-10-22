@@ -140,7 +140,7 @@ def ARMSyncBarrierMCR : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIERMCR,
 
 def ARMrbit          : SDNode<"ARMISD::RBIT", SDTIntUnaryOp>;
 
-def ARMtcret         : SDNode<"ARMISD::TC_RETURN", SDT_ARMTCRET, 
+def ARMtcret         : SDNode<"ARMISD::TC_RETURN", SDT_ARMTCRET,
                         [SDNPHasChain,  SDNPOptInFlag, SDNPVariadic]>;
 
 
@@ -961,7 +961,7 @@ def DBG : AI<(outs), (ins i32imm:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",
 
 // A5.4 Permanently UNDEFINED instructions.
 let isBarrier = 1, isTerminator = 1 in
-def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary, 
+def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
                "trap", [(trap)]>,
            Requires<[IsARM]> {
   let Inst{27-25} = 0b011;
@@ -1050,7 +1050,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   }
 
   // ARMV4 only
-  def MOVPCLR : AI<(outs), (ins), BrMiscFrm, IIC_Br, 
+  def MOVPCLR : AI<(outs), (ins), BrMiscFrm, IIC_Br,
                   "mov", "\tpc, lr", [(ARMretflag)]>,
                Requires<[IsARM, NoV4T]> {
     let Inst{27-0} = 0b0001101000001111000000001110;
@@ -1638,7 +1638,7 @@ def MOVr : AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMOVr,
 
 // A version for the smaller set of tail call registers.
 let neverHasSideEffects = 1 in
-def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm, 
+def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
                 IIC_iMOVr, "mov", "\t$Rd, $Rm", []>, UnaryDP {
   bits<4> Rd;
   bits<4> Rm;
@@ -2656,7 +2656,7 @@ defm CMP  : AI1_cmp_irs<0b1010, "cmp",
 //   mov  r0, #1
 //
 // and:
-// 
+//
 //   cmn  r0, r1
 //   mov  r0, #0
 //   it   ls
