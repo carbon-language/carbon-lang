@@ -6,11 +6,9 @@ import lldb
 import sys
 import StringIO
 
-################################################
-#                                              #
-# Iterator for lldb aggregate data structures. #
-#                                              #
-################################################
+# ===========================================
+# Iterator for lldb aggregate data structures
+# ===========================================
 
 def lldb_iter(obj, getsize, getelem):
     """
@@ -33,11 +31,9 @@ def lldb_iter(obj, getsize, getelem):
         yield elem(i)
 
 
-########################################################
-#                                                      #
-# Convert some enum value to its string's counterpart. #
-#                                                      #
-########################################################
+# =================================================
+# Convert some enum value to its string counterpart
+# =================================================
 
 def StateTypeString(enum):
     """Returns the stateType string given an enum."""
@@ -88,11 +84,9 @@ def StopReasonString(enum):
         raise Exception("Unknown stopReason enum")
 
 
-#######################################################
-#                                                     #
-# Utility functions related to Threads and Processes. #
-#                                                     #
-#######################################################
+# ==================================================
+# Utility functions related to Threads and Processes
+# ==================================================
 
 def GetFunctionNames(thread):
     """
