@@ -33,6 +33,14 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetSelect.h"
 #include <cerrno>
+
+#ifdef __CYGWIN__
+#include <cygwin/version.h>
+#if defined(CYGWIN_VERSION_DLL_MAJOR) && CYGWIN_VERSION_DLL_MAJOR<1007
+#define DO_NOTHING_ATEXIT 1
+#endif
+#endif
+
 using namespace llvm;
 
 namespace {
@@ -99,8 +107,11 @@ namespace {
 static ExecutionEngine *EE = 0;
 
 static void do_shutdown() {
+  // Cygwin-1.5 invokes DLL's dtors before atexit handler.
+#ifndef DO_NOTHING_ATEXIT
   delete EE;
   llvm_shutdown();
+#endif
 }
 
 //===----------------------------------------------------------------------===//
