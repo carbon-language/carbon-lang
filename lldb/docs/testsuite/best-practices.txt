@@ -69,3 +69,25 @@ to cope with this use case by taking the same build parameters in order to do
 the cleanup when we are finished with a test instance, during
 TestBase.tearDown(self).
 
+o Class-wise cleanup after yourself.
+
+TestBase.tearDownClass(cls) provides a mechanism to invoke the platform-specific
+cleanup after finishing with a test class. A test class can have more than one
+test methods, so the tearDownClass(cls) method gets run after all the test
+methods have been executed by the test harness.
+
+The default cleanup action performed by the plugins/darwin.py module invokes the
+"make clean" os command.
+
+If this default cleanup is not enough, individual class can provide an extra
+cleanup hook with a class method named classCleanup , for example,
+in test/breakpoint_command/TestBreakpointCommand.py:
+
+    @classmethod
+    def classCleanup(cls):
+        system(["/bin/sh", "-c", "rm -f output.txt"])
+
+The 'output.txt' file gets generated during the test run, so it makes sense to
+explicitly spell out the action in the same TestBreakpointCommand.py file to do
+the cleanup instead of artificially adding it as part of the default cleanup
+action which serves to cleanup those intermediate and a.out files. 

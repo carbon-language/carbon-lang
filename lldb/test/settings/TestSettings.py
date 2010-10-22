@@ -13,6 +13,7 @@ class SettingsCommandTestCase(TestBase):
 
     @classmethod
     def classCleanup(cls):
+        """Cleanup the test byproducts."""
         system(["/bin/sh", "-c", "rm -f output.txt"])
         system(["/bin/sh", "-c", "rm -f stdout.txt"])
 
