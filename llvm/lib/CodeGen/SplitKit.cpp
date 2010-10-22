@@ -149,37 +149,33 @@ analyzeLoopPeripheralUse(const SplitAnalysis::LoopBlocks &Blocks) {
 }
 
 /// getCriticalExits - It may be necessary to partially break critical edges
-/// leaving the loop if an exit block has phi uses of curli. Collect the exit
-/// blocks that need special treatment into CriticalExits.
+/// leaving the loop if an exit block has predecessors from outside the loop
+/// periphery.
 void SplitAnalysis::getCriticalExits(const SplitAnalysis::LoopBlocks &Blocks,
                                      BlockPtrSet &CriticalExits) {
   CriticalExits.clear();
 
-  // A critical exit block contains a phi def of curli, and has a predecessor
-  // that is not in the loop nor a loop predecessor.
-  // For such an exit block, the edges carrying the new variable must be moved
-  // to a new pre-exit block.
+  // A critical exit block has curli line-in, and has a predecessor that is not
+  // in the loop nor a loop predecessor. For such an exit block, the edges
+  // carrying the new variable must be moved to a new pre-exit block.
   for (BlockPtrSet::iterator I = Blocks.Exits.begin(), E = Blocks.Exits.end();
        I != E; ++I) {
-    const MachineBasicBlock *Succ = *I;
-    SlotIndex SuccIdx = lis_.getMBBStartIdx(Succ);
-    VNInfo *SuccVNI = curli_->getVNInfoAt(SuccIdx);
+    const MachineBasicBlock *Exit = *I;
+    // A single-predecessor exit block is definitely not a critical edge.
+    if (Exit->pred_size() == 1)
+      continue;
     // This exit may not have curli live in at all. No need to split.
-    if (!SuccVNI)
+    if (!lis_.isLiveInToMBB(*curli_, Exit))
       continue;
-    // If this is not a PHI def, it is either using a value from before the
-    // loop, or a value defined inside the loop. Both are safe.
-    if (!SuccVNI->isPHIDef() || SuccVNI->def.getBaseIndex() != SuccIdx)
-      continue;
-    // This exit block does have a PHI. Does it also have a predecessor that is
-    // not a loop block or loop predecessor?
-    for (MachineBasicBlock::const_pred_iterator PI = Succ->pred_begin(),
-         PE = Succ->pred_end(); PI != PE; ++PI) {
+    // Does this exit block have a predecessor that is not a loop block or loop
+    // predecessor?
+    for (MachineBasicBlock::const_pred_iterator PI = Exit->pred_begin(),
+         PE = Exit->pred_end(); PI != PE; ++PI) {
       const MachineBasicBlock *Pred = *PI;
       if (Blocks.Loop.count(Pred) || Blocks.Preds.count(Pred))
         continue;
       // This is a critical exit block, and we need to split the exit edge.
-      CriticalExits.insert(Succ);
+      CriticalExits.insert(Exit);
       break;
     }
   }
