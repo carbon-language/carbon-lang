@@ -301,7 +301,8 @@ void LookupResult::sanity() const {
           isa<FunctionTemplateDecl>((*begin())->getUnderlyingDecl())));
   assert(ResultKind != FoundUnresolvedValue || sanityCheckUnresolved());
   assert(ResultKind != Ambiguous || Decls.size() > 1 ||
-         (Decls.size() == 1 && Ambiguity == AmbiguousBaseSubobjects));
+         (Decls.size() == 1 && (Ambiguity == AmbiguousBaseSubobjects ||
+                                Ambiguity == AmbiguousBaseSubobjectTypes)));
   assert((Paths != NULL) == (ResultKind == Ambiguous &&
                              (Ambiguity == AmbiguousBaseSubobjectTypes ||
                               Ambiguity == AmbiguousBaseSubobjects)));
@@ -1237,6 +1238,38 @@ static bool LookupAnyMember(const CXXBaseSpecifier *Specifier,
   return Path.Decls.first != Path.Decls.second;
 }
 
+/// \brief Determine whether the given set of member declarations contains only 
+/// static members, nested types, and enumerators.
+template<typename InputIterator>
+static bool HasOnlyStaticMembers(InputIterator First, InputIterator Last) {
+  Decl *D = (*First)->getUnderlyingDecl();
+  if (isa<VarDecl>(D) || isa<TypeDecl>(D) || isa<EnumConstantDecl>(D))
+    return true;
+  
+  if (isa<CXXMethodDecl>(D)) {
+    // Determine whether all of the methods are static.
+    bool AllMethodsAreStatic = true;
+    for(; First != Last; ++First) {
+      D = (*First)->getUnderlyingDecl();
+      
+      if (!isa<CXXMethodDecl>(D)) {
+        assert(isa<TagDecl>(D) && "Non-function must be a tag decl");
+        break;
+      }
+      
+      if (!cast<CXXMethodDecl>(D)->isStatic()) {
+        AllMethodsAreStatic = false;
+        break;
+      }
+    }
+    
+    if (AllMethodsAreStatic)
+      return true;
+  }
+
+  return false;
+}
+
 /// \brief Perform qualified name lookup into a given context.
 ///
 /// Qualified name lookup (C++ [basic.lookup.qual]) is used to find
@@ -1362,10 +1395,10 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   //   and includes members from distinct sub-objects, there is an
   //   ambiguity and the program is ill-formed. Otherwise that set is
   //   the result of the lookup.
-  // FIXME: support using declarations!
   QualType SubobjectType;
   int SubobjectNumber = 0;
   AccessSpecifier SubobjectAccess = AS_none;
+  
   for (CXXBasePaths::paths_iterator Path = Paths.begin(), PathEnd = Paths.end();
        Path != PathEnd; ++Path) {
     const CXXBasePathElement &PathElement = Path->back();
@@ -1379,45 +1412,48 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
       // This is the first subobject we've looked at. Record its type.
       SubobjectType = Context.getCanonicalType(PathElement.Base->getType());
       SubobjectNumber = PathElement.SubobjectNumber;
-    } else if (SubobjectType
+      continue;
+    } 
+    
+    if (SubobjectType
                  != Context.getCanonicalType(PathElement.Base->getType())) {
       // We found members of the given name in two subobjects of
-      // different types. This lookup is ambiguous.
+      // different types. If the declaration sets aren't the same, this
+      // this lookup is ambiguous.
+      if (HasOnlyStaticMembers(Path->Decls.first, Path->Decls.second)) {
+        CXXBasePaths::paths_iterator FirstPath = Paths.begin();
+        DeclContext::lookup_iterator FirstD = FirstPath->Decls.first;
+        DeclContext::lookup_iterator CurrentD = Path->Decls.first;
+        
+        while (FirstD != FirstPath->Decls.second &&
+               CurrentD != Path->Decls.second) {
+         if ((*FirstD)->getUnderlyingDecl()->getCanonicalDecl() !=
+             (*CurrentD)->getUnderlyingDecl()->getCanonicalDecl())
+           break;
+          
+          ++FirstD;
+          ++CurrentD;
+        }
+        
+        if (FirstD == FirstPath->Decls.second &&
+            CurrentD == Path->Decls.second)
+          continue;
+      }
+      
       R.setAmbiguousBaseSubobjectTypes(Paths);
       return true;
-    } else if (SubobjectNumber != PathElement.SubobjectNumber) {
+    } 
+    
+    if (SubobjectNumber != PathElement.SubobjectNumber) {
       // We have a different subobject of the same type.
 
       // C++ [class.member.lookup]p5:
       //   A static member, a nested type or an enumerator defined in
       //   a base class T can unambiguously be found even if an object
       //   has more than one base class subobject of type T.
-      Decl *FirstDecl = *Path->Decls.first;
-      if (isa<VarDecl>(FirstDecl) ||
-          isa<TypeDecl>(FirstDecl) ||
-          isa<EnumConstantDecl>(FirstDecl))
+      if (HasOnlyStaticMembers(Path->Decls.first, Path->Decls.second))
         continue;
-
-      if (isa<CXXMethodDecl>(FirstDecl)) {
-        // Determine whether all of the methods are static.
-        bool AllMethodsAreStatic = true;
-        for (DeclContext::lookup_iterator Func = Path->Decls.first;
-             Func != Path->Decls.second; ++Func) {
-          if (!isa<CXXMethodDecl>(*Func)) {
-            assert(isa<TagDecl>(*Func) && "Non-function must be a tag decl");
-            break;
-          }
-
-          if (!cast<CXXMethodDecl>(*Func)->isStatic()) {
-            AllMethodsAreStatic = false;
-            break;
-          }
-        }
-
-        if (AllMethodsAreStatic)
-          continue;
-      }
-
+      
       // We have found a nonstatic member name in multiple, distinct
       // subobjects. Name lookup is ambiguous.
       R.setAmbiguousBaseSubobjects(Paths);
