@@ -13,12 +13,12 @@ class BreakpointConditionsTestCase(TestBase):
     mydir = "breakpoint_conditions"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_with_dsym_python(self):
+    def test_with_dsym_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDsym()
         self.breakpoint_conditions()
 
-    def test_with_dwarf_python(self):
+    def test_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDwarf()
         self.breakpoint_conditions()
