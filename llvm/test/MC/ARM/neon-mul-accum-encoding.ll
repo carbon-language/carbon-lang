@@ -165,3 +165,27 @@ define <2 x i64> @vmlalu_2xi32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) noun
 	%tmp7 = add <2 x i64> %tmp1, %tmp6
 	ret <2 x i64> %tmp7
 }
+
+declare <4 x i32>  @llvm.arm.neon.vqdmlal.v4i32(<4 x i32>, <4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i64>  @llvm.arm.neon.vqdmlal.v2i64(<2 x i64>, <2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vqdmlal_4xi16
+define <4 x i32> @vqdmlal_4xi16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = load <4 x i16>* %C
+; CHECK: vqdmlal.s16	q8, d19, d18    @ encoding: [0xa2,0x09,0xd3,0xf2
+	%tmp4 = call <4 x i32> @llvm.arm.neon.vqdmlal.v4i32(<4 x i32> %tmp1, <4 x i16> %tmp2, <4 x i16> %tmp3)
+	ret <4 x i32> %tmp4
+}
+
+; CHECK: vqdmlal_2xi32
+define <2 x i64> @vqdmlal_2xi32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = load <2 x i32>* %C
+; CHECK: vqdmlal.s32	q8, d19, d18    @ encoding: [0xa2,0x09,0xe3,0xf2]
+	%tmp4 = call <2 x i64> @llvm.arm.neon.vqdmlal.v2i64(<2 x i64> %tmp1, <2 x i32> %tmp2, <2 x i32> %tmp3)
+	ret <2 x i64> %tmp4
+}
+
