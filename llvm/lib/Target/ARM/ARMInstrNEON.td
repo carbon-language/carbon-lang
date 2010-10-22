@@ -1447,11 +1447,11 @@ class N3VLMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
                 InstrItinClass itin, string OpcodeStr, string Dt,
                 ValueType TyQ, ValueType TyD, SDNode MulOp, SDNode OpNode>
   : N3V<op24, op23, op21_20, op11_8, 0, op4,
-        (outs QPR:$dst), (ins QPR:$src1, DPR:$src2, DPR:$src3), N3RegFrm, itin,
-        OpcodeStr, Dt, "$dst, $src2, $src3", "$src1 = $dst",
-        [(set QPR:$dst, (OpNode (TyQ QPR:$src1),
-                                (TyQ (MulOp (TyD DPR:$src2),
-                                            (TyD DPR:$src3)))))]>;
+        (outs QPR:$Vd), (ins QPR:$src1, DPR:$Vn, DPR:$Vm), N3RegFrm, itin,
+        OpcodeStr, Dt, "$Vd, $Vn, $Vm", "$src1 = $Vd",
+        [(set QPR:$Vd, (OpNode (TyQ QPR:$src1),
+                                (TyQ (MulOp (TyD DPR:$Vn),
+                                            (TyD DPR:$Vm)))))]>;
 class N3VLMulOpSL<bit op24, bits<2> op21_20, bits<4> op11_8,
                   InstrItinClass itin, string OpcodeStr, string Dt,
                   ValueType TyQ, ValueType TyD, SDNode MulOp, SDNode OpNode>
