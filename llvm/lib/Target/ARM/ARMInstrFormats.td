@@ -988,11 +988,36 @@ class AExtI<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
 }
 
 // Misc Arithmetic instructions.
-class AMiscA1I<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
-               string opc, string asm, list<dag> pattern>
+class AMiscA1I<bits<8> opcod, bits<4> opc7_4, dag oops, dag iops,
+               InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, ArithMiscFrm, itin,
       opc, asm, "", pattern> {
+  bits<4> Rd;
+  bits<4> Rm;
   let Inst{27-20} = opcod;
+  let Inst{19-16} = 0b1111;
+  let Inst{15-12} = Rd;
+  let Inst{11-8}  = 0b1111;
+  let Inst{7-4}   = opc7_4;
+  let Inst{3-0}   = Rm;
+}
+
+// PKH instructions
+class APKHI<bits<8> opcod, bit tb, dag oops, dag iops, InstrItinClass itin,
+            string opc, string asm, list<dag> pattern>
+  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, ArithMiscFrm, itin,
+      opc, asm, "", pattern> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+  bits<8> sh;
+  let Inst{27-20} = opcod;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rd;
+  let Inst{11-7}  = sh{7-3};
+  let Inst{6}     = tb;
+  let Inst{5-4}   = 0b01;
+  let Inst{3-0}   = Rm;
 }
 
 //===----------------------------------------------------------------------===//

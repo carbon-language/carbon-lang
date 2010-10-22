@@ -2557,55 +2557,35 @@ defm SMUS : AI_sdml<1, "smus">;
 //  Misc. Arithmetic Instructions.
 //
 
-def CLZ  : AMiscA1I<0b000010110, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
-              "clz", "\t$dst, $src",
-              [(set GPR:$dst, (ctlz GPR:$src))]>, Requires<[IsARM, HasV5T]> {
-  let Inst{7-4}   = 0b0001;
-  let Inst{11-8}  = 0b1111;
-  let Inst{19-16} = 0b1111;
-}
+def CLZ  : AMiscA1I<0b000010110, 0b0001, (outs GPR:$Rd), (ins GPR:$Rm),
+              IIC_iUNAr, "clz", "\t$Rd, $Rm",
+              [(set GPR:$Rd, (ctlz GPR:$Rm))]>, Requires<[IsARM, HasV5T]>;
 
-def RBIT : AMiscA1I<0b01101111, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
-              "rbit", "\t$dst, $src",
-              [(set GPR:$dst, (ARMrbit GPR:$src))]>,
-           Requires<[IsARM, HasV6T2]> {
-  let Inst{7-4}   = 0b0011;
-  let Inst{11-8}  = 0b1111;
-  let Inst{19-16} = 0b1111;
-}
+def RBIT : AMiscA1I<0b01101111, 0b0011, (outs GPR:$Rd), (ins GPR:$Rm),
+              IIC_iUNAr, "rbit", "\t$Rd, $Rm",
+              [(set GPR:$Rd, (ARMrbit GPR:$Rm))]>,
+           Requires<[IsARM, HasV6T2]>;
 
-def REV  : AMiscA1I<0b01101011, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
-              "rev", "\t$dst, $src",
-              [(set GPR:$dst, (bswap GPR:$src))]>, Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b0011;
-  let Inst{11-8}  = 0b1111;
-  let Inst{19-16} = 0b1111;
-}
+def REV  : AMiscA1I<0b01101011, 0b0011, (outs GPR:$Rd), (ins GPR:$Rm),
+              IIC_iUNAr, "rev", "\t$Rd, $Rm",
+              [(set GPR:$Rd, (bswap GPR:$Rm))]>, Requires<[IsARM, HasV6]>;
 
-def REV16 : AMiscA1I<0b01101011, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
-               "rev16", "\t$dst, $src",
-               [(set GPR:$dst,
-                   (or (and (srl GPR:$src, (i32 8)), 0xFF),
-                       (or (and (shl GPR:$src, (i32 8)), 0xFF00),
-                           (or (and (srl GPR:$src, (i32 8)), 0xFF0000),
-                               (and (shl GPR:$src, (i32 8)), 0xFF000000)))))]>,
-               Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b1011;
-  let Inst{11-8}  = 0b1111;
-  let Inst{19-16} = 0b1111;
-}
+def REV16 : AMiscA1I<0b01101011, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
+               IIC_iUNAr, "rev16", "\t$Rd, $Rm",
+               [(set GPR:$Rd,
+                   (or (and (srl GPR:$Rm, (i32 8)), 0xFF),
+                       (or (and (shl GPR:$Rm, (i32 8)), 0xFF00),
+                           (or (and (srl GPR:$Rm, (i32 8)), 0xFF0000),
+                               (and (shl GPR:$Rm, (i32 8)), 0xFF000000)))))]>,
+               Requires<[IsARM, HasV6]>;
 
-def REVSH : AMiscA1I<0b01101111, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
-               "revsh", "\t$dst, $src",
-               [(set GPR:$dst,
+def REVSH : AMiscA1I<0b01101111, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
+               IIC_iUNAr, "revsh", "\t$Rd, $Rm",
+               [(set GPR:$Rd,
                   (sext_inreg
-                    (or (srl (and GPR:$src, 0xFF00), (i32 8)),
-                        (shl GPR:$src, (i32 8))), i16))]>,
-               Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b1011;
-  let Inst{11-8}  = 0b1111;
-  let Inst{19-16} = 0b1111;
-}
+                    (or (srl (and GPR:$Rm, 0xFF00), (i32 8)),
+                        (shl GPR:$Rm, (i32 8))), i16))]>,
+               Requires<[IsARM, HasV6]>;
 
 def lsl_shift_imm : SDNodeXForm<imm, [{
   unsigned Sh = ARM_AM::getSORegOpc(ARM_AM::lsl, N->getZExtValue());
@@ -2616,21 +2596,19 @@ def lsl_amt : PatLeaf<(i32 imm), [{
   return (N->getZExtValue() < 32);
 }], lsl_shift_imm>;
 
-def PKHBT : AMiscA1I<0b01101000, (outs GPR:$dst),
-                                 (ins GPR:$src1, GPR:$src2, shift_imm:$sh),
-               IIC_iALUsi, "pkhbt", "\t$dst, $src1, $src2$sh",
-               [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF),
-                                   (and (shl GPR:$src2, lsl_amt:$sh),
-                                        0xFFFF0000)))]>,
-               Requires<[IsARM, HasV6]> {
-  let Inst{6-4} = 0b001;
-}
+def PKHBT : APKHI<0b01101000, 0, (outs GPR:$Rd),
+                              (ins GPR:$Rn, GPR:$Rm, shift_imm:$sh),
+               IIC_iALUsi, "pkhbt", "\t$Rd, $Rn, $Rm$sh",
+               [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF),
+                                  (and (shl GPR:$Rm, lsl_amt:$sh),
+                                       0xFFFF0000)))]>,
+               Requires<[IsARM, HasV6]>;
 
 // Alternate cases for PKHBT where identities eliminate some nodes.
-def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF), (and GPR:$src2, 0xFFFF0000)),
-               (PKHBT GPR:$src1, GPR:$src2, 0)>;
-def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF), (shl GPR:$src2, imm16_31:$sh)),
-               (PKHBT GPR:$src1, GPR:$src2, (lsl_shift_imm imm16_31:$sh))>;
+def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (and GPR:$Rm, 0xFFFF0000)),
+               (PKHBT GPR:$Rn, GPR:$Rm, 0)>;
+def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (shl GPR:$Rm, imm16_31:$sh)),
+               (PKHBT GPR:$Rn, GPR:$Rm, (lsl_shift_imm imm16_31:$sh))>;
 
 def asr_shift_imm : SDNodeXForm<imm, [{
   unsigned Sh = ARM_AM::getSORegOpc(ARM_AM::asr, N->getZExtValue());
@@ -2643,15 +2621,13 @@ def asr_amt : PatLeaf<(i32 imm), [{
 
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
-def PKHTB : AMiscA1I<0b01101000, (outs GPR:$dst),
-                                 (ins GPR:$src1, GPR:$src2, shift_imm:$sh),
-               IIC_iBITsi, "pkhtb", "\t$dst, $src1, $src2$sh",
-               [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF0000),
-                                   (and (sra GPR:$src2, asr_amt:$sh),
-                                        0xFFFF)))]>,
-               Requires<[IsARM, HasV6]> {
-  let Inst{6-4} = 0b101;
-}
+def PKHTB : APKHI<0b01101000, 1, (outs GPR:$Rd),
+                              (ins GPR:$Rn, GPR:$Rm, shift_imm:$sh),
+               IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm$sh",
+               [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF0000),
+                                  (and (sra GPR:$Rm, asr_amt:$sh),
+                                       0xFFFF)))]>,
+               Requires<[IsARM, HasV6]>;
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.

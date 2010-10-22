@@ -7,6 +7,9 @@
 ;       compiler never generates, so we need the integrated assembler to be
 ;       able to test those at all.
 
+declare void @llvm.trap() nounwind
+declare i32 @llvm.ctlz.i32(i32)
+
 define i32 @foo(i32 %a, i32 %b) {
 entry:
 ; CHECK: foo
@@ -182,4 +185,56 @@ define i32 @f18(i32 %a, i16 %x, i32 %y) {
         ret i32 %tmp5
 }
 
-declare void @llvm.trap() nounwind
+define i32 @f19(i32 %x) {
+; CHECK: f19
+; CHECK: clz r0, r0                   @ encoding: [0x10,0x0f,0x6f,0xe1]
+        %tmp.1 = call i32 @llvm.ctlz.i32( i32 %x )
+        ret i32 %tmp.1
+}
+
+define i32 @f20(i32 %X) {
+; CHECK: f20
+; CHECK: rev16 r0, r0                 @ encoding: [0xb0,0x0f,0xbf,0xe6]
+        %tmp1 = lshr i32 %X, 8
+        %X15 = bitcast i32 %X to i32
+        %tmp4 = shl i32 %X15, 8
+        %tmp2 = and i32 %tmp1, 16711680
+        %tmp5 = and i32 %tmp4, -16777216
+        %tmp9 = and i32 %tmp1, 255
+        %tmp13 = and i32 %tmp4, 65280
+        %tmp6 = or i32 %tmp5, %tmp2
+        %tmp10 = or i32 %tmp6, %tmp13
+        %tmp14 = or i32 %tmp10, %tmp9
+        ret i32 %tmp14
+}
+
+define i32 @f21(i32 %X) {
+; CHECK: f21
+; CHECK: revsh r0, r0                 @ encoding: [0xb0,0x0f,0xff,0xe6]
+        %tmp1 = lshr i32 %X, 8
+        %tmp1.upgrd.1 = trunc i32 %tmp1 to i16
+        %tmp3 = trunc i32 %X to i16
+        %tmp2 = and i16 %tmp1.upgrd.1, 255
+        %tmp4 = shl i16 %tmp3, 8
+        %tmp5 = or i16 %tmp2, %tmp4
+        %tmp5.upgrd.2 = sext i16 %tmp5 to i32
+        ret i32 %tmp5.upgrd.2
+}
+
+define i32 @f22(i32 %X, i32 %Y) {
+; CHECK: f22
+; CHECK: pkhtb   r0, r0, r1, asr #22  @ encoding: [0x51,0x0b,0x80,0xe6]
+	%tmp1 = and i32 %X, -65536
+	%tmp3 = lshr i32 %Y, 22
+	%tmp57 = or i32 %tmp3, %tmp1
+	ret i32 %tmp57
+}
+
+define i32 @f23(i32 %X, i32 %Y) {
+; CHECK: f23
+; CHECK: pkhbt   r0, r0, r1, lsl #18  @ encoding: [0x11,0x09,0x80,0xe6]
+	%tmp19 = and i32 %X, 65535
+	%tmp37 = shl i32 %Y, 18
+	%tmp5 = or i32 %tmp37, %tmp19
+	ret i32 %tmp5
+}
