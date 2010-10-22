@@ -70,6 +70,12 @@ public:
 
     uint32_t
     GetIgnoreCount () const;
+    
+    void 
+    SetCondition (const char *condition);
+    
+    const char *
+    GetCondition ();
 
     void
     SetThreadID (lldb::tid_t sb_thread_id);

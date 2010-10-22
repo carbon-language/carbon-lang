@@ -99,6 +99,18 @@ SBBreakpointLocation::SetIgnoreCount (uint32_t n)
 }
 
 void
+SBBreakpointLocation::SetCondition (const char *condition)
+{
+    m_opaque_sp->SetCondition (condition);
+}
+
+const char *
+SBBreakpointLocation::GetCondition ()
+{
+    return m_opaque_sp->GetConditionText ();
+}
+
+void
 SBBreakpointLocation::SetThreadID (tid_t thread_id)
 {
     if (m_opaque_sp)

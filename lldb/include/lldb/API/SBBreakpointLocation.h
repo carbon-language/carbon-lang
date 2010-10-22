@@ -41,6 +41,12 @@ public:
     void
     SetIgnoreCount (uint32_t n);
 
+    void 
+    SetCondition (const char *condition);
+    
+    const char *
+    GetCondition ();
+
     void
     SetThreadID (lldb::tid_t sb_thread_id);
 

@@ -205,6 +205,18 @@ SBBreakpoint::SetIgnoreCount (uint32_t count)
         m_opaque_sp->SetIgnoreCount (count);
 }
 
+void
+SBBreakpoint::SetCondition (const char *condition)
+{
+    m_opaque_sp->SetCondition (condition);
+}
+
+const char *
+SBBreakpoint::GetCondition ()
+{
+    return m_opaque_sp->GetConditionText ();
+}
+
 uint32_t
 SBBreakpoint::GetHitCount () const
 {
