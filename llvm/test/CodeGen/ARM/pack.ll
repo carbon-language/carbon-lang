@@ -9,15 +9,6 @@ define i32 @test1(i32 %X, i32 %Y) {
 	ret i32 %tmp5
 }
 
-; CHECK: test1a
-; CHECK: pkhbt   r0, r0, r1, lsl #16
-define i32 @test1a(i32 %X, i32 %Y) {
-	%tmp19 = and i32 %X, 65535
-	%tmp37 = shl i32 %Y, 16
-	%tmp5 = or i32 %tmp37, %tmp19
-	ret i32 %tmp5
-}
-
 ; CHECK: test2
 ; CHECK: pkhbt   r0, r0, r1, lsl #12
 define i32 @test2(i32 %X, i32 %Y) {
