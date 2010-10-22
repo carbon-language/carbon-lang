@@ -293,7 +293,60 @@ def system(*popenargs, **kwargs):
     return output
 
 class TestBase(unittest2.TestCase):
-    """This LLDB abstract base class is meant to be subclassed."""
+    """
+    This abstract base class is meant to be subclassed.  It provides default
+    implementations for setUpClass(), tearDownClass(), setUp(), and tearDown(),
+    among other things.
+
+    Important things for test class writers:
+
+        - Overwrite the mydir class attribute, otherwise your test class won't
+          run.  It specifies the relative directory to the top level 'test' so
+          the test harness can change to the correct working directory before
+          running your test.
+
+        - The setUp method sets up things to facilitate subsequent interactions
+          with the debugger as part of the test.  These include:
+              - create/get a debugger set with synchronous mode (self.dbg)
+              - get the command interpreter from with the debugger (self.ci)
+              - create a result object for use with the command interpreter
+                (self.result)
+              - plus other stuffs
+
+        - The tearDown method tries to perform some necessary cleanup on behalf
+          of the test to return the debugger to a good state for the next test.
+          These include:
+              - execute any tearDown hooks registered by the test method with
+                TestBase.addTearDownHook(); examples can be found in
+                settings/TestSettings.py
+              - kill the inferior process launched during the test method
+                    - if by 'run' or 'process launch' command, 'process kill'
+                      command is used
+                    - if the test method uses LLDB Python API to launch process,
+                      it should assign the process object to self.process; that
+                      way, tearDown will use self.process.Kill() on the object
+              - perform build cleanup before running the next test method in the
+                same test class; examples of registering for this service can be
+                found in types/TestIntegerTypes.py with the call:
+                    - self.setTearDownCleanup(dictionary=d)
+
+        - Similarly setUpClass and tearDownClass perform classwise setup and
+          teardown fixtures.  The tearDownClass method invokes a default build
+          cleanup for the entire test class;  also, subclasses can implement the
+          classmethod classCleanup(cls) to perform special class cleanup action.
+
+        - The instance methods runCmd and expect are used heavily by existing
+          test cases to send a command to the command interpreter and to perform
+          string/pattern matching on the output of such command execution.  The
+          expect method also provides a mode to peform string/pattern matching
+          without running a command.
+
+        - The build methods buildDefault, buildDsym, and buildDwarf are used to
+          build the binaries used during a particular test scenario.  A plugin
+          should be provided for the sys.platform running the test suite.  The
+          Mac OS X implementation is located in plugins/darwin.py.
+
+    """
 
     @classmethod
     def skipLongRunningTest(cls):
