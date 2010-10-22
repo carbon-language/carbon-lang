@@ -703,7 +703,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("fwait", "wait")
     .Case("movzx", "movzb")  // FIXME: Not correct.
     .Case("fildq", "fildll")
-    .Case("ud2a", "ud2")
     .Default(Name);
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
@@ -1176,10 +1175,9 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 
   // First, handle aliases that expand to multiple instructions.
   // FIXME: This should be replaced with a real .td file alias mechanism.
-  if (Op->getToken() == "fstsw" || Op->getToken() == "fstsww" ||
-      Op->getToken() == "fstcw" || Op->getToken() == "fstcww" ||
+  if (Op->getToken() == "fstsw" || Op->getToken() == "fstcw" ||
       Op->getToken() == "finit" || Op->getToken() == "fsave" ||
-      Op->getToken() == "fstenv" || Op->getToken() == "fclex") {
+      Op->getToken() == "fstenv") {
     MCInst Inst;
     Inst.setOpcode(X86::WAIT);
     Out.EmitInstruction(Inst);
@@ -1189,11 +1187,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
         .Case("finit", "fninit")
         .Case("fsave", "fnsave")
         .Case("fstcw", "fnstcw")
-        .Case("fstcww", "fnstcw")
         .Case("fstenv", "fnstenv")
         .Case("fstsw", "fnstsw")
-        .Case("fstsww", "fnstsw")
-        .Case("fclex", "fnclex")
         .Default(0);
     assert(Repl && "Unknown wait-prefixed instruction");
     delete Operands[0];

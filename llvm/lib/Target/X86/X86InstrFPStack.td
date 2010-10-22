@@ -340,7 +340,7 @@ def FCOMP64m : FPI<0xDC, MRM3m, (outs), (ins f64mem:$src), "fcomp{l}\t$src">;
 
 def FRSTORm  : FPI<0xDD, MRM4m, (outs f32mem:$dst), (ins), "frstor\t$dst">;
 def FSAVEm   : FPI<0xDD, MRM6m, (outs f32mem:$dst), (ins), "fnsave\t$dst">;
-def FNSTSWm  : FPI<0xDD, MRM7m, (outs f32mem:$dst), (ins), "fnstsw{w}\t$dst">;
+def FNSTSWm  : FPI<0xDD, MRM7m, (outs f32mem:$dst), (ins), "fnstsw\t$dst">;
 
 def FICOM16m : FPI<0xDE, MRM2m, (outs), (ins i16mem:$src), "ficom{s}\t$src">;
 def FICOMP16m: FPI<0xDE, MRM3m, (outs), (ins i16mem:$src), "ficomp{s}\t$src">;
@@ -600,12 +600,12 @@ def FNSTSW8r  : I<0xE0, RawFrm,                  // AX = fp flags
                   (outs), (ins), "fnstsw %ax", []>, DF;
 
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world
-                  (outs), (ins i16mem:$dst), "fnstcw{w}\t$dst",
+                  (outs), (ins i16mem:$dst), "fnstcw\t$dst",
                   [(X86fp_cwd_get16 addr:$dst)]>;
                   
 let mayLoad = 1 in
 def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
-                  (outs), (ins i16mem:$dst), "fldcw{w}\t$dst", []>;
+                  (outs), (ins i16mem:$dst), "fldcw\t$dst", []>;
 
 // FPU control instructions
 def FNINIT : I<0xE3, RawFrm, (outs), (ins), "fninit", []>, DB;

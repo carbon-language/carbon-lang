@@ -427,17 +427,17 @@ fstsw %ax
 // CHECK: fnstsw %ax
 fstsw (%rax)
 // CHECK: wait
-// CHECK: fnstsww (%rax)
+// CHECK: fnstsw (%rax)
 
 // PR8259
 fstcw (%rsp)
 // CHECK: wait
-// CHECK: fnstcww (%rsp)
+// CHECK: fnstcw (%rsp)
 
 // PR8259
 fstcw (%rsp)
 // CHECK: wait
-// CHECK: fnstcww (%rsp)
+// CHECK: fnstcw (%rsp)
 
 // PR8258
 finit

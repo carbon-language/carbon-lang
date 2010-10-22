@@ -474,10 +474,10 @@
 // CHECK: 	fabs
         	fabs
 
-// CHECK: 	fldcww	3735928559(%ebx,%ecx,8)
+// CHECK: 	fldcw	3735928559(%ebx,%ecx,8)
         	fldcw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	fnstcww	3735928559(%ebx,%ecx,8)
+// CHECK: 	fnstcw	3735928559(%ebx,%ecx,8)
         	fnstcw	0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	rdtsc
@@ -3702,35 +3702,35 @@
 // CHECK:  encoding: [0x0f,0x00,0x0d,0xed,0x7e,0x00,0x00]
         	strw	0x7eed
 
-// CHECK: verrw	%bx
+// CHECK: verr	%bx
 // CHECK:  encoding: [0x0f,0x00,0xe3]
         	verr	%bx
 
-// CHECK: verrw	3735928559(%ebx,%ecx,8)
+// CHECK: verr	3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0x0f,0x00,0xa4,0xcb,0xef,0xbe,0xad,0xde]
         	verr	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: verrw	3133065982
+// CHECK: verr	3133065982
 // CHECK:  encoding: [0x0f,0x00,0x25,0xfe,0xca,0xbe,0xba]
         	verr	0xbabecafe
 
-// CHECK: verrw	305419896
+// CHECK: verr	305419896
 // CHECK:  encoding: [0x0f,0x00,0x25,0x78,0x56,0x34,0x12]
         	verr	0x12345678
 
-// CHECK: verww	%bx
+// CHECK: verw	%bx
 // CHECK:  encoding: [0x0f,0x00,0xeb]
         	verw	%bx
 
-// CHECK: verww	3735928559(%ebx,%ecx,8)
+// CHECK: verw	3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0x0f,0x00,0xac,0xcb,0xef,0xbe,0xad,0xde]
         	verw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: verww	3133065982
+// CHECK: verw	3133065982
 // CHECK:  encoding: [0x0f,0x00,0x2d,0xfe,0xca,0xbe,0xba]
         	verw	0xbabecafe
 
-// CHECK: verww	305419896
+// CHECK: verw	305419896
 // CHECK:  encoding: [0x0f,0x00,0x2d,0x78,0x56,0x34,0x12]
         	verw	0x12345678
 
@@ -4290,39 +4290,39 @@
 // CHECK:  encoding: [0xdb,0xe3]
         	fninit
 
-// CHECK: fldcww	3735928559(%ebx,%ecx,8)
+// CHECK: fldcw	3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xd9,0xac,0xcb,0xef,0xbe,0xad,0xde]
         	fldcw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: fldcww	3133065982
+// CHECK: fldcw	3133065982
 // CHECK:  encoding: [0xd9,0x2d,0xfe,0xca,0xbe,0xba]
         	fldcw	0xbabecafe
 
-// CHECK: fldcww	305419896
+// CHECK: fldcw	305419896
 // CHECK:  encoding: [0xd9,0x2d,0x78,0x56,0x34,0x12]
         	fldcw	0x12345678
 
-// CHECK: fnstcww	3735928559(%ebx,%ecx,8)
+// CHECK: fnstcw	3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xd9,0xbc,0xcb,0xef,0xbe,0xad,0xde]
         	fnstcw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: fnstcww	3133065982
+// CHECK: fnstcw	3133065982
 // CHECK:  encoding: [0xd9,0x3d,0xfe,0xca,0xbe,0xba]
         	fnstcw	0xbabecafe
 
-// CHECK: fnstcww	305419896
+// CHECK: fnstcw	305419896
 // CHECK:  encoding: [0xd9,0x3d,0x78,0x56,0x34,0x12]
         	fnstcw	0x12345678
 
-// CHECK: fnstsww	3735928559(%ebx,%ecx,8)
+// CHECK: fnstsw	3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xdd,0xbc,0xcb,0xef,0xbe,0xad,0xde]
         	fnstsw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: fnstsww	3133065982
+// CHECK: fnstsw	3133065982
 // CHECK:  encoding: [0xdd,0x3d,0xfe,0xca,0xbe,0xba]
         	fnstsw	0xbabecafe
 
-// CHECK: fnstsww	305419896
+// CHECK: fnstsw	305419896
 // CHECK:  encoding: [0xdd,0x3d,0x78,0x56,0x34,0x12]
         	fnstsw	0x12345678
 
@@ -13553,28 +13553,28 @@
 // CHECK: 	strw	32493
         	strw	0x7eed
 
-// CHECK: 	verrw	%bx
+// CHECK: 	verr	%bx
         	verr	%bx
 
-// CHECK: 	verrw	3735928559(%ebx,%ecx,8)
+// CHECK: 	verr	3735928559(%ebx,%ecx,8)
         	verr	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	verrw	3133065982
+// CHECK: 	verr	3133065982
         	verr	0xbabecafe
 
-// CHECK: 	verrw	305419896
+// CHECK: 	verr	305419896
         	verr	0x12345678
 
-// CHECK: 	verww	%bx
+// CHECK: 	verw	%bx
         	verw	%bx
 
-// CHECK: 	verww	3735928559(%ebx,%ecx,8)
+// CHECK: 	verw	3735928559(%ebx,%ecx,8)
         	verw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	verww	3133065982
+// CHECK: 	verw	3133065982
         	verw	0xbabecafe
 
-// CHECK: 	verww	305419896
+// CHECK: 	verw	305419896
         	verw	0x12345678
 
 // CHECK: 	fld	%st(2)
@@ -14012,31 +14012,31 @@
 // CHECK: 	fninit
         	fninit
 
-// CHECK: 	fldcww	3735928559(%ebx,%ecx,8)
+// CHECK: 	fldcw	3735928559(%ebx,%ecx,8)
         	fldcw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	fldcww	3133065982
+// CHECK: 	fldcw	3133065982
         	fldcw	0xbabecafe
 
-// CHECK: 	fldcww	305419896
+// CHECK: 	fldcw	305419896
         	fldcw	0x12345678
 
-// CHECK: 	fnstcww	3735928559(%ebx,%ecx,8)
+// CHECK: 	fnstcw	3735928559(%ebx,%ecx,8)
         	fnstcw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	fnstcww	3133065982
+// CHECK: 	fnstcw	3133065982
         	fnstcw	0xbabecafe
 
-// CHECK: 	fnstcww	305419896
+// CHECK: 	fnstcw	305419896
         	fnstcw	0x12345678
 
-// CHECK: 	fnstsww	3735928559(%ebx,%ecx,8)
+// CHECK: 	fnstsw	3735928559(%ebx,%ecx,8)
         	fnstsw	0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	fnstsww	3133065982
+// CHECK: 	fnstsw	3133065982
         	fnstsw	0xbabecafe
 
-// CHECK: 	fnstsww	305419896
+// CHECK: 	fnstsw	305419896
         	fnstsw	0x12345678
 
 // CHECK: 	fnclex
