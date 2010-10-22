@@ -143,6 +143,8 @@ void sys::DontRemoveFileOnSignal(const sys::Path &Filename) {
   if (FilesToRemove == NULL)
     return;
 
+  RegisterHandler();
+
   FilesToRemove->push_back(Filename);
   std::vector<sys::Path>::reverse_iterator I =
   std::find(FilesToRemove->rbegin(), FilesToRemove->rend(), Filename);
