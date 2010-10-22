@@ -4,9 +4,12 @@
 
 function(add_version_info_from_vcs VERS)
   set(result ${${VERS}})
-  if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.svn )
+  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn" )
     set(result "${result}svn")
-    find_package(Subversion)
+    # FindSubversion does not work with symlinks. See PR 8437
+    if( NOT IS_SYMLINK "${CMAKE_CURRENT_SOURCE_DIR}" )
+      find_package(Subversion)
+    endif()
     if( Subversion_FOUND )
       subversion_wc_info( ${CMAKE_CURRENT_SOURCE_DIR} Project )
       if( Project_WC_REVISION )
