@@ -128,4 +128,26 @@ define i64 @f13() {
 entry:
         ret i64 9223372036854775807
 }
+
+define i32 @f14(i32 %x, i32 %y) {
+; CHECK: f14:
+; CHECK: smmul  r0, r1, r0            @ encoding: [0x11,0xf0,0x50,0xe7]
+        %tmp = sext i32 %x to i64
+        %tmp1 = sext i32 %y to i64
+        %tmp2 = mul i64 %tmp1, %tmp
+        %tmp3 = lshr i64 %tmp2, 32
+        %tmp3.upgrd.1 = trunc i64 %tmp3 to i32
+        ret i32 %tmp3.upgrd.1
+}
+
+define i32 @f15(i32 %x, i32 %y) {
+; CHECK: f15:
+; CHECK: umull  r1, r0, r1, r0        @ encoding: [0x91,0x10,0x80,0xe0]
+        %tmp = zext i32 %x to i64
+        %tmp1 = zext i32 %y to i64
+        %tmp2 = mul i64 %tmp1, %tmp
+        %tmp3 = lshr i64 %tmp2, 32
+        %tmp3.upgrd.2 = trunc i64 %tmp3 to i32
+        ret i32 %tmp3.upgrd.2
+}
 declare void @llvm.trap() nounwind

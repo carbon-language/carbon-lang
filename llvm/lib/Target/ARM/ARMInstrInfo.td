@@ -2265,8 +2265,8 @@ class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
   bits<4> RdHi;
   bits<4> Rm;
   bits<4> Rn;
-  let Inst{19-16} = RdLo;
-  let Inst{15-12} = RdHi;
+  let Inst{19-16} = RdHi;
+  let Inst{15-12} = RdLo;
   let Inst{11-8}  = Rm;
   let Inst{3-0}   = Rn;
 }
@@ -2333,49 +2333,43 @@ def UMAAL : AMul1I <0b0000010, (outs GPR:$RdLo, GPR:$RdHi),
 } // neverHasSideEffects
 
 // Most significant word multiply
-def SMMUL : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-               IIC_iMUL32, "smmul", "\t$dst, $a, $b",
-               [(set GPR:$dst, (mulhs GPR:$a, GPR:$b))]>,
+def SMMUL : AMul2I <0b0111010, 0b0001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+               IIC_iMUL32, "smmul", "\t$Rd, $Rn, $Rm",
+               [(set GPR:$Rd, (mulhs GPR:$Rn, GPR:$Rm))]>,
             Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b0001;
   let Inst{15-12} = 0b1111;
 }
 
-def SMMULR : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-               IIC_iMUL32, "smmulr", "\t$dst, $a, $b",
+def SMMULR : AMul2I <0b0111010, 0b0011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+               IIC_iMUL32, "smmulr", "\t$Rd, $Rn, $Rm",
                [/* For disassembly only; pattern left blank */]>,
             Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b0011; // R = 1
   let Inst{15-12} = 0b1111;
 }
 
-def SMMLA : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-               IIC_iMAC32, "smmla", "\t$dst, $a, $b, $c",
-               [(set GPR:$dst, (add (mulhs GPR:$a, GPR:$b), GPR:$c))]>,
-            Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b0001;
-}
+def SMMLA : AMul2Ia <0b0111010, 0b0001, (outs GPR:$Rd),
+               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
+               IIC_iMAC32, "smmla", "\t$Rd, $Rn, $Rm, $Ra",
+               [(set GPR:$Rd, (add (mulhs GPR:$Rn, GPR:$Rm), GPR:$Ra))]>,
+            Requires<[IsARM, HasV6]>;
 
-def SMMLAR : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-               IIC_iMAC32, "smmlar", "\t$dst, $a, $b, $c",
+def SMMLAR : AMul2Ia <0b0111010, 0b0011, (outs GPR:$Rd),
+               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
+               IIC_iMAC32, "smmlar", "\t$Rd, $Rn, $Rm, $Ra",
                [/* For disassembly only; pattern left blank */]>,
-            Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b0011; // R = 1
-}
+            Requires<[IsARM, HasV6]>;
 
-def SMMLS : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-               IIC_iMAC32, "smmls", "\t$dst, $a, $b, $c",
-               [(set GPR:$dst, (sub GPR:$c, (mulhs GPR:$a, GPR:$b)))]>,
-            Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b1101;
-}
+def SMMLS : AMul2Ia <0b0111010, 0b1101, (outs GPR:$Rd),
+               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
+               IIC_iMAC32, "smmls", "\t$Rd, $Rn, $Rm, $Ra",
+               [(set GPR:$Rd, (sub GPR:$Ra, (mulhs GPR:$Rn, GPR:$Rm)))]>,
+            Requires<[IsARM, HasV6]>;
 
-def SMMLSR : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-               IIC_iMAC32, "smmlsr", "\t$dst, $a, $b, $c",
+def SMMLSR : AMul2Ia <0b0111010, 0b1111, (outs GPR:$Rd),
+               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
+               IIC_iMAC32, "smmlsr", "\t$Rd, $Rn, $Rm, $Ra",
                [/* For disassembly only; pattern left blank */]>,
-            Requires<[IsARM, HasV6]> {
-  let Inst{7-4}   = 0b1111; // R = 1
-}
+            Requires<[IsARM, HasV6]>;
 
 multiclass AI_smul<string opc, PatFrag opnode> {
   def BB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),

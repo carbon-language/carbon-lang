@@ -911,13 +911,26 @@ class AsMul1I<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
 }
 
 // Most significant word multiply
-class AMul2I<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
-             string opc, string asm, list<dag> pattern>
+class AMul2I<bits<7> opcod, bits<4> opc7_4, dag oops, dag iops,
+             InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, itin,
       opc, asm, "", pattern> {
-  let Inst{7-4}   = 0b1001;
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+  let Inst{7-4}   = opc7_4;
   let Inst{20}    = 1;
   let Inst{27-21} = opcod;
+  let Inst{19-16} = Rd;
+  let Inst{11-8}  = Rm;
+  let Inst{3-0}   = Rn;
+}
+// MSW multiple w/ Ra operand
+class AMul2Ia<bits<7> opcod, bits<4> opc7_4, dag oops, dag iops,
+              InstrItinClass itin, string opc, string asm, list<dag> pattern>
+  : AMul2I<opcod, opc7_4, oops, iops, itin, opc, asm, pattern> {
+  bits<4> Ra;
+  let Inst{15-12} = Ra;
 }
 
 // SMUL<x><y> / SMULW<y> / SMLA<x><y> / SMLAW<x><y>
