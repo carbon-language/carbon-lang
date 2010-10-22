@@ -2686,7 +2686,11 @@ random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last)
         _D __uid;
         __rs_default __g = __rs_get();
         for (--__last, --__d; __first < __last; ++__first, --__d)
-            swap(*__first, *(__first + __uid(__g, _P(0, __d))));
+        {
+            difference_type __i = __uid(__g, _P(0, __d));
+            if (__i != difference_type(0))
+                swap(*__first, *(__first + __i));
+        }
     }
 }
 
@@ -2704,7 +2708,10 @@ random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last,
     if (__d > 1)
     {
         for (--__last; __first < __last; ++__first, --__d)
-            swap(*__first, *(__first + __rand(__d)));
+        {
+            difference_type __i = __rand(__d);
+            swap(*__first, *(__first + __i));
+        }
     }
 }
 
@@ -2720,7 +2727,11 @@ template<class _RandomAccessIterator, class _UniformRandomNumberGenerator>
     {
         _D __uid;
         for (--__last, --__d; __first < __last; ++__first, --__d)
-            swap(*__first, *(__first + __uid(__g, _P(0, __d))));
+        {
+            difference_type __i = __uid(__g, _P(0, __d));
+            if (__i != difference_type(0))
+                swap(*__first, *(__first + __i));
+        }
     }
 }
 
