@@ -1,11 +1,15 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -fvisibility hidden -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-HIDDEN
 
 #define HIDDEN __attribute__((visibility("hidden")))
 #define PROTECTED __attribute__((visibility("protected")))
 #define DEFAULT __attribute__((visibility("default")))
 
 // CHECK: @_ZN5Test425VariableInHiddenNamespaceE = hidden global i32 10
+// CHECK: @_ZN5Test71aE = hidden global
+// CHECK: @_ZN5Test71bE = global
 // CHECK: @_ZTVN5Test63fooE = weak_odr hidden constant 
+
 namespace Test1 {
   // CHECK: define hidden void @_ZN5Test11fEv
   void HIDDEN f() { }
@@ -81,4 +85,33 @@ namespace Test6 {
   };
 
   barc::barc() {}
+}
+
+namespace Test7 {
+  class HIDDEN A {};
+  A a; // top of file
+
+  template <A&> struct Aref {
+    static void foo() {}
+  };
+
+  class B : public A {};
+  B b; // top of file
+
+  // CHECK: define linkonce_odr hidden void @_ZN5Test74ArefILZNS_1aEEE3fooEv()
+  void test() {
+    Aref<a>::foo();
+  }
+}
+
+namespace Test8 {
+  void foo();
+  void bar() {}
+  // CHECK-HIDDEN: define hidden void @_ZN5Test83barEv()
+  // CHECK-HIDDEN: declare void @_ZN5Test83fooEv()
+
+  void test() {
+    foo();
+    bar();
+  }
 }

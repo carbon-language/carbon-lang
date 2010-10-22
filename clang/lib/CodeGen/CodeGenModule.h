@@ -257,12 +257,9 @@ public:
   static void DecorateInstruction(llvm::Instruction *Inst,
                                   llvm::MDNode *TBAAInfo);
 
-  /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.
-  LangOptions::VisibilityMode getDeclVisibilityMode(const Decl *D) const;
-
   /// setGlobalVisibility - Set the visibility for the given LLVM
   /// GlobalValue.
-  void setGlobalVisibility(llvm::GlobalValue *GV, const Decl *D) const;
+  void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D) const;
 
   /// setTypeVisibility - Set the visibility for the given global
   /// value which holds information about a type.

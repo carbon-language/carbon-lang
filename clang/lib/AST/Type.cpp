@@ -1268,129 +1268,154 @@ void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getBaseType(), qual_begin(), getNumProtocols());
 }
 
+void Type::ensureCachedProperties() const {
+  if (!TypeBits.isCacheValid()) {
+    CachedProperties Result = getCachedProperties();
+    TypeBits.CacheValidAndVisibility = Result.getVisibility() + 1U;
+    assert(TypeBits.isCacheValid() &&
+           TypeBits.getVisibility() == Result.getVisibility());
+    TypeBits.CachedLinkage = Result.getLinkage();
+    TypeBits.CachedLocalOrUnnamed = Result.hasLocalOrUnnamedType();
+  }  
+}
+
 /// \brief Determine the linkage of this type.
 Linkage Type::getLinkage() const {
   if (this != CanonicalType.getTypePtr())
     return CanonicalType->getLinkage();
-  
-  if (!TypeBits.LinkageKnown) {
-    std::pair<Linkage, bool> Result = getLinkageUnnamedLocalImpl();
-    TypeBits.CachedLinkage = Result.first;
-    TypeBits.CachedLocalOrUnnamed = Result.second;
-    TypeBits.LinkageKnown = true;
-  }
-  
-  return static_cast<clang::Linkage>(TypeBits.CachedLinkage);
+
+  ensureCachedProperties();
+  return TypeBits.getLinkage();
+}
+
+/// \brief Determine the linkage of this type.
+Visibility Type::getVisibility() const {
+  if (this != CanonicalType.getTypePtr())
+    return CanonicalType->getVisibility();
+
+  ensureCachedProperties();
+  return TypeBits.getVisibility();
 }
 
 bool Type::hasUnnamedOrLocalType() const {
   if (this != CanonicalType.getTypePtr())
     return CanonicalType->hasUnnamedOrLocalType();
-  
-  if (!TypeBits.LinkageKnown) {
-    std::pair<Linkage, bool> Result = getLinkageUnnamedLocalImpl();
-    TypeBits.CachedLinkage = Result.first;
-    TypeBits.CachedLocalOrUnnamed = Result.second;
-    TypeBits.LinkageKnown = true;
-  }
-  
-  return TypeBits.CachedLocalOrUnnamed;
+
+  ensureCachedProperties();
+  return TypeBits.hasLocalOrUnnamedType();
 }
 
-std::pair<Linkage, bool> Type::getLinkageUnnamedLocalImpl() const { 
-  // C++ [basic.link]p8:
-  //   Names not covered by these rules have no linkage.
-  return std::make_pair(NoLinkage, false);
+std::pair<Linkage,Visibility> Type::getLinkageAndVisibility() const {
+  if (this != CanonicalType.getTypePtr())
+    return CanonicalType->getLinkageAndVisibility();
+
+  ensureCachedProperties();
+  return std::make_pair(TypeBits.getLinkage(), TypeBits.getVisibility());
+}
+
+
+Type::CachedProperties Type::getCachedProperties(const Type *T) {
+  T = T->CanonicalType.getTypePtr();
+  T->ensureCachedProperties();
+  return CachedProperties(T->TypeBits.getLinkage(),
+                          T->TypeBits.getVisibility(),
+                          T->TypeBits.hasLocalOrUnnamedType());
 }
 
 void Type::ClearLinkageCache() {
   if (this != CanonicalType.getTypePtr())
     CanonicalType->ClearLinkageCache();
   else
-    TypeBits.LinkageKnown = false;
+    TypeBits.CacheValidAndVisibility = 0;
 }
 
-std::pair<Linkage, bool> BuiltinType::getLinkageUnnamedLocalImpl() const {
+Type::CachedProperties Type::getCachedProperties() const { 
+  // Treat dependent types as external.
+  if (isDependentType())
+    return CachedProperties(ExternalLinkage, DefaultVisibility, false);
+
+  // C++ [basic.link]p8:
+  //   Names not covered by these rules have no linkage.
+  return CachedProperties(NoLinkage, DefaultVisibility, false);
+}
+
+Type::CachedProperties BuiltinType::getCachedProperties() const {
   // C++ [basic.link]p8:
   //   A type is said to have linkage if and only if:
   //     - it is a fundamental type (3.9.1); or
-  return std::make_pair(ExternalLinkage, false);
+  return CachedProperties(ExternalLinkage, DefaultVisibility, false);
 }
 
-std::pair<Linkage, bool> TagType::getLinkageUnnamedLocalImpl() const {
+Type::CachedProperties TagType::getCachedProperties() const {
   // C++ [basic.link]p8:
   //     - it is a class or enumeration type that is named (or has a name for
   //       linkage purposes (7.1.3)) and the name has linkage; or
   //     -  it is a specialization of a class template (14); or
-  return std::make_pair(getDecl()->getLinkage(),
-                        getDecl()->getDeclContext()->isFunctionOrMethod() ||
+
+  std::pair<Linkage,Visibility> LV = getDecl()->getLinkageAndVisibility();
+  bool IsLocalOrUnnamed =
+    getDecl()->getDeclContext()->isFunctionOrMethod() ||
                         (!getDecl()->getIdentifier() &&
-                         !getDecl()->getTypedefForAnonDecl()));
+                         !getDecl()->getTypedefForAnonDecl());
+  return CachedProperties(LV.first, LV.second, IsLocalOrUnnamed);
 }
 
 // C++ [basic.link]p8:
 //   - it is a compound type (3.9.2) other than a class or enumeration, 
 //     compounded exclusively from types that have linkage; or
-std::pair<Linkage, bool> ComplexType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(ElementType->getLinkage(), 
-                        ElementType->hasUnnamedOrLocalType());
+Type::CachedProperties ComplexType::getCachedProperties() const {
+  return Type::getCachedProperties(ElementType);
 }
 
-std::pair<Linkage, bool> PointerType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(PointeeType->getLinkage(), 
-                        PointeeType->hasUnnamedOrLocalType());
+Type::CachedProperties PointerType::getCachedProperties() const {
+  return Type::getCachedProperties(PointeeType);
 }
 
-std::pair<Linkage, bool> BlockPointerType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(PointeeType->getLinkage(),
-                        PointeeType->hasUnnamedOrLocalType());
+Type::CachedProperties BlockPointerType::getCachedProperties() const {
+  return Type::getCachedProperties(PointeeType);
 }
 
-std::pair<Linkage, bool> ReferenceType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(PointeeType->getLinkage(),
-                        PointeeType->hasUnnamedOrLocalType());
+Type::CachedProperties ReferenceType::getCachedProperties() const {
+  return Type::getCachedProperties(PointeeType);
 }
 
-std::pair<Linkage, bool> MemberPointerType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(minLinkage(Class->getLinkage(),
-                                   PointeeType->getLinkage()),
-                        Class->hasUnnamedOrLocalType() ||
-                        PointeeType->hasUnnamedOrLocalType());
+Type::CachedProperties MemberPointerType::getCachedProperties() const {
+  return merge(Type::getCachedProperties(Class),
+               Type::getCachedProperties(PointeeType));
 }
 
-std::pair<Linkage, bool> ArrayType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(ElementType->getLinkage(), 
-                        ElementType->hasUnnamedOrLocalType());
+Type::CachedProperties ArrayType::getCachedProperties() const {
+  return Type::getCachedProperties(ElementType);
 }
 
-std::pair<Linkage, bool> VectorType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(ElementType->getLinkage(),
-                        ElementType->hasUnnamedOrLocalType());
+Type::CachedProperties VectorType::getCachedProperties() const {
+  return Type::getCachedProperties(ElementType);
 }
 
-std::pair<Linkage, bool> 
-FunctionNoProtoType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(getResultType()->getLinkage(),
-                        getResultType()->hasUnnamedOrLocalType());
+Type::CachedProperties FunctionNoProtoType::getCachedProperties() const {
+  return Type::getCachedProperties(getResultType());
 }
 
-std::pair<Linkage, bool> FunctionProtoType::getLinkageUnnamedLocalImpl() const {
-  Linkage L = getResultType()->getLinkage();
-  bool UnnamedOrLocal = getResultType()->hasUnnamedOrLocalType();
+Type::CachedProperties FunctionProtoType::getCachedProperties() const {
+  CachedProperties Cached = Type::getCachedProperties(getResultType());
   for (arg_type_iterator A = arg_type_begin(), AEnd = arg_type_end();
        A != AEnd; ++A) {
-    L = minLinkage(L, (*A)->getLinkage());
-    UnnamedOrLocal = UnnamedOrLocal || (*A)->hasUnnamedOrLocalType();
+    Cached = merge(Cached, Type::getCachedProperties(*A));
   }
-  
-  return std::make_pair(L, UnnamedOrLocal);
+  return Cached;
 }
 
-std::pair<Linkage, bool> ObjCObjectType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(ExternalLinkage, false);
+Type::CachedProperties ObjCInterfaceType::getCachedProperties() const {
+  std::pair<Linkage,Visibility> LV = getDecl()->getLinkageAndVisibility();
+  return CachedProperties(LV.first, LV.second, false);
 }
 
-std::pair<Linkage, bool> 
-ObjCObjectPointerType::getLinkageUnnamedLocalImpl() const {
-  return std::make_pair(ExternalLinkage, false);
+Type::CachedProperties ObjCObjectType::getCachedProperties() const {
+  if (const ObjCInterfaceType *T = getBaseType()->getAs<ObjCInterfaceType>())
+    return Type::getCachedProperties(T);
+  return CachedProperties(ExternalLinkage, DefaultVisibility, false);
+}
+
+Type::CachedProperties ObjCObjectPointerType::getCachedProperties() const {
+  return Type::getCachedProperties(PointeeType);
 }

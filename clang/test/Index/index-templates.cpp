@@ -192,7 +192,7 @@ struct SuperPair : Pair<int, int>, Pair<T, U> { };
 // CHECK-USRS: index-templates.cpp c:index-templates.cpp@210 Extent=[8:19 - 8:20]
 // CHECK-USRS: index-templates.cpp c:index-templates.cpp@222 Extent=[8:31 - 8:36]
 // CHECK-USRS: index-templates.cpp c:@CT>2#T#T@vector@F@clear# Extent=[10:8 - 10:15]
-// CHECK-USRS: index-templates.cpp c:index-templates.cpp@280@CP>1#T@vector>#*t0.0#>@CT>1#T@allocator1S0_ Extent=[13:1 - 14:21]
+// CHECK-USRS: index-templates.cpp c:@CP>1#T@vector>#*t0.0#>@CT>1#T@allocator1S0_ Extent=[13:1 - 14:21]
 // CHECK-USRS: index-templates.cpp c:index-templates.cpp@298 Extent=[13:19 - 13:20]
 // CHECK-USRS: index-templates.cpp c:@S@Z1 Extent=[16:1 - 16:14]
 // CHECK-USRS: index-templates.cpp c:@C@vector>#$@S@Z1#$@C@allocator>#S0_ Extent=[18:1 - 18:22]

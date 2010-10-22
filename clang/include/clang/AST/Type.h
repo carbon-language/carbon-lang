@@ -18,6 +18,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Linkage.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Basic/Visibility.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TemplateName.h"
 #include "llvm/Support/Casting.h"
@@ -800,9 +801,10 @@ private:
     /// \brief Whether this type is a variably-modified type (C99 6.7.5).
     unsigned VariablyModified : 1;
   
-    /// \brief Whether the linkage of this type along with the presence of any
-    /// local or unnamed types is already known.
-    mutable unsigned LinkageKnown : 1;
+    /// \brief Nonzero if the cache (i.e. the bitfields here starting
+    /// with 'Cache') is valid.  If so, then this is a
+    /// LangOptions::VisibilityMode+1.
+    mutable unsigned CacheValidAndVisibility : 2;
   
     /// \brief Linkage of this type.
     mutable unsigned CachedLinkage : 2;
@@ -813,7 +815,21 @@ private:
     /// \brief FromAST - Whether this type comes from an AST file.
     mutable unsigned FromAST : 1;
 
-    unsigned SpareBit : 1;
+    bool isCacheValid() const {
+      return (CacheValidAndVisibility != 0);
+    }
+    Visibility getVisibility() const {
+      assert(isCacheValid() && "getting linkage from invalid cache");
+      return static_cast<Visibility>(CacheValidAndVisibility-1);
+    }
+    Linkage getLinkage() const {
+      assert(isCacheValid() && "getting linkage from invalid cache");
+      return static_cast<Linkage>(CachedLinkage);
+    }
+    bool hasLocalOrUnnamedType() const {
+      assert(isCacheValid() && "getting linkage from invalid cache");
+      return CachedLocalOrUnnamed;
+    }
   };
   enum { NumTypeBits = 16 };
 
@@ -938,10 +954,35 @@ private:
     TypeBits.FromAST = V;
   }
 
+  void ensureCachedProperties() const;
+
 protected:
-  /// \brief Compute the linkage of this type along with the presence of
-  /// any local or unnamed types.
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  /// \brief Compute the cached properties of this type.
+  class CachedProperties {
+    char linkage;
+    char visibility;
+    bool local;
+
+  public:
+    CachedProperties(Linkage linkage, Visibility visibility, bool local)
+      : linkage(linkage), visibility(visibility), local(local) {}
+
+    Linkage getLinkage() const { return (Linkage) linkage; }
+    Visibility getVisibility() const { return (Visibility) visibility; }
+    bool hasLocalOrUnnamedType() const { return local; }
+
+    friend CachedProperties merge(CachedProperties L, CachedProperties R) {
+      return CachedProperties(minLinkage(L.getLinkage(), R.getLinkage()),
+                         minVisibility(L.getVisibility(), R.getVisibility()),
+                      L.hasLocalOrUnnamedType() | R.hasLocalOrUnnamedType());
+    }
+  };
+
+  virtual CachedProperties getCachedProperties() const;
+  static CachedProperties getCachedProperties(QualType T) {
+    return getCachedProperties(T.getTypePtr());
+  }
+  static CachedProperties getCachedProperties(const Type *T);
 
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
@@ -950,7 +991,7 @@ protected:
     TypeBits.TC = tc;
     TypeBits.Dependent = Dependent;
     TypeBits.VariablyModified = VariablyModified;
-    TypeBits.LinkageKnown = false;
+    TypeBits.CacheValidAndVisibility = 0;
     TypeBits.CachedLocalOrUnnamed = false;
     TypeBits.CachedLinkage = NoLinkage;
     TypeBits.FromAST = false;
@@ -1191,6 +1232,12 @@ public:
 
   /// \brief Determine the linkage of this type.
   Linkage getLinkage() const;
+
+  /// \brief Determine the visibility of this type.
+  Visibility getVisibility() const;
+
+  /// \brief Determine the linkage and visibility of this type.
+  std::pair<Linkage,Visibility> getLinkageAndVisibility() const;
   
   /// \brief Note that the linkage is no longer known.
   void ClearLinkageCache();
@@ -1278,7 +1325,7 @@ public:
   };
 
 protected:
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   BuiltinType(Kind K)
@@ -1334,7 +1381,7 @@ class ComplexType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 
 protected:
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   QualType getElementType() const { return ElementType; }
@@ -1366,7 +1413,7 @@ class PointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 
 protected:
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
 
@@ -1400,7 +1447,7 @@ class BlockPointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
   
 protected:
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
 
@@ -1437,7 +1484,7 @@ protected:
     ReferenceTypeBits.InnerRef = Referencee->isReferenceType();
   }
   
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   bool isSpelledAsLValue() const { return ReferenceTypeBits.SpelledAsLValue; }
@@ -1521,7 +1568,7 @@ class MemberPointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext; // ASTContext creates these.
   
 protected:
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   QualType getPointeeType() const { return PointeeType; }
@@ -1590,7 +1637,7 @@ protected:
 
   friend class ASTContext;  // ASTContext creates these.
 
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   QualType getElementType() const { return ElementType; }
@@ -1893,7 +1940,7 @@ protected:
   }
   friend class ASTContext;  // ASTContext creates these.
   
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
 
@@ -2123,7 +2170,7 @@ class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
   
 protected:
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   // No additional state past what FunctionType provides.
@@ -2179,7 +2226,7 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 
 protected:
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   unsigned getNumArgs() const { return NumArgs; }
@@ -2421,7 +2468,7 @@ class TagType : public Type {
 protected:
   TagType(TypeClass TC, const TagDecl *D, QualType can);
 
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   TagDecl *getDecl() const;
@@ -3084,7 +3131,7 @@ protected:
   }
 
 protected:
-  std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const; // key function
+  CachedProperties getCachedProperties() const; // key function
   
 public:
   /// getBaseType - Gets the base type of this object type.  This is
@@ -3192,6 +3239,10 @@ class ObjCInterfaceType : public ObjCObjectType {
     : ObjCObjectType(Nonce_ObjCInterface),
       Decl(const_cast<ObjCInterfaceDecl*>(D)) {}
   friend class ASTContext;  // ASTContext creates these.
+
+protected:
+  virtual CachedProperties getCachedProperties() const;
+  
 public:
   /// getDecl - Get the declaration of this interface.
   ObjCInterfaceDecl *getDecl() const { return Decl; }
@@ -3242,7 +3293,7 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 
 protected:
-  virtual std::pair<Linkage, bool> getLinkageUnnamedLocalImpl() const;
+  virtual CachedProperties getCachedProperties() const;
   
 public:
   /// getPointeeType - Gets the type pointed to by this ObjC pointer.

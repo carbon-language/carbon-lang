@@ -113,7 +113,7 @@ public:
     }
     if (const RecordType *RT = Ty->getAs<RecordType>())
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-        return CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
+        return RD->getVisibility() == HiddenVisibility;
     return false;
   }
   

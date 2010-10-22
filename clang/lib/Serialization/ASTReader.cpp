@@ -2526,7 +2526,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(CharIsSigned);
     PARSE_LANGOPT(ShortWChar);
     LangOpts.setGCMode((LangOptions::GCMode)Record[Idx++]);
-    LangOpts.setVisibilityMode((LangOptions::VisibilityMode)Record[Idx++]);
+    LangOpts.setVisibilityMode((Visibility)Record[Idx++]);
     LangOpts.setStackProtectorMode((LangOptions::StackProtectorMode)
                                    Record[Idx++]);
     PARSE_LANGOPT(InstantiationDepth);

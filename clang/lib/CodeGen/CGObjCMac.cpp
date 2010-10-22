@@ -2197,7 +2197,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     CGM.getContext().getASTObjCImplementationLayout(ID).getSize() / 8;
 
   // FIXME: Set CXX-structors flag.
-  if (CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden)
+  if (ID->getClassInterface()->getVisibility() == HiddenVisibility)
     Flags |= eClassFlags_Hidden;
 
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
@@ -2282,7 +2282,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   unsigned Flags = eClassFlags_Meta;
   unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.ClassTy);
 
-  if (CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden)
+  if (ID->getClassInterface()->getVisibility() == HiddenVisibility)
     Flags |= eClassFlags_Hidden;
 
   std::vector<llvm::Constant*> Values(12);
@@ -4968,7 +4968,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   llvm::GlobalVariable *SuperClassGV, *IsAGV;
 
   bool classIsHidden =
-    CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden;
+    ID->getClassInterface()->getVisibility() == HiddenVisibility;
   if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
   if (ID->getNumIvarInitializers())
@@ -5263,7 +5263,7 @@ CGObjCNonFragileABIMac::EmitIvarOffsetVar(const ObjCInterfaceDecl *ID,
   // well (i.e., in ObjCIvarOffsetVariable).
   if (Ivar->getAccessControl() == ObjCIvarDecl::Private ||
       Ivar->getAccessControl() == ObjCIvarDecl::Package ||
-      CGM.getDeclVisibilityMode(ID) == LangOptions::Hidden)
+      ID->getVisibility() == HiddenVisibility)
     IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   else
     IvarOffsetGV->setVisibility(llvm::GlobalValue::DefaultVisibility);
@@ -6237,7 +6237,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                       ID->getIdentifier()->getName()));
   }
 
-  if (CGM.getLangOptions().getVisibilityMode() == LangOptions::Hidden)
+  if (CGM.getLangOptions().getVisibilityMode() == HiddenVisibility)
     Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
   Entry->setAlignment(CGM.getTargetData().getABITypeAlignment(
       ObjCTypes.EHTypeTy));

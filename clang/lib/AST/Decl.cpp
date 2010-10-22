@@ -32,35 +32,53 @@ using namespace clang;
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
+static Visibility GetVisibilityFromAttr(const VisibilityAttr *A) {
+  switch (A->getVisibility()) {
+  case VisibilityAttr::Default:
+    return DefaultVisibility;
+  case VisibilityAttr::Hidden:
+    return HiddenVisibility;
+  case VisibilityAttr::Protected:
+    return ProtectedVisibility;
+  }
+  return DefaultVisibility;
+}
+
+typedef std::pair<Linkage,Visibility> LVPair;
+static LVPair merge(LVPair L, LVPair R) {
+  return LVPair(minLinkage(L.first, R.first),
+                minVisibility(L.second, R.second));
+}
+
 /// \brief Get the most restrictive linkage for the types in the given
 /// template parameter list.
-static Linkage 
-getLinkageForTemplateParameterList(const TemplateParameterList *Params) {
-  Linkage L = ExternalLinkage;
+static LVPair 
+getLVForTemplateParameterList(const TemplateParameterList *Params) {
+  LVPair LV(ExternalLinkage, DefaultVisibility);
   for (TemplateParameterList::const_iterator P = Params->begin(),
                                           PEnd = Params->end();
        P != PEnd; ++P) {
     if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P))
       if (!NTTP->getType()->isDependentType()) {
-        L = minLinkage(L, NTTP->getType()->getLinkage());
+        LV = merge(LV, NTTP->getType()->getLinkageAndVisibility());
         continue;
       }
 
     if (TemplateTemplateParmDecl *TTP
                                    = dyn_cast<TemplateTemplateParmDecl>(*P)) {
-      L = minLinkage(L, 
-            getLinkageForTemplateParameterList(TTP->getTemplateParameters()));
+      LV =
+        merge(LV, getLVForTemplateParameterList(TTP->getTemplateParameters()));
     }
   }
 
-  return L;
+  return LV;
 }
 
 /// \brief Get the most restrictive linkage for the types and
 /// declarations in the given template argument list.
-static Linkage getLinkageForTemplateArgumentList(const TemplateArgument *Args,
-                                                 unsigned NumArgs) {
-  Linkage L = ExternalLinkage;
+static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
+                                           unsigned NumArgs) {
+  LVPair LV(ExternalLinkage, DefaultVisibility);
 
   for (unsigned I = 0; I != NumArgs; ++I) {
     switch (Args[I].getKind()) {
@@ -70,40 +88,41 @@ static Linkage getLinkageForTemplateArgumentList(const TemplateArgument *Args,
       break;
       
     case TemplateArgument::Type:
-      L = minLinkage(L, Args[I].getAsType()->getLinkage());
+      LV = merge(LV, Args[I].getAsType()->getLinkageAndVisibility());
       break;
 
     case TemplateArgument::Declaration:
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(Args[I].getAsDecl()))
-        L = minLinkage(L, ND->getLinkage());
-      if (ValueDecl *VD = dyn_cast<ValueDecl>(Args[I].getAsDecl()))
-        L = minLinkage(L, VD->getType()->getLinkage());
+      // The decl can validly be null as the representation of nullptr
+      // arguments, valid only in C++0x.
+      if (Decl *D = Args[I].getAsDecl()) {
+        if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
+          LV = merge(LV, ND->getLinkageAndVisibility());
+        if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+          LV = merge(LV, VD->getType()->getLinkageAndVisibility());
+      }
       break;
 
     case TemplateArgument::Template:
-      if (TemplateDecl *Template
-                                = Args[I].getAsTemplate().getAsTemplateDecl())
-        L = minLinkage(L, Template->getLinkage());
+      if (TemplateDecl *Template = Args[I].getAsTemplate().getAsTemplateDecl())
+        LV = merge(LV, Template->getLinkageAndVisibility());
       break;
 
     case TemplateArgument::Pack:
-      L = minLinkage(L, 
-                     getLinkageForTemplateArgumentList(Args[I].pack_begin(),
-                                                       Args[I].pack_size()));
+      LV = merge(LV, getLVForTemplateArgumentList(Args[I].pack_begin(),
+                                                  Args[I].pack_size()));
       break;
     }
   }
 
-  return L;
+  return LV;
 }
 
-static Linkage
-getLinkageForTemplateArgumentList(const TemplateArgumentList &TArgs) {
-  return getLinkageForTemplateArgumentList(TArgs.getFlatArgumentList(), 
-                                           TArgs.flat_size());
+static LVPair getLVForTemplateArgumentList(const TemplateArgumentList &TArgs) {
+  return getLVForTemplateArgumentList(TArgs.getFlatArgumentList(), 
+                                      TArgs.flat_size());
 }
 
-static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
+static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
   assert(D->getDeclContext()->getRedeclContext()->isFileContext() &&
          "Not a name having namespace scope");
   ASTContext &Context = D->getASTContext();
@@ -117,7 +136,7 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
     // Explicitly declared static.
     if (Var->getStorageClass() == SC_Static)
-      return InternalLinkage;
+      return LVPair(InternalLinkage, DefaultVisibility);
 
     // - an object or reference that is explicitly declared const
     //   and neither explicitly declared extern nor previously
@@ -135,7 +154,7 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
           FoundExtern = true;
       
       if (!FoundExtern)
-        return InternalLinkage;
+        return LVPair(InternalLinkage, DefaultVisibility);
     }
   } else if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
     // C++ [temp]p4:
@@ -150,23 +169,63 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
 
     // Explicitly declared static.
     if (Function->getStorageClass() == SC_Static)
-      return InternalLinkage;
+      return LVPair(InternalLinkage, DefaultVisibility);
   } else if (const FieldDecl *Field = dyn_cast<FieldDecl>(D)) {
     //   - a data member of an anonymous union.
     if (cast<RecordDecl>(Field->getDeclContext())->isAnonymousStructOrUnion())
-      return InternalLinkage;
+      return LVPair(InternalLinkage, DefaultVisibility);
   }
 
+  if (D->isInAnonymousNamespace())
+    return LVPair(UniqueExternalLinkage, DefaultVisibility);
+
+  // Set up the defaults.
+
+  // C99 6.2.2p5:
+  //   If the declaration of an identifier for an object has file
+  //   scope and no storage-class specifier, its linkage is
+  //   external.
+  LVPair LV(ExternalLinkage, DefaultVisibility);
+
+  // We ignore -fvisibility on non-definitions and explicit
+  // instantiation declarations.
+  bool ConsiderDashFVisibility = true;
+
   // C++ [basic.link]p4:
-  
+
   //   A name having namespace scope has external linkage if it is the
   //   name of
   //
   //     - an object or reference, unless it has internal linkage; or
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    // Modify the variable's LV by the LV of its type unless this is
+    // C or extern "C".  This follows from [basic.link]p9:
+    //   A type without linkage shall not be used as the type of a
+    //   variable or function with external linkage unless
+    //    - the entity has C language linkage, or
+    //    - the entity is declared within an unnamed namespace, or
+    //    - the entity is not used or is defined in the same
+    //      translation unit.
+    // and [basic.link]p10:
+    //   ...the types specified by all declarations referring to a
+    //   given variable or function shall be identical...
+    // C does not have an equivalent rule.
+    //
+    // Note that we don't want to make the variable non-external
+    // because of this, but unique-external linkage suits us.
+    if (Context.getLangOptions().CPlusPlus && !Var->isExternC()) {
+      LVPair TypeLV = Var->getType()->getLinkageAndVisibility();
+      if (TypeLV.first != ExternalLinkage)
+        return LVPair(UniqueExternalLinkage, DefaultVisibility);
+      LV.second = minVisibility(LV.second, TypeLV.second);
+    }
+
     if (!Context.getLangOptions().CPlusPlus &&
         (Var->getStorageClass() == SC_Extern ||
          Var->getStorageClass() == SC_PrivateExtern)) {
+      if (Var->getStorageClass() == SC_PrivateExtern)
+        LV.second = HiddenVisibility;
+
       // C99 6.2.2p4:
       //   For an identifier declared with the storage-class specifier
       //   extern in a scope in which a prior declaration of that
@@ -177,23 +236,23 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
       //   is visible, or if the prior declaration specifies no
       //   linkage, then the identifier has external linkage.
       if (const VarDecl *PrevVar = Var->getPreviousDeclaration()) {
-        if (Linkage L = PrevVar->getLinkage())
-          return L;
+        LVPair PrevLV = PrevVar->getLinkageAndVisibility();
+        if (PrevLV.first) LV.first = PrevLV.first;
+        LV.second = minVisibility(LV.second, PrevLV.second);
       }
     }
 
-    // C99 6.2.2p5:
-    //   If the declaration of an identifier for an object has file
-    //   scope and no storage-class specifier, its linkage is
-    //   external.
-    if (Var->isInAnonymousNamespace())
-      return UniqueExternalLinkage;
-
-    return ExternalLinkage;
-  }
-
   //     - a function, unless it has internal linkage; or
-  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+  } else if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+    // Modify the function's LV by the LV of its type unless this is
+    // C or extern "C".  See the comment above about variables.
+    if (Context.getLangOptions().CPlusPlus && !Function->isExternC()) {
+      LVPair TypeLV = Function->getType()->getLinkageAndVisibility();
+      if (TypeLV.first != ExternalLinkage)
+        return LVPair(UniqueExternalLinkage, DefaultVisibility);
+      LV.second = minVisibility(LV.second, TypeLV.second);
+    }
+
     // C99 6.2.2p5:
     //   If the declaration of an identifier for a function has no
     //   storage-class specifier, its linkage is determined exactly
@@ -213,24 +272,25 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
       //   is visible, or if the prior declaration specifies no
       //   linkage, then the identifier has external linkage.
       if (const FunctionDecl *PrevFunc = Function->getPreviousDeclaration()) {
-        if (Linkage L = PrevFunc->getLinkage())
-          return L;
+        LVPair PrevLV = PrevFunc->getLinkageAndVisibility();
+        if (PrevLV.first) LV.first = PrevLV.first;
+        LV.second = minVisibility(LV.second, PrevLV.second);
       }
     }
 
-    if (Function->isInAnonymousNamespace())
-      return UniqueExternalLinkage;
-
     if (FunctionTemplateSpecializationInfo *SpecInfo
                                = Function->getTemplateSpecializationInfo()) {
-      Linkage L = SpecInfo->getTemplate()->getLinkage();
+      LV = merge(LV, SpecInfo->getTemplate()->getLinkageAndVisibility());
       const TemplateArgumentList &TemplateArgs = *SpecInfo->TemplateArguments;
-      L = minLinkage(L, getLinkageForTemplateArgumentList(TemplateArgs));
-      return L;
+      LV = merge(LV, getLVForTemplateArgumentList(TemplateArgs));
+
+      if (SpecInfo->getTemplateSpecializationKind()
+            == TSK_ExplicitInstantiationDeclaration)
+        ConsiderDashFVisibility = false;
     }
 
-    return ExternalLinkage;
-  }
+    if (ConsiderDashFVisibility)
+      ConsiderDashFVisibility = Function->hasBody();
 
   //     - a named class (Clause 9), or an unnamed class defined in a
   //       typedef declaration in which the class has the typedef name
@@ -238,116 +298,180 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
   //     - a named enumeration (7.2), or an unnamed enumeration
   //       defined in a typedef declaration in which the enumeration
   //       has the typedef name for linkage purposes (7.1.3); or
-  if (const TagDecl *Tag = dyn_cast<TagDecl>(D))
-    if (Tag->getDeclName() || Tag->getTypedefForAnonDecl()) {
-      if (Tag->isInAnonymousNamespace())
-        return UniqueExternalLinkage;
+  } else if (const TagDecl *Tag = dyn_cast<TagDecl>(D)) {
+    // Unnamed tags have no linkage.
+    if (!Tag->getDeclName() && !Tag->getTypedefForAnonDecl())
+      return LVPair(NoLinkage, DefaultVisibility);
 
-      // If this is a class template specialization, consider the
-      // linkage of the template and template arguments.
-      if (const ClassTemplateSpecializationDecl *Spec
-            = dyn_cast<ClassTemplateSpecializationDecl>(Tag)) {
-        const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-        Linkage L = getLinkageForTemplateArgumentList(TemplateArgs);
-        return minLinkage(L, Spec->getSpecializedTemplate()->getLinkage());
-      }
+    // If this is a class template specialization, consider the
+    // linkage of the template and template arguments.
+    if (const ClassTemplateSpecializationDecl *Spec
+          = dyn_cast<ClassTemplateSpecializationDecl>(Tag)) {
+      // From the template.  Note below the restrictions on how we
+      // compute template visibility.
+      LV = merge(LV, Spec->getSpecializedTemplate()->getLinkageAndVisibility());
 
-      return ExternalLinkage;
+      // The arguments at which the template was instantiated.
+      const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+      LV = merge(LV, getLVForTemplateArgumentList(TemplateArgs));
+
+      if (Spec->getTemplateSpecializationKind()
+            == TSK_ExplicitInstantiationDeclaration)
+        ConsiderDashFVisibility = false;
     }
 
+    if (ConsiderDashFVisibility)
+      ConsiderDashFVisibility = Tag->isDefinition();
+
   //     - an enumerator belonging to an enumeration with external linkage;
-  if (isa<EnumConstantDecl>(D)) {
-    Linkage L = cast<NamedDecl>(D->getDeclContext())->getLinkage();
-    if (isExternalLinkage(L))
-      return L;
-  }
+  } else if (isa<EnumConstantDecl>(D)) {
+    LVPair EnumLV =
+      cast<NamedDecl>(D->getDeclContext())->getLinkageAndVisibility();
+    if (!isExternalLinkage(EnumLV.first))
+      return LVPair(NoLinkage, DefaultVisibility);
+    LV = merge(LV, EnumLV);
 
   //     - a template, unless it is a function template that has
   //       internal linkage (Clause 14);
-  if (const TemplateDecl *Template = dyn_cast<TemplateDecl>(D)) {
-    if (D->isInAnonymousNamespace())
-      return UniqueExternalLinkage;
+  } else if (const TemplateDecl *Template = dyn_cast<TemplateDecl>(D)) {
+    LV = merge(LV, getLVForTemplateParameterList(
+                                         Template->getTemplateParameters()));
 
-    return getLinkageForTemplateParameterList(
-                                         Template->getTemplateParameters());
-  }
+    // We do not want to consider attributes or global settings when
+    // computing template visibility.
+    return LV;
 
   //     - a namespace (7.3), unless it is declared within an unnamed
   //       namespace.
-  if (isa<NamespaceDecl>(D) && !D->isInAnonymousNamespace())
-    return ExternalLinkage;
+  } else if (isa<NamespaceDecl>(D) && !D->isInAnonymousNamespace()) {
+    return LV;
 
-  return NoLinkage;
+  // By extension, we assign external linkage to Objective-C
+  // interfaces.
+  } else if (isa<ObjCInterfaceDecl>(D)) {
+    // fallout
+
+  // Everything not covered here has no linkage.
+  } else {
+    return LVPair(NoLinkage, DefaultVisibility);
+  }
+
+  // If we ended up with non-external linkage, visibility should
+  // always be default.
+  if (LV.first != ExternalLinkage)
+    return LVPair(LV.first, DefaultVisibility);
+
+  // If we didn't end up with hidden visibility, consider attributes
+  // and -fvisibility.
+  if (LV.second != HiddenVisibility) {
+    Visibility StandardV;
+
+    // If we have an explicit visibility attribute, merge that in.
+    const VisibilityAttr *VA = D->getAttr<VisibilityAttr>();
+    if (VA)
+      StandardV = GetVisibilityFromAttr(VA);
+    else if (ConsiderDashFVisibility)
+      StandardV = Context.getLangOptions().getVisibilityMode();
+    else
+      StandardV = DefaultVisibility; // no-op
+
+    LV.second = minVisibility(LV.second, StandardV);  
+  }
+
+  return LV;
 }
 
-static Linkage getLinkageForClassMember(const NamedDecl *D) {
+static LVPair getLVForClassMember(const NamedDecl *D) {
+  // Only certain class members have linkage.  Note that fields don't
+  // really have linkage, but it's convenient to say they do for the
+  // purposes of calculating linkage of pointer-to-data-member
+  // template arguments.
   if (!(isa<CXXMethodDecl>(D) ||
         isa<VarDecl>(D) ||
+        isa<FieldDecl>(D) ||
         (isa<TagDecl>(D) &&
          (D->getDeclName() || cast<TagDecl>(D)->getTypedefForAnonDecl()))))
-    return NoLinkage;
+    return LVPair(NoLinkage, DefaultVisibility);
 
   // Class members only have linkage if their class has external linkage.
-  Linkage L = cast<RecordDecl>(D->getDeclContext())->getLinkage();
-  if (!isExternalLinkage(L)) return NoLinkage;
+  LVPair ClassLV =
+    cast<RecordDecl>(D->getDeclContext())->getLinkageAndVisibility();
+  if (!isExternalLinkage(ClassLV.first))
+    return LVPair(NoLinkage, DefaultVisibility);
 
   // If the class already has unique-external linkage, we can't improve.
-  if (L == UniqueExternalLinkage) return UniqueExternalLinkage;
+  if (ClassLV.first == UniqueExternalLinkage)
+    return LVPair(UniqueExternalLinkage, DefaultVisibility);
 
-  // If this is a method template specialization, use the linkage for
-  // the template parameters and arguments.
+  // Start with the class's linkage and visibility.
+  LVPair LV = ClassLV;
+
+  // If we have an explicit visibility attribute, merge that in.
+  const VisibilityAttr *VA = D->getAttr<VisibilityAttr>();
+  if (VA) LV.second = minVisibility(LV.second, GetVisibilityFromAttr(VA));
+
+  // If it's a value declaration, apply the LV from its type.
+  // See the comment about namespace-scope variable decls above.
+  if (isa<ValueDecl>(D)) {
+    LVPair TypeLV = cast<ValueDecl>(D)->getType()->getLinkageAndVisibility();
+    if (TypeLV.first != ExternalLinkage)
+      LV.first = minLinkage(LV.first, UniqueExternalLinkage);
+    LV.second = minVisibility(LV.second, TypeLV.second);
+  }
+
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    if (FunctionTemplateSpecializationInfo *SpecInfo
+    // If this is a method template specialization, use the linkage for
+    // the template parameters and arguments.
+    if (FunctionTemplateSpecializationInfo *Spec
            = MD->getTemplateSpecializationInfo()) {
-      Linkage ArgLinkage =
-        getLinkageForTemplateArgumentList(*SpecInfo->TemplateArguments);
-      Linkage ParamLinkage =
-        getLinkageForTemplateParameterList(
-                           SpecInfo->getTemplate()->getTemplateParameters());
-      return minLinkage(ArgLinkage, ParamLinkage);
+      LV = merge(LV, getLVForTemplateArgumentList(*Spec->TemplateArguments));
+      LV = merge(LV, getLVForTemplateParameterList(
+                              Spec->getTemplate()->getTemplateParameters()));
     }
+
+    // If -fvisibility-inlines-hidden was provided, then inline C++
+    // member functions get "hidden" visibility if they don't have an
+    // explicit visibility attribute.
+    if (!VA && MD->isInlined() && LV.second > HiddenVisibility &&
+        D->getASTContext().getLangOptions().InlineVisibilityHidden)
+      LV.second = HiddenVisibility;
 
   // Similarly for member class template specializations.
   } else if (const ClassTemplateSpecializationDecl *Spec
                = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
-    Linkage ArgLinkage =
-      getLinkageForTemplateArgumentList(Spec->getTemplateArgs());
-    Linkage ParamLinkage =
-      getLinkageForTemplateParameterList(
-                    Spec->getSpecializedTemplate()->getTemplateParameters());
-    return minLinkage(ArgLinkage, ParamLinkage);
+    LV = merge(LV, getLVForTemplateArgumentList(Spec->getTemplateArgs()));
+    LV = merge(LV, getLVForTemplateParameterList(
+                    Spec->getSpecializedTemplate()->getTemplateParameters()));
   }
 
-  return ExternalLinkage;
+  return LV;
 }
 
-Linkage NamedDecl::getLinkage() const {
+LVPair NamedDecl::getLinkageAndVisibility() const {
 
   // Objective-C: treat all Objective-C declarations as having external
   // linkage.
   switch (getKind()) {
     default:
       break;
+    case Decl::TemplateTemplateParm: // count these as external
+    case Decl::NonTypeTemplateParm:
     case Decl::ObjCAtDefsField:
     case Decl::ObjCCategory:
     case Decl::ObjCCategoryImpl:
-    case Decl::ObjCClass:
     case Decl::ObjCCompatibleAlias:
     case Decl::ObjCForwardProtocol:
     case Decl::ObjCImplementation:
-    case Decl::ObjCInterface:
-    case Decl::ObjCIvar:
     case Decl::ObjCMethod:
     case Decl::ObjCProperty:
     case Decl::ObjCPropertyImpl:
     case Decl::ObjCProtocol:
-      return ExternalLinkage;
+      return LVPair(ExternalLinkage, DefaultVisibility);
   }
 
   // Handle linkage for namespace-scope names.
   if (getDeclContext()->getRedeclContext()->isFileContext())
-    if (Linkage L = getLinkageForNamespaceScopeDecl(this))
-      return L;
+    return getLVForNamespaceScopeDecl(this);
   
   // C++ [basic.link]p5:
   //   In addition, a member function, static data member, a named
@@ -357,7 +481,7 @@ Linkage NamedDecl::getLinkage() const {
   //   purposes (7.1.3), has external linkage if the name of the class
   //   has external linkage.
   if (getDeclContext()->isRecord())
-    return getLinkageForClassMember(this);
+    return getLVForClassMember(this);
 
   // C++ [basic.link]p6:
   //   The name of a function declared in block scope and the name of
@@ -372,34 +496,48 @@ Linkage NamedDecl::getLinkage() const {
   //   external linkage.
   if (getLexicalDeclContext()->isFunctionOrMethod()) {
     if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(this)) {
-      if (Function->getPreviousDeclaration())
-        if (Linkage L = Function->getPreviousDeclaration()->getLinkage())
-          return L;
-
       if (Function->isInAnonymousNamespace())
-        return UniqueExternalLinkage;
+        return LVPair(UniqueExternalLinkage, DefaultVisibility);
 
-      return ExternalLinkage;
+      LVPair LV(ExternalLinkage, DefaultVisibility);
+      if (const VisibilityAttr *VA = Function->getAttr<VisibilityAttr>())
+        LV.second = GetVisibilityFromAttr(VA);
+
+      if (const FunctionDecl *Prev = Function->getPreviousDeclaration()) {
+        LVPair PrevLV = Prev->getLinkageAndVisibility();
+        if (PrevLV.first) LV.first = PrevLV.first;
+        LV.second = minVisibility(LV.second, PrevLV.second);
+      }
+
+      return LV;
     }
 
     if (const VarDecl *Var = dyn_cast<VarDecl>(this))
       if (Var->getStorageClass() == SC_Extern ||
           Var->getStorageClass() == SC_PrivateExtern) {
-        if (Var->getPreviousDeclaration())
-          if (Linkage L = Var->getPreviousDeclaration()->getLinkage())
-            return L;
-
         if (Var->isInAnonymousNamespace())
-          return UniqueExternalLinkage;
+          return LVPair(UniqueExternalLinkage, DefaultVisibility);
 
-        return ExternalLinkage;
+        LVPair LV(ExternalLinkage, DefaultVisibility);
+        if (Var->getStorageClass() == SC_PrivateExtern)
+          LV.second = HiddenVisibility;
+        else if (const VisibilityAttr *VA = Var->getAttr<VisibilityAttr>())
+          LV.second = GetVisibilityFromAttr(VA);
+
+        if (const VarDecl *Prev = Var->getPreviousDeclaration()) {
+          LVPair PrevLV = Prev->getLinkageAndVisibility();
+          if (PrevLV.first) LV.first = PrevLV.first;
+          LV.second = minVisibility(LV.second, PrevLV.second);
+        }
+
+        return LV;
       }
   }
 
   // C++ [basic.link]p6:
   //   Names not covered by these rules have no linkage.
-  return NoLinkage;
-  }
+  return LVPair(NoLinkage, DefaultVisibility);
+}
 
 std::string NamedDecl::getQualifiedNameAsString() const {
   return getQualifiedNameAsString(getASTContext().getLangOptions());

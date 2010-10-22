@@ -18,23 +18,26 @@ namespace ZeroInit {
   // CHECK: @_ZN8ZeroInit1bE = global i64 -1,
   int A::* b = 0;
 
-  // CHECK: @_ZN8ZeroInit2saE = global %struct.anon { i64 -1 }
+  // CHECK: @_ZN8ZeroInit2saE = internal global %struct.anon { i64 -1 }
   struct {
     int A::*a;
   } sa;
+  void test_sa() { (void) sa; } // force emission
   
-  // CHECK: @_ZN8ZeroInit3ssaE = 
+  // CHECK: @_ZN8ZeroInit3ssaE = internal
   // CHECK: [2 x i64] [i64 -1, i64 -1]
   struct {
     int A::*aa[2];
   } ssa[2];
+  void test_ssa() { (void) ssa; }
   
-  // CHECK: @_ZN8ZeroInit2ssE = global %1 { %struct.anon { i64 -1 } }
+  // CHECK: @_ZN8ZeroInit2ssE = internal global %1 { %struct.anon { i64 -1 } }
   struct {
     struct {
       int A::*pa;
     } s;
   } ss;
+  void test_ss() { (void) ss; }
   
   struct A {
     int A::*a;

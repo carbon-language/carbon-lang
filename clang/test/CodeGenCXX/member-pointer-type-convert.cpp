@@ -6,5 +6,6 @@ struct {
   const char *name;
   param_t par;
 } *ptr;
+void test_ptr() { (void) ptr; } // forced use
 
 // CHECK: type { i8*, {{i..}} }

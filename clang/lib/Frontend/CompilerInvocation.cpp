@@ -624,12 +624,12 @@ static void LangOptsToArgs(const LangOptions &Opts,
       Res.push_back("-fobjc-gc-only");
     }
   }
-  if (Opts.getVisibilityMode() != LangOptions::Default) {
+  if (Opts.getVisibilityMode() != DefaultVisibility) {
     Res.push_back("-fvisibility");
-    if (Opts.getVisibilityMode() == LangOptions::Hidden) {
+    if (Opts.getVisibilityMode() == HiddenVisibility) {
       Res.push_back("hidden");
     } else {
-      assert(Opts.getVisibilityMode() == LangOptions::Protected &&
+      assert(Opts.getVisibilityMode() == ProtectedVisibility &&
              "Invalid visibility!");
       Res.push_back("protected");
     }
@@ -1304,11 +1304,11 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   llvm::StringRef Vis = Args.getLastArgValue(OPT_fvisibility, "default");
   if (Vis == "default")
-    Opts.setVisibilityMode(LangOptions::Default);
+    Opts.setVisibilityMode(DefaultVisibility);
   else if (Vis == "hidden")
-    Opts.setVisibilityMode(LangOptions::Hidden);
+    Opts.setVisibilityMode(HiddenVisibility);
   else if (Vis == "protected")
-    Opts.setVisibilityMode(LangOptions::Protected);
+    Opts.setVisibilityMode(ProtectedVisibility);
   else
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fvisibility)->getAsString(Args) << Vis;

@@ -15,6 +15,7 @@
 #define LLVM_CLANG_LANGOPTIONS_H
 
 #include <string>
+#include "clang/Basic/Visibility.h"
 
 namespace clang {
 
@@ -131,11 +132,6 @@ public:
 
   enum GCMode { NonGC, GCOnly, HybridGC };
   enum StackProtectorMode { SSPOff, SSPOn, SSPReq };
-  enum VisibilityMode {
-    Default,
-    Protected,
-    Hidden
-  };
 
   enum SignedOverflowBehaviorTy {
     SOB_Undefined,  // Default C standard behavior.
@@ -161,7 +157,7 @@ public:
     HeinousExtensions = 0;
     AltiVec = OpenCL = StackProtector = 0;
 
-    SymbolVisibility = (unsigned) Default;
+    SymbolVisibility = (unsigned) DefaultVisibility;
 
     ThreadsafeStatics = 1;
     POSIXThreads = 0;
@@ -208,10 +204,10 @@ public:
     StackProtector = static_cast<unsigned>(m);
   }
 
-  VisibilityMode getVisibilityMode() const {
-    return (VisibilityMode) SymbolVisibility;
+  Visibility getVisibilityMode() const {
+    return (Visibility) SymbolVisibility;
   }
-  void setVisibilityMode(VisibilityMode v) { SymbolVisibility = (unsigned) v; }
+  void setVisibilityMode(Visibility v) { SymbolVisibility = (unsigned) v; }
 
   SignedOverflowBehaviorTy getSignedOverflowBehavior() const {
     return (SignedOverflowBehaviorTy)SignedOverflowBehavior;

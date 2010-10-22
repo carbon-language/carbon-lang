@@ -164,81 +164,23 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID) << Msg;
 }
 
-LangOptions::VisibilityMode
-CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
-  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-    if (VD->getStorageClass() == SC_PrivateExtern)
-      return LangOptions::Hidden;
-
-  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>()) {
-    switch (attr->getVisibility()) {
-    default: assert(0 && "Unknown visibility!");
-    case VisibilityAttr::Default:
-      return LangOptions::Default;
-    case VisibilityAttr::Hidden:
-      return LangOptions::Hidden;
-    case VisibilityAttr::Protected:
-      return LangOptions::Protected;
-    }
-  }
-  
-  if (getLangOptions().CPlusPlus) {
-    // Entities subject to an explicit instantiation declaration get default
-    // visibility.
-    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-      if (Function->getTemplateSpecializationKind()
-                                        == TSK_ExplicitInstantiationDeclaration)
-        return LangOptions::Default;
-    } else if (const ClassTemplateSpecializationDecl *ClassSpec
-                              = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
-      if (ClassSpec->getSpecializationKind()
-                                        == TSK_ExplicitInstantiationDeclaration)
-        return LangOptions::Default;
-    } else if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
-      if (Record->getTemplateSpecializationKind()
-                                        == TSK_ExplicitInstantiationDeclaration)
-        return LangOptions::Default;
-    } else if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
-      if (Var->isStaticDataMember() &&
-          (Var->getTemplateSpecializationKind()
-                                      == TSK_ExplicitInstantiationDeclaration))
-        return LangOptions::Default;
-    }
-
-    // If -fvisibility-inlines-hidden was provided, then inline C++ member
-    // functions get "hidden" visibility by default.
-    if (getLangOptions().InlineVisibilityHidden)
-      if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
-        if (Method->isInlined())
-          return LangOptions::Hidden;
-  }
-           
-  // If this decl is contained in a class, it should have the same visibility
-  // as the parent class.
-  if (const DeclContext *DC = D->getDeclContext()) 
-    if (DC->isRecord())
-      return getDeclVisibilityMode(cast<Decl>(DC));
-
-  return getLangOptions().getVisibilityMode();
-}
-
 void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
-                                        const Decl *D) const {
+                                        const NamedDecl *D) const {
   // Internal definitions always have default visibility.
   if (GV->hasLocalLinkage()) {
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
     return;
   }
 
-  switch (getDeclVisibilityMode(D)) {
-  default: assert(0 && "Unknown visibility!");
-  case LangOptions::Default:
+  switch (D->getVisibility()) {
+  case DefaultVisibility:
     return GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
-  case LangOptions::Hidden:
+  case HiddenVisibility:
     return GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  case LangOptions::Protected:
+  case ProtectedVisibility:
     return GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
   }
+  llvm_unreachable("unknown visibility!");
 }
 
 /// Set the symbol visibility of type information (vtable and RTTI)
@@ -498,7 +440,10 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
 void CodeGenModule::SetCommonAttributes(const Decl *D,
                                         llvm::GlobalValue *GV) {
-  setGlobalVisibility(GV, D);
+  if (isa<NamedDecl>(D))
+    setGlobalVisibility(GV, cast<NamedDecl>(D));
+  else
+    GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
 
   if (D->hasAttr<UsedAttr>())
     AddUsedGlobal(GV);

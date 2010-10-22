@@ -197,7 +197,13 @@ public:
   bool isCXXInstanceMember() const;
 
   /// \brief Determine what kind of linkage this entity has.
-  Linkage getLinkage() const;
+  Linkage getLinkage() const { return getLinkageAndVisibility().first; }
+
+  /// \brief Determines the visibility of this entity.
+  Visibility getVisibility() const { return getLinkageAndVisibility().second; }
+
+  /// \brief Determines the linkage and visibility of this entity.
+  std::pair<Linkage,Visibility> getLinkageAndVisibility() const;
 
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
