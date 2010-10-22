@@ -680,7 +680,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
       RemoveCopyFlag(MO.getReg(), CopyMI);
   }
 
-  TransferImplicitOps(CopyMI, NewMI);
+  NewMI->copyImplicitOps(CopyMI);
   li_->ReplaceMachineInstrInMaps(CopyMI, NewMI);
   CopyMI->eraseFromParent();
   ReMatCopies.insert(CopyMI);

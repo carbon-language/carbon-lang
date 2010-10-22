@@ -416,6 +416,10 @@ public:
   ///
   bool allDefsAreDead() const;
 
+  /// copyImplicitOps - Copy implicit register operands from specified
+  /// instruction to this instruction.
+  void copyImplicitOps(const MachineInstr *MI);
+
   //
   // Debugging support
   //

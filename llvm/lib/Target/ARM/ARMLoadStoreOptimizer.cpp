@@ -1196,6 +1196,7 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
       unsigned NewOpc = isThumb2 ? ARM::t2LDM_RET : ARM::LDM_RET;
       PrevMI->setDesc(TII->get(NewOpc));
       MO.setReg(ARM::PC);
+      PrevMI->copyImplicitOps(&*MBBI);
       MBB.erase(MBBI);
       return true;
     }
