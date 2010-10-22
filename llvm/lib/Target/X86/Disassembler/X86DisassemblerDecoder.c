@@ -405,7 +405,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
     insn->registerSize       = (hasOpSize ? 2 : 4);
     insn->addressSize        = (hasAdSize ? 2 : 4);
     insn->displacementSize   = (hasAdSize ? 2 : 4);
-    insn->immediateSize      = (hasAdSize ? 2 : 4);
+    insn->immediateSize      = (hasOpSize ? 2 : 4);
   } else if (insn->mode == MODE_64BIT) {
     if (insn->rexPrefix && wFromREX(insn->rexPrefix)) {
       insn->registerSize       = 8;
