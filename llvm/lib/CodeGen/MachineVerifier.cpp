@@ -921,8 +921,37 @@ void MachineVerifier::verifyLiveIntervals() {
         report("Live range at def has different valno", MF);
         *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
             << " where valno #" << DefVNI->id << " is live.\n";
+        continue;
       }
 
+      const MachineBasicBlock *MBB = LiveInts->getMBBFromIndex(VNI->def);
+      if (!MBB) {
+        report("Invalid definition index", MF);
+        *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
+        continue;
+      }
+
+      if (VNI->isPHIDef()) {
+        if (VNI->def != LiveInts->getMBBStartIdx(MBB)) {
+          report("PHIDef value is not defined at MBB start", MF);
+          *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
+              << ", not at the beginning of BB#" << MBB->getNumber() << '\n';
+        }
+      } else {
+        // Non-PHI def.
+        if (!VNI->def.isDef()) {
+          report("Non-PHI def must be at a DEF slot", MF);
+          *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
+        }
+        const MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
+        if (!MI) {
+          report("No instruction at def index", MF);
+          *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
+        } else if (!MI->modifiesRegister(LI.reg, TRI)) {
+          report("Defining instruction does not modify register", MI);
+          *OS << "Valno #" << VNI->id << " in " << LI << '\n';
+        }
+      }
     }
 
     for (LiveInterval::const_iterator I = LI.begin(), E = LI.end(); I!=E; ++I) {
