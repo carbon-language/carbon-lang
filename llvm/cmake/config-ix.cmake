@@ -258,7 +258,7 @@ if( LLVM_ENABLE_THREADS )
   endif()
 endif()
 
-test_big_endian(LLVM_IS_TARGET_BIG_ENDIAN)
+test_big_endian(LLVM_IS_HOST_BIG_ENDIAN)
 
 if( ENABLE_THREADS )
   message(STATUS "Threads enabled.")

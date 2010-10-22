@@ -60,7 +60,7 @@ struct alignment_access_helper<value_type, unaligned>
 
 } // end namespace detail
 
-#if defined(LLVM_IS_TARGET_BIG_ENDIAN) \
+#if defined(LLVM_IS_HOST_BIG_ENDIAN) \
  || defined(_BIG_ENDIAN) || defined(__BIG_ENDIAN__)
 static const endianness host_endianness = big;
 #else
