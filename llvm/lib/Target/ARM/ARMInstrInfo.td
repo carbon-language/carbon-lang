@@ -2484,9 +2484,11 @@ def SMLALTT : AMulxyI64<0b0001010, 0b11, (outs GPR:$RdLo, GPR:$RdHi),
               Requires<[IsARM, HasV5TE]>;
 
 // Helper class for AI_smld -- for disassembly only
-class AMulDualI<bit long, bit sub, bit swap, dag oops, dag iops,
-                InstrItinClass itin, string opc, string asm>
+class AMulDualIbase<bit long, bit sub, bit swap, dag oops, dag iops,
+                    InstrItinClass itin, string opc, string asm>
   : AI<oops, iops, MulFrm, itin, opc, asm, []>, Requires<[IsARM, HasV6]> {
+  bits<4> Rn;
+  bits<4> Rm;
   let Inst{4}     = 1;
   let Inst{5}     = swap;
   let Inst{6}     = sub;
@@ -2494,21 +2496,46 @@ class AMulDualI<bit long, bit sub, bit swap, dag oops, dag iops,
   let Inst{21-20} = 0b00;
   let Inst{22}    = long;
   let Inst{27-23} = 0b01110;
+  let Inst{11-8}  = Rm;
+  let Inst{3-0}   = Rn;
+}
+class AMulDualI<bit long, bit sub, bit swap, dag oops, dag iops,
+                InstrItinClass itin, string opc, string asm>
+  : AMulDualIbase<long, sub, swap, oops, iops, itin, opc, asm> {
+  bits<4> Rd;
+  let Inst{15-12} = 0b1111;
+  let Inst{19-16} = Rd;
+}
+class AMulDualIa<bit long, bit sub, bit swap, dag oops, dag iops,
+                InstrItinClass itin, string opc, string asm>
+  : AMulDualIbase<long, sub, swap, oops, iops, itin, opc, asm> {
+  bits<4> Ra;
+  let Inst{15-12} = Ra;
+}
+class AMulDualI64<bit long, bit sub, bit swap, dag oops, dag iops,
+                  InstrItinClass itin, string opc, string asm>
+  : AMulDualIbase<long, sub, swap, oops, iops, itin, opc, asm> {
+  bits<4> RdLo;
+  bits<4> RdHi;
+  let Inst{19-16} = RdHi;
+  let Inst{15-12} = RdLo;
 }
 
 multiclass AI_smld<bit sub, string opc> {
 
-  def D : AMulDualI<0, sub, 0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
-                  NoItinerary, !strconcat(opc, "d"), "\t$dst, $a, $b, $acc">;
+  def D : AMulDualIa<0, sub, 0, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
+                  NoItinerary, !strconcat(opc, "d"), "\t$Rd, $Rn, $Rm, $Ra">;
 
-  def DX : AMulDualI<0, sub, 1, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
-                  NoItinerary, !strconcat(opc, "dx"), "\t$dst, $a, $b, $acc">;
+  def DX: AMulDualIa<0, sub, 1, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
+                  NoItinerary, !strconcat(opc, "dx"), "\t$Rd, $Rn, $Rm, $Ra">;
 
-  def LD : AMulDualI<1, sub, 0, (outs GPR:$ldst,GPR:$hdst), (ins GPR:$a,GPR:$b),
-                  NoItinerary, !strconcat(opc, "ld"), "\t$ldst, $hdst, $a, $b">;
+  def LD: AMulDualI64<1, sub, 0, (outs GPR:$RdLo,GPR:$RdHi),
+                  (ins GPR:$Rn, GPR:$Rm), NoItinerary,
+                  !strconcat(opc, "ld"), "\t$RdLo, $RdHi, $Rn, $Rm">;
 
-  def LDX : AMulDualI<1, sub, 1, (outs GPR:$ldst,GPR:$hdst),(ins GPR:$a,GPR:$b),
-                  NoItinerary, !strconcat(opc, "ldx"),"\t$ldst, $hdst, $a, $b">;
+  def LDX : AMulDualI64<1, sub, 1, (outs GPR:$RdLo,GPR:$RdHi),
+                  (ins GPR:$Rn, GPR:$Rm), NoItinerary,
+                  !strconcat(opc, "ldx"),"\t$RdLo, $RdHi, $Rn, $Rm">;
 
 }
 
@@ -2517,16 +2544,10 @@ defm SMLS : AI_smld<1, "smls">;
 
 multiclass AI_sdml<bit sub, string opc> {
 
-  def D : AMulDualI<0, sub, 0, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-                    NoItinerary, !strconcat(opc, "d"), "\t$dst, $a, $b"> {
-    let Inst{15-12} = 0b1111;
-  }
-
-  def DX : AMulDualI<0, sub, 1, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-                    NoItinerary, !strconcat(opc, "dx"), "\t$dst, $a, $b"> {
-    let Inst{15-12} = 0b1111;
-  }
-
+  def D : AMulDualI<0, sub, 0, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                    NoItinerary, !strconcat(opc, "d"), "\t$Rd, $Rn, $Rm">;
+  def DX : AMulDualI<0, sub, 1, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                    NoItinerary, !strconcat(opc, "dx"), "\t$Rd, $Rn, $Rm">;
 }
 
 defm SMUA : AI_sdml<0, "smua">;

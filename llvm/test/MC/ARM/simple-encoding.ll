@@ -3,7 +3,9 @@
 
 ;FIXME: Once the ARM integrated assembler is up and going, these sorts of tests
 ;       should run on .s source files rather than using llc to generate the
-;       assembly.
+;       assembly. There's also a large number of instruction encodings the
+;       compiler never generates, so we need the integrated assembler to be
+;       able to test those at all.
 
 define i32 @foo(i32 %a, i32 %b) {
 entry:
