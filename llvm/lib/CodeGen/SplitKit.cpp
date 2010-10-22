@@ -79,6 +79,15 @@ void SplitAnalysis::analyzeUses() {
                << usingLoops_.size()  << " loops.\n");
 }
 
+void SplitAnalysis::print(const BlockPtrSet &B, raw_ostream &OS) const {
+  for (BlockPtrSet::const_iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    unsigned count = usingBlocks_.lookup(*I);
+    OS << " BB#" << (*I)->getNumber();
+    if (count)
+      OS << '(' << count << ')';
+  }
+}
+
 // Get three sets of basic blocks surrounding a loop: Blocks inside the loop,
 // predecessor blocks, and exit blocks.
 void SplitAnalysis::getLoopBlocks(const MachineLoop *Loop, LoopBlocks &Blocks) {
@@ -105,6 +114,15 @@ void SplitAnalysis::getLoopBlocks(const MachineLoop *Loop, LoopBlocks &Blocks) {
   }
 }
 
+void SplitAnalysis::print(const LoopBlocks &B, raw_ostream &OS) const {
+  OS << "Loop:";
+  print(B.Loop, OS);
+  OS << ", preds:";
+  print(B.Preds, OS);
+  OS << ", exits:";
+  print(B.Exits, OS);
+}
+
 /// analyzeLoopPeripheralUse - Return an enum describing how curli_ is used in
 /// and around the Loop.
 SplitAnalysis::LoopPeripheralUse SplitAnalysis::
@@ -124,6 +142,7 @@ analyzeLoopPeripheralUse(const SplitAnalysis::LoopBlocks &Blocks) {
     if (Blocks.Loop.count(MBB))
       continue;
     // It must be an unrelated block.
+    DEBUG(dbgs() << ", outside: BB#" << MBB->getNumber());
     return OutsideLoop;
   }
   return use;
@@ -223,6 +242,7 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
        E = usingLoops_.end(); I != E; ++I) {
     const MachineLoop *Loop = I->first;
     getLoopBlocks(Loop, Blocks);
+    DEBUG({ dbgs() << "  "; print(Blocks, dbgs()); });
 
     switch(analyzeLoopPeripheralUse(Blocks)) {
     case OutsideLoop:
@@ -235,19 +255,18 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
       // forever.
       // For safety, stick to splitting live ranges with uses outside the
       // periphery.
-      DEBUG(dbgs() << "  multiple peripheral uses in " << *Loop);
+      DEBUG(dbgs() << ": multiple peripheral uses\n");
       break;
     case ContainedInLoop:
-      DEBUG(dbgs() << "  contained in " << *Loop);
+      DEBUG(dbgs() << ": fully contained\n");
       continue;
     case SinglePeripheral:
-      DEBUG(dbgs() << "  single peripheral use in " << *Loop);
+      DEBUG(dbgs() << ": single peripheral use\n");
       continue;
     }
     // Will it be possible to split around this loop?
     getCriticalExits(Blocks, CriticalExits);
-    DEBUG(dbgs() << "  " << CriticalExits.size() << " critical exits from "
-                 << *Loop);
+    DEBUG(dbgs() << ": " << CriticalExits.size() << " critical exits\n");
     if (!canSplitCriticalExits(Blocks, CriticalExits))
       continue;
     // This is a possible split.
@@ -891,19 +910,7 @@ void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
   sa_.getLoopBlocks(Loop, Blocks);
 
   DEBUG({
-    dbgs() << "  splitAroundLoop";
-    for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Loop.begin(),
-         E = Blocks.Loop.end(); I != E; ++I)
-      dbgs() << " BB#" << (*I)->getNumber();
-    dbgs() << ", preds:";
-    for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Preds.begin(),
-         E = Blocks.Preds.end(); I != E; ++I)
-      dbgs() << " BB#" << (*I)->getNumber();
-    dbgs() << ", exits:";
-    for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Exits.begin(),
-         E = Blocks.Exits.end(); I != E; ++I)
-      dbgs() << " BB#" << (*I)->getNumber();
-    dbgs() << '\n';
+    dbgs() << "  splitAround"; sa_.print(Blocks, dbgs()); dbgs() << '\n';
   });
 
   // Break critical edges as needed.

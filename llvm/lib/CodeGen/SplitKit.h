@@ -28,6 +28,7 @@ class MachineRegisterInfo;
 class TargetInstrInfo;
 class VirtRegMap;
 class VNInfo;
+class raw_ostream;
 
 /// SplitAnalysis - Analyze a LiveInterval, looking for live range splitting
 /// opportunities.
@@ -76,6 +77,9 @@ public:
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
   typedef SmallPtrSet<const MachineLoop*, 16> LoopPtrSet;
 
+  // Print a set of blocks with use counts.
+  void print(const BlockPtrSet&, raw_ostream&) const;
+
   // Sets of basic blocks surrounding a machine loop.
   struct LoopBlocks {
     BlockPtrSet Loop;  // Blocks in the loop.
@@ -88,6 +92,9 @@ public:
       Exits.clear();
     }
   };
+
+  // Print loop blocks with use counts.
+  void print(const LoopBlocks&, raw_ostream&) const;
 
   // Calculate the block sets surrounding the loop.
   void getLoopBlocks(const MachineLoop *Loop, LoopBlocks &Blocks);
