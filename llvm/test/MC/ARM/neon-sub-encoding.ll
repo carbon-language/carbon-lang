@@ -89,3 +89,69 @@ define <4 x float> @vsub_4xfloat(<4 x float>* %A, <4 x float>* %B) nounwind {
 	%tmp3 = fsub <4 x float> %tmp1, %tmp2
 	ret <4 x float> %tmp3
 }
+
+; CHECK: vsubls_8xi8
+define <8 x i16> @vsubls_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = sext <8 x i8> %tmp1 to <8 x i16>
+	%tmp4 = sext <8 x i8> %tmp2 to <8 x i16>
+; CHECK: vsubl.s8	q8, d17, d16    @ encoding: [0xa0,0x02,0xc1,0xf2]
+	%tmp5 = sub <8 x i16> %tmp3, %tmp4
+	ret <8 x i16> %tmp5
+}
+
+; CHECK: vsubls_4xi16
+define <4 x i32> @vsubls_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = sext <4 x i16> %tmp1 to <4 x i32>
+	%tmp4 = sext <4 x i16> %tmp2 to <4 x i32>
+; CHECK: vsubl.s16	q8, d17, d16    @ encoding: [0xa0,0x02,0xd1,0xf2]
+	%tmp5 = sub <4 x i32> %tmp3, %tmp4
+	ret <4 x i32> %tmp5
+}
+
+; CHECK: vsubls_2xi32
+define <2 x i64> @vsubls_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = sext <2 x i32> %tmp1 to <2 x i64>
+	%tmp4 = sext <2 x i32> %tmp2 to <2 x i64>
+; CHECK: vsubl.s32	q8, d17, d16    @ encoding: [0xa0,0x02,0xe1,0xf2]
+	%tmp5 = sub <2 x i64> %tmp3, %tmp4
+	ret <2 x i64> %tmp5
+}
+
+; CHECK: vsublu_8xi8
+define <8 x i16> @vsublu_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = zext <8 x i8> %tmp1 to <8 x i16>
+	%tmp4 = zext <8 x i8> %tmp2 to <8 x i16>
+; CHECK: vsubl.u8	q8, d17, d16    @ encoding: [0xa0,0x02,0xc1,0xf3]
+	%tmp5 = sub <8 x i16> %tmp3, %tmp4
+	ret <8 x i16> %tmp5
+}
+
+; CHECK: vsublu_4xi16
+define <4 x i32> @vsublu_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = zext <4 x i16> %tmp1 to <4 x i32>
+	%tmp4 = zext <4 x i16> %tmp2 to <4 x i32>
+; CHECK: vsubl.u16	q8, d17, d16    @ encoding: [0xa0,0x02,0xd1,0xf3]
+	%tmp5 = sub <4 x i32> %tmp3, %tmp4
+	ret <4 x i32> %tmp5
+}
+
+; CHECK: vsublu_2xi32
+define <2 x i64> @vsublu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = zext <2 x i32> %tmp1 to <2 x i64>
+	%tmp4 = zext <2 x i32> %tmp2 to <2 x i64>
+; CHECK: vsubl.u32	q8, d17, d16    @ encoding: [0xa0,0x02,0xe1,0xf3]
+	%tmp5 = sub <2 x i64> %tmp3, %tmp4
+	ret <2 x i64> %tmp5
+}
