@@ -17,7 +17,9 @@ add_clang_library(clangBasic
 # Determine Subversion revision.
 # FIXME: This only gets updated when CMake is run, so this revision number
 # may be out-of-date!
-find_package(Subversion)
+if( NOT IS_SYMLINK "${CLANG_SOURCE_DIR}" )  # See PR 8437
+  find_package(Subversion)
+endif()
 if (Subversion_FOUND AND EXISTS "${CLANG_SOURCE_DIR}/.svn")
   Subversion_WC_INFO(${CLANG_SOURCE_DIR} CLANG)
   set_source_files_properties(Version.cpp
