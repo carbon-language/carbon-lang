@@ -934,14 +934,15 @@ class AMul2Ia<bits<7> opcod, bits<4> opc7_4, dag oops, dag iops,
 }
 
 // SMUL<x><y> / SMULW<y> / SMLA<x><y> / SMLAW<x><y>
-class AMulxyI<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
-              string opc, string asm, list<dag> pattern>
+class AMulxyI<bits<7> opcod, bits<2> bit6_5, dag oops, dag iops,
+              InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, MulFrm, itin,
       opc, asm, "", pattern> {
   let Inst{4}     = 0;
   let Inst{7}     = 1;
   let Inst{20}    = 0;
   let Inst{27-21} = opcod;
+  let Inst{6-5}   = bit6_5;
 }
 
 // Extend instructions.
