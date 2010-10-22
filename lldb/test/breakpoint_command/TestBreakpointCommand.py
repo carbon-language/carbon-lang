@@ -69,7 +69,9 @@ class BreakpointCommandTestCase(TestBase):
                           "print >> here",
                           "here.close()"])
 
-        # Run the program.
+        # Run the program.  Remove 'output.txt' if it exists.
+        if os.path.exists('output.txt'):
+            os.remove('output.txt')
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Check that the file 'output.txt' exists and contains the string "lldb".
