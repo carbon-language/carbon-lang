@@ -26,6 +26,11 @@ public:
     static_cast< ImplClass* >(this)->VisitChildren(S);
   }
   
+  void VisitCompoundStmt(CompoundStmt *S) {
+    // Do nothing.  Everything in a CompoundStmt is inlined
+    // into the CFG.
+  }
+  
   void VisitConditionVariableInit(Stmt *S) {
     assert(S == this->getCurrentBlkStmt());
     VarDecl *CondVar = 0;
