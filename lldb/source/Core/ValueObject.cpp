@@ -565,7 +565,11 @@ ValueObject::GetObjectDescription (ExecutionContextScope *exe_scope)
     {
         m_object_desc_str.append (s.GetData());
     }
-    return m_object_desc_str.c_str();
+    
+    if (m_object_desc_str.empty())
+        return NULL;
+    else
+        return m_object_desc_str.c_str();
 }
 
 const char *
@@ -995,7 +999,7 @@ ValueObject::DumpValueObject
                     if (object_desc)
                         s.Printf(" %s\n", object_desc);
                     else
-                        s.Printf ("No description available.\n");
+                        s.Printf (" [no Objective-C description available]\n");
                     return;
                 }                
             }
