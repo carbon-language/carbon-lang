@@ -314,7 +314,7 @@ static std::string GetNewAnonymousName() {
 std::string TGParser::ParseObjectName() {
   if (Lex.getCode() != tgtok::Id)
     return GetNewAnonymousName();
-  
+
   std::string Ret = Lex.getCurStrVal();
   Lex.Lex();
   return Ret;
@@ -823,7 +823,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
       Type = new StringRecTy();
       break;
     }
-    
+
     if (Lex.getCode() != tgtok::l_paren) {
       TokError("expected '(' after binary operator");
       return 0;
@@ -831,7 +831,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     Lex.Lex();  // eat the '('
 
     SmallVector<Init*, 2> InitList;
-    
+
     InitList.push_back(ParseValue(CurRec));
     if (InitList.back() == 0) return 0;
 
@@ -858,11 +858,11 @@ Init *TGParser::ParseOperation(Record *CurRec) {
         InitList.back() = RHS;
       }
     }
-    
+
     if (InitList.size() == 2)
       return (new BinOpInit(Code, InitList[0], InitList[1], Type))
         ->Fold(CurRec, CurMultiClass);
-    
+
     Error(OpLoc, "expected two operands to operator");
     return 0;
   }
@@ -1907,7 +1907,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     DefmPrefix = Lex.getCurStrVal();
     Lex.Lex();  // Eat the defm prefix.
   }
-  
+
   SMLoc DefmPrefixLoc = Lex.getLoc();
   if (Lex.getCode() != tgtok::colon)
     return TokError("expected ':' after defm identifier");
