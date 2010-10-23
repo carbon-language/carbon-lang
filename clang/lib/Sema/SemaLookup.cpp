@@ -407,8 +407,13 @@ void LookupResult::resolveKind() {
   // But it's still an error if there are distinct tag types found,
   // even if they're not visible. (ref?)
   if (HideTags && HasTag && !Ambiguous &&
-      (HasFunction || HasNonFunction || HasUnresolved))
-    Decls[UniqueTagIndex] = Decls[--N];
+      (HasFunction || HasNonFunction || HasUnresolved)) {
+    if (Decls[UniqueTagIndex]->getDeclContext()->getRedeclContext()->Equals(
+         Decls[UniqueTagIndex? 0 : N-1]->getDeclContext()->getRedeclContext()))
+      Decls[UniqueTagIndex] = Decls[--N];
+    else
+      Ambiguous = true;
+  }
 
   Decls.set_size(N);
 
