@@ -161,7 +161,7 @@ void DisassemblerTables::emitOneID(raw_ostream &o,
 /// @param i        - The indentation level for that output stream.
 static void emitEmptyTable(raw_ostream &o, uint32_t &i)
 {
-  o.indent(i * 2) << "static InstrUID modRMEmptyTable[1] = { 0 };" << "\n";
+  o.indent(i * 2) << "static const InstrUID modRMEmptyTable[1] = { 0 };\n";
   o << "\n";
 }
 
@@ -454,7 +454,8 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o, uint32_t &i)
 void DisassemblerTables::emitContextTable(raw_ostream &o, uint32_t &i) const {
   uint16_t index;
 
-  o.indent(i * 2) << "static InstructionContext " CONTEXTS_STR "[256] = {\n";
+  o.indent(i * 2) << "static const InstructionContext " CONTEXTS_STR
+                     "[256] = {\n";
   i++;
 
   for (index = 0; index < 256; ++index) {
