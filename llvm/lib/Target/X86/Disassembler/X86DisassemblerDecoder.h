@@ -24,7 +24,7 @@ extern "C" {
   const char*             name;
 
 #define INSTRUCTION_IDS     \
-  InstrUID*  instructionIDs;
+  const InstrUID *instructionIDs;
 
 #include "X86DisassemblerDecoderCommon.h"
   
@@ -423,7 +423,7 @@ struct InternalInstruction {
   /* The instruction ID, extracted from the decode table */
   uint16_t instructionID;
   /* The specifier for the instruction, from the instruction info table */
-  struct InstructionSpecifier* spec;
+  const struct InstructionSpecifier *spec;
   
   /* state for additional bytes, consumed during operand decode.  Pattern:
      consumed___ indicates that the byte was already consumed and does not

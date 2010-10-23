@@ -97,7 +97,7 @@ static InstrUID decode(OpcodeType type,
                        InstructionContext insnContext,
                        uint8_t opcode,
                        uint8_t modRM) {
-  struct ModRMDecision* dec;
+  const struct ModRMDecision* dec;
   
   switch (type) {
   default:
@@ -141,7 +141,7 @@ static InstrUID decode(OpcodeType type,
  *              decode(); specifierForUID will not check bounds.
  * @return    - A pointer to the specification for that instruction.
  */
-static struct InstructionSpecifier* specifierForUID(InstrUID uid) {
+static const struct InstructionSpecifier *specifierForUID(InstrUID uid) {
   return &INSTRUCTIONS_SYM[uid];
 }
 
@@ -626,9 +626,9 @@ static int getID(struct InternalInstruction* insn) {
      * instead of F2 changes a 32 to a 64, we adopt the new encoding.
      */
     
-    struct InstructionSpecifier* spec;
+    const struct InstructionSpecifier *spec;
     uint16_t instructionIDWithREXw;
-    struct InstructionSpecifier* specWithREXw;
+    const struct InstructionSpecifier *specWithREXw;
     
     spec = specifierForUID(instructionID);
     
@@ -666,9 +666,9 @@ static int getID(struct InternalInstruction* insn) {
      * in the right place we check if there's a 16-bit operation.
      */
     
-    struct InstructionSpecifier* spec;
+    const struct InstructionSpecifier *spec;
     uint16_t instructionIDWithOpsize;
-    struct InstructionSpecifier* specWithOpsize;
+    const struct InstructionSpecifier *specWithOpsize;
     
     spec = specifierForUID(instructionID);
     
@@ -1061,7 +1061,7 @@ GENERIC_FIXUP_FUNC(fixupRMValue,  insn->eaRegBase,  EA_REG)
  *                invalid for its class.
  */
 static int fixupReg(struct InternalInstruction *insn, 
-                    struct OperandSpecifier *op) {
+                    const struct OperandSpecifier *op) {
   uint8_t valid;
   
   dbgprintf(insn, "fixupReg()");

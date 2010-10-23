@@ -275,7 +275,7 @@ void DisassemblerTables::emitModRMDecision(raw_ostream &o1,
     return;
   }
     
-  o1.indent(i1) << "static InstrUID modRMTable" << thisTableNumber;
+  o1.indent(i1) << "static const InstrUID modRMTable" << thisTableNumber;
     
   switch (dt) {
     default:
@@ -365,7 +365,7 @@ void DisassemblerTables::emitContextDecision(
   uint32_t &i2,
   ContextDecision &decision,
   const char* name) const {
-  o2.indent(i2) << "static struct ContextDecision " << name << " = {\n";
+  o2.indent(i2) << "static const struct ContextDecision " << name << " = {\n";
   i2++;
   o2.indent(i2) << "{ /* opcodeDecisions */" << "\n";
   i2++;
@@ -392,9 +392,8 @@ void DisassemblerTables::emitContextDecision(
 
 void DisassemblerTables::emitInstructionInfo(raw_ostream &o, uint32_t &i) 
   const {
-  o.indent(i * 2) << "static struct InstructionSpecifier " INSTRUCTIONS_STR "[";
-  o << InstructionSpecifiers.size();
-  o << "] = {" << "\n";
+  o.indent(i * 2) << "static const struct InstructionSpecifier ";
+  o << INSTRUCTIONS_STR "[" << InstructionSpecifiers.size() << "] = {\n";
   
   i++;
 

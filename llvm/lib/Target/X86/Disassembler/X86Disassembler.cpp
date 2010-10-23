@@ -157,9 +157,8 @@ static void translateRegister(MCInst &mcInst, Reg reg) {
 /// @param immediate    - The immediate value to append.
 /// @param operand      - The operand, as stored in the descriptor table.
 /// @param insn         - The internal instruction.
-static void translateImmediate(MCInst &mcInst, 
-                               uint64_t immediate, 
-                               OperandSpecifier &operand,
+static void translateImmediate(MCInst &mcInst, uint64_t immediate,
+                               const OperandSpecifier &operand,
                                InternalInstruction &insn) {
   // Sign-extend the immediate if necessary.
 
@@ -392,9 +391,8 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn) {
 /// @param insn         - The instruction to extract Mod, R/M, and SIB fields
 ///                       from.
 /// @return             - 0 on success; nonzero otherwise
-static bool translateRM(MCInst &mcInst,
-                       OperandSpecifier &operand,
-                       InternalInstruction &insn) {
+static bool translateRM(MCInst &mcInst, const OperandSpecifier &operand,
+                        InternalInstruction &insn) {
   switch (operand.type) {
   default:
     debug("Unexpected type for a R/M operand");
@@ -461,9 +459,8 @@ static bool translateFPRegister(MCInst &mcInst,
 /// @param operand      - The operand, as stored in the descriptor table.
 /// @param insn         - The internal instruction.
 /// @return             - false on success; true otherwise.
-static bool translateOperand(MCInst &mcInst,
-                            OperandSpecifier &operand,
-                            InternalInstruction &insn) {
+static bool translateOperand(MCInst &mcInst, const OperandSpecifier &operand,
+                             InternalInstruction &insn) {
   switch (operand.encoding) {
   default:
     debug("Unhandled operand encoding during translation");
