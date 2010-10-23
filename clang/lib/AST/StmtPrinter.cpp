@@ -84,10 +84,10 @@ namespace  {
       else StmtVisitor<StmtPrinter>::Visit(S);
     }
     
-    void VisitStmt(Stmt *Node) ATTRIBUTE_UNUSED {
+    void VisitStmt(Stmt *Node) LLVM_ATTRIBUTE_UNUSED {
       Indent() << "<<unknown stmt type>>\n";
     }
-    void VisitExpr(Expr *Node) ATTRIBUTE_UNUSED {
+    void VisitExpr(Expr *Node) LLVM_ATTRIBUTE_UNUSED {
       OS << "<<unknown expr type>>";
     }
     void VisitCXXNamedCastExpr(CXXNamedCastExpr *Node);
