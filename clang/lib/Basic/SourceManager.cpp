@@ -819,7 +819,7 @@ unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc,
   return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
 
-static DISABLE_INLINE void
+static LLVM_ATTRIBUTE_NOINLINE void
 ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI,
                    llvm::BumpPtrAllocator &Alloc,
                    const SourceManager &SM, bool &Invalid);
