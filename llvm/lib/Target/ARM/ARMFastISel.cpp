@@ -1314,6 +1314,10 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     unsigned Arg = ArgRegs[VA.getValNo()];
     EVT ArgVT = ArgVTs[VA.getValNo()];
 
+    // We don't handle NEON parameters yet.
+    if (VA.getLocVT().isVector() && VA.getLocVT().getSizeInBits() > 64)
+      return false;
+
     // Handle arg promotion, etc.
     switch (VA.getLocInfo()) {
       case CCValAssign::Full: break;
@@ -1334,9 +1338,6 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
         break;
       }
       case CCValAssign::AExt: {
-        // We don't handle NEON or f64 parameters yet.
-        if (VA.getLocVT().isVector() && VA.getLocVT().getSizeInBits() >= 64)
-          return false;
         bool Emitted = FastEmitExtend(ISD::ANY_EXTEND, VA.getLocVT(),
                                          Arg, ArgVT, Arg);
         if (!Emitted)
