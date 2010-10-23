@@ -309,3 +309,166 @@ define <4 x i32> @vhsubs_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 	ret <4 x i32> %tmp3
 }
 
+declare <8 x i8>  @llvm.arm.neon.vqsubs.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vqsubs.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vqsubs.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+declare <1 x i64> @llvm.arm.neon.vqsubs.v1i64(<1 x i64>, <1 x i64>) nounwind readnone
+
+; CHECK: vqsubs_8xi8
+define <8 x i8> @vqsubs_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vqsub.s8	d16, d16, d17   @ encoding: [0xb1,0x02,0x40,0xf2]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vqsubs.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vqsubs_4xi16
+define <4 x i16> @vqsubs_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vqsub.s16	d16, d16, d17   @ encoding: [0xb1,0x02,0x50,0xf2]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vqsubs.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vqsubs_2xi32
+define <2 x i32> @vqsubs_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vqsub.s32	d16, d16, d17   @ encoding: [0xb1,0x02,0x60,0xf2]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vqsubs.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+; CHECK: vqsubs_1xi64
+define <1 x i64> @vqsubs_1xi64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
+	%tmp1 = load <1 x i64>* %A
+	%tmp2 = load <1 x i64>* %B
+; CHECK: vqsub.s64	d16, d16, d17   @ encoding: [0xb1,0x02,0x70,0xf2]
+	%tmp3 = call <1 x i64> @llvm.arm.neon.vqsubs.v1i64(<1 x i64> %tmp1, <1 x i64> %tmp2)
+	ret <1 x i64> %tmp3
+}
+
+declare <8 x i8>  @llvm.arm.neon.vqsubu.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vqsubu.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vqsubu.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+declare <1 x i64> @llvm.arm.neon.vqsubu.v1i64(<1 x i64>, <1 x i64>) nounwind readnone
+
+; CHECK: vqsubu_8xi8
+define <8 x i8> @vqsubu_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vqsub.u8	d16, d16, d17   @ encoding: [0xb1,0x02,0x40,0xf3]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vqsubu.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vqsubu_4xi16
+define <4 x i16> @vqsubu_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vqsub.u16	d16, d16, d17   @ encoding: [0xb1,0x02,0x50,0xf3]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vqsubu.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vqsubu_2xi32
+define <2 x i32> @vqsubu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vqsub.u32	d16, d16, d17   @ encoding: [0xb1,0x02,0x60,0xf3]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vqsubu.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+; CHECK: vqsubu_1xi64
+define <1 x i64> @vqsubu_1xi64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
+	%tmp1 = load <1 x i64>* %A
+	%tmp2 = load <1 x i64>* %B
+; CHECK: vqsub.u64	d16, d16, d17   @ encoding: [0xb1,0x02,0x70,0xf3]
+	%tmp3 = call <1 x i64> @llvm.arm.neon.vqsubu.v1i64(<1 x i64> %tmp1, <1 x i64> %tmp2)
+	ret <1 x i64> %tmp3
+}
+
+declare <16 x i8> @llvm.arm.neon.vqsubs.v16i8(<16 x i8>, <16 x i8>) nounwind readnone
+declare <8 x i16> @llvm.arm.neon.vqsubs.v8i16(<8 x i16>, <8 x i16>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vqsubs.v4i32(<4 x i32>, <4 x i32>) nounwind readnone
+declare <2 x i64> @llvm.arm.neon.vqsubs.v2i64(<2 x i64>, <2 x i64>) nounwind readnone
+
+; CHECK: vqsubs_16xi8
+define <16 x i8> @vqsubs_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vqsub.s8	q8, q8, q9      @ encoding: [0xf2,0x02,0x40,0xf2]
+	%tmp3 = call <16 x i8> @llvm.arm.neon.vqsubs.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
+	ret <16 x i8> %tmp3
+}
+
+; CHECK: vqsubs_8xi16
+define <8 x i16> @vqsubs_8xi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vqsub.s16	q8, q8, q9      @ encoding: [0xf2,0x02,0x50,0xf2]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vqsubs.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
+	ret <8 x i16> %tmp3
+}
+
+; CHECK: vqsubs_4xi32
+define <4 x i32> @vqsubs_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vqsub.s32	q8, q8, q9      @ encoding: [0xf2,0x02,0x60,0xf2]
+	%tmp3 = call <4 x i32> @llvm.arm.neon.vqsubs.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
+	ret <4 x i32> %tmp3
+}
+
+; CHECK: vqsubs_2xi64
+define <2 x i64> @vqsubs_2xi64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <2 x i64>* %B
+; CHECK: vqsub.s64	q8, q8, q9      @ encoding: [0xf2,0x02,0x70,0xf2]
+	%tmp3 = call <2 x i64> @llvm.arm.neon.vqsubs.v2i64(<2 x i64> %tmp1, <2 x i64> %tmp2)
+	ret <2 x i64> %tmp3
+}
+
+declare <16 x i8> @llvm.arm.neon.vqsubu.v16i8(<16 x i8>, <16 x i8>) nounwind readnone
+declare <8 x i16> @llvm.arm.neon.vqsubu.v8i16(<8 x i16>, <8 x i16>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vqsubu.v4i32(<4 x i32>, <4 x i32>) nounwind readnone
+declare <2 x i64> @llvm.arm.neon.vqsubu.v2i64(<2 x i64>, <2 x i64>) nounwind readnone
+
+; CHECK: vqsubu_16xi8
+define <16 x i8> @vqsubu_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vqsub.u8	q8, q8, q9      @ encoding: [0xf2,0x02,0x40,0xf3]
+	%tmp3 = call <16 x i8> @llvm.arm.neon.vqsubu.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
+	ret <16 x i8> %tmp3
+}
+
+; CHECK: vqsubu_8xi16
+define <8 x i16> @vqsubu_8xi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vqsub.u16	q8, q8, q9      @ encoding: [0xf2,0x02,0x50,0xf3]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vqsubu.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
+	ret <8 x i16> %tmp3
+}
+
+; CHECK: vqsubu_4xi32
+define <4 x i32> @vqsubu_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vqsub.u32	q8, q8, q9      @ encoding: [0xf2,0x02,0x60,0xf3]
+	%tmp3 = call <4 x i32> @llvm.arm.neon.vqsubu.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
+	ret <4 x i32> %tmp3
+}
+
+; CHECK: vqsubu_2xi64
+define <2 x i64> @vqsubu_2xi64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <2 x i64>* %B
+; CHECK: vqsub.u64	q8, q8, q9      @ encoding: [0xf2,0x02,0x70,0xf3]
+	%tmp3 = call <2 x i64> @llvm.arm.neon.vqsubu.v2i64(<2 x i64> %tmp1, <2 x i64> %tmp2)
+	ret <2 x i64> %tmp3
+}
