@@ -116,7 +116,7 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
 template<class GraphT>
 void Compress(DominatorTreeBase<typename GraphT::NodeType>& DT,
               typename GraphT::NodeType *VIn) {
-  std::vector<typename GraphT::NodeType*> Work;
+  SmallVector<typename GraphT::NodeType*, 32> Work;
   SmallPtrSet<typename GraphT::NodeType*, 32> Visited;
   typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInVAInfo =
                                       DT.Info[DT.Vertex[DT.Info[VIn].Ancestor]];

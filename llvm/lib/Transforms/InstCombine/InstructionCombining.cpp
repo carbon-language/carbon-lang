@@ -1032,10 +1032,8 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
   bool MadeIRChange = false;
   SmallVector<BasicBlock*, 256> Worklist;
   Worklist.push_back(BB);
-  
-  std::vector<Instruction*> InstrsForInstCombineWorklist;
-  InstrsForInstCombineWorklist.reserve(128);
 
+  SmallVector<Instruction*, 128> InstrsForInstCombineWorklist;
   SmallPtrSet<ConstantExpr*, 64> FoldedConstants;
   
   do {
