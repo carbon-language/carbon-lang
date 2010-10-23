@@ -102,8 +102,8 @@ namespace {
     friend bool operator<(const NEONLdStTableEntry &TE, unsigned PseudoOpc) {
       return TE.PseudoOpc < PseudoOpc;
     }
-    friend bool ATTRIBUTE_UNUSED operator<(unsigned PseudoOpc,
-                                           const NEONLdStTableEntry &TE) {
+    friend bool LLVM_ATTRIBUTE_UNUSED operator<(unsigned PseudoOpc,
+                                                const NEONLdStTableEntry &TE) {
       return PseudoOpc < TE.PseudoOpc;
     }
   };

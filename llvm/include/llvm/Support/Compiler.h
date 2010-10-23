@@ -26,9 +26,9 @@
 #endif
 
 #if (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
-#define ATTRIBUTE_USED __attribute__((__used__))
+#define LLVM_ATTRIBUTE_USED __attribute__((__used__))
 #else
-#define ATTRIBUTE_USED
+#define LLVM_ATTRIBUTE_USED
 #endif
 
 // Some compilers warn about unused functions. When a function is sometimes
@@ -40,21 +40,21 @@
 //   (void)unused_var_name;
 // Prefer cast-to-void wherever it is sufficient.
 #if (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
-#define ATTRIBUTE_UNUSED __attribute__((__unused__))
+#define LLVM_ATTRIBUTE_UNUSED __attribute__((__unused__))
 #else
-#define ATTRIBUTE_UNUSED
+#define LLVM_ATTRIBUTE_UNUSED
 #endif
 
 #ifdef __GNUC__ // aka 'ATTRIBUTE_CONST' but following LLVM Conventions.
-#define ATTRIBUTE_READNONE __attribute__((__const__))
+#define LLVM_ATTRIBUTE_READNONE __attribute__((__const__))
 #else
-#define ATTRIBUTE_READNONE
+#define LLVM_ATTRIBUTE_READNONE
 #endif
 
 #ifdef __GNUC__  // aka 'ATTRIBUTE_PURE' but following LLVM Conventions.
-#define ATTRIBUTE_READONLY __attribute__((__pure__))
+#define LLVM_ATTRIBUTE_READONLY __attribute__((__pure__))
 #else
-#define ATTRIBUTE_READONLY
+#define LLVM_ATTRIBUTE_READONLY
 #endif
 
 #if (__GNUC__ >= 4)
@@ -106,5 +106,13 @@
 #else
 #define NORETURN
 #endif
+
+// We provide definitions without the LLVM_ prefix briefly while transitioning
+// to always-prefixed names. These will go away as soon as the migration is
+// complete.
+#define ATTRIBUTE_USED LLVM_ATTRIBUTE_USED
+#define ATTRIBUTE_UNUSED LLVM_ATTRIBUTE_UNUSED
+#define ATTRIBUTE_READNONE LLVM_ATTRIBUTE_READNONE
+#define ATTRIBUTE_READONLY LLVM_ATTRIBUTE_READONLY
 
 #endif

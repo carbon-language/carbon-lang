@@ -109,7 +109,8 @@ bool LowerSwitch::runOnFunction(Function &F) {
 // operator<< - Used for debugging purposes.
 //
 static raw_ostream& operator<<(raw_ostream &O,
-                               const LowerSwitch::CaseVector &C) ATTRIBUTE_USED;
+                               const LowerSwitch::CaseVector &C)
+    LLVM_ATTRIBUTE_USED;
 static raw_ostream& operator<<(raw_ostream &O,
                                const LowerSwitch::CaseVector &C) {
   O << "[";

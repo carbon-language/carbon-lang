@@ -337,7 +337,7 @@ extern "C" {
  // no support for inline assembly
 static
 #endif
-void ATTRIBUTE_USED
+void LLVM_ATTRIBUTE_USED
 X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   intptr_t *RetAddrLoc = &StackPtr[1];
   assert(*RetAddrLoc == RetAddr &&

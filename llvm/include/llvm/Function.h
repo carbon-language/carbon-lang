@@ -152,7 +152,7 @@ public:
   /// The particular intrinsic functions which correspond to this value are
   /// defined in llvm/Intrinsics.h.
   ///
-  unsigned getIntrinsicID() const ATTRIBUTE_READONLY;
+  unsigned getIntrinsicID() const LLVM_ATTRIBUTE_READONLY;
   bool isIntrinsic() const { return getIntrinsicID() != 0; }
 
   /// getCallingConv()/setCallingConv(CC) - These method get and set the
