@@ -946,7 +946,8 @@ void MachineVerifier::verifyLiveIntervals() {
         const MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
         if (!MI) {
           report("No instruction at def index", MF);
-          *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
+          *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
+              << " in " << LI << '\n';
         } else if (!MI->modifiesRegister(LI.reg, TRI)) {
           report("Defining instruction does not modify register", MI);
           *OS << "Valno #" << VNI->id << " in " << LI << '\n';
@@ -970,6 +971,81 @@ void MachineVerifier::verifyLiveIntervals() {
         *OS << " in " << LI << '\n';
       }
 
+      const MachineBasicBlock *MBB = LiveInts->getMBBFromIndex(I->start);
+      if (!MBB) {
+        report("Bad start of live segment, no basic block", MF);
+        I->print(*OS);
+        *OS << " in " << LI << '\n';
+        continue;
+      }
+      SlotIndex MBBStartIdx = LiveInts->getMBBStartIdx(MBB);
+      if (I->start != MBBStartIdx && I->start != VNI->def) {
+        report("Live segment must begin at MBB entry or valno def", MBB);
+        I->print(*OS);
+        *OS << " in " << LI << '\n' << "Basic block starts at "
+            << MBBStartIdx << '\n';
+      }
+
+      const MachineBasicBlock *EndMBB =
+                                LiveInts->getMBBFromIndex(I->end.getPrevSlot());
+      if (!EndMBB) {
+        report("Bad end of live segment, no basic block", MF);
+        I->print(*OS);
+        *OS << " in " << LI << '\n';
+        continue;
+      }
+      if (I->end != LiveInts->getMBBEndIdx(EndMBB)) {
+        // The live segment is ending inside EndMBB
+        const MachineInstr *MI =
+                        LiveInts->getInstructionFromIndex(I->end.getPrevSlot());
+        if (!MI) {
+          report("Live segment doesn't end at a valid instruction", EndMBB);
+        I->print(*OS);
+        *OS << " in " << LI << '\n' << "Basic block starts at "
+            << MBBStartIdx << '\n';
+        } else if (TargetRegisterInfo::isVirtualRegister(LI.reg) &&
+                   !MI->readsVirtualRegister(LI.reg)) {
+          // FIXME: Should we require a kill flag?
+          report("Instruction killing live segment doesn't read register", MI);
+          I->print(*OS);
+          *OS << " in " << LI << '\n';
+        }
+      }
+
+      // Now check all the basic blocks in this live segment.
+      MachineFunction::const_iterator MFI = MBB;
+      // Is LI live-in to MBB and not a PHIDef?
+      if (I->start == VNI->def) {
+        // Not live-in to any blocks.
+        if (MBB == EndMBB)
+          continue;
+        // Skip this block.
+        ++MFI;
+      }
+      for (;;) {
+        assert(LiveInts->isLiveInToMBB(LI, MFI));
+        // Check that VNI is live-out of all predecessors.
+        for (MachineBasicBlock::const_pred_iterator PI = MFI->pred_begin(),
+             PE = MFI->pred_end(); PI != PE; ++PI) {
+          SlotIndex PEnd = LiveInts->getMBBEndIdx(*PI).getPrevSlot();
+          const VNInfo *PVNI = LI.getVNInfoAt(PEnd);
+          if (!PVNI) {
+            report("Register not marked live out of predecessor", *PI);
+            *OS << "Valno #" << VNI->id << " live into BB#" << MFI->getNumber()
+                << '@' << LiveInts->getMBBStartIdx(MFI) << ", not live at "
+                << PEnd << " in " << LI << '\n';
+          } else if (PVNI != VNI) {
+            report("Different value live out of predecessor", *PI);
+            *OS << "Valno #" << PVNI->id << " live out of BB#"
+                << (*PI)->getNumber() << '@' << PEnd
+                << "\nValno #" << VNI->id << " live into BB#" << MFI->getNumber()
+                << '@' << LiveInts->getMBBStartIdx(MFI) << " in " << LI << '\n';
+          }
+        }
+        if (&*MFI == EndMBB)
+          break;
+        ++MFI;
+      }
     }
   }
 }
