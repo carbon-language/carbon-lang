@@ -490,7 +490,7 @@ bool ARMBaseInstrInfo::isPredicable(MachineInstr *MI) const {
 }
 
 /// FIXME: Works around a gcc miscompilation with -fstrict-aliasing.
-DISABLE_INLINE
+LLVM_ATTRIBUTE_NOINLINE
 static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
                                 unsigned JTI);
 static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,

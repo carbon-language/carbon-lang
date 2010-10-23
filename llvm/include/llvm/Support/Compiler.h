@@ -76,35 +76,35 @@
 #define TEMPLATE_INSTANTIATION(X)
 #endif
 
-// DISABLE_INLINE - On compilers where we have a directive to do so, mark a
-// method "not for inlining".
+// LLVM_ATTRIBUTE_NOINLINE - On compilers where we have a directive to do so,
+// mark a method "not for inlining".
 #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
-#define DISABLE_INLINE __attribute__((noinline))
+#define LLVM_ATTRIBUTE_NOINLINE __attribute__((noinline))
 #elif defined(_MSC_VER)
-#define DISABLE_INLINE __declspec(noinline)
+#define LLVM_ATTRIBUTE_NOINLINE __declspec(noinline)
 #else
-#define DISABLE_INLINE
+#define LLVM_ATTRIBUTE_NOINLINE
 #endif
 
-// ALWAYS_INLINE - On compilers where we have a directive to do so, mark a
-// method "always inline" because it is performance sensitive.
-// GCC 3.4 supported this but is buggy in various cases and produces
-// unimplemented errors, just use it in GCC 4.0 and later.
+// LLVM_ATTRIBUTE_ALWAYS_INLINE - On compilers where we have a directive to do
+// so, mark a method "always inline" because it is performance sensitive. GCC
+// 3.4 supported this but is buggy in various cases and produces unimplemented
+// errors, just use it in GCC 4.0 and later.
 #if __GNUC__ > 3
-#define ALWAYS_INLINE __attribute__((always_inline))
+#define LLVM_ATTRIBUTE_ALWAYS_INLINE __attribute__((always_inline))
 #elif defined(_MSC_VER)
-#define ALWAYS_INLINE __forceinline
+#define LLVM_ATTRIBUTE_ALWAYS_INLINE __forceinline
 #else
-#define ALWAYS_INLINE
+#define LLVM_ATTRIBUTE_ALWAYS_INLINE
 #endif
 
 
 #ifdef __GNUC__
-#define NORETURN __attribute__((noreturn))
+#define LLVM_ATTRIBUTE_NORETURN __attribute__((noreturn))
 #elif defined(_MSC_VER)
-#define NORETURN __declspec(noreturn)
+#define LLVM_ATTRIBUTE_NORETURN __declspec(noreturn)
 #else
-#define NORETURN
+#define LLVM_ATTRIBUTE_NORETURN
 #endif
 
 // We provide definitions without the LLVM_ prefix briefly while transitioning
@@ -114,5 +114,8 @@
 #define ATTRIBUTE_UNUSED LLVM_ATTRIBUTE_UNUSED
 #define ATTRIBUTE_READNONE LLVM_ATTRIBUTE_READNONE
 #define ATTRIBUTE_READONLY LLVM_ATTRIBUTE_READONLY
+#define NORETURN LLVM_ATTRIBUTE_NORETURN
+#define DISABLE_INLINE LLVM_ATTRIBUTE_NOINLINE
+#define ALWAYS_INLINE LLVM_ATTRIBUTE_ALWAYS_INLINE
 
 #endif
