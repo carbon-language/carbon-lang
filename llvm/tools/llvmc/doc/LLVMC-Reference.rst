@@ -456,22 +456,22 @@ use TableGen inheritance instead.
 * Possible tests are:
 
   - ``switch_on`` - Returns true if a given command-line switch is provided by
-    the user. Can be given a list as argument, in that case ``(switch_on ["foo",
-    "bar", "baz"])`` is equivalent to ``(and (switch_on "foo"), (switch_on
+    the user. Can be given multiple arguments, in that case ``(switch_on "foo",
+    "bar", "baz")`` is equivalent to ``(and (switch_on "foo"), (switch_on
     "bar"), (switch_on "baz"))``.
     Example: ``(switch_on "opt")``.
 
-  - ``any_switch_on`` - Given a list of switch options, returns true if any of
+  - ``any_switch_on`` - Given a number of switch options, returns true if any of
     the switches is turned on.
-    Example: ``(any_switch_on ["foo", "bar", "baz"])`` is equivalent to ``(or
+    Example: ``(any_switch_on "foo", "bar", "baz")`` is equivalent to ``(or
     (switch_on "foo"), (switch_on "bar"), (switch_on "baz"))``.
 
-  - ``parameter_equals`` - Returns true if a command-line parameter equals
-    a given value.
+  - ``parameter_equals`` - Returns true if a command-line parameter (first
+    argument) equals a given value (second argument).
     Example: ``(parameter_equals "W", "all")``.
 
-  - ``element_in_list`` - Returns true if a command-line parameter
-    list contains a given value.
+  - ``element_in_list`` - Returns true if a command-line parameter list (first
+    argument) contains a given value (second argument).
     Example: ``(element_in_list "l", "pthread")``.
 
   - ``input_languages_contain`` - Returns true if a given language
@@ -479,27 +479,27 @@ use TableGen inheritance instead.
     Example: ``(input_languages_contain "c++")``.
 
   - ``in_language`` - Evaluates to true if the input file language is equal to
-    the argument. At the moment works only with ``cmd_line`` and ``actions`` (on
+    the argument. At the moment works only with ``command`` and ``actions`` (on
     non-join nodes).
     Example: ``(in_language "c++")``.
 
   - ``not_empty`` - Returns true if a given option (which should be either a
     parameter or a parameter list) is set by the user. Like ``switch_on``, can
-    be also given a list as argument.
-    Example: ``(not_empty "o")``.
+    be also given multiple arguments.
+    Examples: ``(not_empty "o")``, ``(not_empty "o", "l")``.
 
   - ``any_not_empty`` - Returns true if ``not_empty`` returns true for any of
-    the options in the list.
-    Example: ``(any_not_empty ["foo", "bar", "baz"])`` is equivalent to ``(or
+    the provided options.
+    Example: ``(any_not_empty "foo", "bar", "baz")`` is equivalent to ``(or
     (not_empty "foo"), (not_empty "bar"), (not_empty "baz"))``.
 
   - ``empty`` - The opposite of ``not_empty``. Equivalent to ``(not (not_empty
-    X))``. Provided for convenience. Can be given a list as argument.
+    X))``. Can be given multiple arguments.
 
   - ``any_not_empty`` - Returns true if ``not_empty`` returns true for any of
-    the options in the list.
-    Example: ``(any_empty ["foo", "bar", "baz"])`` is equivalent to ``(not (and
-    (not_empty "foo"), (not_empty "bar"), (not_empty "baz")))``.
+    the provided options.
+    Example: ``(any_empty "foo", "bar", "baz")`` is equivalent to ``(or
+    (not_empty "foo"), (not_empty "bar"), (not_empty "baz"))``.
 
   - ``single_input_file`` - Returns true if there was only one input file
     provided on the command-line. Used without arguments:
@@ -511,16 +511,18 @@ use TableGen inheritance instead.
   - ``default`` - Always evaluates to true. Should always be the last
     test in the ``case`` expression.
 
-  - ``and`` - A standard binary logical combinator that returns true iff all of
+  - ``and`` - A standard logical combinator that returns true iff all of
     its arguments return true. Used like this: ``(and (test1), (test2),
     ... (testN))``. Nesting of ``and`` and ``or`` is allowed, but not
     encouraged.
 
-  - ``or`` - A binary logical combinator that returns true iff any of its
-    arguments returns true. Example: ``(or (test1), (test2), ... (testN))``.
+  - ``or`` - A logical combinator that returns true iff any of its arguments
+    return true.
+    Example: ``(or (test1), (test2), ... (testN))``.
 
   - ``not`` - Standard unary logical combinator that negates its
-    argument. Example: ``(not (or (test1), (test2), ... (testN)))``.
+    argument.
+    Example: ``(not (or (test1), (test2), ... (testN)))``.
 
 
 
@@ -549,10 +551,10 @@ The complete list of all currently implemented tool properties follows.
 
 * Possible tool properties:
 
-  - ``in_language`` - input language name. Can be either a string or a
-    list, in case the tool supports multiple input languages.
+  - ``in_language`` - input language name. Can be given multiple arguments, in
+    case the tool supports multiple input languages.
 
-  - ``out_language`` - output language name. Multiple output languages are not
+  - ``out_language`` - output language name. Multiple output languages are
     allowed.
 
   - ``output_suffix`` - output file suffix. Can also be changed
@@ -687,12 +689,12 @@ occasions. Example (adapted from the built-in Base plugin)::
 
 
     def Preprocess : OptionPreprocessor<
-    (case (not (any_switch_on ["O0", "O1", "O2", "O3"])),
+    (case (not (any_switch_on "O0", "O1", "O2", "O3")),
                (set_option "O2"),
-          (and (switch_on "O3"), (any_switch_on ["O0", "O1", "O2"])),
-               (unset_option ["O0", "O1", "O2"]),
-          (and (switch_on "O2"), (any_switch_on ["O0", "O1"])),
-               (unset_option ["O0", "O1"]),
+          (and (switch_on "O3"), (any_switch_on "O0", "O1", "O2")),
+               (unset_option "O0", "O1", "O2"),
+          (and (switch_on "O2"), (any_switch_on "O0", "O1")),
+               (unset_option "O0", "O1"),
           (and (switch_on "O1"), (switch_on "O0")),
                (unset_option "O0"))
     >;
@@ -709,10 +711,10 @@ set or unset a given option. To set an option with ``set_option``, use the
 two-argument form: ``(set_option "parameter", VALUE)``. Here, ``VALUE`` can be
 either a string, a string list, or a boolean constant.
 
-For convenience, ``set_option`` and ``unset_option`` also work on lists. That
-is, instead of ``[(unset_option "A"), (unset_option "B")]`` you can use
-``(unset_option ["A", "B"])``. Obviously, ``(set_option ["A", "B"])`` is valid
-only if both ``A`` and ``B`` are switches.
+For convenience, ``set_option`` and ``unset_option`` also work with multiple
+arguments. That is, instead of ``[(unset_option "A"), (unset_option "B")]`` you
+can use ``(unset_option "A", "B")``. Obviously, ``(set_option "A", "B")`` is
+only valid if both ``A`` and ``B`` are switches.
 
 
 More advanced topics

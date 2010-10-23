@@ -25,6 +25,7 @@
 #include <string>
 #include <typeinfo>
 
+
 using namespace llvm;
 
 namespace {
@@ -162,18 +163,6 @@ void CheckedIncrement(I& P, I E, S ErrorString) {
   ++P;
   if (P == E)
     throw ErrorString;
-}
-
-// apply is needed because C++'s syntax doesn't let us construct a function
-// object and call it in the same statement.
-template<typename F, typename T0>
-void apply(F Fun, T0& Arg0) {
-  return Fun(Arg0);
-}
-
-template<typename F, typename T0, typename T1>
-void apply(F Fun, T0& Arg0, T1& Arg1) {
-  return Fun(Arg0, Arg1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -809,13 +798,12 @@ void CollectOptionDescriptions (const RecordVector& V,
                                 OptionDescriptions& OptDescs)
 {
   // For every OptionList:
-  for (RecordVector::const_iterator B = V.begin(),
-         E = V.end(); B!=E; ++B) {
+  for (RecordVector::const_iterator B = V.begin(), E = V.end(); B!=E; ++B)
+  {
     // Throws an exception if the value does not exist.
     ListInit* PropList = (*B)->getValueAsListInit("options");
 
-    // For every option description in this list:
-    // collect the information and
+    // For every option description in this list: invoke AddOption.
     std::for_each(PropList->begin(), PropList->end(), AddOption(OptDescs));
   }
 }
@@ -922,26 +910,16 @@ private:
   /// onInOutLanguage - Common implementation of on{In,Out}Language().
   void onInOutLanguage (const DagInit& d, StrVector& OutVec) {
     CheckNumberOfArguments(d, 1);
-    Init* arg = d.getArg(0);
 
-    // Find out the argument's type.
-    if (typeid(*arg) == typeid(StringInit)) {
-      // It's a string.
-      OutVec.push_back(InitPtrToString(arg));
+    // Copy strings to the output vector.
+    for (unsigned i = 0, NumArgs = d.getNumArgs(); i < NumArgs; ++i) {
+      OutVec.push_back(InitPtrToString(d.getArg(i)));
     }
-    else {
-      // It's a list.
-      const ListInit& lst = InitPtrToList(arg);
 
-      // Copy strings to the output vector.
-      for (ListInit::const_iterator B = lst.begin(), E = lst.end(); B != E; ++B)
-        OutVec.push_back(InitPtrToString(*B));
-
-      // Remove duplicates.
-      std::sort(OutVec.begin(), OutVec.end());
-      StrVector::iterator newE = std::unique(OutVec.begin(), OutVec.end());
-      OutVec.erase(newE, OutVec.end());
-    }
+    // Remove duplicates.
+    std::sort(OutVec.begin(), OutVec.end());
+    StrVector::iterator newE = std::unique(OutVec.begin(), OutVec.end());
+    OutVec.erase(newE, OutVec.end());
   }
 
 
@@ -1195,25 +1173,20 @@ class ExtractOptionNames {
     if (ActionName == "forward" || ActionName == "forward_as" ||
         ActionName == "forward_value" ||
         ActionName == "forward_transformed_value" ||
-        ActionName == "switch_on" || ActionName == "any_switch_on" ||
-        ActionName == "parameter_equals" ||
-        ActionName == "element_in_list" || ActionName == "not_empty" ||
-        ActionName == "empty") {
+        ActionName == "parameter_equals" || ActionName == "element_in_list") {
       CheckNumberOfArguments(Stmt, 1);
 
       Init* Arg = Stmt.getArg(0);
-      if (typeid(*Arg) == typeid(StringInit)) {
-        const std::string& Name = InitPtrToString(Arg);
-        OptionNames_.insert(Name);
-      }
-      else {
-        // It's a list.
-        const ListInit& List = InitPtrToList(Arg);
-        for (ListInit::const_iterator B = List.begin(), E = List.end();
-             B != E; ++B) {
-          const std::string& Name = InitPtrToString(*B);
-          OptionNames_.insert(Name);
-        }
+      if (typeid(*Arg) == typeid(StringInit))
+        OptionNames_.insert(InitPtrToString(Arg));
+    }
+    else if (ActionName == "any_switch_on" || ActionName == "switch_on" ||
+             ActionName == "any_not_empty" || ActionName == "any_empty" ||
+             ActionName == "not_empty" || ActionName == "empty") {
+      for (unsigned i = 0, NumArgs = Stmt.getNumArgs(); i < NumArgs; ++i) {
+        Init* Arg = Stmt.getArg(i);
+        if (typeid(*Arg) == typeid(StringInit))
+          OptionNames_.insert(InitPtrToString(Arg));
       }
     }
     else if (ActionName == "and" || ActionName == "or" || ActionName == "not") {
@@ -1228,6 +1201,7 @@ public:
   {}
 
   void operator()(const Init* Statement) {
+    // Statement is either a dag, or a list of dags.
     if (typeid(*Statement) == typeid(ListInit)) {
       const ListInit& DagList = *static_cast<const ListInit*>(Statement);
       for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
@@ -1308,24 +1282,20 @@ bool EmitCaseTest0Args(const std::string& TestName, raw_ostream& O) {
   return false;
 }
 
-/// EmitListTest - Helper function used by EmitCaseTest1ArgList().
+/// EmitMultipleArgumentTest - Helper function used by
+/// EmitCaseTestMultipleArgs()
 template <typename F>
-void EmitListTest(const ListInit& L, const char* LogicOp,
-                  F Callback, raw_ostream& O)
+void EmitMultipleArgumentTest(const DagInit& D, const char* LogicOp,
+                              F Callback, raw_ostream& O)
 {
-  // This is a lot like EmitLogicalOperationTest, but works on ListInits instead
-  // of Dags...
-  bool isFirst = true;
-  for (ListInit::const_iterator B = L.begin(), E = L.end(); B != E; ++B) {
-    if (isFirst)
-      isFirst = false;
-    else
-      O << ' ' << LogicOp << ' ';
-    Callback(InitPtrToString(*B), O);
+  for (unsigned i = 0, NumArgs = D.getNumArgs(); i < NumArgs; ++i) {
+    if (i != 0)
+       O << ' ' << LogicOp << ' ';
+    Callback(InitPtrToString(D.getArg(i)), O);
   }
 }
 
-// Callbacks for use with EmitListTest.
+// Callbacks for use with EmitMultipleArgumentTest
 
 class EmitSwitchOn {
   const OptionDescriptions& OptDescs_;
@@ -1363,54 +1333,48 @@ public:
 };
 
 
-/// EmitCaseTest1ArgList - Helper function used by EmitCaseTest1Arg();
-bool EmitCaseTest1ArgList(const std::string& TestName,
-                          const DagInit& d,
-                          const OptionDescriptions& OptDescs,
-                          raw_ostream& O) {
-  const ListInit& L = InitPtrToList(d.getArg(0));
-
+/// EmitCaseTestMultipleArgs - Helper function used by EmitCaseTest1Arg()
+bool EmitCaseTestMultipleArgs (const std::string& TestName,
+                               const DagInit& d,
+                               const OptionDescriptions& OptDescs,
+                               raw_ostream& O) {
   if (TestName == "any_switch_on") {
-    EmitListTest(L, "||", EmitSwitchOn(OptDescs), O);
+    EmitMultipleArgumentTest(d, "||", EmitSwitchOn(OptDescs), O);
     return true;
   }
   else if (TestName == "switch_on") {
-    EmitListTest(L, "&&", EmitSwitchOn(OptDescs), O);
+    EmitMultipleArgumentTest(d, "&&", EmitSwitchOn(OptDescs), O);
     return true;
   }
   else if (TestName == "any_not_empty") {
-    EmitListTest(L, "||", EmitEmptyTest(true, OptDescs), O);
+    EmitMultipleArgumentTest(d, "||", EmitEmptyTest(true, OptDescs), O);
     return true;
   }
   else if (TestName == "any_empty") {
-    EmitListTest(L, "||", EmitEmptyTest(false, OptDescs), O);
+    EmitMultipleArgumentTest(d, "||", EmitEmptyTest(false, OptDescs), O);
     return true;
   }
   else if (TestName == "not_empty") {
-    EmitListTest(L, "&&", EmitEmptyTest(true, OptDescs), O);
+    EmitMultipleArgumentTest(d, "&&", EmitEmptyTest(true, OptDescs), O);
     return true;
   }
   else if (TestName == "empty") {
-    EmitListTest(L, "&&", EmitEmptyTest(false, OptDescs), O);
+    EmitMultipleArgumentTest(d, "&&", EmitEmptyTest(false, OptDescs), O);
     return true;
   }
 
   return false;
 }
 
-/// EmitCaseTest1ArgStr - Helper function used by EmitCaseTest1Arg();
-bool EmitCaseTest1ArgStr(const std::string& TestName,
-                         const DagInit& d,
-                         const OptionDescriptions& OptDescs,
-                         raw_ostream& O) {
-  const std::string& OptName = InitPtrToString(d.getArg(0));
+/// EmitCaseTest1Arg - Helper function used by EmitCaseTest1OrMoreArgs()
+bool EmitCaseTest1Arg (const std::string& TestName,
+                       const DagInit& d,
+                       const OptionDescriptions& OptDescs,
+                       raw_ostream& O) {
+  const std::string& Arg = InitPtrToString(d.getArg(0));
 
-  if (TestName == "switch_on") {
-    apply(EmitSwitchOn(OptDescs), OptName, O);
-    return true;
-  }
-  else if (TestName == "input_languages_contain") {
-    O << "InLangs.count(\"" << OptName << "\") != 0";
+  if (TestName == "input_languages_contain") {
+    O << "InLangs.count(\"" << Arg << "\") != 0";
     return true;
   }
   else if (TestName == "in_language") {
@@ -1418,28 +1382,22 @@ bool EmitCaseTest1ArgStr(const std::string& TestName,
     // tools can process several files in different languages simultaneously.
 
     // TODO: make this work with Edge::Weight (if possible).
-    O << "LangMap.GetLanguage(inFile) == \"" << OptName << '\"';
-    return true;
-  }
-  else if (TestName == "not_empty" || TestName == "empty") {
-    bool EmitNegate = (TestName == "not_empty");
-    apply(EmitEmptyTest(EmitNegate, OptDescs), OptName, O);
+    O << "LangMap.GetLanguage(inFile) == \"" << Arg << '\"';
     return true;
   }
 
   return false;
 }
 
-/// EmitCaseTest1Arg - Helper function used by EmitCaseConstructHandler();
-bool EmitCaseTest1Arg(const std::string& TestName,
-                      const DagInit& d,
-                      const OptionDescriptions& OptDescs,
-                      raw_ostream& O) {
+/// EmitCaseTest1OrMoreArgs - Helper function used by
+/// EmitCaseConstructHandler()
+bool EmitCaseTest1OrMoreArgs(const std::string& TestName,
+                             const DagInit& d,
+                             const OptionDescriptions& OptDescs,
+                             raw_ostream& O) {
   CheckNumberOfArguments(d, 1);
-  if (typeid(*d.getArg(0)) == typeid(ListInit))
-    return EmitCaseTest1ArgList(TestName, d, OptDescs, O);
-  else
-    return EmitCaseTest1ArgStr(TestName, d, OptDescs, O);
+  return EmitCaseTest1Arg(TestName, d, OptDescs, O) ||
+    EmitCaseTestMultipleArgs(TestName, d, OptDescs, O);
 }
 
 /// EmitCaseTest2Args - Helper function used by EmitCaseConstructHandler().
@@ -1483,10 +1441,10 @@ void EmitLogicalOperationTest(const DagInit& d, const char* LogicOp,
                               const OptionDescriptions& OptDescs,
                               raw_ostream& O) {
   O << '(';
-  for (unsigned j = 0, NumArgs = d.getNumArgs(); j < NumArgs; ++j) {
-    const DagInit& InnerTest = InitPtrToDag(d.getArg(j));
+  for (unsigned i = 0, NumArgs = d.getNumArgs(); i < NumArgs; ++i) {
+    const DagInit& InnerTest = InitPtrToDag(d.getArg(i));
     EmitCaseTest(InnerTest, IndentLevel, OptDescs, O);
-    if (j != NumArgs - 1) {
+    if (i != NumArgs - 1) {
       O << ")\n";
       O.indent(IndentLevel + Indent1) << ' ' << LogicOp << " (";
     }
@@ -1520,7 +1478,7 @@ void EmitCaseTest(const DagInit& d, unsigned IndentLevel,
     EmitLogicalNot(d, IndentLevel, OptDescs, O);
   else if (EmitCaseTest0Args(TestName, O))
     return;
-  else if (EmitCaseTest1Arg(TestName, d, OptDescs, O))
+  else if (EmitCaseTest1OrMoreArgs(TestName, d, OptDescs, O))
     return;
   else if (EmitCaseTest2Args(TestName, d, IndentLevel, OptDescs, O))
     return;
@@ -1567,10 +1525,12 @@ public:
   {}
 
   void operator() (const Init* Statement, unsigned IndentLevel) {
+    // Is this a nested 'case'?
+    bool IsCase = dynamic_cast<const DagInit*>(Statement) &&
+      GetOperatorName(static_cast<const DagInit&>(*Statement)) == "case";
 
-    // Ignore nested 'case' DAG.
-    if (!(dynamic_cast<const DagInit*>(Statement) &&
-          GetOperatorName(static_cast<const DagInit&>(*Statement)) == "case")) {
+    // If so, ignore it, it is handled by our caller, WalkCase.
+    if (!IsCase) {
       if (typeid(*Statement) == typeid(ListInit)) {
         const ListInit& DagList = *static_cast<const ListInit*>(Statement);
         for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
@@ -2474,21 +2434,13 @@ class EmitPreprocessOptionsCallback :
 
   const OptionDescriptions& OptDescs_;
 
-  void onListOrDag(const DagInit& d, HandlerImpl h,
-                   unsigned IndentLevel, raw_ostream& O) const
+  void onEachArgument(const DagInit& d, HandlerImpl h,
+                      unsigned IndentLevel, raw_ostream& O) const
   {
     CheckNumberOfArguments(d, 1);
-    const Init* I = d.getArg(0);
 
-    // If I is a list, apply h to each element.
-    if (typeid(*I) == typeid(ListInit)) {
-      const ListInit& L = *static_cast<const ListInit*>(I);
-      for (ListInit::const_iterator B = L.begin(), E = L.end(); B != E; ++B)
-        ((this)->*(h))(*B, IndentLevel, O);
-    }
-    // Otherwise, apply h to I.
-    else {
-      ((this)->*(h))(I, IndentLevel, O);
+    for (unsigned i = 0, NumArgs = d.getNumArgs(); i < NumArgs; ++i) {
+      ((this)->*(h))(d.getArg(i), IndentLevel, O);
     }
   }
 
@@ -2515,16 +2467,17 @@ class EmitPreprocessOptionsCallback :
   void onUnsetOption(const DagInit& d,
                      unsigned IndentLevel, raw_ostream& O) const
   {
-    this->onListOrDag(d, &EmitPreprocessOptionsCallback::onUnsetOptionImpl,
-                      IndentLevel, O);
+    this->onEachArgument(d, &EmitPreprocessOptionsCallback::onUnsetOptionImpl,
+                         IndentLevel, O);
   }
 
-  void onSetOptionImpl(const DagInit& d,
+  void onSetOptionImpl(const DagInit& D,
                        unsigned IndentLevel, raw_ostream& O) const {
-    CheckNumberOfArguments(d, 2);
-    const std::string& OptName = InitPtrToString(d.getArg(0));
-    const Init* Value = d.getArg(1);
+    CheckNumberOfArguments(D, 2);
+
+    const std::string& OptName = InitPtrToString(D.getArg(0));
     const OptionDescription& OptDesc = OptDescs_.FindOption(OptName);
+    const Init* Value = D.getArg(1);
 
     if (OptDesc.isList()) {
       const ListInit& List = InitPtrToList(Value);
@@ -2554,7 +2507,7 @@ class EmitPreprocessOptionsCallback :
                             << " = \"" << Str << "\";\n";
     }
     else {
-      throw "Can't apply 'set_option' to alias option -" + OptName + " !";
+      throw "Can't apply 'set_option' to alias option '" + OptName + "'!";
     }
   }
 
@@ -2574,15 +2527,22 @@ class EmitPreprocessOptionsCallback :
   {
     CheckNumberOfArguments(d, 1);
 
-    // Two arguments: (set_option "parameter", VALUE), where VALUE can be a
-    // boolean, a string or a string list.
-    if (d.getNumArgs() > 1)
-      this->onSetOptionImpl(d, IndentLevel, O);
-    // One argument: (set_option "switch")
-    // or (set_option ["switch1", "switch2", ...])
-    else
-      this->onListOrDag(d, &EmitPreprocessOptionsCallback::onSetSwitch,
-                        IndentLevel, O);
+    // 2-argument form: (set_option "A", true), (set_option "B", "C"),
+    // (set_option "D", ["E", "F"])
+    if (d.getNumArgs() == 2) {
+      const OptionDescription& OptDesc =
+        OptDescs_.FindOption(InitPtrToString(d.getArg(0)));
+      const Init* Opt2 = d.getArg(1);
+
+      if (!OptDesc.isSwitch() || typeid(*Opt2) != typeid(StringInit)) {
+        this->onSetOptionImpl(d, IndentLevel, O);
+        return;
+      }
+    }
+
+    // Multiple argument form: (set_option "A"), (set_option "B", "C", "D")
+    this->onEachArgument(d, &EmitPreprocessOptionsCallback::onSetSwitch,
+                         IndentLevel, O);
   }
 
 public:
@@ -2687,10 +2647,11 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
 {
   O << "int PopulateLanguageMap (LanguageMap& langMap) {\n";
 
-  // For each LangMap:
+  // For each LanguageMap:
   const RecordVector& LangMaps =
     Records.getAllDerivedDefinitions("LanguageMap");
 
+  // Call DoEmitPopulateLanguageMap.
   for (RecordVector::const_iterator B = LangMaps.begin(),
          E = LangMaps.end(); B!=E; ++B) {
     ListInit* LangMap = (*B)->getValueAsListInit("map");
@@ -2925,7 +2886,7 @@ public:
       return;
     }
 
-    // We're invoked on a command line.
+    // We're invoked on a command line string.
     this->onCmdLine(InitPtrToString(Arg));
   }
 

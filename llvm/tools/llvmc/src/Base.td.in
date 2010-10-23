@@ -152,23 +152,22 @@ def LinkerOptList : OptionList<[
 // Option preprocessor.
 
 def Preprocess : OptionPreprocessor<
-(case (not (any_switch_on ["O0", "O1", "O2", "O3"])),
+(case (not (any_switch_on "O0", "O1", "O2", "O3")),
            (set_option "O2"),
-      (and (switch_on "O3"), (any_switch_on ["O0", "O1", "O2"])),
-           (unset_option ["O0", "O1", "O2"]),
-      (and (switch_on "O2"), (any_switch_on ["O0", "O1"])),
-           (unset_option ["O0", "O1"]),
-      (switch_on ["O1", "O0"]),
+      (and (switch_on "O3"), (any_switch_on "O0", "O1", "O2")),
+           (unset_option "O0", "O1", "O2"),
+      (and (switch_on "O2"), (any_switch_on "O0", "O1")),
+           (unset_option "O0", "O1"),
+      (switch_on "O1", "O0"),
            (unset_option "O0"))
 >;
 
 // Tools
 
-class llvm_gcc_based <string cmd, string in_lang,
-                      string E_ext, list<string> out_lang,
+class llvm_gcc_based <string cmd, string in_lang, string E_ext, dag out_lang,
                       string out_ext> : Tool<
 [(in_language in_lang),
- (out_language out_lang),
+ out_lang,
  (output_suffix out_ext),
  (command cmd),
  (actions
@@ -184,7 +183,7 @@ class llvm_gcc_based <string cmd, string in_lang,
          (and (switch_on "emit-llvm"), (not (switch_on "opt"))),
               (stop_compilation),
          // ('-S' && '-emit-llvm') && !('opt') -> output .ll
-         (and (switch_on ["emit-llvm", "S"]), (not (switch_on "opt"))),
+         (and (switch_on "emit-llvm", "S"), (not (switch_on "opt"))),
               [(forward "S"), (output_suffix "ll")],
          // Ususally just output .bc
          (not (switch_on "fsyntax-only")),
@@ -222,10 +221,12 @@ class llvm_gcc_based <string cmd, string in_lang,
 ]>;
 
 class llvm_gcc_comp_based <string cmd, string in_lang, string E_ext>
-: llvm_gcc_based<cmd, in_lang, E_ext, ["llvm-bitcode", "object-code"], "bc">;
+: llvm_gcc_based<cmd, in_lang, E_ext,
+  (out_language "llvm-bitcode", "object-code"), "bc">;
 
 class llvm_gcc_pch_based <string cmd, string in_lang, string E_ext>
-: llvm_gcc_based<cmd, in_lang, E_ext, ["precompiled-header"], "gch">;
+: llvm_gcc_based<cmd, in_lang, E_ext,
+  (out_language "precompiled-header"), "gch">;
 
 def llvm_gcc_c : llvm_gcc_comp_based
     <"@LLVMGCCCOMMAND@ -x c", "c", "i">;
@@ -250,7 +251,7 @@ def opt : Tool<
  (out_language "llvm-bitcode"),
  (output_suffix "opt.bc"),
  (actions (case (switch_on "emit-llvm"), (stop_compilation),
-                (switch_on ["emit-llvm", "S"]),
+                (switch_on "emit-llvm", "S"),
                 [(append_cmd "-S"), (output_suffix "ll")],
                 (not_empty "Wo,"), (forward_value "Wo,"),
                 (switch_on "O1"), (forward "O1"),
@@ -282,7 +283,7 @@ def llvm_gcc_assembler : Tool<
 ]>;
 
 def llc : Tool<
-[(in_language ["llvm-bitcode", "llvm-assembler"]),
+[(in_language "llvm-bitcode", "llvm-assembler"),
  (out_language "assembler"),
  (output_suffix "s"),
  (command "llc"),
@@ -304,7 +305,7 @@ def llc : Tool<
 
 // Base class for linkers
 class llvm_gcc_based_linker <string cmd, dag on_empty> : Tool<
-[(in_language ["object-code", "static-library", "dynamic-library"]),
+[(in_language "object-code", "static-library", "dynamic-library"),
  (out_language "executable"),
  (output_suffix "out"),
  (command cmd),
