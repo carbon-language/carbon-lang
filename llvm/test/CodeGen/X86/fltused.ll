@@ -2,7 +2,8 @@
 ; any function is called with floating point arguments on Windows. And that it
 ; is not emitted otherwise.
 
-; RUN: llc < %s -mtriple i686-pc-win32 | FileCheck %s
+; RUN: llc < %s -mtriple i686-pc-win32 | FileCheck %s --check-prefix WIN32
+; RUN: llc < %s -mtriple x86_64-pc-win32 | FileCheck %s --check-prefix WIN64
 
 @.str = private constant [4 x i8] c"%f\0A\00"
 
@@ -14,4 +15,5 @@ entry:
 
 declare i32 @printf(i8* nocapture, ...) nounwind
 
-; CHECK: .globl __fltused
+; WIN32: .globl __fltused
+; WIN64: .globl _fltused
