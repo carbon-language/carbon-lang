@@ -164,6 +164,15 @@ namespace llvm {
     /// input.
     virtual void BuildSchedGraph(AliasAnalysis *AA);
 
+    /// AddSchedBarrierDeps - Add dependencies from instructions in the current
+    /// list of instructions being scheduled to scheduling barrier. We want to
+    /// make sure instructions which define registers that are either used by
+    /// the terminator or are live-out are properly scheduled. This is
+    /// especially important when the definition latency of the return value(s)
+    /// are too high to be hidden by the branch or when the liveout registers
+    /// used by instructions in the fallthrough block.
+    void AddSchedBarrierDeps();
+
     /// ComputeLatency - Compute node latency.
     ///
     virtual void ComputeLatency(SUnit *SU);
