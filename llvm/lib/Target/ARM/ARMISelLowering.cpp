@@ -69,10 +69,6 @@ ARMInterworking("arm-interworking", cl::Hidden,
   cl::desc("Enable / disable ARM interworking (for debugging only)"),
   cl::init(true));
 
-static cl::opt<bool>
-ARMFastCC("arm-fastcc", cl::Hidden,
-  cl::desc("Use AAPCS / AAPCS-VFP calling conventions for fastcc"));
-
 void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
                                        EVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
@@ -960,7 +956,7 @@ CCAssignFn *ARMTargetLowering::CCAssignFnForNode(CallingConv::ID CC,
   default:
     llvm_unreachable("Unsupported calling convention");
   case CallingConv::Fast:
-    if (ARMFastCC && Subtarget->hasVFP2() && !isVarArg) {
+    if (Subtarget->hasVFP2() && !isVarArg) {
       if (!Subtarget->isAAPCS_ABI())
         return (Return ? RetFastCC_ARM_APCS : FastCC_ARM_APCS);
       // For AAPCS ABI targets, just use VFP variant of the calling convention.
