@@ -25,7 +25,7 @@ void LiveIntervalUnion::unify(LiveInterval &lvr) {
   // Add this live virtual register to the union
   LiveVirtRegs::iterator pos = std::upper_bound(lvrs_.begin(), lvrs_.end(),
                                                 &lvr, less_ptr<LiveInterval>());
-  assert(pos == lvrs_.end() || *pos != &lvr && "duplicate LVR insertion");
+  assert((pos == lvrs_.end() || *pos != &lvr) && "duplicate LVR insertion");
   lvrs_.insert(pos, &lvr);
   // Insert each of the virtual register's live segments into the map
   SegmentIter segPos = segments_.begin();
