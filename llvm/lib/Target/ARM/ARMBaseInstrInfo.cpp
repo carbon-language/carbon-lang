@@ -1892,7 +1892,13 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   if (!ItinData || ItinData->isEmpty())
     return DefTID.mayLoad() ? 3 : 1;
 
+
   const TargetInstrDesc &UseTID = UseMI->getDesc();
+  const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
+  if (DefMO.getReg() == ARM::CPSR && UseTID.isBranch())
+    // CPSR set and branch can be paired in the same cycle.
+    return 0;
+
   unsigned DefAlign = DefMI->hasOneMemOperand()
     ? (*DefMI->memoperands_begin())->getAlignment() : 0;
   unsigned UseAlign = UseMI->hasOneMemOperand()
