@@ -1720,15 +1720,14 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
 
 bool SimplifyCFGOpt::run(BasicBlock *BB) {
   bool Changed = false;
-  Function *M = BB->getParent();
+  Function *Fn = BB->getParent();
 
-  assert(BB && BB->getParent() && "Block not embedded in function!");
+  assert(BB && Fn && "Block not embedded in function!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
 
   // Remove basic blocks that have no predecessors (except the entry block)...
   // or that just have themself as a predecessor.  These are unreachable.
-  if ((pred_begin(BB) == pred_end(BB) &&
-       &BB->getParent()->getEntryBlock() != BB) ||
+  if ((pred_begin(BB) == pred_end(BB) && BB != &Fn->getEntryBlock()) ||
       BB->getSinglePredecessor() == BB) {
     DEBUG(dbgs() << "Removing BB: \n" << *BB);
     DeleteDeadBlock(BB);
@@ -1798,7 +1797,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
         // If we eliminated all predecessors of the block, delete the block now.
         if (pred_begin(BB) == pred_end(BB))
           // We know there are no successors, so just nuke the block.
-          M->getBasicBlockList().erase(BB);
+          Fn->getBasicBlockList().erase(BB);
 
         return true;
       }
@@ -1847,10 +1846,10 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       Preds.pop_back();
     }
 
-    // If this block is now dead, remove it.
-    if (pred_begin(BB) == pred_end(BB)) {
+    // If this block is now dead (and isn't the entry block), remove it.
+    if (pred_begin(BB) == pred_end(BB) && BB != &Fn->getEntryBlock()) {
       // We know there are no successors, so just nuke the block.
-      M->getBasicBlockList().erase(BB);
+      Fn->getBasicBlockList().erase(BB);
       return true;
     }
 
@@ -1880,7 +1879,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       while (isa<DbgInfoIntrinsic>(BBI))
         ++BBI;
       if (BBI->isTerminator()) // Terminator is the only non-phi instruction!
-        if (BB != &BB->getParent()->getEntryBlock())
+        if (BB != &Fn->getEntryBlock())
           if (TryToSimplifyUncondBranchFromEmptyBlock(BB))
             return true;
       
@@ -2050,10 +2049,9 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       }
 
       // If this block is now dead, remove it.
-      if (pred_begin(BB) == pred_end(BB) &&
-          BB != &BB->getParent()->getEntryBlock()) {
+      if (pred_begin(BB) == pred_end(BB) && BB != &Fn->getEntryBlock()) {
         // We know there are no successors, so just nuke the block.
-        M->getBasicBlockList().erase(BB);
+        Fn->getBasicBlockList().erase(BB);
         return true;
       }
     }
