@@ -92,6 +92,7 @@
   
   <li><a href="#targetimpls">Target-specific Implementation Notes</a>
     <ul>
+    <li><a href="#targetfeatures">Target Feature Matrix</a></li>
     <li><a href="#tailcallopt">Tail call optimization</a></li>
     <li><a href="#sibcallopt">Sibling call optimization</a></li>
     <li><a href="#x86">The X86 backend</a></li>
@@ -1900,9 +1901,281 @@ compiler.</p>
 <div class="doc_text">
 
 <p>This section of the document explains features or design decisions that are
-   specific to the code generator for a particular target.</p>
+   specific to the code generator for a particular target.  First we start
+   with a table that summarizes what features are supported by each target.</p>
 
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="targetfeatures">Target Feature Matrix</a>
+</div>
+
+<style type="text/css">
+  .unknown { background-color: #C0C0C0; text-align: center; }
+  .unknown:before { content: "?" }
+  .no { background-color: #C11B17 }
+  .no:before { content: "N" }
+  .partial { background-color: #F88017 }
+  .yes { background-color: #00FF00; }
+  .yes:before { content: "Y" }
+</style>
+
+
+<div class="doc_text">
+
+<p>Note that this table does not include the C backend or Cpp backends, since
+they do not use the target independent code generator infrastructure.  It also
+doesn't list features that are not supported fully by any target yet.  It
+considers a feature to be supported if at least one subtarget supports it.  A
+feature being supported means that it is useful and works for most cases, it
+does not indicate that there are zero known bugs in the implementation.  Here
+is the key:</p>
+
+
+<table border="1" cellspacing="0">
+  <tr>
+    <th>Unknown</th>
+    <th>No support</th>
+    <th>Partial Support</th>
+    <th>Complete Support</th>
+  </tr>
+  <tr>
+    <td class="unknown"></td>
+    <td class="no"></td>
+    <td class="partial"></td>
+    <td class="yes"></td>
+  </tr>
+</table>
+
+<p>Here is the table:</p>
+
+<table width="689" border="1" cellspacing="0">
+<tr><td></td>
+<td colspan="13" align="center" bgcolor="#ffffcc">Target</td>
+</tr>
+  <tr>
+    <th>Feature</th>
+    <th>ARM</th>
+    <th>Alpha</th>
+    <th>Blackfin</th>
+    <th>CellSPU</th>
+    <th>MBlaze</th>
+    <th>MSP430</th>
+    <th>Mips</th>
+    <th>PTX</th>
+    <th>PowerPC</th>
+    <th>Sparc</th>
+    <th>SystemZ</th>
+    <th>X86</th>
+    <th>XCore</th>
+  </tr>
+
+<tr>
+  <td><a href="#feat_reliable">is generally reliable</a></td>
+  <td class="yes"></td> <!-- ARM -->
+  <td class="unknown"></td> <!-- Alpha -->
+  <td class="unknown"></td> <!-- Blackfin -->
+  <td class="unknown"></td> <!-- CellSPU -->
+  <td class="unknown"></td> <!-- MBlaze -->
+  <td class="unknown"></td> <!-- MSP430 -->
+  <td class="unknown"></td> <!-- Mips -->
+  <td class="no"></td> <!-- PTX -->
+  <td class="yes"></td> <!-- PowerPC -->
+  <td class="yes"></td> <!-- Sparc -->
+  <td class="unknown"></td> <!-- SystemZ -->
+  <td class="yes"></td> <!-- X86 -->
+  <td class="unknown"></td> <!-- XCore -->
+</tr>
+
+<tr>
+  <td><a href="#feat_asmparser">assembly parser</a></td>
+  <td class="no"></td> <!-- ARM -->
+  <td class="no"></td> <!-- Alpha -->
+  <td class="no"></td> <!-- Blackfin -->
+  <td class="no"></td> <!-- CellSPU -->
+  <td class="no"></td> <!-- MBlaze -->
+  <td class="no"></td> <!-- MSP430 -->
+  <td class="no"></td> <!-- Mips -->
+  <td class="no"></td> <!-- PTX -->
+  <td class="no"></td> <!-- PowerPC -->
+  <td class="no"></td> <!-- Sparc -->
+  <td class="no"></td> <!-- SystemZ -->
+  <td class="yes"></td> <!-- X86 -->
+  <td class="no"></td> <!-- XCore -->
+</tr>
+
+<tr>
+  <td><a href="#feat_disassembler">disassembler</a></td>
+  <td class="yes"></td> <!-- ARM -->
+  <td class="no"></td> <!-- Alpha -->
+  <td class="no"></td> <!-- Blackfin -->
+  <td class="no"></td> <!-- CellSPU -->
+  <td class="no"></td> <!-- MBlaze -->
+  <td class="no"></td> <!-- MSP430 -->
+  <td class="no"></td> <!-- Mips -->
+  <td class="no"></td> <!-- PTX -->
+  <td class="no"></td> <!-- PowerPC -->
+  <td class="no"></td> <!-- Sparc -->
+  <td class="no"></td> <!-- SystemZ -->
+  <td class="yes"></td> <!-- X86 -->
+  <td class="no"></td> <!-- XCore -->
+</tr>
+
+<tr>
+  <td><a href="#feat_inlineasm">inline asm</a></td>
+  <td class="yes"></td> <!-- ARM -->
+  <td class="unknown"></td> <!-- Alpha -->
+  <td class="unknown"></td> <!-- Blackfin -->
+  <td class="unknown"></td> <!-- CellSPU -->
+  <td class="unknown"></td> <!-- MBlaze -->
+  <td class="unknown"></td> <!-- MSP430 -->
+  <td class="unknown"></td> <!-- Mips -->
+  <td class="unknown"></td> <!-- PTX -->
+  <td class="yes"></td> <!-- PowerPC -->
+  <td class="unknown"></td> <!-- Sparc -->
+  <td class="unknown"></td> <!-- SystemZ -->
+  <td class="yes"><a href="#feat_inlineasm_x86">*</a></td> <!-- X86 -->
+  <td class="unknown"></td> <!-- XCore -->
+</tr>
+
+<tr>
+  <td><a href="#feat_jit">jit</a></td>
+  <td class="partial"><a href="#feat_jit_arm">*</a></td> <!-- ARM -->
+  <td class="unknown"></td> <!-- Alpha -->
+  <td class="unknown"></td> <!-- Blackfin -->
+  <td class="unknown"></td> <!-- CellSPU -->
+  <td class="unknown"></td> <!-- MBlaze -->
+  <td class="unknown"></td> <!-- MSP430 -->
+  <td class="unknown"></td> <!-- Mips -->
+  <td class="unknown"></td> <!-- PTX -->
+  <td class="yes"></td> <!-- PowerPC -->
+  <td class="unknown"></td> <!-- Sparc -->
+  <td class="unknown"></td> <!-- SystemZ -->
+  <td class="yes"></td> <!-- X86 -->
+  <td class="unknown"></td> <!-- XCore -->
+</tr>
+
+<tr>
+  <td><a href="#feat_objectwrite">.o&nbsp;file writing</a></td>
+  <td class="no"></td> <!-- ARM -->
+  <td class="no"></td> <!-- Alpha -->
+  <td class="no"></td> <!-- Blackfin -->
+  <td class="no"></td> <!-- CellSPU -->
+  <td class="no"></td> <!-- MBlaze -->
+  <td class="no"></td> <!-- MSP430 -->
+  <td class="no"></td> <!-- Mips -->
+  <td class="no"></td> <!-- PTX -->
+  <td class="no"></td> <!-- PowerPC -->
+  <td class="no"></td> <!-- Sparc -->
+  <td class="no"></td> <!-- SystemZ -->
+  <td class="yes"></td> <!-- X86 -->
+  <td class="no"></td> <!-- XCore -->
+</tr>
+
+<tr>
+  <td><a href="#feat_tailcall">tail calls</a></td>
+  <td class="yes"></td> <!-- ARM -->
+  <td class="unknown"></td> <!-- Alpha -->
+  <td class="unknown"></td> <!-- Blackfin -->
+  <td class="unknown"></td> <!-- CellSPU -->
+  <td class="unknown"></td> <!-- MBlaze -->
+  <td class="unknown"></td> <!-- MSP430 -->
+  <td class="unknown"></td> <!-- Mips -->
+  <td class="unknown"></td> <!-- PTX -->
+  <td class="yes"></td> <!-- PowerPC -->
+  <td class="unknown"></td> <!-- Sparc -->
+  <td class="unknown"></td> <!-- SystemZ -->
+  <td class="yes"></td> <!-- X86 -->
+  <td class="unknown"></td> <!-- XCore -->
+</tr>
+
+
+</table>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection" id="feat_reliable">Is Generally Reliable</div>
+
+<div class="doc_text">
+<p>This box indicates whether the target is considered to be production quality.
+This indicates that the target has been used as a static compiler to
+compile large amounts of code by a variety of different people and is in
+continuous use.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection" id="feat_asmparser">Assembly Parser</div>
+
+<div class="doc_text">
+<p>This box indicates whether the target supports parsing target specific .s
+files by implementing the MCAsmParser interface.  This is required for llvm-mc
+to be able to act as a native assembler and is required for inline assembly
+support in the native .o file writer.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection" id="feat_disassembler">Disassembler</div>
+
+<div class="doc_text">
+<p>This box indicates whether the target supports the MCDisassembler API for
+disassembling machine opcode bytes into MCInst's.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection" id="feat_inlineasm">Inline Asm</div>
+
+<div class="doc_text">
+<p>This box indicates whether the target supports most popular inline assembly
+constraints and modifiers.</p>
+
+<p id="feat_inlineasm_x86">X86 lacks reliable support for inline assembly
+constraints relating to the X86 floating point stack.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection" id="feat_jit">JIT Support</div>
+
+<div class="doc_text">
+<p>This box indicates whether the target supports the JIT compiler through
+the ExecutionEngine interface.</p>
+
+<p id="feat_inlineasm_arm">The ARM backend has basic support for integer code
+in ARM codegen mode, but lacks NEON and full Thumb support.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection" id="feat_objectwrite">.o File Writing</div>
+
+<div class="doc_text">
+
+<p>This box indicates whether the target supports writing .o files (e.g. MachO,
+ELF, and/or COFF) files directly from the target.  Note that the target also
+must include an assembly parser and general inline assembly support for full
+inline assembly support in the .o writer.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection" id="feat_tailcall">Tail Calls</div>
+
+<div class="doc_text">
+
+<p>This box indicates whether the target supports guaranteed tail calls.  These
+are calls marked "<a href="LangRef.html#i_call">tail</a>" and use the fastcc
+calling convention.  Please see the <a href="#tailcallopt">tail call section
+more more details</a>.</p>
+
+</div>
+
+
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
