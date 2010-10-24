@@ -142,7 +142,7 @@ def UnusedLabel : DiagGroup<"unused-label">;
 def UnusedParameter : DiagGroup<"unused-parameter">;
 def UnusedValue    : DiagGroup<"unused-value">;
 def UnusedVariable : DiagGroup<"unused-variable">;
-def UsedBytMarkedUnused : DiagGroup<"used-but-marked-unused">;
+def UsedButMarkedUnused : DiagGroup<"used-but-marked-unused">;
 def ReadOnlySetterAttrs : DiagGroup<"readonly-setter-attrs">;
 def Reorder : DiagGroup<"reorder">;
 def UndeclaredSelector : DiagGroup<"undeclared-selector">;
