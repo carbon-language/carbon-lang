@@ -289,8 +289,8 @@ private:
   void WriteReferencedSelectorsPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
   void WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record);
-  void WriteDeclChangeSetBlocks();
-  void WriteDeclUpdateBlock();
+  void WriteDeclUpdatesBlocks();
+  void WriteDeclReplacementsBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
   void WriteAdditionalTemplateSpecializations();
 

@@ -2697,19 +2697,19 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!AdditionalTemplateSpecializations.empty())
     WriteAdditionalTemplateSpecializations();
 
-  WriteDeclChangeSetBlocks();
+  WriteDeclUpdatesBlocks();
 
   Record.clear();
   Record.push_back(NumStatements);
   Record.push_back(NumMacros);
   Record.push_back(NumLexicalDeclContexts);
   Record.push_back(NumVisibleDeclContexts);
-  WriteDeclUpdateBlock();
+  WriteDeclReplacementsBlock();
   Stream.EmitRecord(STATISTICS, Record);
   Stream.ExitBlock();
 }
 
-void ASTWriter::WriteDeclChangeSetBlocks() {
+void ASTWriter::WriteDeclUpdatesBlocks() {
   if (DeclUpdates.empty())
     return;
 
@@ -2730,7 +2730,7 @@ void ASTWriter::WriteDeclChangeSetBlocks() {
   Stream.EmitRecord(DECL_UPDATE_OFFSETS, OffsetsRecord);
 }
 
-void ASTWriter::WriteDeclUpdateBlock() {
+void ASTWriter::WriteDeclReplacementsBlock() {
   if (ReplacedDecls.empty())
     return;
 
