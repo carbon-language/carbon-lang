@@ -1599,6 +1599,10 @@ void ASTDeclReader::UpdateDecl(Decl *D, const RecordData &Record) {
       InitializeCXXDefinitionData(RD, DefinitionDecl, Record, Idx);
       break;
     }
+
+    case UPD_CXX_ADDED_IMPLICIT_MEMBER:
+      cast<CXXRecordDecl>(D)->addedMember(Reader.GetDecl(Record[Idx++]));
+      break;
     }
   }
 }

@@ -514,6 +514,7 @@ public:
 
   // ASTMutationListener implementation.
   virtual void CompletedTagDefinition(const TagDecl *D);
+  virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

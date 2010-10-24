@@ -27,6 +27,9 @@ public:
 
   /// \brief A new TagDecl definition was completed.
   virtual void CompletedTagDefinition(const TagDecl *D) { }
+
+  /// \brief An implicit member was added after the definition was completed.
+  virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {}
 };
 
 } // end namespace clang

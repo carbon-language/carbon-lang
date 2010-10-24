@@ -21,7 +21,8 @@ namespace clang {
 namespace serialization {
 
 enum DeclUpdateKind {
-  UPD_CXX_SET_DEFINITIONDATA
+  UPD_CXX_SET_DEFINITIONDATA,
+  UPD_CXX_ADDED_IMPLICIT_MEMBER
 };
 
 TypeIdx TypeIdxFromBuiltin(const BuiltinType *BT);

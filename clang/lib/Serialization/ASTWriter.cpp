@@ -3326,3 +3326,17 @@ void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
     }
   }
 }
+
+void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
+  assert(D->isImplicit());
+  if (!(D->getPCHLevel() == 0 && RD->getPCHLevel() > 0))
+    return; // Not a source member added to a class from PCH.
+  if (!isa<CXXMethodDecl>(D))
+    return; // We are interested in lazily declared implicit methods.
+
+  // A decl coming from PCH was modified.
+  assert(RD->isDefinition());
+  UpdateRecord &Record = DeclUpdates[RD];
+  Record.push_back(UPD_CXX_ADDED_IMPLICIT_MEMBER);
+  AddDeclRef(D, Record);
+}

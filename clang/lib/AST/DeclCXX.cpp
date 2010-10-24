@@ -364,12 +364,11 @@ void CXXRecordDecl::addedMember(Decl *D) {
   }
   
   if (D->isImplicit()) {
-    // Notify the serializer that an implicit member changed the definition.
-    // A chained PCH will write the whole definition again.
-    // FIXME: Make a notification about the specific change (through a listener
-    // interface) so the changes that the serializer records are more
-    // fine grained.
-    data().Definition->setChangedSinceDeserialization(true);
+    // Notify that an implicit member was added after the definition
+    // was completed.
+    if (!isBeingDefined())
+      if (ASTMutationListener *L = getASTMutationListener())
+        L->AddedCXXImplicitMember(data().Definition, D);
 
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
       // If this is the implicit default constructor, note that we have now
