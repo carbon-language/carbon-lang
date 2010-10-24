@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -Wunused -Wunused-parameter -Wunused -fsyntax-only %s
+// RUN: %clang_cc1 -verify -Wunused -Wused-but-marked-unused -Wunused-parameter -Wunused -fsyntax-only %s
 
 static void (*fp0)(void) __attribute__((unused));
 
