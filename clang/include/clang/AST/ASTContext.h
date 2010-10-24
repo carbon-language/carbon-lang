@@ -1290,6 +1290,12 @@ public:
                       bool Unqualified = false);
   QualType mergeFunctionTypes(QualType, QualType, bool OfBlockPointer=false,
                               bool Unqualified = false);
+  QualType mergeFunctionArgumentTypes(QualType, QualType,
+                                      bool OfBlockPointer=false,
+                                      bool Unqualified = false);
+  QualType mergeTransparentUnionType(QualType, QualType,
+                                     bool OfBlockPointer=false,
+                                     bool Unqualified = false);
   
   QualType mergeObjCGCQualifiers(QualType, QualType);
 

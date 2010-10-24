@@ -17,6 +17,24 @@ void g(int *ip, float *fp, char *cp) {
   tu.ip = ip;
 }
 
+/* Test ability to redeclare a function taking a transparent_union arg
+   with various compatible and incompatible argument types. */
+
+void fip(TU);
+void fip(int *i) {}
+
+void ffp(TU);
+void ffp(float *f) {}
+
+void fvp(TU); // expected-note{{previous declaration is here}}
+void fvp(void *p) {} // expected-error{{conflicting types}}
+
+void fsp(TU); // expected-note{{previous declaration is here}}
+void fsp(short *s) {} // expected-error{{conflicting types}}
+
+void fi(TU); // expected-note{{previous declaration is here}}
+void fi(int i) {} // expected-error{{conflicting types}}
+
 /* FIXME: we'd like to just use an "int" here and align it differently
    from the normal "int", but if we do so we lose the alignment
    information from the typedef within the compiler. */

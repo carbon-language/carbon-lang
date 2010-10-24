@@ -4674,6 +4674,49 @@ bool ASTContext::typesAreBlockPointerCompatible(QualType LHS, QualType RHS) {
   return !mergeTypes(LHS, RHS, true).isNull();
 }
 
+/// mergeTransparentUnionType - if T is a transparent union type and a member
+/// of T is compatible with SubType, return the merged type, else return
+/// QualType()
+QualType ASTContext::mergeTransparentUnionType(QualType T, QualType SubType,
+                                               bool OfBlockPointer,
+                                               bool Unqualified) {
+  if (const RecordType *UT = T->getAsUnionType()) {
+    RecordDecl *UD = UT->getDecl();
+    if (UD->hasAttr<TransparentUnionAttr>()) {
+      for (RecordDecl::field_iterator it = UD->field_begin(),
+           itend = UD->field_end(); it != itend; ++it) {
+        QualType ET = it->getType();
+        QualType MT = mergeTypes(ET, SubType, OfBlockPointer, Unqualified);
+        if (!MT.isNull())
+          return MT;
+      }
+    }
+  }
+
+  return QualType();
+}
+
+/// mergeFunctionArgumentTypes - merge two types which appear as function
+/// argument types
+QualType ASTContext::mergeFunctionArgumentTypes(QualType lhs, QualType rhs, 
+                                                bool OfBlockPointer,
+                                                bool Unqualified) {
+  // GNU extension: two types are compatible if they appear as a function
+  // argument, one of the types is a transparent union type and the other
+  // type is compatible with a union member
+  QualType lmerge = mergeTransparentUnionType(lhs, rhs, OfBlockPointer,
+                                              Unqualified);
+  if (!lmerge.isNull())
+    return lmerge;
+
+  QualType rmerge = mergeTransparentUnionType(rhs, lhs, OfBlockPointer,
+                                              Unqualified);
+  if (!rmerge.isNull())
+    return rmerge;
+
+  return mergeTypes(lhs, rhs, OfBlockPointer, Unqualified);
+}
+
 QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs, 
                                         bool OfBlockPointer,
                                         bool Unqualified) {
@@ -4751,8 +4794,9 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     for (unsigned i = 0; i < lproto_nargs; i++) {
       QualType largtype = lproto->getArgType(i).getUnqualifiedType();
       QualType rargtype = rproto->getArgType(i).getUnqualifiedType();
-      QualType argtype = mergeTypes(largtype, rargtype, OfBlockPointer,
-                                    Unqualified);
+      QualType argtype = mergeFunctionArgumentTypes(largtype, rargtype,
+                                                    OfBlockPointer,
+                                                    Unqualified);
       if (argtype.isNull()) return QualType();
       
       if (Unqualified)
