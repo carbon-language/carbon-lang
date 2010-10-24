@@ -511,6 +511,9 @@ public:
   void DeclRead(serialization::DeclID ID, const Decl *D);
   void SelectorRead(serialization::SelectorID ID, Selector Sel);
   void MacroDefinitionRead(serialization::MacroID ID, MacroDefinition *MD);
+
+  // ASTMutationListener implementation.
+  virtual void CompletedTagDefinition(const TagDecl *D);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

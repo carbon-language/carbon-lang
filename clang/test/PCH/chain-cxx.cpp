@@ -7,7 +7,6 @@
 // RUN: %clang_cc1 -x c++-header -emit-pch -o %t1 %s
 // RUN: %clang_cc1 -x c++-header -emit-pch -o %t2 %s -include-pch %t1 -chained-pch
 // RUN: %clang_cc1 -fsyntax-only -verify -include-pch %t2 %s
-// XFAIL: *
 
 #ifndef HEADER1
 #define HEADER1

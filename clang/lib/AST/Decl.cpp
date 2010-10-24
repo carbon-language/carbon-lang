@@ -21,6 +21,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Specifiers.h"
@@ -1713,6 +1714,9 @@ void TagDecl::completeDefinition() {
 
   IsDefinition = true;
   IsBeingDefined = false;
+
+  if (ASTMutationListener *L = getASTMutationListener())
+    L->CompletedTagDefinition(this);
 }
 
 TagDecl* TagDecl::getDefinition() const {

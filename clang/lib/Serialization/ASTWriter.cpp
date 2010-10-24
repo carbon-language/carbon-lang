@@ -3297,3 +3297,32 @@ void ASTWriter::MacroDefinitionRead(serialization::MacroID ID,
                                     MacroDefinition *MD) {
   MacroDefinitions[MD] = ID;
 }
+
+void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
+  assert(D->isDefinition());
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
+    // We are interested when a PCH decl is modified.
+    if (RD->getPCHLevel() > 0) {
+      // A forward reference was mutated into a definition. Rewrite it.
+      // FIXME: This happens during template instantiation, should we
+      // have created a new definition decl instead ?
+      DeclsToRewrite.insert(RD);
+    }
+
+    for (CXXRecordDecl::redecl_iterator
+           I = RD->redecls_begin(), E = RD->redecls_end(); I != E; ++I) {
+      CXXRecordDecl *Redecl = cast<CXXRecordDecl>(*I);
+      if (Redecl == RD)
+        continue;
+
+      // We are interested when a PCH decl is modified.
+      if (Redecl->getPCHLevel() > 0) {
+        UpdateRecord &Record = DeclUpdates[Redecl];
+        Record.push_back(UPD_CXX_SET_DEFINITIONDATA);
+        assert(Redecl->DefinitionData);
+        assert(Redecl->DefinitionData->Definition == D);
+        AddDeclRef(D, Record); // the DefinitionDecl
+      }
+    }
+  }
+}

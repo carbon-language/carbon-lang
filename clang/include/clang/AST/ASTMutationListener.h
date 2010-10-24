@@ -14,6 +14,7 @@
 #define LLVM_CLANG_AST_ASTMUTATIONLISTENER_H
 
 namespace clang {
+  class TagDecl;
   class CXXRecordDecl;
   class CXXMethodDecl;
 
@@ -23,6 +24,9 @@ namespace clang {
 class ASTMutationListener {
 public:
   virtual ~ASTMutationListener();
+
+  /// \brief A new TagDecl definition was completed.
+  virtual void CompletedTagDefinition(const TagDecl *D) { }
 };
 
 } // end namespace clang

@@ -1588,5 +1588,17 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
 }
 
 void ASTDeclReader::UpdateDecl(Decl *D, const RecordData &Record) {
-  // No update is tracked yet.
+  unsigned Idx = 0;
+  while (Idx < Record.size()) {
+    switch ((DeclUpdateKind)Record[Idx++]) {
+    case UPD_CXX_SET_DEFINITIONDATA: {
+      CXXRecordDecl *RD = cast<CXXRecordDecl>(D);
+      CXXRecordDecl *
+          DefinitionDecl = cast<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
+      assert(!RD->DefinitionData && "DefinitionData is already set!");
+      InitializeCXXDefinitionData(RD, DefinitionDecl, Record, Idx);
+      break;
+    }
+    }
+  }
 }
