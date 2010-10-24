@@ -992,6 +992,8 @@ public:
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
+  friend class ASTReader;
+  friend class ASTWriter;
 };
 
 /// CXXMethodDecl - Represents a static or instance method of a

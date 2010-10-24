@@ -19,6 +19,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/DeclFriend.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/Type.h"
@@ -60,13 +61,13 @@ const T *data(const std::vector<T, Allocator> &v) {
 namespace {
   class ASTTypeWriter {
     ASTWriter &Writer;
-    ASTWriter::RecordData &Record;
+    ASTWriter::RecordDataImpl &Record;
 
   public:
     /// \brief Type code that corresponds to the record generated.
     TypeCode Code;
 
-    ASTTypeWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
+    ASTTypeWriter(ASTWriter &Writer, ASTWriter::RecordDataImpl &Record)
       : Writer(Writer), Record(Record), Code(TYPE_EXT_QUAL) { }
 
     void VisitArrayType(const ArrayType *T);
@@ -332,10 +333,10 @@ namespace {
 
 class TypeLocWriter : public TypeLocVisitor<TypeLocWriter> {
   ASTWriter &Writer;
-  ASTWriter::RecordData &Record;
+  ASTWriter::RecordDataImpl &Record;
 
 public:
-  TypeLocWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
+  TypeLocWriter(ASTWriter &Writer, ASTWriter::RecordDataImpl &Record)
     : Writer(Writer), Record(Record) { }
 
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
@@ -507,7 +508,7 @@ void TypeLocWriter::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
 
 static void EmitBlockID(unsigned ID, const char *Name,
                         llvm::BitstreamWriter &Stream,
-                        ASTWriter::RecordData &Record) {
+                        ASTWriter::RecordDataImpl &Record) {
   Record.clear();
   Record.push_back(ID);
   Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_SETBID, Record);
@@ -522,7 +523,7 @@ static void EmitBlockID(unsigned ID, const char *Name,
 
 static void EmitRecordID(unsigned ID, const char *Name,
                          llvm::BitstreamWriter &Stream,
-                         ASTWriter::RecordData &Record) {
+                         ASTWriter::RecordDataImpl &Record) {
   Record.clear();
   Record.push_back(ID);
   while (*Name)
@@ -531,7 +532,7 @@ static void EmitRecordID(unsigned ID, const char *Name,
 }
 
 static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
-                          ASTWriter::RecordData &Record) {
+                          ASTWriter::RecordDataImpl &Record) {
 #define RECORD(X) EmitRecordID(X, #X, Stream, Record)
   RECORD(STMT_STOP);
   RECORD(STMT_NULL_PTR);
@@ -2200,7 +2201,7 @@ void ASTWriter::WriteAdditionalTemplateSpecializations() {
 //===----------------------------------------------------------------------===//
 
 /// \brief Write a record containing the given attributes.
-void ASTWriter::WriteAttributes(const AttrVec &Attrs, RecordData &Record) {
+void ASTWriter::WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record) {
   Record.push_back(Attrs.size());
   for (AttrVec::const_iterator i = Attrs.begin(), e = Attrs.end(); i != e; ++i){
     const Attr * A = *i;
@@ -2213,7 +2214,7 @@ void ASTWriter::WriteAttributes(const AttrVec &Attrs, RecordData &Record) {
   }
 }
 
-void ASTWriter::AddString(llvm::StringRef Str, RecordData &Record) {
+void ASTWriter::AddString(llvm::StringRef Str, RecordDataImpl &Record) {
   Record.push_back(Str.size());
   Record.insert(Record.end(), Str.begin(), Str.end());
 }
@@ -2742,31 +2743,31 @@ void ASTWriter::WriteDeclUpdateBlock() {
   Stream.EmitRecord(DECL_REPLACEMENTS, Record);
 }
 
-void ASTWriter::AddSourceLocation(SourceLocation Loc, RecordData &Record) {
+void ASTWriter::AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record) {
   Record.push_back(Loc.getRawEncoding());
 }
 
-void ASTWriter::AddSourceRange(SourceRange Range, RecordData &Record) {
+void ASTWriter::AddSourceRange(SourceRange Range, RecordDataImpl &Record) {
   AddSourceLocation(Range.getBegin(), Record);
   AddSourceLocation(Range.getEnd(), Record);
 }
 
-void ASTWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
+void ASTWriter::AddAPInt(const llvm::APInt &Value, RecordDataImpl &Record) {
   Record.push_back(Value.getBitWidth());
   const uint64_t *Words = Value.getRawData();
   Record.append(Words, Words + Value.getNumWords());
 }
 
-void ASTWriter::AddAPSInt(const llvm::APSInt &Value, RecordData &Record) {
+void ASTWriter::AddAPSInt(const llvm::APSInt &Value, RecordDataImpl &Record) {
   Record.push_back(Value.isUnsigned());
   AddAPInt(Value, Record);
 }
 
-void ASTWriter::AddAPFloat(const llvm::APFloat &Value, RecordData &Record) {
+void ASTWriter::AddAPFloat(const llvm::APFloat &Value, RecordDataImpl &Record) {
   AddAPInt(Value.bitcastToAPInt(), Record);
 }
 
-void ASTWriter::AddIdentifierRef(const IdentifierInfo *II, RecordData &Record) {
+void ASTWriter::AddIdentifierRef(const IdentifierInfo *II, RecordDataImpl &Record) {
   Record.push_back(getIdentifierRef(II));
 }
 
@@ -2790,7 +2791,7 @@ MacroID ASTWriter::getMacroDefinitionID(MacroDefinition *MD) {
   return ID;
 }
 
-void ASTWriter::AddSelectorRef(const Selector SelRef, RecordData &Record) {
+void ASTWriter::AddSelectorRef(const Selector SelRef, RecordDataImpl &Record) {
   Record.push_back(getSelectorRef(SelRef));
 }
 
@@ -2811,13 +2812,13 @@ SelectorID ASTWriter::getSelectorRef(Selector Sel) {
   return SID;
 }
 
-void ASTWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record) {
+void ASTWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordDataImpl &Record) {
   AddDeclRef(Temp->getDestructor(), Record);
 }
 
 void ASTWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                                            const TemplateArgumentLocInfo &Arg,
-                                           RecordData &Record) {
+                                           RecordDataImpl &Record) {
   switch (Kind) {
   case TemplateArgument::Expression:
     AddStmt(Arg.getAsExpr());
@@ -2838,7 +2839,7 @@ void ASTWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
 }
 
 void ASTWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
-                                       RecordData &Record) {
+                                       RecordDataImpl &Record) {
   AddTemplateArgument(Arg.getArgument(), Record);
 
   if (Arg.getArgument().getKind() == TemplateArgument::Expression) {
@@ -2852,7 +2853,7 @@ void ASTWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
                              Record);
 }
 
-void ASTWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
+void ASTWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordDataImpl &Record) {
   if (TInfo == 0) {
     AddTypeRef(QualType(), Record);
     return;
@@ -2864,7 +2865,7 @@ void ASTWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
     TLW.Visit(TL);
 }
 
-void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
+void ASTWriter::AddTypeRef(QualType T, RecordDataImpl &Record) {
   Record.push_back(GetOrCreateTypeID(T));
 }
 
@@ -2937,7 +2938,7 @@ DeclID ASTWriter::getDeclID(const Decl *D) {
   return DeclIDs[D];
 }
 
-void ASTWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
+void ASTWriter::AddDeclarationName(DeclarationName Name, RecordDataImpl &Record) {
   // FIXME: Emit a stable enum for NameKind.  0 = Identifier etc.
   Record.push_back(Name.getNameKind());
   switch (Name.getNameKind()) {
@@ -2972,7 +2973,7 @@ void ASTWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
 }
 
 void ASTWriter::AddDeclarationNameLoc(const DeclarationNameLoc &DNLoc,
-                                     DeclarationName Name, RecordData &Record) {
+                                     DeclarationName Name, RecordDataImpl &Record) {
   switch (Name.getNameKind()) {
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
@@ -3005,14 +3006,14 @@ void ASTWriter::AddDeclarationNameLoc(const DeclarationNameLoc &DNLoc,
 }
 
 void ASTWriter::AddDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
-                                       RecordData &Record) {
+                                       RecordDataImpl &Record) {
   AddDeclarationName(NameInfo.getName(), Record);
   AddSourceLocation(NameInfo.getLoc(), Record);
   AddDeclarationNameLoc(NameInfo.getInfo(), NameInfo.getName(), Record);
 }
 
 void ASTWriter::AddQualifierInfo(const QualifierInfo &Info,
-                                 RecordData &Record) {
+                                 RecordDataImpl &Record) {
   AddNestedNameSpecifier(Info.NNS, Record);
   AddSourceRange(Info.NNSRange, Record);
   Record.push_back(Info.NumTemplParamLists);
@@ -3021,7 +3022,7 @@ void ASTWriter::AddQualifierInfo(const QualifierInfo &Info,
 }
 
 void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
-                                       RecordData &Record) {
+                                       RecordDataImpl &Record) {
   // Nested name specifiers usually aren't too long. I think that 8 would
   // typically accomodate the vast majority.
   llvm::SmallVector<NestedNameSpecifier *, 8> NestedNames;
@@ -3059,7 +3060,7 @@ void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
   }
 }
 
-void ASTWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
+void ASTWriter::AddTemplateName(TemplateName Name, RecordDataImpl &Record) {
   TemplateName::NameKind Kind = Name.getKind();
   Record.push_back(Kind);
   switch (Kind) {
@@ -3098,7 +3099,7 @@ void ASTWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
 }
 
 void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
-                                    RecordData &Record) {
+                                    RecordDataImpl &Record) {
   Record.push_back(Arg.getKind());
   switch (Arg.getKind()) {
   case TemplateArgument::Null:
@@ -3130,7 +3131,7 @@ void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
 
 void
 ASTWriter::AddTemplateParameterList(const TemplateParameterList *TemplateParams,
-                                    RecordData &Record) {
+                                    RecordDataImpl &Record) {
   assert(TemplateParams && "No TemplateParams!");
   AddSourceLocation(TemplateParams->getTemplateLoc(), Record);
   AddSourceLocation(TemplateParams->getLAngleLoc(), Record);
@@ -3145,7 +3146,7 @@ ASTWriter::AddTemplateParameterList(const TemplateParameterList *TemplateParams,
 /// \brief Emit a template argument list.
 void
 ASTWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
-                                   RecordData &Record) {
+                                   RecordDataImpl &Record) {
   assert(TemplateArgs && "No TemplateArgs!");
   Record.push_back(TemplateArgs->flat_size());
   for (int i=0, e = TemplateArgs->flat_size(); i != e; ++i)
@@ -3154,7 +3155,7 @@ ASTWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
 
 
 void
-ASTWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record) {
+ASTWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordDataImpl &Record) {
   Record.push_back(Set.size());
   for (UnresolvedSetImpl::const_iterator
          I = Set.begin(), E = Set.end(); I != E; ++I) {
@@ -3164,7 +3165,7 @@ ASTWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record) {
 }
 
 void ASTWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
-                                    RecordData &Record) {
+                                    RecordDataImpl &Record) {
   Record.push_back(Base.isVirtual());
   Record.push_back(Base.isBaseOfClass());
   Record.push_back(Base.getAccessSpecifierAsWritten());
@@ -3174,7 +3175,7 @@ void ASTWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
 
 void ASTWriter::AddCXXBaseOrMemberInitializers(
                         const CXXBaseOrMemberInitializer * const *BaseOrMembers,
-                        unsigned NumBaseOrMembers, RecordData &Record) {
+                        unsigned NumBaseOrMembers, RecordDataImpl &Record) {
   Record.push_back(NumBaseOrMembers);
   for (unsigned i=0; i != NumBaseOrMembers; ++i) {
     const CXXBaseOrMemberInitializer *Init = BaseOrMembers[i];
@@ -3200,6 +3201,43 @@ void ASTWriter::AddCXXBaseOrMemberInitializers(
         AddDeclRef(Init->getArrayIndex(i), Record);
     }
   }
+}
+
+void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Record) {
+  assert(D->DefinitionData);
+  struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
+  Record.push_back(Data.UserDeclaredConstructor);
+  Record.push_back(Data.UserDeclaredCopyConstructor);
+  Record.push_back(Data.UserDeclaredCopyAssignment);
+  Record.push_back(Data.UserDeclaredDestructor);
+  Record.push_back(Data.Aggregate);
+  Record.push_back(Data.PlainOldData);
+  Record.push_back(Data.Empty);
+  Record.push_back(Data.Polymorphic);
+  Record.push_back(Data.Abstract);
+  Record.push_back(Data.HasTrivialConstructor);
+  Record.push_back(Data.HasTrivialCopyConstructor);
+  Record.push_back(Data.HasTrivialCopyAssignment);
+  Record.push_back(Data.HasTrivialDestructor);
+  Record.push_back(Data.ComputedVisibleConversions);
+  Record.push_back(Data.DeclaredDefaultConstructor);
+  Record.push_back(Data.DeclaredCopyConstructor);
+  Record.push_back(Data.DeclaredCopyAssignment);
+  Record.push_back(Data.DeclaredDestructor);
+
+  Record.push_back(Data.NumBases);
+  for (unsigned i = 0; i != Data.NumBases; ++i)
+    AddCXXBaseSpecifier(Data.Bases[i], Record);
+
+  // FIXME: Make VBases lazily computed when needed to avoid storing them.
+  Record.push_back(Data.NumVBases);
+  for (unsigned i = 0; i != Data.NumVBases; ++i)
+    AddCXXBaseSpecifier(Data.VBases[i], Record);
+
+  AddUnresolvedSet(Data.Conversions, Record);
+  AddUnresolvedSet(Data.VisibleConversions, Record);
+  // Data.Definition is the owning decl, no need to write it. 
+  AddDeclRef(Data.FirstFriend, Record);
 }
 
 void ASTWriter::ReaderInitialized(ASTReader *Reader) {

@@ -288,7 +288,7 @@ private:
   void WriteSelectors(Sema &SemaRef);
   void WriteReferencedSelectorsPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
-  void WriteAttributes(const AttrVec &Attrs, RecordData &Record);
+  void WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record);
   void WriteDeclChangeSetBlocks();
   void WriteDeclUpdateBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
@@ -328,28 +328,28 @@ public:
                 const char* isysroot);
 
   /// \brief Emit a source location.
-  void AddSourceLocation(SourceLocation Loc, RecordData &Record);
+  void AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record);
 
   /// \brief Emit a source range.
-  void AddSourceRange(SourceRange Range, RecordData &Record);
+  void AddSourceRange(SourceRange Range, RecordDataImpl &Record);
   
   /// \brief Emit an integral value.
-  void AddAPInt(const llvm::APInt &Value, RecordData &Record);
+  void AddAPInt(const llvm::APInt &Value, RecordDataImpl &Record);
 
   /// \brief Emit a signed integral value.
-  void AddAPSInt(const llvm::APSInt &Value, RecordData &Record);
+  void AddAPSInt(const llvm::APSInt &Value, RecordDataImpl &Record);
 
   /// \brief Emit a floating-point value.
-  void AddAPFloat(const llvm::APFloat &Value, RecordData &Record);
+  void AddAPFloat(const llvm::APFloat &Value, RecordDataImpl &Record);
 
   /// \brief Emit a reference to an identifier.
-  void AddIdentifierRef(const IdentifierInfo *II, RecordData &Record);
+  void AddIdentifierRef(const IdentifierInfo *II, RecordDataImpl &Record);
 
   /// \brief Emit a Selector (which is a smart pointer reference).
-  void AddSelectorRef(Selector, RecordData &Record);
+  void AddSelectorRef(Selector, RecordDataImpl &Record);
 
   /// \brief Emit a CXXTemporary.
-  void AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record);
+  void AddCXXTemporary(const CXXTemporary *Temp, RecordDataImpl &Record);
 
   /// \brief Get the unique number used to refer to the given selector.
   serialization::SelectorID getSelectorRef(Selector Sel);
@@ -372,7 +372,7 @@ public:
   serialization::MacroID getMacroDefinitionID(MacroDefinition *MD);
   
   /// \brief Emit a reference to a type.
-  void AddTypeRef(QualType T, RecordData &Record);
+  void AddTypeRef(QualType T, RecordDataImpl &Record);
 
   /// \brief Force a type to be emitted and get its ID.
   serialization::TypeID GetOrCreateTypeID(QualType T);
@@ -387,16 +387,16 @@ public:
   serialization::TypeIdx getTypeIdx(QualType T) const;
 
   /// \brief Emits a reference to a declarator info.
-  void AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record);
+  void AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordDataImpl &Record);
 
   /// \brief Emits a template argument location info.
   void AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                                   const TemplateArgumentLocInfo &Arg,
-                                  RecordData &Record);
+                                  RecordDataImpl &Record);
 
   /// \brief Emits a template argument location.
   void AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
-                              RecordData &Record);
+                              RecordDataImpl &Record);
 
   /// \brief Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordDataImpl &Record);
@@ -409,44 +409,46 @@ public:
   serialization::DeclID getDeclID(const Decl *D);
 
   /// \brief Emit a declaration name.
-  void AddDeclarationName(DeclarationName Name, RecordData &Record);
+  void AddDeclarationName(DeclarationName Name, RecordDataImpl &Record);
   void AddDeclarationNameLoc(const DeclarationNameLoc &DNLoc,
-                             DeclarationName Name, RecordData &Record);
+                             DeclarationName Name, RecordDataImpl &Record);
   void AddDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
-                              RecordData &Record);
+                              RecordDataImpl &Record);
 
-  void AddQualifierInfo(const QualifierInfo &Info, RecordData &Record);
+  void AddQualifierInfo(const QualifierInfo &Info, RecordDataImpl &Record);
 
   /// \brief Emit a nested name specifier.
-  void AddNestedNameSpecifier(NestedNameSpecifier *NNS, RecordData &Record);
+  void AddNestedNameSpecifier(NestedNameSpecifier *NNS, RecordDataImpl &Record);
   
   /// \brief Emit a template name.
-  void AddTemplateName(TemplateName Name, RecordData &Record);
+  void AddTemplateName(TemplateName Name, RecordDataImpl &Record);
 
   /// \brief Emit a template argument.
-  void AddTemplateArgument(const TemplateArgument &Arg, RecordData &Record);
+  void AddTemplateArgument(const TemplateArgument &Arg, RecordDataImpl &Record);
 
   /// \brief Emit a template parameter list.
   void AddTemplateParameterList(const TemplateParameterList *TemplateParams,
-                                RecordData &Record);
+                                RecordDataImpl &Record);
 
   /// \brief Emit a template argument list.
   void AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
-                                RecordData &Record);
+                                RecordDataImpl &Record);
 
   /// \brief Emit a UnresolvedSet structure.
-  void AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record);
+  void AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordDataImpl &Record);
 
   /// \brief Emit a C++ base specifier.
-  void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base, RecordData &Record);
+  void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base, RecordDataImpl &Record);
 
   /// \brief Emit a CXXBaseOrMemberInitializer array.
   void AddCXXBaseOrMemberInitializers(
                         const CXXBaseOrMemberInitializer * const *BaseOrMembers,
-                        unsigned NumBaseOrMembers, RecordData &Record);
+                        unsigned NumBaseOrMembers, RecordDataImpl &Record);
+
+  void AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Record);
 
   /// \brief Add a string to the given record.
-  void AddString(llvm::StringRef Str, RecordData &Record);
+  void AddString(llvm::StringRef Str, RecordDataImpl &Record);
 
   /// \brief Mark a namespace as needing an update.
   void AddUpdatedNamespace(const NamespaceDecl *NS) {

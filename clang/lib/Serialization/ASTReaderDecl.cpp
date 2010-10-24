@@ -62,7 +62,12 @@ namespace clang {
       Reader.ReadDeclarationNameInfo(F, NameInfo, R, I);
     }
 
-    void ReadCXXDefinitionData(struct CXXRecordDecl::DefinitionData &Data);
+    void ReadCXXDefinitionData(struct CXXRecordDecl::DefinitionData &Data,
+                               const RecordData &R, unsigned &I);
+
+    void InitializeCXXDefinitionData(CXXRecordDecl *D,
+                                     CXXRecordDecl *DefinitionDecl,
+                                     const RecordData &Record, unsigned &Idx);
   public:
     ASTDeclReader(ASTReader &Reader, ASTReader::PerFileData &F,
                   llvm::BitstreamCursor &Cursor, DeclID thisDeclID,
@@ -767,7 +772,8 @@ void ASTDeclReader::VisitUnresolvedUsingTypenameDecl(
 }
 
 void ASTDeclReader::ReadCXXDefinitionData(
-                                   struct CXXRecordDecl::DefinitionData &Data) {
+                                   struct CXXRecordDecl::DefinitionData &Data,
+                                   const RecordData &Record, unsigned &Idx) {
   ASTContext &C = *Reader.getContext();
 
   Data.UserDeclaredConstructor = Record[Idx++];
@@ -809,16 +815,15 @@ void ASTDeclReader::ReadCXXDefinitionData(
       = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
 }
 
-void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  VisitRecordDecl(D);
-
+void ASTDeclReader::InitializeCXXDefinitionData(CXXRecordDecl *D,
+                                                CXXRecordDecl *DefinitionDecl,
+                                                const RecordData &Record,
+                                                unsigned &Idx) {
   ASTContext &C = *Reader.getContext();
 
-  CXXRecordDecl *DefinitionDecl
-      = cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
   if (D == DefinitionDecl) {
     D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
-    ReadCXXDefinitionData(*D->DefinitionData);
+    ReadCXXDefinitionData(*D->DefinitionData, Record, Idx);
     // We read the definition info. Check if there are pending forward
     // references that need to point to this DefinitionData pointer.
     ASTReader::PendingForwardRefsMap::iterator
@@ -842,6 +847,16 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
       Reader.PendingForwardRefs[DefinitionDecl].push_back(D);
     }
   }
+}
+
+void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  VisitRecordDecl(D);
+
+  CXXRecordDecl *DefinitionDecl
+      = cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
+  InitializeCXXDefinitionData(D, DefinitionDecl, Record, Idx);
+
+  ASTContext &C = *Reader.getContext();
 
   enum CXXRecKind {
     CXXRecNotTemplate = 0, CXXRecTemplate, CXXRecMemberSpecialization
