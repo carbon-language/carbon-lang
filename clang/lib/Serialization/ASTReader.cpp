@@ -454,8 +454,6 @@ void PCHValidator::ReadCounter(unsigned Value) {
 void
 ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
   DeserializationListener = Listener;
-  if (DeserializationListener)
-    DeserializationListener->SetReader(this);
 }
 
 
@@ -1716,6 +1714,13 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         }
         break;
 
+      case DECL_UPDATES_BLOCK_ID:
+        if (Stream.SkipBlock()) {
+          Error("malformed block record in AST file");
+          return Failure;
+        }
+        break;
+
       case PREPROCESSOR_BLOCK_ID:
         F.MacroCursor = Stream;
         if (PP)
@@ -2043,6 +2048,17 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.LocalNumMacroDefinitions = Record[1];
       break;
 
+    case DECL_UPDATE_OFFSETS: {
+      if (Record.size() % 2 != 0) {
+        Error("invalid DECL_UPDATE_OFFSETS block in AST file");
+        return Failure;
+      }
+      for (unsigned I = 0, N = Record.size(); I != N; I += 2)
+        DeclUpdateOffsets[static_cast<DeclID>(Record[I])]
+            .push_back(std::make_pair(&F, Record[I+1]));
+      break;
+    }
+
     case DECL_REPLACEMENTS: {
       if (Record.size() % 2 != 0) {
         Error("invalid DECL_REPLACEMENTS block in AST file");
@@ -2163,6 +2179,9 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
 
   if (Context)
     InitializeContext(*Context);
+
+  if (DeserializationListener)
+    DeserializationListener->ReaderInitialized(this);
 
   return Success;
 }

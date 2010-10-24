@@ -45,6 +45,7 @@ namespace clang {
   class Diagnostic;
   class Expr;
   class ExternalASTSource;
+  class ASTMutationListener;
   class IdentifierTable;
   class SelectorTable;
   class SourceManager;
@@ -297,6 +298,7 @@ public:
   Builtin::Context &BuiltinInfo;
   DeclarationNameTable DeclarationNames;
   llvm::OwningPtr<ExternalASTSource> ExternalSource;
+  ASTMutationListener *Listener;
   clang::PrintingPolicy PrintingPolicy;
 
   // Typedefs which may be provided defining the structure of Objective-C
@@ -411,6 +413,19 @@ public:
   /// \brief Retrieve a pointer to the external AST source associated
   /// with this AST context, if any.
   ExternalASTSource *getExternalSource() const { return ExternalSource.get(); }
+
+  /// \brief Attach an AST mutation listener to the AST context.
+  ///
+  /// The AST mutation listener provides the ability to track modifications to
+  /// the abstract syntax tree entities committed after they were initially
+  /// created.
+  void setASTMutationListener(ASTMutationListener *Listener) {
+    this->Listener = Listener;
+  }
+
+  /// \brief Retrieve a pointer to the AST mutation listener associated
+  /// with this AST context, if any.
+  ASTMutationListener *getASTMutationListener() const { return Listener; }
 
   void PrintStats() const;
   const std::vector<Type*>& getTypes() const { return Types; }

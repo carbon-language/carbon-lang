@@ -20,6 +20,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExternalASTSource.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
@@ -5199,6 +5200,8 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
 ExternalASTSource::~ExternalASTSource() { }
 
 void ExternalASTSource::PrintStats() { }
+
+ASTMutationListener::~ASTMutationListener() { }
 
 
 //===----------------------------------------------------------------------===//

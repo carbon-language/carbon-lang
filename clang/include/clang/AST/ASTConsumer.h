@@ -19,6 +19,7 @@ namespace clang {
   class CXXRecordDecl;
   class DeclGroupRef;
   class HandleTagDeclDefinition;
+  class ASTMutationListener;
   class ASTDeserializationListener; // layering violation because void* is ugly
   class SemaConsumer; // layering violation required for safe SemaConsumer
   class TagDecl;
@@ -86,10 +87,13 @@ public:
   /// it was actually used.
   virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) {}
 
+  /// \brief If the consumer is interested in entities getting modified after
+  /// their initial creation, it should return a pointer to
+  /// a GetASTMutationListener here.
+  virtual ASTMutationListener *GetASTMutationListener() { return 0; }
+
   /// \brief If the consumer is interested in entities being deserialized from
   /// AST files, it should return a pointer to a ASTDeserializationListener here
-  ///
-  /// The return type is void* because ASTDS lives in Frontend.
   virtual ASTDeserializationListener *GetASTDeserializationListener() { return 0; }
 
   /// PrintStats - If desired, print any statistics.

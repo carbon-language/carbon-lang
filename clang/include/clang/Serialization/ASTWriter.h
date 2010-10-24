@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/TemplateBase.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
 #include "clang/Sema/SemaConsumer.h"
@@ -55,9 +56,11 @@ class TargetInfo;
 /// representation of a given abstract syntax tree and its supporting
 /// data structures. This bitstream can be de-serialized via an
 /// instance of the ASTReader class.
-class ASTWriter : public ASTDeserializationListener {
+class ASTWriter : public ASTDeserializationListener,
+                  public ASTMutationListener {
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
+  typedef llvm::SmallVectorImpl<uint64_t> RecordDataImpl;
 
   friend class ASTDeclWriter;
 private:
@@ -187,6 +190,12 @@ private:
   /// to the corresponding offsets within the preprocessor block.
   std::vector<uint32_t> MacroDefinitionOffsets;
 
+  typedef llvm::SmallVector<uint64_t, 2> UpdateRecord;
+  typedef llvm::DenseMap<const Decl *, UpdateRecord> DeclUpdateMap;
+  /// \brief Mapping from declarations that came from a chained PCH to the
+  /// record containing modifications to them.
+  DeclUpdateMap DeclUpdates;
+
   typedef llvm::DenseMap<Decl *, Decl *> FirstLatestDeclMap;
   /// \brief Map of first declarations from a chained PCH that point to the
   /// most recent declarations in another PCH.
@@ -280,6 +289,7 @@ private:
   void WriteReferencedSelectorsPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
   void WriteAttributes(const AttrVec &Attrs, RecordData &Record);
+  void WriteDeclChangeSetBlocks();
   void WriteDeclUpdateBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
   void WriteAdditionalTemplateSpecializations();
@@ -389,7 +399,7 @@ public:
                               RecordData &Record);
 
   /// \brief Emit a reference to a declaration.
-  void AddDeclRef(const Decl *D, RecordData &Record);
+  void AddDeclRef(const Decl *D, RecordDataImpl &Record);
 
   /// \brief Force a declaration to be emitted and get its ID.
   serialization::DeclID GetDeclRef(const Decl *D);
@@ -489,7 +499,7 @@ public:
   bool hasChain() const { return Chain; }
 
   // ASTDeserializationListener implementation
-  void SetReader(ASTReader *Reader);
+  void ReaderInitialized(ASTReader *Reader);
   void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II);
   void TypeRead(serialization::TypeIdx Idx, QualType T);
   void DeclRead(serialization::DeclID ID, const Decl *D);
@@ -508,6 +518,7 @@ class PCHGenerator : public SemaConsumer {
   std::vector<unsigned char> Buffer;
   llvm::BitstreamWriter Stream;
   ASTWriter Writer;
+  bool Chaining;
 
 protected:
   ASTWriter &getWriter() { return Writer; }
@@ -518,6 +529,7 @@ public:
                const char *isysroot, llvm::raw_ostream *Out);
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
+  virtual ASTMutationListener *GetASTMutationListener();
   virtual ASTDeserializationListener *GetASTDeserializationListener();
 };
 

@@ -141,7 +141,10 @@ namespace clang {
 
       /// \brief The block containing the definitions of all of the
       /// types and decls used within the AST file.
-      DECLTYPES_BLOCK_ID
+      DECLTYPES_BLOCK_ID,
+
+      /// \brief The block containing DECL_UPDATES records.
+      DECL_UPDATES_BLOCK_ID
     };
 
     /// \brief Record types that occur within the AST block itself.
@@ -326,7 +329,15 @@ namespace clang {
 
       /// \brief Record code for template specializations introduced after
       /// serializations of the original template decl.
-      ADDITIONAL_TEMPLATE_SPECIALIZATIONS = 35
+      ADDITIONAL_TEMPLATE_SPECIALIZATIONS = 35,
+
+      /// \brief Record for offsets of DECL_UPDATES records for declarations
+      /// that were modified after being deserialized and need updates.
+      DECL_UPDATE_OFFSETS = 36,
+
+      /// \brief Record of updates for a declaration that was modified after
+      /// being deserialized.
+      DECL_UPDATES = 37
     };
 
     /// \brief Record types used within a source manager block.

@@ -29,8 +29,9 @@ protected:
   virtual ~ASTDeserializationListener();
 
 public:
-  /// \brief Tell the listener about the reader.
-  virtual void SetReader(ASTReader *Reader) { }
+
+  /// \brief The ASTReader was initialized.
+  virtual void ReaderInitialized(ASTReader *Reader) { }
 
   /// \brief An identifier was deserialized from the AST file.
   virtual void IdentifierRead(serialization::IdentID ID,

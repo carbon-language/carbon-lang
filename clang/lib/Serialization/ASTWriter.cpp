@@ -2474,17 +2474,6 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                               const char *isysroot) {
   using namespace llvm;
 
-  FirstDeclID += Chain->getTotalNumDecls();
-  FirstTypeID += Chain->getTotalNumTypes();
-  FirstIdentID += Chain->getTotalNumIdentifiers();
-  FirstSelectorID += Chain->getTotalNumSelectors();
-  FirstMacroID += Chain->getTotalNumMacroDefinitions();
-  NextDeclID = FirstDeclID;
-  NextTypeID = FirstTypeID;
-  NextIdentID = FirstIdentID;
-  NextSelectorID = FirstSelectorID;
-  NextMacroID = FirstMacroID;
-
   ASTContext &Context = SemaRef.Context;
   Preprocessor &PP = SemaRef.PP;
 
@@ -2707,6 +2696,8 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!AdditionalTemplateSpecializations.empty())
     WriteAdditionalTemplateSpecializations();
 
+  WriteDeclChangeSetBlocks();
+
   Record.clear();
   Record.push_back(NumStatements);
   Record.push_back(NumMacros);
@@ -2715,6 +2706,27 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteDeclUpdateBlock();
   Stream.EmitRecord(STATISTICS, Record);
   Stream.ExitBlock();
+}
+
+void ASTWriter::WriteDeclChangeSetBlocks() {
+  if (DeclUpdates.empty())
+    return;
+
+  RecordData OffsetsRecord;
+  Stream.EnterSubblock(DECL_UPDATES_BLOCK_ID, 3);
+  for (DeclUpdateMap::iterator
+         I = DeclUpdates.begin(), E = DeclUpdates.end(); I != E; ++I) {
+    const Decl *D = I->first;
+    UpdateRecord &URec = I->second;
+
+    uint64_t Offset = Stream.GetCurrentBitNo();
+    Stream.EmitRecord(DECL_UPDATES, URec);
+
+    OffsetsRecord.push_back(GetDeclRef(D));
+    OffsetsRecord.push_back(Offset);
+  }
+  Stream.ExitBlock();
+  Stream.EmitRecord(DECL_UPDATE_OFFSETS, OffsetsRecord);
 }
 
 void ASTWriter::WriteDeclUpdateBlock() {
@@ -2891,7 +2903,7 @@ TypeIdx ASTWriter::getTypeIdx(QualType T) const {
   return I->second;
 }
 
-void ASTWriter::AddDeclRef(const Decl *D, RecordData &Record) {
+void ASTWriter::AddDeclRef(const Decl *D, RecordDataImpl &Record) {
   Record.push_back(GetDeclRef(D));
 }
 
@@ -3190,8 +3202,9 @@ void ASTWriter::AddCXXBaseOrMemberInitializers(
   }
 }
 
-void ASTWriter::SetReader(ASTReader *Reader) {
+void ASTWriter::ReaderInitialized(ASTReader *Reader) {
   assert(Reader && "Cannot remove chain");
+  assert(!Chain && "Cannot replace chain");
   assert(FirstDeclID == NextDeclID &&
          FirstTypeID == NextTypeID &&
          FirstIdentID == NextIdentID &&
@@ -3199,6 +3212,17 @@ void ASTWriter::SetReader(ASTReader *Reader) {
          FirstMacroID == NextMacroID &&
          "Setting chain after writing has started.");
   Chain = Reader;
+
+  FirstDeclID += Chain->getTotalNumDecls();
+  FirstTypeID += Chain->getTotalNumTypes();
+  FirstIdentID += Chain->getTotalNumIdentifiers();
+  FirstSelectorID += Chain->getTotalNumSelectors();
+  FirstMacroID += Chain->getTotalNumMacroDefinitions();
+  NextDeclID = FirstDeclID;
+  NextTypeID = FirstTypeID;
+  NextIdentID = FirstIdentID;
+  NextSelectorID = FirstSelectorID;
+  NextMacroID = FirstMacroID;
 }
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {

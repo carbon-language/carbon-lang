@@ -210,6 +210,10 @@ ASTContext &Decl::getASTContext() const {
   return getTranslationUnitDecl()->getASTContext();
 }
 
+ASTMutationListener *Decl::getASTMutationListener() const {
+  return getASTContext().getASTMutationListener();
+}
+
 bool Decl::isUsed(bool CheckUsedAttr) const { 
   if (Used)
     return true;

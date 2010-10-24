@@ -167,6 +167,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     llvm::OwningPtr<ASTConsumer> Consumer(CreateASTConsumer(CI, Filename));
 
+    CI.getASTContext().setASTMutationListener(Consumer->GetASTMutationListener());
+
     /// Use PCH?
     if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
       assert(hasPCHSupport() && "This action does not have PCH support!");

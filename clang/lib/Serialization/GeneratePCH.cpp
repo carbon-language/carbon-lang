@@ -30,7 +30,7 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            const char *isysroot,
                            llvm::raw_ostream *OS)
   : PP(PP), isysroot(isysroot), Out(OS), SemaPtr(0),
-    StatCalls(0), Stream(Buffer), Writer(Stream) {
+    StatCalls(0), Stream(Buffer), Writer(Stream), Chaining(Chaining) {
 
   // Install a stat() listener to keep track of all of the stat()
   // calls.
@@ -57,6 +57,12 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
   // Free up some memory, in case the process is kept alive.
   Buffer.clear();
+}
+
+ASTMutationListener *PCHGenerator::GetASTMutationListener() {
+  if (Chaining)
+    return &Writer;
+  return 0;
 }
 
 ASTDeserializationListener *PCHGenerator::GetASTDeserializationListener() {

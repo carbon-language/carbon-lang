@@ -401,6 +401,14 @@ private:
   /// = I + 1 has already been loaded.
   std::vector<Decl *> DeclsLoaded;
 
+  typedef std::pair<PerFileData *, uint64_t> FileOffset;
+  typedef llvm::SmallVector<FileOffset, 2> FileOffsetsTy;
+  typedef llvm::DenseMap<serialization::DeclID, FileOffsetsTy>
+      DeclUpdateOffsetsMap;
+  /// \brief Declarations that have modifications residing in a later file
+  /// in the chain.
+  DeclUpdateOffsetsMap DeclUpdateOffsets;
+
   typedef llvm::DenseMap<serialization::DeclID,
                          std::pair<PerFileData *, uint64_t> >
       DeclReplacementMap;

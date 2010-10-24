@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ASTCommon.h"
 #include "clang/Serialization/ASTReader.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -70,6 +71,8 @@ namespace clang {
         Record(Record), Idx(Idx), TypeIDForTypeDecl(0) { }
 
     void Visit(Decl *D);
+
+    void UpdateDecl(Decl *D, const RecordData &Record);
 
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *TU);
@@ -1537,6 +1540,28 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   }
   assert(Idx == Record.size());
 
+  // The declaration may have been modified by files later in the chain.
+  // If this is the case, read the record containing the updates from each file
+  // and pass it to ASTDeclReader to make the modifications.
+  DeclUpdateOffsetsMap::iterator UpdI = DeclUpdateOffsets.find(ID);
+  if (UpdI != DeclUpdateOffsets.end()) {
+    FileOffsetsTy &UpdateOffsets = UpdI->second;
+    for (FileOffsetsTy::iterator
+           I = UpdateOffsets.begin(), E = UpdateOffsets.end(); I != E; ++I) {
+      PerFileData *F = I->first;
+      uint64_t Offset = I->second;
+      llvm::BitstreamCursor &Cursor = F->DeclsCursor;
+      SavedStreamPosition SavedPosition(Cursor);
+      Cursor.JumpToBit(Offset);
+      RecordData Record;
+      unsigned Code = Cursor.ReadCode();
+      unsigned RecCode = Cursor.ReadRecord(Code, Record);
+      (void)RecCode;
+      assert(RecCode == DECL_UPDATES && "Expected DECL_UPDATES record!");
+      Reader.UpdateDecl(D, Record);
+    }
+  }
+
   // If we have deserialized a declaration that has a definition the
   // AST consumer might need to know about, queue it.
   // We don't pass it to the consumer immediately because we may be in recursive
@@ -1545,4 +1570,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     InterestingDecls.push_back(D);
 
   return D;
+}
+
+void ASTDeclReader::UpdateDecl(Decl *D, const RecordData &Record) {
+  // No update is tracked yet.
 }

@@ -43,6 +43,7 @@ class DeclarationName;
 class CompoundStmt;
 class StoredDeclsMap;
 class DependentDiagnostic;
+class ASTMutationListener;
 }
 
 namespace llvm {
@@ -625,6 +626,8 @@ public:
 private:
   const Attr *getAttrsImpl() const;
 
+protected:
+  ASTMutationListener *getASTMutationListener() const;
 };
 
 /// PrettyStackTraceDecl - If a crash occurs, indicate that it happened when
