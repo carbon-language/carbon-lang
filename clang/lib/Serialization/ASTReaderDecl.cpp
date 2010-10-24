@@ -33,39 +33,39 @@ namespace clang {
     ASTReader::PerFileData &F;
     llvm::BitstreamCursor &Cursor;
     const DeclID ThisDeclID;
-    const ASTReader::RecordData &Record;
+    typedef ASTReader::RecordData RecordData;
+    const RecordData &Record;
     unsigned &Idx;
     TypeID TypeIDForTypeDecl;
 
     uint64_t GetCurrentCursorOffset();
-    SourceLocation ReadSourceLocation(const ASTReader::RecordData &R,
-                                      unsigned &I) {
+    SourceLocation ReadSourceLocation(const RecordData &R, unsigned &I) {
       return Reader.ReadSourceLocation(F, R, I);
     }
-    SourceRange ReadSourceRange(const ASTReader::RecordData &R, unsigned &I) {
+    SourceRange ReadSourceRange(const RecordData &R, unsigned &I) {
       return Reader.ReadSourceRange(F, R, I);
     }
-    TypeSourceInfo *GetTypeSourceInfo(const ASTReader::RecordData &R,
-                                      unsigned &I) {
+    TypeSourceInfo *GetTypeSourceInfo(const RecordData &R, unsigned &I) {
       return Reader.GetTypeSourceInfo(F, R, I);
     }
     void ReadQualifierInfo(QualifierInfo &Info,
-                           const ASTReader::RecordData &R, unsigned &I) {
+                           const RecordData &R, unsigned &I) {
       Reader.ReadQualifierInfo(F, Info, R, I);
     }
     void ReadDeclarationNameLoc(DeclarationNameLoc &DNLoc, DeclarationName Name,
-                                const ASTReader::RecordData &R, unsigned &I) {
+                                const RecordData &R, unsigned &I) {
       Reader.ReadDeclarationNameLoc(F, DNLoc, Name, R, I);
     }
     void ReadDeclarationNameInfo(DeclarationNameInfo &NameInfo,
-                                const ASTReader::RecordData &R, unsigned &I) {
+                                const RecordData &R, unsigned &I) {
       Reader.ReadDeclarationNameInfo(F, NameInfo, R, I);
     }
 
+    void ReadCXXDefinitionData(struct CXXRecordDecl::DefinitionData &Data);
   public:
     ASTDeclReader(ASTReader &Reader, ASTReader::PerFileData &F,
                   llvm::BitstreamCursor &Cursor, DeclID thisDeclID,
-                  const ASTReader::RecordData &Record, unsigned &Idx)
+                  const RecordData &Record, unsigned &Idx)
       : Reader(Reader), F(F), Cursor(Cursor), ThisDeclID(thisDeclID),
         Record(Record), Idx(Idx), TypeIDForTypeDecl(0) { }
 
@@ -763,6 +763,49 @@ void ASTDeclReader::VisitUnresolvedUsingTypenameDecl(
   D->TargetNestedNameSpecifier = Reader.ReadNestedNameSpecifier(Record, Idx);
 }
 
+void ASTDeclReader::ReadCXXDefinitionData(
+                                   struct CXXRecordDecl::DefinitionData &Data) {
+  ASTContext &C = *Reader.getContext();
+
+  Data.UserDeclaredConstructor = Record[Idx++];
+  Data.UserDeclaredCopyConstructor = Record[Idx++];
+  Data.UserDeclaredCopyAssignment = Record[Idx++];
+  Data.UserDeclaredDestructor = Record[Idx++];
+  Data.Aggregate = Record[Idx++];
+  Data.PlainOldData = Record[Idx++];
+  Data.Empty = Record[Idx++];
+  Data.Polymorphic = Record[Idx++];
+  Data.Abstract = Record[Idx++];
+  Data.HasTrivialConstructor = Record[Idx++];
+  Data.HasTrivialCopyConstructor = Record[Idx++];
+  Data.HasTrivialCopyAssignment = Record[Idx++];
+  Data.HasTrivialDestructor = Record[Idx++];
+  Data.ComputedVisibleConversions = Record[Idx++];
+  Data.DeclaredDefaultConstructor = Record[Idx++];
+  Data.DeclaredCopyConstructor = Record[Idx++];
+  Data.DeclaredCopyAssignment = Record[Idx++];
+  Data.DeclaredDestructor = Record[Idx++];
+
+  // setBases() is unsuitable since it may try to iterate the bases of an
+  // uninitialized base.
+  Data.NumBases = Record[Idx++];
+  Data.Bases = new(C) CXXBaseSpecifier [Data.NumBases];
+  for (unsigned i = 0; i != Data.NumBases; ++i)
+    Data.Bases[i] = Reader.ReadCXXBaseSpecifier(F, Record, Idx);
+
+  // FIXME: Make VBases lazily computed when needed to avoid storing them.
+  Data.NumVBases = Record[Idx++];
+  Data.VBases = new(C) CXXBaseSpecifier [Data.NumVBases];
+  for (unsigned i = 0; i != Data.NumVBases; ++i)
+    Data.VBases[i] = Reader.ReadCXXBaseSpecifier(F, Record, Idx);
+
+  Reader.ReadUnresolvedSet(Data.Conversions, Record, Idx);
+  Reader.ReadUnresolvedSet(Data.VisibleConversions, Record, Idx);
+  assert(Data.Definition && "Data.Definition should be already set!");
+  Data.FirstFriend
+      = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
+}
+
 void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
   ASTContext &C = *Reader.getContext();
 
@@ -807,45 +850,7 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   if (DefOwnership == Data_Owner) {
     assert(D->DefinitionData);
-    struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
-
-    Data.UserDeclaredConstructor = Record[Idx++];
-    Data.UserDeclaredCopyConstructor = Record[Idx++];
-    Data.UserDeclaredCopyAssignment = Record[Idx++];
-    Data.UserDeclaredDestructor = Record[Idx++];
-    Data.Aggregate = Record[Idx++];
-    Data.PlainOldData = Record[Idx++];
-    Data.Empty = Record[Idx++];
-    Data.Polymorphic = Record[Idx++];
-    Data.Abstract = Record[Idx++];
-    Data.HasTrivialConstructor = Record[Idx++];
-    Data.HasTrivialCopyConstructor = Record[Idx++];
-    Data.HasTrivialCopyAssignment = Record[Idx++];
-    Data.HasTrivialDestructor = Record[Idx++];
-    Data.ComputedVisibleConversions = Record[Idx++];
-    Data.DeclaredDefaultConstructor = Record[Idx++];
-    Data.DeclaredCopyConstructor = Record[Idx++];
-    Data.DeclaredCopyAssignment = Record[Idx++];
-    Data.DeclaredDestructor = Record[Idx++];
-
-    // setBases() is unsuitable since it may try to iterate the bases of an
-    // uninitialized base.
-    Data.NumBases = Record[Idx++];
-    Data.Bases = new(C) CXXBaseSpecifier [Data.NumBases];
-    for (unsigned i = 0; i != Data.NumBases; ++i)
-      Data.Bases[i] = Reader.ReadCXXBaseSpecifier(F, Record, Idx);
-
-    // FIXME: Make VBases lazily computed when needed to avoid storing them.
-    Data.NumVBases = Record[Idx++];
-    Data.VBases = new(C) CXXBaseSpecifier [Data.NumVBases];
-    for (unsigned i = 0; i != Data.NumVBases; ++i)
-      Data.VBases[i] = Reader.ReadCXXBaseSpecifier(F, Record, Idx);
-
-    Reader.ReadUnresolvedSet(Data.Conversions, Record, Idx);
-    Reader.ReadUnresolvedSet(Data.VisibleConversions, Record, Idx);
-    assert(Data.Definition && "Data.Definition should be already set!");
-    Data.FirstFriend
-        = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
+    ReadCXXDefinitionData(*D->DefinitionData);
   }
 
   enum CXXRecKind {

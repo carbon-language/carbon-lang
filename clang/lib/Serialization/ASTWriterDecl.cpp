@@ -31,17 +31,18 @@ namespace clang {
 
     ASTWriter &Writer;
     ASTContext &Context;
-    ASTWriter::RecordData &Record;
+    typedef ASTWriter::RecordData RecordData;
+    RecordData &Record;
 
+    void WriteCXXDefinitionData(struct CXXRecordDecl::DefinitionData &Data);
   public:
     serialization::DeclCode Code;
     unsigned AbbrevToUse;
 
-    ASTDeclWriter(ASTWriter &Writer, ASTContext &Context,
-                  ASTWriter::RecordData &Record)
+    ASTDeclWriter(ASTWriter &Writer, ASTContext &Context, RecordData &Record)
       : Writer(Writer), Context(Context), Record(Record) {
     }
-    
+
     void Visit(Decl *D);
 
     void VisitDecl(Decl *D);
@@ -720,6 +721,42 @@ void ASTDeclWriter::VisitUnresolvedUsingTypenameDecl(
   Code = serialization::DECL_UNRESOLVED_USING_TYPENAME;
 }
 
+void ASTDeclWriter::WriteCXXDefinitionData(
+                                   struct CXXRecordDecl::DefinitionData &Data) {
+  Record.push_back(Data.UserDeclaredConstructor);
+  Record.push_back(Data.UserDeclaredCopyConstructor);
+  Record.push_back(Data.UserDeclaredCopyAssignment);
+  Record.push_back(Data.UserDeclaredDestructor);
+  Record.push_back(Data.Aggregate);
+  Record.push_back(Data.PlainOldData);
+  Record.push_back(Data.Empty);
+  Record.push_back(Data.Polymorphic);
+  Record.push_back(Data.Abstract);
+  Record.push_back(Data.HasTrivialConstructor);
+  Record.push_back(Data.HasTrivialCopyConstructor);
+  Record.push_back(Data.HasTrivialCopyAssignment);
+  Record.push_back(Data.HasTrivialDestructor);
+  Record.push_back(Data.ComputedVisibleConversions);
+  Record.push_back(Data.DeclaredDefaultConstructor);
+  Record.push_back(Data.DeclaredCopyConstructor);
+  Record.push_back(Data.DeclaredCopyAssignment);
+  Record.push_back(Data.DeclaredDestructor);
+
+  Record.push_back(Data.NumBases);
+  for (unsigned i = 0; i != Data.NumBases; ++i)
+    Writer.AddCXXBaseSpecifier(Data.Bases[i], Record);
+
+  // FIXME: Make VBases lazily computed when needed to avoid storing them.
+  Record.push_back(Data.NumVBases);
+  for (unsigned i = 0; i != Data.NumVBases; ++i)
+    Writer.AddCXXBaseSpecifier(Data.VBases[i], Record);
+
+  Writer.AddUnresolvedSet(Data.Conversions, Record);
+  Writer.AddUnresolvedSet(Data.VisibleConversions, Record);
+  // Data.Definition is the owning decl, no need to write it. 
+  Writer.AddDeclRef(Data.FirstFriend, Record);
+}
+
 void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // See comments at ASTDeclReader::VisitCXXRecordDecl about why this happens
   // before VisitRecordDecl.
@@ -742,42 +779,7 @@ void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   if (OwnsDefinitionData) {
     assert(D->DefinitionData);
-    struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
-
-    Record.push_back(Data.UserDeclaredConstructor);
-    Record.push_back(Data.UserDeclaredCopyConstructor);
-    Record.push_back(Data.UserDeclaredCopyAssignment);
-    Record.push_back(Data.UserDeclaredDestructor);
-    Record.push_back(Data.Aggregate);
-    Record.push_back(Data.PlainOldData);
-    Record.push_back(Data.Empty);
-    Record.push_back(Data.Polymorphic);
-    Record.push_back(Data.Abstract);
-    Record.push_back(Data.HasTrivialConstructor);
-    Record.push_back(Data.HasTrivialCopyConstructor);
-    Record.push_back(Data.HasTrivialCopyAssignment);
-    Record.push_back(Data.HasTrivialDestructor);
-    Record.push_back(Data.ComputedVisibleConversions);
-    Record.push_back(Data.DeclaredDefaultConstructor);
-    Record.push_back(Data.DeclaredCopyConstructor);
-    Record.push_back(Data.DeclaredCopyAssignment);
-    Record.push_back(Data.DeclaredDestructor);
-
-    Record.push_back(D->getNumBases());
-    for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
-           E = D->bases_end(); I != E; ++I)
-      Writer.AddCXXBaseSpecifier(*I, Record);
-
-    // FIXME: Make VBases lazily computed when needed to avoid storing them.
-    Record.push_back(D->getNumVBases());
-    for (CXXRecordDecl::base_class_iterator I = D->vbases_begin(),
-           E = D->vbases_end(); I != E; ++I)
-      Writer.AddCXXBaseSpecifier(*I, Record);
-
-    Writer.AddUnresolvedSet(Data.Conversions, Record);
-    Writer.AddUnresolvedSet(Data.VisibleConversions, Record);
-    // Data.Definition is written at the top. 
-    Writer.AddDeclRef(Data.FirstFriend, Record);
+    WriteCXXDefinitionData(*D->DefinitionData);
   }
 
   enum {
