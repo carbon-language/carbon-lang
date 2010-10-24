@@ -4318,6 +4318,9 @@ void ASTReader::FinishedDeserializing() {
     // decls to the consumer.
     if (Consumer)
       PassInterestingDeclsToConsumer();
+
+    assert(PendingForwardRefs.size() == 0 &&
+           "Some forward refs did not get linked to the definition!");
   }
   --NumCurrentElementsDeserializing;
 }

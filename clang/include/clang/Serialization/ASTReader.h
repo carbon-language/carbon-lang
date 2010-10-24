@@ -436,6 +436,14 @@ private:
   /// haven't been loaded yet.
   DeclContextVisibleUpdatesPending PendingVisibleUpdates;
 
+  typedef llvm::SmallVector<CXXRecordDecl *, 4> ForwardRefs;
+  typedef llvm::DenseMap<const CXXRecordDecl *, ForwardRefs>
+      PendingForwardRefsMap;
+  /// \brief Forward references that have a definition but the definition decl
+  /// is still initializing. When the definition gets read it will update
+  /// the DefinitionData pointer of all pending references.
+  PendingForwardRefsMap PendingForwardRefs;
+
   typedef llvm::DenseMap<serialization::DeclID, serialization::DeclID>
       FirstLatestDeclIDMap;
   /// \brief Map of first declarations from a chained PCH that point to the

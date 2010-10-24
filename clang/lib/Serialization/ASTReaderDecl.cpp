@@ -807,50 +807,37 @@ void ASTDeclReader::ReadCXXDefinitionData(
 }
 
 void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  ASTContext &C = *Reader.getContext();
-
-  // We need to allocate the DefinitionData struct ahead of VisitRecordDecl
-  // so that the other CXXRecordDecls can get a pointer even when the owner
-  // is still initializing.
-  enum DataOwnership { Data_NoDefData, Data_Owner, Data_NotOwner };
-  DataOwnership DefOwnership = (DataOwnership)Record[Idx++];
-  switch (DefOwnership) {
-  default:
-    assert(0 && "Out of sync with ASTDeclWriter or messed up reading");
-  case Data_NoDefData:
-    break;
-  case Data_Owner:
-    D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
-    break;
-  case Data_NotOwner:
-    D->DefinitionData
-        = cast<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]))->DefinitionData;
-    break;
-  }
-
   VisitRecordDecl(D);
 
-  // Spread the DefinitionData pointer if it's the definition (it may have
-  // come from a chained PCH and earlier redeclarations don't know it), or
-  // if it just acquired a pointer that it's not supposed to have (a definition
-  // from a chained PCH updated it).
-  if (D->DefinitionData && DefOwnership != Data_NotOwner) {
-    llvm::SmallPtrSet<CXXRecordDecl *, 16> PrevRedecls;
-    PrevRedecls.insert(D);
-    CXXRecordDecl *Redecl = cast<CXXRecordDecl>(D->RedeclLink.getNext());
-    while (!PrevRedecls.count(Redecl)) {
-      PrevRedecls.insert(Redecl);
-      assert((!Redecl->DefinitionData ||
-              Redecl->DefinitionData == D->DefinitionData) &&
-             "Multiple definitions in the redeclaration chain ?");
-      Redecl->DefinitionData = D->DefinitionData;
-      Redecl = cast<CXXRecordDecl>(Redecl->RedeclLink.getNext());
-    }
-  }
+  ASTContext &C = *Reader.getContext();
 
-  if (DefOwnership == Data_Owner) {
-    assert(D->DefinitionData);
+  CXXRecordDecl *DefinitionDecl
+      = cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
+  if (D == DefinitionDecl) {
+    D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
     ReadCXXDefinitionData(*D->DefinitionData);
+    // We read the definition info. Check if there are pending forward
+    // references that need to point to this DefinitionData pointer.
+    ASTReader::PendingForwardRefsMap::iterator
+        FindI = Reader.PendingForwardRefs.find(D);
+    if (FindI != Reader.PendingForwardRefs.end()) {
+      ASTReader::ForwardRefs &Refs = FindI->second;
+      for (ASTReader::ForwardRefs::iterator
+             I = Refs.begin(), E = Refs.end(); I != E; ++I)
+        (*I)->DefinitionData = D->DefinitionData;
+#ifndef NDEBUG
+      // We later check whether PendingForwardRefs is empty to make sure all
+      // pending references were linked.
+      Reader.PendingForwardRefs.erase(D);
+#endif
+    }
+  } else if (DefinitionDecl) {
+    if (DefinitionDecl->DefinitionData) {
+      D->DefinitionData = DefinitionDecl->DefinitionData;
+    } else {
+      // The definition is still initializing.
+      Reader.PendingForwardRefs[DefinitionDecl].push_back(D);
+    }
   }
 
   enum CXXRecKind {

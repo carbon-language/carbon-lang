@@ -758,26 +758,13 @@ void ASTDeclWriter::WriteCXXDefinitionData(
 }
 
 void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  // See comments at ASTDeclReader::VisitCXXRecordDecl about why this happens
-  // before VisitRecordDecl.
-  enum { Data_NoDefData, Data_Owner, Data_NotOwner };
-  bool OwnsDefinitionData = false;
-  if (D->DefinitionData) {
-    assert(D->DefinitionData->Definition &&
-           "DefinitionData don't point to a definition decl!");
-    OwnsDefinitionData = D->DefinitionData->Definition == D;
-    if (OwnsDefinitionData) {
-      Record.push_back(Data_Owner);
-    } else {
-      Record.push_back(Data_NotOwner);
-      Writer.AddDeclRef(D->DefinitionData->Definition, Record);
-    }
-  } else
-    Record.push_back(Data_NoDefData);
-
   VisitRecordDecl(D);
 
-  if (OwnsDefinitionData) {
+  CXXRecordDecl *DefinitionDecl = 0;
+  if (D->DefinitionData)
+    DefinitionDecl = D->DefinitionData->Definition;
+  Writer.AddDeclRef(DefinitionDecl, Record);
+  if (D == DefinitionDecl) {
     assert(D->DefinitionData);
     WriteCXXDefinitionData(*D->DefinitionData);
   }
