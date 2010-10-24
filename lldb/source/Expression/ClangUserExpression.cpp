@@ -91,6 +91,26 @@ ApplyObjcCastHack(std::string &expr)
 #undef OBJC_CAST_HACK_FROM
 }
 
+// Another hack, meant to allow use of unichar despite it not being available in
+// the type information.  Although we could special-case it in type lookup,
+// hopefully we'll figure out a way to #include the same environment as is
+// present in the original source file rather than try to hack specific type
+// definitions in as needed.
+static void
+ApplyUnicharHack(std::string &expr)
+{
+#define UNICHAR_HACK_FROM "unichar"
+#define UNICHAR_HACK_TO   "unsigned short"
+    
+    size_t from_offset;
+    
+    while ((from_offset = expr.find(UNICHAR_HACK_FROM)) != expr.npos)
+        expr.replace(from_offset, sizeof(UNICHAR_HACK_FROM) - 1, UNICHAR_HACK_TO);
+    
+#undef UNICHAR_HACK_TO
+#undef UNICHAR_HACK_FROM
+}
+
 bool
 ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
 {
@@ -105,6 +125,7 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     //
     
     ApplyObjcCastHack(m_expr_text);
+    ApplyUnicharHack(m_expr_text);
 
     if (m_cplusplus)
     {
