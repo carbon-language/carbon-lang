@@ -701,6 +701,10 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
 
+      case X86::reloc_global_offset_table:
+        Type = ELF::R_386_GOTPC;
+        break;
+
       // FIXME: Should we avoid selecting reloc_signed_4byte in 32 bit mode
       // instead?
       case X86::reloc_signed_4byte:
@@ -710,10 +714,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         default:
           llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
-          if (Symbol->getName() == "_GLOBAL_OFFSET_TABLE_")
-            Type = ELF::R_386_GOTPC;
-          else
-            Type = ELF::R_386_32;
+          Type = ELF::R_386_32;
           break;
         case MCSymbolRefExpr::VK_GOT:
           Type = ELF::R_386_GOT32;

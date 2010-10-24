@@ -39,7 +39,7 @@ public:
   ~X86MCCodeEmitter() {}
 
   unsigned getNumFixupKinds() const {
-    return 6;
+    return 7;
   }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
@@ -49,7 +49,8 @@ public:
       { "reloc_pcrel_2byte", 0, 2 * 8, MCFixupKindInfo::FKF_IsPCRel },
       { "reloc_riprel_4byte", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
       { "reloc_riprel_4byte_movq_load", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
-      { "reloc_signed_4byte", 0, 4 * 8, 0}
+      { "reloc_signed_4byte", 0, 4 * 8, 0},
+      { "reloc_global_offset_table", 0, 4 * 8, 0}
     };
 
     if (Kind < FirstTargetFixupKind)
@@ -229,10 +230,10 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
   // If we have an immoffset, add it to the expression.
   const MCExpr *Expr = DispOp.getExpr();
 
-  if (StartsWithGlobalOffsetTable(Expr)) {
-    // FIXME: We should probably change the FixupKind to a special one so that
-    // other parts of MC don't have to check the symbol name.
+  if (FixupKind == FK_Data_4 && StartsWithGlobalOffsetTable(Expr)) {
     assert(ImmOffset == 0);
+
+    FixupKind = MCFixupKind(X86::reloc_global_offset_table);
     ImmOffset = CurByte;
   }
 

@@ -39,6 +39,7 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
   case X86::reloc_riprel_4byte:
   case X86::reloc_riprel_4byte_movq_load:
   case X86::reloc_signed_4byte:
+  case X86::reloc_global_offset_table:
   case FK_Data_4: return 2;
   case FK_Data_8: return 3;
   }
