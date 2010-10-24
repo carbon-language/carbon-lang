@@ -2410,6 +2410,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     else
       WriteDecl(Context, DOT.getDecl());
   }
+  for (DeclsToRewriteTy::iterator
+         I = DeclsToRewrite.begin(), E = DeclsToRewrite.end(); I != E; ++I) {
+    WriteDecl(Context, const_cast<Decl*>(*I));
+  }
   Stream.ExitBlock();
 
   WritePreprocessor(PP);
@@ -2719,6 +2723,9 @@ void ASTWriter::WriteDeclUpdatesBlocks() {
          I = DeclUpdates.begin(), E = DeclUpdates.end(); I != E; ++I) {
     const Decl *D = I->first;
     UpdateRecord &URec = I->second;
+
+    if (DeclsToRewrite.count(D))
+      continue; // The decl will be written completely,no need to store updates.
 
     uint64_t Offset = Stream.GetCurrentBitNo();
     Stream.EmitRecord(DECL_UPDATES, URec);

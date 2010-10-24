@@ -223,6 +223,10 @@ private:
   /// to this set, so that we can write out lexical content updates for it.
   llvm::SmallPtrSet<const NamespaceDecl *, 16> UpdatedNamespaces;
 
+  typedef llvm::SmallPtrSet<const Decl *, 16> DeclsToRewriteTy;
+  /// \brief Decls that will be replaced in the current dependent AST file.
+  DeclsToRewriteTy DeclsToRewrite;
+
   /// \brief Decls that have been replaced in the current dependent AST file.
   ///
   /// When a decl changes fundamentally after being deserialized (this shouldn't
