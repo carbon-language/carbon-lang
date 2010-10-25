@@ -552,7 +552,15 @@ void CFGBuilder::addImplicitDtorsForDestructor(const CXXDestructorDecl *DD) {
   // First destroy member objects.
   for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
       FE = RD->field_end(); FI != FE; ++FI) {
-    if (const CXXRecordDecl *CD = FI->getType()->getAsCXXRecordDecl())
+    // Check for constant size array. Set type to array element type.
+    QualType QT = FI->getType();
+    if (const ConstantArrayType *AT = Context->getAsConstantArrayType(QT)) {
+      if (AT->getSize() == 0)
+        continue;
+      QT = AT->getElementType();
+    }
+
+    if (const CXXRecordDecl *CD = QT->getAsCXXRecordDecl())
       if (!CD->hasTrivialDestructor()) {
         autoCreateBlock();
         appendMemberDtor(Block, *FI);
@@ -2729,8 +2737,13 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
 
   } else if (CFGMemberDtor ME = E.getAs<CFGMemberDtor>()) {
     FieldDecl *FD = ME.getFieldDecl();
+
+    const Type *T = FD->getType().getTypePtr();
+    if (const Type *ET = T->getArrayElementTypeNoTypeQual())
+      T = ET;
+
     OS << "this->" << FD->getName();
-    OS << ".~" << FD->getType()->getAsCXXRecordDecl()->getName() << "()";
+    OS << ".~" << T->getAsCXXRecordDecl()->getName() << "()";
     OS << " (Member object destructor)\n";
   }
  }
