@@ -173,9 +173,12 @@ def PrintStackTrace(thread, string_buffer = False):
     lines = GetLineNumbers(thread)
     addrs = GetPCAddresses(thread)
 
-    print >> output, "Stack trace for thread id={0:#x} name={1} queue={2} stop reason={3}:".format(
-        thread.GetThreadID(), thread.GetName(), thread.GetQueueName(),
-        StopReasonString(thread.GetStopReason()))
+    if thread.GetStopReason() != lldb.eStopReasonInvalid:
+        desc =  "stop reason=" + StopReasonString(thread.GetStopReason())
+    else:
+        desc = ""
+    print >> output, "Stack trace for thread id={0:#x} name={1} queue={2} ".format(
+        thread.GetThreadID(), thread.GetName(), thread.GetQueueName()) + desc
 
     for i in range(depth):
         frame = thread.GetFrameAtIndex(i)
