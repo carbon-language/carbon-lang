@@ -32,6 +32,28 @@ CodeGenTBAA::CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext& VMContext,
 CodeGenTBAA::~CodeGenTBAA() {
 }
 
+llvm::MDNode *CodeGenTBAA::getRoot() {
+  // Define the root of the tree. This identifies the tree, so that
+  // if our LLVM IR is linked with LLVM IR from a different front-end
+  // (or a different version of this front-end), their TBAA trees will
+  // remain distinct, and the optimizer will treat them conservatively.
+  if (!Root)
+    Root = getTBAAInfoForNamedType("Simple C/C++ TBAA", 0);
+
+  return Root;
+}
+
+llvm::MDNode *CodeGenTBAA::getChar() {
+  // Define the root of the tree for user-accessible memory. C and C++
+  // give special powers to char and certain similar types. However,
+  // these special powers only cover user-accessible memory, and doesn't
+  // include things like vtables.
+  if (!Char)
+    Char = getTBAAInfoForNamedType("omnipotent char", getRoot());
+
+  return Char;
+}
+
 /// getTBAAInfoForNamedType - Create a TBAA tree node with the given string
 /// as its identifier, and the given Parent node as its tree parent.
 llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(llvm::StringRef NameStr,
@@ -51,21 +73,6 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   if (llvm::MDNode *N = MetadataCache[Ty])
     return N;
 
-  // If this is our first node, create the initial tree.
-  if (!Root) {
-    // Define the root of the tree. This identifies the tree, so that
-    // if our LLVM IR is linked with LLVM IR from a different front-end
-    // (or a different version of this front-end), their TBAA trees will
-    // remain distinct, and the optimizer will treat them conservatively.
-    Root = getTBAAInfoForNamedType("Simple C/C++ TBAA", 0);
-
-    // Define the root of the tree for user-accessible memory. C and C++
-    // give special powers to char and certain similar types. However,
-    // these special powers only cover user-accessible memory, and doesn't
-    // include things like vtables.
-    Char = getTBAAInfoForNamedType("omnipotent char", Root);
-  }
-
   // Handle builtin types.
   if (const BuiltinType *BTy = dyn_cast<BuiltinType>(Ty)) {
     switch (BTy->getKind()) {
@@ -78,7 +85,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     case BuiltinType::Char_S:
     case BuiltinType::UChar:
     case BuiltinType::SChar:
-      return Char;
+      return getChar();
 
     // Unsigned types can alias their corresponding signed types.
     case BuiltinType::UShort:
@@ -97,7 +104,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     // "underlying types".
     default:
       return MetadataCache[Ty] =
-               getTBAAInfoForNamedType(BTy->getName(Features), Char);
+               getTBAAInfoForNamedType(BTy->getName(Features), getChar());
     }
   }
 
@@ -105,7 +112,8 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // TODO: Implement C++'s type "similarity" and consider dis-"similar"
   // pointers distinct.
   if (Ty->isPointerType())
-    return MetadataCache[Ty] = getTBAAInfoForNamedType("any pointer", Char);
+    return MetadataCache[Ty] = getTBAAInfoForNamedType("any pointer",
+                                                       getChar());
 
   // Enum types are distinct types. In C++ they have "underlying types",
   // however they aren't related for TBAA.
@@ -116,7 +124,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     // members into a single identifying MDNode.
     if (!Features.CPlusPlus &&
         ETy->getDecl()->getTypedefForAnonDecl())
-      return MetadataCache[Ty] = Char;
+      return MetadataCache[Ty] = getChar();
 
     // In C++ mode, types have linkage, so we can rely on the ODR and
     // on their mangled names, if they're external.
@@ -124,15 +132,15 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     // decl with local linkage or no linkage?
     if (Features.CPlusPlus &&
         ETy->getDecl()->getLinkage() != ExternalLinkage)
-      return MetadataCache[Ty] = Char;
+      return MetadataCache[Ty] = getChar();
 
     // TODO: This is using the RTTI name. Is there a better way to get
     // a unique string for a type?
     llvm::SmallString<256> OutName;
     MContext.mangleCXXRTTIName(QualType(ETy, 0), OutName);
-    return MetadataCache[Ty] = getTBAAInfoForNamedType(OutName, Char);
+    return MetadataCache[Ty] = getTBAAInfoForNamedType(OutName, getChar());
   }
 
   // For now, handle any other kind of type conservatively.
-  return MetadataCache[Ty] = Char;
+  return MetadataCache[Ty] = getChar();
 }

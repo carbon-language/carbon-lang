@@ -44,13 +44,16 @@ class CodeGenTBAA {
   /// MetadataCache - This maps clang::Types to llvm::MDNodes describing them.
   llvm::DenseMap<const Type *, llvm::MDNode *> MetadataCache;
 
-  /// Root - This is the mdnode for the root of the metadata type graph
-  /// for this translation unit.
   llvm::MDNode *Root;
-
-  /// Char - This is the mdnode for "char", which is special, and any types
-  /// considered to be equivalent to it.
   llvm::MDNode *Char;
+
+  /// getRoot - This is the mdnode for the root of the metadata type graph
+  /// for this translation unit.
+  llvm::MDNode *getRoot();
+
+  /// getChar - This is the mdnode for "char", which is special, and any types
+  /// considered to be equivalent to it.
+  llvm::MDNode *getChar();
 
   llvm::MDNode *getTBAAInfoForNamedType(llvm::StringRef NameStr,
                                         llvm::MDNode *Parent);
