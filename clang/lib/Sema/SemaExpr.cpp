@@ -7067,21 +7067,43 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
   // If there are sub stmts in the compound stmt, take the type of the last one
   // as the type of the stmtexpr.
   QualType Ty = Context.VoidTy;
-
+  bool StmtExprMayBindToTemp = false;
   if (!Compound->body_empty()) {
     Stmt *LastStmt = Compound->body_back();
+    LabelStmt *LastLabelStmt = 0;
     // If LastStmt is a label, skip down through into the body.
-    while (LabelStmt *Label = dyn_cast<LabelStmt>(LastStmt))
+    while (LabelStmt *Label = dyn_cast<LabelStmt>(LastStmt)) {
+      LastLabelStmt = Label;
       LastStmt = Label->getSubStmt();
-
-    if (Expr *LastExpr = dyn_cast<Expr>(LastStmt))
+    }
+    if (Expr *LastExpr = dyn_cast<Expr>(LastStmt)) {
       Ty = LastExpr->getType();
+      if (!Ty->isDependentType() && !LastExpr->isTypeDependent()) {
+        ExprResult Res = PerformCopyInitialization(
+                            InitializedEntity::InitializeResult(LPLoc, 
+                                                                Ty,
+                                                                false),
+                                                   SourceLocation(),
+                                                   Owned(LastExpr));
+        if (Res.isInvalid())
+          return ExprError();
+        if ((LastExpr = Res.takeAs<Expr>())) {
+          if (!LastLabelStmt)
+            Compound->setLastStmt(LastExpr);
+          else
+            LastLabelStmt->setSubStmt(LastExpr);
+          StmtExprMayBindToTemp = true;
+        }
+      }
+    }
   }
 
   // FIXME: Check that expression type is complete/non-abstract; statement
   // expressions are not lvalues.
-
-  return Owned(new (Context) StmtExpr(Compound, Ty, LPLoc, RPLoc));
+  Expr *ResStmtExpr = new (Context) StmtExpr(Compound, Ty, LPLoc, RPLoc);
+  if (StmtExprMayBindToTemp)
+    return MaybeBindToTemporary(ResStmtExpr);
+  return Owned(ResStmtExpr);
 }
 
 ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,

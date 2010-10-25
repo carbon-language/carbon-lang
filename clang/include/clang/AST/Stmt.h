@@ -383,6 +383,9 @@ public:
   body_iterator body_begin() { return Body; }
   body_iterator body_end() { return Body + NumStmts; }
   Stmt *body_back() { return NumStmts ? Body[NumStmts-1] : 0; }
+  
+  void setLastStmt(Stmt *S)
+  { assert(NumStmts && "setLastStmt"); Body[NumStmts-1] = S; }
 
   typedef Stmt* const * const_body_iterator;
   const_body_iterator body_begin() const { return Body; }
