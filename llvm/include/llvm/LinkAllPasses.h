@@ -21,6 +21,7 @@
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/Analysis/RegionPass.h"
 #include "llvm/Analysis/RegionPrinter.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/Lint.h"
@@ -151,6 +152,8 @@ namespace {
       (void)new llvm::FindUsedTypes();
       (void)new llvm::ScalarEvolution();
       ((llvm::Function*)0)->viewCFGOnly();
+      llvm::RGPassManager RGM(0);
+      ((llvm::RegionPass*)0)->runOnRegion((llvm::Region*)0, RGM);
       llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)0);
       X.add((llvm::Value*)0, 0, 0);  // for -print-alias-sets
     }
