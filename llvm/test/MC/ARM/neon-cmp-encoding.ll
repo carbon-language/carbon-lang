@@ -79,3 +79,7 @@ define <4 x i32> @vceq_4xfloat(<4 x float>* %A, <4 x float>* %B) nounwind {
   %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
 }
+
+; FIXME: We cannot currently test the vceq with immediate zero, because we do
+; not code generate it at this time.
+

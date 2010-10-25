@@ -2809,6 +2809,7 @@ def  VCGEfq   : N3VQ<1,0,0b00,0b1110,0, IIC_VBINQ, "vcge", "f32", v4i32, v4f32,
 defm VCGEz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00001, 0, "vcge", "s",
                             "$dst, $src, #0">;
 // For disassembly only.
+// FIXME: This instruction's encoding MAY NOT BE correct.
 defm VCLEz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00011, 0, "vcle", "s",
                             "$dst, $src, #0">;
 
