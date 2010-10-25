@@ -749,14 +749,96 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
     << method->getDeclName();
 }
 
+/// Determines if type B can be substituted for type A.  Returns true if we can
+/// guarantee that anything that the user will do to an object of type A can 
+/// also be done to an object of type B.  This is trivially true if the two 
+/// types are the same, or if B is a subclass of A.  It becomes more complex
+/// in cases where protocols are involved.
+///
+/// Object types in Objective-C describe the minimum requirements for an
+/// object, rather than providing a complete description of a type.  For
+/// example, if A is a subclass of B, then B* may refer to an instance of A.
+/// The principle of substitutability means that we may use an instance of A
+/// anywhere that we may use an instance of B - it will implement all of the
+/// ivars of B and all of the methods of B.  
+///
+/// This substitutability is important when type checking methods, because 
+/// the implementation may have stricter type definitions than the interface.
+/// The interface specifies minimum requirements, but the implementation may
+/// have more accurate ones.  For example, a method may privately accept 
+/// instances of B, but only publish that it accepts instances of A.  Any
+/// object passed to it will be type checked against B, and so will implicitly
+/// by a valid A*.  Similarly, a method may return a subclass of the class that
+/// it is declared as returning.
+///
+/// This is most important when considering subclassing.  A method in a
+/// subclass must accept any object as an argument that its superclass's
+/// implementation accepts.  It may, however, accept a more general type
+/// without breaking substitutability (i.e. you can still use the subclass
+/// anywhere that you can use the superclass, but not vice versa).  The
+/// converse requirement applies to return types: the return type for a
+/// subclass method must be a valid object of the kind that the superclass
+/// advertises, but it may be specified more accurately.  This avoids the need
+/// for explicit down-casting by callers.
+///
+/// Note: This is a stricter requirement than for assignment.  
+static bool isObjCTypeSubstitutable(ASTContext &C, QualType A, QualType B, bool
+    rejectId=false) {
+  ObjCObjectPointerType *a = dyn_cast<ObjCObjectPointerType>(
+      C.getCanonicalType(A));
+  ObjCObjectPointerType *b = dyn_cast<ObjCObjectPointerType>(
+      C.getCanonicalType(B));
+  // Ignore non-ObjC types.
+  if (!(a && b)) 
+  {
+	  //a->dump(); b->dump();
+	  return false;
+  }
+  // A type is always substitutable for itself
+  if (C.hasSameType(A, B)) return true;
+
+  if (rejectId && C.isObjCIdType(B)) return false;
+
+  // If B is a qualified id, then A must also be a qualified id and it must
+  // implement all of the protocols in B.  It may not be a qualified class.
+  // For example, MyClass<A> can be assigned to id<A>, but MyClass<A> is a
+  // stricter definition so it is not substitutable for id<A>.
+  if (B->isObjCQualifiedIdType()) {
+    return A->isObjCQualifiedIdType() &&
+      C.ObjCQualifiedIdTypesAreCompatible(A, B, false);
+  }
+
+  /*
+  // id is a special type that bypasses type checking completely.  We want a
+  // warning when it is used in one place but not another.
+  if (C.isObjCIdType(A) || C.isObjCIdType(B)) return false;
+
+
+  // If B is a qualified id, then A must also be a qualified id (which it isn't
+  // if we've got this far)
+  if (B->isObjCQualifiedIdType()) return false;
+  */
+
+  // Now we know that A and B are (potentially-qualified) class types.  The
+  // normal rules for assignment apply.
+  return C.canAssignObjCInterfaces(a, b);
+}
+
 void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                                        ObjCMethodDecl *IntfMethodDecl) {
   if (!Context.hasSameType(IntfMethodDecl->getResultType(),
                            ImpMethodDecl->getResultType())) {
-    Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_ret_types)
-      << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
-      << ImpMethodDecl->getResultType();
-    Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
+    // Allow non-matching return types as long as they don't violate the
+    // principle of substitutability.  Specifically, we permit return types
+    // that are subclasses of the declared return type, or that are
+    // more-qualified versions of the declared type.
+    if (!isObjCTypeSubstitutable(Context, IntfMethodDecl->getResultType(),
+          ImpMethodDecl->getResultType())) {
+      Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_ret_types)
+        << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
+        << ImpMethodDecl->getResultType();
+      Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
+    }
   }
 
   for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
@@ -765,6 +847,14 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
     QualType ParmDeclTy = (*IF)->getType().getUnqualifiedType();
     QualType ParmImpTy = (*IM)->getType().getUnqualifiedType();
     if (Context.hasSameType(ParmDeclTy, ParmImpTy))
+      continue;
+
+    // Allow non-matching argument types as long as they don't violate the
+    // principle of substitutability.  Specifically, the implementation must
+    // accept any objects that the superclass accepts, however it may also
+    // accept others.  
+
+    if (isObjCTypeSubstitutable(Context, ParmImpTy, ParmDeclTy, true))
       continue;
 
     Diag((*IM)->getLocation(), diag::warn_conflicting_param_types)
