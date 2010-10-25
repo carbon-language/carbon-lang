@@ -2951,28 +2951,30 @@ def  VBSLq    : N3VX<1, 0, 0b01, 0b0001, 1, 1, (outs QPR:$Vd),
 
 //   VBIF     : Vector Bitwise Insert if False
 //              like VBSL but with: "vbif $dst, $src3, $src1", "$src2 = $dst",
+// FIXME: This instruction's encoding MAY NOT BE correct.
 def  VBIFd    : N3VX<1, 0, 0b11, 0b0001, 0, 1,
-                     (outs DPR:$dst), (ins DPR:$src1, DPR:$src2, DPR:$src3),
+                     (outs DPR:$Vd), (ins DPR:$src1, DPR:$Vn, DPR:$Vm),
                      N3RegFrm, IIC_VBINiD,
-                     "vbif", "$dst, $src2, $src3", "$src1 = $dst",
+                     "vbif", "$Vd, $Vn, $Vm", "$src1 = $Vd",
                      [/* For disassembly only; pattern left blank */]>;
 def  VBIFq    : N3VX<1, 0, 0b11, 0b0001, 1, 1,
-                     (outs QPR:$dst), (ins QPR:$src1, QPR:$src2, QPR:$src3),
+                     (outs QPR:$Vd), (ins QPR:$src1, QPR:$Vn, QPR:$Vm),
                      N3RegFrm, IIC_VBINiQ,
-                     "vbif", "$dst, $src2, $src3", "$src1 = $dst",
+                     "vbif", "$Vd, $Vn, $Vm", "$src1 = $Vd",
                      [/* For disassembly only; pattern left blank */]>;
 
 //   VBIT     : Vector Bitwise Insert if True
 //              like VBSL but with: "vbit $dst, $src2, $src1", "$src3 = $dst",
+// FIXME: This instruction's encoding MAY NOT BE correct.
 def  VBITd    : N3VX<1, 0, 0b10, 0b0001, 0, 1,
-                     (outs DPR:$dst), (ins DPR:$src1, DPR:$src2, DPR:$src3),
+                     (outs DPR:$Vd), (ins DPR:$src1, DPR:$Vn, DPR:$Vm),
                      N3RegFrm, IIC_VBINiD,
-                     "vbit", "$dst, $src2, $src3", "$src1 = $dst",
+                     "vbit", "$Vd, $Vn, $Vm", "$src1 = $Vd",
                      [/* For disassembly only; pattern left blank */]>;
 def  VBITq    : N3VX<1, 0, 0b10, 0b0001, 1, 1,
-                     (outs QPR:$dst), (ins QPR:$src1, QPR:$src2, QPR:$src3),
+                     (outs QPR:$Vd), (ins QPR:$src1, QPR:$Vn, QPR:$Vm),
                      N3RegFrm, IIC_VBINiQ,
-                     "vbit", "$dst, $src2, $src3", "$src1 = $dst",
+                     "vbit", "$Vd, $Vn, $Vm", "$src1 = $Vd",
                      [/* For disassembly only; pattern left blank */]>;
 
 // VBIT/VBIF are not yet implemented.  The TwoAddress pass will not go looking

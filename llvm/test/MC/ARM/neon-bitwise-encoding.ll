@@ -3,6 +3,7 @@
 ; FIXME: The following instructions still require testing:
 ;  - vand with immediate
 ;  - vmvn of an immediate
+;  - both vbit and vbif
 
 ; CHECK: vand_8xi8
 define <8 x i8> @vand_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
