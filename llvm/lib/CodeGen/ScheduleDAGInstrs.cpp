@@ -169,8 +169,8 @@ void ScheduleDAGInstrs::AddSchedBarrierDeps() {
   } else {
     // For others, e.g. fallthrough, conditional branch, assume the exit
     // uses all the registers.
-    for (int i = 0, e = TRI->getNumRegs(); i != e; ++i)
-      Uses[i].push_back(&ExitSU);
+    // FIXME: This causes too much compile time regression. We need to compute
+    // liveout instead.
   }
 }
 
