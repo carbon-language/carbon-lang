@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -51,6 +52,8 @@ static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print",
 static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
      cl::desc("Make an absense of debug location information explicit."),
      cl::init(false));
+
+STATISTIC(BlocksWithoutLineNo, "Number of blocks without any line number");
 
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
@@ -2770,11 +2773,36 @@ static DebugLoc FindFirstDebugLoc(const MachineFunction *MF) {
   return DebugLoc();
 }
 
+#ifndef NDEBUG
+/// CheckLineNumbers - Count basicblocks whose instructions do not have any
+/// line number information.
+static void CheckLineNumbers(const MachineFunction *MF) {
+  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+       I != E; ++I) {
+    bool FoundLineNo = false;
+    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
+         II != IE; ++II) {
+      const MachineInstr *MI = II;
+      if (!MI->getDebugLoc().isUnknown()) {
+        FoundLineNo = true;
+        break;
+      }
+    }
+    if (!FoundLineNo)
+      ++BlocksWithoutLineNo;      
+  }
+}
+#endif
+
 /// beginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo()) return;
   if (!extractScopeInformation()) return;
+
+#ifndef NDEBUG
+  CheckLineNumbers(MF);
+#endif
 
   FunctionBeginSym = Asm->GetTempSymbol("func_begin",
                                         Asm->getFunctionNumber());
