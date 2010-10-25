@@ -287,7 +287,7 @@ private:
   bool TryToFoldFastISelLoad(const LoadInst *LI, FastISel *FastIS);
   void FinishBasicBlock();
 
-  bool SelectBasicBlock(BasicBlock::const_iterator Begin,
+  void SelectBasicBlock(BasicBlock::const_iterator Begin,
                         BasicBlock::const_iterator End,
                         bool &HadTailCall);
   void CodeGenAndEmitDAG();

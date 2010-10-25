@@ -376,7 +376,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   return true;
 }
 
-bool
+void
 SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
                                    BasicBlock::const_iterator End,
                                    bool &HadTailCall) {
@@ -393,7 +393,7 @@ SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
 
   // Final step, emit the lowered DAG as machine code.
   CodeGenAndEmitDAG();
-  return Begin != End;
+  return;
 }
 
 void SelectionDAGISel::ComputeLiveOutVRegInfo() {
@@ -783,7 +783,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 
   // Iterate over all basic blocks in the function.
   for (Function::const_iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
-    bool BBSelectedUsingDAG = false;
     const BasicBlock *LLVMBB = &*I;
 #ifndef NDEBUG
     CheckLineNumbers(LLVMBB);
@@ -872,7 +871,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           }
 
           bool HadTailCall = false;
-          BBSelectedUsingDAG |= SelectBasicBlock(Inst, BI, HadTailCall);
+          SelectBasicBlock(Inst, BI, HadTailCall);
 
           // If the call was emitted as a tail call, we're done with the block.
           if (HadTailCall) {
@@ -902,18 +901,19 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       FastIS->recomputeInsertPt();
     }
 
+    if (Begin != BI)
+      ++NumDAGBlocks;
+    else
+      ++NumFastIselBlocks;
+
     // Run SelectionDAG instruction selection on the remainder of the block
     // not handled by FastISel. If FastISel is not run, this is the entire
     // block.
     bool HadTailCall;
-    BBSelectedUsingDAG |= SelectBasicBlock(Begin, BI, HadTailCall);
+    SelectBasicBlock(Begin, BI, HadTailCall);
 
     FinishBasicBlock();
     FuncInfo->PHINodesToUpdate.clear();
-    if (BBSelectedUsingDAG)
-      ++NumDAGBlocks;
-    else
-      ++NumFastIselBlocks;
   }
 
   delete FastIS;
