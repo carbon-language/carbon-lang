@@ -712,6 +712,7 @@ private:
   CXXConstructorDecl *Constructor;
 
   SourceLocation Loc;
+  SourceRange ParenRange;
   bool Elidable : 1;
   bool ZeroInitialization : 1;
   unsigned ConstructKind : 2;
@@ -724,7 +725,8 @@ protected:
                    CXXConstructorDecl *d, bool elidable,
                    Expr **args, unsigned numargs,
                    bool ZeroInitialization = false,
-                   ConstructionKind ConstructKind = CK_Complete);
+                   ConstructionKind ConstructKind = CK_Complete,
+                   SourceRange ParenRange = SourceRange());
 
   /// \brief Construct an empty C++ construction expression.
   CXXConstructExpr(StmtClass SC, EmptyShell Empty)
@@ -743,7 +745,8 @@ public:
                                   CXXConstructorDecl *D, bool Elidable,
                                   Expr **Args, unsigned NumArgs,
                                   bool ZeroInitialization = false,
-                                  ConstructionKind ConstructKind = CK_Complete);
+                                  ConstructionKind ConstructKind = CK_Complete,
+                                  SourceRange ParenRange = SourceRange());
 
 
   CXXConstructorDecl* getConstructor() const { return Constructor; }
@@ -800,6 +803,7 @@ public:
   }
 
   virtual SourceRange getSourceRange() const;
+  SourceRange getParenRange() const { return ParenRange; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXConstructExprClass ||
@@ -872,20 +876,18 @@ public:
 /// };
 /// @endcode
 class CXXTemporaryObjectExpr : public CXXConstructExpr {
-  SourceLocation RParenLoc;
   TypeSourceInfo *Type;
 
 public:
   CXXTemporaryObjectExpr(ASTContext &C, CXXConstructorDecl *Cons,
                          TypeSourceInfo *Type,
                          Expr **Args,unsigned NumArgs,
-                         SourceLocation rParenLoc,
+                         SourceRange parenRange,
                          bool ZeroInitialization = false);
   explicit CXXTemporaryObjectExpr(EmptyShell Empty)
     : CXXConstructExpr(CXXTemporaryObjectExprClass, Empty), Type() { }
 
   TypeSourceInfo *getTypeSourceInfo() const { return Type; }
-  SourceLocation getRParenLoc() const { return RParenLoc; }
 
   virtual SourceRange getSourceRange() const;
   
@@ -974,6 +976,8 @@ class CXXNewExpr : public Expr {
   
   SourceLocation StartLoc;
   SourceLocation EndLoc;
+  SourceLocation ConstructorLParen;
+  SourceLocation ConstructorRParen;
 
   friend class ASTStmtReader;
 public:
@@ -984,7 +988,9 @@ public:
              Expr **constructorArgs, unsigned numConsArgs,
              FunctionDecl *operatorDelete, QualType ty,
              TypeSourceInfo *AllocatedTypeInfo,
-             SourceLocation startLoc, SourceLocation endLoc);
+             SourceLocation startLoc, SourceLocation endLoc,
+             SourceLocation constructorLParen,
+             SourceLocation constructorRParen);
   explicit CXXNewExpr(EmptyShell Shell)
     : Expr(CXXNewExprClass, Shell), SubExprs(0) { }
 
@@ -1080,12 +1086,12 @@ public:
   const_arg_iterator raw_arg_begin() const { return SubExprs; }
   const_arg_iterator raw_arg_end() const { return constructor_arg_end(); }
 
-  
   SourceLocation getStartLoc() const { return StartLoc; }
-  void setStartLoc(SourceLocation L) { StartLoc = L; }
   SourceLocation getEndLoc() const { return EndLoc; }
-  void setEndLoc(SourceLocation L) { EndLoc = L; }
-  
+
+  SourceLocation getConstructorLParen() const { return ConstructorLParen; }
+  SourceLocation getConstructorRParen() const { return ConstructorRParen; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(StartLoc, EndLoc);
   }

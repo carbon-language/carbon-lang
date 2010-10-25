@@ -911,7 +911,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                                         ResultType, AllocTypeInfo,
                                         StartLoc,
                                         Init ? ConstructorRParen :
-                                               TypeRange.getEnd()));
+                                               TypeRange.getEnd(),
+                                        ConstructorLParen, ConstructorRParen));
 }
 
 /// CheckAllocatedType - Checks that a type is suitable as the allocated type
@@ -1668,7 +1669,8 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     ExprResult Result = 
     S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
                             move_arg(ConstructorArgs),
-                            /*ZeroInit*/ false, CXXConstructExpr::CK_Complete);
+                            /*ZeroInit*/ false, CXXConstructExpr::CK_Complete,
+                            SourceRange());
     if (Result.isInvalid())
       return ExprError();
     
@@ -1801,7 +1803,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                               ToType, SCS.CopyConstructor,
                               move_arg(ConstructorArgs),
                               /*ZeroInit*/ false,
-                              CXXConstructExpr::CK_Complete);
+                              CXXConstructExpr::CK_Complete,
+                              SourceRange());
       if (FromResult.isInvalid())
         return true;
       From = FromResult.takeAs<Expr>();
@@ -1812,7 +1815,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                             ToType, SCS.CopyConstructor,
                             MultiExprArg(*this, &From, 1),
                             /*ZeroInit*/ false,
-                            CXXConstructExpr::CK_Complete);
+                            CXXConstructExpr::CK_Complete,
+                            SourceRange());
 
     if (FromResult.isInvalid())
       return true;

@@ -1688,7 +1688,8 @@ public:
                                            bool IsElidable,
                                            MultiExprArg Args,
                                            bool RequiresZeroInit,
-                             CXXConstructExpr::ConstructionKind ConstructKind) {
+                             CXXConstructExpr::ConstructionKind ConstructKind,
+                                           SourceRange ParenRange) {
     ASTOwningVector<Expr*> ConvertedArgs(SemaRef);
     if (getSema().CompleteConstructorCall(Constructor, move(Args), Loc, 
                                           ConvertedArgs))
@@ -1696,7 +1697,8 @@ public:
     
     return getSema().BuildCXXConstructExpr(Loc, T, Constructor, IsElidable,
                                            move_arg(ConvertedArgs),
-                                           RequiresZeroInit, ConstructKind);
+                                           RequiresZeroInit, ConstructKind,
+                                           ParenRange);
   }
 
   /// \brief Build a new object-construction expression.
@@ -5725,7 +5727,8 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
                                               Constructor, E->isElidable(),
                                               move_arg(Args),
                                               E->requiresZeroInitialization(),
-                                              E->getConstructionKind());
+                                              E->getConstructionKind(),
+                                              E->getParenRange());
 }
 
 /// \brief Transform a C++ temporary-binding expression.

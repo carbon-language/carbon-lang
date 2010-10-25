@@ -5365,7 +5365,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,
                             MultiExprArg ExprArgs,
                             bool RequiresZeroInit,
-                            unsigned ConstructKind) {
+                            unsigned ConstructKind,
+                            SourceRange ParenRange) {
   bool Elidable = false;
 
   // C++0x [class.copy]p34:
@@ -5386,7 +5387,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
 
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor,
                                Elidable, move(ExprArgs), RequiresZeroInit,
-                               ConstructKind);
+                               ConstructKind, ParenRange);
 }
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
@@ -5396,7 +5397,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor, bool Elidable,
                             MultiExprArg ExprArgs,
                             bool RequiresZeroInit,
-                            unsigned ConstructKind) {
+                            unsigned ConstructKind,
+                            SourceRange ParenRange) {
   unsigned NumExprs = ExprArgs.size();
   Expr **Exprs = (Expr **)ExprArgs.release();
 
@@ -5404,15 +5406,18 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
                                         Constructor, Elidable, Exprs, NumExprs, 
                                         RequiresZeroInit,
-              static_cast<CXXConstructExpr::ConstructionKind>(ConstructKind)));
+              static_cast<CXXConstructExpr::ConstructionKind>(ConstructKind),
+                                        ParenRange));
 }
 
 bool Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
                                         MultiExprArg Exprs) {
+  // FIXME: Provide the correct paren SourceRange when available.
   ExprResult TempResult =
     BuildCXXConstructExpr(VD->getLocation(), VD->getType(), Constructor,
-                          move(Exprs), false, CXXConstructExpr::CK_Complete);
+                          move(Exprs), false, CXXConstructExpr::CK_Complete,
+                          SourceRange());
   if (TempResult.isInvalid())
     return true;
 

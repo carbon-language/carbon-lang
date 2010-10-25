@@ -113,14 +113,16 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
                        Expr **constructorArgs, unsigned numConsArgs,
                        FunctionDecl *operatorDelete, QualType ty,
                        TypeSourceInfo *AllocatedTypeInfo,
-                       SourceLocation startLoc, SourceLocation endLoc)
+                       SourceLocation startLoc, SourceLocation endLoc,
+                       SourceLocation constructorLParen,
+                       SourceLocation constructorRParen)
   : Expr(CXXNewExprClass, ty, ty->isDependentType(), ty->isDependentType()),
     GlobalNew(globalNew),
     Initializer(initializer), SubExprs(0), OperatorNew(operatorNew),
     OperatorDelete(operatorDelete), Constructor(constructor),
     AllocatedTypeInfo(AllocatedTypeInfo), TypeIdParens(TypeIdParens),
-    StartLoc(startLoc), EndLoc(endLoc) {
-      
+    StartLoc(startLoc), EndLoc(endLoc), ConstructorLParen(constructorLParen),
+    ConstructorRParen(constructorRParen) {
   AllocateArgsArray(C, arraySize != 0, numPlaceArgs, numConsArgs);
   unsigned i = 0;
   if (Array)
@@ -344,16 +346,10 @@ StmtIterator DependentScopeDeclRefExpr::child_end() {
   return child_iterator();
 }
 
-SourceRange CXXConstructExpr::getSourceRange() const { 
-  // FIXME: Should we know where the parentheses are, if there are any?
-  for (std::reverse_iterator<Stmt**> I(&Args[NumArgs]), E(&Args[0]); I!=E;++I) {
-    // Ignore CXXDefaultExprs when computing the range, as they don't
-    // have a range.
-    if (!isa<CXXDefaultArgExpr>(*I))
-      return SourceRange(Loc, (*I)->getLocEnd());
-  }
-  
-  return SourceRange(Loc);
+SourceRange CXXConstructExpr::getSourceRange() const {
+  return ParenRange.isValid() ?
+      SourceRange(Loc, ParenRange.getEnd()) :
+      SourceRange(Loc);
 }
 
 SourceRange CXXOperatorCallExpr::getSourceRange() const {
@@ -535,17 +531,19 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
                                                TypeSourceInfo *Type,
                                                Expr **Args,
                                                unsigned NumArgs,
-                                               SourceLocation rParenLoc,
+                                               SourceRange parenRange,
                                                bool ZeroInitialization)
   : CXXConstructExpr(C, CXXTemporaryObjectExprClass, 
                      Type->getType().getNonReferenceType(), 
                      Type->getTypeLoc().getBeginLoc(),
-                     Cons, false, Args, NumArgs, ZeroInitialization),
-    RParenLoc(rParenLoc), Type(Type) {
+                     Cons, false, Args, NumArgs, ZeroInitialization,
+                     CXXConstructExpr::CK_Complete, parenRange),
+    Type(Type) {
 }
 
 SourceRange CXXTemporaryObjectExpr::getSourceRange() const {
-  return SourceRange(Type->getTypeLoc().getBeginLoc(), RParenLoc);
+  return SourceRange(Type->getTypeLoc().getBeginLoc(),
+                     getParenRange().getEnd());
 }
 
 CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
@@ -553,10 +551,11 @@ CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
                                            CXXConstructorDecl *D, bool Elidable,
                                            Expr **Args, unsigned NumArgs,
                                            bool ZeroInitialization,
-                                           ConstructionKind ConstructKind) {
+                                           ConstructionKind ConstructKind,
+                                           SourceRange ParenRange) {
   return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, Loc, D, 
                                   Elidable, Args, NumArgs, ZeroInitialization,
-                                  ConstructKind);
+                                  ConstructKind, ParenRange);
 }
 
 CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
@@ -564,12 +563,13 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
                                    CXXConstructorDecl *D, bool elidable,
                                    Expr **args, unsigned numargs,
                                    bool ZeroInitialization, 
-                                   ConstructionKind ConstructKind)
+                                   ConstructionKind ConstructKind,
+                                   SourceRange ParenRange)
 : Expr(SC, T,
        T->isDependentType(),
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
-  Constructor(D), Loc(Loc), Elidable(elidable), 
+  Constructor(D), Loc(Loc), ParenRange(ParenRange), Elidable(elidable),
   ZeroInitialization(ZeroInitialization), ConstructKind(ConstructKind),
   Args(0), NumArgs(numargs) 
 {

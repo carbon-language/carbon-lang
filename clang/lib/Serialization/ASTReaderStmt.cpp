@@ -1001,12 +1001,12 @@ void ASTStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
   E->setElidable(Record[Idx++]);  
   E->setRequiresZeroInitialization(Record[Idx++]);
   E->setConstructionKind((CXXConstructExpr::ConstructionKind)Record[Idx++]);
+  E->ParenRange = ReadSourceRange(Record, Idx);
 }
 
 void ASTStmtReader::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   VisitCXXConstructExpr(E);
   E->Type = GetTypeSourceInfo(Record, Idx);
-  E->RParenLoc = ReadSourceLocation(Record, Idx);
 }
 
 void ASTStmtReader::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
@@ -1122,9 +1122,11 @@ void ASTStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
   TypeIdParens.setBegin(ReadSourceLocation(Record, Idx));
   TypeIdParens.setEnd(ReadSourceLocation(Record, Idx));
   E->TypeIdParens = TypeIdParens;
-  E->setStartLoc(ReadSourceLocation(Record, Idx));
-  E->setEndLoc(ReadSourceLocation(Record, Idx));
-  
+  E->StartLoc = ReadSourceLocation(Record, Idx);
+  E->EndLoc = ReadSourceLocation(Record, Idx);
+  E->ConstructorLParen = ReadSourceLocation(Record, Idx);
+  E->ConstructorRParen = ReadSourceLocation(Record, Idx);
+
   E->AllocateArgsArray(*Reader.getContext(), isArray, NumPlacementArgs,
                        NumCtorArgs);
 

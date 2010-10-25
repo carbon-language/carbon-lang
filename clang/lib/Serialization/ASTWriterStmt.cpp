@@ -978,13 +978,13 @@ void ASTStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Record.push_back(E->isElidable());
   Record.push_back(E->requiresZeroInitialization());
   Record.push_back(E->getConstructionKind()); // FIXME: stable encoding
+  Writer.AddSourceRange(E->getParenRange(), Record);
   Code = serialization::EXPR_CXX_CONSTRUCT;
 }
 
 void ASTStmtWriter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   VisitCXXConstructExpr(E);
   Writer.AddTypeSourceInfo(E->getTypeSourceInfo(), Record);
-  Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = serialization::EXPR_CXX_TEMPORARY_OBJECT;
 }
 
@@ -1113,6 +1113,8 @@ void ASTStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   Writer.AddSourceRange(E->getTypeIdParens(), Record);
   Writer.AddSourceLocation(E->getStartLoc(), Record);
   Writer.AddSourceLocation(E->getEndLoc(), Record);
+  Writer.AddSourceLocation(E->getConstructorLParen(), Record);
+  Writer.AddSourceLocation(E->getConstructorRParen(), Record);
   for (CXXNewExpr::arg_iterator I = E->raw_arg_begin(), e = E->raw_arg_end();
        I != e; ++I)
     Writer.AddStmt(*I);

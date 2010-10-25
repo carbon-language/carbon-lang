@@ -3444,7 +3444,8 @@ static ExprResult CopyObject(Sema &S,
   CurInit = S.BuildCXXConstructExpr(Loc, T, Constructor, Elidable,
                                     move_arg(ConstructorArgs),
                                     /*ZeroInit*/ false,
-                                    CXXConstructExpr::CK_Complete);
+                                    CXXConstructExpr::CK_Complete,
+                                    SourceRange());
   
   // If we're supposed to bind temporaries, do so.
   if (!CurInit.isInvalid() && shouldBindAsTemporary(Entity))
@@ -3707,7 +3708,8 @@ InitializationSequence::Perform(Sema &S,
         CurInit = S.BuildCXXConstructExpr(Loc, Step->Type, Constructor, 
                                           move_arg(ConstructorArgs),
                                           /*ZeroInit*/ false,
-                                          CXXConstructExpr::CK_Complete);
+                                          CXXConstructExpr::CK_Complete,
+                                          SourceRange());
         if (CurInit.isInvalid())
           return ExprError();
 
@@ -3870,7 +3872,7 @@ InitializationSequence::Perform(Sema &S,
                                                                  TSInfo,
                                                                  Exprs, 
                                                                  NumExprs,
-                                                Kind.getParenRange().getEnd(),
+                                                         Kind.getParenRange(),
                                              ConstructorInitRequiresZeroInit));
       } else {
         CXXConstructExpr::ConstructionKind ConstructKind =
@@ -3882,6 +3884,11 @@ InitializationSequence::Perform(Sema &S,
             CXXConstructExpr::CK_NonVirtualBase;
         }    
         
+        // Only get the parenthesis range if it is a direct construction.
+        SourceRange parenRange =
+            Kind.getKind() == InitializationKind::IK_Direct ?
+            Kind.getParenRange() : SourceRange();
+
         // If the entity allows NRVO, mark the construction as elidable
         // unconditionally.
         if (Entity.allowsNRVO())
@@ -3889,13 +3896,15 @@ InitializationSequence::Perform(Sema &S,
                                             Constructor, /*Elidable=*/true,
                                             move_arg(ConstructorArgs),
                                             ConstructorInitRequiresZeroInit,
-                                            ConstructKind);
+                                            ConstructKind,
+                                            parenRange);
         else
           CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
                                             Constructor, 
                                             move_arg(ConstructorArgs),
                                             ConstructorInitRequiresZeroInit,
-                                            ConstructKind);
+                                            ConstructKind,
+                                            parenRange);
       }
       if (CurInit.isInvalid())
         return ExprError();
