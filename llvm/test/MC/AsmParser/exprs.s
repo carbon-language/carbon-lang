@@ -43,7 +43,8 @@ k:
         check_expr 1 || 2, 1
         check_expr 0 || 1, 1
         check_expr 0 || 0, 0
-
+        check_expr 1 + 2 < 3 + 4, 1
+        
         .set c, 10
         check_expr c + 1, 11
 

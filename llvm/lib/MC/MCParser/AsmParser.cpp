@@ -717,13 +717,7 @@ static unsigned getBinOpPrecedence(AsmToken::TokenKind K,
     Kind = MCBinaryExpr::And;
     return 2;
 
-    // Intermediate Precedence: +, -, ==, !=, <>, <, <=, >, >=
-  case AsmToken::Plus:
-    Kind = MCBinaryExpr::Add;
-    return 3;
-  case AsmToken::Minus:
-    Kind = MCBinaryExpr::Sub;
-    return 3;
+    // Low Intermediate Precedence: ==, !=, <>, <, <=, >, >=
   case AsmToken::EqualEqual:
     Kind = MCBinaryExpr::EQ;
     return 3;
@@ -744,22 +738,30 @@ static unsigned getBinOpPrecedence(AsmToken::TokenKind K,
     Kind = MCBinaryExpr::GTE;
     return 3;
 
+    // High Intermediate Precedence: +, -
+  case AsmToken::Plus:
+    Kind = MCBinaryExpr::Add;
+    return 4;
+  case AsmToken::Minus:
+    Kind = MCBinaryExpr::Sub;
+    return 4;
+
     // Highest Precedence: *, /, %, <<, >>
   case AsmToken::Star:
     Kind = MCBinaryExpr::Mul;
-    return 4;
+    return 5;
   case AsmToken::Slash:
     Kind = MCBinaryExpr::Div;
-    return 4;
+    return 5;
   case AsmToken::Percent:
     Kind = MCBinaryExpr::Mod;
-    return 4;
+    return 5;
   case AsmToken::LessLess:
     Kind = MCBinaryExpr::Shl;
-    return 4;
+    return 5;
   case AsmToken::GreaterGreater:
     Kind = MCBinaryExpr::Shr;
-    return 4;
+    return 5;
   }
 }
 
