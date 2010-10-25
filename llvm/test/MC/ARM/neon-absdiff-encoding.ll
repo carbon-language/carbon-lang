@@ -336,3 +336,75 @@ define <4 x i32> @vabau_4xi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounw
 	%tmp5 = add <4 x i32> %tmp1, %tmp4
 	ret <4 x i32> %tmp5
 }
+
+; CHECK: vabals_8xi8
+define <8 x i16> @vabals_8xi8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = load <8 x i8>* %C
+; CHECK: vabal.s8	q8, d19, d18    @ encoding: [0xa2,0x05,0xc3,0xf2]
+	%tmp4 = call <8 x i8> @llvm.arm.neon.vabds.v8i8(<8 x i8> %tmp2, <8 x i8> %tmp3)
+	%tmp5 = zext <8 x i8> %tmp4 to <8 x i16>
+	%tmp6 = add <8 x i16> %tmp1, %tmp5
+	ret <8 x i16> %tmp6
+}
+
+; CHECK: vabals_4xi16
+define <4 x i32> @vabals_4xi16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = load <4 x i16>* %C
+; CHECK: vabal.s16	q8, d19, d18    @ encoding: [0xa2,0x05,0xd3,0xf2]
+	%tmp4 = call <4 x i16> @llvm.arm.neon.vabds.v4i16(<4 x i16> %tmp2, <4 x i16> %tmp3)
+	%tmp5 = zext <4 x i16> %tmp4 to <4 x i32>
+	%tmp6 = add <4 x i32> %tmp1, %tmp5
+	ret <4 x i32> %tmp6
+}
+
+; CHECK: vabals_2xi32
+define <2 x i64> @vabals_2xi32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = load <2 x i32>* %C
+; CHECK: vabal.s32	q8, d19, d18    @ encoding: [0xa2,0x05,0xe3,0xf2]
+	%tmp4 = call <2 x i32> @llvm.arm.neon.vabds.v2i32(<2 x i32> %tmp2, <2 x i32> %tmp3)
+	%tmp5 = zext <2 x i32> %tmp4 to <2 x i64>
+	%tmp6 = add <2 x i64> %tmp1, %tmp5
+	ret <2 x i64> %tmp6
+}
+
+; CHECK: vabalu_8xi8
+define <8 x i16> @vabalu_8xi8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = load <8 x i8>* %C
+; CHECK: vabal.u8	q8, d19, d18    @ encoding: [0xa2,0x05,0xc3,0xf3]
+	%tmp4 = call <8 x i8> @llvm.arm.neon.vabdu.v8i8(<8 x i8> %tmp2, <8 x i8> %tmp3)
+	%tmp5 = zext <8 x i8> %tmp4 to <8 x i16>
+	%tmp6 = add <8 x i16> %tmp1, %tmp5
+	ret <8 x i16> %tmp6
+}
+
+; CHECK: vabalu_4xi16
+define <4 x i32> @vabalu_4xi16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = load <4 x i16>* %C
+; CHECK: 	vabal.u16	q8, d19, d18    @ encoding: [0xa2,0x05,0xd3,0xf3]
+	%tmp4 = call <4 x i16> @llvm.arm.neon.vabdu.v4i16(<4 x i16> %tmp2, <4 x i16> %tmp3)
+	%tmp5 = zext <4 x i16> %tmp4 to <4 x i32>
+	%tmp6 = add <4 x i32> %tmp1, %tmp5
+	ret <4 x i32> %tmp6
+}
+
+; CHECK: vabalu_2xi32
+define <2 x i64> @vabalu_2xi32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = load <2 x i32>* %C
+; CHECK: vabal.u32	q8, d19, d18    @ encoding: [0xa2,0x05,0xe3,0xf3]
+	%tmp4 = call <2 x i32> @llvm.arm.neon.vabdu.v2i32(<2 x i32> %tmp2, <2 x i32> %tmp3)
+	%tmp5 = zext <2 x i32> %tmp4 to <2 x i64>
+	%tmp6 = add <2 x i64> %tmp1, %tmp5
+	ret <2 x i64> %tmp6
+}
