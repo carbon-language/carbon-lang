@@ -225,7 +225,7 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
     return AliasAnalysis::pointsToConstantMemory(Loc);
 
   const MDNode *M = Loc.TBAATag;
-  if (!M) return false;
+  if (!M) return AliasAnalysis::pointsToConstantMemory(Loc);
 
   // If this is an "immutable" type, we can assume the pointer is pointing
   // to constant memory.
