@@ -128,7 +128,7 @@ def imm0_255_not : PatLeaf<(i32 imm), [{
 // t2addrmode_imm12  := reg + imm12
 def t2addrmode_imm12 : Operand<i32>,
                        ComplexPattern<i32, 2, "SelectT2AddrModeImm12", []> {
-  let PrintMethod = "printT2AddrModeImm12Operand";
+  let PrintMethod = "printAddrModeImm12Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 

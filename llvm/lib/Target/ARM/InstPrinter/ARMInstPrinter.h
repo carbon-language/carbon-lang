@@ -74,8 +74,8 @@ public:
                                    raw_ostream &O);
 
   void printT2SOOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printT2AddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
-                                   raw_ostream &O);
+  void printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
+                                 raw_ostream &O);
   void printT2AddrModeImm8Operand(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
   void printT2AddrModeImm8s4Operand(const MCInst *MI, unsigned OpNum,

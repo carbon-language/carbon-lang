@@ -600,9 +600,8 @@ void ARMInstPrinter::printT2SOOperand(const MCInst *MI, unsigned OpNum,
     O << " #" << ARM_AM::getSORegOffset(MO2.getImm());
 }
 
-void ARMInstPrinter::printT2AddrModeImm12Operand(const MCInst *MI,
-                                                 unsigned OpNum,
-                                                 raw_ostream &O) {
+void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
+                                               raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
 
