@@ -330,7 +330,9 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   
   NewCast = IC.Builder->CreateCast(opcode, SIOp0, CastDstTy,
                                    SIOp0->getName()+".c");
-  return new StoreInst(NewCast, CastOp);
+  SI.setOperand(0, NewCast);
+  SI.setOperand(1, CastOp);
+  return &SI;
 }
 
 /// equivalentAddressValues - Test if A and B will obviously have the same
