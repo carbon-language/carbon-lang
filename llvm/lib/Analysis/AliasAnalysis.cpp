@@ -67,8 +67,7 @@ void AliasAnalysis::copyValue(Value *From, Value *To) {
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
                              const Location &Loc) {
-  // Don't assert AA because BasicAA calls us in order to make use of the
-  // logic here.
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
 
   ModRefBehavior MRB = getModRefBehavior(CS);
   if (MRB == DoesNotAccessMemory)
@@ -105,8 +104,7 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
-  // Don't assert AA because BasicAA calls us in order to make use of the
-  // logic here.
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
 
   // If CS1 or CS2 are readnone, they don't interact.
   ModRefBehavior CS1B = getModRefBehavior(CS1);
@@ -164,8 +162,7 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
 
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
-  // Don't assert AA because BasicAA calls us in order to make use of the
-  // logic here.
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
 
   ModRefBehavior Min = UnknownModRefBehavior;
 
