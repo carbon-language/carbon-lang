@@ -402,7 +402,7 @@ public:
                        "Show frame variables. All argument and local variables "
                        "that are in scope will be shown when no arguments are given. "
                        "If any arguments are specified, they can be names of "
-                       "argument, local, file static and file global variables."
+                       "argument, local, file static and file global variables. "
                        "Children of aggregate variables can be specified such as "
                        "'var->child.x'.",
                        NULL)
