@@ -3769,6 +3769,10 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   }
 
   NamedDecl *NDecl = 0;
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(NakedFn))
+    if (UnOp->getOpcode() == UO_AddrOf)
+      NakedFn = UnOp->getSubExpr()->IgnoreParens();
+  
   if (isa<DeclRefExpr>(NakedFn))
     NDecl = cast<DeclRefExpr>(NakedFn)->getDecl();
 

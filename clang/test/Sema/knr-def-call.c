@@ -37,4 +37,5 @@ void proto(x)
 
 void use_proto() {
   proto(42.0); // expected-warning{{implicit conversion turns floating-point number into integer: 'double' to 'int'}}
+  (&proto)(42.0); // expected-warning{{implicit conversion turns floating-point number into integer: 'double' to 'int'}}
 }
