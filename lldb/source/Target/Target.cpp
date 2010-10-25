@@ -1014,7 +1014,7 @@ SettingEntry
 Target::SettingsController::global_settings_table[] =
 {
   //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
-    { "default-arch", eSetVarTypeString, "x86_64", NULL,       false,  false,   "Default architecture to choose, when there's a choice." },
+    { "default-arch", eSetVarTypeString, NULL, NULL,       false,  false,   "Default architecture to choose, when there's a choice." },
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
 
