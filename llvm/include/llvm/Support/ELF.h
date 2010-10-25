@@ -299,6 +299,16 @@ enum {
   SHT_LOOS          = 0x60000000, // Lowest operating system-specific type.
   SHT_HIOS          = 0x6fffffff, // Highest operating system-specific type.
   SHT_LOPROC        = 0x70000000, // Lowest processor architecture-specific type.
+  // Fixme: All this is duplicated in MCSectionELF. Why??
+  // Exception Index table
+  SHT_ARM_EXIDX           = 0x70000001U,
+  // BPABI DLL dynamic linking pre-emption map
+  SHT_ARM_PREEMPTMAP      = 0x70000002U,
+  //  Object file compatibility attributes
+  SHT_ARM_ATTRIBUTES      = 0x70000003U,
+  SHT_ARM_DEBUGOVERLAY    = 0x70000004U,
+  SHT_ARM_OVERLAYSECTION  = 0x70000005U,
+
   SHT_HIPROC        = 0x7fffffff, // Highest processor architecture-specific type.
   SHT_LOUSER        = 0x80000000, // Lowest type reserved for applications.
   SHT_HIUSER        = 0xffffffff  // Highest type reserved for applications.

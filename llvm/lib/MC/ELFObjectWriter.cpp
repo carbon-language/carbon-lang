@@ -1200,12 +1200,10 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
     case ELF::SHT_STRTAB:
     case ELF::SHT_NOBITS:
     case ELF::SHT_NULL:
+    case ELF::SHT_ARM_ATTRIBUTES:
       // Nothing to do.
       break;
 
-    case ELF::SHT_HASH:
-    case ELF::SHT_GROUP:
-    case ELF::SHT_SYMTAB_SHNDX:
     default:
       assert(0 && "FIXME: sh_type value not supported!");
       break;

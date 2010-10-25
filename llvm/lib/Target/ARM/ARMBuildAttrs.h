@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains enumerations and support routines for ARM build attributes
-// as defined in ARM ABI addenda document (ABI release 2.07).
+// as defined in ARM ABI addenda document (ABI release 2.08).
 //
 //===----------------------------------------------------------------------===//
 
@@ -59,18 +59,39 @@ namespace ARMBuildAttrs {
     CPU_unaligned_access      = 34,
     VFP_HP_extension          = 36,
     ABI_FP_16bit_format       = 38,
+    MPextension_use           = 42, // was 70, 2.08 ABI
+    DIV_use                   = 44,
     nodefaults                = 64,
     also_compatible_with      = 65,
     T2EE_use                  = 66,
     conformance               = 67,
     Virtualization_use        = 68,
-    MPextension_use           = 70
+    MPextension_use_old       = 70
   };
 
   // Magic numbers for .ARM.attributes
   enum AttrMagic {
     Format_Version  = 0x41
   };
+
+  // Legal Values for CPU_arch, (=6), uleb128
+  enum CPUArch {
+    Pre_v4       = 0,
+    v4       = 1,   // e.g. SA110
+    v4T      = 2,   // e.g. ARM7TDMI
+    v5T      = 3,   // e.g. ARM9TDMI
+    v5TE     = 4,   // e.g. ARM946E_S
+    v5TEJ    = 5,   // e.g. ARM926EJ_S
+    v6       = 6,   // e.g. ARM1136J_S
+    v6KZ     = 7,   // e.g. ARM1176JZ_S
+    v6T2     = 8,   // e.g. ARM1156T2F_S
+    v6K      = 9,   // e.g. ARM1136J_S
+    v7       = 10,  // e.g. Cortex A8, Cortex M3
+    v6_M     = 11,  // e.g. Cortex M1
+    v6S_M    = 12,  // v6_M with the System extensions
+    v7E_M    = 13   // v7_M with DSP extensions
+  };
+
 }
 
 #endif // __TARGET_ARMBUILDATTRS_H__

@@ -55,12 +55,11 @@ void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
 }
 
 bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
-  assert(0 && "ARMAsmBackend::WriteNopData() unimplemented");
   if ((Count % 4) != 0) {
     // Fixme: % 2 for Thumb?
     return false;
   }
-  return false;
+  return true;
 }
 } // end anonymous namespace
 
