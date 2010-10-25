@@ -75,6 +75,7 @@ namespace {
     virtual void MaybeSwitchVendor(StringRef Vendor) = 0;
     virtual void EmitAttribute(unsigned Attribute, unsigned Value) = 0;
     virtual void Finish() = 0;
+    virtual ~AttributeEmitter() {}
   };
 
   class AsmAttributeEmitter : public AttributeEmitter {
