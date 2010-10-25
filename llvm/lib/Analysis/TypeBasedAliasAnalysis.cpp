@@ -102,8 +102,7 @@ namespace {
       ConstantInt *CI = dyn_cast<ConstantInt>(Node->getOperand(2));
       if (!CI)
         return false;
-      // TODO: Think about the encoding.
-      return CI->isOne();
+      return CI->getValue()[0];
     }
   };
 }
