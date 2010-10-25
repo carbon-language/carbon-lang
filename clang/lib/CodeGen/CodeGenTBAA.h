@@ -56,7 +56,8 @@ class CodeGenTBAA {
   llvm::MDNode *getChar();
 
   llvm::MDNode *getTBAAInfoForNamedType(llvm::StringRef NameStr,
-                                        llvm::MDNode *Parent);
+                                        llvm::MDNode *Parent,
+                                        bool Readonly = false);
 
 public:
   CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext &VMContext,

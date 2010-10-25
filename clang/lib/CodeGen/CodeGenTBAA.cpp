@@ -20,6 +20,8 @@
 #include "clang/AST/ASTContext.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
+#include "llvm/Constants.h"
+#include "llvm/Type.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -57,13 +59,22 @@ llvm::MDNode *CodeGenTBAA::getChar() {
 /// getTBAAInfoForNamedType - Create a TBAA tree node with the given string
 /// as its identifier, and the given Parent node as its tree parent.
 llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(llvm::StringRef NameStr,
-                                                   llvm::MDNode *Parent) {
+                                                   llvm::MDNode *Parent,
+                                                   bool Readonly) {
+  // Currently there is only one flag defined - the readonly flag.
+  llvm::Value *Flags = 0;
+  if (Readonly)
+    Flags = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), true);
+
+  // Set up the mdnode operand list.
   llvm::Value *Ops[] = {
     llvm::MDString::get(VMContext, NameStr),
-    Parent
+    Parent,
+    Flags
   };
 
-  return llvm::MDNode::get(VMContext, Ops, llvm::array_lengthof(Ops));
+  // Create the mdnode.
+  return llvm::MDNode::get(VMContext, Ops, llvm::array_lengthof(Ops) - !Flags);
 }
 
 llvm::MDNode *
