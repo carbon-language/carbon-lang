@@ -28,6 +28,8 @@ public:
     //------------------------------------------------------------------
     RegisterContext (Thread &thread, StackFrame *frame);
 
+    RegisterContext (Thread &thread);
+
     virtual
     ~RegisterContext ();
 
@@ -50,16 +52,10 @@ public:
     GetRegisterSet (uint32_t reg_set) = 0;
 
     virtual bool
-    ReadRegisterValue (uint32_t reg, Scalar &value) = 0;
-
-    virtual bool
     ReadRegisterBytes (uint32_t reg, DataExtractor &data) = 0;
 
     virtual bool
     ReadAllRegisterValues (lldb::DataBufferSP &data_sp) = 0;
-
-    virtual bool
-    WriteRegisterValue (uint32_t reg, const Scalar &value) = 0;
 
     virtual bool
     WriteRegisterBytes (uint32_t reg, DataExtractor &data, uint32_t data_offset = 0) = 0;
@@ -73,6 +69,12 @@ public:
     //------------------------------------------------------------------
     // Subclasses can override these functions if desired
     //------------------------------------------------------------------
+    virtual bool
+    ReadRegisterValue (uint32_t reg, Scalar &value);
+
+    virtual bool
+    WriteRegisterValue (uint32_t reg, const Scalar &value);
+
     virtual uint32_t
     NumSupportedHardwareBreakpoints ();
 
@@ -143,7 +145,10 @@ public:
     WriteRegisterFromUnsigned (uint32_t reg, uint64_t uval);
 
     bool
-    ConvertBetweenRegisterKinds (int source_rk, uint32_t source_regnum, int target_rk, uint32_t target_regnum);
+    ConvertBetweenRegisterKinds (int source_rk, uint32_t source_regnum, int target_rk, uint32_t& target_regnum);
+
+    void
+    SetStackFrame (StackFrame *frame);
 
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions

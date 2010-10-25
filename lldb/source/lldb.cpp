@@ -69,6 +69,7 @@ lldb_private::Initialize ()
         SymbolFileDWARFDebugMap::Initialize();
         SymbolFileSymtab::Initialize();
         UnwindAssemblyProfiler_x86::Initialize();
+        ArchDefaultUnwindPlan_x86::Initialize();
         ArchVolatileRegs_x86::Initialize();
 
 #ifdef __APPLE__
@@ -110,6 +111,7 @@ lldb_private::Terminate ()
     SymbolFileDWARFDebugMap::Terminate();
     SymbolFileSymtab::Terminate();
     UnwindAssemblyProfiler_x86::Terminate();
+    ArchDefaultUnwindPlan_x86::Terminate();
     ArchVolatileRegs_x86::Terminate();
 
 #ifdef __APPLE__

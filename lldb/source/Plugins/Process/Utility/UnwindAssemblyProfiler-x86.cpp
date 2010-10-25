@@ -125,7 +125,7 @@ public:
 
     bool get_non_call_site_unwind_plan (UnwindPlan &unwind_plan);
 
-    bool get_fast_unwind_plan (UnwindPlan &unwind_plan);
+    bool get_fast_unwind_plan (AddressRange& func, UnwindPlan &unwind_plan);
 
     bool find_first_non_prologue_insn (Address &address);
 
@@ -166,7 +166,7 @@ private:
 
 AssemblyParse_x86::AssemblyParse_x86 (Target& target, Thread* thread, int cpu, AddressRange func) :
                          m_target (target), m_thread (thread), m_cpu(cpu), m_func_bounds(func)
-{ 
+{
     int *initialized_flag = NULL;
     m_lldb_ip_regnum = m_lldb_sp_regnum = m_lldb_fp_regnum = -1;
     if (cpu == k_i386)
@@ -489,7 +489,7 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
 
     if (EDGetDisassembler (&disasm, "i386-apple-darwin", kEDAssemblySyntaxX86ATT) != 0)
     {
-        false;
+        return false;
     }
 
     uint64_t addr_offset = addr.GetOffset();
@@ -498,7 +498,7 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
     arg.target = &m_target;
     if (EDCreateInsts (&cur_insn, 1, disasm, read_byte_for_edis, addr_offset, &arg) != 1)
     {
-        false;
+        return false;
     }
     length = EDInstByteSize (cur_insn);
     EDReleaseInst (cur_insn);
@@ -566,12 +566,11 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             goto loopnext;
         }
         
+        // This is the start() function (or a pthread equivalent), it starts with a pushl $0x0 which puts the
+        // saved pc value of 0 on the stack.  In this case we want to pretend we didn't see a stack movement at all --
+        // normally the saved pc value is already on the stack by the time the function starts executing.
         if (push_0_pattern_p ())
         {
-            row.SetOffset (current_func_text_offset + insn_len);
-            current_sp_bytes_offset_from_cfa += m_wordsize;
-            row.SetCFAOffset (current_sp_bytes_offset_from_cfa);
-            unwind_plan.AppendRow (row);
             goto loopnext;
         }
 
@@ -648,14 +647,78 @@ loopnext:
         current_func_text_offset += insn_len;
     }
     
+    unwind_plan.SetSourceName ("assembly insn profiling");
+
     return true;
 }
 
+/* The "fast unwind plan" is valid for functions that follow the usual convention of 
+   using the frame pointer register (ebp, rbp), i.e. the function prologue looks like
+     push   %rbp      [0x55]
+     mov    %rsp,%rbp [0x48 0x89 0xe5]   (this is a 2-byte insn seq on i386)
+*/
+
 bool 
-AssemblyParse_x86::get_fast_unwind_plan (UnwindPlan &unwind_plan)
+AssemblyParse_x86::get_fast_unwind_plan (AddressRange& func, UnwindPlan &unwind_plan)
 {
-    UnwindPlan up;
-    return false;
+    UnwindPlan::Row row;
+    UnwindPlan::Row::RegisterLocation pc_reginfo;
+    UnwindPlan::Row::RegisterLocation sp_reginfo;
+    UnwindPlan::Row::RegisterLocation fp_reginfo;
+    unwind_plan.SetRegisterKind (eRegisterKindLLDB);
+
+    if (!func.GetBaseAddress().IsValid())
+        return false;
+
+    uint8_t bytebuf[4];
+    Error error;
+    if (m_target.ReadMemory (func.GetBaseAddress(), bytebuf, sizeof (bytebuf), error) == -1)
+        return false;
+
+    uint8_t i386_prologue[] = {0x55, 0x89, 0xe5};
+    uint8_t x86_64_prologue[] = {0x55, 0x48, 0x89, 0xe5};
+    int prologue_size;
+
+    if (memcmp (bytebuf, i386_prologue, sizeof (i386_prologue)) == 0)
+    {
+        prologue_size = sizeof (i386_prologue);
+    }
+    else if (memcmp (bytebuf, x86_64_prologue, sizeof (x86_64_prologue)) == 0)
+    {
+        prologue_size = sizeof (x86_64_prologue);
+    }
+    else
+    {
+        return false;
+    }
+
+    pc_reginfo.SetAtCFAPlusOffset (-m_wordsize);
+    row.SetRegisterInfo (m_lldb_ip_regnum, pc_reginfo);
+
+    sp_reginfo.SetIsCFAPlusOffset (0);
+    row.SetRegisterInfo (m_lldb_sp_regnum, sp_reginfo);
+
+    // Zero instructions into the function
+    row.SetCFARegister (m_lldb_sp_regnum);
+    row.SetCFAOffset (m_wordsize);
+    row.SetOffset (0);
+    unwind_plan.AppendRow (row);
+
+    // push %rbp has executed - stack moved, rbp now saved
+    row.SetCFAOffset (2 * m_wordsize);
+    fp_reginfo.SetAtCFAPlusOffset (2 * -m_wordsize);
+    row.SetRegisterInfo (m_lldb_fp_regnum, fp_reginfo);
+    row.SetOffset (1);
+    unwind_plan.AppendRow (row);
+
+    // mov %rsp, %rbp has executed
+    row.SetCFARegister (m_lldb_fp_regnum);
+    row.SetCFAOffset (2 * m_wordsize);
+    row.SetOffset (prologue_size);     /// 3 or 4 bytes depending on arch
+    unwind_plan.AppendRow (row);
+
+    unwind_plan.SetPlanValidAddressRange (func);
+    return true;
 }
 
 bool 
@@ -712,7 +775,7 @@ bool
 UnwindAssemblyProfiler_x86::GetFastUnwindPlan (AddressRange& func, Thread& thread, UnwindPlan &unwind_plan)
 {
     AssemblyParse_x86 asm_parse(thread.GetProcess().GetTarget(), &thread, m_cpu, func);
-    return asm_parse.get_fast_unwind_plan (unwind_plan);
+    return asm_parse.get_fast_unwind_plan (func, unwind_plan);
 }
 
 bool

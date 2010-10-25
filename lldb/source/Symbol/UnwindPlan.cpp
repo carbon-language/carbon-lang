@@ -11,6 +11,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Core/ConstString.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -220,6 +221,10 @@ const UnwindPlan::Row *
 UnwindPlan::GetRowForFunctionOffset (int offset) const
 {
     const UnwindPlan::Row *rowp = NULL;
+    if (offset == -1 && m_row_list.size() > 0)
+    {
+        return &m_row_list[m_row_list.size() - 1];
+    }
     for (int i = 0; i < m_row_list.size(); ++i)
     {
         if (m_row_list[i].GetOffset() <= offset)
@@ -268,7 +273,10 @@ UnwindPlan::GetRegisterKind (void) const
 void
 UnwindPlan::SetPlanValidAddressRange (const AddressRange& range)
 {
-   m_plan_valid_address_range = range;
+   if (range.GetBaseAddress().IsValid() && range.GetByteSize() != 0)
+   {
+       m_plan_valid_address_range = range;
+   }
 // .GetBaseAddress() = addr;
 //    m_plan_valid_address_range.SetByteSize (range.GetByteSize());
 }
@@ -276,7 +284,7 @@ UnwindPlan::SetPlanValidAddressRange (const AddressRange& range)
 bool
 UnwindPlan::PlanValidAtAddress (Address addr)
 {
-    if (!m_plan_valid_address_range.GetBaseAddress().IsValid())
+    if (!m_plan_valid_address_range.GetBaseAddress().IsValid() || m_plan_valid_address_range.GetByteSize() == 0)
         return true;
 
     if (m_plan_valid_address_range.ContainsFileAddress (addr))
@@ -288,9 +296,20 @@ UnwindPlan::PlanValidAtAddress (Address addr)
 void
 UnwindPlan::Dump (Stream& s, Thread *thread) const
 {
-    s.Printf ("Address range of this UnwindPlan: ");
-    m_plan_valid_address_range.Dump (&s, &thread->GetProcess().GetTarget(), Address::DumpStyleSectionNameOffset);
-    s.Printf ("\n");
+    if (!m_source_name.IsEmpty())
+    {
+        s.Printf ("This UnwindPlan originally sourced from %s\n", m_source_name.GetCString());
+    }
+    if (m_plan_valid_address_range.GetBaseAddress().IsValid() && m_plan_valid_address_range.GetByteSize() > 0)
+    {
+        s.Printf ("Address range of this UnwindPlan: ");
+        m_plan_valid_address_range.Dump (&s, &thread->GetProcess().GetTarget(), Address::DumpStyleSectionNameOffset);
+        s.Printf ("\n");
+    }
+    else
+    {
+        s.Printf ("No valid address range recorded for this UnwindPlan.\n");
+    }
     s.Printf ("UnwindPlan register kind %d", m_register_kind);
     switch (m_register_kind)
     {
@@ -307,4 +326,16 @@ UnwindPlan::Dump (Stream& s, Thread *thread) const
         s.Printf ("UnwindPlan row at index %d: ", i);
         m_row_list[i].Dump(s, m_register_kind, thread);
     }
+}
+
+void
+UnwindPlan::SetSourceName (const char *source)
+{
+    m_source_name = ConstString (source);
+}
+
+ConstString
+UnwindPlan::GetSourceName () const
+{
+    return m_source_name;
 }

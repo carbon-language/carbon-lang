@@ -347,7 +347,14 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
     // is relative to the FDE offset, into a __eh_frame section
     // offset
     if (m_is_eh_frame)
+    {
+        unwind_plan.SetSourceName ("eh_frame CFI");
         cie_offset = current_entry + 4 - cie_offset;
+    }
+    else
+    {
+        unwind_plan.SetSourceName ("DWARF CFI");
+    }
 
     const CIE *cie = GetCIE (cie_offset);
     assert (cie != NULL);

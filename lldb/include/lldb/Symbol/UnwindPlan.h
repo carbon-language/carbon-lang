@@ -4,6 +4,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/ConstString.h"
 
 #include <map>
 #include <vector>
@@ -69,18 +70,32 @@ public:
     
             void SetSame();
     
+            bool IsSame () const { return m_type == isSame; }
+
+            bool IsUnspecified () const { return m_type == unspecified; }
+
+            bool IsCFAPlusOffset () const { return m_type == isCFAPlusOffset; }
+
+            bool IsAtCFAPlusOffset () const { return m_type == atCFAPlusOffset; }
+
+            bool IsInOtherRegister () const { return m_type == inOtherRegister; }
+
+            bool IsAtDWARFExpression () const { return m_type == atDWARFExpression; }
+
+            bool IsDWARFExpression () const { return m_type == isDWARFExpression; }
+
             void SetAtCFAPlusOffset (int32_t offset);
     
             void SetIsCFAPlusOffset (int32_t offset);
     
             void SetInRegister (uint32_t reg_num);
     
+            uint32_t GetRegisterNumber () const { return m_location.reg_num; }
+
             RestoreType GetLocationType () const { return m_type; }
 
             int32_t GetOffset () const { return m_location.offset; }
             
-            uint32_t GetRegNum () const { return m_location.reg_num; }
-
             void GetDWARFExpr (const uint8_t **opcodes, uint16_t& len) const { *opcodes = m_location.expr.opcodes; len = m_location.expr.length; }
 
             void
@@ -159,6 +174,13 @@ public:
             m_cfa_offset = offset;
         }
     
+        // Return the number of registers we have locations for
+	int
+	GetRegisterCount () const
+        {
+            return m_register_locations.size();
+        }
+
         void
         Clear ();
 
@@ -176,13 +198,20 @@ public:
 
 public:
 
-    UnwindPlan () : m_register_kind(-1), m_row_list(), m_plan_valid_address_range() { }
+    UnwindPlan () : m_register_kind(-1), m_row_list(), m_plan_valid_address_range(), m_source_name()
+    { 
+        m_plan_valid_address_range.SetByteSize (0);
+    }
 
     void Dump (Stream& s, Thread* thread) const;
 
     void 
     AppendRow (const Row& row);
 
+    // Returns a pointer to the best row for the given offset into the function's instructions.
+    // If offset is -1 it indicates that the function start is unknown - the final row in the UnwindPlan is returned.
+    // In practice, the UnwindPlan for a function with no known start address will be the architectural default
+    // UnwindPlan which will only have one row.
     const Row*
     GetRowForFunctionOffset (int offset) const;
 
@@ -207,6 +236,12 @@ public:
     const UnwindPlan::Row&
     GetRowAtIndex (uint32_t idx) const;
 
+    lldb_private::ConstString
+    GetSourceName () const;
+
+    void
+    SetSourceName (const char *);
+
     int
     GetRowCount () const;
 
@@ -217,6 +252,7 @@ private:
     AddressRange m_plan_valid_address_range;
     uint32_t m_register_kind;   // The RegisterKind these register numbers are in terms of - will need to be
                                 // translated to lldb native reg nums at unwind time
+    lldb_private::ConstString m_source_name;  // for logging, where this UnwindPlan originated from
 }; // class UnwindPlan
 
 } // namespace lldb_private

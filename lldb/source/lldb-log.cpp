@@ -152,6 +152,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
             else if (strcasestr(arg, "comm")   == arg)  flag_bits |= LIBLLDB_LOG_COMMUNICATION;
             else if (strcasestr(arg, "conn")   == arg)  flag_bits |= LIBLLDB_LOG_CONNECTION;
             else if (strcasestr(arg, "host")   == arg)  flag_bits |= LIBLLDB_LOG_HOST;
+            else if (strcasestr(arg, "unwind") == arg)  flag_bits |= LIBLLDB_LOG_UNWIND;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
@@ -186,6 +187,7 @@ lldb_private::ListLogCategories (Stream *strm)
         "\tshlib - log shared library related activities\n"
         "\tstate - log private and public process state changes\n"
         "\tstep - log step related activities\n"
+        "\tunwind - log stack unwind activities\n"
         "\tverbose - enable verbose loggging\n"
         "\twatch - log watchpoint related activities\n");
 }

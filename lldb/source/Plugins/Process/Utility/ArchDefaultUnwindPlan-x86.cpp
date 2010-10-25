@@ -64,6 +64,7 @@ ArchDefaultUnwindPlan_x86::ArchDefaultUnwindPlan_x86(int cpu) :
     row.SetRegisterInfo (LLDB_REGNUM_GENERIC_SP, regloc);
 
     m_32bit_default.AppendRow (row);
+    m_32bit_default.SetSourceName ("architectural default");
 
     row.Clear();
 
@@ -80,6 +81,7 @@ ArchDefaultUnwindPlan_x86::ArchDefaultUnwindPlan_x86(int cpu) :
     row.SetRegisterInfo (LLDB_REGNUM_GENERIC_SP, regloc);
 
     m_64bit_default.AppendRow (row);
+    m_64bit_default.SetSourceName ("architectural default");
 }
 
 

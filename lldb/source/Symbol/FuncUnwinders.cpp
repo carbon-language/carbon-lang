@@ -71,9 +71,14 @@ UnwindPlan*
 FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
 {
     if (m_unwind_at_non_call_site != NULL)
-        m_unwind_at_non_call_site;
-    m_unwind_at_non_call_site = new UnwindPlan;
-    m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_at_non_call_site);
+        return m_unwind_at_non_call_site;
+    UnwindPlan *up = new UnwindPlan;
+    if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *up))
+    {
+        delete up;
+        return NULL;
+    }
+    m_unwind_at_non_call_site = up;
     return m_unwind_at_non_call_site;
 }
 
@@ -82,8 +87,13 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
 {
     if (m_fast_unwind != NULL)
         return m_fast_unwind;
-    m_fast_unwind = new UnwindPlan;
-    m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_fast_unwind);
+    UnwindPlan *up = new UnwindPlan;
+    if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *up))
+    {
+        delete up;
+        return NULL;
+    }
+    m_fast_unwind = up;
     return m_fast_unwind;
 }
 
