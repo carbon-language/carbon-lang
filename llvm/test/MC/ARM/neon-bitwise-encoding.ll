@@ -2,6 +2,7 @@
 
 ; FIXME: The following instructions still require testing:
 ;  - vand with immediate
+;  - vmvn of an immediate
 
 ; CHECK: vand_8xi8
 define <8 x i8> @vand_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
@@ -55,4 +56,60 @@ define <16 x i8> @vorr_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ; CHECK: vorr	q8, q8, q9              @ encoding: [0xf2,0x01,0x60,0xf2]
 	%tmp3 = or <16 x i8> %tmp1, %tmp2
 	ret <16 x i8> %tmp3
+}
+
+; CHECK: vbic_8xi8
+define <8 x i8> @vbic_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vbic	d16, d17, d16           @ encoding: [0xb0,0x01,0x51,0xf2]
+	%tmp3 = xor <8 x i8> %tmp2, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
+	%tmp4 = and <8 x i8> %tmp1, %tmp3
+	ret <8 x i8> %tmp4
+}
+
+; CHECK: vbic_16xi8
+define <16 x i8> @vbic_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vbic	q8, q8, q9              @ encoding: [0xf2,0x01,0x50,0xf2]
+	%tmp3 = xor <16 x i8> %tmp2, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
+	%tmp4 = and <16 x i8> %tmp1, %tmp3
+	ret <16 x i8> %tmp4
+}
+
+; CHECK: vorn_8xi8
+define <8 x i8> @vorn_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vorn	d16, d17, d16           @ encoding: [0xb0,0x01,0x71,0xf2]
+	%tmp3 = xor <8 x i8> %tmp2, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
+	%tmp4 = or <8 x i8> %tmp1, %tmp3
+	ret <8 x i8> %tmp4
+}
+
+; CHECK: vorn_16xi8
+define <16 x i8> @vorn_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vorn	q8, q8, q9              @ encoding: [0xf2,0x01,0x70,0xf2]
+	%tmp3 = xor <16 x i8> %tmp2, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
+	%tmp4 = or <16 x i8> %tmp1, %tmp3
+	ret <16 x i8> %tmp4
+}
+
+; CHECK: vmvn_8xi8
+define <8 x i8> @vmvn_8xi8(<8 x i8>* %A) nounwind {
+	%tmp1 = load <8 x i8>* %A
+; CHECK: vmvn	d16, d16                @ encoding: [0xa0,0x05,0xf0,0xf3]
+	%tmp2 = xor <8 x i8> %tmp1, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
+	ret <8 x i8> %tmp2
+}
+
+; CHECK: vmvn_16xi8
+define <16 x i8> @vmvn_16xi8(<16 x i8>* %A) nounwind {
+	%tmp1 = load <16 x i8>* %A
+; CHECK: vmvn	q8, q8                  @ encoding: [0xe0,0x05,0xf0,0xf3]
+	%tmp2 = xor <16 x i8> %tmp1, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
+	ret <16 x i8> %tmp2
 }

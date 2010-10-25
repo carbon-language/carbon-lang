@@ -2899,19 +2899,22 @@ def  VORNq    : N3VX<0, 0, 0b11, 0b0001, 1, 1, (outs QPR:$dst),
 //   VMVN     : Vector Bitwise NOT (Immediate)
 
 let isReMaterializable = 1 in {
+// FIXME: This instruction's encoding MAY NOT BE correct.
 def VMVNv4i16 : N1ModImm<1, 0b000, {1,0,?,0}, 0, 0, 1, 1, (outs DPR:$dst),
                          (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmvn", "i16", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v4i16 (NEONvmvnImm timm:$SIMM)))]>;
+// FIXME: This instruction's encoding MAY NOT BE correct.
 def VMVNv8i16 : N1ModImm<1, 0b000, {1,0,?,0}, 0, 1, 1, 1, (outs QPR:$dst),
                          (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmvn", "i16", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v8i16 (NEONvmvnImm timm:$SIMM)))]>;
-
+// FIXME: This instruction's encoding MAY NOT BE correct.
 def VMVNv2i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 0, 1, 1, (outs DPR:$dst),
                          (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmvn", "i32", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v2i32 (NEONvmvnImm timm:$SIMM)))]>;
+// FIXME: This instruction's encoding MAY NOT BE correct.
 def VMVNv4i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 1, 1, 1, (outs QPR:$dst),
                          (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmvn", "i32", "$dst, $SIMM", "",
