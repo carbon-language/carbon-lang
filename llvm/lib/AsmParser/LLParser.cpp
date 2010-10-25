@@ -982,6 +982,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
     case lltok::kw_noredzone:       Attrs |= Attribute::NoRedZone; break;
     case lltok::kw_noimplicitfloat: Attrs |= Attribute::NoImplicitFloat; break;
     case lltok::kw_naked:           Attrs |= Attribute::Naked; break;
+    case lltok::kw_hotpatch:        Attrs |= Attribute::Hotpatch; break;
 
     case lltok::kw_alignstack: {
       unsigned Alignment;

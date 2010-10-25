@@ -70,6 +70,8 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "noimplicitfloat ";
   if (Attrs & Attribute::Naked)
     Result += "naked ";
+  if (Attrs & Attribute::Hotpatch)
+    Result += "hotpatch ";
   if (Attrs & Attribute::StackAlignment) {
     Result += "alignstack(";
     Result += utostr(Attribute::getStackAlignmentFromAttrs(Attrs));
