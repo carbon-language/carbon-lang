@@ -666,19 +666,19 @@ ClangASTContext::GetBuiltInType_void(ASTContext *ast_context)
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_id()
 {
-    return getASTContext()->getObjCIdType().getAsOpaquePtr();
+    return getASTContext()->ObjCBuiltinIdTy.getAsOpaquePtr();
 }
 
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_Class()
 {
-    return getASTContext()->getObjCClassType().getAsOpaquePtr();
+    return getASTContext()->ObjCBuiltinClassTy.getAsOpaquePtr();
 }
 
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_selector()
 {
-    return getASTContext()->getObjCSelType().getAsOpaquePtr();
+    return getASTContext()->ObjCBuiltinSelTy.getAsOpaquePtr();
 }
 
 clang_type_t
@@ -777,7 +777,7 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
 {
     ASTContext *ast_context = getASTContext();
     assert (ast_context != NULL);
-
+    
     if (decl_ctx == NULL)
         decl_ctx = ast_context->getTranslationUnitDecl();
 
@@ -1662,8 +1662,18 @@ ClangASTContext::GetTypeInfoMask (clang_type_t clang_type)
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
     {
+    case clang::Type::Builtin:
+        switch (cast<clang::BuiltinType>(qual_type)->getKind())
+        {
+        default:
+            break;
+        case clang::BuiltinType::ObjCId:
+        case clang::BuiltinType::ObjCClass:
+        case clang::BuiltinType::ObjCSel:
+            return eTypeIsBuiltIn | eTypeIsPointer | eTypeHasValue;
+        }
+        return eTypeIsBuiltIn | eTypeHasValue;
     case clang::Type::BlockPointer:                     return eTypeIsPointer | eTypeHasChildren | eTypeIsBlock;
-    case clang::Type::Builtin:                          return eTypeIsBuiltIn | eTypeHasValue;
     case clang::Type::Complex:                          return eTypeHasChildren | eTypeIsBuiltIn | eTypeHasValue;
     case clang::Type::ConstantArray:                    return eTypeHasChildren | eTypeIsArray;
     case clang::Type::DependentName:                    return 0;
@@ -1949,13 +1959,16 @@ ClangASTContext::GetChildClangTypeAtIndex
             {
             case clang::BuiltinType::ObjCId:
             case clang::BuiltinType::ObjCClass:
+                child_name = "isa";
+                child_byte_size = ast_context->getTypeSize(ast_context->ObjCBuiltinClassTy) / CHAR_BIT;
                 return ast_context->ObjCBuiltinClassTy.getAsOpaquePtr();
                 
             case clang::BuiltinType::ObjCSel:
                 {
                     QualType char_type(ast_context->CharTy);
                     char_type.addConst();
-                    return ast_context->getPointerType(char_type).getAsOpaquePtr();
+                    child_byte_size = ast_context->getTypeSize(char_type);
+                    return char_type.getAsOpaquePtr();
                 }
                 break;
 
@@ -3150,6 +3163,15 @@ ClangASTContext::CompleteTagDeclarationDefinition (clang_type_t clang_type)
             return true;
         }
         
+        ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type);
+        
+        if (objc_class_type)
+        {
+            ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+            
+            class_interface_decl->setForwardDecl(false);
+        }
+        
         const EnumType *enum_type = dyn_cast<EnumType>(qual_type.getTypePtr());
         
         if (enum_type)
@@ -3350,6 +3372,17 @@ ClangASTContext::IsPointerOrReferenceType (clang_type_t clang_type, clang_type_t
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
     {
+    case clang::Type::Builtin:
+        switch (cast<clang::BuiltinType>(qual_type)->getKind())
+        {
+        default:
+            break;
+        case clang::BuiltinType::ObjCId:
+        case clang::BuiltinType::ObjCClass:
+        case clang::BuiltinType::ObjCSel:
+            return true;
+        }
+        return false;
     case clang::Type::ObjCObjectPointer:
         if (target_type)
             *target_type = cast<ObjCObjectPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
@@ -3411,6 +3444,17 @@ ClangASTContext::IsPointerType (clang_type_t clang_type, clang_type_t*target_typ
         const clang::Type::TypeClass type_class = qual_type->getTypeClass();
         switch (type_class)
         {
+        case clang::Type::Builtin:
+            switch (cast<clang::BuiltinType>(qual_type)->getKind())
+            {
+            default:
+                break;
+            case clang::BuiltinType::ObjCId:
+            case clang::BuiltinType::ObjCClass:
+            case clang::BuiltinType::ObjCSel:
+                return true;
+            }
+            return false;
         case clang::Type::ObjCObjectPointer:
             if (target_type)
                 *target_type = cast<ObjCObjectPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();

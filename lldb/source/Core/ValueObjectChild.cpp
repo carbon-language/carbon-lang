@@ -45,6 +45,8 @@ ValueObjectChild::ValueObjectChild
     m_bitfield_bit_offset (bitfield_bit_offset),
     m_is_base_class (is_base_class)
 {
+    assert(byte_size != 0 && "TEMPORARY DEBUGGING ASSERT");
+    
     m_name = name;
 }
 
