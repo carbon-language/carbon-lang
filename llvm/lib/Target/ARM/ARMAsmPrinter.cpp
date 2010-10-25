@@ -95,8 +95,6 @@ namespace {
 
   class ObjectAttributeEmitter : public AttributeEmitter {
     MCObjectStreamer &Streamer;
-    size_t SectionStart;
-    size_t TagStart;
     StringRef CurrentVendor;
     SmallString<64> Contents;
 
@@ -116,20 +114,7 @@ namespace {
 
       CurrentVendor = Vendor;
 
-      SectionStart = Contents.size();
-
-      // Length of the data for this vendor.
-      Contents.append(4, (char)0);
-
-      Contents.append(Vendor.begin(), Vendor.end());
-      Contents += 0;
-
-      Contents += ARMBuildAttrs::File;
-
-      TagStart = Contents.size();
-
-      // Length of the data for this tag.
-      Contents.append(4, (char)0);
+      assert(Contents.size() == 0);
     }
 
     void EmitAttribute(unsigned Attribute, unsigned Value) {
@@ -139,15 +124,24 @@ namespace {
     }
 
     void Finish() {
-      size_t EndPos = Contents.size();
+      const size_t ContentsSize = Contents.size();
 
-      // FIXME: endian.
-      *((uint32_t*)&Contents[SectionStart]) = EndPos - SectionStart;
+      // Vendor size + Vendor name + '\0'
+      const size_t VendorHeaderSize = 4 + CurrentVendor.size() + 1;
 
-      // +1 since it includes the tag that came before it.
-      *((uint32_t*)&Contents[TagStart]) = EndPos - TagStart + 1;
+      // Tag + Tag Size
+      const size_t TagHeaderSize = 1 + 4;
+
+      Streamer.EmitIntValue(VendorHeaderSize + TagHeaderSize + ContentsSize, 4);
+      Streamer.EmitBytes(CurrentVendor, 0);
+      Streamer.EmitIntValue(0, 1); // '\0'
+
+      Streamer.EmitIntValue(ARMBuildAttrs::File, 1);
+      Streamer.EmitIntValue(TagHeaderSize + ContentsSize, 4);
 
       Streamer.EmitBytes(Contents, 0);
+
+      Contents.clear();
     }
   };
 
