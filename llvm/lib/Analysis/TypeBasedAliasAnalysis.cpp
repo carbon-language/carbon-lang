@@ -31,7 +31,9 @@
 //
 // The second field identifies the type's parent node in the tree, or
 // is null or omitted for a root node. A type is considered to alias
-// all of its decendents and all of its ancestors in the tree.
+// all of its decendents and all of its ancestors in the tree. Also,
+// a type is considered to alias all types in other trees, so that
+// bitcode produced from multiple front-ends is handled conservatively.
 //
 // If the third field is present, it's an integer which if equal to 1
 // indicates that the type is "constant" (meaning pointsToConstantMemory
