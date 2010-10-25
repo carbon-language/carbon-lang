@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/System/ThreadLocal.h"
 
 namespace llvm {
@@ -43,8 +42,9 @@ const void* ThreadLocalImpl::getInstance() {
 
 void ThreadLocalImpl::setInstance(const void* d){
   DWORD* tls = static_cast<DWORD*>(data);
-  int ATTRIBUTE_UNUSED errorcode = TlsSetValue(*tls, const_cast<void*>(d));
+  int errorcode = TlsSetValue(*tls, const_cast<void*>(d));
   assert(errorcode != 0);
+  (void)errorcode;
 }
 
 void ThreadLocalImpl::removeInstance() {
