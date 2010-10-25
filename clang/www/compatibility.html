@@ -141,6 +141,16 @@ mentioning these, the fix is simple: switch to the *mmintrin.h functions.</p>
 architectures respectively.  For these, make sure to use the &lt;arm_neon.h&gt;
 and &lt;altivec.h&gt; headers.</p>
 
+<p>For x86 architectures this <a href="builtins.py">script</a> should help with
+the manual migration process.  It will rewrite your source files in place to
+use the APIs instead of builtin function calls. Just call it like this:</p>
+
+<pre>
+  builtins.py *.c *.h
+</pre>
+
+<p>and it will rewrite all of the .c and .h files in the current directory to
+use the API calls instead of calls like <tt>__builtin_ia32_paddw128</tt>.</p>
 
 <!-- ======================================================================= -->
 <h3 id="lvalue-cast">Lvalue casts</h3>
