@@ -94,7 +94,7 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   if ((Mask & Mod) && pointsToConstantMemory(Loc))
     Mask = ModRefResult(Mask & ~Mod);
 
-  // If this is BasicAA, don't forward.
+  // If this is the end of the chain, don't forward.
   if (!AA) return Mask;
 
   // Otherwise, fall back to the next AA in the chain. But we can merge
@@ -152,7 +152,7 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
       return R;
   }
 
-  // If this is BasicAA, don't forward.
+  // If this is the end of the chain, don't forward.
   if (!AA) return Mask;
 
   // Otherwise, fall back to the next AA in the chain. But we can merge
@@ -171,7 +171,7 @@ AliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   if (const Function *F = CS.getCalledFunction())
     Min = getModRefBehavior(F);
 
-  // If this is BasicAA, don't forward.
+  // If this is the end of the chain, don't forward.
   if (!AA) return Min;
 
   // Otherwise, fall back to the next AA in the chain. But we can merge
