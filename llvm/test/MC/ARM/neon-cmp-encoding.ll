@@ -408,3 +408,68 @@ define <4 x i32> @vacgt_4xfloat(<4 x float>* %A, <4 x float>* %B) nounwind {
 	ret <4 x i32> %tmp3
 }
 
+; CHECK: vtst_8xi8
+define <8 x i8> @vtst_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vtst.8	d16, d16, d17           @ encoding: [0xb1,0x08,0x40,0xf2]
+	%tmp3 = and <8 x i8> %tmp1, %tmp2
+	%tmp4 = icmp ne <8 x i8> %tmp3, zeroinitializer
+  %tmp5 = sext <8 x i1> %tmp4 to <8 x i8>
+	ret <8 x i8> %tmp5
+}
+
+; CHECK: vtst_4xi16
+define <4 x i16> @vtst_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vtst.16	d16, d16, d17           @ encoding: [0xb1,0x08,0x50,0xf2]
+	%tmp3 = and <4 x i16> %tmp1, %tmp2
+	%tmp4 = icmp ne <4 x i16> %tmp3, zeroinitializer
+  %tmp5 = sext <4 x i1> %tmp4 to <4 x i16>
+	ret <4 x i16> %tmp5
+}
+
+; CHECK: vtst_2xi32
+define <2 x i32> @vtst_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vtst.32	d16, d16, d17           @ encoding: [0xb1,0x08,0x60,0xf2]
+	%tmp3 = and <2 x i32> %tmp1, %tmp2
+	%tmp4 = icmp ne <2 x i32> %tmp3, zeroinitializer
+  %tmp5 = sext <2 x i1> %tmp4 to <2 x i32>
+	ret <2 x i32> %tmp5
+}
+
+; CHECK: vtst_16xi8
+define <16 x i8> @vtst_16xi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vtst.8	q8, q8, q9              @ encoding: [0xf2,0x08,0x40,0xf2]
+	%tmp3 = and <16 x i8> %tmp1, %tmp2
+	%tmp4 = icmp ne <16 x i8> %tmp3, zeroinitializer
+  %tmp5 = sext <16 x i1> %tmp4 to <16 x i8>
+	ret <16 x i8> %tmp5
+}
+
+; CHECK: vtst_8xi16
+define <8 x i16> @vtst_8xi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vtst.16	q8, q8, q9              @ encoding: [0xf2,0x08,0x50,0xf2]
+	%tmp3 = and <8 x i16> %tmp1, %tmp2
+	%tmp4 = icmp ne <8 x i16> %tmp3, zeroinitializer
+  %tmp5 = sext <8 x i1> %tmp4 to <8 x i16>
+	ret <8 x i16> %tmp5
+}
+
+; CHECK: vtst_4xi32
+define <4 x i32> @vtst_4xi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vtst.32	q8, q8, q9              @ encoding: [0xf2,0x08,0x60,0xf2]
+	%tmp3 = and <4 x i32> %tmp1, %tmp2
+	%tmp4 = icmp ne <4 x i32> %tmp3, zeroinitializer
+  %tmp5 = sext <4 x i1> %tmp4 to <4 x i32>
+	ret <4 x i32> %tmp5
+}
