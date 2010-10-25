@@ -1,47 +1,52 @@
-// FIXME: For now this test just checks that llvm-mc -triple i386-unknown-unknown works. Once we have .macro,
-// .if, and .abort we can write a better test (without resorting to miles of
-// greps).
-        
 // RUN: llvm-mc -triple i386-unknown-unknown %s > %t
 
+.macro check_expr
+  .if ($0) != ($1)
+        .abort Unexpected $0 != $1.
+  .endif
+.endmacro
+        
         .text
 g:
 h:
 j:
 k:      
         .data
-        .byte !1 + 2
-        .byte !0
-        .byte ~0
-        .byte -1
-        .byte +1
-        .byte 1 + 2
-        .byte 1 & 3
+        check_expr !1 + 2, 2
+        check_expr !0, 1
+        check_expr ~0 & 0xFF, 0xFF
+        check_expr -1 & 0xFF, 0xFF
+        check_expr +1, 1
+        check_expr 1 + 2, 3
+        check_expr 1 & 3, 1
+        // FIXME: There is a bug here in macro expansion.
         .byte 4 / 2
         .byte 4 / -2
-        .byte 1 == 1
-        .byte 1 == 0
-        .byte 1 > 0
-        .byte 1 >= 1
-        .byte 1 < 2
-        .byte 1 <= 1
-        .byte 4 % 3
-        .byte 2 * 2
-        .byte 2 != 2
-        .byte 2 <> 2
-        .byte 1 | 2
-        .byte 1 << 1
-        .byte 2 >> 1
-        .byte ~0 >> 1
-        .byte 3 - 2
-        .byte 1 ^ 3
-        .byte 1 && 2
-        .byte 3 && 0
-        .byte 1 || 2
-        .byte 0 || 0
+        check_expr 1 == 1, 1
+        check_expr 1 == 0, 0
+        check_expr 1 > 0, 1
+        check_expr 1 >= 1, 1
+        check_expr 1 < 2, 1
+        check_expr 1 <= 1, 1
+        check_expr 4 % 3, 1
+        check_expr 2 * 2, 4
+        check_expr 2 != 2, 0
+        check_expr 2 <> 2, 0
+        check_expr 1 | 2, 3
+        check_expr 1 << 1, 2
+        check_expr 2 >> 1, 1
+        check_expr (~0 >> 1) & 0xFF, 0xFF
+        check_expr 3 - 2, 1
+        check_expr 1 ^ 3, 2
+        check_expr 1 && 2, 1
+        check_expr 3 && 0, 0
+        check_expr 0 && 1, 0
+        check_expr 1 || 2, 1
+        check_expr 0 || 1, 1
+        check_expr 0 || 0, 0
 
         .set c, 10
-        .byte c + 1
+        check_expr c + 1, 11
 
         d = e + 10
         .long d
