@@ -1133,10 +1133,11 @@ define void @f() optsize { ... }
 
   <dt><tt><b>hotpatch</b></tt></dt>
   <dd>This attribute indicates that the function should be 'hotpatchable',
-      meaning the function can be patched even while it is loaded into memory.
-      On x86, the function prologue will contain a two-byte no-op sequence;
-      this is the same sequence used in the system DLLs in Microsoft Windows
-      XP Service Pack 2 and higher.</dd>
+      meaning the function can be patched and/or hooked even while it is
+      loaded into memory. On x86, the function prologue will be preceded
+      by six bytes of padding and will begin with a two-byte instruction.
+      Most of the functions in the Windows system DLLs in Windows XP SP2 or
+      higher were compiled in this fashion.</dd>
 
   <dt><tt><b>inlinehint</b></tt></dt>
   <dd>This attribute indicates that the source code contained a hint that inlining
