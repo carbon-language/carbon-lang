@@ -53,7 +53,13 @@
 using namespace llvm;
 
 STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
+STATISTIC(NumFastIselBlocks, "Number of blocks selected entirely by fast isel");
+STATISTIC(NumDAGBlocks, "Number of blocks selected using DAG");
 STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
+STATISTIC(NumBBWithOutOfOrderLineInfo, 
+          "Number of blocks with out of order line number info");
+STATISTIC(NumMBBWithOutOfOrderLineInfo, 
+          "Number of machine blocks with out of order line number info");
 
 static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
@@ -370,7 +376,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   return true;
 }
 
-void
+bool
 SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
                                    BasicBlock::const_iterator End,
                                    bool &HadTailCall) {
@@ -387,6 +393,7 @@ SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
 
   // Final step, emit the lowered DAG as machine code.
   CodeGenAndEmitDAG();
+  return Begin != End;
 }
 
 void SelectionDAGISel::ComputeLiveOutVRegInfo() {
@@ -726,8 +733,47 @@ bool SelectionDAGISel::TryToFoldFastISelLoad(const LoadInst *LI,
   return FastIS->TryToFoldLoad(&*RI, RI.getOperandNo(), LI);
 }
 
-  
+#ifndef NDEBUG
+/// CheckLineNumbers - Check if basic block instructions follow source order
+/// or not.
+static void CheckLineNumbers(const BasicBlock *BB) {
+  unsigned Line = 0;
+  unsigned Col = 0;
+  for (BasicBlock::const_iterator BI = BB->begin(),
+         BE = BB->end(); BI != BE; ++BI) {
+    const DebugLoc DL = BI->getDebugLoc();
+    if (DL.isUnknown()) continue;
+    unsigned L = DL.getLine();
+    unsigned C = DL.getCol();
+    if (L < Line || (L == Line && C < Col)) {
+      ++NumBBWithOutOfOrderLineInfo;
+      return;
+    }
+    Line = L;
+    Col = C;
+  }
+}  
 
+/// CheckLineNumbers - Check if machine basic block instructions follow source 
+/// order or not.
+static void CheckLineNumbers(const MachineBasicBlock *MBB) {
+  unsigned Line = 0;
+  unsigned Col = 0;
+  for (MachineBasicBlock::const_iterator MBI = MBB->begin(),
+         MBE = MBB->end(); MBI != MBE; ++MBI) {
+    const DebugLoc DL = MBI->getDebugLoc();
+    if (DL.isUnknown()) continue;
+    unsigned L = DL.getLine();
+    unsigned C = DL.getCol();
+    if (L < Line || (L == Line && C < Col)) {
+      ++NumMBBWithOutOfOrderLineInfo;
+      return;
+    }
+    Line = L;
+    Col = C;
+  }
+}  
+#endif
 
 void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Initialize the Fast-ISel state, if needed.
@@ -737,7 +783,11 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 
   // Iterate over all basic blocks in the function.
   for (Function::const_iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
+    bool BBSelectedUsingDAG = false;
     const BasicBlock *LLVMBB = &*I;
+#ifndef NDEBUG
+    CheckLineNumbers(LLVMBB);
+#endif
     FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
     FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();
 
@@ -822,7 +872,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           }
 
           bool HadTailCall = false;
-          SelectBasicBlock(Inst, BI, HadTailCall);
+          BBSelectedUsingDAG |= SelectBasicBlock(Inst, BI, HadTailCall);
 
           // If the call was emitted as a tail call, we're done with the block.
           if (HadTailCall) {
@@ -856,13 +906,22 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     // not handled by FastISel. If FastISel is not run, this is the entire
     // block.
     bool HadTailCall;
-    SelectBasicBlock(Begin, BI, HadTailCall);
+    BBSelectedUsingDAG |= SelectBasicBlock(Begin, BI, HadTailCall);
 
     FinishBasicBlock();
     FuncInfo->PHINodesToUpdate.clear();
+    if (BBSelectedUsingDAG)
+      ++NumDAGBlocks;
+    else
+      ++NumFastIselBlocks;
   }
 
   delete FastIS;
+#ifndef NDEBUG
+  for (MachineFunction::const_iterator MBI = MF->begin(), MBE = MF->end();
+       MBI != MBE; ++MBI)
+    CheckLineNumbers(MBI);
+#endif
 }
 
 void
