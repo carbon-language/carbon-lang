@@ -107,15 +107,4 @@
 #define LLVM_ATTRIBUTE_NORETURN
 #endif
 
-// We provide definitions without the LLVM_ prefix briefly while transitioning
-// to always-prefixed names. These will go away as soon as the migration is
-// complete.
-#define ATTRIBUTE_USED LLVM_ATTRIBUTE_USED
-#define ATTRIBUTE_UNUSED LLVM_ATTRIBUTE_UNUSED
-#define ATTRIBUTE_READNONE LLVM_ATTRIBUTE_READNONE
-#define ATTRIBUTE_READONLY LLVM_ATTRIBUTE_READONLY
-#define NORETURN LLVM_ATTRIBUTE_NORETURN
-#define DISABLE_INLINE LLVM_ATTRIBUTE_NOINLINE
-#define ALWAYS_INLINE LLVM_ATTRIBUTE_ALWAYS_INLINE
-
 #endif
