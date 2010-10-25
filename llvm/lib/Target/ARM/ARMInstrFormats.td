@@ -1765,6 +1765,18 @@ class N3VX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
   let Inst{11-8}  = op11_8;
   let Inst{6}     = op6;
   let Inst{4}     = op4;
+  
+  // Instruction operands.
+  bits<5> Vd;
+  bits<5> Vn;
+  bits<5> Vm;
+
+  let Inst{15-12} = Vd{3-0};
+  let Inst{22}    = Vd{4};
+  let Inst{19-16} = Vn{3-0};
+  let Inst{7}     = Vn{4};
+  let Inst{3-0}   = Vm{3-0};
+  let Inst{5}     = Vm{4};
 }
 
 // NEON VMOVs between scalar and core registers.
