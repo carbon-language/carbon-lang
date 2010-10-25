@@ -113,3 +113,29 @@ define <16 x i8> @vmvn_16xi8(<16 x i8>* %A) nounwind {
 	%tmp2 = xor <16 x i8> %tmp1, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
 	ret <16 x i8> %tmp2
 }
+
+; CHECK: vbsl_8xi8
+define <8 x i8> @vbsl_8xi8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = load <8 x i8>* %C
+; CHECK: vbsl	d18, d17, d16           @ encoding: [0xb0,0x21,0x51,0xf3]
+	%tmp4 = and <8 x i8> %tmp1, %tmp2
+	%tmp5 = xor <8 x i8> %tmp1, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
+	%tmp6 = and <8 x i8> %tmp5, %tmp3
+	%tmp7 = or <8 x i8> %tmp4, %tmp6
+	ret <8 x i8> %tmp7
+}
+
+; CHECK: vbsl_16xi8
+define <16 x i8> @vbsl_16xi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8>* %C) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+	%tmp3 = load <16 x i8>* %C
+; CHECK: vbsl	q8, q10, q9             @ encoding: [0xf2,0x01,0x54,0xf3]
+	%tmp4 = and <16 x i8> %tmp1, %tmp2
+	%tmp5 = xor <16 x i8> %tmp1, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
+	%tmp6 = and <16 x i8> %tmp5, %tmp3
+	%tmp7 = or <16 x i8> %tmp4, %tmp6
+	ret <16 x i8> %tmp7
+}

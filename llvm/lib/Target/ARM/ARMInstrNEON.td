@@ -2934,20 +2934,20 @@ def : Pat<(v2i32 (vnotd DPR:$src)), (VMVNd DPR:$src)>;
 def : Pat<(v4i32 (vnotq QPR:$src)), (VMVNq QPR:$src)>;
 
 //   VBSL     : Vector Bitwise Select
-def  VBSLd    : N3VX<1, 0, 0b01, 0b0001, 0, 1, (outs DPR:$dst),
-                     (ins DPR:$src1, DPR:$src2, DPR:$src3),
+def  VBSLd    : N3VX<1, 0, 0b01, 0b0001, 0, 1, (outs DPR:$Vd),
+                     (ins DPR:$src1, DPR:$Vn, DPR:$Vm),
                      N3RegFrm, IIC_VCNTiD,
-                     "vbsl", "$dst, $src2, $src3", "$src1 = $dst",
-                     [(set DPR:$dst,
-                       (v2i32 (or (and DPR:$src2, DPR:$src1),
-                                  (and DPR:$src3, (vnotd DPR:$src1)))))]>;
-def  VBSLq    : N3VX<1, 0, 0b01, 0b0001, 1, 1, (outs QPR:$dst),
-                     (ins QPR:$src1, QPR:$src2, QPR:$src3),
+                     "vbsl", "$Vd, $Vn, $Vm", "$src1 = $Vd",
+                     [(set DPR:$Vd,
+                       (v2i32 (or (and DPR:$Vn, DPR:$src1),
+                                  (and DPR:$Vm, (vnotd DPR:$src1)))))]>;
+def  VBSLq    : N3VX<1, 0, 0b01, 0b0001, 1, 1, (outs QPR:$Vd),
+                     (ins QPR:$src1, QPR:$Vn, QPR:$Vm),
                      N3RegFrm, IIC_VCNTiQ,
-                     "vbsl", "$dst, $src2, $src3", "$src1 = $dst",
-                     [(set QPR:$dst,
-                       (v4i32 (or (and QPR:$src2, QPR:$src1),
-                                  (and QPR:$src3, (vnotq QPR:$src1)))))]>;
+                     "vbsl", "$Vd, $Vn, $Vm", "$src1 = $Vd",
+                     [(set QPR:$Vd,
+                       (v4i32 (or (and QPR:$Vn, QPR:$src1),
+                                  (and QPR:$Vm, (vnotq QPR:$src1)))))]>;
 
 //   VBIF     : Vector Bitwise Insert if False
 //              like VBSL but with: "vbif $dst, $src3, $src1", "$src2 = $dst",
