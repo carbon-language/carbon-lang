@@ -13,7 +13,6 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "CodeGenTBAA.h"
 #include "CGCall.h"
 #include "CGCXXABI.h"
 #include "CGRecordLayout.h"
