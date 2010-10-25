@@ -1149,3 +1149,13 @@ void pr8149(void) {
   for (; ({ do { } while (0); 0; });) { }
 }
 
+// PR 8458 - Make sure @synchronized doesn't crash with properties.
+@interface PR8458 {}
+@property(readonly) id lock;
+@end
+
+static
+void __PR8458(PR8458 *x) {
+  @synchronized(x.lock) {} // no-warning
+}
+

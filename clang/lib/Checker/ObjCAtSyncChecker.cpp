@@ -57,6 +57,9 @@ void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
     return;
   }
 
+  if (V.isUnknown())
+    return;
+
   // Check for null mutexes.
   const GRState *notNullState, *nullState;
   llvm::tie(notNullState, nullState) = state->Assume(cast<DefinedSVal>(V));
