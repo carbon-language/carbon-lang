@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wconversion -fsyntax-only -verify %s
 
 // C DR #316, PR 3626.
 void f0(a, b, c, d) int a,b,c,d; {}
@@ -26,4 +26,15 @@ char *rindex(s, c)
      register char *s, c; // expected-warning{{promoted type 'char *' of K&R function parameter is not compatible with the parameter type 'const char *' declared in a previous prototype}}
 {
   return 0;
+}
+
+// PR8314
+void proto(int);
+void proto(x) 
+     int x;
+{
+}
+
+void use_proto() {
+  proto(42.0); // expected-warning{{implicit conversion turns floating-point number into integer: 'double' to 'int'}}
 }

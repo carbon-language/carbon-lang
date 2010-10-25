@@ -3836,24 +3836,51 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
       // on our knowledge of the function definition.
       const FunctionDecl *Def = 0;
       if (FDecl->hasBody(Def) && NumArgs != Def->param_size()) {
-        const FunctionProtoType *Proto =
-            Def->getType()->getAs<FunctionProtoType>();
-        if (!Proto || !(Proto->isVariadic() && NumArgs >= Def->param_size())) {
+        const FunctionProtoType *Proto 
+          = Def->getType()->getAs<FunctionProtoType>();
+        if (!Proto || !(Proto->isVariadic() && NumArgs >= Def->param_size()))
           Diag(RParenLoc, diag::warn_call_wrong_number_of_arguments)
             << (NumArgs > Def->param_size()) << FDecl << Fn->getSourceRange();
-        }
       }
+      
+      // If the function we're calling isn't a function prototype, but we have
+      // a function prototype from a prior declaratiom, use that prototype.
+      if (!FDecl->hasPrototype())
+        Proto = FDecl->getType()->getAs<FunctionProtoType>();
     }
 
     // Promote the arguments (C99 6.5.2.2p6).
     for (unsigned i = 0; i != NumArgs; i++) {
       Expr *Arg = Args[i];
-      DefaultArgumentPromotion(Arg);
-      if (RequireCompleteType(Arg->getSourceRange().getBegin(),
-                              Arg->getType(),
-                              PDiag(diag::err_call_incomplete_argument)
-                                << Arg->getSourceRange()))
-        return ExprError();
+
+      if (Proto && i < Proto->getNumArgs()) {
+        if (RequireCompleteType(Arg->getSourceRange().getBegin(),
+                                Arg->getType(),
+                                PDiag(diag::err_call_incomplete_argument)
+                                  << Arg->getSourceRange()))
+          return ExprError();
+
+        InitializedEntity Entity
+          = InitializedEntity::InitializeParameter(Context, 
+                                                   Proto->getArgType(i));
+        ExprResult ArgE = PerformCopyInitialization(Entity,
+                                                    SourceLocation(),
+                                                    Owned(Arg));
+        if (ArgE.isInvalid())
+          return true;
+        
+        Arg = ArgE.takeAs<Expr>();
+
+      } else {
+        DefaultArgumentPromotion(Arg);
+
+        if (RequireCompleteType(Arg->getSourceRange().getBegin(),
+                                Arg->getType(),
+                                PDiag(diag::err_call_incomplete_argument)
+                                  << Arg->getSourceRange()))
+          return ExprError();
+      }
+      
       TheCall->setArg(i, Arg);
     }
   }
