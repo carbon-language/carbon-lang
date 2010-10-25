@@ -59,6 +59,7 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Metadata.h"
 #include "llvm/Pass.h"
@@ -138,6 +139,10 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual AliasResult alias(const Location &LocA, const Location &LocB);
     virtual bool pointsToConstantMemory(const Location &Loc);
+    virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
+                                       const Location &Loc);
+    virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                                       ImmutableCallSite CS2);
   };
 }  // End of anonymous namespace
 
@@ -233,4 +238,35 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
     return true;
 
   return AliasAnalysis::pointsToConstantMemory(Loc);
+}
+
+AliasAnalysis::ModRefResult
+TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
+                                      const Location &Loc) {
+  if (!EnableTBAA)
+    return AliasAnalysis::getModRefInfo(CS, Loc);
+
+  if (const MDNode *L = Loc.TBAATag)
+    if (const MDNode *M =
+          CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
+      if (!Aliases(L, M))
+        return NoModRef;
+
+  return AliasAnalysis::getModRefInfo(CS, Loc);
+}
+
+AliasAnalysis::ModRefResult
+TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
+                                      ImmutableCallSite CS2) {
+  if (!EnableTBAA)
+    return AliasAnalysis::getModRefInfo(CS1, CS2);
+
+  if (const MDNode *M1 =
+        CS1.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
+    if (const MDNode *M2 =
+          CS2.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
+      if (!Aliases(M1, M2))
+        return NoModRef;
+
+  return AliasAnalysis::getModRefInfo(CS1, CS2);
 }
