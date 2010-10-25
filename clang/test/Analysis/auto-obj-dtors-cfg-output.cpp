@@ -16,6 +16,11 @@ void test_const_ref() {
   const A& c = A();
 }
 
+void test_array() {
+  A a[2];
+  A b[0];
+}
+
 void test_scope() {
   A a;
   { A c;
@@ -164,6 +169,18 @@ void test_catch_copy() {
 // CHECK:  [ B0 (EXIT) ]
 // CHECK:     Predecessors (1): B1
 // CHECK:     Successors (0):
+// CHECK:  [ B2 (ENTRY) ]
+// CHECK:    Predecessors (0):
+// CHECK:    Successors (1): B1
+// CHECK:  [ B1 ]
+// CHECK:      1: A a[2];
+// CHECK:      2: A b[0];
+// CHECK:      3: [B1.1].~A() (Implicit destructor)
+// CHECK:    Predecessors (1): B2
+// CHECK:    Successors (1): B0
+// CHECK:  [ B0 (EXIT) ]
+// CHECK:    Predecessors (1): B1
+// CHECK:    Successors (0):
 // CHECK:  [ B2 (ENTRY) ]
 // CHECK:     Predecessors (0):
 // CHECK:     Successors (1): B1

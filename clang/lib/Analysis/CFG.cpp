@@ -641,8 +641,14 @@ LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl* VD,
       return Scope;
   }
 
-  // Check if type is a C++ class with non-trivial destructor.
+  // Check for constant size array. Set type to array element type.
+  if (const ConstantArrayType *AT = Context->getAsConstantArrayType(QT)) {
+    if (AT->getSize() == 0)
+      return Scope;
+    QT = AT->getElementType();
+  }
 
+  // Check if type is a C++ class with non-trivial destructor.
   if (const CXXRecordDecl* CD = QT->getAsCXXRecordDecl())
     if (!CD->hasTrivialDestructor()) {
       // Add the variable to scope
@@ -2707,9 +2713,11 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     VarDecl* VD = DE.getVarDecl();
     Helper->handleDecl(VD, OS);
 
-    Type* T = VD->getType().getTypePtr();
+    const Type* T = VD->getType().getTypePtr();
     if (const ReferenceType* RT = T->getAs<ReferenceType>())
       T = RT->getPointeeType().getTypePtr();
+    else if (const Type *ET = T->getArrayElementTypeNoTypeQual())
+      T = ET;
 
     OS << ".~" << T->getAsCXXRecordDecl()->getName().str() << "()";
     OS << " (Implicit destructor)\n";
