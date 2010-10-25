@@ -1,7 +1,7 @@
 ; RUN: llc -show-mc-encoding -march=arm -mcpu=cortex-a8 -mattr=+neon < %s | FileCheck %s
 
 ; FIXME: The following instructions still require testing:
-;  - vand with immediate
+;  - vand with immediate, vorr with immediate
 ;  - vmvn of an immediate
 ;  - both vbit and vbif
 

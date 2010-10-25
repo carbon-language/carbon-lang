@@ -204,3 +204,135 @@ define <2 x i64> @vabdlu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 	%tmp4 = zext <2 x i32> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
 }
+
+; CHECK: vabas_8xi8
+define <8 x i8> @vabas_8xi8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = load <8 x i8>* %C
+; CHECK: vaba.s8	d16, d18, d17           @ encoding: [0xb1,0x07,0x42,0xf2]
+	%tmp4 = call <8 x i8> @llvm.arm.neon.vabds.v8i8(<8 x i8> %tmp2, <8 x i8> %tmp3)
+	%tmp5 = add <8 x i8> %tmp1, %tmp4
+	ret <8 x i8> %tmp5
+}
+
+; CHECK: vabas_4xi16
+define <4 x i16> @vabas_4xi16(<4 x i16>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = load <4 x i16>* %C
+; CHECK: vaba.s16	d16, d18, d17   @ encoding: [0xb1,0x07,0x52,0xf2]
+	%tmp4 = call <4 x i16> @llvm.arm.neon.vabds.v4i16(<4 x i16> %tmp2, <4 x i16> %tmp3)
+	%tmp5 = add <4 x i16> %tmp1, %tmp4
+	ret <4 x i16> %tmp5
+}
+
+; CHECK: vabas_2xi32
+define <2 x i32> @vabas_2xi32(<2 x i32>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = load <2 x i32>* %C
+; CHECK: vaba.s32	d16, d18, d17   @ encoding: [0xb1,0x07,0x62,0xf2]
+	%tmp4 = call <2 x i32> @llvm.arm.neon.vabds.v2i32(<2 x i32> %tmp2, <2 x i32> %tmp3)
+	%tmp5 = add <2 x i32> %tmp1, %tmp4
+	ret <2 x i32> %tmp5
+}
+
+; CHECK: vabau_8xi8
+define <8 x i8> @vabau_8xi8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = load <8 x i8>* %C
+; CHECK: vaba.u8	d16, d18, d17           @ encoding: [0xb1,0x07,0x42,0xf3]
+	%tmp4 = call <8 x i8> @llvm.arm.neon.vabdu.v8i8(<8 x i8> %tmp2, <8 x i8> %tmp3)
+	%tmp5 = add <8 x i8> %tmp1, %tmp4
+	ret <8 x i8> %tmp5
+}
+
+; CHECK: vabau_4xi16
+define <4 x i16> @vabau_4xi16(<4 x i16>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = load <4 x i16>* %C
+; CHECK: vaba.u16	d16, d18, d17   @ encoding: [0xb1,0x07,0x52,0xf3]
+	%tmp4 = call <4 x i16> @llvm.arm.neon.vabdu.v4i16(<4 x i16> %tmp2, <4 x i16> %tmp3)
+	%tmp5 = add <4 x i16> %tmp1, %tmp4
+	ret <4 x i16> %tmp5
+}
+
+; CHECK: vabau_2xi32
+define <2 x i32> @vabau_2xi32(<2 x i32>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+	%tmp3 = load <2 x i32>* %C
+; CHECK: vaba.u32	d16, d18, d17   @ encoding: [0xb1,0x07,0x62,0xf3]
+	%tmp4 = call <2 x i32> @llvm.arm.neon.vabdu.v2i32(<2 x i32> %tmp2, <2 x i32> %tmp3)
+	%tmp5 = add <2 x i32> %tmp1, %tmp4
+	ret <2 x i32> %tmp5
+}
+
+; CHECK: vabas_16xi8
+define <16 x i8> @vabas_16xi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8>* %C) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+	%tmp3 = load <16 x i8>* %C
+; CHECK: vaba.s8	q9, q8, q10             @ encoding: [0xf4,0x27,0x40,0xf2]
+	%tmp4 = call <16 x i8> @llvm.arm.neon.vabds.v16i8(<16 x i8> %tmp2, <16 x i8> %tmp3)
+	%tmp5 = add <16 x i8> %tmp1, %tmp4
+	ret <16 x i8> %tmp5
+}
+
+; CHECK: vabas_8xi16
+define <8 x i16> @vabas_8xi16(<8 x i16>* %A, <8 x i16>* %B, <8 x i16>* %C) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+	%tmp3 = load <8 x i16>* %C
+; CHECK: vaba.s16	q9, q8, q10     @ encoding: [0xf4,0x27,0x50,0xf2]
+	%tmp4 = call <8 x i16> @llvm.arm.neon.vabds.v8i16(<8 x i16> %tmp2, <8 x i16> %tmp3)
+	%tmp5 = add <8 x i16> %tmp1, %tmp4
+	ret <8 x i16> %tmp5
+}
+
+; CHECK: vabas_4xi32
+define <4 x i32> @vabas_4xi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+	%tmp3 = load <4 x i32>* %C
+; CHECK: vaba.s32	q9, q8, q10     @ encoding: [0xf4,0x27,0x60,0xf2]
+	%tmp4 = call <4 x i32> @llvm.arm.neon.vabds.v4i32(<4 x i32> %tmp2, <4 x i32> %tmp3)
+	%tmp5 = add <4 x i32> %tmp1, %tmp4
+	ret <4 x i32> %tmp5
+}
+
+; CHECK: vabau_16xi8
+define <16 x i8> @vabau_16xi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8>* %C) nounwind {
+	%tmp1 = load <16 x i8>* %A
+	%tmp2 = load <16 x i8>* %B
+	%tmp3 = load <16 x i8>* %C
+; CHECK: vaba.u8	q9, q8, q10             @ encoding: [0xf4,0x27,0x40,0xf3]
+	%tmp4 = call <16 x i8> @llvm.arm.neon.vabdu.v16i8(<16 x i8> %tmp2, <16 x i8> %tmp3)
+	%tmp5 = add <16 x i8> %tmp1, %tmp4
+	ret <16 x i8> %tmp5
+}
+
+; CHECK: vabau_8xi16
+define <8 x i16> @vabau_8xi16(<8 x i16>* %A, <8 x i16>* %B, <8 x i16>* %C) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+	%tmp3 = load <8 x i16>* %C
+; CHECK: vaba.u16	q9, q8, q10     @ encoding: [0xf4,0x27,0x50,0xf3]
+	%tmp4 = call <8 x i16> @llvm.arm.neon.vabdu.v8i16(<8 x i16> %tmp2, <8 x i16> %tmp3)
+	%tmp5 = add <8 x i16> %tmp1, %tmp4
+	ret <8 x i16> %tmp5
+}
+
+; CHECK: vabau_4xi32
+define <4 x i32> @vabau_4xi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <4 x i32>* %B
+	%tmp3 = load <4 x i32>* %C
+; CHECK: vaba.u32	q9, q8, q10     @ encoding: [0xf4,0x27,0x60,0xf3]
+	%tmp4 = call <4 x i32> @llvm.arm.neon.vabdu.v4i32(<4 x i32> %tmp2, <4 x i32> %tmp3)
+	%tmp5 = add <4 x i32> %tmp1, %tmp4
+	ret <4 x i32> %tmp5
+}
