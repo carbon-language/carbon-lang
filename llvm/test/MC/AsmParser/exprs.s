@@ -19,9 +19,8 @@ k:
         check_expr +1, 1
         check_expr 1 + 2, 3
         check_expr 1 & 3, 1
-        // FIXME: There is a bug here in macro expansion.
-        .byte 4 / 2
-        .byte 4 / -2
+        check_expr 4 / 2, 2
+        check_expr 4 / -2, -2
         check_expr 1 == 1, 1
         check_expr 1 == 0, 0
         check_expr 1 > 0, 1

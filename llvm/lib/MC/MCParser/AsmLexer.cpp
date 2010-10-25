@@ -119,7 +119,7 @@ AsmToken AsmLexer::LexSlash() {
   switch (*CurPtr) {
   case '*': break; // C style comment.
   case '/': return ++CurPtr, LexLineComment();
-  default:  return AsmToken(AsmToken::Slash, StringRef(CurPtr, 1));
+  default:  return AsmToken(AsmToken::Slash, StringRef(CurPtr-1, 1));
   }
 
   // C Style comment.
