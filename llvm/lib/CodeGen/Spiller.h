@@ -10,14 +10,13 @@
 #ifndef LLVM_CODEGEN_SPILLER_H
 #define LLVM_CODEGEN_SPILLER_H
 
-#include "llvm/ADT/SmallVector.h"
-
 namespace llvm {
 
   class LiveInterval;
   class MachineFunction;
   class MachineFunctionPass;
   class SlotIndex;
+  template <typename T> class SmallVectorImpl;
   class VirtRegMap;
 
   /// Spiller interface.
