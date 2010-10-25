@@ -2824,9 +2824,11 @@ def  VCGTfd   : N3VD<1,0,0b10,0b1110,0, IIC_VBIND, "vcgt", "f32", v2i32, v2f32,
 def  VCGTfq   : N3VQ<1,0,0b10,0b1110,0, IIC_VBINQ, "vcgt", "f32", v4i32, v4f32,
                      NEONvcgt, 0>;
 // For disassembly only.
+// FIXME: This instruction's encoding MAY NOT BE correct.
 defm VCGTz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00000, 0, "vcgt", "s",
                             "$dst, $src, #0">;
 // For disassembly only.
+// FIXME: This instruction's encoding MAY NOT BE correct.
 defm VCLTz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00100, 0, "vclt", "s",
                             "$dst, $src, #0">;
 
