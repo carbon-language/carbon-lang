@@ -92,7 +92,7 @@ augroup END
 "set incsearch
 "set ruler
 
-" Clang code-completion support. This is highly experimental!
+" Clang code-completion support. This is somewhat experimental!
 
 " A path to a clang executable.
 let g:clang_path = "clang++"
@@ -216,5 +216,6 @@ function! ClangComplete(findstart, base)
    return []
 endfunction ClangComplete
 
-" Uncomment this to enable the highly-broken autocompletion support.
-"set omnifunc=ClangComplete
+" This to enables the somewhat-experimental clang-based
+" autocompletion support.
+set omnifunc=ClangComplete
