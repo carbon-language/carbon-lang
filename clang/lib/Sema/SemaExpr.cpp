@@ -3858,12 +3858,6 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
       Expr *Arg = Args[i];
 
       if (Proto && i < Proto->getNumArgs()) {
-        if (RequireCompleteType(Arg->getSourceRange().getBegin(),
-                                Arg->getType(),
-                                PDiag(diag::err_call_incomplete_argument)
-                                  << Arg->getSourceRange()))
-          return ExprError();
-
         InitializedEntity Entity
           = InitializedEntity::InitializeParameter(Context, 
                                                    Proto->getArgType(i));
@@ -3877,14 +3871,14 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
 
       } else {
         DefaultArgumentPromotion(Arg);
-
-        if (RequireCompleteType(Arg->getSourceRange().getBegin(),
-                                Arg->getType(),
-                                PDiag(diag::err_call_incomplete_argument)
-                                  << Arg->getSourceRange()))
-          return ExprError();
       }
       
+      if (RequireCompleteType(Arg->getSourceRange().getBegin(),
+                              Arg->getType(),
+                              PDiag(diag::err_call_incomplete_argument)
+                                << Arg->getSourceRange()))
+        return ExprError();
+
       TheCall->setArg(i, Arg);
     }
   }
