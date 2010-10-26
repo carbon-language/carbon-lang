@@ -1754,6 +1754,17 @@ class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
   let Inst{7}    = op7;
   let Inst{6}    = op6;
   let Inst{4}    = op4;
+  
+  // Instruction operands.
+  bits<5> Vd;
+  bits<5> Vm;
+  bits<6> SIMM;
+
+  let Inst{15-12} = Vd{3-0};
+  let Inst{22}    = Vd{4};
+  let Inst{3-0}   = Vm{3-0};
+  let Inst{5}     = Vm{4};
+  let Inst{21-16} = SIMM{5-0};
 }
 
 // NEON 3 vector register format.

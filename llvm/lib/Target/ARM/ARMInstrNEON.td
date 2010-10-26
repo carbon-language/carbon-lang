@@ -1289,6 +1289,15 @@ class N3VDIntSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                          (Ty (NEONvduplane (Ty DPR_8:$src2), imm:$lane)))))]> {
   let isCommutable = 0;
 }
+class N3VDIntSh<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
+              Format f, InstrItinClass itin, string OpcodeStr, string Dt,
+              ValueType ResTy, ValueType OpTy, Intrinsic IntOp, bit Commutable>
+  : N3V<op24, op23, op21_20, op11_8, 0, op4,
+        (outs DPR:$Vd), (ins DPR:$Vm, DPR:$Vn), f, itin,
+        OpcodeStr, Dt, "$Vd, $Vm, $Vn", "",
+        [(set DPR:$Vd, (ResTy (IntOp (OpTy DPR:$Vm), (OpTy DPR:$Vn))))]> {
+  let isCommutable = Commutable;
+}
 
 class N3VQInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
               Format f, InstrItinClass itin, string OpcodeStr, string Dt,
@@ -1322,6 +1331,15 @@ class N3VQIntSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                             (ResTy (NEONvduplane (OpTy DPR_8:$src2),
                                                  imm:$lane)))))]> {
   let isCommutable = 0;
+}
+class N3VQIntSh<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
+              Format f, InstrItinClass itin, string OpcodeStr, string Dt,
+              ValueType ResTy, ValueType OpTy, Intrinsic IntOp, bit Commutable>
+  : N3V<op24, op23, op21_20, op11_8, 1, op4,
+        (outs QPR:$Vd), (ins QPR:$Vm, QPR:$Vn), f, itin,
+        OpcodeStr, Dt, "$Vd, $Vm, $Vn", "",
+        [(set QPR:$Vd, (ResTy (IntOp (OpTy QPR:$Vm), (OpTy QPR:$Vn))))]> {
+  let isCommutable = Commutable;
 }
 
 // Multiply-Add/Sub operations: single-, double- and quad-register.
@@ -1936,6 +1954,27 @@ multiclass N3VInt_HS<bit op24, bit op23, bits<4> op11_8, bit op4, Format f,
                       OpcodeStr, !strconcat(Dt, "32"),
                       v4i32, v4i32, IntOp, Commutable>;
 }
+multiclass N3VInt_HSSh<bit op24, bit op23, bits<4> op11_8, bit op4, Format f,
+                     InstrItinClass itinD16, InstrItinClass itinD32,
+                     InstrItinClass itinQ16, InstrItinClass itinQ32,
+                     string OpcodeStr, string Dt,
+                     Intrinsic IntOp, bit Commutable = 0> {
+  // 64-bit vector types.
+  def v4i16 : N3VDIntSh<op24, op23, 0b01, op11_8, op4, f, itinD16,
+                      OpcodeStr, !strconcat(Dt, "16"),
+                      v4i16, v4i16, IntOp, Commutable>;
+  def v2i32 : N3VDIntSh<op24, op23, 0b10, op11_8, op4, f, itinD32,
+                      OpcodeStr, !strconcat(Dt, "32"),
+                      v2i32, v2i32, IntOp, Commutable>;
+
+  // 128-bit vector types.
+  def v8i16 : N3VQIntSh<op24, op23, 0b01, op11_8, op4, f, itinQ16,
+                      OpcodeStr, !strconcat(Dt, "16"),
+                      v8i16, v8i16, IntOp, Commutable>;
+  def v4i32 : N3VQIntSh<op24, op23, 0b10, op11_8, op4, f, itinQ32,
+                      OpcodeStr, !strconcat(Dt, "32"),
+                      v4i32, v4i32, IntOp, Commutable>;
+}
 
 multiclass N3VIntSL_HS<bits<4> op11_8, 
                        InstrItinClass itinD16, InstrItinClass itinD32,
@@ -1966,6 +2005,21 @@ multiclass N3VInt_QHS<bit op24, bit op23, bits<4> op11_8, bit op4, Format f,
                       OpcodeStr, !strconcat(Dt, "8"),
                       v16i8, v16i8, IntOp, Commutable>;
 }
+multiclass N3VInt_QHSSh<bit op24, bit op23, bits<4> op11_8, bit op4, Format f,
+                      InstrItinClass itinD16, InstrItinClass itinD32,
+                      InstrItinClass itinQ16, InstrItinClass itinQ32,
+                      string OpcodeStr, string Dt,
+                      Intrinsic IntOp, bit Commutable = 0>
+  : N3VInt_HSSh<op24, op23, op11_8, op4, f, itinD16, itinD32, itinQ16, itinQ32,
+              OpcodeStr, Dt, IntOp, Commutable> {
+  def v8i8  : N3VDIntSh<op24, op23, 0b00, op11_8, op4, f, itinD16,
+                      OpcodeStr, !strconcat(Dt, "8"),
+                      v8i8, v8i8, IntOp, Commutable>;
+  def v16i8 : N3VQIntSh<op24, op23, 0b00, op11_8, op4, f, itinQ16,
+                      OpcodeStr, !strconcat(Dt, "8"),
+                      v16i8, v16i8, IntOp, Commutable>;
+}
+
 
 // ....then also with element size of 64 bits:
 multiclass N3VInt_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4, Format f,
@@ -1979,6 +2033,20 @@ multiclass N3VInt_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4, Format f,
                       OpcodeStr, !strconcat(Dt, "64"),
                       v1i64, v1i64, IntOp, Commutable>;
   def v2i64 : N3VQInt<op24, op23, 0b11, op11_8, op4, f, itinQ32,
+                      OpcodeStr, !strconcat(Dt, "64"),
+                      v2i64, v2i64, IntOp, Commutable>;
+}
+multiclass N3VInt_QHSDSh<bit op24, bit op23, bits<4> op11_8, bit op4, Format f,
+                       InstrItinClass itinD16, InstrItinClass itinD32,
+                       InstrItinClass itinQ16, InstrItinClass itinQ32,
+                       string OpcodeStr, string Dt,
+                       Intrinsic IntOp, bit Commutable = 0>
+  : N3VInt_QHSSh<op24, op23, op11_8, op4, f, itinD16, itinD32, itinQ16, itinQ32,
+               OpcodeStr, Dt, IntOp, Commutable> {
+  def v1i64 : N3VDIntSh<op24, op23, 0b11, op11_8, op4, f, itinD32,
+                      OpcodeStr, !strconcat(Dt, "64"),
+                      v1i64, v1i64, IntOp, Commutable>;
+  def v2i64 : N3VQIntSh<op24, op23, 0b11, op11_8, op4, f, itinQ32,
                       OpcodeStr, !strconcat(Dt, "64"),
                       v2i64, v2i64, IntOp, Commutable>;
 }
@@ -3160,10 +3228,10 @@ def VRSQRTSfq : N3VQInt<0, 0, 0b10, 0b1111, 1, N3RegFrm,
 // Vector Shifts.
 
 //   VSHL     : Vector Shift
-defm VSHLs    : N3VInt_QHSD<0, 0, 0b0100, 0, N3RegVShFrm,
+defm VSHLs    : N3VInt_QHSDSh<0, 0, 0b0100, 0, N3RegVShFrm,
                             IIC_VSHLiD, IIC_VSHLiD, IIC_VSHLiQ, IIC_VSHLiQ,
                             "vshl", "s", int_arm_neon_vshifts, 0>;
-defm VSHLu    : N3VInt_QHSD<1, 0, 0b0100, 0, N3RegVShFrm,
+defm VSHLu    : N3VInt_QHSDSh<1, 0, 0b0100, 0, N3RegVShFrm,
                             IIC_VSHLiD, IIC_VSHLiD, IIC_VSHLiQ, IIC_VSHLiQ,
                             "vshl", "u", int_arm_neon_vshiftu, 0>;
 //   VSHL     : Vector Shift Left (Immediate)
