@@ -163,7 +163,7 @@ void f(A *a) {
 
 @implementation Sub3
 - (int)method3 {
-  int x = super; // expected-note{{use of undeclared identifier 'super'; did you mean 'Super'?}}
+  int x = super; // expected-note{{use of undeclared identifier 'super'}}
   return 0;
 }
 @end
