@@ -13,6 +13,7 @@
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineEntry.h"
 #include "lldb/Symbol/LineTable.h"
+#include "lldb/Core/Log.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -21,11 +22,24 @@ using namespace lldb_private;
 SBCompileUnit::SBCompileUnit () :
     m_opaque_ptr (NULL)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBCompileUnit::SBCompileUnit () ==> this = %p", this);
 }
 
 SBCompileUnit::SBCompileUnit (lldb_private::CompileUnit *lldb_object_ptr) :
     m_opaque_ptr (lldb_object_ptr)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    
+    if (log)
+    {
+        SBStream sstr;
+        GetDescription (sstr);
+        log->Printf ("SBCompileUnit::SBCompileUnit (lldb_private::CompileUnit *lldb_object_ptr) lldb_object_ptr = %p"
+                     " this = %p (%s)", lldb_object_ptr, this, sstr.GetData());
+    }
 }
 
 SBCompileUnit::~SBCompileUnit ()
@@ -57,6 +71,11 @@ SBCompileUnit::GetNumLineEntries () const
 SBLineEntry
 SBCompileUnit::GetLineEntryAtIndex (uint32_t idx) const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBCompileUnit::GetLineEntryAtIndex (%d)", idx);
+
     SBLineEntry sb_line_entry;
     if (m_opaque_ptr)
     {
@@ -68,12 +87,29 @@ SBCompileUnit::GetLineEntryAtIndex (uint32_t idx) const
                 sb_line_entry.SetLineEntry(line_entry);
         }
     }
+    
+    if (log)
+    {
+        SBStream sstr;
+        sb_line_entry.GetDescription (sstr);
+        log->Printf ("SBCompileUnit::GetLineEntryAtIndex ==> %s", sstr.GetData());
+    }
+
     return sb_line_entry;
 }
 
 uint32_t
 SBCompileUnit::FindLineEntryIndex (uint32_t start_idx, uint32_t line, SBFileSpec *inline_file_spec) const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+    {
+        SBStream sstr;
+        inline_file_spec->GetDescription (sstr);
+        log->Printf ("SBCompileUnit::FindLineEntryIndex (%d, %d, %s)", start_idx, line, sstr.GetData());
+    }
+
     if (m_opaque_ptr)
     {
         FileSpec file_spec;
@@ -82,11 +118,20 @@ SBCompileUnit::FindLineEntryIndex (uint32_t start_idx, uint32_t line, SBFileSpec
         else
             file_spec = *m_opaque_ptr;
 
-        return m_opaque_ptr->FindLineEntry (start_idx,
-                                                 line,
-                                                 inline_file_spec ? inline_file_spec->get() : NULL,
-                                                 NULL);
+        
+        uint32_t ret_value = m_opaque_ptr->FindLineEntry (start_idx,
+                                                          line,
+                                                          inline_file_spec ? inline_file_spec->get() : NULL,
+                                                          NULL);
+        if (log)
+            log->Printf ("SBCompileUnit::FindLineEntryIndex ==> %d", ret_value);
+
+        return ret_value;
     }
+
+    if (log)
+        log->Printf ("SBCompileUnit::FindLineEntryIndex ==> %d", UINT32_MAX);
+
     return UINT32_MAX;
 }
 

@@ -21,6 +21,7 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Target/ThreadSpec.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Target/ThreadSpec.h"
@@ -29,16 +30,26 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-
-//class SBBreakpointLocation
-
 SBBreakpointLocation::SBBreakpointLocation ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBBreakpointLocation::SBBreakpointLocation () ==> this = %p", this);
 }
 
 SBBreakpointLocation::SBBreakpointLocation (const lldb::BreakpointLocationSP &break_loc_sp) :
     m_opaque_sp (break_loc_sp)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+    {
+        SBStream sstr;
+        GetDescription (lldb::eDescriptionLevelBrief, sstr);
+        log->Printf ("SBBreakpointLocation::SBBreakpointLocaiton (const lldb::BreakpointLocationsSP &break_loc_sp) "
+                     "break_loc_sp.get() = %p  ==> this = %p (%s)", break_loc_sp.get(), this, sstr.GetData());
+    }
 }
 
 SBBreakpointLocation::~SBBreakpointLocation ()
@@ -210,20 +221,10 @@ SBBreakpointLocation::SetLocation (const lldb::BreakpointLocationSP &break_loc_s
 }
 
 bool
-SBBreakpointLocation::GetDescription (const char *description_level, SBStream &description)
+SBBreakpointLocation::GetDescription (DescriptionLevel level, SBStream &description)
 {
     if (m_opaque_sp)
     {
-        DescriptionLevel level;
-        if (strcmp (description_level, "brief") == 0)
-            level = eDescriptionLevelBrief;
-        else if (strcmp (description_level, "full") == 0)
-            level = eDescriptionLevelFull;
-        else if (strcmp (description_level, "verbose") == 0)
-            level = eDescriptionLevelVerbose;
-        else
-            level = eDescriptionLevelBrief;
-
         description.ref();
         m_opaque_sp->GetDescription (description.get(), level);
         description.get()->EOL();
@@ -237,9 +238,21 @@ SBBreakpointLocation::GetDescription (const char *description_level, SBStream &d
 SBBreakpoint
 SBBreakpointLocation::GetBreakpoint ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBBreakpointLocation::GetBreakpoint ()");
+
     SBBreakpoint sb_bp;
     if (m_opaque_sp)
         *sb_bp = m_opaque_sp->GetBreakpoint ().GetSP();    
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_bp.GetDescription (sstr);
+        log->Printf ("SBBreakpointLocation::GetBreakpoint ==> %s", sstr.GetData());
+    }
     return sb_bp;
 }
 

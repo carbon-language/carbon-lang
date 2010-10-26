@@ -95,6 +95,9 @@ public:
     void
     WaitOnReaderIsDone ();
 
+    static const char *
+    GranularityAsCString (lldb::InputReaderGranularity granularity);
+
 protected:
     friend class Debugger;
 

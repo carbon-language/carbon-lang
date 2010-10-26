@@ -11,6 +11,7 @@
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Disassembler.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
@@ -24,11 +25,24 @@ using namespace lldb_private;
 SBFunction::SBFunction () :
     m_opaque_ptr (NULL)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBFunction::SBFunction () ==> this = %p", this);
 }
 
 SBFunction::SBFunction (lldb_private::Function *lldb_object_ptr) :
     m_opaque_ptr (lldb_object_ptr)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+    {
+        SBStream sstr;
+        GetDescription (sstr);
+        log->Printf ("SBFunction::SBFunction (lldb_Private::Function *lldb_object_ptr) lldb_object_ptr = %p "
+                     " ==> this = %p (%s)", lldb_object_ptr, this, sstr.GetData());
+    }
 }
 
 SBFunction::~SBFunction ()
@@ -45,8 +59,20 @@ SBFunction::IsValid () const
 const char *
 SBFunction::GetName() const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBFunction::GetName ()"); 
+
     if (m_opaque_ptr)
+    {
+        if (log)
+            log->Printf ("SBFunction::GetName ==> %s", m_opaque_ptr->GetMangled().GetName().AsCString());
         return m_opaque_ptr->GetMangled().GetName().AsCString();
+    }
+
+    if (log)
+        log->Printf ("SBFunction::GetName ==> NULL");
     return NULL;
 }
 

@@ -183,7 +183,7 @@ public:
     ///     The stream to which to dump the object descripton.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s);
+    Dump (Stream *s, lldb::DescriptionLevel description_level);
 
     const lldb::ProcessSP &
     CreateProcess (Listener &listener, const char *plugin_name = NULL);

@@ -331,6 +331,9 @@ public:
     SetReadThreadBytesReceivedCallback (ReadThreadBytesReceived callback,
                                         void *callback_baton);
 
+    static const char *
+    ConnectionStatusAsCString (lldb::ConnectionStatus status);
+
 private:
     //------------------------------------------------------------------
     // For Communication only

@@ -162,7 +162,10 @@ public:
 #endif
 
     bool
-    GetDescription (lldb::SBStream &description);
+    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel);
+
+    bool
+    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel) const;
 
 protected:
     friend class SBAddress;

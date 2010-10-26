@@ -56,6 +56,9 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+    bool
+    GetDescription (lldb::SBStream &description) const;
+
 private:
     friend class SBBlock;
     friend class SBCompileUnit;

@@ -11,6 +11,7 @@
 #include "lldb/API/SBStream.h"
 
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
@@ -36,11 +37,24 @@ using namespace lldb_private;
 SBValue::SBValue () :
     m_opaque_sp ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBValue::SBValue () ==> this = %p", this);
 }
 
 SBValue::SBValue (const lldb::ValueObjectSP &value_sp) :
     m_opaque_sp (value_sp)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+    {
+        SBStream sstr;
+        GetDescription (sstr);
+        log->Printf ("SBValue::SBValue (const lldb::ValueObjectSP &value_sp) value_sp.get() = %p ==> this = %p (%s)",
+                     value_sp.get(), this, sstr.GetData());
+    }
 }
 
 SBValue::~SBValue()
@@ -67,10 +81,23 @@ SBValue::GetError()
 const char *
 SBValue::GetName()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBValue::GetName ()");
+
     if (IsValid())
+    {
+        if (log)
+            log->Printf ("SBValue::GetName ==> %s", m_opaque_sp->GetName().AsCString());
         return m_opaque_sp->GetName().AsCString();
+    }
     else
+    {
+        if (log)
+            log->Printf ("SBValue::GetName ==> NULL");
         return NULL;
+    }
 }
 
 const char *

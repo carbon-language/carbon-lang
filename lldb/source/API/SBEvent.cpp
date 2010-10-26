@@ -27,18 +27,34 @@ SBEvent::SBEvent () :
     m_event_sp (),
     m_opaque (NULL)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBEvent::SBEvent () ==> this = %p", this);
 }
 
 SBEvent::SBEvent (uint32_t event_type, const char *cstr, uint32_t cstr_len) :
     m_event_sp (new Event (event_type, new EventDataBytes (cstr, cstr_len))),
     m_opaque (m_event_sp.get())
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+    {
+        log->Printf ("SBEvent::SBEvent (uint32_t event_type, const char *cstr, uint32_t cstr_len)");
+        log->Printf ("    event_type = %d, cstr = '%s', cstr_len = %d  ==> this = %p (m_opaque = %p)", event_type,
+                     cstr, cstr_len, this, m_opaque);
+    }
 }
 
 SBEvent::SBEvent (EventSP &event_sp) :
     m_event_sp (event_sp),
     m_opaque (event_sp.get())
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBEvent::SBEvent (EventSP &event_sp) event_sp.get() = %p ==> this = %p", event_sp.get(), this);
 }
 
 SBEvent::~SBEvent()
@@ -57,10 +73,20 @@ SBEvent::GetDataFlavor ()
 uint32_t
 SBEvent::GetType () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBEvent::GetType ()");
+
     const Event *lldb_event = get();
+    uint32_t event_type = 0;
     if (lldb_event)
-        return lldb_event->GetType();
-    return 0;
+        event_type = lldb_event->GetType();
+
+    if (log)
+        log->Printf ("SBEvent::GetType ==> %d", event_type);
+
+    return event_type;
 }
 
 SBBroadcaster
@@ -88,10 +114,20 @@ SBEvent::BroadcasterMatchesPtr (const SBBroadcaster *broadcaster)
 bool
 SBEvent::BroadcasterMatchesRef (const SBBroadcaster &broadcaster)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBEvent::BroadcasterMatchesRef (broacaster) broadcaster = %p", &broadcaster);
+
     Event *lldb_event = get();
+    bool success = false;
     if (lldb_event)
-        return lldb_event->BroadcasterIs (broadcaster.get());
-    return false;
+        success = lldb_event->BroadcasterIs (broadcaster.get());
+
+    if (log)
+        log->Printf ("SBEvent::BroadcasterMathesRef ==> %s", (success ? "true" : "false"));
+
+    return success;
 }
 
 void
@@ -147,12 +183,32 @@ SBEvent::IsValid() const
 const char *
 SBEvent::GetCStringFromEvent (const SBEvent &event)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("GetCStringFromEvent ==> %s",
+                     reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.get())));
+
     return reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.get()));
 }
 
 
 bool
 SBEvent::GetDescription (SBStream &description)
+{
+    if (m_opaque)
+    {
+        description.ref();
+        m_opaque->Dump (description.get());
+    }
+    else
+        description.Printf ("No value");
+
+    return true;
+}
+
+bool
+SBEvent::GetDescription (SBStream &description) const
 {
     if (m_opaque)
     {

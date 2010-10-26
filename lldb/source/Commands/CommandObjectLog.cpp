@@ -64,18 +64,27 @@ public:
                        "Enable logging for a single log channel.",
                         NULL)
     {
-        CommandArgumentEntry arg;
+
+        CommandArgumentEntry arg1;
+        CommandArgumentEntry arg2;
         CommandArgumentData channel_arg;
+        CommandArgumentData category_arg;
         
         // Define the first (and only) variant of this arg.
         channel_arg.arg_type = eArgTypeLogChannel;
         channel_arg.arg_repetition = eArgRepeatPlain;
         
         // There is only one variant this argument could be; put it into the argument entry.
-        arg.push_back (channel_arg);
+        arg1.push_back (channel_arg);
         
+        category_arg.arg_type = eArgTypeLogCategory;
+        category_arg.arg_repetition = eArgRepeatPlus;
+
+        arg2.push_back (category_arg);
+
         // Push the data for the first argument into the m_arguments vector.
-        m_arguments.push_back (arg);
+        m_arguments.push_back (arg1);
+        m_arguments.push_back (arg2);
     }
 
     virtual

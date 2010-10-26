@@ -364,3 +364,20 @@ Communication::SetConnection (Connection *connection)
     Disconnect (NULL);
     m_connection_ap.reset(connection);
 }
+
+const char *
+Communication::ConnectionStatusAsCString (lldb::ConnectionStatus status)
+{
+    switch (status)
+    {
+    case eConnectionStatusSuccess:        return "success";
+    case eConnectionStatusError:          return "error";
+    case eConnectionStatusTimedOut:       return "timed out";
+    case eConnectionStatusNoConnection:   return "no connection";
+    case eConnectionStatusLostConnection: return "lost connection";
+    }
+
+    static char unknown_state_string[64];
+    snprintf(unknown_state_string, sizeof (unknown_state_string), "ConnectionStatus = %i", status);
+    return unknown_state_string;
+}

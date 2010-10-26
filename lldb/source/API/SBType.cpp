@@ -10,6 +10,7 @@
 #include "lldb/API/SBType.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTType.h"
 
@@ -20,7 +21,17 @@ using namespace lldb_private;
 bool
 SBType::IsPointerType (void *opaque_type)
 {
-    return ClangASTContext::IsPointerType (opaque_type);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBType::IsPointerType (%p)", opaque_type);
+    
+    bool ret_value = ClangASTContext::IsPointerType (opaque_type);
+
+    if (log)
+        log->Printf ("SBType::IsPointerType ==> %s", (ret_value ? "true" : "false"));
+
+    return ret_value;
 }
 
 

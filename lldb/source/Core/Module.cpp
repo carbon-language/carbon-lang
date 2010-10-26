@@ -376,6 +376,20 @@ Module::GetArchitecture () const
 }
 
 void
+Module::GetDescription (Stream *s)
+{
+    Mutex::Locker locker (m_mutex);
+
+    s->Printf("Module %s/%s%s%s%s\n",
+              m_file.GetDirectory().AsCString(),
+              m_file.GetFilename().AsCString(),
+              m_object_name ? "(" : "",
+              m_object_name ? m_object_name.GetCString() : "",
+              m_object_name ? ")" : "");
+
+}
+
+void
 Module::Dump(Stream *s)
 {
     Mutex::Locker locker (m_mutex);

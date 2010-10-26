@@ -64,15 +64,27 @@ Target::~Target()
 }
 
 void
-Target::Dump (Stream *s)
+Target::Dump (Stream *s, lldb::DescriptionLevel description_level)
 {
 //    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
-    s->Indent();
-    s->PutCString("Target\n");
-    s->IndentMore();
-    m_images.Dump(s);
-    m_breakpoint_list.Dump(s);
-    m_internal_breakpoint_list.Dump(s);
+    if (description_level != lldb::eDescriptionLevelBrief)
+    {
+        s->Indent();
+        s->PutCString("Target\n");
+        s->IndentMore();
+        m_images.Dump(s);
+        m_breakpoint_list.Dump(s);
+        m_internal_breakpoint_list.Dump(s);
+    }
+    else
+    {
+        char path[PATH_MAX];
+        int path_len = PATH_MAX;
+        if (GetExecutableModule()->GetFileSpec().GetPath (path, path_len))
+            s->Printf ("Target: %s\n", path);
+        else
+            s->Printf ("Target: <unknown>\n");
+    }
 //  if (m_process_sp.get())
 //      m_process_sp->Dump(s);
     s->IndentLess();

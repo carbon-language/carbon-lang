@@ -26,6 +26,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/FileSpec.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/SearchFilter.h"
 #include "lldb/Core/STLUtils.h"
@@ -51,25 +52,48 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 SBTarget::SBTarget ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBTarget::SBTarget () ==> this = %p", this);
 }
 
 SBTarget::SBTarget (const SBTarget& rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    
+    if (log)
+        log->Printf ("SBTarget::SBTarget (const SBTarget &rhs) rhs.m_opaque_sp.get() = %p ==> this = %p",
+                     rhs.m_opaque_sp.get(), this);
 }
 
 SBTarget::SBTarget(const TargetSP& target_sp) :
     m_opaque_sp (target_sp)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBTarget::SBTarget (const TargetSP &target_sp)  target_sp.get() = %p ==> this = %p",
+                     target_sp.get(), this);
 }
 
 const SBTarget&
 SBTarget::Assign (const SBTarget& rhs)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::Assign (const SBTarget &rhs)  rhs = %p", &rhs);
+
     if (this != &rhs)
     {
         m_opaque_sp = rhs.m_opaque_sp;
     }
+
+    if (log)
+        log->Printf ("SBTarget::Assign ==> SBTarget (this = %p, m_opaque_sp.get() = %p)", this, m_opaque_sp.get());
+
     return *this;
 }
 
@@ -90,9 +114,22 @@ SBTarget::IsValid () const
 SBProcess
 SBTarget::GetProcess ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::GetProcess ()");
+
     SBProcess sb_process;
     if (m_opaque_sp)
         sb_process.SetProcess (m_opaque_sp->GetProcessSP());
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_process.GetDescription (sstr);
+        log->Printf ("SBTarget::GetProcess ==> SBProcess (this = %p, '%s')", &sb_process, sstr.GetData());
+    }
+
     return sb_process;
 }
 
@@ -110,10 +147,22 @@ SBTarget::GetDebugger () const
 SBProcess
 SBTarget::CreateProcess ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::CreateProcess ()");
+
     SBProcess sb_process;
 
     if (m_opaque_sp)
         sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_process.GetDescription (sstr);
+        log->Printf ("SBTarget::CreateProcess ==> SBProcess (this = %p, '%s')", &sb_process, sstr.GetData());
+    }
 
     return sb_process;
 }
@@ -129,8 +178,45 @@ SBTarget::LaunchProcess
     bool stop_at_entry
 )
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+    {
+        log->Printf ("SBTarget::LaunchProcess (char const **argv, char const **envp, const char *tty, "
+                     "uint32_t launch_flags, bool stop_at_entry)");
+
+        if (!argv)
+            log->Printf ("argv:  NULL");
+        else
+        {
+            for (int i = 0; argv[i]; ++i)
+                log->Printf ("     %s", argv[i]);
+        }
+
+        if (!envp)
+            log->Printf ("envp: NULL");
+        else
+        {
+            for (int i = 0; envp[i]; ++i)
+                log->Printf ("     %s", envp[i]);
+        }
+
+        log->Printf ("     tty = %s, launch_flags = %d, stop_at_entry = %s", tty, launch_flags, (stop_at_entry ? 
+                                                                                                 "true" :
+                                                                                                 "false"));    
+    }
+
     SBError sb_error;    
-    return Launch (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
+    SBProcess sb_process = Launch (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_process.GetDescription (sstr);
+        log->Printf ("SBTarget::LaunchProcess ==> SBProcess (this = %p, '%s')", this, sstr.GetData());
+    }
+
+    return sb_process;
 }
 
 SBProcess
@@ -144,6 +230,32 @@ SBTarget::Launch
     SBError &error
 )
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+    {
+        log->Printf ("SBTarget::Launch (char const **argv, char const **envp, const char *tty, uint32_t launch_flag,"
+                     "bool stop_at_entry, SBError error)");
+        if (!argv)
+            log->Printf ("argv:  NULL");
+        else
+        {
+            for (int i = 0; argv[i]; ++i)
+                log->Printf ("     %s", argv[i]);
+        }
+
+        if (!envp)
+            log->Printf ("envp: NULL");
+        else
+        {
+            for (int i = 0; envp[i]; ++i)
+                log->Printf ("     %s", envp[i]);
+        }
+
+        log->Printf ("     tty = %s, launch_flags = %d, stop_at_entry = %s, error (this = %p)", tty, launch_flags, 
+                     (stop_at_entry ? "true" : "false"), &error);    
+    }
+
     SBProcess sb_process;
     if (m_opaque_sp)
     {
@@ -193,6 +305,14 @@ SBTarget::Launch
     {
         error.SetErrorString ("SBTarget is invalid");
     }
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_process.GetDescription (sstr);
+        log->Printf ("SBTarget::Launch ==> SBProceess (this = %p, '%s')", &sb_process, sstr.GetData());
+    }
+
     return sb_process;
 }
 
@@ -279,6 +399,11 @@ SBTarget::AttachToProcessWithName
 SBFileSpec
 SBTarget::GetExecutable ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::GetExecutable ()");
+
     SBFileSpec exe_file_spec;
     if (m_opaque_sp)
     {
@@ -286,6 +411,20 @@ SBTarget::GetExecutable ()
         if (exe_module_sp)
             exe_file_spec.SetFileSpec (exe_module_sp->GetFileSpec());
     }
+
+    if (log)
+    {
+        if (exe_file_spec.Exists())
+        {
+            SBStream sstr;
+            exe_file_spec.GetDescription (sstr);
+            log->Printf ("SBTarget::GetExecutable ==> SBFileSpec (this = %p, '%s')", &exe_file_spec, sstr.GetData());
+        }
+        else
+            log->Printf ("SBTarget::GetExecutable ==> SBFileSpec (this = %p, 'Unable to find valid file')",
+                         &exe_file_spec);
+    }
+
     return exe_file_spec;
 }
 
@@ -332,24 +471,59 @@ SBTarget::reset (const lldb::TargetSP& target_sp)
 SBBreakpoint
 SBTarget::BreakpointCreateByLocation (const char *file, uint32_t line)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::BreakpointCreateByLocation (const char *file, uint32_t line) file = '%s', line = %d", 
+                     file, line);
+
     SBBreakpoint sb_bp;
     if (file != NULL && line != 0)
         sb_bp = BreakpointCreateByLocation (SBFileSpec (file), line);
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_bp.GetDescription (sstr);
+        log->Printf("SBTarget::BreakpointCreateByLocation ==> SBBreakpoint (this = %p, '%s')", &sb_bp, sstr.GetData());
+    }
+
     return sb_bp;
 }
 
 SBBreakpoint
 SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t line)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t line) "
+                     "sb_file_spec (%p), line = %d)", &sb_file_spec, line);
+
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && line != 0)
         *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, *sb_file_spec, line, true, false);
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_bp.GetDescription (sstr);
+        log->Printf ("SBTarget::BreakpointCreateByLocation ==> SBBreakpoint (this = %p, '%s')", &sb_bp, 
+                     sstr.GetData());
+    }
+
     return sb_bp;
 }
 
 SBBreakpoint
 SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_name)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_name) "
+                     "symbol_name = %s, module_name = %s)", symbol_name, module_name);
+
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && symbol_name && symbol_name[0])
     {
@@ -363,12 +537,26 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
             *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
         }
     }
+    
+    if (log)
+    {
+        SBStream sstr;
+        sb_bp.GetDescription (sstr);
+        log->Printf ("SBTarget::BreakpointCreateByName ==> SBBreakpoint (this = %p, '%s')", &sb_bp, sstr.GetData());
+    }
+
     return sb_bp;
 }
 
 SBBreakpoint
 SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name) "
+                     "symbol_name_regex = %s, module_name = %s)", symbol_name_regex, module_name);
+
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && symbol_name_regex && symbol_name_regex[0])
     {
@@ -385,6 +573,14 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
             *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, regexp, false);
         }
     }
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_bp.GetDescription (sstr);
+        log->Printf ("SBTarget::BreakpointCreateByRegex ==> SBBreakpoint (this = %p, '%s')", &sb_bp, sstr.GetData());
+    }
+
     return sb_bp;
 }
 
@@ -393,18 +589,44 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
 SBBreakpoint
 SBTarget::BreakpointCreateByAddress (addr_t address)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::BreakpointCreateByAddress (addr_t address) address = %p", address);
+
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get())
         *sb_bp = m_opaque_sp->CreateBreakpoint (address, false);
+    
+    if (log)
+    {
+        SBStream sstr;
+        sb_bp.GetDescription (sstr);
+        log->Printf ("SBTarget::BreakpointCreateByAddress ==> SBBreakpoint (this = %p, '%s')", &sb_bp, sstr.GetData());
+    }
+
     return sb_bp;
 }
 
 SBBreakpoint
 SBTarget::FindBreakpointByID (break_id_t bp_id)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::FindBreakpointByID (break_id_t bp_id) bp_id = %d", bp_id);
+
     SBBreakpoint sb_breakpoint;
     if (m_opaque_sp && bp_id != LLDB_INVALID_BREAK_ID)
         *sb_breakpoint = m_opaque_sp->GetBreakpointByID (bp_id);
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_breakpoint.GetDescription (sstr);
+        log->Printf ("SBTarget::FindBreakpointByID ==> SBBreakpoint (this = %p, '%s'", &bp_id, sstr.GetData());
+    }
+
     return sb_breakpoint;
 }
 
@@ -428,9 +650,24 @@ SBTarget::GetBreakpointAtIndex (uint32_t idx) const
 bool
 SBTarget::BreakpointDelete (break_id_t bp_id)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::BreakpointDelete (break_id_t bp_id) bp_id = %d", bp_id);
+
+    bool result = false;
     if (m_opaque_sp)
-        return m_opaque_sp->RemoveBreakpointByID (bp_id);
-    return false;
+        result = m_opaque_sp->RemoveBreakpointByID (bp_id);
+
+    if (log)
+    {
+        if (result)
+            log->Printf ("SBTarget::BreakpointDelete ==> true");
+        else
+            log->Printf ("SBTarget::BreakpointDelete ==> false");
+    }
+
+    return result;
 }
 
 bool
@@ -470,14 +707,29 @@ SBTarget::DeleteAllBreakpoints ()
 uint32_t
 SBTarget::GetNumModules () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::GetNumModules ()");
+
+    uint32_t num = 0;
     if (m_opaque_sp)
-        return m_opaque_sp->GetImages().GetSize();
-    return 0;
+        num =  m_opaque_sp->GetImages().GetSize();
+
+    if (log)
+        log->Printf ("SBTarget::GetNumModules ==> %d", num);
+
+    return num;
 }
 
 void
 SBTarget::Clear ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::Clear ()");
+
     m_opaque_sp.reset();
 }
 
@@ -494,9 +746,22 @@ SBTarget::FindModule (const SBFileSpec &sb_file_spec)
 SBModule
 SBTarget::GetModuleAtIndex (uint32_t idx)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::GetModuleAtIndex (uint32_t idx) idx = %d", idx);
+
     SBModule sb_module;
     if (m_opaque_sp)
         sb_module.SetModule(m_opaque_sp->GetImages().GetModuleAtIndex(idx));
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_module.GetDescription (sstr);
+        log->Printf ("SBTarget::GetModuleAtIndex ==> SBModule: this = %p, %s", &sb_module, sstr.GetData());
+    }
+
     return sb_module;
 }
 
@@ -504,7 +769,16 @@ SBTarget::GetModuleAtIndex (uint32_t idx)
 SBBroadcaster
 SBTarget::GetBroadcaster () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBTarget::GetBroadcaster ()");
+
     SBBroadcaster broadcaster(m_opaque_sp.get(), false);
+    
+    if (log)
+        log->Printf ("SBTarget::GetBroadcaster ==> SBBroadcaster (this = %p)", &broadcaster);
+
     return broadcaster;
 }
 
@@ -634,12 +908,26 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
 }
 
 bool
-SBTarget::GetDescription (SBStream &description)
+SBTarget::GetDescription (SBStream &description, lldb::DescriptionLevel description_level)
 {
     if (m_opaque_sp)
     {
         description.ref();
-        m_opaque_sp->Dump (description.get());
+        m_opaque_sp->Dump (description.get(), description_level);
+    }
+    else
+        description.Printf ("No value");
+    
+    return true;
+}
+
+bool
+SBTarget::GetDescription (SBStream &description, lldb::DescriptionLevel description_level) const
+{
+    if (m_opaque_sp)
+    {
+        description.ref();
+        m_opaque_sp->Dump (description.get(), description_level);
     }
     else
         description.Printf ("No value");

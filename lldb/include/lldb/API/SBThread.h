@@ -91,6 +91,9 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+    bool
+    GetDescription (lldb::SBStream &description) const;
+
 protected:
     friend class SBBreakpoint;
     friend class SBBreakpointLocation;

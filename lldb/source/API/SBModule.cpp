@@ -13,18 +13,30 @@
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/Log.h"
+#include "lldb/Core/STreamString.h"
 
 using namespace lldb;
+using namespace lldb_private;
 
 
 SBModule::SBModule () :
     m_opaque_sp ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBModule::SBModule () ==> this = %p", this);
 }
 
 SBModule::SBModule (const lldb::ModuleSP& module_sp) :
     m_opaque_sp (module_sp)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBModule::SBModule (const lldb::ModuleSP &module_sp) module_sp.get() = %p ==> this = %p",
+                     module_sp.get(), this);
 }
 
 SBModule::~SBModule ()
@@ -40,17 +52,46 @@ SBModule::IsValid () const
 SBFileSpec
 SBModule::GetFileSpec () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBModule::GetFileSpec ()");
+
     SBFileSpec file_spec;
     if (m_opaque_sp)
         file_spec.SetFileSpec(m_opaque_sp->GetFileSpec());
+
+    if (log)
+    {
+        SBStream sstr;
+        file_spec.GetDescription (sstr);
+        log->Printf ("SBModule::GetFileSpec ==> SBFileSpec (this = %p, 's')", &file_spec, sstr.GetData());
+    }
+
     return file_spec;
 }
 
 const uint8_t *
 SBModule::GetUUIDBytes () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBModule::GetUUIDBytes ()");
+
     if (m_opaque_sp)
+    {
+        if (log)
+        {
+            StreamString sstr;
+            m_opaque_sp->GetUUID().Dump (&sstr);
+            log->Printf ("SBModule::GetUUIDBytes ==> '%s'", sstr.GetData());
+        }
         return (const uint8_t *)m_opaque_sp->GetUUID().GetBytes();
+    }
+
+    if (log)
+        log->Printf ("SBModule::GetUUIDBytes ==> NULL");
     return NULL;
 }
 
@@ -134,7 +175,7 @@ SBModule::GetDescription (SBStream &description)
     if (m_opaque_sp)
     {
         description.ref();
-        m_opaque_sp->Dump (description.get());
+        m_opaque_sp->GetDescription (description.get());
     }
     else
         description.Printf ("No value");

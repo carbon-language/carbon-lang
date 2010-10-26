@@ -98,6 +98,9 @@ public:
     virtual void
     CalculateSymbolContext (SymbolContext* sc);
 
+    void
+    GetDescription (Stream *s);
+
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
     ///

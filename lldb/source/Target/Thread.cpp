@@ -1097,3 +1097,39 @@ Thread::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
 {
     return GetStackFrameList().GetStackFrameSPForStackFramePtr (stack_frame_ptr);
 }
+
+const char *
+Thread::StopReasonAsCString (lldb::StopReason reason)
+{
+    switch (reason)
+    {
+    case eStopReasonInvalid:      return "invalid";
+    case eStopReasonNone:         return "none";
+    case eStopReasonTrace:        return "trace";
+    case eStopReasonBreakpoint:   return "breakpoint";
+    case eStopReasonWatchpoint:   return "watchpoint";
+    case eStopReasonSignal:       return "signal";
+    case eStopReasonException:    return "exception";
+    case eStopReasonPlanComplete: return "plan complete";
+    }
+
+
+    static char unknown_state_string[64];
+    snprintf(unknown_state_string, sizeof (unknown_state_string), "StopReason = %i", reason);
+    return unknown_state_string;
+}
+
+const char *
+Thread::RunModeAsCString (lldb::RunMode mode)
+{
+    switch (mode)
+    {
+    case eOnlyThisThread:     return "only this thread";
+    case eAllThreads:         return "all threads";
+    case eOnlyDuringStepping: return "only during stepping";
+    }
+
+    static char unknown_state_string[64];
+    snprintf(unknown_state_string, sizeof (unknown_state_string), "RunMode = %i", mode);
+    return unknown_state_string;
+}

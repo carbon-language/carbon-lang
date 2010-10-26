@@ -8,12 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/Listener.h"
+#include "lldb/Core/Log.h"
 #include "lldb/lldb-forward-rtti.h"
 #include "lldb/Host/TimeValue.h"
 
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBStream.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -23,18 +25,32 @@ SBListener::SBListener () :
     m_opaque_ptr (NULL),
     m_opaque_ptr_owned (false)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBListener::SBListener () ==> this = %p", this);
 }
 
 SBListener::SBListener (const char *name) :
     m_opaque_ptr (new Listener (name)),
     m_opaque_ptr_owned (true)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBListener::SBListener (const char *name) name = %s ==> this = %p (m_opaque_ptr = %p)",
+                     name, this, m_opaque_ptr);
 }
 
 SBListener::SBListener (Listener &listener) :
     m_opaque_ptr (&listener),
     m_opaque_ptr_owned (false)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBListener::SBListener (Listener &listener)  *listener = %p ==> this = %p (m_opaque_ptr = %p)",
+                     &listener, this, m_opaque_ptr);
 }
 
 SBListener::~SBListener ()
@@ -73,11 +89,24 @@ SBListener::Clear ()
 uint32_t
 SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t event_mask)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+    {
+        log->Printf ("SBListener::StartListeningForEvents (const SBBroadcaster &broadcaster, uint32_t event_mask)"
+                     " &broadcaster = %p, event_mask = %d", &broadcaster, event_mask);
+    }
+
+    uint32_t ret_value = 0;
     if (m_opaque_ptr && broadcaster.IsValid())
     {
-        return m_opaque_ptr->StartListeningForEvents (broadcaster.get(), event_mask);
+        ret_value = m_opaque_ptr->StartListeningForEvents (broadcaster.get(), event_mask);
     }
-    return false;
+    
+    if (log)
+        log->Printf ("SBListener::StartListeneingForEvents ==> %d", ret_value);
+
+    return ret_value;
 }
 
 bool
@@ -93,6 +122,15 @@ SBListener::StopListeningForEvents (const SBBroadcaster& broadcaster, uint32_t e
 bool
 SBListener::WaitForEvent (uint32_t num_seconds, SBEvent &event)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+    {
+        SBStream sstr;
+        event.GetDescription (sstr);
+        log->Printf ("SBListener::WaitForEvent (%d, %s)", num_seconds, sstr.GetData());
+    }
+
     if (m_opaque_ptr)
     {
         TimeValue time_value;
@@ -106,9 +144,15 @@ SBListener::WaitForEvent (uint32_t num_seconds, SBEvent &event)
         if (m_opaque_ptr->WaitForEvent (time_value.IsValid() ? &time_value : NULL, event_sp))
         {
             event.reset (event_sp);
+            if (log)
+                log->Printf ("SBListener::WaitForEvent ==> true");
             return true;
         }
     }
+
+    if (log)
+        log->Printf ("SBListener::WaitForEvent ==> false");
+
     event.reset (NULL);
     return false;
 }

@@ -23,6 +23,7 @@
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBListener.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"
 
 using namespace lldb;
@@ -32,6 +33,11 @@ using namespace lldb_private;
 SBCommandInterpreter::SBCommandInterpreter (CommandInterpreter *interpreter) :
     m_opaque_ptr (interpreter)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBCommandInterpreter::SBCommandInterpreter (CommandInterpreter *interpreter) interpreter = %p"
+                     " ==> this = %p", interpreter, this);
 }
 
 SBCommandInterpreter::~SBCommandInterpreter ()
@@ -64,6 +70,12 @@ SBCommandInterpreter::AliasExists (const char *cmd)
 lldb::ReturnStatus
 SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnObject &result, bool add_to_history)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBCommandInterpreter::HandleCommand ('%s', result, %s)", command_line, 
+                     (add_to_history ? "true" : "false"));
+
     result.Clear();
     if (m_opaque_ptr)
     {
@@ -74,6 +86,14 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
         result->AppendError ("SBCommandInterpreter is not valid");
         result->SetStatus (eReturnStatusFailed);
     }
+
+    if (log)
+    {
+        SBStream sstr;
+        result.GetDescription (sstr);
+        log->Printf ("SBCommandInterpreter::HandleCommand ==> %s", sstr.GetData());
+    }
+
     return result.GetStatus();
 }
 
@@ -209,7 +229,16 @@ SBCommandInterpreter::SourceInitFileInCurrentWorkingDirectory (SBCommandReturnOb
 SBBroadcaster
 SBCommandInterpreter::GetBroadcaster ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBCommandInterpreter::GetBroadcaster ()");
+
     SBBroadcaster broadcaster (m_opaque_ptr, false);
+
+    if (log)
+        log->Printf ("SBCommandInterpreter::GetBroadcaster ==> %p", m_opaque_ptr);
+
     return broadcaster;
 }
 

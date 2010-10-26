@@ -338,3 +338,21 @@ InputReader::WaitOnReaderIsDone ()
 {
     m_reader_done.WaitForValueEqualTo (true);
 }
+
+const char *
+InputReader::GranularityAsCString (lldb::InputReaderGranularity granularity)
+{
+    switch (granularity)
+    {
+    case eInputReaderGranularityInvalid:  return "invalid";
+    case eInputReaderGranularityByte:     return "byte";
+    case eInputReaderGranularityWord:     return "word";
+    case eInputReaderGranularityLine:     return "line";
+    case eInputReaderGranularityAll:      return "all";
+    }
+
+    static char unknown_state_string[64];
+    snprintf(unknown_state_string, sizeof (unknown_state_string), "InputReaderGranularity = %i", granularity);
+    return unknown_state_string;
+}
+

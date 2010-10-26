@@ -10,22 +10,35 @@
 #include "lldb/API/SBLineEntry.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Symbol/LineEntry.h"
+#include "lldb/Core/Log.h"
 
 using namespace lldb;
+using namespace lldb_private;
 
 
 SBLineEntry::SBLineEntry () :
     m_opaque_ap ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBLineEntry::SBLineEntry () ==> this = %p", this);
 }
 
 SBLineEntry::SBLineEntry (const SBLineEntry &rhs) :
     m_opaque_ap ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
     if (rhs.IsValid())
     {
         m_opaque_ap.reset (new lldb_private::LineEntry (*rhs));
     }
+
+    if (log)
+        log->Printf ("SBLineEntry::SBLineEntry (const SBLineEntry &rhs) rhs.m_opaque_ap.get() = %p ==> this = %p ",
+                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), this);
+
 }
 
 
@@ -33,8 +46,14 @@ SBLineEntry::SBLineEntry (const SBLineEntry &rhs) :
 SBLineEntry::SBLineEntry (const lldb_private::LineEntry *lldb_object_ptr) :
     m_opaque_ap ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
     if (lldb_object_ptr)
         m_opaque_ap.reset (new lldb_private::LineEntry(*lldb_object_ptr));
+
+    if (log)
+        log->Printf ("SBLineEntry::SBLineEntry (const lldb_private::LineEntry *lldb_object_ptr) lldb_object_ptr = %p"
+                     " ==> this = %p (m_opaque_ap.get() = %p)", lldb_object_ptr, this, m_opaque_ap.get());
 }
 
 const SBLineEntry &
@@ -66,9 +85,22 @@ SBLineEntry::~SBLineEntry ()
 SBAddress
 SBLineEntry::GetStartAddress () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBLineEntry::GetStartAddress ()");
+
     SBAddress sb_address;
     if (m_opaque_ap.get())
         sb_address.SetAddress(&m_opaque_ap->range.GetBaseAddress());
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_address.GetDescription (sstr);
+        log->Printf ("SBLineEntry::GetStartAddress ==> SBAddress (this = %p, (%s)", &sb_address, sstr.GetData());
+    }
+
     return sb_address;
 }
 
@@ -94,18 +126,41 @@ SBLineEntry::IsValid () const
 SBFileSpec
 SBLineEntry::GetFileSpec () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBLineEntry::GetFileSpec ()");
+
     SBFileSpec sb_file_spec;
     if (m_opaque_ap.get() && m_opaque_ap->file)
         sb_file_spec.SetFileSpec(m_opaque_ap->file);
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_file_spec.GetDescription (sstr);
+        log->Printf ("SBLineEntry::GetFileSpec ==> SBFileSpec (this = %p, '%s'", &sb_file_spec, sstr.GetData());
+    }
+
     return sb_file_spec;
 }
 
 uint32_t
 SBLineEntry::GetLine () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBLineEntry::GetLine ()");
+
+    uint32_t line = 0;
     if (m_opaque_ap.get())
-        return m_opaque_ap->line;
-    return 0;
+        line = m_opaque_ap->line;
+
+    if (log)
+        log->Printf ("SBLineEntry::GetLine ==> %d", line);
+
+    return line;
 }
 
 

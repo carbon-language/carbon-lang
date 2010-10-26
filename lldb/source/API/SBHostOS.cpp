@@ -10,6 +10,7 @@
 #include "lldb/API/SBHostOS.h"
 #include "lldb/API/SBError.h"
 #include "lldb/Core/FileSpec.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Host/Host.h"
 
 using namespace lldb;
@@ -34,6 +35,13 @@ SBHostOS::ThreadCreate
     SBError *error_ptr
 )
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBHostOS::ThreadCreate (%s, %p, %p, error_ptr)", name, thread_function, thread_arg);
+
+    // CAROLINE: FIXME: You need to log a return value?
+
     return Host::ThreadCreate (name, thread_function, thread_arg, error_ptr ? error_ptr->get() : NULL);
 }
 

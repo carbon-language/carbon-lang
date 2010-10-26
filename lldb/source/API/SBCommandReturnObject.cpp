@@ -10,6 +10,7 @@
 #include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBStream.h"
 
+#include "lldb/Core/Log.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
 using namespace lldb;
@@ -18,6 +19,10 @@ using namespace lldb_private;
 SBCommandReturnObject::SBCommandReturnObject () :
     m_opaque_ap (new CommandReturnObject ())
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBCommandReturnObject::SBCommandReturnObject () ==> this = %p", this);
 }
 
 SBCommandReturnObject::~SBCommandReturnObject ()
@@ -35,16 +40,42 @@ SBCommandReturnObject::IsValid() const
 const char *
 SBCommandReturnObject::GetOutput ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBCommandReturnObject::GetOutput ()");
+
     if (m_opaque_ap.get())
+    {
+        if (log)
+            log->Printf ("SBCommandReturnObject::GetOutput ==> %s", m_opaque_ap->GetOutputStream().GetData());
         return m_opaque_ap->GetOutputStream().GetData();
+    }
+
+    if (log)
+        log->Printf ("SBCommandReturnObject::GetOutput ==> NULL");
+
     return NULL;
 }
 
 const char *
 SBCommandReturnObject::GetError ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBCommandReturnObject::GetError ()");
+
     if (m_opaque_ap.get())
+    {
+        if (log)
+            log->Printf ("SBCommandReturnObject::GetError ==> %s", m_opaque_ap->GetErrorStream().GetData());
         return m_opaque_ap->GetErrorStream().GetData();
+    }
+    
+    if (log)
+        log->Printf ("SBCommandReturnObject::GetError ==> NULL");
+
     return NULL;
 }
 

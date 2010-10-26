@@ -136,6 +136,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
             const char *arg = args.GetArgumentAtIndex(i);
 
             if      (strcasecmp(arg, "all")     == 0  ) flag_bits |= LIBLLDB_LOG_ALL;
+            else if (strcasecmp(arg, "api")     == 0)   flag_bits |= LIBLLDB_LOG_API;
             else if (strcasestr(arg, "break")   == arg) flag_bits |= LIBLLDB_LOG_BREAKPOINTS;
             else if (strcasecmp(arg, "default") == 0  ) flag_bits |= LIBLLDB_LOG_DEFAULT;
             else if (strcasestr(arg, "event")   == arg) flag_bits |= LIBLLDB_LOG_EVENTS;
@@ -177,6 +178,7 @@ lldb_private::ListLogCategories (Stream *strm)
 {
     strm->Printf("Logging categories for 'lldb':\n"
         "\tall - turn on all available logging categories\n"
+        "\tapi - enable logging of API calls and return values\n"
         "\tdefault - enable the default set of logging categories for liblldb\n"
         "\tbreak - log breakpoints\n"
         "\tevents - log broadcaster, listener and event queue activities\n"

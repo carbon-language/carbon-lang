@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/Log.h"
 #include "lldb/lldb-forward-rtti.h"
 
 #include "lldb/API/SBBroadcaster.h"
@@ -22,6 +23,10 @@ SBBroadcaster::SBBroadcaster () :
     m_opaque (NULL),
     m_opaque_owned (false)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBBroadcastetr::SBBroadcaster () ==> this = %p", this);
 }
 
 
@@ -29,12 +34,22 @@ SBBroadcaster::SBBroadcaster (const char *name) :
     m_opaque (new Broadcaster (name)),
     m_opaque_owned (true)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBBroadcaster::SBBroadcaster (const char *name) name = '%s' ==> this = %p (m_opaque = %p)",
+                     name, this, m_opaque);
 }
 
 SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns) :
     m_opaque (broadcaster),
     m_opaque_owned (owns)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns) "
+                     " broadcaster = %p, owns = %s ==> this = %p", broadcaster, (owns ? "true" : "false"), this);
 }
 
 SBBroadcaster::~SBBroadcaster()
@@ -45,6 +60,11 @@ SBBroadcaster::~SBBroadcaster()
 void
 SBBroadcaster::BroadcastEventByType (uint32_t event_type, bool unique)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBBroadcaster::BroadcastEventByType (%d, %s)", event_type, (unique ? "true" : "false"));
+
     if (m_opaque == NULL)
         return;
 

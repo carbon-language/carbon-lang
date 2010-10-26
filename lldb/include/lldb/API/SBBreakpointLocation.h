@@ -75,7 +75,7 @@ public:
     IsResolved ();
 
     bool
-    GetDescription (const char *description_level, lldb::SBStream &description);
+    GetDescription (DescriptionLevel level, lldb::SBStream &description);
 
     SBBreakpoint
     GetBreakpoint ();

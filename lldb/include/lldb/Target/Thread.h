@@ -241,6 +241,12 @@ public:
     bool
     ThreadStoppedForAReason ();
 
+    static const char *
+    RunModeAsCString (lldb::RunMode mode);
+
+    static const char *
+    StopReasonAsCString (lldb::StopReason reason);
+
     virtual const char *
     GetInfo () = 0;
 

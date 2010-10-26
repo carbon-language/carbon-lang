@@ -19,6 +19,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Address.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Target/Process.h"
@@ -66,17 +67,39 @@ public:
 SBBreakpoint::SBBreakpoint () :
     m_opaque_sp ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBBreakpoint::SBBreakpoint () ==> this = %p", this);
 }
 
 SBBreakpoint::SBBreakpoint (const SBBreakpoint& rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+    {
+        SBStream sstr;
+        GetDescription (sstr);
+        log->Printf ("SBBreakpoint::SBBreakpoint (const SBBreakpoint &rhs) rhs.m_opaque_ap.get() = %p ==> this = %p (%s)",
+                     rhs.m_opaque_sp.get(), this, sstr.GetData());
+    }
 }
 
 
 SBBreakpoint::SBBreakpoint (const lldb::BreakpointSP &bp_sp) :
     m_opaque_sp (bp_sp)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+    {
+        SBStream sstr;
+        GetDescription (sstr);
+        log->Printf("SBBreakpoint::SBBreakpoint (const lldb::BreakpointSP &bp_sp) bp_sp.get() = %p ==> this = %p (%s)",
+                    bp_sp.get(), this, sstr.GetData());
+    }
 }
 
 SBBreakpoint::~SBBreakpoint()
@@ -86,18 +109,42 @@ SBBreakpoint::~SBBreakpoint()
 const SBBreakpoint &
 SBBreakpoint::operator = (const SBBreakpoint& rhs)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBBreakpoint::operator=");
+
     if (this != &rhs)
     {
         m_opaque_sp = rhs.m_opaque_sp;
     }
+    
+    if (log)
+        log->Printf ("SBBreakpoint::operator= (const SBBreakpoint &rhs) rhs.m_opaque_sp.get() = %p ==> this = %p", 
+                     rhs.m_opaque_sp.get(), this);
+        
     return *this;
 }
 
 break_id_t
 SBBreakpoint::GetID () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBBreakpoint::GetID");
+
     if (m_opaque_sp)
-        return m_opaque_sp->GetID();
+    {
+        break_id_t id = m_opaque_sp->GetID();
+        if (log)
+            log->Printf ("SBBreakpoint::GetID ==> %d", id);
+        return id;
+    }
+
+    if (log)
+        log->Printf ("SBBreakpoint::GetID ==> LLDB_INVALID_BREAK_ID");
+
     return LLDB_INVALID_BREAK_ID;
 }
 
@@ -185,6 +232,11 @@ SBBreakpoint::GetLocationAtIndex (uint32_t index)
 void
 SBBreakpoint::SetEnabled (bool enable)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBBreakpoint::SetEnabled (%s)", (enable ? "true" : "false"));
+
     if (m_opaque_sp)
         m_opaque_sp->SetEnabled (enable);
 }
@@ -201,6 +253,11 @@ SBBreakpoint::IsEnabled ()
 void
 SBBreakpoint::SetIgnoreCount (uint32_t count)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBBreakpoint::SetIgnoreCount (%d)", count);
+        
     if (m_opaque_sp)
         m_opaque_sp->SetIgnoreCount (count);
 }
@@ -220,10 +277,24 @@ SBBreakpoint::GetCondition ()
 uint32_t
 SBBreakpoint::GetHitCount () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBBreakpoint::GetHitCount");
+        
     if (m_opaque_sp)
+    {
+        uint32_t hit_count = m_opaque_sp->GetHitCount();
+        if (log)
+            log->Printf ("SBBreakpoint::GetHitCount ==> %d", hit_count);        
         return m_opaque_sp->GetHitCount();
+    }
     else
+    {
+        if (log)
+            log->Printf ("SBBreakpoint::GetHitCount ==> 0");
         return 0;
+    }
 }
 
 uint32_t
@@ -389,9 +460,21 @@ SBBreakpoint::PrivateBreakpointHitCallback
 void
 SBBreakpoint::SetCallback (BreakpointHitCallback callback, void *baton)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    
+    if (log)
+        log->Printf ("SBBreakpoint::SetCallback :");
+
     if (m_opaque_sp.get())
     {
         BatonSP baton_sp(new SBBreakpointCallbackBaton (callback, baton));
+        if (log)
+        {
+            // CAROLINE: FIXME!!
+            //StreamString sstr;
+            //baton_sp->GetDescription (sstr, lldb::eDescriptionLevelFull);
+            //log->Printf ("%s", sstr.GetData());
+        }
         m_opaque_sp->SetCallback (SBBreakpoint::PrivateBreakpointHitCallback, baton_sp, false);
     }
 }

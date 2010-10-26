@@ -10,6 +10,7 @@
 #include "lldb/API/SBSymbol.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Disassembler.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -21,11 +22,24 @@ using namespace lldb_private;
 SBSymbol::SBSymbol () :
     m_opaque_ptr (NULL)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBSymbol::SBSymbol () ==> this = %p", this);
 }
 
 SBSymbol::SBSymbol (lldb_private::Symbol *lldb_object_ptr) :
     m_opaque_ptr (lldb_object_ptr)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+    {
+        SBStream sstr;
+        GetDescription (sstr);
+        log->Printf ("SBSymbol::SBSymbol (lldb_private::Symbol *lldb_object_ptr) lldb_object_ptr = %p ==> "
+                     "this = %p (%s)", lldb_object_ptr, this, sstr.GetData());
+    }
 }
 
 SBSymbol::~SBSymbol ()
@@ -42,8 +56,21 @@ SBSymbol::IsValid () const
 const char *
 SBSymbol::GetName() const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBSymbol::GetName ()");
+
     if (m_opaque_ptr)
+    {
+        if (log)
+            log->Printf ("SBSymbol::GetName ==> %s", m_opaque_ptr->GetMangled().GetName().AsCString());
         return m_opaque_ptr->GetMangled().GetName().AsCString();
+    }
+    
+    if (log)
+        log->Printf ("SBSymbol::GetName ==> NULL");
+
     return NULL;
 }
 

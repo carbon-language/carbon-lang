@@ -35,6 +35,7 @@
 #define LIBLLDB_LOG_CONNECTION          (1u << 13)
 #define LIBLLDB_LOG_HOST                (1u << 14)
 #define LIBLLDB_LOG_UNWIND              (1u << 15)
+#define LIBLLDB_LOG_API                 (1u << 16)
 #define LIBLLDB_LOG_ALL                 (UINT32_MAX)
 #define LIBLLDB_LOG_DEFAULT             (LIBLLDB_LOG_PROCESS     |\
                                          LIBLLDB_LOG_THREAD      |\

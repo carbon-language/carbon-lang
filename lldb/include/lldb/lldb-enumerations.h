@@ -533,6 +533,7 @@ typedef enum CommandArgumentType
     eArgTypeFunctionName,
     eArgTypeIndex,
     eArgTypeLineNum,
+    eArgTypeLogCategory,
     eArgTypeLogChannel,
     eArgTypeMethod,
     eArgTypeName,

@@ -41,6 +41,10 @@ using namespace lldb_private;
 SBThread::SBThread () :
     m_opaque_sp ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    
+    if (log)
+        log->Printf ("SBThread::SBThread () ==> this = %p", this);
 }
 
 //----------------------------------------------------------------------
@@ -49,10 +53,21 @@ SBThread::SBThread () :
 SBThread::SBThread (const ThreadSP& lldb_object_sp) :
     m_opaque_sp (lldb_object_sp)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBThread::SBThread (const ThreadSP &lldb_object_sp) lldb_object_sp.get() = %p ==> this = %p",
+                     lldb_object_sp.get(), this);
 }
 
 SBThread::SBThread (const SBThread &rhs)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+
+    if (log)
+        log->Printf ("SBThread::SBThread (const SBThread &rhs) rhs.m_opaque_sp.get() = %p ==> this = %p",
+                     rhs.m_opaque_sp.get(), this);
+
     m_opaque_sp = rhs.m_opaque_sp;
 }
 
@@ -79,18 +94,33 @@ SBThread::Clear ()
 StopReason
 SBThread::GetStopReason()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::GetStopReason ()");
+
+    StopReason reason = eStopReasonInvalid;
     if (m_opaque_sp)
     {
         StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
         if (stop_info_sp)
-            return stop_info_sp->GetStopReason();
+            reason =  stop_info_sp->GetStopReason();
     }
-    return eStopReasonInvalid;
+
+    if (log)
+        log->Printf ("SBThread::GetStopReason ==> %s", Thread::StopReasonAsCString (reason));
+
+    return reason;
 }
 
 size_t
 SBThread::GetStopDescription (char *dst, size_t dst_len)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::GetStopDescription (char *dst, size_t dst_len)");
+
     if (m_opaque_sp)
     {
         StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
@@ -99,6 +129,8 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
             const char *stop_desc = stop_info_sp->GetDescription();
             if (stop_desc)
             {
+                if (log)
+                    log->Printf ("SBThread::GetStopDescription ==> %s", stop_desc);
                 if (dst)
                     return ::snprintf (dst, dst_len, "%s", stop_desc);
                 else
@@ -163,6 +195,9 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
                 
                 if (stop_desc && stop_desc[0])
                 {
+                    if (log)
+                        log->Printf ("SBThread::GetStopDescription ==> %s", stop_desc);
+
                     if (dst)
                         return ::snprintf (dst, dst_len, "%s", stop_desc) + 1; // Include the NULL byte
 
@@ -189,10 +224,19 @@ SBThread::SetThread (const ThreadSP& lldb_object_sp)
 lldb::tid_t
 SBThread::GetThreadID () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::GetThreadID()");
+    
+    lldb::tid_t id = LLDB_INVALID_THREAD_ID;
     if (m_opaque_sp)
-        return m_opaque_sp->GetID();
-    else
-        return LLDB_INVALID_THREAD_ID;
+        id = m_opaque_sp->GetID();
+
+    if (log)
+        log->Printf ("SBThread::GetThreadID ==> %d", id);
+
+    return id;
 }
 
 uint32_t
@@ -205,16 +249,42 @@ SBThread::GetIndexID () const
 const char *
 SBThread::GetName () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::GetName ()");
+
     if (m_opaque_sp)
+    {
+        if (log)
+            log->Printf ("SBThread::GetName ==> %s", m_opaque_sp->GetName());
         return m_opaque_sp->GetName();
+    }
+
+    if (log)
+        log->Printf ("SBThread::GetName ==> NULL");
+
     return NULL;
 }
 
 const char *
 SBThread::GetQueueName () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::GetQueueName ()");
+
     if (m_opaque_sp)
+    {
+        if (log)
+            log->Printf ("SBThread::GetQueueName ==> %s", m_opaque_sp->GetQueueName());
         return m_opaque_sp->GetQueueName();
+    }
+
+    if (log)
+        log->Printf ("SBThread::GetQueueName ==> NULL");
+
     return NULL;
 }
 
@@ -222,6 +292,12 @@ SBThread::GetQueueName () const
 void
 SBThread::StepOver (lldb::RunMode stop_other_threads)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::StepOver (lldb::RunMode stop_other_threads) stop_other_threads = %s)", 
+                     Thread::RunModeAsCString (stop_other_threads));
+
     if (m_opaque_sp)
     {
         bool abort_other_plans = true;
@@ -265,6 +341,12 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
 void
 SBThread::StepInto (lldb::RunMode stop_other_threads)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::StepInto (lldb::RunMode stop_other_threads) stop_other_threads =%s", 
+                     Thread::RunModeAsCString (stop_other_threads));
+
     if (m_opaque_sp)
     {
         bool abort_other_plans = true;
@@ -306,6 +388,11 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 void
 SBThread::StepOut ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::StepOut ()");
+
     if (m_opaque_sp)
     {
         bool abort_other_plans = true;
@@ -329,6 +416,11 @@ SBThread::StepOut ()
 void
 SBThread::StepInstruction (bool step_over)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::StepInstruction (bool step_over) step_over = %s", (step_over ? "true" : "false"));
+
     if (m_opaque_sp)
     {
         m_opaque_sp->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
@@ -348,6 +440,11 @@ SBThread::StepInstruction (bool step_over)
 void
 SBThread::RunToAddress (lldb::addr_t addr)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::RunToAddress (lldb:;addr_t addr) addr = %p", addr);
+
     if (m_opaque_sp)
     {
         bool abort_other_plans = true;
@@ -373,35 +470,77 @@ SBThread::RunToAddress (lldb::addr_t addr)
 SBProcess
 SBThread::GetProcess ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::GetProcess ()");
+
     SBProcess process;
     if (m_opaque_sp)
     {
         // Have to go up to the target so we can get a shared pointer to our process...
         process.SetProcess(m_opaque_sp->GetProcess().GetTarget().GetProcessSP());
     }
+
+    if (log)
+    {
+        SBStream sstr;
+        process.GetDescription (sstr);
+        log->Printf ("SBThread::GetProcess ==> SBProcess (this = %p, '%s')", &process, sstr.GetData());
+    }
+
     return process;
 }
 
 uint32_t
 SBThread::GetNumFrames ()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::GetNumFrames ()");
+
+    uint32_t num_frames = 0;
     if (m_opaque_sp)
-        return m_opaque_sp->GetStackFrameCount();
-    return 0;
+        num_frames = m_opaque_sp->GetStackFrameCount();
+
+    if (log)
+        log->Printf ("SBThread::GetNumFrames ==> %d", num_frames);
+
+    return num_frames;
 }
 
 SBFrame
 SBThread::GetFrameAtIndex (uint32_t idx)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::GetFrameAtIndex (uint32_t idx) idx = %d", idx);
+
     SBFrame sb_frame;
     if (m_opaque_sp)
         sb_frame.SetFrame (m_opaque_sp->GetStackFrameAtIndex (idx));
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_frame.GetDescription (sstr);
+        log->Printf ("SBThread::GetFrameAtIndex ==> SBFrame (this = %p, '%s')", &sb_frame, sstr.GetData());
+    }
+
     return sb_frame;
 }
 
 const lldb::SBThread &
 SBThread::operator = (const lldb::SBThread &rhs)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBThread::operator= (const lldb::SBThread &rhs) rhs.m_opaque_sp.get() = %p ==> this = %p",
+                     rhs.m_opaque_sp.get(), this);
+
     m_opaque_sp = rhs.m_opaque_sp;
     return *this;
 }
@@ -450,6 +589,20 @@ SBThread::operator*()
 
 bool
 SBThread::GetDescription (SBStream &description)
+{
+    if (m_opaque_sp)
+    {
+        StreamString strm;
+        description.Printf("SBThread: tid = 0x%4.4x", m_opaque_sp->GetID());
+    }
+    else
+        description.Printf ("No value");
+    
+    return true;
+}
+
+bool
+SBThread::GetDescription (SBStream &description) const
 {
     if (m_opaque_sp)
     {
