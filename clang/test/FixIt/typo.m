@@ -157,7 +157,7 @@ void f(A *a) {
 }
 
 #ifdef NON_FIXITS
-@implementation Sub3
+@implementation Sub2
 - (int)method2 {
   int x = super; // expected-note{{use of undeclared identifier 'super'; did you mean 'Super'?}}
   return 0;
