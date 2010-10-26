@@ -12,6 +12,7 @@
 // C++ Includes
 #include <list>
 
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Core/ArchSpec.h"
@@ -284,9 +285,15 @@ DWARFCallFrameInfo::GetFDEIndex ()
     if (m_fde_index_initialized)
         return;
 
+
     dw_offset_t offset = 0;
     if (m_cfi_data_initialized == false)
     {
+        Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+        if (log)
+        { 
+            log->Printf ("Reading eh_frame information for %s", m_objfile.GetFileSpec().GetFilename().GetCString());
+        }
         m_section->ReadSectionDataFromObjectFile (&m_objfile, m_cfi_data);
         m_cfi_data_initialized = true;
     }

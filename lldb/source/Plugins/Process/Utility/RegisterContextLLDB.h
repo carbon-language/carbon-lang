@@ -106,6 +106,14 @@ private:
     };
 
 
+    // Indicates whether this frame is frame zero -- the currently
+    // executing frame -- or not.  If it is not frame zero, m_next_frame's
+    // shared pointer holds a pointer to the RegisterContextLLDB
+    // object "below" this frame, i.e. this frame called m_next_frame's
+    // function.
+    bool
+    IsFrameZero () const;
+
     void 
     InitializeZerothFrame ();
 
@@ -139,8 +147,11 @@ private:
     bool
     ReadGPRValue (int register_kind, uint32_t regnum, lldb::addr_t &value);
 
-    void
-    GetUnwindPlansForFrame (lldb_private::Address current_pc);
+    lldb_private::UnwindPlan *
+    GetFastUnwindPlanForFrame ();
+
+    lldb_private::UnwindPlan *
+    GetFullUnwindPlanForFrame ();
 
     lldb_private::Thread& m_thread;
     lldb::RegisterContextSP m_next_frame;
@@ -154,7 +165,6 @@ private:
 
     lldb_private::UnwindPlan *m_fast_unwind_plan;    // may be NULL
     lldb_private::UnwindPlan *m_full_unwind_plan;
-    bool m_zeroth_frame;                             // Is this the bottom-most, i.e. currently executing, frame?
     bool m_all_registers_available;                  // Can we retrieve all regs or just nonvolatile regs?
     int m_frame_type;                                // enum FrameType
     int m_current_offset;                            // how far into the function we've executed; -1 if unknown
@@ -164,6 +174,7 @@ private:
 
     lldb::addr_t m_cfa;
     lldb_private::Address m_start_pc;
+    lldb_private::Address m_current_pc;
 
     std::map<uint32_t, RegisterLocation> m_registers; // where to find reg values for this frame
 
