@@ -479,7 +479,10 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
       Diags.Report(diag::err_fe_error_reading_stdin);
       return false;
     }
-    SourceMgr.createMainFileIDForMemBuffer(SB);
+    const FileEntry *File = FileMgr.getVirtualFile(SB->getBufferIdentifier(),
+                                                   SB->getBufferSize(), 0);
+    SourceMgr.createMainFileID(File);
+    SourceMgr.overrideFileContents(File, SB);
   }
 
   assert(!SourceMgr.getMainFileID().isInvalid() &&
