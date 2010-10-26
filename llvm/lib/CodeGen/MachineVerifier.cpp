@@ -1024,6 +1024,14 @@ void MachineVerifier::verifyLiveIntervals() {
       }
       for (;;) {
         assert(LiveInts->isLiveInToMBB(LI, MFI));
+        // We don't know how to track physregs into a landing pad.
+        if (TargetRegisterInfo::isPhysicalRegister(LI.reg) &&
+            MFI->isLandingPad()) {
+          if (&*MFI == EndMBB)
+            break;
+          ++MFI;
+          continue;
+        }
         // Check that VNI is live-out of all predecessors.
         for (MachineBasicBlock::const_pred_iterator PI = MFI->pred_begin(),
              PE = MFI->pred_end(); PI != PE; ++PI) {
