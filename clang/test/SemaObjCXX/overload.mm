@@ -115,6 +115,7 @@ namespace test5 {
 }
 
 // rdar://problem/8592139
+// FIXME: this should resolve to the unavailable candidate
 namespace test6 {
   void foo(id); // expected-note {{candidate}}
   void foo(A*) __attribute__((unavailable)); // expected-note {{explicitly made unavailable}}
