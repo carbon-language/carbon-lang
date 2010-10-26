@@ -468,20 +468,22 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
   // Figure out where to get and map in the main file.
   if (InputFile != "-") {
     const FileEntry *File = FileMgr.getFile(InputFile);
-    if (File) SourceMgr.createMainFileID(File);
-    if (SourceMgr.getMainFileID().isInvalid()) {
+    if (!File) {
       Diags.Report(diag::err_fe_error_reading) << InputFile;
       return false;
     }
+    SourceMgr.createMainFileID(File);
   } else {
     llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
-    if (SB) SourceMgr.createMainFileIDForMemBuffer(SB);
-    if (SourceMgr.getMainFileID().isInvalid()) {
+    if (!SB) {
       Diags.Report(diag::err_fe_error_reading_stdin);
       return false;
     }
+    SourceMgr.createMainFileIDForMemBuffer(SB);
   }
 
+  assert(!SourceMgr.getMainFileID().isInvalid() &&
+         "Couldn't establish MainFileID!");
   return true;
 }
 
