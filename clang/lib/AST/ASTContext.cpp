@@ -1492,8 +1492,6 @@ QualType ASTContext::getVariableArrayType(QualType EltTy,
   QualType CanonType;
   
   if (!EltTy.isCanonical()) {
-    if (NumElts)
-      NumElts->Retain();
     CanonType = getVariableArrayType(getCanonicalType(EltTy), NumElts, ASM,
                                      EltTypeQuals, Brackets);
   }
@@ -2522,16 +2520,14 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
   if (DependentSizedArrayType *DSAT = dyn_cast<DependentSizedArrayType>(AT))
     return CanQualType::CreateUnsafe(
              getDependentSizedArrayType(NewEltTy,
-                                        DSAT->getSizeExpr() ?
-                                          DSAT->getSizeExpr()->Retain() : 0,
+                                        DSAT->getSizeExpr(),
                                         DSAT->getSizeModifier(),
                                         DSAT->getIndexTypeCVRQualifiers(),
                         DSAT->getBracketsRange())->getCanonicalTypeInternal());
 
   VariableArrayType *VAT = cast<VariableArrayType>(AT);
   return CanQualType::CreateUnsafe(getVariableArrayType(NewEltTy,
-                                                        VAT->getSizeExpr() ?
-                                              VAT->getSizeExpr()->Retain() : 0,
+                                                        VAT->getSizeExpr(),
                                                         VAT->getSizeModifier(),
                                               VAT->getIndexTypeCVRQualifiers(),
                                                      VAT->getBracketsRange()));
@@ -2561,15 +2557,14 @@ QualType ASTContext::getUnqualifiedArrayType(QualType T,
 
   if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(AT)) {
     return getVariableArrayType(UnqualElt,
-                                VAT->getSizeExpr() ?
-                                VAT->getSizeExpr()->Retain() : 0,
+                                VAT->getSizeExpr(),
                                 VAT->getSizeModifier(),
                                 VAT->getIndexTypeCVRQualifiers(),
                                 VAT->getBracketsRange());
   }
 
   const DependentSizedArrayType *DSAT = cast<DependentSizedArrayType>(AT);
-  return getDependentSizedArrayType(UnqualElt, DSAT->getSizeExpr()->Retain(),
+  return getDependentSizedArrayType(UnqualElt, DSAT->getSizeExpr(),
                                     DSAT->getSizeModifier(), 0,
                                     SourceRange());
 }
@@ -2791,16 +2786,14 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
         = dyn_cast<DependentSizedArrayType>(ATy))
     return cast<ArrayType>(
                      getDependentSizedArrayType(NewEltTy,
-                                                DSAT->getSizeExpr() ?
-                                              DSAT->getSizeExpr()->Retain() : 0,
+                                                DSAT->getSizeExpr(),
                                                 DSAT->getSizeModifier(),
                                               DSAT->getIndexTypeCVRQualifiers(),
                                                 DSAT->getBracketsRange()));
 
   const VariableArrayType *VAT = cast<VariableArrayType>(ATy);
   return cast<ArrayType>(getVariableArrayType(NewEltTy,
-                                              VAT->getSizeExpr() ?
-                                              VAT->getSizeExpr()->Retain() : 0,
+                                              VAT->getSizeExpr(),
                                               VAT->getSizeModifier(),
                                               VAT->getIndexTypeCVRQualifiers(),
                                               VAT->getBracketsRange()));

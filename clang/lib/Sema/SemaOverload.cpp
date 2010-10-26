@@ -7839,7 +7839,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     Expr *SubExpr = FixOverloadedFunctionReference(PE->getSubExpr(),
                                                    Found, Fn);
     if (SubExpr == PE->getSubExpr())
-      return PE->Retain();
+      return PE;
     
     return new (Context) ParenExpr(PE->getLParen(), PE->getRParen(), SubExpr);
   } 
@@ -7852,7 +7852,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
            "Implicit cast type cannot be determined from overload");
     assert(ICE->path_empty() && "fixing up hierarchy conversion?");
     if (SubExpr == ICE->getSubExpr())
-      return ICE->Retain();
+      return ICE;
     
     return ImplicitCastExpr::Create(Context, ICE->getType(), 
                                     ICE->getCastKind(),
@@ -7874,7 +7874,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
         Expr *SubExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(),
                                                        Found, Fn);
         if (SubExpr == UnOp->getSubExpr())
-          return UnOp->Retain();
+          return UnOp;
 
         assert(isa<DeclRefExpr>(SubExpr)
                && "fixed to something other than a decl ref");
@@ -7896,7 +7896,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     Expr *SubExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(),
                                                    Found, Fn);
     if (SubExpr == UnOp->getSubExpr())
-      return UnOp->Retain();
+      return UnOp;
     
     return new (Context) UnaryOperator(SubExpr, UO_AddrOf,
                                      Context.getPointerType(SubExpr->getType()),
@@ -7949,7 +7949,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                          /*isImplicit=*/true);
       }
     } else
-      Base = MemExpr->getBase()->Retain();
+      Base = MemExpr->getBase();
 
     return MemberExpr::Create(Context, Base,
                               MemExpr->isArrow(), 
@@ -7962,8 +7962,8 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                               Fn->getType());
   }
   
-  assert(false && "Invalid reference to overloaded function");
-  return E->Retain();
+  llvm_unreachable("Invalid reference to overloaded function");
+  return E;
 }
 
 ExprResult Sema::FixOverloadedFunctionReference(ExprResult E, 

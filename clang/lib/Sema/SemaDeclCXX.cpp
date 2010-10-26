@@ -1328,10 +1328,6 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   // initializer. However, deconstructing the ASTs is a dicey process,
   // and this approach is far more likely to get the corner cases right.
   if (CurContext->isDependentContext()) {
-    // Bump the reference count of all of the arguments.
-    for (unsigned I = 0; I != NumArgs; ++I)
-      Args[I]->Retain();
-
     Expr *Init = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
                                              RParenLoc);
     return new (Context) CXXBaseOrMemberInitializer(Context, Member, IdLoc,
@@ -1461,10 +1457,6 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   // initializer. However, deconstructing the ASTs is a dicey process,
   // and this approach is far more likely to get the corner cases right.
   if (CurContext->isDependentContext()) {
-    // Bump the reference count of all of the arguments.
-    for (unsigned I = 0; I != NumArgs; ++I)
-      Args[I]->Retain();
-
     ExprResult Init
       = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
                                           RParenLoc));
@@ -4646,14 +4638,14 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   llvm::APInt Upper = ArrayTy->getSize();
   Upper.zextOrTrunc(S.Context.getTypeSize(SizeType));
   Expr *Comparison
-    = new (S.Context) BinaryOperator(IterationVarRef->Retain(),
+    = new (S.Context) BinaryOperator(IterationVarRef,
                            IntegerLiteral::Create(S.Context,
                                                   Upper, SizeType, Loc),
                                                   BO_NE, S.Context.BoolTy, Loc);
   
   // Create the pre-increment of the iteration variable.
   Expr *Increment
-    = new (S.Context) UnaryOperator(IterationVarRef->Retain(),
+    = new (S.Context) UnaryOperator(IterationVarRef,
                                     UO_PreInc,
                                     SizeType, Loc);
   
@@ -4936,7 +4928,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
     // Construct the "from" expression, which is an implicit cast to the
     // appropriately-qualified base type.
-    Expr *From = OtherRef->Retain();
+    Expr *From = OtherRef;
     ImpCastExprToType(From, Context.getQualifiedType(BaseType, OtherQuals),
                       CK_UncheckedDerivedToBase,
                       VK_LValue, &BasePath);

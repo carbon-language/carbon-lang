@@ -879,7 +879,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
         for (CXXConstructExpr::arg_iterator A = Construct->arg_begin(),
                                          AEnd = Construct->arg_end();
              A != AEnd; ++A)
-          ConvertedConstructorArgs.push_back(A->Retain());
+          ConvertedConstructorArgs.push_back(*A);
       } else {
         // Take the converted initializer.
         ConvertedConstructorArgs.push_back(FullInit.release());
@@ -1206,7 +1206,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
                                                        Context,
                                                        FnDecl->getParamDecl(i)),
                                     SourceLocation(),
-                                    Owned(Args[i]->Retain()));
+                                    Owned(Args[i]));
       if (Result.isInvalid())
         return true;
       

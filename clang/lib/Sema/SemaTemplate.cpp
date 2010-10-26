@@ -2729,7 +2729,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   // Stop checking the precise nature of the argument if it is value dependent,
   // it should be checked when instantiated.
   if (Arg->isValueDependent()) {
-    Converted = TemplateArgument(ArgIn->Retain());
+    Converted = TemplateArgument(ArgIn);
     return false;
   }
 
@@ -2974,7 +2974,7 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
             (isa<VarDecl>(VD) && 
              Context.getCanonicalType(VD->getType()).isConstQualified())) {
           if (Arg->isTypeDependent() || Arg->isValueDependent())
-            Converted = TemplateArgument(Arg->Retain());
+            Converted = TemplateArgument(Arg);
           else
             Converted = TemplateArgument(VD->getCanonicalDecl());
           return Invalid;
@@ -2998,7 +2998,7 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
     // Okay: this is the address of a non-static member, and therefore
     // a member pointer constant.
     if (Arg->isTypeDependent() || Arg->isValueDependent())
-      Converted = TemplateArgument(Arg->Retain());
+      Converted = TemplateArgument(Arg);
     else
       Converted = TemplateArgument(DRE->getDecl()->getCanonicalDecl());
     return Invalid;

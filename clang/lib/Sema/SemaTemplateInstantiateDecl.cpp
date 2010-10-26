@@ -586,7 +586,7 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
     return 0;
 
   ExprResult Message(D->getMessage());
-  D->getMessage()->Retain();
+  D->getMessage();
   return SemaRef.ActOnStaticAssertDeclaration(D->getLocation(),
                                               InstantiatedAssertExpr.get(),
                                               Message.get());

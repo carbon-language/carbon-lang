@@ -151,7 +151,7 @@ DeduceNonTypeTemplateArgument(Sema &S,
          "Expression template argument must be type- or value-dependent.");
 
   if (Deduced[NTTP->getIndex()].isNull()) {
-    Deduced[NTTP->getIndex()] = TemplateArgument(Value->Retain());
+    Deduced[NTTP->getIndex()] = TemplateArgument(Value);
     return Sema::TDK_Success;
   }
 

@@ -109,9 +109,6 @@ private:
   /// \brief The statement class.
   const unsigned sClass : 8;
 
-  /// \brief The reference count for this statement.
-  unsigned RefCount : 24;
-
   // Make vanilla 'new' and 'delete' illegal for Stmts.
 protected:
   void* operator new(size_t bytes) throw() {
@@ -152,36 +149,17 @@ public:
 
 protected:
   /// \brief Construct an empty statement.
-  explicit Stmt(StmtClass SC, EmptyShell) : sClass(SC), RefCount(1) {
+  explicit Stmt(StmtClass SC, EmptyShell) : sClass(SC) {
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
   }
 
 public:
-  Stmt(StmtClass SC) : sClass(SC), RefCount(1) {
+  Stmt(StmtClass SC) : sClass(SC) {
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
   }
   virtual ~Stmt() {}
 
-#ifndef NDEBUG
-  /// \brief True if this statement's refcount is in a valid state.
-  /// Should be used only in assertions.
-  bool isRetained() const {
-    return (RefCount >= 1);
-  }
-#endif
-
-  /// \brief Increases the reference count for this statement.
-  ///
-  /// Invoke the Retain() operation when this statement or expression
-  /// is being shared by another owner.
-  Stmt *Retain() {
-    assert(RefCount >= 1);
-    ++RefCount;
-    return this;
-  }
-
   StmtClass getStmtClass() const { 
-    assert(RefCount >= 1 && "Referencing already-destroyed statement!");
     return (StmtClass)sClass; 
   }
   const char *getStmtClassName() const;
@@ -726,7 +704,6 @@ public:
   }
   void addSwitchCase(SwitchCase *SC) {
     assert(!SC->getNextSwitchCase() && "case/default already added to a switch");
-    SC->Retain();
     SC->setNextSwitchCase(FirstCase);
     FirstCase = SC;
   }

@@ -274,9 +274,6 @@ void ASTStmtReader::VisitSwitchStmt(SwitchStmt *S) {
     else
       S->setSwitchCaseList(SC);
 
-    // Retain this SwitchCase, since SwitchStmt::addSwitchCase() would
-    // normally retain it (but we aren't calling addSwitchCase).
-    SC->Retain();
     PrevSC = SC;
   }
 }

@@ -250,9 +250,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 
     InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
                                                                       Param);
-    ExprResult ArgE = PerformCopyInitialization(Entity,
-                                                      SourceLocation(),
-                                                      Owned(argExpr->Retain()));
+    ExprResult ArgE = PerformCopyInitialization(Entity, lbrac, Owned(argExpr));
     if (ArgE.isInvalid())
       IsError = true;
     else

@@ -3569,7 +3569,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_StringInit:
   case SK_ObjCObjectConversion:
     assert(Args.size() == 1);
-    CurInit = ExprResult(((Expr **)(Args.get()))[0]->Retain());
+    CurInit = ExprResult(Args.get()[0]);
     if (CurInit.isInvalid())
       return ExprError();
     break;

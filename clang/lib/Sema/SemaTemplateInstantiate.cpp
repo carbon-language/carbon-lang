@@ -776,7 +776,7 @@ TemplateInstantiator::RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
 ExprResult 
 TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
   if (!E->isTypeDependent())
-    return SemaRef.Owned(E->Retain());
+    return SemaRef.Owned(E);
 
   FunctionDecl *currentDecl = getSema().getCurFunctionDecl();
   assert(currentDecl && "Must have current function declaration when "
@@ -804,7 +804,7 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
   // arguments left unspecified.
   if (!TemplateArgs.hasTemplateArgument(NTTP->getDepth(),
                                         NTTP->getPosition()))
-    return SemaRef.Owned(E->Retain());
+    return SemaRef.Owned(E);
 
   const TemplateArgument &Arg = TemplateArgs(NTTP->getDepth(),
                                              NTTP->getPosition());
@@ -812,7 +812,7 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
   // The template argument itself might be an expression, in which
   // case we just return that expression.
   if (Arg.getKind() == TemplateArgument::Expression)
-    return SemaRef.Owned(Arg.getAsExpr()->Retain());
+    return SemaRef.Owned(Arg.getAsExpr());
 
   if (Arg.getKind() == TemplateArgument::Declaration) {
     ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
