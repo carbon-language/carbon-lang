@@ -1801,7 +1801,7 @@ class N3VX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
 class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
                dag oops, dag iops, Format f, InstrItinClass itin,
                string opc, string dt, string asm, list<dag> pattern>
-  : InstARM<AddrModeNone, Size4Bytes, IndexModeNone, f, GenericDomain,
+  : InstARM<AddrModeNone, Size4Bytes, IndexModeNone, f, NeonDomain,
             "", itin> {
   let Inst{27-20} = opcod1;
   let Inst{11-8}  = opcod2;
