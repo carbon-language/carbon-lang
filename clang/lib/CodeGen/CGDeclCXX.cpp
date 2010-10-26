@@ -253,7 +253,15 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                 SourceLocation());
 
   llvm::Constant *DeclPtr = CGM.GetAddrOfGlobalVar(D);
-  EmitCXXGlobalVarDeclInit(*D, DeclPtr);
+  if (D->isStaticDataMember() &&
+      D->getInstantiatedFromStaticDataMember() && D->getInit()){
+    llvm::GlobalVariable *GV = dyn_cast<llvm::GlobalVariable>(DeclPtr);
+    assert(GV && "GenerateCXXGlobalVarDeclInitFunc - GV is null");
+    GV->setConstant(false);
+    EmitCXXStaticLocalInit(*D, GV);
+  }
+  else
+    EmitCXXGlobalVarDeclInit(*D, DeclPtr);
 
   FinishFunction();
 }

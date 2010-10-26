@@ -1092,9 +1092,14 @@ void ItaniumCXXABI::EmitStaticLocalInit(CodeGenFunction &CGF,
   // Create the guard variable.
   llvm::SmallString<256> GuardVName;
   getMangleContext().mangleItaniumGuardVariable(&D, GuardVName);
+  llvm::GlobalValue::LinkageTypes Linkage = GV->getLinkage();
+  if (D.isStaticDataMember() &&
+      D.getInstantiatedFromStaticDataMember())
+    Linkage = llvm::GlobalVariable::WeakAnyLinkage;
+  
   llvm::GlobalVariable *GuardVariable =
     new llvm::GlobalVariable(CGM.getModule(), GuardTy,
-                             false, GV->getLinkage(),
+                             false, Linkage,
                              llvm::ConstantInt::get(GuardTy, 0),
                              GuardVName.str());
 
