@@ -456,12 +456,14 @@ protected:
   ValueManager &ValMgr;
 
   RegionBindings B;
+  
+  const bool includeGlobals;
 
 public:
   ClusterAnalysis(RegionStoreManager &rm, GRStateManager &StateMgr,
-                  RegionBindings b)
+                  RegionBindings b, const bool includeGlobals)
     : RM(rm), Ctx(StateMgr.getContext()), ValMgr(StateMgr.getValueManager()),
-      B(b) {}
+      B(b), includeGlobals(includeGlobals) {}
 
   RegionBindings getRegionBindings() const { return B; }
 
@@ -487,7 +489,7 @@ public:
     return *CRef;
   }
 
-  void GenerateClusters(bool includeGlobals = false) {
+  void GenerateClusters() {
       // Scan the entire set of bindings and make the region clusters.
     for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI){
       RegionCluster &C = AddToCluster(RI.getKey());
@@ -574,8 +576,9 @@ public:
                           RegionBindings b,
                           const Expr *ex, unsigned count,
                           StoreManager::InvalidatedSymbols *is,
-                          StoreManager::InvalidatedRegions *r)
-    : ClusterAnalysis<InvalidateRegionsWorker>(rm, stateMgr, b),
+                          StoreManager::InvalidatedRegions *r,
+                          bool includeGlobals)
+    : ClusterAnalysis<InvalidateRegionsWorker>(rm, stateMgr, b, includeGlobals),
       Ex(ex), Count(count), IS(is), Regions(r) {}
 
   void VisitCluster(const MemRegion *baseR, BindingKey *I, BindingKey *E);
@@ -698,10 +701,10 @@ Store RegionStoreManager::InvalidateRegions(Store store,
                                             InvalidatedRegions *Regions) {
   InvalidateRegionsWorker W(*this, StateMgr,
                             RegionStoreManager::GetRegionBindings(store),
-                            Ex, Count, IS, Regions);
+                            Ex, Count, IS, Regions, invalidateGlobals);
 
   // Scan the bindings and generate the clusters.
-  W.GenerateClusters(invalidateGlobals);
+  W.GenerateClusters();
 
   // Add I .. E to the worklist.
   for ( ; I != E; ++I)
@@ -1612,7 +1615,8 @@ public:
   RemoveDeadBindingsWorker(RegionStoreManager &rm, GRStateManager &stateMgr,
                            RegionBindings b, SymbolReaper &symReaper,
                            const StackFrameContext *LCtx)
-    : ClusterAnalysis<RemoveDeadBindingsWorker>(rm, stateMgr, b),
+    : ClusterAnalysis<RemoveDeadBindingsWorker>(rm, stateMgr, b,
+                                                /* includeGlobals = */ false),
       SymReaper(symReaper), CurrentLCtx(LCtx) {}
 
   // Called by ClusterAnalysis.
