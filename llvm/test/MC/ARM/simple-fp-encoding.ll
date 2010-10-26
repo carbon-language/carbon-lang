@@ -349,16 +349,16 @@ return:                                           ; preds = %entry
   ret double %a
 }
 
-define float @f99(float %a, i32 %i) nounwind readnone {
+define float @f99(float %a, float %b, i32 %i) nounwind readnone {
 entry:
   %cmp = icmp eq i32 %i, 3
   br i1 %cmp, label %if.end, label %return
 
 if.end:                                           ; preds = %entry
 ; CHECK: f99
-; CHECK: vmovne r0, s0               @ encoding: [0x10,0x0a,0x10,0x1e]
-  %sub = fsub float -0.000000e+00, %a
-  ret float %sub
+; CHECK: vmovne s0, r0               @ encoding: [0x10,0x0a,0x00,0x1e]
+; CHECK: vmoveq s0, r1               @ encoding: [0x10,0x1a,0x00,0x0e]
+  ret float %b
 
 return:                                           ; preds = %entry
   ret float %a

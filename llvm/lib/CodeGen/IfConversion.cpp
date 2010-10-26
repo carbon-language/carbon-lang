@@ -520,18 +520,6 @@ bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
   return TExit && TExit == FalseBBI.BB;
 }
 
-static
-MachineBasicBlock::iterator firstNonBranchInst(MachineBasicBlock *BB,
-                                               const TargetInstrInfo *TII) {
-  MachineBasicBlock::iterator I = BB->end();
-  while (I != BB->begin()) {
-    --I;
-    if (!I->getDesc().isBranch())
-      break;
-  }
-  return I;
-}
-
 /// ValidDiamond - Returns true if the 'true' and 'false' blocks (along
 /// with their common predecessor) forms a valid diamond shape for ifcvt.
 bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
@@ -560,64 +548,70 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
       (TrueBBI.ClobbersPred && FalseBBI.ClobbersPred))
     return false;
 
-  MachineBasicBlock::iterator TI = TrueBBI.BB->begin();
-  MachineBasicBlock::iterator FI = FalseBBI.BB->begin();
-  MachineBasicBlock::iterator TIE = TrueBBI.BB->end();
-  MachineBasicBlock::iterator FIE = FalseBBI.BB->end();
-  // Skip dbg_value instructions
-  while (TI != TIE && TI->isDebugValue())
-    ++TI;
-  while (FI != FIE && FI->isDebugValue())
-    ++FI;
-  while (TI != TIE && FI != FIE) {
-    // Skip dbg_value instructions. These do not count.
-    if (TI->isDebugValue()) {
-      while (TI != TIE && TI->isDebugValue())
-        ++TI;
-      if (TI == TIE)
-        break;
-    }
-    if (FI->isDebugValue()) {
-      while (FI != FIE && FI->isDebugValue())
-        ++FI;
-      if (FI == FIE)
-        break;
-    }
-    if (!TI->isIdenticalTo(FI))
-      break;
-    ++Dups1;
-    ++TI;
-    ++FI;
-  }
-
-  TI = firstNonBranchInst(TrueBBI.BB, TII);
-  FI = firstNonBranchInst(FalseBBI.BB, TII);
+  // Count duplicate instructions at the beginning of the true and false blocks.
   MachineBasicBlock::iterator TIB = TrueBBI.BB->begin();
   MachineBasicBlock::iterator FIB = FalseBBI.BB->begin();
-  // Skip dbg_value instructions at end of the bb's.
-  while (TI != TIB && TI->isDebugValue())
-    --TI;
-  while (FI != FIB && FI->isDebugValue())
-    --FI;
-  while (TI != TIB && FI != FIB) {
+  MachineBasicBlock::iterator TIE = TrueBBI.BB->end();
+  MachineBasicBlock::iterator FIE = FalseBBI.BB->end();
+  while (TIB != TIE && FIB != FIE) {
     // Skip dbg_value instructions. These do not count.
-    if (TI->isDebugValue()) {
-      while (TI != TIB && TI->isDebugValue())
-        --TI;
-      if (TI == TIB)
+    if (TIB->isDebugValue()) {
+      while (TIB != TIE && TIB->isDebugValue())
+        ++TIB;
+      if (TIB == TIE)
         break;
     }
-    if (FI->isDebugValue()) {
-      while (FI != FIB && FI->isDebugValue())
-        --FI;
-      if (FI == FIB)
+    if (FIB->isDebugValue()) {
+      while (FIB != FIE && FIB->isDebugValue())
+        ++FIB;
+      if (FIB == FIE)
         break;
     }
-    if (!TI->isIdenticalTo(FI))
+    if (!TIB->isIdenticalTo(FIB))
+      break;
+    ++Dups1;
+    ++TIB;
+    ++FIB;
+  }
+
+  // Now, in preparation for counting duplicate instructions at the ends of the
+  // blocks, move the end iterators up past any branch instructions.
+  while (TIE != TIB) {
+    --TIE;
+    if (!TIE->getDesc().isBranch())
+      break;
+  }
+  while (FIE != FIB) {
+    --FIE;
+    if (!FIE->getDesc().isBranch())
+      break;
+  }
+
+  // If Dups1 includes all of a block, then don't count duplicate
+  // instructions at the end of the blocks.
+  if (TIB == TIE || FIB == FIE)
+    return true;
+
+  // Count duplicate instructions at the ends of the blocks.
+  while (TIE != TIB && FIE != FIB) {
+    // Skip dbg_value instructions. These do not count.
+    if (TIE->isDebugValue()) {
+      while (TIE != TIB && TIE->isDebugValue())
+        --TIE;
+      if (TIE == TIB)
+        break;
+    }
+    if (FIE->isDebugValue()) {
+      while (FIE != FIB && FIE->isDebugValue())
+        --FIE;
+      if (FIE == FIB)
+        break;
+    }
+    if (!TIE->isIdenticalTo(FIE))
       break;
     ++Dups2;
-    --TI;
-    --FI;
+    --TIE;
+    --FIE;
   }
 
   return true;
