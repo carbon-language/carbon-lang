@@ -1362,7 +1362,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
       (Op0->getOperand(2).getReg() != Op1->getOperand(2).getReg()))
       return false;
 
-  // Must sure the base address satisfies i64 ld / st alignment requirement.
+  // Make sure the base address satisfies i64 ld / st alignment requirement.
   if (!Op0->hasOneMemOperand() ||
       !(*Op0->memoperands_begin())->getValue() ||
       (*Op0->memoperands_begin())->isVolatile())
