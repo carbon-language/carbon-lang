@@ -94,6 +94,16 @@ TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
 }
 
+bool TargetInstrInfo::hasLowDefLatency(const InstrItineraryData *ItinData,
+                                       const MachineInstr *DefMI,
+                                       unsigned DefIdx) const {
+  if (!ItinData || ItinData->isEmpty())
+    return false;
+
+  unsigned DefClass = DefMI->getDesc().getSchedClass();
+  int DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
+  return (DefCycle != -1 && DefCycle <= 1);
+}
 
 /// insertNoop - Insert a noop into the instruction stream at the specified
 /// point.

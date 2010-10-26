@@ -1951,3 +1951,18 @@ hasHighOperandLatency(const InstrItineraryData *ItinData,
   return DDomain == ARMII::DomainVFP || DDomain == ARMII::DomainNEON ||
          UDomain == ARMII::DomainVFP || UDomain == ARMII::DomainNEON;
 }
+
+bool ARMBaseInstrInfo::
+hasLowDefLatency(const InstrItineraryData *ItinData,
+                 const MachineInstr *DefMI, unsigned DefIdx) const {
+  if (!ItinData || ItinData->isEmpty())
+    return false;
+
+  unsigned DDomain = DefMI->getDesc().TSFlags & ARMII::DomainMask;
+  if (DDomain == ARMII::DomainGeneral) {
+    unsigned DefClass = DefMI->getDesc().getSchedClass();
+    int DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
+    return (DefCycle != -1 && DefCycle <= 2);
+  }
+  return false;
+}

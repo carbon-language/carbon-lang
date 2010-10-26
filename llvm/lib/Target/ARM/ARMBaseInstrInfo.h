@@ -382,6 +382,8 @@ private:
                              const MachineRegisterInfo *MRI,
                              const MachineInstr *DefMI, unsigned DefIdx,
                              const MachineInstr *UseMI, unsigned UseIdx) const;
+  bool hasLowDefLatency(const InstrItineraryData *ItinData,
+                        const MachineInstr *DefMI, unsigned DefIdx) const;
 };
 
 static inline

@@ -639,6 +639,12 @@ public:
                              const MachineInstr *UseMI, unsigned UseIdx) const {
     return false;
   }
+
+  /// hasLowDefLatency - Compute operand latency of a def of 'Reg', return true
+  /// if the target considered it 'low'.
+  virtual
+  bool hasLowDefLatency(const InstrItineraryData *ItinData,
+                        const MachineInstr *DefMI, unsigned DefIdx) const;
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of
