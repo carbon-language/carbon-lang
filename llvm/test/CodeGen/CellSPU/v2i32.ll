@@ -61,3 +61,17 @@ define void @test_store( %vec %val, %vec* %ptr)
   store %vec %val, %vec* %ptr
   ret void
 }
+
+;Alignment of <2 x i32> is not *directly* defined in the ABI
+;It probably is safe to interpret it as an array, thus having 8 byte
+;alignment (according to ABI). This tests that the size of
+;[2 x <2 x i32>] is 16 bytes, i.e. there is no padding between the
+;two arrays
+define <2 x i32>* @test_alignment( [2 x <2 x i32>]* %ptr)
+{
+; CHECK-NOT:	ai	$3, $3, 16
+; CHECK:	ai	$3, $3, 8
+; CHECK:	bi	$lr
+   %rv = getelementptr [2 x <2 x i32>]* %ptr, i32 0, i32 1
+   ret <2 x i32>* %rv
+}
