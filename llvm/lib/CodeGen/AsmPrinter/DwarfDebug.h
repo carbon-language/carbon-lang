@@ -631,11 +631,11 @@ public:
   /// getLabelAfterInsn - Return Label immediately following the instruction.
   const MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
 
-  /// beginScope - Process beginning of a scope.
-  void beginScope(const MachineInstr *MI);
+  /// beginInstruction - Process beginning of an instruction.
+  void beginInstruction(const MachineInstr *MI);
 
-  /// endScope - Prcess end of a scope.
-  void endScope(const MachineInstr *MI);
+  /// endInstruction - Prcess end of an instruction.
+  void endInstruction(const MachineInstr *MI);
 };
 } // End of namespace llvm
 

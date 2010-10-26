@@ -2457,8 +2457,8 @@ const MCSymbol *DwarfDebug::getLabelAfterInsn(const MachineInstr *MI) {
   return I->second;
 }
 
-/// beginScope - Process beginning of a scope.
-void DwarfDebug::beginScope(const MachineInstr *MI) {
+/// beginInstruction - Process beginning of an instruction.
+void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   if (InsnNeedsLabel.count(MI) == 0) {
     LabelsBeforeInsn[MI] = PrevLabel;
     return;
@@ -2492,8 +2492,8 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   assert (0 && "Instruction is not processed!");
 }
 
-/// endScope - Process end of a scope.
-void DwarfDebug::endScope(const MachineInstr *MI) {
+/// endInstruction - Process end of an instruction.
+void DwarfDebug::endInstruction(const MachineInstr *MI) {
   if (InsnsEndScopeSet.count(MI) != 0) {
     // Emit a label if this instruction ends a scope.
     MCSymbol *Label = MMI->getContext().CreateTempSymbol();

@@ -638,7 +638,7 @@ void AsmPrinter::EmitFunctionBody() {
 
       if (ShouldPrintDebugScopes) {
         NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
-        DD->beginScope(II);
+        DD->beginInstruction(II);
       }
       
       if (isVerbose())
@@ -672,7 +672,7 @@ void AsmPrinter::EmitFunctionBody() {
       
       if (ShouldPrintDebugScopes) {
         NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
-        DD->endScope(II);
+        DD->endInstruction(II);
       }
     }
   }
