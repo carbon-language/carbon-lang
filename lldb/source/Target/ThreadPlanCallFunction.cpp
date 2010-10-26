@@ -14,11 +14,14 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private-log.h"
+#include "lldb/Breakpoint/Breakpoint.h"
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
@@ -171,9 +174,45 @@ ThreadPlanCallFunction::ValidatePlan (Stream *error)
 bool
 ThreadPlanCallFunction::PlanExplainsStop ()
 {
-    // If the subplan is running, any crashes are attributable to us.
+    // If our subplan knows why we stopped, even if it's done (which would forward the question to us)
+    // we answer yes.
+    if(m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop())
+        return true;
     
-    return (m_subplan_sp.get() != NULL);
+    // If we don't want to discard this plan, than any stop we don't understand should be propagated up the stack.
+    if (!OkayToDiscard())
+        return false;
+            
+    // Otherwise, check the case where we stopped for an internal breakpoint, in that case, continue on.
+    // If it is not an internal breakpoint, consult OkayToDiscard.
+    lldb::StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
+    {
+        uint64_t break_site_id = stop_info_sp->GetValue();
+        lldb::BreakpointSiteSP bp_site_sp = m_thread.GetProcess().GetBreakpointSiteList().FindByID(break_site_id);
+        if (bp_site_sp)
+        {
+            uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
+            bool is_internal = true;
+            for (uint32_t i = 0; i < num_owners; i++)
+            {
+                if (!bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().IsInternal())
+                {
+                    is_internal = false;
+                    break;
+                }
+            }
+            if (is_internal)
+                return false;
+        }
+        
+        return OkayToDiscard();
+    }
+    else
+    {
+        // If the subplan is running, any crashes are attributable to us.
+        return (m_subplan_sp.get() != NULL);
+    }
 }
 
 bool

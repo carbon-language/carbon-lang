@@ -46,6 +46,14 @@ public:
         return m_thread;
     }
 
+    // The value of the StopInfo depends on the StopReason.
+    // StopReason                  Meaning
+    // ----------------------------------------------
+    // eStopReasonBreakpoint       BreakpointSiteID
+    // eStopReasonSignal           Signal number
+    // eStopReasonWatchpoint       WatchpointSiteID
+    // eStopReasonPlanComplete     No significance
+    
     uint64_t
     GetValue() const
     {
