@@ -1314,8 +1314,6 @@ getFrameIndexInstrOffset(const MachineInstr *MI, int Idx) const {
   switch (AddrMode) {
   case ARMII::AddrModeT2_i8:
   case ARMII::AddrModeT2_i12:
-    // i8 supports only negative, and i12 supports only positive, so
-    // based on Offset sign, consider the appropriate instruction
     InstrOffs = MI->getOperand(Idx+1).getImm();
     Scale = 1;
     break;
