@@ -128,12 +128,12 @@ RegisterContextLLDB::InitializeZerothFrame()
     Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
 
     // A couple of sanity checks..
-    if (m_cfa == (addr_t) -1 || m_cfa == 0 || m_cfa == 1)
+    if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
     {
         if (log)
         {   
             log->Printf("%*sFrame %d could not find a valid cfa address",
-                        m_frame_number, "", m_frame_number);
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
         }
         m_frame_type = eNotAValidFrame;
         return;
@@ -141,9 +141,9 @@ RegisterContextLLDB::InitializeZerothFrame()
 
     if (log)
     {
-        log->Printf("%*sFrame %d initialized frame current pc is 0x%llx cfa is 0x%llx", 
-                    m_frame_number, "", m_frame_number,
-                    (uint64_t) m_cfa, (uint64_t) current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()));
+        log->Printf("%*sThread %d Frame %d initialized frame current pc is 0x%llx cfa is 0x%llx", 
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_thread.GetIndexID(), m_frame_number,
+                    (uint64_t) current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()), (uint64_t) m_cfa);
     }
 }
 
@@ -178,7 +178,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         if (log)
         {
             log->Printf("%*sFrame %d could not get pc value",
-                        m_frame_number, "", m_frame_number);
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
         }
         m_frame_type = eNotAValidFrame;
         return;
@@ -193,7 +193,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         if (log)
         {
             log->Printf("%*sFrame %d using architectural default unwind method",
-                        m_frame_number, "", m_frame_number);
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
         }
         ArchSpec arch = m_thread.GetProcess().GetTarget().GetArchitecture ();
         ArchDefaultUnwindPlan *arch_default = ArchDefaultUnwindPlan::FindPlugin (arch);
@@ -213,17 +213,30 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                 if (log)
                 {
                     log->Printf("%*sFrame %d failed to get cfa value",
-                                m_frame_number, "", m_frame_number);
+                                m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
                 }
                 m_frame_type = eNormalFrame;
                 return;
             }
             m_cfa = cfa_regval + cfa_offset;
+
+            // A couple of sanity checks..
+            if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
+            {
+                if (log)
+                {
+                    log->Printf("%*sFrame %d could not find a valid cfa address",
+                                m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
+                }
+                m_frame_type = eNotAValidFrame;
+                return;
+            }
+
             if (log)
             {
-                log->Printf("%*sFrame %d initialized frame current pc is 0x%llx cfa is 0x%llx",
-                            m_frame_number, "", m_frame_number,
-                            (uint64_t) m_cfa, (uint64_t) current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()));
+                log->Printf("%*sFrame %d initialized frame cfa is 0x%llx",
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                            (uint64_t) m_cfa);
             }
             return;
         }
@@ -295,7 +308,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         if (log)
         {
             log->Printf("%*sFrame %d failed to get cfa reg %d/%d",
-                        m_frame_number, "", m_frame_number,
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                         row_register_kind, active_row->GetCFARegister());
         }
         m_frame_type = eNotAValidFrame;
@@ -306,12 +319,12 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     m_cfa = cfa_regval + cfa_offset;
 
     // A couple of sanity checks..
-    if (m_cfa == (addr_t) -1 || m_cfa == 0 || m_cfa == 1)
+    if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
     { 
         if (log)
         {
             log->Printf("%*sFrame %d could not find a valid cfa address",
-                        m_frame_number, "", m_frame_number);
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
         }
         m_frame_type = eNotAValidFrame;
         return;
@@ -320,8 +333,8 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (log)
     {
         log->Printf("%*sFrame %d initialized frame current pc is 0x%llx cfa is 0x%llx", 
-                    m_frame_number, "", m_frame_number,
-                    (uint64_t) m_cfa, (uint64_t) current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()));
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                    (uint64_t) current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()), (uint64_t) m_cfa);
     }
 }
 
@@ -479,7 +492,7 @@ RegisterContextLLDB::GetUnwindPlansForFrame (Address current_pc)
         if (m_fast_unwind_plan)
             has_fast = ", and has a fast UnwindPlan";
         log->Printf("%*sFrame %d frame uses %s for full UnwindPlan%s",
-                    m_frame_number, "", m_frame_number,
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                     m_full_unwind_plan->GetSourceName().GetCString(), has_fast);
     }
 
@@ -656,7 +669,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (log)
             {
                 log->Printf("%*sFrame %d could not supply caller's reg %d location",
-                            m_frame_number, "", m_frame_number,
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                             lldb_regnum);
             }
             return false;
@@ -666,7 +679,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (log)
             {
                 log->Printf("%*sFrame %d supplying caller's saved reg %d's location using FastUnwindPlan",
-                            m_frame_number, "", m_frame_number,
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                             lldb_regnum);
             }
             have_unwindplan_regloc = true;
@@ -681,7 +694,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (log)
             {
                 log->Printf("%*sFrame %d could not supply caller's reg %d location",
-                            m_frame_number, "", m_frame_number,
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                             lldb_regnum);
             }
             return false;
@@ -693,7 +706,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (log && IsLogVerbose ())
             {                
                 log->Printf("%*sFrame %d supplying caller's saved reg %d's location using %s UnwindPlan",
-                            m_frame_number, "", m_frame_number,
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                             lldb_regnum, m_full_unwind_plan->GetSourceName().GetCString());
             }
         }
@@ -709,7 +722,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (log)
             {
                 log->Printf("%*sFrame %d did not supply reg location for %d because it is volatile",
-                            m_frame_number, "", m_frame_number,
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                             lldb_regnum);
             }
             return false;
@@ -732,7 +745,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
         if (log)
         {
             log->Printf("%*sFrame %d could not supply caller's reg %d location",
-                        m_frame_number, "", m_frame_number,
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                         lldb_regnum);
         }
         return false;
@@ -747,7 +760,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
         if (log)
         {
             log->Printf("%*sFrame %d could not supply caller's reg %d location",
-                        m_frame_number, "", m_frame_number,
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                         lldb_regnum);
         }
         return false;
@@ -764,7 +777,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (log)
             {
                 log->Printf("%*sFrame %d could not supply caller's reg %d location",
-                            m_frame_number, "", m_frame_number,
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                             lldb_regnum);
             }
             return false;
@@ -798,7 +811,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (log)
             {
                 log->Printf("%*sFrame %d could not supply caller's reg %d location",
-                            m_frame_number, "", m_frame_number,
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                             lldb_regnum);
             }
             return false;
@@ -812,7 +825,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
     if (log)
     {
         log->Printf("%*sFrame %d could not supply caller's reg %d location",
-                    m_frame_number, "", m_frame_number,
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                     lldb_regnum);
     }
 
@@ -897,7 +910,7 @@ RegisterContextLLDB::ReadRegisterBytes (uint32_t lldb_reg, DataExtractor& data)
     if (log && IsLogVerbose ())
     {
         log->Printf("%*sFrame %d looking for register saved location for reg %d",
-                    m_frame_number, "", m_frame_number,
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                     lldb_reg);
     }
 
@@ -907,7 +920,7 @@ RegisterContextLLDB::ReadRegisterBytes (uint32_t lldb_reg, DataExtractor& data)
         if (log)
         {
             log->Printf("%*sFrame %d passing along to the live register context for reg %d",
-                        m_frame_number, "", m_frame_number,
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
                         lldb_reg);
         }
         return m_base_reg_ctx->ReadRegisterBytes (lldb_reg, data);

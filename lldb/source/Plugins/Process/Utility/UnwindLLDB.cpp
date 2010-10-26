@@ -72,7 +72,7 @@ UnwindLLDB::GetFrameCount()
                 if (log)
                 {
                     log->Printf("%*sFrame %d invalid RegisterContext for this frame, stopping stack walk", 
-                                cur_idx, "", cur_idx);
+                                cur_idx < 100 ? cur_idx : 100, "", cur_idx);
                 }
                 break;
             }
@@ -82,7 +82,7 @@ UnwindLLDB::GetFrameCount()
                 if (log)
                 {
                     log->Printf("%*sFrame %d did not get CFA for this frame, stopping stack walk",
-                                cur_idx, "", cur_idx);
+                                cur_idx < 100 ? cur_idx : 100, "", cur_idx);
                 }
                 break;
             }
@@ -92,7 +92,7 @@ UnwindLLDB::GetFrameCount()
                 if (log)
                 {
                     log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
-                                cur_idx, "", cur_idx);
+                                cur_idx < 100 ? cur_idx : 100, "", cur_idx);
                 }
                 break;
             }
@@ -102,7 +102,7 @@ UnwindLLDB::GetFrameCount()
                 if (log)
                 {
                     log->Printf("%*sFrame %d did not get PC for this frame, stopping stack walk",
-                                cur_idx, "", cur_idx);
+                                cur_idx < 100 ? cur_idx : 100, "", cur_idx);
                 }
                 break;
             }
