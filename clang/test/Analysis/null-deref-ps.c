@@ -26,7 +26,7 @@ int f2(struct foo_struct* p) {
   if (p)
     p->x = 1;
     
-  return p->x++; // expected-warning{{Field access results in a dereference of a null pointer (loaded from variable 'p')}}
+  return p->x++; // expected-warning{{Access to field 'x' results in a dereference of a null pointer (loaded from variable 'p')}}
 }
 
 int f3(char* x) {
@@ -36,7 +36,7 @@ int f3(char* x) {
   if (x)
     return x[i - 1];
   
-  return x[i+1]; // expected-warning{{Dereference of null pointer}}
+  return x[i+1]; // expected-warning{{Array access (from variable 'x') results in a null pointer dereference}}
 }
 
 int f3_b(char* x) {
@@ -46,7 +46,7 @@ int f3_b(char* x) {
   if (x)
     return x[i - 1];
   
-  return x[i+1]++; // expected-warning{{Dereference of null pointer}}
+  return x[i+1]++; // expected-warning{{Array access (from variable 'x') results in a null pointer dereference}}
 }
 
 int f4(int *p) {

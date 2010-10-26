@@ -36,6 +36,9 @@ public:
                           ImplicitNullDerefNodes.data() +
                           ImplicitNullDerefNodes.size());
   }
+  void AddDerefSource(llvm::raw_ostream &os,
+                      llvm::SmallVectorImpl<SourceRange> &Ranges,
+                      const Expr *Ex, bool loadedFrom = false);
 };
 } // end anonymous namespace
 
@@ -50,6 +53,33 @@ clang::GetImplicitNullDereferences(GRExprEngine &Eng) {
     return std::make_pair((ExplodedNode * const *) 0,
                           (ExplodedNode * const *) 0);
   return checker->getImplicitNodes();
+}
+
+void DereferenceChecker::AddDerefSource(llvm::raw_ostream &os,
+                                     llvm::SmallVectorImpl<SourceRange> &Ranges,
+                                        const Expr *Ex,
+                                        bool loadedFrom) {
+  switch (Ex->getStmtClass()) {
+    default:
+      return;
+    case Stmt::DeclRefExprClass: {
+      const DeclRefExpr *DR = cast<DeclRefExpr>(Ex);
+      if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+        os << " (" << (loadedFrom ? "loaded from" : "from")
+           << " variable '" <<  VD->getName() << "')";
+        Ranges.push_back(DR->getSourceRange());
+      }
+      return;
+    }
+    case Stmt::MemberExprClass: {
+      const MemberExpr *ME = cast<MemberExpr>(Ex);
+      os << " (" << (loadedFrom ? "loaded from" : "via")
+         << " field '" << ME->getMemberNameInfo() << "')";
+      SourceLocation L = ME->getMemberLoc();
+      Ranges.push_back(SourceRange(L, L));
+      break;
+    }
+  }
 }
 
 void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
@@ -96,31 +126,29 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
       llvm::SmallVector<SourceRange, 2> Ranges;
 
       switch (S->getStmtClass()) {
+        case Stmt::ArraySubscriptExprClass: {
+          llvm::raw_svector_ostream os(buf);
+          os << "Array access";
+          const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(S);
+          AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts());
+          os << " results in a null pointer dereference";
+          break;
+        }
         case Stmt::UnaryOperatorClass: {
+          llvm::raw_svector_ostream os(buf);
+          os << "Dereference of null pointer";
           const UnaryOperator *U = cast<UnaryOperator>(S);
-          const Expr *SU = U->getSubExpr()->IgnoreParens();
-          if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(SU)) {
-            if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-              llvm::raw_svector_ostream os(buf);
-              os << "Dereference of null pointer (loaded from variable '"
-                 << VD->getName() << "')";
-              Ranges.push_back(DR->getSourceRange());
-            }
-          }
+          AddDerefSource(os, Ranges, U->getSubExpr()->IgnoreParens(), true);
           break;
         }
         case Stmt::MemberExprClass: {
           const MemberExpr *M = cast<MemberExpr>(S);
-          if (M->isArrow())
-            if (DeclRefExpr *DR =
-                dyn_cast<DeclRefExpr>(M->getBase()->IgnoreParenCasts())) {
-              if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-                llvm::raw_svector_ostream os(buf);
-                os << "Field access results in a dereference of a null pointer "
-                      "(loaded from variable '" << VD->getName() << "')";
-                Ranges.push_back(M->getBase()->getSourceRange());
-              }
-            }
+          if (M->isArrow()) {
+            llvm::raw_svector_ostream os(buf);
+            os << "Access to field '" << M->getMemberNameInfo()
+               << "' results in a dereference of a null pointer";
+            AddDerefSource(os, Ranges, M->getBase()->IgnoreParenCasts(), true);
+          }
           break;
         }
         case Stmt::ObjCIvarRefExprClass: {

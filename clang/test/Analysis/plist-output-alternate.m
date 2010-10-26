@@ -743,23 +743,23 @@ void rdar8331641(int x) {
 // CHECK:        <array>
 // CHECK:         <dict>
 // CHECK:          <key>line</key><integer>37</integer>
-// CHECK:          <key>col</key><integer>3</integer>
+// CHECK:          <key>col</key><integer>7</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:         <dict>
 // CHECK:          <key>line</key><integer>37</integer>
-// CHECK:          <key>col</key><integer>8</integer>
+// CHECK:          <key>col</key><integer>7</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Dereference of null pointer</string>
+// CHECK:      <string>Dereference of null pointer (loaded from field &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Dereference of null pointer</string>
+// CHECK: <string>Dereference of null pointer (loaded from field &apos;p&apos;)</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Dereference of null pointer</string>
+// CHECK:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>location</key>
