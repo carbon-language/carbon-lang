@@ -212,9 +212,13 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
     //   given variable or function shall be identical...
     // C does not have an equivalent rule.
     //
+    // Ignore this if we've got an explicit attribute;  the user
+    // probably knows what they're doing.
+    //
     // Note that we don't want to make the variable non-external
     // because of this, but unique-external linkage suits us.
-    if (Context.getLangOptions().CPlusPlus && !Var->isExternC()) {
+    if (Context.getLangOptions().CPlusPlus && !Var->isExternC() &&
+        !Var->hasAttr<VisibilityAttr>()) {
       LVPair TypeLV = Var->getType()->getLinkageAndVisibility();
       if (TypeLV.first != ExternalLinkage)
         return LVPair(UniqueExternalLinkage, DefaultVisibility);
@@ -247,7 +251,8 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
   } else if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Modify the function's LV by the LV of its type unless this is
     // C or extern "C".  See the comment above about variables.
-    if (Context.getLangOptions().CPlusPlus && !Function->isExternC()) {
+    if (Context.getLangOptions().CPlusPlus && !Function->isExternC() &&
+        !Function->hasAttr<VisibilityAttr>()) {
       LVPair TypeLV = Function->getType()->getLinkageAndVisibility();
       if (TypeLV.first != ExternalLinkage)
         return LVPair(UniqueExternalLinkage, DefaultVisibility);
@@ -321,8 +326,11 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
         ConsiderDashFVisibility = false;
     }
 
+    // Consider -fvisibility unless the type has C linkage.
     if (ConsiderDashFVisibility)
-      ConsiderDashFVisibility = Tag->isDefinition();
+      ConsiderDashFVisibility =
+        (Context.getLangOptions().CPlusPlus &&
+         !Tag->getDeclContext()->isExternCContext());
 
   //     - an enumerator belonging to an enumeration with external linkage;
   } else if (isa<EnumConstantDecl>(D)) {

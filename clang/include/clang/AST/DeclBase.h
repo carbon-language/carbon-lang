@@ -816,6 +816,10 @@ public:
   /// C++0x scoped enums), and C++ linkage specifications.
   bool isTransparentContext() const;
 
+  /// \brief Determines whether this context is, or is nested within,
+  /// a C++ extern "C" linkage spec.
+  bool isExternCContext() const;
+
   /// \brief Determine whether this declaration context is equivalent
   /// to the declaration context DC.
   bool Equals(const DeclContext *DC) const {

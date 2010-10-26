@@ -529,6 +529,17 @@ bool DeclContext::isTransparentContext() const {
   return false;
 }
 
+bool DeclContext::isExternCContext() const {
+  const DeclContext *DC = this;
+  while (DC->DeclKind != Decl::TranslationUnit) {
+    if (DC->DeclKind == Decl::LinkageSpec)
+      return cast<LinkageSpecDecl>(DC)->getLanguage()
+        == LinkageSpecDecl::lang_c;
+    DC = DC->getParent();
+  }
+  return false;
+}
+
 bool DeclContext::Encloses(const DeclContext *DC) const {
   if (getPrimaryContext() != this)
     return getPrimaryContext()->Encloses(DC);

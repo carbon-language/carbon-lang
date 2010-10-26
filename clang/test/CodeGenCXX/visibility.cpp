@@ -8,6 +8,8 @@
 // CHECK: @_ZN5Test425VariableInHiddenNamespaceE = hidden global i32 10
 // CHECK: @_ZN5Test71aE = hidden global
 // CHECK: @_ZN5Test71bE = global
+// CHECK: @test9_var = global
+// CHECK-HIDDEN: @test9_var = global
 // CHECK: @_ZTVN5Test63fooE = weak_odr hidden constant 
 
 namespace Test1 {
@@ -113,5 +115,21 @@ namespace Test8 {
   void test() {
     foo();
     bar();
+  }
+}
+
+// PR8457
+namespace Test9 {
+  extern "C" {
+    struct A { int field; };
+    void DEFAULT test9_fun(struct A *a) { }
+    struct A DEFAULT test9_var; // above
+  }
+  // CHECK: define void @test9_fun(
+  // CHECK-HIDDEN: define void @test9_fun(
+
+  void test() {
+    A a = test9_var;
+    test9_fun(&a);
   }
 }
