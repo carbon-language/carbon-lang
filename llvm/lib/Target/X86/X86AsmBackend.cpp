@@ -69,15 +69,10 @@ public:
 };
 } // end anonymous namespace
 
-static unsigned getRelaxedOpcode(unsigned Op) {
+static unsigned getRelaxedOpcodeBranch(unsigned Op) {
   switch (Op) {
   default:
     return Op;
-
-  // This is used on i386 with things like addl $foo, %ebx
-  // FIXME: Should the other *i8 instructions be here too? If not, it might
-  // be better to just select X86::ADD32ri instead of X86::ADD32ri8.
-  case X86::ADD32ri8: return X86::ADD32ri;
 
   case X86::JAE_1: return X86::JAE_4;
   case X86::JA_1:  return X86::JA_4;
@@ -99,16 +94,101 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   }
 }
 
+static unsigned getRelaxedOpcodeArith(unsigned Op) {
+  switch (Op) {
+  default:
+    return Op;
+
+    // IMUL
+  case X86::IMUL16rri8: return X86::IMUL16rri;
+  case X86::IMUL16rmi8: return X86::IMUL16rmi;
+  case X86::IMUL32rri8: return X86::IMUL32rri;
+  case X86::IMUL32rmi8: return X86::IMUL32rmi;
+  case X86::IMUL64rri8: return X86::IMUL64rri32;
+  case X86::IMUL64rmi8: return X86::IMUL64rmi32;
+
+    // AND
+  case X86::AND16ri8: return X86::AND16ri;
+  case X86::AND16mi8: return X86::AND16mi;
+  case X86::AND32ri8: return X86::AND32ri;
+  case X86::AND32mi8: return X86::AND32mi;
+  case X86::AND64ri8: return X86::AND64ri32;
+  case X86::AND64mi8: return X86::AND64mi32;
+
+    // OR
+  case X86::OR16ri8: return X86::OR16ri;
+  case X86::OR16mi8: return X86::OR16mi;
+  case X86::OR32ri8: return X86::OR32ri;
+  case X86::OR32mi8: return X86::OR32mi;
+  case X86::OR64ri8: return X86::OR64ri32;
+  case X86::OR64mi8: return X86::OR64mi32;
+
+    // XOR
+  case X86::XOR16ri8: return X86::XOR16ri;
+  case X86::XOR16mi8: return X86::XOR16mi;
+  case X86::XOR32ri8: return X86::XOR32ri;
+  case X86::XOR32mi8: return X86::XOR32mi;
+  case X86::XOR64ri8: return X86::XOR64ri32;
+  case X86::XOR64mi8: return X86::XOR64mi32;
+
+    // ADD
+  case X86::ADD16ri8: return X86::ADD16ri;
+  case X86::ADD16mi8: return X86::ADD16mi;
+  case X86::ADD32ri8: return X86::ADD32ri;
+  case X86::ADD32mi8: return X86::ADD32mi;
+  case X86::ADD64ri8: return X86::ADD64ri32;
+  case X86::ADD64mi8: return X86::ADD64mi32;
+
+    // SUB
+  case X86::SUB16ri8: return X86::SUB16ri;
+  case X86::SUB16mi8: return X86::SUB16mi;
+  case X86::SUB32ri8: return X86::SUB32ri;
+  case X86::SUB32mi8: return X86::SUB32mi;
+  case X86::SUB64ri8: return X86::SUB64ri32;
+  case X86::SUB64mi8: return X86::SUB64mi32;
+
+    // CMP
+  case X86::CMP16ri8: return X86::CMP16ri;
+  case X86::CMP16mi8: return X86::CMP16mi;
+  case X86::CMP32ri8: return X86::CMP32ri;
+  case X86::CMP32mi8: return X86::CMP32mi;
+  case X86::CMP64ri8: return X86::CMP64ri32;
+  case X86::CMP64mi8: return X86::CMP64mi32;
+  }
+}
+
+static unsigned getRelaxedOpcode(unsigned Op) {
+  unsigned R = getRelaxedOpcodeArith(Op);
+  if (R != Op)
+    return R;
+  return getRelaxedOpcodeBranch(Op);
+}
+
 bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
+  // Branches can always be relaxed.
+  if (getRelaxedOpcodeBranch(Inst.getOpcode()) != Inst.getOpcode())
+    return true;
+
   // Check if this instruction is ever relaxable.
-  if (getRelaxedOpcode(Inst.getOpcode()) == Inst.getOpcode())
+  if (getRelaxedOpcodeArith(Inst.getOpcode()) == Inst.getOpcode())
     return false;
 
-  // If so, just assume it can be relaxed. Once we support relaxing more complex
-  // instructions we should check that the instruction actually has symbolic
-  // operands before doing this, but we need to be careful about things like
-  // PCrel.
-  return true;
+
+  // Check if it has an expression and is not RIP relative.
+  bool hasExp = false;
+  bool hasRIP = false;
+  for (unsigned i = 0; i < Inst.getNumOperands(); ++i) {
+    const MCOperand &Op = Inst.getOperand(i);
+    if (Op.isExpr())
+      hasExp = true;
+
+    if (Op.isReg() && Op.getReg() == X86::RIP)
+      hasRIP = true;
+  }
+
+  // FIXME: Why exactly do we need the !hasRIP? Is it just a limitation on
+  // how we do relaxations?
+  return hasExp && !hasRIP;
 }
 
 // FIXME: Can tblgen help at all here to verify there aren't other instructions
