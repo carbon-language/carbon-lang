@@ -12,6 +12,7 @@
 #include "Spiller.h"
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -195,13 +196,17 @@ namespace {
 /// Falls back on LiveIntervals::addIntervalsForSpills.
 class StandardSpiller : public Spiller {
 protected:
+  MachineFunction *mf;
   LiveIntervals *lis;
+  LiveStacks *lss;
   MachineLoopInfo *loopInfo;
   VirtRegMap *vrm;
 public:
   StandardSpiller(MachineFunctionPass &pass, MachineFunction &mf,
                   VirtRegMap &vrm)
-    : lis(&pass.getAnalysis<LiveIntervals>()),
+    : mf(&mf),
+      lis(&pass.getAnalysis<LiveIntervals>()),
+      lss(&pass.getAnalysis<LiveStacks>()),
       loopInfo(pass.getAnalysisIfAvailable<MachineLoopInfo>()),
       vrm(&vrm) {}
 
@@ -212,6 +217,16 @@ public:
     std::vector<LiveInterval*> added =
       lis->addIntervalsForSpills(*li, spillIs, loopInfo, *vrm);
     newIntervals.insert(newIntervals.end(), added.begin(), added.end());
+
+    // Update LiveStacks.
+    int SS = vrm->getStackSlot(li->reg);
+    if (SS == VirtRegMap::NO_STACK_SLOT)
+      return;
+    const TargetRegisterClass *RC = mf->getRegInfo().getRegClass(li->reg);
+    LiveInterval &SI = lss->getOrCreateInterval(SS, RC);
+    if (!SI.hasAtLeastOneValue())
+      SI.getNextValue(SlotIndex(), 0, lss->getVNInfoAllocator());
+    SI.MergeRangesInAsValue(*li, SI.getValNumInfo(0));
   }
 };
 

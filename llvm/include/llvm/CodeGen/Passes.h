@@ -66,6 +66,9 @@ namespace llvm {
 
   extern char &PreAllocSplittingID;
 
+  /// LiveStacks pass. An analysis keeping track of the liveness of stack slots.
+  extern char &LiveStacksID;
+
   /// SimpleRegisterCoalescing pass.  Aggressively coalesces every register
   /// copy it can.
   ///

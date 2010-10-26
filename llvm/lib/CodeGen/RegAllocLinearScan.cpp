@@ -18,7 +18,6 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -138,7 +137,6 @@ namespace {
     BitVector allocatableRegs_;
     BitVector reservedRegs_;
     LiveIntervals* li_;
-    LiveStacks* ls_;
     MachineLoopInfo *loopInfo;
 
     /// handled_ - Intervals are added to the handled_ set in the order of their
@@ -204,8 +202,8 @@ namespace {
       AU.addRequired<CalculateSpillWeights>();
       if (PreSplitIntervals)
         AU.addRequiredID(PreAllocSplittingID);
-      AU.addRequired<LiveStacks>();
-      AU.addPreserved<LiveStacks>();
+      AU.addRequiredID(LiveStacksID);
+      AU.addPreservedID(LiveStacksID);
       AU.addRequired<MachineLoopInfo>();
       AU.addPreserved<MachineLoopInfo>();
       AU.addRequired<VirtRegMap>();
@@ -498,7 +496,6 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   allocatableRegs_ = tri_->getAllocatableSet(fn);
   reservedRegs_ = tri_->getReservedRegs(fn);
   li_ = &getAnalysis<LiveIntervals>();
-  ls_ = &getAnalysis<LiveStacks>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
 
   // We don't run the coalescer here because we have no reason to
@@ -658,8 +655,6 @@ void RALinScan::linearScan() {
 
   // Look for physical registers that end up not being allocated even though
   // register allocator had to spill other registers in its register class.
-  if (ls_->getNumIntervals() == 0)
-    return;
   if (!vrm_->FindUnusedRegisters(li_))
     return;
 }
@@ -802,30 +797,6 @@ static void RevertVectorIteratorsTo(RALinScan::IntervalPtrs &V,
     if (I != IP.first->begin()) --I;
     IP.second = I;
   }
-}
-
-/// addStackInterval - Create a LiveInterval for stack if the specified live
-/// interval has been spilled.
-static void addStackInterval(LiveInterval *cur, LiveStacks *ls_,
-                             LiveIntervals *li_,
-                             MachineRegisterInfo* mri_, VirtRegMap &vrm_) {
-  int SS = vrm_.getStackSlot(cur->reg);
-  if (SS == VirtRegMap::NO_STACK_SLOT)
-    return;
-
-  const TargetRegisterClass *RC = mri_->getRegClass(cur->reg);
-  LiveInterval &SI = ls_->getOrCreateInterval(SS, RC);
-
-  VNInfo *VNI;
-  if (SI.hasAtLeastOneValue())
-    VNI = SI.getValNumInfo(0);
-  else
-    VNI = SI.getNextValue(SlotIndex(), 0,
-                          ls_->getVNInfoAllocator());
-
-  LiveInterval &RI = li_->getInterval(cur->reg);
-  // FIXME: This may be overly conservative.
-  SI.MergeRangesInAsValue(RI, VNI);
 }
 
 /// getConflictWeight - Return the number of conflicts between cur
@@ -1244,7 +1215,6 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     spiller_->spill(cur, added, spillIs);
 
     std::sort(added.begin(), added.end(), LISorter());
-    addStackInterval(cur, ls_, li_, mri_, *vrm_);
     if (added.empty())
       return;  // Early exit if all spills were folded.
 
@@ -1319,7 +1289,6 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     if (sli->beginIndex() < earliestStart)
       earliestStart = sli->beginIndex();
     spiller_->spill(sli, added, spillIs);
-    addStackInterval(sli, ls_, li_, mri_, *vrm_);
     spilled.insert(sli->reg);
   }
 
