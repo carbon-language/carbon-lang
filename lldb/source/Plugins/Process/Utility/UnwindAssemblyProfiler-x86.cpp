@@ -480,14 +480,14 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
     const char *triple;
     // FIXME should probably pass down the ArchSpec and work from that to make a portable triple
     if (m_cpu == k_i386)
-        triple = "i386-apple-darwin";
+        triple = "i386-unknown-unknown";
     else
-        triple = "x86_64-apple-darwin";
+        triple = "x86_64-unknown-unknown";
 
     EDDisassemblerRef disasm;
     EDInstRef         cur_insn;
 
-    if (EDGetDisassembler (&disasm, "i386-apple-darwin", kEDAssemblySyntaxX86ATT) != 0)
+    if (EDGetDisassembler (&disasm, triple, kEDAssemblySyntaxX86ATT) != 0)
     {
         return false;
     }
@@ -565,7 +565,15 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             unwind_plan.AppendRow (row);
             goto loopnext;
         }
-        
+
+        if (mov_rsp_rbp_pattern_p ())
+        {
+            row.SetOffset (current_func_text_offset + insn_len);
+            row.SetCFARegister (m_lldb_fp_regnum);
+            unwind_plan.AppendRow (row);
+            goto loopnext;
+        }
+
         // This is the start() function (or a pthread equivalent), it starts with a pushl $0x0 which puts the
         // saved pc value of 0 on the stack.  In this case we want to pretend we didn't see a stack movement at all --
         // normally the saved pc value is already on the stack by the time the function starts executing.
@@ -614,14 +622,6 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
                 row.SetCFAOffset (current_sp_bytes_offset_from_cfa);
                 unwind_plan.AppendRow (row);
             }
-            goto loopnext;
-        }
-
-        if (mov_rsp_rbp_pattern_p ())
-        {
-            row.SetOffset (current_func_text_offset + insn_len);
-            row.SetCFARegister (m_lldb_fp_regnum);
-            unwind_plan.AppendRow (row);
             goto loopnext;
         }
 

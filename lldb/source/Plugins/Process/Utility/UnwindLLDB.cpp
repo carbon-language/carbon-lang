@@ -71,8 +71,8 @@ UnwindLLDB::GetFrameCount()
                 delete register_ctx;
                 if (log)
                 {
-                    log->Printf("%*sThread %u Frame %d invalid RegisterContext for this frame, stopping stack walk", 
-                                cur_idx, "", m_thread.GetIndexID(), cur_idx);
+                    log->Printf("%*sFrame %d invalid RegisterContext for this frame, stopping stack walk", 
+                                cur_idx, "", cur_idx);
                 }
                 break;
             }
@@ -81,8 +81,18 @@ UnwindLLDB::GetFrameCount()
                 delete register_ctx;
                 if (log)
                 {
-                    log->Printf("%*sThread %u Frame %d did not get CFA for this frame, stopping stack walk",
-                                cur_idx, "", m_thread.GetIndexID(), cur_idx);
+                    log->Printf("%*sFrame %d did not get CFA for this frame, stopping stack walk",
+                                cur_idx, "", cur_idx);
+                }
+                break;
+            }
+            if (cursor.cfa == (addr_t) -1 || cursor.cfa == 1 || cursor.cfa == 0)
+            {
+                delete register_ctx;
+                if (log)
+                {
+                    log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
+                                cur_idx, "", cur_idx);
                 }
                 break;
             }
@@ -91,8 +101,8 @@ UnwindLLDB::GetFrameCount()
                 delete register_ctx;
                 if (log)
                 {
-                    log->Printf("%*sThread %u Frame %d did not get PC for this frame, stopping stack walk",
-                                cur_idx, "", m_thread.GetIndexID(), cur_idx);
+                    log->Printf("%*sFrame %d did not get PC for this frame, stopping stack walk",
+                                cur_idx, "", cur_idx);
                 }
                 break;
             }
