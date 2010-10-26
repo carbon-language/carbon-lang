@@ -18,6 +18,7 @@
 #include "SplitKit.h"
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -34,6 +35,7 @@ class InlineSpiller : public Spiller {
   MachineFunctionPass &pass_;
   MachineFunction &mf_;
   LiveIntervals &lis_;
+  LiveStacks &lss_;
   MachineLoopInfo &loops_;
   VirtRegMap &vrm_;
   MachineFrameInfo &mfi_;
@@ -61,6 +63,7 @@ public:
     : pass_(pass),
       mf_(mf),
       lis_(pass.getAnalysis<LiveIntervals>()),
+      lss_(pass.getAnalysis<LiveStacks>()),
       loops_(pass.getAnalysis<MachineLoopInfo>()),
       vrm_(vrm),
       mfi_(*mf.getFrameInfo()),
@@ -354,6 +357,12 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
 
   rc_ = mri_.getRegClass(edit.getReg());
   stackSlot_ = edit.assignStackSlot(vrm_);
+
+  // Update LiveStacks now that we are committed to spilling.
+  LiveInterval &stacklvr = lss_.getOrCreateInterval(stackSlot_, rc_);
+  if (!stacklvr.hasAtLeastOneValue())
+    stacklvr.getNextValue(SlotIndex(), 0, lss_.getVNInfoAllocator());
+  stacklvr.MergeRangesInAsValue(edit_->getParent(), stacklvr.getValNumInfo(0));
 
   // Iterate over instructions using register.
   for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(edit.getReg());
