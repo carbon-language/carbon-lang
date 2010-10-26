@@ -321,6 +321,10 @@ VNInfo *LiveIntervalMap::defValue(const VNInfo *ParentVNI, SlotIndex Idx) {
   // Create a new value.
   VNInfo *VNI = li_->getNextValue(Idx, 0, lis_.getVNInfoAllocator());
 
+  // Preserve the PHIDef bit.
+  if (ParentVNI->isPHIDef() && Idx == ParentVNI->def)
+    VNI->setIsPHIDef(true);
+
   // Use insert for lookup, so we can add missing values with a second lookup.
   std::pair<ValueMap::iterator,bool> InsP =
     valueMap_.insert(makeVV(ParentVNI, Idx == ParentVNI->def ? VNI : 0));
