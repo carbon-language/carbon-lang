@@ -1683,6 +1683,16 @@ class N1ModImm<bit op23, bits<3> op21_19, bits<4> op11_8, bit op7, bit op6,
   let Inst{6}     = op6;
   let Inst{5}     = op5;
   let Inst{4}     = op4;
+  
+  // Instruction operands.
+  bits<5> Vd;
+  bits<13> SIMM;
+  
+  let Inst{15-12} = Vd{3-0};
+  let Inst{22}    = Vd{4};
+  let Inst{24}    = SIMM{7};
+  let Inst{18-16} = SIMM{6-4};
+  let Inst{3-0}   = SIMM{3-0};
 }
 
 // NEON 2 vector register format.

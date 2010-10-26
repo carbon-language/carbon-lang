@@ -2,7 +2,6 @@
 
 ; FIXME: The following instructions still require testing:
 ;  - vand with immediate, vorr with immediate
-;  - vmvn of an immediate
 ;  - both vbit and vbif
 
 ; CHECK: vand_8xi8
