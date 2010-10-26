@@ -842,25 +842,26 @@ void SplitEditor::finish() {
   for (LiveRangeEdit::iterator I = edit_.begin(), E = edit_.end(); I != E; ++I)
     (*I)->RenumberValues(lis_);
 
-  // Now check if dupli was separated into multiple connected components.
-  ConnectedVNInfoEqClasses ConEQ(lis_);
-  if (unsigned NumComp = ConEQ.Classify(dupli_.getLI())) {
-    DEBUG(dbgs() << "  Remainder has " << NumComp << " connected components: "
-                 << *dupli_.getLI() << '\n');
-    // Did the remainder break up? Create intervals for all the components.
-    if (NumComp > 1) {
-      SmallVector<LiveInterval*, 8> dups;
-      dups.push_back(dupli_.getLI());
-      for (unsigned i = 1; i != NumComp; ++i)
-        dups.push_back(&edit_.create(mri_, lis_, vrm_));
-      ConEQ.Distribute(&dups[0]);
-      // Rewrite uses to the new regs.
-      rewrite(dupli_.getLI()->reg);
-    }
-  }
-
   // Rewrite instructions.
   rewrite(edit_.getReg());
+
+  // Now check if any registers were separated into multiple components.
+  ConnectedVNInfoEqClasses ConEQ(lis_);
+  for (unsigned i = 0, e = edit_.size(); i != e; ++i) {
+    // Don't use iterators, they are invalidated by create() below.
+    LiveInterval *li = edit_.get(i);
+    unsigned NumComp = ConEQ.Classify(li);
+    if (NumComp <= 1)
+      continue;
+    DEBUG(dbgs() << "  " << NumComp << " components: " << *li << '\n');
+    SmallVector<LiveInterval*, 8> dups;
+    dups.push_back(li);
+    for (unsigned i = 1; i != NumComp; ++i)
+      dups.push_back(&edit_.create(mri_, lis_, vrm_));
+    ConEQ.Distribute(&dups[0]);
+    // Rewrite uses to the new regs.
+    rewrite(li->reg);
+  }
 
   // Calculate spill weight and allocation hints for new intervals.
   VirtRegAuxInfo vrai(vrm_.getMachineFunction(), lis_, sa_.loops_);
