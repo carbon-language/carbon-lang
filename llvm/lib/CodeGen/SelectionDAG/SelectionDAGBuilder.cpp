@@ -3021,8 +3021,11 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
                              isVolatile, isNonTemporal, Alignment, TBAAInfo);
   }
 
-  DAG.setRoot(DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
-                          MVT::Other, &Chains[0], NumValues));
+  SDValue StoreNode = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
+                                  MVT::Other, &Chains[0], NumValues);
+  ++SDNodeOrder;
+  AssignOrderingToNode(StoreNode.getNode());
+  DAG.setRoot(StoreNode);
 }
 
 /// visitTargetIntrinsic - Lower a call of a target intrinsic to an INTRINSIC
