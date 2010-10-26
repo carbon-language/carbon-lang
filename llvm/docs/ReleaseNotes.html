@@ -1017,6 +1017,11 @@ API changes are:</p>
   were dropped.  GC plugins which compute stack maps must be updated to avoid
   having the old definition overload the new signature.
 </li>
+<li>
+  The signature of <tt>MemoryBuffer::getMemBuffer</tt> changed.  Unfortunately
+  calls intended for the old version still compile, but will not work correctly,
+  leading to a confusing error about an invalid header in the bitcode.
+</li>
   
 <li>
   Some APIs were renamed:
