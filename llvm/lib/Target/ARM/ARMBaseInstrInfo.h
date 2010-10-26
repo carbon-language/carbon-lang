@@ -328,7 +328,7 @@ public:
                                          unsigned NumInstrs,
                                          float Probability,
                                          float Confidence) const {
-    return NumInstrs && NumInstrs == 1;
+    return NumInstrs == 1;
   }
 
   /// AnalyzeCompare - For a comparison instruction, return the source register
