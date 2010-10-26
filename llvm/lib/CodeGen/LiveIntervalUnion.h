@@ -97,7 +97,6 @@ public:
 private:
   unsigned repReg_;        // representative register number
   LiveSegments segments_;  // union of virtual reg segements
-  LiveVirtRegs lvrs_;      // set of live virtual regs in the union
 
 public:
   // default ctor avoids placement new

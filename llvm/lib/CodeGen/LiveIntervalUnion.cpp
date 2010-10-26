@@ -25,11 +25,6 @@ using namespace llvm;
 // Consider coalescing adjacent segments to save space, even though it makes
 // extraction more complicated.
 void LiveIntervalUnion::unify(LiveInterval &lvr) {
-  // Add this live virtual register to the union
-  LiveVirtRegs::iterator pos = std::upper_bound(lvrs_.begin(), lvrs_.end(),
-                                                &lvr, less_ptr<LiveInterval>());
-  assert((pos == lvrs_.end() || *pos != &lvr) && "duplicate LVR insertion");
-  lvrs_.insert(pos, &lvr);
   // Insert each of the virtual register's live segments into the map
   SegmentIter segPos = segments_.begin();
   for (LiveInterval::iterator lvrI = lvr.begin(), lvrEnd = lvr.end();
