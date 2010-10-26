@@ -141,19 +141,7 @@ void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
 
 void LiveIntervals::printInstrs(raw_ostream &OS) const {
   OS << "********** MACHINEINSTRS **********\n";
-
-  for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
-       mbbi != mbbe; ++mbbi) {
-    OS << "BB#" << mbbi->getNumber()
-       << ":\t\t# derived from " << mbbi->getName() << "\n";
-    for (MachineBasicBlock::iterator mii = mbbi->begin(),
-           mie = mbbi->end(); mii != mie; ++mii) {
-      if (mii->isDebugValue())
-        OS << "    \t" << *mii;
-      else
-        OS << getInstructionIndex(mii) << '\t' << *mii;
-    }
-  }
+  mf_->print(OS, indexes_);
 }
 
 void LiveIntervals::dumpInstrs() const {

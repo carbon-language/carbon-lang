@@ -168,6 +168,7 @@ namespace {
     // Analysis information if available
     LiveVariables *LiveVars;
     const LiveIntervals *LiveInts;
+    SlotIndexes *Indexes;
 
     void visitMachineFunctionBefore();
     void visitMachineBasicBlockBefore(const MachineBasicBlock *MBB);
@@ -249,11 +250,13 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
 
   LiveVars = NULL;
   LiveInts = NULL;
+  Indexes = NULL;
   if (PASS) {
     LiveInts = PASS->getAnalysisIfAvailable<LiveIntervals>();
     // We don't want to verify LiveVariables if LiveIntervals is available.
     if (!LiveInts)
       LiveVars = PASS->getAnalysisIfAvailable<LiveVariables>();
+    Indexes = PASS->getAnalysisIfAvailable<SlotIndexes>();
   }
 
   visitMachineFunctionBefore();
@@ -291,7 +294,7 @@ void MachineVerifier::report(const char *msg, const MachineFunction *MF) {
   assert(MF);
   *OS << '\n';
   if (!foundErrors++)
-    MF->print(*OS);
+    MF->print(*OS, Indexes);
   *OS << "*** Bad machine code: " << msg << " ***\n"
       << "- function:    " << MF->getFunction()->getNameStr() << "\n";
 }
@@ -301,13 +304,19 @@ void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB) {
   report(msg, MBB->getParent());
   *OS << "- basic block: " << MBB->getName()
       << " " << (void*)MBB
-      << " (BB#" << MBB->getNumber() << ")\n";
+      << " (BB#" << MBB->getNumber() << ")";
+  if (Indexes)
+    *OS << " [" << Indexes->getMBBStartIdx(MBB)
+        << ';' <<  Indexes->getMBBEndIdx(MBB) << ')';
+  *OS << '\n';
 }
 
 void MachineVerifier::report(const char *msg, const MachineInstr *MI) {
   assert(MI);
   report(msg, MI->getParent());
   *OS << "- instruction: ";
+  if (Indexes && Indexes->hasIndex(MI))
+    *OS << Indexes->getInstructionIndex(MI) << '\t';
   MI->print(*OS, TM);
 }
 

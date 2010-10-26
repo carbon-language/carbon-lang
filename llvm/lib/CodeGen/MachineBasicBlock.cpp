@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -176,7 +177,7 @@ StringRef MachineBasicBlock::getName() const {
     return "(null)";
 }
 
-void MachineBasicBlock::print(raw_ostream &OS) const {
+void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   const MachineFunction *MF = getParent();
   if (!MF) {
     OS << "Can't print out MachineBasicBlock because parent MachineFunction"
@@ -185,6 +186,9 @@ void MachineBasicBlock::print(raw_ostream &OS) const {
   }
 
   if (Alignment) { OS << "Alignment " << Alignment << "\n"; }
+
+  if (Indexes)
+    OS << Indexes->getMBBStartIdx(this) << '\t';
 
   OS << "BB#" << getNumber() << ": ";
 
@@ -198,8 +202,9 @@ void MachineBasicBlock::print(raw_ostream &OS) const {
   if (hasAddressTaken()) { OS << Comma << "ADDRESS TAKEN"; Comma = ", "; }
   OS << '\n';
 
-  const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();  
+  const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
   if (!livein_empty()) {
+    if (Indexes) OS << '\t';
     OS << "    Live Ins:";
     for (livein_iterator I = livein_begin(),E = livein_end(); I != E; ++I)
       OutputReg(OS, *I, TRI);
@@ -207,19 +212,26 @@ void MachineBasicBlock::print(raw_ostream &OS) const {
   }
   // Print the preds of this block according to the CFG.
   if (!pred_empty()) {
+    if (Indexes) OS << '\t';
     OS << "    Predecessors according to CFG:";
     for (const_pred_iterator PI = pred_begin(), E = pred_end(); PI != E; ++PI)
       OS << " BB#" << (*PI)->getNumber();
     OS << '\n';
   }
-  
+
   for (const_iterator I = begin(); I != end(); ++I) {
+    if (Indexes) {
+      if (Indexes->hasIndex(I))
+        OS << Indexes->getInstructionIndex(I);
+      OS << '\t';
+    }
     OS << '\t';
     I->print(OS, &getParent()->getTarget());
   }
 
   // Print the successors of this block according to the CFG.
   if (!succ_empty()) {
+    if (Indexes) OS << '\t';
     OS << "    Successors according to CFG:";
     for (const_succ_iterator SI = succ_begin(), E = succ_end(); SI != E; ++SI)
       OS << " BB#" << (*SI)->getNumber();

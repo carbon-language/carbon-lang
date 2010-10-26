@@ -280,7 +280,7 @@ void MachineFunction::dump() const {
   print(dbgs());
 }
 
-void MachineFunction::print(raw_ostream &OS) const {
+void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   OS << "# Machine code for function " << Fn->getName() << ":\n";
 
   // Print Frame Information
@@ -329,7 +329,7 @@ void MachineFunction::print(raw_ostream &OS) const {
   
   for (const_iterator BB = begin(), E = end(); BB != E; ++BB) {
     OS << '\n';
-    BB->print(OS);
+    BB->print(OS, Indexes);
   }
 
   OS << "\n# End machine code for function " << Fn->getName() << ".\n\n";

@@ -23,6 +23,7 @@ class Pass;
 class BasicBlock;
 class MachineFunction;
 class MCSymbol;
+class SlotIndexes;
 class StringRef;
 class raw_ostream;
 
@@ -361,7 +362,7 @@ public:
 
   // Debugging methods.
   void dump() const;
-  void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS, SlotIndexes* = 0) const;
 
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
   /// level, unless they're not in a MachineFunction yet, in which case this
