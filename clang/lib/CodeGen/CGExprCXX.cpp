@@ -1348,8 +1348,6 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
       // FIXME: if subE is an lvalue do
       LValue Obj = EmitLValue(subE);
       llvm::Value *This = Obj.getAddress();
-      LTy = LTy->getPointerTo()->getPointerTo();
-      llvm::Value *V = Builder.CreateBitCast(This, LTy);
       // We need to do a zero check for *p, unless it has NonNullAttr.
       // FIXME: PointerType->hasAttr<NonNullAttr>()
       bool CanBeZero = false;
@@ -1360,8 +1358,8 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
         llvm::BasicBlock *NonZeroBlock = createBasicBlock();
         llvm::BasicBlock *ZeroBlock = createBasicBlock();
         
-        llvm::Value *Zero = llvm::Constant::getNullValue(LTy);
-        Builder.CreateCondBr(Builder.CreateICmpNE(V, Zero),
+        llvm::Value *Zero = llvm::Constant::getNullValue(This->getType());
+        Builder.CreateCondBr(Builder.CreateICmpNE(This, Zero),
                              NonZeroBlock, ZeroBlock);
         EmitBlock(ZeroBlock);
         /// Call __cxa_bad_typeid
@@ -1373,7 +1371,7 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
         Builder.CreateUnreachable();
         EmitBlock(NonZeroBlock);
       }
-      V = Builder.CreateLoad(V, "vtable");
+      llvm::Value *V = GetVTablePtr(This, LTy->getPointerTo());
       V = Builder.CreateConstInBoundsGEP1_64(V, -1ULL);
       V = Builder.CreateLoad(V);
       return V;
@@ -1430,8 +1428,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
   // See if this is a dynamic_cast(void*)
   if (ToVoid) {
     llvm::Value *This = V;
-    V = Builder.CreateBitCast(This, PtrDiffTy->getPointerTo()->getPointerTo());
-    V = Builder.CreateLoad(V, "vtable");
+    V = GetVTablePtr(This, PtrDiffTy->getPointerTo());
     V = Builder.CreateConstInBoundsGEP1_64(V, -2ULL);
     V = Builder.CreateLoad(V, "offset to top");
     This = Builder.CreateBitCast(This, llvm::Type::getInt8PtrTy(VMContext));

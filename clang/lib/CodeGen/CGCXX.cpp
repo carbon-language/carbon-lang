@@ -289,11 +289,9 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
 
 static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VTableIndex, 
                                      llvm::Value *This, const llvm::Type *Ty) {
-  Ty = Ty->getPointerTo()->getPointerTo()->getPointerTo();
+  Ty = Ty->getPointerTo()->getPointerTo();
   
-  llvm::Value *VTable = CGF.Builder.CreateBitCast(This, Ty);
-  VTable = CGF.Builder.CreateLoad(VTable);
-  
+  llvm::Value *VTable = CGF.GetVTablePtr(This, Ty);
   llvm::Value *VFuncPtr = 
     CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfn");
   return CGF.Builder.CreateLoad(VFuncPtr);

@@ -888,6 +888,9 @@ public:
 
   void InitializeVTablePointers(const CXXRecordDecl *ClassDecl);
 
+  /// GetVTablePtr - Return the Value of the vtable pointer member pointed
+  /// to by This.
+  llvm::Value *GetVTablePtr(llvm::Value *This, const llvm::Type *Ty);
 
   /// EnterDtorCleanups - Enter the cleanups necessary to complete the
   /// given phase of destruction for a destructor.  The end result

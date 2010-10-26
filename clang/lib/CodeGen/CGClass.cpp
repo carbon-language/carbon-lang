@@ -1237,10 +1237,7 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
   const llvm::Type *Int8PtrTy = 
     llvm::Type::getInt8Ty(VMContext)->getPointerTo();
 
-  llvm::Value *VTablePtr = Builder.CreateBitCast(This, 
-                                                 Int8PtrTy->getPointerTo());
-  VTablePtr = Builder.CreateLoad(VTablePtr, "vtable");
-
+  llvm::Value *VTablePtr = GetVTablePtr(This, Int8PtrTy);
   int64_t VBaseOffsetOffset = 
     CGM.getVTables().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);
   
@@ -1392,4 +1389,10 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
                            /*OffsetFromNearestVBase=*/0,
                            /*BaseIsNonVirtualPrimaryBase=*/false, 
                            VTable, RD, VBases);
+}
+
+llvm::Value *CodeGenFunction::GetVTablePtr(llvm::Value *This,
+                                           const llvm::Type *Ty) {
+  llvm::Value *VTablePtrSrc = Builder.CreateBitCast(This, Ty->getPointerTo());
+  return Builder.CreateLoad(VTablePtrSrc, "vtable");
 }
