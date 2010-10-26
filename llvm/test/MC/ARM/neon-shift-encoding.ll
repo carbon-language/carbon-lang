@@ -262,3 +262,86 @@ define <2 x i64> @vshrs_2xi64(<2 x i64>* %A) nounwind {
 	%tmp2 = ashr <2 x i64> %tmp1, < i64 64, i64 64 >
 	ret <2 x i64> %tmp2
 }
+
+declare <8 x i16> @llvm.arm.neon.vshiftls.v8i16(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vshiftls.v4i32(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i64> @llvm.arm.neon.vshiftls.v2i64(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vshlls_8xi8
+define <8 x i16> @vshlls_8xi8(<8 x i8>* %A) nounwind {
+	%tmp1 = load <8 x i8>* %A
+; CHECK: vshll.s8	q8, d16, #7     @ encoding: [0x30,0x0a,0xcf,0xf2]
+	%tmp2 = call <8 x i16> @llvm.arm.neon.vshiftls.v8i16(<8 x i8> %tmp1, <8 x i8> < i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7 >)
+	ret <8 x i16> %tmp2
+}
+
+; CHECK: vshlls_4xi16
+define <4 x i32> @vshlls_4xi16(<4 x i16>* %A) nounwind {
+	%tmp1 = load <4 x i16>* %A
+; CHECK: vshll.s16	q8, d16, #15    @ encoding: [0x30,0x0a,0xdf,0xf2]
+	%tmp2 = call <4 x i32> @llvm.arm.neon.vshiftls.v4i32(<4 x i16> %tmp1, <4 x i16> < i16 15, i16 15, i16 15, i16 15 >)
+	ret <4 x i32> %tmp2
+}
+
+; CHECK: vshlls_2xi32
+define <2 x i64> @vshlls_2xi32(<2 x i32>* %A) nounwind {
+	%tmp1 = load <2 x i32>* %A
+; CHECK: vshll.s32	q8, d16, #31    @ encoding: [0x30,0x0a,0xff,0xf2]
+	%tmp2 = call <2 x i64> @llvm.arm.neon.vshiftls.v2i64(<2 x i32> %tmp1, <2 x i32> < i32 31, i32 31 >)
+	ret <2 x i64> %tmp2
+}
+
+declare <8 x i16> @llvm.arm.neon.vshiftlu.v8i16(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vshiftlu.v4i32(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i64> @llvm.arm.neon.vshiftlu.v2i64(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vshllu_8xi8
+define <8 x i16> @vshllu_8xi8(<8 x i8>* %A) nounwind {
+	%tmp1 = load <8 x i8>* %A
+; CHECK: vshll.u8	q8, d16, #7     @ encoding: [0x30,0x0a,0xcf,0xf3]
+	%tmp2 = call <8 x i16> @llvm.arm.neon.vshiftlu.v8i16(<8 x i8> %tmp1, <8 x i8> < i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7 >)
+	ret <8 x i16> %tmp2
+}
+
+; CHECK: vshllu_4xi16
+define <4 x i32> @vshllu_4xi16(<4 x i16>* %A) nounwind {
+	%tmp1 = load <4 x i16>* %A
+; CHECK: vshll.u16	q8, d16, #15    @ encoding: [0x30,0x0a,0xdf,0xf3]
+	%tmp2 = call <4 x i32> @llvm.arm.neon.vshiftlu.v4i32(<4 x i16> %tmp1, <4 x i16> < i16 15, i16 15, i16 15, i16 15 >)
+	ret <4 x i32> %tmp2
+}
+
+; CHECK: vshllu_2xi32
+define <2 x i64> @vshllu_2xi32(<2 x i32>* %A) nounwind {
+	%tmp1 = load <2 x i32>* %A
+; CHECK: vshll.u32	q8, d16, #31    @ encoding: [0x30,0x0a,0xff,0xf3]
+	%tmp2 = call <2 x i64> @llvm.arm.neon.vshiftlu.v2i64(<2 x i32> %tmp1, <2 x i32> < i32 31, i32 31 >)
+	ret <2 x i64> %tmp2
+}
+
+; The following tests use the maximum shift count, so the signedness is
+; irrelevant.  Test both signed and unsigned versions.
+
+; CHECK: vshlli_8xi8
+define <8 x i16> @vshlli_8xi8(<8 x i8>* %A) nounwind {
+	%tmp1 = load <8 x i8>* %A
+; CHECK: vshll.i8	q8, d16, #8     @ encoding: [0x20,0x03,0xf2,0xf3]
+	%tmp2 = call <8 x i16> @llvm.arm.neon.vshiftls.v8i16(<8 x i8> %tmp1, <8 x i8> < i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8 >)
+	ret <8 x i16> %tmp2
+}
+
+; CHECK: vshlli_4xi16
+define <4 x i32> @vshlli_4xi16(<4 x i16>* %A) nounwind {
+	%tmp1 = load <4 x i16>* %A
+; CHECK: vshll.i16	q8, d16, #16    @ encoding: [0x20,0x03,0xf6,0xf3]
+	%tmp2 = call <4 x i32> @llvm.arm.neon.vshiftlu.v4i32(<4 x i16> %tmp1, <4 x i16> < i16 16, i16 16, i16 16, i16 16 >)
+	ret <4 x i32> %tmp2
+}
+
+; CHECK: vshlli_2xi32
+define <2 x i64> @vshlli_2xi32(<2 x i32>* %A) nounwind {
+	%tmp1 = load <2 x i32>* %A
+; CHECK: vshll.i32	q8, d16, #32    @ encoding: [0x20,0x03,0xfa,0xf3]
+	%tmp2 = call <2 x i64> @llvm.arm.neon.vshiftls.v2i64(<2 x i32> %tmp1, <2 x i32> < i32 32, i32 32 >)
+	ret <2 x i64> %tmp2
+}
