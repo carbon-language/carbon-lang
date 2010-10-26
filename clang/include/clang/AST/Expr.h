@@ -53,28 +53,25 @@ class Expr : public Stmt {
   QualType TR;
 
   virtual void ANCHOR(); // key function.
+
 protected:
-  /// TypeDependent - Whether this expression is type-dependent
-  /// (C++ [temp.dep.expr]).
-  bool TypeDependent : 1;
-
-  /// ValueDependent - Whether this expression is value-dependent
-  /// (C++ [temp.dep.constexpr]).
-  bool ValueDependent : 1;
-
-  /// ValueKind - The value classification of this expression.
-  /// Only actually used by certain subclasses.
-  unsigned ValueKind : 2;
-
-  enum { BitsRemaining = 28 };
-
-  Expr(StmtClass SC, QualType T, bool TD, bool VD)
-    : Stmt(SC), TypeDependent(TD), ValueDependent(VD), ValueKind(0) {
+  Expr(StmtClass SC, QualType T, bool TD, bool VD) : Stmt(SC) {
+    ExprBits.TypeDependent = TD;
+    ExprBits.ValueDependent = VD;
+    ExprBits.ValueKind = 0;
     setType(T);
   }
 
   /// \brief Construct an empty expression.
   explicit Expr(StmtClass SC, EmptyShell) : Stmt(SC) { }
+
+  /// getValueKind - The value kind that this cast produces.
+  ExprValueKind getValueKind() const {
+    return static_cast<ExprValueKind>(ExprBits.ValueKind);
+  }
+
+  /// setValueKind - Set the value kind this cast produces.
+  void setValueKind(ExprValueKind Cat) { ExprBits.ValueKind = Cat; }
 
 public:
   QualType getType() const { return TR; }
@@ -99,10 +96,10 @@ public:
   /// @code
   /// template<int Size, char (&Chars)[Size]> struct meta_string;
   /// @endcode
-  bool isValueDependent() const { return ValueDependent; }
+  bool isValueDependent() const { return ExprBits.ValueDependent; }
 
   /// \brief Set whether this expression is value-dependent or not.
-  void setValueDependent(bool VD) { ValueDependent = VD; }
+  void setValueDependent(bool VD) { ExprBits.ValueDependent = VD; }
 
   /// isTypeDependent - Determines whether this expression is
   /// type-dependent (C++ [temp.dep.expr]), which means that its type
@@ -115,10 +112,10 @@ public:
   ///   x + y;
   /// }
   /// @endcode
-  bool isTypeDependent() const { return TypeDependent; }
+  bool isTypeDependent() const { return ExprBits.TypeDependent; }
 
   /// \brief Set whether this expression is type-dependent or not.
-  void setTypeDependent(bool TD) { TypeDependent = TD; }
+  void setTypeDependent(bool TD) { ExprBits.TypeDependent = TD; }
 
   /// SourceLocation tokens are not useful in isolation - they are low level
   /// value objects created/interpreted by SourceManager. We assume AST
@@ -1959,8 +1956,6 @@ public:
   typedef clang::CastKind CastKind;
 
 private:
-  unsigned Kind : 5;
-  unsigned BasePathSize : BitsRemaining - 5;
   Stmt *Op;
 
   void CheckBasePath() const {
@@ -2019,17 +2014,21 @@ protected:
          // Cast expressions are value-dependent if the type is
          // dependent or if the subexpression is value-dependent.
          ty->isDependentType() || (op && op->isValueDependent())),
-    Kind(kind), BasePathSize(BasePathSize), Op(op) {
+    Op(op) {
+    CastExprBits.Kind = kind;
+    CastExprBits.BasePathSize = BasePathSize;
     CheckBasePath();
   }
 
   /// \brief Construct an empty cast.
   CastExpr(StmtClass SC, EmptyShell Empty, unsigned BasePathSize)
-    : Expr(SC, Empty), BasePathSize(BasePathSize) { }
+    : Expr(SC, Empty) {
+    CastExprBits.BasePathSize = BasePathSize;
+  }
 
 public:
-  CastKind getCastKind() const { return static_cast<CastKind>(Kind); }
-  void setCastKind(CastKind K) { Kind = K; }
+  CastKind getCastKind() const { return (CastKind) CastExprBits.Kind; }
+  void setCastKind(CastKind K) { CastExprBits.Kind = K; }
   const char *getCastKindName() const;
 
   Expr *getSubExpr() { return cast<Expr>(Op); }
@@ -2046,8 +2045,8 @@ public:
 
   typedef CXXBaseSpecifier **path_iterator;
   typedef const CXXBaseSpecifier * const *path_const_iterator;
-  bool path_empty() const { return BasePathSize == 0; }
-  unsigned path_size() const { return BasePathSize; }
+  bool path_empty() const { return CastExprBits.BasePathSize == 0; }
+  unsigned path_size() const { return CastExprBits.BasePathSize; }
   path_iterator path_begin() { return path_buffer(); }
   path_iterator path_end() { return path_buffer() + path_size(); }
   path_const_iterator path_begin() const { return path_buffer(); }
@@ -2091,7 +2090,7 @@ private:
   ImplicitCastExpr(QualType ty, CastKind kind, Expr *op,
                    unsigned BasePathLength, ExprValueKind VK)
     : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePathLength) {
-    ValueKind = VK;
+    setValueKind(VK);
   }
 
   /// \brief Construct an empty implicit cast.
@@ -2103,7 +2102,7 @@ public:
   ImplicitCastExpr(OnStack_t _, QualType ty, CastKind kind, Expr *op,
                    ExprValueKind VK)
     : CastExpr(ImplicitCastExprClass, ty, kind, op, 0) {
-    ValueKind = VK;
+    setValueKind(VK);
   }
 
   static ImplicitCastExpr *Create(ASTContext &Context, QualType T,
@@ -2117,13 +2116,8 @@ public:
     return getSubExpr()->getSourceRange();
   }
 
-  /// getValueKind - The value kind that this cast produces.
-  ExprValueKind getValueKind() const {
-    return static_cast<ExprValueKind>(ValueKind);
-  }
-
-  /// setValueKind - Set the value kind this cast produces.
-  void setValueKind(ExprValueKind Cat) { ValueKind = Cat; }
+  using Expr::getValueKind;
+  using Expr::setValueKind;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImplicitCastExprClass;

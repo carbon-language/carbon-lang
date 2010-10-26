@@ -124,8 +124,8 @@ std::size_t ExplicitTemplateArgumentList::sizeFor(
 }
 
 void DeclRefExpr::computeDependence() {
-  TypeDependent = false;
-  ValueDependent = false;
+  ExprBits.TypeDependent = false;
+  ExprBits.ValueDependent = false;
   
   NamedDecl *D = getDecl();
 
@@ -140,27 +140,27 @@ void DeclRefExpr::computeDependence() {
   //  (TD)  - an identifier that was declared with dependent type
   //  (VD)  - a name declared with a dependent type,
   if (getType()->isDependentType()) {
-    TypeDependent = true;
-    ValueDependent = true;
+    ExprBits.TypeDependent = true;
+    ExprBits.ValueDependent = true;
   }
   //  (TD)  - a conversion-function-id that specifies a dependent type
   else if (D->getDeclName().getNameKind() 
                                == DeclarationName::CXXConversionFunctionName &&
            D->getDeclName().getCXXNameType()->isDependentType()) {
-    TypeDependent = true;
-    ValueDependent = true;
+    ExprBits.TypeDependent = true;
+    ExprBits.ValueDependent = true;
   }
   //  (TD)  - a template-id that is dependent,
   else if (hasExplicitTemplateArgs() && 
            TemplateSpecializationType::anyDependentTemplateArguments(
                                                        getTemplateArgs(), 
                                                        getNumTemplateArgs())) {
-    TypeDependent = true;
-    ValueDependent = true;
+    ExprBits.TypeDependent = true;
+    ExprBits.ValueDependent = true;
   }
   //  (VD)  - the name of a non-type template parameter,
   else if (isa<NonTypeTemplateParmDecl>(D))
-    ValueDependent = true;
+    ExprBits.ValueDependent = true;
   //  (VD) - a constant with integral or enumeration type and is
   //         initialized with an expression that is value-dependent.
   else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
@@ -168,20 +168,20 @@ void DeclRefExpr::computeDependence() {
         Var->getType().getCVRQualifiers() == Qualifiers::Const) {
       if (const Expr *Init = Var->getAnyInitializer())
         if (Init->isValueDependent())
-          ValueDependent = true;
+          ExprBits.ValueDependent = true;
     } 
     // (VD) - FIXME: Missing from the standard: 
     //      -  a member function or a static data member of the current 
     //         instantiation
     else if (Var->isStaticDataMember() && 
              Var->getDeclContext()->isDependentContext())
-      ValueDependent = true;
+      ExprBits.ValueDependent = true;
   } 
   // (VD) - FIXME: Missing from the standard: 
   //      -  a member function or a static data member of the current 
   //         instantiation
   else if (isa<CXXMethodDecl>(D) && D->getDeclContext()->isDependentContext())
-    ValueDependent = true;
+    ExprBits.ValueDependent = true;
   //  (TD)  - a nested-name-specifier or a qualified-id that names a
   //          member of an unknown specialization.
   //        (handled by DependentScopeDeclRefExpr)
@@ -999,9 +999,9 @@ InitListExpr::InitListExpr(ASTContext &C, SourceLocation lbraceloc,
 {      
   for (unsigned I = 0; I != numInits; ++I) {
     if (initExprs[I]->isTypeDependent())
-      TypeDependent = true;
+      ExprBits.TypeDependent = true;
     if (initExprs[I]->isValueDependent())
-      ValueDependent = true;
+      ExprBits.ValueDependent = true;
   }
       
   InitExprs.insert(C, InitExprs.end(), initExprs, initExprs+numInits);
@@ -2224,7 +2224,7 @@ DesignatedInitExpr::DesignatedInitExpr(ASTContext &C, QualType Ty,
     if (this->Designators[I].isArrayDesignator()) {
       // Compute type- and value-dependence.
       Expr *Index = IndexExprs[IndexIdx];
-      ValueDependent = ValueDependent ||
+      ExprBits.ValueDependent = ExprBits.ValueDependent ||
         Index->isTypeDependent() || Index->isValueDependent();
 
       // Copy the index expressions into permanent storage.
@@ -2233,7 +2233,7 @@ DesignatedInitExpr::DesignatedInitExpr(ASTContext &C, QualType Ty,
       // Compute type- and value-dependence.
       Expr *Start = IndexExprs[IndexIdx];
       Expr *End = IndexExprs[IndexIdx + 1];
-      ValueDependent = ValueDependent ||
+      ExprBits.ValueDependent = ExprBits.ValueDependent ||
         Start->isTypeDependent() || Start->isValueDependent() ||
         End->isTypeDependent() || End->isValueDependent();
 

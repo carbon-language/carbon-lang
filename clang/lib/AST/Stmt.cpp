@@ -46,7 +46,7 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
 }
 
 const char *Stmt::getStmtClassName() const {
-  return getStmtInfoTableEntry((StmtClass)sClass).Name;
+  return getStmtInfoTableEntry((StmtClass) StmtBits.sClass).Name;
 }
 
 void Stmt::PrintStats() {
@@ -87,7 +87,7 @@ bool Stmt::CollectingStats(bool Enable) {
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
   if (this->Body)
     C.Deallocate(Body);
-  this->NumStmts = NumStmts;
+  this->CompoundStmtBits.NumStmts = NumStmts;
 
   Body = new (C) Stmt*[NumStmts];
   memcpy(Body, Stmts, sizeof(Stmt *) * NumStmts);
@@ -106,7 +106,7 @@ SourceRange ReturnStmt::getSourceRange() const {
 }
 
 bool Stmt::hasImplicitControlFlow() const {
-  switch (sClass) {
+  switch (StmtBits.sClass) {
     default:
       return false;
 
@@ -604,7 +604,9 @@ Stmt::child_iterator NullStmt::child_end() { return child_iterator(); }
 
 // CompoundStmt
 Stmt::child_iterator CompoundStmt::child_begin() { return &Body[0]; }
-Stmt::child_iterator CompoundStmt::child_end() { return &Body[0]+NumStmts; }
+Stmt::child_iterator CompoundStmt::child_end() {
+  return &Body[0]+CompoundStmtBits.NumStmts;
+}
 
 // CaseStmt
 Stmt::child_iterator CaseStmt::child_begin() { return &SubExprs[0]; }
