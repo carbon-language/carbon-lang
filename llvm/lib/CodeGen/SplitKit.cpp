@@ -839,7 +839,8 @@ void SplitEditor::finish() {
   computeRemainder();
 
   // Get rid of unused values and set phi-kill flags.
-  dupli_.getLI()->RenumberValues(lis_);
+  for (LiveRangeEdit::iterator I = edit_.begin(), E = edit_.end(); I != E; ++I)
+    (*I)->RenumberValues(lis_);
 
   // Now check if dupli was separated into multiple connected components.
   ConnectedVNInfoEqClasses ConEQ(lis_);
