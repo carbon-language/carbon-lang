@@ -50,6 +50,7 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectivePrevious>(".previous");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveType>(".type");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveIdent>(".ident");
   }
 
   // FIXME: Part of this logic is duplicated in the MCELFStreamer. What is
@@ -114,6 +115,7 @@ public:
   bool ParseDirectiveSize(StringRef, SMLoc);
   bool ParseDirectivePrevious(StringRef, SMLoc);
   bool ParseDirectiveType(StringRef, SMLoc);
+  bool ParseDirectiveIdent(StringRef, SMLoc);
 
 private:
   bool ParseSectionName(StringRef &SectionName);
@@ -342,6 +344,36 @@ bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
 
   getStreamer().EmitSymbolAttribute(Sym, Attr);
 
+  return false;
+}
+
+/// ParseDirectiveIdent
+///  ::= .ident string
+bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
+  if (getLexer().isNot(AsmToken::String))
+    return TokError("unexpected token in '.ident' directive");
+
+  StringRef Data = getTok().getIdentifier();
+
+  Lex();
+
+  const MCSection *OldSection = getStreamer().getCurrentSection();
+  const MCSection *Comment =
+    getContext().getELFSection(".comment", MCSectionELF::SHT_PROGBITS,
+                               MCSectionELF::SHF_MERGE |
+                               MCSectionELF::SHF_STRINGS,
+                               SectionKind::getReadOnly(),
+                               false, 1);
+
+  static bool First = true;
+
+  getStreamer().SwitchSection(Comment);
+  if (First)
+    getStreamer().EmitIntValue(0, 1);
+  First = false;
+  getStreamer().EmitBytes(Data, 0);
+  getStreamer().EmitIntValue(0, 1);
+  getStreamer().SwitchSection(OldSection);
   return false;
 }
 
