@@ -1201,7 +1201,7 @@ emitLoadConstPool(MachineBasicBlock &MBB,
   BuildMI(MBB, MBBI, dl, TII.get(ARM::LDRcp))
     .addReg(DestReg, getDefRegState(true), SubIdx)
     .addConstantPoolIndex(Idx)
-    .addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+    .addImm(0).addImm(Pred).addReg(PredReg);
 }
 
 bool ARMBaseRegisterInfo::
@@ -1314,6 +1314,7 @@ getFrameIndexInstrOffset(const MachineInstr *MI, int Idx) const {
   switch (AddrMode) {
   case ARMII::AddrModeT2_i8:
   case ARMII::AddrModeT2_i12:
+  case ARMII::AddrMode_i12:
     InstrOffs = MI->getOperand(Idx+1).getImm();
     Scale = 1;
     break;
@@ -1375,7 +1376,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   // return false for everything else.
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
-  case ARM::LDR: case ARM::LDRH: case ARM::LDRB:
+  case ARM::LDRi12: case ARM::LDRH: case ARM::LDRB:
   case ARM::STR: case ARM::STRH: case ARM::STRB:
   case ARM::t2LDRi12: case ARM::t2LDRi8:
   case ARM::t2STRi12: case ARM::t2STRi8:
@@ -1519,6 +1520,7 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
     NumBits = 8;
     Scale = 4;
     break;
+  case ARMII::AddrMode_i12:
   case ARMII::AddrMode2:
     NumBits = 12;
     break;
@@ -1813,7 +1815,7 @@ static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII,
                         const unsigned *CSRegs) {
   return ((MI->getOpcode() == (int)ARM::VLDRD ||
-           MI->getOpcode() == (int)ARM::LDR ||
+           MI->getOpcode() == (int)ARM::LDRi12 ||
            MI->getOpcode() == (int)ARM::t2LDRi12) &&
           MI->getOperand(1).isFI() &&
           isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs));
@@ -1881,7 +1883,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getDPRCalleeSavedAreaSize());
 
     // Move SP to SP upon entry to the function.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, ARM::t2LDRi12, 1, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDRi12, ARM::t2LDRi12, 1, STI);
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getGPRCalleeSavedAreaSize());
   }
 

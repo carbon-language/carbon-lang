@@ -80,6 +80,9 @@ public:
 
   bool SelectShifterOperandReg(SDValue N, SDValue &A,
                                SDValue &B, SDValue &C);
+  bool SelectAddrModeImm12(SDValue N, SDValue &Base, SDValue &OffImm);
+  bool SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset, SDValue &Opc);
+
   AddrMode2Type SelectAddrMode2Worker(SDValue N, SDValue &Base,
                                       SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode2Base(SDValue N, SDValue &Base, SDValue &Offset,
@@ -95,6 +98,7 @@ public:
   bool SelectAddrMode2(SDValue N, SDValue &Base, SDValue &Offset,
                        SDValue &Opc) {
     SelectAddrMode2Worker(N, Base, Offset, Opc);
+//    return SelectAddrMode2ShOp(N, Base, Offset, Opc);
     // This always matches one way or another.
     return true;
   }
@@ -267,6 +271,138 @@ bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue N,
                                   MVT::i32);
   return true;
 }
+
+bool ARMDAGToDAGISel::SelectAddrModeImm12(SDValue N,
+                                          SDValue &Base,
+                                          SDValue &OffImm) {
+  // Match simple R + imm12 operands.
+
+  // Base only.
+  if (N.getOpcode() != ISD::ADD && N.getOpcode() != ISD::SUB) {
+    if (N.getOpcode() == ISD::FrameIndex) {
+      // Match frame index...
+      int FI = cast<FrameIndexSDNode>(N)->getIndex();
+      Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+      OffImm  = CurDAG->getTargetConstant(0, MVT::i32);
+      return true;
+    } else if (N.getOpcode() == ARMISD::Wrapper &&
+               !(Subtarget->useMovt() &&
+                 N.getOperand(0).getOpcode() == ISD::TargetGlobalAddress)) {
+      Base = N.getOperand(0);
+    } else
+      Base = N;
+    OffImm  = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
+
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+    int RHSC = (int)RHS->getZExtValue();
+    if (N.getOpcode() == ISD::SUB)
+      RHSC = -RHSC;
+
+    if (RHSC >= 0 && RHSC < 0x1000) { // 12 bits (unsigned)
+      Base   = N.getOperand(0);
+      if (Base.getOpcode() == ISD::FrameIndex) {
+        int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+        Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+      }
+      OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
+      return true;
+    }
+  }
+
+  // Base only.
+  Base = N;
+  OffImm  = CurDAG->getTargetConstant(0, MVT::i32);
+  return true;
+}
+
+
+
+bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
+                                      SDValue &Opc) {
+  if (N.getOpcode() == ISD::MUL) {
+    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      // X * [3,5,9] -> X + X * [2,4,8] etc.
+      int RHSC = (int)RHS->getZExtValue();
+      if (RHSC & 1) {
+        RHSC = RHSC & ~1;
+        ARM_AM::AddrOpc AddSub = ARM_AM::add;
+        if (RHSC < 0) {
+          AddSub = ARM_AM::sub;
+          RHSC = - RHSC;
+        }
+        if (isPowerOf2_32(RHSC)) {
+          unsigned ShAmt = Log2_32(RHSC);
+          Base = Offset = N.getOperand(0);
+          Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, ShAmt,
+                                                            ARM_AM::lsl),
+                                          MVT::i32);
+          return true;
+        }
+      }
+    }
+  }
+
+  if (N.getOpcode() != ISD::ADD && N.getOpcode() != ISD::SUB)
+    return false;
+
+  // Leave simple R +/- imm12 operands for LDRi12
+  if (N.getOpcode() == ISD::ADD) {
+    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      int RHSC = (int)RHS->getZExtValue();
+      if ((RHSC >= 0 && RHSC < 0x1000) ||
+          (RHSC < 0 && RHSC > -0x1000)) // 12 bits.
+        return false;
+    }
+  }
+
+  // Otherwise this is R +/- [possibly shifted] R.
+  ARM_AM::AddrOpc AddSub = N.getOpcode() == ISD::ADD ? ARM_AM::add:ARM_AM::sub;
+  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(1));
+  unsigned ShAmt = 0;
+
+  Base   = N.getOperand(0);
+  Offset = N.getOperand(1);
+
+  if (ShOpcVal != ARM_AM::no_shift) {
+    // Check to see if the RHS of the shift is a constant, if not, we can't fold
+    // it.
+    if (ConstantSDNode *Sh =
+           dyn_cast<ConstantSDNode>(N.getOperand(1).getOperand(1))) {
+      ShAmt = Sh->getZExtValue();
+      Offset = N.getOperand(1).getOperand(0);
+    } else {
+      ShOpcVal = ARM_AM::no_shift;
+    }
+  }
+
+  // Try matching (R shl C) + (R).
+  if (N.getOpcode() == ISD::ADD && ShOpcVal == ARM_AM::no_shift) {
+    ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(0));
+    if (ShOpcVal != ARM_AM::no_shift) {
+      // Check to see if the RHS of the shift is a constant, if not, we can't
+      // fold it.
+      if (ConstantSDNode *Sh =
+          dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {
+        ShAmt = Sh->getZExtValue();
+        Offset = N.getOperand(0).getOperand(0);
+        Base = N.getOperand(1);
+      } else {
+        ShOpcVal = ARM_AM::no_shift;
+      }
+    }
+  }
+
+  Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, ShAmt, ShOpcVal),
+                                  MVT::i32);
+  return true;
+}
+
+
+
+
+//-----
 
 AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
                                                      SDValue &Base,
@@ -1701,14 +1837,13 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       } else {
         SDValue Ops[] = {
           CPIdx,
-          CurDAG->getRegister(0, MVT::i32),
           CurDAG->getTargetConstant(0, MVT::i32),
           getAL(CurDAG),
           CurDAG->getRegister(0, MVT::i32),
           CurDAG->getEntryNode()
         };
         ResNode=CurDAG->getMachineNode(ARM::LDRcp, dl, MVT::i32, MVT::Other,
-                                       Ops, 6);
+                                       Ops, 5);
       }
       ReplaceUses(SDValue(N, 0), SDValue(ResNode, 0));
       return NULL;

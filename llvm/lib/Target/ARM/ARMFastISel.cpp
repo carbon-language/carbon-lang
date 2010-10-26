@@ -449,7 +449,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::LDRcp), DestReg)
                     .addConstantPoolIndex(Idx)
-                    .addReg(0).addImm(0));
+                    .addImm(0));
 
   return DestReg;
 }
@@ -750,7 +750,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i32:
-      Opc = isThumb ? ARM::t2LDRi12 : ARM::LDR;
+      Opc = isThumb ? ARM::t2LDRi12 : ARM::LDRi12;
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::f32:
@@ -776,14 +776,9 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   
   // The thumb and floating point instructions both take 2 operands, ARM takes
   // another register.
-  if (isFloat || isThumb)
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(Opc), ResultReg)
-                    .addReg(Base).addImm(Offset));
-  else
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(Opc), ResultReg)
-                    .addReg(Base).addReg(0).addImm(Offset));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(Opc), ResultReg)
+                  .addReg(Base).addImm(Offset));
   return true;
 }
 

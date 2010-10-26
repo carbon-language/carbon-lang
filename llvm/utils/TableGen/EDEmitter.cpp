@@ -592,6 +592,8 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("so_imm2part", "kOperandTypeARMSoImm2Part");               // I
   MISC("pred", "kOperandTypeARMPredicate");                       // I, R
   MISC("it_pred", "kOperandTypeARMPredicate");                    // I
+  MISC("addrmode_imm12", "kOperandTypeAddrModeImm12");            // R, I
+  MISC("ldst_so_reg", "kOperandTypeLdStSOReg");                   // R, R, I
   MISC("addrmode2", "kOperandTypeARMAddrMode2");                  // R, R, I
   MISC("am2offset", "kOperandTypeARMAddrMode2Offset");            // R, I
   MISC("addrmode3", "kOperandTypeARMAddrMode3");                  // R, R, I
@@ -807,6 +809,8 @@ static void emitCommonEnums(raw_ostream &o, unsigned int &i) {
   operandTypes.addEntry("kOperandTypeARMRotImm");
   operandTypes.addEntry("kOperandTypeARMSoImm2Part");
   operandTypes.addEntry("kOperandTypeARMPredicate");
+  operandTypes.addEntry("kOperandTypeAddrModeImm12");
+  operandTypes.addEntry("kOperandTypeLdStSOReg");
   operandTypes.addEntry("kOperandTypeARMAddrMode2");
   operandTypes.addEntry("kOperandTypeARMAddrMode2Offset");
   operandTypes.addEntry("kOperandTypeARMAddrMode3");

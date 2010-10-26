@@ -605,6 +605,11 @@ void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
 
+  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
+    printOperand(MI, OpNum, O);
+    return;
+  }
+
   O << "[" << getRegisterName(MO1.getReg());
 
   unsigned OffImm = MO2.getImm();

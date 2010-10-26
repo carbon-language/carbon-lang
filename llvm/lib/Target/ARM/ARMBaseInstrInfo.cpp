@@ -144,7 +144,7 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (isLoad)
       MemMI = BuildMI(MF, MI->getDebugLoc(),
                       get(MemOpc), MI->getOperand(0).getReg())
-        .addReg(WBReg).addReg(0).addImm(0).addImm(Pred);
+        .addReg(WBReg).addImm(0).addImm(Pred);
     else
       MemMI = BuildMI(MF, MI->getDebugLoc(),
                       get(MemOpc)).addReg(MI->getOperand(1).getReg())
@@ -155,7 +155,7 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (isLoad)
       MemMI = BuildMI(MF, MI->getDebugLoc(),
                       get(MemOpc), MI->getOperand(0).getReg())
-        .addReg(BaseReg).addReg(0).addImm(0).addImm(Pred);
+        .addReg(BaseReg).addImm(0).addImm(Pred);
     else
       MemMI = BuildMI(MF, MI->getDebugLoc(),
                       get(MemOpc)).addReg(MI->getOperand(1).getReg())
@@ -823,8 +823,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
   switch (RC->getID()) {
   case ARM::GPRRegClassID:
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::LDR), DestReg)
-                   .addFrameIndex(FI).addReg(0).addImm(0).addMemOperand(MMO));
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::LDRi12), DestReg)
+                   .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
     break;
   case ARM::SPRRegClassID:
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRS), DestReg)
@@ -894,7 +894,7 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                       int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
-  case ARM::LDR:
+  case ARM::LDRrs:
   case ARM::t2LDRs:  // FIXME: don't use t2LDRs to access frame.
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isReg() &&
@@ -905,6 +905,7 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
       return MI->getOperand(0).getReg();
     }
     break;
+  case ARM::LDRi12:
   case ARM::t2LDRi12:
   case ARM::tRestore:
   case ARM::VLDRD:
@@ -1078,7 +1079,7 @@ bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   switch (Load1->getMachineOpcode()) {
   default:
     return false;
-  case ARM::LDR:
+  case ARM::LDRi12:
   case ARM::LDRB:
   case ARM::LDRD:
   case ARM::LDRH:
@@ -1097,7 +1098,7 @@ bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   switch (Load2->getMachineOpcode()) {
   default:
     return false;
-  case ARM::LDR:
+  case ARM::LDRi12:
   case ARM::LDRB:
   case ARM::LDRD:
   case ARM::LDRH:
@@ -1362,6 +1363,12 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     unsigned NumBits = 0;
     unsigned Scale = 1;
     switch (AddrMode) {
+    case ARMII::AddrMode_i12: {
+      ImmIdx = FrameRegIdx + 1;
+      InstrOffs = MI.getOperand(ImmIdx).getImm();
+      NumBits = 12;
+      break;
+    }
     case ARMII::AddrMode2: {
       ImmIdx = FrameRegIdx+2;
       InstrOffs = ARM_AM::getAM2Offset(MI.getOperand(ImmIdx).getImm());

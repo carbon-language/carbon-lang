@@ -130,7 +130,7 @@ namespace {
 
 static int getLoadStoreMultipleOpcode(int Opcode) {
   switch (Opcode) {
-  case ARM::LDR:
+  case ARM::LDRi12:
     ++NumLDMGened;
     return ARM::LDM;
   case ARM::STR:
@@ -166,7 +166,7 @@ static bool isT2i32Load(unsigned Opc) {
 }
 
 static bool isi32Load(unsigned Opc) {
-  return Opc == ARM::LDR || isT2i32Load(Opc);
+  return Opc == ARM::LDRi12 || isT2i32Load(Opc);
 }
 
 static bool isT2i32Store(unsigned Opc) {
@@ -440,7 +440,7 @@ static inline bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
 static inline unsigned getLSMultipleTransferSize(MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default: return 0;
-  case ARM::LDR:
+  case ARM::LDRi12:
   case ARM::STR:
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
@@ -578,7 +578,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
 
 static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc) {
   switch (Opc) {
-  case ARM::LDR: return ARM::LDR_PRE;
+  case ARM::LDRi12: return ARM::LDR_PRE;
   case ARM::STR: return ARM::STR_PRE;
   case ARM::VLDRS: return ARM::VLDMS_UPD;
   case ARM::VLDRD: return ARM::VLDMD_UPD;
@@ -597,7 +597,7 @@ static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc) {
 
 static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc) {
   switch (Opc) {
-  case ARM::LDR: return ARM::LDR_POST;
+  case ARM::LDRi12: return ARM::LDR_POST;
   case ARM::STR: return ARM::STR_POST;
   case ARM::VLDRS: return ARM::VLDMS_UPD;
   case ARM::VLDRD: return ARM::VLDMD_UPD;
@@ -629,14 +629,18 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   DebugLoc dl = MI->getDebugLoc();
   bool isAM5 = (Opcode == ARM::VLDRD || Opcode == ARM::VLDRS ||
                 Opcode == ARM::VSTRD || Opcode == ARM::VSTRS);
-  bool isAM2 = (Opcode == ARM::LDR || Opcode == ARM::STR);
-  if (isAM2 && ARM_AM::getAM2Offset(MI->getOperand(3).getImm()) != 0)
+  bool isAM2 = (Opcode == ARM::LDRi12 || Opcode == ARM::STR);
+  // FIXME: This special handling of LDRi12 is hackery until all of the ARM
+  // LDR/STR insns are moved away from the addrmode2 mega-instruction to
+  // the split (LDRi12/LDRrs) style instructions.
+  if (Opcode == ARM::LDRi12 || isT2i32Load(Opcode) || isT2i32Store(Opcode))
+    if (MI->getOperand(2).getImm() != 0)
+      return false;
+  if (isAM2 && Opcode != ARM::LDRi12
+      && ARM_AM::getAM2Offset(MI->getOperand(3).getImm()) != 0)
     return false;
   if (isAM5 && ARM_AM::getAM5Offset(MI->getOperand(2).getImm()) != 0)
     return false;
-  if (isT2i32Load(Opcode) || isT2i32Store(Opcode))
-    if (MI->getOperand(2).getImm() != 0)
-      return false;
 
   bool isLd = isi32Load(Opcode) || Opcode == ARM::VLDRS || Opcode == ARM::VLDRD;
   // Can't do the merge if the destination register is the same as the would-be
@@ -782,7 +786,6 @@ static bool isMemoryOp(const MachineInstr *MI) {
   int Opcode = MI->getOpcode();
   switch (Opcode) {
   default: break;
-  case ARM::LDR:
   case ARM::STR:
     return MI->getOperand(1).isReg() && MI->getOperand(2).getReg() == 0;
   case ARM::VLDRS:
@@ -791,6 +794,7 @@ static bool isMemoryOp(const MachineInstr *MI) {
   case ARM::VLDRD:
   case ARM::VSTRD:
     return MI->getOperand(1).isReg();
+  case ARM::LDRi12:
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
   case ARM::t2STRi8:
@@ -818,14 +822,15 @@ void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps) {
 
 static int getMemoryOpOffset(const MachineInstr *MI) {
   int Opcode = MI->getOpcode();
-  bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
+  bool isAM2 = Opcode == ARM::STR;
   bool isAM3 = Opcode == ARM::LDRD || Opcode == ARM::STRD;
   unsigned NumOperands = MI->getDesc().getNumOperands();
   unsigned OffField = MI->getOperand(NumOperands-3).getImm();
 
   if (Opcode == ARM::t2LDRi12 || Opcode == ARM::t2LDRi8 ||
       Opcode == ARM::t2STRi12 || Opcode == ARM::t2STRi8 ||
-      Opcode == ARM::t2LDRDi8 || Opcode == ARM::t2STRDi8)
+      Opcode == ARM::t2LDRDi8 || Opcode == ARM::t2STRDi8 ||
+      Opcode == ARM::LDRi12)
     return OffField;
 
   int Offset = isAM2
@@ -944,7 +949,7 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
       assert((!isT2 || !OffReg) &&
              "Thumb2 ldrd / strd does not encode offset register!");
       unsigned NewOpc = (isLd)
-        ? (isT2 ? (OffImm < 0 ? ARM::t2LDRi8 : ARM::t2LDRi12) : ARM::LDR)
+        ? (isT2 ? (OffImm < 0 ? ARM::t2LDRi8 : ARM::t2LDRi12) : ARM::LDRi12)
         : (isT2 ? (OffImm < 0 ? ARM::t2STRi8 : ARM::t2STRi12) : ARM::STR);
       DebugLoc dl = MBBI->getDebugLoc();
       // If this is a load and base register is killed, it may have been
@@ -1342,7 +1347,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   // FIXME: VLDRS / VSTRS -> VLDRD / VSTRD
   unsigned Scale = 1;
   unsigned Opcode = Op0->getOpcode();
-  if (Opcode == ARM::LDR)
+  if (Opcode == ARM::LDRi12)
     NewOpc = ARM::LDRD;
   else if (Opcode == ARM::STR)
     NewOpc = ARM::STRD;
@@ -1358,7 +1363,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
     return false;
 
   // Make sure the offset registers match.
-  if (!isT2 &&
+  if (!isT2 && Opcode != ARM::LDRi12 &&
       (Op0->getOperand(2).getReg() != Op1->getOperand(2).getReg()))
       return false;
 
@@ -1405,7 +1410,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   if (EvenReg == OddReg)
     return false;
   BaseReg = Op0->getOperand(1).getReg();
-  if (!isT2)
+  if (!isT2 && Opcode != ARM::LDRi12)
     OffReg = Op0->getOperand(2).getReg();
   Pred = llvm::getInstrPredicate(Op0, PredReg);
   dl = Op0->getDebugLoc();
@@ -1513,8 +1518,12 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
               .addReg(EvenReg, RegState::Define)
               .addReg(OddReg, RegState::Define)
               .addReg(BaseReg);
+            // For now, we're converting from LDRi12 to an insn that still
+            // uses addrmode2, so we need an explicit offset reg. It should
+            // always by reg0 since we're transforming LDRi12s. The old
+            // was just being paranoid in allowing for anything else.
             if (!isT2)
-              MIB.addReg(OffReg);
+              MIB.addReg(0);
             MIB.addImm(Offset).addImm(Pred).addReg(PredReg);
             ++NumLDRDFormed;
           } else {

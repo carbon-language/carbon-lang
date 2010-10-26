@@ -50,6 +50,7 @@ namespace ARMII {
     AddrModeT2_so   = 13,
     AddrModeT2_pc   = 14, // +/- i12 for pc relative data
     AddrModeT2_i8s4 = 15, // i8 * 4
+    AddrMode_i12    = 16,
 
     // Size* - Flags to keep track of the size of an instruction.
     SizeShift     = 5,

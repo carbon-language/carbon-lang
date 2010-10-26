@@ -49,6 +49,10 @@ public:
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO) const;
 
+  /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
+  /// operand.
+  unsigned getAddrModeImm12OpValue(const MCInst &MI, unsigned Op) const;
+
   /// getCCOutOpValue - Return encoding of the 's' bit.
   unsigned getCCOutOpValue(const MCInst &MI, unsigned Op) const {
     // The operand is either reg0 or CPSR. The 's' bit is encoded as '0' or
@@ -169,6 +173,25 @@ unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
     llvm_unreachable(0);
   }
   return 0;
+}
+
+/// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
+/// operand.
+unsigned ARMMCCodeEmitter::getAddrModeImm12OpValue(const MCInst &MI,
+                                                   unsigned OpIdx) const {
+  // {17-13} = reg
+  // {12}    = (U)nsigned (add == '1', sub == '0')
+  // {11-0}  = imm12
+  const MCOperand &MO  = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  unsigned Reg = getARMRegisterNumbering(MO.getReg());
+  int32_t Imm12 = MO1.getImm();
+  uint32_t Binary;
+  Binary = Imm12 & 0xfff;
+  if (Imm12 >= 0)
+    Binary |= (1 << 12);
+  Binary |= (Reg << 13);
+  return Binary;
 }
 
 unsigned ARMMCCodeEmitter::getSORegOpValue(const MCInst &MI,

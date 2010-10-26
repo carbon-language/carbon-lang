@@ -382,22 +382,27 @@ def imm0_31_m1 : Operand<i32>, PatLeaf<(imm), [{
 
 // Define ARM specific addressing modes.
 
-// addrmode2base := reg +/- imm12
+
+// addrmode_imm12 := reg +/- imm12
 //
-def addrmode2base : Operand<i32>,
-                ComplexPattern<i32, 3, "SelectAddrMode2Base", []> {
-  let PrintMethod = "printAddrMode2Operand";
-  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+def addrmode_imm12 : Operand<i32>,
+                     ComplexPattern<i32, 2, "SelectAddrModeImm12", []> {
+
+  string EncoderMethod = "getAddrModeImm12OpValue";
+  let PrintMethod = "printAddrModeImm12Operand";
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
-// addrmode2shop := reg +/- reg shop imm
+// ldst_so_reg := reg +/- reg shop imm
 //
-def addrmode2shop : Operand<i32>,
-                ComplexPattern<i32, 3, "SelectAddrMode2ShOp", []> {
+def ldst_so_reg : Operand<i32>,
+                  ComplexPattern<i32, 3, "SelectLdStSOReg", []> {
+  // FIXME: Simplify the printer
   let PrintMethod = "printAddrMode2Operand";
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
 
-// addrmode2 := (addrmode2base || addrmode2shop)
+// addrmode2 := reg +/- imm12
+//           := reg +/- reg shop imm
 //
 def addrmode2 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode2", []> {
@@ -794,6 +799,34 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Inst{25} = 0;
   }
 }
+}
+}
+
+let canFoldAsLoad = 1, isReMaterializable = 1 in {
+multiclass AI_ldr1<bit opc22, string opc, InstrItinClass iii,
+           InstrItinClass iir, PatFrag opnode> {
+  // Note: We use the complex addrmode_imm12 rather than just an input
+  // GPR and a constrained immediate so that we can use this to match
+  // frame index references and avoid matching constant pool references.
+  def i12 : AIldr1<0b010, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
+                   AddrMode_i12, LdFrm, iii, opc, "\t$Rt, $addr",
+                  [(set GPR:$Rt, (opnode addrmode_imm12:$addr))]> {
+    bits<4> Rt;
+    bits<17> addr;
+    let Inst{23}    = addr{12};     // U (add = ('U' == 1))
+    let Inst{19-16} = addr{16-13};  // Rn
+    let Inst{15-12} = Rt;
+    let Inst{11-0}  = addr{11-0};   // imm12
+  }
+  def rs : AIldr1<0b011, 0, (outs GPR:$Rt), (ins ldst_so_reg:$shift),
+                  AddrModeNone, LdFrm, iir, opc, "\t$Rt, $shift",
+                 [(set GPR:$Rt, (opnode ldst_so_reg:$shift))]> {
+    bits<4> Rt;
+    bits<17> shift;
+    let Inst{23}    = shift{12};    // U (add = ('U' == 1))
+    let Inst{19-16} = shift{16-13}; // Rn
+    let Inst{11-0}  = shift{11-0};
+  }
 }
 }
 
@@ -1365,16 +1398,23 @@ def RFE  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
 //
 
 // Load
-let canFoldAsLoad = 1, isReMaterializable = 1 in
-def LDR  : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoad_r,
-               "ldr", "\t$dst, $addr",
-               [(set GPR:$dst, (load addrmode2:$addr))]>;
+
+
+defm LDR : AI_ldr1<0, "ldr", IIC_iLoad_i, IIC_iLoad_r,
+                   UnOpFrag<(load node:$Src)>>;
 
 // Special LDR for loads from non-pc-relative constpools.
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
     isReMaterializable = 1 in
-def LDRcp : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoad_r,
-                 "ldr", "\t$dst, $addr", []>;
+def LDRcp : AIldr1<0b010, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
+                 AddrMode_i12, LdFrm, IIC_iLoad_r, "ldr", "\t$Rt, $addr", []> {
+  bits<4> Rt;
+  bits<17> addr;
+  let Inst{23}    = addr{12};     // U (add = ('U' == 1))
+  let Inst{19-16} = 0b1111;
+  let Inst{15-12} = Rt;
+  let Inst{11-0}  = addr{11-0};   // imm12
+}
 
 // Loads with zero extension
 def LDRH  : AI3ldh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,

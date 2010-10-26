@@ -33,7 +33,7 @@ unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
   default: break;
   case ARM::LDR_PRE:
   case ARM::LDR_POST:
-    return ARM::LDR;
+    return ARM::LDRi12;
   case ARM::LDRH_PRE:
   case ARM::LDRH_POST:
     return ARM::LDRH;

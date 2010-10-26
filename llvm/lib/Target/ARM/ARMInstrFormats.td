@@ -104,6 +104,7 @@ def AddrModeT2_i8   : AddrMode<12>;
 def AddrModeT2_so   : AddrMode<13>;
 def AddrModeT2_pc   : AddrMode<14>;
 def AddrModeT2_i8s4 : AddrMode<15>;
+def AddrMode_i12    : AddrMode<16>;
 
 // Instruction size.
 class SizeFlagVal<bits<3> val> {
@@ -399,6 +400,38 @@ class AI2<dag oops, dag iops, Format f, InstrItinClass itin,
 }
 
 // loads
+
+// LDR/LDRB
+class AIldr1<bits<3> op, bit opc22, dag oops, dag iops, AddrMode am, Format f,
+             InstrItinClass itin, string opc, string asm, list<dag> pattern>
+  : I<oops, iops, am, Size4Bytes, IndexModeNone, f, itin, opc, asm,
+      "", pattern> {
+  let Inst{27-25} = op;
+  let Inst{24} = 1;  // 24 == P
+  // 23 == U
+  let Inst{22} = opc22;
+  let Inst{21} = 0;  // 21 == W
+  let Inst{20} = 1;
+}
+// LDRH/LDRSB/LDRSH/LDRD
+class AIldr2<bits<4> op, bit opc22, bit opc20, dag oops, dag iops, AddrMode am,
+             Format f, InstrItinClass itin, string opc, string asm,
+             list<dag> pattern>
+  : I<oops, iops, am, Size4Bytes, IndexModeNone, f, itin, opc, asm,
+      "", pattern> {
+  let Inst{27-25} = 0b000;
+  let Inst{24} = 1;  // 24 == P
+  // 23 == U
+  let Inst{22} = opc22;
+  let Inst{21} = 0;  // 21 == W
+  let Inst{20} = opc20;
+
+  let Inst{7-4} = op;
+}
+
+
+
+
 class AI2ldw<dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
