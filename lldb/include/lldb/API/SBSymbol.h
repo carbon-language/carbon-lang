@@ -48,6 +48,11 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+protected:
+
+    lldb_private::Symbol *
+    get ();
+    
 private:
     friend class SBFrame;
     friend class SBSymbolContext;

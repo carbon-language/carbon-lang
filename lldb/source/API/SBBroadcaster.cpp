@@ -26,7 +26,7 @@ SBBroadcaster::SBBroadcaster () :
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
-        log->Printf ("SBBroadcastetr::SBBroadcaster () ==> this = %p", this);
+        log->Printf ("SBBroadcastetr::SBBroadcaster () => this = %p", this);
 }
 
 
@@ -37,7 +37,7 @@ SBBroadcaster::SBBroadcaster (const char *name) :
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
-        log->Printf ("SBBroadcaster::SBBroadcaster (const char *name) name = '%s' ==> this = %p (m_opaque = %p)",
+        log->Printf ("SBBroadcaster::SBBroadcaster (name='%s') => this = %p (m_opaque = %p)",
                      name, this, m_opaque);
 }
 
@@ -48,8 +48,8 @@ SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
-        log->Printf ("SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns) "
-                     " broadcaster = %p, owns = %s ==> this = %p", broadcaster, (owns ? "true" : "false"), this);
+        log->Printf ("SBBroadcaster::SBBroadcaster (broadcaster=%p, bool owns='%s') "
+                     " => this = %p (m_opaque = %p)", broadcaster, (owns ? "true" : "false"), this, m_opaque);
 }
 
 SBBroadcaster::~SBBroadcaster()

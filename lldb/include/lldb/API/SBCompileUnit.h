@@ -66,6 +66,9 @@ private:
 
     const lldb_private::CompileUnit &
     operator*() const;
+    
+    const lldb_private::CompileUnit *
+    get () const;
 
 #endif
 

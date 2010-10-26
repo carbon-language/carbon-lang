@@ -28,30 +28,26 @@ SBInputReader::SBInputReader ()  :
     m_callback_baton (NULL)
 
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBInputReader::SBInputReader () ==> this = %p", this);
 }
 
 SBInputReader::SBInputReader (const lldb::InputReaderSP &reader_sp) :
     m_opaque_sp (reader_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBInputReader::SBInputReader (const lldb::InputReaderSP &reader_sp) reader_sp.get = %p"
-                     " ==> this = %p", this);
+        log->Printf ("SBInputReader::SBInputReader (reader_sp=%p) => this.sp = %p", reader_sp.get(), 
+                     m_opaque_sp.get());
 }
 
 SBInputReader::SBInputReader (const SBInputReader &rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf("SBInputReader::SBInputReader (const SBInputReader &rhs) rhs.m_opaque_sp.get() = %p ==> this = %p",
-                    rhs.m_opaque_sp.get(), this);
+        log->Printf("SBInputReader::SBInputReader (rhs.sp=%p) => this.sp = %p", 
+                    rhs.m_opaque_sp.get(), m_opaque_sp.get());
 }
 
 SBInputReader::~SBInputReader ()
@@ -91,13 +87,10 @@ SBInputReader::Initialize
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-    {
-        log->Printf("SBInputReader::Initialize (SBDebugger &debugger, Callback callback_function, void *baton, "
-                    "lldb::InputReaderGranularity granularity, const char *end_token, const char *prompt, bool echo)");
-        log->Printf("    debugger (this = %p), callback_function, callback_baton = %p, granularity = %s, "
-                    "end_token = '%s', prompt = '%s', echo = %s", &debugger, callback_baton, 
-                    InputReader::GranularityAsCString (granularity), end_token, prompt, (echo ? "true" : "false"));
-    }
+        log->Printf("SBInputReader::Initialize (this.sp=%p, debugger.sp=%p, callback_function=%p, callback_baton=%p, "
+                    "granularity='%s', end_token='%s', prompt='%s', echo=%s)", m_opaque_sp.get(), debugger.get(), 
+                    callback_baton, InputReader::GranularityAsCString (granularity), end_token, prompt, 
+                    (echo ? "true" : "false"));
 
     SBError sb_error;
     m_opaque_sp.reset (new InputReader (debugger.ref()));
@@ -126,7 +119,8 @@ SBInputReader::Initialize
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBInputReader::Initialize ==> SBError (this = %p, '%s')", &sb_error, sstr.GetData());
+        log->Printf ("SBInputReader::Initialize (this.sp=%p, ...) => SBError (this.ap=%p, '%s')", m_opaque_sp.get(),
+                     sb_error.get(), sstr.GetData());
     }
 
     return sb_error;
@@ -198,15 +192,16 @@ SBInputReader::IsActive () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBInputReader::IsActive ()");
+    //if (log)
+    //    log->Printf ("SBInputReader::IsActive ()");
 
     bool ret_value = false;
     if (m_opaque_sp)
         ret_value = m_opaque_sp->IsActive();
     
     if (log)
-        log->Printf ("SBInputReader::IsActive ==> %s", (ret_value ? "true" : "false"));
+        log->Printf ("SBInputReader::IsActive (this.sp=%p) => '%s'", m_opaque_sp.get(), 
+                     (ret_value ? "true" : "false"));
 
     return ret_value;
 }

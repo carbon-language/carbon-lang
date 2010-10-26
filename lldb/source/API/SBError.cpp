@@ -21,16 +21,12 @@ using namespace lldb_private;
 SBError::SBError () :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBError::SBError () ==> this = %p", this);
 }
 
 SBError::SBError (const SBError &rhs) :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (rhs.IsValid())
         m_opaque_ap.reset (new Error(*rhs));
@@ -39,8 +35,8 @@ SBError::SBError (const SBError &rhs) :
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBError::SBError (const SBError &rhs) rhs.m_opaque_ap.get() = %p ==> this = %p (%s)",
-                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), this, sstr.GetData());
+        log->Printf ("SBError::SBError (const SBError rhs.ap=%p) => this.ap = %p (%s)",
+                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), m_opaque_ap.get(), sstr.GetData());
     }
 }
 
@@ -53,14 +49,6 @@ const SBError &
 SBError::operator = (const SBError &rhs)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-    {
-        SBStream sstr;
-        rhs.GetDescription (sstr);
-        log->Printf ("SBError::operator= (const SBError &rhs) rhs.m_opaque_ap.get() = %p (%s)", 
-                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), sstr.GetData());
-    }
 
     if (rhs.IsValid())
     {
@@ -75,7 +63,12 @@ SBError::operator = (const SBError &rhs)
     }
 
     if (log)
-        log->Printf ("SBError::operator= ==> this = %p", this);
+    {
+        SBStream sstr;
+        GetDescription (sstr);
+        log->Printf ("SBError::operator= (this.ap=%p, rhs.ap=%p) => this (%s)", 
+                     m_opaque_ap.get(), (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), sstr.GetData());
+    }
 
     return *this;
 }
@@ -101,15 +94,15 @@ SBError::Fail () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBError::Fail ()");
+    //if (log)
+    //    log->Printf ("SBError::Fail ()");
 
     bool ret_value = false;
     if (m_opaque_ap.get())
         ret_value = m_opaque_ap->Fail();
 
     if (log)
-        log->Printf ("SBError::Fail ==> %s", (ret_value ? "true" : "false"));
+        log->Printf ("SBError::Fail (this.ap=%p) => '%s'", m_opaque_ap.get(), (ret_value ? "true" : "false"));
 
     return ret_value;
 }

@@ -70,6 +70,9 @@ protected:
     lldb_private::Address &
     operator*();
 
+    lldb_private::Address *
+    get ();
+    
 #endif
 
 

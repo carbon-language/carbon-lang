@@ -20,16 +20,12 @@ using namespace lldb_private;
 SBSymbolContext::SBSymbolContext () :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBSymbolContext::SBSymbolContext () ==> this = %p", this);
 }
 
 SBSymbolContext::SBSymbolContext (const SymbolContext *sc_ptr) :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (sc_ptr)
         m_opaque_ap.reset (new SymbolContext (*sc_ptr));
@@ -38,19 +34,16 @@ SBSymbolContext::SBSymbolContext (const SymbolContext *sc_ptr) :
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBSymbolContext::SBSymcolContext (const SymbolContext *sc_ptr) sc_ptr = %p ==> this = %p (%s)",
-                     sc_ptr, this, sstr.GetData());
+        log->Printf ("SBSymbolContext::SBSymcolContext (sc_ptr=%p) => this.ap = %p (%s)",
+                     sc_ptr, m_opaque_ap.get(), sstr.GetData());
     }
 }
 
 SBSymbolContext::SBSymbolContext (const SBSymbolContext& rhs) :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBSymbolContext::SBSymcolContext (const SBSymbolContext &rhs) rhs.m_opaque_ap.get() = %p "
-                     "==> this = %p", (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), this);
 
     if (rhs.IsValid())
     {
@@ -60,6 +53,10 @@ SBSymbolContext::SBSymbolContext (const SBSymbolContext& rhs) :
             ref() = *rhs.m_opaque_ap;
     }
 
+    if (log)
+        log->Printf ("SBSymbolContext::SBSymcolContext (rhs.ap=%p) => this.ap = %p", 
+                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), m_opaque_ap.get());
+                     
 }
 
 SBSymbolContext::~SBSymbolContext ()
@@ -107,8 +104,8 @@ SBSymbolContext::GetModule ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBSymbolContext::GetModule ()");
+    //if (log)
+    //    log->Printf ("SBSymbolContext::GetModule ()");
 
     SBModule sb_module;
     if (m_opaque_ap.get())
@@ -118,7 +115,8 @@ SBSymbolContext::GetModule ()
     {
         SBStream sstr;
         sb_module.GetDescription (sstr);
-        log->Printf ("SBSymbolContext::GetModule ==> SBModule (this = %p, '%s')", &sb_module, sstr.GetData());
+        log->Printf ("SBSymbolContext::GetModule (this.ap=%p) => SBModule (this.sp = %p, '%s')", m_opaque_ap.get(),
+                     sb_module.get(), sstr.GetData());
     }
 
     return sb_module;
@@ -135,14 +133,14 @@ SBSymbolContext::GetFunction ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBSymbolContext::GetFunction ()");
+    //if (log)
+    //    log->Printf ("SBSymbolContext::GetFunction ()");
 
     SBFunction ret_function (m_opaque_ap.get() ? m_opaque_ap->function : NULL);
 
     if (log)
-        log->Printf ("SBSymbolContext::GetFunction ==> SBFunction (this = %p, '%s')", &ret_function, 
-                     ret_function.GetName());
+        log->Printf ("SBSymbolContext::GetFunction (this.ap=%p) => SBFunction (this.obj = %p, '%s')", 
+                     m_opaque_ap.get(), ret_function.get(), ret_function.GetName());
 
     return ret_function;
 }
@@ -158,8 +156,8 @@ SBSymbolContext::GetLineEntry ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBSymbolContext::GetLineEntry ()");
+    //if (log)
+    //    log->Printf ("SBSymbolContext::GetLineEntry ()");
 
     SBLineEntry sb_line_entry;
     if (m_opaque_ap.get())
@@ -169,8 +167,9 @@ SBSymbolContext::GetLineEntry ()
     {
         SBStream sstr;
         sb_line_entry.GetDescription (sstr);
-        log->Printf ("SBSymbolContext::GetLineEntry ==> SBLineEntry (this = %p, '%s')", &sb_line_entry, 
-                     sstr.GetData());
+        log->Printf ("SBSymbolContext::GetLineEntry (this.ap=%p) => SBLineEntry (this.ap = %p, '%s')", 
+                     m_opaque_ap.get(),
+                     sb_line_entry.get(), sstr.GetData());
     }
 
     return sb_line_entry;
@@ -181,8 +180,8 @@ SBSymbolContext::GetSymbol ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBSymbolContext::GetSymbol ()");
+    //if (log)
+    //    log->Printf ("SBSymbolContext::GetSymbol ()");
 
     SBSymbol ret_symbol (m_opaque_ap.get() ? m_opaque_ap->symbol : NULL);
 
@@ -190,7 +189,8 @@ SBSymbolContext::GetSymbol ()
     {
         SBStream sstr;
         ret_symbol.GetDescription (sstr);
-        log->Printf ("SBSymbolContext::GetSymbol ==> SBSymbol (this = %p, '%s')", &ret_symbol, sstr.GetData());
+        log->Printf ("SBSymbolContext::GetSymbol (this.ap=%p) => SBSymbol (this.ap = %p, '%s')", m_opaque_ap.get(),
+                     ret_symbol.get(), sstr.GetData());
     }
 
     return ret_symbol; 

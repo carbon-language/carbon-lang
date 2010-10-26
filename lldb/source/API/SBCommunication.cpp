@@ -22,21 +22,17 @@ SBCommunication::SBCommunication() :
     m_opaque (NULL),
     m_opaque_owned (false)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBCommunication::SBCommunication () ==> this = %p", this);
 }
 
 SBCommunication::SBCommunication(const char * broadcaster_name) :
     m_opaque (new Communication (broadcaster_name)),
     m_opaque_owned (true)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBCommunication::SBCommunication (const char *broadcaster_name) broadcaster_name = '%s' ==> "
-                     "this = %p (m_opaque = %p)", broadcaster_name, this, m_opaque);
+        log->Printf ("SBCommunication::SBCommunication (broadcaster_name='%s') => "
+                     "this.obj = %p", broadcaster_name, m_opaque);
 }
 
 SBCommunication::~SBCommunication()
@@ -88,8 +84,9 @@ SBCommunication::AdoptFileDesriptor (int fd, bool owns_fd)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBCommunication::AdoptFileDescriptor (%d, %s)", fd, (owns_fd ? "true" : "false"));
+    //if (log)
+    //    log->Printf ("SBCommunication::AdoptFileDescriptor (this=%p, fd='%d', owns_fd='%s')", this, fd, 
+    //                 (owns_fd ? "true" : "false"));
 
     if (m_opaque)
     {
@@ -102,19 +99,22 @@ SBCommunication::AdoptFileDesriptor (int fd, bool owns_fd)
         if (m_opaque->IsConnected())
         {
             if (log)
-                log->Printf ("SBCommunication::AdoptFileDescriptor ==> eConnectionStatusSuccess");
+                log->Printf ("SBCommunication::AdoptFileDescriptor (this.obj=%p, fd=%d, ownd_fd='%s') "
+                             "=> eConnectionStatusSuccess", m_opaque, fd, (owns_fd ? "true" : "false"));
             return eConnectionStatusSuccess;
         }
         else
-        {
+        { 
             if (log)
-                log->Printf ("SBCommunication::AdoptFileDescriptor ==> eConnectionStatusLostConnection");
+                log->Printf ("SBCommunication::AdoptFileDescriptor (this.obj=%p, fd=%d, ownd_fd='%s') "
+                             "=> eConnectionStatusLostConnection", m_opaque, fd, (owns_fd ? "true" : "false"));
             return eConnectionStatusLostConnection;
         }
     }
 
     if (log)
-        log->Printf ("SBCommunication::AdoptFileDescriptor ==> eConnectionStatusNoConnection");
+        log->Printf ("SBCommunication::AdoptFileDescriptor (this,obj=%p, fd=%d, ownd_fd='%s') "
+                     "=> eConnectionStatusNoConnection", m_opaque, fd, (owns_fd ? "true" : "false"));
 
     return eConnectionStatusNoConnection;
 }
@@ -125,15 +125,16 @@ SBCommunication::Disconnect ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBCommunication::Disconnect ()");
+    //if (log)
+    //    log->Printf ("SBCommunication::Disconnect ()");
 
     ConnectionStatus status= eConnectionStatusNoConnection;
     if (m_opaque)
         status = m_opaque->Disconnect ();
 
     if (log)
-        log->Printf ("SBCommunication::Disconnect ==> %s", Communication::ConnectionStatusAsCString (status));
+        log->Printf ("SBCommunication::Disconnect (this.obj=%p) => '%s'", m_opaque,
+                     Communication::ConnectionStatusAsCString (status));
 
     return status;
 }
@@ -170,15 +171,15 @@ SBCommunication::ReadThreadStart ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBCommunication::ReadThreadStart ()");
+    //if (log)
+    //    log->Printf ("SBCommunication::ReadThreadStart ()");
 
     bool success = false;
     if (m_opaque)
         success = m_opaque->StartReadThread ();
 
     if (log)
-        log->Printf ("SBCommunication::ReadThreadStart ==> %s", (success ? "true" : "false"));
+        log->Printf ("SBCommunication::ReadThreadStart (this.obj=%p) => '%s'", m_opaque, (success ? "true" : "false"));
 
     return success;
 }
@@ -189,15 +190,15 @@ SBCommunication::ReadThreadStop ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBCommunication::ReadThreadStop ()");
+    //if (log)
+    //    log->Printf ("SBCommunication::ReadThreadStop ()");
 
     bool success = false;
     if (m_opaque)
         success = m_opaque->StopReadThread ();
 
     if (log)
-        log->Printf ("SBCommunication::ReadThreadStop ==> %s", (success ? "true" : "false"));
+        log->Printf ("SBCommunication::ReadThreadStop (this.obj=%p) => '%s'", m_opaque, (success ? "true" : "false"));
 
     return success;
 }
@@ -220,19 +221,19 @@ SBCommunication::SetReadThreadBytesReceivedCallback
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBCommunication::SetReadThreadBytesReceivedCallback (callback, baton)");
-    // CAROLINE: Fixme: Fix the arguments printed out in the log message above
+        log->Printf ("SBCommunication::SetReadThreadBytesReceivedCallback (this.obj=%p, callback=%p, baton=%p)",
+                     m_opaque, callback, callback_baton);
 
     if (m_opaque)
     {
         m_opaque->SetReadThreadBytesReceivedCallback (callback, callback_baton);
         if (log)
-            log->Printf ("SBCommunication::SetReaDThreadBytesReceivedCallback ==> true");
+            log->Printf ("SBCommunication::SetReaDThreadBytesReceivedCallback (this.obj=%p...) => true", m_opaque);
         return true;
     }
 
     if (log)
-        log->Printf ("SBCommunication::SetReaDThreadBytesReceivedCallback ==> false");
+        log->Printf ("SBCommunication::SetReaDThreadBytesReceivedCallback (this.obj=%p...) => false", m_opaque);
 
     return false;
 }

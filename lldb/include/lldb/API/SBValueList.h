@@ -55,6 +55,10 @@ public:
 
     const lldb_private::ValueObjectList &
     operator* () const;
+    
+    lldb_private::ValueObjectList *
+    get ();
+    
 #endif
 
 private:

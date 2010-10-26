@@ -25,23 +25,20 @@ using namespace lldb_private;
 SBFunction::SBFunction () :
     m_opaque_ptr (NULL)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBFunction::SBFunction () ==> this = %p", this);
 }
 
 SBFunction::SBFunction (lldb_private::Function *lldb_object_ptr) :
     m_opaque_ptr (lldb_object_ptr)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBFunction::SBFunction (lldb_Private::Function *lldb_object_ptr) lldb_object_ptr = %p "
-                     " ==> this = %p (%s)", lldb_object_ptr, this, sstr.GetData());
+        log->Printf ("SBFunction::SBFunction (lldb_object_ptr=%p) => this.obj = %p ('%s')", lldb_object_ptr, 
+                     m_opaque_ptr, sstr.GetData());
+                     
     }
 }
 
@@ -61,18 +58,19 @@ SBFunction::GetName() const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBFunction::GetName ()"); 
+    //if (log)
+    //    log->Printf ("SBFunction::GetName ()"); 
 
     if (m_opaque_ptr)
     {
         if (log)
-            log->Printf ("SBFunction::GetName ==> %s", m_opaque_ptr->GetMangled().GetName().AsCString());
+            log->Printf ("SBFunction::GetName (this.obj=%p) => '%s'", m_opaque_ptr,
+                         m_opaque_ptr->GetMangled().GetName().AsCString());
         return m_opaque_ptr->GetMangled().GetName().AsCString();
     }
 
     if (log)
-        log->Printf ("SBFunction::GetName ==> NULL");
+        log->Printf ("SBFunction::GetName (this.obj=%p) => NULL", m_opaque_ptr);
     return NULL;
 }
 
@@ -136,4 +134,9 @@ SBFunction::GetInstructions (SBTarget target)
     return sb_instructions;
 }
 
+lldb_private::Function *
+SBFunction::get ()
+{
+    return m_opaque_ptr;
+}
 

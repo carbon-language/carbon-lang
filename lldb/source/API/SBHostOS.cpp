@@ -38,7 +38,8 @@ SBHostOS::ThreadCreate
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBHostOS::ThreadCreate (%s, %p, %p, error_ptr)", name, thread_function, thread_arg);
+        log->Printf ("SBHostOS::ThreadCreate (name='%s', thread_function=%p, thread_arg=%p, error_ptr=%p)", name, 
+                     thread_function, thread_arg, error_ptr);
 
     // CAROLINE: FIXME: You need to log a return value?
 

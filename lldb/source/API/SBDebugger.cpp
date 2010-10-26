@@ -67,8 +67,8 @@ SBDebugger::Create()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBDebugger::Create ()");
+    //if (log)
+    //    log->Printf ("SBDebugger::Create ()");
 
     SBDebugger debugger;
     debugger.reset(Debugger::CreateInstance());
@@ -77,7 +77,7 @@ SBDebugger::Create()
     {
         SBStream sstr;
         debugger.GetDescription (sstr);
-        log->Printf ("SBDebugger::Create ==> %s", sstr.GetData());
+        log->Printf ("SBDebugger::Create () => SBDebugger (this.sp = %p, '%s')", debugger.m_opaque_sp.get(), sstr.GetData());
     }
 
     return debugger;
@@ -121,7 +121,8 @@ SBDebugger::SetInputFileHandle (FILE *fh, bool transfer_ownership)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBDebugger::SetInputFileHandle (%p, %s)", fh, (transfer_ownership ? "true" : "false"));
+        log->Printf ("SBDebugger::SetInputFileHandle (this.sp=%p, fh=%p, transfer_ownership='%s')", m_opaque_sp.get(),
+                     fh, (transfer_ownership ? "true" : "false"));
 
     if (m_opaque_sp)
         m_opaque_sp->SetInputFileHandle (fh, transfer_ownership);
@@ -134,7 +135,8 @@ SBDebugger::SetOutputFileHandle (FILE *fh, bool transfer_ownership)
 
 
     if (log)
-        log->Printf ("SBDebugger::SetOutputFileHandle (%p, %s)", fh, (transfer_ownership ? "true" : "false"));
+        log->Printf ("SBDebugger::SetOutputFileHandle (this.sp=%p, fh=%p, transfer_ownership='%s')", m_opaque_sp.get(),
+                     fh, (transfer_ownership ? "true" : "false"));
 
     if (m_opaque_sp)
         m_opaque_sp->SetOutputFileHandle (fh, transfer_ownership);
@@ -147,7 +149,8 @@ SBDebugger::SetErrorFileHandle (FILE *fh, bool transfer_ownership)
 
 
     if (log)
-        log->Printf ("SBDebugger::SetErrorFileHandle (%p, %s)", fh, (transfer_ownership ? "true" : "false"));
+        log->Printf ("SBDebugger::SetErrorFileHandle (this.sp=%p, fh=%p, transfer_ownership='%s')", m_opaque_sp.get(),
+                     fh, (transfer_ownership ? "true" : "false"));
 
     if (m_opaque_sp)
         m_opaque_sp->SetErrorFileHandle (fh, transfer_ownership);
@@ -182,12 +185,13 @@ SBDebugger::GetCommandInterpreter ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBDebugger::GetCommandInterpreter ()");
-
     SBCommandInterpreter sb_interpreter;
     if (m_opaque_sp)
         sb_interpreter.reset (&m_opaque_sp->GetCommandInterpreter());
+
+    if (log)
+        log->Printf ("SBDebugger::GetCommandInterpreter (this.sp=%p) => SBCommandInterpreter (this.obj=%p)", 
+                     m_opaque_sp.get(), sb_interpreter.get());
 
     return sb_interpreter;
 }
@@ -229,12 +233,13 @@ SBDebugger::GetListener ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBDebugger::GetListener ()");
-
     SBListener sb_listener;
     if (m_opaque_sp)
         sb_listener.reset(&m_opaque_sp->GetListener(), false);
+
+    if (log)
+        log->Printf ("SBDebugger::GetListener (this.sp=%p) => SBListener (this.obj=%p)", m_opaque_sp.get(),
+                     sb_listener.get());
 
     return sb_listener;
 }
@@ -412,7 +417,8 @@ SBDebugger::StateAsCString (lldb::StateType state)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBDebugger::StateAsCString ==> %s", lldb_private::StateAsCString (state));
+        log->Printf ("SBDebugger::StateAsCString (state=%d) => '%s'", state, 
+                     lldb_private::StateAsCString (state));
 
     return lldb_private::StateAsCString (state);
 }
@@ -429,7 +435,7 @@ SBDebugger::StateIsStoppedState (lldb::StateType state)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBDebugger::StateIsStoppedState ==> %s", 
+        log->Printf ("SBDebugger::StateIsStoppedState (state=%d) => '%s'", state,
                      (lldb_private::StateIsStoppedState (state) ? "true" : "false"));
 
     return lldb_private::StateIsStoppedState (state);
@@ -458,8 +464,9 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBDebugger::CreateTargetWithFileAndArch (%s, %s)", filename, archname);
+    //if (log)
+    //    log->Printf ("SBDebugger::CreateTargetWithFileAndArch (this.sp=%p, filename='%s', arcname='%s')", 
+    //                 m_opaque_sp.get() filename, archname);
 
     SBTarget target;
     if (m_opaque_sp)
@@ -503,7 +510,9 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
     {
         SBStream sstr;
         target.GetDescription (sstr, lldb::eDescriptionLevelFull);
-        log->Printf ("SBDebugger::CreateTargetWithFileAndArch ==> %s", sstr.GetData());
+        log->Printf ("SBDebugger::CreateTargetWithFileAndArch (this.sp=%p, filename='%s', arcname='%s') "
+                     "=> SBTarget: this.sp=%p, '%s'", m_opaque_sp.get(), filename, archname, target.get(),
+                     sstr.GetData());
     }
 
     return target;
@@ -600,8 +609,8 @@ SBDebugger::GetSelectedTarget ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBDebugger::GetSelectedTarget ()");
+    //if (log)
+    //    log->Printf ("SBDebugger::GetSelectedTarget ()");
 
     SBTarget sb_target;
     if (m_opaque_sp)
@@ -611,7 +620,8 @@ SBDebugger::GetSelectedTarget ()
     {
         SBStream sstr;
         sb_target.GetDescription (sstr, lldb::eDescriptionLevelBrief);
-        log->Printf ("SBDebugger::GetSelectedTarget ==> %s", sstr.GetData());
+        log->Printf ("SBDebugger::GetSelectedTarget (this.sp=%p) => SBTarget: this.sp=%p, '%s'", m_opaque_sp.get(),
+                     sb_target.get(), sstr.GetData());
     }
 
     return sb_target;
@@ -623,7 +633,8 @@ SBDebugger::DispatchInput (void *baton, const void *data, size_t data_len)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBDebugger::DispatchInput (%p, %s, %d)", baton, (const char *) data, (uint32_t) data_len);
+        log->Printf ("SBDebugger::DispatchInput (this.sp=%p, baton=%p, data='%s', size_t=%d)", m_opaque_sp.get(),
+                     baton, (const char *) data, (uint32_t) data_len);
 
     if (m_opaque_sp)
         m_opaque_sp->DispatchInput ((const char *) data, data_len);
@@ -635,7 +646,7 @@ SBDebugger::PushInputReader (SBInputReader &reader)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBDebugger::PushInputReader (%p)", &reader);
+        log->Printf ("SBDebugger::PushInputReader (this.sp=%p, reader=%p)", m_opaque_sp.get(), &reader);
 
     if (m_opaque_sp && reader.IsValid())
     {
@@ -742,7 +753,8 @@ SBDebugger::GetPrompt() const
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     
     if (log)
-        log->Printf ("SBDebugger::GetPrompt ==> '%s'", (m_opaque_sp ? m_opaque_sp->GetPrompt() : ""));
+        log->Printf ("SBDebugger::GetPrompt (this.sp=%p) => '%s'", m_opaque_sp.get(), 
+                     (m_opaque_sp ? m_opaque_sp->GetPrompt() : ""));
 
     if (m_opaque_sp)
         return m_opaque_sp->GetPrompt ();

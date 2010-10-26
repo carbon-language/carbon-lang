@@ -27,23 +27,18 @@ SBEvent::SBEvent () :
     m_event_sp (),
     m_opaque (NULL)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBEvent::SBEvent () ==> this = %p", this);
 }
 
 SBEvent::SBEvent (uint32_t event_type, const char *cstr, uint32_t cstr_len) :
     m_event_sp (new Event (event_type, new EventDataBytes (cstr, cstr_len))),
     m_opaque (m_event_sp.get())
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
     {
-        log->Printf ("SBEvent::SBEvent (uint32_t event_type, const char *cstr, uint32_t cstr_len)");
-        log->Printf ("    event_type = %d, cstr = '%s', cstr_len = %d  ==> this = %p (m_opaque = %p)", event_type,
-                     cstr, cstr_len, this, m_opaque);
+        log->Printf ("SBEvent::SBEvent (event_type=%d, cstr='%s', cstr_len=%d)  => this.sp = %p", event_type,
+                     cstr, cstr_len, m_opaque);
     }
 }
 
@@ -51,10 +46,10 @@ SBEvent::SBEvent (EventSP &event_sp) :
     m_event_sp (event_sp),
     m_opaque (event_sp.get())
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBEvent::SBEvent (EventSP &event_sp) event_sp.get() = %p ==> this = %p", event_sp.get(), this);
+        log->Printf ("SBEvent::SBEvent (event_sp=%p) => this.sp = %p", event_sp.get(), m_opaque);
 }
 
 SBEvent::~SBEvent()
@@ -75,8 +70,8 @@ SBEvent::GetType () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBEvent::GetType ()");
+    //if (log)
+    //    log->Printf ("SBEvent::GetType ()");
 
     const Event *lldb_event = get();
     uint32_t event_type = 0;
@@ -84,7 +79,7 @@ SBEvent::GetType () const
         event_type = lldb_event->GetType();
 
     if (log)
-        log->Printf ("SBEvent::GetType ==> %d", event_type);
+        log->Printf ("SBEvent::GetType (this.sp=%p) => %d", m_opaque, event_type);
 
     return event_type;
 }
@@ -125,7 +120,8 @@ SBEvent::BroadcasterMatchesRef (const SBBroadcaster &broadcaster)
         success = lldb_event->BroadcasterIs (broadcaster.get());
 
     if (log)
-        log->Printf ("SBEvent::BroadcasterMathesRef ==> %s", (success ? "true" : "false"));
+        log->Printf ("SBEvent::BroadcasterMathesRef (this.sp=%p, broadcaster.obj=%p) => %s", m_opaque, 
+                     broadcaster.get(), (success ? "true" : "false"));
 
     return success;
 }
@@ -186,7 +182,7 @@ SBEvent::GetCStringFromEvent (const SBEvent &event)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("GetCStringFromEvent ==> %s",
+        log->Printf ("GetCStringFromEvent (event.sp=%p) => %s", event.m_opaque, 
                      reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.get())));
 
     return reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.get()));

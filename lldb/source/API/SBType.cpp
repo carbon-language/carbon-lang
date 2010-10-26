@@ -23,13 +23,13 @@ SBType::IsPointerType (void *opaque_type)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBType::IsPointerType (%p)", opaque_type);
+    //if (log)
+    //    log->Printf ("SBType::IsPointerType (%p)", opaque_type);
     
     bool ret_value = ClangASTContext::IsPointerType (opaque_type);
 
     if (log)
-        log->Printf ("SBType::IsPointerType ==> %s", (ret_value ? "true" : "false"));
+        log->Printf ("SBType::IsPointerType (opaque_type=%p) ==> '%s'", opaque_type, (ret_value ? "true" : "false"));
 
     return ret_value;
 }

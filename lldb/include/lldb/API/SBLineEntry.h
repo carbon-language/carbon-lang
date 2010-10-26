@@ -61,6 +61,11 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+protected:
+
+    lldb_private::LineEntry *
+    get ();
+    
 private:
     friend class SBCompileUnit;
     friend class SBFrame;

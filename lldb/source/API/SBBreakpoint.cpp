@@ -67,23 +67,20 @@ public:
 SBBreakpoint::SBBreakpoint () :
     m_opaque_sp ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBBreakpoint::SBBreakpoint () ==> this = %p", this);
 }
 
 SBBreakpoint::SBBreakpoint (const SBBreakpoint& rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBBreakpoint::SBBreakpoint (const SBBreakpoint &rhs) rhs.m_opaque_ap.get() = %p ==> this = %p (%s)",
-                     rhs.m_opaque_sp.get(), this, sstr.GetData());
+        log->Printf ("SBBreakpoint::SBBreakpoint (const SBBreakpoint rhs.sp=%p) "
+                     "=> this.sp = %p (%s)",
+                     rhs.m_opaque_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
 }
 
@@ -91,14 +88,14 @@ SBBreakpoint::SBBreakpoint (const SBBreakpoint& rhs) :
 SBBreakpoint::SBBreakpoint (const lldb::BreakpointSP &bp_sp) :
     m_opaque_sp (bp_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf("SBBreakpoint::SBBreakpoint (const lldb::BreakpointSP &bp_sp) bp_sp.get() = %p ==> this = %p (%s)",
-                    bp_sp.get(), this, sstr.GetData());
+        log->Printf("SBBreakpoint::SBBreakpoint (const lldb::BreakpointSP &bp_sp=%p) => this.sp = %p (%s)",
+                    bp_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
 }
 
@@ -111,8 +108,8 @@ SBBreakpoint::operator = (const SBBreakpoint& rhs)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBBreakpoint::operator=");
+    //if (log)
+    //    log->Printf ("SBBreakpoint::operator=");
 
     if (this != &rhs)
     {
@@ -120,8 +117,8 @@ SBBreakpoint::operator = (const SBBreakpoint& rhs)
     }
     
     if (log)
-        log->Printf ("SBBreakpoint::operator= (const SBBreakpoint &rhs) rhs.m_opaque_sp.get() = %p ==> this = %p", 
-                     rhs.m_opaque_sp.get(), this);
+        log->Printf ("SBBreakpoint::operator= (const SBBreakpoint &rhs.sp=%p) => this.sp = %p", 
+                     rhs.m_opaque_sp.get(), m_opaque_sp.get());
         
     return *this;
 }
@@ -131,19 +128,19 @@ SBBreakpoint::GetID () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBBreakpoint::GetID");
+    //if (log)
+    //    log->Printf ("SBBreakpoint::GetID");
 
     if (m_opaque_sp)
     {
         break_id_t id = m_opaque_sp->GetID();
         if (log)
-            log->Printf ("SBBreakpoint::GetID ==> %d", id);
+            log->Printf ("SBBreakpoint::GetID (this.sp=%p) => %d", m_opaque_sp.get(), id);
         return id;
     }
 
     if (log)
-        log->Printf ("SBBreakpoint::GetID ==> LLDB_INVALID_BREAK_ID");
+        log->Printf ("SBBreakpoint::GetID (this.sp=%p) => LLDB_INVALID_BREAK_ID", m_opaque_sp.get());
 
     return LLDB_INVALID_BREAK_ID;
 }
@@ -235,7 +232,8 @@ SBBreakpoint::SetEnabled (bool enable)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBBreakpoint::SetEnabled (%s)", (enable ? "true" : "false"));
+        log->Printf ("SBBreakpoint::SetEnabled (this.sp=%p, enable='%s')", m_opaque_sp.get(), 
+                     (enable ? "true" : "false"));
 
     if (m_opaque_sp)
         m_opaque_sp->SetEnabled (enable);
@@ -256,7 +254,7 @@ SBBreakpoint::SetIgnoreCount (uint32_t count)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBBreakpoint::SetIgnoreCount (%d)", count);
+        log->Printf ("SBBreakpoint::SetIgnoreCount (this.sp=%p, count='%d')", m_opaque_sp.get(), count);
         
     if (m_opaque_sp)
         m_opaque_sp->SetIgnoreCount (count);
@@ -279,20 +277,20 @@ SBBreakpoint::GetHitCount () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBBreakpoint::GetHitCount");
+    //if (log)
+    //    log->Printf ("SBBreakpoint::GetHitCount");
         
     if (m_opaque_sp)
     {
         uint32_t hit_count = m_opaque_sp->GetHitCount();
         if (log)
-            log->Printf ("SBBreakpoint::GetHitCount ==> %d", hit_count);        
+            log->Printf ("SBBreakpoint::GetHitCount (this.sp=%p) => '%d'", m_opaque_sp.get(), hit_count);        
         return m_opaque_sp->GetHitCount();
     }
     else
     {
         if (log)
-            log->Printf ("SBBreakpoint::GetHitCount ==> 0");
+            log->Printf ("SBBreakpoint::GetHitCount (this.sp=%p) => '0'", m_opaque_sp.get());
         return 0;
     }
 }
@@ -463,7 +461,7 @@ SBBreakpoint::SetCallback (BreakpointHitCallback callback, void *baton)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     
     if (log)
-        log->Printf ("SBBreakpoint::SetCallback :");
+        log->Printf ("SBBreakpoint::SetCallback (this.sp=%p, :", m_opaque_sp.get());
 
     if (m_opaque_sp.get())
     {

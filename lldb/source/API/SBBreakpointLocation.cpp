@@ -32,23 +32,19 @@ using namespace lldb_private;
 
 SBBreakpointLocation::SBBreakpointLocation ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBBreakpointLocation::SBBreakpointLocation () ==> this = %p", this);
 }
 
 SBBreakpointLocation::SBBreakpointLocation (const lldb::BreakpointLocationSP &break_loc_sp) :
     m_opaque_sp (break_loc_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
     {
         SBStream sstr;
         GetDescription (lldb::eDescriptionLevelBrief, sstr);
-        log->Printf ("SBBreakpointLocation::SBBreakpointLocaiton (const lldb::BreakpointLocationsSP &break_loc_sp) "
-                     "break_loc_sp.get() = %p  ==> this = %p (%s)", break_loc_sp.get(), this, sstr.GetData());
+        log->Printf ("SBBreakpointLocation::SBBreakpointLocaiton (const lldb::BreakpointLocationsSP &break_loc_sp"
+                     "=%p)  => this.sp = %p (%s)", break_loc_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
 }
 
@@ -240,8 +236,8 @@ SBBreakpointLocation::GetBreakpoint ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBBreakpointLocation::GetBreakpoint ()");
+    //if (log)
+    //    log->Printf ("SBBreakpointLocation::GetBreakpoint ()");
 
     SBBreakpoint sb_bp;
     if (m_opaque_sp)
@@ -251,7 +247,8 @@ SBBreakpointLocation::GetBreakpoint ()
     {
         SBStream sstr;
         sb_bp.GetDescription (sstr);
-        log->Printf ("SBBreakpointLocation::GetBreakpoint ==> %s", sstr.GetData());
+        log->Printf ("SBBreakpointLocation::GetBreakpoint (this.sp=%p) => SBBreakpoint: m_opaque_sp=%p, '%s'", 
+                     m_opaque_sp.get(), sb_bp.get(), sstr.GetData());
     }
     return sb_bp;
 }

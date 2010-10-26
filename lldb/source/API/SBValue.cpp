@@ -37,23 +37,19 @@ using namespace lldb_private;
 SBValue::SBValue () :
     m_opaque_sp ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBValue::SBValue () ==> this = %p", this);
 }
 
 SBValue::SBValue (const lldb::ValueObjectSP &value_sp) :
     m_opaque_sp (value_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBValue::SBValue (const lldb::ValueObjectSP &value_sp) value_sp.get() = %p ==> this = %p (%s)",
-                     value_sp.get(), this, sstr.GetData());
+        log->Printf ("SBValue::SBValue (value_sp=%p) => this.sp = %p (%s)",
+                     value_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
 }
 
@@ -83,19 +79,21 @@ SBValue::GetName()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    if (log)
-        log->Printf ("SBValue::GetName ()");
+    //if (log)
+    //    log->Printf ("SBValue::GetName ()");
 
     if (IsValid())
     {
         if (log)
-            log->Printf ("SBValue::GetName ==> %s", m_opaque_sp->GetName().AsCString());
+            log->Printf ("SBValue::GetName (this.sp=%p) => '%s'", m_opaque_sp.get(),
+                         m_opaque_sp->GetName().AsCString());
+
         return m_opaque_sp->GetName().AsCString();
     }
     else
     {
         if (log)
-            log->Printf ("SBValue::GetName ==> NULL");
+            log->Printf ("SBValue::GetName (this.sp=%p) ==> NULL", m_opaque_sp.get());
         return NULL;
     }
 }

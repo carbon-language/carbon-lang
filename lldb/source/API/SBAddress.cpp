@@ -20,16 +20,12 @@ using namespace lldb_private;
 SBAddress::SBAddress () :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBAddress::SBAddress () ==> this = %p (%s)", this);
 }
 
 SBAddress::SBAddress (const lldb_private::Address *lldb_object_ptr) :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (lldb_object_ptr)
         m_opaque_ap.reset (new lldb_private::Address(*lldb_object_ptr));
@@ -38,22 +34,22 @@ SBAddress::SBAddress (const lldb_private::Address *lldb_object_ptr) :
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBAddress::SBAddress (const lldb_private::Address *lldb_object_ptr) lldb_object_ptr = %p "
-                     "==> this = %p (%s)", lldb_object_ptr, this, sstr.GetData());
+        log->Printf ("SBAddress::SBAddress (lldb_object_ptr=%p) "
+                     "=> this.ap = %p (%s)", lldb_object_ptr, m_opaque_ap.get(), sstr.GetData());
     }
 }
 
 SBAddress::SBAddress (const SBAddress &rhs) :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (rhs.IsValid())
         m_opaque_ap.reset (new lldb_private::Address(*rhs.m_opaque_ap.get()));
 
     if (log)
-        log->Printf ("SBAddress::SBAddress (const SBAddress &rhs) rhs.m_opaque_ap.get() = %p ==> this = %p",
-                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), this);
+        log->Printf ("SBAddress::SBAddress (rhs.m_opaque_ap = %p) => this.ap = %p",
+                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), m_opaque_ap.get());
 }
 
 SBAddress::~SBAddress ()
@@ -71,8 +67,8 @@ SBAddress::operator = (const SBAddress &rhs)
             m_opaque_ap.reset (new lldb_private::Address(*rhs.m_opaque_ap.get()));
     }
     if (log)
-        log->Printf ("SBAddress::operator= (const SBAddress rhs) rhs = %p ==> this = %p", 
-                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), this);
+        log->Printf ("SBAddress::operator= (rhs.ap = %p) => this.ap = %p", 
+                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), m_opaque_ap.get());
 
     return *this;
 }
@@ -118,20 +114,20 @@ SBAddress::GetLoadAddress (const SBTarget &target) const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     
-    if (log)
-        log->Printf ("SBAddress::GetLoadAddress");
+    //if (log)
+    //    log->Printf ("SBAddress::GetLoadAddress");
 
     if (m_opaque_ap.get())
     {
         lldb::addr_t addr = m_opaque_ap->GetLoadAddress (target.get());
         if (log)
-            log->Printf ("SBAddress::GetLoadAddress ==> %p", addr);
+            log->Printf ("SBAddress::GetLoadAddress (target.sp=%p) => %p", target.get(), addr);
         return addr;
     }
     else
     {
         if (log)
-            log->Printf ("SBAddress::GetLoadAddress ==> LLDB_INVALID_ADDRESS");
+            log->Printf ("SBAddress::GetLoadAddress (target.sp=%p) => LLDB_INVALID_ADDRESS", target.get());
         return LLDB_INVALID_ADDRESS;
     }
 }
@@ -178,6 +174,11 @@ SBAddress::operator*() const
     return *m_opaque_ap;
 }
 
+lldb_private::Address *
+SBAddress::get ()
+{
+    return m_opaque_ap.get();
+}
 
 bool
 SBAddress::GetDescription (SBStream &description)
