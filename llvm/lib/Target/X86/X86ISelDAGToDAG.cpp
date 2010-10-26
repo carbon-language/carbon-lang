@@ -1147,7 +1147,6 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
   if (Parent &&
       // This list of opcodes are all the nodes that have an "addr:$ptr" operand
       // that are not a MemSDNode, and thus don't have proper addrspace info.
-      Parent->getOpcode() != ISD::PREFETCH &&
       Parent->getOpcode() != ISD::INTRINSIC_W_CHAIN && // unaligned loads, fixme
       Parent->getOpcode() != ISD::INTRINSIC_VOID && // nontemporal stores
       Parent->getOpcode() != X86ISD::TLSCALL) { // Fixme

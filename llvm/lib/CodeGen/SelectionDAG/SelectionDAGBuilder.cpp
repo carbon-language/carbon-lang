@@ -4617,14 +4617,22 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
 
   case Intrinsic::prefetch: {
     SDValue Ops[4];
+    unsigned rw = cast<ConstantInt>(I.getArgOperand(1))->getZExtValue();
     Ops[0] = getRoot();
     Ops[1] = getValue(I.getArgOperand(0));
     Ops[2] = getValue(I.getArgOperand(1));
     Ops[3] = getValue(I.getArgOperand(2));
-    DAG.setRoot(DAG.getNode(ISD::PREFETCH, dl, MVT::Other, &Ops[0], 4));
+    DAG.setRoot(DAG.getMemIntrinsicNode(ISD::PREFETCH, dl,
+                                        DAG.getVTList(MVT::Other),
+                                        &Ops[0], 4, 
+                                        EVT::getIntegerVT(*Context, 8),
+                                        MachinePointerInfo(I.getArgOperand(0)),
+                                        0, /* align */
+                                        false, /* volatile */
+                                        rw==0, /* read */
+                                        rw==1)); /* write */
     return 0;
   }
-
   case Intrinsic::memory_barrier: {
     SDValue Ops[6];
     Ops[0] = getRoot();
