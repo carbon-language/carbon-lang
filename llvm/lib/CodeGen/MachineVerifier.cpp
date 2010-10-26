@@ -167,7 +167,7 @@ namespace {
 
     // Analysis information if available
     LiveVariables *LiveVars;
-    const LiveIntervals *LiveInts;
+    LiveIntervals *LiveInts;
     SlotIndexes *Indexes;
 
     void visitMachineFunctionBefore();
@@ -1066,6 +1066,14 @@ void MachineVerifier::verifyLiveIntervals() {
           break;
         ++MFI;
       }
+    }
+
+    // Check the LI only has one connected component.
+    ConnectedVNInfoEqClasses ConEQ(*LiveInts);
+    unsigned NumComp = ConEQ.Classify(&LI);
+    if (NumComp > 1) {
+      report("Multiple connected components in live interval", MF);
+      *OS << NumComp << " components in " << LI << '\n';
     }
   }
 }
