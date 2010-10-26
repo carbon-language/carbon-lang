@@ -276,10 +276,13 @@ ThreadPlanCallFunction::RunState ()
 void
 ThreadPlanCallFunction::DidPush ()
 {
+//#define SINGLE_STEP_EXPRESSIONS
+    
+#ifndef SINGLE_STEP_EXPRESSIONS
     m_subplan_sp.reset(new ThreadPlanRunToAddress(m_thread, m_start_addr, m_stop_other_threads));
     
     m_thread.QueueThreadPlan(m_subplan_sp, false);
-
+#endif
 }
 
 bool

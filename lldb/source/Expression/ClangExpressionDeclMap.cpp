@@ -88,8 +88,12 @@ ClangExpressionDeclMap::~ClangExpressionDeclMap()
     }
     
     if (m_materialized_location)
-    {
+    {        
+//#define SINGLE_STEP_EXPRESSIONS
+
+#ifndef SINGLE_STEP_EXPRESSIONS
         m_exe_ctx.process->DeallocateMemory(m_materialized_location);
+#endif
         m_materialized_location = 0;
     }
 }

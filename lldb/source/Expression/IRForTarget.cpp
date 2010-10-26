@@ -335,6 +335,9 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
         if (!m_decl_map->GetFunctionAddress (g_sel_registerName_str, srN_addr))
             return false;
         
+        if (log)
+            log->Printf("Found sel_registerName at 0x%llx", srN_addr);
+        
         // Build the function type: struct objc_selector *sel_registerName(uint8_t*)
         
         // The below code would be "more correct," but in actuality what's required is uint8_t*
