@@ -808,7 +808,7 @@ multiclass AI_ldr1<bit opc22, string opc, InstrItinClass iii,
   // Note: We use the complex addrmode_imm12 rather than just an input
   // GPR and a constrained immediate so that we can use this to match
   // frame index references and avoid matching constant pool references.
-  def i12 : AIldr1<0b010, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
+  def i12 : AIldr1<0b010, opc22, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
                    AddrMode_i12, LdFrm, iii, opc, "\t$Rt, $addr",
                   [(set GPR:$Rt, (opnode addrmode_imm12:$addr))]> {
     bits<4> Rt;
@@ -818,7 +818,7 @@ multiclass AI_ldr1<bit opc22, string opc, InstrItinClass iii,
     let Inst{15-12} = Rt;
     let Inst{11-0}  = addr{11-0};   // imm12
   }
-  def rs : AIldr1<0b011, 0, (outs GPR:$Rt), (ins ldst_so_reg:$shift),
+  def rs : AIldr1<0b011, opc22, (outs GPR:$Rt), (ins ldst_so_reg:$shift),
                   AddrModeNone, LdFrm, iir, opc, "\t$Rt, $shift",
                  [(set GPR:$Rt, (opnode ldst_so_reg:$shift))]> {
     bits<4> Rt;
