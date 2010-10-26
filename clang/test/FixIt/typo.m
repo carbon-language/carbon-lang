@@ -102,6 +102,7 @@ void test2(Collide *a) {
 @interface Super
 - (int)method; // expected-note{{using}}
 - (int)method2;
+- (int)method3:(id)x;
 @end
 
 @interface Sub : Super
@@ -155,3 +156,11 @@ void f(A *a) {
   [A methodA] // expected-error{{expected ';' after expression}}
 }
 
+#ifdef NON_FIXITS
+@implementation Sub3
+- (int)method2 {
+  int x = super; // expected-note{{use of undeclared identifier 'super'; did you mean 'Super'?}}
+  return 0;
+}
+@end
+#endif

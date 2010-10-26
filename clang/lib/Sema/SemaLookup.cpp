@@ -3181,10 +3181,14 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
 
   // Make sure that the user typed at least 3 characters for each correction 
   // made. Otherwise, we don't even both looking at the results.
+
+  // We also suppress exact matches; those should be handled by a
+  // different mechanism (e.g., one that introduces qualification in
+  // C++).
   unsigned ED = Consumer.getBestEditDistance();
   if (ED > 0 && Typo->getName().size() / ED < 3) {
     // If this was an unqualified lookup, note that no correction was found.
-    if (IsUnqualifiedLookup)
+    if (IsUnqualifiedLookup && ED > 0)
       (void)UnqualifiedTyposCorrected[Typo];
 
     return DeclarationName();
@@ -3244,6 +3248,14 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     if (Consumer.begin()->second) {
       Res.suppressDiagnostics();
       Res.clear();
+      
+      // Don't correct to a keyword that's the same as the typo; the keyword
+      // wasn't actually in scope.
+      if (ED == 0) {
+        Res.setLookupName(Typo);
+        return DeclarationName();
+      }
+      
     } else if (!LastLookupWasAccepted) {
       // Perform name lookup on this name.
       LookupPotentialTypoResult(*this, Res, Name, S, SS, MemberContext, 
@@ -3263,6 +3275,13 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
     // context.
     Res.suppressDiagnostics();
     Res.clear();
+    
+    // Don't correct to a keyword that's the same as the typo; the keyword
+    // wasn't actually in scope.
+    if (ED == 0) {
+      Res.setLookupName(Typo);
+      return DeclarationName();
+    }
     
     // Record the correction for unqualified lookup.
     if (IsUnqualifiedLookup)
