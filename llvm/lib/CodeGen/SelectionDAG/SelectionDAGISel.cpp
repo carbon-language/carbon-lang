@@ -56,10 +56,13 @@ STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
 STATISTIC(NumFastIselBlocks, "Number of blocks selected entirely by fast isel");
 STATISTIC(NumDAGBlocks, "Number of blocks selected using DAG");
 STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
+
+#ifndef NDEBUG
 STATISTIC(NumBBWithOutOfOrderLineInfo, 
           "Number of blocks with out of order line number info");
 STATISTIC(NumMBBWithOutOfOrderLineInfo, 
           "Number of machine blocks with out of order line number info");
+#endif
 
 static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,

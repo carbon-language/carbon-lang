@@ -53,7 +53,9 @@ static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
      cl::desc("Make an absense of debug location information explicit."),
      cl::init(false));
 
+#ifndef NDEBUG
 STATISTIC(BlocksWithoutLineNo, "Number of blocks without any line number");
+#endif
 
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
