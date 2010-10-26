@@ -3284,12 +3284,12 @@ defm VRSHRN   : N2VNSh_HSD<0, 1, 0b1000, 0, 1, 1, IIC_VSHLi4D, "vrshrn", "i",
                            NEONvrshrn>;
 
 //   VQSHL    : Vector Saturating Shift
-defm VQSHLs   : N3VInt_QHSD<0, 0, 0b0100, 1, N3RegVShFrm,
+defm VQSHLs   : N3VInt_QHSDSh<0, 0, 0b0100, 1, N3RegVShFrm,
                             IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q, IIC_VSHLi4Q,
-                            "vqshl", "s", int_arm_neon_vqshifts, 0>;
-defm VQSHLu   : N3VInt_QHSD<1, 0, 0b0100, 1, N3RegVShFrm,
+                            "vqshl", "s", int_arm_neon_vqshifts>;
+defm VQSHLu   : N3VInt_QHSDSh<1, 0, 0b0100, 1, N3RegVShFrm,
                             IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q, IIC_VSHLi4Q,
-                            "vqshl", "u", int_arm_neon_vqshiftu, 0>;
+                            "vqshl", "u", int_arm_neon_vqshiftu>;
 //   VQSHL    : Vector Saturating Shift Left (Immediate)
 defm VQSHLsi  : N2VSh_QHSD<0,1,0b0111,1, IIC_VSHLi4D, "vqshl", "s",NEONvqshls,
                            N2RegVShLFrm>;
@@ -3310,12 +3310,12 @@ defm VQSHRUN  : N2VNSh_HSD<1, 1, 0b1000, 0, 0, 1, IIC_VSHLi4D, "vqshrun", "s",
                            NEONvqshrnsu>;
 
 //   VQRSHL   : Vector Saturating Rounding Shift
-defm VQRSHLs  : N3VInt_QHSD<0, 0, 0b0101, 1, N3RegVShFrm,
+defm VQRSHLs  : N3VInt_QHSDSh<0, 0, 0b0101, 1, N3RegVShFrm,
                             IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q, IIC_VSHLi4Q,
-                            "vqrshl", "s", int_arm_neon_vqrshifts, 0>;
-defm VQRSHLu  : N3VInt_QHSD<1, 0, 0b0101, 1, N3RegVShFrm,
+                            "vqrshl", "s", int_arm_neon_vqrshifts>;
+defm VQRSHLu  : N3VInt_QHSDSh<1, 0, 0b0101, 1, N3RegVShFrm,
                             IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q, IIC_VSHLi4Q,
-                            "vqrshl", "u", int_arm_neon_vqrshiftu, 0>;
+                            "vqrshl", "u", int_arm_neon_vqrshiftu>;
 
 //   VQRSHRN  : Vector Saturating Rounding Shift Right and Narrow
 defm VQRSHRNs : N2VNSh_HSD<0, 1, 0b1001, 0, 1, 1, IIC_VSHLi4D, "vqrshrn", "s",
