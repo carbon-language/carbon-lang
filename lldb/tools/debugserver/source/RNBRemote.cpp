@@ -2552,7 +2552,7 @@ RNBRemote::HandlePacket_v (const char *p)
             attach_pid = DNBProcessAttachWait(attach_name.c_str (), m_ctx.LaunchFlavor(), NULL, 1000, err_str, sizeof(err_str), RNBRemoteShouldCancelCallback);
 
         }
-        if (strstr (p, "vAttachName;") == p)
+        else if (strstr (p, "vAttachName;") == p)
         {
             p += strlen("vAttachName;");
             std::string attach_name;
