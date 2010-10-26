@@ -157,8 +157,12 @@ void f(A *a) {
 }
 
 #ifdef NON_FIXITS
-@implementation Sub2
-- (int)method2 {
+@interface Sub3 : Super
+- (int)method3;
+@end
+
+@implementation Sub3
+- (int)method3 {
   int x = super; // expected-note{{use of undeclared identifier 'super'; did you mean 'Super'?}}
   return 0;
 }
