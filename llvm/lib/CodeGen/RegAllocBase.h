@@ -37,17 +37,29 @@
 #ifndef LLVM_CODEGEN_REGALLOCBASE
 #define LLVM_CODEGEN_REGALLOCBASE
 
-#include "LiveIntervalUnion.h"
-#include "VirtRegMap.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/OwningPtr.h"
-#include <vector>
-#include <queue>
 
 namespace llvm {
 
+template<typename T> class SmallVectorImpl;
+class TargetRegisterInfo;
 class VirtRegMap;
+class LiveIntervals;
+
+// Heuristic that determines the priority of assigning virtual to physical
+// registers. The main impact of the heuristic is expected to be compile time.
+// The default is to simply compare spill weights.
+struct LessSpillWeightPriority
+  : public std::binary_function<LiveInterval,LiveInterval, bool> {
+  bool operator()(const LiveInterval *left, const LiveInterval *right) const {
+    return left->weight < right->weight;
+  }
+};
+
+// Forward declare a priority queue of live virtual registers. If an
+// implementation needs to prioritize by anything other than spill weight, then
+// this will become an abstract base class with virtual calls to push/get.
+class LiveVirtRegQueue;
 
 /// RegAllocBase provides the register allocation driver and interface that can
 /// be extended to add interesting heuristics.
@@ -58,9 +70,6 @@ class VirtRegMap;
 /// standard comparator.
 class RegAllocBase {
 protected:
-  typedef SmallVector<LiveInterval*, 4> LiveVirtRegs;
-  typedef LiveVirtRegs::iterator LVRIter;
-  
   // Array of LiveIntervalUnions indexed by physical register.
   class LIUArray {
     unsigned nRegs_;
@@ -92,18 +101,20 @@ protected:
   // A RegAlloc pass should call this before allocatePhysRegs.
   void init(const TargetRegisterInfo &tri, VirtRegMap &vrm, LiveIntervals &lis);
 
-  // The top-level driver. Specialize with the comparator that determines the
-  // priority of assigning live virtual registers. The output is a VirtRegMap
-  // that us updated with physical register assignments.
-  template<typename LICompare>
-  void allocatePhysRegs(LICompare liCompare);
+  // The top-level driver. The output is a VirtRegMap that us updated with
+  // physical register assignments.
+  //
+  // If an implementation wants to override the LiveInterval comparator, we
+  // should modify this interface to allow passing in an instance derived from
+  // LiveVirtRegQueue.
+  void allocatePhysRegs();
 
   // A RegAlloc pass should override this to provide the allocation heuristics.
-  // Each call must guarantee forward progess by returning an available
-  // PhysReg or new set of split LiveVirtRegs. It is up to the splitter to
+  // Each call must guarantee forward progess by returning an available PhysReg
+  // or new set of split live virtual registers. It is up to the splitter to
   // converge quickly toward fully spilled live ranges.
   virtual unsigned selectOrSplit(LiveInterval &lvr,
-                                 LiveVirtRegs &splitLVRs) = 0;
+                                 SmallVectorImpl<LiveInterval*> &splitLVRs) = 0;
 
   // A RegAlloc pass should call this when PassManager releases its memory.
   virtual void releaseMemory();
@@ -113,68 +124,8 @@ protected:
   bool checkPhysRegInterference(LiveIntervalUnion::Query &query, unsigned preg);
   
 private:
-  template<typename PQ>
-  void seedLiveVirtRegs(PQ &lvrQ);
+  void seedLiveVirtRegs(LiveVirtRegQueue &lvrQ);
 };
-
-// Heuristic that determines the priority of assigning virtual to physical
-// registers. The main impact of the heuristic is expected to be compile time.
-// The default is to simply compare spill weights.
-struct LessSpillWeightPriority
-  : public std::binary_function<LiveInterval,LiveInterval, bool> {
-  bool operator()(const LiveInterval *left, const LiveInterval *right) const {
-    return left->weight < right->weight;
-  }
-};
-
-// Visit all the live virtual registers. If they are already assigned to a
-// physical register, unify them with the corresponding LiveIntervalUnion,
-// otherwise push them on the priority queue for later assignment.
-template<typename PQ>
-void RegAllocBase::seedLiveVirtRegs(PQ &lvrQ) {
-  for (LiveIntervals::iterator liItr = lis_->begin(), liEnd = lis_->end();
-       liItr != liEnd; ++liItr) {
-    unsigned reg = liItr->first;
-    LiveInterval &li = *liItr->second;
-    if (TargetRegisterInfo::isPhysicalRegister(reg)) {
-      physReg2liu_[reg].unify(li);
-    }
-    else {
-      lvrQ.push(&li);
-    }
-  }
-}
-
-// Top-level driver to manage the queue of unassigned LiveVirtRegs and call the
-// selectOrSplit implementation.
-template<typename LICompare>
-void RegAllocBase::allocatePhysRegs(LICompare liCompare) {
-  typedef std::priority_queue
-    <LiveInterval*, std::vector<LiveInterval*>, LICompare> LiveVirtRegQueue;
-
-  LiveVirtRegQueue lvrQ(liCompare);
-  seedLiveVirtRegs(lvrQ);
-  while (!lvrQ.empty()) {
-    LiveInterval *lvr = lvrQ.top();
-    lvrQ.pop();
-    LiveVirtRegs splitLVRs;
-    unsigned availablePhysReg = selectOrSplit(*lvr, splitLVRs);
-    if (availablePhysReg) {
-      assert(splitLVRs.empty() && "inconsistent splitting");
-      assert(!vrm_->hasPhys(lvr->reg) && "duplicate vreg in interval unions");
-      vrm_->assignVirt2Phys(lvr->reg, availablePhysReg);
-      physReg2liu_[availablePhysReg].unify(*lvr);
-    }
-    else {
-      for (LVRIter lvrI = splitLVRs.begin(), lvrEnd = splitLVRs.end();
-           lvrI != lvrEnd; ++lvrI ) {
-        assert(TargetRegisterInfo::isVirtualRegister((*lvrI)->reg) &&
-               "expect split value in virtual register");
-        lvrQ.push(*lvrI);
-      }
-    }
-  }
-}
 
 } // end namespace llvm
 

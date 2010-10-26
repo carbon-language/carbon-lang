@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "LiveIntervalUnion.h"
 #include "RegAllocBase.h"
 #include "RenderMachineFunction.h"
 #include "Spiller.h"
@@ -32,6 +33,14 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+
+#include "VirtRegMap.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+
+
+#include <vector>
+#include <queue>
 
 using namespace llvm;
 
@@ -72,7 +81,8 @@ public:
 
   virtual void releaseMemory();
 
-  virtual unsigned selectOrSplit(LiveInterval &lvr, LiveVirtRegs &splitLVRs);
+  virtual unsigned selectOrSplit(LiveInterval &lvr,
+                                 SmallVectorImpl<LiveInterval*> &splitLVRs);
 
   /// Perform register allocation.
   virtual bool runOnMachineFunction(MachineFunction &mf);
@@ -101,7 +111,7 @@ INITIALIZE_PASS_DEPENDENCY(RenderMachineFunction)
 #endif
 INITIALIZE_PASS_END(RABasic, "basic-regalloc",
                     "Basic Register Allocator", false, false)
-#endif // INITIALIZE_PASS
+#endif // disable INITIALIZE_PASS
 
 RABasic::RABasic(): MachineFunctionPass(ID) {
   initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
@@ -168,6 +178,79 @@ void RegAllocBase::releaseMemory() {
   physReg2liu_.clear();
 }
 
+namespace llvm {
+/// This class defines a queue of live virtual registers prioritized by spill
+/// weight. The heaviest vreg is popped first.
+///
+/// Currently, this is trivial wrapper that gives us an opaque type in the
+/// header, but we may later give it a virtual interface for register allocators
+/// to override the priority queue comparator.
+class LiveVirtRegQueue {
+  typedef std::priority_queue
+    <LiveInterval*, std::vector<LiveInterval*>, LessSpillWeightPriority> PQ;
+  PQ pq_;
+  
+public:
+  // Is the queue empty?
+  bool empty() { return pq_.empty(); }
+  
+  // Get the highest priority lvr (top + pop)
+  LiveInterval *get() {
+    LiveInterval *lvr = pq_.top();
+    pq_.pop();
+    return lvr;
+  }
+  // Add this lvr to the queue
+  void push(LiveInterval *lvr) {
+    pq_.push(lvr);
+  }
+};
+} // end namespace llvm
+
+// Visit all the live virtual registers. If they are already assigned to a
+// physical register, unify them with the corresponding LiveIntervalUnion,
+// otherwise push them on the priority queue for later assignment.
+void RegAllocBase::seedLiveVirtRegs(LiveVirtRegQueue &lvrQ) {
+  for (LiveIntervals::iterator liItr = lis_->begin(), liEnd = lis_->end();
+       liItr != liEnd; ++liItr) {
+    unsigned reg = liItr->first;
+    LiveInterval &li = *liItr->second;
+    if (TargetRegisterInfo::isPhysicalRegister(reg)) {
+      physReg2liu_[reg].unify(li);
+    }
+    else {
+      lvrQ.push(&li);
+    }
+  }
+}
+
+// Top-level driver to manage the queue of unassigned LiveVirtRegs and call the
+// selectOrSplit implementation.
+void RegAllocBase::allocatePhysRegs() {
+  LiveVirtRegQueue lvrQ;
+  seedLiveVirtRegs(lvrQ);
+  while (!lvrQ.empty()) {
+    LiveInterval *lvr = lvrQ.get();
+    typedef SmallVector<LiveInterval*, 4> LVRVec;
+    LVRVec splitLVRs;
+    unsigned availablePhysReg = selectOrSplit(*lvr, splitLVRs);
+    if (availablePhysReg) {
+      assert(splitLVRs.empty() && "inconsistent splitting");
+      assert(!vrm_->hasPhys(lvr->reg) && "duplicate vreg in interval unions");
+      vrm_->assignVirt2Phys(lvr->reg, availablePhysReg);
+      physReg2liu_[availablePhysReg].unify(*lvr);
+    }
+    else {
+      for (LVRVec::iterator lvrI = splitLVRs.begin(), lvrEnd = splitLVRs.end();
+           lvrI != lvrEnd; ++lvrI) {
+        assert(TargetRegisterInfo::isVirtualRegister((*lvrI)->reg) &&
+               "expect split value in virtual register");
+        lvrQ.push(*lvrI);
+      }
+    }
+  }
+}
+
 // Check if this live virtual reg interferes with a physical register. If not,
 // then check for interference on each register that aliases with the physical
 // register.
@@ -201,7 +284,8 @@ bool RegAllocBase::checkPhysRegInterference(LiveIntervalUnion::Query &query,
 // available register. So, the number of interference tests in the worst case is
 // |vregs| * |machineregs|. And since the number of interference tests is
 // minimal, there is no value in caching them.
-unsigned RABasic::selectOrSplit(LiveInterval &lvr, LiveVirtRegs &splitLVRs) {
+unsigned RABasic::selectOrSplit(LiveInterval &lvr,
+                                SmallVectorImpl<LiveInterval*> &splitLVRs) {
   // Check for an available reg in this class. 
   const TargetRegisterClass *trc = mri_->getRegClass(lvr.reg);
   for (TargetRegisterClass::iterator trcI = trc->allocation_order_begin(*mf_),
@@ -238,7 +322,7 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
 
   spiller_.reset(createSpiller(*this, *mf_, *vrm_));
   
-  allocatePhysRegs(LessSpillWeightPriority());
+  allocatePhysRegs();
 
   // Diagnostic output before rewriting
   DEBUG(dbgs() << "Post alloc VirtRegMap:\n" << *vrm_ << "\n");
@@ -249,6 +333,9 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   // Run rewriter
   std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
   rewriter->runOnMachineFunction(*mf_, *vrm_, lis_);
+
+  // The pass output is in VirtRegMap. Release all the transient data.
+  releaseMemory();
   
   return true;
 }

@@ -21,6 +21,9 @@
 using namespace llvm;
 
 // Merge a LiveInterval's segments. Guarantee no overlaps.
+//
+// Consider coalescing adjacent segments to save space, even though it makes
+// extraction more complicated.
 void LiveIntervalUnion::unify(LiveInterval &lvr) {
   // Add this live virtual register to the union
   LiveVirtRegs::iterator pos = std::upper_bound(lvrs_.begin(), lvrs_.end(),
@@ -34,19 +37,21 @@ void LiveIntervalUnion::unify(LiveInterval &lvr) {
     LiveSegment segment(lvrI->start, lvrI->end, lvr);
     segPos = segments_.insert(segPos, segment);
     assert(*segPos == segment && "need equal val for equal key");
+#ifndef NDEBUG
+    // check for overlap (inductively)
+    if (segPos != segments_.begin()) {
+      SegmentIter prevPos = segPos;
+      --prevPos;
+      assert(prevPos->end <= segment.start && "overlapping segments" );
+    }
+    SegmentIter nextPos = segPos;
+    ++nextPos;
+    if (nextPos != segments_.end())
+      assert(segment.end <= nextPos->start && "overlapping segments" );
+#endif // NDEBUG
   }
 }
 
-namespace {
-
-// Keep LVRs sorted for fast membership test and extraction.
-struct LessReg
-  : public std::binary_function<LiveInterval*, LiveInterval*, bool> {
-  bool operator()(const LiveInterval *left, const LiveInterval *right) const {
-    return left->reg < right->reg;
-  }
-};
-                    
 // Low-level helper to find the first segment in the range [segI,segEnd) that
 // intersects with a live virtual register segment, or segI.start >= lvr.end
 //
@@ -67,10 +72,8 @@ struct LessReg
 // Assuming intervals are disjoint, if an intersection exists, it must be the
 // segment found or immediately behind it. We continue reverse iterating to
 // return the first overlap.
-//
-// FIXME: support extract(), handle tombstones of extracted lvrs.
 typedef LiveIntervalUnion::SegmentIter SegmentIter;
-SegmentIter upperBound(SegmentIter segBegin,
+static SegmentIter upperBound(SegmentIter segBegin,
                        SegmentIter segEnd,
                        const LiveRange &lvrSeg) {
   assert(lvrSeg.end > segBegin->start && "segment iterator precondition");
@@ -84,7 +87,6 @@ SegmentIter upperBound(SegmentIter segBegin,
   }
   return segI;
 }
-} // end anonymous namespace
 
 // Private interface accessed by Query.
 //

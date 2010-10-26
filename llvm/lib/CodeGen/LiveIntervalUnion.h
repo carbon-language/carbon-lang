@@ -23,13 +23,16 @@
 
 namespace llvm {
 
-// A LiveSegment is a copy of a LiveRange object used within
-// LiveIntervalUnion. LiveSegment additionally contains a pointer to its
-// original live virtual register (LiveInterval). This allows quick lookup of
-// the live virtual register as we iterate over live segments in a union. Note
-// that LiveRange is misnamed and actually represents only a single contiguous
-// interval within a virtual register's liveness. To limit confusion, in this
-// file we refer it as a live segment.
+/// A LiveSegment is a copy of a LiveRange object used within
+/// LiveIntervalUnion. LiveSegment additionally contains a pointer to its
+/// original live virtual register (LiveInterval). This allows quick lookup of
+/// the live virtual register as we iterate over live segments in a union. Note
+/// that LiveRange is misnamed and actually represents only a single contiguous
+/// interval within a virtual register's liveness. To limit confusion, in this
+/// file we refer it as a live segment.
+///
+/// Note: This currently represents a half-open interval [start,end).
+/// If LiveRange is modified to represent a closed interval, so should this.
 struct LiveSegment {
   SlotIndex start;
   SlotIndex end;
@@ -46,15 +49,9 @@ struct LiveSegment {
     return !operator==(ls);
   }
 
-  bool operator<(const LiveSegment &ls) const {
-    return start < ls.start || (start == ls.start && end < ls.end);
-  }
+  // Order segments by starting point only--we expect them to be disjoint.
+  bool operator<(const LiveSegment &ls) const { return start < ls.start; }
 };
-
-/// Compare a live virtual register segment to a LiveIntervalUnion segment.
-inline bool overlap(const LiveRange &lvrSeg, const LiveSegment &liuSeg) {
-  return lvrSeg.start < liuSeg.end && liuSeg.start < lvrSeg.end;
-}
 
 inline bool operator<(SlotIndex V, const LiveSegment &ls) {
   return V < ls.start;
@@ -62,6 +59,11 @@ inline bool operator<(SlotIndex V, const LiveSegment &ls) {
 
 inline bool operator<(const LiveSegment &ls, SlotIndex V) {
   return ls.start < V;
+}
+
+/// Compare a live virtual register segment to a LiveIntervalUnion segment.
+inline bool overlap(const LiveRange &lvrSeg, const LiveSegment &liuSeg) {
+  return lvrSeg.start < liuSeg.end && liuSeg.start < lvrSeg.end;
 }
 
 /// Union of live intervals that are strong candidates for coalescing into a
@@ -100,13 +102,18 @@ private:
 public:
   // default ctor avoids placement new
   LiveIntervalUnion() : repReg_(0) {}
-  
+
+  // Initialize the union by associating it with a representative register
+  // number.
   void init(unsigned repReg) { repReg_ = repReg; }
 
+  // Iterate over all segments in the union of live virtual registers ordered
+  // by their starting position.
   SegmentIter begin() { return segments_.begin(); }
   SegmentIter end() { return segments_.end(); }
 
-  /// FIXME: !!!!!!!!!!! Keeps a non-const ref
+  // Add a live virtual register to this union and merge its segments.
+  // Holds a nonconst reference to the LVR for later maniplution.
   void unify(LiveInterval &lvr);
 
   // FIXME: needed by RegAllocGreedy
