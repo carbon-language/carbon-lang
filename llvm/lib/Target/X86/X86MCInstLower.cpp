@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "InstPrinter/X86ATTInstPrinter.h"
 #include "X86MCInstLower.h"
 #include "X86AsmPrinter.h"
 #include "X86COFFMachineModuleInfo.h"
@@ -415,6 +416,13 @@ ReSimplify:
     break;
   }
 
+  case X86::EH_RETURN:
+  case X86::EH_RETURN64: {
+    OutMI = MCInst();
+    OutMI.setOpcode(X86::RET);
+    break;
+  }
+
   // TAILJMPd, TAILJMPd64 - Lower to the correct jump instructions.
   case X86::TAILJMPr:
   case X86::TAILJMPd:
@@ -543,6 +551,15 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       OutStreamer.EmitRawText(StringRef("\t#MEMBARRIER"));
     return;
         
+
+  case X86::EH_RETURN:
+  case X86::EH_RETURN64: {
+    // Lower these as normal, but add some comments.
+    unsigned Reg = MI->getOperand(0).getReg();
+    OutStreamer.AddComment(StringRef("eh_return, addr: %") +
+                           X86ATTInstPrinter::getRegisterName(Reg));
+    break;
+  }
   case X86::TAILJMPr:
   case X86::TAILJMPd:
   case X86::TAILJMPd64:
