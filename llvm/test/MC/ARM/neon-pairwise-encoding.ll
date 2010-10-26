@@ -153,3 +153,127 @@ define <2 x i64> @vpaddlu_4xi32(<4 x i32>* %A) nounwind {
 	%tmp2 = call <2 x i64> @llvm.arm.neon.vpaddlu.v2i64.v4i32(<4 x i32> %tmp1)
 	ret <2 x i64> %tmp2
 }
+
+declare <4 x i16> @llvm.arm.neon.vpadals.v4i16.v8i8(<4 x i16>, <8 x i8>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vpadals.v2i32.v4i16(<2 x i32>, <4 x i16>) nounwind readnone
+declare <1 x i64> @llvm.arm.neon.vpadals.v1i64.v2i32(<1 x i64>, <2 x i32>) nounwind readnone
+
+; CHECK: vpadals_8xi8
+define <4 x i16> @vpadals_8xi8(<4 x i16>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vpadal.s8	d16, d17        @ encoding: [0x21,0x06,0xf0,0xf3]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vpadals.v4i16.v8i8(<4 x i16> %tmp1, <8 x i8> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vpadals_4xi16
+define <2 x i32> @vpadals_4xi16(<2 x i32>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vpadal.s16	d16, d17        @ encoding: [0x21,0x06,0xf4,0xf3]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vpadals.v2i32.v4i16(<2 x i32> %tmp1, <4 x i16> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+; CHECK: vpadals_2xi32
+define <1 x i64> @vpadals_2xi32(<1 x i64>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <1 x i64>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vpadal.s32	d16, d17        @ encoding: [0x21,0x06,0xf8,0xf3]
+	%tmp3 = call <1 x i64> @llvm.arm.neon.vpadals.v1i64.v2i32(<1 x i64> %tmp1, <2 x i32> %tmp2)
+	ret <1 x i64> %tmp3
+}
+
+declare <4 x i16> @llvm.arm.neon.vpadalu.v4i16.v8i8(<4 x i16>, <8 x i8>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vpadalu.v2i32.v4i16(<2 x i32>, <4 x i16>) nounwind readnone
+declare <1 x i64> @llvm.arm.neon.vpadalu.v1i64.v2i32(<1 x i64>, <2 x i32>) nounwind readnone
+
+; CHECK: vpadalu_8xi8
+define <4 x i16> @vpadalu_8xi8(<4 x i16>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vpadal.u8	d16, d17        @ encoding: [0xa1,0x06,0xf0,0xf3]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vpadalu.v4i16.v8i8(<4 x i16> %tmp1, <8 x i8> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vpadalu_4xi16
+define <2 x i32> @vpadalu_4xi16(<2 x i32>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vpadal.u16	d16, d17        @ encoding: [0xa1,0x06,0xf4,0xf3]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vpadalu.v2i32.v4i16(<2 x i32> %tmp1, <4 x i16> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+; CHECK: vpadalu_2xi32
+define <1 x i64> @vpadalu_2xi32(<1 x i64>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <1 x i64>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vpadal.u32	d16, d17        @ encoding: [0xa1,0x06,0xf8,0xf3]
+	%tmp3 = call <1 x i64> @llvm.arm.neon.vpadalu.v1i64.v2i32(<1 x i64> %tmp1, <2 x i32> %tmp2)
+	ret <1 x i64> %tmp3
+}
+
+declare <8 x i16> @llvm.arm.neon.vpadals.v8i16.v16i8(<8 x i16>, <16 x i8>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vpadals.v4i32.v8i16(<4 x i32>, <8 x i16>) nounwind readnone
+declare <2 x i64> @llvm.arm.neon.vpadals.v2i64.v4i32(<2 x i64>, <4 x i32>) nounwind readnone
+
+; CHECK: vpadals_16xi8
+define <8 x i16> @vpadals_16xi8(<8 x i16>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vpadal.s8	q9, q8          @ encoding: [0x60,0x26,0xf0,0xf3]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vpadals.v8i16.v16i8(<8 x i16> %tmp1, <16 x i8> %tmp2)
+	ret <8 x i16> %tmp3
+}
+
+; CHECK: vpadals_8xi16
+define <4 x i32> @vpadals_8xi16(<4 x i32>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vpadal.s16	q9, q8          @ encoding: [0x60,0x26,0xf4,0xf3]
+	%tmp3 = call <4 x i32> @llvm.arm.neon.vpadals.v4i32.v8i16(<4 x i32> %tmp1, <8 x i16> %tmp2)
+	ret <4 x i32> %tmp3
+}
+
+; CHECK: vpadals_4xi32
+define <2 x i64> @vpadals_4xi32(<2 x i64>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vpadal.s32	q9, q8          @ encoding: [0x60,0x26,0xf8,0xf3]
+	%tmp3 = call <2 x i64> @llvm.arm.neon.vpadals.v2i64.v4i32(<2 x i64> %tmp1, <4 x i32> %tmp2)
+	ret <2 x i64> %tmp3
+}
+
+declare <8 x i16> @llvm.arm.neon.vpadalu.v8i16.v16i8(<8 x i16>, <16 x i8>) nounwind readnone
+declare <4 x i32> @llvm.arm.neon.vpadalu.v4i32.v8i16(<4 x i32>, <8 x i16>) nounwind readnone
+declare <2 x i64> @llvm.arm.neon.vpadalu.v2i64.v4i32(<2 x i64>, <4 x i32>) nounwind readnone
+
+; CHECK: vpadalu_16xi8
+define <8 x i16> @vpadalu_16xi8(<8 x i16>* %A, <16 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <16 x i8>* %B
+; CHECK: vpadal.u8	q9, q8          @ encoding: [0xe0,0x26,0xf0,0xf3]
+	%tmp3 = call <8 x i16> @llvm.arm.neon.vpadalu.v8i16.v16i8(<8 x i16> %tmp1, <16 x i8> %tmp2)
+	ret <8 x i16> %tmp3
+}
+
+; CHECK: vpadalu_8xi16
+define <4 x i32> @vpadalu_8xi16(<4 x i32>* %A, <8 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = load <8 x i16>* %B
+; CHECK: vpadal.u16	q9, q8          @ encoding: [0xe0,0x26,0xf4,0xf3]
+	%tmp3 = call <4 x i32> @llvm.arm.neon.vpadalu.v4i32.v8i16(<4 x i32> %tmp1, <8 x i16> %tmp2)
+	ret <4 x i32> %tmp3
+}
+
+; CHECK: vpadalu_4xi32
+define <2 x i64> @vpadalu_4xi32(<2 x i64>* %A, <4 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i64>* %A
+	%tmp2 = load <4 x i32>* %B
+; CHECK: vpadal.u32	q9, q8          @ encoding: [0xe0,0x26,0xf8,0xf3]
+	%tmp3 = call <2 x i64> @llvm.arm.neon.vpadalu.v2i64.v4i32(<2 x i64> %tmp1, <4 x i32> %tmp2)
+	ret <2 x i64> %tmp3
+}

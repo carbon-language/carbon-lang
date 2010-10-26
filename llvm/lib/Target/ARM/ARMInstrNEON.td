@@ -1659,17 +1659,17 @@ class N2VDPLInt2<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
                  string OpcodeStr, string Dt,
                  ValueType ResTy, ValueType OpTy, Intrinsic IntOp>
   : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, 0, op4,
-        (outs DPR:$dst), (ins DPR:$src1, DPR:$src2), IIC_VPALiD,
-        OpcodeStr, Dt, "$dst, $src2", "$src1 = $dst",
-        [(set DPR:$dst, (ResTy (IntOp (ResTy DPR:$src1), (OpTy DPR:$src2))))]>;
+        (outs DPR:$Vd), (ins DPR:$src1, DPR:$Vm), IIC_VPALiD,
+        OpcodeStr, Dt, "$Vd, $Vm", "$src1 = $Vd",
+        [(set DPR:$Vd, (ResTy (IntOp (ResTy DPR:$src1), (OpTy DPR:$Vm))))]>;
 class N2VQPLInt2<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
                  bits<2> op17_16, bits<5> op11_7, bit op4,
                  string OpcodeStr, string Dt,
                  ValueType ResTy, ValueType OpTy, Intrinsic IntOp>
   : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, 1, op4,
-        (outs QPR:$dst), (ins QPR:$src1, QPR:$src2), IIC_VPALiQ,
-        OpcodeStr, Dt, "$dst, $src2", "$src1 = $dst",
-        [(set QPR:$dst, (ResTy (IntOp (ResTy QPR:$src1), (OpTy QPR:$src2))))]>;
+        (outs QPR:$Vd), (ins QPR:$src1, QPR:$Vm), IIC_VPALiQ,
+        OpcodeStr, Dt, "$Vd, $Vm", "$src1 = $Vd",
+        [(set QPR:$Vd, (ResTy (IntOp (ResTy QPR:$src1), (OpTy QPR:$Vm))))]>;
 
 // Shift by immediate,
 // both double- and quad-register.
