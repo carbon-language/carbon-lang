@@ -168,8 +168,7 @@ BreakpointResolverName::SearchCallback
         case Breakpoint::Regexp:
             if (context.module_sp)
             {
-                if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull))
-                    context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
+                context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
                 context.module_sp->FindFunctions (m_regex, true, func_list);
             }
             break;
