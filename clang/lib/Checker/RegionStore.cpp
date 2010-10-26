@@ -686,6 +686,16 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
     B = RM.Add(B, baseR, BindingKey::Default, V);
     return;
   }
+  
+  if (includeGlobals && 
+      isa<NonStaticGlobalSpaceRegion>(baseR->getMemorySpace())) {
+    // If the region is a global and we are invalidating all globals,
+    // just erase the entry.  This causes all globals to be lazily
+    // symbolicated from the same base symbol.
+    B = RM.Remove(B, baseR);
+    return;
+  }
+  
 
   DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(baseR, Ex, T, Count);
   assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
@@ -1182,16 +1192,16 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
   RegionBindings B = GetRegionBindings(store);
 
   while (superR) {
-    if (const Optional<SVal> &D = RetrieveDerivedDefaultValue(B, superR, R, Ty))
+    if (const Optional<SVal> &D =
+        RetrieveDerivedDefaultValue(B, superR, R, Ty))
       return *D;
 
     // If our super region is a field or element itself, walk up the region
     // hierarchy to see if there is a default value installed in an ancestor.
-    if (isa<FieldRegion>(superR) || isa<ElementRegion>(superR)) {
-      superR = cast<SubRegion>(superR)->getSuperRegion();
+    if (const SubRegion *SR = dyn_cast<SubRegion>(superR)) {
+      superR = SR->getSuperRegion();
       continue;
     }
-
     break;
   }
 

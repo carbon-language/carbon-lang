@@ -1159,3 +1159,23 @@ void __PR8458(PR8458 *x) {
   @synchronized(x.lock) {} // no-warning
 }
 
+// PR 8440 - False null dereference during store to array-in-field-in-global.
+// This test case previously resulted in a bogus null deref warning from
+// incorrect lazy symbolication logic in RegionStore.
+static struct {
+  int num;
+  char **data;
+} saved_pr8440;
+
+char *foo_pr8440();
+char **bar_pr8440();
+void baz_pr8440(int n)
+{
+   saved_pr8440.num = n;
+   if (saved_pr8440.data) 
+     return;
+   saved_pr8440.data = bar_pr8440();
+   for (int i = 0 ; i < n ; i ++)
+     saved_pr8440.data[i] = foo_pr8440(); // no-warning
+}
+
