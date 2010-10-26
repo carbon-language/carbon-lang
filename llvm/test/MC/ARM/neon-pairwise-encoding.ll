@@ -277,3 +277,149 @@ define <2 x i64> @vpadalu_4xi32(<2 x i64>* %A, <4 x i32>* %B) nounwind {
 	%tmp3 = call <2 x i64> @llvm.arm.neon.vpadalu.v2i64.v4i32(<2 x i64> %tmp1, <4 x i32> %tmp2)
 	ret <2 x i64> %tmp3
 }
+
+declare <8 x i8>  @llvm.arm.neon.vpmins.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vpmins.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vpmins.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vpmins_8xi8
+define <8 x i8> @vpmins_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vpmin.s8	d16, d16, d17   @ encoding: [0xb1,0x0a,0x40,0xf2]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vpmins.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vpmins_4xi16
+define <4 x i16> @vpmins_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vpmin.s16	d16, d16, d17   @ encoding: [0xb1,0x0a,0x50,0xf2]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vpmins.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vpmins_2xi32
+define <2 x i32> @vpmins_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vpmin.s32	d16, d16, d17   @ encoding: [0xb1,0x0a,0x60,0xf2]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vpmins.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+declare <8 x i8>  @llvm.arm.neon.vpminu.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vpminu.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vpminu.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vpminu_8xi8
+define <8 x i8> @vpminu_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vpmin.u8	d16, d16, d17   @ encoding: [0xb1,0x0a,0x40,0xf3]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vpminu.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vpminu_4xi16
+define <4 x i16> @vpminu_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vpmin.u16	d16, d16, d17   @ encoding: [0xb1,0x0a,0x50,0xf3]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vpminu.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vpminu_2xi32
+define <2 x i32> @vpminu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vpmin.u32	d16, d16, d17   @ encoding: [0xb1,0x0a,0x60,0xf3]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vpminu.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+declare <2 x float> @llvm.arm.neon.vpmins.v2f32(<2 x float>, <2 x float>) nounwind readnone
+
+; CHECK: vpmin_2xfloat
+define <2 x float> @vpmin_2xfloat(<2 x float>* %A, <2 x float>* %B) nounwind {
+	%tmp1 = load <2 x float>* %A
+	%tmp2 = load <2 x float>* %B
+; CHECK: vpmin.f32	d16, d16, d17   @ encoding: [0xa1,0x0f,0x60,0xf3]
+	%tmp3 = call <2 x float> @llvm.arm.neon.vpmins.v2f32(<2 x float> %tmp1, <2 x float> %tmp2)
+	ret <2 x float> %tmp3
+}
+
+declare <8 x i8>  @llvm.arm.neon.vpmaxs.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vpmaxs.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vpmaxs.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vpmaxs_8xi8
+define <8 x i8> @vpmaxs_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vpmax.s8	d16, d16, d17   @ encoding: [0xa1,0x0a,0x40,0xf2]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vpmaxs.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vpmaxs_4xi16
+define <4 x i16> @vpmaxs_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vpmax.s16	d16, d16, d17   @ encoding: [0xa1,0x0a,0x50,0xf2]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vpmaxs.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vpmaxs_2xi32
+define <2 x i32> @vpmaxs_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vpmax.s32	d16, d16, d17   @ encoding: [0xa1,0x0a,0x60,0xf2]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vpmaxs.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+declare <8 x i8>  @llvm.arm.neon.vpmaxu.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vpmaxu.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+declare <2 x i32> @llvm.arm.neon.vpmaxu.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
+
+; CHECK: vpmaxu_8xi8
+define <8 x i8> @vpmaxu_8xi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+; CHECK: vpmax.u8	d16, d16, d17   @ encoding: [0xa1,0x0a,0x40,0xf3]
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vpmaxu.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+	ret <8 x i8> %tmp3
+}
+
+; CHECK: vpmaxu_4xi16
+define <4 x i16> @vpmaxu_4xi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+; CHECK: vpmax.u16	d16, d16, d17   @ encoding: [0xa1,0x0a,0x50,0xf3]
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vpmaxu.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+	ret <4 x i16> %tmp3
+}
+
+; CHECK: vpmaxu_2xi32
+define <2 x i32> @vpmaxu_2xi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = load <2 x i32>* %B
+; CHECK: vpmax.u32	d16, d16, d17   @ encoding: [0xa1,0x0a,0x60,0xf3]
+	%tmp3 = call <2 x i32> @llvm.arm.neon.vpmaxu.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
+	ret <2 x i32> %tmp3
+}
+
+declare <2 x float> @llvm.arm.neon.vpmaxs.v2f32(<2 x float>, <2 x float>) nounwind readnone
+
+; CHECK: vpmax_2xfloat
+define <2 x float> @vpmax_2xfloat(<2 x float>* %A, <2 x float>* %B) nounwind {
+	%tmp1 = load <2 x float>* %A
+	%tmp2 = load <2 x float>* %B
+; CHECK: vpmax.f32	d16, d16, d17   @ encoding: [0xa1,0x0f,0x40,0xf3]
+	%tmp3 = call <2 x float> @llvm.arm.neon.vpmaxs.v2f32(<2 x float> %tmp1, <2 x float> %tmp2)
+	ret <2 x float> %tmp3
+}
