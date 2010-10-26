@@ -93,6 +93,7 @@ namespace {
     /// ClobbersPred    - True if BB could modify predicates (e.g. has
     ///                   cmp, call, etc.)
     /// NonPredSize     - Number of non-predicated instructions.
+    /// ExtraCost       - Extra cost for microcoded instructions.
     /// BB              - Corresponding MachineBasicBlock.
     /// TrueBB / FalseBB- See AnalyzeBranch().
     /// BrCond          - Conditions for end of block conditional branches.
@@ -108,6 +109,7 @@ namespace {
       bool CannotBeCopied  : 1;
       bool ClobbersPred    : 1;
       unsigned NonPredSize;
+      unsigned ExtraCost;
       MachineBasicBlock *BB;
       MachineBasicBlock *TrueBB;
       MachineBasicBlock *FalseBB;
@@ -117,7 +119,7 @@ namespace {
                  IsAnalyzed(false), IsEnqueued(false), IsBrAnalyzable(false),
                  HasFallThrough(false), IsUnpredicable(false),
                  CannotBeCopied(false), ClobbersPred(false), NonPredSize(0),
-                 BB(0), TrueBB(0), FalseBB(0) {}
+                 ExtraCost(0), BB(0), TrueBB(0), FalseBB(0) {}
     };
 
     /// IfcvtToken - Record information about pending if-conversions to attempt:
@@ -652,6 +654,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
 
   // Then scan all the instructions.
   BBI.NonPredSize = 0;
+  BBI.ExtraCost = 0;
   BBI.ClobbersPred = false;
   for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
        I != E; ++I) {
@@ -667,8 +670,10 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
 
     if (!isCondBr) {
       if (!isPredicated) {
+        BBI.NonPredSize++;
         unsigned NumOps = TII->getNumMicroOps(&*I, InstrItins);
-        BBI.NonPredSize += NumOps;
+        if (NumOps > 1)
+          BBI.ExtraCost += NumOps-1;
       } else if (!AlreadyPredicated) {
         // FIXME: This instruction is already predicated before the
         // if-conversion pass. It's probably something like a conditional move.
@@ -815,8 +820,10 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   }
   
   if (CanRevCond && ValidDiamond(TrueBBI, FalseBBI, Dups, Dups2) &&
-      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize - (Dups + Dups2),
-                         *FalseBBI.BB, FalseBBI.NonPredSize - (Dups + Dups2),
+      MeetIfcvtSizeLimit(*TrueBBI.BB, (TrueBBI.NonPredSize - (Dups + Dups2) +
+                                       TrueBBI.ExtraCost),
+                         *FalseBBI.BB, (FalseBBI.NonPredSize - (Dups + Dups2) +
+                                        FalseBBI.ExtraCost),
                          Prediction, Confidence) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond) &&
       FeasibilityAnalysis(FalseBBI, RevCond)) {
@@ -834,7 +841,7 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   }
 
   if (ValidTriangle(TrueBBI, FalseBBI, false, Dups, Prediction, Confidence) &&
-      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize,
+      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize + TrueBBI.ExtraCost,
                          Prediction, Confidence) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond, true)) {
     // Triangle:
@@ -849,7 +856,7 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   }
 
   if (ValidTriangle(TrueBBI, FalseBBI, true, Dups, Prediction, Confidence) &&
-      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize,
+      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize + TrueBBI.ExtraCost,
                          Prediction, Confidence) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond, true, true)) {
     Tokens.push_back(new IfcvtToken(BBI, ICTriangleRev, TNeedSub, Dups));
@@ -857,7 +864,7 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   }
 
   if (ValidSimple(TrueBBI, Dups, Prediction, Confidence) &&
-      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize,
+      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize + TrueBBI.ExtraCost,
                          Prediction, Confidence) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond)) {
     // Simple (split, no rejoin):
@@ -875,7 +882,8 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
     // Try the other path...
     if (ValidTriangle(FalseBBI, TrueBBI, false, Dups,
                       1.0-Prediction, Confidence) &&
-        MeetIfcvtSizeLimit(*FalseBBI.BB, FalseBBI.NonPredSize,
+        MeetIfcvtSizeLimit(*FalseBBI.BB,
+                           FalseBBI.NonPredSize + FalseBBI.ExtraCost,
                            1.0-Prediction, Confidence) &&
         FeasibilityAnalysis(FalseBBI, RevCond, true)) {
       Tokens.push_back(new IfcvtToken(BBI, ICTriangleFalse, FNeedSub, Dups));
@@ -884,7 +892,8 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
 
     if (ValidTriangle(FalseBBI, TrueBBI, true, Dups,
                       1.0-Prediction, Confidence) &&
-        MeetIfcvtSizeLimit(*FalseBBI.BB, FalseBBI.NonPredSize,
+        MeetIfcvtSizeLimit(*FalseBBI.BB,
+                           FalseBBI.NonPredSize + FalseBBI.ExtraCost,
                            1.0-Prediction, Confidence) &&
         FeasibilityAnalysis(FalseBBI, RevCond, true, true)) {
       Tokens.push_back(new IfcvtToken(BBI, ICTriangleFRev, FNeedSub, Dups));
@@ -892,7 +901,8 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
     }
 
     if (ValidSimple(FalseBBI, Dups, 1.0-Prediction, Confidence) &&
-        MeetIfcvtSizeLimit(*FalseBBI.BB, FalseBBI.NonPredSize,
+        MeetIfcvtSizeLimit(*FalseBBI.BB,
+                           FalseBBI.NonPredSize + FalseBBI.ExtraCost,
                            1.0-Prediction, Confidence) &&
         FeasibilityAnalysis(FalseBBI, RevCond)) {
       Tokens.push_back(new IfcvtToken(BBI, ICSimpleFalse, FNeedSub, Dups));
@@ -1422,8 +1432,10 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 
     MachineInstr *MI = MF.CloneMachineInstr(I);
     ToBBI.BB->insert(ToBBI.BB->end(), MI);
+    ToBBI.NonPredSize++;
     unsigned NumOps = TII->getNumMicroOps(MI, InstrItins);
-    ToBBI.NonPredSize += NumOps;
+    if (NumOps > 1)
+      ToBBI.ExtraCost += NumOps-1;
 
     if (!TII->isPredicated(I) && !MI->isDebugValue()) {
       if (!TII->PredicateInstruction(MI, Cond)) {
@@ -1497,7 +1509,9 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges) {
   FromBBI.Predicate.clear();
 
   ToBBI.NonPredSize += FromBBI.NonPredSize;
+  ToBBI.ExtraCost += FromBBI.ExtraCost;
   FromBBI.NonPredSize = 0;
+  FromBBI.ExtraCost = 0;
 
   ToBBI.ClobbersPred |= FromBBI.ClobbersPred;
   ToBBI.HasFallThrough = FromBBI.HasFallThrough;
