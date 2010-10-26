@@ -832,13 +832,19 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
     // principle of substitutability.  Specifically, we permit return types
     // that are subclasses of the declared return type, or that are
     // more-qualified versions of the declared type.
-    if (!isObjCTypeSubstitutable(Context, IntfMethodDecl->getResultType(),
-          ImpMethodDecl->getResultType())) {
-      Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_ret_types)
-        << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
-        << ImpMethodDecl->getResultType();
-      Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
-    }
+
+    // As a possibly-temporary adjustment, we still warn in the
+    // covariant case, just with a different diagnostic (mapped to
+    // nothing under certain circumstances).
+    unsigned DiagID = diag::warn_conflicting_ret_types;
+    if (isObjCTypeSubstitutable(Context, IntfMethodDecl->getResultType(),
+          ImpMethodDecl->getResultType()))
+      DiagID = diag::warn_covariant_ret_types;
+
+    Diag(ImpMethodDecl->getLocation(), DiagID)
+      << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
+      << ImpMethodDecl->getResultType();
+    Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
   }
 
   for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
@@ -852,12 +858,16 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
     // Allow non-matching argument types as long as they don't violate the
     // principle of substitutability.  Specifically, the implementation must
     // accept any objects that the superclass accepts, however it may also
-    // accept others.  
+    // accept others.
 
+    // As a possibly-temporary adjustment, we still warn in the
+    // contravariant case, just with a different diagnostic (mapped to
+    // nothing under certain circumstances).
+    unsigned DiagID = diag::warn_conflicting_param_types;
     if (isObjCTypeSubstitutable(Context, ParmImpTy, ParmDeclTy, true))
-      continue;
+      DiagID = diag::warn_contravariant_param_types;
 
-    Diag((*IM)->getLocation(), diag::warn_conflicting_param_types)
+    Diag((*IM)->getLocation(), DiagID)
       << ImpMethodDecl->getDeclName() << (*IF)->getType()
       << (*IM)->getType();
     Diag((*IF)->getLocation(), diag::note_previous_definition);

@@ -7,12 +7,13 @@
 
 @interface MyClass : NSObject {
 }
-- (void)myMethod:(NSArray *)object; 
+- (void)myMethod:(NSArray *)object; // expected-note {{previous definition is here}}
 - (void)myMethod1:(NSObject *)object; // expected-note {{previous definition is here}}
 @end
 
 @implementation MyClass
-- (void)myMethod:(NSObject *)object { 
+// Warn about this contravariant use for now:
+- (void)myMethod:(NSObject *)object { // expected-warning {{conflicting parameter types in implementation of 'myMethod:': 'NSArray *' vs 'NSObject *'}}
 }
 - (void)myMethod1:(NSArray *)object { // expected-warning {{conflicting parameter types in implementation of 'myMethod1:': 'NSObject *' vs 'NSArray *'}}
 }
