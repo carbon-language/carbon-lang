@@ -200,6 +200,9 @@ bool StandardConversionSequence::isPointerConversionToBool() const {
 /// conversion is a conversion of a pointer to a void pointer. This is
 /// used as part of the ranking of standard conversion sequences (C++
 /// 13.3.3.2p4).
+///
+/// Note that we treat conversions of Objective-C pointers to
+/// unqualified 'id' as having this same rank.
 bool
 StandardConversionSequence::
 isPointerConversionToVoidPointer(ASTContext& Context) const {
@@ -212,9 +215,15 @@ isPointerConversionToVoidPointer(ASTContext& Context) const {
   if (First == ICK_Array_To_Pointer)
     FromType = Context.getArrayDecayedType(FromType);
 
-  if (Second == ICK_Pointer_Conversion && FromType->isPointerType())
+  if (Second == ICK_Pointer_Conversion && FromType->isPointerType()) {
     if (const PointerType* ToPtrType = ToType->getAs<PointerType>())
       return ToPtrType->getPointeeType()->isVoidType();
+  } else if (Second == ICK_Pointer_Conversion &&
+             FromType->isObjCObjectPointerType()) {
+    if (const ObjCObjectPointerType *ToPtrType =
+          ToType->getAs<ObjCObjectPointerType>())
+      return ToPtrType->isObjCIdType();
+  }
 
   return false;
 }
