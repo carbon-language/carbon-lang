@@ -466,7 +466,7 @@ public:
                       unsigned PreallocatedID = 0,
                       unsigned Offset = 0) {
     const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
-    if (IR == 0) return FileID();    // Error opening file?
+    assert(IR && "getOrCreateContentCache() cannot return NULL");
     return createFileID(IR, IncludePos, FileCharacter, PreallocatedID, Offset);
   }
 
@@ -516,9 +516,7 @@ public:
   ///
   /// \param DoNotFree If true, then the buffer will not be freed when the
   /// source manager is destroyed.
-  ///
-  /// \returns true if an error occurred, false otherwise.
-  bool overrideFileContents(const FileEntry *SourceFile,
+  void overrideFileContents(const FileEntry *SourceFile,
                             const llvm::MemoryBuffer *Buffer,
                             bool DoNotFree = false);
 

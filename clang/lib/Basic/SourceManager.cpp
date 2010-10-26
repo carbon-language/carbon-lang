@@ -525,15 +525,13 @@ SourceManager::getMemoryBufferForFile(const FileEntry *File,
   return IR->getBuffer(Diag, *this, SourceLocation(), Invalid);
 }
 
-bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
+void SourceManager::overrideFileContents(const FileEntry *SourceFile,
                                          const llvm::MemoryBuffer *Buffer,
                                          bool DoNotFree) {
   const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
-  if (IR == 0)
-    return true;
+  assert(IR && "getOrCreateContentCache() cannot return NULL");
 
   const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer, DoNotFree);
-  return false;
 }
 
 llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
