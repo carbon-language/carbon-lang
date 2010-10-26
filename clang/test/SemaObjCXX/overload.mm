@@ -120,6 +120,6 @@ namespace test6 {
   void foo(A*) __attribute__((unavailable)); // expected-note {{explicitly made unavailable}}
 
   void test(B *b) {
-    foo(b); // expected-error {{call to unavailable function}}
+    foo(b); // expected-error {{call to 'foo' is ambiguous}}
   }
 }
