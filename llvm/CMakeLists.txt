@@ -392,7 +392,7 @@ if( LLVM_INCLUDE_TESTS )
   add_subdirectory(test)
   add_subdirectory(utils/unittest)
   add_subdirectory(unittests)
-  if (WIN32)
+  if (MSVC)
     # This utility is used to prevent chrashing tests from calling Dr. Watson on
     # Windows.
     add_subdirectory(utils/KillTheDoctor)
