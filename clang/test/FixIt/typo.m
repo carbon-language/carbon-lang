@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -DNON_FIXITS -verify %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -x objective-c -E -P %s -o %t
-// RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t  || true
-// RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -pedantic -Werror %t
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -x objective-c -E -P %s -o %t
+// RUN: %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t  || true
+// RUN: %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -pedantic -Werror %t
 
 @interface NSString // expected-note{{'NSString' declared here}}
 + (int)method:(int)x;
