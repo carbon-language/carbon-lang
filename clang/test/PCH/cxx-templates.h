@@ -150,3 +150,17 @@ struct TS5 {
 template<class T> void f_PR8134(T);
 template<class T> void f_PR8134(T);
 void g_PR8134() { f_PR8134(0); f_PR8134('x'); }
+
+// rdar8580149
+template <typename T>
+struct S6;
+
+template <typename T, unsigned N>
+struct S6<const T [N]>
+{
+private:
+   typedef const T t1[N];
+public:
+   typedef t1& t2;
+};
+

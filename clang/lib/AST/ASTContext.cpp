@@ -1522,11 +1522,12 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
   DependentSizedArrayType *Canon = 0;
   llvm::FoldingSetNodeID ID;
 
+  QualType CanonicalEltTy = getCanonicalType(EltTy);
   if (NumElts) {
     // Dependently-sized array types that do not have a specified
     // number of elements will have their sizes deduced from an
     // initializer.
-    DependentSizedArrayType::Profile(ID, *this, getCanonicalType(EltTy), ASM,
+    DependentSizedArrayType::Profile(ID, *this, CanonicalEltTy, ASM,
                                      EltTypeQuals, NumElts);
 
     Canon = DependentSizedArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -1539,28 +1540,28 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
     New = new (*this, TypeAlignment)
       DependentSizedArrayType(*this, EltTy, QualType(Canon, 0),
                               NumElts, ASM, EltTypeQuals, Brackets);
-  } else {
-    QualType CanonEltTy = getCanonicalType(EltTy);
-    if (CanonEltTy == EltTy) {
-      New = new (*this, TypeAlignment)
-        DependentSizedArrayType(*this, EltTy, QualType(),
-                                NumElts, ASM, EltTypeQuals, Brackets);
-
-      if (NumElts) {
-        DependentSizedArrayType *CanonCheck
-          = DependentSizedArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
-        assert(!CanonCheck && "Dependent-sized canonical array type broken");
-        (void)CanonCheck;
-        DependentSizedArrayTypes.InsertNode(New, InsertPos);
-      }
-    } else {
-      QualType Canon = getDependentSizedArrayType(CanonEltTy, NumElts,
-                                                  ASM, EltTypeQuals,
-                                                  SourceRange());
-      New = new (*this, TypeAlignment)
-        DependentSizedArrayType(*this, EltTy, Canon,
-                                NumElts, ASM, EltTypeQuals, Brackets);
+  } else if (CanonicalEltTy == EltTy) {
+    // This is a canonical type. Record it.
+    New = new (*this, TypeAlignment)
+      DependentSizedArrayType(*this, EltTy, QualType(),
+                              NumElts, ASM, EltTypeQuals, Brackets);
+    
+    if (NumElts) {
+#ifndef NDEBUG
+      DependentSizedArrayType *CanonCheck
+        = DependentSizedArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+      assert(!CanonCheck && "Dependent-sized canonical array type broken");
+      (void)CanonCheck;
+#endif
+      DependentSizedArrayTypes.InsertNode(New, InsertPos);
     }
+  } else {
+    QualType Canon = getDependentSizedArrayType(CanonicalEltTy, NumElts,
+                                                ASM, EltTypeQuals,
+                                                SourceRange());
+    New = new (*this, TypeAlignment)
+      DependentSizedArrayType(*this, EltTy, Canon,
+                              NumElts, ASM, EltTypeQuals, Brackets);
   }
 
   Types.push_back(New);

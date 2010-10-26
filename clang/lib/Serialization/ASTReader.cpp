@@ -2764,6 +2764,8 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     }
     TypedefDecl *Decl = cast<TypedefDecl>(GetDecl(Record[0]));
     QualType Canonical = GetType(Record[1]);
+    if (!Canonical.isNull())
+      Canonical = Context->getCanonicalType(Canonical);
     return Context->getTypedefType(Decl, Canonical);
   }
 
@@ -2867,6 +2869,8 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
     const IdentifierInfo *Name = this->GetIdentifierInfo(Record, Idx);
     QualType Canon = GetType(Record[Idx++]);
+    if (!Canon.isNull())
+      Canon = Context->getCanonicalType(Canon);
     return Context->getDependentNameType(Keyword, NNS, Name, Canon);
   }
 
