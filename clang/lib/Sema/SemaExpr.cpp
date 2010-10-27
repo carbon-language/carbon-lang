@@ -7071,9 +7071,8 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
       LastStmt = Label->getSubStmt();
     }
     if (Expr *LastExpr = dyn_cast<Expr>(LastStmt)) {
+      DefaultFunctionArrayLvalueConversion(LastExpr);
       Ty = LastExpr->getType();
-      if (Ty->isArrayType())
-        Ty = Context.getArrayDecayedType(Ty);
       if (!Ty->isDependentType() && !LastExpr->isTypeDependent()) {
         ExprResult Res = PerformCopyInitialization(
                             InitializedEntity::InitializeResult(LPLoc, 
