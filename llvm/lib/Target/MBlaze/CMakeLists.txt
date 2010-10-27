@@ -12,6 +12,7 @@ tablegen(MBlazeGenDAGISel.inc -gen-dag-isel)
 tablegen(MBlazeGenCallingConv.inc -gen-callingconv)
 tablegen(MBlazeGenSubtarget.inc -gen-subtarget)
 tablegen(MBlazeGenIntrinsics.inc -gen-tgt-intrinsic)
+tablegen(MBlazeGenEDInfo.inc -gen-enhanced-disassembly-info)
 
 add_llvm_target(MBlazeCodeGen
   MBlazeDelaySlotFiller.cpp

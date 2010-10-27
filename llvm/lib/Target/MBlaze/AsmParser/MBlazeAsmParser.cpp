@@ -72,10 +72,6 @@ private:
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
-  bool ParseDirectiveThumb(SMLoc L);
-
-  bool ParseDirectiveThumbFunc(SMLoc L);
-
   bool ParseDirectiveCode(SMLoc L);
 
   bool ParseDirectiveSyntax(SMLoc L);
@@ -750,10 +746,6 @@ bool MBlazeAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
     return ParseDirectiveWord(4, DirectiveID.getLoc());
-  else if (IDVal == ".thumb")
-    return ParseDirectiveThumb(DirectiveID.getLoc());
-  else if (IDVal == ".thumb_func")
-    return ParseDirectiveThumbFunc(DirectiveID.getLoc());
   else if (IDVal == ".code")
     return ParseDirectiveCode(DirectiveID.getLoc());
   else if (IDVal == ".syntax")
@@ -783,36 +775,6 @@ bool MBlazeAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   }
 
   Parser.Lex();
-  return false;
-}
-
-/// ParseDirectiveThumb
-///  ::= .thumb
-bool MBlazeAsmParser::ParseDirectiveThumb(SMLoc L) {
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(L, "unexpected token in directive");
-  Parser.Lex();
-
-  // TODO: set thumb mode
-  // TODO: tell the MC streamer the mode
-  // getParser().getStreamer().Emit???();
-  return false;
-}
-
-/// ParseDirectiveThumbFunc
-///  ::= .thumbfunc symbol_name
-bool MBlazeAsmParser::ParseDirectiveThumbFunc(SMLoc L) {
-  const AsmToken &Tok = Parser.getTok();
-  if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
-    return Error(L, "unexpected token in .syntax directive");
-  Parser.Lex(); // Consume the identifier token.
-
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(L, "unexpected token in directive");
-  Parser.Lex();
-
-  // TODO: mark symbol as a thumb symbol
-  // getParser().getStreamer().Emit???();
   return false;
 }
 

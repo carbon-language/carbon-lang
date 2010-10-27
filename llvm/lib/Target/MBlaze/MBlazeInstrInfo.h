@@ -138,21 +138,26 @@ namespace MBlazeII {
     // PseudoFrm - This represents an instruction that is a pseudo instruction
     // or one that has not been implemented yet.  It is illegal to code generate
     // it, but tolerated for intermediate implementation stages.
-    Pseudo         = 0,
-
-    RegRegReg      = 1,
-    RegRegImm      = 2,
-    RegImmReg      = 3,
-    FSL            = 4,
-    FSLD           = 5,
-    FSLT           = 6,
-    FSLTD          = 7,
-    Reg            = 8,
-    Imm            = 9,
-    RegReg         = 10,
-    RegImm         = 11,
-
-    FormMask       = 63
+    FPseudo = 0,
+    FRRR,
+    FRRI,
+    FCRR,
+    FCRI,
+    FRCR,
+    FRCI,
+    FCCR,
+    FCCI,
+    FRRCI,
+    FRRC,
+    FRCX,
+    FRCS,
+    FCRCS,
+    FCRCX,
+    FCX,
+    FCR,
+    FRIR,
+    FC,
+    FormMask = 63
 
     //===------------------------------------------------------------------===//
     // MBlaze Specific MachineOperand flags.

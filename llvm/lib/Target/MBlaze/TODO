@@ -30,3 +30,5 @@
       slots but I'm not sure that is necessary.
     - The processor itineraries are copied from a different backend
       and need to be updated to model the MicroBlaze correctly.
+    - Look at the MBlazeGenFastISel.inc stuff and make use of it
+      if appropriate.

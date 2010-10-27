@@ -15,17 +15,24 @@ class Format<bits<6> val> {
 }
 
 def FPseudo : Format<0>;
-def FRRR    : Format<1>;
-def FRRI    : Format<2>;
-def FRIR    : Format<3>;
-def FFSL    : Format<4>;
-def FFSLD   : Format<5>;
-def FFSLT   : Format<6>;
-def FFSLTD  : Format<7>;
-def FR      : Format<8>;
-def FI      : Format<9>;
-def FRR     : Format<10>;
-def FRI     : Format<11>;
+def FRRR    : Format<1>;  // ADD, RSUB, OR, etc.
+def FRRI    : Format<2>;  // ADDI, RSUBI, ORI, etc.
+def FCRR    : Format<3>;  // PUTD, WDC, WIC, BEQ, BNE, BGE, etc.
+def FCRI    : Format<4>;  // RTID, RTED, RTSD, BEQI, BNEI, BGEI, etc.
+def FRCR    : Format<5>;  // BRLD, BRALD, GETD
+def FRCI    : Format<6>;  // BRLID, BRALID, MSRCLR, MSRSET
+def FCCR    : Format<7>;  // BR, BRA, BRD, etc.
+def FCCI    : Format<8>;  // IMM, BRI, BRAI, BRID, etc.
+def FRRCI   : Format<9>;  // BSRLI, BSRAI, BSLLI
+def FRRC    : Format<10>; // SEXT8, SEXT16, SRA, SRC, SRL, FLT, FINT, FSQRT
+def FRCX    : Format<11>; // GET
+def FRCS    : Format<12>; // MFS
+def FCRCS   : Format<13>; // MTS
+def FCRCX   : Format<14>; // PUT
+def FCX     : Format<15>; // TPUT
+def FCR     : Format<16>; // TPUTD
+def FRIR    : Format<17>; // RSUBI
+def FC      : Format<18>; // NOP
 
 //===----------------------------------------------------------------------===//
 //  Describe MBlaze instructions format

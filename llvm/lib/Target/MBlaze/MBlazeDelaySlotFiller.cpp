@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Simple pass to fills delay slots with NOPs.
+// A pass that attempts to fill instructions with delay slots. If no
+// instructions can be moved into the delay slot then a NOP is placed there.
 //
 //===----------------------------------------------------------------------===//
 
