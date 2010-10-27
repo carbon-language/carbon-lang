@@ -257,11 +257,16 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
       D->getInstantiatedFromStaticDataMember() && D->getInit()){
     llvm::GlobalVariable *GV = dyn_cast<llvm::GlobalVariable>(DeclPtr);
     assert(GV && "GenerateCXXGlobalVarDeclInitFunc - GV is null");
-    GV->setConstant(false);
-    EmitCXXStaticLocalInit(*D, GV);
+    llvm::GlobalValue::LinkageTypes Linkage = 
+      CGM.GetLLVMLinkageVarDefinition(D, GV);
+    if (Linkage == llvm::GlobalVariable::WeakAnyLinkage) {
+      GV->setConstant(false);
+      EmitCXXStaticLocalInit(*D, GV);
+      FinishFunction();
+      return;
+    }
   }
-  else
-    EmitCXXGlobalVarDeclInit(*D, DeclPtr);
+  EmitCXXGlobalVarDeclInit(*D, DeclPtr);
 
   FinishFunction();
 }

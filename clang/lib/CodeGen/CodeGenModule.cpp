@@ -1154,34 +1154,14 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setConstant(true);
 
   GV->setAlignment(getContext().getDeclAlign(D).getQuantity());
-
+  
   // Set the llvm linkage type as appropriate.
-  GVALinkage Linkage = getContext().GetGVALinkageForVariable(D);
-  if (Linkage == GVA_Internal)
-    GV->setLinkage(llvm::Function::InternalLinkage);
-  else if (D->hasAttr<DLLImportAttr>())
-    GV->setLinkage(llvm::Function::DLLImportLinkage);
-  else if (D->hasAttr<DLLExportAttr>())
-    GV->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (D->hasAttr<WeakAttr>()) {
-    if (GV->isConstant())
-      GV->setLinkage(llvm::GlobalVariable::WeakODRLinkage);
-    else
-      GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
-  } else if (Linkage == GVA_TemplateInstantiation ||
-             Linkage == GVA_ExplicitTemplateInstantiation)
-    // FIXME: It seems like we can provide more specific linkage here
-    // (LinkOnceODR, WeakODR).
-    GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);   
-  else if (!getLangOptions().CPlusPlus && !CodeGenOpts.NoCommon &&
-           !D->hasExternalStorage() && !D->getInit() &&
-           !D->getAttr<SectionAttr>() && !D->isThreadSpecified()) {
-    // Thread local vars aren't considered common linkage.
-    GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
+  llvm::GlobalValue::LinkageTypes Linkage = 
+    GetLLVMLinkageVarDefinition(D, GV);
+  GV->setLinkage(Linkage);
+  if (Linkage == llvm::GlobalVariable::CommonLinkage)
     // common vars aren't constant even if declared const.
     GV->setConstant(false);
-  } else
-    GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
 
   SetCommonAttributes(D, GV);
 
@@ -1190,6 +1170,35 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     DI->setLocation(D->getLocation());
     DI->EmitGlobalVariable(GV, D);
   }
+}
+
+llvm::GlobalValue::LinkageTypes
+CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D,
+                                           llvm::GlobalVariable *GV) {
+  GVALinkage Linkage = getContext().GetGVALinkageForVariable(D);
+  if (Linkage == GVA_Internal)
+    return llvm::Function::InternalLinkage;
+  else if (D->hasAttr<DLLImportAttr>())
+    return llvm::Function::DLLImportLinkage;
+  else if (D->hasAttr<DLLExportAttr>())
+    return llvm::Function::DLLExportLinkage;
+  else if (D->hasAttr<WeakAttr>()) {
+    if (GV->isConstant())
+      return llvm::GlobalVariable::WeakODRLinkage;
+    else
+      return llvm::GlobalVariable::WeakAnyLinkage;
+  } else if (Linkage == GVA_TemplateInstantiation ||
+             Linkage == GVA_ExplicitTemplateInstantiation)
+    // FIXME: It seems like we can provide more specific linkage here
+    // (LinkOnceODR, WeakODR).
+    return llvm::GlobalVariable::WeakAnyLinkage;
+  else if (!getLangOptions().CPlusPlus && !CodeGenOpts.NoCommon &&
+           !D->hasExternalStorage() && !D->getInit() &&
+           !D->getAttr<SectionAttr>() && !D->isThreadSpecified()) {
+    // Thread local vars aren't considered common linkage.
+    return llvm::GlobalVariable::CommonLinkage;
+  }
+  return llvm::GlobalVariable::ExternalLinkage;
 }
 
 /// ReplaceUsesOfNonProtoTypeWithRealFunction - This function is called when we

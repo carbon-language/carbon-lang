@@ -511,7 +511,13 @@ public:
   /// GetTargetTypeStoreSize - Return the store size, in character units, of
   /// the given LLVM type.
   CharUnits GetTargetTypeStoreSize(const llvm::Type *Ty) const;
-
+  
+  /// GetLLVMLinkageVarDefinition - Returns LLVM linkage for a global 
+  /// variable.
+  llvm::GlobalValue::LinkageTypes 
+  GetLLVMLinkageVarDefinition(const VarDecl *D,
+                              llvm::GlobalVariable *GV);
+  
   std::vector<const CXXRecordDecl*> DeferredVTables;
 
 private:
@@ -552,7 +558,7 @@ private:
   void EmitAliasDefinition(GlobalDecl GD);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
   void EmitObjCIvarInitializations(ObjCImplementationDecl *D);
-
+  
   // C++ related functions.
 
   bool TryEmitDefinitionAsAlias(GlobalDecl Alias, GlobalDecl Target);
