@@ -638,6 +638,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
                 ::fprintf (out_fh, "%s\n", g_reader_instructions);
                 if (reader.GetPrompt())
                     ::fprintf (out_fh, "%s", reader.GetPrompt());
+                ::fflush (out_fh);
             }
         }
         break;
@@ -647,7 +648,10 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
 
     case eInputReaderReactivate:
         if (reader.GetPrompt() && out_fh)
+        {
             ::fprintf (out_fh, "%s", reader.GetPrompt());
+            ::fflush (out_fh);
+        }
         break;
 
     case eInputReaderGotToken:
@@ -655,7 +659,10 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
             std::string temp_string (bytes, bytes_len);
             commands_in_progress.AppendString (temp_string.c_str());
             if (out_fh && !reader.IsDone() && reader.GetPrompt())
+            {
                 ::fprintf (out_fh, "%s", reader.GetPrompt());
+                ::fflush (out_fh);
+            }
         }
         break;
 

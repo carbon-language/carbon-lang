@@ -435,6 +435,7 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
             ::fprintf (out_fh, "%s\n", g_reader_instructions);
             if (reader.GetPrompt())
                 ::fprintf (out_fh, "%s", reader.GetPrompt());
+            ::fflush (out_fh);
         }
         break;
 
@@ -443,7 +444,10 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
 
     case eInputReaderReactivate:
         if (out_fh && reader.GetPrompt())
+        {
             ::fprintf (out_fh, "%s", reader.GetPrompt());
+            ::fflush (out_fh);
+        }
         break;
 
     case eInputReaderGotToken:
@@ -458,7 +462,10 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
             }
         }
         if (out_fh && !reader.IsDone() && reader.GetPrompt())
+        {
             ::fprintf (out_fh, "%s", reader.GetPrompt());
+            ::fflush (out_fh);
+        }
         break;
         
     case eInputReaderDone:
