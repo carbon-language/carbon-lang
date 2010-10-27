@@ -782,3 +782,7 @@ pshufw $90, %mm4, %mm0
 // CHECK: fnclex
 // CHECK:  encoding: [0xdb,0xe2]
         	fnclex
+
+// CHECK: ud2
+// CHECK:  encoding: [0x0f,0x0b]
+        	ud2a
