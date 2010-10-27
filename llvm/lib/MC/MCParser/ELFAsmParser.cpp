@@ -240,6 +240,15 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
     return TokError("unexpected token in directive");
 
   unsigned Flags = 0;
+  unsigned Type = MCSectionELF::SHT_NULL;
+
+  // Set the defaults first.
+  if (SectionName == ".fini" || SectionName == ".init") {
+    Type = MCSectionELF::SHT_PROGBITS;
+    Flags |= MCSectionELF::SHF_ALLOC;
+    Flags |= MCSectionELF::SHF_EXECINSTR;
+  }
+
   for (unsigned i = 0; i < FlagsStr.size(); i++) {
     switch (FlagsStr[i]) {
     case 'a':
@@ -271,7 +280,6 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
     }
   }
 
-  unsigned Type = MCSectionELF::SHT_NULL;
   if (!TypeName.empty()) {
     if (TypeName == "init_array")
       Type = MCSectionELF::SHT_INIT_ARRAY;
