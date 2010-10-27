@@ -114,7 +114,6 @@ namespace X86Local {
   EXTENSION_TABLE(72)             \
   EXTENSION_TABLE(73)             \
   EXTENSION_TABLE(ae)             \
-  EXTENSION_TABLE(b9)             \
   EXTENSION_TABLE(ba)             \
   EXTENSION_TABLE(c7)
 

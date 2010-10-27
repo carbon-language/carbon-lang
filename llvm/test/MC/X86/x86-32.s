@@ -786,3 +786,7 @@ pshufw $90, %mm4, %mm0
 // CHECK: ud2
 // CHECK:  encoding: [0x0f,0x0b]
         	ud2a
+
+// CHECK: ud2b
+// CHECK:  encoding: [0x0f,0xb9]
+        	ud2b
