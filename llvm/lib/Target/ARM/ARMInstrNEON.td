@@ -1747,16 +1747,16 @@ class N2VQShAdd<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
 // both double- and quad-register.
 class N2VDShIns<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
                 Format f, string OpcodeStr, string Dt, ValueType Ty,SDNode ShOp>
-  : N2VImm<op24, op23, op11_8, op7, 0, op4, (outs DPR:$dst),
-           (ins DPR:$src1, DPR:$src2, i32imm:$SIMM), f, IIC_VSHLiD,
-           OpcodeStr, Dt, "$dst, $src2, $SIMM", "$src1 = $dst",
-           [(set DPR:$dst, (Ty (ShOp DPR:$src1, DPR:$src2, (i32 imm:$SIMM))))]>;
+  : N2VImm<op24, op23, op11_8, op7, 0, op4, (outs DPR:$Vd),
+           (ins DPR:$src1, DPR:$Vm, i32imm:$SIMM), f, IIC_VSHLiD,
+           OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "$src1 = $Vd",
+           [(set DPR:$Vd, (Ty (ShOp DPR:$src1, DPR:$Vm, (i32 imm:$SIMM))))]>;
 class N2VQShIns<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
                 Format f, string OpcodeStr, string Dt, ValueType Ty,SDNode ShOp>
-  : N2VImm<op24, op23, op11_8, op7, 1, op4, (outs QPR:$dst),
-           (ins QPR:$src1, QPR:$src2, i32imm:$SIMM), f, IIC_VSHLiQ,
-           OpcodeStr, Dt, "$dst, $src2, $SIMM", "$src1 = $dst",
-           [(set QPR:$dst, (Ty (ShOp QPR:$src1, QPR:$src2, (i32 imm:$SIMM))))]>;
+  : N2VImm<op24, op23, op11_8, op7, 1, op4, (outs QPR:$Vd),
+           (ins QPR:$src1, QPR:$Vm, i32imm:$SIMM), f, IIC_VSHLiQ,
+           OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "$src1 = $Vd",
+           [(set QPR:$Vd, (Ty (ShOp QPR:$src1, QPR:$Vm, (i32 imm:$SIMM))))]>;
 
 // Convert, with fractional bits immediate,
 // both double- and quad-register.
