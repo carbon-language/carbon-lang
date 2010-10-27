@@ -1599,6 +1599,9 @@ int main(int argc, const char **argv) {
   pthread_t thread;
   int res;
 
+  if (getenv("CINDEXTEST_NOTHREADS"))
+    return cindextest_main(argc, argv);
+
   client_data.argc = argc;
   client_data.argv = argv;
   res = pthread_create(&thread, 0, thread_runner, &client_data);
