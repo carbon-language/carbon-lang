@@ -239,7 +239,7 @@ StackFrame::ChangePC (addr_t pc)
     m_frame_code_addr.SetOffset(pc);
     m_frame_code_addr.SetSection(NULL);
     m_sc.Clear();
-    m_flags.SetAllFlagBits(0);
+    m_flags.Reset(0);
     m_thread.ClearStackFrames ();
 }
 
@@ -299,7 +299,7 @@ const SymbolContext&
 StackFrame::GetSymbolContext (uint32_t resolve_scope)
 {
     // Copy our internal symbol context into "sc".
-    if ((m_flags.GetAllFlagBits() & resolve_scope) != resolve_scope)
+    if ((m_flags.Get() & resolve_scope) != resolve_scope)
     {
         // Resolve our PC to section offset if we haven't alreday done so
         // and if we don't have a module. The resolved address section will

@@ -358,8 +358,8 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
     bool child_is_base_class = false;
     const bool transparent_pointers = synthetic_array_member == false;
     clang::ASTContext *clang_ast = GetClangAST();
-    void *clang_type = GetClangType();
-    void *child_clang_type;
+    clang_type_t clang_type = GetClangType();
+    clang_type_t child_clang_type;
     child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (clang_ast,
                                                                   GetName().AsCString(),
                                                                   clang_type,
@@ -401,22 +401,38 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
     {
         if (m_summary_str.empty())
         {
-            void *clang_type = GetClangType();
+            clang_type_t clang_type = GetClangType();
 
             // See if this is a pointer to a C string?
-            uint32_t fixed_length = 0;
             if (clang_type)
             {
                 StreamString sstr;
+                clang_type_t elem_or_pointee_clang_type;
+                const Flags type_flags (ClangASTContext::GetTypeInfo (clang_type, 
+                                                                          GetClangAST(), 
+                                                                          &elem_or_pointee_clang_type));
 
-                if (ClangASTContext::IsCStringType (clang_type, fixed_length))
+                if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
+                    ClangASTContext::IsCharType (elem_or_pointee_clang_type))
                 {
                     Process *process = exe_scope->CalculateProcess();
                     if (process != NULL)
                     {
+                        lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
                         lldb::AddressType cstr_address_type = eAddressTypeInvalid;
-                        lldb::addr_t cstr_address = GetPointerValue (cstr_address_type, true);
 
+                        size_t cstr_len = 0;
+                        if (type_flags.Test (ClangASTContext::eTypeIsArray))
+                        {
+                            // We have an array
+                            cstr_len = ClangASTContext::GetArraySize (clang_type);
+                            cstr_address = GetAddressOf (cstr_address_type, true);
+                        }
+                        else
+                        {
+                            // We have a pointer
+                            cstr_address = GetPointerValue (cstr_address_type, true);
+                        }
                         if (cstr_address != LLDB_INVALID_ADDRESS)
                         {
                             DataExtractor data;
@@ -425,14 +441,14 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                             std::vector<char> cstr_buffer;
                             size_t cstr_length;
                             Error error;
-                            if (fixed_length > 0)
+                            if (cstr_len > 0)
                             {
-                                data_buffer.resize(fixed_length);
+                                data_buffer.resize(cstr_len);
                                 // Resize the formatted buffer in case every character
                                 // uses the "\xXX" format and one extra byte for a NULL
                                 cstr_buffer.resize(data_buffer.size() * 4 + 1);
                                 data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
-                                bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), fixed_length, error);
+                                bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), cstr_len, error);
                                 if (bytes_read > 0)
                                 {
                                     sstr << '"';
@@ -590,7 +606,7 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
                 case Value::eContextTypeDCType:
                 case Value::eContextTypeDCVariable:
                     {
-                        void *clang_type = GetClangType ();
+                        clang_type_t clang_type = GetClangType ();
                         if (clang_type)
                         {
                             StreamString sstr;
@@ -644,11 +660,37 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
 }
 
 addr_t
+ValueObject::GetAddressOf (lldb::AddressType &address_type, bool scalar_is_load_address)
+{
+    switch (m_value.GetValueType())
+    {
+    case Value::eValueTypeScalar:
+        if (scalar_is_load_address)
+        {
+            address_type = eAddressTypeLoad;
+            return m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+        }
+        break;
+
+    case Value::eValueTypeLoadAddress: 
+    case Value::eValueTypeFileAddress:
+    case Value::eValueTypeHostAddress:
+        {
+            address_type = m_value.GetValueAddressType ();
+            return m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+        }
+        break;
+    }
+    address_type = eAddressTypeInvalid;
+    return LLDB_INVALID_ADDRESS;
+}
+
+addr_t
 ValueObject::GetPointerValue (lldb::AddressType &address_type, bool scalar_is_load_address)
 {
     lldb::addr_t address = LLDB_INVALID_ADDRESS;
     address_type = eAddressTypeInvalid;
-    switch (GetValue().GetValueType())
+    switch (m_value.GetValueType())
     {
     case Value::eValueTypeScalar:
         if (scalar_is_load_address)
@@ -773,7 +815,7 @@ ValueObject::Write ()
 lldb::LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
-    void *opaque_qual_type = GetClangType();
+    clang_type_t opaque_qual_type = GetClangType();
     if (opaque_qual_type == NULL)
         return lldb::eLanguageTypeC;
     
@@ -824,6 +866,8 @@ ValueObject::IsPointerType ()
 {
     return ClangASTContext::IsPointerType (GetClangType());
 }
+
+
 
 bool
 ValueObject::IsPointerOrReferenceType ()
@@ -909,7 +953,6 @@ ValueObject::GetExpressionPath (Stream &s)
     }
 }
 
-
 void
 ValueObject::DumpValueObject 
 (
@@ -929,13 +972,12 @@ ValueObject::DumpValueObject
 {
     if (valobj)
     {
-        //const char *loc_cstr = valobj->GetLocationAsCString();
         clang_type_t clang_type = valobj->GetClangType();
 
-        const Flags type_info_flags (ClangASTContext::GetTypeInfoMask (clang_type));
+        const Flags type_flags (ClangASTContext::GetTypeInfo (clang_type, NULL, NULL));
         const char *err_cstr = NULL;
-        const bool has_children = type_info_flags.IsSet (ClangASTContext::eTypeHasChildren);
-        const bool has_value = type_info_flags.IsSet (ClangASTContext::eTypeHasValue);
+        const bool has_children = type_flags.Test (ClangASTContext::eTypeHasChildren);
+        const bool has_value = type_flags.Test (ClangASTContext::eTypeHasValue);
         
         const bool print_valobj = flat_output == false || has_value;
         
@@ -983,6 +1025,7 @@ ValueObject::DumpValueObject
         }
         else
         {
+            const bool is_ref = type_flags.Test (ClangASTContext::eTypeIsReference);
             if (print_valobj)
             {
                 const char *sum_cstr = valobj->GetSummaryAsCString(exe_scope);
@@ -1006,9 +1049,39 @@ ValueObject::DumpValueObject
 
             if (curr_depth < max_depth)
             {
-                bool is_ptr_or_ref = type_info_flags.IsSet (ClangASTContext::eTypeIsPointer | ClangASTContext::eTypeIsReference);
+                // We will show children for all concrete types. We won't show
+                // pointer contents unless a pointer depth has been specified.
+                // We won't reference contents unless the reference is the 
+                // root object (depth of zero).
+                bool print_children = true;
+
+                // Use a new temporary pointer depth in case we override the
+                // current pointer depth below...
+                uint32_t curr_ptr_depth = ptr_depth;
+
+                const bool is_ptr = type_flags.Test (ClangASTContext::eTypeIsPointer);
+                if (is_ptr || is_ref)
+                {
+                    // We have a pointer or reference whose value is an address.
+                    // Make sure that address is not NULL
+                    lldb::AddressType ptr_address_type;
+                    if (valobj->GetPointerValue (ptr_address_type, true) == 0)
+                        print_children = false;
+
+                    else if (is_ref && curr_depth == 0)
+                    {
+                        // If this is the root object (depth is zero) that we are showing
+                        // and it is a reference, and no pointer depth has been supplied
+                        // print out what it references. Don't do this at deeper depths
+                        // otherwise we can end up with infinite recursion...
+                        curr_ptr_depth = 1;
+                    }
+                    
+                    if (curr_ptr_depth == 0)
+                        print_children = false;
+                }
                 
-                if (!is_ptr_or_ref || ptr_depth > 0)
+                if (print_children)
                 {
                     const uint32_t num_children = valobj->GetNumChildren();
                     if (num_children)
@@ -1034,7 +1107,7 @@ ValueObject::DumpValueObject
                                                  exe_scope,
                                                  child_sp.get(),
                                                  NULL,
-                                                 is_ptr_or_ref ? ptr_depth - 1 : ptr_depth,
+                                                 (is_ptr || is_ref) ? curr_ptr_depth - 1 : curr_ptr_depth,
                                                  curr_depth + 1,
                                                  max_depth,
                                                  show_types,
@@ -1055,7 +1128,7 @@ ValueObject::DumpValueObject
                     {
                         // Aggregate, no children...
                         if (print_valobj)
-                            s.PutCString("{}\n");
+                            s.PutCString(" {}\n");
                     }
                     else
                     {
@@ -1066,8 +1139,6 @@ ValueObject::DumpValueObject
                 }
                 else
                 {  
-                    // We printed a pointer, but we are stopping and not printing
-                    // and children of this pointer...
                     s.EOL();
                 }
             }

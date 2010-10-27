@@ -27,7 +27,7 @@ ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (uint32_t mask)
     Log *log = g_log;
     if (log && mask)
     {
-        uint32_t log_mask = log->GetMask().GetAllFlagBits();
+        uint32_t log_mask = log->GetMask().Get();
         if ((log_mask & mask) != mask)
             return NULL;
     }
@@ -84,8 +84,8 @@ ProcessGDBRemoteLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, A
         }
         if (flag_bits == 0)
             flag_bits = GDBR_LOG_DEFAULT;
-        g_log->GetMask().SetAllFlagBits(flag_bits);
-        g_log->GetOptions().SetAllFlagBits(log_options);
+        g_log->GetMask().Reset(flag_bits);
+        g_log->GetOptions().Reset(log_options);
     }
     return g_log;
 }

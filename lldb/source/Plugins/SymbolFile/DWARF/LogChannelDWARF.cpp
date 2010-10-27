@@ -156,8 +156,8 @@ LogChannelDWARF::Enable
     }
     if (flag_bits == 0)
         flag_bits = DWARF_LOG_DEFAULT;
-    m_log_sp->GetMask().SetAllFlagBits(flag_bits);
-    m_log_sp->GetOptions().SetAllFlagBits(log_options);
+    m_log_sp->GetMask().Reset(flag_bits);
+    m_log_sp->GetOptions().Reset(log_options);
     return m_log_sp.get() != NULL;
 }
 
@@ -187,8 +187,10 @@ LogChannelDWARF::GetLogIfAll (uint32_t mask)
 {
     Log *log = GetLog();
     if (log)
-        if (log->GetMask().IsSet(mask))
+    {
+        if (log->GetMask().AllSet(mask))
             return log;
+    }
     return NULL;
 }
 

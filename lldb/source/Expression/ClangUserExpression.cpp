@@ -125,11 +125,12 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     //
     
     ApplyObjcCastHack(m_expr_text);
-    ApplyUnicharHack(m_expr_text);
+    //ApplyUnicharHack(m_expr_text);
 
     if (m_cplusplus)
     {
-        m_transformed_stream.Printf("void                                   \n"
+        m_transformed_stream.Printf("typedef unsigned short unichar;        \n"
+                                    "void                                   \n"
                                     "$__lldb_class::%s(void *$__lldb_arg)   \n"
                                     "{                                      \n"
                                     "    %s;                                \n" 
@@ -141,7 +142,8 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     }
     else
     {
-        m_transformed_stream.Printf("void                           \n"
+        m_transformed_stream.Printf("typedef unsigned short unichar;\n"
+                                    "void                           \n"
                                     "%s(void *$__lldb_arg)          \n"
                                     "{                              \n"
                                     "    %s;                        \n" 

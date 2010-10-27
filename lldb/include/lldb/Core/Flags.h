@@ -19,38 +19,45 @@ namespace lldb_private {
 
 //----------------------------------------------------------------------
 /// @class Flags Flags.h "lldb/Core/Flags.h"
-/// @brief A class to manage flag bits.
+/// @brief A class to manage flags.
 ///
-/// The Flags class does bits.
+/// The Flags class managed flag bits and allows testing and 
+/// modification of individual or multiple flag bits.
 //----------------------------------------------------------------------
 class Flags
 {
 public:
     //----------------------------------------------------------------------
-    /// The value type for flag bits is a 32 bit unsigned integer type.
+    /// The value type for flags is a 32 bit unsigned integer type.
     //----------------------------------------------------------------------
     typedef uint32_t ValueType;
 
     //----------------------------------------------------------------------
     /// Construct with initial flag bit values.
     ///
-    /// Constructs this object with \a bits as the initial value for all
-    /// of the flag bits.
+    /// Constructs this object with \a mask as the initial value for all
+    /// of the flags.
     ///
-    /// @param[in] bits
-    ///     The initial value for all flag bits.
+    /// @param[in] mask
+    ///     The initial value for all flags.
     //----------------------------------------------------------------------
-    Flags (ValueType bits = 0);
+    Flags (ValueType flags = 0) :
+        m_flags (flags)
+    {
+    }
 
     //----------------------------------------------------------------------
     /// Copy constructor.
     ///
-    /// Construct and copy the flag bits from \a rhs.
+    /// Construct and copy the flags from \a rhs.
     ///
     /// @param[in] rhs
     ///     A const Flags object reference to copy.
     //----------------------------------------------------------------------
-    Flags (const Flags& rhs);
+    Flags (const Flags& rhs) :
+        m_flags(rhs.m_flags)
+    {
+    }
 
     //----------------------------------------------------------------------
     /// Destructor.
@@ -58,72 +65,150 @@ public:
     /// The destructor is virtual in case this class is subclassed.
     //----------------------------------------------------------------------
     virtual
-    ~Flags ();
+    ~Flags ()
+    {
+    }
 
     //----------------------------------------------------------------------
-    /// Get accessor for all flag bits.
+    /// Get accessor for all flags.
     ///
     /// @return
-    ///     Returns all of the flag bits as a Flags::ValueType.
+    ///     Returns all of the flags as a Flags::ValueType.
     //----------------------------------------------------------------------
     ValueType
-    GetAllFlagBits () const;
-
-    size_t
-    GetBitSize() const;
+    Get () const
+    {
+        return m_flags;
+    }
 
     //----------------------------------------------------------------------
-    /// Set accessor for all flag bits.
+    /// Return the number of flags that can be represented in this 
+    /// object.
     ///
-    /// @param[in] bits
-    ///     The bits with which to replace all of the current flag bits.
+    /// @return
+    ///     The maximum number bits in this flag object.
+    //----------------------------------------------------------------------
+    size_t
+    GetBitSize() const
+    {
+        return sizeof (ValueType) * 8;
+    }
+
+    //----------------------------------------------------------------------
+    /// Set accessor for all flags.
+    ///
+    /// @param[in] flags
+    ///     The bits with which to replace all of the current flags.
     //----------------------------------------------------------------------
     void
-    SetAllFlagBits (ValueType bits);
+    Reset (ValueType flags)
+    {
+        m_flags = flags;
+    }
 
     //----------------------------------------------------------------------
-    /// Clear one or more flag bits.
+    /// Clear one or more flags.
     ///
-    /// @param[in] bits
-    ///     A bitfield containing one or more flag bits.
+    /// @param[in] mask
+    ///     A bitfield containing one or more flags.
     ///
     /// @return
-    ///     The new flag bits after clearing all bits from \a bits.
+    ///     The new flags after clearing all bits from \a mask.
     //----------------------------------------------------------------------
     ValueType
-    Clear (ValueType bits);
+    Clear (ValueType mask = ~(ValueType)0)
+    {
+        m_flags &= ~mask;
+        return m_flags;
+    }
+
 
     //----------------------------------------------------------------------
-    /// Set one or more flag bits.
+    /// Set one or more flags by logical OR'ing \a mask with the current
+    /// flags.
     ///
-    /// @param[in] bits
-    ///     A bitfield containing one or more flag bits.
+    /// @param[in] mask
+    ///     A bitfield containing one or more flags.
     ///
     /// @return
-    ///     The new flag bits after setting all bits from \a bits.
+    ///     The new flags after setting all bits from \a mask.
     //----------------------------------------------------------------------
     ValueType
-    Set (ValueType bits);
+    Set (ValueType mask)
+    {
+        m_flags |= mask;
+        return m_flags;
+    }
+
 
     //----------------------------------------------------------------------
-    /// Test one or more flag bits.
+    /// Test if all bits in \a mask are 1 in the current flags
     ///
     /// @return
-    ///     \b true if \b any flag bits in \a bits are set, \b false
+    ///     \b true if all flags in \a mask are 1, \b false
     ///     otherwise.
     //----------------------------------------------------------------------
     bool
-    IsSet (ValueType bits) const;
+    AllSet (ValueType mask) const
+    {
+        return (m_flags & mask) == mask;
+    }
 
     //----------------------------------------------------------------------
-    /// Test one or more flag bits.
+    /// Test one or more flags.
     ///
     /// @return
-    ///     \b true if \b all flag bits in \a bits are clear, \b false
+    ///     \b true if any flags in \a mask are 1, \b false
     ///     otherwise.
     //----------------------------------------------------------------------
     bool
-    IsClear (ValueType bits) const;
+    AnySet (ValueType mask) const
+    {
+        return (m_flags & mask) != 0;
+    }
+
+    //----------------------------------------------------------------------
+    /// Test a single flag bit.
+    ///
+    /// @return
+    ///     \b true if \a bit is set, \b false otherwise.
+    //----------------------------------------------------------------------
+    bool
+    Test (ValueType bit) const
+    {
+        return (m_flags & bit) != 0;
+    }
+    
+    //----------------------------------------------------------------------
+    /// Test if all bits in \a mask are clear.
+    ///
+    /// @return
+    ///     \b true if \b all flags in \a mask are clear, \b false
+    ///     otherwise.
+    //----------------------------------------------------------------------
+    bool
+    AllClear (ValueType mask) const
+    {
+        return (m_flags & mask) == 0;
+    }
+
+    bool
+    AnyClear (ValueType mask) const
+    {
+        return (m_flags & mask) != mask;
+    }
+    
+    //----------------------------------------------------------------------
+    /// Test a single flag bit to see if it is clear (zero).
+    ///
+    /// @return
+    ///     \b true if \a bit is 0, \b false otherwise.
+    //----------------------------------------------------------------------
+    bool
+    IsClear (ValueType bit) const
+    {
+        return (m_flags & bit) == 0;
+    }
 
     //----------------------------------------------------------------------
     /// Get the number of zero bits in \a m_flags.
@@ -132,7 +217,16 @@ public:
     ///     The number of bits that are set to 0 in the current flags.
     //----------------------------------------------------------------------
     size_t
-    ClearCount () const;
+    ClearCount () const
+    {
+        size_t count = 0;
+        for (ValueType shift = 0; shift < sizeof(ValueType)*8; ++shift)
+        {
+            if ((m_flags & (1u << shift)) == 0)
+                ++count;
+        }
+        return count;
+    }
 
     //----------------------------------------------------------------------
     /// Get the number of one bits in \a m_flags.
@@ -141,10 +235,19 @@ public:
     ///     The number of bits that are set to 1 in the current flags.
     //----------------------------------------------------------------------
     size_t
-    SetCount () const;
+    SetCount () const
+    {
+        size_t count = 0;
+        for (ValueType mask = m_flags; mask; mask >>= 1)
+        {
+            if (mask & 1u)
+                ++count;
+        }
+        return count;
+    }
 
 protected:
-    ValueType   m_flags;    ///< The flag bits.
+    ValueType   m_flags;    ///< The flags.
 };
 
 } // namespace lldb_private

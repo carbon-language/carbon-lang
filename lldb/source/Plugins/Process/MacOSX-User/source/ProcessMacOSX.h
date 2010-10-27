@@ -417,7 +417,7 @@ protected:
     bool
     ProcessUsingSpringBoard() const
     {
-        return m_flags.IsSet(eFlagsUsingSBS);
+        return m_flags.Test (eFlagsUsingSBS);
     }
 
     lldb_private::ArchSpec&

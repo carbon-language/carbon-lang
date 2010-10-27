@@ -142,7 +142,7 @@ MachThreadContext_i386::NotifyException (MachException::Data& exc)
 //              rflags.Clear(trace_bit);
 //      }
 //
-//      rflags_scalar = rflags.GetAllFlagBits();
+//      rflags_scalar = rflags.Get();
 //      // If the code makes it here we have changes to the GPRs which
 //      // we need to write back out, so lets do that.
 //        if (reg_ctx->WriteRegisterValue(m_flags_reg, rflags_scalar))

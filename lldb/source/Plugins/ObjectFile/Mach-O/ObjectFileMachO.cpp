@@ -1049,7 +1049,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 }
                                 else
                                 {
-                                    uint32_t section_type = symbol_section->GetAllFlagBits() & SectionFlagMaskSectionType;
+                                    uint32_t section_type = symbol_section->Get() & SectionFlagMaskSectionType;
 
                                     switch (section_type)
                                     {

@@ -248,7 +248,7 @@ Section::Dump (Stream *s, Target *target) const
         range.Dump (s, 0);
     }
 
-    s->Printf("%c 0x%8.8llx 0x%8.8llx 0x%8.8x ", resolved ? ' ' : '*', m_file_offset, m_file_size, GetAllFlagBits());
+    s->Printf("%c 0x%8.8llx 0x%8.8llx 0x%8.8x ", resolved ? ' ' : '*', m_file_offset, m_file_size, Get());
 
     DumpName (s);
 

@@ -44,7 +44,7 @@ DynamicLoaderMacOSXDYLDLog::GetLogIfAllCategoriesSet (uint32_t mask)
     Log *log = LogAccessor (true, NULL);
     if (log && mask)
     {
-        uint32_t log_mask = log->GetMask().GetAllFlagBits();
+        uint32_t log_mask = log->GetMask().Get();
         if ((log_mask & mask) != mask)
             return NULL;
     }

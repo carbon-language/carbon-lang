@@ -300,6 +300,10 @@ protected:
     lldb::addr_t
     GetPointerValue (lldb::AddressType &address_type, 
                      bool scalar_is_load_address);
+
+    lldb::addr_t
+    GetAddressOf (lldb::AddressType &address_type, 
+                  bool scalar_is_load_address);
 private:
     //------------------------------------------------------------------
     // For ValueObject only

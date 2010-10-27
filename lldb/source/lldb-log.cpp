@@ -47,7 +47,7 @@ lldb_private::GetLogMask ()
 {
     Log *log = LogAccessor (true, NULL);
     if (log)
-        return log->GetMask().GetAllFlagBits();
+        return log->GetMask().Get();
     return 0;
 }
 
@@ -64,7 +64,7 @@ lldb_private::GetLogIfAllCategoriesSet (uint32_t mask)
     Log *log = LogAccessor (true, NULL);
     if (log && mask)
     {
-        uint32_t log_mask = log->GetMask().GetAllFlagBits();
+        uint32_t log_mask = log->GetMask().Get();
         if ((log_mask & mask) != mask)
             return NULL;
     }
@@ -101,7 +101,7 @@ Log *
 lldb_private::GetLogIfAnyCategoriesSet (uint32_t mask)
 {
     Log *log = LogAccessor (true, NULL);
-    if (log && mask && (mask & log->GetMask().GetAllFlagBits()))
+    if (log && mask && (mask & log->GetMask().Get()))
         return log;
     return NULL;
 }
@@ -121,7 +121,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
     uint32_t flag_bits;
     Log* log = LogAccessor (true, NULL);
     if (log)
-        flag_bits = log->GetMask().GetAllFlagBits();
+        flag_bits = log->GetMask().Get();
     else
         flag_bits = 0;
 
@@ -166,8 +166,8 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
             }
         }
 
-        log->GetMask().SetAllFlagBits(flag_bits);
-        log->GetOptions().SetAllFlagBits(log_options);
+        log->GetMask().Reset(flag_bits);
+        log->GetOptions().Reset(log_options);
     }
     return log;
 }

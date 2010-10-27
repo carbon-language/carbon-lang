@@ -91,29 +91,27 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
 
         Mutex::Locker locker;
 
-        uint32_t log_options = m_options.GetAllFlagBits();
-
         // Lock the threaded logging mutex if we are doing thread safe logging
-        if (log_options & LLDB_LOG_OPTION_THREADSAFE)
+        if (m_options.Test (LLDB_LOG_OPTION_THREADSAFE))
             locker.Reset(g_LogThreadedMutex.GetMutex());
 
         // Add a sequence ID if requested
-        if (log_options & LLDB_LOG_OPTION_PREPEND_SEQUENCE)
+        if (m_options.Test (LLDB_LOG_OPTION_PREPEND_SEQUENCE))
             header.Printf ("%u ", ++g_sequence_id);
 
         // Timestamp if requested
-        if (log_options & LLDB_LOG_OPTION_PREPEND_TIMESTAMP)
+        if (m_options.Test (LLDB_LOG_OPTION_PREPEND_TIMESTAMP))
         {
             struct timeval tv = TimeValue::Now().GetAsTimeVal();
             header.Printf ("%9llu.%6.6llu ", tv.tv_sec, tv.tv_usec);
         }
 
         // Add the process and thread if requested
-        if (log_options & LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD)
+        if (m_options.Test (LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD))
             header.Printf ("[%4.4x/%4.4x]: ", getpid(), Host::GetCurrentThreadID());
 
         // Add the process and thread if requested
-        if (log_options & LLDB_LOG_OPTION_PREPEND_THREAD_NAME)
+        if (m_options.Test (LLDB_LOG_OPTION_PREPEND_THREAD_NAME))
         {
             const char *thread_name_str = Host::GetThreadName (getpid(), Host::GetCurrentThreadID());
             if (thread_name_str)
@@ -171,7 +169,7 @@ Log::PrintfWithFlags (uint32_t flags, const char *format, ...)
 void
 Log::Debug (const char *format, ...)
 {
-    if (GetOptions().IsSet(LLDB_LOG_OPTION_DEBUG))
+    if (GetOptions().Test(LLDB_LOG_OPTION_DEBUG))
     {
         va_list args;
         va_start (args, format);
@@ -188,7 +186,7 @@ Log::Debug (const char *format, ...)
 void
 Log::DebugVerbose (const char *format, ...)
 {
-    if (GetOptions().IsSet(LLDB_LOG_OPTION_DEBUG) && GetOptions().IsSet(LLDB_LOG_OPTION_VERBOSE))
+    if (GetOptions().AllSet (LLDB_LOG_OPTION_DEBUG | LLDB_LOG_OPTION_VERBOSE))
     {
         va_list args;
         va_start (args, format);
@@ -204,7 +202,7 @@ Log::DebugVerbose (const char *format, ...)
 void
 Log::LogIf (uint32_t bits, const char *format, ...)
 {
-    if ((bits & m_options.GetAllFlagBits()) == bits)
+    if (m_options.AllSet (bits))
     {
         va_list args;
         va_start (args, format);
@@ -262,7 +260,7 @@ Log::FatalError (int err, const char *format, ...)
 void
 Log::Verbose (const char *format, ...)
 {
-    if (m_options.IsSet(LLDB_LOG_OPTION_VERBOSE))
+    if (m_options.Test(LLDB_LOG_OPTION_VERBOSE))
     {
         va_list args;
         va_start (args, format);
@@ -278,7 +276,7 @@ Log::Verbose (const char *format, ...)
 void
 Log::WarningVerbose (const char *format, ...)
 {
-    if (m_options.IsSet(LLDB_LOG_OPTION_VERBOSE))
+    if (m_options.Test(LLDB_LOG_OPTION_VERBOSE))
     {
         char *arg_msg = NULL;
         va_list args;

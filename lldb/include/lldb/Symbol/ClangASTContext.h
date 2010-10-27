@@ -326,7 +326,9 @@ public:
 
     // Returns a mask containing bits from the ClangASTContext::eTypeXXX enumerations
     static uint32_t
-    GetTypeInfoMask (lldb::clang_type_t clang_type);
+    GetTypeInfo (lldb::clang_type_t clang_type, 
+                     clang::ASTContext *ast_context,                // The AST for clang_type (can be NULL)
+                     lldb::clang_type_t *pointee_or_element_type);  // (can be NULL)
 
     static uint32_t
     GetNumChildren (lldb::clang_type_t clang_type,
@@ -563,6 +565,12 @@ public:
     
     static bool
     IsObjCClassType (lldb::clang_type_t clang_type);
+
+    static bool
+    IsCharType (lldb::clang_type_t clang_type);
+
+    static size_t
+    GetArraySize (lldb::clang_type_t clang_type);
 
     //static bool
     //ConvertFloatValueToString (clang::ASTContext *ast_context, 

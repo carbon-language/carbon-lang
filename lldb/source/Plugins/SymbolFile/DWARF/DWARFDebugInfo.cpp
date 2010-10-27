@@ -908,7 +908,7 @@ static dw_offset_t DumpCallback
     const DWARFCompileUnit* cu = cu_sp.get();
 
     Stream *s = dumpInfo->strm;
-    bool show_parents = s->GetFlags().IsSet(DWARFDebugInfo::eDumpFlag_ShowAncestors);
+    bool show_parents = s->GetFlags().Test(DWARFDebugInfo::eDumpFlag_ShowAncestors);
 
     if (die)
     {

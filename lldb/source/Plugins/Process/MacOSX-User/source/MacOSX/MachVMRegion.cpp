@@ -146,7 +146,7 @@ MachVMRegion::GetRegionForAddress(lldb::addr_t addr)
     }
     else
     {
-        if (log && log->GetMask().IsSet(PD_LOG_VERBOSE))
+        if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         {
             log->Printf("info = { prot = %u, "
                         "max_prot = %u, "

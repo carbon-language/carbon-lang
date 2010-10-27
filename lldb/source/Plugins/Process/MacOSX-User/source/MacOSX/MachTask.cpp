@@ -163,7 +163,7 @@ MachTask::ReadMemory (lldb::addr_t addr, void *buf, size_t size, Error& error)
         if (log)
         {
             log->Printf ("MachTask::ReadMemory ( addr = 0x%16.16llx, size = %zu, buf = %8.8p) => %u bytes read", (uint64_t)addr, size, buf, n);
-            if (log->GetMask().IsSet(PD_LOG_MEMORY_DATA_LONG) || (log->GetMask().IsSet(PD_LOG_MEMORY_DATA_SHORT) && size <= 8))
+            if (log->GetMask().Test(PD_LOG_MEMORY_DATA_LONG) || (log->GetMask().Test(PD_LOG_MEMORY_DATA_SHORT) && size <= 8))
             {
                 DataExtractor data((uint8_t*)buf, n, eByteOrderHost, 4);
                 data.PutToLog(log, 0, n, addr, 16, DataExtractor::TypeUInt8);
@@ -189,7 +189,7 @@ MachTask::WriteMemory (lldb::addr_t addr, const void *buf, size_t size, Error& e
         if (log)
         {
             log->Printf ("MachTask::WriteMemory ( addr = 0x%16.16llx, size = %zu, buf = %8.8p) => %u bytes written", (uint64_t)addr, size, buf, n);
-            if (log->GetMask().IsSet(PD_LOG_MEMORY_DATA_LONG) || (log->GetMask().IsSet(PD_LOG_MEMORY_DATA_SHORT) && size <= 8))
+            if (log->GetMask().Test(PD_LOG_MEMORY_DATA_LONG) || (log->GetMask().Test(PD_LOG_MEMORY_DATA_SHORT) && size <= 8))
             {
                 DataExtractor data((uint8_t*)buf, n, eByteOrderHost, 4);
                 data.PutToLog(log, 0, n, addr, 16, DataExtractor::TypeUInt8);
@@ -329,7 +329,7 @@ MachTask::BasicInfo(task_t task, struct task_basic_info *info)
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK);
     if (log || err.Fail())
         err.PutToLog(log, "::task_info ( target_task = 0x%4.4x, flavor = TASK_BASIC_INFO, task_info_out => %p, task_info_outCnt => %u )", task, info, count);
-    if (log && log->GetMask().IsSet(PD_LOG_VERBOSE) && err.Success())
+    if (log && log->GetMask().Test(PD_LOG_VERBOSE) && err.Success())
     {
         float user = (float)info->user_time.seconds + (float)info->user_time.microseconds / 1000000.0f;
         float system = (float)info->user_time.seconds + (float)info->user_time.microseconds / 1000000.0f;

@@ -220,7 +220,7 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
     Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
     if (process == NULL)
     {
-        if (GetFlags().IsSet(CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
+        if (GetFlags().AnySet (CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
         {
             result.AppendError ("Process must exist.");
             result.SetStatus (eReturnStatusFailed);
@@ -244,7 +244,7 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
         case eStateDetached:
         case eStateExited:
         case eStateUnloaded:
-            if (GetFlags().IsSet(CommandObject::eFlagProcessMustBeLaunched))
+            if (GetFlags().Test(CommandObject::eFlagProcessMustBeLaunched))
             {
                 result.AppendError ("Process must be launched.");
                 result.SetStatus (eReturnStatusFailed);
@@ -254,7 +254,7 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
 
         case eStateRunning:
         case eStateStepping:
-            if (GetFlags().IsSet(CommandObject::eFlagProcessMustBePaused))
+            if (GetFlags().Test(CommandObject::eFlagProcessMustBePaused))
             {
                 result.AppendError ("Process is running.  Use 'process interrupt' to pause execution.");
                 result.SetStatus (eReturnStatusFailed);

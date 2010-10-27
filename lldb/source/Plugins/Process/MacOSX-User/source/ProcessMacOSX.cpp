@@ -584,7 +584,7 @@ ProcessMacOSX::UpdateThreadListIfNeeded ()
 {
     // locker will keep a mutex locked until it goes out of scope
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD);
-    if (log && log->GetMask().IsSet(PD_LOG_VERBOSE))
+    if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf ("ProcessMacOSX::%s (pid = %4.4x)", __FUNCTION__, GetID());
 
     const uint32_t stop_id = GetStopID();

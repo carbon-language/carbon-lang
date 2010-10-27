@@ -949,7 +949,7 @@ ProcessGDBRemote::UpdateThreadListIfNeeded ()
 {
     // locker will keep a mutex locked until it goes out of scope
     Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD);
-    if (log && log->GetMask().IsSet(GDBR_LOG_VERBOSE))
+    if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
         log->Printf ("ProcessGDBRemote::%s (pid = %i)", __FUNCTION__, GetID());
 
     Mutex::Locker locker (m_thread_list.GetMutex ());

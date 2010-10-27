@@ -44,6 +44,9 @@ public:
     const char *
     GetValue (const lldb::SBFrame &frame);
 
+    ValueType
+    GetValueType ();
+
     bool
     GetValueDidChange (const lldb::SBFrame &frame);
 

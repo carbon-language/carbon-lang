@@ -367,7 +367,7 @@ MachException::Message::Reply(task_t task, pid_t pid, int signal)
         else
             err.Clear();
 
-        if (log && log->GetMask().IsSet(PD_LOG_EXCEPTIONS) || err.Fail())
+        if (log && log->GetMask().Test(PD_LOG_EXCEPTIONS) || err.Fail())
             err.PutToLog(log, "::ptrace (request = PT_THUPDATE, pid = %i, tid = 0x%4.4x, signal = %i)", state_pid, state.thread_port, signal);
     }
 
@@ -490,7 +490,7 @@ kern_return_t
 MachException::PortInfo::Restore (task_t task)
 {
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
-    if (log && log->GetMask().IsSet(PD_LOG_VERBOSE))
+    if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf("MachException::PortInfo::Restore (task = 0x%4.4x)", task);
     uint32_t i = 0;
     Error err;

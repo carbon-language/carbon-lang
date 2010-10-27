@@ -542,16 +542,16 @@ lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
             if (encoding_type != NULL)
             {
                 bool forward_decl_is_ok_for_encoding = forward_decl_is_ok;
-                switch (m_encoding_uid_type)
-                {
-                case eEncodingIsPointerUID:
-                case eEncodingIsLValueReferenceUID:
-                case eEncodingIsRValueReferenceUID:
-                    forward_decl_is_ok_for_encoding = true;
-                    break;
-                default:
-                    break;
-                }
+//                switch (m_encoding_uid_type)
+//                {
+//                case eEncodingIsPointerUID:
+//                case eEncodingIsLValueReferenceUID:
+//                case eEncodingIsRValueReferenceUID:
+//                    forward_decl_is_ok_for_encoding = true;
+//                    break;
+//                default:
+//                    break;
+//                }
                 
                 if (encoding_type->ResolveClangType (forward_decl_is_ok_for_encoding))
                 {

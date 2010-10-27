@@ -1098,7 +1098,7 @@ DWARFDebugInfoEntry::Dump
 {
     const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
     uint32_t offset = m_offset;
-    bool english    = s->GetFlags().IsSet (DWARFDebugInfo::eDumpFlag_EnglishyNames);
+    bool english    = s->GetFlags().Test (DWARFDebugInfo::eDumpFlag_EnglishyNames);
 
     if (debug_info_data.ValidOffset(offset))
     {
@@ -1171,8 +1171,8 @@ DWARFDebugInfoEntry::DumpAttribute
 )
 {
     bool verbose    = s->GetVerbose();
-    bool show_form  = s->GetFlags().IsSet(DWARFDebugInfo::eDumpFlag_ShowForm);
-    bool english    = s->GetFlags().IsSet(DWARFDebugInfo::eDumpFlag_EnglishyNames);
+    bool show_form  = s->GetFlags().Test(DWARFDebugInfo::eDumpFlag_ShowForm);
+    bool english    = s->GetFlags().Test(DWARFDebugInfo::eDumpFlag_EnglishyNames);
     const DataExtractor* debug_str_data = dwarf2Data ? &dwarf2Data->get_debug_str_data() : NULL;
     if (verbose)
         s->Offset(*offset_ptr);

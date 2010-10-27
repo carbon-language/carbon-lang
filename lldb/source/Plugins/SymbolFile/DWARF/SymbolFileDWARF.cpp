@@ -1075,12 +1075,12 @@ SymbolFileDWARF::ParseChildMembers
                 if (num_attributes > 0)
                 {
                     Declaration decl;
-                    DWARFExpression location;
+                    //DWARFExpression location;
                     const char *name = NULL;
                     bool is_artificial = false;
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
                     AccessType accessibility = eAccessNone;
-                    off_t member_offset = 0;
+                    //off_t member_offset = 0;
                     size_t byte_size = 0;
                     size_t bit_offset = 0;
                     size_t bit_size = 0;
@@ -1102,18 +1102,18 @@ SymbolFileDWARF::ParseChildMembers
                             case DW_AT_bit_size:    bit_size = form_value.Unsigned(); break;
                             case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
                             case DW_AT_data_member_location:
-                                if (form_value.BlockData())
-                                {
-                                    Value initialValue(0);
-                                    Value memberOffset(0);
-                                    const DataExtractor& debug_info_data = get_debug_info_data();
-                                    uint32_t block_length = form_value.Unsigned();
-                                    uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
-                                    if (DWARFExpression::Evaluate(NULL, NULL, debug_info_data, NULL, NULL, block_offset, block_length, eRegisterKindDWARF, &initialValue, memberOffset, NULL))
-                                    {
-                                        member_offset = memberOffset.ResolveValue(NULL, NULL).UInt();
-                                    }
-                                }
+//                                if (form_value.BlockData())
+//                                {
+//                                    Value initialValue(0);
+//                                    Value memberOffset(0);
+//                                    const DataExtractor& debug_info_data = get_debug_info_data();
+//                                    uint32_t block_length = form_value.Unsigned();
+//                                    uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
+//                                    if (DWARFExpression::Evaluate(NULL, NULL, debug_info_data, NULL, NULL, block_offset, block_length, eRegisterKindDWARF, &initialValue, memberOffset, NULL))
+//                                    {
+//                                        member_offset = memberOffset.ResolveValue(NULL, NULL).UInt();
+//                                    }
+//                                }
                                 break;
 
                             case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType (form_value.Unsigned()); break;
@@ -1262,9 +1262,17 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
 {
     // We have a struct/union/class/enum that needs to be fully resolved.
     const DWARFDebugInfoEntry* die = m_forward_decl_clang_type_to_die.lookup (ClangASTType::RemoveFastQualifiers(clang_type));
-    assert (die);
     if (die == NULL)
-        return NULL;
+    {
+        // We have already resolved this type...
+        return clang_type;
+    }
+    // Once we start resolving this type, remove it from the forward declaration
+    // map in case anyone child members or other types require this type to get resolved.
+    // The type will get resolved when all of the calls to SymbolFileDWARF::ResolveClangOpaqueTypeDefinition
+    // are done.
+    m_forward_decl_clang_type_to_die.erase (ClangASTType::RemoveFastQualifiers(clang_type));
+    
 
     DWARFDebugInfo* debug_info = DebugInfo();
 

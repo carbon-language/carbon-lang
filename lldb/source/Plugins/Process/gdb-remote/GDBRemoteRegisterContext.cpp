@@ -397,6 +397,9 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 bool
 GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data_sp)
 {
+    if (!data_sp || data_sp->GetBytes() == NULL || data_sp->GetByteSize() == 0)
+        return false;
+
     GDBRemoteCommunication &gdb_comm = GetGDBProcess().GetGDBRemote();
     StringExtractorGDBRemote response;
     Mutex::Locker locker;

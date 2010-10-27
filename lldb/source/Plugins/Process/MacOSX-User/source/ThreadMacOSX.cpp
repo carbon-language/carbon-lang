@@ -249,7 +249,7 @@ int32_t
 ThreadMacOSX::Suspend()
 {
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
-    if (log && log->GetMask().IsSet(PD_LOG_VERBOSE))
+    if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf ("ThreadMacOSX::%s ( )", __FUNCTION__);
     lldb::tid_t tid = GetID ();
     if (ThreadIDIsValid(tid))
@@ -267,7 +267,7 @@ int32_t
 ThreadMacOSX::Resume()
 {
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
-    if (log && log->GetMask().IsSet(PD_LOG_VERBOSE))
+    if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf ("ThreadMacOSX::%s ()", __FUNCTION__);
     lldb::tid_t tid = GetID ();
     if (ThreadIDIsValid(tid))
@@ -288,7 +288,7 @@ bool
 ThreadMacOSX::RestoreSuspendCount()
 {
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
-    if (log && log->GetMask().IsSet(PD_LOG_VERBOSE))
+    if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf ("ThreadMacOSX::%s ( )", __FUNCTION__);
     Error err;
     lldb::tid_t tid = GetID ();

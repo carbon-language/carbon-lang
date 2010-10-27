@@ -127,7 +127,6 @@
 		26D5B09E11B07550009A862E /* Event.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7910F1B85900F91463 /* Event.cpp */; };
 		26D5B09F11B07550009A862E /* FileSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7A10F1B85900F91463 /* FileSpec.cpp */; };
 		26D5B0A011B07550009A862E /* FileSpecList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7B10F1B85900F91463 /* FileSpecList.cpp */; };
-		26D5B0A111B07550009A862E /* Flags.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7C10F1B85900F91463 /* Flags.cpp */; };
 		26D5B0A211B07550009A862E /* Language.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7D10F1B85900F91463 /* Language.cpp */; };
 		26D5B0A311B07550009A862E /* Listener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7E10F1B85900F91463 /* Listener.cpp */; };
 		26D5B0A411B07550009A862E /* Log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7F10F1B85900F91463 /* Log.cpp */; };
@@ -812,7 +811,6 @@
 		26BC7E7910F1B85900F91463 /* Event.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Event.cpp; path = source/Core/Event.cpp; sourceTree = "<group>"; };
 		26BC7E7A10F1B85900F91463 /* FileSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileSpec.cpp; path = source/Core/FileSpec.cpp; sourceTree = "<group>"; };
 		26BC7E7B10F1B85900F91463 /* FileSpecList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileSpecList.cpp; path = source/Core/FileSpecList.cpp; sourceTree = "<group>"; };
-		26BC7E7C10F1B85900F91463 /* Flags.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Flags.cpp; path = source/Core/Flags.cpp; sourceTree = "<group>"; };
 		26BC7E7D10F1B85900F91463 /* Language.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Language.cpp; path = source/Core/Language.cpp; sourceTree = "<group>"; };
 		26BC7E7E10F1B85900F91463 /* Listener.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Listener.cpp; path = source/Core/Listener.cpp; sourceTree = "<group>"; };
 		26BC7E7F10F1B85900F91463 /* Log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Log.cpp; path = source/Core/Log.cpp; sourceTree = "<group>"; };
@@ -1731,7 +1729,6 @@
 				26BC7D6310F1B77400F91463 /* FileSpecList.h */,
 				26BC7E7B10F1B85900F91463 /* FileSpecList.cpp */,
 				26BC7D6410F1B77400F91463 /* Flags.h */,
-				26BC7E7C10F1B85900F91463 /* Flags.cpp */,
 				9AA69DBB118A029E00D753A0 /* InputReader.h */,
 				9AA69DB5118A027A00D753A0 /* InputReader.cpp */,
 				26BC7D6510F1B77400F91463 /* IOStreamMacros.h */,
@@ -2680,7 +2677,6 @@
 				26D5B09E11B07550009A862E /* Event.cpp in Sources */,
 				26D5B09F11B07550009A862E /* FileSpec.cpp in Sources */,
 				26D5B0A011B07550009A862E /* FileSpecList.cpp in Sources */,
-				26D5B0A111B07550009A862E /* Flags.cpp in Sources */,
 				26D5B0A211B07550009A862E /* Language.cpp in Sources */,
 				26D5B0A311B07550009A862E /* Listener.cpp in Sources */,
 				26D5B0A411B07550009A862E /* Log.cpp in Sources */,

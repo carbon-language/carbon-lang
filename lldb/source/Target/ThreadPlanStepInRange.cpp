@@ -231,7 +231,7 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
     StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
 
-    if (flags.IsSet(eAvoidNoDebug))
+    if (flags.Test(eAvoidNoDebug))
     {
         if (!frame->HasDebugInformation())
         {

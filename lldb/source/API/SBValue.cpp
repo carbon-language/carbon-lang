@@ -138,6 +138,14 @@ SBValue::GetValue (const SBFrame &frame)
     return value_string;
 }
 
+ValueType
+SBValue::GetValueType ()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetValueType();
+    return eValueTypeInvalid;
+}
+
 const char *
 SBValue::GetObjectDescription (const SBFrame &frame)
 {
