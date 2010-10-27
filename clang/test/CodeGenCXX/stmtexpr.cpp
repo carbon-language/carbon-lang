@@ -63,3 +63,13 @@ int main()
   foo4();
   return foo(1).i-1;
 }
+
+// rdar: // 8600553
+int a[128];
+int* foo5() {
+// CHECK-NOT: memcpy
+  // Check that array-to-pointer conversion occurs in a
+  // statement-expression.
+  return (({ a; }));
+}
+
