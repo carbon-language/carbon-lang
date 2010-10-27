@@ -705,6 +705,12 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("fildq", "fildll")
     .Case("fcompi", "fcomip")
     .Case("fucompi", "fucomip")
+    .Case("fldcww", "fldcw")
+    .Case("fnstcww", "fnstcw")
+    .Case("fstcww", "fstcw")
+    .Case("fnstsww", "fnstsw")
+    .Case("fstsww", "fstsw")
+    .Case("verrw", "verr")
     .Default(Name);
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
