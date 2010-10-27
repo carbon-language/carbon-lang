@@ -67,18 +67,20 @@ enum {
     BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
     BLOCK_HAS_CTOR =          (1 << 26), // helpers have C++ code
     BLOCK_IS_GLOBAL =         (1 << 28),
-    BLOCK_HAS_STRET =         (1 << 29),
+    BLOCK_HAS_STRET =         (1 << 29), // IFF BLOCK_HAS_SIGNATURE
     BLOCK_HAS_SIGNATURE =     (1 << 30), 
 };
 
-In 10.6.ABI the (1<<29) was unconditionally set and ignored by the runtime - it was a transitional marker that did not get deleted after the transition. This bit is now paired with (1<<30), and represented as the pair (3<<30), for the following combinations of valid bit settings, and their meanings.
+In 10.6.ABI the (1<<29) was usually set and was always ignored by the runtime - it had been a transitional marker that did not get deleted after the transition. This bit is now paired with (1<<30), and represented as the pair (3<<30), for the following combinations of valid bit settings, and their meanings.
 
 switch (flags & (3<<29)) {
-  case (0<<29):  <unused>    , error
+  case (0<<29):      10.6.ABI, no signature field available
   case (1<<29):      10.6.ABI, no signature field available
   case (2<<29): ABI.2010.3.16, regular calling convention, presence of signature field
   case (3<<29): ABI.2010.3.16, stret calling convention, presence of signature field,
 }
+
+The signature field is not always populated.
 
 The following discussions are presented as 10.6.ABI otherwise.
 
