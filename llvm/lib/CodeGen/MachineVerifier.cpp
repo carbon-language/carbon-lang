@@ -1069,11 +1069,13 @@ void MachineVerifier::verifyLiveIntervals() {
     }
 
     // Check the LI only has one connected component.
-    ConnectedVNInfoEqClasses ConEQ(*LiveInts);
-    unsigned NumComp = ConEQ.Classify(&LI);
-    if (NumComp > 1) {
-      report("Multiple connected components in live interval", MF);
-      *OS << NumComp << " components in " << LI << '\n';
+    if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
+      ConnectedVNInfoEqClasses ConEQ(*LiveInts);
+      unsigned NumComp = ConEQ.Classify(&LI);
+      if (NumComp > 1) {
+        report("Multiple connected components in live interval", MF);
+        *OS << NumComp << " components in " << LI << '\n';
+      }
     }
   }
 }
