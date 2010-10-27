@@ -308,7 +308,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   bool EmitUniquedSection;
   if (Kind.isText())
     EmitUniquedSection = TM.getFunctionSections();
-  else 
+  else
     EmitUniquedSection = TM.getDataSections();
 
   // If this global is linkonce/weak and the target handles this by emitting it
@@ -464,7 +464,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
       break;
     }
   }
-  
+
   TargetLoweringObjectFile::Initialize(Ctx, TM);
 
   TextSection // .text
@@ -483,20 +483,20 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
     = getContext().getMachOSection("__DATA", "__thread_bss",
                                    MCSectionMachO::S_THREAD_LOCAL_ZEROFILL,
                                    SectionKind::getThreadBSS());
-                                   
+
   // TODO: Verify datarel below.
   TLSTLVSection // .tlv
     = getContext().getMachOSection("__DATA", "__thread_vars",
                                    MCSectionMachO::S_THREAD_LOCAL_VARIABLES,
                                    SectionKind::getDataRel());
-                                   
+
   TLSThreadInitSection
     = getContext().getMachOSection("__DATA", "__thread_init",
                           MCSectionMachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS,
                           SectionKind::getDataRel());
-                                   
+
   CStringSection // .cstring
-    = getContext().getMachOSection("__TEXT", "__cstring", 
+    = getContext().getMachOSection("__TEXT", "__cstring",
                                    MCSectionMachO::S_CSTRING_LITERALS,
                                    SectionKind::getMergeable1ByteCString());
   UStringSection
@@ -507,7 +507,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                    MCSectionMachO::S_4BYTE_LITERALS,
                                    SectionKind::getMergeableConst4());
   EightByteConstantSection // .literal8
-    = getContext().getMachOSection("__TEXT", "__literal8", 
+    = getContext().getMachOSection("__TEXT", "__literal8",
                                    MCSectionMachO::S_8BYTE_LITERALS,
                                    SectionKind::getMergeableConst8());
 
@@ -531,14 +531,14 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                    MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                                    SectionKind::getText());
   ConstTextCoalSection
-    = getContext().getMachOSection("__TEXT", "__const_coal", 
+    = getContext().getMachOSection("__TEXT", "__const_coal",
                                    MCSectionMachO::S_COALESCED,
                                    SectionKind::getReadOnly());
   ConstDataSection  // .const_data
     = getContext().getMachOSection("__DATA", "__const", 0,
                                    SectionKind::getReadOnlyWithRel());
   DataCoalSection
-    = getContext().getMachOSection("__DATA","__datacoal_nt", 
+    = getContext().getMachOSection("__DATA","__datacoal_nt",
                                    MCSectionMachO::S_COALESCED,
                                    SectionKind::getDataRel());
   DataCommonSection
@@ -548,7 +548,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   DataBSSSection
     = getContext().getMachOSection("__DATA","__bss", MCSectionMachO::S_ZEROFILL,
                                    SectionKind::getBSS());
-  
+
 
   LazySymbolPointerSection
     = getContext().getMachOSection("__DATA", "__la_symbol_ptr",
@@ -590,7 +590,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
 
   // Debug Information.
   DwarfAbbrevSection =
-    getContext().getMachOSection("__DWARF", "__debug_abbrev", 
+    getContext().getMachOSection("__DWARF", "__debug_abbrev",
                                  MCSectionMachO::S_ATTR_DEBUG,
                                  SectionKind::getMetadata());
   DwarfInfoSection =
@@ -637,7 +637,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
     getContext().getMachOSection("__DWARF", "__debug_inlined",
                                  MCSectionMachO::S_ATTR_DEBUG,
                                  SectionKind::getMetadata());
-                                 
+
   TLSExtraDataSection = TLSTLVSection;
 }
 
@@ -679,7 +679,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
-  
+
   // Handle thread local data.
   if (Kind.isThreadBSS()) return TLSBSSSection;
   if (Kind.isThreadData()) return TLSDataSection;
@@ -699,7 +699,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isMergeable1ByteCString() &&
       TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV)) < 32)
     return CStringSection;
-      
+
   // Do not put 16-bit arrays in the UString section if they have an
   // externally visible label, this runs into issues with certain linker
   // versions.
@@ -735,7 +735,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // with the .zerofill directive (aka .lcomm).
   if (Kind.isBSSLocal())
     return DataBSSSection;
-  
+
   // Otherwise, just drop the variable in the normal data section.
   return DataSection;
 }
