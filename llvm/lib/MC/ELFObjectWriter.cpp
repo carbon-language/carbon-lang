@@ -134,6 +134,7 @@ namespace {
     };
 
     SmallPtrSet<const MCSymbol *, 16> UsedInReloc;
+    DenseMap<const MCSymbol *, const MCSymbol *> Renames;
 
     llvm::DenseMap<const MCSectionData*,
                    std::vector<ELFRelocationEntry> > Relocations;
@@ -292,8 +293,7 @@ namespace {
 
     void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout);
 
-    void ExecutePostLayoutBinding(MCAssembler &Asm) {
-    }
+    void ExecutePostLayoutBinding(MCAssembler &Asm);
 
     void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
                           uint64_t Address, uint64_t Offset,
@@ -449,6 +449,30 @@ static const MCSymbol &AliasedSymbol(const MCSymbol &Symbol) {
   return *S;
 }
 
+void ELFObjectWriterImpl::ExecutePostLayoutBinding(MCAssembler &Asm) {
+  // The presence of symbol versions causes undefined symbols and
+  // versions declared with @@@ to be renamed.
+
+  for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
+         ie = Asm.symbol_end(); it != ie; ++it) {
+    const MCSymbol &Alias = it->getSymbol();
+    if (!Alias.isVariable())
+      continue;
+    const MCSymbol &Symbol = AliasedSymbol(Alias);
+    const StringRef &AliasName = Alias.getName();
+    size_t Pos = AliasName.find('@');
+    if (Pos == StringRef::npos)
+      continue;
+
+    StringRef Rest(AliasName.begin() + Pos);
+    if (!Symbol.isUndefined() && !Rest.startswith("@@@"))
+      continue;
+
+    std::pair<const MCSymbol *, const MCSymbol *> t(&Symbol, &Alias);
+    Renames.insert(t);
+  }
+}
+
 void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
                                       const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
@@ -593,6 +617,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
   if (!Target.isAbsolute()) {
     Symbol = &AliasedSymbol(Target.getSymA()->getSymbol());
+    const MCSymbol *Renamed = Renames.lookup(Symbol);
+    if (Renamed)
+      Symbol = Renamed;
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     MCFragment *F = SD.getFragment();
 
@@ -765,9 +792,12 @@ ELFObjectWriterImpl::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
 }
 
 static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
-                       bool Used) {
+                       bool Used, bool Renamed) {
   if (Used)
     return true;
+
+  if (Renamed)
+    return false;
 
   const MCSymbol &Symbol = Data.getSymbol();
 
@@ -821,40 +851,52 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
          ie = Asm.symbol_end(); it != ie; ++it) {
     const MCSymbol &Symbol = it->getSymbol();
 
-    if (!isInSymtab(Asm, *it, UsedInReloc.count(&Symbol)))
+    if (!isInSymtab(Asm, *it, UsedInReloc.count(&Symbol),
+                    Renames.count(&Symbol)))
       continue;
 
     ELFSymbolData MSD;
     MSD.SymbolData = it;
     bool Local = isLocal(*it);
+    const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
 
     if (it->isCommon()) {
       assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
     } else if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
-    } else if (Symbol.isVariable()) {
-      const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
-      if (RefSymbol.isDefined()) {
-        MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
-        assert(MSD.SectionIndex && "Invalid section index!");
-      }
-    } else if (Symbol.isUndefined()) {
-      assert(!Local);
+    } else if (RefSymbol.isUndefined()) {
       MSD.SectionIndex = ELF::SHN_UNDEF;
       // FIXME: Undefined symbols are global, but this is the first place we
       // are able to set it.
       if (GetBinding(*it) == ELF::STB_LOCAL)
         SetBinding(*it, ELF::STB_GLOBAL);
+    } else if (Symbol.isVariable()) {
+      MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
+      assert(MSD.SectionIndex && "Invalid section index!");
     } else {
       MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());
       assert(MSD.SectionIndex && "Invalid section index!");
     }
 
-    uint64_t &Entry = StringIndexMap[Symbol.getName()];
+    // The @@@ in symbol version is replaced with @ in undefined symbols and
+    // @@ in defined ones.
+    StringRef Name = Symbol.getName();
+    size_t Pos = Name.find("@@@");
+    std::string FinalName;
+    if (Pos != StringRef::npos) {
+      StringRef Prefix(Name.begin(), Pos);
+      unsigned n = MSD.SectionIndex == ELF::SHN_UNDEF ? 2 : 1;
+      StringRef Suffix(Name.begin() + Pos + n);
+      FinalName = Prefix.str() + Suffix.str();
+    } else {
+      FinalName = Name.str();
+    }
+
+    uint64_t &Entry = StringIndexMap[FinalName];
     if (!Entry) {
       Entry = StringTable.size();
-      StringTable += Symbol.getName();
+      StringTable += FinalName;
       StringTable += '\x00';
     }
     MSD.StringIndex = Entry;
