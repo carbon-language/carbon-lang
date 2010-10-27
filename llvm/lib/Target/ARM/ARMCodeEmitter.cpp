@@ -181,6 +181,10 @@ namespace {
         // {11-0}  = imm12
         const MachineOperand &MO  = MI.getOperand(Op);
         const MachineOperand &MO1 = MI.getOperand(Op + 1);
+        if (!MO.isReg()) {
+          emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_cp_entry);
+          return 0;
+        }
         unsigned Reg = getARMRegisterNumbering(MO.getReg());
         int32_t Imm12 = MO1.getImm();
         uint32_t Binary;
