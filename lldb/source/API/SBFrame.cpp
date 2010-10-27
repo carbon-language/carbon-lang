@@ -527,7 +527,11 @@ SBFrame::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
     {
-        description.Printf("SBFrame: idx = %u", m_opaque_sp->GetFrameIndex());
+        SBLineEntry line_entry = GetLineEntry ();
+        SBFileSpec file_spec = line_entry.GetFileSpec ();
+        uint32_t line = line_entry.GetLine ();
+        description.Printf("SBFrame: idx = %u ('%s', %s, line %d)", m_opaque_sp->GetFrameIndex(), 
+                           GetFunction().GetName(), file_spec.GetFilename(), line);
     }
     else
         description.Printf ("No value");
