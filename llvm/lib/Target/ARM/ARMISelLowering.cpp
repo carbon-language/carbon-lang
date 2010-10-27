@@ -4575,9 +4575,9 @@ static SDValue PerformVECTOR_SHUFFLECombine(SDNode *N, SelectionDAG &DAG) {
   for (unsigned n = 0; n < NumElts; ++n) {
     int MaskElt = SVN->getMaskElt(n);
     int NewElt = -1;
-    if (MaskElt < HalfElts)
+    if (MaskElt < (int)HalfElts)
       NewElt = MaskElt;
-    else if (MaskElt >= NumElts && MaskElt < NumElts + HalfElts)
+    else if (MaskElt >= (int)NumElts && MaskElt < (int)(NumElts + HalfElts))
       NewElt = HalfElts + MaskElt - NumElts;
     NewMask.push_back(NewElt);
   }
