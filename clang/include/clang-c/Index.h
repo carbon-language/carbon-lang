@@ -713,7 +713,22 @@ enum CXTranslationUnit_Flags {
    * introduces some overhead to reparsing but improves the performance of
    * code-completion operations.
    */
-  CXTranslationUnit_CacheCompletionResults = 0x08
+  CXTranslationUnit_CacheCompletionResults = 0x08,
+  /**
+   * \brief Enable precompiled preambles in C++.
+   *
+   * Note: this is a *temporary* option that is available only while
+   * we are testing C++ precompiled preamble support.
+   */
+  CXTranslationUnit_CXXPrecompiledPreamble = 0x10,
+
+  /**
+   * \brief Enabled chained precompiled preambles in C++.
+   *
+   * Note: this is a *temporary* option that is available only while
+   * we are testing C++ precompiled preamble support.
+   */
+  CXTranslationUnit_CXXChainedPCH = 0x20
 };
 
 /**

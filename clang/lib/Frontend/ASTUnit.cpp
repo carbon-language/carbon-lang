@@ -1328,8 +1328,7 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   
   
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
-  // FIXME: When C++ PCH is ready, allow use of it for a precompiled preamble.
-  if (PrecompilePreamble && !Invocation->getLangOpts().CPlusPlus) {
+  if (PrecompilePreamble) {
     PreambleRebuildCounter = 1;
     OverrideMainBuffer
       = getMainBufferWithPrecompiledPreamble(*Invocation);
@@ -1386,7 +1385,9 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool CaptureDiagnostics,
                                       bool PrecompilePreamble,
                                       bool CompleteTranslationUnit,
-                                      bool CacheCodeCompletionResults) {
+                                      bool CacheCodeCompletionResults,
+                                      bool CXXPrecompilePreamble,
+                                      bool CXXChainedPCH) {
   bool CreatedDiagnosticsObject = false;
   
   if (!Diags.getPtr()) {
@@ -1457,6 +1458,16 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // Override the resources path.
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
+  // Check whether we should precompile the preamble and/or use chained PCH.
+  // FIXME: This is a temporary hack while we debug C++ chained PCH.
+  if (CI->getLangOpts().CPlusPlus) {
+    PrecompilePreamble = PrecompilePreamble && CXXPrecompilePreamble;
+    
+    if (PrecompilePreamble && !CXXChainedPCH &&
+        !CI->getPreprocessorOpts().ImplicitPCHInclude.empty())
+      PrecompilePreamble = false;
+  }
+  
   // Create the AST unit.
   llvm::OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));

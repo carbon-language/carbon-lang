@@ -1972,7 +1972,8 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 
 unsigned clang_defaultEditingTranslationUnitOptions() {
   return CXTranslationUnit_PrecompiledPreamble | 
-         CXTranslationUnit_CacheCompletionResults;
+         CXTranslationUnit_CacheCompletionResults |
+         CXTranslationUnit_CXXPrecompiledPreamble;
 }
   
 CXTranslationUnit
@@ -2020,6 +2021,10 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     = ((options & CXTranslationUnit_Incomplete) == 0);
   bool CacheCodeCompetionResults
     = options & CXTranslationUnit_CacheCompletionResults;
+  bool CXXPrecompilePreamble
+    = options & CXTranslationUnit_CXXPrecompiledPreamble;
+  bool CXXChainedPCH
+    = options & CXTranslationUnit_CXXChainedPCH;
   
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
@@ -2084,7 +2089,9 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  /*CaptureDiagnostics=*/true,
                                  PrecompilePreamble,
                                  CompleteTranslationUnit,
-                                 CacheCodeCompetionResults));
+                                 CacheCodeCompetionResults,
+                                 CXXPrecompilePreamble,
+                                 CXXChainedPCH));
 
   if (NumErrors != Diags->getNumErrors()) {
     // Make sure to check that 'Unit' is non-NULL.

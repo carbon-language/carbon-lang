@@ -546,7 +546,9 @@ public:
                                       bool CaptureDiagnostics = false,
                                       bool PrecompilePreamble = false,
                                       bool CompleteTranslationUnit = true,
-                                      bool CacheCodeCompletionResults = false);
+                                      bool CacheCodeCompletionResults = false,
+                                      bool CXXPrecompilePreamble = false,
+                                      bool CXXChainedPCH = false);
   
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.
