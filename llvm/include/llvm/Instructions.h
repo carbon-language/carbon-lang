@@ -43,7 +43,7 @@ protected:
 public:
   explicit AllocaInst(const Type *Ty, Value *ArraySize = 0,
                       const Twine &Name = "", Instruction *InsertBefore = 0);
-  AllocaInst(const Type *Ty, Value *ArraySize, 
+  AllocaInst(const Type *Ty, Value *ArraySize,
              const Twine &Name, BasicBlock *InsertAtEnd);
 
   AllocaInst(const Type *Ty, const Twine &Name, Instruction *InsertBefore = 0);
@@ -166,8 +166,8 @@ public:
   unsigned getPointerAddressSpace() const {
     return cast<PointerType>(getPointerOperand()->getType())->getAddressSpace();
   }
-  
-  
+
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const LoadInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -237,7 +237,7 @@ public:
 
   Value *getValueOperand() { return getOperand(0); }
   const Value *getValueOperand() const { return getOperand(0); }
-  
+
   Value *getPointerOperand() { return getOperand(1); }
   const Value *getPointerOperand() const { return getOperand(1); }
   static unsigned getPointerOperandIndex() { return 1U; }
@@ -245,7 +245,7 @@ public:
   unsigned getPointerAddressSpace() const {
     return cast<PointerType>(getPointerOperand()->getType())->getAddressSpace();
   }
-  
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StoreInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -472,7 +472,7 @@ public:
   static unsigned getPointerOperandIndex() {
     return 0U;                      // get index for modifying correct operand
   }
-  
+
   unsigned getPointerAddressSpace() const {
     return cast<PointerType>(getType())->getAddressSpace();
   }
@@ -575,7 +575,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetElementPtrInst, Value)
 class ICmpInst: public CmpInst {
 protected:
   /// @brief Clone an indentical ICmpInst
-  virtual ICmpInst *clone_impl() const;  
+  virtual ICmpInst *clone_impl() const;
 public:
   /// @brief Constructor with insert-before-instruction semantics.
   ICmpInst(
@@ -746,7 +746,7 @@ public:
     assert(getOperand(0)->getType()->isFPOrFPVectorTy() &&
            "Invalid operand types for FCmp instruction");
   }
-  
+
   /// @brief Constructor with insert-at-end semantics.
   FCmpInst(
     BasicBlock &InsertAtEnd, ///< Block to insert into.
@@ -984,7 +984,7 @@ public:
   unsigned getParamAlignment(unsigned i) const {
     return AttributeList.getParamAlignment(i);
   }
-  
+
   /// @brief Return true if the call should not be inlined.
   bool isNoInline() const { return paramHasAttr(~0, Attribute::NoInline); }
   void setIsNoInline(bool Value = true) {
@@ -1052,7 +1052,7 @@ public:
   void setCalledFunction(Value* Fn) {
     Op<-1>() = Fn;
   }
-  
+
   /// isInlineAsm - Check if this call is an inline asm statement.
   bool isInlineAsm() const {
     return isa<InlineAsm>(Op<-1>());
@@ -1156,7 +1156,7 @@ public:
   Value *getCondition() { return Op<0>(); }
   Value *getTrueValue() { return Op<1>(); }
   Value *getFalseValue() { return Op<2>(); }
-  
+
   /// areInvalidOperands - Return a string if the specified operands are invalid
   /// for a select operation, otherwise return null.
   static const char *areInvalidOperands(Value *Cond, Value *True, Value *False);
@@ -1256,12 +1256,12 @@ public:
   Value *getIndexOperand() { return Op<1>(); }
   const Value *getVectorOperand() const { return Op<0>(); }
   const Value *getIndexOperand() const { return Op<1>(); }
-  
+
   const VectorType *getVectorOperandType() const {
     return reinterpret_cast<const VectorType*>(getVectorOperand()->getType());
   }
-  
-  
+
+
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
@@ -1839,7 +1839,7 @@ public:
   BasicBlock *getIncomingBlock(unsigned i) const {
     return cast<BasicBlock>(getOperand(i*2+1));
   }
-  
+
   /// getIncomingBlock - Return incoming basic block corresponding
   /// to an operand of the PHI.
   ///
@@ -1847,7 +1847,7 @@ public:
     assert(this == U.getUser() && "Iterator doesn't point to PHI's Uses?");
     return cast<BasicBlock>((&U + 1)->get());
   }
-  
+
   /// getIncomingBlock - Return incoming basic block corresponding
   /// to value use iterator.
   ///
@@ -1855,8 +1855,8 @@ public:
   BasicBlock *getIncomingBlock(value_use_iterator<U> I) const {
     return getIncomingBlock(I.getUse());
   }
-  
-  
+
+
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
     setOperand(i*2+1, (Value*)BB);
   }
@@ -2300,7 +2300,7 @@ class IndirectBrInst : public TerminatorInst {
   /// here to make memory allocation more efficient.  This constructor can also
   /// autoinsert before another instruction.
   IndirectBrInst(Value *Address, unsigned NumDests, Instruction *InsertBefore);
-  
+
   /// IndirectBrInst ctor - Create a new indirectbr instruction, specifying an
   /// Address to jump to.  The number of expected destinations can be specified
   /// here to make memory allocation more efficient.  This constructor also
@@ -2318,32 +2318,32 @@ public:
     return new IndirectBrInst(Address, NumDests, InsertAtEnd);
   }
   ~IndirectBrInst();
-  
+
   /// Provide fast operand accessors.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-  
+
   // Accessor Methods for IndirectBrInst instruction.
   Value *getAddress() { return getOperand(0); }
   const Value *getAddress() const { return getOperand(0); }
   void setAddress(Value *V) { setOperand(0, V); }
-  
-  
+
+
   /// getNumDestinations - return the number of possible destinations in this
   /// indirectbr instruction.
   unsigned getNumDestinations() const { return getNumOperands()-1; }
-  
+
   /// getDestination - Return the specified destination.
   BasicBlock *getDestination(unsigned i) { return getSuccessor(i); }
   const BasicBlock *getDestination(unsigned i) const { return getSuccessor(i); }
-  
+
   /// addDestination - Add a destination.
   ///
   void addDestination(BasicBlock *Dest);
-  
+
   /// removeDestination - This method removes the specified successor from the
   /// indirectbr instruction.
   void removeDestination(unsigned i);
-  
+
   unsigned getNumSuccessors() const { return getNumOperands()-1; }
   BasicBlock *getSuccessor(unsigned i) const {
     return cast<BasicBlock>(getOperand(i+1));
@@ -2351,7 +2351,7 @@ public:
   void setSuccessor(unsigned i, BasicBlock *NewSucc) {
     setOperand(i+1, (Value*)NewSucc);
   }
-  
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const IndirectBrInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -2371,8 +2371,8 @@ struct OperandTraits<IndirectBrInst> : public HungoffOperandTraits<1> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(IndirectBrInst, Value)
-  
-  
+
+
 //===----------------------------------------------------------------------===//
 //                               InvokeInst Class
 //===----------------------------------------------------------------------===//
