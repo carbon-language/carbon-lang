@@ -639,6 +639,10 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
             Value *NegVal;  // Compute -Z
             if (Constant *C = dyn_cast<Constant>(SubOp->getOperand(1))) {
               NegVal = ConstantExpr::getNeg(C);
+            } else if (SI.getType()->isFloatingPointTy()) {
+              NegVal = InsertNewInstBefore(
+                    BinaryOperator::CreateFNeg(SubOp->getOperand(1),
+                                              "tmp"), SI);
             } else {
               NegVal = InsertNewInstBefore(
                     BinaryOperator::CreateNeg(SubOp->getOperand(1),
@@ -654,7 +658,10 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                                  NewFalseOp, SI.getName() + ".p");
 
             NewSel = InsertNewInstBefore(NewSel, SI);
-            return BinaryOperator::CreateAdd(SubOp->getOperand(0), NewSel);
+            if (SI.getType()->isFloatingPointTy())
+              return BinaryOperator::CreateFAdd(SubOp->getOperand(0), NewSel);
+            else
+              return BinaryOperator::CreateAdd(SubOp->getOperand(0), NewSel);
           }
         }
       }
