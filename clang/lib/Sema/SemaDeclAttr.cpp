@@ -2467,14 +2467,18 @@ void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
 /// it, apply them to D.  This is a bit tricky because PD can have attributes
 /// specified in many different places, and we need to find and apply them all.
 void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
-  // Handle #pragma weak
-  if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-    if (ND->hasLinkage()) {
-      WeakInfo W = WeakUndeclaredIdentifiers.lookup(ND->getIdentifier());
-      if (W != WeakInfo()) {
-        // Identifier referenced by #pragma weak before it was declared
-        DeclApplyPragmaWeak(S, ND, W);
-        WeakUndeclaredIdentifiers[ND->getIdentifier()] = W;
+  // It's valid to "forward-declare" #pragma weak, in which case we
+  // have to do this.
+  if (!WeakUndeclaredIdentifiers.empty()) {
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+      if (IdentifierInfo *Id = ND->getIdentifier()) {
+        llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator I
+          = WeakUndeclaredIdentifiers.find(Id);
+        if (I != WeakUndeclaredIdentifiers.end() && ND->hasLinkage()) {
+          WeakInfo W = I->second;
+          DeclApplyPragmaWeak(S, ND, W);
+          WeakUndeclaredIdentifiers[Id] = W;
+        }
       }
     }
   }
