@@ -79,6 +79,7 @@ static bool isFixupKindX86PCRel(unsigned Kind) {
 }
 
 static bool RelocNeedsGOT(unsigned Type) {
+  // FIXME: Can we use the VariantKind?
   switch (Type) {
   default:
     return false;
@@ -88,6 +89,10 @@ static bool RelocNeedsGOT(unsigned Type) {
   case ELF::R_X86_64_TPOFF32:
   case ELF::R_X86_64_TLSGD:
   case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_386_TLS_GD:
+  case ELF::R_386_TLS_LE_32:
+  case ELF::R_386_TLS_IE:
+  case ELF::R_386_TLS_LE:
     return true;
   }
 }
@@ -765,6 +770,18 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
           break;
         case MCSymbolRefExpr::VK_GOTOFF:
           Type = ELF::R_386_GOTOFF;
+          break;
+        case MCSymbolRefExpr::VK_TLSGD:
+          Type = ELF::R_386_TLS_GD;
+          break;
+        case MCSymbolRefExpr::VK_TPOFF:
+          Type = ELF::R_386_TLS_LE_32;
+          break;
+        case MCSymbolRefExpr::VK_INDNTPOFF:
+          Type = ELF::R_386_TLS_IE;
+          break;
+        case MCSymbolRefExpr::VK_NTPOFF:
+          Type = ELF::R_386_TLS_LE;
           break;
         }
         break;
