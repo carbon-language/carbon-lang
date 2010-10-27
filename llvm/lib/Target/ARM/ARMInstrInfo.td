@@ -299,6 +299,10 @@ def pclabel : Operand<i32> {
   let PrintMethod = "printPCLabel";
 }
 
+def neon_vcvt_imm32 : Operand<i32> {
+  string EncoderMethod = "getNEONVcvtImm32";
+}
+
 // rot_imm: An integer that encodes a rotate amount. Must be 8, 16, or 24.
 def rot_imm : Operand<i32>, PatLeaf<(i32 imm), [{
   int32_t v = (int32_t)N->getZExtValue();

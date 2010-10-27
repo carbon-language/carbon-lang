@@ -1764,16 +1764,16 @@ class N2VCvtD<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
               string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
               Intrinsic IntOp>
   : N2VImm<op24, op23, op11_8, op7, 0, op4,
-           (outs DPR:$dst), (ins DPR:$src, i32imm:$SIMM), NVCVTFrm,
-           IIC_VUNAD, OpcodeStr, Dt, "$dst, $src, $SIMM", "",
-           [(set DPR:$dst, (ResTy (IntOp (OpTy DPR:$src), (i32 imm:$SIMM))))]>;
+           (outs DPR:$Vd), (ins DPR:$Vm, neon_vcvt_imm32:$SIMM), NVCVTFrm,
+           IIC_VUNAD, OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "",
+           [(set DPR:$Vd, (ResTy (IntOp (OpTy DPR:$Vm), (i32 imm:$SIMM))))]>;
 class N2VCvtQ<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
               string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
               Intrinsic IntOp>
   : N2VImm<op24, op23, op11_8, op7, 1, op4,
-           (outs QPR:$dst), (ins QPR:$src, i32imm:$SIMM), NVCVTFrm,
-           IIC_VUNAQ, OpcodeStr, Dt, "$dst, $src, $SIMM", "",
-           [(set QPR:$dst, (ResTy (IntOp (OpTy QPR:$src), (i32 imm:$SIMM))))]>;
+           (outs QPR:$Vd), (ins QPR:$Vm, neon_vcvt_imm32:$SIMM), NVCVTFrm,
+           IIC_VUNAQ, OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "",
+           [(set QPR:$Vd, (ResTy (IntOp (OpTy QPR:$Vm), (i32 imm:$SIMM))))]>;
 
 //===----------------------------------------------------------------------===//
 // Multiclasses

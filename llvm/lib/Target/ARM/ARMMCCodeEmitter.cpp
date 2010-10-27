@@ -91,6 +91,10 @@ public:
   unsigned getImmMinusOneOpValue(const MCInst &MI, unsigned Op) const {
     return MI.getOperand(Op).getImm() - 1;
   }
+  
+  unsigned getNEONVcvtImm32(const MCInst &MI, unsigned Op) const {
+    return 64 - MI.getOperand(Op).getImm();
+  }
 
   unsigned getBitfieldInvertedMaskOpValue(const MCInst &MI, unsigned Op) const;
 
