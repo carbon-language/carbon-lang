@@ -460,6 +460,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setTargetDAGCombine(ISD::ANY_EXTEND);
     setTargetDAGCombine(ISD::SELECT_CC);
     setTargetDAGCombine(ISD::BUILD_VECTOR);
+    setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   }
 
   computeRegisterProperties();
@@ -4531,6 +4532,59 @@ static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+/// PerformVECTOR_SHUFFLECombine - Target-specific dag combine xforms for
+/// ISD::VECTOR_SHUFFLE.
+static SDValue PerformVECTOR_SHUFFLECombine(SDNode *N, SelectionDAG &DAG) {
+  // The LLVM shufflevector instruction does not require the shuffle mask
+  // length to match the operand vector length, but ISD::VECTOR_SHUFFLE does
+  // have that requirement.  When translating to ISD::VECTOR_SHUFFLE, if the
+  // operands do not match the mask length, they are extended by concatenating
+  // them with undef vectors.  That is probably the right thing for other
+  // targets, but for NEON it is better to concatenate two double-register
+  // size vector operands into a single quad-register size vector.  Do that
+  // transformation here:
+  //   shuffle(concat(v1, undef), concat(v2, undef)) ->
+  //   shuffle(concat(v1, v2), undef)
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+  if (Op0.getOpcode() != ISD::CONCAT_VECTORS ||
+      Op1.getOpcode() != ISD::CONCAT_VECTORS ||
+      Op0.getNumOperands() != 2 ||
+      Op1.getNumOperands() != 2)
+    return SDValue();
+  SDValue Concat0Op1 = Op0.getOperand(1);
+  SDValue Concat1Op1 = Op1.getOperand(1);
+  if (Concat0Op1.getOpcode() != ISD::UNDEF ||
+      Concat1Op1.getOpcode() != ISD::UNDEF)
+    return SDValue();
+  // Skip the transformation if any of the types are illegal.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  EVT VT = N->getValueType(0);
+  if (!TLI.isTypeLegal(VT) ||
+      !TLI.isTypeLegal(Concat0Op1.getValueType()) ||
+      !TLI.isTypeLegal(Concat1Op1.getValueType()))
+    return SDValue();
+
+  SDValue NewConcat = DAG.getNode(ISD::CONCAT_VECTORS, N->getDebugLoc(), VT,
+                                  Op0.getOperand(0), Op1.getOperand(0));
+  // Translate the shuffle mask.
+  SmallVector<int, 16> NewMask;
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned HalfElts = NumElts/2;
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
+  for (unsigned n = 0; n < NumElts; ++n) {
+    int MaskElt = SVN->getMaskElt(n);
+    int NewElt = -1;
+    if (MaskElt < HalfElts)
+      NewElt = MaskElt;
+    else if (MaskElt >= NumElts && MaskElt < NumElts + HalfElts)
+      NewElt = HalfElts + MaskElt - NumElts;
+    NewMask.push_back(NewElt);
+  }
+  return DAG.getVectorShuffle(VT, N->getDebugLoc(), NewConcat,
+                              DAG.getUNDEF(VT), NewMask.data());
+}
+
 /// PerformVDUPLANECombine - Target-specific dag combine xforms for
 /// ARMISD::VDUPLANE.
 static SDValue PerformVDUPLANECombine(SDNode *N, SelectionDAG &DAG) {
@@ -4939,6 +4993,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ARMISD::VMOVDRR: return PerformVMOVDRRCombine(N, DCI.DAG);
   case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DCI.DAG);
+  case ISD::VECTOR_SHUFFLE: return PerformVECTOR_SHUFFLECombine(N, DCI.DAG);
   case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI.DAG);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
   case ISD::SHL:

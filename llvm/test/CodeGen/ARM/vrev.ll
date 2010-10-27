@@ -129,3 +129,21 @@ define <8 x i16> @test_vrev32Q16_undef(<8 x i16>* %A) nounwind {
 	%tmp2 = shufflevector <8 x i16> %tmp1, <8 x i16> undef, <8 x i32> <i32 undef, i32 0, i32 undef, i32 2, i32 5, i32 4, i32 7, i32 undef>
 	ret <8 x i16> %tmp2
 }
+
+; A vcombine feeding a VREV should not obscure things.  Radar 8597007.
+
+define void @test_with_vcombine(<4 x float>* %v) nounwind {
+;CHECK: test_with_vcombine:
+;CHECK-NOT: vext
+;CHECK: vrev64.32
+  %tmp1 = load <4 x float>* %v, align 16
+  %tmp2 = bitcast <4 x float> %tmp1 to <2 x double>
+  %tmp3 = extractelement <2 x double> %tmp2, i32 0
+  %tmp4 = bitcast double %tmp3 to <2 x float>
+  %tmp5 = extractelement <2 x double> %tmp2, i32 1
+  %tmp6 = bitcast double %tmp5 to <2 x float>
+  %tmp7 = fadd <2 x float> %tmp6, %tmp6
+  %tmp8 = shufflevector <2 x float> %tmp4, <2 x float> %tmp7, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  store <4 x float> %tmp8, <4 x float>* %v, align 16
+  ret void
+}
