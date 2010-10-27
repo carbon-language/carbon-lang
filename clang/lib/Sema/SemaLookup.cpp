@@ -3188,7 +3188,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
   unsigned ED = Consumer.getBestEditDistance();
   if (ED > 0 && Typo->getName().size() / ED < 3) {
     // If this was an unqualified lookup, note that no correction was found.
-    if (IsUnqualifiedLookup && ED > 0)
+    if (IsUnqualifiedLookup)
       (void)UnqualifiedTyposCorrected[Typo];
 
     return DeclarationName();
