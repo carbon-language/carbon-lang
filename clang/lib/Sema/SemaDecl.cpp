@@ -559,10 +559,6 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
   if (D->getDeclContext()->isDependentContext())
     return false;
 
-  // We warn for unused decls internal to the translation unit.
-  if (D->getLinkage() == ExternalLinkage)
-    return false;
-
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
       return false;
@@ -577,25 +573,32 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
         return false;
     }
 
-    if (FD->isThisDeclarationADefinition())
-      return !Context.DeclMustBeEmitted(FD);
-    return true;
-  }
+    if (FD->isThisDeclarationADefinition() &&
+        Context.DeclMustBeEmitted(FD))
+      return false;
 
-  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+  } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (!VD->isFileVarDecl() ||
+        VD->getType().isConstant(Context) ||
+        Context.DeclMustBeEmitted(VD))
+      return false;
+
     if (VD->isStaticDataMember() &&
         VD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
       return false;
 
-    if ( VD->isFileVarDecl() &&
-        !VD->getType().isConstant(Context))
-      return !Context.DeclMustBeEmitted(VD);
+  } else {
+    return false;
   }
 
-   return false;
- }
+  // Only warn for unused decls internal to the translation unit.
+  if (D->getLinkage() == ExternalLinkage)
+    return false;
 
- void Sema::MarkUnusedFileScopedDecl(const DeclaratorDecl *D) {
+  return true;
+}
+
+void Sema::MarkUnusedFileScopedDecl(const DeclaratorDecl *D) {
   if (!D)
     return;
 
