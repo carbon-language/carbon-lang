@@ -208,8 +208,7 @@ void llvm::sys::RunInterruptHandlers() {
 }
 
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
-  try {
-    Cleanup();
+  Cleanup();
 
 #ifdef _WIN64
   // TODO: provide a x64 friendly version of the following
@@ -290,10 +289,6 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
     }
 
 #endif
-
-  } catch (...) {
-      assert(0 && "Crashed in LLVMUnhandledExceptionFilter");
-  }
 
   if (ExitOnUnhandledExceptions)
     _exit(-3);
