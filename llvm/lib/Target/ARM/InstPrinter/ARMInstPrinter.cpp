@@ -612,8 +612,11 @@ void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
 
   O << "[" << getRegisterName(MO1.getReg());
 
-  unsigned OffImm = MO2.getImm();
-  if (OffImm)  // Don't print +0.
+  int32_t OffImm = (int32_t)MO2.getImm();
+  // Don't print +0.
+  if (OffImm < 0)
+    O << ", #-" << -OffImm;
+  else if (OffImm > 0)
     O << ", #" << OffImm;
   O << "]";
 }

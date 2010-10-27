@@ -1419,8 +1419,15 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       if ((unsigned)Offset <= Mask * Scale) {
         // Replace the FrameIndex with sp
         MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
-        if (isSub)
-          ImmedOffset |= 1 << NumBits;
+        // FIXME: When addrmode2 goes away, this will simplify (like the
+        // T2 version), as the LDR.i12 versions don't need the encoding
+        // tricks for the offset value.
+        if (isSub) {
+          if (AddrMode == ARMII::AddrMode_i12)
+            ImmedOffset = -ImmedOffset;
+          else
+            ImmedOffset |= 1 << NumBits;
+        }
         ImmOp.ChangeToImmediate(ImmedOffset);
         Offset = 0;
         return true;
