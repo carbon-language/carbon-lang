@@ -59,10 +59,15 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base,
                                                const CXXMethodDecl *MD) {
   
   // If the member function has the "final" attribute, we know that it can't be
-  // overridden and can therefor devirtualize it.
+  // overridden and can therefore devirtualize it.
   if (MD->hasAttr<FinalAttr>())
     return true;
-  
+
+  // Similarly, if the class itself has the "final" attribute it can't be
+  // overridden and we can therefore devirtualize the member function call.
+  if (MD->getParent()->hasAttr<FinalAttr>())
+    return true;
+
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base)) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
       // This is a record decl. We know the type and can devirtualize it.
