@@ -1376,10 +1376,12 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED, llvm::DIFile Unit){
     Size = CGM.getContext().getTypeSize(ED->getTypeForDecl());
     Align = CGM.getContext().getTypeAlign(ED->getTypeForDecl());
   }
+  llvm::DIDescriptor EnumContext = 
+    getContextDescriptor(dyn_cast<Decl>(ED->getDeclContext()), Unit);
   llvm::DIType DbgTy = 
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
-                                     Unit, ED->getName(), DefUnit, Line,
-                                     Size, Align, 0, 0,
+                                     EnumContext, ED->getName(),
+                                     DefUnit, Line, Size, Align, 0, 0,
                                      llvm::DIType(), EltArray);
   return DbgTy;
 }
