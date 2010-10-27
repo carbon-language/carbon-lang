@@ -175,7 +175,21 @@ namespace {
     unsigned getBitfieldInvertedMaskOpValue(const MachineInstr &MI,
                                             unsigned Op) const { return 0; }
     unsigned getAddrModeImm12OpValue(const MachineInstr &MI, unsigned Op)
-      const { return 0; }
+      const {
+        // {17-13} = reg
+        // {12}    = (U)nsigned (add == '1', sub == '0')
+        // {11-0}  = imm12
+        const MachineOperand &MO  = MI.getOperand(Op);
+        const MachineOperand &MO1 = MI.getOperand(Op + 1);
+        unsigned Reg = getARMRegisterNumbering(MO.getReg());
+        int32_t Imm12 = MO1.getImm();
+        uint32_t Binary;
+        Binary = Imm12 & 0xfff;
+        if (Imm12 >= 0)
+          Binary |= (1 << 12);
+        Binary |= (Reg << 13);
+        return Binary;
+      }
 
     /// getMovi32Value - Return binary encoding of operand for movw/movt. If the
     /// machine operand requires relocation, record the relocation and return
@@ -946,9 +960,8 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
-  // If this is an LDRi12, LDRrs, or LDRcp, nothing more needs be done.
-  if (MI.getOpcode() == ARM::LDRi12 || MI.getOpcode() == ARM::LDRrs
-      || MI.getOpcode() == ARM::LDRcp) {
+  // If this is an LDRi12 or LDRcp, nothing more needs be done.
+  if (MI.getOpcode() == ARM::LDRi12 || MI.getOpcode() == ARM::LDRcp) {
     emitWordLE(Binary);
     return;
   }
