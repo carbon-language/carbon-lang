@@ -325,6 +325,13 @@ def so_reg : Operand<i32>,    // reg reg imm
   let PrintMethod = "printSORegOperand";
   let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
+def shift_so_reg : Operand<i32>,    // reg reg imm
+                   ComplexPattern<i32, 3, "SelectShiftShifterOperandReg",
+                                  [shl,srl,sra,rotr]> {
+  string EncoderMethod = "getSORegOpValue";
+  let PrintMethod = "printSORegOperand";
+  let MIOperandInfo = (ops GPR, GPR, i32imm);
+}
 
 // so_imm - Match a 32-bit shifter_operand immediate operand, which is an
 // 8-bit immediate rotated by an arbitrary number of bits.  so_imm values are
@@ -1715,9 +1722,10 @@ def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
   let Inst{15-12} = Rd;
 }
 
-def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins so_reg:$src),
+def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg:$src),
                 DPSoRegFrm, IIC_iMOVsr,
-                "mov", "\t$Rd, $src", [(set GPR:$Rd, so_reg:$src)]>, UnaryDP {
+                "mov", "\t$Rd, $src", [(set GPR:$Rd, shift_so_reg:$src)]>,
+                UnaryDP {
   bits<4> Rd;
   bits<12> src;
   let Inst{15-12} = Rd;

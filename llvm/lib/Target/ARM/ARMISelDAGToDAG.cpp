@@ -78,8 +78,12 @@ public:
 
   SDNode *Select(SDNode *N);
 
+  bool isShifterOpProfitable(const SDValue &Shift,
+                             ARM_AM::ShiftOpc ShOpcVal, unsigned ShAmt);
   bool SelectShifterOperandReg(SDValue N, SDValue &A,
                                SDValue &B, SDValue &C);
+  bool SelectShiftShifterOperandReg(SDValue N, SDValue &A,
+                                    SDValue &B, SDValue &C);
   bool SelectAddrModeImm12(SDValue N, SDValue &Base, SDValue &OffImm);
   bool SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset, SDValue &Opc);
 
@@ -246,6 +250,17 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
 }
 
 
+bool ARMDAGToDAGISel::isShifterOpProfitable(const SDValue &Shift,
+                                            ARM_AM::ShiftOpc ShOpcVal,
+                                            unsigned ShAmt) {
+  if (!Subtarget->isCortexA9())
+    return true;
+  if (Shift.hasOneUse())
+    return true;
+  // R << 2 is free.
+  return ShOpcVal == ARM_AM::lsl && ShAmt == 2;
+}
+
 bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue N,
                                               SDValue &BaseReg,
                                               SDValue &ShReg,
@@ -261,6 +276,32 @@ bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue N,
 
   BaseReg = N.getOperand(0);
   unsigned ShImmVal = 0;
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+    ShReg = CurDAG->getRegister(0, MVT::i32);
+    ShImmVal = RHS->getZExtValue() & 31;
+  } else {
+    ShReg = N.getOperand(1);
+    if (!isShifterOpProfitable(N, ShOpcVal, ShImmVal))
+      return false;
+  }
+  Opc = CurDAG->getTargetConstant(ARM_AM::getSORegOpc(ShOpcVal, ShImmVal),
+                                  MVT::i32);
+  return true;
+}
+
+bool ARMDAGToDAGISel::SelectShiftShifterOperandReg(SDValue N,
+                                                   SDValue &BaseReg,
+                                                   SDValue &ShReg,
+                                                   SDValue &Opc) {
+  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N);
+
+  // Don't match base register only case. That is matched to a separate
+  // lower complexity pattern with explicit register operand.
+  if (ShOpcVal == ARM_AM::no_shift) return false;
+
+  BaseReg = N.getOperand(0);
+  unsigned ShImmVal = 0;
+  // Do not check isShifterOpProfitable. This must return true.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     ShReg = CurDAG->getRegister(0, MVT::i32);
     ShImmVal = RHS->getZExtValue() & 31;
@@ -321,7 +362,8 @@ bool ARMDAGToDAGISel::SelectAddrModeImm12(SDValue N,
 
 bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
                                       SDValue &Opc) {
-  if (N.getOpcode() == ISD::MUL) {
+  if (N.getOpcode() == ISD::MUL &&
+      (!Subtarget->isCortexA9() || N.hasOneUse())) {
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       // X * [3,5,9] -> X + X * [2,4,8] etc.
       int RHSC = (int)RHS->getZExtValue();
@@ -357,6 +399,10 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
     }
   }
 
+  if (Subtarget->isCortexA9() && !N.hasOneUse())
+    // Compute R +/- (R << N) and reuse it.
+    return false;
+
   // Otherwise this is R +/- [possibly shifted] R.
   ARM_AM::AddrOpc AddSub = N.getOpcode() == ISD::ADD ? ARM_AM::add:ARM_AM::sub;
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(1));
@@ -371,14 +417,20 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
     if (ConstantSDNode *Sh =
            dyn_cast<ConstantSDNode>(N.getOperand(1).getOperand(1))) {
       ShAmt = Sh->getZExtValue();
-      Offset = N.getOperand(1).getOperand(0);
+      if (isShifterOpProfitable(Offset, ShOpcVal, ShAmt))
+        Offset = N.getOperand(1).getOperand(0);
+      else {
+        ShAmt = 0;
+        ShOpcVal = ARM_AM::no_shift;
+      }
     } else {
       ShOpcVal = ARM_AM::no_shift;
     }
   }
 
   // Try matching (R shl C) + (R).
-  if (N.getOpcode() == ISD::ADD && ShOpcVal == ARM_AM::no_shift) {
+  if (N.getOpcode() == ISD::ADD && ShOpcVal == ARM_AM::no_shift &&
+      !(Subtarget->isCortexA9() || N.getOperand(0).hasOneUse())) {
     ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(0));
     if (ShOpcVal != ARM_AM::no_shift) {
       // Check to see if the RHS of the shift is a constant, if not, we can't
@@ -386,8 +438,15 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
       if (ConstantSDNode *Sh =
           dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {
         ShAmt = Sh->getZExtValue();
-        Offset = N.getOperand(0).getOperand(0);
-        Base = N.getOperand(1);
+        if (!Subtarget->isCortexA9() ||
+            (N.hasOneUse() &&
+             isShifterOpProfitable(N.getOperand(0), ShOpcVal, ShAmt))) {
+          Offset = N.getOperand(0).getOperand(0);
+          Base = N.getOperand(1);
+        } else {
+          ShAmt = 0;
+          ShOpcVal = ARM_AM::no_shift;
+        }
       } else {
         ShOpcVal = ARM_AM::no_shift;
       }
@@ -408,7 +467,8 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
                                                      SDValue &Base,
                                                      SDValue &Offset,
                                                      SDValue &Opc) {
-  if (N.getOpcode() == ISD::MUL) {
+  if (N.getOpcode() == ISD::MUL &&
+      (!Subtarget->isCortexA9() || N.hasOneUse())) {
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       // X * [3,5,9] -> X + X * [2,4,8] etc.
       int RHSC = (int)RHS->getZExtValue();
@@ -474,6 +534,16 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
     }
   }
 
+  if (Subtarget->isCortexA9() && !N.hasOneUse()) {
+    // Compute R +/- (R << N) and reuse it.
+    Base = N;
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(ARM_AM::add, 0,
+                                                      ARM_AM::no_shift),
+                                    MVT::i32);
+    return AM2_BASE;
+  }
+
   // Otherwise this is R +/- [possibly shifted] R.
   ARM_AM::AddrOpc AddSub = N.getOpcode() == ISD::ADD ? ARM_AM::add:ARM_AM::sub;
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(1));
@@ -488,14 +558,20 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
     if (ConstantSDNode *Sh =
            dyn_cast<ConstantSDNode>(N.getOperand(1).getOperand(1))) {
       ShAmt = Sh->getZExtValue();
-      Offset = N.getOperand(1).getOperand(0);
+      if (isShifterOpProfitable(Offset, ShOpcVal, ShAmt))
+        Offset = N.getOperand(1).getOperand(0);
+      else {
+        ShAmt = 0;
+        ShOpcVal = ARM_AM::no_shift;
+      }
     } else {
       ShOpcVal = ARM_AM::no_shift;
     }
   }
 
   // Try matching (R shl C) + (R).
-  if (N.getOpcode() == ISD::ADD && ShOpcVal == ARM_AM::no_shift) {
+  if (N.getOpcode() == ISD::ADD && ShOpcVal == ARM_AM::no_shift &&
+      !(Subtarget->isCortexA9() || N.getOperand(0).hasOneUse())) {
     ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(0));
     if (ShOpcVal != ARM_AM::no_shift) {
       // Check to see if the RHS of the shift is a constant, if not, we can't
@@ -503,8 +579,15 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
       if (ConstantSDNode *Sh =
           dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {
         ShAmt = Sh->getZExtValue();
-        Offset = N.getOperand(0).getOperand(0);
-        Base = N.getOperand(1);
+        if (!Subtarget->isCortexA9() ||
+            (N.hasOneUse() &&
+             isShifterOpProfitable(N.getOperand(0), ShOpcVal, ShAmt))) {
+          Offset = N.getOperand(0).getOperand(0);
+          Base = N.getOperand(1);
+        } else {
+          ShAmt = 0;
+          ShOpcVal = ARM_AM::no_shift;
+        }
       } else {
         ShOpcVal = ARM_AM::no_shift;
       }
@@ -543,7 +626,12 @@ bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDNode *Op, SDValue N,
     // it.
     if (ConstantSDNode *Sh = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       ShAmt = Sh->getZExtValue();
-      Offset = N.getOperand(0);
+      if (isShifterOpProfitable(N, ShOpcVal, ShAmt))
+        Offset = N.getOperand(0);
+      else {
+        ShAmt = 0;
+        ShOpcVal = ARM_AM::no_shift;
+      }
     } else {
       ShOpcVal = ARM_AM::no_shift;
     }
@@ -959,6 +1047,12 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue N,
       return false;
   }
 
+  if (Subtarget->isCortexA9() && !N.hasOneUse()) {
+    // Compute R + (R << [1,2,3]) and reuse it.
+    Base = N;
+    return false;
+  }
+
   // Look for (R + R) or (R + (R << [1,2,3])).
   unsigned ShAmt = 0;
   Base   = N.getOperand(0);
@@ -977,11 +1071,12 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue N,
     // it.
     if (ConstantSDNode *Sh = dyn_cast<ConstantSDNode>(OffReg.getOperand(1))) {
       ShAmt = Sh->getZExtValue();
-      if (ShAmt >= 4) {
+      if (ShAmt < 4 && isShifterOpProfitable(OffReg, ShOpcVal, ShAmt))
+        OffReg = OffReg.getOperand(0);
+      else {
         ShAmt = 0;
         ShOpcVal = ARM_AM::no_shift;
-      } else
-        OffReg = OffReg.getOperand(0);
+      }
     } else {
       ShOpcVal = ARM_AM::no_shift;
     }
