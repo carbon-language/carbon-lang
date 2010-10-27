@@ -87,6 +87,8 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
         result->SetStatus (eReturnStatusFailed);
     }
 
+    // We need to get the value again, in case the command disabled the log!
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;

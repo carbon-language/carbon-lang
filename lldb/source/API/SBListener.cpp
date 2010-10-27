@@ -119,7 +119,6 @@ SBListener::StopListeningForEvents (const SBBroadcaster& broadcaster, uint32_t e
 bool
 SBListener::WaitForEvent (uint32_t num_seconds, SBEvent &event)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     //if (log)
     //{
@@ -141,6 +140,7 @@ SBListener::WaitForEvent (uint32_t num_seconds, SBEvent &event)
         if (m_opaque_ptr->WaitForEvent (time_value.IsValid() ? &time_value : NULL, event_sp))
         {
             event.reset (event_sp);
+            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
             if (log)
                 log->Printf ("SBListener::WaitForEvent (this.obj=%p, num_seconds=%d, event.sp=%p) => 'true'",
                              m_opaque_ptr, num_seconds, event.get());
@@ -148,6 +148,7 @@ SBListener::WaitForEvent (uint32_t num_seconds, SBEvent &event)
         }
     }
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
         log->Printf ("SBListener::WaitForEvent (this.obj=%p, num_seconds=%d, event.sp=%p) => 'false'",
                      m_opaque_ptr, num_seconds, event.get());
