@@ -734,7 +734,7 @@ namespace llvm {
                                   bool isDefinition,
                                   unsigned VK = 0,
                                   unsigned VIndex = 0,
-                                  DIType = DIType(),
+                                  DIType ContainingType = DIType(),
                                   unsigned Flags = 0,
                                   bool isOptimized = false,
                                   Function *Fn = 0);
