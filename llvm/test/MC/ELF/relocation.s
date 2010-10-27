@@ -1,14 +1,17 @@
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck  %s
 
-// Test that we produce a R_X86_64_32S or R_X86_64_32.
+// Test that we produce the correct relocation.
 
 bar:
-        movl	$bar, %edx        // R_X86_64_32
-        movq	$bar, %rdx        // R_X86_64_32S
-        movq	$bar, bar(%rip)   // R_X86_64_32S
-        movl	bar, %edx         // R_X86_64_32S
-        movq	bar, %rdx         // R_X86_64_32S
-.long bar                         // R_X86_64_32
+        movl	$bar, %edx        # R_X86_64_32
+        movq	$bar, %rdx        # R_X86_64_32S
+        movq	$bar, bar(%rip)   # R_X86_64_32S
+        movl	bar, %edx         # R_X86_64_32S
+        movq	bar, %rdx         # R_X86_64_32S
+.long bar                         # R_X86_64_32
+        leaq	foo@GOTTPOFF(%rip), %rax # R_X86_64_GOTTPOFF
+        leaq	foo@TLSGD(%rip), %rax    # R_X86_64_TLSGD
+        leaq	foo@TPOFF(%rax), %rax    # R_X86_64_TPOFF32
 
 // CHECK:  # Section 0x00000001
 // CHECK: (('sh_name', 0x00000001) # '.text'
@@ -55,3 +58,21 @@ bar:
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000a)
 // CHECK-NEXT:   ('r_addend',
+
+// CHECK: # Relocation 0x00000006
+// CHECK-NEXT:  (('r_offset', 0x0000002d)
+// CHECK-NEXT:   ('r_sym', 0x00000006)
+// CHECK-NEXT:   ('r_type', 0x00000016)
+// CHECK-NEXT:   ('r_addend', 0xfffffffc)
+
+// CHECK:  # Relocation 0x00000007
+// CHECK-NEXT:  (('r_offset', 0x00000034)
+// CHECK-NEXT:   ('r_sym', 0x00000006)
+// CHECK-NEXT:   ('r_type', 0x00000013)
+// CHECK-NEXT:   ('r_addend', 0xfffffffc)
+
+// CHECK:  # Relocation 0x00000008
+// CHECK-NEXT:  (('r_offset', 0x0000003b)
+// CHECK-NEXT:   ('r_sym', 0x00000006)
+// CHECK-NEXT:   ('r_type', 0x00000017)
+// CHECK-NEXT:   ('r_addend', 0x00000000)

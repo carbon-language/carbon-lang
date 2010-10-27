@@ -85,6 +85,9 @@ static bool RelocNeedsGOT(unsigned Type) {
   case ELF::R_X86_64_GOT32:
   case ELF::R_X86_64_PLT32:
   case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_TPOFF32:
+  case ELF::R_X86_64_TLSGD:
+  case ELF::R_X86_64_GOTTPOFF:
     return true;
   }
 }
@@ -687,6 +690,12 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       case llvm::MCSymbolRefExpr::VK_GOTPCREL:
         Type = ELF::R_X86_64_GOTPCREL;
         break;
+      case MCSymbolRefExpr::VK_GOTTPOFF:
+        Type = ELF::R_X86_64_GOTTPOFF;
+        break;
+      case MCSymbolRefExpr::VK_TLSGD:
+        Type = ELF::R_X86_64_TLSGD;
+        break;
       }
     } else {
       switch ((unsigned)Fixup.getKind()) {
@@ -706,6 +715,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
           break;
         case MCSymbolRefExpr::VK_GOTPCREL:
           Type = ELF::R_X86_64_GOTPCREL;
+          break;
+        case MCSymbolRefExpr::VK_TPOFF:
+          Type = ELF::R_X86_64_TPOFF32;
           break;
         }
         break;
