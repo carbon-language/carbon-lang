@@ -2162,8 +2162,8 @@ Classifications</a> </div>
 
 <p>The string '<tt>undef</tt>' can be used anywhere a constant is expected, and
    indicates that the user of the value may receive an unspecified bit-pattern.
-   Undefined values may be of any type (other than label or void) and be used
-   anywhere a constant is permitted.</p>
+   Undefined values may be of any type (other than '<tt>label</tt>'
+   or '<tt>void</tt>') and be used anywhere a constant is permitted.</p>
 
 <p>Undefined values are useful because they indicate to the compiler that the
    program is well defined no matter what value is used.  This gives the
@@ -2182,7 +2182,7 @@ Safe:
 </pre>
 
 <p>This is safe because all of the output bits are affected by the undef bits.
-Any output bit can have a zero or one depending on the input bits.</p>
+   Any output bit can have a zero or one depending on the input bits.</p>
 
 <pre class="doc_code">
   %A = or %X, undef
@@ -2196,13 +2196,14 @@ Unsafe:
 </pre>
 
 <p>These logical operations have bits that are not always affected by the input.
-For example, if "%X" has a zero bit, then the output of the 'and' operation will
-always be a zero, no matter what the corresponding bit from the undef is.  As
-such, it is unsafe to optimize or assume that the result of the and is undef.
-However, it is safe to assume that all bits of the undef could be 0, and
-optimize the and to 0.  Likewise, it is safe to assume that all the bits of
-the undef operand to the or could be set, allowing the or to be folded to
--1.</p>
+   For example, if <tt>%X</tt> has a zero bit, then the output of the
+   '<tt>and</tt>' operation will always be a zero for that bit, no matter what
+   the corresponding bit from the '<tt>undef</tt>' is. As such, it is unsafe to
+   optimize or assume that the result of the '<tt>and</tt>' is '<tt>undef</tt>'.
+   However, it is safe to assume that all bits of the '<tt>undef</tt>' could be
+   0, and optimize the '<tt>and</tt>' to 0. Likewise, it is safe to assume that
+   all the bits of the '<tt>undef</tt>' operand to the '<tt>or</tt>' could be
+   set, allowing the '<tt>or</tt>' to be folded to -1.</p>
 
 <pre class="doc_code">
   %A = select undef, %X, %Y
@@ -2218,13 +2219,14 @@ Unsafe:
   %C = undef
 </pre>
 
-<p>This set of examples show that undefined select (and conditional branch)
-conditions can go "either way" but they have to come from one of the two
-operands.  In the %A example, if %X and %Y were both known to have a clear low
-bit, then %A would have to have a cleared low bit.  However, in the %C example,
-the optimizer is allowed to assume that the undef operand could be the same as
-%Y, allowing the whole select to be eliminated.</p>
-
+<p>This set of examples shows that undefined '<tt>select</tt>' (and conditional
+   branch) conditions can go <em>either way</em>, but they have to come from one
+   of the two operands.  In the <tt>%A</tt> example, if <tt>%X</tt> and
+   <tt>%Y</tt> were both known to have a clear low bit, then <tt>%A</tt> would
+   have to have a cleared low bit. However, in the <tt>%C</tt> example, the
+   optimizer is allowed to assume that the '<tt>undef</tt>' operand could be the
+   same as <tt>%Y</tt>, allowing the whole '<tt>select</tt>' to be
+   eliminated.</p>
 
 <pre class="doc_code">
   %A = xor undef, undef
@@ -2245,16 +2247,17 @@ Safe:
   %F = undef
 </pre>
 
-<p>This example points out that two undef operands are not necessarily the same.
-This can be surprising to people (and also matches C semantics) where they
-assume that "X^X" is always zero, even if X is undef.  This isn't true for a
-number of reasons, but the short answer is that an undef "variable" can
-arbitrarily change its value over its "live range".  This is true because the
-"variable" doesn't actually <em>have a live range</em>.  Instead, the value is
-logically read from arbitrary registers that happen to be around when needed,
-so the value is not necessarily consistent over time.  In fact, %A and %C need
-to have the same semantics or the core LLVM "replace all uses with" concept
-would not hold.</p>
+<p>This example points out that two '<tt>undef</tt>' operands are not
+   necessarily the same. This can be surprising to people (and also matches C
+   semantics) where they assume that "<tt>X^X</tt>" is always zero, even
+   if <tt>X</tt> is undefined. This isn't true for a number of reasons, but the
+   short answer is that an '<tt>undef</tt>' "variable" can arbitrarily change
+   its value over its "live range".  This is true because the variable doesn't
+   actually <em>have a live range</em>. Instead, the value is logically read
+   from arbitrary registers that happen to be around when needed, so the value
+   is not necessarily consistent over time. In fact, <tt>%A</tt> and <tt>%C</tt>
+   need to have the same semantics or the core LLVM "replace all uses with"
+   concept would not hold.</p>
 
 <pre class="doc_code">
   %A = fdiv undef, %X
@@ -2265,17 +2268,17 @@ b: unreachable
 </pre>
 
 <p>These examples show the crucial difference between an <em>undefined
-value</em> and <em>undefined behavior</em>.  An undefined value (like undef) is
-allowed to have an arbitrary bit-pattern.  This means that the %A operation
-can be constant folded to undef because the undef could be an SNaN, and fdiv is
-not (currently) defined on SNaN's.  However, in the second example, we can make
-a more aggressive assumption: because the undef is allowed to be an arbitrary
-value, we are allowed to assume that it could be zero.  Since a divide by zero
-has <em>undefined behavior</em>, we are allowed to assume that the operation
-does not execute at all.  This allows us to delete the divide and all code after
-it: since the undefined operation "can't happen", the optimizer can assume that
-it occurs in dead code.
-</p>
+  value</em> and <em>undefined behavior</em>. An undefined value (like
+  '<tt>undef</tt>') is allowed to have an arbitrary bit-pattern. This means that
+  the <tt>%A</tt> operation can be constant folded to '<tt>undef</tt>', because
+  the '<tt>undef</tt>' could be an SNaN, and <tt>fdiv</tt> is not (currently)
+  defined on SNaN's. However, in the second example, we can make a more
+  aggressive assumption: because the <tt>undef</tt> is allowed to be an
+  arbitrary value, we are allowed to assume that it could be zero. Since a
+  divide by zero has <em>undefined behavior</em>, we are allowed to assume that
+  the operation does not execute at all. This allows us to delete the divide and
+  all code after it. Because the undefined operation "can't happen", the
+  optimizer can assume that it occurs in dead code.</p>
 
 <pre class="doc_code">
 a:  store undef -> %X
@@ -2285,11 +2288,11 @@ a: &lt;deleted&gt;
 b: unreachable
 </pre>
 
-<p>These examples reiterate the fdiv example: a store "of" an undefined value
-can be assumed to not have any effect: we can assume that the value is
-overwritten with bits that happen to match what was already there.  However, a
-store "to" an undefined location could clobber arbitrary memory, therefore, it
-has undefined behavior.</p>
+<p>These examples reiterate the <tt>fdiv</tt> example: a store <em>of</em> an
+   undefined value can be assumed to not have any effect; we can assume that the
+   value is overwritten with bits that happen to match what was already there.
+   However, a store <em>to</em> an undefined location could clobber arbitrary
+   memory, therefore, it has undefined behavior.</p>
 
 </div>
 
@@ -2410,18 +2413,17 @@ end:
    the address of the entry block is illegal.</p>
 
 <p>This value only has defined behavior when used as an operand to the
-   '<a href="#i_indirectbr"><tt>indirectbr</tt></a>' instruction or for comparisons
-   against null.  Pointer equality tests between labels addresses is undefined
-   behavior - though, again, comparison against null is ok, and no label is
-   equal to the null pointer.  This may also be passed around as an opaque
-   pointer sized value as long as the bits are not inspected.  This allows
-   <tt>ptrtoint</tt> and arithmetic to be performed on these values so long as
-   the original value is reconstituted before the <tt>indirectbr</tt>.</p>
+   '<a href="#i_indirectbr"><tt>indirectbr</tt></a>' instruction, or for
+   comparisons against null. Pointer equality tests between labels addresses
+   results in undefined behavior &mdash; though, again, comparison against null
+   is ok, and no label is equal to the null pointer. This may be passed around
+   as an opaque pointer sized value as long as the bits are not inspected. This
+   allows <tt>ptrtoint</tt> and arithmetic to be performed on these values so
+   long as the original value is reconstituted before the <tt>indirectbr</tt>
+   instruction.</p>
 
-<p>Finally, some targets may provide defined semantics when
-   using the value as the operand to an inline assembly, but that is target
-   specific.
-   </p>
+<p>Finally, some targets may provide defined semantics when using the value as
+   the operand to an inline assembly, but that is target specific.</p>
 
 </div>
 
@@ -2436,7 +2438,7 @@ end:
    to be used as constants.  Constant expressions may be of
    any <a href="#t_firstclass">first class</a> type and may involve any LLVM
    operation that does not have side effects (e.g. load and call are not
-   supported).  The following is the syntax for constant expressions:</p>
+   supported). The following is the syntax for constant expressions:</p>
 
 <dl>
   <dt><b><tt>trunc (CST to TYPE)</tt></b></dt>
@@ -7674,7 +7676,7 @@ LLVM</a>.</p>
    the <tt>AllocaInst</tt> stack slot to be before local variables on the
    stack. This is to ensure that if a local variable on the stack is
    overwritten, it will destroy the value of the guard. When the function exits,
-   the guard on the stack is checked against the original guard. If they're
+   the guard on the stack is checked against the original guard. If they are
    different, then the program aborts by calling the <tt>__stack_chk_fail()</tt>
    function.</p>
 
@@ -7694,25 +7696,24 @@ LLVM</a>.</p>
 </pre>
 
 <h5>Overview:</h5>
-<p>The <tt>llvm.objectsize</tt> intrinsic is designed to provide information
-   to the optimizers to discover at compile time either a) when an
-   operation like memcpy will either overflow a buffer that corresponds to
-   an object, or b) to determine that a runtime check for overflow isn't
-   necessary. An object in this context means an allocation of a
-   specific class, structure, array, or other object.</p>
+<p>The <tt>llvm.objectsize</tt> intrinsic is designed to provide information to
+   the optimizers to determine at compile time whether a) an operation (like
+   memcpy) will overflow a buffer that corresponds to an object, or b) that a
+   runtime check for overflow isn't necessary. An object in this context means
+   an allocation of a specific class, structure, array, or other object.</p>
 
 <h5>Arguments:</h5>
-<p>The <tt>llvm.objectsize</tt> intrinsic takes two arguments.  The first
+<p>The <tt>llvm.objectsize</tt> intrinsic takes two arguments. The first
    argument is a pointer to or into the <tt>object</tt>. The second argument
-   is a boolean 0 or 1.  This argument determines whether you want the 
-   maximum (0) or minimum (1) bytes remaining.  This needs to be a literal 0 or
+   is a boolean 0 or 1. This argument determines whether you want the 
+   maximum (0) or minimum (1) bytes remaining. This needs to be a literal 0 or
    1, variables are not allowed.</p>
    
 <h5>Semantics:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic is lowered to either a constant
-   representing the size of the object concerned or <tt>i32/i64 -1 or 0</tt>
-   (depending on the <tt>type</tt> argument if the size cannot be determined
-   at compile time.</p>
+   representing the size of the object concerned, or <tt>i32/i64 -1 or 0</tt>,
+   depending on the <tt>type</tt> argument, if the size cannot be determined at
+   compile time.</p>
 
 </div>
 
