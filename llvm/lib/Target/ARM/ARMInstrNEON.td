@@ -3679,14 +3679,30 @@ class VDUPLNQ<bits<4> op19_16, string OpcodeStr, string Dt,
 
 // Inst{19-16} is partially specified depending on the element size.
 
-def VDUPLN8d  : VDUPLND<{?,?,?,1}, "vdup", "8", v8i8>;
-def VDUPLN16d : VDUPLND<{?,?,1,0}, "vdup", "16", v4i16>;
-def VDUPLN32d : VDUPLND<{?,1,0,0}, "vdup", "32", v2i32>;
-def VDUPLNfd  : VDUPLND<{?,1,0,0}, "vdup", "32", v2f32>;
-def VDUPLN8q  : VDUPLNQ<{?,?,?,1}, "vdup", "8", v16i8, v8i8>;
-def VDUPLN16q : VDUPLNQ<{?,?,1,0}, "vdup", "16", v8i16, v4i16>;
-def VDUPLN32q : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4i32, v2i32>;
-def VDUPLNfq  : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4f32, v2f32>;
+def VDUPLN8d  : VDUPLND<{?,?,?,1}, "vdup", "8", v8i8> {
+  let Inst{19-17} = lane{2-0};
+}
+def VDUPLN16d : VDUPLND<{?,?,1,0}, "vdup", "16", v4i16> {
+  let Inst{19-18} = lane{1-0};
+}
+def VDUPLN32d : VDUPLND<{?,1,0,0}, "vdup", "32", v2i32> {
+  let Inst{19} = lane{0};
+}
+def VDUPLNfd  : VDUPLND<{?,1,0,0}, "vdup", "32", v2f32> {
+  let Inst{19} = lane{0};
+}
+def VDUPLN8q  : VDUPLNQ<{?,?,?,1}, "vdup", "8", v16i8, v8i8> {
+  let Inst{19-17} = lane{2-0};
+}
+def VDUPLN16q : VDUPLNQ<{?,?,1,0}, "vdup", "16", v8i16, v4i16> {
+  let Inst{19-18} = lane{1-0};
+}
+def VDUPLN32q : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4i32, v2i32> {
+  let Inst{19} = lane{0};
+}
+def VDUPLNfq  : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4f32, v2f32> {
+  let Inst{19} = lane{0};
+}
 
 def : Pat<(v16i8 (NEONvduplane (v16i8 QPR:$src), imm:$lane)),
           (v16i8 (VDUPLN8q (v8i8 (EXTRACT_SUBREG QPR:$src,

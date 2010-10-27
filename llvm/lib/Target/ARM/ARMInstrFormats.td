@@ -1867,6 +1867,15 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   let AsmString = !strconcat(opc, "${p}", ".", dt, "\t", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
+  
+  bits<5> Vd;
+  bits<4> Rt;
+  bits<4> p;
+  
+  let Inst{31-28} = p{3-0};
+  let Inst{7}     = Vd{4};
+  let Inst{19-16} = Vd{3-0};
+  let Inst{15-12} = Rt{3-0};
 }
 class NVGetLane<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
                 dag oops, dag iops, InstrItinClass itin,
@@ -1895,6 +1904,15 @@ class NVDupLane<bits<4> op19_16, bit op6, dag oops, dag iops,
   let Inst{11-7}  = 0b11000;
   let Inst{6}     = op6;
   let Inst{4}     = 0;
+  
+  bits<5> Vd;
+  bits<5> Vm;
+  bits<4> lane;
+  
+  let Inst{22}     = Vd{4};
+  let Inst{15-12} = Vd{3-0};
+  let Inst{5}     = Vm{4};
+  let Inst{3-0} = Vm{3-0};
 }
 
 // NEONFPPat - Same as Pat<>, but requires that the compiler be using NEON
