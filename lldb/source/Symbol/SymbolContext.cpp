@@ -413,26 +413,6 @@ SymbolContext::FindFunctionsByName (const ConstString &name, bool append, Symbol
         // for methods matching name.
     }
 
-    if (comp_unit != NULL)
-    {
-        // Make sure we've read in all the functions.  We should be able to check and see
-        // if there's one by this name present before we do this...
-        module_sp->GetSymbolVendor()->ParseCompileUnitFunctions(*this);
-        uint32_t func_idx;
-        lldb::FunctionSP func_sp;
-        for (func_idx = 0; (func_sp = comp_unit->GetFunctionAtIndex(func_idx)) != NULL; ++func_idx)
-        {
-            if (func_sp->GetMangled().GetName() == name)
-            {
-                SymbolContext sym_ctx(target_sp,
-                                      module_sp,
-                                      comp_unit,
-                                      func_sp.get());
-                sc_list.Append(sym_ctx);
-            }
-        }
-    }
-    
     if (module_sp != NULL)
         module_sp->FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, true, sc_list);
 

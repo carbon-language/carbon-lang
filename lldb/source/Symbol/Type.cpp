@@ -428,7 +428,6 @@ lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
     {
         TypeList *type_list = GetTypeList();
         Type *encoding_type = GetEncodingType();
-
         if (encoding_type)
         {
             switch (m_encoding_uid_type)
@@ -542,7 +541,19 @@ lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
             Type *encoding_type = GetEncodingType ();
             if (encoding_type != NULL)
             {
-                if (encoding_type->ResolveClangType (forward_decl_is_ok))
+                bool forward_decl_is_ok_for_encoding = forward_decl_is_ok;
+                switch (m_encoding_uid_type)
+                {
+                case eEncodingIsPointerUID:
+                case eEncodingIsLValueReferenceUID:
+                case eEncodingIsRValueReferenceUID:
+                    forward_decl_is_ok_for_encoding = true;
+                    break;
+                default:
+                    break;
+                }
+                
+                if (encoding_type->ResolveClangType (forward_decl_is_ok_for_encoding))
                 {
                     // We have at least resolve the forward declaration for our
                     // encoding type...
@@ -550,7 +561,7 @@ lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
                 
                     // Check if we fully resolved our encoding type, and if so
                     // mark it as having been completely resolved.
-                    if (forward_decl_is_ok == false)
+                    if (forward_decl_is_ok_for_encoding == false)
                         m_encoding_type_decl_resolved = true;
                 }
             }
