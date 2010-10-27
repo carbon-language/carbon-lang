@@ -863,7 +863,7 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     if (it->isCommon()) {
       assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
-    } else if (Symbol.isAbsolute()) {
+    } else if (Symbol.isAbsolute() || RefSymbol.isVariable()) {
       MSD.SectionIndex = ELF::SHN_ABS;
     } else if (RefSymbol.isUndefined()) {
       MSD.SectionIndex = ELF::SHN_UNDEF;
@@ -871,11 +871,8 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       // are able to set it.
       if (GetBinding(*it) == ELF::STB_LOCAL)
         SetBinding(*it, ELF::STB_GLOBAL);
-    } else if (Symbol.isVariable()) {
-      MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
-      assert(MSD.SectionIndex && "Invalid section index!");
     } else {
-      MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());
+      MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
       assert(MSD.SectionIndex && "Invalid section index!");
     }
 
