@@ -590,7 +590,13 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
   if (TBAAInfo)
     CGM.DecorateInstruction(Load, TBAAInfo);
 
-  return EmitFromMemory(Load, Ty);
+  // Bool can have different representation in memory than in registers.
+  llvm::Value *V = Load;
+  if (Ty->isBooleanType())
+    if (V->getType() != llvm::Type::getInt1Ty(VMContext))
+      V = Builder.CreateTrunc(V, llvm::Type::getInt1Ty(VMContext), "tobool");
+
+  return V;
 }
 
 static bool isBooleanUnderlyingType(QualType Ty) {
@@ -599,31 +605,17 @@ static bool isBooleanUnderlyingType(QualType Ty) {
   return false;
 }
 
-llvm::Value *CodeGenFunction::EmitToMemory(llvm::Value *Value, QualType Ty) {
-  // Bool has a different representation in memory than in registers.
-  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
-    assert(Value->getType()->isIntegerTy(1) && "value rep of bool not i1");
-    return Builder.CreateZExt(Value, Builder.getInt8Ty(), "frombool");
-  }
-
-  return Value;
-}
-
-llvm::Value *CodeGenFunction::EmitFromMemory(llvm::Value *Value, QualType Ty) {
-  // Bool has a different representation in memory than in registers.
-  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
-    assert(Value->getType()->isIntegerTy(8) && "memory rep of bool not i8");
-    return Builder.CreateTrunc(Value, Builder.getInt1Ty(), "tobool");
-  }
-
-  return Value;
-}
-
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         bool Volatile, unsigned Alignment,
                                         QualType Ty,
                                         llvm::MDNode *TBAAInfo) {
-  Value = EmitToMemory(Value, Ty);
+
+  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
+    // Bool can have different representation in memory than in registers.
+    const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
+    Value = Builder.CreateIntCast(Value, DstPtr->getElementType(), false);
+  }
+
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (Alignment)
     Store->setAlignment(Alignment);

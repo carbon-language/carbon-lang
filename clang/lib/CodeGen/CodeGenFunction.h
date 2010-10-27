@@ -1349,14 +1349,6 @@ public:
   /// object.
   LValue EmitCheckedLValue(const Expr *E);
 
-  /// EmitToMemory - Change a scalar value from its value
-  /// representation to its in-memory representation.
-  llvm::Value *EmitToMemory(llvm::Value *Value, QualType Ty);
-
-  /// EmitFromMemory - Change a scalar value from its memory
-  /// representation to its value representation.
-  llvm::Value *EmitFromMemory(llvm::Value *Value, QualType Ty);
-
   /// EmitLoadOfScalar - Load a scalar value from an address, taking
   /// care to appropriately convert from the memory representation to
   /// the LLVM value representation.
