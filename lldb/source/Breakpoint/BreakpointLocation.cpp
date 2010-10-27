@@ -352,7 +352,7 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
             {
                 s->EOL();
                 s->Indent("compile unit = ");
-                dynamic_cast<FileSpec*>(sc.comp_unit)->GetFilename().Dump (s);
+                static_cast<FileSpec*>(sc.comp_unit)->GetFilename().Dump (s);
 
                 if (sc.function != NULL)
                 {
