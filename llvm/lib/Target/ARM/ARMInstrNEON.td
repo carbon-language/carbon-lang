@@ -3501,30 +3501,44 @@ def VMOVv2i64 : N1ModImm<1, 0b000, 0b1110, 0, 1, 1, 1, (outs QPR:$dst),
 //   VMOV     : Vector Get Lane (move scalar to ARM core register)
 
 def VGETLNs8  : NVGetLane<{1,1,1,0,0,1,?,1}, 0b1011, {?,?},
-                          (outs GPR:$dst), (ins DPR:$src, nohash_imm:$lane),
-                          IIC_VMOVSI, "vmov", "s8", "$dst, $src[$lane]",
-                          [(set GPR:$dst, (NEONvgetlanes (v8i8 DPR:$src),
-                                           imm:$lane))]>;
+                          (outs GPR:$R), (ins DPR:$V, nohash_imm:$lane),
+                          IIC_VMOVSI, "vmov", "s8", "$R, $V[$lane]",
+                          [(set GPR:$R, (NEONvgetlanes (v8i8 DPR:$V),
+                                           imm:$lane))]> {
+  let Inst{21}  = lane{2};
+  let Inst{6-5} = lane{1-0};
+}
 def VGETLNs16 : NVGetLane<{1,1,1,0,0,0,?,1}, 0b1011, {?,1},
-                          (outs GPR:$dst), (ins DPR:$src, nohash_imm:$lane),
-                          IIC_VMOVSI, "vmov", "s16", "$dst, $src[$lane]",
-                          [(set GPR:$dst, (NEONvgetlanes (v4i16 DPR:$src),
-                                           imm:$lane))]>;
+                          (outs GPR:$R), (ins DPR:$V, nohash_imm:$lane),
+                          IIC_VMOVSI, "vmov", "s16", "$R, $V[$lane]",
+                          [(set GPR:$R, (NEONvgetlanes (v4i16 DPR:$V),
+                                           imm:$lane))]> {
+  let Inst{21} = lane{1};
+  let Inst{6}  = lane{0};
+}
 def VGETLNu8  : NVGetLane<{1,1,1,0,1,1,?,1}, 0b1011, {?,?},
-                          (outs GPR:$dst), (ins DPR:$src, nohash_imm:$lane),
-                          IIC_VMOVSI, "vmov", "u8", "$dst, $src[$lane]",
-                          [(set GPR:$dst, (NEONvgetlaneu (v8i8 DPR:$src),
-                                           imm:$lane))]>;
+                          (outs GPR:$R), (ins DPR:$V, nohash_imm:$lane),
+                          IIC_VMOVSI, "vmov", "u8", "$R, $V[$lane]",
+                          [(set GPR:$R, (NEONvgetlaneu (v8i8 DPR:$V),
+                                           imm:$lane))]> {
+  let Inst{21}  = lane{2};
+  let Inst{6-5} = lane{1-0};
+}
 def VGETLNu16 : NVGetLane<{1,1,1,0,1,0,?,1}, 0b1011, {?,1},
-                          (outs GPR:$dst), (ins DPR:$src, nohash_imm:$lane),
-                          IIC_VMOVSI, "vmov", "u16", "$dst, $src[$lane]",
-                          [(set GPR:$dst, (NEONvgetlaneu (v4i16 DPR:$src),
-                                           imm:$lane))]>;
+                          (outs GPR:$R), (ins DPR:$V, nohash_imm:$lane),
+                          IIC_VMOVSI, "vmov", "u16", "$R, $V[$lane]",
+                          [(set GPR:$R, (NEONvgetlaneu (v4i16 DPR:$V),
+                                           imm:$lane))]> {
+  let Inst{21} = lane{1};
+  let Inst{6}  = lane{0};
+}
 def VGETLNi32 : NVGetLane<{1,1,1,0,0,0,?,1}, 0b1011, 0b00,
-                          (outs GPR:$dst), (ins DPR:$src, nohash_imm:$lane),
-                          IIC_VMOVSI, "vmov", "32", "$dst, $src[$lane]",
-                          [(set GPR:$dst, (extractelt (v2i32 DPR:$src),
-                                           imm:$lane))]>;
+                          (outs GPR:$R), (ins DPR:$V, nohash_imm:$lane),
+                          IIC_VMOVSI, "vmov", "32", "$R, $V[$lane]",
+                          [(set GPR:$R, (extractelt (v2i32 DPR:$V),
+                                           imm:$lane))]> {
+  let Inst{21} = lane{0};
+}
 // def VGETLNf32: see FMRDH and FMRDL in ARMInstrVFP.td
 def : Pat<(NEONvgetlanes (v16i8 QPR:$src), imm:$lane),
           (VGETLNs8 (v8i8 (EXTRACT_SUBREG QPR:$src,
@@ -3560,22 +3574,30 @@ def : Pat<(extractelt (v2f64 QPR:$src1), imm:$src2),
 
 //   VMOV     : Vector Set Lane (move ARM core register to scalar)
 
-let Constraints = "$src1 = $dst" in {
-def VSETLNi8  : NVSetLane<{1,1,1,0,0,1,?,0}, 0b1011, {?,?}, (outs DPR:$dst),
-                          (ins DPR:$src1, GPR:$src2, nohash_imm:$lane),
-                          IIC_VMOVISL, "vmov", "8", "$dst[$lane], $src2",
-                          [(set DPR:$dst, (vector_insert (v8i8 DPR:$src1),
-                                           GPR:$src2, imm:$lane))]>;
-def VSETLNi16 : NVSetLane<{1,1,1,0,0,0,?,0}, 0b1011, {?,1}, (outs DPR:$dst),
-                          (ins DPR:$src1, GPR:$src2, nohash_imm:$lane),
-                          IIC_VMOVISL, "vmov", "16", "$dst[$lane], $src2",
-                          [(set DPR:$dst, (vector_insert (v4i16 DPR:$src1),
-                                           GPR:$src2, imm:$lane))]>;
-def VSETLNi32 : NVSetLane<{1,1,1,0,0,0,?,0}, 0b1011, 0b00, (outs DPR:$dst),
-                          (ins DPR:$src1, GPR:$src2, nohash_imm:$lane),
-                          IIC_VMOVISL, "vmov", "32", "$dst[$lane], $src2",
-                          [(set DPR:$dst, (insertelt (v2i32 DPR:$src1),
-                                           GPR:$src2, imm:$lane))]>;
+let Constraints = "$src1 = $V" in {
+def VSETLNi8  : NVSetLane<{1,1,1,0,0,1,?,0}, 0b1011, {?,?}, (outs DPR:$V),
+                          (ins DPR:$src1, GPR:$R, nohash_imm:$lane),
+                          IIC_VMOVISL, "vmov", "8", "$V[$lane], $R",
+                          [(set DPR:$V, (vector_insert (v8i8 DPR:$src1),
+                                           GPR:$R, imm:$lane))]> {
+  let Inst{21}  = lane{2};
+  let Inst{6-5} = lane{1-0};
+}
+def VSETLNi16 : NVSetLane<{1,1,1,0,0,0,?,0}, 0b1011, {?,1}, (outs DPR:$V),
+                          (ins DPR:$src1, GPR:$R, nohash_imm:$lane),
+                          IIC_VMOVISL, "vmov", "16", "$V[$lane], $R",
+                          [(set DPR:$V, (vector_insert (v4i16 DPR:$src1),
+                                           GPR:$R, imm:$lane))]> {
+  let Inst{21} = lane{1};
+  let Inst{6}  = lane{0};
+}
+def VSETLNi32 : NVSetLane<{1,1,1,0,0,0,?,0}, 0b1011, 0b00, (outs DPR:$V),
+                          (ins DPR:$src1, GPR:$R, nohash_imm:$lane),
+                          IIC_VMOVISL, "vmov", "32", "$V[$lane], $R",
+                          [(set DPR:$V, (insertelt (v2i32 DPR:$src1),
+                                           GPR:$R, imm:$lane))]> {
+  let Inst{21} = lane{0};
+}
 }
 def : Pat<(vector_insert (v16i8 QPR:$src1), GPR:$src2, imm:$lane),
           (v16i8 (INSERT_SUBREG QPR:$src1, 

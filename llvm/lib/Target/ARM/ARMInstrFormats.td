@@ -1868,14 +1868,15 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
   
-  bits<5> Vd;
-  bits<4> Rt;
+  bits<5> V;
+  bits<4> R;
   bits<4> p;
+  bits<4> lane;
   
   let Inst{31-28} = p{3-0};
-  let Inst{7}     = Vd{4};
-  let Inst{19-16} = Vd{3-0};
-  let Inst{15-12} = Rt{3-0};
+  let Inst{7}     = V{4};
+  let Inst{19-16} = V{3-0};
+  let Inst{15-12} = R{3-0};
 }
 class NVGetLane<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
                 dag oops, dag iops, InstrItinClass itin,

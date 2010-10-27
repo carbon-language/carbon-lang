@@ -305,3 +305,127 @@ declare <2 x i32> @llvm.arm.neon.vqmovnu.v2i32(<2 x i64>) nounwind readnone
 declare <8 x i8>  @llvm.arm.neon.vqmovnsu.v8i8(<8 x i16>) nounwind readnone
 declare <4 x i16> @llvm.arm.neon.vqmovnsu.v4i16(<4 x i32>) nounwind readnone
 declare <2 x i32> @llvm.arm.neon.vqmovnsu.v2i32(<2 x i64>) nounwind readnone
+
+define i32 @vget_lanes8(<8 x i8>* %A) nounwind {
+	%tmp1 = load <8 x i8>* %A
+; CHECK: vmov.s8	r0, d16[1]              @ encoding: [0xb0,0x0b,0x50,0xee]
+	%tmp2 = extractelement <8 x i8> %tmp1, i32 1
+	%tmp3 = sext i8 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+define i32 @vget_lanes16(<4 x i16>* %A) nounwind {
+	%tmp1 = load <4 x i16>* %A
+; CHECK: vmov.s16	r0, d16[1]      @ encoding: [0xf0,0x0b,0x10,0xee]
+	%tmp2 = extractelement <4 x i16> %tmp1, i32 1
+	%tmp3 = sext i16 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+define i32 @vget_laneu8(<8 x i8>* %A) nounwind {
+	%tmp1 = load <8 x i8>* %A
+; CHECK: vmov.u8	r0, d16[1]              @ encoding: [0xb0,0x0b,0xd0,0xee]
+	%tmp2 = extractelement <8 x i8> %tmp1, i32 1
+	%tmp3 = zext i8 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+define i32 @vget_laneu16(<4 x i16>* %A) nounwind {
+	%tmp1 = load <4 x i16>* %A
+; CHECK: vmov.u16	r0, d16[1]      @ encoding: [0xf0,0x0b,0x90,0xee]
+	%tmp2 = extractelement <4 x i16> %tmp1, i32 1
+	%tmp3 = zext i16 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+; Do a vector add to keep the extraction from being done directly from memory.
+define i32 @vget_lanei32(<2 x i32>* %A) nounwind {
+	%tmp1 = load <2 x i32>* %A
+	%tmp2 = add <2 x i32> %tmp1, %tmp1
+; CHECK: vmov.32	r0, d16[1]              @ encoding: [0x90,0x0b,0x30,0xee]
+	%tmp3 = extractelement <2 x i32> %tmp2, i32 1
+	ret i32 %tmp3
+}
+
+define i32 @vgetQ_lanes8(<16 x i8>* %A) nounwind {
+	%tmp1 = load <16 x i8>* %A
+; CHECK: vmov.s8	r0, d16[1]              @ encoding: [0xb0,0x0b,0x50,0xee]
+	%tmp2 = extractelement <16 x i8> %tmp1, i32 1
+	%tmp3 = sext i8 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+define i32 @vgetQ_lanes16(<8 x i16>* %A) nounwind {
+	%tmp1 = load <8 x i16>* %A
+; CHECK: vmov.s16	r0, d16[1]      @ encoding: [0xf0,0x0b,0x10,0xee]
+	%tmp2 = extractelement <8 x i16> %tmp1, i32 1
+	%tmp3 = sext i16 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+define i32 @vgetQ_laneu8(<16 x i8>* %A) nounwind {
+	%tmp1 = load <16 x i8>* %A
+; CHECK: vmov.u8	r0, d16[1]              @ encoding: [0xb0,0x0b,0xd0,0xee]
+	%tmp2 = extractelement <16 x i8> %tmp1, i32 1
+	%tmp3 = zext i8 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+define i32 @vgetQ_laneu16(<8 x i16>* %A) nounwind {
+	%tmp1 = load <8 x i16>* %A
+; CHECK: vmov.u16	r0, d16[1]      @ encoding: [0xf0,0x0b,0x90,0xee]
+	%tmp2 = extractelement <8 x i16> %tmp1, i32 1
+	%tmp3 = zext i16 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+; Do a vector add to keep the extraction from being done directly from memory.
+define i32 @vgetQ_lanei32(<4 x i32>* %A) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = add <4 x i32> %tmp1, %tmp1
+; CHECK: vmov.32	r0, d16[1]              @ encoding: [0x90,0x0b,0x30,0xee]
+	%tmp3 = extractelement <4 x i32> %tmp2, i32 1
+	ret i32 %tmp3
+}
+
+define <8 x i8> @vset_lane8(<8 x i8>* %A, i8 %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+; CHECK: vmov.8	d16[1], r1              @ encoding: [0xb0,0x1b,0x40,0xee]
+	%tmp2 = insertelement <8 x i8> %tmp1, i8 %B, i32 1
+	ret <8 x i8> %tmp2
+}
+
+define <4 x i16> @vset_lane16(<4 x i16>* %A, i16 %B) nounwind {
+	%tmp1 = load <4 x i16>* %A
+; CHECK: vmov.16	d16[1], r1              @ encoding: [0xf0,0x1b,0x00,0xee
+	%tmp2 = insertelement <4 x i16> %tmp1, i16 %B, i32 1
+	ret <4 x i16> %tmp2
+}
+
+define <2 x i32> @vset_lane32(<2 x i32>* %A, i32 %B) nounwind {
+	%tmp1 = load <2 x i32>* %A
+; CHECK: vmov.32	d16[1], r1              @ encoding: [0x90,0x1b,0x20,0xee]
+	%tmp2 = insertelement <2 x i32> %tmp1, i32 %B, i32 1
+	ret <2 x i32> %tmp2
+}
+
+define <16 x i8> @vsetQ_lane8(<16 x i8>* %A, i8 %B) nounwind {
+	%tmp1 = load <16 x i8>* %A
+; CHECK: vmov.8	d18[1], r1              @ encoding: [0xb0,0x1b,0x42,0xee]
+	%tmp2 = insertelement <16 x i8> %tmp1, i8 %B, i32 1
+	ret <16 x i8> %tmp2
+}
+
+define <8 x i16> @vsetQ_lane16(<8 x i16>* %A, i16 %B) nounwind {
+	%tmp1 = load <8 x i16>* %A
+; CHECK: vmov.16	d18[1], r1              @ encoding: [0xf0,0x1b,0x02,0xee]
+	%tmp2 = insertelement <8 x i16> %tmp1, i16 %B, i32 1
+	ret <8 x i16> %tmp2
+}
+
+define <4 x i32> @vsetQ_lane32(<4 x i32>* %A, i32 %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+; CHECK: vmov.32	d18[1], r1              @ encoding: [0x90,0x1b,0x22,0xee]
+	%tmp2 = insertelement <4 x i32> %tmp1, i32 %B, i32 1
+	ret <4 x i32> %tmp2
+}
