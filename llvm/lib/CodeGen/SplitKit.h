@@ -122,6 +122,11 @@ public:
   bool canSplitCriticalExits(const LoopBlocks &Blocks,
                              BlockPtrSet &CriticalExits);
 
+  /// getCriticalPreds - Get the set of loop predecessors with critical edges to
+  /// blocks outside the loop that have curli live in. We don't have to break
+  /// these edges, but they do require special treatment.
+  void getCriticalPreds(const LoopBlocks &Blocks, BlockPtrSet &CriticalPreds);
+
   /// getBestSplitLoop - Return the loop where curli may best be split to a
   /// separate register, or NULL.
   const MachineLoop *getBestSplitLoop();

@@ -155,7 +155,7 @@ void SplitAnalysis::getCriticalExits(const SplitAnalysis::LoopBlocks &Blocks,
                                      BlockPtrSet &CriticalExits) {
   CriticalExits.clear();
 
-  // A critical exit block has curli line-in, and has a predecessor that is not
+  // A critical exit block has curli live-in, and has a predecessor that is not
   // in the loop nor a loop predecessor. For such an exit block, the edges
   // carrying the new variable must be moved to a new pre-exit block.
   for (BlockPtrSet::iterator I = Blocks.Exits.begin(), E = Blocks.Exits.end();
@@ -176,6 +176,38 @@ void SplitAnalysis::getCriticalExits(const SplitAnalysis::LoopBlocks &Blocks,
         continue;
       // This is a critical exit block, and we need to split the exit edge.
       CriticalExits.insert(Exit);
+      break;
+    }
+  }
+}
+
+void SplitAnalysis::getCriticalPreds(const SplitAnalysis::LoopBlocks &Blocks,
+                                     BlockPtrSet &CriticalPreds) {
+  CriticalPreds.clear();
+
+  // A critical predecessor block has curli live-out, and has a successor that
+  // has curli live-in and is not in the loop nor a loop exit block. For such a
+  // predecessor block, we must carry the value in both the 'inside' and
+  // 'outside' registers.
+  for (BlockPtrSet::iterator I = Blocks.Preds.begin(), E = Blocks.Preds.end();
+       I != E; ++I) {
+    const MachineBasicBlock *Pred = *I;
+    // Definitely not a critical edge.
+    if (Pred->succ_size() == 1)
+      continue;
+    // This block may not have curli live out at all if there is a PHI.
+    if (!lis_.isLiveOutOfMBB(*curli_, Pred))
+      continue;
+    // Does this block have a successor outside the loop?
+    for (MachineBasicBlock::const_pred_iterator SI = Pred->succ_begin(),
+         SE = Pred->succ_end(); SI != SE; ++SI) {
+      const MachineBasicBlock *Succ = *SI;
+      if (Blocks.Loop.count(Succ) || Blocks.Exits.count(Succ))
+        continue;
+      if (!lis_.isLiveInToMBB(*curli_, Succ))
+        continue;
+      // This is a critical predecessor block.
+      CriticalPreds.insert(Pred);
       break;
     }
   }
