@@ -3871,14 +3871,20 @@ class VEXTd<string OpcodeStr, string Dt, ValueType Ty>
         (ins DPR:$lhs, DPR:$rhs, i32imm:$index), NVExtFrm,
         IIC_VEXTD, OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
         [(set DPR:$dst, (Ty (NEONvext (Ty DPR:$lhs),
-                                      (Ty DPR:$rhs), imm:$index)))]>;
+                                      (Ty DPR:$rhs), imm:$index)))]> {
+  bits<4> index;
+  let Inst{11-8} = index{3-0};
+}
 
 class VEXTq<string OpcodeStr, string Dt, ValueType Ty>
   : N3V<0,1,0b11,{?,?,?,?},1,0, (outs QPR:$dst),
         (ins QPR:$lhs, QPR:$rhs, i32imm:$index), NVExtFrm,
         IIC_VEXTQ, OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
         [(set QPR:$dst, (Ty (NEONvext (Ty QPR:$lhs),
-                                      (Ty QPR:$rhs), imm:$index)))]>;
+                                      (Ty QPR:$rhs), imm:$index)))]> {
+  bits<4> index;
+  let Inst{11-8} = index{3-0};
+}
 
 def VEXTd8  : VEXTd<"vext", "8",  v8i8>;
 def VEXTd16 : VEXTd<"vext", "16", v4i16>;
