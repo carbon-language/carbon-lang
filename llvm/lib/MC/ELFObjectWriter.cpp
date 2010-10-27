@@ -468,6 +468,11 @@ void ELFObjectWriterImpl::ExecutePostLayoutBinding(MCAssembler &Asm) {
     if (!Symbol.isUndefined() && !Rest.startswith("@@@"))
       continue;
 
+    // FIXME: produce a better error message.
+    if (Symbol.isUndefined() && Rest.startswith("@@") &&
+        !Rest.startswith("@@@"))
+      report_fatal_error("A @@ version cannot be undefined");
+
     std::pair<const MCSymbol *, const MCSymbol *> t(&Symbol, &Alias);
     Renames.insert(t);
   }
