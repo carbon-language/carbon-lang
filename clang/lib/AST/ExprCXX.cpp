@@ -385,6 +385,17 @@ Expr *CXXMemberCallExpr::getImplicitObjectArgument() {
   return 0;
 }
 
+CXXRecordDecl *CXXMemberCallExpr::getRecordDecl() {
+  Expr* ThisArg = getImplicitObjectArgument();
+  if (!ThisArg)
+    return 0;
+
+  if (ThisArg->getType()->isAnyPointerType())
+    return ThisArg->getType()->getPointeeType()->getAsCXXRecordDecl();
+
+  return ThisArg->getType()->getAsCXXRecordDecl();
+}
+
 SourceRange CXXMemberCallExpr::getSourceRange() const {
   SourceLocation LocStart = getCallee()->getLocStart();
   if (LocStart.isInvalid() && getNumArgs() > 0)

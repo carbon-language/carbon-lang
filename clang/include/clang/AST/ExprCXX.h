@@ -100,6 +100,13 @@ public:
   /// operation would return "x".
   Expr *getImplicitObjectArgument();
 
+  /// getRecordDecl - Retrieves the CXXRecordDecl for the underlying type of
+  /// the implicit object argument. Note that this is may not be the same
+  /// declaration as that of the class context of the CXXMethodDecl which this
+  /// function is calling.
+  /// FIXME: Returns 0 for member pointer call exprs.
+  CXXRecordDecl *getRecordDecl();
+
   virtual SourceRange getSourceRange() const;
   
   static bool classof(const Stmt *T) {
