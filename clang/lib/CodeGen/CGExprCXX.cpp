@@ -55,7 +55,14 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
 
 /// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
 /// expr can be devirtualized.
-static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
+static bool canDevirtualizeMemberFunctionCalls(const Expr *Base, 
+                                               const CXXMethodDecl *MD) {
+  
+  // If the member function has the "final" attribute, we know that it can't be
+  // overridden and can therefor devirtualize it.
+  if (MD->hasAttr<FinalAttr>())
+    return true;
+  
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base)) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
       // This is a record decl. We know the type and can devirtualize it.
@@ -76,7 +83,7 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
   // Check if this is a call expr that returns a record type.
   if (const CallExpr *CE = dyn_cast<CallExpr>(Base))
     return CE->getCallReturnType()->isRecordType();
-  
+
   // We can't devirtualize the call.
   return false;
 }
@@ -152,7 +159,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   // We also don't emit a virtual call if the base expression has a record type
   // because then we know what the type is.
   bool UseVirtualCall = MD->isVirtual() && !ME->hasQualifier()
-                     && !canDevirtualizeMemberFunctionCalls(ME->getBase());
+                     && !canDevirtualizeMemberFunctionCalls(ME->getBase(), MD);
 
   llvm::Value *Callee;
   if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD)) {
@@ -267,7 +274,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
     This = LV.getAddress();
 
   llvm::Value *Callee;
-  if (MD->isVirtual() && !canDevirtualizeMemberFunctionCalls(E->getArg(0)))
+  if (MD->isVirtual() && !canDevirtualizeMemberFunctionCalls(E->getArg(0), MD))
     Callee = BuildVirtualCall(MD, This, Ty);
   else
     Callee = CGM.GetAddrOfFunction(MD, Ty);
