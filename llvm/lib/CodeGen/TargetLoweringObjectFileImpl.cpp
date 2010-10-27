@@ -952,6 +952,7 @@ getCOFFSectionFlags(SectionKind K) {
   else if (K.isText())
     Flags |=
       COFF::IMAGE_SCN_MEM_EXECUTE |
+      COFF::IMAGE_SCN_MEM_READ |
       COFF::IMAGE_SCN_CNT_CODE;
   else if (K.isBSS ())
     Flags |=
