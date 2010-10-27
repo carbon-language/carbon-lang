@@ -946,6 +946,13 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
+  // If this is an LDRi12, LDRrs, or LDRcp, nothing more needs be done.
+  if (MI.getOpcode() == ARM::LDRi12 || MI.getOpcode() == ARM::LDRrs
+      || MI.getOpcode() == ARM::LDRcp) {
+    emitWordLE(Binary);
+    return;
+  }
+
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
