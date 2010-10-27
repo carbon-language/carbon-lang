@@ -703,6 +703,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("fwait", "wait")
     .Case("movzx", "movzb")  // FIXME: Not correct.
     .Case("fildq", "fildll")
+    .Case("fcompi", "fcomip")
+    .Case("fucompi", "fucomip")
     .Default(Name);
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
@@ -991,9 +993,20 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                              NameLoc, NameLoc));
   }
 
+  // The assembler accepts this instruction with no operand as a synonym for an
+  // instruction taking %st(1),%st(0). e.g. "fcompi" -> "fcompi %st(1),st(0)".
+  if (Name == "fcompi" && Operands.size() == 1) {
+    Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
+                                             NameLoc, NameLoc));
+    Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(0)"),
+                                             NameLoc, NameLoc));
+  }
+
   // The assembler accepts these instructions with two few operands as a synonym
   // for taking %st(1),%st(0) or X, %st(0).
-  if ((Name == "fcomi" || Name == "fucomi") && Operands.size() < 3) {
+  if ((Name == "fcomi" || Name == "fucomi" || Name == "fucompi" ||
+       Name == "fcompi" ) &&
+      Operands.size() < 3) {
     if (Operands.size() == 1)
       Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
                                                NameLoc, NameLoc));
