@@ -1017,18 +1017,33 @@ void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   VisitRedeclarableTemplateDecl(D);
 
   if (D->getPreviousDeclaration() == 0) {
-    // This ClassTemplateDecl owns a CommonPtr; read it.
+    // This ClassTemplateDecl owns a CommonPtr; read it to keep track of all of
+    // the specializations.
+    llvm::SmallVector<serialization::DeclID, 2> SpecIDs;
+    SpecIDs.push_back(0);
+    
+    // Specializations.
+    unsigned Size = Record[Idx++];
+    SpecIDs[0] += Size;
+    SpecIDs.append(Record.begin() + Idx, Record.begin() + Idx + Size);
+    Idx += Size;
 
-    // FoldingSets are filled in VisitClassTemplateSpecializationDecl.
-    unsigned size = Record[Idx++];
-    while (size--)
-      cast<ClassTemplateSpecializationDecl>(Reader.GetDecl(Record[Idx++]));
+    // Partial specializations.
+    Size = Record[Idx++];
+    SpecIDs[0] += Size;
+    SpecIDs.append(Record.begin() + Idx, Record.begin() + Idx + Size);
+    Idx += Size;
 
-    size = Record[Idx++];
-    while (size--)
-      cast<ClassTemplatePartialSpecializationDecl>(
-                                                 Reader.GetDecl(Record[Idx++]));
-
+    if (SpecIDs[0]) {
+      typedef serialization::DeclID DeclID;
+      
+      ClassTemplateDecl::Common *CommonPtr = D->getCommonPtr();
+      CommonPtr->LazySpecializations
+        = new (*Reader.getContext()) DeclID [SpecIDs.size()];
+      memcpy(CommonPtr->LazySpecializations, SpecIDs.data(), 
+             SpecIDs.size() * sizeof(DeclID));
+    }
+    
     // InjectedClassNameType is computed.
   }
 }
@@ -1071,15 +1086,15 @@ void ASTDeclReader::VisitClassTemplateSpecializationDecl(
   D->TemplateArgs.init(C, TemplArgs.data(), TemplArgs.size());
   D->PointOfInstantiation = ReadSourceLocation(Record, Idx);
   D->SpecializationKind = (TemplateSpecializationKind)Record[Idx++];
-
+  
   if (D->isCanonicalDecl()) { // It's kept in the folding set.
     ClassTemplateDecl *CanonPattern
                        = cast<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
     if (ClassTemplatePartialSpecializationDecl *Partial
-            = dyn_cast<ClassTemplatePartialSpecializationDecl>(D)) {
-      CanonPattern->getPartialSpecializations().InsertNode(Partial);
+                       = dyn_cast<ClassTemplatePartialSpecializationDecl>(D)) {
+      CanonPattern->getCommonPtr()->PartialSpecializations.InsertNode(Partial);
     } else {
-      CanonPattern->getSpecializations().InsertNode(D);
+      CanonPattern->getCommonPtr()->Specializations.InsertNode(D);
     }
   }
 }

@@ -189,6 +189,29 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
   return New;
 }
 
+void ClassTemplateDecl::LoadLazySpecializations() {
+  Common *CommonPtr = getCommonPtr();
+  if (CommonPtr->LazySpecializations) {
+    ASTContext &Context = getASTContext();
+    uint32_t *Specs = CommonPtr->LazySpecializations;
+    CommonPtr->LazySpecializations = 0;
+    for (uint32_t I = 0, N = *Specs++; I != N; ++I)
+      (void)Context.getExternalSource()->GetExternalDecl(Specs[I]);
+  }
+}
+
+llvm::FoldingSet<ClassTemplateSpecializationDecl> &
+ClassTemplateDecl::getSpecializations() {
+  LoadLazySpecializations();
+  return getCommonPtr()->Specializations;
+}  
+
+llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &
+ClassTemplateDecl::getPartialSpecializations() {
+  LoadLazySpecializations();
+  return getCommonPtr()->PartialSpecializations;
+}  
+
 RedeclarableTemplateDecl::CommonBase *
 ClassTemplateDecl::newCommon(ASTContext &C) {
   Common *CommonPtr = new (C) Common;

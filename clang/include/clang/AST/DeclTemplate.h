@@ -1626,6 +1626,8 @@ protected:
   /// \brief Data that is common to all of the declarations of a given
   /// class template.
   struct Common : CommonBase {
+    Common() : LazySpecializations() { }
+    
     /// \brief The class template specializations for this class
     /// template, including explicit specializations and instantiations.
     llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
@@ -1637,19 +1639,25 @@ protected:
 
     /// \brief The injected-class-name type for this class template.
     QualType InjectedClassNameType;
+    
+    /// \brief If non-null, points to an array of specializations (including
+    /// partial specializations) known ownly by their external declaration IDs.
+    ///
+    /// The first value in the array is the number of of specializations/
+    /// partial specializations that follow.
+    uint32_t *LazySpecializations;
   };
 
+  /// \brief Load any lazily-loaded specializations from the external source.
+  void LoadLazySpecializations();
+                            
   /// \brief Retrieve the set of specializations of this class template.
-  llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {
-    return getCommonPtr()->Specializations;
-  }
+  llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations();
 
   /// \brief Retrieve the set of partial specializations of this class
   /// template.
   llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &
-  getPartialSpecializations() {
-    return getCommonPtr()->PartialSpecializations;
-  }
+  getPartialSpecializations();
 
   ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
                     TemplateParameterList *Params, NamedDecl *Decl)
