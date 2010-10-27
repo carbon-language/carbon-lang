@@ -401,9 +401,10 @@ class AI2<dag oops, dag iops, Format f, InstrItinClass itin,
 
 // loads
 
-// LDR/LDRB
-class AIldr1<bits<3> op, bit opc22, dag oops, dag iops, AddrMode am, Format f,
-             InstrItinClass itin, string opc, string asm, list<dag> pattern>
+// LDR/LDRB/STR/STRB
+class AIldst1<bits<3> op, bit opc22, bit isLd, dag oops, dag iops, AddrMode am,
+             Format f, InstrItinClass itin, string opc, string asm,
+             list<dag> pattern>
   : I<oops, iops, am, Size4Bytes, IndexModeNone, f, itin, opc, asm,
       "", pattern> {
   let Inst{27-25} = op;
@@ -411,7 +412,7 @@ class AIldr1<bits<3> op, bit opc22, dag oops, dag iops, AddrMode am, Format f,
   // 23 == U
   let Inst{22} = opc22;
   let Inst{21} = 0;  // 21 == W
-  let Inst{20} = 1;
+  let Inst{20} = isLd;
 }
 // LDRH/LDRSB/LDRSH/LDRD
 class AIldr2<bits<4> op, bit opc22, bit opc20, dag oops, dag iops, AddrMode am,

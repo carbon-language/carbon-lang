@@ -1377,7 +1377,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
   case ARM::LDRi12: case ARM::LDRH: case ARM::LDRBi12:
-  case ARM::STR: case ARM::STRH: case ARM::STRB:
+  case ARM::STRi12: case ARM::STRH: case ARM::STRBi12:
   case ARM::t2LDRi12: case ARM::t2LDRi8:
   case ARM::t2STRi12: case ARM::t2STRi8:
   case ARM::VLDRS: case ARM::VLDRD:
@@ -1711,7 +1711,7 @@ emitPrologue(MachineFunction &MF) const {
 
   // Build the new SUBri to adjust SP for integer callee-save spill area.
   emitSPUpdate(isARM, MBB, MBBI, dl, TII, -GPRCSSize);
-  movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, ARM::t2STRi12, 1, STI);
+  movePastCSLoadStoreOps(MBB, MBBI, ARM::STRi12, ARM::t2STRi12, 1, STI);
 
   // Set FP to point to the stack slot that contains the previous FP.
   bool HasFP = hasFP(MF);

@@ -870,8 +870,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     switch (MI->getOpcode()) {
     default:
       llvm_unreachable("Unexpected opcode!");
-    case ARM::PICSTR:   Opcode = ARM::STR; break;
-    case ARM::PICSTRB:  Opcode = ARM::STRB; break;
+    case ARM::PICSTR:   Opcode = ARM::STRrs; break;
+    case ARM::PICSTRB:  Opcode = ARM::STRBrs; break;
     case ARM::PICSTRH:  Opcode = ARM::STRH; break;
     case ARM::PICLDR:   Opcode = ARM::LDRrs; break;
     case ARM::PICLDRB:  Opcode = ARM::LDRBrs; break;
@@ -1161,10 +1161,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     {
       MCInst TmpInst;
-      TmpInst.setOpcode(ARM::STR);
+      TmpInst.setOpcode(ARM::STRi12);
       TmpInst.addOperand(MCOperand::CreateReg(ValReg));
       TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
       TmpInst.addOperand(MCOperand::CreateImm(4));
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));

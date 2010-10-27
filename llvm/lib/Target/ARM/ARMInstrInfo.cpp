@@ -48,13 +48,13 @@ unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
     return ARM::LDRSB;
   case ARM::STR_PRE:
   case ARM::STR_POST:
-    return ARM::STR;
+    return ARM::STRi12;
   case ARM::STRH_PRE:
   case ARM::STRH_POST:
     return ARM::STRH;
   case ARM::STRB_PRE:
   case ARM::STRB_POST:
-    return ARM::STRB;
+    return ARM::STRBi12;
   }
 
   return 0;

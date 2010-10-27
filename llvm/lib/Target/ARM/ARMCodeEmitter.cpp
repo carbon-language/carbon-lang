@@ -966,8 +966,9 @@ void ARMCodeEmitter::emitLoadStoreInstruction(const MachineInstr &MI,
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
-  // If this is an LDRi12 or LDRcp, nothing more needs be done.
-  if (MI.getOpcode() == ARM::LDRi12 || MI.getOpcode() == ARM::LDRcp) {
+  // If this is an LDRi12, STRi12 or LDRcp, nothing more needs be done.
+  if (MI.getOpcode() == ARM::LDRi12 || MI.getOpcode() == ARM::LDRcp ||
+      MI.getOpcode() == ARM::STRi12) {
     emitWordLE(Binary);
     return;
   }
