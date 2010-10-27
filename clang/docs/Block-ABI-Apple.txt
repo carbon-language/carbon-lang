@@ -348,7 +348,7 @@ void _block_byref_dispose_helper(struct _block_byref_voidBlock *param) {
 and
   struct _block_byref_voidBlock voidBlock = {( .forwarding=&voidBlock, .flags=(1<<25), .size=sizeof(struct _block_byref_voidBlock *),
       .byref_keep=_block_byref_keep_helper, .byref_dispose=_block_byref_dispose_helper,
-      .captured_voidBlock=blockA };
+      .captured_voidBlock=blockA )};
 
   voidBlock.forwarding->captured_voidBlock = blockB;
   
@@ -422,7 +422,9 @@ A __block variable that is also marked __attribute__((NSObject)) should have byr
 
 2.3.5 __block escapes
 
-Because Blocks referencing __block variables may have Block_copy() performed upon them the underlying storage for the variables may move to the heap.  In Objective-C Garbage Collection Only compilation environments the heap used is the garbage collected one and no further action is required.  Otherwise the compiler must issue a call to potentially release any heap storage for __block variables at all escapes or terminations of their scope.
+Because Blocks referencing __block variables may have Block_copy() performed upon them the underlying storage for the variables may move to the heap.  In Objective-C Garbage Collection Only compilation environments the heap used is the garbage collected one and no further action is required.  Otherwise the compiler must issue a call to potentially release any heap storage for __block variables at all escapes or terminations of their scope.  The call should be:
+
+    _Block_object_dispose(&_block_byref_xxx, BLOCK_FIELD_IS_BYREF);
 
 
 2.3.6 Nesting
@@ -639,32 +641,4 @@ void _Block_object_assign(void *destAddr, const void *object, const int flags);
    The same flags used in the copy helper should be used for each call generated to this function:
  */
 void _Block_object_dispose(const void *object, const int flags);
-
-The following functions have been used and will continue to be supported until new compiler support is complete.
-
-// Obsolete functions.
-// Copy helper callback for copying a block imported into a Block
-// Called by copy_helper helper functions synthesized by the compiler.
-// The address in the destination block of an imported Block is provided as the first argument
-// and the value of the existing imported Block is the second.
-// Use: _Block_object_assign(dest, src, BLOCK_FIELD_IS_BLOCK {| BLOCK_FIELD_IS_WEAK});
-void _Block_copy_assign(struct Block_basic **dest, const struct Block_basic *src, const int flags);
-
-// Destroy helper callback for releasing Blocks imported into a Block
-// Called by dispose_helper helper functions synthesized by the compiler.
-// The value of the imported Block variable is passed back.
-// Use: _Block_object_dispose(src, BLOCK_FIELD_IS_BLOCK {| BLOCK_FIELD_IS_WEAK});
-void _Block_destroy(const struct Block_basic *src, const int flags);
-
-// Byref data block copy helper callback
-// Called by block copy helpers when copying __block structures
-// Use: _Block_object_assign(dest, src, BLOCK_FIELD_IS_BYREF {| BLOCK_FIELD_IS_WEAK});
-void _Block_byref_assign_copy(struct Block_byref **destp, struct Block_byref *src);
-
-// Byref data block release helper callback
-// Called by block release helpers when releasing a Block 
-// Called at escape points in scope where __block variables live (under non-GC-only conditions) 
-// Use: _Block_object_dispose(src, BLOCK_FIELD_IS_BYREF {| BLOCK_FIELD_IS_WEAK});
-void §(struct Block_byref *shared_struct);
-
 
