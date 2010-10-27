@@ -845,10 +845,11 @@ Target::UpdateInstanceName ()
     ModuleSP module_sp = GetExecutableModule();
     if (module_sp)
     {
-        sstr.Printf ("%s_%s", module_sp->GetFileSpec().GetFilename().AsCString(), 
+        sstr.Printf ("%s_%s", 
+                     module_sp->GetFileSpec().GetFilename().AsCString(), 
                      module_sp->GetArchitecture().AsCString());
-	Target::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
-								 sstr.GetData());
+        Target::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
+                                                                 sstr.GetData());
     }
 }
 
@@ -912,7 +913,9 @@ Target::SettingsController::GetGlobalVariable (const ConstString &var_name,
 {
     if (var_name == DefArchVarName())
     {
-        value.AppendString (m_default_architecture.AsCString());
+        // If the arch is invalid (the default), don't show a string for it
+        if (m_default_architecture.IsValid())
+            value.AppendString (m_default_architecture.AsCString());
         return true;
     }
     else
