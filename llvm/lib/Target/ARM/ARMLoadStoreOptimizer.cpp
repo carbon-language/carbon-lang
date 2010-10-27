@@ -860,7 +860,9 @@ static void InsertLDR_STR(MachineBasicBlock &MBB,
                           ARMCC::CondCodes Pred, unsigned PredReg,
                           const TargetInstrInfo *TII, bool isT2) {
   int Offset = OffImm;
-  if (!isT2) {
+  // FIXME: This fancy offset encoding stuff goes away when we're done
+  // removing addrmode2.
+  if (!isT2 && !isDef) {
     if (OffImm < 0)
       Offset = ARM_AM::getAM2Opc(ARM_AM::sub, -OffImm, ARM_AM::no_shift);
     else
@@ -871,8 +873,6 @@ static void InsertLDR_STR(MachineBasicBlock &MBB,
                                       TII->get(NewOpc))
       .addReg(Reg, getDefRegState(true) | getDeadRegState(RegDeadKill))
       .addReg(BaseReg, getKillRegState(BaseKill)|getUndefRegState(BaseUndef));
-    if (!isT2)
-      MIB.addReg(OffReg,  getKillRegState(OffKill)|getUndefRegState(OffUndef));
     MIB.addImm(Offset).addImm(Pred).addReg(PredReg);
   } else {
     MachineInstrBuilder MIB = BuildMI(MBB, MBBI, MBBI->getDebugLoc(),
