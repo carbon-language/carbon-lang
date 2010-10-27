@@ -774,3 +774,11 @@ pshufw $90, %mm4, %mm0
 // CHECK: verr	32493
 // CHECK:  encoding: [0x0f,0x00,0x25,0xed,0x7e,0x00,0x00]
         	verr	0x7eed
+
+// CHECK: wait
+// CHECK:  encoding: [0x9b]
+        	fclex
+
+// CHECK: fnclex
+// CHECK:  encoding: [0xdb,0xe2]
+        	fnclex

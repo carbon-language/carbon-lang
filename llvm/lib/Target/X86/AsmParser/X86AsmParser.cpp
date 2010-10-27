@@ -1196,7 +1196,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   // FIXME: This should be replaced with a real .td file alias mechanism.
   if (Op->getToken() == "fstsw" || Op->getToken() == "fstcw" ||
       Op->getToken() == "finit" || Op->getToken() == "fsave" ||
-      Op->getToken() == "fstenv") {
+      Op->getToken() == "fstenv" || Op->getToken() == "fclex") {
     MCInst Inst;
     Inst.setOpcode(X86::WAIT);
     Out.EmitInstruction(Inst);
@@ -1208,6 +1208,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
         .Case("fstcw", "fnstcw")
         .Case("fstenv", "fnstenv")
         .Case("fstsw", "fnstsw")
+        .Case("fclex", "fnclex")
         .Default(0);
     assert(Repl && "Unknown wait-prefixed instruction");
     delete Operands[0];
