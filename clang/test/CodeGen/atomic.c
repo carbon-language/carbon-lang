@@ -102,8 +102,7 @@ int atomic(void) {
 
   if ( __sync_val_compare_and_swap(&valb, 0, 1)) {
     // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
-// FIXME: Doesn't seem right!
-    // CHECK: call i8 @llvm.atomic.cmp.swap.i8.p0i8(i8* %valb, i8 0, i8 -1)
+    // CHECK: call i8 @llvm.atomic.cmp.swap.i8.p0i8(i8* %valb, i8 0, i8 1)
     // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
     old = 42;
   }

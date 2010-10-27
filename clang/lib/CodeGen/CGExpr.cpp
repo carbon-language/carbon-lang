@@ -590,13 +590,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
   if (TBAAInfo)
     CGM.DecorateInstruction(Load, TBAAInfo);
 
-  // Bool can have different representation in memory than in registers.
-  llvm::Value *V = Load;
-  if (Ty->isBooleanType())
-    if (V->getType() != llvm::Type::getInt1Ty(VMContext))
-      V = Builder.CreateTrunc(V, llvm::Type::getInt1Ty(VMContext), "tobool");
-
-  return V;
+  return EmitFromMemory(Load, Ty);
 }
 
 static bool isBooleanUnderlyingType(QualType Ty) {
@@ -605,17 +599,34 @@ static bool isBooleanUnderlyingType(QualType Ty) {
   return false;
 }
 
+llvm::Value *CodeGenFunction::EmitToMemory(llvm::Value *Value, QualType Ty) {
+  // Bool has a different representation in memory than in registers.
+  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
+    // This should really always be an i1, but sometimes it's already
+    // an i8, and it's awkward to track those cases down.
+    if (Value->getType()->isIntegerTy(1))
+      return Builder.CreateZExt(Value, Builder.getInt8Ty(), "frombool");
+    assert(Value->getType()->isIntegerTy(8) && "value rep of bool not i1/i8");
+  }
+
+  return Value;
+}
+
+llvm::Value *CodeGenFunction::EmitFromMemory(llvm::Value *Value, QualType Ty) {
+  // Bool has a different representation in memory than in registers.
+  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
+    assert(Value->getType()->isIntegerTy(8) && "memory rep of bool not i8");
+    return Builder.CreateTrunc(Value, Builder.getInt1Ty(), "tobool");
+  }
+
+  return Value;
+}
+
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         bool Volatile, unsigned Alignment,
                                         QualType Ty,
                                         llvm::MDNode *TBAAInfo) {
-
-  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
-    // Bool can have different representation in memory than in registers.
-    const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
-    Value = Builder.CreateIntCast(Value, DstPtr->getElementType(), false);
-  }
-
+  Value = EmitToMemory(Value, Ty);
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (Alignment)
     Store->setAlignment(Alignment);
