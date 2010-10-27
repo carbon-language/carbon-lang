@@ -441,7 +441,8 @@ static const MCSymbol &AliasedSymbol(const MCSymbol &Symbol) {
   const MCSymbol *S = &Symbol;
   while (S->isVariable()) {
     const MCExpr *Value = S->getVariableValue();
-    assert (Value->getKind() == MCExpr::SymbolRef && "Unimplemented");
+    if (Value->getKind() != MCExpr::SymbolRef)
+      return *S;
     const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
     S = &Ref->getSymbol();
   }
@@ -769,6 +770,11 @@ static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
     return true;
 
   const MCSymbol &Symbol = Data.getSymbol();
+
+  const MCSymbol &A = AliasedSymbol(Symbol);
+  if (&A != &Symbol && A.isUndefined())
+    return false;
+
   if (!Asm.isSymbolLinkerVisible(Symbol) && !Symbol.isUndefined())
     return false;
 
@@ -822,20 +828,16 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     MSD.SymbolData = it;
     bool Local = isLocal(*it);
 
-    bool Add = false;
     if (it->isCommon()) {
       assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
-      Add = true;
     } else if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
-      Add = true;
     } else if (Symbol.isVariable()) {
       const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
       if (RefSymbol.isDefined()) {
         MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
         assert(MSD.SectionIndex && "Invalid section index!");
-        Add = true;
       }
     } else if (Symbol.isUndefined()) {
       assert(!Local);
@@ -844,28 +846,24 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       // are able to set it.
       if (GetBinding(*it) == ELF::STB_LOCAL)
         SetBinding(*it, ELF::STB_GLOBAL);
-      Add = true;
     } else {
       MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());
       assert(MSD.SectionIndex && "Invalid section index!");
-      Add = true;
     }
 
-    if (Add) {
-      uint64_t &Entry = StringIndexMap[Symbol.getName()];
-      if (!Entry) {
-        Entry = StringTable.size();
-        StringTable += Symbol.getName();
-        StringTable += '\x00';
-      }
-      MSD.StringIndex = Entry;
-      if (MSD.SectionIndex == ELF::SHN_UNDEF)
-        UndefinedSymbolData.push_back(MSD);
-      else if (Local)
-        LocalSymbolData.push_back(MSD);
-      else
-        ExternalSymbolData.push_back(MSD);
+    uint64_t &Entry = StringIndexMap[Symbol.getName()];
+    if (!Entry) {
+      Entry = StringTable.size();
+      StringTable += Symbol.getName();
+      StringTable += '\x00';
     }
+    MSD.StringIndex = Entry;
+    if (MSD.SectionIndex == ELF::SHN_UNDEF)
+      UndefinedSymbolData.push_back(MSD);
+    else if (Local)
+      LocalSymbolData.push_back(MSD);
+    else
+      ExternalSymbolData.push_back(MSD);
   }
 
   // Symbols are required to be in lexicographic order.
