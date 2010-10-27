@@ -25,6 +25,7 @@ td {
   <li><a href="#Diagnostics">The Diagnostics Subsystem</a></li>
   <li><a href="#SourceLocation">The SourceLocation and SourceManager
       classes</a></li>
+  <li><a href="#SourceRange">SourceRange and CharSourceRange</a></li>
   </ul>
 </li>
 <li><a href="#libdriver">The Driver Library</a>
@@ -544,6 +545,30 @@ tracked correctly.  If it is ever incorrect, the front-end may get confused and
 die.  The reason for this is that the notion of the 'spelling' of a Token in
 Clang depends on being able to find the original input characters for the token.
 This concept maps directly to the "spelling location" for the token.</p>
+
+
+<!-- ======================================================================= -->
+<h3 id="SourceRange">SourceRange and CharSourceRange</h3>
+<!-- ======================================================================= -->
+<!-- mostly taken from
+  http://lists.cs.uiuc.edu/pipermail/cfe-dev/2010-August/010595.html -->
+
+<p>Clang represents most source ranges by [first, last], where first and last
+each point to the beginning of their respective tokens. For example
+consider the SourceRange of the following statement:</p>
+<pre>
+x = foo + bar;
+^first    ^last
+</pre>
+
+<p>To map from this representation to a character-based
+representation, the 'last' location needs to be adjusted to point to
+(or past) the end of that token with either
+<code>Lexer::MeasureTokenLength()</code> or
+<code>Preprocessor::getLocForEndOfToken()</code>. For the rare cases
+where character-level source ranges information is needed we use
+the <code>CharSourceRange</code> class.</p>
+
 
 <!-- ======================================================================= -->
 <h2 id="libdriver">The Driver Library</h2>
