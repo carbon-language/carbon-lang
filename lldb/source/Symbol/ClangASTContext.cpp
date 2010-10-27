@@ -1570,13 +1570,13 @@ ClangASTContext::AddMethodToObjCObjectType
          start += len)
     {
         len = ::strcspn(start, ":]");
-        if (start[len] == ':')
-        {
+        bool has_arg = (start[len] == ':');
+        if (has_arg)
             ++num_selectors_with_args;
-            len += 1;
-        }
-        //printf ("@selector[%zu] = '%.*s'\n", selector_idents.size(), (int)len, start);
+        printf ("@selector[%zu] = '%.*s'\n", selector_idents.size(), (int)len, start);
         selector_idents.push_back (&identifier_table->get (StringRef (start, len)));
+        if (has_arg)
+            len += 1;
     }
 
     
