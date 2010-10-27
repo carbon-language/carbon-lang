@@ -1080,7 +1080,7 @@ bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   default:
     return false;
   case ARM::LDRi12:
-  case ARM::LDRB:
+  case ARM::LDRBi12:
   case ARM::LDRD:
   case ARM::LDRH:
   case ARM::LDRSB:
@@ -1099,7 +1099,7 @@ bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   default:
     return false;
   case ARM::LDRi12:
-  case ARM::LDRB:
+  case ARM::LDRBi12:
   case ARM::LDRD:
   case ARM::LDRH:
   case ARM::LDRSB:

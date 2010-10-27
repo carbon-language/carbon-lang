@@ -746,7 +746,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i8:
-      Opc = isThumb ? ARM::t2LDRBi12 : ARM::LDRB;
+      Opc = isThumb ? ARM::t2LDRBi12 : ARM::LDRBi12;
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i32:
@@ -774,8 +774,6 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   if (isFloat)
     Offset /= 4;
   
-  // The thumb and floating point instructions both take 2 operands, ARM takes
-  // another register.
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(Opc), ResultReg)
                   .addReg(Base).addImm(Offset));

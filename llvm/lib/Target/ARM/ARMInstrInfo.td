@@ -1400,8 +1400,10 @@ def RFE  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
 // Load
 
 
-defm LDR : AI_ldr1<0, "ldr", IIC_iLoad_i, IIC_iLoad_r,
-                   UnOpFrag<(load node:$Src)>>;
+defm LDR  : AI_ldr1<0, "ldr", IIC_iLoad_i, IIC_iLoad_r,
+                    UnOpFrag<(load node:$Src)>>;
+defm LDRB : AI_ldr1<1, "ldrb", IIC_iLoad_bh_i, IIC_iLoad_bh_r,
+                    UnOpFrag<(zextloadi8 node:$Src)>>;
 
 // Special LDR for loads from non-pc-relative constpools.
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
@@ -1420,10 +1422,6 @@ def LDRcp : AIldr1<0b010, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
 def LDRH  : AI3ldh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                   IIC_iLoad_bh_r, "ldrh", "\t$dst, $addr",
                   [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
-
-def LDRB  : AI2ldb<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
-                  IIC_iLoad_bh_r, "ldrb", "\t$dst, $addr",
-                  [(set GPR:$dst, (zextloadi8 addrmode2:$addr))]>;
 
 // Loads with sign extension
 def LDRSH : AI3ldsh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
@@ -3165,11 +3163,16 @@ def : ARMPat<(ARMcall texternalsym:$func), (BLr9 texternalsym:$func)>,
       Requires<[IsARM, IsDarwin]>;
 
 // zextload i1 -> zextload i8
-def : ARMPat<(zextloadi1 addrmode2:$addr),  (LDRB addrmode2:$addr)>;
+//def : ARMPat<(zextloadi1 addrmode2:$addr),  (LDRB addrmode2:$addr)>;
+def : ARMPat<(zextloadi1 addrmode_imm12:$addr), (LDRBi12 addrmode_imm12:$addr)>;
+def : ARMPat<(zextloadi1 ldst_so_reg:$addr),    (LDRBrs ldst_so_reg:$addr)>;
 
 // extload -> zextload
-def : ARMPat<(extloadi1  addrmode2:$addr),  (LDRB addrmode2:$addr)>;
-def : ARMPat<(extloadi8  addrmode2:$addr),  (LDRB addrmode2:$addr)>;
+def : ARMPat<(extloadi1 addrmode_imm12:$addr),  (LDRBi12 addrmode_imm12:$addr)>;
+def : ARMPat<(extloadi1 ldst_so_reg:$addr),     (LDRBrs ldst_so_reg:$addr)>;
+def : ARMPat<(extloadi8 addrmode_imm12:$addr),  (LDRBi12 addrmode_imm12:$addr)>;
+def : ARMPat<(extloadi8 ldst_so_reg:$addr),     (LDRBrs ldst_so_reg:$addr)>;
+
 def : ARMPat<(extloadi16 addrmode3:$addr),  (LDRH addrmode3:$addr)>;
 
 def : ARMPat<(extloadi8  addrmodepc:$addr), (PICLDRB addrmodepc:$addr)>;

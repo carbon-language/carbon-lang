@@ -874,7 +874,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     case ARM::PICSTRB:  Opcode = ARM::STRB; break;
     case ARM::PICSTRH:  Opcode = ARM::STRH; break;
     case ARM::PICLDR:   Opcode = ARM::LDRrs; break;
-    case ARM::PICLDRB:  Opcode = ARM::LDRB; break;
+    case ARM::PICLDRB:  Opcode = ARM::LDRBrs; break;
     case ARM::PICLDRH:  Opcode = ARM::LDRH; break;
     case ARM::PICLDRSB: Opcode = ARM::LDRSB; break;
     case ARM::PICLDRSH: Opcode = ARM::LDRSH; break;

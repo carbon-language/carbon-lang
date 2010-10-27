@@ -39,7 +39,7 @@ unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
     return ARM::LDRH;
   case ARM::LDRB_PRE:
   case ARM::LDRB_POST:
-    return ARM::LDRB;
+    return ARM::LDRBi12;
   case ARM::LDRSH_PRE:
   case ARM::LDRSH_POST:
     return ARM::LDRSH;
