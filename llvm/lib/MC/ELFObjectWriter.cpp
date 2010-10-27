@@ -459,12 +459,12 @@ void ELFObjectWriterImpl::ExecutePostLayoutBinding(MCAssembler &Asm) {
     if (!Alias.isVariable())
       continue;
     const MCSymbol &Symbol = AliasedSymbol(Alias);
-    const StringRef &AliasName = Alias.getName();
+    StringRef AliasName = Alias.getName();
     size_t Pos = AliasName.find('@');
     if (Pos == StringRef::npos)
       continue;
 
-    StringRef Rest(AliasName.begin() + Pos);
+    StringRef Rest = AliasName.substr(Pos);
     if (!Symbol.isUndefined() && !Rest.startswith("@@@"))
       continue;
 
@@ -473,8 +473,7 @@ void ELFObjectWriterImpl::ExecutePostLayoutBinding(MCAssembler &Asm) {
         !Rest.startswith("@@@"))
       report_fatal_error("A @@ version cannot be undefined");
 
-    std::pair<const MCSymbol *, const MCSymbol *> t(&Symbol, &Alias);
-    Renames.insert(t);
+    Renames.insert(std::make_pair(&Symbol, &Alias));
   }
 }
 
@@ -887,9 +886,9 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     size_t Pos = Name.find("@@@");
     std::string FinalName;
     if (Pos != StringRef::npos) {
-      StringRef Prefix(Name.begin(), Pos);
+      StringRef Prefix = Name.substr(0, Pos);
       unsigned n = MSD.SectionIndex == ELF::SHN_UNDEF ? 2 : 1;
-      StringRef Suffix(Name.begin() + Pos + n);
+      StringRef Suffix = Name.substr(Pos + n);
       FinalName = Prefix.str() + Suffix.str();
     } else {
       FinalName = Name.str();
