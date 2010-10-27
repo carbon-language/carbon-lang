@@ -803,7 +803,7 @@ void ASTDeclWriter::VisitFriendDecl(FriendDecl *D) {
     Writer.AddTypeSourceInfo(D->Friend.get<TypeSourceInfo*>(), Record);
   else
     Writer.AddDeclRef(D->Friend.get<NamedDecl*>(), Record);
-  Writer.AddDeclRef(D->NextFriend, Record);
+  Writer.AddDeclRef(D->getNextFriend(), Record);
   Record.push_back(D->UnsupportedFriend);
   Writer.AddSourceLocation(D->FriendLoc, Record);
   Code = serialization::DECL_FRIEND;
