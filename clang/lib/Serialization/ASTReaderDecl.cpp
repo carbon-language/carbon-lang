@@ -692,10 +692,9 @@ void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
 void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitNamedDecl(D);
   D->IsInline = Record[Idx++];
-  D->setLBracLoc(ReadSourceLocation(Record, Idx));
-  D->setRBracLoc(ReadSourceLocation(Record, Idx));
-  D->setNextNamespace(
-                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
+  D->LBracLoc = ReadSourceLocation(Record, Idx);
+  D->RBracLoc = ReadSourceLocation(Record, Idx);
+  D->NextNamespace = Record[Idx++];
 
   bool IsOriginal = Record[Idx++];
   D->OrigOrAnonNamespace.setInt(IsOriginal);

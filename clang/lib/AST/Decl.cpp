@@ -1911,6 +1911,11 @@ NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) NamespaceDecl(DC, L, Id);
 }
 
+NamespaceDecl *NamespaceDecl::getNextNamespace() {
+  return dyn_cast_or_null<NamespaceDecl>(
+                       NextNamespace.get(getASTContext().getExternalSource()));
+}
+
 ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
     SourceLocation L, IdentifierInfo *Id, QualType T) {
   return new (C) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);

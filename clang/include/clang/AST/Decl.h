@@ -238,7 +238,7 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
   // NextNamespace points to the next extended declaration.
   // OrigNamespace points to the original namespace declaration.
   // OrigNamespace of the first namespace decl points to its anonymous namespace
-  NamespaceDecl *NextNamespace;
+  LazyDeclPtr NextNamespace;
 
   /// \brief A pointer to either the original namespace definition for
   /// this namespace (if the boolean value is false) or the anonymous
@@ -256,7 +256,7 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
 
   NamespaceDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
     : NamedDecl(Namespace, DC, L, Id), DeclContext(Namespace),
-      IsInline(false), NextNamespace(0), OrigOrAnonNamespace(0, true) { }
+      IsInline(false), NextNamespace(), OrigOrAnonNamespace(0, true) { }
 
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
@@ -287,8 +287,10 @@ public:
 
   /// \brief Return the next extended namespace declaration or null if there
   /// is none.
-  NamespaceDecl *getNextNamespace() { return NextNamespace; }
-  const NamespaceDecl *getNextNamespace() const { return NextNamespace; }
+  NamespaceDecl *getNextNamespace();
+  const NamespaceDecl *getNextNamespace() const { 
+    return const_cast<NamespaceDecl *>(this)->getNextNamespace();
+  }
 
   /// \brief Set the next extended namespace declaration.
   void setNextNamespace(NamespaceDecl *ND) { NextNamespace = ND; }
@@ -337,9 +339,9 @@ public:
 
   SourceLocation getLBracLoc() const { return LBracLoc; }
   SourceLocation getRBracLoc() const { return RBracLoc; }
-  void setLBracLoc(SourceLocation LBrace) { LBracLoc = LBrace; }
-  void setRBracLoc(SourceLocation RBrace) { RBracLoc = RBrace; }
-
+  void setLBracLoc(SourceLocation L) { LBracLoc = L; }
+  void setRBracLoc(SourceLocation R) { RBracLoc = R; }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NamespaceDecl *D) { return true; }
