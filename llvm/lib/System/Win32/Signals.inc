@@ -247,7 +247,8 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
       fprintf(stderr, "%08lX", PC);
 
       // Print the parameters.  Assume there are four.
-      fprintf(stderr, " (0x%08lX 0x%08lX 0x%08lX 0x%08lX)", StackFrame.Params[0],
+      fprintf(stderr, " (0x%08lX 0x%08lX 0x%08lX 0x%08lX)",
+              StackFrame.Params[0],
               StackFrame.Params[1], StackFrame.Params[2], StackFrame.Params[3]);
 
       // Verify the PC belongs to a module in this process.
