@@ -935,8 +935,12 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     AppendStmt(Block, B, asc);
   }
 
-  Visit(B->getRHS());
-  return Visit(B->getLHS());
+  CFGBlock *RBlock = Visit(B->getRHS());
+  CFGBlock *LBlock = Visit(B->getLHS());
+  // If visiting RHS causes us to finish 'Block', e.g. the RHS is a StmtExpr
+  // containing a DoStmt, and the LHS doesn't create a new block, then we should
+  // return RBlock.  Otherwise we'll incorrectly return NULL.
+  return (LBlock ? LBlock : RBlock);
 }
 
 CFGBlock *CFGBuilder::VisitBlockExpr(BlockExpr *E, AddStmtChoice asc) {
@@ -1736,7 +1740,8 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   if (Stmt* C = W->getCond()) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
-    assert(Block == EntryConditionBlock);
+    // The condition might finish the current 'Block'.
+    Block = EntryConditionBlock;
 
     // If this block contains a condition variable, add both the condition
     // variable and initializer to the CFG.

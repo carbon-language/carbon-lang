@@ -1157,6 +1157,12 @@ pr8141 (void) {
     }
 }
 
+// Don't crash when building the CFG.
+void do_not_crash(int x) {
+  while (x - ({do {} while (0); x; })) {
+  }
+}
+
 // <rdar://problem/8424269> - Handle looking at the size of a VLA in
 // ArrayBoundChecker.  Nothing intelligent (yet); just don't crash.
 typedef struct RDar8424269_A {
