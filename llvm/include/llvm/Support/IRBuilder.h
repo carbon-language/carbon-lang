@@ -375,10 +375,12 @@ public:
                                      Args+3), Name);
   }
   /// CreateInvoke - Create an invoke instruction.
-  template<typename InputIterator>
+  template<typename RandomAccessIterator>
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
-                           BasicBlock *UnwindDest, InputIterator ArgBegin,
-                           InputIterator ArgEnd, const Twine &Name = "") {
+                           BasicBlock *UnwindDest,
+                           RandomAccessIterator ArgBegin,
+                           RandomAccessIterator ArgEnd,
+                           const Twine &Name = "") {
     return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
                                      ArgBegin, ArgEnd), Name);
   }
@@ -686,12 +688,14 @@ public:
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
     return Insert(new StoreInst(Val, Ptr, isVolatile));
   }
-  template<typename InputIterator>
-  Value *CreateGEP(Value *Ptr, InputIterator IdxBegin, InputIterator IdxEnd,
+  template<typename RandomAccessIterator>
+  Value *CreateGEP(Value *Ptr,
+                   RandomAccessIterator IdxBegin,
+                   RandomAccessIterator IdxEnd,
                    const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {
       // Every index must be constant.
-      InputIterator i;
+      RandomAccessIterator i;
       for (i = IdxBegin; i < IdxEnd; ++i)
         if (!isa<Constant>(*i))
           break;
@@ -700,12 +704,13 @@ public:
     }
     return Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd), Name);
   }
-  template<typename InputIterator>
-  Value *CreateInBoundsGEP(Value *Ptr, InputIterator IdxBegin,
-                           InputIterator IdxEnd, const Twine &Name = "") {
+  template<typename RandomAccessIterator>
+  Value *CreateInBoundsGEP(Value *Ptr, RandomAccessIterator IdxBegin,
+                           RandomAccessIterator IdxEnd,
+                           const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {
       // Every index must be constant.
-      InputIterator i;
+      RandomAccessIterator i;
       for (i = IdxBegin; i < IdxEnd; ++i)
         if (!isa<Constant>(*i))
           break;
@@ -1057,9 +1062,9 @@ public:
     return Insert(CallInst::Create(Callee, Args, Args+5), Name);
   }
 
-  template<typename InputIterator>
-  CallInst *CreateCall(Value *Callee, InputIterator ArgBegin,
-                       InputIterator ArgEnd, const Twine &Name = "") {
+  template<typename RandomAccessIterator>
+  CallInst *CreateCall(Value *Callee, RandomAccessIterator ArgBegin,
+                       RandomAccessIterator ArgEnd, const Twine &Name = "") {
     return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd), Name);
   }
 
@@ -1109,10 +1114,10 @@ public:
     return Insert(ExtractValueInst::Create(Agg, Idx), Name);
   }
 
-  template<typename InputIterator>
+  template<typename RandomAccessIterator>
   Value *CreateExtractValue(Value *Agg,
-                            InputIterator IdxBegin,
-                            InputIterator IdxEnd,
+                            RandomAccessIterator IdxBegin,
+                            RandomAccessIterator IdxEnd,
                             const Twine &Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
       return Folder.CreateExtractValue(AggC, IdxBegin, IdxEnd - IdxBegin);
@@ -1127,10 +1132,10 @@ public:
     return Insert(InsertValueInst::Create(Agg, Val, Idx), Name);
   }
 
-  template<typename InputIterator>
+  template<typename RandomAccessIterator>
   Value *CreateInsertValue(Value *Agg, Value *Val,
-                           InputIterator IdxBegin,
-                           InputIterator IdxEnd,
+                           RandomAccessIterator IdxBegin,
+                           RandomAccessIterator IdxEnd,
                            const Twine &Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
       if (Constant *ValC = dyn_cast<Constant>(Val))
