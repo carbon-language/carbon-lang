@@ -1435,8 +1435,12 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
 
       // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
       ImmedOffset = ImmedOffset & Mask;
-      if (isSub)
-        ImmedOffset |= 1 << NumBits;
+      if (isSub) {
+        if (AddrMode == ARMII::AddrMode_i12)
+          ImmedOffset = -ImmedOffset;
+        else
+          ImmedOffset |= 1 << NumBits;
+      }
       ImmOp.ChangeToImmediate(ImmedOffset);
       Offset &= ~(Mask*Scale);
     }
