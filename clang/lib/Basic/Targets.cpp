@@ -1886,10 +1886,14 @@ const char * const ARMTargetInfo::GCCRegNames[] = {
   "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
   "s8", "s9", "s10", "s11", "s12", "s13", "s14", "s15",
   "s16", "s17", "s18", "s19", "s20", "s21", "s22", "s23",
-  "s24", "s25", "s26", "s27", "s28", "s29", "s30", "s31"
+  "s24", "s25", "s26", "s27", "s28", "s29", "s30", "s31",
 
-  // FIXME: Need double and NEON registers, but we need support for aliasing
-  // multiple registers for that.
+  // Double registers
+  "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7",
+  "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15",
+
+  // Quad registers
+  "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7"
 };
 
 void ARMTargetInfo::getGCCRegNames(const char * const *&Names,
@@ -1915,6 +1919,8 @@ const TargetInfo::GCCRegAlias ARMTargetInfo::GCCRegAliases[] = {
   { { "r13" }, "sp" },
   { { "r14" }, "lr" },
   { { "r15" }, "pc" },
+  // The S, D and Q registers overlap, but aren't really aliases; we
+  // don't want to substitute one of these for a different-sized one.
 };
 
 void ARMTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
