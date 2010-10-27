@@ -419,9 +419,10 @@ static LVPair getLVForClassMember(const NamedDecl *D) {
   const VisibilityAttr *VA = D->getAttr<VisibilityAttr>();
   if (VA) LV.second = minVisibility(LV.second, GetVisibilityFromAttr(VA));
 
-  // If it's a value declaration, apply the LV from its type.
+  // If it's a value declaration and we don't have an explicit visibility
+  // attribute, apply the LV from its type.
   // See the comment about namespace-scope variable decls above.
-  if (isa<ValueDecl>(D)) {
+  if (!VA && isa<ValueDecl>(D)) {
     LVPair TypeLV = cast<ValueDecl>(D)->getType()->getLinkageAndVisibility();
     if (TypeLV.first != ExternalLinkage)
       LV.first = minLinkage(LV.first, UniqueExternalLinkage);
