@@ -512,7 +512,7 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
 // extendTo - Find the last li_ value defined in MBB at or before Idx. The
 // parentli_ is assumed to be live at Idx. Extend the live range to Idx.
 // Return the found VNInfo, or NULL.
-VNInfo *LiveIntervalMap::extendTo(MachineBasicBlock *MBB, SlotIndex Idx) {
+VNInfo *LiveIntervalMap::extendTo(const MachineBasicBlock *MBB, SlotIndex Idx) {
   assert(li_ && "call reset first");
   LiveInterval::iterator I = std::upper_bound(li_->begin(), li_->end(), Idx);
   if (I == li_->begin())
@@ -861,6 +861,16 @@ void SplitEditor::computeRemainder() {
       dupli_.addSimpleRange(LR.start, LR.end, LR.valno);
     }
   }
+
+  // Extend dupli_ to be live out of any critical loop predecessors.
+  // This means we have multiple registers live out of those blocks.
+  // The alternative would be to split the critical edges.
+  if (criticalPreds_.empty())
+    return;
+  for (SplitAnalysis::BlockPtrSet::iterator I = criticalPreds_.begin(),
+       E = criticalPreds_.end(); I != E; ++I)
+     dupli_.extendTo(*I, lis_.getMBBEndIdx(*I).getPrevSlot());
+   criticalPreds_.clear();
 }
 
 void SplitEditor::finish() {
@@ -923,6 +933,9 @@ void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
   SplitAnalysis::BlockPtrSet CriticalExits;
   sa_.getCriticalExits(Blocks, CriticalExits);
   assert(CriticalExits.empty() && "Cannot break critical exits yet");
+
+  // Get critical predecessors so computeRemainder can deal with them.
+  sa_.getCriticalPreds(Blocks, criticalPreds_);
 
   // Create new live interval for the loop.
   openIntv();

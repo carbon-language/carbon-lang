@@ -200,7 +200,7 @@ public:
   // extendTo - Find the last li_ value defined in MBB at or before Idx. The
   // parentli is assumed to be live at Idx. Extend the live range to include
   // Idx. Return the found VNInfo, or NULL.
-  VNInfo *extendTo(MachineBasicBlock *MBB, SlotIndex Idx);
+  VNInfo *extendTo(const MachineBasicBlock *MBB, SlotIndex Idx);
 
   /// isMapped - Return true is ParentVNI is a known mapped value. It may be a
   /// simple 1-1 mapping or a complex mapping to later defs.
@@ -270,6 +270,10 @@ class SplitEditor {
   /// addTruncSimpleRange - Add the given simple range to dupli_ after
   /// truncating any overlap with intervals_.
   void addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI);
+
+  /// criticalPreds_ - Set of basic blocks where both dupli and openli should be
+  /// live out because of a critical edge.
+  SplitAnalysis::BlockPtrSet criticalPreds_;
 
   /// computeRemainder - Compute the dupli liveness as the complement of all the
   /// new intervals.
