@@ -759,8 +759,8 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           // If this instruction has a FrameIndex operand, we need to
           // use that target machine register info object to eliminate
           // it.
-            TRI.eliminateFrameIndex(MI, SPAdj,
-                                    FrameIndexVirtualScavenging ?  NULL : RS);
+          TRI.eliminateFrameIndex(MI, SPAdj,
+                                  FrameIndexVirtualScavenging ?  NULL : RS);
 
           // Reset the iterator if we were at the beginning of the BB.
           if (AtBeginning) {
