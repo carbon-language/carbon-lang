@@ -784,6 +784,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
         if (Value == "-force_cpusubtype_ALL") {
           // Do nothing, this is the default and we don't support anything else.
+        } else if (Value == "-L") {
+          // We don't support -L yet, but it isn't important enough to error
+          // on. No one should really be using it for a semantic change.
+          D.Diag(clang::diag::warn_drv_unsupported_option_argument)
+            << A->getOption().getName() << Value;
         } else {
           D.Diag(clang::diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;

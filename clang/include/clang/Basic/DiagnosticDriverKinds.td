@@ -77,6 +77,8 @@ def err_drv_cc_print_options_failure : Error<
 def err_drv_preamble_format : Error<
     "incorrect format for -preamble-bytes=N,END">;
 
+def warn_drv_unsupported_option_argument : Warning<
+  "ignoring unsupported argument '%1' to option '%0'">;
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;
 def warn_drv_preprocessed_input_file_unused : Warning<
