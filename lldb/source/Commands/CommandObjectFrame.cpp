@@ -847,7 +847,7 @@ CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "show-types", 't', no_argument,       NULL, 0, eArgTypeNone,    "Show variable types when dumping values."},
 { LLDB_OPT_SET_1, false, "no-summary", 'y', no_argument,       NULL, 0, eArgTypeNone,    "Omit summary information."},
 { LLDB_OPT_SET_1, false, "scope",      's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."},
-{ LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name (--name), print as an Objective-C object."},
+{ LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name, print as an Objective-C object."},
 { LLDB_OPT_SET_1, false, "ptr-depth",  'p', required_argument, NULL, 0, eArgTypeCount,   "The number of pointers to be traversed when dumping values (default is zero)."},
 { LLDB_OPT_SET_1, false, "regex",      'r', no_argument,       NULL, 0, eArgTypeRegularExpression,    "The <variable-name> argument for name lookups are regular expressions."},
 { LLDB_OPT_SET_1, false, "flat",       'f', no_argument,       NULL, 0, eArgTypeNone,    "Display results in a flat format that uses expression paths for each variable or member."},

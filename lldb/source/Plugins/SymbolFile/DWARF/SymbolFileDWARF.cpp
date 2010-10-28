@@ -3709,7 +3709,12 @@ SymbolFileDWARF::ParseVariables
         dw_tag_t tag = die->Tag();
 
         // Check to see if we have already parsed this variable or constant?
-        if (m_die_to_variable_sp[die].get() == NULL)
+        if (m_die_to_variable_sp[die])
+        {
+            if (cc_variable_list)
+                cc_variable_list->AddVariable (m_die_to_variable_sp[die]);
+        }
+        else
         {
             // We haven't already parsed it, lets do that now.
             if ((tag == DW_TAG_variable) ||
@@ -3720,6 +3725,8 @@ SymbolFileDWARF::ParseVariables
                 if (var_sp)
                 {
                     variables->AddVariable(var_sp);
+                    if (cc_variable_list)
+                        cc_variable_list->AddVariable (var_sp);
                     ++vars_added;
                 }
             }
@@ -3729,19 +3736,13 @@ SymbolFileDWARF::ParseVariables
 
         if (!skip_children && parse_children && die->HasChildren())
         {
-            vars_added += ParseVariables(sc, dwarf_cu, func_low_pc, die->GetFirstChild(), true, true);
-            //vars_added += ParseVariables(sc, dwarf_cu, die->GetFirstChild(), parse_siblings, parse_children);
+            vars_added += ParseVariables(sc, dwarf_cu, func_low_pc, die->GetFirstChild(), true, true, cc_variable_list);
         }
 
         if (parse_siblings)
             die = die->GetSibling();
         else
             die = NULL;
-    }
-
-    if (cc_variable_list)
-    {
-        cc_variable_list->AddVariables(variables.get());
     }
 
     return vars_added;
