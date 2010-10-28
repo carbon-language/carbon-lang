@@ -21,4 +21,4 @@ entry:
 ; CORTEXA8: test:
 ; CORTEXA8: 	vmul.f32	d0, d1, d0
 ; CORTEXA9: test:
-; CORTEXA9: 	vmla.f32	s0, s1, s2
+; CORTEXA9: 	vmla.f32	s2, s1, s0

@@ -24,4 +24,4 @@ declare float @fabsf(float)
 ; CORTEXA8: test:
 ; CORTEXA8: 	vabs.f32	d1, d1
 ; CORTEXA9: test:
-; CORTEXA9: 	vabs.f32	s0, s0
+; CORTEXA9: 	vabs.f32	s1, s1

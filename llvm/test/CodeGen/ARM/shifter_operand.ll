@@ -36,8 +36,8 @@ entry:
 
 ; lsl #2 is free
 ; A9: test3:
-; A9: ldr r1, [r1, r2, lsl #2]
 ; A9: ldr r0, [r0, r2, lsl #2]
+; A9: ldr r1, [r1, r2, lsl #2]
         %tmp1 = shl i32 %offset, 2
         %tmp2 = add i32 %base, %tmp1
         %tmp3 = inttoptr i32 %tmp2 to i32*

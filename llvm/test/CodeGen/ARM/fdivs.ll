@@ -20,4 +20,4 @@ entry:
 ; CORTEXA8: test:
 ; CORTEXA8: 	vdiv.f32	s0, s1, s0
 ; CORTEXA9: test:
-; CORTEXA9: 	vdiv.f32	s0, s0, s1
+; CORTEXA9: 	vdiv.f32	s0, s1, s0
