@@ -448,6 +448,12 @@ public:
     UpdatedNamespaces.insert(NS);
   }
 
+  void RewriteDecl(const Decl *D) {
+    DeclsToRewrite.insert(D);
+    // Reset the flag, so that we don't add this decl multiple times.
+    const_cast<Decl *>(D)->setChangedSinceDeserialization(false);
+  }
+
   /// \brief Note that the identifier II occurs at the given offset
   /// within the identifier table.
   void SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset);

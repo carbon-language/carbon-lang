@@ -2395,10 +2395,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     else
       WriteDecl(Context, DOT.getDecl());
   }
-  for (DeclsToRewriteTy::iterator
-         I = DeclsToRewrite.begin(), E = DeclsToRewrite.end(); I != E; ++I) {
-    WriteDecl(Context, const_cast<Decl*>(*I));
-  }
   Stream.ExitBlock();
 
   WritePreprocessor(PP);
@@ -2604,6 +2600,9 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   Stream.EnterSubblock(DECLTYPES_BLOCK_ID, 3);
   WriteDeclsBlockAbbrevs();
+  for (DeclsToRewriteTy::iterator
+         I = DeclsToRewrite.begin(), E = DeclsToRewrite.end(); I != E; ++I)
+    DeclTypesToEmit.push(const_cast<Decl*>(*I));
   while (!DeclTypesToEmit.empty()) {
     DeclOrType DOT = DeclTypesToEmit.front();
     DeclTypesToEmit.pop();
@@ -3287,7 +3286,7 @@ void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
       // A forward reference was mutated into a definition. Rewrite it.
       // FIXME: This happens during template instantiation, should we
       // have created a new definition decl instead ?
-      DeclsToRewrite.insert(RD);
+      RewriteDecl(RD);
     }
 
     for (CXXRecordDecl::redecl_iterator
