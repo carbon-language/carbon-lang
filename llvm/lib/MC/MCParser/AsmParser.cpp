@@ -183,7 +183,7 @@ private:
   bool ParseDirectiveFill(); // ".fill"
   bool ParseDirectiveSpace(); // ".space"
   bool ParseDirectiveZero(); // ".zero"
-  bool ParseDirectiveSet(); // ".set"
+  bool ParseDirectiveSet(StringRef IDVal); // ".set" or ".equ"
   bool ParseDirectiveOrg(); // ".org"
   // ".align{,32}", ".p2align{,w,l}"
   bool ParseDirectiveAlign(bool IsPow2, unsigned ValueSize);
@@ -913,8 +913,8 @@ bool AsmParser::ParseStatement() {
   // Otherwise, we have a normal instruction or directive.
   if (IDVal[0] == '.') {
     // Assembler features
-    if (IDVal == ".set")
-      return ParseDirectiveSet();
+    if (IDVal == ".set" || IDVal == ".equ")
+      return ParseDirectiveSet(IDVal);
 
     // Data directives
 
@@ -1275,14 +1275,14 @@ bool AsmParser::ParseIdentifier(StringRef &Res) {
 
 /// ParseDirectiveSet:
 ///   ::= .set identifier ',' expression
-bool AsmParser::ParseDirectiveSet() {
+bool AsmParser::ParseDirectiveSet(StringRef IDVal) {
   StringRef Name;
 
   if (ParseIdentifier(Name))
-    return TokError("expected identifier after '.set' directive");
+    return TokError("expected identifier after '" + Twine(IDVal.str()) + "'");
 
   if (getLexer().isNot(AsmToken::Comma))
-    return TokError("unexpected token in '.set'");
+    return TokError("unexpected token in '" + Twine(IDVal.str()) + "'");
   Lex();
 
   return ParseAssignment(Name);
