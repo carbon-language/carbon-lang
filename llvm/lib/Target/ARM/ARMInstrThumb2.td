@@ -574,7 +574,7 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
 
 /// T2I_ld - Defines a set of (op r, {imm12|imm8|so_reg}) load patterns.
 multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
-                  InstrItinClass iii, InstrItinClass iis, PatFrag opnode> {
+                  InstrItinClass iii, InstrItinClass iir, PatFrag opnode> {
   def i12 : T2Ii12<(outs GPR:$dst), (ins t2addrmode_imm12:$addr), iii,
                    opc, ".w\t$dst, $addr",
                    [(set GPR:$dst, (opnode t2addrmode_imm12:$addr))]> {
@@ -599,7 +599,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{10} = 1; // The P bit.
     let Inst{8} = 0; // The W bit.
   }
-  def s   : T2Iso <(outs GPR:$dst), (ins t2addrmode_so_reg:$addr), iis,
+  def s   : T2Iso <(outs GPR:$dst), (ins t2addrmode_so_reg:$addr), iir,
                    opc, ".w\t$dst, $addr",
                    [(set GPR:$dst, (opnode t2addrmode_so_reg:$addr))]> {
     let Inst{31-27} = 0b11111;
@@ -626,7 +626,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
 
 /// T2I_st - Defines a set of (op r, {imm12|imm8|so_reg}) store patterns.
 multiclass T2I_st<bits<2> opcod, string opc,
-                  InstrItinClass iii, InstrItinClass iis, PatFrag opnode> {
+                  InstrItinClass iii, InstrItinClass iir, PatFrag opnode> {
   def i12 : T2Ii12<(outs), (ins GPR:$src, t2addrmode_imm12:$addr), iii,
                    opc, ".w\t$src, $addr",
                    [(opnode GPR:$src, t2addrmode_imm12:$addr)]> {
@@ -647,7 +647,7 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{10} = 1; // The P bit.
     let Inst{8} = 0; // The W bit.
   }
-  def s   : T2Iso <(outs), (ins GPR:$src, t2addrmode_so_reg:$addr), iis,
+  def s   : T2Iso <(outs), (ins GPR:$src, t2addrmode_so_reg:$addr), iir,
                    opc, ".w\t$src, $addr",
                    [(opnode GPR:$src, t2addrmode_so_reg:$addr)]> {
     let Inst{31-27} = 0b11111;
@@ -916,19 +916,19 @@ def t2UDIV : T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), IIC_iALUi,
 
 // Load
 let canFoldAsLoad = 1, isReMaterializable = 1  in
-defm t2LDR   : T2I_ld<0, 0b10, "ldr", IIC_iLoad_i, IIC_iLoad_si,
+defm t2LDR   : T2I_ld<0, 0b10, "ldr", IIC_iLoad_i, IIC_iLoad_r,
                       UnOpFrag<(load node:$Src)>>;
 
 // Loads with zero extension
-defm t2LDRH  : T2I_ld<0, 0b01, "ldrh", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
+defm t2LDRH  : T2I_ld<0, 0b01, "ldrh", IIC_iLoad_bh_i, IIC_iLoad_bh_r,
                       UnOpFrag<(zextloadi16 node:$Src)>>;
-defm t2LDRB  : T2I_ld<0, 0b00, "ldrb", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
+defm t2LDRB  : T2I_ld<0, 0b00, "ldrb", IIC_iLoad_bh_i, IIC_iLoad_bh_r,
                       UnOpFrag<(zextloadi8  node:$Src)>>;
 
 // Loads with sign extension
-defm t2LDRSH : T2I_ld<1, 0b01, "ldrsh", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
+defm t2LDRSH : T2I_ld<1, 0b01, "ldrsh", IIC_iLoad_bh_i, IIC_iLoad_bh_r,
                       UnOpFrag<(sextloadi16 node:$Src)>>;
-defm t2LDRSB : T2I_ld<1, 0b00, "ldrsb", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
+defm t2LDRSB : T2I_ld<1, 0b00, "ldrsb", IIC_iLoad_bh_i, IIC_iLoad_bh_r,
                       UnOpFrag<(sextloadi8  node:$Src)>>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
@@ -1070,11 +1070,11 @@ def t2LDRSBT : T2IldT<1, 0b00, "ldrsbt", IIC_iLoad_bh_i>;
 def t2LDRSHT : T2IldT<1, 0b01, "ldrsht", IIC_iLoad_bh_i>;
 
 // Store
-defm t2STR :T2I_st<0b10,"str", IIC_iStore_i, IIC_iStore_si,
+defm t2STR :T2I_st<0b10,"str", IIC_iStore_i, IIC_iStore_r,
                    BinOpFrag<(store node:$LHS, node:$RHS)>>;
-defm t2STRB:T2I_st<0b00,"strb", IIC_iStore_bh_i, IIC_iStore_bh_si,
+defm t2STRB:T2I_st<0b00,"strb", IIC_iStore_bh_i, IIC_iStore_bh_r,
                    BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
-defm t2STRH:T2I_st<0b01,"strh", IIC_iStore_bh_i, IIC_iStore_bh_si,
+defm t2STRH:T2I_st<0b01,"strh", IIC_iStore_bh_i, IIC_iStore_bh_r,
                    BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 // Store doubleword

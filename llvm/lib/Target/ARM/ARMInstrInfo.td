@@ -1438,13 +1438,13 @@ def RFE  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
 // Load
 
 
-defm LDR  : AI_ldr1<0, "ldr", IIC_iLoad_r, IIC_iLoad_si,
+defm LDR  : AI_ldr1<0, "ldr", IIC_iLoad_i, IIC_iLoad_r,
                     UnOpFrag<(load node:$Src)>>;
-defm LDRB : AI_ldr1<1, "ldrb", IIC_iLoad_bh_r, IIC_iLoad_bh_si,
+defm LDRB : AI_ldr1<1, "ldrb", IIC_iLoad_bh_i, IIC_iLoad_bh_r,
                     UnOpFrag<(zextloadi8 node:$Src)>>;
-defm STR  : AI_str1<0, "str", IIC_iStore_r, IIC_iStore_si,
+defm STR  : AI_str1<0, "str", IIC_iStore_i, IIC_iStore_r,
                    BinOpFrag<(store node:$LHS, node:$RHS)>>;
-defm STRB : AI_str1<1, "strb", IIC_iStore_bh_r, IIC_iStore_bh_si,
+defm STRB : AI_str1<1, "strb", IIC_iStore_bh_i, IIC_iStore_bh_r,
                    BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
 
 // Special LDR for loads from non-pc-relative constpools.
