@@ -583,12 +583,12 @@ namespace llvm {
     DIScope getContext() const     { return getFieldAs<DIScope>(1);      }
     StringRef getName() const      { return getStringField(2);           }
     StringRef getDirectory() const  { 
-        DIFile F = getFieldAs<DIFile>(3);
-        return F.getDirectory();
+      DIFile F = getFieldAs<DIFile>(3);
+      return F.getDirectory();
     }
     StringRef getFilename() const  { 
-        DIFile F = getFieldAs<DIFile>(3);
-        return F.getFilename();
+      DIFile F = getFieldAs<DIFile>(3);
+      return F.getFilename();
     }
     DICompileUnit getCompileUnit() const{ 
       if (getVersion() == llvm::LLVMDebugVersion7)
