@@ -1367,3 +1367,22 @@ void r8272168() {
   GetAClassThatImplementsProt_R8272168();
 }
 
+// Test case for <rdar://problem/8356342>, which in the past triggered
+// a false positive.
+@interface RDar8356342
+- (NSDate*) rdar8356342:(NSDate *)inValue;
+@end
+
+@implementation RDar8356342
+- (NSDate*) rdar8356342:(NSDate*)inValue {
+  NSDate *outValue = inValue;
+  if (outValue == 0)
+    outValue = [[NSDate alloc] init]; // no-warning
+
+  if (outValue != inValue)
+    [outValue autorelease];
+
+  return outValue;
+}
+@end
+
