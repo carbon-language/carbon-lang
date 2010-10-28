@@ -93,6 +93,7 @@ static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant) {
   case MCSymbolRefExpr::VK_GOTNTPOFF:
   case MCSymbolRefExpr::VK_TLSLDM:
   case MCSymbolRefExpr::VK_DTPOFF:
+  case MCSymbolRefExpr::VK_TLSLD:
     return true;
   }
 }
@@ -700,6 +701,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         break;
       case MCSymbolRefExpr::VK_TLSGD:
         Type = ELF::R_X86_64_TLSGD;
+        break;
+      case MCSymbolRefExpr::VK_TLSLD:
+        Type = ELF::R_X86_64_TLSLD;
         break;
       }
     } else {

@@ -137,6 +137,7 @@ public:
     VK_GOTNTPOFF,
     VK_PLT,
     VK_TLSGD,
+    VK_TLSLD,
     VK_TLSLDM,
     VK_TPOFF,
     VK_DTPOFF,

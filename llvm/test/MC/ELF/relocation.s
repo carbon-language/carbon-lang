@@ -12,6 +12,7 @@ bar:
         leaq	foo@GOTTPOFF(%rip), %rax # R_X86_64_GOTTPOFF
         leaq	foo@TLSGD(%rip), %rax    # R_X86_64_TLSGD
         leaq	foo@TPOFF(%rax), %rax    # R_X86_64_TPOFF32
+        leaq	foo@TLSLD(%rip), %rdi    # R_X86_64_TLSLD
 
 // CHECK:  # Section 0x00000001
 // CHECK: (('sh_name', 0x00000001) # '.text'
@@ -76,3 +77,9 @@ bar:
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000017)
 // CHECK-NEXT:   ('r_addend', 0x00000000)
+
+// CHECK:  # Relocation 0x00000009
+// CHECK-NEXT:  (('r_offset', 0x00000042)
+// CHECK-NEXT:   ('r_sym', 0x00000006)
+// CHECK-NEXT:   ('r_type', 0x00000014)
+// CHECK-NEXT:   ('r_addend', 0xfffffffc)
