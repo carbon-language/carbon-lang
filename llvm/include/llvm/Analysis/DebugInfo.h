@@ -582,8 +582,14 @@ namespace llvm {
     explicit DINameSpace(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const     { return getFieldAs<DIScope>(1);      }
     StringRef getName() const      { return getStringField(2);           }
-    StringRef getDirectory() const { return getContext().getDirectory(); }
-    StringRef getFilename() const  { return getContext().getFilename();  }
+    StringRef getDirectory() const  { 
+        DIFile F = getFieldAs<DIFile>(3);
+        return F.getDirectory();
+    }
+    StringRef getFilename() const  { 
+        DIFile F = getFieldAs<DIFile>(3);
+        return F.getFilename();
+    }
     DICompileUnit getCompileUnit() const{ 
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getFieldAs<DICompileUnit>(3);
