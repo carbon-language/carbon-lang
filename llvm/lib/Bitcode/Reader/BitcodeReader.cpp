@@ -834,7 +834,8 @@ bool BitcodeReader::ParseMetadata() {
       unsigned Size = Record.size();
       SmallVector<Value*, 8> Elts;
       for (unsigned i = 0; i != Size; i += 2) {
-        const Type *Ty = getTypeByID(Record[i], false);
+        const Type *Ty = getTypeByID(Record[i]);
+        if (!Ty) return Error("Invalid METADATA_NODE2 record");
         if (Ty->isMetadataTy())
           Elts.push_back(MDValueList.getValueFwdRef(Record[i+1]));
         else if (!Ty->isVoidTy())
@@ -1169,7 +1170,8 @@ bool BitcodeReader::ParseConstants() {
     }
     case bitc::CST_CODE_CE_SHUFVEC_EX: { // [opty, opval, opval, opval]
       const VectorType *RTy = dyn_cast<VectorType>(CurTy);
-      const VectorType *OpTy = dyn_cast<VectorType>(getTypeByID(Record[0]));
+      const VectorType *OpTy =
+        dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
       if (Record.size() < 4 || RTy == 0 || OpTy == 0)
         return Error("Invalid CE_SHUFVEC_EX record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
@@ -1425,6 +1427,7 @@ bool BitcodeReader::ParseModule() {
       if (Record.size() < 6)
         return Error("Invalid MODULE_CODE_GLOBALVAR record");
       const Type *Ty = getTypeByID(Record[0]);
+      if (!Ty) return Error("Invalid MODULE_CODE_GLOBALVAR record");
       if (!Ty->isPointerTy())
         return Error("Global not a pointer type!");
       unsigned AddressSpace = cast<PointerType>(Ty)->getAddressSpace();
@@ -1468,6 +1471,7 @@ bool BitcodeReader::ParseModule() {
       if (Record.size() < 8)
         return Error("Invalid MODULE_CODE_FUNCTION record");
       const Type *Ty = getTypeByID(Record[0]);
+      if (!Ty) return Error("Invalid MODULE_CODE_FUNCTION record");
       if (!Ty->isPointerTy())
         return Error("Function not a pointer type!");
       const FunctionType *FTy =
@@ -1509,6 +1513,7 @@ bool BitcodeReader::ParseModule() {
       if (Record.size() < 3)
         return Error("Invalid MODULE_ALIAS record");
       const Type *Ty = getTypeByID(Record[0]);
+      if (!Ty) return Error("Invalid MODULE_ALIAS record");
       if (!Ty->isPointerTy())
         return Error("Function not a pointer type!");
 
