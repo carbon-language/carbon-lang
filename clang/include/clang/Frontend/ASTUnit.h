@@ -27,7 +27,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/System/Path.h"
-#include "llvm/Support/Timer.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -96,6 +95,9 @@ private:
   /// \brief Whether this AST represents a complete translation unit.
   bool CompleteTranslationUnit;
 
+  /// \brief Whether we should time each operation.
+  bool WantTiming;
+  
   /// Track the top-level decls which appeared in an ASTUnit which was loaded
   /// from a source file.
   //
@@ -206,18 +208,9 @@ private:
   /// a precompiled preamble.
   unsigned NumStoredDiagnosticsInPreamble;
 
-  /// \brief The group of timers associated with this translation unit.
-  llvm::OwningPtr<llvm::TimerGroup> TimerGroup;  
-
   /// \brief A list of the serialization ID numbers for each of the top-level
   /// declarations parsed within the precompiled preamble.
   std::vector<serialization::DeclID> TopLevelDeclsInPreamble;
-
-  ///
-  /// \defgroup CodeCompleteCaching Code-completion caching
-  ///
-  /// \{
-  ///
 
   /// \brief Whether we should be caching code-completion results.
   bool ShouldCacheCodeCompletionResults;
@@ -300,14 +293,6 @@ private:
   
   /// \brief Clear out and deallocate 
   void ClearCachedCompletionResults();
-  
-  /// 
-  /// \}
-  ///
-  
-  /// \brief The timers we've created from the various parses, reparses, etc.
-  /// involved in this translation unit.
-  std::vector<llvm::Timer *> Timers;
   
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
@@ -392,6 +377,9 @@ public:
 
   void setLastASTLocation(ASTLocation ALoc) { LastLoc = ALoc; }
   ASTLocation getLastASTLocation() const { return LastLoc; }
+
+
+  llvm::StringRef getMainFileName() const;
 
   typedef std::vector<Decl *>::iterator top_level_iterator;
 

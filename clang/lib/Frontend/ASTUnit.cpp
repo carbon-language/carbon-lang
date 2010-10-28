@@ -44,6 +44,46 @@
 #include <sys/stat.h>
 using namespace clang;
 
+using llvm::TimeRecord;
+
+namespace {
+  class SimpleTimer {
+    bool WantTiming;
+    TimeRecord Start;
+    std::string Output;
+
+  public:    
+    explicit SimpleTimer(bool WantTiming) : WantTiming(true) {
+      Start = TimeRecord::getCurrentTime(); 
+    }
+    
+    void setOutput(llvm::StringRef Output) { 
+      if (WantTiming)
+        this->Output = Output; 
+    }
+
+    void setOutput(llvm::Twine Output) { 
+      if (WantTiming)
+        this->Output = Output.str(); 
+    }
+
+    void setOutput(const char *Output) { 
+      if (WantTiming)
+        this->Output = Output; 
+    }
+    
+    ~SimpleTimer() {
+      if (WantTiming) {
+        TimeRecord Elapsed = TimeRecord::getCurrentTime();
+        Elapsed -= Start;
+        llvm::errs() << Output << ':';
+        Elapsed.print(Elapsed, llvm::errs());
+        llvm::errs() << '\n';
+      }
+    }
+  };
+}
+
 /// \brief After failing to build a precompiled preamble (due to
 /// errors in the source that occurs in the preamble), the number of
 /// reparses during which we'll skip even trying to precompile the
@@ -52,7 +92,8 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
-    CompleteTranslationUnit(true), NumStoredDiagnosticsFromDriver(0),
+    CompleteTranslationUnit(true), WantTiming(getenv("LIBCLANG_TIMING")),
+    NumStoredDiagnosticsFromDriver(0),
     ConcurrencyCheckValue(CheckUnlocked), 
     PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
     ShouldCacheCodeCompletionResults(false),
@@ -84,13 +125,7 @@ ASTUnit::~ASTUnit() {
   delete SavedMainFileBuffer;
   delete PreambleBuffer;
 
-  ClearCachedCompletionResults();
-  
-  if (TimerGroup)
-    TimerGroup->printAll(llvm::errs());
-
-  for (unsigned I = 0, N = Timers.size(); I != N; ++I)
-    delete Timers[I];
+  ClearCachedCompletionResults();  
 }
 
 void ASTUnit::CleanTemporaryFiles() {
@@ -171,13 +206,9 @@ void ASTUnit::CacheCodeCompletionResults() {
   if (!TheSema)
     return;
   
-  llvm::Timer *CachingTimer = 0;
-  if (TimerGroup.get()) {
-    CachingTimer = new llvm::Timer("Cache global code completions", 
-                                   *TimerGroup);
-    CachingTimer->startTimer();
-    Timers.push_back(CachingTimer);
-  }
+  SimpleTimer Timer(WantTiming);
+  if (WantTiming)
+    Timer.setOutput( "Cache global code completions for " + getMainFileName());
 
   // Clear out the previous results.
   ClearCachedCompletionResults();
@@ -303,9 +334,6 @@ void ASTUnit::CacheCodeCompletionResults() {
     Results[I].Destroy();
   }
 
-  if (CachingTimer)
-    CachingTimer->stopTimer();
-  
   // Make a note of the state when we performed this caching.
   NumTopLevelDeclsAtLastCompletionCache = top_level_size();
   CacheCodeCompletionCoolDown = 15;
@@ -1118,12 +1146,9 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   }
   
   // We did not previously compute a preamble, or it can't be reused anyway.
-  llvm::Timer *PreambleTimer = 0;
-  if (TimerGroup.get()) {
-    PreambleTimer = new llvm::Timer("Precompiling preamble", *TimerGroup);
-    PreambleTimer->startTimer();
-    Timers.push_back(PreambleTimer);
-  }
+  SimpleTimer PreambleTimer(WantTiming);
+  if (WantTiming)
+    PreambleTimer.setOutput("Precompiling preamble");
   
   // Create a new buffer that stores the preamble. The buffer also contains
   // extra space for the original contents of the file (which will be present
@@ -1183,8 +1208,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     Preamble.clear();
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
-    if (PreambleTimer)
-      PreambleTimer->stopTimer();
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
     PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
@@ -1228,8 +1251,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     Preamble.clear();
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
-    if (PreambleTimer)
-      PreambleTimer->stopTimer();
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
     PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
@@ -1248,8 +1269,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     Preamble.clear();
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
-    if (PreambleTimer)
-      PreambleTimer->stopTimer();
     TopLevelDeclsInPreamble.clear();
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
     PreprocessorOpts.eraseRemappedFile(
@@ -1279,9 +1298,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     FilesInPreamble[File->getName()]
       = std::make_pair(F->second->getSize(), File->getModificationTime());
   }
-  
-  if (PreambleTimer)
-    PreambleTimer->stopTimer();
   
   PreambleRebuildCounter = 1;
   PreprocessorOpts.eraseRemappedFile(
@@ -1314,6 +1330,10 @@ unsigned ASTUnit::getMaxPCHLevel() const {
   return 0;
 }
 
+llvm::StringRef ASTUnit::getMainFileName() const {
+  return Invocation->getFrontendOpts().Inputs[0].second;
+}
+
 bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   if (!Invocation)
     return true;
@@ -1322,11 +1342,6 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   Invocation->getPreprocessorOpts().RetainRemappedFileBuffers = true;
   Invocation->getFrontendOpts().DisableFree = false;
 
-  if (getenv("LIBCLANG_TIMING"))
-    TimerGroup.reset(
-          new llvm::TimerGroup(Invocation->getFrontendOpts().Inputs[0].second));
-  
-  
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (PrecompilePreamble) {
     PreambleRebuildCounter = 1;
@@ -1334,18 +1349,11 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
       = getMainBufferWithPrecompiledPreamble(*Invocation);
   }
   
-  llvm::Timer *ParsingTimer = 0;
-  if (TimerGroup.get()) {
-    ParsingTimer = new llvm::Timer("Initial parse", *TimerGroup);
-    ParsingTimer->startTimer();
-    Timers.push_back(ParsingTimer);
-  }
+  SimpleTimer ParsingTimer(WantTiming);
+  if (WantTiming)
+    ParsingTimer.setOutput( "Parsing " + getMainFileName());
   
-  bool Failed = Parse(OverrideMainBuffer);
-  if (ParsingTimer)
-    ParsingTimer->stopTimer();
-
-  return Failed;
+  return Parse(OverrideMainBuffer);
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
@@ -1487,13 +1495,10 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   if (!Invocation.get())
     return true;
   
-  llvm::Timer *ReparsingTimer = 0;
-  if (TimerGroup.get()) {
-    ReparsingTimer = new llvm::Timer("Reparse", *TimerGroup);
-    ReparsingTimer->startTimer();
-    Timers.push_back(ReparsingTimer);
-  }
-  
+  SimpleTimer ParsingTimer(WantTiming);
+  if (WantTiming)
+    ParsingTimer.setOutput( "Reparsing " + getMainFileName());
+
   // Remap files.
   PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();
   for (PreprocessorOptions::remapped_file_buffer_iterator 
@@ -1522,8 +1527,6 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);  
-  if (ReparsingTimer)
-    ReparsingTimer->stopTimer();
   
   if (ShouldCacheCodeCompletionResults) {
     if (CacheCodeCompletionCoolDown > 0)
@@ -1778,15 +1781,13 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   if (!Invocation.get())
     return;
 
-  llvm::Timer *CompletionTimer = 0;
-  if (TimerGroup.get()) {
+  SimpleTimer CompletionTimer(WantTiming);
+  if (WantTiming) {
     llvm::SmallString<128> TimerName;
     llvm::raw_svector_ostream TimerNameOut(TimerName);
     TimerNameOut << "Code completion @ " << File << ":" << Line << ":" 
                  << Column;
-    CompletionTimer = new llvm::Timer(TimerNameOut.str(), *TimerGroup);
-    CompletionTimer->startTimer();
-    Timers.push_back(CompletionTimer);
+    CompletionTimer.setOutput(TimerNameOut.str());
   }
 
   CompilerInvocation CCInvocation(*Invocation);
@@ -1914,9 +1915,6 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     Act->EndSourceFile();
   }
 
-  if (CompletionTimer)
-    CompletionTimer->stopTimer();
-  
   // Steal back our resources. 
   Clang.takeFileManager();
   Clang.takeSourceManager();
