@@ -3323,6 +3323,8 @@ void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
 
 void ASTWriter::AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
                                      const ClassTemplateSpecializationDecl *D) {
+  // The specializations set is kept in the canonical template.
+  TD = TD->getCanonicalDecl();
   if (!(D->getPCHLevel() == 0 && TD->getPCHLevel() > 0))
     return; // Not a source specialization added to a template from PCH.
 
