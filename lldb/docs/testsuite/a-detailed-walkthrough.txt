@@ -296,6 +296,11 @@ Ran 6 tests in 8.219s
 
 FAILED (failures=1)
 /Volumes/data/lldb/svn/trunk/test $ ls 2010-10-19-14:10:49.059609
+
+NOTE: This directory name has been changed to not contain the ':' character
+      which is not allowed in windows platforms.  We'll change the ':' to '_'
+      and get rid of the microsecond resolution by modifying the test driver.
+
 TestSettings.SettingsCommandTestCase.test_set_output_path.log
 /Volumes/data/lldb/svn/trunk/test $ 
 
