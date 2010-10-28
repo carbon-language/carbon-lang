@@ -69,7 +69,7 @@ llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context,
 
   if (const RecordDecl *RDecl = dyn_cast<RecordDecl>(Context)) {
     if (!RDecl->isDependentType()) {
-      llvm::DIType Ty = getOrCreateType(CGM.getContext().getTypeDeclType(RDecl), 
+      llvm::DIType Ty = getOrCreateType(CGM.getContext().getTypeDeclType(RDecl),
                                         llvm::DIFile(CompileUnit));
       return llvm::DIDescriptor(Ty);
     }
@@ -100,11 +100,14 @@ llvm::StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
   llvm::raw_svector_ostream OS(MethodName);
   OS << (OMD->isInstanceMethod() ? '-' : '+') << '[';
   const DeclContext *DC = OMD->getDeclContext();
-  if (const ObjCImplementationDecl *OID = dyn_cast<const ObjCImplementationDecl>(DC)) {
+  if (const ObjCImplementationDecl *OID = 
+      dyn_cast<const ObjCImplementationDecl>(DC)) {
      OS << OID->getName();
-  } else if (const ObjCInterfaceDecl *OID = dyn_cast<const ObjCInterfaceDecl>(DC)) {
+  } else if (const ObjCInterfaceDecl *OID = 
+             dyn_cast<const ObjCInterfaceDecl>(DC)) {
       OS << OID->getName();
-  } else if (const ObjCCategoryImplDecl *OCD = dyn_cast<const ObjCCategoryImplDecl>(DC)){
+  } else if (const ObjCCategoryImplDecl *OCD = 
+             dyn_cast<const ObjCCategoryImplDecl>(DC)){
       OS << ((NamedDecl *)OCD)->getIdentifier()->getNameStart() << '(' <<
           OCD->getIdentifier()->getNameStart() << ')';
   }
@@ -270,8 +273,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
     return llvm::DIType();
   case BuiltinType::ObjCClass:
     return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
-                                            Unit, "objc_class", Unit, 0, 0, 0, 0,
-                                            llvm::DIDescriptor::FlagFwdDecl, 
+                                            Unit, "objc_class", Unit, 0, 0, 0,
+                                            0, llvm::DIDescriptor::FlagFwdDecl, 
                                             llvm::DIType(), llvm::DIArray());
   case BuiltinType::ObjCId: {
     // typedef struct objc_class *Class;
@@ -302,8 +305,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
       DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
     
     return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
-                                            Unit, "objc_object", Unit, 0, 0, 0, 0,
-                                            0,
+                                            Unit, "objc_object", Unit, 0, 0, 0,
+                                            0, 0,
                                             llvm::DIType(), Elements);
   }
   case BuiltinType::UChar:
@@ -1596,8 +1599,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
   llvm::DISubprogram SP =
-    DebugFactory.CreateSubprogram(FDContext, Name, Name, LinkageName, Unit, LineNo,
-                                  getOrCreateType(FnType, Unit),
+    DebugFactory.CreateSubprogram(FDContext, Name, Name, LinkageName, Unit,
+                                  LineNo, getOrCreateType(FnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/,
                                   0, 0, llvm::DIType(),
                                   Flags,
