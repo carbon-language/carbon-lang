@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -analyze -analyzer-check-objc-unused-ivars %s -verify
+// RUN: %clang_cc1 -fobjc-nonfragile-abi2 -fblocks -analyze -analyzer-check-objc-unused-ivars %s -verify
 
 //===--- BEGIN: Delta-debugging reduced headers. --------------------------===//
 
@@ -95,4 +95,16 @@ int radar_7254495(RDar7254495 *a) {
 
 @implementation RDar7353683
 @end
+//===----------------------------------------------------------------------===//
+// <rdar://problem/8481311> Unused bitfield ivars trigger cause weird
+// diagnostic: "Instance variable '' in class…"
+//===----------------------------------------------------------------------===//
 
+@interface RDar8481311 {
+@private
+    unsigned bitfield:1; // expected-warning {{Instance variable 'bitfield' in class 'RDar8481311' is never used}}
+}
+@end
+
+@implementation RDar8481311
+@end

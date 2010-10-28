@@ -113,9 +113,11 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
     // (a) aren't private
     // (b) explicitly marked unused
     // (c) are iboutlets
+    // (d) are unnamed bitfields
     if (ID->getAccessControl() != ObjCIvarDecl::Private ||
         ID->getAttr<UnusedAttr>() || ID->getAttr<IBOutletAttr>() ||
-        ID->getAttr<IBOutletCollectionAttr>())
+        ID->getAttr<IBOutletCollectionAttr>() ||
+        ID->isUnnamedBitfield())
       continue;
 
     M[ID] = Unused;
