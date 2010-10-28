@@ -6346,9 +6346,10 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
   // FIXME: implement canonicalizations from DAG.getVectorShuffle()
 
-  // If it is a splat, check if the argument vector is a build_vector with
-  // all scalar elements the same.
-  if (cast<ShuffleVectorSDNode>(N)->isSplat()) {
+  // If it is a splat, check if the argument vector is another splat or a
+  // build_vector with all scalar elements the same.
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
+  if (SVN->isSplat() && SVN->getSplatIndex() < (int)NumElts) {
     SDNode *V = N0.getNode();
 
     // If this is a bit convert that changes the element type of the vector but
@@ -6361,31 +6362,34 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         V = ConvInput.getNode();
     }
 
+    // Fold a splat of a splat.
+    ShuffleVectorSDNode *SVV = dyn_cast<ShuffleVectorSDNode>(V);
+    if (SVV && SVV->isSplat())
+      return N0;
+
     if (V->getOpcode() == ISD::BUILD_VECTOR) {
-      unsigned NumElems = V->getNumOperands();
-      unsigned BaseIdx = cast<ShuffleVectorSDNode>(N)->getSplatIndex();
-      if (NumElems > BaseIdx) {
-        SDValue Base;
-        bool AllSame = true;
-        for (unsigned i = 0; i != NumElems; ++i) {
-          if (V->getOperand(i).getOpcode() != ISD::UNDEF) {
-            Base = V->getOperand(i);
-            break;
-          }
+      assert(V->getNumOperands() == NumElts &&
+             "BUILD_VECTOR has wrong number of operands");
+      SDValue Base;
+      bool AllSame = true;
+      for (unsigned i = 0; i != NumElts; ++i) {
+        if (V->getOperand(i).getOpcode() != ISD::UNDEF) {
+          Base = V->getOperand(i);
+          break;
         }
-        // Splat of <u, u, u, u>, return <u, u, u, u>
-        if (!Base.getNode())
-          return N0;
-        for (unsigned i = 0; i != NumElems; ++i) {
-          if (V->getOperand(i) != Base) {
-            AllSame = false;
-            break;
-          }
-        }
-        // Splat of <x, x, x, x>, return <x, x, x, x>
-        if (AllSame)
-          return N0;
       }
+      // Splat of <u, u, u, u>, return <u, u, u, u>
+      if (!Base.getNode())
+        return N0;
+      for (unsigned i = 0; i != NumElts; ++i) {
+        if (V->getOperand(i) != Base) {
+          AllSame = false;
+          break;
+        }
+      }
+      // Splat of <x, x, x, x>, return <x, x, x, x>
+      if (AllSame)
+        return N0;
     }
   }
   return SDValue();
