@@ -52,7 +52,7 @@ private:
 
   ARMOperand *MaybeParseRegister(bool ParseWriteBack);
 
-  bool ParseRegisterList(OwningPtr<ARMOperand> &Op);
+  ARMOperand *ParseRegisterList();
 
   bool ParseMemory(OwningPtr<ARMOperand> &Op);
 
@@ -383,9 +383,9 @@ ARMOperand *ARMAsmParser::MaybeParseRegister(bool ParseWriteBack) {
   return ARMOperand::CreateReg(RegNum, Writeback, S, E);
 }
 
-/// Parse a register list, return false if successful else return true or an 
-/// error.  The first token must be a '{' when called.
-bool ARMAsmParser::ParseRegisterList(OwningPtr<ARMOperand> &Op) {
+/// Parse a register list, return it if successful else return null.  The first
+/// token must be a '{' when called.
+ARMOperand *ARMAsmParser::ParseRegisterList() {
   SMLoc S, E;
   assert(Parser.getTok().is(AsmToken::LCurly) &&
          "Token is not an Left Curly Brace");
@@ -394,11 +394,16 @@ bool ARMAsmParser::ParseRegisterList(OwningPtr<ARMOperand> &Op) {
 
   const AsmToken &RegTok = Parser.getTok();
   SMLoc RegLoc = RegTok.getLoc();
-  if (RegTok.isNot(AsmToken::Identifier))
-    return Error(RegLoc, "register expected");
+  if (RegTok.isNot(AsmToken::Identifier)) {
+    Error(RegLoc, "register expected");
+    return 0;
+  }
   int RegNum = MatchRegisterName(RegTok.getString());
-  if (RegNum == -1)
-    return Error(RegLoc, "register expected");
+  if (RegNum == -1) {
+    Error(RegLoc, "register expected");
+    return 0;
+  }
+  
   Parser.Lex(); // Eat identifier token.
   unsigned RegList = 1 << RegNum;
 
@@ -409,11 +414,15 @@ bool ARMAsmParser::ParseRegisterList(OwningPtr<ARMOperand> &Op) {
 
     const AsmToken &RegTok = Parser.getTok();
     SMLoc RegLoc = RegTok.getLoc();
-    if (RegTok.isNot(AsmToken::Identifier))
-      return Error(RegLoc, "register expected");
+    if (RegTok.isNot(AsmToken::Identifier)) {
+      Error(RegLoc, "register expected");
+      return 0;
+    }
     int RegNum = MatchRegisterName(RegTok.getString());
-    if (RegNum == -1)
-      return Error(RegLoc, "register expected");
+    if (RegNum == -1) {
+      Error(RegLoc, "register expected");
+      return 0;
+    }
 
     if (RegList & (1 << RegNum))
       Warning(RegLoc, "register duplicated in register list");
@@ -425,12 +434,16 @@ bool ARMAsmParser::ParseRegisterList(OwningPtr<ARMOperand> &Op) {
     Parser.Lex(); // Eat identifier token.
   }
   const AsmToken &RCurlyTok = Parser.getTok();
-  if (RCurlyTok.isNot(AsmToken::RCurly))
-    return Error(RCurlyTok.getLoc(), "'}' expected");
+  if (RCurlyTok.isNot(AsmToken::RCurly)) {
+    Error(RCurlyTok.getLoc(), "'}' expected");
+    return 0;
+  }
   E = RCurlyTok.getLoc();
   Parser.Lex(); // Eat left curly brace token.
 
-  return false;
+  // FIXME: Need to return an operand!
+  Error(E, "FIXME: register list parsing not implemented");
+  return 0;
 }
 
 /// Parse an arm memory expression, return false if successful else return true
@@ -654,7 +667,8 @@ bool ARMAsmParser::ParseOperand(OwningPtr<ARMOperand> &Op) {
   case AsmToken::LBrac:
     return ParseMemory(Op);
   case AsmToken::LCurly:
-    return ParseRegisterList(Op);
+    Op.reset(ParseRegisterList());
+    return Op.get() == 0;
   case AsmToken::Hash:
     // #42 -> immediate.
     // TODO: ":lower16:" and ":upper16:" modifiers after # before immediate
