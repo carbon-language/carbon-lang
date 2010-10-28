@@ -908,6 +908,11 @@ void MachineVerifier::verifyLiveIntervals() {
     if (MRI->use_empty(LI.reg))
       continue;
 
+    // Physical registers have much weirdness going on, mostly from coalescing.
+    // We should probably fix it, but for now just ignore them.
+    if (TargetRegisterInfo::isPhysicalRegister(LI.reg))
+      continue;
+
     assert(LVI->first == LI.reg && "Invalid reg to interval mapping");
 
     for (LiveInterval::const_vni_iterator I = LI.vni_begin(), E = LI.vni_end();
