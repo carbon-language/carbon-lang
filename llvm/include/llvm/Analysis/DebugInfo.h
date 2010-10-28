@@ -271,8 +271,14 @@ namespace llvm {
     bool isValid() const {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
     }
-    StringRef getFilename() const    { return getCompileUnit().getFilename();}
-    StringRef getDirectory() const   { return getCompileUnit().getDirectory();}
+    StringRef getDirectory() const  { 
+      DIFile F = getFieldAs<DIFile>(3);
+      return F.getDirectory();
+    }
+    StringRef getFilename() const  { 
+      DIFile F = getFieldAs<DIFile>(3);
+      return F.getFilename();
+    }
 
     /// replaceAllUsesWith - Replace all uses of debug info referenced by
     /// this descriptor.
