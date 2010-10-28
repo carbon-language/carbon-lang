@@ -372,6 +372,9 @@ CommandObjectBreakpointSet::Execute
                             output_stream.Printf ("Breakpoint created: ");
                             bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
                             output_stream.EOL();
+                            if (bp->GetNumLocations() == 0)
+                                output_stream.Printf ("WARNING:  Unable to resolve breakpoint to any actual"
+                                                      " locations.\n");
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
@@ -416,6 +419,9 @@ CommandObjectBreakpointSet::Execute
                             output_stream.Printf ("Breakpoint created: ");
                             bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
                             output_stream.EOL();
+                            if (bp->GetNumLocations() == 0)
+                                output_stream.Printf ("WARNING:  Unable to resolve breakpoint to any actual"
+                                                      " locations.\n");
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
@@ -446,6 +452,9 @@ CommandObjectBreakpointSet::Execute
                             output_stream.Printf ("Breakpoint created: ");
                             bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
                             output_stream.EOL();
+                            if (bp->GetNumLocations() == 0)
+                                output_stream.Printf ("WARNING:  Unable to resolve breakpoint to any actual"
+                                                      " locations.\n");
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
@@ -490,6 +499,8 @@ CommandObjectBreakpointSet::Execute
         output_stream.Printf ("Breakpoint created: ");
         bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
         output_stream.EOL();
+        if (bp->GetNumLocations() == 0)
+            output_stream.Printf ("WARNING:  Unable to resolve breakpoint to any actual locations.\n");
         result.SetStatus (eReturnStatusSuccessFinishResult);
     }
     else if (!bp)
