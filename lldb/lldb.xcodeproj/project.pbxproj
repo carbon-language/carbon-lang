@@ -50,7 +50,7 @@
 		2668022F115FD19D008E1FE4 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
 		26680230115FD19E008E1FE4 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
 		26680231115FD1A0008E1FE4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 260C876910F538E700BB2B04 /* Foundation.framework */; };
-		26680232115FD1A4008E1FE4 /* libpython2.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython2.6.dylib */; };
+		26680232115FD1A4008E1FE4 /* libpython.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython.dylib */; };
 		26680233115FD1A7008E1FE4 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26680324116005D9008E1FE4 /* SBThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9831091125FC5800A56CB0 /* SBThread.cpp */; };
 		26680326116005DB008E1FE4 /* SBTarget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9831071125FC5800A56CB0 /* SBTarget.cpp */; };
@@ -319,7 +319,7 @@
 		26DE20651161904E00A093E2 /* SBSymbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20641161904E00A093E2 /* SBSymbol.cpp */; };
 		26F5C27710F3D9E4009D5894 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27310F3D9E4009D5894 /* Driver.cpp */; };
 		26F5C27810F3D9E4009D5894 /* IOChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27510F3D9E4009D5894 /* IOChannel.cpp */; };
-		26F5C32510F3DF23009D5894 /* libpython2.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython2.6.dylib */; };
+		26F5C32510F3DF23009D5894 /* libpython.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython.dylib */; };
 		26F5C32C10F3DFDD009D5894 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32A10F3DFDD009D5894 /* libedit.dylib */; };
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
@@ -938,7 +938,7 @@
 		26F5C27410F3D9E4009D5894 /* Driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Driver.h; path = tools/driver/Driver.h; sourceTree = "<group>"; };
 		26F5C27510F3D9E4009D5894 /* IOChannel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IOChannel.cpp; path = tools/driver/IOChannel.cpp; sourceTree = "<group>"; };
 		26F5C27610F3D9E4009D5894 /* IOChannel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IOChannel.h; path = tools/driver/IOChannel.h; sourceTree = "<group>"; };
-		26F5C32410F3DF23009D5894 /* libpython2.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpython2.6.dylib; path = /usr/lib/libpython2.6.dylib; sourceTree = "<absolute>"; };
+		26F5C32410F3DF23009D5894 /* libpython.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpython.dylib; path = /usr/lib/libpython.dylib; sourceTree = "<absolute>"; };
 		26F5C32A10F3DFDD009D5894 /* libedit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libedit.dylib; path = /usr/lib/libedit.dylib; sourceTree = "<absolute>"; };
 		26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libtermcap.dylib; path = /usr/lib/libtermcap.dylib; sourceTree = "<absolute>"; };
 		26F5C37410F3F61B009D5894 /* libobjc.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libobjc.dylib; path = /usr/lib/libobjc.dylib; sourceTree = "<absolute>"; };
@@ -1154,7 +1154,7 @@
 				2668022F115FD19D008E1FE4 /* CoreFoundation.framework in Frameworks */,
 				26680230115FD19E008E1FE4 /* DebugSymbols.framework in Frameworks */,
 				26680231115FD1A0008E1FE4 /* Foundation.framework in Frameworks */,
-				26680232115FD1A4008E1FE4 /* libpython2.6.dylib in Frameworks */,
+				26680232115FD1A4008E1FE4 /* libpython.dylib in Frameworks */,
 				26680233115FD1A7008E1FE4 /* libobjc.dylib in Frameworks */,
 				4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */,
 			);
@@ -1164,7 +1164,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				26F5C32510F3DF23009D5894 /* libpython2.6.dylib in Frameworks */,
+				26F5C32510F3DF23009D5894 /* libpython.dylib in Frameworks */,
 				26F5C32C10F3DFDD009D5894 /* libedit.dylib in Frameworks */,
 				26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */,
 				26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */,
@@ -2176,7 +2176,7 @@
 				260C876910F538E700BB2B04 /* Foundation.framework */,
 				26F5C32A10F3DFDD009D5894 /* libedit.dylib */,
 				26F5C37410F3F61B009D5894 /* libobjc.dylib */,
-				26F5C32410F3DF23009D5894 /* libpython2.6.dylib */,
+				26F5C32410F3DF23009D5894 /* libpython.dylib */,
 				26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */,
 				4C74CB6212288704006A8171 /* Carbon.framework */,
 			);
@@ -3076,7 +3076,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
@@ -3129,7 +3129,7 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
@@ -3201,7 +3201,7 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
@@ -3240,7 +3240,7 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
@@ -3291,7 +3291,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
@@ -3331,7 +3331,7 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";

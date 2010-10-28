@@ -7,11 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// In order to guarantee correct working with Python, Python.h *MUST* be
-// the *FIRST* header file included:
-
-#include <Python.h>
-
 #include "lldb/API/SBBreakpointLocation.h"
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBDebugger.h"

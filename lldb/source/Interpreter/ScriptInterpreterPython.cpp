@@ -10,7 +10,11 @@
 // In order to guarantee correct working with Python, Python.h *MUST* be
 // the *FIRST* header file included:
 
+#if defined (__APPLE__)
+#include <Python/Python.h>
+#else
 #include <Python.h>
+#endif
 
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 

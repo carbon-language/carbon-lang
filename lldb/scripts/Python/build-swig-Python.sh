@@ -179,3 +179,14 @@ if [ -f "${current_dir}/append-debugger-id.py" ]
 then
     python ${current_dir}/append-debugger-id.py ${CONFIG_BUILD_DIR}
 fi
+
+# Fix the "#include" statement in the swig output file
+
+if [ -f "${current_dir}/edit-swig-python-wrapper-file.py" ]
+then
+    python ${current_dir}/edit-swig-python-wrapper-file.py
+    if [ -f "${swig_output_file}.edited" ]
+    then
+        mv "${swig_output_file}.edited" ${swig_output_file}
+    fi
+fi

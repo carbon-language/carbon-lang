@@ -3,17 +3,28 @@
 #
 # This script performs some post-processing editing on the C++ file that
 # SWIG generates for python, after running on 'lldb.swig'.   In
-# particular, the types SWIGTYPE_p_SBThread and SWIGTYPE_p_SBTarget are
-# being used, when the types that *should* be used are 
-# SWIGTYPE_p_lldb__SBThread and SWIGTYPE_p_lldb__SBTarget.
-# This script goes through the C++ file SWIG generated, reading it in line
-# by line and doing a search-and-replace for these strings.
+# particular, on Apple systems we want to include the Python.h file that
+# is used in the /System/Library/Frameworks/Python.framework, but on other
+# systems we want to include plain <Python.h>.  So we need to replace:
+#
+# #include <Python.h>
+#
+# with:
+#
+# #if defined (__APPLE__)
+# #include <Python/Python.h>
+# #else
+# #include <Python.h>
+# #endif
+#
+# That's what this python script does.
 #
 
 
 import os
 
-full_input_name = os.environ["SCRIPT_INPUT_FILE_1"];
+input_dir_name = os.environ["SRCROOT"]
+full_input_name = input_dir_name + "/source/LLDBWrapPython.cpp"
 full_output_name = full_input_name + ".edited"
 
 try:
@@ -26,8 +37,7 @@ else:
     except IOError:
         print "Error:  Unable to open file for writing: " + full_output_name
     else:
-        target_typedef_found = False
-        thread_typedef_found = False
+        include_line_found = False
 
         try:
             line = f_in.readline()
@@ -37,15 +47,18 @@ else:
             while line:
                 #
                 #
-                if (line.find ("SWIGTYPE_p_SBTarget")):
-                    if (line.find ("define") < 0):
-                        line = line.replace ("SWIGTYPE_p_SBTarget", 
-                                             "SWIGTYPE_p_lldb__SBTarget")
-                if (line.find ("SWIGTYPE_p_SBThread")):
-                    if (line.find ("define") < 0):
-                        line = line.replace ("SWIGTYPE_p_SBThread", 
-                                             "SWIGTYPE_p_lldb__SBThread")
-                f_out.write (line)
+                if not include_line_found:
+                    if (line.find ("#include <Python.h>") == 0):
+                        f_out.write ("#if defined (__APPLE__)\n");
+                        f_out.write ("#include <Python/Python.h>\n");
+                        f_out.write ("#else\n");
+                        f_out.write (line);
+                        f_out.write ("#endif\n");
+                        include_line_found = True
+                    else:
+                        f_out.write (line)
+                else:
+                    f_out.write (line)
                 try:
                     line = f_in.readline()
                 except IOError:
