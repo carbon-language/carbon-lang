@@ -133,7 +133,7 @@ int test8(int x) {
 void test9(int n, void *P) {
   int Y;
   int Z = 4;
-  goto *P;  // expected-warning {{indirect goto might cross protected scopes}}
+  goto *P;  // expected-error {{indirect goto might cross protected scopes}}
 
 L2: ;
   int a[n]; // expected-note {{jump bypasses initialization of variable length array}}
@@ -198,4 +198,34 @@ void test13(int n, void *p) {
   goto *p;
  a0: ;
   static void *ps[] = { &&a0 };
+}
+
+int test14(int n) {
+  static void *ps[] = { &&a0, &&a1 };
+  if (n < 0)
+    goto *&&a0;
+
+  if (n > 0) {
+    int vla[n];
+   a1:
+    vla[n-1] = 0;
+  }
+ a0:
+  return 0;
+}
+
+
+// PR8473: IR gen can't deal with indirect gotos past VLA
+// initialization, so that really needs to be a hard error.
+void test15(int n, void *pc) {
+  static const void *addrs[] = { &&L1, &&L2 };
+
+  goto *pc; // expected-error {{indirect goto might cross protected scope}}
+
+ L1:
+  {
+    char vla[n]; // expected-note {{jump bypasses initialization}}
+   L2: // expected-note {{possible target}}
+    vla[0] = 'a';
+  }
 }

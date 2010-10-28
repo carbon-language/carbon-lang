@@ -1005,9 +1005,16 @@ public:
   void setStarLoc(SourceLocation L) { StarLoc = L; }
   SourceLocation getStarLoc() const { return StarLoc; }
 
-  Expr *getTarget();
-  const Expr *getTarget() const;
+  Expr *getTarget() { return reinterpret_cast<Expr*>(Target); }
+  const Expr *getTarget() const {return reinterpret_cast<const Expr*>(Target);}
   void setTarget(Expr *E) { Target = reinterpret_cast<Stmt*>(E); }
+
+  /// getConstantTarget - Returns the fixed target of this indirect
+  /// goto, if one exists.
+  LabelStmt *getConstantTarget();
+  const LabelStmt *getConstantTarget() const {
+    return const_cast<IndirectGotoStmt*>(this)->getConstantTarget();
+  }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(GotoLoc, Target->getLocEnd());

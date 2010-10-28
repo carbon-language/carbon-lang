@@ -1980,9 +1980,8 @@ def err_switch_into_protected_scope : Error<
   "switch case is in protected scope">;
 def err_indirect_goto_without_addrlabel : Error<
   "indirect goto in function with no address-of-label expressions">;
-def warn_indirect_goto_in_protected_scope : Warning<
-  "indirect goto might cross protected scopes">,
-  InGroup<DiagGroup<"label-address-scope">>;
+def err_indirect_goto_in_protected_scope : Error<
+  "indirect goto might cross protected scopes">;
 def note_indirect_goto_target : Note<"possible target of indirect goto">;
 def note_protected_by_variable_init : Note<
   "jump bypasses variable initialization">;

@@ -297,6 +297,11 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
 
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
+  if (const LabelStmt *Target = S.getConstantTarget()) {
+    EmitBranchThroughCleanup(getJumpDestForLabel(Target));
+    return;
+  }
+
   // Ensure that we have an i8* for our PHI node.
   llvm::Value *V = Builder.CreateBitCast(EmitScalarExpr(S.getTarget()),
                                          llvm::Type::getInt8PtrTy(VMContext),

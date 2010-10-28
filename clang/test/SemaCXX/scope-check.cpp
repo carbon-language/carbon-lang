@@ -66,7 +66,7 @@ namespace test4 {
 
     C c0;
 
-    goto *ip; // expected-warning {{indirect goto might cross protected scopes}}
+    goto *ip; // expected-error {{indirect goto might cross protected scopes}}
     C c1; // expected-note {{jump bypasses variable initialization}}
   lbl1: // expected-note {{possible target of indirect goto}}
     return 0;
@@ -90,7 +90,7 @@ namespace test5 {
     if (ip[1]) {
       D d; // expected-note {{jump exits scope of variable with non-trivial destructor}}
       ip += 2;
-      goto *ip; // expected-warning {{indirect goto might cross protected scopes}}
+      goto *ip; // expected-error {{indirect goto might cross protected scopes}}
     }
     return 1;
   }

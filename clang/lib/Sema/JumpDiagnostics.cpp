@@ -186,6 +186,17 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     break;
 
   case Stmt::IndirectGotoStmtClass:
+    // "goto *&&lbl;" is a special case which we treat as equivalent
+    // to a normal goto.  In addition, we don't calculate scope in the
+    // operand (to avoid recording the address-of-label use), which
+    // works only because of the restricted set of expressions which
+    // we detect as constant targets.
+    if (cast<IndirectGotoStmt>(S)->getConstantTarget()) {
+      LabelAndGotoScopes[S] = ParentScope;
+      Jumps.push_back(S);
+      return;
+    }
+
     LabelAndGotoScopes[S] = ParentScope;
     IndirectJumps.push_back(cast<IndirectGotoStmt>(S));
     break;
@@ -337,6 +348,14 @@ void JumpScopeChecker::VerifyJumps() {
     // With a goto,
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
       CheckJump(GS, GS->getLabel(), GS->getGotoLoc(),
+                diag::err_goto_into_protected_scope);
+      continue;
+    }
+
+    // We only get indirect gotos here when they have a constant target.
+    if (IndirectGotoStmt *IGS = dyn_cast<IndirectGotoStmt>(Jump)) {
+      LabelStmt *Target = IGS->getConstantTarget();
+      CheckJump(IGS, Target, IGS->getGotoLoc(),
                 diag::err_goto_into_protected_scope);
       continue;
     }
@@ -497,7 +516,7 @@ void JumpScopeChecker::DiagnoseIndirectJump(IndirectGotoStmt *Jump,
                                             unsigned TargetScope) {
   assert(JumpScope != TargetScope);
 
-  S.Diag(Jump->getGotoLoc(), diag::warn_indirect_goto_in_protected_scope);
+  S.Diag(Jump->getGotoLoc(), diag::err_indirect_goto_in_protected_scope);
   S.Diag(Target->getIdentLoc(), diag::note_indirect_goto_target);
 
   unsigned Common = GetDeepestCommonScope(JumpScope, TargetScope);

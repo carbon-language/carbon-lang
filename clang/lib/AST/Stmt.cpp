@@ -669,8 +669,12 @@ Stmt::child_iterator GotoStmt::child_begin() { return child_iterator(); }
 Stmt::child_iterator GotoStmt::child_end() { return child_iterator(); }
 
 // IndirectGotoStmt
-Expr* IndirectGotoStmt::getTarget() { return cast<Expr>(Target); }
-const Expr* IndirectGotoStmt::getTarget() const { return cast<Expr>(Target); }
+LabelStmt *IndirectGotoStmt::getConstantTarget() {
+  if (AddrLabelExpr *E =
+        dyn_cast<AddrLabelExpr>(getTarget()->IgnoreParenImpCasts()))
+    return E->getLabel();
+  return 0;
+}
 
 Stmt::child_iterator IndirectGotoStmt::child_begin() { return &Target; }
 Stmt::child_iterator IndirectGotoStmt::child_end() { return &Target+1; }
