@@ -638,7 +638,7 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
   if (Writer.hasChain() && !D->isOriginalNamespace() &&
       D->getOriginalNamespace()->getPCHLevel() > 0) {
     NamespaceDecl *NS = D->getOriginalNamespace();
-    Writer.AddUpdatedNamespace(NS);
+    Writer.AddUpdatedDeclContext(NS);
 
     // Make sure all visible decls are written. They will be recorded later.
     NS->lookup(DeclarationName());

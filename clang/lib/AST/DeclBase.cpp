@@ -24,6 +24,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -952,6 +953,12 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
   // parent context, too. This operation is recursive.
   if (isTransparentContext() || isInlineNamespace())
     getParent()->makeDeclVisibleInContext(D, Recoverable);
+
+  Decl *DCAsDecl = cast<Decl>(this);
+  // Notify that a decl was made visible unless it's a Tag being defined. 
+  if (!(isa<TagDecl>(DCAsDecl) && cast<TagDecl>(DCAsDecl)->isBeingDefined()))
+    if (ASTMutationListener *L = DCAsDecl->getASTMutationListener())
+      L->AddedVisibleDecl(this, D);
 }
 
 void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {

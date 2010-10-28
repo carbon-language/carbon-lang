@@ -30,6 +30,9 @@ public:
   /// \brief A new TagDecl definition was completed.
   virtual void CompletedTagDefinition(const TagDecl *D) { }
 
+  /// \brief A new declaration with name has been added to a DeclContext.
+  virtual void AddedVisibleDecl(const DeclContext *DC, const Decl *D) {}
+
   /// \brief An implicit member was added after the definition was completed.
   virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {}
 

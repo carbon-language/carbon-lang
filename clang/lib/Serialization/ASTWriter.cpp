@@ -2139,9 +2139,6 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
 /// DeclContext in a dependent AST file. As such, they only exist for the TU
 /// (in C++) and for namespaces.
 void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
-  assert((DC->isTranslationUnit() || DC->isNamespace()) &&
-         "Only TU and namespaces should have visible decl updates.");
-
   // Make the context build its lookup table, but don't make it load external
   // decls.
   DC->lookup(DeclarationName());
@@ -2496,16 +2493,14 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.EmitRecordWithBlob(TuUpdateLexicalAbbrev, Record,
                           reinterpret_cast<const char*>(NewGlobalDecls.data()),
                           NewGlobalDecls.size() * sizeof(KindDeclIDPair));
-  // And in C++, a visible updates block for the TU.
-  if (Context.getLangOptions().CPlusPlus) {
-    Abv = new llvm::BitCodeAbbrev();
-    Abv->Add(llvm::BitCodeAbbrevOp(UPDATE_VISIBLE));
-    Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::VBR, 6));
-    Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Fixed, 32));
-    Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Blob));
-    UpdateVisibleAbbrev = Stream.EmitAbbrev(Abv);
-    WriteDeclContextVisibleUpdate(TU);
-  }
+  // And a visible updates block for the DeclContexts.
+  Abv = new llvm::BitCodeAbbrev();
+  Abv->Add(llvm::BitCodeAbbrevOp(UPDATE_VISIBLE));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::VBR, 6));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Fixed, 32));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Blob));
+  UpdateVisibleAbbrev = Stream.EmitAbbrev(Abv);
+  WriteDeclContextVisibleUpdate(TU);
 
   // Build a record containing all of the new tentative definitions in this
   // file, in TentativeDefinitions order.
@@ -2674,10 +2669,10 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!SemaDeclRefs.empty())
     Stream.EmitRecord(SEMA_DECL_REFS, SemaDeclRefs);
 
-  // Write the updates to C++ namespaces.
-  for (llvm::SmallPtrSet<const NamespaceDecl *, 16>::iterator
-           I = UpdatedNamespaces.begin(),
-           E = UpdatedNamespaces.end();
+  // Write the updates to DeclContexts.
+  for (llvm::SmallPtrSet<const DeclContext *, 16>::iterator
+           I = UpdatedDeclContexts.begin(),
+           E = UpdatedDeclContexts.end();
          I != E; ++I)
     WriteDeclContextVisibleUpdate(*I);
 
@@ -3305,6 +3300,16 @@ void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
       }
     }
   }
+}
+void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
+  // TU and namespaces are handled elsewhere.
+  if (isa<TranslationUnitDecl>(DC) || isa<NamespaceDecl>(DC))
+    return;
+
+  if (!(D->getPCHLevel() == 0 && cast<Decl>(DC)->getPCHLevel() > 0))
+    return; // Not a source decl added to a DeclContext from PCH.
+
+  AddUpdatedDeclContext(DC);
 }
 
 void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {

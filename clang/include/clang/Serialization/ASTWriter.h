@@ -215,13 +215,13 @@ private:
   /// record.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
-  /// \brief Namespaces that have received extensions since their serialized
+  /// \brief DeclContexts that have received extensions since their serialized
   /// form.
   ///
-  /// Basically, when we're chaining and encountering a namespace, we check if
+  /// For namespaces, when we're chaining and encountering a namespace, we check if
   /// its primary namespace comes from the chain. If it does, we add the primary
   /// to this set, so that we can write out lexical content updates for it.
-  llvm::SmallPtrSet<const NamespaceDecl *, 16> UpdatedNamespaces;
+  llvm::SmallPtrSet<const DeclContext *, 16> UpdatedDeclContexts;
 
   typedef llvm::SmallPtrSet<const Decl *, 16> DeclsToRewriteTy;
   /// \brief Decls that will be replaced in the current dependent AST file.
@@ -443,9 +443,9 @@ public:
   /// \brief Add a string to the given record.
   void AddString(llvm::StringRef Str, RecordDataImpl &Record);
 
-  /// \brief Mark a namespace as needing an update.
-  void AddUpdatedNamespace(const NamespaceDecl *NS) {
-    UpdatedNamespaces.insert(NS);
+  /// \brief Mark a declaration context as needing an update.
+  void AddUpdatedDeclContext(const DeclContext *DC) {
+    UpdatedDeclContexts.insert(DC);
   }
 
   void RewriteDecl(const Decl *D) {
@@ -502,6 +502,7 @@ public:
 
   // ASTMutationListener implementation.
   virtual void CompletedTagDefinition(const TagDecl *D);
+  virtual void AddedVisibleDecl(const DeclContext *DC, const Decl *D);
   virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D);
   virtual void AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
                                     const ClassTemplateSpecializationDecl *D);
