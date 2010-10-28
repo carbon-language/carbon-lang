@@ -1553,20 +1553,6 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
       }
     }
   }
-
-  // If this is a template, read additional specializations that may be in a
-  // different part of the chain.
-  if (isa<RedeclarableTemplateDecl>(D)) {
-    AdditionalTemplateSpecializationsMap::iterator F =
-        AdditionalTemplateSpecializationsPending.find(ID);
-    if (F != AdditionalTemplateSpecializationsPending.end()) {
-      for (AdditionalTemplateSpecializations::iterator I = F->second.begin(),
-                                                       E = F->second.end();
-           I != E; ++I)
-        GetDecl(*I);
-      AdditionalTemplateSpecializationsPending.erase(F);
-    }
-  }
   assert(Idx == Record.size());
 
   // The declaration may have been modified by files later in the chain.
@@ -1617,6 +1603,10 @@ void ASTDeclReader::UpdateDecl(Decl *D, const RecordData &Record) {
     case UPD_CXX_ADDED_IMPLICIT_MEMBER:
       cast<CXXRecordDecl>(D)->addedMember(Reader.GetDecl(Record[Idx++]));
       break;
+
+    case UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION:
+      // It will be added to the template's specializations set when loaded.
+      Reader.GetDecl(Record[Idx++]);
     }
   }
 }

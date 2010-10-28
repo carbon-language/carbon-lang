@@ -14,9 +14,11 @@
 #define LLVM_CLANG_AST_ASTMUTATIONLISTENER_H
 
 namespace clang {
+  class Decl;
   class TagDecl;
   class CXXRecordDecl;
-  class CXXMethodDecl;
+  class ClassTemplateDecl;
+  class ClassTemplateSpecializationDecl;
 
 /// \brief An abstract interface that should be implemented by listeners
 /// that want to be notified when an AST entity gets modified after its
@@ -30,6 +32,11 @@ public:
 
   /// \brief An implicit member was added after the definition was completed.
   virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {}
+
+  /// \brief A template specialization (or partial one) was added to the
+  /// template declaration.
+  virtual void AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
+                                    const ClassTemplateSpecializationDecl *D) {}
 };
 
 } // end namespace clang

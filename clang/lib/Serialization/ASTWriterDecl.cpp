@@ -905,10 +905,6 @@ void ASTDeclWriter::VisitClassTemplateSpecializationDecl(
     InstFromD = cast<ClassTemplatePartialSpecializationDecl>(InstFromD)->
                     getSpecializedTemplate();
   }
-  // Is this a specialization of an already-serialized template?
-  if (InstFromD->getCanonicalDecl()->getPCHLevel() != 0)
-    Writer.AddAdditionalTemplateSpecialization(Writer.getDeclID(InstFromD),
-                                               Writer.getDeclID(D));
 
   // Explicit info.
   Writer.AddTypeSourceInfo(D->getTypeAsWritten(), Record);

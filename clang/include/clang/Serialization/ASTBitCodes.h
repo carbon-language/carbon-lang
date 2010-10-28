@@ -327,17 +327,13 @@ namespace clang {
       /// In practice, this should only be used for the TU and namespaces.
       UPDATE_VISIBLE = 34,
 
-      /// \brief Record code for template specializations introduced after
-      /// serializations of the original template decl.
-      ADDITIONAL_TEMPLATE_SPECIALIZATIONS = 35,
-
       /// \brief Record for offsets of DECL_UPDATES records for declarations
       /// that were modified after being deserialized and need updates.
-      DECL_UPDATE_OFFSETS = 36,
+      DECL_UPDATE_OFFSETS = 35,
 
       /// \brief Record of updates for a declaration that was modified after
       /// being deserialized.
-      DECL_UPDATES = 37
+      DECL_UPDATES = 36
     };
 
     /// \brief Record types used within a source manager block.

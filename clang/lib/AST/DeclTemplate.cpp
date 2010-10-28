@@ -16,6 +16,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
@@ -225,12 +226,27 @@ ClassTemplateDecl::findSpecialization(const TemplateArgument *Args,
   return findSpecializationImpl(getSpecializations(), Args, NumArgs, InsertPos);
 }
 
+void ClassTemplateDecl::AddSpecialization(ClassTemplateSpecializationDecl *D,
+                                          void *InsertPos) {
+  getSpecializations().InsertNode(D, InsertPos);
+  if (ASTMutationListener *L = getASTMutationListener())
+    L->AddedCXXTemplateSpecialization(this, D);
+}
+
 ClassTemplatePartialSpecializationDecl *
 ClassTemplateDecl::findPartialSpecialization(const TemplateArgument *Args,
                                              unsigned NumArgs,
                                              void *&InsertPos) {
   return findSpecializationImpl(getPartialSpecializations(), Args, NumArgs,
                                 InsertPos);
+}
+
+void ClassTemplateDecl::AddPartialSpecialization(
+                                      ClassTemplatePartialSpecializationDecl *D,
+                                      void *InsertPos) {
+  getPartialSpecializations().InsertNode(D, InsertPos);
+  if (ASTMutationListener *L = getASTMutationListener())
+    L->AddedCXXTemplateSpecialization(this, D);
 }
 
 void ClassTemplateDecl::getPartialSpecializations(

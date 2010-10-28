@@ -1697,9 +1697,7 @@ public:
 
   /// \brief Insert the specified specialization knowing that it is not already
   /// in. InsertPos must be obtained from findSpecialization.
-  void AddSpecialization(ClassTemplateSpecializationDecl *D, void *InsertPos) {
-    getSpecializations().InsertNode(D, InsertPos);
-  }
+  void AddSpecialization(ClassTemplateSpecializationDecl *D, void *InsertPos);
 
   ClassTemplateDecl *getCanonicalDecl() {
     return redeclarable_base::getCanonicalDecl();
@@ -1733,9 +1731,7 @@ public:
   /// \brief Insert the specified partial specialization knowing that it is not
   /// already in. InsertPos must be obtained from findPartialSpecialization.
   void AddPartialSpecialization(ClassTemplatePartialSpecializationDecl *D,
-                                void *InsertPos) {
-    getPartialSpecializations().InsertNode(D, InsertPos);
-  }
+                                void *InsertPos);
 
   /// \brief Return the next partial specialization sequence number.
   unsigned getNextPartialSpecSequenceNumber() {

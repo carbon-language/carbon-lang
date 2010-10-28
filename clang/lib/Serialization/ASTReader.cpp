@@ -2069,13 +2069,6 @@ ASTReader::ReadASTBlock(PerFileData &F) {
             std::make_pair(&F, Record[I+1]);
       break;
     }
-
-    case ADDITIONAL_TEMPLATE_SPECIALIZATIONS: {
-      AdditionalTemplateSpecializations &ATS =
-          AdditionalTemplateSpecializationsPending[Record[0]];
-      ATS.insert(ATS.end(), Record.begin()+1, Record.end());
-      break;
-    }
     }
     First = false;
   }

@@ -236,16 +236,6 @@ private:
   llvm::SmallVector<std::pair<serialization::DeclID, uint64_t>, 16>
       ReplacedDecls;
 
-  typedef llvm::SmallVector<serialization::DeclID, 4>
-      AdditionalTemplateSpecializationsList;
-  typedef llvm::DenseMap<serialization::DeclID,
-                         AdditionalTemplateSpecializationsList>
-      AdditionalTemplateSpecializationsMap;
-
-  /// \brief Additional specializations (including partial) of templates that
-  /// were introduced after the template was serialized.
-  AdditionalTemplateSpecializationsMap AdditionalTemplateSpecializations;
-
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
   llvm::SmallVector<Stmt *, 16> StmtsToEmit;
@@ -296,7 +286,6 @@ private:
   void WriteDeclUpdatesBlocks();
   void WriteDeclReplacementsBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
-  void WriteAdditionalTemplateSpecializations();
 
   unsigned ParmVarDeclAbbrev;
   unsigned DeclContextLexicalAbbrev;
@@ -459,13 +448,6 @@ public:
     UpdatedNamespaces.insert(NS);
   }
 
-  /// \brief Record a template specialization or partial specialization of
-  /// a template from a previous PCH file.
-  void AddAdditionalTemplateSpecialization(serialization::DeclID Templ,
-                                           serialization::DeclID Spec) {
-    AdditionalTemplateSpecializations[Templ].push_back(Spec);
-  }
-
   /// \brief Note that the identifier II occurs at the given offset
   /// within the identifier table.
   void SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset);
@@ -515,6 +497,8 @@ public:
   // ASTMutationListener implementation.
   virtual void CompletedTagDefinition(const TagDecl *D);
   virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D);
+  virtual void AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
+                                    const ClassTemplateSpecializationDecl *D);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a
