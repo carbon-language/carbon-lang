@@ -345,8 +345,8 @@ namespace sys {
       /// This function determines if the path name in the object references a
       /// native object file by looking at it's magic number. The term object
       /// file is defined as "an organized collection of separate, named
-      /// sequences of binary data." This covers the obvious file formats such as
-      /// COFF and ELF, but it also includes llvm ir bitcode, archives,
+      /// sequences of binary data." This covers the obvious file formats such
+      /// as COFF and ELF, but it also includes llvm ir bitcode, archives,
       /// libraries, etc...
       /// @returns true if the file starts with the magic number for an object
       /// file.
@@ -385,9 +385,9 @@ namespace sys {
       /// in the file system.
       bool canWrite() const;
 
-      /// This function checks that what we're trying to work only on a regular file.
-      /// Check for things like /dev/null, any block special file,
-      /// or other things that aren't "regular" regular files.
+      /// This function checks that what we're trying to work only on a regular
+      /// file. Check for things like /dev/null, any block special file, or
+      /// other things that aren't "regular" regular files.
       /// @returns true if the file is S_ISREG.
       /// @brief Determines if the file is a regular file
       bool isRegularFile() const;
