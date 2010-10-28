@@ -1823,8 +1823,8 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   // This may be a def / use of a variable_ops instruction, the operand
   // latency might be determinable dynamically. Let the target try to
   // figure it out.
-  bool LdmBypass = false;
   int DefCycle = -1;
+  bool LdmBypass = false;
   switch (DefTID.getOpcode()) {
   default:
     DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
@@ -1922,8 +1922,38 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     ? (*DefMI->memoperands_begin())->getAlignment() : 0;
   unsigned UseAlign = UseMI->hasOneMemOperand()
     ? (*UseMI->memoperands_begin())->getAlignment() : 0;
-  return getOperandLatency(ItinData, DefTID, DefIdx, DefAlign,
-                           UseTID, UseIdx, UseAlign);
+  int Latency = getOperandLatency(ItinData, DefTID, DefIdx, DefAlign,
+                                  UseTID, UseIdx, UseAlign);
+
+  if (Latency > 1 &&
+      (Subtarget.isCortexA8() || Subtarget.isCortexA9())) {
+    // FIXME: Shifter op hack: no shift (i.e. [r +/- r]) or [r + r << 2]
+    // variants are one cycle cheaper.
+    switch (DefTID.getOpcode()) {
+    default: break;
+    case ARM::LDRrs:
+    case ARM::LDRBrs: {
+      unsigned ShOpVal = DefMI->getOperand(3).getImm();
+      unsigned ShImm = ARM_AM::getAM2Offset(ShOpVal);
+      if (ShImm == 0 ||
+          (ShImm == 2 && ARM_AM::getAM2ShiftOpc(ShOpVal) == ARM_AM::lsl))
+        --Latency;
+      break;
+    }
+    case ARM::t2LDRs:
+    case ARM::t2LDRBs:
+    case ARM::t2LDRHs:
+    case ARM::t2LDRSHs: {
+      // Thumb2 mode: lsl only.
+      unsigned ShAmt = DefMI->getOperand(3).getImm();
+      if (ShAmt == 0 || ShAmt == 2)
+        --Latency;
+      break;
+    }
+    }
+  }
+
+  return Latency;
 }
 
 int
@@ -1947,8 +1977,40 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   const MachineSDNode *UseMN = dyn_cast<MachineSDNode>(UseNode);
   unsigned UseAlign = !UseMN->memoperands_empty()
     ? (*UseMN->memoperands_begin())->getAlignment() : 0;
-  return getOperandLatency(ItinData, DefTID, DefIdx, DefAlign,
-                           UseTID, UseIdx, UseAlign);
+  int Latency = getOperandLatency(ItinData, DefTID, DefIdx, DefAlign,
+                                  UseTID, UseIdx, UseAlign);
+
+  if (Latency > 1 &&
+      (Subtarget.isCortexA8() || Subtarget.isCortexA9())) {
+    // FIXME: Shifter op hack: no shift (i.e. [r +/- r]) or [r + r << 2]
+    // variants are one cycle cheaper.
+    switch (DefTID.getOpcode()) {
+    default: break;
+    case ARM::LDRrs:
+    case ARM::LDRBrs: {
+      unsigned ShOpVal =
+        cast<ConstantSDNode>(DefNode->getOperand(2))->getZExtValue();
+      unsigned ShImm = ARM_AM::getAM2Offset(ShOpVal);
+      if (ShImm == 0 ||
+          (ShImm == 2 && ARM_AM::getAM2ShiftOpc(ShOpVal) == ARM_AM::lsl))
+        --Latency;
+      break;
+    }
+    case ARM::t2LDRs:
+    case ARM::t2LDRBs:
+    case ARM::t2LDRHs:
+    case ARM::t2LDRSHs: {
+      // Thumb2 mode: lsl only.
+      unsigned ShAmt =
+        cast<ConstantSDNode>(DefNode->getOperand(2))->getZExtValue();
+      if (ShAmt == 0 || ShAmt == 2)
+        --Latency;
+      break;
+    }
+    }
+  }
+
+  return Latency;
 }
 
 bool ARMBaseInstrInfo::
