@@ -25,10 +25,14 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+static cl::opt<bool>
+VerifySpills("verify-spills", cl::desc("Verify after each spill/split"));
 
 namespace {
 class InlineSpiller : public Spiller {
@@ -337,6 +341,8 @@ void InlineSpiller::spill(LiveInterval *li,
                           SmallVectorImpl<LiveInterval*> &spillIs) {
   LiveRangeEdit edit(*li, newIntervals, spillIs);
   spill(edit);
+  if (VerifySpills)
+    mf_.verify(&pass_);
 }
 
 void InlineSpiller::spill(LiveRangeEdit &edit) {
