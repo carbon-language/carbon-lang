@@ -179,6 +179,12 @@ llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
 
 }
 
+/// getOrCreateMainFile - Get the file info for main compile unit.
+llvm::DIFile CGDebugInfo::getOrCreateMainFile() {
+  return DebugFactory.CreateFile(TheCU.getFilename(), TheCU.getDirectory(),
+                                 TheCU);
+}
+
 /// getLineNumber - Get line number for the location. If location is invalid
 /// then use current location.
 unsigned CGDebugInfo::getLineNumber(SourceLocation Loc) {
@@ -340,10 +346,9 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
   uint64_t Size = CGM.getContext().getTypeSize(BT);
   uint64_t Align = CGM.getContext().getTypeAlign(BT);
   uint64_t Offset = 0;
-  
   llvm::DIType DbgTy = 
-    DebugFactory.CreateBasicType(Unit, BTName,
-                                 Unit, 0, Size, Align,
+    DebugFactory.CreateBasicType(TheCU, BTName, getOrCreateMainFile(),
+                                 0, Size, Align,
                                  Offset, /*flags*/ 0, Encoding);
   return DbgTy;
 }
@@ -360,9 +365,8 @@ llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty,
   uint64_t Offset = 0;
 
   llvm::DIType DbgTy = 
-    DebugFactory.CreateBasicType(Unit, "complex",
-                                 Unit, 0, Size, Align,
-                                 Offset, /*flags*/ 0, Encoding);
+    DebugFactory.CreateBasicType(TheCU, "complex", getOrCreateMainFile(), 
+                                 0, Size, Align, Offset, /*flags*/ 0, Encoding);
   return DbgTy;
 }
 

@@ -218,6 +218,9 @@ private:
   /// location.
   llvm::DIFile getOrCreateFile(SourceLocation Loc);
 
+  /// getOrCreateMainFile - Get the file info for main compile unit.
+  llvm::DIFile getOrCreateMainFile();
+
   /// getOrCreateType - Get the type from the cache or create a new type if
   /// necessary.
   llvm::DIType getOrCreateType(QualType Ty, llvm::DIFile F);
