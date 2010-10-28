@@ -69,6 +69,8 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
         // Get command object for the first command argument. Only search built-in command dictionary.
         StringList matches;
         cmd_obj = m_interpreter.GetCommandObject (command.GetArgumentAtIndex (0), &matches);
+        bool is_alias_command = m_interpreter.AliasExists (command.GetArgumentAtIndex (0));
+        std::string alias_name = command.GetArgumentAtIndex(0);
         
         if (cmd_obj != NULL)
         {
@@ -154,6 +156,13 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                     // Mark this help command with a success status.
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
+            }
+            
+            if (is_alias_command)
+            {
+                StreamString sstr;
+                m_interpreter.GetAliasHelp (alias_name.c_str(), cmd_obj->GetCommandName(), sstr);
+                result.GetOutputStream().Printf ("\n'%s' is an abbreviation for %s\n", alias_name.c_str(), sstr.GetData());
             }
         }
         else if (matches.GetSize() > 0)

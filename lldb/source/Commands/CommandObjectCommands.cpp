@@ -339,6 +339,7 @@ public:
                          if (!result.Succeeded() && result.GetStatus() != lldb::eReturnStatusStarted)
                         {
                             result.AppendError ("Unable to create requested command alias.\n");
+                            return false;
                         }
                      }
 
@@ -378,6 +379,7 @@ public:
              {
                  result.AppendErrorWithFormat ("'%s' is not an existing command.\n", actual_command.c_str());
                  result.SetStatus (eReturnStatusFailed);
+                 return false;
              }
         }
 
