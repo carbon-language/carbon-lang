@@ -43,7 +43,7 @@ public:
 };
 
 //-------------------------------------------------------------------------
-// CommandObjectMultiwordBreakpointSet
+// CommandObjectdBreakpointSet
 //-------------------------------------------------------------------------
 
 
@@ -264,6 +264,66 @@ public:
         lldb::DescriptionLevel m_level;
 
         bool m_internal;
+    };
+
+private:
+    CommandOptions m_options;
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectBreakpointClear
+//-------------------------------------------------------------------------
+
+
+class CommandObjectBreakpointClear : public CommandObject
+{
+public:
+
+    typedef enum BreakpointClearType
+    {
+        eClearTypeInvalid,
+        eClearTypeFileAndLine,
+    } BreakpointClearType;
+
+    CommandObjectBreakpointClear (CommandInterpreter &interpreter);
+
+    virtual
+    ~CommandObjectBreakpointClear ();
+
+    virtual bool
+    Execute (Args& command,
+             CommandReturnObject &result);
+
+    virtual Options *
+    GetOptions ();
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions ();
+
+        virtual
+        ~CommandOptions ();
+
+        virtual Error
+        SetOptionValue (int option_idx, const char *option_arg);
+
+        void
+        ResetOptionValues ();
+
+        const lldb::OptionDefinition*
+        GetDefinitions ();
+
+        // Options table: Required for subclasses of Options.
+
+        static lldb::OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        std::string m_filename;
+        uint32_t m_line_num;
+
     };
 
 private:

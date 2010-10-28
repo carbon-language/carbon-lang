@@ -28,7 +28,7 @@ BreakpointResolverName::BreakpointResolverName
     uint32_t func_name_type_mask,
     Breakpoint::MatchType type
 ) :
-    BreakpointResolver (bkpt),
+    BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
     m_func_name (),
     m_basename_filter (),
     m_func_name_type_mask (func_name_type_mask),
@@ -94,7 +94,7 @@ BreakpointResolverName::BreakpointResolverName
     Breakpoint *bkpt,
     RegularExpression &func_regex
 ) :
-    BreakpointResolver (bkpt),
+    BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
     m_func_name (NULL),
     m_class_name (NULL),
     m_regex (func_regex),
@@ -110,7 +110,7 @@ BreakpointResolverName::BreakpointResolverName
     const char *method,
     Breakpoint::MatchType type
 ) :
-    BreakpointResolver (bkpt),
+    BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
     m_func_name (method),
     m_class_name (class_name),
     m_regex (),

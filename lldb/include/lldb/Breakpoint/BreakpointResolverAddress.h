@@ -56,6 +56,12 @@ public:
     virtual void
     Dump (Stream *s) const;
 
+    /// Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const BreakpointResolverAddress *) { return true; }
+    static inline bool classof(const BreakpointResolver *V) {
+        return V->getResolverID() == BreakpointResolver::AddressResolver;
+    }
+
 protected:
     Address m_addr;
 

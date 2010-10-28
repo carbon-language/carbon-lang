@@ -30,8 +30,9 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // BreakpointResolver:
 //----------------------------------------------------------------------
-BreakpointResolver::BreakpointResolver (Breakpoint *bkpt) :
-    m_breakpoint (bkpt)
+BreakpointResolver::BreakpointResolver (Breakpoint *bkpt, const unsigned char resolverTy) :
+    m_breakpoint (bkpt),
+    SubclassID (resolverTy)
 {
 }
 

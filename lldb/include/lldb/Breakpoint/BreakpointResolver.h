@@ -52,11 +52,13 @@ public:
     ///
     /// @param[in] bkpt
     ///   The breakpoint that owns this resolver.
+    /// @param[in] resolverType
+    ///   The concrete breakpoint resolver type for this breakpoint.
     ///
     /// @result
     ///   Returns breakpoint location id.
     //------------------------------------------------------------------
-    BreakpointResolver (Breakpoint *bkpt);
+    BreakpointResolver (Breakpoint *bkpt, unsigned char resolverType);
 
     //------------------------------------------------------------------
     /// The Destructor is virtual, all significant breakpoint resolvers derive
@@ -110,11 +112,32 @@ public:
     virtual void
     Dump (Stream *s) const = 0;
 
+    //------------------------------------------------------------------
+    /// An enumeration for keeping track of the concrete subclass that
+    /// is actually instantiated. Values of this enumeration are kept in the 
+    /// BreakpointResolver's SubclassID field. They are used for concrete type
+    /// identification.
+    enum ResolverTy {
+        FileLineResolver, // This is an instance of BreakpointResolverFileLine
+        AddressResolver,  // This is an instance of BreakpointResolverAddress
+        NameResolver      // This is an instance of BreakpointResolverName
+    };
+
+    //------------------------------------------------------------------
+    /// getResolverID - Return an ID for the concrete type of this object.  This
+    /// is used to implement the LLVM classof checks.  This should not be used
+    /// for any other purpose, as the values may change as LLDB evolves.
+    unsigned getResolverID() const {
+        return SubclassID;
+    }
+
 protected:
     Target *m_target;          // Every resolver has a target.
     Breakpoint *m_breakpoint;  // This is the breakpoint we add locations to.
 
 private:
+    // Subclass identifier (for llvm isa/dyn_cast)
+    const unsigned char SubclassID;
     DISALLOW_COPY_AND_ASSIGN(BreakpointResolver);
 };
 

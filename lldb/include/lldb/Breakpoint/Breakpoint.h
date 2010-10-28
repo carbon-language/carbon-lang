@@ -458,6 +458,21 @@ public:
     void
     GetResolverDescription (Stream *s);
 
+    //------------------------------------------------------------------
+    /// Find breakpoint locations which match the (filename, line_number) description.
+    /// The breakpoint location collection is to be filled with the matching locations.
+    /// It should be initialized with 0 size by the API client.
+    ///
+    /// @return
+    ///     True if there is a match
+    ///
+    ///     The locations which match the filename and line_number in loc_coll.  If its
+    ///     size is 0 and true is returned, it means the breakpoint fully matches the
+    ///     description.
+    //------------------------------------------------------------------
+    bool GetMatchingFileLine(const ConstString &filename, uint32_t line_number,
+                             BreakpointLocationCollection &loc_coll);
+
     void
     GetFilterDescription (Stream *s);
 

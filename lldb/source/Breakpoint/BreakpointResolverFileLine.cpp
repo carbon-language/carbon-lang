@@ -31,7 +31,7 @@ BreakpointResolverFileLine::BreakpointResolverFileLine
     uint32_t line_no,
     bool check_inlines
 ) :
-    BreakpointResolver (bkpt),
+    BreakpointResolver (bkpt, BreakpointResolver::FileLineResolver),
     m_file_spec (file_spec),
     m_line_number (line_no),
     m_inlines (check_inlines)

@@ -31,7 +31,7 @@ BreakpointResolverAddress::BreakpointResolverAddress
     Breakpoint *bkpt,
     const Address &addr
 ) :
-    BreakpointResolver (bkpt),
+    BreakpointResolver (bkpt, BreakpointResolver::AddressResolver),
     m_addr (addr)
 {
 }

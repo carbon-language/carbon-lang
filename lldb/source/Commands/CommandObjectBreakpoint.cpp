@@ -28,6 +28,8 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"
 
+#include <vector>
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -526,23 +528,27 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     bool status;
 
     CommandObjectSP list_command_object (new CommandObjectBreakpointList (interpreter));
-    CommandObjectSP delete_command_object (new CommandObjectBreakpointDelete (interpreter));
     CommandObjectSP enable_command_object (new CommandObjectBreakpointEnable (interpreter));
     CommandObjectSP disable_command_object (new CommandObjectBreakpointDisable (interpreter));
+    CommandObjectSP clear_command_object (new CommandObjectBreakpointClear (interpreter));
+    CommandObjectSP delete_command_object (new CommandObjectBreakpointDelete (interpreter));
     CommandObjectSP set_command_object (new CommandObjectBreakpointSet (interpreter));
     CommandObjectSP command_command_object (new CommandObjectBreakpointCommand (interpreter));
     CommandObjectSP modify_command_object (new CommandObjectBreakpointModify(interpreter));
 
-    command_command_object->SetCommandName ("breakpoint command");
+    list_command_object->SetCommandName ("breakpoint list");
     enable_command_object->SetCommandName("breakpoint enable");
     disable_command_object->SetCommandName("breakpoint disable");
-    list_command_object->SetCommandName ("breakpoint list");
-    modify_command_object->SetCommandName ("breakpoint modify");
+    clear_command_object->SetCommandName("breakpoint clear");
+    delete_command_object->SetCommandName("breakpoint delete");
     set_command_object->SetCommandName("breakpoint set");
+    command_command_object->SetCommandName ("breakpoint command");
+    modify_command_object->SetCommandName ("breakpoint modify");
 
     status = LoadSubCommand ("list",       list_command_object);
     status = LoadSubCommand ("enable",     enable_command_object);
     status = LoadSubCommand ("disable",    disable_command_object);
+    status = LoadSubCommand ("clear",      clear_command_object);
     status = LoadSubCommand ("delete",     delete_command_object);
     status = LoadSubCommand ("set",        set_command_object);
     status = LoadSubCommand ("command",    command_command_object);
@@ -1033,6 +1039,189 @@ CommandObjectBreakpointDisable::Execute
             result.AppendMessageWithFormat ("%d breakpoints disabled.\n", disable_count + loc_count);
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
+    }
+
+    return result.Succeeded();
+}
+
+//-------------------------------------------------------------------------
+// CommandObjectBreakpointClear::CommandOptions
+//-------------------------------------------------------------------------
+#pragma mark Clear::CommandOptions
+
+CommandObjectBreakpointClear::CommandOptions::CommandOptions() :
+    Options (),
+    m_filename (),
+    m_line_num (0)
+{
+}
+
+CommandObjectBreakpointClear::CommandOptions::~CommandOptions ()
+{
+}
+
+lldb::OptionDefinition
+CommandObjectBreakpointClear::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
+        "Specify the breakpoint by source location in this particular file."},
+
+    { LLDB_OPT_SET_1, true, "line", 'l', required_argument, NULL, 0, eArgTypeLineNum,
+        "Specify the breakpoint by source location at this particular line."},
+
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
+const lldb::OptionDefinition*
+CommandObjectBreakpointClear::CommandOptions::GetDefinitions ()
+{
+    return g_option_table;
+}
+
+Error
+CommandObjectBreakpointClear::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+{
+    Error error;
+    char short_option = (char) m_getopt_table[option_idx].val;
+
+    switch (short_option)
+    {
+        case 'f':
+            m_filename = option_arg;
+            break;
+
+        case 'l':
+            m_line_num = Args::StringToUInt32 (option_arg, 0);
+            break;
+
+        default:
+            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            break;
+    }
+
+    return error;
+}
+
+void
+CommandObjectBreakpointClear::CommandOptions::ResetOptionValues ()
+{
+    Options::ResetOptionValues();
+
+    m_filename.clear();
+    m_line_num = 0;
+}
+
+//-------------------------------------------------------------------------
+// CommandObjectBreakpointClear
+//-------------------------------------------------------------------------
+#pragma mark Clear
+
+CommandObjectBreakpointClear::CommandObjectBreakpointClear (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "breakpoint clear", 
+                   "Clears a breakpoint or set of breakpoints in the executable.", 
+                   "breakpoint clear <cmd-options>")
+{
+}
+
+CommandObjectBreakpointClear::~CommandObjectBreakpointClear ()
+{
+}
+
+Options *
+CommandObjectBreakpointClear::GetOptions ()
+{
+    return &m_options;
+}
+
+bool
+CommandObjectBreakpointClear::Execute
+(
+    Args& command,
+    CommandReturnObject &result
+)
+{
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+    if (target == NULL)
+    {
+        result.AppendError ("Invalid target. No existing target or breakpoints.");
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+
+    // The following are the various types of breakpoints that could be cleared:
+    //   1). -f -l (clearing breakpoint by source location)
+
+    BreakpointClearType break_type = eClearTypeInvalid;
+
+    if (m_options.m_line_num != 0)
+        break_type = eClearTypeFileAndLine;
+
+    Mutex::Locker locker;
+    target->GetBreakpointList().GetListMutex(locker);
+
+    BreakpointList &breakpoints = target->GetBreakpointList();
+    size_t num_breakpoints = breakpoints.GetSize();
+
+    // Early return if there's no breakpoint at all.
+    if (num_breakpoints == 0)
+    {
+        result.AppendError ("Breakpoint clear: No breakpoint cleared.");
+        result.SetStatus (eReturnStatusFailed);
+        return result.Succeeded();
+    }
+
+    // Find matching breakpoints and delete them.
+
+    // First create a copy of all the IDs.
+    std::vector<break_id_t> BreakIDs;
+    for (size_t i = 0; i < num_breakpoints; ++i)
+        BreakIDs.push_back(breakpoints.GetBreakpointAtIndex(i).get()->GetID());
+
+    int num_cleared = 0;
+    StreamString ss;
+    switch (break_type)
+    {
+        case eClearTypeFileAndLine: // Breakpoint by source position
+            {
+                const ConstString filename(m_options.m_filename.c_str());
+                BreakpointLocationCollection loc_coll;
+
+                for (size_t i = 0; i < num_breakpoints; ++i)
+                {
+                    Breakpoint *bp = breakpoints.FindBreakpointByID(BreakIDs[i]).get();
+                    
+                    if (bp->GetMatchingFileLine(filename, m_options.m_line_num, loc_coll))
+                    {
+                        // If the collection size is 0, it's a full match and we can just remove the breakpoint.
+                        if (loc_coll.GetSize() == 0)
+                        {
+                            bp->GetDescription(&ss, lldb::eDescriptionLevelBrief);
+                            ss.EOL();
+                            target->RemoveBreakpointByID (bp->GetID());
+                            ++num_cleared;
+                        }
+                    }
+                }
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    if (num_cleared > 0)
+    {
+        StreamString &output_stream = result.GetOutputStream();
+        output_stream.Printf ("%d breakpoints cleared:\n", num_cleared);
+        output_stream << ss.GetData();
+        output_stream.EOL();
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+    }
+    else
+    {
+        result.AppendError ("Breakpoint clear: No breakpoint cleared.");
+        result.SetStatus (eReturnStatusFailed);
     }
 
     return result.Succeeded();

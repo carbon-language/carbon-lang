@@ -16,7 +16,9 @@
 #include "lldb/Core/Address.h"
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Breakpoint/BreakpointLocationCollection.h"
 #include "lldb/Breakpoint/BreakpointResolver.h"
+#include "lldb/Breakpoint/BreakpointResolverFileLine.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/SearchFilter.h"
@@ -26,9 +28,11 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadSpec.h"
 #include "lldb/lldb-private-log.h"
+#include "llvm/Support/Casting.h"
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace llvm;
 
 const ConstString &
 Breakpoint::GetEventIdentifier ()
@@ -531,6 +535,27 @@ Breakpoint::GetResolverDescription (Stream *s)
 {
     if (m_resolver_sp)
         m_resolver_sp->GetDescription (s);
+}
+
+
+bool
+Breakpoint::GetMatchingFileLine (const ConstString &filename, uint32_t line_number, BreakpointLocationCollection &loc_coll)
+{
+    // TODO: To be correct, this method needs to fill the breakpoint location collection
+    //       with the location IDs which match the filename and line_number.
+    //
+
+    if (m_resolver_sp)
+    {
+        BreakpointResolverFileLine *resolverFileLine = dyn_cast<BreakpointResolverFileLine>(m_resolver_sp.get());
+        if (resolverFileLine &&
+            resolverFileLine->m_file_spec.GetFilename() == filename &&
+            resolverFileLine->m_line_number == line_number)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void

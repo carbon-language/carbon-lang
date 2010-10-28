@@ -51,7 +51,14 @@ public:
     virtual void
     Dump (Stream *s) const;
 
+    /// Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const BreakpointResolverFileLine *) { return true; }
+    static inline bool classof(const BreakpointResolver *V) {
+        return V->getResolverID() == BreakpointResolver::FileLineResolver;
+    }
+
 protected:
+    friend class Breakpoint;
     FileSpec m_file_spec; // This is the file spec we are looking for.
     uint32_t m_line_number; // This is the line number that we are looking for.
     bool m_inlines; // This determines whether the resolver looks for inlined functions or not.
