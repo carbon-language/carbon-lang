@@ -233,11 +233,11 @@ namespace llvm {
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
     DICompileUnit getCompileUnit() const{ 
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getFieldAs<DICompileUnit>(3);
-
-      DIFile F = getFieldAs<DIFile>(3);
-      return F.getCompileUnit();
+     if (getVersion() == llvm::LLVMDebugVersion7)
+       return getFieldAs<DICompileUnit>(3);
+     
+     DIFile F = getFieldAs<DIFile>(3);
+     return F.getCompileUnit();
     }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
