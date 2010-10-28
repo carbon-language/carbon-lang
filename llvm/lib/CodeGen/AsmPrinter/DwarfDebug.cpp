@@ -3024,6 +3024,10 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
       DICompileUnit CU(S);
       Dir = CU.getDirectory();
       Fn = CU.getFilename();
+    } else if (Scope.isFile()) {
+      DIFile F(S);
+      Dir = F.getDirectory();
+      Fn = F.getFilename();
     } else if (Scope.isSubprogram()) {
       DISubprogram SP(S);
       Dir = SP.getDirectory();
