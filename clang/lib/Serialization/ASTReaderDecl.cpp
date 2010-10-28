@@ -1225,12 +1225,6 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
       = Reader.FirstLatestDeclIDs.find(ThisDeclID);
   if (I != Reader.FirstLatestDeclIDs.end()) {
     Decl *NewLatest = Reader.GetDecl(I->second);
-    assert((D->getMostRecentDeclaration()->getLocation().isInvalid() ||
-            NewLatest->getLocation().isInvalid() ||
-            !Reader.SourceMgr.isBeforeInTranslationUnit(
-                               NewLatest->getLocation(),
-                               D->getMostRecentDeclaration()->getLocation())) &&
-           "The new latest is supposed to come after the previous latest");
     D->RedeclLink
         = typename Redeclarable<T>::LatestDeclLink(cast_or_null<T>(NewLatest));
   }
