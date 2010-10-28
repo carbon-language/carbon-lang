@@ -5,7 +5,7 @@
 	.weak	foo
         .long   foo
 
-// And that bar is after all local symbols
+// And that bar is after all local symbols and has non zero value.
         .weak bar
 bar:
 
@@ -15,7 +15,7 @@ bar:
 //CHECK-NEXT:    ('st_type', 0x00000000)
 //CHECK-NEXT:    ('st_other', 0x00000000)
 //CHECK-NEXT:    ('st_shndx', 0x00000001)
-//CHECK-NEXT:    ('st_value', 0x00000000)
+//CHECK-NEXT:    ('st_value', 0x00000004)
 //CHECK-NEXT:    ('st_size', 0x00000000)
 //CHECK-NEXT:   ),
 //CHECK-NEXT:   # Symbol 0x00000005

@@ -438,10 +438,9 @@ static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
   if (!Symbol.isInSection())
     return 0;
 
-  if (!Data.isCommon() && !(Data.getFlags() & ELF_STB_Weak))
-    if (MCFragment *FF = Data.getFragment())
-      return Layout.getSymbolAddress(&Data) -
-             Layout.getSectionAddress(FF->getParent());
+  if (MCFragment *FF = Data.getFragment())
+    return Layout.getSymbolAddress(&Data) -
+      Layout.getSectionAddress(FF->getParent());
 
   return 0;
 }
