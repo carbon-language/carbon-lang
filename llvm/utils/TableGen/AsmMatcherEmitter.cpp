@@ -941,21 +941,25 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
       continue;
 
     // Collect singleton registers, if used.
-    if (!RegisterPrefix.empty()) {
-      for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
-        if (II->Tokens[i].startswith(RegisterPrefix)) {
-          StringRef RegName = II->Tokens[i].substr(RegisterPrefix.size());
-          Record *Rec = getRegisterRecord(Target, RegName);
-          
-          if (!Rec) {
-            std::string Err = "unable to find register for '" + RegName.str() + 
-              "' (which matches register prefix)";
-            throw TGError(CGI.TheDef->getLoc(), Err);
-          }
-
-          SingletonRegisterNames.insert(RegName);
-        }
+    for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
+      if (!II->Tokens[i].startswith(RegisterPrefix))
+        continue;
+      
+      StringRef RegName = II->Tokens[i].substr(RegisterPrefix.size());
+      Record *Rec = getRegisterRecord(Target, RegName);
+      
+      if (!Rec) {
+        // If there is no register prefix (i.e. "%" in "%eax"), then this may
+        // be some random non-register token, just ignore it.
+        if (RegisterPrefix.empty())
+          continue;
+        
+        std::string Err = "unable to find register for '" + RegName.str() + 
+          "' (which matches register prefix)";
+        throw TGError(CGI.TheDef->getLoc(), Err);
       }
+
+      SingletonRegisterNames.insert(RegName);
     }
 
     // Compute the require features.
@@ -1008,15 +1012,23 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
       StringRef Token = II->Tokens[i];
 
       // Check for singleton registers.
-      if (!RegisterPrefix.empty() && Token.startswith(RegisterPrefix)) {
+      if (Token.startswith(RegisterPrefix)) {
         StringRef RegName = II->Tokens[i].substr(RegisterPrefix.size());
-        InstructionInfo::Operand Op;
-        Op.Class = RegisterClasses[getRegisterRecord(Target, RegName)];
-        Op.OperandInfo = 0;
-        assert(Op.Class && Op.Class->Registers.size() == 1 &&
-               "Unexpected class for singleton register");
-        II->Operands.push_back(Op);
-        continue;
+        if (Record *RegRecord = getRegisterRecord(Target, RegName)) {
+          InstructionInfo::Operand Op;
+          Op.Class = RegisterClasses[RegRecord];
+          Op.OperandInfo = 0;
+          assert(Op.Class && Op.Class->Registers.size() == 1 &&
+                 "Unexpected class for singleton register");
+          II->Operands.push_back(Op);
+          continue;
+        }
+
+        if (!RegisterPrefix.empty()) {
+          std::string Err = "unable to find register for '" + RegName.str() + 
+                  "' (which matches register prefix)";
+          throw TGError(II->Instr->TheDef->getLoc(), Err);
+        }
       }
 
       // Check for simple tokens.
