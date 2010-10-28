@@ -456,7 +456,9 @@ static LVPair getLVForClassMember(const NamedDecl *D) {
     // member functions get "hidden" visibility if they don't have an
     // explicit visibility attribute.
     if (!VA && MD->isInlined() && LV.second > HiddenVisibility &&
-        D->getASTContext().getLangOptions().InlineVisibilityHidden)
+        D->getASTContext().getLangOptions().InlineVisibilityHidden &&
+        MD->getTemplateSpecializationKind()
+          != TSK_ExplicitInstantiationDeclaration)
       LV.second = HiddenVisibility;
 
   // Similarly for member class template specializations.
