@@ -541,9 +541,9 @@ and within the compound statement:
 
 4.0 C++ Support
 
-Within a block stack based C++ objects are copied as const copies using the const copy constructor.  It is an error if a stack based C++ object is used within a block if it does not have a const copy constructor.  In addition both copy and destroy helper routines must be synthesized for the block to support the Block_copy() operation, and the flags work marked with the (1<<26) bit in addition to the (1<<25) bit.  The copy helper should call the constructor using appropriate offsets of the variable within the supplied stack based block source and heap based destination for all const constructed copies, and similarly should call the destructor in the destroy routine.
+Within a block stack based C++ objects are copied into const copies using the copy constructor.  It is an error if a stack based C++ object is used within a block if it does not have a copy constructor.  In addition both copy and destroy helper routines must be synthesized for the block to support the Block_copy() operation, and the flags work marked with the (1<<26) bit in addition to the (1<<25) bit.  The copy helper should call the constructor using appropriate offsets of the variable within the supplied stack based block source and heap based destination for all const constructed copies, and similarly should call the destructor in the destroy routine.
 
-As an example, suppose a C++ class FOO existed with a const copy constructor.  Within a code block a stack version of a FOO object is declared and used within a Block literal expression:
+As an example, suppose a C++ class FOO existed with a copy constructor.  Within a code block a stack version of a FOO object is declared and used within a Block literal expression:
 
 {
     FOO foo;
@@ -566,11 +566,11 @@ void __block_invoke_10(struct __block_literal_10 *_block) {
 }
 
 void __block_literal_10(struct __block_literal_10 *dst, struct __block_literal_10 *src) {
-     comp_ctor(&dst->foo, &src->foo);
+     FOO_ctor(&dst->foo, &src->foo);
 }
 
 void __block_dispose_10(struct __block_literal_10 *src) {
-     comp_dtor(&src->foo);
+     FOO_dtor(&src->foo);
 }
 
 static struct __block_descriptor_10 {
@@ -598,9 +598,33 @@ and the code would be:
 }
 
 
-C++ objects stored in __block storage start out on the stack in a block_byref data structure as do other variables.  Such objects (if not const objects) must support a regular copy constructor.  The block_byref data structure will have copy and destroy helper routines synthesized by the compiler.  The copy helper will have code created to perform the copy constructor based on the initial stack block_byref data structure, and will also set the (1<<26) bit in addition to the (1<<25) bit.  The destroy helper will have code to do the destructor on the object stored within the supplied block_byref heap data structure.
+C++ objects stored in __block storage start out on the stack in a block_byref data structure as do other variables.  Such objects (if not const objects) must support a regular copy constructor.  The block_byref data structure will have copy and destroy helper routines synthesized by the compiler.  The copy helper will have code created to perform the copy constructor based on the initial stack block_byref data structure, and will also set the (1<<26) bit in addition to the (1<<25) bit.  The destroy helper will have code to do the destructor on the object stored within the supplied block_byref heap data structure.  For example,
 
-To support member variable and function access the compiler will synthesize a const pointer to a block version of the this pointer.
+    __block FOO blockStorageFoo;
+
+requires the normal constructor for the embedded blockStorageFoo object
+
+    FOO_ctor(& _block_byref_blockStorageFoo->blockStorageFoo);
+
+and at scope termination the destructor:
+
+    FOO_dtor(& _block_byref_blockStorageFoo->blockStorageFoo);
+
+Note that the forwarding indirection is NOT used.
+
+The compiler would need to generate (if used from a block literal) the following copy/dispose helpers:
+
+void _block_byref_obj_keep(struct _block_byref_blockStorageFoo *dst, struct _block_byref_blockStorageFoo *src) {
+     FOO_ctor(&dst->blockStorageFoo, &src->blockStorageFoo);
+}
+
+void _block_byref_obj_dispose(struct _block_byref_blockStorageFoo *src) {
+     FOO_dtor(&src->blockStorageFoo);
+}
+
+for the appropriately named constructor and destructor for the class/struct FOO.
+
+To support member variable and function access the compiler will synthesize a const pointer to a block version of the "this" pointer.
 
 5.0 Runtime Helper Functions
 
