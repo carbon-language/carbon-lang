@@ -177,7 +177,9 @@ private:
   bool ParseIdentifier(StringRef &Res);
 
   // Directive Parsing.
-  bool ParseDirectiveAscii(bool ZeroTerminated); // ".ascii", ".asciiz"
+
+ // ".ascii", ".asciiz", ".string"
+  bool ParseDirectiveAscii(StringRef IDVal, bool ZeroTerminated);
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
   bool ParseDirectiveRealValue(const fltSemantics &); // ".single", ...
   bool ParseDirectiveFill(); // ".fill"
@@ -919,9 +921,9 @@ bool AsmParser::ParseStatement() {
     // Data directives
 
     if (IDVal == ".ascii")
-      return ParseDirectiveAscii(false);
-    if (IDVal == ".asciz")
-      return ParseDirectiveAscii(true);
+      return ParseDirectiveAscii(IDVal, false);
+    if (IDVal == ".asciz" || IDVal == ".string")
+      return ParseDirectiveAscii(IDVal, true);
 
     if (IDVal == ".byte")
       return ParseDirectiveValue(1);
@@ -1347,14 +1349,14 @@ bool AsmParser::ParseEscapedString(std::string &Data) {
 }
 
 /// ParseDirectiveAscii:
-///   ::= ( .ascii | .asciz ) [ "string" ( , "string" )* ]
-bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
+///   ::= ( .ascii | .asciz | .string ) [ "string" ( , "string" )* ]
+bool AsmParser::ParseDirectiveAscii(StringRef IDVal, bool ZeroTerminated) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     CheckForValidSection();
 
     for (;;) {
       if (getLexer().isNot(AsmToken::String))
-        return TokError("expected string in '.ascii' or '.asciz' directive");
+        return TokError("expected string in '" + Twine(IDVal) + "' directive");
 
       std::string Data;
       if (ParseEscapedString(Data))
@@ -1370,7 +1372,7 @@ bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
         break;
 
       if (getLexer().isNot(AsmToken::Comma))
-        return TokError("unexpected token in '.ascii' or '.asciz' directive");
+        return TokError("unexpected token in '" + Twine(IDVal) + "' directive");
       Lex();
     }
   }

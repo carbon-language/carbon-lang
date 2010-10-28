@@ -32,3 +32,10 @@ TEST4:
 TEST5:
         .ascii "\b\f\n\r\t\\\""
         
+# CHECK: TEST6:
+# CHECK: .byte 66
+# CHECK: .byte 0
+# CHECK: .byte 67
+# CHECK: .byte 0
+TEST6:
+        .string "B", "C"
