@@ -22,7 +22,13 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+#define GET_INSTRUCTION_NAME
 #include "ARMGenAsmWriter.inc"
+
+StringRef ARMInstPrinter::getOpcodeName(unsigned Opcode) const {
+  return getInstructionName(Opcode);
+}
+
 
 void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   // Check for MOVs and print canonical forms, instead.
