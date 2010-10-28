@@ -33,3 +33,10 @@ typedef double ftype(double);
 ftype ^test2 = ^ftype {
   return 0;
 };
+
+// rdar://problem/8605032
+void f3_helper(void (^)(void));
+void f3() {
+  _Bool b = 0;
+  f3_helper(^{ if (b) {} });
+}

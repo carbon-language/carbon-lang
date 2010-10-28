@@ -611,7 +611,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const ValueDecl *VD,
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V);
   } else {
-    const llvm::Type *Ty = CGM.getTypes().ConvertType(VD->getType());
+    const llvm::Type *Ty = CGM.getTypes().ConvertTypeForMem(VD->getType());
     Ty = llvm::PointerType::get(Ty, 0);
     V = Builder.CreateBitCast(V, Ty);
     if (VD->getType()->isReferenceType())
