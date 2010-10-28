@@ -33,6 +33,23 @@ using namespace clang;
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
+static const VisibilityAttr *GetExplicitVisibility(const Decl *D) {
+  // If the decl is redeclarable, make sure we use the explicit
+  // visibility attribute from the most recent declaration.
+  //
+  // Note that this isn't necessary for tags, which can't have their
+  // visibility adjusted.
+  if (isa<VarDecl>(D)) {
+    return cast<VarDecl>(D)->getMostRecentDeclaration()
+      ->getAttr<VisibilityAttr>();
+  } else if (isa<FunctionDecl>(D)) {
+    return cast<FunctionDecl>(D)->getMostRecentDeclaration()
+      ->getAttr<VisibilityAttr>();
+  } else {
+    return D->getAttr<VisibilityAttr>();
+  }
+}
+
 static Visibility GetVisibilityFromAttr(const VisibilityAttr *A) {
   switch (A->getVisibility()) {
   case VisibilityAttr::Default:
@@ -180,6 +197,8 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
   if (D->isInAnonymousNamespace())
     return LVPair(UniqueExternalLinkage, DefaultVisibility);
 
+  const VisibilityAttr *ExplicitVisibility = GetExplicitVisibility(D);
+
   // Set up the defaults.
 
   // C99 6.2.2p5:
@@ -218,7 +237,7 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
     // Note that we don't want to make the variable non-external
     // because of this, but unique-external linkage suits us.
     if (Context.getLangOptions().CPlusPlus && !Var->isExternC() &&
-        !Var->hasAttr<VisibilityAttr>()) {
+        !ExplicitVisibility) {
       LVPair TypeLV = Var->getType()->getLinkageAndVisibility();
       if (TypeLV.first != ExternalLinkage)
         return LVPair(UniqueExternalLinkage, DefaultVisibility);
@@ -252,7 +271,7 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
     // Modify the function's LV by the LV of its type unless this is
     // C or extern "C".  See the comment above about variables.
     if (Context.getLangOptions().CPlusPlus && !Function->isExternC() &&
-        !Function->hasAttr<VisibilityAttr>()) {
+        !ExplicitVisibility) {
       LVPair TypeLV = Function->getType()->getLinkageAndVisibility();
       if (TypeLV.first != ExternalLinkage)
         return LVPair(UniqueExternalLinkage, DefaultVisibility);
@@ -376,9 +395,8 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
     Visibility StandardV;
 
     // If we have an explicit visibility attribute, merge that in.
-    const VisibilityAttr *VA = D->getAttr<VisibilityAttr>();
-    if (VA)
-      StandardV = GetVisibilityFromAttr(VA);
+    if (ExplicitVisibility)
+      StandardV = GetVisibilityFromAttr(ExplicitVisibility);
     else if (ConsiderDashFVisibility)
       StandardV = Context.getLangOptions().getVisibilityMode();
     else
@@ -416,7 +434,7 @@ static LVPair getLVForClassMember(const NamedDecl *D) {
   LVPair LV = ClassLV;
 
   // If we have an explicit visibility attribute, merge that in.
-  const VisibilityAttr *VA = D->getAttr<VisibilityAttr>();
+  const VisibilityAttr *VA = GetExplicitVisibility(D);
   if (VA) LV.second = minVisibility(LV.second, GetVisibilityFromAttr(VA));
 
   // If it's a value declaration and we don't have an explicit visibility
@@ -510,7 +528,7 @@ LVPair NamedDecl::getLinkageAndVisibility() const {
         return LVPair(UniqueExternalLinkage, DefaultVisibility);
 
       LVPair LV(ExternalLinkage, DefaultVisibility);
-      if (const VisibilityAttr *VA = Function->getAttr<VisibilityAttr>())
+      if (const VisibilityAttr *VA = GetExplicitVisibility(Function))
         LV.second = GetVisibilityFromAttr(VA);
 
       if (const FunctionDecl *Prev = Function->getPreviousDeclaration()) {
@@ -531,7 +549,7 @@ LVPair NamedDecl::getLinkageAndVisibility() const {
         LVPair LV(ExternalLinkage, DefaultVisibility);
         if (Var->getStorageClass() == SC_PrivateExtern)
           LV.second = HiddenVisibility;
-        else if (const VisibilityAttr *VA = Var->getAttr<VisibilityAttr>())
+        else if (const VisibilityAttr *VA = GetExplicitVisibility(Var))
           LV.second = GetVisibilityFromAttr(VA);
 
         if (const VarDecl *Prev = Var->getPreviousDeclaration()) {

@@ -46,3 +46,10 @@ int f_def(void) {
 // CHECK-HIDDEN: define void @test1(
 struct Test1 { int field; };
 void  __attribute__((visibility("default"))) test1(struct Test1 *v) { }
+
+// rdar://problem/8595231
+// CHECK-DEFAULT: define void @test2()
+// CHECK-PROTECTED: define void @test2()
+// CHECK-HIDDEN: define void @test2()
+void test2(void);
+void __attribute__((visibility("default"))) test2(void) {}
