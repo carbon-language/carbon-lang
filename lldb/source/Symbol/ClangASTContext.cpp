@@ -738,6 +738,7 @@ ClangASTContext::CopyType (ASTContext *dest_context,
                            ASTContext *source_context,
                            clang_type_t clang_type)
 {
+    // null_client's ownership is transferred to diagnostics
     NullDiagnosticClient *null_client = new NullDiagnosticClient;
     Diagnostic diagnostics(null_client);
     FileManager file_manager;
