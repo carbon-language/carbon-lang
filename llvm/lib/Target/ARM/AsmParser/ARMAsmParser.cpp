@@ -78,19 +78,8 @@ private:
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                               MCStreamer &Out) {
-    MCInst Inst;
-    unsigned ErrorInfo;
-    if (MatchInstructionImpl(Operands, Inst, ErrorInfo) == Match_Success) {
-      Out.EmitInstruction(Inst);
-      return false;
-    }
-
-    // FIXME: We should give nicer diagnostics about the exact failure.
-    Error(IDLoc, "unrecognized instruction");
-    return true;
-  }
-
+                               MCStreamer &Out);
+  
   /// @name Auto-generated Match Functions
   /// {
 
@@ -763,6 +752,24 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   Parser.Lex(); // Consume the EndOfStatement
   return false;
 }
+
+bool ARMAsmParser::
+MatchAndEmitInstruction(SMLoc IDLoc,
+                        SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                        MCStreamer &Out) {
+  MCInst Inst;
+  unsigned ErrorInfo;
+  if (MatchInstructionImpl(Operands, Inst, ErrorInfo) == Match_Success) {
+    Out.EmitInstruction(Inst);
+    return false;
+  }
+  
+  // FIXME: We should give nicer diagnostics about the exact failure.
+  Error(IDLoc, "unrecognized instruction");
+  return true;
+}
+
+
 
 /// ParseDirective parses the arm specific directives
 bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
