@@ -29,6 +29,8 @@ define float @test_ceil(float %C) {
 	ret float %F
 }
 
+; PR8466
+; XFAIL: win32
 define float @test_nearbyint(float %C) {
 	%D = fpext float %C to double		; <double> [#uses=1]
 	; --> nearbyintf
