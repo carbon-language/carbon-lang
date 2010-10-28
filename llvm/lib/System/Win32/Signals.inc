@@ -214,80 +214,80 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
   // TODO: provide a x64 friendly version of the following
 #else
 
-    // Initialize the STACKFRAME structure.
-    STACKFRAME StackFrame;
-    memset(&StackFrame, 0, sizeof(StackFrame));
+  // Initialize the STACKFRAME structure.
+  STACKFRAME StackFrame;
+  memset(&StackFrame, 0, sizeof(StackFrame));
 
-    StackFrame.AddrPC.Offset = ep->ContextRecord->Eip;
-    StackFrame.AddrPC.Mode = AddrModeFlat;
-    StackFrame.AddrStack.Offset = ep->ContextRecord->Esp;
-    StackFrame.AddrStack.Mode = AddrModeFlat;
-    StackFrame.AddrFrame.Offset = ep->ContextRecord->Ebp;
-    StackFrame.AddrFrame.Mode = AddrModeFlat;
+  StackFrame.AddrPC.Offset = ep->ContextRecord->Eip;
+  StackFrame.AddrPC.Mode = AddrModeFlat;
+  StackFrame.AddrStack.Offset = ep->ContextRecord->Esp;
+  StackFrame.AddrStack.Mode = AddrModeFlat;
+  StackFrame.AddrFrame.Offset = ep->ContextRecord->Ebp;
+  StackFrame.AddrFrame.Mode = AddrModeFlat;
 
-    HANDLE hProcess = GetCurrentProcess();
-    HANDLE hThread = GetCurrentThread();
+  HANDLE hProcess = GetCurrentProcess();
+  HANDLE hThread = GetCurrentThread();
 
-    // Initialize the symbol handler.
-    SymSetOptions(SYMOPT_DEFERRED_LOADS|SYMOPT_LOAD_LINES);
-    SymInitialize(hProcess, NULL, TRUE);
+  // Initialize the symbol handler.
+  SymSetOptions(SYMOPT_DEFERRED_LOADS|SYMOPT_LOAD_LINES);
+  SymInitialize(hProcess, NULL, TRUE);
 
-    while (true) {
-      if (!StackWalk(IMAGE_FILE_MACHINE_I386, hProcess, hThread, &StackFrame,
-                     ep->ContextRecord, NULL, SymFunctionTableAccess,
-                     SymGetModuleBase, NULL)) {
-        break;
-      }
-
-      if (StackFrame.AddrFrame.Offset == 0)
-        break;
-
-      // Print the PC in hexadecimal.
-      DWORD PC = StackFrame.AddrPC.Offset;
-      fprintf(stderr, "%08lX", PC);
-
-      // Print the parameters.  Assume there are four.
-      fprintf(stderr, " (0x%08lX 0x%08lX 0x%08lX 0x%08lX)",
-              StackFrame.Params[0],
-              StackFrame.Params[1], StackFrame.Params[2], StackFrame.Params[3]);
-
-      // Verify the PC belongs to a module in this process.
-      if (!SymGetModuleBase(hProcess, PC)) {
-        fputs(" <unknown module>\n", stderr);
-        continue;
-      }
-
-      // Print the symbol name.
-      char buffer[512];
-      IMAGEHLP_SYMBOL *symbol = reinterpret_cast<IMAGEHLP_SYMBOL *>(buffer);
-      memset(symbol, 0, sizeof(IMAGEHLP_SYMBOL));
-      symbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
-      symbol->MaxNameLength = 512 - sizeof(IMAGEHLP_SYMBOL);
-
-      DWORD dwDisp;
-      if (!SymGetSymFromAddr(hProcess, PC, &dwDisp, symbol)) {
-        fputc('\n', stderr);
-        continue;
-      }
-
-      buffer[511] = 0;
-      if (dwDisp > 0)
-        fprintf(stderr, ", %s()+%04lu bytes(s)", symbol->Name, dwDisp);
-      else
-        fprintf(stderr, ", %s", symbol->Name);
-
-      // Print the source file and line number information.
-      IMAGEHLP_LINE line;
-      memset(&line, 0, sizeof(line));
-      line.SizeOfStruct = sizeof(line);
-      if (SymGetLineFromAddr(hProcess, PC, &dwDisp, &line)) {
-        fprintf(stderr, ", %s, line %lu", line.FileName, line.LineNumber);
-        if (dwDisp > 0)
-          fprintf(stderr, "+%04lu byte(s)", dwDisp);
-      }
-
-      fputc('\n', stderr);
+  while (true) {
+    if (!StackWalk(IMAGE_FILE_MACHINE_I386, hProcess, hThread, &StackFrame,
+                   ep->ContextRecord, NULL, SymFunctionTableAccess,
+                   SymGetModuleBase, NULL)) {
+      break;
     }
+
+    if (StackFrame.AddrFrame.Offset == 0)
+      break;
+
+    // Print the PC in hexadecimal.
+    DWORD PC = StackFrame.AddrPC.Offset;
+    fprintf(stderr, "%08lX", PC);
+
+    // Print the parameters.  Assume there are four.
+    fprintf(stderr, " (0x%08lX 0x%08lX 0x%08lX 0x%08lX)",
+            StackFrame.Params[0],
+            StackFrame.Params[1], StackFrame.Params[2], StackFrame.Params[3]);
+
+    // Verify the PC belongs to a module in this process.
+    if (!SymGetModuleBase(hProcess, PC)) {
+      fputs(" <unknown module>\n", stderr);
+      continue;
+    }
+
+    // Print the symbol name.
+    char buffer[512];
+    IMAGEHLP_SYMBOL *symbol = reinterpret_cast<IMAGEHLP_SYMBOL *>(buffer);
+    memset(symbol, 0, sizeof(IMAGEHLP_SYMBOL));
+    symbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
+    symbol->MaxNameLength = 512 - sizeof(IMAGEHLP_SYMBOL);
+
+    DWORD dwDisp;
+    if (!SymGetSymFromAddr(hProcess, PC, &dwDisp, symbol)) {
+      fputc('\n', stderr);
+      continue;
+    }
+
+    buffer[511] = 0;
+    if (dwDisp > 0)
+      fprintf(stderr, ", %s()+%04lu bytes(s)", symbol->Name, dwDisp);
+    else
+      fprintf(stderr, ", %s", symbol->Name);
+
+    // Print the source file and line number information.
+    IMAGEHLP_LINE line;
+    memset(&line, 0, sizeof(line));
+    line.SizeOfStruct = sizeof(line);
+    if (SymGetLineFromAddr(hProcess, PC, &dwDisp, &line)) {
+      fprintf(stderr, ", %s, line %lu", line.FileName, line.LineNumber);
+      if (dwDisp > 0)
+        fprintf(stderr, "+%04lu byte(s)", dwDisp);
+    }
+
+    fputc('\n', stderr);
+  }
 
 #endif
 
