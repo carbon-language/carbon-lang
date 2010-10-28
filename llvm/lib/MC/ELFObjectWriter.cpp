@@ -728,6 +728,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         case MCSymbolRefExpr::VK_TPOFF:
           Type = ELF::R_X86_64_TPOFF32;
           break;
+        case MCSymbolRefExpr::VK_DTPOFF:
+          Type = ELF::R_X86_64_DTPOFF32;
+          break;
         }
         break;
       case FK_Data_4:
