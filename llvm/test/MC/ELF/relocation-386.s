@@ -85,6 +85,12 @@
 // CHECK-NEXT:  ('r_type', 0x00000010)
 // CHECK-NEXT: ),
 
+// Relocation 10 (foo@TLSLDM) is of type R_386_TLS_LDM
+// CHECK-NEXT: # Relocation 0x0000000a
+// CHECK-NEXT: (('r_offset', 0x0000003d)
+// CHECK-NEXT:  ('r_sym', 0x0000000b)
+// CHECK-NEXT:  ('r_type', 0x00000013)
+// CHECK-NEXT: ),
         .text
 bar:
 	leal	.Lfoo@GOTOFF(%ebx), %eax
@@ -106,6 +112,7 @@ bar2:
         movl foo@INDNTPOFF, %ecx
         addl foo@NTPOFF(%eax), %eax
         addl foo@GOTNTPOFF(%ebx), %ecx
+        leal foo@TLSLDM(%ebx), %eax
 
         .section	.rodata.str1.16,"aMS",@progbits,1
 .Lfoo:

@@ -178,6 +178,7 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_GOTNTPOFF: return "GOTNTPOFF";
   case VK_PLT: return "PLT";
   case VK_TLSGD: return "TLSGD";
+  case VK_TLSLDM: return "TLSLDM";
   case VK_TPOFF: return "TPOFF";
   case VK_ARM_HI16: return ":upper16:";
   case VK_ARM_LO16: return ":lower16:";
@@ -198,6 +199,7 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("GOTNTPOFF", VK_GOTNTPOFF)
     .Case("PLT", VK_PLT)
     .Case("TLSGD", VK_TLSGD)
+    .Case("TLSLDM", VK_TLSLDM)
     .Case("TPOFF", VK_TPOFF)
     .Case("TLVP", VK_TLVP)
     .Default(VK_Invalid);
