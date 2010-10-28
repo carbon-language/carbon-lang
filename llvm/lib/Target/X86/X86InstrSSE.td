@@ -654,10 +654,10 @@ defm Int_VCVTTSS2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                     int_x86_sse_cvttss2si64, f32mem, load,
                                     "cvttss2si">, XS, VEX, VEX_W;
 defm Int_VCVTTSD2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse2_cvttsd2si,
-                                    f128mem, load, "cvttss2si">, XD, VEX;
+                                    f128mem, load, "cvttsd2si">, XD, VEX;
 defm Int_VCVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                     int_x86_sse2_cvttsd2si64, f128mem, load,
-                                    "cvttss2si">, XD, VEX, VEX_W;
+                                    "cvttsd2si">, XD, VEX, VEX_W;
 }
 defm Int_CVTTSS2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse_cvttss2si,
                                     f32mem, load, "cvttss2si">, XS;
@@ -665,10 +665,10 @@ defm Int_CVTTSS2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                     int_x86_sse_cvttss2si64, f32mem, load,
                                     "cvttss2si{q}">, XS, REX_W;
 defm Int_CVTTSD2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse2_cvttsd2si,
-                                    f128mem, load, "cvttss2si">, XD;
+                                    f128mem, load, "cvttsd2si">, XD;
 defm Int_CVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                     int_x86_sse2_cvttsd2si64, f128mem, load,
-                                    "cvttss2si{q}">, XD, REX_W;
+                                    "cvttsd2si{q}">, XD, REX_W;
 
 let isAsmParserOnly = 1, Pattern = []<dag> in {
 defm VCVTSS2SI   : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load,

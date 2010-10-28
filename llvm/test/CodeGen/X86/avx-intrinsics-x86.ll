@@ -230,7 +230,7 @@ declare <4 x i32> @llvm.x86.sse2.cvttps2dq(<4 x float>) nounwind readnone
 
 
 define i32 @test_x86_sse2_cvttsd2si(<2 x double> %a0) {
-  ; CHECK: vcvttss2si
+  ; CHECK: vcvttsd2si
   %res = call i32 @llvm.x86.sse2.cvttsd2si(<2 x double> %a0) ; <i32> [#uses=1]
   ret i32 %res
 }

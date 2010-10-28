@@ -17,7 +17,7 @@ declare <2 x double> @llvm.x86.sse2.cvtsi642sd(<2 x double>, i64) nounwind readn
 
 
 define i64 @test_x86_sse2_cvttsd2si64(<2 x double> %a0) {
-  ; CHECK: vcvttss2si
+  ; CHECK: vcvttsd2si
   %res = call i64 @llvm.x86.sse2.cvttsd2si64(<2 x double> %a0) ; <i64> [#uses=1]
   ret i64 %res
 }
