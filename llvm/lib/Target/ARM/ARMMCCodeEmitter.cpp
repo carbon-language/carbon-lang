@@ -190,9 +190,15 @@ unsigned ARMMCCodeEmitter::getAddrModeImm12OpValue(const MCInst &MI,
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
   unsigned Reg = getARMRegisterNumbering(MO.getReg());
   int32_t Imm12 = MO1.getImm();
-  uint32_t Binary;
-  Binary = Imm12 & 0xfff;
-  if (Imm12 >= 0)
+  bool isAdd = Imm12 >= 0;
+  // Special value for #-0
+  if (Imm12 == INT32_MIN)
+    Imm12 = 0;
+  // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
+  if (Imm12 < 0)
+    Imm12 = -Imm12;
+  uint32_t Binary = Imm12 & 0xfff;
+  if (isAdd)
     Binary |= (1 << 12);
   Binary |= (Reg << 13);
   return Binary;

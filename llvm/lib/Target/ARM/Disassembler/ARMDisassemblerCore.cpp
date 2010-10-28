@@ -2931,9 +2931,9 @@ static inline bool MemBarrierInstr(uint32_t insn) {
 
 static inline bool PreLoadOpcode(unsigned Opcode) {
   switch(Opcode) {
-  case ARM::PLDi:  case ARM::PLDr:
-  case ARM::PLDWi: case ARM::PLDWr:
-  case ARM::PLIi:  case ARM::PLIr:
+  case ARM::PLDi12:  case ARM::PLDrs:
+  case ARM::PLDWi12: case ARM::PLDWrs:
+  case ARM::PLIi12:  case ARM::PLIrs:
     return true;
   default:
     return false;
@@ -2943,18 +2943,21 @@ static inline bool PreLoadOpcode(unsigned Opcode) {
 static bool DisassemblePreLoadFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
-  // Preload Data/Instruction requires either 2 or 4 operands.
-  // PLDi, PLDWi, PLIi:                Rn [+/-]imm12 add = (U == '1')
-  // PLDr[a|m], PLDWr[a|m], PLIr[a|m]: Rn Rm addrmode2_opc
+  // Preload Data/Instruction requires either 2 or 3 operands.
+  // PLDi, PLDWi, PLIi:                addrmode_imm12
+  // PLDr[a|m], PLDWr[a|m], PLIr[a|m]: ldst_so_reg
 
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                      decodeRn(insn))));
 
-  if (Opcode == ARM::PLDi || Opcode == ARM::PLDWi || Opcode == ARM::PLIi) {
+  if (Opcode == ARM::PLDi12 || Opcode == ARM::PLDWi12
+      || Opcode == ARM::PLIi12) {
     unsigned Imm12 = slice(insn, 11, 0);
     bool Negative = getUBit(insn) == 0;
-    int Offset = Negative ? -1 - Imm12 : 1 * Imm12;
-    MI.addOperand(MCOperand::CreateImm(Offset));
+    // -0 is represented specially. All other values are as normal.
+    if (Imm12 == 0 && Negative)
+      Imm12 = INT32_MIN;
+    MI.addOperand(MCOperand::CreateImm(Imm12));
     NumOpsAdded = 2;
   } else {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,

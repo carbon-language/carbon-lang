@@ -398,6 +398,9 @@ def imm0_31_m1 : Operand<i32>, PatLeaf<(imm), [{
 //
 def addrmode_imm12 : Operand<i32>,
                      ComplexPattern<i32, 2, "SelectAddrModeImm12", []> {
+  // 12-bit immediate operand. Note that instructions using this encode
+  // #0 and #-0 differently. We flag #-0 as the magic value INT32_MIN. All other
+  // immediate values are as normal.
 
   string EncoderMethod = "getAddrModeImm12OpValue";
   let PrintMethod = "printAddrModeImm12Operand";
@@ -988,23 +991,33 @@ def CPS : AXI<(outs), (ins cps_opt:$opt), MiscFrm, NoItinerary, "cps$opt",
 // The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
 multiclass APreLoad<bit data, bit read, string opc> {
 
-  def i : AXI<(outs), (ins GPR:$base, neg_zero:$imm), MiscFrm, NoItinerary,
-               !strconcat(opc, "\t[$base, $imm]"), []> {
+  def i12 : AXI<(outs), (ins addrmode_imm12:$addr), MiscFrm, NoItinerary,
+                !strconcat(opc, "\t$addr"), []> {
+    bits<4> Rt;
+    bits<17> addr;
     let Inst{31-26} = 0b111101;
     let Inst{25} = 0; // 0 for immediate form
     let Inst{24} = data;
+    let Inst{23} = addr{12};        // U (add = ('U' == 1))
     let Inst{22} = read;
     let Inst{21-20} = 0b01;
+    let Inst{19-16} = addr{16-13};  // Rn
+    let Inst{15-12} = Rt;
+    let Inst{11-0}  = addr{11-0};   // imm12
   }
 
-  def r : AXI<(outs), (ins addrmode2:$addr), MiscFrm, NoItinerary,
-               !strconcat(opc, "\t$addr"), []> {
+  def rs : AXI<(outs), (ins ldst_so_reg:$shift), MiscFrm, NoItinerary,
+               !strconcat(opc, "\t$shift"), []> {
+    bits<4> Rt;
+    bits<17> shift;
     let Inst{31-26} = 0b111101;
     let Inst{25} = 1; // 1 for register form
     let Inst{24} = data;
+    let Inst{23} = shift{12};    // U (add = ('U' == 1))
     let Inst{22} = read;
     let Inst{21-20} = 0b01;
-    let Inst{4} = 0;
+    let Inst{19-16} = shift{16-13}; // Rn
+    let Inst{11-0}  = shift{11-0};
   }
 }
 
@@ -3199,7 +3212,6 @@ def : ARMPat<(ARMcall texternalsym:$func), (BLr9 texternalsym:$func)>,
       Requires<[IsARM, IsDarwin]>;
 
 // zextload i1 -> zextload i8
-//def : ARMPat<(zextloadi1 addrmode2:$addr),  (LDRB addrmode2:$addr)>;
 def : ARMPat<(zextloadi1 addrmode_imm12:$addr), (LDRBi12 addrmode_imm12:$addr)>;
 def : ARMPat<(zextloadi1 ldst_so_reg:$addr),    (LDRBrs ldst_so_reg:$addr)>;
 
