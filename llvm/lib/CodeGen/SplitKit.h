@@ -22,6 +22,7 @@ class LiveInterval;
 class LiveIntervals;
 class LiveRangeEdit;
 class MachineInstr;
+class MachineDominatorTree;
 class MachineLoop;
 class MachineLoopInfo;
 class MachineRegisterInfo;
@@ -154,6 +155,7 @@ public:
 /// Values in parentli_ may map to any number of openli_ values, including 0.
 class LiveIntervalMap {
   LiveIntervals &lis_;
+  MachineDominatorTree &mdt_;
 
   // The parent interval is never changed.
   const LiveInterval &parentli_;
@@ -171,8 +173,9 @@ class LiveIntervalMap {
 
 public:
   LiveIntervalMap(LiveIntervals &lis,
+                  MachineDominatorTree &mdt,
                   const LiveInterval &parentli)
-    : lis_(lis), parentli_(parentli), li_(0) {}
+    : lis_(lis), mdt_(mdt), parentli_(parentli), li_(0) {}
 
   /// reset - clear all data structures and start a new live interval.
   void reset(LiveInterval *);
@@ -285,7 +288,8 @@ class SplitEditor {
 public:
   /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
   /// Newly created intervals will be appended to newIntervals.
-  SplitEditor(SplitAnalysis &SA, LiveIntervals&, VirtRegMap&, LiveRangeEdit&);
+  SplitEditor(SplitAnalysis &SA, LiveIntervals&, VirtRegMap&,
+              MachineDominatorTree&, LiveRangeEdit&);
 
   /// getAnalysis - Get the corresponding analysis.
   SplitAnalysis &getAnalysis() { return sa_; }

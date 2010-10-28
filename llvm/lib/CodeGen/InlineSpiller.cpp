@@ -19,6 +19,7 @@
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -40,6 +41,7 @@ class InlineSpiller : public Spiller {
   MachineFunction &mf_;
   LiveIntervals &lis_;
   LiveStacks &lss_;
+  MachineDominatorTree &mdt_;
   MachineLoopInfo &loops_;
   VirtRegMap &vrm_;
   MachineFrameInfo &mfi_;
@@ -68,6 +70,7 @@ public:
       mf_(mf),
       lis_(pass.getAnalysis<LiveIntervals>()),
       lss_(pass.getAnalysis<LiveStacks>()),
+      mdt_(pass.getAnalysis<MachineDominatorTree>()),
       loops_(pass.getAnalysis<MachineLoopInfo>()),
       vrm_(vrm),
       mfi_(*mf.getFrameInfo()),
@@ -112,7 +115,7 @@ bool InlineSpiller::split() {
 
   // Try splitting around loops.
   if (const MachineLoop *loop = splitAnalysis_.getBestSplitLoop()) {
-    SplitEditor(splitAnalysis_, lis_, vrm_, *edit_)
+    SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
       .splitAroundLoop(loop);
     return true;
   }
@@ -120,14 +123,14 @@ bool InlineSpiller::split() {
   // Try splitting into single block intervals.
   SplitAnalysis::BlockPtrSet blocks;
   if (splitAnalysis_.getMultiUseBlocks(blocks)) {
-    SplitEditor(splitAnalysis_, lis_, vrm_, *edit_)
+    SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
       .splitSingleBlocks(blocks);
     return true;
   }
 
   // Try splitting inside a basic block.
   if (const MachineBasicBlock *MBB = splitAnalysis_.getBlockForInsideSplit()) {
-    SplitEditor(splitAnalysis_, lis_, vrm_, *edit_)
+    SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
       .splitInsideBlock(MBB);
     return true;
   }
