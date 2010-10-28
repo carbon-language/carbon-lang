@@ -63,7 +63,7 @@ Program::FindProgramByName(const std::string& progName) {
     return Path();
   // Use the given path verbatim if it contains any slashes; this matches
   // the behavior of sh(1) and friends.
-  if (progName.find('/') != std::string::npos && temp.canExecute())
+  if (progName.find('/') != std::string::npos)
     return temp;
 
   // At this point, the file name does not contain slashes. Search for it
