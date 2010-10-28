@@ -454,6 +454,9 @@ void ScheduleDAGSDNodes::ComputeOperandLatency(SDNode *Def, SDNode *Use,
     return;
 
   unsigned DefIdx = Use->getOperand(OpIdx).getResNo();
+  if (Use->isMachineOpcode())
+    // Adjust the use operand index by num of defs.
+    OpIdx += TII->get(Use->getMachineOpcode()).getNumDefs();
   int Latency = TII->getOperandLatency(InstrItins, Def, DefIdx, Use, OpIdx);
   if (Latency >= 0)
     dep.setLatency(Latency);
