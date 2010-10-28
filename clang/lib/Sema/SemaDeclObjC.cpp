@@ -782,22 +782,12 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
 /// for explicit down-casting by callers.
 ///
 /// Note: This is a stricter requirement than for assignment.  
-static bool isObjCTypeSubstitutable(ASTContext &C, QualType A, QualType B, bool
-    rejectId=false) {
-  ObjCObjectPointerType *a = dyn_cast<ObjCObjectPointerType>(
-      C.getCanonicalType(A));
-  ObjCObjectPointerType *b = dyn_cast<ObjCObjectPointerType>(
-      C.getCanonicalType(B));
-  // Ignore non-ObjC types.
-  if (!(a && b)) 
-  {
-	  //a->dump(); b->dump();
-	  return false;
-  }
-  // A type is always substitutable for itself
-  if (C.hasSameType(A, B)) return true;
-
-  if (rejectId && C.isObjCIdType(B)) return false;
+static bool isObjCTypeSubstitutable(ASTContext &Context,
+                                    const ObjCObjectPointerType *A,
+                                    const ObjCObjectPointerType *B,
+                                    bool rejectId) {
+  // Reject a protocol-unqualified id.
+  if (rejectId && B->isObjCIdType()) return false;
 
   // If B is a qualified id, then A must also be a qualified id and it must
   // implement all of the protocols in B.  It may not be a qualified class.
@@ -805,7 +795,9 @@ static bool isObjCTypeSubstitutable(ASTContext &C, QualType A, QualType B, bool
   // stricter definition so it is not substitutable for id<A>.
   if (B->isObjCQualifiedIdType()) {
     return A->isObjCQualifiedIdType() &&
-      C.ObjCQualifiedIdTypesAreCompatible(A, B, false);
+           Context.ObjCQualifiedIdTypesAreCompatible(QualType(A, 0),
+                                                     QualType(B,0),
+                                                     false);
   }
 
   /*
@@ -821,57 +813,94 @@ static bool isObjCTypeSubstitutable(ASTContext &C, QualType A, QualType B, bool
 
   // Now we know that A and B are (potentially-qualified) class types.  The
   // normal rules for assignment apply.
-  return C.canAssignObjCInterfaces(a, b);
+  return Context.canAssignObjCInterfaces(A, B);
 }
+
+static SourceRange getTypeRange(TypeSourceInfo *TSI) {
+  return (TSI ? TSI->getTypeLoc().getSourceRange() : SourceRange());
+}
+
+static void CheckMethodOverrideReturn(Sema &S,
+                                      ObjCMethodDecl *MethodImpl,
+                                      ObjCMethodDecl *MethodIface) {
+  if (S.Context.hasSameUnqualifiedType(MethodImpl->getResultType(),
+                                       MethodIface->getResultType()))
+    return;
+
+  unsigned DiagID = diag::warn_conflicting_ret_types;
+
+  // Mismatches between ObjC pointers go into a different warning
+  // category, and sometimes they're even completely whitelisted.
+  if (const ObjCObjectPointerType *ImplPtrTy =
+        MethodImpl->getResultType()->getAs<ObjCObjectPointerType>()) {
+    if (const ObjCObjectPointerType *IfacePtrTy =
+          MethodIface->getResultType()->getAs<ObjCObjectPointerType>()) {
+      // Allow non-matching return types as long as they don't violate
+      // the principle of substitutability.  Specifically, we permit
+      // return types that are subclasses of the declared return type,
+      // or that are more-qualified versions of the declared type.
+      if (isObjCTypeSubstitutable(S.Context, IfacePtrTy, ImplPtrTy, false))
+        return;
+
+      DiagID = diag::warn_non_covariant_ret_types;
+    }
+  }
+
+  S.Diag(MethodImpl->getLocation(), DiagID)
+    << MethodImpl->getDeclName()
+    << MethodIface->getResultType()
+    << MethodImpl->getResultType()
+    << getTypeRange(MethodImpl->getResultTypeSourceInfo());
+  S.Diag(MethodIface->getLocation(), diag::note_previous_definition)
+    << getTypeRange(MethodIface->getResultTypeSourceInfo());
+}
+
+static void CheckMethodOverrideParam(Sema &S,
+                                     ObjCMethodDecl *MethodImpl,
+                                     ObjCMethodDecl *MethodIface,
+                                     ParmVarDecl *ImplVar,
+                                     ParmVarDecl *IfaceVar) {
+  QualType ImplTy = ImplVar->getType();
+  QualType IfaceTy = IfaceVar->getType();
+  if (S.Context.hasSameUnqualifiedType(ImplTy, IfaceTy))
+    return;
+
+  unsigned DiagID = diag::warn_conflicting_param_types;
+
+  // Mismatches between ObjC pointers go into a different warning
+  // category, and sometimes they're even completely whitelisted.
+  if (const ObjCObjectPointerType *ImplPtrTy =
+        ImplTy->getAs<ObjCObjectPointerType>()) {
+    if (const ObjCObjectPointerType *IfacePtrTy =
+          IfaceTy->getAs<ObjCObjectPointerType>()) {
+      // Allow non-matching argument types as long as they don't
+      // violate the principle of substitutability.  Specifically, the
+      // implementation must accept any objects that the superclass
+      // accepts, however it may also accept others.
+      if (isObjCTypeSubstitutable(S.Context, ImplPtrTy, IfacePtrTy, true))
+        return;
+
+      DiagID = diag::warn_non_contravariant_param_types;
+    }
+  }
+
+  S.Diag(ImplVar->getLocation(), DiagID)
+    << getTypeRange(ImplVar->getTypeSourceInfo())
+    << MethodImpl->getDeclName() << IfaceTy << ImplTy;
+  S.Diag(IfaceVar->getLocation(), diag::note_previous_definition)
+    << getTypeRange(IfaceVar->getTypeSourceInfo());
+}
+                                     
 
 void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                                        ObjCMethodDecl *IntfMethodDecl) {
-  if (!Context.hasSameType(IntfMethodDecl->getResultType(),
-                           ImpMethodDecl->getResultType())) {
-    // Allow non-matching return types as long as they don't violate the
-    // principle of substitutability.  Specifically, we permit return types
-    // that are subclasses of the declared return type, or that are
-    // more-qualified versions of the declared type.
-
-    // As a possibly-temporary adjustment, we still warn in the
-    // covariant case, just with a different diagnostic (mapped to
-    // nothing under certain circumstances).
-    unsigned DiagID = diag::warn_conflicting_ret_types;
-    if (isObjCTypeSubstitutable(Context, IntfMethodDecl->getResultType(),
-          ImpMethodDecl->getResultType()))
-      DiagID = diag::warn_covariant_ret_types;
-
-    Diag(ImpMethodDecl->getLocation(), DiagID)
-      << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
-      << ImpMethodDecl->getResultType();
-    Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
-  }
+  CheckMethodOverrideReturn(*this, ImpMethodDecl, IntfMethodDecl);
 
   for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
        IF = IntfMethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
-       IM != EM; ++IM, ++IF) {
-    QualType ParmDeclTy = (*IF)->getType().getUnqualifiedType();
-    QualType ParmImpTy = (*IM)->getType().getUnqualifiedType();
-    if (Context.hasSameType(ParmDeclTy, ParmImpTy))
-      continue;
+       IM != EM; ++IM, ++IF)
+    CheckMethodOverrideParam(*this, ImpMethodDecl, IntfMethodDecl, *IM, *IF);
 
-    // Allow non-matching argument types as long as they don't violate the
-    // principle of substitutability.  Specifically, the implementation must
-    // accept any objects that the superclass accepts, however it may also
-    // accept others.
-
-    // As a possibly-temporary adjustment, we still warn in the
-    // contravariant case, just with a different diagnostic (mapped to
-    // nothing under certain circumstances).
-    unsigned DiagID = diag::warn_conflicting_param_types;
-    if (isObjCTypeSubstitutable(Context, ParmImpTy, ParmDeclTy, true))
-      DiagID = diag::warn_contravariant_param_types;
-
-    Diag((*IM)->getLocation(), DiagID)
-      << ImpMethodDecl->getDeclName() << (*IF)->getType()
-      << (*IM)->getType();
-    Diag((*IF)->getLocation(), diag::note_previous_definition);
-  }
   if (ImpMethodDecl->isVariadic() != IntfMethodDecl->isVariadic()) {
     Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_variadic);
     Diag(IntfMethodDecl->getLocation(), diag::note_previous_declaration);

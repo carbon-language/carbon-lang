@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wmethod-signatures -fsyntax-only -verify %s
 
 @interface foo
 - (int)meth;

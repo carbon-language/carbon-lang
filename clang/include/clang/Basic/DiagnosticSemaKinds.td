@@ -326,15 +326,15 @@ def note_required_for_protocol_at :
 
 def warn_conflicting_ret_types : Warning<
   "conflicting return type in implementation of %0: %1 vs %2">;
-def warn_covariant_ret_types : Warning<
+def warn_non_covariant_ret_types : Warning<
   "conflicting return type in implementation of %0: %1 vs %2">,
-  InGroup<DiagGroup<"objc-covariant-overrides">>;
+  InGroup<DiagGroup<"method-signatures">>, DefaultIgnore;
 
 def warn_conflicting_param_types : Warning<
   "conflicting parameter types in implementation of %0: %1 vs %2">;
-def warn_contravariant_param_types : Warning<
+def warn_non_contravariant_param_types : Warning<
   "conflicting parameter types in implementation of %0: %1 vs %2">,
-  InGroup<DiagGroup<"objc-covariant-overrides">>;
+  InGroup<DiagGroup<"method-signatures">>, DefaultIgnore;
 def warn_conflicting_variadic :Warning<
   "conflicting variadic declaration of method and its implementation">;
 

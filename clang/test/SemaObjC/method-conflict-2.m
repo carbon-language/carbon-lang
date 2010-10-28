@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wno-objc-covariant-overrides -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wmethod-signatures -fsyntax-only -verify %s
 
 @interface A @end
 @interface B : A @end
@@ -39,6 +39,6 @@
 - (A*) test2;
 @end
 @implementation Test4
-- (A*) test1 { return 0; }
+- (A*) test1 { return 0; } // id -> A* is rdar://problem/8596987
 - (id) test2 { return 0; }
 @end

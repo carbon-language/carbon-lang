@@ -1,8 +1,9 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wmethod-signatures -fsyntax-only -verify %s
 
+@class B;
 @interface A
-- (id)obj; // expected-note {{previous definition is here}}
-- (A*)a; // expected-note {{previous definition is here}}
+- (B*)obj;
+- (B*)a; // expected-note {{previous definition is here}}
 - (void)takesA: (A*)a; // expected-note {{previous definition is here}}
 - (void)takesId: (id)a; // expected-note {{previous definition is here}}
 @end
@@ -12,8 +13,8 @@
 @end
 
 @implementation B
-- (B*)obj {return self;} // expected-warning {{conflicting return type in implementation of 'obj'}}
-- (B*)a { return self;}  // expected-warning {{conflicting return type in implementation of 'a'}}
+- (id)obj {return self;} // 'id' overrides are white-listed?
+- (A*)a { return self;}  // expected-warning {{conflicting return type in implementation of 'a'}}
 - (void)takesA: (B*)a  // expected-warning {{conflicting parameter types in implementation of 'takesA:'}}
 {}
 - (void)takesId: (B*)a // expected-warning {{conflicting parameter types in implementation of 'takesId:'}}
