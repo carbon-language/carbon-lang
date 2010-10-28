@@ -2160,6 +2160,10 @@ ELF, and/or COFF) files directly from the target.  Note that the target also
 must include an assembly parser and general inline assembly support for full
 inline assembly support in the .o writer.</p>
 
+<p>Targets that don't support this feature can obviously still write out .o
+files, they just rely on having an external assembler to translate from a .s
+file to a .o file (as is the case for many C compilers).</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
