@@ -336,6 +336,7 @@ makeVV(const VNInfo *a, VNInfo *b) {
 void LiveIntervalMap::reset(LiveInterval *li) {
   li_ = li;
   valueMap_.clear();
+  liveOutCache_.clear();
 }
 
 bool LiveIntervalMap::isComplexMapped(const VNInfo *ParentVNI) const {
@@ -408,105 +409,175 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
 
   // Now for the fun part. We know that ParentVNI potentially has multiple defs,
   // and we may need to create even more phi-defs to preserve VNInfo SSA form.
-  // Perform a depth-first search for predecessor blocks where we know the
-  // dominating VNInfo. Insert phi-def VNInfos along the path back to IdxMBB.
+  // Perform a search for all predecessor blocks where we know the dominating
+  // VNInfo. Insert phi-def VNInfos along the path back to IdxMBB.
+  DEBUG(dbgs() << "\n  Reaching defs for BB#" << IdxMBB->getNumber()
+               << " at " << Idx << " in " << *li_ << '\n');
 
-  // Track MBBs where we have created or learned the dominating value.
-  // This may change during the DFS as we create new phi-defs.
-  typedef DenseMap<MachineBasicBlock*, VNInfo*> MBBValueMap;
-  MBBValueMap DomValue;
-  typedef SplitAnalysis::BlockPtrSet BlockPtrSet;
-  BlockPtrSet Visited;
+  // Blocks where li_ should be live-in.
+  SmallVector<MachineDomTreeNode*, 16> LiveIn;
+  LiveIn.push_back(mdt_[IdxMBB]);
 
-  // Iterate over IdxMBB predecessors in a depth-first order.
-  // Skip begin() since that is always IdxMBB.
-  for (idf_ext_iterator<MachineBasicBlock*, BlockPtrSet>
-         IDFI = llvm::next(idf_ext_begin(IdxMBB, Visited)),
-         IDFE = idf_ext_end(IdxMBB, Visited); IDFI != IDFE;) {
-    MachineBasicBlock *MBB = *IDFI;
-    SlotIndex End = lis_.getMBBEndIdx(MBB).getPrevSlot();
+  // Using liveOutCache_ as a visited set, perform a BFS for all reaching defs.
+  for (unsigned i = 0; i != LiveIn.size(); ++i) {
+    MachineBasicBlock *MBB = LiveIn[i]->getBlock();
+    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+           PE = MBB->pred_end(); PI != PE; ++PI) {
+       MachineBasicBlock *Pred = *PI;
+       // Is this a known live-out block?
+       std::pair<LiveOutMap::iterator,bool> LOIP =
+         liveOutCache_.insert(std::make_pair(Pred, LiveOutPair()));
+       // Yes, we have been here before.
+       if (!LOIP.second) {
+         if (VNInfo *VNI = LOIP.first->second.first) {
+           DEBUG(dbgs() << "    known valno #" << VNI->id
+                        << " at BB#" << Pred->getNumber() << '\n');
+         }
+         continue;
+       }
 
-    // We are operating on the restricted CFG where ParentVNI is live.
-    if (parentli_.getVNInfoAt(End) != ParentVNI) {
-      IDFI.skipChildren();
-      continue;
+       // Does Pred provide a live-out value?
+       SlotIndex Last = lis_.getMBBEndIdx(Pred).getPrevSlot();
+       if (VNInfo *VNI = extendTo(Pred, Last)) {
+         MachineBasicBlock *DefMBB = lis_.getMBBFromIndex(VNI->def);
+         DEBUG(dbgs() << "    found valno #" << VNI->id
+                      << " at BB#" << DefMBB->getNumber() << '\n');
+         LiveOutPair &LOP = LOIP.first->second;
+         LOP.first = VNI;
+         LOP.second = mdt_[lis_.getMBBFromIndex(VNI->def)];
+         continue;
+       }
+       // No, we need a live-in value for Pred as well
+       if (Pred != IdxMBB)
+         LiveIn.push_back(mdt_[Pred]);
     }
+  }
 
-    // Do we have a dominating value in this block?
-    VNInfo *VNI = extendTo(MBB, End);
-    if (!VNI) {
-      ++IDFI;
-      continue;
-    }
+  // We may need to add phi-def values to preserve the SSA form.
+  // This is essentially the same iterative algorithm that SSAUpdater uses,
+  // except we already have a dominator tree, so we don't have to recompute it.
+  VNInfo *IdxVNI = 0;
+  unsigned Changes;
+  do {
+    Changes = 0;
+    DEBUG(dbgs() << "  Iterating over " << LiveIn.size() << " blocks.\n");
+    // Propagate live-out values down the dominator tree, inserting phi-defs when
+    // necessary. Since LiveIn was created by a BFS, going backwards makes it more
+    // likely for us to visit immediate dominators before their children.
+    for (unsigned i = LiveIn.size(); i; --i) {
+      MachineDomTreeNode *Node = LiveIn[i-1];
+      MachineBasicBlock *MBB = Node->getBlock();
+      MachineDomTreeNode *IDom = Node->getIDom();
+      LiveOutPair IDomValue;
+      // We need a live-in value to a block with no immediate dominator?
+      // This is probably an unreachable block that has survived somehow.
+      bool needPHI = !IDom;
 
-    // Yes, VNI dominates MBB. Make sure we visit MBB again from other paths.
-    Visited.erase(MBB);
+      // Get the IDom live-out value.
+      if (!needPHI) {
+        LiveOutMap::iterator I = liveOutCache_.find(IDom->getBlock());
+        if (I != liveOutCache_.end())
+          IDomValue = I->second;
+        else
+          // If IDom is outside our set of live-out blocks, there must be new
+          // defs, and we need a phi-def here.
+          needPHI = true;
+      }
 
-    // Track the path back to IdxMBB, creating phi-defs
-    // as needed along the way.
-    for (unsigned PI = IDFI.getPathLength()-1; PI != 0; --PI) {
-      // Start from MBB's immediate successor. End at IdxMBB.
-      MachineBasicBlock *Succ = IDFI.getPath(PI-1);
-      std::pair<MBBValueMap::iterator, bool> InsP =
-        DomValue.insert(MBBValueMap::value_type(Succ, VNI));
+      // IDom dominates all of our predecessors, but it may not be the immediate
+      // dominator. Check if any of them have live-out values that are properly
+      // dominated by IDom. If so, we need a phi-def here.
+      if (!needPHI) {
+        for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+               PE = MBB->pred_end(); PI != PE; ++PI) {
+          LiveOutPair Value = liveOutCache_[*PI];
+          if (!Value.first || Value.first == IDomValue.first)
+            continue;
+          // This predecessor is carrying something other than IDomValue.
+          // It could be because IDomValue hasn't propagated yet, or it could be
+          // because MBB is in the dominance frontier of that value.
+          if (mdt_.dominates(IDom, Value.second)) {
+            needPHI = true;
+            break;
+          }
+        }
+      }
 
-      // This is the first time we backtrack to Succ.
-      if (InsP.second)
-        continue;
-
-      // We reached Succ again with the same VNI. Nothing is going to change.
-      VNInfo *OVNI = InsP.first->second;
-      if (OVNI == VNI)
-        break;
-
-      // Succ already has a phi-def. No need to continue.
-      SlotIndex Start = lis_.getMBBStartIdx(Succ);
-      if (OVNI->def == Start)
-        break;
-
-      // We have a collision between the old and new VNI at Succ. That means
-      // neither dominates and we need a new phi-def.
-      VNI = li_->getNextValue(Start, 0, lis_.getVNInfoAllocator());
-      VNI->setIsPHIDef(true);
-      InsP.first->second = VNI;
-
-      // Replace OVNI with VNI in the remaining path.
-      for (; PI > 1 ; --PI) {
-        MBBValueMap::iterator I = DomValue.find(IDFI.getPath(PI-2));
-        if (I == DomValue.end() || I->second != OVNI)
-          break;
-        I->second = VNI;
+      // Create a phi-def if required.
+      if (needPHI) {
+        ++Changes;
+        SlotIndex Start = lis_.getMBBStartIdx(MBB);
+        VNInfo *VNI = li_->getNextValue(Start, 0, lis_.getVNInfoAllocator());
+        VNI->setIsPHIDef(true);
+        DEBUG(dbgs() << "    - BB#" << MBB->getNumber()
+                     << " phi-def #" << VNI->id << " at " << Start << '\n');
+        // We no longer need li_ to be live-in.
+        LiveIn.erase(LiveIn.begin()+(i-1));
+        // Blocks in LiveIn are either IdxMBB, or have a value live-through.
+        if (MBB == IdxMBB)
+          IdxVNI = VNI;
+        // Check if we need to update live-out info.
+        LiveOutMap::iterator I = liveOutCache_.find(MBB);
+        if (I == liveOutCache_.end() || I->second.second == Node) {
+          // We already have a live-out defined in MBB, so this must be IdxMBB.
+          assert(MBB == IdxMBB && "Adding phi-def to known live-out");
+          li_->addRange(LiveRange(Start, Idx.getNextSlot(), VNI));
+        } else {
+          // This phi-def is also live-out, so color the whole block.
+          li_->addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
+          I->second = LiveOutPair(VNI, Node);
+        }
+      } else if (IDomValue.first) {
+        // No phi-def here. Propagate IDomValue if needed.
+        if (MBB == IdxMBB)
+          IdxVNI = IDomValue.first;
+        LiveOutMap::iterator I = liveOutCache_.find(MBB);
+        if (I != liveOutCache_.end() && I->second.first != IDomValue.first) {
+          ++Changes;
+          I->second = IDomValue;
+          DEBUG(dbgs() << "    - BB#" << MBB->getNumber()
+                       << " idom valno #" << IDomValue.first->id
+                       << " from BB#" << IDom->getBlock()->getNumber() << '\n');
+        }
       }
     }
-
-    // No need to search the children, we found a dominating value.
-    IDFI.skipChildren();
-  }
-
-  // The search should at least find a dominating value for IdxMBB.
-  assert(!DomValue.empty() && "Couldn't find a reaching definition");
-
-  // Since we went through the trouble of a full DFS visiting all reaching defs,
-  // the values in DomValue are now accurate. No more phi-defs are needed for
-  // these blocks, so we can color the live ranges.
-  // This makes the next mapValue call much faster.
-  VNInfo *IdxVNI = 0;
-  for (MBBValueMap::iterator I = DomValue.begin(), E = DomValue.end(); I != E;
-       ++I) {
-     MachineBasicBlock *MBB = I->first;
-     VNInfo *VNI = I->second;
-     SlotIndex Start = lis_.getMBBStartIdx(MBB);
-     if (MBB == IdxMBB) {
-       // Don't add full liveness to IdxMBB, stop at Idx.
-       if (Start != Idx)
-         li_->addRange(LiveRange(Start, Idx.getNextSlot(), VNI));
-       // The caller had better add some liveness to IdxVNI, or it leaks.
-       IdxVNI = VNI;
-     } else
-      li_->addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
-  }
+    DEBUG(dbgs() << "  - made " << Changes << " changes.\n");
+  } while (Changes);
 
   assert(IdxVNI && "Didn't find value for Idx");
+
+#ifndef NDEBUG
+  // Check the liveOutCache_ invariants.
+  for (LiveOutMap::iterator I = liveOutCache_.begin(), E = liveOutCache_.end();
+         I != E; ++I) {
+    assert(I->first && "Null MBB entry in cache");
+    assert(I->second.first && "Null VNInfo in cache");
+    assert(I->second.second && "Null DomTreeNode in cache");
+    if (I->second.second->getBlock() == I->first)
+      continue;
+    for (MachineBasicBlock::pred_iterator PI = I->first->pred_begin(),
+           PE = I->first->pred_end(); PI != PE; ++PI)
+      assert(liveOutCache_.lookup(*PI) == I->second && "Bad invariant");
+  }
+#endif
+
+  // Since we went through the trouble of a full BFS visiting all reaching defs,
+  // the values in LiveIn are now accurate. No more phi-defs are needed
+  // for these blocks, so we can color the live ranges.
+  // This makes the next mapValue call much faster.
+  for (unsigned i = 0, e = LiveIn.size(); i != e; ++i) {
+    MachineBasicBlock *MBB = LiveIn[i]->getBlock();
+    SlotIndex Start = lis_.getMBBStartIdx(MBB);
+    if (MBB == IdxMBB) {
+      li_->addRange(LiveRange(Start, Idx.getNextSlot(), IdxVNI));
+      continue;
+    }
+    // Anything in LiveIn other than IdxMBB is live-through.
+    VNInfo *VNI = liveOutCache_.lookup(MBB).first;
+    assert(VNI && "Missing block value");
+    li_->addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
+  }
+
   return IdxVNI;
 }
 

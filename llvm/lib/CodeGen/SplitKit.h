@@ -22,7 +22,6 @@ class LiveInterval;
 class LiveIntervals;
 class LiveRangeEdit;
 class MachineInstr;
-class MachineDominatorTree;
 class MachineLoop;
 class MachineLoopInfo;
 class MachineRegisterInfo;
@@ -30,6 +29,11 @@ class TargetInstrInfo;
 class VirtRegMap;
 class VNInfo;
 class raw_ostream;
+
+/// At some point we should just include MachineDominators.h:
+class MachineDominatorTree;
+template <class NodeT> class DomTreeNodeBase;
+typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 
 /// SplitAnalysis - Analyze a LiveInterval, looking for live range splitting
 /// opportunities.
@@ -170,6 +174,24 @@ class LiveIntervalMap {
   // Note there is a difference between values mapping to NULL (complex), and
   // values not present (unknown/unmapped).
   ValueMap valueMap_;
+
+  typedef std::pair<VNInfo*, MachineDomTreeNode*> LiveOutPair;
+  typedef DenseMap<MachineBasicBlock*,LiveOutPair> LiveOutMap;
+
+  // liveOutCache_ - Map each basic block where li_ is live out to the live-out
+  // value and its defining block. One of these conditions shall be true:
+  //
+  //  1. !liveOutCache_.count(MBB)
+  //  2. liveOutCache_[MBB].second.getNode() == MBB
+  //  3. forall P in preds(MBB): liveOutCache_[P] == liveOutCache_[MBB]
+  //
+  // This is only a cache, the values can be computed as:
+  //
+  //  VNI = li_->getVNInfoAt(lis_.getMBBEndIdx(MBB))
+  //  Node = mbt_[lis_.getMBBFromIndex(VNI->def)]
+  //
+  // The cache is also used as a visiteed set by mapValue().
+  LiveOutMap liveOutCache_;
 
 public:
   LiveIntervalMap(LiveIntervals &lis,
