@@ -272,10 +272,16 @@ namespace llvm {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
     }
     StringRef getDirectory() const  { 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getCompileUnit().getDirectory();
+
       DIFile F = getFieldAs<DIFile>(3);
       return F.getDirectory();
     }
     StringRef getFilename() const  { 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getCompileUnit().getFilename();
+
       DIFile F = getFieldAs<DIFile>(3);
       return F.getFilename();
     }
