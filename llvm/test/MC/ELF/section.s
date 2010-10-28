@@ -37,3 +37,8 @@
 // CHECK-NEXT:  ('sh_info', 0x00000000)
 // CHECK-NEXT:  ('sh_addralign', 0x00000001)
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
+
+
+// Test that we can parse these
+.section        .text.foo,"axG",@progbits,foo,comdat
+.section        .text.bar,"axMG",@progbits,42,bar,.gnu.linkonce

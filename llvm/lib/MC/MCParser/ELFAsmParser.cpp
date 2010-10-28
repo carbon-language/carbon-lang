@@ -198,7 +198,7 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   if (ParseSectionName(SectionName))
     return TokError("expected identifier in directive");
 
-  std::string FlagsStr;
+  StringRef FlagsStr;
   StringRef TypeName;
   int64_t Size = 0;
   if (getLexer().is(AsmToken::Comma)) {
@@ -216,21 +216,47 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
     else
       TypeStartToken = AsmToken::At;
 
-    if (getLexer().is(AsmToken::Comma)) {
-      Lex();
-      if (getLexer().is(TypeStartToken)) {
-        Lex();
-        if (getParser().ParseIdentifier(TypeName))
-          return TokError("expected identifier in directive");
+    bool Mergeable = FlagsStr.find('M') != StringRef::npos;
+    bool Group = FlagsStr.find('G') != StringRef::npos;
 
+    if (getLexer().isNot(AsmToken::Comma)) {
+      if (Mergeable)
+        return TokError("Mergeable section must specify the type");
+      if (Group)
+        return TokError("Group section must specify the type");
+    } else {
+      Lex();
+      if (getLexer().isNot(TypeStartToken))
+        return TokError("expected the type");
+
+      Lex();
+      if (getParser().ParseIdentifier(TypeName))
+        return TokError("expected identifier in directive");
+
+      if (Mergeable) {
+        if (getLexer().isNot(AsmToken::Comma))
+          return TokError("expected the entry size");
+        Lex();
+        if (getParser().ParseAbsoluteExpression(Size))
+          return true;
+        if (Size <= 0)
+          return TokError("entry size must be positive");
+      }
+
+      if (Group) {
+        if (getLexer().isNot(AsmToken::Comma))
+          return TokError("expected group name");
+        Lex();
+        StringRef GroupName;
+        if (getParser().ParseIdentifier(GroupName))
+          return true;
         if (getLexer().is(AsmToken::Comma)) {
           Lex();
-
-          if (getParser().ParseAbsoluteExpression(Size))
+          StringRef Linkage;
+          if (getParser().ParseIdentifier(Linkage))
             return true;
-
-          if (Size <= 0)
-            return TokError("section size must be positive");
+          if (Linkage != "comdat" && Linkage != ".gnu.linkonce")
+            return TokError("Linkage must be 'comdat' or '.gnu.linkonce'");
         }
       }
     }
@@ -274,6 +300,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
       break;
     case 'd':
       Flags |= MCSectionELF::XCORE_SHF_DP_SECTION;
+      break;
+    case 'G':
       break;
     default:
       return TokError("unknown flag");
