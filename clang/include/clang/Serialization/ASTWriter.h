@@ -484,6 +484,8 @@ public:
   /// \brief Retrieve the ID for the given switch-case statement.
   unsigned getSwitchCaseID(SwitchCase *S);
 
+  void ClearSwitchCaseIDs();
+
   /// \brief Retrieve the ID for the given label statement, which may
   /// or may not have been emitted yet.
   unsigned GetLabelID(LabelStmt *S);

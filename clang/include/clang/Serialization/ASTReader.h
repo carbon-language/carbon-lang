@@ -1162,6 +1162,8 @@ public:
   /// deserialized and has the given ID.
   void RecordLabelStmt(LabelStmt *S, unsigned ID);
 
+  void ClearSwitchCaseIDs();
+
   /// \brief Set the label of the given statement to the label
   /// identified by ID.
   ///

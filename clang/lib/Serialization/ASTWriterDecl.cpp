@@ -1128,6 +1128,9 @@ static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
 }
 
 void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
+  // Switch case IDs are per Decl.
+  ClearSwitchCaseIDs();
+
   RecordData Record;
   ASTDeclWriter W(*this, Context, Record);
 

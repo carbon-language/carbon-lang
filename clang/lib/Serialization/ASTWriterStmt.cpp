@@ -1311,6 +1311,10 @@ unsigned ASTWriter::getSwitchCaseID(SwitchCase *S) {
   return SwitchCaseIDs[S];
 }
 
+void ASTWriter::ClearSwitchCaseIDs() {
+  SwitchCaseIDs.clear();
+}
+
 /// \brief Retrieve the ID for the given label statement, which may
 /// or may not have been emitted yet.
 unsigned ASTWriter::GetLabelID(LabelStmt *S) {

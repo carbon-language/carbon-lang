@@ -3284,6 +3284,9 @@ Decl *ASTReader::GetDecl(DeclID ID) {
 /// source each time it is called, and is meant to be used via a
 /// LazyOffsetPtr (which is used by Decls for the body of functions, etc).
 Stmt *ASTReader::GetExternalDeclStmt(uint64_t Offset) {
+  // Switch case IDs are per Decl.
+  ClearSwitchCaseIDs();
+
   // Offset here is a global offset across the entire chain.
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     PerFileData &F = *Chain[N - I - 1];
@@ -4250,6 +4253,10 @@ void ASTReader::RecordSwitchCaseID(SwitchCase *SC, unsigned ID) {
 SwitchCase *ASTReader::getSwitchCaseWithID(unsigned ID) {
   assert(SwitchCaseStmts[ID] != 0 && "No SwitchCase with this ID");
   return SwitchCaseStmts[ID];
+}
+
+void ASTReader::ClearSwitchCaseIDs() {
+  SwitchCaseStmts.clear();
 }
 
 /// \brief Record that the given label statement has been
