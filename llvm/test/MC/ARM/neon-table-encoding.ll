@@ -1,5 +1,6 @@
 ; RUN: llc -show-mc-encoding -march=arm -mcpu=cortex-a8 -mattr=+neon < %s | FileCheck %s
 
+; XFAIL: *
 
 %struct.__neon_int8x8x2_t = type { <8 x i8>, <8 x i8> }
 %struct.__neon_int8x8x3_t = type { <8 x i8>,  <8 x i8>, <8 x i8> }

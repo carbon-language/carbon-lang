@@ -1,5 +1,7 @@
 ; RUN: llc -show-mc-encoding -march=arm -mcpu=cortex-a8 -mattr=+neon < %s | FileCheck %s
 
+; XFAIL: *
+
 define <8 x i8> @test_vextd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B

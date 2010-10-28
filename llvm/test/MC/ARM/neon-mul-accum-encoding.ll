@@ -1,5 +1,7 @@
 ; RUN: llc -show-mc-encoding -march=arm -mcpu=cortex-a8 -mattr=+neon < %s | FileCheck %s
 
+; XFAIL: *
+
 ; CHECK: vmla_8xi8
 define <8 x i8> @vmla_8xi8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8> * %C) nounwind {
 	%tmp1 = load <8 x i8>* %A

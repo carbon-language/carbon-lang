@@ -1,5 +1,7 @@
 ; RUN: llc -show-mc-encoding -march=arm -mcpu=cortex-a8 -mattr=+neon < %s | FileCheck %s
 
+; XFAIL: *
+
 declare <2 x i32> @llvm.arm.neon.vrecpe.v2i32(<2 x i32>) nounwind readnone
 declare <4 x i32> @llvm.arm.neon.vrecpe.v4i32(<4 x i32>) nounwind readnone
 

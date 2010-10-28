@@ -1,5 +1,6 @@
 ; RUN: llc -mtriple=armv7-apple-darwin -mcpu=cortex-a8 -mattr=-neonfp -show-mc-encoding < %s | FileCheck %s
 
+; XFAIL: *
 
 ; FIXME: Once the ARM integrated assembler is up and going, these sorts of tests
 ;        should run on .s source files rather than using llc to generate the

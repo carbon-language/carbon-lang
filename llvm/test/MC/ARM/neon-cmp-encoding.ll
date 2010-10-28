@@ -1,5 +1,7 @@
 ; RUN: llc -show-mc-encoding -march=arm -mcpu=cortex-a8 -mattr=+neon < %s | FileCheck %s
 
+; XFAIL: *
+
 ; FIXME: We cannot currently test the following instructions, which are 
 ; currently marked as for-disassembly only in the .td files:
 ;  - VCEQz
