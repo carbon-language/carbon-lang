@@ -2036,12 +2036,11 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl,
     return llvm::DINameSpace(cast<llvm::MDNode>(I->second));
   
   unsigned LineNo = getLineNumber(NSDecl->getLocation());
-
+  llvm::DIFile FileD = getOrCreateFile(NSDecl->getLocation());
   llvm::DIDescriptor Context = 
     getContextDescriptor(dyn_cast<Decl>(NSDecl->getDeclContext()), Unit);
   llvm::DINameSpace NS =
-    DebugFactory.CreateNameSpace(Context, NSDecl->getName(), 
-                                 llvm::DIFile(Unit), LineNo);
+    DebugFactory.CreateNameSpace(Context, NSDecl->getName(), FileD, LineNo);
   NameSpaceCache[NSDecl] = llvm::WeakVH(NS);
   return NS;
 }
