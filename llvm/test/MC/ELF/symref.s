@@ -17,6 +17,11 @@ defined3:
         .long defined3
         .long undefined3
 
+        .global global1
+        .symver global1, g1@@zed
+global1:
+
+
 // CHECK:      # Symbol 0x00000001
 // CHECK-NEXT: (('st_name', 0x00000013) # 'bar1@zed'
 // CHECK-NEXT:  ('st_bind', 0x00000000)
@@ -90,6 +95,24 @@ defined3:
 // CHECK-NEXT:  ('st_size', 0x00000000)
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Symbol 0x00000009
+// CHECK-NEXT: (('st_name', 0x0000004a) # 'g1@@zed'
+// CHECK-NEXT:  ('st_bind', 0x00000001)
+// CHECK-NEXT:  ('st_type', 0x00000000)
+// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_value', 0x00000014)
+// CHECK-NEXT:  ('st_size', 0x00000000)
+// CHECK-NEXT: ),
+// CHECK-NEXT: # Symbol 0x0000000a
+// CHECK-NEXT: (('st_name', 0x00000042) # 'global1'
+// CHECK-NEXT:  ('st_bind', 0x00000001)
+// CHECK-NEXT:  ('st_type', 0x00000000)
+// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_value', 0x00000014)
+// CHECK-NEXT:  ('st_size', 0x00000000)
+// CHECK-NEXT: ),
+// CHECK-NEXT: # Symbol 0x0000000b
 // CHECK-NEXT: (('st_name', 0x0000001c) # 'bar2@zed'
 // CHECK-NEXT:  ('st_bind', 0x00000001)
 // CHECK-NEXT:  ('st_type', 0x00000000)
@@ -98,7 +121,7 @@ defined3:
 // CHECK-NEXT:  ('st_value', 0x00000000)
 // CHECK-NEXT:  ('st_size', 0x00000000)
 // CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 0x0000000a
+// CHECK-NEXT: # Symbol 0x0000000c
 // CHECK-NEXT: (('st_name', 0x00000039) # 'bar6@zed'
 // CHECK-NEXT:  ('st_bind', 0x00000001)
 // CHECK-NEXT:  ('st_type', 0x00000000)
@@ -117,7 +140,7 @@ defined3:
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Relocation 0x00000001
 // CHECK-NEXT: (('r_offset', 0x00000004)
-// CHECK-NEXT:  ('r_sym', 0x00000009)
+// CHECK-NEXT:  ('r_sym', 0x0000000b)
 // CHECK-NEXT:  ('r_type', 0x0000000a)
 // CHECK-NEXT:  ('r_addend', 0x00000000)
 // CHECK-NEXT: ),
@@ -135,7 +158,7 @@ defined3:
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Relocation 0x00000004
 // CHECK-NEXT: (('r_offset', 0x00000010)
-// CHECK-NEXT:  ('r_sym', 0x0000000a)
+// CHECK-NEXT:  ('r_sym', 0x0000000c)
 // CHECK-NEXT:  ('r_type', 0x0000000a)
 // CHECK-NEXT:  ('r_addend', 0x00000000)
 // CHECK-NEXT: ),

@@ -465,13 +465,31 @@ void ELFObjectWriterImpl::ExecutePostLayoutBinding(MCAssembler &Asm) {
   for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
          ie = Asm.symbol_end(); it != ie; ++it) {
     const MCSymbol &Alias = it->getSymbol();
-    if (!Alias.isVariable())
-      continue;
     const MCSymbol &Symbol = AliasedSymbol(Alias);
+    MCSymbolData &SD = Asm.getSymbolData(Symbol);
+
+    // Undefined symbols are global, but this is the first place we
+    // are able to set it.
+    if (Symbol.isUndefined() && !Symbol.isVariable()) {
+      if (GetBinding(SD) == ELF::STB_LOCAL) {
+        SetBinding(SD, ELF::STB_GLOBAL);
+        SetBinding(*it, ELF::STB_GLOBAL);
+      }
+    }
+
+    // Not an alias.
+    if (&Symbol == &Alias)
+      continue;
+
     StringRef AliasName = Alias.getName();
     size_t Pos = AliasName.find('@');
     if (Pos == StringRef::npos)
       continue;
+
+    // Aliases defined with .symvar copy the binding from the symbol they alias.
+    // This is the first place we are able to copy this information.
+    it->setExternal(SD.isExternal());
+    SetBinding(*it, GetBinding(SD));
 
     StringRef Rest = AliasName.substr(Pos);
     if (!Symbol.isUndefined() && !Rest.startswith("@@@"))
@@ -881,6 +899,7 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     MCSymbol *Sym = Asm.getContext().GetOrCreateSymbol(Name);
     MCSymbolData &Data = Asm.getOrCreateSymbolData(*Sym);
     Data.setExternal(true);
+    SetBinding(Data, ELF::STB_GLOBAL);
   }
 
   // Build section lookup table.
@@ -916,10 +935,6 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       MSD.SectionIndex = ELF::SHN_ABS;
     } else if (RefSymbol.isUndefined()) {
       MSD.SectionIndex = ELF::SHN_UNDEF;
-      // FIXME: Undefined symbols are global, but this is the first place we
-      // are able to set it.
-      if (GetBinding(*it) == ELF::STB_LOCAL)
-        SetBinding(*it, ELF::STB_GLOBAL);
     } else {
       MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
       assert(MSD.SectionIndex && "Invalid section index!");
