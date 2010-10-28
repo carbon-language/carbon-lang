@@ -644,13 +644,14 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   int Index = 0;
   int64_t Value = Target.getConstant();
   const MCSymbol *Symbol = 0;
+  const MCSymbol *Renamed = 0;
 
   bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
   if (!Target.isAbsolute()) {
     Symbol = &AliasedSymbol(Target.getSymA()->getSymbol());
-    const MCSymbol *Renamed = Renames.lookup(Symbol);
-    if (Renamed)
-      Symbol = Renamed;
+    Renamed = Renames.lookup(Symbol);
+    if (!Renamed)
+      Renamed = Symbol;
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     MCFragment *F = SD.getFragment();
 
@@ -685,7 +686,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       // Offset of the symbol in the section
       Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
     } else {
-      UsedInReloc.insert(Symbol);
+      UsedInReloc.insert(Renamed);
       Index = -1;
     }
     Addend = Value;
@@ -833,7 +834,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
 
   ERE.Index = Index;
   ERE.Type = Type;
-  ERE.Symbol = Symbol;
+  ERE.Symbol = Renamed;
 
   ERE.r_offset = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
 
