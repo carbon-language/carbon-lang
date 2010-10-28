@@ -134,6 +134,7 @@ public:
     VK_GOTTPOFF,
     VK_INDNTPOFF,
     VK_NTPOFF,
+    VK_GOTNTPOFF,
     VK_PLT,
     VK_TLSGD,
     VK_TPOFF,

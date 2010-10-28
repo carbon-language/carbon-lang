@@ -76,6 +76,14 @@
 // CHECK-NEXT: (('r_offset', 0x00000031)
 // CHECK-NEXT:  ('r_sym', 0x0000000b)
 // CHECK-NEXT:  ('r_type', 0x00000011)
+// CHECK-NEXT: ),
+
+// Relocation 9 (foo@GOTNTPOFF) is of type R_386_TLS_GOTIE
+// CHECK-NEXT: # Relocation 0x00000009
+// CHECK-NEXT: (('r_offset', 0x00000037)
+// CHECK-NEXT:  ('r_sym', 0x0000000b)
+// CHECK-NEXT:  ('r_type', 0x00000010)
+// CHECK-NEXT: ),
 
         .text
 bar:
@@ -97,6 +105,7 @@ bar2:
         movl $foo@TPOFF, %edx
         movl foo@INDNTPOFF, %ecx
         addl foo@NTPOFF(%eax), %eax
+        addl foo@GOTNTPOFF(%ebx), %ecx
 
         .section	.rodata.str1.16,"aMS",@progbits,1
 .Lfoo:

@@ -78,21 +78,19 @@ static bool isFixupKindX86PCRel(unsigned Kind) {
   }
 }
 
-static bool RelocNeedsGOT(unsigned Type) {
-  // FIXME: Can we use the VariantKind?
-  switch (Type) {
+static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant) {
+  switch (Variant) {
   default:
     return false;
-  case ELF::R_X86_64_GOT32:
-  case ELF::R_X86_64_PLT32:
-  case ELF::R_X86_64_GOTPCREL:
-  case ELF::R_X86_64_TPOFF32:
-  case ELF::R_X86_64_TLSGD:
-  case ELF::R_X86_64_GOTTPOFF:
-  case ELF::R_386_TLS_GD:
-  case ELF::R_386_TLS_LE_32:
-  case ELF::R_386_TLS_IE:
-  case ELF::R_386_TLS_LE:
+  case MCSymbolRefExpr::VK_GOT:
+  case MCSymbolRefExpr::VK_PLT:
+  case MCSymbolRefExpr::VK_GOTPCREL:
+  case MCSymbolRefExpr::VK_TPOFF:
+  case MCSymbolRefExpr::VK_TLSGD:
+  case MCSymbolRefExpr::VK_GOTTPOFF:
+  case MCSymbolRefExpr::VK_INDNTPOFF:
+  case MCSymbolRefExpr::VK_NTPOFF:
+  case MCSymbolRefExpr::VK_GOTNTPOFF:
     return true;
   }
 }
@@ -692,7 +690,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       case MCSymbolRefExpr::VK_PLT:
         Type = ELF::R_X86_64_PLT32;
         break;
-      case llvm::MCSymbolRefExpr::VK_GOTPCREL:
+      case MCSymbolRefExpr::VK_GOTPCREL:
         Type = ELF::R_X86_64_GOTPCREL;
         break;
       case MCSymbolRefExpr::VK_GOTTPOFF:
@@ -783,6 +781,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         case MCSymbolRefExpr::VK_NTPOFF:
           Type = ELF::R_386_TLS_LE;
           break;
+        case MCSymbolRefExpr::VK_GOTNTPOFF:
+          Type = ELF::R_386_TLS_GOTIE;
+          break;
         }
         break;
       case FK_Data_2: Type = ELF::R_386_16; break;
@@ -792,7 +793,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     }
   }
 
-  if (RelocNeedsGOT(Type))
+  if (RelocNeedsGOT(Modifier))
     NeedsGOT = true;
 
   ELFRelocationEntry ERE;
