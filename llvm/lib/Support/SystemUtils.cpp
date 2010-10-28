@@ -56,10 +56,9 @@ sys::Path llvm::FindExecutable(const std::string &ExeName,
     // version of the program.
     if (Result.isAbsolute()) {
       Result = sys::Program::FindProgramByName(Result.str());
-      if (!Result.empty())
-        return Result;
+      return Result;
     }
   }
 
-  return sys::Path();
+  return Result;
 }
