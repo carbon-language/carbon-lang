@@ -268,15 +268,10 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
 
   //     - a function, unless it has internal linkage; or
   } else if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-    // Modify the function's LV by the LV of its type unless this is
-    // C or extern "C".  See the comment above about variables.
-    if (Context.getLangOptions().CPlusPlus && !Function->isExternC() &&
-        !ExplicitVisibility) {
-      LVPair TypeLV = Function->getType()->getLinkageAndVisibility();
-      if (TypeLV.first != ExternalLinkage)
-        return LVPair(UniqueExternalLinkage, DefaultVisibility);
-      LV.second = minVisibility(LV.second, TypeLV.second);
-    }
+    // In theory, we can modify the function's LV by the LV of its
+    // type unless it has C linkage (see comment above about variables
+    // for justification).  In practice, GCC doesn't do this, so it's
+    // just too painful to make work.
 
     // C99 6.2.2p5:
     //   If the declaration of an identifier for a function has no
@@ -437,11 +432,11 @@ static LVPair getLVForClassMember(const NamedDecl *D) {
   const VisibilityAttr *VA = GetExplicitVisibility(D);
   if (VA) LV.second = minVisibility(LV.second, GetVisibilityFromAttr(VA));
 
-  // If it's a value declaration and we don't have an explicit visibility
-  // attribute, apply the LV from its type.
+  // If it's a variable declaration and we don't have an explicit
+  // visibility attribute, apply the LV from its type.
   // See the comment about namespace-scope variable decls above.
-  if (!VA && isa<ValueDecl>(D)) {
-    LVPair TypeLV = cast<ValueDecl>(D)->getType()->getLinkageAndVisibility();
+  if (!VA && isa<VarDecl>(D)) {
+    LVPair TypeLV = cast<VarDecl>(D)->getType()->getLinkageAndVisibility();
     if (TypeLV.first != ExternalLinkage)
       LV.first = minLinkage(LV.first, UniqueExternalLinkage);
     LV.second = minVisibility(LV.second, TypeLV.second);

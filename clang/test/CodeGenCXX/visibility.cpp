@@ -133,3 +133,16 @@ namespace Test9 {
     test9_fun(&a);
   }
 }
+
+// PR8478
+namespace Test10 {
+  struct A;
+
+  DEFAULT class B {
+    void foo(A*);
+  };
+
+  // CHECK: define void @_ZN6Test101B3fooEPNS_1AE(
+  // CHECK-HIDDEN: define void @_ZN6Test101B3fooEPNS_1AE(
+  void B::foo(A*) {}
+}
