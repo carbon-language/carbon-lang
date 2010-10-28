@@ -196,7 +196,7 @@ Program::Execute(const Path &path, const char **args, const char **envp,
           *redirects[1] != *redirects[2]) {
         // Just redirect stderr
         if (RedirectIO_PS(redirects[2], 2, ErrMsg, FileActions)) return false;
-      } else {       
+      } else {
         // If stdout and stderr should go to the same place, redirect stderr
         // to the FD already open for stdout.
         if (int Err = posix_spawn_file_actions_adddup2(&FileActions, 1, 2))
@@ -217,17 +217,17 @@ Program::Execute(const Path &path, const char **args, const char **envp,
     pid_t PID = 0;
     int Err = posix_spawn(&PID, path.c_str(), &FileActions, /*attrp*/0,
                           const_cast<char **>(args), const_cast<char **>(envp));
-                          
+
     posix_spawn_file_actions_destroy(&FileActions);
 
     if (Err)
      return !MakeErrMsg(ErrMsg, "posix_spawn failed", Err);
-      
+
     Data_ = reinterpret_cast<void*>(PID);
     return true;
   }
 #endif
-  
+
   if (!path.canExecute()) {
     if (ErrMsg)
       *ErrMsg = path.str() + " is not executable";
