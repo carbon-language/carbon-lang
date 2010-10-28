@@ -2790,7 +2790,7 @@ static void CheckLineNumbers(const MachineFunction *MF) {
         break;
       }
     }
-    if (!FoundLineNo)
+    if (!FoundLineNo && I->size())
       ++BlocksWithoutLineNo;      
   }
 }
