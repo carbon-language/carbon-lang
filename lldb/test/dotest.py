@@ -565,7 +565,7 @@ unittest2.signals.installHandler()
 # See also TestBase.dumpSessionInfo() in lldbtest.py.
 if not sdir_name:
     import datetime
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
     sdir_name = timestamp
 os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
 sys.stderr.write("\nSession info for test failures/errors will go into directory '%s'\n" % sdir_name)
