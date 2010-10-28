@@ -272,6 +272,20 @@
     ON. You can use that option for disabling the generation of build
     targets for the LLVM examples.</dd>
 
+  <dt><b>LLVM_BUILD_TESTS</b>:BOOL</dt>
+  <dd>Build LLVM unit tests. Defaults to OFF. Targets for building
+    each unit test are generated in any case. You can build a specific
+    unit test with the target <i>UnitTestNameTests</i> (where at this
+    time <i>UnitTestName</i> can be ADT, Analysis, ExecutionEngine,
+    JIT, Support, Transform, VMCore; see the subdirectories
+    of <i>unittests</i> for an updated list.) It is possible to build
+    all unit tests with the target <i>UnitTests</i>.</dd>
+
+  <dt><b>LLVM_INCLUDE_TESTS</b>:BOOL</dt>
+  <dd>Generate build targets for the LLVM unit tests. Defaults to
+    ON. You can use that option for disabling the generation of build
+    targets for the LLVM unit tests.</dd>
+
   <dt><b>LLVM_ENABLE_THREADS</b>:BOOL</dt>
   <dd>Build with threads support, if available. Defaults to ON.</dd>
 

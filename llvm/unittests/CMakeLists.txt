@@ -10,7 +10,10 @@ function(add_llvm_unittest test_name)
     set(EXCLUDE_FROM_ALL ON)
   endif()
   add_llvm_executable(${test_name}Tests ${ARGN})
+  add_dependencies(UnitTests ${test_name}Tests)
 endfunction()
+
+add_custom_target(UnitTests)
 
 include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
 set(LLVM_REQUIRES_RTTI 1)
