@@ -166,7 +166,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins),
   DeclarationNames(*this),
-  ExternalSource(0), PrintingPolicy(LOpts),
+  ExternalSource(0), Listener(0), PrintingPolicy(LOpts),
   LastSDM(0, 0),
   UniqueBlockByRefTypeID(0), UniqueBlockParmTypeID(0) {
   ObjCIdRedefinitionType = QualType();
