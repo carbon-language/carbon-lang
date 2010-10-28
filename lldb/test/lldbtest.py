@@ -646,6 +646,7 @@ class TestBase(unittest2.TestCase):
 
         if exe:
             # First run the command.  If we are expecting error, set check=False.
+            # Pass the assert message along since it provides more semantic info.
             self.runCmd(str, msg=msg, trace = (True if trace else False), check = not error)
 
             # Then compare the output against expected strings.
