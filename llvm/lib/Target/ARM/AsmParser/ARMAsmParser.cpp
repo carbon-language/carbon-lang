@@ -759,14 +759,29 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         MCStreamer &Out) {
   MCInst Inst;
   unsigned ErrorInfo;
-  if (MatchInstructionImpl(Operands, Inst, ErrorInfo) == Match_Success) {
+  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo)) {
+  case Match_Success:
     Out.EmitInstruction(Inst);
     return false;
+      
+  case Match_MissingFeature:
+    Error(IDLoc, "instruction requires a CPU feature not currently enabled");
+    return true;
+  case Match_InvalidOperand: {
+    SMLoc ErrorLoc = IDLoc;
+    if (ErrorInfo != ~0U) {
+      if (ErrorInfo >= Operands.size())
+        return Error(IDLoc, "too few operands for instruction");
+      
+      ErrorLoc = ((ARMOperand*)Operands[ErrorInfo])->getStartLoc();
+      if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
+    }
+    
+    return Error(ErrorLoc, "invalid operand for instruction");
   }
-  
-  // FIXME: We should give nicer diagnostics about the exact failure.
-  Error(IDLoc, "unrecognized instruction");
-  return true;
+  case Match_MnemonicFail:
+    return Error(IDLoc, "unrecognized instruction mnemonic");
+  }
 }
 
 
