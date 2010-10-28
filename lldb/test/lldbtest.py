@@ -646,7 +646,7 @@ class TestBase(unittest2.TestCase):
 
         if exe:
             # First run the command.  If we are expecting error, set check=False.
-            self.runCmd(str, trace = (True if trace else False), check = not error)
+            self.runCmd(str, msg=msg, trace = (True if trace else False), check = not error)
 
             # Then compare the output against expected strings.
             output = self.res.GetError() if error else self.res.GetOutput()
