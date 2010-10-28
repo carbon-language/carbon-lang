@@ -32,6 +32,7 @@
 
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Flags.h"
+#include "lldb/Core/Log.h"
 
 #include <stdio.h>
 
@@ -710,12 +711,35 @@ ClangASTContext::GetVoidPtrType (ASTContext *ast_context, bool is_const)
     return void_ptr_type.getAsOpaquePtr();
 }
 
+class NullDiagnosticClient : public DiagnosticClient
+{
+public:
+    NullDiagnosticClient ()
+    {
+        m_log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    }
+    
+    void HandleDiagnostic (Diagnostic::Level DiagLevel, const DiagnosticInfo &info)
+    {
+        if (m_log)
+        {
+            llvm::SmallVectorImpl<char> diag_str(10);
+            info.FormatDiagnostic(diag_str);
+            diag_str.push_back('\0');
+            m_log->Printf("Compiler diagnostic: %s\n", diag_str.data());
+        }
+    }
+private:
+    Log    *m_log;
+};
+
 clang_type_t
 ClangASTContext::CopyType (ASTContext *dest_context, 
                            ASTContext *source_context,
                            clang_type_t clang_type)
 {
-    Diagnostic diagnostics;
+    NullDiagnosticClient *null_client = new NullDiagnosticClient;
+    Diagnostic diagnostics(null_client);
     FileManager file_manager;
     ASTImporter importer(diagnostics,
                          *dest_context, file_manager,
@@ -1573,7 +1597,6 @@ ClangASTContext::AddMethodToObjCObjectType
         bool has_arg = (start[len] == ':');
         if (has_arg)
             ++num_selectors_with_args;
-        printf ("@selector[%zu] = '%.*s'\n", selector_idents.size(), (int)len, start);
         selector_idents.push_back (&identifier_table->get (StringRef (start, len)));
         if (has_arg)
             len += 1;
