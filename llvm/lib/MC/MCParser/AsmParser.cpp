@@ -1279,10 +1279,10 @@ bool AsmParser::ParseDirectiveSet(StringRef IDVal) {
   StringRef Name;
 
   if (ParseIdentifier(Name))
-    return TokError("expected identifier after '" + Twine(IDVal.str()) + "'");
+    return TokError("expected identifier after '" + Twine(IDVal) + "'");
 
   if (getLexer().isNot(AsmToken::Comma))
-    return TokError("unexpected token in '" + Twine(IDVal.str()) + "'");
+    return TokError("unexpected token in '" + Twine(IDVal) + "'");
   Lex();
 
   return ParseAssignment(Name);
