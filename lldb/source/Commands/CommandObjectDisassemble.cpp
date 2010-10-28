@@ -130,7 +130,7 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 
 { LLDB_OPT_SET_2, true, "name",     'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,             "Disassemble entire contents of the given function name."},
 
-{ LLDB_OPT_SET_3, false, "current-frame",     'f', no_argument, NULL, 0, eArgTypeNone,             "Disassemble entire contents of the current frame's function."},
+//{ LLDB_OPT_SET_3, false, "current-frame",     'f', no_argument, NULL, 0, eArgTypeNone,             "Disassemble entire contents of the current frame's function."},
 
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
