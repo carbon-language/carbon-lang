@@ -82,7 +82,7 @@ BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
 
   // Mask out the reserved registers
   BitVector Reserved = getReservedRegs(MF);
-  Allocatable ^= Reserved & Allocatable;
+  Allocatable &= Reserved.flip();
 
   return Allocatable;
 }
