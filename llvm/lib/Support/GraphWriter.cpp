@@ -64,8 +64,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   
   errs() << "Running 'Graphviz' program... ";
   if (sys::Program::ExecuteAndWait(Graphviz, &args[0],0,0,0,0,&ErrMsg)) {
-    errs() << "Error viewing graph " << Filename.str() << ": " << ErrMsg
-           << "\n";
+    errs() << "Error: " << ErrMsg << "\n";
     return;
   }
   Filename.eraseFromDisk();
@@ -90,8 +89,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   errs() << "Running 'xdot.py' program... ";
   if (sys::Program::ExecuteAndWait(sys::Path(LLVM_PATH_XDOT_PY),
                                    &args[0],0,0,0,0,&ErrMsg)) {
-    errs() << "Error viewing graph " << Filename.str() << ": " << ErrMsg
-           << "\n";
+    errs() << "Error: " << ErrMsg << "\n";
     return;
   }
   Filename.eraseFromDisk();
@@ -156,8 +154,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   errs() << "Running '" << prog.str() << "' program... ";
 
   if (sys::Program::ExecuteAndWait(prog, &args[0], 0, 0, 0, 0, &ErrMsg)) {
-     errs() << "Error viewing graph " << Filename.str() << ": '"
-            << ErrMsg << "\n";
+    errs() << "Error: " << ErrMsg << "\n";
     return;
   }
   errs() << " done. \n";
@@ -172,7 +169,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   ErrMsg.clear();
   if (wait) {
      if (sys::Program::ExecuteAndWait(gv, &args[0],0,0,0,0,&ErrMsg))
-        errs() << "Error viewing graph: " << ErrMsg << "\n";
+        errs() << "Error: " << ErrMsg << "\n";
      Filename.eraseFromDisk();
      PSFilename.eraseFromDisk();
   }
@@ -191,8 +188,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   
   errs() << "Running 'dotty' program... ";
   if (sys::Program::ExecuteAndWait(dotty, &args[0],0,0,0,0,&ErrMsg)) {
-     errs() << "Error viewing graph " << Filename.str() << ": "
-            << ErrMsg << "\n";
+     errs() << "Error: " << ErrMsg << "\n";
   } else {
 // Dotty spawns another app and doesn't wait until it returns
 #if defined (__MINGW32__) || defined (_WINDOWS)
