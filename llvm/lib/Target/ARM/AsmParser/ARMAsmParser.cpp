@@ -153,9 +153,6 @@ public:
 
   };
   
-  //ARMOperand(KindTy K, SMLoc S, SMLoc E)
-  //  : Kind(K), StartLoc(S), EndLoc(E) {}
-  
   ARMOperand(const ARMOperand &o) : MCParsedAsmOperand() {
     Kind = o.Kind;
     StartLoc = o.StartLoc;
@@ -205,16 +202,16 @@ public:
   }
 
   bool isCondCode() const { return Kind == CondCode; }
-
   bool isImm() const { return Kind == Immediate; }
-
   bool isReg() const { return Kind == Register; }
-
-  bool isToken() const {return Kind == Token; }
+  bool isToken() const { return Kind == Token; }
+  bool isMemory() const { return Kind == Memory; }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
-    // Add as immediates when possible.
-    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
+    // Add as immediates when possible.  Null MCExpr = 0.
+    if (Expr == 0)
+      Inst.addOperand(MCOperand::CreateImm(0));
+    else if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
     else
       Inst.addOperand(MCOperand::CreateExpr(Expr));
@@ -235,6 +232,24 @@ public:
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+  
+  
+  bool isMemMode5() const {
+    // FIXME: Is this right?  What about postindexed and Writeback?
+    if (!isMemory() || Mem.OffsetIsReg || Mem.OffsetRegShifted ||
+        Mem.Preindexed || Mem.Negative)
+      return false;
+    
+    return true;
+  }
+  
+  void addMemMode5Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && isMemMode5() && "Invalid number of operands!");
+    
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    assert(!Mem.OffsetIsReg && "invalid mode 5 operand");
+    addExpr(Inst, Mem.Offset);
   }
 
   virtual void dump(raw_ostream &OS) const;
@@ -508,7 +523,7 @@ ARMOperand *ARMAsmParser::ParseMemory() {
     bool OffsetRegShifted = false;
     enum ShiftType ShiftType;
     const MCExpr *ShiftAmount;
-    const MCExpr *Offset;
+    const MCExpr *Offset = 0;
 
     const AsmToken &NextTok = Parser.getTok();
     if (NextTok.isNot(AsmToken::EndOfStatement)) {

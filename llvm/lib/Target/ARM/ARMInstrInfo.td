@@ -456,12 +456,18 @@ def addrmode4 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$addr, i32imm);
 }
 
+def ARMMemMode5AsmOperand : AsmOperandClass {
+  let Name = "MemMode5";
+  let SuperClasses = [];
+}
+
 // addrmode5 := reg +/- imm8*4
 //
 def addrmode5 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode5", []> {
   let PrintMethod = "printAddrMode5Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm);
+  let ParserMatchClass = ARMMemMode5AsmOperand;
 }
 
 // addrmode6 := reg with optional writeback
