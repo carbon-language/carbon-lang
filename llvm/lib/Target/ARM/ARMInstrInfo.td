@@ -3142,7 +3142,7 @@ def Int_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
 }
 
 // eh.sjlj.dispatchsetup pseudo-instruction.
-// This pseudo is usef for ARM, Thumb1 and Thumb2. Any differences are
+// This pseudo is used for ARM, Thumb1 and Thumb2. Any differences are
 // handled when the pseudo is expanded (which happens before any passes
 // that need the instruction size).
 let isBarrier = 1, hasSideEffects = 1 in
