@@ -464,9 +464,10 @@ ARMOperand *ARMAsmParser::ParseMemory() {
     return 0;
   }
   int BaseRegNum = 0;
-  if (ARMOperand *Op = MaybeParseRegister(false))
+  if (ARMOperand *Op = MaybeParseRegister(false)) {
     BaseRegNum = Op->getReg();
-  else {
+    delete Op;
+  } else {
     Error(BaseRegTok.getLoc(), "register expected");
     return 0;
   }
