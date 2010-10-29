@@ -225,8 +225,9 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           SrcIdx -= LHSWidth;
           Src = SVI->getOperand(1);
         }
+        const Type *Int32Ty = Type::getInt32Ty(EI.getContext());
         return ExtractElementInst::Create(Src,
-                                          ConstantInt::get(Type::getInt32Ty(EI.getContext()),
+                                          ConstantInt::get(Int32Ty,
                                                            SrcIdx, false));
       }
     }
