@@ -568,6 +568,7 @@ unittest2.signals.installHandler()
 # See also TestBase.dumpSessionInfo() in lldbtest.py.
 if not sdir_name:
     import datetime
+    # The windows platforms don't like ':' in the pathname.
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
     sdir_name = timestamp
 os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
