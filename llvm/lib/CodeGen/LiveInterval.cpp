@@ -709,15 +709,14 @@ void LiveRange::print(raw_ostream &os) const {
 /// multiple LiveIntervals.
 
 void ConnectedVNInfoEqClasses::Connect(unsigned a, unsigned b) {
-  unsigned eqa = eqClass_[a];
-  unsigned eqb = eqClass_[b];
-  if (eqa == eqb)
-    return;
-  // Make sure a and b are in the same class while maintaining eqClass_[i] <= i.
-  if (eqa > eqb)
-    eqClass_[a] = eqb;
-  else
-    eqClass_[b] = eqa;
+  while (eqClass_[a] != eqClass_[b]) {
+    if (eqClass_[a] > eqClass_[b])
+      std::swap(a, b);
+    unsigned t = eqClass_[b];
+    assert(t <= b && "Invariant broken");
+    eqClass_[b] = eqClass_[a];
+    b = t;
+  }
 }
 
 unsigned ConnectedVNInfoEqClasses::Renumber() {
@@ -745,8 +744,6 @@ unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
   for (LiveInterval::const_vni_iterator I = LI->vni_begin(), E = LI->vni_end();
        I != E; ++I) {
     const VNInfo *VNI = *I;
-    if (VNI->id == eqClass_.size())
-      eqClass_.push_back(VNI->id);
     assert(!VNI->isUnused() && "Cannot handle unused values");
     if (VNI->isPHIDef()) {
       const MachineBasicBlock *MBB = lis_.getMBBFromIndex(VNI->def);
