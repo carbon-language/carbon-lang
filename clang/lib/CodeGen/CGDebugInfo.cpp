@@ -1839,6 +1839,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
     
     Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
+    return;
   }
   
   // If VD is an anonymous union then Storage represents value for
