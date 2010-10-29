@@ -694,6 +694,10 @@ public:
   /// definition.
   DefinitionKind isThisDeclarationADefinition() const;
 
+  /// \brief Check whether this variable is defined in this
+  /// translation unit.
+  DefinitionKind hasDefinition() const;
+
   /// \brief Get the tentative definition that acts as the real definition in
   /// a TU. Returns null if there is a proper definition available.
   VarDecl *getActingDefinition();
