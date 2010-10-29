@@ -266,6 +266,18 @@ public:
   virtual const char *GetDefaultRelocationModel() const { return "pic"; }
 };
 
+class LLVM_LIBRARY_VISIBILITY Generic_ELF : public Generic_GCC {
+ public:
+  Generic_ELF(const HostInfo &Host, const llvm::Triple& Triple)
+    : Generic_GCC(Host, Triple) {}
+
+  virtual bool IsIntegratedAssemblerDefault() const {
+    // Default integrated assembler to on for x86.
+    return (getTriple().getArch() == llvm::Triple::x86 ||
+            getTriple().getArch() == llvm::Triple::x86_64);
+  }
+};
+
 class LLVM_LIBRARY_VISIBILITY AuroraUX : public Generic_GCC {
 public:
   AuroraUX(const HostInfo &Host, const llvm::Triple& Triple);
@@ -273,14 +285,14 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
-class LLVM_LIBRARY_VISIBILITY OpenBSD : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY OpenBSD : public Generic_ELF {
 public:
   OpenBSD(const HostInfo &Host, const llvm::Triple& Triple);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
-class LLVM_LIBRARY_VISIBILITY FreeBSD : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY FreeBSD : public Generic_ELF {
 public:
   FreeBSD(const HostInfo &Host, const llvm::Triple& Triple);
 
@@ -294,14 +306,14 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
-class LLVM_LIBRARY_VISIBILITY DragonFly : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY DragonFly : public Generic_ELF {
 public:
   DragonFly(const HostInfo &Host, const llvm::Triple& Triple);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
-class LLVM_LIBRARY_VISIBILITY Linux : public Generic_GCC {
+class LLVM_LIBRARY_VISIBILITY Linux : public Generic_ELF {
 public:
   Linux(const HostInfo &Host, const llvm::Triple& Triple);
 

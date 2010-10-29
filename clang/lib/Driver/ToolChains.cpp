@@ -1031,7 +1031,7 @@ Tool &TCEToolChain::SelectTool(const Compilation &C,
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.
 
 OpenBSD::OpenBSD(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_GCC(Host, Triple) {
+  : Generic_ELF(Host, Triple) {
   getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
 }
@@ -1061,7 +1061,7 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
 FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_GCC(Host, Triple) {
+  : Generic_ELF(Host, Triple) {
 
   // Determine if we are compiling 32-bit code on an x86_64 platform.
   bool Lib32 = false;
@@ -1178,7 +1178,7 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
 /// Linux toolchain (very bare-bones at the moment).
 
 Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_GCC(Host, Triple) {
+  : Generic_ELF(Host, Triple) {
   getFilePaths().push_back(getDriver().Dir +
                            "/../lib/clang/" CLANG_VERSION_STRING "/");
   getFilePaths().push_back("/lib/");
@@ -1224,7 +1224,7 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
 
 DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_GCC(Host, Triple) {
+  : Generic_ELF(Host, Triple) {
 
   // Path mangling to find libexec
   getProgramPaths().push_back(getDriver().getInstalledDir());
