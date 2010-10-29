@@ -741,10 +741,16 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("al", ARMCC::AL)
     .Default(~0U);
 
-  if (CC != ~0U)
-    Head = Head.slice(0, Head.size() - 2);
-  else
+  if (CC != ~0U) {
+    if (CC == ARMCC::LS &&
+        (Head.compare("vmls") == 0 || Head.compare("vnmls") == 0)) {
+      CC = ARMCC::AL;
+    } else {
+      Head = Head.slice(0, Head.size() - 2);
+    }
+  } else {
     CC = ARMCC::AL;
+  }
 
   Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
   Operands.push_back(ARMOperand::CreateCondCode(ARMCC::CondCodes(CC), NameLoc));
