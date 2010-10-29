@@ -1080,6 +1080,14 @@ void MachineVerifier::verifyLiveIntervals() {
       if (NumComp > 1) {
         report("Multiple connected components in live interval", MF);
         *OS << NumComp << " components in " << LI << '\n';
+        for (unsigned comp = 0; comp != NumComp; ++comp) {
+          *OS << comp << ": valnos";
+          for (LiveInterval::const_vni_iterator I = LI.vni_begin(),
+               E = LI.vni_end(); I!=E; ++I)
+            if (comp == ConEQ.getEqClass(*I))
+              *OS << ' ' << (*I)->id;
+          *OS << '\n';
+        }
       }
     }
   }

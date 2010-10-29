@@ -578,10 +578,15 @@ namespace llvm {
     /// Return the number of connected components.
     unsigned Classify(const LiveInterval *LI);
 
-    // Distribute values in LIV[0] into a separate LiveInterval for each connected
-    // component. LIV must have a LiveInterval for each connected component.
-    // The LiveIntervals in Liv[1..] must be empty.
+    /// getEqClass - Classify creates equivalence classes numbered 0..N. Return
+    /// the equivalence class assigned the VNI.
+    unsigned getEqClass(const VNInfo *VNI) { return eqClass_[VNI->id]; }
+
+    /// Distribute - Distribute values in LIV[0] into a separate LiveInterval
+    /// for each connected component. LIV must have a LiveInterval for each
+    /// connected component. The LiveIntervals in Liv[1..] must be empty.
     void Distribute(LiveInterval *LIV[]);
+
   };
 
 }
