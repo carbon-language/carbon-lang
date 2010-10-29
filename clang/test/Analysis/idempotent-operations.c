@@ -224,3 +224,13 @@ static inline int RDar8431728_C(RDar8431728_D * s, int n,
   return pred;
 }
 
+// <rdar://problem/8601243> - Don't warn on pointer arithmetic.  This
+// is often idiomatic.
+unsigned rdar8601243_aux(unsigned n);
+void rdar8601243() {
+  char arr[100];
+  char *start = arr;
+  start = start + rdar8601243_aux(sizeof(arr) - (arr - start)); // no-warning
+  (void) start;
+}
+

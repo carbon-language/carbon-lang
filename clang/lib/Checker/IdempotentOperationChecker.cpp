@@ -629,6 +629,13 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
   // The next cases require recursion for subexpressions
   case Stmt::BinaryOperatorClass: {
     const BinaryOperator *B = cast<const BinaryOperator>(Ex);
+
+    // Exclude cases involving pointer arithmetic.  These are usually
+    // false positives.
+    if (B->getOpcode() == BO_Sub || B->getOpcode() == BO_Add)
+      if (B->getLHS()->getType()->getAs<PointerType>())
+        return false;
+
     return CanVary(B->getRHS(), AC)
         || CanVary(B->getLHS(), AC);
    }
