@@ -10,6 +10,14 @@
 // CHECK: @_ZN5Test71bE = global
 // CHECK: @test9_var = global
 // CHECK-HIDDEN: @test9_var = global
+// CHECK: @_ZN6Test121A6hiddenE = external hidden global
+// CHECK: @_ZN6Test121A7visibleE = external global
+// CHECK-HIDDEN: @_ZN6Test121A6hiddenE = external hidden global
+// CHECK-HIDDEN: @_ZN6Test121A7visibleE = external global
+// CHECK: @_ZN6Test131B1aE = hidden global
+// CHECK: @_ZN6Test131C1aE = global
+// CHECK-HIDDEN: @_ZN6Test131B1aE = hidden global
+// CHECK-HIDDEN: @_ZN6Test131C1aE = global
 // CHECK: @_ZTVN5Test63fooE = weak_odr hidden constant 
 
 namespace Test1 {
@@ -165,3 +173,37 @@ namespace Test11 {
   // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6Test111A3fooEv(
   // CHECK-HIDDEN: define linkonce_odr void @_ZN6Test111A3barEv(
 }
+
+// Tested at top of file.
+namespace Test12 {
+  struct A {
+    // This is hidden in all cases: the explicit attribute takes
+    // priority over -fvisibility on the parent.
+    static int hidden HIDDEN;
+
+    // This is default in all cases because it's only a declaration.
+    static int visible;
+  };
+
+  void test() {
+    A::hidden = 0;
+    A::visible = 0;
+  }
+}
+
+// Tested at top of file.
+namespace Test13 {
+  struct HIDDEN A {};
+
+  // Should be hidden in all cases.
+  struct B {
+    static A a;
+  };
+  A B::a;
+
+  // Should be default in all cases.
+  struct DEFAULT C {
+    static A a;
+  };
+  A C::a;
+};
