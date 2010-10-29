@@ -249,6 +249,7 @@ Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp)
                                                        event_sp))
         state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
 
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
     if (log)
         log->Printf ("Process::%s (timeout = %p, event_sp) => %s",
                      __FUNCTION__,
@@ -268,6 +269,7 @@ Process::PeekAtStateChangedEvents ()
     Event *event_ptr;
     event_ptr = m_listener.PeekAtNextEventForBroadcasterWithType (this,
                                                                   eBroadcastBitStateChanged);
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
     if (log)
     {
         if (event_ptr)
@@ -1640,6 +1642,8 @@ Process::RunPrivateStateThread ()
             break;
     }
 
+    // Verify log is still enabled before attempting to write to it...
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
     if (log)
         log->Printf ("Process::%s (arg = %p, pid = %i) thread exiting...", __FUNCTION__, this, GetID());
 

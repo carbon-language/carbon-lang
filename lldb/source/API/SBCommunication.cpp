@@ -178,6 +178,7 @@ SBCommunication::ReadThreadStart ()
     if (m_opaque)
         success = m_opaque->StartReadThread ();
 
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
         log->Printf ("SBCommunication::ReadThreadStart (this.obj=%p) => '%s'", m_opaque, (success ? "true" : "false"));
 
@@ -188,7 +189,6 @@ SBCommunication::ReadThreadStart ()
 bool
 SBCommunication::ReadThreadStop ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     //if (log)
     //    log->Printf ("SBCommunication::ReadThreadStop ()");
@@ -197,6 +197,7 @@ SBCommunication::ReadThreadStop ()
     if (m_opaque)
         success = m_opaque->StopReadThread ();
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
         log->Printf ("SBCommunication::ReadThreadStop (this.obj=%p) => '%s'", m_opaque, (success ? "true" : "false"));
 

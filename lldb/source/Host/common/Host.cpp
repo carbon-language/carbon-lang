@@ -122,6 +122,7 @@ MonitorChildProcessThreadFunction (void *arg)
     struct rusage *rusage = NULL;
     while (1)
     {
+        log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
         if (log)
             log->Printf("%s ::wait4 (pid = %i, &status, options = %i, rusage = %p)...", function, pid, options, rusage);
 
@@ -170,6 +171,7 @@ MonitorChildProcessThreadFunction (void *arg)
             {
                 ScopedPThreadCancelDisabler pthread_cancel_disabler;
 
+                log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
                 if (log)
                     log->Printf ("%s ::wait4 (pid = %i, &status, options = %i, rusage = %p) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_state = %i",
                                  function,
@@ -198,6 +200,7 @@ MonitorChildProcessThreadFunction (void *arg)
         }
     }
 
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
     if (log)
         log->Printf ("%s (arg = %p) thread exiting...", __FUNCTION__, arg);
 

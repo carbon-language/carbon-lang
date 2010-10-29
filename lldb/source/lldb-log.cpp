@@ -107,11 +107,54 @@ lldb_private::GetLogIfAnyCategoriesSet (uint32_t mask)
 }
 
 void
-lldb_private::DisableLog ()
+lldb_private::DisableLog (Args &args, Stream *feedback_strm)
 {
-    LogAccessor (false, NULL);
-}
+    Log *log = LogAccessor (true, NULL);
+    uint32_t flag_bits;
 
+    if (log)
+    {
+        flag_bits = log->GetMask().Get();
+        const size_t argc = args.GetArgumentCount ();
+        for (size_t i = 0; i < argc; ++i)
+        {
+            const char *arg = args.GetArgumentAtIndex (i);
+
+            if      (strcasecmp(arg, "all")     == 0  ) flag_bits &= ~LIBLLDB_LOG_ALL;
+            else if (strcasecmp(arg, "api")     == 0)   flag_bits &= ~LIBLLDB_LOG_API;
+            else if (strcasestr(arg, "break")   == arg) flag_bits &= ~LIBLLDB_LOG_BREAKPOINTS;
+            else if (strcasecmp(arg, "default") == 0  ) flag_bits &= ~LIBLLDB_LOG_DEFAULT;
+            else if (strcasestr(arg, "event")   == arg) flag_bits &= ~LIBLLDB_LOG_EVENTS;
+            else if (strcasestr(arg, "expr")    == arg) flag_bits &= ~LIBLLDB_LOG_EXPRESSIONS;
+            else if (strcasestr(arg, "object")  == arg) flag_bits &= ~LIBLLDB_LOG_OBJECT;
+            else if (strcasecmp(arg, "process") == 0  ) flag_bits &= ~LIBLLDB_LOG_PROCESS;
+            else if (strcasecmp(arg, "shlib")   == 0  ) flag_bits &= ~LIBLLDB_LOG_SHLIB;
+            else if (strcasecmp(arg, "state")   == 0  ) flag_bits &= ~LIBLLDB_LOG_STATE;
+            else if (strcasecmp(arg, "step")    == 0  ) flag_bits &= ~LIBLLDB_LOG_STEP;
+            else if (strcasecmp(arg, "thread")  == 0  ) flag_bits &= ~LIBLLDB_LOG_THREAD;
+            else if (strcasecmp(arg, "verbose") == 0  ) flag_bits &= ~LIBLLDB_LOG_VERBOSE;
+            else if (strcasestr(arg, "watch")   == arg) flag_bits &= ~LIBLLDB_LOG_WATCHPOINTS;
+            else if (strcasestr(arg, "temp")   == arg)  flag_bits &= ~LIBLLDB_LOG_TEMPORARY;
+            else if (strcasestr(arg, "comm")   == arg)  flag_bits &= ~LIBLLDB_LOG_COMMUNICATION;
+            else if (strcasestr(arg, "conn")   == arg)  flag_bits &= ~LIBLLDB_LOG_CONNECTION;
+            else if (strcasestr(arg, "host")   == arg)  flag_bits &= ~LIBLLDB_LOG_HOST;
+            else if (strcasestr(arg, "unwind") == arg)  flag_bits &= ~LIBLLDB_LOG_UNWIND;
+            else
+            {
+                feedback_strm->Printf ("error:  unrecognized log category '%s'\n", arg);
+                ListLogCategories (feedback_strm);
+                return;
+            }
+            
+        }
+        if (flag_bits == 0)
+            LogAccessor (false, NULL);
+        else
+            log->GetMask().Reset (flag_bits);
+    }
+
+    return;
+}
 
 Log *
 lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &args, Stream *feedback_strm)

@@ -67,7 +67,10 @@ public:
     EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
 
     virtual void
-    Disable ();
+    Disable (lldb_private::Args &args, lldb_private::Stream *feedback_strm);
+
+    void
+    Delete ();
 
     virtual bool
     Enable (lldb::StreamSP &log_stream_sp,

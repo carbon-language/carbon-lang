@@ -742,6 +742,7 @@ ProcessMacOSX::DoSIGSTOP (bool clear_all_breakpoints)
 
         if (!StateIsStoppedState (state))
         {
+            log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
             if (log)
                 log->Printf("ProcessMacOSX::DoSIGSTOP() failed to stop after sending SIGSTOP");
            return error;
@@ -778,6 +779,7 @@ ProcessMacOSX::DoSIGSTOP (bool clear_all_breakpoints)
         else
             error.SetErrorToErrno();
 
+        log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
         if (log || error.Fail())
             error.PutToLog(log, "ProcessMacOSX::DoSIGSTOP() ::kill (pid = %i, SIGSTOP)", pid);
 
@@ -791,6 +793,7 @@ ProcessMacOSX::DoSIGSTOP (bool clear_all_breakpoints)
         // Make sure the process resumed
         if (StateIsStoppedState (state))
         {
+            log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
             if (log)
                 log->Printf ("ProcessMacOSX::DoSIGSTOP() couldn't resume process, state = %s", StateAsCString(state));
             error.SetErrorStringWithFormat("ProcessMacOSX::DoSIGSTOP() couldn't resume process, state = %s", StateAsCString(state));
@@ -803,6 +806,7 @@ ProcessMacOSX::DoSIGSTOP (bool clear_all_breakpoints)
             state = WaitForStateChangedEventsPrivate (&timeout_time, event_sp);
             if (!StateIsStoppedState (state))
             {
+                log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
                 if (log)
                     log->Printf("ProcessMacOSX::DoSIGSTOP() failed to stop after sending SIGSTOP");
                 error.SetErrorString("ProcessMacOSX::DoSIGSTOP() failed to stop after sending SIGSTOP");
@@ -1256,6 +1260,7 @@ ProcessMacOSX::STDIOThread(void *arg)
         int nfds = std::max<int>(stdout_fd, stderr_fd) + 1;
 
         int num_set_fds = select (nfds, &read_fds, NULL, NULL, NULL);
+        log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
         if (log)
             log->Printf("select (nfds, &read_fds, NULL, NULL, NULL) => %d", num_set_fds);
 
@@ -1343,6 +1348,7 @@ ProcessMacOSX::STDIOThread(void *arg)
         }
     }
 
+    log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
     if (log)
         log->Printf("ProcessMacOSX::%s (%p): thread exiting...", __FUNCTION__, arg);
 
@@ -1647,6 +1653,7 @@ ProcessMacOSX::LaunchForDebug
                 else
                     launch_err.SetErrorToErrno();
 
+                log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
                 if (launch_err.Fail() || log)
                     launch_err.PutToLog(log, "::ptrace (PT_ATTACHEXC, pid = %i, 0, 0 )", pid);
 

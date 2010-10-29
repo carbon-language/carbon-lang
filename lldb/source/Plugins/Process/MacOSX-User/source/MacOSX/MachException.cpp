@@ -265,6 +265,7 @@ MachException::Message::Receive(mach_port_t port, mach_msg_option_t options, mac
                       notify_port);
 
     // Dump any errors we get
+    log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS);
     if (log && err.GetError() != MACH_RCV_TIMED_OUT)
     {
         log->Error("::mach_msg ( msg->{bits = %#x, size = %u remote_port = %#x, local_port = %#x, reserved = 0x%x, id = 0x%x}, option = %#x, send_size = %u, rcv_size = %u, rcv_name = %#x, timeout = %u, notify = %#x)",

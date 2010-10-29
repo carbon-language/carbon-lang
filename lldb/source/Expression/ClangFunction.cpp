@@ -543,6 +543,7 @@ ClangFunction::ExecuteFunction (
             // Right now this is the only way to tell we've timed out...
             // We should interrupt the process here...
             // Not really sure what to do if Halt fails here...
+            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
             if (log)
                 if (try_all_threads)
                     log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.",
@@ -609,6 +610,7 @@ ClangFunction::ExecuteFunction (
         }
         else
         {
+            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
             if (log)
             {
                 StreamString s;
@@ -675,7 +677,9 @@ ClangFunction::ExecuteFunction (
                     event_explanation = ts.GetData();
                 } while (0);
                 
-                log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
+                log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+                if (log)
+                    log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
             }
             
             return_value = eExecutionInterrupted;

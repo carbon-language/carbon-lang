@@ -69,7 +69,7 @@ bool
 IsLogVerbose ();
 
 void
-DisableLog ();
+DisableLog (Args &args, Stream *feedback_strm);
 
 Log *
 EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, Args &args, Stream *feedback_strm);

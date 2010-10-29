@@ -1212,6 +1212,7 @@ ProcessGDBRemote::DoDestroy ()
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse("k", response, 2, false))
     {
+        log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
         if (log)
         {
             if (response.IsOKPacket())
@@ -2101,6 +2102,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
         bool done = false;
         while (!done)
         {
+            log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
             if (log)
                 log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) listener.WaitForEvent (NULL, event_sp)...", __FUNCTION__, arg, process->GetID());
             if (listener.WaitForEvent (NULL, event_sp))
@@ -2116,6 +2118,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
                             {
                                 const char *continue_cstr = (const char *)continue_packet->GetBytes ();
                                 const size_t continue_cstr_len = continue_packet->GetByteSize ();
+                                log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
                                 if (log)
                                     log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncContinue: %s", __FUNCTION__, arg, process->GetID(), continue_cstr);
 
@@ -2153,12 +2156,14 @@ ProcessGDBRemote::AsyncThread (void *arg)
                         break;
 
                     case eBroadcastBitAsyncThreadShouldExit:
+                        log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
                         if (log)
                             log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
                         done = true;
                         break;
 
                     default:
+                        log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
                         if (log)
                             log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
                         done = true;
@@ -2167,6 +2172,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
             }
             else
             {
+                log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
                 if (log)
                     log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) listener.WaitForEvent (NULL, event_sp) => false", __FUNCTION__, arg, process->GetID());
                 done = true;
@@ -2174,6 +2180,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
         }
     }
 
+    log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
     if (log)
         log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) thread exiting...", __FUNCTION__, arg, process->GetID());
 

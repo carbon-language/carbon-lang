@@ -547,6 +547,7 @@ MachTask::ExceptionThread (void *arg)
 
         if (err.GetError() == MACH_RCV_INTERRUPTED)
         {
+            log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
             // If we have no task port we should exit this thread
             if (!mach_task->ExceptionPortIsValid())
             {
@@ -576,6 +577,8 @@ MachTask::ExceptionThread (void *arg)
         {
             if (num_exceptions_received > 0)
             {
+                log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
+            
                 // We were receiving all current exceptions with a timeout of zero
                 // it is time to go back to our normal looping mode
                 num_exceptions_received = 0;
@@ -619,6 +622,7 @@ MachTask::ExceptionThread (void *arg)
         }
         else if (err.GetError() != KERN_SUCCESS)
         {
+            log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
             if (log)
                 log->Printf ("got some other error, do something about it??? nah, continuing for now...");
             // TODO: notify of error?
@@ -645,6 +649,7 @@ MachTask::ExceptionThread (void *arg)
     }
 #endif  // #if defined (__arm__)
 
+    log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
     if (log)
         log->Printf ("MachTask::%s (arg = %p) thread exiting...", __FUNCTION__, arg);
     return NULL;

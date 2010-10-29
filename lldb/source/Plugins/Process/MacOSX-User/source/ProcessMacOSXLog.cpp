@@ -35,7 +35,44 @@ ProcessMacOSXLog::GetLogIfAllCategoriesSet (uint32_t mask)
 }
 
 void
-ProcessMacOSXLog::DisableLog ()
+ProcessMacOSXLog::DisableLog (Args &args, Stream *feedback_strm)
+{
+    if (g_log)
+    {
+        uint32_t flag_bits = g_log->GetMask().Get();
+        const size_t argc = args.GetArgumentCount ();
+        for (size_t i = 0; i < argc; ++i)
+        {
+            const char *arg = args.GetArgumentAtIndex (i);
+        
+            if      (::strcasecmp (arg, "all")        == 0   ) flag_bits &= ~PD_LOG_ALL;
+            else if (::strcasestr (arg, "break")      == arg ) flag_bits &= ~PD_LOG_BREAKPOINTS;
+            else if (::strcasecmp (arg, "default")    == 0   ) flag_bits &= ~PD_LOG_DEFAULT;
+            else if (::strcasestr (arg, "exc")        == arg ) flag_bits &= ~PD_LOG_EXCEPTIONS;
+            else if (::strcasecmp (arg, "memory")     == 0   ) flag_bits &= ~PD_LOG_MEMORY;
+            else if (::strcasecmp (arg, "data-short") == 0   ) flag_bits &= ~PD_LOG_MEMORY_DATA_SHORT;
+            else if (::strcasecmp (arg, "data-long")  == 0   ) flag_bits &= ~PD_LOG_MEMORY_DATA_LONG;
+            else if (::strcasecmp (arg, "protections")== 0   ) flag_bits &= ~PD_LOG_PROCESS;
+            else if (::strcasecmp (arg, "step")       == 0   ) flag_bits &= ~PD_LOG_STEP;
+            else if (::strcasecmp (arg, "task")       == 0   ) flag_bits &= ~PD_LOG_TASK;
+            else if (::strcasecmp (arg, "thread")     == 0   ) flag_bits &= ~PD_LOG_THREAD;
+            else if (::strcasecmp (arg, "verbose")    == 0   ) flag_bits &= ~PD_LOG_VERBOSE;
+            else if (::strcasestr (arg, "watch")      == arg ) flag_bits &= ~PD_LOG_WATCHPOINTS;
+            else
+            {
+                feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
+                ListLogCategories (feedback_strm);
+            }
+        }
+        if (flag_bits == 0)
+            DeleteLog ();
+        else
+            g_log->GetMask().Reset (flag_bits);
+    }
+}
+
+void
+ProcessMacOSXLog::DeleteLog ()
 {
     if (g_log)
     {
@@ -47,7 +84,7 @@ ProcessMacOSXLog::DisableLog ()
 Log *
 ProcessMacOSXLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &args, Stream *feedback_strm)
 {
-    DisableLog ();
+    DeleteLog ();
     g_log = new Log (log_stream_sp);
     if (g_log)
     {

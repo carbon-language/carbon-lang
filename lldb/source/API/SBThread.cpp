@@ -469,7 +469,6 @@ SBThread::RunToAddress (lldb::addr_t addr)
 SBProcess
 SBThread::GetProcess ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     SBProcess process;
     if (m_opaque_sp)
@@ -478,6 +477,7 @@ SBThread::GetProcess ()
         process.SetProcess(m_opaque_sp->GetProcess().GetTarget().GetProcessSP());
     }
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;

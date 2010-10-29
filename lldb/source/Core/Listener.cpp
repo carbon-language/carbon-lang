@@ -388,12 +388,14 @@ Listener::WaitForEventsInternal
 
         else if (timed_out)
         {
+            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS);
             if (log)
                 log->Printf ("%p Listener::WaitForEvents() timed out for %s", this, m_name.c_str());
             break;
         }
         else
         {
+            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS);
             if (log)
                 log->Printf ("%p Listener::WaitForEvents() unknown error for %s", this, m_name.c_str());
             break;

@@ -338,6 +338,7 @@ Communication::ReadThread (void *p)
             break;
         }
     }
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMUNICATION);
     if (log)
         log->Printf ("%p Communication::ReadThread () thread exiting...", p);
 

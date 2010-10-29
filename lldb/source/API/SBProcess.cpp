@@ -385,7 +385,6 @@ SBProcess::WaitUntilProcessHasStopped (SBCommandReturnObject &result)
 SBError
 SBProcess::Continue ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     
     SBError sb_error;
     if (IsValid())
@@ -401,6 +400,7 @@ SBProcess::Continue ()
     else
         sb_error.SetErrorString ("SBProcess is invalid");
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;
@@ -428,7 +428,6 @@ SBProcess::Destroy ()
 SBError
 SBProcess::Stop ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     SBError sb_error;
     if (IsValid())
@@ -436,6 +435,7 @@ SBProcess::Stop ()
     else
         sb_error.SetErrorString ("SBProcess is invalid");
     
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;
@@ -452,7 +452,6 @@ SBProcess::Stop ()
 SBError
 SBProcess::Kill ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     SBError sb_error;
     if (m_opaque_sp)
@@ -460,6 +459,7 @@ SBProcess::Kill ()
     else
         sb_error.SetErrorString ("SBProcess is invalid");
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;

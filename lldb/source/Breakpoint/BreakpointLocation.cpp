@@ -231,6 +231,7 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     if (should_stop)
     {
         ThreadPlanSP condition_plan_sp(GetThreadPlanToTestCondition(context->exe_ctx, errors));
+        log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         if (log && errors.GetSize() > 0)
         {
             log->Printf("Error evaluating condition: \"%s\".\n", errors.GetData());
@@ -244,6 +245,7 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     
     if (should_stop)
     {
+        log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         if (log)
         {
             StreamString s;

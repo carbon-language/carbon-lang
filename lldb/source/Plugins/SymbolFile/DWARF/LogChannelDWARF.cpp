@@ -112,10 +112,42 @@ LogChannelDWARF::EnablePluginLogging (Stream *strm, Args &command)
 
 
 void
-LogChannelDWARF::Disable ()
+LogChannelDWARF::Delete ()
 {
     g_log_channel = NULL;
     m_log_sp.reset();
+}
+
+
+void
+LogChannelDWARF::Disable (Args &categories, Stream *feedback_strm)
+{
+    g_log_channel = this;
+    uint32_t flag_bits = m_log_sp->GetMask().Get();
+    const size_t argc = categories.GetArgumentCount();
+    for (size_t i = 0; i < argc; ++i)
+    {
+         const char *arg = categories.GetArgumentAtIndex(i);
+
+        if      (::strcasecmp (arg, "all")        == 0   ) flag_bits &= ~DWARF_LOG_ALL;
+        else if (::strcasecmp (arg, "info")       == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_INFO;
+        else if (::strcasecmp (arg, "line")       == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_LINE;
+        else if (::strcasecmp (arg, "pubnames")   == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_PUBNAMES;
+        else if (::strcasecmp (arg, "pubtypes")   == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_PUBTYPES;
+        else if (::strcasecmp (arg, "default")    == 0   ) flag_bits &= ~DWARF_LOG_DEFAULT;
+        else
+        {
+            feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
+            ListCategories (feedback_strm);
+        }
+   }
+    
+    if (flag_bits == 0)
+        Delete ();
+    else
+        m_log_sp->GetMask().Reset (flag_bits);
+
+    return;
 }
 
 bool
@@ -127,7 +159,7 @@ LogChannelDWARF::Enable
     const Args &categories  // The categories to enable within this logging stream, if empty, enable default set
 )
 {
-    Disable ();
+    Delete ();
 
     m_log_sp.reset(new Log (log_stream_sp));
     g_log_channel = this;

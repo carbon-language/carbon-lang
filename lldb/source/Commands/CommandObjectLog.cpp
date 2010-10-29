@@ -291,31 +291,29 @@ public:
         }
         else
         {
-            for (size_t i=0; i<argc; ++i)
-            {
-                Log::Callbacks log_callbacks;
+            Log::Callbacks log_callbacks;
 
-                std::string channel(args.GetArgumentAtIndex(i));
-                if (Log::GetLogChannelCallbacks (channel.c_str(), log_callbacks))
+            std::string channel(args.GetArgumentAtIndex(0));
+            args.Shift ();  // Shift off the channel
+            if (Log::GetLogChannelCallbacks (channel.c_str(), log_callbacks))
+            {
+                log_callbacks.disable (args, &result.GetErrorStream());
+                result.SetStatus(eReturnStatusSuccessFinishNoResult);
+            }
+            else if (channel == "all")
+            {
+                Log::DisableAllLogChannels(&result.GetErrorStream());
+            }
+            else
+            {
+                LogChannelSP log_channel_sp (GetLogChannelPluginForChannel(channel.c_str()));
+                if (log_channel_sp)
                 {
-                    log_callbacks.disable ();
+                    log_channel_sp->Disable(args, &result.GetErrorStream());
                     result.SetStatus(eReturnStatusSuccessFinishNoResult);
                 }
-                else if (channel == "all")
-                {
-                    Log::DisableAllLogChannels();
-                }
                 else
-                {
-                    LogChannelSP log_channel_sp (GetLogChannelPluginForChannel(channel.c_str()));
-                    if (log_channel_sp)
-                    {
-                        log_channel_sp->Disable();
-                        result.SetStatus(eReturnStatusSuccessFinishNoResult);
-                    }
-                    else
-                        result.AppendErrorWithFormat("Invalid log channel '%s'.\n", args.GetArgumentAtIndex(0));
-                }
+                    result.AppendErrorWithFormat("Invalid log channel '%s'.\n", args.GetArgumentAtIndex(0));
             }
         }
         return result.Succeeded();

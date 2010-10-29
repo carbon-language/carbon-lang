@@ -47,7 +47,10 @@ public:
     GetLogIfAllCategoriesSet(uint32_t mask = 0);
 
     static void
-    DisableLog ();
+    DisableLog (lldb_private::Args &args, lldb_private::Stream *feedback_strm);
+
+    static void
+    DeleteLog ();
 
     static lldb_private::Log *
     EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, lldb_private::Args &args, lldb_private::Stream *feedback_strm);

@@ -59,7 +59,7 @@ public:
     //------------------------------------------------------------------
     // Callback definitions for abstracted plug-in log access.
     //------------------------------------------------------------------
-    typedef void (*DisableCallback) ();
+    typedef void (*DisableCallback) (Args &args, Stream *feedback_strm);
     typedef Log* (*EnableCallback) (lldb::StreamSP &log_stream_sp,
                                     uint32_t log_options,
                                     Args &args,
@@ -95,7 +95,7 @@ public:
                           Stream *feedback_strm);
 
     static void
-    DisableAllLogChannels ();
+    DisableAllLogChannels (Stream *feedback_strm);
 
     static void
     ListAllLogChannels (Stream *strm);
@@ -194,7 +194,7 @@ public:
     FindPlugin (const char *plugin_name);
 
     virtual void
-    Disable () = 0;
+    Disable (Args &args, Stream *feedback_strm) = 0;
 
     virtual bool
     Enable (lldb::StreamSP &log_stream_sp,

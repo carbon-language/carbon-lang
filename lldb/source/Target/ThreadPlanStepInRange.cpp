@@ -156,6 +156,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
             if (bytes_to_skip != 0)
             {
                 func_start_address.Slide (bytes_to_skip);
+                log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
                 if (log)
                     log->Printf ("Pushing past prologue ");
                     

@@ -115,12 +115,12 @@ SBTarget::IsValid () const
 SBProcess
 SBTarget::GetProcess ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     SBProcess sb_process;
     if (m_opaque_sp)
         sb_process.SetProcess (m_opaque_sp->GetProcessSP());
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;
@@ -146,13 +146,13 @@ SBTarget::GetDebugger () const
 SBProcess
 SBTarget::CreateProcess ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     SBProcess sb_process;
 
     if (m_opaque_sp)
         sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;
@@ -184,6 +184,7 @@ SBTarget::LaunchProcess
     SBError sb_error;    
     SBProcess sb_process = Launch (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
 
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;
@@ -263,6 +264,7 @@ SBTarget::Launch
         error.SetErrorString ("SBTarget is invalid");
     }
 
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         SBStream sstr;

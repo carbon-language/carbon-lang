@@ -89,11 +89,13 @@ ThreadPlanTestCondition::ShouldStop (Event *event_ptr)
                 else
                     m_did_stop = true;
             }
+            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
             if (log)
                 log->Printf("Condition successfully evaluated, result is %s.\n", m_did_stop ? "true" : "false");
         }
         else
         {
+            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
             if (log)
                 log->Printf("Failed to get a result from the expression, error: \"%s\"\n", error_stream.GetData());
             m_did_stop = true;
@@ -101,6 +103,7 @@ ThreadPlanTestCondition::ShouldStop (Event *event_ptr)
     }
     else if (m_exe_ctx.thread->WasThreadPlanDiscarded (m_expression_plan_sp.get()))
     {
+        log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
         if (log)
             log->Printf("ExecuteExpression thread plan was discarded.\n");
         m_did_stop = true; 

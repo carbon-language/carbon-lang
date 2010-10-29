@@ -93,6 +93,7 @@ SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t 
         ret_value = m_opaque_ptr->StartListeningForEvents (broadcaster.get(), event_mask);
     }
     
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
         log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p), event_mask=0x%8.8x) => %d", 
                      m_opaque_ptr, broadcaster.get(), event_mask, ret_value);

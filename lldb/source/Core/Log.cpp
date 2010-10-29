@@ -28,7 +28,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Host/Mutex.h"
-
+#include "lldb/Interpreter/Args.h"
 using namespace lldb;
 using namespace lldb_private;
 
@@ -384,18 +384,19 @@ Log::EnableAllLogChannels
 }
 
 void
-Log::DisableAllLogChannels ()
+Log::DisableAllLogChannels (Stream *feedback_strm)
 {
     CallbackMap &callback_map = GetCallbackMap ();
     CallbackMapIter pos, end = callback_map.end();
+    Args args ("all");
 
     for (pos = callback_map.begin(); pos != end; ++pos)
-        pos->second.disable ();
+        pos->second.disable (args, feedback_strm);
 
     LogChannelMap &channel_map = GetChannelMap ();
     LogChannelMapIter channel_pos, channel_end = channel_map.end();
     for (channel_pos = channel_map.begin(); channel_pos != channel_end; ++channel_pos)
-        channel_pos->second->Disable ();
+        channel_pos->second->Disable (args, feedback_strm);
 }
 
 void

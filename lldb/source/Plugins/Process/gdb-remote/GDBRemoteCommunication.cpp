@@ -209,11 +209,14 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
 
     while (state == eStateRunning)
     {
+        log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
         if (log)
             log->Printf ("GDBRemoteCommunication::%s () WaitForPacket(...)", __FUNCTION__);
 
         if (WaitForPacket (response, (TimeValue*)NULL))
         {
+            log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
+            async_log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_ASYNC);
             if (response.Empty())
                 state = eStateInvalid;
             else
@@ -344,11 +347,13 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
         }
         else
         {
+            log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
             if (log)
                 log->Printf ("GDBRemoteCommunication::%s () WaitForPacket(...) => false", __FUNCTION__);
             state = eStateInvalid;
         }
     }
+    log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
     if (log)
         log->Printf ("GDBRemoteCommunication::%s () => %s", __FUNCTION__, StateAsCString(state));
     response.SetFilePos(0);
