@@ -51,8 +51,11 @@ follows:</p>
   </ul>
   <li>Build LLVM and Clang:</li>
   <ul>
-    <li><tt>cd ..</tt>  (back to llvm)</li>
-    <li><tt>./configure</tt></li>
+    <li><tt>cd ../..</tt>  (back to where you started)</li>
+    <li><tt>mkdir build</tt> (for building without polluting the source dir)
+    </li>
+    <li><tt>cd build</tt></li>
+    <li><tt>../llvm/configure</tt></li>
     <li><tt>make</tt></li>
     <li>This builds both LLVM and Clang for debug mode.</li>
     <li>Note: For subsequent Clang development, you can just do make at the
