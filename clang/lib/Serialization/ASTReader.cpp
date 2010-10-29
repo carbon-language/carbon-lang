@@ -2069,6 +2069,17 @@ ASTReader::ReadASTBlock(PerFileData &F) {
             std::make_pair(&F, Record[I+1]);
       break;
     }
+        
+    case CXX_BASE_SPECIFIER_OFFSETS: {
+      if (F.LocalNumCXXBaseSpecifiers != 0) {
+        Error("duplicate CXX_BASE_SPECIFIER_OFFSETS record in AST file");
+        return Failure;
+      }
+      
+      F.LocalNumCXXBaseSpecifiers = Record[0];
+      F.CXXBaseSpecifiersOffsets = (const uint32_t *)BlobStart;
+      break;
+    }
     }
     First = false;
   }
@@ -3207,6 +3218,14 @@ TypeIdx ASTReader::GetTypeIdx(QualType T) const {
   return I->second;
 }
 
+unsigned ASTReader::getTotalNumCXXBaseSpecifiers() const {
+  unsigned Result = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I)
+    Result += Chain[I]->LocalNumCXXBaseSpecifiers;
+  
+  return Result;
+}
+
 TemplateArgumentLocInfo
 ASTReader::GetTemplateArgumentLocInfo(PerFileData &F,
                                       TemplateArgument::ArgKind Kind,
@@ -3247,6 +3266,63 @@ ASTReader::ReadTemplateArgumentLoc(PerFileData &F,
 
 Decl *ASTReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
+}
+
+uint64_t 
+ASTReader::GetCXXBaseSpecifiersOffset(serialization::CXXBaseSpecifiersID ID) {
+  if (ID == 0)
+    return 0;
+  
+  --ID;
+  uint64_t Offset = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    if (ID < Chain[I]->LocalNumCXXBaseSpecifiers)
+      return Offset + Chain[I]->CXXBaseSpecifiersOffsets[ID];
+    
+    ID -= Chain[I]->LocalNumCXXBaseSpecifiers;
+    Offset += Chain[I]->SizeInBits;
+  }
+  
+  assert(false && "CXXBaseSpecifiers not found");
+  return 0;
+}
+
+CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
+  // Figure out which AST file contains this offset.
+  PerFileData *F = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    if (Offset < Chain[I]->SizeInBits) {
+      F = Chain[I];
+      break;
+    }
+    
+    Offset -= Chain[I]->SizeInBits;
+  }
+  
+  if (!F) {
+    Error("Malformed AST file: C++ base specifiers at impossible offset");
+    return 0;
+  }
+  
+  llvm::BitstreamCursor &Cursor = F->DeclsCursor;
+  SavedStreamPosition SavedPosition(Cursor);
+  Cursor.JumpToBit(Offset);
+  ReadingKindTracker ReadingKind(Read_Decl, *this);
+  RecordData Record;
+  unsigned Code = Cursor.ReadCode();
+  unsigned RecCode = Cursor.ReadRecord(Code, Record);
+  if (RecCode != DECL_CXX_BASE_SPECIFIERS) {
+    Error("Malformed AST file: missing C++ base specifiers");
+    return 0;
+  }
+
+  unsigned Idx = 0;
+  unsigned NumBases = Record[Idx++];
+  void *Mem = Context->Allocate(sizeof(CXXBaseSpecifier) * NumBases);
+  CXXBaseSpecifier *Bases = new (Mem) CXXBaseSpecifier [NumBases];
+  for (unsigned I = 0; I != NumBases; ++I)
+    Bases[I] = ReadCXXBaseSpecifier(*F, Record, Idx);
+  return Bases;
 }
 
 TranslationUnitDecl *ASTReader::GetTranslationUnitDecl() {
@@ -4411,7 +4487,8 @@ ASTReader::PerFileData::PerFileData(ASTFileType Ty)
     IdentifierLookupTable(0), LocalNumMacroDefinitions(0),
     MacroDefinitionOffsets(0), LocalNumSelectors(0), SelectorOffsets(0),
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
-    DeclOffsets(0), LocalNumTypes(0), TypeOffsets(0), StatCache(0),
+    DeclOffsets(0), LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
+    LocalNumTypes(0), TypeOffsets(0), StatCache(0),
     NumPreallocatedPreprocessingEntities(0), NextInSource(0)
 {}
 

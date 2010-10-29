@@ -264,6 +264,35 @@ private:
   /// file.
   unsigned NumVisibleDeclContexts;
 
+  /// \brief The offset of each CXXBaseSpecifier set within the AST.
+  llvm::SmallVector<uint32_t, 4> CXXBaseSpecifiersOffsets;
+                    
+  /// \brief The first ID number we can use for our own base specifiers.
+  serialization::CXXBaseSpecifiersID FirstCXXBaseSpecifiersID;
+  
+  /// \brief The base specifiers ID that will be assigned to the next new 
+  /// set of C++ base specifiers.
+  serialization::CXXBaseSpecifiersID NextCXXBaseSpecifiersID;
+
+  /// \brief A set of C++ base specifiers that is queued to be written into the 
+  /// AST file.                    
+  struct QueuedCXXBaseSpecifiers {
+    QueuedCXXBaseSpecifiers() : ID(), Bases(), BasesEnd() { }
+    
+    QueuedCXXBaseSpecifiers(serialization::CXXBaseSpecifiersID ID,
+                            CXXBaseSpecifier const *Bases,
+                            CXXBaseSpecifier const *BasesEnd)
+      : ID(ID), Bases(Bases), BasesEnd(BasesEnd) { }
+                            
+    serialization::CXXBaseSpecifiersID ID;
+    CXXBaseSpecifier const * Bases;
+    CXXBaseSpecifier const * BasesEnd;
+  };
+                    
+  /// \brief Queue of C++ base specifiers to be written to the AST file,
+  /// in the order they should be written.
+  llvm::SmallVector<QueuedCXXBaseSpecifiers, 2> CXXBaseSpecifiersToWrite;
+                    
   /// \brief Write the given subexpression to the bitstream.
   void WriteSubStmt(Stmt *S);
 
@@ -344,6 +373,11 @@ public:
   /// \brief Emit a CXXTemporary.
   void AddCXXTemporary(const CXXTemporary *Temp, RecordDataImpl &Record);
 
+  /// \brief Emit a set of C++ base specifiers to the record.
+  void AddCXXBaseSpecifiersRef(CXXBaseSpecifier const *Bases,
+                               CXXBaseSpecifier const *BasesEnd,
+                               RecordDataImpl &Record);
+                    
   /// \brief Get the unique number used to refer to the given selector.
   serialization::SelectorID getSelectorRef(Selector Sel);
   
@@ -394,6 +428,7 @@ public:
   /// \brief Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordDataImpl &Record);
 
+                    
   /// \brief Force a declaration to be emitted and get its ID.
   serialization::DeclID GetDeclRef(const Decl *D);
 
@@ -478,6 +513,10 @@ public:
   /// been added to the queue via AddStmt().
   void FlushStmts();
 
+  /// \brief Flush all of the C++ base specifier sets that have been added 
+  /// via \c AddCXXBaseSpecifiersRef().
+  void FlushCXXBaseSpecifiers();
+                    
   /// \brief Record an ID for the given switch-case statement.
   unsigned RecordSwitchCaseID(SwitchCase *S);
 

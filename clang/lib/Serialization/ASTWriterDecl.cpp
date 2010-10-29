@@ -1182,6 +1182,12 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
 
   // Flush any expressions that were written as part of this declaration.
   FlushStmts();
+  
+  // Flush C++ base specifiers, if there are any.
+  FlushCXXBaseSpecifiers();
+  
+  // Flush any expressions that were written as part of the base specifiers.
+  FlushStmts();
 
   // Note "external" declarations so that we can add them to a record in the
   // AST file later.

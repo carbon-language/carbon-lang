@@ -342,18 +342,18 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief Whether we have already declared a destructor within the class.
     bool DeclaredDestructor : 1;
     
-    /// Bases - Base classes of this class.
-    /// FIXME: This is wasted space for a union.
-    CXXBaseSpecifier *Bases;
-
     /// NumBases - The number of base class specifiers in Bases.
     unsigned NumBases;
-
-    /// VBases - direct and indirect virtual base classes of this class.
-    CXXBaseSpecifier *VBases;
-
+    
     /// NumVBases - The number of virtual base class specifiers in VBases.
     unsigned NumVBases;
+
+    /// Bases - Base classes of this class.
+    /// FIXME: This is wasted space for a union.
+    LazyCXXBaseSpecifiersPtr Bases;
+
+    /// VBases - direct and indirect virtual base classes of this class.
+    LazyCXXBaseSpecifiersPtr VBases;
 
     /// Conversions - Overload set containing the conversion functions
     /// of this C++ class (but not its inherited conversion
@@ -376,6 +376,15 @@ class CXXRecordDecl : public RecordDecl {
     /// in reverse order.
     FriendDecl *FirstFriend;
 
+    /// \brief Retrieve the set of direct base classes.    
+    CXXBaseSpecifier *getBases() const {
+      return Bases.get(Definition->getASTContext().getExternalSource());
+    }
+
+    /// \brief Retrieve the set of virtual base classes.    
+    CXXBaseSpecifier *getVBases() const {
+      return VBases.get(Definition->getASTContext().getExternalSource());
+    }
   } *DefinitionData;
 
   struct DefinitionData &data() {
@@ -480,8 +489,8 @@ public:
   /// class.
   unsigned getNumBases() const { return data().NumBases; }
 
-  base_class_iterator bases_begin() { return data().Bases; }
-  base_class_const_iterator bases_begin() const { return data().Bases; }
+  base_class_iterator bases_begin() { return data().getBases(); }
+  base_class_const_iterator bases_begin() const { return data().getBases(); }
   base_class_iterator bases_end() { return bases_begin() + data().NumBases; }
   base_class_const_iterator bases_end() const {
     return bases_begin() + data().NumBases;
@@ -503,8 +512,8 @@ public:
   /// class.
   unsigned getNumVBases() const { return data().NumVBases; }
 
-  base_class_iterator vbases_begin() { return data().VBases; }
-  base_class_const_iterator vbases_begin() const { return data().VBases; }
+  base_class_iterator vbases_begin() { return data().getVBases(); }
+  base_class_const_iterator vbases_begin() const { return data().getVBases(); }
   base_class_iterator vbases_end() { return vbases_begin() + data().NumVBases; }
   base_class_const_iterator vbases_end() const {
     return vbases_begin() + data().NumVBases;

@@ -336,6 +336,13 @@ private:
     /// is the instantiation location.
     llvm::SmallVector<uint64_t, 64> PendingInstantiations;
 
+    /// \brief The number of C++ base specifier sets in this AST file.
+    unsigned LocalNumCXXBaseSpecifiers;
+    
+    /// \brief Offset of each C++ base specifier set within the bitstream,
+    /// indexed by the C++ base specifier set ID (-1).
+    const uint32_t *CXXBaseSpecifiersOffsets;
+    
     // === Types ===
 
     /// \brief The number of types in this AST file.
@@ -867,6 +874,9 @@ public:
     return static_cast<unsigned>(MacroDefinitionsLoaded.size());
   }
       
+  /// \brief Returns the number of C++ base specifiers found in the chain.
+  unsigned getTotalNumCXXBaseSpecifiers() const;
+      
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.
   TemplateArgumentLocInfo
@@ -904,6 +914,12 @@ public:
   Decl *GetDecl(serialization::DeclID ID);
   virtual Decl *GetExternalDecl(uint32_t ID);
 
+  /// \brief Resolve a CXXBaseSpecifiers ID into an offset into the chain
+  /// of loaded AST files.
+  uint64_t GetCXXBaseSpecifiersOffset(serialization::CXXBaseSpecifiersID ID);
+      
+  virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
+      
   /// \brief Resolve the offset of a statement into a statement.
   ///
   /// This operation will read a new statement from the external

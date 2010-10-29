@@ -164,3 +164,8 @@ public:
    typedef t1& t2;
 };
 
+template<typename T>
+  struct S7;
+
+template<unsigned N>
+struct S7<int[N]> : S6<const int[N]> { };

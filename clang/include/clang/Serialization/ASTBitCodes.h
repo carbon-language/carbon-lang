@@ -124,6 +124,10 @@ namespace clang {
     /// \brief An ID number that refers to an ObjC selctor in an AST file.
     typedef uint32_t SelectorID;
 
+    /// \brief An ID number that refers to a set of CXXBaseSpecifiers in an 
+    /// AST file.
+    typedef uint32_t CXXBaseSpecifiersID;
+    
     /// \brief Describes the various kinds of blocks that occur within
     /// an AST file.
     enum BlockIDs {
@@ -333,7 +337,11 @@ namespace clang {
 
       /// \brief Record of updates for a declaration that was modified after
       /// being deserialized.
-      DECL_UPDATES = 36
+      DECL_UPDATES = 36,
+      
+      /// \brief Record code for the table of offsets to CXXBaseSpecifier
+      /// sets.
+      CXX_BASE_SPECIFIER_OFFSETS = 37
     };
 
     /// \brief Record types used within a source manager block.
@@ -705,7 +713,9 @@ namespace clang {
       /// \brief A TemplateTemplateParmDecl record.
       DECL_TEMPLATE_TEMPLATE_PARM,
       /// \brief A StaticAssertDecl record.
-      DECL_STATIC_ASSERT
+      DECL_STATIC_ASSERT,
+      /// \brief A record containing CXXBaseSpecifiers.
+      DECL_CXX_BASE_SPECIFIERS
     };
 
     /// \brief Record codes for each kind of statement or expression.

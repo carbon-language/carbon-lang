@@ -773,8 +773,6 @@ void ASTDeclReader::VisitUnresolvedUsingTypenameDecl(
 void ASTDeclReader::ReadCXXDefinitionData(
                                    struct CXXRecordDecl::DefinitionData &Data,
                                    const RecordData &Record, unsigned &Idx) {
-  ASTContext &C = *Reader.getContext();
-
   Data.UserDeclaredConstructor = Record[Idx++];
   Data.UserDeclaredCopyConstructor = Record[Idx++];
   Data.UserDeclaredCopyAssignment = Record[Idx++];
@@ -793,20 +791,13 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.DeclaredCopyConstructor = Record[Idx++];
   Data.DeclaredCopyAssignment = Record[Idx++];
   Data.DeclaredDestructor = Record[Idx++];
-
-  // setBases() is unsuitable since it may try to iterate the bases of an
-  // uninitialized base.
   Data.NumBases = Record[Idx++];
-  Data.Bases = new(C) CXXBaseSpecifier [Data.NumBases];
-  for (unsigned i = 0; i != Data.NumBases; ++i)
-    Data.Bases[i] = Reader.ReadCXXBaseSpecifier(F, Record, Idx);
-
-  // FIXME: Make VBases lazily computed when needed to avoid storing them.
+  if (Data.NumBases)
+    Data.Bases = Reader.GetCXXBaseSpecifiersOffset(Record[Idx++]);
   Data.NumVBases = Record[Idx++];
-  Data.VBases = new(C) CXXBaseSpecifier [Data.NumVBases];
-  for (unsigned i = 0; i != Data.NumVBases; ++i)
-    Data.VBases[i] = Reader.ReadCXXBaseSpecifier(F, Record, Idx);
-
+  if (Data.NumVBases)
+    Data.VBases = Reader.GetCXXBaseSpecifiersOffset(Record[Idx++]);
+  
   Reader.ReadUnresolvedSet(Data.Conversions, Record, Idx);
   Reader.ReadUnresolvedSet(Data.VisibleConversions, Record, Idx);
   assert(Data.Definition && "Data.Definition should be already set!");
@@ -1508,6 +1499,9 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   case DECL_BLOCK:
     D = BlockDecl::Create(*Context, 0, SourceLocation());
     break;
+  case DECL_CXX_BASE_SPECIFIERS:
+    Error("attempt to read a C++ base-specifier record as a declaration");
+    return 0;
   }
 
   assert(D && "Unknown declaration reading AST file");

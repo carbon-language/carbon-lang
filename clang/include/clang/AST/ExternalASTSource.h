@@ -25,6 +25,7 @@ template <class T> class SmallVectorImpl;
 namespace clang {
 
 class ASTConsumer;
+class CXXBaseSpecifier;
 class Decl;
 class DeclContext;
 class DeclContextLookupResult;
@@ -92,6 +93,10 @@ public:
   /// FunctionDecl::setLazyBody when building decls.
   virtual Stmt *GetExternalDeclStmt(uint64_t Offset) = 0;
 
+  /// \brief Resolve the offset of a set of C++ base specifiers in the decl
+  /// stream into an array of specifiers.
+  virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset) = 0;
+  
   /// \brief Finds all declarations with the given name in the
   /// given context.
   ///
@@ -248,6 +253,11 @@ typedef LazyOffsetPtr<Stmt, uint64_t, &ExternalASTSource::GetExternalDeclStmt>
 typedef LazyOffsetPtr<Decl, uint32_t, &ExternalASTSource::GetExternalDecl>
   LazyDeclPtr;
 
+/// \brief A lazy pointer to a set of CXXBaseSpecifiers.
+typedef LazyOffsetPtr<CXXBaseSpecifier, uint64_t, 
+                      &ExternalASTSource::GetExternalCXXBaseSpecifiers>
+  LazyCXXBaseSpecifiersPtr;
+  
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H

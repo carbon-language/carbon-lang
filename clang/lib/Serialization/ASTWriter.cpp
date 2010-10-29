@@ -1725,7 +1725,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
     // Create a blob abbreviation for the selector table offsets.
     Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(SELECTOR_OFFSETS));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // index
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // size
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned SelectorOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
 
@@ -2230,7 +2230,9 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
     NextSelectorID(FirstSelectorID), FirstMacroID(1), NextMacroID(FirstMacroID),
     CollectedStmts(&StmtsToEmit),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
-    NumVisibleDeclContexts(0) {
+    NumVisibleDeclContexts(0), FirstCXXBaseSpecifiersID(1),
+    NextCXXBaseSpecifiersID(1)
+{
 }
 
 void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
@@ -2401,6 +2403,26 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   WriteTypeDeclOffsets();
 
+  // Write the C++ base-specifier set offsets.
+  if (!CXXBaseSpecifiersOffsets.empty()) {
+    // Create a blob abbreviation for the C++ base specifiers offsets.
+    using namespace llvm;
+    
+    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(CXX_BASE_SPECIFIER_OFFSETS));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // size
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    unsigned BaseSpecifierOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+    
+    // Write the selector offsets table.
+    Record.clear();
+    Record.push_back(CXX_BASE_SPECIFIER_OFFSETS);
+    Record.push_back(CXXBaseSpecifiersOffsets.size());
+    Stream.EmitRecordWithBlob(BaseSpecifierOffsetAbbrev, Record,
+                              (const char *)CXXBaseSpecifiersOffsets.data(),
+                            CXXBaseSpecifiersOffsets.size() * sizeof(uint32_t));
+  }
+  
   // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())
     Stream.EmitRecord(EXTERNAL_DEFINITIONS, ExternalDefinitions);
@@ -2798,6 +2820,16 @@ void ASTWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordDataImpl &Record
   AddDeclRef(Temp->getDestructor(), Record);
 }
 
+void ASTWriter::AddCXXBaseSpecifiersRef(CXXBaseSpecifier const *Bases,
+                                      CXXBaseSpecifier const *BasesEnd,
+                                        RecordDataImpl &Record) {
+  assert(Bases != BasesEnd && "Empty base-specifier sets are not recorded");
+  CXXBaseSpecifiersToWrite.push_back(
+                                QueuedCXXBaseSpecifiers(NextCXXBaseSpecifiersID,
+                                                        Bases, BasesEnd));
+  Record.push_back(NextCXXBaseSpecifiersID++);
+}
+
 void ASTWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                                            const TemplateArgumentLocInfo &Arg,
                                            RecordDataImpl &Record) {
@@ -3155,6 +3187,32 @@ void ASTWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   AddSourceRange(Base.getSourceRange(), Record);
 }
 
+void ASTWriter::FlushCXXBaseSpecifiers() {
+  RecordData Record;
+  for (unsigned I = 0, N = CXXBaseSpecifiersToWrite.size(); I != N; ++I) {
+    Record.clear();
+    
+    // Record the offset of this base-specifier set.
+    unsigned Index = CXXBaseSpecifiersToWrite[I].ID - FirstCXXBaseSpecifiersID;
+    if (Index == CXXBaseSpecifiersOffsets.size())
+      CXXBaseSpecifiersOffsets.push_back(Stream.GetCurrentBitNo());
+    else {
+      if (Index > CXXBaseSpecifiersOffsets.size())
+        CXXBaseSpecifiersOffsets.resize(Index + 1);
+      CXXBaseSpecifiersOffsets[Index] = Stream.GetCurrentBitNo();
+    }
+
+    const CXXBaseSpecifier *B = CXXBaseSpecifiersToWrite[I].Bases,
+                        *BEnd = CXXBaseSpecifiersToWrite[I].BasesEnd;
+    Record.push_back(BEnd - B);
+    for (; B != BEnd; ++B)
+      AddCXXBaseSpecifier(*B, Record);
+    Stream.EmitRecord(serialization::DECL_CXX_BASE_SPECIFIERS, Record);
+  }
+
+  CXXBaseSpecifiersToWrite.clear();
+}
+
 void ASTWriter::AddCXXBaseOrMemberInitializers(
                         const CXXBaseOrMemberInitializer * const *BaseOrMembers,
                         unsigned NumBaseOrMembers, RecordDataImpl &Record) {
@@ -3208,13 +3266,15 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   Record.push_back(Data.DeclaredDestructor);
 
   Record.push_back(Data.NumBases);
-  for (unsigned i = 0; i != Data.NumBases; ++i)
-    AddCXXBaseSpecifier(Data.Bases[i], Record);
-
+  if (Data.NumBases > 0)
+    AddCXXBaseSpecifiersRef(Data.getBases(), Data.getBases() + Data.NumBases, 
+                            Record);
+  
   // FIXME: Make VBases lazily computed when needed to avoid storing them.
   Record.push_back(Data.NumVBases);
-  for (unsigned i = 0; i != Data.NumVBases; ++i)
-    AddCXXBaseSpecifier(Data.VBases[i], Record);
+  if (Data.NumVBases > 0)
+    AddCXXBaseSpecifiersRef(Data.getVBases(), Data.getVBases() + Data.NumVBases, 
+                            Record);
 
   AddUnresolvedSet(Data.Conversions, Record);
   AddUnresolvedSet(Data.VisibleConversions, Record);
@@ -3230,6 +3290,7 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
          FirstIdentID == NextIdentID &&
          FirstSelectorID == NextSelectorID &&
          FirstMacroID == NextMacroID &&
+         FirstCXXBaseSpecifiersID == NextCXXBaseSpecifiersID &&
          "Setting chain after writing has started.");
   Chain = Reader;
 
@@ -3238,11 +3299,13 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
   FirstIdentID += Chain->getTotalNumIdentifiers();
   FirstSelectorID += Chain->getTotalNumSelectors();
   FirstMacroID += Chain->getTotalNumMacroDefinitions();
+  FirstCXXBaseSpecifiersID += Chain->getTotalNumCXXBaseSpecifiers();
   NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
   NextIdentID = FirstIdentID;
   NextSelectorID = FirstSelectorID;
   NextMacroID = FirstMacroID;
+  NextCXXBaseSpecifiersID = FirstCXXBaseSpecifiersID;
 }
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {

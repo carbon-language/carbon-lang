@@ -36,7 +36,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasTrivialDestructor(true), ComputedVisibleConversions(false),
     DeclaredDefaultConstructor(false), DeclaredCopyConstructor(false), 
     DeclaredCopyAssignment(false), DeclaredDestructor(false),
-    Bases(0), NumBases(0), VBases(0), NumVBases(0),
+    NumBases(0), NumVBases(0), Bases(), VBases(), 
     Definition(D), FirstFriend(0) {
 }
 
@@ -77,8 +77,8 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   //   no base classes [...].
   data().Aggregate = false;
 
-  if (data().Bases)
-    C.Deallocate(data().Bases);
+  if (!data().Bases.isOffset() && data().NumBases > 0)
+    C.Deallocate(data().getBases());
 
   // The set of seen virtual base types.
   llvm::SmallPtrSet<CanQualType, 8> SeenVBaseTypes;
@@ -89,7 +89,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   data().Bases = new(C) CXXBaseSpecifier [NumBases];
   data().NumBases = NumBases;
   for (unsigned i = 0; i < NumBases; ++i) {
-    data().Bases[i] = *Bases[i];
+    data().getBases()[i] = *Bases[i];
     // Keep track of inherited vbases for this base class.
     const CXXBaseSpecifier *Base = Bases[i];
     QualType BaseType = Base->getType();
@@ -193,7 +193,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     CXXRecordDecl *VBaseClassDecl = cast<CXXRecordDecl>(
       VBaseTypeInfo->getType()->getAs<RecordType>()->getDecl());
 
-    data().VBases[I] =
+    data().getVBases()[I] =
       CXXBaseSpecifier(VBaseClassDecl->getSourceRange(), true,
                        VBaseClassDecl->getTagKind() == TTK_Class,
                        VBases[I]->getAccessSpecifier(), VBaseTypeInfo);
