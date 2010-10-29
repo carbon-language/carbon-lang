@@ -429,10 +429,9 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
          liveOutCache_.insert(std::make_pair(Pred, LiveOutPair()));
        // Yes, we have been here before.
        if (!LOIP.second) {
-         if (VNInfo *VNI = LOIP.first->second.first) {
-           DEBUG(dbgs() << "    known valno #" << VNI->id
+         DEBUG(if (VNInfo *VNI = LOIP.first->second.first)
+                 dbgs() << "    known valno #" << VNI->id
                         << " at BB#" << Pred->getNumber() << '\n');
-         }
          continue;
        }
 
@@ -445,7 +444,7 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
                       << " at BB#" << Pred->getNumber() << '\n');
          LiveOutPair &LOP = LOIP.first->second;
          LOP.first = VNI;
-         LOP.second = mdt_[lis_.getMBBFromIndex(VNI->def)];
+         LOP.second = mdt_[DefMBB];
          continue;
        }
        // No, we need a live-in value for Pred as well
