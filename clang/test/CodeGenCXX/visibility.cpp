@@ -146,3 +146,22 @@ namespace Test10 {
   // CHECK-HIDDEN: define void @_ZN6Test101B3fooEPNS_1AE(
   void B::foo(A*) {}
 }
+
+// PR8492
+namespace Test11 {
+  struct A {
+    void foo() {}
+    void DEFAULT bar() {}
+  };
+
+  void test() {
+    A a;
+    a.foo();
+    a.bar();
+  }
+
+  // CHECK: define linkonce_odr void @_ZN6Test111A3fooEv(
+  // CHECK: define linkonce_odr void @_ZN6Test111A3barEv(
+  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6Test111A3fooEv(
+  // CHECK-HIDDEN: define linkonce_odr void @_ZN6Test111A3barEv(
+}

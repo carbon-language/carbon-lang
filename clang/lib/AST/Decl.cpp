@@ -140,7 +140,16 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgumentList &TArgs) {
                                       TArgs.flat_size());
 }
 
-static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
+/// getLVForDecl - Get the cached linkage and visibility for the given
+/// declaration.
+///
+/// \param ConsiderGlobalSettings - Whether to honor global visibility
+///   settings.  This is false when computing the visibility of the
+///   context of a declaration with an explicit visibility attribute.
+static LVPair getLVForDecl(const NamedDecl *D, bool ConsiderGlobalSettings);
+
+static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
+                                         bool ConsiderGlobalSettings) {
   assert(D->getDeclContext()->getRedeclContext()->isFileContext() &&
          "Not a name having namespace scope");
   ASTContext &Context = D->getASTContext();
@@ -209,7 +218,7 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
 
   // We ignore -fvisibility on non-definitions and explicit
   // instantiation declarations.
-  bool ConsiderDashFVisibility = true;
+  bool ConsiderDashFVisibility = ConsiderGlobalSettings;
 
   // C++ [basic.link]p4:
 
@@ -403,7 +412,8 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D) {
   return LV;
 }
 
-static LVPair getLVForClassMember(const NamedDecl *D) {
+static LVPair getLVForClassMember(const NamedDecl *D,
+                                  bool ConsiderGlobalSettings) {
   // Only certain class members have linkage.  Note that fields don't
   // really have linkage, but it's convenient to say they do for the
   // purposes of calculating linkage of pointer-to-data-member
@@ -415,9 +425,12 @@ static LVPair getLVForClassMember(const NamedDecl *D) {
          (D->getDeclName() || cast<TagDecl>(D)->getTypedefForAnonDecl()))))
     return LVPair(NoLinkage, DefaultVisibility);
 
+  // If we have an explicit visibility attribute, merge that in.
+  const VisibilityAttr *VA = GetExplicitVisibility(D);
+
   // Class members only have linkage if their class has external linkage.
-  LVPair ClassLV =
-    cast<RecordDecl>(D->getDeclContext())->getLinkageAndVisibility();
+  LVPair ClassLV = getLVForDecl(cast<RecordDecl>(D->getDeclContext()),
+                                ConsiderGlobalSettings && !VA);
   if (!isExternalLinkage(ClassLV.first))
     return LVPair(NoLinkage, DefaultVisibility);
 
@@ -427,9 +440,6 @@ static LVPair getLVForClassMember(const NamedDecl *D) {
 
   // Start with the class's linkage and visibility.
   LVPair LV = ClassLV;
-
-  // If we have an explicit visibility attribute, merge that in.
-  const VisibilityAttr *VA = GetExplicitVisibility(D);
   if (VA) LV.second = minVisibility(LV.second, GetVisibilityFromAttr(VA));
 
   // If it's a variable declaration and we don't have an explicit
@@ -455,7 +465,8 @@ static LVPair getLVForClassMember(const NamedDecl *D) {
     // If -fvisibility-inlines-hidden was provided, then inline C++
     // member functions get "hidden" visibility if they don't have an
     // explicit visibility attribute.
-    if (!VA && MD->isInlined() && LV.second > HiddenVisibility &&
+    if (ConsiderGlobalSettings && !VA && MD->isInlined() &&
+        LV.second > HiddenVisibility &&
         D->getASTContext().getLangOptions().InlineVisibilityHidden &&
         MD->getTemplateSpecializationKind()
           != TSK_ExplicitInstantiationDeclaration)
@@ -473,10 +484,13 @@ static LVPair getLVForClassMember(const NamedDecl *D) {
 }
 
 LVPair NamedDecl::getLinkageAndVisibility() const {
+  return getLVForDecl(this, /*ConsiderGlobalSettings*/ true);
+}
 
+static LVPair getLVForDecl(const NamedDecl *D, bool ConsiderGlobalSettings) {
   // Objective-C: treat all Objective-C declarations as having external
   // linkage.
-  switch (getKind()) {
+  switch (D->getKind()) {
     default:
       break;
     case Decl::TemplateTemplateParm: // count these as external
@@ -495,8 +509,8 @@ LVPair NamedDecl::getLinkageAndVisibility() const {
   }
 
   // Handle linkage for namespace-scope names.
-  if (getDeclContext()->getRedeclContext()->isFileContext())
-    return getLVForNamespaceScopeDecl(this);
+  if (D->getDeclContext()->getRedeclContext()->isFileContext())
+    return getLVForNamespaceScopeDecl(D, ConsiderGlobalSettings);
   
   // C++ [basic.link]p5:
   //   In addition, a member function, static data member, a named
@@ -505,8 +519,8 @@ LVPair NamedDecl::getLinkageAndVisibility() const {
   //   that the class or enumeration has the typedef name for linkage
   //   purposes (7.1.3), has external linkage if the name of the class
   //   has external linkage.
-  if (getDeclContext()->isRecord())
-    return getLVForClassMember(this);
+  if (D->getDeclContext()->isRecord())
+    return getLVForClassMember(D, ConsiderGlobalSettings);
 
   // C++ [basic.link]p6:
   //   The name of a function declared in block scope and the name of
@@ -519,8 +533,8 @@ LVPair NamedDecl::getLinkageAndVisibility() const {
   //   one such matching entity, the program is ill-formed. Otherwise,
   //   if no matching entity is found, the block scope entity receives
   //   external linkage.
-  if (getLexicalDeclContext()->isFunctionOrMethod()) {
-    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(this)) {
+  if (D->getLexicalDeclContext()->isFunctionOrMethod()) {
+    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
       if (Function->isInAnonymousNamespace())
         return LVPair(UniqueExternalLinkage, DefaultVisibility);
 
@@ -537,7 +551,7 @@ LVPair NamedDecl::getLinkageAndVisibility() const {
       return LV;
     }
 
-    if (const VarDecl *Var = dyn_cast<VarDecl>(this))
+    if (const VarDecl *Var = dyn_cast<VarDecl>(D))
       if (Var->getStorageClass() == SC_Extern ||
           Var->getStorageClass() == SC_PrivateExtern) {
         if (Var->isInAnonymousNamespace())
