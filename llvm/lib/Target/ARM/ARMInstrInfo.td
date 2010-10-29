@@ -3028,38 +3028,38 @@ let usesCustomInserter = 1 in {
 }
 
 let mayLoad = 1 in {
-def LDREXB : AIldrex<0b10, (outs GPR:$dest), (ins GPR:$ptr), NoItinerary,
-                    "ldrexb", "\t$dest, [$ptr]",
+def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins GPR:$Rn), NoItinerary,
+                    "ldrexb", "\t$Rt, [$Rn]",
                     []>;
-def LDREXH : AIldrex<0b11, (outs GPR:$dest), (ins GPR:$ptr), NoItinerary,
-                    "ldrexh", "\t$dest, [$ptr]",
+def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins GPR:$Rn), NoItinerary,
+                    "ldrexh", "\t$Rt, [$Rn]",
                     []>;
-def LDREX  : AIldrex<0b00, (outs GPR:$dest), (ins GPR:$ptr), NoItinerary,
-                    "ldrex", "\t$dest, [$ptr]",
+def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins GPR:$Rn), NoItinerary,
+                    "ldrex", "\t$Rt, [$Rn]",
                     []>;
-def LDREXD : AIldrex<0b01, (outs GPR:$dest, GPR:$dest2), (ins GPR:$ptr),
+def LDREXD : AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2), (ins GPR:$Rn),
                     NoItinerary,
-                    "ldrexd", "\t$dest, $dest2, [$ptr]",
+                    "ldrexd", "\t$Rt, $Rt2, [$Rn]",
                     []>;
 }
 
-let mayStore = 1, Constraints = "@earlyclobber $success" in {
-def STREXB : AIstrex<0b10, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
+def STREXB : AIstrex<0b10, (outs GPR:$Rd), (ins GPR:$src, GPR:$Rn),
                     NoItinerary,
-                    "strexb", "\t$success, $src, [$ptr]",
+                    "strexb", "\t$Rd, $src, [$Rn]",
                     []>;
-def STREXH : AIstrex<0b11, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+def STREXH : AIstrex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, GPR:$Rn),
                     NoItinerary,
-                    "strexh", "\t$success, $src, [$ptr]",
+                    "strexh", "\t$Rd, $Rt, [$Rn]",
                     []>;
-def STREX  : AIstrex<0b00, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+def STREX  : AIstrex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, GPR:$Rn),
                     NoItinerary,
-                    "strex", "\t$success, $src, [$ptr]",
+                    "strex", "\t$Rd, $Rt, [$Rn]",
                     []>;
-def STREXD : AIstrex<0b01, (outs GPR:$success),
-                    (ins GPR:$src, GPR:$src2, GPR:$ptr),
+def STREXD : AIstrex<0b01, (outs GPR:$Rd),
+                    (ins GPR:$Rt, GPR:$Rt2, GPR:$Rn),
                     NoItinerary,
-                    "strexd", "\t$success, $src, $src2, [$ptr]",
+                    "strexd", "\t$Rd, $Rt, $Rt2, [$Rn]",
                     []>;
 }
 
