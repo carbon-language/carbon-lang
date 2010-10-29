@@ -52,9 +52,8 @@ bb:             ; preds = %entry
         ret i8 0
 
 bb2:            ; preds = %entry
-; CHECK-NOT: load i8* %a
+; CHECK: %should_be_const = load i8* @gv
         %should_be_const = load i8* %a
-; CHECK: ret i8 7
         ret i8 %should_be_const
 }
 
