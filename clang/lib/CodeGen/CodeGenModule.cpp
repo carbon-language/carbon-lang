@@ -164,17 +164,6 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID) << Msg;
 }
 
-static llvm::GlobalValue::VisibilityTypes GetLLVMVisibility(Visibility V) {
-  switch (V) {
-  case DefaultVisibility:   return llvm::GlobalValue::DefaultVisibility;
-  case HiddenVisibility:    return llvm::GlobalValue::HiddenVisibility;
-  case ProtectedVisibility: return llvm::GlobalValue::ProtectedVisibility;
-  }
-  llvm_unreachable("unknown visibility!");
-  return llvm::GlobalValue::DefaultVisibility;
-}
-
-
 void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
                                         const NamedDecl *D) const {
   // Internal definitions always have default visibility.
@@ -183,7 +172,15 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
     return;
   }
 
-  GV->setVisibility(GetLLVMVisibility(D->getVisibility()));
+  switch (D->getVisibility()) {
+  case DefaultVisibility:
+    return GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
+  case HiddenVisibility:
+    return GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  case ProtectedVisibility:
+    return GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
+  }
+  llvm_unreachable("unknown visibility!");
 }
 
 /// Set the symbol visibility of type information (vtable and RTTI)
@@ -937,18 +934,15 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
     // handling.
     GV->setConstant(DeclIsConstantGlobal(Context, D));
 
-    // Set linkage and visibility in case we never see a definition.
-    std::pair<Linkage,Visibility> LV = D->getLinkageAndVisibility();
-    if (LV.first != ExternalLinkage) {
-      GV->setLinkage(llvm::GlobalValue::InternalLinkage);
-    } else {
-      if (D->hasAttr<DLLImportAttr>())
-        GV->setLinkage(llvm::GlobalValue::DLLImportLinkage);
-      else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>())
-        GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+    // FIXME: Merge with other attribute handling code.
+    if (D->getStorageClass() == SC_PrivateExtern)
+      GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
 
-      GV->setVisibility(GetLLVMVisibility(LV.second));
-    }
+    if (D->hasAttr<DLLImportAttr>())
+      GV->setLinkage(llvm::GlobalValue::DLLImportLinkage);
+    else if (D->hasAttr<WeakAttr>() ||
+        D->hasAttr<WeakImportAttr>())
+      GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
     GV->setThreadLocal(D->isThreadSpecified());
   }

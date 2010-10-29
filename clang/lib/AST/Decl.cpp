@@ -140,25 +140,16 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgumentList &TArgs) {
                                       TArgs.flat_size());
 }
 
-/// Answers whether the given class, or any containing class, has an
-/// explicit visibility attribute.
-static bool HasExplicitVisibilityInHierarchy(const RecordDecl *RD) {
-  if (RD->hasAttr<VisibilityAttr>()) return true;
-  if (const RecordDecl *Parent = dyn_cast<RecordDecl>(RD->getDeclContext()))
-    return HasExplicitVisibilityInHierarchy(Parent);
-  return false;
-}
-
 /// getLVForDecl - Get the cached linkage and visibility for the given
 /// declaration.
 ///
-/// \param ConsiderGlobalVisibility - Whether to honor global visibility
-///   settings.  This is generally false when computing the visibility
-///   of the context of a declaration.
-static LVPair getLVForDecl(const NamedDecl *D, bool ConsiderGlobalVisibility);
+/// \param ConsiderGlobalSettings - Whether to honor global visibility
+///   settings.  This is false when computing the visibility of the
+///   context of a declaration with an explicit visibility attribute.
+static LVPair getLVForDecl(const NamedDecl *D, bool ConsiderGlobalSettings);
 
 static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
-                                         bool ConsiderGlobalVisibility) {
+                                         bool ConsiderGlobalSettings) {
   assert(D->getDeclContext()->getRedeclContext()->isFileContext() &&
          "Not a name having namespace scope");
   ASTContext &Context = D->getASTContext();
@@ -225,6 +216,10 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
   //   external.
   LVPair LV(ExternalLinkage, DefaultVisibility);
 
+  // We ignore -fvisibility on non-definitions and explicit
+  // instantiation declarations.
+  bool ConsiderDashFVisibility = ConsiderGlobalSettings;
+
   // C++ [basic.link]p4:
 
   //   A name having namespace scope has external linkage if it is the
@@ -232,9 +227,6 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
   //
   //     - an object or reference, unless it has internal linkage; or
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    // GCC applies the following optimization to variables and static
-    // data members, but not to functions:
-    //
     // Modify the variable's LV by the LV of its type unless this is
     // C or extern "C".  This follows from [basic.link]p9:
     //   A type without linkage shall not be used as the type of a
@@ -281,9 +273,6 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
         if (PrevLV.first) LV.first = PrevLV.first;
         LV.second = minVisibility(LV.second, PrevLV.second);
       }
-
-      // Don't consider -fvisibility for extern declarations.
-      ConsiderGlobalVisibility = false;
     }
 
   //     - a function, unless it has internal linkage; or
@@ -326,12 +315,11 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
 
       if (SpecInfo->getTemplateSpecializationKind()
             == TSK_ExplicitInstantiationDeclaration)
-        ConsiderGlobalVisibility = false;
+        ConsiderDashFVisibility = false;
     }
 
-    // -fvisibility only applies to function definitions.
-    if (ConsiderGlobalVisibility)
-      ConsiderGlobalVisibility = Function->hasBody();
+    if (ConsiderDashFVisibility)
+      ConsiderDashFVisibility = Function->hasBody();
 
   //     - a named class (Clause 9), or an unnamed class defined in a
   //       typedef declaration in which the class has the typedef name
@@ -358,12 +346,12 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
 
       if (Spec->getTemplateSpecializationKind()
             == TSK_ExplicitInstantiationDeclaration)
-        ConsiderGlobalVisibility = false;
+        ConsiderDashFVisibility = false;
     }
 
     // Consider -fvisibility unless the type has C linkage.
-    if (ConsiderGlobalVisibility)
-      ConsiderGlobalVisibility =
+    if (ConsiderDashFVisibility)
+      ConsiderDashFVisibility =
         (Context.getLangOptions().CPlusPlus &&
          !Tag->getDeclContext()->isExternCContext());
 
@@ -413,7 +401,7 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
     // If we have an explicit visibility attribute, merge that in.
     if (ExplicitVisibility)
       StandardV = GetVisibilityFromAttr(ExplicitVisibility);
-    else if (ConsiderGlobalVisibility)
+    else if (ConsiderDashFVisibility)
       StandardV = Context.getLangOptions().getVisibilityMode();
     else
       StandardV = DefaultVisibility; // no-op
@@ -425,7 +413,7 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
 }
 
 static LVPair getLVForClassMember(const NamedDecl *D,
-                                  bool ConsiderGlobalVisibility) {
+                                  bool ConsiderGlobalSettings) {
   // Only certain class members have linkage.  Note that fields don't
   // really have linkage, but it's convenient to say they do for the
   // purposes of calculating linkage of pointer-to-data-member
@@ -437,9 +425,12 @@ static LVPair getLVForClassMember(const NamedDecl *D,
          (D->getDeclName() || cast<TagDecl>(D)->getTypedefForAnonDecl()))))
     return LVPair(NoLinkage, DefaultVisibility);
 
+  // If we have an explicit visibility attribute, merge that in.
+  const VisibilityAttr *VA = GetExplicitVisibility(D);
+
   // Class members only have linkage if their class has external linkage.
-  // Always ignore global visibility settings during this.
-  LVPair ClassLV = getLVForDecl(cast<RecordDecl>(D->getDeclContext()), false);
+  LVPair ClassLV = getLVForDecl(cast<RecordDecl>(D->getDeclContext()),
+                                ConsiderGlobalSettings && !VA);
   if (!isExternalLinkage(ClassLV.first))
     return LVPair(NoLinkage, DefaultVisibility);
 
@@ -449,21 +440,19 @@ static LVPair getLVForClassMember(const NamedDecl *D,
 
   // Start with the class's linkage and visibility.
   LVPair LV = ClassLV;
+  if (VA) LV.second = minVisibility(LV.second, GetVisibilityFromAttr(VA));
 
-  // If we have an explicit visibility attribute, merge that in and
-  // ignore global visibility settings.
-  const VisibilityAttr *VA = GetExplicitVisibility(D);
-  if (VA) {
-    LV.second = minVisibility(LV.second, GetVisibilityFromAttr(VA));
-    ConsiderGlobalVisibility = false;
+  // If it's a variable declaration and we don't have an explicit
+  // visibility attribute, apply the LV from its type.
+  // See the comment about namespace-scope variable decls above.
+  if (!VA && isa<VarDecl>(D)) {
+    LVPair TypeLV = cast<VarDecl>(D)->getType()->getLinkageAndVisibility();
+    if (TypeLV.first != ExternalLinkage)
+      LV.first = minLinkage(LV.first, UniqueExternalLinkage);
+    LV.second = minVisibility(LV.second, TypeLV.second);
   }
 
-  bool HasExplicitVisibility = (VA ||
-    HasExplicitVisibilityInHierarchy(cast<RecordDecl>(D->getDeclContext())));
-
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    TemplateSpecializationKind TSK = TSK_Undeclared;
-
     // If this is a method template specialization, use the linkage for
     // the template parameters and arguments.
     if (FunctionTemplateSpecializationInfo *Spec
@@ -471,80 +460,24 @@ static LVPair getLVForClassMember(const NamedDecl *D,
       LV = merge(LV, getLVForTemplateArgumentList(*Spec->TemplateArguments));
       LV = merge(LV, getLVForTemplateParameterList(
                               Spec->getTemplate()->getTemplateParameters()));
-
-      TSK = Spec->getTemplateSpecializationKind();
-    } else if (MemberSpecializationInfo *MSI =
-                 MD->getMemberSpecializationInfo()) {
-      TSK = MSI->getTemplateSpecializationKind();
     }
 
-    // Ignore global visibility if it's an extern template.
-    if (ConsiderGlobalVisibility)
-      ConsiderGlobalVisibility = (TSK != TSK_ExplicitInstantiationDeclaration);
-
-    // If we're paying attention to global visibility, apply
-    // -finline-visibility-hidden if this is an inline method.
-    //
-    // Note that we ignore the existence of visibility attributes
-    // on containing classes when deciding whether to do this.
-    if (ConsiderGlobalVisibility && MD->isInlined() &&
-        MD->getASTContext().getLangOptions().InlineVisibilityHidden)
+    // If -fvisibility-inlines-hidden was provided, then inline C++
+    // member functions get "hidden" visibility if they don't have an
+    // explicit visibility attribute.
+    if (ConsiderGlobalSettings && !VA && MD->isInlined() &&
+        LV.second > HiddenVisibility &&
+        D->getASTContext().getLangOptions().InlineVisibilityHidden &&
+        MD->getTemplateSpecializationKind()
+          != TSK_ExplicitInstantiationDeclaration)
       LV.second = HiddenVisibility;
 
-    // Note that in contrast to basically every other situation, we
-    // *do* apply -fvisibility to method declarations.
-
-  } else if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
-    TemplateSpecializationKind TSK = TSK_Undeclared;
-
-    if (const ClassTemplateSpecializationDecl *Spec
-        = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
-      // Merge template argument/parameter information for member
-      // class template specializations.
-      LV = merge(LV, getLVForTemplateArgumentList(Spec->getTemplateArgs()));
-      LV = merge(LV, getLVForTemplateParameterList(
+  // Similarly for member class template specializations.
+  } else if (const ClassTemplateSpecializationDecl *Spec
+               = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+    LV = merge(LV, getLVForTemplateArgumentList(Spec->getTemplateArgs()));
+    LV = merge(LV, getLVForTemplateParameterList(
                     Spec->getSpecializedTemplate()->getTemplateParameters()));
-
-      TSK = Spec->getTemplateSpecializationKind();
-    } else if (MemberSpecializationInfo *MSI =
-                 RD->getMemberSpecializationInfo()) {
-      TSK = MSI->getTemplateSpecializationKind();
-    }
-
-    // Ignore global visibility if it's an extern template.
-    if (ConsiderGlobalVisibility)
-      ConsiderGlobalVisibility = (TSK != TSK_ExplicitInstantiationDeclaration);
-
-  // Static data members.
-  } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    // If we don't have explicit visibility information in the
-    // hierarchy, apply the LV from its type.  See the comment about
-    // namespace-scope variables for justification for this
-    // optimization.
-    if (!HasExplicitVisibility) {
-      LVPair TypeLV = VD->getType()->getLinkageAndVisibility();
-      if (TypeLV.first != ExternalLinkage)
-        LV.first = minLinkage(LV.first, UniqueExternalLinkage);
-      LV.second = minVisibility(LV.second, TypeLV.second);
-    }
-
-    // Ignore global visibility if it's an extern template or
-    // just a declaration.
-    if (ConsiderGlobalVisibility)
-      ConsiderGlobalVisibility =
-        (VD->getDefinition() &&
-         VD->getTemplateSpecializationKind()
-           != TSK_ExplicitInstantiationDeclaration);
-  }
-
-  // Suppress -fvisibility if we have explicit visibility on any of
-  // our ancestors.
-  ConsiderGlobalVisibility &= !HasExplicitVisibility;
-
-  // Apply -fvisibility if desired.
-  if (ConsiderGlobalVisibility && LV.second != HiddenVisibility) {
-    LV.second = minVisibility(LV.second,
-                    D->getASTContext().getLangOptions().getVisibilityMode());
   }
 
   return LV;
