@@ -3781,6 +3781,11 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
 
     PushDefUseChildren(I, Worklist);
   }
+
+  // Forget all contained loops too, to avoid dangling entries in the
+  // ValuesAtScopes map.
+  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    forgetLoop(*I);
 }
 
 /// forgetValue - This method should be called by the client when it has
