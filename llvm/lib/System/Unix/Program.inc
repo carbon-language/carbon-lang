@@ -228,12 +228,6 @@ Program::Execute(const Path &path, const char **args, const char **envp,
   }
 #endif
 
-  if (!path.canExecute()) {
-    if (ErrMsg)
-      *ErrMsg = path.str() + " is not executable";
-    return false;
-  }
-
   // Create a child process.
   int child = fork();
   switch (child) {
@@ -297,7 +291,8 @@ Program::Execute(const Path &path, const char **args, const char **envp,
 }
 
 int
-Program::Wait(unsigned secondsToWait,
+Program::Wait(const sys::Path &path,
+              unsigned secondsToWait,
               std::string* ErrMsg)
 {
 #ifdef HAVE_SYS_WAIT_H
@@ -355,6 +350,14 @@ Program::Wait(unsigned secondsToWait,
   int result = 0;
   if (WIFEXITED(status)) {
     result = WEXITSTATUS(status);
+#ifdef HAVE_POSIX_SPAWN
+    // The posix_spawn child process returns 127 on any kind of error.
+    // Following the POSIX convention for command-line tools (which posix_spawn
+    // itself apparently does not), check to see if the failure was due to some
+    // reason other than the file not existing, and return 126 in this case.
+    if (result == 127 && path.exists())
+      result = 126;
+#endif
     if (result == 127) {
       *ErrMsg = llvm::sys::StrError(ENOENT);
       return -1;

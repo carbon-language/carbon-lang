@@ -90,12 +90,13 @@ namespace sys {
     /// @see Execute
     /// @brief Waits for the program to exit.
     int Wait
-    ( unsigned secondsToWait = 0, ///< If non-zero, this specifies the amount
+    ( const Path& path, ///< The path to the child process executable.
+      unsigned secondsToWait, ///< If non-zero, this specifies the amount
       ///< of time to wait for the child process to exit. If the time
       ///< expires, the child is killed and this call returns. If zero,
       ///< this function will wait until the child finishes or forever if
       ///< it doesn't.
-      std::string* ErrMsg = 0 ///< If non-zero, provides a pointer to a string
+      std::string* ErrMsg ///< If non-zero, provides a pointer to a string
       ///< instance in which error messages will be returned. If the string
       ///< is non-empty upon return an error occurred while waiting.
       );

@@ -31,7 +31,7 @@ Program::ExecuteAndWait(const Path& path,
                         std::string* ErrMsg) {
   Program prg;
   if (prg.Execute(path, args, envp, redirects, memoryLimit, ErrMsg))
-    return prg.Wait(secondsToWait, ErrMsg);
+    return prg.Wait(path, secondsToWait, ErrMsg);
   else
     return -1;
 }
