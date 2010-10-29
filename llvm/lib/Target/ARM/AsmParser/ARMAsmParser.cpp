@@ -236,12 +236,18 @@ public:
 
 
   bool isMemMode5() const {
-    // FIXME: Is this right?  What about postindexed and Writeback?
     if (!isMemory() || Mem.OffsetIsReg || Mem.OffsetRegShifted ||
-        Mem.Preindexed || Mem.Negative)
+        Mem.Writeback || Mem.Negative)
       return false;
-
-    return true;
+    // If there is an offset expression, make sure it's valid.
+    if (!Mem.Offset)
+      return true;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    if (!CE)
+      return false;
+    // The offset must be a multiple of 4 in the range 0-1020.
+    int64_t Value = CE->getValue();
+    return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
   }
 
   void addMemMode5Operands(MCInst &Inst, unsigned N) const {
@@ -249,7 +255,16 @@ public:
 
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     assert(!Mem.OffsetIsReg && "invalid mode 5 operand");
-    addExpr(Inst, Mem.Offset);
+    // FIXME: #-0 is encoded differently than #0. Does the parser preserve
+    // the difference?
+    if (Mem.Offset) {
+      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+      assert (CE && "non-constant mode 5 offset operand!");
+      // The MCInst offset operand doesn't include the low two bits (like
+      // the instruction encoding).
+      Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
+    } else
+      Inst.addOperand(MCOperand::CreateImm(0));
   }
 
   virtual void dump(raw_ostream &OS) const;
@@ -513,10 +528,8 @@ ARMOperand *ARMAsmParser::ParseMemory() {
   }
   // The "[Rn" we have so far was not followed by a comma.
   else if (Tok.is(AsmToken::RBrac)) {
-    // This is a post indexing addressing forms, that is a ']' follows after
-    // the "[Rn".
-    Postindexed = true;
-    Writeback = true;
+    // If there's anything other than the right brace, this is a post indexing
+    // addressing form.
     E = Tok.getLoc();
     Parser.Lex(); // Eat right bracket token.
 
@@ -528,6 +541,8 @@ ARMOperand *ARMAsmParser::ParseMemory() {
 
     const AsmToken &NextTok = Parser.getTok();
     if (NextTok.isNot(AsmToken::EndOfStatement)) {
+      Postindexed = true;
+      Writeback = true;
       if (NextTok.isNot(AsmToken::Comma)) {
         Error(NextTok.getLoc(), "',' expected");
         return 0;
