@@ -101,21 +101,15 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
     llvm::sys::Path P(*it);
     std::string Error;
 
-    if (!P.isRegularFile()) {
-      // If we have a special file in our list, i.e. /dev/null
-      //  then don't call eraseFromDisk() and just continue.
-      continue;
-    }
-
     if (P.eraseFromDisk(false, &Error)) {
-      // Failure is only failure if the file doesn't exist. There is a
-      // race condition here due to the limited interface of
-      // llvm::sys::Path, we want to know if the removal gave E_NOENT.
+      // Failure is only failure if the file exists and is "regular". There is
+      // a race condition here due to the limited interface of
+      // llvm::sys::Path, we want to know if the removal gave ENOENT.
 
       // FIXME: Grumble, P.exists() is broken. PR3837.
       struct stat buf;
-      if (::stat(P.c_str(), &buf) == 0
-          || errno != ENOENT) {
+      if (::stat(P.c_str(), &buf) == 0 ? S_ISREG(buf.st_mode) :
+                                         (errno != ENOENT)) {
         if (IssueErrors)
           getDriver().Diag(clang::diag::err_drv_unable_to_remove_file)
             << Error;
