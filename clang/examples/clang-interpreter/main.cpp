@@ -32,14 +32,14 @@
 using namespace clang;
 using namespace clang::driver;
 
-llvm::sys::Path GetExecutablePath(const char *Argv0) {
+static llvm::sys::Path GetExecutablePath(const char *Argv0) {
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
   void *MainAddr = (void*) (intptr_t) GetExecutablePath;
   return llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
 }
 
-int Execute(llvm::Module *Mod, char * const *envp) {
+static int Execute(llvm::Module *Mod, char * const *envp) {
   llvm::InitializeNativeTarget();
 
   std::string Error;
