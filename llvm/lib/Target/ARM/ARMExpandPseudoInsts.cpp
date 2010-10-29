@@ -712,6 +712,34 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       break;
     }
 
+    case ARM::MOVi2pieces: {
+      unsigned PredReg = 0;
+      ARMCC::CondCodes Pred = llvm::getInstrPredicate(&MI, PredReg);
+      unsigned DstReg = MI.getOperand(0).getReg();
+      bool DstIsDead = MI.getOperand(0).isDead();
+      const MachineOperand &MO = MI.getOperand(1);
+      MachineInstrBuilder LO16, HI16;
+
+      LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi), DstReg);
+      HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::ORRri))
+        .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
+        .addReg(DstReg);
+
+      assert (MO.isImm() && "MOVi2pieces w/ non-immediate source operand!");
+      unsigned ImmVal = (unsigned)MO.getImm();
+      unsigned SOImmValV1 = ARM_AM::getSOImmTwoPartFirst(ImmVal);
+      unsigned SOImmValV2 = ARM_AM::getSOImmTwoPartSecond(ImmVal);
+      LO16 = LO16.addImm(SOImmValV1);
+      HI16 = HI16.addImm(SOImmValV2);
+      (*LO16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+      (*HI16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+      LO16.addImm(Pred).addReg(PredReg).addReg(0);
+      HI16.addImm(Pred).addReg(PredReg).addReg(0);
+      TransferImpOps(MI, LO16, HI16);
+      MI.eraseFromParent();
+      break;
+    }
+
     case ARM::VMOVQQ: {
       unsigned DstReg = MI.getOperand(0).getReg();
       bool DstIsDead = MI.getOperand(0).isDead();

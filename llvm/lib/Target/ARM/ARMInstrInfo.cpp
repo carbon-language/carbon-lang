@@ -73,8 +73,7 @@ reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     RI.emitLoadConstPool(MBB, I, dl,
                          DestReg, SubIdx,
                          Orig->getOperand(1).getImm(),
-                         (ARMCC::CondCodes)Orig->getOperand(2).getImm(),
-                         Orig->getOperand(3).getReg());
+                         ARMCC::AL, 0); // Pre-if-conversion, so default pred.
     MachineInstr *NewMI = prior(I);
     NewMI->getOperand(0).setSubReg(SubIdx);
     return;

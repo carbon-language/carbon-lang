@@ -3158,13 +3158,11 @@ def Int_eh_sjlj_dispatchsetup :
 // Large immediate handling.
 
 // Two piece so_imms.
-// FIXME: Expand this in ARMExpandPseudoInsts.
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
-def MOVi2pieces : AI1x2<(outs GPR:$dst), (ins so_imm2part:$src),
-                         Pseudo, IIC_iMOVix2,
-                         "mov", "\t$dst, $src",
-                         [(set GPR:$dst, so_imm2part:$src)]>,
+def MOVi2pieces : PseudoInst<(outs GPR:$dst), (ins so_imm2part:$src),
+                             IIC_iMOVix2, "",
+                             [(set GPR:$dst, (so_imm2part:$src))]>,
                   Requires<[IsARM, NoV6T2]>;
 
 def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
