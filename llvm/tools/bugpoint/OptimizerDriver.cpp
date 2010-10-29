@@ -15,10 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Note: as a short term hack, the old Unix-specific code and platform-
-// independent code co-exist via conditional compilation until it is verified
-// that the new code works correctly on Unix.
-
 #include "BugDriver.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
