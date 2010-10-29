@@ -380,7 +380,7 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
 /// return false.
 static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
                                     const TargetLowering &TLI) {
-  std::vector<TargetLowering::AsmOperandInfo> TargetConstraints = TLI.ParseConstraints(ImmutableCallSite(CI));
+  TargetLowering::AsmOperandInfoVector TargetConstraints = TLI.ParseConstraints(ImmutableCallSite(CI));
   for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
     TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
     

@@ -5441,6 +5441,40 @@ ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
   return TargetLowering::getConstraintType(Constraint);
 }
 
+/// Examine constraint type and operand type and determine a weight value.
+/// This object must already have been set up with the operand type
+/// and the current alternative constraint selected.
+TargetLowering::ConstraintWeight
+ARMTargetLowering::getSingleConstraintMatchWeight(
+    AsmOperandInfo &info, const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
+    // If we don't have a value, we can't do a match,
+    // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return CW_Default;
+  const Type *type = CallOperandVal->getType();
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+  case 'l':
+    if (type->isIntegerTy()) {
+      if (Subtarget->isThumb())
+        weight = CW_SpecificReg;
+      else
+        weight = CW_Register;
+    }
+    break;
+  case 'w':
+    if (type->isFloatingPointTy())
+      weight = CW_Register;
+    break;
+  }
+  return weight;
+}
+
 std::pair<unsigned, const TargetRegisterClass*>
 ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
                                                 EVT VT) const {

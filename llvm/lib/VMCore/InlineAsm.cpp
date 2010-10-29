@@ -76,11 +76,11 @@ InlineAsm::ConstraintInfo::ConstraintInfo(const ConstraintInfo &other) :
 /// fields in this structure.  If the constraint string is not understood,
 /// return true, otherwise return false.
 bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
-                     std::vector<InlineAsm::ConstraintInfo> &ConstraintsSoFar) {
+                     InlineAsm::ConstraintInfoVector &ConstraintsSoFar) {
   StringRef::iterator I = Str.begin(), E = Str.end();
   unsigned multipleAlternativeCount = Str.count('|') + 1;
   unsigned multipleAlternativeIndex = 0;
-  std::vector<std::string> *pCodes = &Codes;
+  ConstraintCodeVector *pCodes = &Codes;
   
   // Initialize
   isMultipleAlternative = (multipleAlternativeCount > 1 ? true : false);
@@ -202,9 +202,9 @@ void InlineAsm::ConstraintInfo::selectAlternative(unsigned index) {
   }
 }
 
-std::vector<InlineAsm::ConstraintInfo>
+InlineAsm::ConstraintInfoVector
 InlineAsm::ParseConstraints(StringRef Constraints) {
-  std::vector<ConstraintInfo> Result;
+  ConstraintInfoVector Result;
   
   // Scan the constraints string.
   for (StringRef::iterator I = Constraints.begin(),
@@ -239,7 +239,7 @@ InlineAsm::ParseConstraints(StringRef Constraints) {
 bool InlineAsm::Verify(const FunctionType *Ty, StringRef ConstStr) {
   if (Ty->isVarArg()) return false;
   
-  std::vector<ConstraintInfo> Constraints = ParseConstraints(ConstStr);
+  ConstraintInfoVector Constraints = ParseConstraints(ConstStr);
   
   // Error parsing constraints.
   if (Constraints.empty() && !ConstStr.empty()) return false;

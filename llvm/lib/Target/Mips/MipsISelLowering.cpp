@@ -1269,6 +1269,37 @@ getConstraintType(const std::string &Constraint) const
   return TargetLowering::getConstraintType(Constraint);
 }
 
+/// Examine constraint type and operand type and determine a weight value.
+/// This object must already have been set up with the operand type
+/// and the current alternative constraint selected.
+TargetLowering::ConstraintWeight
+MipsTargetLowering::getSingleConstraintMatchWeight(
+    AsmOperandInfo &info, const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
+    // If we don't have a value, we can't do a match,
+    // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return CW_Default;
+  const Type *type = CallOperandVal->getType();
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+  case 'd':     
+  case 'y': 
+    if (type->isIntegerTy())
+      weight = CW_Register;
+    break;
+  case 'f':
+    if (type->isFloatTy())
+      weight = CW_Register;
+    break;
+  }
+  return weight;
+}
+
 /// getRegClassForInlineAsmConstraint - Given a constraint letter (e.g. "r"),
 /// return a list of registers that can be used to satisfy the constraint.
 /// This should only be used for C_RegisterClass constraints.

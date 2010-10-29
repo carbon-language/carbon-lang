@@ -2473,13 +2473,13 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     // node so that legalize doesn't hack it.
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
-					  Callee.getValueType());
+            Callee.getValueType());
       needIndirectCall = false;
     }
   }
   if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
       Callee = DAG.getTargetExternalSymbol(S->getSymbol(),
-					   Callee.getValueType());
+             Callee.getValueType());
       needIndirectCall = false;
   }
   if (needIndirectCall) {
@@ -5372,6 +5372,47 @@ PPCTargetLowering::getConstraintType(const std::string &Constraint) const {
     }
   }
   return TargetLowering::getConstraintType(Constraint);
+}
+
+/// Examine constraint type and operand type and determine a weight value.
+/// This object must already have been set up with the operand type
+/// and the current alternative constraint selected.
+TargetLowering::ConstraintWeight
+PPCTargetLowering::getSingleConstraintMatchWeight(
+    AsmOperandInfo &info, const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
+    // If we don't have a value, we can't do a match,
+    // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return CW_Default;
+  const Type *type = CallOperandVal->getType();
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+  case 'b':
+    if (type->isIntegerTy())
+      weight = CW_Register;
+    break;
+  case 'f':
+    if (type->isFloatTy())
+      weight = CW_Register;
+    break;
+  case 'd':
+    if (type->isDoubleTy())
+      weight = CW_Register;
+    break;
+  case 'v':
+    if (type->isVectorTy())
+      weight = CW_Register;
+    break;
+  case 'y':
+    weight = CW_Register;
+    break;
+  }
+  return weight;
 }
 
 std::pair<unsigned, const TargetRegisterClass*>

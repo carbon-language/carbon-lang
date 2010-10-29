@@ -15,6 +15,7 @@
 #include "BlackfinISelLowering.h"
 #include "BlackfinTargetMachine.h"
 #include "llvm/Function.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -547,6 +548,52 @@ BlackfinTargetLowering::getConstraintType(const std::string &Constraint) const {
   // Not implemented: q0-q7, qA. Use {R2} etc instead
 
   return TargetLowering::getConstraintType(Constraint);
+}
+
+/// Examine constraint type and operand type and determine a weight value.
+/// This object must already have been set up with the operand type
+/// and the current alternative constraint selected.
+TargetLowering::ConstraintWeight
+BlackfinTargetLowering::getSingleConstraintMatchWeight(
+    AsmOperandInfo &info, const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
+    // If we don't have a value, we can't do a match,
+    // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return CW_Default;
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+
+    // Blackfin-specific constraints
+  case 'a':
+  case 'd':
+  case 'z':
+  case 'D':
+  case 'W':
+  case 'e':
+  case 'b':
+  case 'v':
+  case 'f':
+  case 'c':
+  case 't':
+  case 'u':
+  case 'k':
+  case 'x':
+  case 'y':
+  case 'w':
+    return CW_Register;
+  case 'A':
+  case 'B':
+  case 'C':
+  case 'Z':
+  case 'Y':
+    return CW_SpecificReg;
+  }
+  return weight;
 }
 
 /// getRegForInlineAsmConstraint - Return register no and class for a C_Register

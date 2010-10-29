@@ -20,6 +20,7 @@
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CallingConv.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -2987,6 +2988,38 @@ SPUTargetLowering::getConstraintType(const std::string &ConstraintLetter) const 
     }
   }
   return TargetLowering::getConstraintType(ConstraintLetter);
+}
+
+/// Examine constraint type and operand type and determine a weight value.
+/// This object must already have been set up with the operand type
+/// and the current alternative constraint selected.
+TargetLowering::ConstraintWeight
+SPUTargetLowering::getSingleConstraintMatchWeight(
+    AsmOperandInfo &info, const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
+    // If we don't have a value, we can't do a match,
+    // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return CW_Default;
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+    //FIXME: Seems like the supported constraint letters were just copied
+    // from PPC, as the following doesn't correspond to the GCC docs.
+    // I'm leaving it so until someone adds the corresponding lowering support.
+  case 'b':
+  case 'r':
+  case 'f':
+  case 'd':
+  case 'v':
+  case 'y':
+    weight = CW_Register;
+    break;
+  }
+  return weight;
 }
 
 std::pair<unsigned, const TargetRegisterClass*>

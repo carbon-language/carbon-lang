@@ -27,6 +27,7 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Type.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -801,6 +802,30 @@ AlphaTargetLowering::getConstraintType(const std::string &Constraint) const {
     }
   }
   return TargetLowering::getConstraintType(Constraint);
+}
+
+/// Examine constraint type and operand type and determine a weight value.
+/// This object must already have been set up with the operand type
+/// and the current alternative constraint selected.
+TargetLowering::ConstraintWeight
+AlphaTargetLowering::getSingleConstraintMatchWeight(
+    AsmOperandInfo &info, const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
+    // If we don't have a value, we can't do a match,
+    // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return CW_Default;
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+  case 'f':
+    weight = CW_Register;
+    break;
+  }
+  return weight;
 }
 
 std::vector<unsigned> AlphaTargetLowering::

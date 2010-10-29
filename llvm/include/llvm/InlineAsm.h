@@ -16,8 +16,8 @@
 #ifndef LLVM_INLINEASM_H
 #define LLVM_INLINEASM_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Value.h"
-#include <vector>
 
 namespace llvm {
 
@@ -87,6 +87,8 @@ public:
     isClobber           // '~x'
   };
   
+  typedef SmallVector<std::string,8> ConstraintCodeVector;
+  
   struct SubConstraintInfo {
     /// MatchingInput - If this is not -1, this is an output constraint where an
     /// input constraint is required to match it (e.g. "0").  The value is the
@@ -95,10 +97,14 @@ public:
     signed char MatchingInput;
     /// Code - The constraint code, either the register name (in braces) or the
     /// constraint letter/number.
-    std::vector<std::string> Codes;
+    ConstraintCodeVector Codes;
     /// Default constructor.
     SubConstraintInfo() : MatchingInput(-1) {}
   };
+
+  typedef SmallVector<SubConstraintInfo,4> SubConstraintInfoVector;
+  struct ConstraintInfo;
+  typedef SmallVector<ConstraintInfo,16> ConstraintInfoVector;
   
   struct ConstraintInfo {
     /// Type - The basic type of the constraint: input/output/clobber
@@ -131,14 +137,14 @@ public:
     
     /// Code - The constraint code, either the register name (in braces) or the
     /// constraint letter/number.
-    std::vector<std::string> Codes;
+    ConstraintCodeVector Codes;
     
     /// isMultipleAlternative - '|': has multiple-alternative constraints.
     bool isMultipleAlternative;
     
     /// multipleAlternatives - If there are multiple alternative constraints,
     /// this array will contain them.  Otherwise it will be empty.
-    std::vector<SubConstraintInfo> multipleAlternatives;
+    SubConstraintInfoVector multipleAlternatives;
     
     /// The currently selected alternative constraint index.
     unsigned currentAlternativeIndex;
@@ -152,8 +158,7 @@ public:
     /// Parse - Analyze the specified string (e.g. "=*&{eax}") and fill in the
     /// fields in this structure.  If the constraint string is not understood,
     /// return true, otherwise return false.
-    bool Parse(StringRef Str, 
-               std::vector<InlineAsm::ConstraintInfo> &ConstraintsSoFar);
+    bool Parse(StringRef Str, ConstraintInfoVector &ConstraintsSoFar);
                
     /// selectAlternative - Point this constraint to the alternative constraint
     /// indicated by the index.
@@ -163,13 +168,11 @@ public:
   /// ParseConstraints - Split up the constraint string into the specific
   /// constraints and their prefixes.  If this returns an empty vector, and if
   /// the constraint string itself isn't empty, there was an error parsing.
-  static std::vector<ConstraintInfo> 
-    ParseConstraints(StringRef ConstraintString);
+  static ConstraintInfoVector ParseConstraints(StringRef ConstraintString);
   
   /// ParseConstraints - Parse the constraints of this inlineasm object, 
   /// returning them the same way that ParseConstraints(str) does.
-  std::vector<ConstraintInfo> 
-  ParseConstraints() const {
+  ConstraintInfoVector ParseConstraints() const {
     return ParseConstraints(Constraints);
   }
   

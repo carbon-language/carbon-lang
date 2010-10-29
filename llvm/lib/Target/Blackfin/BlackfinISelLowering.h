@@ -39,6 +39,12 @@ namespace llvm {
                                     SelectionDAG &DAG) const;
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
+
+    /// Examine constraint string and operand type and determine a weight value.
+    /// The operand object must already have been set up with the operand type.
+    ConstraintWeight getSingleConstraintMatchWeight(
+      AsmOperandInfo &info, const char *constraint) const;
+
     std::pair<unsigned, const TargetRegisterClass*>
     getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
     std::vector<unsigned>

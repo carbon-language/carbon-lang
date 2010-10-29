@@ -52,7 +52,7 @@ GlobalVariable *ExtractTypeInfo(Value *V);
 
 /// hasInlineAsmMemConstraint - Return true if the inline asm instruction being
 /// processed uses a memory 'm' constraint.
-bool hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
+bool hasInlineAsmMemConstraint(InlineAsm::ConstraintInfoVector &CInfos,
                                const TargetLowering &TLI);
 
 /// getFCmpCondCode - Return the ISD condition code corresponding to

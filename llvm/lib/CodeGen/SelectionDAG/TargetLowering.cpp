@@ -2664,16 +2664,16 @@ unsigned TargetLowering::AsmOperandInfo::getMatchedOperand() const {
 /// and also tie in the associated operand values.
 /// If this returns an empty vector, and if the constraint string itself
 /// isn't empty, there was an error parsing.
-std::vector<TargetLowering::AsmOperandInfo> TargetLowering::ParseConstraints(
+TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
     ImmutableCallSite CS) const {
   /// ConstraintOperands - Information about all of the constraints.
-  std::vector<AsmOperandInfo> ConstraintOperands;
+  AsmOperandInfoVector ConstraintOperands;
   const InlineAsm *IA = cast<InlineAsm>(CS.getCalledValue());
   unsigned maCount = 0; // Largest number of multiple alternative constraints.
 
   // Do a prepass over the constraints, canonicalizing them, and building up the
   // ConstraintOperands list.
-  std::vector<InlineAsm::ConstraintInfo>
+  InlineAsm::ConstraintInfoVector
     ConstraintInfos = IA->ParseConstraints();
     
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
@@ -2687,7 +2687,7 @@ std::vector<TargetLowering::AsmOperandInfo> TargetLowering::ParseConstraints(
     if (OpInfo.multipleAlternatives.size() > maCount)
       maCount = OpInfo.multipleAlternatives.size();
 
-    EVT OpVT = MVT::Other;
+    OpInfo.ConstraintVT = MVT::Other;
 
     // Compute the value type for each operand.
     switch (OpInfo.Type) {
@@ -2703,10 +2703,10 @@ std::vector<TargetLowering::AsmOperandInfo> TargetLowering::ParseConstraints(
       assert(!CS.getType()->isVoidTy() &&
              "Bad inline asm!");
       if (const StructType *STy = dyn_cast<StructType>(CS.getType())) {
-        OpVT = getValueType(STy->getElementType(ResNo));
+        OpInfo.ConstraintVT = getValueType(STy->getElementType(ResNo));
       } else {
         assert(ResNo == 0 && "Asm only has one result!");
-        OpVT = getValueType(CS.getType());
+        OpInfo.ConstraintVT = getValueType(CS.getType());
       }
       ++ResNo;
       break;
@@ -2716,6 +2716,36 @@ std::vector<TargetLowering::AsmOperandInfo> TargetLowering::ParseConstraints(
     case InlineAsm::isClobber:
       // Nothing to do.
       break;
+    }
+    
+    if (OpInfo.CallOperandVal) {
+      const llvm::Type *OpTy = OpInfo.CallOperandVal->getType();
+      if (OpInfo.isIndirect) {
+        const llvm::PointerType *PtrTy = dyn_cast<PointerType>(OpTy);
+        if (!PtrTy)
+          report_fatal_error("Indirect operand for inline asm not a pointer!");
+        OpTy = PtrTy->getElementType();
+      }
+      // If OpTy is not a single value, it may be a struct/union that we
+      // can tile with integers.
+      if (!OpTy->isSingleValueType() && OpTy->isSized()) {
+        unsigned BitSize = TD->getTypeSizeInBits(OpTy);
+        switch (BitSize) {
+        default: break;
+        case 1:
+        case 8:
+        case 16:
+        case 32:
+        case 64:
+        case 128:
+          OpTy = IntegerType::get(OpTy->getContext(), BitSize);
+          break;
+        }
+      } else if (dyn_cast<PointerType>(OpTy)) {
+        OpInfo.ConstraintVT = MVT::getIntegerVT(8*TD->getPointerSize());
+      } else {
+        OpInfo.ConstraintVT = EVT::getEVT(OpTy, true);
+      }
     }
   }
 
@@ -2737,13 +2767,12 @@ std::vector<TargetLowering::AsmOperandInfo> TargetLowering::ParseConstraints(
           if (OpInfo.Type == InlineAsm::isClobber)
             continue;
 
-          // If this is an output operand with a matching input operand, look up the
-          // matching input. If their types mismatch, e.g. one is an integer, the
-          // other is floating point, or their sizes are different, flag it as an
-          // maCantMatch.
+          // If this is an output operand with a matching input operand,
+          // look up the matching input. If their types mismatch, e.g. one
+          // is an integer, the other is floating point, or their sizes are
+          // different, flag it as an maCantMatch.
           if (OpInfo.hasMatchingInput()) {
             AsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
-            
             if (OpInfo.ConstraintVT != Input.ConstraintVT) {
               if ((OpInfo.ConstraintVT.isInteger() !=
                    Input.ConstraintVT.isInteger()) ||
@@ -2752,10 +2781,8 @@ std::vector<TargetLowering::AsmOperandInfo> TargetLowering::ParseConstraints(
                 weightSum = -1;  // Can't match.
                 break;
               }
-              Input.ConstraintVT = OpInfo.ConstraintVT;
             }
           }
-          
           weight = getMultipleConstraintMatchWeight(OpInfo, maIndex);
           if (weight == -1) {
             weightSum = -1;
@@ -2792,7 +2819,7 @@ std::vector<TargetLowering::AsmOperandInfo> TargetLowering::ParseConstraints(
     // error.
     if (OpInfo.hasMatchingInput()) {
       AsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
-      
+
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
         if ((OpInfo.ConstraintVT.isInteger() !=
              Input.ConstraintVT.isInteger()) ||
@@ -2802,8 +2829,8 @@ std::vector<TargetLowering::AsmOperandInfo> TargetLowering::ParseConstraints(
                              " with a matching output constraint of"
                              " incompatible type!");
         }
-        Input.ConstraintVT = OpInfo.ConstraintVT;
       }
+
     }
   }
 
@@ -2828,22 +2855,23 @@ static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
   }
 }
 
-/// Examine constraint type and operand type and determine a weight value,
-/// where: -1 = invalid match, and 0 = so-so match to 3 = good match.
+/// Examine constraint type and operand type and determine a weight value.
 /// This object must already have been set up with the operand type
 /// and the current alternative constraint selected.
-int TargetLowering::getMultipleConstraintMatchWeight(
+TargetLowering::ConstraintWeight
+  TargetLowering::getMultipleConstraintMatchWeight(
     AsmOperandInfo &info, int maIndex) const {
-  std::vector<std::string> *rCodes;
+  InlineAsm::ConstraintCodeVector *rCodes;
   if (maIndex >= (int)info.multipleAlternatives.size())
     rCodes = &info.Codes;
   else
     rCodes = &info.multipleAlternatives[maIndex].Codes;
-  int BestWeight = -1;
+  ConstraintWeight BestWeight = CW_Invalid;
 
   // Loop over the options, keeping track of the most general one.
   for (unsigned i = 0, e = rCodes->size(); i != e; ++i) {
-    int weight = getSingleConstraintMatchWeight(info, (*rCodes)[i].c_str());
+    ConstraintWeight weight =
+      getSingleConstraintMatchWeight(info, (*rCodes)[i].c_str());
     if (weight > BestWeight)
       BestWeight = weight;
   }
@@ -2851,50 +2879,50 @@ int TargetLowering::getMultipleConstraintMatchWeight(
   return BestWeight;
 }
 
-/// Examine constraint type and operand type and determine a weight value,
-/// where: -1 = invalid match, and 0 = so-so match to 3 = good match.
+/// Examine constraint type and operand type and determine a weight value.
 /// This object must already have been set up with the operand type
 /// and the current alternative constraint selected.
-int TargetLowering::getSingleConstraintMatchWeight(
+TargetLowering::ConstraintWeight
+  TargetLowering::getSingleConstraintMatchWeight(
     AsmOperandInfo &info, const char *constraint) const {
-  int weight = -1;
+  ConstraintWeight weight = CW_Invalid;
   Value *CallOperandVal = info.CallOperandVal;
     // If we don't have a value, we can't do a match,
     // but allow it at the lowest weight.
   if (CallOperandVal == NULL)
-    return 0;
+    return CW_Default;
   // Look at the constraint type.
   switch (*constraint) {
     case 'i': // immediate integer.
     case 'n': // immediate integer with a known value.
-      weight = 0;
-      if (info.CallOperandVal) {
-        if (isa<ConstantInt>(info.CallOperandVal))
-          weight = 3;
-        else
-          weight = -1;
-      }
+      if (isa<ConstantInt>(CallOperandVal))
+        weight = CW_Constant;
       break;
     case 's': // non-explicit intregal immediate.
-      weight = 0;
-      if (info.CallOperandVal) {
-        if (isa<GlobalValue>(info.CallOperandVal))
-          weight = 3;
-        else
-          weight = -1;
-      }
+      if (isa<GlobalValue>(CallOperandVal))
+        weight = CW_Constant;
       break;
+    case 'E': // immediate float if host format.
+    case 'F': // immediate float.
+      if (isa<ConstantFP>(CallOperandVal))
+        weight = CW_Constant;
+      break;
+    case '<': // memory operand with autodecrement.
+    case '>': // memory operand with autoincrement.
     case 'm': // memory operand.
     case 'o': // offsettable memory operand
     case 'V': // non-offsettable memory operand
-      weight = 2;
+      weight = CW_Memory;
       break;
+    case 'r': // general register.
     case 'g': // general register, memory operand or immediate integer.
-    case 'X': // any operand.
-      weight = 1;
+              // note: Clang converts "g" to "imr".
+      if (CallOperandVal->getType()->isIntegerTy())
+        weight = CW_Register;
       break;
+    case 'X': // any operand.
     default:
-      weight = 0;
+      weight = CW_Default;
       break;
   }
   return weight;

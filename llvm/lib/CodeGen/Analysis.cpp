@@ -125,7 +125,7 @@ GlobalVariable *llvm::ExtractTypeInfo(Value *V) {
 /// hasInlineAsmMemConstraint - Return true if the inline asm instruction being
 /// processed uses a memory 'm' constraint.
 bool
-llvm::hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
+llvm::hasInlineAsmMemConstraint(InlineAsm::ConstraintInfoVector &CInfos,
                                 const TargetLowering &TLI) {
   for (unsigned i = 0, e = CInfos.size(); i != e; ++i) {
     InlineAsm::ConstraintInfo &CI = CInfos[i];

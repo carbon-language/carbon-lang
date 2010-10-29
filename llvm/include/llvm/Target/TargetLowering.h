@@ -1320,6 +1320,22 @@ public:
     C_Unknown              // Unsupported constraint.
   };
 
+  enum ConstraintWeight {
+    // Generic weights.
+    CW_Invalid  = -1,     // No match.
+    CW_Okay     = 0,      // Acceptable.
+    CW_Good     = 1,      // Good weight.
+    CW_Better   = 2,      // Better weight.
+    CW_Best     = 3,      // Best weight.
+    
+    // Well-known weights.
+    CW_SpecificReg  = CW_Okay,    // Specific register operands.
+    CW_Register     = CW_Good,    // Register operands.
+    CW_Memory       = CW_Better,  // Memory operands.
+    CW_Constant     = CW_Best,    // Constant operand.
+    CW_Default      = CW_Okay     // Default or don't know type.
+  };
+
   /// AsmOperandInfo - This contains information for each constraint that we are
   /// lowering.
   struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
@@ -1365,24 +1381,23 @@ public:
     }
   };
   
+  typedef SmallVector<AsmOperandInfo,16> AsmOperandInfoVector;
+  
   /// ParseConstraints - Split up the constraint string from the inline
   /// assembly value into the specific constraints and their prefixes,
   /// and also tie in the associated operand values.
   /// If this returns an empty vector, and if the constraint string itself
   /// isn't empty, there was an error parsing.
-  virtual std::vector<AsmOperandInfo> ParseConstraints(
-    ImmutableCallSite CS) const;
+  virtual AsmOperandInfoVector ParseConstraints(ImmutableCallSite CS) const;
   
-  /// Examine constraint type and operand type and determine a weight value,
-  /// where: -1 = invalid match, and 0 = so-so match to 5 = good match.
+  /// Examine constraint type and operand type and determine a weight value.
   /// The operand object must already have been set up with the operand type.
-  virtual int getMultipleConstraintMatchWeight(
+  virtual ConstraintWeight getMultipleConstraintMatchWeight(
       AsmOperandInfo &info, int maIndex) const;
   
-  /// Examine constraint string and operand type and determine a weight value,
-  /// where: -1 = invalid match, and 0 = so-so match to 3 = good match.
+  /// Examine constraint string and operand type and determine a weight value.
   /// The operand object must already have been set up with the operand type.
-  virtual int getSingleConstraintMatchWeight(
+  virtual ConstraintWeight getSingleConstraintMatchWeight(
       AsmOperandInfo &info, const char *constraint) const;
 
   /// ComputeConstraintToUse - Determines the constraint code and constraint

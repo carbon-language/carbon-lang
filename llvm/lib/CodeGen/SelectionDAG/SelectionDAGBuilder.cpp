@@ -5221,6 +5221,8 @@ private:
   }
 };
 
+typedef SmallVector<SDISelAsmOperandInfo,16> SDISelAsmOperandInfoVector;
+
 } // end llvm namespace.
 
 /// isAllocatableRegister - If the specified register is safe to allocate,
@@ -5458,11 +5460,11 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
   const InlineAsm *IA = cast<InlineAsm>(CS.getCalledValue());
 
   /// ConstraintOperands - Information about all of the constraints.
-  std::vector<SDISelAsmOperandInfo> ConstraintOperands;
+  SDISelAsmOperandInfoVector ConstraintOperands;
 
   std::set<unsigned> OutputRegs, InputRegs;
 
-  std::vector<TargetLowering::AsmOperandInfo> TargetConstraints = TLI.ParseConstraints(CS);
+  TargetLowering::AsmOperandInfoVector TargetConstraints = TLI.ParseConstraints(CS);
   bool hasMemory = false;
 
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.

@@ -11428,7 +11428,7 @@ static bool LowerToBSwap(CallInst *CI) {
 
 bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
   InlineAsm *IA = cast<InlineAsm>(CI->getCalledValue());
-  std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
+  InlineAsm::ConstraintInfoVector Constraints = IA->ParseConstraints();
 
   std::string AsmStr = IA->getAsmString();
 
@@ -11508,18 +11508,32 @@ X86TargetLowering::ConstraintType
 X86TargetLowering::getConstraintType(const std::string &Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
-    case 'A':
-      return C_Register;
-    case 'f':
-    case 'r':
     case 'R':
-    case 'l':
     case 'q':
     case 'Q':
-    case 'x':
+    case 'f':
+    case 't':
+    case 'u':
     case 'y':
+    case 'x':
     case 'Y':
       return C_RegisterClass;
+    case 'a':
+    case 'b':
+    case 'c':
+    case 'd':
+    case 'S':
+    case 'D':
+    case 'A':
+      return C_Register;
+    case 'I':
+    case 'J':
+    case 'K':
+    case 'L':
+    case 'M':
+    case 'N':
+    case 'G':
+    case 'C':
     case 'e':
     case 'Z':
       return C_Other;
@@ -11530,30 +11544,106 @@ X86TargetLowering::getConstraintType(const std::string &Constraint) const {
   return TargetLowering::getConstraintType(Constraint);
 }
 
-/// Examine constraint type and operand type and determine a weight value,
-/// where: -1 = invalid match, and 0 = so-so match to 3 = good match.
+/// Examine constraint type and operand type and determine a weight value.
 /// This object must already have been set up with the operand type
 /// and the current alternative constraint selected.
-int X86TargetLowering::getSingleConstraintMatchWeight(
+TargetLowering::ConstraintWeight
+  X86TargetLowering::getSingleConstraintMatchWeight(
     AsmOperandInfo &info, const char *constraint) const {
-  int weight = -1;
+  ConstraintWeight weight = CW_Invalid;
   Value *CallOperandVal = info.CallOperandVal;
     // If we don't have a value, we can't do a match,
     // but allow it at the lowest weight.
   if (CallOperandVal == NULL)
-    return 0;
+    return CW_Default;
+  const Type *type = CallOperandVal->getType();
   // Look at the constraint type.
   switch (*constraint) {
   default:
-    return TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+  case 'R':
+  case 'q':
+  case 'Q':
+  case 'a':
+  case 'b':
+  case 'c':
+  case 'd':
+  case 'S':
+  case 'D':
+  case 'A':
+    if (CallOperandVal->getType()->isIntegerTy())
+      weight = CW_SpecificReg;
+    break;
+  case 'f':
+  case 't':
+  case 'u':
+      if (type->isFloatingPointTy())
+        weight = CW_SpecificReg;
+      break;
+  case 'y':
+      if (type->isX86_MMXTy() && !DisableMMX && Subtarget->hasMMX())
+        weight = CW_SpecificReg;
+      break;
+  case 'x':
+  case 'Y':
+    if ((type->getPrimitiveSizeInBits() == 128) && Subtarget->hasSSE1())
+      weight = CW_Register;
     break;
   case 'I':
     if (ConstantInt *C = dyn_cast<ConstantInt>(info.CallOperandVal)) {
       if (C->getZExtValue() <= 31)
-        weight = 3;
+        weight = CW_Constant;
     }
     break;
-  // etc.
+  case 'J':
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CallOperandVal)) {
+      if (C->getZExtValue() <= 63)
+        weight = CW_Constant;
+    }
+    break;
+  case 'K':
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CallOperandVal)) {
+      if ((C->getSExtValue() >= -0x80) && (C->getSExtValue() <= 0x7f))
+        weight = CW_Constant;
+    }
+    break;
+  case 'L':
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CallOperandVal)) {
+      if ((C->getZExtValue() == 0xff) || (C->getZExtValue() == 0xffff))
+        weight = CW_Constant;
+    }
+    break;
+  case 'M':
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CallOperandVal)) {
+      if (C->getZExtValue() <= 3)
+        weight = CW_Constant;
+    }
+    break;
+  case 'N':
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CallOperandVal)) {
+      if (C->getZExtValue() <= 0xff)
+        weight = CW_Constant;
+    }
+    break;
+  case 'G':
+  case 'C':
+    if (dyn_cast<ConstantFP>(CallOperandVal)) {
+      weight = CW_Constant;
+    }
+    break;
+  case 'e':
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CallOperandVal)) {
+      if ((C->getSExtValue() >= -0x80000000LL) &&
+          (C->getSExtValue() <= 0x7fffffffLL))
+        weight = CW_Constant;
+    }
+    break;
+  case 'Z':
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CallOperandVal)) {
+      if (C->getZExtValue() <= 0xffffffff)
+        weight = CW_Constant;
+    }
+    break;
   }
   return weight;
 }
