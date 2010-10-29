@@ -797,6 +797,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   case Match_MnemonicFail:
     return Error(IDLoc, "unrecognized instruction mnemonic");
   }
+  
+  llvm_unreachable("Implement any new match types added!");
 }
 
 
