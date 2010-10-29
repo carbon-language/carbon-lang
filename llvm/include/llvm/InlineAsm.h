@@ -16,8 +16,8 @@
 #ifndef LLVM_INLINEASM_H
 #define LLVM_INLINEASM_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Value.h"
+#include <vector>
 
 namespace llvm {
 
@@ -87,7 +87,7 @@ public:
     isClobber           // '~x'
   };
   
-  typedef SmallVector<std::string,8> ConstraintCodeVector;
+  typedef std::vector<std::string> ConstraintCodeVector;
   
   struct SubConstraintInfo {
     /// MatchingInput - If this is not -1, this is an output constraint where an
@@ -102,9 +102,9 @@ public:
     SubConstraintInfo() : MatchingInput(-1) {}
   };
 
-  typedef SmallVector<SubConstraintInfo,4> SubConstraintInfoVector;
+  typedef std::vector<SubConstraintInfo> SubConstraintInfoVector;
   struct ConstraintInfo;
-  typedef SmallVector<ConstraintInfo,16> ConstraintInfoVector;
+  typedef std::vector<ConstraintInfo> ConstraintInfoVector;
   
   struct ConstraintInfo {
     /// Type - The basic type of the constraint: input/output/clobber

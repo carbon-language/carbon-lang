@@ -1381,7 +1381,7 @@ public:
     }
   };
   
-  typedef SmallVector<AsmOperandInfo,16> AsmOperandInfoVector;
+  typedef std::vector<AsmOperandInfo> AsmOperandInfoVector;
   
   /// ParseConstraints - Split up the constraint string from the inline
   /// assembly value into the specific constraints and their prefixes,
