@@ -190,11 +190,11 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       if (I->hasOneUse() &&
           CheapToScalarize(BO, isa<ConstantInt>(EI.getOperand(1)))) {
         Value *newEI0 =
-        Builder->CreateExtractElement(BO->getOperand(0), EI.getOperand(1),
-                                      EI.getName()+".lhs");
+          Builder->CreateExtractElement(BO->getOperand(0), EI.getOperand(1),
+                                        EI.getName()+".lhs");
         Value *newEI1 =
-        Builder->CreateExtractElement(BO->getOperand(1), EI.getOperand(1),
-                                      EI.getName()+".rhs");
+          Builder->CreateExtractElement(BO->getOperand(1), EI.getOperand(1),
+                                        EI.getName()+".rhs");
         return BinaryOperator::Create(BO->getOpcode(), newEI0, newEI1);
       }
     } else if (InsertElementInst *IE = dyn_cast<InsertElementInst>(I)) {
@@ -340,7 +340,7 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
       if (isa<ConstantInt>(EI->getOperand(1)) && isa<ConstantInt>(IdxOp) &&
           EI->getOperand(0)->getType() == V->getType()) {
         unsigned ExtractedIdx =
-        cast<ConstantInt>(EI->getOperand(1))->getZExtValue();
+          cast<ConstantInt>(EI->getOperand(1))->getZExtValue();
         unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getZExtValue();
 
         // Either the extracted from or inserted into vector must be RHSVec,
@@ -349,8 +349,8 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
           RHS = EI->getOperand(0);
           Value *V = CollectShuffleElements(VecOp, Mask, RHS);
           Mask[InsertedIdx % NumElts] =
-          ConstantInt::get(Type::getInt32Ty(V->getContext()),
-                           NumElts+ExtractedIdx);
+            ConstantInt::get(Type::getInt32Ty(V->getContext()),
+                             NumElts+ExtractedIdx);
           return V;
         }
 
@@ -396,7 +396,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         EI->getOperand(0)->getType() == IE.getType()) {
       unsigned NumVectorElts = IE.getType()->getNumElements();
       unsigned ExtractedIdx =
-      cast<ConstantInt>(EI->getOperand(1))->getZExtValue();
+        cast<ConstantInt>(EI->getOperand(1))->getZExtValue();
       unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getZExtValue();
 
       if (ExtractedIdx >= NumVectorElts) // Out of range extract.
@@ -418,8 +418,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         Value *LHS = CollectShuffleElements(&IE, Mask, RHS);
         if (RHS == 0) RHS = UndefValue::get(LHS->getType());
         // We now have a shuffle of LHS, RHS, Mask.
-        return new ShuffleVectorInst(LHS, RHS,
-                                     ConstantVector::get(Mask));
+        return new ShuffleVectorInst(LHS, RHS, ConstantVector::get(Mask));
       }
     }
   }
@@ -561,4 +560,3 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
 
   return MadeChange ? &SVI : 0;
 }
-
