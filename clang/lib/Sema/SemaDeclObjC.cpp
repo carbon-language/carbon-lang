@@ -745,8 +745,10 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
     Diag(ImpLoc, diag::warn_incomplete_impl);
     IncompleteImpl = true;
   }
-  Diag(method->getLocation(), DiagID) 
-    << method->getDeclName();
+  if (DiagID == diag::warn_unimplemented_protocol_method)
+    Diag(ImpLoc, DiagID) << method->getDeclName();
+  else
+    Diag(method->getLocation(), DiagID) << method->getDeclName();
 }
 
 /// Determines if type B can be substituted for type A.  Returns true if we can
@@ -969,6 +971,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
               unsigned DIAG = diag::warn_unimplemented_protocol_method;
               if (Diags.getDiagnosticLevel(DIAG) != Diagnostic::Ignored) {
                 WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
+                Diag(method->getLocation(), diag::note_method_declared_at);
                 Diag(CDecl->getLocation(), diag::note_required_for_protocol_at)
                   << PDecl->getDeclName();
               }
@@ -986,6 +989,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
       unsigned DIAG = diag::warn_unimplemented_protocol_method;
       if (Diags.getDiagnosticLevel(DIAG) != Diagnostic::Ignored) {
         WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
+        Diag(method->getLocation(), diag::note_method_declared_at);
         Diag(IDecl->getLocation(), diag::note_required_for_protocol_at) <<
           PDecl->getDeclName();
       }

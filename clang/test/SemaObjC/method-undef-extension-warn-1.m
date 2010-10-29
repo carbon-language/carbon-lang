@@ -5,7 +5,7 @@
 
 @protocol P
 - (void)Pmeth;
-- (void)Pmeth1; // expected-warning {{method in protocol not implemented [-Wprotocol]}}
+- (void)Pmeth1; // expected-note {{method declared here}}
 @end
 
 // Class extension
@@ -18,6 +18,7 @@
 - (void)categoryMethod;
 @end
 
-@implementation MyClass // expected-warning {{incomplete implementation}} 
+@implementation MyClass // expected-warning {{incomplete implementation}}  \
+			// expected-warning {{method in protocol not implemented [-Wprotocol]}}
 - (void)Pmeth {}
 @end

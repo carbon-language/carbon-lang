@@ -5,7 +5,7 @@ typedef unsigned int NSUInteger;
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
-@protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end // expected-warning {{method in protocol not implemented [-Wprotocol]}}
+@protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end // expected-note {{method declared here}}
 @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone; @end
 @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder; @end
 @interface NSObject <NSObject> {} @end
@@ -23,7 +23,8 @@ extern NSString * const NSTaskDidTerminateNotification;
 - (NSString *)evaluateAsStringInContext:(XCPropertyExpansionContext *)context withNestingState:(const void *)state;
 @end
 
-@implementation XCPropertyExpansionContext // expected-warning {{incomplete implementation}}
+@implementation XCPropertyExpansionContext // expected-warning {{incomplete implementation}} \
+					   // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 - (NSString *)expandedValueForProperty:(NSString *)property {
   id <XCPropertyValues> cachedValueNode = [_propNamesToPropValuesCache objectForKey:property]; // expected-warning {{method '-objectForKey:' not found (return type defaults to 'id')}}
   if (cachedValueNode == ((void *)0)) { }

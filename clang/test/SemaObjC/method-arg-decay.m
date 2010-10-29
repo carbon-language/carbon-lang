@@ -56,7 +56,7 @@ PBXFindMatchContains,     PBXFindMatchStartsWith,     PBXFindMatchWholeWords,   
 @interface PBXProjectModule : PBXModule <PBXFindableText> {
 }
 @end @class PBXBookmark;
-@protocol PBXSelectionTarget - (NSObject <PBXSelectionTarget> *) performAction:(id)action withSelection:(NSArray *)selection; // expected-warning {{method in protocol not implemented [-Wprotocol]}}
+@protocol PBXSelectionTarget - (NSObject <PBXSelectionTarget> *) performAction:(id)action withSelection:(NSArray *)selection;  // expected-note {{method declared here}}
 @end @class XCPropertyDictionary, XCPropertyCondition, XCPropertyConditionSet, XCMutablePropertyConditionSet;
 extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExposedModulesOnly);
 @interface NSString (StringUtilities) - (NSString *) trimToLength:(NSInteger)length preserveRange:(NSRange)range;
@@ -72,7 +72,8 @@ extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExpos
 }
 - (PBXModule *) moduleForTab:(NSTabViewItem *)item; // expected-note {{method definition for 'moduleForTab:' not found}}
 @end  
-@implementation XCPerspectiveModule // expected-warning {{incomplete implementation}}
+@implementation XCPerspectiveModule // expected-warning {{incomplete implementation}} \
+				    // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 + (void) openForProjectDocument:(PBXProjectDocument *)projectDocument {
 }
 - (PBXModule *) type:(Class)type inPerspective:(id)perspectiveIdentifer  matchingFunction:(BOOL (void *, void *))comparator usingData:(void *)data {

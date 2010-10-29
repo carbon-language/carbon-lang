@@ -62,7 +62,7 @@
 // <rdar://problem/7249233>
 
 @protocol MultipleCat_P
--(void) im0; // expected-warning {{method in protocol not implemented [-Wprotocol]}}
+-(void) im0; // expected-note {{method declared here}}
 @end
 
 @interface MultipleCat_I @end // expected-note {{required for direct or indirect protocol 'MultipleCat_P'}}
@@ -71,7 +71,8 @@
 
 @interface MultipleCat_I() <MultipleCat_P>  @end
 
-@implementation MultipleCat_I // expected-warning {{incomplete implementation}}
+@implementation MultipleCat_I // expected-warning {{incomplete implementation}} \
+                              // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 @end
 
 // <rdar://problem/7680391> - Handle nameless categories with no name that refer
