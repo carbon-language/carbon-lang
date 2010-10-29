@@ -9,6 +9,7 @@
 
 #include "__hash_table"
 #include "algorithm"
+#include "stdexcept"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -143,6 +144,26 @@ const unsigned indices[] =
 // are fewer potential primes to search, and fewer potential primes to divide
 // against.
 
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__check_for_overflow(size_t N, integral_constant<size_t, 32>)
+{
+#ifndef _LIBCPP_NO_EXCEPTIONS 
+    if (N > 0xFFFFFFFB)
+        throw overflow_error("__next_prime overflow");
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__check_for_overflow(size_t N, integral_constant<size_t, 64>)
+{
+#ifndef _LIBCPP_NO_EXCEPTIONS 
+    if (N > 0xFFFFFFFFFFFFFFC5ull)
+        throw overflow_error("__next_prime overflow");
+#endif
+}
+
 size_t
 __next_prime(size_t n)
 {
@@ -152,6 +173,9 @@ __next_prime(size_t n)
     if (n <= small_primes[N-1])
         return *std::lower_bound(small_primes, small_primes + N, n);
     // Else n > largest small_primes
+    // Check for overflow
+    __check_for_overflow(n, integral_constant<size_t, 
+                                                   sizeof(n) * __CHAR_BIT__>());
     // Start searching list of potential primes: L * k0 + indices[in]
     const size_t M = sizeof(indices) / sizeof(indices[0]);
     // Select first potential prime >= n
