@@ -236,9 +236,9 @@ public:
 
 
   bool isMemMode5() const {
-    // FIXME: Is this right?  What about postindexed and Writeback?
     if (!isMemory() || Mem.OffsetIsReg || Mem.OffsetRegShifted ||
-        Mem.Preindexed || Mem.Negative)
+        Mem.Preindexed || Mem.Negative || Mem.Postindexed ||
+        Mem.Writeback)
       return false;
 
     return true;
