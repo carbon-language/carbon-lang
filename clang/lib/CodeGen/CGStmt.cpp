@@ -1046,6 +1046,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
           ResultRegTypes.back() = ConvertType(InputTy);
         }
       }
+      if (const llvm::Type* AdjTy = 
+            Target.adjustInlineAsmType(OutputConstraint, ResultRegTypes.back(),
+                                       VMContext))
+        ResultRegTypes.back() = AdjTy;
     } else {
       ArgTypes.push_back(Dest.getAddress()->getType());
       Args.push_back(Dest.getAddress());
@@ -1109,7 +1113,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
           Arg = Builder.CreateFPExt(Arg, OutputTy);
       }
     }
-
+    if (const llvm::Type* AdjTy = 
+              Target.adjustInlineAsmType(InputConstraint, Arg->getType(),
+                                         VMContext))
+      Arg = Builder.CreateBitCast(Arg, AdjTy);
 
     ArgTypes.push_back(Arg->getType());
     Args.push_back(Arg);
@@ -1204,6 +1211,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         Tmp = Builder.CreateTrunc(Tmp, TruncTy);
       } else if (TruncTy->isIntegerTy()) {
         Tmp = Builder.CreateTrunc(Tmp, TruncTy);
+      } else if (TruncTy->isVectorTy()) {
+        Tmp = Builder.CreateBitCast(Tmp, TruncTy);
       }
     }
 

@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/Type.h"
 #include <cassert>
 #include <vector>
 #include <string>
@@ -26,6 +27,7 @@
 namespace llvm {
 struct fltSemantics;
 class StringRef;
+class LLVMContext;
 }
 
 namespace clang {
@@ -524,6 +526,11 @@ public:
     return 0;
   }
 
+  virtual const llvm::Type* adjustInlineAsmType(std::string& Constraint, 
+                                     const llvm::Type* Ty,
+                                     llvm::LLVMContext& Context) const {
+    return Ty;
+  }
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
     return PointerWidth;
