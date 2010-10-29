@@ -35,6 +35,10 @@ public:
     if (Pointee->isFunctionType()) return 2;
     return 1;
   }
+
+  CallingConv getDefaultMethodCallConv() const {
+    return CC_C;
+  }
 };
 
 class ARMCXXABI : public ItaniumCXXABI {

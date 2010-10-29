@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CXXABI.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/DeclCXX.h"
@@ -26,6 +27,13 @@ public:
   MicrosoftCXXABI(ASTContext &Ctx) : Context(Ctx) { }
 
   unsigned getMemberPointerSize(const MemberPointerType *MPT) const;
+
+  CallingConv getDefaultMethodCallConv() const {
+    if (Context.Target.getTriple().getArch() == llvm::Triple::x86)
+      return CC_X86ThisCall;
+    else
+      return CC_C;
+  }
 };
 }
 

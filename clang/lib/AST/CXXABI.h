@@ -15,6 +15,8 @@
 #ifndef LLVM_CLANG_AST_CXXABI_H
 #define LLVM_CLANG_AST_CXXABI_H
 
+#include "clang/AST/Type.h"
+
 namespace clang {
 
 class ASTContext;
@@ -28,6 +30,9 @@ public:
   /// Returns the size of a member pointer in multiples of the target
   /// pointer size.
   virtual unsigned getMemberPointerSize(const MemberPointerType *MPT) const = 0;
+
+  /// Returns the default calling convention for C++ methods.
+  virtual CallingConv getDefaultMethodCallConv() const = 0;
 };
 
 /// Creates an instance of a C++ ABI class.
