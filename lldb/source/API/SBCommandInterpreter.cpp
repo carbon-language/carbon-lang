@@ -93,7 +93,7 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
     {
         SBStream sstr;
         result.GetDescription (sstr);
-        log->Printf ("SBCommandInterpreter::HandleCommand (...'%s'...) => SBCommandReturnObject: '%s'", 
+        log->Printf ("SBCommandInterpreter::HandleCommand ('%s') => SBCommandReturnObject: '%s'", 
                      command_line, sstr.GetData());
     }
 

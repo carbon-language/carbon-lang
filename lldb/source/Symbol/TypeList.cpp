@@ -52,82 +52,31 @@ TypeList::~TypeList()
 {
 }
 
-//----------------------------------------------------------------------
-// Add a base type to the type list
-//----------------------------------------------------------------------
-
-//struct CampareDCTypeBaton
-//{
-//  CampareDCTypeBaton(const std::vector<TypeSP>& _types, const Type* _search_type) :
-//      types(_types),
-//      search_type(_search_type)
-//  {
-//  }
-//  const std::vector<TypeSP>& types;
-//  const Type* search_type;
-//};
-//
-//static int
-//compare_dc_type (const void *key, const void *arrmem)
-//{
-//  const Type* search_type = ((CampareDCTypeBaton*) key)->search_type;
-//  uint32_t curr_index = *(uint32_t *)arrmem;
-//  const Type* curr_type = ((CampareDCTypeBaton*) key)->types[curr_index].get();
-//  Type::CompareState state;
-//  return Type::Compare(*search_type, *curr_type, state);
-//}
-//
-//struct LessThanBinaryPredicate
-//{
-//  LessThanBinaryPredicate(const CampareDCTypeBaton& _compare_baton) :
-//      compare_baton(_compare_baton)
-//  {
-//  }
-//
-//  bool operator() (uint32_t a, uint32_t b) const
-//  {
-//      Type::CompareState state;
-//      return Type::Compare(*compare_baton.search_type, *compare_baton.types[b].get(), state) < 0;
-//  }
-//  const CampareDCTypeBaton& compare_baton;
-//};
-
-TypeSP
-TypeList::InsertUnique(TypeSP& type_sp)
+void
+TypeList::Insert (TypeSP& type_sp)
 {
-#if 0
-//  Stream s(stdout);
-//  s << "TypeList::InsertUnique for type ";
-//  type_sp->Dump(s);
-//  s << "Current list:\n";
-//  Dump(s);
-
-    CampareDCTypeBaton compare_baton(m_types, type_sp.get());
-    uint32_t* match_index_ptr = (uint32_t*)bsearch(&compare_baton, &m_sorted_indexes[0], m_sorted_indexes.size(), sizeof(uint32_t), compare_dc_type);
-    if (match_index_ptr)
-    {
-//      s << "returning existing type: " << (void *)m_types[*match_index_ptr].get() << "\n";
-        return m_types[*match_index_ptr];
-    }
-
-    // Get the new index within the m_types array before we add the new type
-    uint32_t uniqued_type_index = m_types.size();
-    // Add the new shared pointer to our type by appending it to the end of the types array
-    m_types.push_back(type_sp);
-    // Figure out what the sorted index of this new type should be
-    uint32_t fake_index = 0;
-    LessThanBinaryPredicate compare_func_obj(compare_baton);
-    std::vector<uint32_t>::iterator insert_pos = std::upper_bound(m_sorted_indexes.begin(), m_sorted_indexes.end(), fake_index, compare_func_obj);
-    // Insert the sorted index into our sorted index array
-    m_sorted_indexes.insert(insert_pos, uniqued_type_index);
-#else
     // Just push each type on the back for now. We will worry about uniquing later
-    m_types.push_back (type_sp);
-#endif
-//  s << "New list:\n";
-//  Dump(s);
+    if (type_sp)
+        m_types.insert(std::make_pair(type_sp->GetID(), type_sp));
+}
 
-    return type_sp;
+
+bool
+TypeList::InsertUnique (TypeSP& type_sp)
+{
+    if (type_sp)
+    {
+        user_id_t type_uid = type_sp->GetID();
+        iterator pos, end = m_types.end();
+        
+        for (pos = m_types.find(type_uid); pos != end && pos->second->GetID() == type_uid; ++pos)
+        {
+            if (pos->second.get() == type_sp.get())
+                return false;
+        }
+    }
+    Insert (type_sp);
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -136,26 +85,25 @@ TypeList::InsertUnique(TypeSP& type_sp)
 TypeSP
 TypeList::FindType(lldb::user_id_t uid)
 {
-    TypeSP type_sp;
-    iterator pos, end;
-    for (pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
-        if ((*pos)->GetID() == uid)
-            return *pos;
-
-    return type_sp;
+    iterator pos = m_types.find(uid);
+    if (pos != m_types.end())
+        return pos->second;
+    return TypeSP();
 }
 
 //----------------------------------------------------------------------
 // Find a type by name.
 //----------------------------------------------------------------------
 TypeList
-TypeList::FindTypes(const ConstString &name)
+TypeList::FindTypes (const ConstString &name)
 {
+    // Do we ever need to make a lookup by name map? Here we are doing
+    // a linear search which isn't going to be fast.
     TypeList types(m_ast.getTargetInfo()->getTriple().getTriple().c_str());
     iterator pos, end;
     for (pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
-        if ((*pos)->GetName() == name)
-            types.InsertUnique(*pos);
+        if (pos->second->GetName() == name)
+            types.Insert (pos->second);
     return types;
 }
 
@@ -171,33 +119,31 @@ TypeList::GetSize() const
     return m_types.size();
 }
 
+// GetTypeAtIndex isn't used a lot for large type lists, currently only for
+// type lists that are returned for "image dump -t TYPENAME" commands and other
+// simple symbol queries that grab the first result...
+
 TypeSP
 TypeList::GetTypeAtIndex(uint32_t idx)
 {
-    TypeSP type_sp;
-    if (idx < m_types.size())
-        type_sp = m_types[idx];
-    return type_sp;
+    iterator pos, end;
+    uint32_t i = idx;
+    for (pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
+    {
+        if (i == 0)
+            return pos->second;
+        --i;
+    }
+    return TypeSP();
 }
 
 void
 TypeList::Dump(Stream *s, bool show_context)
 {
-//  std::vector<uint32_t>::const_iterator pos, end;
-//  for (pos = end = m_sorted_indexes.begin(), end = m_sorted_indexes.end(); pos != end; ++pos)
-//  {
-//      m_types[*pos]->Dump(s, show_context);
-//  }
-
-    m_ast.getASTContext()->getTranslationUnitDecl()->print(llvm::fouts(), 0);
-    const size_t num_types = m_types.size();
-    for (size_t i=0; i<num_types; ++i)
+    for (iterator pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
     {
-        m_types[i]->Dump(s, show_context);
+        pos->second->Dump(s, show_context);
     }
-//  ASTContext *ast_context = GetClangASTContext ().getASTContext();
-//  if (ast_context)
-//      ast_context->PrintStats();
 }
 
 

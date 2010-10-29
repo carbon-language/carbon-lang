@@ -1094,7 +1094,7 @@ ValueObject::DumpValueObject
                         else
                         {
                             if (print_valobj)
-                                s.PutCString(" {\n");
+                                s.PutCString(is_ref ? ": {\n" : " {\n");
                             s.IndentMore();
                         }
 

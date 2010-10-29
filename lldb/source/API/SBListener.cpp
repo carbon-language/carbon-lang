@@ -87,12 +87,6 @@ SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t 
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //{
-    //    log->Printf ("SBListener::StartListeningForEvents (const SBBroadcaster &broadcaster, uint32_t event_mask)"
-    //                 " &broadcaster = %p, event_mask = %d", &broadcaster, event_mask);
-    //}
-
     uint32_t ret_value = 0;
     if (m_opaque_ptr && broadcaster.IsValid())
     {
@@ -100,7 +94,7 @@ SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t 
     }
     
     if (log)
-        log->Printf ("SBListener::StartListeneingForEvents (this.obj=%p, broadcaster.obj=%p, event_mask=%d) => %d", 
+        log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p), event_mask=0x%8.8x) => %d", 
                      m_opaque_ptr, broadcaster.get(), event_mask, ret_value);
 
     return ret_value;
@@ -142,7 +136,7 @@ SBListener::WaitForEvent (uint32_t num_seconds, SBEvent &event)
             event.reset (event_sp);
             Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
             if (log)
-                log->Printf ("SBListener::WaitForEvent (this.obj=%p, num_seconds=%d, event.sp=%p) => 'true'",
+                log->Printf ("SBListener(%p)::WaitForEvent (num_seconds=%d, SBEvent(%p)) => 1",
                              m_opaque_ptr, num_seconds, event.get());
             return true;
         }
@@ -150,7 +144,7 @@ SBListener::WaitForEvent (uint32_t num_seconds, SBEvent &event)
 
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBListener::WaitForEvent (this.obj=%p, num_seconds=%d, event.sp=%p) => 'false'",
+        log->Printf ("SBListener(%p)::WaitForEvent (num_seconds=%d, SBEvent(%p)) => 0",
                      m_opaque_ptr, num_seconds, event.get());
 
     event.reset (NULL);

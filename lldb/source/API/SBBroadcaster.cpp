@@ -26,7 +26,7 @@ SBBroadcaster::SBBroadcaster () :
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
-        log->Printf ("SBBroadcastetr::SBBroadcaster () => this = %p", this);
+        log->Printf ("SBBroadcastetr::SBBroadcaster () => SBBroadcaster(%p)", this);
 }
 
 
@@ -37,8 +37,8 @@ SBBroadcaster::SBBroadcaster (const char *name) :
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
-        log->Printf ("SBBroadcaster::SBBroadcaster (name='%s') => this = %p (m_opaque = %p)",
-                     name, this, m_opaque);
+        log->Printf ("SBBroadcaster::SBBroadcaster (name='%s') => SBBroadcaster(%p)",
+                     name, m_opaque);
 }
 
 SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns) :
@@ -48,8 +48,8 @@ SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
-        log->Printf ("SBBroadcaster::SBBroadcaster (broadcaster=%p, bool owns='%s') "
-                     " => this = %p (m_opaque = %p)", broadcaster, (owns ? "true" : "false"), this, m_opaque);
+        log->Printf ("SBBroadcaster::SBBroadcaster (broadcaster=%p, bool owns=%i) "
+                     " => SBBroadcaster(%p)", broadcaster, owns, m_opaque);
 }
 
 SBBroadcaster::~SBBroadcaster()
@@ -63,7 +63,7 @@ SBBroadcaster::BroadcastEventByType (uint32_t event_type, bool unique)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBBroadcaster::BroadcastEventByType (%d, %s)", event_type, (unique ? "true" : "false"));
+        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (event_type=0x%8.8x, unique=%i)", m_opaque, event_type, unique);
 
     if (m_opaque == NULL)
         return;
@@ -77,6 +77,11 @@ SBBroadcaster::BroadcastEventByType (uint32_t event_type, bool unique)
 void
 SBBroadcaster::BroadcastEvent (const SBEvent &event, bool unique)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (SBEvent(%p), unique=%i)", m_opaque, event.get(), unique);
+
     if (m_opaque == NULL)
         return;
 
@@ -90,6 +95,9 @@ SBBroadcaster::BroadcastEvent (const SBEvent &event, bool unique)
 void
 SBBroadcaster::AddInitialEventsToListener (const SBListener &listener, uint32_t requested_events)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBroadcaster(%p)::AddInitialEventsToListener (SBListener(%p), event_mask=0x%8.8x)", m_opaque, listener.get(), requested_events);
     if (m_opaque)
         m_opaque->AddInitialEventsToListener (listener.get(), requested_events);
 }

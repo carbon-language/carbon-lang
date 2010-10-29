@@ -48,8 +48,7 @@ SBValue::SBValue (const lldb::ValueObjectSP &value_sp) :
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBValue::SBValue (value_sp=%p) => this.sp = %p (%s)",
-                     value_sp.get(), m_opaque_sp.get(), sstr.GetData());
+        log->Printf ("SBValue::SBValue (%p) => (%s)", m_opaque_sp.get(), sstr.GetData());
     }
 }
 
@@ -79,23 +78,15 @@ SBValue::GetName()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBValue::GetName ()");
+    if (log)
+        log->Printf ("SBValue::GetName () ptr=%p => '%s'", 
+                     m_opaque_sp.get(),
+                     m_opaque_sp ? m_opaque_sp->GetName().AsCString() : "<invalid>");
 
     if (IsValid())
-    {
-        if (log)
-            log->Printf ("SBValue::GetName (this.sp=%p) => '%s'", m_opaque_sp.get(),
-                         m_opaque_sp->GetName().AsCString());
+        return m_opaque_sp->GetName().GetCString();
 
-        return m_opaque_sp->GetName().AsCString();
-    }
-    else
-    {
-        if (log)
-            log->Printf ("SBValue::GetName (this.sp=%p) ==> NULL", m_opaque_sp.get());
-        return NULL;
-    }
+    return NULL;
 }
 
 const char *
@@ -319,18 +310,21 @@ SBValue::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
     {
-        const char *name = GetName();
-        const char *type_name = GetTypeName ();
-        size_t byte_size = GetByteSize ();
-        uint32_t num_children = GetNumChildren ();
-        bool is_stale = ValueIsStale ();
-        description.Printf ("name: '%s', type: %s, size: %d", (name != NULL ? name : "<unknown name>"),
-                            (type_name != NULL ? type_name : "<unknown type name>"), (int) byte_size);
-        if (num_children > 0)
-            description.Printf (", num_children: %d", num_children);
-
-        if (is_stale)
-            description.Printf (" [value is stale]");
+        // Don't call all these APIs and cause more logging!
+//        const char *name = GetName();
+//        const char *type_name = GetTypeName ();
+//        size_t byte_size = GetByteSize ();
+//        uint32_t num_children = GetNumChildren ();
+//        bool is_stale = ValueIsStale ();
+//        description.Printf ("name: '%s', type: %s, size: %d", (name != NULL ? name : "<unknown name>"),
+//                            (type_name != NULL ? type_name : "<unknown type name>"), (int) byte_size);
+//        if (num_children > 0)
+//            description.Printf (", num_children: %d", num_children);
+//
+//        if (is_stale)
+//            description.Printf (" [value is stale]");
+        
+        description.Printf ("name: '%s'", m_opaque_sp->GetName().GetCString());
     }
     else
         description.Printf ("No value");

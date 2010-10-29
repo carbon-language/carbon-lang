@@ -17,11 +17,6 @@ namespace lldb {
 class SBListener
 {
 public:
-    friend class SBBroadcaster;
-    friend class SBCommandInterpreter;
-    friend class SBDebugger;
-    friend class SBTarget;
-
     SBListener (const char *name);
 
     SBListener (lldb_private::Listener &listener);
@@ -91,6 +86,10 @@ public:
     HandleBroadcastEvent (const lldb::SBEvent &event);
 
 private:
+    friend class SBBroadcaster;
+    friend class SBCommandInterpreter;
+    friend class SBDebugger;
+    friend class SBTarget;
 
 #ifndef SWIG
 

@@ -55,7 +55,7 @@ SBThread::SBThread (const ThreadSP& lldb_object_sp) :
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBThread::SBThread (lldb_object_sp=%p) => this.sp = %p (%s)",
+        log->Printf ("SBThread::SBThread (lldb_object_sp=%p) => SBThread(%p) :%s",
                      lldb_object_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
 }
@@ -67,7 +67,7 @@ SBThread::SBThread (const SBThread &rhs)
     m_opaque_sp = rhs.m_opaque_sp;
 
     if (log)
-        log->Printf ("SBThread::SBThread (rhs.sp=%p) => this.sp = %p",
+        log->Printf ("SBThread::SBThread (rhs.sp=%p) => SBThread(%p)",
                      rhs.m_opaque_sp.get(), m_opaque_sp.get());
 
 }
@@ -97,9 +97,6 @@ SBThread::GetStopReason()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBThread::GetStopReason ()");
-
     StopReason reason = eStopReasonInvalid;
     if (m_opaque_sp)
     {
@@ -109,7 +106,7 @@ SBThread::GetStopReason()
     }
 
     if (log)
-        log->Printf ("SBThread::GetStopReason (this.sp=%p) => '%s'", m_opaque_sp.get(), 
+        log->Printf ("SBThread(%p)::GetStopReason () => '%s'", m_opaque_sp.get(), 
                      Thread::StopReasonAsCString (reason));
 
     return reason;
@@ -120,9 +117,6 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBThread::GetStopDescription (char *dst, size_t dst_len)");
-
     if (m_opaque_sp)
     {
         StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
@@ -132,7 +126,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
             if (stop_desc)
             {
                 if (log)
-                    log->Printf ("SBThread::GetStopDescription (this.sp=%p, dst, dst_len) => '%s'", 
+                    log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => '%s'", 
                                  m_opaque_sp.get(), stop_desc);
                 if (dst)
                     return ::snprintf (dst, dst_len, "%s", stop_desc);
@@ -199,7 +193,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
                 if (stop_desc && stop_desc[0])
                 {
                     if (log)
-                        log->Printf ("SBThread::GetStopDescription (this.sp=%p, dst, dst_len) => '%s'", 
+                        log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => '%s'", 
                                      m_opaque_sp.get(), stop_desc);
 
                     if (dst)
@@ -300,7 +294,7 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBThread::StepOver (this.sp=%p, stop_other_threads='%s')", m_opaque_sp.get(), 
+        log->Printf ("SBThread(%p)::StepOver (stop_other_threads='%s')", m_opaque_sp.get(), 
                      Thread::RunModeAsCString (stop_other_threads));
 
     if (m_opaque_sp)
@@ -349,7 +343,7 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBThread::StepInto (this.sp=%p, stop_other_threads='%s')", m_opaque_sp.get(),
+        log->Printf ("SBThread(%p)::StepInto (stop_other_threads='%s')", m_opaque_sp.get(),
                      Thread::RunModeAsCString (stop_other_threads));
 
     if (m_opaque_sp)
@@ -424,8 +418,7 @@ SBThread::StepInstruction (bool step_over)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBThread::StepInstruction (this.sp=%p, step_over=%s)", m_opaque_sp.get(),
-                     (step_over ? "true" : "false"));
+        log->Printf ("SBThread(%p)::StepInstruction (step_over=%i)", m_opaque_sp.get(), step_over);
 
     if (m_opaque_sp)
     {
@@ -449,7 +442,7 @@ SBThread::RunToAddress (lldb::addr_t addr)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBThread::RunToAddress (this.sp=%p, addr=%p)", m_opaque_sp.get(), addr);
+        log->Printf ("SBThread(%p)::RunToAddress (addr=0x%llx)", m_opaque_sp.get(), addr);
 
     if (m_opaque_sp)
     {
@@ -478,9 +471,6 @@ SBThread::GetProcess ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBThread::GetProcess ()");
-
     SBProcess process;
     if (m_opaque_sp)
     {
@@ -504,9 +494,6 @@ SBThread::GetNumFrames ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBThread::GetNumFrames ()");
-
     uint32_t num_frames = 0;
     if (m_opaque_sp)
         num_frames = m_opaque_sp->GetStackFrameCount();
@@ -522,9 +509,6 @@ SBThread::GetFrameAtIndex (uint32_t idx)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBThread::GetFrameAtIndex (uint32_t idx) idx = %d", idx);
-
     SBFrame sb_frame;
     if (m_opaque_sp)
         sb_frame.SetFrame (m_opaque_sp->GetStackFrameAtIndex (idx));
@@ -533,7 +517,7 @@ SBThread::GetFrameAtIndex (uint32_t idx)
     {
         SBStream sstr;
         sb_frame.GetDescription (sstr);
-        log->Printf ("SBThread::GetFrameAtIndex (this.sp=%p, idx=%d) => SBFrame.sp : this = %p, '%s'", 
+        log->Printf ("SBThread(%p)::GetFrameAtIndex (idx=%d) => SBFrame.sp : this = %p, '%s'", 
                      m_opaque_sp.get(), idx, sb_frame.get(), sstr.GetData());
     }
 
@@ -546,7 +530,7 @@ SBThread::operator = (const lldb::SBThread &rhs)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBThread::operator= (this.sp=%p, rhs.sp=%p)", m_opaque_sp.get(), rhs.m_opaque_sp.get());
+        log->Printf ("SBThread(%p)::operator= (rhs.sp=%p)", m_opaque_sp.get(), rhs.m_opaque_sp.get());
                      
     m_opaque_sp = rhs.m_opaque_sp;
     return *this;

@@ -158,7 +158,7 @@ SBValueList::GetValueAtIndex (uint32_t idx) const
         SBStream sstr;
         sb_value.GetDescription (sstr);
         log->Printf ("SBValueList::GetValueAtIndex (this.ap=%p, idx=%d) => SBValue (this.sp = %p, '%s')", 
-                     m_opaque_ap.get(), sb_value.get(), sstr.GetData());
+                     m_opaque_ap.get(), idx, sb_value.get(), sstr.GetData());
     }
 
     return sb_value;

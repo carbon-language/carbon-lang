@@ -3327,12 +3327,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                 if (type_sp.unique())
                 {
                     // We are ready to put this type into the uniqued list up at the module level
-                    TypeSP uniqued_type_sp(m_obj_file->GetModule()->GetTypeList()->InsertUnique(type_sp));
+                    m_obj_file->GetModule()->GetTypeList()->Insert (type_sp);
                     
                     if (m_debug_map_symfile)
-                        m_debug_map_symfile->GetObjectFile()->GetModule()->GetTypeList()->InsertUnique (uniqued_type_sp);
+                        m_debug_map_symfile->GetObjectFile()->GetModule()->GetTypeList()->Insert (type_sp);
 
-                    type_sp = uniqued_type_sp;
                     m_die_to_type[die] = type_sp.get();
                 }
             }

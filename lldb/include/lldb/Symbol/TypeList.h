@@ -13,7 +13,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
-#include <vector>
+#include <map>
 
 namespace lldb_private {
 
@@ -40,8 +40,11 @@ public:
     TypeList
     FindTypes(const ConstString &name);
 
-    lldb::TypeSP
-    InsertUnique(lldb::TypeSP& type);
+    void
+    Insert (lldb::TypeSP& type);
+
+    bool
+    InsertUnique (lldb::TypeSP& type);
 
     uint32_t
     GetSize() const;
@@ -70,7 +73,7 @@ public:
     CreateClangRValueReferenceType (Type *type);
 
 private:
-    typedef std::vector<lldb::TypeSP> collection;
+    typedef std::multimap<lldb::user_id_t, lldb::TypeSP> collection;
     typedef collection::iterator iterator;
     typedef collection::const_iterator const_iterator;
     ClangASTContext m_ast; ///< The type abtract syntax tree.

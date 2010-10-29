@@ -54,9 +54,6 @@ public:
     ResolvePath (const char *src_path, char *dst_path, size_t dst_len);
 
     bool
-    GetDescription (lldb::SBStream &description);
-
-    bool
     GetDescription (lldb::SBStream &description) const;
 
 private:
