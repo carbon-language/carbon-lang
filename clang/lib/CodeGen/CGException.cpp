@@ -526,7 +526,7 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *E,
 
   // __cxa_allocate_exception returns a void*;  we need to cast this
   // to the appropriate type for the object.
-  const llvm::Type *Ty = CGF.ConvertType(E->getType())->getPointerTo();
+  const llvm::Type *Ty = CGF.ConvertTypeForMem(E->getType())->getPointerTo();
   llvm::Value *TypedExnLoc = CGF.Builder.CreateBitCast(ExnLoc, Ty);
 
   // FIXME: this isn't quite right!  If there's a final unelided call

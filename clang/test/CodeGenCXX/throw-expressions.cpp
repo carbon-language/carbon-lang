@@ -8,3 +8,8 @@ int& test1() {
 int test2() {
   return val ? throw val : val;
 }
+
+// rdar://problem/8608801
+void test3() {
+  throw false;
+}
