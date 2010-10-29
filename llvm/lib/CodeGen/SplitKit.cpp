@@ -441,7 +441,8 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
        if (VNInfo *VNI = extendTo(Pred, Last)) {
          MachineBasicBlock *DefMBB = lis_.getMBBFromIndex(VNI->def);
          DEBUG(dbgs() << "    found valno #" << VNI->id
-                      << " at BB#" << DefMBB->getNumber() << '\n');
+                      << " from BB#" << DefMBB->getNumber()
+                      << " at BB#" << Pred->getNumber() << '\n');
          LiveOutPair &LOP = LOIP.first->second;
          LOP.first = VNI;
          LOP.second = mdt_[lis_.getMBBFromIndex(VNI->def)];
@@ -528,11 +529,14 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
           I->second = LiveOutPair(VNI, Node);
         }
       } else if (IDomValue.first) {
-        // No phi-def here. Propagate IDomValue if needed.
+        // No phi-def here. Remember incoming value for IdxMBB.
         if (MBB == IdxMBB)
           IdxVNI = IDomValue.first;
+        // Propagate IDomValue if needed:
+        // MBB is live-out and doesn't define its own value.
         LiveOutMap::iterator I = liveOutCache_.find(MBB);
-        if (I != liveOutCache_.end() && I->second.first != IDomValue.first) {
+        if (I != liveOutCache_.end() && I->second.second != Node &&
+            I->second.first != IDomValue.first) {
           ++Changes;
           I->second = IDomValue;
           DEBUG(dbgs() << "    - BB#" << MBB->getNumber()
