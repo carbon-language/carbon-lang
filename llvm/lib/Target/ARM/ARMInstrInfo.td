@@ -1155,7 +1155,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
               Requires<[IsARM, HasV4T]> {
     bits<4> dst;
     let Inst{31-4} = 0b1110000100101111111111110001;
-    let Inst{3-0}   = dst;
+    let Inst{3-0}  = dst;
   }
 
   // ARMV4 only
@@ -2830,39 +2830,55 @@ def MOVCCr : AI1<0b1101, (outs GPR:$Rd), (ins GPR:$false, GPR:$Rm), DPFrm,
                 RegConstraint<"$false = $Rd">, UnaryDP {
   bits<4> Rd;
   bits<4> Rm;
-
-  let Inst{11-4} = 0b00000000;
   let Inst{25} = 0;
-  let Inst{3-0} = Rm;
+  let Inst{20} = 0;
   let Inst{15-12} = Rd;
   let Inst{11-4} = 0b00000000;
-  let Inst{25} = 0;
+  let Inst{3-0} = Rm;
 }
 
-def MOVCCs : AI1<0b1101, (outs GPR:$dst),
-                        (ins GPR:$false, so_reg:$true), DPSoRegFrm, IIC_iCMOVsr,
-                "mov", "\t$dst, $true",
-   [/*(set GPR:$dst, (ARMcmov GPR:$false, so_reg:$true, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $dst">, UnaryDP {
+def MOVCCs : AI1<0b1101, (outs GPR:$Rd),
+                 (ins GPR:$false, so_reg:$shift), DPSoRegFrm, IIC_iCMOVsr,
+                "mov", "\t$Rd, $shift",
+   [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg:$shift, imm:$cc, CCR:$ccr))*/]>,
+                RegConstraint<"$false = $Rd">, UnaryDP {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<12> shift;
   let Inst{25} = 0;
-}
-
-def MOVCCi16 : AI1<0b1000, (outs GPR:$dst), (ins GPR:$false, i32imm:$src),
-                 DPFrm, IIC_iMOVi,
-                 "movw", "\t$dst, $src",
-                 []>,
-                 RegConstraint<"$false = $dst">, Requires<[IsARM, HasV6T2]>,
-                 UnaryDP {
   let Inst{20} = 0;
-  let Inst{25} = 1;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rd;
+  let Inst{11-0} = shift;
 }
 
-def MOVCCi : AI1<0b1101, (outs GPR:$dst),
-                        (ins GPR:$false, so_imm:$true), DPFrm, IIC_iCMOVi,
-                "mov", "\t$dst, $true",
-   [/*(set GPR:$dst, (ARMcmov GPR:$false, so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $dst">, UnaryDP {
+def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm:$imm),
+                 DPFrm, IIC_iMOVi,
+                 "movw", "\t$Rd, $imm",
+                 []>,
+                 RegConstraint<"$false = $Rd">, Requires<[IsARM, HasV6T2]>,
+                 UnaryDP {
+  bits<4> Rd;
+  bits<16> imm;
   let Inst{25} = 1;
+  let Inst{20} = 0;
+  let Inst{19-16} = imm{15-12};
+  let Inst{15-12} = Rd;
+  let Inst{11-0}  = imm{11-0};
+}
+
+def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
+                         (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
+                "mov", "\t$Rd, $imm",
+   [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm:$imm, imm:$cc, CCR:$ccr))*/]>,
+                RegConstraint<"$false = $Rd">, UnaryDP {
+  bits<4> Rd;
+  bits<12> imm;
+  let Inst{25} = 1;
+  let Inst{20} = 0;
+  let Inst{19-16} = 0b0000;
+  let Inst{15-12} = Rd;
+  let Inst{11-0} = imm;
 }
 } // neverHasSideEffects
 
