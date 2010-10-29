@@ -913,6 +913,9 @@ void SplitEditor::computeRemainder() {
   for (LiveInterval::const_vni_iterator I = parent.vni_begin(),
        E = parent.vni_end(); I != E; ++I) {
     const VNInfo *VNI = *I;
+    // Don't transfer unused values to the new intervals.
+    if (VNI->isUnused())
+      continue;
     // Original def is contained in the split intervals.
     if (intervalsLiveAt(VNI->def)) {
       // Did this value escape?
