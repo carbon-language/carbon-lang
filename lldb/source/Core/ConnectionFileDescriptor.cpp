@@ -325,6 +325,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
         Error error;
 
 
+        log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION);
         if (log)
             log->Printf("%p ConnectionFileDescriptor::Write()  ::select (nfds = %i, fd = %i, NULL, NULL, timeout = %p)...",
                         this, nfds, m_fd, tv_ptr);
@@ -335,6 +336,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
         else
             error.Clear();
 
+        log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION);
         if (log)
             log->Printf("%p ConnectionFileDescriptor::Write()  ::select (nfds = %i, fd = %i, NULL, NULL, timeout = %p) => %d, error = %s",
                         this, nfds, m_fd, tv_ptr, num_set_fds, error.AsCString());
