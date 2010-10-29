@@ -718,6 +718,11 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // FIXME: We need a way to check whether a prefix supports predication,
   // otherwise we will end up with an ambiguity for instructions that happen to
   // end with a predicate name.
+  // FIXME: Likewise, some arithmetic instructions have an 's' prefix which
+  // indicates to update the condition codes. Those instructions have an
+  // additional immediate operand which encodes the prefix as reg0 or CPSR.
+  // Just checking for a suffix of 's' definitely creates ambiguities; e.g,
+  // the SMMLS instruction.
   unsigned CC = StringSwitch<unsigned>(Head.substr(Head.size()-2))
     .Case("eq", ARMCC::EQ)
     .Case("ne", ARMCC::NE)
