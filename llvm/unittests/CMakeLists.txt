@@ -16,7 +16,6 @@ endfunction()
 add_custom_target(UnitTests)
 
 include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
-set(LLVM_REQUIRES_RTTI 1)
 add_definitions(-DGTEST_HAS_RTTI=0)
 
 set(LLVM_LINK_COMPONENTS
