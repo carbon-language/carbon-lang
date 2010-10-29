@@ -151,10 +151,8 @@ class ArrayTypesTestCase(TestBase):
         # representation.
         variable = frame.LookupVar("strings")
         var = repr(variable)
-        self.expect(var, "Variable for 'strings' looks good with correct type and size", exe=False,
-            substrs = ["name: '%s'" % variable.GetName(),
-                       "type: %s" % variable.GetTypeName(),
-                       "size: %d" % variable.GetByteSize()])
+        self.expect(var, "Variable for 'strings' looks good with correct name", exe=False,
+            substrs = ["name: '%s'" % variable.GetName()])
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 4,
                         "Variable 'strings' should have 4 children")
