@@ -868,8 +868,11 @@ static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
 
   const MCSymbol &Symbol = Data.getSymbol();
 
+  if (Symbol.getName() == "_GLOBAL_OFFSET_TABLE_")
+    return true;
+
   const MCSymbol &A = AliasedSymbol(Symbol);
-  if (&A != &Symbol && A.isUndefined())
+  if (!A.isVariable() && A.isUndefined() && !Data.isCommon())
     return false;
 
   if (!Asm.isSymbolLinkerVisible(Symbol) && !Symbol.isUndefined())

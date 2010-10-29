@@ -10,6 +10,7 @@
 
 	.type	.Lsym5,@object
         .type   sym6,@object
+        .long sym6
 
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .Lsym7:

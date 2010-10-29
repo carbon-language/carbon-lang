@@ -15,6 +15,7 @@ bar3 = foo3
 foo4:
 bar4 = foo4
 
+        .long foo2
 // CHECK:       # Symbol 0x00000001
 // CHECK-NEXT:  (('st_name', 0x00000005) # 'bar'
 // CHECK-NEXT:   ('st_bind', 0x00000000)

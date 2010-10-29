@@ -6,4 +6,5 @@
 // CHECK-NEXT:    (('st_name', 0x00000001) # 'foo'
 // CHECK-NEXT:     ('st_bind', 0x00000001)
 
-	.size	foo, .Lbar-foo
+	.size foo, .Lbar-foo
+        .long foo
