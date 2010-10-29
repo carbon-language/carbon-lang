@@ -8,7 +8,6 @@ import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
-@unittest2.skip("rdar://problem/8584431 Assert in clang while evaluating expression")
 class BreakpointConditionsTestCase(TestBase):
 
     mydir = "breakpoint_conditions"
