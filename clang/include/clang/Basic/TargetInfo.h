@@ -19,7 +19,6 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/System/DataTypes.h"
-#include "llvm/Type.h"
 #include <cassert>
 #include <vector>
 #include <string>
@@ -28,6 +27,7 @@ namespace llvm {
 struct fltSemantics;
 class StringRef;
 class LLVMContext;
+class Type;
 }
 
 namespace clang {
