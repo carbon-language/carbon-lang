@@ -359,24 +359,29 @@ Program::Wait(const sys::Path &path,
       result = 126;
 #endif
     if (result == 127) {
-      *ErrMsg = llvm::sys::StrError(ENOENT);
+      if (ErrMsg)
+        *ErrMsg = llvm::sys::StrError(ENOENT);
       return -1;
     }
     if (result == 126) {
-      *ErrMsg = "Program could not be executed";
+      if (ErrMsg)
+        *ErrMsg = "Program could not be executed";
       return -1;
     }
   } else if (WIFSIGNALED(status)) {
-    *ErrMsg = strsignal(WTERMSIG(status));
+    if (ErrMsg) {
+      *ErrMsg = strsignal(WTERMSIG(status));
 #ifdef WCOREDUMP
-    if (WCOREDUMP(status))
-      *ErrMsg += " (core dumped)";
+      if (WCOREDUMP(status))
+        *ErrMsg += " (core dumped)";
 #endif
+    }
     return -1;
   }
   return result;
 #else
-  *ErrMsg = "Program::Wait is not implemented on this platform yet!";
+  if (ErrMsg)
+    *ErrMsg = "Program::Wait is not implemented on this platform yet!";
   return -1;
 #endif
 }
