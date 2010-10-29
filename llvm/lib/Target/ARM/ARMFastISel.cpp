@@ -933,14 +933,75 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
   // Simple branch support.
-  // TODO: Try to avoid the re-computation in some places.
-  unsigned CondReg = getRegForValue(BI->getCondition());
-  if (CondReg == 0) return false;
+  
+  // If we can, avoid recomputing the compare - redoing it could lead to wonky
+  // behavior.
+  // TODO: Factor this out.
+  if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
+    if (CI->hasOneUse() && (CI->getParent() == I->getParent())) {
+      const Type *Ty = CI->getOperand(0)->getType();
+      EVT VT = TLI.getValueType(Ty);
+      bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
+      if (isFloat && !Subtarget->hasVFP2())
+        return false;
+
+      unsigned CmpOpc;
+      unsigned CondReg;
+      switch (VT.getSimpleVT().SimpleTy) {
+        default: return false;
+        // TODO: Verify compares.
+        case MVT::f32:
+          CmpOpc = ARM::VCMPES;
+          CondReg = ARM::FPSCR;
+          break;
+        case MVT::f64:
+          CmpOpc = ARM::VCMPED;
+          CondReg = ARM::FPSCR;
+          break;
+        case MVT::i32:
+          CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
+          CondReg = ARM::CPSR;
+          break;
+      }
+
+      // Get the compare predicate.
+      ARMCC::CondCodes ARMPred = getComparePred(CI->getPredicate());
+
+      // We may not handle every CC for now.
+      if (ARMPred == ARMCC::AL) return false;
+
+      unsigned Arg1 = getRegForValue(CI->getOperand(0));
+      if (Arg1 == 0) return false;
+
+      unsigned Arg2 = getRegForValue(CI->getOperand(1));
+      if (Arg2 == 0) return false;
+
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(CmpOpc))
+                      .addReg(Arg1).addReg(Arg2));
+      
+      // For floating point we need to move the result to a comparison register
+      // that we can then use for branches.
+      if (isFloat)
+        AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                TII.get(ARM::FMSTAT)));
+      
+      unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
+      .addMBB(TBB).addImm(ARMPred).addReg(ARM::CPSR);
+      FastEmitBranch(FBB, DL);
+      FuncInfo.MBB->addSuccessor(TBB);
+      return true;
+    }
+  }
+  
+  unsigned CmpReg = getRegForValue(BI->getCondition());
+  if (CmpReg == 0) return false;
 
   // Re-set the flags just in case.
   unsigned CmpOpc = isThumb ? ARM::t2CMPri : ARM::CMPri;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
-                  .addReg(CondReg).addImm(1));
+                  .addReg(CmpReg).addImm(1));
 
   unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
