@@ -49,11 +49,7 @@ case $TRIPLE in
 			-install_name /usr/lib/libc++.dylib \
 			${SDKROOT}/usr/lib/libc++abi.dylib \
 			-lSystem  \
-			-Xarch_x86_64 -exported_symbols_list \
-			-Xarch_x86_64 x86_64.exp \
-			-Xarch_i386 -exported_symbols_list \
-			-Xarch_i386 i386.exp \
-			-exported_symbols_list libc++abi.exp \
+			-Wl,-reexported_symbols_list,libc++abi.exp \
 			-Wl,-force_symbols_not_weak_list,notweak.exp"
 	fi
     ;;
