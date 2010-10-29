@@ -104,6 +104,8 @@ namespace llvm {
 Spiller *createInlineSpiller(MachineFunctionPass &pass,
                              MachineFunction &mf,
                              VirtRegMap &vrm) {
+  if (VerifySpills)
+    mf.verify(&pass);
   return new InlineSpiller(pass, mf, vrm);
 }
 }
