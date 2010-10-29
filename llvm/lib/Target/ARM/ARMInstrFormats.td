@@ -372,6 +372,19 @@ class AIstrex<bits<2> opcod, dag oops, dag iops, InstrItinClass itin,
   let Inst{11-4}  = 0b11111001;
   let Inst{3-0}   = Rt;
 }
+class AIswp<bit b, dag oops, dag iops, string opc, list<dag> pattern>
+  : AI<oops, iops, MiscFrm, NoItinerary, opc, "\t$Rt, $Rt2, [$Rn]", pattern> {
+  bits<4> Rt;
+  bits<4> Rt2;
+  bits<4> Rn;
+  let Inst{27-23} = 0b00010;
+  let Inst{22} = b;
+  let Inst{21-20} = 0b00;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rt;
+  let Inst{11-4} = 0b00001001;
+  let Inst{3-0} = Rt2;
+}
 
 // addrmode1 instructions
 class AI1<bits<4> opcod, dag oops, dag iops, Format f, InstrItinClass itin,

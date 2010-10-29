@@ -1065,7 +1065,8 @@ def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
 //        classes (AXI1, et.al.) and so have encoding information and such,
 //        which is suboptimal. Once the rest of the code emitter (including
 //        JIT) is MC-ized we should look at refactoring these into true
-//        pseudos.
+//        pseudos. As is, the encoding information ends up being ignored,
+//        as these instructions are lowered to individual MC-insts.
 let isNotDuplicable = 1 in {
 def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
                   Pseudo, IIC_iALUr, "",
@@ -3067,29 +3068,15 @@ def STREXD : AIstrex<0b01, (outs GPR:$Rd),
 def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex",
                 [/* For disassembly only; pattern left blank */]>,
             Requires<[IsARM, HasV7]>  {
-  let Inst{31-20} = 0xf57;
-  let Inst{7-4} = 0b0001;
+  let Inst{31-0} = 0b11110101011111111111000000011111;
 }
 
 // SWP/SWPB are deprecated in V6/V7 and for disassembly only.
 let mayLoad = 1 in {
-def SWP : AI<(outs GPR:$dst), (ins GPR:$src, GPR:$ptr), LdStExFrm, NoItinerary,
-             "swp", "\t$dst, $src, [$ptr]",
-             [/* For disassembly only; pattern left blank */]> {
-  let Inst{27-23} = 0b00010;
-  let Inst{22} = 0; // B = 0
-  let Inst{21-20} = 0b00;
-  let Inst{7-4} = 0b1001;
-}
-
-def SWPB : AI<(outs GPR:$dst), (ins GPR:$src, GPR:$ptr), LdStExFrm, NoItinerary,
-             "swpb", "\t$dst, $src, [$ptr]",
-             [/* For disassembly only; pattern left blank */]> {
-  let Inst{27-23} = 0b00010;
-  let Inst{22} = 1; // B = 1
-  let Inst{21-20} = 0b00;
-  let Inst{7-4} = 0b1001;
-}
+def SWP  : AIswp<0, (outs GPR:$Rt), (ins GPR:$Rt2, GPR:$Rn), "swp",
+             [/* For disassembly only; pattern left blank */]>;
+def SWPB : AIswp<1, (outs GPR:$Rt), (ins GPR:$Rt2, GPR:$Rn), "swpb",
+             [/* For disassembly only; pattern left blank */]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3097,6 +3084,8 @@ def SWPB : AI<(outs GPR:$dst), (ins GPR:$src, GPR:$ptr), LdStExFrm, NoItinerary,
 //
 
 // __aeabi_read_tp preserves the registers r1-r3.
+// FIXME: This needs to be a pseudo of some sort so that we can get the
+// encoding right, complete with fixup for the aeabi_read_tp function.
 let isCall = 1,
   Defs = [R0, R12, LR, CPSR] in {
   def TPsoft : ABXI<0b1011, (outs), (ins), IIC_Br,
@@ -3117,6 +3106,9 @@ let isCall = 1,
 //   doing so, we also cause the prologue/epilogue code to actively preserve
 //   all of the callee-saved resgisters, which is exactly what we want.
 //   A constant value is passed in $val, and we use the location as a scratch.
+//
+// These are pseudo-instructions and are lowered to individual MC-insts, so
+// no encoding information is necessary.
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR,  D0,
     D1,  D2,  D3,  D4,  D5,  D6,  D7,  D8,  D9,  D10, D11, D12, D13, D14, D15,
