@@ -105,7 +105,9 @@ void ClangASTSource::MaterializeVisibleDecls(const DeclContext *DC)
 
 // This is used to support iterating through an entire lexical context,
 // which isn't something the debugger should ever need to do.
-bool ClangASTSource::FindExternalLexicalDecls(const DeclContext *DC, llvm::SmallVectorImpl<Decl*> &Decls) {
+bool ClangASTSource::FindExternalLexicalDecls(const DeclContext *DC, 
+                                              bool (*isKindWeWant)(Decl::Kind),
+                                              llvm::SmallVectorImpl<Decl*> &Decls) {
 	// true is for error, that's good enough for me
 	return true;
 }

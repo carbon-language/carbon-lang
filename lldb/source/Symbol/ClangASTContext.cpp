@@ -161,7 +161,7 @@ ParseLangArgs
 //    llvm::StringRef Vis = getLastArgValue(Args, OPT_fvisibility,
 //                                          "default");
 //    if (Vis == "default")
-        Opts.setVisibilityMode(LangOptions::Default);
+        Opts.setVisibilityMode(DefaultVisibility);
 //    else if (Vis == "hidden")
 //        Opts.setVisibilityMode(LangOptions::Hidden);
 //    else if (Vis == "protected")
@@ -1091,6 +1091,7 @@ ClangASTContext::AddMethodToCXXRecordType
                                                      cxx_record_decl,
                                                      DeclarationNameInfo (ast_context->DeclarationNames.getCXXDestructorName (ast_context->getCanonicalType (record_qual_type)), SourceLocation()),
                                                      method_qual_type,
+                                                     NULL,
                                                      is_inline,
                                                      is_implicitly_declared);
     }
@@ -3346,7 +3347,7 @@ ClangASTContext::CreateEnumerationType (const Declaration &decl, const char *nam
                                             SourceLocation(),
                                             name && name[0] ? &ast_context->Idents.get(name) : NULL,
                                             SourceLocation(),
-                                            NULL); //IsScoped, IsFixed);
+                                            NULL, false, false); //IsScoped, IsFixed);
     if (enum_decl)
     {
         // TODO: check if we should be setting the promotion type too?
