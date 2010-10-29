@@ -92,7 +92,7 @@ class FoundationDisassembleTestCase(TestBase):
             substrs = ["Foundation`+[NSString stringWithFormat:]"])
 
         # Do the disassemble for the currently stopped function.
-        self.runCmd("disassemble")
+        self.runCmd("disassemble -f")
 
         self.runCmd("process continue")
 
@@ -101,7 +101,7 @@ class FoundationDisassembleTestCase(TestBase):
             substrs = ["a.out`-[MyString initWithNSString:]"])
 
         # Do the disassemble for the currently stopped function.
-        self.runCmd("disassemble")
+        self.runCmd("disassemble -f")
 
         self.runCmd("process continue")
 
@@ -110,7 +110,7 @@ class FoundationDisassembleTestCase(TestBase):
             substrs = ["a.out`-[MyString description]"])
 
         # Do the disassemble for the currently stopped function.
-        self.runCmd("disassemble")
+        self.runCmd("disassemble -f")
 
         self.runCmd("process continue")
 
@@ -119,7 +119,7 @@ class FoundationDisassembleTestCase(TestBase):
             substrs = ["Foundation`-[NSAutoreleasePool release]"])
 
         # Do the disassemble for the currently stopped function.
-        self.runCmd("disassemble")
+        self.runCmd("disassemble -f")
 
 
 if __name__ == '__main__':

@@ -90,6 +90,11 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (int option_idx, const 
         raw = true;
         break;
 
+    case 'f':
+        // The default action is to disassemble the function for the current frame.
+        // There's no need to set any flag.
+        break;
+
     default:
         error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
         break;
@@ -130,7 +135,7 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 
 { LLDB_OPT_SET_2, true, "name",     'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,             "Disassemble entire contents of the given function name."},
 
-//{ LLDB_OPT_SET_3, false, "current-frame",     'f', no_argument, NULL, 0, eArgTypeNone,             "Disassemble entire contents of the current frame's function."},
+{ LLDB_OPT_SET_3, true, "current-frame", 'f',  no_argument, NULL, 0, eArgTypeNone,             "Disassemble entire contents of the current frame's function."},
 
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -244,6 +249,7 @@ CommandObjectDisassemble::Execute
         } 
         else
         {
+            // The default action is to disassemble the current frame function.
             if (exe_ctx.frame)
             {
                 SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
