@@ -236,8 +236,7 @@ namespace llvm {
      if (getVersion() == llvm::LLVMDebugVersion7)
        return getFieldAs<DICompileUnit>(3);
      
-     DIFile F = getFieldAs<DIFile>(3);
-     return F.getCompileUnit();
+     return getFieldAs<DIFile>(3).getCompileUnit();
     }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
@@ -275,15 +274,13 @@ namespace llvm {
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getCompileUnit().getDirectory();
 
-      DIFile F = getFieldAs<DIFile>(3);
-      return F.getDirectory();
+      return getFieldAs<DIFile>(3).getDirectory();
     }
     StringRef getFilename() const  { 
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getCompileUnit().getFilename();
 
-      DIFile F = getFieldAs<DIFile>(3);
-      return F.getFilename();
+      return getFieldAs<DIFile>(3).getFilename();
     }
 
     /// replaceAllUsesWith - Replace all uses of debug info referenced by
@@ -380,8 +377,7 @@ namespace llvm {
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getFieldAs<DICompileUnit>(6);
 
-      DIFile F = getFieldAs<DIFile>(6); 
-      return F.getCompileUnit();
+      return getFieldAs<DIFile>(6).getCompileUnit(); 
     }
     unsigned getLineNumber() const      { return getUnsignedField(7); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
@@ -448,16 +444,14 @@ namespace llvm {
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getCompileUnit().getFilename();
 
-      DIFile F = getFieldAs<DIFile>(6); 
-      return F.getFilename();
+      return getFieldAs<DIFile>(6).getFilename(); 
     }
 
     StringRef getDirectory() const   { 
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getCompileUnit().getFilename();
 
-      DIFile F = getFieldAs<DIFile>(6); 
-      return F.getDirectory();
+      return getFieldAs<DIFile>(6).getDirectory(); 
     }
 
     /// Verify - Verify that a subprogram descriptor is well formed.
@@ -577,13 +571,11 @@ namespace llvm {
     unsigned getLineNumber() const   { return getUnsignedField(2);         }
     unsigned getColumnNumber() const { return getUnsignedField(3);         }
     StringRef getDirectory() const {
-      DIFile F = getFieldAs<DIFile>(4);
-      StringRef dir = F.getDirectory();
+      StringRef dir = getFieldAs<DIFile>(4).getDirectory();
       return !dir.empty() ? dir : getContext().getDirectory();
     }
     StringRef getFilename() const {
-      DIFile F = getFieldAs<DIFile>(4);
-      StringRef filename = F.getFilename();
+      StringRef filename = getFieldAs<DIFile>(4).getFilename();
       return !filename.empty() ? filename : getContext().getFilename();
     }
   };
@@ -595,19 +587,16 @@ namespace llvm {
     DIScope getContext() const     { return getFieldAs<DIScope>(1);      }
     StringRef getName() const      { return getStringField(2);           }
     StringRef getDirectory() const  { 
-      DIFile F = getFieldAs<DIFile>(3);
-      return F.getDirectory();
+      return getFieldAs<DIFile>(3).getDirectory();
     }
     StringRef getFilename() const  { 
-      DIFile F = getFieldAs<DIFile>(3);
-      return F.getFilename();
+      return getFieldAs<DIFile>(3).getFilename();
     }
     DICompileUnit getCompileUnit() const{ 
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getFieldAs<DICompileUnit>(3);
 
-      DIFile F = getFieldAs<DIFile>(3); 
-      return F.getCompileUnit();
+      return getFieldAs<DIFile>(3).getCompileUnit(); 
     }
     unsigned getLineNumber() const { return getUnsignedField(4);         }
     bool Verify() const;
