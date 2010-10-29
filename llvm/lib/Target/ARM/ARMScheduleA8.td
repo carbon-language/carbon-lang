@@ -237,7 +237,7 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // FP Special Register to Integer Register File Move
   InstrItinData<IIC_fpSTAT , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                              InstrStage<1, [A8_NLSPipe]>]>,
+                              InstrStage<1, [A8_NLSPipe]>], [20]>,
   //
   // Single-precision FP Unary
   InstrItinData<IIC_fpUNA32 , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,

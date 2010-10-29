@@ -1914,9 +1914,16 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
 
   const TargetInstrDesc &UseTID = UseMI->getDesc();
   const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
-  if (DefMO.getReg() == ARM::CPSR && UseTID.isBranch())
+  if (DefMO.getReg() == ARM::CPSR) {
+    if (DefMI->getOpcode() == ARM::FMSTAT) {
+      // fpscr -> cpsr stalls over 20 cycles on A8 (and earlier?)
+      return Subtarget.isCortexA9() ? 1 : 20;
+    }
+
     // CPSR set and branch can be paired in the same cycle.
-    return 0;
+    if (UseTID.isBranch())
+      return 0;
+  }
 
   unsigned DefAlign = DefMI->hasOneMemOperand()
     ? (*DefMI->memoperands_begin())->getAlignment() : 0;

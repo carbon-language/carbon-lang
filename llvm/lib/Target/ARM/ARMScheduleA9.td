@@ -431,7 +431,8 @@ def CortexA9Itineraries : ProcessorItineraries<
                               InstrStage<1, [A9_MUX0], 0>,
                               InstrStage<1, [A9_DRegsVFP], 0, Required>,
                               InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                              InstrStage<1, [A9_NPipe]>]>,
+                              InstrStage<1, [A9_NPipe]>],
+                             [1]>,
   //
   // Single-precision FP Unary
   InstrItinData<IIC_fpUNA32 , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
