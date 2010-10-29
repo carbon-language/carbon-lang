@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ScopedHashTable.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -30,7 +31,8 @@ using namespace llvm;
 
 STATISTIC(NumCoalesces, "Number of copies coalesced");
 STATISTIC(NumCSEs,      "Number of common subexpression eliminated");
-STATISTIC(NumPhysCSEs,  "Number of phyreg defining common subexpr eliminated");
+STATISTIC(NumPhysCSEs,
+          "Number of physreg referencing common subexpr eliminated");
 
 namespace {
   class MachineCSE : public MachineFunctionPass {
@@ -74,11 +76,11 @@ namespace {
     bool isPhysDefTriviallyDead(unsigned Reg,
                                 MachineBasicBlock::const_iterator I,
                                 MachineBasicBlock::const_iterator E) const ;
-    bool hasLivePhysRegDefUse(const MachineInstr *MI,
-                              const MachineBasicBlock *MBB,
-                              unsigned &PhysDef) const;
-    bool PhysRegDefReaches(MachineInstr *CSMI, MachineInstr *MI,
-                           unsigned PhysDef) const;
+    bool hasLivePhysRegDefUses(const MachineInstr *MI,
+                               const MachineBasicBlock *MBB,
+                               SmallSet<unsigned,8> &PhysRefs) const;
+    bool PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
+                          SmallSet<unsigned,8> &PhysRefs) const;
     bool isCSECandidate(MachineInstr *MI);
     bool isProfitableToCSE(unsigned CSReg, unsigned Reg,
                            MachineInstr *CSMI, MachineInstr *MI);
@@ -177,14 +179,14 @@ MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
   return false;
 }
 
-/// hasLivePhysRegDefUse - Return true if the specified instruction read / write
+/// hasLivePhysRegDefUses - Return true if the specified instruction read/write
 /// physical registers (except for dead defs of physical registers). It also
 /// returns the physical register def by reference if it's the only one and the
 /// instruction does not uses a physical register.
-bool MachineCSE::hasLivePhysRegDefUse(const MachineInstr *MI,
-                                      const MachineBasicBlock *MBB,
-                                      unsigned &PhysDef) const {
-  PhysDef = 0;
+bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
+                                       const MachineBasicBlock *MBB,
+                                       SmallSet<unsigned,8> &PhysRefs) const {
+  MachineBasicBlock::const_iterator I = MI; I = llvm::next(I);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg())
@@ -194,35 +196,22 @@ bool MachineCSE::hasLivePhysRegDefUse(const MachineInstr *MI,
       continue;
     if (TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
-    if (MO.isUse()) {
-      // Can't touch anything to read a physical register.
-      PhysDef = 0;
-      return true;
-    }
-    if (MO.isDead())
-      // If the def is dead, it's ok.
-      continue;
-    // Ok, this is a physical register def that's not marked "dead". That's
+    // If the def is dead, it's ok. But the def may not marked "dead". That's
     // common since this pass is run before livevariables. We can scan
     // forward a few instructions and check if it is obviously dead.
-    if (PhysDef) {
-      // Multiple physical register defs. These are rare, forget about it.
-      PhysDef = 0;
-      return true;
-    }
-    PhysDef = Reg;
+    if (MO.isDef() &&
+        (MO.isDead() || isPhysDefTriviallyDead(Reg, I, MBB->end())))
+      continue;
+    PhysRefs.insert(Reg);
+    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
+      PhysRefs.insert(*Alias);
   }
 
-  if (PhysDef) {
-    MachineBasicBlock::const_iterator I = MI; I = llvm::next(I);
-    if (!isPhysDefTriviallyDead(PhysDef, I, MBB->end()))
-      return true;
-  }
-  return false;
+  return !PhysRefs.empty();
 }
 
-bool MachineCSE::PhysRegDefReaches(MachineInstr *CSMI, MachineInstr *MI,
-                                  unsigned PhysDef) const {
+bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
+                                  SmallSet<unsigned,8> &PhysRefs) const {
   // For now conservatively returns false if the common subexpression is
   // not in the same basic block as the given instruction.
   MachineBasicBlock *MBB = MI->getParent();
@@ -238,8 +227,17 @@ bool MachineCSE::PhysRegDefReaches(MachineInstr *CSMI, MachineInstr *MI,
 
     if (I == E)
       return true;
-    if (I->modifiesRegister(PhysDef, TRI))
-      return false;
+
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = I->getOperand(i);
+      if (!MO.isReg() || !MO.isDef())
+        continue;
+      unsigned MOReg = MO.getReg();
+      if (TargetRegisterInfo::isVirtualRegister(MOReg))
+        continue;
+      if (PhysRefs.count(MOReg))
+        return false;
+    }
 
     --LookAheadLeft;
     ++I;
@@ -360,7 +358,6 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
     if (!isCSECandidate(MI))
       continue;
 
-    bool DefPhys = false;
     bool FoundCSE = VNT.count(MI);
     if (!FoundCSE) {
       // Look for trivial copy coalescing opportunities.
@@ -373,22 +370,20 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
     }
     // FIXME: commute commutable instructions?
 
-    // If the instruction defines a physical register and the value *may* be
+    // If the instruction defines physical registers and the values *may* be
     // used, then it's not safe to replace it with a common subexpression.
-    unsigned PhysDef = 0;
-    if (FoundCSE && hasLivePhysRegDefUse(MI, MBB, PhysDef)) {
+    // It's also not safe if the instruction uses physical registers.
+    SmallSet<unsigned,8> PhysRefs;
+    if (FoundCSE && hasLivePhysRegDefUses(MI, MBB, PhysRefs)) {
       FoundCSE = false;
 
       // ... Unless the CS is local and it also defines the physical register
-      // which is not clobbered in between.
-      if (PhysDef) {
-        unsigned CSVN = VNT.lookup(MI);
-        MachineInstr *CSMI = Exps[CSVN];
-        if (PhysRegDefReaches(CSMI, MI, PhysDef)) {
-          FoundCSE = true;
-          DefPhys = true;
-        }
-      }
+      // which is not clobbered in between and the physical register uses 
+      // were not clobbered.
+      unsigned CSVN = VNT.lookup(MI);
+      MachineInstr *CSMI = Exps[CSVN];
+      if (PhysRegDefsReach(CSMI, MI, PhysRefs))
+        FoundCSE = true;
     }
 
     if (!FoundCSE) {
@@ -433,7 +428,7 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
       }
       MI->eraseFromParent();
       ++NumCSEs;
-      if (DefPhys)
+      if (!PhysRefs.empty())
         ++NumPhysCSEs;
     } else {
       DEBUG(dbgs() << "*** Not profitable, avoid CSE!\n");
