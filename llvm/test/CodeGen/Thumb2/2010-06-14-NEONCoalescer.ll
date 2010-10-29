@@ -23,7 +23,10 @@ entry:
   %4 = insertelement <2 x double> %2, double %V.0.ph, i32 1 ; <<2 x double>> [#uses=2]
 ; Constant pool load followed by add.
 ; Then clobber the loaded register, not the sum.
+; CHECK: vldr.64
+; CHECK: vadd.f64
 ; CHECK: vldr.64 [[LDR:d.*]],
+; CHECK: LPC0_0:
 ; CHECK: vadd.f64 [[ADD:d.*]], [[LDR]], [[LDR]]
 ; CHECK: vmov.f64 [[LDR]]
   %5 = fadd <2 x double> %3, %3                   ; <<2 x double>> [#uses=2]

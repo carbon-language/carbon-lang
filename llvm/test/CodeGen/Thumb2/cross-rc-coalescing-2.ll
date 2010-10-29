@@ -15,9 +15,9 @@ bb.nph:                                           ; preds = %bb5
 
 ; Loop preheader
 ; CHECK: vmov.f32
-; CHECK: vmul.f32
 ; CHECK: vsub.f32
 ; CHECK: vadd.f32
+; CHECK: vmul.f32
 bb7:                                              ; preds = %bb9, %bb.nph
   %s1.02 = phi float [ undef, %bb.nph ], [ %35, %bb9 ] ; <float> [#uses=3]
   %tmp79 = add i32 undef, undef                   ; <i32> [#uses=1]

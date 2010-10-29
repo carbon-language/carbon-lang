@@ -458,6 +458,15 @@ void ScheduleDAGSDNodes::ComputeOperandLatency(SDNode *Def, SDNode *Use,
     // Adjust the use operand index by num of defs.
     OpIdx += TII->get(Use->getMachineOpcode()).getNumDefs();
   int Latency = TII->getOperandLatency(InstrItins, Def, DefIdx, Use, OpIdx);
+  if (Latency > 1 && Use->getOpcode() == ISD::CopyToReg &&
+      !BB->succ_empty()) {
+    unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+    if (TargetRegisterInfo::isVirtualRegister(Reg))
+      // This copy is a liveout value. It is likely coalesced, so reduce the
+      // latency so not to penalize the def.
+      // FIXME: need target specific adjustment here?
+      Latency = (Latency > 1) ? Latency - 1 : 1;
+  }
   if (Latency >= 0)
     dep.setLatency(Latency);
 }

@@ -190,7 +190,7 @@ private:
 void ScheduleDAGRRList::Schedule() {
   DEBUG(dbgs()
         << "********** List Scheduling BB#" << BB->getNumber()
-        << " **********\n");
+        << " '" << BB->getName() << "' **********\n");
 
   NumLiveRegs = 0;
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);  
@@ -1483,6 +1483,46 @@ static unsigned calcMaxScratches(const SUnit *SU) {
   return Scratches;
 }
 
+/// hasOnlyLiveOutUse - Return true if SU has a single value successor that is a
+/// CopyToReg to a virtual register. This SU def is probably a liveout and
+/// it has no other use. It should be scheduled closer to the terminator.
+static bool hasOnlyLiveOutUses(const SUnit *SU) {
+  bool RetVal = false;
+  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    if (I->isCtrl()) continue;
+    const SUnit *SuccSU = I->getSUnit();
+    if (SuccSU->getNode() && SuccSU->getNode()->getOpcode() == ISD::CopyToReg) {
+      unsigned Reg =
+        cast<RegisterSDNode>(SuccSU->getNode()->getOperand(1))->getReg();
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        RetVal = true;
+        continue;
+      }
+    }
+    return false;
+  }
+  return RetVal;
+}
+
+/// UnitsSharePred - Return true if the two scheduling units share a common
+/// data predecessor.
+static bool UnitsSharePred(const SUnit *left, const SUnit *right) {
+  SmallSet<const SUnit*, 4> Preds;
+  for (SUnit::const_pred_iterator I = left->Preds.begin(),E = left->Preds.end();
+       I != E; ++I) {
+    if (I->isCtrl()) continue;  // ignore chain preds
+    Preds.insert(I->getSUnit());
+  }
+  for (SUnit::const_pred_iterator I = right->Preds.begin(),E = right->Preds.end();
+       I != E; ++I) {
+    if (I->isCtrl()) continue;  // ignore chain preds
+    if (Preds.count(I->getSUnit()))
+      return true;
+  }
+  return false;
+}
+
 template <typename RRSort>
 static bool BURRSort(const SUnit *left, const SUnit *right,
                      const RegReductionPriorityQueue<RRSort> *SPQ) {
@@ -1558,29 +1598,46 @@ bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
   else if (!LHigh && RHigh)
     return false;
   else if (!LHigh && !RHigh) {
+    // If the two nodes share an operand and one of them has a single
+    // use that is a live out copy, favor the one that is live out. Otherwise
+    // it will be difficult to eliminate the copy if the instruction is a
+    // loop induction variable update. e.g.
+    // BB:
+    // sub r1, r3, #1
+    // str r0, [r2, r3]
+    // mov r3, r1
+    // cmp
+    // bne BB
+    bool SharePred = UnitsSharePred(left, right);
+    // FIXME: Only adjust if BB is a loop back edge.
+    // FIXME: What's the cost of a copy?
+    int LBonus = (SharePred && hasOnlyLiveOutUses(left)) ? 1 : 0;
+    int RBonus = (SharePred && hasOnlyLiveOutUses(right)) ? 1 : 0;
+    int LHeight = (int)left->getHeight() - LBonus;
+    int RHeight = (int)right->getHeight() - RBonus;
+
     // Low register pressure situation, schedule for latency if possible.
     bool LStall = left->SchedulingPref == Sched::Latency &&
-      SPQ->getCurCycle() < left->getHeight();
+      (int)SPQ->getCurCycle() < LHeight;
     bool RStall = right->SchedulingPref == Sched::Latency &&
-      SPQ->getCurCycle() < right->getHeight();
+      (int)SPQ->getCurCycle() < RHeight;
     // If scheduling one of the node will cause a pipeline stall, delay it.
     // If scheduling either one of the node will cause a pipeline stall, sort
     // them according to their height.
-    // If neither will cause a pipeline stall, try to reduce register pressure.
     if (LStall) {
       if (!RStall)
         return true;
-      if (left->getHeight() != right->getHeight())
-        return left->getHeight() > right->getHeight();
+      if (LHeight != RHeight)
+        return LHeight > RHeight;
     } else if (RStall)
       return false;
 
-    // If either node is scheduling for latency, sort them by height and latency
-    // first.
+    // If either node is scheduling for latency, sort them by height
+    // and latency.
     if (left->SchedulingPref == Sched::Latency ||
         right->SchedulingPref == Sched::Latency) {
-      if (left->getHeight() != right->getHeight())
-        return left->getHeight() > right->getHeight();
+      if (LHeight != RHeight)
+        return LHeight > RHeight;
       if (left->Latency != right->Latency)
         return left->Latency > right->Latency;
     }
@@ -1627,19 +1684,6 @@ RegReductionPriorityQueue<SF>::canClobber(const SUnit *SU, const SUnit *Op) {
           return true;
       }
     }
-  }
-  return false;
-}
-
-/// hasCopyToRegUse - Return true if SU has a value successor that is a
-/// CopyToReg node.
-static bool hasCopyToRegUse(const SUnit *SU) {
-  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    if (I->isCtrl()) continue;
-    const SUnit *SuccSU = I->getSUnit();
-    if (SuccSU->getNode() && SuccSU->getNode()->getOpcode() == ISD::CopyToReg)
-      return true;
   }
   return false;
 }
@@ -1813,6 +1857,7 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
     if (!Node || !Node->isMachineOpcode() || SU->getNode()->getFlaggedNode())
       continue;
 
+    bool isLiveOut = hasOnlyLiveOutUses(SU);
     unsigned Opc = Node->getMachineOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
     unsigned NumRes = TID.getNumDefs();
@@ -1862,7 +1907,7 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
             SuccOpc == TargetOpcode::SUBREG_TO_REG)
           continue;
         if ((!canClobber(SuccSU, DUSU) ||
-             (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
+             (isLiveOut && !hasOnlyLiveOutUses(SuccSU)) ||
              (!SU->isCommutable && SuccSU->isCommutable)) &&
             !scheduleDAG->IsReachable(SuccSU, SU)) {
           DEBUG(dbgs() << "    Adding a pseudo-two-addr edge from SU #"

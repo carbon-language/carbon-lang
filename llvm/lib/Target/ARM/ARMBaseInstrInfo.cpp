@@ -1967,8 +1967,13 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   if (!ItinData || ItinData->isEmpty())
     return DefTID.mayLoad() ? 3 : 1;
 
-  if (!UseNode->isMachineOpcode())
-    return ItinData->getOperandCycle(DefTID.getSchedClass(), DefIdx);
+  if (!UseNode->isMachineOpcode()) {
+    int Latency = ItinData->getOperandCycle(DefTID.getSchedClass(), DefIdx);
+    if (Subtarget.isCortexA9())
+      return Latency <= 2 ? 1 : Latency - 1;
+    else
+      return Latency <= 3 ? 1 : Latency - 2;
+  }
 
   const TargetInstrDesc &UseTID = get(UseNode->getMachineOpcode());
   const MachineSDNode *DefMN = dyn_cast<MachineSDNode>(DefNode);
