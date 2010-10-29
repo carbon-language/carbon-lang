@@ -87,3 +87,13 @@ define <4 x i8> @test9(<16 x i8> %tmp6) nounwind {
 	%tmp9 = shufflevector <4 x i8> %tmp7, <4 x i8> undef, <4 x i32> < i32 3, i32 1, i32 2, i32 0 >		; <<4 x i8>> [#uses=1]
 	ret <4 x i8> %tmp9
 }
+
+; Redundant vector splats should be removed.  Radar 8597790.
+define <4 x i32> @test10(<4 x i32> %tmp5) nounwind {
+; CHECK: @test10
+; CHECK-NEXT: shufflevector
+; CHECK-NEXT: ret
+  %tmp6 = shufflevector <4 x i32> %tmp5, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+  %tmp7 = shufflevector <4 x i32> %tmp6, <4 x i32> undef, <4 x i32> zeroinitializer
+  ret <4 x i32> %tmp7
+}
