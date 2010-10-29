@@ -244,7 +244,8 @@ void FindUnreachableCode(AnalysisContext &AC, Callback &CB) {
     CFGBlock &b = **I;
     if (!reachable[b.getBlockID()]) {
       if (b.pred_empty()) {
-        if (!AddEHEdges && dyn_cast_or_null<CXXTryStmt>(b.getTerminator())) {
+        if (!AddEHEdges
+        && dyn_cast_or_null<CXXTryStmt>(b.getTerminator().getStmt())) {
             // When not adding EH edges from calls, catch clauses
             // can otherwise seem dead.  Avoid noting them as dead.
           numReachable += ScanReachableFromBlock(b, reachable);

@@ -2455,7 +2455,7 @@ bool CFGBlock::FilterEdge(const CFGBlock::FilterOptions &F,
     // If the 'To' has no label or is labeled but the label isn't a
     // CaseStmt then filter this edge.
     if (const SwitchStmt *S =
-  dyn_cast_or_null<SwitchStmt>(From->getTerminator())) {
+  dyn_cast_or_null<SwitchStmt>(From->getTerminator().getStmt())) {
       if (S->isAllEnumCasesCovered()) {
   const Stmt *L = To->getLabel();
   if (!L || !isa<CaseStmt>(L))
@@ -2834,7 +2834,7 @@ static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
 
     CFGBlockTerminatorPrint TPrinter(OS, Helper,
                                      PrintingPolicy(Helper->getLangOpts()));
-    TPrinter.Visit(const_cast<Stmt*>(B.getTerminator()));
+    TPrinter.Visit(const_cast<Stmt*>(B.getTerminator().getStmt()));
     OS << '\n';
   }
 
@@ -2916,11 +2916,11 @@ void CFGBlock::print(llvm::raw_ostream& OS, const CFG* cfg,
 void CFGBlock::printTerminator(llvm::raw_ostream &OS,
                                const LangOptions &LO) const {
   CFGBlockTerminatorPrint TPrinter(OS, NULL, PrintingPolicy(LO));
-  TPrinter.Visit(const_cast<Stmt*>(getTerminator()));
+  TPrinter.Visit(const_cast<Stmt*>(getTerminator().getStmt()));
 }
 
 Stmt* CFGBlock::getTerminatorCondition() {
-
+  Stmt *Terminator = this->Terminator;
   if (!Terminator)
     return NULL;
 
@@ -2974,7 +2974,7 @@ Stmt* CFGBlock::getTerminatorCondition() {
 }
 
 bool CFGBlock::hasBinaryBranchTerminator() const {
-
+  const Stmt *Terminator = this->Terminator;
   if (!Terminator)
     return false;
 

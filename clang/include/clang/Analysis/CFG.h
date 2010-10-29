@@ -205,6 +205,36 @@ public:
   }
 };
 
+/// CFGTerminator - Represents CFGBlock terminator statement.
+///
+/// TemporaryDtorsBranch bit is set to true if the terminator marks a branch
+/// in control flow of destructors of temporaries. In this case terminator
+/// statement is the same statement that branches control flow in evaluation
+/// of matching full expression.
+class CFGTerminator {
+  llvm::PointerIntPair<Stmt *, 1> Data;
+public:
+  CFGTerminator() {}
+  CFGTerminator(Stmt *S, bool TemporaryDtorsBranch = false)
+      : Data(S, TemporaryDtorsBranch) {}
+
+  Stmt *getStmt() { return Data.getPointer(); }
+  const Stmt *getStmt() const { return Data.getPointer(); }
+
+  bool isTemporaryDtorsBranch() const { return Data.getInt(); }
+
+  operator Stmt *() { return getStmt(); }
+  operator const Stmt *() const { return getStmt(); }
+
+  Stmt *operator->() { return getStmt(); }
+  const Stmt *operator->() const { return getStmt(); }
+
+  Stmt &operator*() { return *getStmt(); }
+  const Stmt &operator*() const { return *getStmt(); }
+
+  operator bool() const { return getStmt(); }
+};
+
 /// CFGBlock - Represents a single basic block in a source-level CFG.
 ///  It consists of:
 ///
@@ -279,7 +309,7 @@ class CFGBlock {
   /// Terminator - The terminator for a basic block that
   ///  indicates the type of control-flow that occurs between a block
   ///  and its successors.
-  Stmt *Terminator;
+  CFGTerminator Terminator;
 
   /// LoopTarget - Some blocks are used to represent the "loop edge" to
   ///  the start of a loop from within the loop body.  This Stmt* will be
@@ -422,8 +452,8 @@ public:
   void setLabel(Stmt* Statement) { Label = Statement; }
   void setLoopTarget(const Stmt *loopTarget) { LoopTarget = loopTarget; }
 
-  Stmt* getTerminator() { return Terminator; }
-  const Stmt* getTerminator() const { return Terminator; }
+  CFGTerminator getTerminator() { return Terminator; }
+  const CFGTerminator getTerminator() const { return Terminator; }
 
   Stmt* getTerminatorCondition();
 
@@ -638,6 +668,22 @@ private:
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
+
+/// Implement simplify_type for CFGTerminator, so that we can dyn_cast from
+/// CFGTerminator to a specific Stmt class.
+template <> struct simplify_type<const ::clang::CFGTerminator> {
+  typedef const ::clang::Stmt *SimpleType;
+  static SimpleType getSimplifiedValue(const ::clang::CFGTerminator &Val) {
+    return Val.getStmt();
+  }
+};
+
+template <> struct simplify_type< ::clang::CFGTerminator> {
+  typedef ::clang::Stmt *SimpleType;
+  static SimpleType getSimplifiedValue(const ::clang::CFGTerminator &Val) {
+    return const_cast<SimpleType>(Val.getStmt());
+  }
+};
 
 // Traits for: CFGBlock
 
