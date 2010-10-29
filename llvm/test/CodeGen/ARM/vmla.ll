@@ -213,19 +213,3 @@ entry:
   %4 = add <2 x i64> %arg0_uint64x2_t, %3
   ret <2 x i64> %4
 }
-
-; Redundant vector splats should be removed.  Radar 8597790.
-define void @fold_splat(<4 x i32>* %a, <4 x i32>* %b, <4 x i32>* %c) nounwind {
-; CHECK: fold_splat
-; CHECK-NOT: vdup
-; CHECK: vmla.i32
-  %tmp1 = load <4 x i32>* %a, align 16
-  %tmp3 = load <4 x i32>* %b, align 16
-  %tmp5 = load <4 x i32>* %c, align 16
-  %tmp6 = shufflevector <4 x i32> %tmp5, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
-  %tmp7 = shufflevector <4 x i32> %tmp6, <4 x i32> undef, <4 x i32> zeroinitializer
-  %tmp8 = mul <4 x i32> %tmp3, %tmp7
-  %tmp9 = add <4 x i32> %tmp1, %tmp8
-  store <4 x i32> %tmp9, <4 x i32>* %a, align 16
-  ret void
-}

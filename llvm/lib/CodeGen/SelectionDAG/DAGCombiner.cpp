@@ -6362,11 +6362,6 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         V = ConvInput.getNode();
     }
 
-    // Fold a splat of a splat.
-    ShuffleVectorSDNode *SVV = dyn_cast<ShuffleVectorSDNode>(V);
-    if (SVV && SVV->isSplat())
-      return N0;
-
     if (V->getOpcode() == ISD::BUILD_VECTOR) {
       assert(V->getNumOperands() == NumElts &&
              "BUILD_VECTOR has wrong number of operands");
