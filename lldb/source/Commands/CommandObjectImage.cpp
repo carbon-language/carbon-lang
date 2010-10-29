@@ -82,7 +82,7 @@ DumpCompileUnitLineTable
                 if (i > 0)
                     strm << "\n\n";
 
-                strm << "Line table for " << *dynamic_cast<FileSpec*> (sc.comp_unit) << " in `"
+                strm << "Line table for " << *static_cast<FileSpec*> (sc.comp_unit) << " in `"
                      << module->GetFileSpec().GetFilename() << "\n";
                 LineTable *line_table = sc.comp_unit->GetLineTable();
                 if (line_table)

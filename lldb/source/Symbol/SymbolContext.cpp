@@ -303,7 +303,7 @@ SymbolContext::Dump(Stream *s, Target *target) const
     s->Indent();
     *s << "CompileUnit  = " << (void *)comp_unit;
     if (comp_unit != NULL)
-        *s << " {0x" << comp_unit->GetID() << "} " << *(dynamic_cast<FileSpec*> (comp_unit));
+        *s << " {0x" << comp_unit->GetID() << "} " << *(static_cast<FileSpec*> (comp_unit));
     s->EOL();
     s->Indent();
     *s << "Function     = " << (void *)function;
