@@ -350,22 +350,32 @@ Program::Wait(unsigned secondsToWait,
     sigaction(SIGALRM, &Old, 0);
   }
 
-  // Return the proper exit status. 0=success, >0 is programs' exit status,
-  // <0 means a signal was returned, -9999999 means the program dumped core.
+  // Return the proper exit status. Detect error conditions
+  // so we can return -1 for them and set ErrMsg informatively.
   int result = 0;
-  if (WIFEXITED(status))
+  if (WIFEXITED(status)) {
     result = WEXITSTATUS(status);
-  else if (WIFSIGNALED(status))
-    result = 0 - WTERMSIG(status);
+    if (result == 127) {
+      *ErrMsg = llvm::sys::StrError(ENOENT);
+      return -1;
+    }
+    if (result == 126) {
+      *ErrMsg = "Program could not be executed";
+      return -1;
+    }
+  } else if (WIFSIGNALED(status)) {
+    *ErrMsg = strsignal(WTERMSIG(status));
 #ifdef WCOREDUMP
-  else if (WCOREDUMP(status))
-    result |= 0x01000000;
+    if (WCOREDUMP(status))
+      *ErrMsg += " (core dumped)";
 #endif
+    return -1;
+  }
   return result;
 #else
-  return -99;
+  *ErrMsg = "Program::Wait is not implemented on this platform yet!";
+  return -1;
 #endif
-
 }
 
 bool
