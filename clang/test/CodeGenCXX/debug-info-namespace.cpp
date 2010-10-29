@@ -1,4 +1,3 @@
-// XFAIL: freebsd, linux
 // RUN: %clang  -g -S %s -o - | FileCheck %s
 
 // CHECK: TAG_namespace
