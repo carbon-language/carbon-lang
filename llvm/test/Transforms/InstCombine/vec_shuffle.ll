@@ -88,6 +88,19 @@ define <4 x i8> @test9(<16 x i8> %tmp6) nounwind {
 	ret <4 x i8> %tmp9
 }
 
+; Same as test9, but make sure that "undef" mask values are not confused with
+; mask values of 2*N, where N is the mask length.  These shuffles should not
+; be folded (because [8,9,4,8] may not be a mask supported by the target).
+define <4 x i8> @test9a(<16 x i8> %tmp6) nounwind {
+; CHECK: @test9a
+; CHECK-NEXT: shufflevector
+; CHECK-NEXT: shufflevector
+; CHECK-NEXT: ret
+	%tmp7 = shufflevector <16 x i8> %tmp6, <16 x i8> undef, <4 x i32> < i32 undef, i32 9, i32 4, i32 8 >		; <<4 x i8>> [#uses=1]
+	%tmp9 = shufflevector <4 x i8> %tmp7, <4 x i8> undef, <4 x i32> < i32 3, i32 1, i32 2, i32 0 >		; <<4 x i8>> [#uses=1]
+	ret <4 x i8> %tmp9
+}
+
 ; Redundant vector splats should be removed.  Radar 8597790.
 define <4 x i32> @test10(<4 x i32> %tmp5) nounwind {
 ; CHECK: @test10

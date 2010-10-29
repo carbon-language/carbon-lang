@@ -53,22 +53,20 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
   return false;
 }
 
-/// Read and decode a shufflevector mask.
-///
-/// It turns undef elements into values that are larger than the number of
-/// elements in the input.
-static std::vector<unsigned> getShuffleMask(const ShuffleVectorInst *SVI) {
+/// getShuffleMask - Read and decode a shufflevector mask.
+/// Turn undef elements into negative values.
+static std::vector<int> getShuffleMask(const ShuffleVectorInst *SVI) {
   unsigned NElts = SVI->getType()->getNumElements();
   if (isa<ConstantAggregateZero>(SVI->getOperand(2)))
-    return std::vector<unsigned>(NElts, 0);
+    return std::vector<int>(NElts, 0);
   if (isa<UndefValue>(SVI->getOperand(2)))
-    return std::vector<unsigned>(NElts, 2*NElts);
+    return std::vector<int>(NElts, -1);
   
-  std::vector<unsigned> Result;
+  std::vector<int> Result;
   const ConstantVector *CP = cast<ConstantVector>(SVI->getOperand(2));
   for (User::const_op_iterator i = CP->op_begin(), e = CP->op_end(); i!=e; ++i)
     if (isa<UndefValue>(*i))
-      Result.push_back(NElts*2);  // undef -> 8
+      Result.push_back(-1);  // undef
     else
       Result.push_back(cast<ConstantInt>(*i)->getZExtValue());
   return Result;
@@ -109,14 +107,13 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
   
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(V)) {
     unsigned LHSWidth =
-    cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
-    unsigned InEl = getShuffleMask(SVI)[EltNo];
-    if (InEl < LHSWidth)
-      return FindScalarElement(SVI->getOperand(0), InEl);
-    else if (InEl < LHSWidth*2)
-      return FindScalarElement(SVI->getOperand(1), InEl - LHSWidth);
-    else
+      cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
+    int InEl = getShuffleMask(SVI)[EltNo];
+    if (InEl < 0) 
       return UndefValue::get(PTy->getElementType());
+    if (InEl < (int)LHSWidth)
+      return FindScalarElement(SVI->getOperand(0), InEl);
+    return FindScalarElement(SVI->getOperand(1), InEl - LHSWidth);
   }
   
   // Otherwise, we don't know.
@@ -215,18 +212,18 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       // If this is extracting an element from a shufflevector, figure out where
       // it came from and extract from the appropriate input element instead.
       if (ConstantInt *Elt = dyn_cast<ConstantInt>(EI.getOperand(1))) {
-        unsigned SrcIdx = getShuffleMask(SVI)[Elt->getZExtValue()];
+        int SrcIdx = getShuffleMask(SVI)[Elt->getZExtValue()];
         Value *Src;
         unsigned LHSWidth =
-        cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
+          cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
         
-        if (SrcIdx < LHSWidth)
+        if (SrcIdx < 0)
+          return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
+        if (SrcIdx < (int)LHSWidth)
           Src = SVI->getOperand(0);
-        else if (SrcIdx < LHSWidth*2) {
+        else {
           SrcIdx -= LHSWidth;
           Src = SVI->getOperand(1);
-        } else {
-          return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
         }
         return ExtractElementInst::Create(Src,
                                           ConstantInt::get(Type::getInt32Ty(EI.getContext()),
@@ -440,7 +437,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
 Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   Value *LHS = SVI.getOperand(0);
   Value *RHS = SVI.getOperand(1);
-  std::vector<unsigned> Mask = getShuffleMask(&SVI);
+  std::vector<int> Mask = getShuffleMask(&SVI);
   
   bool MadeChange = false;
   
@@ -472,12 +469,12 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     // Remap any references to RHS to use LHS.
     std::vector<Constant*> Elts;
     for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
-      if (Mask[i] >= 2*e)
+      if (Mask[i] < 0)
         Elts.push_back(UndefValue::get(Type::getInt32Ty(SVI.getContext())));
       else {
-        if ((Mask[i] >= e && isa<UndefValue>(RHS)) ||
-            (Mask[i] <  e && isa<UndefValue>(LHS))) {
-          Mask[i] = 2*e;     // Turn into undef.
+        if ((Mask[i] >= (int)e && isa<UndefValue>(RHS)) ||
+            (Mask[i] <  (int)e && isa<UndefValue>(LHS))) {
+          Mask[i] = -1;     // Turn into undef.
           Elts.push_back(UndefValue::get(Type::getInt32Ty(SVI.getContext())));
         } else {
           Mask[i] = Mask[i] % e;  // Force to LHS.
@@ -498,9 +495,9 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   bool isLHSID = true, isRHSID = true;
   
   for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
-    if (Mask[i] >= e*2) continue;  // Ignore undef values.
+    if (Mask[i] < 0) continue;  // Ignore undef values.
     // Is this an identity shuffle of the LHS value?
-    isLHSID &= (Mask[i] == i);
+    isLHSID &= (Mask[i] == (int)i);
     
     // Is this an identity shuffle of the RHS value?
     isRHSID &= (Mask[i]-e == i);
@@ -521,19 +518,21 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   // turning: (splat(splat)) -> splat.
   if (ShuffleVectorInst *LHSSVI = dyn_cast<ShuffleVectorInst>(LHS)) {
     if (isa<UndefValue>(RHS)) {
-      std::vector<unsigned> LHSMask = getShuffleMask(LHSSVI);
+      std::vector<int> LHSMask = getShuffleMask(LHSSVI);
       
       if (LHSMask.size() == Mask.size()) {
-        std::vector<unsigned> NewMask;
+        std::vector<int> NewMask;
         bool isSplat = true;
-        unsigned SplatElt = 2 * Mask.size(); // undef
+        int SplatElt = -1; // undef
         for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
-          unsigned MaskElt = 2 * e; // undef
-          if (Mask[i] < e)
+          int MaskElt;
+          if (Mask[i] < 0 || Mask[i] >= (int)e)
+            MaskElt = -1; // undef
+          else
             MaskElt = LHSMask[Mask[i]];
           // Check if this could still be a splat.
-          if (MaskElt < 2*e) {
-            if (SplatElt < 2*e && SplatElt != MaskElt)
+          if (MaskElt >= 0) {
+            if (SplatElt >=0 && SplatElt != MaskElt)
               isSplat = false;
             SplatElt = MaskElt;
           }
@@ -543,13 +542,10 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         // If the result mask is equal to the src shuffle or this
         // shuffle mask, do the replacement.
         if (isSplat || NewMask == LHSMask || NewMask == Mask) {
-          unsigned LHSInNElts =
-          cast<VectorType>(LHSSVI->getOperand(0)->getType())->
-          getNumElements();
           std::vector<Constant*> Elts;
           const Type *Int32Ty = Type::getInt32Ty(SVI.getContext());
           for (unsigned i = 0, e = NewMask.size(); i != e; ++i) {
-            if (NewMask[i] >= LHSInNElts*2) {
+            if (NewMask[i] < 0) {
               Elts.push_back(UndefValue::get(Int32Ty));
             } else {
               Elts.push_back(ConstantInt::get(Int32Ty, NewMask[i]));
