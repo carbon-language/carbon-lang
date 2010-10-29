@@ -43,7 +43,10 @@ class Reader:
       return int(Value)
 
    def read64(self):
-      return struct.unpack('><'[self.isLSB] + 'Q', self.read(8))[0]
+      Value = struct.unpack('><'[self.isLSB] + 'Q', self.read(8))[0]
+      if Value == int(Value):
+         Value = int(Value)
+      return Value
 
    def registerStringTable(self, strings):
       if self.string_table is not None:
