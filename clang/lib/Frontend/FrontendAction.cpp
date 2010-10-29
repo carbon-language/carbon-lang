@@ -166,6 +166,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     CI.createASTContext();
 
     llvm::OwningPtr<ASTConsumer> Consumer(CreateASTConsumer(CI, Filename));
+    if (!Consumer)
+      goto failure;
 
     CI.getASTContext().setASTMutationListener(Consumer->GetASTMutationListener());
 
