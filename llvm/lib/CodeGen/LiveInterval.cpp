@@ -740,11 +740,20 @@ unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
   for (unsigned i = 0, e = LI->getNumValNums(); i != e; ++i)
     eqClass_.push_back(i);
 
+  const VNInfo *used = 0, *unused = 0;
+
   // Determine connections.
   for (LiveInterval::const_vni_iterator I = LI->vni_begin(), E = LI->vni_end();
        I != E; ++I) {
     const VNInfo *VNI = *I;
-    assert(!VNI->isUnused() && "Cannot handle unused values");
+    // Group all unused values into one class.
+    if (VNI->isUnused()) {
+      if (unused)
+        Connect(unused->id, VNI->id);
+      unused = VNI;
+      continue;
+    }
+    used = VNI;
     if (VNI->isPHIDef()) {
       const MachineBasicBlock *MBB = lis_.getMBBFromIndex(VNI->def);
       assert(MBB && "Phi-def has no defining MBB");
@@ -762,6 +771,11 @@ unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
         Connect(VNI->id, UVNI->id);
     }
   }
+
+  // Lump all the unused values in with the last used value.
+  if (used && unused)
+    Connect(used->id, unused->id);
+
   return Renumber();
 }
 
