@@ -48,90 +48,6 @@ using namespace clang;
 using namespace clang::cxcursor;
 using namespace clang::cxstring;
 
-//===----------------------------------------------------------------------===//
-// Crash Reporting.
-//===----------------------------------------------------------------------===//
-
-#ifdef USE_CRASHTRACER
-#include "clang/Analysis/Support/SaveAndRestore.h"
-// Integrate with crash reporter.
-static const char *__crashreporter_info__ = 0;
-asm(".desc ___crashreporter_info__, 0x10");
-#define NUM_CRASH_STRINGS 32
-static unsigned crashtracer_counter = 0;
-static unsigned crashtracer_counter_id[NUM_CRASH_STRINGS] = { 0 };
-static const char *crashtracer_strings[NUM_CRASH_STRINGS] = { 0 };
-static const char *agg_crashtracer_strings[NUM_CRASH_STRINGS] = { 0 };
-
-static unsigned SetCrashTracerInfo(const char *str,
-                                   llvm::SmallString<1024> &AggStr) {
-
-  unsigned slot = 0;
-  while (crashtracer_strings[slot]) {
-    if (++slot == NUM_CRASH_STRINGS)
-      slot = 0;
-  }
-  crashtracer_strings[slot] = str;
-  crashtracer_counter_id[slot] = ++crashtracer_counter;
-
-  // We need to create an aggregate string because multiple threads
-  // may be in this method at one time.  The crash reporter string
-  // will attempt to overapproximate the set of in-flight invocations
-  // of this function.  Race conditions can still cause this goal
-  // to not be achieved.
-  {
-    llvm::raw_svector_ostream Out(AggStr);
-    for (unsigned i = 0; i < NUM_CRASH_STRINGS; ++i)
-      if (crashtracer_strings[i]) Out << crashtracer_strings[i] << '\n';
-  }
-  __crashreporter_info__ = agg_crashtracer_strings[slot] =  AggStr.c_str();
-  return slot;
-}
-
-static void ResetCrashTracerInfo(unsigned slot) {
-  unsigned max_slot = 0;
-  unsigned max_value = 0;
-
-  crashtracer_strings[slot] = agg_crashtracer_strings[slot] = 0;
-
-  for (unsigned i = 0 ; i < NUM_CRASH_STRINGS; ++i)
-    if (agg_crashtracer_strings[i] &&
-        crashtracer_counter_id[i] > max_value) {
-      max_slot = i;
-      max_value = crashtracer_counter_id[i];
-    }
-
-  __crashreporter_info__ = agg_crashtracer_strings[max_slot];
-}
-
-namespace {
-class ArgsCrashTracerInfo {
-  llvm::SmallString<1024> CrashString;
-  llvm::SmallString<1024> AggregateString;
-  unsigned crashtracerSlot;
-public:
-  ArgsCrashTracerInfo(llvm::SmallVectorImpl<const char*> &Args)
-    : crashtracerSlot(0)
-  {
-    {
-      llvm::raw_svector_ostream Out(CrashString);
-      Out << "ClangCIndex [" << getClangFullVersion() << "]"
-          << "[createTranslationUnitFromSourceFile]: clang";
-      for (llvm::SmallVectorImpl<const char*>::iterator I=Args.begin(),
-           E=Args.end(); I!=E; ++I)
-        Out << ' ' << *I;
-    }
-    crashtracerSlot = SetCrashTracerInfo(CrashString.c_str(),
-                                         AggregateString);
-  }
-
-  ~ArgsCrashTracerInfo() {
-    ResetCrashTracerInfo(crashtracerSlot);
-  }
-};
-}
-#endif
-
 /// \brief The result of comparing two source ranges.
 enum RangeComparisonResult {
   /// \brief Either the ranges overlap or one of the ranges is invalid.
@@ -2074,11 +1990,6 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   }
   
   unsigned NumErrors = Diags->getNumErrors();
-
-#ifdef USE_CRASHTRACER
-  ArgsCrashTracerInfo ACTI(Args);
-#endif
-
   llvm::OwningPtr<ASTUnit> Unit(
     ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
                                  Diags,
@@ -2232,6 +2143,7 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
     static_cast<ASTUnit *>(TU)->setUnsafeToFree(true);
     return 1;
   }
+
 
   return RTUI.result;
 }
