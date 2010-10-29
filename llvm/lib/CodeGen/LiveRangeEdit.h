@@ -78,7 +78,7 @@ public:
   iterator begin() const { return newRegs_.begin()+firstNew_; }
   iterator end() const { return newRegs_.end(); }
   unsigned size() const { return newRegs_.size()-firstNew_; }
-  LiveInterval *get(unsigned idx) const { return newRegs_[idx-firstNew_]; }
+  LiveInterval *get(unsigned idx) const { return newRegs_[idx+firstNew_]; }
 
   /// assignStackSlot - Ensure a stack slot is assigned to parent.
   /// @return the assigned stack slot number.
