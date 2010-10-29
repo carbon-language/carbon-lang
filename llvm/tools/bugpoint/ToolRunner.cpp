@@ -243,7 +243,7 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const char *Argv0,
     return new LLI(LLIPath, ToolArgs);
   }
 
-  Message = "Cannot find `lli' in executable directory or PATH!\n";
+  Message = "Cannot find `lli' in executable directory!\n";
   return 0;
 }
 
@@ -343,7 +343,7 @@ AbstractInterpreter *AbstractInterpreter::createCustom(
   if (CmdPath.empty()) {
     Message = 
       std::string("Cannot find '") + Command + 
-      "' in executable directory or PATH!\n";
+      "' in PATH!\n";
     return 0;
   }
 
@@ -439,7 +439,7 @@ LLC *AbstractInterpreter::createLLC(const char *Argv0,
   std::string LLCPath =
     FindExecutable("llc", Argv0, (void *)(intptr_t)&createLLC).str();
   if (LLCPath.empty()) {
-    Message = "Cannot find `llc' in executable directory or PATH!\n";
+    Message = "Cannot find `llc' in executable directory!\n";
     return 0;
   }
 
@@ -531,7 +531,7 @@ AbstractInterpreter *AbstractInterpreter::createJIT(const char *Argv0,
     return new JIT(LLIPath, Args);
   }
 
-  Message = "Cannot find `lli' in executable directory or PATH!\n";
+  Message = "Cannot find `lli' in executable directory!\n";
   return 0;
 }
 
@@ -610,7 +610,7 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
     FindExecutable("llc", Argv0, (void *)(intptr_t)&createCBE);
   if (LLCPath.isEmpty()) {
     Message =
-      "Cannot find `llc' in executable directory or PATH!\n";
+      "Cannot find `llc' in executable directory!\n";
     return 0;
   }
 
@@ -870,7 +870,7 @@ GCC *GCC::create(std::string &Message,
                  const std::vector<std::string> *Args) {
   sys::Path GCCPath = sys::Program::FindProgramByName(GCCBinary);
   if (GCCPath.isEmpty()) {
-    Message = "Cannot find `"+ GCCBinary +"' in executable directory or PATH!\n";
+    Message = "Cannot find `"+ GCCBinary +"' in PATH!\n";
     return 0;
   }
 
