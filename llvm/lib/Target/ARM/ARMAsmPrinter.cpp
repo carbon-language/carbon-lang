@@ -949,61 +949,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::MOVi32imm: {
-    // FIXME: We'd like to remove the asm string in the .td file, but the
-    // This is a hack that lowers as a two instruction sequence.
-    unsigned DstReg = MI->getOperand(0).getReg();
-    const MachineOperand &MO = MI->getOperand(1);
-    MCOperand V1, V2;
-    if (MO.isImm()) {
-      unsigned ImmVal = (unsigned)MI->getOperand(1).getImm();
-      V1 = MCOperand::CreateImm(ImmVal & 65535);
-      V2 = MCOperand::CreateImm(ImmVal >> 16);
-    } else if (MO.isGlobal()) {
-      MCSymbol *Symbol = MCInstLowering.GetGlobalAddressSymbol(MO.getGlobal());
-      const MCSymbolRefExpr *SymRef1 =
-        MCSymbolRefExpr::Create(Symbol,
-                                MCSymbolRefExpr::VK_ARM_LO16, OutContext);
-      const MCSymbolRefExpr *SymRef2 =
-        MCSymbolRefExpr::Create(Symbol,
-                                MCSymbolRefExpr::VK_ARM_HI16, OutContext);
-      V1 = MCOperand::CreateExpr(SymRef1);
-      V2 = MCOperand::CreateExpr(SymRef2);
-    } else {
-      // FIXME: External symbol?
-      MI->dump();
-      llvm_unreachable("cannot handle this operand");
-    }
-
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::MOVi16);
-      TmpInst.addOperand(MCOperand::CreateReg(DstReg));         // dstreg
-      TmpInst.addOperand(V1); // lower16(imm)
-
-      // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
-      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
-
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-
-    {
-      MCInst TmpInst;
-      TmpInst.setOpcode(ARM::MOVTi16);
-      TmpInst.addOperand(MCOperand::CreateReg(DstReg));         // dstreg
-      TmpInst.addOperand(MCOperand::CreateReg(DstReg));         // srcreg
-      TmpInst.addOperand(V2);   // upper16(imm)
-
-      // Predicate.
-      TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
-      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
-
-      OutStreamer.EmitInstruction(TmpInst);
-    }
-
-    return;
-  }
   case ARM::t2TBB:
   case ARM::t2TBH:
   case ARM::t2BR_JT: {
