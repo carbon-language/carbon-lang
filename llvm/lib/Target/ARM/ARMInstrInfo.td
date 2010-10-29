@@ -300,7 +300,7 @@ def pclabel : Operand<i32> {
 }
 
 def neon_vcvt_imm32 : Operand<i32> {
-  string EncoderMethod = "getNEONVcvtImm32";
+  string EncoderMethod = "getNEONVcvtImm32OpValue";
 }
 
 // rot_imm: An integer that encodes a rotate amount. Must be 8, 16, or 24.

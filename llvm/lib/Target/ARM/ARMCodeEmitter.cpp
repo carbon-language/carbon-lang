@@ -194,7 +194,7 @@ namespace {
         Binary |= (Reg << 13);
         return Binary;
       }
-    unsigned getNEONVcvtImm32(const MachineInstr &MI, unsigned Op) const {
+    unsigned getNEONVcvtImm32OpValue(const MachineInstr &MI, unsigned Op) const {
        return 0; }
 
     /// getMovi32Value - Return binary encoding of operand for movw/movt. If the

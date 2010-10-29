@@ -92,7 +92,7 @@ public:
     return MI.getOperand(Op).getImm() - 1;
   }
   
-  unsigned getNEONVcvtImm32(const MCInst &MI, unsigned Op) const {
+  unsigned getNEONVcvtImm32OpValue(const MCInst &MI, unsigned Op) const {
     return 64 - MI.getOperand(Op).getImm();
   }
 
