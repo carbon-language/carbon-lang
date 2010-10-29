@@ -233,7 +233,12 @@ CommandObjectExpression::EvaluateExpression
         m_exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
     }
     
-    lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (m_exe_ctx, expr));
+    const char *prefix = NULL;
+    
+    if (m_exe_ctx.target)
+        prefix = m_exe_ctx.target->GetExpressionPrefixContentsAsCString();
+    
+    lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (m_exe_ctx, expr, prefix));
     assert (result_valobj_sp.get());
     if (result_valobj_sp->GetError().Success())
     {

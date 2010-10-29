@@ -70,9 +70,9 @@ protected:
 
     const ConstString
     CreateInstanceName ();
-
-private:
-
+    
+    std::string m_expr_prefix_path;
+    std::string m_expr_prefix_contents;
 };
 
 class Target :
@@ -436,6 +436,9 @@ public:
     
     ClangASTContext *
     GetScratchClangASTContext();
+    
+    const char *
+    GetExpressionPrefixContentsAsCString ();
     
 protected:
     friend class lldb::SBTarget;

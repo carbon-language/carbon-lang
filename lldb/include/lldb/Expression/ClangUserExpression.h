@@ -45,8 +45,16 @@ class ClangUserExpression : public ClangExpression
 public:
     //------------------------------------------------------------------
     /// Constructor
+    ///
+    /// @param[in] expr
+    ///     The expression to parse.
+    ///
+    /// @param[in] expr_prefix
+    ///     If non-NULL, a C string containing translation-unit level
+    ///     definitions to be included when the expression is parsed.
     //------------------------------------------------------------------
-    ClangUserExpression (const char *expr);
+    ClangUserExpression (const char *expr,
+                         const char *expr_prefix);
     
     //------------------------------------------------------------------
     /// Destructor
@@ -189,9 +197,23 @@ public:
         return true;
     }
 
-
+    //------------------------------------------------------------------
+    /// Evaluate one expression and return its result.
+    ///
+    /// @param[in] exe_ctx
+    ///     The execution context to use when evaluating the expression.
+    ///
+    /// @param[in] expr_cstr
+    ///     A C string containing the expression to be evaluated.
+    ///
+    /// @param[in] expr_prefix
+    ///     If non-NULL, a C string containing translation-unit level
+    ///     definitions to be included when the expression is parsed.
+    //------------------------------------------------------------------
     static lldb::ValueObjectSP
-    Evaluate (ExecutionContext &exe_ctx, const char *expr_cstr);
+    Evaluate (ExecutionContext &exe_ctx, 
+              const char *expr_cstr,
+              const char *expr_prefix);
 
 private:
     //------------------------------------------------------------------
@@ -202,11 +224,12 @@ private:
 
     bool
     PrepareToExecuteJITExpression (Stream &error_stream,
-                                       ExecutionContext &exe_ctx,
-                                       lldb::addr_t &struct_address,
-                                       lldb::addr_t &object_ptr);
+                                   ExecutionContext &exe_ctx,
+                                   lldb::addr_t &struct_address,
+                                   lldb::addr_t &object_ptr);
     
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
+    std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
     
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.

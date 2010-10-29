@@ -547,7 +547,13 @@ SBFrame::EvaluateExpression (const char *expr)
     {
         ExecutionContext exe_ctx;
         m_opaque_sp->CalculateExecutionContext (exe_ctx);
-        *expr_result_value = ClangUserExpression::Evaluate (exe_ctx, expr);
+        
+        const char *prefix = NULL;
+        
+        if (exe_ctx.target)
+            prefix = exe_ctx.target->GetExpressionPrefixContentsAsCString();
+        
+        *expr_result_value = ClangUserExpression::Evaluate (exe_ctx, expr, prefix);
     }
     return expr_result_value;
 }

@@ -35,8 +35,10 @@
 
 using namespace lldb_private;
 
-ClangUserExpression::ClangUserExpression (const char *expr) :
+ClangUserExpression::ClangUserExpression (const char *expr,
+                                          const char *expr_prefix) :
     m_expr_text(expr),
+    m_expr_prefix(expr_prefix),
     m_transformed_text(),
     m_jit_addr(LLDB_INVALID_ADDRESS),
     m_cplusplus(false),
@@ -129,12 +131,14 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
 
     if (m_cplusplus)
     {
-        m_transformed_stream.Printf("typedef unsigned short unichar;        \n"
+        m_transformed_stream.Printf("%s                                     \n"
+                                    "typedef unsigned short unichar;        \n"
                                     "void                                   \n"
                                     "$__lldb_class::%s(void *$__lldb_arg)   \n"
                                     "{                                      \n"
                                     "    %s;                                \n" 
                                     "}                                      \n",
+                                    m_expr_prefix.c_str(),
                                     FunctionName(),
                                     m_expr_text.c_str());
         
@@ -142,12 +146,14 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     }
     else
     {
-        m_transformed_stream.Printf("typedef unsigned short unichar;\n"
+        m_transformed_stream.Printf("%s                             \n"
+                                    "typedef unsigned short unichar;\n"
                                     "void                           \n"
                                     "%s(void *$__lldb_arg)          \n"
                                     "{                              \n"
                                     "    %s;                        \n" 
                                     "}                              \n",
+                                    m_expr_prefix.c_str(),
                                     FunctionName(),
                                     m_expr_text.c_str());
     }
@@ -425,11 +431,13 @@ ClangUserExpression::DwarfOpcodeStream ()
 
 
 lldb::ValueObjectSP
-ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, const char *expr_cstr)
+ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, 
+                               const char *expr_cstr,
+                               const char *expr_prefix)
 {
     Error error;
     lldb::ValueObjectSP result_valobj_sp;
-    ClangUserExpression user_expression (expr_cstr);
+    ClangUserExpression user_expression (expr_cstr, expr_prefix);
     
     StreamString error_stream;
     

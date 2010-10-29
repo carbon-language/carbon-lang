@@ -17,6 +17,7 @@
 #include "lldb/Breakpoint/BreakpointResolverAddress.h"
 #include "lldb/Breakpoint/BreakpointResolverFileLine.h"
 #include "lldb/Breakpoint/BreakpointResolverName.h"
+#include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Timer.h"
@@ -853,6 +854,12 @@ Target::UpdateInstanceName ()
     }
 }
 
+const char *
+Target::GetExpressionPrefixContentsAsCString ()
+{
+    return m_expr_prefix_contents.c_str();
+}
+
 //--------------------------------------------------------------
 // class Target::SettingsController
 //--------------------------------------------------------------
@@ -976,6 +983,7 @@ TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
     return *this;
 }
 
+#define EXPR_PREFIX_STRING  "expr-prefix"
 
 void
 TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
@@ -987,14 +995,64 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
                                                         Error &err,
                                                         bool pending)
 {
-    // Currently 'target' does not have any instance settings.
+    static ConstString expr_prefix_str (EXPR_PREFIX_STRING);
+    
+    if (var_name == expr_prefix_str)
+    {
+        switch (op)
+        {
+        default:
+            err.SetErrorToGenericError ();
+            err.SetErrorString ("Unrecognized operation. Cannot update value.\n");
+            return;
+        case lldb::eVarSetOperationAssign:
+            {
+                FileSpec file_spec(value, true);
+                
+                if (!file_spec.Exists())
+                {
+                    err.SetErrorToGenericError ();
+                    err.SetErrorStringWithFormat ("%s does not exist.\n", value);
+                    return;
+                }
+                
+                DataBufferMemoryMap buf;
+                
+                if (!buf.MemoryMapFromFileSpec(&file_spec) &&
+                    buf.GetError().Fail())
+                {
+                    err.SetErrorToGenericError ();
+                    err.SetErrorStringWithFormat ("Couldn't read from %s: %s\n", value, buf.GetError().AsCString());
+                    return;
+                }
+                
+                m_expr_prefix_path = value;
+                m_expr_prefix_contents.assign(reinterpret_cast<const char *>(buf.GetBytes()), buf.GetByteSize());
+            }
+            return;
+        case lldb::eVarSetOperationAppend:
+            err.SetErrorToGenericError ();
+            err.SetErrorString ("Cannot append to a path.\n");
+            return;
+        case lldb::eVarSetOperationClear:
+            m_expr_prefix_path.clear ();
+            m_expr_prefix_contents.clear ();
+            return;
+        }
+    }
 }
 
 void
 TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
-                                               bool pending)
+                                              bool pending)
 {
-    // Currently 'target' does not have any instance settings.
+    TargetInstanceSettings *new_settings_ptr = static_cast <TargetInstanceSettings *> (new_settings.get());
+    
+    if (!new_settings_ptr)
+        return;
+    
+    m_expr_prefix_path = new_settings_ptr->m_expr_prefix_path;
+    m_expr_prefix_contents = new_settings_ptr->m_expr_prefix_contents;
 }
 
 bool
@@ -1003,9 +1061,20 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                   StringList &value,
                                                   Error *err)
 {
-    if (err)
-        err->SetErrorString ("'target' does not have any instance settings");
-    return false;
+    static ConstString expr_prefix_str (EXPR_PREFIX_STRING);
+    
+    if (var_name == expr_prefix_str)
+    {
+        value.AppendString (m_expr_prefix_path.c_str(), m_expr_prefix_path.size());
+    }
+    else 
+    {
+        if (err)
+            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+        return false;
+    }
+
+    return true;
 }
 
 const ConstString
@@ -1028,14 +1097,15 @@ TargetInstanceSettings::CreateInstanceName ()
 SettingEntry
 Target::SettingsController::global_settings_table[] =
 {
-  //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
-    { "default-arch", eSetVarTypeString, NULL, NULL,       false,  false,   "Default architecture to choose, when there's a choice." },
+  //{ "var-name",       var-type,           "default",  enum-table, init'd, hidden, "help-text"},
+    { "default-arch",   eSetVarTypeString,  NULL,       NULL,       false,  false,  "Default architecture to choose, when there's a choice." },
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
 
 SettingEntry
 Target::SettingsController::instance_settings_table[] =
 {
-  //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
+  //{ "var-name",           var-type,           "default",  enum-table, init'd, hidden, "help-text"},
+    { EXPR_PREFIX_STRING,   eSetVarTypeString,  NULL,       NULL,       false,  false,  "Path to a file containing expressions to be prepended to all expressions." },
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
