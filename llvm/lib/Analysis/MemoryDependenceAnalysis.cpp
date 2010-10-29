@@ -161,8 +161,9 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
 }
 
 /// getPointerDependencyFrom - Return the instruction on which a memory
-/// location depends.  If isLoad is true, this routine ignore may-aliases with
-/// read-only operations.
+/// location depends.  If isLoad is true, this routine ignores may-aliases with
+/// read-only operations.  If isLoad is false, this routine ignores may-aliases
+/// with reads from read-only locations.
 MemDepResult MemoryDependenceAnalysis::
 getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad, 
                          BasicBlock::iterator ScanIt, BasicBlock *BB) {
@@ -225,17 +226,21 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       Value *Pointer = LI->getPointerOperand();
       uint64_t PointerSize = AA->getTypeStoreSize(LI->getType());
       MDNode *TBAATag = LI->getMetadata(LLVMContext::MD_tbaa);
+      AliasAnalysis::Location LoadLoc(Pointer, PointerSize, TBAATag);
       
       // If we found a pointer, check if it could be the same as our pointer.
-      AliasAnalysis::AliasResult R =
-        AA->alias(AliasAnalysis::Location(Pointer, PointerSize, TBAATag),
-                  MemLoc);
+      AliasAnalysis::AliasResult R = AA->alias(LoadLoc, MemLoc);
       if (R == AliasAnalysis::NoAlias)
         continue;
       
       // May-alias loads don't depend on each other without a dependence.
       if (isLoad && R == AliasAnalysis::MayAlias)
         continue;
+
+      // Stores don't alias loads from read-only memory.
+      if (!isLoad && AA->pointsToConstantMemory(LoadLoc))
+        continue;
+
       // Stores depend on may and must aliased loads, loads depend on must-alias
       // loads.
       return MemDepResult::getDef(Inst);
