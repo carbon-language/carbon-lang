@@ -80,6 +80,9 @@ rdir = None
 # run.  Use '-s session-dir-name' to specify a specific dir name.
 sdir_name = None
 
+# Set this flag if there is any session info dumped during the test run.
+sdir_has_content = False
+
 # Default verbosity is 0.
 verbose = 0
 
@@ -568,7 +571,6 @@ if not sdir_name:
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
     sdir_name = timestamp
 os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
-sys.stderr.write("\nSession info for test failures/errors will go into directory '%s'\n" % sdir_name)
 
 #
 # Invoke the default TextTestRunner to run the test suite, possibly iterating
@@ -680,12 +682,16 @@ for ia in range(len(archs) if iterArchs else 1):
                 lldb.test_result = self
 
             def addError(self, test, err):
+                global sdir_has_content
+                sdir_has_content = True
                 super(LLDBTestResult, self).addError(test, err)
                 method = getattr(test, "markError", None)
                 if method:
                     method()
 
             def addFailure(self, test, err):
+                global sdir_has_content
+                sdir_has_content = True
                 super(LLDBTestResult, self).addFailure(test, err)
                 method = getattr(test, "markFailure", None)
                 if method:
@@ -694,6 +700,9 @@ for ia in range(len(archs) if iterArchs else 1):
         result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
                                           resultclass=LLDBTestResult).run(suite)
         
+
+if sdir_has_content:
+    sys.stderr.write("\nSession logs for test failures/errors can be found in directory '%s'\n" % sdir_name)
 
 # Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
 # This should not be necessary now.
