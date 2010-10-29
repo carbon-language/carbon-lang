@@ -143,11 +143,18 @@ bool BugDriver::runPasses(Module *Program,
     InFile.os().clear_error();
     return 1;
   }
+
+  sys::Path tool = FindExecutable("opt", getToolName(), (void*)"opt");
+  if (tool.empty()) {
+    errs() << "Cannot find `opt' in executable directory!\n";
+    return 1;
+  }
+
+  // Ok, everything that could go wrong before running opt is done.
   InFile.keep();
 
   // setup the child process' arguments
   SmallVector<const char*, 8> Args;
-  sys::Path tool = FindExecutable("opt", getToolName(), (void*)"opt");
   std::string Opt = tool.str();
   if (UseValgrind) {
     Args.push_back("valgrind");
