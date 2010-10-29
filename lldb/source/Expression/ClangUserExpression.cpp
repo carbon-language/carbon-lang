@@ -38,7 +38,7 @@ using namespace lldb_private;
 ClangUserExpression::ClangUserExpression (const char *expr,
                                           const char *expr_prefix) :
     m_expr_text(expr),
-    m_expr_prefix(expr_prefix),
+    m_expr_prefix(expr_prefix ? expr_prefix : ""),
     m_transformed_text(),
     m_jit_addr(LLDB_INVALID_ADDRESS),
     m_cplusplus(false),
