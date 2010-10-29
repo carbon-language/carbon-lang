@@ -855,6 +855,8 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
 
   for (unsigned i = 0; i != NumVals; ++i) {
     EVT VT = N->getValueType(i);
+    if (VT == MVT::Flag || VT == MVT::Other)
+      continue;
     if (VT.isFloatingPoint() || VT.isVector())
       return Sched::Latency;
   }
@@ -866,11 +868,13 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
   // is not available.
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
-  if (TID.mayLoad())
+
+  if (TID.getNumDefs() == 0)
+    return Sched::RegPressure;
+  if (!Itins->isEmpty() &&
+      Itins->getOperandCycle(TID.getSchedClass(), 0) > 2)
     return Sched::Latency;
 
-  if (!Itins->isEmpty() && Itins->getStageLatency(TID.getSchedClass()) > 2)
-    return Sched::Latency;
   return Sched::RegPressure;
 }
 
