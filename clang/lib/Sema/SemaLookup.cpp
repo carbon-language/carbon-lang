@@ -918,6 +918,10 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   // FIXME:  This really, really shouldn't be happening.
   if (!S) return false;
 
+  // If we are looking for members, no need to look into global/namespace scope.
+  if (R.getLookupKind() == LookupMemberName)
+    return false;
+
   // Collect UsingDirectiveDecls in all scopes, and recursively all
   // nominated namespaces by those using-directives.
   //
