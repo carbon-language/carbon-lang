@@ -43,7 +43,7 @@ namespace {
     // The eh.selector intrinsic.
     Function *SelectorIntrinsic;
 
-    // _Unwind_Resume_or_Rethrow call.
+    // _Unwind_Resume_or_Rethrow or _Unwind_SjLj_Resume call.
     Constant *URoR;
 
     // The EH language-specific catch-all type.
@@ -82,11 +82,11 @@ namespace {
     /// FindAllURoRInvokes - Find all URoR invokes in the function.
     void FindAllURoRInvokes(SmallPtrSet<InvokeInst*, 32> &URoRInvokes);
 
-    /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow"
-    /// calls. The "unwind" part of these invokes jump to a landing pad within
-    /// the current function. This is a candidate to merge the selector
-    /// associated with the URoR invoke with the one from the URoR's landing
-    /// pad.
+    /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow" or
+    /// "_Unwind_SjLj_Resume" calls. The "unwind" part of these invokes jump to
+    /// a landing pad within the current function. This is a candidate to merge
+    /// the selector associated with the URoR invoke with the one from the
+    /// URoR's landing pad.
     bool HandleURoRInvokes();
 
     /// FindSelectorAndURoR - Find the eh.selector call and URoR call associated
@@ -226,10 +226,11 @@ DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
   return Changed;
 }
 
-/// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow" calls. The
-/// "unwind" part of these invokes jump to a landing pad within the current
-/// function. This is a candidate to merge the selector associated with the URoR
-/// invoke with the one from the URoR's landing pad.
+/// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow" or
+/// "_Unwind_SjLj_Resume" calls. The "unwind" part of these invokes jump to a
+/// landing pad within the current function. This is a candidate to merge the
+/// selector associated with the URoR invoke with the one from the URoR's
+/// landing pad.
 bool DwarfEHPrepare::HandleURoRInvokes() {
   if (!EHCatchAllValue) {
     EHCatchAllValue =
@@ -249,7 +250,10 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
 
   if (!URoR) {
     URoR = F->getParent()->getFunction("_Unwind_Resume_or_Rethrow");
-    if (!URoR) return CleanupSelectors(CatchAllSels);
+    if (!URoR) {
+      URoR = F->getParent()->getFunction("_Unwind_SjLj_Resume");
+      if (!URoR) return CleanupSelectors(CatchAllSels);
+    }
   }
 
   SmallPtrSet<InvokeInst*, 32> URoRInvokes;
