@@ -91,7 +91,7 @@ public:
   unsigned getImmMinusOneOpValue(const MCInst &MI, unsigned Op) const {
     return MI.getOperand(Op).getImm() - 1;
   }
-  
+
   unsigned getNEONVcvtImm32OpValue(const MCInst &MI, unsigned Op) const {
     return 64 - MI.getOperand(Op).getImm();
   }
@@ -154,7 +154,7 @@ unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCOperand &MO) const {
   if (MO.isReg()) {
     unsigned regno = getARMRegisterNumbering(MO.getReg());
-    
+
     // Q registers are encodes as 2x their register number.
     switch (MO.getReg()) {
       case ARM::Q0: case ARM::Q1: case ARM::Q2: case ARM::Q3:
