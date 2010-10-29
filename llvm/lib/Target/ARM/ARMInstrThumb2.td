@@ -1736,8 +1736,8 @@ def t2MUL: T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), IIC_iMUL32,
 }
 
 def t2MLA: T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b, rGPR:$c), IIC_iMAC32,
-		"mla", "\t$dst, $a, $b, $c",
-		[(set rGPR:$dst, (add (mul rGPR:$a, rGPR:$b), rGPR:$c))]> {
+                "mla", "\t$dst, $a, $b, $c",
+                [(set rGPR:$dst, (add (mul rGPR:$a, rGPR:$b), rGPR:$c))]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0110;
   let Inst{22-20} = 0b000;
@@ -1746,7 +1746,7 @@ def t2MLA: T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b, rGPR:$c), IIC_iMAC32,
 }
 
 def t2MLS: T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b, rGPR:$c), IIC_iMAC32,
-		"mls", "\t$dst, $a, $b, $c",
+                "mls", "\t$dst, $a, $b, $c",
                 [(set rGPR:$dst, (sub rGPR:$c, (mul rGPR:$a, rGPR:$b)))]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0110;
