@@ -49,7 +49,8 @@ private:
 
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
-  ARMOperand *MaybeParseRegister(bool ParseWriteBack);
+  int TryParseRegister();
+  ARMOperand *TryParseRegisterWithWriteBack();
   ARMOperand *ParseRegisterList();
   ARMOperand *ParseMemory();
 
@@ -362,41 +363,45 @@ static unsigned MatchRegisterName(StringRef Name);
 /// }
 
 /// Try to parse a register name.  The token must be an Identifier when called,
-/// and if it is a register name the token is eaten and a Reg operand is created
-/// and returned.  Otherwise return null.
+/// and if it is a register name the token is eaten and the register number is
+/// returned.  Otherwise return -1.
+///
+int ARMAsmParser::TryParseRegister() {
+  const AsmToken &Tok = Parser.getTok();
+  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  
+  // FIXME: Validate register for the current architecture; we have to do
+  // validation later, so maybe there is no need for this here.
+  int RegNum = MatchRegisterName(Tok.getString());
+  if (RegNum == -1)
+    return -1;
+  Parser.Lex(); // Eat identifier token.
+  return RegNum;
+}
+  
+  
+/// Try to parse a register name.  The token must be an Identifier when called,
+/// and if it is a register name the token is eaten and the register number is
+/// returned.  Otherwise return -1.
 ///
 /// TODO this is likely to change to allow different register types and or to
 /// parse for a specific register type.
-ARMOperand *ARMAsmParser::MaybeParseRegister(bool ParseWriteBack) {
-  SMLoc S, E;
-  const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
-
-  // FIXME: Validate register for the current architecture; we have to do
-  // validation later, so maybe there is no need for this here.
-  int RegNum;
-
-  RegNum = MatchRegisterName(Tok.getString());
-  if (RegNum == -1)
-    return 0;
-
-  S = Tok.getLoc();
-
-  Parser.Lex(); // Eat identifier token.
-
-  E = Parser.getTok().getLoc();
+ARMOperand *ARMAsmParser::TryParseRegisterWithWriteBack() {
+  SMLoc S = Parser.getTok().getLoc();
+  int RegNo = TryParseRegister();
+  if (RegNo == -1) return 0;
+  
+  SMLoc E = Parser.getTok().getLoc();
 
   bool Writeback = false;
-  if (ParseWriteBack) {
-    const AsmToken &ExclaimTok = Parser.getTok();
-    if (ExclaimTok.is(AsmToken::Exclaim)) {
-      E = ExclaimTok.getLoc();
-      Writeback = true;
-      Parser.Lex(); // Eat exclaim token
-    }
+  const AsmToken &ExclaimTok = Parser.getTok();
+  if (ExclaimTok.is(AsmToken::Exclaim)) {
+    E = ExclaimTok.getLoc();
+    Writeback = true;
+    Parser.Lex(); // Eat exclaim token
   }
 
-  return ARMOperand::CreateReg(RegNum, Writeback, S, E);
+  return ARMOperand::CreateReg(RegNo, Writeback, S, E);
 }
 
 /// Parse a register list, return it if successful else return null.  The first
@@ -478,11 +483,8 @@ ARMOperand *ARMAsmParser::ParseMemory() {
     Error(BaseRegTok.getLoc(), "register expected");
     return 0;
   }
-  int BaseRegNum = 0;
-  if (ARMOperand *Op = MaybeParseRegister(false)) {
-    BaseRegNum = Op->getReg();
-    delete Op;
-  } else {
+  int BaseRegNum = TryParseRegister();
+  if (BaseRegNum == -1) {
     Error(BaseRegTok.getLoc(), "register expected");
     return 0;
   }
@@ -593,13 +595,14 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
   // See if there is a register following the "[Rn," or "[Rn]," we have so far.
   const AsmToken &OffsetRegTok = Parser.getTok();
   if (OffsetRegTok.is(AsmToken::Identifier)) {
-    if (ARMOperand *Op = MaybeParseRegister(false)) {
+    SMLoc CurLoc = OffsetRegTok.getLoc();
+    OffsetRegNum = TryParseRegister();
+    if (OffsetRegNum != -1) {
       OffsetIsReg = true;
-      E = Op->getEndLoc();
-      OffsetRegNum = Op->getReg();
-      delete Op;
+      E = CurLoc;
     }
   }
+  
   // If we parsed a register as the offset then their can be a shift after that
   if (OffsetRegNum != -1) {
     // Look for a comma then a shift
@@ -675,7 +678,7 @@ ARMOperand *ARMAsmParser::ParseOperand() {
 
   switch (getLexer().getKind()) {
   case AsmToken::Identifier:
-    if (ARMOperand *Op = MaybeParseRegister(true))
+    if (ARMOperand *Op = TryParseRegisterWithWriteBack())
       return Op;
 
     // This was not a register so parse other operands that start with an
