@@ -1571,21 +1571,25 @@ static bool EmitMnemonicAliases(raw_ostream &OS) {
           // We can't have two aliases from the same mnemonic with no predicate.
           PrintError(ToVec[AliasWithNoPredicate]->getLoc(),
                      "two MnemonicAliases with the same 'from' mnemonic!");
-          PrintError(R->getLoc(), "this is the other MnemonicAliases.");
-          throw std::string("ERROR: Invalid MnemonicAliases definitions!");
+          PrintError(R->getLoc(), "this is the other MnemonicAlias.");
+          throw std::string("ERROR: Invalid MnemonicAlias definitions!");
         }
         
         AliasWithNoPredicate = i;
         continue;
       }
      
+      if (!MatchCode.empty())
+        MatchCode += "else ";
       MatchCode += "if ((Features & " + FeatureMask + ") == "+FeatureMask+")\n";
       MatchCode += "  Mnemonic = \"" +R->getValueAsString("ToMnemonic")+"\";\n";
     }
     
     if (AliasWithNoPredicate != -1) {
       Record *R = ToVec[AliasWithNoPredicate];
-      MatchCode += "Mnemonic = \"" + R->getValueAsString("ToMnemonic") + "\";";
+      if (!MatchCode.empty())
+        MatchCode += "else\n  ";
+      MatchCode += "Mnemonic = \"" + R->getValueAsString("ToMnemonic")+"\";\n";
     }
     
     MatchCode += "return;";
