@@ -423,7 +423,7 @@ class.  This operation is analogous to $(foreach) in GNU make.</dd>
       'c' otherwise.</dd>
 <dt><tt>!eq(a,b)</tt></dt>
   <dd>Integer one if string a is equal to string b, zero otherwise.  This
-      only operates on string, int and bit objects.  Use !cast<string> to
+      only operates on string, int and bit objects.  Use !cast&lt;string&gt; to
       compare other types of objects.</dd>
 </dl>
 
@@ -813,8 +813,7 @@ end-user to factor out commonality from the records.</p>
 apply, and one or more records to bind the values in.  Here are some
 examples:</p>
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 <b>let</b> isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 <b>in</b>
   <b>def</b> RET : I&lt;0xC3, RawFrm, (outs), (ins), "ret", [(X86retflag 0)]&gt;;
 
@@ -831,7 +830,6 @@ examples:</p>
                         "call\t{*}$dst", []&gt;;
   }
 </pre>
-</div>
 
 <p>File-scope "let" expressions are often useful when a couple of definitions
 need to be added to several records, and the records do not otherwise need to be
@@ -842,8 +840,7 @@ more ways to factor out commonality from the records, specially if using
 several levels of multiclass instanciations. This also avoids the need of using
 "let" expressions within subsequent records inside a multiclass.</p> 
 
-<div class="doc_code">
-<pre>
+<pre class="doc_code">
 <b>multiclass </b>basic_r&lt;bits&lt;4&gt; opc&gt; {
   <b>let </b>Predicates = [HasSSE2] in {
     <b>def </b>rr : Instruction&lt;opc, "rr"&gt;;
@@ -869,16 +866,17 @@ several levels of multiclass instanciations. This also avoids the need of using
 <div class="doc_section"><a name="codegen">Code Generator backend info</a></div>
 <!-- *********************************************************************** -->
 
+<div class="doc_text">
+
 <p>Expressions used by code generator to describe instructions and isel
 patterns:</p>
 
-<div class="doc_text">
-
+<dl>
 <dt><tt>(implicit a)</tt></dt>
   <dd>an implicitly defined physical register.  This tells the dag instruction
   selection emitter the input pattern's extra definitions matches implicit
   physical register definitions.</dd>
-
+</dl>
 </div>
 
 <!-- *********************************************************************** -->

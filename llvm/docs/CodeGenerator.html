@@ -5,6 +5,17 @@
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <title>The LLVM Target-Independent Code Generator</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
+
+  <style type="text/css">
+    .unknown { background-color: #C0C0C0; text-align: center; }
+    .unknown:before { content: "?" }
+    .no { background-color: #C11B17 }
+    .no:before { content: "N" }
+    .partial { background-color: #F88017 }
+    .yes { background-color: #0F0; }
+    .yes:before { content: "Y" }
+  </style>
+
 </head>
 <body>
 
@@ -872,7 +883,7 @@ directive in a .s file).
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="mcinst">The <tt>MCInst</tt> class</a></li>
+  <a name="mcinst">The <tt>MCInst</tt> class</a>
 </div>
 
 <div class="doc_text">
@@ -1974,17 +1985,6 @@ on the current instruction set.</p>
   <a name="targetfeatures">Target Feature Matrix</a>
 </div>
 
-<style type="text/css">
-  .unknown { background-color: #C0C0C0; text-align: center; }
-  .unknown:before { content: "?" }
-  .no { background-color: #C11B17 }
-  .no:before { content: "N" }
-  .partial { background-color: #F88017 }
-  .yes { background-color: #00FF00; }
-  .yes:before { content: "Y" }
-</style>
-
-
 <div class="doc_text">
 
 <p>Note that this table does not include the C backend or Cpp backends, since
@@ -2015,7 +2015,7 @@ is the key:</p>
 
 <table width="689" border="1" cellspacing="0">
 <tr><td></td>
-<td colspan="13" align="center" bgcolor="#ffffcc">Target</td>
+<td colspan="13" align="center" style="background-color:#ffc">Target</td>
 </tr>
   <tr>
     <th>Feature</th>
