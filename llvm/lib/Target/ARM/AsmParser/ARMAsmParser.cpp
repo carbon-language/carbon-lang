@@ -260,7 +260,7 @@ public:
     // the difference?
     if (Mem.Offset) {
       const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
-      assert (CE && "non-constant mode 5 offset operand!");
+      assert(CE && "non-constant mode 5 offset operand!");
       // The MCInst offset operand doesn't include the low two bits (like
       // the instruction encoding).
       Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
