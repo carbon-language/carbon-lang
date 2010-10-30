@@ -26,3 +26,18 @@ template<typename T> struct a : T {
    int aa() { return p; } // expected-error{{use of undeclared identifier 'p'}}
  };
 };
+
+// rdar://8605381
+namespace rdar8605381 {
+struct X {};
+
+struct Y { // expected-note{{candidate}}
+  Y();
+};
+
+struct {
+  Y obj;
+} objs[] = {
+  new Y // expected-error{{no viable conversion}}
+};
+}
