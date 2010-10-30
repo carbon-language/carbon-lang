@@ -587,7 +587,7 @@ private:
 
     SubtargetFeatureInfo *&Entry = SubtargetFeatures[Def];
     if (!Entry) {
-      Entry = new SubtargetFeatureInfo;
+      Entry = new SubtargetFeatureInfo();
       Entry->TheDef = Def;
       Entry->Index = SubtargetFeatures.size() - 1;
       Entry->EnumName = "Feature_" + Def->getName();
@@ -1514,6 +1514,35 @@ static void EmitComputeAvailableFeatures(CodeGenTarget &Target,
   OS << "}\n\n";
 }
 
+static std::string GetAliasRequiredFeatures(Record *R) {
+  // FIXME: This is a total hack.
+  std::vector<Record*> ReqFeatures = R->getValueAsListOfDefs("Predicates");
+  
+  std::string Result;
+  unsigned NumFeatures = 0;
+  for (unsigned i = 0, e = ReqFeatures.size(); i != e; ++i) {
+    Record *Pred = ReqFeatures[i];
+  
+    // FIXME: Total hack; for now, we just limit ourselves to In32BitMode
+    // and In64BitMode, because we aren't going to have the right feature
+    // masks for SSE and friends. We need to decide what we are going to do
+    // about CPU subtypes to implement this the right way.
+    if (Pred->getName() != "In32BitMode" &&
+        Pred->getName() != "In64BitMode")
+      continue;
+
+    if (NumFeatures)
+      Result += '|';
+    
+    Result += "Feature_" + Pred->getName();
+    ++NumFeatures;
+  }
+  
+  if (NumFeatures > 1)
+    Result = '(' + Result + ')';
+  return Result;
+}
+
 /// EmitMnemonicAliases - If the target has any MnemonicAlias<> definitions,
 /// emit a function for them and return true, otherwise return false.
 static bool EmitMnemonicAliases(raw_ostream &OS) {
@@ -1539,22 +1568,45 @@ static bool EmitMnemonicAliases(raw_ostream &OS) {
   for (std::map<std::string, std::vector<Record*> >::iterator
        I = AliasesFromMnemonic.begin(), E = AliasesFromMnemonic.end();
        I != E; ++I) {
-    const std::string &From = I->first;
     const std::vector<Record*> &ToVec = I->second;
+
+    // Loop through each alias and emit code that handles each case.  If there
+    // are two instructions without predicates, emit an error.  If there is one,
+    // emit it last.
+    std::string MatchCode;
+    int AliasWithNoPredicate = -1;
     
-    // If there is only one destination mnemonic, generate simple code.
-    if (ToVec.size() == 1) {
-      Cases.push_back(std::make_pair(From, "Mnemonic = \"" +
-                                     ToVec[0]->getValueAsString("ToMnemonic") +
-                                     "\"; return;"));
-      continue;
+    for (unsigned i = 0, e = ToVec.size(); i != e; ++i) {
+      Record *R = ToVec[i];
+      std::string FeatureMask = GetAliasRequiredFeatures(R);
+    
+      // If this unconditionally matches, remember it for later and diagnose
+      // duplicates.
+      if (FeatureMask.empty()) {
+        if (AliasWithNoPredicate != -1) {
+          // We can't have two aliases from the same mnemonic with no predicate.
+          PrintError(ToVec[AliasWithNoPredicate]->getLoc(),
+                     "two MnemonicAliases with the same 'from' mnemonic!");
+          PrintError(R->getLoc(), "this is the other MnemonicAliases.");
+          throw std::string("ERROR: Invalid MnemonicAliases definitions!");
+        }
+        
+        AliasWithNoPredicate = i;
+        continue;
+      }
+     
+      MatchCode += "if ((Features & " + FeatureMask + ") == "+FeatureMask+")\n";
+      MatchCode += "  Mnemonic = \"" +R->getValueAsString("ToMnemonic")+"\";\n";
     }
     
-    // Otherwise, diagnose an error, can't have two aliases from the same
-    // mnemonic.
-    PrintError(ToVec[0]->getLoc(), "two MnemonicAliases with the same 'from' mnemonic!");
-    PrintError(ToVec[1]->getLoc(), "this is the other MnemonicAliases.");
-    throw std::string("ERROR: Invalid MnemonicAliases definitions!");
+    if (AliasWithNoPredicate != -1) {
+      Record *R = ToVec[AliasWithNoPredicate];
+      MatchCode += "Mnemonic = \"" + R->getValueAsString("ToMnemonic") + "\";";
+    }
+    
+    MatchCode += "return;";
+
+    Cases.push_back(std::make_pair(I->first, MatchCode));
   }
   
   

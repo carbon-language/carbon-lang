@@ -1896,7 +1896,7 @@ compiler.</p>
 The MatchInstructionImpl function performs alias processing and then does
 actual matching.</p>
 
-<p>Alias processing if the phase that canonicalizes different lexical forms of
+<p>Alias processing is the phase that canonicalizes different lexical forms of
 the same instructions down to one representation.  There are several different
 kinds of alias that are possible to implement and they are listed below in the
 order that they are processed (which is in order from simplest/weakest to most
@@ -1911,7 +1911,7 @@ description.</p>
 
 <p>The first phase of alias processing is simple instruction mneomonic
 remapping for classes of instructions which are allowed with two different
-mneomonics.  This phase is a simple and unconditionally remapping from one input
+mnemonics.  This phase is a simple and unconditionally remapping from one input
 mnemonic to one output mnemonic.  It isn't possible for this form of alias to
 look at the operands at all, so the remapping must apply for all forms of a
 given mnemonic.  Mnemonic aliases are defined simply, for example X86 has:
@@ -1928,7 +1928,19 @@ def : MnemonicAlias&lt;"ud2a",    "ud2"&gt;;
 </div>
 
 <p>... and many others.  With a MnemonicAlias definition, the mnemonic is
-remapped simply and directly.</p>
+remapped simply and directly.  Though MnemonicAlias's can't look at any aspect
+of the instruction (such as the operands) they can depend on global modes (the
+same ones supported by the matcher), through a Requires clause:</p>
+
+<div class="doc_code">
+<pre>
+def : MnemonicAlias&lt;"pushf", "pushfq"&gt;, Requires&lt;[In64BitMode]&gt;;
+def : MnemonicAlias&lt;"pushf", "pushfl"&gt;, Requires&lt;[In32BitMode]&gt;;
+</pre>
+</div>
+
+<p>In this example, the mnemonic gets mapped into different a new one depending
+on the current instruction set.</p>
 
 </div>
 

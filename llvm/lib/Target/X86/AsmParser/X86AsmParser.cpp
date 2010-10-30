@@ -620,16 +620,10 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 bool X86ATTAsmParser::
 ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // FIXME: Hack to recognize some aliases.
-  StringRef PatchedName = StringSwitch<StringRef>(Name)
-    .Case("push", Is64Bit ? "pushq" : "pushl")
-    .Case("pop", Is64Bit ? "popq" : "popl")
-    .Case("pushf", Is64Bit ? "pushfq" : "pushfl")
-    .Case("popf",  Is64Bit ? "popfq"  : "popfl")
-    .Case("retl", Is64Bit ? "retl" : "ret")
-    .Case("retq", Is64Bit ? "ret" : "retq")
-    .Case("movzx", "movzb")  // FIXME: Not correct.
-    .Default(Name);
+  // FIXME: This is not correct at all.
+  if (Name == "movzx") Name = "movzb";
+  
+  StringRef PatchedName = Name;
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
   const MCExpr *ExtraImmOp = 0;
@@ -714,9 +708,9 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   // Determine whether this is an instruction prefix.
   bool isPrefix =
-    PatchedName == "lock" || PatchedName == "rep" ||
-    PatchedName == "repe" || PatchedName == "repz" ||
-    PatchedName == "repne" || PatchedName == "repnz";
+    Name == "lock" || Name == "rep" ||
+    Name == "repe" || Name == "repz" ||
+    Name == "repne" || Name == "repnz";
 
 
   // This does the actual operand parsing.  Don't parse any more if we have a

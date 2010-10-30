@@ -1266,12 +1266,24 @@ def : MnemonicAlias<"cdq", "cltd">;
 def : MnemonicAlias<"cwde", "cwtl">;
 def : MnemonicAlias<"cdqe", "cltq">;
 
-def : MnemonicAlias<"pushfd", "pushfl">;
+def : MnemonicAlias<"pop", "popl">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"pop", "popq">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"popf", "popfl">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"popf", "popfq">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"popfd",  "popfl">;
+
+def : MnemonicAlias<"push", "pushl">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"push", "pushq">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"pushf", "pushfl">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"pushf", "pushfq">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"pushfd", "pushfl">;
 
 def : MnemonicAlias<"repe", "rep">;
 def : MnemonicAlias<"repz", "rep">;
 def : MnemonicAlias<"repnz", "repne">;
+
+def : MnemonicAlias<"retl", "ret">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"retq", "ret">, Requires<[In64BitMode]>;
 
 def : MnemonicAlias<"salb", "shlb">;
 def : MnemonicAlias<"salw", "shlw">;

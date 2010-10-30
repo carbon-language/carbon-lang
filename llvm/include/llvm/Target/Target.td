@@ -541,11 +541,18 @@ def DefaultAsmParser : AsmParser;
 /// actually has one for each suffix as well):
 ///   def : MnemonicAlias<"sal", "shl">;
 ///
-/// Mnemonic aliases are mapped before any other translation in the match phase.
+/// Mnemonic aliases are mapped before any other translation in the match phase,
+/// and do allow Requires predicates, e.g.:
+///
+///  def : MnemonicAlias<"pushf", "pushfq">, Requires<[In64BitMode]>;
+///  def : MnemonicAlias<"pushf", "pushfl">, Requires<[In32BitMode]>;
 ///
 class MnemonicAlias<string From, string To> {
   string FromMnemonic = From;
   string ToMnemonic = To;
+  
+  // Predicates - Predicates that must be true for this remapping to happen.
+  list<Predicate> Predicates = [];
 }
 
 
