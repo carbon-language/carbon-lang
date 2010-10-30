@@ -57,6 +57,11 @@ rdtscp
 // CHECK: shrl	%eax                    # encoding: [0xd1,0xe8]
         shrl $1, %eax
 
+// CHECK: shll	%eax                    # encoding: [0xd1,0xe0]
+        sall $1, %eax
+// CHECK: shll	%eax                    # encoding: [0xd1,0xe0]
+        sal $1, %eax
+
 // moffset forms of moves, rdar://7947184
 movb	0, %al    // CHECK: movb 0, %al  # encoding: [0xa0,A,A,A,A]
 movw	0, %ax    // CHECK: movw 0, %ax  # encoding: [0x66,0xa1,A,A,A,A]

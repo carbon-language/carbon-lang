@@ -783,7 +783,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".
   if ((Name.startswith("shr") || Name.startswith("sar") ||
-       Name.startswith("shl")) &&
+       Name.startswith("shl") || Name.startswith("sal")) &&
       Operands.size() == 3) {
     X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
     if (Op1->isImm() && isa<MCConstantExpr>(Op1->getImm()) &&
