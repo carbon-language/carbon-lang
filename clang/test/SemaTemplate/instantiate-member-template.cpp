@@ -203,3 +203,15 @@ namespace PR7669 {
     X<int>::Y<int>::Z<0,int>();
   }
 }
+
+namespace PR8489 {
+  template <typename CT>
+  class C {
+    template<typename FT>
+    void F() {} // expected-note{{FT}}
+  };
+  void f() {
+    C<int> c;
+    c.F(); // expected-error{{no matching member function}}
+  }
+}

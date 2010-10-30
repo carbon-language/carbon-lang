@@ -1508,7 +1508,7 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
   TemplateTypeParmDecl *Inst =
     TemplateTypeParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
                                  TTPT->getDepth() - TemplateArgs.getNumLevels(),
-                                 TTPT->getIndex(),TTPT->getName(),
+                                 TTPT->getIndex(), D->getIdentifier(),
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
 
