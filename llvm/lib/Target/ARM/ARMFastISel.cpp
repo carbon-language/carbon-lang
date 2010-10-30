@@ -939,8 +939,11 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   // TODO: Factor this out.
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
     if (CI->hasOneUse() && (CI->getParent() == I->getParent())) {
+      EVT VT;
       const Type *Ty = CI->getOperand(0)->getType();
-      EVT VT = TLI.getValueType(Ty);
+      if (!isTypeLegal(Ty, VT))
+        return false;
+
       bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
       if (isFloat && !Subtarget->hasVFP2())
         return false;
