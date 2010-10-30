@@ -33,3 +33,12 @@ __attribute__((vector_size(16))) float f2(
 typedef float __attribute__((ext_vector_type (3))) float3;
 int test2[sizeof(float3) == sizeof(float4) ? 1 : -1];
 
+// rdar://problem/8345836
+typedef long long __attribute__((vector_size(16))) longlong2;
+typedef short __attribute__((vector_size(16))) short8;
+typedef short __attribute__((vector_size(8))) short4;
+void test3() {
+  extern short8 test3_helper(void);
+  longlong2 arr1[2] = { test3_helper(), test3_helper() };
+  short4 arr2[2] = { test3_helper(), test3_helper() }; // expected-error 2 {{initializing 'short4' with an expression of incompatible type 'short8'}}
+}

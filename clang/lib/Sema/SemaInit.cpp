@@ -839,66 +839,95 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
                                       unsigned &Index,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
-  if (Index < IList->getNumInits()) {
-    const VectorType *VT = DeclType->getAs<VectorType>();
-    unsigned maxElements = VT->getNumElements();
-    unsigned numEltsInit = 0;
-    QualType elementType = VT->getElementType();
+  if (Index >= IList->getNumInits())
+    return;
 
-    if (!SemaRef.getLangOptions().OpenCL) {
-      InitializedEntity ElementEntity =
-        InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity);
+  const VectorType *VT = DeclType->getAs<VectorType>();
+  unsigned maxElements = VT->getNumElements();
+  unsigned numEltsInit = 0;
+  QualType elementType = VT->getElementType();
 
-      for (unsigned i = 0; i < maxElements; ++i, ++numEltsInit) {
-        // Don't attempt to go past the end of the init list
-        if (Index >= IList->getNumInits())
-          break;
-        
-        ElementEntity.setElementIndex(Index);
-        CheckSubElementType(ElementEntity, IList, elementType, Index,
-                            StructuredList, StructuredIndex);
-      }
-    } else {
-      InitializedEntity ElementEntity =
-        InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity);
+  if (!SemaRef.getLangOptions().OpenCL) {
+    // If the initializing element is a vector, try to copy-initialize
+    // instead of breaking it apart (which is doomed to failure anyway).
+    Expr *Init = IList->getInit(Index);
+    if (!isa<InitListExpr>(Init) && Init->getType()->isVectorType()) {
+      ExprResult Result =
+        SemaRef.PerformCopyInitialization(Entity, Init->getLocStart(),
+                                          SemaRef.Owned(Init));
+
+      Expr *ResultExpr = 0;
+      if (Result.isInvalid())
+        hadError = true; // types weren't compatible.
+      else {
+        ResultExpr = Result.takeAs<Expr>();
       
-      // OpenCL initializers allows vectors to be constructed from vectors.
-      for (unsigned i = 0; i < maxElements; ++i) {
-        // Don't attempt to go past the end of the init list
-        if (Index >= IList->getNumInits())
-          break;
-        
-        ElementEntity.setElementIndex(Index);
-
-        QualType IType = IList->getInit(Index)->getType();
-        if (!IType->isVectorType()) {
-          CheckSubElementType(ElementEntity, IList, elementType, Index,
-                              StructuredList, StructuredIndex);
-          ++numEltsInit;
-        } else {
-          QualType VecType;
-          const VectorType *IVT = IType->getAs<VectorType>();
-          unsigned numIElts = IVT->getNumElements();
-          
-          if (IType->isExtVectorType())
-            VecType = SemaRef.Context.getExtVectorType(elementType, numIElts);
-          else
-            VecType = SemaRef.Context.getVectorType(elementType, numIElts,
-                                                    IVT->getAltiVecSpecific());
-          CheckSubElementType(ElementEntity, IList, VecType, Index,
-                              StructuredList, StructuredIndex);
-          numEltsInit += numIElts;
+        if (ResultExpr != Init) {
+          // The type was promoted, update initializer list.
+          IList->setInit(Index, ResultExpr);
         }
       }
+      if (hadError)
+        ++StructuredIndex;
+      else
+        UpdateStructuredListElement(StructuredList, StructuredIndex, ResultExpr);
+      ++Index;
+      return;
     }
 
-    // OpenCL requires all elements to be initialized.
-    if (numEltsInit != maxElements)
-      if (SemaRef.getLangOptions().OpenCL)
-        SemaRef.Diag(IList->getSourceRange().getBegin(),
-                     diag::err_vector_incorrect_num_initializers)
-          << (numEltsInit < maxElements) << maxElements << numEltsInit;
+    InitializedEntity ElementEntity =
+      InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity);
+    
+    for (unsigned i = 0; i < maxElements; ++i, ++numEltsInit) {
+      // Don't attempt to go past the end of the init list
+      if (Index >= IList->getNumInits())
+        break;
+        
+      ElementEntity.setElementIndex(Index);
+      CheckSubElementType(ElementEntity, IList, elementType, Index,
+                          StructuredList, StructuredIndex);
+    }
+    return;
   }
+
+  InitializedEntity ElementEntity =
+    InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity);
+      
+  // OpenCL initializers allows vectors to be constructed from vectors.
+  for (unsigned i = 0; i < maxElements; ++i) {
+    // Don't attempt to go past the end of the init list
+    if (Index >= IList->getNumInits())
+      break;
+        
+    ElementEntity.setElementIndex(Index);
+
+    QualType IType = IList->getInit(Index)->getType();
+    if (!IType->isVectorType()) {
+      CheckSubElementType(ElementEntity, IList, elementType, Index,
+                          StructuredList, StructuredIndex);
+      ++numEltsInit;
+    } else {
+      QualType VecType;
+      const VectorType *IVT = IType->getAs<VectorType>();
+      unsigned numIElts = IVT->getNumElements();
+          
+      if (IType->isExtVectorType())
+        VecType = SemaRef.Context.getExtVectorType(elementType, numIElts);
+      else
+        VecType = SemaRef.Context.getVectorType(elementType, numIElts,
+                                                IVT->getAltiVecSpecific());
+      CheckSubElementType(ElementEntity, IList, VecType, Index,
+                          StructuredList, StructuredIndex);
+      numEltsInit += numIElts;
+    }
+  }
+
+  // OpenCL requires all elements to be initialized.
+  if (numEltsInit != maxElements)
+    if (SemaRef.getLangOptions().OpenCL)
+      SemaRef.Diag(IList->getSourceRange().getBegin(),
+                   diag::err_vector_incorrect_num_initializers)
+        << (numEltsInit < maxElements) << maxElements << numEltsInit;
 }
 
 void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
