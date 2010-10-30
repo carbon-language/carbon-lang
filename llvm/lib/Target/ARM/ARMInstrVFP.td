@@ -739,6 +739,8 @@ let Constraints = "$a = $dst" in {
 
 // FP to Fixed-Point:
 
+// FIXME: Marking these as codegen only seems wrong. They are real
+//        instructions(?)
 let isCodeGenOnly = 1 in {
 def VTOSHS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 0,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
