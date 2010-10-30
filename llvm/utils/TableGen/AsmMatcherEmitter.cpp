@@ -1517,13 +1517,13 @@ static void EmitComputeAvailableFeatures(CodeGenTarget &Target,
 /// EmitMnemonicAliases - If the target has any MnemonicAlias<> definitions,
 /// emit a function for them and return true, otherwise return false.
 static bool EmitMnemonicAliases(raw_ostream &OS) {
-  OS << "static void ApplyMnemonicAliases(StringRef &Mnemonic, "
-  "unsigned Features) {\n";
-  
   std::vector<Record*> Aliases =
     Records.getAllDerivedDefinitions("MnemonicAlias");
   if (Aliases.empty()) return false;
 
+  OS << "static void ApplyMnemonicAliases(StringRef &Mnemonic, "
+        "unsigned Features) {\n";
+  
   // Keep track of all the aliases from a mnemonic.  Use an std::map so that the
   // iteration order of the map is stable.
   std::map<std::string, std::vector<Record*> > AliasesFromMnemonic;
