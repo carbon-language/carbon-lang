@@ -629,7 +629,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("retl", Is64Bit ? "retl" : "ret")
     .Case("retq", Is64Bit ? "ret" : "retq")
     .Case("movzx", "movzb")  // FIXME: Not correct.
-    .Case("fcompi", "fcomip")
     .Default(Name);
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
