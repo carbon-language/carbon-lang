@@ -1265,15 +1265,31 @@ def : MnemonicAlias<"cwd",  "cwtd">;
 def : MnemonicAlias<"cdq", "cltd">;
 def : MnemonicAlias<"cwde", "cwtl">;
 def : MnemonicAlias<"cdqe", "cltq">;
+
+def : MnemonicAlias<"pushfd", "pushfl">;
+def : MnemonicAlias<"popfd",  "popfl">;
+
 def : MnemonicAlias<"smovb", "movsb">;
 def : MnemonicAlias<"smovw", "movsw">;
 def : MnemonicAlias<"smovl", "movsl">;
 def : MnemonicAlias<"smovq", "movsq">;
 
-def : MnemonicAlias<"fldcww", "fldcw">;
-def : MnemonicAlias<"fucompi", "fucomip">;
 def : MnemonicAlias<"ud2a", "ud2">;
 def : MnemonicAlias<"verrw", "verr">;
+
+
+// Floating point stack aliases.
+def : MnemonicAlias<"fcmovz",   "fcmove">;
+def : MnemonicAlias<"fcmova",   "fcmovnbe">;
+def : MnemonicAlias<"fcmovnae", "fcmovb">;
+def : MnemonicAlias<"fcmovna",  "fcmovbe">;
+def : MnemonicAlias<"fcmovae",  "fcmovnb">;
+def : MnemonicAlias<"fildq",    "fildll">;
+def : MnemonicAlias<"fldcww",   "fldcw">;
+def : MnemonicAlias<"fnstcww", "fnstcw">;
+def : MnemonicAlias<"fnstsww", "fnstsw">;
+def : MnemonicAlias<"fucompi",  "fucomip">;
+def : MnemonicAlias<"fwait",    "wait">;
 
 
 class CondCodeAlias<string Prefix,string Suffix, string OldCond, string NewCond>

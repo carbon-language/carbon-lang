@@ -636,24 +636,10 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("pop", Is64Bit ? "popq" : "popl")
     .Case("pushf", Is64Bit ? "pushfq" : "pushfl")
     .Case("popf",  Is64Bit ? "popfq"  : "popfl")
-    .Case("pushfd", "pushfl")
-    .Case("popfd",  "popfl")
     .Case("retl", Is64Bit ? "retl" : "ret")
     .Case("retq", Is64Bit ? "ret" : "retq")
-    // Floating point stack cmov aliases.
-    .Case("fcmovz", "fcmove")
-    .Case("fcmova", "fcmovnbe")
-    .Case("fcmovnae", "fcmovb")
-    .Case("fcmovna", "fcmovbe")
-    .Case("fcmovae", "fcmovnb")
-    .Case("fwait", "wait")
     .Case("movzx", "movzb")  // FIXME: Not correct.
-    .Case("fildq", "fildll")
     .Case("fcompi", "fcomip")
-    .Case("fnstcww", "fnstcw")
-    .Case("fstcww", "fstcw")
-    .Case("fnstsww", "fnstsw")
-    .Case("fstsww", "fstsw")
     .Default(Name);
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
@@ -964,7 +950,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   }
 
   // The assembler accepts various amounts of brokenness for fnstsw.
-  if (Name == "fnstsw") {
+  if (Name == "fnstsw" || Name == "fnstsww") {
     if (Operands.size() == 2 &&
         static_cast<X86Operand*>(Operands[1])->isReg()) {
       // "fnstsw al" and "fnstsw eax" -> "fnstw"
@@ -1105,6 +1091,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   // First, handle aliases that expand to multiple instructions.
   // FIXME: This should be replaced with a real .td file alias mechanism.
   if (Op->getToken() == "fstsw" || Op->getToken() == "fstcw" ||
+      Op->getToken() == "fstsww" || Op->getToken() == "fstcww" ||
       Op->getToken() == "finit" || Op->getToken() == "fsave" ||
       Op->getToken() == "fstenv" || Op->getToken() == "fclex") {
     MCInst Inst;
@@ -1113,12 +1100,14 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 
     const char *Repl =
       StringSwitch<const char*>(Op->getToken())
-        .Case("finit", "fninit")
-        .Case("fsave", "fnsave")
-        .Case("fstcw", "fnstcw")
+        .Case("finit",  "fninit")
+        .Case("fsave",  "fnsave")
+        .Case("fstcw",  "fnstcw")
+        .Case("fstcww",  "fnstcw")
         .Case("fstenv", "fnstenv")
-        .Case("fstsw", "fnstsw")
-        .Case("fclex", "fnclex")
+        .Case("fstsw",  "fnstsw")
+        .Case("fstsww", "fnstsw")
+        .Case("fclex",  "fnclex")
         .Default(0);
     assert(Repl && "Unknown wait-prefixed instruction");
     delete Operands[0];
