@@ -43,9 +43,6 @@ public:
     //------------------------------------------------------------------
     ~SBTarget();
 
-    const lldb::SBTarget&
-    Assign (const lldb::SBTarget& rhs);
-
     bool
     IsValid() const;
 

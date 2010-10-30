@@ -36,8 +36,8 @@ SBCommandInterpreter::SBCommandInterpreter (CommandInterpreter *interpreter) :
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBCommandInterpreter::SBCommandInterpreter (interpreter = %p)"
-                     " => this.obj = %p", interpreter, m_opaque_ptr);
+        log->Printf ("SBCommandInterpreter::SBCommandInterpreter (interpreter=%p)"
+                     " => SBCommandInterpreter(%p)", interpreter, m_opaque_ptr);
 }
 
 SBCommandInterpreter::~SBCommandInterpreter ()
@@ -73,8 +73,8 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf("SBCommandInterpreter::HandleCommand (this.obj=%p, command_line='%s', result=%p, "
-                    "add_to_history='%s')", m_opaque_ptr, command_line, &result, (add_to_history ? "true" : "false"));
+        log->Printf ("SBCommandInterpreter(%p)::HandleCommand (command_line='%s', result=%p, add_to_history=%i)", 
+                     m_opaque_ptr, command_line, &result, add_to_history);
 
     result.Clear();
     if (m_opaque_ptr)
@@ -93,8 +93,8 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
     {
         SBStream sstr;
         result.GetDescription (sstr);
-        log->Printf ("SBCommandInterpreter::HandleCommand ('%s') => SBCommandReturnObject: '%s'", 
-                     command_line, sstr.GetData());
+        log->Printf ("SBCommandInterpreter(%p)::HandleCommand (\"%s\") => SBCommandReturnObject(%p): '%s'", 
+                     m_opaque_ptr, command_line, result.get(), sstr.GetData());
     }
 
     return result.GetStatus();
@@ -156,27 +156,39 @@ SBCommandInterpreter::GetProcess ()
         if (target)
             process.SetProcess(target->GetProcessSP());
     }
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBCommandInterpreter(%p)::GetProcess () => SBProcess(%p)", 
+                     m_opaque_ptr, process.get());
+
+    
     return process;
 }
 
 ssize_t
 SBCommandInterpreter::WriteToScriptInterpreter (const char *src)
 {
-    if (m_opaque_ptr && src && src[0])
-        return WriteToScriptInterpreter (src, strlen(src));
-    return 0;
+    return WriteToScriptInterpreter (src, strlen(src));
 }
 
 ssize_t
 SBCommandInterpreter::WriteToScriptInterpreter (const char *src, size_t src_len)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    ssize_t bytes_written = 0;
     if (m_opaque_ptr && src && src[0])
     {
         ScriptInterpreter *script_interpreter = m_opaque_ptr->GetScriptInterpreter();
         if (script_interpreter)
-            return ::write (script_interpreter->GetMasterFileDescriptor(), src, src_len);
+            bytes_written = ::write (script_interpreter->GetMasterFileDescriptor(), src, src_len);
     }
-    return 0;
+    if (log)
+        log->Printf ("SBCommandInterpreter(%p)::WriteToScriptInterpreter (src=\"%s\", src_len=%zu) => %zi", 
+                     m_opaque_ptr, src, src_len, bytes_written);
+
+    return bytes_written;
 }
 
 
@@ -212,6 +224,12 @@ SBCommandInterpreter::SourceInitFileInHomeDirectory (SBCommandReturnObject &resu
         result->AppendError ("SBCommandInterpreter is not valid");
         result->SetStatus (eReturnStatusFailed);
     }
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBCommandInterpreter(%p)::SourceInitFileInHomeDirectory (&SBCommandReturnObject(%p))", 
+                     m_opaque_ptr, result.get());
+
 }
 
 void
@@ -227,6 +245,11 @@ SBCommandInterpreter::SourceInitFileInCurrentWorkingDirectory (SBCommandReturnOb
         result->AppendError ("SBCommandInterpreter is not valid");
         result->SetStatus (eReturnStatusFailed);
     }
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBCommandInterpreter(%p)::SourceInitFileInCurrentWorkingDirectory (&SBCommandReturnObject(%p))", 
+                     m_opaque_ptr, result.get());
 }
 
 SBBroadcaster
@@ -234,13 +257,10 @@ SBCommandInterpreter::GetBroadcaster ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBCommandInterpreter::GetBroadcaster ()");
-
     SBBroadcaster broadcaster (m_opaque_ptr, false);
 
     if (log)
-        log->Printf ("SBCommandInterpreter::GetBroadcaster (this.obj=%p) => SBBroadcaster (this.m_opaque_ptr=%p)", 
+        log->Printf ("SBCommandInterpreter(%p)::GetBroadcaster() => SBBroadcaster(%p)", 
                      m_opaque_ptr, broadcaster.get());
 
     return broadcaster;

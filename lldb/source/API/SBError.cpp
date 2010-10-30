@@ -35,8 +35,8 @@ SBError::SBError (const SBError &rhs) :
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBError::SBError (const SBError rhs.ap=%p) => this.ap = %p (%s)",
-                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), m_opaque_ap.get(), sstr.GetData());
+        log->Printf ("SBError::SBError (const SBError rhs.ap=%p) => SBError(%p): %s",
+                     rhs.m_opaque_ap.get(), m_opaque_ap.get(), sstr.GetData());
     }
 }
 
@@ -49,7 +49,7 @@ const SBError &
 SBError::operator = (const SBError &rhs)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
+    void *old_error = m_opaque_ap.get();
     if (rhs.IsValid())
     {
         if (m_opaque_ap.get())
@@ -66,8 +66,8 @@ SBError::operator = (const SBError &rhs)
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBError::operator= (this.ap=%p, rhs.ap=%p) => this (%s)", 
-                     m_opaque_ap.get(), (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), sstr.GetData());
+        log->Printf ("SBError(%p)::operator= (SBError(%p)) => SBError(%s)", 
+                     old_error, rhs.m_opaque_ap.get(), sstr.GetData());
     }
 
     return *this;
@@ -94,15 +94,12 @@ SBError::Fail () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBError::Fail ()");
-
     bool ret_value = false;
     if (m_opaque_ap.get())
         ret_value = m_opaque_ap->Fail();
 
     if (log)
-        log->Printf ("SBError::Fail (this.ap=%p) => '%s'", m_opaque_ap.get(), (ret_value ? "true" : "false"));
+        log->Printf ("SBError(%p)::Fail () => %i", m_opaque_ap.get(), ret_value);
 
     return ret_value;
 }
@@ -110,25 +107,45 @@ SBError::Fail () const
 bool
 SBError::Success () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    bool ret_value = false;
     if (m_opaque_ap.get())
-        return m_opaque_ap->Success();
-    return false;
+        ret_value = m_opaque_ap->Success();
+
+    if (log)
+        log->Printf ("SBError(%p)::Success () => %i", m_opaque_ap.get(), ret_value);
+
+    return ret_value;
 }
 
 uint32_t
 SBError::GetError () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    uint32_t err = 0;
     if (m_opaque_ap.get())
-        return m_opaque_ap->GetError();
-    return true;
+        err = m_opaque_ap->GetError();
+
+    if (log)
+        log->Printf ("SBError(%p)::GetError () => 0x%8.8x", m_opaque_ap.get(), err);
+
+
+    return err;
 }
 
 ErrorType
 SBError::GetType () const
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    ErrorType err_type = eErrorTypeInvalid;
     if (m_opaque_ap.get())
-        return m_opaque_ap->GetType();
-    return eErrorTypeInvalid;
+        err_type = m_opaque_ap->GetType();
+
+    if (log)
+        log->Printf ("SBError(%p)::GetType () => %i", m_opaque_ap.get(), err_type);
+
+    return err_type;
 }
 
 void

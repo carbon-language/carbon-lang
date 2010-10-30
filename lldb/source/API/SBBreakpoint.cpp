@@ -72,31 +72,12 @@ SBBreakpoint::SBBreakpoint () :
 SBBreakpoint::SBBreakpoint (const SBBreakpoint& rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-    {
-        SBStream sstr;
-        GetDescription (sstr);
-        log->Printf ("SBBreakpoint::SBBreakpoint (const SBBreakpoint rhs.sp=%p) "
-                     "=> this.sp = %p (%s)",
-                     rhs.m_opaque_sp.get(), m_opaque_sp.get(), sstr.GetData());
-    }
 }
 
 
 SBBreakpoint::SBBreakpoint (const lldb::BreakpointSP &bp_sp) :
     m_opaque_sp (bp_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-    {
-        SBStream sstr;
-        GetDescription (sstr);
-        log->Printf("SBBreakpoint::SBBreakpoint (const lldb::BreakpointSP &bp_sp=%p) => this.sp = %p (%s)",
-                    bp_sp.get(), m_opaque_sp.get(), sstr.GetData());
-    }
 }
 
 SBBreakpoint::~SBBreakpoint()
@@ -106,20 +87,8 @@ SBBreakpoint::~SBBreakpoint()
 const SBBreakpoint &
 SBBreakpoint::operator = (const SBBreakpoint& rhs)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBBreakpoint::operator=");
-
     if (this != &rhs)
-    {
         m_opaque_sp = rhs.m_opaque_sp;
-    }
-    
-    if (log)
-        log->Printf ("SBBreakpoint::operator= (const SBBreakpoint &rhs.sp=%p) => this.sp = %p", 
-                     rhs.m_opaque_sp.get(), m_opaque_sp.get());
-        
     return *this;
 }
 
@@ -128,19 +97,16 @@ SBBreakpoint::GetID () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBBreakpoint::GetID");
-
     if (m_opaque_sp)
     {
-        break_id_t id = m_opaque_sp->GetID();
+        break_id_t break_id = m_opaque_sp->GetID();
         if (log)
-            log->Printf ("SBBreakpoint::GetID (this.sp=%p) => %d", m_opaque_sp.get(), id);
-        return id;
+            log->Printf ("SBBreakpoint(%p)::GetID () => %u", m_opaque_sp.get(), break_id);
+        return break_id;
     }
 
     if (log)
-        log->Printf ("SBBreakpoint::GetID (this.sp=%p) => LLDB_INVALID_BREAK_ID", m_opaque_sp.get());
+        log->Printf ("SBBreakpoint(%p)::GetID () => LLDB_INVALID_BREAK_ID", m_opaque_sp.get());
 
     return LLDB_INVALID_BREAK_ID;
 }
@@ -232,8 +198,7 @@ SBBreakpoint::SetEnabled (bool enable)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBBreakpoint::SetEnabled (this.sp=%p, enable='%s')", m_opaque_sp.get(), 
-                     (enable ? "true" : "false"));
+        log->Printf ("SBBreakpoint(%p)::SetEnabled (enabled=%i)", m_opaque_sp.get(), enable);
 
     if (m_opaque_sp)
         m_opaque_sp->SetEnabled (enable);
@@ -254,7 +219,7 @@ SBBreakpoint::SetIgnoreCount (uint32_t count)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBBreakpoint::SetIgnoreCount (this.sp=%p, count='%d')", m_opaque_sp.get(), count);
+        log->Printf ("SBBreakpoint(%p)::SetIgnoreCount (count=%u)", m_opaque_sp.get(), count);
         
     if (m_opaque_sp)
         m_opaque_sp->SetIgnoreCount (count);
@@ -275,55 +240,61 @@ SBBreakpoint::GetCondition ()
 uint32_t
 SBBreakpoint::GetHitCount () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBBreakpoint::GetHitCount");
-        
+    uint32_t count = 0;
     if (m_opaque_sp)
-    {
-        uint32_t hit_count = m_opaque_sp->GetHitCount();
-        if (log)
-            log->Printf ("SBBreakpoint::GetHitCount (this.sp=%p) => '%d'", m_opaque_sp.get(), hit_count);        
-        return m_opaque_sp->GetHitCount();
-    }
-    else
-    {
-        if (log)
-            log->Printf ("SBBreakpoint::GetHitCount (this.sp=%p) => '0'", m_opaque_sp.get());
-        return 0;
-    }
+        count = m_opaque_sp->GetHitCount();
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetHitCount () => %u", m_opaque_sp.get(), count);
+
+    return count;
 }
 
 uint32_t
 SBBreakpoint::GetIgnoreCount () const
 {
+    uint32_t count = 0;
     if (m_opaque_sp)
-        return m_opaque_sp->GetIgnoreCount();
-    else
-        return 0;
+        count = m_opaque_sp->GetIgnoreCount();
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetIgnoreCount () => %u", m_opaque_sp.get(), count);
+
+    return count;
 }
 
 void
-SBBreakpoint::SetThreadID (tid_t sb_thread_id)
+SBBreakpoint::SetThreadID (tid_t tid)
 {
     if (m_opaque_sp)
-        m_opaque_sp->SetThreadID (sb_thread_id);
+        m_opaque_sp->SetThreadID (tid);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::SetThreadID (tid=0x%4.4x)", m_opaque_sp.get(), tid);
+
 }
 
 tid_t
 SBBreakpoint::GetThreadID ()
 {
-    tid_t lldb_thread_id = LLDB_INVALID_THREAD_ID;
+    tid_t tid = LLDB_INVALID_THREAD_ID;
     if (m_opaque_sp)
-        lldb_thread_id = m_opaque_sp->GetThreadID();
+        tid = m_opaque_sp->GetThreadID();
 
-    return lldb_thread_id;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetThreadID () => 0x%4.4x", m_opaque_sp.get(), tid);
+    return tid;
 }
 
 void
 SBBreakpoint::SetThreadIndex (uint32_t index)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::SetThreadIndex (%u)", m_opaque_sp.get(), index);
     if (m_opaque_sp)
         m_opaque_sp->GetOptions()->GetThreadSpec()->SetIndex (index);
 }
@@ -331,14 +302,17 @@ SBBreakpoint::SetThreadIndex (uint32_t index)
 uint32_t
 SBBreakpoint::GetThreadIndex() const
 {
+    uint32_t thread_idx = 0;
     if (m_opaque_sp)
     {
         const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
         if (thread_spec == NULL)
-            return 0;
-        else
-            return thread_spec->GetIndex();
+            thread_idx = thread_spec->GetIndex();
     }
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetThreadIndex () => %u", m_opaque_sp.get(), index);
+
     return 0;
 }
     
@@ -346,6 +320,10 @@ SBBreakpoint::GetThreadIndex() const
 void
 SBBreakpoint::SetThreadName (const char *thread_name)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::SetThreadName (%s)", m_opaque_sp.get(), thread_name);
+
     if (m_opaque_sp)
         m_opaque_sp->GetOptions()->GetThreadSpec()->SetName (thread_name);
 }
@@ -353,20 +331,26 @@ SBBreakpoint::SetThreadName (const char *thread_name)
 const char *
 SBBreakpoint::GetThreadName () const
 {
+    const char *name = NULL;
     if (m_opaque_sp)
     {
         const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
         if (thread_spec == NULL)
-            return NULL;
-        else
-            return thread_spec->GetName();
+            name = thread_spec->GetName();
     }
-    return NULL;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetThreadName () => %s", m_opaque_sp.get(), name);
+
+    return name;
 }
 
 void
 SBBreakpoint::SetQueueName (const char *queue_name)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::SetQueueName (%s)", m_opaque_sp.get(), queue_name);
     if (m_opaque_sp)
         m_opaque_sp->GetOptions()->GetThreadSpec()->SetQueueName (queue_name);
 }
@@ -374,33 +358,41 @@ SBBreakpoint::SetQueueName (const char *queue_name)
 const char *
 SBBreakpoint::GetQueueName () const
 {
+    const char *name = NULL;
     if (m_opaque_sp)
     {
         const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
-        if (thread_spec == NULL)
-            return NULL;
-        else
-            return thread_spec->GetQueueName();
+            name = thread_spec->GetQueueName();
     }
-    return NULL;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetQueueName () => %s", m_opaque_sp.get(), name);
+
+    return name;
 }
 
 size_t
 SBBreakpoint::GetNumResolvedLocations() const
 {
+    size_t num_resolved = 0;
     if (m_opaque_sp)
-        return m_opaque_sp->GetNumResolvedLocations();
-    else
-        return 0;
+        num_resolved = m_opaque_sp->GetNumResolvedLocations();
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetNumResolvedLocations () => %zu", m_opaque_sp.get(), num_resolved);
+    return num_resolved;
 }
 
 size_t
 SBBreakpoint::GetNumLocations() const
 {
+    size_t num_locs = 0;
     if (m_opaque_sp)
-        return m_opaque_sp->GetNumLocations();
-    else
-        return 0;
+        num_locs = m_opaque_sp->GetNumLocations();
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetNumLocations () => %zu", m_opaque_sp.get(), num_locs);
+    return num_locs;
 }
 
 bool
@@ -461,18 +453,11 @@ SBBreakpoint::SetCallback (BreakpointHitCallback callback, void *baton)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     
     if (log)
-        log->Printf ("SBBreakpoint::SetCallback (this.sp=%p, :", m_opaque_sp.get());
+        log->Printf ("SBBreakpoint(%p)::SetCallback (callback=%p, baton=%p)", m_opaque_sp.get(), callback, baton);
 
     if (m_opaque_sp.get())
     {
         BatonSP baton_sp(new SBBreakpointCallbackBaton (callback, baton));
-        if (log)
-        {
-            // CAROLINE: FIXME!!
-            //StreamString sstr;
-            //baton_sp->GetDescription (sstr, lldb::eDescriptionLevelFull);
-            //log->Printf ("%s", sstr.GetData());
-        }
         m_opaque_sp->SetCallback (SBBreakpoint::PrivateBreakpointHitCallback, baton_sp, false);
     }
 }

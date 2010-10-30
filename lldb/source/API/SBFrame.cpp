@@ -57,8 +57,8 @@ SBFrame::SBFrame (const lldb::StackFrameSP &lldb_object_sp) :
     {
         SBStream sstr;
         GetDescription (sstr);
-        log->Printf ("SBFrame::SBFrame (lldb_object_sp=%p) => this.sp = %p (%s)", lldb_object_sp.get(), 
-                     m_opaque_sp.get(), sstr.GetData());
+        log->Printf ("SBFrame::SBFrame (sp=%p) => SBFrame(%p): %s", 
+                     lldb_object_sp.get(), m_opaque_sp.get(), sstr.GetData());
                      
     }
 }
@@ -71,7 +71,16 @@ SBFrame::~SBFrame()
 void
 SBFrame::SetFrame (const lldb::StackFrameSP &lldb_object_sp)
 {
+    void *old_ptr = m_opaque_sp.get();
     m_opaque_sp = lldb_object_sp;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+    {
+        log->Printf ("SBFrame(%p)::SetFrame(sp=%p) := SBFrame(%p)", 
+                     old_ptr, lldb_object_sp.get(), m_opaque_sp.get());
+    }
+
 }
 
 
@@ -84,17 +93,14 @@ SBFrame::IsValid() const
 SBSymbolContext
 SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBFrame::GetSymbolContext (this.sp=%p, resolve_scope=%d)", m_opaque_sp.get(), resolve_scope);
 
     SBSymbolContext sb_sym_ctx;
     if (m_opaque_sp)
         sb_sym_ctx.SetSymbolContext(&m_opaque_sp->GetSymbolContext (resolve_scope));
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFrame::GetSymbolContext (this.sp=%p, resolve_scope=%d) => SBSymbolContext (this.ap = %p)", 
+        log->Printf ("SBFrame(%p)::GetSymbolContext (resolve_scope=0x%8.8x) => SBSymbolContext(%p)", 
                      m_opaque_sp.get(), resolve_scope, sb_sym_ctx.get());
 
     return sb_sym_ctx;
@@ -104,22 +110,23 @@ SBModule
 SBFrame::GetModule () const
 {
     SBModule sb_module (m_opaque_sp->GetSymbolContext (eSymbolContextModule).module_sp);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetModule () => SBModule(%p)", 
+                     m_opaque_sp.get(), sb_module.get());
+
     return sb_module;
 }
 
 SBCompileUnit
 SBFrame::GetCompileUnit () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBFrame::GetCompileUnit()");
-
     SBCompileUnit sb_comp_unit(m_opaque_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFrame::GetCompileUnit (this.sp=%p) => SBCompileUnit (this=%p)", m_opaque_sp.get(), 
-                     sb_comp_unit.get());
+        log->Printf ("SBFrame(%p)::GetModule () => SBCompileUnit(%p)", 
+                     m_opaque_sp.get(), sb_comp_unit.get());
 
     return sb_comp_unit;
 }
@@ -128,6 +135,12 @@ SBFunction
 SBFrame::GetFunction () const
 {
     SBFunction sb_function(m_opaque_sp->GetSymbolContext (eSymbolContextFunction).function);
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetFunction () => SBFunction(%p)", 
+                     m_opaque_sp.get(), sb_function.get());
+
     return sb_function;
 }
 
@@ -135,6 +148,10 @@ SBSymbol
 SBFrame::GetSymbol () const
 {
     SBSymbol sb_symbol(m_opaque_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetSymbol () => SBSymbol(%p)", 
+                     m_opaque_sp.get(), sb_symbol.get());
     return sb_symbol;
 }
 
@@ -142,6 +159,10 @@ SBBlock
 SBFrame::GetBlock () const
 {
     SBBlock sb_block(m_opaque_sp->GetSymbolContext (eSymbolContextBlock).block);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetBlock () => SBBlock(%p)", 
+                     m_opaque_sp.get(), sb_block.get());
     return sb_block;
 }
 
@@ -149,6 +170,10 @@ SBBlock
 SBFrame::GetFrameBlock () const
 {
     SBBlock sb_block(m_opaque_sp->GetFrameBlock ());
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetFrameBlock () => SBBlock(%p)", 
+                     m_opaque_sp.get(), sb_block.get());
     return sb_block;    
 }
 
@@ -156,32 +181,36 @@ SBLineEntry
 SBFrame::GetLineEntry () const
 {
     SBLineEntry sb_line_entry(&m_opaque_sp->GetSymbolContext (eSymbolContextLineEntry).line_entry);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetLineEntry () => SBLineEntry(%p)", 
+                     m_opaque_sp.get(), sb_line_entry.get());
     return sb_line_entry;
 }
 
 uint32_t
 SBFrame::GetFrameID () const
 {
-    if (m_opaque_sp)
-        return m_opaque_sp->GetFrameIndex ();
-    else
-        return UINT32_MAX;
+    uint32_t frame_idx = m_opaque_sp ? m_opaque_sp->GetFrameIndex () : UINT32_MAX;
+    
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetFrameID () => %u", 
+                     m_opaque_sp.get(), frame_idx);
+    return frame_idx;
 }
 
 lldb::addr_t
 SBFrame::GetPC () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBFrame::GetPC (this.sp=%p)", m_opaque_sp.get());
 
     lldb::addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
         addr = m_opaque_sp->GetFrameCodeAddress().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess().GetTarget());
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFrame::GetPC (this.sp=%p) => %p", m_opaque_sp.get(), addr);
+        log->Printf ("SBFrame(%p)::GetPC () => %0xllx", m_opaque_sp.get(), addr);
 
     return addr;
 }
@@ -189,18 +218,15 @@ SBFrame::GetPC () const
 bool
 SBFrame::SetPC (lldb::addr_t new_pc)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBFrame::SetPC (this.sp=%p, new_pc=%p)", m_opaque_sp.get(), new_pc);
 
     bool ret_val = false;
     if (m_opaque_sp)
         ret_val = m_opaque_sp->GetRegisterContext()->SetPC (new_pc);
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFrame::SetPC (this.sp=%p, new_pc=%p) => '%s'", m_opaque_sp.get(), new_pc, 
-                     (ret_val ? "true" : "false"));
+        log->Printf ("SBFrame(%p)::SetPC (new_pc=0x%llx) => %i", 
+                     m_opaque_sp.get(), new_pc, ret_val);
 
     return ret_val;
 }
@@ -208,27 +234,27 @@ SBFrame::SetPC (lldb::addr_t new_pc)
 lldb::addr_t
 SBFrame::GetSP () const
 {
+    addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
-        return m_opaque_sp->GetRegisterContext()->GetSP();
-    return LLDB_INVALID_ADDRESS;
+        addr = m_opaque_sp->GetRegisterContext()->GetSP();
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetSP () => %0xllx", m_opaque_sp.get(), addr);
+
+    return addr;
 }
 
 
 lldb::addr_t
 SBFrame::GetFP () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBFrame::GetFP ()");
-
     lldb::addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
         addr = m_opaque_sp->GetRegisterContext()->GetFP();
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFrame::GetFP (this.sp=%p) => %p", m_opaque_sp.get(), addr);
-
+        log->Printf ("SBFrame(%p)::GetFP () => %0xllx", m_opaque_sp.get(), addr);
     return addr;
 }
 
@@ -239,6 +265,9 @@ SBFrame::GetPCAddress () const
     SBAddress sb_addr;
     if (m_opaque_sp)
         sb_addr.SetAddress (&m_opaque_sp->GetFrameCodeAddress());
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::GetPCAddress () => SBAddress(%p)", m_opaque_sp.get(), sb_addr.get());
     return sb_addr;
 }
 
@@ -274,13 +303,17 @@ SBFrame::LookupVar (const char *var_name)
         if (!found)
             var_sp.reset();
     }
-    if (var_sp)
-    {
-        SBValue sb_value (ValueObjectSP (new ValueObjectVariable (var_sp)));
-        return sb_value;
-    }
     
     SBValue sb_value;
+    
+    if (var_sp)
+        *sb_value = ValueObjectSP (new ValueObjectVariable (var_sp));
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::LookupVar (name=\"%s\") => SBValue(%p)", 
+                     m_opaque_sp.get(), var_name, sb_value.get());
+
     return sb_value;
 }
 
@@ -327,13 +360,16 @@ SBFrame::LookupVarInScope (const char *var_name, const char *scope)
         }
     }
     
-    if (var_sp)
-    {
-        SBValue sb_value (ValueObjectSP (new ValueObjectVariable (var_sp)));
-        return sb_value;
-    }
-    
     SBValue sb_value;
+    if (var_sp)
+        *sb_value = ValueObjectSP (new ValueObjectVariable (var_sp));
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFrame(%p)::LookupVarInScope (name=\"%s\", scope=%s) => SBValue(%p)", 
+                     m_opaque_sp.get(), var_name, scope, sb_value.get());
+
+    
     return sb_value;
 }
 
@@ -376,8 +412,8 @@ SBFrame::GetThread () const
     {
         SBStream sstr;
         sb_thread.GetDescription (sstr);
-        log->Printf ("SBFrame::GetThread (this.sp=%p) => SBThread : this.sp= %p, '%s'", m_opaque_sp.get(), 
-                     sb_thread.GetLLDBObjectPtr(), sstr.GetData());
+        log->Printf ("SBFrame(%p)::GetThread () => SBThread(%p): %s", m_opaque_sp.get(), 
+                     sb_thread.get(), sstr.GetData());
     }
 
     return sb_thread;
@@ -386,26 +422,17 @@ SBFrame::GetThread () const
 const char *
 SBFrame::Disassemble () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-    Log *verbose_log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (verbose_log)
-        verbose_log->Printf ("SBFrame::Disassemble (this.sp=%p) => %s", m_opaque_sp.get(), m_opaque_sp->Disassemble());
-    else if (log)
-        log->Printf ("SBFrame::Disassemble (this.sp=%p)", m_opaque_sp.get());
-
+    const char *disassembly = NULL;
     if (m_opaque_sp)
-        return m_opaque_sp->Disassemble();
-    return NULL;
+        disassembly = m_opaque_sp->Disassemble();
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    if (log)
+        log->Printf ("SBFrame(%p)::Disassemble () => %s", m_opaque_sp.get(), disassembly);
+
+    return disassembly;
 }
 
-
-
-lldb_private::StackFrame *
-SBFrame::GetLLDBObjectPtr ()
-{
-    return m_opaque_sp.get();
-}
 
 SBValueList
 SBFrame::GetVariables (bool arguments,
@@ -416,12 +443,12 @@ SBFrame::GetVariables (bool arguments,
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBFrame::GetVariables (this_sp.get=%p, arguments=%s, locals=%s, statics=%s, in_scope_only=%s)", 
+        log->Printf ("SBFrame(%p)::GetVariables (arguments=%i, locals=%i, statics=%i, in_scope_only=%i)", 
                      m_opaque_sp.get(), 
-                     (arguments ? "true" : "false"),
-                     (locals    ? "true" : "false"),
-                     (statics   ? "true" : "false"),
-                     (in_scope_only ? "true" : "false"));
+                     arguments,
+                     locals,
+                     statics,
+                     in_scope_only);
 
     SBValueList value_list;
     if (m_opaque_sp)
@@ -472,14 +499,8 @@ SBFrame::GetVariables (bool arguments,
 
     if (log)
     {
-        log->Printf ("SBFrame::GetVariables (this.sp=%p,...) => SBValueList (this.ap = %p)", m_opaque_sp.get(),
+        log->Printf ("SBFrame(%p)::GetVariables (...) => SBValueList(%p)", m_opaque_sp.get(),
                      value_list.get());
-        //uint32_t num_vars = value_list.GetSize();
-        //for (uint32_t i = 0; i < num_vars; ++i)
-        //{
-        //    SBValue value = value_list.GetValueAtIndex (i);
-        //    log->Printf ("  %s : %s", value.GetName(), value.GetObjectDescription (*this));
-        //}
     }
 
     return value_list;
@@ -489,9 +510,6 @@ lldb::SBValueList
 SBFrame::GetRegisters ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBFrame::GetRegisters ()");
 
     SBValueList value_list;
     if (m_opaque_sp)
@@ -508,16 +526,7 @@ SBFrame::GetRegisters ()
     }
 
     if (log)
-    {
-        log->Printf ("SBFrame::Registers (this.sp=%p) => SBValueList (this.ap = %p)", m_opaque_sp.get(),
-                     value_list.get() );
-        //uint32_t num_vars = value_list.GetSize();
-        //for (uint32_t i = 0; i < num_vars; ++i)
-        //{
-        //    SBValue value = value_list.GetValueAtIndex (i);
-        //    log->Printf ("  %s : %s", value.GetName(), value.GetObjectDescription (*this));
-        //}
-    }
+        log->Printf ("SBFrame(%p)::Registers () => SBValueList(%p)", m_opaque_sp.get(), value_list.get());
 
     return value_list;
 }
@@ -542,7 +551,12 @@ SBFrame::GetDescription (SBStream &description)
 lldb::SBValue
 SBFrame::EvaluateExpression (const char *expr)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
     lldb::SBValue expr_result_value;
+    if (log)
+        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\")...", m_opaque_sp.get(), expr);
+
     if (m_opaque_sp)
     {
         ExecutionContext exe_ctx;
@@ -555,5 +569,9 @@ SBFrame::EvaluateExpression (const char *expr)
         
         *expr_result_value = ClangUserExpression::Evaluate (exe_ctx, expr, prefix);
     }
+    
+    if (log)
+        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p)", m_opaque_sp.get(), expr_result_value.get());
+
     return expr_result_value;
 }

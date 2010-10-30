@@ -87,18 +87,18 @@ SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t 
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    uint32_t ret_value = 0;
+    uint32_t aquired_event_mask = 0;
     if (m_opaque_ptr && broadcaster.IsValid())
     {
-        ret_value = m_opaque_ptr->StartListeningForEvents (broadcaster.get(), event_mask);
+        aquired_event_mask = m_opaque_ptr->StartListeningForEvents (broadcaster.get(), event_mask);
     }
     
     log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p), event_mask=0x%8.8x) => %d", 
-                     m_opaque_ptr, broadcaster.get(), event_mask, ret_value);
+        log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p), event_mask=0x%8.8x) => 0x%8.8x", 
+                     m_opaque_ptr, broadcaster.get(), event_mask, aquired_event_mask);
 
-    return ret_value;
+    return aquired_event_mask;
 }
 
 bool

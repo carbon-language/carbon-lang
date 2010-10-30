@@ -106,11 +106,8 @@ public:
     SBError
     Destroy ();
 
-    bool
-    WaitUntilProcessHasStopped (lldb::SBCommandReturnObject &result);
-
     lldb::pid_t
-    AttachByPID (lldb::pid_t pid);  // DEPRECATED: will be removed in a few builds in favor of SBError AttachByPID(pid_t)
+    AttachByPID (lldb::pid_t pid);  // DEPRECATED
 
     // DEPRECATED: relocated to "SBProcess SBTarget::AttachToProcess (lldb::pid_t pid, SBError& error)"
     SBError

@@ -89,9 +89,6 @@ public:
 #endif
 
     bool
-    GetDescription (lldb::SBStream &description);
-
-    bool
     GetDescription (lldb::SBStream &description) const;
 
 protected:
@@ -102,10 +99,11 @@ protected:
     friend class SBDebugger;
     friend class SBValue;
 
-    lldb_private::Thread *
-    GetLLDBObjectPtr ();
 
 #ifndef SWIG
+
+    lldb_private::Thread *
+    get ();
 
     const lldb_private::Thread *
     operator->() const;

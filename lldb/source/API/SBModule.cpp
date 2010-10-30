@@ -28,10 +28,6 @@ SBModule::SBModule () :
 SBModule::SBModule (const lldb::ModuleSP& module_sp) :
     m_opaque_sp (module_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-        log->Printf ("SBModule::SBModule (module_sp=%p) => this.sp = %p", module_sp.get(), m_opaque_sp.get());
 }
 
 SBModule::~SBModule ()
@@ -49,9 +45,6 @@ SBModule::GetFileSpec () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBModule::GetFileSpec ()");
-
     SBFileSpec file_spec;
     if (m_opaque_sp)
         file_spec.SetFileSpec(m_opaque_sp->GetFileSpec());
@@ -60,7 +53,7 @@ SBModule::GetFileSpec () const
     {
         SBStream sstr;
         file_spec.GetDescription (sstr);
-        log->Printf ("SBModule::GetFileSpec (this.sp=%p) => SBFileSpec : this.ap = %p, 's'", m_opaque_sp.get(),
+        log->Printf ("SBModule(%p)::GetFileSpec () => SBFileSpec(%p): %s", m_opaque_sp.get(),
                      file_spec.get(), sstr.GetData());
     }
 
@@ -72,23 +65,22 @@ SBModule::GetUUIDBytes () const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBModule::GetUUIDBytes ()");
-
+    const uint8_t *uuid_bytes = NULL;
     if (m_opaque_sp)
-    {
-        if (log)
-        {
-            StreamString sstr;
-            m_opaque_sp->GetUUID().Dump (&sstr);
-            log->Printf ("SBModule::GetUUIDBytes (this.sp=%p) => '%s'", m_opaque_sp.get(), sstr.GetData());
-        }
-        return (const uint8_t *)m_opaque_sp->GetUUID().GetBytes();
-    }
+        uuid_bytes = (const uint8_t *)m_opaque_sp->GetUUID().GetBytes();
 
     if (log)
-        log->Printf ("SBModule::GetUUIDBytes (this.sp=%p) => NULL", m_opaque_sp.get());
-    return NULL;
+    {
+        if (uuid_bytes)
+        {
+            StreamString s;
+            m_opaque_sp->GetUUID().Dump (&s);
+            log->Printf ("SBModule(%p)::GetUUIDBytes () => %s", m_opaque_sp.get(), s.GetData());
+        }
+        else
+            log->Printf ("SBModule(%p)::GetUUIDBytes () => NULL", m_opaque_sp.get());
+    }
+    return uuid_bytes;
 }
 
 

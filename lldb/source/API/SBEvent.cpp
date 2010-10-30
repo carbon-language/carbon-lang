@@ -117,10 +117,10 @@ SBEvent::BroadcasterMatchesRef (const SBBroadcaster &broadcaster)
         success = lldb_event->BroadcasterIs (broadcaster.get());
 
     if (log)
-        log->Printf ("SBEvent(%p)::BroadcasterMathesRef (broadcaster.ptr=%p) => %s", 
+        log->Printf ("SBEvent(%p)::BroadcasterMatchesRef (SBBroadcaster(%p)) => %i", 
                      get(),
                      broadcaster.get(),
-                     success ? "true" : "false");
+                     success);
 
     return success;
 }

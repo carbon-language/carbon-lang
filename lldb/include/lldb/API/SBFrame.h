@@ -124,9 +124,6 @@ public:
 protected:
     friend class SBValue;
 
-    lldb_private::StackFrame *
-    GetLLDBObjectPtr ();
-
 private:
     friend class SBThread;
     friend class lldb_private::ScriptInterpreterPython;

@@ -80,7 +80,7 @@ Target::Dump (Stream *s, lldb::DescriptionLevel description_level)
     }
     else
     {
-        s->Printf ("%s", GetExecutableModule()->GetFileSpec().GetFilename().GetCString());
+        s->PutCString (GetExecutableModule()->GetFileSpec().GetFilename().GetCString());
     }
 }
 

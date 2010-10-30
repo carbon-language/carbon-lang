@@ -133,6 +133,12 @@ SBBlock::GetFirstChild ()
     return sb_block;
 }
 
+const lldb_private::Block *
+SBBlock::get () const
+{
+    return m_opaque_ptr;
+}
+
 
 bool
 SBBlock::GetDescription (SBStream &description)

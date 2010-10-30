@@ -58,6 +58,9 @@ private:
 
 #ifndef SWIG
 
+    const lldb_private::Block *
+    get () const;
+
     SBBlock (lldb_private::Block *lldb_object_ptr);
 
     void

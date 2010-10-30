@@ -411,19 +411,20 @@ SBDebugger::GetVersionString ()
 const char *
 SBDebugger::StateAsCString (lldb::StateType state)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-        log->Printf ("SBDebugger::StateAsCString (state=%d) => '%s'", state, 
-                     lldb_private::StateAsCString (state));
-
     return lldb_private::StateAsCString (state);
 }
 
 bool
 SBDebugger::StateIsRunningState (lldb::StateType state)
 {
-    return lldb_private::StateIsRunningState (state);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+
+    const bool result = lldb_private::StateIsRunningState (state);
+    if (log)
+        log->Printf ("SBDebugger::StateIsRunningState (state=%s) => %i", 
+                     lldb_private::StateAsCString (state), result);
+
+    return result;
 }
 
 bool
@@ -431,11 +432,12 @@ SBDebugger::StateIsStoppedState (lldb::StateType state)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
+    const bool result = lldb_private::StateIsStoppedState (state);
     if (log)
-        log->Printf ("SBDebugger::StateIsStoppedState (state=%d) => '%s'", state,
-                     (lldb_private::StateIsStoppedState (state) ? "true" : "false"));
+        log->Printf ("SBDebugger::StateIsStoppedState (state=%s) => %i", 
+                     lldb_private::StateAsCString (state), result);
 
-    return lldb_private::StateIsStoppedState (state);
+    return result;
 }
 
 
@@ -453,6 +455,14 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
         Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file_spec, arch, NULL, true, target_sp));
         target.reset (target_sp);
     }
+    
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndTargetTriple (filename='%s', tiple = %s) => SBTarget(%p)", 
+                     m_opaque_sp.get(), filename, target_triple, target.get());
+    }
+
     return target;
 }
 
@@ -501,11 +511,8 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
 
     if (log)
     {
-        SBStream sstr;
-        target.GetDescription (sstr, lldb::eDescriptionLevelFull);
-        log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndArch (filename='%s', arcname='%s') "
-                     "=> SBTarget(%p): %s", m_opaque_sp.get(), filename, archname, target.get(),
-                     sstr.GetData());
+        log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndArch (filename='%s', arch = %s) => SBTarget(%p)", 
+                     m_opaque_sp.get(), filename, archname, target.get());
     }
 
     return target;
@@ -542,6 +549,12 @@ SBDebugger::CreateTarget (const char *filename)
             m_opaque_sp->GetTargetList().SetSelectedTarget (target_sp.get());
             target.reset (target_sp);
         }
+    }
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        log->Printf ("SBDebugger(%p)::CreateTarget (filename='%s') => SBTarget(%p)", 
+                     m_opaque_sp.get(), filename, target.get());
     }
     return target;
 }

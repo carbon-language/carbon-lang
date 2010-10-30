@@ -108,29 +108,27 @@ SBFileSpec::ResolvePath (const char *src_path, char *dst_path, size_t dst_len)
 const char *
 SBFileSpec::GetFilename() const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
+    const char *s = NULL;
     if (m_opaque_ap.get())
-    {
-        if (log)
-            log->Printf ("SBFileSpec(%p)::GetFilename () => %s", m_opaque_ap.get(), 
-                         m_opaque_ap->GetFilename().AsCString());
+        s = m_opaque_ap->GetFilename().AsCString();
 
-        return m_opaque_ap->GetFilename().AsCString();
-    }
-
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFileSpec(%p)::GetFilename () => NULL", m_opaque_ap.get());
+        log->Printf ("SBFileSpec(%p)::GetFilename () => \"%s\"", m_opaque_ap.get(), s ? s : "");
 
-    return NULL;
+    return s;
 }
 
 const char *
 SBFileSpec::GetDirectory() const
 {
+    const char *s = NULL;
     if (m_opaque_ap.get())
-        return m_opaque_ap->GetDirectory().AsCString();
-    return NULL;
+        s = m_opaque_ap->GetDirectory().AsCString();
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBFileSpec(%p)::GetDirectory () => \"%s\"", m_opaque_ap.get(), s ? s : "");
+    return s;
 }
 
 uint32_t
