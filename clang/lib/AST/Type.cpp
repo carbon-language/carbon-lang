@@ -1352,12 +1352,12 @@ Type::CachedProperties TagType::getCachedProperties() const {
   //       linkage purposes (7.1.3)) and the name has linkage; or
   //     -  it is a specialization of a class template (14); or
 
-  std::pair<Linkage,Visibility> LV = getDecl()->getLinkageAndVisibility();
+  NamedDecl::LinkageInfo LV = getDecl()->getLinkageAndVisibility();
   bool IsLocalOrUnnamed =
     getDecl()->getDeclContext()->isFunctionOrMethod() ||
                         (!getDecl()->getIdentifier() &&
                          !getDecl()->getTypedefForAnonDecl());
-  return CachedProperties(LV.first, LV.second, IsLocalOrUnnamed);
+  return CachedProperties(LV.linkage(), LV.visibility(), IsLocalOrUnnamed);
 }
 
 // C++ [basic.link]p8:
@@ -1406,8 +1406,8 @@ Type::CachedProperties FunctionProtoType::getCachedProperties() const {
 }
 
 Type::CachedProperties ObjCInterfaceType::getCachedProperties() const {
-  std::pair<Linkage,Visibility> LV = getDecl()->getLinkageAndVisibility();
-  return CachedProperties(LV.first, LV.second, false);
+  NamedDecl::LinkageInfo LV = getDecl()->getLinkageAndVisibility();
+  return CachedProperties(LV.linkage(), LV.visibility(), false);
 }
 
 Type::CachedProperties ObjCObjectType::getCachedProperties() const {

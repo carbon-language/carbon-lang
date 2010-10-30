@@ -2485,7 +2485,7 @@ static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
 
 static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
                                const ThunkInfo &Thunk, llvm::Function *Fn) {
-  CGM.setGlobalVisibility(Fn, MD);
+  CGM.setGlobalVisibility(Fn, MD, /*ForDef*/ true);
 
   if (!CGM.getCodeGenOpts().HiddenWeakVTables)
     return;
@@ -2989,7 +2989,7 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
   VTable->setLinkage(Linkage);
   
   // Set the right visibility.
-  CGM.setTypeVisibility(VTable, RD, /*ForRTTI*/ false);
+  CGM.setTypeVisibility(VTable, RD, /*ForRTTI*/ false, /*ForDef*/ true);
 }
 
 llvm::GlobalVariable *

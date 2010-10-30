@@ -259,12 +259,13 @@ public:
 
   /// setGlobalVisibility - Set the visibility for the given LLVM
   /// GlobalValue.
-  void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D) const;
+  void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D,
+                           bool IsForDefinition) const;
 
   /// setTypeVisibility - Set the visibility for the given global
   /// value which holds information about a type.
   void setTypeVisibility(llvm::GlobalValue *GV, const CXXRecordDecl *D,
-                         bool IsForRTTI) const;
+                         bool IsForRTTI, bool IsForDefinition) const;
 
   llvm::Constant *GetAddrOfGlobal(GlobalDecl GD) {
     if (isa<CXXConstructorDecl>(GD.getDecl()))

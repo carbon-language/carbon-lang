@@ -22,6 +22,8 @@
 // CHECK-HIDDEN: @_ZN6Test143varE = external global
 // CHECK: @_ZN6Test154TempINS_1AEE5Inner6bufferE = external global [0 x i8]
 // CHECK-HIDDEN: @_ZN6Test154TempINS_1AEE5Inner6bufferE = external global [0 x i8]
+// CHECK-HIDDEN: @_ZTTN6Test161AIcEE = external constant
+// CHECK-HIDDEN: @_ZTVN6Test161AIcEE = external constant
 // CHECK: @_ZTVN5Test63fooE = weak_odr hidden constant 
 
 namespace Test1 {
@@ -232,5 +234,19 @@ namespace Test15 {
 
   char *test() {
     return Temp<A>::Inner::buffer;
+  }
+}
+
+namespace Test16 {
+  struct Base1 { virtual void foo(); };
+  struct Base2 : virtual Base1 { virtual void foo(); };
+  template <class T> struct A : virtual Base1, Base2 {
+    virtual void foo();
+  };
+  extern template struct A<char>;
+
+  void test() {
+    A<char> a;
+    a.foo();
   }
 }

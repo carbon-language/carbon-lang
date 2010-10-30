@@ -176,22 +176,28 @@ static llvm::GlobalValue::VisibilityTypes GetLLVMVisibility(Visibility V) {
 
 
 void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
-                                        const NamedDecl *D) const {
+                                        const NamedDecl *D,
+                                        bool IsForDefinition) const {
   // Internal definitions always have default visibility.
   if (GV->hasLocalLinkage()) {
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
     return;
   }
 
-  GV->setVisibility(GetLLVMVisibility(D->getVisibility()));
+  // Set visibility for definitions.
+  NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
+  if (LV.visibilityExplicit() ||
+      (IsForDefinition && !GV->hasAvailableExternallyLinkage()))
+    GV->setVisibility(GetLLVMVisibility(LV.visibility()));
 }
 
 /// Set the symbol visibility of type information (vtable and RTTI)
 /// associated with the given type.
 void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
                                       const CXXRecordDecl *RD,
-                                      bool IsForRTTI) const {
-  setGlobalVisibility(GV, RD);
+                                      bool IsForRTTI,
+                                      bool IsForDefinition) const {
+  setGlobalVisibility(GV, RD, IsForDefinition);
 
   if (!CodeGenOpts.HiddenWeakVTables)
     return;
@@ -444,7 +450,7 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 void CodeGenModule::SetCommonAttributes(const Decl *D,
                                         llvm::GlobalValue *GV) {
   if (isa<NamedDecl>(D))
-    setGlobalVisibility(GV, cast<NamedDecl>(D));
+    setGlobalVisibility(GV, cast<NamedDecl>(D), /*ForDef*/ true);
   else
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
 
@@ -488,6 +494,11 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
     F->setLinkage(llvm::Function::ExternalWeakLinkage);
   } else {
     F->setLinkage(llvm::Function::ExternalLinkage);
+
+    NamedDecl::LinkageInfo LV = FD->getLinkageAndVisibility();
+    if (LV.linkage() == ExternalLinkage && LV.visibilityExplicit()) {
+      F->setVisibility(GetLLVMVisibility(LV.visibility()));
+    }
   }
 
   if (const SectionAttr *SA = FD->getAttr<SectionAttr>())
@@ -822,11 +833,11 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
     // If this the first reference to a C++ inline function in a class, queue up
     // the deferred function body for emission.  These are not seen as
     // top-level declarations.
-    if (FD->isThisDeclarationADefinition() && MayDeferGeneration(FD))
+    if (FD->isThisDeclarationADefinition() && MayDeferGeneration(FD)) {
       DeferredDeclsToEmit.push_back(D);
     // A called constructor which has no definition or declaration need be
     // synthesized.
-    else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+    } else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
       if (CD->isImplicit()) {
         assert(CD->isUsed() && "Sema doesn't consider constructor as used.");
         DeferredDeclsToEmit.push_back(D);
@@ -938,8 +949,8 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
     GV->setConstant(DeclIsConstantGlobal(Context, D));
 
     // Set linkage and visibility in case we never see a definition.
-    std::pair<Linkage,Visibility> LV = D->getLinkageAndVisibility();
-    if (LV.first != ExternalLinkage) {
+    NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
+    if (LV.linkage() != ExternalLinkage) {
       GV->setLinkage(llvm::GlobalValue::InternalLinkage);
     } else {
       if (D->hasAttr<DLLImportAttr>())
@@ -947,7 +958,9 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
       else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>())
         GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
-      GV->setVisibility(GetLLVMVisibility(LV.second));
+      // Set visibility on a declaration only if it's explicit.
+      if (LV.visibilityExplicit())
+        GV->setVisibility(GetLLVMVisibility(LV.visibility()));
     }
 
     GV->setThreadLocal(D->isThreadSpecified());

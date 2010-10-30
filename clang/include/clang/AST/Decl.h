@@ -196,14 +196,81 @@ public:
   /// determine whether it's an instance member of its class.
   bool isCXXInstanceMember() const;
 
+  class LinkageInfo {
+    Linkage linkage_;
+    Visibility visibility_;
+    bool explicit_;
+
+  public:
+    LinkageInfo() : linkage_(ExternalLinkage), visibility_(DefaultVisibility),
+                    explicit_(false) {}
+    LinkageInfo(Linkage L, Visibility V, bool E)
+      : linkage_(L), visibility_(V), explicit_(E) {}
+
+    static LinkageInfo external() {
+      return LinkageInfo();
+    }
+    static LinkageInfo internal() {
+      return LinkageInfo(InternalLinkage, DefaultVisibility, false);
+    }
+    static LinkageInfo uniqueExternal() {
+      return LinkageInfo(UniqueExternalLinkage, DefaultVisibility, false);
+    }
+    static LinkageInfo none() {
+      return LinkageInfo(NoLinkage, DefaultVisibility, false);
+    }
+
+    Linkage linkage() const { return linkage_; }
+    Visibility visibility() const { return visibility_; }
+    bool visibilityExplicit() const { return explicit_; }
+
+    void setLinkage(Linkage L) { linkage_ = L; }
+    void setVisibility(Visibility V) { visibility_ = V; }
+    void setVisibility(Visibility V, bool E) { visibility_ = V; explicit_ = E; }
+    void setVisibility(LinkageInfo Other) {
+      setVisibility(Other.visibility(), Other.visibilityExplicit());
+    }
+
+    void mergeLinkage(Linkage L) {
+      setLinkage(minLinkage(linkage(), L));
+    }
+    void mergeLinkage(LinkageInfo Other) {
+      setLinkage(minLinkage(linkage(), Other.linkage()));
+    }
+
+    void mergeVisibility(Visibility V) {
+      setVisibility(minVisibility(visibility(), V));
+    }
+    void mergeVisibility(Visibility V, bool E) {
+      setVisibility(minVisibility(visibility(), V), visibilityExplicit() || E);
+    }
+    void mergeVisibility(LinkageInfo Other) {
+      mergeVisibility(Other.visibility(), Other.visibilityExplicit());
+    }
+
+    void merge(LinkageInfo Other) {
+      mergeLinkage(Other);
+      mergeVisibility(Other);
+    }
+    void merge(std::pair<Linkage,Visibility> LV) {
+      mergeLinkage(LV.first);
+      mergeVisibility(LV.second);
+    }
+
+    friend LinkageInfo merge(LinkageInfo L, LinkageInfo R) {
+      L.merge(R);
+      return L;
+    }
+  };
+
   /// \brief Determine what kind of linkage this entity has.
-  Linkage getLinkage() const { return getLinkageAndVisibility().first; }
+  Linkage getLinkage() const { return getLinkageAndVisibility().linkage(); }
 
   /// \brief Determines the visibility of this entity.
-  Visibility getVisibility() const { return getLinkageAndVisibility().second; }
+  Visibility getVisibility() const { return getLinkageAndVisibility().visibility(); }
 
   /// \brief Determines the linkage and visibility of this entity.
-  std::pair<Linkage,Visibility> getLinkageAndVisibility() const;
+  LinkageInfo getLinkageAndVisibility() const;
 
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
