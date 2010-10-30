@@ -4404,17 +4404,33 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
 
   if (const ObjCObjectPointerType *lhsOPT =
         lhs->getAsObjCInterfacePointerType()) {
-    // If both the right and left sides have qualifiers.
+    if (lhsOPT->qual_empty()) {
+      bool match = false;
+      if (ObjCInterfaceDecl *lhsID = lhsOPT->getInterfaceDecl()) {
+        for (ObjCObjectPointerType::qual_iterator I = rhsQID->qual_begin(),
+             E = rhsQID->qual_end(); I != E; ++I) {
+          // when comparing an id<P> on rhs with a static type on lhs,
+          // static class must implement all of id's protocols directly or
+          // indirectly through its super class.
+          if (lhsID->ClassImplementsProtocol(*I, true)) {
+            match = true;
+            break;
+          }
+        }
+        if (!match)
+          return false;
+      }
+      return true;
+    }
+    // Both the right and left sides have qualifiers.
     for (ObjCObjectPointerType::qual_iterator I = lhsOPT->qual_begin(),
          E = lhsOPT->qual_end(); I != E; ++I) {
       ObjCProtocolDecl *lhsProto = *I;
       bool match = false;
 
-      // when comparing an id<P> on rhs with a static type on lhs,
+      // when comparing an id<P> on lhs with a static type on rhs,
       // see if static class implements all of id's protocols, directly or
       // through its super class and categories.
-      // First, lhs protocols in the qualifier list must be found, direct
-      // or indirect in rhs's qualifier list or it is a mismatch.
       for (ObjCObjectPointerType::qual_iterator J = rhsQID->qual_begin(),
            E = rhsQID->qual_end(); J != E; ++J) {
         ObjCProtocolDecl *rhsProto = *J;
@@ -4426,35 +4442,6 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       }
       if (!match)
         return false;
-    }
-    
-    // Static class's protocols, or its super class or category protocols
-    // must be found, direct or indirect in rhs's qualifier list or it is a mismatch.
-    if (ObjCInterfaceDecl *lhsID = lhsOPT->getInterfaceDecl()) {
-      llvm::SmallPtrSet<ObjCProtocolDecl *, 8> LHSInheritedProtocols;
-      CollectInheritedProtocols(lhsID, LHSInheritedProtocols);
-      // This is rather dubious but matches gcc's behavior. If lhs has
-      // no type qualifier and its class has no static protocol(s) assume
-      // assume that it is mismatch.
-      if (LHSInheritedProtocols.empty() && lhsOPT->qual_empty())
-        return false;
-      for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator I =
-           LHSInheritedProtocols.begin(),
-           E = LHSInheritedProtocols.end(); I != E; ++I) {
-        bool match = false;
-        ObjCProtocolDecl *lhsProto = (*I);
-        for (ObjCObjectPointerType::qual_iterator J = rhsQID->qual_begin(),
-             E = rhsQID->qual_end(); J != E; ++J) {
-          ObjCProtocolDecl *rhsProto = *J;
-          if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
-              (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
-            match = true;
-            break;
-          }
-        }
-        if (!match)
-          return false;
-      }
     }
     return true;
   }
