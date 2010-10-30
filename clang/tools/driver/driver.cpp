@@ -36,8 +36,7 @@
 using namespace clang;
 using namespace clang::driver;
 
-static llvm::sys::Path GetExecutablePath(const char *Argv0,
-                                         bool CanonicalPrefixes) {
+llvm::sys::Path GetExecutablePath(const char *Argv0, bool CanonicalPrefixes) {
   if (!CanonicalPrefixes)
     return llvm::sys::Path(Argv0);
 

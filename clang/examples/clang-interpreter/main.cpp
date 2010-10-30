@@ -32,7 +32,7 @@
 using namespace clang;
 using namespace clang::driver;
 
-static llvm::sys::Path GetExecutablePath(const char *Argv0) {
+llvm::sys::Path GetExecutablePath(const char *Argv0) {
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
   void *MainAddr = (void*) (intptr_t) GetExecutablePath;
