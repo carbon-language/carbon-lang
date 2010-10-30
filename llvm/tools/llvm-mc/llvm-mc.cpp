@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/SubtargetFeature.h" // FIXME.
 #include "llvm/Target/TargetMachine.h"  // FIXME.
 #include "llvm/Target/TargetSelect.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -94,6 +95,12 @@ ArchName("arch", cl::desc("Target arch to assemble for, "
 static cl::opt<std::string>
 TripleName("triple", cl::desc("Target triple to assemble for, "
                               "see -version for available targets"));
+
+static cl::opt<std::string>
+MCPU("mcpu",
+     cl::desc("Target a specific cpu type (-mcpu=help for details)"),
+     cl::value_desc("cpu-name"),
+     cl::init(""));
 
 static cl::opt<bool>
 NoInitialTextSection("n", cl::desc(
@@ -301,8 +308,20 @@ static int AssembleInput(const char *ProgName) {
   
   MCContext Ctx(*MAI);
 
+  // Package up features to be passed to target/subtarget
+  std::string FeaturesStr;
+  if (MCPU.size()) {
+    SubtargetFeatures Features;
+    Features.setCPU(MCPU);
+    FeaturesStr = Features.getString();
+  }
+
   // FIXME: We shouldn't need to do this (and link in codegen).
-  OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName, ""));
+  //        When we split this out, we should do it in a way that makes
+  //        it straightforward to switch subtargets on the fly (.e.g,
+  //        the .cpu and .code16 directives).
+  OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
+                                                             FeaturesStr));
 
   if (!TM) {
     errs() << ProgName << ": error: could not create target for triple '"
