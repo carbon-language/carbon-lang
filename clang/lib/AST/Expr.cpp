@@ -1930,6 +1930,11 @@ FieldDecl *Expr::getBitField() {
       if (Field->isBitField())
         return Field;
 
+  if (DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(E))
+    if (FieldDecl *Field = dyn_cast<FieldDecl>(DeclRef->getDecl()))
+      if (Field->isBitField())
+        return Field;
+
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(E))
     if (BinOp->isAssignmentOp() && BinOp->getLHS())
       return BinOp->getLHS()->getBitField();
