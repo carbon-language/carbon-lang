@@ -26,7 +26,6 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/UniqueVector.h"
@@ -201,10 +200,6 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
       // read or write memory.
       if (I->mayWriteToMemory())
         // Writes memory.  Just give up.
-        return false;
-
-      if (isMalloc(I))
-        // malloc claims not to write memory!  PR3754.
         return false;
 
       // If this instruction may read memory, remember that.
