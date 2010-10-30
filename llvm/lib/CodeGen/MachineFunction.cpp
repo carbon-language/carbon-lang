@@ -347,17 +347,15 @@ namespace llvm {
 
     std::string getNodeLabel(const MachineBasicBlock *Node,
                              const MachineFunction *Graph) {
-      if (isSimple () && Node->getBasicBlock() &&
-          !Node->getBasicBlock()->getName().empty())
-        return Node->getBasicBlock()->getNameStr() + ":";
-
       std::string OutStr;
       {
         raw_string_ostream OSS(OutStr);
-        
-        if (isSimple())
-          OSS << Node->getNumber() << ':';
-        else
+
+        if (isSimple()) {
+          OSS << "BB#" << Node->getNumber();
+          if (const BasicBlock *BB = Node->getBasicBlock())
+            OSS << ": " << BB->getName();
+        } else
           Node->print(OSS);
       }
 
