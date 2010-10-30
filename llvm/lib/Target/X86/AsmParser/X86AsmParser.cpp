@@ -1137,39 +1137,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   return false;
 }
 
-bool X86ATTAsmParser::ParseDirective(AsmToken DirectiveID) {
-  StringRef IDVal = DirectiveID.getIdentifier();
-  if (IDVal == ".word")
-    return ParseDirectiveWord(2, DirectiveID.getLoc());
-  return true;
-}
-
-/// ParseDirectiveWord
-///  ::= .word [ expression (, expression)* ]
-bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    for (;;) {
-      const MCExpr *Value;
-      if (getParser().ParseExpression(Value))
-        return true;
-
-      getParser().getStreamer().EmitValue(Value, Size, 0 /*addrspace*/);
-
-      if (getLexer().is(AsmToken::EndOfStatement))
-        break;
-
-      // FIXME: Improve diagnostic.
-      if (getLexer().isNot(AsmToken::Comma))
-        return Error(L, "unexpected token in directive");
-      Parser.Lex();
-    }
-  }
-
-  Parser.Lex();
-  return false;
-}
-
-
 bool X86ATTAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -1333,6 +1300,41 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   Error(IDLoc, "unknown use of instruction mnemonic without a size suffix");
   return true;
 }
+
+
+bool X86ATTAsmParser::ParseDirective(AsmToken DirectiveID) {
+  StringRef IDVal = DirectiveID.getIdentifier();
+  if (IDVal == ".word")
+    return ParseDirectiveWord(2, DirectiveID.getLoc());
+  return true;
+}
+
+/// ParseDirectiveWord
+///  ::= .word [ expression (, expression)* ]
+bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    for (;;) {
+      const MCExpr *Value;
+      if (getParser().ParseExpression(Value))
+        return true;
+      
+      getParser().getStreamer().EmitValue(Value, Size, 0 /*addrspace*/);
+      
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
+      
+      // FIXME: Improve diagnostic.
+      if (getLexer().isNot(AsmToken::Comma))
+        return Error(L, "unexpected token in directive");
+      Parser.Lex();
+    }
+  }
+  
+  Parser.Lex();
+  return false;
+}
+
+
 
 
 extern "C" void LLVMInitializeX86AsmLexer();
