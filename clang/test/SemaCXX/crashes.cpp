@@ -19,3 +19,10 @@ class Foo {
     Bar i;
   }
 };
+
+// PR7625
+template<typename T> struct a : T {
+ struct x : T {
+   int aa() { return p; } // expected-error{{use of undeclared identifier 'p'}}
+ };
+};
