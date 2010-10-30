@@ -1276,32 +1276,37 @@ def : MnemonicAlias<"ud2a", "ud2">;
 def : MnemonicAlias<"verrw", "verr">;
 
 
-class CondCodeAlias<string Prefix, string OldCond, string NewCond>
-  : MnemonicAlias<!strconcat(Prefix, OldCond), !strconcat(Prefix, NewCond)>;
+class CondCodeAlias<string Prefix,string Suffix, string OldCond, string NewCond>
+  : MnemonicAlias<!strconcat(Prefix, OldCond, Suffix),
+                  !strconcat(Prefix, NewCond, Suffix)>;
 
 /// IntegerCondCodeMnemonicAlias - This multiclass defines a bunch of
 /// MnemonicAlias's that canonicalize the condition code in a mnemonic, for
 /// example "setz" -> "sete".
-multiclass IntegerCondCodeMnemonicAlias<string Prefix> {
-  def C   : CondCodeAlias<Prefix, "c",   "b">;   // setc   -> setb
-  def Z   : CondCodeAlias<Prefix, "z" ,  "e">;   // setz   -> sete
-  def NA  : CondCodeAlias<Prefix, "na",  "be">;  // setna  -> setbe
-  def NB  : CondCodeAlias<Prefix, "nb",  "ae">;  // setnb  -> setae
-  def NC  : CondCodeAlias<Prefix, "nc",  "ae">;  // setnc  -> setae
-  def NG  : CondCodeAlias<Prefix, "ng",  "le">;  // setng  -> setle
-  def NL  : CondCodeAlias<Prefix, "nl",  "ge">;  // setnl  -> setge
-  def NZ  : CondCodeAlias<Prefix, "nz",  "ne">;  // setnz  -> setne
-  def PE  : CondCodeAlias<Prefix, "pe",  "p">;   // setpe  -> setp
-  def PO  : CondCodeAlias<Prefix, "po",  "np">;  // setpo  -> setnp
+multiclass IntegerCondCodeMnemonicAlias<string Prefix, string Suffix> {
+  def C   : CondCodeAlias<Prefix, Suffix, "c",   "b">;   // setc   -> setb
+  def Z   : CondCodeAlias<Prefix, Suffix, "z" ,  "e">;   // setz   -> sete
+  def NA  : CondCodeAlias<Prefix, Suffix, "na",  "be">;  // setna  -> setbe
+  def NB  : CondCodeAlias<Prefix, Suffix, "nb",  "ae">;  // setnb  -> setae
+  def NC  : CondCodeAlias<Prefix, Suffix, "nc",  "ae">;  // setnc  -> setae
+  def NG  : CondCodeAlias<Prefix, Suffix, "ng",  "le">;  // setng  -> setle
+  def NL  : CondCodeAlias<Prefix, Suffix, "nl",  "ge">;  // setnl  -> setge
+  def NZ  : CondCodeAlias<Prefix, Suffix, "nz",  "ne">;  // setnz  -> setne
+  def PE  : CondCodeAlias<Prefix, Suffix, "pe",  "p">;   // setpe  -> setp
+  def PO  : CondCodeAlias<Prefix, Suffix, "po",  "np">;  // setpo  -> setnp
 
-  def NAE : CondCodeAlias<Prefix, "nae", "b">;   // setnae -> setb
-  def NBE : CondCodeAlias<Prefix, "nbe", "a">;   // setnbe -> seta
-  def NGE : CondCodeAlias<Prefix, "nge", "l">;   // setnge -> setl
-  def NLE : CondCodeAlias<Prefix, "nle", "g">;   // setnle -> setg
+  def NAE : CondCodeAlias<Prefix, Suffix, "nae", "b">;   // setnae -> setb
+  def NBE : CondCodeAlias<Prefix, Suffix, "nbe", "a">;   // setnbe -> seta
+  def NGE : CondCodeAlias<Prefix, Suffix, "nge", "l">;   // setnge -> setl
+  def NLE : CondCodeAlias<Prefix, Suffix, "nle", "g">;   // setnle -> setg
 }
 
 // Aliases for set<CC>
-defm : IntegerCondCodeMnemonicAlias<"set">;
+defm : IntegerCondCodeMnemonicAlias<"set", "">;
 // Aliases for j<CC>
-defm : IntegerCondCodeMnemonicAlias<"j">;
+defm : IntegerCondCodeMnemonicAlias<"j", "">;
+// Aliases for cmov<CC>{w,l,q}
+defm : IntegerCondCodeMnemonicAlias<"cmov", "w">;
+defm : IntegerCondCodeMnemonicAlias<"cmov", "l">;
+defm : IntegerCondCodeMnemonicAlias<"cmov", "q">;
 
