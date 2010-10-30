@@ -565,7 +565,7 @@ public:
 
   /// Map of Predicate records to their subtarget information.
   std::map<Record*, SubtargetFeatureInfo*> SubtargetFeatures;
-
+  
 private:
   /// Map of token to class information which has already been constructed.
   std::map<std::string, ClassInfo*> TokenClasses;
@@ -584,13 +584,6 @@ private:
   ClassInfo *getOperandClass(StringRef Token,
                              const CodeGenInstruction::OperandInfo &OI);
 
-  /// getSubtargetFeature - Lookup or create the subtarget feature info for the
-  /// given operand.
-  SubtargetFeatureInfo *getSubtargetFeature(Record *Def) {
-    assert(Def->isSubClassOf("Predicate") && "Invalid predicate type!");
-    return SubtargetFeatures[Def];
-  }
-
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
   void BuildRegisterClasses(CodeGenTarget &Target,
@@ -605,6 +598,15 @@ public:
 
   /// BuildInfo - Construct the various tables used during matching.
   void BuildInfo(CodeGenTarget &Target);
+  
+  /// getSubtargetFeature - Lookup or create the subtarget feature info for the
+  /// given operand.
+  SubtargetFeatureInfo *getSubtargetFeature(Record *Def) const {
+    assert(Def->isSubClassOf("Predicate") && "Invalid predicate type!");
+    std::map<Record*, SubtargetFeatureInfo*>::const_iterator I =
+      SubtargetFeatures.find(Def);
+    return I == SubtargetFeatures.end() ? 0 : I->second;
+  }
 };
 
 }
@@ -979,14 +981,9 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     // Compute the require features.
     std::vector<Record*> Predicates =
       CGI.TheDef->getValueAsListOfDefs("Predicates");
-    for (unsigned i = 0, e = Predicates.size(); i != e; ++i) {
-      Record *Pred = Predicates[i];
-      // Ignore predicates that are not intended for the assembler.
-      if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
-        continue;
-        
-      II->RequiredFeatures.push_back(getSubtargetFeature(Pred));
-    }
+    for (unsigned i = 0, e = Predicates.size(); i != e; ++i)
+      if (SubtargetFeatureInfo *Feature = getSubtargetFeature(Predicates[i]))
+        II->RequiredFeatures.push_back(Feature);
 
     Instructions.push_back(II.take());
   }
@@ -1516,24 +1513,19 @@ static void EmitComputeAvailableFeatures(CodeGenTarget &Target,
   OS << "}\n\n";
 }
 
-static std::string GetAliasRequiredFeatures(Record *R) {
-  // FIXME: This is a total hack.
+static std::string GetAliasRequiredFeatures(Record *R,
+                                            const AsmMatcherInfo &Info) {
   std::vector<Record*> ReqFeatures = R->getValueAsListOfDefs("Predicates");
-  
   std::string Result;
   unsigned NumFeatures = 0;
   for (unsigned i = 0, e = ReqFeatures.size(); i != e; ++i) {
-    Record *Pred = ReqFeatures[i];
-  
-    // Ignore predicates that are not intended for the assembler.
-    if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
-      continue;
- 
-    if (NumFeatures)
-      Result += '|';
+    if (SubtargetFeatureInfo *F = Info.getSubtargetFeature(ReqFeatures[i])) {
+      if (NumFeatures)
+        Result += '|';
     
-    Result += "Feature_" + Pred->getName();
-    ++NumFeatures;
+      Result += F->getEnumName();
+      ++NumFeatures;
+    }
   }
   
   if (NumFeatures > 1)
@@ -1576,7 +1568,7 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
     
     for (unsigned i = 0, e = ToVec.size(); i != e; ++i) {
       Record *R = ToVec[i];
-      std::string FeatureMask = GetAliasRequiredFeatures(R);
+      std::string FeatureMask = GetAliasRequiredFeatures(R, Info);
     
       // If this unconditionally matches, remember it for later and diagnose
       // duplicates.
