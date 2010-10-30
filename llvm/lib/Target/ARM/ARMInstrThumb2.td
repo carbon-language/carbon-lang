@@ -2268,78 +2268,29 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$dst),
 
 // memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
-def t2DMBsy : AInoP<(outs), (ins), ThumbFrm, NoItinerary, "dmb", "",
-                    [(ARMMemBarrier)]>, Requires<[IsThumb, HasDB]> {
-  let Inst{31-4} = 0xF3BF8F5;
-  // FIXME: add support for options other than a full system DMB
-  let Inst{3-0} = 0b1111;
-}
-
-def t2DSBsy : AInoP<(outs), (ins), ThumbFrm, NoItinerary, "dsb", "",
-                    [(ARMSyncBarrier)]>, Requires<[IsThumb, HasDB]> {
-  let Inst{31-4} = 0xF3BF8F4;
-  // FIXME: add support for options other than a full system DSB
-  let Inst{3-0} = 0b1111;
+def t2DMB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
+                  "dmb", "\t$opt", [(ARMMemBarrier (i32 imm:$opt))]>,
+                  Requires<[IsThumb, HasDB]> {
+  bits<4> opt;
+  let Inst{31-4} = 0xf3bf8f5;
+  let Inst{3-0} = opt;
 }
 }
 
-// Helper class for multiclass T2MemB -- for disassembly only
-class T2I_memb<string opc, string asm>
-  : T2I<(outs), (ins), NoItinerary, opc, asm,
-        [/* For disassembly only; pattern left blank */]>,
-    Requires<[IsThumb2, HasV7]> {
-  let Inst{31-20} = 0xf3b;
-  let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
+def t2DSB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
+                  "dsb", "\t$opt",
+                  [/* For disassembly only; pattern left blank */]>,
+                  Requires<[IsThumb, HasDB]> {
+  bits<4> opt;
+  let Inst{31-4} = 0xf3bf8f4;
+  let Inst{3-0} = opt;
 }
-
-multiclass T2MemB<bits<4> op7_4, string opc> {
-
-  def st : T2I_memb<opc, "\tst"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b1110;
-  }
-
-  def ish : T2I_memb<opc, "\tish"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b1011;
-  }
-
-  def ishst : T2I_memb<opc, "\tishst"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b1010;
-  }
-
-  def nsh : T2I_memb<opc, "\tnsh"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b0111;
-  }
-
-  def nshst : T2I_memb<opc, "\tnshst"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b0110;
-  }
-
-  def osh : T2I_memb<opc, "\tosh"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b0011;
-  }
-
-  def oshst : T2I_memb<opc, "\toshst"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b0010;
-  }
-}
-
-// These DMB variants are for disassembly only.
-defm t2DMB : T2MemB<0b0101, "dmb">;
-
-// These DSB variants are for disassembly only.
-defm t2DSB : T2MemB<0b0100, "dsb">;
 
 // ISB has only full system option -- for disassembly only
-def t2ISBsy : T2I_memb<"isb", ""> {
-  let Inst{7-4} = 0b0110;
+def t2ISB : T2I<(outs), (ins), NoItinerary, "isb", "",
+                  [/* For disassembly only; pattern left blank */]>,
+                  Requires<[IsThumb2, HasV7]> {
+  let Inst{31-4} = 0xf3bf8f6;
   let Inst{3-0} = 0b1111;
 }
 

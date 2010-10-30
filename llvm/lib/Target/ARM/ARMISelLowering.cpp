@@ -766,7 +766,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::DYN_ALLOC:     return "ARMISD::DYN_ALLOC";
 
   case ARMISD::MEMBARRIER:    return "ARMISD::MEMBARRIER";
-  case ARMISD::SYNCBARRIER:   return "ARMISD::SYNCBARRIER";
+  case ARMISD::MEMBARRIER_MCR: return "ARMISD::MEMBARRIER_MCR";
 
   case ARMISD::VCEQ:          return "ARMISD::VCEQ";
   case ARMISD::VCGE:          return "ARMISD::VCGE";
@@ -2026,21 +2026,29 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
 static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
                                const ARMSubtarget *Subtarget) {
   DebugLoc dl = Op.getDebugLoc();
-  SDValue Op5 = Op.getOperand(5);
-  unsigned isDeviceBarrier = cast<ConstantSDNode>(Op5)->getZExtValue();
-  // Some subtargets which have dmb and dsb instructions can handle barriers
-  // directly. Some ARMv6 cpus can support them with the help of mcr
-  // instruction. Thumb1 and pre-v6 ARM mode use a libcall instead and should
-  // never get here.
-  unsigned Opc = isDeviceBarrier ? ARMISD::SYNCBARRIER : ARMISD::MEMBARRIER;
-  if (Subtarget->hasDataBarrier())
-    return DAG.getNode(Opc, dl, MVT::Other, Op.getOperand(0));
-  else {
+  if (!Subtarget->hasDataBarrier()) {
+    // Some ARMv6 cpus can support data barriers with an mcr instruction.
+    // Thumb1 and pre-v6 ARM mode use a libcall instead and should never get
+    // here.
     assert(Subtarget->hasV6Ops() && !Subtarget->isThumb1Only() &&
            "Unexpected ISD::MEMBARRIER encountered. Should be libcall!");
-    return DAG.getNode(Opc, dl, MVT::Other, Op.getOperand(0),
+    return DAG.getNode(ARMISD::MEMBARRIER_MCR, dl, MVT::Other, Op.getOperand(0),
                        DAG.getConstant(0, MVT::i32));
   }
+
+  SDValue Op5 = Op.getOperand(5);
+  bool isDeviceBarrier = cast<ConstantSDNode>(Op5)->getZExtValue() != 0;
+  unsigned isLL = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  unsigned isLS = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
+  bool isOnlyStoreBarrier = (isLL == 0 && isLS == 0);
+
+  ARM_MB::MemBOpt DMBOpt;
+  if (isDeviceBarrier)
+    DMBOpt = isOnlyStoreBarrier ? ARM_MB::ST : ARM_MB::SY;
+  else
+    DMBOpt = isOnlyStoreBarrier ? ARM_MB::ISHST : ARM_MB::ISH;
+  return DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
+                     DAG.getConstant(DMBOpt, MVT::i32));
 }
 
 static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) {

@@ -81,8 +81,8 @@ namespace llvm {
 
       DYN_ALLOC,    // Dynamic allocation on the stack.
 
-      MEMBARRIER,   // Memory barrier
-      SYNCBARRIER,  // Memory sync barrier
+      MEMBARRIER,   // Memory barrier (DMB)
+      MEMBARRIER_MCR, // Memory barrier (MCR)
       
       VCEQ,         // Vector compare equal.
       VCGE,         // Vector compare greater than or equal.

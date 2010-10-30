@@ -101,6 +101,7 @@ namespace ARM_MB {
   // The Memory Barrier Option constants map directly to the 4-bit encoding of
   // the option field for memory barrier operations.
   enum MemBOpt {
+    SY    = 15,
     ST    = 14,
     ISH   = 11,
     ISHST = 10,
@@ -113,6 +114,7 @@ namespace ARM_MB {
   inline static const char *MemBOptToString(unsigned val) {
     switch (val) {
     default: llvm_unreachable("Unknown memory operation");
+    case SY:    return "sy";
     case ST:    return "st";
     case ISH:   return "ish";
     case ISHST: return "ishst";

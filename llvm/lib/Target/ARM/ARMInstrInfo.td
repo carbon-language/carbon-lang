@@ -60,10 +60,7 @@ def SDT_ARMEH_SJLJ_Longjmp: SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
 
 def SDT_ARMEH_SJLJ_DispatchSetup: SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
-def SDT_ARMMEMBARRIER     : SDTypeProfile<0, 0, []>;
-def SDT_ARMSYNCBARRIER    : SDTypeProfile<0, 0, []>;
-def SDT_ARMMEMBARRIERMCR  : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
-def SDT_ARMSYNCBARRIERMCR : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+def SDT_ARMMEMBARRIER     : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
 def SDT_ARMTCRET : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
@@ -131,11 +128,7 @@ def ARMeh_sjlj_dispatchsetup: SDNode<"ARMISD::EH_SJLJ_DISPATCHSETUP",
 
 def ARMMemBarrier     : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIER,
                                [SDNPHasChain]>;
-def ARMSyncBarrier    : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIER,
-                               [SDNPHasChain]>;
-def ARMMemBarrierMCR  : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIERMCR,
-                               [SDNPHasChain]>;
-def ARMSyncBarrierMCR : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIERMCR,
+def ARMMemBarrierMCR  : SDNode<"ARMISD::MEMBARRIER_MCR", SDT_ARMMEMBARRIER,
                                [SDNPHasChain]>;
 
 def ARMrbit          : SDNode<"ARMISD::RBIT", SDTIntUnaryOp>;
@@ -2888,64 +2881,40 @@ def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
 // Atomic operations intrinsics
 //
 
-// memory barriers protect the atomic sequences
-let hasSideEffects = 1 in {
-def DMBsy : AInoP<(outs), (ins), MiscFrm, NoItinerary, "dmb", "",
-                  [(ARMMemBarrier)]>, Requires<[IsARM, HasDB]> {
-  let Inst{31-4} = 0xf57ff05;
-  // FIXME: add support for options other than a full system DMB
-  // See DMB disassembly-only variants below.
-  let Inst{3-0} = 0b1111;
+def memb_opt : Operand<i32> {
+  let PrintMethod = "printMemBOption";
 }
 
-def DSBsy : AInoP<(outs), (ins), MiscFrm, NoItinerary, "dsb", "",
-                  [(ARMSyncBarrier)]>, Requires<[IsARM, HasDB]> {
-  let Inst{31-4} = 0xf57ff04;
-  // FIXME: add support for options other than a full system DSB
-  // See DSB disassembly-only variants below.
-  let Inst{3-0} = 0b1111;
+// memory barriers protect the atomic sequences
+let hasSideEffects = 1 in {
+def DMB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
+                "dmb", "\t$opt", [(ARMMemBarrier (i32 imm:$opt))]>,
+                Requires<[IsARM, HasDB]> {
+  bits<4> opt;
+  let Inst{31-4} = 0xf57ff05;
+  let Inst{3-0} = opt;
 }
 
 def DMB_MCR : AInoP<(outs), (ins GPR:$zero), MiscFrm, NoItinerary,
                        "mcr", "\tp15, 0, $zero, c7, c10, 5",
                        [(ARMMemBarrierMCR GPR:$zero)]>,
                        Requires<[IsARM, HasV6]> {
-  // FIXME: add support for options other than a full system DMB
-  // FIXME: add encoding
-}
-
-def DSB_MCR : AInoP<(outs), (ins GPR:$zero), MiscFrm, NoItinerary,
-                        "mcr", "\tp15, 0, $zero, c7, c10, 4",
-                        [(ARMSyncBarrierMCR GPR:$zero)]>,
-                        Requires<[IsARM, HasV6]> {
-  // FIXME: add support for options other than a full system DSB
   // FIXME: add encoding
 }
 }
 
-// Memory Barrier Operations Variants -- for disassembly only
-
-def memb_opt : Operand<i32> {
-  let PrintMethod = "printMemBOption";
+def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
+                "dsb", "\t$opt",
+                [/* For disassembly only; pattern left blank */]>,
+                Requires<[IsARM, HasDB]> {
+  bits<4> opt;
+  let Inst{31-4} = 0xf57ff04;
+  let Inst{3-0} = opt;
 }
-
-class AMBI<bits<4> op7_4, string opc>
-  : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary, opc, "\t$opt",
-          [/* For disassembly only; pattern left blank */]>,
-    Requires<[IsARM, HasDB]> {
-  let Inst{31-8} = 0xf57ff0;
-  let Inst{7-4} = op7_4;
-}
-
-// These DMB variants are for disassembly only.
-def DMBvar : AMBI<0b0101, "dmb">;
-
-// These DSB variants are for disassembly only.
-def DSBvar : AMBI<0b0100, "dsb">;
 
 // ISB has only full system option -- for disassembly only
-def ISBsy : AInoP<(outs), (ins), MiscFrm, NoItinerary, "isb", "", []>,
-            Requires<[IsARM, HasDB]> {
+def ISB : AInoP<(outs), (ins), MiscFrm, NoItinerary, "isb", "", []>,
+                Requires<[IsARM, HasDB]> {
   let Inst{31-4} = 0xf57ff06;
   let Inst{3-0} = 0b1111;
 }
