@@ -255,21 +255,17 @@ static LVPair getLVForNamespaceScopeDecl(const NamedDecl *D,
     //
     // Note that we don't want to make the variable non-external
     // because of this, but unique-external linkage suits us.
-    if (Context.getLangOptions().CPlusPlus && !ExplicitVisibility &&
-        !Var->isExternC()) {
+    if (Context.getLangOptions().CPlusPlus && !Var->isExternC()) {
       LVPair TypeLV = Var->getType()->getLinkageAndVisibility();
       if (TypeLV.first != ExternalLinkage)
         return LVPair(UniqueExternalLinkage, DefaultVisibility);
-
-      // Otherwise, ignore type visibility for declarations.
-      if (!isDeclaration)
+      if (!isDeclaration && !ExplicitVisibility)
         LV.second = minVisibility(LV.second, TypeLV.second);
     }
 
     // Don't consider -fvisibility for pure declarations.
-    if (isDeclaration) {
+    if (isDeclaration)
       ConsiderGlobalVisibility = false;
-    }
 
     if (!Context.getLangOptions().CPlusPlus &&
         (Var->getStorageClass() == SC_Extern ||
@@ -524,24 +520,24 @@ static LVPair getLVForClassMember(const NamedDecl *D,
 
   // Static data members.
   } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    // If we don't have explicit visibility information in the
-    // hierarchy, apply the LV from its type.  See the comment about
-    // namespace-scope variables for justification for this
-    // optimization.
-    if (!HasExplicitVisibility) {
-      LVPair TypeLV = VD->getType()->getLinkageAndVisibility();
-      if (TypeLV.first != ExternalLinkage)
-        LV.first = minLinkage(LV.first, UniqueExternalLinkage);
-      LV.second = minVisibility(LV.second, TypeLV.second);
+    bool IsDefinition = (VD->getDefinition() &&
+                         VD->getTemplateSpecializationKind()
+                           != TSK_ExplicitInstantiationDeclaration);
+
+    // GCC just ignores the visibility of a variable declaration
+    // unless it's explicit.
+    if (!IsDefinition && !HasExplicitVisibility) {
+      LV.second = DefaultVisibility;
+      ConsiderGlobalVisibility = false;
     }
 
-    // Ignore global visibility if it's an extern template or
-    // just a declaration.
-    if (ConsiderGlobalVisibility)
-      ConsiderGlobalVisibility =
-        (VD->getDefinition() &&
-         VD->getTemplateSpecializationKind()
-           != TSK_ExplicitInstantiationDeclaration);
+    // Modify the variable's linkage by its type, but ignore the
+    // type's visibility unless it's a definition.
+    LVPair TypeLV = VD->getType()->getLinkageAndVisibility();
+    if (TypeLV.first != ExternalLinkage)
+      LV.first = minLinkage(LV.first, UniqueExternalLinkage);
+    if (IsDefinition && !HasExplicitVisibility)
+      LV.second = minVisibility(LV.second, TypeLV.second);
   }
 
   // Suppress -fvisibility if we have explicit visibility on any of
