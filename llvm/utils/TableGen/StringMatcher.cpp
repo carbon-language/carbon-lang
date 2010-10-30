@@ -51,9 +51,18 @@ EmitStringMatcherForChar(const std::vector<const StringPair*> &Matches,
   if (CharNo == Matches[0]->first.size()) {
     assert(Matches.size() == 1 && "Had duplicate keys to match on");
     
-    // FIXME: If Matches[0].first has embeded \n, this will be bad.
-    OS << Indent << Matches[0]->second << "\t // \"" << Matches[0]->first
-    << "\"\n";
+    // If the to-execute code has \n's in it, indent each subsequent line.
+    StringRef Code = Matches[0]->second;
+    
+    std::pair<StringRef, StringRef> Split = Code.split('\n');
+    OS << Indent << Split.first << "\t // \"" << Matches[0]->first << "\"\n";
+
+    Code = Split.second;
+    while (!Code.empty()) {
+      Split = Code.split('\n');
+      OS << Indent << Split.first << "\n";
+      Code = Split.second;
+    }
     return false;
   }
   
