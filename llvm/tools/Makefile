@@ -57,4 +57,8 @@ ifeq ($(ENABLE_PIC),1)
   endif
 endif
 
+ifdef LLVM_HAS_POLLY
+  PARALLEL_DIRS += polly
+endif
+
 include $(LEVEL)/Makefile.common

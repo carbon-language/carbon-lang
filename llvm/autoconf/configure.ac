@@ -121,6 +121,26 @@ do
   fi
 done
 
+dnl Disable the build of polly, even if it is checked out into tools/polly.
+AC_ARG_ENABLE(polly,
+              AS_HELP_STRING([--enable-polly],
+                             [Use polly if available (default is YES)]),,
+                             enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_POLLY,[1]) ;;
+  no)  AC_SUBST(ENABLE_POLLY,[0]) ;;
+  default) AC_SUBST(ENABLE_POLLY,[1]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-polly. Use "yes" or "no"]) ;;
+esac
+
+
+dnl Check if polly is checked out into tools/polly and configure it if
+dnl available.
+if (test -d ${srcdir}/tools/polly) && (test $ENABLE_POLLY -eq 1) ; then
+  AC_SUBST(LLVM_HAS_POLLY,1)
+  AC_CONFIG_SUBDIRS([tools/polly])
+fi
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 2: Architecture, target, and host checks
