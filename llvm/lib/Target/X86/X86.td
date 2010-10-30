@@ -176,7 +176,7 @@ include "X86CallingConv.td"
 
 
 //===----------------------------------------------------------------------===//
-// Assembly Printers
+// Assembly Parser
 //===----------------------------------------------------------------------===//
 
 // Currently the X86 assembly parser only supports ATT syntax.
@@ -190,6 +190,10 @@ def ATTAsmParser : AsmParser {
   // Recognize hard coded registers.
   string RegisterPrefix = "%";
 }
+
+//===----------------------------------------------------------------------===//
+// Assembly Printers
+//===----------------------------------------------------------------------===//
 
 // The X86 target supports two different syntaxes for emitting machine code.
 // This is controlled by the -x86-asm-syntax={att|intel}
