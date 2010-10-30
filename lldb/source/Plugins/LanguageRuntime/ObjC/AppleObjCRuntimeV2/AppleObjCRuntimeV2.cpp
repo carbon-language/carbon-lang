@@ -87,15 +87,6 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, Value &value, ExecutionCo
             str.Printf ("Value doesn't point to an ObjC object.\n");
             return false;
         }
-        // FIXME: If we use the real types here then we end up crashing in the expression parser.
-        // For now, forcing this to be a generic pointer makes it work...
-#if 1
-        ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
-        if (value.GetContextType() == Value::eContextTypeOpaqueClangQualType)
-        {
-            value.SetContext(Value::eContextTypeOpaqueClangQualType, ast_context->GetVoidPtrType(false));
-        }
-#endif
     }
     else 
     {
