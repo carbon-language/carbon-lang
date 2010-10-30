@@ -293,7 +293,7 @@ unsigned ARMMCCodeEmitter::getRegisterListOpValue(const MCInst &MI,
   // Convert a list of GPRs into a bitfield (R0 -> bit 0). For each
   // register in the list, set the corresponding bit.
   unsigned Binary = 0;
-  for (unsigned i = Op; i < MI.getNumOperands(); ++i) {
+  for (unsigned i = Op, e = MI.getNumOperands(); i < e; ++i) {
     unsigned regno = getARMRegisterNumbering(MI.getOperand(i).getReg());
     Binary |= 1 << regno;
   }
