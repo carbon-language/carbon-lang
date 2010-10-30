@@ -1524,14 +1524,39 @@ static bool EmitMnemonicAliases(raw_ostream &OS) {
     Records.getAllDerivedDefinitions("MnemonicAlias");
   if (Aliases.empty()) return false;
 
-  std::vector<StringMatcher::StringPair> Cases;
+  // Keep track of all the aliases from a mnemonic.  Use an std::map so that the
+  // iteration order of the map is stable.
+  std::map<std::string, std::vector<Record*> > AliasesFromMnemonic;
+  
   for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {
     Record *R = Aliases[i];
-    Cases.push_back(std::make_pair(R->getValueAsString("FromMnemonic"),
-                                   "Mnemonic = \"" +
-                                   R->getValueAsString("ToMnemonic") +
-                                   "\"; return;"));
+    AliasesFromMnemonic[R->getValueAsString("FromMnemonic")].push_back(R);
   }
+
+  // Process each alias a "from" mnemonic at a time, building the code executed
+  // by the string remapper.
+  std::vector<StringMatcher::StringPair> Cases;
+  for (std::map<std::string, std::vector<Record*> >::iterator
+       I = AliasesFromMnemonic.begin(), E = AliasesFromMnemonic.end();
+       I != E; ++I) {
+    const std::string &From = I->first;
+    const std::vector<Record*> &ToVec = I->second;
+    
+    // If there is only one destination mnemonic, generate simple code.
+    if (ToVec.size() == 1) {
+      Cases.push_back(std::make_pair(From, "Mnemonic = \"" +
+                                     ToVec[0]->getValueAsString("ToMnemonic") +
+                                     "\"; return;"));
+      continue;
+    }
+    
+    // Otherwise, diagnose an error, can't have two aliases from the same
+    // mnemonic.
+    PrintError(ToVec[0]->getLoc(), "two MnemonicAliases with the same 'from' mnemonic!");
+    PrintError(ToVec[1]->getLoc(), "this is the other MnemonicAliases.");
+    throw std::string("ERROR: Invalid MnemonicAliases definitions!");
+  }
+  
   
   StringMatcher("Mnemonic", Cases, OS).Emit();
   OS << "}\n";
