@@ -535,8 +535,12 @@ struct SubtargetFeatureInfo {
   /// \brief An unique index assigned to represent this feature.
   unsigned Index;
 
+  SubtargetFeatureInfo(Record *D, unsigned Idx) : TheDef(D), Index(Idx) {}
+  
   /// \brief The name of the enumerated constant identifying this feature.
-  std::string EnumName;
+  std::string getEnumName() const {
+    return "Feature_" + TheDef->getName();
+  }
 };
 
 class AsmMatcherInfo {
@@ -584,17 +588,7 @@ private:
   /// given operand.
   SubtargetFeatureInfo *getSubtargetFeature(Record *Def) {
     assert(Def->isSubClassOf("Predicate") && "Invalid predicate type!");
-
-    SubtargetFeatureInfo *&Entry = SubtargetFeatures[Def];
-    if (!Entry) {
-      Entry = new SubtargetFeatureInfo();
-      Entry->TheDef = Def;
-      Entry->Index = SubtargetFeatures.size() - 1;
-      Entry->EnumName = "Feature_" + Def->getName();
-      assert(Entry->Index < 32 && "Too many subtarget features!");
-    }
-
-    return Entry;
+    return SubtargetFeatures[Def];
   }
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
@@ -900,8 +894,8 @@ void AsmMatcherInfo::BuildOperandClasses(CodeGenTarget &Target) {
   }
 }
 
-AsmMatcherInfo::AsmMatcherInfo(Record *_AsmParser)
-  : AsmParser(_AsmParser),
+AsmMatcherInfo::AsmMatcherInfo(Record *asmParser)
+  : AsmParser(asmParser),
     CommentDelimiter(AsmParser->getValueAsString("CommentDelimiter")),
     RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix"))
 {
@@ -914,6 +908,26 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
 
   const std::vector<const CodeGenInstruction*> &InstrList =
     Target.getInstructionsByEnumValue();
+  
+  
+  // Build information about all of the AssemblerPredicates.
+  std::vector<Record*> AllPredicates =
+    Records.getAllDerivedDefinitions("Predicate");
+  for (unsigned i = 0, e = AllPredicates.size(); i != e; ++i) {
+    Record *Pred = AllPredicates[i];
+    // Ignore predicates that are not intended for the assembler.
+    if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
+      continue;
+    
+    if (Pred->getName().empty()) {
+      PrintError(Pred->getLoc(), "Predicate has no name!");
+      throw std::string("ERROR: Predicate defs must be named");
+    }
+    
+    unsigned FeatureNo = SubtargetFeatures.size();
+    SubtargetFeatures[Pred] = new SubtargetFeatureInfo(Pred, FeatureNo);
+    assert(FeatureNo < 32 && "Too many subtarget features!");
+  }
 
   for (unsigned i = 0, e = InstrList.size(); i != e; ++i) {
     const CodeGenInstruction &CGI = *InstrList[i];
@@ -1472,7 +1486,7 @@ static void EmitSubtargetFeatureFlagEnumeration(CodeGenTarget &Target,
          it = Info.SubtargetFeatures.begin(),
          ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
     SubtargetFeatureInfo &SFI = *it->second;
-    OS << "  " << SFI.EnumName << " = (1 << " << SFI.Index << "),\n";
+    OS << "  " << SFI.getEnumName() << " = (1 << " << SFI.Index << "),\n";
   }
   OS << "  Feature_None = 0\n";
   OS << "};\n\n";
@@ -1496,7 +1510,7 @@ static void EmitComputeAvailableFeatures(CodeGenTarget &Target,
     SubtargetFeatureInfo &SFI = *it->second;
     OS << "  if (" << SFI.TheDef->getValueAsString("CondString")
        << ")\n";
-    OS << "    Features |= " << SFI.EnumName << ";\n";
+    OS << "    Features |= " << SFI.getEnumName() << ";\n";
   }
   OS << "  return Features;\n";
   OS << "}\n\n";
@@ -1529,7 +1543,7 @@ static std::string GetAliasRequiredFeatures(Record *R) {
 
 /// EmitMnemonicAliases - If the target has any MnemonicAlias<> definitions,
 /// emit a function for them and return true, otherwise return false.
-static bool EmitMnemonicAliases(raw_ostream &OS) {
+static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
   std::vector<Record*> Aliases =
     Records.getAllDerivedDefinitions("MnemonicAlias");
   if (Aliases.empty()) return false;
@@ -1688,7 +1702,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_MATCHER_IMPLEMENTATION\n\n";
 
   // Generate the function that remaps for mnemonic aliases.
-  bool HasMnemonicAliases = EmitMnemonicAliases(OS);
+  bool HasMnemonicAliases = EmitMnemonicAliases(OS, Info);
   
   // Generate the unified function to convert operands into an MCInst.
   EmitConvertToMCInst(Target, Info.Instructions, OS);
@@ -1773,7 +1787,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     if (!II.RequiredFeatures.empty()) {
       for (unsigned i = 0, e = II.RequiredFeatures.size(); i != e; ++i) {
         if (i) OS << "|";
-        OS << II.RequiredFeatures[i]->EnumName;
+        OS << II.RequiredFeatures[i]->getEnumName();
       }
     } else
       OS << "0";
