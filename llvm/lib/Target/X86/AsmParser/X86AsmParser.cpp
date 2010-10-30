@@ -620,13 +620,10 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 bool X86ATTAsmParser::
 ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // FIXME: Hack to recognize "sal..." and "rep..." for now. We need a way to
-  // represent alternative syntaxes in the .td file, without requiring
-  // instruction duplication.
+  // FIXME: Hack to recognize some aliases.
   StringRef PatchedName = StringSwitch<StringRef>(Name)
     .Case("repe", "rep")
     .Case("repz", "rep")
-    .Case("repnz", "repne")
     .Case("push", Is64Bit ? "pushq" : "pushl")
     .Case("pop", Is64Bit ? "popq" : "popl")
     .Case("pushf", Is64Bit ? "pushfq" : "pushfl")
@@ -721,7 +718,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Determine whether this is an instruction prefix.
   bool isPrefix =
     PatchedName == "lock" || PatchedName == "rep" ||
-    PatchedName == "repne";
+    PatchedName == "repe" || PatchedName == "repz" ||
+    PatchedName == "repne" || PatchedName == "repnz";
 
 
   // This does the actual operand parsing.  Don't parse any more if we have a

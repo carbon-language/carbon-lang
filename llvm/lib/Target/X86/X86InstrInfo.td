@@ -1269,6 +1269,10 @@ def : MnemonicAlias<"cdqe", "cltq">;
 def : MnemonicAlias<"pushfd", "pushfl">;
 def : MnemonicAlias<"popfd",  "popfl">;
 
+def : MnemonicAlias<"repe", "rep">;
+def : MnemonicAlias<"repz", "rep">;
+def : MnemonicAlias<"repnz", "repne">;
+
 def : MnemonicAlias<"salb", "shlb">;
 def : MnemonicAlias<"salw", "shlw">;
 def : MnemonicAlias<"sall", "shll">;
