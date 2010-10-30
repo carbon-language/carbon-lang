@@ -147,6 +147,13 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstNonPHI() {
   return I;
 }
 
+MachineBasicBlock::iterator
+MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
+  while (I != end() && (I->isPHI() || I->isLabel() || I->isDebugValue()))
+    ++I;
+  return I;
+}
+
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   iterator I = end();
   while (I != begin() && (--I)->getDesc().isTerminator())
