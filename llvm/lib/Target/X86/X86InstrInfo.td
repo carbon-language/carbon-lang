@@ -1276,4 +1276,32 @@ def : MnemonicAlias<"ud2a", "ud2">;
 def : MnemonicAlias<"verrw", "verr">;
 
 
+class CondCodeAlias<string Prefix, string OldCond, string NewCond>
+  : MnemonicAlias<!strconcat(Prefix, OldCond), !strconcat(Prefix, NewCond)>;
+
+/// IntegerCondCodeMnemonicAlias - This multiclass defines a bunch of
+/// MnemonicAlias's that canonicalize the condition code in a mnemonic, for
+/// example "setz" -> "sete".
+multiclass IntegerCondCodeMnemonicAlias<string Prefix> {
+  def C   : CondCodeAlias<Prefix, "c",   "b">;   // setc   -> setb
+  def Z   : CondCodeAlias<Prefix, "z" ,  "e">;   // setz   -> sete
+  def NA  : CondCodeAlias<Prefix, "na",  "be">;  // setna  -> setbe
+  def NB  : CondCodeAlias<Prefix, "nb",  "ae">;  // setnb  -> setae
+  def NC  : CondCodeAlias<Prefix, "nc",  "ae">;  // setnc  -> setae
+  def NG  : CondCodeAlias<Prefix, "ng",  "le">;  // setng  -> setle
+  def NL  : CondCodeAlias<Prefix, "nl",  "ge">;  // setnl  -> setge
+  def NZ  : CondCodeAlias<Prefix, "nz",  "ne">;  // setnz  -> setne
+  def PE  : CondCodeAlias<Prefix, "pe",  "p">;   // setpe  -> setp
+  def PO  : CondCodeAlias<Prefix, "po",  "np">;  // setpo  -> setnp
+
+  def NAE : CondCodeAlias<Prefix, "nae", "b">;   // setnae -> setb
+  def NBE : CondCodeAlias<Prefix, "nbe", "a">;   // setnbe -> seta
+  def NGE : CondCodeAlias<Prefix, "nge", "l">;   // setnge -> setl
+  def NLE : CondCodeAlias<Prefix, "nle", "g">;   // setnle -> setg
+}
+
+// Aliases for set<CC>
+defm : IntegerCondCodeMnemonicAlias<"set">;
+// Aliases for j<CC>
+defm : IntegerCondCodeMnemonicAlias<"j">;
 
