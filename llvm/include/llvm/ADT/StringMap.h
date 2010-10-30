@@ -167,7 +167,7 @@ public:
 
     unsigned AllocSize = static_cast<unsigned>(sizeof(StringMapEntry))+
       KeyLength+1;
-    unsigned Alignment = alignof<StringMapEntry>();
+    unsigned Alignment = alignOf<StringMapEntry>();
 
     StringMapEntry *NewItem =
       static_cast<StringMapEntry*>(Allocator.Allocate(AllocSize,Alignment));
