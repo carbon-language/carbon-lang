@@ -3208,6 +3208,9 @@ void ASTWriter::FlushCXXBaseSpecifiers() {
     for (; B != BEnd; ++B)
       AddCXXBaseSpecifier(*B, Record);
     Stream.EmitRecord(serialization::DECL_CXX_BASE_SPECIFIERS, Record);
+    
+    // Flush any expressions that were written as part of the base specifiers.
+    FlushStmts();
   }
 
   CXXBaseSpecifiersToWrite.clear();
