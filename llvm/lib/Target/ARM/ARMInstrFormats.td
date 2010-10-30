@@ -937,17 +937,21 @@ class AXI4ld<dag oops, dag iops, IndexMode im, Format f, InstrItinClass itin,
              string asm, string cstr, list<dag> pattern>
   : XI<oops, iops, AddrMode4, Size4Bytes, im, f, itin,
        asm, cstr, pattern> {
+  bits<16> dsts;
   let Inst{20}    = 1; // L bit
   let Inst{22}    = 0; // S bit
   let Inst{27-25} = 0b100;
+  let Inst{15-0}  = dsts;
 }
 class AXI4st<dag oops, dag iops, IndexMode im, Format f, InstrItinClass itin,
              string asm, string cstr, list<dag> pattern>
   : XI<oops, iops, AddrMode4, Size4Bytes, im, f, itin,
        asm, cstr, pattern> {
+  bits<16> srcs;
   let Inst{20}    = 0; // L bit
   let Inst{22}    = 0; // S bit
   let Inst{27-25} = 0b100;
+  let Inst{15-0}  = srcs;
 }
 
 // Unsigned multiply, multiply-accumulate instructions.

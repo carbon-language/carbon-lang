@@ -98,6 +98,9 @@ public:
 
   unsigned getBitfieldInvertedMaskOpValue(const MCInst &MI, unsigned Op) const;
 
+  unsigned getRegisterListOpValue(const MCInst &MI, unsigned Op) const;
+
+
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
     return 0;
@@ -283,6 +286,18 @@ unsigned ARMMCCodeEmitter::getBitfieldInvertedMaskOpValue(const MCInst &MI,
   uint32_t msb = (32 - CountLeadingZeros_32 (v)) - 1;
   assert (v != 0 && lsb < 32 && msb < 32 && "Illegal bitfield mask!");
   return lsb | (msb << 5);
+}
+
+unsigned ARMMCCodeEmitter::getRegisterListOpValue(const MCInst &MI,
+                                                  unsigned Op) const {
+  // Convert a list of GPRs into a bitfield (R0 -> bit 0). For each
+  // register in the list, set the corresponding bit.
+  unsigned Binary = 0;
+  for (unsigned i = Op; i < MI.getNumOperands(); ++i) {
+    unsigned regno = getARMRegisterNumbering(MI.getOperand(i).getReg());
+    Binary |= 1 << regno;
+  }
+  return Binary;
 }
 
 void ARMMCCodeEmitter::
