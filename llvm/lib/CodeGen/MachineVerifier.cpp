@@ -609,7 +609,8 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       }
 
       // Check LiveInts liveness and kill.
-      if (LiveInts && !LiveInts->isNotInMIMap(MI)) {
+      if (TargetRegisterInfo::isVirtualRegister(Reg) &&
+          LiveInts && !LiveInts->isNotInMIMap(MI)) {
         SlotIndex UseIdx = LiveInts->getInstructionIndex(MI).getUseIndex();
         if (LiveInts->hasInterval(Reg)) {
           const LiveInterval &LI = LiveInts->getInterval(Reg);
@@ -618,7 +619,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
             *OS << UseIdx << " is not live in " << LI << '\n';
           }
           // TODO: Verify isKill == LI.killedAt.
-        } else if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        } else {
           report("Virtual register has no Live interval", MO, MONum);
         }
       }
