@@ -262,6 +262,8 @@ private:  // Cached tokens state.
   /// allocation.
   MacroInfoChain *MICache;
 
+  MacroInfo *getInfoForMacro(IdentifierInfo *II) const;
+  
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts,
                const TargetInfo &target,
@@ -335,7 +337,10 @@ public:
   /// getMacroInfo - Given an identifier, return the MacroInfo it is #defined to
   /// or null if it isn't #define'd.
   MacroInfo *getMacroInfo(IdentifierInfo *II) const {
-    return II->hasMacroDefinition() ? Macros.find(II)->second : 0;
+    if (!II->hasMacroDefinition())
+      return 0;
+    
+    return getInfoForMacro(II);
   }
 
   /// setMacroInfo - Specify a macro for this identifier.

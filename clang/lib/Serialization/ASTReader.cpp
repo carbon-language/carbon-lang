@@ -682,7 +682,7 @@ public:
     // definition.
     if (hasMacroDefinition) {
       uint32_t Offset = ReadUnalignedLE32(d);
-      Reader.ReadMacroRecord(F, Offset);
+      Reader.SetIdentifierIsMacro(II, F, Offset);
       DataLen -= 4;
     }
 
@@ -1568,6 +1568,22 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
   }
 }
 
+void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, PerFileData &F,
+                                     uint64_t Offset) {
+  // Note that this identifier has a macro definition.
+  II->setHasMacroDefinition(true);
+  
+  // Adjust the offset based on our position in the chain.
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    if (Chain[I] == &F)
+      break;
+    
+    Offset += Chain[I]->SizeInBits;
+  }
+    
+  UnreadMacroRecordOffsets[II] = Offset;
+}
+
 void ASTReader::ReadDefinedMacros() {
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     PerFileData &F = *Chain[N - I - 1];
@@ -1629,6 +1645,39 @@ void ASTReader::ReadDefinedMacros() {
       }
     }
   }
+  
+  // Drain the unread macro-record offsets map.
+  while (!UnreadMacroRecordOffsets.empty())
+    LoadMacroDefinition(UnreadMacroRecordOffsets.begin());
+}
+
+void ASTReader::LoadMacroDefinition(
+                     llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos) {
+  assert(Pos != UnreadMacroRecordOffsets.end() && "Unknown macro definition");
+  PerFileData *F = 0;
+  uint64_t Offset = Pos->second;
+  UnreadMacroRecordOffsets.erase(Pos);
+  
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    if (Offset < Chain[I]->SizeInBits) {
+      F = Chain[I];
+      break;
+    }
+    
+    Offset -= Chain[I]->SizeInBits;
+  }    
+  if (!F) {
+    Error("Malformed macro record offset");
+    return;
+  }
+  
+  ReadMacroRecord(*F, Offset);
+}
+
+void ASTReader::LoadMacroDefinition(IdentifierInfo *II) {
+  llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos
+    = UnreadMacroRecordOffsets.find(II);
+  LoadMacroDefinition(Pos);
 }
 
 MacroDefinition *ASTReader::getMacroDefinition(MacroID ID) {

@@ -20,11 +20,26 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/CodeCompletionHandler.h"
+#include "clang/Lex/ExternalPreprocessorSource.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <ctime>
 using namespace clang;
+
+MacroInfo *Preprocessor::getInfoForMacro(IdentifierInfo *II) const {
+  assert(II->hasMacroDefinition() && "Identifier is not a macro!");
+  
+  llvm::DenseMap<IdentifierInfo*, MacroInfo*>::const_iterator Pos
+    = Macros.find(II);
+  if (Pos == Macros.end()) {
+    // Load this macro from the external source.
+    getExternalSource()->LoadMacroDefinition(II);
+    Pos = Macros.find(II);
+  }
+  assert(Pos != Macros.end() && "Identifier macro info is missing!");
+  return Pos->second;
+}
 
 /// setMacroInfo - Specify a macro for this identifier.
 ///

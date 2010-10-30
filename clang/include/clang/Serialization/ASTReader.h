@@ -488,6 +488,11 @@ private:
   /// \brief The macro definitions we have already loaded.
   llvm::SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
 
+  /// \brief Mapping from identifiers that represent macros whose definitions
+  /// have not yet been deserialized to the global offset where the macro
+  /// record resides.
+  llvm::DenseMap<IdentifierInfo *, uint64_t> UnreadMacroRecordOffsets;
+      
   /// \name CodeGen-relevant special data
   /// \brief Fields containing data that is relevant to CodeGen.
   //@{
@@ -1145,9 +1150,22 @@ public:
   /// \brief Reads the macro record located at the given offset.
   void ReadMacroRecord(PerFileData &F, uint64_t Offset);
 
+  /// \brief Note that the identifier is a macro whose record will be loaded
+  /// from the given AST file at the given (file-local) offset.
+  void SetIdentifierIsMacro(IdentifierInfo *II, PerFileData &F,
+                            uint64_t Offset);
+      
   /// \brief Read the set of macros defined by this external macro source.
   virtual void ReadDefinedMacros();
 
+  /// \brief Read the macro definition for this identifier.
+  virtual void LoadMacroDefinition(IdentifierInfo *II);
+
+  /// \brief Read the macro definition corresponding to this iterator
+  /// into the unread macro record offsets table.
+  void LoadMacroDefinition(
+                     llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos);
+      
   /// \brief Retrieve the macro definition with the given ID.
   MacroDefinition *getMacroDefinition(serialization::MacroID ID);
 

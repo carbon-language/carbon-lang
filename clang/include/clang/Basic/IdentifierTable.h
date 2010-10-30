@@ -71,7 +71,7 @@ class IdentifierInfo {
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
 
   friend class IdentifierTable;
-
+  
 public:
   IdentifierInfo();
 
