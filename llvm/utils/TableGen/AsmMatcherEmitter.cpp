@@ -1515,23 +1515,28 @@ static void EmitComputeAvailableFeatures(CodeGenTarget &Target,
 }
 
 /// EmitMnemonicAliases - If the target has any MnemonicAlias<> definitions,
-/// emit them.
-static void EmitMnemonicAliases(raw_ostream &OS) {
+/// emit a function for them and return true, otherwise return false.
+static bool EmitMnemonicAliases(raw_ostream &OS) {
+  OS << "static void ApplyMnemonicAliases(StringRef &Mnemonic, "
+  "unsigned Features) {\n";
+  
   std::vector<Record*> Aliases =
     Records.getAllDerivedDefinitions("MnemonicAlias");
-  if (Aliases.empty()) return;
+  if (Aliases.empty()) return false;
 
-  OS << "  // Process all MnemonicAliases to remap the mnemonic.\n";
   std::vector<StringMatcher::StringPair> Cases;
   for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {
     Record *R = Aliases[i];
     Cases.push_back(std::make_pair(R->getValueAsString("FromMnemonic"),
                                    "Mnemonic = \"" +
                                    R->getValueAsString("ToMnemonic") +
-                                   "\"; break;"));
+                                   "\"; return;"));
   }
   
   StringMatcher("Mnemonic", Cases, OS).Emit();
+  OS << "}\n";
+  
+  return true;
 }
 
 void AsmMatcherEmitter::run(raw_ostream &OS) {
@@ -1617,6 +1622,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "\n#ifdef GET_MATCHER_IMPLEMENTATION\n";
   OS << "#undef GET_MATCHER_IMPLEMENTATION\n\n";
 
+  // Generate the function that remaps for mnemonic aliases.
+  bool HasMnemonicAliases = EmitMnemonicAliases(OS);
+  
   // Generate the unified function to convert operands into an MCInst.
   EmitConvertToMCInst(Target, Info.Instructions, OS);
 
@@ -1725,7 +1733,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  StringRef Mnemonic = ((" << Target.getName()
      << "Operand*)Operands[0])->getToken();\n\n";
 
-  EmitMnemonicAliases(OS);
+  if (HasMnemonicAliases) {
+    OS << "  // Process all MnemonicAliases to remap the mnemonic.\n";
+    OS << "  ApplyMnemonicAliases(Mnemonic, AvailableFeatures);\n\n";
+  }
   
   // Emit code to compute the class list for this operand vector.
   OS << "  // Eliminate obvious mismatches.\n";
