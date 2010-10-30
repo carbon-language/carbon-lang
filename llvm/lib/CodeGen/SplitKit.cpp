@@ -799,7 +799,7 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
 
   // We are going to insert a back copy, so we must have a dupli_.
   VNInfo *VNI = dupli_.defByCopyFrom(openli_.getLI()->reg, ParentVNI,
-                                     MBB, MBB.begin());
+                                     MBB, MBB.SkipPHIsAndLabels(MBB.begin()));
 
   // Finally we must make sure that openli is properly extended from Start to
   // the new copy.
