@@ -963,27 +963,15 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     }
 
     // Compute the require features.
-    ListInit *Predicates = CGI.TheDef->getValueAsListInit("Predicates");
-    for (unsigned i = 0, e = Predicates->getSize(); i != e; ++i) {
-      if (DefInit *Pred = dynamic_cast<DefInit*>(Predicates->getElement(i))) {
-        // Ignore OptForSize and OptForSpeed, they aren't really requirements,
-        // rather they are hints to isel.
-        //
-        // FIXME: Find better way to model this.
-        if (Pred->getDef()->getName() == "OptForSize" ||
-            Pred->getDef()->getName() == "OptForSpeed")
-          continue;
-
-        // FIXME: Total hack; for now, we just limit ourselves to In32BitMode
-        // and In64BitMode, because we aren't going to have the right feature
-        // masks for SSE and friends. We need to decide what we are going to do
-        // about CPU subtypes to implement this the right way.
-        if (Pred->getDef()->getName() != "In32BitMode" &&
-            Pred->getDef()->getName() != "In64BitMode")
-          continue;
-
-        II->RequiredFeatures.push_back(getSubtargetFeature(Pred->getDef()));
-      }
+    std::vector<Record*> Predicates =
+      CGI.TheDef->getValueAsListOfDefs("Predicates");
+    for (unsigned i = 0, e = Predicates.size(); i != e; ++i) {
+      Record *Pred = Predicates[i];
+      // Ignore predicates that are not intended for the assembler.
+      if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
+        continue;
+        
+      II->RequiredFeatures.push_back(getSubtargetFeature(Pred));
     }
 
     Instructions.push_back(II.take());
@@ -1523,14 +1511,10 @@ static std::string GetAliasRequiredFeatures(Record *R) {
   for (unsigned i = 0, e = ReqFeatures.size(); i != e; ++i) {
     Record *Pred = ReqFeatures[i];
   
-    // FIXME: Total hack; for now, we just limit ourselves to In32BitMode
-    // and In64BitMode, because we aren't going to have the right feature
-    // masks for SSE and friends. We need to decide what we are going to do
-    // about CPU subtypes to implement this the right way.
-    if (Pred->getName() != "In32BitMode" &&
-        Pred->getName() != "In64BitMode")
+    // Ignore predicates that are not intended for the assembler.
+    if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
       continue;
-
+ 
     if (NumFeatures)
       Result += '|';
     

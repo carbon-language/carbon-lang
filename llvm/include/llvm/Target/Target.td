@@ -251,6 +251,11 @@ class Instruction {
 /// selector matching code. Currently each predicate is just a string.
 class Predicate<string cond> {
   string CondString = cond;
+  
+  /// AssemblerMatcherPredicate - If this feature can be used by the assembler
+  /// matcher, this is true.  Targets should set this by inheriting their
+  /// feature from the AssemblerPredicate class in addition to Predicate.
+  bit AssemblerMatcherPredicate = 0;
 }
 
 /// NoHonorSignDependentRounding - This predicate is true if support for
@@ -528,6 +533,13 @@ class AsmParser {
   string RegisterPrefix = "";
 }
 def DefaultAsmParser : AsmParser;
+
+/// AssemblerPredicate - This is a Predicate that can be used when the assembler
+/// matches instructions and aliases.
+class AssemblerPredicate {
+  bit AssemblerMatcherPredicate = 1;
+}
+
 
 
 /// MnemonicAlias - This class allows targets to define assembler mnemonic
