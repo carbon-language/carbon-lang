@@ -188,12 +188,12 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
             continue;
           }
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-        // Ignore loads from local memory.
-        if (PointsToLocalMemory(LI->getPointerOperand()))
+        // Ignore non-volatile loads from local memory.
+        if (!LI->isVolatile() && PointsToLocalMemory(LI->getPointerOperand()))
           continue;
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-        // Ignore stores to local memory.
-        if (PointsToLocalMemory(SI->getPointerOperand()))
+        // Ignore non-volatile stores to local memory.
+        if (!SI->isVolatile() && PointsToLocalMemory(SI->getPointerOperand()))
           continue;
       }
 
