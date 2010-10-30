@@ -64,8 +64,8 @@ private:
   /// }
 
 public:
-  X86ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
-    : TargetAsmParser(T), Parser(_Parser), TM(TM) {
+  X86ATTAsmParser(const Target &T, MCAsmParser &parser, TargetMachine &TM)
+    : TargetAsmParser(T), Parser(parser), TM(TM) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(
@@ -80,16 +80,16 @@ public:
 
 class X86_32ATTAsmParser : public X86ATTAsmParser {
 public:
-  X86_32ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
-    : X86ATTAsmParser(T, _Parser, TM) {
+  X86_32ATTAsmParser(const Target &T, MCAsmParser &Parser, TargetMachine &TM)
+    : X86ATTAsmParser(T, Parser, TM) {
     Is64Bit = false;
   }
 };
 
 class X86_64ATTAsmParser : public X86ATTAsmParser {
 public:
-  X86_64ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
-    : X86ATTAsmParser(T, _Parser, TM) {
+  X86_64ATTAsmParser(const Target &T, MCAsmParser &Parser, TargetMachine &TM)
+    : X86ATTAsmParser(T, Parser, TM) {
     Is64Bit = true;
   }
 };
