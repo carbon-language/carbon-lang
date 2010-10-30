@@ -390,7 +390,7 @@ Selector SelectorTable::getSelector(unsigned nKeys, IdentifierInfo **IIV) {
   unsigned Size = sizeof(MultiKeywordSelector) + nKeys*sizeof(IdentifierInfo *);
   MultiKeywordSelector *SI =
     (MultiKeywordSelector*)SelTabImpl.Allocator.Allocate(Size,
-                                         llvm::alignof<MultiKeywordSelector>());
+                                         llvm::alignOf<MultiKeywordSelector>());
   new (SI) MultiKeywordSelector(nKeys, IIV);
   SelTabImpl.Table.InsertNode(SI, InsertPos);
   return Selector(SI);

@@ -711,7 +711,7 @@ ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L,
 void ObjCClassDecl::setClassList(ASTContext &C, ObjCInterfaceDecl*const*List,
                                  const SourceLocation *Locs, unsigned Num) {
   ForwardDecls = (ObjCClassRef*) C.Allocate(sizeof(ObjCClassRef)*Num,
-                                            llvm::alignof<ObjCClassRef>());
+                                            llvm::alignOf<ObjCClassRef>());
   for (unsigned i = 0; i < Num; ++i)
     new (&ForwardDecls[i]) ObjCClassRef(List[i], Locs[i]);
   

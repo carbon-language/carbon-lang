@@ -257,7 +257,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
   if (TemplateArgs)
     Size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
   
-  void *Mem = Context.Allocate(Size, llvm::alignof<DeclRefExpr>());
+  void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(Qualifier, QualifierRange, D, NameInfo,
                                TemplateArgs, T);
 }
@@ -271,7 +271,7 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context, bool HasQualifier,
   if (NumTemplateArgs)
     Size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
   
-  void *Mem = Context.Allocate(Size, llvm::alignof<DeclRefExpr>());
+  void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(EmptyShell());
 }
 
@@ -432,7 +432,7 @@ StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
   // any concatenated string tokens.
   void *Mem = C.Allocate(sizeof(StringLiteral)+
                          sizeof(SourceLocation)*(NumStrs-1),
-                         llvm::alignof<StringLiteral>());
+                         llvm::alignOf<StringLiteral>());
   StringLiteral *SL = new (Mem) StringLiteral(Ty);
 
   // OPTIMIZE: could allocate this appended to the StringLiteral.
@@ -452,7 +452,7 @@ StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
 StringLiteral *StringLiteral::CreateEmpty(ASTContext &C, unsigned NumStrs) {
   void *Mem = C.Allocate(sizeof(StringLiteral)+
                          sizeof(SourceLocation)*(NumStrs-1),
-                         llvm::alignof<StringLiteral>());
+                         llvm::alignOf<StringLiteral>());
   StringLiteral *SL = new (Mem) StringLiteral(QualType());
   SL->StrData = 0;
   SL->ByteLength = 0;
@@ -714,7 +714,7 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
   if (targs)
     Size += ExplicitTemplateArgumentList::sizeFor(*targs);
 
-  void *Mem = C.Allocate(Size, llvm::alignof<MemberExpr>());
+  void *Mem = C.Allocate(Size, llvm::alignOf<MemberExpr>());
   MemberExpr *E = new (Mem) MemberExpr(base, isarrow, memberdecl, nameinfo, ty);
 
   if (hasQualOrFound) {

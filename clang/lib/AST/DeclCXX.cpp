@@ -1057,7 +1057,7 @@ CXXBaseOrMemberInitializer::Create(ASTContext &Context,
                                    unsigned NumIndices) {
   void *Mem = Context.Allocate(sizeof(CXXBaseOrMemberInitializer) +
                                sizeof(VarDecl *) * NumIndices,
-                               llvm::alignof<CXXBaseOrMemberInitializer>());
+                               llvm::alignOf<CXXBaseOrMemberInitializer>());
   return new (Mem) CXXBaseOrMemberInitializer(Context, Member, MemberLoc,
                                               L, Init, R, Indices, NumIndices);
 }

@@ -287,7 +287,7 @@ void TokenLexer::ExpandFunctionArguments() {
     llvm::BumpPtrAllocator &Alloc = PP.getPreprocessorAllocator();
     Token *Res =
       static_cast<Token *>(Alloc.Allocate(sizeof(Token)*ResultToks.size(),
-                                          llvm::alignof<Token>()));
+                                          llvm::alignOf<Token>()));
     if (NumTokens)
       memcpy(Res, &ResultToks[0], NumTokens*sizeof(Token));
     Tokens = Res;

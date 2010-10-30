@@ -416,7 +416,7 @@ ObjCAtTryStmt *ObjCAtTryStmt::Create(ASTContext &Context,
                                      Stmt *atFinallyStmt) {
   unsigned Size = sizeof(ObjCAtTryStmt) + 
     (1 + NumCatchStmts + (atFinallyStmt != 0)) * sizeof(Stmt *);
-  void *Mem = Context.Allocate(Size, llvm::alignof<ObjCAtTryStmt>());
+  void *Mem = Context.Allocate(Size, llvm::alignOf<ObjCAtTryStmt>());
   return new (Mem) ObjCAtTryStmt(atTryLoc, atTryStmt, CatchStmts, NumCatchStmts,
                                  atFinallyStmt);
 }
@@ -426,7 +426,7 @@ ObjCAtTryStmt *ObjCAtTryStmt::CreateEmpty(ASTContext &Context,
                                                  bool HasFinally) {
   unsigned Size = sizeof(ObjCAtTryStmt) + 
     (1 + NumCatchStmts + HasFinally) * sizeof(Stmt *);
-  void *Mem = Context.Allocate(Size, llvm::alignof<ObjCAtTryStmt>());
+  void *Mem = Context.Allocate(Size, llvm::alignOf<ObjCAtTryStmt>());
   return new (Mem) ObjCAtTryStmt(EmptyShell(), NumCatchStmts, HasFinally);  
 }
 
@@ -448,7 +448,7 @@ CXXTryStmt *CXXTryStmt::Create(ASTContext &C, SourceLocation tryLoc,
   std::size_t Size = sizeof(CXXTryStmt);
   Size += ((numHandlers + 1) * sizeof(Stmt));
 
-  void *Mem = C.Allocate(Size, llvm::alignof<CXXTryStmt>());
+  void *Mem = C.Allocate(Size, llvm::alignOf<CXXTryStmt>());
   return new (Mem) CXXTryStmt(tryLoc, tryBlock, handlers, numHandlers);
 }
 
@@ -457,7 +457,7 @@ CXXTryStmt *CXXTryStmt::Create(ASTContext &C, EmptyShell Empty,
   std::size_t Size = sizeof(CXXTryStmt);
   Size += ((numHandlers + 1) * sizeof(Stmt));
 
-  void *Mem = C.Allocate(Size, llvm::alignof<CXXTryStmt>());
+  void *Mem = C.Allocate(Size, llvm::alignOf<CXXTryStmt>());
   return new (Mem) CXXTryStmt(Empty, numHandlers);
 }
 
