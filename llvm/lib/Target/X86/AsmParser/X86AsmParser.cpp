@@ -624,11 +624,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // represent alternative syntaxes in the .td file, without requiring
   // instruction duplication.
   StringRef PatchedName = StringSwitch<StringRef>(Name)
-    .Case("sal", "shl")
-    .Case("salb", "shlb")
-    .Case("sall", "shll")
-    .Case("salq", "shlq")
-    .Case("salw", "shlw")
     .Case("repe", "rep")
     .Case("repz", "rep")
     .Case("repnz", "repne")
