@@ -622,8 +622,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // FIXME: Hack to recognize some aliases.
   StringRef PatchedName = StringSwitch<StringRef>(Name)
-    .Case("repe", "rep")
-    .Case("repz", "rep")
     .Case("push", Is64Bit ? "pushq" : "pushl")
     .Case("pop", Is64Bit ? "popq" : "popl")
     .Case("pushf", Is64Bit ? "pushfq" : "pushfl")
@@ -918,15 +916,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
        Name == "fmulp" || Name == "fdivp" || Name == "fdivrp") &&
       Operands.size() == 1) {
     Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
-                                             NameLoc, NameLoc));
-  }
-
-  // The assembler accepts this instruction with no operand as a synonym for an
-  // instruction taking %st(1),%st(0). e.g. "fcompi" -> "fcompi %st(1),st(0)".
-  if (Name == "fcompi" && Operands.size() == 1) {
-    Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
-                                             NameLoc, NameLoc));
-    Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(0)"),
                                              NameLoc, NameLoc));
   }
 
