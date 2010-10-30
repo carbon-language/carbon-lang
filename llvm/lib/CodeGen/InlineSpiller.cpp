@@ -352,10 +352,12 @@ void InlineSpiller::spill(LiveInterval *li,
 
 void InlineSpiller::spill(LiveRangeEdit &edit) {
   edit_ = &edit;
-  DEBUG(dbgs() << "Inline spilling " << edit.getParent() << "\n");
+  assert(!edit.getParent().isStackSlot() && "Trying to spill a stack slot.");
+  DEBUG(dbgs() << "Inline spilling "
+               << mri_.getRegClass(edit.getReg())->getName()
+               << ':' << edit.getParent() << "\n");
   assert(edit.getParent().isSpillable() &&
          "Attempting to spill already spilled value.");
-  assert(!edit.getParent().isStackSlot() && "Trying to spill a stack slot.");
 
   if (split())
     return;
