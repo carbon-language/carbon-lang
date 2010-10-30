@@ -1128,6 +1128,12 @@ SymbolFileDWARF::ParseChildMembers
                             }
                         }
                     }
+                    
+                    // FIXME: Make Clang ignore Objective-C accessibility for expressions
+                    
+                    if (class_language == eLanguageTypeObjC ||
+                        class_language == eLanguageTypeObjC_plus_plus)
+                        accessibility = eAccessNone; 
 
                     if (is_artificial == false)
                     {
