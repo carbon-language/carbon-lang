@@ -51,7 +51,8 @@ SBThread::SBThread (const ThreadSP& lldb_object_sp) :
 {
 }
 
-SBThread::SBThread (const SBThread &rhs)
+SBThread::SBThread (const SBThread &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp)
 {
 }
 
@@ -490,7 +491,7 @@ SBThread::GetFrameAtIndex (uint32_t idx)
 }
 
 const lldb::SBThread &
-SBThread::operator = (const lldb::SBThread &rhs)
+SBThread::operator = (const SBThread &rhs)
 {
     if (this != &rhs)
         m_opaque_sp = rhs.m_opaque_sp;
