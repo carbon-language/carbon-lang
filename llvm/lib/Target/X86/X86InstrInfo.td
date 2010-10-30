@@ -1254,3 +1254,26 @@ include "X86InstrSystem.td"
 // Compiler Pseudo Instructions and Pat Patterns
 include "X86InstrCompiler.td"
 
+//===----------------------------------------------------------------------===//
+// Assembler Aliases
+//===----------------------------------------------------------------------===//
+
+def : MnemonicAlias<"iret", "iretl">;
+def : MnemonicAlias<"sysret", "sysretl">;
+def : MnemonicAlias<"cbw",  "cbtw">;
+def : MnemonicAlias<"cwd",  "cwtd">;
+def : MnemonicAlias<"cdq", "cltd">;
+def : MnemonicAlias<"cwde", "cwtl">;
+def : MnemonicAlias<"cdqe", "cltq">;
+def : MnemonicAlias<"smovb", "movsb">;
+def : MnemonicAlias<"smovw", "movsw">;
+def : MnemonicAlias<"smovl", "movsl">;
+def : MnemonicAlias<"smovq", "movsq">;
+
+def : MnemonicAlias<"fldcww", "fldcw">;
+def : MnemonicAlias<"fucompi", "fucomip">;
+def : MnemonicAlias<"ud2a", "ud2">;
+def : MnemonicAlias<"verrw", "verr">;
+
+
+

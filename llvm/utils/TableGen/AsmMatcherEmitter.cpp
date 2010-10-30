@@ -1514,6 +1514,26 @@ static void EmitComputeAvailableFeatures(CodeGenTarget &Target,
   OS << "}\n\n";
 }
 
+/// EmitMnemonicAliases - If the target has any MnemonicAlias<> definitions,
+/// emit them.
+static void EmitMnemonicAliases(raw_ostream &OS) {
+  std::vector<Record*> Aliases =
+    Records.getAllDerivedDefinitions("MnemonicAlias");
+  if (Aliases.empty()) return;
+
+  OS << "  // Process all MnemonicAliases to remap the mnemonic.\n";
+  std::vector<StringMatcher::StringPair> Cases;
+  for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {
+    Record *R = Aliases[i];
+    Cases.push_back(std::make_pair(R->getValueAsString("FromMnemonic"),
+                                   "Mnemonic = \"" +
+                                   R->getValueAsString("ToMnemonic") +
+                                   "\"; break;"));
+  }
+  
+  StringMatcher("Mnemonic", Cases, OS).Emit();
+}
+
 void AsmMatcherEmitter::run(raw_ostream &OS) {
   CodeGenTarget Target;
   Record *AsmParser = Target.getAsmParser();
@@ -1701,6 +1721,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  // Get the current feature set.\n";
   OS << "  unsigned AvailableFeatures = getAvailableFeatures();\n\n";
 
+  OS << "  // Get the instruction mnemonic, which is the first token.\n";
+  OS << "  StringRef Mnemonic = ((" << Target.getName()
+     << "Operand*)Operands[0])->getToken();\n\n";
+
+  EmitMnemonicAliases(OS);
+  
   // Emit code to compute the class list for this operand vector.
   OS << "  // Eliminate obvious mismatches.\n";
   OS << "  if (Operands.size() > " << (MaxNumOperands+1) << ") {\n";
@@ -1724,10 +1750,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  for (unsigned i = Operands.size()-1, e = " << MaxNumOperands << "; "
      << "i != e; ++i)\n";
   OS << "    Classes[i] = InvalidMatchClass;\n\n";
-
-  OS << "  // Get the instruction mnemonic, which is the first token.\n";
-  OS << "  StringRef Mnemonic = ((" << Target.getName()
-     << "Operand*)Operands[0])->getToken();\n\n";
 
   OS << "  // Some state to try to produce better error messages.\n";
   OS << "  bool HadMatchOtherThanFeatures = false;\n\n";

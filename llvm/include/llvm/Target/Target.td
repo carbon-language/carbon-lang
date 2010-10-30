@@ -530,6 +530,25 @@ class AsmParser {
 def DefaultAsmParser : AsmParser;
 
 
+/// MnemonicAlias - This class allows targets to define assembler mnemonic
+/// aliases.  This should be used when all forms of one mnemonic are accepted
+/// with a different mnemonic.  For example, X86 allows:
+///   sal %al, 1    -> shl %al, 1
+///   sal %ax, %cl  -> shl %ax, %cl
+///   sal %eax, %cl -> shl %eax, %cl
+/// etc.  Though "sal" is accepted with many forms, all of them are directly
+/// translated to a shl, so it can be handled with (in the case of X86, it
+/// actually has one for each suffix as well):
+///   def : MnemonicAlias<"sal", "shl">;
+///
+/// Mnemonic aliases are mapped before any other translation in the match phase.
+///
+class MnemonicAlias<string From, string To> {
+  string FromMnemonic = From;
+  string ToMnemonic = To;
+}
+
+
 //===----------------------------------------------------------------------===//
 // AsmWriter - This class can be implemented by targets that need to customize
 // the format of the .s file writer.

@@ -632,17 +632,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("repe", "rep")
     .Case("repz", "rep")
     .Case("repnz", "repne")
-    .Case("iret", "iretl")
-    .Case("sysret", "sysretl")
-    .Case("cbw",  "cbtw")
-    .Case("cwd",  "cwtd")
-    .Case("cdq", "cltd")
-    .Case("cwde", "cwtl")
-    .Case("cdqe", "cltq")
-    .Case("smovb", "movsb")
-    .Case("smovw", "movsw")
-    .Case("smovl", "movsl")
-    .Case("smovq", "movsq")
     .Case("push", Is64Bit ? "pushq" : "pushl")
     .Case("pop", Is64Bit ? "popq" : "popl")
     .Case("pushf", Is64Bit ? "pushfq" : "pushfl")
@@ -704,14 +693,10 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("movzx", "movzb")  // FIXME: Not correct.
     .Case("fildq", "fildll")
     .Case("fcompi", "fcomip")
-    .Case("fucompi", "fucomip")
-    .Case("fldcww", "fldcw")
     .Case("fnstcww", "fnstcw")
     .Case("fstcww", "fstcw")
     .Case("fnstsww", "fnstsw")
     .Case("fstsww", "fstsw")
-    .Case("verrw", "verr")
-    .Case("ud2a", "ud2")
     .Default(Name);
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.

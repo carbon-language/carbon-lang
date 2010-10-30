@@ -1878,15 +1878,64 @@ We've tried hard to automate the generation of the assembler from the .td files
 part of the manual and repetitive data entry can be factored and shared with the
 compiler.</p>
 
+</div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection" id="na_instparsing">Instruction Parsing</div>
+
+<div class="doc_text"><p>To Be Written</p></div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection" id="na_instaliases">
+  Instruction Alias Processing
+</div>
+
+<div class="doc_text">
+<p>Once the instruction is parsed, it enters the MatchInstructionImpl function.
+The MatchInstructionImpl function performs alias processing and then does
+actual matching.</p>
+
+<p>Alias processing if the phase that canonicalizes different lexical forms of
+the same instructions down to one representation.  There are several different
+kinds of alias that are possible to implement and they are listed below in the
+order that they are processed (which is in order from simplest/weakest to most
+complex/powerful).  Generally you want to use the first alias mechanism that
+meets the needs of your instruction, because it will allow a more concise
+description.</p>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">Mnemonic Aliases</div>
+
+<div class="doc_text">
+
+<p>The first phase of alias processing is simple instruction mneomonic
+remapping for classes of instructions which are allowed with two different
+mneomonics.  This phase is a simple and unconditionally remapping from one input
+mnemonic to one output mnemonic.  It isn't possible for this form of alias to
+look at the operands at all, so the remapping must apply for all forms of a
+given mnemonic.  Mnemonic aliases are defined simply, for example X86 has:
+</p>
+
+<div class="doc_code">
+<pre>
+def : MnemonicAlias&lt;"cbw",     "cbtw"&gt;;
+def : MnemonicAlias&lt;"smovq",   "movsq"&gt;;
+def : MnemonicAlias&lt;"fldcww",  "fldcw"&gt;;
+def : MnemonicAlias&lt;"fucompi", "fucomip"&gt;;
+def : MnemonicAlias&lt;"ud2a",    "ud2"&gt;;
+</pre>
+</div>
+
+<p>... and many others.  With a MnemonicAlias definition, the mnemonic is
+remapped simply and directly.</p>
 
 </div>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="proepicode">Prolog/Epilog Code Insertion</a>
-</div>
+<div class="doc_subsection" id="na_matching">Instruction Matching</div>
+
 <div class="doc_text"><p>To Be Written</p></div>
 
 
