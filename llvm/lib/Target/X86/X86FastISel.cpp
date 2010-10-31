@@ -115,7 +115,6 @@ private:
   bool X86SelectCall(const Instruction *I);
 
   CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool isTailCall = false);
-  CCAssignFn *CCAssignFnForRet(CallingConv::ID CC, bool isTailCall = false);
 
   const X86InstrInfo *getInstrInfo() const {
     return getTargetMachine()->getInstrInfo();
@@ -187,20 +186,6 @@ CCAssignFn *X86FastISel::CCAssignFnForCall(CallingConv::ID CC,
     return CC_X86_32_GHC;
   else
     return CC_X86_32_C;
-}
-
-/// CCAssignFnForRet - Selects the correct CCAssignFn for a given calling
-/// convention.
-CCAssignFn *X86FastISel::CCAssignFnForRet(CallingConv::ID CC,
-                                          bool isTaillCall) {
-  if (Subtarget->is64Bit()) {
-    if (Subtarget->isTargetWin64())
-      return RetCC_X86_Win64_C;
-    else
-      return RetCC_X86_64_C;
-  }
-
-  return RetCC_X86_32_C;
 }
 
 /// X86FastEmitLoad - Emit a machine instruction to load a value of type VT.
@@ -731,7 +716,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
     // Analyze operands of the call, assigning locations to each operand.
     SmallVector<CCValAssign, 16> ValLocs;
     CCState CCInfo(CC, F.isVarArg(), TM, ValLocs, I->getContext());
-    CCInfo.AnalyzeReturn(Outs, CCAssignFnForRet(CC));
+    CCInfo.AnalyzeReturn(Outs, RetCC_X86);
 
     const Value *RV = Ret->getOperand(0);
     unsigned Reg = getRegForValue(RV);
