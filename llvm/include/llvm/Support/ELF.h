@@ -299,6 +299,7 @@ enum {
   SHN_HIPROC    = 0xff1f, // Highest processor-specific index
   SHN_ABS       = 0xfff1, // Symbol has absolute value; does not need relocation
   SHN_COMMON    = 0xfff2, // FORTRAN COMMON or C external global variables
+  SHN_XINDEX    = 0xffff, // Mark that the index is >= SHN_LORESERVE
   SHN_HIRESERVE = 0xffff  // Highest reserved index
 };
 

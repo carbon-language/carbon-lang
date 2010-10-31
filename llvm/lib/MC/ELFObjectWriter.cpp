@@ -164,6 +164,8 @@ namespace {
 
     bool NeedsGOT;
 
+    bool NeedsSymtabShndx;
+
     ELFObjectWriter *Writer;
 
     raw_ostream &OS;
@@ -180,6 +182,8 @@ namespace {
     unsigned LastLocalSymbolIndex;
     // This holds the .strtab section index.
     unsigned StringTableIndex;
+    // This holds the .symtab section index.
+    unsigned SymbolTableIndex;
 
     unsigned ShstrtabIndex;
 
@@ -187,7 +191,8 @@ namespace {
     ELFObjectWriterImpl(ELFObjectWriter *_Writer, bool _Is64Bit,
                         uint16_t _EMachine, bool _HasRelAddend,
                         Triple::OSType _OSType)
-      : NeedsGOT(false), Writer(_Writer), OS(Writer->getStream()),
+      : NeedsGOT(false), NeedsSymtabShndx(false), Writer(_Writer),
+        OS(Writer->getStream()),
         Is64Bit(_Is64Bit), HasRelocationAddend(_HasRelAddend),
         OSType(_OSType), EMachine(_EMachine) {
     }
@@ -265,14 +270,18 @@ namespace {
 
     void WriteHeader(uint64_t SectionDataSize, unsigned NumberOfSections);
 
-    void WriteSymbolEntry(MCDataFragment *F, uint64_t name, uint8_t info,
+    void WriteSymbolEntry(MCDataFragment *SymtabF, MCDataFragment *ShndxF,
+                          uint64_t name, uint8_t info,
                           uint64_t value, uint64_t size,
-                          uint8_t other, uint16_t shndx);
+                          uint8_t other, uint32_t shndx,
+                          bool Reserved);
 
-    void WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
+    void WriteSymbol(MCDataFragment *SymtabF,  MCDataFragment *ShndxF,
+                     ELFSymbolData &MSD,
                      const MCAsmLayout &Layout);
 
-    void WriteSymbolTable(MCDataFragment *F, const MCAssembler &Asm,
+    void WriteSymbolTable(MCDataFragment *SymtabF, MCDataFragment *ShndxF,
+                          const MCAssembler &Asm,
                           const MCAsmLayout &Layout,
                           unsigned NumRegularSections);
 
@@ -377,56 +386,82 @@ void ELFObjectWriterImpl::WriteHeader(uint64_t SectionDataSize,
   Write16(Is64Bit ? sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr));
 
   // e_shnum     = # of section header ents
-  Write16(NumberOfSections);
+  if (NumberOfSections >= ELF::SHN_LORESERVE)
+    Write16(0);
+  else
+    Write16(NumberOfSections);
 
   // e_shstrndx  = Section # of '.shstrtab'
-  Write16(ShstrtabIndex);
+  if (NumberOfSections >= ELF::SHN_LORESERVE)
+    Write16(ELF::SHN_XINDEX);
+  else
+    Write16(ShstrtabIndex);
 }
 
-void ELFObjectWriterImpl::WriteSymbolEntry(MCDataFragment *F, uint64_t name,
+void ELFObjectWriterImpl::WriteSymbolEntry(MCDataFragment *SymtabF,
+                                           MCDataFragment *ShndxF,
+                                           uint64_t name,
                                            uint8_t info, uint64_t value,
                                            uint64_t size, uint8_t other,
-                                           uint16_t shndx) {
+                                           uint32_t shndx,
+                                           bool Reserved) {
+  if (ShndxF) {
+    char buf[4];
+    if (shndx >= ELF::SHN_LORESERVE && !Reserved)
+      String32(buf, shndx);
+    else
+      String32(buf, 0);
+    ShndxF->getContents() += StringRef(buf, 4);
+  }
+
   if (Is64Bit) {
     char buf[8];
 
     String32(buf, name);
-    F->getContents() += StringRef(buf, 4); // st_name
+    SymtabF->getContents() += StringRef(buf, 4); // st_name
 
     String8(buf, info);
-    F->getContents() += StringRef(buf, 1);  // st_info
+    SymtabF->getContents() += StringRef(buf, 1);  // st_info
 
     String8(buf, other);
-    F->getContents() += StringRef(buf, 1); // st_other
+    SymtabF->getContents() += StringRef(buf, 1); // st_other
 
-    String16(buf, shndx);
-    F->getContents() += StringRef(buf, 2); // st_shndx
+    if (shndx >= ELF::SHN_LORESERVE && !Reserved)
+      String16(buf, ELF::SHN_XINDEX);
+    else
+      String16(buf, shndx);
+
+    SymtabF->getContents() += StringRef(buf, 2); // st_shndx
 
     String64(buf, value);
-    F->getContents() += StringRef(buf, 8); // st_value
+    SymtabF->getContents() += StringRef(buf, 8); // st_value
 
     String64(buf, size);
-    F->getContents() += StringRef(buf, 8);  // st_size
+    SymtabF->getContents() += StringRef(buf, 8);  // st_size
   } else {
     char buf[4];
 
     String32(buf, name);
-    F->getContents() += StringRef(buf, 4);  // st_name
+    SymtabF->getContents() += StringRef(buf, 4);  // st_name
 
     String32(buf, value);
-    F->getContents() += StringRef(buf, 4); // st_value
+    SymtabF->getContents() += StringRef(buf, 4); // st_value
 
     String32(buf, size);
-    F->getContents() += StringRef(buf, 4);  // st_size
+    SymtabF->getContents() += StringRef(buf, 4);  // st_size
 
     String8(buf, info);
-    F->getContents() += StringRef(buf, 1);  // st_info
+    SymtabF->getContents() += StringRef(buf, 1);  // st_info
 
     String8(buf, other);
-    F->getContents() += StringRef(buf, 1); // st_other
+    SymtabF->getContents() += StringRef(buf, 1); // st_other
 
-    String16(buf, shndx);
-    F->getContents() += StringRef(buf, 2); // st_shndx
+    if (shndx >= ELF::SHN_LORESERVE && !Reserved)
+      String16(buf, ELF::SHN_XINDEX);
+    else
+      String16(buf, shndx);
+
+    SymtabF->getContents() += StringRef(buf, 2); // st_shndx
   }
 }
 
@@ -503,11 +538,16 @@ void ELFObjectWriterImpl::ExecutePostLayoutBinding(MCAssembler &Asm) {
   }
 }
 
-void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
+void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *SymtabF,
+                                      MCDataFragment *ShndxF,
+                                      ELFSymbolData &MSD,
                                       const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
   MCSymbolData &Data =
     Layout.getAssembler().getSymbolData(AliasedSymbol(OrigData.getSymbol()));
+
+  bool IsReserved = Data.isCommon() || Data.getSymbol().isAbsolute() ||
+    Data.getSymbol().isVariable();
 
   uint8_t Binding = GetBinding(OrigData);
   uint8_t Visibility = GetVisibility(OrigData);
@@ -541,11 +581,12 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
   }
 
   // Write out the symbol table entry
-  WriteSymbolEntry(F, MSD.StringIndex, Info, Value,
-                   Size, Other, MSD.SectionIndex);
+  WriteSymbolEntry(SymtabF, ShndxF, MSD.StringIndex, Info, Value,
+                   Size, Other, MSD.SectionIndex, IsReserved);
 }
 
-void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
+void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *SymtabF,
+                                           MCDataFragment *ShndxF,
                                            const MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
                                            unsigned NumRegularSections) {
@@ -556,14 +597,13 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
   // FIXME: Make sure the start of the symbol table is aligned.
 
   // The first entry is the undefined symbol entry.
-  unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
-  F->getContents().append(EntrySize, '\x00');
+  WriteSymbolEntry(SymtabF, ShndxF, 0, 0, 0, 0, 0, 0, false);
 
   // Write the symbol table entries.
   LastLocalSymbolIndex = LocalSymbolData.size() + 1;
   for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i) {
     ELFSymbolData &MSD = LocalSymbolData[i];
-    WriteSymbol(F, MSD, Layout);
+    WriteSymbol(SymtabF, ShndxF, MSD, Layout);
   }
 
   // Write out a symbol table entry for each regular section.
@@ -576,7 +616,8 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
     // the relocations messed up
     if (Section.getType() == ELF::SHT_RELA || Section.getType() == ELF::SHT_REL)
       continue;
-    WriteSymbolEntry(F, 0, ELF::STT_SECTION, 0, 0, ELF::STV_DEFAULT, Index);
+    WriteSymbolEntry(SymtabF, ShndxF, 0, ELF::STT_SECTION, 0, 0,
+                     ELF::STV_DEFAULT, Index, false);
     LastLocalSymbolIndex++;
   }
 
@@ -586,7 +627,7 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
     assert(((Data.getFlags() & ELF_STB_Global) ||
             (Data.getFlags() & ELF_STB_Weak)) &&
            "External symbol requires STB_GLOBAL or STB_WEAK flag");
-    WriteSymbol(F, MSD, Layout);
+    WriteSymbol(SymtabF, ShndxF, MSD, Layout);
     if (GetBinding(Data) == ELF::STB_LOCAL)
       LastLocalSymbolIndex++;
   }
@@ -594,7 +635,7 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
   for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i) {
     ELFSymbolData &MSD = UndefinedSymbolData[i];
     MCSymbolData &Data = *MSD.SymbolData;
-    WriteSymbol(F, MSD, Layout);
+    WriteSymbol(SymtabF, ShndxF, MSD, Layout);
     if (GetBinding(Data) == ELF::STB_LOCAL)
       LastLocalSymbolIndex++;
   }
@@ -940,6 +981,8 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
       MSD.SectionIndex = ELF::SHN_UNDEF;
     } else {
       MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
+      if (MSD.SectionIndex >= ELF::SHN_LORESERVE)
+        NeedsSymtabShndx = true;
       assert(MSD.SectionIndex && "Invalid section index!");
     }
 
@@ -1093,24 +1136,35 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   MCContext &Ctx = Asm.getContext();
   MCDataFragment *F;
 
-  const MCSection *SymtabSection;
   unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
 
   unsigned NumRegularSections = Asm.size();
 
   // We construct .shstrtab, .symtab and .strtab in this order to match gnu as.
-  const MCSection *ShstrtabSection;
-  ShstrtabSection = Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0,
-                                      SectionKind::getReadOnly(), false);
+  const MCSection *ShstrtabSection =
+    Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0,
+                      SectionKind::getReadOnly(), false);
   MCSectionData &ShstrtabSD = Asm.getOrCreateSectionData(*ShstrtabSection);
   ShstrtabSD.setAlignment(1);
   ShstrtabIndex = Asm.size();
 
-  SymtabSection = Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
-                                    SectionKind::getReadOnly(),
-                                    false, EntrySize);
+  const MCSection *SymtabSection =
+    Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
+                      SectionKind::getReadOnly(),
+                      false, EntrySize);
   MCSectionData &SymtabSD = Asm.getOrCreateSectionData(*SymtabSection);
   SymtabSD.setAlignment(Is64Bit ? 8 : 4);
+  SymbolTableIndex = Asm.size();
+
+  MCSectionData *SymtabShndxSD = NULL;
+
+  if (NeedsSymtabShndx) {
+    const MCSection *SymtabShndxSection =
+      Ctx.getELFSection(".symtab_shndx", ELF::SHT_SYMTAB_SHNDX, 0,
+                        SectionKind::getReadOnly(), false, 4);
+    SymtabShndxSD = &Asm.getOrCreateSectionData(*SymtabShndxSection);
+    SymtabShndxSD->setAlignment(4);
+  }
 
   const MCSection *StrtabSection;
   StrtabSection = Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0,
@@ -1123,7 +1177,12 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
 
   // Symbol table
   F = new MCDataFragment(&SymtabSD);
-  WriteSymbolTable(F, Asm, Layout, NumRegularSections);
+  MCDataFragment *ShndxF = NULL;
+  if (NeedsSymtabShndx) {
+    ShndxF = new MCDataFragment(SymtabShndxSD);
+    Asm.AddSectionToTheEnd(*Writer, *SymtabShndxSD, Layout);
+  }
+  WriteSymbolTable(F, ShndxF, Asm, Layout, NumRegularSections);
   Asm.AddSectionToTheEnd(*Writer, SymtabSD, Layout);
 
   F = new MCDataFragment(&StrtabSD);
@@ -1255,7 +1314,11 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
   // Should we align the section header table?
   //
   // Null section first.
-  WriteSecHdrEntry(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  uint64_t FirstSectionSize =
+    NumSections >= ELF::SHN_LORESERVE ? NumSections : 0;
+  uint32_t FirstSectionLink =
+    ShstrtabIndex >= ELF::SHN_LORESERVE ? ShstrtabIndex : 0;
+  WriteSecHdrEntry(0, 0, 0, 0, 0, FirstSectionSize, FirstSectionLink, 0, 0, 0);
 
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
@@ -1298,6 +1361,10 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
     case ELF::SHT_DYNSYM:
       sh_link = StringTableIndex;
       sh_info = LastLocalSymbolIndex;
+      break;
+
+    case ELF::SHT_SYMTAB_SHNDX:
+      sh_link = SymbolTableIndex;
       break;
 
     case ELF::SHT_PROGBITS:
