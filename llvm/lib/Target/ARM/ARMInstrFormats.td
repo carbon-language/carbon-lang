@@ -203,6 +203,9 @@ class InstTemplate<AddrMode am, SizeFlagVal sz, IndexMode im,
   Domain D = d;
   bit isUnaryDataProc = 0;
   bit canXformTo16Bit = 0;
+  
+  // If this is a pseudo instruction, mark it isCodeGenOnly.
+  let isCodeGenOnly = !eq(!cast<string>(f), "Pseudo");
 
   // The layout of TSFlags should be kept in sync with ARMBaseInstrInfo.h.
   let TSFlags{4-0}   = AM.Value;

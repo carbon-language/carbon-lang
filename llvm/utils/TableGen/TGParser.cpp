@@ -812,7 +812,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     case tgtok::XSRA:    Code = BinOpInit::SRA;    Type = new IntRecTy(); break;
     case tgtok::XSRL:    Code = BinOpInit::SRL;    Type = new IntRecTy(); break;
     case tgtok::XSHL:    Code = BinOpInit::SHL;    Type = new IntRecTy(); break;
-    case tgtok::XEq:     Code = BinOpInit::EQ;     Type = new IntRecTy(); break;
+    case tgtok::XEq:     Code = BinOpInit::EQ;     Type = new BitRecTy(); break;
     case tgtok::XStrConcat:
       Code = BinOpInit::STRCONCAT;
       Type = new StringRecTy();

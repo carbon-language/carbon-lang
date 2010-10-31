@@ -223,21 +223,6 @@ static bool IsAssemblerInstruction(StringRef Name,
   if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
     return false;
 
-  // Ignore pseudo ops.
-  //
-  // FIXME: This is a hack [for X86]; can we convert these instructions to set
-  // the "codegen only" bit instead?
-  if (const RecordVal *Form = CGI.TheDef->getValue("Form"))
-    if (Form->getValue()->getAsString() == "Pseudo")
-      return false;
-  
-  // FIXME: This is a hack [for ARM]; can we convert these instructions to set
-  // the "codegen only" bit instead?
-  if (const RecordVal *Form = CGI.TheDef->getValue("F"))
-    if (Form->getValue()->getAsString() == "Pseudo")
-      return false;
-  
-
   // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
   //
   // FIXME: This is a total hack.

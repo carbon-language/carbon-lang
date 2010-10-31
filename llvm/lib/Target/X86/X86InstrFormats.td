@@ -125,6 +125,9 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   dag InOperandList = ins;
   string AsmString = AsmStr;
 
+  // If this is a pseudo instruction, mark it isCodeGenOnly.
+  let isCodeGenOnly = !eq(!cast<string>(f), "Pseudo");
+
   //
   // Attributes specific to X86 instructions...
   //
