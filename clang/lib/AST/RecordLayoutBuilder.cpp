@@ -63,7 +63,7 @@ class EmptySubobjectMap {
 
   /// EmptyClassOffsets - A map from offsets to empty record decls.
   typedef llvm::SmallVector<const CXXRecordDecl *, 1> ClassVectorTy;
-  typedef llvm::DenseMap<uint64_t, ClassVectorTy> EmptyClassOffsetsMapTy;
+  typedef llvm::DenseMap<CharUnits, ClassVectorTy> EmptyClassOffsetsMapTy;
   EmptyClassOffsetsMapTy EmptyClassOffsets;
   
   /// MaxEmptyClassOffset - The highest offset known to contain an empty
@@ -88,6 +88,14 @@ class EmptySubobjectMap {
   /// subobjects beyond the given offset.
   bool AnyEmptySubobjectsBeyondOffset(uint64_t Offset) const {
     return Offset <= MaxEmptyClassOffset;
+  }
+
+  // FIXME: Remove these.
+  CharUnits toCharUnits(uint64_t Offset) const {
+    return CharUnits::fromQuantity(Offset / Context.getCharWidth());
+  }
+  uint64_t toOffset(CharUnits Offset) const {
+    return Offset.getQuantity() * Context.getCharWidth();
   }
 
 protected:
@@ -183,7 +191,8 @@ EmptySubobjectMap::CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD,
   if (!RD->isEmpty())
     return true;
 
-  EmptyClassOffsetsMapTy::const_iterator I = EmptyClassOffsets.find(Offset);
+  EmptyClassOffsetsMapTy::const_iterator I = 
+    EmptyClassOffsets.find(toCharUnits(Offset));
   if (I == EmptyClassOffsets.end())
     return true;
   
@@ -201,7 +210,7 @@ void EmptySubobjectMap::AddSubobjectAtOffset(const CXXRecordDecl *RD,
   if (!RD->isEmpty())
     return;
 
-  ClassVectorTy& Classes = EmptyClassOffsets[Offset];
+  ClassVectorTy& Classes = EmptyClassOffsets[toCharUnits(Offset)];
   assert(std::find(Classes.begin(), Classes.end(), RD) == Classes.end() &&
          "Duplicate empty class detected!");
 
