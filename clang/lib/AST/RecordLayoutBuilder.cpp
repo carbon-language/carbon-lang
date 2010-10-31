@@ -375,8 +375,7 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
       const CXXRecordDecl *VBaseDecl =
         cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
       
-      CharUnits VBaseOffset = Offset + 
-        toCharUnits(Layout.getVBaseClassOffsetInBits(VBaseDecl));
+      CharUnits VBaseOffset = Offset + Layout.getVBaseClassOffset(VBaseDecl);
       if (!CanPlaceFieldSubobjectAtOffset(VBaseDecl, Class, VBaseOffset))
         return false;
     }
@@ -489,8 +488,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
       const CXXRecordDecl *VBaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
       
-      CharUnits VBaseOffset = 
-        Offset + toCharUnits(Layout.getVBaseClassOffsetInBits(VBaseDecl));
+      CharUnits VBaseOffset = Offset + Layout.getVBaseClassOffset(VBaseDecl);
       UpdateEmptyFieldSubobjects(VBaseDecl, Class, VBaseOffset);
     }
   }
@@ -1799,18 +1797,18 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 }
 
 static void PrintOffset(llvm::raw_ostream &OS,
-                        uint64_t Offset, unsigned IndentLevel) {
-  OS << llvm::format("%4d | ", Offset);
+                        CharUnits Offset, unsigned IndentLevel) {
+  OS << llvm::format("%4d | ", Offset.getQuantity());
   OS.indent(IndentLevel * 2);
 }
 
 static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
                                 const CXXRecordDecl *RD, ASTContext &C,
-                                uint64_t Offset,
+                                CharUnits Offset,
                                 unsigned IndentLevel,
                                 const char* Description,
                                 bool IncludeVirtualBases) {
-  const ASTRecordLayout &Info = C.getASTRecordLayout(RD);
+  const ASTRecordLayout &Layout = C.getASTRecordLayout(RD);
 
   PrintOffset(OS, Offset, IndentLevel);
   OS << C.getTypeDeclType(const_cast<CXXRecordDecl *>(RD)).getAsString();
@@ -1822,7 +1820,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
 
   IndentLevel++;
 
-  const CXXRecordDecl *PrimaryBase = Info.getPrimaryBase();
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
 
   // Vtable pointer.
   if (RD->isDynamicClass() && !PrimaryBase) {
@@ -1840,7 +1838,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    uint64_t BaseOffset = Offset + Info.getBaseClassOffsetInBits(Base) / 8;
+    CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(Base);
 
     DumpCXXRecordLayout(OS, Base, C, BaseOffset, IndentLevel,
                         Base == PrimaryBase ? "(primary base)" : "(base)",
@@ -1852,7 +1850,9 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
   for (CXXRecordDecl::field_iterator I = RD->field_begin(),
          E = RD->field_end(); I != E; ++I, ++FieldNo) {
     const FieldDecl *Field = *I;
-    uint64_t FieldOffset = Offset + Info.getFieldOffset(FieldNo) / 8;
+    CharUnits FieldOffset = Offset + 
+      CharUnits::fromQuantity(Layout.getFieldOffset(FieldNo) / 
+                              C.getCharWidth());
 
     if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
       if (const CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
@@ -1877,18 +1877,18 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
     const CXXRecordDecl *VBase =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    uint64_t VBaseOffset = Offset + Info.getVBaseClassOffsetInBits(VBase) / 8;
+    CharUnits VBaseOffset = Offset + Layout.getVBaseClassOffset(VBase);
     DumpCXXRecordLayout(OS, VBase, C, VBaseOffset, IndentLevel,
                         VBase == PrimaryBase ?
                         "(primary virtual base)" : "(virtual base)",
                         /*IncludeVirtualBases=*/false);
   }
 
-  OS << "  sizeof=" << Info.getSize() / 8;
-  OS << ", dsize=" << Info.getDataSize() / 8;
-  OS << ", align=" << Info.getAlignment() / 8 << '\n';
-  OS << "  nvsize=" << Info.getNonVirtualSize() / 8;
-  OS << ", nvalign=" << Info.getNonVirtualAlign() / 8 << '\n';
+  OS << "  sizeof=" << Layout.getSize() / 8;
+  OS << ", dsize=" << Layout.getDataSize() / 8;
+  OS << ", align=" << Layout.getAlignment() / 8 << '\n';
+  OS << "  nvsize=" << Layout.getNonVirtualSize() / 8;
+  OS << ", nvalign=" << Layout.getNonVirtualAlign() / 8 << '\n';
   OS << '\n';
 }
 
@@ -1897,7 +1897,7 @@ void ASTContext::DumpRecordLayout(const RecordDecl *RD,
   const ASTRecordLayout &Info = getASTRecordLayout(RD);
 
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
-    return DumpCXXRecordLayout(OS, CXXRD, *this, 0, 0, 0,
+    return DumpCXXRecordLayout(OS, CXXRD, *this, CharUnits(), 0, 0,
                                /*IncludeVirtualBases=*/true);
 
   OS << "Type: " << getTypeDeclType(RD).getAsString() << "\n";

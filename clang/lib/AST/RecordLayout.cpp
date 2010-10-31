@@ -69,7 +69,7 @@ ASTRecordLayout::ASTRecordLayout(ASTContext &Ctx,
 #ifndef NDEBUG
     if (const CXXRecordDecl *PrimaryBase = getPrimaryBase()) {
       if (getPrimaryBaseWasVirtual())
-        assert(getVBaseClassOffsetInBits(PrimaryBase) == 0 &&
+        assert(getVBaseClassOffset(PrimaryBase).isZero() &&
                "Primary virtual base must be at offset 0!");
       else
         assert(getBaseClassOffsetInBits(PrimaryBase) == 0 &&
