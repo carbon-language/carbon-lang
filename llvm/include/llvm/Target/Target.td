@@ -567,6 +567,18 @@ class MnemonicAlias<string From, string To> {
   list<Predicate> Predicates = [];
 }
 
+/// InstAlias - This defines an alternate assembly syntax that is allowed to
+/// match an instruction that has a different (more canonical) assembly
+/// representation.
+class InstAlias<dag Outs, dag Ins, string Asm, dag Result> {
+  dag OutOperandList = Outs;   // An dag containing the MI def operand list.
+  dag InOperandList = Ins;     // An dag containing the MI use operand list.
+  string AsmString = Asm;      // The .s format to match the instruction with.
+  dag ResultInst = Result;     // The MCInst to generate.
+  
+  // Predicates - Predicates that must be true for this to match.
+  list<Predicate> Predicates = [];
+}
 
 //===----------------------------------------------------------------------===//
 // AsmWriter - This class can be implemented by targets that need to customize

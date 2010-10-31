@@ -1258,6 +1258,17 @@ include "X86InstrCompiler.td"
 // Assembler Aliases
 //===----------------------------------------------------------------------===//
 
+// movsx aliases
+def : InstAlias<(outs GR32:$dst), (ins GR8 :$src),
+                "movsx $src, $dst",
+                (MOVSX32rr8 GR32:$dst, GR8:$src)>;
+def : InstAlias<(outs GR32:$dst), (ins GR16:$src),
+                "movsx $src, $dst",
+                (MOVSX32rr16 GR32:$dst, GR16:$src)>;
+
+
+// TODO: lidtl/lidtq can be opcode aliases, perhaps others.
+
 def : MnemonicAlias<"iret", "iretl">;
 def : MnemonicAlias<"sysret", "sysretl">;
 def : MnemonicAlias<"cbw",  "cbtw">;
@@ -1272,6 +1283,9 @@ def : MnemonicAlias<"popf", "popfl">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"popf", "popfq">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"popfd",  "popfl">;
 
+// FIXME: This is wrong for "push reg".  "push %bx" should turn into pushw in
+// all modes.  However: "push (addr)" and "push $42" should default to
+// pushl/pushq depending on the current mode.  Similar for "pop %bx"
 def : MnemonicAlias<"push", "pushl">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"push", "pushq">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"pushf", "pushfl">, Requires<[In32BitMode]>;
