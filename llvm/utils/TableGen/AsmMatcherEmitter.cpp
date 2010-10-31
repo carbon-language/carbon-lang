@@ -225,11 +225,18 @@ static bool IsAssemblerInstruction(StringRef Name,
 
   // Ignore pseudo ops.
   //
-  // FIXME: This is a hack; can we convert these instructions to set the
-  // "codegen only" bit instead?
+  // FIXME: This is a hack [for X86]; can we convert these instructions to set
+  // the "codegen only" bit instead?
   if (const RecordVal *Form = CGI.TheDef->getValue("Form"))
     if (Form->getValue()->getAsString() == "Pseudo")
       return false;
+  
+  // FIXME: This is a hack [for ARM]; can we convert these instructions to set
+  // the "codegen only" bit instead?
+  if (const RecordVal *Form = CGI.TheDef->getValue("F"))
+    if (Form->getValue()->getAsString() == "Pseudo")
+      return false;
+  
 
   // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
   //
@@ -240,18 +247,19 @@ static bool IsAssemblerInstruction(StringRef Name,
   // Ignore instructions with no .s string.
   //
   // FIXME: What are these?
-  if (CGI.AsmString.empty())
-    return false;
+  if (CGI.AsmString.empty()) {
+    PrintError(CGI.TheDef->getLoc(),
+               "instruction with empty asm string");
+    throw std::string("ERROR: Invalid instruction for asm matcher");
+  }
 
   // FIXME: Hack; ignore any instructions with a newline in them.
   if (std::find(CGI.AsmString.begin(),
                 CGI.AsmString.end(), '\n') != CGI.AsmString.end())
     return false;
 
-  // Ignore instructions with attributes, these are always fake instructions for
-  // simplifying codegen.
-  //
-  // FIXME: Is this true?
+  // Reject instructions with attributes, these aren't something we can handle,
+  // the target should be refactored to use operands instead of modifiers.
   //
   // Also, check for instructions which reference the operand multiple times;
   // this implies a constraint we would not honor.

@@ -161,7 +161,7 @@ def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
 // instruction is lowered to an MCInst.
 // FIXME: AddedComplexity gives this a higher priority than MOV64ri32. Remove
 // when we have a better way to specify isel priority.
-let Defs = [EFLAGS],
+let Defs = [EFLAGS], isCodeGenOnly=1,
     AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
                  [(set GR64:$dst, 0)]>;
@@ -169,10 +169,10 @@ def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
 // Materialize i64 constant where top 32-bits are zero. This could theoretically
 // use MOV32ri with a SUBREG_TO_REG to represent the zero-extension, however
 // that would make it more difficult to rematerialize.
-let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
+let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1,
+    isCodeGenOnly = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         "", [(set GR64:$dst, i64immZExt32:$src)]>;
-
 
 // Use sbb to materialize carry bit.
 let Uses = [EFLAGS], Defs = [EFLAGS], isCodeGenOnly = 1 in {

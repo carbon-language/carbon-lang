@@ -45,10 +45,14 @@ def MOVSX16rr8W : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8:$src),
                     "movs{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def MOVSX16rm8W : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem:$src),
                     "movs{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
+
+// FIXME: Use a pat pattern or define a syntax here.                    
+let isCodeGenOnly=1 in {
 def MOVSX16rr8 : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
                    "", [(set GR16:$dst, (sext GR8:$src))]>, TB;
 def MOVSX16rm8 : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
                    "", [(set GR16:$dst, (sextloadi16i8 addr:$src))]>, TB;
+}
 def MOVSX32rr8 : I<0xBE, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
                    "movs{bl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (sext GR8:$src))]>, TB;
@@ -69,10 +73,13 @@ def MOVZX16rr8W : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8:$src),
                     "movz{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def MOVZX16rm8W : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem:$src),
                     "movz{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;  
+// FIXME: Use a pat pattern or define a syntax here.                    
+let isCodeGenOnly=1 in {
 def MOVZX16rr8 : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
                    "", [(set GR16:$dst, (zext GR8:$src))]>, TB;
 def MOVZX16rm8 : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
                    "", [(set GR16:$dst, (zextloadi16i8 addr:$src))]>, TB;
+}
 def MOVZX32rr8 : I<0xB6, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
                    "movz{bl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (zext GR8:$src))]>, TB;
@@ -132,6 +139,9 @@ def MOVZX64rr16_Q : RI<0xB7, MRMSrcReg, (outs GR64:$dst), (ins GR16:$src),
 def MOVZX64rm16_Q : RI<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
                        "movz{wq|x}\t{$src, $dst|$dst, $src}", []>, TB;
 
+// FIXME: These should be Pat patterns.
+let isCodeGenOnly = 1 in {
+
 // Use movzbl instead of movzbq when the destination is a register; it's
 // equivalent due to implicit zero-extending, and it has a smaller encoding.
 def MOVZX64rr8 : I<0xB6, MRMSrcReg, (outs GR64:$dst), (ins GR8 :$src),
@@ -158,5 +168,5 @@ def MOVZX64rm32 : I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
                     "", [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
 
 
-
+}
 

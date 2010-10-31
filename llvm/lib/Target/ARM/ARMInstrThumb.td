@@ -205,7 +205,7 @@ def tCPS : T1I<(outs), (ins cps_opt:$opt), NoItinerary, "cps$opt",
            T1Misc<0b0110011>;
 
 // For both thumb1 and thumb2.
-let isNotDuplicable = 1 in
+let isNotDuplicable = 1, isCodeGenOnly = 1 in
 def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
                  [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>,
               T1Special<{0,0,?,?}> {
@@ -917,14 +917,14 @@ let isCall = 1,
 //   $val is a scratch register for our use.
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ], hasSideEffects = 1,
-   isBarrier = 1  in {
+   isBarrier = 1, isCodeGenOnly = 1 in {
   def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
                               AddrModeNone, SizeSpecial, NoItinerary, "", "",
                    [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>;
 }
 
 // FIXME: Non-Darwin version(s)
-let isBarrier = 1, hasSideEffects = 1, isTerminator = 1,
+let isBarrier = 1, hasSideEffects = 1, isTerminator = 1, isCodeGenOnly = 1,
     Defs = [ R7, LR, SP ] in {
 def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
                              AddrModeNone, SizeSpecial, IndexModeNone,
