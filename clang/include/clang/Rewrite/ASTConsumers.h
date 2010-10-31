@@ -26,7 +26,7 @@ class Diagnostic;
 class LangOptions;
 class Preprocessor;
 
-// ObjC rewriter: attempts tp rewrite ObjC constructs into pure C code.
+// ObjC rewriter: attempts to rewrite ObjC constructs into pure C code.
 // This is considered experimental, and only works with Apple's ObjC runtime.
 ASTConsumer *CreateObjCRewriter(const std::string &InFile,
                                 llvm::raw_ostream *OS,
