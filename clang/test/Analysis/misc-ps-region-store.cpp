@@ -159,3 +159,50 @@ int r8375510(R8375510 x, R8375510 y) {
   for (; ; x++) { }
 }
 
+// PR8426 -- this used to crash.
+
+void Use(void* to);
+
+template <class T> class Foo {
+  ~Foo();
+  struct Bar;
+  Bar* bar_;
+};
+
+template <class T> Foo<T>::~Foo() {
+  Use(bar_);
+  T::DoSomething();
+  bar_->Work();
+}
+
+// PR8427 -- this used to crash.
+
+class Dummy {};
+
+bool operator==(Dummy, int);
+
+template <typename T>
+class Foo2 {
+  bool Bar();
+};
+
+template <typename T>
+bool Foo2<T>::Bar() {
+  return 0 == T();
+}
+
+// PR8433 -- this used to crash.
+
+template <typename T>
+class Foo3 {
+ public:
+  void Bar();
+  void Baz();
+  T value_;
+};
+
+template <typename T>
+void Foo3<T>::Bar() {
+  Baz();
+  value_();
+}

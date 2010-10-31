@@ -211,8 +211,10 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
     case Decl::CXXMethod:
     case Decl::Function: {
       FunctionDecl* FD = cast<FunctionDecl>(D);
-      
-      if (FD->isThisDeclarationADefinition()) {
+      // We skip function template definitions, as their semantics is
+      // only determined when they are instantiated.
+      if (FD->isThisDeclarationADefinition() &&
+          !FD->isDependentContext()) {
         if (!Opts.AnalyzeSpecificFunction.empty() &&
             FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
           break;
