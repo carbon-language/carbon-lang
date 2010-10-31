@@ -206,3 +206,14 @@ namespace BoolPtrToMember {
     return x.*member;
   }
 }
+
+namespace PR8507 {
+  
+struct S;
+void f(S* p, double S::*pm) {
+  if (0 < p->*pm) {
+  }
+}
+
+}
+

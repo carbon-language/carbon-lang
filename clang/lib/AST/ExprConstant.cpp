@@ -1966,6 +1966,10 @@ bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return true;
   }
 
+  // We can't evaluate pointer-to-member operations.
+  if (E->isPtrMemOp())
+    return false;
+
   // FIXME: Diagnostics?  I really don't understand how the warnings
   // and errors are supposed to work.
   APFloat RHS(0.0);
