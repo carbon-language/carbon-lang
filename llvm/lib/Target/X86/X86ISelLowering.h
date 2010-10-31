@@ -717,7 +717,6 @@ namespace llvm {
                                 SDValue Chain, bool IsTailCall, bool Is64Bit,
                                 int FPDiff, DebugLoc dl) const;
 
-    CCAssignFn *CCAssignFnForNode(CallingConv::ID CallConv) const;
     unsigned GetAlignedArgumentStackSize(unsigned StackSize,
                                          SelectionDAG &DAG) const;
 

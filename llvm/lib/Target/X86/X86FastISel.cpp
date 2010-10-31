@@ -114,8 +114,6 @@ private:
   bool X86VisitIntrinsicCall(const IntrinsicInst &I);
   bool X86SelectCall(const Instruction *I);
 
-  CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool isTailCall = false);
-
   const X86InstrInfo *getInstrInfo() const {
     return getTargetMachine()->getInstrInfo();
   }
@@ -162,31 +160,6 @@ bool X86FastISel::isTypeLegal(const Type *Ty, EVT &VT, bool AllowI1) {
 }
 
 #include "X86GenCallingConv.inc"
-
-/// CCAssignFnForCall - Selects the correct CCAssignFn for a given calling
-/// convention.
-CCAssignFn *X86FastISel::CCAssignFnForCall(CallingConv::ID CC,
-                                           bool isTaillCall) {
-  if (Subtarget->is64Bit()) {
-    if (CC == CallingConv::GHC)
-      return CC_X86_64_GHC;
-    else if (Subtarget->isTargetWin64())
-      return CC_X86_Win64_C;
-    else
-      return CC_X86_64_C;
-  }
-
-  if (CC == CallingConv::X86_FastCall)
-    return CC_X86_32_FastCall;
-  else if (CC == CallingConv::X86_ThisCall)
-    return CC_X86_32_ThisCall;
-  else if (CC == CallingConv::Fast)
-    return CC_X86_32_FastCC;
-  else if (CC == CallingConv::GHC)
-    return CC_X86_32_GHC;
-  else
-    return CC_X86_32_C;
-}
 
 /// X86FastEmitLoad - Emit a machine instruction to load a value of type VT.
 /// The address is either pre-computed, i.e. Ptr, or a GlobalAddress, i.e. GV.
@@ -1548,7 +1521,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     CCInfo.AllocateStack(32, 8); 
   }
 
-  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC));
+  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CC_X86);
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();

@@ -379,3 +379,35 @@ def CC_X86_32_GHC : CallingConv<[
   // Pass in STG registers: Base, Sp, Hp, R1
   CCIfType<[i32], CCAssignToReg<[EBX, EBP, EDI, ESI]>>
 ]>;
+
+//===----------------------------------------------------------------------===//
+// X86 Root Argument Calling Conventions
+//===----------------------------------------------------------------------===//
+
+// This is the root argument convention for the X86-32 backend.
+def CC_X86_32 : CallingConv<[
+  CCIfCC<"CallingConv::X86_FastCall", CCDelegateTo<CC_X86_32_FastCall>>,
+  CCIfCC<"CallingConv::X86_ThisCall", CCDelegateTo<CC_X86_32_ThisCall>>,
+  CCIfCC<"CallingConv::Fast", CCDelegateTo<CC_X86_32_FastCC>>,
+  CCIfCC<"CallingConv::GHC", CCDelegateTo<CC_X86_32_GHC>>,
+
+  // Otherwise, drop to normal X86-32 CC
+  CCDelegateTo<CC_X86_32_C>
+]>;
+
+// This is the root argument convention for the X86-64 backend.
+def CC_X86_64 : CallingConv<[
+  CCIfCC<"CallingConv::GHC", CCDelegateTo<CC_X86_64_GHC>>,
+
+  // Mingw64 and native Win64 use Win64 CC
+  CCIfSubtarget<"isTargetWin64()", CCDelegateTo<CC_X86_Win64_C>>,
+
+  // Otherwise, drop to normal X86-64 CC
+  CCDelegateTo<CC_X86_64_C>
+]>;
+
+// This is the argument convention used for the entire X86 backend.
+def CC_X86 : CallingConv<[
+  CCIfSubtarget<"is64Bit()", CCDelegateTo<CC_X86_64>>,
+  CCDelegateTo<CC_X86_32>
+]>;

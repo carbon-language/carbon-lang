@@ -1457,30 +1457,6 @@ ArgsAreStructReturn(const SmallVectorImpl<ISD::InputArg> &Ins) {
   return Ins[0].Flags.isSRet();
 }
 
-/// CCAssignFnForNode - Selects the correct CCAssignFn for a the
-/// given CallingConvention value.
-CCAssignFn *X86TargetLowering::CCAssignFnForNode(CallingConv::ID CC) const {
-  if (Subtarget->is64Bit()) {
-    if (CC == CallingConv::GHC)
-      return CC_X86_64_GHC;
-    else if (Subtarget->isTargetWin64())
-      return CC_X86_Win64_C;
-    else
-      return CC_X86_64_C;
-  }
-
-  if (CC == CallingConv::X86_FastCall)
-    return CC_X86_32_FastCall;
-  else if (CC == CallingConv::X86_ThisCall)
-    return CC_X86_32_ThisCall;
-  else if (CC == CallingConv::Fast)
-    return CC_X86_32_FastCC;
-  else if (CC == CallingConv::GHC)
-    return CC_X86_32_GHC;
-  else
-    return CC_X86_32_C;
-}
-
 /// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
 /// by "Src" to address "Dst" with size and alignment information specified by
 /// the specific parameter attribute. The copy will be passed as a byval
@@ -1576,7 +1552,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  ArgLocs, *DAG.getContext());
-  CCInfo.AnalyzeFormalArguments(Ins, CCAssignFnForNode(CallConv));
+  CCInfo.AnalyzeFormalArguments(Ins, CC_X86);
 
   unsigned LastVal = ~0U;
   SDValue ArgValue;
@@ -1895,7 +1871,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  ArgLocs, *DAG.getContext());
-  CCInfo.AnalyzeCallOperands(Outs, CCAssignFnForNode(CallConv));
+  CCInfo.AnalyzeCallOperands(Outs, CC_X86);
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -2478,7 +2454,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     SmallVector<CCValAssign, 16> ArgLocs;
     CCState CCInfo(CalleeCC, isVarArg, getTargetMachine(),
                    ArgLocs, *DAG.getContext());
-    CCInfo.AnalyzeCallOperands(Outs, CCAssignFnForNode(CalleeCC));
+    CCInfo.AnalyzeCallOperands(Outs, CC_X86);
     if (CCInfo.getNextStackOffset()) {
       MachineFunction &MF = DAG.getMachineFunction();
       if (MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn())
