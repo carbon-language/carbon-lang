@@ -1166,7 +1166,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // FIXME: remove when we have a way to marking a MI with these properties.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
-    hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
+    hasExtraDefRegAllocReq = 1 in
   def LDM_RET : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                         reglist:$dsts, variable_ops),
                        IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
@@ -1416,7 +1416,6 @@ def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
 }
 
 // Store Return State is a system instruction -- for disassembly only
-let isCodeGenOnly = 1 in {  // FIXME: This should not use submode!
 def SRSW : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$mode),
                 NoItinerary, "srs${addr:submode}\tsp!, $mode",
                 [/* For disassembly only; pattern left blank */]> {
@@ -1445,7 +1444,6 @@ def RFE  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b001; // W = 0
 }
-} // isCodeGenOnly = 1
 
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
@@ -1683,8 +1681,7 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb),
 //  Load / store multiple Instructions.
 //
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def LDM : AXI4ld<(outs), (ins addrmode4:$addr, pred:$p,
                           reglist:$dsts, variable_ops),
                  IndexModeNone, LdStMulFrm, IIC_iLoad_m,
@@ -1697,8 +1694,7 @@ def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                      "$addr.addr = $wb", []>;
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
 
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 def STM : AXI4st<(outs), (ins addrmode4:$addr, pred:$p,
                           reglist:$srcs, variable_ops),
                  IndexModeNone, LdStMulFrm, IIC_iStore_m,

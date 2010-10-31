@@ -1241,8 +1241,7 @@ defm t2PLI  : T2Ipl<1, 0, "pli">;
 //  Load / store multiple Instructions.
 //
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def t2LDM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
                           reglist:$dsts, variable_ops), IIC_iLoad_m,
                  "ldm${addr:submode}${p}${addr:wide}\t$addr, $dsts", []> {
@@ -1268,8 +1267,7 @@ def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 }
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
 
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 def t2STM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
                           reglist:$srcs, variable_ops), IIC_iStore_m,
                  "stm${addr:submode}${p}${addr:wide}\t$addr, $srcs", []> {
@@ -2431,7 +2429,7 @@ let Defs =
 // operand list.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
-    hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
+    hasExtraDefRegAllocReq = 1 in
   def t2LDM_RET : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                          reglist:$dsts, variable_ops),
                         IIC_iLoad_mBr,

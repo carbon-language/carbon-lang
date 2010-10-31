@@ -532,8 +532,7 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
 //
 
 // These require base address to be written back or one of the loaded regs.
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def tLDM : T1I<(outs),
                (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
                IIC_iLoad_m,
@@ -548,8 +547,7 @@ def tLDM_UPD : T1It<(outs tGPR:$wb),
                T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
 } // mayLoad, neverHasSideEffects = 1, hasExtraDefRegAllocReq
 
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
 def tSTM_UPD : T1It<(outs tGPR:$wb),
                     (ins addrmode4:$addr, pred:$p, reglist:$srcs, variable_ops),
                     IIC_iStore_mu,

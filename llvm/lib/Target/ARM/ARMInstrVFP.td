@@ -72,8 +72,7 @@ def VSTRS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
 //  Load / store multiple Instructions.
 //
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 def VLDMD : AXDI4<(outs), (ins addrmode4:$addr, pred:$p, reglist:$dsts,
                            variable_ops), IndexModeNone, IIC_fpLoad_m,
                   "vldm${addr:submode}${p}\t$addr, $dsts", "", []> {
@@ -103,8 +102,7 @@ def VLDMS_UPD : AXSI4<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 }
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
 
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 def VSTMD : AXDI4<(outs), (ins addrmode4:$addr, pred:$p, reglist:$srcs,
                            variable_ops), IndexModeNone, IIC_fpStore_m,
                   "vstm${addr:submode}${p}\t$addr, $srcs", "", []> {
