@@ -565,7 +565,7 @@ protected:
   /// out is virtual.
   bool PrimaryBaseIsVirtual;
 
-  typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t> BaseOffsetsMapTy;
+  typedef llvm::DenseMap<const CXXRecordDecl *, CharUnits> BaseOffsetsMapTy;
 
   /// Bases - base classes and their offsets in the record.
   BaseOffsetsMapTy Bases;
@@ -992,10 +992,12 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
 void RecordLayoutBuilder::LayoutNonVirtualBase(const BaseSubobjectInfo *Base) {
   // Layout the base.
   uint64_t Offset = LayoutBase(Base);
+  CharUnits OffsetInChars = 
+    CharUnits::fromQuantity(Offset / Context.getCharWidth());
 
   // Add its base class offset.
   assert(!Bases.count(Base->Class) && "base offset already exists!");
-  Bases.insert(std::make_pair(Base->Class, Offset));
+  Bases.insert(std::make_pair(Base->Class, OffsetInChars));
 
   AddPrimaryVirtualBaseOffsets(Base, Offset);
 }
@@ -1015,8 +1017,10 @@ RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
       // Add the offset.
       assert(!VBases.count(Info->PrimaryVirtualBaseInfo->Class) && 
              "primary vbase offset already exists!");
+      CharUnits OffsetInChars = 
+        CharUnits::fromQuantity(Offset / Context.getCharWidth());
       VBases.insert(std::make_pair(Info->PrimaryVirtualBaseInfo->Class,
-                                   Offset));
+                                   OffsetInChars));
 
       // Traverse the primary virtual base.
       AddPrimaryVirtualBaseOffsets(Info->PrimaryVirtualBaseInfo, Offset);
@@ -1089,10 +1093,12 @@ void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
   
   // Layout the base.
   uint64_t Offset = LayoutBase(Base);
+  CharUnits OffsetInChars = 
+    CharUnits::fromQuantity(Offset / Context.getCharWidth());
 
   // Add its base class offset.
   assert(!VBases.count(Base->Class) && "vbase offset already exists!");
-  VBases.insert(std::make_pair(Base->Class, Offset));
+  VBases.insert(std::make_pair(Base->Class, OffsetInChars));
   
   AddPrimaryVirtualBaseOffsets(Base, Offset);
 }

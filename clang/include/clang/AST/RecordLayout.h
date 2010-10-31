@@ -119,7 +119,7 @@ private:
     PrimaryBaseInfo PrimaryBase;
     
     /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
-    typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t> BaseOffsetsMapTy;
+    typedef llvm::DenseMap<const CXXRecordDecl *, CharUnits> BaseOffsetsMapTy;
     
     /// BaseOffsets - Contains a map from base classes to their offset.
     BaseOffsetsMapTy BaseOffsets;
@@ -153,7 +153,7 @@ private:
   ~ASTRecordLayout() {}
 
   void Destroy(ASTContext &Ctx);
-
+  
   ASTRecordLayout(const ASTRecordLayout&);   // DO NOT IMPLEMENT
   void operator=(const ASTRecordLayout&); // DO NOT IMPLEMENT
 public:
@@ -218,7 +218,8 @@ public:
     assert(CXXInfo && "Record layout does not have C++ specific info!");
     assert(CXXInfo->BaseOffsets.count(Base) && "Did not find base!");
 
-    return CXXInfo->BaseOffsets[Base];
+    return CXXInfo->BaseOffsets[Base].getQuantity() * 
+      Base->getASTContext().getCharWidth();
   }
 
   /// getVBaseClassOffset - Get the offset, in bits, for the given base class.
@@ -226,9 +227,10 @@ public:
     assert(CXXInfo && "Record layout does not have C++ specific info!");
     assert(CXXInfo->VBaseOffsets.count(VBase) && "Did not find base!");
 
-    return CXXInfo->VBaseOffsets[VBase];
+    return CXXInfo->VBaseOffsets[VBase].getQuantity() *
+      VBase->getASTContext().getCharWidth();
   }
-  
+
   uint64_t getSizeOfLargestEmptySubobject() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
     return CXXInfo->SizeOfLargestEmptySubobject;
