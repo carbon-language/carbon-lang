@@ -118,8 +118,8 @@ SBDebugger::SetInputFileHandle (FILE *fh, bool transfer_ownership)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBDebugger(%p)::SetInputFileHandle (fh=%p, transfer_ownership='%s')", m_opaque_sp.get(),
-                     fh, (transfer_ownership ? "true" : "false"));
+        log->Printf ("SBDebugger(%p)::SetInputFileHandle (fh=%p, transfer_ownership=%i)", m_opaque_sp.get(),
+                     fh, transfer_ownership);
 
     if (m_opaque_sp)
         m_opaque_sp->SetInputFileHandle (fh, transfer_ownership);
@@ -132,8 +132,8 @@ SBDebugger::SetOutputFileHandle (FILE *fh, bool transfer_ownership)
 
 
     if (log)
-        log->Printf ("SBDebugger(%p)::SetOutputFileHandle (fh=%p, transfer_ownership='%s')", m_opaque_sp.get(),
-                     fh, (transfer_ownership ? "true" : "false"));
+        log->Printf ("SBDebugger(%p)::SetOutputFileHandle (fh=%p, transfer_ownership=%i)", m_opaque_sp.get(),
+                     fh, transfer_ownership);
 
     if (m_opaque_sp)
         m_opaque_sp->SetOutputFileHandle (fh, transfer_ownership);
@@ -146,8 +146,8 @@ SBDebugger::SetErrorFileHandle (FILE *fh, bool transfer_ownership)
 
 
     if (log)
-        log->Printf ("SBDebugger(%p)::SetErrorFileHandle (fh=%p, transfer_ownership='%s')", m_opaque_sp.get(),
-                     fh, (transfer_ownership ? "true" : "false"));
+        log->Printf ("SBDebugger(%p)::SetErrorFileHandle (fh=%p, transfer_ownership=%i)", m_opaque_sp.get(),
+                     fh, transfer_ownership);
 
     if (m_opaque_sp)
         m_opaque_sp->SetErrorFileHandle (fh, transfer_ownership);
@@ -459,7 +459,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
-        log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndTargetTriple (filename='%s', tiple = %s) => SBTarget(%p)", 
+        log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndTargetTriple (filename=\"%s\", triple=%s) => SBTarget(%p)", 
                      m_opaque_sp.get(), filename, target_triple, target.get());
     }
 
@@ -511,7 +511,7 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
 
     if (log)
     {
-        log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndArch (filename='%s', arch = %s) => SBTarget(%p)", 
+        log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndArch (filename=\"%s\", arch=%s) => SBTarget(%p)", 
                      m_opaque_sp.get(), filename, archname, target.get());
     }
 
@@ -553,7 +553,7 @@ SBDebugger::CreateTarget (const char *filename)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
-        log->Printf ("SBDebugger(%p)::CreateTarget (filename='%s') => SBTarget(%p)", 
+        log->Printf ("SBDebugger(%p)::CreateTarget (filename=\"%s\") => SBTarget(%p)", 
                      m_opaque_sp.get(), filename, target.get());
     }
     return target;
@@ -636,8 +636,8 @@ SBDebugger::DispatchInput (void *baton, const void *data, size_t data_len)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBDebugger(%p)::DispatchInput (baton=%p, data='%s', size_t=%d)", m_opaque_sp.get(),
-                     baton, (const char *) data, (uint32_t) data_len);
+        log->Printf ("SBDebugger(%p)::DispatchInput (baton=%p, data=\"%.*s\", size_t=%zu)", m_opaque_sp.get(),
+                     baton, (int) data_len, (const char *) data, data_len);
 
     if (m_opaque_sp)
         m_opaque_sp->DispatchInput ((const char *) data, data_len);
@@ -756,7 +756,7 @@ SBDebugger::GetPrompt() const
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     
     if (log)
-        log->Printf ("SBDebugger(%p)::GetPrompt () => '%s'", m_opaque_sp.get(), 
+        log->Printf ("SBDebugger(%p)::GetPrompt () => \"%s\"", m_opaque_sp.get(), 
                      (m_opaque_sp ? m_opaque_sp->GetPrompt() : ""));
 
     if (m_opaque_sp)
@@ -815,7 +815,7 @@ SBDebugger::GetDescription (SBStream &description)
     {
         const char *name = m_opaque_sp->GetInstanceName().AsCString();
         lldb::user_id_t id = m_opaque_sp->GetID();
-        description.Printf ("Debugger (instance: '%s', id: %d)", name, id);
+        description.Printf ("Debugger (instance: \"%s\", id: %d)", name, id);
     }
     else
         description.Printf ("No value");

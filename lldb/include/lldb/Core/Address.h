@@ -247,21 +247,6 @@ public:
           uint32_t addr_byte_size = UINT32_MAX) const;
 
     //------------------------------------------------------------------
-    /// Dump a debug description of this object to a Stream.
-    ///
-    /// Dump a debug description of the contents of this object to the
-    /// supplied stream \a s.
-    ///
-    /// The debug description contains verbose internal state such
-    /// and pointer values, reference counts, etc.
-    ///
-    /// @param[in] s
-    ///     The stream to which to dump the object descripton.
-    //------------------------------------------------------------------
-    void
-    DumpDebug (Stream *s) const;
-
-    //------------------------------------------------------------------
     /// Get the file address.
     ///
     /// If an address comes from a file on disk that has section

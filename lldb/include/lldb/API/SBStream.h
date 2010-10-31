@@ -70,6 +70,7 @@ protected:
     friend class SBSymbolContext;
     friend class SBTarget;
     friend class SBThread;
+    friend class SBValue;
 
 #ifndef SWIG
 

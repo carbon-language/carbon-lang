@@ -559,41 +559,27 @@ FileSpec::GetFilename() const
 // needed as the directory and path are stored in separate string
 // values.
 //------------------------------------------------------------------
-bool
-FileSpec::GetPath(char *path, size_t max_path_length) const
+size_t
+FileSpec::GetPath(char *path, size_t path_max_len) const
 {
-    if (max_path_length)
+    if (path_max_len)
     {
-        const char *dirname = m_directory.AsCString();
-        const char *filename = m_filename.AsCString();
+        const char *dirname = m_directory.GetCString();
+        const char *filename = m_filename.GetCString();
         if (dirname)
         {
             if (filename)
-            {
-                return (size_t)::snprintf (path, max_path_length, "%s/%s", dirname, filename) < max_path_length;
-            }
+                return ::snprintf (path, path_max_len, "%s/%s", dirname, filename);
             else
-            {
-                size_t dir_len = m_directory.GetLength() + 1;
-                if (dir_len < max_path_length)
-                {
-                    ::memcpy (path, dirname, dir_len);
-                    return true;
-                }
-            }
+                return ::snprintf (path, path_max_len, "%s", dirname);
         }
         else if (filename)
         {
-            size_t filename_len = m_filename.GetLength() + 1;
-            if (filename_len < max_path_length)
-            {
-                ::memcpy (path, filename, filename_len);
-                return true;
-            }
+            return ::snprintf (path, path_max_len, "%s", filename);
         }
     }
     path[0] = '\0';
-    return false;
+    return 0;
 }
 
 //------------------------------------------------------------------

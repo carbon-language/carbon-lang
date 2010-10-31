@@ -89,10 +89,13 @@ public:
     Dereference ();
 
     bool
-    TypeIsPtrType ();
+    TypeIsPointerType ();
 
     bool
     GetDescription (lldb::SBStream &description);
+
+    bool
+    GetExpressionPath (lldb::SBStream &description);
 
 protected:
     friend class SBValueList;

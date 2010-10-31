@@ -12,9 +12,9 @@
 
 // C Includes
 // C++ Includes
+#include <map>
 #include <string>
 #include <vector>
-
 
 // Other libraries and framework includes
 // Project includes
@@ -142,6 +142,35 @@ public:
     const ConstString &
     GetBroadcasterName ();
 
+
+    //------------------------------------------------------------------
+    /// Get the event name(s) for one or more event bits.
+    ///
+    /// @param[in] event_mask
+    ///     A bit mask that indicates which events to get names for.
+    ///
+    /// @return
+    ///     The NULL terminated C string name of this Broadcaster.
+    //------------------------------------------------------------------
+    bool
+    GetEventNames (Stream &s, const uint32_t event_mask, bool prefix_with_broadcaster_name) const;
+
+    //------------------------------------------------------------------
+    /// Set the name for an event bit.
+    ///
+    /// @param[in] event_mask
+    ///     A bit mask that indicates which events the listener is
+    ///     asking to monitor.
+    ///
+    /// @return
+    ///     The NULL terminated C string name of this Broadcaster.
+    //------------------------------------------------------------------
+    void
+    SetEventName (uint32_t event_mask, const char *name)
+    {
+        m_event_names[event_mask] = name;
+    }
+    
     bool
     EventTypeHasListeners (uint32_t event_type);
 
@@ -207,13 +236,15 @@ protected:
     // Classes that inherit from Broadcaster can see and modify these
     //------------------------------------------------------------------
     typedef std::vector< std::pair<Listener*,uint32_t> > collection;
+    typedef std::map<uint32_t, std::string> event_names_map;
     // Prefix the name of our member variables with "m_broadcaster_"
     // since this is a class that gets subclassed.
     const ConstString m_broadcaster_name;   ///< The name of this broadcaster object.
-    collection m_broadcaster_listeners;     ///< A list of Listener / event_mask pairs that are listening to this broadcaster.
-    Mutex m_broadcaster_listeners_mutex;    ///< A mutex that protects \a m_broadcaster_listeners.
+    event_names_map m_event_names;  ///< Optionally define event names for readability and logging for each event bit
+    collection m_listeners;     ///< A list of Listener / event_mask pairs that are listening to this broadcaster.
+    Mutex m_listeners_mutex;    ///< A mutex that protects \a m_listeners.
     Listener *m_hijacking_listener;         // A simple mechanism to intercept events in lieu of a real Listener collection stack.
-    uint32_t m_hijack_mask;
+    uint32_t m_hijacking_mask;
     
 private:
     //------------------------------------------------------------------

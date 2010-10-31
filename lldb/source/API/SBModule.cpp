@@ -51,10 +51,8 @@ SBModule::GetFileSpec () const
 
     if (log)
     {
-        SBStream sstr;
-        file_spec.GetDescription (sstr);
-        log->Printf ("SBModule(%p)::GetFileSpec () => SBFileSpec(%p): %s", m_opaque_sp.get(),
-                     file_spec.get(), sstr.GetData());
+        log->Printf ("SBModule(%p)::GetFileSpec () => SBFileSpec(%p)", 
+        m_opaque_sp.get(), file_spec.get());
     }
 
     return file_spec;

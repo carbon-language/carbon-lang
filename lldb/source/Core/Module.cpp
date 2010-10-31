@@ -380,13 +380,16 @@ Module::GetDescription (Stream *s)
 {
     Mutex::Locker locker (m_mutex);
 
-    s->Printf("Module %s/%s%s%s%s\n",
-              m_file.GetDirectory().AsCString(),
-              m_file.GetFilename().AsCString(),
-              m_object_name ? "(" : "",
-              m_object_name ? m_object_name.GetCString() : "",
-              m_object_name ? ")" : "");
+    if (m_arch.IsValid())
+        s->Printf("(%s) ", m_arch.AsCString());
 
+    char path[PATH_MAX];
+    if (m_file.GetPath(path, sizeof(path)))
+        s->PutCString(path);
+
+    const char *object_name = m_object_name.GetCString();
+    if (object_name)
+        s->Printf("(%s)", object_name);
 }
 
 void

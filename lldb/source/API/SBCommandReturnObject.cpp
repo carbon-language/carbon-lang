@@ -19,10 +19,6 @@ using namespace lldb_private;
 SBCommandReturnObject::SBCommandReturnObject () :
     m_opaque_ap (new CommandReturnObject ())
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-        log->Printf ("SBCommandReturnObject::SBCommandReturnObject () => this.ap = %p", m_opaque_ap.get());
 }
 
 SBCommandReturnObject::~SBCommandReturnObject ()
@@ -42,20 +38,17 @@ SBCommandReturnObject::GetOutput ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBCommandReturnObject::GetOutput ()");
-
     if (m_opaque_ap.get())
     {
         if (log)
-            log->Printf ("SBCommandReturnObject::GetOutput (this.ap=%p) => '%s'", m_opaque_ap.get(), 
+            log->Printf ("SBCommandReturnObject(%p)::GetOutput () => \"%s\"", m_opaque_ap.get(), 
                          m_opaque_ap->GetOutputStream().GetData());
 
         return m_opaque_ap->GetOutputStream().GetData();
     }
 
     if (log)
-        log->Printf ("SBCommandReturnObject::GetOutput (this.ap=%p) => 'NULL'", m_opaque_ap.get());
+        log->Printf ("SBCommandReturnObject(%p)::GetOutput () => NULL", m_opaque_ap.get());
 
     return NULL;
 }
@@ -65,20 +58,17 @@ SBCommandReturnObject::GetError ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    //if (log)
-    //    log->Printf ("SBCommandReturnObject::GetError ()");
-
     if (m_opaque_ap.get())
     {
         if (log)
-            log->Printf ("SBCommandReturnObject::GetError (this.ap=%p) => '%s'", m_opaque_ap.get(),
+            log->Printf ("SBCommandReturnObject(%p)::GetError () => \"%s\"", m_opaque_ap.get(),
                          m_opaque_ap->GetErrorStream().GetData());
 
         return m_opaque_ap->GetErrorStream().GetData();
     }
     
     if (log)
-        log->Printf ("SBCommandReturnObject::GetError (this.ap=%p) => 'NULL'", m_opaque_ap.get());
+        log->Printf ("SBCommandReturnObject(%p)::GetError () => NULL", m_opaque_ap.get());
 
     return NULL;
 }

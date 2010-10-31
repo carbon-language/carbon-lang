@@ -410,7 +410,8 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
         break;
 
     case DumpStyleModuleWithFileAddress:
-        s->Printf("%s[", m_section->GetModule()->GetFileSpec().GetFilename().AsCString());
+        if (m_section)
+            s->Printf("%s[", m_section->GetModule()->GetFileSpec().GetFilename().AsCString());
         // Fall through
     case DumpStyleFileAddress:
         {
@@ -422,7 +423,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                 return false;
             }
             s->Address (file_addr, addr_size);
-            if (style == DumpStyleModuleWithFileAddress)
+            if (style == DumpStyleModuleWithFileAddress && m_section)
                 s->PutChar(']');
         }
         break;
@@ -735,21 +736,6 @@ Address::CalculateSymbolContext (SymbolContext *sc)
         if (sc->module_sp)
             sc->module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextEverything, *sc);
     }
-}
-
-void
-Address::DumpDebug(Stream *s) const
-{
-    *s << (void *)this << ": " << "Address";
-    if (m_section != NULL)
-    {
-        *s << ", section = " << (void *)m_section << " (" << m_section->GetName() << "), offset = " << m_offset;
-    }
-    else
-    {
-        *s << ", vm_addr = " << m_offset;
-    }
-    s->EOL();
 }
 
 int

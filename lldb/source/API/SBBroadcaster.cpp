@@ -37,7 +37,7 @@ SBBroadcaster::SBBroadcaster (const char *name) :
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
-        log->Printf ("SBBroadcaster::SBBroadcaster (name='%s') => SBBroadcaster(%p)",
+        log->Printf ("SBBroadcaster::SBBroadcaster (name=\"%s\") => SBBroadcaster(%p)",
                      name, m_opaque);
 }
 
@@ -111,10 +111,10 @@ SBBroadcaster::AddListener (const SBListener &listener, uint32_t event_mask)
 }
 
 const char *
-SBBroadcaster::GetName ()
+SBBroadcaster::GetName () const
 {
     if (m_opaque)
-        return m_opaque->GetBroadcasterName().AsCString();
+        return m_opaque->GetBroadcasterName().GetCString();
     return NULL;
 }
 

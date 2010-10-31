@@ -58,7 +58,7 @@ CommandInterpreter::CommandInterpreter
     ScriptLanguage script_language,
     bool synchronous_execution
 ) :
-    Broadcaster ("CommandInterpreter"),
+    Broadcaster ("lldb.command-interpreter"),
     m_debugger (debugger),
     m_synchronous_execution (synchronous_execution),
     m_skip_lldbinit_files (false)
@@ -69,7 +69,10 @@ CommandInterpreter::CommandInterpreter
     var_name.Printf ("[%s].script-lang", dbg_name);
     debugger.GetSettingsController()->SetVariable (var_name.GetData(), lang_name.c_str(), 
                                                    lldb::eVarSetOperationAssign, false, 
-                                                   m_debugger.GetInstanceName().AsCString());
+                                                   m_debugger.GetInstanceName().AsCString());                                                   
+    SetEventName (eBroadcastBitThreadShouldExit, "thread-should-exit");
+    SetEventName (eBroadcastBitResetPrompt, "reset-prompt");
+    SetEventName (eBroadcastBitQuitCommandReceived, "quit");
 }
 
 void

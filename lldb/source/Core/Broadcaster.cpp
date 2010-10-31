@@ -23,10 +23,10 @@ using namespace lldb_private;
 
 Broadcaster::Broadcaster (const char *name) :
     m_broadcaster_name (name),
-    m_broadcaster_listeners (),
-    m_broadcaster_listeners_mutex (Mutex::eMutexTypeRecursive),
+    m_listeners (),
+    m_listeners_mutex (Mutex::eMutexTypeRecursive),
     m_hijacking_listener(NULL),
-    m_hijack_mask(UINT32_MAX)
+    m_hijacking_mask(UINT32_MAX)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
     if (log)
@@ -42,17 +42,17 @@ Broadcaster::~Broadcaster()
 
     // Scope for "listeners_locker"
     {
-        Mutex::Locker listeners_locker(m_broadcaster_listeners_mutex);
+        Mutex::Locker listeners_locker(m_listeners_mutex);
 
         // Make sure the listener forgets about this broadcaster. We do
         // this in the broadcaster in case the broadcaster object initiates
         // the removal.
 
-        collection::iterator pos, end = m_broadcaster_listeners.end();
-        for (pos = m_broadcaster_listeners.begin(); pos != end; ++pos)
+        collection::iterator pos, end = m_listeners.end();
+        for (pos = m_listeners.begin(); pos != end; ++pos)
             pos->first->BroadcasterWillDestruct (this);
 
-        m_broadcaster_listeners.clear();
+        m_listeners.clear();
     }
 }
 
@@ -60,6 +60,37 @@ const ConstString &
 Broadcaster::GetBroadcasterName ()
 {
     return m_broadcaster_name;
+}
+
+bool
+Broadcaster::GetEventNames (Stream &s, uint32_t event_mask, bool prefix_with_broadcaster_name) const
+{
+    uint32_t num_names_added = 0;
+    if (event_mask && !m_event_names.empty())
+    {
+        event_names_map::const_iterator end = m_event_names.end();
+        for (uint32_t bit=1u, mask=event_mask; mask != 0 && bit != 0; bit <<= 1, mask >>= 1)
+        {
+            if (mask & 1)
+            {
+                event_names_map::const_iterator pos = m_event_names.find(bit);
+                if (pos != end)
+                {
+                    if (num_names_added > 0)
+                        s.PutCString(", ");
+
+                    if (prefix_with_broadcaster_name)
+                    {
+                        s.PutCString (m_broadcaster_name.GetCString());
+                        s.PutChar('.');
+                    }
+                    s.PutCString(pos->second.c_str());
+                    ++num_names_added;
+                }
+            }
+        }
+    }
+    return num_names_added > 0;
 }
 
 void
@@ -71,13 +102,13 @@ Broadcaster::AddInitialEventsToListener (Listener *listener, uint32_t requested_
 uint32_t
 Broadcaster::AddListener (Listener* listener, uint32_t event_mask)
 {
-    Mutex::Locker locker(m_broadcaster_listeners_mutex);
-    collection::iterator pos, end = m_broadcaster_listeners.end();
+    Mutex::Locker locker(m_listeners_mutex);
+    collection::iterator pos, end = m_listeners.end();
 
     collection::iterator existing_pos = end;
     // See if we already have this listener, and if so, update its mask
     uint32_t taken_event_types = 0;
-    for (pos = m_broadcaster_listeners.begin(); pos != end; ++pos)
+    for (pos = m_listeners.begin(); pos != end; ++pos)
     {
         if (pos->first == listener)
             existing_pos = pos;
@@ -96,7 +127,7 @@ Broadcaster::AddListener (Listener* listener, uint32_t event_mask)
         if (existing_pos == end)
         {
             // Grant a new listener the available event bits
-            m_broadcaster_listeners.push_back(std::make_pair(listener, available_event_types));
+            m_listeners.push_back(std::make_pair(listener, available_event_types));
         }
         else
         {
@@ -117,16 +148,16 @@ Broadcaster::AddListener (Listener* listener, uint32_t event_mask)
 bool
 Broadcaster::EventTypeHasListeners (uint32_t event_type)
 {
-    Mutex::Locker locker (m_broadcaster_listeners_mutex);
+    Mutex::Locker locker (m_listeners_mutex);
     
-    if (m_hijacking_listener != NULL && event_type & m_hijack_mask)
+    if (m_hijacking_listener != NULL && event_type & m_hijacking_mask)
         return true;
         
-    if (m_broadcaster_listeners.empty())
+    if (m_listeners.empty())
         return false;
 
-    collection::iterator pos, end = m_broadcaster_listeners.end();
-    for (pos = m_broadcaster_listeners.begin(); pos != end; ++pos)
+    collection::iterator pos, end = m_listeners.end();
+    for (pos = m_listeners.begin(); pos != end; ++pos)
     {
         if (pos->second & event_type)
             return true;
@@ -137,10 +168,10 @@ Broadcaster::EventTypeHasListeners (uint32_t event_type)
 bool
 Broadcaster::RemoveListener (Listener* listener, uint32_t event_mask)
 {
-    Mutex::Locker locker(m_broadcaster_listeners_mutex);
-    collection::iterator pos, end = m_broadcaster_listeners.end();
+    Mutex::Locker locker(m_listeners_mutex);
+    collection::iterator pos, end = m_listeners.end();
     // See if we already have this listener, and if so, update its mask
-    for (pos = m_broadcaster_listeners.begin(); pos != end; ++pos)
+    for (pos = m_listeners.begin(); pos != end; ++pos)
     {
         if (pos->first == listener)
         {
@@ -148,7 +179,7 @@ Broadcaster::RemoveListener (Listener* listener, uint32_t event_mask)
             pos->second &= ~event_mask;
             // If all bits have been relinquished then remove this listener
             if (pos->second == 0)
-                m_broadcaster_listeners.erase (pos);
+                m_listeners.erase (pos);
             return true;
         }
     }
@@ -191,7 +222,7 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
                      unique);
     }
 
-    if (m_hijacking_listener != NULL && m_hijack_mask & event_type)
+    if (m_hijacking_listener != NULL && m_hijacking_mask & event_type)
     {
         if (unique && m_hijacking_listener->PeekAtNextEventForBroadcasterWithType (this, event_type))
             return;
@@ -199,12 +230,12 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
     }
     else
     {
-        Mutex::Locker event_types_locker(m_broadcaster_listeners_mutex);
-        collection::iterator pos, end = m_broadcaster_listeners.end();
+        Mutex::Locker event_types_locker(m_listeners_mutex);
+        collection::iterator pos, end = m_listeners.end();
 
 
         // Iterate through all listener/mask pairs
-        for (pos = m_broadcaster_listeners.begin(); pos != end; ++pos)
+        for (pos = m_listeners.begin(); pos != end; ++pos)
         {
             // If the listener's mask matches any bits that we just set, then
             // put the new event on its event queue.
@@ -235,21 +266,21 @@ Broadcaster::BroadcastEventIfUnique (uint32_t event_type, EventData *event_data)
 bool
 Broadcaster::HijackBroadcaster (Listener *listener, uint32_t event_mask)
 {
-    Mutex::Locker event_types_locker(m_broadcaster_listeners_mutex);
+    Mutex::Locker event_types_locker(m_listeners_mutex);
 
     if (m_hijacking_listener != NULL)
         return false;
     
     m_hijacking_listener = listener;
-    m_hijack_mask = event_mask;
+    m_hijacking_mask = event_mask;
     return true;
 }
 
 void
 Broadcaster::RestoreBroadcaster ()
 {
-    Mutex::Locker event_types_locker(m_broadcaster_listeners_mutex);
-
+    Mutex::Locker event_types_locker(m_listeners_mutex);
     m_hijacking_listener = NULL;
+    m_hijacking_mask = 0;
 }
 

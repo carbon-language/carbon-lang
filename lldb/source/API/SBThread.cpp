@@ -38,14 +38,14 @@
 using namespace lldb;
 using namespace lldb_private;
 
+//----------------------------------------------------------------------
+// Constructors
+//----------------------------------------------------------------------
 SBThread::SBThread () :
     m_opaque_sp ()
 {
 }
 
-//----------------------------------------------------------------------
-// Thread constructor
-//----------------------------------------------------------------------
 SBThread::SBThread (const ThreadSP& lldb_object_sp) :
     m_opaque_sp (lldb_object_sp)
 {
@@ -54,6 +54,18 @@ SBThread::SBThread (const ThreadSP& lldb_object_sp) :
 SBThread::SBThread (const SBThread &rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
+}
+
+//----------------------------------------------------------------------
+// Assignment operator
+//----------------------------------------------------------------------
+
+const lldb::SBThread &
+SBThread::operator = (const SBThread &rhs)
+{
+    if (this != &rhs)
+        m_opaque_sp = rhs.m_opaque_sp;
+    return *this;
 }
 
 //----------------------------------------------------------------------
@@ -488,14 +500,6 @@ SBThread::GetFrameAtIndex (uint32_t idx)
     }
 
     return sb_frame;
-}
-
-const lldb::SBThread &
-SBThread::operator = (const SBThread &rhs)
-{
-    if (this != &rhs)
-        m_opaque_sp = rhs.m_opaque_sp;
-    return *this;
 }
 
 bool

@@ -25,31 +25,15 @@ SBAddress::SBAddress () :
 SBAddress::SBAddress (const lldb_private::Address *lldb_object_ptr) :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
     if (lldb_object_ptr)
         m_opaque_ap.reset (new lldb_private::Address(*lldb_object_ptr));
-
-    if (log)
-    {
-        SBStream sstr;
-        GetDescription (sstr);
-        log->Printf ("SBAddress::SBAddress (lldb_object_ptr=%p) "
-                     "=> this.ap = %p (%s)", lldb_object_ptr, m_opaque_ap.get(), sstr.GetData());
-    }
 }
 
 SBAddress::SBAddress (const SBAddress &rhs) :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
     if (rhs.IsValid())
         m_opaque_ap.reset (new lldb_private::Address(*rhs.m_opaque_ap.get()));
-
-    if (log)
-        log->Printf ("SBAddress::SBAddress (rhs.m_opaque_ap = %p) => this.ap = %p",
-                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), m_opaque_ap.get());
 }
 
 SBAddress::~SBAddress ()
@@ -59,17 +43,8 @@ SBAddress::~SBAddress ()
 const SBAddress &
 SBAddress::operator = (const SBAddress &rhs)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-    
-    if (this != &rhs)
-    {
-        if (rhs.IsValid())
-            m_opaque_ap.reset (new lldb_private::Address(*rhs.m_opaque_ap.get()));
-    }
-    if (log)
-        log->Printf ("SBAddress::operator= (rhs.ap = %p) => this.ap = %p", 
-                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), m_opaque_ap.get());
-
+    if (this != &rhs && rhs.IsValid())
+        m_opaque_ap.reset (new lldb_private::Address(*rhs.m_opaque_ap.get()));
     return *this;
 }
 
@@ -113,21 +88,18 @@ lldb::addr_t
 SBAddress::GetLoadAddress (const SBTarget &target) const
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-    
-    //if (log)
-    //    log->Printf ("SBAddress::GetLoadAddress");
 
     if (m_opaque_ap.get())
     {
         lldb::addr_t addr = m_opaque_ap->GetLoadAddress (target.get());
         if (log)
-            log->Printf ("SBAddress::GetLoadAddress (target.sp=%p) => %p", target.get(), addr);
+            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => 0x%llx", target.get(), addr);
         return addr;
     }
     else
     {
         if (log)
-            log->Printf ("SBAddress::GetLoadAddress (target.sp=%p) => LLDB_INVALID_ADDRESS", target.get());
+            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => LLDB_INVALID_ADDRESS", target.get());
         return LLDB_INVALID_ADDRESS;
     }
 }
@@ -183,11 +155,11 @@ SBAddress::get ()
 bool
 SBAddress::GetDescription (SBStream &description)
 {
+    // Call "ref()" on the stream to make sure it creates a backing stream in
+    // case there isn't one already...
     description.ref();
     if (m_opaque_ap.get())
-    {
-        m_opaque_ap->DumpDebug (description.get());
-    }
+        m_opaque_ap->Dump (description.get(), NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
     else
         description.Printf ("No value");
 

@@ -348,10 +348,14 @@ public:
     ///     The maximum length or \a path.
     ///
     /// @return
-    ///     \b true if the extracted fullpath fits into \a path, \b
-    ///     false otherwise.
+    ///     Returns the number of characters that would be needed to 
+    ///     properly copy the full path into \a path. If the returned
+    ///     number is less than \a max_path_length, then the path is
+    ///     properly copied and terminated. If the return value is 
+    ///     >= \a max_path_length, then the path was truncated (but is
+    ///     still NULL terminated).
     //------------------------------------------------------------------
-    bool
+    size_t
     GetPath (char *path, size_t max_path_length) const;
 
     FileType

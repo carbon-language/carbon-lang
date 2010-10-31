@@ -22,6 +22,7 @@
 #include <sys/wait.h>
 
 #if defined (__APPLE__)
+#include <dispatch/dispatch.h>
 #include <libproc.h>
 #include <mach-o/dyld.h>
 #endif
@@ -544,6 +545,13 @@ Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
                     // Get our copy of the thread name string
                     name = ThreadNameAccessor (true, pid, tid, NULL);
                 }
+            }
+            
+            if (name == NULL)
+            {
+                dispatch_queue_t current_queue = ::dispatch_get_current_queue ();
+                if (current_queue != NULL)
+                    name = dispatch_queue_get_label (current_queue);
             }
         }
 #endif

@@ -88,7 +88,7 @@ SBInputReader::Initialize
 
     if (log)
         log->Printf("SBInputReader(%p)::Initialize (SBDebugger(%p), callback_function=%p, callback_baton=%p, "
-                    "granularity='%s', end_token='%s', prompt='%s', echo=%i)", 
+                    "granularity=%s, end_token=\"%s\", prompt=\"%s\", echo=%i)", 
                     m_opaque_sp.get(), 
                     debugger.get(), 
                     callback_function,

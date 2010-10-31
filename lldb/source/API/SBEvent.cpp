@@ -33,26 +33,12 @@ SBEvent::SBEvent (uint32_t event_type, const char *cstr, uint32_t cstr_len) :
     m_event_sp (new Event (event_type, new EventDataBytes (cstr, cstr_len))),
     m_opaque (m_event_sp.get())
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-    {
-        log->Printf ("SBEvent::SBEvent (event_type=0x%8.8x, cstr='%s', cstr_len=%d) => SBEvent(%p)", 
-                     event_type,
-                     cstr, 
-                     cstr_len, 
-                     m_opaque);
-    }
 }
 
 SBEvent::SBEvent (EventSP &event_sp) :
     m_event_sp (event_sp),
     m_opaque (event_sp.get())
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-        log->Printf ("SBEvent::SBEvent (event_sp=%p) => SBEvent(%p)", event_sp.get(), m_opaque);
 }
 
 SBEvent::~SBEvent()
@@ -79,7 +65,14 @@ SBEvent::GetType () const
         event_type = lldb_event->GetType();
 
     if (log)
-        log->Printf ("SBEvent(%p)::GetType () => 0x%8.8x", get(), event_type);
+    {
+        StreamString sstr;
+        if (lldb_event && lldb_event->GetBroadcaster() && lldb_event->GetBroadcaster()->GetEventNames(sstr, event_type, true))
+            log->Printf ("SBEvent(%p)::GetType () => 0x%8.8x (%s)", get(), event_type, sstr.GetData());
+        else
+            log->Printf ("SBEvent(%p)::GetType () => 0x%8.8x", get(), event_type);
+
+    }
 
     return event_type;
 }
@@ -98,28 +91,26 @@ bool
 SBEvent::BroadcasterMatchesPtr (const SBBroadcaster *broadcaster)
 {
     if (broadcaster)
-    {
-        Event *lldb_event = get();
-        if (lldb_event)
-            return lldb_event->BroadcasterIs (broadcaster->get());
-    }
+        return BroadcasterMatchesRef (*broadcaster);
     return false;
 }
 
 bool
 SBEvent::BroadcasterMatchesRef (const SBBroadcaster &broadcaster)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     Event *lldb_event = get();
     bool success = false;
     if (lldb_event)
         success = lldb_event->BroadcasterIs (broadcaster.get());
 
+    // For logging, this gets a little chatty so only enable this when verbose logging is on
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
     if (log)
-        log->Printf ("SBEvent(%p)::BroadcasterMatchesRef (SBBroadcaster(%p)) => %i", 
+        log->Printf ("SBEvent(%p)::BroadcasterMatchesRef (SBBroadcaster(%p): %s) => %i", 
                      get(),
                      broadcaster.get(),
+                     broadcaster.GetName(),
                      success);
 
     return success;
@@ -181,7 +172,7 @@ SBEvent::GetCStringFromEvent (const SBEvent &event)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBEvent(%p)::GetCStringFromEvent () => '%s'", 
+        log->Printf ("SBEvent(%p)::GetCStringFromEvent () => \"%s\"", 
                      event.get(), 
                      reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.get())));
 

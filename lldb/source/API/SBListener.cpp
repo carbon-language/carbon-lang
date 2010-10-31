@@ -7,15 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBStream.h"
+#include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Core/Log.h"
-#include "lldb/lldb-forward-rtti.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Host/TimeValue.h"
 
-#include "lldb/API/SBListener.h"
-#include "lldb/API/SBEvent.h"
-#include "lldb/API/SBBroadcaster.h"
-#include "lldb/API/SBStream.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -34,7 +35,7 @@ SBListener::SBListener (const char *name) :
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBListener::SBListener (name='%s') => this.obj = %p",
+        log->Printf ("SBListener::SBListener (name=\"%s\") => SBListener(%p)",
                      name, m_opaque_ptr);
 }
 
@@ -42,11 +43,6 @@ SBListener::SBListener (Listener &listener) :
     m_opaque_ptr (&listener),
     m_opaque_ptr_owned (false)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-        log->Printf ("SBListener::SBListener (listener=%p) => this.obj = %p",
-                     &listener, m_opaque_ptr);
 }
 
 SBListener::~SBListener ()
@@ -87,18 +83,48 @@ SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t 
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    uint32_t aquired_event_mask = 0;
+    uint32_t acquired_event_mask = 0;
     if (m_opaque_ptr && broadcaster.IsValid())
     {
-        aquired_event_mask = m_opaque_ptr->StartListeningForEvents (broadcaster.get(), event_mask);
+        acquired_event_mask = m_opaque_ptr->StartListeningForEvents (broadcaster.get(), event_mask);
     }
     
     log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p), event_mask=0x%8.8x) => 0x%8.8x", 
-                     m_opaque_ptr, broadcaster.get(), event_mask, aquired_event_mask);
+    {
+        StreamString sstr_requested;
+        StreamString sstr_acquired;
+        
+        Broadcaster *lldb_broadcaster = broadcaster.get();
+        if (lldb_broadcaster)
+        {
+            const bool got_requested_names = lldb_broadcaster->GetEventNames (sstr_requested, event_mask, false);
+            const bool got_acquired_names = lldb_broadcaster->GetEventNames (sstr_acquired, acquired_event_mask, false);
+            log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p): %s, event_mask=0x%8.8x%s%s%s) => 0x%8.8x%s%s%s",
+                         m_opaque_ptr, 
+                         lldb_broadcaster, 
+                         lldb_broadcaster->GetBroadcasterName().GetCString(), 
+                         event_mask, 
+                         got_requested_names ? " (" : "",
+                         sstr_requested.GetData(),
+                         got_requested_names ? ")" : "",
+                         acquired_event_mask,
+                         got_acquired_names ? " (" : "",
+                         sstr_acquired.GetData(),
+                         got_acquired_names ? ")" : "");
+        }
+        else
+        {
+            log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p), event_mask=0x%8.8x) => 0x%8.8x", 
+                         m_opaque_ptr, 
+                         lldb_broadcaster, 
+                         event_mask, 
+                         acquired_event_mask);
+            
+        }
+    }
 
-    return aquired_event_mask;
+    return acquired_event_mask;
 }
 
 bool
@@ -112,44 +138,57 @@ SBListener::StopListeningForEvents (const SBBroadcaster& broadcaster, uint32_t e
 }
 
 bool
-SBListener::WaitForEvent (uint32_t num_seconds, SBEvent &event)
+SBListener::WaitForEvent (uint32_t timeout_secs, SBEvent &event)
 {
-
-    //if (log)
-    //{
-    //    SBStream sstr;
-    //    event.GetDescription (sstr);
-    //    log->Printf ("SBListener::WaitForEvent (%d, %s)", num_seconds, sstr.GetData());
-    //}
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        if (timeout_secs == UINT32_MAX)
+        {
+            log->Printf ("SBListener(%p)::WaitForEvent (timeout_secs=INFINITE, SBEvent(%p))...",
+                         m_opaque_ptr, event.get());
+        }
+        else
+        {
+            log->Printf ("SBListener(%p)::WaitForEvent (timeout_secs=%d, SBEvent(%p))...",
+                         m_opaque_ptr, timeout_secs, event.get());
+        }
+    }
+    bool success = false;
 
     if (m_opaque_ptr)
     {
         TimeValue time_value;
-        if (num_seconds != UINT32_MAX)
+        if (timeout_secs != UINT32_MAX)
         {
-            assert (num_seconds != 0); // Take this out after all calls with timeout set to zero have been removed....
+            assert (timeout_secs != 0); // Take this out after all calls with timeout set to zero have been removed....
             time_value = TimeValue::Now();
-            time_value.OffsetWithSeconds (num_seconds);
+            time_value.OffsetWithSeconds (timeout_secs);
         }
         EventSP event_sp;
         if (m_opaque_ptr->WaitForEvent (time_value.IsValid() ? &time_value : NULL, event_sp))
         {
             event.reset (event_sp);
-            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-            if (log)
-                log->Printf ("SBListener(%p)::WaitForEvent (num_seconds=%d, SBEvent(%p)) => 1",
-                             m_opaque_ptr, num_seconds, event.get());
-            return true;
+            success = true;
         }
     }
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBListener(%p)::WaitForEvent (num_seconds=%d, SBEvent(%p)) => 0",
-                     m_opaque_ptr, num_seconds, event.get());
-
-    event.reset (NULL);
-    return false;
+    {
+        if (timeout_secs == UINT32_MAX)
+        {
+            log->Printf ("SBListener(%p)::WaitForEvent (timeout_secs=INFINITE, SBEvent(%p)) => %i",
+                         m_opaque_ptr, event.get(), success);
+        }
+        else
+        {
+            log->Printf ("SBListener(%p)::WaitForEvent (timeout_secs=%d, SBEvent(%p)) => %i",
+                         m_opaque_ptr, timeout_secs, event.get(), success);
+        }
+    }
+    if (!success)
+        event.reset (NULL);
+    return success;
 }
 
 bool

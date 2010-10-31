@@ -116,6 +116,7 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
             const char *thread_name_str = Host::GetThreadName (getpid(), Host::GetCurrentThreadID());
             if (thread_name_str)
                 header.Printf ("%s ", thread_name_str);
+
         }
 
         header.PrintfVarArg (format, args);

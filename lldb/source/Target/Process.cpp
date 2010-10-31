@@ -66,7 +66,7 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
 //----------------------------------------------------------------------
 Process::Process(Target &target, Listener &listener) :
     UserID (LLDB_INVALID_PROCESS_ID),
-    Broadcaster ("Process"),
+    Broadcaster ("lldb.process"),
     ProcessInstanceSettings (*(Process::GetSettingsController().get())),
     m_target (target),
     m_public_state (eStateUnloaded),
@@ -92,6 +92,11 @@ Process::Process(Target &target, Listener &listener) :
     if (log)
         log->Printf ("%p Process::Process()", this);
 
+    SetEventName (eBroadcastBitStateChanged, "state-changed");
+    SetEventName (eBroadcastBitInterrupt, "interrupt");
+    SetEventName (eBroadcastBitSTDOUT, "stdout-available");
+    SetEventName (eBroadcastBitSTDERR, "stderr-available");
+    
     listener.StartListeningForEvents (this,
                                       eBroadcastBitStateChanged |
                                       eBroadcastBitInterrupt |

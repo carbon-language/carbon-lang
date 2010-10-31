@@ -210,7 +210,7 @@ SBFrame::GetPC () const
 
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFrame(%p)::GetPC () => %0xllx", m_opaque_sp.get(), addr);
+        log->Printf ("SBFrame(%p)::GetPC () => 0x%llx", m_opaque_sp.get(), addr);
 
     return addr;
 }
@@ -239,7 +239,7 @@ SBFrame::GetSP () const
         addr = m_opaque_sp->GetRegisterContext()->GetSP();
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFrame(%p)::GetSP () => %0xllx", m_opaque_sp.get(), addr);
+        log->Printf ("SBFrame(%p)::GetSP () => 0x%llx", m_opaque_sp.get(), addr);
 
     return addr;
 }
@@ -254,7 +254,7 @@ SBFrame::GetFP () const
 
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFrame(%p)::GetFP () => %0xllx", m_opaque_sp.get(), addr);
+        log->Printf ("SBFrame(%p)::GetFP () => 0x%llx", m_opaque_sp.get(), addr);
     return addr;
 }
 
@@ -536,11 +536,8 @@ SBFrame::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
     {
-        SBLineEntry line_entry = GetLineEntry ();
-        SBFileSpec file_spec = line_entry.GetFileSpec ();
-        uint32_t line = line_entry.GetLine ();
-        description.Printf("SBFrame: idx = %u ('%s', %s, line %d)", m_opaque_sp->GetFrameIndex(), 
-                           GetFunction().GetName(), file_spec.GetFilename(), line);
+        Stream &s = description.ref();
+        m_opaque_sp->DumpUsingSettingsFormat (&s);
     }
     else
         description.Printf ("No value");
@@ -553,7 +550,7 @@ SBFrame::EvaluateExpression (const char *expr)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    lldb::SBValue expr_result_value;
+    lldb::SBValue expr_result;
     if (log)
         log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\")...", m_opaque_sp.get(), expr);
 
@@ -567,11 +564,11 @@ SBFrame::EvaluateExpression (const char *expr)
         if (exe_ctx.target)
             prefix = exe_ctx.target->GetExpressionPrefixContentsAsCString();
         
-        *expr_result_value = ClangUserExpression::Evaluate (exe_ctx, expr, prefix);
+        *expr_result = ClangUserExpression::Evaluate (exe_ctx, expr, prefix);
     }
     
     if (log)
-        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p)", m_opaque_sp.get(), expr_result_value.get());
+        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p)", m_opaque_sp.get(), expr, expr_result.get());
 
-    return expr_result_value;
+    return expr_result;
 }

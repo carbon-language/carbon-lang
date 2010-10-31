@@ -30,16 +30,6 @@ SBFunction::SBFunction () :
 SBFunction::SBFunction (lldb_private::Function *lldb_object_ptr) :
     m_opaque_ptr (lldb_object_ptr)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-    {
-        SBStream sstr;
-        GetDescription (sstr);
-        log->Printf ("SBFunction::SBFunction (lldb_object_ptr=%p) => this.obj = %p ('%s')", lldb_object_ptr, 
-                     m_opaque_ptr, sstr.GetData());
-                     
-    }
 }
 
 SBFunction::~SBFunction ()
@@ -56,30 +46,36 @@ SBFunction::IsValid () const
 const char *
 SBFunction::GetName() const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    //if (log)
-    //    log->Printf ("SBFunction::GetName ()"); 
-
+    const char *cstr = NULL;
     if (m_opaque_ptr)
-    {
-        if (log)
-            log->Printf ("SBFunction::GetName (this.obj=%p) => '%s'", m_opaque_ptr,
-                         m_opaque_ptr->GetMangled().GetName().AsCString());
-        return m_opaque_ptr->GetMangled().GetName().AsCString();
-    }
+        cstr = m_opaque_ptr->GetMangled().GetName().AsCString();
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBFunction::GetName (this.obj=%p) => NULL", m_opaque_ptr);
-    return NULL;
+    {
+        if (cstr)
+            log->Printf ("SBFunction(%p)::GetName () => \"%s\"", m_opaque_ptr, cstr);
+        else
+            log->Printf ("SBFunction(%p)::GetName () => NULL", m_opaque_ptr);
+    }
+    return cstr;
 }
 
 const char *
 SBFunction::GetMangledName () const
 {
+    const char *cstr = NULL;
     if (m_opaque_ptr)
-        return m_opaque_ptr->GetMangled().GetMangledName().AsCString();
-    return NULL;
+        cstr = m_opaque_ptr->GetMangled().GetMangledName().AsCString();
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        if (cstr)
+            log->Printf ("SBFunction(%p)::GetMangledName () => \"%s\"", m_opaque_ptr, cstr);
+        else
+            log->Printf ("SBFunction(%p)::GetMangledName () => NULL", m_opaque_ptr);
+    }
+    return cstr;
 }
 
 bool

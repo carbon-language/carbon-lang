@@ -152,7 +152,7 @@ SBProcess::PutSTDIN (const char *src, size_t src_len)
     }
     
     if (log)
-        log->Printf ("SBProcess(%p)::PutSTDIN (src='%s', src_len=%d) => %d", 
+        log->Printf ("SBProcess(%p)::PutSTDIN (src=\"%s\", src_len=%d) => %d", 
                      m_opaque_sp.get(), 
                      src, 
                      (uint32_t) src_len, 
@@ -164,47 +164,37 @@ SBProcess::PutSTDIN (const char *src, size_t src_len)
 size_t
 SBProcess::GetSTDOUT (char *dst, size_t dst_len) const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    size_t ret_val = 0;
+    size_t bytes_read = 0;
     if (m_opaque_sp != NULL)
     {
         Error error;
-        ret_val = m_opaque_sp->GetSTDOUT (dst, dst_len, error);
+        bytes_read = m_opaque_sp->GetSTDOUT (dst, dst_len, error);
     }
     
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBProcess(%p)::GetSTDOUT (dst='%.*s', dst_len=%d) => %d", 
-                     m_opaque_sp.get(), 
-                     (uint32_t) dst_len, 
-                     dst,
-                     (uint32_t) dst_len, 
-                     (uint32_t) ret_val);
+        log->Printf ("SBProcess(%p)::GetSTDOUT (dst=\"%.*s\", dst_len=%zu) => %zu", 
+                     m_opaque_sp.get(), (int) bytes_read, dst, dst_len, bytes_read);
 
-    return ret_val;
+    return bytes_read;
 }
 
 size_t
 SBProcess::GetSTDERR (char *dst, size_t dst_len) const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    size_t ret_val = 0;
+    size_t bytes_read = 0;
     if (m_opaque_sp != NULL)
     {
         Error error;
-        ret_val = m_opaque_sp->GetSTDERR (dst, dst_len, error);
+        bytes_read = m_opaque_sp->GetSTDERR (dst, dst_len, error);
     }
 
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBProcess(%p)::GetSTDERR (dst='%.*s', dst_len=%d) => %d",
-                     m_opaque_sp.get(), 
-                     (uint32_t) dst_len, 
-                     dst,
-                     (uint32_t) dst_len, 
-                     (uint32_t) ret_val);
+        log->Printf ("SBProcess(%p)::GetSTDERR (dst=\"%.*s\", dst_len=%zu) => %zu",
+                     m_opaque_sp.get(), (int) bytes_read, dst, dst_len, bytes_read);
 
-    return ret_val;
+    return bytes_read;
 }
 
 void
@@ -263,7 +253,7 @@ SBProcess::SetSelectedThreadByID (uint32_t tid)
         ret_val = m_opaque_sp->GetThreadList().SetSelectedThreadByID (tid);
 
     if (log)
-        log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=%d) => '%s'", 
+        log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=0x%4.4x) => %s", 
                      m_opaque_sp.get(), tid, (ret_val ? "true" : "false"));
 
     return ret_val;
@@ -297,7 +287,7 @@ SBProcess::GetState ()
 
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBProcess(%p)::GetState () => '%s'", 
+        log->Printf ("SBProcess(%p)::GetState () => %s", 
                      m_opaque_sp.get(),
                      lldb_private::StateAsCString (ret_val));
 
@@ -557,7 +547,7 @@ SBProcess::GetStateFromEvent (const SBEvent &event)
     StateType ret_val = Process::ProcessEventData::GetStateFromEvent (event.get());
     
     if (log)
-        log->Printf ("SBProcess::GetStateFromEvent (event.sp=%p) => '%s'", event.get(),
+        log->Printf ("SBProcess::GetStateFromEvent (event.sp=%p) => %s", event.get(),
                      lldb_private::StateAsCString (ret_val));
 
     return ret_val;

@@ -31,8 +31,8 @@ SBCommunication::SBCommunication(const char * broadcaster_name) :
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBCommunication::SBCommunication (broadcaster_name='%s') => "
-                     "SBCommunication(%p): owned = 1", broadcaster_name, m_opaque);
+        log->Printf ("SBCommunication::SBCommunication (broadcaster_name=\"%s\") => "
+                     "SBCommunication(%p)", broadcaster_name, m_opaque);
 }
 
 SBCommunication::~SBCommunication()

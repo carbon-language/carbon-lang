@@ -26,18 +26,8 @@ SBError::SBError () :
 SBError::SBError (const SBError &rhs) :
     m_opaque_ap ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
     if (rhs.IsValid())
         m_opaque_ap.reset (new Error(*rhs));
-
-    if (log)
-    {
-        SBStream sstr;
-        GetDescription (sstr);
-        log->Printf ("SBError::SBError (const SBError rhs.ap=%p) => SBError(%p): %s",
-                     rhs.m_opaque_ap.get(), m_opaque_ap.get(), sstr.GetData());
-    }
 }
 
 
@@ -48,8 +38,6 @@ SBError::~SBError()
 const SBError &
 SBError::operator = (const SBError &rhs)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-    void *old_error = m_opaque_ap.get();
     if (rhs.IsValid())
     {
         if (m_opaque_ap.get())
@@ -58,17 +46,7 @@ SBError::operator = (const SBError &rhs)
             m_opaque_ap.reset (new Error(*rhs));
     }
     else
-    {
         m_opaque_ap.reset();
-    }
-
-    if (log)
-    {
-        SBStream sstr;
-        GetDescription (sstr);
-        log->Printf ("SBError(%p)::operator= (SBError(%p)) => SBError(%s)", 
-                     old_error, rhs.m_opaque_ap.get(), sstr.GetData());
-    }
 
     return *this;
 }

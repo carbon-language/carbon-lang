@@ -42,14 +42,6 @@ SBValue::SBValue () :
 SBValue::SBValue (const lldb::ValueObjectSP &value_sp) :
     m_opaque_sp (value_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
-    if (log)
-    {
-        SBStream sstr;
-        GetDescription (sstr);
-        log->Printf ("SBValue::SBValue (%p) => (%s)", m_opaque_sp.get(), sstr.GetData());
-    }
 }
 
 SBValue::~SBValue()
@@ -59,7 +51,10 @@ SBValue::~SBValue()
 bool
 SBValue::IsValid () const
 {
-    return  (m_opaque_sp.get() != NULL);
+    // If this function ever changes to anything that does more than just
+    // check if the opaque shared pointer is non NULL, then we need to update
+    // all "if (m_opaque_sp)" code in this file.
+    return m_opaque_sp.get() != NULL;
 }
 
 SBError
@@ -76,26 +71,39 @@ SBValue::GetError()
 const char *
 SBValue::GetName()
 {
+
+    const char *name = NULL;
+    if (m_opaque_sp)
+        name = m_opaque_sp->GetName().GetCString();
+
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-
     if (log)
-        log->Printf ("SBValue::GetName () ptr=%p => '%s'", 
-                     m_opaque_sp.get(),
-                     m_opaque_sp ? m_opaque_sp->GetName().AsCString() : "<invalid>");
+    {
+        if (name)
+            log->Printf ("SBValue(%p)::GetName () => \"%s\"", m_opaque_sp.get(), name);
+        else
+            log->Printf ("SBValue(%p)::GetName () => NULL", m_opaque_sp.get(), name);
+    }
 
-    if (IsValid())
-        return m_opaque_sp->GetName().GetCString();
-
-    return NULL;
+    return name;
 }
 
 const char *
 SBValue::GetTypeName ()
 {
-    if (IsValid())
-        return m_opaque_sp->GetTypeName().AsCString();
-    else
-        return NULL;
+    const char *name = NULL;
+    if (m_opaque_sp)
+        name = m_opaque_sp->GetTypeName().GetCString();
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        if (name)
+            log->Printf ("SBValue(%p)::GetTypeName () => \"%s\"", m_opaque_sp.get(), name);
+        else
+            log->Printf ("SBValue(%p)::GetTypeName () => NULL", m_opaque_sp.get());
+    }
+
+    return name;
 }
 
 size_t
@@ -103,8 +111,12 @@ SBValue::GetByteSize ()
 {
     size_t result = 0;
 
-    if (IsValid())
+    if (m_opaque_sp)
         result = m_opaque_sp->GetByteSize();
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBValue(%p)::GetByteSize () => %zu", m_opaque_sp.get(), result);
 
     return result;
 }
@@ -114,8 +126,12 @@ SBValue::IsInScope (const SBFrame &frame)
 {
     bool result = false;
 
-    if (IsValid())
+    if (m_opaque_sp)
         result = m_opaque_sp->IsInScope (frame.get());
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBValue(%p)::IsInScope () => %i", m_opaque_sp.get(), result);
 
     return result;
 }
@@ -123,60 +139,115 @@ SBValue::IsInScope (const SBFrame &frame)
 const char *
 SBValue::GetValue (const SBFrame &frame)
 {
-    const char *value_string = NULL;
+    const char *cstr = NULL;
     if ( m_opaque_sp)
-        value_string = m_opaque_sp->GetValueAsCString (frame.get());
-    return value_string;
+        cstr = m_opaque_sp->GetValueAsCString (frame.get());
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        if (cstr)
+            log->Printf ("SBValue(%p)::GetValue (SBFrame(%p)) => \"%s\"", m_opaque_sp.get(), frame.get(), cstr);
+        else
+            log->Printf ("SBValue(%p)::GetValue (SBFrame(%p)) => NULL", m_opaque_sp.get(), frame.get());
+    }
+
+    return cstr;
 }
 
 ValueType
 SBValue::GetValueType ()
 {
+    ValueType result = eValueTypeInvalid;
     if (m_opaque_sp)
-        return m_opaque_sp->GetValueType();
-    return eValueTypeInvalid;
+        result = m_opaque_sp->GetValueType();
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        switch (result)
+        {
+        case eValueTypeInvalid:         log->Printf ("SBValue(%p)::GetValueType () => eValueTypeInvalid", m_opaque_sp.get()); break;
+        case eValueTypeVariableGlobal:  log->Printf ("SBValue(%p)::GetValueType () => eValueTypeVariableGlobal", m_opaque_sp.get()); break;
+        case eValueTypeVariableStatic:  log->Printf ("SBValue(%p)::GetValueType () => eValueTypeVariableStatic", m_opaque_sp.get()); break;
+        case eValueTypeVariableArgument:log->Printf ("SBValue(%p)::GetValueType () => eValueTypeVariableArgument", m_opaque_sp.get()); break;
+        case eValueTypeVariableLocal:   log->Printf ("SBValue(%p)::GetValueType () => eValueTypeVariableLocal", m_opaque_sp.get()); break;
+        case eValueTypeRegister:        log->Printf ("SBValue(%p)::GetValueType () => eValueTypeRegister", m_opaque_sp.get()); break;
+        case eValueTypeRegisterSet:     log->Printf ("SBValue(%p)::GetValueType () => eValueTypeRegisterSet", m_opaque_sp.get()); break;
+        case eValueTypeConstResult:     log->Printf ("SBValue(%p)::GetValueType () => eValueTypeConstResult", m_opaque_sp.get()); break;
+        default:     log->Printf ("SBValue(%p)::GetValueType () => %i ???", m_opaque_sp.get(), result); break;
+        }
+    }
+    return result;
 }
 
 const char *
 SBValue::GetObjectDescription (const SBFrame &frame)
 {
-    const char *value_string = NULL;
+    const char *cstr = NULL;
     if ( m_opaque_sp)
-        value_string = m_opaque_sp->GetObjectDescription (frame.get());
-    return value_string;
+        cstr = m_opaque_sp->GetObjectDescription (frame.get());
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        if (cstr)
+            log->Printf ("SBValue(%p)::GetObjectDescription (SBFrame(%p)) => \"%s\"", m_opaque_sp.get(), frame.get(), cstr);
+        else
+            log->Printf ("SBValue(%p)::GetObjectDescription (SBFrame(%p)) => NULL", m_opaque_sp.get(), frame.get());
+    }
+    return cstr;
 }
 
 bool
 SBValue::GetValueDidChange (const SBFrame &frame)
 {
-    if (IsValid())
-        return m_opaque_sp->GetValueDidChange (frame.get());
-    return false;
+    bool result = false;
+    if (m_opaque_sp)
+        result = m_opaque_sp->GetValueDidChange (frame.get());
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBValue(%p)::GetValueDidChange (SBFrame(%p)) => %i", m_opaque_sp.get(), frame.get(), result);
+
+    return result;
 }
 
 const char *
 SBValue::GetSummary (const SBFrame &frame)
 {
-    const char *value_string = NULL;
-    if ( m_opaque_sp)
-        value_string = m_opaque_sp->GetSummaryAsCString(frame.get());
-    return value_string;
+    const char *cstr = NULL;
+    if (m_opaque_sp)
+        cstr = m_opaque_sp->GetSummaryAsCString(frame.get());
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        if (cstr)
+            log->Printf ("SBValue(%p)::GetSummary (SBFrame(%p)) => \"%s\"", m_opaque_sp.get(), frame.get(), cstr);
+        else
+            log->Printf ("SBValue(%p)::GetSummary (SBFrame(%p)) => NULL", m_opaque_sp.get(), frame.get());
+    }
+    return cstr;
 }
 
 const char *
 SBValue::GetLocation (const SBFrame &frame)
 {
-    const char *value_string = NULL;
-    if (IsValid())
-        value_string = m_opaque_sp->GetLocationAsCString(frame.get());
-    return value_string;
+    const char *cstr = NULL;
+    if (m_opaque_sp)
+        cstr = m_opaque_sp->GetLocationAsCString(frame.get());
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        if (cstr)
+            log->Printf ("SBValue(%p)::GetSummary (SBFrame(%p)) => \"%s\"", m_opaque_sp.get(), frame.get(), cstr);
+        else
+            log->Printf ("SBValue(%p)::GetSummary (SBFrame(%p)) => NULL", m_opaque_sp.get(), frame.get());
+    }
+    return cstr;
 }
 
 bool
 SBValue::SetValueFromCString (const SBFrame &frame, const char *value_str)
 {
     bool success = false;
-    if (IsValid())
+    if (m_opaque_sp)
         success = m_opaque_sp->SetValueFromCString (frame.get(), value_str);
     return success;
 }
@@ -186,21 +257,34 @@ SBValue::GetChildAtIndex (uint32_t idx)
 {
     lldb::ValueObjectSP child_sp;
 
-    if (IsValid())
+    if (m_opaque_sp)
     {
         child_sp = m_opaque_sp->GetChildAtIndex (idx, true);
     }
 
     SBValue sb_value (child_sp);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBValue(%p)::GetChildAtIndex (%u) => SBValue(%p)", m_opaque_sp.get(), idx, sb_value.get());
+
     return sb_value;
 }
 
 uint32_t
 SBValue::GetIndexOfChildWithName (const char *name)
 {
-    if (IsValid())
-        return m_opaque_sp->GetIndexOfChildWithName (ConstString(name));
-    return UINT32_MAX;
+    uint32_t idx = UINT32_MAX;
+    if (m_opaque_sp)
+        idx = m_opaque_sp->GetIndexOfChildWithName (ConstString(name));
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        if (idx == UINT32_MAX)
+            log->Printf ("SBValue(%p)::GetIndexOfChildWithName (name=\"%s\") => NOT FOUND", m_opaque_sp.get(), name, idx);
+        else
+            log->Printf ("SBValue(%p)::GetIndexOfChildWithName (name=\"%s\") => %u", m_opaque_sp.get(), name, idx);
+    }
+    return idx;
 }
 
 SBValue
@@ -209,12 +293,17 @@ SBValue::GetChildMemberWithName (const char *name)
     lldb::ValueObjectSP child_sp;
     const ConstString str_name (name);
 
-    if (IsValid())
+    if (m_opaque_sp)
     {
         child_sp = m_opaque_sp->GetChildMemberWithName (str_name, true);
     }
 
     SBValue sb_value (child_sp);
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBValue(%p)::GetChildMemberWithName (name=\"%s\") => SBValue(%p)", m_opaque_sp.get(), name, sb_value.get());
+
     return sb_value;
 }
 
@@ -224,10 +313,12 @@ SBValue::GetNumChildren ()
 {
     uint32_t num_children = 0;
 
-    if (IsValid())
-    {
+    if (m_opaque_sp)
         num_children = m_opaque_sp->GetNumChildren();
-    }
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBValue(%p)::GetNumChildren () => %u", m_opaque_sp.get(), num_children);
 
     return num_children;
 }
@@ -237,10 +328,8 @@ SBValue::ValueIsStale ()
 {
     bool result = true;
 
-    if (IsValid())
-    {
+    if (m_opaque_sp)
         result = m_opaque_sp->GetValueIsValid();
-    }
 
     return result;
 }
@@ -249,25 +338,31 @@ SBValue::ValueIsStale ()
 SBValue
 SBValue::Dereference ()
 {
-    if (IsValid())
+    SBValue sb_value;
+    if (m_opaque_sp)
     {
         if (m_opaque_sp->IsPointerType())
-        {
-            return GetChildAtIndex(0);
-        }
+            sb_value = GetChildAtIndex(0);
     }
-    return *this;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBValue(%p)::Dereference () => SBValue(%p)", m_opaque_sp.get(), sb_value.get());
+
+    return sb_value;
 }
 
 bool
-SBValue::TypeIsPtrType ()
+SBValue::TypeIsPointerType ()
 {
     bool is_ptr_type = false;
 
-    if (IsValid())
-    {
+    if (m_opaque_sp)
         is_ptr_type = m_opaque_sp->IsPointerType();
-    }
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+        log->Printf ("SBValue(%p)::TypeIsPointerType () => %i", m_opaque_sp.get(), is_ptr_type);
+
 
     return is_ptr_type;
 }
@@ -303,6 +398,17 @@ const lldb::ValueObjectSP &
 SBValue::operator*() const
 {
     return m_opaque_sp;
+}
+
+bool
+SBValue::GetExpressionPath (SBStream &description)
+{
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->GetExpressionPath (description.ref());
+        return true;
+    }
+    return false;
 }
 
 bool

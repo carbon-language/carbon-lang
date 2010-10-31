@@ -73,8 +73,8 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBCommandInterpreter(%p)::HandleCommand (command_line='%s', result=%p, add_to_history=%i)", 
-                     m_opaque_ptr, command_line, &result, add_to_history);
+        log->Printf ("SBCommandInterpreter(%p)::HandleCommand (command=\"%s\", SBCommandReturnObject(%p), add_to_history=%i)", 
+                     m_opaque_ptr, command_line, result.get(), add_to_history);
 
     result.Clear();
     if (m_opaque_ptr)
@@ -93,8 +93,8 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
     {
         SBStream sstr;
         result.GetDescription (sstr);
-        log->Printf ("SBCommandInterpreter(%p)::HandleCommand (\"%s\") => SBCommandReturnObject(%p): '%s'", 
-                     m_opaque_ptr, command_line, result.get(), sstr.GetData());
+        log->Printf ("SBCommandInterpreter(%p)::HandleCommand (command=\"%s\", SBCommandReturnObject(%p): %s, add_to_history=%i) => %i", 
+                     m_opaque_ptr, command_line, result.get(), sstr.GetData(), add_to_history, result.GetStatus());
     }
 
     return result.GetStatus();

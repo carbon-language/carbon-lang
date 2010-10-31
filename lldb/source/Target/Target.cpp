@@ -35,7 +35,7 @@ using namespace lldb_private;
 // Target constructor
 //----------------------------------------------------------------------
 Target::Target(Debugger &debugger) :
-    Broadcaster("Target"),
+    Broadcaster("lldb.target"),
     TargetInstanceSettings (*(Target::GetSettingsController().get())),
     m_debugger (debugger),
     m_images(),
@@ -48,6 +48,10 @@ Target::Target(Debugger &debugger) :
     m_image_search_paths (ImageSearchPathsChanged, this),
     m_scratch_ast_context_ap(NULL)
 {
+    SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
+    SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
+    SetEventName (eBroadcastBitModulesUnloaded, "modules-unloaded");
+
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
     if (log)
         log->Printf ("%p Target::Target()", this);

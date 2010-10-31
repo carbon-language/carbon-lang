@@ -39,7 +39,7 @@ public:
     AddListener (const lldb::SBListener &listener, uint32_t event_mask);
 
     const char *
-    GetName ();
+    GetName () const;
 
     bool
     EventTypeHasListeners (uint32_t event_type);

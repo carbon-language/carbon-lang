@@ -242,7 +242,7 @@ SBBreakpointLocation::GetBreakpoint ()
     {
         SBStream sstr;
         sb_bp.GetDescription (sstr);
-        log->Printf ("SBBreakpointLocation::GetBreakpoint (this.sp=%p) => SBBreakpoint: m_opaque_sp=%p, '%s'", 
+        log->Printf ("SBBreakpointLocation(%p)::GetBreakpoint () => SBBreakpoint(%p) %s", 
                      m_opaque_sp.get(), sb_bp.get(), sstr.GetData());
     }
     return sb_bp;

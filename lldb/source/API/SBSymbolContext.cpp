@@ -9,8 +9,10 @@
 
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBStream.h"
-#include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/Symbol.h"
+#include "lldb/Symbol/SymbolContext.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -112,13 +114,18 @@ SBSymbolContext::GetFunction ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    SBFunction ret_function (m_opaque_ap.get() ? m_opaque_ap->function : NULL);
+    Function *function = NULL;
+    
+    if (m_opaque_ap.get())
+        function = m_opaque_ap->function;
+
+    SBFunction sb_function (function);
 
     if (log)
-        log->Printf ("SBSymbolContext(%p)::GetFunction () => SBFunction(%p): %s", 
-                     m_opaque_ap.get(), ret_function.get(), ret_function.GetName());
+        log->Printf ("SBSymbolContext(%p)::GetFunction () => SBFunction(%p)", 
+                     m_opaque_ap.get(), function);
 
-    return ret_function;
+    return sb_function;
 }
 
 SBBlock
@@ -138,11 +145,8 @@ SBSymbolContext::GetLineEntry ()
 
     if (log)
     {
-        SBStream sstr;
-        sb_line_entry.GetDescription (sstr);
-        log->Printf ("SBSymbolContext(%p)::GetLineEntry () => SBLineEntry(%p): %s", 
-                     m_opaque_ap.get(),
-                     sb_line_entry.get(), sstr.GetData());
+        log->Printf ("SBSymbolContext(%p)::GetLineEntry () => SBLineEntry(%p)", 
+                     m_opaque_ap.get(), sb_line_entry.get());
     }
 
     return sb_line_entry;
@@ -153,17 +157,20 @@ SBSymbolContext::GetSymbol ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
-    SBSymbol ret_symbol (m_opaque_ap.get() ? m_opaque_ap->symbol : NULL);
+    Symbol *symbol = NULL;
+    
+    if (m_opaque_ap.get())
+        symbol = m_opaque_ap->symbol;
+
+    SBSymbol sb_symbol (symbol);
 
     if (log)
     {
-        SBStream sstr;
-        ret_symbol.GetDescription (sstr);
-        log->Printf ("SBSymbolContext(%p)::GetSymbol () => SBSymbol(%p): %s", m_opaque_ap.get(),
-                     ret_symbol.get(), sstr.GetData());
+        log->Printf ("SBSymbolContext(%p)::GetSymbol () => SBSymbol(%p)", 
+                     m_opaque_ap.get(), symbol);
     }
 
-    return ret_symbol; 
+    return sb_symbol; 
 }
 
 lldb_private::SymbolContext*

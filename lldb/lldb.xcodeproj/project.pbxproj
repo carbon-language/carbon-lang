@@ -8,24 +8,18 @@
 
 /* Begin PBXBuildFile section */
 		260C876A10F538E700BB2B04 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 260C876910F538E700BB2B04 /* Foundation.framework */; };
-		2615DB851208A9C90021781D /* StopInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 2615DB841208A9C90021781D /* StopInfo.h */; };
 		2615DB871208A9E40021781D /* StopInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2615DB861208A9E40021781D /* StopInfo.cpp */; };
 		2615DBCA1208B5FC0021781D /* StopInfoMachException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2615DBC81208B5FC0021781D /* StopInfoMachException.cpp */; };
-		2615DBCB1208B5FC0021781D /* StopInfoMachException.h in Headers */ = {isa = PBXBuildFile; fileRef = 2615DBC91208B5FC0021781D /* StopInfoMachException.h */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		2618D7901240115500F2B8FE /* SectionLoadList.h in Headers */ = {isa = PBXBuildFile; fileRef = 2618D78F1240115500F2B8FE /* SectionLoadList.h */; };
 		2618D7921240116900F2B8FE /* SectionLoadList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618D7911240116900F2B8FE /* SectionLoadList.cpp */; };
-		2618D959124056C700F2B8FE /* NameToDIE.h in Headers */ = {isa = PBXBuildFile; fileRef = 2618D957124056C700F2B8FE /* NameToDIE.h */; };
 		2618D9EB12406FE600F2B8FE /* NameToDIE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618D9EA12406FE600F2B8FE /* NameToDIE.cpp */; };
 		261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */; };
-		261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
+		2635DA87127D0D0400675BC1 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		26424E3D125986CB0016D82C /* ValueObjectConstResult.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */; };
-		26424E3F125986D30016D82C /* ValueObjectConstResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 26424E3E125986D30016D82C /* ValueObjectConstResult.h */; };
-		264723A611FA076E00DE380C /* CleanUp.h in Headers */ = {isa = PBXBuildFile; fileRef = 264723A511FA076E00DE380C /* CleanUp.h */; };
 		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668020F115FD12C008E1FE4 /* lldb-enumerations.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -69,14 +63,13 @@
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
-		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; };
+		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42B1E1187A92B0079C8C8 /* lldb-include.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; };
+		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
 		26D27C9F11ED3A4E0024D721 /* ELFHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */; };
-		26D27CA011ED3A4E0024D721 /* ELFHeader.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D27C9E11ED3A4E0024D721 /* ELFHeader.h */; };
 		26D5B06511B07550009A862E /* StoppointCallbackContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0910F1B83100F91463 /* StoppointCallbackContext.cpp */; };
 		26D5B06611B07550009A862E /* Breakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0A10F1B83100F91463 /* Breakpoint.cpp */; };
 		26D5B06711B07550009A862E /* BreakpointID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0B10F1B83100F91463 /* BreakpointID.cpp */; };
@@ -324,53 +317,30 @@
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26F5C39110F3FA26009D5894 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
-		4911934C1226383D00578B7F /* ASTStructExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = 4911934B1226383D00578B7F /* ASTStructExtractor.h */; };
 		491193521226386000578B7F /* ASTStructExtractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 491193501226386000578B7F /* ASTStructExtractor.cpp */; };
 		49307AAE11DEA4D90081F992 /* IRForTarget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49307AAD11DEA4D90081F992 /* IRForTarget.cpp */; };
-		49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */ = {isa = PBXBuildFile; fileRef = 49307AB111DEA4F20081F992 /* IRForTarget.h */; };
 		49445C2612245E3600C11A81 /* ClangExpressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */; };
-		49445C2A12245E5500C11A81 /* ClangExpressionParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 49445C2912245E5500C11A81 /* ClangExpressionParser.h */; };
-		49445E351225AB6A00C11A81 /* ClangUserExpression.h in Headers */ = {isa = PBXBuildFile; fileRef = 49445E341225AB6A00C11A81 /* ClangUserExpression.h */; };
 		497C86BE122823D800B54702 /* ClangUtilityFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 497C86BD122823D800B54702 /* ClangUtilityFunction.cpp */; };
-		497C86C2122823F300B54702 /* ClangUtilityFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 497C86C1122823F300B54702 /* ClangUtilityFunction.h */; };
 		49A8A3A011D568A300AD3B68 /* ASTResultSynthesizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A8A39F11D568A300AD3B68 /* ASTResultSynthesizer.cpp */; };
-		49A8A3A411D568BF00AD3B68 /* ASTResultSynthesizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A8A3A311D568BF00AD3B68 /* ASTResultSynthesizer.h */; };
-		49BB309611F79450001A4197 /* TaggedASTType.h in Headers */ = {isa = PBXBuildFile; fileRef = 49BB309511F79450001A4197 /* TaggedASTType.h */; };
 		49CF982A122C70BD007A0B96 /* IRDynamicChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49CF9829122C70BD007A0B96 /* IRDynamicChecks.cpp */; };
-		49CF9834122C718B007A0B96 /* IRDynamicChecks.h in Headers */ = {isa = PBXBuildFile; fileRef = 49CF9833122C718B007A0B96 /* IRDynamicChecks.h */; };
-		49D4FE831210B5FB00CDB854 /* ClangPersistentVariables.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */; };
 		49D4FE891210B61C00CDB854 /* ClangPersistentVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */; };
-		49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D7072611B5AD03001AD875 /* ClangASTSource.h */; };
 		49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D7072811B5AD11001AD875 /* ClangASTSource.cpp */; settings = {COMPILER_FLAGS = "-fno-rtti"; }; };
 		49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */; };
-		49DA743511DE6BB2006AEF7E /* IRToDWARF.h in Headers */ = {isa = PBXBuildFile; fileRef = 49DA743411DE6BB2006AEF7E /* IRToDWARF.h */; };
-		49E45FAA11F660DC008F7B28 /* ClangASTType.h in Headers */ = {isa = PBXBuildFile; fileRef = 49E45FA911F660DC008F7B28 /* ClangASTType.h */; };
 		49E45FAF11F660FE008F7B28 /* ClangASTType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */; };
 		49F1A74611B3388F003ED505 /* ClangExpressionDeclMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */; };
-		49F1A74A11B338AE003ED505 /* ClangExpressionDeclMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 49F1A74911B338AE003ED505 /* ClangExpressionDeclMap.h */; };
 		49FB515E121481B000DF8983 /* DWARFExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */; };
 		4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */; };
-		4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */; };
 		4C0A91D812511CB900CA6636 /* AppleObjCTrampolineHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C0A91D412511CB900CA6636 /* AppleObjCTrampolineHandler.cpp */; };
-		4C0A91D912511CB900CA6636 /* AppleObjCTrampolineHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C0A91D512511CB900CA6636 /* AppleObjCTrampolineHandler.h */; };
 		4C0A91DA12511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C0A91D612511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.cpp */; };
-		4C0A91DB12511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C0A91D712511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.h */; };
 		4C139EA5124A8B03000BFF8D /* AppleObjCRuntimeV2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C139EA3124A8B03000BFF8D /* AppleObjCRuntimeV2.cpp */; };
-		4C139EA6124A8B03000BFF8D /* AppleObjCRuntimeV2.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C139EA4124A8B03000BFF8D /* AppleObjCRuntimeV2.h */; };
 		4C1AB23B1263E5F400D0F04A /* ThreadPlanTestCondition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1AB23A1263E5F400D0F04A /* ThreadPlanTestCondition.cpp */; };
-		4C1AB23F1263E61100D0F04A /* ThreadPlanTestCondition.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1AB23E1263E61100D0F04A /* ThreadPlanTestCondition.h */; };
 		4C5DBBC811E3FEC60035160F /* CommandObjectCommands.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C5DBBC611E3FEC60035160F /* CommandObjectCommands.cpp */; };
-		4C5DBBC911E3FEC60035160F /* CommandObjectCommands.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C5DBBC711E3FEC60035160F /* CommandObjectCommands.h */; };
 		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */; };
-		4CB4430B12491DDA00C13DC2 /* LanguageRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CB4430912491DDA00C13DC2 /* LanguageRuntime.h */; };
 		4CB4430C12491DDA00C13DC2 /* LanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB4430A12491DDA00C13DC2 /* LanguageRuntime.cpp */; };
-		4CB4436B124944B000C13DC2 /* ItaniumABILanguageRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CB44369124944B000C13DC2 /* ItaniumABILanguageRuntime.h */; };
 		4CB4436C124944B000C13DC2 /* ItaniumABILanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB4436A124944B000C13DC2 /* ItaniumABILanguageRuntime.cpp */; };
-		4CB443BD1249920C00C13DC2 /* CPPLanguageRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CB443BB1249920C00C13DC2 /* CPPLanguageRuntime.h */; };
 		4CB443BE1249920C00C13DC2 /* CPPLanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB443BC1249920C00C13DC2 /* CPPLanguageRuntime.cpp */; };
 		4CB443F312499B5000C13DC2 /* ObjCLanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB443F212499B5000C13DC2 /* ObjCLanguageRuntime.cpp */; };
-		4CB443F712499B6E00C13DC2 /* ObjCLanguageRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CB443F612499B6E00C13DC2 /* ObjCLanguageRuntime.h */; };
 		69A01E211236C5D400C660B5 /* Condition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1B1236C5D400C660B5 /* Condition.cpp */; };
 		69A01E221236C5D400C660B5 /* Host.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1C1236C5D400C660B5 /* Host.cpp */; };
 		69A01E241236C5D400C660B5 /* Mutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1E1236C5D400C660B5 /* Mutex.cpp */; };
@@ -381,13 +351,10 @@
 		961FABBD1235DE1600F93A47 /* UnwindTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961FABBA1235DE1600F93A47 /* UnwindTable.cpp */; };
 		961FABE51235F15900F93A47 /* UnwindAssemblyProfiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961FABE41235F15900F93A47 /* UnwindAssemblyProfiler.cpp */; };
 		961FABEA1235F26800F93A47 /* UnwindAssemblyProfiler-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961FABE81235F26800F93A47 /* UnwindAssemblyProfiler-x86.cpp */; };
-		961FABEB1235F26800F93A47 /* UnwindAssemblyProfiler-x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 961FABE91235F26800F93A47 /* UnwindAssemblyProfiler-x86.h */; };
 		961FAC19123605A200F93A47 /* ArchDefaultUnwindPlan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961FAC18123605A200F93A47 /* ArchDefaultUnwindPlan.cpp */; };
 		961FAC1E12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961FAC1C12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.cpp */; };
-		961FAC1F12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 961FAC1D12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h */; };
 		96A6D9C61249D96F00250B38 /* ArchVolatileRegs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96A6D9C51249D96F00250B38 /* ArchVolatileRegs.cpp */; };
 		96A6D9C91249D98800250B38 /* ArchVolatileRegs-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96A6D9C71249D98800250B38 /* ArchVolatileRegs-x86.cpp */; };
-		96A6D9CA1249D98800250B38 /* ArchVolatileRegs-x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 96A6D9C81249D98800250B38 /* ArchVolatileRegs-x86.h */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A357582116CFDEE00E8ED2F /* SBValueList.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -396,7 +363,6 @@
 		9A357673116E7B6400E8ED2F /* SBStringList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A357672116E7B6400E8ED2F /* SBStringList.cpp */; };
 		9A3576A8116E9AB700E8ED2F /* SBHostOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A3576A7116E9AB700E8ED2F /* SBHostOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A3576AA116E9AC700E8ED2F /* SBHostOS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A3576A9116E9AC700E8ED2F /* SBHostOS.cpp */; };
-		9A4633DB11F65D8600955CE1 /* UserSettingsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A4633DA11F65D8600955CE1 /* UserSettingsController.h */; };
 		9A4633DD11F65D9A00955CE1 /* UserSettingsController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A4633DC11F65D9A00955CE1 /* UserSettingsController.cpp */; };
 		9AA69DA61188F52100D753A0 /* PseudoTerminal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */; };
 		9AA69DAF118A023300D753A0 /* SBInputReader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AA69DAE118A023300D753A0 /* SBInputReader.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -406,9 +372,7 @@
 		9AC703AF117675410086C050 /* SBInstruction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703AE117675410086C050 /* SBInstruction.cpp */; };
 		9AC703B1117675490086C050 /* SBInstructionList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703B0117675490086C050 /* SBInstructionList.cpp */; };
 		AF68D2561255416E002FF25B /* RegisterContextLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */; };
-		AF68D2571255416E002FF25B /* RegisterContextLLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = AF68D2551255416E002FF25B /* RegisterContextLLDB.h */; };
 		AF68D3311255A111002FF25B /* UnwindLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */; };
-		AF68D3321255A111002FF25B /* UnwindLLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = AF68D3301255A110002FF25B /* UnwindLLDB.h */; };
 		AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF94005711C03F6500085DB9 /* SymbolVendor.cpp */; };
 /* End PBXBuildFile section */
 
@@ -2351,85 +2315,49 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */,
+				2668020F115FD12C008E1FE4 /* lldb-enumerations.h in Headers */,
+				26DE1E6C11616C2E00A093E2 /* lldb-forward.h in Headers */,
+				26DE1E6B11616C2E00A093E2 /* lldb-forward-rtti.h in Headers */,
+				26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */,
+				26680214115FD12C008E1FE4 /* lldb-types.h in Headers */,
+				26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */,
+				26DE204311618ACA00A093E2 /* SBAddress.h in Headers */,
+				26DE205711618FC500A093E2 /* SBBlock.h in Headers */,
 				26680219115FD13D008E1FE4 /* SBBreakpoint.h in Headers */,
 				2668021A115FD13D008E1FE4 /* SBBreakpointLocation.h in Headers */,
 				2668021B115FD13D008E1FE4 /* SBBroadcaster.h in Headers */,
 				2668021D115FD13D008E1FE4 /* SBCommandInterpreter.h in Headers */,
 				2668021E115FD13D008E1FE4 /* SBCommandReturnObject.h in Headers */,
 				2668021F115FD13D008E1FE4 /* SBCommunication.h in Headers */,
+				26DE205511618FB800A093E2 /* SBCompileUnit.h in Headers */,
 				26680220115FD13D008E1FE4 /* SBDebugger.h in Headers */,
 				26680221115FD13D008E1FE4 /* SBDefines.h in Headers */,
 				26680222115FD13D008E1FE4 /* SBError.h in Headers */,
 				26680223115FD13D008E1FE4 /* SBEvent.h in Headers */,
 				26680224115FD13D008E1FE4 /* SBFileSpec.h in Headers */,
 				26680225115FD13D008E1FE4 /* SBFrame.h in Headers */,
-				26680227115FD13D008E1FE4 /* SBListener.h in Headers */,
-				2668022A115FD13D008E1FE4 /* SBProcess.h in Headers */,
-				2668022B115FD13D008E1FE4 /* SBSourceManager.h in Headers */,
-				2668022C115FD13D008E1FE4 /* SBTarget.h in Headers */,
-				2668022E115FD13D008E1FE4 /* SBThread.h in Headers */,
-				2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */,
-				2668020F115FD12C008E1FE4 /* lldb-enumerations.h in Headers */,
-				26680214115FD12C008E1FE4 /* lldb-types.h in Headers */,
-				26DE1E6B11616C2E00A093E2 /* lldb-forward-rtti.h in Headers */,
-				26DE1E6C11616C2E00A093E2 /* lldb-forward.h in Headers */,
-				26DE204111618AB900A093E2 /* SBSymbolContext.h in Headers */,
-				26DE204311618ACA00A093E2 /* SBAddress.h in Headers */,
-				26DE204F11618E9800A093E2 /* SBModule.h in Headers */,
 				26DE205311618FAC00A093E2 /* SBFunction.h in Headers */,
-				26DE205511618FB800A093E2 /* SBCompileUnit.h in Headers */,
-				26DE205711618FC500A093E2 /* SBBlock.h in Headers */,
-				26DE205911618FE700A093E2 /* SBLineEntry.h in Headers */,
-				26DE205B11618FF600A093E2 /* SBSymbol.h in Headers */,
-				9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */,
-				2617447A11685869005ADD65 /* SBType.h in Headers */,
-				9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */,
-				9A357671116E7B5200E8ED2F /* SBStringList.h in Headers */,
 				9A3576A8116E9AB700E8ED2F /* SBHostOS.h in Headers */,
+				9AA69DAF118A023300D753A0 /* SBInputReader.h in Headers */,
 				9AC7038E117674FB0086C050 /* SBInstruction.h in Headers */,
 				9AC70390117675270086C050 /* SBInstructionList.h in Headers */,
-				26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */,
-				26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */,
-				9AA69DAF118A023300D753A0 /* SBInputReader.h in Headers */,
-				49F1A74A11B338AE003ED505 /* ClangExpressionDeclMap.h in Headers */,
-				49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */,
-				261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */,
-				4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */,
-				49A8A3A411D568BF00AD3B68 /* ASTResultSynthesizer.h in Headers */,
-				49DA743511DE6BB2006AEF7E /* IRToDWARF.h in Headers */,
-				49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */,
-				4C5DBBC911E3FEC60035160F /* CommandObjectCommands.h in Headers */,
-				26D27CA011ED3A4E0024D721 /* ELFHeader.h in Headers */,
-				9A4633DB11F65D8600955CE1 /* UserSettingsController.h in Headers */,
-				49E45FAA11F660DC008F7B28 /* ClangASTType.h in Headers */,
-				49BB309611F79450001A4197 /* TaggedASTType.h in Headers */,
-				264723A611FA076E00DE380C /* CleanUp.h in Headers */,
-				2615DB851208A9C90021781D /* StopInfo.h in Headers */,
-				2615DBCB1208B5FC0021781D /* StopInfoMachException.h in Headers */,
-				49D4FE831210B5FB00CDB854 /* ClangPersistentVariables.h in Headers */,
-				49445C2A12245E5500C11A81 /* ClangExpressionParser.h in Headers */,
-				49445E351225AB6A00C11A81 /* ClangUserExpression.h in Headers */,
-				4911934C1226383D00578B7F /* ASTStructExtractor.h in Headers */,
-				497C86C2122823F300B54702 /* ClangUtilityFunction.h in Headers */,
-				49CF9834122C718B007A0B96 /* IRDynamicChecks.h in Headers */,
-				961FABEB1235F26800F93A47 /* UnwindAssemblyProfiler-x86.h in Headers */,
-				961FAC1F12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h in Headers */,
-				268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */,
-				2618D7901240115500F2B8FE /* SectionLoadList.h in Headers */,
-				2618D959124056C700F2B8FE /* NameToDIE.h in Headers */,
+				26DE205911618FE700A093E2 /* SBLineEntry.h in Headers */,
+				26680227115FD13D008E1FE4 /* SBListener.h in Headers */,
+				26DE204F11618E9800A093E2 /* SBModule.h in Headers */,
+				2668022A115FD13D008E1FE4 /* SBProcess.h in Headers */,
+				2668022B115FD13D008E1FE4 /* SBSourceManager.h in Headers */,
 				26C72C94124322890068DC16 /* SBStream.h in Headers */,
-				4CB4430B12491DDA00C13DC2 /* LanguageRuntime.h in Headers */,
-				4CB4436B124944B000C13DC2 /* ItaniumABILanguageRuntime.h in Headers */,
-				4CB443BD1249920C00C13DC2 /* CPPLanguageRuntime.h in Headers */,
-				4CB443F712499B6E00C13DC2 /* ObjCLanguageRuntime.h in Headers */,
-				96A6D9CA1249D98800250B38 /* ArchVolatileRegs-x86.h in Headers */,
-				4C139EA6124A8B03000BFF8D /* AppleObjCRuntimeV2.h in Headers */,
-				4C0A91D912511CB900CA6636 /* AppleObjCTrampolineHandler.h in Headers */,
-				4C0A91DB12511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.h in Headers */,
-				AF68D2571255416E002FF25B /* RegisterContextLLDB.h in Headers */,
-				AF68D3321255A111002FF25B /* UnwindLLDB.h in Headers */,
-				26424E3F125986D30016D82C /* ValueObjectConstResult.h in Headers */,
-				4C1AB23F1263E61100D0F04A /* ThreadPlanTestCondition.h in Headers */,
+				9A357671116E7B5200E8ED2F /* SBStringList.h in Headers */,
+				26DE205B11618FF600A093E2 /* SBSymbol.h in Headers */,
+				26DE204111618AB900A093E2 /* SBSymbolContext.h in Headers */,
+				268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */,
+				2668022C115FD13D008E1FE4 /* SBTarget.h in Headers */,
+				2668022E115FD13D008E1FE4 /* SBThread.h in Headers */,
+				2617447A11685869005ADD65 /* SBType.h in Headers */,
+				9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */,
+				9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */,
+				2635DA87127D0D0400675BC1 /* SharingPtr.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

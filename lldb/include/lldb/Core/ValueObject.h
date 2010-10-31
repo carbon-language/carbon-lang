@@ -88,7 +88,7 @@ public:
     }
 
     virtual void
-    GetExpressionPath (Stream &s);//, ValueObject *child);
+    GetExpressionPath (Stream &s);
 
     virtual bool
     IsInScope (StackFrame *frame)
