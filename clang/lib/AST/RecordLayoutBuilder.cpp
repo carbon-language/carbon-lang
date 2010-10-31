@@ -245,7 +245,7 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
       continue;
 
     CharUnits BaseOffset =
-      Offset + toCharUnits(Layout.getBaseClassOffset(Base->Class));
+      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(Base->Class));
 
     if (!CanPlaceBaseSubobjectAtOffset(Base, BaseOffset))
       return false;
@@ -298,7 +298,7 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
       continue;
 
     CharUnits BaseOffset = 
-      Offset + toCharUnits(Layout.getBaseClassOffset(Base->Class));
+      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(Base->Class));
     UpdateEmptyBaseSubobjects(Base, BaseOffset, PlacingEmptyBase);
   }
 
@@ -363,7 +363,7 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     CharUnits BaseOffset =
-      Offset + toCharUnits(Layout.getBaseClassOffset(BaseDecl));
+      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(BaseDecl));
     if (!CanPlaceFieldSubobjectAtOffset(BaseDecl, Class, BaseOffset))
       return false;
   }
@@ -376,7 +376,7 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
         cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
       
       CharUnits VBaseOffset = Offset + 
-        toCharUnits(Layout.getVBaseClassOffset(VBaseDecl));
+        toCharUnits(Layout.getVBaseClassOffsetInBits(VBaseDecl));
       if (!CanPlaceFieldSubobjectAtOffset(VBaseDecl, Class, VBaseOffset))
         return false;
     }
@@ -478,7 +478,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     CharUnits BaseOffset = 
-      Offset + toCharUnits(Layout.getBaseClassOffset(BaseDecl));
+      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(BaseDecl));
     UpdateEmptyFieldSubobjects(BaseDecl, Class, BaseOffset);
   }
 
@@ -490,7 +490,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
       
       CharUnits VBaseOffset = 
-        Offset + toCharUnits(Layout.getVBaseClassOffset(VBaseDecl));
+        Offset + toCharUnits(Layout.getVBaseClassOffsetInBits(VBaseDecl));
       UpdateEmptyFieldSubobjects(VBaseDecl, Class, VBaseOffset);
     }
   }
@@ -1068,7 +1068,7 @@ RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
       continue;
 
     CharUnits BaseOffset = 
-      Offset + toCharUnits(Layout.getBaseClassOffset(Base->Class));
+      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(Base->Class));
     AddPrimaryVirtualBaseOffsets(Base, BaseOffset);
   }
 }
@@ -1840,7 +1840,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    uint64_t BaseOffset = Offset + Info.getBaseClassOffset(Base) / 8;
+    uint64_t BaseOffset = Offset + Info.getBaseClassOffsetInBits(Base) / 8;
 
     DumpCXXRecordLayout(OS, Base, C, BaseOffset, IndentLevel,
                         Base == PrimaryBase ? "(primary base)" : "(base)",
@@ -1877,7 +1877,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
     const CXXRecordDecl *VBase =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    uint64_t VBaseOffset = Offset + Info.getVBaseClassOffset(VBase) / 8;
+    uint64_t VBaseOffset = Offset + Info.getVBaseClassOffsetInBits(VBase) / 8;
     DumpCXXRecordLayout(OS, VBase, C, VBaseOffset, IndentLevel,
                         VBase == PrimaryBase ?
                         "(primary virtual base)" : "(virtual base)",

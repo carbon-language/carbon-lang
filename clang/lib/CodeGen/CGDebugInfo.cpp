@@ -855,7 +855,7 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
       BaseOffset = 0 - CGM.getVTables().getVirtualBaseOffsetOffset(RD, Base);
       BFlags = llvm::DIDescriptor::FlagVirtual;
     } else
-      BaseOffset = RL.getBaseClassOffset(Base);
+      BaseOffset = RL.getBaseClassOffsetInBits(Base);
     
     AccessSpecifier Access = BI->getAccessSpecifier();
     if (Access == clang::AS_private)

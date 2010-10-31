@@ -823,7 +823,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
       OffsetFlags = CGM.getVTables().getVirtualBaseOffsetOffset(RD, BaseDecl);
     else {
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-      OffsetFlags = Layout.getBaseClassOffset(BaseDecl) / 8;
+      OffsetFlags = Layout.getBaseClassOffsetInBits(BaseDecl) / 8;
     };
     
     OffsetFlags <<= 8;

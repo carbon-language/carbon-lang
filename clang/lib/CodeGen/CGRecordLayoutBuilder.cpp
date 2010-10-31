@@ -516,7 +516,7 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
     if (BaseDecl == PrimaryBase && !Layout.getPrimaryBaseWasVirtual())
       continue;
 
-    LayoutNonVirtualBase(BaseDecl, Layout.getBaseClassOffset(BaseDecl));
+    LayoutNonVirtualBase(BaseDecl, Layout.getBaseClassOffsetInBits(BaseDecl));
   }
 }
 

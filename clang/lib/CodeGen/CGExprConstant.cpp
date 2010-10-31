@@ -980,7 +980,7 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
       if (CGM.getTypes().isZeroInitializable(BaseDecl))
         continue;
 
-      uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl);
+      uint64_t BaseOffset = Layout.getBaseClassOffsetInBits(BaseDecl);
       FillInNullDataMemberPointers(CGM, I->getType(),
                                    Elements, StartOffset + BaseOffset);
     }

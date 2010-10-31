@@ -213,21 +213,39 @@ public:
     return getPrimaryBaseInfo().isVirtual();
   }
 
-  /// getBaseClassOffset - Get the offset, in bits, for the given base class.
-  uint64_t getBaseClassOffset(const CXXRecordDecl *Base) const {
+  /// getBaseClassOffset - Get the offset, in chars, for the given base class.
+  CharUnits getBaseClassOffset(const CXXRecordDecl *Base) const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
     assert(CXXInfo->BaseOffsets.count(Base) && "Did not find base!");
 
-    return CXXInfo->BaseOffsets[Base].getQuantity() * 
-      Base->getASTContext().getCharWidth();
+    return CXXInfo->BaseOffsets[Base];
   }
 
-  /// getVBaseClassOffset - Get the offset, in bits, for the given base class.
-  uint64_t getVBaseClassOffset(const CXXRecordDecl *VBase) const {
+  /// getVBaseClassOffset - Get the offset, in chars, for the given base class.
+  CharUnits getVBaseClassOffset(const CXXRecordDecl *VBase) const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
     assert(CXXInfo->VBaseOffsets.count(VBase) && "Did not find base!");
 
-    return CXXInfo->VBaseOffsets[VBase].getQuantity() *
+    return CXXInfo->VBaseOffsets[VBase];
+  }
+
+  /// getBaseClassOffsetInBits - Get the offset, in bits, for the given
+  /// base class.
+  uint64_t getBaseClassOffsetInBits(const CXXRecordDecl *Base) const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    assert(CXXInfo->BaseOffsets.count(Base) && "Did not find base!");
+
+    return getBaseClassOffset(Base).getQuantity() *
+      Base->getASTContext().getCharWidth();
+  }
+
+  /// getVBaseClassOffsetInBits - Get the offset, in bits, for the given
+  /// base class.
+  uint64_t getVBaseClassOffsetInBits(const CXXRecordDecl *VBase) const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    assert(CXXInfo->VBaseOffsets.count(VBase) && "Did not find base!");
+
+    return getVBaseClassOffset(VBase).getQuantity() *
       VBase->getASTContext().getCharWidth();
   }
 

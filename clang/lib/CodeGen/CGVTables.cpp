@@ -240,7 +240,7 @@ static BaseOffset ComputeBaseOffset(ASTContext &Context,
     const RecordType *BaseType = Element.Base->getType()->getAs<RecordType>();
     const CXXRecordDecl *Base = cast<CXXRecordDecl>(BaseType->getDecl());
 
-    NonVirtualOffset += Layout.getBaseClassOffset(Base);
+    NonVirtualOffset += Layout.getBaseClassOffsetInBits(Base);
   }
   
   // FIXME: This should probably use CharUnits or something. Maybe we should
@@ -358,12 +358,12 @@ FinalOverriders::ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
       const ASTRecordLayout &LayoutClassLayout =
         Context.getASTRecordLayout(LayoutClass);
 
-      BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
+      BaseOffset = MostDerivedClassLayout.getVBaseClassOffsetInBits(BaseDecl);
       BaseOffsetInLayoutClass = 
-        LayoutClassLayout.getVBaseClassOffset(BaseDecl);
+        LayoutClassLayout.getVBaseClassOffsetInBits(BaseDecl);
     } else {
       const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-      uint64_t Offset = Layout.getBaseClassOffset(BaseDecl);
+      uint64_t Offset = Layout.getBaseClassOffsetInBits(BaseDecl);
     
       BaseOffset = Base.getBaseOffset() + Offset;
       BaseOffsetInLayoutClass = OffsetInLayoutClass + Offset;
@@ -396,9 +396,9 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base,
         continue;
       }
       
-      BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
+      BaseOffset = MostDerivedClassLayout.getVBaseClassOffsetInBits(BaseDecl);
     } else {
-      BaseOffset = Layout.getBaseClassOffset(BaseDecl) + 
+      BaseOffset = Layout.getBaseClassOffsetInBits(BaseDecl) + 
         Base.getBaseOffset();
     }
 
@@ -799,16 +799,16 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
     
     // Get the base offset of the primary base.
     if (PrimaryBaseIsVirtual) {
-      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
+      assert(Layout.getVBaseClassOffsetInBits(PrimaryBase) == 0 &&
              "Primary vbase should have a zero offset!");
       
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
       
       PrimaryBaseOffset = 
-        MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
+        MostDerivedClassLayout.getVBaseClassOffsetInBits(PrimaryBase);
     } else {
-      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
+      assert(Layout.getBaseClassOffsetInBits(PrimaryBase) == 0 &&
              "Primary base should have a zero offset!");
 
       PrimaryBaseOffset = Base.getBaseOffset();
@@ -851,7 +851,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   // primary base will have its vcall and vbase offsets emitted already.
   if (PrimaryBase && !Layout.getPrimaryBaseWasVirtual()) {
     // Get the base offset of the primary base.
-    assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
+    assert(Layout.getBaseClassOffsetInBits(PrimaryBase) == 0 &&
            "Primary base should have a zero offset!");
 
     AddVCallOffsets(BaseSubobject(PrimaryBase, Base.getBaseOffset()),
@@ -903,7 +903,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
 
     // Get the base offset of this base.
     uint64_t BaseOffset = Base.getBaseOffset() + 
-      Layout.getBaseClassOffset(BaseDecl);
+      Layout.getBaseClassOffsetInBits(BaseDecl);
     
     AddVCallOffsets(BaseSubobject(BaseDecl, BaseOffset), VBaseOffset);
   }
@@ -924,7 +924,7 @@ void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
     if (I->isVirtual() && VisitedVirtualBases.insert(BaseDecl)) {
       // FIXME: We shouldn't use / 8 here.
       int64_t Offset = 
-        (int64_t)(LayoutClassLayout.getVBaseClassOffset(BaseDecl) - 
+        (int64_t)(LayoutClassLayout.getVBaseClassOffsetInBits(BaseDecl) - 
                   OffsetInLayoutClass) / 8;
 
       // Add the vbase offset offset.
@@ -1372,7 +1372,7 @@ VTableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
       /// Get the virtual base offset, relative to the most derived class 
       /// layout.
       OffsetToBaseSubobject += 
-        LayoutClassLayout.getVBaseClassOffset(Offset.VirtualBase);
+        LayoutClassLayout.getVBaseClassOffsetInBits(Offset.VirtualBase);
     } else {
       // Otherwise, the non-virtual offset is relative to the derived class 
       // offset.
@@ -1521,7 +1521,7 @@ VTableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
       break;
     
     if (Layout.getPrimaryBaseWasVirtual()) {
-      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 && 
+      assert(Layout.getVBaseClassOffsetInBits(PrimaryBase) == 0 && 
              "Primary base should always be at offset 0!");
 
       const ASTRecordLayout &LayoutClassLayout =
@@ -1529,13 +1529,13 @@ VTableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
 
       // Now check if this is the primary base that is not a primary base in the
       // most derived class.
-      if (LayoutClassLayout.getVBaseClassOffset(PrimaryBase) !=
+      if (LayoutClassLayout.getVBaseClassOffsetInBits(PrimaryBase) !=
           FirstBaseOffsetInLayoutClass) {
         // We found it, stop walking the chain.
         break;
       }
     } else {
-      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 && 
+      assert(Layout.getBaseClassOffsetInBits(PrimaryBase) == 0 && 
              "Primary base should always be at offset 0!");
     }
     
@@ -1587,22 +1587,22 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
     uint64_t PrimaryBaseOffset;
     uint64_t PrimaryBaseOffsetInLayoutClass;
     if (Layout.getPrimaryBaseWasVirtual()) {
-      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
+      assert(Layout.getVBaseClassOffsetInBits(PrimaryBase) == 0 &&
              "Primary vbase should have a zero offset!");
       
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
       
       PrimaryBaseOffset = 
-        MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
+        MostDerivedClassLayout.getVBaseClassOffsetInBits(PrimaryBase);
       
       const ASTRecordLayout &LayoutClassLayout =
         Context.getASTRecordLayout(LayoutClass);
 
       PrimaryBaseOffsetInLayoutClass =
-        LayoutClassLayout.getVBaseClassOffset(PrimaryBase);
+        LayoutClassLayout.getVBaseClassOffsetInBits(PrimaryBase);
     } else {
-      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
+      assert(Layout.getBaseClassOffsetInBits(PrimaryBase) == 0 &&
              "Primary base should have a zero offset!");
 
       PrimaryBaseOffset = Base.getBaseOffset();
@@ -1785,7 +1785,7 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
       const ASTRecordLayout &LayoutClassLayout =
         Context.getASTRecordLayout(LayoutClass);
 
-      if (LayoutClassLayout.getVBaseClassOffset(PrimaryBase) !=
+      if (LayoutClassLayout.getVBaseClassOffsetInBits(PrimaryBase) !=
           OffsetInLayoutClass) {
         // We don't want to add this class (or any of its primary bases).
         break;
@@ -1835,7 +1835,7 @@ void VTableBuilder::LayoutSecondaryVTables(BaseSubobject Base,
     }
 
     // Get the base offset of this base.
-    uint64_t RelativeBaseOffset = Layout.getBaseClassOffset(BaseDecl);
+    uint64_t RelativeBaseOffset = Layout.getBaseClassOffsetInBits(BaseDecl);
     uint64_t BaseOffset = Base.getBaseOffset() + RelativeBaseOffset;
     
     uint64_t BaseOffsetInLayoutClass = OffsetInLayoutClass + RelativeBaseOffset;
@@ -1876,7 +1876,7 @@ VTableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
           Context.getASTRecordLayout(LayoutClass);
 
         uint64_t PrimaryBaseOffsetInLayoutClass =
-          LayoutClassLayout.getVBaseClassOffset(PrimaryBase);
+          LayoutClassLayout.getVBaseClassOffsetInBits(PrimaryBase);
         
         // We know that the base is not a primary base in the layout class if 
         // the base offsets are different.
@@ -1904,10 +1904,11 @@ VTableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
       const ASTRecordLayout &LayoutClassLayout =
         Context.getASTRecordLayout(LayoutClass);
 
-      BaseOffsetInLayoutClass = LayoutClassLayout.getVBaseClassOffset(BaseDecl);
+      BaseOffsetInLayoutClass = 
+        LayoutClassLayout.getVBaseClassOffsetInBits(BaseDecl);
     } else {
       BaseOffsetInLayoutClass = 
-        OffsetInLayoutClass + Layout.getBaseClassOffset(BaseDecl);
+        OffsetInLayoutClass + Layout.getBaseClassOffsetInBits(BaseDecl);
     }
 
     DeterminePrimaryVirtualBases(BaseDecl, BaseOffsetInLayoutClass, VBases);
@@ -1933,12 +1934,12 @@ VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD,
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
       uint64_t BaseOffset = 
-        MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
+        MostDerivedClassLayout.getVBaseClassOffsetInBits(BaseDecl);
       
       const ASTRecordLayout &LayoutClassLayout =
         Context.getASTRecordLayout(LayoutClass);
       uint64_t BaseOffsetInLayoutClass = 
-        LayoutClassLayout.getVBaseClassOffset(BaseDecl);
+        LayoutClassLayout.getVBaseClassOffsetInBits(BaseDecl);
 
       LayoutPrimaryAndSecondaryVTables(BaseSubobject(BaseDecl, BaseOffset),
                                        /*BaseIsMorallyVirtual=*/true,

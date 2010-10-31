@@ -594,7 +594,7 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
       const CXXRecordDecl *BaseDecl = Base->getType()->getAsCXXRecordDecl();
       const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(DerivedDecl);
 
-      Offset += Layout.getBaseClassOffset(BaseDecl);
+      Offset += Layout.getBaseClassOffsetInBits(BaseDecl);
       DerivedDecl = BaseDecl;
     }
 
@@ -1621,7 +1621,7 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
       
       // Add the offset to the base.
       Result += CharUnits::fromQuantity(
-                RL.getBaseClassOffset(cast<CXXRecordDecl>(BaseRT->getDecl()))
+             RL.getBaseClassOffsetInBits(cast<CXXRecordDecl>(BaseRT->getDecl()))
                                         / Info.Ctx.getCharWidth());
       break;
     }

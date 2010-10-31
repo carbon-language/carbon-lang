@@ -103,7 +103,7 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
 
   // If the base is at a non-zero offset, give up.
   const ASTRecordLayout &ClassLayout = Context.getASTRecordLayout(Class);
-  if (ClassLayout.getBaseClassOffset(UniqueBase) != 0)
+  if (ClassLayout.getBaseClassOffsetInBits(UniqueBase) != 0)
     return true;
 
   return TryEmitDefinitionAsAlias(GlobalDecl(D, Dtor_Base),
