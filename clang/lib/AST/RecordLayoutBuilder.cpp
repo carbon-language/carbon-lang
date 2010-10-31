@@ -684,8 +684,8 @@ protected:
   /// LayoutNonVirtualBase - Lays out a single non-virtual base.
   void LayoutNonVirtualBase(const BaseSubobjectInfo *Base);
 
-  void AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info, 
-                                            uint64_t Offset);
+  void AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
+                                    CharUnits Offset);
 
   /// LayoutVirtualBases - Lays out all the virtual bases.
   void LayoutVirtualBases(const CXXRecordDecl *RD,
@@ -695,8 +695,8 @@ protected:
   void LayoutVirtualBase(const BaseSubobjectInfo *Base);
 
   /// LayoutBase - Will lay out a base and return the offset where it was
-  /// placed, in bits.
-  uint64_t LayoutBase(const BaseSubobjectInfo *Base);
+  /// placed, in chars.
+  CharUnits LayoutBase(const BaseSubobjectInfo *Base);
 
   /// InitializeLayout - Initialize record layout for the given record decl.
   void InitializeLayout(const Decl *D);
@@ -1028,20 +1028,18 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
 
 void RecordLayoutBuilder::LayoutNonVirtualBase(const BaseSubobjectInfo *Base) {
   // Layout the base.
-  uint64_t Offset = LayoutBase(Base);
-  CharUnits OffsetInChars = 
-    CharUnits::fromQuantity(Offset / Context.getCharWidth());
+  CharUnits Offset = LayoutBase(Base);
 
   // Add its base class offset.
   assert(!Bases.count(Base->Class) && "base offset already exists!");
-  Bases.insert(std::make_pair(Base->Class, OffsetInChars));
+  Bases.insert(std::make_pair(Base->Class, Offset));
 
   AddPrimaryVirtualBaseOffsets(Base, Offset);
 }
 
 void
 RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info, 
-                                                  uint64_t Offset) {
+                                                  CharUnits Offset) {
   // This base isn't interesting, it has no virtual bases.
   if (!Info->Class->getNumVBases())
     return;
@@ -1054,10 +1052,8 @@ RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
       // Add the offset.
       assert(!VBases.count(Info->PrimaryVirtualBaseInfo->Class) && 
              "primary vbase offset already exists!");
-      CharUnits OffsetInChars = 
-        CharUnits::fromQuantity(Offset / Context.getCharWidth());
       VBases.insert(std::make_pair(Info->PrimaryVirtualBaseInfo->Class,
-                                   OffsetInChars));
+                                   Offset));
 
       // Traverse the primary virtual base.
       AddPrimaryVirtualBaseOffsets(Info->PrimaryVirtualBaseInfo, Offset);
@@ -1071,7 +1067,8 @@ RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
     if (Base->IsVirtual)
       continue;
 
-    uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
+    CharUnits BaseOffset = 
+      Offset + toCharUnits(Layout.getBaseClassOffset(Base->Class));
     AddPrimaryVirtualBaseOffsets(Base, BaseOffset);
   }
 }
@@ -1129,18 +1126,16 @@ void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
   assert(!Base->Derived && "Trying to lay out a primary virtual base!");
   
   // Layout the base.
-  uint64_t Offset = LayoutBase(Base);
-  CharUnits OffsetInChars = 
-    CharUnits::fromQuantity(Offset / Context.getCharWidth());
+  CharUnits Offset = LayoutBase(Base);
 
   // Add its base class offset.
   assert(!VBases.count(Base->Class) && "vbase offset already exists!");
-  VBases.insert(std::make_pair(Base->Class, OffsetInChars));
+  VBases.insert(std::make_pair(Base->Class, Offset));
   
   AddPrimaryVirtualBaseOffsets(Base, Offset);
 }
 
-uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
+CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base->Class);
 
   // If we have an empty base class, try to place it at offset 0.
@@ -1148,7 +1143,7 @@ uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
       EmptySubobjects->CanPlaceBaseAtOffset(Base, CharUnits::Zero())) {
     Size = std::max(Size, Layout.getSize());
 
-    return 0;
+    return CharUnits::Zero();
   }
 
   unsigned BaseAlign = Layout.getNonVirtualAlign();
@@ -1171,7 +1166,7 @@ uint64_t RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign);
 
-  return Offset;
+  return toCharUnits(Offset);
 }
 
 void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
