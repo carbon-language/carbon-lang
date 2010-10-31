@@ -562,7 +562,7 @@ let rb = 0 in {
                   "src     $dst, $src", [], IIAlu>;
 }
 
-let opcode=0x08 in {
+let opcode=0x08, isCodeGenOnly=1 in {
   def LEA_ADDI : TB<0x08, (outs GPR:$dst), (ins memri:$addr),
                     "addi    $dst, ${addr:stackloc}",
                     [(set GPR:$dst, iaddr:$addr)], IIAlu>;

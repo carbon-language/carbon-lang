@@ -257,27 +257,26 @@ static bool IsAssemblerInstruction(StringRef Name,
   // this implies a constraint we would not honor.
   std::set<std::string> OperandNames;
   for (unsigned i = 1, e = Tokens.size(); i < e; ++i) {
-    if (Tokens[i][0] == '$' &&
-        std::find(Tokens[i].begin(),
-                  Tokens[i].end(), ':') != Tokens[i].end()) {
-      DEBUG({
-          errs() << "warning: '" << Name << "': "
-                 << "ignoring instruction; operand with attribute '"
-                 << Tokens[i] << "'\n";
-        });
-      return false;
-    }
-
-    if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
-      DEBUG({
+    for (unsigned i = 1, e = Tokens.size(); i < e; ++i) {
+      if (Tokens[i][0] == '$' &&
+          Tokens[i].find(':') != StringRef::npos) {
+        PrintError(CGI.TheDef->getLoc(),
+                   "instruction with operand modifier '" + Tokens[i].str() +
+                   "' not supported by asm matcher.  Mark isCodeGenOnly!");
+        throw std::string("ERROR: Invalid instruction");
+      }
+      
+      if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
+        DEBUG({
           errs() << "warning: '" << Name << "': "
                  << "ignoring instruction with tied operand '"
                  << Tokens[i].str() << "'\n";
         });
-      return false;
+        return false;
+      }
     }
   }
-
+  
   return true;
 }
 
@@ -648,13 +647,11 @@ static std::string getEnumNameForToken(StringRef Str) {
     case '*': Res += "_STAR_"; break;
     case '%': Res += "_PCT_"; break;
     case ':': Res += "_COLON_"; break;
-
     default:
-      if (isalnum(*it))  {
+      if (isalnum(*it))
         Res += *it;
-      } else {
+      else
         Res += "_" + utostr((unsigned) *it) + "_";
-      }
     }
   }
 
@@ -904,14 +901,6 @@ AsmMatcherInfo::AsmMatcherInfo(Record *asmParser)
 }
 
 void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
-  // Parse the instructions; we need to do this first so that we can gather the
-  // singleton register classes.
-  std::set<std::string> SingletonRegisterNames;
-
-  const std::vector<const CodeGenInstruction*> &InstrList =
-    Target.getInstructionsByEnumValue();
-  
-  
   // Build information about all of the AssemblerPredicates.
   std::vector<Record*> AllPredicates =
     Records.getAllDerivedDefinitions("Predicate");
@@ -931,9 +920,16 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     assert(FeatureNo < 32 && "Too many subtarget features!");
   }
 
+  // Parse the instructions; we need to do this first so that we can gather the
+  // singleton register classes.
+  std::set<std::string> SingletonRegisterNames;
+  const std::vector<const CodeGenInstruction*> &InstrList =
+    Target.getInstructionsByEnumValue();
   for (unsigned i = 0, e = InstrList.size(); i != e; ++i) {
     const CodeGenInstruction &CGI = *InstrList[i];
 
+    // If the tblgen -match-prefix option is specified (for tblgen hackers),
+    // filter the set of instructions we consider.
     if (!StringRef(CGI.TheDef->getName()).startswith(MatchPrefix))
       continue;
 
@@ -943,7 +939,8 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     II->Instr = &CGI;
     II->AsmString = FlattenVariants(CGI.AsmString, 0);
 
-    // Remove comments from the asm string.
+    // Remove comments from the asm string.  We know that the asmstring only
+    // has one line.
     if (!CommentDelimiter.empty()) {
       size_t Idx = StringRef(II->AsmString).find(CommentDelimiter);
       if (Idx != StringRef::npos)
@@ -955,7 +952,7 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     // Ignore instructions which shouldn't be matched.
     if (!IsAssemblerInstruction(CGI.TheDef->getName(), CGI, II->Tokens))
       continue;
-
+    
     // Collect singleton registers, if used.
     for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
       if (!II->Tokens[i].startswith(RegisterPrefix))
