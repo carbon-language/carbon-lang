@@ -568,6 +568,42 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
   case CK_AnyPointerToBlockPointerCast:
     return Visit(SubExpr);
 
+  case CK_DerivedToBase:
+  case CK_UncheckedDerivedToBase: {
+    LValue BaseLV;
+    if (!EvaluatePointer(E->getSubExpr(), BaseLV, Info))
+      return false;
+
+    // Now figure out the necessary offset to add to the baseLV to get from
+    // the derived class to the base class.
+    uint64_t Offset = 0;
+
+    QualType Ty = E->getSubExpr()->getType();
+    const CXXRecordDecl *DerivedDecl = 
+      Ty->getAs<PointerType>()->getPointeeType()->getAsCXXRecordDecl();
+
+    for (CastExpr::path_const_iterator PathI = E->path_begin(), 
+         PathE = E->path_end(); PathI != PathE; ++PathI) {
+      const CXXBaseSpecifier *Base = *PathI;
+
+      // FIXME: If the base is virtual, we'd need to determine the type of the
+      // most derived class and we don't support that right now.
+      if (Base->isVirtual())
+        return false;
+
+      const CXXRecordDecl *BaseDecl = Base->getType()->getAsCXXRecordDecl();
+      const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(DerivedDecl);
+
+      Offset += Layout.getBaseClassOffset(BaseDecl);
+      DerivedDecl = BaseDecl;
+    }
+
+    Result.Base = BaseLV.getLValueBase();
+    Result.Offset = BaseLV.getLValueOffset() + 
+      CharUnits::fromQuantity(Offset / Info.Ctx.getCharWidth());
+    return true;
+  }
+
   case CK_IntegralToPointer: {
     APValue Value;
     if (!EvaluateIntegerOrLValue(SubExpr, Value, Info))

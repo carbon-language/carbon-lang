@@ -17,6 +17,11 @@ struct D { ~D(); };
 // It's okay if we ever implement the IR-generation optimization to remove this.
 // CHECK: @_ZN5test3L3varE = internal constant i8* getelementptr inbounds ([7 x i8]* 
 
+// PR6205: The casts should not require global initializers
+// CHECK: @_ZN6PR59741cE = external global %"struct.PR5974::C"
+// CHECK: @_ZN6PR59741aE = global %"struct.PR5974::A"* bitcast (%"struct.PR5974::C"* @_ZN6PR59741cE to %"struct.PR5974::A"*), align 8
+// CHECK: @_ZN6PR59741bE = global %"struct.PR5974::A"* bitcast (i8* getelementptr (%"struct.PR5974::C"* @_ZN6PR59741cE, i32 0, i32 0, i64 4) to %"struct.PR5974::A"*), align 8
+
 // CHECK: call void @_ZN1AC1Ev(%struct.A* @a)
 // CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1AD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @a, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
 A a;
@@ -64,6 +69,17 @@ namespace test3 {
   const char *test() { return var; }
 }
 
+namespace PR5974 {
+  struct A { int a; };
+  struct B { int b; };
+  struct C : A, B { int c; };
+
+  extern C c;
+
+  // These should not require global initializers.
+  A* a = &c;
+  B* b = &c;
+}
 // CHECK:      define internal void [[TEST1_Z_INIT:@.*]]()
 // CHECK:        load i32* @_ZN5test1L1yE
 // CHECK-NEXT:   xor

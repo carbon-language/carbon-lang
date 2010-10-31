@@ -16,6 +16,7 @@
 
 #include "llvm/System/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclCXX.h"
 
 namespace clang {
