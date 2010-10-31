@@ -2953,7 +2953,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = /Developer/usr/bin;
 				PREBINDING = NO;
 				PRODUCT_NAME = "darwin-debug";
 			};
@@ -2967,7 +2967,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = /Developer/usr/bin;
 				PREBINDING = NO;
 				PRODUCT_NAME = "darwin-debug";
 				ZERO_LINK = NO;
@@ -2980,7 +2980,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = /Developer/usr/bin;
 				PREBINDING = NO;
 				PRODUCT_NAME = "darwin-debug";
 			};
