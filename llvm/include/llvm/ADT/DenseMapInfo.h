@@ -102,6 +102,20 @@ template<> struct DenseMapInfo<int> {
   }
 };
 
+// Provide DenseMapInfo for longs.
+template<> struct DenseMapInfo<long> {
+  static inline long getEmptyKey() {
+    return (1UL << (sizeof(long) * 8 - 1)) - 1L;
+  }
+  static inline long getTombstoneKey() { return getEmptyKey() - 1L; }
+  static unsigned getHashValue(const long& Val) {
+    return (unsigned)(Val * 37L);
+  }
+  static bool isEqual(const long& LHS, const long& RHS) {
+    return LHS == RHS;
+  }
+};
+
 // Provide DenseMapInfo for long longs.
 template<> struct DenseMapInfo<long long> {
   static inline long long getEmptyKey() { return 0x7fffffffffffffffLL; }
