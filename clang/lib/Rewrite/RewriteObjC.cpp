@@ -155,7 +155,7 @@ namespace {
 
     bool DisableReplaceStmt;
 
-    static const int OBJC_ABI_VERSION =7 ;
+    static const int OBJC_ABI_VERSION = 7;
   public:
     virtual void Initialize(ASTContext &context);
 
@@ -195,7 +195,7 @@ namespace {
     }
 
     void ReplaceStmtWithRange(Stmt *Old, Stmt *New, SourceRange SrcRange) {
-      // Measaure the old text.
+      // Measure the old text.
       int Size = Rewrite.getRangeSize(SrcRange);
       if (Size == -1) {
         Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag)
@@ -5448,7 +5448,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
             continue;
           }
         }
-      }
+    }
 
   if (BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
     llvm::SmallVector<BlockDeclRefExpr *, 8> InnerBlockDeclRefs;
