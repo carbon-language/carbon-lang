@@ -129,7 +129,7 @@ public:
 };
 
 /// CCAssignFn - This function assigns a location for Val, updating State to
-/// reflect the change.
+/// reflect the change.  It returns 'true' if it failed to handle Val.
 typedef bool CCAssignFn(unsigned ValNo, EVT ValVT,
                         EVT LocVT, CCValAssign::LocInfo LocInfo,
                         ISD::ArgFlagsTy ArgFlags, CCState &State);
