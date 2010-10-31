@@ -68,13 +68,13 @@ class EmptySubobjectMap {
   
   /// MaxEmptyClassOffset - The highest offset known to contain an empty
   /// base subobject.
-  uint64_t MaxEmptyClassOffset;
+  CharUnits MaxEmptyClassOffset;
   
   /// ComputeEmptySubobjectSizes - Compute the size of the largest base or
   /// member subobject that is empty.
   void ComputeEmptySubobjectSizes();
   
-  void AddSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
+  void AddSubobjectAtOffset(const CXXRecordDecl *RD, CharUnits Offset);
   
   void UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
                                  uint64_t Offset, bool PlacingEmptyBase);
@@ -86,7 +86,7 @@ class EmptySubobjectMap {
   
   /// AnyEmptySubobjectsBeyondOffset - Returns whether there are any empty
   /// subobjects beyond the given offset.
-  bool AnyEmptySubobjectsBeyondOffset(uint64_t Offset) const {
+  bool AnyEmptySubobjectsBeyondOffset(CharUnits Offset) const {
     return Offset <= MaxEmptyClassOffset;
   }
 
@@ -99,8 +99,8 @@ class EmptySubobjectMap {
   }
 
 protected:
-  bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, 
-                                 uint64_t Offset) const;
+  bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD,
+                                 CharUnits Offset) const;
 
   bool CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
                                      uint64_t Offset);
@@ -118,8 +118,7 @@ public:
   uint64_t SizeOfLargestEmptySubobject;
 
   EmptySubobjectMap(ASTContext &Context, const CXXRecordDecl *Class)
-    : Context(Context), Class(Class), MaxEmptyClassOffset(0),
-    SizeOfLargestEmptySubobject(0) {
+  : Context(Context), Class(Class), SizeOfLargestEmptySubobject(0) {
       ComputeEmptySubobjectSizes();
   }
 
@@ -186,13 +185,12 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
 
 bool
 EmptySubobjectMap::CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, 
-                                             uint64_t Offset) const {
+                                             CharUnits Offset) const {
   // We only need to check empty bases.
   if (!RD->isEmpty())
     return true;
 
-  EmptyClassOffsetsMapTy::const_iterator I = 
-    EmptyClassOffsets.find(toCharUnits(Offset));
+  EmptyClassOffsetsMapTy::const_iterator I = EmptyClassOffsets.find(Offset);
   if (I == EmptyClassOffsets.end())
     return true;
   
@@ -205,19 +203,20 @@ EmptySubobjectMap::CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD,
 }
   
 void EmptySubobjectMap::AddSubobjectAtOffset(const CXXRecordDecl *RD, 
-                                             uint64_t Offset) {
+                                             CharUnits Offset) {
   // We only care about empty bases.
   if (!RD->isEmpty())
     return;
 
-  ClassVectorTy& Classes = EmptyClassOffsets[toCharUnits(Offset)];
+  ClassVectorTy& Classes = EmptyClassOffsets[Offset];
   assert(std::find(Classes.begin(), Classes.end(), RD) == Classes.end() &&
          "Duplicate empty class detected!");
 
   Classes.push_back(RD);
   
   // Update the empty class offset.
-  MaxEmptyClassOffset = std::max(MaxEmptyClassOffset, Offset);
+  if (Offset > MaxEmptyClassOffset)
+    MaxEmptyClassOffset = Offset;
 }
 
 bool
@@ -225,10 +224,10 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
                                                  uint64_t Offset) {
   // We don't have to keep looking past the maximum offset that's known to
   // contain an empty class.
-  if (!AnyEmptySubobjectsBeyondOffset(Offset))
+  if (!AnyEmptySubobjectsBeyondOffset(toCharUnits(Offset)))
     return true;
 
-  if (!CanPlaceSubobjectAtOffset(Info->Class, Offset))
+  if (!CanPlaceSubobjectAtOffset(Info->Class, toCharUnits(Offset)))
     return false;
 
   // Traverse all non-virtual bases.
@@ -279,7 +278,7 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
     return;
   }
 
-  AddSubobjectAtOffset(Info->Class, Offset);
+  AddSubobjectAtOffset(Info->Class, toCharUnits(Offset));
 
   // Traverse all non-virtual bases.
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(Info->Class);
@@ -333,10 +332,10 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
                                                   uint64_t Offset) const {
   // We don't have to keep looking past the maximum offset that's known to
   // contain an empty class.
-  if (!AnyEmptySubobjectsBeyondOffset(Offset))
+  if (!AnyEmptySubobjectsBeyondOffset(toCharUnits(Offset)))
     return true;
 
-  if (!CanPlaceSubobjectAtOffset(RD, Offset))
+  if (!CanPlaceSubobjectAtOffset(RD, toCharUnits(Offset)))
     return false;
   
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -387,7 +386,7 @@ bool EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
                                                        uint64_t Offset) const {
   // We don't have to keep looking past the maximum offset that's known to
   // contain an empty class.
-  if (!AnyEmptySubobjectsBeyondOffset(Offset))
+  if (!AnyEmptySubobjectsBeyondOffset(toCharUnits(Offset)))
     return true;
   
   QualType T = FD->getType();
@@ -411,7 +410,7 @@ bool EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
     for (uint64_t I = 0; I != NumElements; ++I) {
       // We don't have to keep looking past the maximum offset that's known to
       // contain an empty class.
-      if (!AnyEmptySubobjectsBeyondOffset(ElementOffset))
+      if (!AnyEmptySubobjectsBeyondOffset(toCharUnits(ElementOffset)))
         return true;
       
       if (!CanPlaceFieldSubobjectAtOffset(RD, RD, ElementOffset))
@@ -446,7 +445,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
   if (Offset >= SizeOfLargestEmptySubobject)
     return;
 
-  AddSubobjectAtOffset(RD, Offset);
+  AddSubobjectAtOffset(RD, toCharUnits(Offset));
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
@@ -601,6 +600,14 @@ protected:
       DataSize(0), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
       PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
+  // FIXME: Remove these.
+  CharUnits toCharUnits(uint64_t Offset) const {
+    return CharUnits::fromQuantity(Offset / Context.getCharWidth());
+  }
+  uint64_t toOffset(CharUnits Offset) const {
+    return Offset.getQuantity() * Context.getCharWidth();
+  }
+  
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);

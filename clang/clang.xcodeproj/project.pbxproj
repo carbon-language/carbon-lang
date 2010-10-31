@@ -138,8 +138,6 @@
 		57AA9250121C8B9400B4AA6C /* ASTReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57AA924D121C8B9400B4AA6C /* ASTReader.cpp */; };
 		57AA9251121C8B9400B4AA6C /* ASTReaderDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57AA924E121C8B9400B4AA6C /* ASTReaderDecl.cpp */; };
 		57AA9252121C8B9400B4AA6C /* ASTReaderStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57AA924F121C8B9400B4AA6C /* ASTReaderStmt.cpp */; };
-		57EB566A121B034300ECA335 /* GeneratePCH.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5662121B034300ECA335 /* GeneratePCH.cpp */; };
-		57EB566B121B034300ECA335 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5663121B034300ECA335 /* Makefile */; };
 		57F66612121B4DE600DCE3B7 /* ASTWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57F6660F121B4DE600DCE3B7 /* ASTWriter.cpp */; };
 		57F66613121B4DE600DCE3B7 /* ASTWriterDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57F66610121B4DE600DCE3B7 /* ASTWriterDecl.cpp */; };
 		57F66614121B4DE600DCE3B7 /* ASTWriterStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57F66611121B4DE600DCE3B7 /* ASTWriterStmt.cpp */; };
@@ -180,34 +178,11 @@
 		BF9FEE381225E925003A8B71 /* BoostConAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE371225E925003A8B71 /* BoostConAction.cpp */; };
 		BF9FEE521226FE9F003A8B71 /* ParseAST.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE511226FE9F003A8B71 /* ParseAST.cpp */; };
 		BF9FEEF2122D8068003A8B71 /* PreprocessingRecord.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEEF1122D8068003A8B71 /* PreprocessingRecord.cpp */; };
-		BFE2F6AB11DA955A0007EDC0 /* DeltaTree.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F67D11DA95590007EDC0 /* DeltaTree.d */; };
-		BFE2F6AC11DA955A0007EDC0 /* DeltaTree.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F67E11DA955A0007EDC0 /* DeltaTree.o */; };
-		BFE2F6AD11DA955A0007EDC0 /* FixItRewriter.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F67F11DA955A0007EDC0 /* FixItRewriter.d */; };
-		BFE2F6AE11DA955A0007EDC0 /* FixItRewriter.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F68011DA955A0007EDC0 /* FixItRewriter.o */; };
-		BFE2F6AF11DA955A0007EDC0 /* FrontendActions.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F68111DA955A0007EDC0 /* FrontendActions.d */; };
-		BFE2F6B011DA955A0007EDC0 /* FrontendActions.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F68211DA955A0007EDC0 /* FrontendActions.o */; };
-		BFE2F6B111DA955A0007EDC0 /* HTMLPrint.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F68311DA955A0007EDC0 /* HTMLPrint.d */; };
-		BFE2F6B211DA955A0007EDC0 /* HTMLPrint.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F68411DA955A0007EDC0 /* HTMLPrint.o */; };
-		BFE2F6B311DA955A0007EDC0 /* HTMLRewrite.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F68511DA955A0007EDC0 /* HTMLRewrite.d */; };
-		BFE2F6B411DA955A0007EDC0 /* HTMLRewrite.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F68611DA955A0007EDC0 /* HTMLRewrite.o */; };
-		BFE2F6B511DA955A0007EDC0 /* RewriteMacros.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F68711DA955A0007EDC0 /* RewriteMacros.d */; };
-		BFE2F6B711DA955A0007EDC0 /* RewriteObjC.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F68911DA955A0007EDC0 /* RewriteObjC.d */; };
-		BFE2F6B911DA955A0007EDC0 /* Rewriter.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F68B11DA955A0007EDC0 /* Rewriter.d */; };
-		BFE2F6BF11DA955A0007EDC0 /* TokenRewriter.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69111DA955A0007EDC0 /* TokenRewriter.d */; };
-		BFE2F6C011DA955A0007EDC0 /* TokenRewriter.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F69211DA955A0007EDC0 /* TokenRewriter.o */; };
 		BFE2F6C111DA955A0007EDC0 /* DeltaTree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69311DA955A0007EDC0 /* DeltaTree.cpp */; };
 		BFE2F6C211DA955A0007EDC0 /* FixItRewriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69411DA955A0007EDC0 /* FixItRewriter.cpp */; };
 		BFE2F6C311DA955A0007EDC0 /* FrontendActions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69511DA955A0007EDC0 /* FrontendActions.cpp */; };
 		BFE2F6C411DA955A0007EDC0 /* HTMLPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69611DA955A0007EDC0 /* HTMLPrint.cpp */; };
 		BFE2F6C511DA955A0007EDC0 /* HTMLRewrite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69711DA955A0007EDC0 /* HTMLRewrite.cpp */; };
-		BFE2F6C611DA955A0007EDC0 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69811DA955A0007EDC0 /* Makefile */; };
-		BFE2F6C711DA955A0007EDC0 /* DeltaTree.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69B11DA955A0007EDC0 /* DeltaTree.d */; };
-		BFE2F6C811DA955A0007EDC0 /* DeltaTree.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F69C11DA955A0007EDC0 /* DeltaTree.o */; };
-		BFE2F6C911DA955A0007EDC0 /* HTMLRewrite.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69D11DA955A0007EDC0 /* HTMLRewrite.d */; };
-		BFE2F6CA11DA955A0007EDC0 /* HTMLRewrite.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F69E11DA955A0007EDC0 /* HTMLRewrite.o */; };
-		BFE2F6CB11DA955A0007EDC0 /* Rewriter.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F69F11DA955A0007EDC0 /* Rewriter.d */; };
-		BFE2F6CF11DA955A0007EDC0 /* TokenRewriter.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F6A311DA955A0007EDC0 /* TokenRewriter.d */; };
-		BFE2F6D011DA955A0007EDC0 /* TokenRewriter.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F6A411DA955A0007EDC0 /* TokenRewriter.o */; };
 		BFE2F6D111DA955A0007EDC0 /* RewriteMacros.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F6A511DA955A0007EDC0 /* RewriteMacros.cpp */; };
 		BFE2F6D211DA955A0007EDC0 /* RewriteObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F6A611DA955A0007EDC0 /* RewriteObjC.cpp */; };
 		BFE2F6D311DA955A0007EDC0 /* Rewriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F6A711DA955A0007EDC0 /* Rewriter.cpp */; };
@@ -599,9 +574,6 @@
 		57AA924F121C8B9400B4AA6C /* ASTReaderStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTReaderStmt.cpp; sourceTree = "<group>"; };
 		57E15B21121C8D2B0051C2CC /* ASTDeserializationListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDeserializationListener.h; path = clang/Serialization/ASTDeserializationListener.h; sourceTree = "<group>"; };
 		57E15B22121C8D2B0051C2CC /* ASTReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTReader.h; path = clang/Serialization/ASTReader.h; sourceTree = "<group>"; };
-		57EB5661121B034300ECA335 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
-		57EB5662121B034300ECA335 /* GeneratePCH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GeneratePCH.cpp; sourceTree = "<group>"; };
-		57EB5663121B034300ECA335 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		57F6660F121B4DE600DCE3B7 /* ASTWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTWriter.cpp; sourceTree = "<group>"; };
 		57F66610121B4DE600DCE3B7 /* ASTWriterDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTWriterDecl.cpp; sourceTree = "<group>"; };
 		57F66611121B4DE600DCE3B7 /* ASTWriterStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTWriterStmt.cpp; sourceTree = "<group>"; };
@@ -763,37 +735,11 @@
 		BF9FEE511226FE9F003A8B71 /* ParseAST.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParseAST.cpp; path = lib/Parse/ParseAST.cpp; sourceTree = "<group>"; };
 		BF9FEE531226FEC1003A8B71 /* RAIIObjectsForParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RAIIObjectsForParser.h; path = lib/Parse/RAIIObjectsForParser.h; sourceTree = "<group>"; };
 		BF9FEEF1122D8068003A8B71 /* PreprocessingRecord.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PreprocessingRecord.cpp; sourceTree = "<group>"; };
-		BFE2F67A11DA95590007EDC0 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
-		BFE2F67C11DA95590007EDC0 /* .dir */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .dir; sourceTree = "<group>"; };
-		BFE2F67D11DA95590007EDC0 /* DeltaTree.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = DeltaTree.d; sourceTree = "<group>"; };
-		BFE2F67E11DA955A0007EDC0 /* DeltaTree.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = DeltaTree.o; sourceTree = "<group>"; };
-		BFE2F67F11DA955A0007EDC0 /* FixItRewriter.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = FixItRewriter.d; sourceTree = "<group>"; };
-		BFE2F68011DA955A0007EDC0 /* FixItRewriter.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = FixItRewriter.o; sourceTree = "<group>"; };
-		BFE2F68111DA955A0007EDC0 /* FrontendActions.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = FrontendActions.d; sourceTree = "<group>"; };
-		BFE2F68211DA955A0007EDC0 /* FrontendActions.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = FrontendActions.o; sourceTree = "<group>"; };
-		BFE2F68311DA955A0007EDC0 /* HTMLPrint.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = HTMLPrint.d; sourceTree = "<group>"; };
-		BFE2F68411DA955A0007EDC0 /* HTMLPrint.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = HTMLPrint.o; sourceTree = "<group>"; };
-		BFE2F68511DA955A0007EDC0 /* HTMLRewrite.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = HTMLRewrite.d; sourceTree = "<group>"; };
-		BFE2F68611DA955A0007EDC0 /* HTMLRewrite.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = HTMLRewrite.o; sourceTree = "<group>"; };
-		BFE2F68711DA955A0007EDC0 /* RewriteMacros.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = RewriteMacros.d; sourceTree = "<group>"; };
-		BFE2F68911DA955A0007EDC0 /* RewriteObjC.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = RewriteObjC.d; sourceTree = "<group>"; };
-		BFE2F68B11DA955A0007EDC0 /* Rewriter.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = Rewriter.d; sourceTree = "<group>"; };
-		BFE2F69111DA955A0007EDC0 /* TokenRewriter.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = TokenRewriter.d; sourceTree = "<group>"; };
-		BFE2F69211DA955A0007EDC0 /* TokenRewriter.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = TokenRewriter.o; sourceTree = "<group>"; };
 		BFE2F69311DA955A0007EDC0 /* DeltaTree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeltaTree.cpp; sourceTree = "<group>"; };
 		BFE2F69411DA955A0007EDC0 /* FixItRewriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FixItRewriter.cpp; sourceTree = "<group>"; };
 		BFE2F69511DA955A0007EDC0 /* FrontendActions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FrontendActions.cpp; sourceTree = "<group>"; };
 		BFE2F69611DA955A0007EDC0 /* HTMLPrint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HTMLPrint.cpp; sourceTree = "<group>"; };
 		BFE2F69711DA955A0007EDC0 /* HTMLRewrite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HTMLRewrite.cpp; sourceTree = "<group>"; };
-		BFE2F69811DA955A0007EDC0 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		BFE2F69A11DA955A0007EDC0 /* .dir */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .dir; sourceTree = "<group>"; };
-		BFE2F69B11DA955A0007EDC0 /* DeltaTree.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = DeltaTree.d; sourceTree = "<group>"; };
-		BFE2F69C11DA955A0007EDC0 /* DeltaTree.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = DeltaTree.o; sourceTree = "<group>"; };
-		BFE2F69D11DA955A0007EDC0 /* HTMLRewrite.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = HTMLRewrite.d; sourceTree = "<group>"; };
-		BFE2F69E11DA955A0007EDC0 /* HTMLRewrite.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = HTMLRewrite.o; sourceTree = "<group>"; };
-		BFE2F69F11DA955A0007EDC0 /* Rewriter.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = Rewriter.d; sourceTree = "<group>"; };
-		BFE2F6A311DA955A0007EDC0 /* TokenRewriter.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = TokenRewriter.d; sourceTree = "<group>"; };
-		BFE2F6A411DA955A0007EDC0 /* TokenRewriter.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = TokenRewriter.o; sourceTree = "<group>"; };
 		BFE2F6A511DA955A0007EDC0 /* RewriteMacros.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RewriteMacros.cpp; sourceTree = "<group>"; };
 		BFE2F6A611DA955A0007EDC0 /* RewriteObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RewriteObjC.cpp; sourceTree = "<group>"; };
 		BFE2F6A711DA955A0007EDC0 /* Rewriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Rewriter.cpp; sourceTree = "<group>"; };
@@ -988,15 +934,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BFE2F6AC11DA955A0007EDC0 /* DeltaTree.o in Frameworks */,
-				BFE2F6AE11DA955A0007EDC0 /* FixItRewriter.o in Frameworks */,
-				BFE2F6B011DA955A0007EDC0 /* FrontendActions.o in Frameworks */,
-				BFE2F6B211DA955A0007EDC0 /* HTMLPrint.o in Frameworks */,
-				BFE2F6B411DA955A0007EDC0 /* HTMLRewrite.o in Frameworks */,
-				BFE2F6C011DA955A0007EDC0 /* TokenRewriter.o in Frameworks */,
-				BFE2F6C811DA955A0007EDC0 /* DeltaTree.o in Frameworks */,
-				BFE2F6CA11DA955A0007EDC0 /* HTMLRewrite.o in Frameworks */,
-				BFE2F6D011DA955A0007EDC0 /* TokenRewriter.o in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1252,9 +1189,6 @@
 				57F6660F121B4DE600DCE3B7 /* ASTWriter.cpp */,
 				57F66610121B4DE600DCE3B7 /* ASTWriterDecl.cpp */,
 				57F66611121B4DE600DCE3B7 /* ASTWriterStmt.cpp */,
-				57EB5661121B034300ECA335 /* CMakeLists.txt */,
-				57EB5662121B034300ECA335 /* GeneratePCH.cpp */,
-				57EB5663121B034300ECA335 /* Makefile */,
 			);
 			name = Serialization;
 			path = lib/Serialization;
@@ -1343,15 +1277,11 @@
 		BFE2F67911DA95590007EDC0 /* Rewrite */ = {
 			isa = PBXGroup;
 			children = (
-				BFE2F67A11DA95590007EDC0 /* CMakeLists.txt */,
-				BFE2F67B11DA95590007EDC0 /* Debug */,
 				BFE2F69311DA955A0007EDC0 /* DeltaTree.cpp */,
 				BFE2F69411DA955A0007EDC0 /* FixItRewriter.cpp */,
 				BFE2F69511DA955A0007EDC0 /* FrontendActions.cpp */,
 				BFE2F69611DA955A0007EDC0 /* HTMLPrint.cpp */,
 				BFE2F69711DA955A0007EDC0 /* HTMLRewrite.cpp */,
-				BFE2F69811DA955A0007EDC0 /* Makefile */,
-				BFE2F69911DA955A0007EDC0 /* Release-Asserts */,
 				BFE2F6A511DA955A0007EDC0 /* RewriteMacros.cpp */,
 				BFE2F6A611DA955A0007EDC0 /* RewriteObjC.cpp */,
 				BFE2F6A711DA955A0007EDC0 /* Rewriter.cpp */,
@@ -1361,44 +1291,6 @@
 			);
 			name = Rewrite;
 			path = lib/Rewrite;
-			sourceTree = "<group>";
-		};
-		BFE2F67B11DA95590007EDC0 /* Debug */ = {
-			isa = PBXGroup;
-			children = (
-				BFE2F67C11DA95590007EDC0 /* .dir */,
-				BFE2F67D11DA95590007EDC0 /* DeltaTree.d */,
-				BFE2F67E11DA955A0007EDC0 /* DeltaTree.o */,
-				BFE2F67F11DA955A0007EDC0 /* FixItRewriter.d */,
-				BFE2F68011DA955A0007EDC0 /* FixItRewriter.o */,
-				BFE2F68111DA955A0007EDC0 /* FrontendActions.d */,
-				BFE2F68211DA955A0007EDC0 /* FrontendActions.o */,
-				BFE2F68311DA955A0007EDC0 /* HTMLPrint.d */,
-				BFE2F68411DA955A0007EDC0 /* HTMLPrint.o */,
-				BFE2F68511DA955A0007EDC0 /* HTMLRewrite.d */,
-				BFE2F68611DA955A0007EDC0 /* HTMLRewrite.o */,
-				BFE2F68711DA955A0007EDC0 /* RewriteMacros.d */,
-				BFE2F68911DA955A0007EDC0 /* RewriteObjC.d */,
-				BFE2F68B11DA955A0007EDC0 /* Rewriter.d */,
-				BFE2F69111DA955A0007EDC0 /* TokenRewriter.d */,
-				BFE2F69211DA955A0007EDC0 /* TokenRewriter.o */,
-			);
-			path = Debug;
-			sourceTree = "<group>";
-		};
-		BFE2F69911DA955A0007EDC0 /* Release-Asserts */ = {
-			isa = PBXGroup;
-			children = (
-				BFE2F69A11DA955A0007EDC0 /* .dir */,
-				BFE2F69B11DA955A0007EDC0 /* DeltaTree.d */,
-				BFE2F69C11DA955A0007EDC0 /* DeltaTree.o */,
-				BFE2F69D11DA955A0007EDC0 /* HTMLRewrite.d */,
-				BFE2F69E11DA955A0007EDC0 /* HTMLRewrite.o */,
-				BFE2F69F11DA955A0007EDC0 /* Rewriter.d */,
-				BFE2F6A311DA955A0007EDC0 /* TokenRewriter.d */,
-				BFE2F6A411DA955A0007EDC0 /* TokenRewriter.o */,
-			);
-			path = "Release-Asserts";
 			sourceTree = "<group>";
 		};
 		C6859E8C029090F304C91782 /* Documentation */ = {
@@ -2290,33 +2182,17 @@
 				1ABD23F71182449800A48E65 /* Type.cpp in Sources */,
 				1ABD23F81182449800A48E65 /* TypeLoc.cpp in Sources */,
 				1ABD23F91182449800A48E65 /* TypePrinter.cpp in Sources */,
-				BFE2F6AB11DA955A0007EDC0 /* DeltaTree.d in Sources */,
-				BFE2F6AD11DA955A0007EDC0 /* FixItRewriter.d in Sources */,
-				BFE2F6AF11DA955A0007EDC0 /* FrontendActions.d in Sources */,
-				BFE2F6B111DA955A0007EDC0 /* HTMLPrint.d in Sources */,
-				BFE2F6B311DA955A0007EDC0 /* HTMLRewrite.d in Sources */,
-				BFE2F6B511DA955A0007EDC0 /* RewriteMacros.d in Sources */,
-				BFE2F6B711DA955A0007EDC0 /* RewriteObjC.d in Sources */,
-				BFE2F6B911DA955A0007EDC0 /* Rewriter.d in Sources */,
-				BFE2F6BF11DA955A0007EDC0 /* TokenRewriter.d in Sources */,
 				BFE2F6C111DA955A0007EDC0 /* DeltaTree.cpp in Sources */,
 				BFE2F6C211DA955A0007EDC0 /* FixItRewriter.cpp in Sources */,
 				BFE2F6C311DA955A0007EDC0 /* FrontendActions.cpp in Sources */,
 				BFE2F6C411DA955A0007EDC0 /* HTMLPrint.cpp in Sources */,
 				BFE2F6C511DA955A0007EDC0 /* HTMLRewrite.cpp in Sources */,
-				BFE2F6C611DA955A0007EDC0 /* Makefile in Sources */,
-				BFE2F6C711DA955A0007EDC0 /* DeltaTree.d in Sources */,
-				BFE2F6C911DA955A0007EDC0 /* HTMLRewrite.d in Sources */,
-				BFE2F6CB11DA955A0007EDC0 /* Rewriter.d in Sources */,
-				BFE2F6CF11DA955A0007EDC0 /* TokenRewriter.d in Sources */,
 				BFE2F6D111DA955A0007EDC0 /* RewriteMacros.cpp in Sources */,
 				BFE2F6D211DA955A0007EDC0 /* RewriteObjC.cpp in Sources */,
 				BFE2F6D311DA955A0007EDC0 /* Rewriter.cpp in Sources */,
 				BFE2F6D411DA955A0007EDC0 /* RewriteRope.cpp in Sources */,
 				BFE2F6D511DA955A0007EDC0 /* RewriteTest.cpp in Sources */,
 				BFE2F6D611DA955A0007EDC0 /* TokenRewriter.cpp in Sources */,
-				57EB566A121B034300ECA335 /* GeneratePCH.cpp in Sources */,
-				57EB566B121B034300ECA335 /* Makefile in Sources */,
 				57F66612121B4DE600DCE3B7 /* ASTWriter.cpp in Sources */,
 				57F66613121B4DE600DCE3B7 /* ASTWriterDecl.cpp in Sources */,
 				57F66614121B4DE600DCE3B7 /* ASTWriterStmt.cpp in Sources */,
