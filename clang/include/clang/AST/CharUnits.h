@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_CHARUNITS_H
 #define LLVM_CLANG_AST_CHARUNITS_H
 
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/System/DataTypes.h"
 
 namespace clang {
@@ -145,5 +146,39 @@ inline clang::CharUnits operator* (clang::CharUnits::QuantityType Scale,
                                    const clang::CharUnits &CU) {
   return CU * Scale;
 }
+
+namespace llvm {
+
+template<> struct DenseMapInfo<clang::CharUnits> {
+  static clang::CharUnits getEmptyKey() {
+    clang::CharUnits::QuantityType Quantity =
+      DenseMapInfo<clang::CharUnits::QuantityType>::getEmptyKey();
+
+    return clang::CharUnits::fromQuantity(Quantity);
+  }
+
+  static clang::CharUnits getTombstoneKey() {
+    clang::CharUnits::QuantityType Quantity =
+      DenseMapInfo<clang::CharUnits::QuantityType>::getTombstoneKey();
+    
+    return clang::CharUnits::fromQuantity(Quantity);    
+  }
+
+  static unsigned getHashValue(const clang::CharUnits &CU) {
+    clang::CharUnits::QuantityType Quantity = CU.getQuantity();
+    return DenseMapInfo<clang::CharUnits::QuantityType>::getHashValue(Quantity);
+  }
+
+  static bool isEqual(const clang::CharUnits &LHS, 
+                      const clang::CharUnits &RHS) {
+    return LHS == RHS;
+  }
+};
+
+template <> struct isPodLike<clang::CharUnits> {
+  static const bool value = true;
+};
+  
+} // end namespace llvm
 
 #endif // LLVM_CLANG_AST_CHARUNITS_H
