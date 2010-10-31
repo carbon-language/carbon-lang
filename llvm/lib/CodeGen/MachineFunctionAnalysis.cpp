@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
+#include "llvm/CodeGen/GCMetadata.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 using namespace llvm;
@@ -52,7 +53,8 @@ bool MachineFunctionAnalysis::doInitialization(Module &M) {
 bool MachineFunctionAnalysis::runOnFunction(Function &F) {
   assert(!MF && "MachineFunctionAnalysis already initialized!");
   MF = new MachineFunction(&F, TM, NextFnNum++,
-                           getAnalysis<MachineModuleInfo>());
+                           getAnalysis<MachineModuleInfo>(),
+                           getAnalysisIfAvailable<GCModuleInfo>());
   return false;
 }
 

@@ -28,6 +28,7 @@ namespace llvm {
 
 class Value;
 class Function;
+class GCModuleInfo;
 class MachineRegisterInfo;
 class MachineFrameInfo;
 class MachineConstantPool;
@@ -75,6 +76,7 @@ class MachineFunction {
   const TargetMachine &Target;
   MCContext &Ctx;
   MachineModuleInfo &MMI;
+  GCModuleInfo *GMI;
   
   // RegInfo - Information about each register in use in the function.
   MachineRegisterInfo *RegInfo;
@@ -127,10 +129,12 @@ class MachineFunction {
   void operator=(const MachineFunction&);   // DO NOT IMPLEMENT
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM,
-                  unsigned FunctionNum, MachineModuleInfo &MMI);
+                  unsigned FunctionNum, MachineModuleInfo &MMI,
+                  GCModuleInfo* GMI);
   ~MachineFunction();
 
   MachineModuleInfo &getMMI() const { return MMI; }
+  GCModuleInfo *getGMI() const { return GMI; }
   MCContext &getContext() const { return Ctx; }
   
   /// getFunction - Return the LLVM function that this machine code represents
