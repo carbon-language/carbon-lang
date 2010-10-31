@@ -14,7 +14,7 @@
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/STreamString.h"
+#include "lldb/Core/StreamString.h"
 
 using namespace lldb;
 using namespace lldb_private;
