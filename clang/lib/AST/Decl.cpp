@@ -459,9 +459,15 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
     // about whether containing classes have visibility attributes,
     // and that's intentional.
     if (TSK != TSK_ExplicitInstantiationDeclaration &&
-        ConsiderGlobalVisibility && MD->isInlined() &&
-        MD->getASTContext().getLangOptions().InlineVisibilityHidden)
-      LV.setVisibility(HiddenVisibility);
+        ConsiderGlobalVisibility &&
+        MD->getASTContext().getLangOptions().InlineVisibilityHidden) {
+      // InlineVisibilityHidden only applies to definitions, and
+      // isInlined() only gives meaningful answers on definitions
+      // anyway.
+      const FunctionDecl *Def = 0;
+      if (MD->hasBody(Def) && Def->isInlined())
+        LV.setVisibility(HiddenVisibility);
+    }
 
     // Note that in contrast to basically every other situation, we
     // *do* apply -fvisibility to method declarations.

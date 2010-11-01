@@ -64,3 +64,18 @@ void use(X0 *x0, X1<int> *x1, X2 *x2, X1<float> *x3) {
   // CHECK: define available_externally void @_ZN2X1IfE2f2Ev
   x3->f2();
 }
+
+// rdar://problem/8614470
+namespace test1 {
+  struct __attribute__((visibility("default"))) A {
+    inline void foo();
+    ~A();
+  };
+
+  void test() {
+    A a;
+    a.foo();
+  }
+// CHECK: declare void @_ZN5test11A3fooEv
+// CHECK: declare void @_ZN5test11AD1Ev
+}
