@@ -2831,11 +2831,12 @@ void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
 /// takes care of any checks that cannot be performed on the
 /// declaration itself, e.g., that the types of each of the function
 /// parameters are complete.
-bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
+bool Sema::CheckParmsForFunctionDef(ParmVarDecl **P, ParmVarDecl **PEnd,
+                                    bool CheckParameterNames) {
   bool HasInvalidParm = false;
-  for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
-    ParmVarDecl *Param = FD->getParamDecl(p);
-
+  for (; P != PEnd; ++P) {
+    ParmVarDecl *Param = *P;
+    
     // C99 6.7.5.3p4: the parameters in a parameter type list in a
     // function declarator that is part of a function definition of
     // that function shall not have incomplete type.
@@ -2850,7 +2851,8 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
 
     // C99 6.9.1p5: If the declarator includes a parameter type list, the
     // declaration of each parameter shall include an identifier.
-    if (Param->getIdentifier() == 0 &&
+    if (CheckParameterNames &&
+        Param->getIdentifier() == 0 &&
         !Param->isImplicit() &&
         !getLangOptions().CPlusPlus)
       Diag(Param->getLocation(), diag::err_parameter_name_omitted);

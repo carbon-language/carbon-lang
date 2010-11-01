@@ -3624,7 +3624,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       if (getLangOptions().CPlusPlus &&
           Param->getType().getUnqualifiedType() != Context.VoidTy)
         Diag(Param->getLocation(), diag::err_param_typedef_of_void);
-      // FIXME: Leaks decl?
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
       for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
         ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
@@ -4927,10 +4926,6 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
          "Not a function declarator!");
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
 
-  if (FTI.hasPrototype) {
-    // FIXME: Diagnose arguments without names in C.
-  }
-
   Scope *ParentScope = FnBodyScope->getParent();
 
   Decl *DP = HandleDeclarator(ParentScope, D,
@@ -5043,7 +5038,8 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
     PushDeclContext(FnBodyScope, FD);
 
   // Check the validity of our function parameters
-  CheckParmsForFunctionDef(FD);
+  CheckParmsForFunctionDef(FD->param_begin(), FD->param_end(),
+                           /*CheckParameterNames=*/true);
 
   bool ShouldCheckShadow =
     Diags.getDiagnosticLevel(diag::warn_decl_shadow) != Diagnostic::Ignored;
@@ -7356,7 +7352,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   }
 
   // Figure out the type that should be used for this enum.
-  // FIXME: Support -fshort-enums.
   QualType BestType;
   unsigned BestWidth;
 

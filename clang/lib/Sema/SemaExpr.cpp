@@ -7424,9 +7424,13 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   }
 
   // Set the parameters on the block decl.
-  if (!Params.empty())
+  if (!Params.empty()) {
     CurBlock->TheDecl->setParams(Params.data(), Params.size());
-
+    CheckParmsForFunctionDef(CurBlock->TheDecl->param_begin(),
+                             CurBlock->TheDecl->param_end(),
+                             /*CheckParameterNames=*/false);
+  }
+  
   // Finally we can process decl attributes.
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
 
@@ -7464,7 +7468,6 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
   // Pop off CurBlock, handle nested blocks.
   PopDeclContext();
   PopFunctionOrBlockScope();
-  // FIXME: Delete the ParmVarDecl objects as well???
 }
 
 /// ActOnBlockStmtExpr - This is called when the body of a block statement
@@ -7526,7 +7529,6 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
                              FunctionType::ExtInfo(NoReturn, 0, CC_Default));
   }
 
-  // FIXME: Check that return/parameter types are complete/non-abstract
   DiagnoseUnusedParameters(BSI->TheDecl->param_begin(),
                            BSI->TheDecl->param_end());
   BlockTy = Context.getBlockPointerType(BlockTy);

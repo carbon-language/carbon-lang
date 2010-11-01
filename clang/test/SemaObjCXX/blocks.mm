@@ -50,3 +50,27 @@ void foo6(void *block) {
 	void (^vb)(id obj, int idx, BOOL *stop) = (void (^)(id, int, BOOL *))block;
     BOOL (^bb)(id obj, int idx, BOOL *stop) = (BOOL (^)(id, int, BOOL *))block;
 }
+
+// <rdar://problem/8600419>: Require that the types of block
+// parameters are complete.
+namespace N1 {
+  template<class _T> class ptr; // expected-note{{template is declared here}}
+
+  template<class _T>
+    class foo {
+  public:
+    void bar(void (^)(ptr<_T>));
+  };
+
+  class X;
+
+  void test2();
+
+  void test()
+  {
+    foo<X> f;
+    f.bar(^(ptr<X> _f) { // expected-error{{implicit instantiation of undefined template 'N1::ptr<N1::X>'}}
+        test2();
+      });
+  }
+}
