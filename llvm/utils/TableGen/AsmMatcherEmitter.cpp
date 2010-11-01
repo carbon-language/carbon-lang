@@ -228,7 +228,7 @@ static bool IsAssemblerInstruction(StringRef Name,
 }
 
 namespace {
-
+  class AsmMatcherInfo;
 struct SubtargetFeatureInfo;
 
 /// ClassInfo - Helper class for storing the information about a particular
@@ -411,6 +411,11 @@ struct InstructionInfo {
   /// ConvertToMCInst to convert parsed operands into an MCInst for this
   /// function.
   std::string ConversionFnKind;
+  
+  /// getSingletonRegisterForToken - If the specified token is a singleton
+  /// register, return the register name, otherwise return a null StringRef.
+  StringRef getSingletonRegisterForToken(unsigned i,
+                                         const AsmMatcherInfo &Info) const;  
 
   /// operator< - Compare two instructions.
   bool operator<(const InstructionInfo &RHS) const {
@@ -493,6 +498,9 @@ public:
   /// The tablegen AsmParser record.
   Record *AsmParser;
 
+  /// Target - The target information.
+  CodeGenTarget &Target;
+
   /// The AsmParser "CommentDelimiter" value.
   std::string CommentDelimiter;
 
@@ -531,18 +539,17 @@ private:
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
-  void BuildRegisterClasses(CodeGenTarget &Target,
-                            std::set<std::string> &SingletonRegisterNames);
+  void BuildRegisterClasses(std::set<std::string> &SingletonRegisterNames);
 
   /// BuildOperandClasses - Build the ClassInfo* instances for user defined
   /// operand classes.
-  void BuildOperandClasses(CodeGenTarget &Target);
+  void BuildOperandClasses();
 
 public:
-  AsmMatcherInfo(Record *_AsmParser);
+  AsmMatcherInfo(Record *AsmParser, CodeGenTarget &Target);
 
   /// BuildInfo - Construct the various tables used during matching.
-  void BuildInfo(CodeGenTarget &Target);
+  void BuildInfo();
   
   /// getSubtargetFeature - Lookup or create the subtarget feature info for the
   /// given operand.
@@ -585,6 +592,43 @@ void InstructionInfo::dump() {
   }
 }
 
+/// getRegisterRecord - Get the register record for \arg name, or 0.
+static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
+  for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
+    const CodeGenRegister &Reg = Target.getRegisters()[i];
+    if (Name == Reg.TheDef->getValueAsString("AsmName"))
+      return Reg.TheDef;
+  }
+  
+  return 0;
+}
+
+/// getSingletonRegisterForToken - If the specified token is a singleton
+/// register, return the register name, otherwise return a null StringRef.
+StringRef InstructionInfo::
+getSingletonRegisterForToken(unsigned i, const AsmMatcherInfo &Info) const {
+  StringRef Tok = Tokens[i];
+  if (!Tok.startswith(Info.RegisterPrefix))
+    return StringRef();
+  
+  StringRef RegName = Tok.substr(Info.RegisterPrefix.size());
+  Record *Rec = getRegisterRecord(Info.Target, RegName);
+  
+  if (!Rec) {
+    // If there is no register prefix (i.e. "%" in "%eax"), then this may
+    // be some random non-register token, just ignore it.
+    if (Info.RegisterPrefix.empty())
+      return StringRef();
+    
+    std::string Err = "unable to find register for '" + RegName.str() +
+      "' (which matches register prefix)";
+    throw TGError(Instr->TheDef->getLoc(), Err);
+  }
+  
+  return RegName;
+}
+
+
 static std::string getEnumNameForToken(StringRef Str) {
   std::string Res;
 
@@ -602,17 +646,6 @@ static std::string getEnumNameForToken(StringRef Str) {
   }
 
   return Res;
-}
-
-/// getRegisterRecord - Get the register record for \arg name, or 0.
-static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
-  for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Target.getRegisters()[i];
-    if (Name == Reg.TheDef->getValueAsString("AsmName"))
-      return Reg.TheDef;
-  }
-
-  return 0;
 }
 
 ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
@@ -658,8 +691,7 @@ AsmMatcherInfo::getOperandClass(StringRef Token,
   return CI;
 }
 
-void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target,
-                                          std::set<std::string>
+void AsmMatcherInfo::BuildRegisterClasses(std::set<std::string>
                                             &SingletonRegisterNames) {
   std::vector<CodeGenRegisterClass> RegisterClasses;
   std::vector<CodeGenRegister> Registers;
@@ -781,7 +813,7 @@ void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target,
   }
 }
 
-void AsmMatcherInfo::BuildOperandClasses(CodeGenTarget &Target) {
+void AsmMatcherInfo::BuildOperandClasses() {
   std::vector<Record*> AsmOperands;
   AsmOperands = Records.getAllDerivedDefinitions("AsmOperandClass");
 
@@ -839,14 +871,14 @@ void AsmMatcherInfo::BuildOperandClasses(CodeGenTarget &Target) {
   }
 }
 
-AsmMatcherInfo::AsmMatcherInfo(Record *asmParser)
-  : AsmParser(asmParser),
+AsmMatcherInfo::AsmMatcherInfo(Record *asmParser, CodeGenTarget &target)
+  : AsmParser(asmParser), Target(target),
     CommentDelimiter(AsmParser->getValueAsString("CommentDelimiter")),
     RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix"))
 {
 }
 
-void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
+void AsmMatcherInfo::BuildInfo() {
   // Build information about all of the AssemblerPredicates.
   std::vector<Record*> AllPredicates =
     Records.getAllDerivedDefinitions("Predicate");
@@ -869,10 +901,9 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   // Parse the instructions; we need to do this first so that we can gather the
   // singleton register classes.
   std::set<std::string> SingletonRegisterNames;
-  const std::vector<const CodeGenInstruction*> &InstrList =
-    Target.getInstructionsByEnumValue();
-  for (unsigned i = 0, e = InstrList.size(); i != e; ++i) {
-    const CodeGenInstruction &CGI = *InstrList[i];
+  for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
+       E = Target.inst_end(); I != E; ++I) {
+    const CodeGenInstruction &CGI = **I;
 
     // If the tblgen -match-prefix option is specified (for tblgen hackers),
     // filter the set of instructions we consider.
@@ -903,24 +934,10 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     
     // Collect singleton registers, if used.
     for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
-      if (!II->Tokens[i].startswith(RegisterPrefix))
-        continue;
-
-      StringRef RegName = II->Tokens[i].substr(RegisterPrefix.size());
-      Record *Rec = getRegisterRecord(Target, RegName);
-
-      if (!Rec) {
-        // If there is no register prefix (i.e. "%" in "%eax"), then this may
-        // be some random non-register token, just ignore it.
-        if (RegisterPrefix.empty())
-          continue;
-
-        std::string Err = "unable to find register for '" + RegName.str() +
-          "' (which matches register prefix)";
-        throw TGError(CGI.TheDef->getLoc(), Err);
-      }
-
-      SingletonRegisterNames.insert(RegName);
+      StringRef RegName = II->getSingletonRegisterForToken(i, *this);
+      
+      if (RegName != StringRef())
+        SingletonRegisterNames.insert(RegName);
     }
 
     // Compute the require features.
@@ -934,10 +951,10 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   }
 
   // Build info for the register classes.
-  BuildRegisterClasses(Target, SingletonRegisterNames);
+  BuildRegisterClasses(SingletonRegisterNames);
 
   // Build info for the user defined assembly operand classes.
-  BuildOperandClasses(Target);
+  BuildOperandClasses();
 
   // Build the instruction information.
   for (std::vector<InstructionInfo*>::iterator it = Instructions.begin(),
@@ -945,34 +962,29 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     InstructionInfo *II = *it;
 
     // The first token of the instruction is the mnemonic, which must be a
-    // simple string.
+    // simple string, not a $foo variable or a singleton register.
     assert(!II->Tokens.empty() && "Instruction has no tokens?");
     StringRef Mnemonic = II->Tokens[0];
-    assert(Mnemonic[0] != '$' &&
-           (RegisterPrefix.empty() || !Mnemonic.startswith(RegisterPrefix)));
+    if (Mnemonic[0] == '$' ||
+        II->getSingletonRegisterForToken(0, *this) != StringRef())
+      throw TGError(II->Instr->TheDef->getLoc(),
+                    "Invalid instruction mnemonic '" + Mnemonic.str() + "'!");
 
     // Parse the tokens after the mnemonic.
     for (unsigned i = 1, e = II->Tokens.size(); i != e; ++i) {
       StringRef Token = II->Tokens[i];
 
       // Check for singleton registers.
-      if (Token.startswith(RegisterPrefix)) {
-        StringRef RegName = II->Tokens[i].substr(RegisterPrefix.size());
-        if (Record *RegRecord = getRegisterRecord(Target, RegName)) {
-          InstructionInfo::Operand Op;
-          Op.Class = RegisterClasses[RegRecord];
-          Op.OperandInfo = 0;
-          assert(Op.Class && Op.Class->Registers.size() == 1 &&
-                 "Unexpected class for singleton register");
-          II->Operands.push_back(Op);
-          continue;
-        }
-
-        if (!RegisterPrefix.empty()) {
-          std::string Err = "unable to find register for '" + RegName.str() +
-                  "' (which matches register prefix)";
-          throw TGError(II->Instr->TheDef->getLoc(), Err);
-        }
+      StringRef RegName = II->getSingletonRegisterForToken(i, *this);
+      if (RegName != StringRef()) {
+        Record *RegRecord = getRegisterRecord(Target, RegName);
+        InstructionInfo::Operand Op;
+        Op.Class = RegisterClasses[RegRecord];
+        Op.OperandInfo = 0;
+        assert(Op.Class && Op.Class->Registers.size() == 1 &&
+               "Unexpected class for singleton register");
+        II->Operands.push_back(Op);
+        continue;
       }
 
       // Check for simple tokens.
@@ -1259,12 +1271,11 @@ static void EmitMatchClassEnumeration(CodeGenTarget &Target,
 }
 
 /// EmitClassifyOperand - Emit the function to classify an operand.
-static void EmitClassifyOperand(CodeGenTarget &Target,
-                                AsmMatcherInfo &Info,
+static void EmitClassifyOperand(AsmMatcherInfo &Info,
                                 raw_ostream &OS) {
   OS << "static MatchClassKind ClassifyOperand(MCParsedAsmOperand *GOp) {\n"
-     << "  " << Target.getName() << "Operand &Operand = *("
-     << Target.getName() << "Operand*)GOp;\n";
+     << "  " << Info.Target.getName() << "Operand &Operand = *("
+     << Info.Target.getName() << "Operand*)GOp;\n";
 
   // Classify tokens.
   OS << "  if (Operand.isToken())\n";
@@ -1279,7 +1290,7 @@ static void EmitClassifyOperand(CodeGenTarget &Target,
   for (std::map<Record*, ClassInfo*>::iterator
          it = Info.RegisterClasses.begin(), ie = Info.RegisterClasses.end();
        it != ie; ++it)
-    OS << "    case " << Target.getName() << "::"
+    OS << "    case " << Info.Target.getName() << "::"
        << it->first->getName() << ": return " << it->second->Name << ";\n";
   OS << "    }\n";
   OS << "  }\n\n";
@@ -1418,8 +1429,7 @@ static void EmitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
 
 /// EmitSubtargetFeatureFlagEnumeration - Emit the subtarget feature flag
 /// definitions.
-static void EmitSubtargetFeatureFlagEnumeration(CodeGenTarget &Target,
-                                                AsmMatcherInfo &Info,
+static void EmitSubtargetFeatureFlagEnumeration(AsmMatcherInfo &Info,
                                                 raw_ostream &OS) {
   OS << "// Flags for subtarget features that participate in "
      << "instruction matching.\n";
@@ -1436,14 +1446,13 @@ static void EmitSubtargetFeatureFlagEnumeration(CodeGenTarget &Target,
 
 /// EmitComputeAvailableFeatures - Emit the function to compute the list of
 /// available features given a subtarget.
-static void EmitComputeAvailableFeatures(CodeGenTarget &Target,
-                                         AsmMatcherInfo &Info,
+static void EmitComputeAvailableFeatures(AsmMatcherInfo &Info,
                                          raw_ostream &OS) {
   std::string ClassName =
     Info.AsmParser->getValueAsString("AsmParserClassName");
 
-  OS << "unsigned " << Target.getName() << ClassName << "::\n"
-     << "ComputeAvailableFeatures(const " << Target.getName()
+  OS << "unsigned " << Info.Target.getName() << ClassName << "::\n"
+     << "ComputeAvailableFeatures(const " << Info.Target.getName()
      << "Subtarget *Subtarget) const {\n";
   OS << "  unsigned Features = 0;\n";
   for (std::map<Record*, SubtargetFeatureInfo*>::const_iterator
@@ -1561,8 +1570,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   std::string ClassName = AsmParser->getValueAsString("AsmParserClassName");
 
   // Compute the information on the instructions to match.
-  AsmMatcherInfo Info(AsmParser);
-  Info.BuildInfo(Target);
+  AsmMatcherInfo Info(AsmParser, Target);
+  Info.BuildInfo();
 
   // Sort the instruction table using the partial order on classes. We use
   // stable_sort to ensure that ambiguous instructions are still
@@ -1627,7 +1636,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_REGISTER_MATCHER\n\n";
 
   // Emit the subtarget feature enumeration.
-  EmitSubtargetFeatureFlagEnumeration(Target, Info, OS);
+  EmitSubtargetFeatureFlagEnumeration(Info, OS);
 
   // Emit the function to match a register name to number.
   EmitMatchRegisterName(Target, AsmParser, OS);
@@ -1651,13 +1660,13 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   EmitMatchTokenString(Target, Info.Classes, OS);
 
   // Emit the routine to classify an operand.
-  EmitClassifyOperand(Target, Info, OS);
+  EmitClassifyOperand(Info, OS);
 
   // Emit the subclass predicate routine.
   EmitIsSubclass(Target, Info.Classes, OS);
 
   // Emit the available features compute function.
-  EmitComputeAvailableFeatures(Target, Info, OS);
+  EmitComputeAvailableFeatures(Info, OS);
 
 
   size_t MaxNumOperands = 0;
