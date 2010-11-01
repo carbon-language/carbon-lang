@@ -329,6 +329,9 @@ struct MatchableInfo {
 
     /// The original operand this corresponds to, if any.
     const CGIOperandList::OperandInfo *OperandInfo;
+    
+    Operand(ClassInfo *C, const CGIOperandList::OperandInfo *OpInfo)
+      : Class(C), OperandInfo(OpInfo) {}
   };
 
   /// InstrName - The target name for this instruction.
@@ -1006,9 +1009,7 @@ void AsmMatcherInfo::BuildInfo() {
 
       // Check for singleton registers.
       if (Record *RegRecord = II->getSingletonRegisterForToken(i, *this)) {
-        MatchableInfo::Operand Op;
-        Op.Class = RegisterClasses[RegRecord];
-        Op.OperandInfo = 0;
+        MatchableInfo::Operand Op(RegisterClasses[RegRecord], 0);
         assert(Op.Class && Op.Class->Registers.size() == 1 &&
                "Unexpected class for singleton register");
         II->Operands.push_back(Op);
@@ -1017,10 +1018,7 @@ void AsmMatcherInfo::BuildInfo() {
 
       // Check for simple tokens.
       if (Token[0] != '$') {
-        MatchableInfo::Operand Op;
-        Op.Class = getTokenClass(Token);
-        Op.OperandInfo = 0;
-        II->Operands.push_back(Op);
+        II->Operands.push_back(MatchableInfo::Operand(getTokenClass(Token), 0));
         continue;
       }
 
@@ -1057,10 +1055,8 @@ void AsmMatcherInfo::BuildInfo() {
         assert(OI && "Unable to find tied operand target!");
       }
 
-      MatchableInfo::Operand Op;
-      Op.Class = getOperandClass(Token, *OI);
-      Op.OperandInfo = OI;
-      II->Operands.push_back(Op);
+      II->Operands.push_back(MatchableInfo::Operand(getOperandClass(Token,
+                                                                    *OI), OI));
     }
   }
 
