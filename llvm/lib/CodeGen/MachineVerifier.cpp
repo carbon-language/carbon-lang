@@ -26,6 +26,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
@@ -168,6 +169,7 @@ namespace {
     // Analysis information if available
     LiveVariables *LiveVars;
     LiveIntervals *LiveInts;
+    LiveStacks *LiveStks;
     SlotIndexes *Indexes;
 
     void visitMachineFunctionBefore();
@@ -250,12 +252,14 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
 
   LiveVars = NULL;
   LiveInts = NULL;
+  LiveStks = NULL;
   Indexes = NULL;
   if (PASS) {
     LiveInts = PASS->getAnalysisIfAvailable<LiveIntervals>();
     // We don't want to verify LiveVariables if LiveIntervals is available.
     if (!LiveInts)
       LiveVars = PASS->getAnalysisIfAvailable<LiveVariables>();
+    LiveStks = PASS->getAnalysisIfAvailable<LiveStacks>();
     Indexes = PASS->getAnalysisIfAvailable<SlotIndexes>();
   }
 
@@ -724,6 +728,22 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
   case MachineOperand::MO_MachineBasicBlock:
     if (MI->isPHI() && !MO->getMBB()->isSuccessor(MI->getParent()))
       report("PHI operand is not in the CFG", MO, MONum);
+    break;
+
+  case MachineOperand::MO_FrameIndex:
+    if (LiveStks && LiveStks->hasInterval(MO->getIndex()) &&
+        LiveInts && !LiveInts->isNotInMIMap(MI)) {
+      LiveInterval &LI = LiveStks->getInterval(MO->getIndex());
+      SlotIndex Idx = LiveInts->getInstructionIndex(MI);
+      if (TI.mayLoad() && !LI.liveAt(Idx.getUseIndex())) {
+        report("Instruction loads from dead spill slot", MO, MONum);
+        *OS << "Live stack: " << LI << '\n';
+      }
+      if (TI.mayStore() && !LI.liveAt(Idx.getDefIndex())) {
+        report("Instruction stores to dead spill slot", MO, MONum);
+        *OS << "Live stack: " << LI << '\n';
+      }
+    }
     break;
 
   default:
