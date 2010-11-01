@@ -311,6 +311,7 @@ let isCall = 1,
               T1Special<{1,1,1,?}>; // A6.2.3 & A8.6.24;
 
   // ARMv4T
+  let isCodeGenOnly = 1 in
   def tBX : TIx2<{?,?,?,?,?}, {?,?}, ?,
                   (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                   "mov\tlr, pc\n\tbx\t$func",
@@ -346,6 +347,7 @@ let isCall = 1,
                  T1Special<{1,1,1,?}>; // A6.2.3 & A8.6.24
 
   // ARMv4T
+  let isCodeGenOnly = 1 in
   def tBXr9 : TIx2<{?,?,?,?,?}, {?,?}, ?,
                    (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                    "mov\tlr, pc\n\tbx\t$func",
@@ -365,6 +367,7 @@ let isBranch = 1, isTerminator = 1 in {
   def tBfar : TIx2<0b11110, 0b11, 1, (outs), (ins brtarget:$target), IIC_Br,
                     "bl\t$target",[]>;
 
+  let isCodeGenOnly = 1 in
   def tBR_JTr : T1JTI<(outs),
                       (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
                       IIC_Br, "mov\tpc, $target\n\t.align\t2$jt",

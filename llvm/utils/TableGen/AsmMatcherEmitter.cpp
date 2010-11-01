@@ -229,19 +229,21 @@ static bool IsAssemblerInstruction(StringRef Name,
   if (StringRef(Name).startswith("Int_") || StringRef(Name).endswith("_Int"))
     return false;
 
-  // Ignore instructions with no .s string.
-  //
-  // FIXME: What are these?
+  // Reject instructions with no .s string.
   if (CGI.AsmString.empty()) {
     PrintError(CGI.TheDef->getLoc(),
                "instruction with empty asm string");
     throw std::string("ERROR: Invalid instruction for asm matcher");
   }
 
-  // FIXME: Hack; ignore any instructions with a newline in them.
-  if (std::find(CGI.AsmString.begin(),
-                CGI.AsmString.end(), '\n') != CGI.AsmString.end())
-    return false;
+  // Reject any instructions with a newline in them, they should be marked
+  // isCodeGenOnly if they are pseudo instructions.
+  if (CGI.AsmString.find('\n') != std::string::npos) {
+    PrintError(CGI.TheDef->getLoc(),
+               "multiline instruction is not valid for the asmparser, "
+               "mark it isCodeGenOnly");
+    throw std::string("ERROR: Invalid instruction");
+  }
 
   // Reject instructions with attributes, these aren't something we can handle,
   // the target should be refactored to use operands instead of modifiers.
@@ -258,6 +260,7 @@ static bool IsAssemblerInstruction(StringRef Name,
       throw std::string("ERROR: Invalid instruction");
     }
     
+    // FIXME: Should reject these.
     if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
       DEBUG({
         errs() << "warning: '" << Name << "': "

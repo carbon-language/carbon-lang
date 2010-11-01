@@ -487,6 +487,7 @@ def ATOMSWAP6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
 // Memory barriers
 
 // TODO: Get this to fold the constant into the instruction.
+let isCodeGenOnly = 1 in
 def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
                       "lock\n\t"
                       "or{l}\t{$zero, $dst|$dst, $zero}",
@@ -498,7 +499,7 @@ def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
                      [(X86MemBarrier)]>, Requires<[HasSSE2]>;
 
 // TODO: Get this to fold the constant into the instruction.
-let hasSideEffects = 1, Defs = [ESP] in
+let hasSideEffects = 1, Defs = [ESP], isCodeGenOnly = 1 in
 def Int_MemBarrierNoSSE64  : RI<0x09, MRM1r, (outs), (ins GR64:$zero),
                            "lock\n\t"
                            "or{q}\t{$zero, (%rsp)|(%rsp), $zero}",
@@ -507,7 +508,7 @@ def Int_MemBarrierNoSSE64  : RI<0x09, MRM1r, (outs), (ins GR64:$zero),
 
 
 // Optimized codegen when the non-memory output is not used.
-let Defs = [EFLAGS], mayLoad = 1, mayStore = 1 in {
+let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {
 def LOCK_ADD8mr  : I<0x00, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
                     "lock\n\t"
                     "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
@@ -614,34 +615,35 @@ def LOCK_DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst),
 }
 
 // Atomic compare and swap.
-let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
+let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX],
+    isCodeGenOnly = 1 in {
 def LCMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i64mem:$ptr),
                "lock\n\t"
                "cmpxchg8b\t$ptr",
                [(X86cas8 addr:$ptr)]>, TB, LOCK;
 }
-let Defs = [AL, EFLAGS], Uses = [AL] in {
+let Defs = [AL, EFLAGS], Uses = [AL], isCodeGenOnly = 1 in {
 def LCMPXCHG8 : I<0xB0, MRMDestMem, (outs), (ins i8mem:$ptr, GR8:$swap),
                "lock\n\t"
                "cmpxchg{b}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
 }
 
-let Defs = [AX, EFLAGS], Uses = [AX] in {
+let Defs = [AX, EFLAGS], Uses = [AX], isCodeGenOnly = 1 in {
 def LCMPXCHG16 : I<0xB1, MRMDestMem, (outs), (ins i16mem:$ptr, GR16:$swap),
                "lock\n\t"
                "cmpxchg{w}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR16:$swap, 2)]>, TB, OpSize, LOCK;
 }
 
-let Defs = [EAX, EFLAGS], Uses = [EAX] in {
+let Defs = [EAX, EFLAGS], Uses = [EAX], isCodeGenOnly = 1 in {
 def LCMPXCHG32 : I<0xB1, MRMDestMem, (outs), (ins i32mem:$ptr, GR32:$swap),
                "lock\n\t"
                "cmpxchg{l}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
 }
 
-let Defs = [RAX, EFLAGS], Uses = [RAX] in {
+let Defs = [RAX, EFLAGS], Uses = [RAX], isCodeGenOnly = 1 in {
 def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
                "lock\n\t"
                "cmpxchgq\t$swap,$ptr",
@@ -649,7 +651,7 @@ def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
 }
 
 // Atomic exchange and add
-let Constraints = "$val = $dst", Defs = [EFLAGS] in {
+let Constraints = "$val = $dst", Defs = [EFLAGS], isCodeGenOnly = 1 in {
 def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins GR8:$val, i8mem:$ptr),
                "lock\n\t"
                "xadd{b}\t{$val, $ptr|$ptr, $val}",
