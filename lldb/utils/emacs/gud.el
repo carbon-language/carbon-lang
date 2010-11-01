@@ -996,8 +996,13 @@ and source-file directory for your debugger."
   (set (make-local-variable 'gud-minor-mode) 'lldb)
   (setq lldb-oneshot-break-defined nil)
 
-  (gud-def gud-lbreak "breakpoint list"
+  (gud-def gud-listb  "breakpoint list"
                       "l"    "List all breakpoints.")
+  (gud-def gud-bt     "thread backtrace"
+                      "b"    "Show stack for the current thread.")
+  (gud-def gud-bt-all "thread backtrace all"
+                      "B"    "Show stacks for all the threads.")
+
   (gud-def gud-break  "breakpoint set -f %f -l %l"
                       "\C-b" "Set breakpoint at current line.")
   (gud-def gud-tbreak

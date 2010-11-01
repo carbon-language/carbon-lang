@@ -1,5 +1,5 @@
 --- /tmp/gud.el	2009-05-06 05:16:32.000000000 -0700
-+++ utils/emacs/gud.el	2010-10-29 16:41:53.000000000 -0700
++++ utils/emacs/gud.el	2010-11-01 10:13:13.000000000 -0700
 @@ -144,12 +144,12 @@
  			       (display-graphic-p)
  			       (fboundp 'x-show-tip))
@@ -71,7 +71,7 @@
    %p -- Prefix argument to the command (if any) as a number.
    %c -- Fully qualified class name derived from the expression
          surrounding point (jdb only).
-@@ -930,6 +931,126 @@
+@@ -930,6 +931,131 @@
  
  
  ;; ======================================================================
@@ -140,8 +140,13 @@
 +  (set (make-local-variable 'gud-minor-mode) 'lldb)
 +  (setq lldb-oneshot-break-defined nil)
 +
-+  (gud-def gud-lbreak "breakpoint list"
++  (gud-def gud-listb  "breakpoint list"
 +                      "l"    "List all breakpoints.")
++  (gud-def gud-bt     "thread backtrace"
++                      "b"    "Show stack for the current thread.")
++  (gud-def gud-bt-all "thread backtrace all"
++                      "B"    "Show stacks for all the threads.")
++
 +  (gud-def gud-break  "breakpoint set -f %f -l %l"
 +                      "\C-b" "Set breakpoint at current line.")
 +  (gud-def gud-tbreak
@@ -198,7 +203,7 @@
  ;; sdb functions
  
  ;; History of argument lists passed to sdb.
-@@ -2372,9 +2493,10 @@
+@@ -2372,9 +2498,10 @@
    "Major mode for interacting with an inferior debugger process.
  
     You start it up with one of the commands M-x gdb, M-x sdb, M-x dbx,
@@ -212,7 +217,7 @@
  
  After startup, the following commands are available in both the GUD
  interaction buffer and any source buffer GUD visits due to a breakpoint stop
-@@ -2404,7 +2526,7 @@
+@@ -2404,7 +2531,7 @@
  except that the breakpoint is temporary; that is, it is removed when
  execution stops on it.
  
@@ -221,7 +226,7 @@
  frame.  \\[gud-down] drops back down through one.
  
  If you are using gdb or xdb, \\[gud-finish] runs execution to the return from
-@@ -2724,7 +2846,7 @@
+@@ -2724,7 +2851,7 @@
  	result)
      (while (and str
  		(let ((case-fold-search nil))
@@ -230,7 +235,7 @@
        (let ((key (string-to-char (match-string 2 str)))
  	    subst)
  	(cond
-@@ -2753,6 +2875,8 @@
+@@ -2753,6 +2880,8 @@
  	  (setq subst (gud-find-expr)))
  	 ((eq key ?a)
  	  (setq subst (gud-read-address)))
@@ -239,7 +244,7 @@
  	 ((eq key ?c)
  	  (setq subst
                  (gud-find-class
-@@ -3372,6 +3496,8 @@
+@@ -3372,6 +3501,8 @@
  (defun gud-tooltip-print-command (expr)
    "Return a suitable command to print the expression EXPR."
    (case gud-minor-mode
