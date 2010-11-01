@@ -637,7 +637,7 @@ let Constraints = "$a = $dst", isCodeGenOnly = 1 in {
 // FP to Fixed-Point:
 
 def VTOSHS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 0,
-                       (outs SPR:$dst), (ins SPR_S16:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTSI, "vcvt", ".s16.f32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]>;
 
