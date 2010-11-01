@@ -98,12 +98,12 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
 // instead of GR32. This allows them to operate on h registers on x86-64.
 def MOVZX32_NOREXrr8 : I<0xB6, MRMSrcReg,
                          (outs GR32_NOREX:$dst), (ins GR8:$src),
-                         "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
+                         "movz{bl|x}\t{$src, $dst|$dst, $src}",
                          []>, TB;
 let mayLoad = 1 in
 def MOVZX32_NOREXrm8 : I<0xB6, MRMSrcMem,
                          (outs GR32_NOREX:$dst), (ins i8mem:$src),
-                         "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
+                         "movz{bl|x}\t{$src, $dst|$dst, $src}",
                          []>, TB;
 
 // MOVSX64rr8 always has a REX prefix and it has an 8-bit register

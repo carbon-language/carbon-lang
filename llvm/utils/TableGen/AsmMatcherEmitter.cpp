@@ -355,26 +355,18 @@ struct InstructionInfo {
   /// function.
   std::string ConversionFnKind;
   
-  InstructionInfo(const CodeGenInstruction &CGI, StringRef CommentDelimiter)
+  InstructionInfo(const CodeGenInstruction &CGI)
     : TheDef(CGI.TheDef), OperandList(CGI.Operands) {
     InstrName = TheDef->getName();
     // TODO: Eventually support asmparser for Variant != 0.
     AsmString = CGI.FlattenAsmStringVariants(CGI.AsmString, 0);
-    
-    // Remove comments from the asm string.  We know that the asmstring only
-    // has one line.
-    if (!CommentDelimiter.empty()) {
-      size_t Idx = StringRef(AsmString).find(CommentDelimiter);
-      if (Idx != StringRef::npos)
-        AsmString = AsmString.substr(0, Idx);
-    }
     
     TokenizeAsmString(AsmString, Tokens);
   }
 
   /// isAssemblerInstruction - Return true if this matchable is a valid thing to
   /// match against.
-  bool isAssemblerInstruction() const;
+  bool isAssemblerInstruction(StringRef CommentDelimiter) const;
   
   /// getSingletonRegisterForToken - If the specified token is a singleton
   /// register, return the Record for it, otherwise return null.
@@ -464,9 +456,6 @@ public:
 
   /// Target - The target information.
   CodeGenTarget &Target;
-
-  /// The AsmParser "CommentDelimiter" value.
-  std::string CommentDelimiter;
 
   /// The AsmParser "RegisterPrefix" value.
   std::string RegisterPrefix;
@@ -567,7 +556,7 @@ static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
   return 0;
 }
 
-bool InstructionInfo::isAssemblerInstruction() const {
+bool InstructionInfo::isAssemblerInstruction(StringRef CommentDelimiter) const {
   StringRef Name = InstrName;
   
   // Reject instructions with no .s string.
@@ -579,6 +568,14 @@ bool InstructionInfo::isAssemblerInstruction() const {
   if (AsmString.find('\n') != std::string::npos)
     throw TGError(TheDef->getLoc(),
                   "multiline instruction is not valid for the asmparser, "
+                  "mark it isCodeGenOnly");
+  
+  // Remove comments from the asm string.  We know that the asmstring only
+  // has one line.
+  if (!CommentDelimiter.empty() &&
+      StringRef(AsmString).find(CommentDelimiter) != StringRef::npos)
+    throw TGError(TheDef->getLoc(),
+                  "asmstring for instruction has comment character in it, "
                   "mark it isCodeGenOnly");
   
   // Reject instructions with attributes, these aren't something we can handle,
@@ -674,10 +671,8 @@ AsmMatcherInfo::getOperandClass(StringRef Token,
   if (OI.Rec->isSubClassOf("RegisterClass")) {
     ClassInfo *CI = RegisterClassClasses[OI.Rec];
 
-    if (!CI) {
-      PrintError(OI.Rec->getLoc(), "register class has no class info!");
-      throw std::string("ERROR: Missing register class!");
-    }
+    if (!CI)
+      throw TGError(OI.Rec->getLoc(), "register class has no class info!");
 
     return CI;
   }
@@ -686,10 +681,8 @@ AsmMatcherInfo::getOperandClass(StringRef Token,
   Record *MatchClass = OI.Rec->getValueAsDef("ParserMatchClass");
   ClassInfo *CI = AsmOperandClasses[MatchClass];
 
-  if (!CI) {
-    PrintError(OI.Rec->getLoc(), "operand has no match class!");
-    throw std::string("ERROR: Missing match class!");
-  }
+  if (!CI)
+    throw TGError(OI.Rec->getLoc(), "operand has no match class!");
 
   return CI;
 }
@@ -876,7 +869,6 @@ void AsmMatcherInfo::BuildOperandClasses() {
 
 AsmMatcherInfo::AsmMatcherInfo(Record *asmParser, CodeGenTarget &target)
   : AsmParser(asmParser), Target(target),
-    CommentDelimiter(AsmParser->getValueAsString("CommentDelimiter")),
     RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix"))
 {
 }
@@ -891,16 +883,16 @@ void AsmMatcherInfo::BuildInfo() {
     if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
       continue;
     
-    if (Pred->getName().empty()) {
-      PrintError(Pred->getLoc(), "Predicate has no name!");
-      throw std::string("ERROR: Predicate defs must be named");
-    }
+    if (Pred->getName().empty())
+      throw TGError(Pred->getLoc(), "Predicate has no name!");
     
     unsigned FeatureNo = SubtargetFeatures.size();
     SubtargetFeatures[Pred] = new SubtargetFeatureInfo(Pred, FeatureNo);
     assert(FeatureNo < 32 && "Too many subtarget features!");
   }
 
+  StringRef CommentDelimiter = AsmParser->getValueAsString("CommentDelimiter");
+  
   // Parse the instructions; we need to do this first so that we can gather the
   // singleton register classes.
   SmallPtrSet<Record*, 16> SingletonRegisters;
@@ -917,11 +909,11 @@ void AsmMatcherInfo::BuildInfo() {
     if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
       continue;
     
-    OwningPtr<InstructionInfo> II(new InstructionInfo(CGI, CommentDelimiter));
+    OwningPtr<InstructionInfo> II(new InstructionInfo(CGI));
 
     // Ignore instructions which shouldn't be matched and diagnose invalid
     // instruction definitions with an error.
-    if (!II->isAssemblerInstruction())
+    if (!II->isAssemblerInstruction(CommentDelimiter))
       continue;
     
     // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
@@ -1010,8 +1002,8 @@ void AsmMatcherInfo::BuildInfo() {
       // Map this token to an operand. FIXME: Move elsewhere.
       unsigned Idx;
       if (!II->OperandList.hasOperandNamed(OperandName, Idx))
-        throw std::string("error: unable to find operand: '" +
-                          OperandName.str() + "'");
+        throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
+                      OperandName.str() + "'");
 
       // FIXME: This is annoying, the named operand may be tied (e.g.,
       // XCHG8rm). What we want is the untied operand, which we now have to
@@ -1536,8 +1528,7 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
           // We can't have two aliases from the same mnemonic with no predicate.
           PrintError(ToVec[AliasWithNoPredicate]->getLoc(),
                      "two MnemonicAliases with the same 'from' mnemonic!");
-          PrintError(R->getLoc(), "this is the other MnemonicAlias.");
-          throw std::string("ERROR: Invalid MnemonicAlias definitions!");
+          throw TGError(R->getLoc(), "this is the other MnemonicAlias.");
         }
         
         AliasWithNoPredicate = i;
