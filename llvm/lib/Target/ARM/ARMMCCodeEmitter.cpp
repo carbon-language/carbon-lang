@@ -126,12 +126,6 @@ public:
     }
   }
 
-  void EmitImmediate(const MCOperand &Disp,
-                     unsigned ImmSize, MCFixupKind FixupKind,
-                     unsigned &CurByte, raw_ostream &OS,
-                     SmallVectorImpl<MCFixup> &Fixups,
-                     int ImmOffset = 0) const;
-
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const;
 };
@@ -142,13 +136,6 @@ MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &,
                                              TargetMachine &TM,
                                              MCContext &Ctx) {
   return new ARMMCCodeEmitter(TM, Ctx);
-}
-
-void ARMMCCodeEmitter::
-EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
-              unsigned &CurByte, raw_ostream &OS,
-              SmallVectorImpl<MCFixup> &Fixups, int ImmOffset) const {
-  assert(0 && "ARMMCCodeEmitter::EmitImmediate() not yet implemented.");
 }
 
 /// getMachineOpValue - Return binary encoding of operand. If the machine
