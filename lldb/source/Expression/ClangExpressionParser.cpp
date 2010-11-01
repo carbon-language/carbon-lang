@@ -308,7 +308,7 @@ ClangExpressionParser::Parse (Stream &stream)
     TextDiagnosticBuffer::const_iterator diag_iterator;
     
     int num_errors = 0;
-        
+    
     for (diag_iterator = diag_buf->warn_begin();
          diag_iterator != diag_buf->warn_end();
          ++diag_iterator)
@@ -323,6 +323,11 @@ ClangExpressionParser::Parse (Stream &stream)
         num_errors++;
         stream.Printf("error: %s\n", (*diag_iterator).second.c_str());
     }
+    
+    for (diag_iterator = diag_buf->note_begin();
+         diag_iterator != diag_buf->note_end();
+         ++diag_iterator)
+        stream.Printf("note: %s\n", (*diag_iterator).second.c_str());
     
     return num_errors;
 }
