@@ -53,7 +53,7 @@ namespace {
     std::string Output;
 
   public:    
-    explicit SimpleTimer(bool WantTiming) : WantTiming(true) {
+    explicit SimpleTimer(bool WantTiming) : WantTiming(WantTiming) {
       Start = TimeRecord::getCurrentTime(); 
     }
     
