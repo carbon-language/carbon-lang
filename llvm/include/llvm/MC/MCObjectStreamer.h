@@ -57,6 +57,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
+  virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
   virtual void SwitchSection(const MCSection *Section);
   virtual void Finish();
 

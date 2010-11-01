@@ -113,6 +113,7 @@ public:
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
 
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
+  virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
 
@@ -256,6 +257,11 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 
   // FIXME: Lift context changes into super class.
   Symbol->setVariableValue(Value);
+}
+
+void MCAsmStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
+  OS << ".weakref " << *Alias << ", " << *Symbol;
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,

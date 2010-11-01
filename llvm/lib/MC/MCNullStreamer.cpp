@@ -42,6 +42,7 @@ namespace {
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
 
     virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {}
+    virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol){}
 
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute){}
 

@@ -139,6 +139,15 @@ namespace llvm {
     /// @param Value - The value for the symbol.
     virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) = 0;
 
+    /// EmitWeakReference - Emit an weak reference from @p Alias to @p Symbol.
+    ///
+    /// This corresponds to an assembler statement such as:
+    ///  .weakref alias, symbol
+    ///
+    /// @param Alias - The alias that is being created.
+    /// @param Symbol - The symbol being aliased.
+    virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) = 0;
+
     /// EmitSymbolAttribute - Add the given @p Attribute to @p Symbol.
     virtual void EmitSymbolAttribute(MCSymbol *Symbol,
                                      MCSymbolAttr Attribute) = 0;

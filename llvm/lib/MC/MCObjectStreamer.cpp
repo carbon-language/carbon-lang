@@ -74,6 +74,11 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
   return Value;
 }
 
+void MCObjectStreamer::EmitWeakReference(MCSymbol *Alias,
+                                         const MCSymbol *Symbol) {
+  report_fatal_error("This file format doesn't support weak aliases.");
+}
+
 void MCObjectStreamer::SwitchSection(const MCSection *Section) {
   assert(Section && "Cannot switch to a null section!");
 

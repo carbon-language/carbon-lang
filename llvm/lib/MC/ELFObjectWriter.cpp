@@ -143,6 +143,7 @@ namespace {
     };
 
     SmallPtrSet<const MCSymbol *, 16> UsedInReloc;
+    SmallPtrSet<const MCSymbol *, 16> WeakrefUsedInReloc;
     DenseMap<const MCSymbol *, const MCSymbol *> Renames;
 
     llvm::DenseMap<const MCSectionData*,
@@ -691,7 +692,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     Symbol = &AliasedSymbol(Target.getSymA()->getSymbol());
     Renamed = Renames.lookup(Symbol);
     if (!Renamed)
-      Renamed = Symbol;
+      Renamed = &Target.getSymA()->getSymbol();
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     MCFragment *F = SD.getFragment();
 
@@ -727,6 +728,10 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
     } else {
       UsedInReloc.insert(Renamed);
+      MCSymbolData &RenamedSD = Asm.getSymbolData(*Renamed);
+      if (RenamedSD.getFlags() & ELF_Other_Weakref) {
+        WeakrefUsedInReloc.insert(Symbol);
+      }
       Index = -1;
     }
     Addend = Value;
@@ -901,6 +906,9 @@ ELFObjectWriterImpl::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
 
 static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
                        bool Used, bool Renamed) {
+  if (Data.getFlags() & ELF_Other_Weakref)
+    return false;
+
   if (Used)
     return true;
 
@@ -963,7 +971,9 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
          ie = Asm.symbol_end(); it != ie; ++it) {
     const MCSymbol &Symbol = it->getSymbol();
 
-    if (!isInSymtab(Asm, *it, UsedInReloc.count(&Symbol),
+    bool Used = UsedInReloc.count(&Symbol);
+    bool WeakrefUsed = WeakrefUsedInReloc.count(&Symbol);
+    if (!isInSymtab(Asm, *it, Used || WeakrefUsed,
                     Renames.count(&Symbol)))
       continue;
 
@@ -971,6 +981,9 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     MSD.SymbolData = it;
     bool Local = isLocal(*it);
     const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
+
+    if (RefSymbol.isUndefined() && !Used && WeakrefUsed)
+      SetBinding(*it, ELF::STB_WEAK);
 
     if (it->isCommon()) {
       assert(!Local);

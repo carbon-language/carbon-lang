@@ -53,6 +53,7 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveType>(".type");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveIdent>(".ident");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymver>(".symver");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveWeakref>(".weakref");
   }
 
   // FIXME: Part of this logic is duplicated in the MCELFStreamer. What is
@@ -119,6 +120,7 @@ public:
   bool ParseDirectiveType(StringRef, SMLoc);
   bool ParseDirectiveIdent(StringRef, SMLoc);
   bool ParseDirectiveSymver(StringRef, SMLoc);
+  bool ParseDirectiveWeakref(StringRef, SMLoc);
 
 private:
   bool ParseSectionName(StringRef &SectionName);
@@ -440,6 +442,32 @@ bool ELFAsmParser::ParseDirectiveSymver(StringRef, SMLoc) {
   const MCExpr *Value = MCSymbolRefExpr::Create(Sym, getContext());
 
   getStreamer().EmitAssignment(Alias, Value);
+  return false;
+}
+
+/// ParseDirectiveWeakref
+///  ::= .weakref foo, bar
+bool ELFAsmParser::ParseDirectiveWeakref(StringRef, SMLoc) {
+  // FIXME: Share code with the other alias building directives.
+
+  StringRef AliasName;
+  if (getParser().ParseIdentifier(AliasName))
+    return TokError("expected identifier in directive");
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("expected a comma");
+
+  Lex();
+
+  StringRef Name;
+  if (getParser().ParseIdentifier(Name))
+    return TokError("expected identifier in directive");
+
+  MCSymbol *Alias = getContext().GetOrCreateSymbol(AliasName);
+
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+
+  getStreamer().EmitWeakReference(Alias, Sym);
   return false;
 }
 

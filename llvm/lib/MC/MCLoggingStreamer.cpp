@@ -74,6 +74,11 @@ public:
     return Child->EmitAssignment(Symbol, Value);
   }
 
+  virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
+    LogCall("EmitWeakReference");
+    return Child->EmitWeakReference(Alias, Symbol);
+  }
+
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
     LogCall("EmitSymbolAttribute");
     return Child->EmitSymbolAttribute(Symbol, Attribute);

@@ -21,9 +21,10 @@
 
 namespace llvm {
   enum {
-    ELF_STT_Shift = 0, // Shift value for STT_* flags.
-    ELF_STB_Shift = 4, // Shift value for STB_* flags.
-    ELF_STV_Shift = 8  // Shift value ofr STV_* flags.
+    ELF_STT_Shift   = 0, // Shift value for STT_* flags.
+    ELF_STB_Shift   = 4, // Shift value for STB_* flags.
+    ELF_STV_Shift   = 8, // Shift value for STV_* flags.
+    ELF_Other_Shift = 10 // Shift value for other flags.
   };
 
   enum SymbolFlags {
@@ -46,7 +47,9 @@ namespace llvm {
       ELF_STV_Default   = (ELF::STV_DEFAULT   << ELF_STV_Shift),
       ELF_STV_Internal  = (ELF::STV_INTERNAL  << ELF_STV_Shift),
       ELF_STV_Hidden    = (ELF::STV_HIDDEN    << ELF_STV_Shift),
-      ELF_STV_Protected = (ELF::STV_PROTECTED << ELF_STV_Shift)
+      ELF_STV_Protected = (ELF::STV_PROTECTED << ELF_STV_Shift),
+
+      ELF_Other_Weakref = (1                  << ELF_Other_Shift)
   };
 
 } // end namespace llvm
