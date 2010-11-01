@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
+// RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
 // XFAIL: *
 
 // CHECK: vmla.i8	d16, d18, d17           @ encoding: [0xa1,0x09,0x42,0xf2]

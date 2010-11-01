@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -triple arm-unknown-unknown %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown %s | FileCheck %s
 
 @ CHECK: TEST0:
 @ CHECK: .long 3

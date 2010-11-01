@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
+// RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
 
 // CHECK: vcvt.s32.f32	d16, d16        @ encoding: [0x20,0x07,0xfb,0xf3]
 	vcvt.s32.f32	d16, d16

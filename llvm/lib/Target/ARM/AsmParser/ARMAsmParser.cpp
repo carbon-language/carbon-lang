@@ -92,7 +92,11 @@ private:
 
 public:
   ARMAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
-    : TargetAsmParser(T), Parser(_Parser), TM(_TM) {}
+    : TargetAsmParser(T), Parser(_Parser), TM(_TM) {
+      // Initialize the set of available features.
+      setAvailableFeatures(ComputeAvailableFeatures(
+          &TM.getSubtarget<ARMSubtarget>()));
+    }
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);

@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -triple arm-unknown-unknown -show-encoding %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding %s | FileCheck %s
 
 @ CHECK: nop
 @ CHECK: encoding: [0x00,0xf0,0x20,0xe3]

@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
+// RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
 
 // CHECK: vrecpe.u32	d16, d16        @ encoding: [0x20,0x04,0xfb,0xf3]
 	vrecpe.u32	d16, d16

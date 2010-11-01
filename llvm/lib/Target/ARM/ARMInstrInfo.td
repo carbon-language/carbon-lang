@@ -142,27 +142,29 @@ def ARMbfi           : SDNode<"ARMISD::BFI", SDT_ARMBFI>;
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
 //
-def HasV4T           : Predicate<"Subtarget->hasV4TOps()">;
+def HasV4T           : Predicate<"Subtarget->hasV4TOps()">, AssemblerPredicate;
 def NoV4T            : Predicate<"!Subtarget->hasV4TOps()">;
 def HasV5T           : Predicate<"Subtarget->hasV5TOps()">;
-def HasV5TE          : Predicate<"Subtarget->hasV5TEOps()">;
-def HasV6            : Predicate<"Subtarget->hasV6Ops()">;
-def HasV6T2          : Predicate<"Subtarget->hasV6T2Ops()">;
+def HasV5TE          : Predicate<"Subtarget->hasV5TEOps()">, AssemblerPredicate;
+def HasV6            : Predicate<"Subtarget->hasV6Ops()">, AssemblerPredicate;
+def HasV6T2          : Predicate<"Subtarget->hasV6T2Ops()">, AssemblerPredicate;
 def NoV6T2           : Predicate<"!Subtarget->hasV6T2Ops()">;
-def HasV7            : Predicate<"Subtarget->hasV7Ops()">;
+def HasV7            : Predicate<"Subtarget->hasV7Ops()">, AssemblerPredicate;
 def NoVFP            : Predicate<"!Subtarget->hasVFP2()">;
-def HasVFP2          : Predicate<"Subtarget->hasVFP2()">;
-def HasVFP3          : Predicate<"Subtarget->hasVFP3()">;
-def HasNEON          : Predicate<"Subtarget->hasNEON()">;
-def HasDivide        : Predicate<"Subtarget->hasDivide()">;
-def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">;
-def HasDB            : Predicate<"Subtarget->hasDataBarrier()">;
+def HasVFP2          : Predicate<"Subtarget->hasVFP2()">, AssemblerPredicate;
+def HasVFP3          : Predicate<"Subtarget->hasVFP3()">, AssemblerPredicate;
+def HasNEON          : Predicate<"Subtarget->hasNEON()">, AssemblerPredicate;
+def HasDivide        : Predicate<"Subtarget->hasDivide()">, AssemblerPredicate;
+def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">,
+                                 AssemblerPredicate;
+def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
+                                 AssemblerPredicate;
 def UseNEONForFP     : Predicate<"Subtarget->useNEONForSinglePrecisionFP()">;
 def DontUseNEONForFP : Predicate<"!Subtarget->useNEONForSinglePrecisionFP()">;
-def IsThumb          : Predicate<"Subtarget->isThumb()">;
+def IsThumb          : Predicate<"Subtarget->isThumb()">, AssemblerPredicate;
 def IsThumb1Only     : Predicate<"Subtarget->isThumb1Only()">;
-def IsThumb2         : Predicate<"Subtarget->isThumb2()">;
-def IsARM            : Predicate<"!Subtarget->isThumb()">;
+def IsThumb2         : Predicate<"Subtarget->isThumb2()">, AssemblerPredicate;
+def IsARM            : Predicate<"!Subtarget->isThumb()">, AssemblerPredicate;
 def IsDarwin         : Predicate<"Subtarget->isTargetDarwin()">;
 def IsNotDarwin      : Predicate<"!Subtarget->isTargetDarwin()">;
 
