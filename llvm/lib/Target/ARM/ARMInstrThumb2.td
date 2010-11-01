@@ -690,7 +690,7 @@ multiclass T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode> {
   def r     : T2I<(outs rGPR:$dst), (ins rGPR:$src), IIC_iEXTr,
                   opc, "\t$dst, $src",
                  [(set rGPR:$dst, (opnode rGPR:$src))]>,
-                 Requires<[HasT2ExtractPack]> {
+                 Requires<[HasT2ExtractPack, IsThumb2]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -702,7 +702,7 @@ multiclass T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode> {
   def r_rot : T2I<(outs rGPR:$dst), (ins rGPR:$src, i32imm:$rot), IIC_iEXTr,
                   opc, "\t$dst, $src, ror $rot",
                  [(set rGPR:$dst, (opnode (rotr rGPR:$src, rot_imm:$rot)))]>,
-                 Requires<[HasT2ExtractPack]> {
+                 Requires<[HasT2ExtractPack, IsThumb2]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -744,7 +744,7 @@ multiclass T2I_exta_rrot<bits<3> opcod, string opc, PatFrag opnode> {
   def rr     : T2I<(outs rGPR:$dst), (ins rGPR:$LHS, rGPR:$RHS), IIC_iEXTAr,
                   opc, "\t$dst, $LHS, $RHS",
                   [(set rGPR:$dst, (opnode rGPR:$LHS, rGPR:$RHS))]>,
-                  Requires<[HasT2ExtractPack]> {
+                  Requires<[HasT2ExtractPack, IsThumb2]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -756,7 +756,7 @@ multiclass T2I_exta_rrot<bits<3> opcod, string opc, PatFrag opnode> {
                   IIC_iEXTAsr, opc, "\t$dst, $LHS, $RHS, ror $rot",
                   [(set rGPR:$dst, (opnode rGPR:$LHS,
                                           (rotr rGPR:$RHS, rot_imm:$rot)))]>,
-                  Requires<[HasT2ExtractPack]> {
+                  Requires<[HasT2ExtractPack, IsThumb2]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -1384,9 +1384,11 @@ defm t2UXTB16 : T2I_ext_rrot_uxtb16<0b011, "uxtb16",
 //        instead so we can include a check for masking back in the upper
 //        eight bits of the source into the lower eight bits of the result.
 //def : T2Pat<(and (shl rGPR:$Src, (i32 8)), 0xFF00FF),
-//            (t2UXTB16r_rot rGPR:$Src, 24)>, Requires<[HasT2ExtractPack]>;
+//            (t2UXTB16r_rot rGPR:$Src, 24)>,
+//          Requires<[HasT2ExtractPack, IsThumb2]>;
 def : T2Pat<(and (srl rGPR:$Src, (i32 8)), 0xFF00FF),
-            (t2UXTB16r_rot rGPR:$Src, 8)>, Requires<[HasT2ExtractPack]>;
+            (t2UXTB16r_rot rGPR:$Src, 8)>,
+        Requires<[HasT2ExtractPack, IsThumb2]>;
 
 defm t2UXTAB : T2I_exta_rrot<0b101, "uxtab",
                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;
@@ -2124,7 +2126,7 @@ def t2PKHBT : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
                   [(set rGPR:$dst, (or (and rGPR:$src1, 0xFFFF),
                                       (and (shl rGPR:$src2, lsl_amt:$sh),
                                            0xFFFF0000)))]>,
-                  Requires<[HasT2ExtractPack]> {
+                  Requires<[HasT2ExtractPack, IsThumb2]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-20} = 0b01100;
@@ -2135,10 +2137,10 @@ def t2PKHBT : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
 // Alternate cases for PKHBT where identities eliminate some nodes.
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (and rGPR:$src2, 0xFFFF0000)),
             (t2PKHBT rGPR:$src1, rGPR:$src2, 0)>,
-            Requires<[HasT2ExtractPack]>;
+            Requires<[HasT2ExtractPack, IsThumb2]>;
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (shl rGPR:$src2, imm16_31:$sh)),
             (t2PKHBT rGPR:$src1, rGPR:$src2, (lsl_shift_imm imm16_31:$sh))>,
-            Requires<[HasT2ExtractPack]>;
+            Requires<[HasT2ExtractPack, IsThumb2]>;
 
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
@@ -2147,7 +2149,7 @@ def t2PKHTB : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
                   [(set rGPR:$dst, (or (and rGPR:$src1, 0xFFFF0000),
                                        (and (sra rGPR:$src2, asr_amt:$sh),
                                             0xFFFF)))]>,
-                  Requires<[HasT2ExtractPack]> {
+                  Requires<[HasT2ExtractPack, IsThumb2]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-20} = 0b01100;
@@ -2159,11 +2161,11 @@ def t2PKHTB : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000), (srl rGPR:$src2, imm16_31:$sh)),
             (t2PKHTB rGPR:$src1, rGPR:$src2, (asr_shift_imm imm16_31:$sh))>,
-            Requires<[HasT2ExtractPack]>;
+            Requires<[HasT2ExtractPack, IsThumb2]>;
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
                 (and (srl rGPR:$src2, imm1_15:$sh), 0xFFFF)),
             (t2PKHTB rGPR:$src1, rGPR:$src2, (asr_shift_imm imm1_15:$sh))>,
-            Requires<[HasT2ExtractPack]>;
+            Requires<[HasT2ExtractPack, IsThumb2]>;
 
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...
