@@ -320,9 +320,9 @@ public:
   }
 };
 
-/// InstructionInfo - Helper class for storing the necessary information for an
-/// instruction which is capable of being matched.
-struct InstructionInfo {
+/// MatchableInfo - Helper class for storing the necessary information for an
+/// instruction or alias which is capable of being matched.
+struct MatchableInfo {
   struct Operand {
     /// The unique class instance this operand should match.
     ClassInfo *Class;
@@ -355,11 +355,11 @@ struct InstructionInfo {
   /// function.
   std::string ConversionFnKind;
   
-  InstructionInfo(const CodeGenInstruction &CGI)
+  MatchableInfo(const CodeGenInstruction &CGI)
     : TheDef(CGI.TheDef), OperandList(CGI.Operands), AsmString(CGI.AsmString) {
   }
 
-  InstructionInfo(const CodeGenInstAlias *Alias)
+  MatchableInfo(const CodeGenInstAlias *Alias)
     : TheDef(Alias->TheDef), OperandList(Alias->Operands),
       AsmString(Alias->AsmString) {
     
@@ -368,17 +368,17 @@ struct InstructionInfo {
   void Initialize(const AsmMatcherInfo &Info,
                   SmallPtrSet<Record*, 16> &SingletonRegisters);
   
-  /// isAssemblerInstruction - Return true if this matchable is a valid thing to
-  /// match against.
-  bool isAssemblerInstruction(StringRef CommentDelimiter) const;
+  /// Validate - Return true if this matchable is a valid thing to match against
+  /// and perform a bunch of validity checking.
+  bool Validate(StringRef CommentDelimiter, bool Hack) const;
   
   /// getSingletonRegisterForToken - If the specified token is a singleton
   /// register, return the Record for it, otherwise return null.
   Record *getSingletonRegisterForToken(unsigned i,
                                        const AsmMatcherInfo &Info) const;  
 
-  /// operator< - Compare two instructions.
-  bool operator<(const InstructionInfo &RHS) const {
+  /// operator< - Compare two matchables.
+  bool operator<(const MatchableInfo &RHS) const {
     // The primary comparator is the instruction mnemonic.
     if (Tokens[0] != RHS.Tokens[0])
       return Tokens[0] < RHS.Tokens[0];
@@ -398,10 +398,10 @@ struct InstructionInfo {
     return false;
   }
 
-  /// CouldMatchAmiguouslyWith - Check whether this instruction could
+  /// CouldMatchAmiguouslyWith - Check whether this matchable could
   /// ambiguously match the same set of operands as \arg RHS (without being a
   /// strictly superior match).
-  bool CouldMatchAmiguouslyWith(const InstructionInfo &RHS) {
+  bool CouldMatchAmiguouslyWith(const MatchableInfo &RHS) {
     // The number of operands is unambiguous.
     if (Operands.size() != RHS.Operands.size())
       return false;
@@ -467,8 +467,8 @@ public:
   /// The classes which are needed for matching.
   std::vector<ClassInfo*> Classes;
 
-  /// The information on the instruction to match.
-  std::vector<InstructionInfo*> Instructions;
+  /// The information on the matchables to match.
+  std::vector<MatchableInfo*> Matchables;
 
   /// Map of Register records to their class information.
   std::map<Record*, ClassInfo*> RegisterClasses;
@@ -520,7 +520,7 @@ public:
 
 }
 
-void InstructionInfo::dump() {
+void MatchableInfo::dump() {
   errs() << InstrName << " -- " << "flattened:\"" << AsmString << '\"'
          << ", tokens:[";
   for (unsigned i = 0, e = Tokens.size(); i != e; ++i) {
@@ -549,8 +549,8 @@ void InstructionInfo::dump() {
   }
 }
 
-void InstructionInfo::Initialize(const AsmMatcherInfo &Info,
-                                 SmallPtrSet<Record*, 16> &SingletonRegisters) {
+void MatchableInfo::Initialize(const AsmMatcherInfo &Info,
+                               SmallPtrSet<Record*, 16> &SingletonRegisters) {
   InstrName = TheDef->getName();
   
   // TODO: Eventually support asmparser for Variant != 0.
@@ -584,12 +584,12 @@ static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
   return 0;
 }
 
-bool InstructionInfo::isAssemblerInstruction(StringRef CommentDelimiter) const {
-  // Reject instructions with no .s string.
+bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
+  // Reject matchables with no .s string.
   if (AsmString.empty())
     throw TGError(TheDef->getLoc(), "instruction with empty asm string");
   
-  // Reject any instructions with a newline in them, they should be marked
+  // Reject any matchables with a newline in them, they should be marked
   // isCodeGenOnly if they are pseudo instructions.
   if (AsmString.find('\n') != std::string::npos)
     throw TGError(TheDef->getLoc(),
@@ -604,8 +604,9 @@ bool InstructionInfo::isAssemblerInstruction(StringRef CommentDelimiter) const {
                   "asmstring for instruction has comment character in it, "
                   "mark it isCodeGenOnly");
   
-  // Reject instructions with attributes, these aren't something we can handle,
-  // the target should be refactored to use operands instead of modifiers.
+  // Reject matchables with operand modifiers, these aren't something we can
+  /// handle, the target should be refactored to use operands instead of
+  /// modifiers.
   //
   // Also, check for instructions which reference the operand multiple times;
   // this implies a constraint we would not honor.
@@ -613,16 +614,21 @@ bool InstructionInfo::isAssemblerInstruction(StringRef CommentDelimiter) const {
   for (unsigned i = 1, e = Tokens.size(); i < e; ++i) {
     if (Tokens[i][0] == '$' && Tokens[i].find(':') != StringRef::npos)
       throw TGError(TheDef->getLoc(),
-                    "instruction with operand modifier '" + Tokens[i].str() +
+                    "matchable with operand modifier '" + Tokens[i].str() +
                     "' not supported by asm matcher.  Mark isCodeGenOnly!");
     
-    // FIXME: Should reject these.  The ARM backend hits this with $lane in a
-    // bunch of instructions.  It is unclear what the right answer is for this.
+    // Verify that any operand is only mentioned once.
     if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
+      if (!Hack)
+        throw TGError(TheDef->getLoc(),
+                      "ERROR: matchable with tied operand '" + Tokens[i].str() +
+                      "' can never be matched!");
+      // FIXME: Should reject these.  The ARM backend hits this with $lane in a
+      // bunch of instructions.  It is unclear what the right answer is.
       DEBUG({
         errs() << "warning: '" << InstrName << "': "
-        << "ignoring instruction with tied operand '"
-        << Tokens[i].str() << "'\n";
+               << "ignoring instruction with tied operand '"
+               << Tokens[i].str() << "'\n";
       });
       return false;
     }
@@ -634,7 +640,7 @@ bool InstructionInfo::isAssemblerInstruction(StringRef CommentDelimiter) const {
 
 /// getSingletonRegisterForToken - If the specified token is a singleton
 /// register, return the register name, otherwise return a null StringRef.
-Record *InstructionInfo::
+Record *MatchableInfo::
 getSingletonRegisterForToken(unsigned i, const AsmMatcherInfo &Info) const {
   StringRef Tok = Tokens[i];
   if (!Tok.startswith(Info.RegisterPrefix))
@@ -935,13 +941,13 @@ void AsmMatcherInfo::BuildInfo() {
     if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
       continue;
     
-    OwningPtr<InstructionInfo> II(new InstructionInfo(CGI));
+    OwningPtr<MatchableInfo> II(new MatchableInfo(CGI));
 
     II->Initialize(*this, SingletonRegisters);
     
     // Ignore instructions which shouldn't be matched and diagnose invalid
     // instruction definitions with an error.
-    if (!II->isAssemblerInstruction(CommentDelimiter))
+    if (!II->Validate(CommentDelimiter, true))
       continue;
     
     // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
@@ -951,7 +957,7 @@ void AsmMatcherInfo::BuildInfo() {
         StringRef(II->InstrName).endswith("_Int"))
       continue;
     
-     Instructions.push_back(II.take());
+     Matchables.push_back(II.take());
   }
   
   // Parse all of the InstAlias definitions and stick them in the list of
@@ -961,11 +967,14 @@ void AsmMatcherInfo::BuildInfo() {
   for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
     CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i]);
 
-    OwningPtr<InstructionInfo> II(new InstructionInfo(Alias));
+    OwningPtr<MatchableInfo> II(new MatchableInfo(Alias));
     
     II->Initialize(*this, SingletonRegisters);
     
-    //Instructions.push_back(II.take());
+    // Validate the alias definitions.
+    II->Validate(CommentDelimiter, false);
+    
+    //Matchables.push_back(II.take());
   }
 
   // Build info for the register classes.
@@ -974,10 +983,10 @@ void AsmMatcherInfo::BuildInfo() {
   // Build info for the user defined assembly operand classes.
   BuildOperandClasses();
 
-  // Build the instruction information.
-  for (std::vector<InstructionInfo*>::iterator it = Instructions.begin(),
-         ie = Instructions.end(); it != ie; ++it) {
-    InstructionInfo *II = *it;
+  // Build the information about matchables.
+  for (std::vector<MatchableInfo*>::iterator it = Matchables.begin(),
+         ie = Matchables.end(); it != ie; ++it) {
+    MatchableInfo *II = *it;
 
     // The first token of the instruction is the mnemonic, which must be a
     // simple string, not a $foo variable or a singleton register.
@@ -993,7 +1002,7 @@ void AsmMatcherInfo::BuildInfo() {
 
       // Check for singleton registers.
       if (Record *RegRecord = II->getSingletonRegisterForToken(i, *this)) {
-        InstructionInfo::Operand Op;
+        MatchableInfo::Operand Op;
         Op.Class = RegisterClasses[RegRecord];
         Op.OperandInfo = 0;
         assert(Op.Class && Op.Class->Registers.size() == 1 &&
@@ -1004,7 +1013,7 @@ void AsmMatcherInfo::BuildInfo() {
 
       // Check for simple tokens.
       if (Token[0] != '$') {
-        InstructionInfo::Operand Op;
+        MatchableInfo::Operand Op;
         Op.Class = getTokenClass(Token);
         Op.OperandInfo = 0;
         II->Operands.push_back(Op);
@@ -1044,7 +1053,7 @@ void AsmMatcherInfo::BuildInfo() {
         assert(OI && "Unable to find tied operand target!");
       }
 
-      InstructionInfo::Operand Op;
+      MatchableInfo::Operand Op;
       Op.Class = getOperandClass(Token, *OI);
       Op.OperandInfo = OI;
       II->Operands.push_back(Op);
@@ -1066,7 +1075,7 @@ GetTiedOperandAtIndex(SmallVectorImpl<std::pair<unsigned, unsigned> > &List,
 }
 
 static void EmitConvertToMCInst(CodeGenTarget &Target,
-                                std::vector<InstructionInfo*> &Infos,
+                                std::vector<MatchableInfo*> &Infos,
                                 raw_ostream &OS) {
   // Write the convert function to a separate stream, so we can drop it after
   // the enum.
@@ -1094,14 +1103,14 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
   // TargetOperandClass - This is the target's operand class, like X86Operand.
   std::string TargetOperandClass = Target.getName() + "Operand";
 
-  for (std::vector<InstructionInfo*>::const_iterator it = Infos.begin(),
+  for (std::vector<MatchableInfo*>::const_iterator it = Infos.begin(),
          ie = Infos.end(); it != ie; ++it) {
-    InstructionInfo &II = **it;
+    MatchableInfo &II = **it;
 
     // Order the (class) operands by the order to convert them into an MCInst.
     SmallVector<std::pair<unsigned, unsigned>, 4> MIOperandList;
     for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
-      InstructionInfo::Operand &Op = II.Operands[i];
+      MatchableInfo::Operand &Op = II.Operands[i];
       if (Op.OperandInfo)
         MIOperandList.push_back(std::make_pair(Op.OperandInfo->MIOperandNo, i));
     }
@@ -1132,7 +1141,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
     std::string Signature = "Convert";
     unsigned CurIndex = 0;
     for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i) {
-      InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
+      MatchableInfo::Operand &Op = II.Operands[MIOperandList[i].second];
       assert(CurIndex <= Op.OperandInfo->MIOperandNo &&
              "Duplicate match for instruction operand!");
 
@@ -1191,7 +1200,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
     CvtOS << "  case " << Signature << ":\n";
     CurIndex = 0;
     for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i) {
-      InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
+      MatchableInfo::Operand &Op = II.Operands[MIOperandList[i].second];
 
       // Add the implicit operands.
       for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex) {
@@ -1591,26 +1600,26 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Sort the instruction table using the partial order on classes. We use
   // stable_sort to ensure that ambiguous instructions are still
   // deterministically ordered.
-  std::stable_sort(Info.Instructions.begin(), Info.Instructions.end(),
-                   less_ptr<InstructionInfo>());
+  std::stable_sort(Info.Matchables.begin(), Info.Matchables.end(),
+                   less_ptr<MatchableInfo>());
 
   DEBUG_WITH_TYPE("instruction_info", {
-      for (std::vector<InstructionInfo*>::iterator
-             it = Info.Instructions.begin(), ie = Info.Instructions.end();
+      for (std::vector<MatchableInfo*>::iterator
+             it = Info.Matchables.begin(), ie = Info.Matchables.end();
            it != ie; ++it)
         (*it)->dump();
     });
 
-  // Check for ambiguous instructions.
+  // Check for ambiguous matchables.
   DEBUG_WITH_TYPE("ambiguous_instrs", {
     unsigned NumAmbiguous = 0;
-    for (unsigned i = 0, e = Info.Instructions.size(); i != e; ++i) {
+    for (unsigned i = 0, e = Info.Matchables.size(); i != e; ++i) {
       for (unsigned j = i + 1; j != e; ++j) {
-        InstructionInfo &A = *Info.Instructions[i];
-        InstructionInfo &B = *Info.Instructions[j];
+        MatchableInfo &A = *Info.Matchables[i];
+        MatchableInfo &B = *Info.Matchables[j];
 
         if (A.CouldMatchAmiguouslyWith(B)) {
-          errs() << "warning: ambiguous instruction match:\n";
+          errs() << "warning: ambiguous matchables:\n";
           A.dump();
           errs() << "\nis incomparable with:\n";
           B.dump();
@@ -1621,7 +1630,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     }
     if (NumAmbiguous)
       errs() << "warning: " << NumAmbiguous
-             << " ambiguous instructions!\n";
+             << " ambiguous matchables!\n";
   });
 
   // Write the output.
@@ -1666,7 +1675,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   bool HasMnemonicAliases = EmitMnemonicAliases(OS, Info);
   
   // Generate the unified function to convert operands into an MCInst.
-  EmitConvertToMCInst(Target, Info.Instructions, OS);
+  EmitConvertToMCInst(Target, Info.Matchables, OS);
 
   // Emit the enumeration for classes which participate in matching.
   EmitMatchClassEnumeration(Target, Info.Classes, OS);
@@ -1685,8 +1694,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
 
   size_t MaxNumOperands = 0;
-  for (std::vector<InstructionInfo*>::const_iterator it =
-         Info.Instructions.begin(), ie = Info.Instructions.end();
+  for (std::vector<MatchableInfo*>::const_iterator it =
+         Info.Matchables.begin(), ie = Info.Matchables.end();
        it != ie; ++it)
     MaxNumOperands = std::max(MaxNumOperands, (*it)->Operands.size());
 
@@ -1726,18 +1735,18 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "} // end anonymous namespace.\n\n";
 
   OS << "static const MatchEntry MatchTable["
-     << Info.Instructions.size() << "] = {\n";
+     << Info.Matchables.size() << "] = {\n";
 
-  for (std::vector<InstructionInfo*>::const_iterator it =
-       Info.Instructions.begin(), ie = Info.Instructions.end();
+  for (std::vector<MatchableInfo*>::const_iterator it =
+       Info.Matchables.begin(), ie = Info.Matchables.end();
        it != ie; ++it) {
-    InstructionInfo &II = **it;
+    MatchableInfo &II = **it;
 
     OS << "  { " << Target.getName() << "::" << II.InstrName
     << ", \"" << II.Tokens[0] << "\""
     << ", " << II.ConversionFnKind << ", { ";
     for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
-      InstructionInfo::Operand &Op = II.Operands[i];
+      MatchableInfo::Operand &Op = II.Operands[i];
 
       if (i) OS << ", ";
       OS << Op.Class->Name;
@@ -1812,7 +1821,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  // Search the table.\n";
   OS << "  std::pair<const MatchEntry*, const MatchEntry*> MnemonicRange =\n";
   OS << "    std::equal_range(MatchTable, MatchTable+"
-     << Info.Instructions.size() << ", Mnemonic, LessOpcode());\n\n";
+     << Info.Matchables.size() << ", Mnemonic, LessOpcode());\n\n";
 
   OS << "  // Return a more specific error code if no mnemonics match.\n";
   OS << "  if (MnemonicRange.first == MnemonicRange.second)\n";
