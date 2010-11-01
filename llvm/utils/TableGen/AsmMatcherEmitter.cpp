@@ -945,7 +945,7 @@ void AsmMatcherInfo::BuildInfo() {
 
     Instructions.push_back(II.take());
   }
-  
+ 
   // Build info for the register classes.
   BuildRegisterClasses(SingletonRegisters);
 
@@ -998,12 +998,9 @@ void AsmMatcherInfo::BuildInfo() {
 
       // Map this token to an operand. FIXME: Move elsewhere.
       unsigned Idx;
-      try {
-        Idx = II->Instr->getOperandNamed(OperandName);
-      } catch(...) {
+      if (!II->Instr->hasOperandNamed(OperandName, Idx))
         throw std::string("error: unable to find operand: '" +
                           OperandName.str() + "'");
-      }
 
       // FIXME: This is annoying, the named operand may be tied (e.g.,
       // XCHG8rm). What we want is the untied operand, which we now have to

@@ -190,12 +190,12 @@ namespace llvm {
     /// getOperandNamed - Return the index of the operand with the specified
     /// non-empty name.  If the instruction does not have an operand with the
     /// specified name, throw an exception.
-    unsigned getOperandNamed(const std::string &Name) const;
+    unsigned getOperandNamed(StringRef Name) const;
 
     /// hasOperandNamed - Query whether the instruction has an operand of the
     /// given name. If so, return true and set OpIdx to the index of the
     /// operand. Otherwise, return false.
-    bool hasOperandNamed(const std::string &Name, unsigned &OpIdx) const;
+    bool hasOperandNamed(StringRef Name, unsigned &OpIdx) const;
 
     /// HasOneImplicitDefWithKnownVT - If the instruction has at least one
     /// implicit def and it has a known VT, return the VT, otherwise return
