@@ -624,12 +624,14 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           }
           // Verify isKill == LI.killedAt.
           if (!MI->isRegTiedToDefOperand(MONum)) {
+            // MI could kill register without a kill flag on MO.
+            bool miKill = MI->killsRegister(Reg);
             bool liKill = LI.killedAt(UseIdx.getDefIndex());
-            if (isKill && !liKill) {
+            if (miKill && !liKill) {
               report("Live range continues after kill flag", MO, MONum);
               *OS << "Live range: " << LI << '\n';
             }
-            if (!isKill && liKill) {
+            if (!miKill && liKill) {
               report("Live range ends without kill flag", MO, MONum);
               *OS << "Live range: " << LI << '\n';
             }
