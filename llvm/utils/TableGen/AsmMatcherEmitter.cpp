@@ -411,6 +411,10 @@ struct MatchableInfo {
   /// ambiguously match the same set of operands as \arg RHS (without being a
   /// strictly superior match).
   bool CouldMatchAmiguouslyWith(const MatchableInfo &RHS) {
+    // The primary comparator is the instruction mnemonic.
+    if (Tokens[0] != RHS.Tokens[0])
+      return false;
+    
     // The number of operands is unambiguous.
     if (Operands.size() != RHS.Operands.size())
       return false;
@@ -849,8 +853,8 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
 }
 
 void AsmMatcherInfo::BuildOperandClasses() {
-  std::vector<Record*> AsmOperands;
-  AsmOperands = Records.getAllDerivedDefinitions("AsmOperandClass");
+  std::vector<Record*> AsmOperands =
+    Records.getAllDerivedDefinitions("AsmOperandClass");
 
   // Pre-populate AsmOperandClasses map.
   for (std::vector<Record*>::iterator it = AsmOperands.begin(),
@@ -1127,7 +1131,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       }
     }
 
-    std::sort(MIOperandList.begin(), MIOperandList.end());
+    array_pod_sort(MIOperandList.begin(), MIOperandList.end());
 
     // Compute the total number of operands.
     unsigned NumMIOperands = 0;
