@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "clang/AST/DeclarationName.h"
+#include "clang/AST/Decl.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Error.h"
@@ -35,6 +36,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace lldb_private;
 using namespace clang;
@@ -949,8 +951,6 @@ ClangExpressionDeclMap::FindVariableInScope
     }
     
     return var.get();
-    
-    return NULL;
 }
 
 // Interface for ClangASTSource
@@ -1242,7 +1242,12 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (log)
     {
-        log->Printf("Found variable %s, returned (NamedDecl)%p", decl_name.c_str(), var_decl);
+        std::string var_decl_print_string;
+        llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
+        var_decl->print(var_decl_print_stream);
+        var_decl_print_stream.flush();
+        
+        log->Printf("Found variable %s, returned %s", decl_name.c_str(), var_decl_print_string.c_str());
     }
 }
 
@@ -1268,7 +1273,14 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     pvar->m_parser_vars->m_lldb_value  = NULL;
     
     if (log)
-        log->Printf("Added pvar %s, returned (NamedDecl)%p", pvar->m_name.GetCString(), var_decl);  
+    {
+        std::string var_decl_print_string;
+        llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
+        var_decl->print(var_decl_print_stream);
+        var_decl_print_stream.flush();
+        
+        log->Printf("Added pvar %s, returned %s", pvar->m_name.GetCString(), var_decl_print_string.c_str());
+    }
 }
 
 void
@@ -1343,7 +1355,12 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
         
     if (log)
     {
-        log->Printf("Found %s function %s, returned (NamedDecl)%p", (fun ? "specific" : "generic"), decl_name.c_str(), fun_decl);
+        std::string fun_decl_print_string;
+        llvm::raw_string_ostream fun_decl_print_stream(fun_decl_print_string);
+        fun_decl->print(fun_decl_print_stream);
+        fun_decl_print_stream.flush();
+        
+        log->Printf("Found %s function %s, returned %s", (fun ? "specific" : "generic"), decl_name.c_str(), fun_decl_print_string.c_str());
     }
 }
 
