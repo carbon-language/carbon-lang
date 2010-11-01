@@ -822,6 +822,7 @@ void SplitEditor::rewrite(unsigned reg) {
   for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(reg),
        RE = mri_.reg_end(); RI != RE;) {
     MachineOperand &MO = RI.getOperand();
+    unsigned OpNum = RI.getOperandNo();
     MachineInstr *MI = MO.getParent();
     ++RI;
     if (MI->isDebugValue()) {
@@ -844,6 +845,8 @@ void SplitEditor::rewrite(unsigned reg) {
     DEBUG(dbgs() << "  rewr BB#" << MI->getParent()->getNumber() << '\t'<< Idx);
     assert(LI && "No register was live at use");
     MO.setReg(LI->reg);
+    if (MO.isUse() && !MI->isRegTiedToDefOperand(OpNum))
+      MO.setIsKill(LI->killedAt(Idx.getDefIndex()));
     DEBUG(dbgs() << '\t' << *MI);
   }
 }
