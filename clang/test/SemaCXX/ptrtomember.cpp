@@ -16,3 +16,17 @@ struct S2 {
 };
 
 int S2::*pf = &S2::bitfield; // expected-error {{address of bit-field requested}}
+
+struct S3 {
+  void m();
+};
+
+void f3(S3* p, void (S3::*m)()) {
+    p->*m; // expected-error {{a bound member function may only be used to call it}}
+    (void)(p->*m); // expected-error {{a bound member function may only be used to call it}}
+    (void)(void*)(p->*m); // expected-error {{a bound member function may only be used to call it}}
+    (void)reinterpret_cast<void*>(p->*m); // expected-error {{a bound member function may only be used to call it}}
+    if (p->*m) {} // expected-error {{a bound member function may only be used to call it}}
+
+    p->m; // expected-error {{a bound member function may only be used to call it}}
+}

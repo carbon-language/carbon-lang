@@ -396,6 +396,9 @@ public:
   /// write barrier.
   bool isOBJCGCCandidate(ASTContext &Ctx) const;
 
+  /// \brief Returns true if this expression is a bound member function.
+  bool isBoundMemberFunction(ASTContext &Ctx) const;
+
   /// \brief Result type of CanThrow().
   enum CanThrowResult {
     CT_Cannot,

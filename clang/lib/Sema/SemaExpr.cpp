@@ -8206,6 +8206,10 @@ bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
   DiagnoseAssignmentAsCondition(E);
 
   if (!E->isTypeDependent()) {
+    if (E->isBoundMemberFunction(Context))
+      return Diag(E->getLocStart(), diag::err_invalid_use_of_bound_member_func)
+        << E->getSourceRange();
+
     DefaultFunctionArrayLvalueConversion(E);
 
     QualType T = E->getType();

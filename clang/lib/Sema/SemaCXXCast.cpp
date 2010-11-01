@@ -146,6 +146,10 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
   // FIXME: should we check this in a more fine-grained manner?
   bool TypeDependent = DestType->isDependentType() || Ex->isTypeDependent();
 
+  if (Ex->isBoundMemberFunction(Context))
+    Diag(Ex->getLocStart(), diag::err_invalid_use_of_bound_member_func)
+      << Ex->getSourceRange();
+
   switch (Kind) {
   default: assert(0 && "Unknown C++ cast!");
 
@@ -1273,6 +1277,11 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
                          CastKind &Kind, 
                          CXXCastPath &BasePath,
                          bool FunctionalStyle) {
+  if (CastExpr->isBoundMemberFunction(Context))
+    return Diag(CastExpr->getLocStart(),
+                diag::err_invalid_use_of_bound_member_func)
+        << CastExpr->getSourceRange();
+
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
