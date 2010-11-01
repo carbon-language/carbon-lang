@@ -969,14 +969,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                           NameLoc);
   }
 
-  // call foo is not ambiguous with callw.
-  if (Name == "call" && Operands.size() == 2) {
-    const char *NewName = Is64Bit ? "callq" : "calll";
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken(NewName, NameLoc);
-    Name = NewName;
-  }
-
   // movsd -> movsl (when no operands are specified).
   if (Name == "movsd" && Operands.size() == 1) {
     delete Operands[0];
@@ -1007,46 +999,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       Operands.size() == 1) {
     const MCExpr *A = MCConstantExpr::Create(0xA, getParser().getContext());
     Operands.push_back(X86Operand::CreateImm(A, NameLoc, NameLoc));
-  }
-
-  // "lgdtl" is not ambiguous 32-bit mode and is the same as "lgdt".
-  // "lgdtq" is not ambiguous 64-bit mode and is the same as "lgdt".
-  if ((Name == "lgdtl" && Is64Bit == false) ||
-      (Name == "lgdtq" && Is64Bit == true)) {
-    const char *NewName = "lgdt";
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken(NewName, NameLoc);
-    Name = NewName;
-  }
-
-  // "lidtl" is not ambiguous 32-bit mode and is the same as "lidt".
-  // "lidtq" is not ambiguous 64-bit mode and is the same as "lidt".
-  if ((Name == "lidtl" && Is64Bit == false) ||
-      (Name == "lidtq" && Is64Bit == true)) {
-    const char *NewName = "lidt";
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken(NewName, NameLoc);
-    Name = NewName;
-  }
-
-  // "sgdtl" is not ambiguous 32-bit mode and is the same as "sgdt".
-  // "sgdtq" is not ambiguous 64-bit mode and is the same as "sgdt".
-  if ((Name == "sgdtl" && Is64Bit == false) ||
-      (Name == "sgdtq" && Is64Bit == true)) {
-    const char *NewName = "sgdt";
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken(NewName, NameLoc);
-    Name = NewName;
-  }
-
-  // "sidtl" is not ambiguous 32-bit mode and is the same as "sidt".
-  // "sidtq" is not ambiguous 64-bit mode and is the same as "sidt".
-  if ((Name == "sidtl" && Is64Bit == false) ||
-      (Name == "sidtq" && Is64Bit == true)) {
-    const char *NewName = "sidt";
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken(NewName, NameLoc);
-    Name = NewName;
   }
 
   return false;

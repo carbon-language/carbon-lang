@@ -1306,10 +1306,10 @@ def : InstAlias<(outs GR64:$dst), (ins GR16:$src),
                 (MOVZX64rr16_Q GR64:$dst, GR16:$src)>;
 // Note: No GR32->GR64 movzx form.
 
-// TODO: lidtl/lidtq can be opcode aliases, perhaps others.
 
-def : MnemonicAlias<"iret", "iretl">;
-def : MnemonicAlias<"sysret", "sysretl">;
+def : MnemonicAlias<"call", "calll">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"call", "callq">, Requires<[In64BitMode]>;
+
 def : MnemonicAlias<"cbw",  "cbtw">;
 def : MnemonicAlias<"cwd",  "cwtd">;
 def : MnemonicAlias<"cdq", "cltd">;
@@ -1350,6 +1350,19 @@ def : MnemonicAlias<"smovq", "movsq">;
 
 def : MnemonicAlias<"ud2a", "ud2">;
 def : MnemonicAlias<"verrw", "verr">;
+
+// System instruction aliases.
+def : MnemonicAlias<"iret", "iretl">;
+def : MnemonicAlias<"sysret", "sysretl">;
+
+def : MnemonicAlias<"lgdtl", "lgdt">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"lgdtq", "lgdt">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"lidtl", "lidt">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"lidtq", "lidt">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"sgdtl", "sgdt">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"sgdtq", "sgdt">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"sidtl", "sidt">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"sidtq", "sidt">, Requires<[In64BitMode]>;
 
 
 // Floating point stack aliases.
