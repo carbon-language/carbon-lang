@@ -169,64 +169,6 @@ static void TokenizeAsmString(StringRef AsmString,
     Tokens.push_back(AsmString.substr(Prev));
 }
 
-static bool IsAssemblerInstruction(StringRef Name,
-                                   const CodeGenInstruction &CGI,
-                                   const SmallVectorImpl<StringRef> &Tokens) {
-  // Ignore "codegen only" instructions.
-  if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
-    return false;
-
-  // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
-  //
-  // FIXME: This is a total hack.
-  if (StringRef(Name).startswith("Int_") || StringRef(Name).endswith("_Int"))
-    return false;
-
-  // Reject instructions with no .s string.
-  if (CGI.AsmString.empty()) {
-    PrintError(CGI.TheDef->getLoc(),
-               "instruction with empty asm string");
-    throw std::string("ERROR: Invalid instruction for asm matcher");
-  }
-
-  // Reject any instructions with a newline in them, they should be marked
-  // isCodeGenOnly if they are pseudo instructions.
-  if (CGI.AsmString.find('\n') != std::string::npos) {
-    PrintError(CGI.TheDef->getLoc(),
-               "multiline instruction is not valid for the asmparser, "
-               "mark it isCodeGenOnly");
-    throw std::string("ERROR: Invalid instruction");
-  }
-
-  // Reject instructions with attributes, these aren't something we can handle,
-  // the target should be refactored to use operands instead of modifiers.
-  //
-  // Also, check for instructions which reference the operand multiple times;
-  // this implies a constraint we would not honor.
-  std::set<std::string> OperandNames;
-  for (unsigned i = 1, e = Tokens.size(); i < e; ++i) {
-    if (Tokens[i][0] == '$' &&
-        Tokens[i].find(':') != StringRef::npos) {
-      PrintError(CGI.TheDef->getLoc(),
-                 "instruction with operand modifier '" + Tokens[i].str() +
-                 "' not supported by asm matcher.  Mark isCodeGenOnly!");
-      throw std::string("ERROR: Invalid instruction");
-    }
-    
-    // FIXME: Should reject these.  The ARM backend hits this with $lane in a
-    // bunch of instructions.  It is unclear what the right answer is for this.
-    if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
-      DEBUG({
-        errs() << "warning: '" << Name << "': "
-               << "ignoring instruction with tied operand '"
-               << Tokens[i].str() << "'\n";
-      });
-      return false;
-    }
-  }
-  
-  return true;
-}
 
 namespace {
   class AsmMatcherInfo;
@@ -392,8 +334,8 @@ struct InstructionInfo {
   /// InstrName - The target name for this instruction.
   std::string InstrName;
 
-  /// Instr - The instruction this matches.
-  const CodeGenInstruction *Instr;
+  Record *const TheDef;
+  const CGIOperandList &OperandList;
 
   /// AsmString - The assembly string for this instruction (with variants
   /// removed).
@@ -412,6 +354,27 @@ struct InstructionInfo {
   /// ConvertToMCInst to convert parsed operands into an MCInst for this
   /// function.
   std::string ConversionFnKind;
+  
+  InstructionInfo(const CodeGenInstruction &CGI, StringRef CommentDelimiter)
+    : TheDef(CGI.TheDef), OperandList(CGI.Operands) {
+    InstrName = TheDef->getName();
+    // TODO: Eventually support asmparser for Variant != 0.
+    AsmString = CGI.FlattenAsmStringVariants(CGI.AsmString, 0);
+    
+    // Remove comments from the asm string.  We know that the asmstring only
+    // has one line.
+    if (!CommentDelimiter.empty()) {
+      size_t Idx = StringRef(AsmString).find(CommentDelimiter);
+      if (Idx != StringRef::npos)
+        AsmString = AsmString.substr(0, Idx);
+    }
+    
+    TokenizeAsmString(AsmString, Tokens);
+  }
+
+  /// isAssemblerInstruction - Return true if this matchable is a valid thing to
+  /// match against.
+  bool isAssemblerInstruction() const;
   
   /// getSingletonRegisterForToken - If the specified token is a singleton
   /// register, return the Record for it, otherwise return null.
@@ -604,6 +567,48 @@ static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
   return 0;
 }
 
+bool InstructionInfo::isAssemblerInstruction() const {
+  StringRef Name = InstrName;
+  
+  // Reject instructions with no .s string.
+  if (AsmString.empty())
+    throw TGError(TheDef->getLoc(), "instruction with empty asm string");
+  
+  // Reject any instructions with a newline in them, they should be marked
+  // isCodeGenOnly if they are pseudo instructions.
+  if (AsmString.find('\n') != std::string::npos)
+    throw TGError(TheDef->getLoc(),
+                  "multiline instruction is not valid for the asmparser, "
+                  "mark it isCodeGenOnly");
+  
+  // Reject instructions with attributes, these aren't something we can handle,
+  // the target should be refactored to use operands instead of modifiers.
+  //
+  // Also, check for instructions which reference the operand multiple times;
+  // this implies a constraint we would not honor.
+  std::set<std::string> OperandNames;
+  for (unsigned i = 1, e = Tokens.size(); i < e; ++i) {
+    if (Tokens[i][0] == '$' && Tokens[i].find(':') != StringRef::npos)
+      throw TGError(TheDef->getLoc(),
+                    "instruction with operand modifier '" + Tokens[i].str() +
+                    "' not supported by asm matcher.  Mark isCodeGenOnly!");
+    
+    // FIXME: Should reject these.  The ARM backend hits this with $lane in a
+    // bunch of instructions.  It is unclear what the right answer is for this.
+    if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
+      DEBUG({
+        errs() << "warning: '" << Name << "': "
+        << "ignoring instruction with tied operand '"
+        << Tokens[i].str() << "'\n";
+      });
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+
 /// getSingletonRegisterForToken - If the specified token is a singleton
 /// register, return the register name, otherwise return a null StringRef.
 Record *InstructionInfo::
@@ -623,7 +628,7 @@ getSingletonRegisterForToken(unsigned i, const AsmMatcherInfo &Info) const {
     
   std::string Err = "unable to find register for '" + RegName.str() +
   "' (which matches register prefix)";
-  throw TGError(Instr->TheDef->getLoc(), Err);
+  throw TGError(TheDef->getLoc(), Err);
 }
 
 
@@ -908,26 +913,22 @@ void AsmMatcherInfo::BuildInfo() {
     if (!StringRef(CGI.TheDef->getName()).startswith(MatchPrefix))
       continue;
 
-    OwningPtr<InstructionInfo> II(new InstructionInfo());
-
-    II->InstrName = CGI.TheDef->getName();
-    II->Instr = &CGI;
-    // TODO: Eventually support asmparser for Variant != 0.
-    II->AsmString = CGI.FlattenAsmStringVariants(CGI.AsmString, 0);
-
-    // Remove comments from the asm string.  We know that the asmstring only
-    // has one line.
-    if (!CommentDelimiter.empty()) {
-      size_t Idx = StringRef(II->AsmString).find(CommentDelimiter);
-      if (Idx != StringRef::npos)
-        II->AsmString = II->AsmString.substr(0, Idx);
-    }
-
-    TokenizeAsmString(II->AsmString, II->Tokens);
+    // Ignore "codegen only" instructions.
+    if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
+      continue;
+    
+    OwningPtr<InstructionInfo> II(new InstructionInfo(CGI, CommentDelimiter));
 
     // Ignore instructions which shouldn't be matched and diagnose invalid
     // instruction definitions with an error.
-    if (!IsAssemblerInstruction(CGI.TheDef->getName(), CGI, II->Tokens))
+    if (!II->isAssemblerInstruction())
+      continue;
+    
+    // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
+    //
+    // FIXME: This is a total hack.
+    if (StringRef(II->InstrName).startswith("Int_") ||
+        StringRef(II->InstrName).endswith("_Int"))
       continue;
     
     // Collect singleton registers, if used.
@@ -972,7 +973,7 @@ void AsmMatcherInfo::BuildInfo() {
     assert(!II->Tokens.empty() && "Instruction has no tokens?");
     StringRef Mnemonic = II->Tokens[0];
     if (Mnemonic[0] == '$' || II->getSingletonRegisterForToken(0, *this))
-      throw TGError(II->Instr->TheDef->getLoc(),
+      throw TGError(II->TheDef->getLoc(),
                     "Invalid instruction mnemonic '" + Mnemonic.str() + "'!");
 
     // Parse the tokens after the mnemonic.
@@ -1008,7 +1009,7 @@ void AsmMatcherInfo::BuildInfo() {
 
       // Map this token to an operand. FIXME: Move elsewhere.
       unsigned Idx;
-      if (!II->Instr->Operands.hasOperandNamed(OperandName, Idx))
+      if (!II->OperandList.hasOperandNamed(OperandName, Idx))
         throw std::string("error: unable to find operand: '" +
                           OperandName.str() + "'");
 
@@ -1016,15 +1017,15 @@ void AsmMatcherInfo::BuildInfo() {
       // XCHG8rm). What we want is the untied operand, which we now have to
       // grovel for. Only worry about this for single entry operands, we have to
       // clean this up anyway.
-      const CGIOperandList::OperandInfo *OI = &II->Instr->Operands[Idx];
+      const CGIOperandList::OperandInfo *OI = &II->OperandList[Idx];
       if (OI->Constraints[0].isTied()) {
         unsigned TiedOp = OI->Constraints[0].getTiedOperand();
 
         // The tied operand index is an MIOperand index, find the operand that
         // contains it.
-        for (unsigned i = 0, e = II->Instr->Operands.size(); i != e; ++i) {
-          if (II->Instr->Operands[i].MIOperandNo == TiedOp) {
-            OI = &II->Instr->Operands[i];
+        for (unsigned i = 0, e = II->OperandList.size(); i != e; ++i) {
+          if (II->OperandList[i].MIOperandNo == TiedOp) {
+            OI = &II->OperandList[i];
             break;
           }
         }
@@ -1096,8 +1097,8 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
     // Find any tied operands.
     SmallVector<std::pair<unsigned, unsigned>, 4> TiedOperands;
-    for (unsigned i = 0, e = II.Instr->Operands.size(); i != e; ++i) {
-      const CGIOperandList::OperandInfo &OpInfo = II.Instr->Operands[i];
+    for (unsigned i = 0, e = II.OperandList.size(); i != e; ++i) {
+      const CGIOperandList::OperandInfo &OpInfo = II.OperandList[i];
       for (unsigned j = 0, e = OpInfo.Constraints.size(); j != e; ++j) {
         const CGIOperandList::ConstraintInfo &CI = OpInfo.Constraints[j];
         if (CI.isTied())
@@ -1110,8 +1111,8 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
     // Compute the total number of operands.
     unsigned NumMIOperands = 0;
-    for (unsigned i = 0, e = II.Instr->Operands.size(); i != e; ++i) {
-      const CGIOperandList::OperandInfo &OI = II.Instr->Operands[i];
+    for (unsigned i = 0, e = II.OperandList.size(); i != e; ++i) {
+      const CGIOperandList::OperandInfo &OI = II.OperandList[i];
       NumMIOperands = std::max(NumMIOperands,
                                OI.MIOperandNo + OI.MINumOperands);
     }
