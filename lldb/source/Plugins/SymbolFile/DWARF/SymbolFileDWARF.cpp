@@ -3447,7 +3447,12 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
 {
     if (sc.comp_unit != NULL)
     {
-        DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnitForUID(sc.comp_unit->GetID());
+        DWARFDebugInfo* info = DebugInfo();
+        if (info == NULL)
+            return 0;
+        
+        uint32_t cu_idx = UINT32_MAX;
+        DWARFCompileUnit* dwarf_cu = info->GetCompileUnit(sc.comp_unit->GetID(), &cu_idx).get();
 
         if (dwarf_cu == NULL)
             return 0;
@@ -3476,9 +3481,8 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                 if (!m_indexed)
                     Index ();
 
-
                 std::vector<NameToDIE::Info> global_die_info_array;
-                const size_t num_globals = m_global_index.FindAllEntriesForCompileUnitWithIndex (sc.comp_unit->GetID(), global_die_info_array);
+                const size_t num_globals = m_global_index.FindAllEntriesForCompileUnitWithIndex (cu_idx, global_die_info_array);
                 for (size_t idx=0; idx<num_globals; ++idx)
                 {
                     VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, dwarf_cu->GetDIEAtIndexUnchecked(global_die_info_array[idx].die_idx), LLDB_INVALID_ADDRESS));
