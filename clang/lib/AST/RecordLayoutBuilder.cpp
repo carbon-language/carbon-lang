@@ -494,7 +494,9 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
   for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++FieldNo) {
     const FieldDecl *FD = *I;
-    
+    if (FD->isBitField())
+      continue;
+
     CharUnits FieldOffset = Offset + getFieldOffset(Layout, FieldNo);
 
     UpdateEmptyFieldSubobjects(FD, FieldOffset);
