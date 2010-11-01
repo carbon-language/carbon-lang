@@ -4924,8 +4924,6 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
   assert(getCurFunctionDecl() == 0 && "Function parsing confused");
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
-  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
-
   Scope *ParentScope = FnBodyScope->getParent();
 
   Decl *DP = HandleDeclarator(ParentScope, D,
