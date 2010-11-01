@@ -78,6 +78,7 @@
 #include "Record.h"
 #include "StringMatcher.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
@@ -413,9 +414,9 @@ struct InstructionInfo {
   std::string ConversionFnKind;
   
   /// getSingletonRegisterForToken - If the specified token is a singleton
-  /// register, return the register name, otherwise return a null StringRef.
-  StringRef getSingletonRegisterForToken(unsigned i,
-                                         const AsmMatcherInfo &Info) const;  
+  /// register, return the Record for it, otherwise return null.
+  Record *getSingletonRegisterForToken(unsigned i,
+                                       const AsmMatcherInfo &Info) const;  
 
   /// operator< - Compare two instructions.
   bool operator<(const InstructionInfo &RHS) const {
@@ -539,7 +540,7 @@ private:
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
-  void BuildRegisterClasses(std::set<std::string> &SingletonRegisterNames);
+  void BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters);
 
   /// BuildOperandClasses - Build the ClassInfo* instances for user defined
   /// operand classes.
@@ -605,27 +606,24 @@ static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
 
 /// getSingletonRegisterForToken - If the specified token is a singleton
 /// register, return the register name, otherwise return a null StringRef.
-StringRef InstructionInfo::
+Record *InstructionInfo::
 getSingletonRegisterForToken(unsigned i, const AsmMatcherInfo &Info) const {
   StringRef Tok = Tokens[i];
   if (!Tok.startswith(Info.RegisterPrefix))
-    return StringRef();
+    return 0;
   
   StringRef RegName = Tok.substr(Info.RegisterPrefix.size());
-  Record *Rec = getRegisterRecord(Info.Target, RegName);
+  if (Record *Rec = getRegisterRecord(Info.Target, RegName))
+    return Rec;
   
-  if (!Rec) {
-    // If there is no register prefix (i.e. "%" in "%eax"), then this may
-    // be some random non-register token, just ignore it.
-    if (Info.RegisterPrefix.empty())
-      return StringRef();
+  // If there is no register prefix (i.e. "%" in "%eax"), then this may
+  // be some random non-register token, just ignore it.
+  if (Info.RegisterPrefix.empty())
+    return 0;
     
-    std::string Err = "unable to find register for '" + RegName.str() +
-      "' (which matches register prefix)";
-    throw TGError(Instr->TheDef->getLoc(), Err);
-  }
-  
-  return RegName;
+  std::string Err = "unable to find register for '" + RegName.str() +
+  "' (which matches register prefix)";
+  throw TGError(Instr->TheDef->getLoc(), Err);
 }
 
 
@@ -691,8 +689,8 @@ AsmMatcherInfo::getOperandClass(StringRef Token,
   return CI;
 }
 
-void AsmMatcherInfo::BuildRegisterClasses(std::set<std::string>
-                                            &SingletonRegisterNames) {
+void AsmMatcherInfo::
+BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   std::vector<CodeGenRegisterClass> RegisterClasses;
   std::vector<CodeGenRegister> Registers;
 
@@ -709,10 +707,11 @@ void AsmMatcherInfo::BuildRegisterClasses(std::set<std::string>
                                           it->Elements.end()));
 
   // Add any required singleton sets.
-  for (std::set<std::string>::iterator it = SingletonRegisterNames.begin(),
-         ie = SingletonRegisterNames.end(); it != ie; ++it)
-    if (Record *Rec = getRegisterRecord(Target, *it))
-      RegisterSets.insert(std::set<Record*>(&Rec, &Rec + 1));
+  for (SmallPtrSet<Record*, 16>::iterator it = SingletonRegisters.begin(),
+       ie = SingletonRegisters.end(); it != ie; ++it) {
+    Record *Rec = *it;
+    RegisterSets.insert(std::set<Record*>(&Rec, &Rec + 1));
+  }
 
   // Introduce derived sets where necessary (when a register does not determine
   // a unique register set class), and build the mapping of registers to the set
@@ -797,19 +796,18 @@ void AsmMatcherInfo::BuildRegisterClasses(std::set<std::string>
     this->RegisterClasses[it->first] = RegisterSetClasses[it->second];
 
   // Name the register classes which correspond to singleton registers.
-  for (std::set<std::string>::iterator it = SingletonRegisterNames.begin(),
-         ie = SingletonRegisterNames.end(); it != ie; ++it) {
-    if (Record *Rec = getRegisterRecord(Target, *it)) {
-      ClassInfo *CI = this->RegisterClasses[Rec];
-      assert(CI && "Missing singleton register class info!");
+  for (SmallPtrSet<Record*, 16>::iterator it = SingletonRegisters.begin(),
+         ie = SingletonRegisters.end(); it != ie; ++it) {
+    Record *Rec = *it;
+    ClassInfo *CI = this->RegisterClasses[Rec];
+    assert(CI && "Missing singleton register class info!");
 
-      if (CI->ValueName.empty()) {
-        CI->ClassName = Rec->getName();
-        CI->Name = "MCK_" + Rec->getName();
-        CI->ValueName = Rec->getName();
-      } else
-        CI->ValueName = CI->ValueName + "," + Rec->getName();
-    }
+    if (CI->ValueName.empty()) {
+      CI->ClassName = Rec->getName();
+      CI->Name = "MCK_" + Rec->getName();
+      CI->ValueName = Rec->getName();
+    } else
+      CI->ValueName = CI->ValueName + "," + Rec->getName();
   }
 }
 
@@ -900,7 +898,7 @@ void AsmMatcherInfo::BuildInfo() {
 
   // Parse the instructions; we need to do this first so that we can gather the
   // singleton register classes.
-  std::set<std::string> SingletonRegisterNames;
+  SmallPtrSet<Record*, 16> SingletonRegisters;
   for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
        E = Target.inst_end(); I != E; ++I) {
     const CodeGenInstruction &CGI = **I;
@@ -934,10 +932,8 @@ void AsmMatcherInfo::BuildInfo() {
     
     // Collect singleton registers, if used.
     for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
-      StringRef RegName = II->getSingletonRegisterForToken(i, *this);
-      
-      if (RegName != StringRef())
-        SingletonRegisterNames.insert(RegName);
+      if (Record *Reg = II->getSingletonRegisterForToken(i, *this))
+        SingletonRegisters.insert(Reg);
     }
 
     // Compute the require features.
@@ -951,7 +947,7 @@ void AsmMatcherInfo::BuildInfo() {
   }
 
   // Build info for the register classes.
-  BuildRegisterClasses(SingletonRegisterNames);
+  BuildRegisterClasses(SingletonRegisters);
 
   // Build info for the user defined assembly operand classes.
   BuildOperandClasses();
@@ -965,8 +961,7 @@ void AsmMatcherInfo::BuildInfo() {
     // simple string, not a $foo variable or a singleton register.
     assert(!II->Tokens.empty() && "Instruction has no tokens?");
     StringRef Mnemonic = II->Tokens[0];
-    if (Mnemonic[0] == '$' ||
-        II->getSingletonRegisterForToken(0, *this) != StringRef())
+    if (Mnemonic[0] == '$' || II->getSingletonRegisterForToken(0, *this))
       throw TGError(II->Instr->TheDef->getLoc(),
                     "Invalid instruction mnemonic '" + Mnemonic.str() + "'!");
 
@@ -975,9 +970,7 @@ void AsmMatcherInfo::BuildInfo() {
       StringRef Token = II->Tokens[i];
 
       // Check for singleton registers.
-      StringRef RegName = II->getSingletonRegisterForToken(i, *this);
-      if (RegName != StringRef()) {
-        Record *RegRecord = getRegisterRecord(Target, RegName);
+      if (Record *RegRecord = II->getSingletonRegisterForToken(i, *this)) {
         InstructionInfo::Operand Op;
         Op.Class = RegisterClasses[RegRecord];
         Op.OperandInfo = 0;
