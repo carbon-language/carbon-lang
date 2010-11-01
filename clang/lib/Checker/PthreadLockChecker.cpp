@@ -65,7 +65,10 @@ void PthreadLockChecker::PostVisitCallExpr(CheckerContext &C,
   if (!R)
     return;
   
-  llvm::StringRef FName = R->getDecl()->getName();
+  IdentifierInfo *II = R->getDecl()->getIdentifier();
+  if (!II)   // if no identifier, not a simple C function
+    return;
+  llvm::StringRef FName = II->getName();
   
   if (FName == "pthread_mutex_lock") {
     if (CE->getNumArgs() != 1)
