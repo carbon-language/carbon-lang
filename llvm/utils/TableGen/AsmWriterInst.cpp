@@ -53,8 +53,6 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
                              int OperandSpacing) {
   this->CGI = &CGI;
   
-  unsigned CurVariant = ~0U;  // ~0 if we are outside a {.|.|.} region, other #.
-  
   // This is the number of tabs we've seen if we're doing columnar layout.
   unsigned CurColumn = 0;
   
@@ -62,54 +60,48 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
   // NOTE: Any extensions to this code need to be mirrored in the 
   // AsmPrinter::printInlineAsm code that executes as compile time (assuming
   // that inline asm strings should also get the new feature)!
-  const std::string &AsmString = CGI.AsmString;
+  std::string AsmString = CGI.FlattenAsmStringVariants(CGI.AsmString, Variant);
   std::string::size_type LastEmitted = 0;
   while (LastEmitted != AsmString.size()) {
     std::string::size_type DollarPos =
-    AsmString.find_first_of("${|}\\", LastEmitted);
+      AsmString.find_first_of("$\\", LastEmitted);
     if (DollarPos == std::string::npos) DollarPos = AsmString.size();
     
     // Emit a constant string fragment.
-    
     if (DollarPos != LastEmitted) {
-      if (CurVariant == Variant || CurVariant == ~0U) {
-        for (; LastEmitted != DollarPos; ++LastEmitted)
-          switch (AsmString[LastEmitted]) {
-            case '\n':
-              AddLiteralString("\\n");
-              break;
-            case '\t':
-              // If the asm writer is not using a columnar layout, \t is not
-              // magic.
-              if (FirstOperandColumn == -1 || OperandSpacing == -1) {
-                AddLiteralString("\\t");
-              } else {
-                // We recognize a tab as an operand delimeter.
-                unsigned DestColumn = FirstOperandColumn + 
-                CurColumn++ * OperandSpacing;
-                Operands.push_back(
-                  AsmWriterOperand(
-                    "O.PadToColumn(" +
-                    utostr(DestColumn) + ");\n",
-                    AsmWriterOperand::isLiteralStatementOperand));
-              }
-              break;
-            case '"':
-              AddLiteralString("\\\"");
-              break;
-            case '\\':
-              AddLiteralString("\\\\");
-              break;
-            default:
-              AddLiteralString(std::string(1, AsmString[LastEmitted]));
-              break;
-          }
-      } else {
-        LastEmitted = DollarPos;
-      }
+      for (; LastEmitted != DollarPos; ++LastEmitted)
+        switch (AsmString[LastEmitted]) {
+          case '\n':
+            AddLiteralString("\\n");
+            break;
+          case '\t':
+            // If the asm writer is not using a columnar layout, \t is not
+            // magic.
+            if (FirstOperandColumn == -1 || OperandSpacing == -1) {
+              AddLiteralString("\\t");
+            } else {
+              // We recognize a tab as an operand delimeter.
+              unsigned DestColumn = FirstOperandColumn + 
+              CurColumn++ * OperandSpacing;
+              Operands.push_back(
+                AsmWriterOperand(
+                  "O.PadToColumn(" +
+                  utostr(DestColumn) + ");\n",
+                  AsmWriterOperand::isLiteralStatementOperand));
+            }
+            break;
+          case '"':
+            AddLiteralString("\\\"");
+            break;
+          case '\\':
+            AddLiteralString("\\\\");
+            break;
+          default:
+            AddLiteralString(std::string(1, AsmString[LastEmitted]));
+            break;
+        }
     } else if (AsmString[DollarPos] == '\\') {
-      if (DollarPos+1 != AsmString.size() &&
-          (CurVariant == Variant || CurVariant == ~0U)) {
+      if (DollarPos+1 != AsmString.size()) {
         if (AsmString[DollarPos+1] == 'n') {
           AddLiteralString("\\n");
         } else if (AsmString[DollarPos+1] == 't') {
@@ -137,29 +129,9 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
         LastEmitted = DollarPos+2;
         continue;
       }
-    } else if (AsmString[DollarPos] == '{') {
-      if (CurVariant != ~0U)
-        throw "Nested variants found for instruction '" +
-        CGI.TheDef->getName() + "'!";
-      LastEmitted = DollarPos+1;
-      CurVariant = 0;   // We are now inside of the variant!
-    } else if (AsmString[DollarPos] == '|') {
-      if (CurVariant == ~0U)
-        throw "'|' character found outside of a variant in instruction '"
-        + CGI.TheDef->getName() + "'!";
-      ++CurVariant;
-      ++LastEmitted;
-    } else if (AsmString[DollarPos] == '}') {
-      if (CurVariant == ~0U)
-        throw "'}' character found outside of a variant in instruction '"
-        + CGI.TheDef->getName() + "'!";
-      ++LastEmitted;
-      CurVariant = ~0U;
     } else if (DollarPos+1 != AsmString.size() &&
                AsmString[DollarPos+1] == '$') {
-      if (CurVariant == Variant || CurVariant == ~0U) {
-        AddLiteralString("$");  // "$$" -> $
-      }
+      AddLiteralString("$");  // "$$" -> $
       LastEmitted = DollarPos+2;
     } else {
       // Get the name of the variable.
@@ -229,13 +201,9 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
         unsigned OpNo = CGI.getOperandNamed(VarName);
         CodeGenInstruction::OperandInfo OpInfo = CGI.OperandList[OpNo];
         
-        if (CurVariant == Variant || CurVariant == ~0U) {
-          unsigned MIOp = OpInfo.MIOperandNo;
-          Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, 
-                                              OpNo,
-                                              MIOp,
-                                              Modifier));
-        }
+        unsigned MIOp = OpInfo.MIOperandNo;
+        Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, 
+                                            OpNo, MIOp, Modifier));
       }
       LastEmitted = VarEnd;
     }

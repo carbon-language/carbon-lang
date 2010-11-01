@@ -23,6 +23,7 @@ namespace llvm {
   class Record;
   class DagInit;
   class CodeGenTarget;
+  class StringRef;
 
   class CodeGenInstruction {
   public:
@@ -201,6 +202,12 @@ namespace llvm {
     /// MVT::Other.
     MVT::SimpleValueType
       HasOneImplicitDefWithKnownVT(const CodeGenTarget &TargetInfo) const;
+    
+    
+    /// FlattenAsmStringVariants - Flatten the specified AsmString to only
+    /// include text from the specified variant, returning the new string.
+    static std::string FlattenAsmStringVariants(StringRef AsmString,
+                                                unsigned Variant);
   };
 }
 

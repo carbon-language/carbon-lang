@@ -92,54 +92,6 @@ static cl::opt<std::string>
 MatchPrefix("match-prefix", cl::init(""),
             cl::desc("Only match instructions with the given prefix"));
 
-/// FlattenVariants - Flatten an .td file assembly string by selecting the
-/// variant at index \arg N.
-static std::string FlattenVariants(const std::string &AsmString,
-                                   unsigned N) {
-  StringRef Cur = AsmString;
-  std::string Res = "";
-
-  for (;;) {
-    // Find the start of the next variant string.
-    size_t VariantsStart = 0;
-    for (size_t e = Cur.size(); VariantsStart != e; ++VariantsStart)
-      if (Cur[VariantsStart] == '{' &&
-          (VariantsStart == 0 || (Cur[VariantsStart-1] != '$' &&
-                                  Cur[VariantsStart-1] != '\\')))
-        break;
-
-    // Add the prefix to the result.
-    Res += Cur.slice(0, VariantsStart);
-    if (VariantsStart == Cur.size())
-      break;
-
-    ++VariantsStart; // Skip the '{'.
-
-    // Scan to the end of the variants string.
-    size_t VariantsEnd = VariantsStart;
-    unsigned NestedBraces = 1;
-    for (size_t e = Cur.size(); VariantsEnd != e; ++VariantsEnd) {
-      if (Cur[VariantsEnd] == '}' && Cur[VariantsEnd-1] != '\\') {
-        if (--NestedBraces == 0)
-          break;
-      } else if (Cur[VariantsEnd] == '{')
-        ++NestedBraces;
-    }
-
-    // Select the Nth variant (or empty).
-    StringRef Selection = Cur.slice(VariantsStart, VariantsEnd);
-    for (unsigned i = 0; i != N; ++i)
-      Selection = Selection.split('|').second;
-    Res += Selection.split('|').first;
-
-    assert(VariantsEnd != Cur.size() &&
-           "Unterminated variants in assembly string!");
-    Cur = Cur.substr(VariantsEnd + 1);
-  }
-
-  return Res;
-}
-
 /// TokenizeAsmString - Tokenize a simplified assembly string.
 static void TokenizeAsmString(StringRef AsmString,
                               SmallVectorImpl<StringRef> &Tokens) {
@@ -516,7 +468,6 @@ struct InstructionInfo {
     return !(HasLT ^ HasGT);
   }
 
-public:
   void dump();
 };
 
@@ -932,7 +883,8 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
 
     II->InstrName = CGI.TheDef->getName();
     II->Instr = &CGI;
-    II->AsmString = FlattenVariants(CGI.AsmString, 0);
+    // TODO: Eventually support asmparser for Variant != 0.
+    II->AsmString = CGI.FlattenAsmStringVariants(CGI.AsmString, 0);
 
     // Remove comments from the asm string.  We know that the asmstring only
     // has one line.
@@ -944,7 +896,8 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
 
     TokenizeAsmString(II->AsmString, II->Tokens);
 
-    // Ignore instructions which shouldn't be matched.
+    // Ignore instructions which shouldn't be matched and diagnose invalid
+    // instruction definitions with an error.
     if (!IsAssemblerInstruction(CGI.TheDef->getName(), CGI, II->Tokens))
       continue;
     
