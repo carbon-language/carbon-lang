@@ -369,7 +369,7 @@ static unsigned MatchRegisterName(StringRef Name);
 int ARMAsmParser::TryParseRegister() {
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
-  
+
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
   int RegNum = MatchRegisterName(Tok.getString());
@@ -378,8 +378,8 @@ int ARMAsmParser::TryParseRegister() {
   Parser.Lex(); // Eat identifier token.
   return RegNum;
 }
-  
-  
+
+
 /// Try to parse a register name.  The token must be an Identifier when called,
 /// and if it is a register name the token is eaten and the register number is
 /// returned.  Otherwise return -1.
@@ -390,7 +390,7 @@ ARMOperand *ARMAsmParser::TryParseRegisterWithWriteBack() {
   SMLoc S = Parser.getTok().getLoc();
   int RegNo = TryParseRegister();
   if (RegNo == -1) return 0;
-  
+
   SMLoc E = Parser.getTok().getLoc();
 
   bool Writeback = false;
@@ -602,7 +602,7 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
       E = CurLoc;
     }
   }
-  
+
   // If we parsed a register as the offset then their can be a shift after that
   if (OffsetRegNum != -1) {
     // Look for a comma then a shift
