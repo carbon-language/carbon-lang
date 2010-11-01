@@ -1,10 +1,15 @@
-; RUN: llc < %s -march=arm
-; FIXME: llc < %s -march=thumb | FileCheck -check-prefix=THUMB %s
-; FIXME: llc < %s -march=thumb -mattr=+thumb2 | FileCheck -check-prefix=T2 %s
+; RUN: llc < %s -march=arm | FileCheck -check-prefix=ARM %s
+; RUN: llc < %s -march=thumb | FileCheck -check-prefix=THUMB %s
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck -check-prefix=T2 %s
+
+; FIXME: The -march=thumb test doesn't change if -disable-peephole is specified.
 
 %struct.Foo = type { i8* }
 
-define %struct.Foo* @_ZN3Foo7collectEj(%struct.Foo* %this, i32 %acc) nounwind readonly align 2 {
+; ARM:   foo
+; THUMB: foo
+; T2:    foo
+define %struct.Foo* @foo(%struct.Foo* %this, i32 %acc) nounwind readonly align 2 {
 entry:
   %scevgep = getelementptr %struct.Foo* %this, i32 1
   br label %tailrecurse
@@ -18,8 +23,8 @@ tailrecurse:                                      ; preds = %sw.bb, %entry
   %tmp2 = load i8** %scevgep5
   %0 = ptrtoint i8* %tmp2 to i32
 
-; CHECK:      ands r12, r12, #3
-; CHECK-NEXT: beq
+; ARM:      ands r12, r12, #3
+; ARM-NEXT: beq
 
 ; THUMB:      movs r5, #3
 ; THUMB-NEXT: mov r6, r4
@@ -66,7 +71,7 @@ sw.epilog:                                        ; preds = %tailrecurse.switch
 
 %struct.S = type { i8* (i8*)*, [1 x i8] }
 
-; CHECK: bar
+; ARM: bar
 ; THUMB: bar
 ; T2: bar
 define internal zeroext i8 @bar(%struct.S* %x, %struct.S* nocapture %y) nounwind readonly {
@@ -74,7 +79,7 @@ entry:
   %0 = getelementptr inbounds %struct.S* %x, i32 0, i32 1, i32 0
   %1 = load i8* %0, align 1
   %2 = zext i8 %1 to i32
-; CHECK: ands
+; ARM: ands
 ; THUMB: ands
 ; T2: ands
   %3 = and i32 %2, 112
@@ -85,7 +90,7 @@ bb:                                               ; preds = %entry
   %5 = getelementptr inbounds %struct.S* %y, i32 0, i32 1, i32 0
   %6 = load i8* %5, align 1
   %7 = zext i8 %6 to i32
-; CHECK: andsne
+; ARM: andsne
 ; THUMB: ands
 ; T2: andsne
   %8 = and i32 %7, 112

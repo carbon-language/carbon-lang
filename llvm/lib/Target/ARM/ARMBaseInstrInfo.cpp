@@ -21,7 +21,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -34,6 +33,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 static cl::opt<bool>
@@ -1557,10 +1557,10 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
 
     for (unsigned IO = 0, EO = Instr.getNumOperands(); IO != EO; ++IO) {
       const MachineOperand &MO = Instr.getOperand(IO);
-      if (!MO.isReg() || !MO.isDef()) continue;
+      if (!MO.isReg()) continue;
 
-      // This instruction modifies CPSR before the one we want to change. We
-      // can't do this transformation.
+      // This instruction modifies or uses CPSR after the one we want to
+      // change. We can't do this transformation.
       if (MO.getReg() == ARM::CPSR)
         return false;
     }

@@ -1,6 +1,4 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
-; XFAIL: *
-; FIXME: Fix after peephole optimizer is fixed.
 
 define i64 @f0(i64 %A, i64 %B) {
 ; CHECK: f0

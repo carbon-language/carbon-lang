@@ -50,6 +50,10 @@ static cl::opt<bool>
 Aggressive("aggressive-ext-opt", cl::Hidden,
            cl::desc("Aggressive extension optimization"));
 
+static cl::opt<bool>
+DisablePeephole("disable-peephole", cl::Hidden, cl::init(false),
+                cl::desc("Disable the peephole optimizer"));
+
 STATISTIC(NumReuse,      "Number of extension results reused");
 STATISTIC(NumEliminated, "Number of compares eliminated");
 
@@ -276,11 +280,9 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
       if (MI->getDesc().isCompare() &&
           !MI->getDesc().hasUnmodeledSideEffects()) {
-#if 0
-        if (OptimizeCmpInstr(MI, MBB, MII))
+        if (!DisablePeephole && OptimizeCmpInstr(MI, MBB, MII))
           Changed = true;
         else
-#endif
           ++MII;
       } else {
         Changed |= OptimizeExtInstr(MI, MBB, LocalMIs);
