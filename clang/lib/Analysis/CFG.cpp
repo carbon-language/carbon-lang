@@ -260,6 +260,9 @@ private:
   CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
   CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
   CFGBlock *VisitCXXTryStmt(CXXTryStmt *S);
+  CFGBlock *VisitCXXConstructExpr(CXXConstructExpr *C, AddStmtChoice asc);
+  CFGBlock *VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *C, 
+                                        AddStmtChoice asc);
   CFGBlock *VisitCXXMemberCallExpr(CXXMemberCallExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCallExpr(CallExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCaseStmt(CaseStmt *C);
@@ -760,6 +763,12 @@ tryAgain:
       // so we don't artificially create extra blocks.
       return Visit(cast<CXXExprWithTemporaries>(S)->getSubExpr(), asc);
     }
+
+    case Stmt::CXXConstructExprClass:
+      return VisitCXXConstructExpr(cast<CXXConstructExpr>(S), asc);
+
+    case Stmt::CXXTemporaryObjectExprClass:
+      return VisitCXXTemporaryObjectExpr(cast<CXXTemporaryObjectExpr>(S), asc);
 
     case Stmt::CXXMemberCallExprClass:
       return VisitCXXMemberCallExpr(cast<CXXMemberCallExpr>(S), asc);
@@ -2282,6 +2291,24 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
   return CatchBlock;
 }
 
+CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
+                                            AddStmtChoice asc) {
+  AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
+                                         : AddStmtChoice::AlwaysAdd;
+  autoCreateBlock();
+  AppendStmt(Block, C, AddStmtChoice(K));
+  return VisitChildren(C);
+}
+
+CFGBlock *CFGBuilder::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *C,
+                                                  AddStmtChoice asc) {
+  AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
+                                         : AddStmtChoice::AlwaysAdd;
+  autoCreateBlock();
+  AppendStmt(Block, C, AddStmtChoice(K));
+  return VisitChildren(C);
+}
+
 CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C,
                                              AddStmtChoice asc) {
   AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
@@ -2751,7 +2778,7 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     OS << ".~" << T->getAsCXXRecordDecl()->getName() << "()";
     OS << " (Member object destructor)\n";
   }
- }
+}
 
 static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
                         const CFGBlock& B,
