@@ -1,7 +1,6 @@
-; RUN: llc < %s -march=arm | FileCheck %s
-; RUN: llc < %s -march=thumb | FileCheck -check-prefix=THUMB %s
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck -check-prefix=T2 %s
-; XFAIL: *
+; RUN: llc < %s -march=arm
+; FIXME: llc < %s -march=thumb | FileCheck -check-prefix=THUMB %s
+; FIXME: llc < %s -march=thumb -mattr=+thumb2 | FileCheck -check-prefix=T2 %s
 
 %struct.Foo = type { i8* }
 
