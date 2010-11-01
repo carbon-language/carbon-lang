@@ -511,6 +511,15 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst) {
 }
 
 void MCELFStreamer::Finish() {
+  // FIXME: duplicated code with the MachO streamer.
+  // Dump out the dwarf file & directory tables and line tables.
+  if (getContext().hasDwarfFiles()) {
+    const MCSection *DwarfLineSection =
+      getContext().getELFSection(".debug_line", 0, 0,
+                                 SectionKind::getDataRelLocal());
+    MCDwarfFileTable::Emit(this, DwarfLineSection);
+  }
+
   for (std::vector<LocalCommon>::const_iterator i = LocalCommons.begin(),
                                                 e = LocalCommons.end();
        i != e; ++i) {
