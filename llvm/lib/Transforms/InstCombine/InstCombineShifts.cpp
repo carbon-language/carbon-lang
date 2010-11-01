@@ -157,7 +157,7 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
     if (CI->getZExtValue() > NumBits) {
       unsigned LowBits = CI->getZExtValue() - NumBits;
       if (MaskedValueIsZero(I->getOperand(0),
-                            APInt::getLowBitsSet(TypeWidth, LowBits)))
+                          APInt::getLowBitsSet(TypeWidth, LowBits) << NumBits))
         return true;
     }
       
