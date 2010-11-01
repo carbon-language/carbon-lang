@@ -276,9 +276,11 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
       if (MI->getDesc().isCompare() &&
           !MI->getDesc().hasUnmodeledSideEffects()) {
+#if 0
         if (OptimizeCmpInstr(MI, MBB, MII))
           Changed = true;
         else
+#endif
           ++MII;
       } else {
         Changed |= OptimizeExtInstr(MI, MBB, LocalMIs);
