@@ -36,3 +36,7 @@ TEST4:
 # CHECK: 	.quad	1075
 
 
+TEST5:
+        .value 8
+# CHECK: TEST5:
+# CHECK: .short 8

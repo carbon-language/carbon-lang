@@ -929,6 +929,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveValue(1);
     if (IDVal == ".short")
       return ParseDirectiveValue(2);
+    if (IDVal == ".value")
+      return ParseDirectiveValue(2);
     if (IDVal == ".long")
       return ParseDirectiveValue(4);
     if (IDVal == ".quad")
