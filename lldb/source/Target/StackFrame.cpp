@@ -36,6 +36,7 @@ using namespace lldb_private;
 #define RESOLVED_FRAME_ID_SYMBOL_SCOPE  (RESOLVED_FRAME_CODE_ADDR << 1)
 #define GOT_FRAME_BASE                  (RESOLVED_FRAME_ID_SYMBOL_SCOPE << 1)
 #define RESOLVED_VARIABLES              (GOT_FRAME_BASE << 1)
+#define RESOLVED_GLOBAL_VARIABLES       (RESOLVED_VARIABLES << 1)
 
 StackFrame::StackFrame 
 (
@@ -454,22 +455,26 @@ StackFrame::GetVariableList (bool get_file_globals)
             const bool can_create = true;
             m_variable_list_sp = frame_block->GetVariableList (get_child_variables, can_create);
         }
+    }
+    
+    if (m_flags.IsClear(RESOLVED_GLOBAL_VARIABLES) &&
+        get_file_globals)
+    {
+        m_flags.Set(RESOLVED_GLOBAL_VARIABLES);
         
-        if (get_file_globals)
+        if (m_flags.IsClear (eSymbolContextCompUnit))
+            GetSymbolContext (eSymbolContextCompUnit);
+        
+        if (m_sc.comp_unit)
         {
-            if (m_flags.IsClear (eSymbolContextCompUnit))
-                GetSymbolContext (eSymbolContextCompUnit);
-
-            if (m_sc.comp_unit)
-            {
-                VariableListSP global_variable_list_sp (m_sc.comp_unit->GetVariableList(true));
-                if (m_variable_list_sp)
-                    m_variable_list_sp->AddVariables (global_variable_list_sp.get());
-                else
-                    m_variable_list_sp = global_variable_list_sp;
-            }
+            VariableListSP global_variable_list_sp (m_sc.comp_unit->GetVariableList(true));
+            if (m_variable_list_sp)
+                m_variable_list_sp->AddVariables (global_variable_list_sp.get());
+            else
+                m_variable_list_sp = global_variable_list_sp;
         }
     }
+    
     return m_variable_list_sp.get();
 }
 
