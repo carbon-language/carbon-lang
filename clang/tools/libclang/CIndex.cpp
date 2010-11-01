@@ -3635,7 +3635,9 @@ enum CXChildVisitResult
 AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {  
   CXSourceLocation Loc = clang_getCursorLocation(cursor);
   SourceRange cursorRange = getRawCursorExtent(cursor);
-  
+  if (cursorRange.isInvalid())
+    return CXChildVisit_Recurse;
+        
   if (clang_isPreprocessing(cursor.kind)) {    
     // For macro instantiations, just note where the beginning of the macro
     // instantiation occurs.
@@ -3643,9 +3645,6 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
       Annotated[Loc.int_data] = cursor;
       return CXChildVisit_Recurse;
     }
-    
-    if (cursorRange.isInvalid())
-      return CXChildVisit_Continue;
     
     // Items in the preprocessing record are kept separate from items in
     // declarations, so we keep a separate token index.
@@ -3711,13 +3710,13 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
         TypeLoc TL = TI->getTypeLoc();
         SourceLocation TLoc = TL.getSourceRange().getBegin();
-        if (TLoc.isValid() && 
+        if (TLoc.isValid() && L.isValid() &&
             SrcMgr.isBeforeInTranslationUnit(TLoc, L))
           cursorRange.setBegin(TLoc);
       }
     }
   }
-
+  
   // If the location of the cursor occurs within a macro instantiation, record
   // the spelling location of the cursor in our annotation map.  We can then
   // paper over the token labelings during a post-processing step to try and
