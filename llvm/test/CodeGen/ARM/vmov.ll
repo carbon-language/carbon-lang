@@ -343,3 +343,13 @@ declare <2 x i32> @llvm.arm.neon.vqmovnu.v2i32(<2 x i64>) nounwind readnone
 declare <8 x i8>  @llvm.arm.neon.vqmovnsu.v8i8(<8 x i16>) nounwind readnone
 declare <4 x i16> @llvm.arm.neon.vqmovnsu.v4i16(<4 x i32>) nounwind readnone
 declare <2 x i32> @llvm.arm.neon.vqmovnsu.v2i32(<2 x i64>) nounwind readnone
+
+; Truncating vector stores are not supported.  The following should not crash.
+; Radar 8598391.
+define void @noTruncStore(<4 x i32>* %a, <4 x i16>* %b) nounwind {
+;CHECK: vmovn
+  %tmp1 = load <4 x i32>* %a, align 16
+  %tmp2 = trunc <4 x i32> %tmp1 to <4 x i16>
+  store <4 x i16> %tmp2, <4 x i16>* %b, align 8
+  ret void
+}

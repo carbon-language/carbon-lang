@@ -104,6 +104,10 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
     setOperationAction(ISD::SRL, VT.getSimpleVT(), Custom);
     setLoadExtAction(ISD::SEXTLOAD, VT.getSimpleVT(), Expand);
     setLoadExtAction(ISD::ZEXTLOAD, VT.getSimpleVT(), Expand);
+    for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+         InnerVT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
+      setTruncStoreAction(VT.getSimpleVT(),
+                          (MVT::SimpleValueType)InnerVT, Expand);
   }
   setLoadExtAction(ISD::EXTLOAD, VT.getSimpleVT(), Expand);
 
