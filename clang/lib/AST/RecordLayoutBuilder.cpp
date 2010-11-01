@@ -244,8 +244,7 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
     if (Base->IsVirtual)
       continue;
 
-    CharUnits BaseOffset =
-      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(Base->Class));
+    CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
 
     if (!CanPlaceBaseSubobjectAtOffset(Base, BaseOffset))
       return false;
@@ -297,8 +296,7 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
     if (Base->IsVirtual)
       continue;
 
-    CharUnits BaseOffset = 
-      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(Base->Class));
+    CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
     UpdateEmptyBaseSubobjects(Base, BaseOffset, PlacingEmptyBase);
   }
 
@@ -362,8 +360,7 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
     const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    CharUnits BaseOffset =
-      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(BaseDecl));
+    CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(BaseDecl);
     if (!CanPlaceFieldSubobjectAtOffset(BaseDecl, Class, BaseOffset))
       return false;
   }
@@ -476,8 +473,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
     const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    CharUnits BaseOffset = 
-      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(BaseDecl));
+    CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(BaseDecl);
     UpdateEmptyFieldSubobjects(BaseDecl, Class, BaseOffset);
   }
 
@@ -1065,8 +1061,7 @@ RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
     if (Base->IsVirtual)
       continue;
 
-    CharUnits BaseOffset = 
-      Offset + toCharUnits(Layout.getBaseClassOffsetInBits(Base->Class));
+    CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
     AddPrimaryVirtualBaseOffsets(Base, BaseOffset);
   }
 }
