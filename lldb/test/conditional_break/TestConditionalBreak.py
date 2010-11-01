@@ -8,6 +8,11 @@ import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
+# rdar://problem/8532131
+# lldb not able to digest the clang-generated debug info correctly with respect to function name
+#
+# This class currently fails for clang as well as llvm-gcc.
+
 class ConditionalBreakTestCase(TestBase):
 
     mydir = "conditional_break"
