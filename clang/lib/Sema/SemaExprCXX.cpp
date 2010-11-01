@@ -2933,6 +2933,9 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
 }
 
 ExprResult Sema::MaybeBindToTemporary(Expr *E) {
+  if (!E)
+    return ExprError();
+  
   if (!Context.getLangOptions().CPlusPlus)
     return Owned(E);
 
