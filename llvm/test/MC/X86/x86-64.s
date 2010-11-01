@@ -692,7 +692,13 @@ movzx %bl, %rax
 // CHECK: encoding: [0x48,0x0f,0xb7,0xc1]
 movzx %cx, %rax
 
+// CHECK: movsbw	(%rax), %ax
+// CHECK: encoding: [0x66,0x0f,0xbe,0x00]
+movsx (%rax), %ax
 
+// CHECK: movzbw	(%rax), %ax
+// CHECK: encoding: [0x66,0x0f,0xb6,0x00]
+movzx (%rax), %ax
 
 
 // rdar://7873482

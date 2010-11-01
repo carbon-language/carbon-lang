@@ -1262,6 +1262,9 @@ include "X86InstrCompiler.td"
 def : InstAlias<(outs GR16:$dst), (ins GR8 :$src),
                 "movsx $src, $dst",
                 (MOVSX16rr8W GR16:$dst, GR8:$src)>;
+def : InstAlias<(outs GR16:$dst), (ins i8mem:$src),
+                "movsx $src, $dst",
+                (MOVSX16rm8W GR16:$dst, i8mem:$src)>;
 
 def : InstAlias<(outs GR32:$dst), (ins GR8 :$src),
                 "movsx $src, $dst",
@@ -1284,6 +1287,9 @@ def : InstAlias<(outs GR64:$dst), (ins GR32:$src),
 def : InstAlias<(outs GR16:$dst), (ins GR8 :$src),
                 "movzx $src, $dst",
                 (MOVZX16rr8W GR16:$dst, GR8:$src)>;
+def : InstAlias<(outs GR16:$dst), (ins i8mem:$src),
+                "movzx $src, $dst",
+                (MOVZX16rm8W GR16:$dst, i8mem:$src)>;
 
 def : InstAlias<(outs GR32:$dst), (ins GR8 :$src),
                 "movzx $src, $dst",
