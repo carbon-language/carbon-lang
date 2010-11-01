@@ -292,6 +292,17 @@ def system(*popenargs, **kwargs):
         raise CalledProcessError(retcode, cmd)
     return output
 
+def getsource_if_available(obj):
+    """
+    Return the text of the source code for an object if available.  Otherwise,
+    a print representation is returned.
+    """
+    import inspect
+    try:
+        return inspect.getsource(obj)
+    except:
+        return repr(obj)
+
 class TestBase(unittest2.TestCase):
     """
     This abstract base class is meant to be subclassed.  It provides default
@@ -536,8 +547,7 @@ class TestBase(unittest2.TestCase):
         """
         if callable(hook):
             with recording(self, traceAlways) as sbuf:
-                import inspect
-                print >> sbuf, "Adding tearDown hook:", inspect.getsource(hook)
+                print >> sbuf, "Adding tearDown hook:", getsource_if_available(hook)
             self.hooks.append(hook)
 
     def tearDown(self):
@@ -547,8 +557,7 @@ class TestBase(unittest2.TestCase):
         # Check and run any hook functions.
         for hook in self.hooks:
             with recording(self, traceAlways) as sbuf:
-                import inspect
-                print >> sbuf, "Executing tearDown hook:", inspect.getsource(hook)
+                print >> sbuf, "Executing tearDown hook:", getsource_if_available(hook)
             hook()
 
         # Terminate the current process being debugged, if any.
