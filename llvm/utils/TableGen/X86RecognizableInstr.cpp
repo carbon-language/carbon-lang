@@ -219,7 +219,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   Name      = Rec->getName();
   AsmString = Rec->getValueAsString("AsmString");
   
-  Operands = &insn.OperandList;
+  Operands = &insn.Operands.OperandList;
   
   IsSSE            = HasOpSizePrefix && (Name.find("16") == Name.npos);
   HasFROperands    = false;
@@ -424,7 +424,7 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   
   Spec->insnContext = insnContext();
     
-  const std::vector<CodeGenInstruction::OperandInfo> &OperandList = *Operands;
+  const std::vector<CGIOperandList::OperandInfo> &OperandList = *Operands;
   
   unsigned operandIndex;
   unsigned numOperands = OperandList.size();
@@ -440,7 +440,7 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   
   for (operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
     if (OperandList[operandIndex].Constraints.size()) {
-      const CodeGenInstruction::ConstraintInfo &Constraint =
+      const CGIOperandList::ConstraintInfo &Constraint =
         OperandList[operandIndex].Constraints[0];
       if (Constraint.isTied()) {
         operandMapping[operandIndex] = Constraint.getTiedOperand();

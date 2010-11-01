@@ -386,7 +386,7 @@ struct InstructionInfo {
     ClassInfo *Class;
 
     /// The original operand this corresponds to, if any.
-    const CodeGenInstruction::OperandInfo *OperandInfo;
+    const CGIOperandList::OperandInfo *OperandInfo;
   };
 
   /// InstrName - The target name for this instruction.
@@ -536,7 +536,7 @@ private:
 
   /// getOperandClass - Lookup or create the class for the given operand.
   ClassInfo *getOperandClass(StringRef Token,
-                             const CodeGenInstruction::OperandInfo &OI);
+                             const CGIOperandList::OperandInfo &OI);
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
@@ -587,7 +587,7 @@ void InstructionInfo::dump() {
       continue;
     }
 
-    const CodeGenInstruction::OperandInfo &OI = *Op.OperandInfo;
+    const CGIOperandList::OperandInfo &OI = *Op.OperandInfo;
     errs() << OI.Name << " " << OI.Rec->getName()
            << " (" << OI.MIOperandNo << ", " << OI.MINumOperands << ")\n";
   }
@@ -665,7 +665,7 @@ ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
 
 ClassInfo *
 AsmMatcherInfo::getOperandClass(StringRef Token,
-                                const CodeGenInstruction::OperandInfo &OI) {
+                                const CGIOperandList::OperandInfo &OI) {
   if (OI.Rec->isSubClassOf("RegisterClass")) {
     ClassInfo *CI = RegisterClassClasses[OI.Rec];
 
@@ -945,7 +945,8 @@ void AsmMatcherInfo::BuildInfo() {
 
     Instructions.push_back(II.take());
   }
- 
+  
+
   // Build info for the register classes.
   BuildRegisterClasses(SingletonRegisters);
 
@@ -998,7 +999,7 @@ void AsmMatcherInfo::BuildInfo() {
 
       // Map this token to an operand. FIXME: Move elsewhere.
       unsigned Idx;
-      if (!II->Instr->hasOperandNamed(OperandName, Idx))
+      if (!II->Instr->Operands.hasOperandNamed(OperandName, Idx))
         throw std::string("error: unable to find operand: '" +
                           OperandName.str() + "'");
 
@@ -1006,15 +1007,15 @@ void AsmMatcherInfo::BuildInfo() {
       // XCHG8rm). What we want is the untied operand, which we now have to
       // grovel for. Only worry about this for single entry operands, we have to
       // clean this up anyway.
-      const CodeGenInstruction::OperandInfo *OI = &II->Instr->OperandList[Idx];
+      const CGIOperandList::OperandInfo *OI = &II->Instr->Operands[Idx];
       if (OI->Constraints[0].isTied()) {
         unsigned TiedOp = OI->Constraints[0].getTiedOperand();
 
         // The tied operand index is an MIOperand index, find the operand that
         // contains it.
-        for (unsigned i = 0, e = II->Instr->OperandList.size(); i != e; ++i) {
-          if (II->Instr->OperandList[i].MIOperandNo == TiedOp) {
-            OI = &II->Instr->OperandList[i];
+        for (unsigned i = 0, e = II->Instr->Operands.size(); i != e; ++i) {
+          if (II->Instr->Operands[i].MIOperandNo == TiedOp) {
+            OI = &II->Instr->Operands[i];
             break;
           }
         }
@@ -1086,10 +1087,10 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
     // Find any tied operands.
     SmallVector<std::pair<unsigned, unsigned>, 4> TiedOperands;
-    for (unsigned i = 0, e = II.Instr->OperandList.size(); i != e; ++i) {
-      const CodeGenInstruction::OperandInfo &OpInfo = II.Instr->OperandList[i];
+    for (unsigned i = 0, e = II.Instr->Operands.size(); i != e; ++i) {
+      const CGIOperandList::OperandInfo &OpInfo = II.Instr->Operands[i];
       for (unsigned j = 0, e = OpInfo.Constraints.size(); j != e; ++j) {
-        const CodeGenInstruction::ConstraintInfo &CI = OpInfo.Constraints[j];
+        const CGIOperandList::ConstraintInfo &CI = OpInfo.Constraints[j];
         if (CI.isTied())
           TiedOperands.push_back(std::make_pair(OpInfo.MIOperandNo + j,
                                                 CI.getTiedOperand()));
@@ -1100,8 +1101,8 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
     // Compute the total number of operands.
     unsigned NumMIOperands = 0;
-    for (unsigned i = 0, e = II.Instr->OperandList.size(); i != e; ++i) {
-      const CodeGenInstruction::OperandInfo &OI = II.Instr->OperandList[i];
+    for (unsigned i = 0, e = II.Instr->Operands.size(); i != e; ++i) {
+      const CGIOperandList::OperandInfo &OI = II.Instr->Operands[i];
       NumMIOperands = std::max(NumMIOperands,
                                OI.MIOperandNo + OI.MINumOperands);
     }

@@ -1763,8 +1763,8 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
       errs() << '\n';
 
       // Dumps the list of operand info.
-      for (unsigned i = 0, e = CGI.OperandList.size(); i != e; ++i) {
-        CodeGenInstruction::OperandInfo Info = CGI.OperandList[i];
+      for (unsigned i = 0, e = CGI.Operands.size(); i != e; ++i) {
+        const CGIOperandList::OperandInfo &Info = CGI.Operands[i];
         const std::string &OperandName = Info.Name;
         const Record &OperandDef = *Info.Rec;
 

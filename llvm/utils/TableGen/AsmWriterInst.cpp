@@ -198,8 +198,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
                                             Modifier));
       } else {
         // Otherwise, normal operand.
-        unsigned OpNo = CGI.getOperandNamed(VarName);
-        CodeGenInstruction::OperandInfo OpInfo = CGI.OperandList[OpNo];
+        unsigned OpNo = CGI.Operands.getOperandNamed(VarName);
+        CGIOperandList::OperandInfo OpInfo = CGI.Operands[OpNo];
         
         unsigned MIOp = OpInfo.MIOperandNo;
         Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, 

@@ -829,7 +829,7 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
     CodeGenInstruction &InstInfo = CDP.getTargetInfo().getInstruction(Operator);
 
     // FIXME: Should allow access to all the results here.
-    unsigned NumDefsToAdd = InstInfo.NumDefs ? 1 : 0;
+    unsigned NumDefsToAdd = InstInfo.Operands.NumDefs ? 1 : 0;
     
     // Add on one implicit def if it has a resolvable type.
     if (InstInfo.HasOneImplicitDefWithKnownVT(CDP.getTargetInfo()) !=MVT::Other)
@@ -1314,7 +1314,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     // Apply the result types to the node, these come from the things in the
     // (outs) list of the instruction.
     // FIXME: Cap at one result so far.
-    unsigned NumResultsToAdd = InstInfo.NumDefs ? 1 : 0;
+    unsigned NumResultsToAdd = InstInfo.Operands.NumDefs ? 1 : 0;
     for (unsigned ResNo = 0; ResNo != NumResultsToAdd; ++ResNo) {
       Record *ResultNode = Inst.getResult(ResNo);
       
@@ -2258,7 +2258,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     HasSideEffects = true;
   }
   
-  if (Inst.isVariadic)
+  if (Inst.Operands.isVariadic)
     IsVariadic = true;  // Can warn if we want.
 }
 
@@ -2283,18 +2283,18 @@ void CodeGenDAGPatterns::ParseInstructions() {
       
       CodeGenInstruction &InstInfo = Target.getInstruction(Instrs[i]);
 
-      if (InstInfo.OperandList.size() != 0) {
-        if (InstInfo.NumDefs == 0) {
+      if (InstInfo.Operands.size() != 0) {
+        if (InstInfo.Operands.NumDefs == 0) {
           // These produce no results
-          for (unsigned j = 0, e = InstInfo.OperandList.size(); j < e; ++j)
-            Operands.push_back(InstInfo.OperandList[j].Rec);
+          for (unsigned j = 0, e = InstInfo.Operands.size(); j < e; ++j)
+            Operands.push_back(InstInfo.Operands[j].Rec);
         } else {
           // Assume the first operand is the result.
-          Results.push_back(InstInfo.OperandList[0].Rec);
+          Results.push_back(InstInfo.Operands[0].Rec);
       
           // The rest are inputs.
-          for (unsigned j = 1, e = InstInfo.OperandList.size(); j < e; ++j)
-            Operands.push_back(InstInfo.OperandList[j].Rec);
+          for (unsigned j = 1, e = InstInfo.Operands.size(); j < e; ++j)
+            Operands.push_back(InstInfo.Operands[j].Rec);
         }
       }
       
@@ -2351,10 +2351,10 @@ void CodeGenDAGPatterns::ParseInstructions() {
     std::vector<Record*> Results;
     TreePatternNode *Res0Node = 0;
     for (unsigned i = 0; i != NumResults; ++i) {
-      if (i == CGI.OperandList.size())
+      if (i == CGI.Operands.size())
         I->error("'" + InstResults.begin()->first +
                  "' set but does not appear in operand list!");
-      const std::string &OpName = CGI.OperandList[i].Name;
+      const std::string &OpName = CGI.Operands[i].Name;
       
       // Check that it exists in InstResults.
       TreePatternNode *RNode = InstResults[OpName];
@@ -2368,11 +2368,11 @@ void CodeGenDAGPatterns::ParseInstructions() {
         I->error("Operand $" + OpName + " should be a set destination: all "
                  "outputs must occur before inputs in operand list!");
       
-      if (CGI.OperandList[i].Rec != R)
+      if (CGI.Operands[i].Rec != R)
         I->error("Operand $" + OpName + " class mismatch!");
       
       // Remember the return type.
-      Results.push_back(CGI.OperandList[i].Rec);
+      Results.push_back(CGI.Operands[i].Rec);
       
       // Okay, this one checks out.
       InstResults.erase(OpName);
@@ -2384,8 +2384,8 @@ void CodeGenDAGPatterns::ParseInstructions() {
 
     std::vector<TreePatternNode*> ResultNodeOperands;
     std::vector<Record*> Operands;
-    for (unsigned i = NumResults, e = CGI.OperandList.size(); i != e; ++i) {
-      CodeGenInstruction::OperandInfo &Op = CGI.OperandList[i];
+    for (unsigned i = NumResults, e = CGI.Operands.size(); i != e; ++i) {
+      CGIOperandList::OperandInfo &Op = CGI.Operands[i];
       const std::string &OpName = Op.Name;
       if (OpName.empty())
         I->error("Operand #" + utostr(i) + " in operands list has no name!");
@@ -2569,7 +2569,7 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
     InstInfo.mayStore = MayStore;
     InstInfo.mayLoad = MayLoad;
     InstInfo.hasSideEffects = HasSideEffects;
-    InstInfo.isVariadic = IsVariadic;
+    InstInfo.Operands.isVariadic = IsVariadic;
   }
 }
 

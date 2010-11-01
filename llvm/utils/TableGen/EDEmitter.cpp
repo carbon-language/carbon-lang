@@ -346,11 +346,10 @@ static void X86PopulateOperands(
     return;
 
   unsigned int index;
-  unsigned int numOperands = inst.OperandList.size();
+  unsigned int numOperands = inst.Operands.size();
 
   for (index = 0; index < numOperands; ++index) {
-    const CodeGenInstruction::OperandInfo &operandInfo =
-      inst.OperandList[index];
+    const CGIOperandList::OperandInfo &operandInfo = inst.Operands[index];
     Record &rec = *operandInfo.Rec;
 
     if (X86TypeFromOpName(operandTypes[index], rec.getName())) {
@@ -376,7 +375,7 @@ static inline void decorate1(
   const char *opFlag) {
   unsigned opIndex;
 
-  opIndex = inst.getOperandNamed(std::string(opName));
+  opIndex = inst.Operands.getOperandNamed(std::string(opName));
 
   operandFlags[opIndex]->addEntry(opFlag);
 }
@@ -648,7 +647,7 @@ static void ARMPopulateOperands(
     return;
 
   unsigned int index;
-  unsigned int numOperands = inst.OperandList.size();
+  unsigned int numOperands = inst.Operands.size();
 
   if (numOperands > EDIS_MAX_OPERANDS) {
     errs() << "numOperands == " << numOperands << " > " <<
@@ -657,8 +656,7 @@ static void ARMPopulateOperands(
   }
 
   for (index = 0; index < numOperands; ++index) {
-    const CodeGenInstruction::OperandInfo &operandInfo =
-    inst.OperandList[index];
+    const CGIOperandList::OperandInfo &operandInfo = inst.Operands[index];
     Record &rec = *operandInfo.Rec;
 
     if (ARMFlagFromOpName(operandTypes[index], rec.getName())) {
@@ -709,7 +707,7 @@ static void ARMExtractSemantics(
     BRANCH("func");
 
     unsigned opIndex;
-    opIndex = inst.getOperandNamed("func");
+    opIndex = inst.Operands.getOperandNamed("func");
     if (operandTypes[opIndex]->is("kOperandTypeImmediate"))
       operandTypes[opIndex]->set("kOperandTypeARMBranchTarget");
   }
@@ -740,7 +738,7 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
     infoStruct->addEntry(instType);
 
     LiteralConstantEmitter *numOperandsEmitter =
-      new LiteralConstantEmitter(inst.OperandList.size());
+      new LiteralConstantEmitter(inst.Operands.size());
     infoStruct->addEntry(numOperandsEmitter);
 
     CompoundConstantEmitter *operandTypeArray = new CompoundConstantEmitter;

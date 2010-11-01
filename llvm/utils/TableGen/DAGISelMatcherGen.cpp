@@ -678,11 +678,11 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   // in the 'execute always' values.  Match up the node operands to the
   // instruction operands to do this.
   SmallVector<unsigned, 8> InstOps;
-  for (unsigned ChildNo = 0, InstOpNo = NumResults, e = II.OperandList.size();
+  for (unsigned ChildNo = 0, InstOpNo = NumResults, e = II.Operands.size();
        InstOpNo != e; ++InstOpNo) {
     
     // Determine what to emit for this operand.
-    Record *OperandNode = II.OperandList[InstOpNo].Rec;
+    Record *OperandNode = II.Operands[InstOpNo].Rec;
     if ((OperandNode->isSubClassOf("PredicateOperand") ||
          OperandNode->isSubClassOf("OptionalDefOperand")) &&
         !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {

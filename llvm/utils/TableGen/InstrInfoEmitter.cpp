@@ -60,23 +60,23 @@ std::vector<std::string>
 InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
   std::vector<std::string> Result;
   
-  for (unsigned i = 0, e = Inst.OperandList.size(); i != e; ++i) {
+  for (unsigned i = 0, e = Inst.Operands.size(); i != e; ++i) {
     // Handle aggregate operands and normal operands the same way by expanding
     // either case into a list of operands for this op.
-    std::vector<CodeGenInstruction::OperandInfo> OperandList;
+    std::vector<CGIOperandList::OperandInfo> OperandList;
 
     // This might be a multiple operand thing.  Targets like X86 have
     // registers in their multi-operand operands.  It may also be an anonymous
     // operand, which has a single operand, but no declared class for the
     // operand.
-    DagInit *MIOI = Inst.OperandList[i].MIOperandInfo;
+    DagInit *MIOI = Inst.Operands[i].MIOperandInfo;
     
     if (!MIOI || MIOI->getNumArgs() == 0) {
       // Single, anonymous, operand.
-      OperandList.push_back(Inst.OperandList[i]);
+      OperandList.push_back(Inst.Operands[i]);
     } else {
-      for (unsigned j = 0, e = Inst.OperandList[i].MINumOperands; j != e; ++j) {
-        OperandList.push_back(Inst.OperandList[i]);
+      for (unsigned j = 0, e = Inst.Operands[i].MINumOperands; j != e; ++j) {
+        OperandList.push_back(Inst.Operands[i]);
 
         Record *OpR = dynamic_cast<DefInit*>(MIOI->getArg(j))->getDef();
         OperandList.back().Rec = OpR;
@@ -104,19 +104,19 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
 
       // Predicate operands.  Check to see if the original unexpanded operand
       // was of type PredicateOperand.
-      if (Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
+      if (Inst.Operands[i].Rec->isSubClassOf("PredicateOperand"))
         Res += "|(1<<TOI::Predicate)";
         
       // Optional def operands.  Check to see if the original unexpanded operand
       // was of type OptionalDefOperand.
-      if (Inst.OperandList[i].Rec->isSubClassOf("OptionalDefOperand"))
+      if (Inst.Operands[i].Rec->isSubClassOf("OptionalDefOperand"))
         Res += "|(1<<TOI::OptionalDef)";
 
       // Fill in constraint info.
       Res += ", ";
       
-      const CodeGenInstruction::ConstraintInfo &Constraint =
-        Inst.OperandList[i].Constraints[j];
+      const CGIOperandList::ConstraintInfo &Constraint =
+        Inst.Operands[i].Constraints[j];
       if (Constraint.isNone())
         Res += "0";
       else if (Constraint.isEarlyClobber())
@@ -256,14 +256,14 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   const OperandInfoMapTy &OpInfo,
                                   raw_ostream &OS) {
   int MinOperands = 0;
-  if (!Inst.OperandList.empty())
+  if (!Inst.Operands.size() == 0)
     // Each logical operand can be multiple MI operands.
-    MinOperands = Inst.OperandList.back().MIOperandNo +
-                  Inst.OperandList.back().MINumOperands;
+    MinOperands = Inst.Operands.back().MIOperandNo +
+                  Inst.Operands.back().MINumOperands;
 
   OS << "  { ";
   OS << Num << ",\t" << MinOperands << ",\t"
-     << Inst.NumDefs << ",\t" << getItinClassNumber(Inst.TheDef)
+     << Inst.Operands.NumDefs << ",\t" << getItinClassNumber(Inst.TheDef)
      << ",\t\"" << Inst.TheDef->getName() << "\", 0";
 
   // Emit all of the target indepedent flags...
@@ -283,9 +283,9 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isTerminator)       OS << "|(1<<TID::Terminator)";
   if (Inst.isReMaterializable) OS << "|(1<<TID::Rematerializable)";
   if (Inst.isNotDuplicable)    OS << "|(1<<TID::NotDuplicable)";
-  if (Inst.hasOptionalDef)     OS << "|(1<<TID::HasOptionalDef)";
+  if (Inst.Operands.hasOptionalDef) OS << "|(1<<TID::HasOptionalDef)";
   if (Inst.usesCustomInserter) OS << "|(1<<TID::UsesCustomInserter)";
-  if (Inst.isVariadic)         OS << "|(1<<TID::Variadic)";
+  if (Inst.Operands.isVariadic)OS << "|(1<<TID::Variadic)";
   if (Inst.hasSideEffects)     OS << "|(1<<TID::UnmodeledSideEffects)";
   if (Inst.isAsCheapAsAMove)   OS << "|(1<<TID::CheapAsAMove)";
   if (Inst.hasExtraSrcRegAllocReq) OS << "|(1<<TID::ExtraSrcRegAllocReq)";

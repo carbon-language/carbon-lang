@@ -76,7 +76,8 @@ private:
   /// The operands of the instruction, as listed in the CodeGenInstruction.
   /// They are not one-to-one with operands listed in the MCInst; for example,
   /// memory operands expand to 5 operands in the MCInst
-  const std::vector<CodeGenInstruction::OperandInfo>* Operands;
+  const std::vector<CGIOperandList::OperandInfo>* Operands;
+  
   /// The description of the instruction that is emitted into the instruction
   /// info table
   InstructionSpecifier* Spec;

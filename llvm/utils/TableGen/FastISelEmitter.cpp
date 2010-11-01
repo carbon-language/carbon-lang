@@ -263,7 +263,7 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     if (!Op->isSubClassOf("Instruction"))
       continue;
     CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op);
-    if (II.OperandList.empty())
+    if (II.Operands.size() == 0)
       continue;
       
     // For now, ignore multi-instruction patterns.
@@ -285,7 +285,7 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     const CodeGenRegisterClass *DstRC = 0;
     std::string SubRegNo;
     if (Op->getName() != "EXTRACT_SUBREG") {
-      Record *Op0Rec = II.OperandList[0].Rec;
+      Record *Op0Rec = II.Operands[0].Rec;
       if (!Op0Rec->isSubClassOf("RegisterClass"))
         continue;
       DstRC = &Target.getRegisterClass(Op0Rec);

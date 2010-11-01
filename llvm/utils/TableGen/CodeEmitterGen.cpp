@@ -158,21 +158,22 @@ void CodeEmitterGen::run(raw_ostream &o) {
               // operand number. Non-matching operands are assumed to be in
               // order.
               unsigned OpIdx;
-              if (CGI.hasOperandNamed(VarName, OpIdx)) {
+              if (CGI.Operands.hasOperandNamed(VarName, OpIdx)) {
                 // Get the machine operand number for the indicated operand.
-                OpIdx = CGI.OperandList[OpIdx].MIOperandNo;
-                assert (!CGI.isFlatOperandNotEmitted(OpIdx) &&
+                OpIdx = CGI.Operands[OpIdx].MIOperandNo;
+                assert (!CGI.Operands.isFlatOperandNotEmitted(OpIdx) &&
                         "Explicitly used operand also marked as not emitted!");
               } else {
                 /// If this operand is not supposed to be emitted by the
                 /// generated emitter, skip it.
-                while (CGI.isFlatOperandNotEmitted(NumberedOp))
+                while (CGI.Operands.isFlatOperandNotEmitted(NumberedOp))
                   ++NumberedOp;
                 OpIdx = NumberedOp++;
               }
-              std::pair<unsigned, unsigned> SO = CGI.getSubOperandNumber(OpIdx);
+              std::pair<unsigned, unsigned> SO =
+                CGI.Operands.getSubOperandNumber(OpIdx);
               std::string &EncoderMethodName =
-                CGI.OperandList[SO.first].EncoderMethodName;
+                CGI.Operands[SO.first].EncoderMethodName;
 
               // If the source operand has a custom encoder, use it. This will
               // get the encoding for all of the suboperands.
