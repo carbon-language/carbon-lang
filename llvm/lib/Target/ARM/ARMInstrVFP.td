@@ -630,15 +630,14 @@ def VTOUIRS : AVConv1InsS_Encode<0b11101, 0b11, 0b1100, 0b1010,
 //   S32 (U=0, sx=1) -> SL
 //   U32 (U=1, sx=1) -> UL
 
-let Constraints = "$a = $dst" in {
+// FIXME: Marking these as codegen only seems wrong. They are real
+//        instructions(?)
+let Constraints = "$a = $dst", isCodeGenOnly = 1 in {
 
 // FP to Fixed-Point:
 
-// FIXME: Marking these as codegen only seems wrong. They are real
-//        instructions(?)
-let isCodeGenOnly = 1 in {
 def VTOSHS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 0,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR_S16:$a, i32imm:$fbits),
                  IIC_fpCVTSI, "vcvt", ".s16.f32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]>;
 
@@ -676,11 +675,9 @@ def VTOULD : AVConv1XI<0b11101, 0b11, 0b1111, 0b1011, 1,
                        (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
                  IIC_fpCVTDI, "vcvt", ".u32.f64\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]>;
-} // End of 'let isCodeGenOnly = 1 in'
 
 // Fixed-Point to FP:
 
-let isCodeGenOnly = 1 in {
 def VSHTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 0,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.s16\t$dst, $a, $fbits",
@@ -720,9 +717,8 @@ def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
                        (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
                  IIC_fpCVTID, "vcvt", ".f64.u32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]>;
-} // End of 'let isCodeGenOnly = 1 in'
 
-} // End of 'let Constraints = "$src = $dst" in'
+} // End of 'let Constraints = "$a = $dst", isCodeGenOnly = 1 in'
 
 //===----------------------------------------------------------------------===//
 // FP FMA Operations.
@@ -841,8 +837,8 @@ def VNEGScc  : ASuI<0b11101, 0b11, 0b0001, 0b01, 0,
 // APSR is the application level alias of CPSR. This FPSCR N, Z, C, V flags
 // to APSR.
 let Defs = [CPSR], Uses = [FPSCR] in
-def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
-                   "\tapsr_nzcv, fpscr",
+def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT,
+                   "vmrs", "\tapsr_nzcv, fpscr",
                    [(arm_fmstat)]> {
   let Inst{27-20} = 0b11101111;
   let Inst{19-16} = 0b0001;
