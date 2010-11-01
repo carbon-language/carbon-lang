@@ -679,7 +679,6 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     // C++ stuff we don't support yet.
     case Stmt::CXXBindTemporaryExprClass:
     case Stmt::CXXCatchStmtClass:
-    case Stmt::CXXConstructExprClass:
     case Stmt::CXXDefaultArgExprClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXExprWithTemporariesClass:
@@ -807,6 +806,14 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::CXXOperatorCallExprClass: {
       const CallExpr* C = cast<CallExpr>(S);
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, false);
+      break;
+    }
+
+    case Stmt::CXXConstructExprClass: {
+      const CXXConstructExpr *C = cast<CXXConstructExpr>(S);
+      // For block-level CXXConstructExpr, we don't have a destination region.
+      // Let VisitCXXConstructExpr() create one.
+      VisitCXXConstructExpr(C, 0, Pred, Dst);
       break;
     }
 
@@ -2592,20 +2599,7 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   ExplodedNodeSet Tmp;
 
   if (InitEx) {
-    QualType InitTy = InitEx->getType();
-    if (getContext().getLangOptions().CPlusPlus && InitTy->isRecordType()) {
-      // Delegate expressions of C++ record type evaluation to AggExprVisitor.
-      VisitAggExpr(InitEx, GetState(Pred)->getLValue(VD,
-                                       Pred->getLocationContext()), Pred, Tmp);
-
-      // FIXME: remove later when all paths through VisitAggExpr work properly
-      if (Tmp.empty())
-        Tmp.Add(Pred);
-      // Call checkers for initialized aggregates
-      CheckerVisit(DS, Dst, Tmp, PreVisitStmtCallback);
-
-      return;
-    } else if (VD->getType()->isReferenceType())
+    if (VD->getType()->isReferenceType())
       VisitLValue(InitEx, Pred, Tmp);
     else
       Visit(InitEx, Pred, Tmp);

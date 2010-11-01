@@ -91,9 +91,14 @@ void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
+void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 
+                                         const MemRegion *Dest,
                                          ExplodedNode *Pred,
                                          ExplodedNodeSet &Dst) {
+  if (!Dest)
+    Dest = ValMgr.getRegionManager().getCXXObjectRegion(E,
+                                                    Pred->getLocationContext());
+
   if (E->isElidable()) {
     VisitAggExpr(E->getArg(0), Dest, Pred, Dst);
     return;
@@ -124,7 +129,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
     const GRState *state = GetState(*NI);
     // Setup 'this' region, so that the ctor is evaluated on the object pointed
     // by 'Dest'.
-    state = state->bindLoc(loc::MemRegionVal(ThisR), Dest);
+    state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
     ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
     if (N)
       Dst.Add(N);

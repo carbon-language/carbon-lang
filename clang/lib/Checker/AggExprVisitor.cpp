@@ -26,15 +26,15 @@ namespace {
 /// cast and construct exprs (and others), and at the final point, dispatches
 /// back to the GRExprEngine to let the real evaluation logic happen.
 class AggExprVisitor : public StmtVisitor<AggExprVisitor> {
-  SVal DestPtr;
+  const MemRegion *Dest;
   ExplodedNode *Pred;
   ExplodedNodeSet &DstSet;
   GRExprEngine &Eng;
 
 public:
-  AggExprVisitor(SVal dest, ExplodedNode *N, ExplodedNodeSet &dst, 
+  AggExprVisitor(const MemRegion *dest, ExplodedNode *N, ExplodedNodeSet &dst, 
                  GRExprEngine &eng)
-    : DestPtr(dest), Pred(N), DstSet(dst), Eng(eng) {}
+    : Dest(dest), Pred(N), DstSet(dst), Eng(eng) {}
 
   void VisitCastExpr(CastExpr *E);
   void VisitCXXConstructExpr(CXXConstructExpr *E);
@@ -53,10 +53,10 @@ void AggExprVisitor::VisitCastExpr(CastExpr *E) {
 }
 
 void AggExprVisitor::VisitCXXConstructExpr(CXXConstructExpr *E) {
-  Eng.VisitCXXConstructExpr(E, DestPtr, Pred, DstSet);
+  Eng.VisitCXXConstructExpr(E, Dest, Pred, DstSet);
 }
 
-void GRExprEngine::VisitAggExpr(const Expr *E, SVal Dest, ExplodedNode *Pred,
-                                ExplodedNodeSet &Dst) {
+void GRExprEngine::VisitAggExpr(const Expr *E, const MemRegion *Dest, 
+                                ExplodedNode *Pred, ExplodedNodeSet &Dst) {
   AggExprVisitor(Dest, Pred, Dst, *this).Visit(const_cast<Expr *>(E));
 }

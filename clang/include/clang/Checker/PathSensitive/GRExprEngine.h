@@ -412,9 +412,8 @@ public:
   void VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred, 
                         ExplodedNodeSet & Dst);
   
-  void VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
-                             ExplodedNode *Pred,
-                             ExplodedNodeSet &Dst);
+  void VisitCXXConstructExpr(const CXXConstructExpr *E, const MemRegion *Dest,
+                             ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   void VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, ExplodedNode *Pred,
                               ExplodedNodeSet &Dst);
@@ -425,7 +424,7 @@ public:
   void VisitCXXDeleteExpr(const CXXDeleteExpr *CDE, ExplodedNode *Pred,
                           ExplodedNodeSet &Dst);
 
-  void VisitAggExpr(const Expr *E, SVal Dest, ExplodedNode *Pred,
+  void VisitAggExpr(const Expr *E, const MemRegion *Dest, ExplodedNode *Pred,
                     ExplodedNodeSet &Dst);
 
   /// Create a C++ temporary object for an rvalue.
