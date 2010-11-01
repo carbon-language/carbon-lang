@@ -1,5 +1,32 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
+define <8 x i8> @vld1lanei8(i8* %A, <8 x i8>* %B) nounwind {
+;CHECK: vld1lanei8:
+;CHECK: vld1.8 {d16[3]}, [r0]
+	%tmp1 = load <8 x i8>* %B
+	%tmp2 = load i8* %A, align 1
+	%tmp3 = insertelement <8 x i8> %tmp1, i8 %tmp2, i32 3
+        ret <8 x i8> %tmp3
+}
+
+define <4 x i16> @vld1lanei16(i16* %A, <4 x i16>* %B) nounwind {
+;CHECK: vld1lanei16:
+;CHECK: vld1.16 {d16[2]}, [r0]
+	%tmp1 = load <4 x i16>* %B
+	%tmp2 = load i16* %A, align 2
+	%tmp3 = insertelement <4 x i16> %tmp1, i16 %tmp2, i32 2
+        ret <4 x i16> %tmp3
+}
+
+define <2 x i32> @vld1lanei32(i32* %A, <2 x i32>* %B) nounwind {
+;CHECK: vld1lanei32:
+;CHECK: vld1.32 {d16[1]}, [r0]
+	%tmp1 = load <2 x i32>* %B
+	%tmp2 = load i32* %A, align 4
+	%tmp3 = insertelement <2 x i32> %tmp1, i32 %tmp2, i32 1
+        ret <2 x i32> %tmp3
+}
+
 %struct.__neon_int8x8x2_t = type { <8 x i8>,  <8 x i8> }
 %struct.__neon_int16x4x2_t = type { <4 x i16>, <4 x i16> }
 %struct.__neon_int32x2x2_t = type { <2 x i32>, <2 x i32> }

@@ -421,6 +421,8 @@ def VLD4q8oddPseudo_UPD  : VLDQQQQWBPseudo<IIC_VLD4>;
 def VLD4q16oddPseudo_UPD : VLDQQQQWBPseudo<IIC_VLD4>;
 def VLD4q32oddPseudo_UPD : VLDQQQQWBPseudo<IIC_VLD4>;
 
+} // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
+
 // Classes for VLD*LN pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
 class VLDQLNPseudo<InstrItinClass itin>
@@ -449,7 +451,46 @@ class VLDQQQQLNWBPseudo<InstrItinClass itin>
                  nohash_imm:$lane), itin, "$addr.addr = $wb, $src = $dst">;
 
 //   VLD1LN   : Vector Load (single element to one lane)
-//   FIXME: Not yet implemented.
+class VLD1LN<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
+             PatFrag LoadOp>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$dst),
+          (ins addrmode6:$addr, DPR:$src, nohash_imm:$lane),
+          IIC_VLD1ln, "vld1", Dt, "\\{$dst[$lane]\\}, $addr",
+          "$src = $dst",
+          [(set DPR:$dst, (vector_insert (Ty DPR:$src),
+                                         (i32 (LoadOp addrmode6:$addr)),
+                                         imm:$lane))]>;
+class VLD1QLNPseudo<ValueType Ty, PatFrag LoadOp> : VLDQLNPseudo<IIC_VLD1ln> {
+  let Pattern = [(set QPR:$dst, (vector_insert (Ty QPR:$src),
+                                               (i32 (LoadOp addrmode6:$addr)),
+                                               imm:$lane))];
+}
+
+def VLD1LNd8  : VLD1LN<0b0000, {?,?,?,0}, "8", v8i8, extloadi8>;
+def VLD1LNd16 : VLD1LN<0b0100, {?,?,0,?}, "16", v4i16, extloadi16>;
+def VLD1LNd32 : VLD1LN<0b1000, {?,0,?,?}, "32", v2i32, load>;
+
+def VLD1LNq8Pseudo  : VLD1QLNPseudo<v16i8, extloadi8>;
+def VLD1LNq16Pseudo : VLD1QLNPseudo<v8i16, extloadi16>;
+def VLD1LNq32Pseudo : VLD1QLNPseudo<v4i32, load>;
+
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
+
+// ...with address register writeback:
+class VLD1LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$dst, GPR:$wb),
+          (ins addrmode6:$addr, am6offset:$offset,
+           DPR:$src, nohash_imm:$lane), IIC_VLD1lnu, "vld1", Dt,
+          "\\{$dst[$lane]\\}, $addr$offset",
+          "$src = $dst, $addr.addr = $wb", []>;
+
+def VLD1LNd8_UPD  : VLD1LNWB<0b0000, {?,?,?,0}, "8">;
+def VLD1LNd16_UPD : VLD1LNWB<0b0100, {?,?,0,?}, "16">;
+def VLD1LNd32_UPD : VLD1LNWB<0b1000, {?,0,?,?}, "32">;
+
+def VLD1LNq8Pseudo_UPD  : VLDQLNWBPseudo<IIC_VLD1lnu>;
+def VLD1LNq16Pseudo_UPD : VLDQLNWBPseudo<IIC_VLD1lnu>;
+def VLD1LNq32Pseudo_UPD : VLDQLNWBPseudo<IIC_VLD1lnu>;
 
 //   VLD2LN   : Vector Load (single 2-element structure to one lane)
 class VLD2LN<bits<4> op11_8, bits<4> op7_4, string Dt>

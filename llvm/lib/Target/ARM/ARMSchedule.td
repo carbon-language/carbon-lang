@@ -134,6 +134,8 @@ def IIC_VLD1u      : InstrItinClass;
 def IIC_VLD1x2u    : InstrItinClass;
 def IIC_VLD1x3u    : InstrItinClass;
 def IIC_VLD1x4u    : InstrItinClass;
+def IIC_VLD1ln     : InstrItinClass;
+def IIC_VLD1lnu    : InstrItinClass;
 def IIC_VLD2       : InstrItinClass;
 def IIC_VLD2x2     : InstrItinClass;
 def IIC_VLD2u      : InstrItinClass;

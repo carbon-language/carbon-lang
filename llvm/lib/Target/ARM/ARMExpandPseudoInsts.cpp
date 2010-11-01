@@ -110,6 +110,13 @@ namespace {
 }
 
 static const NEONLdStTableEntry NEONLdStTable[] = {
+{ ARM::VLD1LNq16Pseudo,     ARM::VLD1LNd16,     true, false, EvenDblSpc, 1, 4 },
+{ ARM::VLD1LNq16Pseudo_UPD, ARM::VLD1LNd16_UPD, true, false, EvenDblSpc, 1, 4 },
+{ ARM::VLD1LNq32Pseudo,     ARM::VLD1LNd32,     true, false, EvenDblSpc, 1, 2 },
+{ ARM::VLD1LNq32Pseudo_UPD, ARM::VLD1LNd32_UPD, true, false, EvenDblSpc, 1, 2 },
+{ ARM::VLD1LNq8Pseudo,      ARM::VLD1LNd8,      true, false, EvenDblSpc, 1, 8 },
+{ ARM::VLD1LNq8Pseudo_UPD,  ARM::VLD1LNd8_UPD,  true, false, EvenDblSpc, 1, 8 },
+
 { ARM::VLD1d64QPseudo,      ARM::VLD1d64Q,     true,  false, SingleSpc,  4, 1 },
 { ARM::VLD1d64QPseudo_UPD,  ARM::VLD1d64Q_UPD, true,  true,  SingleSpc,  4, 1 },
 { ARM::VLD1d64TPseudo,      ARM::VLD1d64T,     true,  false, SingleSpc,  3, 1 },
@@ -476,8 +483,9 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
     DstIsDead = MI.getOperand(OpIdx).isDead();
     DstReg = MI.getOperand(OpIdx++).getReg();
     GetDSubRegs(DstReg, RegSpc, TRI, D0, D1, D2, D3);
-    MIB.addReg(D0, RegState::Define | getDeadRegState(DstIsDead))
-      .addReg(D1, RegState::Define | getDeadRegState(DstIsDead));
+    MIB.addReg(D0, RegState::Define | getDeadRegState(DstIsDead));
+    if (NumRegs > 1)
+      MIB.addReg(D1, RegState::Define | getDeadRegState(DstIsDead));
     if (NumRegs > 2)
       MIB.addReg(D2, RegState::Define | getDeadRegState(DstIsDead));
     if (NumRegs > 3)
@@ -502,7 +510,9 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
   // Add the subregs as sources of the new instruction.
   unsigned SrcFlags = (getUndefRegState(MO.isUndef()) |
                        getKillRegState(MO.isKill()));
-  MIB.addReg(D0, SrcFlags).addReg(D1, SrcFlags);
+  MIB.addReg(D0, SrcFlags);
+  if (NumRegs > 1)
+    MIB.addReg(D1, SrcFlags);
   if (NumRegs > 2)
     MIB.addReg(D2, SrcFlags);
   if (NumRegs > 3)
@@ -943,6 +953,12 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       ExpandVST(MBBI);
       break;
 
+    case ARM::VLD1LNq8Pseudo:
+    case ARM::VLD1LNq16Pseudo:
+    case ARM::VLD1LNq32Pseudo:
+    case ARM::VLD1LNq8Pseudo_UPD:
+    case ARM::VLD1LNq16Pseudo_UPD:
+    case ARM::VLD1LNq32Pseudo_UPD:
     case ARM::VLD2LNd8Pseudo:
     case ARM::VLD2LNd16Pseudo:
     case ARM::VLD2LNd32Pseudo:
