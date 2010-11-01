@@ -199,7 +199,7 @@ namespace clang {
   private:
     /// \brief The name of the file that was included, as written in
     /// the source.
-    std::string FileName;
+    llvm::StringRef FileName;
 
     /// \brief Whether the file name was in quotation marks; otherwise, it was
     /// in angle brackets.
@@ -214,11 +214,9 @@ namespace clang {
     const FileEntry *File;
 
   public:
-    explicit InclusionDirective(InclusionKind Kind,
-                                const std::string &FileName, bool InQuotes,
-                                const FileEntry *File, SourceRange Range)
-      : PreprocessingDirective(InclusionDirectiveKind, Range), 
-        FileName(FileName), InQuotes(InQuotes), Kind(Kind), File(File) { }
+    InclusionDirective(PreprocessingRecord &PPRec,
+                       InclusionKind Kind, llvm::StringRef FileName, 
+                       bool InQuotes, const FileEntry *File, SourceRange Range);
     
     /// \brief Determine what kind of inclusion directive this is.
     InclusionKind getKind() const { return static_cast<InclusionKind>(Kind); }

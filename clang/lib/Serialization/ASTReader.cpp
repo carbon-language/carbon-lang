@@ -1555,7 +1555,7 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       InclusionDirective::InclusionKind Kind
         = static_cast<InclusionDirective::InclusionKind>(Record[5]);
       InclusionDirective *ID
-        = new (PPRec) InclusionDirective(Kind,
+        = new (PPRec) InclusionDirective(PPRec, Kind,
                              llvm::StringRef(BlobStart, Record[3]),
                                          Record[4],
                                          File,

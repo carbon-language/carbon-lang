@@ -21,6 +21,22 @@ using namespace clang;
 
 ExternalPreprocessingRecordSource::~ExternalPreprocessingRecordSource() { }
 
+
+InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
+                                       InclusionKind Kind, 
+                                       llvm::StringRef FileName, 
+                                       bool InQuotes, const FileEntry *File, 
+                                       SourceRange Range)
+  : PreprocessingDirective(InclusionDirectiveKind, Range), 
+    InQuotes(InQuotes), Kind(Kind), File(File) 
+{ 
+  char *Memory 
+    = (char*)PPRec.Allocate(FileName.size() + 1, llvm::alignOf<char>());
+  memcpy(Memory, FileName.data(), FileName.size());
+  Memory[FileName.size()] = 0;
+  this->FileName = llvm::StringRef(Memory, FileName.size());
+}
+
 void PreprocessingRecord::MaybeLoadPreallocatedEntities() const {
   if (!ExternalSource || LoadedPreallocatedEntities)
     return;
@@ -160,7 +176,7 @@ void PreprocessingRecord::InclusionDirective(SourceLocation HashLoc,
   }
   
   clang::InclusionDirective *ID
-    = new (*this) clang::InclusionDirective(Kind, FileName, !IsAngled, File, 
-                                            SourceRange(HashLoc, EndLoc));
+    = new (*this) clang::InclusionDirective(*this, Kind, FileName, !IsAngled, 
+                                            File, SourceRange(HashLoc, EndLoc));
   PreprocessedEntities.push_back(ID);
 }
