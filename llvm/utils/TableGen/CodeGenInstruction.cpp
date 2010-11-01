@@ -95,9 +95,9 @@ static void ParseConstraints(const std::string &CStr, CodeGenInstruction *I) {
   }
 }
 
-CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
-  : TheDef(R), AsmString(AsmStr) {
+CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R) {
   Namespace = R->getValueAsString("Namespace");
+  AsmString = R->getValueAsString("AsmString");
 
   isReturn     = R->getValueAsBit("isReturn");
   isBranch     = R->getValueAsBit("isBranch");

@@ -945,7 +945,7 @@ void AsmMatcherInfo::BuildInfo() {
 
     Instructions.push_back(II.take());
   }
-
+  
   // Build info for the register classes.
   BuildRegisterClasses(SingletonRegisters);
 

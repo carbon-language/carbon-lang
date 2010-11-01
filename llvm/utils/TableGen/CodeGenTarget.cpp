@@ -295,13 +295,8 @@ void CodeGenTarget::ReadInstructions() const {
     throw std::string("No 'Instruction' subclasses defined!");
 
   // Parse the instructions defined in the .td file.
-  std::string InstFormatName =
-    getAsmWriter()->getValueAsString("InstFormatName");
-
-  for (unsigned i = 0, e = Insts.size(); i != e; ++i) {
-    std::string AsmStr = Insts[i]->getValueAsString(InstFormatName);
-    Instructions[Insts[i]] = new CodeGenInstruction(Insts[i], AsmStr);
-  }
+  for (unsigned i = 0, e = Insts.size(); i != e; ++i)
+    Instructions[Insts[i]] = new CodeGenInstruction(Insts[i]);
 }
 
 static const CodeGenInstruction *

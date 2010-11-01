@@ -185,7 +185,7 @@ namespace llvm {
       return false;
     }
 
-    CodeGenInstruction(Record *R, const std::string &AsmStr);
+    CodeGenInstruction(Record *R);
 
     /// getOperandNamed - Return the index of the operand with the specified
     /// non-empty name.  If the instruction does not have an operand with the

@@ -593,10 +593,6 @@ class AsmWriter {
   // name.
   string AsmWriterClassName  = "AsmPrinter";
 
-  // InstFormatName - AsmWriters can specify the name of the format string to
-  // print instructions with.
-  string InstFormatName = "AsmString";
-
   // Variant - AsmWriters can be of multiple different variants.  Variants are
   // used to support targets that need to emit assembly code in ways that are
   // mostly the same for different targets, but have minor differences in
