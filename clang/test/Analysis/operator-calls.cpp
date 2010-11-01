@@ -12,5 +12,5 @@ void t2() {
 }
 
 bool PR7287(X0 a, X0 b) {
-  return a == b;
+  return operator==(a, b);
 }
