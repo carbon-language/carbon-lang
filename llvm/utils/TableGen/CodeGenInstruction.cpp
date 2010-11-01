@@ -382,3 +382,13 @@ FlattenAsmStringVariants(StringRef Cur, unsigned Variant) {
   return Res;
 }
 
+
+//===----------------------------------------------------------------------===//
+/// CodeGenInstAlias Implementation
+//===----------------------------------------------------------------------===//
+
+CodeGenInstAlias::CodeGenInstAlias(Record *R) : TheDef(R), Operands(R) {
+  AsmString = R->getValueAsString("AsmString");
+
+  
+}

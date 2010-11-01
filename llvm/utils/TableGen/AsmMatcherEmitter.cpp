@@ -946,6 +946,15 @@ void AsmMatcherInfo::BuildInfo() {
     Instructions.push_back(II.take());
   }
   
+  // Parse all of the InstAlias definitions.
+  std::vector<Record*> AllInstAliases =
+    Records.getAllDerivedDefinitions("InstAlias");
+  for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
+    CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i]);
+
+    
+    (void)Alias;
+  }
 
   // Build info for the register classes.
   BuildRegisterClasses(SingletonRegisters);

@@ -235,6 +235,23 @@ namespace llvm {
     static std::string FlattenAsmStringVariants(StringRef AsmString,
                                                 unsigned Variant);
   };
-  }
+  
+  
+  /// CodeGenInstAlias - This represents an InstAlias definition.
+  class CodeGenInstAlias {
+  public:
+    Record *TheDef;            // The actual record defining this InstAlias.
+    
+    /// AsmString - The format string used to emit a .s file for the
+    /// instruction.
+    std::string AsmString;
+    
+    /// Operands - This is information about the (ins) and (outs) list specified
+    /// to the alias.
+    CGIOperandList Operands;
+    
+    CodeGenInstAlias(Record *R);
+  };    
+}
 
 #endif
