@@ -20,6 +20,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang-c/Index.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
@@ -49,9 +50,12 @@ CXCursor cxcursor::MakeCXCursor(const Attr *A, Decl *Parent, ASTUnit *TU) {
   return C;
 }
 
-CXCursor cxcursor::MakeCXCursor(Decl *D, ASTUnit *TU) {
+CXCursor cxcursor::MakeCXCursor(Decl *D, ASTUnit *TU,
+                                bool FirstInDeclGroup) {
   assert(D && TU && "Invalid arguments!");
-  CXCursor C = { getCursorKindForDecl(D), { D, 0, TU } };
+  CXCursor C = { getCursorKindForDecl(D),
+                 { D, (void*) (FirstInDeclGroup ? 1 : 0), TU }
+               };
   return C;
 }
 
@@ -470,3 +474,11 @@ bool cxcursor::operator==(CXCursor X, CXCursor Y) {
   return X.kind == Y.kind && X.data[0] == Y.data[0] && X.data[1] == Y.data[1] &&
          X.data[2] == Y.data[2];
 }
+
+// FIXME: Remove once we can model DeclGroups and their appropriate ranges
+// properly in the ASTs.
+bool cxcursor::isFirstInDeclGroup(CXCursor C) {
+  assert(clang_isDeclaration(C.kind));
+  return ((uintptr_t) (C.data[1])) != 0;
+}
+

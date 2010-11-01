@@ -1357,10 +1357,12 @@ bool CursorVisitor::VisitCaseStmt(CaseStmt *S) {
 }
 
 bool CursorVisitor::VisitDeclStmt(DeclStmt *S) {
+  bool isFirst = true;
   for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
        D != DEnd; ++D) {
-    if (*D && Visit(MakeCXCursor(*D, TU)))
+    if (*D && Visit(MakeCXCursor(*D, TU, isFirst)))
       return true;
+    isFirst = false;
   }
 
   return false;
@@ -2926,6 +2928,16 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   SourceLocation Loc = D->getLocation();
   if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(D))
     Loc = Class->getClassLoc();
+  // FIXME: Multiple variables declared in a single declaration
+  // currently lack the information needed to correctly determine their
+  // ranges when accounting for the type-specifier.  We use context
+  // stored in the CXCursor to determine if the VarDecl is in a DeclGroup,
+  // and if so, whether it is the first decl.
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (!cxcursor::isFirstInDeclGroup(C))
+      Loc = VD->getLocation();
+  }
+
   return cxloc::translateSourceLocation(getCursorContext(C), Loc);
 }
 
@@ -2988,9 +3000,20 @@ static SourceRange getRawCursorExtent(CXCursor C) {
   if (C.kind == CXCursor_InclusionDirective)
     return cxcursor::getCursorInclusionDirective(C)->getSourceRange();
 
-  if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl)
-    return getCursorDecl(C)->getSourceRange();
-
+  if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
+    Decl *D = cxcursor::getCursorDecl(C);
+    SourceRange R = D->getSourceRange();
+    // FIXME: Multiple variables declared in a single declaration
+    // currently lack the information needed to correctly determine their
+    // ranges when accounting for the type-specifier.  We use context
+    // stored in the CXCursor to determine if the VarDecl is in a DeclGroup,
+    // and if so, whether it is the first decl.
+    if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+      if (!cxcursor::isFirstInDeclGroup(C))
+        R.setBegin(VD->getLocation());
+    }
+    return R;
+  }
   return SourceRange();}
 
 extern "C" {

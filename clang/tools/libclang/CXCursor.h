@@ -45,7 +45,8 @@ class TypeDecl;
 namespace cxcursor {
   
 CXCursor MakeCXCursor(const clang::Attr *A, clang::Decl *Parent, ASTUnit *TU);
-CXCursor MakeCXCursor(clang::Decl *D, ASTUnit *TU);
+CXCursor MakeCXCursor(clang::Decl *D, ASTUnit *TU,
+                      bool FirstInDeclGroup = true);
 CXCursor MakeCXCursor(clang::Stmt *S, clang::Decl *Parent, ASTUnit *TU);
 CXCursor MakeCXCursorInvalid(CXCursorKind K);
 
@@ -182,6 +183,10 @@ bool operator==(CXCursor X, CXCursor Y);
 inline bool operator!=(CXCursor X, CXCursor Y) {
   return !(X == Y);
 }
+
+/// \brief Return true if the cursor represents a declaration that is the
+/// first in a declaration group.
+bool isFirstInDeclGroup(CXCursor C);
 
 }} // end namespace: clang::cxcursor
 
