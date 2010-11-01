@@ -589,7 +589,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         unsigned DefReg = MI->getOperand(defIdx).getReg();
         if (Reg == DefReg) {
           isKill = true;
-          // ANd in that case an explicit kill flag is not allowed.
+          // And in that case an explicit kill flag is not allowed.
           if (MO->isKill())
             report("Illegal kill flag on two-address instruction operand",
                    MO, MONum);
@@ -622,7 +622,18 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
             report("No live range at use", MO, MONum);
             *OS << UseIdx << " is not live in " << LI << '\n';
           }
-          // TODO: Verify isKill == LI.killedAt.
+          // Verify isKill == LI.killedAt.
+          if (!MI->isRegTiedToDefOperand(MONum)) {
+            bool liKill = LI.killedAt(UseIdx.getDefIndex());
+            if (isKill && !liKill) {
+              report("Live range continues after kill flag", MO, MONum);
+              *OS << "Live range: " << LI << '\n';
+            }
+            if (!isKill && liKill) {
+              report("Live range ends without kill flag", MO, MONum);
+              *OS << "Live range: " << LI << '\n';
+            }
+          }
         } else {
           report("Virtual register has no Live interval", MO, MONum);
         }
