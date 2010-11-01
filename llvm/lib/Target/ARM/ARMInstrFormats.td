@@ -1147,7 +1147,7 @@ class Thumb1I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = iops;
   let AsmString = asm;
   let Pattern = pattern;
-  list<Predicate> Predicates = [IsThumb1Only];
+  list<Predicate> Predicates = [IsThumb, IsThumb1Only];
 }
 
 class T1I<dag oops, dag iops, InstrItinClass itin,
@@ -1175,7 +1175,7 @@ class Thumb1sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, "${s}${p}", asm);
   let Pattern = pattern;
-  list<Predicate> Predicates = [IsThumb1Only];
+  list<Predicate> Predicates = [IsThumb, IsThumb1Only];
 }
 
 class T1sI<dag oops, dag iops, InstrItinClass itin,
@@ -1197,7 +1197,7 @@ class Thumb1pI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, "${p}", asm);
   let Pattern = pattern;
-  list<Predicate> Predicates = [IsThumb1Only];
+  list<Predicate> Predicates = [IsThumb, IsThumb1Only];
 }
 
 class T1pI<dag oops, dag iops, InstrItinClass itin,
@@ -1316,7 +1316,7 @@ class ThumbXI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = iops;
   let AsmString = asm;
   let Pattern = pattern;
-  list<Predicate> Predicates = [IsThumb1Only];
+  list<Predicate> Predicates = [IsThumb, IsThumb1Only];
 }
 
 class T2I<dag oops, dag iops, InstrItinClass itin,
@@ -1405,12 +1405,12 @@ class T2I_mac<bit long, bits<3> op22_20, bits<4> op7_4, dag oops, dag iops,
 
 // Tv5Pat - Same as Pat<>, but requires V5T Thumb mode.
 class Tv5Pat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb1Only, HasV5T];
+  list<Predicate> Predicates = [IsThumb, IsThumb1Only, HasV5T];
 }
 
 // T1Pat - Same as Pat<>, but requires that the compiler be in Thumb1 mode.
 class T1Pat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb1Only];
+  list<Predicate> Predicates = [IsThumb, IsThumb1Only];
 }
 
 // T2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.

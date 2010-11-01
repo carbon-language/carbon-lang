@@ -127,11 +127,13 @@ def t_addrmode_sp : Operand<i32>,
 let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def tADJCALLSTACKUP :
 PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary, "",
-           [(ARMcallseq_end imm:$amt1, imm:$amt2)]>, Requires<[IsThumb1Only]>;
+           [(ARMcallseq_end imm:$amt1, imm:$amt2)]>,
+       Requires<[IsThumb, IsThumb1Only]>;
 
 def tADJCALLSTACKDOWN :
 PseudoInst<(outs), (ins i32imm:$amt), NoItinerary, "",
-           [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb1Only]>;
+           [(ARMcallseq_start imm:$amt)]>,
+       Requires<[IsThumb, IsThumb1Only]>;
 }
 
 def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "",
@@ -316,7 +318,7 @@ let isCall = 1,
                   (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                   "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
-            Requires<[IsThumb1Only, IsNotDarwin]>;
+            Requires<[IsThumb, IsThumb1Only, IsNotDarwin]>;
 }
 
 // On Darwin R9 is call-clobbered.
@@ -352,7 +354,7 @@ let isCall = 1,
                    (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                    "mov\tlr, pc\n\tbx\t$func",
                    [(ARMcall_nolink tGPR:$func)]>,
-              Requires<[IsThumb1Only, IsDarwin]>;
+              Requires<[IsThumb, IsThumb1Only, IsDarwin]>;
 }
 
 let isBranch = 1, isTerminator = 1 in {
@@ -764,7 +766,7 @@ def tORR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),  IIC_iBITr,
 def tREV : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
                 "rev", "\t$dst, $src",
                 [(set tGPR:$dst, (bswap tGPR:$src))]>,
-                Requires<[IsThumb1Only, HasV6]>,
+                Requires<[IsThumb, IsThumb1Only, HasV6]>,
            T1Misc<{1,0,1,0,0,0,?}>;
 
 def tREV16 : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
@@ -774,7 +776,7 @@ def tREV16 : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
                        (or (and (shl tGPR:$src, (i32 8)), 0xFF00),
                            (or (and (srl tGPR:$src, (i32 8)), 0xFF0000),
                                (and (shl tGPR:$src, (i32 8)), 0xFF000000)))))]>,
-                Requires<[IsThumb1Only, HasV6]>,
+                Requires<[IsThumb, IsThumb1Only, HasV6]>,
              T1Misc<{1,0,1,0,0,1,?}>;
 
 def tREVSH : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
@@ -783,7 +785,7 @@ def tREVSH : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
                         (sext_inreg
                           (or (srl (and tGPR:$src, 0xFF00), (i32 8)),
                               (shl tGPR:$src, (i32 8))), i16))]>,
-                  Requires<[IsThumb1Only, HasV6]>,
+                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
              T1Misc<{1,0,1,0,1,1,?}>;
 
 // rotate right register
@@ -828,14 +830,14 @@ def tSUBrr : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
 def tSXTB  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
                   "sxtb", "\t$dst, $src",
                   [(set tGPR:$dst, (sext_inreg tGPR:$src, i8))]>,
-                  Requires<[IsThumb1Only, HasV6]>,
+                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
              T1Misc<{0,0,1,0,0,1,?}>;
 
 // sign-extend short
 def tSXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
                   "sxth", "\t$dst, $src",
                   [(set tGPR:$dst, (sext_inreg tGPR:$src, i16))]>,
-                  Requires<[IsThumb1Only, HasV6]>,
+                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
              T1Misc<{0,0,1,0,0,0,?}>;
 
 // test
@@ -849,14 +851,14 @@ def tTST  : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iTSTr,
 def tUXTB  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
                   "uxtb", "\t$dst, $src",
                   [(set tGPR:$dst, (and tGPR:$src, 0xFF))]>,
-                  Requires<[IsThumb1Only, HasV6]>,
+                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
              T1Misc<{0,0,1,0,1,1,?}>;
 
 // zero-extend short
 def tUXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
                   "uxth", "\t$dst, $src",
                   [(set tGPR:$dst, (and tGPR:$src, 0xFFFF))]>,
-                  Requires<[IsThumb1Only, HasV6]>,
+                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
              T1Misc<{0,0,1,0,1,0,?}>;
 
 
@@ -994,10 +996,10 @@ def : T1Pat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
 // ldr{b|h} + sxt{b|h} instead.
 def : T1Pat<(sextloadi8 t_addrmode_s1:$addr),
             (tSXTB (tLDRB t_addrmode_s1:$addr))>,
-      Requires<[IsThumb1Only, HasV6]>;
+      Requires<[IsThumb, IsThumb1Only, HasV6]>;
 def : T1Pat<(sextloadi16 t_addrmode_s2:$addr),
             (tSXTH (tLDRH t_addrmode_s2:$addr))>,
-      Requires<[IsThumb1Only, HasV6]>;
+      Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
 def : T1Pat<(sextloadi8 t_addrmode_s1:$addr),
             (tASRri (tLSLri (tLDRB t_addrmode_s1:$addr), 24), 24)>;
@@ -1022,4 +1024,4 @@ def tLDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
                    NoItinerary, "",
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
-               Requires<[IsThumb1Only]>;
+               Requires<[IsThumb, IsThumb1Only]>;
