@@ -728,30 +728,12 @@ def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
 // FP FMA Operations.
 //
 
-class ADbI_vmlX_Encode<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4,
-                       dag oops, dag iops, InstrItinClass itin, string opc,
-                       string asm, list<dag> pattern>
-  : ADbI_vmlX<opcod1, opcod2, op6, op4, oops, iops, itin, opc, asm, pattern> {
-  // Instruction operands.
-  bits<5> Dd;
-  bits<5> Dn;
-  bits<5> Dm;
-
-  // Encode instruction operands.
-  let Inst{19-16} = Dn{3-0};
-  let Inst{7}     = Dn{4};
-  let Inst{15-12} = Dd{3-0};
-  let Inst{22}    = Dd{4};
-  let Inst{3-0}   = Dm{3-0};
-  let Inst{5}     = Dm{4};
-}
-
-def VMLAD : ADbI_vmlX_Encode<0b11100, 0b00, 0, 0,
-                             (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
-                             IIC_fpMAC64, "vmla", ".f64\t$Dd, $Dn, $Dm",
-                             [(set DPR:$Dd, (fadd (fmul DPR:$Dn, DPR:$Dm),
-                                                  (f64 DPR:$Ddin)))]>,
-                             RegConstraint<"$Ddin = $Dd">;
+def VMLAD : ADbI_vmlX<0b11100, 0b00, 0, 0,
+                      (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                      IIC_fpMAC64, "vmla", ".f64\t$Dd, $Dn, $Dm",
+                      [(set DPR:$Dd, (fadd (fmul DPR:$Dn, DPR:$Dm),
+                                           (f64 DPR:$Ddin)))]>,
+              RegConstraint<"$Ddin = $Dd">;
 
 def VMLAS : ASbIn<0b11100, 0b00, 0, 0,
                   (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
@@ -765,12 +747,12 @@ def : Pat<(fadd DPR:$dstin, (fmul DPR:$a, (f64 DPR:$b))),
 def : Pat<(fadd SPR:$dstin, (fmul SPR:$a, SPR:$b)),
           (VMLAS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
 
-def VMLSD : ADbI_vmlX_Encode<0b11100, 0b00, 1, 0,
-                             (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
-                             IIC_fpMAC64, "vmls", ".f64\t$Dd, $Dn, $Dm",
-                             [(set DPR:$Dd, (fadd (fneg (fmul DPR:$Dn,DPR:$Dm)),
-                                                        (f64 DPR:$Ddin)))]>,
-                             RegConstraint<"$Ddin = $Dd">;
+def VMLSD : ADbI_vmlX<0b11100, 0b00, 1, 0,
+                      (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                      IIC_fpMAC64, "vmls", ".f64\t$Dd, $Dn, $Dm",
+                      [(set DPR:$Dd, (fadd (fneg (fmul DPR:$Dn,DPR:$Dm)),
+                                                 (f64 DPR:$Ddin)))]>,
+              RegConstraint<"$Ddin = $Dd">;
 
 def VMLSS : ASbIn<0b11100, 0b00, 1, 0,
                   (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
@@ -784,11 +766,11 @@ def : Pat<(fsub DPR:$dstin, (fmul DPR:$a, (f64 DPR:$b))),
 def : Pat<(fsub SPR:$dstin, (fmul SPR:$a, SPR:$b)),
           (VMLSS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
 
-def VNMLAD : ADbI_vmlX_Encode<0b11100, 0b01, 1, 0,
-                              (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
-                              IIC_fpMAC64, "vnmla", ".f64\t$Dd, $Dn, $Dm",
-                              [(set DPR:$Dd,(fsub (fneg (fmul DPR:$Dn,DPR:$Dm)),
-                                                  (f64 DPR:$Ddin)))]>,
+def VNMLAD : ADbI_vmlX<0b11100, 0b01, 1, 0,
+                       (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                       IIC_fpMAC64, "vnmla", ".f64\t$Dd, $Dn, $Dm",
+                       [(set DPR:$Dd,(fsub (fneg (fmul DPR:$Dn,DPR:$Dm)),
+                                           (f64 DPR:$Ddin)))]>,
                 RegConstraint<"$Ddin = $Dd">;
 
 def VNMLAS : ASbI<0b11100, 0b01, 1, 0,
@@ -803,12 +785,12 @@ def : Pat<(fsub (fneg (fmul DPR:$a, (f64 DPR:$b))), DPR:$dstin),
 def : Pat<(fsub (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin),
           (VNMLAS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
 
-def VNMLSD : ADbI_vmlX_Encode<0b11100, 0b01, 0, 0,
-                              (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
-                              IIC_fpMAC64, "vnmls", ".f64\t$Dd, $Dn, $Dm",
-                              [(set DPR:$Dd, (fsub (fmul DPR:$Dn, DPR:$Dm),
-                                                   (f64 DPR:$Ddin)))]>,
-                              RegConstraint<"$Ddin = $Dd">;
+def VNMLSD : ADbI_vmlX<0b11100, 0b01, 0, 0,
+                       (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                       IIC_fpMAC64, "vnmls", ".f64\t$Dd, $Dn, $Dm",
+                       [(set DPR:$Dd, (fsub (fmul DPR:$Dn, DPR:$Dm),
+                                            (f64 DPR:$Ddin)))]>,
+               RegConstraint<"$Ddin = $Dd">;
 
 def VNMLSS : ASbI<0b11100, 0b01, 0, 0,
                   (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),

@@ -1573,6 +1573,19 @@ class ADbI_vmlX<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
            dag iops, InstrItinClass itin, string opc, string asm,
            list<dag> pattern>
   : VFPAI<oops, iops, VFPBinaryFrm, itin, opc, asm, pattern> {
+  // Instruction operands.
+  bits<5> Dd;
+  bits<5> Dn;
+  bits<5> Dm;
+
+  // Encode instruction operands.
+  let Inst{19-16} = Dn{3-0};
+  let Inst{7}     = Dn{4};
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+
   let Inst{27-23} = opcod1;
   let Inst{21-20} = opcod2;
   let Inst{11-9}  = 0b101;
