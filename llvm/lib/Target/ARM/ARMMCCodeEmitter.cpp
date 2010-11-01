@@ -178,6 +178,15 @@ unsigned ARMMCCodeEmitter::getAddrModeImm12OpValue(const MCInst &MI,
   // {11-0}  = imm12
   const MCOperand &MO  = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  uint32_t Binary = 0;
+
+  // If The first operand isn't a register, we have a label reference.
+  if (!MO.isReg()) {
+    Binary |= ARM::PC << 13;     // Rn is PC.
+    // FIXME: Add a fixup referencing the label.
+    return Binary;
+  }
+
   unsigned Reg = getARMRegisterNumbering(MO.getReg());
   int32_t Imm12 = MO1.getImm();
   bool isAdd = Imm12 >= 0;
@@ -187,7 +196,7 @@ unsigned ARMMCCodeEmitter::getAddrModeImm12OpValue(const MCInst &MI,
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
   if (Imm12 < 0)
     Imm12 = -Imm12;
-  uint32_t Binary = Imm12 & 0xfff;
+  Binary = Imm12 & 0xfff;
   if (isAdd)
     Binary |= (1 << 12);
   Binary |= (Reg << 13);
