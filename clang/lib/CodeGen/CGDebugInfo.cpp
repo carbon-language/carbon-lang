@@ -269,8 +269,7 @@ void CGDebugInfo::CreateCompileUnit() {
 
 /// CreateType - Get the Basic type from the cache or create a new
 /// one if necessary.
-llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
-                                     llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   unsigned Encoding = 0;
   const char *BTName = NULL;
   switch (BT->getKind()) {
@@ -279,7 +278,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
     return llvm::DIType();
   case BuiltinType::ObjCClass:
     return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
-                                            Unit, "objc_class", Unit, 0, 0, 0,
+                                            TheCU, "objc_class", 
+                                            getOrCreateMainFile(), 0, 0, 0,
                                             0, llvm::DIDescriptor::FlagFwdDecl, 
                                             llvm::DIType(), llvm::DIArray());
   case BuiltinType::ObjCId: {
@@ -290,29 +290,31 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
 
     llvm::DIType OCTy = 
       DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
-                                       Unit, "objc_class", Unit, 0, 0, 0, 0,
+                                       TheCU, "objc_class", 
+                                       getOrCreateMainFile(), 0, 0, 0, 0,
                                        llvm::DIDescriptor::FlagFwdDecl, 
                                        llvm::DIType(), llvm::DIArray());
     unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
     
     llvm::DIType ISATy = 
       DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type,
-                                     Unit, "", Unit,
+                                     TheCU, "", getOrCreateMainFile(),
                                      0, Size, 0, 0, 0, OCTy);
 
     llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
 
     llvm::DIType FieldTy = 
-      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                     "isa", Unit,
+      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, TheCU,
+                                     "isa", getOrCreateMainFile(),
                                      0,Size, 0, 0, 0, ISATy);
     EltTys.push_back(FieldTy);
     llvm::DIArray Elements =
       DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
     
     return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
-                                            Unit, "objc_object", Unit, 0, 0, 0,
-                                            0, 0,
+                                            TheCU, "objc_object", 
+                                            getOrCreateMainFile(),
+                                            0, 0, 0, 0, 0,
                                             llvm::DIType(), Elements);
   }
   case BuiltinType::UChar:
@@ -348,8 +350,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
   uint64_t Offset = 0;
   llvm::DIType DbgTy = 
     DebugFactory.CreateBasicType(TheCU, BTName, getOrCreateMainFile(),
-                                 0, Size, Align,
-                                 Offset, /*flags*/ 0, Encoding);
+                                 0, Size, Align, Offset, /*flags*/ 0, Encoding);
   return DbgTy;
 }
 
@@ -1486,7 +1487,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
     return CreateType(cast<ObjCObjectType>(Ty), Unit);
   case Type::ObjCInterface:
     return CreateType(cast<ObjCInterfaceType>(Ty), Unit);
-  case Type::Builtin: return CreateType(cast<BuiltinType>(Ty), Unit);
+  case Type::Builtin: return CreateType(cast<BuiltinType>(Ty));
   case Type::Complex: return CreateType(cast<ComplexType>(Ty), Unit);
   case Type::Pointer: return CreateType(cast<PointerType>(Ty), Unit);
   case Type::BlockPointer:

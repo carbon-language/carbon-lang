@@ -74,7 +74,7 @@ class CGDebugInfo {
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
 
   /// Helper functions for getOrCreateType.
-  llvm::DIType CreateType(const BuiltinType *Ty, llvm::DIFile F);
+  llvm::DIType CreateType(const BuiltinType *Ty);
   llvm::DIType CreateType(const ComplexType *Ty, llvm::DIFile F);
   llvm::DIType CreateQualifiedType(QualType Ty, llvm::DIFile F);
   llvm::DIType CreateType(const TypedefType *Ty, llvm::DIFile F);
