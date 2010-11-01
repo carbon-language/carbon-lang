@@ -260,7 +260,8 @@ static bool IsAssemblerInstruction(StringRef Name,
       throw std::string("ERROR: Invalid instruction");
     }
     
-    // FIXME: Should reject these.
+    // FIXME: Should reject these.  The ARM backend hits this with $lane in a
+    // bunch of instructions.  It is unclear what the right answer is for this.
     if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
       DEBUG({
         errs() << "warning: '" << Name << "': "
