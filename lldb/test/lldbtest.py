@@ -781,11 +781,11 @@ class TestBase(unittest2.TestCase):
 
         err = sys.stderr
         err.write(val.GetName() + ":\n")
-        err.write('\t' + "TypeName    -> " + val.GetTypeName()          + '\n')
-        err.write('\t' + "ByteSize    -> " + str(val.GetByteSize())     + '\n')
-        err.write('\t' + "NumChildren -> " + str(val.GetNumChildren())  + '\n')
-        err.write('\t' + "Value       -> " + str(val.GetValue(frame))   + '\n')
-        err.write('\t' + "Summary     -> " + str(val.GetSummary(frame)) + '\n')
-        err.write('\t' + "IsPtrType   -> " + str(val.TypeIsPtrType())   + '\n')
-        err.write('\t' + "Location    -> " + val.GetLocation(frame)     + '\n')
+        err.write('\t' + "TypeName      -> " + val.GetTypeName()            + '\n')
+        err.write('\t' + "ByteSize      -> " + str(val.GetByteSize())       + '\n')
+        err.write('\t' + "NumChildren   -> " + str(val.GetNumChildren())    + '\n')
+        err.write('\t' + "Value         -> " + str(val.GetValue(frame))     + '\n')
+        err.write('\t' + "Summary       -> " + str(val.GetSummary(frame))   + '\n')
+        err.write('\t' + "IsPointerType -> " + str(val.TypeIsPointerType()) + '\n')
+        err.write('\t' + "Location      -> " + val.GetLocation(frame)       + '\n')
 

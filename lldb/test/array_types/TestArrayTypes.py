@@ -145,7 +145,7 @@ class ArrayTypesTestCase(TestBase):
         self.expect(frm,
                     "Frame looks good with correct index %d" % frame.GetFrameID(),
                     exe=False,
-            substrs = ["idx = %d" % frame.GetFrameID()])
+            substrs = ["#%d" % frame.GetFrameID()])
 
         # Lookup the "strings" string array variable and sanity check its print
         # representation.
