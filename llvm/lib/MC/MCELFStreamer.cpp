@@ -36,8 +36,6 @@ using namespace llvm;
 namespace {
 
 class MCELFStreamer : public MCObjectStreamer {
-  void EmitInstToFragment(const MCInst &Inst);
-  void EmitInstToData(const MCInst &Inst);
 public:
   MCELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter)
@@ -109,10 +107,12 @@ public:
     DEBUG(dbgs() << "FIXME: MCELFStreamer:EmitDwarfFileDirective not implemented\n");
   }
 
-  virtual void EmitInstruction(const MCInst &Inst);
   virtual void Finish();
 
 private:
+  virtual void EmitInstToFragment(const MCInst &Inst);
+  virtual void EmitInstToData(const MCInst &Inst);
+
   struct LocalCommon {
     MCSymbolData *SD;
     uint64_t Size;
@@ -508,35 +508,6 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst) {
     DF->addFixup(Fixups[i]);
   }
   DF->getContents().append(Code.begin(), Code.end());
-}
-
-void MCELFStreamer::EmitInstruction(const MCInst &Inst) {
-  // Scan for values.
-  for (unsigned i = 0; i != Inst.getNumOperands(); ++i)
-    if (Inst.getOperand(i).isExpr())
-      AddValueSymbols(Inst.getOperand(i).getExpr());
-
-  getCurrentSectionData()->setHasInstructions(true);
-
-  // If this instruction doesn't need relaxation, just emit it as data.
-  if (!getAssembler().getBackend().MayNeedRelaxation(Inst)) {
-    EmitInstToData(Inst);
-    return;
-  }
-
-  // Otherwise, if we are relaxing everything, relax the instruction as much as
-  // possible and emit it as data.
-  if (getAssembler().getRelaxAll()) {
-    MCInst Relaxed;
-    getAssembler().getBackend().RelaxInstruction(Inst, Relaxed);
-    while (getAssembler().getBackend().MayNeedRelaxation(Relaxed))
-      getAssembler().getBackend().RelaxInstruction(Relaxed, Relaxed);
-    EmitInstToData(Relaxed);
-    return;
-  }
-
-  // Otherwise emit to a separate fragment.
-  EmitInstToFragment(Inst);
 }
 
 void MCELFStreamer::Finish() {

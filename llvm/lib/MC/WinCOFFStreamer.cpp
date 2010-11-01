@@ -81,6 +81,13 @@ public:
   virtual void Finish();
 
 private:
+  virtual void EmitInstToFragment(const MCInst &Inst) {
+    llvm_unreachable("Not used by WinCOFF.");
+  }
+  virtual void EmitInstToData(const MCInst &Inst) {
+    llvm_unreachable("Not used by WinCOFF.");
+  }
+
   void SetSection(StringRef Section,
                   unsigned Characteristics,
                   SectionKind Kind) {

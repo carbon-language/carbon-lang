@@ -33,6 +33,9 @@ class MCObjectStreamer : public MCStreamer {
   MCAssembler *Assembler;
   MCSectionData *CurSectionData;
 
+  virtual void EmitInstToFragment(const MCInst &Inst) = 0;
+  virtual void EmitInstToData(const MCInst &Inst) = 0;
+
 protected:
   MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
                    raw_ostream &_OS, MCCodeEmitter *_Emitter,
@@ -59,6 +62,7 @@ public:
 
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
   virtual void SwitchSection(const MCSection *Section);
+  virtual void EmitInstruction(const MCInst &Inst);
   virtual void Finish();
 
   /// @}
