@@ -246,12 +246,12 @@ public:
   /// beforehand so mapValue will work.
   void addRange(SlotIndex Start, SlotIndex End);
 
-  /// defByCopyFrom - Insert a copy from Reg to li, assuming that Reg carries
-  /// ParentVNI. Add a minimal live range for the new value and return it.
-  VNInfo *defByCopyFrom(unsigned Reg,
-                        const VNInfo *ParentVNI,
-                        MachineBasicBlock &MBB,
-                        MachineBasicBlock::iterator I);
+  /// defByCopy- Insert a copy from parentli to li, assuming that ParentVNI is
+  /// live at the insert location. Add a minimal live range for the new value
+  /// and return it.
+  VNInfo *defByCopy(const VNInfo *ParentVNI,
+                    MachineBasicBlock &MBB,
+                    MachineBasicBlock::iterator I);
 
 };
 

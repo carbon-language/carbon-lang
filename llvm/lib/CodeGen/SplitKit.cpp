@@ -659,13 +659,13 @@ void LiveIntervalMap::addRange(SlotIndex Start, SlotIndex End) {
     addSimpleRange(I->start, std::min(End, I->end), I->valno);
 }
 
-VNInfo *LiveIntervalMap::defByCopyFrom(unsigned Reg,
-                                       const VNInfo *ParentVNI,
-                                       MachineBasicBlock &MBB,
-                                       MachineBasicBlock::iterator I) {
+VNInfo *LiveIntervalMap::defByCopy(const VNInfo *ParentVNI,
+                                   MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator I) {
   const TargetInstrDesc &TID = MBB.getParent()->getTarget().getInstrInfo()->
     get(TargetOpcode::COPY);
-  MachineInstr *MI = BuildMI(MBB, I, DebugLoc(), TID, li_->reg).addReg(Reg);
+  MachineInstr *MI = BuildMI(MBB, I, DebugLoc(), TID, li_->reg)
+    .addReg(parentli_.reg);
   SlotIndex DefIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
   VNInfo *VNI = defValue(ParentVNI, DefIdx);
   VNI->setCopy(MI);
@@ -723,8 +723,7 @@ void SplitEditor::enterIntvBefore(SlotIndex Idx) {
   truncatedValues.insert(ParentVNI);
   MachineInstr *MI = lis_.getInstructionFromIndex(Idx);
   assert(MI && "enterIntvBefore called with invalid index");
-  VNInfo *VNI = openli_.defByCopyFrom(edit_.getReg(), ParentVNI,
-                                      *MI->getParent(), MI);
+  VNInfo *VNI = openli_.defByCopy(ParentVNI, *MI->getParent(), MI);
   openli_.getLI()->addRange(LiveRange(VNI->def, Idx.getDefIndex(), VNI));
   DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
@@ -741,8 +740,7 @@ void SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
   truncatedValues.insert(ParentVNI);
-  VNInfo *VNI = openli_.defByCopyFrom(edit_.getReg(), ParentVNI,
-                                      MBB, MBB.getFirstTerminator());
+  VNInfo *VNI = openli_.defByCopy(ParentVNI, MBB, MBB.getFirstTerminator());
   // Make sure openli is live out of MBB.
   openli_.getLI()->addRange(LiveRange(VNI->def, End, VNI));
   DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
@@ -775,8 +773,7 @@ void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
 
   MachineBasicBlock::iterator MII = lis_.getInstructionFromIndex(Idx);
   MachineBasicBlock *MBB = MII->getParent();
-  VNInfo *VNI = dupli_.defByCopyFrom(openli_.getLI()->reg, ParentVNI, *MBB,
-                                     llvm::next(MII));
+  VNInfo *VNI = dupli_.defByCopy(ParentVNI, *MBB, llvm::next(MII));
 
   // Finally we must make sure that openli is properly extended from Idx to the
   // new copy.
@@ -798,8 +795,8 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   }
 
   // We are going to insert a back copy, so we must have a dupli_.
-  VNInfo *VNI = dupli_.defByCopyFrom(openli_.getLI()->reg, ParentVNI,
-                                     MBB, MBB.SkipPHIsAndLabels(MBB.begin()));
+  VNInfo *VNI = dupli_.defByCopy(ParentVNI, MBB,
+                                 MBB.SkipPHIsAndLabels(MBB.begin()));
 
   // Finally we must make sure that openli is properly extended from Start to
   // the new copy.
