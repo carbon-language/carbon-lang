@@ -116,7 +116,7 @@ public:
   bool SelectAddrMode4(SDValue N, SDValue &Addr, SDValue &Mode);
   bool SelectAddrMode5(SDValue N, SDValue &Base,
                        SDValue &Offset);
-  bool SelectAddrMode6(SDValue N, SDValue &Addr, SDValue &Align);
+  bool SelectAddrMode6(SDNode *Parent, SDValue N, SDValue &Addr,SDValue &Align);
 
   bool SelectAddrModePC(SDValue N, SDValue &Offset,
                         SDValue &Label);
@@ -222,6 +222,9 @@ private:
   SDNode *QuadSRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
   SDNode *QuadDRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
   SDNode *QuadQRegs(EVT VT, SDValue V0, SDValue V1, SDValue V2, SDValue V3);
+
+  // Get the alignment operand for a NEON VLD or VST instruction.
+  SDValue GetVLDSTAlign(SDValue Align, unsigned NumVecs, bool is64BitVector);
 };
 }
 
@@ -769,10 +772,26 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDValue N,
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectAddrMode6(SDValue N, SDValue &Addr, SDValue &Align){
+bool ARMDAGToDAGISel::SelectAddrMode6(SDNode *Parent, SDValue N, SDValue &Addr,
+                                      SDValue &Align) {
   Addr = N;
-  // Default to no alignment.
-  Align = CurDAG->getTargetConstant(0, MVT::i32);
+
+  unsigned Alignment = 0;
+  if (LSBaseSDNode *LSN = dyn_cast<LSBaseSDNode>(Parent)) {
+    // This case occurs only for VLD1-lane/dup and VST1-lane instructions.
+    // The maximum alignment is equal to the memory size being referenced.
+    unsigned LSNAlign = LSN->getAlignment();
+    unsigned MemSize = LSN->getMemoryVT().getSizeInBits() / 8;
+    if (LSNAlign > MemSize && MemSize > 1)
+      Alignment = MemSize;
+  } else {
+    // All other uses of addrmode6 are for intrinsics.  For now just record
+    // the raw alignment value; it will be refined later based on the legal
+    // alignment operands for the intrinsic.
+    Alignment = cast<MemIntrinsicSDNode>(Parent)->getAlignment();
+  }
+
+  Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
   return true;
 }
 
@@ -1261,19 +1280,23 @@ SDNode *ARMDAGToDAGISel::QuadQRegs(EVT VT, SDValue V0, SDValue V1,
 /// GetVLDSTAlign - Get the alignment (in bytes) for the alignment operand
 /// of a NEON VLD or VST instruction.  The supported values depend on the
 /// number of registers being loaded.
-static unsigned GetVLDSTAlign(SDNode *N, unsigned NumVecs, bool is64BitVector) {
+SDValue ARMDAGToDAGISel::GetVLDSTAlign(SDValue Align, unsigned NumVecs,
+                                       bool is64BitVector) {
   unsigned NumRegs = NumVecs;
   if (!is64BitVector && NumVecs < 3)
     NumRegs *= 2;
 
-  unsigned Alignment = cast<MemIntrinsicSDNode>(N)->getAlignment();
+  unsigned Alignment = cast<ConstantSDNode>(Align)->getZExtValue();
   if (Alignment >= 32 && NumRegs == 4)
-    return 32;
-  if (Alignment >= 16 && (NumRegs == 2 || NumRegs == 4))
-    return 16;
-  if (Alignment >= 8)
-    return 8;
-  return 0;
+    Alignment = 32;
+  else if (Alignment >= 16 && (NumRegs == 2 || NumRegs == 4))
+    Alignment = 16;
+  else if (Alignment >= 8)
+    Alignment = 8;
+  else
+    Alignment = 0;
+
+  return CurDAG->getTargetConstant(Alignment, MVT::i32);
 }
 
 SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
@@ -1283,15 +1306,13 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
   DebugLoc dl = N->getDebugLoc();
 
   SDValue MemAddr, Align;
-  if (!SelectAddrMode6(N->getOperand(2), MemAddr, Align))
+  if (!SelectAddrMode6(N, N->getOperand(2), MemAddr, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
   EVT VT = N->getValueType(0);
   bool is64BitVector = VT.is64BitVector();
-
-  unsigned Alignment = GetVLDSTAlign(N, NumVecs, is64BitVector);
-  Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
+  Align = GetVLDSTAlign(Align, NumVecs, is64BitVector);
 
   unsigned OpcodeIndex;
   switch (VT.getSimpleVT().SimpleTy) {
@@ -1397,15 +1418,13 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   DebugLoc dl = N->getDebugLoc();
 
   SDValue MemAddr, Align;
-  if (!SelectAddrMode6(N->getOperand(2), MemAddr, Align))
+  if (!SelectAddrMode6(N, N->getOperand(2), MemAddr, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
   EVT VT = N->getOperand(3).getValueType();
   bool is64BitVector = VT.is64BitVector();
-
-  unsigned Alignment = GetVLDSTAlign(N, NumVecs, is64BitVector);
-  Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
+  Align = GetVLDSTAlign(Align, NumVecs, is64BitVector);
 
   unsigned OpcodeIndex;
   switch (VT.getSimpleVT().SimpleTy) {
@@ -1520,7 +1539,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   DebugLoc dl = N->getDebugLoc();
 
   SDValue MemAddr, Align;
-  if (!SelectAddrMode6(N->getOperand(2), MemAddr, Align))
+  if (!SelectAddrMode6(N, N->getOperand(2), MemAddr, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
@@ -1529,16 +1548,18 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   EVT VT = IsLoad ? N->getValueType(0) : N->getOperand(3).getValueType();
   bool is64BitVector = VT.is64BitVector();
 
+  unsigned Alignment = 0;
   if (NumVecs != 3) {
-    unsigned Alignment = cast<MemIntrinsicSDNode>(N)->getAlignment();
+    Alignment = cast<ConstantSDNode>(Align)->getZExtValue();
     unsigned NumBytes = NumVecs * VT.getVectorElementType().getSizeInBits()/8;
     if (Alignment > NumBytes)
       Alignment = NumBytes;
     // Alignment must be a power of two; make sure of that.
     Alignment = (Alignment & -Alignment);
-    if (Alignment > 1)
-      Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
+    if (Alignment == 1)
+      Alignment = 0;
   }
+  Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
 
   unsigned OpcodeIndex;
   switch (VT.getSimpleVT().SimpleTy) {
