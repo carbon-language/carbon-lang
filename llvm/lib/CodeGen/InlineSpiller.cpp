@@ -369,12 +369,12 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
     return;
 
   rc_ = mri_.getRegClass(edit.getReg());
-  stackSlot_ = edit.assignStackSlot(vrm_);
+  stackSlot_ = vrm_.assignVirt2StackSlot(edit_->getReg());
 
   // Update LiveStacks now that we are committed to spilling.
   LiveInterval &stacklvr = lss_.getOrCreateInterval(stackSlot_, rc_);
-  if (!stacklvr.hasAtLeastOneValue())
-    stacklvr.getNextValue(SlotIndex(), 0, lss_.getVNInfoAllocator());
+  assert(stacklvr.empty() && "Just created stack slot not empty");
+  stacklvr.getNextValue(SlotIndex(), 0, lss_.getVNInfoAllocator());
   stacklvr.MergeRangesInAsValue(edit_->getParent(), stacklvr.getValNumInfo(0));
 
   // Iterate over instructions using register.

@@ -19,21 +19,12 @@
 
 using namespace llvm;
 
-int LiveRangeEdit::assignStackSlot(VirtRegMap &vrm) {
-  int ss = vrm.getStackSlot(getReg());
-  if (ss != VirtRegMap::NO_STACK_SLOT)
-    return ss;
-  return vrm.assignVirt2StackSlot(getReg());
-}
-
 LiveInterval &LiveRangeEdit::create(MachineRegisterInfo &mri,
                                     LiveIntervals &lis,
                                     VirtRegMap &vrm) {
   const TargetRegisterClass *RC = mri.getRegClass(parent_.reg);
   unsigned VReg = mri.createVirtualRegister(RC);
   vrm.grow();
-  // Immediately assign to the same stack slot as parent.
-  vrm.assignVirt2StackSlot(VReg, assignStackSlot(vrm));
   LiveInterval &li = lis.getOrCreateInterval(VReg);
   newRegs_.push_back(&li);
   return li;
