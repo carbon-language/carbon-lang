@@ -1466,13 +1466,17 @@ static std::string GetAliasRequiredFeatures(Record *R,
   std::string Result;
   unsigned NumFeatures = 0;
   for (unsigned i = 0, e = ReqFeatures.size(); i != e; ++i) {
-    if (SubtargetFeatureInfo *F = Info.getSubtargetFeature(ReqFeatures[i])) {
-      if (NumFeatures)
-        Result += '|';
+    SubtargetFeatureInfo *F = Info.getSubtargetFeature(ReqFeatures[i]);
     
-      Result += F->getEnumName();
-      ++NumFeatures;
-    }
+    if (F == 0)
+      throw TGError(R->getLoc(), "Predicate '" + ReqFeatures[i]->getName() +
+                    "' is not marked as an AssemblerPredicate!");
+    
+    if (NumFeatures)
+      Result += '|';
+  
+    Result += F->getEnumName();
+    ++NumFeatures;
   }
   
   if (NumFeatures > 1)
