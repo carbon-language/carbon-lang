@@ -260,7 +260,11 @@ private:
   CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
   CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
   CFGBlock *VisitCXXTryStmt(CXXTryStmt *S);
+  CFGBlock *VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E, 
+                                      AddStmtChoice asc);
   CFGBlock *VisitCXXConstructExpr(CXXConstructExpr *C, AddStmtChoice asc);
+  CFGBlock *VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E,
+                                       AddStmtChoice asc);
   CFGBlock *VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *C, 
                                         AddStmtChoice asc);
   CFGBlock *VisitCXXMemberCallExpr(CXXMemberCallExpr *C, AddStmtChoice asc);
@@ -277,6 +281,7 @@ private:
   CFGBlock *VisitForStmt(ForStmt *F);
   CFGBlock *VisitGotoStmt(GotoStmt* G);
   CFGBlock *VisitIfStmt(IfStmt *I);
+  CFGBlock *VisitImplicitCastExpr(ImplicitCastExpr *E, AddStmtChoice asc);
   CFGBlock *VisitIndirectGotoStmt(IndirectGotoStmt *I);
   CFGBlock *VisitLabelStmt(LabelStmt *L);
   CFGBlock *VisitMemberExpr(MemberExpr *M, AddStmtChoice asc);
@@ -764,8 +769,14 @@ tryAgain:
       return Visit(cast<CXXExprWithTemporaries>(S)->getSubExpr(), asc);
     }
 
+    case Stmt::CXXBindTemporaryExprClass:
+      return VisitCXXBindTemporaryExpr(cast<CXXBindTemporaryExpr>(S), asc);
+
     case Stmt::CXXConstructExprClass:
       return VisitCXXConstructExpr(cast<CXXConstructExpr>(S), asc);
+
+    case Stmt::CXXFunctionalCastExprClass:
+      return VisitCXXFunctionalCastExpr(cast<CXXFunctionalCastExpr>(S), asc);
 
     case Stmt::CXXTemporaryObjectExprClass:
       return VisitCXXTemporaryObjectExpr(cast<CXXTemporaryObjectExpr>(S), asc);
@@ -796,6 +807,9 @@ tryAgain:
 
     case Stmt::IfStmtClass:
       return VisitIfStmt(cast<IfStmt>(S));
+
+    case Stmt::ImplicitCastExprClass:
+      return VisitImplicitCastExpr(cast<ImplicitCastExpr>(S), asc);
 
     case Stmt::IndirectGotoStmtClass:
       return VisitIndirectGotoStmt(cast<IndirectGotoStmt>(S));
@@ -2291,6 +2305,19 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
   return CatchBlock;
 }
 
+CFGBlock *CFGBuilder::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E,
+                                                AddStmtChoice asc) {
+  if (asc.alwaysAdd()) {
+    autoCreateBlock();
+    AppendStmt(Block, E, asc);
+
+    // We do not want to propagate the AlwaysAdd property.
+    asc = AddStmtChoice(asc.asLValue() ? AddStmtChoice::AsLValueNotAlwaysAdd
+                                       : AddStmtChoice::NotAlwaysAdd);
+  }
+  return Visit(E->getSubExpr(), asc);
+}
+
 CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
                                             AddStmtChoice asc) {
   AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
@@ -2298,6 +2325,18 @@ CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
   autoCreateBlock();
   AppendStmt(Block, C, AddStmtChoice(K));
   return VisitChildren(C);
+}
+
+CFGBlock *CFGBuilder::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E,
+                                                 AddStmtChoice asc) {
+  if (asc.alwaysAdd()) {
+    autoCreateBlock();
+    AppendStmt(Block, E, asc);
+    // We do not want to propagate the AlwaysAdd property.
+    asc = AddStmtChoice(asc.asLValue() ? AddStmtChoice::AsLValueNotAlwaysAdd
+                                       : AddStmtChoice::NotAlwaysAdd);
+  }
+  return Visit(E->getSubExpr(), asc);
 }
 
 CFGBlock *CFGBuilder::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *C,
@@ -2316,6 +2355,18 @@ CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C,
   autoCreateBlock();
   AppendStmt(Block, C, AddStmtChoice(K));
   return VisitChildren(C);
+}
+
+CFGBlock *CFGBuilder::VisitImplicitCastExpr(ImplicitCastExpr *E,
+                                            AddStmtChoice asc) {
+  if (asc.alwaysAdd()) {
+    autoCreateBlock();
+    AppendStmt(Block, E, asc);
+    // We do not want to propagate the AlwaysAdd property.
+    asc = AddStmtChoice(asc.asLValue() ? AddStmtChoice::AsLValueNotAlwaysAdd
+                                       : AddStmtChoice::NotAlwaysAdd);
+  }
+  return Visit(E->getSubExpr(), asc);
 }
 
 CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
