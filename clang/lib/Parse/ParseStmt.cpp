@@ -1458,6 +1458,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
       SkipUntil(tok::r_paren);
       return true;
     }
+    Res = Actions.MakeFullExpr(Res.get()).release();
     Exprs.push_back(Res.release());
     // Eat the comma and continue parsing if it exists.
     if (Tok.isNot(tok::comma)) return false;
