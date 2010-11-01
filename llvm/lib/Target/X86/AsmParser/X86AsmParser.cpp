@@ -620,9 +620,6 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 bool X86ATTAsmParser::
 ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // FIXME: This is not correct at all.
-  if (Name == "movzx") Name = "movzb";
-  
   StringRef PatchedName = Name;
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.

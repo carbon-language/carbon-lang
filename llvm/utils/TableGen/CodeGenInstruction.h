@@ -250,6 +250,9 @@ namespace llvm {
     /// to the alias.
     CGIOperandList Operands;
     
+    /// Result - The result instruction.
+    DagInit *Result;
+    
     CodeGenInstAlias(Record *R);
   };    
 }

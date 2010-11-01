@@ -357,12 +357,18 @@ struct MatchableInfo {
   
   MatchableInfo(const CodeGenInstruction &CGI)
     : TheDef(CGI.TheDef), OperandList(CGI.Operands), AsmString(CGI.AsmString) {
+    InstrName = TheDef->getName();
   }
 
   MatchableInfo(const CodeGenInstAlias *Alias)
     : TheDef(Alias->TheDef), OperandList(Alias->Operands),
       AsmString(Alias->AsmString) {
-    
+        
+    // FIXME: Huge hack.
+    DefInit *DI = dynamic_cast<DefInit*>(Alias->Result->getOperator());
+    assert(DI);
+        
+    InstrName = DI->getDef()->getName();
   }
   
   void Initialize(const AsmMatcherInfo &Info,
@@ -551,8 +557,6 @@ void MatchableInfo::dump() {
 
 void MatchableInfo::Initialize(const AsmMatcherInfo &Info,
                                SmallPtrSet<Record*, 16> &SingletonRegisters) {
-  InstrName = TheDef->getName();
-  
   // TODO: Eventually support asmparser for Variant != 0.
   AsmString = CodeGenInstruction::FlattenAsmStringVariants(AsmString, 0);
   
@@ -974,7 +978,7 @@ void AsmMatcherInfo::BuildInfo() {
     // Validate the alias definitions.
     II->Validate(CommentDelimiter, false);
     
-    //Matchables.push_back(II.take());
+    Matchables.push_back(II.take());
   }
 
   // Build info for the register classes.

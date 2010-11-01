@@ -110,6 +110,12 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
                                       MIOperandNo, NumOps, MIOpInfo));
     MIOperandNo += NumOps;
   }
+  
+  
+  // Make sure the constraints list for each operand is large enough to hold
+  // constraint info, even if none is present.
+  for (unsigned i = 0, e = OperandList.size(); i != e; ++i)
+    OperandList[i].Constraints.resize(OperandList[i].MINumOperands);
 }
 
 
@@ -235,11 +241,6 @@ static void ParseConstraint(const std::string &CStr, CGIOperandList &Ops) {
 }
 
 static void ParseConstraints(const std::string &CStr, CGIOperandList &Ops) {
-  // Make sure the constraints list for each operand is large enough to hold
-  // constraint info, even if none is present.
-  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-    Ops[i].Constraints.resize(Ops[i].MINumOperands);
-  
   if (CStr.empty()) return;
   
   const std::string delims(",");
@@ -390,5 +391,5 @@ FlattenAsmStringVariants(StringRef Cur, unsigned Variant) {
 CodeGenInstAlias::CodeGenInstAlias(Record *R) : TheDef(R), Operands(R) {
   AsmString = R->getValueAsString("AsmString");
 
-  
+  Result = R->getValueAsDag("ResultInst");
 }
