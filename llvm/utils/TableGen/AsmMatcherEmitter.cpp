@@ -356,14 +356,18 @@ struct InstructionInfo {
   std::string ConversionFnKind;
   
   InstructionInfo(const CodeGenInstruction &CGI)
-    : TheDef(CGI.TheDef), OperandList(CGI.Operands) {
-    InstrName = TheDef->getName();
-    // TODO: Eventually support asmparser for Variant != 0.
-    AsmString = CGI.FlattenAsmStringVariants(CGI.AsmString, 0);
-    
-    TokenizeAsmString(AsmString, Tokens);
+    : TheDef(CGI.TheDef), OperandList(CGI.Operands), AsmString(CGI.AsmString) {
   }
 
+  InstructionInfo(const CodeGenInstAlias *Alias)
+    : TheDef(Alias->TheDef), OperandList(Alias->Operands),
+      AsmString(Alias->AsmString) {
+    
+  }
+  
+  void Initialize(const AsmMatcherInfo &Info,
+                  SmallPtrSet<Record*, 16> &SingletonRegisters);
+  
   /// isAssemblerInstruction - Return true if this matchable is a valid thing to
   /// match against.
   bool isAssemblerInstruction(StringRef CommentDelimiter) const;
@@ -545,6 +549,30 @@ void InstructionInfo::dump() {
   }
 }
 
+void InstructionInfo::Initialize(const AsmMatcherInfo &Info,
+                                 SmallPtrSet<Record*, 16> &SingletonRegisters) {
+  InstrName = TheDef->getName();
+  
+  // TODO: Eventually support asmparser for Variant != 0.
+  AsmString = CodeGenInstruction::FlattenAsmStringVariants(AsmString, 0);
+  
+  TokenizeAsmString(AsmString, Tokens);
+  
+  // Compute the require features.
+  std::vector<Record*> Predicates =TheDef->getValueAsListOfDefs("Predicates");
+  for (unsigned i = 0, e = Predicates.size(); i != e; ++i)
+    if (SubtargetFeatureInfo *Feature =
+        Info.getSubtargetFeature(Predicates[i]))
+      RequiredFeatures.push_back(Feature);
+  
+  // Collect singleton registers, if used.
+  for (unsigned i = 0, e = Tokens.size(); i != e; ++i) {
+    if (Record *Reg = getSingletonRegisterForToken(i, Info))
+      SingletonRegisters.insert(Reg);
+  }
+}
+
+
 /// getRegisterRecord - Get the register record for \arg name, or 0.
 static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
   for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
@@ -557,8 +585,6 @@ static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
 }
 
 bool InstructionInfo::isAssemblerInstruction(StringRef CommentDelimiter) const {
-  StringRef Name = InstrName;
-  
   // Reject instructions with no .s string.
   if (AsmString.empty())
     throw TGError(TheDef->getLoc(), "instruction with empty asm string");
@@ -594,7 +620,7 @@ bool InstructionInfo::isAssemblerInstruction(StringRef CommentDelimiter) const {
     // bunch of instructions.  It is unclear what the right answer is for this.
     if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
       DEBUG({
-        errs() << "warning: '" << Name << "': "
+        errs() << "warning: '" << InstrName << "': "
         << "ignoring instruction with tied operand '"
         << Tokens[i].str() << "'\n";
       });
@@ -869,9 +895,9 @@ void AsmMatcherInfo::BuildOperandClasses() {
 
 AsmMatcherInfo::AsmMatcherInfo(Record *asmParser, CodeGenTarget &target)
   : AsmParser(asmParser), Target(target),
-    RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix"))
-{
+    RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix")) {
 }
+
 
 void AsmMatcherInfo::BuildInfo() {
   // Build information about all of the AssemblerPredicates.
@@ -911,6 +937,8 @@ void AsmMatcherInfo::BuildInfo() {
     
     OwningPtr<InstructionInfo> II(new InstructionInfo(CGI));
 
+    II->Initialize(*this, SingletonRegisters);
+    
     // Ignore instructions which shouldn't be matched and diagnose invalid
     // instruction definitions with an error.
     if (!II->isAssemblerInstruction(CommentDelimiter))
@@ -923,30 +951,21 @@ void AsmMatcherInfo::BuildInfo() {
         StringRef(II->InstrName).endswith("_Int"))
       continue;
     
-    // Collect singleton registers, if used.
-    for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
-      if (Record *Reg = II->getSingletonRegisterForToken(i, *this))
-        SingletonRegisters.insert(Reg);
-    }
-
-    // Compute the require features.
-    std::vector<Record*> Predicates =
-      CGI.TheDef->getValueAsListOfDefs("Predicates");
-    for (unsigned i = 0, e = Predicates.size(); i != e; ++i)
-      if (SubtargetFeatureInfo *Feature = getSubtargetFeature(Predicates[i]))
-        II->RequiredFeatures.push_back(Feature);
-
-    Instructions.push_back(II.take());
+     Instructions.push_back(II.take());
   }
   
-  // Parse all of the InstAlias definitions.
+  // Parse all of the InstAlias definitions and stick them in the list of
+  // matchables.
   std::vector<Record*> AllInstAliases =
     Records.getAllDerivedDefinitions("InstAlias");
   for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
     CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i]);
 
+    OwningPtr<InstructionInfo> II(new InstructionInfo(Alias));
     
-    (void)Alias;
+    II->Initialize(*this, SingletonRegisters);
+    
+    //Instructions.push_back(II.take());
   }
 
   // Build info for the register classes.
