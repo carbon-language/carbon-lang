@@ -188,6 +188,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
         << Attr.Range;
     bool msAsm = false;
     Res = ParseAsmStatement(msAsm);
+    Res = Actions.ActOnFinishFullStmt(Res.get());
     if (msAsm) return move(Res);
     SemiError = "asm";
     break;
@@ -1458,7 +1459,6 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
       SkipUntil(tok::r_paren);
       return true;
     }
-    Res = Actions.MakeFullExpr(Res.get()).release();
     Exprs.push_back(Res.release());
     // Eat the comma and continue parsing if it exists.
     if (Tok.isNot(tok::comma)) return false;

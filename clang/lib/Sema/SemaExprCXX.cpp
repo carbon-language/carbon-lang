@@ -3016,6 +3016,26 @@ FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
   return E;
 }
 
+Stmt *Sema::MaybeCreateCXXStmtWithTemporaries(Stmt *SubStmt) {
+  assert(SubStmt && "sub statement can't be null!");
+
+  unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
+  assert(ExprTemporaries.size() >= FirstTemporary);
+  if (ExprTemporaries.size() == FirstTemporary)
+    return SubStmt;
+
+  // FIXME: In order to attach the temporaries, wrap the statement into
+  // a StmtExpr; currently this is only used for asm statements.
+  // This is hacky, either create a new CXXStmtWithTemporaries statement or
+  // a new AsmStmtWithTemporaries.
+  CompoundStmt *CompStmt = new (Context) CompoundStmt(Context, &SubStmt, 1,
+                                                      SourceLocation(),
+                                                      SourceLocation());
+  Expr *E = new (Context) StmtExpr(CompStmt, Context.VoidTy, SourceLocation(),
+                                   SourceLocation());
+  return MaybeCreateCXXExprWithTemporaries(E);
+}
+
 ExprResult
 Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
                                    tok::TokenKind OpKind, ParsedType &ObjectType,
@@ -3397,4 +3417,10 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {
 
   CheckImplicitConversions(FullExpr);
   return MaybeCreateCXXExprWithTemporaries(FullExpr);
+}
+
+StmtResult Sema::ActOnFinishFullStmt(Stmt *FullStmt) {
+  if (!FullStmt) return StmtError();
+
+  return MaybeCreateCXXStmtWithTemporaries(FullStmt);
 }

@@ -2342,10 +2342,12 @@ public:
   /// non-empty, will create a new CXXExprWithTemporaries expression.
   /// Otherwise, just returs the passed in expression.
   Expr *MaybeCreateCXXExprWithTemporaries(Expr *SubExpr);
+  Stmt *MaybeCreateCXXStmtWithTemporaries(Stmt *SubStmt);
   ExprResult MaybeCreateCXXExprWithTemporaries(ExprResult SubExpr);
   FullExpr CreateFullExpr(Expr *SubExpr);
 
   ExprResult ActOnFinishFullExpr(Expr *Expr);
+  StmtResult ActOnFinishFullStmt(Stmt *Stmt);
 
   // Marks SS invalid if it represents an incomplete type.
   bool RequireCompleteDeclContext(CXXScopeSpec &SS, DeclContext *DC);
