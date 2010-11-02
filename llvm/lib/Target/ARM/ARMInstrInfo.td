@@ -478,6 +478,7 @@ def addrmode6 : Operand<i32>,
 def am6offset : Operand<i32> {
   let PrintMethod = "printAddrMode6OffsetOperand";
   let MIOperandInfo = (ops GPR);
+  string EncoderMethod = "getAddrMode6OffsetOperand";
 }
 
 // addrmodepc := pc + reg
