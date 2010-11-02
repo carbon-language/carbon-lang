@@ -158,6 +158,8 @@ def IIC_VST1u      : InstrItinClass;
 def IIC_VST1x2u    : InstrItinClass;
 def IIC_VST1x3u    : InstrItinClass;
 def IIC_VST1x4u    : InstrItinClass;
+def IIC_VST1ln     : InstrItinClass;
+def IIC_VST1lnu    : InstrItinClass;
 def IIC_VST2       : InstrItinClass;
 def IIC_VST2x2     : InstrItinClass;
 def IIC_VST2u      : InstrItinClass;

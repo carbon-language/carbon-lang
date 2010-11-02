@@ -1087,6 +1087,8 @@ def VST4q8oddPseudo_UPD  : VSTQQQQWBPseudo<IIC_VST4u>;
 def VST4q16oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
 def VST4q32oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
 
+} // mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1
+
 // Classes for VST*LN pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
 class VSTQLNPseudo<InstrItinClass itin>
@@ -1112,7 +1114,36 @@ class VSTQQQQLNWBPseudo<InstrItinClass itin>
                  nohash_imm:$lane), itin, "$addr.addr = $wb">;
 
 //   VST1LN   : Vector Store (single element from one lane)
-//   FIXME: Not yet implemented.
+class VST1LN<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b00, op11_8, op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src, nohash_imm:$lane),
+          IIC_VST1ln, "vst1", Dt, "\\{$src[$lane]\\}, $addr", "", []>;
+
+def VST1LNd8  : VST1LN<0b0000, {?,?,?,0}, "8">;
+def VST1LNd16 : VST1LN<0b0100, {?,?,0,?}, "16">;
+def VST1LNd32 : VST1LN<0b1000, {?,0,?,?}, "32">;
+
+def VST1LNq8Pseudo  : VSTQLNPseudo<IIC_VST1ln>;
+def VST1LNq16Pseudo : VSTQLNPseudo<IIC_VST1ln>;
+def VST1LNq32Pseudo : VSTQLNPseudo<IIC_VST1ln>;
+
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
+
+// ...with address register writeback:
+class VST1LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b00, op11_8, op7_4, (outs GPR:$wb),
+          (ins addrmode6:$addr, am6offset:$offset,
+           DPR:$src, nohash_imm:$lane), IIC_VST1lnu, "vst1", Dt,
+          "\\{$src[$lane]\\}, $addr$offset",
+          "$addr.addr = $wb", []>;
+
+def VST1LNd8_UPD  : VST1LNWB<0b0000, {?,?,?,0}, "8">;
+def VST1LNd16_UPD : VST1LNWB<0b0100, {?,?,0,?}, "16">;
+def VST1LNd32_UPD : VST1LNWB<0b1000, {?,0,?,?}, "32">;
+
+def VST1LNq8Pseudo_UPD  : VSTQLNWBPseudo<IIC_VST1lnu>;
+def VST1LNq16Pseudo_UPD : VSTQLNWBPseudo<IIC_VST1lnu>;
+def VST1LNq32Pseudo_UPD : VSTQLNWBPseudo<IIC_VST1lnu>;
 
 //   VST2LN   : Vector Store (single 2-element structure from one lane)
 class VST2LN<bits<4> op11_8, bits<4> op7_4, string Dt>

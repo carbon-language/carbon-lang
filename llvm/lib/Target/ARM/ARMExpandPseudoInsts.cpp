@@ -111,11 +111,11 @@ namespace {
 
 static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD1LNq16Pseudo,     ARM::VLD1LNd16,     true, false, EvenDblSpc, 1, 4 },
-{ ARM::VLD1LNq16Pseudo_UPD, ARM::VLD1LNd16_UPD, true, false, EvenDblSpc, 1, 4 },
+{ ARM::VLD1LNq16Pseudo_UPD, ARM::VLD1LNd16_UPD, true, true,  EvenDblSpc, 1, 4 },
 { ARM::VLD1LNq32Pseudo,     ARM::VLD1LNd32,     true, false, EvenDblSpc, 1, 2 },
-{ ARM::VLD1LNq32Pseudo_UPD, ARM::VLD1LNd32_UPD, true, false, EvenDblSpc, 1, 2 },
+{ ARM::VLD1LNq32Pseudo_UPD, ARM::VLD1LNd32_UPD, true, true,  EvenDblSpc, 1, 2 },
 { ARM::VLD1LNq8Pseudo,      ARM::VLD1LNd8,      true, false, EvenDblSpc, 1, 8 },
-{ ARM::VLD1LNq8Pseudo_UPD,  ARM::VLD1LNd8_UPD,  true, false, EvenDblSpc, 1, 8 },
+{ ARM::VLD1LNq8Pseudo_UPD,  ARM::VLD1LNd8_UPD,  true, true,  EvenDblSpc, 1, 8 },
 
 { ARM::VLD1d64QPseudo,      ARM::VLD1d64Q,     true,  false, SingleSpc,  4, 1 },
 { ARM::VLD1d64QPseudo_UPD,  ARM::VLD1d64Q_UPD, true,  true,  SingleSpc,  4, 1 },
@@ -205,6 +205,13 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD4q32oddPseudo_UPD, ARM::VLD4q32_UPD, true,  true,  OddDblSpc,  4, 2 },
 { ARM::VLD4q8Pseudo_UPD,     ARM::VLD4q8_UPD,  true,  true,  EvenDblSpc, 4, 8 },
 { ARM::VLD4q8oddPseudo_UPD,  ARM::VLD4q8_UPD,  true,  true,  OddDblSpc,  4, 8 },
+
+{ ARM::VST1LNq16Pseudo,     ARM::VST1LNd16,    false, false, EvenDblSpc, 1, 4 },
+{ ARM::VST1LNq16Pseudo_UPD, ARM::VST1LNd16_UPD,false, true,  EvenDblSpc, 1, 4 },
+{ ARM::VST1LNq32Pseudo,     ARM::VST1LNd32,    false, false, EvenDblSpc, 1, 2 },
+{ ARM::VST1LNq32Pseudo_UPD, ARM::VST1LNd32_UPD,false, true,  EvenDblSpc, 1, 2 },
+{ ARM::VST1LNq8Pseudo,      ARM::VST1LNd8,     false, false, EvenDblSpc, 1, 8 },
+{ ARM::VST1LNq8Pseudo_UPD,  ARM::VST1LNd8_UPD, false, true,  EvenDblSpc, 1, 8 },
 
 { ARM::VST1d64QPseudo,      ARM::VST1d64Q,     false, false, SingleSpc,  4, 1 },
 { ARM::VST1d64QPseudo_UPD,  ARM::VST1d64Q_UPD, false, true,  SingleSpc,  4, 1 },
@@ -989,6 +996,12 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
     case ARM::VLD4LNd32Pseudo_UPD:
     case ARM::VLD4LNq16Pseudo_UPD:
     case ARM::VLD4LNq32Pseudo_UPD:
+    case ARM::VST1LNq8Pseudo:
+    case ARM::VST1LNq16Pseudo:
+    case ARM::VST1LNq32Pseudo:
+    case ARM::VST1LNq8Pseudo_UPD:
+    case ARM::VST1LNq16Pseudo_UPD:
+    case ARM::VST1LNq32Pseudo_UPD:
     case ARM::VST2LNd8Pseudo:
     case ARM::VST2LNd16Pseudo:
     case ARM::VST2LNd32Pseudo:
