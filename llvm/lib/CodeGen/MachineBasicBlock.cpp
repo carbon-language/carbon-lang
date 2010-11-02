@@ -450,13 +450,23 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   MachineFunction *MF = getParent();
   DebugLoc dl;  // FIXME: this is nowhere
 
-  // We may need to update this's terminator, but we can't do that if AnalyzeBranch
-  // fails. If this uses a jump table, we won't touch it.
+  // We may need to update this's terminator, but we can't do that if
+  // AnalyzeBranch fails. If this uses a jump table, we won't touch it.
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
   if (TII->AnalyzeBranch(*this, TBB, FBB, Cond))
     return NULL;
+
+  // Avoid bugpoint weirdness: A block may end with a conditional branch but
+  // jumps to the same MBB is either case. We have duplicate CFG edges in that
+  // case that we can't handle. Since this never happens in properly optimized
+  // code, just skip those edges.
+  if (TBB && TBB == FBB) {
+    DEBUG(dbgs() << "Won't split critical edge after degenerate BB#"
+                 << getNumber() << '\n');
+    return NULL;
+  }
 
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
   MF->insert(llvm::next(MachineFunction::iterator(this)), NMBB);
