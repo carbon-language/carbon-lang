@@ -17,8 +17,14 @@
 #include "CodeGenTarget.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
+
+static cl::opt<bool>
+MCEmitter("mc-code-emitter",
+          cl::desc("Generate CodeEmitter for use with the MC library."),
+          cl::init(false));
 
 void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
   for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();

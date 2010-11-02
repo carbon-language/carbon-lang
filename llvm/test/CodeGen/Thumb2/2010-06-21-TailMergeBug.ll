@@ -32,14 +32,15 @@
 
 define fastcc i32 @parse_percent_token() nounwind {
 entry:
-; CHECK: itt eq
-; CHECK: itt eq
-; CHECK: itt eq
-; CHECK: itt eq
-; CHECK: itt eq
+; CHECK: ittt eq
+; CHECK: ittt eq
+; CHECK: ittt eq
+; CHECK: ittt eq
+; CHECK: ittt eq
 ; CHECK: moveq r0
 ; CHECK-NOT: LBB0_
-; CHECK: ldmiaeq
+; CHECK: ldreq
+; CHECK: popeq
   switch i32 undef, label %bb7 [
     i32 37, label %bb43
     i32 48, label %bb5
