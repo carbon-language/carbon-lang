@@ -195,25 +195,29 @@ def  VLD1q64Pseudo : VLDQPseudo<IIC_VLD1x2>;
 
 // ...with address register writeback:
 class VLD1DWB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$dst, GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1u,
-          "vld1", Dt, "\\{$dst\\}, $addr$offset",
-          "$addr.addr = $wb", []>;
+  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$Vd, GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1u,
+          "vld1", Dt, "\\{$Vd\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
+  let Inst{4} = Rn{4}; 
+}
 class VLD1QWB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b1010,op7_4, (outs DPR:$dst1, DPR:$dst2, GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1x2u,
-          "vld1", Dt, "\\{$dst1, $dst2\\}, $addr$offset",
-          "$addr.addr = $wb", []>;
+  : NLdSt<0,0b10,0b1010,op7_4, (outs DPR:$Vd, DPR:$dst2, GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1x2u,
+          "vld1", Dt, "\\{$Vd, $dst2\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
+  let Inst{5-4} = Rn{5-4};
+}
 
-def VLD1d8_UPD  : VLD1DWB<0b0000, "8">;
-def VLD1d16_UPD : VLD1DWB<0b0100, "16">;
-def VLD1d32_UPD : VLD1DWB<0b1000, "32">;
-def VLD1d64_UPD : VLD1DWB<0b1100, "64">;
+def VLD1d8_UPD  : VLD1DWB<{0,0,0,?}, "8">;
+def VLD1d16_UPD : VLD1DWB<{0,1,0,?}, "16">;
+def VLD1d32_UPD : VLD1DWB<{1,0,0,?}, "32">;
+def VLD1d64_UPD : VLD1DWB<{1,1,0,?}, "64">;
 
-def VLD1q8_UPD  : VLD1QWB<0b0000, "8">;
-def VLD1q16_UPD : VLD1QWB<0b0100, "16">;
-def VLD1q32_UPD : VLD1QWB<0b1000, "32">;
-def VLD1q64_UPD : VLD1QWB<0b1100, "64">;
+def VLD1q8_UPD  : VLD1QWB<{0,0,?,?}, "8">;
+def VLD1q16_UPD : VLD1QWB<{0,1,?,?}, "16">;
+def VLD1q32_UPD : VLD1QWB<{1,0,?,?}, "32">;
+def VLD1q64_UPD : VLD1QWB<{1,1,?,?}, "64">;
 
 def VLD1q8Pseudo_UPD  : VLDQWBPseudo<IIC_VLD1x2u>;
 def VLD1q16Pseudo_UPD : VLDQWBPseudo<IIC_VLD1x2u>;
@@ -222,48 +226,58 @@ def VLD1q64Pseudo_UPD : VLDQWBPseudo<IIC_VLD1x2u>;
 
 // ...with 3 registers (some of these are only for the disassembler):
 class VLD1D3<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
-          (ins addrmode6:$addr), IIC_VLD1x3, "vld1", Dt,
-          "\\{$dst1, $dst2, $dst3\\}, $addr", "", []>;
+  : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$Vd, DPR:$dst2, DPR:$dst3),
+          (ins addrmode6:$Rn), IIC_VLD1x3, "vld1", Dt,
+          "\\{$Vd, $dst2, $dst3\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{4} = Rn{4};
+}
 class VLD1D3WB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1x3u, "vld1", Dt,
-          "\\{$dst1, $dst2, $dst3\\}, $addr$offset", "$addr.addr = $wb", []>;
+  : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$Vd, DPR:$dst2, DPR:$dst3, GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1x3u, "vld1", Dt,
+          "\\{$Vd, $dst2, $dst3\\}, $Rn$Rm", "$Rn.addr = $wb", []> {
+  let Inst{4} = Rn{4};
+}
 
-def VLD1d8T      : VLD1D3<0b0000, "8">;
-def VLD1d16T     : VLD1D3<0b0100, "16">;
-def VLD1d32T     : VLD1D3<0b1000, "32">;
-def VLD1d64T     : VLD1D3<0b1100, "64">;
+def VLD1d8T      : VLD1D3<{0,0,0,?}, "8">;
+def VLD1d16T     : VLD1D3<{0,1,0,?}, "16">;
+def VLD1d32T     : VLD1D3<{1,0,0,?}, "32">;
+def VLD1d64T     : VLD1D3<{1,1,0,?}, "64">;
 
-def VLD1d8T_UPD  : VLD1D3WB<0b0000, "8">;
-def VLD1d16T_UPD : VLD1D3WB<0b0100, "16">;
-def VLD1d32T_UPD : VLD1D3WB<0b1000, "32">;
-def VLD1d64T_UPD : VLD1D3WB<0b1100, "64">;
+def VLD1d8T_UPD  : VLD1D3WB<{0,0,0,?}, "8">;
+def VLD1d16T_UPD : VLD1D3WB<{0,1,0,?}, "16">;
+def VLD1d32T_UPD : VLD1D3WB<{1,0,0,?}, "32">;
+def VLD1d64T_UPD : VLD1D3WB<{1,1,0,?}, "64">;
 
 def VLD1d64TPseudo     : VLDQQPseudo<IIC_VLD1x3>;
 def VLD1d64TPseudo_UPD : VLDQQWBPseudo<IIC_VLD1x3u>;
 
 // ...with 4 registers (some of these are only for the disassembler):
 class VLD1D4<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0010,op7_4,(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
-          (ins addrmode6:$addr), IIC_VLD1x4, "vld1", Dt,
-          "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr", "", []>;
+  : NLdSt<0,0b10,0b0010,op7_4,(outs DPR:$Vd, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+          (ins addrmode6:$Rn), IIC_VLD1x4, "vld1", Dt,
+          "\\{$Vd, $dst2, $dst3, $dst4\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{5-4} = Rn{5-4};
+}
 class VLD1D4WB<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0010,op7_4,
-          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset), IIC_VLD4, "vld1", Dt,
-          "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr$offset", "$addr.addr = $wb",
-          []>;
+          (outs DPR:$Vd, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD4, "vld1", Dt,
+          "\\{$Vd, $dst2, $dst3, $dst4\\}, $Rn$Rm", "$Rn.addr = $wb",
+          []> {
+  let Inst{5-4} = Rn{5-4};
+}
 
-def VLD1d8Q      : VLD1D4<0b0000, "8">;
-def VLD1d16Q     : VLD1D4<0b0100, "16">;
-def VLD1d32Q     : VLD1D4<0b1000, "32">;
-def VLD1d64Q     : VLD1D4<0b1100, "64">;
+def VLD1d8Q      : VLD1D4<{0,0,?,?}, "8">;
+def VLD1d16Q     : VLD1D4<{0,1,?,?}, "16">;
+def VLD1d32Q     : VLD1D4<{1,0,?,?}, "32">;
+def VLD1d64Q     : VLD1D4<{1,1,?,?}, "64">;
 
-def VLD1d8Q_UPD  : VLD1D4WB<0b0000, "8">;
-def VLD1d16Q_UPD : VLD1D4WB<0b0100, "16">;
-def VLD1d32Q_UPD : VLD1D4WB<0b1000, "32">;
-def VLD1d64Q_UPD : VLD1D4WB<0b1100, "64">;
+def VLD1d8Q_UPD  : VLD1D4WB<{0,0,?,?}, "8">;
+def VLD1d16Q_UPD : VLD1D4WB<{0,1,?,?}, "16">;
+def VLD1d32Q_UPD : VLD1D4WB<{1,0,?,?}, "32">;
+def VLD1d64Q_UPD : VLD1D4WB<{1,1,?,?}, "64">;
 
 def VLD1d64QPseudo     : VLDQQPseudo<IIC_VLD1x4>;
 def VLD1d64QPseudo_UPD : VLDQQWBPseudo<IIC_VLD1x4u>;
