@@ -298,8 +298,9 @@ public:
                          }
                          else
                          {
-                             result.AppendErrorWithFormat ("Error occurred while attempting to look up command '%s %s'.\n",
-                                                          alias_command.c_str(), sub_command.c_str());
+                             result.AppendErrorWithFormat("'%s' is not a valid sub-command of '%s'.  "
+                                                          "Unable to create alias.\n",
+                                                          sub_command.c_str(), actual_command.c_str());
                              result.SetStatus (eReturnStatusFailed);
                              return false;
                          }
@@ -310,18 +311,6 @@ public:
 
                  if (args.GetArgumentCount () > 0)
                  {
-                     //if ((!use_subcommand && (cmd_obj->WantsRawCommandString()))
-                     //    || (use_subcommand && (sub_cmd_obj->WantsRawCommandString())))
-                     //{
-                     //    result.AppendErrorWithFormat ("'%s' cannot be aliased with any options or arguments.\n",
-                     //                                 (use_subcommand ? sub_cmd_obj->GetCommandName()
-                     //                                                 : cmd_obj->GetCommandName()));
-                     //    result.SetStatus (eReturnStatusFailed);
-                     //    return false;
-                     //}
-
-                     // options or arguments have been passed to the alias command, and must be 
-                     // verified & processed here.
                      if ((!use_subcommand && (cmd_obj->GetOptions() != NULL))
                          || (use_subcommand && (sub_cmd_obj->GetOptions() != NULL)))
                      {
