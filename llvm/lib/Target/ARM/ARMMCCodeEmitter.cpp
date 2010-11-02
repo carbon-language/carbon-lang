@@ -323,22 +323,15 @@ unsigned ARMMCCodeEmitter::getAddrMode6OffsetOpValue(const MCInst &MI,
 void ARMMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
-  unsigned Opcode = MI.getOpcode();
-  const TargetInstrDesc &Desc = TII.get(Opcode);
-  uint64_t TSFlags = Desc.TSFlags;
-  // Keep track of the current byte being emitted.
-  unsigned CurByte = 0;
-
   // Pseudo instructions don't get encoded.
-  if ((TSFlags & ARMII::FormMask) == ARMII::Pseudo)
+  const TargetInstrDesc &Desc = TII.get(MI.getOpcode());
+  if ((Desc.TSFlags & ARMII::FormMask) == ARMII::Pseudo)
     return;
 
-  ++MCNumEmitted;  // Keep track of the # of mi's emitted
-  unsigned Value = getBinaryCodeForInstr(MI);
-  switch (Opcode) {
-  default: break;
-  }
-  EmitConstant(Value, 4, CurByte, OS);
+  // Keep track of the current byte being emitted.
+  unsigned CurByte = 0;
+  EmitConstant(getBinaryCodeForInstr(MI), 4, CurByte, OS);
+  ++MCNumEmitted;  // Keep track of the # of mi's emitted.
 }
 
 // FIXME: These #defines shouldn't be necessary. Instead, tblgen should
