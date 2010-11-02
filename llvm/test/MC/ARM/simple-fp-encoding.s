@@ -157,3 +157,20 @@
 
 @ CHECK: vmov r0, r1, d16            @ encoding: [0x30,0x0b,0x51,0xec]
         vmov    r0, r1, d16
+
+@ CHECK: vldr.64 d17, [r0]           @ encoding: [0x00,0x1b,0xd0,0xed]
+        vldr.64	d17, [r0]
+
+@ CHECK: vldr.64 d1, [r2, #32]       @ encoding: [0x08,0x1b,0x92,0xed]
+        vldr.64	d1, [r2, #32]
+
+        
+@ CHECK: vldr.64 d2, [r3]            @ encoding: [0x00,0x2b,0x93,0xed]
+        vldr.64 d2, [r3]
+
+@ CHECK: vldr.64 d3, [pc]            @ encoding: [0x00,0x3b,0x9f,0xed]
+@ CHECK: vldr.64 d3, [pc]            @ encoding: [0x00,0x3b,0x9f,0xed]
+@ CHECK: vldr.64 d3, [pc]            @ encoding: [0x00,0x3b,0x9f,0xed]
+        vldr.64 d3, [pc]
+        vldr.64 d3, [pc,#0]
+        vldr.64 d3, [pc,#-0]

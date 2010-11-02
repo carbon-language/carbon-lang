@@ -53,18 +53,29 @@ def vfp_f64imm : Operand<f64>,
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def VLDRD : ADI5<0b1101, 0b01, (outs DPR:$Dd), (ins addrmode5:$addr),
                  IIC_fpLoad64, "vldr", ".64\t$Dd, $addr",
-                 [(set DPR:$Dd, (f64 (load addrmode5:$addr)))]>;
+                 [(set DPR:$Dd, (f64 (load addrmode5:$addr)))]> {
+  // Instruction operands.
+  bits<5> Dd;
+  bits<32> addr;
+
+  // Encode instruction operands.
+  let Inst{23}    = addr{16};     // U (add = (U == '1'))
+  let Inst{22}    = Dd{4};
+  let Inst{19-16} = addr{20-17};  // Rn
+  let Inst{15-12} = Dd{3-0};
+  let Inst{7-0}   = addr{7-0};    // imm8
+}
 
 def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$dst), (ins addrmode5:$addr),
                  IIC_fpLoad32, "vldr", ".32\t$dst, $addr",
                  [(set SPR:$dst, (load addrmode5:$addr))]>;
 } // canFoldAsLoad
 
-def VSTRD  : ADI5<0b1101, 0b00, (outs), (ins DPR:$src, addrmode5:$addr),
+def VSTRD : ADI5<0b1101, 0b00, (outs), (ins DPR:$src, addrmode5:$addr),
                  IIC_fpStore64, "vstr", ".64\t$src, $addr",
                  [(store (f64 DPR:$src), addrmode5:$addr)]>;
 
-def VSTRS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
+def VSTRS : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
                  IIC_fpStore32, "vstr", ".32\t$src, $addr",
                  [(store SPR:$src, addrmode5:$addr)]>;
 

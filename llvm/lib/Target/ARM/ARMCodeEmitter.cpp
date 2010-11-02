@@ -177,26 +177,27 @@ namespace {
       const { return 0; }
     unsigned getBitfieldInvertedMaskOpValue(const MachineInstr &MI,
                                             unsigned Op) const { return 0; }
-    unsigned getAddrModeImm12OpValue(const MachineInstr &MI, unsigned Op)
-      const {
-        // {17-13} = reg
-        // {12}    = (U)nsigned (add == '1', sub == '0')
-        // {11-0}  = imm12
-        const MachineOperand &MO  = MI.getOperand(Op);
-        const MachineOperand &MO1 = MI.getOperand(Op + 1);
-        if (!MO.isReg()) {
-          emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_cp_entry);
-          return 0;
-        }
-        unsigned Reg = getARMRegisterNumbering(MO.getReg());
-        int32_t Imm12 = MO1.getImm();
-        uint32_t Binary;
-        Binary = Imm12 & 0xfff;
-        if (Imm12 >= 0)
-          Binary |= (1 << 12);
-        Binary |= (Reg << 13);
-        return Binary;
+    uint32_t getAddrModeImmOpValue(const MachineInstr &MI, unsigned Op) const {
+      // {20-17} = reg
+      // {16}    = (U)nsigned (add == '1', sub == '0')
+      // {15-0}  = imm
+      const MachineOperand &MO  = MI.getOperand(Op);
+      const MachineOperand &MO1 = MI.getOperand(Op + 1);
+      if (!MO.isReg()) {
+        emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_cp_entry);
+        return 0;
       }
+
+      unsigned Reg = getARMRegisterNumbering(MO.getReg());
+      int32_t Imm = MO1.getImm();
+      uint32_t Binary;
+      Binary = Imm & 0xffff;
+      if (Imm >= 0)
+        Binary |= (1 << 16);
+
+      Binary |= (Reg << 17);
+      return Binary;
+    }
     unsigned getNEONVcvtImm32OpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
 

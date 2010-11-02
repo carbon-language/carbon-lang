@@ -49,9 +49,8 @@ public:
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO) const;
 
-  /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
-  /// operand.
-  unsigned getAddrModeImm12OpValue(const MCInst &MI, unsigned Op) const;
+  /// getAddrModeImmOpValue - Return encoding info for 'reg +/- imm' operand.
+  uint32_t getAddrModeImmOpValue(const MCInst &MI, unsigned Op) const;
 
   /// getCCOutOpValue - Return encoding of the 's' bit.
   unsigned getCCOutOpValue(const MCInst &MI, unsigned Op) const {
@@ -170,37 +169,38 @@ unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   return 0;
 }
 
-/// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
-/// operand.
-unsigned ARMMCCodeEmitter::getAddrModeImm12OpValue(const MCInst &MI,
-                                                   unsigned OpIdx) const {
-  // {17-13} = reg
-  // {12}    = (U)nsigned (add == '1', sub == '0')
-  // {11-0}  = imm12
+/// getAddrModeImmOpValue - Return encoding info for 'reg +/- imm' operand.
+uint32_t ARMMCCodeEmitter::getAddrModeImmOpValue(const MCInst &MI,
+                                                 unsigned OpIdx) const {
+  // {20-17} = reg
+  // {16}    = (U)nsigned (add == '1', sub == '0')
+  // {15-0}  = imm
   const MCOperand &MO  = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
   uint32_t Binary = 0;
 
   // If The first operand isn't a register, we have a label reference.
   if (!MO.isReg()) {
-    Binary |= ARM::PC << 13;     // Rn is PC.
+    Binary |= ARM::PC << 17;     // Rn is PC.
     // FIXME: Add a fixup referencing the label.
     return Binary;
   }
 
   unsigned Reg = getARMRegisterNumbering(MO.getReg());
-  int32_t Imm12 = MO1.getImm();
-  bool isAdd = Imm12 >= 0;
+  int32_t Imm = MO1.getImm();
+  bool isAdd = Imm >= 0;
+
   // Special value for #-0
-  if (Imm12 == INT32_MIN)
-    Imm12 = 0;
+  if (Imm == INT32_MIN)
+    Imm = 0;
+
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
-  if (Imm12 < 0)
-    Imm12 = -Imm12;
-  Binary = Imm12 & 0xfff;
+  if (Imm < 0) Imm = -Imm;
+
+  Binary = Imm & 0xffff;
   if (isAdd)
-    Binary |= (1 << 12);
-  Binary |= (Reg << 13);
+    Binary |= (1 << 16);
+  Binary |= (Reg << 17);
   return Binary;
 }
 
@@ -319,7 +319,6 @@ unsigned ARMMCCodeEmitter::getAddrMode6OffsetOpValue(const MCInst &MI,
   if (regno.getReg() == 0) return 0x0D;
   return regno.getReg();
 }
-
 
 void ARMMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
