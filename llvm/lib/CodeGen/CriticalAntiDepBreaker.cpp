@@ -325,8 +325,25 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
   }
 }
 
+// Check all machine instructions that define the antidependent register.
+// Return true if any of these instructions define the new register.
+bool
+CriticalAntiDepBreaker::isNewRegModifiedByRefs(RegRefIter RegRefBegin,
+                                               RegRefIter RegRefEnd,
+                                               unsigned NewReg)
+{
+  for (RegRefIter I = RegRefBegin; I != RegRefEnd; ++I ) {
+    MachineOperand *MO = I->second;
+    if (MO->isDef()) continue;
+    if (MO->getParent()->modifiesRegister(NewReg, TRI))
+      return true;
+  }
+  return false;
+}
+
 unsigned
-CriticalAntiDepBreaker::findSuitableFreeRegister(MachineInstr *MI,
+CriticalAntiDepBreaker::findSuitableFreeRegister(RegRefIter RegRefBegin,
+                                                 RegRefIter RegRefEnd,
                                                  unsigned AntiDepReg,
                                                  unsigned LastNewReg,
                                                  const TargetRegisterClass *RC)
@@ -342,10 +359,10 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(MachineInstr *MI,
     // an anti-dependence with this AntiDepReg, because that would
     // re-introduce that anti-dependence.
     if (NewReg == LastNewReg) continue;
-    // If the instruction already has a def of the NewReg, it's not suitable.
-    // For example, Instruction with multiple definitions can result in this
-    // condition.
-    if (MI->modifiesRegister(NewReg, TRI)) continue;
+    // If any instructions that define AntiDepReg also define the NewReg, it's
+    // not suitable.  For example, Instruction with multiple definitions can
+    // result in this condition.
+    if (isNewRegModifiedByRefs(RegRefBegin, RegRefEnd, NewReg)) continue;
     // If NewReg is dead and NewReg's most recent def is not before
     // AntiDepReg's kill, it's safe to replace AntiDepReg with NewReg.
     assert(((KillIndices[AntiDepReg] == ~0u) != (DefIndices[AntiDepReg] == ~0u))
@@ -552,7 +569,11 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
     // TODO: Instead of picking the first free register, consider which might
     // be the best.
     if (AntiDepReg != 0) {
-      if (unsigned NewReg = findSuitableFreeRegister(MI, AntiDepReg,
+      std::pair<std::multimap<unsigned, MachineOperand *>::iterator,
+                std::multimap<unsigned, MachineOperand *>::iterator>
+        Range = RegRefs.equal_range(AntiDepReg);
+      if (unsigned NewReg = findSuitableFreeRegister(Range.first, Range.second,
+                                                     AntiDepReg,
                                                      LastNewReg[AntiDepReg],
                                                      RC)) {
         DEBUG(dbgs() << "Breaking anti-dependence edge on "
@@ -562,9 +583,6 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
 
         // Update the references to the old register to refer to the new
         // register.
-        std::pair<std::multimap<unsigned, MachineOperand *>::iterator,
-                  std::multimap<unsigned, MachineOperand *>::iterator>
-           Range = RegRefs.equal_range(AntiDepReg);
         for (std::multimap<unsigned, MachineOperand *>::iterator
              Q = Range.first, QE = Range.second; Q != QE; ++Q) {
           Q->second->setReg(NewReg);
