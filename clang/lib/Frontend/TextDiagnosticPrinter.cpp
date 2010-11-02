@@ -781,7 +781,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     }
 
     // Compute the column number.
-    if (DiagOpts->ShowLocation) {
+    if (DiagOpts->ShowLocation && PLoc.isValid()) {
       if (DiagOpts->ShowColors)
         OS.changeColor(savedColor, true);
 

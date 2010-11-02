@@ -1058,8 +1058,14 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
     Filename = C->Entry->getName();
   else
     Filename = C->getBuffer(Diag, *this)->getBufferIdentifier();
-  unsigned LineNo = getLineNumber(LocInfo.first, LocInfo.second);
-  unsigned ColNo  = getColumnNumber(LocInfo.first, LocInfo.second);
+  bool Invalid = false;
+  unsigned LineNo = getLineNumber(LocInfo.first, LocInfo.second, &Invalid);
+  if (Invalid)
+    return PresumedLoc();
+  unsigned ColNo  = getColumnNumber(LocInfo.first, LocInfo.second, &Invalid);
+  if (Invalid)
+    return PresumedLoc();
+  
   SourceLocation IncludeLoc = FI.getIncludeLoc();
 
   // If we have #line directives in this file, update and overwrite the physical
