@@ -31,6 +31,8 @@
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Optional.h"
+#include "clang/Analysis/Support/SaveAndRestore.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -151,6 +153,11 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   /// its search.
   SourceRange RegionOfInterest;
 
+  // FIXME: Eventually remove.  This part of a hack to support proper
+  // iteration over all Decls contained lexically within an ObjC container.
+  DeclContext::decl_iterator *DI_current;
+  DeclContext::decl_iterator DE_current;
+
   using DeclVisitor<CursorVisitor, bool>::Visit;
   using TypeLocVisitor<CursorVisitor, bool>::Visit;
   using StmtVisitor<CursorVisitor, bool>::Visit;
@@ -187,7 +194,8 @@ public:
                 unsigned MaxPCHLevel,
                 SourceRange RegionOfInterest = SourceRange())
     : TU(TU), Visitor(Visitor), ClientData(ClientData),
-      MaxPCHLevel(MaxPCHLevel), RegionOfInterest(RegionOfInterest)
+      MaxPCHLevel(MaxPCHLevel), RegionOfInterest(RegionOfInterest), 
+      DI_current(0)
   {
     Parent.kind = CXCursor_NoDeclFound;
     Parent.data[0] = 0;
@@ -207,6 +215,7 @@ public:
   bool VisitAttributes(Decl *D);
   bool VisitBlockDecl(BlockDecl *B);
   bool VisitCXXRecordDecl(CXXRecordDecl *D);
+  llvm::Optional<bool> shouldVisitCursor(CXCursor C);
   bool VisitDeclContext(DeclContext *DC);
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitTypedefDecl(TypedefDecl *D);
@@ -497,40 +506,50 @@ bool CursorVisitor::VisitBlockDecl(BlockDecl *B) {
   return false;
 }
 
-bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
-  for (DeclContext::decl_iterator
-       I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
+llvm::Optional<bool> CursorVisitor::shouldVisitCursor(CXCursor Cursor) {
+  if (RegionOfInterest.isValid()) {
+    SourceRange Range = getRawCursorExtent(Cursor);
+    if (Range.isInvalid())
+      return llvm::Optional<bool>();
 
+    switch (CompareRegionOfInterest(Range)) {
+    case RangeBefore:
+      // This declaration comes before the region of interest; skip it.
+      return llvm::Optional<bool>();
+
+    case RangeAfter:
+      // This declaration comes after the region of interest; we're done.
+      return false;
+
+    case RangeOverlap:
+      // This declaration overlaps the region of interest; visit it.
+      break;
+    }
+  }
+  return true;
+}
+
+bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
+  DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
+
+  // FIXME: Eventually remove.  This part of a hack to support proper
+  // iteration over all Decls contained lexically within an ObjC container.
+  SaveAndRestore<DeclContext::decl_iterator*> DI_saved(DI_current, &I);
+  SaveAndRestore<DeclContext::decl_iterator> DE_saved(DE_current, E);
+
+  for ( ; I != E; ++I) {
     Decl *D = *I;
     if (D->getLexicalDeclContext() != DC)
       continue;
-
     CXCursor Cursor = MakeCXCursor(D, TU);
-
-    if (RegionOfInterest.isValid()) {
-      SourceRange Range = getRawCursorExtent(Cursor);
-      if (Range.isInvalid())
-        continue;
-
-      switch (CompareRegionOfInterest(Range)) {
-      case RangeBefore:
-        // This declaration comes before the region of interest; skip it.
-        continue;
-
-      case RangeAfter:
-        // This declaration comes after the region of interest; we're done.
-        return false;
-
-      case RangeOverlap:
-        // This declaration overlaps the region of interest; visit it.
-        break;
-      }
-    }
-
+    const llvm::Optional<bool> &V = shouldVisitCursor(Cursor);
+    if (!V.hasValue())
+      continue;
+    if (!V.getValue())
+      return false;
     if (Visit(Cursor, true))
       return true;
   }
-
   return false;
 }
 
@@ -794,8 +813,83 @@ bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
   return false;
 }
 
+namespace {
+  struct ContainerDeclsSort {
+    SourceManager &SM;
+    ContainerDeclsSort(SourceManager &sm) : SM(sm) {}
+    bool operator()(Decl *A, Decl *B) {
+      SourceLocation L_A = A->getLocStart();
+      SourceLocation L_B = B->getLocStart();
+      assert(L_A.isValid() && L_B.isValid());
+      return SM.isBeforeInTranslationUnit(L_A, L_B);
+    }
+  };
+}
+
 bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
-  return VisitDeclContext(D);
+  // FIXME: Eventually convert back to just 'VisitDeclContext()'.  Essentially
+  // an @implementation can lexically contain Decls that are not properly
+  // nested in the AST.  When we identify such cases, we need to retrofit
+  // this nesting here.
+  if (!DI_current)
+    return VisitDeclContext(D);
+
+  // Scan the Decls that immediately come after the container
+  // in the current DeclContext.  If any fall within the
+  // container's lexical region, stash them into a vector
+  // for later processing.
+  llvm::SmallVector<Decl *, 24> DeclsInContainer;
+  SourceLocation EndLoc = D->getSourceRange().getEnd();
+  SourceManager &SM = TU->getSourceManager();
+  if (EndLoc.isValid()) {
+    DeclContext::decl_iterator next = *DI_current;
+    while (++next != DE_current) {
+      Decl *D_next = *next;
+      if (!D_next)
+        break;
+      SourceLocation L = D_next->getLocStart();
+      if (!L.isValid())
+        break;
+      if (SM.isBeforeInTranslationUnit(L, EndLoc)) {
+        *DI_current = next;
+        DeclsInContainer.push_back(D_next);
+        continue;
+      }
+      break;
+    }
+  }
+
+  // The common case.
+  if (DeclsInContainer.empty())
+    return VisitDeclContext(D);
+
+  // Get all the Decls in the DeclContext, and sort them with the
+  // additional ones we've collected.  Then visit them.
+  for (DeclContext::decl_iterator I = D->decls_begin(), E = D->decls_end();
+       I!=E; ++I) {
+    Decl *subDecl = *I;
+    if (!subDecl || subDecl->getLexicalDeclContext() != D)
+      continue;
+    DeclsInContainer.push_back(subDecl);
+  }
+
+  // Now sort the Decls so that they appear in lexical order.
+  std::sort(DeclsInContainer.begin(), DeclsInContainer.end(),
+            ContainerDeclsSort(SM));
+
+  // Now visit the decls.
+  for (llvm::SmallVectorImpl<Decl*>::iterator I = DeclsInContainer.begin(),
+         E = DeclsInContainer.end(); I != E; ++I) {
+    CXCursor Cursor = MakeCXCursor(*I, TU);
+    const llvm::Optional<bool> &V = shouldVisitCursor(Cursor);
+    if (!V.hasValue())
+      continue;
+    if (!V.getValue())
+      return false;
+    if (Visit(Cursor, true))
+      return true;
+  }
+  return false;
 }
 
 bool CursorVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {

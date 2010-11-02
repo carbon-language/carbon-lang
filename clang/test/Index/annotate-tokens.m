@@ -88,7 +88,21 @@ void f() {
   (void)@protocol(Proto);
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:89:2 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
+// <rdar://problem/8595462> - Properly annotate functions and variables
+// declared within an @implementation.
+@class Rdar8595462_A;
+@interface Rdar8595462_B
+@end
+
+@implementation Rdar8595462_B
+Rdar8595462_A * Rdar8595462_aFunction() {
+  Rdar8595462_A * localVar = 0;
+  return localVar;
+}
+static Rdar8595462_A * Rdar8595462_staticVar;
+@end
+
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:104:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Identifier: "Foo" [1:12 - 1:15] ObjCInterfaceDecl=Foo:1:12
@@ -397,3 +411,39 @@ void f() {
 // CHECK: Punctuation: ")" [88:24 - 88:25] UnexposedExpr=Proto:85:1
 // CHECK: Punctuation: ";" [88:25 - 88:26] UnexposedStmt=
 // CHECK: Punctuation: "}" [89:1 - 89:2] UnexposedStmt=
+// CHECK: Punctuation: "@" [93:1 - 93:2] UnexposedDecl=[93:8]
+// CHECK: Keyword: "class" [93:2 - 93:7] UnexposedDecl=[93:8]
+// CHECK: Identifier: "Rdar8595462_A" [93:8 - 93:21] ObjCClassRef=Rdar8595462_A:93:8
+// CHECK: Punctuation: ";" [93:21 - 93:22]
+// CHECK: Punctuation: "@" [94:1 - 94:2] ObjCInterfaceDecl=Rdar8595462_B:94:12
+// CHECK: Keyword: "interface" [94:2 - 94:11] ObjCInterfaceDecl=Rdar8595462_B:94:12
+// CHECK: Identifier: "Rdar8595462_B" [94:12 - 94:25] ObjCInterfaceDecl=Rdar8595462_B:94:12
+// CHECK: Punctuation: "@" [95:1 - 95:2] ObjCInterfaceDecl=Rdar8595462_B:94:12
+// CHECK: Keyword: "end" [95:2 - 95:5] ObjCInterfaceDecl=Rdar8595462_B:94:12
+// CHECK: Punctuation: "@" [97:1 - 97:2] ObjCImplementationDecl=Rdar8595462_B:97:1 (Definition)
+// CHECK: Keyword: "implementation" [97:2 - 97:16] ObjCImplementationDecl=Rdar8595462_B:97:1 (Definition)
+// CHECK: Identifier: "Rdar8595462_B" [97:17 - 97:30] ObjCImplementationDecl=Rdar8595462_B:97:1 (Definition)
+// CHECK: Identifier: "Rdar8595462_A" [98:1 - 98:14] ObjCClassRef=Rdar8595462_A:93:8
+// CHECK: Punctuation: "*" [98:15 - 98:16] FunctionDecl=Rdar8595462_aFunction:98:17 (Definition)
+// CHECK: Identifier: "Rdar8595462_aFunction" [98:17 - 98:38] FunctionDecl=Rdar8595462_aFunction:98:17 (Definition)
+// CHECK: Punctuation: "(" [98:38 - 98:39] FunctionDecl=Rdar8595462_aFunction:98:17 (Definition)
+// CHECK: Punctuation: ")" [98:39 - 98:40] FunctionDecl=Rdar8595462_aFunction:98:17 (Definition)
+// CHECK: Punctuation: "{" [98:41 - 98:42] UnexposedStmt=
+// CHECK: Identifier: "Rdar8595462_A" [99:3 - 99:16] ObjCClassRef=Rdar8595462_A:93:8
+// CHECK: Punctuation: "*" [99:17 - 99:18] VarDecl=localVar:99:19 (Definition)
+// CHECK: Identifier: "localVar" [99:19 - 99:27] VarDecl=localVar:99:19 (Definition)
+// CHECK: Punctuation: "=" [99:28 - 99:29] VarDecl=localVar:99:19 (Definition)
+// CHECK: Literal: "0" [99:30 - 99:31] UnexposedExpr=
+// CHECK: Punctuation: ";" [99:31 - 99:32] UnexposedStmt=
+// CHECK: Keyword: "return" [100:3 - 100:9] UnexposedStmt=
+// CHECK: Identifier: "localVar" [100:10 - 100:18] DeclRefExpr=localVar:99:19
+// CHECK: Punctuation: ";" [100:18 - 100:19] UnexposedStmt=
+// CHECK: Punctuation: "}" [101:1 - 101:2] UnexposedStmt=
+// CHECK: Keyword: "static" [102:1 - 102:7] ObjCImplementationDecl=Rdar8595462_B:97:1 (Definition)
+// CHECK: Identifier: "Rdar8595462_A" [102:8 - 102:21] ObjCClassRef=Rdar8595462_A:93:8
+// CHECK: Punctuation: "*" [102:22 - 102:23] VarDecl=Rdar8595462_staticVar:102:24
+// CHECK: Identifier: "Rdar8595462_staticVar" [102:24 - 102:45] VarDecl=Rdar8595462_staticVar:102:24
+// CHECK: Punctuation: ";" [102:45 - 102:46] ObjCImplementationDecl=Rdar8595462_B:97:1 (Definition)
+// CHECK: Punctuation: "@" [103:1 - 103:2] ObjCImplementationDecl=Rdar8595462_B:97:1 (Definition)
+// CHECK: Keyword: "end" [103:2 - 103:5]
+
