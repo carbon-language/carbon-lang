@@ -224,7 +224,7 @@ private:
     nub_size_t              RemoveTrapsFromBuffer (nub_addr_t addr, nub_size_t size, uint8_t *buf) const;
 
     uint32_t                Flags () const { return m_flags; }
-    nub_state_t             DoSIGSTOP (bool clear_bps_and_wps);
+    nub_state_t             DoSIGSTOP (bool clear_bps_and_wps, uint32_t *thread_idx_ptr = NULL);
 
     pid_t                       m_pid;                      // Process ID of child process
     int                         m_child_stdin;

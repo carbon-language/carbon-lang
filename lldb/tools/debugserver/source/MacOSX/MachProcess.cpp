@@ -359,7 +359,7 @@ MachProcess::Signal (int signal, const struct timespec *timeout_abstime)
 }
 
 nub_state_t
-MachProcess::DoSIGSTOP (bool clear_bps_and_wps)
+MachProcess::DoSIGSTOP (bool clear_bps_and_wps, uint32_t *thread_idx_ptr)
 {
     nub_state_t state = GetState();
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::DoSIGSTOP() state = %s", DNBStateAsString (state));
@@ -375,7 +375,10 @@ MachProcess::DoSIGSTOP (bool clear_bps_and_wps)
 
         // If we already have a thread stopped due to a SIGSTOP, we don't have
         // to do anything...
-        if (m_thread_list.GetThreadIndexForThreadStoppedWithSignal (SIGSTOP) != UINT32_MAX)
+        uint32_t thread_idx = m_thread_list.GetThreadIndexForThreadStoppedWithSignal (SIGSTOP);
+        if (thread_idx_ptr)
+            *thread_idx_ptr = thread_idx;
+        if (thread_idx != UINT32_MAX)
             return GetState();
 
         // No threads were stopped with a SIGSTOP, we need to run and halt the
@@ -401,6 +404,9 @@ MachProcess::DoSIGSTOP (bool clear_bps_and_wps)
         DisableAllWatchpoints (true);
         clear_bps_and_wps = false;
     }
+    uint32_t thread_idx = m_thread_list.GetThreadIndexForThreadStoppedWithSignal (SIGSTOP);
+    if (thread_idx_ptr)
+        *thread_idx_ptr = thread_idx;
     return GetState();
 }
 
@@ -409,11 +415,22 @@ MachProcess::Detach()
 {
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Detach()");
 
-    nub_state_t state = DoSIGSTOP(true);
+    uint32_t thread_idx = UINT32_MAX;
+    nub_state_t state = DoSIGSTOP(true, &thread_idx);
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Detach() DoSIGSTOP() returned %s", DNBStateAsString(state));
 
     {
-        DNBThreadResumeActions thread_actions (eStateRunning, 0);
+        DNBThreadResumeActions thread_actions;
+        DNBThreadResumeAction thread_action;
+        thread_action.tid = m_thread_list.ThreadIDAtIndex (thread_idx);
+        thread_action.state = eStateRunning;
+        thread_action.signal = -1;
+        thread_action.addr = INVALID_NUB_ADDRESS;
+        
+        thread_actions.Append (thread_action);
+        
+        thread_actions.SetDefaultThreadActionIfNeeded (eStateRunning, 0);
+        
         PTHREAD_MUTEX_LOCKER (locker, m_exception_messages_mutex);
 
         ReplyToAllExceptions (thread_actions);
@@ -425,9 +442,9 @@ MachProcess::Detach()
     // Detach from our process
     errno = 0;
     nub_process_t pid = m_pid;
-    ::ptrace (PT_DETACH, pid, (caddr_t)1, 0);
+    int ret = ::ptrace (PT_DETACH, pid, (caddr_t)1, 0);
     DNBError err(errno, DNBError::POSIX);
-    if (DNBLogCheckLogBit(LOG_PROCESS) || err.Fail())
+    if (DNBLogCheckLogBit(LOG_PROCESS) || err.Fail() || (ret != 0))
         err.LogThreaded("::ptrace (PT_DETACH, %u, (caddr_t)1, 0)", pid);
 
     // Resume our task
@@ -1546,7 +1563,7 @@ MachProcess::LaunchForDebug
 
             SetState (eStateAttaching);
             errno = 0;
-            int err = ptrace (PT_ATTACHEXC, m_pid, 0, 0);
+            int err = ::ptrace (PT_ATTACHEXC, m_pid, 0, 0);
             if (err == 0)
             {
                 m_flags |= eMachProcessFlagsAttached;
@@ -1802,7 +1819,7 @@ MachProcess::SBLaunchForDebug (const char *path, char const *argv[], char const 
 
         StartSTDIOThread();
         SetState (eStateAttaching);
-        int err = ptrace (PT_ATTACHEXC, m_pid, 0, 0);
+        int err = ::ptrace (PT_ATTACHEXC, m_pid, 0, 0);
         if (err == 0)
         {
             m_flags |= eMachProcessFlagsAttached;

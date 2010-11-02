@@ -836,6 +836,7 @@ public:
             return false;
         }
 
+        result.AppendMessageWithFormat ("Detaching from process %i\n", process->GetID());
         Error error (process->Detach());
         if (error.Success())
         {
