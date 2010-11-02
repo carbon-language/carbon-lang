@@ -682,7 +682,7 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Base,
   }
 
   // Try to get this in a register if nothing else has worked.
-  if (Base == 0) Base  = getRegForValue(Obj);
+  if (Base == 0) Base = getRegForValue(Obj);
   return Base != 0;
 }
 
