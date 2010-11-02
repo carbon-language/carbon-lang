@@ -101,3 +101,25 @@ void test_f4(D d, E e, F f, G g) {
   C<int, 1> *ci3c = f4c(&g);
   int       *ip1 = f4c(&f);
 }
+
+// PR8462
+namespace N {
+  struct T0;
+  struct T1;
+
+  template<typename X, typename Y> struct B {};
+
+  struct J : B<T0,T0> {};
+  struct K : B<T1,T1> {};
+
+  struct D : J, K {};
+
+  template<typename X, typename Y> void F(B<Y,X>);
+
+  void test()
+  {
+    D d; 
+    N::F<T0>(d); // Fails
+    N::F<T1>(d); // OK
+  }
+}

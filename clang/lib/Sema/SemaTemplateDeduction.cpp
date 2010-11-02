@@ -721,6 +721,8 @@ DeduceTemplateArguments(Sema &S,
           llvm::SmallVector<const RecordType *, 8> ToVisit;
           ToVisit.push_back(RecordT);
           bool Successful = false;
+          llvm::SmallVectorImpl<DeducedTemplateArgument> DeducedOrig(0);
+          DeducedOrig = Deduced;
           while (!ToVisit.empty()) {
             // Retrieve the next class in the inheritance hierarchy.
             const RecordType *NextT = ToVisit.back();
@@ -738,9 +740,14 @@ DeduceTemplateArguments(Sema &S,
                                           QualType(NextT, 0), Info, Deduced);
 
               // If template argument deduction for this base was successful,
-              // note that we had some success.
-              if (BaseResult == Sema::TDK_Success)
+              // note that we had some success. Otherwise, ignore any deductions
+              // from this base class.
+              if (BaseResult == Sema::TDK_Success) {
                 Successful = true;
+                DeducedOrig = Deduced;
+              }
+              else
+                Deduced = DeducedOrig;
             }
 
             // Visit base classes
