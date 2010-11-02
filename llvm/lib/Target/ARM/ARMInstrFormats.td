@@ -1782,6 +1782,14 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
   let Inst{3-0}   = Rm{3-0};
 }
 
+class NLdStLn<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
+            dag oops, dag iops, InstrItinClass itin,
+            string opc, string dt, string asm, string cstr, list<dag> pattern>
+  : NLdSt<op23, op21_20, op11_8, op7_4, oops, iops, itin, opc,
+          dt, asm, cstr, pattern> {
+  bits<3> lane;
+}
+
 class PseudoNLdSt<dag oops, dag iops, InstrItinClass itin, string cstr>
   : InstARM<AddrMode6, Size4Bytes, IndexModeNone, Pseudo, NeonDomain, cstr,
             itin> {
