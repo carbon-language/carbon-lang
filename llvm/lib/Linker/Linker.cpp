@@ -97,13 +97,13 @@ std::auto_ptr<Module>
 Linker::LoadObject(const sys::Path &FN) {
   std::string ParseErrorMessage;
   Module *Result = 0;
-  
+
   std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(FN.c_str()));
   if (Buffer.get())
     Result = ParseBitcodeFile(Buffer.get(), Context, &ParseErrorMessage);
   else
     ParseErrorMessage = "Error reading file '" + FN.str() + "'";
-    
+
   if (Result)
     return std::auto_ptr<Module>(Result);
   Error = "Bitcode file '" + FN.str() + "' could not be loaded";

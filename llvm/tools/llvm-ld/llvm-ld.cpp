@@ -98,7 +98,7 @@ static cl::list<std::string> PostLinkOpts("post-link-opts",
 static cl::list<std::string> XLinker("Xlinker", cl::value_desc("option"),
   cl::desc("Pass options to the system linker"));
 
-// Compatibility options that llvm-ld ignores but are supported for 
+// Compatibility options that llvm-ld ignores but are supported for
 // compatibility with LD
 static cl::opt<std::string> CO3("soname", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
@@ -112,13 +112,13 @@ static cl::opt<bool> CO5("eh-frame-hdr", cl::Hidden,
 static  cl::opt<std::string> CO6("h", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
-static cl::opt<bool> CO7("start-group", cl::Hidden, 
+static cl::opt<bool> CO7("start-group", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
-static cl::opt<bool> CO8("end-group", cl::Hidden, 
+static cl::opt<bool> CO8("end-group", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
-static cl::opt<std::string> CO9("m", cl::Hidden, 
+static cl::opt<std::string> CO9("m", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
 /// This is just for convenience so it doesn't have to be passed around
@@ -142,7 +142,7 @@ static void PrintAndExit(const std::string &Message, Module *M, int errcode = 1)
 }
 
 static void PrintCommand(const std::vector<const char*> &args) {
-  std::vector<const char*>::const_iterator I = args.begin(), E = args.end(); 
+  std::vector<const char*>::const_iterator I = args.begin(), E = args.end();
   for (; I != E; ++I)
     if (*I)
       errs() << "'" << *I << "'" << " ";
@@ -384,7 +384,7 @@ static int GenerateNative(const std::string &OutputFilename,
     args.push_back("-framework");
     args.push_back(Frameworks[index]);
   }
-      
+
   // Now that "args" owns all the std::strings for the arguments, call the c_str
   // method to get the underlying string array.  We do this game so that the
   // std::string array is guaranteed to outlive the const char* array.
@@ -414,7 +414,7 @@ static void EmitShellScript(char **argv, Module *M) {
   // Windows doesn't support #!/bin/sh style shell scripts in .exe files.  To
   // support windows systems, we copy the llvm-stub.exe executable from the
   // build tree to the destination file.
-  std::string ErrMsg;  
+  std::string ErrMsg;
   sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0],
                                       (void *)(intptr_t)&Optimize);
   if (llvmstub.isEmpty())
@@ -513,7 +513,7 @@ int main(int argc, char **argv, char **envp) {
 
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-  
+
   // Initialize passes
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
   initializeCore(Registry);
@@ -524,7 +524,7 @@ int main(int argc, char **argv, char **envp) {
   initializeTransformUtils(Registry);
   initializeInstCombine(Registry);
   initializeTarget(Registry);
-  
+
   // Initial global variable above for convenience printing of program name.
   progname = sys::Path(argv[0]).getBasename();
 
@@ -705,7 +705,7 @@ int main(int argc, char **argv, char **envp) {
       if (GenerateCFile(CFile.str(), BitcodeOutputFilename, llc, ErrMsg))
         PrintAndExit(ErrMsg, Composite.get());
 
-      if (GenerateNative(OutputFilename, CFile.str(), 
+      if (GenerateNative(OutputFilename, CFile.str(),
                          NativeLinkItems, gcc, envp, ErrMsg))
         PrintAndExit(ErrMsg, Composite.get());
     } else {
