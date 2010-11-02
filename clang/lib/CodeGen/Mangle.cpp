@@ -1324,7 +1324,9 @@ void CXXNameMangler::mangleType(const ConstantArrayType *T) {
 }
 void CXXNameMangler::mangleType(const VariableArrayType *T) {
   Out << 'A';
-  mangleExpression(T->getSizeExpr());
+  // decayed vla types (size 0) will just be skipped.
+  if (T->getSizeExpr())
+    mangleExpression(T->getSizeExpr());
   Out << '_';
   mangleType(T->getElementType());
 }
