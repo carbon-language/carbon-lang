@@ -1125,13 +1125,23 @@ class VSTQQQQLNWBPseudo<InstrItinClass itin>
 
 //   VST1LN   : Vector Store (single element from one lane)
 class VST1LN<bits<4> op11_8, bits<4> op7_4, string Dt>
-  : NLdSt<1, 0b00, op11_8, op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src, nohash_imm:$lane),
-          IIC_VST1ln, "vst1", Dt, "\\{$src[$lane]\\}, $addr", "", []>;
+  : NLdStLn<1, 0b00, op11_8, op7_4, (outs),
+          (ins addrmode6:$Rn, DPR:$Vd, nohash_imm:$lane),
+          IIC_VST1ln, "vst1", Dt, "\\{$Vd[$lane]\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+}
 
-def VST1LNd8  : VST1LN<0b0000, {?,?,?,0}, "8">;
-def VST1LNd16 : VST1LN<0b0100, {?,?,0,?}, "16">;
-def VST1LNd32 : VST1LN<0b1000, {?,0,?,?}, "32">;
+def VST1LNd8  : VST1LN<0b0000, {?,?,?,0}, "8"> {
+  let Inst{7-5} = lane{2-0};
+}
+def VST1LNd16 : VST1LN<0b0100, {?,?,0,?}, "16"> {
+  let Inst{7-6} = lane{1-0};
+  let Inst{4}   = Rn{5};
+}
+def VST1LNd32 : VST1LN<0b1000, {?,0,?,?}, "32"> {
+  let Inst{7}   = lane{0};
+  let Inst{5-4} = Rn{5-4};
+}
 
 def VST1LNq8Pseudo  : VSTQLNPseudo<IIC_VST1ln>;
 def VST1LNq16Pseudo : VSTQLNPseudo<IIC_VST1ln>;
@@ -1141,15 +1151,23 @@ let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 
 // ...with address register writeback:
 class VST1LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
-  : NLdSt<1, 0b00, op11_8, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset,
-           DPR:$src, nohash_imm:$lane), IIC_VST1lnu, "vst1", Dt,
-          "\\{$src[$lane]\\}, $addr$offset",
-          "$addr.addr = $wb", []>;
+  : NLdStLn<1, 0b00, op11_8, op7_4, (outs GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm,
+           DPR:$Vd, nohash_imm:$lane), IIC_VST1lnu, "vst1", Dt,
+          "\\{$Vd[$lane]\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []>;
 
-def VST1LNd8_UPD  : VST1LNWB<0b0000, {?,?,?,0}, "8">;
-def VST1LNd16_UPD : VST1LNWB<0b0100, {?,?,0,?}, "16">;
-def VST1LNd32_UPD : VST1LNWB<0b1000, {?,0,?,?}, "32">;
+def VST1LNd8_UPD  : VST1LNWB<0b0000, {?,?,?,0}, "8"> {
+  let Inst{7-5} = lane{2-0};
+}
+def VST1LNd16_UPD : VST1LNWB<0b0100, {?,?,0,?}, "16"> {
+  let Inst{7-6} = lane{1-0};
+  let Inst{4}   = Rn{5};
+}
+def VST1LNd32_UPD : VST1LNWB<0b1000, {?,0,?,?}, "32"> {
+  let Inst{7}   = lane{0};
+  let Inst{5-4} = Rn{5-4};
+}
 
 def VST1LNq8Pseudo_UPD  : VSTQLNWBPseudo<IIC_VST1lnu>;
 def VST1LNq16Pseudo_UPD : VSTQLNWBPseudo<IIC_VST1lnu>;
