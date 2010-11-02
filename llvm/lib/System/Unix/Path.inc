@@ -96,10 +96,12 @@ Path::operator=(StringRef that) {
 
 bool
 Path::isValid() const {
-  // Check some obvious things
-  if (path.empty())
-    return false;
-  return path.length() < MAXPATHLEN;
+  // Empty paths are considered invalid here.
+  // This code doesn't check MAXPATHLEN because there's no need. Nothing in
+  // LLVM manipulates Paths with fixed-sizes arrays, and if the OS can't
+  // handle names longer than some limit, it'll report this on demand using
+  // ENAMETOLONG.
+  return !path.empty();
 }
 
 bool
