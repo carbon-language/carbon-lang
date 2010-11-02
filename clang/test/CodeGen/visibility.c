@@ -19,6 +19,10 @@ int g_def = 0;
 extern int g_ext;
 static char g_deferred[] = "hello";
 
+// CHECK-DEFAULT: @test4 = hidden global i32 10
+// CHECK-PROTECTED: @test4 = hidden global i32 10
+// CHECK-HIDDEN: @test4 = hidden global i32 10
+
 // CHECK-DEFAULT: define i32 @f_def()
 // CHECK-DEFAULT: declare void @f_ext()
 // CHECK-DEFAULT: define internal void @f_deferred()
@@ -53,3 +57,13 @@ void  __attribute__((visibility("default"))) test1(struct Test1 *v) { }
 // CHECK-HIDDEN: define void @test2()
 void test2(void);
 void __attribute__((visibility("default"))) test2(void) {}
+
+// CHECK-DEFAULT: define hidden void @test3()
+// CHECK-PROTECTED: define hidden void @test3()
+// CHECK-HIDDEN: define hidden void @test3()
+extern void test3(void);
+__private_extern__ void test3(void) {}
+
+// Top of file.
+extern int test4;
+__private_extern__ int test4 = 10;

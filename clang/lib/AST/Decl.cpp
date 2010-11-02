@@ -278,11 +278,12 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
         LV.mergeVisibility(TypeLV.second);
     }
 
+    if (Var->getStorageClass() == SC_PrivateExtern)
+      LV.setVisibility(HiddenVisibility, true);
+
     if (!Context.getLangOptions().CPlusPlus &&
         (Var->getStorageClass() == SC_Extern ||
          Var->getStorageClass() == SC_PrivateExtern)) {
-      if (Var->getStorageClass() == SC_PrivateExtern)
-        LV.setVisibility(HiddenVisibility, true);
 
       // C99 6.2.2p4:
       //   For an identifier declared with the storage-class specifier
@@ -306,6 +307,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
     // type unless it has C linkage (see comment above about variables
     // for justification).  In practice, GCC doesn't do this, so it's
     // just too painful to make work.
+
+    if (Function->getStorageClass() == SC_PrivateExtern)
+      LV.setVisibility(HiddenVisibility, true);
 
     // C99 6.2.2p5:
     //   If the declaration of an identifier for a function has no
