@@ -263,11 +263,16 @@ struct MatchableInfo {
   /// InstrName - The target name for this instruction.
   std::string InstrName;
 
+  /// TheDef - This is the definition of the instruction or InstAlias that this
+  /// matchable came from.
   Record *const TheDef;
+  
+  /// OperandList - This is the operand list that came from the (ins) and (outs)
+  /// list of the alias or instruction.
   const CGIOperandList &OperandList;
 
   /// AsmString - The assembly string for this instruction (with variants
-  /// removed).
+  /// removed), e.g. "movsx $src, $dst".
   std::string AsmString;
 
   /// Mnemonic - This is the first token of the matched instruction, its
@@ -275,7 +280,9 @@ struct MatchableInfo {
   StringRef Mnemonic;
   
   /// AsmOperands - The textual operands that this instruction matches,
-  /// including literal tokens for the mnemonic, etc.
+  /// annotated with a class and where in the OperandList they were defined.
+  /// This directly corresponds to the tokenized AsmString after the mnemonic is
+  /// removed.
   SmallVector<Operand, 4> AsmOperands;
 
   /// Predicates - The required subtarget features to match this instruction.
