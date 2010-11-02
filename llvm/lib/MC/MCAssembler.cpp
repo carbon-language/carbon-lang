@@ -337,23 +337,8 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
     return Size;
   }
 
-  case MCFragment::FT_Org: {
-    const MCOrgFragment &OF = cast<MCOrgFragment>(F);
-
-    // FIXME: We should compute this sooner, we don't want to recurse here, and
-    // we would like to be more functional.
-    int64_t TargetLocation;
-    if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
-      report_fatal_error("expected assembly-time absolute expression");
-
-    // FIXME: We need a way to communicate this error.
-    int64_t Offset = TargetLocation - FragmentOffset;
-    if (Offset < 0 || Offset >= 0x40000000)
-      report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
-                         "' (at offset '" + Twine(FragmentOffset) + "')");
-
-    return Offset;
-  }
+  case MCFragment::FT_Org:
+    return cast<MCOrgFragment>(F).getSize();
 
   case MCFragment::FT_Dwarf: {
     const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
@@ -841,6 +826,25 @@ bool MCAssembler::RelaxInstruction(const MCObjectWriter &Writer,
   return true;
 }
 
+bool MCAssembler::RelaxOrg(const MCObjectWriter &Writer,
+                           MCAsmLayout &Layout,
+                           MCOrgFragment &OF) {
+  int64_t TargetLocation;
+  if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
+    report_fatal_error("expected assembly-time absolute expression");
+
+  // FIXME: We need a way to communicate this error.
+  uint64_t FragmentOffset = Layout.getFragmentOffset(&OF);
+  int64_t Offset = TargetLocation - FragmentOffset;
+  if (Offset < 0 || Offset >= 0x40000000)
+    report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
+                       "' (at offset '" + Twine(FragmentOffset) + "')");
+
+  unsigned OldSize = OF.getSize();
+  OF.setSize(Offset);
+  return OldSize != OF.getSize();
+}
+
 bool MCAssembler::RelaxLEB(const MCObjectWriter &Writer,
                            MCAsmLayout &Layout,
                            MCLEBFragment &LF) {
@@ -856,7 +860,6 @@ bool MCAssembler::RelaxLEB(const MCObjectWriter &Writer,
   LF.setSize(OSE.GetNumBytesInBuffer());
   return OldSize != LF.getSize();
 }
-
 
 bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
                              MCAsmLayout &Layout) {
@@ -879,6 +882,9 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
       case MCFragment::FT_Inst:
         WasRelaxed |= RelaxInstruction(Writer, Layout,
                                        *cast<MCInstFragment>(it2));
+        break;
+      case MCFragment::FT_Org:
+        WasRelaxed |= RelaxOrg(Writer, Layout, *cast<MCOrgFragment>(it2));
         break;
       case MCFragment::FT_LEB:
         WasRelaxed |= RelaxLEB(Writer, Layout, *cast<MCLEBFragment>(it2));

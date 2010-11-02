@@ -319,10 +319,13 @@ class MCOrgFragment : public MCFragment {
   /// Value - Value to use for filling bytes.
   int8_t Value;
 
+  /// Size - The current estimate of the size.
+  unsigned Size;
+
 public:
   MCOrgFragment(const MCExpr &_Offset, int8_t _Value, MCSectionData *SD = 0)
     : MCFragment(FT_Org, SD),
-      Offset(&_Offset), Value(_Value) {}
+      Offset(&_Offset), Value(_Value), Size(0) {}
 
   /// @name Accessors
   /// @{
@@ -331,6 +334,9 @@ public:
 
   uint8_t getValue() const { return Value; }
 
+  unsigned getSize() const { return Size; }
+
+  void setSize(unsigned Size_) { Size = Size_; }
   /// @}
 
   static bool classof(const MCFragment *F) {
@@ -714,6 +720,9 @@ private:
 
   bool RelaxInstruction(const MCObjectWriter &Writer, MCAsmLayout &Layout,
                         MCInstFragment &IF);
+
+  bool RelaxOrg(const MCObjectWriter &Writer, MCAsmLayout &Layout,
+                MCOrgFragment &OF);
 
   bool RelaxLEB(const MCObjectWriter &Writer, MCAsmLayout &Layout,
                 MCLEBFragment &IF);
