@@ -134,7 +134,6 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
     # rdar://problem/8482903
     # test suite failure for types dir -- "long long" and "unsigned long long"
 
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_long_long_type_with_dsym(self):
         """Test that 'long long'-type variables are displayed correctly."""
@@ -143,7 +142,6 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.long_long_type()
 
-    @unittest2.expectedFailure
     def test_long_long_type_with_dwarf(self):
         """Test that 'long long'-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'long_long.cpp'}
@@ -151,7 +149,6 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.long_long_type()
 
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_long_long_type_with_dsym(self):
         """Test that 'unsigned long long'-type variables are displayed correctly."""
@@ -160,7 +157,6 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
         self.setTearDownCleanup(dictionary=d)
         self.unsigned_long_long_type()
 
-    @unittest2.expectedFailure
     def test_unsigned_long_long_type_with_dwarf(self):
         """Test that 'unsigned long long'-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'unsigned_long_long.cpp'}
