@@ -143,7 +143,8 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
   // Linux and FreeBSD have it. Others probably won't.
   char pathname[] = "/tmp/llvm_XXXXXX";
   if (0 == mkdtemp(pathname)) {
-    MakeErrMsg(ErrMsg, pathname + ": can't create temporary directory");
+    MakeErrMsg(ErrMsg,
+               std::string(pathname) + ": can't create temporary directory");
     return Path();
   }
   Path result;
