@@ -672,8 +672,9 @@ class CXXBindTemporaryExpr : public Expr {
 
   Stmt *SubExpr;
 
-  CXXBindTemporaryExpr(CXXTemporary *temp, Expr* subexpr)
-   : Expr(CXXBindTemporaryExprClass, subexpr->getType(), false, false),
+  CXXBindTemporaryExpr(CXXTemporary *temp, Expr* subexpr, 
+                       bool TD=false, bool VD=false)
+   : Expr(CXXBindTemporaryExprClass, subexpr->getType(), TD, VD),
      Temp(temp), SubExpr(subexpr) { }
 
 public:

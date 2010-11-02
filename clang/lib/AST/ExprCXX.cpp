@@ -534,7 +534,9 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
   assert(SubExpr->getType()->isRecordType() &&
          "Expression bound to a temporary must have record type!");
 
-  return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
+  return new (C) CXXBindTemporaryExpr(Temp, SubExpr,
+                                      SubExpr->isTypeDependent(),
+                                      SubExpr->isValueDependent());
 }
 
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
