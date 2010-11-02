@@ -195,6 +195,9 @@ bool ARMFastISel::DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR) {
 
 // If the machine is predicable go ahead and add the predicate operands, if
 // it needs default CC operands add those.
+// TODO: If we want to support thumb1 then we'll need to deal with optional
+// CPSR defs that need to be added before the remaining operands. See s_cc_out
+// for descriptions why.
 const MachineInstrBuilder &
 ARMFastISel::AddOptionalDefs(const MachineInstrBuilder &MIB) {
   MachineInstr *MI = &*MIB;
@@ -1761,8 +1764,6 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
 
 // TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
-  // No Thumb-1 for now.
-  if (isThumb && !AFI->isThumb2Function()) return false;
 
   switch (I->getOpcode()) {
     case Instruction::Load:
@@ -1807,8 +1808,11 @@ namespace llvm {
   llvm::FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo) {
     // Completely untested on non-darwin.
     const TargetMachine &TM = funcInfo.MF->getTarget();
+    
+    // Darwin and thumb1 only for now.
     const ARMSubtarget *Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    if (Subtarget->isTargetDarwin() && !DisableARMFastISel)
+    if (Subtarget->isTargetDarwin() && !Subtarget->isThumb1Only() && 
+        !DisableARMFastISel)
       return new ARMFastISel(funcInfo);
     return 0;
   }
