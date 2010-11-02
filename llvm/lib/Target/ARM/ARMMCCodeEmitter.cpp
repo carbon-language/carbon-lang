@@ -305,7 +305,7 @@ unsigned ARMMCCodeEmitter::getAddrMode6RegisterOperand(const MCInst &MI,
   unsigned RegNo = getARMRegisterNumbering(Reg.getReg());
   unsigned Align = Imm.getImm();
   switch(Align) {
-    case 8:  Align = 0x01; break;
+    case 2: case 4: case 8:  Align = 0x01; break;
     case 16: Align = 0x02; break;
     case 32: Align = 0x03; break;
     default: Align = 0x00; break;
