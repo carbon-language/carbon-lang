@@ -9,13 +9,13 @@
 # CHECK:	vdup.32	q3, d1[0]
 0x41 0x6c 0xb4 0xf3
 
-# CHECK:	vld1.8	{d17, d18}, [r6][r5]
+# CHECK:	vld1.8	{d17, d18}, [r6], r5
 0x05 0x1a 0x66 0xf4
 
-# CHECK:        vld1.8  {d17, d18, d19}, [r6][r5]
+# CHECK:        vld1.8  {d17, d18, d19}, [r6], r5
 0x05 0x16 0x66 0xf4
 
-# CHECK:	vld4.8	{d0, d1, d2, d3}, [r2][r7]
+# CHECK:	vld4.8	{d0, d1, d2, d3}, [r2], r7
 0x07 0x00 0x22 0xf4
 
 # CHECK:	vld4.8	{d4, d6, d8, d10}, [r2]
