@@ -1176,27 +1176,21 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
         continue;
       }
       
+      // Otherwise, this must be a tied operand if not, it is something that is
+      // mentioned in the ins/outs list but not in the asm string.
+      int TiedOp = OpInfo.getTiedRegister();
+      if (TiedOp == -1)
+        throw TGError(II.TheDef->getLoc(), "Instruction '" +
+                      II.TheDef->getName() + "' has operand '" + OpInfo.Name +
+                      "' that doesn't appear in asm string!");
 
       // If this operand is tied to a previous one, just copy the MCInst operand
       // from the earlier one.
-      int TiedOp = OpInfo.getTiedRegister();
-      if (TiedOp != -1) {
-        // Copy the tied operand.  We can only tie single MCOperand values.
-        assert(OpInfo.MINumOperands == 1 && "Not a singular MCOperand");
-        assert(i > unsigned(TiedOp) && "Tied operand preceeds its target!");
-        CaseOS << "    Inst.addOperand(Inst.getOperand(" << TiedOp << "));\n";
-        Signature += "__Tie" + itostr(TiedOp);
-        continue;
-      }
-
-      // Otherwise this is some sort of dummy operand that is mentioned in the
-      // ins/outs list but not mentioned in the asmstring, brutalize a dummy
-      // value into the operand.
-      // FIXME: This is a terrible hack: If an MCInst operand doesn't occur in
-      // the asmstring, there is no way to parse something meaningful.
-      // Just assume it is a zero register for now.
-      CaseOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
-      Signature += "__Imp";
+      // Copy the tied operand.  We can only tie single MCOperand values.
+      assert(OpInfo.MINumOperands == 1 && "Not a singular MCOperand");
+      assert(i > unsigned(TiedOp) && "Tied operand preceeds its target!");
+      CaseOS << "    Inst.addOperand(Inst.getOperand(" << TiedOp << "));\n";
+      Signature += "__Tie" + itostr(TiedOp);
     }
     
     II.ConversionFnKind = Signature;

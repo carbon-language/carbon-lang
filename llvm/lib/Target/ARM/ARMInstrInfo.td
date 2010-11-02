@@ -1352,39 +1352,41 @@ let isBranch = 1, isTerminator = 1 in {
     def B : ABXI<0b1010, (outs), (ins brtarget:$target), IIC_Br,
                 "b\t$target", [(br bb:$target)]>;
 
-  let isNotDuplicable = 1, isIndirectBranch = 1 in {
-  def BR_JTr : JTI<(outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
-                    IIC_Br, "mov\tpc, $target$jt",
-                    [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
-    let Inst{11-4}  = 0b00000000;
-    let Inst{15-12} = 0b1111;
-    let Inst{20}    = 0; // S Bit
-    let Inst{24-21} = 0b1101;
-    let Inst{27-25} = 0b000;
-  }
-  def BR_JTm : JTI<(outs),
-                   (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
-                   IIC_Br, "ldr\tpc, $target$jt",
-                   [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
-                     imm:$id)]> {
-    let Inst{15-12} = 0b1111;
-    let Inst{20}    = 1; // L bit
-    let Inst{21}    = 0; // W bit
-    let Inst{22}    = 0; // B bit
-    let Inst{24}    = 1; // P bit
-    let Inst{27-25} = 0b011;
-  }
-  def BR_JTadd : JTI<(outs),
-                   (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
-                    IIC_Br, "add\tpc, $target, $idx$jt",
-                    [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
-                      imm:$id)]> {
-    let Inst{15-12} = 0b1111;
-    let Inst{20}    = 0; // S bit
-    let Inst{24-21} = 0b0100;
-    let Inst{27-25} = 0b000;
-  }
-  } // isNotDuplicable = 1, isIndirectBranch = 1
+    let isNotDuplicable = 1, isIndirectBranch = 1,
+        // FIXME: $imm field is not specified by asm string.  Mark as cgonly.
+        isCodeGenOnly = 1 in {
+    def BR_JTr : JTI<(outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
+                      IIC_Br, "mov\tpc, $target$jt",
+                      [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
+      let Inst{11-4}  = 0b00000000;
+      let Inst{15-12} = 0b1111;
+      let Inst{20}    = 0; // S Bit
+      let Inst{24-21} = 0b1101;
+      let Inst{27-25} = 0b000;
+    }
+    def BR_JTm : JTI<(outs),
+                     (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
+                     IIC_Br, "ldr\tpc, $target$jt",
+                     [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
+                       imm:$id)]> {
+      let Inst{15-12} = 0b1111;
+      let Inst{20}    = 1; // L bit
+      let Inst{21}    = 0; // W bit
+      let Inst{22}    = 0; // B bit
+      let Inst{24}    = 1; // P bit
+      let Inst{27-25} = 0b011;
+    }
+    def BR_JTadd : JTI<(outs),
+                     (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
+                      IIC_Br, "add\tpc, $target, $idx$jt",
+                      [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
+                        imm:$id)]> {
+      let Inst{15-12} = 0b1111;
+      let Inst{20}    = 0; // S bit
+      let Inst{24-21} = 0b0100;
+      let Inst{27-25} = 0b000;
+    }
+    } // isNotDuplicable = 1, isIndirectBranch = 1
   } // isBarrier = 1
 
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
@@ -1494,7 +1496,8 @@ def LDRSB : AI3ldsb<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                    IIC_iLoad_bh_r, "ldrsb", "\t$dst, $addr",
                    [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
+    isCodeGenOnly = 1 in { // $dst2 doesn't exist in asmstring?
 // Load doubleword
 def LDRD : AI3ldd<(outs GPR:$dst1, GPR:$dst2), (ins addrmode3:$addr), LdMiscFrm,
                  IIC_iLoad_d_r, "ldrd", "\t$dst1, $addr",
@@ -1595,7 +1598,8 @@ def STRH : AI3sth<(outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
                [(truncstorei16 GPR:$src, addrmode3:$addr)]>;
 
 // Store doubleword
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
+    isCodeGenOnly = 1 in  // $src2 doesn't exist in asm string
 def STRD : AI3std<(outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),
                StMiscFrm, IIC_iStore_d_r,
                "strd", "\t$src1, $addr", []>, Requires<[IsARM, HasV5TE]>;

@@ -931,7 +931,8 @@ defm t2LDRSH : T2I_ld<1, 0b01, "ldrsh", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
 defm t2LDRSB : T2I_ld<1, 0b00, "ldrsb", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
                       UnOpFrag<(sextloadi8  node:$Src)>>;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
+    isCodeGenOnly = 1 in { // $dst doesn't exist in asmstring?
 // Load doubleword
 def t2LDRDi8  : T2Ii8s4<1, 0, 1, (outs rGPR:$dst1, rGPR:$dst2),
                         (ins t2addrmode_imm8s4:$addr),
@@ -1078,7 +1079,8 @@ defm t2STRH:T2I_st<0b01,"strh", IIC_iStore_bh_i, IIC_iStore_bh_si,
                    BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 // Store doubleword
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
+    isCodeGenOnly = 1 in  // $src2 doesn't exist in asm string
 def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
                        (ins GPR:$src1, GPR:$src2, t2addrmode_imm8s4:$addr),
                IIC_iStore_d_r, "strd", "\t$src1, $addr", []>;
@@ -1195,6 +1197,7 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{11-8} = 0b1100;
   }
 
+  let isCodeGenOnly = 1 in   // $base doesn't exist in asmstring?
   def pci : T2I<(outs), (ins GPR:$base, neg_zero:$imm), IIC_iLoad_i, opc,
                 "\t[pc, $imm]", []> {
     let Inst{31-25} = 0b1111100;
@@ -2457,7 +2460,8 @@ def t2B   : T2XI<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{12} = 1;
 }
 
-let isNotDuplicable = 1, isIndirectBranch = 1 in {
+let isNotDuplicable = 1, isIndirectBranch = 1,
+    isCodeGenOnly = 1 in { // $id doesn't exist in asmstring, should be lowered.
 def t2BR_JT :
     T2JTI<(outs),
           (ins GPR:$target, GPR:$index, jt2block_operand:$jt, i32imm:$id),
@@ -2472,6 +2476,7 @@ def t2BR_JT :
 }
 
 // FIXME: Add a non-pc based case that can be predicated.
+let isCodeGenOnly = 1 in  // $id doesn't exist in asm string, should be lowered.
 def t2TBB :
     T2JTI<(outs),
         (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
@@ -2483,6 +2488,7 @@ def t2TBB :
   let Inst{7-4} = 0b0000; // B form
 }
 
+let isCodeGenOnly = 1 in  // $id doesn't exist in asm string, should be lowered.
 def t2TBH :
     T2JTI<(outs),
         (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
