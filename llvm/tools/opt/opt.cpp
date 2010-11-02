@@ -355,9 +355,9 @@ void AddOptimizationPasses(PassManagerBase &MPM, PassManagerBase &FPM,
   if (DisableInline) {
     // No inlining pass
   } else if (OptLevel) {
-    unsigned Threshold = 200;
+    unsigned Threshold = 225;
     if (OptLevel > 2)
-      Threshold = 250;
+      Threshold = 275;
     InliningPass = createFunctionInliningPass(Threshold);
   } else {
     InliningPass = createAlwaysInlinerPass();
