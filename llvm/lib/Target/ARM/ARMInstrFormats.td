@@ -1771,6 +1771,15 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
   let Inst{21-20} = op21_20;
   let Inst{11-8}  = op11_8;
   let Inst{7-4}   = op7_4;
+  
+  bits<5> Vd;
+  bits<6> Rn;
+  bits<4> Rm;
+  
+  let Inst{22}    = Vd{4};
+  let Inst{15-12} = Vd{3-0};
+  let Inst{19-16} = Rn{3-0};
+  let Inst{3-0}   = Rm{3-0};
 }
 
 class PseudoNLdSt<dag oops, dag iops, InstrItinClass itin, string cstr>

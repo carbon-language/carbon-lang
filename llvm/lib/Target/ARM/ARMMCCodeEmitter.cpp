@@ -99,7 +99,7 @@ public:
   unsigned getBitfieldInvertedMaskOpValue(const MCInst &MI, unsigned Op) const;
 
   unsigned getRegisterListOpValue(const MCInst &MI, unsigned Op) const;
-
+  unsigned getAddrMode6RegisterOperand(const MCInst &MI, unsigned Op) const;
 
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
@@ -294,6 +294,22 @@ unsigned ARMMCCodeEmitter::getRegisterListOpValue(const MCInst &MI,
     Binary |= 1 << regno;
   }
   return Binary;
+}
+
+unsigned ARMMCCodeEmitter::getAddrMode6RegisterOperand(const MCInst &MI,
+                                                      unsigned Op) const {
+  const MCOperand &Reg = MI.getOperand(Op);
+  const MCOperand &Imm = MI.getOperand(Op+1);
+  
+  unsigned RegNo = getARMRegisterNumbering(Reg.getReg());
+  unsigned Align = Imm.getImm();
+  switch(Align) {
+    case 8:  Align = 0x01; break;
+    case 16: Align = 0x02; break;
+    case 32: Align = 0x03; break;
+    default: Align = 0x00;
+  }
+  return RegNo | (Align << 4);
 }
 
 void ARMMCCodeEmitter::

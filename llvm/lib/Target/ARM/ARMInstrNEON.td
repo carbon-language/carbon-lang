@@ -164,23 +164,29 @@ class VLDQQQQWBPseudo<InstrItinClass itin>
 
 //   VLD1     : Vector Load (multiple single elements)
 class VLD1D<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$dst),
-          (ins addrmode6:$addr), IIC_VLD1,
-          "vld1", Dt, "\\{$dst\\}, $addr", "", []>;
+  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$Vd),
+          (ins addrmode6:$Rn), IIC_VLD1,
+          "vld1", Dt, "\\{$Vd\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{4} = Rn{4};
+}
 class VLD1Q<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b1010,op7_4, (outs DPR:$dst1, DPR:$dst2),
-          (ins addrmode6:$addr), IIC_VLD1x2,
-          "vld1", Dt, "\\{$dst1, $dst2\\}, $addr", "", []>;
+  : NLdSt<0,0b10,0b1010,op7_4, (outs DPR:$Vd, DPR:$dst2),
+          (ins addrmode6:$Rn), IIC_VLD1x2,
+          "vld1", Dt, "\\{$Vd, $dst2\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{5-4} = Rn{5-4};
+}
 
-def  VLD1d8   : VLD1D<0b0000, "8">;
-def  VLD1d16  : VLD1D<0b0100, "16">;
-def  VLD1d32  : VLD1D<0b1000, "32">;
-def  VLD1d64  : VLD1D<0b1100, "64">;
+def  VLD1d8   : VLD1D<{0,0,0,?}, "8">;
+def  VLD1d16  : VLD1D<{0,1,0,?}, "16">;
+def  VLD1d32  : VLD1D<{1,0,0,?}, "32">;
+def  VLD1d64  : VLD1D<{1,1,0,?}, "64">;
 
-def  VLD1q8   : VLD1Q<0b0000, "8">;
-def  VLD1q16  : VLD1Q<0b0100, "16">;
-def  VLD1q32  : VLD1Q<0b1000, "32">;
-def  VLD1q64  : VLD1Q<0b1100, "64">;
+def  VLD1q8   : VLD1Q<{0,0,?,?}, "8">;
+def  VLD1q16  : VLD1Q<{0,1,?,?}, "16">;
+def  VLD1q32  : VLD1Q<{1,0,?,?}, "32">;
+def  VLD1q64  : VLD1Q<{1,1,?,?}, "64">;
 
 def  VLD1q8Pseudo  : VLDQPseudo<IIC_VLD1x2>;
 def  VLD1q16Pseudo : VLDQPseudo<IIC_VLD1x2>;

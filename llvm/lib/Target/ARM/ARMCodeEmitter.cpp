@@ -101,7 +101,8 @@ namespace {
                                     unsigned OpIdx);
 
     unsigned getMachineSoImmOpValue(unsigned SoImm);
-
+    unsigned getAddrMode6RegisterOperand(const MachineInstr &MI);
+    
     unsigned getAddrModeSBit(const MachineInstr &MI,
                              const TargetInstrDesc &TID) const;
 
@@ -171,6 +172,8 @@ namespace {
     unsigned getRotImmOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getImmMinusOneOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
+    unsigned getAddrMode6RegisterOperand(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getBitfieldInvertedMaskOpValue(const MachineInstr &MI,
                                             unsigned Op) const { return 0; }
