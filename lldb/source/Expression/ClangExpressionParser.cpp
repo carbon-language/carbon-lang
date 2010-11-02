@@ -471,9 +471,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
     m_jit_mm = new RecordingMemoryManager();
     
     std::string error_string;
-    
-    llvm::Reloc::Model relocation_model = llvm::TargetMachine::getRelocationModel();
-    
+        
     llvm::TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
     
     m_execution_engine.reset(llvm::ExecutionEngine::createJIT (module, 
@@ -482,9 +480,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
                                                                CodeGenOpt::Less,
                                                                true,
                                                                CodeModel::Small));
-    
-    llvm::TargetMachine::setRelocationModel(relocation_model);
-    
+        
     if (!m_execution_engine.get())
     {
         err.SetErrorToGenericError();
