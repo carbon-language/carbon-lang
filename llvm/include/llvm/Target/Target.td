@@ -267,9 +267,9 @@ class Requires<list<Predicate> preds> {
   list<Predicate> Predicates = preds;
 }
 
-/// ops definition - This is just a simple marker used to identify the operands
-/// list for an instruction. outs and ins are identical both syntatically and
-/// semantically, they are used to define def operands and use operands to
+/// ops definition - This is just a simple marker used to identify the operand
+/// list for an instruction. outs and ins are identical both syntactically and
+/// semanticallyr; they are used to define def operands and use operands to
 /// improve readibility. This should be used like this:
 ///     (outs R32:$dst), (ins R32:$src1, R32:$src2) or something similar.
 def ops;
