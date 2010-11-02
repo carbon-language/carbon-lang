@@ -811,7 +811,15 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
   bool needReg0Op = false;
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
-    case MVT::i1:
+    case MVT::i1: {
+      unsigned Res = createResultReg(isThumb ? ARM::tGPRRegisterClass :
+                                               ARM::GPRRegisterClass);
+      unsigned Opc = isThumb ? ARM::t2ANDri : ARM::ANDri;
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(Opc), Res)
+                      .addReg(SrcReg).addImm(1));
+      SrcReg = Res;
+    } // Fallthrough here.
     case MVT::i8:
       StrOpc = isThumb ? ARM::t2STRBi12 : ARM::STRBi12;
       break;
@@ -840,7 +848,6 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg,
   // offset by 4 that it then later multiplies. Do this here as well.
   if (isFloat)
     Offset /= 4;
-
 
   // FIXME: The 'needReg0Op' bit goes away once STRH is converted to
   // not use the mega-addrmode stuff.
