@@ -352,18 +352,18 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
   if (_NSGetExecutablePath(exe_path, &size) == 0) {
     char link_path[MAXPATHLEN];
     if (realpath(exe_path, link_path))
-      return Path(std::string(link_path));
+      return Path(link_path);
   }
 #elif defined(__FreeBSD__) || defined (__NetBSD__) || defined(__minix)
   char exe_path[PATH_MAX];
 
   if (getprogpath(exe_path, argv0) != NULL)
-    return Path(std::string(exe_path));
+    return Path(exe_path);
 #elif defined(__linux__) || defined(__CYGWIN__)
   char exe_path[MAXPATHLEN];
   ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path));
   if (len >= 0)
-    return Path(std::string(exe_path, len));
+    return Path(StringRef(exe_path, len));
 #elif defined(HAVE_DLFCN_H)
   // Use dladdr to get executable path if available.
   Dl_info DLInfo;
@@ -375,7 +375,7 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
   // the actual executable.
   char link_path[MAXPATHLEN];
   if (realpath(DLInfo.dli_fname, link_path))
-    return Path(std::string(link_path));
+    return Path(link_path);
 #else
 #error GetMainExecutable is not implemented on this host yet.
 #endif
