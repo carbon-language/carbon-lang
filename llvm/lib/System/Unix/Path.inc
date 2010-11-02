@@ -141,8 +141,7 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
 #if defined(HAVE_MKDTEMP)
   // The best way is with mkdtemp but that's not available on many systems,
   // Linux and FreeBSD have it. Others probably won't.
-  char pathname[MAXPATHLEN];
-  strcpy(pathname,"/tmp/llvm_XXXXXX");
+  char pathname[] = "/tmp/llvm_XXXXXX";
   if (0 == mkdtemp(pathname)) {
     MakeErrMsg(ErrMsg,
       std::string(pathname) + ": can't create temporary directory");
@@ -158,8 +157,7 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
   // mktemp because of mktemp's inherent security and threading risks. We still
   // have a slight race condition from the time the temporary file is created to
   // the time it is re-created as a directoy.
-  char pathname[MAXPATHLEN];
-  strcpy(pathname, "/tmp/llvm_XXXXXX");
+  char pathname[] = "/tmp/llvm_XXXXXX";
   int fd = 0;
   if (-1 == (fd = mkstemp(pathname))) {
     MakeErrMsg(ErrMsg,
@@ -183,8 +181,7 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
   // implementation of mktemp(3) and doesn't follow BSD 4.3's lead of replacing
   // the XXXXXX with the pid of the process and a letter. That leads to only
   // twenty six temporary files that can be generated.
-  char pathname[MAXPATHLEN];
-  strcpy(pathname, "/tmp/llvm_XXXXXX");
+  char pathname[] = "/tmp/llvm_XXXXXX";
   char *TmpName = ::mktemp(pathname);
   if (TmpName == 0) {
     MakeErrMsg(ErrMsg,
