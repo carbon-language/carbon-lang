@@ -1040,13 +1040,12 @@ void AsmMatcherInfo::BuildInfo() {
       // grovel for. Only worry about this for single entry operands, we have to
       // clean this up anyway.
       const CGIOperandList::OperandInfo *OI = &II->OperandList[Idx];
-      if (OI->Constraints[0].isTied()) {
-        unsigned TiedOp = OI->Constraints[0].getTiedOperand();
-
+      int OITied = OI->getTiedRegister();
+      if (OITied != -1) {
         // The tied operand index is an MIOperand index, find the operand that
         // contains it.
         for (unsigned i = 0, e = II->OperandList.size(); i != e; ++i) {
-          if (II->OperandList[i].MIOperandNo == TiedOp) {
+          if (II->OperandList[i].MIOperandNo == unsigned(OITied)) {
             OI = &II->OperandList[i];
             break;
           }
@@ -1062,16 +1061,6 @@ void AsmMatcherInfo::BuildInfo() {
 
   // Reorder classes so that classes preceed super classes.
   std::sort(Classes.begin(), Classes.end(), less_ptr<ClassInfo>());
-}
-
-static std::pair<unsigned, unsigned> *
-GetTiedOperandAtIndex(SmallVectorImpl<std::pair<unsigned, unsigned> > &List,
-                      unsigned Index) {
-  for (unsigned i = 0, e = List.size(); i != e; ++i)
-    if (Index == List[i].first)
-      return &List[i];
-
-  return 0;
 }
 
 static void EmitConvertToMCInst(CodeGenTarget &Target,
@@ -1103,111 +1092,88 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
   // TargetOperandClass - This is the target's operand class, like X86Operand.
   std::string TargetOperandClass = Target.getName() + "Operand";
 
+  /// OperandMap - This is a mapping from the MCInst operands (specified by the
+  /// II.OperandList operands) to the AsmOperands that they filled in from.
+  SmallVector<int, 16> OperandMap;
+  
   for (std::vector<MatchableInfo*>::const_iterator it = Infos.begin(),
          ie = Infos.end(); it != ie; ++it) {
     MatchableInfo &II = **it;
 
+    OperandMap.clear();
+    OperandMap.resize(II.OperandList.size(), -1);
+    
     // Order the (class) operands by the order to convert them into an MCInst.
-    SmallVector<std::pair<unsigned, unsigned>, 4> MIOperandList;
     for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
       MatchableInfo::Operand &Op = II.AsmOperands[i];
-      if (Op.OperandInfo)
-        MIOperandList.push_back(std::make_pair(Op.OperandInfo->MIOperandNo, i));
-    }
-
-    // Find any tied operands.
-    SmallVector<std::pair<unsigned, unsigned>, 4> TiedOperands;
-    for (unsigned i = 0, e = II.OperandList.size(); i != e; ++i) {
-      const CGIOperandList::OperandInfo &OpInfo = II.OperandList[i];
-      for (unsigned j = 0, e = OpInfo.Constraints.size(); j != e; ++j) {
-        const CGIOperandList::ConstraintInfo &CI = OpInfo.Constraints[j];
-        if (!CI.isTied()) continue;
-        TiedOperands.push_back(std::make_pair(OpInfo.MIOperandNo,
-                                              CI.getTiedOperand()));
-      }
-    }
-
-    array_pod_sort(MIOperandList.begin(), MIOperandList.end());
-
-    // Compute the total number of operands.
-    unsigned NumMIOperands = 0;
-    for (unsigned i = 0, e = II.OperandList.size(); i != e; ++i) {
-      const CGIOperandList::OperandInfo &OI = II.OperandList[i];
-      NumMIOperands = std::max(NumMIOperands, OI.MIOperandNo+OI.MINumOperands);
+      if (!Op.OperandInfo) continue;
+      
+      unsigned LogicalOpNum = Op.OperandInfo - &II.OperandList[0];
+      assert(LogicalOpNum < OperandMap.size() && "Invalid operand number");
+      OperandMap[LogicalOpNum] = i;
     }
 
     // Build the conversion function signature.
     std::string Signature = "Convert";
-    unsigned CurIndex = 0;
-    
     std::string CaseBody;
     raw_string_ostream CaseOS(CaseBody);
     
     // Compute the convert enum and the case body.
-    for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i) {
-      MatchableInfo::Operand &Op = II.AsmOperands[MIOperandList[i].second];
-      assert(CurIndex <= Op.OperandInfo->MIOperandNo &&
-             "Duplicate match for instruction operand!");
+    for (unsigned i = 0, e = II.OperandList.size(); i != e; ++i) {
+      const CGIOperandList::OperandInfo &OpInfo = II.OperandList[i];
 
-      // Add the implicit operands.
-      for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex) {
-        // See if this is a tied operand.
-        std::pair<unsigned, unsigned> *Tie = GetTiedOperandAtIndex(TiedOperands,
-                                                                   CurIndex);
+      // Find out what operand from the asmparser that this MCInst operand comes
+      // from.
+      int SrcOperand = OperandMap[i];
+      if (SrcOperand != -1) {
+        // Otherwise, this comes from something we parsed.
+        MatchableInfo::Operand &Op = II.AsmOperands[SrcOperand];
         
-        if (!Tie) {
-          // If not, this is some implicit operand. Just assume it is a register
-          // for now.
-          CaseOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
-          Signature += "__Imp";
-        } else {
-          // Copy the tied operand.
-          assert(Tie->first>Tie->second && "Tied operand preceeds its target!");
-          CaseOS << "    Inst.addOperand(Inst.getOperand("
-                 << Tie->second << "));\n";
-          Signature += "__Tie" + utostr(Tie->second);
-        }
+        // Registers are always converted the same, don't duplicate the
+        // conversion function based on them.
+        //
+        // FIXME: We could generalize this based on the render method, if it
+        // mattered.
+        Signature += "__";
+        if (Op.Class->isRegisterClass())
+          Signature += "Reg";
+        else
+          Signature += Op.Class->ClassName;
+        Signature += utostr(Op.OperandInfo->MINumOperands);
+        Signature += "_" + itostr(SrcOperand);
+        
+        CaseOS << "    ((" << TargetOperandClass << "*)Operands["
+               << SrcOperand << "+1])->" << Op.Class->RenderMethod
+               << "(Inst, " << Op.OperandInfo->MINumOperands << ");\n";
+        continue;
       }
       
-      // Registers are always converted the same, don't duplicate the conversion
-      // function based on them.
-      //
-      // FIXME: We could generalize this based on the render method, if it
-      // mattered.
-      Signature += "__";
-      if (Op.Class->isRegisterClass())
-        Signature += "Reg";
-      else
-        Signature += Op.Class->ClassName;
-      Signature += utostr(Op.OperandInfo->MINumOperands);
-      Signature += "_" + utostr(MIOperandList[i].second);
-      
-      
-      CaseOS << "    ((" << TargetOperandClass << "*)Operands["
-             << MIOperandList[i].second << "+1])->" << Op.Class->RenderMethod
-             << "(Inst, " << Op.OperandInfo->MINumOperands << ");\n";
-      CurIndex += Op.OperandInfo->MINumOperands;
+
+      // If this operand is tied to a previous one, just copy the MCInst operand
+      // from the earlier one.
+      int TiedOp = OpInfo.getTiedRegister();
+      if (TiedOp != -1) {
+        // Copy the tied operand.
+        // FIXME: What if the operand has multiple MINumOperands?  This happens
+        // in ARM.
+        //assert(OpInfo.MINumOperands == 1);
+        
+        assert(i > unsigned(TiedOp) && "Tied operand preceeds its target!");
+        CaseOS << "    Inst.addOperand(Inst.getOperand(" << TiedOp << "));\n";
+        Signature += "__Tie" + itostr(TiedOp);
+        continue;
+      }
+
+      // Otherwise this is some sort of dummy operand that is mentioned in the
+      // ins/outs list but not mentioned in the asmstring, brutalize a dummy
+      // value into the operand.
+      // FIXME: This is a terrible hack: If an MCInst operand doesn't occur in
+      // the asmstring, there is no way to parse something meaningful.
+      // Just assume it is a zero register for now.
+      CaseOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
+      Signature += "__Imp";
     }
     
-    // And add trailing implicit operands.
-    for (; CurIndex != NumMIOperands; ++CurIndex) {
-      std::pair<unsigned, unsigned> *Tie = GetTiedOperandAtIndex(TiedOperands,
-                                                                 CurIndex);
-      
-      if (!Tie) {
-        // If not, this is some implicit operand. Just assume it is a register
-        // for now.
-        CaseOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
-        Signature += "__Imp";
-      } else {
-        // Copy the tied operand.
-        assert(Tie->first>Tie->second && "Tied operand preceeds its target!");
-        CaseOS << "    Inst.addOperand(Inst.getOperand("
-               << Tie->second << "));\n";
-        Signature += "__Tie" + utostr(Tie->second);
-      }
-    }
-
     II.ConversionFnKind = Signature;
 
     // Check if we have already generated this signature.

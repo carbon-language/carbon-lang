@@ -102,7 +102,18 @@ namespace llvm {
                   const std::string &EMN, unsigned MION, unsigned MINO,
                   DagInit *MIOI)
       : Rec(R), Name(N), PrinterMethodName(PMN), EncoderMethodName(EMN),
-      MIOperandNo(MION), MINumOperands(MINO), MIOperandInfo(MIOI) {}
+        MIOperandNo(MION), MINumOperands(MINO), MIOperandInfo(MIOI) {}
+      
+      
+      /// getTiedOperand - If this operand is tied to another one, return the
+      /// other operand number.  Otherwise, return -1.
+      int getTiedRegister() const {
+        for (unsigned j = 0, e = Constraints.size(); j != e; ++j) {
+          const CGIOperandList::ConstraintInfo &CI = Constraints[j];
+          if (CI.isTied()) return CI.getTiedOperand();
+        }
+        return -1;
+      }
     };
     
     CGIOperandList(Record *D);
