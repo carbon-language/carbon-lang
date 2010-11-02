@@ -455,7 +455,7 @@ static void EmitShellScript(char **argv, Module *M) {
            E = LibPaths.end(); P != E; ++P) {
       FullLibraryPath = *P;
       FullLibraryPath.appendComponent("lib" + *i);
-      FullLibraryPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
+      FullLibraryPath.appendSuffix(sys::Path::GetDLLSuffix());
       if (!FullLibraryPath.isEmpty()) {
         if (!FullLibraryPath.isDynamicLibrary()) {
           // Not a native shared library; mark as invalid

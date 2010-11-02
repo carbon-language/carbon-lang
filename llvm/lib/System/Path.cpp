@@ -192,7 +192,7 @@ Path::FindLibrary(std::string& name) {
 }
 
 StringRef Path::GetDLLSuffix() {
-  return LTDL_SHLIB_EXT;
+  return &(LTDL_SHLIB_EXT[1]);
 }
 
 bool

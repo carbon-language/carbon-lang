@@ -133,7 +133,7 @@ static inline sys::Path IsLibrary(StringRef Name,
 
   // Try the libX.so (or .dylib) form
   FullPath.eraseSuffix();
-  FullPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
+  FullPath.appendSuffix(sys::Path::GetDLLSuffix());
   if (FullPath.isDynamicLibrary())  // Native shared library?
     return FullPath;
   if (FullPath.isBitcodeFile())    // .so file containing bitcode?
