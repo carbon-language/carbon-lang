@@ -52,7 +52,8 @@ Inliner::Inliner(char &ID)
   : CallGraphSCCPass(ID), InlineThreshold(InlineLimit) {}
 
 Inliner::Inliner(char &ID, int Threshold) 
-  : CallGraphSCCPass(ID), InlineThreshold(Threshold) {}
+  : CallGraphSCCPass(ID), InlineThreshold(InlineLimit.getNumOccurrences() > 0 ?
+                                          InlineLimit : Threshold) {}
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should

@@ -99,6 +99,8 @@ ModulePass *createGVExtractionPass(std::vector<GlobalValue*>& GVs, bool
 /// createFunctionInliningPass - Return a new pass object that uses a heuristic
 /// to inline direct function calls to small functions.
 ///
+/// The -inline-threshold command line option takes precedence over the
+/// threshold given here.
 Pass *createFunctionInliningPass();
 Pass *createFunctionInliningPass(int Threshold);
 
