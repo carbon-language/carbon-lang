@@ -799,22 +799,28 @@ class VSTQQQQWBPseudo<InstrItinClass itin>
 
 //   VST1     : Vector Store (multiple single elements)
 class VST1D<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$addr, DPR:$src),
-          IIC_VST1, "vst1", Dt, "\\{$src\\}, $addr", "", []>;
+  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$Rn, DPR:$Vd),
+          IIC_VST1, "vst1", Dt, "\\{$Vd\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{4} = Rn{4};
+}
 class VST1Q<bits<4> op7_4, string Dt>
   : NLdSt<0,0b00,0b1010,op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST1x2,
-          "vst1", Dt, "\\{$src1, $src2\\}, $addr", "", []>;
+          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2), IIC_VST1x2,
+          "vst1", Dt, "\\{$Vd, $src2\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{5-4} = Rn{5-4};
+}
 
-def  VST1d8   : VST1D<0b0000, "8">;
-def  VST1d16  : VST1D<0b0100, "16">;
-def  VST1d32  : VST1D<0b1000, "32">;
-def  VST1d64  : VST1D<0b1100, "64">;
+def  VST1d8   : VST1D<{0,0,0,?}, "8">;
+def  VST1d16  : VST1D<{0,1,0,?}, "16">;
+def  VST1d32  : VST1D<{1,0,0,?}, "32">;
+def  VST1d64  : VST1D<{1,1,0,?}, "64">;
 
-def  VST1q8   : VST1Q<0b0000, "8">;
-def  VST1q16  : VST1Q<0b0100, "16">;
-def  VST1q32  : VST1Q<0b1000, "32">;
-def  VST1q64  : VST1Q<0b1100, "64">;
+def  VST1q8   : VST1Q<{0,0,?,?}, "8">;
+def  VST1q16  : VST1Q<{0,1,?,?}, "16">;
+def  VST1q32  : VST1Q<{1,0,?,?}, "32">;
+def  VST1q64  : VST1Q<{1,1,?,?}, "64">;
 
 def  VST1q8Pseudo  : VSTQPseudo<IIC_VST1x2>;
 def  VST1q16Pseudo : VSTQPseudo<IIC_VST1x2>;
@@ -824,23 +830,27 @@ def  VST1q64Pseudo : VSTQPseudo<IIC_VST1x2>;
 // ...with address register writeback:
 class VST1DWB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0111, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset, DPR:$src), IIC_VST1u,
-          "vst1", Dt, "\\{$src\\}, $addr$offset", "$addr.addr = $wb", []>;
+          (ins addrmode6:$Rn, am6offset:$Rm, DPR:$Vd), IIC_VST1u,
+          "vst1", Dt, "\\{$Vd\\}, $Rn$Rm", "$Rn.addr = $wb", []> {
+  let Inst{4} = Rn{4};
+}
 class VST1QWB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b1010, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset, DPR:$src1, DPR:$src2),
-          IIC_VST1x2u, "vst1", Dt, "\\{$src1, $src2\\}, $addr$offset",
-          "$addr.addr = $wb", []>;
+          (ins addrmode6:$Rn, am6offset:$Rm, DPR:$Vd, DPR:$src2),
+          IIC_VST1x2u, "vst1", Dt, "\\{$Vd, $src2\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
+  let Inst{5-4} = Rn{5-4};
+}
 
-def VST1d8_UPD  : VST1DWB<0b0000, "8">;
-def VST1d16_UPD : VST1DWB<0b0100, "16">;
-def VST1d32_UPD : VST1DWB<0b1000, "32">;
-def VST1d64_UPD : VST1DWB<0b1100, "64">;
+def VST1d8_UPD  : VST1DWB<{0,0,0,?}, "8">;
+def VST1d16_UPD : VST1DWB<{0,1,0,?}, "16">;
+def VST1d32_UPD : VST1DWB<{1,0,0,?}, "32">;
+def VST1d64_UPD : VST1DWB<{1,1,0,?}, "64">;
 
-def VST1q8_UPD  : VST1QWB<0b0000, "8">;
-def VST1q16_UPD : VST1QWB<0b0100, "16">;
-def VST1q32_UPD : VST1QWB<0b1000, "32">;
-def VST1q64_UPD : VST1QWB<0b1100, "64">;
+def VST1q8_UPD  : VST1QWB<{0,0,?,?}, "8">;
+def VST1q16_UPD : VST1QWB<{0,1,?,?}, "16">;
+def VST1q32_UPD : VST1QWB<{1,0,?,?}, "32">;
+def VST1q64_UPD : VST1QWB<{1,1,?,?}, "64">;
 
 def VST1q8Pseudo_UPD  : VSTQWBPseudo<IIC_VST1x2u>;
 def VST1q16Pseudo_UPD : VSTQWBPseudo<IIC_VST1x2u>;
@@ -850,24 +860,29 @@ def VST1q64Pseudo_UPD : VSTQWBPseudo<IIC_VST1x2u>;
 // ...with 3 registers (some of these are only for the disassembler):
 class VST1D3<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
-          IIC_VST1x3, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr", "", []>;
+          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2, DPR:$src3),
+          IIC_VST1x3, "vst1", Dt, "\\{$Vd, $src2, $src3\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{4} = Rn{4};
+}
 class VST1D3WB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset,
-           DPR:$src1, DPR:$src2, DPR:$src3),
-          IIC_VST1x3u, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr$offset",
-          "$addr.addr = $wb", []>;
+          (ins addrmode6:$Rn, am6offset:$Rm,
+           DPR:$Vd, DPR:$src2, DPR:$src3),
+          IIC_VST1x3u, "vst1", Dt, "\\{$Vd, $src2, $src3\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
+  let Inst{4} = Rn{4};
+}
 
-def VST1d8T      : VST1D3<0b0000, "8">;
-def VST1d16T     : VST1D3<0b0100, "16">;
-def VST1d32T     : VST1D3<0b1000, "32">;
-def VST1d64T     : VST1D3<0b1100, "64">;
+def VST1d8T      : VST1D3<{0,0,0,?}, "8">;
+def VST1d16T     : VST1D3<{0,1,0,?}, "16">;
+def VST1d32T     : VST1D3<{1,0,0,?}, "32">;
+def VST1d64T     : VST1D3<{1,1,0,?}, "64">;
 
-def VST1d8T_UPD  : VST1D3WB<0b0000, "8">;
-def VST1d16T_UPD : VST1D3WB<0b0100, "16">;
-def VST1d32T_UPD : VST1D3WB<0b1000, "32">;
-def VST1d64T_UPD : VST1D3WB<0b1100, "64">;
+def VST1d8T_UPD  : VST1D3WB<{0,0,0,?}, "8">;
+def VST1d16T_UPD : VST1D3WB<{0,1,0,?}, "16">;
+def VST1d32T_UPD : VST1D3WB<{1,0,0,?}, "32">;
+def VST1d64T_UPD : VST1D3WB<{1,1,0,?}, "64">;
 
 def VST1d64TPseudo     : VSTQQPseudo<IIC_VST1x3>;
 def VST1d64TPseudo_UPD : VSTQQWBPseudo<IIC_VST1x3u>;
@@ -875,25 +890,30 @@ def VST1d64TPseudo_UPD : VSTQQWBPseudo<IIC_VST1x3u>;
 // ...with 4 registers (some of these are only for the disassembler):
 class VST1D4<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
-          IIC_VST1x4, "vst1", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr", "",
-          []>;
+          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4),
+          IIC_VST1x4, "vst1", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn", "",
+          []> {
+  let Rm = 0b1111;
+  let Inst{5-4} = Rn{5-4};
+}
 class VST1D4WB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset,
-           DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST1x4u,
-          "vst1", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr$offset",
-          "$addr.addr = $wb", []>;
+          (ins addrmode6:$Rn, am6offset:$Rm,
+           DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST1x4u,
+          "vst1", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
+  let Inst{5-4} = Rn{5-4};
+}
 
-def VST1d8Q      : VST1D4<0b0000, "8">;
-def VST1d16Q     : VST1D4<0b0100, "16">;
-def VST1d32Q     : VST1D4<0b1000, "32">;
-def VST1d64Q     : VST1D4<0b1100, "64">;
+def VST1d8Q      : VST1D4<{0,0,?,?}, "8">;
+def VST1d16Q     : VST1D4<{0,1,?,?}, "16">;
+def VST1d32Q     : VST1D4<{1,0,?,?}, "32">;
+def VST1d64Q     : VST1D4<{1,1,?,?}, "64">;
 
-def VST1d8Q_UPD  : VST1D4WB<0b0000, "8">;
-def VST1d16Q_UPD : VST1D4WB<0b0100, "16">;
-def VST1d32Q_UPD : VST1D4WB<0b1000, "32">;
-def VST1d64Q_UPD : VST1D4WB<0b1100, "64">;
+def VST1d8Q_UPD  : VST1D4WB<{0,0,?,?}, "8">;
+def VST1d16Q_UPD : VST1D4WB<{0,1,?,?}, "16">;
+def VST1d32Q_UPD : VST1D4WB<{1,0,?,?}, "32">;
+def VST1d64Q_UPD : VST1D4WB<{1,1,?,?}, "64">;
 
 def VST1d64QPseudo     : VSTQQPseudo<IIC_VST1x4>;
 def VST1d64QPseudo_UPD : VSTQQWBPseudo<IIC_VST1x4u>;
