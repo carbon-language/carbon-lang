@@ -472,13 +472,13 @@ def addrmode6 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode6", [], [SDNPWantParent]>{
   let PrintMethod = "printAddrMode6Operand";
   let MIOperandInfo = (ops GPR:$addr, i32imm);
-  string EncoderMethod = "getAddrMode6RegisterOperand";
+  string EncoderMethod = "getAddrMode6AddressOpValue";
 }
 
 def am6offset : Operand<i32> {
   let PrintMethod = "printAddrMode6OffsetOperand";
   let MIOperandInfo = (ops GPR);
-  string EncoderMethod = "getAddrMode6OffsetOperand";
+  string EncoderMethod = "getAddrMode6OffsetOpValue";
 }
 
 // addrmodepc := pc + reg

@@ -99,8 +99,8 @@ public:
   unsigned getBitfieldInvertedMaskOpValue(const MCInst &MI, unsigned Op) const;
 
   unsigned getRegisterListOpValue(const MCInst &MI, unsigned Op) const;
-  unsigned getAddrMode6RegisterOperand(const MCInst &MI, unsigned Op) const;
-  unsigned getAddrMode6OffsetOperand(const MCInst &MI, unsigned Op) const;
+  unsigned getAddrMode6AddressOpValue(const MCInst &MI, unsigned Op) const;
+  unsigned getAddrMode6OffsetOpValue(const MCInst &MI, unsigned Op) const;
 
   unsigned getNumFixupKinds() const {
     assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
@@ -297,7 +297,7 @@ unsigned ARMMCCodeEmitter::getRegisterListOpValue(const MCInst &MI,
   return Binary;
 }
 
-unsigned ARMMCCodeEmitter::getAddrMode6RegisterOperand(const MCInst &MI,
+unsigned ARMMCCodeEmitter::getAddrMode6AddressOpValue(const MCInst &MI,
                                                       unsigned Op) const {
   const MCOperand &Reg = MI.getOperand(Op);
   const MCOperand &Imm = MI.getOperand(Op+1);
@@ -313,7 +313,7 @@ unsigned ARMMCCodeEmitter::getAddrMode6RegisterOperand(const MCInst &MI,
   return RegNo | (Align << 4);
 }
 
-unsigned ARMMCCodeEmitter::getAddrMode6OffsetOperand(const MCInst &MI,
+unsigned ARMMCCodeEmitter::getAddrMode6OffsetOpValue(const MCInst &MI,
                                                      unsigned Op) const {
   const MCOperand &regno = MI.getOperand(Op);
   if (regno.getReg() == 0) return 0x0D;
