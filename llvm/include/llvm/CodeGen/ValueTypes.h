@@ -26,7 +26,10 @@ namespace llvm {
   class LLVMContext;
   struct EVT;
 
-  class MVT { // MVT = Machine Value Type
+  /// MVT - Machine Value Type.  Every type that is supported natively by some
+  /// processor targeted by LLVM occurs here.  This means that any legal value
+  /// type can be represented by a MVT.
+  class MVT {
   public:
     enum SimpleValueType {
       // If you change this numbering, you must change the values in
@@ -158,7 +161,7 @@ namespace llvm {
       return !(NElts & (NElts - 1));
     }
 
-    /// getPow2VectorType - Widens the length of the given vector EVT up to
+    /// getPow2VectorType - Widens the length of the given vector MVT up to
     /// the nearest power of 2 and returns that type.
     MVT getPow2VectorType() const {
       if (isPow2VectorType())
@@ -353,7 +356,11 @@ namespace llvm {
     }
   };
 
-  struct EVT { // EVT = Extended Value Type
+
+  /// EVT - Extended Value Type.  Capable of holding value types which are not
+  /// native for any processor (such as the i12345 type), as well as the types
+  /// a MVT can represent.
+  struct EVT {
   private:
     MVT V;
     const Type *LLVMTy;
