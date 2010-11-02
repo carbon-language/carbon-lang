@@ -53,18 +53,18 @@ namespace {
 #endif
   }
 
-  int ExecuteProgram (const std::string& name,
-                      const StrVector& args) {
+  int ExecuteProgram (const std::string& name, const StrVector& args) {
     sys::Path prog(name);
 
-    if (!prog.isAbsolute())
+    if (!prog.isAbsolute()) {
       prog = FindExecutable(name, ProgramName, (void *)(intptr_t)&Main);
 
-    if (prog.isEmpty()) {
-      prog = sys::Program::FindProgramByName(name);
-      if (prog.isEmpty()) {
-        PrintError("Can't find program '" + name + "'");
-        return -1;
+      if (!prog.canExecute()) {
+        prog = sys::Program::FindProgramByName(name);
+        if (prog.isEmpty()) {
+          PrintError("Can't find program '" + name + "'");
+          return -1;
+        }
       }
     }
     if (!prog.canExecute()) {
