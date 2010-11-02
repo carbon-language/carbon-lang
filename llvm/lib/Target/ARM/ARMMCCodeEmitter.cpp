@@ -132,9 +132,8 @@ public:
 
 } // end anonymous namespace
 
-MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &,
-                                             TargetMachine &TM,
-                                             MCContext &Ctx) {
+MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &, TargetMachine &TM,
+                                            MCContext &Ctx) {
   return new ARMMCCodeEmitter(TM, Ctx);
 }
 
@@ -143,29 +142,30 @@ MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &,
 unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCOperand &MO) const {
   if (MO.isReg()) {
-    unsigned regno = getARMRegisterNumbering(MO.getReg());
+    unsigned Reg = MO.getReg();
+    unsigned RegNo = getARMRegisterNumbering(Reg);
 
     // Q registers are encodes as 2x their register number.
-    switch (MO.getReg()) {
-      case ARM::Q0: case ARM::Q1: case ARM::Q2: case ARM::Q3:
-      case ARM::Q4: case ARM::Q5: case ARM::Q6: case ARM::Q7:
-      case ARM::Q8: case ARM::Q9: case ARM::Q10: case ARM::Q11:
-      case ARM::Q12: case ARM::Q13: case ARM::Q14: case ARM::Q15:
-        return 2 * regno;
-      default:
-        return regno;
+    switch (Reg) {
+    default:
+      return RegNo;
+    case ARM::Q0:  case ARM::Q1:  case ARM::Q2:  case ARM::Q3:
+    case ARM::Q4:  case ARM::Q5:  case ARM::Q6:  case ARM::Q7:
+    case ARM::Q8:  case ARM::Q9:  case ARM::Q10: case ARM::Q11:
+    case ARM::Q12: case ARM::Q13: case ARM::Q14: case ARM::Q15:
+      return 2 * RegNo;
     }
   } else if (MO.isImm()) {
     return static_cast<unsigned>(MO.getImm());
   } else if (MO.isFPImm()) {
     return static_cast<unsigned>(APFloat(MO.getFPImm())
                      .bitcastToAPInt().getHiBits(32).getLimitedValue());
-  } else {
-#ifndef NDEBUG
-    errs() << MO;
-#endif
-    llvm_unreachable(0);
   }
+
+#ifndef NDEBUG
+  errs() << MO;
+#endif
+  llvm_unreachable(0);
   return 0;
 }
 
@@ -206,15 +206,16 @@ uint32_t ARMMCCodeEmitter::getAddrModeImmOpValue(const MCInst &MI,
 
 unsigned ARMMCCodeEmitter::getSORegOpValue(const MCInst &MI,
                                            unsigned OpIdx) const {
-  // Sub-operands are [reg, reg, imm]. The first register is Rm, the reg
-  // to be shifted. The second is either Rs, the amount to shift by, or
-  // reg0 in which case the imm contains the amount to shift by.
+  // Sub-operands are [reg, reg, imm]. The first register is Rm, the reg to be
+  // shifted. The second is either Rs, the amount to shift by, or reg0 in which
+  // case the imm contains the amount to shift by.
+  // 
   // {3-0} = Rm.
-  // {4} = 1 if reg shift, 0 if imm shift
+  // {4}   = 1 if reg shift, 0 if imm shift
   // {6-5} = type
   //    If reg shift:
-  //      {7} = 0
   //      {11-8} = Rs
+  //      {7}    = 0
   //    else (imm shift)
   //      {11-7} = imm
 
@@ -258,6 +259,7 @@ unsigned ARMMCCodeEmitter::getSORegOpValue(const MCInst &MI,
     case ARM_AM::ror: SBits = 0x6; break;
     }
   }
+
   Binary |= SBits << 4;
   if (SOpc == ARM_AM::rrx)
     return Binary;
@@ -300,24 +302,28 @@ unsigned ARMMCCodeEmitter::getRegisterListOpValue(const MCInst &MI,
 unsigned ARMMCCodeEmitter::getAddrMode6AddressOpValue(const MCInst &MI,
                                                       unsigned Op) const {
   const MCOperand &Reg = MI.getOperand(Op);
-  const MCOperand &Imm = MI.getOperand(Op+1);
+  const MCOperand &Imm = MI.getOperand(Op + 1);
   
   unsigned RegNo = getARMRegisterNumbering(Reg.getReg());
-  unsigned Align = Imm.getImm();
-  switch(Align) {
-    case 2: case 4: case 8:  Align = 0x01; break;
-    case 16: Align = 0x02; break;
-    case 32: Align = 0x03; break;
-    default: Align = 0x00; break;
+  unsigned Align = 0;
+
+  switch (Imm.getImm()) {
+  default: break;
+  case 2:
+  case 4:
+  case 8:  Align = 0x01; break;
+  case 16: Align = 0x02; break;
+  case 32: Align = 0x03; break;
   }
+
   return RegNo | (Align << 4);
 }
 
 unsigned ARMMCCodeEmitter::getAddrMode6OffsetOpValue(const MCInst &MI,
                                                      unsigned Op) const {
-  const MCOperand &regno = MI.getOperand(Op);
-  if (regno.getReg() == 0) return 0x0D;
-  return regno.getReg();
+  const MCOperand &MO = MI.getOperand(Op);
+  if (MO.getReg() == 0) return 0x0D;
+  return MO.getReg();
 }
 
 void ARMMCCodeEmitter::
