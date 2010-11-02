@@ -125,7 +125,7 @@ def xaddr : ComplexPattern<i32, 2, "SelectAddrRegReg", [], []>;
 //===----------------------------------------------------------------------===//
 
 // As stack alignment is always done with addiu, we need a 16-bit immediate
-let Defs = [R1], Uses = [R1], isCodeGenOnly = 1 in {
+let Defs = [R1], Uses = [R1] in {
 def ADJCALLSTACKDOWN : MBlazePseudo<(outs), (ins simm16:$amt),
                                   "#ADJCALLSTACKDOWN $amt",
                                   [(callseq_start timm:$amt)]>;
@@ -526,7 +526,7 @@ let neverHasSideEffects = 1 in {
   def NOP :  MBlazeInst< 0x20, FC, (outs), (ins), "nop    ", [], IIAlu>;
 }
 
-let usesCustomInserter = 1, isCodeGenOnly = 1 in {
+let usesCustomInserter = 1 in {
   def Select_CC : MBlazePseudo<(outs GPR:$dst),
     (ins GPR:$T, GPR:$F, GPR:$CMP, i32imm:$CC),
     "; SELECT_CC PSEUDO!",

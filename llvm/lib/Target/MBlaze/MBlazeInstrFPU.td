@@ -124,7 +124,7 @@ let isAsCheapAsAMove = 1 in {
 }
 
 
-let usesCustomInserter = 1, isCodeGenOnly = 1 in {
+let usesCustomInserter = 1 in {
   def Select_FCC : MBlazePseudo<(outs GPR:$dst),
     (ins GPR:$T, GPR:$F, GPR:$CMP, i32imm:$CC),
     "; SELECT_FCC PSEUDO!",

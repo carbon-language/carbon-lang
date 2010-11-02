@@ -49,8 +49,7 @@ def FC      : Format<18>; // NOP
 
 // Generic MBlaze Format
 class MBlazeInst<bits<6> op, Format form, dag outs, dag ins, string asmstr, 
-                 list<dag> pattern, InstrItinClass itin> : Instruction 
-{
+                 list<dag> pattern, InstrItinClass itin> : Instruction {
   let Namespace = "MBlaze";
   field bits<32> Inst;
 
@@ -60,6 +59,10 @@ class MBlazeInst<bits<6> op, Format form, dag outs, dag ins, string asmstr,
 
   // Top 6 bits are the 'opcode' field
   let Inst{0-5} = opcode;   
+  
+  // If the instruction is marked as a pseudo, set isCodeGenOnly so that the
+  // assembler and disassmbler ignore it.
+  let isCodeGenOnly = !eq(!cast<string>(form), "FPseudo");
   
   dag OutOperandList = outs;
   dag InOperandList  = ins;
