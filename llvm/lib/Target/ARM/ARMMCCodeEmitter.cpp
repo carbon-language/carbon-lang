@@ -322,7 +322,7 @@ unsigned ARMMCCodeEmitter::getAddrMode6OffsetOpValue(const MCInst &MI,
 
 void ARMMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                  SmallVectorImpl<MCFixup> &Fixups) const {
+                  SmallVectorImpl<MCFixup> &) const {
   // Pseudo instructions don't get encoded.
   const TargetInstrDesc &Desc = TII.get(MI.getOpcode());
   if ((Desc.TSFlags & ARMII::FormMask) == ARMII::Pseudo)
