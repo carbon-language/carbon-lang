@@ -347,8 +347,9 @@ struct MatchableInfo {
   /// Tokens - The tokenized assembly pattern that this instruction matches.
   SmallVector<StringRef, 4> Tokens;
 
-  /// Operands - The operands that this instruction matches.
-  SmallVector<Operand, 4> Operands;
+  /// AsmOperands - The textual operands that this instruction matches,
+  /// including literal tokens for the mnemonic, etc.
+  SmallVector<Operand, 4> AsmOperands;
 
   /// Predicates - The required subtarget features to match this instruction.
   SmallVector<SubtargetFeatureInfo*, 4> RequiredFeatures;
@@ -392,15 +393,15 @@ struct MatchableInfo {
     if (Tokens[0] != RHS.Tokens[0])
       return Tokens[0] < RHS.Tokens[0];
 
-    if (Operands.size() != RHS.Operands.size())
-      return Operands.size() < RHS.Operands.size();
+    if (AsmOperands.size() != RHS.AsmOperands.size())
+      return AsmOperands.size() < RHS.AsmOperands.size();
 
     // Compare lexicographically by operand. The matcher validates that other
     // orderings wouldn't be ambiguous using \see CouldMatchAmiguouslyWith().
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (*Operands[i].Class < *RHS.Operands[i].Class)
+    for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
+      if (*AsmOperands[i].Class < *RHS.AsmOperands[i].Class)
         return true;
-      if (*RHS.Operands[i].Class < *Operands[i].Class)
+      if (*RHS.AsmOperands[i].Class < *AsmOperands[i].Class)
         return false;
     }
 
@@ -416,7 +417,7 @@ struct MatchableInfo {
       return false;
     
     // The number of operands is unambiguous.
-    if (Operands.size() != RHS.Operands.size())
+    if (AsmOperands.size() != RHS.AsmOperands.size())
       return false;
 
     // Otherwise, make sure the ordering of the two instructions is unambiguous
@@ -425,21 +426,21 @@ struct MatchableInfo {
 
     // Tokens and operand kinds are unambiguous (assuming a correct target
     // specific parser).
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-      if (Operands[i].Class->Kind != RHS.Operands[i].Class->Kind ||
-          Operands[i].Class->Kind == ClassInfo::Token)
-        if (*Operands[i].Class < *RHS.Operands[i].Class ||
-            *RHS.Operands[i].Class < *Operands[i].Class)
+    for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i)
+      if (AsmOperands[i].Class->Kind != RHS.AsmOperands[i].Class->Kind ||
+          AsmOperands[i].Class->Kind == ClassInfo::Token)
+        if (*AsmOperands[i].Class < *RHS.AsmOperands[i].Class ||
+            *RHS.AsmOperands[i].Class < *AsmOperands[i].Class)
           return false;
 
     // Otherwise, this operand could commute if all operands are equivalent, or
     // there is a pair of operands that compare less than and a pair that
     // compare greater than.
     bool HasLT = false, HasGT = false;
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (*Operands[i].Class < *RHS.Operands[i].Class)
+    for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
+      if (*AsmOperands[i].Class < *RHS.AsmOperands[i].Class)
         HasLT = true;
-      if (*RHS.Operands[i].Class < *Operands[i].Class)
+      if (*RHS.AsmOperands[i].Class < *AsmOperands[i].Class)
         HasGT = true;
     }
 
@@ -543,8 +544,8 @@ void MatchableInfo::dump() {
   }
   errs() << "]\n";
 
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-    Operand &Op = Operands[i];
+  for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
+    Operand &Op = AsmOperands[i];
     errs() << "  op[" << i << "] = " << Op.Class->ClassName << " - ";
     if (Op.Class->Kind == ClassInfo::Token) {
       errs() << '\"' << Tokens[i] << "\"\n";
@@ -1016,13 +1017,14 @@ void AsmMatcherInfo::BuildInfo() {
         MatchableInfo::Operand Op(RegisterClasses[RegRecord], 0);
         assert(Op.Class && Op.Class->Registers.size() == 1 &&
                "Unexpected class for singleton register");
-        II->Operands.push_back(Op);
+        II->AsmOperands.push_back(Op);
         continue;
       }
 
       // Check for simple tokens.
       if (Token[0] != '$') {
-        II->Operands.push_back(MatchableInfo::Operand(getTokenClass(Token), 0));
+        II->AsmOperands.push_back(MatchableInfo::Operand(getTokenClass(Token),
+                                                         0));
         continue;
       }
 
@@ -1059,7 +1061,7 @@ void AsmMatcherInfo::BuildInfo() {
         assert(OI && "Unable to find tied operand target!");
       }
 
-      II->Operands.push_back(MatchableInfo::Operand(getOperandClass(Token,
+      II->AsmOperands.push_back(MatchableInfo::Operand(getOperandClass(Token,
                                                                     *OI), OI));
     }
   }
@@ -1113,8 +1115,8 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
     // Order the (class) operands by the order to convert them into an MCInst.
     SmallVector<std::pair<unsigned, unsigned>, 4> MIOperandList;
-    for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
-      MatchableInfo::Operand &Op = II.Operands[i];
+    for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
+      MatchableInfo::Operand &Op = II.AsmOperands[i];
       if (Op.OperandInfo)
         MIOperandList.push_back(std::make_pair(Op.OperandInfo->MIOperandNo, i));
     }
@@ -1145,7 +1147,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
     std::string Signature = "Convert";
     unsigned CurIndex = 0;
     for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i) {
-      MatchableInfo::Operand &Op = II.Operands[MIOperandList[i].second];
+      MatchableInfo::Operand &Op = II.AsmOperands[MIOperandList[i].second];
       assert(CurIndex <= Op.OperandInfo->MIOperandNo &&
              "Duplicate match for instruction operand!");
 
@@ -1204,7 +1206,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
     CvtOS << "  case " << Signature << ":\n";
     CurIndex = 0;
     for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i) {
-      MatchableInfo::Operand &Op = II.Operands[MIOperandList[i].second];
+      MatchableInfo::Operand &Op = II.AsmOperands[MIOperandList[i].second];
 
       // Add the implicit operands.
       for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex) {
@@ -1701,7 +1703,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   for (std::vector<MatchableInfo*>::const_iterator it =
          Info.Matchables.begin(), ie = Info.Matchables.end();
        it != ie; ++it)
-    MaxNumOperands = std::max(MaxNumOperands, (*it)->Operands.size());
+    MaxNumOperands = std::max(MaxNumOperands, (*it)->AsmOperands.size());
 
 
   // Emit the static match table; unused classes get initalized to 0 which is
@@ -1749,8 +1751,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     OS << "  { " << Target.getName() << "::" << II.InstrName
     << ", \"" << II.Tokens[0] << "\""
     << ", " << II.ConversionFnKind << ", { ";
-    for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
-      MatchableInfo::Operand &Op = II.Operands[i];
+    for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
+      MatchableInfo::Operand &Op = II.AsmOperands[i];
 
       if (i) OS << ", ";
       OS << Op.Class->Name;
