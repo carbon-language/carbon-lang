@@ -78,6 +78,10 @@ using namespace sys;
 
 const char sys::PathSeparator = ':';
 
+StringRef Path::GetEXESuffix() {
+  return "";
+}
+
 Path::Path(StringRef p)
   : path(p) {}
 

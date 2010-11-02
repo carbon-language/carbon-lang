@@ -154,6 +154,12 @@ namespace sys {
       /// @brief Returns the current working directory.
       static Path GetCurrentDirectory();
 
+      /// Return the suffix commonly used on file names that contain an
+      /// executable.
+      /// @returns The executable file suffix for the current platform.
+      /// @brief Return the executable file suffix.
+      static StringRef GetEXESuffix();
+
       /// Return the suffix commonly used on file names that contain a shared
       /// object, shared archive, or dynamic link library. Such files are
       /// linked at runtime into a process and their code images are shared

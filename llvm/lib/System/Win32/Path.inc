@@ -45,7 +45,12 @@ static void FlipBackSlashes(std::string& s) {
 
 namespace llvm {
 namespace sys {
+
 const char PathSeparator = ';';
+
+StringRef Path::GetEXESuffix() {
+  return "exe";
+}
 
 Path::Path(llvm::StringRef p)
   : path(p) {
