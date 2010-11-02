@@ -47,9 +47,7 @@ sys::Path llvm::FindExecutable(const std::string &ExeName,
 
   if (!Result.isEmpty()) {
     Result.appendComponent(ExeName);
-    StringRef EXESuffix = sys::Path::GetEXESuffix();
-    if (!EXESuffix.empty())
-      Result.appendSuffix(EXESuffix);
+    Result.appendSuffix(sys::Path::GetEXESuffix());
   }
 
   return Result;
