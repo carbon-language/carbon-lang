@@ -693,7 +693,7 @@ Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
   if (pathname[lastchar] != '/')
     ++lastchar;
 
-  pathname[lastchar] = 0;
+  pathname[lastchar] = '\0';
 
   if (createDirectoryHelper(pathname, pathname+lastchar, create_parents))
     return MakeErrMsg(ErrMsg,
@@ -766,9 +766,9 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   path.copy(pathname, MAXPATHLEN);
   size_t lastchar = path.length() - 1;
   if (pathname[lastchar] == '/')
-    pathname[lastchar] = 0;
+    pathname[lastchar] = '\0';
   else
-    pathname[lastchar+1] = 0;
+    pathname[lastchar+1] = '\0';
 
   if (rmdir(pathname) != 0)
     return MakeErrMsg(ErrStr,
