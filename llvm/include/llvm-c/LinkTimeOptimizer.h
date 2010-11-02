@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This header provides a C API to use the LLVM link time optimization
-// library. This is inteded to be used by linkers which are C-only in
+// library. This is intended to be used by linkers which are C-only in
 // their implementation for performing LTO.
 //
 //===----------------------------------------------------------------------===//
