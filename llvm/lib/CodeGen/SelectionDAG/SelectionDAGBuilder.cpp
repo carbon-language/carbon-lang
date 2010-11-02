@@ -3944,6 +3944,9 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     return false;
 
   MachineFunction &MF = DAG.getMachineFunction();
+  const TargetInstrInfo *TII = DAG.getTarget().getInstrInfo();
+  const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
+
   // Ignore inlined function arguments here.
   DIVariable DV(Variable);
   if (DV.isInlinedFnArgument(MF.getFunction()))
@@ -3957,7 +3960,6 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
   if (Arg->hasByValAttr()) {
     // Byval arguments' frame index is recorded during argument lowering.
     // Use this info directly.
-    const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
     Reg = TRI->getFrameRegister(MF);
     Offset = FuncInfo.getByValArgumentFrameIndex(Arg);
     // If byval argument ofset is not recorded then ignore this.
@@ -3976,13 +3978,22 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
   }
 
   if (!Reg) {
+    // Check if ValueMap has reg number.
     DenseMap<const Value *, unsigned>::iterator VMI = FuncInfo.ValueMap.find(V);
     if (VMI == FuncInfo.ValueMap.end())
       return false;
     Reg = VMI->second;
   }
 
-  const TargetInstrInfo *TII = DAG.getTarget().getInstrInfo();
+  if (!Reg && N.getNode())
+    // Check if frame index is available.
+    if (LoadSDNode *LNode = dyn_cast<LoadSDNode>(N.getNode()))
+      if (FrameIndexSDNode *FINode = 
+          dyn_cast<FrameIndexSDNode>(LNode->getBasePtr().getNode())) {
+        Reg = TRI->getFrameRegister(MF);
+        Offset = FINode->getIndex();
+      }
+
   MachineInstrBuilder MIB = BuildMI(MF, getCurDebugLoc(),
                                     TII->get(TargetOpcode::DBG_VALUE))
     .addReg(Reg, RegState::Debug).addImm(Offset).addMetadata(Variable);
