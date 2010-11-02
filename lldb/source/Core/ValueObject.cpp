@@ -990,7 +990,8 @@ ValueObject::DumpValueObject
 
             s.Indent();
 
-            if (show_types)
+            // Always show the type for the top level items.
+            if (show_types || curr_depth == 0)
                 s.Printf("(%s) ", valobj->GetTypeName().AsCString());
 
 
@@ -1021,7 +1022,7 @@ ValueObject::DumpValueObject
 
         if (err_cstr)
         {
-            s.Printf (" %s\n", err_cstr);
+            s.Printf (" error: %s\n", err_cstr);
         }
         else
         {

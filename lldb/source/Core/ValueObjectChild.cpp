@@ -146,13 +146,27 @@ ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
             {
                 uint32_t offset = 0;
                 m_value.GetScalar() = parent->GetDataExtractor().GetPointer(&offset);
-                // For pointers, m_byte_offset should only ever be set if we
-                // ValueObject::GetSyntheticArrayMemberFromPointer() was called
-                if (ClangASTContext::IsPointerType (parent->GetClangType()) && m_byte_offset)
-                    m_value.GetScalar() += m_byte_offset;
-                if (value_type == Value::eValueTypeScalar ||
-                    value_type == Value::eValueTypeFileAddress)
-                    m_value.SetValueType (Value::eValueTypeLoadAddress);
+
+                lldb::addr_t addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+
+                if (addr == LLDB_INVALID_ADDRESS)
+                {
+                    m_error.SetErrorString ("parent address is invalid.");
+                }
+                else if (addr == 0)
+                {
+                    m_error.SetErrorString ("parent is NULL");
+                }
+                else
+                {
+                    // For pointers, m_byte_offset should only ever be set if we
+                    // ValueObject::GetSyntheticArrayMemberFromPointer() was called
+                    if (ClangASTContext::IsPointerType (parent->GetClangType()) && m_byte_offset)
+                        m_value.GetScalar() += m_byte_offset;
+                    if (value_type == Value::eValueTypeScalar ||
+                        value_type == Value::eValueTypeFileAddress)
+                        m_value.SetValueType (Value::eValueTypeLoadAddress);
+                }
             }
             else
             {
@@ -163,14 +177,20 @@ ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
                 case Value::eValueTypeHostAddress:
                     {
                         lldb::addr_t addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-                        if (addr == LLDB_INVALID_ADDRESS || addr == 0)
+                        if (addr == LLDB_INVALID_ADDRESS)
                         {
-                            m_error.SetErrorStringWithFormat("Parent address is invalid: 0x%llx.\n", addr);
-                            break;
+                            m_error.SetErrorString ("parent address is invalid.");
                         }
-                        // Set this object's scalar value to the address of its
-                        // value be adding its byte offset to the parent address
-                        m_value.GetScalar() += GetByteOffset();
+                        else if (addr == 0)
+                        {
+                            m_error.SetErrorString ("parent is NULL");
+                        }
+                        else
+                        {
+                            // Set this object's scalar value to the address of its
+                            // value be adding its byte offset to the parent address
+                            m_value.GetScalar() += GetByteOffset();
+                        }
                     }
                     break;
 

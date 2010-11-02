@@ -498,7 +498,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
     switch (m_value_type)
     {
     default:
-        error.SetErrorStringWithFormat("Invalid value type %i.\n", m_value_type);
+        error.SetErrorStringWithFormat("invalid value type %i", m_value_type);
         break;
 
     case eValueTypeScalar:
@@ -506,17 +506,17 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
         data.SetAddressByteSize(sizeof(void *));
         if (m_value.GetData (data))
             return error;   // Success;
-        error.SetErrorStringWithFormat("Extracting data from value failed.\n");
+        error.SetErrorStringWithFormat("extracting data from value failed");
         break;
 
     case eValueTypeLoadAddress:
         if (exe_ctx == NULL)
         {
-            error.SetErrorString ("Can't read memory (no execution context).");
+            error.SetErrorString ("can't read memory (no execution context)");
         }
         else if (exe_ctx->process == NULL)
         {
-            error.SetErrorString ("Can't read memory (invalid process).");
+            error.SetErrorString ("can't read memory (invalid process)");
         }
         else
         {
@@ -564,7 +564,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
                     }
                     else
                     {
-                        error.SetErrorStringWithFormat ("Unable to resolve the module for file address 0x%llx for variable '%s'.\n", file_addr, variable->GetName().AsCString(""));
+                        error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx for variable '%s'", file_addr, variable->GetName().AsCString(""));
                     }
                 }
                 else
@@ -576,7 +576,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
             {
                 // Can't convert a file address to anything valid without more
                 // context (which Module it came from)
-                error.SetErrorString ("Can't read memory from file address without more context.");
+                error.SetErrorString ("can't read memory from file address without more context");
             }
         }
         break;
@@ -595,7 +595,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
 
     if (address == LLDB_INVALID_ADDRESS)
     {
-        error.SetErrorStringWithFormat ("Invalid %s address.\n", address_type == eAddressTypeHost ? "host" : "load");
+        error.SetErrorStringWithFormat ("invalid %s address", address_type == eAddressTypeHost ? "host" : "load");
         return error;
     }
 
@@ -628,16 +628,18 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
             {
                 if (error.Success())
                     error.SetErrorStringWithFormat("read %u bytes of memory from 0x%llx failed", (uint64_t)address, byte_size);
+                else
+                    error.SetErrorStringWithFormat("read memory from 0x%llx failed", (uint64_t)address);
             }
         }
         else
         {
-            error.SetErrorStringWithFormat ("Unsupported lldb::AddressType value (%i).\n", address_type);
+            error.SetErrorStringWithFormat ("unsupported lldb::AddressType value (%i)", address_type);
         }
     }
     else
     {
-        error.SetErrorStringWithFormat ("Out of memory.\n");
+        error.SetErrorStringWithFormat ("out of memory");
     }
 
     return error;
