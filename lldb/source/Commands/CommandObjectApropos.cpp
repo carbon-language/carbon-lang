@@ -73,7 +73,7 @@ CommandObjectApropos::Execute
             m_interpreter.FindCommandsForApropos (search_word, commands_found, commands_help);
             if (commands_found.GetSize() == 0)
             {
-                result.AppendMessageWithFormat ("No commands found pertaining to '%s'. Try 'help' to see a complete list of debugger commands.", search_word);
+                result.AppendMessageWithFormat ("No commands found pertaining to '%s'. Try 'help' to see a complete list of debugger commands.\n", search_word);
             }
             else
             {
