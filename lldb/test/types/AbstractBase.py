@@ -7,8 +7,9 @@ import re
 import lldb
 from lldbtest import *
 
-def Msg(var, val):
-    return "'frame variable -t %s' matches the output (from compiled code): %s" % (var, val)
+def Msg(var, val, using_frame_variable):
+    return "'%s %s' matches the output (from compiled code): %s" % (
+        'frame variable -t' if using_frame_variable else 'expression' ,var, val)
 
 class GenericTester(TestBase):
 
@@ -33,35 +34,10 @@ class GenericTester(TestBase):
         #
         #     variable = 'value'
         #
-        # Filter out the following lines, for the time being:
-        #
-        #     'a_ref = ...'
-        #     'a_class_ref.m_a = ...'
-        #     'a_class_ref.m_b = ...'
-        #     'a_struct_ref.a = ...'
-        #     'a_struct_ref.b = ...'
-        #     'a_union_zero_ref.a = ...'
-        #     'a_union_nonzero_ref.u.a = ...'
-        #
-        # rdar://problem/8471016 frame variable a_ref should display the referenced value as well
-        # rdar://problem/8470987 frame variable a_class_ref.m_a does not work
-        # notnow = set(['a_ref',
-        #               'a_class_ref.m_a', 'a_class_ref.m_b',
-        #               'a_struct_ref.a', 'a_struct_ref.b',
-        #               'a_union_zero_ref.a', 'a_union_nonzero_ref.u.a'])
-        #
-        # rdar://problem/8620735 test/types: frame variable -t a_class_ref.m_b fails
-        # The reference type related failures that remain are:
-        # notnow = set(['a_class_ref.m_b',
-        #               'a_struct_ref.b',
-        #               'a_union_nonzero_ref.u.a'])
-
         for line in go.split(os.linesep):
             match = self.pattern.search(line)
             if match:
                 var, val = match.group(1), match.group(2)
-                # if var in notnow:
-                #     continue
                 gl.append((var, val))
         #print "golden list:", gl
 
@@ -101,7 +77,7 @@ class GenericTester(TestBase):
 
             # The (var, val) pair must match, too.
             nv = ("%s = '%s'" if quotedDisplay else "%s = %s") % (var, val)
-            self.expect(output, Msg(var, val), exe=False,
+            self.expect(output, Msg(var, val, True), exe=False,
                 substrs = [nv])
 
     def generic_type_expr_tester(self, atoms, quotedDisplay=False):
@@ -137,7 +113,7 @@ class GenericTester(TestBase):
         # Now iterate through the golden list, comparing against the output from
         # 'expr var'.
         for var, val in gl:
-            self.runCmd("expr %s" % var)
+            self.runCmd("expression %s" % var)
             output = self.res.GetOutput()
             
             # The input type is in a canonical form as a set named atoms.
@@ -161,5 +137,5 @@ class GenericTester(TestBase):
 
             # The val part must match, too.
             valPart = ("'%s'" if quotedDisplay else "%s") % val
-            self.expect(output, Msg(var, val), exe=False,
+            self.expect(output, Msg(var, val, False), exe=False,
                 substrs = [valPart])
