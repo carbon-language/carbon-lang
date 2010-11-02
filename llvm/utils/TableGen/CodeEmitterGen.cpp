@@ -49,7 +49,6 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
   }
 }
 
-
 // If the VarBitInit at position 'bit' matches the specified variable then
 // return the variable bit position.  Otherwise return -1.
 int CodeEmitterGen::getVariableBit(const std::string &VarName,
@@ -64,7 +63,6 @@ int CodeEmitterGen::getVariableBit(const std::string &VarName,
 
   return -1;
 }
-
 
 void CodeEmitterGen::run(raw_ostream &o) {
   CodeGenTarget Target;
@@ -216,7 +214,6 @@ void CodeEmitterGen::run(raw_ostream &o) {
     std::vector<std::string> &InstList = CaseMap[Case];
     InstList.push_back(InstName);
   }
-
 
   // Emit initial function code
   o << "  const unsigned opcode = MI.getOpcode();\n"
