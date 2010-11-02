@@ -172,6 +172,8 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
                              CGM.EmitNullConstant(D.getType()), Name, 0,
                              D.isThreadSpecified(), Ty.getAddressSpace());
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
+  if (Linkage != llvm::GlobalValue::InternalLinkage)
+    GV->setVisibility(CurFn->getVisibility());
   return GV;
 }
 
@@ -209,8 +211,10 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
     GV = new llvm::GlobalVariable(CGM.getModule(), Init->getType(),
                                   OldGV->isConstant(),
                                   OldGV->getLinkage(), Init, "",
-                                  0, D.isThreadSpecified(),
+                                  /*InsertBefore*/ OldGV,
+                                  D.isThreadSpecified(),
                                   D.getType().getAddressSpace());
+    GV->setVisibility(OldGV->getVisibility());
     
     // Steal the name of the old global
     GV->takeName(OldGV);

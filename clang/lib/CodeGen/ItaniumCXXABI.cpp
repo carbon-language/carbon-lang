@@ -1092,6 +1092,9 @@ void ItaniumCXXABI::EmitStaticLocalInit(CodeGenFunction &CGF,
   // Create the guard variable.
   llvm::SmallString<256> GuardVName;
   getMangleContext().mangleItaniumGuardVariable(&D, GuardVName);
+
+  // FIXME: we should just absorb linkage and visibility from the
+  // variable, but that's not always set up properly just yet.
   llvm::GlobalValue::LinkageTypes Linkage = GV->getLinkage();
   if (D.isStaticDataMember() &&
       D.getInstantiatedFromStaticDataMember())
@@ -1102,6 +1105,7 @@ void ItaniumCXXABI::EmitStaticLocalInit(CodeGenFunction &CGF,
                              false, Linkage,
                              llvm::ConstantInt::get(GuardTy, 0),
                              GuardVName.str());
+  GuardVariable->setVisibility(GV->getVisibility());
 
   // Test whether the variable has completed initialization.
   llvm::Value *IsInitialized;

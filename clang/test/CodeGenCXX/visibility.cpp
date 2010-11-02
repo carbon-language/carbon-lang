@@ -22,6 +22,10 @@
 // CHECK-HIDDEN: @_ZN6Test143varE = external global
 // CHECK: @_ZN6Test154TempINS_1AEE5Inner6bufferE = external global [0 x i8]
 // CHECK-HIDDEN: @_ZN6Test154TempINS_1AEE5Inner6bufferE = external global [0 x i8]
+// CHECK: @_ZZN6Test193fooIiEEvvE1a = linkonce_odr global
+// CHECK: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr global i64
+// CHECK-HIDDEN: @_ZZN6Test193fooIiEEvvE1a = linkonce_odr hidden global
+// CHECK-HIDDEN: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr hidden global i64
 // CHECK-HIDDEN: @_ZTTN6Test161AIcEE = external constant
 // CHECK-HIDDEN: @_ZTVN6Test161AIcEE = external constant
 // CHECK: @_ZTVN5Test63fooE = weak_odr hidden constant 
@@ -338,4 +342,17 @@ namespace Test18 {
   // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE1B3fooEv()
   // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE1B3barEv()
   // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE1B3bazEv()
+}
+
+namespace Test19 {
+  struct A { A(); ~A(); };
+
+  // Tested at top of file.
+  template <class T> void foo() {
+    static A a;
+  }
+
+  void test() {
+    foo<int>();
+  }
 }

@@ -1344,8 +1344,15 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
     Entry = NewFn;
   }
 
+  // We need to set linkage and visibility on the function before
+  // generating code for it because various parts of IR generation
+  // want to propagate this information down (e.g. to local static
+  // declarations).
   llvm::Function *Fn = cast<llvm::Function>(Entry);
   setFunctionLinkage(D, Fn);
+
+  // FIXME: this is redundant with part of SetFunctionDefinitionAttributes
+  setGlobalVisibility(Fn, D, /*ForDef*/ true);
 
   CodeGenFunction(*this).GenerateCode(D, Fn);
 
