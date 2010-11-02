@@ -101,6 +101,10 @@ public:
     if (Registers.empty()) ReadRegisters();
     return Registers;
   }
+  
+  /// getRegisterByName - If there is a register with the specific AsmName,
+  /// return it.
+  const CodeGenRegister *getRegisterByName(StringRef Name) const;
 
   const std::vector<Record*> &getSubRegIndices() const {
     if (SubRegIndices.empty()) ReadSubRegIndices();

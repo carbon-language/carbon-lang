@@ -190,6 +190,19 @@ void CodeGenTarget::ReadRegisterClasses() const {
   RegisterClasses.assign(RegClasses.begin(), RegClasses.end());
 }
 
+/// getRegisterByName - If there is a register with the specific AsmName,
+/// return it.
+const CodeGenRegister *CodeGenTarget::getRegisterByName(StringRef Name) const {
+  const std::vector<CodeGenRegister> &Regs = getRegisters();
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister &Reg = Regs[i];
+    if (Reg.TheDef->getValueAsString("AsmName") == Name)
+      return &Reg;
+  }
+  
+  return 0;
+}
+
 std::vector<MVT::SimpleValueType> CodeGenTarget::
 getRegisterVTs(Record *R) const {
   std::vector<MVT::SimpleValueType> Result;

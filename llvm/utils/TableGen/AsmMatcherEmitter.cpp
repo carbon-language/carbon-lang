@@ -254,7 +254,9 @@ struct MatchableInfo {
     /// The unique class instance this operand should match.
     ClassInfo *Class;
 
-    /// The original operand this corresponds to, if any.
+    /// The original operand this corresponds to.  This is unset for singleton
+    /// registers and tokens, because they don't have a list in the ins/outs
+    /// list.  If an operand is tied ($a=$b), this refers to source operand: $b.
     const CGIOperandList::OperandInfo *OperandInfo;
     
     explicit Operand(StringRef T) : Token(T), Class(0), OperandInfo(0) {}
@@ -601,17 +603,6 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
 
 
 
-/// getRegisterRecord - Get the register record for \arg name, or 0.
-static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
-  for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Target.getRegisters()[i];
-    if (Name == Reg.TheDef->getValueAsString("AsmName"))
-      return Reg.TheDef;
-  }
-  
-  return 0;
-}
-
 bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
   // Reject matchables with no .s string.
   if (AsmString.empty())
@@ -676,14 +667,16 @@ getSingletonRegisterForAsmOperand(unsigned i, const AsmMatcherInfo &Info) const{
     return 0;
   
   StringRef RegName = Tok.substr(Info.RegisterPrefix.size());
-  if (Record *Rec = getRegisterRecord(Info.Target, RegName))
-    return Rec;
+  if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(RegName))
+    return Reg->TheDef;
   
   // If there is no register prefix (i.e. "%" in "%eax"), then this may
   // be some random non-register token, just ignore it.
   if (Info.RegisterPrefix.empty())
     return 0;
     
+  // Otherwise, we have something invalid prefixed with the register prefix,
+  // such as %foo.
   std::string Err = "unable to find register for '" + RegName.str() +
   "' (which matches register prefix)";
   throw TGError(TheDef->getLoc(), Err);
@@ -730,38 +723,31 @@ ClassInfo *
 AsmMatcherInfo::getOperandClass(StringRef Token,
                                 const CGIOperandList::OperandInfo &OI) {
   if (OI.Rec->isSubClassOf("RegisterClass")) {
-    ClassInfo *CI = RegisterClassClasses[OI.Rec];
-
-    if (!CI)
-      throw TGError(OI.Rec->getLoc(), "register class has no class info!");
-
-    return CI;
+    if (ClassInfo *CI = RegisterClassClasses[OI.Rec])
+      return CI;
+    throw TGError(OI.Rec->getLoc(), "register class has no class info!");
   }
 
   assert(OI.Rec->isSubClassOf("Operand") && "Unexpected operand!");
   Record *MatchClass = OI.Rec->getValueAsDef("ParserMatchClass");
-  ClassInfo *CI = AsmOperandClasses[MatchClass];
+  if (ClassInfo *CI = AsmOperandClasses[MatchClass])
+    return CI;
 
-  if (!CI)
-    throw TGError(OI.Rec->getLoc(), "operand has no match class!");
-
-  return CI;
+  throw TGError(OI.Rec->getLoc(), "operand has no match class!");
 }
 
 void AsmMatcherInfo::
 BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
-  std::vector<CodeGenRegisterClass> RegisterClasses;
-  std::vector<CodeGenRegister> Registers;
-
-  RegisterClasses = Target.getRegisterClasses();
-  Registers = Target.getRegisters();
+  const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
+  const std::vector<CodeGenRegisterClass> &RegClassList =
+    Target.getRegisterClasses();
 
   // The register sets used for matching.
   std::set< std::set<Record*> > RegisterSets;
 
   // Gather the defined sets.
-  for (std::vector<CodeGenRegisterClass>::iterator it = RegisterClasses.begin(),
-         ie = RegisterClasses.end(); it != ie; ++it)
+  for (std::vector<CodeGenRegisterClass>::const_iterator it =
+       RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it)
     RegisterSets.insert(std::set<Record*>(it->Elements.begin(),
                                           it->Elements.end()));
 
@@ -776,9 +762,9 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   // a unique register set class), and build the mapping of registers to the set
   // they should classify to.
   std::map<Record*, std::set<Record*> > RegisterMap;
-  for (std::vector<CodeGenRegister>::iterator it = Registers.begin(),
+  for (std::vector<CodeGenRegister>::const_iterator it = Registers.begin(),
          ie = Registers.end(); it != ie; ++it) {
-    CodeGenRegister &CGR = *it;
+    const CodeGenRegister &CGR = *it;
     // Compute the intersection of all sets containing this register.
     std::set<Record*> ContainingSet;
 
@@ -789,14 +775,14 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
 
       if (ContainingSet.empty()) {
         ContainingSet = *it;
-      } else {
-        std::set<Record*> Tmp;
-        std::swap(Tmp, ContainingSet);
-        std::insert_iterator< std::set<Record*> > II(ContainingSet,
-                                                     ContainingSet.begin());
-        std::set_intersection(Tmp.begin(), Tmp.end(), it->begin(), it->end(),
-                              II);
+        continue;
       }
+      
+      std::set<Record*> Tmp;
+      std::swap(Tmp, ContainingSet);
+      std::insert_iterator< std::set<Record*> > II(ContainingSet,
+                                                   ContainingSet.begin());
+      std::set_intersection(Tmp.begin(), Tmp.end(), it->begin(), it->end(), II);
     }
 
     if (!ContainingSet.empty()) {
@@ -835,8 +821,8 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   }
 
   // Name the register classes which correspond to a user defined RegisterClass.
-  for (std::vector<CodeGenRegisterClass>::iterator it = RegisterClasses.begin(),
-         ie = RegisterClasses.end(); it != ie; ++it) {
+  for (std::vector<CodeGenRegisterClass>::const_iterator
+       it = RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it) {
     ClassInfo *CI = RegisterSetClasses[std::set<Record*>(it->Elements.begin(),
                                                          it->Elements.end())];
     if (CI->ValueName.empty()) {
@@ -852,13 +838,13 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   // Populate the map for individual registers.
   for (std::map<Record*, std::set<Record*> >::iterator it = RegisterMap.begin(),
          ie = RegisterMap.end(); it != ie; ++it)
-    this->RegisterClasses[it->first] = RegisterSetClasses[it->second];
+    RegisterClasses[it->first] = RegisterSetClasses[it->second];
 
   // Name the register classes which correspond to singleton registers.
   for (SmallPtrSet<Record*, 16>::iterator it = SingletonRegisters.begin(),
          ie = SingletonRegisters.end(); it != ie; ++it) {
     Record *Rec = *it;
-    ClassInfo *CI = this->RegisterClasses[Rec];
+    ClassInfo *CI = RegisterClasses[Rec];
     assert(CI && "Missing singleton register class info!");
 
     if (CI->ValueName.empty()) {
@@ -1135,9 +1121,9 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       const CGIOperandList::OperandInfo &OpInfo = II.OperandList[i];
       for (unsigned j = 0, e = OpInfo.Constraints.size(); j != e; ++j) {
         const CGIOperandList::ConstraintInfo &CI = OpInfo.Constraints[j];
-        if (CI.isTied())
-          TiedOperands.push_back(std::make_pair(OpInfo.MIOperandNo + j,
-                                                CI.getTiedOperand()));
+        if (!CI.isTied()) continue;
+        TiedOperands.push_back(std::make_pair(OpInfo.MIOperandNo,
+                                              CI.getTiedOperand()));
       }
     }
 
@@ -1147,8 +1133,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
     unsigned NumMIOperands = 0;
     for (unsigned i = 0, e = II.OperandList.size(); i != e; ++i) {
       const CGIOperandList::OperandInfo &OI = II.OperandList[i];
-      NumMIOperands = std::max(NumMIOperands,
-                               OI.MIOperandNo + OI.MINumOperands);
+      NumMIOperands = std::max(NumMIOperands, OI.MIOperandNo+OI.MINumOperands);
     }
 
     // Build the conversion function signature.
