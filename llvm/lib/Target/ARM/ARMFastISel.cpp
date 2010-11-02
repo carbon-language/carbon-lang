@@ -889,7 +889,7 @@ static ARMCC::CondCodes getComparePred(CmpInst::Predicate Pred) {
     case CmpInst::FCMP_ONE:
     case CmpInst::FCMP_UEQ:
     default:
-      assert(false && "Unhandled CmpInst::Predicate!");
+      // AL is our "false" for now. The other two need more compares.
       return ARMCC::AL;
     case CmpInst::ICMP_EQ:
     case CmpInst::FCMP_OEQ:
