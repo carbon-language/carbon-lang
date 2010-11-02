@@ -995,12 +995,15 @@ def VST2b32_UPD : VST2DWB<0b1001, {1,0,?,?}, "32">;
 //   VST3     : Vector Store (multiple 3-element structures)
 class VST3D<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST3,
-          "vst3", Dt, "\\{$src1, $src2, $src3\\}, $addr", "", []>;
+          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2, DPR:$src3), IIC_VST3,
+          "vst3", Dt, "\\{$Vd, $src2, $src3\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{4} = Rn{4};
+}
 
-def  VST3d8   : VST3D<0b0100, 0b0000, "8">;
-def  VST3d16  : VST3D<0b0100, 0b0100, "16">;
-def  VST3d32  : VST3D<0b0100, 0b1000, "32">;
+def  VST3d8   : VST3D<0b0100, {0,0,0,?}, "8">;
+def  VST3d16  : VST3D<0b0100, {0,1,0,?}, "16">;
+def  VST3d32  : VST3D<0b0100, {1,0,0,?}, "32">;
 
 def  VST3d8Pseudo  : VSTQQPseudo<IIC_VST3>;
 def  VST3d16Pseudo : VSTQQPseudo<IIC_VST3>;
@@ -1009,26 +1012,28 @@ def  VST3d32Pseudo : VSTQQPseudo<IIC_VST3>;
 // ...with address register writeback:
 class VST3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset,
-           DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST3u,
-          "vst3", Dt, "\\{$src1, $src2, $src3\\}, $addr$offset",
-          "$addr.addr = $wb", []>;
+          (ins addrmode6:$Rn, am6offset:$Rm,
+           DPR:$Vd, DPR:$src2, DPR:$src3), IIC_VST3u,
+          "vst3", Dt, "\\{$Vd, $src2, $src3\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
+  let Inst{4} = Rn{4};
+}
 
-def VST3d8_UPD  : VST3DWB<0b0100, 0b0000, "8">;
-def VST3d16_UPD : VST3DWB<0b0100, 0b0100, "16">;
-def VST3d32_UPD : VST3DWB<0b0100, 0b1000, "32">;
+def VST3d8_UPD  : VST3DWB<0b0100, {0,0,0,?}, "8">;
+def VST3d16_UPD : VST3DWB<0b0100, {0,1,0,?}, "16">;
+def VST3d32_UPD : VST3DWB<0b0100, {1,0,0,?}, "32">;
 
 def VST3d8Pseudo_UPD  : VSTQQWBPseudo<IIC_VST3u>;
 def VST3d16Pseudo_UPD : VSTQQWBPseudo<IIC_VST3u>;
 def VST3d32Pseudo_UPD : VSTQQWBPseudo<IIC_VST3u>;
 
 // ...with double-spaced registers (non-updating versions for disassembly only):
-def VST3q8      : VST3D<0b0101, 0b0000, "8">;
-def VST3q16     : VST3D<0b0101, 0b0100, "16">;
-def VST3q32     : VST3D<0b0101, 0b1000, "32">;
-def VST3q8_UPD  : VST3DWB<0b0101, 0b0000, "8">;
-def VST3q16_UPD : VST3DWB<0b0101, 0b0100, "16">;
-def VST3q32_UPD : VST3DWB<0b0101, 0b1000, "32">;
+def VST3q8      : VST3D<0b0101, {0,0,0,?}, "8">;
+def VST3q16     : VST3D<0b0101, {0,1,0,?}, "16">;
+def VST3q32     : VST3D<0b0101, {1,0,0,?}, "32">;
+def VST3q8_UPD  : VST3DWB<0b0101, {0,0,0,?}, "8">;
+def VST3q16_UPD : VST3DWB<0b0101, {0,1,0,?}, "16">;
+def VST3q32_UPD : VST3DWB<0b0101, {1,0,0,?}, "32">;
 
 def VST3q8Pseudo_UPD  : VSTQQQQWBPseudo<IIC_VST3u>;
 def VST3q16Pseudo_UPD : VSTQQQQWBPseudo<IIC_VST3u>;
@@ -1042,13 +1047,16 @@ def VST3q32oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST3u>;
 //   VST4     : Vector Store (multiple 4-element structures)
 class VST4D<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
-          IIC_VST4, "vst4", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
-          "", []>;
+          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4),
+          IIC_VST4, "vst4", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn",
+          "", []> {
+  let Rm = 0b1111;
+  let Inst{5-4} = Rn{5-4};
+}
 
-def  VST4d8   : VST4D<0b0000, 0b0000, "8">;
-def  VST4d16  : VST4D<0b0000, 0b0100, "16">;
-def  VST4d32  : VST4D<0b0000, 0b1000, "32">;
+def  VST4d8   : VST4D<0b0000, {0,0,?,?}, "8">;
+def  VST4d16  : VST4D<0b0000, {0,1,?,?}, "16">;
+def  VST4d32  : VST4D<0b0000, {1,0,?,?}, "32">;
 
 def  VST4d8Pseudo  : VSTQQPseudo<IIC_VST4>;
 def  VST4d16Pseudo : VSTQQPseudo<IIC_VST4>;
@@ -1057,26 +1065,28 @@ def  VST4d32Pseudo : VSTQQPseudo<IIC_VST4>;
 // ...with address register writeback:
 class VST4DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset,
-           DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST4u,
-           "vst4", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr$offset",
-          "$addr.addr = $wb", []>;
+          (ins addrmode6:$Rn, am6offset:$Rm,
+           DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST4u,
+           "vst4", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
+  let Inst{5-4} = Rn{5-4};
+}
 
-def VST4d8_UPD  : VST4DWB<0b0000, 0b0000, "8">;
-def VST4d16_UPD : VST4DWB<0b0000, 0b0100, "16">;
-def VST4d32_UPD : VST4DWB<0b0000, 0b1000, "32">;
+def VST4d8_UPD  : VST4DWB<0b0000, {0,0,?,?}, "8">;
+def VST4d16_UPD : VST4DWB<0b0000, {0,1,?,?}, "16">;
+def VST4d32_UPD : VST4DWB<0b0000, {1,0,?,?}, "32">;
 
 def VST4d8Pseudo_UPD  : VSTQQWBPseudo<IIC_VST4u>;
 def VST4d16Pseudo_UPD : VSTQQWBPseudo<IIC_VST4u>;
 def VST4d32Pseudo_UPD : VSTQQWBPseudo<IIC_VST4u>;
 
 // ...with double-spaced registers (non-updating versions for disassembly only):
-def VST4q8      : VST4D<0b0001, 0b0000, "8">;
-def VST4q16     : VST4D<0b0001, 0b0100, "16">;
-def VST4q32     : VST4D<0b0001, 0b1000, "32">;
-def VST4q8_UPD  : VST4DWB<0b0001, 0b0000, "8">;
-def VST4q16_UPD : VST4DWB<0b0001, 0b0100, "16">;
-def VST4q32_UPD : VST4DWB<0b0001, 0b1000, "32">;
+def VST4q8      : VST4D<0b0001, {0,0,?,?}, "8">;
+def VST4q16     : VST4D<0b0001, {0,1,?,?}, "16">;
+def VST4q32     : VST4D<0b0001, {1,0,?,?}, "32">;
+def VST4q8_UPD  : VST4DWB<0b0001, {0,0,?,?}, "8">;
+def VST4q16_UPD : VST4DWB<0b0001, {0,1,?,?}, "16">;
+def VST4q32_UPD : VST4DWB<0b0001, {1,0,?,?}, "32">;
 
 def VST4q8Pseudo_UPD  : VSTQQQQWBPseudo<IIC_VST4u>;
 def VST4q16Pseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
