@@ -1655,9 +1655,16 @@ Debugger::SettingsController::global_settings_table[] =
     MODULE_WITH_FUNC\
     FILE_AND_LINE\
     "{, stop reason = ${thread.stop-reason}}"\
-    "{, name = ${thread.name}}"\
-    "{, queue = ${thread.queue}}"\
     "\\n"
+
+//#define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id}"\
+//    "{, ${frame.pc}}"\
+//    MODULE_WITH_FUNC\
+//    FILE_AND_LINE\
+//    "{, stop reason = ${thread.stop-reason}}"\
+//    "{, name = ${thread.name}}"\
+//    "{, queue = ${thread.queue}}"\
+//    "\\n"
 
 #define DEFAULT_FRAME_FORMAT "frame #${frame.index}: ${frame.pc}"\
     MODULE_WITH_FUNC\
