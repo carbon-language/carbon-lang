@@ -3980,12 +3980,11 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
   if (!Reg) {
     // Check if ValueMap has reg number.
     DenseMap<const Value *, unsigned>::iterator VMI = FuncInfo.ValueMap.find(V);
-    if (VMI == FuncInfo.ValueMap.end())
-      return false;
-    Reg = VMI->second;
+    if (VMI != FuncInfo.ValueMap.end())
+      Reg = VMI->second;
   }
-
-  if (!Reg && N.getNode())
+  
+  if (!Reg && N.getNode()) {
     // Check if frame index is available.
     if (LoadSDNode *LNode = dyn_cast<LoadSDNode>(N.getNode()))
       if (FrameIndexSDNode *FINode = 
@@ -3993,6 +3992,10 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
         Reg = TRI->getFrameRegister(MF);
         Offset = FINode->getIndex();
       }
+  }
+
+  if (!Reg)
+    return false;
 
   MachineInstrBuilder MIB = BuildMI(MF, getCurDebugLoc(),
                                     TII->get(TargetOpcode::DBG_VALUE))
