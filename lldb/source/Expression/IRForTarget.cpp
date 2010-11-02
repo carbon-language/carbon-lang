@@ -1103,6 +1103,9 @@ IRForTarget::replaceVariables(Module &M, Function &F)
             UnfoldConstant(constant, bit_cast, first_entry_instruction);
         else
             value->replaceAllUsesWith(bit_cast);
+        
+        if (GlobalVariable *var = dyn_cast<GlobalVariable>(value))
+            var->eraseFromParent();
     }
     
     if (log)
