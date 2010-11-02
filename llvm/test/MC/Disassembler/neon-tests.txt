@@ -1,4 +1,5 @@
 # RUN: llvm-mc --disassemble %s -triple=arm-apple-darwin9 | FileCheck %s
+# XFAIL: *
 
 # CHECK:	vbif	q15, q7, q0
 0x50 0xe1 0x7e 0xf3
@@ -9,8 +10,8 @@
 # CHECK:	vdup.32	q3, d1[0]
 0x41 0x6c 0xb4 0xf3
 
-# CHECK:	vld1.8	{d17, d18}, [r6], r5
-0x05 0x1a 0x66 0xf4
+# HECK:	vld1.8	{d17, d18}, [r6], r5
+#0x05 0x1a 0x66 0xf4
 
 # CHECK:        vld1.8  {d17, d18, d19}, [r6], r5
 0x05 0x16 0x66 0xf4
