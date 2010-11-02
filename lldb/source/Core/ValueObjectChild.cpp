@@ -159,10 +159,7 @@ ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
                 }
                 else
                 {
-                    // For pointers, m_byte_offset should only ever be set if we
-                    // ValueObject::GetSyntheticArrayMemberFromPointer() was called
-                    if (ClangASTContext::IsPointerType (parent->GetClangType()) && m_byte_offset)
-                        m_value.GetScalar() += m_byte_offset;
+                    m_value.GetScalar() += m_byte_offset;
                     if (value_type == Value::eValueTypeScalar ||
                         value_type == Value::eValueTypeFileAddress)
                         m_value.SetValueType (Value::eValueTypeLoadAddress);
