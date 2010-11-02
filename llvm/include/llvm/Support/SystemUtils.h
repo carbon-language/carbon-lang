@@ -30,10 +30,10 @@ bool CheckBitcodeOutputToConsole(
   bool print_warning = true     ///< Control whether warnings are printed
 );
 
-/// FindExecutable - Find a named executable, giving the argv[0] of program
-/// being executed. This allows us to find another LLVM tool if it is built in
-/// the same directory.  If the executable cannot be found, return an
-/// empty string.
+/// FindExecutable - Find a named executable, given the value of argv[0] of the
+/// program being executed and the address of main itself. This allows us to
+/// find another LLVM tool if it is built in the same directory. An empty string
+/// is returned on error.
 /// @brief Find a named executable.
 sys::Path FindExecutable(const std::string &ExeName,
                          const char *Argv0, void *MainAddr);

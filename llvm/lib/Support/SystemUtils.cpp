@@ -32,11 +32,10 @@ bool llvm::CheckBitcodeOutputToConsole(raw_ostream &stream_to_check,
   return false;
 }
 
-/// FindExecutable - Find a named executable, giving the argv[0] of program
-/// being executed. This allows us to find another LLVM tool if it is built in
-/// the same directory.  If the executable cannot be found, return an
-/// empty string.
-/// @brief Find a named executable.
+/// FindExecutable - Find a named executable, given the value of argv[0] of the
+/// program being executed and the address of main itself. This allows us to
+/// find another LLVM tool if it is built in the same directory. An empty string
+/// is returned on error.
 #undef FindExecutable   // needed on windows :(
 sys::Path llvm::FindExecutable(const std::string &ExeName,
                                const char *Argv0, void *MainAddr) {
@@ -45,19 +44,10 @@ sys::Path llvm::FindExecutable(const std::string &ExeName,
   // is a relative path to the executable itself.
   sys::Path Result = sys::Path::GetMainExecutable(Argv0, MainAddr);
   Result.eraseComponent();
+
   if (!Result.isEmpty()) {
     Result.appendComponent(ExeName);
-    if (Result.canExecute())
-      return Result;
-    // If the path is absolute (and it usually is), call FindProgramByName to
-    // allow it to try platform-specific logic, such as appending a .exe suffix
-    // on Windows. Don't do this if we somehow have a relative path, because
-    // we don't want to go searching the PATH and accidentally find an unrelated
-    // version of the program.
-    if (Result.isAbsolute()) {
-      Result = sys::Program::FindProgramByName(Result.str());
-      return Result;
-    }
+    Result.appendSuffix(sys::Path::GetEXESuffix());
   }
 
   return Result;
