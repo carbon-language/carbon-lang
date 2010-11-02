@@ -868,7 +868,8 @@ bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   for (DeclContext::decl_iterator I = D->decls_begin(), E = D->decls_end();
        I!=E; ++I) {
     Decl *subDecl = *I;
-    if (!subDecl || subDecl->getLexicalDeclContext() != D)
+    if (!subDecl || subDecl->getLexicalDeclContext() != D ||
+        subDecl->getLocStart().isInvalid())
       continue;
     DeclsInContainer.push_back(subDecl);
   }
