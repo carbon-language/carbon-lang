@@ -318,6 +318,9 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
   case MCFragment::FT_Inst:
     return cast<MCInstFragment>(F).getInstSize();
 
+  case MCFragment::FT_LEB:
+    return cast<MCLEBFragment>(F).getSize();
+
   case MCFragment::FT_Align: {
     const MCAlignFragment &AF = cast<MCAlignFragment>(F);
 
@@ -513,6 +516,23 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
   case MCFragment::FT_Inst:
     llvm_unreachable("unexpected inst fragment after lowering");
     break;
+
+  case MCFragment::FT_LEB: {
+    MCLEBFragment &LF = cast<MCLEBFragment>(F);
+
+    // FIXME: It is probably better if we don't call EvaluateAsAbsolute in
+    // here.
+    int64_t Value;
+    LF.getValue().EvaluateAsAbsolute(Value, &Layout);
+    SmallString<32> Tmp;
+    raw_svector_ostream OSE(Tmp);
+    if (LF.isSigned())
+      MCObjectWriter::EncodeSLEB128(Value, OSE);
+    else
+      MCObjectWriter::EncodeULEB128(Value, OSE);
+    OW->WriteBytes(OSE.str());
+    break;
+  }
 
   case MCFragment::FT_Org: {
     MCOrgFragment &OF = cast<MCOrgFragment>(F);
@@ -781,6 +801,63 @@ bool MCAssembler::FragmentNeedsRelaxation(const MCObjectWriter &Writer,
   return false;
 }
 
+bool MCAssembler::RelaxInstruction(const MCObjectWriter &Writer,
+                                   MCAsmLayout &Layout,
+                                   MCInstFragment &IF) {
+  if (!FragmentNeedsRelaxation(Writer, &IF, Layout))
+    return false;
+
+  ++stats::RelaxedInstructions;
+
+  // FIXME-PERF: We could immediately lower out instructions if we can tell
+  // they are fully resolved, to avoid retesting on later passes.
+
+  // Relax the fragment.
+
+  MCInst Relaxed;
+  getBackend().RelaxInstruction(IF.getInst(), Relaxed);
+
+  // Encode the new instruction.
+  //
+  // FIXME-PERF: If it matters, we could let the target do this. It can
+  // probably do so more efficiently in many cases.
+  SmallVector<MCFixup, 4> Fixups;
+  SmallString<256> Code;
+  raw_svector_ostream VecOS(Code);
+  getEmitter().EncodeInstruction(Relaxed, VecOS, Fixups);
+  VecOS.flush();
+
+  // Update the instruction fragment.
+  int SlideAmount = Code.size() - IF.getInstSize();
+  IF.setInst(Relaxed);
+  IF.getCode() = Code;
+  IF.getFixups().clear();
+  // FIXME: Eliminate copy.
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
+    IF.getFixups().push_back(Fixups[i]);
+
+  // Update the layout, and remember that we relaxed.
+  Layout.UpdateForSlide(&IF, SlideAmount);
+  return true;
+}
+
+bool MCAssembler::RelaxLEB(const MCObjectWriter &Writer,
+                           MCAsmLayout &Layout,
+                           MCLEBFragment &LF) {
+  int64_t Value;
+  LF.getValue().EvaluateAsAbsolute(Value, &Layout);
+  SmallString<32> Tmp;
+  raw_svector_ostream OSE(Tmp);
+  if (LF.isSigned())
+    MCObjectWriter::EncodeSLEB128(Value, OSE);
+  else
+    MCObjectWriter::EncodeULEB128(Value, OSE);
+  uint64_t OldSize = LF.getSize();
+  LF.setSize(OSE.GetNumBytesInBuffer());
+  return OldSize != LF.getSize();
+}
+
+
 bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
                              MCAsmLayout &Layout) {
   ++stats::RelaxationSteps;
@@ -795,43 +872,18 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
 
     for (MCSectionData::iterator it2 = SD.begin(),
            ie2 = SD.end(); it2 != ie2; ++it2) {
-      // Check if this is an instruction fragment that needs relaxation.
-      MCInstFragment *IF = dyn_cast<MCInstFragment>(it2);
-      if (!IF || !FragmentNeedsRelaxation(Writer, IF, Layout))
-        continue;
-
-      ++stats::RelaxedInstructions;
-
-      // FIXME-PERF: We could immediately lower out instructions if we can tell
-      // they are fully resolved, to avoid retesting on later passes.
-
-      // Relax the fragment.
-
-      MCInst Relaxed;
-      getBackend().RelaxInstruction(IF->getInst(), Relaxed);
-
-      // Encode the new instruction.
-      //
-      // FIXME-PERF: If it matters, we could let the target do this. It can
-      // probably do so more efficiently in many cases.
-      SmallVector<MCFixup, 4> Fixups;
-      SmallString<256> Code;
-      raw_svector_ostream VecOS(Code);
-      getEmitter().EncodeInstruction(Relaxed, VecOS, Fixups);
-      VecOS.flush();
-
-      // Update the instruction fragment.
-      int SlideAmount = Code.size() - IF->getInstSize();
-      IF->setInst(Relaxed);
-      IF->getCode() = Code;
-      IF->getFixups().clear();
-      // FIXME: Eliminate copy.
-      for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
-        IF->getFixups().push_back(Fixups[i]);
-
-      // Update the layout, and remember that we relaxed.
-      Layout.UpdateForSlide(IF, SlideAmount);
-      WasRelaxed = true;
+      // Check if this is an fragment that needs relaxation.
+      switch(it2->getKind()) {
+      default:
+        break;
+      case MCFragment::FT_Inst:
+        WasRelaxed |= RelaxInstruction(Writer, Layout,
+                                       *cast<MCInstFragment>(it2));
+        break;
+      case MCFragment::FT_LEB:
+        WasRelaxed |= RelaxLEB(Writer, Layout, *cast<MCLEBFragment>(it2));
+        break;
+      }
     }
   }
 
@@ -903,6 +955,7 @@ void MCFragment::dump() {
   case MCFragment::FT_Inst:  OS << "MCInstFragment"; break;
   case MCFragment::FT_Org:   OS << "MCOrgFragment"; break;
   case MCFragment::FT_Dwarf: OS << "MCDwarfFragment"; break;
+  case MCFragment::FT_LEB:   OS << "MCLEBFragment"; break;
   }
 
   OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
@@ -968,6 +1021,12 @@ void MCFragment::dump() {
     OS << "\n       ";
     OS << " AddrDelta:" << OF->getAddrDelta()
        << " LineDelta:" << OF->getLineDelta();
+    break;
+  }
+  case MCFragment::FT_LEB: {
+    const MCLEBFragment *LF = cast<MCLEBFragment>(this);
+    OS << "\n       ";
+    OS << " Value:" << LF->getValue() << " Signed:" << LF->isSigned();
     break;
   }
   }

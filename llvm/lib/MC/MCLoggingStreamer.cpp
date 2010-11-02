@@ -152,6 +152,18 @@ public:
     return Child->EmitIntValue(Value, Size, AddrSpace);
   }
 
+  virtual void EmitULEB128Value(const MCExpr *Value,
+                                unsigned AddrSpace = 0) {
+    LogCall("EmitULEB128Value");
+    return Child->EmitULEB128Value(Value, AddrSpace);
+  }
+
+  virtual void EmitSLEB128Value(const MCExpr *Value,
+                                unsigned AddrSpace = 0) {
+    LogCall("EmitSLEB128Value");
+    return Child->EmitSLEB128Value(Value, AddrSpace);
+  }
+
   virtual void EmitGPRel32Value(const MCExpr *Value) {
     LogCall("EmitGPRel32Value");
     return Child->EmitGPRel32Value(Value);

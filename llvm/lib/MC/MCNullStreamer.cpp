@@ -66,6 +66,10 @@ namespace {
 
     virtual void EmitValue(const MCExpr *Value, unsigned Size,
                            unsigned AddrSpace) {}
+    virtual void EmitULEB128Value(const MCExpr *Value,
+                                  unsigned AddrSpace = 0) {}
+    virtual void EmitSLEB128Value(const MCExpr *Value,
+                                  unsigned AddrSpace = 0) {}
     virtual void EmitGPRel32Value(const MCExpr *Value) {}
     virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                       unsigned ValueSize = 1,

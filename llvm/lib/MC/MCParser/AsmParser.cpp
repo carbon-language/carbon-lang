@@ -261,8 +261,6 @@ public:
   bool ParseDirectiveMacro(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveEndMacro(StringRef, SMLoc DirectiveLoc);
 
-  void ParseUleb128(uint64_t Value);
-  void ParseSleb128(int64_t Value);
   bool ParseDirectiveLEB128(StringRef, SMLoc);
 };
 
@@ -2178,44 +2176,22 @@ bool GenericAsmParser::ParseDirectiveEndMacro(StringRef Directive,
                   "no current macro definition");
 }
 
-void GenericAsmParser::ParseUleb128(uint64_t Value) {
-  const uint64_t Mask = (1 << 7) - 1;
-  do {
-    unsigned Byte = Value & Mask;
-    Value >>= 7;
-    if (Value) // Not the last one
-      Byte |= (1 << 7);
-    getStreamer().EmitIntValue(Byte, 1, DEFAULT_ADDRSPACE);
-  } while (Value);
-}
-
-void GenericAsmParser::ParseSleb128(int64_t Value) {
-  const int64_t Mask = (1 << 7) - 1;
-  for(;;) {
-    unsigned Byte = Value & Mask;
-    Value >>= 7;
-    bool Done = ((Value ==  0 && (Byte & 0x40) == 0) ||
-                 (Value == -1 && (Byte & 0x40) != 0));
-    if (!Done)
-      Byte |= (1 << 7);
-    getStreamer().EmitIntValue(Byte, 1, DEFAULT_ADDRSPACE);
-    if (Done)
-      break;
-  }
-}
-
 bool GenericAsmParser::ParseDirectiveLEB128(StringRef DirName, SMLoc) {
-  int64_t Value;
-  if (getParser().ParseAbsoluteExpression(Value))
+  getParser().CheckForValidSection();
+
+  const MCExpr *Value;
+
+  if (getParser().ParseExpression(Value))
     return true;
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");
 
   if (DirName[1] == 's')
-    ParseSleb128(Value);
+    getStreamer().EmitSLEB128Value(Value);
   else
-    ParseUleb128(Value);
+    getStreamer().EmitULEB128Value(Value);
+
   return false;
 }
 

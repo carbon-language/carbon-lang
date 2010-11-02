@@ -60,6 +60,8 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
+  virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
+  virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
   virtual void SwitchSection(const MCSection *Section);
   virtual void EmitInstruction(const MCInst &Inst);

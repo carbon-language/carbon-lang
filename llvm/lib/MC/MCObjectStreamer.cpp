@@ -75,6 +75,16 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
   return Value;
 }
 
+void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value,
+                                        unsigned AddrSpace) {
+  new MCLEBFragment(*Value, false, getCurrentSectionData());
+}
+
+void MCObjectStreamer::EmitSLEB128Value(const MCExpr *Value,
+                                        unsigned AddrSpace) {
+  new MCLEBFragment(*Value, true, getCurrentSectionData());
+}
+
 void MCObjectStreamer::EmitWeakReference(MCSymbol *Alias,
                                          const MCSymbol *Symbol) {
   report_fatal_error("This file format doesn't support weak aliases.");

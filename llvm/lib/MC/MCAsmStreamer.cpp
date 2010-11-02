@@ -141,7 +141,13 @@ public:
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
+
   virtual void EmitIntValue(uint64_t Value, unsigned Size, unsigned AddrSpace);
+
+  virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
+
+  virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
+
   virtual void EmitGPRel32Value(const MCExpr *Value);
 
 
@@ -502,6 +508,16 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
 
   assert(Directive && "Invalid size for machine code value!");
   OS << Directive << *Value;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace) {
+  OS << ".uleb " << *Value;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace) {
+  OS << ".sleb " << *Value;
   EmitEOL();
 }
 

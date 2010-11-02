@@ -244,13 +244,20 @@ namespace llvm {
     virtual void EmitIntValue(uint64_t Value, unsigned Size,
                               unsigned AddrSpace = 0);
 
-    /// EmitULEB128Value - Special case of EmitValue that takes an ULEB128 and
-    /// emits the needed bytes for the encoded value.
-    virtual void EmitULEB128Value(uint64_t Value, unsigned AddrSpace = 0);
 
-    /// EmitSLEB128Value - Special case of EmitValue that takes an SLEB128 and
-    /// emits the needed bytes for the encoded value.
-    virtual void EmitSLEB128Value(int64_t Value, unsigned AddrSpace = 0);
+    virtual void EmitULEB128Value(const MCExpr *Value,
+                                  unsigned AddrSpace = 0) = 0;
+
+    virtual void EmitSLEB128Value(const MCExpr *Value,
+                                  unsigned AddrSpace = 0) = 0;
+
+    /// EmitULEB128Value - Special case of EmitULEB128Value that avoids the
+    /// client having to pass in a MCExpr for constant integers.
+    virtual void EmitULEB128IntValue(uint64_t Value, unsigned AddrSpace = 0);
+
+    /// EmitSLEB128Value - Special case of EmitSLEB128Value that avoids the
+    /// client having to pass in a MCExpr for constant integers.
+    virtual void EmitSLEB128IntValue(int64_t Value, unsigned AddrSpace = 0);
 
     /// EmitSymbolValue - Special case of EmitValue that avoids the client
     /// having to pass in a MCExpr for MCSymbols.

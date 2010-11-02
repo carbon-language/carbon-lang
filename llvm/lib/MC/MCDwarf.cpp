@@ -125,7 +125,7 @@ static inline void EmitDwarfSetAddress(MCObjectStreamer *MCOS,
   MCOS->EmitIntValue(dwarf::DW_LNS_extended_op, 1);
 
   int sizeof_address = MCOS->getAssembler().getBackend().getPointerSize();
-  MCOS->EmitULEB128Value(sizeof_address + 1);
+  MCOS->EmitULEB128IntValue(sizeof_address + 1);
 
   MCOS->EmitIntValue(dwarf::DW_LNE_set_address, 1);
   MCOS->EmitSymbolValue(Symbol, sizeof_address);
@@ -157,17 +157,17 @@ static inline bool EmitDwarfLineTable(MCObjectStreamer *MCOS,
     if (FileNum != it->getFileNum()) {
       FileNum = it->getFileNum();
       MCOS->EmitIntValue(dwarf::DW_LNS_set_file, 1);
-      MCOS->EmitULEB128Value(FileNum);
+      MCOS->EmitULEB128IntValue(FileNum);
     }
     if (Column != it->getColumn()) {
       Column = it->getColumn();
       MCOS->EmitIntValue(dwarf::DW_LNS_set_column, 1);
-      MCOS->EmitULEB128Value(Column);
+      MCOS->EmitULEB128IntValue(Column);
     }
     if (Isa != it->getIsa()) {
       Isa = it->getIsa();
       MCOS->EmitIntValue(dwarf::DW_LNS_set_isa, 1);
-      MCOS->EmitULEB128Value(Isa);
+      MCOS->EmitULEB128IntValue(Isa);
     }
     if ((it->getFlags() ^ Flags) & DWARF2_FLAG_IS_STMT) {
       Flags = it->getFlags();
@@ -303,7 +303,8 @@ void MCDwarfFileTable::Emit(MCObjectStreamer *MCOS,
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
     MCOS->EmitBytes(MCDwarfFiles[i]->getName(), 0); // FileName
     MCOS->EmitBytes(StringRef("\0", 1), 0); // the null term. of the string
-    MCOS->EmitULEB128Value(MCDwarfFiles[i]->getDirIndex()); // the Directory num
+    // the Directory num
+    MCOS->EmitULEB128IntValue(MCDwarfFiles[i]->getDirIndex());
     MCOS->EmitIntValue(0, 1); // last modification timestamp (always 0)
     MCOS->EmitIntValue(0, 1); // filesize (always 0)
   }

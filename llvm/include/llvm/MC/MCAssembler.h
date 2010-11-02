@@ -50,7 +50,8 @@ public:
     FT_Fill,
     FT_Inst,
     FT_Org,
-    FT_Dwarf
+    FT_Dwarf,
+    FT_LEB
   };
 
 private:
@@ -336,6 +337,40 @@ public:
     return F->getKind() == MCFragment::FT_Org;
   }
   static bool classof(const MCOrgFragment *) { return true; }
+};
+
+class MCLEBFragment : public MCFragment {
+  /// Value - The value this fragment should contain.
+  const MCExpr *Value;
+
+  /// IsSigned - True if this is a sleb128, false if uleb128.
+  bool IsSigned;
+
+  /// Size - The current size estimate.
+  uint64_t Size;
+
+public:
+  MCLEBFragment(const MCExpr &Value_, bool IsSigned_, MCSectionData *SD)
+    : MCFragment(FT_LEB, SD),
+      Value(&Value_), IsSigned(IsSigned_), Size(1) {}
+
+  /// @name Accessors
+  /// @{
+
+  const MCExpr &getValue() const { return *Value; }
+
+  bool isSigned() const { return IsSigned; }
+
+  uint64_t getSize() const { return Size; }
+
+  void setSize(uint64_t Size_) { Size = Size_; }
+
+  /// @}
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_LEB;
+  }
+  static bool classof(const MCLEBFragment *) { return true; }
 };
 
 class MCDwarfLineAddrFragment : public MCFragment {
@@ -676,6 +711,12 @@ private:
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
   /// were adjusted.
   bool LayoutOnce(const MCObjectWriter &Writer, MCAsmLayout &Layout);
+
+  bool RelaxInstruction(const MCObjectWriter &Writer, MCAsmLayout &Layout,
+                        MCInstFragment &IF);
+
+  bool RelaxLEB(const MCObjectWriter &Writer, MCAsmLayout &Layout,
+                MCLEBFragment &IF);
 
   /// FinishLayout - Finalize a layout, including fragment lowering.
   void FinishLayout(MCAsmLayout &Layout);
