@@ -126,13 +126,13 @@ namespace llvm {
 
     MVT() : SimpleTy((SimpleValueType)(INVALID_SIMPLE_VALUE_TYPE)) {}
     MVT(SimpleValueType SVT) : SimpleTy(SVT) { }
-    
+
     bool operator>(const MVT& S)  const { return SimpleTy >  S.SimpleTy; }
     bool operator<(const MVT& S)  const { return SimpleTy <  S.SimpleTy; }
     bool operator==(const MVT& S) const { return SimpleTy == S.SimpleTy; }
     bool operator>=(const MVT& S) const { return SimpleTy >= S.SimpleTy; }
     bool operator<=(const MVT& S) const { return SimpleTy <= S.SimpleTy; }
-    
+
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
       return ((SimpleTy >= MVT::f32 && SimpleTy <= MVT::ppcf128) ||
@@ -151,7 +151,7 @@ namespace llvm {
       return (SimpleTy >= MVT::FIRST_VECTOR_VALUETYPE &&
               SimpleTy <= MVT::LAST_VECTOR_VALUETYPE);
     }
-    
+
     /// isPow2VectorType - Returns true if the given vector is a power of 2.
     bool isPow2VectorType() const {
       unsigned NElts = getVectorNumElements();
@@ -174,7 +174,7 @@ namespace llvm {
     MVT getScalarType() const {
       return isVector() ? getVectorElementType() : *this;
     }
-    
+
     MVT getVectorElementType() const {
       switch (SimpleTy) {
       default:
@@ -202,7 +202,7 @@ namespace llvm {
       case v4f64: return f64;
       }
     }
-    
+
     unsigned getVectorNumElements() const {
       switch (SimpleTy) {
       default:
@@ -230,7 +230,7 @@ namespace llvm {
       case v1i64: return 1;
       }
     }
-    
+
     unsigned getSizeInBits() const {
       switch (SimpleTy) {
       case iPTR:
@@ -276,7 +276,7 @@ namespace llvm {
       case v8i64: return 512;
       }
     }
-    
+
     static MVT getFloatingPointVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:
@@ -291,7 +291,7 @@ namespace llvm {
         return MVT::f128;
       }
     }
-    
+
     static MVT getIntegerVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:
@@ -310,7 +310,7 @@ namespace llvm {
         return MVT::i128;
       }
     }
-    
+
     static MVT getVectorVT(MVT VT, unsigned NumElements) {
       switch (VT.SimpleTy) {
       default:
@@ -530,7 +530,7 @@ namespace llvm {
     EVT getScalarType() const {
       return isVector() ? getVectorElementType() : *this;
     }
-    
+
     /// getVectorElementType - Given a vector type, return the type of
     /// each element.
     EVT getVectorElementType() const {
