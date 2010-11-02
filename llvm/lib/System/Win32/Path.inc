@@ -175,8 +175,9 @@ Path::isAbsolute(const char *NameStart, unsigned NameLen) {
   case 2:
     return NameStart[0] == '/';
   default:
-    return (NameStart[0] == '/' || (NameStart[1] == ':' && NameStart[2] == '/')) ||
-           (NameStart[0] == '\\' || (NameStart[1] == ':' && NameStart[2] == '\\'));
+    return
+      (NameStart[0] == '/' || (NameStart[1] == ':' && NameStart[2] == '/')) ||
+      (NameStart[0] == '\\' || (NameStart[1] == ':' && NameStart[2] == '\\'));
   }
 }
 
@@ -641,7 +642,8 @@ Path::createDirectoryOnDisk(bool create_parents, std::string* ErrMsg) {
     pathname[len-1] = 0;
     if (!CreateDirectory(pathname, NULL) &&
         GetLastError() != ERROR_ALREADY_EXISTS) {
-      return MakeErrMsg(ErrMsg, std::string(pathname) + ": Can't create directory: ");
+      return MakeErrMsg(ErrMsg, std::string(pathname) +
+                        ": Can't create directory: ");
     }
   }
   return false;
