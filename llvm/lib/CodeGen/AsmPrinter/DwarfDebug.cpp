@@ -822,9 +822,8 @@ void DwarfDebug::addAddress(DIE *Die, unsigned Attribute,
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-  const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
 
-  if (TRI->getFrameRegister(*Asm->MF) == Location.getReg()
+  if (RI->getFrameRegister(*Asm->MF) == Location.getReg()
       && Location.getOffset()) {
     // If variable offset is based in frame register then use fbreg.
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_fbreg);
