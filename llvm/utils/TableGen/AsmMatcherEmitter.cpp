@@ -638,6 +638,7 @@ bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
                     "' not supported by asm matcher.  Mark isCodeGenOnly!");
     
     // Verify that any operand is only mentioned once.
+    // We reject aliases and ignore instructions for now.
     if (Tok[0] == '$' && !OperandNames.insert(Tok).second) {
       if (!Hack)
         throw TGError(TheDef->getLoc(),
@@ -653,6 +654,33 @@ bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
       return false;
     }
   }
+  
+  // Validate the operand list to ensure we can handle this instruction.
+  for (unsigned i = 0, e = OperandList.size(); i != e; ++i) {
+    const CGIOperandList::OperandInfo &OI = OperandList[i];
+
+    // Validate tied operands.
+    if (OI.getTiedRegister() != -1) {
+      // If we have a tied operand that consists of multiple MCOperands, reject
+      // it.  We reject aliases and ignore instructions for now.
+      if (OI.MINumOperands != 1) {
+        if (!Hack)
+          throw TGError(TheDef->getLoc(),
+                        "ERROR: tied operand '" + OI.Name +
+                        "' has multiple MCOperands!");
+        
+        // FIXME: Should reject these.  The ARM backend hits this with $lane in a
+        // bunch of instructions.  It is unclear what the right answer is.
+        DEBUG({
+          errs() << "warning: '" << InstrName << "': "
+                 << "ignoring instruction with multi-operand tied operand '"
+                 << OI.Name << "'\n";
+        });
+        return false;
+      }
+    }
+  }
+  
   
   return true;
 }
@@ -1086,7 +1114,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
   // Start the enum, which we will generate inline.
 
-  OS << "// Unified function for converting operants to MCInst instances.\n\n";
+  OS << "// Unified function for converting operands to MCInst instances.\n\n";
   OS << "enum ConversionKind {\n";
 
   // TargetOperandClass - This is the target's operand class, like X86Operand.
@@ -1153,11 +1181,8 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       // from the earlier one.
       int TiedOp = OpInfo.getTiedRegister();
       if (TiedOp != -1) {
-        // Copy the tied operand.
-        // FIXME: What if the operand has multiple MINumOperands?  This happens
-        // in ARM.
-        //assert(OpInfo.MINumOperands == 1);
-        
+        // Copy the tied operand.  We can only tie single MCOperand values.
+        assert(OpInfo.MINumOperands == 1 && "Not a singular MCOperand");
         assert(i > unsigned(TiedOp) && "Tied operand preceeds its target!");
         CaseOS << "    Inst.addOperand(Inst.getOperand(" << TiedOp << "));\n";
         Signature += "__Tie" + itostr(TiedOp);
