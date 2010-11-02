@@ -67,10 +67,12 @@ Program::FindProgramByName(const std::string& progName) {
   Path temp;
   if (!temp.set(progName)) // invalid name
     return Path();
-  if (temp.canExecute()) // already executable as is
+  // Return paths with slashes verbatim.
+  if (progName.find('\\') != std::string::npos ||
+      progName.find('/') != std::string::npos)
     return temp;
 
-  // At this point, the file name is valid and its not executable.
+  // At this point, the file name is valid and does not contain slashes.
   // Let Windows search for it.
   char buffer[MAX_PATH];
   char *dummy = NULL;

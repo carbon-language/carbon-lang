@@ -114,7 +114,8 @@ namespace sys {
 
     /// This static constructor (factory) will attempt to locate a program in
     /// the operating system's file system using some pre-determined set of
-    /// locations to search (e.g. the PATH on Unix).
+    /// locations to search (e.g. the PATH on Unix). Paths with slashes are
+    /// returned unmodified.
     /// @returns A Path object initialized to the path of the program or a
     /// Path object that is empty (invalid) if the program could not be found.
     /// @brief Construct a Program by finding it by name.
