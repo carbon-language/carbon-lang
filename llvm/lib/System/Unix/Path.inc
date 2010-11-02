@@ -143,8 +143,7 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
   // Linux and FreeBSD have it. Others probably won't.
   char pathname[] = "/tmp/llvm_XXXXXX";
   if (0 == mkdtemp(pathname)) {
-    MakeErrMsg(ErrMsg,
-      std::string(pathname) + ": can't create temporary directory");
+    MakeErrMsg(ErrMsg, pathname + ": can't create temporary directory");
     return Path();
   }
   Path result;
@@ -681,8 +680,7 @@ static bool createDirectoryHelper(char* beg, char* end, bool create_parents) {
 bool
 Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
   // Get a writeable copy of the path name
-  char pathname[MAXPATHLEN];
-  path.copy(pathname,MAXPATHLEN);
+  std::string pathname(path);
 
   // Null-terminate the last component
   size_t lastchar = path.length() - 1 ;
@@ -692,7 +690,7 @@ Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
 
   pathname[lastchar] = '\0';
 
-  if (createDirectoryHelper(pathname, pathname+lastchar, create_parents))
+  if (createDirectoryHelper(&pathname[0], &pathname[lastchar], create_parents))
     return MakeErrMsg(ErrMsg,
                       std::string(pathname) + ": can't create directory");
 
@@ -759,17 +757,15 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   }
 
   // Otherwise, try to just remove the one directory.
-  char pathname[MAXPATHLEN];
-  path.copy(pathname, MAXPATHLEN);
+  std::string pathname(path);
   size_t lastchar = path.length() - 1;
   if (pathname[lastchar] == '/')
     pathname[lastchar] = '\0';
   else
     pathname[lastchar+1] = '\0';
 
-  if (rmdir(pathname) != 0)
-    return MakeErrMsg(ErrStr,
-      std::string(pathname) + ": can't erase directory");
+  if (rmdir(pathname.c_str()) != 0)
+    return MakeErrMsg(ErrStr, pathname + ": can't erase directory");
   return false;
 }
 
