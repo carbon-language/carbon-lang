@@ -45,10 +45,17 @@ class GenericTester(TestBase):
         #
         # rdar://problem/8471016 frame variable a_ref should display the referenced value as well
         # rdar://problem/8470987 frame variable a_class_ref.m_a does not work
-        notnow = set(['a_ref',
-                      'a_class_ref.m_a', 'a_class_ref.m_b',
-                      'a_struct_ref.a', 'a_struct_ref.b',
-                      'a_union_zero_ref.a', 'a_union_nonzero_ref.u.a'])
+        # notnow = set(['a_ref',
+        #               'a_class_ref.m_a', 'a_class_ref.m_b',
+        #               'a_struct_ref.a', 'a_struct_ref.b',
+        #               'a_union_zero_ref.a', 'a_union_nonzero_ref.u.a'])
+        #
+        # rdar://problem/8620735 test/types: frame variable -t a_class_ref.m_b fails
+        # The reference type related failures that remain are:
+        notnow = set(['a_class_ref.m_b',
+                      'a_struct_ref.b',
+                      'a_union_nonzero_ref.u.a'])
+
         for line in go.split(os.linesep):
             match = self.pattern.search(line)
             if match:
@@ -93,7 +100,7 @@ class GenericTester(TestBase):
                 substrs = list(atoms))
 
             # The (var, val) pair must match, too.
-            nv = (" %s = '%s'" if quotedDisplay else " %s = %s") % (var, val)
+            nv = ("%s = '%s'" if quotedDisplay else "%s = %s") % (var, val)
             self.expect(output, Msg(var, val), exe=False,
                 substrs = [nv])
 
