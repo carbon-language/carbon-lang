@@ -1027,23 +1027,39 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
   return true;
 }
 
-static ObjCPropertyDecl *OkToSynthesizeProvisionalIvar(Sema &SemaRef,
-                                                       IdentifierInfo *II,
-                                                       SourceLocation NameLoc) {
-  ObjCMethodDecl *CurMeth = SemaRef.getCurMethodDecl();
+ObjCPropertyDecl *Sema::canSynthesizeProvisionalIvar(IdentifierInfo *II) {
+  ObjCMethodDecl *CurMeth = getCurMethodDecl();
   ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
   if (!IDecl)
     return 0;
   ObjCImplementationDecl *ClassImpDecl = IDecl->getImplementation();
   if (!ClassImpDecl)
     return 0;
-  ObjCPropertyDecl *property = SemaRef.LookupPropertyDecl(IDecl, II);
+  ObjCPropertyDecl *property = LookupPropertyDecl(IDecl, II);
   if (!property)
     return 0;
   if (ObjCPropertyImplDecl *PIDecl = ClassImpDecl->FindPropertyImplDecl(II))
-    if (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
+    if (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic ||
+        PIDecl->getPropertyIvarDecl())
       return 0;
   return property;
+}
+
+bool Sema::canSynthesizeProvisionalIvar(ObjCPropertyDecl *Property) {
+  ObjCMethodDecl *CurMeth = getCurMethodDecl();
+  ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
+  if (!IDecl)
+    return false;
+  ObjCImplementationDecl *ClassImpDecl = IDecl->getImplementation();
+  if (!ClassImpDecl)
+    return false;
+  if (ObjCPropertyImplDecl *PIDecl
+                = ClassImpDecl->FindPropertyImplDecl(Property->getIdentifier()))
+    if (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic ||
+        PIDecl->getPropertyIvarDecl())
+      return false;
+  
+  return true;
 }
 
 static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
@@ -1228,8 +1244,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
     if (getLangOptions().ObjCNonFragileABI && IvarLookupFollowUp &&
         !getLangOptions().ObjCNonFragileABI2 &&
         Var->isFileVarDecl()) {
-      ObjCPropertyDecl *Property = 
-        OkToSynthesizeProvisionalIvar(*this, II, NameLoc);
+      ObjCPropertyDecl *Property = canSynthesizeProvisionalIvar(II);
       if (Property) {
         Diag(NameLoc, diag::warn_ivar_variable_conflict) << Var->getDeclName();
         Diag(Property->getLocation(), diag::note_property_declare);

@@ -147,8 +147,12 @@ namespace {
     /// \brief The selector that we prefer.
     Selector PreferredSelector;
     
-    /// \brief The completion context in which 
+    /// \brief The completion context in which we are gathering results.
     CodeCompletionContext CompletionContext;
+    
+    /// \brief If we are in an instance method definition, the @implementation
+    /// object.
+    ObjCImplementationDecl *ObjCImplementation;
     
     void AdjustResultPriorityForDecl(Result &R);
 
@@ -160,7 +164,27 @@ namespace {
                            LookupFilter Filter = 0)
       : SemaRef(SemaRef), Filter(Filter), AllowNestedNameSpecifiers(false),
         HasObjectTypeQualifiers(false), 
-        CompletionContext(CompletionContext) { }
+        CompletionContext(CompletionContext),
+        ObjCImplementation(0) 
+    { 
+      // If this is an Objective-C instance method definition, dig out the 
+      // corresponding implementation.
+      switch (CompletionContext.getKind()) {
+      case CodeCompletionContext::CCC_Expression:
+      case CodeCompletionContext::CCC_ObjCMessageReceiver:
+      case CodeCompletionContext::CCC_ParenthesizedExpression:
+      case CodeCompletionContext::CCC_Statement:
+      case CodeCompletionContext::CCC_Recovery:
+        if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl())
+          if (Method->isInstanceMethod())
+            if (ObjCInterfaceDecl *Interface = Method->getClassInterface())
+              ObjCImplementation = Interface->getImplementation();
+        break;
+          
+      default:
+        break;
+      }
+    }
     
     /// \brief Whether we should include code patterns in the completion
     /// results.
@@ -203,7 +227,7 @@ namespace {
     void setPreferredSelector(Selector Sel) {
       PreferredSelector = Sel;
     }
-    
+        
     /// \brief Retrieve the code-completion context for which results are
     /// being collected.
     const CodeCompletionContext &getCompletionContext() const { 
@@ -919,9 +943,14 @@ bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
     IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace | Decl::IDNS_Member;
-  else if (SemaRef.getLangOptions().ObjC1 && isa<ObjCIvarDecl>(ND))
-    return true;
-
+  else if (SemaRef.getLangOptions().ObjC1) {
+    if (isa<ObjCIvarDecl>(ND))
+      return true;
+    if (isa<ObjCPropertyDecl>(ND) &&
+        SemaRef.canSynthesizeProvisionalIvar(cast<ObjCPropertyDecl>(ND)))
+      return true;
+  }
+  
   return ND->getIdentifierNamespace() & IDNS;
 }
 
@@ -935,9 +964,14 @@ bool ResultBuilder::IsOrdinaryNonTypeName(NamedDecl *ND) const {
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
     IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace | Decl::IDNS_Member;
-  else if (SemaRef.getLangOptions().ObjC1 && isa<ObjCIvarDecl>(ND))
-    return true;
-  
+  else if (SemaRef.getLangOptions().ObjC1) {
+    if (isa<ObjCIvarDecl>(ND))
+      return true;
+    if (isa<ObjCPropertyDecl>(ND) &&
+        SemaRef.canSynthesizeProvisionalIvar(cast<ObjCPropertyDecl>(ND)))
+      return true;
+  }
+ 
   return ND->getIdentifierNamespace() & IDNS;
 }
 
