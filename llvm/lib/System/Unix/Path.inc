@@ -692,8 +692,7 @@ Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
   pathname[lastchar] = '\0';
 
   if (createDirectoryHelper(&pathname[0], &pathname[lastchar], create_parents))
-    return MakeErrMsg(ErrMsg,
-                      std::string(pathname) + ": can't create directory");
+    return MakeErrMsg(ErrMsg, pathname + ": can't create directory");
 
   return false;
 }
