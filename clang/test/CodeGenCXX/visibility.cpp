@@ -250,3 +250,92 @@ namespace Test16 {
     a.foo();
   }
 }
+
+namespace Test17 {
+  struct HIDDEN A {
+    static void foo();
+    static void DEFAULT bar();
+    static void HIDDEN baz();
+
+    struct DEFAULT B {
+      static void foo();
+      static void DEFAULT bar();
+      static void HIDDEN baz();
+    };
+  };
+
+  void test() {
+    A::foo();
+    A::bar();
+    A::baz();
+    A::B::foo();
+    A::B::bar();
+    A::B::baz();
+  }
+  // CHECK: declare hidden void @_ZN6Test171A3fooEv()
+  // CHECK: declare void @_ZN6Test171A3barEv()
+  // CHECK: declare hidden void @_ZN6Test171A3bazEv()
+  // CHECK: declare void @_ZN6Test171A1B3fooEv()
+  // CHECK: declare void @_ZN6Test171A1B3barEv()
+  // CHECK: declare hidden void @_ZN6Test171A1B3bazEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test171A3fooEv()
+  // CHECK-HIDDEN: declare void @_ZN6Test171A3barEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test171A3bazEv()
+  // CHECK-HIDDEN: declare void @_ZN6Test171A1B3fooEv()
+  // CHECK-HIDDEN: declare void @_ZN6Test171A1B3barEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test171A1B3bazEv()
+}
+
+namespace Test18 {
+  template <class T> struct HIDDEN A {
+    static void foo();
+    static void DEFAULT bar();
+    static void HIDDEN baz();
+
+    struct DEFAULT B {
+      static void foo();
+      static void DEFAULT bar();
+      static void HIDDEN baz();
+    };
+  };
+  struct HIDDEN H;
+
+  void test() {
+    A<int>::foo();
+    A<int>::bar();
+    A<int>::baz();
+    A<int>::B::foo();
+    A<int>::B::bar();
+    A<int>::B::baz();
+    A<H>::foo();
+    A<H>::bar();
+    A<H>::baz();
+    A<H>::B::foo();
+    A<H>::B::bar();
+    A<H>::B::baz();
+  }
+  // CHECK: declare hidden void @_ZN6Test181AIiE3fooEv()
+  // CHECK: declare void @_ZN6Test181AIiE3barEv()
+  // CHECK: declare hidden void @_ZN6Test181AIiE3bazEv()
+  // CHECK: declare void @_ZN6Test181AIiE1B3fooEv()
+  // CHECK: declare void @_ZN6Test181AIiE1B3barEv()
+  // CHECK: declare hidden void @_ZN6Test181AIiE1B3bazEv()
+  // CHECK: declare hidden void @_ZN6Test181AINS_1HEE3fooEv()
+  // CHECK: declare hidden void @_ZN6Test181AINS_1HEE3barEv()
+  // CHECK: declare hidden void @_ZN6Test181AINS_1HEE3bazEv()
+  // CHECK: declare hidden void @_ZN6Test181AINS_1HEE1B3fooEv()
+  // CHECK: declare hidden void @_ZN6Test181AINS_1HEE1B3barEv()
+  // CHECK: declare hidden void @_ZN6Test181AINS_1HEE1B3bazEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AIiE3fooEv()
+  // CHECK-HIDDEN: declare void @_ZN6Test181AIiE3barEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AIiE3bazEv()
+  // CHECK-HIDDEN: declare void @_ZN6Test181AIiE1B3fooEv()
+  // CHECK-HIDDEN: declare void @_ZN6Test181AIiE1B3barEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AIiE1B3bazEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE3fooEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE3barEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE3bazEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE1B3fooEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE1B3barEv()
+  // CHECK-HIDDEN: declare hidden void @_ZN6Test181AINS_1HEE1B3bazEv()
+}
