@@ -516,8 +516,8 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
     bits<4> Rn;
     bits<12> imm;
     let Inst{25} = 1;
-    let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
+    let Inst{15-12} = Rd;
     let Inst{11-0} = imm;
   }
   }
@@ -527,12 +527,12 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
     bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
-    let Inst{11-4} = 0b00000000;
     let Inst{25} = 0;
     let isCommutable = Commutable;
-    let Inst{3-0} = Rm;
-    let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
+    let Inst{15-12} = Rd;
+    let Inst{11-4} = 0b00000000;
+    let Inst{3-0} = Rm;
   }
   def rs : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift), DPSoRegFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
@@ -541,9 +541,9 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
     bits<4> Rn;
     bits<12> shift;
     let Inst{25} = 0;
-    let Inst{11-0} = shift;
-    let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
+    let Inst{15-12} = Rd;
+    let Inst{11-0} = shift;
   }
 }
 
@@ -560,10 +560,10 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
     bits<4> Rn;
     bits<12> imm;
     let Inst{25} = 1;
-    let Inst{15-12} = Rd;
-    let Inst{19-16} = Rn;
-    let Inst{11-0} = imm;
     let Inst{20} = 1;
+    let Inst{19-16} = Rn;
+    let Inst{15-12} = Rd;
+    let Inst{11-0} = imm;
   }
   def rr : AI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
                iir, opc, "\t$Rd, $Rn, $Rm",
@@ -571,13 +571,13 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
     bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
-    let Inst{11-4} = 0b00000000;
-    let Inst{25} = 0;
     let isCommutable = Commutable;
-    let Inst{3-0} = Rm;
-    let Inst{15-12} = Rd;
-    let Inst{19-16} = Rn;
+    let Inst{25} = 0;
     let Inst{20} = 1;
+    let Inst{19-16} = Rn;
+    let Inst{15-12} = Rd;
+    let Inst{11-4} = 0b00000000;
+    let Inst{3-0} = Rm;
   }
   def rs : AI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift), DPSoRegFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
@@ -586,10 +586,10 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
     bits<4> Rn;
     bits<12> shift;
     let Inst{25} = 0;
-    let Inst{11-0} = shift;
-    let Inst{15-12} = Rd;
-    let Inst{19-16} = Rn;
     let Inst{20} = 1;
+    let Inst{19-16} = Rn;
+    let Inst{15-12} = Rd;
+    let Inst{11-0} = shift;
   }
 }
 }
@@ -607,24 +607,23 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     bits<4> Rn;
     bits<12> imm;
     let Inst{25} = 1;
-    let Inst{15-12} = 0b0000;
+    let Inst{20} = 1;
     let Inst{19-16} = Rn;
+    let Inst{15-12} = 0b0000;
     let Inst{11-0} = imm;
-    let Inst{20} = 1;
-    let Inst{20} = 1;
   }
   def rr : AI1<opcod, (outs), (ins GPR:$Rn, GPR:$Rm), DPFrm, iir,
                opc, "\t$Rn, $Rm",
                [(opnode GPR:$Rn, GPR:$Rm)]> {
     bits<4> Rn;
     bits<4> Rm;
-    let Inst{11-4} = 0b00000000;
-    let Inst{25} = 0;
     let isCommutable = Commutable;
-    let Inst{3-0} = Rm;
-    let Inst{15-12} = 0b0000;
-    let Inst{19-16} = Rn;
+    let Inst{25} = 0;
     let Inst{20} = 1;
+    let Inst{19-16} = Rn;
+    let Inst{15-12} = 0b0000;
+    let Inst{11-4} = 0b00000000;
+    let Inst{3-0} = Rm;
   }
   def rs : AI1<opcod, (outs), (ins GPR:$Rn, so_reg:$shift), DPSoRegFrm, iis,
                opc, "\t$Rn, $shift",
@@ -632,10 +631,10 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     bits<4> Rn;
     bits<12> shift;
     let Inst{25} = 0;
-    let Inst{11-0} = shift;
-    let Inst{15-12} = 0b0000;
-    let Inst{19-16} = Rn;
     let Inst{20} = 1;
+    let Inst{19-16} = Rn;
+    let Inst{15-12} = 0b0000;
+    let Inst{11-0} = shift;
   }
 }
 }
@@ -650,10 +649,10 @@ multiclass AI_ext_rrot<bits<8> opcod, string opc, PatFrag opnode> {
               Requires<[IsARM, HasV6]> {
     bits<4> Rd;
     bits<4> Rm;
-    let Inst{15-12} = Rd;
-    let Inst{3-0}   = Rm;
-    let Inst{11-10} = 0b00;
     let Inst{19-16} = 0b1111;
+    let Inst{15-12} = Rd;
+    let Inst{11-10} = 0b00;
+    let Inst{3-0}   = Rm;
   }
   def r_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
                  IIC_iEXTr, opc, "\t$Rd, $Rm, ror $rot",
@@ -662,10 +661,10 @@ multiclass AI_ext_rrot<bits<8> opcod, string opc, PatFrag opnode> {
     bits<4> Rd;
     bits<4> Rm;
     bits<2> rot;
+    let Inst{19-16} = 0b1111;
     let Inst{15-12} = Rd;
     let Inst{11-10} = rot;
     let Inst{3-0}   = Rm;
-    let Inst{19-16} = 0b1111;
   }
 }
 
@@ -674,16 +673,16 @@ multiclass AI_ext_rrot_np<bits<8> opcod, string opc> {
                  IIC_iEXTr, opc, "\t$Rd, $Rm",
                  [/* For disassembly only; pattern left blank */]>,
               Requires<[IsARM, HasV6]> {
-    let Inst{11-10} = 0b00;
     let Inst{19-16} = 0b1111;
+    let Inst{11-10} = 0b00;
   }
   def r_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
                  IIC_iEXTr, opc, "\t$Rd, $Rm, ror $rot",
                  [/* For disassembly only; pattern left blank */]>,
               Requires<[IsARM, HasV6]> {
     bits<2> rot;
-    let Inst{11-10} = rot;
     let Inst{19-16} = 0b1111;
+    let Inst{11-10} = rot;
   }
 }
 
