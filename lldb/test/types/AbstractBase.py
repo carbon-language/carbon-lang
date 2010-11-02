@@ -52,16 +52,16 @@ class GenericTester(TestBase):
         #
         # rdar://problem/8620735 test/types: frame variable -t a_class_ref.m_b fails
         # The reference type related failures that remain are:
-        notnow = set(['a_class_ref.m_b',
-                      'a_struct_ref.b',
-                      'a_union_nonzero_ref.u.a'])
+        # notnow = set(['a_class_ref.m_b',
+        #               'a_struct_ref.b',
+        #               'a_union_nonzero_ref.u.a'])
 
         for line in go.split(os.linesep):
             match = self.pattern.search(line)
             if match:
                 var, val = match.group(1), match.group(2)
-                if var in notnow:
-                    continue
+                # if var in notnow:
+                #     continue
                 gl.append((var, val))
         #print "golden list:", gl
 
@@ -80,7 +80,7 @@ class GenericTester(TestBase):
             self.runCmd("frame variable -t %s" % var)
             output = self.res.GetOutput()
             
-            # The input type is in a canonical form as a set named atoms.
+            # The input type is in a canonical form as a set of named atoms.
             # The display type string must conatin each and every element.
             #
             # Example:
