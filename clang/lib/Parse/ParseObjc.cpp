@@ -402,7 +402,12 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
       // Skip until we see an '@' or '}' or ';'.
       SkipUntil(tok::r_brace, tok::at);
       break;
-
+        
+    case tok::objc_implementation:
+      Diag(Tok, diag::err_objc_missing_end);
+      ConsumeToken();
+      break;
+        
     case tok::objc_required:
     case tok::objc_optional:
       // This is only valid on protocols.
