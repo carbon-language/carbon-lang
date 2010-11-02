@@ -454,7 +454,8 @@ namespace sys {
       /// The precondition for this function is that the Path reference a file
       /// name (i.e. isFile() returns true). If the Path is not a file, no
       /// action is taken and the function returns false. If the path would
-      /// become invalid for the host operating system, false is returned.
+      /// become invalid for the host operating system, false is returned. When
+      /// the \p suffix is empty, no action is performed.
       /// @returns false if the suffix could not be added, true if it was.
       /// @brief Adds a period and the \p suffix to the end of the pathname.
       bool appendSuffix(StringRef suffix);

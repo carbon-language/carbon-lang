@@ -638,18 +638,6 @@ Path::eraseComponent() {
 }
 
 bool
-Path::appendSuffix(StringRef suffix) {
-  std::string save(path);
-  path.append(".");
-  path.append(suffix);
-  if (!isValid()) {
-    path = save;
-    return false;
-  }
-  return true;
-}
-
-bool
 Path::eraseSuffix() {
   std::string save = path;
   size_t dotpos = path.rfind('.',path.size());

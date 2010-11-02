@@ -196,6 +196,21 @@ StringRef Path::GetDLLSuffix() {
 }
 
 bool
+Path::appendSuffix(StringRef suffix) {
+  if (!suffix.empty()) {
+    std::string save(path);
+    path.append(".");
+    path.append(suffix);
+    if (!isValid()) {
+      path = save;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool
 Path::isBitcodeFile() const {
   std::string actualMagic;
   if (!getMagicNumber(actualMagic, 4))
