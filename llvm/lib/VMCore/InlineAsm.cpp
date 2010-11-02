@@ -47,6 +47,7 @@ InlineAsm::InlineAsm(const PointerType *Ty, const std::string &asmString,
 }
 
 void InlineAsm::destroyConstant() {
+  getRawType()->getContext().pImpl->InlineAsms.remove(this);
   delete this;
 }
 
