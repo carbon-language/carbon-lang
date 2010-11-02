@@ -1496,16 +1496,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-spell-checking");
 
 
-  // -fasm-blocks is disallowed except on X86, where we just ignore it.
-  if (Args.hasFlag(options::OPT_fasm_blocks, options::OPT_fno_asm_blocks,
-                   false)) {
-    if (getToolChain().getTriple().getArch() != llvm::Triple::x86 &&
-        getToolChain().getTriple().getArch() != llvm::Triple::x86_64)
-      D.Diag(clang::diag::err_drv_clang_unsupported_per_platform)
-        << "-fasm-blocks";
-  }
-
-  // -fasm-blocks is disallowed except on X86, where we just ignore it.
+  // Silently ignore -fasm-blocks for now.
+  (void) Args.hasFlag(options::OPT_fasm_blocks, options::OPT_fno_asm_blocks,
+                      false);
 
   if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
     A->render(Args, CmdArgs);
