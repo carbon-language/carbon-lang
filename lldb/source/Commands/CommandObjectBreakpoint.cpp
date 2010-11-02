@@ -52,7 +52,7 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions() :
     m_filename (),
     m_line_num (0),
     m_column (0),
-    m_ignore_inlines (false),
+    m_check_inlines (true),
     m_func_name (),
     m_func_name_type_mask (0),
     m_func_regexp (),
@@ -367,7 +367,7 @@ CommandObjectBreakpointSet::Execute
                         bp = target->CreateBreakpoint (&module_spec,
                                                        file,
                                                        m_options.m_line_num,
-                                                       m_options.m_ignore_inlines).get();
+                                                       m_options.m_check_inlines).get();
                         if (bp)
                         {
                             StreamString &output_stream = result.GetOutputStream();
@@ -391,7 +391,7 @@ CommandObjectBreakpointSet::Execute
                     bp = target->CreateBreakpoint (NULL,
                                                    file,
                                                    m_options.m_line_num,
-                                                   m_options.m_ignore_inlines).get();
+                                                   m_options.m_check_inlines).get();
             }
             break;
 

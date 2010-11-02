@@ -99,7 +99,7 @@ public:
         std::string m_filename;
         uint32_t m_line_num;
         uint32_t m_column;
-        bool m_ignore_inlines;
+        bool m_check_inlines;
         std::string m_func_name;
         uint32_t m_func_name_type_mask;
         std::string m_func_regexp;
