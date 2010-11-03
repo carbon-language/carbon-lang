@@ -81,7 +81,13 @@ int test7(unsigned long long b) {
 asm volatile (""); // expected-warning {{meaningless 'volatile' on asm outside function}}
 
 // PR3904
-int test8(int i) {
+void test8(int i) {
   // A number in an input constraint can't point to a read-write constraint.
-  asm ("" : "+r" (i), "=r"(i) :  "0" (i)); // expected-error{{invalid input constraint '0' in asm}}
+  asm("" : "+r" (i), "=r"(i) :  "0" (i)); // expected-error{{invalid input constraint '0' in asm}}
+}
+
+// PR3905
+void test9(int i) {
+  asm("" : [foo] "=r" (i), "=r"(i) : "1[foo]"(i)); // expected-error{{invalid input constraint '1[foo]' in asm}}
+  asm("" : [foo] "=r" (i), "=r"(i) : "[foo]1"(i)); // expected-error{{invalid input constraint '[foo]1' in asm}}
 }

@@ -354,6 +354,11 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
         if (OutputConstraints[i].isReadWrite())
           return false;
 
+        // If the constraint is already tied, it must be tied to the 
+        // same operand referenced to by the number.
+        if (Info.hasTiedOperand() && Info.getTiedOperand() != i)
+          return false;
+
         // The constraint should have the same info as the respective
         // output constraint.
         Info.setTiedOperand(i, OutputConstraints[i]);
@@ -367,6 +372,11 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
     case '[': {
       unsigned Index = 0;
       if (!resolveSymbolicName(Name, OutputConstraints, NumOutputs, Index))
+        return false;
+
+      // If the constraint is already tied, it must be tied to the 
+      // same operand referenced to by the number.
+      if (Info.hasTiedOperand() && Info.getTiedOperand() != Index)
         return false;
 
       Info.setTiedOperand(Index, OutputConstraints[Index]);
