@@ -255,7 +255,7 @@ unsigned ARMMCCodeEmitter::getSORegOpValue(const MCInst &MI,
   // Sub-operands are [reg, reg, imm]. The first register is Rm, the reg to be
   // shifted. The second is either Rs, the amount to shift by, or reg0 in which
   // case the imm contains the amount to shift by.
-  // 
+  //
   // {3-0} = Rm.
   // {4}   = 1 if reg shift, 0 if imm shift
   // {6-5} = type
@@ -349,7 +349,7 @@ unsigned ARMMCCodeEmitter::getAddrMode6AddressOpValue(const MCInst &MI,
                                                       unsigned Op) const {
   const MCOperand &Reg = MI.getOperand(Op);
   const MCOperand &Imm = MI.getOperand(Op + 1);
-  
+
   unsigned RegNo = getARMRegisterNumbering(Reg.getReg());
   unsigned Align = 0;
 
