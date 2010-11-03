@@ -4241,15 +4241,37 @@ class VEXTq<string OpcodeStr, string Dt, ValueType Ty>
   let Inst{11-8} = index{3-0};
 }
 
-def VEXTd8  : VEXTd<"vext", "8",  v8i8>;
-def VEXTd16 : VEXTd<"vext", "16", v4i16>;
-def VEXTd32 : VEXTd<"vext", "32", v2i32>;
-def VEXTdf  : VEXTd<"vext", "32", v2f32>;
+def VEXTd8  : VEXTd<"vext", "8",  v8i8> {
+  let Inst{11-8} = index{3-0};
+}
+def VEXTd16 : VEXTd<"vext", "16", v4i16> {
+  let Inst{11-9} = index{2-0};
+  let Inst{8}    = 0b0;
+}
+def VEXTd32 : VEXTd<"vext", "32", v2i32> {
+  let Inst{11-10} = index{1-0};
+  let Inst{9-8}    = 0b00;
+}
+def VEXTdf  : VEXTd<"vext", "32", v2f32> {
+  let Inst{11}    = index{0};
+  let Inst{10-8}  = 0b000;
+}
 
-def VEXTq8  : VEXTq<"vext", "8",  v16i8>;
-def VEXTq16 : VEXTq<"vext", "16", v8i16>;
-def VEXTq32 : VEXTq<"vext", "32", v4i32>;
-def VEXTqf  : VEXTq<"vext", "32", v4f32>;
+def VEXTq8  : VEXTq<"vext", "8",  v16i8> {
+  let Inst{11-8} = index{3-0};
+}
+def VEXTq16 : VEXTq<"vext", "16", v8i16> {
+  let Inst{11-9} = index{2-0};
+  let Inst{8}    = 0b0;
+}
+def VEXTq32 : VEXTq<"vext", "32", v4i32> {
+  let Inst{11-10} = index{1-0};
+  let Inst{9-8}    = 0b00;
+}
+def VEXTqf  : VEXTq<"vext", "32", v4f32> {
+  let Inst{11}    = index{0};
+  let Inst{10-8}  = 0b000;
+}
 
 //   VTRN     : Vector Transpose
 

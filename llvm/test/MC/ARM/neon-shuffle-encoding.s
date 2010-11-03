@@ -8,9 +8,9 @@
 	vext.8	q8, q9, q8, #3
 @ CHECK: vext.8	q8, q9, q8, #7          @ encoding: [0xe0,0x07,0xf2,0xf2]
 	vext.8	q8, q9, q8, #7
-@ CHECK: vext.16	d16, d17, d16, #3       @ encoding: [0xa0,0x03,0xf1,0xf2]
+@ CHECK: vext.16	d16, d17, d16, #3       @ encoding: [0xa0,0x06,0xf1,0xf2]
 	vext.16	d16, d17, d16, #3
-@ CHECK: vext.32	q8, q9, q8, #3          @ encoding: [0xe0,0x03,0xf2,0xf2]
+@ CHECK: vext.32	q8, q9, q8, #3          @ encoding: [0xe0,0x0c,0xf2,0xf2]
 	vext.32	q8, q9, q8, #3
 @ CHECK: vtrn.8	d17, d16                @ encoding: [0xa0,0x10,0xf2,0xf3]
 	vtrn.8	d17, d16
