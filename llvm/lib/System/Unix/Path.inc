@@ -583,7 +583,6 @@ bool
 Path::set(StringRef a_path) {
   if (a_path.empty())
     return false;
-  std::string save(path);
   path = a_path;
   return true;
 }
@@ -592,7 +591,6 @@ bool
 Path::appendComponent(StringRef name) {
   if (name.empty())
     return false;
-  std::string save(path);
   if (!lastIsSlash(path))
     path += '/';
   path += name;
@@ -618,7 +616,6 @@ Path::eraseComponent() {
 
 bool
 Path::eraseSuffix() {
-  std::string save = path;
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
   if (dotpos != std::string::npos) {
