@@ -195,6 +195,18 @@ class ArrayTypesTestCase(TestBase):
         self.assertTrue(long(child5.GetValue(frame), 0) == 6,
                         "long_6[5] == 6")
 
+        # Last, check that "long_6" has a value type of eValueTypeVariableLocal
+        # and "argc" has eValueTypeVariableArgument.
+        from lldbutil import ValueTypeString
+        self.assertTrue(variable.GetValueType() == lldb.eValueTypeVariableLocal,
+                        "Variable 'long_6' should have '%s' value type." %
+                        ValueTypeString(lldb.eValueTypeVariableLocal))
+        argc = frame.LookupVar("argc")
+        self.DebugSBValue(frame, argc)
+        self.assertTrue(argc.GetValueType() == lldb.eValueTypeVariableArgument,
+                        "Variable 'argc' should have '%s' value type." %
+                        ValueTypeString(lldb.eValueTypeVariableArgument))
+
 
 if __name__ == '__main__':
     import atexit

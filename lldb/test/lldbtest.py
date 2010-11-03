@@ -814,6 +814,8 @@ class TestBase(unittest2.TestCase):
 
     def DebugSBValue(self, frame, val):
         """Debug print a SBValue object, if traceAlways is True."""
+        from lldbutil import ValueTypeString
+
         if not traceAlways:
             return
 
@@ -823,6 +825,7 @@ class TestBase(unittest2.TestCase):
         err.write('\t' + "ByteSize      -> " + str(val.GetByteSize())       + '\n')
         err.write('\t' + "NumChildren   -> " + str(val.GetNumChildren())    + '\n')
         err.write('\t' + "Value         -> " + str(val.GetValue(frame))     + '\n')
+        err.write('\t' + "ValueType     -> " + ValueTypeString(val.GetValueType()) + '\n')
         err.write('\t' + "Summary       -> " + str(val.GetSummary(frame))   + '\n')
         err.write('\t' + "IsPointerType -> " + str(val.TypeIsPointerType()) + '\n')
         err.write('\t' + "Location      -> " + val.GetLocation(frame)       + '\n')

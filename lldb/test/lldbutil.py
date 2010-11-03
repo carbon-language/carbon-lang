@@ -83,6 +83,27 @@ def StopReasonString(enum):
     else:
         raise Exception("Unknown stopReason enum")
 
+def ValueTypeString(enum):
+    """Returns the valueType string given an enum."""
+    if enum == lldb.eValueTypeInvalid:
+        return "invalid"
+    elif enum == lldb.eValueTypeVariableGlobal:
+        return "global_variable"
+    elif enum == lldb.eValueTypeVariableStatic:
+        return "static_variable"
+    elif enum == lldb.eValueTypeVariableArgument:
+        return "argument_variable"
+    elif enum == lldb.eValueTypeVariableLocal:
+        return "local_variable"
+    elif enum == lldb.eValueTypeRegister:
+        return "register"
+    elif enum == lldb.eValueTypeRegisterSet:
+        return "register_set"
+    elif enum == lldb.eValueTypeConstResult:
+        return "constant_result"
+    else:
+        raise Exception("Unknown valueType enum")
+
 
 # ==================================================
 # Utility functions related to Threads and Processes
