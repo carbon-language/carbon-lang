@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "splitter"
+#define DEBUG_TYPE "regalloc"
 #include "SplitKit.h"
 #include "LiveRangeEdit.h"
 #include "VirtRegMap.h"

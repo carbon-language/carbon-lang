@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "spiller"
+#define DEBUG_TYPE "regalloc"
 #include "Spiller.h"
 #include "LiveRangeEdit.h"
 #include "SplitKit.h"
