@@ -6242,6 +6242,10 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     if (!LN0 || !LN0->hasOneUse() || LN0->isVolatile())
       return SDValue();
 
+    // If Idx was -1 above, Elt is going to be -1, so just return undef.
+    if (Elt == -1)
+      return DAG.getUNDEF(LN0->getBasePtr().getValueType());
+
     unsigned Align = LN0->getAlignment();
     if (NewLoad) {
       // Check the resultant load doesn't need a higher alignment than the
@@ -6257,11 +6261,8 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 
     SDValue NewPtr = LN0->getBasePtr();
     unsigned PtrOff = 0;
-    // If Idx was -1 above, Elt is going to be -1, so just use undef as our
-    // new pointer.
-    if (Elt == -1) {
-      NewPtr = DAG.getUNDEF(NewPtr.getValueType());
-    } else if (Elt) {
+    
+    if (Elt) {
       PtrOff = LVT.getSizeInBits() * Elt / 8;
       EVT PtrType = NewPtr.getValueType();
       if (TLI.isBigEndian())
