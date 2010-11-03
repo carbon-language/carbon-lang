@@ -126,12 +126,12 @@ bool BugDriver::runPasses(Module *Program,
            << ErrMsg << "\n";
     return(1);
   }
-  
+
   std::string ErrInfo;
   tool_output_file InFile(inputFilename.c_str(), ErrInfo,
                           raw_fd_ostream::F_Binary);
-  
-  
+
+
   if (!ErrInfo.empty()) {
     errs() << "Error opening bitcode file: " << inputFilename.str() << "\n";
     return 1;
@@ -195,7 +195,7 @@ bool BugDriver::runPasses(Module *Program,
     prog = sys::Program::FindProgramByName("valgrind");
   else
     prog = tool;
-  
+
   // Redirect stdout and stderr to nowhere if SilencePasses is given
   sys::Path Nowhere;
   const sys::Path *Redirects[3] = {0, &Nowhere, &Nowhere};
