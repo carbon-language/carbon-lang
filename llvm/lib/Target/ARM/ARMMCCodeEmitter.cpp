@@ -240,7 +240,7 @@ uint32_t ARMMCCodeEmitter::getAddrMode5OpValue(const MCInst &MI,
   EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm8);
 
   if (Reg == ARM::PC)
-    return ARM::PC << 13;       // Rn is PC;
+    return ARM::PC << 9;        // Rn is PC;
 
   uint32_t Binary = ARM_AM::getAM5Offset(Imm8);
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
