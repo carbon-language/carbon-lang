@@ -4,14 +4,14 @@
 ; constant offset addressing, so that each of the following stores
 ; uses the same register.
 
-; CHECK: vstr.32 s{{.*}}, [r{{.*}}, #-128]
-; CHECK: vstr.32 s{{.*}}, [r{{.*}}, #-96]
-; CHECK: vstr.32 s{{.*}}, [r{{.*}}, #-64]
-; CHECK: vstr.32 s{{.*}}, [r{{.*}}, #-32]
-; CHECK: vstr.32 s{{.*}}, [r{{.*}}]
-; CHECK: vstr.32 s{{.*}}, [r{{.*}}, #32]
-; CHECK: vstr.32 s{{.*}}, [r{{.*}}, #64]
-; CHECK: vstr.32 s{{.*}}, [r{{.*}}, #96]
+; CHECK: vstr.32 s{{.*}}, [lr, #-128]
+; CHECK: vstr.32 s{{.*}}, [lr, #-96]
+; CHECK: vstr.32 s{{.*}}, [lr, #-64]
+; CHECK: vstr.32 s{{.*}}, [lr, #-32]
+; CHECK: vstr.32 s{{.*}}, [lr]
+; CHECK: vstr.32 s{{.*}}, [lr, #32]
+; CHECK: vstr.32 s{{.*}}, [lr, #64]
+; CHECK: vstr.32 s{{.*}}, [lr, #96]
 
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 

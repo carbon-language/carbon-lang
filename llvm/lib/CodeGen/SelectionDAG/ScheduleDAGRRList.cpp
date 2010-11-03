@@ -1589,6 +1589,10 @@ bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 }
 
 bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
+  if (left->isCall || right->isCall)
+    // No way to compute latency of calls.
+    return BURRSort(left, right, SPQ);
+
   bool LHigh = SPQ->HighRegPressure(left);
   bool RHigh = SPQ->HighRegPressure(right);
   // Avoid causing spills. If register pressure is high, schedule for
@@ -1648,6 +1652,10 @@ bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
 
 bool ilp_ls_rr_sort::operator()(const SUnit *left,
                                 const SUnit *right) const {
+  if (left->isCall || right->isCall)
+    // No way to compute latency of calls.
+    return BURRSort(left, right, SPQ);
+
   bool LHigh = SPQ->HighRegPressure(left);
   bool RHigh = SPQ->HighRegPressure(right);
   // Avoid causing spills. If register pressure is high, schedule for

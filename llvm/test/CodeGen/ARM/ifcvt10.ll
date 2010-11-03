@@ -4,27 +4,40 @@
 ; micro-coded and would have long issue latency even if predicated on
 ; false predicate.
 
-%0 = type { float, float, float, float }
-%pln = type { %vec, float }
-%vec = type { [4 x float] }
-
-define arm_aapcs_vfpcc float @aaa(%vec* nocapture %ustart, %vec* nocapture %udir, %vec* nocapture %vstart, %vec* nocapture %vdir, %vec* %upoint, %vec* %vpoint) {
-; CHECK: aaa:
-; CHECK: vldr.32
-; CHECK-NOT: vldrne
-; CHECK-NOT: vpopne
-; CHECK-NOT: popne
-; CHECK: vpop
-; CHECK: pop
+define void @t(double %a, double %b, double %c, double %d, i32* nocapture %solutions, double* nocapture %x) nounwind {
 entry:
-  br i1 undef, label %bb81, label %bb48
+; CHECK: t:
+; CHECK: vpop {d8}
+; CHECK-NOT: vpopne
+; CHECK: ldmia sp!, {r7, pc}
+; CHECK: vpop {d8}
+; CHECK: ldmia sp!, {r7, pc}
+  br i1 undef, label %if.else, label %if.then
 
-bb48:                                             ; preds = %entry
-  %0 = call arm_aapcs_vfpcc  %0 @bbb(%pln* undef, %vec* %vstart, %vec* undef) nounwind ; <%0> [#uses=0]
-  ret float 0.000000e+00
+if.then:                                          ; preds = %entry
+  %mul73 = fmul double undef, 0.000000e+00
+  %sub76 = fsub double %mul73, undef
+  store double %sub76, double* undef, align 4
+  %call88 = tail call double @cos(double 0.000000e+00) nounwind
+  %mul89 = fmul double undef, %call88
+  %sub92 = fsub double %mul89, undef
+  store double %sub92, double* undef, align 4
+  ret void
 
-bb81:                                             ; preds = %entry
-  ret float 0.000000e+00
+if.else:                                          ; preds = %entry
+  %tmp101 = tail call double @llvm.pow.f64(double undef, double 0x3FD5555555555555)
+  %add112 = fadd double %tmp101, undef
+  %mul118 = fmul double %add112, undef
+  store double 0.000000e+00, double* %x, align 4
+  ret void
 }
 
-declare arm_aapcs_vfpcc %0 @bbb(%pln* nocapture, %vec* nocapture, %vec* nocapture) nounwind
+declare double @acos(double)
+
+declare double @sqrt(double) readnone
+
+declare double @cos(double) readnone
+
+declare double @fabs(double)
+
+declare double @llvm.pow.f64(double, double) nounwind readonly

@@ -40,10 +40,6 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
-static cl::opt<bool>
-OldARMIfCvt("old-arm-ifcvt", cl::Hidden,
-             cl::desc("Use old-style ARM if-conversion heuristics"));
-
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
   : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
     Subtarget(STI) {
@@ -1205,53 +1201,36 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
 }
 
 bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
-                                           unsigned NumInstrs,
+                                           unsigned NumCyles,
+                                           unsigned ExtraPredCycles,
                                            float Probability,
                                            float Confidence) const {
-  if (!NumInstrs)
+  if (!NumCyles)
     return false;
 
-  // Use old-style heuristics
-  if (OldARMIfCvt) {
-    if (Subtarget.getCPUString() == "generic")
-      // Generic (and overly aggressive) if-conversion limits for testing.
-      return NumInstrs <= 10;
-    if (Subtarget.hasV7Ops())
-      return NumInstrs <= 3;
-    return NumInstrs <= 2;
-  }
-
   // Attempt to estimate the relative costs of predication versus branching.
-  float UnpredCost = Probability * NumInstrs;
+  float UnpredCost = Probability * NumCyles;
   UnpredCost += 1.0; // The branch itself
   UnpredCost += (1.0 - Confidence) * Subtarget.getMispredictionPenalty();
 
-  float PredCost = NumInstrs;
-
-  return PredCost < UnpredCost;
-
+  return (float)(NumCyles + ExtraPredCycles) < UnpredCost;
 }
 
 bool ARMBaseInstrInfo::
-isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
-                    MachineBasicBlock &FMBB, unsigned NumF,
+isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                    unsigned TCycles, unsigned TExtra,
+                    MachineBasicBlock &FMBB,
+                    unsigned FCycles, unsigned FExtra,
                     float Probability, float Confidence) const {
-  // Use old-style if-conversion heuristics
-  if (OldARMIfCvt) {
-    return NumT && NumF && NumT <= 2 && NumF <= 2;
-  }
-
-  if (!NumT || !NumF)
+  if (!TCycles || !FCycles)
     return false;
 
   // Attempt to estimate the relative costs of predication versus branching.
-  float UnpredCost = Probability * NumT + (1.0 - Probability) * NumF;
+  float UnpredCost = Probability * TCycles + (1.0 - Probability) * FCycles;
   UnpredCost += 1.0; // The branch itself
   UnpredCost += (1.0 - Confidence) * Subtarget.getMispredictionPenalty();
 
-  float PredCost = NumT + NumF;
-
-  return PredCost < UnpredCost;
+  return (float)(TCycles + FCycles + TExtra + FExtra) < UnpredCost;
 }
 
 /// getInstrPredicate - If instruction is predicated, returns its predicate
@@ -1591,8 +1570,8 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
 }
 
 unsigned
-ARMBaseInstrInfo::getNumMicroOps(const MachineInstr *MI,
-                                 const InstrItineraryData *ItinData) const {
+ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
+                                 const MachineInstr *MI) const {
   if (!ItinData || ItinData->isEmpty())
     return 1;
 
@@ -1649,9 +1628,14 @@ ARMBaseInstrInfo::getNumMicroOps(const MachineInstr *MI,
   case ARM::t2STM_UPD: {
     unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands() + 1;
     if (Subtarget.isCortexA8()) {
-      // 4 registers would be issued: 1, 2, 1.
-      // 5 registers would be issued: 1, 2, 2.
-      return 1 + (NumRegs / 2);
+      if (NumRegs < 4)
+        return 2;
+      // 4 registers would be issued: 2, 2.
+      // 5 registers would be issued: 2, 2, 1.
+      UOps = (NumRegs / 2);
+      if (NumRegs % 2)
+        ++UOps;
+      return UOps;
     } else if (Subtarget.isCortexA9()) {
       UOps = (NumRegs / 2);
       // If there are odd number of registers or if it's not 64-bit aligned,
@@ -2023,6 +2007,46 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   }
 
   return Latency;
+}
+
+int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
+                                      const MachineInstr *MI,
+                                      unsigned *PredCost) const {
+  if (MI->isCopyLike() || MI->isInsertSubreg() ||
+      MI->isRegSequence() || MI->isImplicitDef())
+    return 1;
+
+  if (!ItinData || ItinData->isEmpty())
+    return 1;
+
+  const TargetInstrDesc &TID = MI->getDesc();
+  unsigned Class = TID.getSchedClass();
+  unsigned UOps = ItinData->Itineraries[Class].NumMicroOps;
+  if (PredCost && TID.hasImplicitDefOfPhysReg(ARM::CPSR))
+    // When predicated, CPSR is an additional source operand for CPSR updating
+    // instructions, this apparently increases their latencies.
+    *PredCost = 1;
+  if (UOps)
+    return ItinData->getStageLatency(Class);
+  return getNumMicroOps(ItinData, MI);
+}
+
+int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
+                                      SDNode *Node) const {
+  if (!Node->isMachineOpcode())
+    return 1;
+
+  if (!ItinData || ItinData->isEmpty())
+    return 1;
+
+  unsigned Opcode = Node->getMachineOpcode();
+  switch (Opcode) {
+  default:
+    return ItinData->getStageLatency(get(Opcode).getSchedClass());
+  case ARM::VLDMQ:
+  case ARM::VSTMQ:
+    return 2;
+  }  
 }
 
 bool ARMBaseInstrInfo::

@@ -50,8 +50,8 @@ TargetInstrInfo::~TargetInstrInfo() {
 }
 
 unsigned
-TargetInstrInfo::getNumMicroOps(const MachineInstr *MI,
-                                const InstrItineraryData *ItinData) const {
+TargetInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
+                                const MachineInstr *MI) const {
   if (!ItinData || ItinData->isEmpty())
     return 1;
 
@@ -92,6 +92,26 @@ TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     return ItinData->getOperandCycle(DefClass, DefIdx);
   unsigned UseClass = get(UseNode->getMachineOpcode()).getSchedClass();
   return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
+}
+
+int TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
+                                     const MachineInstr *MI,
+                                     unsigned *PredCost) const {
+  if (!ItinData || ItinData->isEmpty())
+    return 1;
+
+  return ItinData->getStageLatency(MI->getDesc().getSchedClass());
+}
+
+int TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
+                                     SDNode *N) const {
+  if (!ItinData || ItinData->isEmpty())
+    return 1;
+
+  if (!N->isMachineOpcode())
+    return 1;
+
+  return ItinData->getStageLatency(get(N->getMachineOpcode()).getSchedClass());
 }
 
 bool TargetInstrInfo::hasLowDefLatency(const InstrItineraryData *ItinData,

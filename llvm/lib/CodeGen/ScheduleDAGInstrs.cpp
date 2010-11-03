@@ -238,6 +238,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
            "Cannot schedule terminators or labels!");
     // Create the SUnit for this MI.
     SUnit *SU = NewSUnit(MI);
+    SU->isCall = TID.isCall();
+    SU->isCommutable = TID.isCommutable();
 
     // Assign the Latency field of SU using target-provided information.
     if (UnitLatencies)
@@ -564,9 +566,9 @@ void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {
     // extra time.
     if (SU->getInstr()->getDesc().mayLoad())
       SU->Latency += 2;
-  } else
-    SU->Latency =
-      InstrItins->getStageLatency(SU->getInstr()->getDesc().getSchedClass());
+  } else {
+    SU->Latency = TII->getInstrLatency(InstrItins, SU->getInstr());
+  }
 }
 
 void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use, 

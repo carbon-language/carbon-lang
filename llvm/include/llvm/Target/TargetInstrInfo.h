@@ -304,12 +304,14 @@ public:
     return true;
   }
 
-  /// isProfitableToIfCvt - Return true if it's profitable to first "NumInstrs"
+  /// isProfitableToIfCvt - Return true if it's profitable to predicate
+  /// instructions with accumulated instruction latency of "NumCycles"
   /// of the specified basic block, where the probability of the instructions
   /// being executed is given by Probability, and Confidence is a measure
   /// of our confidence that it will be properly predicted.
   virtual
-  bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumInstrs,
+  bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCyles,
+                           unsigned ExtraPredCycles,
                            float Probability, float Confidence) const {
     return false;
   }
@@ -321,19 +323,22 @@ public:
   /// by Probability, and Confidence is a measure of our confidence that it
   /// will be properly predicted.
   virtual bool
-  isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumTInstrs,
-                      MachineBasicBlock &FMBB, unsigned NumFInstrs,
+  isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                      unsigned NumTCycles, unsigned ExtraTCycles,
+                      MachineBasicBlock &FMBB,
+                      unsigned NumFCycles, unsigned ExtraFCycles,
                       float Probability, float Confidence) const {
     return false;
   }
 
   /// isProfitableToDupForIfCvt - Return true if it's profitable for
-  /// if-converter to duplicate a specific number of instructions in the
-  /// specified MBB to enable if-conversion, where the probability of the 
-  /// instructions being executed is given by Probability, and Confidence is
-  /// a measure of our confidence that it will be properly predicted.
+  /// if-converter to duplicate instructions of specified accumulated
+  /// instruction latencies in the specified MBB to enable if-conversion.
+  /// The probability of the instructions being executed is given by
+  /// Probability, and Confidence is a measure of our confidence that it
+  /// will be properly predicted.
   virtual bool
-  isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumInstrs,
+  isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCyles,
                             float Probability, float Confidence) const {
     return false;
   }
@@ -608,24 +613,31 @@ public:
 
   /// getNumMicroOps - Return the number of u-operations the given machine
   /// instruction will be decoded to on the target cpu.
-  virtual unsigned getNumMicroOps(const MachineInstr *MI,
-                                  const InstrItineraryData *ItinData) const;
+  virtual unsigned getNumMicroOps(const InstrItineraryData *ItinData,
+                                  const MachineInstr *MI) const;
 
   /// getOperandLatency - Compute and return the use operand latency of a given
-  /// itinerary class and operand index if the value is produced by an
-  /// instruction of the specified itinerary class and def operand index.
+  /// pair of def and use.
   /// In most cases, the static scheduling itinerary was enough to determine the
   /// operand latency. But it may not be possible for instructions with variable
   /// number of defs / uses.
-  virtual
-  int getOperandLatency(const InstrItineraryData *ItinData,
-                        const MachineInstr *DefMI, unsigned DefIdx,
-                        const MachineInstr *UseMI, unsigned UseIdx) const;
+  virtual int getOperandLatency(const InstrItineraryData *ItinData,
+                              const MachineInstr *DefMI, unsigned DefIdx,
+                              const MachineInstr *UseMI, unsigned UseIdx) const;
 
-  virtual
-  int getOperandLatency(const InstrItineraryData *ItinData,
-                        SDNode *DefNode, unsigned DefIdx,
-                        SDNode *UseNode, unsigned UseIdx) const;
+  virtual int getOperandLatency(const InstrItineraryData *ItinData,
+                                SDNode *DefNode, unsigned DefIdx,
+                                SDNode *UseNode, unsigned UseIdx) const;
+
+  /// getInstrLatency - Compute the instruction latency of a given instruction.
+  /// If the instruction has higher cost when predicated, it's returned via
+  /// PredCost.
+  virtual int getInstrLatency(const InstrItineraryData *ItinData,
+                              const MachineInstr *MI,
+                              unsigned *PredCost = 0) const;
+
+  virtual int getInstrLatency(const InstrItineraryData *ItinData,
+                              SDNode *Node) const;
 
   /// hasHighOperandLatency - Compute operand latency between a def of 'Reg'
   /// and an use in the current loop, return true if the target considered
