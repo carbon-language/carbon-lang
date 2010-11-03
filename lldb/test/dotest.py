@@ -698,6 +698,14 @@ for ia in range(len(archs) if iterArchs else 1):
                 if method:
                     method()
 
+            def addExpectedFailure(self, test, err):
+                global sdir_has_content
+                sdir_has_content = True
+                super(LLDBTestResult, self).addExpectedFailure(test, err)
+                method = getattr(test, "markExpectedFailure", None)
+                if method:
+                    method()
+
         result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
                                           resultclass=LLDBTestResult).run(suite)
         

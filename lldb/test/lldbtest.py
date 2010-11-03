@@ -485,12 +485,13 @@ class TestBase(unittest2.TestCase):
         # test case specific file if test failure is encountered.
         self.session = StringIO.StringIO()
 
-        # Optimistically set self.__errored__ and self.__failed__ to False
+        # Optimistically set __errored__, __failed__, __expected__ to False
         # initially.  If the test errored/failed, the session info
         # (self.session) is then dumped into a session specific file for
         # diagnosis.
         self.__errored__ = False
         self.__failed__ = False
+        self.__expected__ = False
 
         # See addTearDownHook(self, hook) which allows the client to add a hook
         # function to be run during tearDown() time.
@@ -512,10 +513,24 @@ class TestBase(unittest2.TestCase):
             # Once by the Python unittest framework, and a second time by us.
             print >> sbuf, "FAIL"
 
+    def markExpectedFailure(self):
+        """Callback invoked when an expected failure/error occurred."""
+        self.__expected__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "expected failure" to the
+            # stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "expected failure"
+
     def dumpSessionInfo(self):
         """
         Dump the debugger interactions leading to a test error/failure.  This
         allows for more convenient postmortem analysis.
+
+        See also LLDBTestResult (dotest.py) which is a singlton class derived
+        from TextTestResult and overwrites addError, addFailure, and
+        addExpectedFailure methods to allow us to to mark the test instance as
+        such.
         """
 
         # We are here because self.tearDown() detected that this test instance
@@ -523,13 +538,23 @@ class TestBase(unittest2.TestCase):
         # two lists (erros and failures) which get populated by the unittest
         # framework.  Look over there for stack trace information.
         #
+        # The lists contain 2-tuples of TestCase instances and strings holding
+        # formatted tracebacks.
+        #
         # See http://docs.python.org/library/unittest.html#unittest.TestResult.
-        for test, err in lldb.test_result.errors:
+        if self.__errored__:
+            pairs = lldb.test_result.errors
+        elif self.__failed__:
+            pairs = lldb.test_result.failures
+        elif self.__expected__:
+            pairs = lldb.test_result.expectedFailures
+        else:
+            # Simply return, there's no session info to dump!
+            return
+
+        for test, traceback in pairs:
             if test is self:
-                print >> self.session, err
-        for test, err in lldb.test_result.failures:
-            if test is self:
-                print >> self.session, err
+                print >> self.session, traceback
 
         dname = os.path.join(os.environ["LLDB_TEST"],
                              os.environ["LLDB_SESSION_DIRNAME"])
@@ -584,11 +609,8 @@ class TestBase(unittest2.TestCase):
             if not module.cleanup(self, dictionary=self.dict):
                 raise Exception("Don't know how to do cleanup")
 
-        # See also LLDBTestResult (dotest.py) which is a singlton class derived
-        # from TextTestResult and overwrites addError()/addFailure() methods to
-        # allow us to to check the error/failure status here.
-        if self.__errored__ or self.__failed__:
-            self.dumpSessionInfo()
+        # We always dump the session infos for failures/errors.
+        self.dumpSessionInfo()
 
     def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):
         """
