@@ -63,9 +63,6 @@
 //      In addition, the subset relation amongst classes induces a partial order
 //      on such tuples, which we use to resolve ambiguities.
 //
-//      FIXME: What do we do if a crazy case shows up where this is the wrong
-//      resolution?
-//
 //   2. The input can now be treated as a tuple of classes (static tokens are
 //      simple singleton sets). Each such tuple should generally map to a single
 //      instruction (we currently ignore cases where this isn't true, whee!!!),
@@ -247,7 +244,7 @@ public:
 /// MatchableInfo - Helper class for storing the necessary information for an
 /// instruction or alias which is capable of being matched.
 struct MatchableInfo {
-  struct Operand {
+  struct AsmOperand {
     /// Token - This is the token that the operand came from.
     StringRef Token;
     
@@ -259,7 +256,7 @@ struct MatchableInfo {
     /// list.  If an operand is tied ($a=$b), this refers to source operand: $b.
     const CGIOperandList::OperandInfo *OperandInfo;
     
-    explicit Operand(StringRef T) : Token(T), Class(0), OperandInfo(0) {}
+    explicit AsmOperand(StringRef T) : Token(T), Class(0), OperandInfo(0) {}
   };
 
   /// InstrName - The target name for this instruction.
@@ -285,7 +282,7 @@ struct MatchableInfo {
   /// annotated with a class and where in the OperandList they were defined.
   /// This directly corresponds to the tokenized AsmString after the mnemonic is
   /// removed.
-  SmallVector<Operand, 4> AsmOperands;
+  SmallVector<AsmOperand, 4> AsmOperands;
 
   /// Predicates - The required subtarget features to match this instruction.
   SmallVector<SubtargetFeatureInfo*, 4> RequiredFeatures;
@@ -477,7 +474,7 @@ void MatchableInfo::dump() {
   errs() << InstrName << " -- " << "flattened:\"" << AsmString << "\"\n";
 
   for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
-    Operand &Op = AsmOperands[i];
+    AsmOperand &Op = AsmOperands[i];
     errs() << "  op[" << i << "] = " << Op.Class->ClassName << " - ";
     if (Op.Class->Kind == ClassInfo::Token) {
       errs() << '\"' << Op.Token << "\"\n";
@@ -531,22 +528,22 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
     case '\t':
     case ',':
       if (InTok) {
-        AsmOperands.push_back(Operand(String.slice(Prev, i)));
+        AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
         InTok = false;
       }
       if (!isspace(String[i]) && String[i] != ',')
-        AsmOperands.push_back(Operand(String.substr(i, 1)));
+        AsmOperands.push_back(AsmOperand(String.substr(i, 1)));
       Prev = i + 1;
       break;
 
     case '\\':
       if (InTok) {
-        AsmOperands.push_back(Operand(String.slice(Prev, i)));
+        AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
         InTok = false;
       }
       ++i;
       assert(i != String.size() && "Invalid quoted character");
-      AsmOperands.push_back(Operand(String.substr(i, 1)));
+      AsmOperands.push_back(AsmOperand(String.substr(i, 1)));
       Prev = i + 1;
       break;
 
@@ -554,7 +551,7 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
       // If this isn't "${", treat like a normal token.
       if (i + 1 == String.size() || String[i + 1] != '{') {
         if (InTok) {
-          AsmOperands.push_back(Operand(String.slice(Prev, i)));
+          AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
           InTok = false;
         }
         Prev = i;
@@ -562,14 +559,14 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
       }
 
       if (InTok) {
-        AsmOperands.push_back(Operand(String.slice(Prev, i)));
+        AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
         InTok = false;
       }
 
       StringRef::iterator End = std::find(String.begin() + i, String.end(),'}');
       assert(End != String.end() && "Missing brace in operand reference!");
       size_t EndPos = End - String.begin();
-      AsmOperands.push_back(Operand(String.slice(i, EndPos+1)));
+      AsmOperands.push_back(AsmOperand(String.slice(i, EndPos+1)));
       Prev = EndPos + 1;
       i = EndPos;
       break;
@@ -577,7 +574,7 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
 
     case '.':
       if (InTok)
-        AsmOperands.push_back(Operand(String.slice(Prev, i)));
+        AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
       Prev = i;
       InTok = true;
       break;
@@ -587,7 +584,7 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
     }
   }
   if (InTok && Prev != String.size())
-    AsmOperands.push_back(Operand(String.substr(Prev)));
+    AsmOperands.push_back(AsmOperand(String.substr(Prev)));
   
   // The first token of the instruction is the mnemonic, which must be a
   // simple string, not a $foo variable or a singleton register.
@@ -1033,7 +1030,7 @@ void AsmMatcherInfo::BuildInfo() {
 
     // Parse the tokens after the mnemonic.
     for (unsigned i = 0, e = II->AsmOperands.size(); i != e; ++i) {
-      MatchableInfo::Operand &Op = II->AsmOperands[i];
+      MatchableInfo::AsmOperand &Op = II->AsmOperands[i];
       StringRef Token = Op.Token;
 
       // Check for singleton registers.
@@ -1133,7 +1130,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
     
     // Order the (class) operands by the order to convert them into an MCInst.
     for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
-      MatchableInfo::Operand &Op = II.AsmOperands[i];
+      MatchableInfo::AsmOperand &Op = II.AsmOperands[i];
       if (!Op.OperandInfo) continue;
       
       unsigned LogicalOpNum = Op.OperandInfo - &II.OperandList[0];
@@ -1155,13 +1152,10 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       int SrcOperand = OperandMap[i];
       if (SrcOperand != -1) {
         // Otherwise, this comes from something we parsed.
-        MatchableInfo::Operand &Op = II.AsmOperands[SrcOperand];
+        MatchableInfo::AsmOperand &Op = II.AsmOperands[SrcOperand];
         
         // Registers are always converted the same, don't duplicate the
         // conversion function based on them.
-        //
-        // FIXME: We could generalize this based on the render method, if it
-        // mattered.
         Signature += "__";
         if (Op.Class->isRegisterClass())
           Signature += "Reg";
@@ -1706,7 +1700,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     << ", \"" << II.Mnemonic << "\""
     << ", " << II.ConversionFnKind << ", { ";
     for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
-      MatchableInfo::Operand &Op = II.AsmOperands[i];
+      MatchableInfo::AsmOperand &Op = II.AsmOperands[i];
 
       if (i) OS << ", ";
       OS << Op.Class->Name;
