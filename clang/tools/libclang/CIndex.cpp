@@ -2467,6 +2467,41 @@ unsigned clang_visitChildren(CXCursor parent,
   return CursorVis.VisitChildren(parent);
 }
 
+#ifndef __has_feature
+#define __has_feature(x) 0
+#endif
+#if __has_feature(blocks)
+typedef enum CXChildVisitResult 
+     (^CXCursorVisitorBlock)(CXCursor cursor, CXCursor parent);
+
+static enum CXChildVisitResult visitWithBlock(CXCursor cursor, CXCursor parent,
+    CXClientData client_data) {
+  CXCursorVisitorBlock block = (CXCursorVisitorBlock)client_data;
+  return block(cursor, parent);
+}
+#else
+// If we are compiled with a compiler that doesn't have native blocks support,
+// define and call the block manually, so the 
+typedef struct _CXChildVisitResult
+{
+	void *isa;
+	int flags;
+	int reserved;
+	enum CXChildVisitResult(*invoke)(struct _CXChildVisitResult*, CXCursor, CXCursor);
+} *CXCursorVisitorBlock;
+
+static enum CXChildVisitResult visitWithBlock(CXCursor cursor, CXCursor parent,
+    CXClientData client_data) {
+  CXCursorVisitorBlock block = (CXCursorVisitorBlock)client_data;
+  return block->invoke(block, cursor, parent);
+}
+#endif
+
+
+unsigned clang_visitChildrenWithBlock(CXCursor parent, CXCursorVisitorBlock block) {
+  return clang_visitChildren(parent, visitWithBlock, block);
+}
+
 static CXString getDeclSpelling(Decl *D) {
   NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D);
   if (!ND)

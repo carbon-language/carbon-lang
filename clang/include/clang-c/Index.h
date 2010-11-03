@@ -1828,6 +1828,29 @@ typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor,
 CINDEX_LINKAGE unsigned clang_visitChildren(CXCursor parent,
                                             CXCursorVisitor visitor,
                                             CXClientData client_data);
+#ifdef __has_feature
+#  if __has_feature(blocks)
+/**
+ * \brief Visitor invoked for each cursor found by a traversal.
+ *
+ * This visitor block will be invoked for each cursor found by
+ * clang_visitChildrenWithBlock(). Its first argument is the cursor being
+ * visited, its second argument is the parent visitor for that cursor.
+ *
+ * The visitor should return one of the \c CXChildVisitResult values
+ * to direct clang_visitChildrenWithBlock().
+ */
+typedef enum CXChildVisitResult 
+     (^CXCursorVisitorBlock)(CXCursor cursor, CXCursor parent);
+
+/**
+ * Visits the children of a cursor using the specified block.  Behaves
+ * identically to clang_visitChildren() in all other respects.
+ */
+unsigned clang_visitChildrenWithBlock(CXCursor parent,
+                                      CXCursorVisitorBlock block);
+#  endif
+#endif
 
 /**
  * @}

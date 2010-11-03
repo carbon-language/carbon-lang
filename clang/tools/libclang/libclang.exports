@@ -113,3 +113,4 @@ clang_saveTranslationUnit
 clang_sortCodeCompletionResults
 clang_tokenize
 clang_visitChildren
+clang_visitChildrenWithBlock
