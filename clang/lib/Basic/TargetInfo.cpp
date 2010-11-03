@@ -350,6 +350,10 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
         if (i >= NumOutputs)
           return false;
 
+        // A number must refer to an output only operand.
+        if (OutputConstraints[i].isReadWrite())
+          return false;
+
         // The constraint should have the same info as the respective
         // output constraint.
         Info.setTiedOperand(i, OutputConstraints[i]);
