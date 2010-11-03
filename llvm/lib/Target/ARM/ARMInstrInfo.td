@@ -991,17 +991,18 @@ def CPS : AXI<(outs), (ins cps_opt:$opt), MiscFrm, NoItinerary, "cps$opt",
 //
 // A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.
 // The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
-multiclass APreLoad<bit data, bit read, string opc> {
+multiclass APreLoad<bits<2> data_read, string opc> {
 
   def i12 : AXI<(outs), (ins addrmode_imm12:$addr), MiscFrm, NoItinerary,
-                !strconcat(opc, "\t$addr"), []> {
+                !strconcat(opc, "\t$addr"),
+                [(prefetch addrmode_imm12:$addr, imm, (i32 data_read))]> {
     bits<4> Rt;
     bits<17> addr;
     let Inst{31-26} = 0b111101;
     let Inst{25} = 0; // 0 for immediate form
-    let Inst{24} = data;
+    let Inst{24} = data_read{1};
     let Inst{23} = addr{12};        // U (add = ('U' == 1))
-    let Inst{22} = read;
+    let Inst{22} = data_read{0};
     let Inst{21-20} = 0b01;
     let Inst{19-16} = addr{16-13};  // Rn
     let Inst{15-12} = Rt;
@@ -1009,23 +1010,24 @@ multiclass APreLoad<bit data, bit read, string opc> {
   }
 
   def rs : AXI<(outs), (ins ldst_so_reg:$shift), MiscFrm, NoItinerary,
-               !strconcat(opc, "\t$shift"), []> {
+               !strconcat(opc, "\t$shift"),
+               [(prefetch ldst_so_reg:$shift, imm, (i32 data_read))]> {
     bits<4> Rt;
     bits<17> shift;
     let Inst{31-26} = 0b111101;
     let Inst{25} = 1; // 1 for register form
-    let Inst{24} = data;
+    let Inst{24} = data_read{1};
     let Inst{23} = shift{12};    // U (add = ('U' == 1))
-    let Inst{22} = read;
+    let Inst{22} = data_read{0};
     let Inst{21-20} = 0b01;
     let Inst{19-16} = shift{16-13}; // Rn
     let Inst{11-0}  = shift{11-0};
   }
 }
 
-defm PLD  : APreLoad<1, 1, "pld">;
-defm PLDW : APreLoad<1, 0, "pldw">;
-defm PLI  : APreLoad<0, 1, "pli">;
+defm PLD  : APreLoad<3, "pld">;
+defm PLDW : APreLoad<2, "pldw">;
+defm PLI  : APreLoad<1, "pli">;
 
 def SETEND : AXI<(outs),(ins setend_op:$end), MiscFrm, NoItinerary,
                  "setend\t$end",

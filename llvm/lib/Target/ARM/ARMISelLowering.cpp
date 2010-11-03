@@ -598,6 +598,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i64, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i64, Expand);
 
+  // ARM v5TE+ and Thumb2 has preload instructions.
+  if (Subtarget->isThumb2() ||
+      (!Subtarget->isThumb1Only() && Subtarget->hasV5TEOps()))
+    setOperationAction(ISD::PREFETCH,   MVT::Other, Legal);
+
   // Requires SXTB/SXTH, available on v6 and up in both ARM and Thumb modes.
   if (!Subtarget->hasV6Ops()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);

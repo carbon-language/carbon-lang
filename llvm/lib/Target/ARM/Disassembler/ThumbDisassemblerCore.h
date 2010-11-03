@@ -1731,11 +1731,11 @@ static inline bool Thumb2PreloadOpcode(unsigned Opcode) {
   default:
     return false;
   case ARM::t2PLDi12:   case ARM::t2PLDi8:   case ARM::t2PLDpci:
-  case ARM::t2PLDr:     case ARM::t2PLDs:
+  case ARM::t2PLDs:
   case ARM::t2PLDWi12:  case ARM::t2PLDWi8:  case ARM::t2PLDWpci:
-  case ARM::t2PLDWr:    case ARM::t2PLDWs:
+  case ARM::t2PLDWs:
   case ARM::t2PLIi12:   case ARM::t2PLIi8:   case ARM::t2PLIpci:
-  case ARM::t2PLIr:     case ARM::t2PLIs:
+  case ARM::t2PLIs:
     return true;
   }
 }

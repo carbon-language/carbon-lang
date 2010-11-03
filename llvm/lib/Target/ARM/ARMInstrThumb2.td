@@ -610,6 +610,8 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{20} = 1; // load
     let Inst{11-6} = 0b000000;
   }
+
+  // FIXME: Is the pci variant actually needed?
   def pci : T2Ipc <(outs GPR:$dst), (ins i32imm:$addr), iii,
                    opc, ".w\t$dst, $addr",
                    [(set GPR:$dst, (opnode (ARMWrapper tconstpool:$addr)))]> {
@@ -1172,10 +1174,11 @@ def t2STRD_POST : T2Ii8s4<0, 1, 0, (outs),
 //
 // A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.
 // The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
-multiclass T2Ipl<bit instr, bit write, string opc> {
+multiclass T2Ipl<bit instr, bit write, bits<2> data_read, string opc> {
 
-  def i12 : T2I<(outs), (ins GPR:$base, i32imm:$imm), IIC_iLoad_i, opc,
-                "\t[$base, $imm]", []> {
+  def i12 : T2Ii12<(outs), (ins t2addrmode_imm12:$addr), IIC_iLoad_i, opc,
+                "\t$addr",
+                [(prefetch t2addrmode_imm12:$addr, imm, (i32 data_read))]> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = 1; // U = 1
@@ -1185,8 +1188,9 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{15-12} = 0b1111;
   }
 
-  def i8 : T2I<(outs), (ins GPR:$base, neg_zero:$imm), IIC_iLoad_i, opc,
-                "\t[$base, $imm]", []> {
+  def i8 : T2Ii8<(outs), (ins t2addrmode_imm8:$addr), IIC_iLoad_i, opc,
+                "\t$addr",
+               [(prefetch t2addrmode_imm8:$addr, imm, (i32 data_read))]> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = 0; // U = 0
@@ -1197,9 +1201,23 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{11-8} = 0b1100;
   }
 
-  let isCodeGenOnly = 1 in   // $base doesn't exist in asmstring?
-  def pci : T2I<(outs), (ins GPR:$base, neg_zero:$imm), IIC_iLoad_i, opc,
-                "\t[pc, $imm]", []> {
+  def s : T2Iso<(outs), (ins t2addrmode_so_reg:$addr), IIC_iLoad_i, opc,
+               "\t$addr",
+              [(prefetch t2addrmode_so_reg:$addr, imm, (i32 data_read))]> {
+    let Inst{31-25} = 0b1111100;
+    let Inst{24} = instr;
+    let Inst{23} = 0; // add = TRUE for T1
+    let Inst{22} = 0;
+    let Inst{21} = write;
+    let Inst{20} = 1;
+    let Inst{15-12} = 0b1111;
+    let Inst{11-6} = 0000000;
+  }
+
+  let isCodeGenOnly = 1 in
+  def pci : T2Ipc<(outs), (ins i32imm:$addr), IIC_iLoad_i, opc,
+                "\t$addr",
+               []> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = ?; // add = (U == 1)
@@ -1209,36 +1227,11 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{19-16} = 0b1111; // Rn = 0b1111
     let Inst{15-12} = 0b1111;
   }
-
-  def r : T2I<(outs), (ins GPR:$base, GPR:$a), IIC_iLoad_i, opc,
-                "\t[$base, $a]", []> {
-    let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr;
-    let Inst{23} = 0; // add = TRUE for T1
-    let Inst{22} = 0;
-    let Inst{21} = write;
-    let Inst{20} = 1;
-    let Inst{15-12} = 0b1111;
-    let Inst{11-6} = 0000000;
-    let Inst{5-4} = 0b00; // no shift is applied
-  }
-
-  def s : T2I<(outs), (ins GPR:$base, GPR:$a, i32imm:$shamt), IIC_iLoad_i, opc,
-                "\t[$base, $a, lsl $shamt]", []> {
-    let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr;
-    let Inst{23} = 0; // add = TRUE for T1
-    let Inst{22} = 0;
-    let Inst{21} = write;
-    let Inst{20} = 1;
-    let Inst{15-12} = 0b1111;
-    let Inst{11-6} = 0000000;
-  }
 }
 
-defm t2PLD  : T2Ipl<0, 0, "pld">;
-defm t2PLDW : T2Ipl<0, 1, "pldw">;
-defm t2PLI  : T2Ipl<1, 0, "pli">;
+defm t2PLD  : T2Ipl<0, 0, 3, "pld">;
+defm t2PLDW : T2Ipl<0, 1, 2, "pldw">;
+defm t2PLI  : T2Ipl<1, 0, 1, "pli">;
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
