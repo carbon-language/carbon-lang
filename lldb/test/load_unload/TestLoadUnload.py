@@ -11,7 +11,6 @@ class LoadUnloadTestCase(TestBase):
 
     mydir = "load_unload"
 
-    @unittest2.expectedFailure
     def test_load_unload(self):
         """Test breakpoint by name works correctly with dlopen'ing."""
 
