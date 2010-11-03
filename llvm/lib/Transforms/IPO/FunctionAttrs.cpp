@@ -65,7 +65,7 @@ namespace {
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
-    bool PointsToLocalMemory(Value *V);
+    bool PointsToLocalOrConstantMemory(Value *V);
   };
 }
 
@@ -79,10 +79,10 @@ INITIALIZE_PASS_END(FunctionAttrs, "functionattrs",
 Pass *llvm::createFunctionAttrsPass() { return new FunctionAttrs(); }
 
 
-/// PointsToLocalMemory - Returns whether the given pointer value points to
-/// memory that is local to the function.  Global constants are considered
-/// local to all functions.
-bool FunctionAttrs::PointsToLocalMemory(Value *V) {
+/// PointsToLocalOrConstantMemory - Returns whether the given pointer value
+/// points to memory that is local to the function, with global constants being
+/// considered local to all functions.
+bool FunctionAttrs::PointsToLocalOrConstantMemory(Value *V) {
   SmallVector<Value*, 16> Worklist;
   unsigned MaxLookup = 8;
 
@@ -179,7 +179,8 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
             for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
                  CI != CE; ++CI) {
               Value *Arg = *CI;
-              if (Arg->getType()->isPointerTy() && !PointsToLocalMemory(Arg))
+              if (Arg->getType()->isPointerTy() &&
+                  !PointsToLocalOrConstantMemory(Arg))
                 // Writes memory.  Just give up.
                 return false;
             }
@@ -188,11 +189,13 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
           }
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore non-volatile loads from local memory.
-        if (!LI->isVolatile() && PointsToLocalMemory(LI->getPointerOperand()))
+        if (!LI->isVolatile() &&
+            PointsToLocalOrConstantMemory(LI->getPointerOperand()))
           continue;
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Ignore non-volatile stores to local memory.
-        if (!SI->isVolatile() && PointsToLocalMemory(SI->getPointerOperand()))
+        if (!SI->isVolatile() &&
+            PointsToLocalOrConstantMemory(SI->getPointerOperand()))
           continue;
       }
 
