@@ -23,7 +23,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
@@ -1178,338 +1177,28 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
 
 /// Linux toolchain (very bare-bones at the moment).
 
-enum LinuxDistro {
-  DebianLennyAmd64,
-  DebianLennyi386,
-  DebianSqueezeAmd64,
-  DebianSqueezei386,
-  DebianSqueezeArm,
-  Fedora13X86_64,
-  Fedora13i686,
-  Fedora14X86_64,
-  Fedora14i686,
-  OpenSuse11_3X86_64,
-  OpenSuse11_3i686,
-  UbuntuLucidAmd64,
-  UbuntuLucidi386,
-  UbuntuMaverickAmd64,
-  UbuntuMavericki386,
-  UnknownDistro
-};
-
-static bool IsFedora13(enum LinuxDistro Distro) {
-  return Distro == Fedora13X86_64 || Distro == Fedora13i686;
-}
-
-static bool IsFedora14(enum LinuxDistro Distro) {
-  return Distro == Fedora14X86_64 || Distro == Fedora14i686;
-}
-
-static bool IsFedora(enum LinuxDistro Distro) {
-  return IsFedora13(Distro) || IsFedora14(Distro);
-}
-
-static bool IsOpenSuse(enum LinuxDistro Distro) {
-  return Distro == OpenSuse11_3X86_64 || Distro == OpenSuse11_3i686;
-}
-
-static bool IsUbuntuLucid(enum LinuxDistro Distro) {
-  return Distro == UbuntuLucidi386 || Distro == UbuntuLucidAmd64;
-}
-
-static bool IsUbuntuMaveric(enum LinuxDistro Distro) {
-  return Distro == UbuntuMavericki386 || Distro == UbuntuMaverickAmd64;
-}
-
-static bool IsDebianLenny(enum LinuxDistro Distro) {
-  return Distro == DebianLennyAmd64 || Distro == DebianLennyi386;
-}
-
-static bool IsDebianSqueeze(enum LinuxDistro Distro) {
-  return Distro == DebianSqueezeAmd64 ||
-         Distro == DebianSqueezei386 ||
-         Distro == DebianSqueezeArm;
-}
-
-static bool IsDebian(enum LinuxDistro Distro) {
-  return IsDebianLenny(Distro) || IsDebianSqueeze(Distro);
-}
-
-static bool IsUbuntu(enum LinuxDistro Distro) {
-  return IsUbuntuMaveric(Distro) || IsUbuntuLucid(Distro);
-}
-
-static bool IsDebianBased(enum LinuxDistro Distro) {
-  return IsDebian(Distro) || IsUbuntu(Distro);
-}
-
-static bool IsArm(enum LinuxDistro Distro) {
-  return Distro == DebianSqueezeArm;
-}
-
-static bool IsX86_64(enum LinuxDistro Distro) {
-  switch (Distro) {
-  default:
-    return false;
-  case DebianLennyAmd64:
-  case DebianSqueezeAmd64:
-  case Fedora13X86_64:
-  case Fedora14X86_64:
-  case OpenSuse11_3X86_64:
-  case UbuntuLucidAmd64:
-  case UbuntuMaverickAmd64:
-    return true;
-  }
-}
-
-static bool IsX86(enum LinuxDistro Distro) {
-  return !IsArm(Distro) && !IsX86_64(Distro);
-}
-
-static bool HasMultilib(enum LinuxDistro Distro) {
-  if (IsX86_64(Distro))
-    return true;
-  if (IsArm(Distro))
-    return false;
-  if (IsDebianBased(Distro))
-    return true;
-  return false;
-}
-
-static LinuxDistro DetectLinuxDistro( llvm::Triple::ArchType Arch) {
-  llvm::OwningPtr<const llvm::MemoryBuffer>
-    LsbRelease(llvm::MemoryBuffer::getFile("/etc/lsb-release"));
-  if (LsbRelease) {
-    llvm::StringRef Data = LsbRelease.get()->getBuffer();
-    llvm::SmallVector<llvm::StringRef, 8> Lines;
-    Data.split(Lines, "\n");
-    for (unsigned int i = 0, s = Lines.size(); i < s; ++ i) {
-      if (Lines[i] == "DISTRIB_CODENAME=maverick") {
-        switch (Arch) {
-        default:
-          return UnknownDistro;
-        case llvm::Triple::x86:
-	  return UbuntuMavericki386;
-        case llvm::Triple::x86_64:
-	  return UbuntuMaverickAmd64;
-        }
-      }
-      if (Lines[i] == "DISTRIB_CODENAME=lucid") {
-       switch (Arch) {
-        default:
-          return UnknownDistro;
-        case llvm::Triple::x86:
-	  return UbuntuLucidi386;
-        case llvm::Triple::x86_64:
-	  return UbuntuLucidAmd64;
-        }
-      }
-    }
-    return UnknownDistro;
-  }
-
-  llvm::OwningPtr<const llvm::MemoryBuffer>
-    RHRelease(llvm::MemoryBuffer::getFile("/etc/redhat-release"));
-  if (RHRelease) {
-    llvm::StringRef Data = RHRelease.get()->getBuffer();
-    if (Data.startswith("Fedora release 14 (Laughlin)")) {
-      switch (Arch) {
-      default:
-        return UnknownDistro;
-      case llvm::Triple::x86:
-        return Fedora14i686;
-      case llvm::Triple::x86_64:
-        return Fedora14X86_64;
-      }
-    }
-
-    if (Data.startswith("Fedora release 13 (Goddard)")) {
-      switch (Arch) {
-      default:
-        return UnknownDistro;
-      case llvm::Triple::x86:
-        return Fedora13i686;
-      case llvm::Triple::x86_64:
-        return Fedora13X86_64;
-      }
-    }
-    return UnknownDistro;
-  }
-
-  llvm::OwningPtr<const llvm::MemoryBuffer>
-    DebianVersion(llvm::MemoryBuffer::getFile("/etc/debian_version"));
-  if (DebianVersion) {
-    llvm::StringRef Data = DebianVersion.get()->getBuffer();
-    if (Data[0] == '5') {
-      switch (Arch) {
-      default:
-        return UnknownDistro;
-      case llvm::Triple::x86:
-        return DebianLennyi386;
-      case llvm::Triple::x86_64:
-        return DebianLennyAmd64;
-      }
-    } else if (Data.startswith("squeeze/sid")) {
-      switch (Arch) {
-      default:
-        return UnknownDistro;
-      case llvm::Triple::arm:
-        return DebianSqueezeArm;
-      case llvm::Triple::x86:
-        return DebianSqueezei386;
-      case llvm::Triple::x86_64:
-        return DebianSqueezeAmd64;
-      }
-    }
-    return UnknownDistro;
-  }
-
-  llvm::OwningPtr<const llvm::MemoryBuffer>
-    SuseRelease(llvm::MemoryBuffer::getFile("/etc/SuSE-release"));
-  if (SuseRelease) {
-    llvm::StringRef Data = SuseRelease.get()->getBuffer();
-    if (Data.startswith("openSUSE 11.3")) {
-      switch (Arch) {
-      default:
-        return UnknownDistro;
-      case llvm::Triple::x86:
-        return OpenSuse11_3i686;
-      case llvm::Triple::x86_64:
-        return OpenSuse11_3X86_64;
-      }
-    }
-    return UnknownDistro;
-  }
-
-  return UnknownDistro;
-}
-
 Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_ELF(Host, Triple) {
+  getFilePaths().push_back(getDriver().Dir +
+                           "/../lib/clang/" CLANG_VERSION_STRING "/");
+  getFilePaths().push_back("/lib/");
+  getFilePaths().push_back("/usr/lib/");
 
-  std::string Lib32     = "lib";
-  std::string Lib64     = "lib";
-  std::string Suffix32  = "";
-  std::string Suffix64  = "";
-  std::string Base      = "";
-  std::string GccTriple = "";
+  // Depending on the Linux distribution, any combination of lib{,32,64} is
+  // possible. E.g. Debian uses lib and lib32 for mixed i386/x86-64 systems,
+  // openSUSE uses lib and lib64 for the same purpose.
+  getFilePaths().push_back("/lib32/");
+  getFilePaths().push_back("/usr/lib32/");
+  getFilePaths().push_back("/lib64/");
+  getFilePaths().push_back("/usr/lib64/");
 
-  llvm::Triple::ArchType Arch =
-    llvm::Triple(getDriver().DefaultHostTriple).getArch();
-  LinuxDistro Distro = DetectLinuxDistro(Arch);
-
-  if (Distro == UnknownDistro)
-    llvm::report_fatal_error("Unknown linux distribution.");
-
-  if (IsUbuntu(Distro))
-    ExtraOpts.push_back("-z relro");
-
-  if (IsArm(Distro))
-    ExtraOpts.push_back("-X");
-
-  if (IsFedora(Distro) || IsUbuntuMaveric(Distro))
-    ExtraOpts.push_back("--hash-style=gnu");
-
-  if (IsDebian(Distro) || IsUbuntuLucid(Distro))
-    ExtraOpts.push_back("--hash-style=both");
-
-  if (IsX86_64(Distro))
-    Suffix32 = "/32";
-
-  if (IsX86(Distro))
-    Suffix64 = "/64";
-
-  if (IsDebianBased(Distro) && IsX86_64(Distro))
-    Lib32 = "lib32";
-
-  if ((IsDebianBased(Distro) && IsX86(Distro)) ||
-      IsFedora(Distro) || IsOpenSuse(Distro))
-    Lib64 = "lib64";
-
-  if (IsFedora(Distro))
-    ExtraOpts.push_back("--no-add-needed");
-
-  if (IsDebianSqueeze(Distro) || IsUbuntu(Distro) || IsOpenSuse(Distro) ||
-      IsFedora(Distro))
-    ExtraOpts.push_back("--build-id");
-
-  if (IsArm(Distro)) {
-    if (IsDebianBased(Distro))
-      GccTriple = "arm-linux-gnueabi";
-  } else if (IsX86_64(Distro)) {
-    if (IsDebianBased(Distro))
-      GccTriple = "x86_64-linux-gnu";
-    else if (IsFedora(Distro))
-      GccTriple = "x86_64-redhat-linux";
-    else if (IsOpenSuse(Distro))
-      GccTriple = "x86_64-suse-linux";
-  } else if (IsX86(Distro)) {
-    if (Distro == UbuntuMavericki386)
-      GccTriple = "i686-linux-gnu";
-    else if (IsDebianBased(Distro))
-      GccTriple = "i486-linux-gnu";
-    if (IsFedora(Distro))
-      GccTriple = "i686-redhat-linux";
-    if (IsOpenSuse(Distro))
-      GccTriple = "i586-suse-linux";
-  }
-
-  if (IsDebianLenny(Distro))
-    Base = "/usr/lib/gcc/" + GccTriple +"/4.3.2";
-  if (IsDebianSqueeze(Distro) || IsUbuntuMaveric(Distro))
-    Base = "/usr/lib/gcc/" + GccTriple +"/4.4.5";
-  if (IsUbuntuLucid(Distro))
-    Base = "/usr/lib/gcc/" + GccTriple +"/4.4.3";
-  if (IsFedora13(Distro))
-    Base = "/usr/lib/gcc/" + GccTriple +"/4.4.4";
-  if (IsFedora14(Distro))
-    Base = "/usr/lib/gcc/" + GccTriple +"/4.5.1";
-  if (IsOpenSuse(Distro) && IsX86_64(Distro))
-    Base = "/usr/lib64/gcc/" + GccTriple + "/4.5";
-  if (IsOpenSuse(Distro) && IsX86(Distro))
-    Base = "/usr/lib/gcc/" + GccTriple + "/4.5";
-
-  path_list &Paths = getFilePaths();
-  bool Is32Bits = getArch() == llvm::Triple::x86;
-
-  std::string Suffix;
-  std::string Lib;
-
-  if (Is32Bits) {
-    Suffix = Suffix32;
-    Lib = Lib32;
-  } else {
-    Suffix = Suffix64;
-    Lib = Lib64;
-  }
-
-  llvm::sys::Path LinkerPath(Base + "/../../../../" + GccTriple + "/bin/ld");
-  if (LinkerPath.exists())
-    Linker = LinkerPath.str();
-  else
-    Linker = GetProgramPath("ld");
-
-  Paths.push_back(Base + Suffix);
-  if (HasMultilib(Distro)) {
-    if (IsOpenSuse(Distro) && Is32Bits)
-      Paths.push_back(Base + "/../../../../" + GccTriple + "/lib/../lib");
-    Paths.push_back(Base + "/../../../../" + Lib);
-    Paths.push_back("/lib/../" + Lib);
-    Paths.push_back("/usr/lib/../" + Lib);
-  }
-  if (!Suffix.empty())
-    Paths.push_back(Base);
-  if (IsOpenSuse(Distro))
-    Paths.push_back(Base + "/../../../../" + GccTriple + "/lib");
-  Paths.push_back(Base + "/../../..");
-  bool IsNative = (Is32Bits && IsX86(Distro)) ||
-                  (!Is32Bits && IsX86_64(Distro));
-  if (IsNative && IsUbuntu(Distro))
-    Paths.push_back("/usr/lib/" + GccTriple);
-}
-
-bool Linux::HasNativeLLVMSupport() const {
-  return true;
+  // FIXME: Figure out some way to get gcc's libdir
+  // (e.g. /usr/lib/gcc/i486-linux-gnu/4.3/ for Ubuntu 32-bit); we need
+  // crtbegin.o/crtend.o/etc., and want static versions of various
+  // libraries. If we had our own crtbegin.o/crtend.o/etc, we could probably
+  // get away with using shared versions in /usr/lib, though.
+  // We could fall back to the approach we used for includes (a massive
+  // list), but that's messy at best.
 }
 
 Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
@@ -1524,8 +1213,6 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
     switch (Key) {
     case Action::AssembleJobClass:
       T = new tools::linuxtools::Assemble(*this); break;
-    case Action::LinkJobClass:
-      T = new tools::linuxtools::Link(*this); break;
     default:
       T = &Generic_GCC::SelectTool(C, JA);
     }
