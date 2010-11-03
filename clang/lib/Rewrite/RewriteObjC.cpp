@@ -4901,10 +4901,14 @@ bool RewriteObjC::PointerTypeTakesAnyObjCQualifiedType(QualType QT) {
   }
   if (FTP) {
     for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
-         E = FTP->arg_type_end(); I != E; ++I)
-      if ((*I)->isObjCQualifiedIdType() ||
-          (*I)->isObjCQualifiedInterfaceType())
+         E = FTP->arg_type_end(); I != E; ++I) {
+      if ((*I)->isObjCQualifiedIdType())
         return true;
+      if ((*I)->isObjCObjectPointerType() &&
+          (*I)->getPointeeType()->isObjCQualifiedInterfaceType())
+        return true;
+    }
+        
   }
   return false;
 }

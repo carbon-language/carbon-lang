@@ -78,3 +78,7 @@ typedef void (^DVDisc)(id<CoreDAVAccountInfoProvider> discoveredInfo, id<CodePro
 			void(^arg1)(), int i1, void(^arg)(id<CoreDAVAccountInfoProvider>),
                         int success, id<CoreDAVAccountInfoProvider, CodeProvider> Info);
 
+
+@interface I @end
+@interface INTF @end
+void (^BLINT)(I<CoreDAVAccountInfoProvider>* ARG, INTF<CodeProvider, CoreDAVAccountInfoProvider>* ARG1);
