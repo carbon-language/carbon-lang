@@ -84,8 +84,7 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
   EVT ElemTy = VT.getVectorElementType();
   if (ElemTy != MVT::i64 && ElemTy != MVT::f64)
     setOperationAction(ISD::VSETCC, VT.getSimpleVT(), Custom);
-  if (ElemTy == MVT::i8 || ElemTy == MVT::i16)
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
   if (ElemTy != MVT::i32) {
     setOperationAction(ISD::SINT_TO_FP, VT.getSimpleVT(), Expand);
     setOperationAction(ISD::UINT_TO_FP, VT.getSimpleVT(), Expand);
@@ -3777,14 +3776,19 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
-  EVT VT = Op.getValueType();
-  DebugLoc dl = Op.getDebugLoc();
-  SDValue Vec = Op.getOperand(0);
+  // EXTRACT_VECTOR_ELT is legal only for immediate indexes.
   SDValue Lane = Op.getOperand(1);
-  assert(VT == MVT::i32 &&
-         Vec.getValueType().getVectorElementType().getSizeInBits() < 32 &&
-         "unexpected type for custom-lowering vector extract");
-  return DAG.getNode(ARMISD::VGETLANEu, dl, MVT::i32, Vec, Lane);
+  if (!isa<ConstantSDNode>(Lane))
+    return SDValue();
+
+  SDValue Vec = Op.getOperand(0);
+  if (Op.getValueType() == MVT::i32 &&
+      Vec.getValueType().getVectorElementType().getSizeInBits() < 32) {
+    DebugLoc dl = Op.getDebugLoc();
+    return DAG.getNode(ARMISD::VGETLANEu, dl, MVT::i32, Vec, Lane);
+  }
+
+  return Op;
 }
 
 static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
@@ -4923,7 +4927,8 @@ static SDValue PerformExtendCombine(SDNode *N, SelectionDAG &DAG,
 
     if (VT == MVT::i32 &&
         (EltVT == MVT::i8 || EltVT == MVT::i16) &&
-        TLI.isTypeLegal(Vec.getValueType())) {
+        TLI.isTypeLegal(Vec.getValueType()) &&
+        isa<ConstantSDNode>(Lane)) {
 
       unsigned Opc = 0;
       switch (N->getOpcode()) {

@@ -210,3 +210,20 @@ entry:
   %0 = insertelement <2 x float> %arg1_float32x2_t, float %arg0_float32_t, i32 1 ; <<2 x float>> [#uses=1]
   ret <2 x float> %0
 }
+
+; The llvm extractelement instruction does not require that the lane number
+; be an immediate constant.  Make sure a variable lane number is handled.
+
+define i32 @vget_variable_lanes8(<8 x i8>* %A, i32 %B) nounwind {
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = extractelement <8 x i8> %tmp1, i32 %B
+	%tmp3 = sext i8 %tmp2 to i32
+	ret i32 %tmp3
+}
+
+define i32 @vgetQ_variable_lanei32(<4 x i32>* %A, i32 %B) nounwind {
+	%tmp1 = load <4 x i32>* %A
+	%tmp2 = add <4 x i32> %tmp1, %tmp1
+	%tmp3 = extractelement <4 x i32> %tmp2, i32 %B
+	ret i32 %tmp3
+}
