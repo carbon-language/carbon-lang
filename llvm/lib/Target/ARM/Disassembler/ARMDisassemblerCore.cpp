@@ -691,8 +691,8 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
 // MSR/MSRsys: Rm mask=Inst{19-16}
 // BXJ:        Rm
 // MSRi/MSRsysi: so_imm
-// SRSW/SRS: addrmode4:$addr mode_imm
-// RFEW/RFE: addrmode4:$addr Rn
+// SRSW/SRS: ldstm_mode:$amode mode_imm
+// RFEW/RFE: ldstm_mode:$amode Rn
 static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
@@ -742,13 +742,8 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     NumOpsAdded = 2;
     return true;
   }
-  // SRSW and SRS requires addrmode4:$addr for ${addr:submode}, followed by the
-  // mode immediate (Inst{4-0}).
   if (Opcode == ARM::SRSW || Opcode == ARM::SRS ||
       Opcode == ARM::RFEW || Opcode == ARM::RFE) {
-    // ARMInstPrinter::printAddrMode4Operand() prints special mode string
-    // if the base register is SP; so don't set ARM::SP.
-    MI.addOperand(MCOperand::CreateReg(0));
     ARM_AM::AMSubMode SubMode = getAMSubModeForBits(getPUBits(insn));
     MI.addOperand(MCOperand::CreateImm(ARM_AM::getAM4ModeImm(SubMode)));
 

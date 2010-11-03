@@ -290,21 +290,12 @@ void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
     << ImmOffs;
 }
 
-
-void ARMInstPrinter::printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
+void ARMInstPrinter::printLdStmModeOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O,
                                            const char *Modifier) {
-  const MCOperand &MO2 = MI->getOperand(OpNum+1);
-  ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MO2.getImm());
-  if (Modifier && strcmp(Modifier, "submode") == 0) {
-    O << ARM_AM::getAMSubModeStr(Mode);
-  } else if (Modifier && strcmp(Modifier, "wide") == 0) {
-    ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MO2.getImm());
-    if (Mode == ARM_AM::ia)
-      O << ".w";
-  } else {
-    printOperand(MI, OpNum, O);
-  }
+  ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MI->getOperand(OpNum)
+                                                 .getImm());
+  O << ARM_AM::getAMSubModeStr(Mode);
 }
 
 void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,

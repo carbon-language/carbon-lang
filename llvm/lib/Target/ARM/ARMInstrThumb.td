@@ -540,26 +540,29 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
 def tLDM : T1I<(outs),
-               (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
+               (ins GPR:$Rn, ldstm_mode:$amode, pred:$p, reglist:$dsts,
+                variable_ops),
                IIC_iLoad_m,
-               "ldm${addr:submode}${p}\t$addr, $dsts", []>,
+               "ldm${amode}${p}\t$Rn, $dsts", []>,
            T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
 
 def tLDM_UPD : T1It<(outs tGPR:$wb),
-                    (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
+                    (ins GPR:$Rn, ldstm_mode:$amode, pred:$p, reglist:$dsts,
+                     variable_ops),
                     IIC_iLoad_m,
-                    "ldm${addr:submode}${p}\t$addr!, $dsts",
-                    "$addr.addr = $wb", []>,
+                    "ldm${amode}${p}\t$Rn!, $dsts",
+                    "$Rn = $wb", []>,
                T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
 } // mayLoad, neverHasSideEffects = 1, hasExtraDefRegAllocReq
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
     isCodeGenOnly = 1 in
 def tSTM_UPD : T1It<(outs tGPR:$wb),
-                    (ins addrmode4:$addr, pred:$p, reglist:$srcs, variable_ops),
+                    (ins GPR:$Rn, ldstm_mode:$amode, pred:$p, reglist:$srcs,
+                     variable_ops),
                     IIC_iStore_mu,
-                    "stm${addr:submode}${p}\t$addr!, $srcs",
-                    "$addr.addr = $wb", []>,
+                    "stm${amode}${p}\t$Rn!, $srcs",
+                    "$Rn = $wb", []>,
            T1Encoding<{1,1,0,0,0,?}>; // A6.2 & A8.6.189
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in

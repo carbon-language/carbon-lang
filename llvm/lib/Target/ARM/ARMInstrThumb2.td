@@ -1246,9 +1246,9 @@ defm t2PLI  : T2Ipl<1, 0, "pli">;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
-def t2LDM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
+def t2LDM : T2XI<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                           reglist:$dsts, variable_ops), IIC_iLoad_m,
-                 "ldm${addr:submode}${p}${addr:wide}\t$addr, $dsts", []> {
+                 "ldm${amode}${p}.w\t$Rn, $dsts", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
@@ -1257,11 +1257,11 @@ def t2LDM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
   let Inst{20} = 1; // Load
 }
 
-def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                        reglist:$dsts, variable_ops),
                       IIC_iLoad_mu,
-                      "ldm${addr:submode}${p}${addr:wide}\t$addr!, $dsts",
-                      "$addr.addr = $wb", []> {
+                      "ldm${amode}${p}.w\t$Rn!, $dsts",
+                      "$Rn = $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
@@ -1273,9 +1273,9 @@ def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
     isCodeGenOnly = 1 in {
-def t2STM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
+def t2STM : T2XI<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                           reglist:$srcs, variable_ops), IIC_iStore_m,
-                 "stm${addr:submode}${p}${addr:wide}\t$addr, $srcs", []> {
+                 "stm${amode}${p}.w\t$Rn, $srcs", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
@@ -1284,11 +1284,11 @@ def t2STM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
   let Inst{20} = 0; // Store
 }
 
-def t2STM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+def t2STM_UPD : T2XIt<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                        reglist:$srcs, variable_ops),
                       IIC_iStore_m,
-                      "stm${addr:submode}${p}${addr:wide}\t$addr!, $srcs",
-                      "$addr.addr = $wb", []> {
+                      "stm${amode}${p}.w\t$Rn!, $srcs",
+                      "$Rn = $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
@@ -2437,11 +2437,11 @@ let Defs =
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-  def t2LDM_RET : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
-                                         reglist:$dsts, variable_ops),
+  def t2LDM_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
+                                        reglist:$dsts, variable_ops),
                         IIC_iLoad_mBr,
-                        "ldm${addr:submode}${p}${addr:wide}\t$addr!, $dsts",
-                        "$addr.addr = $wb", []> {
+                        "ldm${amode}${p}.w\t$Rn!, $dsts",
+                        "$Rn = $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'

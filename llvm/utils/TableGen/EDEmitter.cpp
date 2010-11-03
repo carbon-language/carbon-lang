@@ -599,7 +599,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("am2offset", "kOperandTypeARMAddrMode2Offset");            // R, I
   MISC("addrmode3", "kOperandTypeARMAddrMode3");                  // R, R, I
   MISC("am3offset", "kOperandTypeARMAddrMode3Offset");            // R, I
-  MISC("addrmode4", "kOperandTypeARMAddrMode4");                  // R, I
+  MISC("ldstm_mode", "kOperandTypeARMLdStmMode");                 // I
   MISC("addrmode5", "kOperandTypeARMAddrMode5");                  // R, I
   MISC("addrmode6", "kOperandTypeARMAddrMode6");                  // R, R, I, I
   MISC("am6offset", "kOperandTypeARMAddrMode6Offset");            // R, I, I
@@ -815,7 +815,7 @@ static void emitCommonEnums(raw_ostream &o, unsigned int &i) {
   operandTypes.addEntry("kOperandTypeARMAddrMode2Offset");
   operandTypes.addEntry("kOperandTypeARMAddrMode3");
   operandTypes.addEntry("kOperandTypeARMAddrMode3Offset");
-  operandTypes.addEntry("kOperandTypeARMAddrMode4");
+  operandTypes.addEntry("kOperandTypeARMLdStmMode");
   operandTypes.addEntry("kOperandTypeARMAddrMode5");
   operandTypes.addEntry("kOperandTypeARMAddrMode6");
   operandTypes.addEntry("kOperandTypeARMAddrMode6Offset");

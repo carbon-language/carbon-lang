@@ -85,62 +85,66 @@ def VSTRS : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
-def VLDMD : AXDI4<(outs), (ins addrmode4:$addr, pred:$p, reglist:$dsts,
-                           variable_ops), IndexModeNone, IIC_fpLoad_m,
-                  "vldm${addr:submode}${p}\t$addr, $dsts", "", []> {
+def VLDMD : AXDI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
+                           reglist:$dsts, variable_ops),
+                  IndexModeNone, IIC_fpLoad_m,
+                  "vldm${amode}${p}\t$Rn, $dsts", "", []> {
   let Inst{20} = 1;
 }
 
-def VLDMS : AXSI4<(outs), (ins addrmode4:$addr, pred:$p, reglist:$dsts,
-                           variable_ops), IndexModeNone, IIC_fpLoad_m,
-                  "vldm${addr:submode}${p}\t$addr, $dsts", "", []> {
+def VLDMS : AXSI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
+                           reglist:$dsts, variable_ops),
+                  IndexModeNone, IIC_fpLoad_m,
+                  "vldm${amode}${p}\t$Rn, $dsts", "", []> {
   let Inst{20} = 1;
 }
 
-def VLDMD_UPD : AXDI4<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+def VLDMD_UPD : AXDI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                        reglist:$dsts, variable_ops),
                       IndexModeUpd, IIC_fpLoad_mu,
-                      "vldm${addr:submode}${p}\t$addr!, $dsts",
-                      "$addr.addr = $wb", []> {
+                      "vldm${amode}${p}\t$Rn!, $dsts",
+                      "$Rn = $wb", []> {
   let Inst{20} = 1;
 }
 
-def VLDMS_UPD : AXSI4<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+def VLDMS_UPD : AXSI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                        reglist:$dsts, variable_ops),
                       IndexModeUpd, IIC_fpLoad_mu, 
-                      "vldm${addr:submode}${p}\t$addr!, $dsts",
-                      "$addr.addr = $wb", []> {
+                      "vldm${amode}${p}\t$Rn!, $dsts",
+                      "$Rn = $wb", []> {
   let Inst{20} = 1;
 }
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
     isCodeGenOnly = 1 in {
-def VSTMD : AXDI4<(outs), (ins addrmode4:$addr, pred:$p, reglist:$srcs,
-                           variable_ops), IndexModeNone, IIC_fpStore_m,
-                  "vstm${addr:submode}${p}\t$addr, $srcs", "", []> {
+def VSTMD : AXDI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
+                           reglist:$srcs, variable_ops),
+                  IndexModeNone, IIC_fpStore_m,
+                  "vstm${amode}${p}\t$Rn, $srcs", "", []> {
   let Inst{20} = 0;
 }
 
-def VSTMS : AXSI4<(outs), (ins addrmode4:$addr, pred:$p, reglist:$srcs,
-                           variable_ops), IndexModeNone, IIC_fpStore_m,
-                  "vstm${addr:submode}${p}\t$addr, $srcs", "", []> {
+def VSTMS : AXSI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
+                           reglist:$srcs, variable_ops), IndexModeNone,
+                   IIC_fpStore_m,
+                  "vstm${amode}${p}\t$Rn, $srcs", "", []> {
   let Inst{20} = 0;
 }
 
-def VSTMD_UPD : AXDI4<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+def VSTMD_UPD : AXDI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                        reglist:$srcs, variable_ops),
                       IndexModeUpd, IIC_fpStore_mu,
-                      "vstm${addr:submode}${p}\t$addr!, $srcs",
-                      "$addr.addr = $wb", []> {
+                      "vstm${amode}${p}\t$Rn!, $srcs",
+                      "$Rn = $wb", []> {
   let Inst{20} = 0;
 }
 
-def VSTMS_UPD : AXSI4<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+def VSTMS_UPD : AXSI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                        reglist:$srcs, variable_ops),
                       IndexModeUpd, IIC_fpStore_mu,
-                      "vstm${addr:submode}${p}\t$addr!, $srcs",
-                      "$addr.addr = $wb", []> {
+                      "vstm${amode}${p}\t$Rn!, $srcs",
+                      "$Rn = $wb", []> {
   let Inst{20} = 0;
 }
 } // mayStore, neverHasSideEffects, hasExtraSrcRegAllocReq

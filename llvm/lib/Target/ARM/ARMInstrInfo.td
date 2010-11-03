@@ -444,12 +444,10 @@ def am3offset : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
-// addrmode4 := reg, <mode|W>
+// ldstm_mode := {ia, ib, da, db}
 //
-def addrmode4 : Operand<i32>,
-                ComplexPattern<i32, 2, "SelectAddrMode4", []> {
-  let PrintMethod = "printAddrMode4Operand";
-  let MIOperandInfo = (ops GPR:$addr, i32imm);
+def ldstm_mode : OptionalDefOperand<OtherVT, (ops i32), (ops (i32 1))> {
+  let PrintMethod = "printLdStmModeOperand";
 }
 
 def ARMMemMode5AsmOperand : AsmOperandClass {
@@ -1171,11 +1169,11 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-  def LDM_RET : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+  def LDM_RET : AXI4ld<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$mode, pred:$p,
                                         reglist:$dsts, variable_ops),
                        IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
-                       "ldm${addr:submode}${p}\t$addr!, $dsts",
-                       "$addr.addr = $wb", []>;
+                       "ldm${mode}${p}\t$Rn!, $dsts",
+                       "$Rn = $wb", []>;
 
 // On non-Darwin platforms R9 is callee-saved.
 let isCall = 1,
@@ -1423,30 +1421,30 @@ def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
 
 // Store Return State is a system instruction -- for disassembly only
 let isCodeGenOnly = 1 in {  // FIXME: This should not use submode!
-def SRSW : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$mode),
-                NoItinerary, "srs${addr:submode}\tsp!, $mode",
+def SRSW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
+                NoItinerary, "srs${amode}\tsp!, $mode",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b110; // W = 1
 }
 
-def SRS  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$mode),
-                NoItinerary, "srs${addr:submode}\tsp, $mode",
+def SRS  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
+                NoItinerary, "srs${amode}\tsp, $mode",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b100; // W = 0
 }
 
 // Return From Exception is a system instruction -- for disassembly only
-def RFEW : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
-                NoItinerary, "rfe${addr:submode}\t$base!",
+def RFEW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
+                NoItinerary, "rfe${amode}\t$base!",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b011; // W = 1
 }
 
-def RFE  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
-                NoItinerary, "rfe${addr:submode}\t$base",
+def RFE  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
+                NoItinerary, "rfe${amode}\t$base",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b001; // W = 0
@@ -1693,30 +1691,30 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb),
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
-def LDM : AXI4ld<(outs), (ins addrmode4:$addr, pred:$p,
+def LDM : AXI4ld<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                           reglist:$dsts, variable_ops),
                  IndexModeNone, LdStMulFrm, IIC_iLoad_m,
-                 "ldm${addr:submode}${p}\t$addr, $dsts", "", []>;
+                 "ldm${amode}${p}\t$Rn, $dsts", "", []>;
 
-def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                       reglist:$dsts, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iLoad_mu,
-                     "ldm${addr:submode}${p}\t$addr!, $dsts",
-                     "$addr.addr = $wb", []>;
+                     "ldm${amode}${p}\t$Rn!, $dsts",
+                     "$Rn = $wb", []>;
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
     isCodeGenOnly = 1 in {
-def STM : AXI4st<(outs), (ins addrmode4:$addr, pred:$p,
+def STM : AXI4st<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                           reglist:$srcs, variable_ops),
                  IndexModeNone, LdStMulFrm, IIC_iStore_m,
-                 "stm${addr:submode}${p}\t$addr, $srcs", "", []>;
+                 "stm${amode}${p}\t$Rn, $srcs", "", []>;
 
-def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+def STM_UPD : AXI4st<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                       reglist:$srcs, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iStore_mu,
-                     "stm${addr:submode}${p}\t$addr!, $srcs",
-                     "$addr.addr = $wb", []>;
+                     "stm${amode}${p}\t$Rn!, $srcs",
+                     "$Rn = $wb", []>;
 } // mayStore, neverHasSideEffects, hasExtraSrcRegAllocReq
 
 //===----------------------------------------------------------------------===//
