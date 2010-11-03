@@ -3832,7 +3832,7 @@ static SDValue LowerMUL(SDValue Op, SelectionDAG &DAG) {
   } else if ((N0->getOpcode() == ISD::ZERO_EXTEND || ISD::isZEXTLoad(N0)) &&
              (N1->getOpcode() == ISD::ZERO_EXTEND || ISD::isZEXTLoad(N1))) {
     NewOpc = ARMISD::VMULLu;
-  } else if (VT.getSimpleVT().SimpleTy == MVT::v2i64) {
+  } else if (VT == MVT::v2i64) {
     // Fall through to expand this.  It is not legal.
     return SDValue();
   } else {

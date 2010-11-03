@@ -2578,7 +2578,7 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
   SDValue Op0 = Op.getOperand(0);
   EVT Op0VT = Op0.getValueType();
 
-  if (Op0VT.getSimpleVT() == MVT::i128 && simpleVT == MVT::i64) {
+  if (Op0VT == MVT::i128 && simpleVT == MVT::i64) {
     // Create shuffle mask, least significant doubleword of quadword
     unsigned maskHigh = 0x08090a0b;
     unsigned maskLow = 0x0c0d0e0f;

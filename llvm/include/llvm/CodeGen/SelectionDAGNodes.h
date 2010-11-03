@@ -528,7 +528,7 @@ public:
   /// to which the flag operand points. Otherwise return NULL.
   SDNode *getFlaggedNode() const {
     if (getNumOperands() != 0 &&
-      getOperand(getNumOperands()-1).getValueType().getSimpleVT() == MVT::Flag)
+      getOperand(getNumOperands()-1).getValueType() == MVT::Flag)
       return getOperand(getNumOperands()-1).getNode();
     return 0;
   }

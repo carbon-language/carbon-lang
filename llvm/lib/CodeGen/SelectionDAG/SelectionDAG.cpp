@@ -3131,8 +3131,7 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
   if (Str.empty()) {
     if (VT.isInteger())
       return DAG.getConstant(0, VT);
-    else if (VT.getSimpleVT().SimpleTy == MVT::f32 ||
-             VT.getSimpleVT().SimpleTy == MVT::f64)
+    else if (VT == MVT::f32 || VT == MVT::f64)
       return DAG.getConstantFP(0.0, VT);
     else if (VT.isVector()) {
       unsigned NumElts = VT.getVectorNumElements();
@@ -5428,7 +5427,7 @@ const EVT *SDNode::getValueTypeList(EVT VT) {
     sys::SmartScopedLock<true> Lock(*VTMutex);
     return &(*EVTs->insert(VT).first);
   } else {
-    assert(VT.getSimpleVT().SimpleTy < MVT::LAST_VALUETYPE &&
+    assert(VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
            "Value type out of range!");
     return &SimpleVTArray->VTs[VT.getSimpleVT().SimpleTy];
   }

@@ -2240,12 +2240,11 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     EVT VecVT = N->getValueType(0);
     EVT EltVT = VecVT.getVectorElementType();
     unsigned NumElts = VecVT.getVectorNumElements();
-    if (EltVT.getSimpleVT() == MVT::f64) {
+    if (EltVT == MVT::f64) {
       assert(NumElts == 2 && "unexpected type for BUILD_VECTOR");
       return PairDRegs(VecVT, N->getOperand(0), N->getOperand(1));
     }
-    assert(EltVT.getSimpleVT() == MVT::f32 &&
-           "unexpected type for BUILD_VECTOR");
+    assert(EltVT == MVT::f32 && "unexpected type for BUILD_VECTOR");
     if (NumElts == 2)
       return PairSRegs(VecVT, N->getOperand(0), N->getOperand(1));
     assert(NumElts == 4 && "unexpected type for BUILD_VECTOR");

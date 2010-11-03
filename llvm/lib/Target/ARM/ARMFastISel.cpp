@@ -371,7 +371,7 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
 // TODO: Don't worry about 64-bit now, but when this is fixed remove the
 // checks from the various callers.
 unsigned ARMFastISel::ARMMoveToFPReg(EVT VT, unsigned SrcReg) {
-  if (VT.getSimpleVT().SimpleTy == MVT::f64) return 0;
+  if (VT == MVT::f64) return 0;
 
   unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -381,7 +381,7 @@ unsigned ARMFastISel::ARMMoveToFPReg(EVT VT, unsigned SrcReg) {
 }
 
 unsigned ARMFastISel::ARMMoveToIntReg(EVT VT, unsigned SrcReg) {
-  if (VT.getSimpleVT().SimpleTy == MVT::i64) return 0;
+  if (VT == MVT::i64) return 0;
 
   unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -395,7 +395,7 @@ unsigned ARMFastISel::ARMMoveToIntReg(EVT VT, unsigned SrcReg) {
 // the combined constant into an FP reg.
 unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
   const APFloat Val = CFP->getValueAPF();
-  bool is64bit = VT.getSimpleVT().SimpleTy == MVT::f64;
+  bool is64bit = VT == MVT::f64;
 
   // This checks to see if we can use VFP3 instructions to materialize
   // a constant, otherwise we have to go through the constant pool.
@@ -432,7 +432,7 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
 unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
 
   // For now 32-bit only.
-  if (VT.getSimpleVT().SimpleTy != MVT::i32) return false;
+  if (VT != MVT::i32) return false;
 
   // MachineConstantPool wants an explicit alignment.
   unsigned Align = TD.getPrefTypeAlignment(C->getType());
@@ -459,7 +459,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
 
 unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
   // For now 32-bit only.
-  if (VT.getSimpleVT().SimpleTy != MVT::i32) return 0;
+  if (VT != MVT::i32) return 0;
 
   Reloc::Model RelocM = TM.getRelocationModel();
 
@@ -1292,8 +1292,7 @@ bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   if (Op2 == 0) return false;
 
   unsigned Opc;
-  bool is64bit = VT.getSimpleVT().SimpleTy == MVT::f64 ||
-                 VT.getSimpleVT().SimpleTy == MVT::i64;
+  bool is64bit = VT == MVT::f64 || VT == MVT::i64;
   switch (ISDOpcode) {
     default: return false;
     case ISD::FADD:

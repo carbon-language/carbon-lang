@@ -4893,7 +4893,7 @@ static SDValue getVZextMovL(EVT VT, EVT OpVT,
       // movssrr and movsdrr do not clear top bits. Try to use movd, movq
       // instead.
       MVT ExtVT = (OpVT == MVT::v2f64) ? MVT::i64 : MVT::i32;
-      if ((ExtVT.SimpleTy != MVT::i64 || Subtarget->is64Bit()) &&
+      if ((ExtVT != MVT::i64 || Subtarget->is64Bit()) &&
           SrcOp.getOpcode() == ISD::SCALAR_TO_VECTOR &&
           SrcOp.getOperand(0).getOpcode() == ISD::BIT_CONVERT &&
           SrcOp.getOperand(0).getOperand(0).getValueType() == ExtVT) {

@@ -123,7 +123,7 @@ public:
   /// hasType - return true if this TargetRegisterClass has the ValueType vt.
   ///
   bool hasType(EVT vt) const {
-    for(int i = 0; VTs[i].getSimpleVT().SimpleTy != MVT::Other; ++i)
+    for(int i = 0; VTs[i] != MVT::Other; ++i)
       if (VTs[i] == vt)
         return true;
     return false;
@@ -137,7 +137,7 @@ public:
 
   vt_iterator vt_end() const {
     vt_iterator I = VTs;
-    while (I->getSimpleVT().SimpleTy != MVT::Other) ++I;
+    while (*I != MVT::Other) ++I;
     return I;
   }
 

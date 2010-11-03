@@ -435,7 +435,7 @@ public:
   /// for it.
   LegalizeAction getLoadExtAction(unsigned ExtType, EVT VT) const {
     assert(ExtType < ISD::LAST_LOADEXT_TYPE &&
-           (unsigned)VT.getSimpleVT().SimpleTy < MVT::LAST_VALUETYPE &&
+           VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
     return (LegalizeAction)LoadExtActions[VT.getSimpleVT().SimpleTy][ExtType];
   }
@@ -453,8 +453,8 @@ public:
   /// to be expanded to some other code sequence, or the target has a custom
   /// expander for it.
   LegalizeAction getTruncStoreAction(EVT ValVT, EVT MemVT) const {
-    assert((unsigned)ValVT.getSimpleVT().SimpleTy < MVT::LAST_VALUETYPE &&
-           (unsigned)MemVT.getSimpleVT().SimpleTy < MVT::LAST_VALUETYPE &&
+    assert(ValVT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+           MemVT.getSimpleVT() < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
     return (LegalizeAction)TruncStoreActions[ValVT.getSimpleVT().SimpleTy]
                                             [MemVT.getSimpleVT().SimpleTy];
@@ -474,8 +474,8 @@ public:
   /// for it.
   LegalizeAction
   getIndexedLoadAction(unsigned IdxMode, EVT VT) const {
-    assert( IdxMode < ISD::LAST_INDEXED_MODE &&
-           ((unsigned)VT.getSimpleVT().SimpleTy) < MVT::LAST_VALUETYPE &&
+    assert(IdxMode < ISD::LAST_INDEXED_MODE &&
+           VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
     unsigned Ty = (unsigned)VT.getSimpleVT().SimpleTy;
     return (LegalizeAction)((IndexedModeActions[Ty][IdxMode] & 0xf0) >> 4);
@@ -495,8 +495,8 @@ public:
   /// for it.
   LegalizeAction
   getIndexedStoreAction(unsigned IdxMode, EVT VT) const {
-    assert( IdxMode < ISD::LAST_INDEXED_MODE &&
-           ((unsigned)VT.getSimpleVT().SimpleTy) < MVT::LAST_VALUETYPE &&
+    assert(IdxMode < ISD::LAST_INDEXED_MODE &&
+           VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
     unsigned Ty = (unsigned)VT.getSimpleVT().SimpleTy;
     return (LegalizeAction)(IndexedModeActions[Ty][IdxMode] & 0x0f);
@@ -1057,8 +1057,7 @@ protected:
   /// not work with the specified type and indicate what to do about it.
   void setLoadExtAction(unsigned ExtType, MVT VT,
                         LegalizeAction Action) {
-    assert(ExtType < ISD::LAST_LOADEXT_TYPE &&
-           (unsigned)VT.SimpleTy < MVT::LAST_VALUETYPE &&
+    assert(ExtType < ISD::LAST_LOADEXT_TYPE && VT < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
     LoadExtActions[VT.SimpleTy][ExtType] = (uint8_t)Action;
   }
@@ -1067,8 +1066,7 @@ protected:
   /// not work with the specified type and indicate what to do about it.
   void setTruncStoreAction(MVT ValVT, MVT MemVT,
                            LegalizeAction Action) {
-    assert((unsigned)ValVT.SimpleTy < MVT::LAST_VALUETYPE &&
-           (unsigned)MemVT.SimpleTy < MVT::LAST_VALUETYPE &&
+    assert(ValVT < MVT::LAST_VALUETYPE && MemVT < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
     TruncStoreActions[ValVT.SimpleTy][MemVT.SimpleTy] = (uint8_t)Action;
   }
@@ -1079,10 +1077,8 @@ protected:
   /// TargetLowering.cpp
   void setIndexedLoadAction(unsigned IdxMode, MVT VT,
                             LegalizeAction Action) {
-    assert((unsigned)VT.SimpleTy < MVT::LAST_VALUETYPE &&
-           IdxMode < ISD::LAST_INDEXED_MODE &&
-           (unsigned)Action < 0xf &&
-           "Table isn't big enough!");
+    assert(VT < MVT::LAST_VALUETYPE && IdxMode < ISD::LAST_INDEXED_MODE &&
+           (unsigned)Action < 0xf && "Table isn't big enough!");
     // Load action are kept in the upper half.
     IndexedModeActions[(unsigned)VT.SimpleTy][IdxMode] &= ~0xf0;
     IndexedModeActions[(unsigned)VT.SimpleTy][IdxMode] |= ((uint8_t)Action) <<4;
@@ -1094,10 +1090,8 @@ protected:
   /// TargetLowering.cpp
   void setIndexedStoreAction(unsigned IdxMode, MVT VT,
                              LegalizeAction Action) {
-    assert((unsigned)VT.SimpleTy < MVT::LAST_VALUETYPE &&
-           IdxMode < ISD::LAST_INDEXED_MODE &&
-           (unsigned)Action < 0xf &&
-           "Table isn't big enough!");
+    assert(VT < MVT::LAST_VALUETYPE && IdxMode < ISD::LAST_INDEXED_MODE &&
+           (unsigned)Action < 0xf && "Table isn't big enough!");
     // Store action are kept in the lower half.
     IndexedModeActions[(unsigned)VT.SimpleTy][IdxMode] &= ~0x0f;
     IndexedModeActions[(unsigned)VT.SimpleTy][IdxMode] |= ((uint8_t)Action);
@@ -1107,7 +1101,7 @@ protected:
   /// supported on the target and indicate what to do about it.
   void setCondCodeAction(ISD::CondCode CC, MVT VT,
                          LegalizeAction Action) {
-    assert((unsigned)VT.SimpleTy < MVT::LAST_VALUETYPE &&
+    assert(VT < MVT::LAST_VALUETYPE &&
            (unsigned)CC < array_lengthof(CondCodeActions) &&
            "Table isn't big enough!");
     CondCodeActions[(unsigned)CC] &= ~(uint64_t(3UL)  << VT.SimpleTy*2);
