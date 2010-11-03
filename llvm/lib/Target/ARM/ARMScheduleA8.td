@@ -225,6 +225,10 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iStore_mu, [InstrStage<2, [A8_Pipe0], 0>,
                                 InstrStage<2, [A8_LSPipe]>], [2]>,
 
+  //
+  // Preload
+  InstrItinData<IIC_Preload, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
+
   // Branch
   //
   // no delay slots, so the latency of a branch is unimportant

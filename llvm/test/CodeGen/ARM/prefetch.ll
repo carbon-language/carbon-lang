@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=thumb -mattr=-thumb2 | not grep pld
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s -check-prefix=THUMB2
-; RUN: llc < %s -march=arm   -mattr=+v5te   | FileCheck %s -check-prefix=ARM
+; RUN: llc < %s -march=thumb -mattr=+v7a,+mp | FileCheck %s -check-prefix=THUMB2
+; RUN: llc < %s -march=arm   -mattr=+v7a,+mp | FileCheck %s -check-prefix=ARM
 ; rdar://8601536
 
 define void @t1(i8* %ptr) nounwind  {

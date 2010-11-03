@@ -64,6 +64,9 @@ def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
 def FeaturePref32BitThumb : SubtargetFeature<"32bit", "Pref32BitThumb", "true",
                                              "Prefer 32-bit Thumb instrs">;
 
+// Multiprocessing extension.
+def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
+                                 "Supports Multiprocessing extension">;
 
 // ARM architectures.
 def ArchV4T     : SubtargetFeature<"v4t", "ARMArchVersion", "V4T",

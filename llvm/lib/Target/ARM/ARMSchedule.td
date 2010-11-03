@@ -90,6 +90,7 @@ def IIC_iStore_d_r   : InstrItinClass;
 def IIC_iStore_d_ru  : InstrItinClass;
 def IIC_iStore_m   : InstrItinClass<0>;  // micro-coded
 def IIC_iStore_mu  : InstrItinClass<0>;  // micro-coded
+def IIC_Preload    : InstrItinClass;
 def IIC_Br         : InstrItinClass;
 def IIC_fpSTAT     : InstrItinClass;
 def IIC_fpUNA32    : InstrItinClass;

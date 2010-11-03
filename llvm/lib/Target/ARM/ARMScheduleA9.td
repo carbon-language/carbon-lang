@@ -402,6 +402,10 @@ def CortexA9Itineraries : ProcessorItineraries<
                                 InstrStage<1, [A9_AGU], 0>,
                                 InstrStage<2, [A9_LSUnit]>], [2]>,
 
+  //
+  // Preload
+  InstrItinData<IIC_Preload,   [InstrStage<1, [A9_Issue0, A9_Issue1]>], [1, 1]>,
+
   // Branch
   //
   // no delay slots, so the latency of a branch is unimportant

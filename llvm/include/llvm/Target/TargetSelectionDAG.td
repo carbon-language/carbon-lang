@@ -183,18 +183,18 @@ def SDTVecInsert : SDTypeProfile<1, 3, [    // vector insert
   SDTCisEltOfVec<2, 1>, SDTCisSameAs<0, 1>, SDTCisPtrTy<3>
 ]>;
 
-def STDPrefetch : SDTypeProfile<0, 3, [     // prefetch
+def SDTPrefetch : SDTypeProfile<0, 3, [     // prefetch
   SDTCisPtrTy<0>, SDTCisSameAs<1, 2>, SDTCisInt<1>
 ]>;
 
-def STDMemBarrier : SDTypeProfile<0, 5, [   // memory barier
+def SDTMemBarrier : SDTypeProfile<0, 5, [   // memory barier
   SDTCisSameAs<0,1>,  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisSameAs<0,4>,
   SDTCisInt<0>
 ]>;
-def STDAtomic3 : SDTypeProfile<1, 3, [
+def SDTAtomic3 : SDTypeProfile<1, 3, [
   SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
-def STDAtomic2 : SDTypeProfile<1, 2, [
+def SDTAtomic2 : SDTypeProfile<1, 2, [
   SDTCisSameAs<0,2>, SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
 
@@ -374,35 +374,35 @@ def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
 def trap       : SDNode<"ISD::TRAP"       , SDTNone,
                         [SDNPHasChain, SDNPSideEffect]>;
 
-def prefetch   : SDNode<"ISD::PREFETCH"   , STDPrefetch,
+def prefetch   : SDNode<"ISD::PREFETCH"   , SDTPrefetch,
                         [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
 
-def membarrier : SDNode<"ISD::MEMBARRIER" , STDMemBarrier,
+def membarrier : SDNode<"ISD::MEMBARRIER" , SDTMemBarrier,
                         [SDNPHasChain, SDNPSideEffect]>;
 
-def atomic_cmp_swap : SDNode<"ISD::ATOMIC_CMP_SWAP" , STDAtomic3,
+def atomic_cmp_swap : SDNode<"ISD::ATOMIC_CMP_SWAP" , SDTAtomic3,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_add : SDNode<"ISD::ATOMIC_LOAD_ADD" , STDAtomic2,
+def atomic_load_add : SDNode<"ISD::ATOMIC_LOAD_ADD" , SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_swap     : SDNode<"ISD::ATOMIC_SWAP", STDAtomic2,
+def atomic_swap     : SDNode<"ISD::ATOMIC_SWAP", SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_sub : SDNode<"ISD::ATOMIC_LOAD_SUB" , STDAtomic2,
+def atomic_load_sub : SDNode<"ISD::ATOMIC_LOAD_SUB" , SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_and : SDNode<"ISD::ATOMIC_LOAD_AND" , STDAtomic2,
+def atomic_load_and : SDNode<"ISD::ATOMIC_LOAD_AND" , SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_or  : SDNode<"ISD::ATOMIC_LOAD_OR" , STDAtomic2,
+def atomic_load_or  : SDNode<"ISD::ATOMIC_LOAD_OR" , SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_xor : SDNode<"ISD::ATOMIC_LOAD_XOR" , STDAtomic2,
+def atomic_load_xor : SDNode<"ISD::ATOMIC_LOAD_XOR" , SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_nand: SDNode<"ISD::ATOMIC_LOAD_NAND", STDAtomic2,
+def atomic_load_nand: SDNode<"ISD::ATOMIC_LOAD_NAND", SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_min : SDNode<"ISD::ATOMIC_LOAD_MIN", STDAtomic2,
+def atomic_load_min : SDNode<"ISD::ATOMIC_LOAD_MIN", SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_max : SDNode<"ISD::ATOMIC_LOAD_MAX", STDAtomic2,
+def atomic_load_max : SDNode<"ISD::ATOMIC_LOAD_MAX", SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_umin : SDNode<"ISD::ATOMIC_LOAD_UMIN", STDAtomic2,
+def atomic_load_umin : SDNode<"ISD::ATOMIC_LOAD_UMIN", SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_load_umax : SDNode<"ISD::ATOMIC_LOAD_UMAX", STDAtomic2,
+def atomic_load_umax : SDNode<"ISD::ATOMIC_LOAD_UMAX", SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,

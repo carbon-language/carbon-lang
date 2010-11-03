@@ -106,6 +106,10 @@ protected:
   /// over 16-bit ones.
   bool Pref32BitThumb;
 
+  /// HasMPExtension - True if the subtarget supports Multiprocessing
+  /// extension (ARMv7 only).
+  bool HasMPExtension;
+
   /// FPOnlySP - If true, the floating point unit only supports single
   /// precision.
   bool FPOnlySP;
@@ -176,6 +180,7 @@ protected:
   bool isFPBrccSlow() const { return SlowFPBrcc; }
   bool isFPOnlySP() const { return FPOnlySP; }
   bool prefers32BitThumb() const { return Pref32BitThumb; }
+  bool hasMPExtension() const { return HasMPExtension; }
 
   bool hasFP16() const { return HasFP16; }
   bool hasD16() const { return HasD16; }

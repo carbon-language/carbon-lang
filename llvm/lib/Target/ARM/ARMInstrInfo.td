@@ -62,6 +62,8 @@ def SDT_ARMEH_SJLJ_DispatchSetup: SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def SDT_ARMMEMBARRIER     : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
+def SDT_ARMPRELOAD : SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
+
 def SDT_ARMTCRET : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
@@ -130,6 +132,8 @@ def ARMMemBarrier     : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIER,
                                [SDNPHasChain]>;
 def ARMMemBarrierMCR  : SDNode<"ARMISD::MEMBARRIER_MCR", SDT_ARMMEMBARRIER,
                                [SDNPHasChain]>;
+def ARMPreload        : SDNode<"ARMISD::PRELOAD", SDT_ARMPRELOAD,
+                               [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
 
 def ARMrbit          : SDNode<"ARMISD::RBIT", SDTIntUnaryOp>;
 
@@ -158,6 +162,8 @@ def HasDivide        : Predicate<"Subtarget->hasDivide()">, AssemblerPredicate;
 def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">,
                                  AssemblerPredicate;
 def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
+                                 AssemblerPredicate;
+def HasMP            : Predicate<"Subtarget->hasMPExtension()">,
                                  AssemblerPredicate;
 def UseNEONForFP     : Predicate<"Subtarget->useNEONForSinglePrecisionFP()">;
 def DontUseNEONForFP : Predicate<"!Subtarget->useNEONForSinglePrecisionFP()">;
@@ -988,14 +994,11 @@ def CPS : AXI<(outs), (ins cps_opt:$opt), MiscFrm, NoItinerary, "cps$opt",
 
 // Preload signals the memory system of possible future data/instruction access.
 // These are for disassembly only.
-//
-// A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.
-// The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
 multiclass APreLoad<bits<2> data_read, string opc> {
 
-  def i12 : AXI<(outs), (ins addrmode_imm12:$addr), MiscFrm, NoItinerary,
+  def i12 : AXI<(outs), (ins addrmode_imm12:$addr), MiscFrm, IIC_Preload,
                 !strconcat(opc, "\t$addr"),
-                [(prefetch addrmode_imm12:$addr, imm, (i32 data_read))]> {
+                [(ARMPreload addrmode_imm12:$addr, (i32 data_read))]> {
     bits<4> Rt;
     bits<17> addr;
     let Inst{31-26} = 0b111101;
@@ -1009,9 +1012,9 @@ multiclass APreLoad<bits<2> data_read, string opc> {
     let Inst{11-0}  = addr{11-0};   // imm12
   }
 
-  def rs : AXI<(outs), (ins ldst_so_reg:$shift), MiscFrm, NoItinerary,
+  def rs : AXI<(outs), (ins ldst_so_reg:$shift), MiscFrm, IIC_Preload,
                !strconcat(opc, "\t$shift"),
-               [(prefetch ldst_so_reg:$shift, imm, (i32 data_read))]> {
+               [(ARMPreload ldst_so_reg:$shift, (i32 data_read))]> {
     bits<4> Rt;
     bits<17> shift;
     let Inst{31-26} = 0b111101;
@@ -1025,9 +1028,9 @@ multiclass APreLoad<bits<2> data_read, string opc> {
   }
 }
 
-defm PLD  : APreLoad<3, "pld">;
-defm PLDW : APreLoad<2, "pldw">;
-defm PLI  : APreLoad<1, "pli">;
+defm PLD  : APreLoad<3, "pld">,  Requires<[IsARM]>;
+defm PLDW : APreLoad<2, "pldw">, Requires<[IsARM,HasV7,HasMP]>;
+defm PLI  : APreLoad<1, "pli">,  Requires<[IsARM,HasV7]>;
 
 def SETEND : AXI<(outs),(ins setend_op:$end), MiscFrm, NoItinerary,
                  "setend\t$end",

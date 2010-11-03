@@ -598,10 +598,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i64, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i64, Expand);
 
-  // ARM v5TE+ and Thumb2 has preload instructions.
-  if (Subtarget->isThumb2() ||
-      (!Subtarget->isThumb1Only() && Subtarget->hasV5TEOps()))
-    setOperationAction(ISD::PREFETCH,   MVT::Other, Legal);
+    setOperationAction(ISD::PREFETCH,   MVT::Other, Custom);
 
   // Requires SXTB/SXTH, available on v6 and up in both ARM and Thumb modes.
   if (!Subtarget->hasV6Ops()) {
@@ -776,6 +773,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
 
   case ARMISD::MEMBARRIER:    return "ARMISD::MEMBARRIER";
   case ARMISD::MEMBARRIER_MCR: return "ARMISD::MEMBARRIER_MCR";
+
+  case ARMISD::PRELOAD:       return "ARMISD::PRELOAD";
 
   case ARMISD::VCEQ:          return "ARMISD::VCEQ";
   case ARMISD::VCGE:          return "ARMISD::VCGE";
@@ -2058,6 +2057,31 @@ static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
     DMBOpt = isOnlyStoreBarrier ? ARM_MB::ISHST : ARM_MB::ISH;
   return DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
                      DAG.getConstant(DMBOpt, MVT::i32));
+}
+
+static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG,
+                             const ARMSubtarget *Subtarget) {
+  // ARM pre v5TE and Thumb1 does not have preload instructions.
+  if (!(Subtarget->isThumb2() ||
+        (!Subtarget->isThumb1Only() && Subtarget->hasV5TEOps())))
+    // Just preserve the chain.
+    return Op.getOperand(0);
+
+  DebugLoc dl = Op.getDebugLoc();
+  unsigned Flavor = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
+  if (Flavor != 3) {
+    if (!Subtarget->hasV7Ops())
+      return Op.getOperand(0);
+    else if (Flavor == 2 && !Subtarget->hasMPExtension())
+      return Op.getOperand(0);
+  }
+
+  if (Subtarget->isThumb())
+    // Invert the bits.
+    Flavor = ~Flavor & 0x3;
+
+  return DAG.getNode(ARMISD::PRELOAD, dl, MVT::Other, Op.getOperand(0),
+                     Op.getOperand(1), DAG.getConstant(Flavor, MVT::i32));
 }
 
 static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) {
@@ -3842,6 +3866,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BR_JT:         return LowerBR_JT(Op, DAG);
   case ISD::VASTART:       return LowerVASTART(Op, DAG);
   case ISD::MEMBARRIER:    return LowerMEMBARRIER(Op, DAG, Subtarget);
+  case ISD::PREFETCH:      return LowerPREFETCH(Op, DAG, Subtarget);
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:    return LowerINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT:

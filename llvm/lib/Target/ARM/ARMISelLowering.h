@@ -83,6 +83,8 @@ namespace llvm {
 
       MEMBARRIER,   // Memory barrier (DMB)
       MEMBARRIER_MCR, // Memory barrier (MCR)
+
+      PRELOAD,      // Preload
       
       VCEQ,         // Vector compare equal.
       VCGE,         // Vector compare greater than or equal.

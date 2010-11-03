@@ -1171,67 +1171,66 @@ def t2STRD_POST : T2Ii8s4<0, 1, 0, (outs),
 
 // T2Ipl (Preload Data/Instruction) signals the memory system of possible future
 // data/instruction access.  These are for disassembly only.
-//
-// A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.
-// The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
-multiclass T2Ipl<bit instr, bit write, bits<2> data_read, string opc> {
+// instr_write is inverted for Thumb mode: (prefetch 3) -> (preload 0),
+// (prefetch 1) -> (preload 2),  (prefetch 2) -> (preload 1).
+multiclass T2Ipl<bits<2> instr_write, string opc> {
 
-  def i12 : T2Ii12<(outs), (ins t2addrmode_imm12:$addr), IIC_iLoad_i, opc,
+  def i12 : T2Ii12<(outs), (ins t2addrmode_imm12:$addr), IIC_Preload, opc,
                 "\t$addr",
-                [(prefetch t2addrmode_imm12:$addr, imm, (i32 data_read))]> {
+                [(ARMPreload t2addrmode_imm12:$addr, (i32 instr_write))]> {
     let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr;
+    let Inst{24} = instr_write{1};
     let Inst{23} = 1; // U = 1
     let Inst{22} = 0;
-    let Inst{21} = write;
+    let Inst{21} = instr_write{0};
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
   }
 
-  def i8 : T2Ii8<(outs), (ins t2addrmode_imm8:$addr), IIC_iLoad_i, opc,
+  def i8 : T2Ii8<(outs), (ins t2addrmode_imm8:$addr), IIC_Preload, opc,
                 "\t$addr",
-               [(prefetch t2addrmode_imm8:$addr, imm, (i32 data_read))]> {
+               [(ARMPreload t2addrmode_imm8:$addr, (i32 instr_write))]> {
     let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr;
+    let Inst{24} = instr_write{1};
     let Inst{23} = 0; // U = 0
     let Inst{22} = 0;
-    let Inst{21} = write;
+    let Inst{21} = instr_write{0};
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
     let Inst{11-8} = 0b1100;
   }
 
-  def s : T2Iso<(outs), (ins t2addrmode_so_reg:$addr), IIC_iLoad_i, opc,
+  def s : T2Iso<(outs), (ins t2addrmode_so_reg:$addr), IIC_Preload, opc,
                "\t$addr",
-              [(prefetch t2addrmode_so_reg:$addr, imm, (i32 data_read))]> {
+              [(ARMPreload t2addrmode_so_reg:$addr, (i32 instr_write))]> {
     let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr;
+    let Inst{24} = instr_write{1};
     let Inst{23} = 0; // add = TRUE for T1
     let Inst{22} = 0;
-    let Inst{21} = write;
+    let Inst{21} = instr_write{0};
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
     let Inst{11-6} = 0000000;
   }
 
   let isCodeGenOnly = 1 in
-  def pci : T2Ipc<(outs), (ins i32imm:$addr), IIC_iLoad_i, opc,
+  def pci : T2Ipc<(outs), (ins i32imm:$addr), IIC_Preload, opc,
                 "\t$addr",
                []> {
     let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr;
+    let Inst{24} = instr_write{1};
     let Inst{23} = ?; // add = (U == 1)
     let Inst{22} = 0;
-    let Inst{21} = write;
+    let Inst{21} = instr_write{0};
     let Inst{20} = 1;
     let Inst{19-16} = 0b1111; // Rn = 0b1111
     let Inst{15-12} = 0b1111;
   }
 }
 
-defm t2PLD  : T2Ipl<0, 0, 3, "pld">;
-defm t2PLDW : T2Ipl<0, 1, 2, "pldw">;
-defm t2PLI  : T2Ipl<1, 0, 1, "pli">;
+defm t2PLD  : T2Ipl<0, "pld">,  Requires<[IsThumb2]>;
+defm t2PLDW : T2Ipl<1, "pldw">, Requires<[IsThumb2,HasV7,HasMP]>;
+defm t2PLI  : T2Ipl<2, "pli">,  Requires<[IsThumb2,HasV7]>;
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.

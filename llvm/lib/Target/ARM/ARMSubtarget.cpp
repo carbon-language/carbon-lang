@@ -51,6 +51,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , HasT2ExtractPack(false)
   , HasDataBarrier(false)
   , Pref32BitThumb(false)
+  , HasMPExtension(false)
   , FPOnlySP(false)
   , AllowsUnalignedMem(false)
   , stackAlignment(4)
