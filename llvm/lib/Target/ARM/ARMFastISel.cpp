@@ -1014,11 +1014,11 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   // Re-set the flags just in case.
   unsigned CmpOpc = isThumb ? ARM::t2CMPri : ARM::CMPri;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
-                  .addReg(CmpReg).addImm(1));
+                  .addReg(CmpReg).addImm(0));
 
   unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
-                  .addMBB(TBB).addImm(ARMCC::EQ).addReg(ARM::CPSR);
+                  .addMBB(TBB).addImm(ARMCC::NE).addReg(ARM::CPSR);
   FastEmitBranch(FBB, DL);
   FuncInfo.MBB->addSuccessor(TBB);
   return true;
