@@ -366,7 +366,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
       unsigned ObjSize = VA.getLocVT().getSizeInBits()/8;
       if (ObjSize > 2) {
         errs() << "LowerFormalArguments Unhandled argument type: "
-             << VA.getLocVT().getSimpleVT().SimpleTy
+             << EVT(VA.getLocVT()).getEVTString()
              << "\n";
       }
       // Create the frame index object for this incoming parameter...

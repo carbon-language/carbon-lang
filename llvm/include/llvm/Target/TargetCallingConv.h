@@ -106,14 +106,13 @@ namespace ISD {
   ///
   struct InputArg {
     ArgFlagsTy Flags;
-    EVT VT;
+    MVT VT;
     bool Used;
 
     InputArg() : VT(MVT::Other), Used(false) {}
     InputArg(ArgFlagsTy flags, EVT vt, bool used)
-      : Flags(flags), VT(vt), Used(used) {
-      assert(VT.isSimple() &&
-             "InputArg value type must be Simple!");
+      : Flags(flags), Used(used) {
+      VT = vt.getSimpleVT();
     }
   };
 
@@ -123,16 +122,15 @@ namespace ISD {
   ///
   struct OutputArg {
     ArgFlagsTy Flags;
-    EVT VT;
+    MVT VT;
 
     /// IsFixed - Is this a "fixed" value, ie not passed through a vararg "...".
     bool IsFixed;
 
     OutputArg() : IsFixed(false) {}
     OutputArg(ArgFlagsTy flags, EVT vt, bool isfixed)
-      : Flags(flags), VT(vt), IsFixed(isfixed) {
-      assert(VT.isSimple() &&
-             "OutputArg value type must be Simple!");
+      : Flags(flags), IsFixed(isfixed) {
+      VT = vt.getSimpleVT();
     }
   };
 }

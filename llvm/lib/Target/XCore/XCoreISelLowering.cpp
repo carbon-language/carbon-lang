@@ -1065,7 +1065,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       unsigned ObjSize = VA.getLocVT().getSizeInBits()/8;
       if (ObjSize > StackSlotSize) {
         errs() << "LowerFormalArguments Unhandled argument type: "
-               << (unsigned)VA.getLocVT().getSimpleVT().SimpleTy
+               << EVT(VA.getLocVT()).getEVTString()
                << "\n";
       }
       // Create the frame index object for this incoming parameter...

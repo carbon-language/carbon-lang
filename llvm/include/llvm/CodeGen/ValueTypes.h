@@ -133,6 +133,7 @@ namespace llvm {
     bool operator>(const MVT& S)  const { return SimpleTy >  S.SimpleTy; }
     bool operator<(const MVT& S)  const { return SimpleTy <  S.SimpleTy; }
     bool operator==(const MVT& S) const { return SimpleTy == S.SimpleTy; }
+    bool operator!=(const MVT& S) const { return SimpleTy != S.SimpleTy; }
     bool operator>=(const MVT& S) const { return SimpleTy >= S.SimpleTy; }
     bool operator<=(const MVT& S) const { return SimpleTy <= S.SimpleTy; }
 
@@ -278,6 +279,18 @@ namespace llvm {
       case v4f64: return 256;
       case v8i64: return 512;
       }
+    }
+
+    /// getStoreSize - Return the number of bytes overwritten by a store
+    /// of the specified value type.
+    unsigned getStoreSize() const {
+      return (getSizeInBits() + 7) / 8;
+    }
+
+    /// getStoreSizeInBits - Return the number of bits overwritten by a store
+    /// of the specified value type.
+    unsigned getStoreSizeInBits() const {
+      return getStoreSize() * 8;
     }
 
     static MVT getFloatingPointVT(unsigned BitWidth) {

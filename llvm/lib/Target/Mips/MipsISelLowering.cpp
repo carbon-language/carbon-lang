@@ -630,7 +630,7 @@ SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 //===----------------------------------------------------------------------===//
 
 static bool CC_MipsO32(unsigned ValNo, EVT ValVT,
-                       EVT LocVT, CCValAssign::LocInfo LocInfo,
+                       MVT LocVT, CCValAssign::LocInfo LocInfo,
                        ISD::ArgFlagsTy ArgFlags, CCState &State) {
 
   static const unsigned IntRegsSize=4, FloatRegsSize=2; 
@@ -696,7 +696,7 @@ static bool CC_MipsO32(unsigned ValNo, EVT ValVT,
 }
 
 static bool CC_MipsO32_VarArgs(unsigned ValNo, EVT ValVT,
-                       EVT LocVT, CCValAssign::LocInfo LocInfo,
+                       MVT LocVT, CCValAssign::LocInfo LocInfo,
                        ISD::ArgFlagsTy ArgFlags, CCState &State) {
 
   static const unsigned IntRegsSize=4;

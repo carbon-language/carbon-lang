@@ -136,8 +136,8 @@ class ARMFastISel : public FastISel {
 
     // Utility routines.
   private:
-    bool isTypeLegal(const Type *Ty, EVT &VT);
-    bool isLoadTypeLegal(const Type *Ty, EVT &VT);
+    bool isTypeLegal(const Type *Ty, MVT &VT);
+    bool isLoadTypeLegal(const Type *Ty, MVT &VT);
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Base, int Offset);
     bool ARMEmitStore(EVT VT, unsigned SrcReg, unsigned Base, int Offset);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Base, int &Offset);
@@ -155,12 +155,12 @@ class ARMFastISel : public FastISel {
     CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool Return);
     bool ProcessCallArgs(SmallVectorImpl<Value*> &Args,
                          SmallVectorImpl<unsigned> &ArgRegs,
-                         SmallVectorImpl<EVT> &ArgVTs,
+                         SmallVectorImpl<MVT> &ArgVTs,
                          SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
                          SmallVectorImpl<unsigned> &RegArgs,
                          CallingConv::ID CC,
                          unsigned &NumBytes);
-    bool FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
+    bool FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
                     const Instruction *I, CallingConv::ID CC,
                     unsigned &NumBytes);
     bool ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call);
@@ -523,7 +523,7 @@ unsigned ARMFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   // Don't handle dynamic allocas.
   if (!FuncInfo.StaticAllocaMap.count(AI)) return 0;
 
-  EVT VT;
+  MVT VT;
   if (!isLoadTypeLegal(AI->getType(), VT)) return false;
 
   DenseMap<const AllocaInst*, int>::iterator SI =
@@ -545,18 +545,19 @@ unsigned ARMFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   return 0;
 }
 
-bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
-  VT = TLI.getValueType(Ty, true);
+bool ARMFastISel::isTypeLegal(const Type *Ty, MVT &VT) {
+  EVT evt = TLI.getValueType(Ty, true);
 
   // Only handle simple types.
-  if (VT == MVT::Other || !VT.isSimple()) return false;
+  if (evt == MVT::Other || !evt.isSimple()) return false;
+  VT = evt.getSimpleVT();
 
   // Handle all legal types, i.e. a register that will directly hold this
   // value.
   return TLI.isTypeLegal(VT);
 }
 
-bool ARMFastISel::isLoadTypeLegal(const Type *Ty, EVT &VT) {
+bool ARMFastISel::isLoadTypeLegal(const Type *Ty, MVT &VT) {
   if (isTypeLegal(Ty, VT)) return true;
 
   // If this is a type than can be sign or zero-extended to a basic operation
@@ -785,7 +786,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 
 bool ARMFastISel::SelectLoad(const Instruction *I) {
   // Verify we have a legal type before going any further.
-  EVT VT;
+  MVT VT;
   if (!isLoadTypeLegal(I->getType(), VT))
     return false;
 
@@ -868,7 +869,7 @@ bool ARMFastISel::SelectStore(const Instruction *I) {
   unsigned SrcReg = 0;
 
   // Yay type legalization
-  EVT VT;
+  MVT VT;
   if (!isLoadTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
 
@@ -949,7 +950,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   // TODO: Factor this out.
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
     if (CI->hasOneUse() && (CI->getParent() == I->getParent())) {
-      EVT VT;
+      MVT VT;
       const Type *Ty = CI->getOperand(0)->getType();
       if (!isTypeLegal(Ty, VT))
         return false;
@@ -960,7 +961,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
 
       unsigned CmpOpc;
       unsigned CondReg;
-      switch (VT.getSimpleVT().SimpleTy) {
+      switch (VT.SimpleTy) {
         default: return false;
         // TODO: Verify compares.
         case MVT::f32:
@@ -1027,7 +1028,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
 bool ARMFastISel::SelectCmp(const Instruction *I) {
   const CmpInst *CI = cast<CmpInst>(I);
 
-  EVT VT;
+  MVT VT;
   const Type *Ty = CI->getOperand(0)->getType();
   if (!isTypeLegal(Ty, VT))
     return false;
@@ -1038,7 +1039,7 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
 
   unsigned CmpOpc;
   unsigned CondReg;
-  switch (VT.getSimpleVT().SimpleTy) {
+  switch (VT.SimpleTy) {
     default: return false;
     // TODO: Verify compares.
     case MVT::f32:
@@ -1135,7 +1136,7 @@ bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   // Make sure we have VFP.
   if (!Subtarget->hasVFP2()) return false;
 
-  EVT DstVT;
+  MVT DstVT;
   const Type *Ty = I->getType();
   if (!isTypeLegal(Ty, DstVT))
     return false;
@@ -1165,7 +1166,7 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
   // Make sure we have VFP.
   if (!Subtarget->hasVFP2()) return false;
 
-  EVT DstVT;
+  MVT DstVT;
   const Type *RetTy = I->getType();
   if (!isTypeLegal(RetTy, DstVT))
     return false;
@@ -1195,12 +1196,12 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
 }
 
 bool ARMFastISel::SelectSelect(const Instruction *I) {
-  EVT VT = TLI.getValueType(I->getType(), /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
+  MVT VT;
+  if (!isTypeLegal(I->getType(), VT))
     return false;
 
   // Things need to be register sized for register moves.
-  if (VT.getSimpleVT().SimpleTy != MVT::i32) return false;
+  if (VT != MVT::i32) return false;
   const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
 
   unsigned CondReg = getRegForValue(I->getOperand(0));
@@ -1223,7 +1224,7 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
 }
 
 bool ARMFastISel::SelectSDiv(const Instruction *I) {
-  EVT VT;
+  MVT VT;
   const Type *Ty = I->getType();
   if (!isTypeLegal(Ty, VT))
     return false;
@@ -1251,7 +1252,7 @@ bool ARMFastISel::SelectSDiv(const Instruction *I) {
 }
 
 bool ARMFastISel::SelectSRem(const Instruction *I) {
-  EVT VT;
+  MVT VT;
   const Type *Ty = I->getType();
   if (!isTypeLegal(Ty, VT))
     return false;
@@ -1360,7 +1361,7 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC, bool Return) {
 
 bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
                                   SmallVectorImpl<unsigned> &ArgRegs,
-                                  SmallVectorImpl<EVT> &ArgVTs,
+                                  SmallVectorImpl<MVT> &ArgVTs,
                                   SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
                                   SmallVectorImpl<unsigned> &RegArgs,
                                   CallingConv::ID CC,
@@ -1382,7 +1383,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     unsigned Arg = ArgRegs[VA.getValNo()];
-    EVT ArgVT = ArgVTs[VA.getValNo()];
+    MVT ArgVT = ArgVTs[VA.getValNo()];
 
     // We don't handle NEON parameters yet.
     if (VA.getLocVT().isVector() && VA.getLocVT().getSizeInBits() > 64)
@@ -1422,9 +1423,8 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
         break;
       }
       case CCValAssign::BCvt: {
-        unsigned BC = FastEmit_r(ArgVT.getSimpleVT(),
-                                 VA.getLocVT().getSimpleVT(),
-                                 ISD::BIT_CONVERT, Arg, /*TODO: Kill=*/false);
+        unsigned BC = FastEmit_r(ArgVT, VA.getLocVT(), ISD::BIT_CONVERT, Arg,
+                                 /*TODO: Kill=*/false);
         assert(BC != 0 && "Failed to emit a bitcast!");
         Arg = BC;
         ArgVT = VA.getLocVT();
@@ -1466,7 +1466,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
   return true;
 }
 
-bool ARMFastISel::FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
+bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
                              const Instruction *I, CallingConv::ID CC,
                              unsigned &NumBytes) {
   // Issue CALLSEQ_END
@@ -1476,13 +1476,13 @@ bool ARMFastISel::FinishCall(EVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
                   .addImm(NumBytes).addImm(0));
 
   // Now the return value.
-  if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
+  if (RetVT != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
     CCState CCInfo(CC, false, TM, RVLocs, *Context);
     CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
 
     // Copy all of the result registers out of their specified physreg.
-    if (RVLocs.size() == 2 && RetVT.getSimpleVT().SimpleTy == MVT::f64) {
+    if (RVLocs.size() == 2 && RetVT == MVT::f64) {
       // For this move we copy into two registers and then move into the
       // double fp reg we want.
       EVT DestVT = RVLocs[0].getValVT();
@@ -1591,7 +1591,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
 
   // Handle *simple* calls for now.
   const Type *RetTy = I->getType();
-  EVT RetVT;
+  MVT RetVT;
   if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
   else if (!isTypeLegal(RetTy, RetVT))
@@ -1603,7 +1603,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // Set up the argument vectors.
   SmallVector<Value*, 8> Args;
   SmallVector<unsigned, 8> ArgRegs;
-  SmallVector<EVT, 8> ArgVTs;
+  SmallVector<MVT, 8> ArgVTs;
   SmallVector<ISD::ArgFlagsTy, 8> ArgFlags;
   Args.reserve(I->getNumOperands());
   ArgRegs.reserve(I->getNumOperands());
@@ -1615,7 +1615,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
     if (Arg == 0) return false;
 
     const Type *ArgTy = Op->getType();
-    EVT ArgVT;
+    MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT)) return false;
 
     ISD::ArgFlagsTy Flags;
@@ -1685,7 +1685,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
 
   // Handle *simple* calls for now.
   const Type *RetTy = I->getType();
-  EVT RetVT;
+  MVT RetVT;
   if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
   else if (!isTypeLegal(RetTy, RetVT))
@@ -1698,7 +1698,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   // Set up the argument vectors.
   SmallVector<Value*, 8> Args;
   SmallVector<unsigned, 8> ArgRegs;
-  SmallVector<EVT, 8> ArgVTs;
+  SmallVector<MVT, 8> ArgVTs;
   SmallVector<ISD::ArgFlagsTy, 8> ArgFlags;
   Args.reserve(CS.arg_size());
   ArgRegs.reserve(CS.arg_size());
@@ -1725,7 +1725,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
       return false;
 
     const Type *ArgTy = (*i)->getType();
-    EVT ArgVT;
+    MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT))
       return false;
     unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);

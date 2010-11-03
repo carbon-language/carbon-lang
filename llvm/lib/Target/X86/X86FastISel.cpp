@@ -132,17 +132,18 @@ private:
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
   }
 
-  bool isTypeLegal(const Type *Ty, EVT &VT, bool AllowI1 = false);
+  bool isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1 = false);
 };
   
 } // end anonymous namespace.
 
-bool X86FastISel::isTypeLegal(const Type *Ty, EVT &VT, bool AllowI1) {
-  VT = TLI.getValueType(Ty, /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !VT.isSimple())
+bool X86FastISel::isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1) {
+  EVT evt = TLI.getValueType(Ty, /*HandleUnknown=*/true);
+  if (evt == MVT::Other || !evt.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
     return false;
-  
+
+  VT = evt.getSimpleVT();
   // For now, require SSE/SSE2 for performing floating-point operations,
   // since x87 requires additional work.
   if (VT == MVT::f64 && !X86ScalarSSEf64)
@@ -639,7 +640,7 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
 
 /// X86SelectStore - Select and emit code to implement store instructions.
 bool X86FastISel::X86SelectStore(const Instruction *I) {
-  EVT VT;
+  MVT VT;
   if (!isTypeLegal(I->getOperand(0)->getType(), VT, /*AllowI1=*/true))
     return false;
 
@@ -740,7 +741,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 /// X86SelectLoad - Select and emit code to implement load instructions.
 ///
 bool X86FastISel::X86SelectLoad(const Instruction *I)  {
-  EVT VT;
+  MVT VT;
   if (!isTypeLegal(I->getType(), VT, /*AllowI1=*/true))
     return false;
 
@@ -823,7 +824,7 @@ bool X86FastISel::X86FastEmitCompare(const Value *Op0, const Value *Op1,
 bool X86FastISel::X86SelectCmp(const Instruction *I) {
   const CmpInst *CI = cast<CmpInst>(I);
 
-  EVT VT;
+  MVT VT;
   if (!isTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
 
@@ -1112,8 +1113,8 @@ bool X86FastISel::X86SelectShift(const Instruction *I) {
     return false;
   }
 
-  EVT VT = TLI.getValueType(I->getType(), /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
+  MVT VT;
+  if (!isTypeLegal(I->getType(), VT))
     return false;
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
@@ -1148,8 +1149,8 @@ bool X86FastISel::X86SelectShift(const Instruction *I) {
 }
 
 bool X86FastISel::X86SelectSelect(const Instruction *I) {
-  EVT VT = TLI.getValueType(I->getType(), /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
+  MVT VT;
+  if (!isTypeLegal(I->getType(), VT))
     return false;
   
   // We only use cmov here, if we don't have a cmov instruction bail.
@@ -1157,13 +1158,13 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
   
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
-  if (VT.getSimpleVT() == MVT::i16) {
+  if (VT == MVT::i16) {
     Opc = X86::CMOVE16rr;
     RC = &X86::GR16RegClass;
-  } else if (VT.getSimpleVT() == MVT::i32) {
+  } else if (VT == MVT::i32) {
     Opc = X86::CMOVE32rr;
     RC = &X86::GR32RegClass;
-  } else if (VT.getSimpleVT() == MVT::i64) {
+  } else if (VT == MVT::i64) {
     Opc = X86::CMOVE64rr;
     RC = &X86::GR64RegClass;
   } else {
@@ -1314,7 +1315,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     
     assert(CI && "Non-constant type in Intrinsic::objectsize?");
     
-    EVT VT;
+    MVT VT;
     if (!isTypeLegal(Ty, VT))
       return false;
     
@@ -1360,7 +1361,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     const Type *RetTy =
       cast<StructType>(Callee->getReturnType())->getTypeAtIndex(unsigned(0));
 
-    EVT VT;
+    MVT VT;
     if (!isTypeLegal(RetTy, VT))
       return false;
 
@@ -1444,7 +1445,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
 
   // Handle *simple* calls for now.
   const Type *RetTy = CS.getType();
-  EVT RetVT;
+  MVT RetVT;
   if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
   else if (!isTypeLegal(RetTy, RetVT, true))
@@ -1474,7 +1475,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   // Deal with call operands first.
   SmallVector<const Value *, 8> ArgVals;
   SmallVector<unsigned, 8> Args;
-  SmallVector<EVT, 8> ArgVTs;
+  SmallVector<MVT, 8> ArgVTs;
   SmallVector<ISD::ArgFlagsTy, 8> ArgFlags;
   Args.reserve(CS.arg_size());
   ArgVals.reserve(CS.arg_size());
@@ -1500,7 +1501,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
       return false;
 
     const Type *ArgTy = (*i)->getType();
-    EVT ArgVT;
+    MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT))
       return false;
     unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
@@ -1577,7 +1578,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
       break;
     }
     case CCValAssign::BCvt: {
-      unsigned BC = FastEmit_r(ArgVT.getSimpleVT(), VA.getLocVT().getSimpleVT(),
+      unsigned BC = FastEmit_r(ArgVT.getSimpleVT(), VA.getLocVT(),
                                ISD::BIT_CONVERT, Arg, /*TODO: Kill=*/false);
       assert(BC != 0 && "Failed to emit a bitcast!");
       Arg = BC;
@@ -1680,7 +1681,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
 
   // Now handle call return value (if any).
   SmallVector<unsigned, 4> UsedRegs;
-  if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
+  if (RetVT != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
     CCState CCInfo(CC, false, TM, RVLocs, I->getParent()->getContext());
     CCInfo.AnalyzeCallResult(RetVT, RetCC_X86);
@@ -1794,14 +1795,14 @@ X86FastISel::TargetSelectInstruction(const Instruction *I)  {
 }
 
 unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
-  EVT VT;
+  MVT VT;
   if (!isTypeLegal(C->getType(), VT))
     return false;
   
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
-  switch (VT.getSimpleVT().SimpleTy) {
+  switch (VT.SimpleTy) {
   default: return false;
   case MVT::i8:
     Opc = X86::MOV8rm;

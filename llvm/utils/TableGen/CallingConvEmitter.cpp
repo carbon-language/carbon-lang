@@ -28,7 +28,7 @@ void CallingConvEmitter::run(raw_ostream &O) {
     O << "static bool " << CCs[i]->getName()
       << "(unsigned ValNo, EVT ValVT,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
-      << "EVT LocVT, CCValAssign::LocInfo LocInfo,\n"
+      << "MVT LocVT, CCValAssign::LocInfo LocInfo,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
       << "ISD::ArgFlagsTy ArgFlags, CCState &State);\n";
   }
@@ -46,7 +46,7 @@ void CallingConvEmitter::EmitCallingConv(Record *CC, raw_ostream &O) {
   O << "\n\nstatic bool " << CC->getName()
     << "(unsigned ValNo, EVT ValVT,\n"
     << std::string(CC->getName().size()+13, ' ')
-    << "EVT LocVT, CCValAssign::LocInfo LocInfo,\n"
+    << "MVT LocVT, CCValAssign::LocInfo LocInfo,\n"
     << std::string(CC->getName().size()+13, ' ')
     << "ISD::ArgFlagsTy ArgFlags, CCState &State) {\n";
   // Emit all of the actions, in order.
@@ -163,12 +163,12 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << Size << ", ";
       else
         O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
-          "->getTypeAllocSize(LocVT.getTypeForEVT(State.getContext())), ";
+          "->getTypeAllocSize(EVT(LocVT).getTypeForEVT(State.getContext())), ";
       if (Align)
         O << Align;
       else
         O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
-          "->getABITypeAlignment(LocVT.getTypeForEVT(State.getContext()))";
+          "->getABITypeAlignment(EVT(LocVT).getTypeForEVT(State.getContext()))";
       if (Action->isSubClassOf("CCAssignToStackWithShadow"))
         O << ", " << getQualifiedName(Action->getValueAsDef("ShadowReg"));
       O << ");\n" << IndentStr

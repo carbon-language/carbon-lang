@@ -287,7 +287,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
   for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-    switch (Outs[i].VT.getSimpleVT().SimpleTy) {
+    switch (Outs[i].VT.SimpleTy) {
       default: llvm_unreachable("Unknown value type!");
       case MVT::i1:
       case MVT::i8:

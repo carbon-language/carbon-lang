@@ -6050,7 +6050,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     unsigned NumRegs = getNumRegisters(RetTy->getContext(), VT);
     for (unsigned i = 0; i != NumRegs; ++i) {
       ISD::InputArg MyFlags;
-      MyFlags.VT = RegisterVT;
+      MyFlags.VT = RegisterVT.getSimpleVT();
       MyFlags.Used = isReturnValueUsed;
       if (RetSExt)
         MyFlags.Flags.setSExt();
@@ -6086,7 +6086,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   DEBUG(for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
           assert(InVals[i].getNode() &&
                  "LowerCall emitted a null value!");
-          assert(Ins[i].VT == InVals[i].getValueType() &&
+          assert(EVT(Ins[i].VT) == InVals[i].getValueType() &&
                  "LowerCall emitted a value with the wrong type!");
         });
 
@@ -6247,7 +6247,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
       for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
         assert(InVals[i].getNode() &&
                "LowerFormalArguments emitted a null value!");
-        assert(Ins[i].VT == InVals[i].getValueType() &&
+        assert(EVT(Ins[i].VT) == InVals[i].getValueType() &&
                "LowerFormalArguments emitted a value with the wrong type!");
       }
     });

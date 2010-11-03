@@ -127,7 +127,7 @@ SDValue PTXTargetLowering::
     i->reset();
 
   for (int i = 0, e = Ins.size(); i != e; ++ i) {
-    MVT::SimpleValueType VT = Ins[i].VT.getSimpleVT().SimpleTy;
+    MVT::SimpleValueType VT = Ins[i].VT.SimpleTy;
 
     struct argmap_entry *entry = std::find(argmap,
                                            argmap + array_lengthof(argmap), VT);

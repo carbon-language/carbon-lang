@@ -60,11 +60,11 @@ private:
   EVT ValVT;
 
   /// LocVT - The type of the location being assigned to.
-  EVT LocVT;
+  MVT LocVT;
 public:
 
   static CCValAssign getReg(unsigned ValNo, EVT ValVT,
-                            unsigned RegNo, EVT LocVT,
+                            unsigned RegNo, MVT LocVT,
                             LocInfo HTP) {
     CCValAssign Ret;
     Ret.ValNo = ValNo;
@@ -78,7 +78,7 @@ public:
   }
 
   static CCValAssign getCustomReg(unsigned ValNo, EVT ValVT,
-                                  unsigned RegNo, EVT LocVT,
+                                  unsigned RegNo, MVT LocVT,
                                   LocInfo HTP) {
     CCValAssign Ret;
     Ret = getReg(ValNo, ValVT, RegNo, LocVT, HTP);
@@ -87,7 +87,7 @@ public:
   }
 
   static CCValAssign getMem(unsigned ValNo, EVT ValVT,
-                            unsigned Offset, EVT LocVT,
+                            unsigned Offset, MVT LocVT,
                             LocInfo HTP) {
     CCValAssign Ret;
     Ret.ValNo = ValNo;
@@ -101,7 +101,7 @@ public:
   }
 
   static CCValAssign getCustomMem(unsigned ValNo, EVT ValVT,
-                                  unsigned Offset, EVT LocVT,
+                                  unsigned Offset, MVT LocVT,
                                   LocInfo HTP) {
     CCValAssign Ret;
     Ret = getMem(ValNo, ValVT, Offset, LocVT, HTP);
@@ -119,7 +119,7 @@ public:
 
   unsigned getLocReg() const { assert(isRegLoc()); return Loc; }
   unsigned getLocMemOffset() const { assert(isMemLoc()); return Loc; }
-  EVT getLocVT() const { return LocVT; }
+  MVT getLocVT() const { return LocVT; }
 
   LocInfo getLocInfo() const { return HTP; }
   bool isExtInLoc() const {
@@ -131,14 +131,14 @@ public:
 /// CCAssignFn - This function assigns a location for Val, updating State to
 /// reflect the change.  It returns 'true' if it failed to handle Val.
 typedef bool CCAssignFn(unsigned ValNo, EVT ValVT,
-                        EVT LocVT, CCValAssign::LocInfo LocInfo,
+                        MVT LocVT, CCValAssign::LocInfo LocInfo,
                         ISD::ArgFlagsTy ArgFlags, CCState &State);
 
 /// CCCustomFn - This function assigns a location for Val, possibly updating
 /// all args to reflect changes and indicates if it handled it. It must set
 /// isCustom if it handles the arg and returns true.
 typedef bool CCCustomFn(unsigned &ValNo, EVT &ValVT,
-                        EVT &LocVT, CCValAssign::LocInfo &LocInfo,
+                        MVT &LocVT, CCValAssign::LocInfo &LocInfo,
                         ISD::ArgFlagsTy &ArgFlags, CCState &State);
 
 /// CCState - This class holds information needed while lowering arguments and
@@ -198,7 +198,7 @@ public:
 
   /// AnalyzeCallOperands - Same as above except it takes vectors of types
   /// and argument flags.
-  void AnalyzeCallOperands(SmallVectorImpl<EVT> &ArgVTs,
+  void AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
                            SmallVectorImpl<ISD::ArgFlagsTy> &Flags,
                            CCAssignFn Fn);
 
@@ -209,7 +209,7 @@ public:
 
   /// AnalyzeCallResult - Same as above except it's specialized for calls which
   /// produce a single value.
-  void AnalyzeCallResult(EVT VT, CCAssignFn Fn);
+  void AnalyzeCallResult(MVT VT, CCAssignFn Fn);
 
   /// getFirstUnallocated - Return the first unallocated register in the set, or
   /// NumRegs if they are all allocated.
@@ -285,7 +285,7 @@ public:
   // value. The size and alignment information of the argument is encoded in its
   // parameter attribute.
   void HandleByVal(unsigned ValNo, EVT ValVT,
-                   EVT LocVT, CCValAssign::LocInfo LocInfo,
+                   MVT LocVT, CCValAssign::LocInfo LocInfo,
                    int MinSize, int MinAlign, ISD::ArgFlagsTy ArgFlags);
 
 private:

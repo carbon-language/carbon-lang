@@ -469,7 +469,7 @@ SDValue MBlazeTargetLowering::LowerVASTART(SDValue Op,
 #include "MBlazeGenCallingConv.inc"
 
 static bool CC_MBlaze2(unsigned ValNo, EVT ValVT,
-                       EVT LocVT, CCValAssign::LocInfo LocInfo,
+                       MVT LocVT, CCValAssign::LocInfo LocInfo,
                        ISD::ArgFlagsTy ArgFlags, CCState &State) {
   static const unsigned RegsSize=6;
   static const unsigned IntRegs[] = {
