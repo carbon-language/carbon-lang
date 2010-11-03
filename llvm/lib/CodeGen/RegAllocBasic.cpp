@@ -120,6 +120,7 @@ RABasic::RABasic(): MachineFunctionPass(ID) {
   initializeRegisterCoalescerAnalysisGroup(*PassRegistry::getPassRegistry());
   initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
   initializeLiveStacksPass(*PassRegistry::getPassRegistry());
+  initializeMachineDominatorTreePass(*PassRegistry::getPassRegistry());
   initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
   initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
   initializeRenderMachineFunctionPass(*PassRegistry::getPassRegistry());
@@ -135,6 +136,8 @@ void RABasic::getAnalysisUsage(AnalysisUsage &au) const {
   au.addRequired<CalculateSpillWeights>();
   au.addRequired<LiveStacks>();
   au.addPreserved<LiveStacks>();
+  au.addRequiredID(MachineDominatorsID);
+  au.addPreservedID(MachineDominatorsID);
   au.addRequired<MachineLoopInfo>();
   au.addPreserved<MachineLoopInfo>();
   au.addRequired<VirtRegMap>();
