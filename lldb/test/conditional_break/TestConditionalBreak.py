@@ -61,7 +61,7 @@ class ConditionalBreakTestCase(TestBase):
 
         # Find the line number where a's parent frame function is c.
         line = line_number('main.c',
-            "// Find the line number where a's parent frame function is c here.")
+            "// Find the line number where c's parent frame is a here.")
 
         # Suppose we are only interested in the call scenario where c()'s
         # immediate caller is a() and we want to find out the value passed from
