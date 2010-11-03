@@ -1126,28 +1126,37 @@ class VSTQQQQLNWBPseudo<InstrItinClass itin>
                  nohash_imm:$lane), itin, "$addr.addr = $wb">;
 
 //   VST1LN   : Vector Store (single element from one lane)
-class VST1LN<bits<4> op11_8, bits<4> op7_4, string Dt>
+class VST1LN<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
+             PatFrag StoreOp, SDNode ExtractOp>
   : NLdStLn<1, 0b00, op11_8, op7_4, (outs),
           (ins addrmode6:$Rn, DPR:$Vd, nohash_imm:$lane),
-          IIC_VST1ln, "vst1", Dt, "\\{$Vd[$lane]\\}, $Rn", "", []> {
+          IIC_VST1ln, "vst1", Dt, "\\{$Vd[$lane]\\}, $Rn", "",
+          [(StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane), addrmode6:$Rn)]> {
   let Rm = 0b1111;
 }
+class VST1QLNPseudo<ValueType Ty, PatFrag StoreOp, SDNode ExtractOp>
+  : VSTQLNPseudo<IIC_VST1ln> {
+  let Pattern = [(StoreOp (ExtractOp (Ty QPR:$src), imm:$lane),
+                          addrmode6:$addr)];
+}
 
-def VST1LNd8  : VST1LN<0b0000, {?,?,?,0}, "8"> {
+def VST1LNd8  : VST1LN<0b0000, {?,?,?,0}, "8", v8i8, truncstorei8,
+                       NEONvgetlaneu> {
   let Inst{7-5} = lane{2-0};
 }
-def VST1LNd16 : VST1LN<0b0100, {?,?,0,?}, "16"> {
+def VST1LNd16 : VST1LN<0b0100, {?,?,0,?}, "16", v4i16, truncstorei16,
+                       NEONvgetlaneu> {
   let Inst{7-6} = lane{1-0};
   let Inst{4}   = Rn{5};
 }
-def VST1LNd32 : VST1LN<0b1000, {?,0,?,?}, "32"> {
+def VST1LNd32 : VST1LN<0b1000, {?,0,?,?}, "32", v2i32, store, extractelt> {
   let Inst{7}   = lane{0};
   let Inst{5-4} = Rn{5-4};
 }
 
-def VST1LNq8Pseudo  : VSTQLNPseudo<IIC_VST1ln>;
-def VST1LNq16Pseudo : VSTQLNPseudo<IIC_VST1ln>;
-def VST1LNq32Pseudo : VSTQLNPseudo<IIC_VST1ln>;
+def VST1LNq8Pseudo  : VST1QLNPseudo<v16i8, truncstorei8, NEONvgetlaneu>;
+def VST1LNq16Pseudo : VST1QLNPseudo<v8i16, truncstorei16, NEONvgetlaneu>;
+def VST1LNq32Pseudo : VST1QLNPseudo<v4i32, store, extractelt>;
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 

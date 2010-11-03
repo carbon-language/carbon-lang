@@ -1,5 +1,62 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
+define void @vst1lanei8(i8* %A, <8 x i8>* %B) nounwind {
+;CHECK: vst1lanei8:
+;Check the (default) alignment.
+;CHECK: vst1.8 {d16[3]}, [r0]
+	%tmp1 = load <8 x i8>* %B
+        %tmp2 = extractelement <8 x i8> %tmp1, i32 3
+        store i8 %tmp2, i8* %A, align 8
+	ret void
+}
+
+define void @vst1lanei16(i16* %A, <4 x i16>* %B) nounwind {
+;CHECK: vst1lanei16:
+;Check the alignment value.  Max for this instruction is 16 bits:
+;CHECK: vst1.16 {d16[2]}, [r0, :16]
+	%tmp1 = load <4 x i16>* %B
+        %tmp2 = extractelement <4 x i16> %tmp1, i32 2
+        store i16 %tmp2, i16* %A, align 8
+	ret void
+}
+
+define void @vst1lanei32(i32* %A, <2 x i32>* %B) nounwind {
+;CHECK: vst1lanei32:
+;Check the alignment value.  Max for this instruction is 32 bits:
+;CHECK: vst1.32 {d16[1]}, [r0, :32]
+	%tmp1 = load <2 x i32>* %B
+        %tmp2 = extractelement <2 x i32> %tmp1, i32 1
+        store i32 %tmp2, i32* %A, align 8
+	ret void
+}
+
+define void @vst1laneQi8(i8* %A, <16 x i8>* %B) nounwind {
+;CHECK: vst1laneQi8:
+;CHECK: vst1.8 {d17[1]}, [r0]
+	%tmp1 = load <16 x i8>* %B
+        %tmp2 = extractelement <16 x i8> %tmp1, i32 9
+        store i8 %tmp2, i8* %A, align 8
+	ret void
+}
+
+define void @vst1laneQi16(i16* %A, <8 x i16>* %B) nounwind {
+;CHECK: vst1laneQi16:
+;CHECK: vst1.16 {d17[1]}, [r0, :16]
+	%tmp1 = load <8 x i16>* %B
+        %tmp2 = extractelement <8 x i16> %tmp1, i32 5
+        store i16 %tmp2, i16* %A, align 8
+	ret void
+}
+
+define void @vst1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
+;CHECK: vst1laneQi32:
+;CHECK: vst1.32 {d17[1]}, [r0, :32]
+	%tmp1 = load <4 x i32>* %B
+        %tmp2 = extractelement <4 x i32> %tmp1, i32 3
+        store i32 %tmp2, i32* %A, align 8
+	ret void
+}
+
 define void @vst2lanei8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vst2lanei8:
 ;Check the alignment value.  Max for this instruction is 16 bits:

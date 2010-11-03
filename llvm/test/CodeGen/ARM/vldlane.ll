@@ -22,7 +22,7 @@ define <4 x i16> @vld1lanei16(i16* %A, <4 x i16>* %B) nounwind {
 
 define <2 x i32> @vld1lanei32(i32* %A, <2 x i32>* %B) nounwind {
 ;CHECK: vld1lanei32:
-;Check the alignment value.  Max for this instruction is 16 bits:
+;Check the alignment value.  Max for this instruction is 32 bits:
 ;CHECK: vld1.32 {d16[1]}, [r0, :32]
 	%tmp1 = load <2 x i32>* %B
 	%tmp2 = load i32* %A, align 8

@@ -102,7 +102,8 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   %0 = load <4 x i16>* %arg0_uint16x4_t, align 8  ; <<4 x i16>> [#uses=1]
   %1 = extractelement <4 x i16> %0, i32 1         ; <i16> [#uses=1]
-  store i16 %1, i16* %out_uint16_t, align 2
+  %2 = add i16 %1, %1
+  store i16 %2, i16* %out_uint16_t, align 2
   br label %return
 
 return:                                           ; preds = %entry
@@ -117,7 +118,8 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   %0 = load <8 x i8>* %arg0_uint8x8_t, align 8    ; <<8 x i8>> [#uses=1]
   %1 = extractelement <8 x i8> %0, i32 1          ; <i8> [#uses=1]
-  store i8 %1, i8* %out_uint8_t, align 1
+  %2 = add i8 %1, %1
+  store i8 %2, i8* %out_uint8_t, align 1
   br label %return
 
 return:                                           ; preds = %entry
@@ -132,7 +134,8 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   %0 = load <8 x i16>* %arg0_uint16x8_t, align 16 ; <<8 x i16>> [#uses=1]
   %1 = extractelement <8 x i16> %0, i32 1         ; <i16> [#uses=1]
-  store i16 %1, i16* %out_uint16_t, align 2
+  %2 = add i16 %1, %1
+  store i16 %2, i16* %out_uint16_t, align 2
   br label %return
 
 return:                                           ; preds = %entry
@@ -147,7 +150,8 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   %0 = load <16 x i8>* %arg0_uint8x16_t, align 16 ; <<16 x i8>> [#uses=1]
   %1 = extractelement <16 x i8> %0, i32 1         ; <i8> [#uses=1]
-  store i8 %1, i8* %out_uint8_t, align 1
+  %2 = add i8 %1, %1
+  store i8 %2, i8* %out_uint8_t, align 1
   br label %return
 
 return:                                           ; preds = %entry
