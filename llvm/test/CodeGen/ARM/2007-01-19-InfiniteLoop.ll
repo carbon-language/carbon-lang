@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-darwin -mattr=+v6,+vfp2 | FileCheck %s
 
 @quant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
 @dequant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
