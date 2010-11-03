@@ -149,10 +149,7 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
                std::string(pathname) + ": can't create temporary directory");
     return Path();
   }
-  Path result;
-  result.set(pathname);
-  assert(result.isValid() && "mkdtemp didn't create a valid pathname!");
-  return result;
+  return Path(pathname);
 #elif defined(HAVE_MKSTEMP)
   // If no mkdtemp is available, mkstemp can be used to create a temporary file
   // which is then removed and created as a directory. We prefer this over
@@ -173,10 +170,7 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
       std::string(pathname) + ": can't create temporary directory");
     return Path();
   }
-  Path result;
-  result.set(pathname);
-  assert(result.isValid() && "mkstemp didn't create a valid pathname!");
-  return result;
+  return Path(pathname);
 #elif defined(HAVE_MKTEMP)
   // If a system doesn't have mkdtemp(3) or mkstemp(3) but it does have
   // mktemp(3) then we'll assume that system (e.g. AIX) has a reasonable
@@ -195,10 +189,7 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
         std::string(TmpName) + ": can't create temporary directory");
     return Path();
   }
-  Path result;
-  result.set(TmpName);
-  assert(result.isValid() && "mktemp didn't create a valid pathname!");
-  return result;
+  return Path(TmpName);
 #else
   // This is the worst case implementation. tempnam(3) leaks memory unless its
   // on an SVID2 (or later) system. On BSD 4.3 it leaks. tmpnam(3) has thread
@@ -219,10 +210,7 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
       std::string(pathname) + ": can't create temporary directory");
     return Path();
   }
-  Path result;
-  result.set(pathname);
-  assert(result.isValid() && "mkstemp didn't create a valid pathname!");
-  return result;
+  return Path(pathname);
 #endif
 }
 
@@ -597,10 +585,6 @@ Path::set(StringRef a_path) {
     return false;
   std::string save(path);
   path = a_path;
-  if (!isValid()) {
-    path = save;
-    return false;
-  }
   return true;
 }
 
@@ -612,10 +596,6 @@ Path::appendComponent(StringRef name) {
   if (!lastIsSlash(path))
     path += '/';
   path += name;
-  if (!isValid()) {
-    path = save;
-    return false;
-  }
   return true;
 }
 
@@ -647,8 +627,6 @@ Path::eraseSuffix() {
       return true;
     }
   }
-  if (!isValid())
-    path = save;
   return false;
 }
 
