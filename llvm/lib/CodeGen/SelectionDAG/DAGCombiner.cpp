@@ -3667,6 +3667,20 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext (truncate x)) -> (and x, mask)
   if (N0.getOpcode() == ISD::TRUNCATE &&
       (!LegalOperations || TLI.isOperationLegal(ISD::AND, VT))) {
+
+    // fold (zext (truncate (load x))) -> (zext (smaller load x))
+    // fold (zext (truncate (srl (load x), c))) -> (zext (smaller load (x+c/n)))
+    SDValue NarrowLoad = ReduceLoadWidth(N0.getNode());
+    if (NarrowLoad.getNode()) {
+      SDNode* oye = N0.getNode()->getOperand(0).getNode();
+      if (NarrowLoad.getNode() != N0.getNode()) {
+        CombineTo(N0.getNode(), NarrowLoad);
+        // CombineTo deleted the truncate, if needed, but not what's under it.
+        AddToWorkList(oye);
+      }
+      return SDValue(N, 0);   // Return N so it doesn't get rechecked!
+    }
+
     SDValue Op = N0.getOperand(0);
     if (Op.getValueType().bitsLT(VT)) {
       Op = DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, Op);
@@ -4102,6 +4116,17 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     }
   }
 
+  // If the load is shifted left (and the result isn't shifted back right),
+  // we can fold the truncate through the shift.
+  unsigned ShLeftAmt = 0;
+  if (ShAmt == 0 && N0.getOpcode() == ISD::SHL && N0.hasOneUse() &&
+      TLI.isNarrowingProfitable(N0.getValueType(), VT)) {
+    if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+      ShLeftAmt = N01->getZExtValue();
+      N0 = N0.getOperand(0);
+    }
+  }
+
   // Do not generate loads of non-round integer types since these can
   // be expensive (and would be wrong if the type is not byte sized).
   if (isa<LoadSDNode>(N0) && N0.hasOneUse() && ExtVT.isRound() &&
@@ -4140,8 +4165,18 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
                                   &DeadNodes);
 
+    // Shift the result left, if we've swallowed a left shift.
+    SDValue Result = Load;
+    if (ShLeftAmt != 0) {
+      EVT ShImmTy = getShiftAmountTy();
+      if (!isUIntN(ShImmTy.getSizeInBits(), ShLeftAmt))
+        ShImmTy = VT;
+      Result = DAG.getNode(ISD::SHL, N0.getDebugLoc(), VT,
+                           Result, DAG.getConstant(ShLeftAmt, ShImmTy));
+    }
+
     // Return the new loaded value.
-    return Load;
+    return Result;
   }
 
   return SDValue();
