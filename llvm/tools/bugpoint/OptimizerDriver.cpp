@@ -144,7 +144,8 @@ bool BugDriver::runPasses(Module *Program,
     return 1;
   }
 
-  sys::Path tool = FindExecutable("opt", getToolName(), (void*)"opt");
+  sys::Path tool = PrependMainExecutablePath("opt", getToolName(),
+                                             (void*)"opt");
   if (tool.empty()) {
     errs() << "Cannot find `opt' in executable directory!\n";
     return 1;

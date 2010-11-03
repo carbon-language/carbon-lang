@@ -30,13 +30,14 @@ bool CheckBitcodeOutputToConsole(
   bool print_warning = true     ///< Control whether warnings are printed
 );
 
-/// FindExecutable - Find a named executable, given the value of argv[0] of the
-/// program being executed and the address of main itself. This allows us to
-/// find another LLVM tool if it is built in the same directory. An empty string
-/// is returned on error.
+/// PrependMainExecutablePath - Prepend the path to the program being executed
+/// to \p ExeName, given the value of argv[0] and the address of main()
+/// itself. This allows us to find another LLVM tool if it is built in the same
+/// directory. An empty string is returned on error; note that this function
+/// just mainpulates the path and doesn't check for executability.
 /// @brief Find a named executable.
-sys::Path FindExecutable(const std::string &ExeName,
-                         const char *Argv0, void *MainAddr);
+sys::Path PrependMainExecutablePath(const std::string &ExeName,
+                                    const char *Argv0, void *MainAddr);
 
 } // End llvm namespace
 

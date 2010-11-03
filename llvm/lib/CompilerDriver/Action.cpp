@@ -57,7 +57,8 @@ namespace {
     sys::Path prog(name);
 
     if (!prog.isAbsolute()) {
-      prog = FindExecutable(name, ProgramName, (void *)(intptr_t)&Main);
+      prog = PrependMainExecutablePath(name, ProgramName,
+                                       (void *)(intptr_t)&Main);
 
       if (!prog.canExecute()) {
         prog = sys::Program::FindProgramByName(name);

@@ -415,8 +415,8 @@ static void EmitShellScript(char **argv, Module *M) {
   // support windows systems, we copy the llvm-stub.exe executable from the
   // build tree to the destination file.
   std::string ErrMsg;
-  sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0],
-                                      (void *)(intptr_t)&Optimize);
+  sys::Path llvmstub = PrependMainExecutablePath("llvm-stub", argv[0],
+                                                 (void *)(intptr_t)&Optimize);
   if (llvmstub.isEmpty())
     PrintAndExit("Could not find llvm-stub.exe executable!", M);
 
@@ -664,8 +664,8 @@ int main(int argc, char **argv, char **envp) {
       sys::RemoveFileOnSignal(AssemblyFile);
 
       // Determine the locations of the llc and gcc programs.
-      sys::Path llc = FindExecutable("llc", argv[0],
-                                     (void *)(intptr_t)&Optimize);
+      sys::Path llc = PrependMainExecutablePath("llc", argv[0],
+                                                (void *)(intptr_t)&Optimize);
       if (llc.isEmpty())
         PrintAndExit("Failed to find llc", Composite.get());
 
@@ -691,8 +691,8 @@ int main(int argc, char **argv, char **envp) {
       sys::RemoveFileOnSignal(CFile);
 
       // Determine the locations of the llc and gcc programs.
-      sys::Path llc = FindExecutable("llc", argv[0],
-                                     (void *)(intptr_t)&Optimize);
+      sys::Path llc = PrependMainExecutablePath("llc", argv[0],
+                                                (void *)(intptr_t)&Optimize);
       if (llc.isEmpty())
         PrintAndExit("Failed to find llc", Composite.get());
 

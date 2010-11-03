@@ -238,7 +238,7 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const char *Argv0,
                                                     std::string &Message,
                                      const std::vector<std::string> *ToolArgs) {
   std::string LLIPath =
-    FindExecutable("lli", Argv0, (void *)(intptr_t)&createLLI).str();
+    PrependMainExecutablePath("lli", Argv0, (void *)(intptr_t)&createLLI).str();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new LLI(LLIPath, ToolArgs);
@@ -438,7 +438,7 @@ LLC *AbstractInterpreter::createLLC(const char *Argv0,
                                     const std::vector<std::string> *GCCArgs,
                                     bool UseIntegratedAssembler) {
   std::string LLCPath =
-    FindExecutable("llc", Argv0, (void *)(intptr_t)&createLLC).str();
+    PrependMainExecutablePath("llc", Argv0, (void *)(intptr_t)&createLLC).str();
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory!\n";
     return 0;
@@ -526,7 +526,7 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
 AbstractInterpreter *AbstractInterpreter::createJIT(const char *Argv0,
                    std::string &Message, const std::vector<std::string> *Args) {
   std::string LLIPath =
-    FindExecutable("lli", Argv0, (void *)(intptr_t)&createJIT).str();
+    PrependMainExecutablePath("lli", Argv0, (void *)(intptr_t)&createJIT).str();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new JIT(LLIPath, Args);
@@ -604,11 +604,11 @@ int CBE::ExecuteProgram(const std::string &Bitcode,
 ///
 CBE *AbstractInterpreter::createCBE(const char *Argv0,
                                     std::string &Message,
-                                    const std::string &GCCBinary, 
+                                    const std::string &GCCBinary,
                                     const std::vector<std::string> *Args,
                                     const std::vector<std::string> *GCCArgs) {
   sys::Path LLCPath =
-    FindExecutable("llc", Argv0, (void *)(intptr_t)&createCBE);
+    PrependMainExecutablePath("llc", Argv0, (void *)(intptr_t)&createCBE);
   if (LLCPath.isEmpty()) {
     Message =
       "Cannot find `llc' in executable directory!\n";

@@ -32,13 +32,14 @@ bool llvm::CheckBitcodeOutputToConsole(raw_ostream &stream_to_check,
   return false;
 }
 
-/// FindExecutable - Find a named executable, given the value of argv[0] of the
-/// program being executed and the address of main itself. This allows us to
-/// find another LLVM tool if it is built in the same directory. An empty string
-/// is returned on error.
-#undef FindExecutable   // needed on windows :(
-sys::Path llvm::FindExecutable(const std::string &ExeName,
-                               const char *Argv0, void *MainAddr) {
+/// PrependMainExecutablePath - Prepend the path to the program being executed
+/// to \p ExeName, given the value of argv[0] and the address of main()
+/// itself. This allows us to find another LLVM tool if it is built in the same
+/// directory. An empty string is returned on error; note that this function
+/// just mainpulates the path and doesn't check for executability.
+/// @brief Find a named executable.
+sys::Path llvm::PrependMainExecutablePath(const std::string &ExeName,
+                                          const char *Argv0, void *MainAddr) {
   // Check the directory that the calling program is in.  We can do
   // this if ProgramPath contains at least one / character, indicating that it
   // is a relative path to the executable itself.
