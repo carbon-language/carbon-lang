@@ -101,7 +101,6 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
     setOperationAction(ISD::SHL, VT.getSimpleVT(), Custom);
     setOperationAction(ISD::SRA, VT.getSimpleVT(), Custom);
     setOperationAction(ISD::SRL, VT.getSimpleVT(), Custom);
-    setOperationAction(ISD::OR, VT.getSimpleVT(), Custom);
     setLoadExtAction(ISD::SEXTLOAD, VT.getSimpleVT(), Expand);
     setLoadExtAction(ISD::ZEXTLOAD, VT.getSimpleVT(), Expand);
     for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
@@ -3433,32 +3432,6 @@ static SDValue IsSingleInstrConstant(SDValue N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue LowerOR(SDValue Op, SelectionDAG &DAG) {
-  SDValue Op1 = Op.getOperand(1);
-  while (Op1.getOpcode() == ISD::BIT_CONVERT && Op1.getOperand(0) != Op1)
-    Op1 = Op1.getOperand(0);
-  if (Op1.getOpcode() != ARMISD::VMOVIMM) return Op;
-  
-  ConstantSDNode* TargetConstant = cast<ConstantSDNode>(Op1.getOperand(0));
-  uint32_t ConstVal = TargetConstant->getZExtValue();
-
-  // FIXME: VORRIMM only supports immediate encodings of 16 and 32 bit size.
-  // In theory for VMOVIMMs whose value is already encoded as with an
-  // 8 bit encoding, we could re-encode it as a 16 or 32 bit immediate.
-  EVT VorrVT = Op1.getValueType();
-  EVT EltVT = VorrVT.getVectorElementType();
-  if (EltVT != MVT::i16 && EltVT != MVT::i32) return Op;
-  
-  ConstVal |= 0x0100;
-  SDValue OrConst = DAG.getTargetConstant(ConstVal, MVT::i32);
-  
-  DebugLoc dl = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
-  SDValue toTy = DAG.getNode(ISD::BIT_CONVERT, dl, VorrVT, Op.getOperand(0));
-  SDValue Vorr = DAG.getNode(ARMISD::VORRIMM, dl, VorrVT, toTy, OrConst);
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vorr);
-}
-
 // If this is a case we can't handle, return null and let the default
 // expansion code take care of it.
 static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
@@ -3927,7 +3900,6 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::FLT_ROUNDS_:   return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::MUL:           return LowerMUL(Op, DAG);
-  case ISD::OR:            return LowerOR(Op, DAG);
   }
   return SDValue();
 }
@@ -4474,6 +4446,31 @@ static SDValue PerformMULCombine(SDNode *N,
 static SDValue PerformORCombine(SDNode *N,
                                 TargetLowering::DAGCombinerInfo &DCI,
                                 const ARMSubtarget *Subtarget) {
+  // Attempt to use immediate-form VORR
+  BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(N->getOperand(1));
+  DebugLoc dl = N->getDebugLoc();
+  EVT VT = N->getValueType(0);
+  SelectionDAG &DAG = DCI.DAG;
+  
+  APInt SplatBits, SplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+  if (BVN && Subtarget->hasNEON() &&
+      BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs)) {
+    if (SplatBitSize <= 64) {
+      EVT VorrVT;
+      SDValue Val = isNEONModifiedImm(SplatBits.getZExtValue(),
+                                      SplatUndef.getZExtValue(), SplatBitSize,
+                                      DAG, VorrVT, VT.is128BitVector(), false);
+      if (Val.getNode()) {
+        SDValue Input =
+          DAG.getNode(ISD::BIT_CONVERT, dl, VorrVT, N->getOperand(0));
+        SDValue Vorr = DAG.getNode(ARMISD::VORRIMM, dl, VorrVT, Input, Val);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vorr);
+      }
+    }
+  }
+
   // Try to use the ARM/Thumb2 BFI (bitfield insert) instruction when
   // reasonable.
 
@@ -4481,7 +4478,6 @@ static SDValue PerformORCombine(SDNode *N,
   if (Subtarget->isThumb1Only() || !Subtarget->hasV6T2Ops())
     return SDValue();
 
-  SelectionDAG &DAG = DCI.DAG;
   SDValue N0 = N->getOperand(0), N1 = N->getOperand(1);
   DebugLoc DL = N->getDebugLoc();
   // 1) or (and A, mask), val => ARMbfi A, val, mask
@@ -4496,7 +4492,6 @@ static SDValue PerformORCombine(SDNode *N,
   if (N0.getOpcode() != ISD::AND)
     return SDValue();
 
-  EVT VT = N->getValueType(0);
   if (VT != MVT::i32)
     return SDValue();
 
@@ -4565,7 +4560,7 @@ static SDValue PerformORCombine(SDNode *N,
       DCI.CombineTo(N, Res, false);
     }
   }
-
+  
   return SDValue();
 }
 

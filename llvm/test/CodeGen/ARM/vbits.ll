@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon -mcpu=cortex-a8 | FileCheck %s
 
 define <8 x i8> @v_andi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: v_andi8:
