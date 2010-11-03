@@ -77,6 +77,12 @@ public:
 
 protected:
 private:
+    void
+    SetBreakpoints ();
+    
+    void
+    ClearBreakpoints ();
+    
     bool                                            m_use_abi;
     bool                                            m_valid;
     bool                                            m_stop_other_threads;
@@ -88,6 +94,9 @@ private:
     Thread                                         &m_thread;
     Thread::RegisterCheckpoint                      m_register_backup;
     lldb::ThreadPlanSP                              m_subplan_sp;
+    lldb::BreakpointSP                              m_cxx_exception_bp_sp;
+    lldb::BreakpointSP                              m_cxx_exception_alloc_bp_sp;
+    lldb::BreakpointSP                              m_objc_exception_bp_sp;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };

@@ -12,6 +12,7 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+#include "llvm/Support/MachO.h"
 // Project includes
 #include "lldb/lldb-private-log.h"
 #include "lldb/Breakpoint/Breakpoint.h"
@@ -52,10 +53,12 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     Process& process = thread.GetProcess();
     Target& target = process.GetTarget();
     const ABI *abi = process.GetABI();
-
+    
     if (!abi)
         return;
-
+    
+    SetBreakpoints();
+    
     lldb::addr_t spBelowRedZone = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
     
     SymbolContextList contexts;
@@ -110,6 +113,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     
     if(!abi)
         return;
+    
+    SetBreakpoints();
     
     lldb::addr_t spBelowRedZone = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
     
@@ -173,7 +178,7 @@ ThreadPlanCallFunction::ValidatePlan (Stream *error)
 
 bool
 ThreadPlanCallFunction::PlanExplainsStop ()
-{
+{    
     // If our subplan knows why we stopped, even if it's done (which would forward the question to us)
     // we answer yes.
     if(m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop())
@@ -186,6 +191,7 @@ ThreadPlanCallFunction::PlanExplainsStop ()
     // Otherwise, check the case where we stopped for an internal breakpoint, in that case, continue on.
     // If it is not an internal breakpoint, consult OkayToDiscard.
     lldb::StopInfoSP stop_info_sp = GetPrivateStopReason();
+    
     if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
     {
         uint64_t break_site_id = stop_info_sp->GetValue();
@@ -196,7 +202,24 @@ ThreadPlanCallFunction::PlanExplainsStop ()
             bool is_internal = true;
             for (uint32_t i = 0; i < num_owners; i++)
             {
-                if (!bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().IsInternal())
+                Breakpoint &bp = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint();
+                break_id_t bid = bp.GetID();
+                
+                // Check if the breakpoint is one of ours.
+                
+                if (m_cxx_exception_bp_sp.get() &&
+                    bid == m_cxx_exception_bp_sp->GetID())
+                    return true;
+                
+                if (m_cxx_exception_alloc_bp_sp.get() &&
+                    bid == m_cxx_exception_alloc_bp_sp->GetID())
+                    return true;
+                
+                if (m_objc_exception_bp_sp.get() &&
+                    bid == m_objc_exception_bp_sp->GetID())
+                    return true;
+                
+                if (!bp.IsInternal())
                 {
                     is_internal = false;
                     break;
@@ -242,6 +265,8 @@ ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
         m_thread.RestoreSaveFrameZero(m_register_backup);
         m_thread.ClearStackFrames();
         SetPlanComplete();
+        
+        ClearBreakpoints();
         return true;
     }
     else
@@ -307,5 +332,69 @@ ThreadPlanCallFunction::MischiefManaged ()
     else
     {
         return false;
+    }
+}
+
+void
+ThreadPlanCallFunction::SetBreakpoints ()
+{
+    Target& target = m_process.GetTarget();
+    
+    ArchSpec arch_spec = target.GetArchitecture();
+    
+    // A temporary fix to set breakpoints at points where exceptions are being
+    // thrown.  This functionality will migrate into the Target.
+    switch (arch_spec.GetCPUType())
+    {
+    default:
+        break;
+    case llvm::MachO::CPUTypeI386:
+        m_cxx_exception_bp_sp = target.CreateBreakpoint (NULL,
+                                                       "__cxa_throw",
+                                                       eFunctionNameTypeBase, 
+                                                       true);
+        m_cxx_exception_alloc_bp_sp = target.CreateBreakpoint (NULL,
+                                                             "__cxa_allocate",
+                                                             eFunctionNameTypeBase,
+                                                             true);
+        m_objc_exception_bp_sp = target.CreateBreakpoint (NULL,
+                                                        "objc_exception_throw",
+                                                        eFunctionNameTypeBase,
+                                                        true);
+        break;
+    case llvm::MachO::CPUTypeX86_64:
+        m_cxx_exception_bp_sp = target.CreateBreakpoint (NULL,
+                                                       "__cxa_throw",
+                                                       eFunctionNameTypeBase, 
+                                                       true);
+        m_cxx_exception_alloc_bp_sp = target.CreateBreakpoint (NULL,
+                                                             "__cxa_allocate",
+                                                             eFunctionNameTypeBase,
+                                                             true);
+        break;
+    }
+}
+
+void
+ThreadPlanCallFunction::ClearBreakpoints ()
+{
+    Target& target = m_process.GetTarget();
+    
+    if (m_cxx_exception_bp_sp.get())
+    {
+        target.RemoveBreakpointByID(m_cxx_exception_bp_sp->GetID());
+        m_cxx_exception_bp_sp.reset();
+    }
+    
+    if (m_cxx_exception_alloc_bp_sp.get())
+    {
+        target.RemoveBreakpointByID(m_cxx_exception_alloc_bp_sp->GetID());
+        m_cxx_exception_bp_sp.reset();
+    }
+    
+    if (m_objc_exception_bp_sp.get())
+    {
+        target.RemoveBreakpointByID(m_objc_exception_bp_sp->GetID());
+        m_cxx_exception_bp_sp.reset();
     }
 }
