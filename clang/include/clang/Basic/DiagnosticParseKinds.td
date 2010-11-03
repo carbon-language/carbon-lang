@@ -293,8 +293,6 @@ def err_default_arg_unparsed : Error<
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
 
 // C++ operator overloading
-def err_operator_missing_type_specifier : Error<
-  "missing type specifier after 'operator'">;
 def err_operator_string_not_empty : Error<
   "string literal after 'operator' must be '\"\"'">;
 

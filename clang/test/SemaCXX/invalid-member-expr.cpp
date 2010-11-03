@@ -7,8 +7,8 @@ void test() {
 
   x.int; // expected-error{{expected unqualified-id}}
   x.~int(); // expected-error{{expected a class name}}
-  x.operator; // expected-error{{missing type specifier after 'operator'}}
-  x.operator typedef; // expected-error{{missing type specifier after 'operator'}}
+  x.operator; // expected-error{{expected a type}}
+  x.operator typedef; // expected-error{{expected a type}}
 }
 
 void test2() {
@@ -16,8 +16,8 @@ void test2() {
 
   x->int; // expected-error{{expected unqualified-id}}
   x->~int(); // expected-error{{expected a class name}}
-  x->operator; // expected-error{{missing type specifier after 'operator'}}
-  x->operator typedef; // expected-error{{missing type specifier after 'operator'}}
+  x->operator; // expected-error{{expected a type}}
+  x->operator typedef; // expected-error{{expected a type}}
 }
 
 // PR6327

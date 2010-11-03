@@ -62,8 +62,8 @@ struct abstract {
 void bad_news(int *ip)
 {
   int i = 1;
-  (void)new; // expected-error {{missing type specifier}}
-  (void)new 4; // expected-error {{missing type specifier}}
+  (void)new; // expected-error {{expected a type}}
+  (void)new 4; // expected-error {{expected a type}}
   (void)new () int; // expected-error {{expected expression}}
   (void)new int[1.1]; // expected-error {{array size expression must have integral or enumerated type, not 'double'}}
   (void)new int[1][i]; // expected-error {{only the first dimension}}
@@ -370,5 +370,11 @@ namespace PairedDelete {
 
   A<int> *test() {
     return new A<int>();
+  }
+}
+
+namespace PR7702 {
+  void test1() {
+    new DoesNotExist; // expected-error {{expected a type}}
   }
 }

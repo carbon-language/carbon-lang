@@ -1005,7 +1005,7 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
   // Parse one or more of the type specifiers.
   if (!ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID,
       ParsedTemplateInfo(), /*SuppressDeclarations*/true)) {
-    Diag(Tok, diag::err_operator_missing_type_specifier);
+    Diag(Tok, diag::err_expected_type);
     return true;
   }
 
