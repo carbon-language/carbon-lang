@@ -130,7 +130,7 @@ public:
   }
 
   ASTUnit &getCurrentASTUnit() const {
-    assert(!CurrentASTUnit && "No current AST unit!");
+    assert(CurrentASTUnit && "No current AST unit!");
     return *CurrentASTUnit;
   }
 
