@@ -610,6 +610,7 @@ def undefined : JoinedOrSeparate<"-undefined">, Group<u_Group>;
 def undef : Flag<"-undef">, Group<u_Group>;
 def unexported__symbols__list : Separate<"-unexported_symbols_list">;
 def u : JoinedOrSeparate<"-u">, Group<u_Group>;
+def use_gold_plugin : Flag<"-use-gold-plugin">;
 def v : Flag<"-v">,
   HelpText<"Show commands to run and use verbose output">;
 def weak_l : Joined<"-weak-l">, Flags<[LinkerInput]>;
