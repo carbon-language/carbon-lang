@@ -505,3 +505,23 @@ define <4 x i32> @vtstQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
         %tmp5 = sext <4 x i1> %tmp4 to <4 x i32>
 	ret <4 x i32> %tmp5
 }
+
+define <8 x i8> @v_orrimm(<8 x i8>* %A) nounwind {
+; CHECK: v_orrimm:
+; CHECK-NOT: vmov
+; CHECK-NOT: vmvn
+; CHECK: vorr
+	%tmp1 = load <8 x i8>* %A
+	%tmp3 = or <8 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0, i8 1>
+	ret <8 x i8> %tmp3
+}
+
+define <16 x i8> @v_orrimmQ(<16 x i8>* %A) nounwind {
+; CHECK: v_orrimmQ
+; CHECK-NOT: vmov
+; CHECK-NOT: vmvn
+; CHECK: vorr
+	%tmp1 = load <16 x i8>* %A
+	%tmp3 = or <16 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0, i8 1>
+	ret <16 x i8> %tmp3
+}

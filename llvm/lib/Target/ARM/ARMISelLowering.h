@@ -162,7 +162,10 @@ namespace llvm {
       FMIN,
 
       // Bit-field insert
-      BFI
+      BFI,
+      
+      // Vector OR with immediate
+      VORRIMM
     };
   }
 

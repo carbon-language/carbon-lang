@@ -69,6 +69,10 @@ def SDTARMVMOVIMM : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVT<1, i32>]>;
 def NEONvmovImm   : SDNode<"ARMISD::VMOVIMM", SDTARMVMOVIMM>;
 def NEONvmvnImm   : SDNode<"ARMISD::VMVNIMM", SDTARMVMOVIMM>;
 
+def SDTARMVORRIMM : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0, 1>,
+                                           SDTCisVT<2, i32>]>;
+def NEONvorrImm   : SDNode<"ARMISD::VORRIMM", SDTARMVORRIMM>;
+
 def NEONvdup      : SDNode<"ARMISD::VDUP", SDTypeProfile<1, 1, [SDTCisVec<0>]>>;
 
 // VDUPLANE can produce a quad-register result from a double-register source,
@@ -3294,6 +3298,43 @@ def  VORRd    : N3VDX<0, 0, 0b10, 0b0001, 1, IIC_VBINiD, "vorr",
                       v2i32, v2i32, or, 1>;
 def  VORRq    : N3VQX<0, 0, 0b10, 0b0001, 1, IIC_VBINiQ, "vorr",
                       v4i32, v4i32, or, 1>;
+
+def VORRiv4i16 : N1ModImm<1, 0b000, {1,0,?,1}, 0, 0, 0, 1,
+                          (outs DPR:$Vd), (ins nModImm:$SIMM, DPR:$src),
+                          IIC_VMOVImm,
+                          "vorr", "i16", "$Vd, $SIMM", "$src = $Vd",
+                          [(set DPR:$Vd,
+                            (v4i16 (NEONvorrImm DPR:$src, timm:$SIMM)))]> {
+  let Inst{9} = SIMM{9};
+}
+
+def VORRiv2i32 : N1ModImm<1, 0b000, {?,?,?,1}, 0, 0, 0, 1,
+                          (outs DPR:$Vd), (ins nModImm:$SIMM, DPR:$src),
+                          IIC_VMOVImm,
+                          "vorr", "i32", "$Vd, $SIMM", "$src = $Vd",
+                          [(set DPR:$Vd,
+                            (v2i32 (NEONvorrImm DPR:$src, timm:$SIMM)))]> {
+  let Inst{11-9} = SIMM{11-9};
+}
+
+def VORRiv8i16 : N1ModImm<1, 0b000, {1,0,?,1}, 0, 1, 0, 1,
+                          (outs QPR:$Vd), (ins nModImm:$SIMM, QPR:$src),
+                          IIC_VMOVImm,
+                          "vorr", "i16", "$Vd, $SIMM", "$src = $Vd",
+                          [(set QPR:$Vd,
+                            (v8i16 (NEONvorrImm QPR:$src, timm:$SIMM)))]> {
+  let Inst{9} = SIMM{9};
+}
+
+def VORRiv4i32 : N1ModImm<1, 0b000, {?,?,?,1}, 0, 1, 0, 1,
+                          (outs QPR:$Vd), (ins nModImm:$SIMM, QPR:$src),
+                          IIC_VMOVImm,
+                          "vorr", "i32", "$Vd, $SIMM", "$src = $Vd",
+                          [(set QPR:$Vd,
+                            (v4i32 (NEONvorrImm QPR:$src, timm:$SIMM)))]> {
+  let Inst{11-9} = SIMM{11-9};
+}
+
 
 //   VBIC     : Vector Bitwise Bit Clear (AND NOT)
 def  VBICd    : N3VX<0, 0, 0b01, 0b0001, 0, 1, (outs DPR:$dst),

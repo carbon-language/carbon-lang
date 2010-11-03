@@ -1,4 +1,5 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
+@ XFAIL: *
 
 @ CHECK: vand	d16, d17, d16           @ encoding: [0xb0,0x01,0x41,0xf2]
 	vand	d16, d17, d16
@@ -14,6 +15,10 @@
 	vorr	d16, d17, d16
 @ CHECK: vorr	q8, q8, q9              @ encoding: [0xf2,0x01,0x60,0xf2]
 	vorr	q8, q8, q9
+@ CHECK: vorr.i32	d16, #0x1000000 @ encoding: [0x11,0x07,0xc0,0xf2]
+  vorr.i32	d16, #0x1000000
+@ CHECK: vorr.i32	q8, #0x1000000  @ encoding: [0x51,0x07,0xc0,0xf2]
+  vorr.i32	q8, #0x1000000
 
 @ CHECK: vbic	d16, d17, d16           @ encoding: [0xb0,0x01,0x51,0xf2]
 	vbic	d16, d17, d16
