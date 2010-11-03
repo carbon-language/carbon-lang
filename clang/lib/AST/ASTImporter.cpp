@@ -2980,9 +2980,12 @@ Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
 
 ASTImporter::ASTImporter(Diagnostic &Diags,
                          ASTContext &ToContext, FileManager &ToFileManager,
-                         ASTContext &FromContext, FileManager &FromFileManager)
+                         const FileSystemOptions &ToFileSystemOpts,
+                         ASTContext &FromContext, FileManager &FromFileManager,
+                         const FileSystemOptions &FromFileSystemOpts)
   : ToContext(ToContext), FromContext(FromContext),
     ToFileManager(ToFileManager), FromFileManager(FromFileManager),
+    ToFileSystemOpts(ToFileSystemOpts), FromFileSystemOpts(FromFileSystemOpts),
     Diags(Diags) {
   ImportedDecls[FromContext.getTranslationUnitDecl()]
     = ToContext.getTranslationUnitDecl();
@@ -3153,7 +3156,8 @@ FileID ASTImporter::Import(FileID FromID) {
     // disk again
     // FIXME: We definitely want to re-use the existing MemoryBuffer, rather
     // than mmap the files several times.
-    const FileEntry *Entry = ToFileManager.getFile(Cache->Entry->getName());
+    const FileEntry *Entry = ToFileManager.getFile(Cache->Entry->getName(),
+                                                   ToFileSystemOpts);
     ToID = ToSM.createFileID(Entry, ToIncludeLoc, 
                              FromSLoc.getFile().getFileCharacteristic());
   } else {

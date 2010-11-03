@@ -24,8 +24,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+namespace llvm {
+class MemoryBuffer;
+namespace sys {
+class Path;
+}
+}
+
 namespace clang {
 class FileManager;
+class FileSystemOptions;
 
 /// DirectoryEntry - Cached information about one directory on the disk.
 ///
@@ -162,9 +170,8 @@ class FileManager {
   // Caching.
   llvm::OwningPtr<StatSysCallCache> StatCache;
 
-  int stat_cached(const char* path, struct stat* buf) {
-    return StatCache.get() ? StatCache->stat(path, buf) : stat(path, buf);
-  }
+  int stat_cached(const char* path, struct stat* buf,
+                  const FileSystemOptions &FileSystemOpts);
 
 public:
   FileManager();
@@ -189,25 +196,61 @@ public:
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.
   ///
-  const DirectoryEntry *getDirectory(llvm::StringRef Filename) {
-    return getDirectory(Filename.begin(), Filename.end());
+  const DirectoryEntry *getDirectory(llvm::StringRef Filename,
+                                     const FileSystemOptions &FileSystemOpts) {
+    return getDirectory(Filename.begin(), Filename.end(), FileSystemOpts);
   }
-  const DirectoryEntry *getDirectory(const char *FileStart,const char *FileEnd);
+  const DirectoryEntry *getDirectory(const char *FileStart,const char *FileEnd,
+                                     const FileSystemOptions &FileSystemOpts);
 
   /// getFile - Lookup, cache, and verify the specified file.  This returns null
   /// if the file doesn't exist.
   ///
-  const FileEntry *getFile(llvm::StringRef Filename) {
-    return getFile(Filename.begin(), Filename.end());
+  const FileEntry *getFile(llvm::StringRef Filename,
+                           const FileSystemOptions &FileSystemOpts) {
+    return getFile(Filename.begin(), Filename.end(), FileSystemOpts);
   }
   const FileEntry *getFile(const char *FilenameStart,
-                           const char *FilenameEnd);
+                           const char *FilenameEnd,
+                           const FileSystemOptions &FileSystemOpts);
 
   /// \brief Retrieve a file entry for a "virtual" file that acts as
   /// if there were a file with the given name on disk. The file
   /// itself is not accessed.
   const FileEntry *getVirtualFile(llvm::StringRef Filename, off_t Size,
-                                  time_t ModificationTime);
+                                  time_t ModificationTime,
+                                  const FileSystemOptions &FileSystemOpts);
+
+  /// \brief Open the specified file as a MemoryBuffer, returning a new
+  /// MemoryBuffer if successful, otherwise returning null.
+  llvm::MemoryBuffer *getBufferForFile(const FileEntry *Entry,
+                                       const FileSystemOptions &FileSystemOpts,
+                                       std::string *ErrorStr = 0,
+                                       struct stat *FileInfo = 0) {
+    return getBufferForFile(Entry->getName(), FileSystemOpts,
+                            ErrorStr, Entry->getSize(), FileInfo);
+  }
+  llvm::MemoryBuffer *getBufferForFile(llvm::StringRef Filename,
+                                       const FileSystemOptions &FileSystemOpts,
+                                       std::string *ErrorStr = 0,
+                                       int64_t FileSize = -1,
+                                       struct stat *FileInfo = 0) {
+    return getBufferForFile(Filename.begin(), Filename.end(), FileSystemOpts,
+                            ErrorStr, FileSize, FileInfo);
+  }
+  llvm::MemoryBuffer *getBufferForFile(const char *FilenameStart,
+                                       const char *FilenameEnd,
+                                       const FileSystemOptions &FileSystemOpts,
+                                       std::string *ErrorStr = 0,
+                                       int64_t FileSize = -1,
+                                       struct stat *FileInfo = 0);
+
+  /// \brief If path is not absolute and FileSystemOptions set the working
+  /// directory, the path is modified to be relative to the given
+  /// working directory.
+  static void FixupRelativePath(llvm::sys::Path &path,
+                                const FileSystemOptions &FSOpts);
+
   void PrintStats() const;
 };
 

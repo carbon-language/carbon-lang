@@ -32,7 +32,8 @@ class CIndexer {
   bool DisplayDiagnostics;
 
   llvm::sys::Path ResourcesPath;
-  
+  std::string WorkingDir;
+
 public:
  CIndexer() : OnlyLocalDecls(false), DisplayDiagnostics(false) { }
   
@@ -49,6 +50,9 @@ public:
 
   /// \brief Get the path of the clang resource files.
   std::string getClangResourcesPath();
+
+  const std::string &getWorkingDirectory() const { return WorkingDir; }
+  void setWorkingDirectory(const std::string &Dir) { WorkingDir = Dir; }
 };
 
 namespace clang {

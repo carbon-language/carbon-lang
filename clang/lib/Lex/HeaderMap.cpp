@@ -75,13 +75,14 @@ static inline unsigned HashHMapKey(llvm::StringRef Str) {
 /// map.  If it doesn't look like a HeaderMap, it gives up and returns null.
 /// If it looks like a HeaderMap but is obviously corrupted, it puts a reason
 /// into the string error argument and returns null.
-const HeaderMap *HeaderMap::Create(const FileEntry *FE) {
+const HeaderMap *HeaderMap::Create(const FileEntry *FE, FileManager &FM,
+                                   const FileSystemOptions &FSOpts) {
   // If the file is too small to be a header map, ignore it.
   unsigned FileSize = FE->getSize();
   if (FileSize <= sizeof(HMapHeader)) return 0;
 
   llvm::OwningPtr<const llvm::MemoryBuffer> FileBuffer(
-    llvm::MemoryBuffer::getFile(FE->getName(), 0, FE->getSize()));
+    FM.getBufferForFile(FE, FSOpts));
   if (FileBuffer == 0) return 0;  // Unreadable file?
   const char *FileStart = FileBuffer->getBufferStart();
 
@@ -200,7 +201,8 @@ void HeaderMap::dump() const {
 /// LookupFile - Check to see if the specified relative filename is located in
 /// this HeaderMap.  If so, open it and return its FileEntry.
 const FileEntry *HeaderMap::LookupFile(llvm::StringRef Filename,
-                                       FileManager &FM) const {
+                                       FileManager &FM,
+                                const FileSystemOptions &FileSystemOpts) const {
   const HMapHeader &Hdr = getHeader();
   unsigned NumBuckets = getEndianAdjustedWord(Hdr.NumBuckets);
 
@@ -223,6 +225,6 @@ const FileEntry *HeaderMap::LookupFile(llvm::StringRef Filename,
     llvm::SmallString<1024> DestPath;
     DestPath += getString(B.Prefix);
     DestPath += getString(B.Suffix);
-    return FM.getFile(DestPath.begin(), DestPath.end());
+    return FM.getFile(DestPath.begin(), DestPath.end(), FileSystemOpts);
   }
 }

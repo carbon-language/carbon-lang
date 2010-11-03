@@ -10,6 +10,7 @@
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/Version.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/CC1Options.h"
@@ -349,6 +350,14 @@ static const char *getActionName(frontend::ActionKind Kind) {
 
   llvm_unreachable("Unexpected language kind!");
   return 0;
+}
+
+static void FileSystemOptsToArgs(const FileSystemOptions &Opts,
+                                 std::vector<std::string> &Res) {
+  if (!Opts.WorkingDir.empty()) {
+    Res.push_back("-working-directory");
+    Res.push_back(Opts.WorkingDir);
+  }
 }
 
 static void FrontendOptsToArgs(const FrontendOptions &Opts,
@@ -743,6 +752,7 @@ void CompilerInvocation::toArgs(std::vector<std::string> &Res) {
   CodeGenOptsToArgs(getCodeGenOpts(), Res);
   DependencyOutputOptsToArgs(getDependencyOutputOpts(), Res);
   DiagnosticOptsToArgs(getDiagnosticOpts(), Res);
+  FileSystemOptsToArgs(getFileSystemOpts(), Res);
   FrontendOptsToArgs(getFrontendOpts(), Res);
   HeaderSearchOptsToArgs(getHeaderSearchOpts(), Res);
   LangOptsToArgs(getLangOpts(), Res);
@@ -977,6 +987,10 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.MessageLength = Args.getLastArgIntValue(OPT_fmessage_length, 0, Diags);
   Opts.DumpBuildInformation = Args.getLastArgValue(OPT_dump_build_information);
   Opts.Warnings = Args.getAllArgValues(OPT_W);
+}
+
+static void ParseFileSystemArgs(FileSystemOptions &Opts, ArgList &Args) {
+  Opts.WorkingDir = Args.getLastArgValue(OPT_working_directory);
 }
 
 static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
@@ -1402,6 +1416,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 }
 
 static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
+                                  FileManager &FileMgr,
+                                  const FileSystemOptions &FSOpts,
                                   Diagnostic &Diags) {
   using namespace cc1options;
   Opts.ImplicitPCHInclude = Args.getLastArgValue(OPT_include_pch);
@@ -1456,7 +1472,8 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
     // PCH is handled specially, we need to extra the original include path.
     if (A->getOption().matches(OPT_include_pch)) {
       std::string OriginalFile =
-        ASTReader::getOriginalSourceFile(A->getValue(Args), Diags);
+        ASTReader::getOriginalSourceFile(A->getValue(Args), FileMgr, FSOpts,
+                                         Diags);
       if (OriginalFile.empty())
         continue;
 
@@ -1535,11 +1552,18 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, Diags);
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
   ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags);
+  ParseFileSystemArgs(Res.getFileSystemOpts(), *Args);
   InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
   if (DashX != IK_AST && DashX != IK_LLVM_IR)
     ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
-  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, Diags);
+  // FIXME: ParsePreprocessorArgs uses the FileManager to read the contents of
+  // PCH file and find the original header name. Remove the need to do that in
+  // ParsePreprocessorArgs and remove the FileManager & FileSystemOptions
+  // parameters from the function and the "FileManager.h" #include.
+  FileManager FileMgr;
+  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args,
+                        FileMgr, Res.getFileSystemOpts(), Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);
   ParseTargetArgs(Res.getTargetOpts(), *Args);
 }

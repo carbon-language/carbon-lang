@@ -119,7 +119,9 @@ public:
 
   /// Create - This method creates PTHManager objects.  The 'file' argument
   ///  is the name of the PTH file.  This method returns NULL upon failure.
-  static PTHManager *Create(const std::string& file, Diagnostic &Diags);
+  static PTHManager *Create(const std::string& file, FileManager &FileMgr,
+                            const FileSystemOptions &FSOpts,
+                            Diagnostic &Diags);
 
   void setPreprocessor(Preprocessor *pp) { PP = pp; }
 

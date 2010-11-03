@@ -21,6 +21,7 @@
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemOptions.h"
 #include "clang-c/Index.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -68,7 +69,9 @@ private:
   llvm::OwningPtr<TargetInfo>       Target;
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
-  
+
+  FileSystemOptions FileSystemOpts;
+
   /// \brief The AST consumer that received information about the translation
   /// unit as it was parsed or loaded.
   llvm::OwningPtr<ASTConsumer> Consumer;
@@ -359,6 +362,8 @@ public:
   const FileManager &getFileManager() const { return *FileMgr; }
         FileManager &getFileManager()       { return *FileMgr; }
 
+  const FileSystemOptions &getFileSystemOpts() const { return FileSystemOpts; }
+
   const std::string &getOriginalSourceFileName();
   const std::string &getASTFileName();
 
@@ -452,7 +457,12 @@ public:
   unsigned cached_completion_size() const { 
     return CachedCompletionResults.size(); 
   }
-  
+
+  llvm::MemoryBuffer *getBufferForFile(llvm::StringRef Filename,
+                                       std::string *ErrorStr = 0,
+                                       int64_t FileSize = -1,
+                                       struct stat *FileInfo = 0);
+
   /// \brief Whether this AST represents a complete translation unit.
   ///
   /// If false, this AST is only a partial translation unit, e.g., one
@@ -473,6 +483,7 @@ public:
   /// \returns - The initialized ASTUnit or null if the AST failed to load.
   static ASTUnit *LoadFromASTFile(const std::string &Filename,
                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                                  const FileSystemOptions &FileSystemOpts,
                                   bool OnlyLocalDecls = false,
                                   RemappedFile *RemappedFiles = 0,
                                   unsigned NumRemappedFiles = 0,

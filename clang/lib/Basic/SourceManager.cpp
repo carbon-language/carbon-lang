@@ -73,9 +73,10 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   if (!Buffer.getPointer() && Entry) {
     std::string ErrorStr;
     struct stat FileInfo;
-    Buffer.setPointer(MemoryBuffer::getFile(Entry->getName(), &ErrorStr,
-                                            Entry->getSize(), &FileInfo));
-    
+    Buffer.setPointer(SM.getFileManager().getBufferForFile(Entry,
+                                                         SM.getFileSystemOpts(),
+                                                         &ErrorStr, &FileInfo));
+
     // If we were unable to open the file, then we are in an inconsistent
     // situation where the content cache referenced a file which no longer
     // exists. Most likely, we were using a stat cache with an invalid entry but

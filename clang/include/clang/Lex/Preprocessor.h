@@ -35,6 +35,7 @@ namespace clang {
 class SourceManager;
 class ExternalPreprocessorSource;
 class FileManager;
+class FileSystemOptions;
 class FileEntry;
 class HeaderSearch;
 class PragmaNamespace;
@@ -57,6 +58,7 @@ class Preprocessor {
   LangOptions        Features;
   const TargetInfo  &Target;
   FileManager       &FileMgr;
+  const FileSystemOptions &FileSystemOpts;
   SourceManager     &SourceMgr;
   ScratchBuffer     *ScratchBuf;
   HeaderSearch      &HeaderInfo;
@@ -279,6 +281,7 @@ public:
   const LangOptions &getLangOptions() const { return Features; }
   const TargetInfo &getTargetInfo() const { return Target; }
   FileManager &getFileManager() const { return FileMgr; }
+  const FileSystemOptions &getFileSystemOpts() const { return FileSystemOpts; }
   SourceManager &getSourceManager() const { return SourceMgr; }
   HeaderSearch &getHeaderSearchInfo() const { return HeaderInfo; }
 

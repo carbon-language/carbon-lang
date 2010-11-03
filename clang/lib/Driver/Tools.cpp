@@ -1073,6 +1073,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-resource-dir");
   CmdArgs.push_back(D.ResourceDir.c_str());
 
+  Args.AddLastArg(CmdArgs, options::OPT_working_directory);
+
   // Add preprocessing options like -I, -D, etc. if we are using the
   // preprocessor.
   //

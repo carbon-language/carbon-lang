@@ -366,6 +366,11 @@ def create_module : Flag<"-create-module">,
 def import_module : Separate<"-import-module">,
   HelpText<"Import a module definition file">;
 
+def working_directory : JoinedOrSeparate<"-working-directory">,
+  HelpText<"Resolve file paths relative to the specified directory">;
+def working_directory_EQ : Joined<"-working-directory=">,
+  Alias<working_directory>;
+
 def relocatable_pch : Flag<"-relocatable-pch">,
   HelpText<"Whether to build a relocatable precompiled header">;
 def chained_pch : Flag<"-chained-pch">,

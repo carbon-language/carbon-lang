@@ -1977,9 +1977,11 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
     return 0;
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+  FileSystemOptions FileSystemOpts;
+  FileSystemOpts.WorkingDir = CXXIdx->getWorkingDirectory();
 
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
-  return ASTUnit::LoadFromASTFile(ast_filename, Diags,
+  return ASTUnit::LoadFromASTFile(ast_filename, Diags, FileSystemOpts,
                                   CXXIdx->getOnlyLocalDecls(),
                                   0, 0, true);
 }
@@ -2405,7 +2407,8 @@ CXFile clang_getFile(CXTranslationUnit tu, const char *file_name) {
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu);
 
   FileManager &FMgr = CXXUnit->getFileManager();
-  const FileEntry *File = FMgr.getFile(file_name, file_name+strlen(file_name));
+  const FileEntry *File = FMgr.getFile(file_name, file_name+strlen(file_name),
+                                       CXXUnit->getFileSystemOpts());
   return const_cast<FileEntry *>(File);
 }
 

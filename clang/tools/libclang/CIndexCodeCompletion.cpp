@@ -232,12 +232,14 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   
   /// \brief Language options used to adjust source locations.
   LangOptions LangOpts;
-
-  /// \brief Source manager, used for diagnostics.
-  SourceManager SourceMgr;
   
   /// \brief File manager, used for diagnostics.
   FileManager FileMgr;
+
+  FileSystemOptions FileSystemOpts;
+
+  /// \brief Source manager, used for diagnostics.
+  SourceManager SourceMgr;
   
   /// \brief Temporary files that should be removed once we have finished
   /// with the code-completion results.
@@ -248,7 +250,8 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
 };
 
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults() 
-  : CXCodeCompleteResults(), Diag(new Diagnostic), SourceMgr(*Diag) { }
+  : CXCodeCompleteResults(), Diag(new Diagnostic),
+    SourceMgr(*Diag, FileMgr, FileSystemOpts) { }
   
 AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   for (unsigned I = 0, N = NumResults; I != N; ++I)

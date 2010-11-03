@@ -753,10 +753,19 @@ void Driver::BuildActions(const ToolChain &TC, const ArgList &Args,
       }
 
       // Check that the file exists, if enabled.
-      if (CheckInputsExist && memcmp(Value, "-", 2) != 0 &&
-          !llvm::sys::Path(Value).exists())
-        Diag(clang::diag::err_drv_no_such_file) << A->getValue(Args);
-      else
+      if (CheckInputsExist && memcmp(Value, "-", 2) != 0) {
+        llvm::sys::Path Path(Value);
+        if (Arg *WorkDir = Args.getLastArg(options::OPT_working_directory))
+          if (!Path.isAbsolute()) {
+            Path = WorkDir->getValue(Args);
+            Path.appendComponent(Value);
+          }
+
+        if (!Path.exists())
+          Diag(clang::diag::err_drv_no_such_file) << Path.str();
+        else
+          Inputs.push_back(std::make_pair(Ty, A));
+      } else
         Inputs.push_back(std::make_pair(Ty, A));
 
     } else if (A->getOption().isLinkerInput()) {

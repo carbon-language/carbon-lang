@@ -28,6 +28,7 @@ namespace clang {
   class Diagnostic;
   class Expr;
   class FileManager;
+  class FileSystemOptions;
   class IdentifierInfo;
   class NestedNameSpecifier;
   class Stmt;
@@ -45,6 +46,8 @@ namespace clang {
     
     /// \brief The file managers we're importing to and from.
     FileManager &ToFileManager, &FromFileManager;
+
+    const FileSystemOptions &ToFileSystemOpts, &FromFileSystemOpts;
     
     /// \brief The diagnostics object that we should use to emit diagnostics.
     Diagnostic &Diags;
@@ -76,7 +79,9 @@ namespace clang {
   public:
     ASTImporter(Diagnostic &Diags,
                 ASTContext &ToContext, FileManager &ToFileManager,
-                ASTContext &FromContext, FileManager &FromFileManager);
+                const FileSystemOptions &ToFileSystemOpts,
+                ASTContext &FromContext, FileManager &FromFileManager,
+                const FileSystemOptions &FromFileSystemOpts);
     
     virtual ~ASTImporter();
     

@@ -18,8 +18,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemOptions.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
@@ -197,7 +199,8 @@ void FileManager::removeStatCache(StatSysCallCache *statCache) {
 /// \brief Retrieve the directory that the given file name resides in.
 static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
                                                   const char *NameStart,
-                                                  const char *NameEnd) {
+                                                  const char *NameEnd,
+                                      const FileSystemOptions &FileSystemOpts) {
   // Figure out what directory it is in.   If the string contains a / in it,
   // strip off everything after it.
   // FIXME: this logic should be in sys::Path.
@@ -211,18 +214,19 @@ static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
   if (SlashPos < NameStart) {
     // Use the current directory if file has no path component.
     const char *Name = ".";
-    return FileMgr.getDirectory(Name, Name+1);
+    return FileMgr.getDirectory(Name, Name+1, FileSystemOpts);
   } else if (SlashPos == NameEnd-1)
     return 0;       // If filename ends with a /, it's a directory.
   else
-    return FileMgr.getDirectory(NameStart, SlashPos);
+    return FileMgr.getDirectory(NameStart, SlashPos, FileSystemOpts);
 }
 
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
 ///
 const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
-                                                const char *NameEnd) {
+                                                const char *NameEnd,
+                                      const FileSystemOptions &FileSystemOpts) {
   // stat doesn't like trailing separators (at least on Windows).
   if (((NameEnd - NameStart) > 1) &&
       ((*(NameEnd - 1) == '/') || (*(NameEnd - 1) == '\\')))
@@ -248,7 +252,7 @@ const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
 
   // Check to see if the directory exists.
   struct stat StatBuf;
-  if (stat_cached(InterndDirName, &StatBuf) ||   // Error stat'ing.
+  if (stat_cached(InterndDirName, &StatBuf, FileSystemOpts) ||   // Error stat'ing.
       !S_ISDIR(StatBuf.st_mode))          // Not a directory?
     return 0;
 
@@ -274,7 +278,8 @@ const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
 /// if the file doesn't exist.
 ///
 const FileEntry *FileManager::getFile(const char *NameStart,
-                                      const char *NameEnd) {
+                                      const char *NameEnd,
+                                      const FileSystemOptions &FileSystemOpts) {
   ++NumFileLookups;
 
   // See if there is already an entry in the map.
@@ -297,7 +302,7 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   const char *InterndFileName = NamedFileEnt.getKeyData();
 
   const DirectoryEntry *DirInfo
-    = getDirectoryFromFile(*this, NameStart, NameEnd);
+    = getDirectoryFromFile(*this, NameStart, NameEnd, FileSystemOpts);
   if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
     return 0;
 
@@ -307,7 +312,7 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
   //llvm::errs() << "STATING: " << Filename;
-  if (stat_cached(InterndFileName, &StatBuf) ||   // Error stat'ing.
+  if (stat_cached(InterndFileName, &StatBuf, FileSystemOpts) ||   // Error stat'ing.
         S_ISDIR(StatBuf.st_mode)) {           // A directory?
     // If this file doesn't exist, we leave a null in FileEntries for this path.
     //llvm::errs() << ": Not existing\n";
@@ -336,7 +341,8 @@ const FileEntry *FileManager::getFile(const char *NameStart,
 
 const FileEntry *
 FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
-                            time_t ModificationTime) {
+                            time_t ModificationTime,
+                            const FileSystemOptions &FileSystemOpts) {
   const char *NameStart = Filename.begin(), *NameEnd = Filename.end();
 
   ++NumFileLookups;
@@ -356,7 +362,7 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   NamedFileEnt.setValue(NON_EXISTENT_FILE);
 
   const DirectoryEntry *DirInfo
-    = getDirectoryFromFile(*this, NameStart, NameEnd);
+    = getDirectoryFromFile(*this, NameStart, NameEnd, FileSystemOpts);
   if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
     return 0;
 
@@ -374,7 +380,7 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   // newly-created file entry.
   const char *InterndFileName = NamedFileEnt.getKeyData();
   struct stat StatBuf;
-  if (!stat_cached(InterndFileName, &StatBuf) &&
+  if (!stat_cached(InterndFileName, &StatBuf, FileSystemOpts) &&
       !S_ISDIR(StatBuf.st_mode)) {
     llvm::sys::Path FilePath(InterndFileName);
     FilePath.makeAbsolute();
@@ -382,6 +388,38 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   }
   
   return UFE;
+}
+
+llvm::MemoryBuffer *FileManager::getBufferForFile(const char *FilenameStart,
+                                     const char *FilenameEnd,
+                                     const FileSystemOptions &FileSystemOpts,
+                                     std::string *ErrorStr,
+                                     int64_t FileSize,
+                                     struct stat *FileInfo) {
+  llvm::sys::Path FilePath(llvm::StringRef(FilenameStart,
+                                           FilenameEnd-FilenameStart));
+  FixupRelativePath(FilePath, FileSystemOpts);
+
+  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr,
+                                     FileSize, FileInfo);
+}
+
+int FileManager::stat_cached(const char* path, struct stat* buf,
+                             const FileSystemOptions &FileSystemOpts) {
+  llvm::sys::Path FilePath(path);
+  FixupRelativePath(FilePath, FileSystemOpts);
+
+  return StatCache.get() ? StatCache->stat(FilePath.c_str(), buf)
+                         : stat(FilePath.c_str(), buf);
+}
+
+void FileManager::FixupRelativePath(llvm::sys::Path &path,
+                                    const FileSystemOptions &FSOpts) {
+  if (!FSOpts.WorkingDir.empty() && !path.isAbsolute()) {
+    llvm::sys::Path NewPath(FSOpts.WorkingDir);
+    NewPath.appendComponent(path.str());
+    path = NewPath;
+  }
 }
 
 void FileManager::PrintStats() const {

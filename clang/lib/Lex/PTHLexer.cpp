@@ -434,10 +434,12 @@ static void InvalidPTH(Diagnostic &Diags, const char *Msg) {
   Diags.Report(Diags.getCustomDiagID(Diagnostic::Error, Msg));
 }
 
-PTHManager* PTHManager::Create(const std::string& file, Diagnostic &Diags) {
+PTHManager* PTHManager::Create(const std::string& file, FileManager &FileMgr,
+                               const FileSystemOptions &FSOpts,
+                               Diagnostic &Diags) {
   // Memory map the PTH file.
   llvm::OwningPtr<llvm::MemoryBuffer>
-  File(llvm::MemoryBuffer::getFile(file.c_str()));
+  File(FileMgr.getBufferForFile(file, FSOpts));
 
   if (!File) {
     Diags.Report(diag::err_invalid_pth_file) << file;

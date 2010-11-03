@@ -12,6 +12,7 @@
 
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetOptions.h"
+#include "clang/Basic/FileSystemOptions.h"
 #include "clang/Frontend/AnalyzerOptions.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
@@ -51,6 +52,9 @@ class CompilerInvocation {
 
   /// Options controlling the diagnostic engine.
   DiagnosticOptions DiagnosticOpts;
+
+  /// Options controlling file system operations.
+  FileSystemOptions FileSystemOpts;
 
   /// Options controlling the frontend itself.
   FrontendOptions FrontendOpts;
@@ -125,6 +129,11 @@ public:
 
   DiagnosticOptions &getDiagnosticOpts() { return DiagnosticOpts; }
   const DiagnosticOptions &getDiagnosticOpts() const { return DiagnosticOpts; }
+
+  FileSystemOptions &getFileSystemOpts() { return FileSystemOpts; }
+  const FileSystemOptions &getFileSystemOpts() const {
+    return FileSystemOpts;
+  }
 
   HeaderSearchOptions &getHeaderSearchOpts() { return HeaderSearchOpts; }
   const HeaderSearchOptions &getHeaderSearchOpts() const {

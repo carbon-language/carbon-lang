@@ -39,6 +39,7 @@ class SourceManager;
 class Stmt;
 class TargetInfo;
 class FrontendOptions;
+class FileSystemOptions;
 
 /// Normalize \arg File for use in a user defined #include directive (in the
 /// predefines buffer).
@@ -53,6 +54,7 @@ void ApplyHeaderSearchOptions(HeaderSearch &HS,
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file.
 void InitializePreprocessor(Preprocessor &PP,
+                            const FileSystemOptions &FSOpts,
                             const PreprocessorOptions &PPOpts,
                             const HeaderSearchOptions &HSOpts,
                             const FrontendOptions &FEOpts);

@@ -103,7 +103,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     llvm::IntrusiveRefCntPtr<Diagnostic> Diags(&CI.getDiagnostics());
     std::string Error;
-    ASTUnit *AST = ASTUnit::LoadFromASTFile(Filename, Diags);
+    ASTUnit *AST = ASTUnit::LoadFromASTFile(Filename, Diags,
+                                            CI.getFileSystemOpts());
     if (!AST)
       goto failure;
 
@@ -132,7 +133,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (!CI.hasFileManager())
     CI.createFileManager();
   if (!CI.hasSourceManager())
-    CI.createSourceManager();
+    CI.createSourceManager(CI.getFileManager(), CI.getFileSystemOpts());
 
   // IR files bypass the rest of initialization.
   if (InputKind == IK_LLVM_IR) {

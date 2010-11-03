@@ -40,7 +40,8 @@ void ASTMergeAction::ExecuteAction() {
                                        &CI.getASTContext());
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags(&CI.getDiagnostics());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
-    ASTUnit *Unit = ASTUnit::LoadFromASTFile(ASTFiles[I], Diags, false);
+    ASTUnit *Unit = ASTUnit::LoadFromASTFile(ASTFiles[I], Diags,
+                                             CI.getFileSystemOpts(), false);
     if (!Unit)
       continue;
 
@@ -53,8 +54,10 @@ void ASTMergeAction::ExecuteAction() {
     ASTImporter Importer(CI.getDiagnostics(),
                          CI.getASTContext(), 
                          CI.getFileManager(),
+                         CI.getFileSystemOpts(),
                          Unit->getASTContext(), 
-                         Unit->getFileManager());
+                         Unit->getFileManager(),
+                         Unit->getFileSystemOpts());
 
     TranslationUnitDecl *TU = Unit->getASTContext().getTranslationUnitDecl();
     for (DeclContext::decl_iterator D = TU->decls_begin(), 

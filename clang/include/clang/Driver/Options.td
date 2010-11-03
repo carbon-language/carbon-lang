@@ -624,6 +624,11 @@ def x : JoinedOrSeparate<"-x">, Flags<[DriverOption]>,
   MetaVarName<"<language>">;
 def y : Joined<"-y">;
 
+def working_directory : Separate<"-working-directory">,
+  HelpText<"Resolve file paths relative to the specified directory">;
+def working_directory_EQ : Joined<"-working-directory=">,
+  Alias<working_directory>;
+
 // Double dash options, which are usually an alias for one of the previous
 // options.
 

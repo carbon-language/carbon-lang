@@ -449,8 +449,17 @@ const std::string &ASTUnit::getASTFileName() {
   return static_cast<ASTReader *>(Ctx->getExternalSource())->getFileName();
 }
 
+llvm::MemoryBuffer *ASTUnit::getBufferForFile(llvm::StringRef Filename,
+                                              std::string *ErrorStr,
+                                              int64_t FileSize,
+                                              struct stat *FileInfo) {
+  return FileMgr->getBufferForFile(Filename, FileSystemOpts,
+                                   ErrorStr, FileSize, FileInfo);
+}
+
 ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                                  const FileSystemOptions &FileSystemOpts,
                                   bool OnlyLocalDecls,
                                   RemappedFile *RemappedFiles,
                                   unsigned NumRemappedFiles,
@@ -467,9 +476,13 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->Diagnostics = Diags;
+  AST->FileSystemOpts = FileSystemOpts;
   AST->FileMgr.reset(new FileManager);
-  AST->SourceMgr.reset(new SourceManager(AST->getDiagnostics()));
-  AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
+  AST->SourceMgr.reset(new SourceManager(AST->getDiagnostics(),
+                                         AST->getFileManager(),
+                                         AST->getFileSystemOpts()));
+  AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager(),
+                                         AST->getFileSystemOpts()));
   
   // If requested, capture diagnostics in the ASTUnit.
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, AST->getDiagnostics(),
@@ -480,7 +493,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
     const FileEntry *FromFile
       = AST->getFileManager().getVirtualFile(RemappedFiles[I].first,
                                     RemappedFiles[I].second->getBufferSize(),
-                                             0);
+                                             0,
+                                             AST->getFileSystemOpts());
     if (!FromFile) {
       AST->getDiagnostics().Report(diag::err_fe_remap_missing_from_file)
         << RemappedFiles[I].first;
@@ -505,7 +519,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   llvm::OwningPtr<ASTReader> Reader;
 
   Reader.reset(new ASTReader(AST->getSourceManager(), AST->getFileManager(),
-                             AST->getDiagnostics()));
+                             AST->getFileSystemOpts(), AST->getDiagnostics()));
   Reader->setListener(new ASTInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
@@ -732,7 +746,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // Configure the various subsystems.
   // FIXME: Should we retain the previous file manager?
   FileMgr.reset(new FileManager);
-  SourceMgr.reset(new SourceManager(getDiagnostics()));
+  FileSystemOpts = Clang.getFileSystemOpts();
+  SourceMgr.reset(new SourceManager(getDiagnostics(), *FileMgr, FileSystemOpts));
   TheSema.reset();
   Ctx.reset();
   PP.reset();
@@ -908,7 +923,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
             CreatedBuffer = false;
           }
           
-          Buffer = llvm::MemoryBuffer::getFile(M->second);
+          Buffer = getBufferForFile(M->second);
           if (!Buffer)
             return std::make_pair((llvm::MemoryBuffer*)0, 
                                   std::make_pair(0, true));
@@ -941,7 +956,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
   
   // If the main source file was not remapped, load it now.
   if (!Buffer) {
-    Buffer = llvm::MemoryBuffer::getFile(FrontendOpts.Inputs[0].second);
+    Buffer = getBufferForFile(FrontendOpts.Inputs[0].second);
     if (!Buffer)
       return std::make_pair((llvm::MemoryBuffer*)0, std::make_pair(0, true));    
     
@@ -1240,7 +1255,9 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Clang.setFileManager(new FileManager);
   
   // Create the source manager.
-  Clang.setSourceManager(new SourceManager(getDiagnostics()));
+  Clang.setSourceManager(new SourceManager(getDiagnostics(),
+                                           Clang.getFileManager(),
+                                           Clang.getFileSystemOpts()));
   
   llvm::OwningPtr<PrecompilePreambleAction> Act;
   Act.reset(new PrecompilePreambleAction(*this));
