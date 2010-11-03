@@ -338,14 +338,6 @@ void ARMInstPrinter::printAddrMode6OffsetOperand(const MCInst *MI,
     O << ", " << getRegisterName(MO.getReg());
 }
 
-void ARMInstPrinter::printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
-                                            raw_ostream &O) {
-  // All instructions using addrmodepc are pseudos and should have been
-  // handled explicitly in printInstructionThroughMCStreamer(). If one got
-  // here, it wasn't, so something's wrong.
-  llvm_unreachable("Unhandled PC-relative pseudo-instruction!");
-}
-
 void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
                                                     unsigned OpNum,
                                                     raw_ostream &O) {
