@@ -2392,7 +2392,8 @@ CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
   AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
                                          : AddStmtChoice::AlwaysAdd;
   autoCreateBlock();
-  AppendStmt(Block, C, AddStmtChoice(K));
+  if (!C->isElidable())
+    AppendStmt(Block, C, AddStmtChoice(K));
   return VisitChildren(C);
 }
 
