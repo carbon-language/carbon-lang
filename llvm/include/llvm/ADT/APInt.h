@@ -348,7 +348,7 @@ public:
       return true;
 
     if (isSingleWord())
-      return VAL == (VAL & (~0ULL >> (64 - N)));
+      return isUIntN(N, VAL);
     APInt Tmp(N, getNumWords(), pVal);
     Tmp.zext(getBitWidth());
     return Tmp == (*this);

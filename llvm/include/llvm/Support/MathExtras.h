@@ -71,6 +71,12 @@ inline bool isUInt<32>(uint64_t x) {
   return static_cast<uint32_t>(x) == x;
 }
 
+/// isUIntN - Checks if an unsigned integer fits into the given (dynamic)
+/// bit width.
+inline bool isUIntN(unsigned N, uint64_t x) {
+  return x == (x & (~0ULL >> (64 - N)));
+}
+
 /// isMask_32 - This function returns true if the argument is a sequence of ones
 /// starting at the least significant bit with the remainder zero (32 bit
 /// version).   Ex. isMask_32(0x0000FFFFU) == true.
