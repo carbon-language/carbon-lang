@@ -1721,6 +1721,11 @@ $(ObjDir)/%GenAsmMatcher.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly matcher with tblgen"
 	$(Verb) $(TableGen) -gen-asm-matcher -o $(call SYSPATH, $@) $<
 
+$(TARGET:%=$(ObjDir)/%GenMCCodeEmitter.inc.tmp): \
+$(ObjDir)/%GenMCCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) MC code emitter with tblgen"
+	$(Verb) $(TableGen) -gen-emitter -mc-emitter -o $(call SYSPATH, $@) $<
+
 $(TARGET:%=$(ObjDir)/%GenCodeEmitter.inc.tmp): \
 $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) code emitter with tblgen"
