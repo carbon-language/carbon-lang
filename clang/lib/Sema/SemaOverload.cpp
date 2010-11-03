@@ -4541,15 +4541,17 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
     VisibleTypeConversionsQuals += CollectVRQualifiers(Context, Args[ArgIdx]);
   
-  BuiltinCandidateTypeSet CandidateTypes(*this);
-  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
-    CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType(),
-                                         OpLoc,
-                                         true,
-                                         (Op == OO_Exclaim ||
-                                          Op == OO_AmpAmp ||
-                                          Op == OO_PipePipe),
-                                         VisibleTypeConversionsQuals);
+  llvm::SmallVector<BuiltinCandidateTypeSet, 2> CandidateTypes;
+  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+    CandidateTypes.push_back(BuiltinCandidateTypeSet(*this));
+    CandidateTypes[ArgIdx].AddTypesConvertedFrom(Args[ArgIdx]->getType(),
+                                                 OpLoc,
+                                                 true,
+                                                 (Op == OO_Exclaim ||
+                                                  Op == OO_AmpAmp ||
+                                                  Op == OO_PipePipe),
+                                                 VisibleTypeConversionsQuals);
+  }
 
   // C++ [over.built]p1:
   //   If there is a user-written candidate with the same name and parameter
@@ -4563,29 +4565,35 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   llvm::DenseSet<std::pair<CanQualType, CanQualType> > 
     UserDefinedBinaryOperators;
   
-  if (CandidateTypes.enumeration_begin() != CandidateTypes.enumeration_end()) {
-    for (OverloadCandidateSet::iterator C = CandidateSet.begin(),
-                                     CEnd = CandidateSet.end();
-         C != CEnd; ++C) {
-      if (!C->Viable || !C->Function || C->Function->getNumParams() != 2)
-        continue;
-      
-      // Check if the first parameter is of enumeration type.
-      QualType FirstParamType
-        = C->Function->getParamDecl(0)->getType().getUnqualifiedType();
-      if (!FirstParamType->isEnumeralType())
-        continue;
-      
-      // Check if the second parameter is of enumeration type.
-      QualType SecondParamType
-        = C->Function->getParamDecl(1)->getType().getUnqualifiedType();
-      if (!SecondParamType->isEnumeralType())
-        continue;
+  /// Set of (canonical) types that we've already handled.
+  llvm::SmallPtrSet<QualType, 8> AddedTypes;
+  
+  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+    if (CandidateTypes[ArgIdx].enumeration_begin() 
+                                != CandidateTypes[ArgIdx].enumeration_end()) {
+      for (OverloadCandidateSet::iterator C = CandidateSet.begin(),
+                                       CEnd = CandidateSet.end();
+           C != CEnd; ++C) {
+        if (!C->Viable || !C->Function || C->Function->getNumParams() != 2)
+          continue;
+        
+        // Check if the first parameter is of enumeration type.
+        QualType FirstParamType
+          = C->Function->getParamDecl(0)->getType().getUnqualifiedType();
+        if (!FirstParamType->isEnumeralType())
+          continue;
+        
+        // Check if the second parameter is of enumeration type.
+        QualType SecondParamType
+          = C->Function->getParamDecl(1)->getType().getUnqualifiedType();
+        if (!SecondParamType->isEnumeralType())
+          continue;
 
-      // Add this operator to the set of known user-defined operators.
-      UserDefinedBinaryOperators.insert(
-                  std::make_pair(Context.getCanonicalType(FirstParamType),
-                                 Context.getCanonicalType(SecondParamType)));
+        // Add this operator to the set of known user-defined operators.
+        UserDefinedBinaryOperators.insert(
+                    std::make_pair(Context.getCanonicalType(FirstParamType),
+                                   Context.getCanonicalType(SecondParamType)));
+      }
     }
   }
   
@@ -4676,8 +4684,10 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //       T*VQ&      operator--(T*VQ&);
     //       T*         operator++(T*VQ&, int);
     //       T*         operator--(T*VQ&, int);
-    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
-         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+    for (BuiltinCandidateTypeSet::iterator 
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
       // Skip pointer types that aren't pointers to object types.
       if (!(*Ptr)->getPointeeType()->isIncompleteOrObjectType())
         continue;
@@ -4716,8 +4726,10 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //   For every function type T, there exist candidate operator
     //   functions of the form
     //       T&         operator*(T*);
-    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
-         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+    for (BuiltinCandidateTypeSet::iterator 
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
       QualType ParamTy = *Ptr;
       QualType PointeeTy = ParamTy->getPointeeType();
       AddBuiltinCandidate(Context.getLValueReferenceType(PointeeTy),
@@ -4731,8 +4743,10 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //   the form
     //
     //       T*         operator+(T*);
-    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
-         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+    for (BuiltinCandidateTypeSet::iterator 
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
       QualType ParamTy = *Ptr;
       AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet);
     }
@@ -4753,8 +4767,9 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     }
       
     // Extension: We also add these operators for vector types.
-    for (BuiltinCandidateTypeSet::iterator Vec = CandidateTypes.vector_begin(),
-                                        VecEnd = CandidateTypes.vector_end(); 
+    for (BuiltinCandidateTypeSet::iterator
+              Vec = CandidateTypes[0].vector_begin(),
+           VecEnd = CandidateTypes[0].vector_end(); 
          Vec != VecEnd; ++Vec) {
       QualType VecTy = *Vec;
       AddBuiltinCandidate(VecTy, &VecTy, Args, 1, CandidateSet);
@@ -4774,8 +4789,9 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     }
       
     // Extension: We also add this operator for vector types.
-    for (BuiltinCandidateTypeSet::iterator Vec = CandidateTypes.vector_begin(),
-                                        VecEnd = CandidateTypes.vector_end(); 
+    for (BuiltinCandidateTypeSet::iterator
+              Vec = CandidateTypes[0].vector_begin(),
+           VecEnd = CandidateTypes[0].vector_end(); 
          Vec != VecEnd; ++Vec) {
       QualType VecTy = *Vec;
       AddBuiltinCandidate(VecTy, &VecTy, Args, 1, CandidateSet);
@@ -4806,15 +4822,22 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //
     //        bool operator==(T,T);
     //        bool operator!=(T,T);
-    for (BuiltinCandidateTypeSet::iterator
-           MemPtr = CandidateTypes.member_pointer_begin(),
-           MemPtrEnd = CandidateTypes.member_pointer_end();
-         MemPtr != MemPtrEnd;
-         ++MemPtr) {
-      QualType ParamTypes[2] = { *MemPtr, *MemPtr };
-      AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+      for (BuiltinCandidateTypeSet::iterator
+                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
+             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end();
+           MemPtr != MemPtrEnd;
+           ++MemPtr) {
+        // Don't add the same builtin candidate twice.
+        if (!AddedTypes.insert(Context.getCanonicalType(*MemPtr)))
+          continue;
+        
+        QualType ParamTypes[2] = { *MemPtr, *MemPtr };
+        AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
+      }
     }
-
+    AddedTypes.clear();
+    
     // Fall through
 
   case OO_Less:
@@ -4832,21 +4855,35 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //        bool       operator>=(T, T);
     //        bool       operator==(T, T);
     //        bool       operator!=(T, T);
-    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
-         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
-      QualType ParamTypes[2] = { *Ptr, *Ptr };
-      AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
-    }
-    for (BuiltinCandidateTypeSet::iterator Enum
-           = CandidateTypes.enumeration_begin();
-         Enum != CandidateTypes.enumeration_end(); ++Enum) {
-      QualType ParamTypes[2] = { *Enum, *Enum };
-      CanQualType CanonType = Context.getCanonicalType(*Enum);
-      if (!UserDefinedBinaryOperators.count(
-                                          std::make_pair(CanonType, CanonType)))
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+      for (BuiltinCandidateTypeSet::iterator 
+                Ptr = CandidateTypes[ArgIdx].pointer_begin(),
+             PtrEnd = CandidateTypes[ArgIdx].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
+        // Don't add the same builtin candidate twice.
+        if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
+          continue;
+        
+        QualType ParamTypes[2] = { *Ptr, *Ptr };
         AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
+      }
+      for (BuiltinCandidateTypeSet::iterator 
+                Enum = CandidateTypes[ArgIdx].enumeration_begin(),
+             EnumEnd = CandidateTypes[ArgIdx].enumeration_end();
+           Enum != EnumEnd; ++Enum) {
+        // Don't add the same builtin candidate twice.
+        if (!AddedTypes.insert(Context.getCanonicalType(*Enum)))
+          continue;
+        
+        QualType ParamTypes[2] = { *Enum, *Enum };
+        CanQualType CanonType = Context.getCanonicalType(*Enum);
+        if (!UserDefinedBinaryOperators.count(
+                                            std::make_pair(CanonType, CanonType)))
+          AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
+      }
     }
-
+    AddedTypes.clear();
+      
     // Fall through.
     isComparison = true;
 
@@ -4872,26 +4909,46 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       //   exist candidate operator functions of the form
       //
       //      ptrdiff_t  operator-(T, T);
-      for (BuiltinCandidateTypeSet::iterator Ptr
-             = CandidateTypes.pointer_begin();
-           Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+      for (BuiltinCandidateTypeSet::iterator 
+                Ptr = CandidateTypes[0].pointer_begin(),
+             PtrEnd = CandidateTypes[0].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
         QualType ParamTypes[2] = { *Ptr, Context.getPointerDiffType() };
 
         // operator+(T*, ptrdiff_t) or operator-(T*, ptrdiff_t)
         AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
 
-        if (Op == OO_Plus) {
-          // T* operator+(ptrdiff_t, T*);
-          ParamTypes[0] = ParamTypes[1];
-          ParamTypes[1] = *Ptr;
-          AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
-        } else {
+        if (Op == OO_Minus) {
           // ptrdiff_t operator-(T, T);
+          if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
+            continue;
+          
           ParamTypes[1] = *Ptr;
           AddBuiltinCandidate(Context.getPointerDiffType(), ParamTypes,
                               Args, 2, CandidateSet);
         }
       }
+      
+      for (BuiltinCandidateTypeSet::iterator 
+                Ptr = CandidateTypes[1].pointer_begin(),
+             PtrEnd = CandidateTypes[1].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
+        if (Op == OO_Plus) {
+          // T* operator+(ptrdiff_t, T*);
+          QualType ParamTypes[2] = { Context.getPointerDiffType(), *Ptr };
+          AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
+        } else {
+          // ptrdiff_t operator-(T, T);
+          if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
+            continue;
+          
+          QualType ParamTypes[2] = { *Ptr, *Ptr };
+          AddBuiltinCandidate(Context.getPointerDiffType(), ParamTypes,
+                              Args, 2, CandidateSet);
+        }
+      }   
+      
+      AddedTypes.clear();
     }
     // Fall through
 
@@ -4942,12 +4999,13 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
     // Extension: Add the binary operators ==, !=, <, <=, >=, >, *, /, and the
     // conditional operator for vector types.
-    for (BuiltinCandidateTypeSet::iterator Vec1 = CandidateTypes.vector_begin(),
-         Vec1End = CandidateTypes.vector_end(); 
+    for (BuiltinCandidateTypeSet::iterator
+              Vec1 = CandidateTypes[0].vector_begin(),
+           Vec1End = CandidateTypes[0].vector_end(); 
          Vec1 != Vec1End; ++Vec1)
       for (BuiltinCandidateTypeSet::iterator 
-           Vec2 = CandidateTypes.vector_begin(),
-           Vec2End = CandidateTypes.vector_end(); 
+               Vec2 = CandidateTypes[1].vector_begin(),
+             Vec2End = CandidateTypes[1].vector_end(); 
            Vec2 != Vec2End; ++Vec2) {
         QualType LandR[2] = { *Vec1, *Vec2 };
         QualType Result;
@@ -5006,18 +5064,30 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //   empty, there exist candidate operator functions of the form
     //
     //        VQ T&      operator=(VQ T&, T);
-    for (BuiltinCandidateTypeSet::iterator
-           Enum = CandidateTypes.enumeration_begin(),
-           EnumEnd = CandidateTypes.enumeration_end();
-         Enum != EnumEnd; ++Enum)
-      AddBuiltinAssignmentOperatorCandidates(*this, *Enum, Args, 2,
-                                             CandidateSet);
-    for (BuiltinCandidateTypeSet::iterator
-           MemPtr = CandidateTypes.member_pointer_begin(),
-         MemPtrEnd = CandidateTypes.member_pointer_end();
-         MemPtr != MemPtrEnd; ++MemPtr)
-      AddBuiltinAssignmentOperatorCandidates(*this, *MemPtr, Args, 2,
-                                             CandidateSet);
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+      for (BuiltinCandidateTypeSet::iterator
+                Enum = CandidateTypes[ArgIdx].enumeration_begin(),
+             EnumEnd = CandidateTypes[ArgIdx].enumeration_end();
+           Enum != EnumEnd; ++Enum) {
+        if (!AddedTypes.insert(Context.getCanonicalType(*Enum)))
+          continue;
+        
+        AddBuiltinAssignmentOperatorCandidates(*this, *Enum, Args, 2,
+                                               CandidateSet);
+      }
+      
+      for (BuiltinCandidateTypeSet::iterator
+                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
+             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end();
+           MemPtr != MemPtrEnd; ++MemPtr) {
+        if (!AddedTypes.insert(Context.getCanonicalType(*MemPtr)))
+          continue;
+        
+        AddBuiltinAssignmentOperatorCandidates(*this, *MemPtr, Args, 2,
+                                               CandidateSet);
+      }
+    }
+    AddedTypes.clear();
       
     // Fall through.
 
@@ -5039,11 +5109,17 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //
     //        T*VQ&      operator+=(T*VQ&, ptrdiff_t);
     //        T*VQ&      operator-=(T*VQ&, ptrdiff_t);
-    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
-         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+    for (BuiltinCandidateTypeSet::iterator 
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
       QualType ParamTypes[2];
       ParamTypes[1] = (Op == OO_Equal)? *Ptr : Context.getPointerDiffType();
 
+      // If this is operator=, keep track of the builtin candidates we added.
+      if (Op == OO_Equal)
+        AddedTypes.insert(Context.getCanonicalType(*Ptr));
+      
       // non-volatile version
       ParamTypes[0] = Context.getLValueReferenceType(*Ptr);
       AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
@@ -5057,6 +5133,33 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
       }
+    }
+      
+    if (Op == OO_Equal) {
+      for (BuiltinCandidateTypeSet::iterator 
+                Ptr = CandidateTypes[1].pointer_begin(),
+             PtrEnd = CandidateTypes[1].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
+        // Make sure we don't add the same candidate twice.
+        if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
+          continue;
+        
+        QualType ParamTypes[2] = { Context.getLValueReferenceType(*Ptr), *Ptr };
+        
+        // non-volatile version
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                            /*IsAssigmentOperator=*/true);
+        
+        if (!Context.getCanonicalType(*Ptr).isVolatileQualified() &&
+            VisibleTypeConversionsQuals.hasVolatile()) {
+          // volatile version
+          ParamTypes[0]
+            = Context.getLValueReferenceType(Context.getVolatileType(*Ptr));
+          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                              /*IsAssigmentOperator=*/true);
+        }
+      }
+      AddedTypes.clear();
     }
     // Fall through.
 
@@ -5096,12 +5199,13 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     }
       
     // Extension: Add the binary operators =, +=, -=, *=, /= for vector types.
-    for (BuiltinCandidateTypeSet::iterator Vec1 = CandidateTypes.vector_begin(),
-                                        Vec1End = CandidateTypes.vector_end(); 
+    for (BuiltinCandidateTypeSet::iterator
+              Vec1 = CandidateTypes[0].vector_begin(),
+           Vec1End = CandidateTypes[0].vector_end(); 
          Vec1 != Vec1End; ++Vec1)
       for (BuiltinCandidateTypeSet::iterator 
-                Vec2 = CandidateTypes.vector_begin(),
-             Vec2End = CandidateTypes.vector_end(); 
+                Vec2 = CandidateTypes[1].vector_begin(),
+             Vec2End = CandidateTypes[1].vector_end(); 
            Vec2 != Vec2End; ++Vec2) {
         QualType ParamTypes[2];
         ParamTypes[1] = *Vec2;
@@ -5200,20 +5304,29 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //        T*         operator-(T*, ptrdiff_t);     [ABOVE]
     //        T*         operator+(ptrdiff_t, T*);     [ABOVE]
     //        T&         operator[](ptrdiff_t, T*);
-    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
-         Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+    for (BuiltinCandidateTypeSet::iterator 
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
       QualType ParamTypes[2] = { *Ptr, Context.getPointerDiffType() };
       QualType PointeeType = (*Ptr)->getPointeeType();
       QualType ResultTy = Context.getLValueReferenceType(PointeeType);
 
       // T& operator[](T*, ptrdiff_t)
       AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
-
-      // T& operator[](ptrdiff_t, T*);
-      ParamTypes[0] = ParamTypes[1];
-      ParamTypes[1] = *Ptr;
+    }
+      
+    for (BuiltinCandidateTypeSet::iterator 
+              Ptr = CandidateTypes[1].pointer_begin(),
+           PtrEnd = CandidateTypes[1].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
+      QualType ParamTypes[2] = { Context.getPointerDiffType(), *Ptr };
+      QualType PointeeType = (*Ptr)->getPointeeType();
+      QualType ResultTy = Context.getLValueReferenceType(PointeeType);
+      
+      // T& operator[](ptrdiff_t, T*)
       AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
-    }      
+    }
     break;
 
   case OO_ArrowStar:
@@ -5222,12 +5335,15 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //    C1 is the same type as C2 or is a derived class of C2, T is an object 
     //    type or a function type, and CV1 and CV2 are cv-qualifier-seqs, 
     //    there exist candidate operator functions of the form 
-    //    CV12 T& operator->*(CV1 C1*, CV2 T C2::*); 
+    //
+    //      CV12 T& operator->*(CV1 C1*, CV2 T C2::*); 
+    //
     //    where CV12 is the union of CV1 and CV2.
     {
-      for (BuiltinCandidateTypeSet::iterator Ptr = 
-             CandidateTypes.pointer_begin();
-           Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+      for (BuiltinCandidateTypeSet::iterator 
+               Ptr = CandidateTypes[0].pointer_begin(),
+             PtrEnd = CandidateTypes[0].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
         QualType C1Ty = (*Ptr);
         QualType C1;
         QualifierCollector Q1;
@@ -5242,8 +5358,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         if (!VisibleTypeConversionsQuals.hasRestrict() && Q1.hasRestrict())
           continue;
         for (BuiltinCandidateTypeSet::iterator
-             MemPtr = CandidateTypes.member_pointer_begin(),
-             MemPtrEnd = CandidateTypes.member_pointer_end();
+                  MemPtr = CandidateTypes[1].member_pointer_begin(),
+               MemPtrEnd = CandidateTypes[1].member_pointer_end();
              MemPtr != MemPtrEnd; ++MemPtr) {
           const MemberPointerType *mptr = cast<MemberPointerType>(*MemPtr);
           QualType C2 = QualType(mptr->getClass(), 0);
@@ -5278,25 +5394,44 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //
     //        T        operator?(bool, T, T);
     //
-    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin(),
-         E = CandidateTypes.pointer_end(); Ptr != E; ++Ptr) {
-      QualType ParamTypes[2] = { *Ptr, *Ptr };
-      AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
-    }
-    for (BuiltinCandidateTypeSet::iterator Ptr =
-           CandidateTypes.member_pointer_begin(),
-         E = CandidateTypes.member_pointer_end(); Ptr != E; ++Ptr) {
-      QualType ParamTypes[2] = { *Ptr, *Ptr };
-      AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
-    }
-    if (getLangOptions().CPlusPlus0x)
-    for (BuiltinCandidateTypeSet::iterator Enum =
-         CandidateTypes.enumeration_begin(),
-         E = CandidateTypes.enumeration_end(); Enum != E; ++Enum) {
-      if (!(*Enum)->getAs<EnumType>()->getDecl()->isScoped())
-        continue;
-      QualType ParamTypes[2] = { *Enum, *Enum };
-      AddBuiltinCandidate(*Enum, ParamTypes, Args, 2, CandidateSet);
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+      for (BuiltinCandidateTypeSet::iterator
+                Ptr = CandidateTypes[ArgIdx].pointer_begin(),
+             PtrEnd = CandidateTypes[ArgIdx].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
+        if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
+          continue;
+        
+        QualType ParamTypes[2] = { *Ptr, *Ptr };
+        AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
+      }
+      
+      for (BuiltinCandidateTypeSet::iterator 
+                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
+             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end(); 
+           MemPtr != MemPtrEnd; ++MemPtr) {
+        if (!AddedTypes.insert(Context.getCanonicalType(*MemPtr)))
+          continue;
+        
+        QualType ParamTypes[2] = { *MemPtr, *MemPtr };
+        AddBuiltinCandidate(*MemPtr, ParamTypes, Args, 2, CandidateSet);
+      }
+      
+      if (getLangOptions().CPlusPlus0x) {
+        for (BuiltinCandidateTypeSet::iterator 
+                  Enum = CandidateTypes[ArgIdx].enumeration_begin(),
+               EnumEnd = CandidateTypes[ArgIdx].enumeration_end(); 
+             Enum != EnumEnd; ++Enum) {
+          if (!(*Enum)->getAs<EnumType>()->getDecl()->isScoped())
+            continue;
+          
+          if (!AddedTypes.insert(Context.getCanonicalType(*Enum)))
+            continue;
+
+          QualType ParamTypes[2] = { *Enum, *Enum };
+          AddBuiltinCandidate(*Enum, ParamTypes, Args, 2, CandidateSet);
+        }
+      }
     }
     goto Conditional;
   }

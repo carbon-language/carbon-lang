@@ -200,3 +200,23 @@ namespace PR7319 {
     if (e1 > e2) {}
   }
 }
+
+namespace PR8477 {
+  struct Foo {
+    operator bool();
+    operator const char *();
+  };
+
+  bool doit() {
+    Foo foo;
+    long long zero = 0;
+    (void)(foo + zero);
+    (void)(foo - zero);
+    (void)(zero + foo);
+    (void)(zero[foo]);
+    (void)(foo - foo); // expected-error{{use of overloaded operator '-' is ambiguous}} \
+    // expected-note 4{{built-in candidate operator-}} \
+    // expected-note{{candidates omitted}}
+    return foo[zero] == zero;
+  }
+}
