@@ -1469,7 +1469,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
           llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), Offset));
       IvarOffsetValues.push_back(new llvm::GlobalVariable(TheModule, IntTy,
           false, llvm::GlobalValue::ExternalLinkage,
-          llvm::ConstantInt::get(IntTy, BaseOffset),
+          llvm::ConstantInt::get(IntTy, Offset),
           "__objc_ivar_offset_value_" + ClassName +"." +
           IVD->getNameAsString()));
   }
@@ -1538,7 +1538,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   // allows code compiled for the non-Fragile ABI to inherit from code compiled
   // for the legacy ABI, without causing problems.  The converse is also
   // possible, but causes all ivar accesses to be fragile.
-  int i = 0;
+
   // Offset pointer for getting at the correct field in the ivar list when
   // setting up the alias.  These are: The base address for the global, the
   // ivar array (second field), the ivar in this list (set for each ivar), and
@@ -1548,15 +1548,16 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       llvm::ConstantInt::get(IndexTy, 1), 0,
       llvm::ConstantInt::get(IndexTy, 2) };
 
-  for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
-      endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
+
+  for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
+      ObjCIvarDecl *IVD = OIvars[i];
       const std::string Name = "__objc_ivar_offset_" + ClassName + '.'
-          +(*iter)->getNameAsString();
-      offsetPointerIndexes[2] = llvm::ConstantInt::get(IndexTy, i++);
+          + IVD->getNameAsString();
+      offsetPointerIndexes[2] = llvm::ConstantInt::get(IndexTy, i);
       // Get the correct ivar field
       llvm::Constant *offsetValue = llvm::ConstantExpr::getGetElementPtr(
               IvarList, offsetPointerIndexes, 4);
-      // Get the existing alias, if one exists.
+      // Get the existing variable, if one exists.
       llvm::GlobalVariable *offset = TheModule.getNamedGlobal(Name);
       if (offset) {
           offset->setInitializer(offsetValue);
@@ -2142,12 +2143,18 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
   // when linked against code which isn't (most of the time).
   llvm::GlobalVariable *IvarOffsetPointer = TheModule.getNamedGlobal(Name);
   if (!IvarOffsetPointer) {
-    uint64_t Offset;
-    if (ObjCImplementationDecl *OID =
-            CGM.getContext().getObjCImplementation(
+    // This will cause a run-time crash if we accidentally use it.  A value of
+    // 0 would seem more sensible, but will silently overwrite the isa pointer
+    // causing a great deal of confusion.
+    uint64_t Offset = -1;
+    // We can't call ComputeIvarBaseOffset() here if we have the
+    // implementation, because it will create an invalid ASTRecordLayout object
+    // that we are then stuck with forever, so we only initialize the ivar
+    // offset variable with a guess if we only have the interface.  The
+    // initializer will be reset later anyway, when we are generating the class
+    // description.
+    if (!CGM.getContext().getObjCImplementation(
               const_cast<ObjCInterfaceDecl *>(ID)))
-      Offset = ComputeIvarBaseOffset(CGM, OID, Ivar);
-    else
       Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
 
     llvm::ConstantInt *OffsetGuess =

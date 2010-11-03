@@ -77,6 +77,7 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
     ++Index;
   }
   assert(Index != Ivars.size() && "Ivar is not inside container!");
+  assert(Index < RL->getFieldCount() && "Ivar is not inside record layout!");
 
   return RL->getFieldOffset(Index);
 }
