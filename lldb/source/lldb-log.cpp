@@ -124,6 +124,7 @@ lldb_private::DisableLog (Args &args, Stream *feedback_strm)
             else if (strcasecmp(arg, "api")     == 0)   flag_bits &= ~LIBLLDB_LOG_API;
             else if (strcasestr(arg, "break")   == arg) flag_bits &= ~LIBLLDB_LOG_BREAKPOINTS;
             else if (strcasecmp(arg, "default") == 0  ) flag_bits &= ~LIBLLDB_LOG_DEFAULT;
+            else if (strcasecmp(arg, "dyld")    == 0  ) flag_bits &= ~LIBLLDB_LOG_DYNAMIC_LOADER;
             else if (strcasestr(arg, "event")   == arg) flag_bits &= ~LIBLLDB_LOG_EVENTS;
             else if (strcasestr(arg, "expr")    == arg) flag_bits &= ~LIBLLDB_LOG_EXPRESSIONS;
             else if (strcasestr(arg, "object")  == arg) flag_bits &= ~LIBLLDB_LOG_OBJECT;
@@ -182,6 +183,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
             else if (strcasecmp(arg, "api")     == 0)   flag_bits |= LIBLLDB_LOG_API;
             else if (strcasestr(arg, "break")   == arg) flag_bits |= LIBLLDB_LOG_BREAKPOINTS;
             else if (strcasecmp(arg, "default") == 0  ) flag_bits |= LIBLLDB_LOG_DEFAULT;
+            else if (strcasecmp(arg, "dyld")    == 0  ) flag_bits |= LIBLLDB_LOG_DYNAMIC_LOADER;
             else if (strcasestr(arg, "event")   == arg) flag_bits |= LIBLLDB_LOG_EVENTS;
             else if (strcasestr(arg, "expr")    == arg) flag_bits |= LIBLLDB_LOG_EXPRESSIONS;
             else if (strcasestr(arg, "object")  == arg) flag_bits |= LIBLLDB_LOG_OBJECT;

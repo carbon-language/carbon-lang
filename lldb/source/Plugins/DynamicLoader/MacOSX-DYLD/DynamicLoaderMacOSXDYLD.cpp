@@ -23,7 +23,6 @@
 #include "lldb/Target/StackFrame.h"
 
 #include "DynamicLoaderMacOSXDYLD.h"
-#include "DynamicLoaderMacOSXDYLDLog.h"
 
 //#define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
 #ifdef ENABLE_DEBUG_PRINTF
@@ -501,6 +500,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
 uint32_t
 DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 {
+    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER);
     if (ReadAllImageInfosStructure ())
     {
         Mutex::Locker locker(m_mutex);
@@ -566,17 +566,44 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
         if (m_dyld_image_infos.size() < old_dyld_all_image_infos.size())
         {
             ModuleList unloaded_module_list;
-            for (idx = m_dyld_image_infos.size(); idx < old_dyld_all_image_infos.size(); ++idx)
+            uint32_t old_idx;
+            for (idx = 0; idx < old_dyld_all_image_infos.size(); ++idx)
             {
-                ModuleSP unload_image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (old_dyld_all_image_infos[idx].file_spec));
-                if (unload_image_module_sp.get())
+                for (old_idx = idx; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
                 {
-                    if (UnloadImageLoadAddress (unload_image_module_sp.get(), old_dyld_all_image_infos[idx]))
-                        unloaded_module_list.AppendInNeeded (unload_image_module_sp);
+                    if (m_dyld_image_infos[idx].file_spec == old_dyld_all_image_infos[old_idx].file_spec)
+                    {
+                        old_dyld_all_image_infos[old_idx].address = LLDB_INVALID_ADDRESS;
+                        break;
+                    }
                 }
             }
+
+            if (log)
+                log->PutCString("Unloaded:");
+
+            for (old_idx = 0; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
+            {
+                if (old_dyld_all_image_infos[old_idx].address != LLDB_INVALID_ADDRESS)
+                {
+                    if (log)
+                        old_dyld_all_image_infos[old_idx].PutToLog (log);
+                    ModuleSP unload_image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (old_dyld_all_image_infos[old_idx].file_spec));
+                    if (unload_image_module_sp.get())
+                    {
+                        if (UnloadImageLoadAddress (unload_image_module_sp.get(), old_dyld_all_image_infos[old_idx]))
+                            unloaded_module_list.AppendInNeeded (unload_image_module_sp);
+                    }
+                }
+            }
+
             if (unloaded_module_list.GetSize() > 0)
                 m_process->GetTarget().ModulesDidUnload (unloaded_module_list);
+        }
+        else
+        {
+            if (log)
+                PutToLog(log);
         }
     }
     else
@@ -640,7 +667,6 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                 }
             }
         }
-        PutToLog(DynamicLoaderMacOSXDYLDLog::GetLogIfAllCategoriesSet (1));
         if (loaded_module_list.GetSize() > 0)
         {
             // FIXME: This should really be in the Runtime handlers class, which should get
@@ -960,7 +986,7 @@ DynamicLoaderMacOSXDYLD::PutToLog(Log *log) const
     const size_t count = m_dyld_image_infos.size();
     if (count > 0)
     {
-        log->Printf("\tdyld_image_infos");
+        log->PutCString("Loaded:");
         for (i = 0; i<count; i++)
             m_dyld_image_infos[i].PutToLog(log);
     }

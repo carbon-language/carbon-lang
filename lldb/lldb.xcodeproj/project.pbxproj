@@ -195,7 +195,6 @@
 		26D5B0F211B07550009A862E /* ThreadPlanStepThrough.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C847510F50EFC00BB2B04 /* ThreadPlanStepThrough.cpp */; };
 		26D5B0F311B07550009A862E /* ThreadPlanStepRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C847610F50EFC00BB2B04 /* ThreadPlanStepRange.cpp */; };
 		26D5B0F411B07550009A862E /* DynamicLoaderMacOSXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C897A10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.cpp */; };
-		26D5B0F511B07550009A862E /* DynamicLoaderMacOSXDYLDLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C897C10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLDLog.cpp */; };
 		26D5B0F611B07550009A862E /* ObjectContainerUniversalMachO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C898010F57C5600BB2B04 /* ObjectContainerUniversalMachO.cpp */; };
 		26D5B0F711B07550009A862E /* ObjectFileELF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C898510F57C5600BB2B04 /* ObjectFileELF.cpp */; };
 		26D5B0F811B07550009A862E /* ObjectFileMachO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C898810F57C5600BB2B04 /* ObjectFileMachO.cpp */; };
@@ -436,8 +435,6 @@
 		260C897510F57C5600BB2B04 /* DisassemblerLLVM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DisassemblerLLVM.h; sourceTree = "<group>"; };
 		260C897A10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderMacOSXDYLD.cpp; sourceTree = "<group>"; };
 		260C897B10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderMacOSXDYLD.h; sourceTree = "<group>"; };
-		260C897C10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLDLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderMacOSXDYLDLog.cpp; sourceTree = "<group>"; };
-		260C897D10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLDLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderMacOSXDYLDLog.h; sourceTree = "<group>"; };
 		260C898010F57C5600BB2B04 /* ObjectContainerUniversalMachO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectContainerUniversalMachO.cpp; sourceTree = "<group>"; };
 		260C898110F57C5600BB2B04 /* ObjectContainerUniversalMachO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectContainerUniversalMachO.h; sourceTree = "<group>"; };
 		260C898510F57C5600BB2B04 /* ObjectFileELF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFileELF.cpp; sourceTree = "<group>"; };
@@ -1237,8 +1234,6 @@
 			children = (
 				260C897B10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.h */,
 				260C897A10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.cpp */,
-				260C897D10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLDLog.h */,
-				260C897C10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLDLog.cpp */,
 			);
 			path = "MacOSX-DYLD";
 			sourceTree = "<group>";
@@ -2680,7 +2675,6 @@
 				26D5B0F211B07550009A862E /* ThreadPlanStepThrough.cpp in Sources */,
 				26D5B0F311B07550009A862E /* ThreadPlanStepRange.cpp in Sources */,
 				26D5B0F411B07550009A862E /* DynamicLoaderMacOSXDYLD.cpp in Sources */,
-				26D5B0F511B07550009A862E /* DynamicLoaderMacOSXDYLDLog.cpp in Sources */,
 				26D5B0F611B07550009A862E /* ObjectContainerUniversalMachO.cpp in Sources */,
 				26D5B0F711B07550009A862E /* ObjectFileELF.cpp in Sources */,
 				26D5B0F811B07550009A862E /* ObjectFileMachO.cpp in Sources */,
