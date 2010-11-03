@@ -21,8 +21,11 @@
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
+// FIXME: Somewhat hackish to use a command line option for this. There should
+// be a CodeEmitter class in the Target.td that controls this sort of thing
+// instead.
 static cl::opt<bool>
-MCEmitter("mc-code-emitter",
+MCEmitter("mc-emitter",
           cl::desc("Generate CodeEmitter for use with the MC library."),
           cl::init(false));
 
@@ -84,8 +87,12 @@ void CodeEmitterGen::run(raw_ostream &o) {
     Target.getInstructionsByEnumValue();
 
   // Emit function declaration
-  o << "unsigned " << Target.getName() << "CodeEmitter::"
-    << "getBinaryCodeForInstr(const MachineInstr &MI) const {\n";
+  o << "unsigned " << Target.getName();
+  if (MCEmitter)
+    o << "MCCodeEmitter::getBinaryCodeForInstr(const MCInst &MI,\n"
+      << "    SmallVectorImpl<MCFixup> &Fixups) const {\n";
+  else
+    o << "CodeEmitter::getBinaryCodeForInstr(const MachineInstr &MI) const {\n";
 
   // Emit instruction base values
   o << "  static const unsigned InstBits[] = {\n";
@@ -188,12 +195,18 @@ void CodeEmitterGen::run(raw_ostream &o) {
                 if (SO.second == 0) {
                   Case += "      // op: " + VarName + "\n"
                        + "      op = " + EncoderMethodName + "(MI, "
-                       + utostr(OpIdx) + ");\n";
+                       + utostr(OpIdx);
+                  if (MCEmitter)
+                    Case += ", Fixups";
+                  Case += ");\n";
                 }
               } else {
                 Case += "      // op: " + VarName + "\n"
                      +  "      op = getMachineOpValue(MI, MI.getOperand("
-                     +  utostr(OpIdx) + "));\n";
+                     +  utostr(OpIdx) + ")";
+                if (MCEmitter)
+                  Case += ", Fixups";
+                Case += ");\n";
               }
               gotOp = true;
             }
