@@ -86,7 +86,7 @@ namespace llvm {
       LAST_VALUETYPE =  36,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
-      // EVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
+      // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
       // This value must be a multiple of 32.
       MAX_ALLOWED_VALUETYPE = 64,
 
