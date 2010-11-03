@@ -6190,7 +6190,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   SDValue EltNo = N->getOperand(1);
 
   if (isa<ConstantSDNode>(EltNo)) {
-    unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
+    int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
     bool NewLoad = false;
     bool BCNumEltsChanged = false;
     EVT VT = InVec.getValueType();
@@ -6228,7 +6228,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 
       // Select the input vector, guarding against out of range extract vector.
       unsigned NumElems = VT.getVectorNumElements();
-      int Idx = (Elt > NumElems) ? -1 : SVN->getMaskElt(Elt);
+      int Idx = (Elt > (int)NumElems) ? -1 : SVN->getMaskElt(Elt);
       InVec = (Idx < (int)NumElems) ? InVec.getOperand(0) : InVec.getOperand(1);
 
       if (InVec.getOpcode() == ISD::BIT_CONVERT)
@@ -6257,7 +6257,11 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 
     SDValue NewPtr = LN0->getBasePtr();
     unsigned PtrOff = 0;
-    if (Elt) {
+    // If Idx was -1 above, Elt is going to be -1, so just use undef as our
+    // new pointer.
+    if (Elt == -1) {
+      NewPtr = DAG.getUNDEF(NewPtr.getValueType());
+    } else if (Elt) {
       PtrOff = LVT.getSizeInBits() * Elt / 8;
       EVT PtrType = NewPtr.getValueType();
       if (TLI.isBigEndian())
