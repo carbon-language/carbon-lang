@@ -398,7 +398,7 @@ def addrmode_imm12 : Operand<i32>,
   // #0 and #-0 differently. We flag #-0 as the magic value INT32_MIN. All other
   // immediate values are as normal.
 
-  string EncoderMethod = "getAddrModeImmOpValue";
+  string EncoderMethod = "getAddrModeImm12OpValue";
   let PrintMethod = "printAddrModeImm12Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
@@ -462,7 +462,7 @@ def addrmode5 : Operand<i32>,
   let PrintMethod = "printAddrMode5Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm);
   let ParserMatchClass = ARMMemMode5AsmOperand;
-  string EncoderMethod = "getAddrModeImmOpValue";
+  string EncoderMethod = "getAddrMode5OpValue";
 }
 
 // addrmode6 := reg with optional writeback
@@ -828,20 +828,20 @@ multiclass AI_ldr1<bit opc22, string opc, InstrItinClass iii,
   def i12 : AIldst1<0b010, opc22, 1, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
                    AddrMode_i12, LdFrm, iii, opc, "\t$Rt, $addr",
                   [(set GPR:$Rt, (opnode addrmode_imm12:$addr))]> {
-    bits<4> Rt;
-    bits<32> addr;
-    let Inst{23}    = addr{16};     // U (add = ('U' == 1))
-    let Inst{19-16} = addr{20-17};  // Rn
+    bits<4>  Rt;
+    bits<17> addr;
+    let Inst{23}    = addr{12};     // U (add = ('U' == 1))
+    let Inst{19-16} = addr{16-13};  // Rn
     let Inst{15-12} = Rt;
     let Inst{11-0}  = addr{11-0};   // imm12
   }
   def rs : AIldst1<0b011, opc22, 1, (outs GPR:$Rt), (ins ldst_so_reg:$shift),
                   AddrModeNone, LdFrm, iir, opc, "\t$Rt, $shift",
                  [(set GPR:$Rt, (opnode ldst_so_reg:$shift))]> {
-    bits<4> Rt;
-    bits<32> shift;
-    let Inst{23}    = shift{16};    // U (add = ('U' == 1))
-    let Inst{19-16} = shift{20-17}; // Rn
+    bits<4>  Rt;
+    bits<17> shift;
+    let Inst{23}    = shift{12};    // U (add = ('U' == 1))
+    let Inst{19-16} = shift{16-13}; // Rn
     let Inst{11-0}  = shift{11-0};
   }
 }

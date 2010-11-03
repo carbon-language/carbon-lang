@@ -310,7 +310,7 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
   if (unsigned ImmOffs = ARM_AM::getAM5Offset(MO2.getImm())) {
     O << ", #"
       << ARM_AM::getAddrOpcStr(ARM_AM::getAM5Op(MO2.getImm()))
-      << ImmOffs*4;
+      << ImmOffs * 4;
   }
   O << "]";
 }

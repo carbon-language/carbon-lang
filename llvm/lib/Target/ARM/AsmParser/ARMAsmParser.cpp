@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
+#include "ARMAddressingModes.h"
 #include "ARMSubtarget.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -260,16 +261,25 @@ public:
 
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     assert(!Mem.OffsetIsReg && "invalid mode 5 operand");
+
     // FIXME: #-0 is encoded differently than #0. Does the parser preserve
     // the difference?
     if (Mem.Offset) {
       const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
-      assert(CE && "non-constant mode 5 offset operand!");
+      assert(CE && "Non-constant mode 5 offset operand!");
+
       // The MCInst offset operand doesn't include the low two bits (like
       // the instruction encoding).
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
-    } else
+      int64_t Offset = CE->getValue() / 4;
+      if (Offset >= 0)
+        Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::add,
+                                                               Offset)));
+      else
+        Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::sub,
+                                                               -Offset)));
+    } else {
       Inst.addOperand(MCOperand::CreateImm(0));
+    }
   }
 
   virtual void dump(raw_ostream &OS) const;

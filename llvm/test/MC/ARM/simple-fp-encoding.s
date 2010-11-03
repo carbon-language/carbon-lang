@@ -162,8 +162,9 @@
         vldr.64	d17, [r0]
 
 @ CHECK: vldr.64 d1, [r2, #32]       @ encoding: [0x08,0x1b,0x92,0xed]
+@ CHECK: vldr.64 d1, [r2, #-32]      @ encoding: [0x08,0x1b,0x12,0xed]
         vldr.64	d1, [r2, #32]
-
+        vldr.64	d1, [r2, #-32]
         
 @ CHECK: vldr.64 d2, [r3]            @ encoding: [0x00,0x2b,0x93,0xed]
         vldr.64 d2, [r3]
@@ -174,3 +175,21 @@
         vldr.64 d3, [pc]
         vldr.64 d3, [pc,#0]
         vldr.64 d3, [pc,#-0]
+
+@ CHECK: vldr.32 s13, [r0]           @ encoding: [0x00,0x6a,0xd0,0xed]
+        vldr.32	s13, [r0]
+
+@ CHECK: vldr.32 s1, [r2, #32]       @ encoding: [0x08,0x0a,0xd2,0xed]
+@ CHECK: vldr.32 s1, [r2, #-32]      @ encoding: [0x08,0x0a,0x52,0xed]
+        vldr.32	s1, [r2, #32]
+        vldr.32	s1, [r2, #-32]
+        
+@ CHECK: vldr.32 s2, [r3]            @ encoding: [0x00,0x1a,0x93,0xed]
+        vldr.32 s2, [r3]
+
+@ CHECK: vldr.32 s5, [pc]            @ encoding: [0x00,0x2a,0xdf,0xed]
+@ CHECK: vldr.32 s5, [pc]            @ encoding: [0x00,0x2a,0xdf,0xed]
+@ CHECK: vldr.32 s5, [pc]            @ encoding: [0x00,0x2a,0xdf,0xed]
+        vldr.32 s5, [pc]
+        vldr.32 s5, [pc,#0]
+        vldr.32 s5, [pc,#-0]

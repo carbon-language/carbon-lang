@@ -49,8 +49,15 @@ public:
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO) const;
 
-  /// getAddrModeImmOpValue - Return encoding info for 'reg +/- imm' operand.
-  uint32_t getAddrModeImmOpValue(const MCInst &MI, unsigned Op) const;
+  bool EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx,
+                              unsigned &Reg, unsigned &Imm) const;
+
+  /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
+  /// operand.
+  uint32_t getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx) const;
+
+  /// getAddrMode5OpValue - Return encoding info for 'reg +/- imm8' operand.
+  uint32_t getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx) const;
 
   /// getCCOutOpValue - Return encoding of the 's' bit.
   unsigned getCCOutOpValue(const MCInst &MI, unsigned Op) const {
@@ -170,37 +177,76 @@ unsigned ARMMCCodeEmitter::getMachineOpValue(const MCInst &MI,
 }
 
 /// getAddrModeImmOpValue - Return encoding info for 'reg +/- imm' operand.
-uint32_t ARMMCCodeEmitter::getAddrModeImmOpValue(const MCInst &MI,
-                                                 unsigned OpIdx) const {
-  // {20-17} = reg
-  // {16}    = (U)nsigned (add == '1', sub == '0')
-  // {15-0}  = imm
+bool ARMMCCodeEmitter::EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx,
+                                              unsigned &Reg,
+                                              unsigned &Imm) const {
   const MCOperand &MO  = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
-  uint32_t Binary = 0;
 
   // If The first operand isn't a register, we have a label reference.
   if (!MO.isReg()) {
-    Binary |= ARM::PC << 17;     // Rn is PC.
+    Reg = ARM::PC;              // Rn is PC.
+    Imm = 0;
     // FIXME: Add a fixup referencing the label.
-    return Binary;
+    return true;
   }
 
-  unsigned Reg = getARMRegisterNumbering(MO.getReg());
-  int32_t Imm = MO1.getImm();
-  bool isAdd = Imm >= 0;
+  Reg = getARMRegisterNumbering(MO.getReg());
+
+  int32_t SImm = MO1.getImm();
+  bool isAdd = true;
 
   // Special value for #-0
-  if (Imm == INT32_MIN)
-    Imm = 0;
+  if (SImm == INT32_MIN)
+    SImm = 0;
 
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
-  if (Imm < 0) Imm = -Imm;
+  if (SImm < 0) {
+    SImm = -SImm;
+    isAdd = false;
+  }
 
-  Binary = Imm & 0xffff;
+  Imm = SImm;
+  return isAdd;
+}
+
+/// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12' operand.
+uint32_t ARMMCCodeEmitter::getAddrModeImm12OpValue(const MCInst &MI,
+                                                   unsigned OpIdx) const {
+  // {17-13} = reg
+  // {12}    = (U)nsigned (add == '1', sub == '0')
+  // {11-0}  = imm12
+  unsigned Reg, Imm12;
+  bool isAdd = EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm12);
+
+  if (Reg == ARM::PC)
+    return ARM::PC << 13;       // Rn is PC;
+
+  uint32_t Binary = Imm12 & 0xfff;
+  // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
   if (isAdd)
-    Binary |= (1 << 16);
-  Binary |= (Reg << 17);
+    Binary |= (1 << 12);
+  Binary |= (Reg << 13);
+  return Binary;
+}
+
+/// getAddrMode5OpValue - Return encoding info for 'reg +/- imm12' operand.
+uint32_t ARMMCCodeEmitter::getAddrMode5OpValue(const MCInst &MI,
+                                               unsigned OpIdx) const {
+  // {12-9} = reg
+  // {8}    = (U)nsigned (add == '1', sub == '0')
+  // {7-0}  = imm8
+  unsigned Reg, Imm8;
+  EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm8);
+
+  if (Reg == ARM::PC)
+    return ARM::PC << 13;       // Rn is PC;
+
+  uint32_t Binary = ARM_AM::getAM5Offset(Imm8);
+  // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
+  if (ARM_AM::getAM5Op(Imm8) == ARM_AM::add)
+    Binary |= (1 << 8);
+  Binary |= (Reg << 9);
   return Binary;
 }
 
