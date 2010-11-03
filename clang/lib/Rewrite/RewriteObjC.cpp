@@ -423,6 +423,7 @@ namespace {
       return false;
     }
     bool PointerTypeTakesAnyBlockArguments(QualType QT);
+    bool PointerTypeTakesAnyObjCQualifiedType(QualType QT);
     void GetExtentOfArgList(const char *Name, const char *&LParen,
                             const char *&RParen);
     void RewriteCastExpr(CStyleCastExpr *CE);
@@ -4888,6 +4889,26 @@ bool RewriteObjC::PointerTypeTakesAnyBlockArguments(QualType QT) {
   return false;
 }
 
+bool RewriteObjC::PointerTypeTakesAnyObjCQualifiedType(QualType QT) {
+  const FunctionProtoType *FTP;
+  const PointerType *PT = QT->getAs<PointerType>();
+  if (PT) {
+    FTP = PT->getPointeeType()->getAs<FunctionProtoType>();
+  } else {
+    const BlockPointerType *BPT = QT->getAs<BlockPointerType>();
+    assert(BPT && "BlockPointerTypeTakeAnyBlockArguments(): not a block pointer type");
+    FTP = BPT->getPointeeType()->getAs<FunctionProtoType>();
+  }
+  if (FTP) {
+    for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
+         E = FTP->arg_type_end(); I != E; ++I)
+      if ((*I)->isObjCQualifiedIdType() ||
+          (*I)->isObjCQualifiedInterfaceType())
+        return true;
+  }
+  return false;
+}
+
 void RewriteObjC::GetExtentOfArgList(const char *Name, const char *&LParen,
                                      const char *&RParen) {
   const char *argPtr = strchr(Name, '(');
@@ -4931,28 +4952,57 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
   // scan backward (from the decl location) for the end of the previous decl.
   while (*startBuf != '^' && *startBuf != ';' && startBuf != MainFileStart)
     startBuf--;
-
+  SourceLocation Start = DeclLoc.getFileLocWithOffset(startBuf-endBuf);
+  std::string buf;
+  unsigned OrigLength=0;
   // *startBuf != '^' if we are dealing with a pointer to function that
   // may take block argument types (which will be handled below).
   if (*startBuf == '^') {
     // Replace the '^' with '*', computing a negative offset.
-    DeclLoc = DeclLoc.getFileLocWithOffset(startBuf-endBuf);
-    ReplaceText(DeclLoc, 1, "*");
+    buf = '*';
+    startBuf++;
+    OrigLength++;
   }
-  if (PointerTypeTakesAnyBlockArguments(DeclT)) {
+  while (*startBuf != ')') {
+    buf += *startBuf;
+    startBuf++;
+    OrigLength++;
+  }
+  buf += ')';
+  OrigLength++;
+  
+  if (PointerTypeTakesAnyBlockArguments(DeclT) ||
+      PointerTypeTakesAnyObjCQualifiedType(DeclT)) {
     // Replace the '^' with '*' for arguments.
+    // Replace id<P> with id/*<>*/
     DeclLoc = ND->getLocation();
     startBuf = SM->getCharacterData(DeclLoc);
     const char *argListBegin, *argListEnd;
     GetExtentOfArgList(startBuf, argListBegin, argListEnd);
     while (argListBegin < argListEnd) {
-      if (*argListBegin == '^') {
-        SourceLocation CaretLoc = DeclLoc.getFileLocWithOffset(argListBegin-startBuf);
-        ReplaceText(CaretLoc, 1, "*");
+      if (*argListBegin == '^')
+        buf += '*';
+      else if (*argListBegin ==  '<') {
+        buf += "/*"; 
+        buf += *argListBegin++;
+        OrigLength++;;
+        while (*argListBegin != '>') {
+          buf += *argListBegin++;
+          OrigLength++;
+        }
+        buf += *argListBegin;
+        buf += "*/";
       }
+      else
+        buf += *argListBegin;
       argListBegin++;
+      OrigLength++;
     }
+    buf += ')';
+    OrigLength++;
   }
+  ReplaceText(Start, OrigLength, buf);
+  
   return;
 }
 
