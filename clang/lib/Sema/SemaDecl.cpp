@@ -4757,8 +4757,18 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
       << Context.getTypeDeclType(OwnedDecl);
   }
 
+  // Ensure we have a valid name
+  IdentifierInfo *II = 0;
+  if (D.hasName()) {
+    II = D.getIdentifier();
+    if (!II) {
+      Diag(D.getIdentifierLoc(), diag::err_bad_parameter_name)
+        << GetNameForDeclarator(D).getName().getAsString();
+      D.setInvalidType(true);
+    }
+  }
+
   // Check for redeclaration of parameters, e.g. int foo(int x, int x);
-  IdentifierInfo *II = D.getIdentifier();
   if (II) {
     LookupResult R(*this, II, D.getIdentifierLoc(), LookupOrdinaryName,
                    ForRedeclaration);
