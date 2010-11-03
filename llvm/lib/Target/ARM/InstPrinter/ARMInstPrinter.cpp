@@ -475,20 +475,10 @@ void ARMInstPrinter::printSBitModifierOperand(const MCInst *MI, unsigned OpNum,
   }
 }
 
-
-
-void ARMInstPrinter::printCPInstOperand(const MCInst *MI, unsigned OpNum,
-                                        raw_ostream &O,
-                                        const char *Modifier) {
-  // FIXME: remove this.
-  abort();
-}
-
 void ARMInstPrinter::printNoHashImmediate(const MCInst *MI, unsigned OpNum,
                                           raw_ostream &O) {
   O << MI->getOperand(OpNum).getImm();
 }
-
 
 void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O) {

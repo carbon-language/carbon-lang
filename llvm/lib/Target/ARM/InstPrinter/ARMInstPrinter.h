@@ -100,8 +100,6 @@ public:
   void printSBitModifierOperand(const MCInst *MI, unsigned OpNum,
                                 raw_ostream &O);
   void printRegisterList(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printCPInstOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O,
-                          const char *Modifier);
   // The jump table instructions have custom handling in ARMAsmPrinter
   // to output the jump table. Nothing further is necessary here.
   void printJTBlockOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O) {}
