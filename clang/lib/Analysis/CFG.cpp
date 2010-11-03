@@ -258,6 +258,8 @@ private:
   CFGBlock *VisitBlockExpr(BlockExpr* E, AddStmtChoice asc);
   CFGBlock *VisitBreakStmt(BreakStmt *B);
   CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
+  CFGBlock *VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E,
+      AddStmtChoice asc);
   CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
   CFGBlock *VisitCXXTryStmt(CXXTryStmt *S);
   CFGBlock *VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E, 
@@ -275,7 +277,7 @@ private:
   CFGBlock *VisitConditionalOperator(ConditionalOperator *C, AddStmtChoice asc);
   CFGBlock *VisitContinueStmt(ContinueStmt *C);
   CFGBlock *VisitDeclStmt(DeclStmt *DS);
-  CFGBlock *VisitDeclSubExpr(Decl* D);
+  CFGBlock *VisitDeclSubExpr(DeclStmt* DS);
   CFGBlock *VisitDefaultStmt(DefaultStmt *D);
   CFGBlock *VisitDoStmt(DoStmt *D);
   CFGBlock *VisitForStmt(ForStmt *F);
@@ -299,6 +301,16 @@ private:
   CFGBlock *Visit(Stmt *S, AddStmtChoice asc = AddStmtChoice::NotAlwaysAdd);
   CFGBlock *VisitStmt(Stmt *S, AddStmtChoice asc);
   CFGBlock *VisitChildren(Stmt* S);
+
+  // Visitors to walk an AST and generate destructors of temporaries in
+  // full expression.
+  CFGBlock *VisitForTemporaryDtors(Stmt *E, bool BindToTemporary = false);
+  CFGBlock *VisitChildrenForTemporaryDtors(Stmt *E);
+  CFGBlock *VisitBinaryOperatorForTemporaryDtors(BinaryOperator *E);
+  CFGBlock *VisitCXXBindTemporaryExprForTemporaryDtors(CXXBindTemporaryExpr *E,
+      bool BindToTemporary);
+  CFGBlock *VisitConditionalOperatorForTemporaryDtors(ConditionalOperator *E,
+      bool BindToTemporary);
 
   // NYS == Not Yet Supported
   CFGBlock* NYS() {
@@ -339,6 +351,9 @@ private:
   }
   void appendMemberDtor(CFGBlock *B, FieldDecl *FD) {
     B->appendMemberDtor(FD, cfg->getBumpVectorContext());
+  }
+  void appendTemporaryDtor(CFGBlock *B, CXXBindTemporaryExpr *E) {
+    B->appendTemporaryDtor(E, cfg->getBumpVectorContext());
   }
 
   void insertAutomaticObjDtors(CFGBlock* Blk, CFGBlock::iterator I,
@@ -498,18 +513,38 @@ CFGBlock *CFGBuilder::addInitializer(CXXBaseOrMemberInitializer *I) {
   if (!BuildOpts.AddInitializers)
     return Block;
 
+  bool IsReference = false;
+  bool HasTemporaries = false;
+
+  // Destructors of temporaries in initialization expression should be called
+  // after initialization finishes.
+  Expr *Init = I->getInit();
+  if (Init) {
+    if (FieldDecl *FD = I->getMember())
+      IsReference = FD->getType()->isReferenceType();
+    HasTemporaries = isa<CXXExprWithTemporaries>(Init);
+
+    if (BuildOpts.AddImplicitDtors && HasTemporaries) {
+      // Generate destructors for temporaries in initialization expression.
+      VisitForTemporaryDtors(cast<CXXExprWithTemporaries>(Init)->getSubExpr(),
+          IsReference);
+    }
+  }
+
   autoCreateBlock();
   appendInitializer(Block, I);
 
-  if (Expr *Init = I->getInit()) {
-    AddStmtChoice::Kind K = AddStmtChoice::NotAlwaysAdd;
-    if (FieldDecl *FD = I->getMember())
-      if (FD->getType()->isReferenceType())
-        K = AddStmtChoice::AsLValueNotAlwaysAdd;
-
-    return Visit(Init, AddStmtChoice(K));
+  if (Init) {
+    AddStmtChoice asc = IsReference
+        ? AddStmtChoice::AsLValueNotAlwaysAdd
+        : AddStmtChoice::NotAlwaysAdd;
+    if (HasTemporaries)
+      // For expression with temporaries go directly to subexpression to omit
+      // generating destructors for the second time.
+      return Visit(cast<CXXExprWithTemporaries>(Init)->getSubExpr(), asc);
+    return Visit(Init, asc);
   }
-  
+
   return Block;
 }
 
@@ -763,11 +798,8 @@ tryAgain:
     case Stmt::CXXCatchStmtClass:
       return VisitCXXCatchStmt(cast<CXXCatchStmt>(S));
 
-    case Stmt::CXXExprWithTemporariesClass: {
-      // FIXME: Handle temporaries.  For now, just visit the subexpression
-      // so we don't artificially create extra blocks.
-      return Visit(cast<CXXExprWithTemporaries>(S)->getSubExpr(), asc);
-    }
+    case Stmt::CXXExprWithTemporariesClass:
+      return VisitCXXExprWithTemporaries(cast<CXXExprWithTemporaries>(S), asc);
 
     case Stmt::CXXBindTemporaryExprClass:
       return VisitCXXBindTemporaryExpr(cast<CXXBindTemporaryExpr>(S), asc);
@@ -1184,12 +1216,8 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
 }
 
 CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {
-  autoCreateBlock();
-
-  if (DS->isSingleDecl()) {
-    AppendStmt(Block, DS);
-    return VisitDeclSubExpr(DS->getSingleDecl());
-  }
+  if (DS->isSingleDecl())
+    return VisitDeclSubExpr(DS);
 
   CFGBlock *B = 0;
 
@@ -1210,30 +1238,55 @@ CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {
     DeclStmt *DSNew = new (Mem) DeclStmt(DG, D->getLocation(), GetEndLoc(D));
 
     // Append the fake DeclStmt to block.
-    AppendStmt(Block, DSNew);
-    B = VisitDeclSubExpr(D);
+    B = VisitDeclSubExpr(DSNew);
   }
 
   return B;
 }
 
 /// VisitDeclSubExpr - Utility method to add block-level expressions for
-///  initializers in Decls.
-CFGBlock *CFGBuilder::VisitDeclSubExpr(Decl* D) {
-  assert(Block);
+/// DeclStmts and initializers in them.
+CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt* DS) {
+  assert(DS->isSingleDecl() && "Can handle single declarations only.");
 
-  VarDecl *VD = dyn_cast<VarDecl>(D);
+  VarDecl *VD = dyn_cast<VarDecl>(DS->getSingleDecl());
 
-  if (!VD)
+  if (!VD) {
+    autoCreateBlock();
+    AppendStmt(Block, DS);
     return Block;
+  }
 
+  bool IsReference = false;
+  bool HasTemporaries = false;
+
+  // Destructors of temporaries in initialization expression should be called
+  // after initialization finishes.
   Expr *Init = VD->getInit();
+  if (Init) {
+    IsReference = VD->getType()->isReferenceType();
+    HasTemporaries = isa<CXXExprWithTemporaries>(Init);
+
+    if (BuildOpts.AddImplicitDtors && HasTemporaries) {
+      // Generate destructors for temporaries in initialization expression.
+      VisitForTemporaryDtors(cast<CXXExprWithTemporaries>(Init)->getSubExpr(),
+          IsReference);
+    }
+  }
+
+  autoCreateBlock();
+  AppendStmt(Block, DS);
 
   if (Init) {
-    AddStmtChoice::Kind k =
-      VD->getType()->isReferenceType() ? AddStmtChoice::AsLValueNotAlwaysAdd
-                                       : AddStmtChoice::NotAlwaysAdd;
-    Visit(Init, AddStmtChoice(k));
+    AddStmtChoice asc = IsReference
+          ? AddStmtChoice::AsLValueNotAlwaysAdd
+          : AddStmtChoice::NotAlwaysAdd;
+    if (HasTemporaries)
+      // For expression with temporaries go directly to subexpression to omit
+      // generating destructors for the second time.
+      Visit(cast<CXXExprWithTemporaries>(Init)->getSubExpr(), asc);
+    else
+      Visit(Init, asc);
   }
 
   // If the type of VD is a VLA, then we must process its size expressions.
@@ -2305,6 +2358,22 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
   return CatchBlock;
 }
 
+CFGBlock *CFGBuilder::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E,
+    AddStmtChoice asc) {
+  if (BuildOpts.AddImplicitDtors) {
+    // If adding implicit destructors visit the full expression for adding
+    // destructors of temporaries.
+    VisitForTemporaryDtors(E->getSubExpr());
+
+    // Full expression has to be added as CFGStmt so it will be sequenced
+    // before destructors of it's temporaries.
+    asc = asc.asLValue()
+        ? AddStmtChoice::AlwaysAddAsLValue
+        : AddStmtChoice::AlwaysAdd;
+  }
+  return Visit(E->getSubExpr(), asc);
+}
+
 CFGBlock *CFGBuilder::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E,
                                                 AddStmtChoice asc) {
   if (asc.alwaysAdd()) {
@@ -2387,6 +2456,196 @@ CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
   Block->setTerminator(I);
   AddSuccessor(Block, IBlock);
   return addStmt(I->getTarget());
+}
+
+CFGBlock *CFGBuilder::VisitForTemporaryDtors(Stmt *E, bool BindToTemporary) {
+tryAgain:
+  if (!E) {
+    badCFG = true;
+    return NULL;
+  }
+  switch (E->getStmtClass()) {
+    default:
+      return VisitChildrenForTemporaryDtors(E);
+
+    case Stmt::BinaryOperatorClass:
+      return VisitBinaryOperatorForTemporaryDtors(cast<BinaryOperator>(E));
+
+    case Stmt::CXXBindTemporaryExprClass:
+      return VisitCXXBindTemporaryExprForTemporaryDtors(
+          cast<CXXBindTemporaryExpr>(E), BindToTemporary);
+
+    case Stmt::ConditionalOperatorClass:
+      return VisitConditionalOperatorForTemporaryDtors(
+          cast<ConditionalOperator>(E), BindToTemporary);
+
+    case Stmt::ImplicitCastExprClass:
+      // For implicit cast we want BindToTemporary to be passed further.
+      E = cast<CastExpr>(E)->getSubExpr();
+      goto tryAgain;
+
+    case Stmt::ParenExprClass:
+      E = cast<ParenExpr>(E)->getSubExpr();
+      goto tryAgain;
+  }
+}
+
+CFGBlock *CFGBuilder::VisitChildrenForTemporaryDtors(Stmt *E) {
+  // When visiting children for destructors we want to visit them in reverse
+  // order. Because there's no reverse iterator for children must to reverse
+  // them in helper vector.
+  typedef llvm::SmallVector<Stmt *, 4> ChildrenVect;
+  ChildrenVect ChildrenRev;
+  for (Stmt::child_iterator I = E->child_begin(), L = E->child_end();
+      I != L; ++I) {
+    if (*I) ChildrenRev.push_back(*I);
+  }
+
+  CFGBlock *B = Block;
+  for (ChildrenVect::reverse_iterator I = ChildrenRev.rbegin(),
+      L = ChildrenRev.rend(); I != L; ++I) {
+    if (CFGBlock *R = VisitForTemporaryDtors(*I))
+      B = R;
+  }
+  return B;
+}
+
+CFGBlock *CFGBuilder::VisitBinaryOperatorForTemporaryDtors(BinaryOperator *E) {
+  if (E->isLogicalOp()) {
+    // Destructors for temporaries in LHS expression should be called after
+    // those for RHS expression. Even if this will unnecessarily create a block,
+    // this block will be used at least by the full expression.
+    autoCreateBlock();
+    CFGBlock *ConfluenceBlock = VisitForTemporaryDtors(E->getLHS());
+    if (badCFG)
+      return NULL;
+
+    Succ = ConfluenceBlock;
+    Block = NULL;
+    CFGBlock *RHSBlock = VisitForTemporaryDtors(E->getRHS());
+
+    if (RHSBlock) {
+      if (badCFG)
+        return NULL;
+
+      // If RHS expression did produce destructors we need to connect created
+      // blocks to CFG in same manner as for binary operator itself.
+      CFGBlock *LHSBlock = createBlock(false);
+      LHSBlock->setTerminator(CFGTerminator(E, true));
+
+      // For binary operator LHS block is before RHS in list of predecessors
+      // of ConfluenceBlock.
+      std::reverse(ConfluenceBlock->pred_begin(),
+          ConfluenceBlock->pred_end());
+
+      // See if this is a known constant.
+      TryResult KnownVal = TryEvaluateBool(E->getLHS());
+      if (KnownVal.isKnown() && (E->getOpcode() == BO_LOr))
+        KnownVal.negate();
+
+      // Link LHSBlock with RHSBlock exactly the same way as for binary operator
+      // itself.
+      if (E->getOpcode() == BO_LOr) {
+        AddSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
+        AddSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
+      } else {
+        assert (E->getOpcode() == BO_LAnd);
+        AddSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
+        AddSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
+      }
+
+      Block = LHSBlock;
+      return LHSBlock;
+    }
+
+    Block = ConfluenceBlock;
+    return ConfluenceBlock;
+  }
+
+  else if (E->isAssignmentOp()) {
+    // For assignment operator (=) LHS expression is visited
+    // before RHS expression. For destructors visit them in reverse order.
+    CFGBlock *RHSBlock = VisitForTemporaryDtors(E->getRHS());
+    CFGBlock *LHSBlock = VisitForTemporaryDtors(E->getLHS());
+    return LHSBlock ? LHSBlock : RHSBlock;
+  }
+
+  // For any other binary operator RHS expression is visited before
+  // LHS expression (order of children). For destructors visit them in reverse
+  // order.
+  CFGBlock *LHSBlock = VisitForTemporaryDtors(E->getLHS());
+  CFGBlock *RHSBlock = VisitForTemporaryDtors(E->getRHS());
+  return RHSBlock ? RHSBlock : LHSBlock;
+}
+
+CFGBlock *CFGBuilder::VisitCXXBindTemporaryExprForTemporaryDtors(
+    CXXBindTemporaryExpr *E, bool BindToTemporary) {
+  // First add destructors for temporaries in subexpression.
+  CFGBlock *B = VisitForTemporaryDtors(E->getSubExpr());
+  if (!BindToTemporary) {
+    // If lifetime of temporary is not prolonged (by assigning to constant
+    // reference) add destructor for it.
+    autoCreateBlock();
+    appendTemporaryDtor(Block, E);
+    B = Block;
+  }
+  return B;
+}
+
+CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
+    ConditionalOperator *E, bool BindToTemporary) {
+  // First add destructors for condition expression.  Even if this will
+  // unnecessarily create a block, this block will be used at least by the full
+  // expression.
+  autoCreateBlock();
+  CFGBlock *ConfluenceBlock = VisitForTemporaryDtors(E->getCond());
+  if (badCFG)
+    return NULL;
+
+  // Try to add block with destructors for LHS expression.
+  CFGBlock *LHSBlock = NULL;
+  if (E->getLHS()) {
+    Succ = ConfluenceBlock;
+    Block = NULL;
+    LHSBlock = VisitForTemporaryDtors(E->getLHS(), BindToTemporary);
+    if (badCFG)
+      return NULL;
+  }
+
+  // Try to add block with destructors for RHS expression;
+  Succ = ConfluenceBlock;
+  Block = NULL;
+  CFGBlock *RHSBlock = VisitForTemporaryDtors(E->getRHS(), BindToTemporary);
+  if (badCFG)
+    return NULL;
+
+  if (!RHSBlock && !LHSBlock) {
+    // If neither LHS nor RHS expression had temporaries to destroy don't create
+    // more blocks.
+    Block = ConfluenceBlock;
+    return Block;
+  }
+
+  Block = createBlock(false);
+  Block->setTerminator(CFGTerminator(E, true));
+
+  // See if this is a known constant.
+  const TryResult &KnownVal = TryEvaluateBool(E->getCond());
+
+  if (LHSBlock) {
+    AddSuccessor(Block, KnownVal.isFalse() ? NULL : LHSBlock);
+  } else if (KnownVal.isFalse()) {
+    AddSuccessor(Block, NULL);
+  } else {
+    AddSuccessor(Block, ConfluenceBlock);
+    std::reverse(ConfluenceBlock->pred_begin(), ConfluenceBlock->pred_end());
+  }
+
+  if (!RHSBlock)
+    RHSBlock = ConfluenceBlock;
+  AddSuccessor(Block, KnownVal.isTrue() ? NULL : RHSBlock);
+
+  return Block;
 }
 
 } // end anonymous namespace
@@ -2828,6 +3087,11 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     OS << "this->" << FD->getName();
     OS << ".~" << T->getAsCXXRecordDecl()->getName() << "()";
     OS << " (Member object destructor)\n";
+
+  } else if (CFGTemporaryDtor TE = E.getAs<CFGTemporaryDtor>()) {
+    CXXBindTemporaryExpr *BT = TE.getBindTemporaryExpr();
+    OS << "~" << BT->getType()->getAsCXXRecordDecl()->getName() << "()";
+    OS << " (Temporary object destructor)\n";
   }
 }
 

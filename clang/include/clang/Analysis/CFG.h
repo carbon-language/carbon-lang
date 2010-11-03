@@ -35,6 +35,7 @@ namespace clang {
   class VarDecl;
   class CXXBaseOrMemberInitializer;
   class CXXBaseSpecifier;
+  class CXXBindTemporaryExpr;
   class CFG;
   class PrinterHelper;
   class LangOptions;
@@ -198,8 +199,18 @@ public:
   }
 };
 
+/// CFGTemporaryDtor - Represents C++ object destructor implicitly generated
+/// at the end of full expression for temporary object.
 class CFGTemporaryDtor : public CFGImplicitDtor {
 public:
+  CFGTemporaryDtor() {}
+  CFGTemporaryDtor(CXXBindTemporaryExpr *E)
+      : CFGImplicitDtor(TemporaryDtor, E, NULL) {}
+
+  CXXBindTemporaryExpr *getBindTemporaryExpr() const {
+    return static_cast<CXXBindTemporaryExpr *>(Data1.getPointer());
+  }
+
   static bool classof(const CFGElement *E) {
     return E->getKind() == Dtor && E->getDtorKind() == TemporaryDtor;
   }
@@ -494,6 +505,10 @@ public:
 
   void appendMemberDtor(FieldDecl *FD, BumpVectorContext &C) {
     Elements.push_back(CFGMemberDtor(FD), C);
+  }
+  
+  void appendTemporaryDtor(CXXBindTemporaryExpr *E, BumpVectorContext &C) {
+    Elements.push_back(CFGTemporaryDtor(E), C);
   }
 
   // Destructors must be inserted in reversed order. So insertion is in two
