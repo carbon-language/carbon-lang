@@ -116,16 +116,14 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
  }
 
 void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
-                                  raw_ostream &O, const char *Modifier) {
+                                  raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
     unsigned Reg = Op.getReg();
     O << getRegisterName(Reg);
   } else if (Op.isImm()) {
-    assert((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported");
     O << '#' << Op.getImm();
   } else {
-    assert((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported");
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     O << *Op.getExpr();
   }
@@ -291,16 +289,14 @@ void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
 }
 
 void ARMInstPrinter::printLdStmModeOperand(const MCInst *MI, unsigned OpNum,
-                                           raw_ostream &O,
-                                           const char *Modifier) {
+                                           raw_ostream &O) {
   ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MI->getOperand(OpNum)
                                                  .getImm());
   O << ARM_AM::getAMSubModeStr(Mode);
 }
 
 void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
-                                           raw_ostream &O,
-                                           const char *Modifier) {
+                                           raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
 
@@ -343,8 +339,7 @@ void ARMInstPrinter::printAddrMode6OffsetOperand(const MCInst *MI,
 }
 
 void ARMInstPrinter::printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
-                                            raw_ostream &O,
-                                            const char *Modifier) {
+                                            raw_ostream &O) {
   // All instructions using addrmodepc are pseudos and should have been
   // handled explicitly in printInstructionThroughMCStreamer(). If one got
   // here, it wasn't, so something's wrong.

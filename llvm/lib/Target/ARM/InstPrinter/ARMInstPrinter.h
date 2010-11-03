@@ -33,8 +33,7 @@ public:
   static const char *getRegisterName(unsigned RegNo);
 
 
-  void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O,
-                    const char *Modifier = 0);
+  void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 
   void printSOImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printSOImm2PartOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
@@ -46,15 +45,12 @@ public:
   void printAddrMode3Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode3OffsetOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
-  void printLdStmModeOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O,
-                             const char *Modifier = 0);
-  void printAddrMode5Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O,
-                             const char *Modifier = 0);
+  void printLdStmModeOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printAddrMode5Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode6Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode6OffsetOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
-  void printAddrModePCOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O,
-                              const char *Modifier = 0);
+  void printAddrModePCOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printBitfieldInvMaskImmOperand(const MCInst *MI, unsigned OpNum,
                                       raw_ostream &O);
