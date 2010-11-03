@@ -83,6 +83,9 @@ private:
     void
     ClearBreakpoints ();
     
+    bool
+    BreakpointsExplainStop ();
+    
     bool                                            m_use_abi;
     bool                                            m_valid;
     bool                                            m_stop_other_threads;

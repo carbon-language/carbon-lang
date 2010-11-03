@@ -184,6 +184,11 @@ ThreadPlanCallFunction::PlanExplainsStop ()
     if(m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop())
         return true;
     
+    // Check if the breakpoint is one of ours.
+    
+    if (BreakpointsExplainStop())
+        return true;
+    
     // If we don't want to discard this plan, than any stop we don't understand should be propagated up the stack.
     if (!OkayToDiscard())
         return false;
@@ -203,21 +208,6 @@ ThreadPlanCallFunction::PlanExplainsStop ()
             for (uint32_t i = 0; i < num_owners; i++)
             {
                 Breakpoint &bp = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint();
-                break_id_t bid = bp.GetID();
-                
-                // Check if the breakpoint is one of ours.
-                
-                if (m_cxx_exception_bp_sp.get() &&
-                    bid == m_cxx_exception_bp_sp->GetID())
-                    return true;
-                
-                if (m_cxx_exception_alloc_bp_sp.get() &&
-                    bid == m_cxx_exception_alloc_bp_sp->GetID())
-                    return true;
-                
-                if (m_objc_exception_bp_sp.get() &&
-                    bid == m_objc_exception_bp_sp->GetID())
-                    return true;
                 
                 if (!bp.IsInternal())
                 {
@@ -342,8 +332,6 @@ ThreadPlanCallFunction::SetBreakpoints ()
     
     ArchSpec arch_spec = target.GetArchitecture();
     
-    // A temporary fix to set breakpoints at points where exceptions are being
-    // thrown.  This functionality will migrate into the Target.
     switch (arch_spec.GetCPUType())
     {
     default:
@@ -397,4 +385,65 @@ ThreadPlanCallFunction::ClearBreakpoints ()
         target.RemoveBreakpointByID(m_objc_exception_bp_sp->GetID());
         m_cxx_exception_bp_sp.reset();
     }
+}
+
+bool
+ThreadPlanCallFunction::BreakpointsExplainStop()
+{
+    // A temporary fix to set breakpoints at points where exceptions are being
+    // thrown.  This functionality will migrate into the Target.
+    
+    lldb::StopInfoSP stop_info_sp = GetPrivateStopReason();
+    
+    if (!stop_info_sp || 
+        stop_info_sp->GetStopReason() != eStopReasonBreakpoint)
+        return false;
+    
+    uint64_t break_site_id = stop_info_sp->GetValue();
+    lldb::BreakpointSiteSP bp_site_sp = m_thread.GetProcess().GetBreakpointSiteList().FindByID(break_site_id);
+    
+    if (!bp_site_sp)
+        return false;
+    
+    uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
+    
+    bool        check_cxx_exception = false;
+    break_id_t  cxx_exception_bid;
+    
+    bool        check_cxx_exception_alloc = false;
+    break_id_t  cxx_exception_alloc_bid;
+    
+    bool        check_objc_exception = false;
+    break_id_t  objc_exception_bid;
+    
+    if (m_cxx_exception_bp_sp.get())
+    {
+        check_cxx_exception = true;
+        cxx_exception_bid = m_cxx_exception_bp_sp->GetID();
+    }
+    
+    if (m_cxx_exception_bp_sp.get())
+    {
+        check_cxx_exception_alloc = true;
+        cxx_exception_alloc_bid = m_cxx_exception_alloc_bp_sp->GetID();
+    }
+    
+    if (m_cxx_exception_bp_sp.get())
+    {
+        check_objc_exception = true;
+        objc_exception_bid = m_objc_exception_bp_sp->GetID();
+    }
+        
+
+    for (uint32_t i = 0; i < num_owners; i++)
+    {
+        break_id_t bid = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().GetID();
+        
+        if ((check_cxx_exception        && (bid == cxx_exception_bid)) ||
+            (check_cxx_exception_alloc  && (bid == cxx_exception_alloc_bid)) ||
+            (check_objc_exception       && (bid == objc_exception_bid)))
+            return true;
+    }
+    
+    return false;
 }

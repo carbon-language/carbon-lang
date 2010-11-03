@@ -538,7 +538,7 @@ ClangFunction::ExecuteFunction (
         // Now wait for the process to stop again:
         bool got_event = listener.WaitForEvent (timeout_ptr, event_sp);
         
-        if (!got_event)
+        if (!got_event && !call_plan_sp->IsPlanComplete())
         {
             // Right now this is the only way to tell we've timed out...
             // We should interrupt the process here...

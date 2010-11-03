@@ -319,17 +319,17 @@ public:
     {
         return m_kind;
     }
+    
+    bool
+    IsPlanComplete();
+    
+    void
+    SetPlanComplete ();
 
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ThreadPlan can see and modify these
     //------------------------------------------------------------------
-
-    bool
-    IsPlanComplete();
-
-    void
-    SetPlanComplete ();
 
     // This gets the previous plan to the current plan (for forwarding requests).
     // This is mostly a formal requirement, it allows us to make the Thread's
