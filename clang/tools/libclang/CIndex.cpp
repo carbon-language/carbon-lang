@@ -1748,7 +1748,8 @@ bool CursorVisitor::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
 
 bool CursorVisitor::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
-    return Visit(TSInfo->getTypeLoc());
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
   
   return VisitExpr(E);
 }
@@ -2849,6 +2850,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
   if (SLoc.isInvalid())
     return clang_getNullCursor();
 
+  bool Logging = getenv("LIBCLANG_LOGGING");  
   SLoc = Lexer::GetBeginningOfToken(SLoc, CXXUnit->getSourceManager(),
                                     CXXUnit->getASTContext().getLangOptions());
   
@@ -2862,6 +2864,31 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
                             Decl::MaxPCHLevel, SourceLocation(SLoc));
     CursorVis.VisitChildren(Parent);
   }
+  
+  if (Logging) {
+    CXFile SearchFile;
+    unsigned SearchLine, SearchColumn;
+    CXFile ResultFile;
+    unsigned ResultLine, ResultColumn;
+    CXString SearchFileName, ResultFileName, KindSpelling;
+    CXSourceLocation ResultLoc = clang_getCursorLocation(Result);
+    
+    clang_getInstantiationLocation(Loc, &SearchFile, &SearchLine, &SearchColumn,
+                                   0);
+    clang_getInstantiationLocation(ResultLoc, &ResultFile, &ResultLine, 
+                                   &ResultColumn, 0);
+    SearchFileName = clang_getFileName(SearchFile);
+    ResultFileName = clang_getFileName(ResultFile);
+    KindSpelling = clang_getCursorKindSpelling(Result.kind);
+    fprintf(stderr, "clang_getCursor(%s:%d:%d) = %s(%s:%d:%d)\n",
+            clang_getCString(SearchFileName), SearchLine, SearchColumn,
+            clang_getCString(KindSpelling),
+            clang_getCString(ResultFileName), ResultLine, ResultColumn);
+    clang_disposeString(SearchFileName);
+    clang_disposeString(ResultFileName);
+    clang_disposeString(KindSpelling);
+  }
+
   return Result;
 }
 

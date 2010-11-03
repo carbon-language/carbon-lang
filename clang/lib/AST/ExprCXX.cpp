@@ -347,9 +347,22 @@ StmtIterator DependentScopeDeclRefExpr::child_end() {
 }
 
 SourceRange CXXConstructExpr::getSourceRange() const {
-  return ParenRange.isValid() ?
-      SourceRange(Loc, ParenRange.getEnd()) :
-      SourceRange(Loc);
+  if (ParenRange.isValid())
+    return SourceRange(Loc, ParenRange.getEnd());
+
+  SourceLocation End = Loc;
+  for (unsigned I = getNumArgs(); I > 0; --I) {
+    const Expr *Arg = getArg(I-1);
+    if (!Arg->isDefaultArgument()) {
+      SourceLocation NewEnd = Arg->getLocEnd();
+      if (NewEnd.isValid()) {
+        End = NewEnd;
+        break;
+      }
+    }
+  }
+
+  return SourceRange(Loc, End);
 }
 
 SourceRange CXXOperatorCallExpr::getSourceRange() const {

@@ -4032,7 +4032,9 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
                           CXXCastPath &BasePath,
                           bool FunctionalStyle) {
   if (getLangOptions().CPlusPlus)
-    return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, BasePath,
+    return CXXCheckCStyleCast(SourceRange(TyR.getBegin(),
+                                          castExpr->getLocEnd()), 
+                              castType, castExpr, Kind, BasePath,
                               FunctionalStyle);
 
   DefaultFunctionArrayLvalueConversion(castExpr);
