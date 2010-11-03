@@ -45,6 +45,21 @@ public:
     virtual lldb::ValueObjectSP
     GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope) = 0;
     
+    virtual void
+    SetExceptionBreakpoints ()
+    {
+    }
+    
+    virtual void
+    ClearExceptionBreakpoints ()
+    {
+    }
+    
+    virtual bool
+    ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
+    {
+        return false;
+    }
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from LanguageRuntime can see and modify these

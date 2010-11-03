@@ -65,9 +65,22 @@ namespace lldb_private {
         
         virtual lldb_private::Log *
         EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
+        
+        virtual void
+        SetExceptionBreakpoints ();
+        
+        virtual void
+        ClearExceptionBreakpoints ();
+        
+        virtual bool
+        ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason);
+        
     protected:
     private:
         ItaniumABILanguageRuntime(Process *process) : lldb_private::CPPLanguageRuntime(process) { } // Call CreateInstance instead.
+        
+        lldb::BreakpointSP                              m_cxx_exception_bp_sp;
+        lldb::BreakpointSP                              m_cxx_exception_alloc_bp_sp;
     };
     
 } // namespace lldb_private

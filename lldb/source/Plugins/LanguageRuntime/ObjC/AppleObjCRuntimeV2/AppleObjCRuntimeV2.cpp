@@ -10,8 +10,10 @@
 #include "AppleObjCRuntimeV2.h"
 #include "AppleObjCTrampolineHandler.h"
 
+#include "llvm/Support/MachO.h"
 #include "clang/AST/Type.h"
 
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
@@ -24,6 +26,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -285,4 +288,85 @@ Log *
 AppleObjCRuntimeV2::EnablePluginLogging (Stream *strm, Args &command)
 {
     return NULL;
+}
+
+void
+AppleObjCRuntimeV2::SetExceptionBreakpoints ()
+{
+    if (!m_process)
+        return;
+        
+    if (!m_objc_exception_bp_sp)
+    {
+        ArchSpec arch_spec = m_process->GetTarget().GetArchitecture();
+        
+        switch (arch_spec.GetCPUType())
+        {
+        default:
+            break;
+        case llvm::MachO::CPUTypeI386:
+            m_objc_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                              "objc_exception_throw",
+                                                                              eFunctionNameTypeBase, 
+                                                                              true);
+            break;
+        case llvm::MachO::CPUTypeX86_64:
+            m_objc_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                              "__cxa_throw",
+                                                                              eFunctionNameTypeBase, 
+                                                                              true);
+            break;
+        }
+    }
+}
+
+void
+AppleObjCRuntimeV2::ClearExceptionBreakpoints ()
+{
+    if (!m_process)
+        return;
+    
+    if (m_objc_exception_bp_sp.get())
+    {
+        m_process->GetTarget().RemoveBreakpointByID(m_objc_exception_bp_sp->GetID());
+        m_objc_exception_bp_sp.reset();
+    }
+}
+
+bool
+AppleObjCRuntimeV2::ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
+{
+    if (!m_process)
+        return false;
+    
+    if (!stop_reason || 
+        stop_reason->GetStopReason() != eStopReasonBreakpoint)
+        return false;
+    
+    uint64_t break_site_id = stop_reason->GetValue();
+    lldb::BreakpointSiteSP bp_site_sp = m_process->GetBreakpointSiteList().FindByID(break_site_id);
+    
+    if (!bp_site_sp)
+        return false;
+    
+    uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
+    
+    bool        check_objc_exception = false;
+    break_id_t  objc_exception_bid;
+    
+    if (m_objc_exception_bp_sp)
+    {
+        check_objc_exception = true;
+        objc_exception_bid = m_objc_exception_bp_sp->GetID();
+    }
+    
+    for (uint32_t i = 0; i < num_owners; i++)
+    {
+        break_id_t bid = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().GetID();
+        
+        if ((check_objc_exception && (bid == objc_exception_bid)))
+            return true;
+    }
+    
+    return false;
 }

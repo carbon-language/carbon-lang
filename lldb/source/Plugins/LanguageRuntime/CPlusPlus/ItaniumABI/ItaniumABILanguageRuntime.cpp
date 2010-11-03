@@ -9,6 +9,7 @@
 
 #include "ItaniumABILanguageRuntime.h"
 
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
@@ -17,6 +18,7 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -115,4 +117,90 @@ Log *
 ItaniumABILanguageRuntime::EnablePluginLogging (Stream *strm, Args &command)
 {
     return NULL;
+}
+
+void
+ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
+{
+    if (!m_process)
+        return;
+    
+    if (!m_cxx_exception_bp_sp)
+        m_cxx_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                         "__cxa_throw",
+                                                                         eFunctionNameTypeBase, 
+                                                                         true);
+    
+    if (!m_cxx_exception_alloc_bp_sp)
+        m_cxx_exception_alloc_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                               "__cxa_allocate",
+                                                                               eFunctionNameTypeBase,
+                                                                               true);
+}
+
+void
+ItaniumABILanguageRuntime::ClearExceptionBreakpoints ()
+{
+    if (!m_process)
+        return;
+    
+    if (m_cxx_exception_bp_sp.get())
+    {
+        m_process->GetTarget().RemoveBreakpointByID(m_cxx_exception_bp_sp->GetID());
+        m_cxx_exception_bp_sp.reset();
+    }
+    
+    if (m_cxx_exception_alloc_bp_sp.get())
+    {
+        m_process->GetTarget().RemoveBreakpointByID(m_cxx_exception_alloc_bp_sp->GetID());
+        m_cxx_exception_bp_sp.reset();
+    }
+}
+
+bool
+ItaniumABILanguageRuntime::ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
+{
+    if (!m_process)
+        return false;
+    
+    if (!stop_reason || 
+        stop_reason->GetStopReason() != eStopReasonBreakpoint)
+        return false;
+    
+    uint64_t break_site_id = stop_reason->GetValue();
+    lldb::BreakpointSiteSP bp_site_sp = m_process->GetBreakpointSiteList().FindByID(break_site_id);
+    
+    if (!bp_site_sp)
+        return false;
+    
+    uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
+    
+    bool        check_cxx_exception = false;
+    break_id_t  cxx_exception_bid;
+    
+    bool        check_cxx_exception_alloc = false;
+    break_id_t  cxx_exception_alloc_bid;
+    
+    if (m_cxx_exception_bp_sp)
+    {
+        check_cxx_exception = true;
+        cxx_exception_bid = m_cxx_exception_bp_sp->GetID();
+    }
+    
+    if (m_cxx_exception_alloc_bp_sp)
+    {
+        check_cxx_exception_alloc = true;
+        cxx_exception_alloc_bid = m_cxx_exception_alloc_bp_sp->GetID();
+    }
+    
+    for (uint32_t i = 0; i < num_owners; i++)
+    {
+        break_id_t bid = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().GetID();
+        
+        if ((check_cxx_exception        && (bid == cxx_exception_bid)) ||
+            (check_cxx_exception_alloc  && (bid == cxx_exception_alloc_bid)))
+            return true;
+    }
+    
+    return false;
 }

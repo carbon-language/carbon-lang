@@ -97,9 +97,8 @@ private:
     Thread                                         &m_thread;
     Thread::RegisterCheckpoint                      m_register_backup;
     lldb::ThreadPlanSP                              m_subplan_sp;
-    lldb::BreakpointSP                              m_cxx_exception_bp_sp;
-    lldb::BreakpointSP                              m_cxx_exception_alloc_bp_sp;
-    lldb::BreakpointSP                              m_objc_exception_bp_sp;
+    LanguageRuntime                                *m_cxx_language_runtime;
+    LanguageRuntime                                *m_objc_language_runtime;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };

@@ -20,6 +20,7 @@
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
@@ -328,122 +329,36 @@ ThreadPlanCallFunction::MischiefManaged ()
 void
 ThreadPlanCallFunction::SetBreakpoints ()
 {
-    Target& target = m_process.GetTarget();
+    m_cxx_language_runtime = m_process.GetLanguageRuntime(eLanguageTypeC_plus_plus);
+    m_objc_language_runtime = m_process.GetLanguageRuntime(eLanguageTypeObjC);
     
-    ArchSpec arch_spec = target.GetArchitecture();
-    
-    switch (arch_spec.GetCPUType())
-    {
-    default:
-        break;
-    case llvm::MachO::CPUTypeI386:
-        m_cxx_exception_bp_sp = target.CreateBreakpoint (NULL,
-                                                       "__cxa_throw",
-                                                       eFunctionNameTypeBase, 
-                                                       true);
-        m_cxx_exception_alloc_bp_sp = target.CreateBreakpoint (NULL,
-                                                             "__cxa_allocate",
-                                                             eFunctionNameTypeBase,
-                                                             true);
-        m_objc_exception_bp_sp = target.CreateBreakpoint (NULL,
-                                                        "objc_exception_throw",
-                                                        eFunctionNameTypeBase,
-                                                        true);
-        break;
-    case llvm::MachO::CPUTypeX86_64:
-        m_cxx_exception_bp_sp = target.CreateBreakpoint (NULL,
-                                                       "__cxa_throw",
-                                                       eFunctionNameTypeBase, 
-                                                       true);
-        m_cxx_exception_alloc_bp_sp = target.CreateBreakpoint (NULL,
-                                                             "__cxa_allocate",
-                                                             eFunctionNameTypeBase,
-                                                             true);
-        break;
-    }
+    if (m_cxx_language_runtime)
+        m_cxx_language_runtime->SetExceptionBreakpoints();
+    if (m_objc_language_runtime)
+        m_objc_language_runtime->SetExceptionBreakpoints();
 }
 
 void
 ThreadPlanCallFunction::ClearBreakpoints ()
 {
-    Target& target = m_process.GetTarget();
-    
-    if (m_cxx_exception_bp_sp.get())
-    {
-        target.RemoveBreakpointByID(m_cxx_exception_bp_sp->GetID());
-        m_cxx_exception_bp_sp.reset();
-    }
-    
-    if (m_cxx_exception_alloc_bp_sp.get())
-    {
-        target.RemoveBreakpointByID(m_cxx_exception_alloc_bp_sp->GetID());
-        m_cxx_exception_bp_sp.reset();
-    }
-    
-    if (m_objc_exception_bp_sp.get())
-    {
-        target.RemoveBreakpointByID(m_objc_exception_bp_sp->GetID());
-        m_cxx_exception_bp_sp.reset();
-    }
+    if (m_cxx_language_runtime)
+        m_cxx_language_runtime->ClearExceptionBreakpoints();
+    if (m_objc_language_runtime)
+        m_objc_language_runtime->ClearExceptionBreakpoints();
 }
 
 bool
 ThreadPlanCallFunction::BreakpointsExplainStop()
 {
-    // A temporary fix to set breakpoints at points where exceptions are being
-    // thrown.  This functionality will migrate into the Target.
-    
     lldb::StopInfoSP stop_info_sp = GetPrivateStopReason();
     
-    if (!stop_info_sp || 
-        stop_info_sp->GetStopReason() != eStopReasonBreakpoint)
-        return false;
+    if (m_cxx_language_runtime &&
+        m_cxx_language_runtime->ExceptionBreakpointsExplainStop(stop_info_sp))
+        return true;
     
-    uint64_t break_site_id = stop_info_sp->GetValue();
-    lldb::BreakpointSiteSP bp_site_sp = m_thread.GetProcess().GetBreakpointSiteList().FindByID(break_site_id);
-    
-    if (!bp_site_sp)
-        return false;
-    
-    uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
-    
-    bool        check_cxx_exception = false;
-    break_id_t  cxx_exception_bid;
-    
-    bool        check_cxx_exception_alloc = false;
-    break_id_t  cxx_exception_alloc_bid;
-    
-    bool        check_objc_exception = false;
-    break_id_t  objc_exception_bid;
-    
-    if (m_cxx_exception_bp_sp.get())
-    {
-        check_cxx_exception = true;
-        cxx_exception_bid = m_cxx_exception_bp_sp->GetID();
-    }
-    
-    if (m_cxx_exception_bp_sp.get())
-    {
-        check_cxx_exception_alloc = true;
-        cxx_exception_alloc_bid = m_cxx_exception_alloc_bp_sp->GetID();
-    }
-    
-    if (m_cxx_exception_bp_sp.get())
-    {
-        check_objc_exception = true;
-        objc_exception_bid = m_objc_exception_bp_sp->GetID();
-    }
-        
-
-    for (uint32_t i = 0; i < num_owners; i++)
-    {
-        break_id_t bid = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().GetID();
-        
-        if ((check_cxx_exception        && (bid == cxx_exception_bid)) ||
-            (check_cxx_exception_alloc  && (bid == cxx_exception_alloc_bid)) ||
-            (check_objc_exception       && (bid == objc_exception_bid)))
-            return true;
-    }
+    if (m_objc_language_runtime &&
+        m_objc_language_runtime->ExceptionBreakpointsExplainStop(stop_info_sp))
+        return true;
     
     return false;
 }

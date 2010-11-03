@@ -87,6 +87,15 @@ public:
     
     virtual lldb_private::Log *
     EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
+    
+    virtual void
+    SetExceptionBreakpoints ();
+    
+    virtual void
+    ClearExceptionBreakpoints ();
+    
+    virtual bool
+    ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason);
 protected:
     Address *
     GetPrintForDebuggerAddr();
@@ -95,6 +104,7 @@ private:
     std::auto_ptr<Address>  m_PrintForDebugger_addr;
     bool m_read_objc_library;
     std::auto_ptr<lldb_private::AppleObjCTrampolineHandler> m_objc_trampoline_handler_ap;
+    lldb::BreakpointSP m_objc_exception_bp_sp;
 
     AppleObjCRuntimeV2(Process *process) : 
         lldb_private::ObjCLanguageRuntime(process),
