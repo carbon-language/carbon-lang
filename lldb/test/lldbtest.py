@@ -517,6 +517,13 @@ class TestBase(unittest2.TestCase):
         Dump the debugger interactions leading to a test error/failure.  This
         allows for more convenient postmortem analysis.
         """
+
+        # We are here because self.tearDown() detected that this test instance
+        # either errored or failed.  The lldb.test_result singleton contains
+        # two lists (erros and failures) which get populated by the unittest
+        # framework.  Look over there for stack trace information.
+        #
+        # See http://docs.python.org/library/unittest.html#unittest.TestResult.
         for test, err in lldb.test_result.errors:
             if test is self:
                 print >> self.session, err
