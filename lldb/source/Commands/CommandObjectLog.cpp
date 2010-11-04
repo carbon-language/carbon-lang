@@ -413,7 +413,7 @@ public:
         CommandObject (interpreter, 
                        "log timers",
                        "Enable, disable, dump, and reset LLDB internal performance timers.",
-                       "log timers < enable <depth> | disable | dump | reset >")
+                       "log timers < enable <depth> | disable | dump | increment <bool> | reset >")
     {
     }
 
@@ -471,6 +471,18 @@ public:
                 }
                 else
                     result.AppendError("Could not convert enable depth to an unsigned integer.");
+            }
+            if (strcasecmp(sub_command, "increment") == 0)
+            {
+                bool success;
+                bool increment = Args::StringToBoolean(args.GetArgumentAtIndex(1), false, &success);
+                if (success)
+                {
+                    Timer::SetQuiet (!increment);
+                    result.SetStatus(eReturnStatusSuccessFinishNoResult);
+                }
+                else
+                    result.AppendError("Could not convert increment value to boolean.");
             }
         }
         

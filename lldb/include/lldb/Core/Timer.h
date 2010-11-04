@@ -51,6 +51,9 @@ public:
 
     static void
     SetDisplayDepth (uint32_t depth);
+    
+    static void
+    SetQuiet (bool value);
 
     static void
     DumpCategoryTimes (Stream *s);

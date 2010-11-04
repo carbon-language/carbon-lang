@@ -28,7 +28,6 @@ typedef std::vector<Timer *> TimerStack;
 typedef std::map<const char *, uint64_t> CategoryMap;
 static pthread_key_t g_key;
 
-
 static Mutex &
 GetCategoryMutex()
 {
@@ -60,6 +59,12 @@ void
 ThreadSpecificCleanup (void *p)
 {
     delete (TimerStack *)p;
+}
+
+void
+Timer::SetQuiet (bool value)
+{
+    g_quiet = value;
 }
 
 void
