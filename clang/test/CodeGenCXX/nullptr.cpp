@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++0x -triple x86_64-apple-darwin10 -I%S -emit-llvm -o - %s | FileCheck %s
 
 #include <typeinfo>
 
