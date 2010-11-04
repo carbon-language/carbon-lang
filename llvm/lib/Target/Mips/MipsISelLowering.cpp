@@ -629,7 +629,7 @@ SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 //       go to stack.
 //===----------------------------------------------------------------------===//
 
-static bool CC_MipsO32(unsigned ValNo, EVT ValVT,
+static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
                        MVT LocVT, CCValAssign::LocInfo LocInfo,
                        ISD::ArgFlagsTy ArgFlags, CCState &State) {
 
@@ -695,7 +695,7 @@ static bool CC_MipsO32(unsigned ValNo, EVT ValVT,
   return false; // CC must always match
 }
 
-static bool CC_MipsO32_VarArgs(unsigned ValNo, EVT ValVT,
+static bool CC_MipsO32_VarArgs(unsigned ValNo, MVT ValVT,
                        MVT LocVT, CCValAssign::LocInfo LocInfo,
                        ISD::ArgFlagsTy ArgFlags, CCState &State) {
 
@@ -789,7 +789,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // To meet O32 ABI, Mips must always allocate 16 bytes on
   // the stack (even if less than 4 are used as arguments)
   if (Subtarget->isABI_O32()) {
-    int VTsize = EVT(MVT::i32).getSizeInBits()/8;
+    int VTsize = MVT(MVT::i32).getSizeInBits()/8;
     MFI->CreateFixedObject(VTsize, (VTsize*3), true);
     CCInfo.AnalyzeCallOperands(Outs, 
                      isVarArg ? CC_MipsO32_VarArgs : CC_MipsO32);

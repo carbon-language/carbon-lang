@@ -26,7 +26,7 @@ void CallingConvEmitter::run(raw_ostream &O) {
   // other.
   for (unsigned i = 0, e = CCs.size(); i != e; ++i) {
     O << "static bool " << CCs[i]->getName()
-      << "(unsigned ValNo, EVT ValVT,\n"
+      << "(unsigned ValNo, MVT ValVT,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
       << "MVT LocVT, CCValAssign::LocInfo LocInfo,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
@@ -44,7 +44,7 @@ void CallingConvEmitter::EmitCallingConv(Record *CC, raw_ostream &O) {
   Counter = 0;
 
   O << "\n\nstatic bool " << CC->getName()
-    << "(unsigned ValNo, EVT ValVT,\n"
+    << "(unsigned ValNo, MVT ValVT,\n"
     << std::string(CC->getName().size()+13, ' ')
     << "MVT LocVT, CCValAssign::LocInfo LocInfo,\n"
     << std::string(CC->getName().size()+13, ' ')

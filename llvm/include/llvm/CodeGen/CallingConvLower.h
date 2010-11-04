@@ -57,13 +57,13 @@ private:
   LocInfo HTP : 6;
 
   /// ValVT - The type of the value being assigned.
-  EVT ValVT;
+  MVT ValVT;
 
   /// LocVT - The type of the location being assigned to.
   MVT LocVT;
 public:
 
-  static CCValAssign getReg(unsigned ValNo, EVT ValVT,
+  static CCValAssign getReg(unsigned ValNo, MVT ValVT,
                             unsigned RegNo, MVT LocVT,
                             LocInfo HTP) {
     CCValAssign Ret;
@@ -77,7 +77,7 @@ public:
     return Ret;
   }
 
-  static CCValAssign getCustomReg(unsigned ValNo, EVT ValVT,
+  static CCValAssign getCustomReg(unsigned ValNo, MVT ValVT,
                                   unsigned RegNo, MVT LocVT,
                                   LocInfo HTP) {
     CCValAssign Ret;
@@ -86,7 +86,7 @@ public:
     return Ret;
   }
 
-  static CCValAssign getMem(unsigned ValNo, EVT ValVT,
+  static CCValAssign getMem(unsigned ValNo, MVT ValVT,
                             unsigned Offset, MVT LocVT,
                             LocInfo HTP) {
     CCValAssign Ret;
@@ -100,7 +100,7 @@ public:
     return Ret;
   }
 
-  static CCValAssign getCustomMem(unsigned ValNo, EVT ValVT,
+  static CCValAssign getCustomMem(unsigned ValNo, MVT ValVT,
                                   unsigned Offset, MVT LocVT,
                                   LocInfo HTP) {
     CCValAssign Ret;
@@ -110,7 +110,7 @@ public:
   }
 
   unsigned getValNo() const { return ValNo; }
-  EVT getValVT() const { return ValVT; }
+  MVT getValVT() const { return ValVT; }
 
   bool isRegLoc() const { return !isMem; }
   bool isMemLoc() const { return isMem; }
@@ -130,14 +130,14 @@ public:
 
 /// CCAssignFn - This function assigns a location for Val, updating State to
 /// reflect the change.  It returns 'true' if it failed to handle Val.
-typedef bool CCAssignFn(unsigned ValNo, EVT ValVT,
+typedef bool CCAssignFn(unsigned ValNo, MVT ValVT,
                         MVT LocVT, CCValAssign::LocInfo LocInfo,
                         ISD::ArgFlagsTy ArgFlags, CCState &State);
 
 /// CCCustomFn - This function assigns a location for Val, possibly updating
 /// all args to reflect changes and indicates if it handled it. It must set
 /// isCustom if it handles the arg and returns true.
-typedef bool CCCustomFn(unsigned &ValNo, EVT &ValVT,
+typedef bool CCCustomFn(unsigned &ValNo, MVT &ValVT,
                         MVT &LocVT, CCValAssign::LocInfo &LocInfo,
                         ISD::ArgFlagsTy &ArgFlags, CCState &State);
 
@@ -284,7 +284,7 @@ public:
   // HandleByVal - Allocate a stack slot large enough to pass an argument by
   // value. The size and alignment information of the argument is encoded in its
   // parameter attribute.
-  void HandleByVal(unsigned ValNo, EVT ValVT,
+  void HandleByVal(unsigned ValNo, MVT ValVT,
                    MVT LocVT, CCValAssign::LocInfo LocInfo,
                    int MinSize, int MinAlign, ISD::ArgFlagsTy ArgFlags);
 

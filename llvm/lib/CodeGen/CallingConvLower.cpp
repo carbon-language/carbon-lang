@@ -34,7 +34,7 @@ CCState::CCState(CallingConv::ID CC, bool isVarArg, const TargetMachine &tm,
 // HandleByVal - Allocate a stack slot large enough to pass an argument by
 // value. The size and alignment information of the argument is encoded in its
 // parameter attribute.
-void CCState::HandleByVal(unsigned ValNo, EVT ValVT,
+void CCState::HandleByVal(unsigned ValNo, MVT ValVT,
                           MVT LocVT, CCValAssign::LocInfo LocInfo,
                           int MinSize, int MinAlign,
                           ISD::ArgFlagsTy ArgFlags) {

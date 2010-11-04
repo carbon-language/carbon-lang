@@ -468,7 +468,7 @@ SDValue MBlazeTargetLowering::LowerVASTART(SDValue Op,
 
 #include "MBlazeGenCallingConv.inc"
 
-static bool CC_MBlaze2(unsigned ValNo, EVT ValVT,
+static bool CC_MBlaze2(unsigned ValNo, MVT ValVT,
                        MVT LocVT, CCValAssign::LocInfo LocInfo,
                        ISD::ArgFlagsTy ArgFlags, CCState &State) {
   static const unsigned RegsSize=6;
@@ -553,7 +553,7 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    EVT RegVT = VA.getLocVT();
+    MVT RegVT = VA.getLocVT();
     SDValue Arg = OutVals[i];
 
     // Promote the value if needed.
@@ -720,7 +720,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
 
     // Arguments stored on registers
     if (VA.isRegLoc()) {
-      EVT RegVT = VA.getLocVT();
+      MVT RegVT = VA.getLocVT();
       ArgRegEnd = VA.getLocReg();
       TargetRegisterClass *RC = 0;
 

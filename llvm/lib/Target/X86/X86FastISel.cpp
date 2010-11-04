@@ -711,7 +711,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
       return false;
     // TODO: For now, don't try to handle cases where getLocInfo()
     // says Full but the types don't match.
-    if (VA.getValVT() != TLI.getValueType(RV->getType()))
+    if (TLI.getValueType(RV->getType()) != VA.getValVT())
       return false;
 
     // The calling-convention tables for x87 returns don't tell
