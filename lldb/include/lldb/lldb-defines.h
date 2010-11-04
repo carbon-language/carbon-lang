@@ -55,6 +55,7 @@
 //----------------------------------------------------------------------
 #define LLDB_INVALID_ADDRESS            UINT64_MAX
 #define LLDB_INVALID_INDEX32            UINT32_MAX
+#define LLDB_INVALID_IMAGE_TOKEN        UINT32_MAX
 #define LLDB_INVALID_REGNUM             UINT32_MAX
 #define LLDB_INVALID_UID                UINT32_MAX
 #define LLDB_INVALID_PROCESS_ID         0

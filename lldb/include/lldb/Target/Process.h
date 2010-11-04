@@ -615,6 +615,33 @@ public:
     GetImageInfoAddress ();
 
     //------------------------------------------------------------------
+    /// Load a shared library into this process.
+    ///
+    /// Try and load a shared library into the current process. This
+    /// call might fail in the dynamic loader plug-in says it isn't safe
+    /// to try and load shared libraries at the moment.
+    ///
+    /// @param[in] image_spec
+    ///     The image file spec that points to the shared library that
+    ///     you want to load.
+    ///
+    /// @param[out] error
+    ///     An error object that gets filled in with any errors that
+    ///     might occur when trying to load the shared library.
+    ///
+    /// @return
+    ///     A token that represents the shared library that can be
+    ///     later used to unload the shared library. A value of
+    ///     LLDB_INVALID_IMAGE_TOKEN will be returned if the shared
+    ///     library can't be opened.
+    //------------------------------------------------------------------
+    virtual uint32_t
+    LoadImage (const FileSpec &image_spec, Error &error);
+
+    virtual Error
+    UnloadImage (uint32_t image_token);
+
+    //------------------------------------------------------------------
     /// Register for process and thread notifications.
     ///
     /// Clients can register nofication callbacks by filling out a
@@ -1642,6 +1669,7 @@ protected:
     std::string                 m_exit_string;          ///< A textual description of why a process exited.
     ThreadList                  m_thread_list;          ///< The threads for this process.
     std::vector<Notifications>  m_notifications;        ///< The list of notifications that this process can deliver.
+    std::vector<lldb::addr_t>   m_image_tokens;
     Listener                    &m_listener;
     BreakpointSiteList          m_breakpoint_site_list; ///< This is the list of breakpoint locations we intend
                                                         ///< to insert in the target.

@@ -218,21 +218,6 @@ CommandObjectExpression::EvaluateExpression
         return false;
     }
     
-    if (!m_exe_ctx.process->GetDynamicCheckers())
-    {
-        DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
-        
-        StreamString install_errors;
-        
-        if (!dynamic_checkers->Install(install_errors, m_exe_ctx))
-        {
-            error_stream.Printf("Couldn't install dynamic checkers into the execution context: %s\n", install_errors.GetData());
-            return false;
-        }
-        
-        m_exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
-    }
-    
     const char *prefix = NULL;
     
     if (m_exe_ctx.target)

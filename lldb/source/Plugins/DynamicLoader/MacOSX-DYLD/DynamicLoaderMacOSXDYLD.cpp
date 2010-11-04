@@ -1167,6 +1167,26 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
     return thread_plan_sp;
 }
 
+Error
+DynamicLoaderMacOSXDYLD::CanLoadImage ()
+{
+    Error error;
+    // In order for us to tell if we can load a shared library we verify that
+    // the dylib_info_addr isn't zero (which means no shared libraries have
+    // been set yet, or dyld is currently mucking with the shared library list).
+    if (ReadAllImageInfosStructure ())
+    {
+        // TODO: also check the _dyld_global_lock_held variable in libSystem.B.dylib?
+        // TODO: check the malloc lock?
+        // TODO: check the objective C lock?
+        if (m_dyld_all_image_infos.dylib_info_addr != 0)
+            return error; // Success
+    }
+
+    error.SetErrorString("unsafe to load or unload shared libraries");
+    return error;
+}
+
 void
 DynamicLoaderMacOSXDYLD::Initialize()
 {

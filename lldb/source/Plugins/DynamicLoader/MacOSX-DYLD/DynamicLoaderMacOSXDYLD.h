@@ -78,6 +78,8 @@ public:
     GetStepThroughTrampolinePlan (lldb_private::Thread &thread,
                                   bool stop_others);
 
+    virtual lldb_private::Error
+    CanLoadImage ();
 
     //------------------------------------------------------------------
     // PluginInterface protocol

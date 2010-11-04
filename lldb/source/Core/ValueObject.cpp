@@ -222,6 +222,15 @@ ValueObject::GetValue() const
 }
 
 bool
+ValueObject::ResolveValue (ExecutionContextScope *exe_scope, Scalar &scalar)
+{
+    ExecutionContext exe_ctx;
+    exe_scope->CalculateExecutionContext(exe_ctx);
+    scalar = m_value.ResolveValue(&exe_ctx, GetClangAST ());
+    return scalar.IsValid();
+}
+
+bool
 ValueObject::GetValueIsValid () const
 {
     return m_value_is_valid;

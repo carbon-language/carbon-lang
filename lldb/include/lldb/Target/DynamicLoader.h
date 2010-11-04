@@ -12,6 +12,7 @@
 
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/PluginInterface.h"
 
 namespace lldb_private {
@@ -137,6 +138,23 @@ public:
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan (Thread &thread, bool stop_others) = 0;
+
+
+    //------------------------------------------------------------------
+    /// Ask if it is ok to try and load or unload an shared library 
+    /// (image).
+    ///
+    /// The dynamic loader often knows when it would be ok to try and
+    /// load or unload a shared library. This function call allows the
+    /// dynamic loader plug-ins to check any current dyld state to make
+    /// sure it is an ok time to load a shared library.
+    ///
+    /// @return
+    ///     \b True if it is currently ok to try and load a shared 
+    ///     library into the process, \b false otherwise.
+    //------------------------------------------------------------------
+    virtual Error
+    CanLoadImage () = 0;
 
 protected:
     //------------------------------------------------------------------

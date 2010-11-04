@@ -147,6 +147,9 @@ public:
     Value &
     GetValue();
 
+    bool
+    ResolveValue (ExecutionContextScope *exe_scope, Scalar &scalar);
+
     const char *
     GetLocationAsCString (ExecutionContextScope *exe_scope);
 

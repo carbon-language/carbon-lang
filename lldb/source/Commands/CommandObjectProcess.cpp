@@ -853,6 +853,128 @@ public:
 };
 
 //-------------------------------------------------------------------------
+// CommandObjectProcessLoad
+//-------------------------------------------------------------------------
+
+class CommandObjectProcessLoad : public CommandObject
+{
+public:
+
+    CommandObjectProcessLoad (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "process load",
+                       "Load a shared library into the current process.",
+                       "process load <filename> [<filename> ...]",
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+    {
+    }
+
+    ~CommandObjectProcessLoad ()
+    {
+    }
+
+    bool
+    Execute (Args& command,
+             CommandReturnObject &result)
+    {
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        if (process == NULL)
+        {
+            result.AppendError ("must have a valid process in order to load a shared library");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        const uint32_t argc = command.GetArgumentCount();
+        
+        for (uint32_t i=0; i<argc; ++i)
+        {
+            Error error;
+            const char *image_path = command.GetArgumentAtIndex(i);
+            FileSpec image_spec (image_path, false);
+            uint32_t image_token = process->LoadImage(image_spec, error);
+            if (image_token != LLDB_INVALID_IMAGE_TOKEN)
+            {
+                result.AppendMessageWithFormat ("Loading \"%s\"...ok\nImage %u loaded.\n", image_path, image_token);  
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+            }
+            else
+            {
+                result.AppendErrorWithFormat ("failed to load '%s': %s", image_path, error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        return result.Succeeded();
+    }
+};
+
+
+//-------------------------------------------------------------------------
+// CommandObjectProcessUnload
+//-------------------------------------------------------------------------
+
+class CommandObjectProcessUnload : public CommandObject
+{
+public:
+
+    CommandObjectProcessUnload (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "process unload",
+                       "Unload a shared library from the current process using the index returned by a previous call to \"process load\".",
+                       "process unload <index>",
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+    {
+    }
+
+    ~CommandObjectProcessUnload ()
+    {
+    }
+
+    bool
+    Execute (Args& command,
+             CommandReturnObject &result)
+    {
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        if (process == NULL)
+        {
+            result.AppendError ("must have a valid process in order to load a shared library");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        const uint32_t argc = command.GetArgumentCount();
+        
+        for (uint32_t i=0; i<argc; ++i)
+        {
+            const char *image_token_cstr = command.GetArgumentAtIndex(i);
+            uint32_t image_token = Args::StringToUInt32(image_token_cstr, LLDB_INVALID_IMAGE_TOKEN, 0);
+            if (image_token == LLDB_INVALID_IMAGE_TOKEN)
+            {
+                result.AppendErrorWithFormat ("invalid image index argument '%s'", image_token_cstr);
+                result.SetStatus (eReturnStatusFailed);
+                break;
+            }
+            else
+            {
+                Error error (process->UnloadImage(image_token));
+                if (error.Success())
+                {
+                    result.AppendMessageWithFormat ("Unloading shared library with index %u...ok\n", image_token);  
+                    result.SetStatus (eReturnStatusSuccessFinishResult);
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("failed to unload image: %s", error.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                    break;
+                }
+            }
+        }
+        return result.Succeeded();
+    }
+};
+
+//-------------------------------------------------------------------------
 // CommandObjectProcessSignal
 //-------------------------------------------------------------------------
 
@@ -1450,6 +1572,8 @@ CommandObjectMultiwordProcess::CommandObjectMultiwordProcess (CommandInterpreter
     LoadSubCommand ("launch",      CommandObjectSP (new CommandObjectProcessLaunch (interpreter)));
     LoadSubCommand ("continue",    CommandObjectSP (new CommandObjectProcessContinue (interpreter)));
     LoadSubCommand ("detach",      CommandObjectSP (new CommandObjectProcessDetach (interpreter)));
+    LoadSubCommand ("load",        CommandObjectSP (new CommandObjectProcessLoad (interpreter)));
+    LoadSubCommand ("unload",      CommandObjectSP (new CommandObjectProcessUnload (interpreter)));
     LoadSubCommand ("signal",      CommandObjectSP (new CommandObjectProcessSignal (interpreter)));
     LoadSubCommand ("handle",      CommandObjectSP (new CommandObjectProcessHandle (interpreter)));
     LoadSubCommand ("status",      CommandObjectSP (new CommandObjectProcessStatus (interpreter)));

@@ -703,3 +703,24 @@ SBProcess::GetDescription (SBStream &description)
 
     return true;
 }
+
+uint32_t
+SBProcess::LoadImage (lldb::SBFileSpec &sb_image_spec, lldb::SBError &sb_error)
+{
+    if (m_opaque_sp)
+        m_opaque_sp->LoadImage (*sb_image_spec, sb_error.ref());
+    return LLDB_INVALID_IMAGE_TOKEN;
+}
+    
+lldb::SBError
+SBProcess::UnloadImage (uint32_t image_token)
+{
+    lldb::SBError sb_error;
+    if (m_opaque_sp)
+        sb_error.SetError (m_opaque_sp->UnloadImage (image_token));
+    else
+        sb_error.SetErrorString("invalid process");
+    return sb_error;
+}
+
+

@@ -103,40 +103,40 @@ public:
     uint32_t
     GetAddressByteSize() const;
 
-    SBError
+    lldb::SBError
     Destroy ();
 
     lldb::pid_t
     AttachByPID (lldb::pid_t pid);  // DEPRECATED
 
-    // DEPRECATED: relocated to "SBProcess SBTarget::AttachToProcess (lldb::pid_t pid, SBError& error)"
-    SBError
+    // DEPRECATED: relocated to "SBProcess SBTarget::AttachToProcess (lldb::pid_t pid, lldb::SBError& error)"
+    lldb::SBError
     Attach (lldb::pid_t pid);
 
-    // DEPRECATED: relocated to "SBProcess SBTarget::AttachToProcess (const char *name, bool wait_for_launch, SBError& error)"
-    SBError
+    // DEPRECATED: relocated to "SBProcess SBTarget::AttachToProcess (const char *name, bool wait_for_launch, lldb::SBError& error)"
+    lldb::SBError
     AttachByName (const char *name, bool wait_for_launch);
 
-    SBError
+    lldb::SBError
     Continue ();
 
-    SBError
+    lldb::SBError
     Stop ();
 
-    SBError
+    lldb::SBError
     Kill ();
 
-    SBError
+    lldb::SBError
     Detach ();
 
-    SBError
+    lldb::SBError
     Signal (int signal);
 
     size_t
-    ReadMemory (addr_t addr, void *buf, size_t size, SBError &error);
+    ReadMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error);
 
     size_t
-    WriteMemory (addr_t addr, const void *buf, size_t size, SBError &error);
+    WriteMemory (addr_t addr, const void *buf, size_t size, lldb::SBError &error);
 
     // Events
     static lldb::StateType
@@ -153,6 +153,12 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+
+    uint32_t
+    LoadImage (lldb::SBFileSpec &image_spec, lldb::SBError &error);
+    
+    lldb::SBError
+    UnloadImage (uint32_t image_token);
 
 protected:
     friend class SBAddress;

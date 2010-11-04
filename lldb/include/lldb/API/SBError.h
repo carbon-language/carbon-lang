@@ -92,6 +92,9 @@ protected:
     const lldb_private::Error &
     operator*() const;
 
+    lldb_private::Error &
+    ref();
+
 #endif
 
 

@@ -199,6 +199,12 @@ SBError::get()
     return m_opaque_ap.get();
 }
 
+lldb_private::Error &
+SBError::ref()
+{
+    CreateIfNeeded();
+    return *m_opaque_ap;
+}
 
 const lldb_private::Error &
 SBError::operator*() const

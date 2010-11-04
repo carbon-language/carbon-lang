@@ -30,6 +30,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
@@ -437,6 +438,22 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
 {
     Error error;
     lldb::ValueObjectSP result_valobj_sp;
+    
+    if (exe_ctx.process == NULL)
+        return result_valobj_sp;
+
+    if (!exe_ctx.process->GetDynamicCheckers())
+    {
+        DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
+        
+        StreamString install_errors;
+        
+        if (!dynamic_checkers->Install(install_errors, exe_ctx))
+            return result_valobj_sp;
+        
+        exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
+    }
+    
     ClangUserExpression user_expression (expr_cstr, expr_prefix);
     
     StreamString error_stream;

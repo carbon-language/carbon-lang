@@ -21,6 +21,7 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/ABI.h"
+#include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
@@ -469,6 +470,141 @@ addr_t
 Process::GetImageInfoAddress()
 {
     return LLDB_INVALID_ADDRESS;
+}
+
+//----------------------------------------------------------------------
+// LoadImage
+//
+// This function provides a default implementation that works for most
+// unix variants. Any Process subclasses that need to do shared library
+// loading differently should override LoadImage and UnloadImage and
+// do what is needed.
+//----------------------------------------------------------------------
+uint32_t
+Process::LoadImage (const FileSpec &image_spec, Error &error)
+{
+    DynamicLoader *loader = GetDynamicLoader();
+    if (loader)
+    {
+        error = loader->CanLoadImage();
+        if (error.Fail())
+            return LLDB_INVALID_IMAGE_TOKEN;
+    }
+    
+    if (error.Success())
+    {
+        ThreadSP thread_sp(GetThreadList ().GetSelectedThread());
+        if (thread_sp == NULL)
+            thread_sp = GetThreadList ().GetThreadAtIndex(0, true);
+        
+        if (thread_sp)
+        {
+            StackFrameSP frame_sp (thread_sp->GetStackFrameAtIndex (0));
+            
+            if (frame_sp)
+            {
+                ExecutionContext exe_ctx;
+                frame_sp->CalculateExecutionContext (exe_ctx);
+    
+                StreamString expr;
+                char path[PATH_MAX];
+                image_spec.GetPath(path, sizeof(path));
+                expr.Printf("dlopen (\"%s\", 2)", path);
+                const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
+                lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (exe_ctx, expr.GetData(), prefix));
+                if (result_valobj_sp->GetError().Success())
+                {
+                    Scalar scalar;
+                    if (result_valobj_sp->ResolveValue (frame_sp.get(), scalar))
+                    {
+                        addr_t image_ptr = scalar.ULongLong(LLDB_INVALID_ADDRESS);
+                        if (image_ptr != 0 && image_ptr != LLDB_INVALID_ADDRESS)
+                        {
+                            uint32_t image_token = m_image_tokens.size();
+                            m_image_tokens.push_back (image_ptr);
+                            return image_token;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return LLDB_INVALID_IMAGE_TOKEN;
+}
+
+//----------------------------------------------------------------------
+// UnloadImage
+//
+// This function provides a default implementation that works for most
+// unix variants. Any Process subclasses that need to do shared library
+// loading differently should override LoadImage and UnloadImage and
+// do what is needed.
+//----------------------------------------------------------------------
+Error
+Process::UnloadImage (uint32_t image_token)
+{
+    Error error;
+    if (image_token < m_image_tokens.size())
+    {
+        const addr_t image_addr = m_image_tokens[image_token];
+        if (image_addr == LLDB_INVALID_ADDRESS)
+        {
+            error.SetErrorString("image already unloaded");
+        }
+        else
+        {
+            DynamicLoader *loader = GetDynamicLoader();
+            if (loader)
+                error = loader->CanLoadImage();
+            
+            if (error.Success())
+            {
+                ThreadSP thread_sp(GetThreadList ().GetSelectedThread());
+                if (thread_sp == NULL)
+                    thread_sp = GetThreadList ().GetThreadAtIndex(0, true);
+                
+                if (thread_sp)
+                {
+                    StackFrameSP frame_sp (thread_sp->GetStackFrameAtIndex (0));
+                    
+                    if (frame_sp)
+                    {
+                        ExecutionContext exe_ctx;
+                        frame_sp->CalculateExecutionContext (exe_ctx);
+            
+                        StreamString expr;
+                        expr.Printf("dlclose ((void *)0x%llx)", image_addr);
+                        const char *prefix = "extern \"C\" int dlclose(void* handle);\n";
+                        lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (exe_ctx, expr.GetData(), prefix));
+                        if (result_valobj_sp->GetError().Success())
+                        {
+                            Scalar scalar;
+                            if (result_valobj_sp->ResolveValue (frame_sp.get(), scalar))
+                            {
+                                if (scalar.UInt(1))
+                                {
+                                    error.SetErrorStringWithFormat("expression failed: \"%s\"", expr.GetData());
+                                }
+                                else
+                                {
+                                    m_image_tokens[image_token] = LLDB_INVALID_ADDRESS;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            error = result_valobj_sp->GetError();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        error.SetErrorString("invalid image token");
+    }
+    return error;
 }
 
 DynamicLoader *
