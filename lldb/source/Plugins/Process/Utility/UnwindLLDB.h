@@ -11,6 +11,7 @@
 #define lldb_UnwindLLDB_h_
 
 #include "lldb/lldb-private.h"
+#include "lldb/lldb-types.h"
 #include "lldb/Target/Unwind.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/UnwindPlan.h"
@@ -57,7 +58,8 @@ private:
         Cursor () : start_pc (LLDB_INVALID_ADDRESS), cfa (LLDB_INVALID_ADDRESS), sctx(), reg_ctx() { }
     };
 
-    std::vector<Cursor> m_frames;
+    typedef lldb::SharedPtr<Cursor>::Type CursorSP;
+    std::vector<CursorSP> m_frames;
 
     //------------------------------------------------------------------
     // For UnwindLLDB only

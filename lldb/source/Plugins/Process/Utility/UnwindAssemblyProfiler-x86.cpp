@@ -478,6 +478,10 @@ bool
 AssemblyParse_x86::instruction_length (Address addr, int &length)
 {
     const char *triple;
+
+    if (!addr.IsValid())
+        return false;
+
     // FIXME should probably pass down the ArchSpec and work from that to make a portable triple
     if (m_cpu == k_i386)
         triple = "i386-unknown-unknown";
@@ -512,10 +516,15 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
     UnwindPlan up;
     UnwindPlan::Row row;
     int non_prologue_insn_count = 0;
-    Address m_cur_insn = m_func_bounds.GetBaseAddress ();
+    m_cur_insn = m_func_bounds.GetBaseAddress ();
     int current_func_text_offset = 0;
     int current_sp_bytes_offset_from_cfa = 0;
     UnwindPlan::Row::RegisterLocation regloc;
+
+    if (!m_cur_insn.IsValid())
+    {
+        return false;
+    }
 
     unwind_plan.SetPlanValidAddressRange (m_func_bounds);
     unwind_plan.SetRegisterKind (eRegisterKindLLDB);
@@ -725,6 +734,11 @@ bool
 AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
 {
     m_cur_insn = m_func_bounds.GetBaseAddress ();
+    if (!m_cur_insn.IsValid())
+    {
+        return false;
+    }
+
     while (m_func_bounds.ContainsFileAddress (m_cur_insn))
     {
         Error error;

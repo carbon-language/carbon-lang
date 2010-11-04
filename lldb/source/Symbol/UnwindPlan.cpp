@@ -287,6 +287,9 @@ UnwindPlan::PlanValidAtAddress (Address addr)
     if (!m_plan_valid_address_range.GetBaseAddress().IsValid() || m_plan_valid_address_range.GetByteSize() == 0)
         return true;
 
+    if (!addr.IsValid())
+        return true;
+
     if (m_plan_valid_address_range.ContainsFileAddress (addr))
         return true;
 

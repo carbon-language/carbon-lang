@@ -33,9 +33,13 @@ RegisterContextLLDB::RegisterContextLLDB (Thread& thread,
                                           int frame_number) :
     RegisterContext (thread), m_thread(thread), m_next_frame(next_frame), 
     m_sym_ctx(sym_ctx), m_all_registers_available(false), m_registers(),
-    m_cfa (LLDB_INVALID_ADDRESS), m_start_pc (), m_current_pc (), m_frame_number (frame_number)
+    m_cfa (LLDB_INVALID_ADDRESS), m_start_pc (), m_current_pc (), m_frame_number (frame_number),
+    m_full_unwind_plan(NULL), m_fast_unwind_plan(NULL)
 {
+    m_sym_ctx.Clear();
+    m_sym_ctx_valid = false;
     m_base_reg_ctx = m_thread.GetRegisterContext();
+
     if (IsFrameZero ())
     {
         InitializeZerothFrame ();
@@ -77,13 +81,11 @@ RegisterContextLLDB::InitializeZerothFrame()
         m_frame_type = eNotAValidFrame;
         return;
     }
-    m_sym_ctx = frame_sp->GetSymbolContext (eSymbolContextEverything);
-    const AddressRange *addr_range_ptr;
-    if (m_sym_ctx.function)
-        addr_range_ptr = &m_sym_ctx.function->GetAddressRange();
-    else if (m_sym_ctx.symbol)
-        addr_range_ptr = m_sym_ctx.symbol->GetAddressRangePtr();
-
+    m_sym_ctx = frame_sp->GetSymbolContext (eSymbolContextFunction | eSymbolContextSymbol);
+    m_sym_ctx_valid = true;
+    AddressRange addr_range;
+    m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, addr_range);
+    
     m_current_pc = frame_sp->GetFrameCodeAddress();
 
     static ConstString sigtramp_name ("_sigtramp");
@@ -98,11 +100,11 @@ RegisterContextLLDB::InitializeZerothFrame()
         m_frame_type = eNormalFrame;
     }
 
-    // If we were able to find a symbol/function, set addr_range_ptr to the bounds of that symbol/function.
+    // If we were able to find a symbol/function, set addr_range to the bounds of that symbol/function.
     // else treat the current pc value as the start_pc and record no offset.
-    if (addr_range_ptr)
+    if (addr_range.GetBaseAddress().IsValid())
     {
-        m_start_pc = addr_range_ptr->GetBaseAddress();
+        m_start_pc = addr_range.GetBaseAddress();
         m_current_offset = frame_sp->GetFrameCodeAddress().GetOffset() - m_start_pc.GetOffset();
     }
     else
@@ -261,14 +263,17 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         return;
     }
 
-    // set up our m_sym_ctx SymbolContext
-    m_current_pc.GetModule()->ResolveSymbolContextForAddress (m_current_pc, eSymbolContextFunction | eSymbolContextSymbol, m_sym_ctx);
+    // We require that eSymbolContextSymbol be successfully filled in or this context is of no use to us.
+    if ((m_current_pc.GetModule()->ResolveSymbolContextForAddress (m_current_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+    {
+        m_sym_ctx_valid = true;
+    }
 
-    const AddressRange *addr_range_ptr;
-    if (m_sym_ctx.function)
-        addr_range_ptr = &m_sym_ctx.function->GetAddressRange();
-    else if (m_sym_ctx.symbol)
-        addr_range_ptr = m_sym_ctx.symbol->GetAddressRangePtr();
+    AddressRange addr_range;
+    if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, addr_range))
+    {
+        m_sym_ctx_valid = false;
+    }
 
     static ConstString sigtramp_name ("_sigtramp");
     if ((m_sym_ctx.function && m_sym_ctx.function->GetMangled().GetMangledName() == sigtramp_name)
@@ -284,9 +289,9 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
     // If we were able to find a symbol/function, set addr_range_ptr to the bounds of that symbol/function.
     // else treat the current pc value as the start_pc and record no offset.
-    if (addr_range_ptr)
+    if (addr_range.GetBaseAddress().IsValid())
     {
-        m_start_pc = addr_range_ptr->GetBaseAddress();
+        m_start_pc = addr_range.GetBaseAddress();
         m_current_offset = m_current_pc.GetOffset() - m_start_pc.GetOffset();
     }
     else
@@ -458,6 +463,9 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     {
         behaves_like_zeroth_frame = true;
     }
+
+    // If this frame behaves like a 0th frame (currently executing or interrupted asynchronously), all registers
+    // can be retrieved.
     if (behaves_like_zeroth_frame)
     {
         m_all_registers_available = true;
@@ -471,7 +479,10 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     }
 
     FuncUnwindersSP fu;
-    fu = m_current_pc.GetModule()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx);
+    if (m_sym_ctx_valid)
+    {
+        fu = m_current_pc.GetModule()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx);
+    }
 
     // No FuncUnwinders available for this pc, try using architectural default unwind.
     if (fu.get() == NULL)
@@ -718,9 +729,9 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
         {
             if (log)
             {
-                log->Printf("%*sFrame %d could not supply caller's reg %d location",
+                log->Printf("%*sFrame %d could not convert lldb regnum %d into %d RegisterKind reg numbering scheme",
                             m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                            lldb_regnum);
+                            lldb_regnum, (int) unwindplan_registerkind);
             }
             return false;
         }
@@ -735,9 +746,10 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             have_unwindplan_regloc = true;
         }
     }
-    else
+
+    if (!have_unwindplan_regloc)
     {
-        // m_full_unwind_plan being NULL probably means that we haven't tried to find a full UnwindPlan yet
+        // m_full_unwind_plan being NULL means that we haven't tried to find a full UnwindPlan yet
         if (m_full_unwind_plan == NULL)
         {
             m_full_unwind_plan = GetFullUnwindPlanForFrame ();
@@ -751,9 +763,9 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             {
                 if (log)
                 {
-                    log->Printf("%*sFrame %d could not supply caller's reg %d location",
+                    log->Printf("%*sFrame %d could not convert lldb regnum %d into %d RegisterKind reg numbering scheme",
                                 m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                                lldb_regnum);
+                                lldb_regnum, (int) unwindplan_registerkind);
                 }
                 return false;
             }
@@ -770,6 +782,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             }
         }
     }
+
     if (have_unwindplan_regloc == false)
     {
         // If a volatile register is being requested, we don't want to forward m_next_frame's register contents 

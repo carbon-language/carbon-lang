@@ -163,14 +163,15 @@ private:
     // i.e. where THIS frame saved them
     ///
 
-    lldb_private::UnwindPlan *m_fast_unwind_plan;    // may be NULL
+    lldb_private::UnwindPlan *m_fast_unwind_plan;  // may be NULL
     lldb_private::UnwindPlan *m_full_unwind_plan;
-    bool m_all_registers_available;                  // Can we retrieve all regs or just nonvolatile regs?
-    int m_frame_type;                                // enum FrameType
-    int m_current_offset;                            // how far into the function we've executed; -1 if unknown
+    bool m_all_registers_available;               // Can we retrieve all regs or just nonvolatile regs?
+    int m_frame_type;                             // enum FrameType
+    int m_current_offset;                         // how far into the function we've executed; -1 if unknown
     lldb_private::SymbolContext& m_sym_ctx;
+    bool m_sym_ctx_valid;                         // if ResolveSymbolContextForAddress fails, don't try to use m_sym_ctx
 
-    int m_frame_number;                              // What stack frame level this frame is - used for debug logging
+    int m_frame_number;                           // What stack frame level this frame is - used for debug logging
 
     lldb::addr_t m_cfa;
     lldb_private::Address m_start_pc;

@@ -35,20 +35,20 @@ UnwindLLDB::GetFrameCount()
     if (m_frames.empty())
     {
         // First, set up the 0th (initial) frame
-        Cursor first_cursor;
+        CursorSP first_cursor_sp(new Cursor);
         RegisterContextSP no_frame; // an empty shared pointer
-        RegisterContextLLDB *first_register_ctx = new RegisterContextLLDB(m_thread, no_frame, first_cursor.sctx, 0);
+        RegisterContextLLDB *first_register_ctx = new RegisterContextLLDB(m_thread, no_frame, first_cursor_sp->sctx, 0);
         if (!first_register_ctx->IsValid())
         {
             delete first_register_ctx;
             return 0;
         }
-        if (!first_register_ctx->GetCFA (first_cursor.cfa))
+        if (!first_register_ctx->GetCFA (first_cursor_sp->cfa))
         {
             delete first_register_ctx;
             return 0;
         }
-        if (!first_register_ctx->GetPC (first_cursor.start_pc))
+        if (!first_register_ctx->GetPC (first_cursor_sp->start_pc))
         {
             delete first_register_ctx;
             return 0;
@@ -56,16 +56,16 @@ UnwindLLDB::GetFrameCount()
         // Reuse the StackFrame provided by the processor native machine context for the first frame
         first_register_ctx->SetStackFrame (m_thread.GetStackFrameAtIndex(0).get());
         RegisterContextSP temp_rcs(first_register_ctx);
-        first_cursor.reg_ctx = temp_rcs;
-        m_frames.push_back (first_cursor);
+        first_cursor_sp->reg_ctx = temp_rcs;
+        m_frames.push_back (first_cursor_sp);
 
         // Now walk up the rest of the stack
         while (1)
         {
-            Cursor cursor;
+            CursorSP cursor_sp(new Cursor);
             RegisterContextLLDB *register_ctx;
             int cur_idx = m_frames.size ();
-            register_ctx = new RegisterContextLLDB (m_thread, m_frames[cur_idx - 1].reg_ctx, cursor.sctx, cur_idx);
+            register_ctx = new RegisterContextLLDB (m_thread, m_frames[cur_idx - 1]->reg_ctx, cursor_sp->sctx, cur_idx);
             if (!register_ctx->IsValid())
             {
                 delete register_ctx;
@@ -76,7 +76,7 @@ UnwindLLDB::GetFrameCount()
                 }
                 break;
             }
-            if (!register_ctx->GetCFA (cursor.cfa))
+            if (!register_ctx->GetCFA (cursor_sp->cfa))
             {
                 delete register_ctx;
                 if (log)
@@ -86,7 +86,7 @@ UnwindLLDB::GetFrameCount()
                 }
                 break;
             }
-            if (cursor.cfa == (addr_t) -1 || cursor.cfa == 1 || cursor.cfa == 0)
+            if (cursor_sp->cfa == (addr_t) -1 || cursor_sp->cfa == 1 || cursor_sp->cfa == 0)
             {
                 delete register_ctx;
                 if (log)
@@ -96,7 +96,7 @@ UnwindLLDB::GetFrameCount()
                 }
                 break;
             }
-            if (!register_ctx->GetPC (cursor.start_pc))
+            if (!register_ctx->GetPC (cursor_sp->start_pc))
             {
                 delete register_ctx;
                 if (log)
@@ -107,10 +107,10 @@ UnwindLLDB::GetFrameCount()
                 break;
             }
             RegisterContextSP temp_rcs(register_ctx);
-            StackFrame *frame = new StackFrame(cur_idx, cur_idx, m_thread, temp_rcs, cursor.cfa, cursor.start_pc, &cursor.sctx);
+            StackFrame *frame = new StackFrame(cur_idx, cur_idx, m_thread, temp_rcs, cursor_sp->cfa, cursor_sp->start_pc, &(cursor_sp->sctx));
             register_ctx->SetStackFrame (frame);
-            cursor.reg_ctx = temp_rcs;
-            m_frames.push_back (cursor);
+            cursor_sp->reg_ctx = temp_rcs;
+            m_frames.push_back (cursor_sp);
         }
     }
     return m_frames.size ();
@@ -125,8 +125,8 @@ UnwindLLDB::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
 
     if (idx < m_frames.size ())
     {
-        cfa = m_frames[idx].cfa;
-        pc = m_frames[idx].start_pc;
+        cfa = m_frames[idx]->cfa;
+        pc = m_frames[idx]->start_pc;
         return true;
     }
     return false;
@@ -146,6 +146,6 @@ UnwindLLDB::CreateRegisterContextForFrame (StackFrame *frame)
         return m_thread.GetRegisterContext();
     }
     if (idx < m_frames.size ())
-        return m_frames[idx].reg_ctx.get();
+        return m_frames[idx]->reg_ctx.get();
     return NULL;
 }

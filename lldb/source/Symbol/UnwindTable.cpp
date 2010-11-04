@@ -77,6 +77,11 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
 
     initialize();
 
+    if (m_eh_frame == NULL)
+    {
+        return no_unwind_found;
+    }
+
     // Create a FuncUnwinders object for the binary search below
     AddressRange search_range(addr, 1);
     FuncUnwindersSP search_unwind(new FuncUnwinders (*this, NULL, search_range));
@@ -103,26 +108,19 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
     }
 
     AddressRange range;
-    if (sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range))
+    if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range) || !range.GetBaseAddress().IsValid())
     {
-        FuncUnwindersSP unw(new FuncUnwinders(*this, m_assembly_profiler, range));
-        m_unwinds.push_back (unw);
-        std::sort (m_unwinds.begin(), m_unwinds.end());
-        return unw;
-    }
-    else
-    {
-        // Does the eh_frame unwind info has a function bounds defined for this addr?
-        if (m_eh_frame->GetAddressRange (addr, range))
+        // Does the eh_frame unwind info has a function bounds for this addr?
+        if (!m_eh_frame->GetAddressRange (addr, range))
         {
-            FuncUnwindersSP unw(new FuncUnwinders(*this, m_assembly_profiler, range));
-            m_unwinds.push_back (unw);
-            std::sort (m_unwinds.begin(), m_unwinds.end());
-            return unw;
-            // FIXME we should create a syntheic Symbol based on the address range with a synthesized symbol name
+            return no_unwind_found;
         }
     }
-    return no_unwind_found;
+
+    FuncUnwindersSP unw(new FuncUnwinders(*this, m_assembly_profiler, range));
+    m_unwinds.push_back (unw);
+    std::sort (m_unwinds.begin(), m_unwinds.end());
+    return unw;
 }
 
 DWARFCallFrameInfo *
