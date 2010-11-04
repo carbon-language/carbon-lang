@@ -986,7 +986,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     } else {
       return false;
     }
-  } 
+  }
   // Lvalue-to-rvalue conversion (C++ 4.1):
   //   An lvalue (3.10) of a non-function, non-array type T can be
   //   converted to an rvalue.

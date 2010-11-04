@@ -187,13 +187,14 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
   //   Basic type information (e.g. for "int", "bool", etc.) will be kept in
   //   the run-time support library. Specifically, the run-time support
   //   library should contain type_info objects for the types X, X* and 
-  //   X const*, for every X in: void, bool, wchar_t, char, unsigned char, 
-  //   signed char, short, unsigned short, int, unsigned int, long, 
-  //   unsigned long, long long, unsigned long long, float, double, long double, 
-  //   char16_t, char32_t, and the IEEE 754r decimal and half-precision 
-  //   floating point types.
+  //   X const*, for every X in: void, std::nullptr_t, bool, wchar_t, char,
+  //   unsigned char, signed char, short, unsigned short, int, unsigned int,
+  //   long, unsigned long, long long, unsigned long long, float, double,
+  //   long double, char16_t, char32_t, and the IEEE 754r decimal and 
+  //   half-precision floating point types.
   switch (Ty->getKind()) {
     case BuiltinType::Void:
+    case BuiltinType::NullPtr:
     case BuiltinType::Bool:
     case BuiltinType::WChar:
     case BuiltinType::Char_U:
@@ -222,9 +223,6 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
     case BuiltinType::UndeducedAuto:
       assert(false && "Should not see this type here!");
       
-    case BuiltinType::NullPtr:
-      assert(false && "FIXME: nullptr_t is not handled!");
-
     case BuiltinType::ObjCId:
     case BuiltinType::ObjCClass:
     case BuiltinType::ObjCSel:
@@ -934,16 +932,16 @@ void CodeGenModule::EmitFundamentalRTTIDescriptor(QualType Type) {
 }
 
 void CodeGenModule::EmitFundamentalRTTIDescriptors() {
-  QualType FundamentalTypes[] = { Context.VoidTy, Context.Char32Ty,
-                                  Context.Char16Ty, Context.UnsignedLongLongTy,
-                                  Context.LongLongTy, Context.WCharTy,
-                                  Context.UnsignedShortTy, Context.ShortTy,
-                                  Context.UnsignedLongTy, Context.LongTy,
-                                  Context.UnsignedIntTy, Context.IntTy,
-                                  Context.UnsignedCharTy, Context.FloatTy,
-                                  Context.LongDoubleTy, Context.DoubleTy,
-                                  Context.CharTy, Context.BoolTy,
-                                  Context.SignedCharTy };
+  QualType FundamentalTypes[] = { Context.VoidTy, Context.NullPtrTy,
+                                  Context.BoolTy, Context.WCharTy,
+                                  Context.CharTy, Context.UnsignedCharTy,
+                                  Context.SignedCharTy, Context.ShortTy, 
+                                  Context.UnsignedShortTy, Context.IntTy,
+                                  Context.UnsignedIntTy, Context.LongTy, 
+                                  Context.UnsignedLongTy, Context.LongLongTy, 
+                                  Context.UnsignedLongLongTy, Context.FloatTy,
+                                  Context.DoubleTy, Context.LongDoubleTy,
+                                  Context.Char16Ty, Context.Char32Ty };
   for (unsigned i = 0; i < sizeof(FundamentalTypes)/sizeof(QualType); ++i)
     EmitFundamentalRTTIDescriptor(FundamentalTypes[i]);
 }
