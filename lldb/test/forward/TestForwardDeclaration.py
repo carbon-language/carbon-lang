@@ -9,15 +9,12 @@ class ForwardDeclarationTestCase(TestBase):
 
     mydir = "forward"
 
-    @unittest2.skip("rdar://problem/8630601 Assertion failed: (result_valobj_sp.get()), function EvaluateExpression, file CommandObjectExpression.cpp, line 227.")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
         """Display *bar_ptr when stopped on a function with forward declaration of struct bar."""
         self.buildDsym()
         self.forward_declaration()
 
-    # The expected failure happens before the assert, so there's no need to @skip.
-    #@unittest2.skip("rdar://problem/8630601 Assertion failed: (result_valobj_sp.get()), function EvaluateExpression, file CommandObjectExpression.cpp, line 227.")
     # rdar://problem/8546815
     # './dotest.py -v -t forward' fails for test_with_dwarf_and_run_command
     @unittest2.expectedFailure
