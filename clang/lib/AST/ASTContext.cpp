@@ -2738,6 +2738,7 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) {
                            const_cast<IdentifierInfo *>(DNT->getIdentifier()));
     }    
 
+    // Do the same thing as above, but with dependent-named specializations.
     if (const DependentTemplateSpecializationType *DTST
           = T->getAs<DependentTemplateSpecializationType>()) {
       NestedNameSpecifier *Prefix
