@@ -25,6 +25,7 @@ clang_disposeString
 clang_disposeTokens
 clang_disposeTranslationUnit
 clang_enableStackTraces
+clang_executeOnThread
 clang_equalCursors
 clang_equalLocations
 clang_equalTypes

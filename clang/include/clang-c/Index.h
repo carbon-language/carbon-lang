@@ -2208,6 +2208,9 @@ CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
                                           unsigned *endLine,
                                           unsigned *endColumn);
 CINDEX_LINKAGE void clang_enableStackTraces(void);
+CINDEX_LINKAGE void clang_executeOnThread(void (*fn)(void*), void *user_data,
+                                          unsigned stack_size);
+
 /**
  * @}
  */

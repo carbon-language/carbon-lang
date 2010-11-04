@@ -3562,6 +3562,11 @@ void clang_enableStackTraces(void) {
   llvm::sys::PrintStackTraceOnErrorSignal();
 }
 
+void clang_executeOnThread(void (*fn)(void*), void *user_data,
+                           unsigned stack_size) {
+  llvm::llvm_execute_on_thread(fn, user_data, stack_size);
+}
+
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
