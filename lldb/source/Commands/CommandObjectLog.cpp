@@ -413,7 +413,7 @@ public:
         CommandObject (interpreter, 
                        "log timers",
                        "Enable, disable, dump, and reset LLDB internal performance timers.",
-                       "log timers < enable | disable | dump | reset >")
+                       "log timers < enable <depth> | disable | dump | reset >")
     {
     }
 
@@ -456,6 +456,24 @@ public:
             }
 
         }
+        else if (argc == 2)
+        {
+            const char *sub_command = args.GetArgumentAtIndex(0);
+
+            if (strcasecmp(sub_command, "enable") == 0)
+            {
+                bool success;
+                uint32_t depth = Args::StringToUInt32(args.GetArgumentAtIndex(1), 0, 0, &success);
+                if (success)
+                {
+                    Timer::SetDisplayDepth (depth);
+                    result.SetStatus(eReturnStatusSuccessFinishNoResult);
+                }
+                else
+                    result.AppendError("Could not convert enable depth to an unsigned integer.");
+            }
+        }
+        
         if (!result.Succeeded())
         {
             result.AppendError("Missing subcommand");
