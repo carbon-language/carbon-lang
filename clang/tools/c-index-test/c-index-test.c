@@ -1583,10 +1583,9 @@ typedef struct thread_info {
   const char **argv;
   int result;
 } thread_info;
-void *thread_runner(void *client_data_v) {
+void thread_runner(void *client_data_v) {
   thread_info *client_data = client_data_v;
   client_data->result = cindextest_main(client_data->argc, client_data->argv);
-  return 0;
 }
 
 int main(int argc, const char **argv) {
