@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "arm-emitter"
 #include "ARM.h"
 #include "ARMAddressingModes.h"
+#include "ARMFixupKinds.h"
 #include "ARMInstrInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
@@ -22,7 +23,8 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
+STATISTIC(MCNumEmitted, "Number of MC instructions emitted.");
+STATISTIC(MCNumCPRelocations, "Number of constant pool relocations created.");
 
 namespace {
 class ARMMCCodeEmitter : public MCCodeEmitter {
@@ -39,6 +41,21 @@ public:
 
   ~ARMMCCodeEmitter() {}
 
+  unsigned getNumFixupKinds() const { return 2; }
+
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+    const static MCFixupKindInfo Infos[] = {
+      { "fixup_arm_pcrel_12", 2, 12, MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_vfp_pcrel_12", 3, 8, MCFixupKindInfo::FKF_IsPCRel },
+    };
+
+    if (Kind < FirstTargetFixupKind)
+      return MCCodeEmitter::getFixupKindInfo(Kind);
+
+    assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
+           "Invalid kind!");
+    return Infos[Kind - FirstTargetFixupKind];
+  }
   unsigned getMachineSoImmOpValue(unsigned SoImm) const;
 
   // getBinaryCodeForInstr - TableGen'erated function for getting the
@@ -123,27 +140,14 @@ public:
   unsigned getAddrMode6OffsetOpValue(const MCInst &MI, unsigned Op,
                                      SmallVectorImpl<MCFixup> &Fixups) const;
 
-  unsigned getNumFixupKinds() const {
-    assert(0 && "ARMMCCodeEmitter::getNumFixupKinds() not yet implemented.");
-    return 0;
-  }
-
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
-    static MCFixupKindInfo rtn;
-    assert(0 && "ARMMCCodeEmitter::getFixupKindInfo() not yet implemented.");
-    return rtn;
-  }
-
-  void EmitByte(unsigned char C, unsigned &CurByte, raw_ostream &OS) const {
+  void EmitByte(unsigned char C, raw_ostream &OS) const {
     OS << (char)C;
-    ++CurByte;
   }
 
-  void EmitConstant(uint64_t Val, unsigned Size, unsigned &CurByte,
-                    raw_ostream &OS) const {
+  void EmitConstant(uint64_t Val, unsigned Size, raw_ostream &OS) const {
     // Output the constant in little endian byte order.
     for (unsigned i = 0; i != Size; ++i) {
-      EmitByte(Val & 255, CurByte, OS);
+      EmitByte(Val & 255, OS);
       Val >>= 8;
     }
   }
@@ -199,14 +203,6 @@ EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx, unsigned &Reg,
   const MCOperand &MO  = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
 
-  // If The first operand isn't a register, we have a label reference.
-  if (!MO.isReg()) {
-    Reg = ARM::PC;              // Rn is PC.
-    Imm = 0;
-    // FIXME: Add a fixup referencing the label.
-    return true;
-  }
-
   Reg = getARMRegisterNumbering(MO.getReg());
 
   int32_t SImm = MO1.getImm();
@@ -234,7 +230,21 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   // {12}    = (U)nsigned (add == '1', sub == '0')
   // {11-0}  = imm12
   unsigned Reg, Imm12;
-  bool isAdd = EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm12, Fixups);
+  bool isAdd = true;
+  // If The first operand isn't a register, we have a label reference.
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  if (!MO.isReg()) {
+    Reg = ARM::PC;              // Rn is PC.
+    Imm12 = 0;
+
+    assert(MO.isExpr() && "Unexpected machine operand type!");
+    const MCExpr *Expr = MO.getExpr();
+    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_12);
+    Fixups.push_back(MCFixup::Create(0, Expr, Kind));
+
+    ++MCNumCPRelocations;
+  } else
+    isAdd = EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm12, Fixups);
 
   if (Reg == ARM::PC)
     return ARM::PC << 13;       // Rn is PC;
@@ -255,7 +265,20 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
   // {8}    = (U)nsigned (add == '1', sub == '0')
   // {7-0}  = imm8
   unsigned Reg, Imm8;
-  EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm8, Fixups);
+  // If The first operand isn't a register, we have a label reference.
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  if (!MO.isReg()) {
+    Reg = ARM::PC;              // Rn is PC.
+    Imm8 = 0;
+
+    assert(MO.isExpr() && "Unexpected machine operand type!");
+    const MCExpr *Expr = MO.getExpr();
+    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_vfp_pcrel_12);
+    Fixups.push_back(MCFixup::Create(0, Expr, Kind));
+
+    ++MCNumCPRelocations;
+  } else
+    EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm8, Fixups);
 
   if (Reg == ARM::PC)
     return ARM::PC << 9;        // Rn is PC;
@@ -403,9 +426,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if ((Desc.TSFlags & ARMII::FormMask) == ARMII::Pseudo)
     return;
 
-  // Keep track of the current byte being emitted.
-  unsigned CurByte = 0;
-  EmitConstant(getBinaryCodeForInstr(MI, Fixups), 4, CurByte, OS);
+  EmitConstant(getBinaryCodeForInstr(MI, Fixups), 4, OS);
   ++MCNumEmitted;  // Keep track of the # of mi's emitted.
 }
 
