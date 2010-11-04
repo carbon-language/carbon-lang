@@ -334,6 +334,10 @@
 		4C139EA5124A8B03000BFF8D /* AppleObjCRuntimeV2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C139EA3124A8B03000BFF8D /* AppleObjCRuntimeV2.cpp */; };
 		4C1AB23B1263E5F400D0F04A /* ThreadPlanTestCondition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1AB23A1263E5F400D0F04A /* ThreadPlanTestCondition.cpp */; };
 		4C5DBBC811E3FEC60035160F /* CommandObjectCommands.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C5DBBC611E3FEC60035160F /* CommandObjectCommands.cpp */; };
+		4C61978C12823D4300FAFFCC /* AppleObjCRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C61978812823D4300FAFFCC /* AppleObjCRuntime.cpp */; };
+		4C61978D12823D4300FAFFCC /* AppleObjCRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C61978912823D4300FAFFCC /* AppleObjCRuntime.h */; };
+		4C61978E12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C61978A12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp */; };
+		4C61978F12823D4300FAFFCC /* AppleObjCRuntimeV1.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C61978B12823D4300FAFFCC /* AppleObjCRuntimeV1.h */; };
 		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */; };
 		4CB4430C12491DDA00C13DC2 /* LanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB4430A12491DDA00C13DC2 /* LanguageRuntime.cpp */; };
@@ -950,12 +954,12 @@
 		4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSpec.h; path = include/lldb/Target/ThreadSpec.h; sourceTree = "<group>"; };
 		4C09CB73116BD98B00C7A725 /* CommandCompletions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandCompletions.h; path = include/lldb/Interpreter/CommandCompletions.h; sourceTree = "<group>"; };
 		4C09CB74116BD98B00C7A725 /* CommandCompletions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandCompletions.cpp; path = source/Commands/CommandCompletions.cpp; sourceTree = "<group>"; };
-		4C0A91D412511CB900CA6636 /* AppleObjCTrampolineHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleObjCTrampolineHandler.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntimeV2/AppleObjCTrampolineHandler.cpp; sourceTree = "<group>"; };
-		4C0A91D512511CB900CA6636 /* AppleObjCTrampolineHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleObjCTrampolineHandler.h; path = LanguageRuntime/ObjC/AppleObjCRuntimeV2/AppleObjCTrampolineHandler.h; sourceTree = "<group>"; };
-		4C0A91D612511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleThreadPlanStepThroughObjCTrampoline.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntimeV2/AppleThreadPlanStepThroughObjCTrampoline.cpp; sourceTree = "<group>"; };
-		4C0A91D712511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleThreadPlanStepThroughObjCTrampoline.h; path = LanguageRuntime/ObjC/AppleObjCRuntimeV2/AppleThreadPlanStepThroughObjCTrampoline.h; sourceTree = "<group>"; };
-		4C139EA3124A8B03000BFF8D /* AppleObjCRuntimeV2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleObjCRuntimeV2.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntimeV2/AppleObjCRuntimeV2.cpp; sourceTree = "<group>"; };
-		4C139EA4124A8B03000BFF8D /* AppleObjCRuntimeV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleObjCRuntimeV2.h; path = LanguageRuntime/ObjC/AppleObjCRuntimeV2/AppleObjCRuntimeV2.h; sourceTree = "<group>"; };
+		4C0A91D412511CB900CA6636 /* AppleObjCTrampolineHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleObjCTrampolineHandler.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCTrampolineHandler.cpp; sourceTree = "<group>"; };
+		4C0A91D512511CB900CA6636 /* AppleObjCTrampolineHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleObjCTrampolineHandler.h; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCTrampolineHandler.h; sourceTree = "<group>"; };
+		4C0A91D612511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleThreadPlanStepThroughObjCTrampoline.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleThreadPlanStepThroughObjCTrampoline.cpp; sourceTree = "<group>"; };
+		4C0A91D712511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleThreadPlanStepThroughObjCTrampoline.h; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleThreadPlanStepThroughObjCTrampoline.h; sourceTree = "<group>"; };
+		4C139EA3124A8B03000BFF8D /* AppleObjCRuntimeV2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleObjCRuntimeV2.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.cpp; sourceTree = "<group>"; };
+		4C139EA4124A8B03000BFF8D /* AppleObjCRuntimeV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleObjCRuntimeV2.h; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h; sourceTree = "<group>"; };
 		4C1AB23A1263E5F400D0F04A /* ThreadPlanTestCondition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanTestCondition.cpp; path = source/Target/ThreadPlanTestCondition.cpp; sourceTree = "<group>"; };
 		4C1AB23E1263E61100D0F04A /* ThreadPlanTestCondition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanTestCondition.h; path = include/lldb/Target/ThreadPlanTestCondition.h; sourceTree = "<group>"; };
 		4C43DEF9110641F300E55CBF /* ThreadPlanShouldStopHere.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanShouldStopHere.h; path = include/lldb/Target/ThreadPlanShouldStopHere.h; sourceTree = "<group>"; };
@@ -966,6 +970,10 @@
 		4C43DF8A11069C3200E55CBF /* ThreadPlanStepOverRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanStepOverRange.cpp; path = source/Target/ThreadPlanStepOverRange.cpp; sourceTree = "<group>"; };
 		4C5DBBC611E3FEC60035160F /* CommandObjectCommands.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectCommands.cpp; path = source/Commands/CommandObjectCommands.cpp; sourceTree = "<group>"; };
 		4C5DBBC711E3FEC60035160F /* CommandObjectCommands.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectCommands.h; path = source/Commands/CommandObjectCommands.h; sourceTree = "<group>"; };
+		4C61978812823D4300FAFFCC /* AppleObjCRuntime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleObjCRuntime.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntime.cpp; sourceTree = "<group>"; };
+		4C61978912823D4300FAFFCC /* AppleObjCRuntime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleObjCRuntime.h; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntime.h; sourceTree = "<group>"; };
+		4C61978A12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleObjCRuntimeV1.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.cpp; sourceTree = "<group>"; };
+		4C61978B12823D4300FAFFCC /* AppleObjCRuntimeV1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleObjCRuntimeV1.h; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h; sourceTree = "<group>"; };
 		4C74CB6212288704006A8171 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		4C98D3DA118FB96F00E575D0 /* ClangFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangFunction.cpp; path = source/Expression/ClangFunction.cpp; sourceTree = "<group>"; };
 		4C98D3DB118FB96F00E575D0 /* RecordingMemoryManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RecordingMemoryManager.cpp; path = source/Expression/RecordingMemoryManager.cpp; sourceTree = "<group>"; };
@@ -2181,14 +2189,18 @@
 		4C139EA1124A8AD5000BFF8D /* ObjC */ = {
 			isa = PBXGroup;
 			children = (
-				4C139EA2124A8AE5000BFF8D /* AppleRuntimeV2 */,
+				4C139EA2124A8AE5000BFF8D /* AppleRuntime */,
 			);
 			name = ObjC;
 			sourceTree = "<group>";
 		};
-		4C139EA2124A8AE5000BFF8D /* AppleRuntimeV2 */ = {
+		4C139EA2124A8AE5000BFF8D /* AppleRuntime */ = {
 			isa = PBXGroup;
 			children = (
+				4C61978812823D4300FAFFCC /* AppleObjCRuntime.cpp */,
+				4C61978912823D4300FAFFCC /* AppleObjCRuntime.h */,
+				4C61978A12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp */,
+				4C61978B12823D4300FAFFCC /* AppleObjCRuntimeV1.h */,
 				4C0A91D512511CB900CA6636 /* AppleObjCTrampolineHandler.h */,
 				4C0A91D412511CB900CA6636 /* AppleObjCTrampolineHandler.cpp */,
 				4C0A91D712511CB900CA6636 /* AppleThreadPlanStepThroughObjCTrampoline.h */,
@@ -2196,7 +2208,7 @@
 				4C139EA4124A8B03000BFF8D /* AppleObjCRuntimeV2.h */,
 				4C139EA3124A8B03000BFF8D /* AppleObjCRuntimeV2.cpp */,
 			);
-			name = AppleRuntimeV2;
+			name = AppleRuntime;
 			sourceTree = "<group>";
 		};
 		4CB443651249446F00C13DC2 /* LanguageRuntime */ = {
@@ -2353,6 +2365,8 @@
 				9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */,
 				9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */,
 				2635DA87127D0D0400675BC1 /* SharingPtr.h in Headers */,
+				4C61978D12823D4300FAFFCC /* AppleObjCRuntime.h in Headers */,
+				4C61978F12823D4300FAFFCC /* AppleObjCRuntimeV1.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2424,7 +2438,6 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
-			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
@@ -2853,6 +2866,8 @@
 				AF68D3311255A111002FF25B /* UnwindLLDB.cpp in Sources */,
 				26424E3D125986CB0016D82C /* ValueObjectConstResult.cpp in Sources */,
 				4C1AB23B1263E5F400D0F04A /* ThreadPlanTestCondition.cpp in Sources */,
+				4C61978C12823D4300FAFFCC /* AppleObjCRuntime.cpp in Sources */,
+				4C61978E12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

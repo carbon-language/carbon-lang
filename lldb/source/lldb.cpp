@@ -31,7 +31,8 @@
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
-#include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntimeV2/AppleObjCRuntimeV2.h"
+#include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h"
+#include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h"
 #include "Plugins/ObjectContainer/Universal-Mach-O/ObjectContainerUniversalMachO.h"
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
 #include "Plugins/Process/MacOSX-User/source/ProcessMacOSX.h"
@@ -78,6 +79,7 @@ lldb_private::Initialize ()
         DynamicLoaderMacOSXDYLD::Initialize();
         ItaniumABILanguageRuntime::Initialize();
         AppleObjCRuntimeV2::Initialize();
+        AppleObjCRuntimeV1::Initialize();
         ObjectContainerUniversalMachO::Initialize();
         ObjectFileMachO::Initialize();
         ProcessGDBRemote::Initialize();
@@ -116,6 +118,9 @@ lldb_private::Terminate ()
 
 #ifdef __APPLE__
     DynamicLoaderMacOSXDYLD::Terminate();
+    ItaniumABILanguageRuntime::Terminate();
+    AppleObjCRuntimeV2::Terminate();
+    AppleObjCRuntimeV1::Terminate();
     ObjectContainerUniversalMachO::Terminate();
     ObjectFileMachO::Terminate();
     ProcessGDBRemote::Terminate();

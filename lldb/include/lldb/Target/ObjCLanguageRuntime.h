@@ -55,8 +55,8 @@ public:
     void
     AddToMethodCache (lldb::addr_t class_addr, lldb::addr_t sel, lldb::addr_t impl_addr);
     
-    ClangUtilityFunction *
-    CreateObjectChecker (const char *);
+    virtual ClangUtilityFunction *
+    CreateObjectChecker (const char *) = 0;
     
 protected:
     //------------------------------------------------------------------

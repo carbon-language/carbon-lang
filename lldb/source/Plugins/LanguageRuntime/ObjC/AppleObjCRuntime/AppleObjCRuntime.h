@@ -1,4 +1,4 @@
-//===-- AppleObjCRuntimeV2.h ----------------------------------------*- C++ -*-===//
+//===-- AppleObjCRuntime.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_AppleObjCRuntimeV2_h_
-#define liblldb_AppleObjCRuntimeV2_h_
+#ifndef liblldb_AppleObjCRuntime_h_
+#define liblldb_AppleObjCRuntime_h_
 
 // C Includes
 // C++ Includes
@@ -23,11 +23,18 @@
 
 namespace lldb_private {
     
-class AppleObjCRuntimeV2 :
+class AppleObjCRuntime :
         public lldb_private::ObjCLanguageRuntime
 {
 public:
-    ~AppleObjCRuntimeV2() { }
+
+    enum RuntimeVersions {
+        eObjC_VersionUnknown = 0,
+        eObjC_V1 = 1,
+        eObjC_V2 = 2
+    };
+    
+    ~AppleObjCRuntime() { }
     
     // These are generic runtime functions:
     virtual bool
@@ -40,6 +47,7 @@ public:
     GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope);
 
     // These are the ObjC specific functions.
+    
     virtual bool
     IsModuleObjCLibrary (const lldb::ModuleSP &module_sp);
     
@@ -58,27 +66,20 @@ public:
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
-    static void
-    Initialize();
+    // Note there is no CreateInstance, Initialize & Terminate functions here, because
+    // you can't make an instance of this generic runtime.
     
-    static void
-    Terminate();
-    
-    static lldb_private::LanguageRuntime *
-    CreateInstance (Process *process, lldb::LanguageType language);
-    
+protected:
+    static bool
+    AppleIsModuleObjCLibrary (const lldb::ModuleSP &module_sp);
+
+    static enum AppleObjCRuntime::RuntimeVersions
+    GetObjCVersion (Process *process);
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual const char *
-    GetPluginName();
-    
-    virtual const char *
-    GetShortPluginName();
-    
-    virtual uint32_t
-    GetPluginVersion();
-    
+public:
     virtual void
     GetPluginCommandHelp (const char *command, lldb_private::Stream *strm);
     
@@ -89,9 +90,6 @@ public:
     EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
     
     virtual void
-    SetExceptionBreakpoints ();
-    
-    virtual void
     ClearExceptionBreakpoints ();
     
     virtual bool
@@ -100,13 +98,12 @@ protected:
     Address *
     GetPrintForDebuggerAddr();
     
-private:
     std::auto_ptr<Address>  m_PrintForDebugger_addr;
     bool m_read_objc_library;
     std::auto_ptr<lldb_private::AppleObjCTrampolineHandler> m_objc_trampoline_handler_ap;
     lldb::BreakpointSP m_objc_exception_bp_sp;
 
-    AppleObjCRuntimeV2(Process *process) : 
+    AppleObjCRuntime(Process *process) : 
         lldb_private::ObjCLanguageRuntime(process),
         m_read_objc_library (false),
         m_objc_trampoline_handler_ap(NULL)
@@ -115,4 +112,4 @@ private:
     
 } // namespace lldb_private
 
-#endif  // liblldb_AppleObjCRuntimeV2_h_
+#endif  // liblldb_AppleObjCRuntime_h_

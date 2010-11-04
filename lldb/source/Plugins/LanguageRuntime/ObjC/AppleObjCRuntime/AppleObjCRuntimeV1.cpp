@@ -1,4 +1,4 @@
-//===-- AppleObjCRuntimeV2.cpp --------------------------------------*- C++ -*-===//
+//===-- AppleObjCRuntimeV1.cpp --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AppleObjCRuntimeV2.h"
+#include "AppleObjCRuntimeV1.h"
 #include "AppleObjCTrampolineHandler.h"
 
 #include "llvm/Support/MachO.h"
@@ -22,6 +22,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
@@ -35,12 +36,12 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const char *pluginName = "AppleObjCRuntimeV2";
-static const char *pluginDesc = "Apple Objective C Language Runtime - Version 2";
-static const char *pluginShort = "language.apple.objc.v2";
+static const char *pluginName = "AppleObjCRuntimeV1";
+static const char *pluginDesc = "Apple Objective C Language Runtime - Version 1";
+static const char *pluginShort = "language.apple.objc.v1";
 
 bool
-AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope)
+AppleObjCRuntimeV1::GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope)
 {
 
     // ObjC objects can only be pointers:
@@ -63,7 +64,7 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, Exec
                    
 }
 bool
-AppleObjCRuntimeV2::GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope)
+AppleObjCRuntimeV1::GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope)
 {
     if (!m_read_objc_library)
         return false;
@@ -154,90 +155,34 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, Value &value, ExecutionCo
 
 }
 
-Address *
-AppleObjCRuntimeV2::GetPrintForDebuggerAddr()
-{
-    if (!m_PrintForDebugger_addr.get())
-    {
-        ModuleList &modules = m_process->GetTarget().GetImages();
-        
-        SymbolContextList contexts;
-        SymbolContext context;
-        
-        if((!modules.FindSymbolsWithNameAndType(ConstString ("_NSPrintForDebugger"), eSymbolTypeCode, contexts)) &&
-           (!modules.FindSymbolsWithNameAndType(ConstString ("_CFPrintForDebugger"), eSymbolTypeCode, contexts)))
-            return NULL;
-        
-        contexts.GetContextAtIndex(0, context);
-        
-        m_PrintForDebugger_addr.reset(new Address(context.symbol->GetValue()));
-    }
-    
-    return m_PrintForDebugger_addr.get();
-}
-
 lldb::ValueObjectSP
-AppleObjCRuntimeV2::GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope)
+AppleObjCRuntimeV1::GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope)
 {
     lldb::ValueObjectSP ret_sp;
     return ret_sp;
-}
-
-bool
-AppleObjCRuntimeV2::IsModuleObjCLibrary (const ModuleSP &module_sp)
-{
-    const FileSpec &module_file_spec = module_sp->GetFileSpec();
-    static ConstString ObjCName ("libobjc.A.dylib");
-    
-    if (module_file_spec)
-    {
-        if (module_file_spec.GetFilename() == ObjCName)
-            return true;
-    }
-    
-    return false;
-}
-
-bool
-AppleObjCRuntimeV2::ReadObjCLibrary (const ModuleSP &module_sp)
-{
-    // Maybe check here and if we have a handler already, and the UUID of this module is the same as the one in the
-    // current module, then we don't have to reread it?
-    m_objc_trampoline_handler_ap.reset(new AppleObjCTrampolineHandler (m_process->GetSP(), module_sp));
-    if (m_objc_trampoline_handler_ap.get() != NULL)
-    {
-        m_read_objc_library = true;
-        return true;
-    }
-    else
-        return false;
-}
-
-ThreadPlanSP
-AppleObjCRuntimeV2::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others)
-{
-    ThreadPlanSP thread_plan_sp;
-    if (m_objc_trampoline_handler_ap.get())
-        thread_plan_sp = m_objc_trampoline_handler_ap->GetStepThroughDispatchPlan (thread, stop_others);
-    return thread_plan_sp;
 }
 
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
 lldb_private::LanguageRuntime *
-AppleObjCRuntimeV2::CreateInstance (Process *process, lldb::LanguageType language)
+AppleObjCRuntimeV1::CreateInstance (Process *process, lldb::LanguageType language)
 {
     // FIXME: This should be a MacOS or iOS process, and we need to look for the OBJC section to make
     // sure we aren't using the V1 runtime.
     if (language == eLanguageTypeObjC)
-        return new AppleObjCRuntimeV2 (process);
+    {
+        if (AppleObjCRuntime::GetObjCVersion (process) == AppleObjCRuntime::eObjC_V1)
+            return new AppleObjCRuntimeV1 (process);
+        else
+            return NULL;
+    }
     else
         return NULL;
 }
 
 void
-AppleObjCRuntimeV2::Initialize()
+AppleObjCRuntimeV1::Initialize()
 {
     PluginManager::RegisterPlugin (pluginName,
                                    pluginDesc,
@@ -245,7 +190,7 @@ AppleObjCRuntimeV2::Initialize()
 }
 
 void
-AppleObjCRuntimeV2::Terminate()
+AppleObjCRuntimeV1::Terminate()
 {
     PluginManager::UnregisterPlugin (CreateInstance);
 }
@@ -254,119 +199,54 @@ AppleObjCRuntimeV2::Terminate()
 // PluginInterface protocol
 //------------------------------------------------------------------
 const char *
-AppleObjCRuntimeV2::GetPluginName()
+AppleObjCRuntimeV1::GetPluginName()
 {
     return pluginName;
 }
 
 const char *
-AppleObjCRuntimeV2::GetShortPluginName()
+AppleObjCRuntimeV1::GetShortPluginName()
 {
     return pluginShort;
 }
 
 uint32_t
-AppleObjCRuntimeV2::GetPluginVersion()
+AppleObjCRuntimeV1::GetPluginVersion()
 {
     return 1;
 }
 
 void
-AppleObjCRuntimeV2::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-AppleObjCRuntimeV2::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-AppleObjCRuntimeV2::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-void
-AppleObjCRuntimeV2::SetExceptionBreakpoints ()
+AppleObjCRuntimeV1::SetExceptionBreakpoints ()
 {
     if (!m_process)
         return;
         
     if (!m_objc_exception_bp_sp)
     {
-        ArchSpec arch_spec = m_process->GetTarget().GetArchitecture();
-        
-        switch (arch_spec.GetCPUType())
-        {
-        default:
-            break;
-        case llvm::MachO::CPUTypeI386:
-            m_objc_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                              "objc_exception_throw",
-                                                                              eFunctionNameTypeBase, 
-                                                                              true);
-            break;
-        case llvm::MachO::CPUTypeX86_64:
-            m_objc_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                              "__cxa_throw",
-                                                                              eFunctionNameTypeBase, 
-                                                                              true);
-            break;
-        }
+        m_objc_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                          "objc_exception_throw",
+                                                                          eFunctionNameTypeBase, 
+                                                                          true);
     }
 }
 
-void
-AppleObjCRuntimeV2::ClearExceptionBreakpoints ()
+ClangUtilityFunction *
+AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 {
-    if (!m_process)
-        return;
-    
-    if (m_objc_exception_bp_sp.get())
-    {
-        m_process->GetTarget().RemoveBreakpointByID(m_objc_exception_bp_sp->GetID());
-        m_objc_exception_bp_sp.reset();
-    }
-}
-
-bool
-AppleObjCRuntimeV2::ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
-{
-    if (!m_process)
-        return false;
-    
-    if (!stop_reason || 
-        stop_reason->GetStopReason() != eStopReasonBreakpoint)
-        return false;
-    
-    uint64_t break_site_id = stop_reason->GetValue();
-    lldb::BreakpointSiteSP bp_site_sp = m_process->GetBreakpointSiteList().FindByID(break_site_id);
-    
-    if (!bp_site_sp)
-        return false;
-    
-    uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
-    
-    bool        check_objc_exception = false;
-    break_id_t  objc_exception_bid;
-    
-    if (m_objc_exception_bp_sp)
-    {
-        check_objc_exception = true;
-        objc_exception_bid = m_objc_exception_bp_sp->GetID();
-    }
-    
-    for (uint32_t i = 0; i < num_owners; i++)
-    {
-        break_id_t bid = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().GetID();
-        
-        if ((check_objc_exception && (bid == objc_exception_bid)))
-            return true;
-    }
-    
-    return false;
+//    char buf[256];
+//    
+//    assert(snprintf(&buf[0], sizeof(buf), 
+//                    "extern \"C\" int gdb_object_getClass(void *);"
+//                    "extern \"C\" void "
+//                    "%s(void *$__lldb_arg_obj)"
+//                    "{"
+//                    "    void **isa_ptr = (void **)$__lldb_arg_obj;"
+//                    "    if (!isa_ptr || !gdb_class_getClass(*isa_ptr))"
+//                    "        abort();"
+//                    "}", 
+//                    name) < sizeof(buf));
+//
+//    return new ClangUtilityFunction(buf, name);
+    return NULL;
 }
