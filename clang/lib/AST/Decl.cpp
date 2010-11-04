@@ -732,6 +732,10 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
     return cast<UsingShadowDecl>(this)->getTargetDecl() ==
            cast<UsingShadowDecl>(OldD)->getTargetDecl();
 
+  if (isa<UsingDecl>(this) && isa<UsingDecl>(OldD))
+    return cast<UsingDecl>(this)->getTargetNestedNameDecl() ==
+           cast<UsingDecl>(OldD)->getTargetNestedNameDecl();
+
   // For non-function declarations, if the declarations are of the
   // same kind then this must be a redeclaration, or semantic analysis
   // would not have given us the new declaration.

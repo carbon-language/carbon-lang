@@ -45,3 +45,21 @@ namespace test0 {
 
   template struct E<int>;
 }
+
+// PR7896
+namespace PR7896 {
+template <class T> struct Foo {
+  int k (float);
+};
+struct Baz {
+  int k (int);
+};
+template <class T> struct Bar : public Foo<T>, Baz {
+  using Foo<T>::k;
+  using Baz::k;
+  int foo() {
+    return k (1.0f);
+  }
+};
+template int Bar<int>::foo();
+}
