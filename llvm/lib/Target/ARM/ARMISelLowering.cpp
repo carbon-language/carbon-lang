@@ -597,7 +597,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i64, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i64, Expand);
 
-    setOperationAction(ISD::PREFETCH,   MVT::Other, Custom);
+  setOperationAction(ISD::PREFETCH,         MVT::Other, Custom);
 
   // Requires SXTB/SXTH, available on v6 and up in both ARM and Thumb modes.
   if (!Subtarget->hasV6Ops()) {
@@ -2068,20 +2068,21 @@ static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG,
     return Op.getOperand(0);
 
   DebugLoc dl = Op.getDebugLoc();
-  unsigned Flavor = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
-  if (Flavor != 3) {
-    if (!Subtarget->hasV7Ops())
-      return Op.getOperand(0);
-    else if (Flavor == 2 && !Subtarget->hasMPExtension())
-      return Op.getOperand(0);
-  }
+  unsigned isRead = ~cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() & 1;
+  if (!isRead &&
+      (!Subtarget->hasV7Ops() || !Subtarget->hasMPExtension()))
+    // ARMv7 with MP extension has PLDW.
+    return Op.getOperand(0);
 
   if (Subtarget->isThumb())
     // Invert the bits.
-    Flavor = ~Flavor & 0x3;
+    isRead = ~isRead & 1;
+  unsigned isData = Subtarget->isThumb() ? 0 : 1;
 
+  // Currently there is no intrinsic that matches pli.
   return DAG.getNode(ARMISD::PRELOAD, dl, MVT::Other, Op.getOperand(0),
-                     Op.getOperand(1), DAG.getConstant(Flavor, MVT::i32));
+                     Op.getOperand(1), DAG.getConstant(isRead, MVT::i32),
+                     DAG.getConstant(isData, MVT::i32));
 }
 
 static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) {

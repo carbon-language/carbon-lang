@@ -62,8 +62,6 @@ def SDT_ARMEH_SJLJ_DispatchSetup: SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def SDT_ARMMEMBARRIER     : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
-def SDT_ARMPRELOAD : SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
-
 def SDT_ARMTCRET : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
@@ -132,7 +130,7 @@ def ARMMemBarrier     : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIER,
                                [SDNPHasChain]>;
 def ARMMemBarrierMCR  : SDNode<"ARMISD::MEMBARRIER_MCR", SDT_ARMMEMBARRIER,
                                [SDNPHasChain]>;
-def ARMPreload        : SDNode<"ARMISD::PRELOAD", SDT_ARMPRELOAD,
+def ARMPreload        : SDNode<"ARMISD::PRELOAD", SDTPrefetch,
                                [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
 
 def ARMrbit          : SDNode<"ARMISD::RBIT", SDTIntUnaryOp>;
@@ -994,18 +992,18 @@ def CPS : AXI<(outs), (ins cps_opt:$opt), MiscFrm, NoItinerary, "cps$opt",
 
 // Preload signals the memory system of possible future data/instruction access.
 // These are for disassembly only.
-multiclass APreLoad<bits<2> data_read, string opc> {
+multiclass APreLoad<bits<1> read, bits<1> data, string opc> {
 
   def i12 : AXI<(outs), (ins addrmode_imm12:$addr), MiscFrm, IIC_Preload,
                 !strconcat(opc, "\t$addr"),
-                [(ARMPreload addrmode_imm12:$addr, (i32 data_read))]> {
+                [(ARMPreload addrmode_imm12:$addr, (i32 read), (i32 data))]> {
     bits<4> Rt;
     bits<17> addr;
     let Inst{31-26} = 0b111101;
     let Inst{25} = 0; // 0 for immediate form
-    let Inst{24} = data_read{1};
+    let Inst{24} = data;
     let Inst{23} = addr{12};        // U (add = ('U' == 1))
-    let Inst{22} = data_read{0};
+    let Inst{22} = read;
     let Inst{21-20} = 0b01;
     let Inst{19-16} = addr{16-13};  // Rn
     let Inst{15-12} = Rt;
@@ -1014,23 +1012,23 @@ multiclass APreLoad<bits<2> data_read, string opc> {
 
   def rs : AXI<(outs), (ins ldst_so_reg:$shift), MiscFrm, IIC_Preload,
                !strconcat(opc, "\t$shift"),
-               [(ARMPreload ldst_so_reg:$shift, (i32 data_read))]> {
+               [(ARMPreload ldst_so_reg:$shift, (i32 read), (i32 data))]> {
     bits<4> Rt;
     bits<17> shift;
     let Inst{31-26} = 0b111101;
     let Inst{25} = 1; // 1 for register form
-    let Inst{24} = data_read{1};
+    let Inst{24} = data;
     let Inst{23} = shift{12};    // U (add = ('U' == 1))
-    let Inst{22} = data_read{0};
+    let Inst{22} = read;
     let Inst{21-20} = 0b01;
     let Inst{19-16} = shift{16-13}; // Rn
     let Inst{11-0}  = shift{11-0};
   }
 }
 
-defm PLD  : APreLoad<3, "pld">,  Requires<[IsARM]>;
-defm PLDW : APreLoad<2, "pldw">, Requires<[IsARM,HasV7,HasMP]>;
-defm PLI  : APreLoad<1, "pli">,  Requires<[IsARM,HasV7]>;
+defm PLD  : APreLoad<1, 1, "pld">,  Requires<[IsARM]>;
+defm PLDW : APreLoad<0, 1, "pldw">, Requires<[IsARM,HasV7,HasMP]>;
+defm PLI  : APreLoad<1, 0, "pli">,  Requires<[IsARM,HasV7]>;
 
 def SETEND : AXI<(outs),(ins setend_op:$end), MiscFrm, NoItinerary,
                  "setend\t$end",

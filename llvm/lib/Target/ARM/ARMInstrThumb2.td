@@ -1173,28 +1173,28 @@ def t2STRD_POST : T2Ii8s4<0, 1, 0, (outs),
 // data/instruction access.  These are for disassembly only.
 // instr_write is inverted for Thumb mode: (prefetch 3) -> (preload 0),
 // (prefetch 1) -> (preload 2),  (prefetch 2) -> (preload 1).
-multiclass T2Ipl<bits<2> instr_write, string opc> {
+multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
 
   def i12 : T2Ii12<(outs), (ins t2addrmode_imm12:$addr), IIC_Preload, opc,
                 "\t$addr",
-                [(ARMPreload t2addrmode_imm12:$addr, (i32 instr_write))]> {
+              [(ARMPreload t2addrmode_imm12:$addr, (i32 write), (i32 instr))]> {
     let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr_write{1};
+    let Inst{24} = instr;
     let Inst{23} = 1; // U = 1
     let Inst{22} = 0;
-    let Inst{21} = instr_write{0};
+    let Inst{21} = write;
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
   }
 
   def i8 : T2Ii8<(outs), (ins t2addrmode_imm8:$addr), IIC_Preload, opc,
                 "\t$addr",
-               [(ARMPreload t2addrmode_imm8:$addr, (i32 instr_write))]> {
+               [(ARMPreload t2addrmode_imm8:$addr, (i32 write), (i32 instr))]> {
     let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr_write{1};
+    let Inst{24} = instr;
     let Inst{23} = 0; // U = 0
     let Inst{22} = 0;
-    let Inst{21} = instr_write{0};
+    let Inst{21} = write;
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
     let Inst{11-8} = 0b1100;
@@ -1202,12 +1202,12 @@ multiclass T2Ipl<bits<2> instr_write, string opc> {
 
   def s : T2Iso<(outs), (ins t2addrmode_so_reg:$addr), IIC_Preload, opc,
                "\t$addr",
-              [(ARMPreload t2addrmode_so_reg:$addr, (i32 instr_write))]> {
+             [(ARMPreload t2addrmode_so_reg:$addr, (i32 write), (i32 instr))]> {
     let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr_write{1};
+    let Inst{24} = instr;
     let Inst{23} = 0; // add = TRUE for T1
     let Inst{22} = 0;
-    let Inst{21} = instr_write{0};
+    let Inst{21} = write;
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
     let Inst{11-6} = 0000000;
@@ -1218,19 +1218,19 @@ multiclass T2Ipl<bits<2> instr_write, string opc> {
                 "\t$addr",
                []> {
     let Inst{31-25} = 0b1111100;
-    let Inst{24} = instr_write{1};
+    let Inst{24} = write;
     let Inst{23} = ?; // add = (U == 1)
     let Inst{22} = 0;
-    let Inst{21} = instr_write{0};
+    let Inst{21} = instr;
     let Inst{20} = 1;
     let Inst{19-16} = 0b1111; // Rn = 0b1111
     let Inst{15-12} = 0b1111;
   }
 }
 
-defm t2PLD  : T2Ipl<0, "pld">,  Requires<[IsThumb2]>;
-defm t2PLDW : T2Ipl<1, "pldw">, Requires<[IsThumb2,HasV7,HasMP]>;
-defm t2PLI  : T2Ipl<2, "pli">,  Requires<[IsThumb2,HasV7]>;
+defm t2PLD  : T2Ipl<0, 0, "pld">,  Requires<[IsThumb2]>;
+defm t2PLDW : T2Ipl<1, 0, "pldw">, Requires<[IsThumb2,HasV7,HasMP]>;
+defm t2PLI  : T2Ipl<0, 1, "pli">,  Requires<[IsThumb2,HasV7]>;
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
