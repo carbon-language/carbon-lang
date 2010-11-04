@@ -1219,9 +1219,8 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   // UNSUPPORTED:    ::= Dh # IEEE 754r half-precision floating point (16 bits)
   //                 ::= Di # char32_t
   //                 ::= Ds # char16_t
+  //                 ::= Dn # std::nullptr_t (i.e., decltype(nullptr))
   //                 ::= u <source-name>    # vendor extended type
-  // From our point of view, std::nullptr_t is a builtin, but as far as mangling
-  // is concerned, it's a type called std::nullptr_t.
   switch (T->getKind()) {
   case BuiltinType::Void: Out << 'v'; break;
   case BuiltinType::Bool: Out << 'b'; break;
@@ -1244,7 +1243,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Float: Out << 'f'; break;
   case BuiltinType::Double: Out << 'd'; break;
   case BuiltinType::LongDouble: Out << 'e'; break;
-  case BuiltinType::NullPtr: Out << "St9nullptr_t"; break;
+  case BuiltinType::NullPtr: Out << "Dn"; break;
 
   case BuiltinType::Overload:
   case BuiltinType::Dependent:
