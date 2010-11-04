@@ -512,12 +512,14 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
 }
 
 void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace) {
-  OS << ".uleb " << *Value;
+  assert(MAI.hasLEB128() && "Cannot print a .uleb");
+  OS << ".uleb128 " << *Value;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace) {
-  OS << ".sleb " << *Value;
+  assert(MAI.hasLEB128() && "Cannot print a .sleb");
+  OS << ".sleb128 " << *Value;
   EmitEOL();
 }
 
