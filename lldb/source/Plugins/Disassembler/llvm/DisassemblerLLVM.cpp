@@ -362,7 +362,6 @@ SyntaxForArchSpec (const ArchSpec &arch)
        ((strcasestr (arch_name, "i386") == arch_name) || 
         (strcasestr (arch_name, "x86_64") == arch_name)))
         return kEDAssemblySyntaxX86ATT;
-printf ("JSMDEBUG: Warning returning 'default' as the assembly syntax style\n");
     
     return (EDAssemblySyntax_t)0;   // default
 }
@@ -383,10 +382,6 @@ DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
     char triple[256];
     if (TripleForArchSpec (arch, triple, sizeof(triple)))
     {
-printf ("JSMDEBUG: Getting disassembler for triple %s\n", triple);
-if (strcmp (triple, "x86_64-unknown-unknown") == 0)
-    strcpy (triple, "x86_64-apple-darwin");
-printf ("JSMDEBUG: Getting disassembler for triple fixed %s\n", triple);
         assert(!EDGetDisassembler(&m_disassembler, triple, SyntaxForArchSpec (arch)) && "No disassembler created!");
     }
 }
