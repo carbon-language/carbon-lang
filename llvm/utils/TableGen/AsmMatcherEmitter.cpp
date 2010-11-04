@@ -250,10 +250,10 @@ struct MatchableInfo {
     /// The unique class instance this operand should match.
     ClassInfo *Class;
 
-    /// The original operand this corresponds to.
-    int SrcOpNum;
+    /// The operand name this is, if anything.
+    StringRef SrcOpName;
     
-    explicit AsmOperand(StringRef T) : Token(T), Class(0), SrcOpNum(-1) {}
+    explicit AsmOperand(StringRef T) : Token(T), Class(0) {}
   };
   
   /// ResOperand - This represents a single operand in the result instruction
@@ -1141,7 +1141,7 @@ BuildInstructionOperandReference(MatchableInfo *II,
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (Operands[i].MIOperandNo == unsigned(OITied)) {
         OI = &Operands[i];
-        Idx = i;
+        OperandName = OI->Name;
         break;
       }
     }
@@ -1150,40 +1150,37 @@ BuildInstructionOperandReference(MatchableInfo *II,
   }
   
   Op.Class = getOperandClass(Token, *OI);
-  Op.SrcOpNum = Idx;
+  Op.SrcOpName = OperandName;
 }
 
 void MatchableInfo::BuildResultOperands() {
-  /// OperandMap - This is a mapping from the MCInst operands (specified by the
-  /// II.OperandList operands) to the AsmOperands that they are filled in from.
-  SmallVector<int, 16> OperandMap(TheOperandList.size(), -1);
-  
-  // Order the (class) operands by the order to convert them into an MCInst.
-  for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
-    MatchableInfo::AsmOperand &Op = AsmOperands[i];
-    if (Op.SrcOpNum != -1)
-      OperandMap[Op.SrcOpNum] = i;
-  }
-  
   for (unsigned i = 0, e = TheOperandList.size(); i != e; ++i) {
     const CGIOperandList::OperandInfo &OpInfo = TheOperandList[i];
+
+    // If this is a tied operand, just copy from the previously handled operand.
+    int TiedOp = OpInfo.getTiedRegister();
+    if (TiedOp != -1) {
+      ResOperands.push_back(ResOperand::getTiedOp(TiedOp, &OpInfo));
+      continue;
+    }
     
     // Find out what operand from the asmparser that this MCInst operand comes
     // from.
-    int SrcOperand = OperandMap[i];
-    if (SrcOperand != -1) {
+    int SrcOperand = -1;
+    for (unsigned op = 0, e = AsmOperands.size(); op != e; ++op)
+      if (OpInfo.Name == AsmOperands[op].SrcOpName) {
+        SrcOperand = op;
+        break;
+      }
+
+    if (!OpInfo.Name.empty() && SrcOperand != -1) {
       ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand, &OpInfo));
       continue;
     }
     
-    // Otherwise, this must be a tied operand.
-    int TiedOp = OpInfo.getTiedRegister();
-    if (TiedOp == -1)
-      throw TGError(TheDef->getLoc(), "Instruction '" +
-                    TheDef->getName() + "' has operand '" + OpInfo.Name +
-                    "' that doesn't appear in asm string!");
-
-    ResOperands.push_back(ResOperand::getTiedOp(TiedOp, &OpInfo));
+    throw TGError(TheDef->getLoc(), "Instruction '" +
+                  TheDef->getName() + "' has operand '" + OpInfo.Name +
+                  "' that doesn't appear in asm string!");
   }
 }
 
