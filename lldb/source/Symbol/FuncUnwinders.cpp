@@ -105,7 +105,6 @@ FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
 
     Address current_pc;
     Target *target = thread.CalculateTarget();
-    ArchSpec arch;
     if (target)
     {
         ArchSpec arch = target->GetArchitecture ();

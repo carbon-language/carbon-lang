@@ -35,7 +35,8 @@ DWARFCallFrameInfo::DWARFCallFrameInfo(ObjectFile& objfile, SectionSP& section, 
     m_cfi_data_initialized (false),
     m_fde_index (),
     m_fde_index_initialized (false),
-    m_is_eh_frame (is_eh_frame)
+    m_is_eh_frame (is_eh_frame),
+    m_flags ()
 {
 }
 

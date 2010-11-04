@@ -34,7 +34,8 @@ RegisterContextLLDB::RegisterContextLLDB (Thread& thread,
     RegisterContext (thread), m_thread(thread), m_next_frame(next_frame), 
     m_sym_ctx(sym_ctx), m_all_registers_available(false), m_registers(),
     m_cfa (LLDB_INVALID_ADDRESS), m_start_pc (), m_current_pc (), m_frame_number (frame_number),
-    m_full_unwind_plan(NULL), m_fast_unwind_plan(NULL)
+    m_full_unwind_plan(NULL), m_fast_unwind_plan(NULL), m_base_reg_ctx (), m_frame_type (-1), 
+    m_current_offset (0), m_sym_ctx_valid (false)
 {
     m_sym_ctx.Clear();
     m_sym_ctx_valid = false;
@@ -498,7 +499,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     if (m_frame_type == eSigtrampFrame)
     {
         m_fast_unwind_plan = NULL;
-        UnwindPlan *up = fu->GetUnwindPlanAtCallSite ();
+        up = fu->GetUnwindPlanAtCallSite ();
         if (up->PlanValidAtAddress (m_current_pc))
         {
             return up;

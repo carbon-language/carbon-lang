@@ -26,6 +26,8 @@
 #include "Utility/StringExtractorGDBRemote.h"
 #include "UnwindLibUnwind.h"
 #include "UnwindMacOSXFrameBackchain.h"
+#include "UnwindLLDB.h"
+#include "RegisterContextLLDB.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -128,7 +130,7 @@ ThreadGDBRemote::GetUnwinder ()
         const ArchSpec target_arch (GetProcess().GetTarget().GetArchitecture ());
         if (target_arch == ArchSpec("x86_64") ||  target_arch == ArchSpec("i386"))
         {
-            m_unwinder_ap.reset (new UnwindLibUnwind (*this, GetGDBProcess().GetLibUnwindAddressSpace()));
+            m_unwinder_ap.reset (new UnwindLLDB (*this));
         }
         else
         {

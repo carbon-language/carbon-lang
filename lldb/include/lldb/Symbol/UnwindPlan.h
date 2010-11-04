@@ -59,7 +59,7 @@ public:
                     isDWARFExpression   // reg = eval(dwarf_expr)
                 };
     
-            RegisterLocation() : m_type(unspecified) { }
+            RegisterLocation() : m_type(unspecified), m_location() { }
     
             bool
             operator == (const RegisterLocation& rhs) const;
@@ -175,8 +175,8 @@ public:
         }
     
         // Return the number of registers we have locations for
-	int
-	GetRegisterCount () const
+        int
+        GetRegisterCount () const
         {
             return m_register_locations.size();
         }

@@ -21,10 +21,18 @@
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Core/SourceManager.h"
+#include "lldb/Core/Stream.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
+
+#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Symbol/FuncUnwinders.h"
+#include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Symbol/DWARFCallFrameInfo.h"
+#include "lldb/Utility/ArchVolatileRegs.h"
 
 #define DEFAULT_DISASM_BYTE_SIZE 32
 
@@ -252,7 +260,46 @@ CommandObjectDisassemble::Execute
             // The default action is to disassemble the current frame function.
             if (exe_ctx.frame)
             {
-                SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
+//                SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
+                SymbolContext sc(exe_ctx.frame->GetSymbolContext (eSymbolContextEverything));
+
+                ArchVolatileRegs *vr = ArchVolatileRegs::FindPlugin (exe_ctx.target->GetArchitecture());
+                Address pc = exe_ctx.frame->GetFrameCodeAddress();
+                FuncUnwindersSP fu = pc.GetModule()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (pc, sc);
+                if (fu != NULL)
+                {
+                    
+                     Address first_non_prologue_insn = fu->GetFirstNonPrologueInsn (*exe_ctx.target);
+                     UnwindPlan *up = fu->GetUnwindPlanAtCallSite();
+                     Stream *s = &result.GetOutputStream();
+                     if (up)
+                     {
+                         s->Printf ("\nJSMDEBUG: unwind plan at call site (from eh_frame)\n");
+                         up->Dump (result.GetOutputStream(), &exe_ctx.frame->GetThread());
+                     }
+                     else
+                     {
+                         result.GetOutputStream().Printf("No UnwindPlanAtCallSite available.\n");
+                     }
+                     up = fu->GetUnwindPlanAtNonCallSite(exe_ctx.frame->GetThread());
+                     s->Printf ("\nJSMDEBUG: unwind plan at non-call site (from disassembly)\n");
+                     up->Dump (result.GetOutputStream(), &exe_ctx.frame->GetThread());
+
+                     up = fu->GetUnwindPlanFastUnwind(exe_ctx.frame->GetThread());
+                     if (up)
+                     {
+                         s->Printf ("\nJSMDEBUG: fast unwind plan\n");
+                         up->Dump (result.GetOutputStream(), &exe_ctx.frame->GetThread());
+                     }
+
+                     up = fu->GetUnwindPlanArchitectureDefault(exe_ctx.frame->GetThread());
+                     if (up)
+                     {
+                         s->Printf ("\nJSMDEBUG: architectural default unwind plan\n");
+                         up->Dump (result.GetOutputStream(), &exe_ctx.frame->GetThread());
+                     }
+                }
+
                 if (sc.function)
                     range = sc.function->GetAddressRange();
                 else if (sc.symbol && sc.symbol->GetAddressRangePtr())

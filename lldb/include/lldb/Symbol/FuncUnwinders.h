@@ -74,6 +74,8 @@ protected:
 
     Address m_first_non_prologue_insn;
 
+    DISALLOW_COPY_AND_ASSIGN (FuncUnwinders);
+
 }; // class FuncUnwinders
 
 inline bool 

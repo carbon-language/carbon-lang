@@ -162,10 +162,15 @@ private:
 
     int m_wordsize;
     int m_cpu;
+
+    DISALLOW_COPY_AND_ASSIGN (AssemblyParse_x86);
 };
 
 AssemblyParse_x86::AssemblyParse_x86 (Target& target, Thread* thread, int cpu, AddressRange func) :
-                         m_target (target), m_thread (thread), m_cpu(cpu), m_func_bounds(func)
+                         m_target (target), m_thread (thread), m_cpu(cpu), m_func_bounds(func),
+                         m_machine_ip_regnum (-1), m_machine_sp_regnum (-1), m_machine_fp_regnum (-1),
+                         m_lldb_ip_regnum (-1), m_lldb_sp_regnum (-1), m_lldb_fp_regnum (-1),
+                         m_wordsize (-1), m_cur_insn ()
 {
     int *initialized_flag = NULL;
     m_lldb_ip_regnum = m_lldb_sp_regnum = m_lldb_fp_regnum = -1;
@@ -519,7 +524,7 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
     m_cur_insn = m_func_bounds.GetBaseAddress ();
     int current_func_text_offset = 0;
     int current_sp_bytes_offset_from_cfa = 0;
-    UnwindPlan::Row::RegisterLocation regloc;
+    UnwindPlan::Row::RegisterLocation initial_regloc;
 
     if (!m_cur_insn.IsValid())
     {
@@ -535,13 +540,13 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
     row.SetCFAOffset (m_wordsize);
 
     // caller's stack pointer value before the call insn is the CFA address
-    regloc.SetIsCFAPlusOffset (0);
-    row.SetRegisterInfo (m_lldb_sp_regnum, regloc);
+    initial_regloc.SetIsCFAPlusOffset (0);
+    row.SetRegisterInfo (m_lldb_sp_regnum, initial_regloc);
 
     // saved instruction pointer can be found at CFA - wordsize.
     current_sp_bytes_offset_from_cfa = m_wordsize;
-    regloc.SetAtCFAPlusOffset (-current_sp_bytes_offset_from_cfa);
-    row.SetRegisterInfo (m_lldb_ip_regnum, regloc);
+    initial_regloc.SetAtCFAPlusOffset (-current_sp_bytes_offset_from_cfa);
+    row.SetRegisterInfo (m_lldb_ip_regnum, initial_regloc);
 
     unwind_plan.AppendRow (row);
 

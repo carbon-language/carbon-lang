@@ -35,7 +35,7 @@ UnwindLLDB::GetFrameCount()
     if (m_frames.empty())
     {
         // First, set up the 0th (initial) frame
-        CursorSP first_cursor_sp(new Cursor);
+        CursorSP first_cursor_sp(new Cursor ());
         RegisterContextSP no_frame; // an empty shared pointer
         RegisterContextLLDB *first_register_ctx = new RegisterContextLLDB(m_thread, no_frame, first_cursor_sp->sctx, 0);
         if (!first_register_ctx->IsValid())
@@ -55,16 +55,16 @@ UnwindLLDB::GetFrameCount()
         }
         // Reuse the StackFrame provided by the processor native machine context for the first frame
         first_register_ctx->SetStackFrame (m_thread.GetStackFrameAtIndex(0).get());
-        RegisterContextSP temp_rcs(first_register_ctx);
-        first_cursor_sp->reg_ctx = temp_rcs;
+        RegisterContextSP first_register_ctx_sp(first_register_ctx);
+        first_cursor_sp->reg_ctx = first_register_ctx_sp;
         m_frames.push_back (first_cursor_sp);
 
         // Now walk up the rest of the stack
         while (1)
         {
-            CursorSP cursor_sp(new Cursor);
+            CursorSP cursor_sp(new Cursor ());
             RegisterContextLLDB *register_ctx;
-            int cur_idx = m_frames.size ();
+            uint32_t cur_idx = m_frames.size ();
             register_ctx = new RegisterContextLLDB (m_thread, m_frames[cur_idx - 1]->reg_ctx, cursor_sp->sctx, cur_idx);
             if (!register_ctx->IsValid())
             {
@@ -106,10 +106,10 @@ UnwindLLDB::GetFrameCount()
                 }
                 break;
             }
-            RegisterContextSP temp_rcs(register_ctx);
-            StackFrame *frame = new StackFrame(cur_idx, cur_idx, m_thread, temp_rcs, cursor_sp->cfa, cursor_sp->start_pc, &(cursor_sp->sctx));
+            RegisterContextSP register_ctx_sp(register_ctx);
+            StackFrame *frame = new StackFrame(cur_idx, cur_idx, m_thread, register_ctx_sp, cursor_sp->cfa, cursor_sp->start_pc, &(cursor_sp->sctx));
             register_ctx->SetStackFrame (frame);
-            cursor_sp->reg_ctx = temp_rcs;
+            cursor_sp->reg_ctx = register_ctx_sp;
             m_frames.push_back (cursor_sp);
         }
     }
