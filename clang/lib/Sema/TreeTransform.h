@@ -522,7 +522,8 @@ public:
   /// By default, builds a new ElaboratedType type from the keyword,
   /// the nested-name-specifier and the named type.
   /// Subclasses may override this routine to provide different behavior.
-  QualType RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
+  QualType RebuildElaboratedType(SourceLocation KeywordLoc,
+                                 ElaboratedTypeKeyword Keyword,
                                  NestedNameSpecifier *NNS, QualType Named) {
     return SemaRef.Context.getElaboratedType(Keyword, NNS, Named);
   }
@@ -3340,7 +3341,8 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
   if (getDerived().AlwaysRebuild() ||
       NNS != T->getQualifier() ||
       NamedT != T->getNamedType()) {
-    Result = getDerived().RebuildElaboratedType(T->getKeyword(), NNS, NamedT);
+    Result = getDerived().RebuildElaboratedType(TL.getKeywordLoc(),
+                                                T->getKeyword(), NNS, NamedT);
     if (Result.isNull())
       return QualType();
   }

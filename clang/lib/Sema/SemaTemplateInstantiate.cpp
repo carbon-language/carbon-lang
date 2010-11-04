@@ -618,7 +618,8 @@ namespace {
       
     /// \brief Check for tag mismatches when instantiating an
     /// elaborated type.
-    QualType RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
+    QualType RebuildElaboratedType(SourceLocation KeywordLoc,
+                                   ElaboratedTypeKeyword Keyword,
                                    NestedNameSpecifier *NNS, QualType T);
 
     ExprResult TransformPredefinedExpr(PredefinedExpr *E);
@@ -743,14 +744,14 @@ VarDecl *TemplateInstantiator::RebuildObjCExceptionDecl(VarDecl *ExceptionDecl,
 }
 
 QualType
-TemplateInstantiator::RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
+TemplateInstantiator::RebuildElaboratedType(SourceLocation KeywordLoc,
+                                            ElaboratedTypeKeyword Keyword,
                                             NestedNameSpecifier *NNS,
                                             QualType T) {
   if (const TagType *TT = T->getAs<TagType>()) {
     TagDecl* TD = TT->getDecl();
 
-    // FIXME: this location is very wrong;  we really need typelocs.
-    SourceLocation TagLocation = TD->getTagKeywordLoc();
+    SourceLocation TagLocation = KeywordLoc;
 
     // FIXME: type might be anonymous.
     IdentifierInfo *Id = TD->getIdentifier();
@@ -769,7 +770,8 @@ TemplateInstantiator::RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
     }
   }
 
-  return TreeTransform<TemplateInstantiator>::RebuildElaboratedType(Keyword,
+  return TreeTransform<TemplateInstantiator>::RebuildElaboratedType(KeywordLoc,
+                                                                    Keyword,
                                                                     NNS, T);
 }
 
