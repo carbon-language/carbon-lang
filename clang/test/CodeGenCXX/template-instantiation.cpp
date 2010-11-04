@@ -109,3 +109,16 @@ namespace test4 {
     A<int>::foo();
   }
 }
+
+namespace PR8505 {
+// Hits an assertion due to bogus instantiation of class B.
+template <int i> class A {
+  class B* g;
+};
+class B {
+  void f () {}
+};
+// Should not instantiate class B since it is introduced in namespace scope.
+// CHECK-NOT: _ZN6PR85051AILi0EE1B1fEv
+template class A<0>;
+}

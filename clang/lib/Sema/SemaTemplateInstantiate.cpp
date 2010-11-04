@@ -1223,6 +1223,18 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
          MemberEnd = Pattern->decls_end();
        Member != MemberEnd; ++Member) {
+    // Don't instantiate members not belonging in this semantic context.
+    // e.g. for:
+    // @code
+    //    template <int i> class A {
+    //      class B *g;
+    //    };
+    // @endcode
+    // 'class B' has the template as lexical context but semantically it is
+    // introduced in namespace scope.
+    if ((*Member)->getDeclContext() != Pattern)
+      continue;
+
     Decl *NewMember = SubstDecl(*Member, Instantiation, TemplateArgs);
     if (NewMember) {
       if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
