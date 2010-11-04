@@ -454,8 +454,6 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         
         if (m_expr.NeedsValidation() && exe_ctx.process->GetDynamicCheckers())
         {
-            /* 
-             Disabled temporarily - TODO Centralize and re-enable this inside Process to avoid race conditions
             IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), function_name.c_str());
         
             if (!ir_dynamic_checks.runOnModule(*module))
@@ -464,7 +462,6 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
                 err.SetErrorString("Couldn't add dynamic checks to the expression");
                 return err;
             }
-             */
         }
     }
     

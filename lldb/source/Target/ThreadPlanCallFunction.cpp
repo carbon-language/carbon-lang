@@ -150,6 +150,17 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 
 ThreadPlanCallFunction::~ThreadPlanCallFunction ()
 {
+    if (m_valid && !IsPlanComplete())
+        DoTakedown();
+}
+
+void
+ThreadPlanCallFunction::DoTakedown ()
+{
+    m_thread.RestoreSaveFrameZero(m_register_backup);
+    m_thread.ClearStackFrames();
+    SetPlanComplete();
+    ClearBreakpoints();
 }
 
 void
@@ -253,11 +264,8 @@ ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
             }
         }
         
-        m_thread.RestoreSaveFrameZero(m_register_backup);
-        m_thread.ClearStackFrames();
-        SetPlanComplete();
+        DoTakedown();
         
-        ClearBreakpoints();
         return true;
     }
     else

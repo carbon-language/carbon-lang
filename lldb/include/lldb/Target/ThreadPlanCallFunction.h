@@ -78,6 +78,9 @@ public:
 protected:
 private:
     void
+    DoTakedown ();
+    
+    void
     SetBreakpoints ();
     
     void

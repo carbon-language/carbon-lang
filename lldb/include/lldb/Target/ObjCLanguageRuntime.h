@@ -21,6 +21,8 @@
 #include "lldb/Target/LanguageRuntime.h"
 
 namespace lldb_private {
+    
+class ClangUtilityFunction;
 
 class ObjCLanguageRuntime :
     public LanguageRuntime
@@ -52,6 +54,9 @@ public:
 
     void
     AddToMethodCache (lldb::addr_t class_addr, lldb::addr_t sel, lldb::addr_t impl_addr);
+    
+    ClangUtilityFunction *
+    CreateObjectChecker (const char *);
     
 protected:
     //------------------------------------------------------------------
