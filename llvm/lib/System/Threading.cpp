@@ -62,3 +62,55 @@ void llvm::llvm_acquire_global_lock() {
 void llvm::llvm_release_global_lock() {
   if (multithreaded_mode) global_lock->release();
 }
+
+#if defined(LLVM_MULTITHREADED) && defined(HAVE_PTHREAD_H)
+#include <pthread.h>
+
+struct ThreadInfo {
+  void (*UserFn)(void *);
+  void *UserData;
+};
+static void *ExecuteOnThread_Dispatch(void *Arg) {
+  ThreadInfo *TI = reinterpret_cast<ThreadInfo*>(Arg);
+  TI->UserFn(TI->UserData);
+  return 0;
+}
+
+void llvm::llvm_execute_on_thread(void (*Fn)(void*), void *UserData,
+                                  unsigned RequestedStackSize) {
+  ThreadInfo Info = { Fn, UserData };
+  pthread_attr_t Attr;
+  pthread_t Thread;
+
+  // Construct the attributes object.
+  if (::pthread_attr_init(&Attr) != 0)
+    return;
+
+  // Set the requested stack size, if given.
+  if (RequestedStackSize != 0) {
+    if (::pthread_attr_setstacksize(&Attr, RequestedStackSize) != 0)
+      goto error;
+  }
+
+  // Construct and execute the thread.
+  if (::pthread_create(&Thread, &Attr, ExecuteOnThread_Dispatch, &Info) != 0)
+    goto error;
+
+  // Wait for the thread and clean up.
+  ::pthread_join(Thread, 0);
+  
+ error:
+  ::pthread_attr_destroy(&Attr);
+}
+
+#else
+
+// No non-pthread implementation, currently.
+
+void llvm::llvm_execute_on_thread(void (*Fn)(void*), void *UserData,
+                                  unsigned RequestedStackSize) {
+  (void) RequestedStackSize;
+  Fn(UserData);
+}
+
+#endif
