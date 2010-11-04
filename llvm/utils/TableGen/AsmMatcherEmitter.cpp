@@ -75,6 +75,7 @@
 #include "Record.h"
 #include "StringMatcher.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
@@ -312,6 +313,9 @@ struct MatchableInfo {
   /// matchable came from.
   Record *const TheDef;
   
+  /// DefRec - This is the definition that it came from.
+  PointerUnion<const CodeGenInstruction*, const CodeGenInstAlias*> DefRec;
+  
   // FIXME: REMOVE.
   const CGIOperandList &TheOperandList;
 
@@ -343,12 +347,13 @@ struct MatchableInfo {
   std::string ConversionFnKind;
   
   MatchableInfo(const CodeGenInstruction &CGI)
-    : TheDef(CGI.TheDef), TheOperandList(CGI.Operands), AsmString(CGI.AsmString) {
+    : TheDef(CGI.TheDef), DefRec(&CGI),
+      TheOperandList(CGI.Operands), AsmString(CGI.AsmString) {
     InstrName = TheDef->getName();
   }
 
   MatchableInfo(const CodeGenInstAlias *Alias)
-    : TheDef(Alias->TheDef), TheOperandList(Alias->Operands),
+    : TheDef(Alias->TheDef), DefRec(Alias), TheOperandList(Alias->Operands),
       AsmString(Alias->AsmString) {
         
     // FIXME: Huge hack.
@@ -510,9 +515,13 @@ private:
   /// operand classes.
   void BuildOperandClasses();
 
-  void BuildInstructionOperandReference(MatchableInfo *II, StringRef OpName,
+  void BuildInstructionOperandReference(MatchableInfo *II,
+                                        StringRef OpName,
                                         MatchableInfo::AsmOperand &Op);
-
+  void BuildAliasOperandReference(MatchableInfo *II,
+                                  StringRef OpName,
+                                  MatchableInfo::AsmOperand &Op);
+                                  
 public:
   AsmMatcherInfo(Record *AsmParser, CodeGenTarget &Target);
 
@@ -1100,14 +1109,19 @@ void AsmMatcherInfo::BuildInfo() {
         continue;
       }
 
+      // Otherwise this is an operand reference.
       StringRef OperandName;
       if (Token[1] == '{')
         OperandName = Token.substr(2, Token.size() - 3);
       else
         OperandName = Token.substr(1);
       
-      // Otherwise this is an operand reference.
-      BuildInstructionOperandReference(II, OperandName, Op);
+      if (II->DefRec.is<const CodeGenInstruction*>())
+        BuildInstructionOperandReference(II,
+                                         OperandName, Op);
+      else
+        BuildAliasOperandReference(II,
+                                   OperandName, Op);
     }
     
     II->BuildResultOperands();
@@ -1123,8 +1137,8 @@ void AsmMatcherInfo::
 BuildInstructionOperandReference(MatchableInfo *II,
                                  StringRef OperandName,
                                  MatchableInfo::AsmOperand &Op) {
-  const CGIOperandList &Operands = II->TheOperandList;
-  
+  const CodeGenInstruction &CGI = *II->DefRec.get<const CodeGenInstruction*>();
+  const CGIOperandList &Operands = CGI.Operands;
   
   // Map this token to an operand. FIXME: Move elsewhere.
   unsigned Idx;
@@ -1135,6 +1149,49 @@ BuildInstructionOperandReference(MatchableInfo *II,
   // Set up the operand class.
   Op.Class = getOperandClass(Operands[Idx]);
 
+  // If the named operand is tied, canonicalize it to the untied operand.
+  // For example, something like:
+  //   (outs GPR:$dst), (ins GPR:$src)
+  // with an asmstring of
+  //   "inc $src"
+  // we want to canonicalize to:
+  //   "inc $dst"
+  // so that we know how to provide the $dst operand when filling in the result.
+  int OITied = Operands[Idx].getTiedRegister();
+  if (OITied != -1) {
+    // The tied operand index is an MIOperand index, find the operand that
+    // contains it.
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+      if (Operands[i].MIOperandNo == unsigned(OITied)) {
+        OperandName = Operands[i].Name;
+        break;
+      }
+    }
+  }
+  
+  Op.SrcOpName = OperandName;
+}
+
+void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
+                                                StringRef OperandName,
+                                                MatchableInfo::AsmOperand &Op) {
+  const CodeGenInstAlias &CGA = *II->DefRec.get<const CodeGenInstAlias*>();
+  
+  
+  // FIXME: This is a total hack, it should not be a copy of
+  // BuildInstructionOperandReference
+  
+  const CGIOperandList &Operands = CGA.Operands;
+  
+  // Map this token to an operand. FIXME: Move elsewhere.
+  unsigned Idx;
+  if (!Operands.hasOperandNamed(OperandName, Idx))
+    throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
+                  OperandName.str() + "'");
+  
+  // Set up the operand class.
+  Op.Class = getOperandClass(Operands[Idx]);
+  
   // If the named operand is tied, canonicalize it to the untied operand.
   // For example, something like:
   //   (outs GPR:$dst), (ins GPR:$src)
