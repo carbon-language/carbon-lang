@@ -123,7 +123,7 @@ ThreadGDBRemote::RefreshStateAfterStop()
 
 // Whether to use the new native unwinder (UnwindLLDB) or the libunwind-remote based unwinder for
 // stack walks on i386/x86_64
-#undef USE_NATIVE_UNWINDER
+#define USE_NATIVE_UNWINDER
 
 Unwind *
 ThreadGDBRemote::GetUnwinder ()
