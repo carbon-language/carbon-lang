@@ -117,3 +117,20 @@ namespace PR6463 {
     return x;
   }
 }
+
+namespace PR7419 {
+  template <typename T> struct S {
+    typedef typename T::Y T2;
+    typedef typename T2::Z T3;
+    typedef typename T3::W T4;
+    T4 *f();
+
+    typedef typename T::template Y<int> TT2;
+    typedef typename TT2::template Z<float> TT3;
+    typedef typename TT3::template W<double> TT4;
+    TT4 g();
+  };
+
+  template <typename T> typename T::Y::Z::W *S<T>::f() { }
+  template <typename T> typename T::template Y<int>::template Z<float>::template W<double> S<T>::g() { }
+}

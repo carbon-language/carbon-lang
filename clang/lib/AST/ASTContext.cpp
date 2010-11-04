@@ -2723,9 +2723,33 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) {
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate: {
     QualType T = getCanonicalType(QualType(NNS->getAsType(), 0));
-    return NestedNameSpecifier::Create(*this, 0,
-                 NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate,
-                                       T.getTypePtr());
+    
+    // If we have some kind of dependent-named type (e.g., "typename T::type"),
+    // break it apart into its prefix and identifier, then reconsititute those
+    // as the canonical nested-name-specifier. This is required to canonicalize
+    // a dependent nested-name-specifier involving typedefs of dependent-name
+    // types, e.g.,
+    //   typedef typename T::type T1;
+    //   typedef typename T1::type T2;
+    if (const DependentNameType *DNT = T->getAs<DependentNameType>()) {
+      NestedNameSpecifier *Prefix
+        = getCanonicalNestedNameSpecifier(DNT->getQualifier());
+      return NestedNameSpecifier::Create(*this, Prefix, 
+                           const_cast<IdentifierInfo *>(DNT->getIdentifier()));
+    }    
+
+    if (const DependentTemplateSpecializationType *DTST
+          = T->getAs<DependentTemplateSpecializationType>()) {
+      NestedNameSpecifier *Prefix
+        = getCanonicalNestedNameSpecifier(DTST->getQualifier());
+      TemplateName Name
+        = getDependentTemplateName(Prefix, DTST->getIdentifier());
+      T = getTemplateSpecializationType(Name, 
+                                        DTST->getArgs(), DTST->getNumArgs());
+      T = getCanonicalType(T);
+    }
+    
+    return NestedNameSpecifier::Create(*this, 0, false, T.getTypePtr());
   }
 
   case NestedNameSpecifier::Global:
