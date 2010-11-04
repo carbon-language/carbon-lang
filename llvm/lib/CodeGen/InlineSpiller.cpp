@@ -35,6 +35,10 @@ using namespace llvm;
 static cl::opt<bool>
 VerifySpills("verify-spills", cl::desc("Verify after each spill/split"));
 
+static cl::opt<bool>
+ExtraSpillerSplits("extra-spiller-splits",
+                   cl::desc("Enable additional splitting during splitting"));
+
 namespace {
 class InlineSpiller : public Spiller {
   MachineFunctionPass &pass_;
@@ -116,10 +120,13 @@ bool InlineSpiller::split() {
   splitAnalysis_.analyze(&edit_->getParent());
 
   // Try splitting around loops.
-  if (const MachineLoop *loop = splitAnalysis_.getBestSplitLoop()) {
-    SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
-      .splitAroundLoop(loop);
-    return true;
+  if (ExtraSpillerSplits) {
+    const MachineLoop *loop = splitAnalysis_.getBestSplitLoop();
+    if (loop) {
+      SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
+        .splitAroundLoop(loop);
+      return true;
+    }
   }
 
   // Try splitting into single block intervals.
@@ -131,10 +138,13 @@ bool InlineSpiller::split() {
   }
 
   // Try splitting inside a basic block.
-  if (const MachineBasicBlock *MBB = splitAnalysis_.getBlockForInsideSplit()) {
-    SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
-      .splitInsideBlock(MBB);
-    return true;
+  if (ExtraSpillerSplits) {
+    const MachineBasicBlock *MBB = splitAnalysis_.getBlockForInsideSplit();
+    if (MBB){
+      SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
+        .splitInsideBlock(MBB);
+      return true;
+    }
   }
 
   return false;
