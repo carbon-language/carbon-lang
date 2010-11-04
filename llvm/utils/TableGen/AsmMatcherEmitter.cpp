@@ -370,6 +370,13 @@ struct MatchableInfo {
   Record *getSingletonRegisterForAsmOperand(unsigned i,
                                             const AsmMatcherInfo &Info) const;  
 
+  int FindAsmOperandNamed(StringRef N) const {
+    for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i)
+      if (N == AsmOperands[i].SrcOpName)
+        return i;
+    return -1;
+  }
+  
   void BuildResultOperands();
 
   /// operator< - Compare two matchables.
@@ -1128,28 +1135,30 @@ BuildInstructionOperandReference(MatchableInfo *II,
   if (!Operands.hasOperandNamed(OperandName, Idx))
     throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
                   OperandName.str() + "'");
-  
-  // FIXME: This is annoying, the named operand may be tied (e.g.,
-  // XCHG8rm). What we want is the untied operand, which we now have to
-  // grovel for. Only worry about this for single entry operands, we have to
-  // clean this up anyway.
-  const CGIOperandList::OperandInfo *OI = &Operands[Idx];
-  int OITied = OI->getTiedRegister();
+
+  // Set up the operand class.
+  Op.Class = getOperandClass(Token, Operands[Idx]);
+
+  // If the named operand is tied, canonicalize it to the untied operand.
+  // For example, something like:
+  //   (outs GPR:$dst), (ins GPR:$src)
+  // with an asmstring of
+  //   "inc $src"
+  // we want to canonicalize to:
+  //   "inc $dst"
+  // so that we know how to provide the $dst operand when filling in the result.
+  int OITied = Operands[Idx].getTiedRegister();
   if (OITied != -1) {
     // The tied operand index is an MIOperand index, find the operand that
     // contains it.
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (Operands[i].MIOperandNo == unsigned(OITied)) {
-        OI = &Operands[i];
-        OperandName = OI->Name;
+        OperandName = Operands[i].Name;
         break;
       }
     }
-    
-    assert(OI && "Unable to find tied operand target!");
   }
   
-  Op.Class = getOperandClass(Token, *OI);
   Op.SrcOpName = OperandName;
 }
 
@@ -1166,12 +1175,7 @@ void MatchableInfo::BuildResultOperands() {
     
     // Find out what operand from the asmparser that this MCInst operand comes
     // from.
-    int SrcOperand = -1;
-    for (unsigned op = 0, e = AsmOperands.size(); op != e; ++op)
-      if (OpInfo.Name == AsmOperands[op].SrcOpName) {
-        SrcOperand = op;
-        break;
-      }
+    int SrcOperand = FindAsmOperandNamed(OpInfo.Name);
 
     if (!OpInfo.Name.empty() && SrcOperand != -1) {
       ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand, &OpInfo));
