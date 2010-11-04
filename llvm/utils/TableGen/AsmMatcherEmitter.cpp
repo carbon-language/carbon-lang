@@ -500,8 +500,7 @@ private:
   ClassInfo *getTokenClass(StringRef Token);
 
   /// getOperandClass - Lookup or create the class for the given operand.
-  ClassInfo *getOperandClass(StringRef Token,
-                             const CGIOperandList::OperandInfo &OI);
+  ClassInfo *getOperandClass(const CGIOperandList::OperandInfo &OI);
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
@@ -511,7 +510,7 @@ private:
   /// operand classes.
   void BuildOperandClasses();
 
-  void BuildInstructionOperandReference(MatchableInfo *II,
+  void BuildInstructionOperandReference(MatchableInfo *II, StringRef OpName,
                                         MatchableInfo::AsmOperand &Op);
 
 public:
@@ -778,8 +777,7 @@ ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
 }
 
 ClassInfo *
-AsmMatcherInfo::getOperandClass(StringRef Token,
-                                const CGIOperandList::OperandInfo &OI) {
+AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI) {
   if (OI.Rec->isSubClassOf("RegisterClass")) {
     if (ClassInfo *CI = RegisterClassClasses[OI.Rec])
       return CI;
@@ -1102,8 +1100,14 @@ void AsmMatcherInfo::BuildInfo() {
         continue;
       }
 
+      StringRef OperandName;
+      if (Token[1] == '{')
+        OperandName = Token.substr(2, Token.size() - 3);
+      else
+        OperandName = Token.substr(1);
+      
       // Otherwise this is an operand reference.
-      BuildInstructionOperandReference(II, Op);
+      BuildInstructionOperandReference(II, OperandName, Op);
     }
     
     II->BuildResultOperands();
@@ -1117,16 +1121,8 @@ void AsmMatcherInfo::BuildInfo() {
 /// named operand such as $src.  Resolve the Class and OperandInfo pointers.
 void AsmMatcherInfo::
 BuildInstructionOperandReference(MatchableInfo *II,
+                                 StringRef OperandName,
                                  MatchableInfo::AsmOperand &Op) {
-  StringRef Token = Op.Token;
-  assert(Token[0] == '$' && "Not an operand name ref");
-  
-  StringRef OperandName;
-  if (Token[1] == '{')
-    OperandName = Token.substr(2, Token.size() - 3);
-  else
-    OperandName = Token.substr(1);
-  
   const CGIOperandList &Operands = II->TheOperandList;
   
   
@@ -1137,7 +1133,7 @@ BuildInstructionOperandReference(MatchableInfo *II,
                   OperandName.str() + "'");
 
   // Set up the operand class.
-  Op.Class = getOperandClass(Token, Operands[Idx]);
+  Op.Class = getOperandClass(Operands[Idx]);
 
   // If the named operand is tied, canonicalize it to the untied operand.
   // For example, something like:
