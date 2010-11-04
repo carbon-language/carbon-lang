@@ -5735,6 +5735,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           return ResultTy;
         }
       }
+
       // C++ [expr.rel]p2:
       //   [...] Pointer conversions (4.10) and qualification
       //   conversions (4.4) are performed on pointer operands (or on
@@ -5788,10 +5789,14 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   }
 
   if (getLangOptions().CPlusPlus) {
+    // Comparison of nullptr_t with itself.
+    if (lType->isNullPtrType() && rType->isNullPtrType())
+      return ResultTy;
+    
     // Comparison of pointers with null pointer constants and equality
     // comparisons of member pointers to null pointer constants.
     if (RHSIsNull &&
-        (lType->isPointerType() ||
+        ((lType->isPointerType() || lType->isNullPtrType()) ||
          (!isRelational && lType->isMemberPointerType()))) {
       ImpCastExprToType(rex, lType, 
                         lType->isMemberPointerType()
@@ -5800,7 +5805,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       return ResultTy;
     }
     if (LHSIsNull &&
-        (rType->isPointerType() ||
+        ((rType->isPointerType() || rType->isNullPtrType()) ||
          (!isRelational && rType->isMemberPointerType()))) {
       ImpCastExprToType(lex, rType, 
                         rType->isMemberPointerType()
@@ -5840,10 +5845,6 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       ImpCastExprToType(rex, T, CK_BitCast);
       return ResultTy;
     }
-
-    // Comparison of nullptr_t with itself.
-    if (lType->isNullPtrType() && rType->isNullPtrType())
-      return ResultTy;
   }
 
   // Handle block pointer types.

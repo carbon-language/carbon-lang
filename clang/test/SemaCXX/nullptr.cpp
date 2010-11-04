@@ -38,6 +38,10 @@ nullptr_t f(nullptr_t null)
   (void)((void*)0 == nullptr);
   (void)(null <= (void*)0);
   (void)((void*)0 <= nullptr);
+  (void)(0 == nullptr);
+  (void)(nullptr == 0);
+  (void)(nullptr <= 0);
+  (void)(0 <= nullptr);
   (void)(1 > nullptr); // expected-error {{invalid operands to binary expression}}
   (void)(1 != nullptr); // expected-error {{invalid operands to binary expression}}
   (void)(1 + nullptr); // expected-error {{invalid operands to binary expression}}
