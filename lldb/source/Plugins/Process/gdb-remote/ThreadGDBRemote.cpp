@@ -26,6 +26,7 @@
 #include "Utility/StringExtractorGDBRemote.h"
 #include "UnwindLibUnwind.h"
 #include "UnwindMacOSXFrameBackchain.h"
+#include "UnwindLLDB.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -120,6 +121,10 @@ ThreadGDBRemote::RefreshStateAfterStop()
     GetRegisterContext()->Invalidate();
 }
 
+// Whether to use the new native unwinder (UnwindLLDB) or the libunwind-remote based unwinder for
+// stack walks on i386/x86_64
+#undef USE_NATIVE_UNWINDER
+
 Unwind *
 ThreadGDBRemote::GetUnwinder ()
 {
@@ -128,7 +133,11 @@ ThreadGDBRemote::GetUnwinder ()
         const ArchSpec target_arch (GetProcess().GetTarget().GetArchitecture ());
         if (target_arch == ArchSpec("x86_64") ||  target_arch == ArchSpec("i386"))
         {
+#if defined (USE_NATIVE_UNWINDER)
+            m_unwinder_ap.reset (new UnwindLLDB (*this));
+#else
             m_unwinder_ap.reset (new UnwindLibUnwind (*this, GetGDBProcess().GetLibUnwindAddressSpace()));
+#endif
         }
         else
         {
