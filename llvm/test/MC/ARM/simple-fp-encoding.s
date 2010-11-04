@@ -193,3 +193,17 @@
         vldr.32 s5, [pc]
         vldr.32 s5, [pc,#0]
         vldr.32 s5, [pc,#-0]
+
+@ CHECK: vstr.64 d4, [r1]            @ encoding: [0x00,0x4b,0x81,0xed]
+@ CHECK: vstr.64 d4, [r1, #24]       @ encoding: [0x06,0x4b,0x81,0xed]
+@ CHECK: vstr.64 d4, [r1, #-24]      @ encoding: [0x06,0x4b,0x01,0xed]
+        vstr.64 d4, [r1]
+        vstr.64 d4, [r1, #24]
+        vstr.64 d4, [r1, #-24]
+
+@ CHECK: vstr.32 s4, [r1]            @ encoding: [0x00,0x2a,0x81,0xed]
+@ CHECK: vstr.32 s4, [r1, #24]       @ encoding: [0x06,0x2a,0x81,0xed]
+@ CHECK: vstr.32 s4, [r1, #-24]      @ encoding: [0x06,0x2a,0x01,0xed]
+        vstr.32 s4, [r1]
+        vstr.32 s4, [r1, #24]
+        vstr.32 s4, [r1, #-24]

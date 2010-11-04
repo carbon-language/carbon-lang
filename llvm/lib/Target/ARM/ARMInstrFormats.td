@@ -1461,6 +1461,17 @@ class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
            string opc, string asm, list<dag> pattern>
   : VFPI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
          VFPLdStFrm, itin, opc, asm, "", pattern> {
+  // Instruction operands.
+  bits<5>  Dd;
+  bits<13> addr;
+
+  // Encode instruction operands.
+  let Inst{23}    = addr{8};      // U (add = (U == '1'))
+  let Inst{22}    = Dd{4};
+  let Inst{19-16} = addr{12-9};   // Rn
+  let Inst{15-12} = Dd{3-0};
+  let Inst{7-0}   = addr{7-0};    // imm8
+
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-24} = opcod1;
   let Inst{21-20} = opcod2;
@@ -1476,6 +1487,17 @@ class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
            string opc, string asm, list<dag> pattern>
   : VFPI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
          VFPLdStFrm, itin, opc, asm, "", pattern> {
+  // Instruction operands.
+  bits<5>  Sd;
+  bits<13> addr;
+
+  // Encode instruction operands.
+  let Inst{23}    = addr{8};      // U (add = (U == '1'))
+  let Inst{22}    = Sd{0};
+  let Inst{19-16} = addr{12-9};   // Rn
+  let Inst{15-12} = Sd{4-1};
+  let Inst{7-0}   = addr{7-0};    // imm8
+
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-24} = opcod1;
   let Inst{21-20} = opcod2;
