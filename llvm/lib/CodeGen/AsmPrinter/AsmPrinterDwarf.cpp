@@ -36,9 +36,8 @@ void AsmPrinter::EmitSLEB128(int Value, const char *Desc) const {
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
     
-  if (MAI->hasLEB128() && OutStreamer.hasRawTextSupport()) {
-    // FIXME: MCize.
-    OutStreamer.EmitRawText("\t.sleb128\t" + Twine(Value));
+  if (MAI->hasLEB128()) {
+    OutStreamer.EmitSLEB128IntValue(Value);
     return;
   }
 
@@ -60,10 +59,10 @@ void AsmPrinter::EmitULEB128(unsigned Value, const char *Desc,
                              unsigned PadTo) const {
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
- 
-  if (MAI->hasLEB128() && PadTo == 0 && OutStreamer.hasRawTextSupport()) {
-    // FIXME: MCize.
-    OutStreamer.EmitRawText("\t.uleb128\t" + Twine(Value));
+
+  // FIXME: Should we add a PadTo option to the streamer?
+  if (MAI->hasLEB128() && PadTo == 0) {
+    OutStreamer.EmitULEB128IntValue(Value); 
     return;
   }
   
