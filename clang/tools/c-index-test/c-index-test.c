@@ -1578,11 +1578,6 @@ int cindextest_main(int argc, const char **argv) {
  * testing of a multithreaded environment (for example, having a reduced stack
  * size). */
 
-#include "llvm/Config/config.h"
-#ifdef HAVE_PTHREAD_H
-
-#include <pthread.h>
-
 typedef struct thread_info {
   int argc;
   const char **argv;
@@ -1596,33 +1591,12 @@ void *thread_runner(void *client_data_v) {
 
 int main(int argc, const char **argv) {
   thread_info client_data;
-  pthread_t thread;
-  int res;
 
   if (getenv("CINDEXTEST_NOTHREADS"))
     return cindextest_main(argc, argv);
 
   client_data.argc = argc;
   client_data.argv = argv;
-  res = pthread_create(&thread, 0, thread_runner, &client_data);
-  if (res != 0) {
-    perror("thread creation failed");
-    return 1;
-  }
-
-  res = pthread_join(thread, 0);
-  if (res != 0) {
-    perror("thread join failed");
-    return 1;
-  }
-
+  clang_executeOnThread(thread_runner, &client_data, 0);
   return client_data.result;
 }
-
-#else
-
-int main(int argc, const char **argv) {
-  return cindextest_main(argc, argv);
-}
-
-#endif
