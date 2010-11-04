@@ -250,12 +250,10 @@ struct MatchableInfo {
     /// The unique class instance this operand should match.
     ClassInfo *Class;
 
-    /// The original operand this corresponds to.  This is unset for singleton
-    /// registers and tokens, because they don't have a list in the ins/outs
-    /// list.  If an operand is tied ($a=$b), this refers to source operand: $b.
-    const CGIOperandList::OperandInfo *OperandInfo;
+    /// The original operand this corresponds to.
+    int SrcOpNum;
     
-    explicit AsmOperand(StringRef T) : Token(T), Class(0), OperandInfo(0) {}
+    explicit AsmOperand(StringRef T) : Token(T), Class(0), SrcOpNum(-1) {}
   };
   
   /// ResOperand - This represents a single operand in the result instruction
@@ -533,11 +531,8 @@ void MatchableInfo::dump() {
   for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
     AsmOperand &Op = AsmOperands[i];
     errs() << "  op[" << i << "] = " << Op.Class->ClassName << " - ";
-    if (Op.Class->Kind == ClassInfo::Token) {
-      errs() << '\"' << Op.Token << "\"\n";
-      continue;
-    }
-
+    errs() << '\"' << Op.Token << "\"\n";
+#if 0
     if (!Op.OperandInfo) {
       errs() << "(singleton register)\n";
       continue;
@@ -546,6 +541,7 @@ void MatchableInfo::dump() {
     const CGIOperandList::OperandInfo &OI = *Op.OperandInfo;
     errs() << OI.Name << " " << OI.Rec->getName()
            << " (" << OI.MIOperandNo << ", " << OI.MINumOperands << ")\n";
+#endif
   }
 }
 
@@ -974,52 +970,6 @@ AsmMatcherInfo::AsmMatcherInfo(Record *asmParser, CodeGenTarget &target)
     RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix")) {
 }
 
-/// BuildInstructionOperandReference - The specified operand is a reference to a
-/// named operand such as $src.  Resolve the Class and OperandInfo pointers.
-void AsmMatcherInfo::
-BuildInstructionOperandReference(MatchableInfo *II,
-                                 MatchableInfo::AsmOperand &Op) {
-  StringRef Token = Op.Token;
-  assert(Token[0] == '$' && "Not an operand name ref");
-  
-  StringRef OperandName;
-  if (Token[1] == '{')
-    OperandName = Token.substr(2, Token.size() - 3);
-  else
-    OperandName = Token.substr(1);
-  
-  const CGIOperandList &Operands = II->TheOperandList;
-   
-  
-  // Map this token to an operand. FIXME: Move elsewhere.
-  unsigned Idx;
-  if (!Operands.hasOperandNamed(OperandName, Idx))
-    throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
-                  OperandName.str() + "'");
-  
-  // FIXME: This is annoying, the named operand may be tied (e.g.,
-  // XCHG8rm). What we want is the untied operand, which we now have to
-  // grovel for. Only worry about this for single entry operands, we have to
-  // clean this up anyway.
-  const CGIOperandList::OperandInfo *OI = &Operands[Idx];
-  int OITied = OI->getTiedRegister();
-  if (OITied != -1) {
-    // The tied operand index is an MIOperand index, find the operand that
-    // contains it.
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (Operands[i].MIOperandNo == unsigned(OITied)) {
-        OI = &Operands[i];
-        break;
-      }
-    }
-    
-    assert(OI && "Unable to find tied operand target!");
-  }
-  
-  Op.Class = getOperandClass(Token, *OI);
-  Op.OperandInfo = OI;
-}
-
 
 void AsmMatcherInfo::BuildInfo() {
   // Build information about all of the AssemblerPredicates.
@@ -1120,7 +1070,8 @@ void AsmMatcherInfo::BuildInfo() {
   // Build info for the user defined assembly operand classes.
   BuildOperandClasses();
 
-  // Build the information about matchables.
+  // Build the information about matchables, now that we have fully formed
+  // classes.
   for (std::vector<MatchableInfo*>::iterator it = Matchables.begin(),
          ie = Matchables.end(); it != ie; ++it) {
     MatchableInfo *II = *it;
@@ -1155,6 +1106,53 @@ void AsmMatcherInfo::BuildInfo() {
   std::sort(Classes.begin(), Classes.end(), less_ptr<ClassInfo>());
 }
 
+/// BuildInstructionOperandReference - The specified operand is a reference to a
+/// named operand such as $src.  Resolve the Class and OperandInfo pointers.
+void AsmMatcherInfo::
+BuildInstructionOperandReference(MatchableInfo *II,
+                                 MatchableInfo::AsmOperand &Op) {
+  StringRef Token = Op.Token;
+  assert(Token[0] == '$' && "Not an operand name ref");
+  
+  StringRef OperandName;
+  if (Token[1] == '{')
+    OperandName = Token.substr(2, Token.size() - 3);
+  else
+    OperandName = Token.substr(1);
+  
+  const CGIOperandList &Operands = II->TheOperandList;
+  
+  
+  // Map this token to an operand. FIXME: Move elsewhere.
+  unsigned Idx;
+  if (!Operands.hasOperandNamed(OperandName, Idx))
+    throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
+                  OperandName.str() + "'");
+  
+  // FIXME: This is annoying, the named operand may be tied (e.g.,
+  // XCHG8rm). What we want is the untied operand, which we now have to
+  // grovel for. Only worry about this for single entry operands, we have to
+  // clean this up anyway.
+  const CGIOperandList::OperandInfo *OI = &Operands[Idx];
+  int OITied = OI->getTiedRegister();
+  if (OITied != -1) {
+    // The tied operand index is an MIOperand index, find the operand that
+    // contains it.
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+      if (Operands[i].MIOperandNo == unsigned(OITied)) {
+        OI = &Operands[i];
+        Idx = i;
+        break;
+      }
+    }
+    
+    assert(OI && "Unable to find tied operand target!");
+  }
+  
+  Op.Class = getOperandClass(Token, *OI);
+  Op.SrcOpNum = Idx;
+}
+
 void MatchableInfo::BuildResultOperands() {
   /// OperandMap - This is a mapping from the MCInst operands (specified by the
   /// II.OperandList operands) to the AsmOperands that they are filled in from.
@@ -1163,13 +1161,8 @@ void MatchableInfo::BuildResultOperands() {
   // Order the (class) operands by the order to convert them into an MCInst.
   for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
     MatchableInfo::AsmOperand &Op = AsmOperands[i];
-    if (!Op.OperandInfo) continue;
-    
-    
-    // FIXME: eliminate the mapping+unmapping.
-    unsigned LogicalOpNum = Op.OperandInfo - &TheOperandList[0];
-    assert(LogicalOpNum < OperandMap.size() && "Invalid operand number");
-    OperandMap[LogicalOpNum] = i;
+    if (Op.SrcOpNum != -1)
+      OperandMap[Op.SrcOpNum] = i;
   }
   
   for (unsigned i = 0, e = TheOperandList.size(); i != e; ++i) {
@@ -1250,12 +1243,12 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
           Signature += "Reg";
         else
           Signature += Op.Class->ClassName;
-        Signature += utostr(Op.OperandInfo->MINumOperands);
+        Signature += utostr(OpInfo.OpInfo->MINumOperands);
         Signature += "_" + itostr(OpInfo.AsmOperandNum);
         
         CaseOS << "    ((" << TargetOperandClass << "*)Operands["
                << (OpInfo.AsmOperandNum+1) << "])->" << Op.Class->RenderMethod
-               << "(Inst, " << Op.OperandInfo->MINumOperands << ");\n";
+               << "(Inst, " << OpInfo.OpInfo->MINumOperands << ");\n";
         break;
       }
           
