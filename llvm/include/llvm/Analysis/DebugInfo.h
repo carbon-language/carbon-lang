@@ -238,6 +238,7 @@ namespace llvm {
      
      return getFieldAs<DIFile>(3).getCompileUnit();
     }
+    DIFile getFile() const              { return getFieldAs<DIFile>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
     uint64_t getAlignInBits() const     { return getUInt64Field(6); }
