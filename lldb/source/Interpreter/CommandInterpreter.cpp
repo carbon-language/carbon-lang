@@ -510,6 +510,8 @@ CommandInterpreter::HandleCommand
 //        result.AppendMessageWithFormat ("Processing command: %s\n", command_line);
 //    }
 
+    Timer scoped_timer (__PRETTY_FUNCTION__, "Handling command: %s.", command_line);
+    
     m_debugger.UpdateExecutionContext (override_context);
 
     if (command_line == NULL || command_line[0] == '\0')
