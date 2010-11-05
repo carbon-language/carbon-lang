@@ -1451,7 +1451,8 @@ void ASTWriter::WriteUserDiagnosticMappings(const Diagnostic &Diag) {
     }
   }
 
-  Stream.EmitRecord(DIAG_USER_MAPPINGS, Record);
+  if (!Record.empty())
+    Stream.EmitRecord(DIAG_USER_MAPPINGS, Record);
 }
 
 //===----------------------------------------------------------------------===//
