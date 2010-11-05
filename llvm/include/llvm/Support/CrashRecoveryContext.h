@@ -67,6 +67,14 @@ public:
   /// the backtrace of the crash on failures.
   bool RunSafely(void (*Fn)(void*), void *UserData);
 
+  /// \brief Execute the provide callback function (with the given arguments) in
+  /// a protected context which is run in another thread (optionally with a
+  /// requested stack size).
+  ///
+  /// See RunSafely() and llvm_execute_on_thread().
+  bool RunSafelyOnThread(void (*Fn)(void*), void *UserData,
+                         unsigned RequestedStackSize = 0);
+
   /// \brief Explicitly trigger a crash recovery in the current process, and
   /// return failure from RunSafely(). This function does not return.
   void HandleCrash();

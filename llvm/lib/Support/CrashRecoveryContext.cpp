@@ -205,3 +205,26 @@ const std::string &CrashRecoveryContext::getBacktrace() const {
   assert(CRC->Failed && "No crash was detected!");
   return CRC->Backtrace;
 }
+
+//
+
+namespace {
+struct RunSafelyOnThreadInfo {
+  void (*UserFn)(void*);
+  void *UserData;
+  CrashRecoveryContext *CRC;
+  bool Result;
+};
+}
+
+static void RunSafelyOnThread_Dispatch(void *UserData) {
+  RunSafelyOnThreadInfo *Info =
+    reinterpret_cast<RunSafelyOnThreadInfo*>(UserData);
+  Info->Result = Info->CRC->RunSafely(Info->UserFn, Info->UserData);
+}
+bool CrashRecoveryContext::RunSafelyOnThread(void (*Fn)(void*), void *UserData,
+                                             unsigned RequestedStackSize) {
+  RunSafelyOnThreadInfo Info = { Fn, UserData, this, false };
+  llvm_execute_on_thread(RunSafelyOnThread_Dispatch, &Info, RequestedStackSize);
+  return Info.Result;
+}
