@@ -2753,6 +2753,8 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
         if (!Tag->isBeingDefined() &&
             RequireCompleteType(Loc, T, diag::err_incomplete_type))
           return 0;
+
+        ParentDC = Tag->getDecl();
       }
     }
 
