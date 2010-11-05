@@ -2131,12 +2131,12 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                              const char *source_filename,
                                          const char * const *command_line_args,
                                              int num_command_line_args,
-                                             struct CXUnsavedFile *unsaved_files,
+                                            struct CXUnsavedFile *unsaved_files,
                                              unsigned num_unsaved_files,
                                              unsigned options) {
   ParseTranslationUnitInfo PTUI = { CIdx, source_filename, command_line_args,
-                                    num_command_line_args, unsaved_files, num_unsaved_files,
-                                    options, 0 };
+                                    num_command_line_args, unsaved_files,
+                                    num_unsaved_files, options, 0 };
   llvm::CrashRecoveryContext CRC;
 
   if (!CRC.RunSafely(clang_parseTranslationUnit_Impl, &PTUI)) {
@@ -2490,7 +2490,8 @@ typedef struct _CXChildVisitResult
 	void *isa;
 	int flags;
 	int reserved;
-	enum CXChildVisitResult(*invoke)(struct _CXChildVisitResult*, CXCursor, CXCursor);
+	enum CXChildVisitResult(*invoke)(struct _CXChildVisitResult*, CXCursor,
+                                         CXCursor);
 } *CXCursorVisitorBlock;
 
 static enum CXChildVisitResult visitWithBlock(CXCursor cursor, CXCursor parent,
@@ -2501,7 +2502,8 @@ static enum CXChildVisitResult visitWithBlock(CXCursor cursor, CXCursor parent,
 #endif
 
 
-unsigned clang_visitChildrenWithBlock(CXCursor parent, CXCursorVisitorBlock block) {
+unsigned clang_visitChildrenWithBlock(CXCursor parent,
+                                      CXCursorVisitorBlock block) {
   return clang_visitChildren(parent, visitWithBlock, block);
 }
 
@@ -3457,7 +3459,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
                                        D->getLocation(), CXXUnit);
 
   case Decl::ObjCClass:
-    return MakeCursorOverloadedDeclRef(cast<ObjCClassDecl>(D), D->getLocation(), 
+    return MakeCursorOverloadedDeclRef(cast<ObjCClassDecl>(D), D->getLocation(),
                                        CXXUnit);
 
   case Decl::Friend:
@@ -4056,9 +4058,9 @@ void clang_annotateTokens(CXTranslationUnit TU,
     reprocess:
       if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
         // We have found a preprocessing directive. Gobble it up so that we
-        // don't see it while preprocessing these tokens later, but keep track of
-        // all of the token locations inside this preprocessing directive so that
-        // we can annotate them appropriately.
+        // don't see it while preprocessing these tokens later, but keep track
+        // of all of the token locations inside this preprocessing directive so
+        // that we can annotate them appropriately.
         //
         // FIXME: Some simple tests here could identify macro definitions and
         // #undefs, to provide specific cursor kinds for those.
