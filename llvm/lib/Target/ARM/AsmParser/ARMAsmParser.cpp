@@ -958,8 +958,11 @@ bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
     return Error(Parser.getTok().getLoc(), "unexpected token in directive");
   Parser.Lex();
 
-  // TODO tell the MC streamer the mode
-  // getParser().getStreamer().Emit???();
+  if (Val == 16)
+    getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
+  else
+    getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
+
   return false;
 }
 
