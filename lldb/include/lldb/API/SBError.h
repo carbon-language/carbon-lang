@@ -18,14 +18,14 @@ class SBError {
 public:
     SBError ();
 
-    SBError (const SBError &rhs);
+    SBError (const lldb::SBError &rhs);
 
     ~SBError();
 
 #ifndef SWIG
 
     const SBError &
-    operator =(const SBError &rhs);
+    operator =(const lldb::SBError &rhs);
 
 #endif
 

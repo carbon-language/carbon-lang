@@ -22,7 +22,14 @@ public:
 
     SBType (void *ast = NULL, void *clang_type = NULL);
     
+    SBType (const SBType &rhs);
+
     ~SBType ();
+
+#ifndef SWIG
+    const SBType &
+    operator =(const SBType &rhs);
+#endif
 
     bool
     IsValid();
@@ -68,6 +75,13 @@ public:
 
     SBTypeMember ();
     
+    SBTypeMember (const SBTypeMember &rhs);
+
+#ifndef SWIG
+    const SBTypeMember&
+    operator =(const SBTypeMember &rhs);
+#endif
+
     ~SBTypeMember ();
 
     bool

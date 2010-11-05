@@ -21,7 +21,14 @@ public:
 
     SBCompileUnit ();
 
+    SBCompileUnit (const lldb::SBCompileUnit &rhs);
+
     ~SBCompileUnit ();
+
+#ifndef SWIG
+    const lldb::SBCompileUnit &
+    operator = (const lldb::SBCompileUnit &rhs);
+#endif
 
     bool
     IsValid () const;

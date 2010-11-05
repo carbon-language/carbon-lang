@@ -32,11 +32,16 @@ public:
     };
 
     //------------------------------------------------------------------
-    // Constructors and Destructors
+    // Constructors
     //------------------------------------------------------------------
+    SBTarget ();
+
     SBTarget (const lldb::SBTarget& rhs);
 
-    SBTarget ();  // Required for SWIG.
+#ifndef SWIG
+    const lldb::SBTarget&
+    operator = (const lldb::SBTarget& rhs);
+#endif
 
     //------------------------------------------------------------------
     // Destructor

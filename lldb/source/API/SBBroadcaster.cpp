@@ -20,36 +20,49 @@ using namespace lldb_private;
 
 
 SBBroadcaster::SBBroadcaster () :
-    m_opaque (NULL),
-    m_opaque_owned (false)
+    m_opaque_sp (),
+    m_opaque_ptr (NULL)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
-
-    if (log)
-        log->Printf ("SBBroadcastetr::SBBroadcaster () => SBBroadcaster(%p)", this);
 }
 
-
 SBBroadcaster::SBBroadcaster (const char *name) :
-    m_opaque (new Broadcaster (name)),
-    m_opaque_owned (true)
+    m_opaque_sp (new Broadcaster (name)),
+    m_opaque_ptr (NULL)
 {
+    m_opaque_ptr = m_opaque_sp.get();
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
         log->Printf ("SBBroadcaster::SBBroadcaster (name=\"%s\") => SBBroadcaster(%p)",
-                     name, m_opaque);
+                     name, m_opaque_ptr);
 }
 
 SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns) :
-    m_opaque (broadcaster),
-    m_opaque_owned (owns)
+    m_opaque_sp (owns ? broadcaster : NULL),
+    m_opaque_ptr (broadcaster)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE);
 
     if (log)
-        log->Printf ("SBBroadcaster::SBBroadcaster (broadcaster=%p, bool owns=%i) "
-                     " => SBBroadcaster(%p)", broadcaster, owns, m_opaque);
+        log->Printf ("SBBroadcaster::SBBroadcaster (broadcaster=%p, bool owns=%i) => SBBroadcaster(%p)", 
+                     broadcaster, owns, m_opaque_ptr);
+}
+
+SBBroadcaster::SBBroadcaster (const SBBroadcaster &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp),
+    m_opaque_ptr (rhs.m_opaque_ptr) 
+{
+}
+
+const SBBroadcaster &
+SBBroadcaster::operator = (const SBBroadcaster &rhs)
+{
+    if (this != &rhs)
+    {
+        m_opaque_sp = rhs.m_opaque_sp;
+        m_opaque_ptr = rhs.m_opaque_ptr;
+    }
+    return *this;
 }
 
 SBBroadcaster::~SBBroadcaster()
@@ -63,15 +76,15 @@ SBBroadcaster::BroadcastEventByType (uint32_t event_type, bool unique)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (event_type=0x%8.8x, unique=%i)", m_opaque, event_type, unique);
+        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (event_type=0x%8.8x, unique=%i)", m_opaque_ptr, event_type, unique);
 
-    if (m_opaque == NULL)
+    if (m_opaque_ptr == NULL)
         return;
 
     if (unique)
-        m_opaque->BroadcastEventIfUnique (event_type);
+        m_opaque_ptr->BroadcastEventIfUnique (event_type);
     else
-        m_opaque->BroadcastEvent (event_type);
+        m_opaque_ptr->BroadcastEvent (event_type);
 }
 
 void
@@ -80,16 +93,16 @@ SBBroadcaster::BroadcastEvent (const SBEvent &event, bool unique)
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
-        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (SBEvent(%p), unique=%i)", m_opaque, event.get(), unique);
+        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (SBEvent(%p), unique=%i)", m_opaque_ptr, event.get(), unique);
 
-    if (m_opaque == NULL)
+    if (m_opaque_ptr == NULL)
         return;
 
     EventSP event_sp = event.GetSP ();
     if (unique)
-        m_opaque->BroadcastEventIfUnique (event_sp);
+        m_opaque_ptr->BroadcastEventIfUnique (event_sp);
     else
-        m_opaque->BroadcastEvent (event_sp);
+        m_opaque_ptr->BroadcastEvent (event_sp);
 }
 
 void
@@ -97,74 +110,75 @@ SBBroadcaster::AddInitialEventsToListener (const SBListener &listener, uint32_t 
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
-        log->Printf ("SBBroadcaster(%p)::AddInitialEventsToListener (SBListener(%p), event_mask=0x%8.8x)", m_opaque, listener.get(), requested_events);
-    if (m_opaque)
-        m_opaque->AddInitialEventsToListener (listener.get(), requested_events);
+        log->Printf ("SBBroadcaster(%p)::AddInitialEventsToListener (SBListener(%p), event_mask=0x%8.8x)", m_opaque_ptr, listener.get(), requested_events);
+    if (m_opaque_ptr)
+        m_opaque_ptr->AddInitialEventsToListener (listener.get(), requested_events);
 }
 
 uint32_t
 SBBroadcaster::AddListener (const SBListener &listener, uint32_t event_mask)
 {
-    if (m_opaque)
-        return m_opaque->AddListener (listener.get(), event_mask);
+    if (m_opaque_ptr)
+        return m_opaque_ptr->AddListener (listener.get(), event_mask);
     return 0;
 }
 
 const char *
 SBBroadcaster::GetName () const
 {
-    if (m_opaque)
-        return m_opaque->GetBroadcasterName().GetCString();
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetBroadcasterName().GetCString();
     return NULL;
 }
 
 bool
 SBBroadcaster::EventTypeHasListeners (uint32_t event_type)
 {
-    if (m_opaque)
-        return m_opaque->EventTypeHasListeners (event_type);
+    if (m_opaque_ptr)
+        return m_opaque_ptr->EventTypeHasListeners (event_type);
     return false;
 }
 
 bool
 SBBroadcaster::RemoveListener (const SBListener &listener, uint32_t event_mask)
 {
-    if (m_opaque)
-        return m_opaque->RemoveListener (listener.get(), event_mask);
+    if (m_opaque_ptr)
+        return m_opaque_ptr->RemoveListener (listener.get(), event_mask);
     return false;
 }
 
 Broadcaster *
 SBBroadcaster::get () const
 {
-    return m_opaque;
+    return m_opaque_ptr;
 }
 
 void
 SBBroadcaster::reset (Broadcaster *broadcaster, bool owns)
 {
-    if (m_opaque && m_opaque_owned)
-        delete m_opaque;
-    m_opaque = broadcaster;
-    m_opaque_owned = owns;
+    if (owns)
+        m_opaque_sp.reset (broadcaster);
+    else
+        m_opaque_sp.reset ();
+    m_opaque_ptr = broadcaster;
 }
 
 
 bool
 SBBroadcaster::IsValid () const
 {
-    return m_opaque != NULL;
+    return m_opaque_ptr != NULL;
 }
 
 bool
 SBBroadcaster::operator == (const SBBroadcaster &rhs) const
 {
-    return m_opaque == rhs.m_opaque;
+    return m_opaque_ptr == rhs.m_opaque_ptr;
     
 }
 
 bool
 SBBroadcaster::operator != (const SBBroadcaster &rhs) const
 {
-    return m_opaque != rhs.m_opaque;
+    return m_opaque_ptr != rhs.m_opaque_ptr;
 }

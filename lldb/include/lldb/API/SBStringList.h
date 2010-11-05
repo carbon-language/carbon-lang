@@ -20,9 +20,12 @@ public:
 
     SBStringList ();
 
-    SBStringList (const lldb_private::StringList  *lldb_strings);
-
-    SBStringList (const lldb::SBStringList  &rhs);
+    SBStringList (const lldb::SBStringList &rhs);
+    
+#ifndef SWIG
+    const SBStringList &
+    operator = (const SBStringList &rhs);
+#endif
 
     ~SBStringList ();
 
@@ -47,6 +50,11 @@ public:
     void
     Clear ();
 
+protected:
+    friend class SBCommandInterpreter;
+
+    SBStringList (const lldb_private::StringList *lldb_strings);
+
 #ifndef SWIG
 
     const lldb_private::StringList *
@@ -54,9 +62,6 @@ public:
 
     const lldb_private::StringList &
     operator*() const;
-
-    const lldb::SBStringList &
-    operator = (const lldb::SBStringList &rhs);
 
 #endif
 

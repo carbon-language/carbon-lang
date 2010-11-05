@@ -25,8 +25,8 @@ public:
     ~SBAddress ();
 
 #ifndef SWIG
-    const SBAddress &
-    operator = (const SBAddress &rhs);
+    const lldb::SBAddress &
+    operator = (const lldb::SBAddress &rhs);
 #endif
 
     bool

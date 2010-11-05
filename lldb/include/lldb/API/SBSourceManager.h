@@ -19,7 +19,14 @@ namespace lldb {
 class SBSourceManager
 {
 public:
+    SBSourceManager (const lldb::SBSourceManager &rhs);
+    
     ~SBSourceManager();
+
+#ifndef SWIG
+    const lldb::SBSourceManager &
+    operator = (const lldb::SBSourceManager &rhs);
+#endif
 
     size_t
     DisplaySourceLinesWithLineNumbers (const lldb::SBFileSpec &file,
@@ -34,14 +41,11 @@ protected:
     friend class SBCommandInterpreter;
     friend class SBDebugger;
 
-    SBSourceManager(lldb_private::SourceManager &source_manager);
-
-    lldb_private::SourceManager &
-    GetLLDBManager ();
+    SBSourceManager(lldb_private::SourceManager *source_manager);
 
 private:
 
-    lldb_private::SourceManager &m_opaque_ref;
+    lldb_private::SourceManager *m_opaque_ptr;
 };
 
 } // namespace lldb

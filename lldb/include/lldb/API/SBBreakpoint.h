@@ -31,8 +31,8 @@ public:
     ~SBBreakpoint();
 
 #ifndef SWIG
-    const SBBreakpoint &
-    operator = (const SBBreakpoint& rhs);
+    const lldb::SBBreakpoint &
+    operator = (const lldb::SBBreakpoint& rhs);
 #endif
 
     break_id_t

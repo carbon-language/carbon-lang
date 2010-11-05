@@ -21,6 +21,14 @@ public:
 
     SBFunction ();
 
+    SBFunction (const lldb::SBFunction &rhs);
+
+#ifndef SWIG
+    const lldb::SBFunction &
+    operator = (const lldb::SBFunction &rhs);
+#endif
+
+
     ~SBFunction ();
 
     bool

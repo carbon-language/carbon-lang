@@ -22,6 +22,13 @@ class SBFrame
 public:
     SBFrame ();
 
+    SBFrame (const lldb::SBFrame &rhs);
+    
+#ifndef SWIG
+    const lldb::SBFrame &
+    operator =(const lldb::SBFrame &rhs);
+#endif
+
    ~SBFrame();
 
     bool

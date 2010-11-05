@@ -21,7 +21,14 @@ public:
 
     SBBreakpointLocation ();
 
+    SBBreakpointLocation (const lldb::SBBreakpointLocation &rhs);
+
     ~SBBreakpointLocation ();
+
+#ifndef SWIG
+    const lldb::SBBreakpointLocation &
+    operator = (const lldb::SBBreakpointLocation &rhs);
+#endif
 
     bool
     IsValid() const;

@@ -32,6 +32,18 @@ SBFunction::SBFunction (lldb_private::Function *lldb_object_ptr) :
 {
 }
 
+SBFunction::SBFunction (const lldb::SBFunction &rhs) :
+    m_opaque_ptr (rhs.m_opaque_ptr)
+{
+}
+
+const SBFunction &
+SBFunction::operator = (const SBFunction &rhs)
+{
+    m_opaque_ptr = rhs.m_opaque_ptr;
+    return *this;
+}
+
 SBFunction::~SBFunction ()
 {
     m_opaque_ptr = NULL;

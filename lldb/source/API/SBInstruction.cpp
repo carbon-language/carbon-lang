@@ -28,6 +28,19 @@ SBInstruction::SBInstruction (const lldb::InstructionSP& inst_sp) :
 {
 }
 
+SBInstruction::SBInstruction(const SBInstruction &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp)
+{
+}
+
+const SBInstruction &
+SBInstruction::operator = (const SBInstruction &rhs)
+{
+    if (this != &rhs)
+        m_opaque_sp = rhs.m_opaque_sp;
+    return *this;
+}
+
 SBInstruction::~SBInstruction ()
 {
 }

@@ -20,13 +20,25 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-SBSourceManager::SBSourceManager (SourceManager& source_manager) :
-    m_opaque_ref (source_manager)
+SBSourceManager::SBSourceManager (SourceManager* source_manager) :
+    m_opaque_ptr (source_manager)
 {
 }
 
 SBSourceManager::~SBSourceManager()
 {
+}
+
+SBSourceManager::SBSourceManager(const SBSourceManager &rhs) :
+    m_opaque_ptr (rhs.m_opaque_ptr)
+{
+}
+
+const SBSourceManager &
+SBSourceManager::operator = (const SBSourceManager &rhs)
+{
+    m_opaque_ptr = rhs.m_opaque_ptr;
+    return *this;
 }
 
 size_t
@@ -40,6 +52,9 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
     FILE *f
 )
 {
+    if (m_opaque_ptr == NULL)
+        return 0;
+
     if (f == NULL)
         return 0;
 
@@ -48,18 +63,12 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
         StreamFile str (f);
 
 
-        return m_opaque_ref.DisplaySourceLinesWithLineNumbers (*file,
-                                                               line,
-                                                               context_before,
-                                                               context_after,
-                                                               current_line_cstr,
-                                                               &str);
+        return m_opaque_ptr->DisplaySourceLinesWithLineNumbers (*file,
+                                                                line,
+                                                                context_before,
+                                                                context_after,
+                                                                current_line_cstr,
+                                                                &str);
     }
     return 0;
-}
-
-SourceManager &
-SBSourceManager::GetLLDBManager ()
-{
-    return m_opaque_ref;
 }

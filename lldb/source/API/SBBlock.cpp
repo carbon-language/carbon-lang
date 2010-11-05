@@ -28,6 +28,18 @@ SBBlock::SBBlock (lldb_private::Block *lldb_object_ptr) :
 {
 }
 
+SBBlock::SBBlock(const SBBlock &rhs) :
+    m_opaque_ptr (rhs.m_opaque_ptr)
+{
+}
+
+const SBBlock &
+SBBlock::operator = (const SBBlock &rhs)
+{
+    m_opaque_ptr = rhs.m_opaque_ptr;
+    return *this;
+}
+
 SBBlock::~SBBlock ()
 {
     m_opaque_ptr = NULL;

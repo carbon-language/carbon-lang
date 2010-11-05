@@ -21,6 +21,13 @@ class SBValue
 public:
     SBValue ();
 
+    SBValue (const SBValue &rhs);
+
+#ifndef SWIG
+    const SBValue &
+    operator =(const SBValue &rhs);
+#endif
+
     ~SBValue ();
 
     bool

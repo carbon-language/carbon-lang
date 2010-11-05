@@ -61,6 +61,14 @@ SBProcess::SBProcess (const lldb::ProcessSP &process_sp) :
 {
 }
 
+const SBProcess&
+SBProcess::operator = (const SBProcess& rhs)
+{
+    if (this != &rhs)
+        m_opaque_sp = rhs.m_opaque_sp;
+    return *this;
+}
+
 //----------------------------------------------------------------------
 // Destructor
 //----------------------------------------------------------------------

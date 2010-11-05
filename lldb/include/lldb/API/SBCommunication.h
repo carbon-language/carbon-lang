@@ -84,8 +84,8 @@ public:
 
 
 private:
-//    void
-//    CreateIfNeeded ();
+
+    DISALLOW_COPY_AND_ASSIGN (SBCommunication);
 
     lldb_private::Communication *m_opaque;
     bool m_opaque_owned;

@@ -85,6 +85,21 @@ SBDebugger::SBDebugger () :
 {
 }
 
+SBDebugger::SBDebugger(const SBDebugger &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp)
+{
+}
+
+SBDebugger &
+SBDebugger::operator = (const SBDebugger &rhs)
+{
+    if (this != &rhs)
+    {
+        m_opaque_sp = rhs.m_opaque_sp;
+    }
+    return *this;
+}
+
 SBDebugger::~SBDebugger ()
 {
 }
@@ -355,7 +370,7 @@ SBSourceManager &
 SBDebugger::GetSourceManager ()
 {
     static SourceManager g_lldb_source_manager;
-    static SBSourceManager g_sb_source_manager (g_lldb_source_manager);
+    static SBSourceManager g_sb_source_manager (&g_lldb_source_manager);
     return g_sb_source_manager;
 }
 

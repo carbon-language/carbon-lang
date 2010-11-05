@@ -23,15 +23,17 @@ using namespace lldb_private;
 
 
 SBListener::SBListener () :
-    m_opaque_ptr (NULL),
-    m_opaque_ptr_owned (false)
+    m_opaque_sp (),
+    m_opaque_ptr (NULL)
 {
 }
 
 SBListener::SBListener (const char *name) :
-    m_opaque_ptr (new Listener (name)),
-    m_opaque_ptr_owned (true)
+    m_opaque_sp (new Listener (name)),
+    m_opaque_ptr (NULL)
 {
+    m_opaque_ptr = m_opaque_sp.get();
+
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
 
     if (log)
@@ -39,22 +41,32 @@ SBListener::SBListener (const char *name) :
                      name, m_opaque_ptr);
 }
 
+
+SBListener::SBListener (const SBListener &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp),
+    m_opaque_ptr (rhs.m_opaque_ptr)
+{
+}
+
+const lldb::SBListener &
+SBListener::operator = (const lldb::SBListener &rhs)
+{
+    if (this != &rhs)
+    {
+        m_opaque_sp = rhs.m_opaque_sp;
+        m_opaque_ptr = rhs.m_opaque_ptr;
+    }
+    return *this;
+}
+
 SBListener::SBListener (Listener &listener) :
-    m_opaque_ptr (&listener),
-    m_opaque_ptr_owned (false)
+    m_opaque_sp (),
+    m_opaque_ptr (&listener)
 {
 }
 
 SBListener::~SBListener ()
 {
-    if (m_opaque_ptr_owned)
-    {
-        if (m_opaque_ptr)
-        {
-            delete m_opaque_ptr;
-            m_opaque_ptr = NULL;
-        }
-    }
 }
 
 bool
@@ -365,11 +377,12 @@ SBListener::get() const
 }
 
 void
-SBListener::reset(Listener *listener, bool transfer_ownership)
+SBListener::reset(Listener *listener, bool owns)
 {
-    if (m_opaque_ptr_owned && m_opaque_ptr)
-        delete m_opaque_ptr;
-    m_opaque_ptr_owned = transfer_ownership;
+    if (owns)
+        m_opaque_sp.reset (listener);
+    else
+        m_opaque_sp.reset ();
     m_opaque_ptr = listener;
 }
 

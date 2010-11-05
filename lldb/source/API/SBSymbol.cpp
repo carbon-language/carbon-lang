@@ -29,6 +29,19 @@ SBSymbol::SBSymbol (lldb_private::Symbol *lldb_object_ptr) :
 {
 }
 
+SBSymbol::SBSymbol (const lldb::SBSymbol &rhs) :
+    m_opaque_ptr (rhs.m_opaque_ptr)
+{
+}
+
+const SBSymbol &
+SBSymbol::operator = (const SBSymbol &rhs)
+{
+    m_opaque_ptr = rhs.m_opaque_ptr;
+    return *this;
+}
+
+
 SBSymbol::~SBSymbol ()
 {
     m_opaque_ptr = NULL;

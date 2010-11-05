@@ -44,6 +44,19 @@ SBValue::SBValue (const lldb::ValueObjectSP &value_sp) :
 {
 }
 
+SBValue::SBValue(const SBValue &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp)
+{
+}
+
+const SBValue &
+SBValue::operator = (const SBValue &rhs)
+{
+    if (this != &rhs)
+        m_opaque_sp = rhs.m_opaque_sp;
+    return *this;
+}
+
 SBValue::~SBValue()
 {
 }

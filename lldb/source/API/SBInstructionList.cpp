@@ -22,6 +22,20 @@ SBInstructionList::SBInstructionList () :
 {
 }
 
+SBInstructionList::SBInstructionList(const SBInstructionList &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp)
+{
+}
+
+const SBInstructionList &
+SBInstructionList::operator = (const SBInstructionList &rhs)
+{
+    if (this != &rhs)
+        m_opaque_sp = rhs.m_opaque_sp;
+    return *this;
+}
+
+
 SBInstructionList::~SBInstructionList ()
 {
 }

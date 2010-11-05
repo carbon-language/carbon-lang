@@ -34,19 +34,21 @@ SBStringList::SBStringList (const SBStringList  &rhs) :
 }
 
 
-
-SBStringList::~SBStringList ()
-{
-}
-
-
 const SBStringList &
 SBStringList::operator = (const SBStringList &rhs)
 {
-    if (rhs.IsValid())
-        m_opaque_ap.reset (new lldb_private::StringList(*rhs));
-
+    if (this != &rhs)
+    {
+        if (rhs.IsValid())
+            m_opaque_ap.reset(new lldb_private::StringList(*rhs));
+        else
+            m_opaque_ap.reset();
+    }
     return *this;
+}
+
+SBStringList::~SBStringList ()
+{
 }
 
 const lldb_private::StringList *

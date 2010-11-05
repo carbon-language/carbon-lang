@@ -21,6 +21,13 @@ public:
 
     SBBroadcaster (const char *name);
 
+    SBBroadcaster (const SBBroadcaster &rhs);
+    
+#ifndef SWIG
+    const SBBroadcaster &
+    operator = (const SBBroadcaster &rhs);
+#endif
+
     ~SBBroadcaster();
 
     bool
@@ -77,9 +84,8 @@ protected:
 #endif
 
 private:
-
-    lldb_private::Broadcaster *m_opaque;
-    bool m_opaque_owned;
+    lldb::BroadcasterSP m_opaque_sp;
+    lldb_private::Broadcaster *m_opaque_ptr;
 };
 
 } // namespace lldb

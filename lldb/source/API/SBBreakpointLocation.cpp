@@ -25,7 +25,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-SBBreakpointLocation::SBBreakpointLocation ()
+SBBreakpointLocation::SBBreakpointLocation () :
+    m_opaque_sp ()
 {
 }
 
@@ -42,6 +43,20 @@ SBBreakpointLocation::SBBreakpointLocation (const lldb::BreakpointLocationSP &br
                      "=%p)  => this.sp = %p (%s)", break_loc_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
 }
+
+SBBreakpointLocation::SBBreakpointLocation(const SBBreakpointLocation &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp)
+{
+}
+
+const SBBreakpointLocation &
+SBBreakpointLocation::operator = (const SBBreakpointLocation &rhs)
+{
+    if (this != &rhs)
+        m_opaque_sp = rhs.m_opaque_sp;
+    return *this;
+}
+
 
 SBBreakpointLocation::~SBBreakpointLocation ()
 {

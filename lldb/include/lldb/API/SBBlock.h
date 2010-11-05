@@ -20,7 +20,14 @@ public:
 
     SBBlock ();
 
+    SBBlock (const lldb::SBBlock &rhs);
+
     ~SBBlock ();
+
+#ifndef SWIG
+    const lldb::SBBlock &
+    operator = (const lldb::SBBlock &rhs);
+#endif
 
     bool
     IsInlined () const;

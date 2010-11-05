@@ -40,7 +40,21 @@ SBType::SBType (void *ast, void *clang_type) :
     m_type (clang_type)
 {
 }
-    
+
+SBType::SBType (const SBType &rhs) :
+    m_ast (rhs.m_ast),
+    m_type (rhs.m_type)
+{
+}
+
+const SBType &
+SBType::operator =(const SBType &rhs)
+{
+    m_ast = rhs.m_ast;
+    m_type = rhs.m_type;
+    return *this;
+}
+
 SBType::~SBType ()
 {
 }
@@ -210,6 +224,35 @@ SBTypeMember::SBTypeMember () :
     m_is_base_class (false)
     
 {
+}
+
+SBTypeMember::SBTypeMember (const SBTypeMember &rhs) :
+    m_ast (rhs.m_ast),
+    m_parent_type (rhs.m_parent_type),
+    m_member_type (rhs.m_member_type),
+    m_member_name (rhs.m_member_name),
+    m_offset (rhs.m_offset),
+    m_bit_size (rhs.m_bit_size),
+    m_bit_offset (rhs.m_bit_offset),
+    m_is_base_class (rhs.m_is_base_class)
+{
+}
+
+const SBTypeMember&
+SBTypeMember::operator =(const SBTypeMember &rhs)
+{
+    if (this != &rhs)
+    {
+        m_ast = rhs.m_ast;
+        m_parent_type = rhs.m_parent_type;
+        m_member_type = rhs.m_member_type;
+        m_member_name = rhs.m_member_name;
+        m_offset = rhs.m_offset;
+        m_bit_size = rhs.m_bit_size;
+        m_bit_offset = rhs.m_bit_offset;
+        m_is_base_class = rhs.m_is_base_class;
+    }
+    return *this;
 }
 
 SBTypeMember::~SBTypeMember ()

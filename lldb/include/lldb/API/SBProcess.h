@@ -37,6 +37,11 @@ public:
 
     SBProcess (const lldb::SBProcess& rhs);
 
+#ifndef SWIG
+    const lldb::SBProcess&
+    operator = (const lldb::SBProcess& rhs);
+#endif
+
     ~SBProcess();
 
     void

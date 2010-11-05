@@ -30,6 +30,19 @@ SBModule::SBModule (const lldb::ModuleSP& module_sp) :
 {
 }
 
+SBModule::SBModule(const SBModule &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp)
+{
+}
+
+const SBModule &
+SBModule::operator = (const SBModule &rhs)
+{
+    if (this != &rhs)
+        m_opaque_sp = rhs.m_opaque_sp;
+    return *this;
+}
+
 SBModule::~SBModule ()
 {
 }

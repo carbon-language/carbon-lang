@@ -24,6 +24,12 @@ public:
         eBroadcastBitQuitCommandReceived    = (1 << 2)   // User entered quit
     };
 
+    SBCommandInterpreter (const lldb::SBCommandInterpreter &rhs);
+    
+#ifndef SWIG
+    const lldb::SBCommandInterpreter &
+    operator = (const lldb::SBCommandInterpreter &rhs);
+#endif
 
     ~SBCommandInterpreter ();
 

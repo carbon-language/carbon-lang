@@ -21,6 +21,27 @@ SBCommandReturnObject::SBCommandReturnObject () :
 {
 }
 
+SBCommandReturnObject::SBCommandReturnObject (const SBCommandReturnObject &rhs):
+    m_opaque_ap ()
+{
+    if (rhs.m_opaque_ap.get())
+        m_opaque_ap.reset (new CommandReturnObject (*rhs.m_opaque_ap));
+}
+
+const SBCommandReturnObject &
+SBCommandReturnObject::operator = (const SBCommandReturnObject &rhs)
+{
+    if (this != &rhs)
+    {
+        if (rhs.m_opaque_ap.get())
+            m_opaque_ap.reset (new CommandReturnObject (*rhs.m_opaque_ap));
+        else
+            m_opaque_ap.reset();
+    }
+    return *this;
+}
+
+
 SBCommandReturnObject::~SBCommandReturnObject ()
 {
     // m_opaque_ap will automatically delete any pointer it owns

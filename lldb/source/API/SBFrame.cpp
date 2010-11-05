@@ -63,6 +63,19 @@ SBFrame::SBFrame (const lldb::StackFrameSP &lldb_object_sp) :
     }
 }
 
+SBFrame::SBFrame(const SBFrame &rhs) :
+    m_opaque_sp (rhs.m_opaque_sp)
+{
+}
+
+const SBFrame &
+SBFrame::operator = (const SBFrame &rhs)
+{
+    if (this != &rhs)
+        m_opaque_sp = rhs.m_opaque_sp;
+    return *this;
+}
+
 SBFrame::~SBFrame()
 {
 }

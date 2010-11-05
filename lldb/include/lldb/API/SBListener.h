@@ -17,13 +17,18 @@ namespace lldb {
 class SBListener
 {
 public:
-    SBListener (const char *name);
-
-    SBListener (lldb_private::Listener &listener);
-
     SBListener ();
 
+    SBListener (const char *name);
+
+    SBListener (const SBListener &rhs);
+
     ~SBListener ();
+
+#ifndef SWIG
+    const lldb::SBListener &
+    operator = (const lldb::SBListener &rhs);
+#endif
 
     void
     AddEvent (const lldb::SBEvent &event);
@@ -85,11 +90,15 @@ public:
     bool
     HandleBroadcastEvent (const lldb::SBEvent &event);
 
-private:
+protected:
     friend class SBBroadcaster;
     friend class SBCommandInterpreter;
     friend class SBDebugger;
     friend class SBTarget;
+
+    SBListener (lldb_private::Listener &listener);
+
+private:
 
 #ifndef SWIG
 
@@ -110,10 +119,8 @@ private:
 
 #endif
 
-
-
+    lldb::ListenerSP m_opaque_sp;
     lldb_private::Listener *m_opaque_ptr;
-    bool m_opaque_ptr_owned;
 };
 
 } // namespace lldb

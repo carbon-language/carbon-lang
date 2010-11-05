@@ -20,6 +20,13 @@ public:
 
     SBCommandReturnObject ();
 
+    SBCommandReturnObject (const lldb::SBCommandReturnObject &rhs);
+
+#ifndef SWIG
+    const lldb::SBCommandReturnObject &
+    operator = (const lldb::SBCommandReturnObject &rhs);
+#endif
+
     ~SBCommandReturnObject ();
 
     bool

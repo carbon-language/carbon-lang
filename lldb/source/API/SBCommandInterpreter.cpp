@@ -40,6 +40,18 @@ SBCommandInterpreter::SBCommandInterpreter (CommandInterpreter *interpreter) :
                      " => SBCommandInterpreter(%p)", interpreter, m_opaque_ptr);
 }
 
+SBCommandInterpreter::SBCommandInterpreter(const SBCommandInterpreter &rhs) :
+    m_opaque_ptr (rhs.m_opaque_ptr)
+{
+}
+
+const SBCommandInterpreter &
+SBCommandInterpreter::operator = (const SBCommandInterpreter &rhs)
+{
+    m_opaque_ptr = rhs.m_opaque_ptr;
+    return *this;
+}
+
 SBCommandInterpreter::~SBCommandInterpreter ()
 {
 }

@@ -48,7 +48,7 @@ public:
     IsValid () const;
 
 #ifndef SWIG
-    const SBInputReader &
+    const lldb::SBInputReader &
     operator = (const lldb::SBInputReader &rhs);
 #endif
 

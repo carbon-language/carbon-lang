@@ -24,6 +24,13 @@ public:
 
     ~SBSymbol ();
 
+    SBSymbol (const lldb::SBSymbol &rhs);
+
+#ifndef SWIG
+    const lldb::SBSymbol &
+    operator = (const lldb::SBSymbol &rhs);
+#endif
+
     bool
     IsValid () const;
 

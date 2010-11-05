@@ -30,6 +30,13 @@ public:
 
     SBDebugger();
 
+    SBDebugger(const lldb::SBDebugger &rhs);
+
+#ifndef SWIG
+    lldb::SBDebugger &
+    operator = (const lldb::SBDebugger &rhs);
+#endif
+    
     ~SBDebugger();
 
     bool

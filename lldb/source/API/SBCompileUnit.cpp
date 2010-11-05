@@ -29,6 +29,19 @@ SBCompileUnit::SBCompileUnit (lldb_private::CompileUnit *lldb_object_ptr) :
 {
 }
 
+SBCompileUnit::SBCompileUnit(const SBCompileUnit &rhs) :
+    m_opaque_ptr (rhs.m_opaque_ptr)
+{
+}
+
+const SBCompileUnit &
+SBCompileUnit::operator = (const SBCompileUnit &rhs)
+{
+    m_opaque_ptr = rhs.m_opaque_ptr;
+    return *this;
+}
+
+
 SBCompileUnit::~SBCompileUnit ()
 {
     m_opaque_ptr = NULL;

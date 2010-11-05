@@ -30,6 +30,13 @@ public:
 
     ~SBEvent();
 
+    SBEvent (const lldb::SBEvent &rhs);
+    
+#ifndef SWIG
+    const SBEvent &
+    operator = (const lldb::SBEvent &rhs);
+#endif
+
     bool
     IsValid() const;
 
@@ -88,7 +95,7 @@ protected:
 private:
 
     mutable lldb::EventSP m_event_sp;
-    mutable lldb_private::Event *m_opaque;
+    mutable lldb_private::Event *m_opaque_ptr;
 };
 
 } // namespace lldb

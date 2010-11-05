@@ -21,6 +21,13 @@ public:
 
     SBModule ();
 
+    SBModule (const SBModule &rhs);
+    
+#ifndef SWIG
+    const SBModule &
+    operator = (const SBModule &rhs);
+#endif
+
     ~SBModule ();
 
     bool

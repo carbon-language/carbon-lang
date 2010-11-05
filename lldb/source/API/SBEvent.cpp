@@ -25,20 +25,38 @@ using namespace lldb_private;
 
 SBEvent::SBEvent () :
     m_event_sp (),
-    m_opaque (NULL)
+    m_opaque_ptr (NULL)
 {
 }
 
 SBEvent::SBEvent (uint32_t event_type, const char *cstr, uint32_t cstr_len) :
     m_event_sp (new Event (event_type, new EventDataBytes (cstr, cstr_len))),
-    m_opaque (m_event_sp.get())
+    m_opaque_ptr (m_event_sp.get())
 {
 }
 
 SBEvent::SBEvent (EventSP &event_sp) :
     m_event_sp (event_sp),
-    m_opaque (event_sp.get())
+    m_opaque_ptr (event_sp.get())
 {
+}
+
+SBEvent::SBEvent (const SBEvent &rhs) :
+    m_event_sp (rhs.m_event_sp),
+    m_opaque_ptr (rhs.m_opaque_ptr)
+{
+    
+}
+    
+const SBEvent &
+SBEvent::operator = (const SBEvent &rhs)
+{
+    if (this != &rhs)
+    {
+        m_event_sp = rhs.m_event_sp;
+        m_opaque_ptr = rhs.m_opaque_ptr;
+    }
+    return *this;
 }
 
 SBEvent::~SBEvent()
@@ -136,31 +154,31 @@ SBEvent::get() const
     // There is a dangerous accessor call GetSharedPtr which can be used, so if
     // we have anything valid in m_event_sp, we must use that since if it gets
     // used by a function that puts something in there, then it won't update
-    // m_opaque...
+    // m_opaque_ptr...
     if (m_event_sp)
-        m_opaque = m_event_sp.get();
+        m_opaque_ptr = m_event_sp.get();
 
-    return m_opaque;
+    return m_opaque_ptr;
 }
 
 void
 SBEvent::reset (EventSP &event_sp)
 {
     m_event_sp = event_sp;
-    m_opaque = m_event_sp.get();
+    m_opaque_ptr = m_event_sp.get();
 }
 
 void
 SBEvent::reset (Event* event_ptr)
 {
-    m_opaque = event_ptr;
+    m_opaque_ptr = event_ptr;
     m_event_sp.reset();
 }
 
 bool
 SBEvent::IsValid() const
 {
-    // Do NOT use m_opaque directly!!! Must use the SBEvent::get()
+    // Do NOT use m_opaque_ptr directly!!! Must use the SBEvent::get()
     // accessor. See comments in SBEvent::get()....
     return SBEvent::get() != NULL;
 
@@ -186,7 +204,7 @@ SBEvent::GetDescription (SBStream &description)
     if (get())
     {
         description.ref();
-        m_opaque->Dump (description.get());
+        m_opaque_ptr->Dump (description.get());
     }
     else
         description.Printf ("No value");
@@ -200,7 +218,7 @@ SBEvent::GetDescription (SBStream &description) const
     if (get())
     {
         description.ref();
-        m_opaque->Dump (description.get());
+        m_opaque_ptr->Dump (description.get());
     }
     else
         description.Printf ("No value");
