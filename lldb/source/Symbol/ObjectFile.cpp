@@ -59,6 +59,11 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, lldb::addr_t file_
                 }
             }
 
+            // No need to delegate further if (file_offset, file_size) exceeds the total file size.
+            // This is the base case.
+            if (file_offset + file_size > file->GetByteSize())
+                return NULL;
+
             DataBufferSP file_header_data_sp(file->ReadFileContents(file_offset, 512));
             uint32_t idx;
 
