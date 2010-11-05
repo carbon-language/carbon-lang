@@ -111,7 +111,6 @@ public:
   DarwinARMAsmBackend(const Target &T)
     : ARMAsmBackend(T) {
     HasScatteredSymbols = true;
-    assert(0 && "DarwinARMAsmBackend::DarwinARMAsmBackend() unimplemented");
   }
 
   virtual const MCObjectFormat &getObjectFormat() const {
