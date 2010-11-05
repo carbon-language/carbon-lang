@@ -299,17 +299,8 @@ namespace {
 
 void ARMAsmPrinter::EmitFunctionEntryLabel() {
   if (AFI->isThumbFunction()) {
-    OutStreamer.EmitRawText(StringRef("\t.code\t16"));
-    if (!Subtarget->isTargetDarwin())
-      OutStreamer.EmitRawText(StringRef("\t.thumb_func"));
-    else {
-      // This needs to emit to a temporary string to get properly quoted
-      // MCSymbols when they have spaces in them.
-      SmallString<128> Tmp;
-      raw_svector_ostream OS(Tmp);
-      OS << "\t.thumb_func\t" << *CurrentFnSym;
-      OutStreamer.EmitRawText(OS.str());
-    }
+    OutStreamer.EmitAssemblerFlag(MCAF_Code16);
+    OutStreamer.EmitThumbFunc(Subtarget->isTargetDarwin()? CurrentFnSym : 0);
   }
 
   OutStreamer.EmitLabel(CurrentFnSym);

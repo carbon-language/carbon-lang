@@ -69,6 +69,11 @@ public:
     return Child->EmitAssemblerFlag(Flag);
   }
 
+  virtual void EmitThumbFunc(MCSymbol *Func) {
+    LogCall("EmitThumbFunc");
+    return Child->EmitThumbFunc(Func);
+  }
+
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
     LogCall("EmitAssignment");
     return Child->EmitAssignment(Symbol, Value);

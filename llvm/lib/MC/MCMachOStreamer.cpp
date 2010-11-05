@@ -45,6 +45,7 @@ public:
   virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
+  virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
@@ -149,13 +150,18 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
 
 void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   switch (Flag) {
-  case MCAF_SyntaxUnified:  return; // no-op here.
+  case MCAF_SyntaxUnified: return; // no-op here.
+  case MCAF_Code16: return; // no-op here.
   case MCAF_SubsectionsViaSymbols:
     getAssembler().setSubsectionsViaSymbols(true);
     return;
   default:
     llvm_unreachable("invalid assembler flag!");
   }
+}
+
+void MCMachOStreamer::EmitThumbFunc(MCSymbol *Func) {
+  // FIXME: Flag the function ISA as thumb with DW_AT_APPLE_isa.
 }
 
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {

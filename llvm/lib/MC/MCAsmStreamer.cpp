@@ -111,6 +111,7 @@ public:
   virtual void EmitLabel(MCSymbol *Symbol);
 
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
+  virtual void EmitThumbFunc(MCSymbol *Func);
 
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
@@ -253,7 +254,17 @@ void MCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   default: assert(0 && "Invalid flag!");
   case MCAF_SyntaxUnified:         OS << "\t.syntax unified"; break;
   case MCAF_SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
+  case MCAF_Code16:                OS << "\t.code\t16"; break;
   }
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitThumbFunc(MCSymbol *Func) {
+  // This needs to emit to a temporary string to get properly quoted
+  // MCSymbols when they have spaces in them.
+  OS << "\t.thumb_func";
+  if (Func)
+    OS << '\t' << *Func;
   EmitEOL();
 }
 

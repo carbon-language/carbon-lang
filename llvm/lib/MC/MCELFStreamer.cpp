@@ -49,6 +49,7 @@ public:
   virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
+  virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
@@ -178,13 +179,18 @@ void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
 
 void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   switch (Flag) {
-  case MCAF_SyntaxUnified:  return; // no-op here?
+  case MCAF_SyntaxUnified: return; // no-op here.
+  case MCAF_Code16: return; // no-op here.
   case MCAF_SubsectionsViaSymbols:
     getAssembler().setSubsectionsViaSymbols(true);
     return;
   }
 
   assert(0 && "invalid assembler flag!");
+}
+
+void MCELFStreamer::EmitThumbFunc(MCSymbol *Func) {
+  // FIXME: Anything needed here to flag the function as thumb?
 }
 
 void MCELFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {

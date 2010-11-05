@@ -126,6 +126,10 @@ namespace llvm {
     /// EmitAssemblerFlag - Note in the output the specified @p Flag
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) = 0;
 
+    /// EmitThumbFunc - Note in the output that the specified @p Func is
+    /// a Thumb mode function (ARM target only).
+    virtual void EmitThumbFunc(MCSymbol *Func) = 0;
+
     /// EmitAssignment - Emit an assignment of @p Value to @p Symbol.
     ///
     /// This corresponds to an assembler statement such as:
