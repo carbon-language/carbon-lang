@@ -22,7 +22,7 @@
 #define LIBLLDB_LOG_VERBOSE             (1u << 0)
 #define LIBLLDB_LOG_PROCESS             (1u << 1)
 #define LIBLLDB_LOG_THREAD              (1u << 2)
-#define LIBLLDB_LOG_SHLIB               (1u << 3)
+#define LIBLLDB_LOG_DYNAMIC_LOADER      (1u << 3)
 #define LIBLLDB_LOG_EVENTS              (1u << 4)
 #define LIBLLDB_LOG_BREAKPOINTS         (1u << 5)
 #define LIBLLDB_LOG_WATCHPOINTS         (1u << 6)
@@ -36,14 +36,13 @@
 #define LIBLLDB_LOG_HOST                (1u << 14)
 #define LIBLLDB_LOG_UNWIND              (1u << 15)
 #define LIBLLDB_LOG_API                 (1u << 16)
-#define LIBLLDB_LOG_DYNAMIC_LOADER      (1u << 17)
 #define LIBLLDB_LOG_ALL                 (UINT32_MAX)
-#define LIBLLDB_LOG_DEFAULT             (LIBLLDB_LOG_PROCESS     |\
-                                         LIBLLDB_LOG_THREAD      |\
-                                         LIBLLDB_LOG_SHLIB       |\
-                                         LIBLLDB_LOG_BREAKPOINTS |\
-                                         LIBLLDB_LOG_WATCHPOINTS |\
-                                         LIBLLDB_LOG_STEP        |\
+#define LIBLLDB_LOG_DEFAULT             (LIBLLDB_LOG_PROCESS              |\
+                                         LIBLLDB_LOG_THREAD               |\
+                                         LIBLLDB_LOG_DYNAMIC_LOADER       |\
+                                         LIBLLDB_LOG_BREAKPOINTS          |\
+                                         LIBLLDB_LOG_WATCHPOINTS          |\
+                                         LIBLLDB_LOG_STEP                 |\
                                          LIBLLDB_LOG_STATE       )
 
 namespace lldb_private {
