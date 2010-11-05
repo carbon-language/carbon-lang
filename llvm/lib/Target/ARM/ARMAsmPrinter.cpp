@@ -231,6 +231,7 @@ namespace {
       SmallString<128> Str;
       raw_svector_ostream OS(Str);
       EmitMachineConstantPoolValue(MCPV, OS);
+      // FIXME: non-assembly streamer support.
       OutStreamer.EmitRawText(OS.str());
     }
 
