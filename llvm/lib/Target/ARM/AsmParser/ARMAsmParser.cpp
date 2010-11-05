@@ -13,6 +13,7 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -904,14 +905,15 @@ bool ARMAsmParser::ParseDirectiveThumbFunc(SMLoc L) {
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
     return Error(L, "unexpected token in .thumb_func directive");
+  StringRef Name = Tok.getString();
   Parser.Lex(); // Consume the identifier token.
-
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return Error(L, "unexpected token in directive");
   Parser.Lex();
 
-  // TODO: mark symbol as a thumb symbol
-  // getParser().getStreamer().Emit???();
+  // Mark symbol as a thumb symbol.
+  MCSymbol *Func = getParser().getContext().GetOrCreateSymbol(Name);
+  getParser().getStreamer().EmitThumbFunc(Func);
   return false;
 }
 
