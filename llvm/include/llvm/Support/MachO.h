@@ -681,7 +681,9 @@ namespace llvm {
       // ARM
       CPUSubType_ARM_ALL     = 0,
       CPUSubType_ARM_V4T     = 5,
+      CPUSubType_ARM_V5      = 7,
       CPUSubType_ARM_V6      = 6,
+      CPUSubType_ARM_V7      = 9,
 
       // PowerPC
       CPUSubType_POWERPC_ALL = 0,
