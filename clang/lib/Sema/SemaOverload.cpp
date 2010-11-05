@@ -190,6 +190,7 @@ bool StandardConversionSequence::isPointerConversionToBool() const {
       (getFromType()->isPointerType() ||
        getFromType()->isObjCObjectPointerType() ||
        getFromType()->isBlockPointerType() ||
+       getFromType()->isNullPtrType() ||
        First == ICK_Array_To_Pointer || First == ICK_Function_To_Pointer))
     return true;
 

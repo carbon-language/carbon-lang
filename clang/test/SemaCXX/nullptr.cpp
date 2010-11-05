@@ -1,8 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x -ffreestanding %s
 #include <stdint.h>
 
-// Don't have decltype yet.
-typedef __typeof__(nullptr) nullptr_t;
+typedef decltype(nullptr) nullptr_t;
 
 struct A {};
 
@@ -69,3 +68,19 @@ template <int *PI, void (*PF)(), int A::*PM, void (A::*PMF)()>
 struct T {};
 
 typedef T<nullptr, nullptr, nullptr, nullptr> NT;
+
+namespace test1 { 
+template<typename T, typename U> struct is_same {
+  static const bool value = false;
+};
+
+template<typename T> struct is_same<T, T> {
+  static const bool value = true;
+};
+
+void *g(void*);
+bool g(bool);
+
+// Test that we prefer g(void*) over g(bool).
+static_assert(is_same<decltype(g(nullptr)), void*>::value, "");
+}
