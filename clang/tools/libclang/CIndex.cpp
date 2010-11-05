@@ -4431,7 +4431,8 @@ CXString createCXString(llvm::StringRef String, bool DupString) {
 // Misc. utility functions.
 //===----------------------------------------------------------------------===//
 
-static unsigned SafetyStackThreadSize = 0;
+/// Default to using an 8 MB stack size on "safety" threads.
+static unsigned SafetyStackThreadSize = 8 << 20;
 
 namespace clang {
 
