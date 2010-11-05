@@ -996,6 +996,14 @@ and source-file directory for your debugger."
   (set (make-local-variable 'gud-minor-mode) 'lldb)
   (setq lldb-oneshot-break-defined nil)
 
+  ;; Make lldb dump fullpath instead of basename for a file.
+  ;; See also gud-lldb-marker-filter where gud-last-frame is grokked from lldb output.
+  (progn
+    (gud-call "settings set frame-format 'frame #${frame.index}: ${frame.pc}{ ${module.file.basename}{`${function.name}${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}\\n'")
+    (sit-for 1)
+    (gud-call "settings set thread-format 'thread #${thread.index}: tid = ${thread.id}{, ${frame.pc}}{ ${module.file.basename}{`${function.name}${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}{, stop reason = ${thread.stop-reason}}\\n'")
+    (sit-for 1))
+
   (gud-def gud-listb  "breakpoint list"
                       "l"    "List all breakpoints.")
   (gud-def gud-bt     "thread backtrace"
@@ -1036,9 +1044,13 @@ and source-file directory for your debugger."
                       "\C-r" "Continue with display.")
   (gud-def gud-finish "thread step-out"
                       "\C-f" "Finish executing current function.")
-  (gud-def gud-up     "frame select -r %p"
+  (gud-def gud-up
+           (progn (gud-call "frame select -r 1")
+                  (sit-for 1))
                       "<"    "Up 1 stack frame.")
-  (gud-def gud-down   "frame select -r -%p"
+  (gud-def gud-down
+           (progn (gud-call "frame select -r -1")
+                  (sit-for 1))
                       ">"    "Down 1 stack frame.")
   (gud-def gud-print  "expression -- %e"
                       "\C-p" "Evaluate C expression at point.")
