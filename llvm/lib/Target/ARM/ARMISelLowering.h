@@ -428,6 +428,13 @@ namespace llvm {
 
   };
   
+  enum NEONModImmType {
+    VMOVModImm,
+    VMVNModImm,
+    OtherModImm
+  };
+  
+  
   namespace ARM {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo);
   }

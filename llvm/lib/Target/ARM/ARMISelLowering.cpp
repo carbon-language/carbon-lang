@@ -3087,7 +3087,7 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 /// operand (e.g., VMOV).  If so, return the encoded value.
 static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
                                  unsigned SplatBitSize, SelectionDAG &DAG,
-                                 EVT &VT, bool is128Bits, bool isVMOV) {
+                                 EVT &VT, bool is128Bits, NEONModImmType type) {
   unsigned OpCmode, Imm;
 
   // SplatBitSize is set to the smallest size that splats the vector, so a
@@ -3100,7 +3100,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
 
   switch (SplatBitSize) {
   case 8:
-    if (!isVMOV)
+    if (type != VMOVModImm)
       return SDValue();
     // Any 1-byte value is OK.  Op=0, Cmode=1110.
     assert((SplatBits & ~0xff) == 0 && "one byte splat value is too big");
@@ -3157,6 +3157,9 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
       break;
     }
 
+    // cmode == 0b1100 and cmode == 0b1101 are not supported for VORR or VBIC
+    if (type == OtherModImm) return SDValue();
+
     if ((SplatBits & ~0xffff) == 0 &&
         ((SplatBits | SplatUndef) & 0xff) == 0xff) {
       // Value = 0x0000nnff: Op=x, Cmode=1100.
@@ -3183,7 +3186,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     return SDValue();
 
   case 64: {
-    if (!isVMOV)
+    if (type != VMOVModImm)
       return SDValue();
     // NEON has a 64-bit VMOV splat where each byte is either 0 or 0xff.
     uint64_t BitMask = 0xff;
@@ -3452,7 +3455,8 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       EVT VmovVT;
       SDValue Val = isNEONModifiedImm(SplatBits.getZExtValue(),
                                       SplatUndef.getZExtValue(), SplatBitSize,
-                                      DAG, VmovVT, VT.is128BitVector(), true);
+                                      DAG, VmovVT, VT.is128BitVector(),
+                                      VMOVModImm);
       if (Val.getNode()) {
         SDValue Vmov = DAG.getNode(ARMISD::VMOVIMM, dl, VmovVT, Val);
         return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vmov);
@@ -3463,7 +3467,8 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
                              ((1LL << SplatBitSize) - 1));
       Val = isNEONModifiedImm(NegatedImm,
                                       SplatUndef.getZExtValue(), SplatBitSize,
-                                      DAG, VmovVT, VT.is128BitVector(), false);
+                                      DAG, VmovVT, VT.is128BitVector(), 
+                                      VMVNModImm);
       if (Val.getNode()) {
         SDValue Vmov = DAG.getNode(ARMISD::VMVNIMM, dl, VmovVT, Val);
         return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vmov);
@@ -4462,7 +4467,8 @@ static SDValue PerformANDCombine(SDNode *N,
       EVT VbicVT;
       SDValue Val = isNEONModifiedImm((~SplatBits).getZExtValue(),
                                       SplatUndef.getZExtValue(), SplatBitSize,
-                                      DAG, VbicVT, VT.is128BitVector(), false);
+                                      DAG, VbicVT, VT.is128BitVector(), 
+                                      OtherModImm);
       if (Val.getNode()) {
         SDValue Input =
           DAG.getNode(ISD::BIT_CONVERT, dl, VbicVT, N->getOperand(0));
@@ -4494,7 +4500,8 @@ static SDValue PerformORCombine(SDNode *N,
       EVT VorrVT;
       SDValue Val = isNEONModifiedImm(SplatBits.getZExtValue(),
                                       SplatUndef.getZExtValue(), SplatBitSize,
-                                      DAG, VorrVT, VT.is128BitVector(), false);
+                                      DAG, VorrVT, VT.is128BitVector(),
+                                      OtherModImm);
       if (Val.getNode()) {
         SDValue Input =
           DAG.getNode(ISD::BIT_CONVERT, dl, VorrVT, N->getOperand(0));
