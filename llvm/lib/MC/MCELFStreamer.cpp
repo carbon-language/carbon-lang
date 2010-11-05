@@ -212,6 +212,7 @@ void MCELFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 // that equals the original symbol (tmp = bar). With this hack the writer
 // gets a relocation with tmp and can correctly implement weak references.
 
+namespace {
 class WeakRefExpr : public MCTargetExpr {
 private:
   const MCSymbolRefExpr *Alias;
@@ -235,6 +236,7 @@ public:
     return new (Ctx) WeakRefExpr(A);
   }
 };
+} // end anonymous namespace
 
 void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
   getAssembler().getOrCreateSymbolData(*Symbol);
