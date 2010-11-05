@@ -480,7 +480,7 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
                               options, 0 };
   llvm::CrashRecoveryContext CRC;
 
-  if (!CRC.RunSafely(clang_codeCompleteAt_Impl, &CCAI)) {
+  if (!RunSafely(CRC, clang_codeCompleteAt_Impl, &CCAI)) {
     fprintf(stderr, "libclang: crash detected in code completion\n");
     static_cast<ASTUnit *>(TU)->setUnsafeToFree(true);
     return 0;

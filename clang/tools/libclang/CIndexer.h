@@ -1,4 +1,4 @@
-//===- CIndexer.h - Clang-C Source Indexing Library -----------------------===//
+//===- CIndexer.h - Clang-C Source Indexing Library -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,6 +19,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/Path.h"
 #include <vector>
+
+namespace llvm {
+  class CrashRecoveryContext;
+}
 
 namespace clang {
 namespace cxstring {
@@ -66,6 +70,20 @@ namespace clang {
                   struct CXUnsavedFile *unsaved_files,
                   std::vector<std::string> &RemapArgs,
                   std::vector<llvm::sys::Path> &TemporaryFiles);
+
+  /// \brief Return the current size to request for "safety".
+  unsigned GetSafetyThreadStackSize();
+
+  /// \brief Set the current size to request for "safety" (or 0, if safety
+  /// threads should not be used).
+  void SetSafetyThreadStackSize(unsigned Value);
+
+  /// \brief Execution the given code "safely", using crash recovery or safety
+  /// threads when possible.
+  ///
+  /// \return False if a crash was detected.
+  bool RunSafely(llvm::CrashRecoveryContext &CRC,
+                 void (*Fn)(void*), void *UserData);
 }
 
 #endif

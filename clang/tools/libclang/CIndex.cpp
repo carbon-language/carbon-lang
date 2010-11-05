@@ -2139,7 +2139,7 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                     num_unsaved_files, options, 0 };
   llvm::CrashRecoveryContext CRC;
 
-  if (!CRC.RunSafely(clang_parseTranslationUnit_Impl, &PTUI)) {
+  if (!RunSafely(CRC, clang_parseTranslationUnit_Impl, &PTUI)) {
     fprintf(stderr, "libclang: crash detected during parsing: {\n");
     fprintf(stderr, "  'source_filename' : '%s'\n", source_filename);
     fprintf(stderr, "  'command_line_args' : [");
@@ -2238,7 +2238,7 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                       options, 0 };
   llvm::CrashRecoveryContext CRC;
 
-  if (!CRC.RunSafely(clang_reparseTranslationUnit_Impl, &RTUI)) {
+  if (!RunSafely(CRC, clang_reparseTranslationUnit_Impl, &RTUI)) {
     fprintf(stderr, "libclang: crash detected during reparsing\n");
     static_cast<ASTUnit *>(TU)->setUnsafeToFree(true);
     return 1;
@@ -4430,6 +4430,27 @@ CXString createCXString(llvm::StringRef String, bool DupString) {
 //===----------------------------------------------------------------------===//
 // Misc. utility functions.
 //===----------------------------------------------------------------------===//
+
+static unsigned SafetyStackThreadSize = 0;
+
+namespace clang {
+
+bool RunSafely(llvm::CrashRecoveryContext &CRC,
+               void (*Fn)(void*), void *UserData) {
+  if (unsigned Size = GetSafetyThreadStackSize())
+    return CRC.RunSafelyOnThread(Fn, UserData, Size);
+  return CRC.RunSafely(Fn, UserData);
+}
+
+unsigned GetSafetyThreadStackSize() {
+  return SafetyStackThreadSize;
+}
+
+void SetSafetyThreadStackSize(unsigned Value) {
+  SafetyStackThreadSize = Value;
+}
+
+}
 
 extern "C" {
 
