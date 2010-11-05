@@ -560,11 +560,12 @@ SBFrame::EvaluateExpression (const char *expr)
         m_opaque_sp->CalculateExecutionContext (exe_ctx);
         
         const char *prefix = NULL;
+        const bool discard_on_error = true;
         
         if (exe_ctx.target)
             prefix = exe_ctx.target->GetExpressionPrefixContentsAsCString();
         
-        *expr_result = ClangUserExpression::Evaluate (exe_ctx, expr, prefix);
+        *expr_result = ClangUserExpression::Evaluate (exe_ctx, discard_on_error, expr, prefix);
     }
     
     if (log)

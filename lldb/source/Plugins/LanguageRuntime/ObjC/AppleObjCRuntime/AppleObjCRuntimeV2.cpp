@@ -126,8 +126,13 @@ AppleObjCRuntimeV2::GetObjectDescription (Stream &str, Value &value, ExecutionCo
     lldb::addr_t wrapper_struct_addr = LLDB_INVALID_ADDRESS;
     func.InsertFunction(exe_ctx, wrapper_struct_addr, error_stream);
 
+    const bool stop_others = true;
+    const bool try_all_threads = true;
+    const bool discard_on_error = true;
+    
     ClangFunction::ExecutionResults results 
-        = func.ExecuteFunction(exe_ctx, &wrapper_struct_addr, error_stream, true, 1000, true, ret);
+        = func.ExecuteFunction(exe_ctx, &wrapper_struct_addr, error_stream, stop_others, 1000, 
+                               try_all_threads, discard_on_error, ret);
     if (results != ClangFunction::eExecutionCompleted)
     {
         str.Printf("Error evaluating Print Object function: %d.\n", results);

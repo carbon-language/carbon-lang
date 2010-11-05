@@ -89,6 +89,11 @@ public:
     ///     The execution context to use when looking up entities that
     ///     are needed for parsing (locations of variables, etc.)
     ///
+    /// @param[in] discard_on_error
+    ///     If true, and the execution stops before completion, we unwind the
+    ///     function call, and return the program state to what it was before the
+    ///     execution.  If false, we leave the program in the stopped state.
+    /// 
     /// @param[in] result
     ///     A pointer to direct at the persistent variable in which the
     ///     expression's result is stored.
@@ -99,6 +104,7 @@ public:
     bool
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
+             bool discard_on_error,
              ClangExpressionVariable *&result);
              
     ThreadPlan *
@@ -212,6 +218,7 @@ public:
     //------------------------------------------------------------------
     static lldb::ValueObjectSP
     Evaluate (ExecutionContext &exe_ctx, 
+              bool discard_on_error,
               const char *expr_cstr,
               const char *expr_prefix);
 

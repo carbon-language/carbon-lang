@@ -75,6 +75,13 @@ CommandObjectExpression::CommandOptions::SetOptionValue (int option_idx, const c
     case 'o':
         print_object = true;
         break;
+        
+    case 'u':
+        bool success;
+        unwind_on_error = Args::StringToBoolean(option_arg, true, &success);
+        if (!success)
+            error.SetErrorStringWithFormat("Could not convert \"%s\" to a boolean value.", option_arg);
+        break;
 
     default:
         error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
@@ -92,6 +99,7 @@ CommandObjectExpression::CommandOptions::ResetOptionValues ()
     debug = false;
     format = eFormatDefault;
     print_object = false;
+    unwind_on_error = true;
     show_types = true;
     show_summary = true;
 }
@@ -223,7 +231,7 @@ CommandObjectExpression::EvaluateExpression
     if (m_exe_ctx.target)
         prefix = m_exe_ctx.target->GetExpressionPrefixContentsAsCString();
     
-    lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (m_exe_ctx, expr, prefix));
+    lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (m_exe_ctx, m_options.unwind_on_error, expr, prefix));
     assert (result_valobj_sp.get());
     if (result_valobj_sp->GetError().Success())
     {
@@ -347,7 +355,8 @@ CommandObjectExpression::CommandOptions::g_option_table[] =
   //{ LLDB_OPT_SET_ALL, false, "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
 //{ LLDB_OPT_SET_1, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
 { LLDB_OPT_SET_1, false, "format",             'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the expression output should use."},
-{ LLDB_OPT_SET_2, false, "object-description", 'o', no_argument,       NULL, 0, eArgTypeNone, "Print the object description of the value resulting from the expression"},
+{ LLDB_OPT_SET_2, false, "object-description", 'o', no_argument,       NULL, 0, eArgTypeNone, "Print the object description of the value resulting from the expression."},
+{ LLDB_OPT_SET_ALL, false, "unwind-on-error",  'u', required_argument, NULL, 0, eArgTypeBoolean, "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
 { LLDB_OPT_SET_ALL, false, "debug",            'g', no_argument,       NULL, 0, eArgTypeNone, "Enable verbose debug logging of the expression parsing and evaluation."},
 { LLDB_OPT_SET_ALL, false, "use-ir",           'i', no_argument,       NULL, 0, eArgTypeNone, "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},
 { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }

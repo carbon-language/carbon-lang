@@ -490,14 +490,49 @@ Thread::QueueThreadPlan (ThreadPlanSP &thread_plan_sp, bool abort_other_plans)
 }
 
 void
+Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
+{
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    if (log)
+    {
+        log->Printf("Discarding thread plans for thread tid = 0x%4.4x, up to %p", GetID(), up_to_plan_sp.get());
+    }
+
+    int stack_size = m_plan_stack.size();
+    
+    // If the input plan is NULL, discard all plans.  Otherwise make sure this plan is in the
+    // stack, and if so discard up to and including it.
+    
+    if (up_to_plan_sp.get() == NULL)
+    {
+        for (int i = stack_size - 1; i > 0; i--)
+            DiscardPlan();
+    }
+    else
+    {
+        bool found_it = false;
+        for (int i = stack_size - 1; i > 0; i--)
+        {
+            if (m_plan_stack[i] == up_to_plan_sp)
+                found_it = true;
+        }
+        if (found_it)
+        {
+            bool last_one = false;
+            for (int i = stack_size - 1; i > 0 && !last_one ; i--)
+            {
+                if (GetCurrentPlan() == up_to_plan_sp.get())
+                    last_one = true;
+                DiscardPlan();
+            }
+        }
+    }
+    return;
+}
+
+void
 Thread::DiscardThreadPlans(bool force)
 {
-    // FIXME: It is not always safe to just discard plans.  Some, like the step over
-    // breakpoint trap can't be discarded in general (though you can if you plan to
-    // force a return from a function, for instance.
-    // For now I'm just not clearing immediate plans, but I need a way for plans to
-    // say they really need to be kept on, and then a way to override that.  Humm...
-
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
     if (log)
     {

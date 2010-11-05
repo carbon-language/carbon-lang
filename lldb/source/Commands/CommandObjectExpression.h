@@ -51,6 +51,7 @@ public:
         lldb::Format    format;
         bool        debug;
         bool        print_object;
+        bool        unwind_on_error;
         bool        show_types;
         bool        show_summary;
     };

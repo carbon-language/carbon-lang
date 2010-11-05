@@ -357,6 +357,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
 bool
 ClangUserExpression::Execute (Stream &error_stream,
                               ExecutionContext &exe_ctx,
+                              bool discard_on_error,
                               ClangExpressionVariable *&result)
 {
     if (m_dwarf_opcodes.get())
@@ -375,12 +376,15 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr);
         
+        const bool stop_others = true;
+        const bool try_all_threads = true;
         ClangFunction::ExecutionResults execution_result = 
         ClangFunction::ExecuteFunction (exe_ctx, 
                                         m_jit_addr, 
                                         struct_address, 
-                                        true,
-                                        true, 
+                                        stop_others,
+                                        try_all_threads,
+                                        discard_on_error, 
                                         10000000, 
                                         error_stream,
                                         (m_needs_object_ptr ? &object_ptr : NULL));
@@ -430,9 +434,9 @@ ClangUserExpression::DwarfOpcodeStream ()
     return *m_dwarf_opcodes.get();
 }
 
-
 lldb::ValueObjectSP
 ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, 
+                               bool discard_on_error,
                                const char *expr_cstr,
                                const char *expr_prefix)
 {
@@ -479,7 +483,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
 
         error_stream.GetString().clear();
 
-        if (!user_expression.Execute (error_stream, exe_ctx, expr_result))
+        if (!user_expression.Execute (error_stream, exe_ctx, discard_on_error, expr_result))
         {
             if (error_stream.GetString().empty())
                 error.SetErrorString ("expression failed to execute, unknown error");

@@ -365,7 +365,13 @@ ClangFunction::InsertFunction (ExecutionContext &exe_ctx, lldb::addr_t &args_add
 }
 
 ThreadPlan *
-ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, lldb::addr_t func_addr, lldb::addr_t &args_addr, Stream &errors, bool stop_others, bool discard_on_error, lldb::addr_t *this_arg)
+ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, 
+                                            lldb::addr_t func_addr, 
+                                            lldb::addr_t &args_addr, 
+                                            Stream &errors, 
+                                            bool stop_others, 
+                                            bool discard_on_error, 
+                                            lldb::addr_t *this_arg)
 {
     // FIXME: Use the errors Stream for better error reporting.
 
@@ -441,7 +447,9 @@ ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, Value 
 ClangFunction::ExecutionResults
 ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, bool stop_others, Value &results)
 {
-    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, NULL, false, results);
+    const bool try_all_threads = false;
+    const bool discard_on_error = true;
+    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, NULL, try_all_threads, discard_on_error, results);
 }
 
 ClangFunction::ExecutionResults
@@ -452,7 +460,10 @@ ClangFunction::ExecuteFunction(
         bool try_all_threads, 
         Value &results)
 {
-    return ExecuteFunction (exe_ctx, NULL, errors, true, single_thread_timeout_usec, try_all_threads, results);
+    const bool stop_others = true;
+    const bool discard_on_error = true;
+    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, single_thread_timeout_usec, 
+                            try_all_threads, discard_on_error, results);
 }
 
 // This is the static function
@@ -463,6 +474,7 @@ ClangFunction::ExecuteFunction (
         lldb::addr_t &void_arg,
         bool stop_others,
         bool try_all_threads,
+        bool discard_on_error,
         uint32_t single_thread_timeout_usec,
         Stream &errors,
         lldb::addr_t *this_arg)
@@ -488,8 +500,9 @@ ClangFunction::ExecuteFunction (
     }
 
     ClangFunction::ExecutionResults return_value = eExecutionSetupError;
-    
-    lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exe_ctx, function_address, void_arg, errors, stop_others, false, this_arg));
+    lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exe_ctx, function_address, void_arg, 
+                                                                               errors, stop_others, discard_on_error, 
+                                                                               this_arg));
     
     ThreadPlanCallFunction *call_plan_ptr = static_cast<ThreadPlanCallFunction *> (call_plan_sp.get());
     
@@ -682,6 +695,10 @@ ClangFunction::ExecuteFunction (
                     log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
             }
             
+            if (discard_on_error && call_plan_sp)
+            {
+                exe_ctx.thread->DiscardThreadPlansUpToPlan (call_plan_sp);
+            }
             return_value = eExecutionInterrupted;
             break;
         }
@@ -718,7 +735,8 @@ ClangFunction::ExecuteFunction(
         Stream &errors, 
         bool stop_others, 
         uint32_t single_thread_timeout_usec, 
-        bool try_all_threads, 
+        bool try_all_threads,
+        bool discard_on_error, 
         Value &results)
 {
     using namespace clang;
@@ -741,7 +759,7 @@ ClangFunction::ExecuteFunction(
     }
     
     return_value = ClangFunction::ExecuteFunction(exe_ctx, m_wrapper_function_addr, args_addr, stop_others, 
-                                                  try_all_threads, single_thread_timeout_usec, errors);
+                                                  try_all_threads, discard_on_error, single_thread_timeout_usec, errors);
 
     if (args_addr_ptr != NULL)
         *args_addr_ptr = args_addr;

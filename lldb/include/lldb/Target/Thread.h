@@ -571,6 +571,16 @@ public:
     DiscardThreadPlans (bool force);
 
     //------------------------------------------------------------------
+    /// Discards the plans queued on the plan stack of the current thread up to and
+    /// including up_to_plan_sp.
+    //
+    // @param[in] up_to_plan_sp
+    //   Discard all plans up to and including this one.
+    //------------------------------------------------------------------
+    void
+    DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp);
+
+    //------------------------------------------------------------------
     /// Prints the current plan stack.
     ///
     /// @param[in] s

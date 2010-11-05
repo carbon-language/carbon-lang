@@ -256,6 +256,11 @@ public:
     ///     If the timeout expires, true if other threads should run.  If
     ///     the function may try to take locks, this is useful.
     /// 
+    /// @param[in] discard_on_error
+    ///     If true, and the execution stops before completion, we unwind the
+    ///     function call, and return the program state to what it was before the
+    ///     execution.  If false, we leave the program in the stopped state.
+    /// 
     /// @param[in] single_thread_timeout_usec
     ///     If stop_others is true, the length of time to wait before
     ///     concluding that the system is deadlocked.
@@ -274,7 +279,8 @@ public:
                                              lldb::addr_t function_address, 
                                              lldb::addr_t &void_arg, 
                                              bool stop_others, 
-                                             bool try_all_threads, 
+                                             bool try_all_threads,
+                                             bool discard_on_error,
                                              uint32_t single_thread_timeout_usec, 
                                              Stream &errors,
                                              lldb::addr_t* this_arg = 0);
@@ -396,7 +402,8 @@ public:
                                      Stream &errors, 
                                      bool stop_others, 
                                      uint32_t single_thread_timeout_usec,
-                                     bool try_all_threads, 
+                                     bool try_all_threads,
+                                     bool discard_on_error, 
                                      Value &results);
     
     //------------------------------------------------------------------
@@ -434,7 +441,7 @@ public:
                                  lldb::addr_t &args_addr_ref, 
                                  Stream &errors, 
                                  bool stop_others, 
-                                 bool discard_on_error = true,
+                                 bool discard_on_error,
                                  lldb::addr_t *this_arg = 0);
     
     //------------------------------------------------------------------
