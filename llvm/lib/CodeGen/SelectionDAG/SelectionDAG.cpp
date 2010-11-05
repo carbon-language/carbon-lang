@@ -3283,6 +3283,8 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 
   // Expand memcpy to a series of load and store ops if the size operand falls
   // below a certain threshold.
+  // TODO: In the AlwaysInline case, if the size is big then generate a loop
+  // rather than maybe a humongous number of loads and stores.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   std::vector<EVT> MemOps;
   bool DstAlignCanChange = false;
