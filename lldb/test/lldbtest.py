@@ -498,7 +498,7 @@ class TestBase(unittest2.TestCase):
         self.hooks = []
 
     def markError(self):
-        """Callback invoked when we (the test case instance) errored."""
+        """Callback invoked when an error (unexpected exception) errored."""
         self.__errored__ = True
         with recording(self, False) as sbuf:
             # False because there's no need to write "ERROR" to the stderr twice.
@@ -506,7 +506,7 @@ class TestBase(unittest2.TestCase):
             print >> sbuf, "ERROR"
 
     def markFailure(self):
-        """Callback invoked when we (the test case instance) failed."""
+        """Callback invoked when a failure (test assertion failure) occurred."""
         self.__failed__ = True
         with recording(self, False) as sbuf:
             # False because there's no need to write "FAIL" to the stderr twice.
@@ -609,7 +609,7 @@ class TestBase(unittest2.TestCase):
             if not module.cleanup(self, dictionary=self.dict):
                 raise Exception("Don't know how to do cleanup")
 
-        # We always dump the session infos for failures/errors.
+        # Decide whether to dump the session info.
         self.dumpSessionInfo()
 
     def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):
