@@ -21,6 +21,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MachObjectWriter.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/MachO.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -396,7 +397,8 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return new MachObjectWriter(OS, /*Is64Bit=*/false);
+    return new MachObjectWriter(OS, /*Is64Bit=*/false, MachO::CPUTypeI386,
+                                MachO::CPUSubType_I386_ALL);
   }
 };
 
@@ -412,7 +414,8 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return new MachObjectWriter(OS, /*Is64Bit=*/true);
+    return new MachObjectWriter(OS, /*Is64Bit=*/true, MachO::CPUTypeX86_64,
+                                MachO::CPUSubType_I386_ALL);
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {

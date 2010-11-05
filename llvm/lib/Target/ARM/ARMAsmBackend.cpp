@@ -20,6 +20,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MachObjectWriter.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/MachO.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -128,7 +129,9 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return new MachObjectWriter(OS, /*Is64Bit=*/false);
+    // FIXME: Subtarget info should be derived. Force v7 for now.
+    return new MachObjectWriter(OS, /*Is64Bit=*/false, MachO::CPUTypeARM,
+                                MachO::CPUSubType_ARM_V7);
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {

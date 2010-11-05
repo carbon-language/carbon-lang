@@ -25,7 +25,8 @@ class MachObjectWriter : public MCObjectWriter {
   void *Impl;
 
 public:
-  MachObjectWriter(raw_ostream &OS, bool Is64Bit, bool IsLittleEndian = true);
+  MachObjectWriter(raw_ostream &OS, bool Is64Bit, uint32_t CPUType,
+                   uint32_t CPUSubtype, bool IsLittleEndian = true);
   virtual ~MachObjectWriter();
 
   virtual void ExecutePostLayoutBinding(MCAssembler &Asm);

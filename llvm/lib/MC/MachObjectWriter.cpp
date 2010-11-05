@@ -290,9 +290,14 @@ class MachObjectWriterImpl {
 
   unsigned Is64Bit : 1;
 
+  uint32_t CPUType;
+  uint32_t CPUSubtype;
+
 public:
-  MachObjectWriterImpl(MachObjectWriter *_Writer, bool _Is64Bit)
-    : Writer(_Writer), OS(Writer->getStream()), Is64Bit(_Is64Bit) {
+  MachObjectWriterImpl(MachObjectWriter *_Writer, bool _Is64Bit,
+                       uint32_t _CPUType, uint32_t _CPUSubtype)
+    : Writer(_Writer), OS(Writer->getStream()), Is64Bit(_Is64Bit),
+      CPUType(_CPUType), CPUSubtype(_CPUSubtype) {
   }
 
   void Write8(uint8_t Value) { Writer->Write8(Value); }
@@ -319,10 +324,9 @@ public:
 
     Write32(Is64Bit ? Header_Magic64 : Header_Magic32);
 
-    // FIXME: Support cputype.
-    Write32(Is64Bit ? MachO::CPUTypeX86_64 : MachO::CPUTypeI386);
-    // FIXME: Support cpusubtype.
-    Write32(MachO::CPUSubType_I386_ALL);
+    Write32(CPUType);
+    Write32(CPUSubtype);
+
     Write32(HFT_Object);
     Write32(NumLoadCommands);    // Object files have a single load command, the
                                  // segment.
@@ -1329,10 +1333,12 @@ public:
 
 MachObjectWriter::MachObjectWriter(raw_ostream &OS,
                                    bool Is64Bit,
+                                   uint32_t CPUType,
+                                   uint32_t CPUSubtype,
                                    bool IsLittleEndian)
   : MCObjectWriter(OS, IsLittleEndian)
 {
-  Impl = new MachObjectWriterImpl(this, Is64Bit);
+  Impl = new MachObjectWriterImpl(this, Is64Bit, CPUType, CPUSubtype);
 }
 
 MachObjectWriter::~MachObjectWriter() {
