@@ -1252,6 +1252,9 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                              unsigned NumArgs, SourceLocation IdLoc,
                              SourceLocation LParenLoc,
                              SourceLocation RParenLoc) {
+  if (Member->isInvalidDecl())
+    return true;
+  
   // Diagnose value-uses of fields to initialize themselves, e.g.
   //   foo(foo)
   // where foo is not also a parameter to the constructor.
@@ -1293,9 +1296,6 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                                                     RParenLoc);
     
   }
-  
-  if (Member->isInvalidDecl())
-    return true;
   
   // Initialize the member.
   InitializedEntity MemberEntity =
