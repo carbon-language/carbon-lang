@@ -84,3 +84,12 @@ bool g(bool);
 // Test that we prefer g(void*) over g(bool).
 static_assert(is_same<decltype(g(nullptr)), void*>::value, "");
 }
+
+namespace test2 {
+  void f(int, ...) __attribute__((sentinel));
+
+  void g() {
+    // nullptr can be used as the sentinel value.
+    f(10, nullptr);
+  }
+}

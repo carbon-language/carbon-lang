@@ -193,6 +193,10 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   if (!sentinelExpr) return;
   if (sentinelExpr->isTypeDependent()) return;
   if (sentinelExpr->isValueDependent()) return;
+
+  // nullptr_t is always treated as null.
+  if (sentinelExpr->getType()->isNullPtrType()) return;
+
   if (sentinelExpr->getType()->isAnyPointerType() &&
       sentinelExpr->IgnoreParenCasts()->isNullPointerConstant(Context,
                                             Expr::NPC_ValueDependentIsNull))
