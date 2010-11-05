@@ -255,6 +255,7 @@ void MCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   case MCAF_SyntaxUnified:         OS << "\t.syntax unified"; break;
   case MCAF_SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
   case MCAF_Code16:                OS << "\t.code\t16"; break;
+  case MCAF_Code32:                OS << "\t.code\t32"; break;
   }
   EmitEOL();
 }

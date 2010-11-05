@@ -45,7 +45,8 @@ enum MCSymbolAttr {
 enum MCAssemblerFlag {
   MCAF_SyntaxUnified,         ///< .syntax (ARM/ELF)
   MCAF_SubsectionsViaSymbols, ///< .subsections_via_symbols (MachO)
-  MCAF_Code16                 ///< .code 16
+  MCAF_Code16,                ///< .code 16
+  MCAF_Code32                 ///< .code 32
 };
 
 } // end namespace llvm
