@@ -215,7 +215,7 @@ void considered_harmful(int x) {
 // CHECK: load-stmts.cpp:104:5: MemberRef=member:100:7 Extent=[104:5 - 104:11]
 // CHECK: load-stmts.cpp:104:12: DeclRefExpr=x:103:22 Extent=[104:12 - 104:13]
 // CHECK: load-stmts.cpp:104:16: TypeRef=struct Base:94:8 Extent=[104:16 - 104:2
-// CHECK: load-stmts.cpp:104:16: CallExpr= Extent=[104:16 - 104:23]
+// CHECK: load-stmts.cpp:104:16: CallExpr=Base:95:3 Extent=[104:16 - 104:23]
 // CHECK: load-stmts.cpp:104:21: DeclRefExpr=x:103:22 Extent=[104:21 - 104:22]
 // CHECK: load-stmts.cpp:107:6: FunctionDecl=considered_harmful:107:6 (Definition)
 // CHECK: load-stmts.cpp:108:2: LabelStmt=start_over Extent=[108:2 - 109:28]

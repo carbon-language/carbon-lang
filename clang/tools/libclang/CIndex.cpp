@@ -2435,6 +2435,9 @@ static Decl *getDeclFromExpr(Stmt *E) {
       
   if (CallExpr *CE = dyn_cast<CallExpr>(E))
     return getDeclFromExpr(CE->getCallee());
+  if (CXXConstructExpr *CE = llvm::dyn_cast<CXXConstructExpr>(E))
+    if (!CE->isElidable())
+    return CE->getConstructor();
   if (ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(E))
     return OME->getMethodDecl();
 
@@ -2870,6 +2873,15 @@ enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
                                          CXCursor parent,
                                          CXClientData client_data) {
   CXCursor *BestCursor = static_cast<CXCursor *>(client_data);
+  
+  // If our current best cursor is the construction of a temporary object, 
+  // don't replace that cursor with a type reference, because we want 
+  // clang_getCursor() to point at the constructor.
+  if (clang_isExpression(BestCursor->kind) &&
+      isa<CXXTemporaryObjectExpr>(getCursorExpr(*BestCursor)) &&
+      cursor.kind == CXCursor_TypeRef)
+    return CXChildVisit_Recurse;
+  
   *BestCursor = cursor;
   return CXChildVisit_Recurse;
 }
