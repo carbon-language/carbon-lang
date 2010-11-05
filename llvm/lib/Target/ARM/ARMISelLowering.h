@@ -165,7 +165,9 @@ namespace llvm {
       BFI,
       
       // Vector OR with immediate
-      VORRIMM
+      VORRIMM,
+      // Vector AND with NOT of immediate
+      VBICIMM
     };
   }
 

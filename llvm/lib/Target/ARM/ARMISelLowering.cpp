@@ -673,8 +673,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setTargetDAGCombine(ISD::SUB);
   setTargetDAGCombine(ISD::MUL);
 
-  if (Subtarget->hasV6T2Ops())
+  if (Subtarget->hasV6T2Ops() || Subtarget->hasNEON())
     setTargetDAGCombine(ISD::OR);
+  if (Subtarget->hasNEON())
+    setTargetDAGCombine(ISD::AND);
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
 
@@ -4443,6 +4445,36 @@ static SDValue PerformMULCombine(SDNode *N,
   return SDValue();
 }
 
+static SDValue PerformANDCombine(SDNode *N,
+                                TargetLowering::DAGCombinerInfo &DCI) {
+  // Attempt to use immediate-form VBIC
+  BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(N->getOperand(1));
+  DebugLoc dl = N->getDebugLoc();
+  EVT VT = N->getValueType(0);
+  SelectionDAG &DAG = DCI.DAG;
+  
+  APInt SplatBits, SplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+  if (BVN &&
+      BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs)) {
+    if (SplatBitSize <= 64) {
+      EVT VbicVT;
+      SDValue Val = isNEONModifiedImm((~SplatBits).getZExtValue(),
+                                      SplatUndef.getZExtValue(), SplatBitSize,
+                                      DAG, VbicVT, VT.is128BitVector(), false);
+      if (Val.getNode()) {
+        SDValue Input =
+          DAG.getNode(ISD::BIT_CONVERT, dl, VbicVT, N->getOperand(0));
+        SDValue Vbic = DAG.getNode(ARMISD::VBICIMM, dl, VbicVT, Input, Val);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vbic);
+      }
+    }
+  }
+  
+  return SDValue();
+}
+
 /// PerformORCombine - Target-specific dag combine xforms for ISD::OR
 static SDValue PerformORCombine(SDNode *N,
                                 TargetLowering::DAGCombinerInfo &DCI,
@@ -5066,6 +5098,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SUB:        return PerformSUBCombine(N, DCI);
   case ISD::MUL:        return PerformMULCombine(N, DCI, Subtarget);
   case ISD::OR:         return PerformORCombine(N, DCI, Subtarget);
+  case ISD::AND:        return PerformANDCombine(N, DCI);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ARMISD::VMOVDRR: return PerformVMOVDRRCombine(N, DCI.DAG);
   case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DCI.DAG);
