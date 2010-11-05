@@ -508,11 +508,11 @@ def lldbLoggings():
             raise Exception('log enable failed (check GDB_REMOTE_LOG env variable.')
 
 
-############################################
+# ======================================== #
 #                                          #
 # Execution of the test driver starts here #
 #                                          #
-############################################
+# ======================================== #
 
 #
 # Start the actions by first parsing the options while setting up the test
@@ -600,6 +600,7 @@ if rdir and (iterArchs or iterCompilers):
     new_stderr = None
     new_stdout = None
 
+# Iterating over all possible architecture and compiler combinations.
 for ia in range(len(archs) if iterArchs else 1):
     archConfig = ""
     if iterArchs:
