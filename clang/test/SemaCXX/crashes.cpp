@@ -41,3 +41,30 @@ struct {
   new Y // expected-error{{no viable conversion}}
 };
 }
+
+// http://llvm.org/PR8234
+namespace PR8234 {
+template<typename Signature>
+class callback
+{
+};
+
+template<typename R , typename ARG_TYPE0>
+class callback<R( ARG_TYPE0)>
+{
+    public:
+        callback() {}
+};
+
+template< typename ARG_TYPE0>
+class callback<void( ARG_TYPE0)>
+{
+    public:
+        callback() {}
+};
+
+void f()
+{
+    callback<void(const int&)> op;
+}
+}

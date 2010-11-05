@@ -2485,10 +2485,13 @@ Sema::getMoreSpecializedPartialSpecialization(
                                                                Info,
                                                                Deduced,
                                                                0);
-  if (Better1)
+  if (Better1) {
+    InstantiatingTemplate Inst(*this, PS2->getLocation(), PS2,
+                               Deduced.data(), Deduced.size(), Info);
     Better1 = !::FinishTemplateArgumentDeduction(*this, PS2, 
                                                  PS1->getTemplateArgs(), 
                                                  Deduced, Info);
+  }
   
   // Determine whether PS2 is at least as specialized as PS1
   Deduced.clear();
@@ -2500,10 +2503,13 @@ Sema::getMoreSpecializedPartialSpecialization(
                                                                Info,
                                                                Deduced,
                                                                0);
-  if (Better2)
+  if (Better2) {
+    InstantiatingTemplate Inst(*this, PS1->getLocation(), PS1,
+                               Deduced.data(), Deduced.size(), Info);
     Better2 = !::FinishTemplateArgumentDeduction(*this, PS1, 
                                                  PS2->getTemplateArgs(), 
                                                  Deduced, Info);
+  }
   
   if (Better1 == Better2)
     return 0;
