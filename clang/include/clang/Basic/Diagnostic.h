@@ -215,9 +215,7 @@ private:
     unsigned char Values[diag::DIAG_UPPER_LIMIT/2];
 
   public:
-    DiagMappings() {
-      memset(Values, 0, diag::DIAG_UPPER_LIMIT/2);
-    }
+    DiagMappings() : Values() { }
 
     void setMapping(diag::kind Diag, unsigned Map) {
       size_t Shift = (Diag & 1)*4;
