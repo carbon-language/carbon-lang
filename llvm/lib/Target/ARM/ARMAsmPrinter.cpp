@@ -228,38 +228,26 @@ namespace {
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
-      SmallString<128> Str;
-      raw_svector_ostream OS(Str);
-      EmitMachineConstantPoolValue(MCPV, OS);
-      // FIXME: non-assembly streamer support.
-      OutStreamer.EmitRawText(OS.str());
-    }
-
-    void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV,
-                                      raw_ostream &O) {
-      switch (TM.getTargetData()->getTypeAllocSize(MCPV->getType())) {
-      case 1: O << MAI->getData8bitsDirective(0); break;
-      case 2: O << MAI->getData16bitsDirective(0); break;
-      case 4: O << MAI->getData32bitsDirective(0); break;
-      default: assert(0 && "Unknown CPV size");
-      }
+      int Size = TM.getTargetData()->getTypeAllocSize(MCPV->getType());
 
       ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
+      SmallString<128> Str;
+      raw_svector_ostream OS(Str);
 
       if (ACPV->isLSDA()) {
-        O << MAI->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
+        OS << MAI->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
       } else if (ACPV->isBlockAddress()) {
-        O << *GetBlockAddressSymbol(ACPV->getBlockAddress());
+        OS << *GetBlockAddressSymbol(ACPV->getBlockAddress());
       } else if (ACPV->isGlobalValue()) {
         const GlobalValue *GV = ACPV->getGV();
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
         if (!isIndirect)
-          O << *Mang->getSymbol(GV);
+          OS << *Mang->getSymbol(GV);
         else {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
           MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-          O << *Sym;
+          OS << *Sym;
 
           MachineModuleInfoMachO &MMIMachO =
             MMI->getObjFileInfo<MachineModuleInfoMachO>();
@@ -272,17 +260,38 @@ namespace {
         }
       } else {
         assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
-        O << *GetExternalSymbolSymbol(ACPV->getSymbol());
+        OS << *GetExternalSymbolSymbol(ACPV->getSymbol());
       }
 
-      if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
-      if (ACPV->getPCAdjustment() != 0) {
-        O << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
-          << getFunctionNumber() << "_"  << ACPV->getLabelId()
-          << "+" << (unsigned)ACPV->getPCAdjustment();
-         if (ACPV->mustAddCurrentAddress())
-           O << "-.";
-         O << ')';
+      // Create an MCSymbol for the reference.
+      MCSymbol *MCSym = OutContext.GetOrCreateSymbol(OS.str());
+      const MCExpr *Expr = MCSymbolRefExpr::Create(MCSym, OutContext);
+
+      // FIXME: Model the whole expression an an MCExpr and we can get rid
+      // of this hasRawTextSupport() clause and just do an EmitValue().
+      if (OutStreamer.hasRawTextSupport()) {
+        if (ACPV->hasModifier()) OS << "(" << ACPV->getModifier() << ")";
+        if (ACPV->getPCAdjustment() != 0) {
+          OS << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
+            << getFunctionNumber() << "_"  << ACPV->getLabelId()
+            << "+" << (unsigned)ACPV->getPCAdjustment();
+          if (ACPV->mustAddCurrentAddress())
+            OS << "-.";
+          OS << ')';
+        }
+        const char *DataDirective = 0;
+        switch (Size) {
+        case 1: DataDirective = MAI->getData8bitsDirective(0); break;
+        case 2: DataDirective = MAI->getData16bitsDirective(0); break;
+        case 4: DataDirective = MAI->getData32bitsDirective(0); break;
+        default: assert(0 && "Unknown CPV size");
+        }
+        Twine Text(DataDirective, OS.str());
+        OutStreamer.EmitRawText(Text);
+      } else {
+        assert(!ACPV->hasModifier() && ACPV->getPCAdjustment() == 0 &&
+               "ARM binary streamer of non-trivial constant pool value!");
+        OutStreamer.EmitValue(Expr, Size);
       }
     }
   };
