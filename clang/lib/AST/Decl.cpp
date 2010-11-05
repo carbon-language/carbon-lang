@@ -75,6 +75,7 @@ static LVPair merge(LVPair L, LinkageInfo R) {
                 minVisibility(L.second, R.visibility()));
 }
 
+namespace {
 /// Flags controlling the computation of linkage and visibility.
 struct LVFlags {
   bool ConsiderGlobalVisibility;
@@ -93,6 +94,7 @@ struct LVFlags {
     return F;
   }
 };
+} // end anonymous namespace
 
 /// \brief Get the most restrictive linkage for the types in the given
 /// template parameter list.
