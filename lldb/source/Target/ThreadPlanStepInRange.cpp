@@ -83,23 +83,6 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     if (InRange())
         return false;
 
-    // If we're in an older frame then we should stop.
-    if (FrameIsOlder())
-        return true;
-        
-    // See if we are in a place we should step through (i.e. a trampoline of some sort):
-    // One tricky bit here is that some stubs don't push a frame, so we have to check
-    // both the case of a frame that is younger, or the same as this frame.  
-    // However, if the frame is the same, and we are still in the symbol we started
-    // in, the we don't need to do this.  This first check isn't strictly necessary,
-    // but it is more efficient.
-    
-    if (!FrameIsYounger() && InSymbol())
-    {
-        SetPlanComplete();
-        return true;
-    }
-    
     ThreadPlan* new_plan = NULL;
 
     // Stepping through should be done stopping other threads in general, since we're setting a breakpoint and
@@ -111,7 +94,39 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     else
         stop_others = false;
         
-    new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+    if (FrameIsOlder())
+    {
+        // If we're in an older frame then we should stop.
+        //
+        // A caveat to this is if we think the frame is older but we're actually in a trampoline.
+        // I'm going to make the assumption that you wouldn't RETURN to a trampoline.  So if we are
+        // in a trampoline we think the frame is older because the trampoline confused the backtracer.
+        new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+        if (new_plan == NULL)
+            return true;
+        else if (log)
+        {
+            log->Printf("Thought I stepped out, but in fact arrived at a trampoline.");
+        }
+
+    }
+    else if (!FrameIsYounger() && InSymbol())
+    {
+        // If we are not in a place we should step through, we're done.
+        // One tricky bit here is that some stubs don't push a frame, so we have to check
+        // both the case of a frame that is younger, or the same as this frame.  
+        // However, if the frame is the same, and we are still in the symbol we started
+        // in, the we don't need to do this.  This first check isn't strictly necessary,
+        // but it is more efficient.
+    
+        SetPlanComplete();
+        return true;
+    }
+    
+    // We may have set the plan up above in the FrameIsOlder section:
+    
+    if (new_plan == NULL)
+        new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
     
     if (log)
     {

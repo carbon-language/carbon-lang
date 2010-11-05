@@ -88,7 +88,19 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     ThreadPlan* new_plan = NULL;
 
     if (FrameIsOlder())
-        return true;
+    {
+        // If we're in an older frame then we should stop.
+        //
+        // A caveat to this is if we think the frame is older but we're actually in a trampoline.
+        // I'm going to make the assumption that you wouldn't RETURN to a trampoline.  So if we are
+        // in a trampoline we think the frame is older because the trampoline confused the backtracer.
+        // As below, we step through first, and then try to figure out how to get back out again.
+        
+        new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+
+        if (new_plan != NULL && log)
+            log->Printf("Thought I stepped out, but in fact arrived at a trampoline.");
+    }
     else if (FrameIsYounger())
     {
         new_plan = m_thread.QueueThreadPlanForStepOut (false, NULL, true, stop_others, lldb::eVoteNo, lldb::eVoteNoOpinion);

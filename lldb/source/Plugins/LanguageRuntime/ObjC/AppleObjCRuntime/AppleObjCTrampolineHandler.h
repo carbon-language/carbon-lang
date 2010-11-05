@@ -31,9 +31,7 @@ public:
     AppleObjCTrampolineHandler (ProcessSP process_sp, ModuleSP objc_module_sp);
     
     ~AppleObjCTrampolineHandler() {}
-    
-    static bool ModuleIsObjCLibrary (const ModuleSP &module_sp);
-        
+            
     ThreadPlanSP
     GetStepThroughDispatchPlan (Thread &thread, bool stop_others);
     
@@ -57,6 +55,127 @@ public:
     };
     
 private:
+
+    class AppleObjCVTables
+    {
+    public:
+        // These come from objc-gdb.h.
+        enum VTableFlags
+        {
+             eOBJC_TRAMPOLINE_MESSAGE = (1<<0),   // trampoline acts like objc_msgSend                                                           
+             eOBJC_TRAMPOLINE_STRET   = (1<<1),   // trampoline is struct-returning                                                              
+             eOBJC_TRAMPOLINE_VTABLE  = (1<<2),   // trampoline is vtable dispatcher                                                             
+        };
+            
+    private:
+        struct VTableDescriptor 
+        {
+            VTableDescriptor(uint32_t in_flags, addr_t in_code_start) :
+                flags(in_flags),
+                code_start(in_code_start) {}
+            
+            uint32_t flags;
+            lldb::addr_t code_start;
+        };
+
+
+        class VTableRegion 
+        {
+        public:
+            VTableRegion() :
+                    m_valid (false),
+                    m_owner (NULL),
+                    m_header_addr (LLDB_INVALID_ADDRESS),
+                    m_code_start_addr(0),
+                    m_code_end_addr (0),
+                    m_next_region (0)
+            {}
+            
+            VTableRegion(AppleObjCVTables *owner, lldb::addr_t header_addr);
+            
+            void SetUpRegion();
+                        
+            lldb::addr_t GetNextRegionAddr ()
+            {
+                return m_next_region;
+            }
+            
+            lldb::addr_t
+            GetCodeStart ()
+            {
+                return m_code_start_addr;
+            }
+            
+            lldb::addr_t
+            GetCodeEnd ()
+            {
+                return m_code_end_addr;
+            }
+            
+            uint32_t
+            GetFlagsForVTableAtAddress (lldb::addr_t address)
+            {
+                return 0;
+            }
+            
+            bool
+            IsValid ()
+            {
+                return m_valid;
+            }
+            
+            bool 
+            AddressInRegion (lldb::addr_t addr, uint32_t &flags);
+            
+            void
+            Dump (Stream &s);
+            
+        public:
+            bool m_valid;
+            AppleObjCVTables *m_owner;
+            lldb::addr_t m_header_addr;
+            lldb::addr_t m_code_start_addr;
+            lldb::addr_t m_code_end_addr;
+            std::vector<VTableDescriptor> m_descriptors;
+            lldb::addr_t m_next_region;
+        };
+        
+    public:
+        AppleObjCVTables(ProcessSP &process_sp, ModuleSP &objc_module_sp);
+        
+        ~AppleObjCVTables();
+                
+        bool
+        InitializeVTableSymbols ();
+                
+        static bool RefreshTrampolines (void *baton, 
+                                        StoppointCallbackContext *context, 
+                                        lldb::user_id_t break_id, 
+                                        lldb::user_id_t break_loc_id);
+        bool
+        ReadRegions ();
+        
+        bool
+        ReadRegions (lldb::addr_t region_addr);
+                
+        bool
+        IsAddressInVTables (lldb::addr_t addr, uint32_t &flags);
+                
+        Process *GetProcess ()
+        {   
+            return m_process_sp.get();
+        }
+
+    private:
+        ProcessSP m_process_sp;
+        typedef std::vector<VTableRegion> region_collection;
+        lldb::addr_t m_trampoline_header;
+        lldb::break_id_t m_trampolines_changed_bp_id;
+        region_collection m_regions;
+        lldb::ModuleSP m_objc_module_sp;
+        
+    };
+    
     static const DispatchFunction g_dispatch_functions[];
     
     typedef std::map<lldb::addr_t, int> MsgsendMap; // This table maps an dispatch fn address to the index in g_dispatch_functions
@@ -68,6 +187,7 @@ private:
     Mutex m_impl_function_mutex;
     lldb::addr_t m_impl_fn_addr;
     lldb::addr_t m_impl_stret_fn_addr;
+    std::auto_ptr<AppleObjCVTables> m_vtables_ap;
     
      
 };

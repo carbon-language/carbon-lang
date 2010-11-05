@@ -15,7 +15,9 @@
 // Project includes
 #include "AppleThreadPlanStepThroughObjCTrampoline.h"
 
+#include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -32,6 +34,351 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+        
+AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::VTableRegion(AppleObjCVTables *owner, lldb::addr_t header_addr) :
+    m_valid (true),
+    m_owner(owner),
+    m_header_addr (header_addr),
+    m_code_start_addr(0),
+    m_code_end_addr (0),
+    m_next_region (0)
+{
+    SetUpRegion ();
+}
+
+void
+AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::SetUpRegion()
+{
+    // The header looks like:
+    //
+    //   uint16_t headerSize
+    //   uint16_t descSize
+    //   uint32_t descCount
+    //   void * next
+    //
+    // First read in the header:
+    
+    char memory_buffer[16];
+    Process *process = m_owner->GetProcess();
+    DataExtractor data(memory_buffer, sizeof(memory_buffer), 
+                       process->GetByteOrder(), 
+                       process->GetAddressByteSize());
+    size_t actual_size = 8 + process->GetAddressByteSize();
+    Error error;
+    size_t bytes_read = process->ReadMemory (m_header_addr, memory_buffer, actual_size, error);
+    if (bytes_read != actual_size)
+    {
+        m_valid = false;
+        return;
+    }
+    
+    uint32_t offset_ptr = 0;
+    uint16_t header_size = data.GetU16(&offset_ptr);
+    uint16_t descriptor_size = data.GetU16(&offset_ptr);
+    size_t num_descriptors = data.GetU32(&offset_ptr);
+    
+    m_next_region = data.GetPointer(&offset_ptr);
+    
+    // If the header size is 0, that means we've come in too early before this data is set up.
+    // Set ourselves as not valid, and continue.
+    if (header_size == 0)
+    {
+        m_valid = false;
+        return;
+    }
+    
+    // Now read in all the descriptors:
+    // The descriptor looks like:
+    //
+    // uint32_t offset
+    // uint32_t flags
+    //
+    // Where offset is either 0 - in which case it is unused, or
+    // it is the offset of the vtable code from the beginning of the descriptor record.
+    // Below, we'll convert that into an absolute code address, since I don't want to have
+    // to compute it over and over.
+    
+    // Ingest the whole descriptor array:
+    lldb::addr_t desc_ptr = m_header_addr + header_size;
+    size_t desc_array_size = num_descriptors * descriptor_size;
+    DataBufferSP data_sp(new DataBufferHeap (desc_array_size, '\0'));
+    uint8_t* dst = (uint8_t*)data_sp->GetBytes();
+
+    DataExtractor desc_extractor (dst, desc_array_size,
+                                  process->GetByteOrder(), 
+                                  process->GetAddressByteSize());
+    bytes_read = process->ReadMemory(desc_ptr, dst, desc_array_size, error);
+    if (bytes_read != desc_array_size)
+    {
+        m_valid = false;
+        return;
+    }
+    
+    // The actual code for the vtables will be laid out consecutively, so I also
+    // compute the start and end of the whole code block.
+
+    offset_ptr = 0;
+    m_code_start_addr = 0;
+    m_code_end_addr = 0;
+
+    for (int i = 0; i < num_descriptors; i++)
+    {
+        lldb::addr_t start_offset = offset_ptr;
+        uint32_t offset = desc_extractor.GetU32 (&offset_ptr);
+        uint32_t flags  = desc_extractor.GetU32 (&offset_ptr);
+        lldb:addr_t code_addr = desc_ptr + start_offset + offset;
+        m_descriptors.push_back (VTableDescriptor(flags, code_addr));
+        
+        if (m_code_start_addr == 0 || code_addr < m_code_start_addr)
+            m_code_start_addr = code_addr;
+        if (code_addr > m_code_end_addr)
+            m_code_end_addr = code_addr;
+            
+        offset_ptr = start_offset + descriptor_size;
+    }
+    // Finally, a little bird told me that all the vtable code blocks are the same size.  
+    // Let's compute the blocks and if they are all the same add the size to the code end address:
+    lldb::addr_t code_size = 0;
+    bool all_the_same = true;
+    for (int i = 0; i < num_descriptors - 1; i++)
+    {
+        lldb::addr_t this_size = m_descriptors[i + 1].code_start - m_descriptors[i].code_start;
+        if (code_size == 0)
+            code_size = this_size;
+        else
+        {
+            if (this_size != code_size)
+                all_the_same = false;
+            if (this_size > code_size)
+                code_size = this_size;
+        }
+    }
+    if (all_the_same)
+        m_code_end_addr += code_size;
+}
+
+bool 
+AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::AddressInRegion (lldb::addr_t addr, uint32_t &flags)
+{
+    if (!IsValid())
+        return false;
+        
+    if (addr < m_code_start_addr || addr > m_code_end_addr)
+        return false;
+        
+    std::vector<VTableDescriptor>::iterator pos, end = m_descriptors.end();
+    for (pos = m_descriptors.begin(); pos != end; pos++)
+    {
+        if (addr <= (*pos).code_start)
+        {
+            flags = (*pos).flags;
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::Dump (Stream &s)
+{
+    s.Printf ("Header addr: 0x%llx Code start: 0x%llx Code End: 0x%llx Next: 0x%llx\n", 
+              m_header_addr, m_code_start_addr, m_code_end_addr, m_next_region);
+    size_t num_elements = m_descriptors.size();
+    for (size_t i = 0; i < num_elements; i++)
+    {
+        s.Indent();
+        s.Printf ("Code start: 0x%llx Flags: %d\n", m_descriptors[i].code_start, m_descriptors[i].flags);
+    }
+}
+        
+AppleObjCTrampolineHandler::AppleObjCVTables::AppleObjCVTables (ProcessSP &process_sp, ModuleSP &objc_module_sp) :
+        m_process_sp(process_sp),
+        m_trampoline_header(LLDB_INVALID_ADDRESS),
+        m_trampolines_changed_bp_id(LLDB_INVALID_BREAK_ID),
+        m_objc_module_sp(objc_module_sp)
+{
+    
+}
+
+AppleObjCTrampolineHandler::AppleObjCVTables::~AppleObjCVTables()
+{
+    if (m_trampolines_changed_bp_id != LLDB_INVALID_BREAK_ID)
+        m_process_sp->GetTarget().RemoveBreakpointByID (m_trampolines_changed_bp_id);
+}
+    
+bool
+AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
+{
+    if (m_trampoline_header != LLDB_INVALID_ADDRESS)
+        return true;
+    Target &target = m_process_sp->GetTarget();
+    
+    ModuleList &modules = target.GetImages();
+    size_t num_modules = modules.GetSize();
+    if (!m_objc_module_sp)
+    {
+        for (size_t i = 0; i < num_modules; i++)
+        {
+            if (m_process_sp->GetObjCLanguageRuntime()->IsModuleObjCLibrary (modules.GetModuleAtIndex(i)))
+            {
+                m_objc_module_sp = modules.GetModuleAtIndex(i);
+                break;
+            }
+        }
+    }
+    
+    if (m_objc_module_sp)
+    {
+        ConstString trampoline_name ("gdb_objc_trampolines");
+        const Symbol *trampoline_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType(trampoline_name, 
+                                                                                   eSymbolTypeData);
+        if (trampoline_symbol != NULL)
+        {
+            const Address &temp_address = trampoline_symbol->GetValue();
+            if (!temp_address.IsValid())
+                return false;
+                
+            m_trampoline_header = temp_address.GetLoadAddress(&target);
+            if (m_trampoline_header == LLDB_INVALID_ADDRESS)
+                return false;
+            
+            // Next look up the "changed" symbol and set a breakpoint on that...
+            ConstString changed_name ("gdb_objc_trampolines_changed");
+            const Symbol *changed_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType(changed_name, 
+                                                                                   eSymbolTypeCode);
+            if (changed_symbol != NULL)
+            {
+                const Address &temp_address = changed_symbol->GetValue();
+                if (!temp_address.IsValid())
+                    return false;
+                    
+                lldb::addr_t changed_addr = temp_address.GetLoadAddress(&target);
+                if (changed_addr != LLDB_INVALID_ADDRESS)
+                {
+                    BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr,
+                                                                                          true);
+                    if (trampolines_changed_bp_sp != NULL)
+                    {
+                        m_trampolines_changed_bp_id = trampolines_changed_bp_sp->GetID();
+                        trampolines_changed_bp_sp->SetCallback (RefreshTrampolines, this, true);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+    
+bool 
+AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton, 
+                                    StoppointCallbackContext *context, 
+                                    lldb::user_id_t break_id, 
+                                    lldb::user_id_t break_loc_id)
+{
+    AppleObjCVTables *vtable_handler = (AppleObjCVTables *) baton;
+    if (vtable_handler->InitializeVTableSymbols())
+    {
+        // The Update function is called with the address of an added region.  So we grab that address, and
+        // feed it into ReadRegions.  Of course, our friend the ABI will get the values for us.
+        Process *process = context->exe_ctx.process;
+        const ABI *abi = process->GetABI();
+        
+        ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
+        ValueList argument_values;
+        Value input_value;
+        void *clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
+        input_value.SetValueType (Value::eValueTypeScalar);
+        input_value.SetContext (Value::eContextTypeOpaqueClangQualType, clang_void_ptr_type);
+        argument_values.PushValue(input_value);
+        
+        bool success = abi->GetArgumentValues (*(context->exe_ctx.thread), argument_values);
+        if (!success)
+            return false;
+            
+        // Now get a pointer value from the zeroth argument.
+        Error error;
+        DataExtractor data;
+        error = argument_values.GetValueAtIndex(0)->GetValueAsData(&(context->exe_ctx), clang_ast_context->getASTContext(), data, 0);
+        uint32_t offset_ptr = 0;
+        lldb::addr_t region_addr = data.GetPointer(&offset_ptr);
+        
+        if (region_addr != 0)
+            vtable_handler->ReadRegions(region_addr);
+    }
+    return false;
+}
+
+bool
+AppleObjCTrampolineHandler::AppleObjCVTables::ReadRegions ()
+{
+    // The no argument version reads the start region from the value of the gdb_regions_header, and 
+    // gets started from there.
+    
+    m_regions.clear();
+    if (!InitializeVTableSymbols())
+        return false;
+    char memory_buffer[8];
+    DataExtractor data(memory_buffer, sizeof(memory_buffer), 
+                       m_process_sp->GetByteOrder(), 
+                       m_process_sp->GetAddressByteSize());
+    Error error;
+    size_t bytes_read = m_process_sp->ReadMemory (m_trampoline_header, memory_buffer, m_process_sp->GetAddressByteSize(), error);
+    if (bytes_read != m_process_sp->GetAddressByteSize())
+        return false;
+        
+    uint32_t offset_ptr = 0;
+    lldb::addr_t region_addr = data.GetPointer(&offset_ptr);
+    return ReadRegions (region_addr);
+}
+
+bool
+AppleObjCTrampolineHandler::AppleObjCVTables::ReadRegions (lldb::addr_t region_addr)
+{
+    if (!m_process_sp)
+        return false;
+        
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    
+    // We aren't starting at the trampoline symbol.
+    InitializeVTableSymbols ();
+    lldb::addr_t next_region = region_addr;
+    
+    // Read in the sizes of the headers.
+    while (next_region != 0) 
+    {
+        m_regions.push_back (VTableRegion(this, next_region));
+        if (!m_regions.back().IsValid())
+        {
+            m_regions.clear();
+            return false;
+        }
+        if (log)
+        {
+            StreamString s;
+            m_regions.back().Dump(s);
+            log->Printf("Read vtable region: \n%s", s.GetData());
+        }
+        
+        next_region = m_regions.back().GetNextRegionAddr();
+    }
+    
+    return true;
+}
+    
+bool
+AppleObjCTrampolineHandler::AppleObjCVTables::IsAddressInVTables (lldb::addr_t addr, uint32_t &flags)
+{
+    region_collection::iterator pos, end = m_regions.end();
+    for (pos = m_regions.begin(); pos != end; pos++)
+    {
+        if ((*pos).AddressInRegion (addr, flags))
+            return true;
+    }
+    return false;
+}
 
 const AppleObjCTrampolineHandler::DispatchFunction
 AppleObjCTrampolineHandler::g_dispatch_functions[] =
@@ -60,24 +407,9 @@ AppleObjCTrampolineHandler::g_dispatch_functions[] =
     {NULL}
 };
 
-bool
-AppleObjCTrampolineHandler::ModuleIsObjCLibrary (const ModuleSP &module_sp)
-{
-    const FileSpec &module_file_spec = module_sp->GetFileSpec();
-    static ConstString ObjCName ("libobjc.A.dylib");
-    
-    if (module_file_spec)
-    {
-        if (module_file_spec.GetFilename() == ObjCName)
-            return true;
-    }
-    
-    return false;
-}
-
-AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, ModuleSP objc_module) :
+AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, ModuleSP objc_module_sp) :
     m_process_sp (process_sp),
-    m_objc_module_sp (objc_module),
+    m_objc_module_sp (objc_module_sp),
     m_impl_fn_addr (LLDB_INVALID_ADDRESS),
     m_impl_stret_fn_addr (LLDB_INVALID_ADDRESS)
 {
@@ -119,6 +451,11 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, Mo
             m_msgSend_map.insert(std::pair<lldb::addr_t, int>(sym_addr, i));
         }
     }
+    
+    // Build our vtable dispatch handler here:
+    m_vtables_ap.reset(new AppleObjCVTables(process_sp, m_objc_module_sp));
+    if (m_vtables_ap.get())
+        m_vtables_ap->ReadRegions();        
 }
 
 ThreadPlanSP
@@ -127,13 +464,38 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
     ThreadPlanSP ret_plan_sp;
     lldb::addr_t curr_pc = thread.GetRegisterContext()->GetPC();
     
+    DispatchFunction this_dispatch;
+    bool found_it = false;
+    
     MsgsendMap::iterator pos;
     pos = m_msgSend_map.find (curr_pc);
     if (pos != m_msgSend_map.end())
     {
+        this_dispatch = g_dispatch_functions[(*pos).second];
+        found_it = true;
+    }
+    
+    if (!found_it)
+    {
+        uint32_t flags;
+        if (m_vtables_ap.get())
+        {
+            found_it = m_vtables_ap->IsAddressInVTables (curr_pc, flags);
+            if (found_it)
+            {
+                this_dispatch.name = "vtable";
+                this_dispatch.stret_return 
+                        = (flags & AppleObjCVTables::eOBJC_TRAMPOLINE_STRET) == AppleObjCVTables::eOBJC_TRAMPOLINE_STRET;
+                this_dispatch.is_super = false;
+                this_dispatch.fixedup = DispatchFunction::eFixUpFixed;
+            }
+        }
+    }
+    
+    if (found_it)
+    {
         Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
 
-        const DispatchFunction *this_dispatch = &g_dispatch_functions[(*pos).second];
         
         lldb::StackFrameSP thread_cur_frame = thread.GetStackFrameAtIndex(0);
         
@@ -161,7 +523,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         // If this is a struct return dispatch, then the first argument is the
         // return struct pointer, and the object is the second, and the selector is the third.
         // Otherwise the object is the first and the selector the second.
-        if (this_dispatch->stret_return)
+        if (this_dispatch.stret_return)
         {
             obj_index = 1;
             sel_index = 2;
@@ -197,7 +559,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         isa_value.SetValueType(Value::eValueTypeLoadAddress);
         isa_value.ResolveValue(&exec_ctx, clang_ast_context->getASTContext());
         
-        if (this_dispatch->fixedup == DispatchFunction::eFixUpFixed)
+        if (this_dispatch.fixedup == DispatchFunction::eFixUpFixed)
         {
             // For the FixedUp method the Selector is actually a pointer to a 
             // structure, the second field of which is the selector number.
@@ -206,7 +568,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
             sel_value->SetValueType(Value::eValueTypeLoadAddress);
             sel_value->ResolveValue(&exec_ctx, clang_ast_context->getASTContext());            
         }
-        else if (this_dispatch->fixedup == DispatchFunction::eFixUpToFix)
+        else if (this_dispatch.fixedup == DispatchFunction::eFixUpToFix)
         {   
             // FIXME: If the method dispatch is not "fixed up" then the selector is actually a
             // pointer to the string name of the selector.  We need to look that up...
@@ -219,7 +581,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         // FIXME: If this is a dispatch to the super-class, we need to get the super-class from
         // the class, and disaptch to that instead.
         // But for now I just punt and return no plan.
-        if (this_dispatch->is_super)
+        if (this_dispatch.is_super)
         {   
             if (log)
                 log->Printf ("Punting on stepping into super method dispatch.");
@@ -244,7 +606,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         if (impl_addr == LLDB_INVALID_ADDRESS)
         {
 
-            Address resolve_address(NULL, this_dispatch->stret_return ? m_impl_stret_fn_addr : m_impl_fn_addr);
+            Address resolve_address(NULL, this_dispatch.stret_return ? m_impl_stret_fn_addr : m_impl_fn_addr);
             
             StreamString errors;
             { 
@@ -289,6 +651,12 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                                                                         dispatch_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
                                                                         dispatch_values.GetValueAtIndex(1)->GetScalar().ULongLong(),
                                                                         stop_others));
+            if (log)
+            {
+                StreamString s;
+                ret_plan_sp->GetDescription(&s, eDescriptionLevelFull);
+                log->Printf("Using ObjC step plan: %s.\n", s.GetData());
+            }
         }
         else
         {

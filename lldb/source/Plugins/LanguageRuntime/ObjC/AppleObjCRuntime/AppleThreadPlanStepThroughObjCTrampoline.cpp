@@ -115,6 +115,13 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
             lldb::addr_t target_addr = target_addr_value.GetScalar().ULongLong();
             Address target_address(NULL, target_addr);
             Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+            if (target_addr == 0)
+            {
+                if (log)
+                    log->Printf("Got target implementation of 0x0, stopping.");
+                SetPlanComplete();
+                return true;
+            }
             if (log)
                 log->Printf("Running to ObjC method implementation: 0x%llx", target_addr);
             
