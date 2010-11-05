@@ -903,7 +903,7 @@ bool ARMAsmParser::ParseDirectiveThumb(SMLoc L) {
 bool ARMAsmParser::ParseDirectiveThumbFunc(SMLoc L) {
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
-    return Error(L, "unexpected token in .syntax directive");
+    return Error(L, "unexpected token in .thumb_func directive");
   Parser.Lex(); // Consume the identifier token.
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
