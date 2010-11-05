@@ -231,7 +231,7 @@ AppleObjCRuntime::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others
 // Static Functions
 //------------------------------------------------------------------
 enum AppleObjCRuntime::RuntimeVersions
-AppleObjCRuntime::GetObjCVersion (Process *process)
+AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
 {
     ModuleList &images = process->GetTarget().GetImages();
     size_t num_images = images.GetSize();
@@ -240,6 +240,7 @@ AppleObjCRuntime::GetObjCVersion (Process *process)
         ModuleSP module_sp = images.GetModuleAtIndex(i);
         if (AppleIsModuleObjCLibrary (module_sp))
         {
+            objc_module_sp = module_sp;
             ObjectFile *ofile = module_sp->GetObjectFile();
             if (!ofile)
                 return eObjC_VersionUnknown;

@@ -74,9 +74,9 @@ public:
 protected:
     
 private:
-    AppleObjCRuntimeV2(Process *process) : 
-        lldb_private::AppleObjCRuntime (process)
-     { } // Call CreateInstance instead.
+    AppleObjCRuntimeV2(Process *process, ModuleSP &objc_module_sp);
+    
+    bool m_has_object_getClass;
 };
     
 } // namespace lldb_private

@@ -172,7 +172,9 @@ AppleObjCRuntimeV1::CreateInstance (Process *process, lldb::LanguageType languag
     // sure we aren't using the V1 runtime.
     if (language == eLanguageTypeObjC)
     {
-        if (AppleObjCRuntime::GetObjCVersion (process) == AppleObjCRuntime::eObjC_V1)
+        ModuleSP objc_module_sp;
+        
+        if (AppleObjCRuntime::GetObjCVersion (process, objc_module_sp) == AppleObjCRuntime::eObjC_V1)
             return new AppleObjCRuntimeV1 (process);
         else
             return NULL;
@@ -231,22 +233,36 @@ AppleObjCRuntimeV1::SetExceptionBreakpoints ()
     }
 }
 
+struct BufStruct {
+    char contents[2048];
+};
+
 ClangUtilityFunction *
 AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 {
-//    char buf[256];
-//    
-//    assert(snprintf(&buf[0], sizeof(buf), 
-//                    "extern \"C\" int gdb_object_getClass(void *);"
-//                    "extern \"C\" void "
-//                    "%s(void *$__lldb_arg_obj)"
-//                    "{"
-//                    "    void **isa_ptr = (void **)$__lldb_arg_obj;"
-//                    "    if (!isa_ptr || !gdb_class_getClass(*isa_ptr))"
-//                    "        abort();"
-//                    "}", 
-//                    name) < sizeof(buf));
-//
-//    return new ClangUtilityFunction(buf, name);
-    return NULL;
+    std::auto_ptr<BufStruct> buf(new BufStruct);
+    
+    assert(snprintf(&buf->contents[0], sizeof(buf->contents),
+                    "struct __objc_class                                                    \n"
+                    "{                                                                      \n"
+                    "   struct __objc_class *isa;                                           \n"
+                    "   struct __objc_class *super_class;                                   \n"
+                    "   const char *name;                                                   \n"
+                    "   // rest of struct elided because unused                             \n"
+                    "};                                                                     \n"
+                    "                                                                       \n"
+                    "struct __objc_object                                                   \n"
+                    "{                                                                      \n"
+                    "   struct __objc_class *isa;                                           \n"
+                    "};                                                                     \n"
+                    "                                                                       \n"
+                    "extern \"C\" void                                                      \n"
+                    "%s(void *$__lldb_arg_obj)                                              \n"
+                    "{                                                                      \n"
+                    "   struct __objc_object *obj = (struct __objc_object*)$__lldb_arg_obj; \n"
+                    "   strlen(obj->isa->name);                                             \n"
+                    "}                                                                      \n",
+                    name) < sizeof(buf->contents));
+
+    return new ClangUtilityFunction(buf->contents, name);
 }

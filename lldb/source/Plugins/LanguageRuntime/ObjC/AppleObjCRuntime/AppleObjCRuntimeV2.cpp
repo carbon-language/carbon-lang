@@ -40,6 +40,12 @@ static const char *pluginName = "AppleObjCRuntimeV2";
 static const char *pluginDesc = "Apple Objective C Language Runtime - Version 2";
 static const char *pluginShort = "language.apple.objc.v2";
 
+AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process, ModuleSP &objc_module_sp) : 
+    lldb_private::AppleObjCRuntime (process)
+{
+    m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(ConstString("gdb_object_getClass")) != NULL);
+}
+
 bool
 AppleObjCRuntimeV2::GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope)
 {
@@ -172,8 +178,10 @@ AppleObjCRuntimeV2::CreateInstance (Process *process, lldb::LanguageType languag
     // sure we aren't using the V1 runtime.
     if (language == eLanguageTypeObjC)
     {
-        if (AppleObjCRuntime::GetObjCVersion (process) == AppleObjCRuntime::eObjC_V2)
-            return new AppleObjCRuntimeV2 (process);
+        ModuleSP objc_module_sp;
+        
+        if (AppleObjCRuntime::GetObjCVersion (process, objc_module_sp) == AppleObjCRuntime::eObjC_V2)
+            return new AppleObjCRuntimeV2 (process, objc_module_sp);
         else
             return NULL;
     }
@@ -231,21 +239,40 @@ AppleObjCRuntimeV2::SetExceptionBreakpoints ()
     }
 }
 
+struct BufStruct {
+    char contents[1024];
+};
+
 ClangUtilityFunction *
 AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
 {
-    char buf[256];
+    std::auto_ptr<BufStruct> buf(new BufStruct);
     
-    assert(snprintf(&buf[0], sizeof(buf), 
-                    "extern \"C\" int gdb_object_getClass(void *);"
-                    "extern \"C\" void "
-                    "%s(void *$__lldb_arg_obj)"
-                    "{"
-                    "    void **isa_ptr = (void **)$__lldb_arg_obj;"
-                    "    if (!isa_ptr || !gdb_class_getClass(*isa_ptr))"
-                    "        abort();"
-                    "}", 
-                    name) < sizeof(buf));
-
-    return new ClangUtilityFunction(buf, name);
+    if (m_has_object_getClass)
+    {
+        assert(snprintf(&buf->contents[0], sizeof(buf->contents),
+                        "extern \"C\" int gdb_object_getClass(void *);      \n"
+                        "extern \"C\" void                                  \n"
+                        "%s(void *$__lldb_arg_obj)                          \n"
+                        "{                                                  \n"
+                        "   if (!gdb_object_getClass($__lldb_arg_obj))      \n"
+                        "       abort();                                    \n"
+                        "}                                                  \n",
+                        name) < sizeof(buf->contents));
+    }
+    else
+    {
+        assert(snprintf(&buf->contents[0], sizeof(buf->contents), 
+                        "extern \"C\" int gdb_class_getClass(void *);       \n"
+                        "extern \"C\" void                                  \n"
+                        "%s(void *$__lldb_arg_obj)                          \n"
+                        "{                                                  \n"
+                        "    void **isa_ptr = (void **)$__lldb_arg_obj;     \n"
+                        "    if (!isa_ptr || !gdb_class_getClass(*isa_ptr)) \n"
+                        "        abort();                                   \n"
+                        "}                                                  \n", 
+                        name) < sizeof(buf->contents));
+    }
+    
+    return new ClangUtilityFunction(buf->contents, name);
 }

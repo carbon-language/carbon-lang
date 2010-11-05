@@ -449,8 +449,16 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
         StreamString install_errors;
         
         if (!dynamic_checkers->Install(install_errors, exe_ctx))
+        {
+            if (install_errors.GetString().empty())
+                error.SetErrorString ("couldn't install checkers, unknown error");
+            else
+                error.SetErrorString (install_errors.GetString().c_str());
+            
+            result_valobj_sp.reset (new ValueObjectConstResult (error));
             return result_valobj_sp;
-        
+        }
+            
         exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
     }
     
