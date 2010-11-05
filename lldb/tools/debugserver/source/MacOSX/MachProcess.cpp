@@ -1662,17 +1662,21 @@ MachProcess::PosixSpawnChildForPTraceDebugging
 
         if (stdio_path != NULL)
         {
-            err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDERR_FILENO,  stdio_path, O_RDWR,     0), DNBError::POSIX);
-            if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDERR_FILENO, path = '%s', oflag = O_RDWR, mode = 0 )", stdio_path);
+            int slave_fd_err = open (stdio_path, O_RDWR, 0);
+            int slave_fd_in = open (stdio_path, O_RDONLY, 0);
+            int slave_fd_out = open (stdio_path, O_WRONLY, 0);
 
-            err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDIN_FILENO,   stdio_path, O_RDONLY,   0), DNBError::POSIX);
+            err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_err, STDERR_FILENO), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDIN_FILENO, path = '%s', oflag = O_RDONLY, mode = 0 )", stdio_path);
+                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d, newfiledes = STDERR_FILENO )", slave_fd_err);
 
-            err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDOUT_FILENO,  stdio_path, O_WRONLY,   0), DNBError::POSIX);
+            err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_in, STDIN_FILENO), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDOUT_FILENO, path = '%s', oflag = O_WRONLY, mode = 0 )", stdio_path);
+                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d, newfiledes = STDIN_FILENO )", slave_fd_in);
+
+            err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_out, STDOUT_FILENO), DNBError::POSIX);
+            if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
+                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d, newfiledes = STDOUT_FILENO )", slave_fd_out);
         }
         err.SetError( ::posix_spawnp (&pid, path, &file_actions, &attr, (char * const*)argv, (char * const*)envp), DNBError::POSIX);
         if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))

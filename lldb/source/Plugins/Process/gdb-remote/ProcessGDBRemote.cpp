@@ -1752,7 +1752,8 @@ ProcessGDBRemote::StartDebugserverProcess
             lldb_utility::PseudoTerminal pty;
             if (stdio_path == NULL)
             {
-                pass_stdio_path_to_debugserver = false;
+                if (! m_local_debugserver)
+                    pass_stdio_path_to_debugserver = false;
                 if (pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
                 {
                     struct termios stdin_termios;
@@ -1785,7 +1786,7 @@ ProcessGDBRemote::StartDebugserverProcess
                 {
                     debugserver_args.AppendArgument("-s");    // short for --stdio-path
                     StreamString strm;
-                    strm.Printf("'%s'", stdio_path);
+                    strm.Printf("%s", stdio_path);
                     debugserver_args.AppendArgument(strm.GetData());    // path to file to have inferior open as it's STDIO
                 }
             }
@@ -1880,19 +1881,19 @@ ProcessGDBRemote::StartDebugserverProcess
             if (error.Fail() || log)
                 error.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", m_debugserver_pid, debugserver_path, NULL, &attr, inferior_argv, inferior_envp);
 
-//            if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
-//            {
-//                std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor (pty.ReleaseMasterFileDescriptor(), true));
-//                if (conn_ap.get())
-//                {
-//                    m_stdio_communication.SetConnection(conn_ap.release());
-//                    if (m_stdio_communication.IsConnected())
-//                    {
-//                        m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
-//                        m_stdio_communication.StartReadThread();
-//                    }
-//                }
-//            }
+            if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
+            {
+                std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor (pty.ReleaseMasterFileDescriptor(), true));
+                if (conn_ap.get())
+                {
+                    m_stdio_communication.SetConnection(conn_ap.release());
+                    if (m_stdio_communication.IsConnected())
+                    {
+                        m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
+                        m_stdio_communication.StartReadThread();
+                    }
+                }
+            }
         }
         else
         {

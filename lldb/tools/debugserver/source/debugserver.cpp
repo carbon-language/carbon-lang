@@ -704,7 +704,7 @@ main (int argc, char *argv[])
 
     RNBRunLoopMode start_mode = eRNBRunLoopModeExit;
 
-    while ((ch = getopt_long(argc, argv, "a:d:gi:vktl:f:w:x:r", g_long_options, &long_option_index)) != -1)
+    while ((ch = getopt_long(argc, argv, "a:d:gi:vktl:f:w:x:rs:", g_long_options, &long_option_index)) != -1)
     {
         DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
                     ch, (uint8_t)ch,
