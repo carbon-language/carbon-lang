@@ -129,7 +129,6 @@ lldb_private::DisableLog (Args &args, Stream *feedback_strm)
             else if (strcasestr(arg, "expr")    == arg) flag_bits &= ~LIBLLDB_LOG_EXPRESSIONS;
             else if (strcasestr(arg, "object")  == arg) flag_bits &= ~LIBLLDB_LOG_OBJECT;
             else if (strcasecmp(arg, "process") == 0  ) flag_bits &= ~LIBLLDB_LOG_PROCESS;
-            else if (strcasecmp(arg, "shlib")   == 0  ) flag_bits &= ~LIBLLDB_LOG_SHLIB;
             else if (strcasecmp(arg, "state")   == 0  ) flag_bits &= ~LIBLLDB_LOG_STATE;
             else if (strcasecmp(arg, "step")    == 0  ) flag_bits &= ~LIBLLDB_LOG_STEP;
             else if (strcasecmp(arg, "thread")  == 0  ) flag_bits &= ~LIBLLDB_LOG_THREAD;
@@ -188,7 +187,6 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
             else if (strcasestr(arg, "expr")    == arg) flag_bits |= LIBLLDB_LOG_EXPRESSIONS;
             else if (strcasestr(arg, "object")  == arg) flag_bits |= LIBLLDB_LOG_OBJECT;
             else if (strcasecmp(arg, "process") == 0  ) flag_bits |= LIBLLDB_LOG_PROCESS;
-            else if (strcasecmp(arg, "shlib")   == 0  ) flag_bits |= LIBLLDB_LOG_SHLIB;
             else if (strcasecmp(arg, "state")   == 0  ) flag_bits |= LIBLLDB_LOG_STATE;
             else if (strcasecmp(arg, "step")    == 0  ) flag_bits |= LIBLLDB_LOG_STEP;
             else if (strcasecmp(arg, "thread")  == 0  ) flag_bits |= LIBLLDB_LOG_THREAD;
