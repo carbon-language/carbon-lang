@@ -82,3 +82,9 @@ typedef void (^DVDisc)(id<CoreDAVAccountInfoProvider> discoveredInfo, id<CodePro
 @interface I @end
 @interface INTF @end
 void (^BLINT)(I<CoreDAVAccountInfoProvider>* ARG, INTF<CodeProvider, CoreDAVAccountInfoProvider>* ARG1);
+
+void  test8608902() {
+  BDVDiscoveryCompletionHandler ppp;
+  ppp(1, 0);
+}
+

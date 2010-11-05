@@ -404,6 +404,16 @@ namespace {
       return false;
     }
     
+    void convertToUnqualifiedObjCType(QualType &T) {
+      if (T->isObjCQualifiedIdType())
+        T = Context->getObjCIdType();
+      else if (T->isObjCQualifiedClassType())
+        T = Context->getObjCClassType();
+      else if (T->isObjCObjectPointerType() &&
+               T->getPointeeType()->isObjCQualifiedInterfaceType())
+        T = Context->getObjCIdType();
+    }
+    
     // FIXME: This predicate seems like it would be useful to add to ASTContext.
     bool isObjCType(QualType T) {
       if (!LangOpts.ObjC1 && !LangOpts.ObjC2)
@@ -4685,7 +4695,8 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
          E = FTP->arg_type_end(); I && (I != E); ++I) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
-      (void)convertBlockPointerToFunctionPointer(t);
+      if (!convertBlockPointerToFunctionPointer(t))
+        convertToUnqualifiedObjCType(t);
       ArgTypes.push_back(t);
     }
   }
@@ -4711,6 +4722,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
   MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
                                             FD->getType());
 
+  
   CastExpr *FunkCast = NoTypeInfoCStyleCastExpr(Context, PtrToFuncCastType,
                                                 CK_Unknown, ME);
   PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), FunkCast);
