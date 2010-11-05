@@ -640,6 +640,9 @@ private:
   /// \returns true if the diagnostic was emitted, false if it was
   /// suppressed.
   bool ProcessDiag();
+
+  friend class ASTReader;
+  friend class ASTWriter;
 };
 
 //===----------------------------------------------------------------------===//
