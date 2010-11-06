@@ -449,6 +449,21 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
       ++AliasOpNo;
       continue;
     }
+    
+    if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
+      // Integer arguments can't have names.
+      if (!Result->getArgName(AliasOpNo).empty())
+        throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
+                      " must not have a name!");
+      if (ResultInst->Operands[i].MINumOperands != 1 ||
+          !ResultInst->Operands[i].Rec->isSubClassOf("Operand"))
+        throw TGError(R->getLoc(), "invalid argument class " + 
+                      ResultInst->Operands[i].Rec->getName() +
+                      " for integer result operand!");
+      ResultOperands.push_back(ResultOperand(II->getValue()));
+      ++AliasOpNo;
+      continue;
+    }
 
     throw TGError(R->getLoc(), "result of inst alias has unknown operand type");
   }

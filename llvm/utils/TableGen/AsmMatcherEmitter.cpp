@@ -270,7 +270,11 @@ struct MatchableInfo {
       
       /// TiedOperand - This represents a result operand that is a duplicate of
       /// a previous result operand.
-      TiedOperand
+      TiedOperand,
+      
+      /// ImmOperand - This represents an immediate value that is dumped into
+      /// the operand.
+      ImmOperand
     } Kind;
     
     union {
@@ -281,6 +285,9 @@ struct MatchableInfo {
       /// TiedOperandNum - This is the (earlier) result operand that should be
       /// copied from.
       unsigned TiedOperandNum;
+      
+      /// ImmVal - This is the immediate value added to the instruction.
+      int64_t ImmVal;
     };
     
     /// OpInfo - This is the information about the instruction operand that is
@@ -301,6 +308,15 @@ struct MatchableInfo {
       ResOperand X;
       X.Kind = TiedOperand;
       X.TiedOperandNum = TiedOperandNum;
+      X.OpInfo = Op;
+      return X;
+    }
+    
+    static ResOperand getImmOp(int64_t Val,
+                               const CGIOperandList::OperandInfo *Op) {
+      ResOperand X;
+      X.Kind = ImmOperand;
+      X.ImmVal = Val;
       X.OpInfo = Op;
       return X;
     }
@@ -538,16 +554,6 @@ void MatchableInfo::dump() {
     AsmOperand &Op = AsmOperands[i];
     errs() << "  op[" << i << "] = " << Op.Class->ClassName << " - ";
     errs() << '\"' << Op.Token << "\"\n";
-#if 0
-    if (!Op.OperandInfo) {
-      errs() << "(singleton register)\n";
-      continue;
-    }
-
-    const CGIOperandList::OperandInfo &OI = *Op.OperandInfo;
-    errs() << OI.Name << " " << OI.Rec->getName()
-           << " (" << OI.MIOperandNo << ", " << OI.MINumOperands << ")\n";
-#endif
   }
 }
 
@@ -1174,7 +1180,8 @@ void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
    
   // Set up the operand class.
   for (unsigned i = 0, e = CGA.ResultOperands.size(); i != e; ++i)
-    if (CGA.ResultOperands[i].Name == OperandName) {
+    if (CGA.ResultOperands[i].isRecord() &&
+        CGA.ResultOperands[i].getName() == OperandName) {
       // It's safe to go with the first one we find, because CodeGenInstAlias
       // validates that all operands with the same name have the same record.
       unsigned ResultIdx =CGA.getResultInstOperandIndexForResultOperandIndex(i);
@@ -1236,15 +1243,22 @@ void MatchableInfo::BuildAliasResultOperands() {
     
     // Find out what operand from the asmparser that this MCInst operand comes
     // from.
-    int SrcOperand = FindAsmOperandNamed(CGA.ResultOperands[AliasOpNo++].Name);
-    if (SrcOperand != -1) {
-      ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand, &OpInfo));
-      continue;
+    if (CGA.ResultOperands[AliasOpNo].isRecord()) {
+      StringRef Name = CGA.ResultOperands[AliasOpNo++].getName();
+      int SrcOperand = FindAsmOperandNamed(Name);
+      if (SrcOperand != -1) {
+        ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand, &OpInfo));
+        continue;
+      }
+      
+      throw TGError(TheDef->getLoc(), "Instruction '" +
+                    TheDef->getName() + "' has operand '" + OpInfo.Name +
+                    "' that doesn't appear in asm string!");
     }
     
-    throw TGError(TheDef->getLoc(), "Instruction '" +
-                  TheDef->getName() + "' has operand '" + OpInfo.Name +
-                  "' that doesn't appear in asm string!");
+    int64_t ImmVal = CGA.ResultOperands[AliasOpNo++].getImm();
+    ResOperands.push_back(ResOperand::getImmOp(ImmVal, &OpInfo));
+    continue;
   }
 }
 
@@ -1291,7 +1305,6 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
       // Generate code to populate each result operand.
       switch (OpInfo.Kind) {
-      default: assert(0 && "Unknown result operand kind");
       case MatchableInfo::ResOperand::RenderAsmOperand: {
         // This comes from something we parsed.
         MatchableInfo::AsmOperand &Op = II.AsmOperands[OpInfo.AsmOperandNum];
@@ -1320,6 +1333,12 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
         assert(i > TiedOp && "Tied operand preceeds its target!");
         CaseOS << "    Inst.addOperand(Inst.getOperand(" << TiedOp << "));\n";
         Signature += "__Tie" + utostr(TiedOp);
+        break;
+      }
+      case MatchableInfo::ResOperand::ImmOperand: {
+        int64_t Val = OpInfo.ImmVal;
+        CaseOS << "    Inst.addOperand(MCOperand::CreateImm(" << Val << "));\n";
+        Signature += "__imm" + itostr(Val);
         break;
       }
       }

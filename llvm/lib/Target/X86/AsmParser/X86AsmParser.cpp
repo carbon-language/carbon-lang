@@ -752,6 +752,22 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (getLexer().is(AsmToken::EndOfStatement))
     Parser.Lex(); // Consume the EndOfStatement
 
+  // This is a terrible hack to handle "out[bwl]? %al, (%dx)" ->
+  // "outb %al, %dx".  Out doesn't take a memory form, but this is a widely
+  // documented form in various unofficial manuals, so a lot of code uses it.
+  if ((Name == "outb" || Name == "outw" || Name == "outl" || Name == "out") &&
+      Operands.size() == 3) {
+    X86Operand &Op = *(X86Operand*)Operands.back();
+    if (Op.isMem() && Op.Mem.SegReg == 0 &&
+        isa<MCConstantExpr>(Op.Mem.Disp) &&
+        cast<MCConstantExpr>(Op.Mem.Disp)->getValue() == 0 &&
+        Op.Mem.BaseReg == MatchRegisterName("dx") && Op.Mem.IndexReg == 0) {
+      SMLoc Loc = Op.getEndLoc();
+      Operands.back() = X86Operand::CreateReg(Op.Mem.BaseReg, Loc, Loc);
+      delete &Op;
+    }
+  }
+  
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".
   if ((Name.startswith("shr") || Name.startswith("sar") ||
@@ -779,20 +795,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     const MCExpr *One = MCConstantExpr::Create(1, getParser().getContext());
     Operands.insert(Operands.begin()+1,
                     X86Operand::CreateImm(One, NameLoc, NameLoc));
-  }
-
-  // FIXME: Hack to handle "out[bwl]? %al, (%dx)" -> "outb %al, %dx".
-  if ((Name == "outb" || Name == "outw" || Name == "outl" || Name == "out") &&
-      Operands.size() == 3) {
-    X86Operand &Op = *(X86Operand*)Operands.back();
-    if (Op.isMem() && Op.Mem.SegReg == 0 &&
-        isa<MCConstantExpr>(Op.Mem.Disp) &&
-        cast<MCConstantExpr>(Op.Mem.Disp)->getValue() == 0 &&
-        Op.Mem.BaseReg == MatchRegisterName("dx") && Op.Mem.IndexReg == 0) {
-      SMLoc Loc = Op.getEndLoc();
-      Operands.back() = X86Operand::CreateReg(Op.Mem.BaseReg, Loc, Loc);
-      delete &Op;
-    }
   }
 
   // FIXME: Hack to handle "f{mul*,add*,sub*,div*} $op, st(0)" the same as
@@ -837,13 +839,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                                NameLoc, NameLoc));
     Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(0)"),
                                              NameLoc, NameLoc));
-  }
-
-  // FIXME: Hack to handle recognize "aa[dm]" -> "aa[dm] $0xA".
-  if ((Name.startswith("aad") || Name.startswith("aam")) &&
-      Operands.size() == 1) {
-    const MCExpr *A = MCConstantExpr::Create(0xA, getParser().getContext());
-    Operands.push_back(X86Operand::CreateImm(A, NameLoc, NameLoc));
   }
 
   return false;

@@ -1367,6 +1367,10 @@ defm : IntegerCondCodeMnemonicAlias<"cmov", "q">;
 // Assembler Instruction Aliases
 //===----------------------------------------------------------------------===//
 
+// aad/aam default to base 10 if no operand is specified.
+def : InstAlias<"aad", (AAD8i8 10)>;
+def : InstAlias<"aam", (AAM8i8 10)>;
+
 // clr aliases.
 def : InstAlias<"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg)>;
 def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;

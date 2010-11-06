@@ -1998,7 +1998,15 @@ def : InstAlias&lt;"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)&gt;;
 <p>This example also shows that tied operands are only listed once.  In the X86
 backend, XOR8rr has two input GR8's and one output GR8 (where an input is tied
 to the output).  InstAliases take a flattened operand list without duplicates
-for tied operands.</p>
+for tied operands.  The result of an instruction alias can also use immediates,
+which are added as simple immediate operands in the result, for example:</p>
+
+<div class="doc_code">
+<pre>
+def : InstAlias&lt;"aad", (AAD8i8 10)&gt;;
+</pre>
+</div>
+
 
 <p>Instruction aliases can also have a Requires clause to make them
 subtarget specific.</p>

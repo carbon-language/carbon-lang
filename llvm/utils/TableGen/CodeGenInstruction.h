@@ -267,10 +267,26 @@ namespace llvm {
     
     
     struct ResultOperand {
+    private:
       StringRef Name;
       Record *R;
       
-      ResultOperand(StringRef N, Record *r) : Name(N), R(r) {}
+      int64_t Imm;
+    public:      
+      enum {
+        K_Record,
+        K_Imm
+      } Kind;
+      
+      ResultOperand(StringRef N, Record *r) : Name(N), R(r), Kind(K_Record) {}
+      ResultOperand(int64_t I) : Imm(I), Kind(K_Imm) {}
+
+      bool isRecord() const { return Kind == K_Record; }
+      bool isImm() const { return Kind == K_Imm; }
+      
+      StringRef getName() const { assert(isRecord()); return Name; }
+      Record *getRecord() const { assert(isRecord()); return R; }
+      int64_t getImm() const { assert(isImm()); return Imm; }
     };
     
     /// ResultOperands - The decoded operands for the result instruction.
