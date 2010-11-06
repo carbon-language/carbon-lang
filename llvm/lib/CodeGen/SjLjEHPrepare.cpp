@@ -21,15 +21,14 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetLowering.h"
+#include <set>
 using namespace llvm;
 
 STATISTIC(NumInvokes, "Number of invokes replaced");

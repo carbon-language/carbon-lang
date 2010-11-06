@@ -15,9 +15,6 @@
 #define LLVM_CODEGEN_FASTISEL_H
 
 #include "llvm/ADT/DenseMap.h"
-#ifndef NDEBUG
-#include "llvm/ADT/SmallSet.h"
-#endif
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 

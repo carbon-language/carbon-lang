@@ -25,13 +25,9 @@
 #include "llvm/CallingConv.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Attributes.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetCallingConv.h"
 #include "llvm/Target/TargetMachine.h"
@@ -41,6 +37,7 @@
 
 namespace llvm {
   class AllocaInst;
+  class APFloat;
   class CallInst;
   class Function;
   class FastISel;
@@ -56,6 +53,7 @@ namespace llvm {
   class SDNode;
   class SDValue;
   class SelectionDAG;
+  template<typename T> class SmallVectorImpl;
   class TargetData;
   class TargetMachine;
   class TargetRegisterClass;

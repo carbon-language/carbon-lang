@@ -22,8 +22,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
-#include <algorithm>
 using namespace llvm;
 
 STATISTIC(NumDSE     , "Number of dead stores elided");
