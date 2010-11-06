@@ -355,12 +355,8 @@ struct MatchableInfo {
   MatchableInfo(const CodeGenInstAlias *Alias)
     : TheDef(Alias->TheDef), DefRec(Alias), TheOperandList(Alias->Operands),
       AsmString(Alias->AsmString) {
-        
-    // FIXME: Huge hack.
-    DefInit *DI = dynamic_cast<DefInit*>(Alias->Result->getOperator());
-    assert(DI);
-        
-    InstrName = DI->getDef()->getName();
+    // FIXME: InstrName should be a CGI.
+    InstrName = Alias->ResultInst->TheDef->getName();
   }
   
   void Initialize(const AsmMatcherInfo &Info,
@@ -1066,7 +1062,7 @@ void AsmMatcherInfo::BuildInfo() {
   std::vector<Record*> AllInstAliases =
     Records.getAllDerivedDefinitions("InstAlias");
   for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
-    CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i]);
+    CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i], Target);
 
     OwningPtr<MatchableInfo> II(new MatchableInfo(Alias));
     
@@ -1117,11 +1113,9 @@ void AsmMatcherInfo::BuildInfo() {
         OperandName = Token.substr(1);
       
       if (II->DefRec.is<const CodeGenInstruction*>())
-        BuildInstructionOperandReference(II,
-                                         OperandName, Op);
+        BuildInstructionOperandReference(II, OperandName, Op);
       else
-        BuildAliasOperandReference(II,
-                                   OperandName, Op);
+        BuildAliasOperandReference(II, OperandName, Op);
     }
     
     II->BuildResultOperands();

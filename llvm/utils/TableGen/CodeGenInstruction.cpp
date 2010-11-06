@@ -388,8 +388,16 @@ FlattenAsmStringVariants(StringRef Cur, unsigned Variant) {
 /// CodeGenInstAlias Implementation
 //===----------------------------------------------------------------------===//
 
-CodeGenInstAlias::CodeGenInstAlias(Record *R) : TheDef(R), Operands(R) {
+CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T)
+  : TheDef(R), Operands(R) {
   AsmString = R->getValueAsString("AsmString");
 
   Result = R->getValueAsDag("ResultInst");
+
+  // Verify that the root of the result is an instruction.
+  DefInit *DI = dynamic_cast<DefInit*>(Result->getOperator());
+  if (DI == 0 || !DI->getDef()->isSubClassOf("Instruction"))
+    throw TGError(R->getLoc(), "result of inst alias should be an instruction");
+
+  ResultInst = &T.getInstruction(DI->getDef());
 }
