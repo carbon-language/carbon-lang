@@ -873,3 +873,10 @@ decl %eax // CHECK:	decl	%eax # encoding: [0xff,0xc8]
 // CHECK: sidt	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x48,0x04]
         	sidtq	4(%rax)
+
+
+// rdar://8208615
+mov (%rsi), %gs  // CHECK: movl	(%rsi), %gs # encoding: [0x8e,0x2e]
+mov %gs, (%rsi)  // CHECK: movl	%gs, (%rsi) # encoding: [0x8c,0x2e]
+
+
