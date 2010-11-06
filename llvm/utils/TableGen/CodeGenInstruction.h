@@ -275,18 +275,22 @@ namespace llvm {
     public:      
       enum {
         K_Record,
-        K_Imm
+        K_Imm,
+        K_Reg
       } Kind;
       
       ResultOperand(StringRef N, Record *r) : Name(N), R(r), Kind(K_Record) {}
       ResultOperand(int64_t I) : Imm(I), Kind(K_Imm) {}
+      ResultOperand(Record *r) : R(r), Kind(K_Reg) {}
 
       bool isRecord() const { return Kind == K_Record; }
       bool isImm() const { return Kind == K_Imm; }
+      bool isReg() const { return Kind == K_Reg; }
       
       StringRef getName() const { assert(isRecord()); return Name; }
       Record *getRecord() const { assert(isRecord()); return R; }
       int64_t getImm() const { assert(isImm()); return Imm; }
+      Record *getRegister() const { assert(isReg()); return R; }
     };
     
     /// ResultOperands - The decoded operands for the result instruction.

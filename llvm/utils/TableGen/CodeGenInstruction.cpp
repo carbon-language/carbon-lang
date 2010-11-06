@@ -419,6 +419,30 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
     
     
     Init *Arg = Result->getArg(AliasOpNo);
+    Record *ResultOpRec = ResultInst->Operands[i].Rec;
+
+    // Handle explicit registers.
+    if (DefInit *ADI = dynamic_cast<DefInit*>(Arg)) {
+      if (ADI->getDef()->isSubClassOf("Register")) {
+        if (!Result->getArgName(AliasOpNo).empty())
+          throw TGError(R->getLoc(), "result fixed register argument must "
+                        "not have a name!");
+        
+        if (!ResultOpRec->isSubClassOf("RegisterClass"))
+          throw TGError(R->getLoc(), "result fixed register argument is not "
+                        "passed to a RegisterClass operand!");
+        
+        if (!T.getRegisterClass(ResultOpRec).containsRegister(ADI->getDef()))
+          throw TGError(R->getLoc(), "fixed register " +ADI->getDef()->getName()
+                        + " is not a member of the " + ResultOpRec->getName() +
+                        " register class!");
+                                                                              
+        // Now that it is validated, add it.
+        ResultOperands.push_back(ResultOperand(ADI->getDef()));
+        ++AliasOpNo;
+        continue;
+      }
+    }
     
     // If the operand is a record, it must have a name, and the record type must
     // match up with the instruction's argument type.
@@ -427,11 +451,11 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
         throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
                       " must have a name!");
 
-      if (ADI->getDef() != ResultInst->Operands[i].Rec)
+      if (ADI->getDef() != ResultOpRec)
         throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
                       " declared with class " + ADI->getDef()->getName() +
                       ", instruction operand is class " + 
-                      ResultInst->Operands[i].Rec->getName());
+                      ResultOpRec->getName());
       
       // Verify we don't have something like: (someinst GR16:$foo, GR32:$foo)
       // $foo can exist multiple times in the result list, but it must have the
@@ -456,9 +480,9 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
         throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
                       " must not have a name!");
       if (ResultInst->Operands[i].MINumOperands != 1 ||
-          !ResultInst->Operands[i].Rec->isSubClassOf("Operand"))
+          !ResultOpRec->isSubClassOf("Operand"))
         throw TGError(R->getLoc(), "invalid argument class " + 
-                      ResultInst->Operands[i].Rec->getName() +
+                      ResultOpRec->getName() +
                       " for integer result operand!");
       ResultOperands.push_back(ResultOperand(II->getValue()));
       ++AliasOpNo;

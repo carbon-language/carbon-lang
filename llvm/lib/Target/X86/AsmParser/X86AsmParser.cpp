@@ -821,23 +821,11 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   // The assembler accepts these instructions with no operand as a synonym for
   // an instruction acting on st(1).  e.g. "fxch" -> "fxch %st(1)".
-  if ((Name == "fxch" || Name == "fucom" || Name == "fucomp" ||
+  if ((Name == "fxch" ||
        Name == "faddp" || Name == "fsubp" || Name == "fsubrp" ||
        Name == "fmulp" || Name == "fdivp" || Name == "fdivrp") &&
       Operands.size() == 1) {
     Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
-                                             NameLoc, NameLoc));
-  }
-
-  // The assembler accepts these instructions with two few operands as a synonym
-  // for taking %st(1),%st(0) or X, %st(0).
-  if ((Name == "fcomi" || Name == "fucomi" || Name == "fucompi" ||
-       Name == "fcompi" ) &&
-      Operands.size() < 3) {
-    if (Operands.size() == 1)
-      Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
-                                               NameLoc, NameLoc));
-    Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(0)"),
                                              NameLoc, NameLoc));
   }
 
@@ -854,6 +842,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 
   // First, handle aliases that expand to multiple instructions.
   // FIXME: This should be replaced with a real .td file alias mechanism.
+  // Also, MatchInstructionImpl should do actually *do* the EmitInstruction
+  // call.
   if (Op->getToken() == "fstsw" || Op->getToken() == "fstcw" ||
       Op->getToken() == "fstsww" || Op->getToken() == "fstcww" ||
       Op->getToken() == "finit" || Op->getToken() == "fsave" ||

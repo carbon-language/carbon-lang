@@ -57,6 +57,12 @@ namespace llvm {
       abort();
     }
     
+    bool containsRegister(Record *R) const {
+      for (unsigned i = 0, e = Elements.size(); i != e; ++i)
+        if (Elements[i] == R) return true;
+      return false;
+    }
+    
     // Returns true if RC is a strict subclass.
     // RC is a sub-class of this class if it is a valid replacement for any
     // instruction operand where a register of this classis required. It must 

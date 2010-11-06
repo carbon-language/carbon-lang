@@ -274,7 +274,10 @@ struct MatchableInfo {
       
       /// ImmOperand - This represents an immediate value that is dumped into
       /// the operand.
-      ImmOperand
+      ImmOperand,
+      
+      /// RegOperand - This represents a fixed register that is dumped in.
+      RegOperand
     } Kind;
     
     union {
@@ -288,6 +291,9 @@ struct MatchableInfo {
       
       /// ImmVal - This is the immediate value added to the instruction.
       int64_t ImmVal;
+      
+      /// Register - This is the register record.
+      Record *Register;
     };
     
     /// OpInfo - This is the information about the instruction operand that is
@@ -320,6 +326,16 @@ struct MatchableInfo {
       X.OpInfo = Op;
       return X;
     }
+    
+    static ResOperand getRegOp(Record *Reg,
+                               const CGIOperandList::OperandInfo *Op) {
+      ResOperand X;
+      X.Kind = RegOperand;
+      X.Register = Reg;
+      X.OpInfo = Op;
+      return X;
+    }
+    
   };
 
   /// TheDef - This is the definition of the instruction or InstAlias that this
@@ -1243,7 +1259,8 @@ void MatchableInfo::BuildAliasResultOperands() {
     
     // Find out what operand from the asmparser that this MCInst operand comes
     // from.
-    if (CGA.ResultOperands[AliasOpNo].isRecord()) {
+    switch (CGA.ResultOperands[AliasOpNo].Kind) {
+    case CodeGenInstAlias::ResultOperand::K_Record: {
       StringRef Name = CGA.ResultOperands[AliasOpNo++].getName();
       int SrcOperand = FindAsmOperandNamed(Name);
       if (SrcOperand != -1) {
@@ -1255,10 +1272,18 @@ void MatchableInfo::BuildAliasResultOperands() {
                     TheDef->getName() + "' has operand '" + OpInfo.Name +
                     "' that doesn't appear in asm string!");
     }
-    
-    int64_t ImmVal = CGA.ResultOperands[AliasOpNo++].getImm();
-    ResOperands.push_back(ResOperand::getImmOp(ImmVal, &OpInfo));
-    continue;
+    case CodeGenInstAlias::ResultOperand::K_Imm: {
+      int64_t ImmVal = CGA.ResultOperands[AliasOpNo++].getImm();
+      ResOperands.push_back(ResOperand::getImmOp(ImmVal, &OpInfo));
+      continue;
+    }
+
+    case CodeGenInstAlias::ResultOperand::K_Reg: {
+      Record *Reg = CGA.ResultOperands[AliasOpNo++].getRegister();
+      ResOperands.push_back(ResOperand::getRegOp(Reg, &OpInfo));
+      continue;
+    }
+    }
   }
 }
 
@@ -1341,6 +1366,11 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
         Signature += "__imm" + itostr(Val);
         break;
       }
+      case MatchableInfo::ResOperand::RegOperand: {
+        std::string N = getQualifiedName(OpInfo.Register);
+        CaseOS << "    Inst.addOperand(MCOperand::CreateReg(" << N << "));\n";
+        Signature += "__reg" + OpInfo.Register->getName();
+      }  
       }
     }
     

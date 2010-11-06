@@ -1377,6 +1377,19 @@ def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
 def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
 
+// Default arguments for various fp stack instructions.
+def : InstAlias<"fucom",        (UCOM_Fr   ST1)>;
+def : InstAlias<"fucomp",       (UCOM_FPr  ST1)>;
+def : InstAlias<"fcomi",        (COM_FIr   ST1)>;
+def : InstAlias<"fcomi   $reg", (COM_FIr   RST:$reg)>;
+def : InstAlias<"fcomip",       (COM_FIPr  ST1)>;
+def : InstAlias<"fcomip  $reg", (COM_FIPr  RST:$reg)>;
+def : InstAlias<"fucomi",       (UCOM_FIr  ST1)>;
+def : InstAlias<"fucomi  $reg", (UCOM_FIr  RST:$reg)>;
+def : InstAlias<"fucomip",      (UCOM_FIPr ST1)>;
+def : InstAlias<"fucomip $reg", (UCOM_FIPr RST:$reg)>;
+
+
 // We accepts "fnstsw %eax" even though it only writes %ax.
 def : InstAlias<"fnstsw %eax", (FNSTSW8r)>;
 def : InstAlias<"fnstsw %al" , (FNSTSW8r)>;
