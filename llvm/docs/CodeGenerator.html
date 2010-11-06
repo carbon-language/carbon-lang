@@ -1957,6 +1957,55 @@ on the current instruction set.</p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">Instruction Aliases</div>
+
+<div class="doc_text">
+
+<p>The most general phase of alias processing occurs while matching is
+happening: it provides new forms for the matcher to match along with a specific
+instruction to generate.  An instruction alias has two parts: the string to
+match and the instruction to generate.  For example:
+</p>
+
+<div class="doc_code">
+<pre>
+def : InstAlias&lt;"movsx $src, $dst", (MOVSX16rr8W GR16:$dst, GR8  :$src)&gt;;
+def : InstAlias&lt;"movsx $src, $dst", (MOVSX16rm8W GR16:$dst, i8mem:$src)&gt;;
+def : InstAlias&lt;"movsx $src, $dst", (MOVSX32rr8  GR32:$dst, GR8  :$src)&gt;;
+def : InstAlias&lt;"movsx $src, $dst", (MOVSX32rr16 GR32:$dst, GR16 :$src)&gt;;
+def : InstAlias&lt;"movsx $src, $dst", (MOVSX64rr8  GR64:$dst, GR8  :$src)&gt;;
+def : InstAlias&lt;"movsx $src, $dst", (MOVSX64rr16 GR64:$dst, GR16 :$src)&gt;;
+def : InstAlias&lt;"movsx $src, $dst", (MOVSX64rr32 GR64:$dst, GR32 :$src)&gt;;
+</pre>
+</div>
+
+<p>This shows a powerful example of the instruction aliases, matching the
+same mnemonic in multiple different ways depending on what operands are present
+in the assembly.  The result of instruction aliases can include operands in a
+different order than the destination instruction, and can use an input
+multiple times, for example:</p>
+
+<div class="doc_code">
+<pre>
+def : InstAlias&lt;"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg)&gt;;
+def : InstAlias&lt;"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)&gt;;
+def : InstAlias&lt;"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)&gt;;
+def : InstAlias&lt;"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)&gt;;
+</pre>
+</div>
+
+<p>This example also shows that tied operands are only listed once.  In the X86
+backend, XOR8rr has two input GR8's and one output GR8 (where an input is tied
+to the output).  InstAliases take a flattened operand list without duplicates
+for tied operands.</p>
+
+<p>Instruction aliases can also have a Requires clause to make them
+subtarget specific.</p>
+
+</div>
+
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection" id="na_matching">Instruction Matching</div>
