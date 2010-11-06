@@ -615,7 +615,7 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
     }
   }
 
-  // If we parsed a register as the offset then their can be a shift after that
+  // If we parsed a register as the offset then there can be a shift after that.
   if (OffsetRegNum != -1) {
     // Look for a comma then a shift
     const AsmToken &Tok = Parser.getTok();
