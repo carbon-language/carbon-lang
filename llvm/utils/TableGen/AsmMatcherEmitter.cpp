@@ -306,8 +306,8 @@ struct MatchableInfo {
     }
   };
 
-  /// InstrName - The target name for this instruction.
-  std::string InstrName;
+  /// ResultInst - The result instruction generated.
+  const CodeGenInstruction *ResultInst;
 
   /// TheDef - This is the definition of the instruction or InstAlias that this
   /// matchable came from.
@@ -349,14 +349,13 @@ struct MatchableInfo {
   MatchableInfo(const CodeGenInstruction &CGI)
     : TheDef(CGI.TheDef), DefRec(&CGI),
       TheOperandList(CGI.Operands), AsmString(CGI.AsmString) {
-    InstrName = TheDef->getName();
+    ResultInst = &CGI;
   }
 
   MatchableInfo(const CodeGenInstAlias *Alias)
     : TheDef(Alias->TheDef), DefRec(Alias), TheOperandList(Alias->Operands),
       AsmString(Alias->AsmString) {
-    // FIXME: InstrName should be a CGI.
-    InstrName = Alias->ResultInst->TheDef->getName();
+    ResultInst = Alias->ResultInst;
   }
   
   void Initialize(const AsmMatcherInfo &Info,
@@ -537,7 +536,7 @@ public:
 }
 
 void MatchableInfo::dump() {
-  errs() << InstrName << " -- " << "flattened:\"" << AsmString << "\"\n";
+  errs() << TheDef->getName() << " -- " << "flattened:\"" << AsmString <<"\"\n";
 
   for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
     AsmOperand &Op = AsmOperands[i];
@@ -708,7 +707,7 @@ bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
       // FIXME: Should reject these.  The ARM backend hits this with $lane in a
       // bunch of instructions.  It is unclear what the right answer is.
       DEBUG({
-        errs() << "warning: '" << InstrName << "': "
+        errs() << "warning: '" << TheDef->getName() << "': "
                << "ignoring instruction with tied operand '"
                << Tok.str() << "'\n";
       });
@@ -1050,8 +1049,8 @@ void AsmMatcherInfo::BuildInfo() {
     // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
     //
     // FIXME: This is a total hack.
-    if (StringRef(II->InstrName).startswith("Int_") ||
-        StringRef(II->InstrName).endswith("_Int"))
+    if (StringRef(II->TheDef->getName()).startswith("Int_") ||
+        StringRef(II->TheDef->getName()).endswith("_Int"))
       continue;
     
      Matchables.push_back(II.take());
@@ -1822,7 +1821,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
        it != ie; ++it) {
     MatchableInfo &II = **it;
 
-    OS << "  { " << Target.getName() << "::" << II.InstrName
+    OS << "  { " << Target.getName() << "::" << II.ResultInst->TheDef->getName()
     << ", \"" << II.Mnemonic << "\""
     << ", " << II.ConversionFnKind << ", { ";
     for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
