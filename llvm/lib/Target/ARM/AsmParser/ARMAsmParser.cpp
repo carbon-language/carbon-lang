@@ -434,13 +434,12 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
     Error(RegLoc, "register expected");
     return 0;
   }
-  int RegNum = MatchRegisterName(RegTok.getString());
+  int RegNum = TryParseRegister();
   if (RegNum == -1) {
     Error(RegLoc, "register expected");
     return 0;
   }
 
-  Parser.Lex(); // Eat identifier token.
   unsigned RegList = 1 << RegNum;
 
   int HighRegNum = RegNum;
@@ -454,7 +453,7 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
       Error(RegLoc, "register expected");
       return 0;
     }
-    int RegNum = MatchRegisterName(RegTok.getString());
+    int RegNum = TryParseRegister();
     if (RegNum == -1) {
       Error(RegLoc, "register expected");
       return 0;
@@ -466,8 +465,6 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
       Warning(RegLoc, "register not in ascending order in register list");
     RegList |= 1 << RegNum;
     HighRegNum = RegNum;
-
-    Parser.Lex(); // Eat identifier token.
   }
   const AsmToken &RCurlyTok = Parser.getTok();
   if (RCurlyTok.isNot(AsmToken::RCurly)) {
