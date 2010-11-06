@@ -771,7 +771,9 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".
   if ((Name.startswith("shr") || Name.startswith("sar") ||
-       Name.startswith("shl") || Name.startswith("sal")) &&
+       Name.startswith("shl") || Name.startswith("sal") ||
+       Name.startswith("rcl") || Name.startswith("rcr") ||
+       Name.startswith("rol") || Name.startswith("ror")) &&
       Operands.size() == 3) {
     X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
     if (Op1->isImm() && isa<MCConstantExpr>(Op1->getImm()) &&
@@ -779,14 +781,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       delete Operands[1];
       Operands.erase(Operands.begin() + 1);
     }
-  }
-
-  // FIXME: Hack to handle recognize "rc[lr] <op>" -> "rcl $1, <op>".
-  if ((Name.startswith("rcl") || Name.startswith("rcr")) &&
-      Operands.size() == 2) {
-    const MCExpr *One = MCConstantExpr::Create(1, getParser().getContext());
-    Operands.push_back(X86Operand::CreateImm(One, NameLoc, NameLoc));
-    std::swap(Operands[1], Operands[2]);
   }
 
   // FIXME: Hack to handle recognize "sh[lr]d op,op" -> "shld $1, op,op".

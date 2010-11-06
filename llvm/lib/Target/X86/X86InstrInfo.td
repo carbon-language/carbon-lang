@@ -1504,6 +1504,33 @@ def : InstAlias<"outl $port", (OUT32ir i8imm:$port)>;
 // errors, since its encoding is the most compact.
 def : InstAlias<"sldt $mem", (SLDT16m i16mem:$mem)>;
 
+// "rc[lr] X" is an alias for "rcl X, 1"
+/*
+multiclass RotateAlias<string Mnemonic, string Opc> {
+ def : InstAlias<!strconcat(Mnemonic, "b $op, $$1"),
+                 (!cast<Instruction>(!strconcat(Opc, "8r1")) GR8:$op)>;
+ def : InstAlias<!strconcat(Mnemonic, "w $op, $$1"),
+                 (!cast<Instruction>(!strconcat(Opc, "16r1")) GR16:$op)>;
+ def : InstAlias<!strconcat(Mnemonic, "l $op, $$1"),
+                 (!cast<Instruction>(!strconcat(Opc, "32r1")) GR32:$op)>;
+ def : InstAlias<!strconcat(Mnemonic, "q $op, $$1"),
+                 (!cast<Instruction>(!strconcat(Opc, "64r1")) GR64:$op)>;
+ def : InstAlias<!strconcat(Mnemonic, "b $op, $$1"),
+                 (!cast<Instruction>(!strconcat(Opc, "8m1")) i8mem:$op)>;
+ def : InstAlias<!strconcat(Mnemonic, "w $op, $$1"),
+                 (!cast<Instruction>(!strconcat(Opc, "16m1")) i16mem:$op)>;
+ def : InstAlias<!strconcat(Mnemonic, "l $op, $$1"),
+                 (!cast<Instruction>(!strconcat(Opc, "32m1")) i32mem:$op)>;
+ def : InstAlias<!strconcat(Mnemonic, "q $op, $$1"),
+                 (!cast<Instruction>(!strconcat(Opc, "64m1")) i64mem:$op)>;
+}
+
+defm : RotateAlias<"rcl", "RCL">;
+defm : RotateAlias<"rcr", "RCR">;
+defm : RotateAlias<"rol", "ROL">;
+defm : RotateAlias<"ror", "ROR">;
+*/
+
 
 // test: We accept "testX <reg>, <mem>" and "testX <mem>, <reg>" as synonyms.
 def : InstAlias<"testb $val, $mem", (TEST8rm  GR8 :$val, i8mem :$mem)>;

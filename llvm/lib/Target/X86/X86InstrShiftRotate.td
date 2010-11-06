@@ -290,7 +290,7 @@ def SAR64m1 : RI<0xD1, MRM7m, (outs), (ins i64mem:$dst),
 
 let Constraints = "$src1 = $dst" in {
 def RCL8r1 : I<0xD0, MRM2r, (outs GR8:$dst), (ins GR8:$src1),
-               "rcl{b}\t{1, $dst|$dst, 1}", []>;
+               "rcl{b}\t$dst", []>;
 def RCL8ri : Ii8<0xC0, MRM2r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$cnt),
                  "rcl{b}\t{$cnt, $dst|$dst, $cnt}", []>;
 let Uses = [CL] in
@@ -298,7 +298,7 @@ def RCL8rCL : I<0xD2, MRM2r, (outs GR8:$dst), (ins GR8:$src1),
                 "rcl{b}\t{%cl, $dst|$dst, CL}", []>;
   
 def RCL16r1 : I<0xD1, MRM2r, (outs GR16:$dst), (ins GR16:$src1),
-                "rcl{w}\t{1, $dst|$dst, 1}", []>, OpSize;
+                "rcl{w}\t$dst", []>, OpSize;
 def RCL16ri : Ii8<0xC1, MRM2r, (outs GR16:$dst), (ins GR16:$src1, i8imm:$cnt),
                   "rcl{w}\t{$cnt, $dst|$dst, $cnt}", []>, OpSize;
 let Uses = [CL] in
@@ -306,7 +306,7 @@ def RCL16rCL : I<0xD3, MRM2r, (outs GR16:$dst), (ins GR16:$src1),
                  "rcl{w}\t{%cl, $dst|$dst, CL}", []>, OpSize;
 
 def RCL32r1 : I<0xD1, MRM2r, (outs GR32:$dst), (ins GR32:$src1),
-                "rcl{l}\t{1, $dst|$dst, 1}", []>;
+                "rcl{l}\t$dst", []>;
 def RCL32ri : Ii8<0xC1, MRM2r, (outs GR32:$dst), (ins GR32:$src1, i8imm:$cnt),
                   "rcl{l}\t{$cnt, $dst|$dst, $cnt}", []>;
 let Uses = [CL] in
@@ -315,7 +315,7 @@ def RCL32rCL : I<0xD3, MRM2r, (outs GR32:$dst), (ins GR32:$src1),
 
 
 def RCL64r1 : RI<0xD1, MRM2r, (outs GR64:$dst), (ins GR64:$src1),
-                 "rcl{q}\t{1, $dst|$dst, 1}", []>;
+                 "rcl{q}\t$dst", []>;
 def RCL64ri : RIi8<0xC1, MRM2r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$cnt),
                    "rcl{q}\t{$cnt, $dst|$dst, $cnt}", []>;
 let Uses = [CL] in
@@ -324,7 +324,7 @@ def RCL64rCL : RI<0xD3, MRM2r, (outs GR64:$dst), (ins GR64:$src1),
 
 
 def RCR8r1 : I<0xD0, MRM3r, (outs GR8:$dst), (ins GR8:$src1),
-               "rcr{b}\t{1, $dst|$dst, 1}", []>;
+               "rcr{b}\t$dst", []>;
 def RCR8ri : Ii8<0xC0, MRM3r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$cnt),
                  "rcr{b}\t{$cnt, $dst|$dst, $cnt}", []>;
 let Uses = [CL] in
@@ -332,7 +332,7 @@ def RCR8rCL : I<0xD2, MRM3r, (outs GR8:$dst), (ins GR8:$src1),
                 "rcr{b}\t{%cl, $dst|$dst, CL}", []>;
   
 def RCR16r1 : I<0xD1, MRM3r, (outs GR16:$dst), (ins GR16:$src1),
-                "rcr{w}\t{1, $dst|$dst, 1}", []>, OpSize;
+                "rcr{w}\t$dst", []>, OpSize;
 def RCR16ri : Ii8<0xC1, MRM3r, (outs GR16:$dst), (ins GR16:$src1, i8imm:$cnt),
                   "rcr{w}\t{$cnt, $dst|$dst, $cnt}", []>, OpSize;
 let Uses = [CL] in
@@ -340,7 +340,7 @@ def RCR16rCL : I<0xD3, MRM3r, (outs GR16:$dst), (ins GR16:$src1),
                  "rcr{w}\t{%cl, $dst|$dst, CL}", []>, OpSize;
 
 def RCR32r1 : I<0xD1, MRM3r, (outs GR32:$dst), (ins GR32:$src1),
-                "rcr{l}\t{1, $dst|$dst, 1}", []>;
+                "rcr{l}\t$dst", []>;
 def RCR32ri : Ii8<0xC1, MRM3r, (outs GR32:$dst), (ins GR32:$src1, i8imm:$cnt),
                   "rcr{l}\t{$cnt, $dst|$dst, $cnt}", []>;
 let Uses = [CL] in
@@ -348,7 +348,7 @@ def RCR32rCL : I<0xD3, MRM3r, (outs GR32:$dst), (ins GR32:$src1),
                  "rcr{l}\t{%cl, $dst|$dst, CL}", []>;
                  
 def RCR64r1 : RI<0xD1, MRM3r, (outs GR64:$dst), (ins GR64:$src1),
-                 "rcr{q}\t{1, $dst|$dst, 1}", []>;
+                 "rcr{q}\t$dst", []>;
 def RCR64ri : RIi8<0xC1, MRM3r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$cnt),
                    "rcr{q}\t{$cnt, $dst|$dst, $cnt}", []>;
 let Uses = [CL] in
@@ -358,36 +358,36 @@ def RCR64rCL : RI<0xD3, MRM3r, (outs GR64:$dst), (ins GR64:$src1),
 } // Constraints = "$src = $dst"
 
 def RCL8m1 : I<0xD0, MRM2m, (outs), (ins i8mem:$dst),
-               "rcl{b}\t{1, $dst|$dst, 1}", []>;
+               "rcl{b}\t$dst", []>;
 def RCL8mi : Ii8<0xC0, MRM2m, (outs), (ins i8mem:$dst, i8imm:$cnt),
                  "rcl{b}\t{$cnt, $dst|$dst, $cnt}", []>;
 def RCL16m1 : I<0xD1, MRM2m, (outs), (ins i16mem:$dst),
-                "rcl{w}\t{1, $dst|$dst, 1}", []>, OpSize;
+                "rcl{w}\t$dst", []>, OpSize;
 def RCL16mi : Ii8<0xC1, MRM2m, (outs), (ins i16mem:$dst, i8imm:$cnt),
                   "rcl{w}\t{$cnt, $dst|$dst, $cnt}", []>, OpSize;
 def RCL32m1 : I<0xD1, MRM2m, (outs), (ins i32mem:$dst),
-                "rcl{l}\t{1, $dst|$dst, 1}", []>;
+                "rcl{l}\t$dst", []>;
 def RCL32mi : Ii8<0xC1, MRM2m, (outs), (ins i32mem:$dst, i8imm:$cnt),
                   "rcl{l}\t{$cnt, $dst|$dst, $cnt}", []>;
 def RCL64m1 : RI<0xD1, MRM2m, (outs), (ins i64mem:$dst),
-                 "rcl{q}\t{1, $dst|$dst, 1}", []>;
+                 "rcl{q}\t$dst", []>;
 def RCL64mi : RIi8<0xC1, MRM2m, (outs), (ins i64mem:$dst, i8imm:$cnt),
                    "rcl{q}\t{$cnt, $dst|$dst, $cnt}", []>;
 
 def RCR8m1 : I<0xD0, MRM3m, (outs), (ins i8mem:$dst),
-               "rcr{b}\t{1, $dst|$dst, 1}", []>;
+               "rcr{b}\t$dst", []>;
 def RCR8mi : Ii8<0xC0, MRM3m, (outs), (ins i8mem:$dst, i8imm:$cnt),
                  "rcr{b}\t{$cnt, $dst|$dst, $cnt}", []>;
 def RCR16m1 : I<0xD1, MRM3m, (outs), (ins i16mem:$dst),
-                "rcr{w}\t{1, $dst|$dst, 1}", []>, OpSize;
+                "rcr{w}\t$dst", []>, OpSize;
 def RCR16mi : Ii8<0xC1, MRM3m, (outs), (ins i16mem:$dst, i8imm:$cnt),
                   "rcr{w}\t{$cnt, $dst|$dst, $cnt}", []>, OpSize;
 def RCR32m1 : I<0xD1, MRM3m, (outs), (ins i32mem:$dst),
-                "rcr{l}\t{1, $dst|$dst, 1}", []>;
+                "rcr{l}\t$dst", []>;
 def RCR32mi : Ii8<0xC1, MRM3m, (outs), (ins i32mem:$dst, i8imm:$cnt),
                   "rcr{l}\t{$cnt, $dst|$dst, $cnt}", []>;
 def RCR64m1 : RI<0xD1, MRM3m, (outs), (ins i64mem:$dst),
-                 "rcr{q}\t{1, $dst|$dst, 1}", []>;
+                 "rcr{q}\t$dst", []>;
 def RCR64mi : RIi8<0xC1, MRM3m, (outs), (ins i64mem:$dst, i8imm:$cnt),
                    "rcr{q}\t{$cnt, $dst|$dst, $cnt}", []>;
 

@@ -284,15 +284,18 @@ fnstsw %eax
 fnstsw %al
 
 // rdar://8431880
-// CHECK: rclb	$1, %bl
-// CHECK: rcll	$1, 3735928559(%ebx,%ecx,8)
-// CHECK: rcrl	$1, %ecx
-// CHECK: rcrl	$1, 305419896
-
+// CHECK: rclb	%bl
+// CHECK: rcll	3735928559(%ebx,%ecx,8)
+// CHECK: rcrl	%ecx
+// CHECK: rcrl	305419896
 rcl	%bl
 rcll	0xdeadbeef(%ebx,%ecx,8)
 rcr	%ecx
 rcrl	0x12345678
+
+rclb	%bl       // CHECK: rclb %bl     # encoding: [0xd0,0xd3]
+rclb	$1, %bl   // CHECK: rclb %bl     # encoding: [0xd0,0xd3]
+rclb	$2, %bl   // CHECK: rclb $2, %bl # encoding: [0xc0,0xd3,0x02]
 
 // rdar://8418316
 // CHECK: shldw	$1, %bx, %bx
