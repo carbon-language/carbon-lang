@@ -129,7 +129,7 @@ class ARMOperand : public MCParsedAsmOperand {
       bool Writeback;
     } Reg;
 
-     struct {
+    struct {
       unsigned RegStart;
       unsigned Number;
     } RegList;
@@ -198,8 +198,13 @@ public:
   }
 
   unsigned getReg() const {
-    assert(Kind == Register && "Invalid access!");
-    return Reg.RegNum;
+    assert((Kind == Register || Kind == RegisterList) && "Invalid access!");
+    unsigned RegNum = 0;
+    if (Kind == Register)
+      RegNum = Reg.RegNum;
+    else
+      RegNum = RegList.RegStart;
+    return RegNum;
   }
 
   std::pair<unsigned, unsigned> getRegList() const {
