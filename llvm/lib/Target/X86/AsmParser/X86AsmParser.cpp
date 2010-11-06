@@ -783,14 +783,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     }
   }
 
-  // FIXME: Hack to handle recognize "sh[lr]d op,op" -> "shld $1, op,op".
-  if ((Name.startswith("shld") || Name.startswith("shrd")) &&
-      Operands.size() == 3) {
-    const MCExpr *One = MCConstantExpr::Create(1, getParser().getContext());
-    Operands.insert(Operands.begin()+1,
-                    X86Operand::CreateImm(One, NameLoc, NameLoc));
-  }
-
   return false;
 }
 
