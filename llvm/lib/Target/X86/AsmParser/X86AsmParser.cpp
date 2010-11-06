@@ -877,27 +877,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands[0] = X86Operand::CreateToken("sldtw", NameLoc);
   }
 
-  // The assembler accepts "xchgX <reg>, <mem>" and "xchgX <mem>, <reg>" as
-  // synonyms.  Our tables only have the "<reg>, <mem>" form, so if we see the
-  // other operand order, swap them.
-  if (Name == "xchgb" || Name == "xchgw" || Name == "xchgl" || Name == "xchgq"||
-      Name == "xchg")
-    if (Operands.size() == 3 &&
-        static_cast<X86Operand*>(Operands[1])->isMem() &&
-        static_cast<X86Operand*>(Operands[2])->isReg()) {
-      std::swap(Operands[1], Operands[2]);
-    }
-
-  // The assembler accepts "testX <reg>, <mem>" and "testX <mem>, <reg>" as
-  // synonyms.  Our tables only have the "<mem>, <reg>" form, so if we see the
-  // other operand order, swap them.
-  if (Name == "testb" || Name == "testw" || Name == "testl" || Name == "testq"||
-      Name == "test")
-    if (Operands.size() == 3 &&
-        static_cast<X86Operand*>(Operands[1])->isReg() &&
-        static_cast<X86Operand*>(Operands[2])->isMem()) {
-      std::swap(Operands[1], Operands[2]);
-    }
 
   // The assembler accepts these instructions with no operand as a synonym for
   // an instruction acting on st(1).  e.g. "fxch" -> "fxch %st(1)".

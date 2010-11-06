@@ -277,6 +277,11 @@ namespace llvm {
     std::vector<ResultOperand> ResultOperands;
     
     CodeGenInstAlias(Record *R, CodeGenTarget &T);
+    
+    /// getResultInstOperandIndexForResultOperandIndex - Given an index into the
+    /// ResultOperands array, translate it to a valid index in ResultInst's
+    /// operand list.
+    unsigned getResultInstOperandIndexForResultOperandIndex(unsigned i) const;
   };    
 }
 

@@ -1171,13 +1171,14 @@ void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
                                                 StringRef OperandName,
                                                 MatchableInfo::AsmOperand &Op) {
   const CodeGenInstAlias &CGA = *II->DefRec.get<const CodeGenInstAlias*>();
-  
+   
   // Set up the operand class.
   for (unsigned i = 0, e = CGA.ResultOperands.size(); i != e; ++i)
     if (CGA.ResultOperands[i].Name == OperandName) {
       // It's safe to go with the first one we find, because CodeGenInstAlias
       // validates that all operands with the same name have the same record.
-      Op.Class = getOperandClass(CGA.ResultInst->Operands[i]);
+      unsigned ResultIdx =CGA.getResultInstOperandIndexForResultOperandIndex(i);
+      Op.Class = getOperandClass(CGA.ResultInst->Operands[ResultIdx]);
       Op.SrcOpName = OperandName;
       return;
     }

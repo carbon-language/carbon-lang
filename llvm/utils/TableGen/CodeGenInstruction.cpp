@@ -459,3 +459,21 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
                   " instruction expects " + utostr(ResultInst->Operands.size())+
                   " operands!");
 }
+
+/// getResultInstOperandIndexForResultOperandIndex - Given an index into the
+/// ResultOperands array, translate it to a valid index in ResultInst's
+/// operand list.
+unsigned CodeGenInstAlias::
+getResultInstOperandIndexForResultOperandIndex(unsigned OpNo) const {
+  unsigned OpIdx = 0;
+  
+  for (unsigned i = 0;; ++i) {
+    assert(i != ResultInst->Operands.size() && "Didn't find entry");
+    if (ResultInst->Operands[i].getTiedRegister() != -1)
+      continue;
+
+    if (OpIdx == OpNo) return i;
+
+    ++OpIdx;
+  }
+}

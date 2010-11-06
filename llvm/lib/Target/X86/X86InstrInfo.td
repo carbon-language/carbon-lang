@@ -1060,17 +1060,14 @@ let Constraints = "$val = $dst" in {
 def XCHG8rm  : I<0x86, MRMSrcMem, (outs GR8:$dst), (ins GR8:$val, i8mem:$ptr),
                "xchg{b}\t{$val, $ptr|$ptr, $val}",
                [(set GR8:$dst, (atomic_swap_8 addr:$ptr, GR8:$val))]>;
-def XCHG16rm : I<0x87, MRMSrcMem, (outs GR16:$dst),
-                 (ins GR16:$val, i16mem:$ptr),
+def XCHG16rm : I<0x87, MRMSrcMem, (outs GR16:$dst),(ins GR16:$val, i16mem:$ptr),
                "xchg{w}\t{$val, $ptr|$ptr, $val}",
                [(set GR16:$dst, (atomic_swap_16 addr:$ptr, GR16:$val))]>,
                 OpSize;
-def XCHG32rm : I<0x87, MRMSrcMem, (outs GR32:$dst),
-                 (ins GR32:$val, i32mem:$ptr),
+def XCHG32rm : I<0x87, MRMSrcMem, (outs GR32:$dst),(ins GR32:$val, i32mem:$ptr),
                "xchg{l}\t{$val, $ptr|$ptr, $val}",
                [(set GR32:$dst, (atomic_swap_32 addr:$ptr, GR32:$val))]>;
-def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst),
-                  (ins GR64:$val,i64mem:$ptr),
+def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst),(ins GR64:$val,i64mem:$ptr),
                   "xchg{q}\t{$val, $ptr|$ptr, $val}",
                   [(set GR64:$dst, (atomic_swap_64 addr:$ptr, GR64:$val))]>;
 
@@ -1414,4 +1411,15 @@ def : InstAlias<"movzx $src, $dst", (MOVZX64rr8_Q GR64:$dst, GR8:$src)>;
 def : InstAlias<"movzx $src, $dst", (MOVZX64rr16_Q GR64:$dst, GR16:$src)>;
 // Note: No GR32->GR64 movzx form.
 
+// test: We accept "testX <reg>, <mem>" and "testX <mem>, <reg>" as synonyms.
+def : InstAlias<"testb $val, $mem", (TEST8rm  GR8 :$val, i8mem :$mem)>;
+def : InstAlias<"testw $val, $mem", (TEST16rm GR16:$val, i16mem:$mem)>;
+def : InstAlias<"testl $val, $mem", (TEST32rm GR32:$val, i32mem:$mem)>;
+def : InstAlias<"testq $val, $mem", (TEST64rm GR64:$val, i64mem:$mem)>;
+
+// xchg: We accept "xchgX <reg>, <mem>" and "xchgX <mem>, <reg>" as synonyms.
+def : InstAlias<"xchgb $mem, $val", (XCHG8rm  GR8 :$val, i8mem :$mem)>;
+def : InstAlias<"xchgw $mem, $val", (XCHG16rm GR16:$val, i16mem:$mem)>;
+def : InstAlias<"xchgl $mem, $val", (XCHG32rm GR32:$val, i32mem:$mem)>;
+def : InstAlias<"xchgq $mem, $val", (XCHG64rm GR64:$val, i64mem:$mem)>;
 
