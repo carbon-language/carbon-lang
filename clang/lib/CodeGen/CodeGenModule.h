@@ -590,7 +590,8 @@ private:
   /// EmitCXXGlobalDtorFunc - Emit the function that destroys C++ globals.
   void EmitCXXGlobalDtorFunc();
 
-  void EmitCXXGlobalVarDeclInitFunc(const VarDecl *D);
+  void EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
+                                    llvm::GlobalVariable *Addr);
 
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function *Ctor, int Priority=65535);

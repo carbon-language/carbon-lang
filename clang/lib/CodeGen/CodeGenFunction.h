@@ -1628,7 +1628,12 @@ public:
   void EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
                                      llvm::Constant *DeclPtr);
 
-  void EmitCXXStaticLocalInit(const VarDecl &D, llvm::GlobalVariable *DeclPtr);
+  /// Emit code in this function to perform a guarded variable
+  /// initialization.  Guarded initializations are used when it's not
+  /// possible to prove that an initialization will be done exactly
+  /// once, e.g. with a static local variable or a static data member
+  /// of a class template.
+  void EmitCXXGuardedInit(const VarDecl &D, llvm::GlobalVariable *DeclPtr);
 
   /// GenerateCXXGlobalInitFunc - Generates code for initializing global
   /// variables.
@@ -1642,7 +1647,8 @@ public:
                                  const std::vector<std::pair<llvm::WeakVH,
                                    llvm::Constant*> > &DtorsAndObjects);
 
-  void GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn, const VarDecl *D);
+  void GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn, const VarDecl *D,
+                                        llvm::GlobalVariable *Addr);
 
   void EmitCXXConstructExpr(const CXXConstructExpr *E, AggValueSlot Dest);
 

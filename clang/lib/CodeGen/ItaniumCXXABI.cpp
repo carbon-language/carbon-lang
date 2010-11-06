@@ -120,8 +120,8 @@ public:
                        QualType ElementType, llvm::Value *&NumElements,
                        llvm::Value *&AllocPtr, CharUnits &CookieSize);
 
-  void EmitStaticLocalInit(CodeGenFunction &CGF, const VarDecl &D,
-                           llvm::GlobalVariable *DeclPtr);
+  void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
+                       llvm::GlobalVariable *DeclPtr);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -1078,11 +1078,15 @@ namespace {
 
 /// The ARM code here follows the Itanium code closely enough that we
 /// just special-case it at particular places.
-void ItaniumCXXABI::EmitStaticLocalInit(CodeGenFunction &CGF,
-                                        const VarDecl &D,
-                                        llvm::GlobalVariable *GV) {
+void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
+                                    const VarDecl &D,
+                                    llvm::GlobalVariable *GV) {
   CGBuilderTy &Builder = CGF.Builder;
-  bool ThreadsafeStatics = getContext().getLangOptions().ThreadsafeStatics;
+
+  // We only need to use thread-safe statics for local variables;
+  // global initialization is always single-threaded.
+  bool ThreadsafeStatics = (getContext().getLangOptions().ThreadsafeStatics &&
+                            D.isLocalVarDecl());
   
   // Guard variables are 64 bits in the generic ABI and 32 bits on ARM.
   const llvm::IntegerType *GuardTy
@@ -1093,16 +1097,10 @@ void ItaniumCXXABI::EmitStaticLocalInit(CodeGenFunction &CGF,
   llvm::SmallString<256> GuardVName;
   getMangleContext().mangleItaniumGuardVariable(&D, GuardVName);
 
-  // FIXME: we should just absorb linkage and visibility from the
-  // variable, but that's not always set up properly just yet.
-  llvm::GlobalValue::LinkageTypes Linkage = GV->getLinkage();
-  if (D.isStaticDataMember() &&
-      D.getInstantiatedFromStaticDataMember())
-    Linkage = llvm::GlobalVariable::WeakAnyLinkage;
-  
+  // Just absorb linkage and visibility from the variable.
   llvm::GlobalVariable *GuardVariable =
     new llvm::GlobalVariable(CGM.getModule(), GuardTy,
-                             false, Linkage,
+                             false, GV->getLinkage(),
                              llvm::ConstantInt::get(GuardTy, 0),
                              GuardVName.str());
   GuardVariable->setVisibility(GV->getVisibility());

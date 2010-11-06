@@ -221,11 +221,14 @@ public:
 
   /*************************** Static local guards ****************************/
 
-  /// Emits the initializer and destructor setup for the given static
-  /// local variable, given that it's reachable and couldn't be
-  /// emitted as a constant.
-  virtual void EmitStaticLocalInit(CodeGenFunction &CGF, const VarDecl &D,
-                                   llvm::GlobalVariable *DeclPtr);
+  /// Emits the guarded initializer and destructor setup for the given
+  /// variable, given that it couldn't be emitted as a constant.
+  ///
+  /// The variable may be:
+  ///   - a static local variable
+  ///   - a static data member of a class template instantiation
+  virtual void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
+                               llvm::GlobalVariable *DeclPtr);
 
 };
 

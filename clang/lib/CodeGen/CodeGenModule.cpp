@@ -1102,7 +1102,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
         T = D->getType();
       
       if (getLangOptions().CPlusPlus) {
-        EmitCXXGlobalVarDeclInitFunc(D);
         Init = EmitNullConstant(T);
         NonConstInit = true;
       } else {
@@ -1183,6 +1182,10 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setConstant(false);
 
   SetCommonAttributes(D, GV);
+
+  // Emit the initializer function if necessary.
+  if (NonConstInit)
+    EmitCXXGlobalVarDeclInitFunc(D, GV);
 
   // Emit global variable debug information.
   if (CGDebugInfo *DI = getDebugInfo()) {

@@ -196,7 +196,7 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
       // be constant.
       GV->setConstant(false);
 
-      EmitCXXStaticLocalInit(D, GV);
+      EmitCXXGuardedInit(D, GV);
     }
     return GV;
   }

@@ -468,8 +468,8 @@ void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
   CookieSize = CharUnits::Zero();
 }
 
-void CGCXXABI::EmitStaticLocalInit(CodeGenFunction &CGF,
-                                   const VarDecl &D,
-                                   llvm::GlobalVariable *GV) {
+void CGCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
+                               const VarDecl &D,
+                               llvm::GlobalVariable *GV) {
   ErrorUnsupportedABI(CGF, "static local variable initialization");
 }

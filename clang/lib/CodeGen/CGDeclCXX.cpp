@@ -140,9 +140,9 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
   Builder.CreateCall(AtExitFn, &Args[0], llvm::array_endof(Args));
 }
 
-void CodeGenFunction::EmitCXXStaticLocalInit(const VarDecl &D,
-                                             llvm::GlobalVariable *DeclPtr) {
-  CGM.getCXXABI().EmitStaticLocalInit(*this, D, DeclPtr);
+void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
+                                         llvm::GlobalVariable *DeclPtr) {
+  CGM.getCXXABI().EmitGuardedInit(*this, D, DeclPtr);
 }
 
 static llvm::Function *
@@ -165,7 +165,8 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
 }
 
 void
-CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
+CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
+                                            llvm::GlobalVariable *Addr) {
   const llvm::FunctionType *FTy
     = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
                               false);
@@ -174,7 +175,7 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
   llvm::Function *Fn =
     CreateGlobalInitOrDestructFunction(*this, FTy, "__cxx_global_var_init");
 
-  CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D);
+  CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr);
 
   if (D->hasAttr<InitPriorityAttr>()) {
     unsigned int order = D->getAttr<InitPriorityAttr>()->getPriority();
@@ -247,26 +248,20 @@ void CodeGenModule::EmitCXXGlobalDtorFunc() {
   AddGlobalDtor(Fn);
 }
 
+/// Emit the code necessary to initialize the given global variable.
 void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
-                                                       const VarDecl *D) {
+                                                       const VarDecl *D,
+                                                 llvm::GlobalVariable *Addr) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
                 SourceLocation());
 
-  llvm::Constant *DeclPtr = CGM.GetAddrOfGlobalVar(D);
-  if (D->isStaticDataMember() &&
-      D->getInstantiatedFromStaticDataMember() && D->getInit()){
-    llvm::GlobalVariable *GV = dyn_cast<llvm::GlobalVariable>(DeclPtr);
-    assert(GV && "GenerateCXXGlobalVarDeclInitFunc - GV is null");
-    llvm::GlobalValue::LinkageTypes Linkage = 
-      CGM.GetLLVMLinkageVarDefinition(D, GV);
-    if (Linkage == llvm::GlobalVariable::WeakAnyLinkage) {
-      GV->setConstant(false);
-      EmitCXXStaticLocalInit(*D, GV);
-      FinishFunction();
-      return;
-    }
+  // Use guarded initialization if the global variable is weak due to
+  // being a class template's static data member.
+  if (Addr->hasWeakLinkage() && D->getInstantiatedFromStaticDataMember()) {
+    EmitCXXGuardedInit(*D, Addr);
+  } else {
+    EmitCXXGlobalVarDeclInit(*D, Addr);
   }
-  EmitCXXGlobalVarDeclInit(*D, DeclPtr);
 
   FinishFunction();
 }
