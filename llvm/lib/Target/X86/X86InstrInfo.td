@@ -1377,18 +1377,59 @@ def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
 def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
 
-// Default arguments for various fp stack instructions.
-def : InstAlias<"fucom",        (UCOM_Fr   ST1)>;
-def : InstAlias<"fucomp",       (UCOM_FPr  ST1)>;
-def : InstAlias<"fcomi",        (COM_FIr   ST1)>;
+// The instruction patterns for these instructions were written with st(0)
+// explicitly in the pattern, match the form with implicit st(0).
+// FIXME: Tweak these to work like fadd etc.
 def : InstAlias<"fcomi   $reg", (COM_FIr   RST:$reg)>;
-def : InstAlias<"fcomip",       (COM_FIPr  ST1)>;
 def : InstAlias<"fcomip  $reg", (COM_FIPr  RST:$reg)>;
-def : InstAlias<"fucomi",       (UCOM_FIr  ST1)>;
 def : InstAlias<"fucomi  $reg", (UCOM_FIr  RST:$reg)>;
-def : InstAlias<"fucomip",      (UCOM_FIPr ST1)>;
 def : InstAlias<"fucomip $reg", (UCOM_FIPr RST:$reg)>;
 
+// Various unary fpstack operations default to operating on on ST1.
+// For example, "fxch" -> "fxch %st(1)"
+def : InstAlias<"faddp",        (ADD_FPrST0  ST1)>;
+def : InstAlias<"fsubp",        (SUBR_FPrST0 ST1)>;
+def : InstAlias<"fsubrp",       (SUB_FPrST0  ST1)>;
+def : InstAlias<"fmulp",        (MUL_FPrST0  ST1)>;
+def : InstAlias<"fdivp",        (DIVR_FPrST0 ST1)>;
+def : InstAlias<"fdivrp",       (DIV_FPrST0  ST1)>;
+def : InstAlias<"fxch",         (XCH_F       ST1)>;
+def : InstAlias<"fcomi",        (COM_FIr     ST1)>;
+def : InstAlias<"fcomip",       (COM_FIPr    ST1)>;
+def : InstAlias<"fucom",        (UCOM_Fr     ST1)>;
+def : InstAlias<"fucomp",       (UCOM_FPr    ST1)>;
+def : InstAlias<"fucomi",       (UCOM_FIr    ST1)>;
+def : InstAlias<"fucomip",      (UCOM_FIPr   ST1)>;
+
+// Handle fmul/fadd/fsub/fdiv instructions with explicitly written st(0) op.
+// For example, "fadd %st(4), %st(0)" -> "fadd %st(4)".  We also disambiguate
+// instructions like "fadd %st(0), %st(0)" as "fadd %st(0)" for consistency with
+// gas.
+multiclass FpUnaryAlias<string Mnemonic, Instruction Inst> {
+ def : InstAlias<!strconcat(Mnemonic, " $op, %st(0)"),    (Inst RST:$op)>;
+ def : InstAlias<!strconcat(Mnemonic, " %st(0), %st(0)"), (Inst ST0)>;
+}
+
+defm : FpUnaryAlias<"fadd",   ADD_FST0r>;
+defm : FpUnaryAlias<"faddp",  ADD_FPrST0>;
+defm : FpUnaryAlias<"fsub",   SUB_FST0r>;
+defm : FpUnaryAlias<"fsubp",  SUBR_FPrST0>;
+defm : FpUnaryAlias<"fsubr",  SUBR_FST0r>;
+defm : FpUnaryAlias<"fsubrp", SUB_FPrST0>;
+defm : FpUnaryAlias<"fmul",   MUL_FST0r>;
+defm : FpUnaryAlias<"fmulp",  MUL_FPrST0>;
+defm : FpUnaryAlias<"fdiv",   DIV_FST0r>;
+defm : FpUnaryAlias<"fdivp",  DIVR_FPrST0>;
+defm : FpUnaryAlias<"fdivr",  DIVR_FST0r>;
+defm : FpUnaryAlias<"fdivrp", DIV_FPrST0>;
+
+// Handle "f{mulp,addp} st(0), $op" the same as "f{mulp,addp} $op", since they
+// commute.  We also allow fdivrp/fsubrp even though they don't commute, solely
+// because gas supports it.
+def : InstAlias<"faddp %st(0), $op", (ADD_FPrST0 RST:$op)>;
+def : InstAlias<"fmulp %st(0), $op", (MUL_FPrST0 RST:$op)>;
+def : InstAlias<"fsubrp %st(0), $op", (SUB_FPrST0 RST:$op)>;
+def : InstAlias<"fdivrp %st(0), $op", (DIV_FPrST0 RST:$op)>;
 
 // We accepts "fnstsw %eax" even though it only writes %ax.
 def : InstAlias<"fnstsw %eax", (FNSTSW8r)>;

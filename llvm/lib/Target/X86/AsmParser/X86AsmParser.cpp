@@ -797,38 +797,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                     X86Operand::CreateImm(One, NameLoc, NameLoc));
   }
 
-  // FIXME: Hack to handle "f{mul*,add*,sub*,div*} $op, st(0)" the same as
-  // "f{mul*,add*,sub*,div*} $op"
-  if ((Name.startswith("fmul") || Name.startswith("fadd") ||
-       Name.startswith("fsub") || Name.startswith("fdiv")) &&
-      Operands.size() == 3 &&
-      static_cast<X86Operand*>(Operands[2])->isReg() &&
-      static_cast<X86Operand*>(Operands[2])->getReg() == X86::ST0) {
-    delete Operands[2];
-    Operands.erase(Operands.begin() + 2);
-  }
-
-  // FIXME: Hack to handle "f{mulp,addp} st(0), $op" the same as
-  // "f{mulp,addp} $op", since they commute.  We also allow fdivrp/fsubrp even
-  // though they don't commute, solely because gas does support this.
-  if ((Name=="fmulp" || Name=="faddp" || Name=="fsubrp" || Name=="fdivrp") &&
-      Operands.size() == 3 &&
-      static_cast<X86Operand*>(Operands[1])->isReg() &&
-      static_cast<X86Operand*>(Operands[1])->getReg() == X86::ST0) {
-    delete Operands[1];
-    Operands.erase(Operands.begin() + 1);
-  }
-
-  // The assembler accepts these instructions with no operand as a synonym for
-  // an instruction acting on st(1).  e.g. "fxch" -> "fxch %st(1)".
-  if ((Name == "fxch" ||
-       Name == "faddp" || Name == "fsubp" || Name == "fsubrp" ||
-       Name == "fmulp" || Name == "fdivp" || Name == "fdivrp") &&
-      Operands.size() == 1) {
-    Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(1)"),
-                                             NameLoc, NameLoc));
-  }
-
   return false;
 }
 
