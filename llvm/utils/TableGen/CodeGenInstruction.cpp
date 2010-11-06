@@ -400,4 +400,37 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T)
     throw TGError(R->getLoc(), "result of inst alias should be an instruction");
 
   ResultInst = &T.getInstruction(DI->getDef());
+  
+  // Check number of arguments in the result.
+  if (ResultInst->Operands.size() != Result->getNumArgs())
+    throw TGError(R->getLoc(), "result has " + utostr(Result->getNumArgs()) +
+                  " arguments, but " + ResultInst->TheDef->getName() +
+                  " instruction expects " + utostr(ResultInst->Operands.size())+
+                  " operands!");
+    
+  // Decode and validate the arguments of the result.
+  for (unsigned i = 0, e = Result->getNumArgs(); i != e; ++i) {
+    Init *Arg = Result->getArg(i);
+    
+    // If the operand is a record, it must have a name, and the record type must
+    // match up with the instruction's argument type.
+    if (DefInit *ADI = dynamic_cast<DefInit*>(Arg)) {
+      if (Result->getArgName(i).empty())
+        throw TGError(R->getLoc(), "result argument #" + utostr(i) +
+                      " must have a name!");
+
+      if (ADI->getDef() != ResultInst->Operands[i].Rec)
+        throw TGError(R->getLoc(), "result argument #" + utostr(i) +
+                      " declared with class " + ADI->getDef()->getName() +
+                      ", instruction operand is class " + 
+                      ResultInst->Operands[i].Rec->getName());
+      
+      // Now that it is validated, add it.
+      ResultOperands.push_back(ResultOperand(Result->getArgName(i),
+                                             ADI->getDef()));
+      continue;
+    }
+
+    throw TGError(R->getLoc(), "result of inst alias has unknown operand type");
+  }
 }
