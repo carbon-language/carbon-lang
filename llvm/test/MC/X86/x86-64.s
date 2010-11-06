@@ -261,11 +261,11 @@ fmulp
 fdivp
 fdivrp
 
-// CHECK: fcomi	%st(1), %st(0)
-// CHECK: fcomi	%st(2), %st(0)
-// CHECK: fucomi	%st(1), %st(0)
-// CHECK: fucomi	%st(2), %st(0)
-// CHECK: fucomi	%st(2), %st(0)
+// CHECK: fcomi	%st(1)
+// CHECK: fcomi	%st(2)
+// CHECK: fucomi	%st(1)
+// CHECK: fucomi	%st(2)
+// CHECK: fucomi	%st(2)
 
 fcomi
 fcomi	%st(2)

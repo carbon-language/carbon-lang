@@ -1377,14 +1377,6 @@ def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
 def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
 
-// The instruction patterns for these instructions were written with st(0)
-// explicitly in the pattern, match the form with implicit st(0).
-// FIXME: Tweak these to work like fadd etc.
-def : InstAlias<"fcomi   $reg", (COM_FIr   RST:$reg)>;
-def : InstAlias<"fcomip  $reg", (COM_FIPr  RST:$reg)>;
-def : InstAlias<"fucomi  $reg", (UCOM_FIr  RST:$reg)>;
-def : InstAlias<"fucomip $reg", (UCOM_FIPr RST:$reg)>;
-
 // Various unary fpstack operations default to operating on on ST1.
 // For example, "fxch" -> "fxch %st(1)"
 def : InstAlias<"faddp",        (ADD_FPrST0  ST1)>;
@@ -1422,6 +1414,11 @@ defm : FpUnaryAlias<"fdiv",   DIV_FST0r>;
 defm : FpUnaryAlias<"fdivp",  DIVR_FPrST0>;
 defm : FpUnaryAlias<"fdivr",  DIVR_FST0r>;
 defm : FpUnaryAlias<"fdivrp", DIV_FPrST0>;
+defm : FpUnaryAlias<"fcomi",   COM_FIr>;
+defm : FpUnaryAlias<"fcomip",  COM_FIPr>;
+defm : FpUnaryAlias<"fucomi",  UCOM_FIr>;
+defm : FpUnaryAlias<"fucomip", UCOM_FIPr>;
+
 
 // Handle "f{mulp,addp} st(0), $op" the same as "f{mulp,addp} $op", since they
 // commute.  We also allow fdivrp/fsubrp even though they don't commute, solely

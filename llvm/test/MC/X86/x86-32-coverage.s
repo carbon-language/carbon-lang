@@ -4474,19 +4474,19 @@
 // CHECK:  encoding: [0xdb,0xda]
         	fcmovnu	%st(2),%st
 
-// CHECK: fcomi	%st(2), %st(0)
+// CHECK: fcomi	%st(2)
 // CHECK:  encoding: [0xdb,0xf2]
         	fcomi	%st(2),%st
 
-// CHECK: fucomi	%st(2), %st(0)
+// CHECK: fucomi	%st(2)
 // CHECK:  encoding: [0xdb,0xea]
         	fucomi	%st(2),%st
 
-// CHECK: fcomip	%st(2), %st(0)
+// CHECK: fcomip	%st(2)
 // CHECK:  encoding: [0xdf,0xf2]
         	fcomip	%st(2),%st
 
-// CHECK: fucomip	%st(2), %st(0)
+// CHECK: fucomip	%st(2)
 // CHECK:  encoding: [0xdf,0xea]
         	fucomip	%st(2),%st
 
@@ -14150,16 +14150,16 @@
 // CHECK: 	fcmovnu	%st(2), %st(0)
         	fcmovnu	%st(2),%st
 
-// CHECK: 	fcomi	%st(2), %st(0)
+// CHECK: 	fcomi	%st(2)
         	fcomi	%st(2),%st
 
-// CHECK: 	fucomi	%st(2), %st(0)
+// CHECK: 	fucomi	%st(2)
         	fucomi	%st(2),%st
 
-// CHECK: 	fcomip	%st(2), %st(0)
+// CHECK: 	fcomip	%st(2)
         	fcomip	%st(2),%st
 
-// CHECK: 	fucomip	%st(2), %st(0)
+// CHECK: 	fucomip	%st(2)
         	fucomip	%st(2),%st
 
 // CHECK: 	movnti	%ecx, 3735928559(%ebx,%ecx,8)
