@@ -296,8 +296,8 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
     }
 
     case CPointerTy:
-      return argTy->getAs<PointerType>() != NULL ||
-             argTy->getAs<ObjCObjectPointerType>() != NULL;
+      return argTy->isPointerType() || argTy->isObjCObjectPointerType() ||
+        argTy->isNullPtrType();
 
     case ObjCPointerTy:
       return argTy->getAs<ObjCObjectPointerType>() != NULL;

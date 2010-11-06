@@ -93,3 +93,12 @@ namespace test2 {
     f(10, nullptr);
   }
 }
+
+namespace test3 {
+  void f(const char*, ...) __attribute__((format(printf, 1, 2)));
+
+  void g() {
+    // Don't warn when using nullptr with %p.
+    f("%p", nullptr);
+  }
+}
