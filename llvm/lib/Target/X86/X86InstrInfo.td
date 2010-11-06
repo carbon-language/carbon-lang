@@ -1370,6 +1370,12 @@ defm : IntegerCondCodeMnemonicAlias<"cmov", "q">;
 // Assembler Instruction Aliases
 //===----------------------------------------------------------------------===//
 
+// clr aliases.
+def : InstAlias<"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg)>;
+def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
+def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
+def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
+
 // movsx aliases
 def : InstAlias<"movsx $src, $dst",
                 (MOVSX16rr8W GR16:$dst, GR8:$src)>;

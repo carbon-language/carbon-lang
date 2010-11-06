@@ -372,7 +372,8 @@ struct MatchableInfo {
     return -1;
   }
   
-  void BuildResultOperands();
+  void BuildInstructionResultOperands();
+  void BuildAliasResultOperands();
 
   /// operator< - Compare two matchables.
   bool operator<(const MatchableInfo &RHS) const {
@@ -1112,7 +1113,10 @@ void AsmMatcherInfo::BuildInfo() {
         BuildAliasOperandReference(II, OperandName, Op);
     }
     
-    II->BuildResultOperands();
+    if (II->DefRec.is<const CodeGenInstruction*>())
+      II->BuildInstructionResultOperands();
+    else
+      II->BuildAliasResultOperands();
   }
 
   // Reorder classes so that classes preceed super classes.
@@ -1182,7 +1186,7 @@ void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
                 OperandName.str() + "'");
 }
 
-void MatchableInfo::BuildResultOperands() {
+void MatchableInfo::BuildInstructionResultOperands() {
   const CodeGenInstruction *ResultInst = getResultInst();
   
   // Loop over all operands of the result instruction, determining how to
@@ -1212,6 +1216,36 @@ void MatchableInfo::BuildResultOperands() {
   }
 }
 
+void MatchableInfo::BuildAliasResultOperands() {
+  const CodeGenInstAlias &CGA = *DefRec.get<const CodeGenInstAlias*>();
+  const CodeGenInstruction *ResultInst = getResultInst();
+  
+  // Loop over all operands of the result instruction, determining how to
+  // populate them.
+  unsigned AliasOpNo = 0;
+  for (unsigned i = 0, e = ResultInst->Operands.size(); i != e; ++i) {
+    const CGIOperandList::OperandInfo &OpInfo = ResultInst->Operands[i];
+    
+    // If this is a tied operand, just copy from the previously handled operand.
+    int TiedOp = OpInfo.getTiedRegister();
+    if (TiedOp != -1) {
+      ResOperands.push_back(ResOperand::getTiedOp(TiedOp, &OpInfo));
+      continue;
+    }
+    
+    // Find out what operand from the asmparser that this MCInst operand comes
+    // from.
+    int SrcOperand = FindAsmOperandNamed(CGA.ResultOperands[AliasOpNo++].Name);
+    if (SrcOperand != -1) {
+      ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand, &OpInfo));
+      continue;
+    }
+    
+    throw TGError(TheDef->getLoc(), "Instruction '" +
+                  TheDef->getName() + "' has operand '" + OpInfo.Name +
+                  "' that doesn't appear in asm string!");
+  }
+}
 
 static void EmitConvertToMCInst(CodeGenTarget &Target,
                                 std::vector<MatchableInfo*> &Infos,
