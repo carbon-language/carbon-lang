@@ -919,14 +919,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                                NameLoc, NameLoc));
   }
 
-  // fstp <mem> -> fstps <mem>.  Without this, we'll default to fstpl due to
-  // suffix searching.
-  if (Name == "fstp" && Operands.size() == 2 &&
-      static_cast<X86Operand*>(Operands[1])->isMem()) {
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken("fstps", NameLoc);
-  }
-
   // FIXME: Hack to handle recognize "aa[dm]" -> "aa[dm] $0xA".
   if ((Name.startswith("aad") || Name.startswith("aam")) &&
       Operands.size() == 1) {
@@ -1002,16 +994,26 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   Tmp += ' ';
   Op->setTokenValue(Tmp.str());
 
+  // If this instruction starts with an 'f', then it is a floating point stack
+  // instruction.  These come in up to three forms for 32-bit, 64-bit, and
+  // 80-bit floating point, which use the suffixes s,l,t respectively.
+  //
+  // Otherwise, we assume that this may be an integer instruction, which comes
+  // in 8/16/32/64-bit forms using the b,w,l,q suffixes respectively.
+  const char *Suffixes = Base[0] != 'f' ? "bwlq" : "slt\0";
+  
   // Check for the various suffix matches.
-  Tmp[Base.size()] = 'b';
-  unsigned BErrorInfo, WErrorInfo, LErrorInfo, QErrorInfo;
-  MatchResultTy MatchB = MatchInstructionImpl(Operands, Inst, BErrorInfo);
-  Tmp[Base.size()] = 'w';
-  MatchResultTy MatchW = MatchInstructionImpl(Operands, Inst, WErrorInfo);
-  Tmp[Base.size()] = 'l';
-  MatchResultTy MatchL = MatchInstructionImpl(Operands, Inst, LErrorInfo);
-  Tmp[Base.size()] = 'q';
-  MatchResultTy MatchQ = MatchInstructionImpl(Operands, Inst, QErrorInfo);
+  Tmp[Base.size()] = Suffixes[0];
+  unsigned ErrorInfoIgnore;
+  MatchResultTy Match1, Match2, Match3, Match4;
+  
+  Match1 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore);
+  Tmp[Base.size()] = Suffixes[1];
+  Match2 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore);
+  Tmp[Base.size()] = Suffixes[2];
+  Match3 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore);
+  Tmp[Base.size()] = Suffixes[3];
+  Match4 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore);
 
   // Restore the old token.
   Op->setTokenValue(Base);
@@ -1020,8 +1022,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   // instruction will already have been filled in correctly, since the failing
   // matches won't have modified it).
   unsigned NumSuccessfulMatches =
-    (MatchB == Match_Success) + (MatchW == Match_Success) +
-    (MatchL == Match_Success) + (MatchQ == Match_Success);
+    (Match1 == Match_Success) + (Match2 == Match_Success) +
+    (Match3 == Match_Success) + (Match4 == Match_Success);
   if (NumSuccessfulMatches == 1) {
     Out.EmitInstruction(Inst);
     return false;
@@ -1034,14 +1036,10 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   if (NumSuccessfulMatches > 1) {
     char MatchChars[4];
     unsigned NumMatches = 0;
-    if (MatchB == Match_Success)
-      MatchChars[NumMatches++] = 'b';
-    if (MatchW == Match_Success)
-      MatchChars[NumMatches++] = 'w';
-    if (MatchL == Match_Success)
-      MatchChars[NumMatches++] = 'l';
-    if (MatchQ == Match_Success)
-      MatchChars[NumMatches++] = 'q';
+    if (Match1 == Match_Success) MatchChars[NumMatches++] = Suffixes[0];
+    if (Match2 == Match_Success) MatchChars[NumMatches++] = Suffixes[1];
+    if (Match3 == Match_Success) MatchChars[NumMatches++] = Suffixes[2];
+    if (Match4 == Match_Success) MatchChars[NumMatches++] = Suffixes[3];
 
     SmallString<126> Msg;
     raw_svector_ostream OS(Msg);
@@ -1062,8 +1060,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 
   // If all of the instructions reported an invalid mnemonic, then the original
   // mnemonic was invalid.
-  if ((MatchB == Match_MnemonicFail) && (MatchW == Match_MnemonicFail) &&
-      (MatchL == Match_MnemonicFail) && (MatchQ == Match_MnemonicFail)) {
+  if ((Match1 == Match_MnemonicFail) && (Match2 == Match_MnemonicFail) &&
+      (Match3 == Match_MnemonicFail) && (Match4 == Match_MnemonicFail)) {
     if (!WasOriginallyInvalidOperand) {
       Error(IDLoc, "invalid instruction mnemonic '" + Base + "'");
       return true;
@@ -1084,16 +1082,16 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 
   // If one instruction matched with a missing feature, report this as a
   // missing feature.
-  if ((MatchB == Match_MissingFeature) + (MatchW == Match_MissingFeature) +
-      (MatchL == Match_MissingFeature) + (MatchQ == Match_MissingFeature) == 1){
+  if ((Match1 == Match_MissingFeature) + (Match2 == Match_MissingFeature) +
+      (Match3 == Match_MissingFeature) + (Match4 == Match_MissingFeature) == 1){
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");
     return true;
   }
 
   // If one instruction matched with an invalid operand, report this as an
   // operand failure.
-  if ((MatchB == Match_InvalidOperand) + (MatchW == Match_InvalidOperand) +
-      (MatchL == Match_InvalidOperand) + (MatchQ == Match_InvalidOperand) == 1){
+  if ((Match1 == Match_InvalidOperand) + (Match2 == Match_InvalidOperand) +
+      (Match3 == Match_InvalidOperand) + (Match4 == Match_InvalidOperand) == 1){
     Error(IDLoc, "invalid operand for instruction");
     return true;
   }
