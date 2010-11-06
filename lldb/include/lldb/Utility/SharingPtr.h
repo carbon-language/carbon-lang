@@ -11,7 +11,6 @@
 #define utility_SharingPtr_h_
 
 #include <algorithm>
-#include <memory>
 
 namespace lldb_private {
 
@@ -57,6 +56,48 @@ shared_ptr_pointer<T>::on_zero_shared()
     delete data_;
 }
 
+template <class T>
+class shared_ptr_emplace
+    : public shared_count
+{
+    T data_;
+public:
+
+    shared_ptr_emplace()
+        :  data_() {}
+
+    template <class A0>
+        shared_ptr_emplace(A0& a0)
+            :  data_(a0) {}
+
+    template <class A0, class A1>
+        shared_ptr_emplace(A0& a0, A1& a1)
+            :  data_(a0, a1) {}
+
+    template <class A0, class A1, class A2>
+        shared_ptr_emplace(A0& a0, A1& a1, A2& a2)
+            :  data_(a0, a1, a2) {}
+
+    template <class A0, class A1, class A2, class A3>
+        shared_ptr_emplace(A0& a0, A1& a1, A2& a2, A3& a3)
+            :  data_(a0, a1, a2, a3) {}
+
+    template <class A0, class A1, class A2, class A3, class A4>
+        shared_ptr_emplace(A0& a0, A1& a1, A2& a2, A3& a3, A4& a4)
+            :  data_(a0, a1, a2, a3, a4) {}
+
+private:
+    virtual void on_zero_shared();
+public:
+    T* get() {return &data_;}
+};
+
+template <class T>
+void
+shared_ptr_emplace<T>::on_zero_shared()
+{
+}
+
 }  // namespace
 
 template<class T>
@@ -93,6 +134,23 @@ public:
     bool unique() const {return use_count() == 1;}
     bool empty() const {return cntrl_ == 0;}
     operator nat*() const {return (nat*)get();}
+
+    static SharingPtr<T> make_shared();
+
+    template<class A0>
+        static SharingPtr<T> make_shared(A0&);
+
+    template<class A0, class A1>
+        static SharingPtr<T> make_shared(A0&, A1&);
+
+    template<class A0, class A1, class A2>
+        static SharingPtr<T> make_shared(A0&, A1&, A2&);
+
+    template<class A0, class A1, class A2, class A3>
+        static SharingPtr<T> make_shared(A0&, A1&, A2&, A3&);
+
+    template<class A0, class A1, class A2, class A3, class A4>
+        static SharingPtr<T> make_shared(A0&, A1&, A2&, A3&, A4&);
 
 private:
 
@@ -201,6 +259,126 @@ SharingPtr<T>::reset(Y* p)
 {
     SharingPtr(p).swap(*this);
 }
+
+template<class T>
+SharingPtr<T>
+SharingPtr<T>::make_shared()
+{
+    typedef imp::shared_ptr_emplace<T> CntrlBlk;
+    SharingPtr<T> r;
+    r.cntrl_ = new CntrlBlk();
+    r.ptr_ = r.cntrl_->get();
+    return r;
+}
+
+template<class T>
+template<class A0>
+SharingPtr<T>
+SharingPtr<T>::make_shared(A0& a0)
+{
+    typedef imp::shared_ptr_emplace<T> CntrlBlk;
+    SharingPtr<T> r;
+    r.cntrl_ = new CntrlBlk(a0);
+    r.ptr_ = static_cast<CntrlBlk*>(r.cntrl_)->get();
+    return r;
+}
+
+template<class T>
+template<class A0, class A1>
+SharingPtr<T>
+SharingPtr<T>::make_shared(A0& a0, A1& a1)
+{
+    typedef imp::shared_ptr_emplace<T> CntrlBlk;
+    SharingPtr<T> r;
+    r.cntrl_ = new CntrlBlk(a0, a1);
+    r.ptr_ = static_cast<CntrlBlk*>(r.cntrl_)->get();
+    return r;
+}
+
+template<class T>
+template<class A0, class A1, class A2>
+SharingPtr<T>
+SharingPtr<T>::make_shared(A0& a0, A1& a1, A2& a2)
+{
+    typedef imp::shared_ptr_emplace<T> CntrlBlk;
+    SharingPtr<T> r;
+    r.cntrl_ = new CntrlBlk(a0, a1, a2);
+    r.ptr_ = static_cast<CntrlBlk*>(r.cntrl_)->get();
+    return r;
+}
+
+template<class T>
+template<class A0, class A1, class A2, class A3>
+SharingPtr<T>
+SharingPtr<T>::make_shared(A0& a0, A1& a1, A2& a2, A3& a3)
+{
+    typedef imp::shared_ptr_emplace<T> CntrlBlk;
+    SharingPtr<T> r;
+    r.cntrl_ = new CntrlBlk(a0, a1, a2, a3);
+    r.ptr_ = static_cast<CntrlBlk*>(r.cntrl_)->get();
+    return r;
+}
+
+template<class T>
+template<class A0, class A1, class A2, class A3, class A4>
+SharingPtr<T>
+SharingPtr<T>::make_shared(A0& a0, A1& a1, A2& a2, A3& a3, A4& a4)
+{
+    typedef imp::shared_ptr_emplace<T> CntrlBlk;
+    SharingPtr<T> r;
+    r.cntrl_ = new CntrlBlk(a0, a1, a2, a3, a4);
+    r.ptr_ = static_cast<CntrlBlk*>(r.cntrl_)->get();
+    return r;
+}
+
+template<class T>
+inline
+SharingPtr<T>
+make_shared()
+{
+    return SharingPtr<T>::make_shared();
+}
+
+template<class T, class A0>
+inline
+SharingPtr<T>
+make_shared(A0& a0)
+{
+    return SharingPtr<T>::make_shared(a0);
+}
+
+template<class T, class A0, class A1>
+inline
+SharingPtr<T>
+make_shared(A0& a0, A1& a1)
+{
+    return SharingPtr<T>::make_shared(a0, a1);
+}
+
+template<class T, class A0, class A1, class A2>
+inline
+SharingPtr<T>
+make_shared(A0& a0, A1& a1, A2& a2)
+{
+    return SharingPtr<T>::make_shared(a0, a1, a2);
+}
+
+template<class T, class A0, class A1, class A2, class A3>
+inline
+SharingPtr<T>
+make_shared(A0& a0, A1& a1, A2& a2, A3& a3)
+{
+    return SharingPtr<T>::make_shared(a0, a1, a2, a3);
+}
+
+template<class T, class A0, class A1, class A2, class A3, class A4>
+inline
+SharingPtr<T>
+make_shared(A0& a0, A1& a1, A2& a2, A3& a3, A4& a4)
+{
+    return SharingPtr<T>::make_shared(a0, a1, a2, a3, a4);
+}
+
 
 template<class T, class U>
 inline
