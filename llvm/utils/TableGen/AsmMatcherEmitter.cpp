@@ -306,9 +306,6 @@ struct MatchableInfo {
     }
   };
 
-  /// ResultInst - The result instruction generated.
-  const CodeGenInstruction *ResultInst;
-
   /// TheDef - This is the definition of the instruction or InstAlias that this
   /// matchable came from.
   Record *const TheDef;
@@ -349,13 +346,11 @@ struct MatchableInfo {
   MatchableInfo(const CodeGenInstruction &CGI)
     : TheDef(CGI.TheDef), DefRec(&CGI),
       TheOperandList(CGI.Operands), AsmString(CGI.AsmString) {
-    ResultInst = &CGI;
   }
 
   MatchableInfo(const CodeGenInstAlias *Alias)
     : TheDef(Alias->TheDef), DefRec(Alias), TheOperandList(Alias->Operands),
       AsmString(Alias->AsmString) {
-    ResultInst = Alias->ResultInst;
   }
   
   void Initialize(const AsmMatcherInfo &Info,
@@ -1821,7 +1816,14 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
        it != ie; ++it) {
     MatchableInfo &II = **it;
 
-    OS << "  { " << Target.getName() << "::" << II.ResultInst->TheDef->getName()
+
+    const CodeGenInstruction *ResultInst;
+    if (II.DefRec.is<const CodeGenInstruction*>())
+      ResultInst = II.DefRec.get<const CodeGenInstruction*>();
+    else
+      ResultInst = II.DefRec.get<const CodeGenInstAlias*>()->ResultInst;
+    
+    OS << "  { " << Target.getName() << "::" << ResultInst->TheDef->getName()
     << ", \"" << II.Mnemonic << "\""
     << ", " << II.ConversionFnKind << ", { ";
     for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
