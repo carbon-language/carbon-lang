@@ -752,15 +752,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (getLexer().is(AsmToken::EndOfStatement))
     Parser.Lex(); // Consume the EndOfStatement
 
-  // Hack to allow 'movq <largeimm>, <reg>' as an alias for movabsq.
-  if ((Name == "movq" || Name == "mov") && Operands.size() == 3 &&
-      static_cast<X86Operand*>(Operands[2])->isReg() &&
-      static_cast<X86Operand*>(Operands[1])->isImm() &&
-      !static_cast<X86Operand*>(Operands[1])->isImmSExti64i32()) {
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken("movabsq", NameLoc);
-  }
-
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".
   if ((Name.startswith("shr") || Name.startswith("sar") ||
@@ -857,26 +848,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Operands[1];
     Operands.erase(Operands.begin() + 1);
   }
-
-  // FIXME: Hack to handle "imul <imm>, B" which is an alias for "imul <imm>, B,
-  // B".
-  if (Name.startswith("imul") && Operands.size() == 3 &&
-      static_cast<X86Operand*>(Operands[1])->isImm() &&
-      static_cast<X86Operand*>(Operands.back())->isReg()) {
-    X86Operand *Op = static_cast<X86Operand*>(Operands.back());
-    Operands.push_back(X86Operand::CreateReg(Op->getReg(), Op->getStartLoc(),
-                                             Op->getEndLoc()));
-  }
-
-  // 'sldt <mem>' can be encoded with either sldtw or sldtq with the same
-  // effect (both store to a 16-bit mem).  Force to sldtw to avoid ambiguity
-  // errors, since its encoding is the most compact.
-  if (Name == "sldt" && Operands.size() == 2 &&
-      static_cast<X86Operand*>(Operands[1])->isMem()) {
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken("sldtw", NameLoc);
-  }
-
 
   // The assembler accepts these instructions with no operand as a synonym for
   // an instruction acting on st(1).  e.g. "fxch" -> "fxch %st(1)".

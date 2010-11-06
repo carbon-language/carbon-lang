@@ -1380,6 +1380,15 @@ def : InstAlias<"ljmp $seg, $off",  (FARJMP32i  i32imm:$off, i16imm:$seg)>;
 def : InstAlias<"lcall *$dst",      (FARCALL32m opaque48mem:$dst)>;
 def : InstAlias<"ljmp *$dst",       (FARJMP32m  opaque48mem:$dst)>;
 
+// "imul <imm>, B" is an alias for "imul <imm>, B, B".
+def : InstAlias<"imulw $imm, $r", (IMUL16rri  GR16:$r, GR16:$r, i16imm:$imm)>;
+def : InstAlias<"imulw $imm, $r", (IMUL16rri8 GR16:$r, GR16:$r, i16i8imm:$imm)>;
+def : InstAlias<"imull $imm, $r", (IMUL32rri  GR32:$r, GR32:$r, i32imm:$imm)>;
+def : InstAlias<"imull $imm, $r", (IMUL32rri8 GR32:$r, GR32:$r, i32i8imm:$imm)>;
+def : InstAlias<"imulq $imm, $r",(IMUL64rri32 GR64:$r, GR64:$r,i64i32imm:$imm)>;
+def : InstAlias<"imulq $imm, $r", (IMUL64rri8 GR64:$r, GR64:$r, i64i8imm:$imm)>;
+
+
 // jmp and call aliases for lcall and ljmp.  jmp $42,$5 -> ljmp
 def : InstAlias<"call $seg, $off",  (FARCALL32i i32imm:$off, i16imm:$seg)>;
 def : InstAlias<"jmp $seg, $off",   (FARJMP32i  i32imm:$off, i16imm:$seg)>;
@@ -1388,6 +1397,9 @@ def : InstAlias<"jmpw $seg, $off",  (FARJMP16i  i16imm:$off, i16imm:$seg)>;
 def : InstAlias<"calll $seg, $off", (FARCALL32i i32imm:$off, i16imm:$seg)>;
 def : InstAlias<"jmpl $seg, $off",  (FARJMP32i  i32imm:$off, i16imm:$seg)>;
 
+
+// Match 'movq <largeimm>, <reg>' as an alias for movabsq.
+def : InstAlias<"movq $imm, $reg", (MOV64ri GR64:$reg, i64imm:$imm)>;
 
 // movsd with no operands (as opposed to the SSE scalar move of a double) is an
 // alias for movsl. (as in rep; movsd)
@@ -1410,6 +1422,12 @@ def : InstAlias<"movzx $src, $dst", (MOVZX32rr16 GR32:$dst, GR16:$src)>;
 def : InstAlias<"movzx $src, $dst", (MOVZX64rr8_Q GR64:$dst, GR8:$src)>;
 def : InstAlias<"movzx $src, $dst", (MOVZX64rr16_Q GR64:$dst, GR16:$src)>;
 // Note: No GR32->GR64 movzx form.
+
+// 'sldt <mem>' can be encoded with either sldtw or sldtq with the same
+// effect (both store to a 16-bit mem).  Force to sldtw to avoid ambiguity
+// errors, since its encoding is the most compact.
+def : InstAlias<"sldt $mem", (SLDT16m i16mem:$mem)>;
+
 
 // test: We accept "testX <reg>, <mem>" and "testX <mem>, <reg>" as synonyms.
 def : InstAlias<"testb $val, $mem", (TEST8rm  GR8 :$val, i8mem :$mem)>;
