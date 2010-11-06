@@ -387,8 +387,8 @@ int ARMAsmParser::TryParseRegister() {
 
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
-  int RegNum = MatchRegisterName(Tok.getString());
-  if (RegNum == -1)
+  unsigned RegNum = MatchRegisterName(Tok.getString());
+  if (RegNum == 0)
     return -1;
   Parser.Lex(); // Eat identifier token.
   return RegNum;
