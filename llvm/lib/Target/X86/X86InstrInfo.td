@@ -1370,6 +1370,10 @@ defm : IntegerCondCodeMnemonicAlias<"cmov", "q">;
 // Assembler Instruction Aliases
 //===----------------------------------------------------------------------===//
 
+// movsd with no operands (as opposed to the SSE scalar move of a double) is an
+// alias for movsl. (as in rep; movsd)
+def : InstAlias<"movsd", (MOVSD)>;
+
 // clr aliases.
 def : InstAlias<"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg)>;
 def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
@@ -1377,38 +1381,21 @@ def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
 
 // movsx aliases
-def : InstAlias<"movsx $src, $dst",
-                (MOVSX16rr8W GR16:$dst, GR8:$src)>;
-def : InstAlias<"movsx $src, $dst",
-                (MOVSX16rm8W GR16:$dst, i8mem:$src)>;
-
-def : InstAlias<"movsx $src, $dst",
-                (MOVSX32rr8 GR32:$dst, GR8:$src)>;
-def : InstAlias<"movsx $src, $dst",
-                (MOVSX32rr16 GR32:$dst, GR16:$src)>;
-
-def : InstAlias<"movsx $src, $dst",
-                (MOVSX64rr8 GR64:$dst, GR8:$src)>;
-def : InstAlias<"movsx $src, $dst",
-                (MOVSX64rr16 GR64:$dst, GR16:$src)>;
-def : InstAlias<"movsx $src, $dst",
-                (MOVSX64rr32 GR64:$dst, GR32:$src)>;
+def : InstAlias<"movsx $src, $dst", (MOVSX16rr8W GR16:$dst, GR8:$src)>;
+def : InstAlias<"movsx $src, $dst", (MOVSX16rm8W GR16:$dst, i8mem:$src)>;
+def : InstAlias<"movsx $src, $dst", (MOVSX32rr8 GR32:$dst, GR8:$src)>;
+def : InstAlias<"movsx $src, $dst", (MOVSX32rr16 GR32:$dst, GR16:$src)>;
+def : InstAlias<"movsx $src, $dst", (MOVSX64rr8 GR64:$dst, GR8:$src)>;
+def : InstAlias<"movsx $src, $dst", (MOVSX64rr16 GR64:$dst, GR16:$src)>;
+def : InstAlias<"movsx $src, $dst", (MOVSX64rr32 GR64:$dst, GR32:$src)>;
 
 // movzx aliases
-def : InstAlias<"movzx $src, $dst",
-                (MOVZX16rr8W GR16:$dst, GR8:$src)>;
-def : InstAlias<"movzx $src, $dst",
-                (MOVZX16rm8W GR16:$dst, i8mem:$src)>;
-
-def : InstAlias<"movzx $src, $dst",
-                (MOVZX32rr8 GR32:$dst, GR8:$src)>;
-def : InstAlias<"movzx $src, $dst",
-                (MOVZX32rr16 GR32:$dst, GR16:$src)>;
-
-def : InstAlias<"movzx $src, $dst",
-                (MOVZX64rr8_Q GR64:$dst, GR8:$src)>;
-def : InstAlias<"movzx $src, $dst",
-                (MOVZX64rr16_Q GR64:$dst, GR16:$src)>;
+def : InstAlias<"movzx $src, $dst", (MOVZX16rr8W GR16:$dst, GR8:$src)>;
+def : InstAlias<"movzx $src, $dst", (MOVZX16rm8W GR16:$dst, i8mem:$src)>;
+def : InstAlias<"movzx $src, $dst", (MOVZX32rr8 GR32:$dst, GR8:$src)>;
+def : InstAlias<"movzx $src, $dst", (MOVZX32rr16 GR32:$dst, GR16:$src)>;
+def : InstAlias<"movzx $src, $dst", (MOVZX64rr8_Q GR64:$dst, GR8:$src)>;
+def : InstAlias<"movzx $src, $dst", (MOVZX64rr16_Q GR64:$dst, GR16:$src)>;
 // Note: No GR32->GR64 movzx form.
 
 
