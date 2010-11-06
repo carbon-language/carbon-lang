@@ -880,3 +880,20 @@ mov (%rsi), %gs  // CHECK: movl	(%rsi), %gs # encoding: [0x8e,0x2e]
 mov %gs, (%rsi)  // CHECK: movl	%gs, (%rsi) # encoding: [0x8c,0x2e]
 
 
+// rdar://8431864
+	div	%bl,%al
+	div	%bx,%ax
+	div	%ecx,%eax
+	div	0xdeadbeef(%ebx,%ecx,8),%eax
+	div	0x45,%eax
+	div	0x7eed,%eax
+	div	0xbabecafe,%eax
+	div	0x12345678,%eax
+	idiv	%bl,%al
+	idiv	%bx,%ax
+	idiv	%ecx,%eax
+	idiv	0xdeadbeef(%ebx,%ecx,8),%eax
+	idiv	0x45,%eax
+	idiv	0x7eed,%eax
+	idiv	0xbabecafe,%eax
+	idiv	0x12345678,%eax

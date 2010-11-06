@@ -1377,6 +1377,26 @@ def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
 def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
 
+// div and idiv aliases for explicit A register.
+def : InstAlias<"divb $src, %al",  (DIV8r  GR8 :$src)>;
+def : InstAlias<"divw $src, %ax",  (DIV16r GR16:$src)>;
+def : InstAlias<"divl $src, %eax", (DIV32r GR32:$src)>;
+def : InstAlias<"divq $src, %rax", (DIV64r GR64:$src)>;
+def : InstAlias<"divb $src, %al",  (DIV8m  i8mem :$src)>;
+def : InstAlias<"divw $src, %ax",  (DIV16m i16mem:$src)>;
+def : InstAlias<"divl $src, %eax", (DIV32m i32mem:$src)>;
+def : InstAlias<"divq $src, %rax", (DIV64m i64mem:$src)>;
+def : InstAlias<"idivb $src, %al",  (IDIV8r  GR8 :$src)>;
+def : InstAlias<"idivw $src, %ax",  (IDIV16r GR16:$src)>;
+def : InstAlias<"idivl $src, %eax", (IDIV32r GR32:$src)>;
+def : InstAlias<"idivq $src, %rax", (IDIV64r GR64:$src)>;
+def : InstAlias<"idivb $src, %al",  (IDIV8m  i8mem :$src)>;
+def : InstAlias<"idivw $src, %ax",  (IDIV16m i16mem:$src)>;
+def : InstAlias<"idivl $src, %eax", (IDIV32m i32mem:$src)>;
+def : InstAlias<"idivq $src, %rax", (IDIV64m i64mem:$src)>;
+
+
+
 // Various unary fpstack operations default to operating on on ST1.
 // For example, "fxch" -> "fxch %st(1)"
 def : InstAlias<"faddp",        (ADD_FPrST0  ST1)>;
