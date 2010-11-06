@@ -570,9 +570,7 @@ class MnemonicAlias<string From, string To> {
 /// InstAlias - This defines an alternate assembly syntax that is allowed to
 /// match an instruction that has a different (more canonical) assembly
 /// representation.
-class InstAlias<dag Outs, dag Ins, string Asm, dag Result> {
-  dag OutOperandList = Outs;   // An dag containing the MI def operand list.
-  dag InOperandList = Ins;     // An dag containing the MI use operand list.
+class InstAlias<string Asm, dag Result> {
   string AsmString = Asm;      // The .s format to match the instruction with.
   dag ResultInst = Result;     // The MCInst to generate.
   

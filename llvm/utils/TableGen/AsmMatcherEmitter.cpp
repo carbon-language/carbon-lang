@@ -313,9 +313,11 @@ struct MatchableInfo {
   /// DefRec - This is the definition that it came from.
   PointerUnion<const CodeGenInstruction*, const CodeGenInstAlias*> DefRec;
   
-  // FIXME: REMOVE.
-  const CGIOperandList &TheOperandList;
-
+  const CodeGenInstruction *getResultInst() const {
+    if (DefRec.is<const CodeGenInstruction*>())
+      return DefRec.get<const CodeGenInstruction*>();
+    return DefRec.get<const CodeGenInstAlias*>()->ResultInst;
+  }
   
   /// ResOperands - This is the operand list that should be built for the result
   /// MCInst.
@@ -344,13 +346,11 @@ struct MatchableInfo {
   std::string ConversionFnKind;
   
   MatchableInfo(const CodeGenInstruction &CGI)
-    : TheDef(CGI.TheDef), DefRec(&CGI),
-      TheOperandList(CGI.Operands), AsmString(CGI.AsmString) {
+    : TheDef(CGI.TheDef), DefRec(&CGI), AsmString(CGI.AsmString) {
   }
 
   MatchableInfo(const CodeGenInstAlias *Alias)
-    : TheDef(Alias->TheDef), DefRec(Alias), TheOperandList(Alias->Operands),
-      AsmString(Alias->AsmString) {
+    : TheDef(Alias->TheDef), DefRec(Alias), AsmString(Alias->AsmString) {
   }
   
   void Initialize(const AsmMatcherInfo &Info,
@@ -1128,7 +1128,7 @@ BuildInstructionOperandReference(MatchableInfo *II,
   const CodeGenInstruction &CGI = *II->DefRec.get<const CodeGenInstruction*>();
   const CGIOperandList &Operands = CGI.Operands;
   
-  // Map this token to an operand. FIXME: Move elsewhere.
+  // Map this token to an operand.
   unsigned Idx;
   if (!Operands.hasOperandNamed(OperandName, Idx))
     throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
@@ -1171,6 +1171,8 @@ void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
   // Set up the operand class.
   for (unsigned i = 0, e = CGA.ResultOperands.size(); i != e; ++i)
     if (CGA.ResultOperands[i].Name == OperandName) {
+      // It's safe to go with the first one we find, because CodeGenInstAlias
+      // validates that all operands with the same name have the same record.
       Op.Class = getOperandClass(CGA.ResultInst->Operands[i]);
       Op.SrcOpName = OperandName;
       return;
@@ -1181,8 +1183,12 @@ void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
 }
 
 void MatchableInfo::BuildResultOperands() {
-  for (unsigned i = 0, e = TheOperandList.size(); i != e; ++i) {
-    const CGIOperandList::OperandInfo &OpInfo = TheOperandList[i];
+  const CodeGenInstruction *ResultInst = getResultInst();
+  
+  // Loop over all operands of the result instruction, determining how to
+  // populate them.
+  for (unsigned i = 0, e = ResultInst->Operands.size(); i != e; ++i) {
+    const CGIOperandList::OperandInfo &OpInfo = ResultInst->Operands[i];
 
     // If this is a tied operand, just copy from the previously handled operand.
     int TiedOp = OpInfo.getTiedRegister();
@@ -1794,15 +1800,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     MatchableInfo &II = **it;
 
 
-    const CodeGenInstruction *ResultInst;
-    if (II.DefRec.is<const CodeGenInstruction*>())
-      ResultInst = II.DefRec.get<const CodeGenInstruction*>();
-    else
-      ResultInst = II.DefRec.get<const CodeGenInstAlias*>()->ResultInst;
-    
-    OS << "  { " << Target.getName() << "::" << ResultInst->TheDef->getName()
-    << ", \"" << II.Mnemonic << "\""
-    << ", " << II.ConversionFnKind << ", { ";
+    OS << "  { " << Target.getName() << "::"
+       << II.getResultInst()->TheDef->getName() << ", \"" << II.Mnemonic << "\""
+       << ", " << II.ConversionFnKind << ", { ";
     for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
       MatchableInfo::AsmOperand &Op = II.AsmOperands[i];
 

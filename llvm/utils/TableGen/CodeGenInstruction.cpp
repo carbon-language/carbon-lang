@@ -389,10 +389,8 @@ FlattenAsmStringVariants(StringRef Cur, unsigned Variant) {
 /// CodeGenInstAlias Implementation
 //===----------------------------------------------------------------------===//
 
-CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T)
-  : TheDef(R), Operands(R) {
+CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
   AsmString = R->getValueAsString("AsmString");
-
   Result = R->getValueAsDag("ResultInst");
 
   // Verify that the root of the result is an instruction.

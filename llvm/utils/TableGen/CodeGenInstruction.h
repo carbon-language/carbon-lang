@@ -258,10 +258,6 @@ namespace llvm {
     /// instruction.
     std::string AsmString;
     
-    /// Operands - This is information about the (ins) and (outs) list specified
-    /// to the alias.
-    CGIOperandList Operands;
-    
     /// Result - The result instruction.
     DagInit *Result;
     
