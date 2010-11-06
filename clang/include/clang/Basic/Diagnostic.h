@@ -215,7 +215,7 @@ private:
     unsigned char Values[diag::DIAG_UPPER_LIMIT/2];
 
   public:
-    DiagMappings() : Values() { }
+    DiagMappings() : Values() /*zero-initialization of array*/ { }
 
     void setMapping(diag::kind Diag, unsigned Map) {
       size_t Shift = (Diag & 1)*4;
