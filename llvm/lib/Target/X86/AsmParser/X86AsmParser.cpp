@@ -797,22 +797,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(X86Operand::CreateReg(Reg, Loc, Loc));
   }
 
-  // FIXME: Hack to handle recognize "out[bwl] <op>".  Canonicalize it to
-  // "outb %al, <op>".
-  if ((Name == "outb" || Name == "outw" || Name == "outl") &&
-      Operands.size() == 2) {
-    unsigned Reg;
-    if (Name[3] == 'b')
-      Reg = MatchRegisterName("al");
-    else if (Name[3] == 'w')
-      Reg = MatchRegisterName("ax");
-    else
-      Reg = MatchRegisterName("eax");
-    SMLoc Loc = Operands.back()->getEndLoc();
-    Operands.push_back(X86Operand::CreateReg(Reg, Loc, Loc));
-    std::swap(Operands[1], Operands[2]);
-  }
-
   // FIXME: Hack to handle "out[bwl]? %al, (%dx)" -> "outb %al, %dx".
   if ((Name == "outb" || Name == "outw" || Name == "outl" || Name == "out") &&
       Operands.size() == 3) {
