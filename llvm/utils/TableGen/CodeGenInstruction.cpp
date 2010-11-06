@@ -15,6 +15,7 @@
 #include "CodeGenTarget.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include <set>
 using namespace llvm;
@@ -407,6 +408,10 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T)
                   " arguments, but " + ResultInst->TheDef->getName() +
                   " instruction expects " + utostr(ResultInst->Operands.size())+
                   " operands!");
+  
+  // NameClass - If argument names are repeated, we need to verify they have
+  // the same class.
+  StringMap<Record*> NameClass;
     
   // Decode and validate the arguments of the result.
   for (unsigned i = 0, e = Result->getNumArgs(); i != e; ++i) {
@@ -424,6 +429,15 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T)
                       " declared with class " + ADI->getDef()->getName() +
                       ", instruction operand is class " + 
                       ResultInst->Operands[i].Rec->getName());
+      
+      // Verify we don't have something like: (someinst GR16:$foo, GR32:$foo)
+      // $foo can exist multiple times in the result list, but it must have the
+      // same type.
+      Record *&Entry = NameClass[Result->getArgName(i)];
+      if (Entry && Entry != ADI->getDef())
+        throw TGError(R->getLoc(), "result value $" + Result->getArgName(i) +
+                      " is both " + Entry->getName() + " and " +
+                      ADI->getDef()->getName() + "!");
       
       // Now that it is validated, add it.
       ResultOperands.push_back(ResultOperand(Result->getArgName(i),

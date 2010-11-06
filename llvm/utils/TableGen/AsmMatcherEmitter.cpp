@@ -1160,47 +1160,24 @@ BuildInstructionOperandReference(MatchableInfo *II,
   Op.SrcOpName = OperandName;
 }
 
+/// BuildAliasOperandReference - When parsing an operand reference out of the
+/// matching string (e.g. "movsx $src, $dst"), determine what the class of the
+/// operand reference is by looking it up in the result pattern definition.
 void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
                                                 StringRef OperandName,
                                                 MatchableInfo::AsmOperand &Op) {
   const CodeGenInstAlias &CGA = *II->DefRec.get<const CodeGenInstAlias*>();
   
-  
-  // FIXME: This is a total hack, it should not be a copy of
-  // BuildInstructionOperandReference
-  
-  const CGIOperandList &Operands = CGA.Operands;
-  
-  // Map this token to an operand. FIXME: Move elsewhere.
-  unsigned Idx;
-  if (!Operands.hasOperandNamed(OperandName, Idx))
-    throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
-                  OperandName.str() + "'");
-  
   // Set up the operand class.
-  Op.Class = getOperandClass(Operands[Idx]);
-  
-  // If the named operand is tied, canonicalize it to the untied operand.
-  // For example, something like:
-  //   (outs GPR:$dst), (ins GPR:$src)
-  // with an asmstring of
-  //   "inc $src"
-  // we want to canonicalize to:
-  //   "inc $dst"
-  // so that we know how to provide the $dst operand when filling in the result.
-  int OITied = Operands[Idx].getTiedRegister();
-  if (OITied != -1) {
-    // The tied operand index is an MIOperand index, find the operand that
-    // contains it.
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (Operands[i].MIOperandNo == unsigned(OITied)) {
-        OperandName = Operands[i].Name;
-        break;
-      }
+  for (unsigned i = 0, e = CGA.ResultOperands.size(); i != e; ++i)
+    if (CGA.ResultOperands[i].Name == OperandName) {
+      Op.Class = getOperandClass(CGA.ResultInst->Operands[i]);
+      Op.SrcOpName = OperandName;
+      return;
     }
-  }
-  
-  Op.SrcOpName = OperandName;
+
+  throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
+                OperandName.str() + "'");
 }
 
 void MatchableInfo::BuildResultOperands() {
