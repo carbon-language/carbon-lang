@@ -42,7 +42,6 @@ class ARMAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
   TargetMachine &TM;
 
-private:
   MCAsmParser &getParser() const { return Parser; }
 
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
@@ -118,6 +117,7 @@ public:
     Immediate,
     Memory,
     Register,
+    RegisterList,
     Token
   } Kind;
 
@@ -137,6 +137,11 @@ public:
       unsigned RegNum;
       bool Writeback;
     } Reg;
+
+     struct {
+      unsigned RegStart;
+      unsigned Number;
+    } RegList;
 
     struct {
       const MCExpr *Val;
@@ -174,6 +179,9 @@ public:
     case Register:
       Reg = o.Reg;
       break;
+    case RegisterList:
+      RegList = o.RegList;
+      break;
     case Immediate:
       Imm = o.Imm;
       break;
@@ -203,6 +211,11 @@ public:
     return Reg.RegNum;
   }
 
+  std::pair<unsigned, unsigned> getRegList() const {
+    assert(Kind == RegisterList && "Invalid access!");
+    return std::make_pair(RegList.RegStart, RegList.Number);
+  }
+
   const MCExpr *getImm() const {
     assert(Kind == Immediate && "Invalid access!");
     return Imm.Val;
@@ -211,6 +224,7 @@ public:
   bool isCondCode() const { return Kind == CondCode; }
   bool isImm() const { return Kind == Immediate; }
   bool isReg() const { return Kind == Register; }
+  bool isRegList() const { return Kind == RegisterList; }
   bool isToken() const { return Kind == Token; }
   bool isMemory() const { return Kind == Memory; }
 
@@ -312,6 +326,16 @@ public:
     return Op;
   }
 
+  static ARMOperand *CreateRegList(unsigned RegStart, unsigned Number,
+                                   SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(RegisterList);
+    Op->RegList.RegStart = RegStart;
+    Op->RegList.Number = Number;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARMOperand *CreateImm(const MCExpr *Val, SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(Immediate);
     Op->Imm.Val = Val;
@@ -364,6 +388,19 @@ void ARMOperand::dump(raw_ostream &OS) const {
   case Register:
     OS << "<register " << getReg() << ">";
     break;
+  case RegisterList: {
+    OS << "<register_list ";
+    std::pair<unsigned, unsigned> List = getRegList();
+    unsigned RegEnd = List.first + List.second;
+
+    for (unsigned Idx = List.first; Idx < RegEnd; ) {
+      OS << Idx;
+      if (++Idx < RegEnd) OS << ", ";
+    }
+
+    OS << ">";
+    break;
+  }
   case Token:
     OS << "'" << getToken() << "'";
     break;
