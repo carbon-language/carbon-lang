@@ -1623,10 +1623,17 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
                                      /*wasskip*/false, /*foundnonskip*/true,
                                      /*foundelse*/false);
   } else {
-    // No, skip the contents of this block and return the first token after it.
+    // No, skip the contents of this block.
     SkipExcludedConditionalBlock(DirectiveTok.getLocation(),
                                  /*Foundnonskip*/false,
                                  /*FoundElse*/false);
+  }
+
+  if (Callbacks) {
+    if (isIfndef)
+      Callbacks->Ifndef(MacroNameTok.getLocation(), MII);
+    else
+      Callbacks->Ifdef(MacroNameTok.getLocation(), MII);
   }
 }
 
@@ -1636,10 +1643,11 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
                                      bool ReadAnyTokensBeforeDirective) {
   ++NumIf;
 
-  // Parse and evaluation the conditional expression.
+  // Parse and evaluate the conditional expression.
   IdentifierInfo *IfNDefMacro = 0;
-  bool ConditionalTrue = EvaluateDirectiveExpression(IfNDefMacro);
-
+  const SourceLocation ConditionalBegin = CurPPLexer->getSourceLocation();
+  const bool ConditionalTrue = EvaluateDirectiveExpression(IfNDefMacro);
+  const SourceLocation ConditionalEnd = CurPPLexer->getSourceLocation();
 
   // If this condition is equivalent to #ifndef X, and if this is the first
   // directive seen, handle it for the multiple-include optimization.
@@ -1656,10 +1664,13 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
     CurPPLexer->pushConditionalLevel(IfToken.getLocation(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
   } else {
-    // No, skip the contents of this block and return the first token after it.
+    // No, skip the contents of this block.
     SkipExcludedConditionalBlock(IfToken.getLocation(), /*Foundnonskip*/false,
                                  /*FoundElse*/false);
   }
+
+  if (Callbacks)
+    Callbacks->If(SourceRange(ConditionalBegin, ConditionalEnd));
 }
 
 /// HandleEndifDirective - Implements the #endif directive.
@@ -1683,9 +1694,13 @@ void Preprocessor::HandleEndifDirective(Token &EndifToken) {
 
   assert(!CondInfo.WasSkipping && !CurPPLexer->LexingRawMode &&
          "This code should only be reachable in the non-skipping case!");
+
+  if (Callbacks)
+    Callbacks->Endif();
 }
 
-
+/// HandleElseDirective - Implements the #else directive.
+///
 void Preprocessor::HandleElseDirective(Token &Result) {
   ++NumElse;
 
@@ -1705,19 +1720,25 @@ void Preprocessor::HandleElseDirective(Token &Result) {
   // If this is a #else with a #else before it, report the error.
   if (CI.FoundElse) Diag(Result, diag::pp_err_else_after_else);
 
-  // Finally, skip the rest of the contents of this block and return the first
-  // token after it.
-  return SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,
-                                      /*FoundElse*/true);
+  // Finally, skip the rest of the contents of this block.
+  SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,
+                               /*FoundElse*/true);
+
+  if (Callbacks)
+    Callbacks->Else();
 }
 
+/// HandleElifDirective - Implements the #elif directive.
+///
 void Preprocessor::HandleElifDirective(Token &ElifToken) {
   ++NumElse;
 
   // #elif directive in a non-skipping conditional... start skipping.
   // We don't care what the condition is, because we will always skip it (since
   // the block immediately before it was included).
+  const SourceLocation ConditionalBegin = CurPPLexer->getSourceLocation();
   DiscardUntilEndOfDirective();
+  const SourceLocation ConditionalEnd = CurPPLexer->getSourceLocation();
 
   PPConditionalInfo CI;
   if (CurPPLexer->popConditionalLevel(CI)) {
@@ -1732,8 +1753,10 @@ void Preprocessor::HandleElifDirective(Token &ElifToken) {
   // If this is a #elif with a #else before it, report the error.
   if (CI.FoundElse) Diag(ElifToken, diag::pp_err_elif_after_else);
 
-  // Finally, skip the rest of the contents of this block and return the first
-  // token after it.
-  return SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,
-                                      /*FoundElse*/CI.FoundElse);
+  // Finally, skip the rest of the contents of this block.
+  SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,
+                               /*FoundElse*/CI.FoundElse);
+
+  if (Callbacks)
+    Callbacks->Elif(SourceRange(ConditionalBegin, ConditionalEnd));
 }
