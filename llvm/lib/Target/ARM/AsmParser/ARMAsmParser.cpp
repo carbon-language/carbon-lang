@@ -36,24 +36,24 @@ enum ShiftType {
 };
 
 namespace {
-  struct ARMOperand;
+
+class ARMOperand;
 
 class ARMAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
   TargetMachine &TM;
 
   MCAsmParser &getParser() const { return Parser; }
-
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
   void Warning(SMLoc L, const Twine &Msg) { Parser.Warning(L, Msg); }
-
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
   int TryParseRegister();
   ARMOperand *TryParseRegisterWithWriteBack();
   ARMOperand *ParseRegisterList();
   ARMOperand *ParseMemory();
+  ARMOperand *ParseOperand();
 
   bool ParseMemoryOffsetReg(bool &Negative,
                             bool &OffsetRegShifted,
@@ -63,19 +63,11 @@ class ARMAsmParser : public TargetAsmParser {
                             bool &OffsetIsReg,
                             int &OffsetRegNum,
                             SMLoc &E);
-
   bool ParseShift(enum ShiftType &St, const MCExpr *&ShiftAmount, SMLoc &E);
-
-  ARMOperand *ParseOperand();
-
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
-
   bool ParseDirectiveThumb(SMLoc L);
-
   bool ParseDirectiveThumbFunc(SMLoc L);
-
   bool ParseDirectiveCode(SMLoc L);
-
   bool ParseDirectiveSyntax(SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
@@ -110,8 +102,7 @@ namespace {
 
 /// ARMOperand - Instances of this class represent a parsed ARM machine
 /// instruction.
-struct ARMOperand : public MCParsedAsmOperand {
-public:
+class ARMOperand : public MCParsedAsmOperand {
   enum KindTy {
     CondCode,
     Immediate,
@@ -150,21 +141,21 @@ public:
     // This is for all forms of ARM address expressions
     struct {
       unsigned BaseRegNum;
-      unsigned OffsetRegNum; // used when OffsetIsReg is true
-      const MCExpr *Offset; // used when OffsetIsReg is false
-      const MCExpr *ShiftAmount; // used when OffsetRegShifted is true
-      enum ShiftType ShiftType;  // used when OffsetRegShifted is true
-      unsigned
-        OffsetRegShifted : 1, // only used when OffsetIsReg is true
-        Preindexed : 1,
-        Postindexed : 1,
-        OffsetIsReg : 1,
-        Negative : 1, // only used when OffsetIsReg is true
-        Writeback : 1;
+      unsigned OffsetRegNum;         // used when OffsetIsReg is true
+      const MCExpr *Offset;          // used when OffsetIsReg is false
+      const MCExpr *ShiftAmount;     // used when OffsetRegShifted is true
+      enum ShiftType ShiftType;      // used when OffsetRegShifted is true
+      unsigned OffsetRegShifted : 1; // only used when OffsetIsReg is true
+      unsigned Preindexed : 1;
+      unsigned Postindexed : 1;
+      unsigned OffsetIsReg : 1;
+      unsigned Negative : 1;         // only used when OffsetIsReg is true
+      unsigned Writeback : 1;
     } Mem;
-
   };
 
+  ARMOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
+public:
   ARMOperand(const ARMOperand &o) : MCParsedAsmOperand() {
     Kind = o.Kind;
     StartLoc = o.StartLoc;
@@ -254,7 +245,6 @@ public:
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
   }
-
 
   bool isMemMode5() const {
     if (!isMemory() || Mem.OffsetIsReg || Mem.OffsetRegShifted ||
@@ -367,9 +357,6 @@ public:
     Op->EndLoc = E;
     return Op;
   }
-
-private:
-  ARMOperand(KindTy K) : Kind(K) {}
 };
 
 } // end anonymous namespace.
@@ -724,8 +711,10 @@ bool ARMAsmParser::ParseShift(ShiftType &St, const MCExpr *&ShiftAmount,
 /// of the mnemonic.
 ARMOperand *ARMAsmParser::ParseOperand() {
   SMLoc S, E;
-
   switch (getLexer().getKind()) {
+  default:
+    Error(Parser.getTok().getLoc(), "unexpected token in operand");
+    return 0;
   case AsmToken::Identifier:
     if (ARMOperand *Op = TryParseRegisterWithWriteBack())
       return Op;
@@ -752,9 +741,6 @@ ARMOperand *ARMAsmParser::ParseOperand() {
       return 0;
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     return ARMOperand::CreateImm(ImmVal, S, E);
-  default:
-    Error(Parser.getTok().getLoc(), "unexpected token in operand");
-    return 0;
   }
 }
 
@@ -840,6 +826,7 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     Parser.EatToEndOfStatement();
     return TokError("unexpected token in argument list");
   }
+
   Parser.Lex(); // Consume the EndOfStatement
   return false;
 }
@@ -854,7 +841,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   case Match_Success:
     Out.EmitInstruction(Inst);
     return false;
-
   case Match_MissingFeature:
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");
     return true;
@@ -875,9 +861,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   }
 
   llvm_unreachable("Implement any new match types added!");
+  return true;
 }
-
-
 
 /// ParseDirective parses the arm specific directives
 bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
