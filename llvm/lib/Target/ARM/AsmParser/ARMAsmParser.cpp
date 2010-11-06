@@ -82,7 +82,6 @@ class ARMAsmParser : public TargetAsmParser {
 
   /// }
 
-
 public:
   ARMAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
     : TargetAsmParser(T), Parser(_Parser), TM(_TM) {
@@ -93,7 +92,6 @@ public:
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);
-
   virtual bool ParseDirective(AsmToken DirectiveID);
 };
 } // end anonymous namespace
@@ -433,7 +431,8 @@ int ARMAsmParser::TryParseRegister() {
 ARMOperand *ARMAsmParser::TryParseRegisterWithWriteBack() {
   SMLoc S = Parser.getTok().getLoc();
   int RegNo = TryParseRegister();
-  if (RegNo == -1) return 0;
+  if (RegNo == -1)
+    return 0;
 
   SMLoc E = Parser.getTok().getLoc();
 
@@ -451,10 +450,9 @@ ARMOperand *ARMAsmParser::TryParseRegisterWithWriteBack() {
 /// Parse a register list, return it if successful else return null.  The first
 /// token must be a '{' when called.
 ARMOperand *ARMAsmParser::ParseRegisterList() {
-  SMLoc S, E;
   assert(Parser.getTok().is(AsmToken::LCurly) &&
          "Token is not a Left Curly Brace");
-  S = Parser.getTok().getLoc();
+  SMLoc S = Parser.getTok().getLoc();
   Parser.Lex(); // Eat left curly brace token.
 
   const AsmToken &RegTok = Parser.getTok();
@@ -463,18 +461,22 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
     Error(RegLoc, "register expected");
     return 0;
   }
+
   int RegNum = TryParseRegister();
   if (RegNum == -1) {
     Error(RegLoc, "register expected");
     return 0;
   }
 
-  unsigned RegList = 1 << RegNum;
+  unsigned PrevRegNum = RegNum;
+  std::vector<std::pair<unsigned, SMLoc> > Registers;
+  Registers.reserve(32);
+  Registers.push_back(std::make_pair(RegNum, RegLoc));
 
-  int HighRegNum = RegNum;
-  // TODO ranges like "{Rn-Rm}"
-  while (Parser.getTok().is(AsmToken::Comma)) {
-    Parser.Lex(); // Eat comma token.
+  while (Parser.getTok().is(AsmToken::Comma) ||
+         Parser.getTok().is(AsmToken::Minus)) {
+    bool IsRange = Parser.getTok().is(AsmToken::Minus);
+    Parser.Lex(); // Eat comma or minus token.
 
     const AsmToken &RegTok = Parser.getTok();
     SMLoc RegLoc = RegTok.getLoc();
@@ -482,33 +484,73 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
       Error(RegLoc, "register expected");
       return 0;
     }
+
     int RegNum = TryParseRegister();
     if (RegNum == -1) {
       Error(RegLoc, "register expected");
       return 0;
     }
 
-    if (RegList & (1 << RegNum))
-      Warning(RegLoc, "register duplicated in register list");
-    else if (RegNum <= HighRegNum)
-      Warning(RegLoc, "register not in ascending order in register list");
-    RegList |= 1 << RegNum;
-    HighRegNum = RegNum;
+    if (IsRange) {
+      int Reg = PrevRegNum;
+      do {
+        ++Reg;
+        Registers.push_back(std::make_pair(Reg, RegLoc));
+      } while (Reg != RegNum);
+    } else {
+      Registers.push_back(std::make_pair(RegNum, RegLoc));
+    }
+
+    PrevRegNum = RegNum;
   }
+
+  // Process the right curly brace of the list.
   const AsmToken &RCurlyTok = Parser.getTok();
   if (RCurlyTok.isNot(AsmToken::RCurly)) {
     Error(RCurlyTok.getLoc(), "'}' expected");
     return 0;
   }
-  E = RCurlyTok.getLoc();
-  Parser.Lex(); // Eat left curly brace token.
 
-  // FIXME: Need to return an operand!
-  Error(E, "FIXME: register list parsing not implemented");
-  return 0;
+  SMLoc E = RCurlyTok.getLoc();
+  Parser.Lex(); // Eat right curly brace token.
+ 
+  // Verify the register list.
+  std::vector<std::pair<unsigned, SMLoc> >::iterator
+    RI = Registers.begin(), RE = Registers.end();
+
+  unsigned Number = Registers.size();
+  unsigned HighRegNum = RI->first;
+  unsigned RegStart = RI->first;
+
+  DenseMap<unsigned, bool> RegMap;
+  RegMap[RI->first] = true;
+
+  for (++RI; RI != RE; ++RI) {
+    std::pair<unsigned, SMLoc> &RegInfo = *RI;
+
+    if (RegMap[RegInfo.first]) {
+      Error(RegInfo.second, "register duplicated in register list");
+      return 0;
+    }
+
+    if (RegInfo.first < HighRegNum)
+      Warning(RegInfo.second,
+              "register not in ascending order in register list");
+
+    RegMap[RegInfo.first] = true;
+    HighRegNum = std::max(RegInfo.first, HighRegNum);
+    RegStart = std::min(RegInfo.first, RegStart);
+  }
+
+  if (RegStart + Number - 1 != HighRegNum) {
+    Error(RegLoc, "non-contiguous register range");
+    return 0;
+  }
+
+  return ARMOperand::CreateRegList(RegStart, Number, S, E);
 }
 
-/// Parse an arm memory expression, return false if successful else return true
+/// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.
 /// TODO Only preindexing and postindexing addressing are started, unindexed
 /// with option, etc are still to do.
