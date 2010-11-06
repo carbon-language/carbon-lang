@@ -439,7 +439,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
   // If we can do this in a single instruction without a constant pool entry
   // do so now.
   const ConstantInt *CI = cast<ConstantInt>(C);
-  if (isUInt<16>(CI->getSExtValue())) {
+  if (Subtarget->hasV6T2Ops() && isUInt<16>(CI->getSExtValue())) {
     unsigned Opc = isThumb ? ARM::t2MOVi16 : ARM::MOVi16;
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
 			    TII.get(Opc), DestReg)
