@@ -117,7 +117,7 @@ ApplyUnicharHack(std::string &expr)
 bool
 ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     ScanContext(exe_ctx);
     
@@ -271,7 +271,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
                                                     lldb::addr_t &struct_address,
                                                     lldb::addr_t &object_ptr)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (m_jit_addr != LLDB_INVALID_ADDRESS)
     {

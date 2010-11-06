@@ -60,10 +60,10 @@ public:
     // Callback definitions for abstracted plug-in log access.
     //------------------------------------------------------------------
     typedef void (*DisableCallback) (Args &args, Stream *feedback_strm);
-    typedef Log* (*EnableCallback) (lldb::StreamSP &log_stream_sp,
-                                    uint32_t log_options,
-                                    Args &args,
-                                    Stream *feedback_strm);
+    typedef lldb::LogSP (*EnableCallback) (lldb::StreamSP &log_stream_sp,
+                                           uint32_t log_options,
+                                           Args &args,
+                                           Stream *feedback_strm);
     typedef void (*ListCategoriesCallback) (Stream *strm);
 
     struct Callbacks

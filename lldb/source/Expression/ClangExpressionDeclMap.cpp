@@ -151,7 +151,7 @@ ClangExpressionDeclMap::AddValueToStruct
     off_t alignment
 )
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     m_struct_laid_out = false;
     
@@ -510,7 +510,7 @@ ClangExpressionDeclMap::DoMaterialize
     Error &err
 )
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (!m_struct_laid_out)
     {
@@ -675,7 +675,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     Error &err
 )
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (!exe_ctx.frame || !exe_ctx.process)
         return false;
@@ -923,7 +923,7 @@ ClangExpressionDeclMap::FindVariableInScope
     TypeFromUser *type
 )
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     VariableList *var_list = frame.GetVariableList(true);
     
@@ -961,7 +961,7 @@ ClangExpressionDeclMap::GetDecls
     const ConstString &name
 )
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
         
     if (log)
         log->Printf("Hunting for a definition for '%s'", name.GetCString());
@@ -1109,7 +1109,7 @@ ClangExpressionDeclMap::GetVariableValue
     TypeFromParser *parser_type
 )
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     Type *var_type = var->GetType();
     
@@ -1216,7 +1216,7 @@ void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                        Variable* var)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     TypeFromUser ut;
     TypeFromParser pt;
@@ -1255,7 +1255,7 @@ void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                        ClangExpressionVariable *pvar)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     TypeFromUser user_type = pvar->m_user_type;
     
@@ -1288,7 +1288,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
                                        Function* fun,
                                        Symbol* symbol)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     NamedDecl *fun_decl;
     std::auto_ptr<Value> fun_location(new Value);

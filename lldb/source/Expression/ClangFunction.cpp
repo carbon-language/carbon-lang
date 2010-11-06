@@ -207,7 +207,7 @@ ClangFunction::CompileFunction (Stream &errors)
     m_wrapper_function_text.append (args_list_buffer);
     m_wrapper_function_text.append (");\n}\n");
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
         log->Printf ("Expression: \n\n%s\n\n", m_wrapper_function_text.c_str());
         
@@ -357,7 +357,7 @@ ClangFunction::InsertFunction (ExecutionContext &exe_ctx, lldb::addr_t &args_add
     if (!WriteFunctionArguments(exe_ctx, args_addr_ref, errors))
         return false;
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
         log->Printf ("Call Address: 0x%llx Struct Address: 0x%llx.\n", m_wrapper_function_addr, args_addr_ref);
         
@@ -542,7 +542,7 @@ ClangFunction::ExecuteFunction (
         return eExecutionSetupError;
     }
     
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     while (1)
     {

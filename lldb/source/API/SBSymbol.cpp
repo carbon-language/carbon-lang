@@ -60,7 +60,7 @@ SBSymbol::GetName() const
     if (m_opaque_ptr)
         name = m_opaque_ptr->GetMangled().GetName().AsCString();
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBSymbol(%p)::GetName () => \"%s\"", m_opaque_ptr, name ? name : "");
     return name;
@@ -72,7 +72,7 @@ SBSymbol::GetMangledName () const
     const char *name = NULL;
     if (m_opaque_ptr)
         name = m_opaque_ptr->GetMangled().GetMangledName().AsCString();
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBSymbol(%p)::GetMangledName () => \"%s\"", m_opaque_ptr, name ? name : "");
 

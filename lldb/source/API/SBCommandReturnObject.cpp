@@ -57,7 +57,7 @@ SBCommandReturnObject::IsValid() const
 const char *
 SBCommandReturnObject::GetOutput ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (m_opaque_ap.get())
     {
@@ -77,7 +77,7 @@ SBCommandReturnObject::GetOutput ()
 const char *
 SBCommandReturnObject::GetError ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (m_opaque_ap.get())
     {

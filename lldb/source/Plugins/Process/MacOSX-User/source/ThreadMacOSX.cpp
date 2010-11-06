@@ -248,7 +248,7 @@ ThreadMacOSX::ClearStackFrames ()
 int32_t
 ThreadMacOSX::Suspend()
 {
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD));
     if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf ("ThreadMacOSX::%s ( )", __FUNCTION__);
     lldb::tid_t tid = GetID ();
@@ -259,7 +259,7 @@ ThreadMacOSX::Suspend()
             m_suspend_count++;
         log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
         if (log || err.Fail())
-            err.PutToLog(log, "::thread_suspend (%4.4x)", tid);
+            err.PutToLog(log.get(), "::thread_suspend (%4.4x)", tid);
     }
     return GetSuspendCount();
 }
@@ -267,7 +267,7 @@ ThreadMacOSX::Suspend()
 int32_t
 ThreadMacOSX::Resume()
 {
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD));
     if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf ("ThreadMacOSX::%s ()", __FUNCTION__);
     lldb::tid_t tid = GetID ();
@@ -280,7 +280,7 @@ ThreadMacOSX::Resume()
                 m_suspend_count--;
             log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
             if (log || err.Fail())
-                err.PutToLog(log, "::thread_resume (%4.4x)", tid);
+                err.PutToLog(log.get(), "::thread_resume (%4.4x)", tid);
         }
     }
     return GetSuspendCount();
@@ -289,7 +289,7 @@ ThreadMacOSX::Resume()
 bool
 ThreadMacOSX::RestoreSuspendCount()
 {
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD));
     if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf ("ThreadMacOSX::%s ( )", __FUNCTION__);
     Error err;
@@ -305,7 +305,7 @@ ThreadMacOSX::RestoreSuspendCount()
                 --m_suspend_count;
             log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
             if (log || err.Fail())
-                err.PutToLog(log, "::thread_resume (%4.4x)", tid);
+                err.PutToLog(log.get(), "::thread_resume (%4.4x)", tid);
         }
     }
     else if (m_suspend_count < m_basic_info.suspend_count)
@@ -317,7 +317,7 @@ ThreadMacOSX::RestoreSuspendCount()
                 --m_suspend_count;
             log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_THREAD);
             if (log || err.Fail())
-                err.PutToLog(log, "::thread_suspend (%4.4x)", tid);
+                err.PutToLog(log.get(), "::thread_suspend (%4.4x)", tid);
         }
     }
     return  m_suspend_count == m_basic_info.suspend_count;

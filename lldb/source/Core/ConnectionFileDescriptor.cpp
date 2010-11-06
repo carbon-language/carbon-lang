@@ -145,7 +145,7 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
 size_t
 ConnectionFileDescriptor::Read (void *dst, size_t dst_len, ConnectionStatus &status, Error *error_ptr)
 {
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %zu)...",
                      this, m_fd, dst, dst_len);
@@ -227,7 +227,7 @@ ConnectionFileDescriptor::Read (void *dst, size_t dst_len, ConnectionStatus &sta
 size_t
 ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStatus &status, Error *error_ptr)
 {
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Write (src = %p, src_len = %zu)", this, src, src_len);
 
@@ -297,7 +297,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 ConnectionStatus
 ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_ptr)
 {
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf("%p ConnectionFileDescriptor::BytesAvailable (timeout_usec = %u)", this, timeout_usec);
     struct timeval *tv_ptr;

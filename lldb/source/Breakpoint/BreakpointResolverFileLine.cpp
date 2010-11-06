@@ -56,7 +56,7 @@ BreakpointResolverFileLine::SearchCallback
     CompileUnit *cu = context.comp_unit;
 
     assert (m_breakpoint != NULL);
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
 
     sc_list_size = cu->ResolveSymbolContext (m_file_spec, m_line_number, m_inlines, false, eSymbolContextEverything, sc_list);
     for (uint32_t i = 0; i < sc_list_size; i++)

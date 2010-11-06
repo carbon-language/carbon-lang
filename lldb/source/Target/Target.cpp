@@ -52,7 +52,7 @@ Target::Target(Debugger &debugger) :
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
     SetEventName (eBroadcastBitModulesUnloaded, "modules-unloaded");
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Target::Target()", this);
 }
@@ -62,7 +62,7 @@ Target::Target(Debugger &debugger) :
 //----------------------------------------------------------------------
 Target::~Target()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Target::~Target()", this);
     DeleteCurrentProcess ();
@@ -252,7 +252,7 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
         else
             m_breakpoint_list.Add (bp_sp, true);
 
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
         if (log)
         {
             StreamString s;
@@ -274,7 +274,7 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
 void
 Target::RemoveAllBreakpoints (bool internal_also)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (internal_also = %s)\n", __FUNCTION__, internal_also ? "yes" : "no");
 
@@ -288,7 +288,7 @@ Target::RemoveAllBreakpoints (bool internal_also)
 void
 Target::DisableAllBreakpoints (bool internal_also)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (internal_also = %s)\n", __FUNCTION__, internal_also ? "yes" : "no");
 
@@ -300,7 +300,7 @@ Target::DisableAllBreakpoints (bool internal_also)
 void
 Target::EnableAllBreakpoints (bool internal_also)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (internal_also = %s)\n", __FUNCTION__, internal_also ? "yes" : "no");
 
@@ -312,7 +312,7 @@ Target::EnableAllBreakpoints (bool internal_also)
 bool
 Target::RemoveBreakpointByID (break_id_t break_id)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (break_id = %i, internal = %s)\n", __FUNCTION__, break_id, LLDB_BREAK_ID_IS_INTERNAL (break_id) ? "yes" : "no");
 
@@ -334,7 +334,7 @@ Target::RemoveBreakpointByID (break_id_t break_id)
 bool
 Target::DisableBreakpointByID (break_id_t break_id)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (break_id = %i, internal = %s)\n", __FUNCTION__, break_id, LLDB_BREAK_ID_IS_INTERNAL (break_id) ? "yes" : "no");
 
@@ -355,7 +355,7 @@ Target::DisableBreakpointByID (break_id_t break_id)
 bool
 Target::EnableBreakpointByID (break_id_t break_id)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (break_id = %i, internal = %s)\n",
                      __FUNCTION__,

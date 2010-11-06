@@ -87,7 +87,7 @@ SBAddress::GetFileAddress () const
 lldb::addr_t
 SBAddress::GetLoadAddress (const SBTarget &target) const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (m_opaque_ap.get())
     {

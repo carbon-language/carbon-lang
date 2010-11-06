@@ -285,7 +285,7 @@ private:
     std::map<uint8_t *, uintptr_t> m_globals;           ///< A map from the base addresses of globals to their sizes.
     std::map<uint8_t *, uint8_t *> m_exception_tables;  ///< A map from the base addresses of exception tables to their end addresses.
     
-    lldb_private::Log *m_log;                           ///< The log to use when printing log messages.  May be NULL.
+    lldb::LogSP m_log; ///< The log to use when printing log messages.  May be NULL.
 
     //----------------------------------------------------------------------
     /// @class LocalToRemoteAddressRange RecordingMemoryManager.h "lldb/Expression/RecordingMemoryManager.h"

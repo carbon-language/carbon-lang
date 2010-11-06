@@ -71,7 +71,7 @@ SBCompileUnit::GetNumLineEntries () const
 SBLineEntry
 SBCompileUnit::GetLineEntryAtIndex (uint32_t idx) const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBLineEntry sb_line_entry;
     if (m_opaque_ptr)
@@ -99,7 +99,7 @@ SBCompileUnit::GetLineEntryAtIndex (uint32_t idx) const
 uint32_t
 SBCompileUnit::FindLineEntryIndex (uint32_t start_idx, uint32_t line, SBFileSpec *inline_file_spec) const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t index = UINT32_MAX;
     if (m_opaque_ptr)

@@ -99,7 +99,7 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
 {
     ASTContext &Ctx(*m_ast_context);
     
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (!m_sema)
         return false;

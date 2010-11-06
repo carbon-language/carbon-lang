@@ -56,10 +56,10 @@ LogIfAllCategoriesSet (uint32_t mask, const char *format, ...);
 void
 LogIfAnyCategoriesSet (uint32_t mask, const char *format, ...);
 
-Log *
+lldb::LogSP
 GetLogIfAllCategoriesSet (uint32_t mask);
 
-Log *
+lldb::LogSP
 GetLogIfAnyCategoriesSet (uint32_t mask);
 
 uint32_t
@@ -71,7 +71,7 @@ IsLogVerbose ();
 void
 DisableLog (Args &args, Stream *feedback_strm);
 
-Log *
+lldb::LogSP
 EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, Args &args, Stream *feedback_strm);
 
 void

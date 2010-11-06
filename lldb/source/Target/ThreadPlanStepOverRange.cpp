@@ -24,6 +24,7 @@
 #include "lldb/Target/ThreadPlanStepThrough.h"
 
 using namespace lldb_private;
+using namespace lldb;
 
 
 //----------------------------------------------------------------------
@@ -63,7 +64,7 @@ ThreadPlanStepOverRange::GetDescription (Stream *s, lldb::DescriptionLevel level
 bool
 ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (log)
     {

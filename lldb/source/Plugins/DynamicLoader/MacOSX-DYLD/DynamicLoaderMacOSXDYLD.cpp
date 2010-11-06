@@ -500,7 +500,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
 uint32_t
 DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 {
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     if (ReadAllImageInfosStructure ())
     {
         Mutex::Locker locker(m_mutex);
@@ -587,7 +587,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                 if (old_dyld_all_image_infos[old_idx].address != LLDB_INVALID_ADDRESS)
                 {
                     if (log)
-                        old_dyld_all_image_infos[old_idx].PutToLog (log);
+                        old_dyld_all_image_infos[old_idx].PutToLog (log.get());
                     ModuleSP unload_image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (old_dyld_all_image_infos[old_idx].file_spec));
                     if (unload_image_module_sp.get())
                     {
@@ -603,7 +603,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
         else
         {
             if (log)
-                PutToLog(log);
+                PutToLog(log.get());
         }
     }
     else
@@ -1094,7 +1094,7 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
     StackFrame *current_frame = thread.GetStackFrameAtIndex(0).get();
     const SymbolContext &current_context = current_frame->GetSymbolContext(eSymbolContextSymbol);
     Symbol *current_symbol = current_context.symbol;
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (current_symbol != NULL)
     {

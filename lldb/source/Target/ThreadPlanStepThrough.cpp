@@ -117,7 +117,7 @@ ThreadPlanStepThrough::WillStop ()
 bool
 ThreadPlanStepThrough::MischiefManaged ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     // Stop if we're happy with the place we've landed...
 

@@ -93,7 +93,7 @@ SBTarget::GetProcess ()
     if (m_opaque_sp)
         sb_process.SetProcess (m_opaque_sp->GetProcessSP());
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBTarget(%p)::GetProcess () => SBProcess(%p)", 
@@ -123,7 +123,7 @@ SBTarget::CreateProcess ()
     if (m_opaque_sp)
         sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBTarget(%p)::CreateProcess () => SBProcess(%p)", 
@@ -144,7 +144,7 @@ SBTarget::LaunchProcess
     bool stop_at_entry
 )
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBTarget(%p)::LaunchProcess (argv=%p, envp=%p, tty=\"%s\", launch_flags=%d, stop_at_entry=%i)",
@@ -174,7 +174,7 @@ SBTarget::Launch
     SBError &error
 )
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
     {
@@ -333,7 +333,7 @@ SBTarget::GetExecutable ()
             exe_file_spec.SetFileSpec (exe_module_sp->GetFileSpec());
     }
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBTarget(%p)::GetExecutable () => SBFileSpec(%p)", 
@@ -392,7 +392,7 @@ SBTarget::BreakpointCreateByLocation (const char *file, uint32_t line)
 SBBreakpoint
 SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t line)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && line != 0)
@@ -418,7 +418,7 @@ SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t l
 SBBreakpoint
 SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_name)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && symbol_name && symbol_name[0])
@@ -446,7 +446,7 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
 SBBreakpoint
 SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && symbol_name_regex && symbol_name_regex[0])
@@ -479,7 +479,7 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
 SBBreakpoint
 SBTarget::BreakpointCreateByAddress (addr_t address)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get())
@@ -496,7 +496,7 @@ SBTarget::BreakpointCreateByAddress (addr_t address)
 SBBreakpoint
 SBTarget::FindBreakpointByID (break_id_t bp_id)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_breakpoint;
     if (m_opaque_sp && bp_id != LLDB_INVALID_BREAK_ID)
@@ -531,7 +531,7 @@ SBTarget::GetBreakpointAtIndex (uint32_t idx) const
 bool
 SBTarget::BreakpointDelete (break_id_t bp_id)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool result = false;
     if (m_opaque_sp)
@@ -582,7 +582,7 @@ SBTarget::DeleteAllBreakpoints ()
 uint32_t
 SBTarget::GetNumModules () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t num = 0;
     if (m_opaque_sp)
@@ -597,7 +597,7 @@ SBTarget::GetNumModules () const
 void
 SBTarget::Clear ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBTarget(%p)::Clear ()", m_opaque_sp.get());
@@ -618,7 +618,7 @@ SBTarget::FindModule (const SBFileSpec &sb_file_spec)
 SBModule
 SBTarget::GetModuleAtIndex (uint32_t idx)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBModule sb_module;
     if (m_opaque_sp)
@@ -637,7 +637,7 @@ SBTarget::GetModuleAtIndex (uint32_t idx)
 SBBroadcaster
 SBTarget::GetBroadcaster () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBroadcaster broadcaster(m_opaque_sp.get(), false);
     

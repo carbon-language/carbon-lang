@@ -718,7 +718,7 @@ public:
         }
     }
 private:
-    Log    *m_log;
+    LogSP m_log;
 };
 
 clang_type_t

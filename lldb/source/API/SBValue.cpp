@@ -89,7 +89,7 @@ SBValue::GetName()
     if (m_opaque_sp)
         name = m_opaque_sp->GetName().GetCString();
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (name)
@@ -107,7 +107,7 @@ SBValue::GetTypeName ()
     const char *name = NULL;
     if (m_opaque_sp)
         name = m_opaque_sp->GetTypeName().GetCString();
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (name)
@@ -127,7 +127,7 @@ SBValue::GetByteSize ()
     if (m_opaque_sp)
         result = m_opaque_sp->GetByteSize();
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::GetByteSize () => %zu", m_opaque_sp.get(), result);
 
@@ -142,7 +142,7 @@ SBValue::IsInScope (const SBFrame &frame)
     if (m_opaque_sp)
         result = m_opaque_sp->IsInScope (frame.get());
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::IsInScope () => %i", m_opaque_sp.get(), result);
 
@@ -155,7 +155,7 @@ SBValue::GetValue (const SBFrame &frame)
     const char *cstr = NULL;
     if ( m_opaque_sp)
         cstr = m_opaque_sp->GetValueAsCString (frame.get());
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
@@ -173,7 +173,7 @@ SBValue::GetValueType ()
     ValueType result = eValueTypeInvalid;
     if (m_opaque_sp)
         result = m_opaque_sp->GetValueType();
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         switch (result)
@@ -198,7 +198,7 @@ SBValue::GetObjectDescription (const SBFrame &frame)
     const char *cstr = NULL;
     if ( m_opaque_sp)
         cstr = m_opaque_sp->GetObjectDescription (frame.get());
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
@@ -215,7 +215,7 @@ SBValue::GetValueDidChange (const SBFrame &frame)
     bool result = false;
     if (m_opaque_sp)
         result = m_opaque_sp->GetValueDidChange (frame.get());
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::GetValueDidChange (SBFrame(%p)) => %i", m_opaque_sp.get(), frame.get(), result);
 
@@ -228,7 +228,7 @@ SBValue::GetSummary (const SBFrame &frame)
     const char *cstr = NULL;
     if (m_opaque_sp)
         cstr = m_opaque_sp->GetSummaryAsCString(frame.get());
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
@@ -245,7 +245,7 @@ SBValue::GetLocation (const SBFrame &frame)
     const char *cstr = NULL;
     if (m_opaque_sp)
         cstr = m_opaque_sp->GetLocationAsCString(frame.get());
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
@@ -276,7 +276,7 @@ SBValue::GetChildAtIndex (uint32_t idx)
     }
 
     SBValue sb_value (child_sp);
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::GetChildAtIndex (%u) => SBValue(%p)", m_opaque_sp.get(), idx, sb_value.get());
 
@@ -289,7 +289,7 @@ SBValue::GetIndexOfChildWithName (const char *name)
     uint32_t idx = UINT32_MAX;
     if (m_opaque_sp)
         idx = m_opaque_sp->GetIndexOfChildWithName (ConstString(name));
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (idx == UINT32_MAX)
@@ -313,7 +313,7 @@ SBValue::GetChildMemberWithName (const char *name)
 
     SBValue sb_value (child_sp);
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::GetChildMemberWithName (name=\"%s\") => SBValue(%p)", m_opaque_sp.get(), name, sb_value.get());
 
@@ -329,7 +329,7 @@ SBValue::GetNumChildren ()
     if (m_opaque_sp)
         num_children = m_opaque_sp->GetNumChildren();
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::GetNumChildren () => %u", m_opaque_sp.get(), num_children);
 
@@ -357,7 +357,7 @@ SBValue::Dereference ()
         if (m_opaque_sp->IsPointerType())
             sb_value = GetChildAtIndex(0);
     }
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::Dereference () => SBValue(%p)", m_opaque_sp.get(), sb_value.get());
 
@@ -372,7 +372,7 @@ SBValue::TypeIsPointerType ()
     if (m_opaque_sp)
         is_ptr_type = m_opaque_sp->IsPointerType();
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBValue(%p)::TypeIsPointerType () => %i", m_opaque_sp.get(), is_ptr_type);
 

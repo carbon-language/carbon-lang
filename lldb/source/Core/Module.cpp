@@ -36,7 +36,7 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
 {
     if (object_name)
         m_object_name = *object_name;
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Module::Module((%s) '%s/%s%s%s%s')",
                      this,
@@ -50,7 +50,7 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
 
 Module::~Module()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Module::~Module((%s) '%s/%s%s%s%s')",
                      this,

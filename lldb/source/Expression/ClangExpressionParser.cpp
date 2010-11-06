@@ -408,7 +408,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
                                 lldb::addr_t &func_end, 
                                 ExecutionContext &exe_ctx)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     Error err;
     
@@ -578,7 +578,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
 Error
 ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     const char *name = m_expr.FunctionName();
     
@@ -664,10 +664,10 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
                             exe_ctx.process->GetByteOrder(),
                             exe_ctx.target->GetArchitecture().GetAddressByteSize());
     
-    if(log)
+    if (log)
     {
         log->Printf("Function data has contents:");
-        extractor.PutToLog (log,
+        extractor.PutToLog (log.get(),
                             0,
                             extractor.GetByteSize(),
                             func_remote_addr,

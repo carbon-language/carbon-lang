@@ -76,7 +76,7 @@ IRForTarget::~IRForTarget()
 bool 
 IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &llvm_function)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (!m_resolve_vars)
         return true;
@@ -270,7 +270,7 @@ bool
 IRForTarget::RewriteObjCSelector(Instruction* selector_load,
                                  Module &M)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     LoadInst *load = dyn_cast<LoadInst>(selector_load);
     
@@ -382,7 +382,7 @@ bool
 IRForTarget::rewriteObjCSelectors(Module &M, 
                                   BasicBlock &BB)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     BasicBlock::iterator ii;
     
@@ -481,7 +481,7 @@ IRForTarget::rewritePersistentAllocs(llvm::Module &M,
     if (!m_resolve_vars)
         return true;
     
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     BasicBlock::iterator ii;
     
@@ -567,7 +567,7 @@ IRForTarget::MaybeHandleVariable
     bool Store
 )
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(llvm_value_ptr))
     {
@@ -641,7 +641,7 @@ bool
 IRForTarget::MaybeHandleCallArguments(Module &M,
                                       CallInst *C)
 {
-    // lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    // lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     for (unsigned op_index = 0, num_ops = C->getNumArgOperands();
          op_index < num_ops;
@@ -656,7 +656,7 @@ bool
 IRForTarget::MaybeHandleCall(Module &llvm_module,
                              CallInst *llvm_call_inst)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     Function *fun = llvm_call_inst->getCalledFunction();
     
@@ -924,7 +924,7 @@ IRForTarget::removeGuards(Module &M, BasicBlock &BB)
 static bool
 UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instruction)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     Value::use_iterator ui;
     
@@ -1028,7 +1028,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
     if (!m_resolve_vars)
         return true;
     
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     m_decl_map->DoStructLayout();
     
@@ -1118,7 +1118,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
 bool
 IRForTarget::runOnModule(Module &M)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     Function* function = M.getFunction(StringRef(m_func_name.c_str()));
     

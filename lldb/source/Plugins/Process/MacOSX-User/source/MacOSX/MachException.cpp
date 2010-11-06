@@ -18,6 +18,7 @@
 #include "MachException.h"
 #include "ProcessMacOSXLog.h"
 
+using namespace lldb;
 using namespace lldb_private;
 
 // Routine mach_exception_raise
@@ -91,7 +92,7 @@ catch_mach_exception_raise_state
     mach_msg_type_number_t *    new_stateCnt
 )
 {
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS));
     if (log)
     {
         log->Printf("::%s ( exc_port = 0x%4.4x, exc_type = %d ( %s ), exc_data = " MACH_EXCEPTION_DATA_FMT_HEX ", exc_data_count = %d)",
@@ -122,7 +123,7 @@ catch_mach_exception_raise_state_identity
 )
 {
     kern_return_t kret;
-    Log * log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS));
     if (log)
     {
         log->Printf("::%s ( exc_port = 0x%4.4x, thd_port = 0x%4.4x, tsk_port = 0x%4.4x, exc_type = %d ( %s ), exc_data[%d] = { " MACH_EXCEPTION_DATA_FMT_HEX ",  " MACH_EXCEPTION_DATA_FMT_HEX " })",
@@ -152,7 +153,7 @@ catch_mach_exception_raise
     mach_exception_data_t   exc_data,
     mach_msg_type_number_t  exc_data_count)
 {
-    Log * log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS));
     if (log)
     {
         log->Printf("::%s ( exc_port = 0x%4.4x, thd_port = 0x%4.4x, tsk_port = 0x%4.4x, exc_type = %d ( %s ), exc_data[%d] = { " MACH_EXCEPTION_DATA_FMT_HEX ",  " MACH_EXCEPTION_DATA_FMT_HEX " })",
@@ -215,7 +216,7 @@ MachException::Data::GetStopInfo (lldb_private::Thread &thread) const
 void
 MachException::Data::DumpStopReason() const
 {
-    Log * log = ProcessMacOSXLog::GetLogIfAllCategoriesSet();
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet());
     if (log)
     {
         int signal = SoftSignal();
@@ -236,7 +237,7 @@ kern_return_t
 MachException::Message::Receive(mach_port_t port, mach_msg_option_t options, mach_msg_timeout_t timeout, mach_port_t notify_port)
 {
     Error err;
-    Log * log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS));
     mach_msg_timeout_t mach_msg_timeout = options & MACH_RCV_TIMEOUT ? timeout : 0;
     if (log && ((options & MACH_RCV_TIMEOUT) == 0))
     {
@@ -313,7 +314,7 @@ MachException::Message::CatchExceptionRaise()
     }
     else
     {
-        Log * log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS));
         if (log)
             log->Printf ("mach_exc_server returned zero...");
     }
@@ -329,7 +330,7 @@ MachException::Message::Reply(task_t task, pid_t pid, int signal)
     // Reply to the exception...
     Error err;
 
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet();
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet());
     if (log)
         log->Printf("MachException::Message::Reply (task = 0x%4.4x, pid = %i, signal = %i)", task, pid, signal);
 
@@ -369,7 +370,7 @@ MachException::Message::Reply(task_t task, pid_t pid, int signal)
             err.Clear();
 
         if (log && log->GetMask().Test(PD_LOG_EXCEPTIONS) || err.Fail())
-            err.PutToLog(log, "::ptrace (request = PT_THUPDATE, pid = %i, tid = 0x%4.4x, signal = %i)", state_pid, state.thread_port, signal);
+            err.PutToLog(log.get(), "::ptrace (request = PT_THUPDATE, pid = %i, tid = 0x%4.4x, signal = %i)", state_pid, state.thread_port, signal);
     }
 
     err = ::mach_msg (  &reply_msg.hdr,
@@ -401,18 +402,18 @@ MachException::Message::Reply(task_t task, pid_t pid, int signal)
     {
         if (err.GetError() == MACH_SEND_INTERRUPTED)
         {
-            err.PutToLog(log, "::mach_msg() - send interrupted");
+            err.PutToLog(log.get(), "::mach_msg() - send interrupted");
         }
         else
         {
             if (state.task_port == task)
             {
-                err.PutToLog(log, "::mach_msg() - failed (task)");
+                err.PutToLog(log.get(), "::mach_msg() - failed (task)");
                 abort ();
             }
             else
             {
-                err.PutToLog(log, "::mach_msg() - failed (child of task)");
+                err.PutToLog(log.get(), "::mach_msg() - failed (child of task)");
             }
         }
     }
@@ -465,7 +466,7 @@ kern_return_t
 MachException::PortInfo::Save (task_t task)
 {
     count = EXC_TYPES_COUNT;
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS));
     if (log)
         log->Printf ("MachException::PortInfo::Save (task = 0x%4.4x)", task);
     Error err;
@@ -473,7 +474,7 @@ MachException::PortInfo::Save (task_t task)
         log->Printf("::task_get_exception_ports (task=0x%4.4x, mask=0x%x, maskCnt<=>%u, ports, behaviors, flavors)...", task, EXC_MASK_ALL, count);
     err = ::task_get_exception_ports (task, EXC_MASK_ALL, masks, &count, ports, behaviors, flavors);
     if (log || err.Fail())
-        err.PutToLog(log, "::task_get_exception_ports (task=0x%4.4x, mask=0x%x, maskCnt<=>%u, ports, behaviors, flavors)", task, EXC_MASK_ALL, count);
+        err.PutToLog(log.get(), "::task_get_exception_ports (task=0x%4.4x, mask=0x%x, maskCnt<=>%u, ports, behaviors, flavors)", task, EXC_MASK_ALL, count);
     if (log)
     {
         mach_msg_type_number_t i;
@@ -490,7 +491,7 @@ MachException::PortInfo::Save (task_t task)
 kern_return_t
 MachException::PortInfo::Restore (task_t task)
 {
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS));
     if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf("MachException::PortInfo::Restore (task = 0x%4.4x)", task);
     uint32_t i = 0;
@@ -501,7 +502,7 @@ MachException::PortInfo::Restore (task_t task)
         {
             err = ::task_set_exception_ports (task, masks[i], ports[i], behaviors[i], flavors[i]);
             if (log || err.Fail())
-                err.PutToLog(log, "::task_set_exception_ports ( task = 0x%4.4x, exception_mask = 0x%8.8x, new_port = 0x%4.4x, behavior = 0x%8.8x, new_flavor = 0x%8.8x )", task, masks[i], ports[i], behaviors[i], flavors[i]);
+                err.PutToLog(log.get(), "::task_set_exception_ports ( task = 0x%4.4x, exception_mask = 0x%8.8x, new_port = 0x%4.4x, behavior = 0x%8.8x, new_flavor = 0x%8.8x )", task, masks[i], ports[i], behaviors[i], flavors[i]);
 
             if (err.Fail())
                 break;

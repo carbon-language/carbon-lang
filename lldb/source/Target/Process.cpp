@@ -89,7 +89,7 @@ Process::Process(Target &target, Listener &listener) :
 {
     UpdateInstanceName();
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Process::Process()", this);
 
@@ -118,7 +118,7 @@ Process::Process(Target &target, Listener &listener) :
 //----------------------------------------------------------------------
 Process::~Process()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Process::~Process()", this);
     StopPrivateStateThread();
@@ -243,7 +243,7 @@ Process::RestoreProcessEvents ()
 StateType
 Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
     if (log)
         log->Printf ("Process::%s (timeout = %p, event_sp)...", __FUNCTION__, timeout);
@@ -267,7 +267,7 @@ Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp)
 Event *
 Process::PeekAtStateChangedEvents ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
     if (log)
         log->Printf ("Process::%s...", __FUNCTION__);
@@ -296,7 +296,7 @@ Process::PeekAtStateChangedEvents ()
 StateType
 Process::WaitForStateChangedEventsPrivate (const TimeValue *timeout, EventSP &event_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
     if (log)
         log->Printf ("Process::%s (timeout = %p, event_sp)...", __FUNCTION__, timeout);
@@ -320,7 +320,7 @@ Process::WaitForStateChangedEventsPrivate (const TimeValue *timeout, EventSP &ev
 bool
 Process::WaitForEventsPrivate (const TimeValue *timeout, EventSP &event_sp, bool control_only)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
     if (log)
         log->Printf ("Process::%s (timeout = %p, event_sp)...", __FUNCTION__, timeout);
@@ -415,7 +415,7 @@ Process::GetState()
 void
 Process::SetPublicState (StateType new_state)
 {
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE));
     if (log)
         log->Printf("Process::SetPublicState (%s)", StateAsCString(new_state));
     m_public_state.SetValue (new_state);
@@ -430,7 +430,7 @@ Process::GetPrivateState ()
 void
 Process::SetPrivateState (StateType new_state)
 {
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE));
     bool state_changed = false;
 
     if (log)
@@ -811,7 +811,7 @@ Process::EnableSoftwareBreakpoint (BreakpointSite *bp_site)
 {
     Error error;
     assert (bp_site != NULL);
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     const addr_t bp_addr = bp_site->GetLoadAddress();
     if (log)
         log->Printf ("Process::EnableSoftwareBreakpoint (site_id = %d) addr = 0x%llx", bp_site->GetID(), (uint64_t)bp_addr);
@@ -888,7 +888,7 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
 {
     Error error;
     assert (bp_site != NULL);
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     addr_t bp_addr = bp_site->GetLoadAddress();
     lldb::user_id_t breakID = bp_site->GetID();
     if (log)
@@ -1389,7 +1389,7 @@ Process::Attach (const char *process_name, bool wait_for_launch)
 Error
 Process::Resume ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
         log->Printf("Process::Resume() m_stop_id = %u", m_stop_id);
 
@@ -1513,7 +1513,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
 {
     const StateType state = Process::ProcessEventData::GetStateFromEvent (event_ptr);
     bool return_value = true;
-    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS));
 
     switch (state)
     {
@@ -1632,7 +1632,7 @@ Process::GetThreadList () const
 bool
 Process::StartPrivateStateThread ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS));
 
     if (log)
         log->Printf ("Process::%s ( )", __FUNCTION__);
@@ -1664,7 +1664,7 @@ Process::StopPrivateStateThread ()
 void
 Process::ControlPrivateStateThread (uint32_t signal)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS));
 
     assert (signal == eBroadcastInternalStateControlStop ||
             signal == eBroadcastInternalStateControlPause ||
@@ -1701,7 +1701,7 @@ Process::ControlPrivateStateThread (uint32_t signal)
 void
 Process::HandlePrivateEvent (EventSP &event_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     const StateType internal_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
     // See if we should broadcast this state to external clients?
     const bool should_broadcast = ShouldBroadcastEvent (event_sp.get());
@@ -1740,7 +1740,7 @@ Process::RunPrivateStateThread ()
     bool control_only = false;
     m_private_state_control_wait.SetValue (false, eBroadcastNever);
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
         log->Printf ("Process::%s (arg = %p, pid = %i) thread starting...", __FUNCTION__, this, GetID());
 

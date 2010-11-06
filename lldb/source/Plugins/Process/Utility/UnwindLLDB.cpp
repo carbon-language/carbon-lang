@@ -31,7 +31,7 @@ UnwindLLDB::UnwindLLDB (Thread &thread) :
 uint32_t
 UnwindLLDB::GetFrameCount()
 {
-    Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     if (m_frames.empty())
     {
         // First, set up the 0th (initial) frame

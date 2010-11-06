@@ -69,7 +69,7 @@ ThreadPlanStepInRange::GetDescription (Stream *s, lldb::DescriptionLevel level)
 bool
 ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     m_no_more_plans = false;
     
     if (log)
@@ -245,7 +245,7 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
 {
     bool should_step_out = false;
     StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (flags.Test(eAvoidNoDebug))
     {

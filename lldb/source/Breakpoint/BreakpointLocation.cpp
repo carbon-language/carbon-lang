@@ -209,7 +209,7 @@ bool
 BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
 {
     bool should_stop = true;
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
 
     m_hit_count++;
 
@@ -287,7 +287,7 @@ BreakpointLocation::ResolveBreakpointSite ()
 
     if (new_id == LLDB_INVALID_BREAK_ID)
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+        LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         if (log)
             log->Warning ("Tried to add breakpoint site at 0x%llx but it was already present.\n",
                           m_address.GetLoadAddress(&m_owner.GetTarget()));

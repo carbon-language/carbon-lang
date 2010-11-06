@@ -335,7 +335,7 @@ kern_return_t
 MachThreadContext_arm::EnableHardwareSingleStep (bool enable)
 {
     Error err;
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_STEP);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_STEP));
 
     if (log) log->Printf("%s( enable = %d )", __FUNCTION__, enable);
 

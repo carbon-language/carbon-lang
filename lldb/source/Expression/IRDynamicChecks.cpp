@@ -296,7 +296,7 @@ public:
 private:
     bool InstrumentInstruction(llvm::Instruction *inst)
     {
-        lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
         if(log)
             log->Printf("Instrumenting load/store instruction: %s\n", 
@@ -396,7 +396,7 @@ private:
     
     bool InspectInstruction(llvm::Instruction &i)
     {
-        lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
         CallInst *call_inst = dyn_cast<CallInst>(&i);
         
@@ -460,7 +460,7 @@ IRDynamicChecks::~IRDynamicChecks()
 bool
 IRDynamicChecks::runOnModule(llvm::Module &M)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     llvm::Function* function = M.getFunction(StringRef(m_func_name.c_str()));
     

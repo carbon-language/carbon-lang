@@ -84,7 +84,7 @@ ThreadPlanStepRange::PlanExplainsStop ()
 Vote
 ThreadPlanStepRange::ShouldReportStop (Event *event_ptr)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     const Vote vote = IsPlanComplete() ? eVoteYes : eVoteNo;
     if (log)
@@ -95,7 +95,7 @@ ThreadPlanStepRange::ShouldReportStop (Event *event_ptr)
 bool
 ThreadPlanStepRange::InRange ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     bool ret_value = false;
 
     lldb::addr_t pc_load_addr = m_thread.GetRegisterContext()->GetPC();
@@ -158,7 +158,7 @@ ThreadPlanStepRange::InSymbol()
 bool
 ThreadPlanStepRange::FrameIsYounger ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     // FIXME: Might be better to do this by storing the FrameID we started in and seeing if that is still above
     // us on the stack.  Counting the whole stack could be expensive.
@@ -187,7 +187,7 @@ ThreadPlanStepRange::FrameIsYounger ()
 bool
 ThreadPlanStepRange::FrameIsOlder ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     uint32_t current_depth = m_thread.GetStackFrameCount();
     if (current_depth == m_stack_depth)
     {
@@ -254,7 +254,7 @@ ThreadPlanStepRange::MischiefManaged ()
 
     if (done)
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
             log->Printf("Completed step through range plan.");
         ThreadPlan::MischiefManaged ();

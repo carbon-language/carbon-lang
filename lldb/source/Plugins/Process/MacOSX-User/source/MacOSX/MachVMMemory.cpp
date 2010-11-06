@@ -14,6 +14,7 @@
 #include "MachVMRegion.h"
 #include "ProcessMacOSXLog.h"
 
+using namespace lldb;
 using namespace lldb_private;
 
 MachVMMemory::MachVMMemory() :
@@ -73,17 +74,17 @@ MachVMMemory::Read(task_t task, lldb::addr_t address, void *data, size_t data_co
         mach_msg_type_number_t curr_bytes_read = 0;
         vm_offset_t vm_memory = NULL;
         error = ::mach_vm_read (task, curr_addr, curr_size, &vm_memory, &curr_bytes_read);
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY|PD_LOG_VERBOSE);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY|PD_LOG_VERBOSE));
 
         if (log || error.Fail())
-            error.PutToLog (log, "::mach_vm_read (task = 0x%4.4x, addr = 0x%8.8llx, size = %llu, data => %8.8p, dataCnt => %i)", task, (uint64_t)curr_addr, (uint64_t)curr_size, vm_memory, curr_bytes_read);
+            error.PutToLog (log.get(), "::mach_vm_read (task = 0x%4.4x, addr = 0x%8.8llx, size = %llu, data => %8.8p, dataCnt => %i)", task, (uint64_t)curr_addr, (uint64_t)curr_size, vm_memory, curr_bytes_read);
 
         if (error.Success())
         {
             if (curr_bytes_read != curr_size)
             {
                 if (log)
-                    error.PutToLog (log, "::mach_vm_read (task = 0x%4.4x, addr = 0x%8.8llx, size = %llu, data => %8.8p, dataCnt=>%i) only read %u of %llu bytes", task, (uint64_t)curr_addr, (uint64_t)curr_size, vm_memory, curr_bytes_read, curr_bytes_read, (uint64_t)curr_size);
+                    error.PutToLog (log.get(), "::mach_vm_read (task = 0x%4.4x, addr = 0x%8.8llx, size = %llu, data => %8.8p, dataCnt=>%i) only read %u of %llu bytes", task, (uint64_t)curr_addr, (uint64_t)curr_size, vm_memory, curr_bytes_read, curr_bytes_read, (uint64_t)curr_size);
             }
             ::memcpy (curr_data, (void *)vm_memory, curr_bytes_read);
             ::vm_deallocate (mach_task_self (), vm_memory, curr_bytes_read);
@@ -168,16 +169,16 @@ MachVMMemory::WriteRegion(task_t task, const lldb::addr_t address, const void *d
     {
         mach_msg_type_number_t curr_data_count = MaxBytesLeftInPage(curr_addr, data_count - total_bytes_written);
         error = ::mach_vm_write (task, curr_addr, (pointer_t) curr_data, curr_data_count);
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY));
         if (log || error.Fail())
-            error.PutToLog (log, "::mach_vm_write ( task = 0x%4.4x, addr = 0x%8.8llx, data = %8.8p, dataCnt = %u )", task, (uint64_t)curr_addr, curr_data, curr_data_count);
+            error.PutToLog (log.get(), "::mach_vm_write ( task = 0x%4.4x, addr = 0x%8.8llx, data = %8.8p, dataCnt = %u )", task, (uint64_t)curr_addr, curr_data, curr_data_count);
 
 #if defined (__powerpc__) || defined (__ppc__)
         vm_machine_attribute_val_t mattr_value = MATTR_VAL_CACHE_FLUSH;
 
         error = ::vm_machine_attribute (task, curr_addr, curr_data_count, MATTR_CACHE, &mattr_value);
         if (log || error.Fail())
-            error.Log(log, "::vm_machine_attribute ( task = 0x%4.4x, addr = 0x%8.8llx, size = %u, attr = MATTR_CACHE, mattr_value => MATTR_VAL_CACHE_FLUSH )", task, (uint64_t)curr_addr, curr_data_count);
+            error.Log(log.get(), "::vm_machine_attribute ( task = 0x%4.4x, addr = 0x%8.8llx, size = %u, attr = MATTR_CACHE, mattr_value => MATTR_VAL_CACHE_FLUSH )", task, (uint64_t)curr_addr, curr_data_count);
 #endif
 
         if (error.Success())

@@ -290,7 +290,7 @@ DWARFCallFrameInfo::GetFDEIndex ()
     dw_offset_t offset = 0;
     if (m_cfi_data_initialized == false)
     {
-        Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+        LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log)
         { 
             log->Printf ("Reading eh_frame information for %s", m_objfile.GetFileSpec().GetFilename().GetCString());

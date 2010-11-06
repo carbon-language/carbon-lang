@@ -22,30 +22,21 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-static Log *
-LogAccessor (bool get, StreamSP *stream_sp_ptr)
+// We want to avoid global constructors where code needs to be run so here we
+// control access to our static g_log_sp by hiding it in a singleton function
+// that will construct the static g_lob_sp the first time this function is 
+// called.
+static LogSP &
+GetLog ()
 {
-    static Log* g_log = NULL; // Leak for now as auto_ptr was being cleaned up
-                                // by global constructors before other threads
-                                // were done with it.
-    if (!get)
-    {
-        if (g_log)
-            delete g_log;
-        if (stream_sp_ptr)
-            g_log = new Log (*stream_sp_ptr);
-        else
-            g_log = NULL;
-    }
-
-    return g_log;
-
+    static LogSP g_log_sp;
+    return g_log_sp;
 }
 
 uint32_t
 lldb_private::GetLogMask ()
 {
-    Log *log = LogAccessor (true, NULL);
+    LogSP log(GetLog ());
     if (log)
         return log->GetMask().Get();
     return 0;
@@ -58,15 +49,15 @@ lldb_private::IsLogVerbose ()
     return (mask & LIBLLDB_LOG_VERBOSE);
 }
 
-Log *
+LogSP
 lldb_private::GetLogIfAllCategoriesSet (uint32_t mask)
 {
-    Log *log = LogAccessor (true, NULL);
+    LogSP log(GetLog ());
     if (log && mask)
     {
         uint32_t log_mask = log->GetMask().Get();
         if ((log_mask & mask) != mask)
-            return NULL;
+            return LogSP();
     }
     return log;
 }
@@ -74,7 +65,7 @@ lldb_private::GetLogIfAllCategoriesSet (uint32_t mask)
 void
 lldb_private::LogIfAllCategoriesSet (uint32_t mask, const char *format, ...)
 {
-    Log *log = GetLogIfAllCategoriesSet (mask);
+    LogSP log(GetLogIfAllCategoriesSet (mask));
     if (log)
     {
         va_list args;
@@ -87,7 +78,7 @@ lldb_private::LogIfAllCategoriesSet (uint32_t mask, const char *format, ...)
 void
 lldb_private::LogIfAnyCategoriesSet (uint32_t mask, const char *format, ...)
 {
-    Log *log = GetLogIfAnyCategoriesSet (mask);
+    LogSP log(GetLogIfAnyCategoriesSet (mask));
     if (log)
     {
         va_list args;
@@ -97,19 +88,19 @@ lldb_private::LogIfAnyCategoriesSet (uint32_t mask, const char *format, ...)
     }
 }
 
-Log *
+LogSP
 lldb_private::GetLogIfAnyCategoriesSet (uint32_t mask)
 {
-    Log *log = LogAccessor (true, NULL);
+    LogSP log(GetLog ());
     if (log && mask && (mask & log->GetMask().Get()))
         return log;
-    return NULL;
+    return LogSP();
 }
 
 void
 lldb_private::DisableLog (Args &args, Stream *feedback_strm)
 {
-    Log *log = LogAccessor (true, NULL);
+    LogSP log(GetLog ());
     uint32_t flag_bits;
 
     if (log)
@@ -148,7 +139,7 @@ lldb_private::DisableLog (Args &args, Stream *feedback_strm)
             
         }
         if (flag_bits == 0)
-            LogAccessor (false, NULL);
+            GetLog ().reset();
         else
             log->GetMask().Reset (flag_bits);
     }
@@ -156,20 +147,25 @@ lldb_private::DisableLog (Args &args, Stream *feedback_strm)
     return;
 }
 
-Log *
+LogSP
 lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &args, Stream *feedback_strm)
 {
     // Try see if there already is a log - that way we can reuse its settings.
     // We could reuse the log in toto, but we don't know that the stream is the same.
     uint32_t flag_bits;
-    Log* log = LogAccessor (true, NULL);
+    LogSP log(GetLog ());
     if (log)
         flag_bits = log->GetMask().Get();
     else
         flag_bits = 0;
 
-    // Now make a new log with this stream.
-    log = LogAccessor (false, &log_stream_sp);
+    // Now make a new log with this stream if one was provided
+    if (log_stream_sp)
+    {
+        log = make_shared<Log>(log_stream_sp);
+        GetLog () = log;
+    }
+
     if (log)
     {
         bool got_unknown_category = false;

@@ -450,7 +450,7 @@ RegisterContextMach_i386::ReadGPR (bool force)
     {
         mach_msg_type_number_t count = GPRWordCount;
         SetError(set, Read, ::thread_get_state(GetThreadID(), set, (thread_state_t)&gpr, &count));
-        LogGPR (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD), "RegisterContextMach_i386::ReadGPR()");
+        LogGPR (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD).get(), "RegisterContextMach_i386::ReadGPR()");
     }
     return GetError(set, Read);
 }

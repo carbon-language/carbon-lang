@@ -193,8 +193,8 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
     StringExtractorGDBRemote &response
 )
 {
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
-    Log *async_log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_ASYNC);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    LogSP async_log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_ASYNC));
     if (log)
         log->Printf ("GDBRemoteCommunication::%s ()", __FUNCTION__);
 

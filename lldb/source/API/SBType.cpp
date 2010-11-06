@@ -21,7 +21,7 @@ using namespace lldb_private;
 bool
 SBType::IsPointerType (void *opaque_type)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     //if (log)
     //    log->Printf ("SBType::IsPointerType (%p)", opaque_type);

@@ -83,7 +83,7 @@ BreakpointResolverAddress::SearchCallback
         {
             StreamString s;
             bp_loc_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
-            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
             if (log)
                 log->Printf ("Added location: %s\n", s.GetData());
         }

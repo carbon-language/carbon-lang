@@ -93,7 +93,7 @@ public:
             }
             else
             {
-                Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
                 if (log)
                     log->Printf ("Process::%s could not find breakpoint site id: %lld...", __FUNCTION__, m_value);
@@ -127,7 +127,7 @@ public:
         }
         else
         {
-            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
             if (log)
                 log->Printf ("Process::%s could not find breakpoint site id: %lld...", __FUNCTION__, m_value);

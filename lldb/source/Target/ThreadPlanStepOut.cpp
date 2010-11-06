@@ -207,7 +207,7 @@ ThreadPlanStepOut::MischiefManaged ()
         // reason and we're now stopping for some other reason altogether, then we're done
         // with this step out operation.
 
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
             log->Printf("Completed step out plan.");
         m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_return_bp_id);

@@ -101,7 +101,7 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
 {
     if (m_step_over)
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (m_thread.GetStackFrameCount() <= m_stack_depth)
         {
             if (m_thread.GetRegisterContext()->GetPC(0) != m_instruction_addr)
@@ -178,7 +178,7 @@ ThreadPlanStepInstruction::MischiefManaged ()
 {
     if (IsPlanComplete())
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
             log->Printf("Completed single instruction step plan.");
         ThreadPlan::MischiefManaged ();

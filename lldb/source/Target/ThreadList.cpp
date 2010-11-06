@@ -179,7 +179,7 @@ ThreadList::ShouldStop (Event *event_ptr)
 
     // Running events should never stop, obviously...
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     bool should_stop = false;    
     m_process->UpdateThreadListIfNeeded();
@@ -251,7 +251,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
     m_process->UpdateThreadListIfNeeded();
     collection::iterator pos, end = m_threads.end();
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (log)
         log->Printf ("%s %zu threads", __FUNCTION__, m_threads.size());

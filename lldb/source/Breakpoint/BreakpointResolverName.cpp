@@ -81,7 +81,7 @@ BreakpointResolverName::BreakpointResolverName
     {
         if (!m_regex.Compile (m_func_name.AsCString()))
         {
-            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
 
             if (log)
                 log->Warning ("function name regexp: \"%s\" did not compile.", m_func_name.AsCString());
@@ -146,7 +146,7 @@ BreakpointResolverName::SearchCallback
     Address break_addr;
     assert (m_breakpoint != NULL);
     
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     
     if (m_class_name)
     {

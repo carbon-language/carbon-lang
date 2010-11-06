@@ -32,7 +32,7 @@ AddressResolverName::AddressResolverName
     {
         if (!m_regex.Compile (m_func_name.AsCString()))
         {
-            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
 
             if (log)
                 log->Warning ("function name regexp: \"%s\" did not compile.", m_func_name.AsCString());
@@ -93,7 +93,7 @@ AddressResolverName::SearchCallback
     SymbolContext sc;
     Address func_addr;
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
 
     if (m_class_name)
     {

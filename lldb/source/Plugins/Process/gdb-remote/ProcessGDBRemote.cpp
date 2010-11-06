@@ -633,7 +633,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     Clear();
     ArchSpec arch_spec = GetTarget().GetArchitecture();
     
-    //Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
+    //LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     
     
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
@@ -735,7 +735,7 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
     // HACK: require arch be set correctly at the target level until we can
     // figure out a good way to determine the arch of what we are attaching to
 
-    //Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
+    //LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (process_name && process_name[0])
     {
         char host_port[128];
@@ -948,7 +948,7 @@ uint32_t
 ProcessGDBRemote::UpdateThreadListIfNeeded ()
 {
     // locker will keep a mutex locked until it goes out of scope
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD));
     if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
         log->Printf ("ProcessGDBRemote::%s (pid = %i)", __FUNCTION__, GetID());
 
@@ -1166,7 +1166,7 @@ Error
 ProcessGDBRemote::DoDetach()
 {
     Error error;
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::DoDetach()");
 
@@ -1199,7 +1199,7 @@ Error
 ProcessGDBRemote::DoDestroy ()
 {
     Error error;
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::DoDestroy()");
 
@@ -1407,7 +1407,7 @@ ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
     Error error;
     assert (bp_site != NULL);
 
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS));
     user_id_t site_id = bp_site->GetID();
     const addr_t addr = bp_site->GetLoadAddress();
     if (log)
@@ -1483,7 +1483,7 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
     assert (bp_site != NULL);
     addr_t addr = bp_site->GetLoadAddress();
     user_id_t site_id = bp_site->GetID();
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %d) addr = 0x%8.8llx", site_id, (uint64_t)addr);
 
@@ -1550,7 +1550,7 @@ ProcessGDBRemote::EnableWatchpoint (WatchpointLocation *wp)
     {
         user_id_t watchID = wp->GetID();
         addr_t addr = wp->GetLoadAddress();
-        Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS);
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS));
         if (log)
             log->Printf ("ProcessGDBRemote::EnableWatchpoint(watchID = %d)", watchID);
         if (wp->IsEnabled())
@@ -1582,7 +1582,7 @@ ProcessGDBRemote::DisableWatchpoint (WatchpointLocation *wp)
     {
         user_id_t watchID = wp->GetID();
 
-        Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS);
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS));
 
         addr_t addr = wp->GetLoadAddress();
         if (log)
@@ -1620,7 +1620,7 @@ Error
 ProcessGDBRemote::DoSignal (int signo)
 {
     Error error;
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::DoSignal (signal = %d)", signo);
 
@@ -1706,14 +1706,14 @@ ProcessGDBRemote::StartDebugserverProcess
             m_stdio_communication.Clear();
             posix_spawnattr_t attr;
 
-            Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
+            LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
             Error local_err;    // Errors that don't affect the spawning.
             if (log)
                 log->Printf ("%s ( path='%s', argv=%p, envp=%p, arch=%s )", __FUNCTION__, debugserver_path, inferior_argv, inferior_envp, inferior_arch.AsCString());
             error.SetError( ::posix_spawnattr_init (&attr), eErrorTypePOSIX);
             if (error.Fail() || log)
-                error.PutToLog(log, "::posix_spawnattr_init ( &attr )");
+                error.PutToLog(log.get(), "::posix_spawnattr_init ( &attr )");
             if (error.Fail())
                 return error;;
 
@@ -1730,7 +1730,7 @@ ProcessGDBRemote::StartDebugserverProcess
                     size_t ocount = 0;
                     error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
                     if (error.Fail() || log)
-                        error.PutToLog(log, "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
+                        error.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
 
                     if (error.Fail() != 0 || ocount != 1)
                         return error;
@@ -1879,7 +1879,7 @@ ProcessGDBRemote::StartDebugserverProcess
                 m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
 
             if (error.Fail() || log)
-                error.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", m_debugserver_pid, debugserver_path, NULL, &attr, inferior_argv, inferior_envp);
+                error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", m_debugserver_pid, debugserver_path, NULL, &attr, inferior_argv, inferior_envp);
 
             if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
             {
@@ -2055,7 +2055,7 @@ ProcessGDBRemote::StartAsyncThread ()
 {
     ResetGDBRemoteState ();
 
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
 
     if (log)
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
@@ -2069,7 +2069,7 @@ ProcessGDBRemote::StartAsyncThread ()
 void
 ProcessGDBRemote::StopAsyncThread ()
 {
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
 
     if (log)
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
@@ -2089,7 +2089,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
 {
     ProcessGDBRemote *process = (ProcessGDBRemote*) arg;
 
-    Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) thread starting...", __FUNCTION__, arg, process->GetID());
 

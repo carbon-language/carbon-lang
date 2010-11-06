@@ -65,9 +65,9 @@ MachTask::Suspend()
     Error err;
     task_t task = GetTaskPort();
     err = ::task_suspend (task);
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK));
     if (log || err.Fail())
-        err.PutToLog(log, "::task_suspend ( target_task = 0x%4.4x )", task);
+        err.PutToLog(log.get(), "::task_suspend ( target_task = 0x%4.4x )", task);
     return err.GetError();
 }
 
@@ -81,9 +81,9 @@ MachTask::Resume()
     Error err;
     task_t task = GetTaskPort();
     err = ::task_resume (task);
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK));
     if (log || err.Fail())
-        err.PutToLog(log, "::task_resume ( target_task = 0x%4.4x )", task);
+        err.PutToLog(log.get(), "::task_resume ( target_task = 0x%4.4x )", task);
     return err.GetError();
 }
 
@@ -159,14 +159,14 @@ MachTask::ReadMemory (lldb::addr_t addr, void *buf, size_t size, Error& error)
     if (task != TASK_NULL)
     {
         n = m_vm_memory.Read(task, addr, buf, size, error);
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY));
         if (log)
         {
             log->Printf ("MachTask::ReadMemory ( addr = 0x%16.16llx, size = %zu, buf = %8.8p) => %u bytes read", (uint64_t)addr, size, buf, n);
             if (log->GetMask().Test(PD_LOG_MEMORY_DATA_LONG) || (log->GetMask().Test(PD_LOG_MEMORY_DATA_SHORT) && size <= 8))
             {
                 DataExtractor data((uint8_t*)buf, n, eByteOrderHost, 4);
-                data.PutToLog(log, 0, n, addr, 16, DataExtractor::TypeUInt8);
+                data.PutToLog(log.get(), 0, n, addr, 16, DataExtractor::TypeUInt8);
             }
         }
     }
@@ -185,14 +185,14 @@ MachTask::WriteMemory (lldb::addr_t addr, const void *buf, size_t size, Error& e
     if (task != TASK_NULL)
     {
         n = m_vm_memory.Write(task, addr, buf, size, error);
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY));
         if (log)
         {
             log->Printf ("MachTask::WriteMemory ( addr = 0x%16.16llx, size = %zu, buf = %8.8p) => %u bytes written", (uint64_t)addr, size, buf, n);
             if (log->GetMask().Test(PD_LOG_MEMORY_DATA_LONG) || (log->GetMask().Test(PD_LOG_MEMORY_DATA_SHORT) && size <= 8))
             {
                 DataExtractor data((uint8_t*)buf, n, eByteOrderHost, 4);
-                data.PutToLog(log, 0, n, addr, 16, DataExtractor::TypeUInt8);
+                data.PutToLog(log.get(), 0, n, addr, 16, DataExtractor::TypeUInt8);
             }
         }
     }
@@ -212,7 +212,7 @@ MachTask::AllocateMemory (size_t size, uint32_t permissions, Error& error)
 
     kern_return_t kret;
     mach_vm_address_t addr;
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_MEMORY));
 
     kret = ::mach_vm_allocate (GetTaskPort(), &addr, size, TRUE);
     if (kret == KERN_SUCCESS)
@@ -295,10 +295,10 @@ MachTask::GetTaskPortForProcessID (lldb::pid_t pid, Error &err)
     {
         mach_port_t task_self = mach_task_self ();
         err = ::task_for_pid ( task_self, pid, &task);
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK));
         if (log || err.Fail())
         {
-            err.PutToLog(log, "::task_for_pid ( target_tport = 0x%4.4x, pid = %d, task => 0x%4.4x ) %u/%u %u/%u", task_self, pid, task, getuid(), geteuid(), getgid(), getegid());
+            err.PutToLog(log.get(), "::task_for_pid ( target_tport = 0x%4.4x, pid = %d, task => 0x%4.4x ) %u/%u %u/%u", task_self, pid, task, getuid(), geteuid(), getgid(), getegid());
         }
     }
     return task;
@@ -326,9 +326,9 @@ MachTask::BasicInfo(task_t task, struct task_basic_info *info)
     Error err;
     mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
     err = ::task_info (task, TASK_BASIC_INFO, (task_info_t)info, &count);
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_TASK));
     if (log || err.Fail())
-        err.PutToLog(log, "::task_info ( target_task = 0x%4.4x, flavor = TASK_BASIC_INFO, task_info_out => %p, task_info_outCnt => %u )", task, info, count);
+        err.PutToLog(log.get(), "::task_info ( target_task = 0x%4.4x, flavor = TASK_BASIC_INFO, task_info_out => %p, task_info_outCnt => %u )", task, info, count);
     if (log && log->GetMask().Test(PD_LOG_VERBOSE) && err.Success())
     {
         float user = (float)info->user_time.seconds + (float)info->user_time.microseconds / 1000000.0f;
@@ -371,7 +371,7 @@ MachTask::IsValid (task_t task)
 bool
 MachTask::StartExceptionThread(Error &err)
 {
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS));
 
     if (log)
         log->Printf ("MachTask::%s ( )", __FUNCTION__);
@@ -384,7 +384,7 @@ MachTask::StartExceptionThread(Error &err)
         // Allocate an exception port that we will use to track our child process
         err = ::mach_port_allocate (task_self, MACH_PORT_RIGHT_RECEIVE, &m_exception_port);
         if (log || err.Fail())
-            err.PutToLog(log, "::mach_port_allocate (task_self=0x%4.4x, MACH_PORT_RIGHT_RECEIVE, &m_exception_port => 0x%4.4x)",
+            err.PutToLog(log.get(), "::mach_port_allocate (task_self=0x%4.4x, MACH_PORT_RIGHT_RECEIVE, &m_exception_port => 0x%4.4x)",
                          task_self, m_exception_port);
         if (err.Fail())
             return false;
@@ -392,7 +392,7 @@ MachTask::StartExceptionThread(Error &err)
         // Add the ability to send messages on the new exception port
         err = ::mach_port_insert_right (task_self, m_exception_port, m_exception_port, MACH_MSG_TYPE_MAKE_SEND);
         if (log || err.Fail())
-            err.PutToLog(log, "::mach_port_insert_right (task_self=0x%4.4x, m_exception_port=0x%4.4x, m_exception_port=0x%4.4x, MACH_MSG_TYPE_MAKE_SEND)",
+            err.PutToLog(log.get(), "::mach_port_insert_right (task_self=0x%4.4x, m_exception_port=0x%4.4x, m_exception_port=0x%4.4x, MACH_MSG_TYPE_MAKE_SEND)",
                          task_self, m_exception_port, m_exception_port);
         if (err.Fail())
             return false;
@@ -403,7 +403,7 @@ MachTask::StartExceptionThread(Error &err)
         // Set the ability to get all exceptions on this port
         err = ::task_set_exception_ports (task, EXC_MASK_ALL, m_exception_port, EXCEPTION_DEFAULT | MACH_EXCEPTION_CODES, THREAD_STATE_NONE);
         if (log || err.Fail())
-            err.PutToLog(log, "::task_set_exception_ports (task, EXC_MASK_ALL, m_exception_port, EXCEPTION_DEFAULT | MACH_EXCEPTION_CODES, THREAD_STATE_NONE)");
+            err.PutToLog(log.get(), "::task_set_exception_ports (task, EXC_MASK_ALL, m_exception_port, EXCEPTION_DEFAULT | MACH_EXCEPTION_CODES, THREAD_STATE_NONE)");
         if (err.Fail())
             return false;
 
@@ -427,7 +427,7 @@ MachTask::ShutDownExceptionThread()
 
     err = RestoreExceptionPortInfo();
 
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS));
 
     // NULL our our exception port and let our exception thread exit
     mach_port_t exception_port = m_exception_port;
@@ -435,17 +435,17 @@ MachTask::ShutDownExceptionThread()
 
     Host::ThreadCancel (m_exception_thread, &err);
     if (log || err.Fail())
-        err.PutToLog(log, "Host::ThreadCancel ( thread = %p )", m_exception_thread);
+        err.PutToLog(log.get(), "Host::ThreadCancel ( thread = %p )", m_exception_thread);
 
     Host::ThreadJoin (m_exception_thread, NULL, &err);
     if (log || err.Fail())
-        err.PutToLog(log, "Host::ThreadJoin ( thread = %p, result_ptr = NULL)", m_exception_thread);
+        err.PutToLog(log.get(), "Host::ThreadJoin ( thread = %p, result_ptr = NULL)", m_exception_thread);
 
     // Deallocate our exception port that we used to track our child process
     mach_port_t task_self = mach_task_self ();
     err = ::mach_port_deallocate (task_self, exception_port);
     if (log || err.Fail())
-        err.PutToLog(log, "::mach_port_deallocate ( task = 0x%4.4x, name = 0x%4.4x )", task_self, exception_port);
+        err.PutToLog(log.get(), "::mach_port_deallocate ( task = 0x%4.4x, name = 0x%4.4x )", task_self, exception_port);
     exception_port = NULL;
 
     Clear();
@@ -461,7 +461,7 @@ MachTask::ExceptionThread (void *arg)
 
     MachTask *mach_task = (MachTask*) arg;
     ProcessMacOSX *mach_proc = mach_task->Process();
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_EXCEPTIONS));
     if (log)
         log->Printf ("MachTask::%s (arg = %p) thread starting...", __FUNCTION__, arg);
 

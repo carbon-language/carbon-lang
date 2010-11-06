@@ -69,7 +69,7 @@ SBLineEntry::GetStartAddress () const
     if (m_opaque_ap.get())
         sb_address.SetAddress(&m_opaque_ap->range.GetBaseAddress());
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         StreamString sstr;
@@ -91,7 +91,7 @@ SBLineEntry::GetEndAddress () const
         sb_address.SetAddress(&m_opaque_ap->range.GetBaseAddress());
         sb_address.OffsetAddress(m_opaque_ap->range.GetByteSize());
     }
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         StreamString sstr;
@@ -113,7 +113,7 @@ SBLineEntry::IsValid () const
 SBFileSpec
 SBLineEntry::GetFileSpec () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFileSpec sb_file_spec;
     if (m_opaque_ap.get() && m_opaque_ap->file)
@@ -133,7 +133,7 @@ SBLineEntry::GetFileSpec () const
 uint32_t
 SBLineEntry::GetLine () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t line = 0;
     if (m_opaque_ap.get())

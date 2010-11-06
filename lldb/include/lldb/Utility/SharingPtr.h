@@ -267,7 +267,7 @@ SharingPtr<T>::make_shared()
     typedef imp::shared_ptr_emplace<T> CntrlBlk;
     SharingPtr<T> r;
     r.cntrl_ = new CntrlBlk();
-    r.ptr_ = r.cntrl_->get();
+    r.ptr_ = static_cast<CntrlBlk*>(r.cntrl_)->get();
     return r;
 }
 

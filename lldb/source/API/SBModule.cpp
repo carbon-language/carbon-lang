@@ -56,7 +56,7 @@ SBModule::IsValid () const
 SBFileSpec
 SBModule::GetFileSpec () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFileSpec file_spec;
     if (m_opaque_sp)
@@ -74,7 +74,7 @@ SBModule::GetFileSpec () const
 const uint8_t *
 SBModule::GetUUIDBytes () const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     const uint8_t *uuid_bytes = NULL;
     if (m_opaque_sp)

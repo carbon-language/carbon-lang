@@ -86,7 +86,7 @@ SBSymbolContext::IsValid () const
 SBModule
 SBSymbolContext::GetModule ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBModule sb_module;
     if (m_opaque_ap.get())
@@ -112,7 +112,7 @@ SBSymbolContext::GetCompileUnit ()
 SBFunction
 SBSymbolContext::GetFunction ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Function *function = NULL;
     
@@ -137,7 +137,7 @@ SBSymbolContext::GetBlock ()
 SBLineEntry
 SBSymbolContext::GetLineEntry ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBLineEntry sb_line_entry;
     if (m_opaque_ap.get())
@@ -155,7 +155,7 @@ SBSymbolContext::GetLineEntry ()
 SBSymbol
 SBSymbolContext::GetSymbol ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Symbol *symbol = NULL;
     

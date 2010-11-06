@@ -108,7 +108,7 @@ using namespace lldb_private;
 //{
 //    const lldb::pid_t pid = *((lldb::user_id_t *)pid_ptr);
 //
-//    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD);
+//    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD));
 //
 //    if (log)
 //        log->Printf ("ProcessMacOSX::%s (arg = %p) thread starting...", __FUNCTION__, pid_ptr);
@@ -357,7 +357,7 @@ ProcessMacOSX::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     // figure out a good way to determine the arch of what we are attaching to
     m_arch_spec = m_target.GetArchitecture();
 
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS));
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
     {
         SetID(attach_pid);
@@ -583,7 +583,7 @@ uint32_t
 ProcessMacOSX::UpdateThreadListIfNeeded ()
 {
     // locker will keep a mutex locked until it goes out of scope
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD));
     if (log && log->GetMask().Test(PD_LOG_VERBOSE))
         log->Printf ("ProcessMacOSX::%s (pid = %4.4x)", __FUNCTION__, GetID());
 
@@ -597,7 +597,7 @@ ProcessMacOSX::UpdateThreadListIfNeeded ()
         Error err(::task_threads (task, &thread_list, &thread_list_count), eErrorTypeMachKernel);
 
         if (log || err.Fail())
-            err.PutToLog(log, "::task_threads ( task = 0x%4.4x, thread_list => %p, thread_list_count => %u )", task, thread_list, thread_list_count);
+            err.PutToLog(log.get(), "::task_threads ( task = 0x%4.4x, thread_list => %p, thread_list_count => %u )", task, thread_list, thread_list_count);
 
         if (err.GetError() == KERN_SUCCESS && thread_list_count > 0)
         {
@@ -651,7 +651,7 @@ ProcessMacOSX::RefreshStateAfterStop ()
     m_thread_list.RefreshStateAfterStop();
 
    // Let each thread know of any exceptions
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS));
     task_t task = Task().GetTaskPort();
     size_t i;
     for (i=0; i<m_exception_messages.size(); ++i)
@@ -668,7 +668,7 @@ ProcessMacOSX::RefreshStateAfterStop ()
             }
         }
         if (log)
-            m_exception_messages[i].PutToLog(log);
+            m_exception_messages[i].PutToLog(log.get());
     }
 
 }
@@ -697,7 +697,7 @@ Error
 ProcessMacOSX::DoSIGSTOP (bool clear_all_breakpoints)
 {
     Error error;
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS));
 
     if (log)
         log->Printf ("ProcessMacOSX::DoSIGSTOP()");
@@ -730,7 +730,7 @@ ProcessMacOSX::DoSIGSTOP (bool clear_all_breakpoints)
             error.SetErrorToErrno();
 
         if (error.Fail())
-            error.PutToLog(log, "::kill (pid = %i, SIGSTOP)", pid);
+            error.PutToLog(log.get(), "::kill (pid = %i, SIGSTOP)", pid);
 
         timeout_time = TimeValue::Now();
         timeout_time.OffsetWithSeconds(2);
@@ -781,7 +781,7 @@ ProcessMacOSX::DoSIGSTOP (bool clear_all_breakpoints)
 
         log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
         if (log || error.Fail())
-            error.PutToLog(log, "ProcessMacOSX::DoSIGSTOP() ::kill (pid = %i, SIGSTOP)", pid);
+            error.PutToLog(log.get(), "ProcessMacOSX::DoSIGSTOP() ::kill (pid = %i, SIGSTOP)", pid);
 
         error = PrivateResume(LLDB_INVALID_THREAD_ID);
 
@@ -823,7 +823,7 @@ Error
 ProcessMacOSX::DoDestroy ()
 {
     Error error;
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessMacOSX::DoDestroy()");
 
@@ -863,7 +863,7 @@ ProcessMacOSX::DoDestroy ()
             error.SetErrorToErrno();
 
             if (log || error.Fail())
-                error.PutToLog (log, "::ptrace (PT_KILL, %u, 0, 0)", pid);
+                error.PutToLog (log.get(), "::ptrace (PT_KILL, %u, 0, 0)", pid);
 
             // Resume our task and let the SIGKILL do its thing. The thread named
             // "ProcessMacOSX::WaitForChildProcessToExit(void*)" will catch the
@@ -1003,7 +1003,7 @@ ProcessMacOSX::EnableBreakpoint (BreakpointSite *bp_site)
     const lldb::addr_t addr = bp_site->GetLoadAddress();
     const lldb::user_id_t site_id = bp_site->GetID();
 
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_BREAKPOINTS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("ProcessMacOSX::EnableBreakpoint (site_id = %d) addr = 0x%8.8llx", site_id, (uint64_t)addr);
 
@@ -1044,7 +1044,7 @@ ProcessMacOSX::DisableBreakpoint (BreakpointSite *bp_site)
     const lldb::addr_t addr = bp_site->GetLoadAddress();
     const lldb::user_id_t site_id = bp_site->GetID();
 
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_BREAKPOINTS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("ProcessMacOSX::DisableBreakpoint (site_id = %d) addr = 0x%8.8llx", site_id, (uint64_t)addr);
 
@@ -1066,7 +1066,7 @@ ProcessMacOSX::EnableWatchpoint (WatchpointLocation *wp)
     {
         lldb::user_id_t watchID = wp->GetID();
         lldb::addr_t addr = wp->GetLoadAddress();
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_WATCHPOINTS);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_WATCHPOINTS));
         if (log)
             log->Printf ("ProcessMacOSX::EnableWatchpoint(watchID = %d)", watchID);
         if (wp->IsEnabled())
@@ -1092,7 +1092,7 @@ ProcessMacOSX::DisableWatchpoint (WatchpointLocation *wp)
     {
         lldb::user_id_t watchID = wp->GetID();
 
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_WATCHPOINTS);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_WATCHPOINTS));
 
         lldb::addr_t addr = wp->GetLoadAddress();
         if (log)
@@ -1222,7 +1222,7 @@ ProcessMacOSX::STDIOThread(void *arg)
 {
     ProcessMacOSX *proc = (ProcessMacOSX*) arg;
 
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessMacOSX::%s (arg = %p) thread starting...", __FUNCTION__, arg);
 
@@ -1270,7 +1270,7 @@ ProcessMacOSX::STDIOThread(void *arg)
             if (log)
             {
                 err.SetError (select_errno, eErrorTypePOSIX);
-                err.LogIfError(log, "select (nfds, &read_fds, NULL, NULL, NULL) => %d", num_set_fds);
+                err.LogIfError(log.get(), "select (nfds, &read_fds, NULL, NULL, NULL) => %d", num_set_fds);
             }
 
             switch (select_errno)
@@ -1359,13 +1359,13 @@ Error
 ProcessMacOSX::DoSignal (int signal)
 {
     Error error;
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessMacOSX::DoSignal (signal = %d)", signal);
     if (::kill (GetID(), signal) != 0)
     {
         error.SetErrorToErrno();
-        error.LogIfError(log, "ProcessMacOSX::DoSignal (%d)", signal);
+        error.LogIfError(log.get(), "ProcessMacOSX::DoSignal (%d)", signal);
     }
     return error;
 }
@@ -1374,7 +1374,7 @@ ProcessMacOSX::DoSignal (int signal)
 Error
 ProcessMacOSX::DoDetach()
 {
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessMacOSX::DoDetach()");
 
@@ -1404,7 +1404,7 @@ ProcessMacOSX::DoDetach()
         error.SetErrorToErrno();
 
         if (log || error.Fail())
-            error.PutToLog(log, "::ptrace (PT_DETACH, %u, (caddr_t)1, 0)", pid);
+            error.PutToLog(log.get(), "::ptrace (PT_DETACH, %u, (caddr_t)1, 0)", pid);
 
         // Resume our task
         Task().Resume();
@@ -1429,7 +1429,7 @@ ProcessMacOSX::ReplyToAllExceptions()
     Mutex::Locker locker(m_exception_messages_mutex);
     if (m_exception_messages.empty() == false)
     {
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet(PD_LOG_EXCEPTIONS));
 
         MachException::Message::iterator pos;
         MachException::Message::iterator begin = m_exception_messages.begin();
@@ -1448,7 +1448,7 @@ ProcessMacOSX::ReplyToAllExceptions()
             if (curr_error.Fail() && error.Success())
                 error = curr_error;
 
-            error.LogIfError(log, "Error replying to exception");
+            error.LogIfError(log.get(), "Error replying to exception");
         }
 
         // Erase all exception message as we should have used and replied
@@ -1577,7 +1577,7 @@ ProcessMacOSX::LaunchForDebug
     if (launch_type == eLaunchDefault)
         launch_type = eLaunchPosixSpawn;
 
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS));
     if (log)
         log->Printf ("%s( path = '%s', argv = %p, envp = %p, launch_type = %u, flags = %x )", __FUNCTION__, path, argv, envp, launch_type, flags);
 
@@ -1655,7 +1655,7 @@ ProcessMacOSX::LaunchForDebug
 
                 log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
                 if (launch_err.Fail() || log)
-                    launch_err.PutToLog(log, "::ptrace (PT_ATTACHEXC, pid = %i, 0, 0 )", pid);
+                    launch_err.PutToLog(log.get(), "::ptrace (PT_ATTACHEXC, pid = %i, 0, 0 )", pid);
 
                 if (launch_err.Success())
                     m_flags.Set (eFlagsAttached);
@@ -1698,14 +1698,14 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
 {
     posix_spawnattr_t attr;
     short flags;
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS));
 
     Error local_err;    // Errors that don't affect the spawning.
     if (log)
         log->Printf ("%s ( path='%s', argv=%p, envp=%p, process )", __FUNCTION__, path, argv, envp);
     err.SetError( ::posix_spawnattr_init (&attr), eErrorTypePOSIX);
     if (err.Fail() || log)
-        err.PutToLog(log, "::posix_spawnattr_init ( &attr )");
+        err.PutToLog(log.get(), "::posix_spawnattr_init ( &attr )");
     if (err.Fail())
         return LLDB_INVALID_PROCESS_ID;
 
@@ -1715,7 +1715,7 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
     
     err.SetError( ::posix_spawnattr_setflags (&attr, flags), eErrorTypePOSIX);
     if (err.Fail() || log)
-        err.PutToLog(log, "::posix_spawnattr_setflags ( &attr, POSIX_SPAWN_START_SUSPENDED%s )", disable_aslr ? " | _POSIX_SPAWN_DISABLE_ASLR" : "");
+        err.PutToLog(log.get(), "::posix_spawnattr_setflags ( &attr, POSIX_SPAWN_START_SUSPENDED%s )", disable_aslr ? " | _POSIX_SPAWN_DISABLE_ASLR" : "");
     if (err.Fail())
         return LLDB_INVALID_PROCESS_ID;
 
@@ -1732,7 +1732,7 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
             size_t ocount = 0;
             err.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
             if (err.Fail() || log)
-                err.PutToLog(log, "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
+                err.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
 
             if (err.Fail() != 0 || ocount != 1)
                 return LLDB_INVALID_PROCESS_ID;
@@ -1747,7 +1747,7 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
     err.SetError( ::posix_spawn_file_actions_init (&file_actions), eErrorTypePOSIX);
     int file_actions_valid = err.Success();
     if (!file_actions_valid || log)
-        err.PutToLog(log, "::posix_spawn_file_actions_init ( &file_actions )");
+        err.PutToLog(log.get(), "::posix_spawn_file_actions_init ( &file_actions )");
     Error stdio_err;
     lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
     if (file_actions_valid)
@@ -1760,21 +1760,21 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
             {
                 stdio_err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDERR_FILENO,    stderr_path, O_RDWR, 0), eErrorTypePOSIX);
                 if (stdio_err.Fail() || log)
-                    stdio_err.PutToLog(log, "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDERR_FILENO, path = '%s', oflag = O_RDWR, mode = 0 )", stderr_path);
+                    stdio_err.PutToLog(log.get(), "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDERR_FILENO, path = '%s', oflag = O_RDWR, mode = 0 )", stderr_path);
             }
 
             if (stdin_path != NULL && stdin_path[0])
             {
                 stdio_err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDIN_FILENO, stdin_path, O_RDONLY, 0), eErrorTypePOSIX);
                 if (stdio_err.Fail() || log)
-                    stdio_err.PutToLog(log, "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDIN_FILENO, path = '%s', oflag = O_RDONLY, mode = 0 )", stdin_path);
+                    stdio_err.PutToLog(log.get(), "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDIN_FILENO, path = '%s', oflag = O_RDONLY, mode = 0 )", stdin_path);
             }
 
             if (stdout_path != NULL && stdout_path[0])
             {
                 stdio_err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDOUT_FILENO,    stdout_path, O_WRONLY, 0), eErrorTypePOSIX);
                 if (stdio_err.Fail() || log)
-                    stdio_err.PutToLog(log, "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDOUT_FILENO, path = '%s', oflag = O_WRONLY, mode = 0 )", stdout_path);
+                    stdio_err.PutToLog(log.get(), "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDOUT_FILENO, path = '%s', oflag = O_WRONLY, mode = 0 )", stdout_path);
             }
         }
         else
@@ -1792,15 +1792,15 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
                     slave_name = "/dev/null";
                 stdio_err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDERR_FILENO,    slave_name, O_RDWR|O_NOCTTY, 0), eErrorTypePOSIX);
                 if (stdio_err.Fail() || log)
-                    stdio_err.PutToLog(log, "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDERR_FILENO, path = '%s', oflag = O_RDWR|O_NOCTTY, mode = 0 )", slave_name);
+                    stdio_err.PutToLog(log.get(), "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDERR_FILENO, path = '%s', oflag = O_RDWR|O_NOCTTY, mode = 0 )", slave_name);
 
                 stdio_err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDIN_FILENO, slave_name, O_RDONLY|O_NOCTTY, 0), eErrorTypePOSIX);
                 if (stdio_err.Fail() || log)
-                    stdio_err.PutToLog(log, "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDIN_FILENO, path = '%s', oflag = O_RDONLY|O_NOCTTY, mode = 0 )", slave_name);
+                    stdio_err.PutToLog(log.get(), "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDIN_FILENO, path = '%s', oflag = O_RDONLY|O_NOCTTY, mode = 0 )", slave_name);
 
                 stdio_err.SetError( ::posix_spawn_file_actions_addopen(&file_actions, STDOUT_FILENO,    slave_name, O_WRONLY|O_NOCTTY, 0), eErrorTypePOSIX);
                 if (stdio_err.Fail() || log)
-                    stdio_err.PutToLog(log, "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDOUT_FILENO, path = '%s', oflag = O_WRONLY|O_NOCTTY, mode = 0 )", slave_name);
+                    stdio_err.PutToLog(log.get(), "::posix_spawn_file_actions_addopen ( &file_actions, filedes = STDOUT_FILENO, path = '%s', oflag = O_WRONLY|O_NOCTTY, mode = 0 )", slave_name);
             }
             else
             {
@@ -1813,7 +1813,7 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
         }
         err.SetError( ::posix_spawnp (&pid, path, &file_actions, &attr, (char * const*)argv, (char * const*)envp), eErrorTypePOSIX);
         if (err.Fail() || log)
-            err.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", pid, path, &file_actions, &attr, argv, envp);
+            err.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", pid, path, &file_actions, &attr, argv, envp);
 
         if (stdio_err.Success())
         {
@@ -1831,7 +1831,7 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
     {
         err.SetError( ::posix_spawnp (&pid, path, NULL, &attr, (char * const*)argv, (char * const*)envp), eErrorTypePOSIX);
         if (err.Fail() || log)
-            err.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", pid, path, NULL, &attr, argv, envp);
+            err.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", pid, path, NULL, &attr, argv, envp);
     }
     
     ::posix_spawnattr_destroy (&attr);
@@ -1845,7 +1845,7 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
     {
         local_err.SetError( ::posix_spawn_file_actions_destroy (&file_actions), eErrorTypePOSIX);
         if (local_err.Fail() || log)
-            local_err.PutToLog(log, "::posix_spawn_file_actions_destroy ( &file_actions )");
+            local_err.PutToLog(log.get(), "::posix_spawn_file_actions_destroy ( &file_actions )");
     }
 
     return pid;

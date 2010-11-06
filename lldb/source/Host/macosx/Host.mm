@@ -538,7 +538,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
         uint32_t  reserved2;  // must be zero
     } BabelAESelInfo;
     
-    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST));
     char file_path[PATH_MAX];
     file_spec.GetPath(file_path, PATH_MAX);
     CFCString file_cfstr (file_path, kCFStringEncodingUTF8);

@@ -33,7 +33,7 @@ SBBreakpointLocation::SBBreakpointLocation () :
 SBBreakpointLocation::SBBreakpointLocation (const lldb::BreakpointLocationSP &break_loc_sp) :
     m_opaque_sp (break_loc_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
     {
@@ -244,7 +244,7 @@ SBBreakpointLocation::GetDescription (DescriptionLevel level, SBStream &descript
 SBBreakpoint
 SBBreakpointLocation::GetBreakpoint ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     //if (log)
     //    log->Printf ("SBBreakpointLocation::GetBreakpoint ()");

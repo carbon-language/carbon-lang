@@ -347,7 +347,7 @@ ThreadPlanStepUntil::MischiefManaged ()
     bool done = false;
     if (IsPlanComplete())
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
             log->Printf("Completed step until plan.");
 

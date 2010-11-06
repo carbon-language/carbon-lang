@@ -57,7 +57,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_unwinder_ap ()
 
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Thread::Thread(tid = 0x%4.4x)", this, GetID());
 
@@ -68,7 +68,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
 
 Thread::~Thread()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Thread::~Thread(tid = 0x%4.4x)", this, GetID());
 }
@@ -220,7 +220,7 @@ Thread::ShouldStop (Event* event_ptr)
     ThreadPlan *current_plan = GetCurrentPlan();
     bool should_stop = true;
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
         StreamString s;
@@ -291,7 +291,7 @@ Vote
 Thread::ShouldReportStop (Event* event_ptr)
 {
     StateType thread_state = GetResumeState ();
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (thread_state == eStateSuspended || thread_state == eStateInvalid)
     {
@@ -350,7 +350,7 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
 
         thread_plan_sp->DidPush();
 
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
         {
             StreamString s;
@@ -365,7 +365,7 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
 void
 Thread::PopPlan ()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (m_plan_stack.empty())
         return;
@@ -492,7 +492,7 @@ Thread::QueueThreadPlan (ThreadPlanSP &thread_plan_sp, bool abort_other_plans)
 void
 Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
         log->Printf("Discarding thread plans for thread tid = 0x%4.4x, up to %p", GetID(), up_to_plan_sp.get());
@@ -533,7 +533,7 @@ Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
 void
 Thread::DiscardThreadPlans(bool force)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
         log->Printf("Discarding thread plans for thread (tid = 0x%4.4x, force %d)", GetID(), force);

@@ -340,7 +340,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::ReadRegions (lldb::addr_t region_a
     if (!m_process_sp)
         return false;
         
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     // We aren't starting at the trampoline symbol.
     InitializeVTableSymbols ();
@@ -494,7 +494,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
     
     if (found_it)
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
         
         lldb::StackFrameSP thread_cur_frame = thread.GetStackFrameAtIndex(0);

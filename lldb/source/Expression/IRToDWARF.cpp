@@ -171,7 +171,7 @@ IRToDWARF::runOnBasicBlock(BasicBlock &BB, Relocator &R)
 bool
 IRToDWARF::runOnModule(Module &M)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     llvm::Function* function = M.getFunction(StringRef(m_func_name.c_str()));
     

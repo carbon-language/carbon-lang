@@ -245,7 +245,7 @@ ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
 {
     if (PlanExplainsStop())
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         
         if (log)
         {
@@ -320,7 +320,7 @@ ThreadPlanCallFunction::MischiefManaged ()
 {
     if (IsPlanComplete())
     {
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
         if (log)
             log->Printf("Completed call function plan.");

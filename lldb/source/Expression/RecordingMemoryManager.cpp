@@ -17,9 +17,9 @@ using namespace lldb_private;
 
 RecordingMemoryManager::RecordingMemoryManager () :
     llvm::JITMemoryManager(),
-    m_default_mm_ap (llvm::JITMemoryManager::CreateDefaultMemManager())
+    m_default_mm_ap (llvm::JITMemoryManager::CreateDefaultMemManager()),
+    m_log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
 {
-    m_log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 }
 
 RecordingMemoryManager::~RecordingMemoryManager ()

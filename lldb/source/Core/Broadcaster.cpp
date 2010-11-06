@@ -28,7 +28,7 @@ Broadcaster::Broadcaster (const char *name) :
     m_hijacking_listener(NULL),
     m_hijacking_mask(UINT32_MAX)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Broadcaster::Broadcaster(\"%s\")", this, m_broadcaster_name.AsCString());
 
@@ -36,7 +36,7 @@ Broadcaster::Broadcaster (const char *name) :
 
 Broadcaster::~Broadcaster()
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Broadcaster::~Broadcaster(\"%s\")", this, m_broadcaster_name.AsCString());
 
@@ -210,7 +210,7 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
 
     const uint32_t event_type = event_sp->GetType();
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
     if (log)
     {
         StreamString event_description;

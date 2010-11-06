@@ -104,7 +104,7 @@ private:
 static void *
 MonitorChildProcessThreadFunction (void *arg)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     const char *function = __FUNCTION__;
     if (log)
         log->Printf ("%s (arg = %p) thread starting...", function, arg);
@@ -426,7 +426,7 @@ ThreadCreateTrampoline (thread_arg_t arg)
     thread_func_t thread_fptr = info->thread_fptr;
     thread_arg_t thread_arg = info->thread_arg;
     
-    Log * log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
     if (log)
         log->Printf("thread created");
     

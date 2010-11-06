@@ -494,9 +494,9 @@ RegisterContextMach_x86_64::ReadGPR (bool force)
     {
         mach_msg_type_number_t count = GPRWordCount;
         SetError(GPRRegSet, Read, ::thread_get_state(GetThreadID(), set, (thread_state_t)&gpr, &count));
-        Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD);
+        LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD));
         if (log)
-            LogGPR (log, "RegisterContextMach_x86_64::ReadGPR(thread = 0x%4.4x)", GetThreadID());
+            LogGPR (log.get(), "RegisterContextMach_x86_64::ReadGPR(thread = 0x%4.4x)", GetThreadID());
     }
     return GetError(GPRRegSet, Read);
 }
@@ -534,9 +534,9 @@ RegisterContextMach_x86_64::WriteGPR ()
         SetError (set, Write, -1);
         return KERN_INVALID_ARGUMENT;
     }
-    Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD);
+    LogSP log (ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_THREAD));
     if (log)
-        LogGPR (log, "RegisterContextMach_x86_64::WriteGPR (thread = 0x%4.4x)", GetThreadID());
+        LogGPR (log.get(), "RegisterContextMach_x86_64::WriteGPR (thread = 0x%4.4x)", GetThreadID());
     SetError (set, Write, ::thread_set_state(GetThreadID(), set, (thread_state_t)&gpr, GPRWordCount));
     SetError (set, Read, -1);
     return GetError (set, Write);

@@ -61,7 +61,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                                     lldb::addr_t arg,
                                     lldb::addr_t *this_arg) const
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
         log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%llx\n  functionAddress = 0x%llx\n  returnAddress = 0x%llx\n  arg = 0x%llx\n  this_arg = %p(0x%llx)\n)",

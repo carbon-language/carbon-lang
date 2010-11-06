@@ -114,7 +114,7 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
             m_impl_function->DeallocateFunctionResults(exc_context, m_args_addr);
             lldb::addr_t target_addr = target_addr_value.GetScalar().ULongLong();
             Address target_address(NULL, target_addr);
-            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             if (target_addr == 0)
             {
                 if (log)

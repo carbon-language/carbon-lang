@@ -147,7 +147,7 @@ RegisterContextLLDB::InitializeZerothFrame()
 
     m_cfa = cfa_regval + cfa_offset;
 
-    Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
 
     // A couple of sanity checks..
     if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
@@ -176,7 +176,7 @@ RegisterContextLLDB::InitializeZerothFrame()
 void
 RegisterContextLLDB::InitializeNonZerothFrame()
 {
-    Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     if (IsFrameZero ())
     {
         m_frame_type = eNotAValidFrame;
@@ -416,7 +416,7 @@ RegisterContextLLDB::GetFastUnwindPlanForFrame ()
     if (fu->GetUnwindPlanFastUnwind (m_thread) 
         && fu->GetUnwindPlanFastUnwind (m_thread)->PlanValidAtAddress (m_current_pc))
     {
-        Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+        LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log && IsLogVerbose())
         {
             const char *has_fast = "";
@@ -441,7 +441,7 @@ RegisterContextLLDB::GetFastUnwindPlanForFrame ()
 UnwindPlan *
 RegisterContextLLDB::GetFullUnwindPlanForFrame ()
 {
-    Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     UnwindPlan *up;
     UnwindPlan *arch_default_up = NULL;
     ArchSpec arch = m_thread.GetProcess().GetTarget().GetArchitecture ();
@@ -687,7 +687,7 @@ RegisterContextLLDB::IsValid () const
 bool
 RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLocation &regloc)
 {
-    Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
 
     // Have we already found this register location?
     std::map<uint32_t, RegisterLocation>::const_iterator iterator;
@@ -976,7 +976,7 @@ RegisterContextLLDB::ReadGPRValue (int register_kind, uint32_t regnum, addr_t &v
 bool
 RegisterContextLLDB::ReadRegisterBytes (uint32_t lldb_reg, DataExtractor& data)
 {
-    Log *log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND);
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     if (!IsValid())
         return false;
 
