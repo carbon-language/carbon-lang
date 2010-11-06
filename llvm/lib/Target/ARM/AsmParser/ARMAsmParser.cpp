@@ -261,7 +261,7 @@ public:
     assert(N == 2 && isMemMode5() && "Invalid number of operands!");
 
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    assert(!Mem.OffsetIsReg && "invalid mode 5 operand");
+    assert(!Mem.OffsetIsReg && "Invalid mode 5 operand");
 
     // FIXME: #-0 is encoded differently than #0. Does the parser preserve
     // the difference?
@@ -424,7 +424,7 @@ ARMOperand *ARMAsmParser::TryParseRegisterWithWriteBack() {
 ARMOperand *ARMAsmParser::ParseRegisterList() {
   SMLoc S, E;
   assert(Parser.getTok().is(AsmToken::LCurly) &&
-         "Token is not an Left Curly Brace");
+         "Token is not a Left Curly Brace");
   S = Parser.getTok().getLoc();
   Parser.Lex(); // Eat left curly brace token.
 
@@ -486,7 +486,7 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
 ARMOperand *ARMAsmParser::ParseMemory() {
   SMLoc S, E;
   assert(Parser.getTok().is(AsmToken::LBrac) &&
-         "Token is not an Left Bracket");
+         "Token is not a Left Bracket");
   S = Parser.getTok().getLoc();
   Parser.Lex(); // Eat left bracket token.
 
