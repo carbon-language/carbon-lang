@@ -940,35 +940,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                                NameLoc, NameLoc));
   }
 
-  // jmp $42,$5 -> ljmp, similarly for call.
-  if ((Name.startswith("call") || Name.startswith("jmp")) &&
-      Operands.size() == 3 &&
-      static_cast<X86Operand*>(Operands[1])->isImm() &&
-      static_cast<X86Operand*>(Operands[2])->isImm()) {
-    const char *NewOpName = StringSwitch<const char *>(Name)
-      .Case("jmp", "ljmp")
-      .Case("jmpw", "ljmpw")
-      .Case("jmpl", "ljmpl")
-      .Case("jmpq", "ljmpq")
-      .Case("call", "lcall")
-      .Case("callw", "lcallw")
-      .Case("calll", "lcalll")
-      .Case("callq", "lcallq")
-    .Default(0);
-    if (NewOpName) {
-      delete Operands[0];
-      Operands[0] = X86Operand::CreateToken(NewOpName, NameLoc);
-      Name = NewOpName;
-    }
-  }
-
-  // lcall  and ljmp  -> lcalll and ljmpl
-  if ((Name == "lcall" || Name == "ljmp") && Operands.size() == 3) {
-    delete Operands[0];
-    Operands[0] = X86Operand::CreateToken(Name == "lcall" ? "lcalll" : "ljmpl",
-                                          NameLoc);
-  }
-
   // fstp <mem> -> fstps <mem>.  Without this, we'll default to fstpl due to
   // suffix searching.
   if (Name == "fstp" && Operands.size() == 2 &&

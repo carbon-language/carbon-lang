@@ -1370,15 +1370,31 @@ defm : IntegerCondCodeMnemonicAlias<"cmov", "q">;
 // Assembler Instruction Aliases
 //===----------------------------------------------------------------------===//
 
-// movsd with no operands (as opposed to the SSE scalar move of a double) is an
-// alias for movsl. (as in rep; movsd)
-def : InstAlias<"movsd", (MOVSD)>;
-
 // clr aliases.
 def : InstAlias<"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg)>;
 def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
 def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
+
+// lcall and ljmp aliases.  This seems to be an odd mapping in 64-bit mode, but
+// this is compatible with what GAS does.
+def : InstAlias<"lcall $seg, $off", (FARCALL32i i32imm:$off, i16imm:$seg)>;
+def : InstAlias<"ljmp $seg, $off",  (FARJMP32i  i32imm:$off, i16imm:$seg)>;
+def : InstAlias<"lcall *$dst",      (FARCALL32m opaque48mem:$dst)>;
+def : InstAlias<"ljmp *$dst",       (FARJMP32m  opaque48mem:$dst)>;
+
+// jmp and call aliases for lcall and ljmp.  jmp $42,$5 -> ljmp
+def : InstAlias<"call $seg, $off",  (FARCALL32i i32imm:$off, i16imm:$seg)>;
+def : InstAlias<"jmp $seg, $off",   (FARJMP32i  i32imm:$off, i16imm:$seg)>;
+def : InstAlias<"callw $seg, $off", (FARCALL16i i16imm:$off, i16imm:$seg)>;
+def : InstAlias<"jmpw $seg, $off",  (FARJMP16i  i16imm:$off, i16imm:$seg)>;
+def : InstAlias<"calll $seg, $off", (FARCALL32i i32imm:$off, i16imm:$seg)>;
+def : InstAlias<"jmpl $seg, $off",  (FARJMP32i  i32imm:$off, i16imm:$seg)>;
+
+
+// movsd with no operands (as opposed to the SSE scalar move of a double) is an
+// alias for movsl. (as in rep; movsd)
+def : InstAlias<"movsd", (MOVSD)>;
 
 // movsx aliases
 def : InstAlias<"movsx $src, $dst", (MOVSX16rr8W GR16:$dst, GR8:$src)>;
