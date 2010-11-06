@@ -794,7 +794,8 @@ IRForTarget::resolveExternals(Module &M, BasicBlock &BB)
                     return false;
             
             if (StoreInst *store = dyn_cast<StoreInst>(&inst))
-                if (!MaybeHandleVariable(M, store->getPointerOperand(), true))
+                if (!MaybeHandleVariable(M, store->getValueOperand(), true) ||
+                    !MaybeHandleVariable(M, store->getPointerOperand(), true))
                     return false;
         }
         
