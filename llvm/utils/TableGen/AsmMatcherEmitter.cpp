@@ -629,19 +629,15 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
       break;
 
     case '$': {
-      // If this isn't "${", treat like a normal token.
-      if (i + 1 == String.size() || String[i + 1] != '{') {
-        if (InTok) {
-          AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
-          InTok = false;
-        }
-        Prev = i;
-        break;
-      }
-
       if (InTok) {
         AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
         InTok = false;
+      }
+      
+      // If this isn't "${", treat like a normal token.
+      if (i + 1 == String.size() || String[i + 1] != '{') {
+        Prev = i;
+        break;
       }
 
       StringRef::iterator End = std::find(String.begin() + i, String.end(),'}');
@@ -1122,6 +1118,11 @@ void AsmMatcherInfo::BuildInfo() {
         continue;
       }
 
+      if (Token.size() > 1 && isdigit(Token[1])) {
+        Op.Class = getTokenClass(Token);
+        continue;
+      }
+      
       // Otherwise this is an operand reference.
       StringRef OperandName;
       if (Token[1] == '{')
