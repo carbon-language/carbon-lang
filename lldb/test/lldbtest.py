@@ -544,10 +544,13 @@ class TestBase(unittest2.TestCase):
         # See http://docs.python.org/library/unittest.html#unittest.TestResult.
         if self.__errored__:
             pairs = lldb.test_result.errors
+            prefix = 'Error'
         elif self.__failed__:
             pairs = lldb.test_result.failures
+            prefix = 'Failure'
         elif self.__expected__:
             pairs = lldb.test_result.expectedFailures
+            prefix = 'ExpectedFailure'
         else:
             # Simply return, there's no session info to dump!
             return
@@ -560,7 +563,7 @@ class TestBase(unittest2.TestCase):
                              os.environ["LLDB_SESSION_DIRNAME"])
         if not os.path.isdir(dname):
             os.mkdir(dname)
-        fname = os.path.join(dname, "%s.log" % self.id())
+        fname = os.path.join(dname, "%s-%s.log" % (prefix, self.id()))
         with open(fname, "w") as f:
             import datetime
             print >> f, "Session info generated @", datetime.datetime.now().ctime()
