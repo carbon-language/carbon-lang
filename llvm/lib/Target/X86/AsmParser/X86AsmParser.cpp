@@ -781,22 +781,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                     X86Operand::CreateImm(One, NameLoc, NameLoc));
   }
 
-
-  // FIXME: Hack to handle recognize "in[bwl] <op>".  Canonicalize it to
-  // "inb <op>, %al".
-  if ((Name == "inb" || Name == "inw" || Name == "inl") &&
-      Operands.size() == 2) {
-    unsigned Reg;
-    if (Name[2] == 'b')
-      Reg = MatchRegisterName("al");
-    else if (Name[2] == 'w')
-      Reg = MatchRegisterName("ax");
-    else
-      Reg = MatchRegisterName("eax");
-    SMLoc Loc = Operands.back()->getEndLoc();
-    Operands.push_back(X86Operand::CreateReg(Reg, Loc, Loc));
-  }
-
   // FIXME: Hack to handle "out[bwl]? %al, (%dx)" -> "outb %al, %dx".
   if ((Name == "outb" || Name == "outw" || Name == "outl" || Name == "out") &&
       Operands.size() == 3) {
@@ -853,25 +837,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                                                NameLoc, NameLoc));
     Operands.push_back(X86Operand::CreateReg(MatchRegisterName("st(0)"),
                                              NameLoc, NameLoc));
-  }
-
-  // The assembler accepts various amounts of brokenness for fnstsw.
-  if (Name == "fnstsw" || Name == "fnstsww") {
-    if (Operands.size() == 2 &&
-        static_cast<X86Operand*>(Operands[1])->isReg()) {
-      // "fnstsw al" and "fnstsw eax" -> "fnstw"
-      unsigned Reg = static_cast<X86Operand*>(Operands[1])->Reg.RegNo;
-      if (Reg == MatchRegisterName("eax") ||
-          Reg == MatchRegisterName("al")) {
-        delete Operands[1];
-        Operands.pop_back();
-      }
-    }
-
-    // "fnstw" -> "fnstw %ax"
-    if (Operands.size() == 1)
-      Operands.push_back(X86Operand::CreateReg(MatchRegisterName("ax"),
-                                               NameLoc, NameLoc));
   }
 
   // FIXME: Hack to handle recognize "aa[dm]" -> "aa[dm] $0xA".

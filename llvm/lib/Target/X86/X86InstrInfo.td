@@ -1373,6 +1373,11 @@ def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
 def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
 
+// We accepts "fnstsw %eax" even though it only writes %ax.
+def : InstAlias<"fnstsw %eax", (FNSTSW8r)>;
+def : InstAlias<"fnstsw %al" , (FNSTSW8r)>;
+def : InstAlias<"fnstsw"     , (FNSTSW8r)>;
+
 // lcall and ljmp aliases.  This seems to be an odd mapping in 64-bit mode, but
 // this is compatible with what GAS does.
 def : InstAlias<"lcall $seg, $off", (FARCALL32i i32imm:$off, i16imm:$seg)>;
@@ -1393,7 +1398,7 @@ def : InstAlias<"inb %dx", (IN8rr)>;
 def : InstAlias<"inw %dx", (IN16rr)>;
 def : InstAlias<"inl %dx", (IN32rr)>;
 def : InstAlias<"inb $port", (IN8ri i8imm:$port)>;
-def : InstAlias<"inw $port", (IN16rir i8imm:$port)>;
+def : InstAlias<"inw $port", (IN16ri i8imm:$port)>;
 def : InstAlias<"inl $port", (IN32ri i8imm:$port)>;
 
 
