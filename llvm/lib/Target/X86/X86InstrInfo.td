@@ -1319,12 +1319,12 @@ def : MnemonicAlias<"fcmova",   "fcmovnbe">;
 def : MnemonicAlias<"fcmovnae", "fcmovb">;
 def : MnemonicAlias<"fcmovna",  "fcmovbe">;
 def : MnemonicAlias<"fcmovae",  "fcmovnb">;
-def : MnemonicAlias<"fcompi",   "fcomip">;
+def : MnemonicAlias<"fcomip",   "fcompi">;
 def : MnemonicAlias<"fildq",    "fildll">;
 def : MnemonicAlias<"fldcww",   "fldcw">;
 def : MnemonicAlias<"fnstcww", "fnstcw">;
 def : MnemonicAlias<"fnstsww", "fnstsw">;
-def : MnemonicAlias<"fucompi",  "fucomip">;
+def : MnemonicAlias<"fucomip",  "fucompi">;
 def : MnemonicAlias<"fwait",    "wait">;
 
 
@@ -1387,11 +1387,11 @@ def : InstAlias<"fdivp",        (DIVR_FPrST0 ST1)>;
 def : InstAlias<"fdivrp",       (DIV_FPrST0  ST1)>;
 def : InstAlias<"fxch",         (XCH_F       ST1)>;
 def : InstAlias<"fcomi",        (COM_FIr     ST1)>;
-def : InstAlias<"fcomip",       (COM_FIPr    ST1)>;
+def : InstAlias<"fcompi",       (COM_FIPr    ST1)>;
 def : InstAlias<"fucom",        (UCOM_Fr     ST1)>;
 def : InstAlias<"fucomp",       (UCOM_FPr    ST1)>;
 def : InstAlias<"fucomi",       (UCOM_FIr    ST1)>;
-def : InstAlias<"fucomip",      (UCOM_FIPr   ST1)>;
+def : InstAlias<"fucompi",      (UCOM_FIPr   ST1)>;
 
 // Handle fmul/fadd/fsub/fdiv instructions with explicitly written st(0) op.
 // For example, "fadd %st(4), %st(0)" -> "fadd %st(4)".  We also disambiguate
@@ -1415,9 +1415,9 @@ defm : FpUnaryAlias<"fdivp",  DIVR_FPrST0>;
 defm : FpUnaryAlias<"fdivr",  DIVR_FST0r>;
 defm : FpUnaryAlias<"fdivrp", DIV_FPrST0>;
 defm : FpUnaryAlias<"fcomi",   COM_FIr>;
-defm : FpUnaryAlias<"fcomip",  COM_FIPr>;
 defm : FpUnaryAlias<"fucomi",  UCOM_FIr>;
-defm : FpUnaryAlias<"fucomip", UCOM_FIPr>;
+defm : FpUnaryAlias<"fcompi",   COM_FIPr>;
+defm : FpUnaryAlias<"fucompi",  UCOM_FIPr>;
 
 
 // Handle "f{mulp,addp} st(0), $op" the same as "f{mulp,addp} $op", since they

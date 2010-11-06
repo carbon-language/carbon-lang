@@ -586,13 +586,13 @@ def UCOM_FIr   : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i)
                     "fucomi\t$reg">, DB;
 def UCOM_FIPr  : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i), pop
                     (outs), (ins RST:$reg),
-                    "fucomip\t$reg">, DF;
+                    "fucompi\t$reg">, DF;
 }
 
 def COM_FIr : FPI<0xF0, AddRegFrm, (outs), (ins RST:$reg),
                   "fcomi\t$reg">, DB;
 def COM_FIPr : FPI<0xF0, AddRegFrm, (outs), (ins RST:$reg),
-                   "fcomip\t$reg">, DF;
+                   "fcompi\t$reg">, DF;
 
 // Floating point flag ops.
 let Defs = [AX] in

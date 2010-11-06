@@ -708,27 +708,27 @@ pshufw $90, %mm4, %mm0
 // CHECK:  encoding: [0x0f,0x01,0x48,0x04]
         	sidtl	4(%eax)
 
-// CHECK: fcomip	%st(2)
+// CHECK: fcompi	%st(2)
 // CHECK:  encoding: [0xdf,0xf2]
-        	fcompi	%st(2),%st
+        	fcompi	%st(2), %st
 
-// CHECK: fcomip	%st(2)
+// CHECK: fcompi	%st(2)
 // CHECK:  encoding: [0xdf,0xf2]
         	fcompi	%st(2)
 
-// CHECK: fcomip	%st(1)
+// CHECK: fcompi	%st(1)
 // CHECK:  encoding: [0xdf,0xf1]
         	fcompi
 
-// CHECK: fucomip	%st(2)
+// CHECK: fucompi	%st(2)
 // CHECK:  encoding: [0xdf,0xea]
         	fucompi	%st(2),%st
 
-// CHECK: fucomip	%st(2)
+// CHECK: fucompi	%st(2)
 // CHECK:  encoding: [0xdf,0xea]
         	fucompi	%st(2)
 
-// CHECK: fucomip	%st(1)
+// CHECK: fucompi	%st(1)
 // CHECK:  encoding: [0xdf,0xe9]
         	fucompi
 

@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=i386 | \
-; RUN:   grep {fucomi.*st.\[12\]}
+; RUN: llc < %s -march=x86 -mcpu=i386 | grep {fucompi.*st.\[12\]}
 ; PR1012
 
 define float @foo(float* %col.2.0) {
