@@ -8039,8 +8039,7 @@ bool MarkReferencedDecls::TraverseRecordType(RecordType *T) {
   if (ClassTemplateSpecializationDecl *Spec
                   = dyn_cast<ClassTemplateSpecializationDecl>(T->getDecl())) {
     const TemplateArgumentList &Args = Spec->getTemplateArgs();
-    return TraverseTemplateArguments(Args.getFlatArgumentList(),
-                                     Args.flat_size());
+    return TraverseTemplateArguments(Args.data(), Args.size());
   }
 
   return true;

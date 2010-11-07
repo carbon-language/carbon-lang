@@ -44,7 +44,6 @@ class TemplateArgument {
     struct {
       TemplateArgument *Args;
       unsigned NumArgs;
-      bool CopyArgs;
     } Args;
   };
 
@@ -92,6 +91,8 @@ public:
 
   /// \brief Construct an integral constant template argument.
   TemplateArgument(const llvm::APSInt &Value, QualType Type) : Kind(Integral) {
+    // FIXME: Large integral values will get leaked. Do something
+    // similar to what we did with IntegerLiteral.
     new (Integer.Value) llvm::APSInt(Value);
     Integer.Type = Type.getAsOpaquePtr();
   }
@@ -115,46 +116,54 @@ public:
     TypeOrValue = reinterpret_cast<uintptr_t>(E);
   }
 
+  /// \brief Construct a template argument that is a template argument pack.
+  ///
+  /// We assume that storage for the template arguments provided
+  /// outlives the TemplateArgument itself.
+  TemplateArgument(TemplateArgument *Args, unsigned NumArgs) : Kind(Pack) {
+    this->Args.Args = Args;
+    this->Args.NumArgs = NumArgs;
+  }
+
   /// \brief Copy constructor for a template argument.
   TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
+    // FIXME: Large integral values will get leaked. Do something
+    // similar to what we did with IntegerLiteral.
     if (Kind == Integral) {
       new (Integer.Value) llvm::APSInt(*Other.getAsIntegral());
       Integer.Type = Other.Integer.Type;
     } else if (Kind == Pack) {
       Args.NumArgs = Other.Args.NumArgs;
-      Args.Args = new TemplateArgument[Args.NumArgs];
-      for (unsigned I = 0; I != Args.NumArgs; ++I)
-        Args.Args[I] = Other.Args.Args[I];
+      Args.Args = Other.Args.Args;
     }
     else
       TypeOrValue = Other.TypeOrValue;
   }
 
   TemplateArgument& operator=(const TemplateArgument& Other) {
-    // FIXME: Does not provide the strong guarantee for exception
-    // safety.
     using llvm::APSInt;
-
-    // FIXME: Handle Packs
-    assert(Kind != Pack && "FIXME: Handle packs");
-    assert(Other.Kind != Pack && "FIXME: Handle packs");
 
     if (Kind == Other.Kind && Kind == Integral) {
       // Copy integral values.
       *this->getAsIntegral() = *Other.getAsIntegral();
       Integer.Type = Other.Integer.Type;
+      return *this;
+    } 
+
+    // Destroy the current integral value, if that's what we're holding.
+    if (Kind == Integral)
+      getAsIntegral()->~APSInt();
+
+    Kind = Other.Kind;
+
+    if (Other.Kind == Integral) {
+      new (Integer.Value) llvm::APSInt(*Other.getAsIntegral());
+      Integer.Type = Other.Integer.Type;
+    } else if (Other.Kind == Pack) {
+      Args.NumArgs = Other.Args.NumArgs;
+      Args.Args = Other.Args.Args;
     } else {
-      // Destroy the current integral value, if that's what we're holding.
-      if (Kind == Integral)
-        getAsIntegral()->~APSInt();
-
-      Kind = Other.Kind;
-
-      if (Other.Kind == Integral) {
-        new (Integer.Value) llvm::APSInt(*Other.getAsIntegral());
-        Integer.Type = Other.Integer.Type;
-      } else
-        TypeOrValue = Other.TypeOrValue;
+      TypeOrValue = Other.TypeOrValue;
     }
 
     return *this;
@@ -165,8 +174,6 @@ public:
 
     if (Kind == Integral)
       getAsIntegral()->~APSInt();
-    else if (Kind == Pack && Args.CopyArgs)
-      delete[] Args.Args;
   }
 
   /// \brief Return the kind of stored template argument.
@@ -259,9 +266,6 @@ public:
   /// Determines whether two template arguments are superficially the
   /// same.
   bool structurallyEquals(const TemplateArgument &Other) const;
-
-  /// \brief Construct a template argument pack.
-  void setArgumentPack(TemplateArgument *Args, unsigned NumArgs, bool CopyArgs);
 
   /// \brief Used to insert TemplateArguments into FoldingSets.
   void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context) const;

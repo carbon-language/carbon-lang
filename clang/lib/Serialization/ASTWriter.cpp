@@ -3180,8 +3180,8 @@ void
 ASTWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
                                    RecordDataImpl &Record) {
   assert(TemplateArgs && "No TemplateArgs!");
-  Record.push_back(TemplateArgs->flat_size());
-  for (int i=0, e = TemplateArgs->flat_size(); i != e; ++i)
+  Record.push_back(TemplateArgs->size());
+  for (int i=0, e = TemplateArgs->size(); i != e; ++i)
     AddTemplateArgument(TemplateArgs->get(i), Record);
 }
 

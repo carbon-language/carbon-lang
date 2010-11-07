@@ -4168,13 +4168,10 @@ ASTReader::ReadTemplateArgument(PerFileData &F,
     return TemplateArgument(ReadExpr(F));
   case TemplateArgument::Pack: {
     unsigned NumArgs = Record[Idx++];
-    llvm::SmallVector<TemplateArgument, 8> Args;
-    Args.reserve(NumArgs);
-    while (NumArgs--)
-      Args.push_back(ReadTemplateArgument(F, Record, Idx));
-    TemplateArgument TemplArg;
-    TemplArg.setArgumentPack(Args.data(), Args.size(), /*CopyArgs=*/true);
-    return TemplArg;
+    TemplateArgument *Args = new (*Context) TemplateArgument[NumArgs];
+    for (unsigned I = 0; I != NumArgs; ++I)
+      Args[I] = ReadTemplateArgument(F, Record, Idx);
+    return TemplateArgument(Args, NumArgs);
   }
   }
 

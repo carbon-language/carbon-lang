@@ -327,7 +327,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
 
     ASTContext &C = *Reader.getContext();
     TemplateArgumentList *TemplArgList
-      = new (C) TemplateArgumentList(C, TemplArgs.data(), TemplArgs.size());
+      = TemplateArgumentList::CreateCopy(C, TemplArgs.data(), TemplArgs.size());
     TemplateArgumentListInfo *TemplArgsInfo
       = new (C) TemplateArgumentListInfo(LAngleLoc, RAngleLoc);
     for (unsigned i=0, e = TemplArgLocs.size(); i != e; ++i)
@@ -1051,7 +1051,8 @@ void ASTDeclReader::VisitClassTemplateSpecializationDecl(
       llvm::SmallVector<TemplateArgument, 8> TemplArgs;
       Reader.ReadTemplateArgumentList(TemplArgs, F, Record, Idx);
       TemplateArgumentList *ArgList
-          = new (C) TemplateArgumentList(C, TemplArgs.data(), TemplArgs.size());
+        = TemplateArgumentList::CreateCopy(C, TemplArgs.data(), 
+                                           TemplArgs.size());
       ClassTemplateSpecializationDecl::SpecializedPartialSpecialization *PS
           = new (C) ClassTemplateSpecializationDecl::
                                              SpecializedPartialSpecialization();
@@ -1074,7 +1075,8 @@ void ASTDeclReader::VisitClassTemplateSpecializationDecl(
 
   llvm::SmallVector<TemplateArgument, 8> TemplArgs;
   Reader.ReadTemplateArgumentList(TemplArgs, F, Record, Idx);
-  D->TemplateArgs.init(C, TemplArgs.data(), TemplArgs.size());
+  D->TemplateArgs = TemplateArgumentList::CreateCopy(C, TemplArgs.data(), 
+                                                     TemplArgs.size());
   D->PointOfInstantiation = ReadSourceLocation(Record, Idx);
   D->SpecializationKind = (TemplateSpecializationKind)Record[Idx++];
   

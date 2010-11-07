@@ -121,7 +121,6 @@ namespace clang {
   class TargetAttributesSema;
   class TemplateArgument;
   class TemplateArgumentList;
-  class TemplateArgumentListBuilder;
   class TemplateArgumentLoc;
   class TemplateDecl;
   class TemplateParameterList;
@@ -2883,7 +2882,7 @@ public:
 
   bool CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,
-                              const TemplateArgumentListBuilder &TemplateArgs,
+                        llvm::SmallVectorImpl<TemplateArgument> &TemplateArgs,
                                         bool &MirrorsPrimaryTemplate);
 
   DeclResult
@@ -2958,7 +2957,7 @@ public:
                                           SourceLocation TemplateLoc,
                                           SourceLocation RAngleLoc,
                                           Decl *Param,
-                                      TemplateArgumentListBuilder &Converted);
+                          llvm::SmallVectorImpl<TemplateArgument> &Converted);
 
   /// \brief Specifies the context in which a particular template
   /// argument is being checked.
@@ -2981,18 +2980,18 @@ public:
                              TemplateDecl *Template,
                              SourceLocation TemplateLoc,
                              SourceLocation RAngleLoc,
-                             TemplateArgumentListBuilder &Converted,
+                           llvm::SmallVectorImpl<TemplateArgument> &Converted,
                              CheckTemplateArgumentKind CTAK = CTAK_Specified);
 
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  const TemplateArgumentListInfo &TemplateArgs,
                                  bool PartialTemplateArgs,
-                                 TemplateArgumentListBuilder &Converted);
+                           llvm::SmallVectorImpl<TemplateArgument> &Converted);
 
   bool CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
                                  const TemplateArgumentLoc &Arg,
-                                 TemplateArgumentListBuilder &Converted);
+                           llvm::SmallVectorImpl<TemplateArgument> &Converted);
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param,
                              TypeSourceInfo *Arg);

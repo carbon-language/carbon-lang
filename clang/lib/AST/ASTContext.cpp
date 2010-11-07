@@ -2684,17 +2684,15 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) {
       return TemplateArgument(getCanonicalType(Arg.getAsType()));
 
     case TemplateArgument::Pack: {
-      // FIXME: Allocate in ASTContext
-      TemplateArgument *CanonArgs = new TemplateArgument[Arg.pack_size()];
+      TemplateArgument *CanonArgs
+        = new (*this) TemplateArgument[Arg.pack_size()];
       unsigned Idx = 0;
       for (TemplateArgument::pack_iterator A = Arg.pack_begin(),
                                         AEnd = Arg.pack_end();
            A != AEnd; (void)++A, ++Idx)
         CanonArgs[Idx] = getCanonicalTemplateArgument(*A);
 
-      TemplateArgument Result;
-      Result.setArgumentPack(CanonArgs, Arg.pack_size(), false);
-      return Result;
+      return TemplateArgument(CanonArgs, Arg.pack_size());
     }
   }
 
@@ -3897,8 +3895,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
         std::string TemplateArgsStr
           = TemplateSpecializationType::PrintTemplateArgumentList(
-                                            TemplateArgs.getFlatArgumentList(),
-                                            TemplateArgs.flat_size(),
+                                            TemplateArgs.data(),
+                                            TemplateArgs.size(),
                                             (*this).PrintingPolicy);
 
         S += TemplateArgsStr;

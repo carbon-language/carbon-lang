@@ -26,25 +26,6 @@ using namespace clang;
 // TemplateArgument Implementation
 //===----------------------------------------------------------------------===//
 
-/// \brief Construct a template argument pack.
-void TemplateArgument::setArgumentPack(TemplateArgument *args, unsigned NumArgs,
-                                       bool CopyArgs) {
-  assert(isNull() && "Must call setArgumentPack on a null argument");
-
-  Kind = Pack;
-  Args.NumArgs = NumArgs;
-  Args.CopyArgs = CopyArgs;
-  if (!Args.CopyArgs) {
-    Args.Args = args;
-    return;
-  }
-
-  // FIXME: Allocate in ASTContext
-  Args.Args = new TemplateArgument[NumArgs];
-  for (unsigned I = 0; I != Args.NumArgs; ++I)
-    Args.Args[I] = args[I];
-}
-
 void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
                                ASTContext &Context) const {
   ID.AddInteger(Kind);

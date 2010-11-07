@@ -2359,10 +2359,14 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
 
       TransformedArgs.push_back(OutputArg.getArgument());
     }
-    TemplateArgument Result;
-    Result.setArgumentPack(TransformedArgs.data(), TransformedArgs.size(),
-                           true);
-    Output = TemplateArgumentLoc(Result, Input.getLocInfo());
+
+    TemplateArgument *TransformedArgsPtr
+      = new (getSema().Context) TemplateArgument[TransformedArgs.size()];
+    std::copy(TransformedArgs.begin(), TransformedArgs.end(),
+              TransformedArgsPtr);
+    Output = TemplateArgumentLoc(TemplateArgument(TransformedArgsPtr, 
+                                                  TransformedArgs.size()), 
+                                 Input.getLocInfo());
     return false;
   }
   }

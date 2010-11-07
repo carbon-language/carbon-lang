@@ -136,8 +136,8 @@ CGDebugInfo::getClassName(RecordDecl *RD) {
     NumArgs = TST->getNumArgs();
   } else {
     const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-    Args = TemplateArgs.getFlatArgumentList();
-    NumArgs = TemplateArgs.flat_size();
+    Args = TemplateArgs.data();
+    NumArgs = TemplateArgs.size();
   }
   Buffer = RD->getIdentifier()->getNameStart();
   PrintingPolicy Policy(CGM.getLangOptions());

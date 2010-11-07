@@ -426,8 +426,8 @@ void TypePrinter::AppendScope(DeclContext *DC, std::string &Buffer) {
     const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
     std::string TemplateArgsStr
       = TemplateSpecializationType::PrintTemplateArgumentList(
-                                            TemplateArgs.getFlatArgumentList(),
-                                            TemplateArgs.flat_size(),
+                                            TemplateArgs.data(),
+                                            TemplateArgs.size(),
                                             Policy);
     Buffer += Spec->getIdentifier()->getName();
     Buffer += TemplateArgsStr;
@@ -506,8 +506,8 @@ void TypePrinter::PrintTag(TagDecl *D, std::string &InnerString) {
       NumArgs = TST->getNumArgs();
     } else {
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-      Args = TemplateArgs.getFlatArgumentList();
-      NumArgs = TemplateArgs.flat_size();
+      Args = TemplateArgs.data();
+      NumArgs = TemplateArgs.size();
     }
     Buffer += TemplateSpecializationType::PrintTemplateArgumentList(Args,
                                                                     NumArgs,

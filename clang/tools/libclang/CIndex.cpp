@@ -2720,8 +2720,8 @@ CXString clang_getCursorDisplayName(CXCursor C) {
     llvm::raw_svector_ostream OS(Str);
     OS << ClassSpec->getNameAsString();
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
-                            ClassSpec->getTemplateArgs().getFlatArgumentList(),
-                                      ClassSpec->getTemplateArgs().flat_size(),
+                                      ClassSpec->getTemplateArgs().data(),
+                                      ClassSpec->getTemplateArgs().size(),
                                                                 Policy);
     return createCXString(OS.str());
   }

@@ -1102,7 +1102,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     std::pair<const TemplateArgument *, unsigned> Innermost 
       = TemplateArgs.getInnermost();
     Function->setFunctionTemplateSpecialization(FunctionTemplate,
-                  new (SemaRef.Context) TemplateArgumentList(SemaRef.Context,
+                            TemplateArgumentList::CreateCopy(SemaRef.Context,
                                                              Innermost.first,
                                                              Innermost.second),
                                                 InsertPos);
@@ -1410,9 +1410,9 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     std::pair<const TemplateArgument *, unsigned> Innermost 
       = TemplateArgs.getInnermost();
     Method->setFunctionTemplateSpecialization(FunctionTemplate,
-                    new (SemaRef.Context) TemplateArgumentList(SemaRef.Context,
-                                                              Innermost.first,
-                                                              Innermost.second),
+                         TemplateArgumentList::CreateCopy(SemaRef.Context,
+                                                          Innermost.first,
+                                                          Innermost.second),
                                               InsertPos);
   } else if (!isFriend) {
     // Record that this is an instantiation of a member function.
@@ -1842,8 +1842,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
 
   // Check that the template argument list is well-formed for this
   // class template.
-  TemplateArgumentListBuilder Converted(ClassTemplate->getTemplateParameters(), 
-                                        InstTemplateArgs.size());
+  llvm::SmallVector<TemplateArgument, 4> Converted;
   if (SemaRef.CheckTemplateArgumentList(ClassTemplate, 
                                         PartialSpec->getLocation(),
                                         InstTemplateArgs, 
@@ -1855,15 +1854,15 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   // in the member template's set of class template partial specializations.
   void *InsertPos = 0;
   ClassTemplateSpecializationDecl *PrevDecl
-    = ClassTemplate->findPartialSpecialization(Converted.getFlatArguments(),
-                                                Converted.flatSize(), InsertPos);
+    = ClassTemplate->findPartialSpecialization(Converted.data(),
+                                               Converted.size(), InsertPos);
   
   // Build the canonical type that describes the converted template
   // arguments of the class template partial specialization.
   QualType CanonType 
     = SemaRef.Context.getTemplateSpecializationType(TemplateName(ClassTemplate),
-                                                  Converted.getFlatArguments(),
-                                                    Converted.flatSize());
+                                                    Converted.data(),
+                                                    Converted.size());
 
   // Build the fully-sugared type for this class template
   // specialization as the user wrote in the specialization
@@ -1911,7 +1910,8 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                                      PartialSpec->getLocation(), 
                                                      InstParams,
                                                      ClassTemplate, 
-                                                     Converted,
+                                                     Converted.data(),
+                                                     Converted.size(),
                                                      InstTemplateArgs,
                                                      CanonType,
                                                      0,

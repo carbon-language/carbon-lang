@@ -164,8 +164,7 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
 
 static LVPair
 getLVForTemplateArgumentList(const TemplateArgumentList &TArgs) {
-  return getLVForTemplateArgumentList(TArgs.getFlatArgumentList(), 
-                                      TArgs.flat_size());
+  return getLVForTemplateArgumentList(TArgs.data(), TArgs.size());
 }
 
 /// getLVForDecl - Get the cached linkage and visibility for the given
@@ -650,8 +649,8 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
       std::string TemplateArgsStr
         = TemplateSpecializationType::PrintTemplateArgumentList(
-                                           TemplateArgs.getFlatArgumentList(),
-                                           TemplateArgs.flat_size(),
+                                           TemplateArgs.data(),
+                                           TemplateArgs.size(),
                                            P);
       OS << Spec->getName() << TemplateArgsStr;
     } else if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(*I)) {
@@ -1161,8 +1160,8 @@ void FunctionDecl::getNameForDiagnostic(std::string &S,
   const TemplateArgumentList *TemplateArgs = getTemplateSpecializationArgs();
   if (TemplateArgs)
     S += TemplateSpecializationType::PrintTemplateArgumentList(
-                                         TemplateArgs->getFlatArgumentList(),
-                                         TemplateArgs->flat_size(),
+                                                         TemplateArgs->data(),
+                                                         TemplateArgs->size(),
                                                                Policy);
     
 }
