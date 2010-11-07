@@ -2788,6 +2788,15 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         Diag(D.getIdentifierLoc(),
              diag::err_static_data_member_not_allowed_in_local_class)
           << Name << RD->getDeclName();
+
+      // C++ [class.union]p1: If a union contains a static data member,
+      // the program is ill-formed.
+      //
+      // We also disallow static data members in anonymous structs.
+      if (CurContext->isRecord() && (RD->isUnion() || !RD->getDeclName()))
+        Diag(D.getIdentifierLoc(),
+             diag::err_static_data_member_not_allowed_in_union_or_anon_struct)
+          << Name << RD->isUnion();
     }
   }
 
@@ -6444,17 +6453,27 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   if (!InvalidDecl && getLangOptions().CPlusPlus) {
-    if (const RecordType *RT = EltTy->getAs<RecordType>()) {
-      CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
-      if (RDecl->getDefinition()) {
-        // C++ 9.5p1: An object of a class with a non-trivial
-        // constructor, a non-trivial copy constructor, a non-trivial
-        // destructor, or a non-trivial copy assignment operator
-        // cannot be a member of a union, nor can an array of such
-        // objects.
-        // TODO: C++0x alters this restriction significantly.
-        if (Record->isUnion() && CheckNontrivialField(NewFD))
-          NewFD->setInvalidDecl();
+    if (Record->isUnion()) {
+      if (const RecordType *RT = EltTy->getAs<RecordType>()) {
+        CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
+        if (RDecl->getDefinition()) {
+          // C++ [class.union]p1: An object of a class with a non-trivial
+          // constructor, a non-trivial copy constructor, a non-trivial
+          // destructor, or a non-trivial copy assignment operator
+          // cannot be a member of a union, nor can an array of such
+          // objects.
+          // TODO: C++0x alters this restriction significantly.
+          if (CheckNontrivialField(NewFD))
+            NewFD->setInvalidDecl();
+        }
+      }
+
+      // C++ [class.union]p1: If a union contains a member of reference type,
+      // the program is ill-formed.
+      if (EltTy->isReferenceType()) {
+        Diag(NewFD->getLocation(), diag::err_union_member_of_reference_type)
+          << NewFD->getDeclName() << EltTy;
+        NewFD->setInvalidDecl();
       }
     }
   }

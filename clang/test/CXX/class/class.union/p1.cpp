@@ -90,6 +90,14 @@ union U3 {
   } m7;
 };
 
+union U4 {
+  static int i1; // expected-error {{static data member 'i1' not allowed in union}}
+};
+
+union U5 {
+  int& i1; // expected-error {{union member 'i1' has reference type 'int &'}}
+};
+
 template <class A, class B> struct Either {
   bool tag;
   union {

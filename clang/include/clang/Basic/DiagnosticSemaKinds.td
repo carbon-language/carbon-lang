@@ -674,6 +674,10 @@ def note_nontrivial_has_nontrivial : Note<
 def note_nontrivial_user_defined : Note<
   "because type %0 has a user-declared %select{constructor|copy constructor|"
   "copy assignment operator|destructor}1">;
+def err_static_data_member_not_allowed_in_union_or_anon_struct : Error<
+  "static data member %0 not allowed in %select{anonymous struct|union}1">; 
+def err_union_member_of_reference_type : Error<
+  "union member %0 has reference type %1">;
 
 def err_different_return_type_for_overriding_virtual_function : Error<
   "virtual function %0 has a different return type (%1) than the "

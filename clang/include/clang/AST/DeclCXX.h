@@ -341,7 +341,7 @@ class CXXRecordDecl : public RecordDecl {
     
     /// \brief Whether we have already declared a destructor within the class.
     bool DeclaredDestructor : 1;
-    
+
     /// NumBases - The number of base class specifiers in Bases.
     unsigned NumBases;
     
