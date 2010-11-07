@@ -16,6 +16,8 @@
 #include "lldb/Symbol/SymbolFile.h"
 
 class SymbolFileDWARF;
+class DWARFCompileUnit;
+class DWARFDebugInfoEntry;
 
 class SymbolFileDWARFDebugMap : public lldb_private::SymbolFile
 {
@@ -189,6 +191,11 @@ protected:
 
     void
     SetCompileUnit (SymbolFileDWARF *oso_dwarf, const lldb::CompUnitSP &cu_sp);
+
+    lldb::TypeSP
+    FindDefinitionTypeForDIE (DWARFCompileUnit* cu, 
+                              const DWARFDebugInfoEntry *die, 
+                              const lldb_private::ConstString &type_name);    
 
     //------------------------------------------------------------------
     // Member Variables

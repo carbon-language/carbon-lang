@@ -1375,7 +1375,7 @@ main (int argc, char const *argv[])
 {
     SBDebugger::Initialize();
     
-    SBHostOS::ThreadCreated ("[main]");
+    SBHostOS::ThreadCreated ("<lldb.driver.main-thread>");
 
     signal (SIGPIPE, SIG_IGN);
     signal (SIGWINCH, sigwinch_handler);

@@ -2534,6 +2534,71 @@ SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *cu, const DWARFDeb
     return NULL;
 }
 
+// This function can be used when a DIE is found that is a forward declaration
+// DIE and we want to try and find a type that has the complete definition.
+TypeSP
+SymbolFileDWARF::FindDefinitionTypeForDIE (
+    DWARFCompileUnit* cu, 
+    const DWARFDebugInfoEntry *die, 
+    const ConstString &type_name
+)
+{
+    TypeSP type_sp;
+
+    if (cu == NULL || die == NULL || !type_name)
+        return type_sp;
+
+    const dw_tag_t type_tag = die->Tag();
+    std::vector<NameToDIE::Info> die_info_array;
+    const size_t num_matches = m_type_index.Find (type_name, die_info_array);
+    if (num_matches > 0)
+    {
+        DWARFCompileUnit* type_cu = NULL;
+        DWARFCompileUnit* curr_cu = cu;
+        DWARFDebugInfo *info = DebugInfo();
+        for (size_t i=0; i<num_matches; ++i)
+        {
+            type_cu = info->GetCompileUnitAtIndex (die_info_array[i].cu_idx);
+            
+            if (type_cu != curr_cu)
+            {
+                type_cu->ExtractDIEsIfNeeded (false);
+                curr_cu = type_cu;
+            }
+
+            DWARFDebugInfoEntry *type_die = type_cu->GetDIEAtIndexUnchecked (die_info_array[i].die_idx);
+            
+            if (type_die != die && type_die->Tag() == type_tag)
+            {
+                // Hold off on comparing parent DIE tags until
+                // we know what happens with stuff in namespaces
+                // for gcc and clang...
+                //DWARFDebugInfoEntry *parent_die = die->GetParent();
+                //DWARFDebugInfoEntry *parent_type_die = type_die->GetParent();
+                //if (parent_die->Tag() == parent_type_die->Tag())
+                {
+                    Type *resolved_type = ResolveType (type_cu, type_die, false);
+                    if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                    {
+                        DEBUG_PRINTF ("resolved 0x%8.8x (cu 0x%8.8x) from %s to 0x%8.8x (cu 0x%8.8x)\n",
+                                      die->GetOffset(), 
+                                      dwarf_cu->GetOffset(), 
+                                      m_obj_file->GetFileSpec().GetFilename().AsCString(),
+                                      type_die->GetOffset(), 
+                                      type_cu->GetOffset());
+                        
+                        m_die_to_type[die] = resolved_type;
+                        type_sp = m_obj_file->GetModule()->GetTypeList()->FindType(resolved_type->GetID());
+                        assert (type_sp.get());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return type_sp;
+}
+
 TypeSP
 SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool *type_is_new_ptr)
 {
@@ -2786,50 +2851,24 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     if (is_forward_declaration)
                     {
-                        // We have a forward declaration
-                        std::vector<NameToDIE::Info> die_info_array;
-                        const size_t num_matches = m_type_index.Find (type_name_const_str, die_info_array);
-                        DWARFCompileUnit* type_cu = NULL;
-                        DWARFCompileUnit* curr_cu = dwarf_cu;
-                        DWARFDebugInfo *info = DebugInfo();
-                        for (size_t i=0; i<num_matches; ++i)
-                        {
-                            type_cu = info->GetCompileUnitAtIndex (die_info_array[i].cu_idx);
-                            
-                            if (type_cu != curr_cu)
-                            {
-                                type_cu->ExtractDIEsIfNeeded (false);
-                                curr_cu = type_cu;
-                            }
+                        // We have a forward declaration to a type and we need
+                        // to try and find a full declaration. We look in the
+                        // current type index just in case we have a forward
+                        // declaration followed by an actual declarations in the
+                        // DWARF. If this fails, we need to look elsewhere...
+                    
+                        type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
 
-                            DWARFDebugInfoEntry *type_die = type_cu->GetDIEAtIndexUnchecked (die_info_array[i].die_idx);
-                            
-                            if (type_die != die && type_die->Tag() == tag)
-                            {
-                                // Hold off on comparing parent DIE tags until
-                                // we know what happens with stuff in namespaces
-                                // for gcc and clang...
-//                                DWARFDebugInfoEntry *parent_die = die->GetParent();
-//                                DWARFDebugInfoEntry *parent_type_die = type_die->GetParent();
-//                                if (parent_die->Tag() == parent_type_die->Tag())
-                                {
-                                    Type *resolved_type = ResolveType (type_cu, type_die, false);
-                                    if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
-                                    {
-                                        DEBUG_PRINTF ("resolved 0x%8.8x (cu 0x%8.8x) from %s to 0x%8.8x (cu 0x%8.8x)\n",
-                                                      die->GetOffset(), 
-                                                      dwarf_cu->GetOffset(), 
-                                                      m_obj_file->GetFileSpec().GetFilename().AsCString(),
-                                                      type_die->GetOffset(), 
-                                                      type_cu->GetOffset());
-                                        
-                                        m_die_to_type[die] = resolved_type;
-                                        type_sp = m_obj_file->GetModule()->GetTypeList()->FindType(resolved_type->GetID());
-                                        return type_sp;    
-                                    }
-                                }
-                            }
+                        if (!type_sp)
+                        {
+                            // We weren't able to find a full declaration in
+                            // this DWARF, see if we have a declaration anywhere    
+                            // else...
+                            if (m_debug_map_symfile)
+                                type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
                         }
+                        if (type_sp)
+                            return type_sp;
                     }
                     assert (tag_decl_kind != -1);
                     bool clang_type_was_created = false;

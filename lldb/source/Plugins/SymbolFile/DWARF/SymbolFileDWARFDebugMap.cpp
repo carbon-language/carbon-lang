@@ -886,6 +886,23 @@ SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool app
     return sc_list.GetSize() - initial_size;
 }
 
+TypeSP
+SymbolFileDWARFDebugMap::FindDefinitionTypeForDIE (
+    DWARFCompileUnit* cu, 
+    const DWARFDebugInfoEntry *die, 
+    const ConstString &type_name
+)
+{
+    TypeSP type_sp;
+    SymbolFileDWARF *oso_dwarf;
+    for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
+    {
+        type_sp = oso_dwarf->FindDefinitionTypeForDIE (cu, die, type_name);
+        if (type_sp)
+            break;
+    }
+    return type_sp;
+}
 
 uint32_t
 SymbolFileDWARFDebugMap::FindTypes 

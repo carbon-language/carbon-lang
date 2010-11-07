@@ -279,6 +279,11 @@ protected:
                                 const NameToDIE &name_to_die,
                                 lldb_private::SymbolContextList& sc_list);
 
+    lldb::TypeSP            FindDefinitionTypeForDIE (
+                                DWARFCompileUnit* cu, 
+                                const DWARFDebugInfoEntry *die, 
+                                const lldb_private::ConstString &type_name);
+    
     lldb::TypeSP            GetTypeForDIE (DWARFCompileUnit *cu, 
                                            const DWARFDebugInfoEntry* die);
 
