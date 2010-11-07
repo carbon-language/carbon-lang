@@ -367,16 +367,16 @@ namespace sys {
       /// the file system.
       bool exists() const;
 
-      /// This function determines if the path name refences an
+      /// This function determines if the path name references an
       /// existing directory.
       /// @returns true if the pathname references an existing directory.
-      /// @brief Determins if the path is a directory in the file system.
+      /// @brief Determines if the path is a directory in the file system.
       bool isDirectory() const;
 
-      /// This function determines if the path name refences an
+      /// This function determines if the path name references an
       /// existing symbolic link.
       /// @returns true if the pathname references an existing symlink.
-      /// @brief Determins if the path is a symlink in the file system.
+      /// @brief Determines if the path is a symlink in the file system.
       bool isSymLink() const;
 
       /// This function determines if the path name references a readable file
