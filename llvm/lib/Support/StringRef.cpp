@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/OwningPtr.h"
 #include <bitset>
 
 using namespace llvm;
@@ -84,10 +85,12 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
 
   const unsigned SmallBufferSize = 64;
   unsigned SmallBuffer[SmallBufferSize];
-  unsigned *Allocated = 0;
+  llvm::OwningArrayPtr<unsigned> Allocated;
   unsigned *previous = SmallBuffer;
-  if (2*(n + 1) > SmallBufferSize)
-    Allocated = previous = new unsigned [2*(n+1)];
+  if (2*(n + 1) > SmallBufferSize) {
+    previous = new unsigned [2*(n+1)];
+    Allocated.reset(previous);
+  }
   unsigned *current = previous + (n + 1);
   
   for (unsigned i = 0; i <= n; ++i) 
@@ -118,8 +121,6 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
   }
 
   unsigned Result = previous[n];
-  delete [] Allocated;
-  
   return Result;
 }
 
