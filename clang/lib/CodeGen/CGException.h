@@ -44,6 +44,7 @@ class EHPersonality {
 public:
   static const EHPersonality &get(const LangOptions &Lang);
   static const EHPersonality GNU_C;
+  static const EHPersonality GNU_C_SJLJ;
   static const EHPersonality GNU_ObjC;
   static const EHPersonality NeXT_ObjC;
   static const EHPersonality GNU_CPlusPlus;

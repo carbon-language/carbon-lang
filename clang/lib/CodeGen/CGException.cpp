@@ -300,6 +300,7 @@ static llvm::Constant *getCatchallRethrowFn(CodeGenFunction &CGF,
 }
 
 const EHPersonality EHPersonality::GNU_C("__gcc_personality_v0");
+const EHPersonality EHPersonality::GNU_C_SJLJ("__gcc_personality_sj0");
 const EHPersonality EHPersonality::NeXT_ObjC("__objc_personality_v0");
 const EHPersonality EHPersonality::GNU_CPlusPlus("__gxx_personality_v0");
 const EHPersonality EHPersonality::GNU_CPlusPlus_SJLJ("__gxx_personality_sj0");
@@ -307,6 +308,8 @@ const EHPersonality EHPersonality::GNU_ObjC("__gnu_objc_personality_v0",
                                             "objc_exception_throw");
 
 static const EHPersonality &getCPersonality(const LangOptions &L) {
+  if (L.SjLjExceptions)
+    return EHPersonality::GNU_C_SJLJ;
   return EHPersonality::GNU_C;
 }
 
