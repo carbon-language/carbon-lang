@@ -3151,6 +3151,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  if (Args.hasArg(options::OPT_rdynamic))
+    CmdArgs.push_back("-export-dynamic");
+
   for (std::vector<std::string>::const_iterator i = ToolChain.ExtraOpts.begin(),
          e = ToolChain.ExtraOpts.end();
        i != e; ++i)
