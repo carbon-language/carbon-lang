@@ -252,8 +252,27 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       break;
     }
   }
-  
-  
+
+  // If the comparison is with the result of a select instruction, check whether
+  // comparing with either branch of the select always yields the same value.
+  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)) {
+    // Make sure the select is on the LHS.
+    if (!isa<SelectInst>(LHS)) {
+      std::swap(LHS, RHS);
+      Pred = CmpInst::getSwappedPredicate(Pred);
+    }
+    SelectInst *SI = cast<SelectInst>(LHS);
+    // Now that we have "icmp select(cond, TV, FV), RHS", analyse it.
+    // Does "icmp TV, RHS" simplify?
+    if (Value *TCmp = SimplifyICmpInst(Pred, SI->getTrueValue(), RHS, TD))
+      // It does!  Does "icmp FV, RHS" simplify?
+      if (Value *FCmp = SimplifyICmpInst(Pred, SI->getFalseValue(), RHS, TD))
+        // It does!  If they simplified to the same value, then use it as the
+        // result of the original comparison.
+        if (TCmp == FCmp)
+          return TCmp;
+  }
+
   return 0;
 }
 

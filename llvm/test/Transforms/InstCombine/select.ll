@@ -470,3 +470,13 @@ define i32 @test37(i32 %x) {
 ; CHECK: or i32 {{.*}}, 1
 ; CHECK: ret
 }
+
+define i1 @test38(i1 %cond) {
+  %zero = alloca i32
+  %one = alloca i32
+  %ptr = select i1 %cond, i32* %zero, i32* %one
+  %isnull = icmp eq i32* %ptr, null
+  ret i1 %isnull
+; CHECK: @test38
+; CHECK: ret i1 false
+}

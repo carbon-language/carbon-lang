@@ -1963,15 +1963,3 @@ bb3:            ; preds = %entry
         ret i32 %b
 }
 //===---------------------------------------------------------------------===//
-We should fold this code into "ret i1 false" since neither %zero nor %one can
-ever be null pointers.
-
-define i1 @foo(i1 %cond) {
-  %zero = alloca i32
-  %one = alloca i32
-
-  %ptr = select i1 %cond, i32* %zero, i32* %one
-  %isnull = icmp eq i32* %ptr, null
-  ret i1 %isnull
-}
-//===---------------------------------------------------------------------===//
