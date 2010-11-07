@@ -373,6 +373,12 @@ namespace sys {
       /// @brief Determins if the path is a directory in the file system.
       bool isDirectory() const;
 
+      /// This function determines if the path name refences an
+      /// existing symbolic link.
+      /// @returns true if the pathname references an existing symlink.
+      /// @brief Determins if the path is a symlink in the file system.
+      bool isSymLink() const;
+
       /// This function determines if the path name references a readable file
       /// or directory in the file system. This function checks for
       /// the existence and readability (by the current program) of the file

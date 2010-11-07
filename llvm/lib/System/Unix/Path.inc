@@ -434,6 +434,15 @@ Path::isDirectory() const {
 }
 
 bool
+Path::isSymLink() const {
+  struct stat buf;
+  if (0 != lstat(path.c_str(), &buf))
+    return false;
+  return S_ISLNK(buf.st_mode);
+}
+
+
+bool
 Path::canRead() const {
   return 0 == access(path.c_str(), R_OK);
 }

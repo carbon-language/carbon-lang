@@ -351,6 +351,11 @@ Path::isDirectory() const {
 }
 
 bool
+Path::isSymLink() const {
+  return false;
+}
+
+bool
 Path::canRead() const {
   // FIXME: take security attributes into account.
   DWORD attr = GetFileAttributes(path.c_str());
