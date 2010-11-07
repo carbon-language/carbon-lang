@@ -1044,11 +1044,20 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
+  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
+                                             options::OPT_no_integrated_as,
+                                             IsIntegratedAssemblerDefault());
+
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
-    case Action::AssembleJobClass:
-      T = new tools::openbsd::Assemble(*this); break;
+    case Action::AssembleJobClass: {
+      if (UseIntegratedAs)
+        T = new tools::ClangAs(*this);
+      else
+        T = new tools::openbsd::Assemble(*this);
+      break;
+    }
     case Action::LinkJobClass:
       T = new tools::openbsd::Link(*this); break;
     default:
@@ -1398,11 +1407,19 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
+  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
+                                             options::OPT_no_integrated_as,
+                                             IsIntegratedAssemblerDefault());
+
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass:
-      T = new tools::linuxtools::Assemble(*this); break;
+      if (UseIntegratedAs)
+        T = new tools::ClangAs(*this);
+      else
+        T = new tools::linuxtools::Assemble(*this);
+      break;
     case Action::LinkJobClass:
       T = new tools::linuxtools::Link(*this); break;
     default:
