@@ -3000,7 +3000,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
       // Walk through identifiers in external identifier sources.
       if (IdentifierInfoLookup *External
                               = Context.Idents.getExternalIdentifierLookup()) {
-        IdentifierIterator *Iter = External->getIdentifiers();
+        llvm::OwningPtr<IdentifierIterator> Iter(External->getIdentifiers());
         do {
           llvm::StringRef Name = Iter->Next();
           if (Name.empty())
