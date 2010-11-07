@@ -1611,11 +1611,11 @@ namespace {
 
 /// \brief Helper function that computes which global names are hidden by the
 /// local code-completion results.
-void CalculateHiddenNames(const CodeCompletionContext &Context,
-                          CodeCompletionResult *Results,
-                          unsigned NumResults,
-                          ASTContext &Ctx,
-                          llvm::StringSet<> &HiddenNames) {
+static void CalculateHiddenNames(const CodeCompletionContext &Context,
+                                 CodeCompletionResult *Results,
+                                 unsigned NumResults,
+                                 ASTContext &Ctx,
+                          llvm::StringSet<llvm::BumpPtrAllocator> &HiddenNames){
   bool OnlyTagNames = false;
   switch (Context.getKind()) {
   case CodeCompletionContext::CCC_Recovery:
@@ -1698,7 +1698,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
                                             : (1 << (Context.getKind() - 1)));
 
   // Contains the set of names that are hidden by "local" completion results.
-  llvm::StringSet<> HiddenNames;
+  llvm::StringSet<llvm::BumpPtrAllocator> HiddenNames;
   llvm::SmallVector<CodeCompletionString *, 4> StringsToDestroy;
   typedef CodeCompletionResult Result;
   llvm::SmallVector<Result, 8> AllResults;
