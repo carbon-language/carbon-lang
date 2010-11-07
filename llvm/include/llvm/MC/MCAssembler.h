@@ -388,11 +388,14 @@ class MCDwarfLineAddrFragment : public MCFragment {
   /// make up the address delta between two .loc dwarf directives.
   const MCExpr *AddrDelta;
 
+  /// Size - The current size estimate.
+  uint64_t Size;
+
 public:
   MCDwarfLineAddrFragment(int64_t _LineDelta, const MCExpr &_AddrDelta,
                       MCSectionData *SD = 0)
     : MCFragment(FT_Dwarf, SD),
-      LineDelta(_LineDelta), AddrDelta(&_AddrDelta) {}
+      LineDelta(_LineDelta), AddrDelta(&_AddrDelta), Size(1) {}
 
   /// @name Accessors
   /// @{
@@ -400,6 +403,10 @@ public:
   int64_t getLineDelta() const { return LineDelta; }
 
   const MCExpr &getAddrDelta() const { return *AddrDelta; }
+
+  uint64_t getSize() const { return Size; }
+
+  void setSize(uint64_t Size_) { Size = Size_; }
 
   /// @}
 
@@ -726,6 +733,9 @@ private:
 
   bool RelaxLEB(const MCObjectWriter &Writer, MCAsmLayout &Layout,
                 MCLEBFragment &IF);
+
+  bool RelaxDwarfLineAddr(const MCObjectWriter &Writer, MCAsmLayout &Layout,
+			  MCDwarfLineAddrFragment &DF);
 
   /// FinishLayout - Finalize a layout, including fragment lowering.
   void FinishLayout(MCAsmLayout &Layout);

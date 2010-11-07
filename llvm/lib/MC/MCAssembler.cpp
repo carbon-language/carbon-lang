@@ -340,19 +340,8 @@ uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
   case MCFragment::FT_Org:
     return cast<MCOrgFragment>(F).getSize();
 
-  case MCFragment::FT_Dwarf: {
-    const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
-
-    // The AddrDelta is really unsigned and it can only increase.
-    int64_t AddrDelta;
-
-    OF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, &Layout);
-
-    int64_t LineDelta;
-    LineDelta = OF.getLineDelta();
-
-    return MCDwarfLineAddr::ComputeSize(LineDelta, AddrDelta);
-  }
+  case MCFragment::FT_Dwarf:
+    return cast<MCDwarfLineAddrFragment>(F).getSize();
   }
 
   assert(0 && "invalid fragment kind");
@@ -861,6 +850,18 @@ bool MCAssembler::RelaxLEB(const MCObjectWriter &Writer,
   return OldSize != LF.getSize();
 }
 
+bool MCAssembler::RelaxDwarfLineAddr(const MCObjectWriter &Writer,
+				     MCAsmLayout &Layout,
+				     MCDwarfLineAddrFragment &DF) {
+  int64_t AddrDelta;
+  DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, &Layout);
+  int64_t LineDelta;
+  LineDelta = DF.getLineDelta();
+  uint64_t OldSize = DF.getSize();
+  DF.setSize(MCDwarfLineAddr::ComputeSize(LineDelta, AddrDelta));
+  return OldSize != DF.getSize();  
+}
+
 bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
                              MCAsmLayout &Layout) {
   ++stats::RelaxationSteps;
@@ -886,6 +887,10 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
       case MCFragment::FT_Org:
         WasRelaxed |= RelaxOrg(Writer, Layout, *cast<MCOrgFragment>(it2));
         break;
+      case MCFragment::FT_Dwarf:
+        WasRelaxed |= RelaxDwarfLineAddr(Writer, Layout,
+					 *cast<MCDwarfLineAddrFragment>(it2));
+	break;
       case MCFragment::FT_LEB:
         WasRelaxed |= RelaxLEB(Writer, Layout, *cast<MCLEBFragment>(it2));
         break;
