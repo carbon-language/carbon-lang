@@ -317,7 +317,12 @@ class LLVM_LIBRARY_VISIBILITY Linux : public Generic_ELF {
 public:
   Linux(const HostInfo &Host, const llvm::Triple& Triple);
 
+  virtual bool HasNativeLLVMSupport() const;
+
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+
+  std::string Linker;
+  std::vector<std::string> ExtraOpts;
 };
 
 

@@ -23,6 +23,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
@@ -1177,28 +1178,217 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
 
 /// Linux toolchain (very bare-bones at the moment).
 
+enum LinuxDistro {
+  DebianLenny,
+  DebianSqueeze,
+  Fedora13,
+  Fedora14,
+  OpenSuse11_3,
+  UbuntuLucid,
+  UbuntuMaverick,
+  UnknownDistro
+};
+
+static bool IsFedora(enum LinuxDistro Distro) {
+  return Distro == Fedora13 || Distro == Fedora14;
+}
+
+static bool IsOpenSuse(enum LinuxDistro Distro) {
+  return Distro == OpenSuse11_3;
+}
+
+static bool IsDebian(enum LinuxDistro Distro) {
+  return Distro == DebianLenny || Distro == DebianSqueeze;
+}
+
+static bool IsUbuntu(enum LinuxDistro Distro) {
+  return Distro == UbuntuLucid || Distro == UbuntuMaverick;
+}
+
+static bool IsDebianBased(enum LinuxDistro Distro) {
+  return IsDebian(Distro) || IsUbuntu(Distro);
+}
+
+static bool HasMultilib(llvm::Triple::ArchType Arch, enum LinuxDistro Distro) {
+  if (Arch == llvm::Triple::x86_64)
+    return true;
+  if (Arch == llvm::Triple::x86 && IsDebianBased(Distro))
+    return true;
+  return false;
+}
+
+static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
+  llvm::OwningPtr<const llvm::MemoryBuffer>
+    LsbRelease(llvm::MemoryBuffer::getFile("/etc/lsb-release"));
+  if (LsbRelease) {
+    llvm::StringRef Data = LsbRelease.get()->getBuffer();
+    llvm::SmallVector<llvm::StringRef, 8> Lines;
+    Data.split(Lines, "\n");
+    for (unsigned int i = 0, s = Lines.size(); i < s; ++ i) {
+      if (Lines[i] == "DISTRIB_CODENAME=maverick")
+        return UbuntuMaverick;
+      else if (Lines[i] == "DISTRIB_CODENAME=lucid")
+        return UbuntuLucid;
+    }
+    return UnknownDistro;
+  }
+
+  llvm::OwningPtr<const llvm::MemoryBuffer>
+    RHRelease(llvm::MemoryBuffer::getFile("/etc/redhat-release"));
+  if (RHRelease) {
+    llvm::StringRef Data = RHRelease.get()->getBuffer();
+    if (Data.startswith("Fedora release 14 (Laughlin)"))
+      return Fedora14;
+    else if (Data.startswith("Fedora release 13 (Goddard)"))
+      return Fedora13;
+    return UnknownDistro;
+  }
+
+  llvm::OwningPtr<const llvm::MemoryBuffer>
+    DebianVersion(llvm::MemoryBuffer::getFile("/etc/debian_version"));
+  if (DebianVersion) {
+    llvm::StringRef Data = DebianVersion.get()->getBuffer();
+    if (Data[0] == '5')
+      return DebianLenny;
+    else if (Data.startswith("squeeze/sid"))
+      return DebianSqueeze;
+    return UnknownDistro;
+  }
+
+  llvm::OwningPtr<const llvm::MemoryBuffer>
+    SuseRelease(llvm::MemoryBuffer::getFile("/etc/SuSE-release"));
+  if (SuseRelease) {
+    llvm::StringRef Data = SuseRelease.get()->getBuffer();
+    if (Data.startswith("openSUSE 11.3"))
+      return OpenSuse11_3;
+    return UnknownDistro;
+  }
+
+  return UnknownDistro;
+}
+
 Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_ELF(Host, Triple) {
-  getFilePaths().push_back(getDriver().Dir +
-                           "/../lib/clang/" CLANG_VERSION_STRING "/");
-  getFilePaths().push_back("/lib/");
-  getFilePaths().push_back("/usr/lib/");
+  llvm::Triple::ArchType Arch =
+    llvm::Triple(getDriver().DefaultHostTriple).getArch();
 
-  // Depending on the Linux distribution, any combination of lib{,32,64} is
-  // possible. E.g. Debian uses lib and lib32 for mixed i386/x86-64 systems,
-  // openSUSE uses lib and lib64 for the same purpose.
-  getFilePaths().push_back("/lib32/");
-  getFilePaths().push_back("/usr/lib32/");
-  getFilePaths().push_back("/lib64/");
-  getFilePaths().push_back("/usr/lib64/");
+  std::string Suffix32  = "";
+  if (Arch == llvm::Triple::x86_64)
+    Suffix32 = "/32";
 
-  // FIXME: Figure out some way to get gcc's libdir
-  // (e.g. /usr/lib/gcc/i486-linux-gnu/4.3/ for Ubuntu 32-bit); we need
-  // crtbegin.o/crtend.o/etc., and want static versions of various
-  // libraries. If we had our own crtbegin.o/crtend.o/etc, we could probably
-  // get away with using shared versions in /usr/lib, though.
-  // We could fall back to the approach we used for includes (a massive
-  // list), but that's messy at best.
+  std::string Suffix64  = "";
+  if (Arch == llvm::Triple::x86)
+    Suffix64 = "/64";
+
+  std::string Lib32 = "lib";
+
+  if (  llvm::sys::Path("/lib32").exists())
+    Lib32 = "lib32";
+
+  std::string Lib64 = "lib";
+  llvm::sys::Path Lib64Path("/lib64");
+  if (Lib64Path.exists() && !Lib64Path.isSymLink())
+    Lib64 = "lib64";
+
+  std::string GccTriple = "";
+  if (Arch == llvm::Triple::arm) {
+    if (llvm::sys::Path("/usr/lib/gcc/arm-linux-gnueabi").exists())
+      GccTriple = "arm-linux-gnueabi";
+  } else if (Arch == llvm::Triple::x86_64) {
+    if (llvm::sys::Path("/usr/lib/gcc/x86_64-linux-gnu").exists())
+      GccTriple = "x86_64-linux-gnu";
+    else if (llvm::sys::Path("/usr/lib/gcc/x86_64-redhat-linux").exists())
+      GccTriple = "x86_64-redhat-linux";
+    else if (llvm::sys::Path("/usr/lib64/gcc/x86_64-suse-linux").exists())
+      GccTriple = "x86_64-suse-linux";
+  } else if (Arch == llvm::Triple::x86) {
+    if (llvm::sys::Path("/usr/lib/gcc/i686-linux-gnu").exists())
+      GccTriple = "i686-linux-gnu";
+    else if (llvm::sys::Path("/usr/lib/gcc/i486-linux-gnu").exists())
+      GccTriple = "i486-linux-gnu";
+    else if (llvm::sys::Path("/usr/lib/gcc/i686-redhat-linux").exists())
+      GccTriple = "i686-redhat-linux";
+    else if (llvm::sys::Path("/usr/lib/gcc/i586-suse-linux").exists())
+      GccTriple = "i586-suse-linux";
+  }
+
+  const char* GccVersions[] = {"4.5.1", "4.5", "4.4.5", "4.4.4", "4.4.3",
+                               "4.3.2"};
+  std::string Base = "";
+  for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
+    std::string Suffix = GccTriple + "/" + GccVersions[i];
+    std::string t1 = "/usr/lib/gcc/" + Suffix;
+    if (llvm::sys::Path(t1 + "/crtbegin.o").exists()) {
+      Base = t1;
+      break;
+    }
+    std::string t2 = "/usr/lib64/gcc/" + Suffix;
+    if (llvm::sys::Path(t2 + "/crtbegin.o").exists()) {
+      Base = t2;
+      break;
+    }
+  }
+
+  path_list &Paths = getFilePaths();
+  bool Is32Bits = getArch() == llvm::Triple::x86;
+
+  std::string Suffix;
+  std::string Lib;
+
+  if (Is32Bits) {
+    Suffix = Suffix32;
+    Lib = Lib32;
+  } else {
+    Suffix = Suffix64;
+    Lib = Lib64;
+  }
+
+  llvm::sys::Path LinkerPath(Base + "/../../../../" + GccTriple + "/bin/ld");
+  if (LinkerPath.exists())
+    Linker = LinkerPath.str();
+  else
+    Linker = GetProgramPath("ld");
+
+  LinuxDistro Distro = DetectLinuxDistro(Arch);
+
+  if (IsUbuntu(Distro))
+    ExtraOpts.push_back("-z relro");
+
+  if (Arch == llvm::Triple::arm)
+    ExtraOpts.push_back("-X");
+
+  if (IsFedora(Distro) || Distro == UbuntuMaverick)
+    ExtraOpts.push_back("--hash-style=gnu");
+
+  if (IsDebian(Distro) || Distro == UbuntuLucid)
+    ExtraOpts.push_back("--hash-style=both");
+
+  if (IsFedora(Distro))
+    ExtraOpts.push_back("--no-add-needed");
+
+  if (Distro == DebianSqueeze || IsUbuntu(Distro) || IsOpenSuse(Distro) ||
+      IsFedora(Distro))
+    ExtraOpts.push_back("--build-id");
+
+  Paths.push_back(Base + Suffix);
+  if (HasMultilib(Arch, Distro)) {
+    if (IsOpenSuse(Distro) && Is32Bits)
+      Paths.push_back(Base + "/../../../../" + GccTriple + "/lib/../lib");
+    Paths.push_back(Base + "/../../../../" + Lib);
+    Paths.push_back("/lib/../" + Lib);
+    Paths.push_back("/usr/lib/../" + Lib);
+  }
+  if (!Suffix.empty())
+    Paths.push_back(Base);
+  if (IsOpenSuse(Distro))
+    Paths.push_back(Base + "/../../../../" + GccTriple + "/lib");
+  Paths.push_back(Base + "/../../..");
+  if (Arch == getArch() && IsUbuntu(Distro))
+    Paths.push_back("/usr/lib/" + GccTriple);
+}
+
+bool Linux::HasNativeLLVMSupport() const {
+  return true;
 }
 
 Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
@@ -1213,6 +1403,8 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
     switch (Key) {
     case Action::AssembleJobClass:
       T = new tools::linuxtools::Assemble(*this); break;
+    case Action::LinkJobClass:
+      T = new tools::linuxtools::Link(*this); break;
     default:
       T = &Generic_GCC::SelectTool(C, JA);
     }

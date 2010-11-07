@@ -3136,6 +3136,150 @@ void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
+void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                    const InputInfo &Output,
+                                    const InputInfoList &Inputs,
+                                    const ArgList &Args,
+                                    const char *LinkingOutput) const {
+  const toolchains::Linux& ToolChain =
+    static_cast<const toolchains::Linux&>(getToolChain());
+  const Driver &D = ToolChain.getDriver();
+  ArgStringList CmdArgs;
+
+  if (Arg *A = Args.getLastArg(options::OPT__sysroot_EQ)) {
+    CmdArgs.push_back("--sysroot");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+
+  for (std::vector<std::string>::const_iterator i = ToolChain.ExtraOpts.begin(),
+         e = ToolChain.ExtraOpts.end();
+       i != e; ++i)
+    CmdArgs.push_back(i->c_str());
+
+  if (!Args.hasArg(options::OPT_static)) {
+    CmdArgs.push_back("--eh-frame-hdr");
+  }
+
+  CmdArgs.push_back("-m");
+  if (ToolChain.getArch() == llvm::Triple::x86)
+    CmdArgs.push_back("elf_i386");
+  else if (ToolChain.getArch() == llvm::Triple::arm)
+    CmdArgs.push_back("armelf_linux_eabi");
+  else
+    CmdArgs.push_back("elf_x86_64");
+
+  if (Args.hasArg(options::OPT_static)) {
+    if (ToolChain.getArch() == llvm::Triple::arm)
+      CmdArgs.push_back("-Bstatic");
+    else
+      CmdArgs.push_back("-static");
+  } else if (Args.hasArg(options::OPT_shared)) {
+    CmdArgs.push_back("-shared");
+  }
+
+  if (ToolChain.getArch() == llvm::Triple::arm ||
+      (!Args.hasArg(options::OPT_static) &&
+       !Args.hasArg(options::OPT_shared))) {
+    CmdArgs.push_back("-dynamic-linker");
+    if (ToolChain.getArch() == llvm::Triple::x86)
+      CmdArgs.push_back("/lib/ld-linux.so.2");
+    else if (ToolChain.getArch() == llvm::Triple::arm)
+      CmdArgs.push_back("/lib/ld-linux.so.3");
+    else
+      CmdArgs.push_back("/lib64/ld-linux-x86-64.so.2");
+  }
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  if (!Args.hasArg(options::OPT_shared))
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt1.o")));
+
+  CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
+
+  const char *crtbegin;
+  if (Args.hasArg(options::OPT_static))
+    crtbegin = "crtbeginT.o";
+  else if (Args.hasArg(options::OPT_shared))
+    crtbegin = "crtbeginS.o";
+  else
+    crtbegin = "crtbegin.o";
+
+  CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtbegin)));
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+
+  const ToolChain::path_list Paths = ToolChain.getFilePaths();
+
+  for (ToolChain::path_list::const_iterator i = Paths.begin(),
+         e = Paths.end();
+       i != e; ++i) {
+    const std::string &s = *i;
+    CmdArgs.push_back(Args.MakeArgString(std::string("-L") + s));
+  }
+
+  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+
+  if (D.CCCIsCXX) {
+    ToolChain.AddCXXStdlibLibArgs(Args, CmdArgs);
+    CmdArgs.push_back("-lm");
+  }
+
+  if (Args.hasArg(options::OPT_static))
+    CmdArgs.push_back("--start-group");
+
+  if (!D.CCCIsCXX)
+    CmdArgs.push_back("-lgcc");
+
+  if (Args.hasArg(options::OPT_static)) {
+    if (D.CCCIsCXX)
+      CmdArgs.push_back("-lgcc");
+  } else {
+    if (!D.CCCIsCXX)
+      CmdArgs.push_back("--as-needed");
+    CmdArgs.push_back("-lgcc_s");
+    if (!D.CCCIsCXX)
+      CmdArgs.push_back("--no-as-needed");
+  }
+
+  if (Args.hasArg(options::OPT_static))
+    CmdArgs.push_back("-lgcc_eh");
+  else if (!Args.hasArg(options::OPT_shared) && D.CCCIsCXX)
+    CmdArgs.push_back("-lgcc");
+
+  CmdArgs.push_back("-lc");
+
+  if (Args.hasArg(options::OPT_static))
+    CmdArgs.push_back("--end-group");
+  else {
+    if (!D.CCCIsCXX)
+      CmdArgs.push_back("-lgcc");
+
+    if (!D.CCCIsCXX)
+      CmdArgs.push_back("--as-needed");
+    CmdArgs.push_back("-lgcc_s");
+    if (!D.CCCIsCXX)
+      CmdArgs.push_back("--no-as-needed");
+
+    if (!Args.hasArg(options::OPT_shared) && D.CCCIsCXX)
+      CmdArgs.push_back("-lgcc");
+  }
+
+  if (Args.hasArg(options::OPT_shared))
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtendS.o")));
+  else
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
+
+  CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
+
+  if (Args.hasArg(options::OPT_use_gold_plugin)) {
+    CmdArgs.push_back("-plugin");
+    std::string Plugin = ToolChain.getDriver().Dir + "/../lib/LLVMgold.so";
+    CmdArgs.push_back(Args.MakeArgString(Plugin));
+  }
+
+  C.addCommand(new Command(JA, *this, ToolChain.Linker.c_str(), CmdArgs));
+}
 
 void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                    const InputInfo &Output,
