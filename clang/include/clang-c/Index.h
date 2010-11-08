@@ -616,9 +616,20 @@ clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
  *   '-fsyntax-only'
  *   '-o <output file>'  (both '-o' and '<output file>' are ignored)
  *
+ * \param CIdx The index object with which the translation unit will be
+ * associated.
  *
  * \param source_filename - The name of the source file to load, or NULL if the
- * source file is included in clang_command_line_args.
+ * source file is included in \p clang_command_line_args.
+ *
+ * \param num_clang_command_line_args The number of command-line arguments in
+ * \p clang_command_line_args.
+ *
+ * \param clang_command_line_args The command-line arguments that would be
+ * passed to the \c clang executable if it were being invoked out-of-process.
+ * These command-line options will be parsed and will affect how the translation
+ * unit is parsed. Note that the following options are ignored: '-c',
+ * '-emit-ast', '-fsyntex-only' (which is the default), and '-o <output file>'.
  *
  * \param num_unsaved_files the number of unsaved file entries in \p
  * unsaved_files.
@@ -628,13 +639,6 @@ clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
  * those files.  The contents and name of these files (as specified by
  * CXUnsavedFile) are copied when necessary, so the client only needs to
  * guarantee their validity until the call to this function returns.
- *
- * \param diag_callback callback function that will receive any diagnostics
- * emitted while processing this source file. If NULL, diagnostics will be
- * suppressed.
- *
- * \param diag_client_data client data that will be passed to the diagnostic
- * callback function.
  */
 CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
                                          CXIndex CIdx,
@@ -759,7 +763,7 @@ CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
  * associated.
  *
  * \param source_filename The name of the source file to load, or NULL if the
- * source file is included in \p clang_command_line_args.
+ * source file is included in \p command_line_args.
  *
  * \param command_line_args The command-line arguments that would be
  * passed to the \c clang executable if it were being invoked out-of-process.
@@ -2688,12 +2692,6 @@ CXDiagnostic clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *Results,
  *        intended to be parsed (the format is not guaranteed to be stable).
  */
 CINDEX_LINKAGE CXString clang_getClangVersion();
-
-/**
- * \brief Return a version string, suitable for showing to a user, but not
- *        intended to be parsed (the format is not guaranteed to be stable).
- */
-
 
  /**
   * \brief Visitor invoked for each file in a translation unit
