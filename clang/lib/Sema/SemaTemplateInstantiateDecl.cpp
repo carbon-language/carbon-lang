@@ -722,6 +722,15 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   CXXRecordDecl *PrevDecl = 0;
   ClassTemplateDecl *PrevClassTemplate = 0;
 
+  if (!isFriend && Pattern->getPreviousDeclaration()) {
+    DeclContext::lookup_result Found = Owner->lookup(Pattern->getDeclName());
+    if (Found.first != Found.second) {
+      PrevClassTemplate = dyn_cast<ClassTemplateDecl>(*Found.first);
+      if (PrevClassTemplate)
+        PrevDecl = PrevClassTemplate->getTemplatedDecl();
+    }
+  }
+
   // If this isn't a friend, then it's a member template, in which
   // case we just want to build the instantiation in the
   // specialization.  If it is a friend, we want to build it in
@@ -836,7 +845,8 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     // friend target decl?
   } else {
     Inst->setAccess(D->getAccess());
-    Inst->setInstantiatedFromMemberTemplate(D);
+    if (!PrevClassTemplate)
+      Inst->setInstantiatedFromMemberTemplate(D);
   }
   
   // Trigger creation of the type for the instantiation.

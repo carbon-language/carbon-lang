@@ -56,3 +56,21 @@ namespace M {
 }
 
 template<typename T> class M::C3 { }; // expected-error{{out-of-line definition of 'C3' does not match any declaration in namespace 'M'}}
+
+namespace PR8001 {
+  template<typename T1>
+  struct Foo {
+    template<typename T2> class Bar;
+    typedef Bar<T1> Baz;
+
+   template<typename T2>
+   struct Bar {
+     Bar() {}
+   };
+  };
+
+  void pr8001() {
+    Foo<int>::Baz x;
+    Foo<int>::Bar<int> y(x);
+  }
+}
