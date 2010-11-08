@@ -23,6 +23,7 @@
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
@@ -140,10 +141,14 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
           for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
                CI != CE; ++CI) {
             Value *Arg = *CI;
-            if (Arg->getType()->isPointerTy() &&
-                !AA->pointsToConstantMemory(Arg, /*OrLocal=*/true))
-              // Writes memory.  Just give up.
-              return false;
+            if (Arg->getType()->isPointerTy()) {
+              AliasAnalysis::Location Loc(Arg,
+                                          AliasAnalysis::UnknownSize,
+                                          I->getMetadata(LLVMContext::MD_tbaa));
+              if (!AA->pointsToConstantMemory(Arg, /*OrLocal=*/true))
+                // Writes memory.  Just give up.
+                return false;
+            }
           }
           // Only reads and writes local memory.
           continue;
@@ -153,16 +158,23 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
         }
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore non-volatile loads from local memory.
-        if (!LI->isVolatile() &&
-            AA->pointsToConstantMemory(LI->getPointerOperand(),
-                                       /*OrLocal=*/true))
-          continue;
+        if (!LI->isVolatile()) {
+          AliasAnalysis::Location Loc(LI->getPointerOperand(),
+                                        AA->getTypeStoreSize(LI->getType()),
+                                        LI->getMetadata(LLVMContext::MD_tbaa));
+          if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
+            continue;
+        }
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Ignore non-volatile stores to local memory.
-        if (!SI->isVolatile() &&
-            AA->pointsToConstantMemory(SI->getPointerOperand(),
-                                       /*OrLocal=*/true))
-          continue;
+        if (!SI->isVolatile()) {
+          const Type *StoredType = SI->getValueOperand()->getType();
+          AliasAnalysis::Location Loc(SI->getPointerOperand(),
+                                      AA->getTypeStoreSize(StoredType),
+                                      SI->getMetadata(LLVMContext::MD_tbaa));
+          if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
+            continue;
+        }
       }
 
       // Any remaining instructions need to be taken seriously!  Check if they
