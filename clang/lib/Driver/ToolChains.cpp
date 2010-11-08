@@ -1110,6 +1110,7 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
         T = new tools::ClangAs(*this);
       else
         T = new tools::freebsd::Assemble(*this);
+      break;
     case Action::LinkJobClass:
       T = new tools::freebsd::Link(*this); break;
     default:
