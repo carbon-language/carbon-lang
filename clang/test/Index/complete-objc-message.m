@@ -150,6 +150,27 @@ void test_redundancy(C *c) {
   [c method2];
 };
 
+@protocol P
+- (Class)class;
+@end
+
+@interface A () <P>
+@end
+
+@interface A ()
++ (void)class_method3;
+@end
+
+@interface A (Cat)
++ (void)class_method4;
+@end
+
+@implementation A
+- (void)method5:(A*)a {
+  [[self class] class_method4];
+}
+@end
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{TypedText withKeyword:}{Placeholder (int)}
@@ -256,6 +277,10 @@ void test_redundancy(C *c) {
 // CHECK-REDUNDANT-NOT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2}
 // CHECK-REDUNDANT: ObjCInstanceMethodDecl:{ResultType void}{TypedText method3} (35)
 
+// RUN: c-index-test -code-completion-at=%s:170:16 %s | FileCheck -check-prefix=CHECK-CLASS-RESULT %s
+// CHECK-CLASS-RESULT: ObjCClassMethodDecl:{ResultType void}{TypedText class_method3} (35)
+// CHECK-CLASS-RESULT: ObjCClassMethodDecl:{ResultType void}{TypedText class_method4} (35)
+
 // Test code completion with a missing opening bracket:
 // RUN: c-index-test -code-completion-at=%s:135:5 %s | FileCheck -check-prefix=CHECK-CCI %s
 // RUN: c-index-test -code-completion-at=%s:139:7 %s | FileCheck -check-prefix=CHECK-CC7 %s
@@ -268,3 +293,4 @@ void test_redundancy(C *c) {
 // RUN: c-index-test -code-completion-at=%s:141:14 %s | FileCheck -check-prefix=CHECK-CCC %s
 // RUN: c-index-test -code-completion-at=%s:141:23 %s | FileCheck -check-prefix=CHECK-CCD %s
 // RUN: c-index-test -code-completion-at=%s:141:30 %s | FileCheck -check-prefix=CHECK-CCE %s
+

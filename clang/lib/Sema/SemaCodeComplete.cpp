@@ -4695,6 +4695,21 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                             Context.getObjCInterfaceType(Super))
                                  : Context.getObjCIdType();
   
+  // If we're messaging an expression with type "id" or "Class", check
+  // whether we know something special about the receiver that allows
+  // us to assume a more-specific receiver type.
+  if (ReceiverType->isObjCIdType() || ReceiverType->isObjCClassType())
+    if (ObjCInterfaceDecl *IFace = GetAssumedMessageSendExprType(RecExpr)) {
+      if (ReceiverType->isObjCClassType())
+        return CodeCompleteObjCClassMessage(S, 
+                       ParsedType::make(Context.getObjCInterfaceType(IFace)),
+                                            SelIdents, NumSelIdents,
+                                            AtArgumentExpression, Super);
+
+      ReceiverType = Context.getObjCObjectPointerType(
+                                          Context.getObjCInterfaceType(IFace));
+    }
+
   // Build the set of methods we can see.
   ResultBuilder Results(*this, CodeCompletionContext::CCC_Other);
   Results.EnterNewScope();
@@ -4712,14 +4727,6 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   // others.
   if (ObjCMethodDecl *CurMethod = getCurMethodDecl())
     Results.setPreferredSelector(CurMethod->getSelector());
-
-  // If we're messaging an expression with type "id" or "Class", check
-  // whether we know something special about the receiver that allows
-  // us to assume a more-specific receiver type.
-  if (ReceiverType->isObjCIdType() || ReceiverType->isObjCClassType())
-    if (ObjCInterfaceDecl *IFace = GetAssumedMessageSendExprType(RecExpr))
-      ReceiverType = Context.getObjCObjectPointerType(
-                                          Context.getObjCInterfaceType(IFace));
   
   // Keep track of the selectors we've already added.
   VisitedSelectorSet Selectors;
