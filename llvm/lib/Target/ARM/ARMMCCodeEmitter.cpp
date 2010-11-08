@@ -378,14 +378,11 @@ getBitfieldInvertedMaskOpValue(const MCInst &MI, unsigned Op,
 
 unsigned ARMMCCodeEmitter::
 getRegisterListOpValue(const MCInst &MI, unsigned Op,
-                       SmallVectorImpl<MCFixup> &Fixups) const {
-  // Convert a list of GPRs into a bitfield (R0 -> bit 0). For each
-  // register in the list, set the corresponding bit.
-  unsigned Binary = 0;
-  for (unsigned i = Op, e = MI.getNumOperands(); i < e; ++i) {
-    unsigned regno = getARMRegisterNumbering(MI.getOperand(i).getReg());
-    Binary |= 1 << regno;
-  }
+                       SmallVectorImpl<MCFixup> &) const {
+  // {12-8} = Rd
+  // {7-0}  = count
+  unsigned Binary = getARMRegisterNumbering(MI.getOperand(Op).getReg()) << 8;
+  Binary |= MI.getOperand(Op + 1).getImm() & 0xFF;
   return Binary;
 }
 
