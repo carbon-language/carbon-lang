@@ -286,14 +286,15 @@ protected:
     UpdateThreadListIfNeeded ();
 
     lldb_private::Error
-    StartDebugserverProcess (const char *debugserver_url,      // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
+    StartDebugserverProcess (const char *debugserver_url,   // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
                              char const *inferior_argv[],
                              char const *inferior_envp[],
                              const char *stdin_path,
-                             lldb::pid_t attach_pid,         // If inferior inferior_argv == NULL, then attach to this pid
-                             const char *attach_pid_name,    // Wait for the next process to launch whose basename matches "attach_wait_name"
-                             bool wait_for_launch,           // Wait for the process named "attach_wait_name" to launch
-                             bool disable_aslr,               // Disable ASLR
+                             bool launch_process,           // Set to true if we are going to be launching a the process
+                             lldb::pid_t attach_pid,        // If inferior inferior_argv == NULL, then attach to this pid
+                             const char *attach_pid_name,   // Wait for the next process to launch whose basename matches "attach_wait_name"
+                             bool wait_for_launch,          // Wait for the process named "attach_wait_name" to launch
+                             bool disable_aslr,             // Disable ASLR
                              lldb_private::ArchSpec& arch_spec);
 
     void

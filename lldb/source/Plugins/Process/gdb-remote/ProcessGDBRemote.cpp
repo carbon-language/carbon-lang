@@ -393,6 +393,7 @@ ProcessGDBRemote::DoLaunch
         char host_port[128];
         snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
 
+        const bool launch_process = true;
         bool start_debugserver_with_inferior_args = false;
         if (start_debugserver_with_inferior_args)
         {
@@ -403,6 +404,7 @@ ProcessGDBRemote::DoLaunch
                                              argv,
                                              envp,
                                              NULL, //stdin_path,
+                                             launch_process,
                                              LLDB_INVALID_PROCESS_ID,
                                              NULL, false,
                                              (launch_flags & eLaunchFlagDisableASLR) != 0,
@@ -421,7 +423,8 @@ ProcessGDBRemote::DoLaunch
             error = StartDebugserverProcess (host_port,
                                              NULL,
                                              NULL,
-                                             NULL, //stdin_path,
+                                             NULL, //stdin_path
+                                             launch_process,
                                              LLDB_INVALID_PROCESS_ID,
                                              NULL, false,
                                              (launch_flags & eLaunchFlagDisableASLR) != 0,
@@ -644,9 +647,10 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
                                          NULL,                      // inferior_argv
                                          NULL,                      // inferior_envp
                                          NULL,                      // stdin_path
-                                         LLDB_INVALID_PROCESS_ID,   // attach_pid
-                                         NULL,                      // attach_pid_name
-                                         false,                     // wait_for_launch
+                                         false,                     // launch_process == false (we are attaching)
+                                         LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
+                                         NULL,                      // Don't send any attach by process name option to debugserver
+                                         false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
                                          false,                     // disable_aslr
                                          arch_spec);
         
@@ -745,9 +749,10 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
                                          NULL,                      // inferior_argv
                                          NULL,                      // inferior_envp
                                          NULL,                      // stdin_path
-                                         LLDB_INVALID_PROCESS_ID,   // attach_pid
-                                         NULL,                      // attach_pid_name
-                                         false,                     // wait_for_launch
+                                         false,                     // launch_process == false (we are attaching)
+                                         LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
+                                         NULL,                      // Don't send any attach by process name option to debugserver
+                                         false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
                                          false,                     // disable_aslr
                                          arch_spec);
         if (error.Fail())
@@ -1655,10 +1660,11 @@ ProcessGDBRemote::StartDebugserverProcess
     char const *inferior_argv[],    // Arguments for the inferior program including the path to the inferior itself as the first argument
     char const *inferior_envp[],    // Environment to pass along to the inferior program
     char const *stdio_path,
-    lldb::pid_t attach_pid,         // If inferior inferior_argv == NULL, and attach_pid != LLDB_INVALID_PROCESS_ID then attach to this attach_pid
+    bool launch_process,            // Set to true if we are going to be launching a the process
+    lldb::pid_t attach_pid,         // If inferior inferior_argv == NULL, and attach_pid != LLDB_INVALID_PROCESS_ID send this pid as an argument to debugserver
     const char *attach_name,        // Wait for the next process to launch whose basename matches "attach_name"
     bool wait_for_launch,           // Wait for the process named "attach_name" to launch
-    bool disable_aslr,               // Disable ASLR
+    bool disable_aslr,              // Disable ASLR
     ArchSpec& inferior_arch         // The arch of the inferior that we will launch
 )
 {
@@ -1741,30 +1747,12 @@ ProcessGDBRemote::StartDebugserverProcess
 
             Args debugserver_args;
             char arg_cstr[PATH_MAX];
-            bool launch_process = true;
 
-            if (inferior_argv == NULL && attach_pid != LLDB_INVALID_PROCESS_ID)
-                launch_process = false;
-            else if (attach_name)
-                launch_process = false; // Wait for a process whose basename matches that in inferior_argv[0]
-
-            bool pass_stdio_path_to_debugserver = true;
             lldb_utility::PseudoTerminal pty;
-            if (stdio_path == NULL)
+            if (launch_process && stdio_path == NULL && m_local_debugserver)
             {
-                if (! m_local_debugserver)
-                    pass_stdio_path_to_debugserver = false;
                 if (pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
-                {
-                    struct termios stdin_termios;
-                    if (::tcgetattr (pty.GetMasterFileDescriptor(), &stdin_termios) == 0)
-                    {
-                        stdin_termios.c_lflag &= ~ECHO;     // Turn off echoing
-                        stdin_termios.c_lflag &= ~ICANON;   // Get one char at a time
-                        ::tcsetattr (pty.GetMasterFileDescriptor(), TCSANOW, &stdin_termios);
-                    }
                     stdio_path = pty.GetSlaveName (NULL, 0);
-                }
             }
 
             // Start args with "debugserver /file/path -r --"
@@ -1780,15 +1768,10 @@ ProcessGDBRemote::StartDebugserverProcess
                 debugserver_args.AppendArguments("--disable-aslr");
             
             // Only set the inferior
-            if (launch_process)
+            if (launch_process && stdio_path)
             {
-                if (stdio_path && pass_stdio_path_to_debugserver)
-                {
-                    debugserver_args.AppendArgument("-s");    // short for --stdio-path
-                    StreamString strm;
-                    strm.Printf("%s", stdio_path);
-                    debugserver_args.AppendArgument(strm.GetData());    // path to file to have inferior open as it's STDIO
-                }
+                debugserver_args.AppendArgument("--stdio-path");
+                debugserver_args.AppendArgument(stdio_path);
             }
 
             const char *env_debugserver_log_file = getenv("LLDB_DEBUGSERVER_LOG_FILE");
@@ -1883,14 +1866,17 @@ ProcessGDBRemote::StartDebugserverProcess
 
             if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
             {
-                std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor (pty.ReleaseMasterFileDescriptor(), true));
-                if (conn_ap.get())
+                if (pty.GetMasterFileDescriptor() != lldb_utility::PseudoTerminal::invalid_fd)
                 {
-                    m_stdio_communication.SetConnection(conn_ap.release());
-                    if (m_stdio_communication.IsConnected())
+                    std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor (pty.ReleaseMasterFileDescriptor(), true));
+                    if (conn_ap.get())
                     {
-                        m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
-                        m_stdio_communication.StartReadThread();
+                        m_stdio_communication.SetConnection(conn_ap.release());
+                        if (m_stdio_communication.IsConnected())
+                        {
+                            m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
+                            m_stdio_communication.StartReadThread();
+                        }
                     }
                 }
             }

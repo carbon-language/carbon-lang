@@ -1785,9 +1785,6 @@ ClangASTContext::IsAggregateType (clang_type_t clang_type)
 
     QualType qual_type (QualType::getFromOpaquePtr(clang_type));
 
-    if (qual_type->isAggregateType ())
-        return true;
-
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
     {
