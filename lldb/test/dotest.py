@@ -104,7 +104,7 @@ where options:
        (see also lldb-trunk/example/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
 -f   : specify a filter, which consists of the test class name, a dot, followed by
-       the test method, to admit tests into the test suite
+       the test method, to only admit such test into the test suite
        e.g., -f 'ClassTypesTestCase.test_with_dwarf_and_python_api'
 -g   : if specified, the filterspec by -f is not exclusive, i.e., if a test module
        does not match the filterspec (testclass.testmethod), the whole module is
