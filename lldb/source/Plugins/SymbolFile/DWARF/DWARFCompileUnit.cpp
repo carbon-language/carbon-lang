@@ -138,7 +138,7 @@ DWARFCompileUnit::ClearDIEs(bool keep_compile_unit_die)
 //----------------------------------------------------------------------
 // ParseCompileUnitDIEsIfNeeded
 //
-// Parses a compile unit and indexes its DIEs if it already hasn't been
+// Parses a compile unit and indexes its DIEs if it hasn't already been
 // done.
 //----------------------------------------------------------------------
 size_t
