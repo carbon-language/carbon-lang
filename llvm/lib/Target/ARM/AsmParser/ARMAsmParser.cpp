@@ -217,7 +217,7 @@ public:
 
   bool isCondCode() const { return Kind == CondCode; }
   bool isImm() const { return Kind == Immediate; }
-  bool isReg() const { return Kind == Register || Kind == RegisterList; }
+  bool isReg() const { return Kind == Register; }
   bool isRegList() const { return Kind == RegisterList; }
   bool isToken() const { return Kind == Token; }
   bool isMemory() const { return Kind == Memory; }
