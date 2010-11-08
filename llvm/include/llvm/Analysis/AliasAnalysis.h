@@ -154,15 +154,16 @@ public:
     return isNoAlias(Location(V1, V1Size), Location(V2, V2Size));
   }
 
-  /// pointsToConstantMemory - If the specified memory location is known to be
-  /// constant, return true.  This allows disambiguation of store
-  /// instructions from constant pointers.
-  ///
-  virtual bool pointsToConstantMemory(const Location &Loc);
+  /// pointsToConstantMemory - If the specified memory location is
+  /// known to be constant, return true. If OrLocal is true and the
+  /// specified memory location is known to be "local" (derived from
+  /// an alloca), return true. Otherwise return false.
+  virtual bool pointsToConstantMemory(const Location &Loc,
+                                      bool OrLocal = false);
 
   /// pointsToConstantMemory - A convenient wrapper.
-  bool pointsToConstantMemory(const Value *P) {
-    return pointsToConstantMemory(Location(P));
+  bool pointsToConstantMemory(const Value *P, bool OrLocal = false) {
+    return pointsToConstantMemory(Location(P), OrLocal);
   }
 
   //===--------------------------------------------------------------------===//

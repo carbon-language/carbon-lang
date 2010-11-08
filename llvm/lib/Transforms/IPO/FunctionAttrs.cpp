@@ -66,8 +66,6 @@ namespace {
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
-    bool PointsToLocalOrConstantMemory(Value *V);
-
   private:
     AliasAnalysis *AA;
   };
@@ -82,53 +80,6 @@ INITIALIZE_PASS_END(FunctionAttrs, "functionattrs",
 
 Pass *llvm::createFunctionAttrsPass() { return new FunctionAttrs(); }
 
-
-/// PointsToLocalOrConstantMemory - Returns whether the given pointer value
-/// points to memory that is local to the function, with global constants being
-/// considered local to all functions.
-bool FunctionAttrs::PointsToLocalOrConstantMemory(Value *V) {
-  SmallVector<Value*, 16> Worklist;
-  unsigned MaxLookup = 8;
-
-  Worklist.push_back(V);
-
-  do {
-    V = Worklist.pop_back_val()->getUnderlyingObject();
-
-    // An alloca instruction defines local memory.
-    if (isa<AllocaInst>(V))
-      continue;
-
-    // A global constant counts as local memory for our purposes.
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-      if (!GV->isConstant())
-        return false;
-      continue;
-    }
-
-    // If both select values point to local memory, then so does the select.
-    if (SelectInst *SI = dyn_cast<SelectInst>(V)) {
-      Worklist.push_back(SI->getTrueValue());
-      Worklist.push_back(SI->getFalseValue());
-      continue;
-    }
-
-    // If all values incoming to a phi node point to local memory, then so does
-    // the phi.
-    if (PHINode *PN = dyn_cast<PHINode>(V)) {
-      // Don't bother inspecting phi nodes with many operands.
-      if (PN->getNumIncomingValues() > MaxLookup)
-        return false;
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        Worklist.push_back(PN->getIncomingValue(i));
-      continue;
-    }
-
-    return false;
-  } while (!Worklist.empty() && --MaxLookup);
-
-  return Worklist.empty();
-}
 
 /// AddReadAttrs - Deduce readonly/readnone attributes for the SCC.
 bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
@@ -190,7 +141,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
                CI != CE; ++CI) {
             Value *Arg = *CI;
             if (Arg->getType()->isPointerTy() &&
-                !PointsToLocalOrConstantMemory(Arg))
+                !AA->pointsToConstantMemory(Arg, /*OrLocal=*/true))
               // Writes memory.  Just give up.
               return false;
           }
@@ -203,12 +154,14 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore non-volatile loads from local memory.
         if (!LI->isVolatile() &&
-            PointsToLocalOrConstantMemory(LI->getPointerOperand()))
+            AA->pointsToConstantMemory(LI->getPointerOperand(),
+                                       /*OrLocal=*/true))
           continue;
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Ignore non-volatile stores to local memory.
         if (!SI->isVolatile() &&
-            PointsToLocalOrConstantMemory(SI->getPointerOperand()))
+            AA->pointsToConstantMemory(SI->getPointerOperand(),
+                                       /*OrLocal=*/true))
           continue;
       }
 

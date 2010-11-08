@@ -49,9 +49,10 @@ AliasAnalysis::alias(const Location &LocA, const Location &LocB) {
   return AA->alias(LocA, LocB);
 }
 
-bool AliasAnalysis::pointsToConstantMemory(const Location &Loc) {
+bool AliasAnalysis::pointsToConstantMemory(const Location &Loc,
+                                           bool OrLocal) {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return AA->pointsToConstantMemory(Loc);
+  return AA->pointsToConstantMemory(Loc, OrLocal);
 }
 
 void AliasAnalysis::deleteValue(Value *V) {

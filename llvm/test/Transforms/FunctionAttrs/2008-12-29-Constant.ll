@@ -1,4 +1,4 @@
-; RUN: opt < %s -functionattrs -S | grep readnone
+; RUN: opt < %s -basicaa -functionattrs -S | grep readnone
 
 @s = external constant i8		; <i8*> [#uses=1]
 

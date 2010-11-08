@@ -113,9 +113,9 @@ namespace {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
     
-    bool pointsToConstantMemory(const Location &Loc) {
+    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) {
       assert(Vals.find(Loc.Ptr) != Vals.end() && "Never seen value in AA before");
-      return AliasAnalysis::pointsToConstantMemory(Loc);
+      return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
     }
 
     virtual void deleteValue(Value *V) {

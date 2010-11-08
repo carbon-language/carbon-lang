@@ -456,7 +456,7 @@ namespace {
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
-    virtual bool pointsToConstantMemory(const Location &Loc);
+    virtual bool pointsToConstantMemory(const Location &Loc, bool OrLocal);
 
     /// getModRefBehavior - Return the behavior when calling the given
     /// call site.
@@ -517,18 +517,61 @@ ImmutablePass *llvm::createBasicAliasAnalysisPass() {
   return new BasicAliasAnalysis();
 }
 
+/// pointsToConstantMemory - Returns whether the given pointer value
+/// points to memory that is local to the function, with global constants being
+/// considered local to all functions.
+bool
+BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
+  assert(Visited.empty() && "Visited must be cleared after use!");
 
-/// pointsToConstantMemory - Chase pointers until we find a (constant
-/// global) or not.
-bool BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
-  if (const GlobalVariable *GV = 
-        dyn_cast<GlobalVariable>(Loc.Ptr->getUnderlyingObject()))
-    // Note: this doesn't require GV to be "ODR" because it isn't legal for a
-    // global to be marked constant in some modules and non-constant in others.
-    // GV may even be a declaration, not a definition.
-    return GV->isConstant();
+  SmallVector<const Value *, 16> Worklist;
+  Worklist.push_back(Loc.Ptr);
+  do {
+    const Value *V = Worklist.pop_back_val()->getUnderlyingObject();
+    if (!Visited.insert(V)) {
+      Visited.clear();
+      return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
+    }
 
-  return AliasAnalysis::pointsToConstantMemory(Loc);
+    // An alloca instruction defines local memory.
+    if (OrLocal && isa<AllocaInst>(V))
+      continue;
+
+    // A global constant counts as local memory for our purposes.
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+      // Note: this doesn't require GV to be "ODR" because it isn't legal for a
+      // global to be marked constant in some modules and non-constant in
+      // others.  GV may even be a declaration, not a definition.
+      if (!GV->isConstant()) {
+        Visited.clear();
+        return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
+      }
+      continue;
+    }
+
+    // If both select values point to local memory, then so does the select.
+    if (const SelectInst *SI = dyn_cast<SelectInst>(V)) {
+      Worklist.push_back(SI->getTrueValue());
+      Worklist.push_back(SI->getFalseValue());
+      continue;
+    }
+
+    // If all values incoming to a phi node point to local memory, then so does
+    // the phi.
+    if (const PHINode *PN = dyn_cast<PHINode>(V)) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        Worklist.push_back(PN->getIncomingValue(i));
+      continue;
+    }
+
+    // Otherwise be conservative.
+    Visited.clear();
+    return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
+
+  } while (!Worklist.empty());
+
+  Visited.clear();
+  return true;
 }
 
 /// getModRefBehavior - Return the behavior when calling the given call site.

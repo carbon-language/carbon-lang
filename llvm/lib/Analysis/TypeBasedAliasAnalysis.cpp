@@ -138,7 +138,7 @@ namespace {
   private:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual AliasResult alias(const Location &LocA, const Location &LocB);
-    virtual bool pointsToConstantMemory(const Location &Loc);
+    virtual bool pointsToConstantMemory(const Location &Loc, bool OrLocal);
     virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
                                        const Location &Loc);
     virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
@@ -225,19 +225,20 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
   return NoAlias;
 }
 
-bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc) {
+bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc,
+                                                    bool OrLocal) {
   if (!EnableTBAA)
-    return AliasAnalysis::pointsToConstantMemory(Loc);
+    return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 
   const MDNode *M = Loc.TBAATag;
-  if (!M) return AliasAnalysis::pointsToConstantMemory(Loc);
+  if (!M) return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 
   // If this is an "immutable" type, we can assume the pointer is pointing
   // to constant memory.
   if (TBAANode(M).TypeIsImmutable())
     return true;
 
-  return AliasAnalysis::pointsToConstantMemory(Loc);
+  return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 }
 
 AliasAnalysis::ModRefResult
