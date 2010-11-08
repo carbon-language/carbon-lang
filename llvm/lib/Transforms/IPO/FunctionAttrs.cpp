@@ -145,7 +145,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
               AliasAnalysis::Location Loc(Arg,
                                           AliasAnalysis::UnknownSize,
                                           I->getMetadata(LLVMContext::MD_tbaa));
-              if (!AA->pointsToConstantMemory(Arg, /*OrLocal=*/true))
+              if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
                 // Writes memory.  Just give up.
                 return false;
             }
