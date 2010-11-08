@@ -428,6 +428,9 @@ LaunchInNewTerminalWithAppleScript
     char launcher_path[PATH_MAX];
     darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
 
+    if (arch_spec)
+        command.Printf("arch -arch %s ", arch_spec->AsCString());
+
     command.Printf("'%s' --unix-socket=%s", launcher_path, unix_socket_name.c_str());
 
     if (arch_spec && arch_spec->IsValid())
@@ -449,16 +452,17 @@ LaunchInNewTerminalWithAppleScript
     
     StreamString applescript_source;
 
+    const char *tty_command = command.GetString().c_str();
     if (tty_name && tty_name[0])
     {
         applescript_source.Printf (applscript_in_existing_tty, 
-                                   command.GetString().c_str(),
+                                   tty_command,
                                    tty_name);
     }
     else
     {
         applescript_source.Printf (applscript_in_new_tty, 
-                                   command.GetString().c_str());
+                                   tty_command);
     }
 
     
