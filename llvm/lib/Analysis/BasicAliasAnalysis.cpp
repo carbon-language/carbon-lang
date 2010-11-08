@@ -524,6 +524,7 @@ bool
 BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
   assert(Visited.empty() && "Visited must be cleared after use!");
 
+  unsigned MaxLookup = 8;
   SmallVector<const Value *, 16> Worklist;
   Worklist.push_back(Loc.Ptr);
   do {
@@ -559,6 +560,11 @@ BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
     // If all values incoming to a phi node point to local memory, then so does
     // the phi.
     if (const PHINode *PN = dyn_cast<PHINode>(V)) {
+      // Don't bother inspecting phi nodes with many operands.
+      if (PN->getNumIncomingValues() > MaxLookup) {
+        Visited.clear();
+        return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
+      }
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         Worklist.push_back(PN->getIncomingValue(i));
       continue;
@@ -568,10 +574,10 @@ BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
     Visited.clear();
     return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 
-  } while (!Worklist.empty());
+  } while (!Worklist.empty() && --MaxLookup);
 
   Visited.clear();
-  return true;
+  return Worklist.empty();
 }
 
 /// getModRefBehavior - Return the behavior when calling the given call site.
