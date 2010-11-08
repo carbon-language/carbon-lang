@@ -100,6 +100,8 @@ public:
                                      const std::string &CPU);
 
   bool isMips1() const { return MipsArchVersion == Mips1; }
+  bool isMips32() const { return MipsArchVersion == Mips32; }
+  bool isMips32r2() const { return MipsArchVersion == Mips32r2; }
 
   bool isLittle() const { return IsLittle; }
   bool isFP64bit() const { return IsFP64bit; }
