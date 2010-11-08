@@ -213,11 +213,6 @@ public:
   /// For use when the call site is not known.
   virtual ModRefBehavior getModRefBehavior(const Function *F);
 
-  /// getIntrinsicModRefBehavior - Return the modref behavior of the intrinsic
-  /// with the given id.  Most clients won't need this, because the regular
-  /// getModRefBehavior incorporates this information.
-  static ModRefBehavior getIntrinsicModRefBehavior(unsigned iid);
-
   /// doesNotAccessMemory - If the specified call is known to never read or
   /// write memory, return true.  If the call only reads from known-constant
   /// memory, it is also legal to return true.  Calls that unwind the stack

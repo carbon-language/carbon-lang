@@ -249,13 +249,6 @@ AliasAnalysis::getModRefInfo(const VAArgInst *V, const Location &Loc) {
   return ModRef;
 }
 
-AliasAnalysis::ModRefBehavior
-AliasAnalysis::getIntrinsicModRefBehavior(unsigned iid) {
-#define GET_INTRINSIC_MODREF_BEHAVIOR
-#include "llvm/Intrinsics.gen"
-#undef GET_INTRINSIC_MODREF_BEHAVIOR
-}
-
 // AliasAnalysis destructor: DO NOT move this to the header file for
 // AliasAnalysis or else clients of the AliasAnalysis class may not depend on
 // the AliasAnalysis.o file in the current .a file, causing alias analysis
