@@ -488,3 +488,14 @@ define i1 @test39(i1 %cond, double %x) {
 ; CHECK: @test39
 ; CHECK: ret i1 true
 }
+
+define i1 @test40(i1 %cond) {
+  %a = alloca i32
+  %b = alloca i32
+  %c = alloca i32
+  %s = select i1 %cond, i32* %a, i32* %b
+  %r = icmp eq i32* %s, %c
+  ret i1 %r
+; CHECK: @test40
+; CHECK: ret i1 false
+}
