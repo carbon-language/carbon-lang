@@ -56,38 +56,38 @@ static unsigned mblazeBinary2Opcode[] = {
   MBlaze::SBI,   MBlaze::SHI,    MBlaze::SWI,    UNSUPPORTED,     //3C,3D,3E,3F
 };
 
-static unsigned getRD( uint32_t insn ) {
-  return MBlazeRegisterInfo::getRegisterFromNumbering( (insn>>21)&0x1F );
+static unsigned getRD(uint32_t insn) {
+  return MBlazeRegisterInfo::getRegisterFromNumbering((insn>>21)&0x1F);
 }
 
-static unsigned getRA( uint32_t insn ) {
-  return MBlazeRegisterInfo::getRegisterFromNumbering( (insn>>16)&0x1F );
+static unsigned getRA(uint32_t insn) {
+  return MBlazeRegisterInfo::getRegisterFromNumbering((insn>>16)&0x1F);
 }
 
-static unsigned getRB( uint32_t insn ) {
-  return MBlazeRegisterInfo::getRegisterFromNumbering( (insn>>11)&0x1F );
+static unsigned getRB(uint32_t insn) {
+  return MBlazeRegisterInfo::getRegisterFromNumbering((insn>>11)&0x1F);
 }
 
-static int64_t getRS( uint32_t insn ) {
+static int64_t getRS(uint32_t insn) {
     int16_t val = (insn & 0x3FFF);
     return val;
 }
 
-static int64_t getIMM( uint32_t insn ) {
+static int64_t getIMM(uint32_t insn) {
     int16_t val = (insn & 0xFFFF);
     return val;
 }
 
-static int64_t getSHT( uint32_t insn ) {
+static int64_t getSHT(uint32_t insn) {
     int16_t val = (insn & 0x1F);
     return val;
 }
 
-static unsigned getFLAGS( int32_t insn ) {
+static unsigned getFLAGS(int32_t insn) {
     return (insn & 0x7FF);
 }
 
-static int64_t getFSL( uint32_t insn ) {
+static int64_t getFSL(uint32_t insn) {
     int16_t val = (insn & 0xF);
     return val;
 }
@@ -412,7 +412,7 @@ static unsigned decodeRTSD(uint32_t insn) {
     }
 }
 
-static unsigned getOPCODE( uint32_t insn ) {
+static unsigned getOPCODE(uint32_t insn) {
   unsigned opcode = mblazeBinary2Opcode[ (insn>>26)&0x3F ];
   switch (opcode) {
   case MBlaze::MUL:     return decodeMUL(insn);
@@ -465,102 +465,99 @@ bool MBlazeDisassembler::getInstruction(MCInst &instr,
 
   // Get the MCInst opcode from the binary instruction and make sure
   // that it is a valid instruction.
-  unsigned opcode = getOPCODE( insn );
-  if( opcode == UNSUPPORTED )
+  unsigned opcode = getOPCODE(insn);
+  if (opcode == UNSUPPORTED)
     return false;
 
   instr.setOpcode(opcode);
 
   uint64_t tsFlags = MBlazeInsts[opcode].TSFlags;
-  switch( (tsFlags & MBlazeII::FormMask) ) {
-  default: 
-    errs() << "Opcode:      " << MBlazeInsts[opcode].Name << "\n";
-    errs() << "Flags:       "; errs().write_hex( tsFlags ); errs() << "\n";
-    return false;
+  switch ((tsFlags & MBlazeII::FormMask)) {
+  default: llvm_unreachable("unknown instruction encoding");
 
   case MBlazeII::FRRR:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
-    instr.addOperand( MCOperand::CreateReg( getRB(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRB(insn)));
     break;
 
   case MBlazeII::FRRI:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getIMM(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
+    instr.addOperand(MCOperand::CreateImm(getIMM(insn)));
     break;
 
   case MBlazeII::FCRR:
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
-    instr.addOperand( MCOperand::CreateReg( getRB(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRB(insn)));
     break;
 
   case MBlazeII::FCRI:
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getIMM(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
+    instr.addOperand(MCOperand::CreateImm(getIMM(insn)));
     break;
 
   case MBlazeII::FRCR:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateReg( getRB(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRB(insn)));
     break;
 
   case MBlazeII::FRCI:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getIMM(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateImm(getIMM(insn)));
     break;
 
   case MBlazeII::FCCR:
-    instr.addOperand( MCOperand::CreateReg( getRB(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRB(insn)));
     break;
 
   case MBlazeII::FCCI:
-    instr.addOperand( MCOperand::CreateImm( getIMM(insn) ) );
+    instr.addOperand(MCOperand::CreateImm(getIMM(insn)));
     break;
 
   case MBlazeII::FRRCI:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getSHT(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
+    instr.addOperand(MCOperand::CreateImm(getSHT(insn)));
     break;
 
   case MBlazeII::FRRC:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
     break;
 
   case MBlazeII::FRCX:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getFSL(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateImm(getFSL(insn)));
     break;
 
   case MBlazeII::FRCS:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getRS(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateImm(getRS(insn)));
     break;
 
   case MBlazeII::FCRCS:
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getRS(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
+    instr.addOperand(MCOperand::CreateImm(getRS(insn)));
     break;
 
   case MBlazeII::FCRCX:
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getFSL(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
+    instr.addOperand(MCOperand::CreateImm(getFSL(insn)));
     break;
 
   case MBlazeII::FCX:
-    instr.addOperand( MCOperand::CreateImm( getFSL(insn) ) );
+    instr.addOperand(MCOperand::CreateImm(getFSL(insn)));
     break;
 
   case MBlazeII::FCR:
-    instr.addOperand( MCOperand::CreateReg( getRB(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRB(insn)));
     break;
 
   case MBlazeII::FRIR:
-    instr.addOperand( MCOperand::CreateReg( getRD(insn) ) );
-    instr.addOperand( MCOperand::CreateImm( getIMM(insn) ) );
-    instr.addOperand( MCOperand::CreateReg( getRA(insn) ) );
+    instr.addOperand(MCOperand::CreateReg(getRD(insn)));
+    instr.addOperand(MCOperand::CreateImm(getIMM(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRA(insn)));
     break;
   }
 

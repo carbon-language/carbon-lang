@@ -1,16 +1,16 @@
 //===- MBlazeCallingConv.td - Calling Conventions for MBlaze -*- tablegen -*-=//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 // This describes the calling conventions for MBlaze architecture.
 //===----------------------------------------------------------------------===//
 
 /// CCIfSubtarget - Match if the current subtarget has a feature F.
-class CCIfSubtarget<string F, CCAction A>: 
+class CCIfSubtarget<string F, CCAction A>:
   CCIf<!strconcat("State.getTarget().getSubtarget<MBlazeSubtarget>().", F), A>;
 
 //===----------------------------------------------------------------------===//

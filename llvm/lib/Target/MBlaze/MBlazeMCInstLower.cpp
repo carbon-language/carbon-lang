@@ -32,7 +32,7 @@ using namespace llvm;
 MCSymbol *MBlazeMCInstLower::
 GetGlobalAddressSymbol(const MachineOperand &MO) const {
   switch (MO.getTargetFlags()) {
-  default: 
+  default:
       llvm_unreachable("Unknown target flag on GV operand");
 
   case 0: break;

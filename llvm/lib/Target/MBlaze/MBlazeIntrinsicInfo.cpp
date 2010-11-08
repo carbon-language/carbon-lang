@@ -48,7 +48,7 @@ std::string MBlazeIntrinsicInfo::getName(unsigned IntrID, const Type **Tys,
   assert(!isOverloaded(IntrID) && "MBlaze intrinsics are not overloaded");
   if (IntrID < Intrinsic::num_intrinsics)
     return 0;
-  assert(IntrID < mblazeIntrinsic::num_mblaze_intrinsics && 
+  assert(IntrID < mblazeIntrinsic::num_mblaze_intrinsics &&
          "Invalid intrinsic ID");
 
   std::string Result(names[IntrID - Intrinsic::num_intrinsics]);
@@ -94,12 +94,12 @@ static const FunctionType *getType(LLVMContext &Context, unsigned id) {
   const Type *ResultTy = NULL;
   std::vector<const Type*> ArgTys;
   bool IsVarArg = false;
-  
+
 #define GET_INTRINSIC_GENERATOR
 #include "MBlazeGenIntrinsics.inc"
 #undef GET_INTRINSIC_GENERATOR
 
-  return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
+  return FunctionType::get(ResultTy, ArgTys, IsVarArg);
 }
 
 Function *MBlazeIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,

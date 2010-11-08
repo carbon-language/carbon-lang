@@ -102,7 +102,7 @@ void MBlazeInstPrinter::printUnsignedImm(const MCInst *MI, int OpNo,
 }
 
 void MBlazeInstPrinter::printMemOperand(const MCInst *MI, int OpNo,
-                                        raw_ostream &O, const char *Modifier ) {
+                                        raw_ostream &O, const char *Modifier) {
   printOperand(MI, OpNo+1, O, NULL);
   O << ", ";
   printOperand(MI, OpNo, O, NULL);

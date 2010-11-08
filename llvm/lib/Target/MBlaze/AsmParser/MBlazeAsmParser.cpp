@@ -1,4 +1,4 @@
-//===-- MBlazeAsmParser.cpp - Parse MBlaze assembly to MCInst instructions ------===//
+//===-- MBlazeAsmParser.cpp - Parse MBlaze asm to MCInst instructions -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -29,67 +29,25 @@ using namespace llvm;
 namespace {
 struct MBlazeOperand;
 
-// The shift types for register controlled shifts in arm memory addressing
-enum ShiftType {
-  Lsl,
-  Lsr,
-  Asr,
-  Ror,
-  Rrx
-};
-
 class MBlazeAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
   TargetMachine &TM;
 
-private:
   MCAsmParser &getParser() const { return Parser; }
-
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
   void Warning(SMLoc L, const Twine &Msg) { Parser.Warning(L, Msg); }
-
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
-  bool MaybeParseRegister(OwningPtr<MBlazeOperand> &Op, bool ParseWriteBack);
-
-  bool ParseRegisterList(OwningPtr<MBlazeOperand> &Op);
-
-  bool ParseMemory(OwningPtr<MBlazeOperand> &Op);
-
-  bool ParseMemoryOffsetReg(bool &Negative,
-                            bool &OffsetRegShifted,
-                            enum ShiftType &ShiftType,
-                            const MCExpr *&ShiftAmount,
-                            const MCExpr *&Offset,
-                            bool &OffsetIsReg,
-                            int &OffsetRegNum,
-                            SMLoc &E);
-
-  bool ParseShift(enum ShiftType &St, const MCExpr *&ShiftAmount, SMLoc &E);
-
-  bool ParseOperand(OwningPtr<MBlazeOperand> &Op);
-
-  bool ParseDirectiveWord(unsigned Size, SMLoc L);
-
-  bool ParseDirectiveCode(SMLoc L);
-
-  bool ParseDirectiveSyntax(SMLoc L);
+  MBlazeOperand *ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  MBlazeOperand *ParseRegister();
+  MBlazeOperand *ParseImmediate();
+  MBlazeOperand *ParseFsl();
+  MBlazeOperand* ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                               MCStreamer &Out) {
-    MCInst Inst;
-    unsigned ErrorInfo;
-    if (MatchInstructionImpl(Operands, Inst, ErrorInfo) == Match_Success) {
-      Out.EmitInstruction(Inst);
-      return false;
-    }
-
-    // FIXME: We should give nicer diagnostics about the exact failure.
-    Error(IDLoc, "unrecognized instruction");
-    return true;
-  }
+                               MCStreamer &Out);
 
   /// @name Auto-generated Match Functions
   /// {
@@ -109,28 +67,21 @@ public:
 
   virtual bool ParseDirective(AsmToken DirectiveID);
 };
-  
+
 /// MBlazeOperand - Instances of this class represent a parsed MBlaze machine
 /// instruction.
 struct MBlazeOperand : public MCParsedAsmOperand {
-private:
-  MBlazeOperand() {}
-public:
   enum KindTy {
-    CondCode,
+    Token,
     Immediate,
-    Memory,
     Register,
-    Token
+    Memory,
+    Fsl
   } Kind;
 
   SMLoc StartLoc, EndLoc;
 
   union {
-    struct {
-      MBlazeCC::CC Val;
-    } CC;
-
     struct {
       const char *Data;
       unsigned Length;
@@ -138,71 +89,53 @@ public:
 
     struct {
       unsigned RegNum;
-      bool Writeback;
     } Reg;
 
     struct {
       const MCExpr *Val;
     } Imm;
-    
-    // This is for all forms of MBlaze address expressions
+
     struct {
-      unsigned BaseRegNum;
-      unsigned OffsetRegNum; // used when OffsetIsReg is true
-      const MCExpr *Offset; // used when OffsetIsReg is false
-      const MCExpr *ShiftAmount; // used when OffsetRegShifted is true
-      enum ShiftType ShiftType;  // used when OffsetRegShifted is true
-      unsigned
-        OffsetRegShifted : 1, // only used when OffsetIsReg is true
-        Preindexed : 1,
-        Postindexed : 1,
-        OffsetIsReg : 1,
-        Negative : 1, // only used when OffsetIsReg is true
-        Writeback : 1;
+      unsigned Base;
+      unsigned OffReg;
+      const MCExpr *Off;
     } Mem;
 
+    struct {
+      const MCExpr *Val;
+    } FslImm;
   };
-  
-  //MBlazeOperand(KindTy K, SMLoc S, SMLoc E)
-  //  : Kind(K), StartLoc(S), EndLoc(E) {}
-  
+
+  MBlazeOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
+public:
   MBlazeOperand(const MBlazeOperand &o) : MCParsedAsmOperand() {
     Kind = o.Kind;
     StartLoc = o.StartLoc;
     EndLoc = o.EndLoc;
     switch (Kind) {
-    case CondCode:
-      CC = o.CC;
-      break;
-    case Token:
-      Tok = o.Tok;
-      break;
     case Register:
       Reg = o.Reg;
       break;
     case Immediate:
       Imm = o.Imm;
       break;
+    case Token:
+      Tok = o.Tok;
+      break;
     case Memory:
       Mem = o.Mem;
       break;
+    case Fsl:
+      FslImm = o.FslImm;
+      break;
     }
   }
-  
+
   /// getStartLoc - Get the location of the first token of this operand.
   SMLoc getStartLoc() const { return StartLoc; }
+
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const { return EndLoc; }
-
-  MBlazeCC::CC getCondCode() const {
-    assert(Kind == CondCode && "Invalid access!");
-    return CC.Val;
-  }
-
-  StringRef getToken() const {
-    assert(Kind == Token && "Invalid access!");
-    return StringRef(Tok.Data, Tok.Length);
-  }
 
   unsigned getReg() const {
     assert(Kind == Register && "Invalid access!");
@@ -214,27 +147,40 @@ public:
     return Imm.Val;
   }
 
-  bool isCondCode() const { return Kind == CondCode; }
+  const MCExpr *getFslImm() const {
+    assert(Kind == Fsl && "Invalid access!");
+    return FslImm.Val;
+  }
 
+  unsigned getMemBase() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.Base;
+  }
+
+  const MCExpr* getMemOff() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.Off;
+  }
+
+  unsigned getMemOffReg() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.OffReg;
+  }
+
+  bool isToken() const { return Kind == Token; }
   bool isImm() const { return Kind == Immediate; }
-
+  bool isMem() const { return Kind == Memory; }
+  bool isFsl() const { return Kind == Fsl; }
   bool isReg() const { return Kind == Register; }
 
-  bool isToken() const {return Kind == Token; }
-
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
-    // Add as immediates when possible.
-    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
+    // Add as immediates when possible.  Null MCExpr = 0.
+    if (Expr == 0)
+      Inst.addOperand(MCOperand::CreateImm(0));
+    else if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
     else
       Inst.addOperand(MCOperand::CreateExpr(Expr));
-  }
-
-  void addCondCodeOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
-    // FIXME: What belongs here?
-    Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
@@ -247,71 +193,83 @@ public:
     addExpr(Inst, getImm());
   }
 
-  virtual void dump(raw_ostream &OS) const;
-
-  static void CreateCondCode(OwningPtr<MBlazeOperand> &Op, MBlazeCC::CC CC,
-                             SMLoc S) {
-    Op.reset(new MBlazeOperand);
-    Op->Kind = CondCode;
-    Op->CC.Val = CC;
-    Op->StartLoc = S;
-    Op->EndLoc = S;
+  void addFslOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getFslImm());
   }
 
-  static void CreateToken(OwningPtr<MBlazeOperand> &Op, StringRef Str,
-                          SMLoc S) {
-    Op.reset(new MBlazeOperand);
-    Op->Kind = Token;
+  void addMemOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+
+    unsigned RegOff = getMemOffReg();
+    if (RegOff)
+      Inst.addOperand(MCOperand::CreateReg(RegOff));
+    else
+      addExpr(Inst, getMemOff());
+
+    Inst.addOperand(MCOperand::CreateReg(getMemBase()));
+  }
+
+  StringRef getToken() const {
+    assert(Kind == Token && "Invalid access!");
+    return StringRef(Tok.Data, Tok.Length);
+  }
+
+  virtual void dump(raw_ostream &OS) const;
+
+  static MBlazeOperand *CreateToken(StringRef Str, SMLoc S) {
+    MBlazeOperand *Op = new MBlazeOperand(Token);
     Op->Tok.Data = Str.data();
     Op->Tok.Length = Str.size();
     Op->StartLoc = S;
     Op->EndLoc = S;
+    return Op;
   }
 
-  static void CreateReg(OwningPtr<MBlazeOperand> &Op, unsigned RegNum, 
-                        bool Writeback, SMLoc S, SMLoc E) {
-    Op.reset(new MBlazeOperand);
-    Op->Kind = Register;
+  static MBlazeOperand *CreateReg(unsigned RegNum, SMLoc S, SMLoc E) {
+    MBlazeOperand *Op = new MBlazeOperand(Register);
     Op->Reg.RegNum = RegNum;
-    Op->Reg.Writeback = Writeback;
-    
     Op->StartLoc = S;
     Op->EndLoc = E;
+    return Op;
   }
 
-  static void CreateImm(OwningPtr<MBlazeOperand> &Op, const MCExpr *Val,
-                        SMLoc S, SMLoc E) {
-    Op.reset(new MBlazeOperand);
-    Op->Kind = Immediate;
+  static MBlazeOperand *CreateImm(const MCExpr *Val, SMLoc S, SMLoc E) {
+    MBlazeOperand *Op = new MBlazeOperand(Immediate);
     Op->Imm.Val = Val;
-    
     Op->StartLoc = S;
     Op->EndLoc = E;
+    return Op;
   }
 
-  static void CreateMem(OwningPtr<MBlazeOperand> &Op,
-                        unsigned BaseRegNum, bool OffsetIsReg,
-                        const MCExpr *Offset, unsigned OffsetRegNum,
-                        bool OffsetRegShifted, enum ShiftType ShiftType,
-                        const MCExpr *ShiftAmount, bool Preindexed,
-                        bool Postindexed, bool Negative, bool Writeback,
-                        SMLoc S, SMLoc E) {
-    Op.reset(new MBlazeOperand);
-    Op->Kind = Memory;
-    Op->Mem.BaseRegNum = BaseRegNum;
-    Op->Mem.OffsetIsReg = OffsetIsReg;
-    Op->Mem.Offset = Offset;
-    Op->Mem.OffsetRegNum = OffsetRegNum;
-    Op->Mem.OffsetRegShifted = OffsetRegShifted;
-    Op->Mem.ShiftType = ShiftType;
-    Op->Mem.ShiftAmount = ShiftAmount;
-    Op->Mem.Preindexed = Preindexed;
-    Op->Mem.Postindexed = Postindexed;
-    Op->Mem.Negative = Negative;
-    Op->Mem.Writeback = Writeback;
-    
+  static MBlazeOperand *CreateFslImm(const MCExpr *Val, SMLoc S, SMLoc E) {
+    MBlazeOperand *Op = new MBlazeOperand(Fsl);
+    Op->Imm.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = E;
+    return Op;
+  }
+
+  static MBlazeOperand *CreateMem(unsigned Base, const MCExpr *Off, SMLoc S,
+                                  SMLoc E) {
+    MBlazeOperand *Op = new MBlazeOperand(Memory);
+    Op->Mem.Base = Base;
+    Op->Mem.Off = Off;
+    Op->Mem.OffReg = 0;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
+  static MBlazeOperand *CreateMem(unsigned Base, unsigned Off, SMLoc S,
+                                  SMLoc E) {
+    MBlazeOperand *Op = new MBlazeOperand(Memory);
+    Op->Mem.Base = Base;
+    Op->Mem.OffReg = Off;
+    Op->Mem.Off = 0;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
   }
 };
 
@@ -319,20 +277,20 @@ public:
 
 void MBlazeOperand::dump(raw_ostream &OS) const {
   switch (Kind) {
-  case CondCode:
-    OS << MBlazeCCToString(getCondCode());
-    break;
   case Immediate:
     getImm()->print(OS);
-    break;
-  case Memory:
-    OS << "<memory>";
     break;
   case Register:
     OS << "<register " << getReg() << ">";
     break;
   case Token:
     OS << "'" << getToken() << "'";
+    break;
+  case Memory:
+    OS << "MEMORY";
+    break;
+  case Fsl:
+    getFslImm()->print(OS);
     break;
   }
 }
@@ -343,485 +301,208 @@ void MBlazeOperand::dump(raw_ostream &OS) const {
 static unsigned MatchRegisterName(StringRef Name);
 
 /// }
+//
+bool MBlazeAsmParser::
+MatchAndEmitInstruction(SMLoc IDLoc,
+                        SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                        MCStreamer &Out) {
+  MCInst Inst;
+  SMLoc ErrorLoc;
+  unsigned ErrorInfo;
 
-/// Try to parse a register name.  The token must be an Identifier when called,
-/// and if it is a register name a Reg operand is created, the token is eaten
-/// and false is returned.  Else true is returned and no token is eaten.
-/// TODO this is likely to change to allow different register types and or to
-/// parse for a specific register type.
-bool MBlazeAsmParser::MaybeParseRegister
-  (OwningPtr<MBlazeOperand> &Op, bool ParseWriteBack) {
-  SMLoc S, E;
-  const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
-
-  // FIXME: Validate register for the current architecture; we have to do
-  // validation later, so maybe there is no need for this here.
-  int RegNum;
-
-  RegNum = MatchRegisterName(Tok.getString());
-  if (RegNum == -1)
-    return true;
-  
-  S = Tok.getLoc();
-  
-  Parser.Lex(); // Eat identifier token.
-    
-  E = Parser.getTok().getLoc();
-
-  bool Writeback = false;
-  if (ParseWriteBack) {
-    const AsmToken &ExclaimTok = Parser.getTok();
-    if (ExclaimTok.is(AsmToken::Exclaim)) {
-      E = ExclaimTok.getLoc();
-      Writeback = true;
-      Parser.Lex(); // Eat exclaim token
-    }
-  }
-
-  MBlazeOperand::CreateReg(Op, RegNum, Writeback, S, E);
-
-  return false;
-}
-
-/// Parse a register list, return false if successful else return true or an 
-/// error.  The first token must be a '{' when called.
-bool MBlazeAsmParser::ParseRegisterList(OwningPtr<MBlazeOperand> &Op) {
-  SMLoc S, E;
-  assert(Parser.getTok().is(AsmToken::LCurly) &&
-         "Token is not an Left Curly Brace");
-  S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat left curly brace token.
-
-  const AsmToken &RegTok = Parser.getTok();
-  SMLoc RegLoc = RegTok.getLoc();
-  if (RegTok.isNot(AsmToken::Identifier))
-    return Error(RegLoc, "register expected");
-  int RegNum = MatchRegisterName(RegTok.getString());
-  if (RegNum == -1)
-    return Error(RegLoc, "register expected");
-  Parser.Lex(); // Eat identifier token.
-  unsigned RegList = 1 << RegNum;
-
-  int HighRegNum = RegNum;
-  // TODO ranges like "{Rn-Rm}"
-  while (Parser.getTok().is(AsmToken::Comma)) {
-    Parser.Lex(); // Eat comma token.
-
-    const AsmToken &RegTok = Parser.getTok();
-    SMLoc RegLoc = RegTok.getLoc();
-    if (RegTok.isNot(AsmToken::Identifier))
-      return Error(RegLoc, "register expected");
-    int RegNum = MatchRegisterName(RegTok.getString());
-    if (RegNum == -1)
-      return Error(RegLoc, "register expected");
-
-    if (RegList & (1 << RegNum))
-      Warning(RegLoc, "register duplicated in register list");
-    else if (RegNum <= HighRegNum)
-      Warning(RegLoc, "register not in ascending order in register list");
-    RegList |= 1 << RegNum;
-    HighRegNum = RegNum;
-
-    Parser.Lex(); // Eat identifier token.
-  }
-  const AsmToken &RCurlyTok = Parser.getTok();
-  if (RCurlyTok.isNot(AsmToken::RCurly))
-    return Error(RCurlyTok.getLoc(), "'}' expected");
-  E = RCurlyTok.getLoc();
-  Parser.Lex(); // Eat left curly brace token.
-
-  return false;
-}
-
-/// Parse an arm memory expression, return false if successful else return true
-/// or an error.  The first token must be a '[' when called.
-/// TODO Only preindexing and postindexing addressing are started, unindexed
-/// with option, etc are still to do.
-bool MBlazeAsmParser::ParseMemory(OwningPtr<MBlazeOperand> &Op) {
-  SMLoc S, E;
-  assert(Parser.getTok().is(AsmToken::LBrac) &&
-         "Token is not an Left Bracket");
-  S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat left bracket token.
-
-  const AsmToken &BaseRegTok = Parser.getTok();
-  if (BaseRegTok.isNot(AsmToken::Identifier))
-    return Error(BaseRegTok.getLoc(), "register expected");
-  if (MaybeParseRegister(Op, false))
-    return Error(BaseRegTok.getLoc(), "register expected");
-  int BaseRegNum = Op->getReg();
-
-  bool Preindexed = false;
-  bool Postindexed = false;
-  bool OffsetIsReg = false;
-  bool Negative = false;
-  bool Writeback = false;
-
-  // First look for preindexed address forms, that is after the "[Rn" we now
-  // have to see if the next token is a comma.
-  const AsmToken &Tok = Parser.getTok();
-  if (Tok.is(AsmToken::Comma)) {
-    Preindexed = true;
-    Parser.Lex(); // Eat comma token.
-    int OffsetRegNum;
-    bool OffsetRegShifted;
-    enum ShiftType ShiftType;
-    const MCExpr *ShiftAmount;
-    const MCExpr *Offset;
-    if(ParseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType, ShiftAmount,
-                            Offset, OffsetIsReg, OffsetRegNum, E))
-      return true;
-    const AsmToken &RBracTok = Parser.getTok();
-    if (RBracTok.isNot(AsmToken::RBrac))
-      return Error(RBracTok.getLoc(), "']' expected");
-    E = RBracTok.getLoc();
-    Parser.Lex(); // Eat right bracket token.
-
-    const AsmToken &ExclaimTok = Parser.getTok();
-    if (ExclaimTok.is(AsmToken::Exclaim)) {
-      E = ExclaimTok.getLoc();
-      Writeback = true;
-      Parser.Lex(); // Eat exclaim token
-    }
-    MBlazeOperand::CreateMem(Op, BaseRegNum, OffsetIsReg, Offset, OffsetRegNum,
-                          OffsetRegShifted, ShiftType, ShiftAmount,
-                          Preindexed, Postindexed, Negative, Writeback, S, E);
+  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo)) {
+  case Match_Success:
+    Out.EmitInstruction(Inst);
     return false;
-  }
-  // The "[Rn" we have so far was not followed by a comma.
-  else if (Tok.is(AsmToken::RBrac)) {
-    // This is a post indexing addressing forms, that is a ']' follows after
-    // the "[Rn".
-    Postindexed = true;
-    Writeback = true;
-    E = Tok.getLoc();
-    Parser.Lex(); // Eat right bracket token.
+  case Match_MissingFeature:
+    return Error(IDLoc, "instruction use requires an option to be enabled");
+  case Match_MnemonicFail:
+      return Error(IDLoc, "unrecognized instruction mnemonic");
+  case Match_InvalidOperand:
+    ErrorLoc = IDLoc;
+    if (ErrorInfo != ~0U) {
+      if (ErrorInfo >= Operands.size())
+        return Error(IDLoc, "too few operands for instruction");
 
-    int OffsetRegNum = 0;
-    bool OffsetRegShifted = false;
-    enum ShiftType ShiftType;
-    const MCExpr *ShiftAmount;
-    const MCExpr *Offset;
-
-    const AsmToken &NextTok = Parser.getTok();
-    if (NextTok.isNot(AsmToken::EndOfStatement)) {
-      if (NextTok.isNot(AsmToken::Comma))
-        return Error(NextTok.getLoc(), "',' expected");
-      Parser.Lex(); // Eat comma token.
-      if(ParseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType,
-                              ShiftAmount, Offset, OffsetIsReg, OffsetRegNum, 
-                              E))
-        return true;
+      ErrorLoc = ((MBlazeOperand*)Operands[ErrorInfo])->getStartLoc();
+      if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
     }
 
-    MBlazeOperand::CreateMem(Op, BaseRegNum, OffsetIsReg, Offset, OffsetRegNum,
-                          OffsetRegShifted, ShiftType, ShiftAmount,
-                          Preindexed, Postindexed, Negative, Writeback, S, E);
-    return false;
+    return Error(ErrorLoc, "invalid operand for instruction");
   }
 
+  llvm_unreachable("Implement any new match types added!");
   return true;
 }
 
-/// Parse the offset of a memory operand after we have seen "[Rn," or "[Rn],"
-/// we will parse the following (were +/- means that a plus or minus is
-/// optional):
-///   +/-Rm
-///   +/-Rm, shift
-///   #offset
-/// we return false on success or an error otherwise.
-bool MBlazeAsmParser::ParseMemoryOffsetReg(bool &Negative,
-                                        bool &OffsetRegShifted,
-                                        enum ShiftType &ShiftType,
-                                        const MCExpr *&ShiftAmount,
-                                        const MCExpr *&Offset,
-                                        bool &OffsetIsReg,
-                                        int &OffsetRegNum,
-                                        SMLoc &E) {
-  OwningPtr<MBlazeOperand> Op;
-  Negative = false;
-  OffsetRegShifted = false;
-  OffsetIsReg = false;
-  OffsetRegNum = -1;
-  const AsmToken &NextTok = Parser.getTok();
-  E = NextTok.getLoc();
-  if (NextTok.is(AsmToken::Plus))
-    Parser.Lex(); // Eat plus token.
-  else if (NextTok.is(AsmToken::Minus)) {
-    Negative = true;
-    Parser.Lex(); // Eat minus token
-  }
-  // See if there is a register following the "[Rn," or "[Rn]," we have so far.
-  const AsmToken &OffsetRegTok = Parser.getTok();
-  if (OffsetRegTok.is(AsmToken::Identifier)) {
-    OffsetIsReg = !MaybeParseRegister(Op, false);
-    if (OffsetIsReg) {
-      E = Op->getEndLoc();
-      OffsetRegNum = Op->getReg();
-    }
-  }
-  // If we parsed a register as the offset then their can be a shift after that
-  if (OffsetRegNum != -1) {
-    // Look for a comma then a shift
-    const AsmToken &Tok = Parser.getTok();
-    if (Tok.is(AsmToken::Comma)) {
-      Parser.Lex(); // Eat comma token.
+MBlazeOperand *MBlazeAsmParser::
+ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  if (Operands.size() != 4)
+    return 0;
 
-      const AsmToken &Tok = Parser.getTok();
-      if (ParseShift(ShiftType, ShiftAmount, E))
-        return Error(Tok.getLoc(), "shift expected");
-      OffsetRegShifted = true;
-    }
-  }
-  else { // the "[Rn," or "[Rn,]" we have so far was not followed by "Rm"
-    // Look for #offset following the "[Rn," or "[Rn],"
-    const AsmToken &HashTok = Parser.getTok();
-    if (HashTok.isNot(AsmToken::Hash))
-      return Error(HashTok.getLoc(), "'#' expected");
-    
-    Parser.Lex(); // Eat hash token.
+  MBlazeOperand &Base = *(MBlazeOperand*)Operands[2];
+  MBlazeOperand &Offset = *(MBlazeOperand*)Operands[3];
 
-    if (getParser().ParseExpression(Offset))
-     return true;
-    E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-  }
-  return false;
-}
+  SMLoc S = Base.getStartLoc();
+  SMLoc O = Offset.getStartLoc();
+  SMLoc E = Offset.getEndLoc();
 
-/// ParseShift as one of these two:
-///   ( lsl | lsr | asr | ror ) , # shift_amount
-///   rrx
-/// and returns true if it parses a shift otherwise it returns false.
-bool MBlazeAsmParser::ParseShift(ShiftType &St, 
-                              const MCExpr *&ShiftAmount, 
-                              SMLoc &E) {
-  const AsmToken &Tok = Parser.getTok();
-  if (Tok.isNot(AsmToken::Identifier))
-    return true;
-  StringRef ShiftName = Tok.getString();
-  if (ShiftName == "lsl" || ShiftName == "LSL")
-    St = Lsl;
-  else if (ShiftName == "lsr" || ShiftName == "LSR")
-    St = Lsr;
-  else if (ShiftName == "asr" || ShiftName == "ASR")
-    St = Asr;
-  else if (ShiftName == "ror" || ShiftName == "ROR")
-    St = Ror;
-  else if (ShiftName == "rrx" || ShiftName == "RRX")
-    St = Rrx;
+  if (!Base.isReg()) {
+    Error(S, "base address must be a register");
+    return 0;
+  }
+
+  if (!Offset.isReg() && !Offset.isImm()) {
+    Error(O, "offset must be a register or immediate");
+    return 0;
+  }
+
+  MBlazeOperand *Op;
+  if (Offset.isReg())
+    Op = MBlazeOperand::CreateMem(Base.getReg(), Offset.getReg(), S, E);
   else
-    return true;
-  Parser.Lex(); // Eat shift type token.
+    Op = MBlazeOperand::CreateMem(Base.getReg(), Offset.getImm(), S, E);
 
-  // Rrx stands alone.
-  if (St == Rrx)
-    return false;
+  delete Operands.pop_back_val();
+  delete Operands.pop_back_val();
+  Operands.push_back(Op);
 
-  // Otherwise, there must be a '#' and a shift amount.
-  const AsmToken &HashTok = Parser.getTok();
-  if (HashTok.isNot(AsmToken::Hash))
-    return Error(HashTok.getLoc(), "'#' expected");
-  Parser.Lex(); // Eat hash token.
-
-  if (getParser().ParseExpression(ShiftAmount))
-    return true;
-
-  return false;
+  return Op;
 }
 
-/// Parse a arm instruction operand.  For now this parses the operand regardless
-/// of the mnemonic.
-bool MBlazeAsmParser::ParseOperand(OwningPtr<MBlazeOperand> &Op) {
-  SMLoc S, E;
-  
+MBlazeOperand *MBlazeAsmParser::ParseRegister() {
+  SMLoc S = Parser.getTok().getLoc();
+  SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+
   switch (getLexer().getKind()) {
+  default: return 0;
   case AsmToken::Identifier:
-    if (!MaybeParseRegister(Op, true))
-      return false;
-    // This was not a register so parse other operands that start with an
-    // identifier (like labels) as expressions and create them as immediates.
-    const MCExpr *IdVal;
-    S = Parser.getTok().getLoc();
-    if (getParser().ParseExpression(IdVal))
-      return true;
-    E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-    MBlazeOperand::CreateImm(Op, IdVal, S, E);
-    return false;
-  case AsmToken::LBrac:
-    return ParseMemory(Op);
-  case AsmToken::LCurly:
-    return ParseRegisterList(Op);
-  case AsmToken::Hash:
-    // #42 -> immediate.
-    // TODO: ":lower16:" and ":upper16:" modifiers after # before immediate
-    S = Parser.getTok().getLoc();
-    Parser.Lex();
-    const MCExpr *ImmVal;
-    if (getParser().ParseExpression(ImmVal))
-      return true;
-    E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-    MBlazeOperand::CreateImm(Op, ImmVal, S, E);
-    return false;
-  default:
-    return Error(Parser.getTok().getLoc(), "unexpected token in operand");
+    unsigned RegNo = MatchRegisterName(getLexer().getTok().getIdentifier());
+    if (RegNo == 0)
+      return 0;
+
+    return MBlazeOperand::CreateReg(RegNo, S, E);
   }
+}
+
+static unsigned MatchFslRegister(const StringRef &String) {
+  if (!String.startswith("rfsl"))
+    return -1;
+
+  unsigned regNum;
+  if (String.substr(4).getAsInteger(10,regNum))
+    return -1;
+
+  return regNum;
+}
+
+MBlazeOperand *MBlazeAsmParser::ParseFsl() {
+  SMLoc S = Parser.getTok().getLoc();
+  SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+
+  switch (getLexer().getKind()) {
+  default: return 0;
+  case AsmToken::Identifier:
+    unsigned reg = MatchFslRegister(getLexer().getTok().getIdentifier());
+    if (reg >= 16)
+      return 0;
+
+    const MCExpr *EVal = MCConstantExpr::Create(reg,getContext());
+    return MBlazeOperand::CreateFslImm(EVal,S,E);
+  }
+}
+
+MBlazeOperand *MBlazeAsmParser::ParseImmediate() {
+  SMLoc S = Parser.getTok().getLoc();
+  SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+
+  const MCExpr *EVal;
+  switch (getLexer().getKind()) {
+  default: return 0;
+  case AsmToken::LParen:
+  case AsmToken::Plus:
+  case AsmToken::Minus:
+  case AsmToken::Integer:
+  case AsmToken::Identifier:
+    if (getParser().ParseExpression(EVal))
+      return 0;
+
+    return MBlazeOperand::CreateImm(EVal, S, E);
+  }
+}
+
+MBlazeOperand *MBlazeAsmParser::
+ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  MBlazeOperand *Op;
+
+  // Attempt to parse the next token as a register name
+  Op = ParseRegister();
+
+  // Attempt to parse the next token as an FSL immediate
+  if (!Op)
+    Op = ParseFsl();
+
+  // Attempt to parse the next token as an immediate
+  if (!Op)
+    Op = ParseImmediate();
+
+  // Move past the parsed token in the token stream
+  getLexer().Lex();
+
+  // If the token could not be parsed then fail
+  if (!Op) {
+    Error(Parser.getTok().getLoc(), "unknown operand");
+    return 0;
+  }
+
+  // Push the parsed operand into the list of operands
+  Operands.push_back(Op);
+  return Op;
 }
 
 /// Parse an mblaze instruction mnemonic followed by its operands.
-bool MBlazeAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
-                               SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  OwningPtr<MBlazeOperand> Op;
+bool MBlazeAsmParser::
+ParseInstruction(StringRef Name, SMLoc NameLoc,
+                 SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // The first operand is the token for the instruction name
+  Operands.push_back(MBlazeOperand::CreateToken(Name, NameLoc));
 
-  // Create the leading tokens for the mnemonic, split by '.' characters.
-  size_t Start = 0, Next = Name.find('.');
-  StringRef Head = Name.slice(Start, Next);
+  // If there are no more operands then finish
+  if (getLexer().is(AsmToken::EndOfStatement))
+    return false;
 
-  // Determine the predicate, if any.
-  //
-  // FIXME: We need a way to check whether a prefix supports predication,
-  // otherwise we will end up with an ambiguity for instructions that happen to
-  // end with a predicate name.
-  unsigned CC = StringSwitch<unsigned>(Head.substr(Head.size()-2))
-    .Case("eq", MBlazeCC::EQ)
-    .Case("ne", MBlazeCC::NE)
-    .Case("gt", MBlazeCC::GT)
-    .Case("lt", MBlazeCC::LT)
-    .Case("ge", MBlazeCC::GE)
-    .Case("le", MBlazeCC::LE)
-    .Default(~0U);
-  if (CC != ~0U) {
-    Head = Head.slice(0, Head.size() - 2);
-  } else
-    CC = MBlazeCC::EQ;
+  // Parse the first operand
+  if (ParseOperand(Operands))
+    return true;
 
-  MBlazeOperand::CreateToken(Op, Head, NameLoc);
-  Operands.push_back(Op.take());
+  while (getLexer().isNot(AsmToken::EndOfStatement) &&
+         getLexer().is(AsmToken::Comma)) {
+    // Make sure there is a comma separating operands
+    // if (getLexer().isNot(AsmToken::Comma))
+    //  return false;
 
-  MBlazeOperand::CreateCondCode(Op, MBlazeCC::CC(CC), NameLoc);
-  Operands.push_back(Op.take());
+    // Consume the comma token
+    getLexer().Lex();
 
-  // Add the remaining tokens in the mnemonic.
-  while (Next != StringRef::npos) {
-    Start = Next;
-    Next = Name.find('.', Start + 1);
-    Head = Name.slice(Start, Next);
-
-    MBlazeOperand::CreateToken(Op, Head, NameLoc);
-    Operands.push_back(Op.take());
-  }
-
-  // Read the remaining operands.
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    // Read the first operand.
-    OwningPtr<MBlazeOperand> Op;
-    if (ParseOperand(Op)) {
-      Parser.EatToEndOfStatement();
+    // Parse the next operand
+    if (ParseOperand(Operands))
       return true;
-    }
-    Operands.push_back(Op.take());
-
-    while (getLexer().is(AsmToken::Comma)) {
-      Parser.Lex();  // Eat the comma.
-
-      // Parse and remember the operand.
-      if (ParseOperand(Op)) {
-        Parser.EatToEndOfStatement();
-        return true;
-      }
-      Operands.push_back(Op.take());
-    }
   }
-  
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    Parser.EatToEndOfStatement();
-    return TokError("unexpected token in argument list");
-  }
-  Parser.Lex(); // Consume the EndOfStatement
+
+  // If the instruction requires a memory operand then we need to
+  // replace the last two operands (base+offset) with a single
+  // memory operand.
+  if (Name.startswith("lw") || Name.startswith("sw") ||
+      Name.startswith("lh") || Name.startswith("sh") ||
+      Name.startswith("lb") || Name.startswith("sb"))
+    return ParseMemory(Operands);
+
   return false;
 }
 
 /// ParseDirective parses the arm specific directives
 bool MBlazeAsmParser::ParseDirective(AsmToken DirectiveID) {
-  StringRef IDVal = DirectiveID.getIdentifier();
-  if (IDVal == ".word")
-    return ParseDirectiveWord(4, DirectiveID.getLoc());
-  else if (IDVal == ".code")
-    return ParseDirectiveCode(DirectiveID.getLoc());
-  else if (IDVal == ".syntax")
-    return ParseDirectiveSyntax(DirectiveID.getLoc());
   return true;
-}
-
-/// ParseDirectiveWord
-///  ::= .word [ expression (, expression)* ]
-bool MBlazeAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    for (;;) {
-      const MCExpr *Value;
-      if (getParser().ParseExpression(Value))
-        return true;
-
-      getParser().getStreamer().EmitValue(Value, Size, 0/*addrspace*/);
-
-      if (getLexer().is(AsmToken::EndOfStatement))
-        break;
-      
-      // FIXME: Improve diagnostic.
-      if (getLexer().isNot(AsmToken::Comma))
-        return Error(L, "unexpected token in directive");
-      Parser.Lex();
-    }
-  }
-
-  Parser.Lex();
-  return false;
-}
-
-/// ParseDirectiveSyntax
-///  ::= .syntax unified | divided
-bool MBlazeAsmParser::ParseDirectiveSyntax(SMLoc L) {
-  const AsmToken &Tok = Parser.getTok();
-  if (Tok.isNot(AsmToken::Identifier))
-    return Error(L, "unexpected token in .syntax directive");
-  StringRef Mode = Tok.getString();
-  if (Mode == "unified" || Mode == "UNIFIED")
-    Parser.Lex();
-  else if (Mode == "divided" || Mode == "DIVIDED")
-    Parser.Lex();
-  else
-    return Error(L, "unrecognized syntax mode in .syntax directive");
-
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(Parser.getTok().getLoc(), "unexpected token in directive");
-  Parser.Lex();
-
-  // TODO tell the MC streamer the mode
-  // getParser().getStreamer().Emit???();
-  return false;
-}
-
-/// ParseDirectiveCode
-///  ::= .code 16 | 32
-bool MBlazeAsmParser::ParseDirectiveCode(SMLoc L) {
-  const AsmToken &Tok = Parser.getTok();
-  if (Tok.isNot(AsmToken::Integer))
-    return Error(L, "unexpected token in .code directive");
-  int64_t Val = Parser.getTok().getIntVal();
-  if (Val == 16)
-    Parser.Lex();
-  else if (Val == 32)
-    Parser.Lex();
-  else
-    return Error(L, "invalid operand to .code directive");
-
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(Parser.getTok().getLoc(), "unexpected token in directive");
-  Parser.Lex();
-
-  // TODO tell the MC streamer the mode
-  // getParser().getStreamer().Emit???();
-  return false;
 }
 
 extern "C" void LLVMInitializeMBlazeAsmLexer();

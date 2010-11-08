@@ -58,8 +58,8 @@ class MBlazeInst<bits<6> op, Format form, dag outs, dag ins, string asmstr,
   bits<6> FormBits = Form.Value;
 
   // Top 6 bits are the 'opcode' field
-  let Inst{0-5} = opcode;   
-  
+  let Inst{0-5} = opcode;
+
   // If the instruction is marked as a pseudo, set isCodeGenOnly so that the
   // assembler and disassmbler ignore it.
   let isCodeGenOnly = !eq(!cast<string>(form), "FPseudo");
@@ -86,15 +86,15 @@ class MBlazePseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
 //===----------------------------------------------------------------------===//
 
 class TA<bits<6> op, bits<11> flags, dag outs, dag ins, string asmstr,
-         list<dag> pattern, InstrItinClass itin> : 
-         MBlazeInst<op,FRRR,outs, ins, asmstr, pattern, itin> 
+         list<dag> pattern, InstrItinClass itin> :
+         MBlazeInst<op,FRRR,outs, ins, asmstr, pattern, itin>
 {
   bits<5> rd;
   bits<5> ra;
   bits<5> rb;
 
   let Inst{6-10}  = rd;
-  let Inst{11-15} = ra; 
+  let Inst{11-15} = ra;
   let Inst{16-20} = rb;
   let Inst{21-31} = flags;
 }
@@ -104,15 +104,15 @@ class TA<bits<6> op, bits<11> flags, dag outs, dag ins, string asmstr,
 //===----------------------------------------------------------------------===//
 
 class TB<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin> : 
-         MBlazeInst<op, FRRI, outs, ins, asmstr, pattern, itin> 
+         InstrItinClass itin> :
+         MBlazeInst<op, FRRI, outs, ins, asmstr, pattern, itin>
 {
   bits<5>  rd;
   bits<5>  ra;
   bits<16> imm16;
 
   let Inst{6-10}  = rd;
-  let Inst{11-15} = ra; 
+  let Inst{11-15} = ra;
   let Inst{16-31} = imm16;
 }
 
@@ -121,7 +121,7 @@ class TB<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 // the LLVM DAG : <|opcode|rd|ra|immediate|>
 //===----------------------------------------------------------------------===//
 class TBR<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin> : 
+         InstrItinClass itin> :
          TB<op, outs, ins, asmstr, pattern, itin> {
   bits<5>  rrd;
   bits<16> rimm16;

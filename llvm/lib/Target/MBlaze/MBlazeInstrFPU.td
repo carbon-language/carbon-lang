@@ -100,11 +100,11 @@ let Predicates=[HasFPU] in {
   def FMUL   :  ArithF<0x16, 0x100, "fmul   ", fmul, IIAlu>;
   def FDIV   :  ArithF<0x16, 0x180, "fdiv   ", fdiv, IIAlu>;
 
-  def LWF    :   LoadFM<0x32, "lw     ", load>;
-  def LWFI   :  LoadFMI<0x32, "lwi    ", load>;
+  def LWF    :   LoadFM<0x32, "lw      ", load>;
+  def LWFI   :  LoadFMI<0x32, "lwi     ", load>;
 
-  def SWF    :  StoreFM<0x32, "sw     ", store>;
-  def SWFI   : StoreFMI<0x32, "swi    ", store>;
+  def SWF    :  StoreFM<0x32, "sw      ", store>;
+  def SWFI   : StoreFMI<0x32, "swi     ", store>;
 }
 
 let Predicates=[HasFPU,HasSqrt] in {

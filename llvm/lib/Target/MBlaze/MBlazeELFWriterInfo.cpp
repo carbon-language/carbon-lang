@@ -32,7 +32,7 @@ MBlazeELFWriterInfo::MBlazeELFWriterInfo(TargetMachine &TM)
 MBlazeELFWriterInfo::~MBlazeELFWriterInfo() {}
 
 unsigned MBlazeELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
-  switch(MachineRelTy) {
+  switch (MachineRelTy) {
   case MBlaze::reloc_pcrel_word:
     return R_MICROBLAZE_64_PCREL;
   case MBlaze::reloc_absolute_word:
@@ -45,7 +45,7 @@ unsigned MBlazeELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
 
 long int MBlazeELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
                                                     long int Modifier) const {
-  switch(RelTy) {
+  switch (RelTy) {
   case R_MICROBLAZE_32_PCREL:
     return Modifier - 4;
   case R_MICROBLAZE_32:
@@ -58,7 +58,7 @@ long int MBlazeELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
 
 unsigned MBlazeELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
   // FIXME: Most of these sizes are guesses based on the name
-  switch(RelTy) {
+  switch (RelTy) {
   case R_MICROBLAZE_32:
   case R_MICROBLAZE_32_PCREL:
   case R_MICROBLAZE_32_PCREL_LO:
@@ -83,7 +83,7 @@ unsigned MBlazeELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
 
 bool MBlazeELFWriterInfo::isPCRelativeRel(unsigned RelTy) const {
   // FIXME: Most of these are guesses based on the name
-  switch(RelTy) {
+  switch (RelTy) {
   case R_MICROBLAZE_32_PCREL:
   case R_MICROBLAZE_64_PCREL:
   case R_MICROBLAZE_32_PCREL_LO:

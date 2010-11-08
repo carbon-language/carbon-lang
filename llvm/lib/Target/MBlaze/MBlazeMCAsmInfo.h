@@ -19,7 +19,7 @@
 
 namespace llvm {
   class Target;
-  
+
   class MBlazeMCAsmInfo : public MCAsmInfo {
   public:
     explicit MBlazeMCAsmInfo();

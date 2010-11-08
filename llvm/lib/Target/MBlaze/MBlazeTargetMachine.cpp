@@ -61,7 +61,7 @@ extern "C" void LLVMInitializeMBlazeTarget() {
   // Register the MC code emitter
   TargetRegistry::RegisterCodeEmitter(TheMBlazeTarget,
                                       llvm::createMBlazeMCCodeEmitter);
-  
+
   // Register the asm backend
   TargetRegistry::RegisterAsmBackend(TheMBlazeTarget,
                                      createMBlazeAsmBackend);

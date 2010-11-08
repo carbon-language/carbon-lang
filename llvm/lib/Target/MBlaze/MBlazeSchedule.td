@@ -14,7 +14,7 @@ def ALU     : FuncUnit;
 def IMULDIV : FuncUnit;
 
 //===----------------------------------------------------------------------===//
-// Instruction Itinerary classes used for MBlaze 
+// Instruction Itinerary classes used for MBlaze
 //===----------------------------------------------------------------------===//
 def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;

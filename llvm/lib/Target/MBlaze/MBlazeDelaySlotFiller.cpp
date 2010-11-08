@@ -36,7 +36,7 @@ namespace {
     const TargetInstrInfo *TII;
 
     static char ID;
-    Filler(TargetMachine &tm) 
+    Filler(TargetMachine &tm)
       : MachineFunctionPass(ID), TM(tm), TII(tm.getInstrInfo()) { }
 
     virtual const char *getPassName() const {
@@ -56,44 +56,44 @@ namespace {
   char Filler::ID = 0;
 } // end of anonymous namespace
 
-static bool hasImmInstruction( MachineBasicBlock::iterator &candidate ) {
+static bool hasImmInstruction(MachineBasicBlock::iterator &candidate) {
     // Any instruction with an immediate mode operand greater than
     // 16-bits requires an implicit IMM instruction.
     unsigned numOper = candidate->getNumOperands();
-    for( unsigned op = 0; op < numOper; ++op ) {
-        if( candidate->getOperand(op).isImm() &&
-            (candidate->getOperand(op).getImm() & 0xFFFFFFFFFFFF0000LL) != 0 )
+    for (unsigned op = 0; op < numOper; ++op) {
+        if (candidate->getOperand(op).isImm() &&
+            (candidate->getOperand(op).getImm() & 0xFFFFFFFFFFFF0000LL) != 0)
             return true;
 
         // FIXME: we could probably check to see if the FP value happens
         //        to not need an IMM instruction. For now we just always
         //        assume that FP values always do.
-        if( candidate->getOperand(op).isFPImm() )
+        if (candidate->getOperand(op).isFPImm())
             return true;
     }
 
     return false;
 }
 
-static bool delayHasHazard( MachineBasicBlock::iterator &candidate,
-                            MachineBasicBlock::iterator &slot ) {
+static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
+                           MachineBasicBlock::iterator &slot) {
 
     // Loop over all of the operands in the branch instruction
     // and make sure that none of them are defined by the
     // candidate instruction.
     unsigned numOper = slot->getNumOperands();
-    for( unsigned op = 0; op < numOper; ++op ) {
-        if( !slot->getOperand(op).isReg() || 
+    for (unsigned op = 0; op < numOper; ++op) {
+        if (!slot->getOperand(op).isReg() ||
             !slot->getOperand(op).isUse() ||
-            slot->getOperand(op).isImplicit() )
+            slot->getOperand(op).isImplicit())
             continue;
 
         unsigned cnumOper = candidate->getNumOperands();
-        for( unsigned cop = 0; cop < cnumOper; ++cop ) {
-            if( candidate->getOperand(cop).isReg() &&
+        for (unsigned cop = 0; cop < cnumOper; ++cop) {
+            if (candidate->getOperand(cop).isReg() &&
                 candidate->getOperand(cop).isDef() &&
-                candidate->getOperand(cop).getReg() == 
-                slot->getOperand(op).getReg() )
+                candidate->getOperand(cop).getReg() ==
+                slot->getOperand(op).getReg())
                 return true;
         }
     }
@@ -102,20 +102,20 @@ static bool delayHasHazard( MachineBasicBlock::iterator &candidate,
     return false;
 }
 
-static bool usedBeforeDelaySlot( MachineBasicBlock::iterator &candidate,
-                                 MachineBasicBlock::iterator &slot ) {
+static bool usedBeforeDelaySlot(MachineBasicBlock::iterator &candidate,
+                                MachineBasicBlock::iterator &slot) {
   MachineBasicBlock::iterator I = candidate;
   for (++I; I != slot; ++I) {
         unsigned numOper = I->getNumOperands();
-        for( unsigned op = 0; op < numOper; ++op ) {
-            if( I->getOperand(op).isReg() &&
-                I->getOperand(op).isUse() ) {
+        for (unsigned op = 0; op < numOper; ++op) {
+            if (I->getOperand(op).isReg() &&
+                I->getOperand(op).isUse()) {
                 unsigned reg = I->getOperand(op).getReg();
                 unsigned cops = candidate->getNumOperands();
-                for( unsigned cop = 0; cop < cops; ++cop ) {
-                    if( candidate->getOperand(cop).isReg() &&
+                for (unsigned cop = 0; cop < cops; ++cop) {
+                    if (candidate->getOperand(cop).isReg() &&
                         candidate->getOperand(cop).isDef() &&
-                        candidate->getOperand(cop).getReg() == reg )
+                        candidate->getOperand(cop).getReg() == reg)
                         return true;
                 }
             }
@@ -130,9 +130,9 @@ findDelayInstr(MachineBasicBlock &MBB,MachineBasicBlock::iterator &slot) {
   MachineBasicBlock::iterator found = MBB.end();
   for (MachineBasicBlock::iterator I = MBB.begin(); I != slot; ++I) {
       TargetInstrDesc desc = I->getDesc();
-      if( desc.hasDelaySlot() || desc.isBranch() || 
-          desc.mayLoad() || desc.    mayStore() || 
-          hasImmInstruction(I) || delayHasHazard(I,slot) || 
+      if (desc.hasDelaySlot() || desc.isBranch() ||
+          desc.mayLoad() || desc.    mayStore() ||
+          hasImmInstruction(I) || delayHasHazard(I,slot) ||
           usedBeforeDelaySlot(I,slot)) continue;
 
       found = I;
@@ -155,10 +155,10 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       ++FilledSlots;
       Changed = true;
 
-      if( D == MBB.end() )
+      if (D == MBB.end())
         BuildMI(MBB, J, I->getDebugLoc(), TII->get(MBlaze::NOP));
       else
-        MBB.splice( J, &MBB, D );
+        MBB.splice(J, &MBB, D);
     }
   return Changed;
 }

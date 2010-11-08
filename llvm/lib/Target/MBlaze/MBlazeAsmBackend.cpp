@@ -70,8 +70,8 @@ bool MBlazeAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
   if ((Count % 4) != 0)
     return false;
 
-  for (uint64_t i = 0; i < Count; i += 4 )
-      OW->Write32( 0x00000000 );
+  for (uint64_t i = 0; i < Count; i += 4)
+      OW->Write32(0x00000000);
 
   return true;
 }
@@ -114,17 +114,17 @@ public:
 void ELFMBlazeAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                                      uint64_t Value) const {
   unsigned Size = getFixupKindSize(Fixup.getKind());
-            
+
   assert(Fixup.getOffset() + Size <= DF.getContents().size() &&
          "Invalid fixup offset!");
 
   char *data = DF.getContents().data() + Fixup.getOffset();
   switch (Size) {
-  default: llvm_unreachable( "Cannot fixup unknown value." );
-  case 1:  llvm_unreachable( "Cannot fixup 1 byte value." );
-  case 8:  llvm_unreachable( "Cannot fixup 8 byte value." );
+  default: llvm_unreachable("Cannot fixup unknown value.");
+  case 1:  llvm_unreachable("Cannot fixup 1 byte value.");
+  case 8:  llvm_unreachable("Cannot fixup 8 byte value.");
 
-  case 4: 
+  case 4:
     *(data+7) = uint8_t(Value);
     *(data+6) = uint8_t(Value >> 8);
     *(data+3) = uint8_t(Value >> 16);

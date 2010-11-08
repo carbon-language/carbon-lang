@@ -159,7 +159,6 @@ SelectAddrRegImm(SDValue N, SDValue &Disp, SDValue &Base) {
       } else {
         Base = N.getOperand(0);
       }
-      DEBUG( errs() << "WESLEY: Using Operand Immediate\n" );
       return true; // [r+i]
     }
   } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
@@ -167,7 +166,6 @@ SelectAddrRegImm(SDValue N, SDValue &Disp, SDValue &Base) {
     uint32_t Imm = CN->getZExtValue();
     Disp = CurDAG->getTargetConstant(Imm, CN->getValueType(0));
     Base = CurDAG->getRegister(MBlaze::R0, CN->getValueType(0));
-    DEBUG( errs() << "WESLEY: Using Constant Node\n" );
     return true;
   }
 
@@ -192,20 +190,15 @@ SDNode* MBlazeDAGToDAGISel::Select(SDNode *Node) {
   unsigned Opcode = Node->getOpcode();
   DebugLoc dl = Node->getDebugLoc();
 
-  // Dump information about the Node being selected
-  DEBUG(errs() << "Selecting: "; Node->dump(CurDAG); errs() << "\n");
-
   // If we have a custom node, we already have selected!
-  if (Node->isMachineOpcode()) {
-    DEBUG(errs() << "== "; Node->dump(CurDAG); errs() << "\n");
+  if (Node->isMachineOpcode())
     return NULL;
-  }
 
   ///
   // Instruction Selection not handled by the auto-generated
   // tablegen selection should be handled here.
   ///
-  switch(Opcode) {
+  switch (Opcode) {
     default: break;
 
     // Get target GOT address.
@@ -235,8 +228,8 @@ SDNode* MBlazeDAGToDAGISel::Select(SDNode *Node) {
         SDValue R20Reg = CurDAG->getRegister(MBlaze::R20, MVT::i32);
         SDValue InFlag(0, 0);
 
-        if ( (isa<GlobalAddressSDNode>(Callee)) ||
-             (isa<ExternalSymbolSDNode>(Callee)) )
+        if ((isa<GlobalAddressSDNode>(Callee)) ||
+            (isa<ExternalSymbolSDNode>(Callee)))
         {
           /// Direct call for global addresses and external symbols
           SDValue GPReg = CurDAG->getRegister(MBlaze::R15, MVT::i32);
