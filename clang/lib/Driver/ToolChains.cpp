@@ -1360,8 +1360,10 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
 
   LinuxDistro Distro = DetectLinuxDistro(Arch);
 
-  if (IsUbuntu(Distro))
-    ExtraOpts.push_back("-z relro");
+  if (IsUbuntu(Distro)) {
+    ExtraOpts.push_back("-z");
+    ExtraOpts.push_back("relro");
+  }
 
   if (Arch == llvm::Triple::arm)
     ExtraOpts.push_back("-X");
