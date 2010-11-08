@@ -41,5 +41,6 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
 bool PTXTargetMachine::addInstSelector(PassManagerBase &PM,
                                        CodeGenOpt::Level OptLevel) {
   PM.add(createPTXISelDag(*this, OptLevel));
+  PM.add(createPTXMFInfoExtract(*this, OptLevel));
   return false;
 }

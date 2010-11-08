@@ -24,6 +24,9 @@ namespace llvm {
   FunctionPass *createPTXISelDag(PTXTargetMachine &TM,
                                  CodeGenOpt::Level OptLevel);
 
+  FunctionPass *createPTXMFInfoExtract(PTXTargetMachine &TM,
+                                       CodeGenOpt::Level OptLevel);
+
   extern Target ThePTXTarget;
 } // namespace llvm;
 

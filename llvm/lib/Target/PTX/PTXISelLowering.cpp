@@ -13,6 +13,7 @@
 
 #include "PTX.h"
 #include "PTXISelLowering.h"
+#include "PTXMachineFunctionInfo.h"
 #include "PTXRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -107,6 +108,9 @@ SDValue PTXTargetLowering::
                        SmallVectorImpl<SDValue> &InVals) const {
   if (isVarArg) llvm_unreachable("PTX does not support varargs");
 
+  MachineFunction &MF = DAG.getMachineFunction();
+  PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
+
   lower_argument_func lower_argument;
 
   switch (CallConv) {
@@ -114,9 +118,11 @@ SDValue PTXTargetLowering::
       llvm_unreachable("Unsupported calling convention");
       break;
     case CallingConv::PTX_Kernel:
+      MFI->setKernel();
       lower_argument = lower_kernel_argument;
       break;
     case CallingConv::PTX_Device:
+      MFI->setKernel(false);
       lower_argument = lower_device_argument;
       break;
   }
@@ -137,7 +143,14 @@ SDValue PTXTargetLowering::
     unsigned reg;
     SDValue arg = lower_argument(i, Chain, dl, VT, entry, DAG, &reg);
     InVals.push_back(arg);
+
+    if (!MFI->isDoneAddArg())
+      MFI->addArgReg(reg);
   }
+
+  // Make sure we don't add argument registers twice
+  if (!MFI->isDoneAddArg())
+    MFI->doneAddArg();
 
   return Chain;
 }
@@ -173,6 +186,10 @@ SDValue PTXTargetLowering::
 
   SDValue Flag;
   unsigned reg = PTX::R0;
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
+  MFI->setRetReg(reg);
 
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function
