@@ -1,59 +1,54 @@
-// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o - | sort | FileCheck %s
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fvisibility hidden -fhidden-weak-vtables -emit-llvm -o - | FileCheck -check-prefix=CHECK-WITH-HIDDEN %s
-
-// FIXME: Fails on Win32, dunno why.
-// XFAIL: win32
 
 #include <typeinfo>
 
 // CHECK-WITH-HIDDEN: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
 
-// CHECK: _ZTIN12_GLOBAL__N_11DE to
-
-
-
-// CHECK: _ZTI1A = weak_odr hidden constant
-// CHECK: _ZTI1B = constant
+// CHECK: _ZTSP1C = internal constant
+// CHECK: _ZTS1C = internal constant
 // CHECK: _ZTI1C = internal constant
+// CHECK: _ZTIP1C = internal constant
+// CHECK: _ZTSPP1C = internal constant
+// CHECK: _ZTIPP1C = internal constant
+// CHECK: _ZTSM1Ci = internal constant
+// CHECK: _ZTIM1Ci = internal constant
+// CHECK: _ZTSPM1Ci = internal constant
+// CHECK: _ZTIPM1Ci = internal constant
+// CHECK: _ZTSM1CS_ = internal constant
+// CHECK: _ZTIM1CS_ = internal constant
+// CHECK: _ZTSM1CPS_ = internal constant
+// CHECK: _ZTIM1CPS_ = internal constant
+// CHECK: _ZTSM1A1C = internal constant
+// CHECK: _ZTS1A = weak_odr constant
+// CHECK: _ZTI1A = weak_odr hidden constant
+// CHECK: _ZTIM1A1C = internal constant
+// CHECK: _ZTSM1AP1C = internal constant
+// CHECK: _ZTIM1AP1C = internal constant
+// CHECK: _ZTSN12_GLOBAL__N_11DE = internal constant
+// CHECK: _ZTIN12_GLOBAL__N_11DE = internal constant
+// CHECK: _ZTSPN12_GLOBAL__N_11DE = internal constant
+// CHECK: _ZTIPN12_GLOBAL__N_11DE = internal constant
+// CHECK: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
+// CHECK: _ZTIFN12_GLOBAL__N_11DEvE = internal constant
+// CHECK: _ZTSFvN12_GLOBAL__N_11DEE = internal constant
+// CHECK: _ZTIFvN12_GLOBAL__N_11DEE = internal constant
+// CHECK: _ZTSPFvvE = weak_odr constant
+// CHECK: _ZTSFvvE = weak_odr constant
+// CHECK: _ZTIFvvE = weak_odr hidden constant
+// CHECK: _ZTIPFvvE = weak_odr hidden constant
+// CHECK: _ZTSN12_GLOBAL__N_11EE = internal constant
+// CHECK: _ZTIN12_GLOBAL__N_11EE = internal constant
+// CHECK: _ZTSA10_i = weak_odr constant
+// CHECK: _ZTIA10_i = weak_odr hidden constant
 // CHECK: _ZTI1TILj0EE = weak_odr constant
 // CHECK: _ZTI1TILj1EE = weak_odr constant
 // CHECK: _ZTI1TILj2EE = external constant
-// CHECK: _ZTIA10_i = weak_odr hidden constant
-// CHECK: _ZTIFN12_GLOBAL__N_11DEvE = internal constant
-// CHECK: _ZTIFvN12_GLOBAL__N_11DEE = internal constant
-// CHECK: _ZTIFvvE = weak_odr hidden constant
-// CHECK: _ZTIM1A1C = internal constant
-// CHECK: _ZTIM1AP1C = internal constant
-// CHECK: _ZTIM1CPS_ = internal constant
-// CHECK: _ZTIM1CS_ = internal constant
-// CHECK: _ZTIM1Ci = internal constant
-// CHECK: _ZTIN12_GLOBAL__N_11DE = internal constant
-// CHECK: _ZTIN12_GLOBAL__N_11EE = internal constant
-// CHECK: _ZTIP1C = internal constant
-// CHECK: _ZTIPFvvE = weak_odr hidden constant
-// CHECK: _ZTIPM1Ci = internal constant
-// CHECK: _ZTIPN12_GLOBAL__N_11DE = internal constant
-// CHECK: _ZTIPP1C = internal constant
-// CHECK: _ZTS1A = weak_odr constant
 // CHECK: _ZTS1B = constant
-// CHECK: _ZTS1C = internal constant
+// CHECK: _ZTI1B = constant
 // CHECK: _ZTS1F = weak_odr constant
-// CHECK: _ZTSA10_i = weak_odr constant
-// CHECK: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
-// CHECK: _ZTSFvN12_GLOBAL__N_11DEE = internal constant
-// CHECK: _ZTSFvvE = weak_odr constant
-// CHECK: _ZTSM1A1C = internal constant
-// CHECK: _ZTSM1AP1C = internal constant
-// CHECK: _ZTSM1CPS_ = internal constant
-// CHECK: _ZTSM1CS_ = internal constant
-// CHECK: _ZTSM1Ci = internal constant
-// CHECK: _ZTSN12_GLOBAL__N_11DE = internal constant
-// CHECK: _ZTSN12_GLOBAL__N_11EE = internal constant
-// CHECK: _ZTSP1C = internal constant
-// CHECK: _ZTSPFvvE = weak_odr constant
-// CHECK: _ZTSPM1Ci = internal constant
-// CHECK: _ZTSPN12_GLOBAL__N_11DE = internal constant
-// CHECK: _ZTSPP1C = internal constant
+
+// CHECK: _ZTIN12_GLOBAL__N_11DE to
 
 // A has no key function, so its RTTI data should be weak_odr.
 struct A { };
