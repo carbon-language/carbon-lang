@@ -33,7 +33,9 @@ public:
 } // end anonymous namespace
 
 void clang::RegisterObjCAtSyncChecker(GRExprEngine &Eng) {
-  Eng.registerCheck(new ObjCAtSyncChecker());
+  // @synchronized is an Objective-C 2 feature.
+  if (Eng.getContext().getLangOptions().ObjC2)
+    Eng.registerCheck(new ObjCAtSyncChecker());
 }
 
 void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
