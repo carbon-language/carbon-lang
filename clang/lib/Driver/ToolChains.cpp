@@ -1098,11 +1098,18 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
+  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
+                                             options::OPT_no_integrated_as,
+                                             IsIntegratedAssemblerDefault());
+
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass:
-      T = new tools::freebsd::Assemble(*this); break;
+      if (UseIntegratedAs)
+        T = new tools::ClangAs(*this);
+      else
+        T = new tools::freebsd::Assemble(*this);
     case Action::LinkJobClass:
       T = new tools::freebsd::Link(*this); break;
     default:
