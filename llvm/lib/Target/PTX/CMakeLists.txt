@@ -14,6 +14,7 @@ add_llvm_target(PTXCodeGen
   PTXISelLowering.cpp
   PTXInstrInfo.cpp
   PTXMCAsmInfo.cpp
+  PTXMCAsmStreamer.cpp
   PTXRegisterInfo.cpp
   PTXSubtarget.cpp
   PTXTargetMachine.cpp

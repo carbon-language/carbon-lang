@@ -13,6 +13,7 @@
 
 #include "PTX.h"
 #include "PTXMCAsmInfo.h"
+#include "PTXMCAsmStreamer.h"
 #include "PTXTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -22,6 +23,7 @@ using namespace llvm;
 extern "C" void LLVMInitializePTXTarget() {
   RegisterTargetMachine<PTXTargetMachine> X(ThePTXTarget);
   RegisterAsmInfo<PTXMCAsmInfo> Y(ThePTXTarget);
+  TargetRegistry::RegisterAsmStreamer(ThePTXTarget, createPTXAsmStreamer);
 }
 
 // DataLayout and FrameInfo are filled with dummy data
