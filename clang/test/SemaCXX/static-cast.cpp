@@ -184,7 +184,7 @@ void PR5897() { (void)static_cast<const int(*)[1]>((const void*)0); }
 
 namespace PR6072 {
   struct A { }; 
-  struct B : A { void f(int); void f(); }; 
+  struct B : A { void f(int); void f(); };  // expected-note 2{{candidate function}}
   struct C : B { };
   struct D { };
 
@@ -192,6 +192,6 @@ namespace PR6072 {
     (void)static_cast<void (A::*)()>(&B::f);
     (void)static_cast<void (B::*)()>(&B::f);
     (void)static_cast<void (C::*)()>(&B::f);
-    (void)static_cast<void (D::*)()>(&B::f); // expected-error{{static_cast from '<overloaded function type>' to 'void (PR6072::D::*)()' is not allowed}}
+    (void)static_cast<void (D::*)()>(&B::f); // expected-error{{address of overloaded function 'f' cannot be static_cast to type 'void (PR6072::D::*)()'}}
   }
 }

@@ -17,7 +17,6 @@ int f0(int);
 
 void test_f0_2() {
   using namespace N;
-  int (*fp0)(int) = f0; // expected-error{{ambiguous}} \ 
-                        // expected-error{{cannot initialize}}
+  int (*fp0)(int) = f0; // expected-error{{address of overloaded function 'f0' is ambiguous}}
   float (*fp1)(float) = f0;
 }

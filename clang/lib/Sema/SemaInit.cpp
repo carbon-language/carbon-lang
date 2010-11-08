@@ -3202,7 +3202,12 @@ InitializationSequence::InitializationSequence(Sema &S,
                               /*SuppressUserConversions*/ true,
                               /*AllowExplicitConversions*/ false,
                               /*InOverloadResolution*/ false))
-    SetFailed(InitializationSequence::FK_ConversionFailed);
+  {
+    if (Initializer->getType() == Context.OverloadTy )
+      SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
+    else
+      SetFailed(InitializationSequence::FK_ConversionFailed);
+  }
   else
     setSequenceKind(StandardConversion);
 }

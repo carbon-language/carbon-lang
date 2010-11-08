@@ -2449,6 +2449,12 @@ def note_parameter_here : Note<
 // C++ casts
 // These messages adhere to the TryCast pattern: %0 is an int specifying the
 // cast type, %1 is the source type, %2 is the destination type.
+def err_bad_reinterpret_cast_overload : Error<
+  "reinterpret_cast cannot resolve overloaded function %0 to type %1">;
+
+def err_bad_static_cast_overload : Error<
+  "address of overloaded function %0 cannot be static_cast to type %1">;
+
 def err_bad_cxx_cast_generic : Error<
   "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"
   "functional-style cast}0 from %1 to %2 is not allowed">;

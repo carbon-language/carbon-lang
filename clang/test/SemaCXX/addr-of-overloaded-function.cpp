@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s 
-int f(double);
-int f(int);
+int f(double); // expected-note{{candidate function}}
+int f(int); // expected-note{{candidate function}}
 
 int (*pfd)(double) = f; // selects f(double)
 int (*pfd2)(double) = &f; // selects f(double)
@@ -9,7 +9,7 @@ int (*pfi)(int) = &f;    // selects f(int)
 // FIXME: This error message is not very good. We need to keep better
 // track of what went wrong when the implicit conversion failed to
 // give a better error message here.
-int (*pfe)(...) = &f;    // expected-error{{cannot initialize a variable of type 'int (*)(...)' with an rvalue of type '<overloaded function type>'}}
+int (*pfe)(...) = &f;    // expected-error{{address of overloaded function 'f' does not match required type 'int (...)'}}
 int (&rfi)(int) = f;     // selects f(int)
 int (&rfd)(double) = f;  // selects f(double)
 
@@ -98,10 +98,10 @@ namespace PR7971 {
 }
 
 namespace PR8033 {
-  template <typename T1, typename T2> int f(T1 *, const T2 *); // expected-note{{candidate function [with T1 = const int, T2 = int]}}
-  template <typename T1, typename T2> int f(const T1 *, T2 *); // expected-note{{candidate function [with T1 = int, T2 = const int]}}
+  template <typename T1, typename T2> int f(T1 *, const T2 *); // expected-note 2{{candidate function [with T1 = const int, T2 = int]}}
+  template <typename T1, typename T2> int f(const T1 *, T2 *); // expected-note 2{{candidate function [with T1 = int, T2 = const int]}}
   int (*p)(const int *, const int *) = f; // expected-error{{address of overloaded function 'f' is ambiguous}} \
-  // expected-error{{cannot initialize a variable of type}}
+  // expected-error{{address of overloaded function 'f' is ambiguous}}
 
 }
 

@@ -6632,10 +6632,13 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 
   // FIXME: We should probably return the same thing that BestViableFunction
   // returns (even if we issue the diagnostics here).
-  Diag(From->getLocStart(), diag::err_addr_ovl_ambiguous)
-    << Matches[0].second->getDeclName();
-  for (unsigned I = 0, E = Matches.size(); I != E; ++I)
-    NoteOverloadCandidate(Matches[I].second);
+  if (Complain) {
+    Diag(From->getLocStart(), diag::err_addr_ovl_ambiguous)
+      << Matches[0].second->getDeclName();
+    for (unsigned I = 0, E = Matches.size(); I != E; ++I)
+      NoteOverloadCandidate(Matches[I].second);
+  }
+
   return 0;
 }
 

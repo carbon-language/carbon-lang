@@ -7,8 +7,7 @@ namespace test0 {
     template<typename T> void g(T);
 
     void test() {
-      // FIXME: this diagnostic is terrible
-      foo(&g<int>); // expected-error {{cannot initialize a parameter of type 'void (test0::A::*)(int)' with an rvalue of type '<overloaded function type>'}}
+      foo(&g<int>); // expected-error {{can't form member pointer of type 'void (test0::A::*)(int)' without '&' and class name}}
     }
   };
 }
@@ -39,7 +38,6 @@ namespace test2 {
   };
 
   void A::test() {
-    // FIXME: This diagnostic is terrible.
-    int (A::*ptr)(int) = &(A::foo); // expected-error {{cannot initialize a variable of type 'int (test2::A::*)(int)' with an rvalue of type '<overloaded function type>'}}
+    int (A::*ptr)(int) = &(A::foo); // expected-error {{can't form member pointer of type 'int (test2::A::*)(int)' without '&' and class name}}
   }
 }
