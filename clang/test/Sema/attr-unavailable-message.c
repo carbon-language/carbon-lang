@@ -14,3 +14,5 @@ void test_foo() {
 
   double (*fp4)(double) = dfoo;  // expected-error {{'dfoo' is unavailable: NO LONGER}}
 }
+
+char test2[__has_feature(attribute_unavailable_with_message) ? 1 : -1];

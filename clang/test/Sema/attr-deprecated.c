@@ -109,3 +109,5 @@ void test20() {
   f = test20_a; // expected-warning {{'test20_a' is deprecated}}
   f = test20_b;
 }
+
+char test21[__has_feature(attribute_deprecated_with_message) ? 1 : -1];
