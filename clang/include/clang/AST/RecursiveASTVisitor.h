@@ -995,17 +995,18 @@ DEF_TRAVERSE_DECL(FileScopeAsmDecl, {
   })
 
 DEF_TRAVERSE_DECL(FriendDecl, {
-    // At most one of these two will be non-NULL.
-    TRY_TO(TraverseDecl(D->getFriendDecl()));
+    // Friend is either decl or a type.
     if (D->getFriendType())
       TRY_TO(TraverseTypeLoc(D->getFriendType()->getTypeLoc()));
+    else
+      TRY_TO(TraverseDecl(D->getFriendDecl()));
   })
 
 DEF_TRAVERSE_DECL(FriendTemplateDecl, {
-    // At most one of these two will be non-NULL.
-    TRY_TO(TraverseDecl(D->getFriendDecl()));
     if (D->getFriendType())
       TRY_TO(TraverseTypeLoc(D->getFriendType()->getTypeLoc()));
+    else
+      TRY_TO(TraverseDecl(D->getFriendDecl()));
     for (unsigned I = 0, E = D->getNumTemplateParameters(); I < E; ++I) {
       TemplateParameterList *TPL = D->getTemplateParameterList(I);
       for (TemplateParameterList::iterator ITPL = TPL->begin(),

@@ -228,7 +228,7 @@ public:
   }
 
   /// Elif -- This hook is called whenever an #if is seen.
-  virtual void ElfIf(SourceRange Range) {
+  virtual void Elif(SourceRange Range) {
     First->Elif(Range);
     Second->Elif(Range);
   }
