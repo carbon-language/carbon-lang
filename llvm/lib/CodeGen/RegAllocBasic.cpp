@@ -17,10 +17,12 @@
 #include "RegAllocBase.h"
 #include "RenderMachineFunction.h"
 #include "Spiller.h"
+#include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
 #include "llvm/Function.h"
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -31,13 +33,10 @@
 #include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-
-#include "VirtRegMap.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <vector>
 #include <queue>
@@ -84,6 +83,9 @@ public:
   virtual unsigned selectOrSplit(LiveInterval &lvr,
                                  SmallVectorImpl<LiveInterval*> &splitLVRs);
 
+  void spillInterferences(unsigned preg,
+                          SmallVectorImpl<LiveInterval*> &splitLVRs);
+  
   /// Perform register allocation.
   virtual bool runOnMachineFunction(MachineFunction &mf);
 
@@ -170,6 +172,8 @@ void RegAllocBase::init(const TargetRegisterInfo &tri, VirtRegMap &vrm,
   vrm_ = &vrm;
   lis_ = &lis;
   physReg2liu_.init(tri_->getNumRegs());
+  // Cache an interferece query for each physical reg
+  queries_.reset(new LiveIntervalUnion::Query[physReg2liu_.numRegs()]);
 }
 
 void RegAllocBase::LIUArray::clear() {
@@ -238,38 +242,61 @@ void RegAllocBase::allocatePhysRegs() {
     LVRVec splitLVRs;
     unsigned availablePhysReg = selectOrSplit(*lvr, splitLVRs);
     if (availablePhysReg) {
-      assert(splitLVRs.empty() && "inconsistent splitting");
+      DEBUG(dbgs() << "allocating: " << tri_->getName(availablePhysReg) <<
+            " " << lvr << '\n');
       assert(!vrm_->hasPhys(lvr->reg) && "duplicate vreg in interval unions");
       vrm_->assignVirt2Phys(lvr->reg, availablePhysReg);
       physReg2liu_[availablePhysReg].unify(*lvr);
     }
-    else {
-      for (LVRVec::iterator lvrI = splitLVRs.begin(), lvrEnd = splitLVRs.end();
-           lvrI != lvrEnd; ++lvrI) {
-        assert(TargetRegisterInfo::isVirtualRegister((*lvrI)->reg) &&
-               "expect split value in virtual register");
-        lvrQ.push(*lvrI);
-      }
+    for (LVRVec::iterator lvrI = splitLVRs.begin(), lvrEnd = splitLVRs.end();
+         lvrI != lvrEnd; ++lvrI) {
+      DEBUG(dbgs() << "queuing new interval: " << **lvrI << "\n");
+      assert(TargetRegisterInfo::isVirtualRegister((*lvrI)->reg) &&
+             "expect split value in virtual register");
+      lvrQ.push(*lvrI);
     }
   }
 }
 
 // Check if this live virtual reg interferes with a physical register. If not,
 // then check for interference on each register that aliases with the physical
-// register.
-bool RegAllocBase::checkPhysRegInterference(LiveIntervalUnion::Query &query,
-                                            unsigned preg) {
-  if (query.checkInterference())
-    return true;
+// register. Return the interfering register.
+unsigned RegAllocBase::checkPhysRegInterference(LiveInterval &lvr,
+                                                unsigned preg) {
+  queries_[preg].init(&lvr, &physReg2liu_[preg]);
+  if (queries_[preg].checkInterference())
+    return preg;
   for (const unsigned *asI = tri_->getAliasSet(preg); *asI; ++asI) {
-    // We assume it's very unlikely for a register in the alias set to also be
-    // in the original register class. So we don't bother caching the
-    // interference.
-    LiveIntervalUnion::Query subQuery(query.lvr(), physReg2liu_[*asI] );
-    if (subQuery.checkInterference())
-      return true;
+    queries_[*asI].init(&lvr, &physReg2liu_[*asI]);
+    if (queries_[*asI].checkInterference())
+      return *asI;
   }
-  return false;
+  return 0;
+}
+
+// Spill all live virtual registers currently unified under preg that interfere
+// with lvr.
+void RABasic::spillInterferences(unsigned preg,
+                                 SmallVectorImpl<LiveInterval*> &splitLVRs) {
+  SmallPtrSet<LiveInterval*, 8> spilledLVRs;
+  LiveIntervalUnion::Query &query = queries_[preg];
+  LiveIntervalUnion::InterferenceResult ir = query.firstInterference();
+  assert(query.isInterference(ir) && "expect interference");
+  do {
+    LiveInterval *lvr = ir.liuSegPos()->liveVirtReg;
+    if (!spilledLVRs.insert(lvr)) continue;
+    // Spill the previously allocated lvr.
+    SmallVector<LiveInterval*, 1> spillIs; // ignored
+    spiller_->spill(lvr, splitLVRs, spillIs);
+  } while (query.nextInterference(ir));
+  for (SmallPtrSetIterator<LiveInterval*> lvrI = spilledLVRs.begin(),
+         lvrEnd = spilledLVRs.end();
+       lvrI != lvrEnd; ++lvrI ) {
+    // Deallocate the interfering lvr by removing it from the preg union.
+    physReg2liu_[preg].extract(**lvrI);
+  }
+  // After extracting segments, the query's results are invalid.
+  query.clear();
 }
 
 //===----------------------------------------------------------------------===//
@@ -289,24 +316,59 @@ bool RegAllocBase::checkPhysRegInterference(LiveIntervalUnion::Query &query,
 // minimal, there is no value in caching them.
 unsigned RABasic::selectOrSplit(LiveInterval &lvr,
                                 SmallVectorImpl<LiveInterval*> &splitLVRs) {
+  // Accumulate the min spill cost among the interferences, in case we spill.
+  unsigned minSpillReg = 0;
+  unsigned minSpillAlias = 0;
+  float minSpillWeight = lvr.weight;
+
   // Check for an available reg in this class. 
   const TargetRegisterClass *trc = mri_->getRegClass(lvr.reg);
   for (TargetRegisterClass::iterator trcI = trc->allocation_order_begin(*mf_),
          trcEnd = trc->allocation_order_end(*mf_);
        trcI != trcEnd; ++trcI) {
     unsigned preg = *trcI;
-    LiveIntervalUnion::Query query(lvr, physReg2liu_[preg]);
-    if (!checkPhysRegInterference(query, preg)) {
-      DEBUG(dbgs() << "\tallocating: " << tri_->getName(preg) << lvr << '\n');
+    unsigned interfReg = checkPhysRegInterference(lvr, preg);
+    if (interfReg == 0) {
       return preg;
     }
+    LiveIntervalUnion::InterferenceResult interf =
+      queries_[interfReg].firstInterference();
+    float interfWeight = interf.liuSegPos()->liveVirtReg->weight;
+    if (interfWeight < minSpillWeight ) {
+      minSpillReg = interfReg;
+      minSpillAlias = preg;
+      minSpillWeight = interfWeight;
+    }
   }
-  DEBUG(dbgs() << "\tspilling: " << lvr << '\n');
-  SmallVector<LiveInterval*, 1> spillIs; // ignored
-  spiller_->spill(&lvr, splitLVRs, spillIs);
+  if (minSpillReg == 0) {
+    DEBUG(dbgs() << "spilling: " << lvr << '\n');
+    SmallVector<LiveInterval*, 1> spillIs; // ignored
+    spiller_->spill(&lvr, splitLVRs, spillIs);
+    // The live virtual register requesting to be allocated was spilled. So tell
+    // the caller not to allocate anything for this round.
+    return 0;
+  }
+  // Free the cheapest physical register.
+  spillInterferences(minSpillReg, splitLVRs);
+  // Tell the caller to allocate to this newly freed physical register.
+  assert(minSpillAlias != 0 && "need a free register after spilling");
+  // We just spilled the first register that interferes with minSpillAlias. We
+  // now assume minSpillAlias is free because only one register alias may
+  // interfere at a time. e.g. we ignore predication.
+  unsigned interfReg = checkPhysRegInterference(lvr, minSpillAlias);
+  if (interfReg != 0) {
+    dbgs() << "spilling cannot free " << tri_->getName(minSpillAlias) <<
+      " for " << lvr.reg << " with interference " <<
+      *queries_[interfReg].firstInterference().liuSegPos()->liveVirtReg << "\n";
+    llvm_unreachable("Interference after spill.");
+  }
+  return minSpillAlias;
+}
 
-  // FIXME: update LiveStacks
-  return 0;
+namespace llvm {
+Spiller *createInlineSpiller(MachineFunctionPass &pass,
+                             MachineFunction &mf,
+                             VirtRegMap &vrm);
 }
 
 bool RABasic::runOnMachineFunction(MachineFunction &mf) {
@@ -323,6 +385,10 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   RegAllocBase::init(*tm_->getRegisterInfo(), getAnalysis<VirtRegMap>(),
                      getAnalysis<LiveIntervals>());
 
+  // We may want to force InlineSpiller for this register allocator. For
+  // now we're also experimenting with the standard spiller.
+  // 
+  //spiller_.reset(createInlineSpiller(*this, *mf_, *vrm_));
   spiller_.reset(createSpiller(*this, *mf_, *vrm_));
   
   allocatePhysRegs();

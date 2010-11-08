@@ -94,6 +94,10 @@ protected:
   LiveIntervals *lis_;
   LIUArray physReg2liu_;
 
+  // Current queries, one per physreg. They must be reinitialized each time we
+  // query on a new live virtual register.
+  OwningArrayPtr<LiveIntervalUnion::Query> queries_;
+
   RegAllocBase(): tri_(0), vrm_(0), lis_(0) {}
 
   virtual ~RegAllocBase() {}
@@ -120,9 +124,15 @@ protected:
   virtual void releaseMemory();
 
   // Helper for checking interference between a live virtual register and a
-  // physical register, including all its register aliases.
-  bool checkPhysRegInterference(LiveIntervalUnion::Query &query, unsigned preg);
-  
+  // physical register, including all its register aliases. If an interference
+  // exists, return the interfering register, which may be preg or an alias.
+  unsigned checkPhysRegInterference(LiveInterval& lvr, unsigned preg);
+
+  // Helper that spills all live virtual registers currently unified under preg
+  // that interfere with the most recently queried lvr.
+  void spillInterferences(unsigned preg,
+                          SmallVectorImpl<LiveInterval*> &splitLVRs);
+
 private:
   void seedLiveVirtRegs(LiveVirtRegQueue &lvrQ);
 };

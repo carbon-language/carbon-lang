@@ -20,6 +20,44 @@
 #include <algorithm>
 using namespace llvm;
 
+// Find the first segment in the range [segBegin,segments_.end()) that
+// intersects with seg. If no intersection is found, return the first segI
+// such that segI.start >= seg.end
+//
+// This logic is tied to the underlying LiveSegments data structure. For now, we
+// use set::upper_bound to find the nearest starting position,
+// then reverse iterate to find the first overlap.
+//
+// Upon entry we have segBegin.start < seg.end
+// seg   |--...
+//        \   .
+// lvr ...-|
+// 
+// After set::upper_bound, we have segI.start >= seg.start:
+// seg   |--...
+//      /
+// lvr |--...
+//
+// Assuming intervals are disjoint, if an intersection exists, it must be the
+// segment found or the one immediately preceeding it. We continue reverse
+// iterating to return the first overlapping segment.
+LiveIntervalUnion::SegmentIter
+LiveIntervalUnion::upperBound(SegmentIter segBegin,
+                              const LiveSegment &seg) {
+  assert(seg.end > segBegin->start && "segment iterator precondition");
+  // get the next LIU segment such that segI->start is not less than seg.start
+  // 
+  // FIXME: Once we have a B+tree, we can make good use of segBegin as a hint to
+  // upper_bound. For now, we're forced to search again from the root each time.
+  SegmentIter segI = segments_.upper_bound(seg);
+  while (segI != segBegin) {
+    --segI;
+    if (seg.start >= segI->end)
+      return ++segI;
+  }
+  return segI;
+}
+
 // Merge a LiveInterval's segments. Guarantee no overlaps.
 //
 // Consider coalescing adjacent segments to save space, even though it makes
@@ -29,7 +67,7 @@ void LiveIntervalUnion::unify(LiveInterval &lvr) {
   SegmentIter segPos = segments_.begin();
   for (LiveInterval::iterator lvrI = lvr.begin(), lvrEnd = lvr.end();
        lvrI != lvrEnd; ++lvrI ) {
-    LiveSegment segment(lvrI->start, lvrI->end, lvr);
+    LiveSegment segment(lvrI->start, lvrI->end, &lvr);
     segPos = segments_.insert(segPos, segment);
     assert(*segPos == segment && "need equal val for equal key");
 #ifndef NDEBUG
@@ -47,40 +85,17 @@ void LiveIntervalUnion::unify(LiveInterval &lvr) {
   }
 }
 
-// Low-level helper to find the first segment in the range [segI,segEnd) that
-// intersects with a live virtual register segment, or segI.start >= lvr.end
-//
-// This logic is tied to the underlying LiveSegments data structure. For now, we
-// use a binary search within the vector to find the nearest starting position,
-// then reverse iterate to find the first overlap.
-//
-// Upon entry we have segI.start < lvrSeg.end
-// seg   |--...
-//        \   .
-// lvr ...-|
-// 
-// After binary search, we have segI.start >= lvrSeg.start:
-// seg   |--...
-//      /
-// lvr |--...
-//
-// Assuming intervals are disjoint, if an intersection exists, it must be the
-// segment found or immediately behind it. We continue reverse iterating to
-// return the first overlap.
-typedef LiveIntervalUnion::SegmentIter SegmentIter;
-static SegmentIter upperBound(SegmentIter segBegin,
-                       SegmentIter segEnd,
-                       const LiveRange &lvrSeg) {
-  assert(lvrSeg.end > segBegin->start && "segment iterator precondition");
-  // get the next LIU segment such that setg.start is not less than
-  // lvrSeg.start
-  SegmentIter segI = std::upper_bound(segBegin, segEnd, lvrSeg.start);
-  while (segI != segBegin) {
-    --segI;
-    if (lvrSeg.start >= segI->end)
-      return ++segI;
+// Remove a live virtual register's segments from this union.
+void LiveIntervalUnion::extract(const LiveInterval &lvr) {
+  // Remove each of the virtual register's live segments from the map.
+  SegmentIter segPos = segments_.begin();
+  for (LiveInterval::const_iterator lvrI = lvr.begin(), lvrEnd = lvr.end();
+       lvrI != lvrEnd; ++lvrI) {
+    LiveSegment seg(lvrI->start, lvrI->end, const_cast<LiveInterval*>(&lvr));
+    segPos = upperBound(segPos, seg);
+    assert(segPos != segments_.end() && "missing lvr segment");
+    segments_.erase(segPos++);
   }
-  return segI;
 }
 
 // Private interface accessed by Query.
@@ -102,8 +117,8 @@ static SegmentIter upperBound(SegmentIter segBegin,
 // Assumes that segments are sorted by start position in both
 // LiveInterval and LiveSegments.
 void LiveIntervalUnion::Query::findIntersection(InterferenceResult &ir) const {
-  LiveInterval::iterator lvrEnd = lvr_.end();
-  SegmentIter liuEnd = liu_.end();
+  LiveInterval::iterator lvrEnd = lvr_->end();
+  SegmentIter liuEnd = liu_->end();
   while (ir.liuSegI_ != liuEnd) {
     // Slowly advance the live virtual reg iterator until we surpass the next
     // segment in this union. If this is ever used for coalescing of fixed
@@ -115,7 +130,8 @@ void LiveIntervalUnion::Query::findIntersection(InterferenceResult &ir) const {
       break;
     // lvrSegI_ may have advanced far beyond liuSegI_,
     // do a fast intersection test to "catch up"
-    ir.liuSegI_ = upperBound(ir.liuSegI_, liuEnd, *ir.lvrSegI_);
+    LiveSegment seg(ir.lvrSegI_->start, ir.lvrSegI_->end, lvr_);
+    ir.liuSegI_ = liu_->upperBound(ir.liuSegI_, seg);
     // Check if no liuSegI_ exists with lvrSegI_->start < liuSegI_.end
     if (ir.liuSegI_ == liuEnd)
       break;
@@ -135,7 +151,7 @@ LiveIntervalUnion::Query::firstInterference() {
   if (firstInterference_ != LiveIntervalUnion::InterferenceResult()) {
     return firstInterference_;
   }
-  firstInterference_ = InterferenceResult(lvr_.begin(), liu_.begin());
+  firstInterference_ = InterferenceResult(lvr_->begin(), liu_->begin());
   findIntersection(firstInterference_);
   return firstInterference_;
 }
@@ -147,12 +163,12 @@ bool LiveIntervalUnion::Query::nextInterference(InterferenceResult &ir) const {
   // Advance either the lvr or liu segment to ensure that we visit all unique
   // overlapping pairs.
   if (ir.lvrSegI_->end < ir.liuSegI_->end) {
-    if (++ir.lvrSegI_ == lvr_.end())
+    if (++ir.lvrSegI_ == lvr_->end())
       return false;
   }
   else {
-    if (++ir.liuSegI_ == liu_.end()) {
-      ir.lvrSegI_ = lvr_.end();
+    if (++ir.liuSegI_ == liu_->end()) {
+      ir.lvrSegI_ = lvr_->end();
       return false;
     }
   }

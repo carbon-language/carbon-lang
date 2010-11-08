@@ -38,8 +38,8 @@ struct LiveSegment {
   SlotIndex end;
   LiveInterval *liveVirtReg;
 
-  LiveSegment(SlotIndex s, SlotIndex e, LiveInterval &lvr)
-    : start(s), end(e), liveVirtReg(&lvr) {}
+  LiveSegment(SlotIndex s, SlotIndex e, LiveInterval *lvr)
+    : start(s), end(e), liveVirtReg(lvr) {}
 
   bool operator==(const LiveSegment &ls) const {
     return start == ls.start && end == ls.end && liveVirtReg == ls.liveVirtReg;
@@ -111,12 +111,16 @@ public:
   SegmentIter begin() { return segments_.begin(); }
   SegmentIter end() { return segments_.end(); }
 
+  // Return an iterator to the first segment after or including begin that
+  // intersects with lvrSeg.
+  SegmentIter upperBound(SegmentIter begin, const LiveSegment &seg);
+
   // Add a live virtual register to this union and merge its segments.
   // Holds a nonconst reference to the LVR for later maniplution.
   void unify(LiveInterval &lvr);
 
-  // FIXME: needed by RegAllocGreedy
-  //void extract(const LiveInterval &li);
+  // Remove a live virtual register's segments from this union.
+  void extract(const LiveInterval &lvr);
 
   /// Cache a single interference test result in the form of two intersecting
   /// segments. This allows efficiently iterating over the interferences. The
@@ -143,7 +147,7 @@ public:
     const LiveInterval::iterator &lvrSegPos() const { return lvrSegI_; }
 
     // Access the liu segment.
-    const SegmentIter &liuSeg() const { return liuSegI_; }
+    const SegmentIter &liuSegPos() const { return liuSegI_; }
 
     bool operator==(const InterferenceResult &ir) const {
       return lvrSegI_ == ir.lvrSegI_ && liuSegI_ == ir.liuSegI_;
@@ -156,18 +160,40 @@ public:
   /// Query interferences between a single live virtual register and a live
   /// interval union.
   class Query {
-    LiveIntervalUnion &liu_;
-    LiveInterval &lvr_;
+    LiveIntervalUnion *liu_;
+    LiveInterval *lvr_;
     InterferenceResult firstInterference_;
     // TBD: interfering vregs
 
   public:
-    Query(LiveInterval &lvr, LiveIntervalUnion &liu): liu_(liu), lvr_(lvr) {}
+    Query(): liu_(), lvr_() {}
 
-    LiveInterval &lvr() const { return lvr_; }
+    Query(LiveInterval *lvr, LiveIntervalUnion *liu): liu_(liu), lvr_(lvr) {}
+
+    void clear() {
+      liu_ = NULL;
+      lvr_ = NULL;
+      firstInterference_ = InterferenceResult();
+    }
+    
+    void init(LiveInterval *lvr, LiveIntervalUnion *liu) {
+      if (lvr_ == lvr) {
+        // We currently allow query objects to be reused acrossed live virtual
+        // registers, but always for the same live interval union.
+        assert(liu_ == liu && "inconsistent initialization");
+        // Retain cached results, e.g. firstInterference.
+        return;
+      }
+      liu_ = liu;
+      lvr_ = lvr;
+      // Clear cached results.
+      firstInterference_ = InterferenceResult();
+    }
+
+    LiveInterval &lvr() const { assert(lvr_ && "uninitialized"); return *lvr_; }
 
     bool isInterference(const InterferenceResult &ir) const {
-      if (ir.lvrSegI_ != lvr_.end()) {
+      if (ir.lvrSegI_ != lvr_->end()) {
         assert(overlap(*ir.lvrSegI_, *ir.liuSegI_) &&
                "invalid segment iterators");
         return true;
@@ -178,7 +204,8 @@ public:
     // Does this live virtual register interfere with the union.
     bool checkInterference() { return isInterference(firstInterference()); }
 
-    // First pair of interfering segments, or a noninterfering result.
+    // Get the first pair of interfering segments, or a noninterfering result.
+    // This initializes the firstInterference_ cache.
     InterferenceResult firstInterference();
 
     // Treat the result as an iterator and advance to the next interfering pair
