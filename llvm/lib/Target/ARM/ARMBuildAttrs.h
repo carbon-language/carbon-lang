@@ -92,40 +92,6 @@ namespace ARMBuildAttrs {
     v7E_M    = 13   // v7_M with DSP extensions
   };
 
-  enum CPUArchProfile { // (=7), uleb128 
-    Not_Applicable = 0, // pre v7, or cross-profile code
-    ApplicationProfile = (0x41), // 'A' (e.g. for Cortex A8)
-    RealTimeProfile = (0x52), // 'R' (e.g. for Cortex R4)
-    MicroControllerProfile = (0x4D), // 'M' (e.g. for Cortex M3)
-    SystemProfile = (0x53) // 'S' Application or real-time profile
-  };
-
-  // The following have a lot of common use cases
-  enum { 
-    //ARMISAUse (=8), uleb128  and THUMBISAUse (=9), uleb128
-    Not_Allowed = 0,
-    Allowed = 1,
-
-    // FP_arch (=10), uleb128 (formerly Tag_VFP_arch = 10)
-    AllowFPv2  = 2, // v2 FP ISA permitted (implies use of the v1 FP ISA)
-    AllowFPv3A = 3, // v3 FP ISA permitted (implies use of the v2 FP ISA)
-    AllowFPv3B = 4, // v3 FP ISA permitted, but only D0-D15, S0-S31 
-    AllowFPv4A = 5, // v4 FP ISA permitted (implies use of v3 FP ISA) 
-    AllowFPv4B = 6, // v4 FP ISA was permitted, but only D0-D15, S0-S31
-
-    // Tag_WMMX_arch, (=11), uleb128
-    AllowThumb32 = 2, // 32-bit Thumb (implies 16-bit instructions)
-    
-    // Tag_WMMX_arch, (=11), uleb128
-    AllowWMMXv1 = 2,  // The user permitted this entity to use WMMX v2
-
-    // Tag_ABI_FP_denormal, (=20), uleb128 
-    PreserveFPSign = 2, // sign when flushed-to-zero is preserved
-
-    // Tag_ABI_FP_number_model, (=23), uleb128
-    AllowRTABI = 2,  // numbers, infinities, and one quiet NaN (see [RTABI])
-    AllowIEE754 = 3 // this code to use all the IEEE 754-defined FP encodings
-  };
 }
 
 #endif // __TARGET_ARMBUILDATTRS_H__

@@ -74,7 +74,6 @@ namespace {
   public:
     virtual void MaybeSwitchVendor(StringRef Vendor) = 0;
     virtual void EmitAttribute(unsigned Attribute, unsigned Value) = 0;
-    virtual void EmitTextAttribute(unsigned Attribute, StringRef String) = 0;
     virtual void Finish() = 0;
     virtual ~AttributeEmitter() {}
   };
@@ -89,10 +88,6 @@ namespace {
     void EmitAttribute(unsigned Attribute, unsigned Value) {
       Streamer.EmitRawText("\t.eabi_attribute " +
                            Twine(Attribute) + ", " + Twine(Value));
-    }
-
-    void EmitTextAttribute(unsigned Attribute, StringRef String) {
-      assert(0 && "Unsupported use of text attribute");
     }
 
     void Finish() { }
@@ -126,12 +121,6 @@ namespace {
       // FIXME: should be ULEB
       Contents += Attribute;
       Contents += Value;
-    }
-
-    void EmitTextAttribute(unsigned Attribute, StringRef String) {
-      Contents += Attribute;
-      Contents += String;
-      Contents += 0;
     }
 
     void Finish() {
@@ -609,51 +598,28 @@ void ARMAsmPrinter::emitAttributes() {
     if (CPUString != "generic")
       OutStreamer.EmitRawText(StringRef("\t.cpu ") + CPUString);
   } else {
-    if (CPUString != "generic") {
-      if (CPUString == "cortex-a8") {
-        AttrEmitter->EmitTextAttribute(ARMBuildAttrs::CPU_name, "CORTEX-A8");
-        AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v7);
-        AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
-                                   ARMBuildAttrs::ApplicationProfile);
-        AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use,
-                                   ARMBuildAttrs::Allowed);
-        AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
-                                   ARMBuildAttrs::AllowThumb32);
-        // Fixme: figure out when this is emitted.
-        //AttrEmitter->EmitAttribute(ARMBuildAttrs::WMMX_arch,
-        //                           ARMBuildAttrs::AllowWMMXv1);
-      }
-    } else {
-      // FIXME: Why these defaults?
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v4T);
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use,
-                                 ARMBuildAttrs::Allowed);
-      AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
-                                 ARMBuildAttrs::Allowed);
-    }
+    assert(CPUString == "generic" && "Unsupported .cpu attribute for ELF/.o");
+    // FIXME: Why these defaults?
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v4T);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use, 1);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use, 1);
   }
 
   // FIXME: Emit FPU type
   if (Subtarget->hasVFP2())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
-                               ARMBuildAttrs::AllowFPv2);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch, 2);
 
   // Signal various FP modes.
   if (!UnsafeFPMath) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal,
-                               ARMBuildAttrs::Allowed);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
-                               ARMBuildAttrs::Allowed);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal, 1);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions, 1);
   }
 
   if (NoInfsFPMath && NoNaNsFPMath)
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
-                               ARMBuildAttrs::Allowed);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model, 1);
   else
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
-                               ARMBuildAttrs::AllowIEE754);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model, 3);
 
-  // FIXME: add more flags to ARMBuildAttrs.h
   // 8-bytes alignment stuff.
   AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_align8_needed, 1);
   AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_align8_preserved, 1);
