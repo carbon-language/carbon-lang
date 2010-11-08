@@ -193,11 +193,11 @@ private:
                                  llvm::BasicBlock &BB);
     
     //------------------------------------------------------------------
-    /// A basic block-level pass to find all external variables and
-    /// functions used in the IR.  Each found external variable is added
-    /// to the struct, and each external function is resolved in place,
-    /// its call replaced with a call to a function pointer whose value
-    /// is the address of the function in the target process.
+    /// A function-level pass to find all external variables and functions 
+    /// used in the IR.  Each found external variable is added to the 
+    /// struct, and each external function is resolved in place, its call
+    /// replaced with a call to a function pointer whose value is the 
+    /// address of the function in the target process.
     //------------------------------------------------------------------
     
     //------------------------------------------------------------------
@@ -216,8 +216,7 @@ private:
     ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool MaybeHandleVariable(llvm::Module &M, 
-                             llvm::Value *V,
-                             bool Store);
+                             llvm::Value *V);
     
     //------------------------------------------------------------------
     /// Handle all the arguments to a function call
@@ -250,7 +249,7 @@ private:
                          llvm::CallInst *C);
     
     //------------------------------------------------------------------
-    /// The top-level pass implementation
+    /// Resolve calls to external functions
     ///
     /// @param[in] M
     ///     The module currently being processed.
@@ -261,8 +260,23 @@ private:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
+    bool resolveCalls(llvm::Module &M,
+                      llvm::BasicBlock &BB);
+    
+    //------------------------------------------------------------------
+    /// The top-level pass implementation
+    ///
+    /// @param[in] M
+    ///     The module currently being processed.
+    ///
+    /// @param[in] BB
+    ///     The function currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
     bool resolveExternals(llvm::Module &M,
-                          llvm::BasicBlock &BB);
+                          llvm::Function &F);
     
     //------------------------------------------------------------------
     /// A basic block-level pass to excise guard variables from the code.

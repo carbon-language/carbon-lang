@@ -563,8 +563,7 @@ bool
 IRForTarget::MaybeHandleVariable 
 (
     Module &llvm_module, 
-    Value *llvm_value_ptr,
-    bool Store
+    Value *llvm_value_ptr
 )
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -578,7 +577,7 @@ IRForTarget::MaybeHandleVariable
         case Instruction::GetElementPtr:
         case Instruction::BitCast:
             Value *s = constant_expr->getOperand(0);
-            MaybeHandleVariable(llvm_module, s, Store);
+            MaybeHandleVariable(llvm_module, s);
         }
     }
     if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(llvm_value_ptr))
@@ -646,7 +645,7 @@ IRForTarget::MaybeHandleCallArguments(Module &M,
     for (unsigned op_index = 0, num_ops = C->getNumArgOperands();
          op_index < num_ops;
          ++op_index)
-        if (!MaybeHandleVariable(M, C->getArgOperand(op_index), true)) // conservatively believe that this is a store
+        if (!MaybeHandleVariable(M, C->getArgOperand(op_index))) // conservatively believe that this is a store
             return false;
     
     return true;
@@ -773,7 +772,7 @@ IRForTarget::MaybeHandleCall(Module &llvm_module,
 }
 
 bool
-IRForTarget::resolveExternals(Module &M, BasicBlock &BB)
+IRForTarget::resolveCalls(Module &M, BasicBlock &BB)
 {        
     /////////////////////////////////////////////////////////////////////////
     // Prepare the current basic block for execution in the remote process
@@ -787,28 +786,28 @@ IRForTarget::resolveExternals(Module &M, BasicBlock &BB)
     {
         Instruction &inst = *ii;
         
-        if (m_resolve_vars)
-        {
-            if (LoadInst *load = dyn_cast<LoadInst>(&inst))
-                if (!MaybeHandleVariable(M, load->getPointerOperand(), false))
-                    return false;
-            
-            if (StoreInst *store = dyn_cast<StoreInst>(&inst))
-                if (!MaybeHandleVariable(M, store->getValueOperand(), true) ||
-                    !MaybeHandleVariable(M, store->getPointerOperand(), true))
-                    return false;
-        }
+        CallInst *call = dyn_cast<CallInst>(&inst);
         
-        if (CallInst *call = dyn_cast<CallInst>(&inst))
-        {
-            if (!MaybeHandleCallArguments(M, call))
-                return false;
-            
-            if (!MaybeHandleCall(M, call))
-                return false;
-        }
+        if (call && !MaybeHandleCall(M, call))
+            return false;
     }
     
+    return true;
+}
+
+bool
+IRForTarget::resolveExternals(Module &M,
+                              Function &F)
+{
+    for (Module::global_iterator global = M.global_begin(), end = M.global_end();
+         global != end;
+         ++global)
+    {
+        if ((*global).hasExternalLinkage() &&
+            !MaybeHandleVariable (M, global))
+            return false;
+    }
+        
     return true;
 }
 
@@ -1156,13 +1155,16 @@ IRForTarget::runOnModule(Module &M)
         if (!rewriteObjCSelectors(M, *bbi))
             return false;
 
-        if (!resolveExternals(M, *bbi))
+        if (!resolveCalls(M, *bbi))
             return false;
     }
     
     ///////////////////////////////
     // Run function-level passes
     //
+    
+    if (!resolveExternals(M, *function))
+        return false;
     
     if (!replaceVariables(M, *function))
         return false;
