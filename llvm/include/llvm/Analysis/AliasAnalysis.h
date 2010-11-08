@@ -86,10 +86,14 @@ public:
   struct Location {
     /// Ptr - The address of the start of the location.
     const Value *Ptr;
-    /// Size - The size of the location.
+    /// Size - The maximum size of the location, or UnknownSize if the size is
+    /// not known.  Note that an unknown size does not mean the pointer aliases
+    /// the entire virtual address space, because there are restrictions on
+    /// stepping out of one object and into another.
+    /// See http://llvm.org/docs/LangRef.html#pointeraliasing
     uint64_t Size;
     /// TBAATag - The metadata node which describes the TBAA type of
-    /// the location, or null if there is no (unique) tag.
+    /// the location, or null if there is no known unique tag.
     const MDNode *TBAATag;
 
     explicit Location(const Value *P = 0,
@@ -122,9 +126,9 @@ public:
   enum AliasResult { NoAlias = 0, MayAlias = 1, MustAlias = 2 };
 
   /// alias - The main low level interface to the alias analysis implementation.
-  /// Returns a Result indicating whether the two pointers are aliased to each
-  /// other.  This is the interface that must be implemented by specific alias
-  /// analysis implementations.
+  /// Returns an AliasResult indicating whether the two pointers are aliased to
+  /// each other.  This is the interface that must be implemented by specific
+  /// alias analysis implementations.
   virtual AliasResult alias(const Location &LocA, const Location &LocB);
 
   /// alias - A convenience wrapper.
