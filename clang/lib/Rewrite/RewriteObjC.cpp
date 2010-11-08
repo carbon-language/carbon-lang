@@ -5524,7 +5524,12 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     GetInnerBlockDeclRefExprs(BE->getBody(),
                               InnerBlockDeclRefs, InnerContexts);
     // Rewrite the block body in place.
+    Stmt *SaveCurrentBody = CurrentBody;
+    CurrentBody = BE->getBody();
+    PropParentMap = 0;
     RewriteFunctionBodyOrGlobalInitializer(BE->getBody());
+    CurrentBody = SaveCurrentBody;
+    PropParentMap = 0;
     ImportedLocalExternalDecls.clear();
     // Now we snarf the rewritten text and stash it away for later use.
     std::string Str = Rewrite.getRewrittenText(BE->getSourceRange());
