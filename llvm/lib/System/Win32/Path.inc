@@ -5,9 +5,6 @@
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-// Modified by Henrik Bach to comply with at least MinGW.
-// Ported to Win32 by Jeff Cohen.
-//
 //===----------------------------------------------------------------------===//
 //
 // This file provides the Win32 specific implementation of the Path class.
