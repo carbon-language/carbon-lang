@@ -54,11 +54,13 @@ config = {}
 # Delay startup in order for the debugger to attach.
 delay = False
 
-# The filter (testcase.testmethod) used to admit tests into our test suite.
+# The filter (testclass.testmethod) used to admit tests into our test suite.
 filterspec = None
 
-# If '-g' is specified, the filterspec must be consulted for each test module, default to False.
-fs4all = False
+# If '-g' is specified, the filterspec is not exclusive.  If a test module does
+# not contain testclass.testmethod which matches the filterspec, the whole test
+# module is still admitted into our test suite.  fs4all flag defaults to True.
+fs4all = True
 
 # Ignore the build search path relative to this script to locate the lldb.py module.
 ignore = False
@@ -104,10 +106,9 @@ where options:
 -f   : specify a filter, which consists of the test class name, a dot, followed by
        the test method, to admit tests into the test suite
        e.g., -f 'ClassTypesTestCase.test_with_dwarf_and_python_api'
--g   : if specified, only the modules with the corect filter will be run
-       it has no effect if no '-f' option is present
-       '-f filterspec -g' can be used with '-p filename-regexp' to select only
-       the testfile.testclass.testmethod to run
+-g   : if specified, the filterspec by -f is not exclusive, i.e., if a test module
+       does not match the filterspec (testclass.testmethod), the whole module is
+       still admitted to the test suite
 -i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
        tree relative to this script; use PYTHONPATH to locate the module
 -l   : don't skip long running test
@@ -129,10 +130,10 @@ args : specify a list of directory names to search for test modules named after
 
 Examples:
 
-This is an example of using the -f -g options to pinpoint to a specfic test
-method to be run:
+This is an example of using the -f option to pinpoint to a specfic test class
+and test method to be run:
 
-$ ./dotest.py -f ClassTypesTestCase.test_with_dsym_and_run_command -g
+$ ./dotest.py -f ClassTypesTestCase.test_with_dsym_and_run_command
 ----------------------------------------------------------------------
 Collected 1 test
 
@@ -233,7 +234,7 @@ def parseOptionsAndInitTestdirs():
             filterspec = sys.argv[index]
             index += 1
         elif sys.argv[index].startswith('-g'):
-            fs4all = True
+            fs4all = False
             index += 1
         elif sys.argv[index].startswith('-i'):
             ignore = True
@@ -461,7 +462,7 @@ def visit(prefix, dir, names):
                         filtered = False
                         break
                 # Forgo this module if the (base, filterspec) combo is invalid
-                # and the '-g' option is present.
+                # and no '-g' option is specified
                 if fs4all and not filtered:
                     continue
                 
