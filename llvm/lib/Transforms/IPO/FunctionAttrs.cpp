@@ -40,7 +40,7 @@ STATISTIC(NumNoAlias, "Number of function returns marked noalias");
 namespace {
   struct FunctionAttrs : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
-    FunctionAttrs() : CallGraphSCCPass(ID) {
+    FunctionAttrs() : CallGraphSCCPass(ID), AA(0) {
       initializeFunctionAttrsPass(*PassRegistry::getPassRegistry());
     }
 
@@ -62,10 +62,14 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<AliasAnalysis>();
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
     bool PointsToLocalOrConstantMemory(Value *V);
+
+  private:
+    AliasAnalysis *AA;
   };
 }
 
@@ -167,26 +171,35 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
       // Some instructions can be ignored even if they read or write memory.
       // Detect these now, skipping to the next instruction if one is found.
       CallSite CS(cast<Value>(I));
-      if (CS && CS.getCalledFunction()) {
+      if (CS) {
         // Ignore calls to functions in the same SCC.
-        if (SCCNodes.count(CS.getCalledFunction()))
+        if (CS.getCalledFunction() && SCCNodes.count(CS.getCalledFunction()))
           continue;
-        // Ignore intrinsics that only access local memory.
-        if (unsigned id = CS.getCalledFunction()->getIntrinsicID())
-          if (AliasAnalysis::getIntrinsicModRefBehavior(id) ==
-              AliasAnalysis::AccessesArguments) {
-            // Check that all pointer arguments point to local memory.
-            for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-                 CI != CE; ++CI) {
-              Value *Arg = *CI;
-              if (Arg->getType()->isPointerTy() &&
-                  !PointsToLocalOrConstantMemory(Arg))
-                // Writes memory.  Just give up.
-                return false;
-            }
-            // Only reads and writes local memory.
-            continue;
+        switch (AA->getModRefBehavior(CS)) {
+        case AliasAnalysis::DoesNotAccessMemory:
+          // Ignore calls that don't access memory.
+          continue;
+        case AliasAnalysis::OnlyReadsMemory:
+          // Handle calls that only read from memory.
+          ReadsMemory = true;
+          continue;
+        case AliasAnalysis::AccessesArguments:
+          // Check whether all pointer arguments point to local memory, and
+          // ignore calls that only access local memory.
+          for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+               CI != CE; ++CI) {
+            Value *Arg = *CI;
+            if (Arg->getType()->isPointerTy() &&
+                !PointsToLocalOrConstantMemory(Arg))
+              // Writes memory.  Just give up.
+              return false;
           }
+          // Only reads and writes local memory.
+          continue;
+        default:
+          // Otherwise, be conservative.
+          break;
+        }
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore non-volatile loads from local memory.
         if (!LI->isVolatile() &&
@@ -387,6 +400,8 @@ bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
 }
 
 bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
+  AA = &getAnalysis<AliasAnalysis>();
+
   bool Changed = AddReadAttrs(SCC);
   Changed |= AddNoCaptureAttrs(SCC);
   Changed |= AddNoAliasAttrs(SCC);

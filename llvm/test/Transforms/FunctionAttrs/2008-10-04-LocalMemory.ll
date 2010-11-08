@@ -1,4 +1,4 @@
-; RUN: opt < %s -functionattrs -S | FileCheck %s
+; RUN: opt < %s -basicaa -functionattrs -S | FileCheck %s
 
 %struct.X = type { i32*, i32* }
 
