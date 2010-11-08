@@ -282,6 +282,11 @@ def reglist : Operand<i32> {
   let PrintMethod = "printRegisterList";
 }
 
+def RegListAsmOperand : AsmOperandClass {
+  let Name = "RegList";
+  let SuperClasses = [];
+}
+
 // An operand for the CONSTPOOL_ENTRY pseudo-instruction.
 def cpinst_operand : Operand<i32> {
   let PrintMethod = "printCPInstOperand";
@@ -454,7 +459,7 @@ def ldstm_mode : OptionalDefOperand<OtherVT, (ops i32), (ops (i32 1))> {
   let PrintMethod = "printLdStmModeOperand";
 }
 
-def ARMMemMode5AsmOperand : AsmOperandClass {
+def MemMode5AsmOperand : AsmOperandClass {
   let Name = "MemMode5";
   let SuperClasses = [];
 }
@@ -465,7 +470,7 @@ def addrmode5 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode5", []> {
   let PrintMethod = "printAddrMode5Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm);
-  let ParserMatchClass = ARMMemMode5AsmOperand;
+  let ParserMatchClass = MemMode5AsmOperand;
   string EncoderMethod = "getAddrMode5OpValue";
 }
 
