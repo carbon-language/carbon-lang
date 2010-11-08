@@ -553,14 +553,22 @@ BasicAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
 /// For use when the call site is not known.
 AliasAnalysis::ModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(const Function *F) {
+  // If the function declares it doesn't access memory, we can't do better.
   if (F->doesNotAccessMemory())
-    // Can't do better than this.
     return DoesNotAccessMemory;
+
+  // For intrinsics, we can check the table.
+  if (unsigned iid = F->getIntrinsicID()) {
+#define GET_INTRINSIC_MODREF_BEHAVIOR
+#include "llvm/Intrinsics.gen"
+#undef GET_INTRINSIC_MODREF_BEHAVIOR
+  }
+
+  // If the function declares it only reads memory, go with that.
   if (F->onlyReadsMemory())
     return OnlyReadsMemory;
-  if (unsigned id = F->getIntrinsicID())
-    return getIntrinsicModRefBehavior(id);
 
+  // Otherwise be conservative.
   return AliasAnalysis::getModRefBehavior(F);
 }
 
