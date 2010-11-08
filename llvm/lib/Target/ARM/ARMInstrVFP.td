@@ -80,14 +80,16 @@ def VLDMD : AXDI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                            reglist:$dsts, variable_ops),
                   IndexModeNone, IIC_fpLoad_m,
                   "vldm${amode}${p}\t$Rn, $dsts", "", []> {
-  let Inst{20} = 1;
+  let Inst{21} = 0;             // wback = (W == '1')
+  let Inst{20} = 1;             // Load
 }
 
 def VLDMS : AXSI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                            reglist:$dsts, variable_ops),
                   IndexModeNone, IIC_fpLoad_m,
                   "vldm${amode}${p}\t$Rn, $dsts", "", []> {
-  let Inst{20} = 1;
+  let Inst{21} = 0;             // wback = (W == '1')
+  let Inst{20} = 1;             // Load
 }
 
 def VLDMD_UPD : AXDI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
@@ -95,7 +97,8 @@ def VLDMD_UPD : AXDI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                       IndexModeUpd, IIC_fpLoad_mu,
                       "vldm${amode}${p}\t$Rn!, $dsts",
                       "$Rn = $wb", []> {
-  let Inst{20} = 1;
+  let Inst{21} = 1;             // wback = (W == '1')
+  let Inst{20} = 1;             // Load
 }
 
 def VLDMS_UPD : AXSI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
@@ -103,7 +106,8 @@ def VLDMS_UPD : AXSI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                       IndexModeUpd, IIC_fpLoad_mu, 
                       "vldm${amode}${p}\t$Rn!, $dsts",
                       "$Rn = $wb", []> {
-  let Inst{20} = 1;
+  let Inst{21} = 1;             // wback = (W == '1')
+  let Inst{20} = 1;             // Load
 }
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
 
@@ -113,14 +117,16 @@ def VSTMD : AXDI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                            reglist:$srcs, variable_ops),
                   IndexModeNone, IIC_fpStore_m,
                   "vstm${amode}${p}\t$Rn, $srcs", "", []> {
-  let Inst{20} = 0;
+  let Inst{21} = 0;             // wback = (W == '1')
+  let Inst{20} = 0;             // Store
 }
 
 def VSTMS : AXSI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                            reglist:$srcs, variable_ops), IndexModeNone,
                    IIC_fpStore_m,
                   "vstm${amode}${p}\t$Rn, $srcs", "", []> {
-  let Inst{20} = 0;
+  let Inst{21} = 0;             // wback = (W == '1')
+  let Inst{20} = 0;             // Store
 }
 
 def VSTMD_UPD : AXDI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
@@ -128,7 +134,8 @@ def VSTMD_UPD : AXDI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                       IndexModeUpd, IIC_fpStore_mu,
                       "vstm${amode}${p}\t$Rn!, $srcs",
                       "$Rn = $wb", []> {
-  let Inst{20} = 0;
+  let Inst{21} = 1;             // wback = (W == '1')
+  let Inst{20} = 0;             // Store
 }
 
 def VSTMS_UPD : AXSI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
@@ -136,7 +143,8 @@ def VSTMS_UPD : AXSI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                       IndexModeUpd, IIC_fpStore_mu,
                       "vstm${amode}${p}\t$Rn!, $srcs",
                       "$Rn = $wb", []> {
-  let Inst{20} = 0;
+  let Inst{21} = 1;             // wback = (W == '1')
+  let Inst{20} = 0;             // Store
 }
 } // mayStore, neverHasSideEffects, hasExtraSrcRegAllocReq
 
