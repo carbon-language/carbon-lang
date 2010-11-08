@@ -160,3 +160,25 @@ define <4 x i32> @vacgeQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 
 declare <2 x i32> @llvm.arm.neon.vacged(<2 x float>, <2 x float>) nounwind readnone
 declare <4 x i32> @llvm.arm.neon.vacgeq(<4 x float>, <4 x float>) nounwind readnone
+
+define <8 x i8> @vcgei8Z(<8 x i8>* %A) nounwind {
+;CHECK: vcgei8Z:
+;CHECK-NOT: vmov
+;CHECK-NOT: vmvn
+;CHECK: vcge.s8
+	%tmp1 = load <8 x i8>* %A
+	%tmp3 = icmp sge <8 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
+        %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
+	ret <8 x i8> %tmp4
+}
+
+define <8 x i8> @vclei8Z(<8 x i8>* %A) nounwind {
+;CHECK: vclei8Z:
+;CHECK-NOT: vmov
+;CHECK-NOT: vmvn
+;CHECK: vcle.s8
+	%tmp1 = load <8 x i8>* %A
+	%tmp3 = icmp sle <8 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
+        %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
+	ret <8 x i8> %tmp4
+}

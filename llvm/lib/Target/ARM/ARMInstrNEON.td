@@ -16,11 +16,17 @@
 //===----------------------------------------------------------------------===//
 
 def SDTARMVCMP    : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisSameAs<1, 2>]>;
+def SDTARMVCMPZ   : SDTypeProfile<1, 1, []>;
 
 def NEONvceq      : SDNode<"ARMISD::VCEQ", SDTARMVCMP>;
+def NEONvceqz     : SDNode<"ARMISD::VCEQZ", SDTARMVCMPZ>;
 def NEONvcge      : SDNode<"ARMISD::VCGE", SDTARMVCMP>;
+def NEONvcgez     : SDNode<"ARMISD::VCGEZ", SDTARMVCMPZ>;
+def NEONvclez     : SDNode<"ARMISD::VCLEZ", SDTARMVCMPZ>;
 def NEONvcgeu     : SDNode<"ARMISD::VCGEU", SDTARMVCMP>;
 def NEONvcgt      : SDNode<"ARMISD::VCGT", SDTARMVCMP>;
+def NEONvcgtz     : SDNode<"ARMISD::VCGTZ", SDTARMVCMPZ>;
+def NEONvcltz     : SDNode<"ARMISD::VCLTZ", SDTARMVCMPZ>;
 def NEONvcgtu     : SDNode<"ARMISD::VCGTU", SDTARMVCMP>;
 def NEONvtst      : SDNode<"ARMISD::VTST", SDTARMVCMP>;
 
@@ -2150,36 +2156,44 @@ class N2VCvtQ<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
 // First with only element sizes of 8, 16 and 32 bits:
 multiclass N2V_QHS_cmp<bits<2> op24_23, bits<2> op21_20, bits<2> op17_16,
                        bits<5> op11_7, bit op4, string opc, string Dt,
-                       string asm> {
+                       string asm, SDNode OpNode> {
   // 64-bit vector types.
   def v8i8  : N2V<op24_23, op21_20, 0b00, op17_16, op11_7, 0, op4,
                   (outs DPR:$dst), (ins DPR:$src), NoItinerary,
-                  opc, !strconcat(Dt, "8"), asm, "", []>;
+                  opc, !strconcat(Dt, "8"), asm, "",
+                  [(set DPR:$dst, (v8i8 (OpNode (v8i8 DPR:$src))))]>;
   def v4i16 : N2V<op24_23, op21_20, 0b01, op17_16, op11_7, 0, op4,
                   (outs DPR:$dst), (ins DPR:$src), NoItinerary,
-                  opc, !strconcat(Dt, "16"), asm, "", []>;
+                  opc, !strconcat(Dt, "16"), asm, "",
+                  [(set DPR:$dst, (v4i16 (OpNode (v4i16 DPR:$src))))]>;
   def v2i32 : N2V<op24_23, op21_20, 0b10, op17_16, op11_7, 0, op4,
                   (outs DPR:$dst), (ins DPR:$src), NoItinerary,
-                  opc, !strconcat(Dt, "32"), asm, "", []>;
+                  opc, !strconcat(Dt, "32"), asm, "",
+                  [(set DPR:$dst, (v2i32 (OpNode (v2i32 DPR:$src))))]>;
   def v2f32 : N2V<op24_23, op21_20, 0b10, op17_16, op11_7, 0, op4,
                   (outs DPR:$dst), (ins DPR:$src), NoItinerary,
-                  opc, "f32", asm, "", []> {
+                  opc, "f32", asm, "",
+                  [(set DPR:$dst, (v2f32 (OpNode (v2f32 DPR:$src))))]> {
     let Inst{10} = 1; // overwrite F = 1
   }
 
   // 128-bit vector types.
   def v16i8 : N2V<op24_23, op21_20, 0b00, op17_16, op11_7, 1, op4,
                   (outs QPR:$dst), (ins QPR:$src), NoItinerary,
-                  opc, !strconcat(Dt, "8"), asm, "", []>;
+                  opc, !strconcat(Dt, "8"), asm, "",
+                  [(set QPR:$dst, (v16i8 (OpNode (v16i8 QPR:$src))))]>;
   def v8i16 : N2V<op24_23, op21_20, 0b01, op17_16, op11_7, 1, op4,
                   (outs QPR:$dst), (ins QPR:$src), NoItinerary,
-                  opc, !strconcat(Dt, "16"), asm, "", []>;
+                  opc, !strconcat(Dt, "16"), asm, "",
+                  [(set QPR:$dst, (v8i16 (OpNode (v8i16 QPR:$src))))]>;
   def v4i32 : N2V<op24_23, op21_20, 0b10, op17_16, op11_7, 1, op4,
                   (outs QPR:$dst), (ins QPR:$src), NoItinerary,
-                  opc, !strconcat(Dt, "32"), asm, "", []>;
+                  opc, !strconcat(Dt, "32"), asm, "",
+                  [(set QPR:$dst, (v4i32 (OpNode (v4i32 QPR:$src))))]>;
   def v4f32 : N2V<op24_23, op21_20, 0b10, op17_16, op11_7, 1, op4,
                   (outs QPR:$dst), (ins QPR:$src), NoItinerary,
-                  opc, "f32", asm, "", []> {
+                  opc, "f32", asm, "",
+                  [(set QPR:$dst, (v4f32 (OpNode (v4f32 QPR:$src))))]> {
     let Inst{10} = 1; // overwrite F = 1
   }
 }
@@ -3220,9 +3234,9 @@ def  VCEQfd   : N3VD<0,0,0b00,0b1110,0, IIC_VBIND, "vceq", "f32", v2i32, v2f32,
                      NEONvceq, 1>;
 def  VCEQfq   : N3VQ<0,0,0b00,0b1110,0, IIC_VBINQ, "vceq", "f32", v4i32, v4f32,
                      NEONvceq, 1>;
-// For disassembly only.
+
 defm VCEQz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00010, 0, "vceq", "i",
-                            "$dst, $src, #0">;
+                            "$dst, $src, #0", NEONvceqz>;
 
 //   VCGE     : Vector Compare Greater Than or Equal
 defm VCGEs    : N3V_QHS<0, 0, 0b0011, 1, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
@@ -3233,14 +3247,11 @@ def  VCGEfd   : N3VD<1,0,0b00,0b1110,0, IIC_VBIND, "vcge", "f32", v2i32, v2f32,
                      NEONvcge, 0>;
 def  VCGEfq   : N3VQ<1,0,0b00,0b1110,0, IIC_VBINQ, "vcge", "f32", v4i32, v4f32,
                      NEONvcge, 0>;
-// For disassembly only.
-// FIXME: This instruction's encoding MAY NOT BE correct.
+
 defm VCGEz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00001, 0, "vcge", "s",
-                            "$dst, $src, #0">;
-// For disassembly only.
-// FIXME: This instruction's encoding MAY NOT BE correct.
+                            "$dst, $src, #0", NEONvcgez>;
 defm VCLEz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00011, 0, "vcle", "s",
-                            "$dst, $src, #0">;
+                            "$dst, $src, #0", NEONvclez>;
 
 //   VCGT     : Vector Compare Greater Than
 defm VCGTs    : N3V_QHS<0, 0, 0b0011, 0, IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q,
@@ -3251,14 +3262,11 @@ def  VCGTfd   : N3VD<1,0,0b10,0b1110,0, IIC_VBIND, "vcgt", "f32", v2i32, v2f32,
                      NEONvcgt, 0>;
 def  VCGTfq   : N3VQ<1,0,0b10,0b1110,0, IIC_VBINQ, "vcgt", "f32", v4i32, v4f32,
                      NEONvcgt, 0>;
-// For disassembly only.
-// FIXME: This instruction's encoding MAY NOT BE correct.
+
 defm VCGTz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00000, 0, "vcgt", "s",
-                            "$dst, $src, #0">;
-// For disassembly only.
-// FIXME: This instruction's encoding MAY NOT BE correct.
+                            "$dst, $src, #0", NEONvcgtz>;
 defm VCLTz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00100, 0, "vclt", "s",
-                            "$dst, $src, #0">;
+                            "$dst, $src, #0", NEONvcltz>;
 
 //   VACGE    : Vector Absolute Compare Greater Than or Equal (aka VCAGE)
 def  VACGEd   : N3VDInt<1, 0, 0b00, 0b1110, 1, N3RegFrm, IIC_VBIND, "vacge",

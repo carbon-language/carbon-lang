@@ -87,9 +87,14 @@ namespace llvm {
       PRELOAD,      // Preload
       
       VCEQ,         // Vector compare equal.
+      VCEQZ,        // Vector compare equal to zero.
       VCGE,         // Vector compare greater than or equal.
+      VCGEZ,        // Vector compare greater than or equal to zero.
+      VCLEZ,        // Vector compare less than or equal to zero.
       VCGEU,        // Vector compare unsigned greater than or equal.
       VCGT,         // Vector compare greater than.
+      VCGTZ,        // Vector compare greater than zero.
+      VCLTZ,        // Vector compare less than zero.
       VCGTU,        // Vector compare unsigned greater than.
       VTST,         // Vector test bits.
 

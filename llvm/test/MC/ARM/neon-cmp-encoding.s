@@ -102,3 +102,14 @@
 	vtst.16	q8, q8, q9
 @ CHECK: vtst.32	q8, q8, q9              @ encoding: [0xf2,0x08,0x60,0xf2]
 	vtst.32	q8, q8, q9
+
+@ CHECK: vceq.i8	d16, d16, #0            @ encoding: [0x20,0x01,0xf1,0xf3]
+  vceq.i8	d16, d16, #0
+@ CHECK: vcge.s8	d16, d16, #0            @ encoding: [0xa0,0x00,0xf1,0xf3]
+  vcge.s8	d16, d16, #0
+@ CHECK: vcle.s8	d16, d16, #0            @ encoding: [0xa0,0x01,0xf1,0xf3]
+  vcle.s8	d16, d16, #0
+@ CHECK: vcgt.s8	d16, d16, #0            @ encoding: [0x20,0x00,0xf1,0xf3]
+  vcgt.s8	d16, d16, #0
+@ CHECK: vclt.s8	d16, d16, #0            @ encoding: [0x20,0x02,0xf1,0xf3]
+  vclt.s8	d16, d16, #0

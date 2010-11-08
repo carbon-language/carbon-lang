@@ -79,3 +79,14 @@ define <4 x i32> @vceqQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
         %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
 }
+
+define <8 x i8> @vceqi8Z(<8 x i8>* %A) nounwind {
+;CHECK: vceqi8Z:
+;CHECK-NOT: vmov
+;CHECK-NOT: vmvn
+;CHECK: vceq.i8
+	%tmp1 = load <8 x i8>* %A
+	%tmp3 = icmp eq <8 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
+        %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
+	ret <8 x i8> %tmp4
+}

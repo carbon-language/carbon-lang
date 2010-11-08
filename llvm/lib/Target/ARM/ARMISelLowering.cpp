@@ -3074,7 +3074,38 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
   if (Swap)
     std::swap(Op0, Op1);
 
-  SDValue Result = DAG.getNode(Opc, dl, VT, Op0, Op1);
+  // If one of the operands is a constant vector zero, attempt to fold the
+  // comparison to a specialized compare-against-zero form.
+  SDValue SingleOp;
+  if (ISD::isBuildVectorAllZeros(Op1.getNode()))
+    SingleOp = Op0;
+  else if (ISD::isBuildVectorAllZeros(Op0.getNode())) {
+    if (Opc == ARMISD::VCGE)
+      Opc = ARMISD::VCLEZ;
+    else if (Opc == ARMISD::VCGT)
+      Opc = ARMISD::VCLTZ;
+    SingleOp = Op1;
+  }
+  
+  SDValue Result;
+  if (SingleOp.getNode()) {
+    switch (Opc) {
+    case ARMISD::VCEQ:
+      Result = DAG.getNode(ARMISD::VCEQZ, dl, VT, SingleOp); break;
+    case ARMISD::VCGE:
+      Result = DAG.getNode(ARMISD::VCGEZ, dl, VT, SingleOp); break;
+    case ARMISD::VCLEZ:
+      Result = DAG.getNode(ARMISD::VCLEZ, dl, VT, SingleOp); break;
+    case ARMISD::VCGT:
+      Result = DAG.getNode(ARMISD::VCGTZ, dl, VT, SingleOp); break;
+    case ARMISD::VCLTZ:
+      Result = DAG.getNode(ARMISD::VCLTZ, dl, VT, SingleOp); break;
+    default:
+      Result = DAG.getNode(Opc, dl, VT, Op0, Op1);
+    }
+  } else {
+     Result = DAG.getNode(Opc, dl, VT, Op0, Op1);
+  }
 
   if (Invert)
     Result = DAG.getNOT(dl, Result, VT);

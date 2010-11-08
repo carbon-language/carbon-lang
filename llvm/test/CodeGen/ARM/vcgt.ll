@@ -173,3 +173,25 @@ define <4 x i32> @vcgt_zext(<4 x float>* %A, <4 x float>* %B) nounwind {
 
 declare <2 x i32> @llvm.arm.neon.vacgtd(<2 x float>, <2 x float>) nounwind readnone
 declare <4 x i32> @llvm.arm.neon.vacgtq(<4 x float>, <4 x float>) nounwind readnone
+
+define <8 x i8> @vcgti8Z(<8 x i8>* %A) nounwind {
+;CHECK: vcgti8Z:
+;CHECK-NOT: vmov
+;CHECK-NOT: vmvn
+;CHECK: vcgt.s8
+	%tmp1 = load <8 x i8>* %A
+	%tmp3 = icmp sgt <8 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
+        %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
+	ret <8 x i8> %tmp4
+}
+
+define <8 x i8> @vclti8Z(<8 x i8>* %A) nounwind {
+;CHECK: vclti8Z:
+;CHECK-NOT: vmov
+;CHECK-NOT: vmvn
+;CHECK: vclt.s8
+	%tmp1 = load <8 x i8>* %A
+	%tmp3 = icmp slt <8 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
+        %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
+	ret <8 x i8> %tmp4
+}
