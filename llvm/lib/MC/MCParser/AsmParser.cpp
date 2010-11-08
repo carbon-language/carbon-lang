@@ -503,7 +503,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     // semantics in the face of reassignment.
     if (Sym->isVariable() && isa<MCConstantExpr>(Sym->getVariableValue())) {
       if (Variant)
-        return Error(EndLoc, "unexpected modified on variable reference");
+        return Error(EndLoc, "unexpected modifier on variable reference");
 
       Res = Sym->getVariableValue();
       return false;
