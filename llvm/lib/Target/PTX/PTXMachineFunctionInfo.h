@@ -56,6 +56,7 @@ public:
   typedef std::vector<unsigned>::const_iterator reg_iterator;
 
   bool argRegEmpty() const { return reg_arg.empty(); }
+  int getNumArg() const { return reg_arg.size(); }
   reg_iterator argRegBegin() const { return reg_arg.begin(); }
   reg_iterator argRegEnd()   const { return reg_arg.end(); }
 
