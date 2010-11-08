@@ -139,6 +139,8 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual AliasResult alias(const Location &LocA, const Location &LocB);
     virtual bool pointsToConstantMemory(const Location &Loc, bool OrLocal);
+    virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS);
+    virtual ModRefBehavior getModRefBehavior(const Function *F);
     virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
                                        const Location &Loc);
     virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
@@ -239,6 +241,27 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc,
     return true;
 
   return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
+}
+
+AliasAnalysis::ModRefBehavior
+TypeBasedAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
+  if (!EnableTBAA)
+    return AliasAnalysis::getModRefBehavior(CS);
+
+  ModRefBehavior Min = UnknownModRefBehavior;
+
+  // If this is an "immutable" type, we can assume the call doesn't write
+  // to memory.
+  if (const MDNode *M = CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
+    if (TBAANode(M).TypeIsImmutable())
+      Min = OnlyReadsMemory;
+
+  return std::min(AliasAnalysis::getModRefBehavior(CS), Min);
+}
+
+AliasAnalysis::ModRefBehavior
+TypeBasedAliasAnalysis::getModRefBehavior(const Function *F) {
+  return AliasAnalysis::getModRefBehavior(F);
 }
 
 AliasAnalysis::ModRefResult
