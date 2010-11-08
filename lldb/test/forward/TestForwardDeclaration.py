@@ -5,6 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
+@unittest2.skip("rdar://problem/8641483 ./dotest.py -v -t -w forward seg faults")
 class ForwardDeclarationTestCase(TestBase):
 
     mydir = "forward"
