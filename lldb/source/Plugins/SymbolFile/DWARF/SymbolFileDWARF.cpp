@@ -2589,7 +2589,10 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (
                         
                         m_die_to_type[die] = resolved_type;
                         type_sp = m_obj_file->GetModule()->GetTypeList()->FindType(resolved_type->GetID());
-                        assert (type_sp.get());
+                        if (!type_sp)
+                        {
+                            DEBUG_PRINTF("unable to resolve type '%s' from DIE 0x%8.8x\n", type_name.GetCString(), die->GetOffset());
+                        }
                         break;
                     }
                 }
@@ -2807,7 +2810,12 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     break;
 
                                 case DW_AT_declaration: 
-                                    is_forward_declaration = form_value.Unsigned() != 0; 
+                                    // Make sure the declaration is from this DIE, and not from 
+                                    // a DW_AT_specification or DW_AT_abstract_origin by checking
+                                    // this die and seeing if its abbreviations have the
+                                    // DW_AT_declaration attribute
+                                    if (die->GetAbbreviationDeclarationPtr()->FindAttributeIndex (DW_AT_declaration) != DW_INVALID_INDEX)
+                                        is_forward_declaration = form_value.Unsigned() != 0; 
                                     break;
 
                                 case DW_AT_APPLE_runtime_class: 
@@ -2849,27 +2857,27 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     }
 
 
-                    if (is_forward_declaration)
-                    {
-                        // We have a forward declaration to a type and we need
-                        // to try and find a full declaration. We look in the
-                        // current type index just in case we have a forward
-                        // declaration followed by an actual declarations in the
-                        // DWARF. If this fails, we need to look elsewhere...
-                    
-                        type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
-
-                        if (!type_sp)
-                        {
-                            // We weren't able to find a full declaration in
-                            // this DWARF, see if we have a declaration anywhere    
-                            // else...
-                            if (m_debug_map_symfile)
-                                type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
-                        }
-                        if (type_sp)
-                            return type_sp;
-                    }
+//                    if (is_forward_declaration)
+//                    {
+//                        // We have a forward declaration to a type and we need
+//                        // to try and find a full declaration. We look in the
+//                        // current type index just in case we have a forward
+//                        // declaration followed by an actual declarations in the
+//                        // DWARF. If this fails, we need to look elsewhere...
+//                    
+//                        type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+//
+//                        if (!type_sp)
+//                        {
+//                            // We weren't able to find a full declaration in
+//                            // this DWARF, see if we have a declaration anywhere    
+//                            // else...
+//                            if (m_debug_map_symfile)
+//                                type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+//                        }
+//                        if (type_sp)
+//                            return type_sp;
+//                    }
                     assert (tag_decl_kind != -1);
                     bool clang_type_was_created = false;
                     clang_type = m_forward_decl_die_to_clang_type.lookup (die);
@@ -2888,7 +2896,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     m_die_to_type[die] = type_sp.get();
 
-                    if (die->HasChildren() == false)
+                    if (die->HasChildren() == false && is_forward_declaration == false)
                     {
                         // No children for this struct/union/class, lets finish it
                         type_list->GetClangASTContext().StartTagDeclarationDefinition (clang_type);
@@ -2940,7 +2948,14 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_type:        encoding_uid = form_value.Reference(dwarf_cu); break;
                                 case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
                                 case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
-                                case DW_AT_declaration: is_forward_declaration = form_value.Unsigned() != 0; break;
+                                case DW_AT_declaration: 
+                                    // Make sure the declaration is from this DIE, and not from 
+                                    // a DW_AT_specification or DW_AT_abstract_origin by checking
+                                    // this die and seeing if its abbreviations have the
+                                    // DW_AT_declaration attribute
+                                    if (die->GetAbbreviationDeclarationPtr()->FindAttributeIndex (DW_AT_declaration) != DW_INVALID_INDEX)
+                                        is_forward_declaration = form_value.Unsigned() != 0; 
+                                    break;
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
                                 case DW_AT_bit_stride:
@@ -3032,7 +3047,14 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_MIPS_linkage_name:   mangled = form_value.AsCString(&get_debug_str_data()); break;
                                 case DW_AT_type:                type_die_offset = form_value.Reference(dwarf_cu); break;
                                 case DW_AT_accessibility:       accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
-                                case DW_AT_declaration:         is_forward_declaration = form_value.Unsigned() != 0; break;
+                                case DW_AT_declaration: 
+                                    // Make sure the declaration is from this DIE, and not from 
+                                    // a DW_AT_specification or DW_AT_abstract_origin by checking
+                                    // this die and seeing if its abbreviations have the
+                                    // DW_AT_declaration attribute
+                                    if (die->GetAbbreviationDeclarationPtr()->FindAttributeIndex (DW_AT_declaration) != DW_INVALID_INDEX)
+                                        is_forward_declaration = form_value.Unsigned() != 0; 
+                                    break;
                                 case DW_AT_inline:              is_inline = form_value.Unsigned() != 0; break;
                                 case DW_AT_virtuality:          is_virtual = form_value.Unsigned() != 0;  break;
                                 case DW_AT_explicit:            is_explicit = form_value.Unsigned() != 0;  break; 
@@ -3245,7 +3267,14 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_byte_stride:     byte_stride = form_value.Unsigned(); break;
                                 case DW_AT_bit_stride:      bit_stride = form_value.Unsigned(); break;
                                 case DW_AT_accessibility:   accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
-                                case DW_AT_declaration:     is_forward_declaration = form_value.Unsigned() != 0; break;
+                                case DW_AT_declaration: 
+                                    // Make sure the declaration is from this DIE, and not from 
+                                    // a DW_AT_specification or DW_AT_abstract_origin by checking
+                                    // this die and seeing if its abbreviations have the
+                                    // DW_AT_declaration attribute
+                                    if (die->GetAbbreviationDeclarationPtr()->FindAttributeIndex (DW_AT_declaration) != DW_INVALID_INDEX)
+                                        is_forward_declaration = form_value.Unsigned() != 0; 
+                                    break;
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
                                 case DW_AT_data_location:
