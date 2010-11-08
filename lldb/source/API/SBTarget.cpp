@@ -386,7 +386,7 @@ SBTarget::reset (const lldb::TargetSP& target_sp)
 SBBreakpoint
 SBTarget::BreakpointCreateByLocation (const char *file, uint32_t line)
 {
-    return SBBreakpoint(BreakpointCreateByLocation (SBFileSpec (file), line));
+    return SBBreakpoint(BreakpointCreateByLocation (SBFileSpec (file, false), line));
 }
 
 SBBreakpoint

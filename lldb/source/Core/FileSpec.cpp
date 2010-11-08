@@ -176,7 +176,8 @@ FileSpec::FileSpec() :
 //------------------------------------------------------------------
 FileSpec::FileSpec(const char *pathname, bool resolve_path) :
     m_directory(),
-    m_filename()
+    m_filename(),
+    m_is_resolved(false)
 {
     if (pathname && pathname[0])
         SetFile(pathname, resolve_path);
@@ -187,7 +188,8 @@ FileSpec::FileSpec(const char *pathname, bool resolve_path) :
 //------------------------------------------------------------------
 FileSpec::FileSpec(const FileSpec& rhs) :
     m_directory (rhs.m_directory),
-    m_filename (rhs.m_filename)
+    m_filename (rhs.m_filename),
+    m_is_resolved (rhs.m_is_resolved)
 {
 }
 
@@ -219,6 +221,7 @@ FileSpec::operator= (const FileSpec& rhs)
     {
         m_directory = rhs.m_directory;
         m_filename = rhs.m_filename;
+        m_is_resolved = rhs.m_is_resolved;
     }
     return *this;
 }
@@ -229,10 +232,11 @@ FileSpec::operator= (const FileSpec& rhs)
 // string values for quick comparison and efficient memory usage.
 //------------------------------------------------------------------
 void
-FileSpec::SetFile(const char *pathname, bool resolve)
+FileSpec::SetFile (const char *pathname, bool resolve)
 {
     m_filename.Clear();
     m_directory.Clear();
+    m_is_resolved = false;
     if (pathname == NULL || pathname[0] == '\0')
         return;
 
@@ -242,13 +246,16 @@ FileSpec::SetFile(const char *pathname, bool resolve)
     if (resolve)
     {
         path_fit = (FileSpec::Resolve (pathname, resolved_path, sizeof(resolved_path)) < sizeof(resolved_path) - 1);
+        m_is_resolved = path_fit;
     }
     else
     {
-        if (strlen (pathname) > sizeof(resolved_path) - 1)
+        // Copy the path because "basename" and "dirname" want to muck with the
+        // path buffer
+        if (::strlen (pathname) > sizeof(resolved_path) - 1)
             path_fit = false;
         else
-            strcpy (resolved_path, pathname);
+            ::strcpy (resolved_path, pathname);
     }
 
     
@@ -317,7 +324,60 @@ FileSpec::operator!() const
 bool
 FileSpec::operator== (const FileSpec& rhs) const
 {
-    return m_directory == rhs.m_directory && m_filename == rhs.m_filename;
+    if (m_filename == rhs.m_filename)
+    {
+        if (m_directory == rhs.m_directory)
+            return true;
+        
+        // TODO: determine if we want to keep this code in here.
+        // The code below was added to handle a case where we were
+        // trying to set a file and line breakpoint and one path
+        // was resolved, and the other not and the directory was
+        // in a mount point that resolved to a more complete path:
+        // "/tmp/a.c" == "/private/tmp/a.c". I might end up pulling
+        // this out...
+        if (IsResolved() && rhs.IsResolved())
+        {
+            // Both paths are resolved, no need to look further...
+            return false;
+        }
+        
+        FileSpec resolved_lhs(*this);
+
+        // If "this" isn't resolved, resolve it
+        if (!IsResolved())
+        {
+            if (resolved_lhs.ResolvePath())
+            {
+                // This path wasn't resolved but now it is. Check if the resolved
+                // directory is the same as our unresolved directory, and if so, 
+                // we can mark this object as resolved to avoid more future resolves
+                m_is_resolved = (m_directory == resolved_lhs.m_directory);
+            }
+            else
+                return false;
+        }
+        
+        FileSpec resolved_rhs(rhs);
+        if (!rhs.IsResolved())
+        {
+            if (resolved_rhs.ResolvePath())
+            {
+                // rhs's path wasn't resolved but now it is. Check if the resolved
+                // directory is the same as rhs's unresolved directory, and if so, 
+                // we can mark this object as resolved to avoid more future resolves
+                rhs.m_is_resolved = (m_directory == resolved_rhs.m_directory);
+            }
+            else
+                return false;
+        }
+
+        // If we reach this point in the code we were able to resolve both paths
+        // and since we only resolve the paths if the basenames are equal, then
+        // we can just check if both directories are equal...
+        return resolved_lhs.GetDirectory() == resolved_rhs.GetDirectory();
+    }
+    return false;
 }
 
 //------------------------------------------------------------------
@@ -326,7 +386,7 @@ FileSpec::operator== (const FileSpec& rhs) const
 bool
 FileSpec::operator!= (const FileSpec& rhs) const
 {
-    return m_filename != rhs.m_filename || m_directory != rhs.m_directory;
+    return !(*this == rhs);
 }
 
 //------------------------------------------------------------------
@@ -469,12 +529,15 @@ FileSpec::ResolveExecutableLocation ()
 bool
 FileSpec::ResolvePath ()
 {
-    char path_buf[PATH_MAX];
-    
+    if (m_is_resolved)
+        return true;    // We have already resolved this path
+
+    char path_buf[PATH_MAX];    
     if (!GetPath (path_buf, PATH_MAX))
         return false;
+    // SetFile(...) will set m_is_resolved correctly if it can resolve the path
     SetFile (path_buf, true);
-    return true;
+    return m_is_resolved; 
 }
 
 uint64_t

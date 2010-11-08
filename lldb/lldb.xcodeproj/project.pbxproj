@@ -2912,7 +2912,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = (
+					x86_64,
+					i386,
+				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -3021,7 +3024,6 @@
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
 				LLVM_CONFIGURATION = "Debug+Asserts";
-				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",

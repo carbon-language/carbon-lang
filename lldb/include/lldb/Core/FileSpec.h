@@ -273,21 +273,20 @@ public:
     /// Call into the Host to see if it can help find the file (e.g. by
     /// searching paths set in the environment, etc.).
     ///
-    /// If found, sets the value of m_directory to the directory where the file was found.
+    /// If found, sets the value of m_directory to the directory where 
+    /// the file was found.
     ///
     /// @return
-    ///     \b true if was able to find the file using expanded search methods, \b false otherwise.
+    ///     \b true if was able to find the file using expanded search 
+    ///     methods, \b false otherwise.
     //------------------------------------------------------------------
     bool
     ResolveExecutableLocation ();
     
-    
     //------------------------------------------------------------------
-    /// Canonicalize this file path (basically running the static Resolve method on it).
-    /// Useful if you asked us not to resolve the file path when you set the file.
-    ///
-    /// @return
-    ///     None.
+    /// Canonicalize this file path (basically running the static 
+    /// FileSpec::Resolve method on it). Useful if you asked us not to 
+    /// resolve the file path when you set the file.
     //------------------------------------------------------------------
     bool
     ResolvePath ();
@@ -450,13 +449,37 @@ public:
     /// @param[in] path
     ///     A full, partial, or relative path to a file.
     ///
-    /// @param[in] resolve
+    /// @param[in] resolve_path
     ///     If \b true, then we will try to resolve links the path using
     ///     the static FileSpec::Resolve.
     //------------------------------------------------------------------
     void
-    SetFile (const char *path, bool resolve);
+    SetFile (const char *path, bool resolve_path);
 
+    bool
+    IsResolved () const
+    {
+        return m_is_resolved;
+    }
+
+    //------------------------------------------------------------------
+    /// Set if the file path has been resolved or not.
+    ///
+    /// If you know a file path is already resolved and avoided passing
+    /// a \b true parameter for any functions that take a "bool 
+    /// resolve_path" parameter, you can set the value manually using
+    /// this call to make sure we don't try and resolve it later, or try
+    /// and resolve a path that has already been resolved.
+    ///
+    /// @param[in] is_resolved
+    ///     A boolean value that will replace the current value that
+    ///     indicates if the paths in this object have been resolved.
+    //------------------------------------------------------------------
+    void
+    SetIsResolved (bool is_resolved)
+    {
+        m_is_resolved = is_resolved;
+    }
     //------------------------------------------------------------------
     /// Read the file into an array of strings, one per line.
     ///
@@ -527,6 +550,7 @@ protected:
     //------------------------------------------------------------------
     ConstString m_directory;    ///< The uniqued directory path
     ConstString m_filename;     ///< The uniqued filename path
+    mutable bool m_is_resolved; ///< True if this path has been resolved.
 };
 
 //----------------------------------------------------------------------
