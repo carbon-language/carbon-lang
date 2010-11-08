@@ -5384,6 +5384,12 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
   case 'F':
     Type = Context.getCFConstantStringType();
     break;
+  case 'G':
+    Type = Context.getObjCIdType();
+    break;
+  case 'H':
+    Type = Context.getObjCSelType();
+    break;
   case 'a':
     Type = Context.getBuiltinVaListType();
     assert(!Type.isNull() && "builtin va list type not initialized!");
