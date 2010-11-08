@@ -1469,9 +1469,9 @@ public:
   bool isConvertingConstructor(bool AllowExplicit) const;
 
   /// \brief Determine whether this is a member template specialization that
-  /// looks like a copy constructor. Such constructors are never used to copy
+  /// would copy the object to itself. Such constructors are never used to copy
   /// an object.
-  bool isCopyConstructorLikeSpecialization() const;
+  bool isSpecializationCopyingObject() const;
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

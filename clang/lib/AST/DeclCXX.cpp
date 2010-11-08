@@ -1176,7 +1176,7 @@ bool CXXConstructorDecl::isConvertingConstructor(bool AllowExplicit) const {
          (getNumParams() > 1 && getParamDecl(1)->hasDefaultArg());
 }
 
-bool CXXConstructorDecl::isCopyConstructorLikeSpecialization() const {
+bool CXXConstructorDecl::isSpecializationCopyingObject() const {
   if ((getNumParams() < 1) ||
       (getNumParams() > 1 && !getParamDecl(1)->hasDefaultArg()) ||
       (getPrimaryTemplate() == 0) ||
@@ -1187,12 +1187,6 @@ bool CXXConstructorDecl::isCopyConstructorLikeSpecialization() const {
 
   ASTContext &Context = getASTContext();
   CanQualType ParamType = Context.getCanonicalType(Param->getType());
-  
-  // Strip off the lvalue reference, if any.
-  if (CanQual<LValueReferenceType> ParamRefType
-                                    = ParamType->getAs<LValueReferenceType>())
-    ParamType = ParamRefType->getPointeeType();
-
   
   // Is it the same as our our class type?
   CanQualType ClassTy 

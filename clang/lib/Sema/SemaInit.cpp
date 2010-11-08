@@ -3391,17 +3391,39 @@ static ExprResult CopyObject(Sema &S,
   OverloadCandidateSet CandidateSet(Loc);
   for (llvm::tie(Con, ConEnd) = S.LookupConstructors(Class);
        Con != ConEnd; ++Con) {
-    // Only consider copy constructors.
-    CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(*Con);
-    if (!Constructor || Constructor->isInvalidDecl() ||
-        !Constructor->isCopyConstructor() ||
-        !Constructor->isConvertingConstructor(/*AllowExplicit=*/false))
+    // Only consider copy constructors and constructor templates.
+    CXXConstructorDecl *Constructor = 0;
+
+    if ((Constructor = dyn_cast<CXXConstructorDecl>(*Con))) {
+      // Handle copy constructors, only.
+      if (!Constructor || Constructor->isInvalidDecl() ||
+          !Constructor->isCopyConstructor() ||
+          !Constructor->isConvertingConstructor(/*AllowExplicit=*/false))
+        continue;
+
+      DeclAccessPair FoundDecl
+        = DeclAccessPair::make(Constructor, Constructor->getAccess());
+      S.AddOverloadCandidate(Constructor, FoundDecl,
+                             &CurInitExpr, 1, CandidateSet);
+      continue;
+    } 
+
+    // Handle constructor templates.
+    FunctionTemplateDecl *ConstructorTmpl = cast<FunctionTemplateDecl>(*Con);
+    if (ConstructorTmpl->isInvalidDecl())
       continue;
 
+    Constructor = cast<CXXConstructorDecl>(
+                                         ConstructorTmpl->getTemplatedDecl());
+    if (!Constructor->isConvertingConstructor(/*AllowExplicit=*/false))
+      continue;
+
+    // FIXME: Do we need to limit this to copy-constructor-like
+    // candidates?
     DeclAccessPair FoundDecl
-      = DeclAccessPair::make(Constructor, Constructor->getAccess());
-    S.AddOverloadCandidate(Constructor, FoundDecl,
-                           &CurInitExpr, 1, CandidateSet);
+      = DeclAccessPair::make(ConstructorTmpl, ConstructorTmpl->getAccess());
+    S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl, 0,
+                                   &CurInitExpr, 1, CandidateSet, true);
   }
   
   OverloadCandidateSet::iterator Best;

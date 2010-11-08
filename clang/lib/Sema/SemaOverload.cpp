@@ -3457,7 +3457,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     //   of a class object to an object of its class type.
     QualType ClassType = Context.getTypeDeclType(Constructor->getParent());
     if (NumArgs == 1 && 
-        Constructor->isCopyConstructorLikeSpecialization() &&
+        Constructor->isSpecializationCopyingObject() &&
         (Context.hasSameUnqualifiedType(ClassType, Args[0]->getType()) ||
          IsDerivedFrom(Args[0]->getType(), ClassType)))
       return;

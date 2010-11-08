@@ -71,16 +71,16 @@ struct X3 {
 template<> X3::X3(X3); // expected-error{{must pass its first argument by reference}}
 
 struct X4 {
-  X4(); // expected-note{{candidate constructor}}
+  X4();
   ~X4();
-  X4(X4&);	// expected-note {{candidate constructor}}
+  X4(X4&);
   template<typename T> X4(const T&, int = 17);
 };
 
 X4 test_X4(bool Cond, X4 x4) {
   X4 a(x4, 17); // okay, constructor template
   X4 b(x4); // okay, copy constructor
-  return X4(); // expected-error{{no matching constructor}}
+  return X4();
 }
 
 // Instantiation of a non-dependent use of a constructor
@@ -108,4 +108,21 @@ struct X6 {
 void test_X5_X6() {
   X5<X6> tf;
   X5<X6> tf2(tf);
+}
+
+namespace PR8182 {
+  struct foo {
+    foo();
+    template<class T> foo(T&);
+
+  private:
+    foo(const foo&);
+  };
+
+  void test_foo() {
+    foo f1;
+    foo f2(f1);
+    foo f3 = f1;
+  }
+
 }
