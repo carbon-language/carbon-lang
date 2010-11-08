@@ -144,10 +144,11 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     if (ShowMCEncoding)
       MCE = getTarget().createCodeEmitter(*this, *Context);
 
-    AsmStreamer.reset(createAsmStreamer(*Context, Out,
-                                        getTargetData()->isLittleEndian(),
-                                        getVerboseAsm(), InstPrinter,
-                                        MCE, ShowMCInst));
+    AsmStreamer.reset(getTarget().createAsmStreamer(*Context, Out,
+                                                    getTargetData()->isLittleEndian(),
+                                                    getVerboseAsm(),
+                                                    InstPrinter, MCE,
+                                                    ShowMCInst));
     break;
   }
   case CGFT_ObjectFile: {

@@ -342,9 +342,9 @@ static int AssembleInput(const char *ProgName) {
     MCCodeEmitter *CE = 0;
     if (ShowEncoding)
       CE = TheTarget->createCodeEmitter(*TM, Ctx);
-    Str.reset(createAsmStreamer(Ctx, FOS,
-                                TM->getTargetData()->isLittleEndian(),
-                                /*asmverbose*/true, IP, CE, ShowInst));
+    Str.reset(TheTarget->createAsmStreamer(Ctx, FOS,
+                                           TM->getTargetData()->isLittleEndian(),
+                                           /*asmverbose*/true, IP, CE, ShowInst));
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));
   } else {
