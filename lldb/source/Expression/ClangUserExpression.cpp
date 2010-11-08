@@ -238,24 +238,6 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     
     if (jit_error.Success())
     {
-        if (log)
-        {
-            log->Printf("Code can be run in the target.");
-            
-            StreamString disassembly_stream;
-            
-            Error err = parser.DisassembleFunction(disassembly_stream, exe_ctx);
-            
-            if (!err.Success())
-            {
-                log->Printf("Couldn't disassemble function : %s", err.AsCString("unknown error"));
-            }
-            else
-            {
-                log->Printf("Function disassembly:\n%s", disassembly_stream.GetData());
-            }
-        }
-        
         return true;
     }
     else

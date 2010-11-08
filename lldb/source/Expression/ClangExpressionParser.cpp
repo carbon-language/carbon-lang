@@ -571,6 +571,24 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         }
     }
     
+    if (log)
+    {
+        log->Printf("Code can be run in the target.");
+        
+        StreamString disassembly_stream;
+        
+        Error err = DisassembleFunction(disassembly_stream, exe_ctx);
+        
+        if (!err.Success())
+        {
+            log->Printf("Couldn't disassemble function : %s", err.AsCString("unknown error"));
+        }
+        else
+        {
+            log->Printf("Function disassembly:\n%s", disassembly_stream.GetData());
+        }
+    }
+    
     err.Clear();
     return err;
 }

@@ -89,6 +89,25 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                  this_arg))
         return;
     
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    
+    if (log)
+    {
+        RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+        
+        log->PutCString("Function call was set up.  Register state was:");
+        
+        for (uint32_t register_index = 0, num_registers = reg_ctx->GetRegisterCount();
+             register_index < num_registers;
+             ++register_index)
+        {
+            const char *register_name = reg_ctx->GetRegisterName(register_index);
+            uint64_t register_value = reg_ctx->ReadRegisterAsUnsigned(register_index, LLDB_INVALID_ADDRESS);
+            
+            log->Printf("  %s = 0x%llx", register_name, register_value);
+        }
+    }
+    
     m_valid = true;    
 }
 
@@ -144,6 +163,25 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                 StartLoadAddr, 
                                 *m_args))
         return;
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    
+    if (log)
+    {
+        RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+        
+        log->PutCString("Function call was set up.  Register state was:");
+        
+        for (uint32_t register_index = 0, num_registers = reg_ctx->GetRegisterCount();
+             register_index < num_registers;
+             ++register_index)
+        {
+            const char *register_name = reg_ctx->GetRegisterName(register_index);
+            uint64_t register_value = reg_ctx->ReadRegisterAsUnsigned(register_index, LLDB_INVALID_ADDRESS);
+            
+            log->Printf("  %s = 0x%llx", register_name, register_value);
+        }
+    }
     
     m_valid = true;    
 }
