@@ -185,10 +185,14 @@ public:
     // or stores to memory.
     //
     // This property corresponds to the GCC 'const' attribute.
+    // This property corresponds to the LLVM IR 'readnone' attribute.
+    // This property corresponds to the IntrNoMem LLVM intrinsic flag.
     DoesNotAccessMemory,
 
     // AccessesArguments - This function accesses function arguments in well
     // known (possibly volatile) ways, but does not access any other memory.
+    //
+    // This property corresponds to the IntrReadWriteArgMem LLVM intrinsic flag.
     AccessesArguments,
 
     // AccessesArgumentsAndGlobals - This function has accesses function
@@ -200,6 +204,8 @@ public:
     // volatile loads, but may read from any memory location.
     //
     // This property corresponds to the GCC 'pure' attribute.
+    // This property corresponds to the LLVM IR 'readonly' attribute.
+    // This property corresponds to the IntrReadMem LLVM intrinsic flag.
     OnlyReadsMemory,
 
     // UnknownModRefBehavior - This indicates that the function could not be
