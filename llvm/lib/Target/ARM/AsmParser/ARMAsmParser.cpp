@@ -221,6 +221,20 @@ public:
   bool isRegList() const { return Kind == RegisterList; }
   bool isToken() const { return Kind == Token; }
   bool isMemory() const { return Kind == Memory; }
+  bool isMemMode5() const {
+    if (!isMemory() || Mem.OffsetIsReg || Mem.OffsetRegShifted ||
+        Mem.Writeback || Mem.Negative)
+      return false;
+    // If there is an offset expression, make sure it's valid.
+    if (!Mem.Offset)
+      return true;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    if (!CE)
+      return false;
+    // The offset must be a multiple of 4 in the range 0-1020.
+    int64_t Value = CE->getValue();
+    return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
+  }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
@@ -244,24 +258,16 @@ public:
     Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
 
+  void addRegListOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    std::pair<unsigned, unsigned> RegList = getRegList();
+    Inst.addOperand(MCOperand::CreateReg(RegList.first));
+    Inst.addOperand(MCOperand::CreateImm(RegList.second));
+  }
+
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
-  }
-
-  bool isMemMode5() const {
-    if (!isMemory() || Mem.OffsetIsReg || Mem.OffsetRegShifted ||
-        Mem.Writeback || Mem.Negative)
-      return false;
-    // If there is an offset expression, make sure it's valid.
-    if (!Mem.Offset)
-      return true;
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
-    if (!CE)
-      return false;
-    // The offset must be a multiple of 4 in the range 0-1020.
-    int64_t Value = CE->getValue();
-    return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
   }
 
   void addMemMode5Operands(MCInst &Inst, unsigned N) const {
