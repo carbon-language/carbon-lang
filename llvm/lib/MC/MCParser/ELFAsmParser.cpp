@@ -271,9 +271,11 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   unsigned Type = MCSectionELF::SHT_NULL;
 
   // Set the defaults first.
-  if (SectionName == ".fini" || SectionName == ".init") {
+  if (SectionName == ".fini" || SectionName == ".init" || SectionName == ".rodata") {
     Type = MCSectionELF::SHT_PROGBITS;
     Flags |= MCSectionELF::SHF_ALLOC;
+  }
+  if (SectionName == ".fini" || SectionName == ".init") {
     Flags |= MCSectionELF::SHF_EXECINSTR;
   }
 
