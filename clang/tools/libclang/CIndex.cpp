@@ -299,6 +299,7 @@ public:
   bool VisitDeclRefExpr(DeclRefExpr *E);
   bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
+  bool VisitBinaryOperator(BinaryOperator *B);
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   bool VisitExplicitCastExpr(ExplicitCastExpr *E);
   bool VisitObjCMessageExpr(ObjCMessageExpr *E);
@@ -1526,6 +1527,95 @@ bool CursorVisitor::VisitForStmt(ForStmt *S) {
   if (S->getBody() && Visit(MakeCXCursor(S->getBody(), StmtParent, TU)))
     return true;
 
+  return false;
+}
+
+bool CursorVisitor::VisitBinaryOperator(BinaryOperator *B) {
+  // We can blow the stack in some cases where we have deeply nested BinaryOperators,
+  // often involving logical expressions, e.g.: '(x || y) || (y || z) || ...
+  // To handle this, we visitation of BinaryOperators is data recursive instead of
+  // directly recursive.  This makes the algorithm more complicated, but handles
+  // arbitrary depths.  We should consider making the entire CursorVisitor data
+  // recursive.
+  typedef std::pair</* Current expression = */ Expr*, /* Parent = */ CXCursor>
+          WorkListItem;
+  typedef llvm::SmallVector<WorkListItem, 5> WorkList;
+
+  CXCursor Cursor = MakeCXCursor(B, StmtParent, TU);
+  WorkList WL;
+  WL.push_back(std::make_pair(B->getRHS(), Cursor));
+  WL.push_back(std::make_pair(B->getLHS(), Cursor));
+
+  while (!WL.empty()) {
+    // Dequeue the worklist item.
+    WorkListItem LI = WL.back(); WL.pop_back(); Expr *Ex = LI.first;
+
+    // Set the Parent field, then back to its old value once we're done.
+    SetParentRAII SetParent(Parent, StmtParent, LI.second);
+
+    // Update the current cursor.
+    Cursor = MakeCXCursor(Ex, StmtParent, TU);
+
+    // For non-BinaryOperators, perform the default visitation.
+    if (!isa<BinaryOperator>(Ex)) {
+      if (Visit(Cursor)) {
+        // Skip all other items in the worklist that also have
+        // the same parent.
+        while (!WL.empty()) {
+          const WorkListItem &LIb = WL.back();
+          if (LIb.second == LI.second)
+            WL.pop_back();
+          else
+            break;
+        }
+        // If the worklist is now empty, we should immediately return
+        // to the caller, since this is the base case.
+        if (WL.empty())
+          return true;
+      }
+      continue;
+    }
+    // For BinaryOperators, perform a custom visitation where we add the
+    // children to a worklist.
+    if (RegionOfInterest.isValid()) {
+      SourceRange Range = getRawCursorExtent(Cursor);
+      if (Range.isInvalid() || CompareRegionOfInterest(Range)) {
+        // Proceed to the next item on the worklist.
+        continue;
+      }
+    }
+    switch (Visitor(Cursor, Parent, ClientData)) {
+      case CXChildVisit_Break: {
+        // Skip all other items in the worklist that also have
+        // the same parent.
+        while (!WL.empty()) {
+          const WorkListItem &LIb = WL.back();
+          if (LIb.second == LI.second)
+            WL.pop_back();
+          else
+            break;
+        }
+        // If the worklist is now empty, we should immediately return
+        // to the caller, since this is the base case.
+        if (WL.empty())
+          return true;
+        break;
+      }
+      case CXChildVisit_Continue:
+        break;
+      case CXChildVisit_Recurse: {
+        BinaryOperator *B = cast<BinaryOperator>(Ex);
+        // FIXME: Note that we ignore parentheses, since these are often
+        // unimportant during cursor visitation.  If we care about these, we
+        // can unroll the visitation one more level.  Alternatively, we
+        // can convert the entire visitor to be data recursive, eliminating
+        // all edge cases.
+        WL.push_back(std::make_pair(B->getRHS()->IgnoreParens(), Cursor));
+        WL.push_back(std::make_pair(B->getLHS()->IgnoreParens(), Cursor));
+        break;
+      }
+    }
+  }
   return false;
 }
 
