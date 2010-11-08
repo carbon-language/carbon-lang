@@ -116,3 +116,32 @@ namespace PR8196 {
     add_property(&wrap_mean); // expected-error{{no matching function for call to 'add_property'}}
   }
 }
+
+namespace PR7425 {
+  template<typename T>
+  void foo()
+  {
+  }
+
+  struct B
+  {
+    template<typename T>
+    B(const T&)
+    {
+    }
+  };
+
+  void bar(const B& b)
+  {
+  }
+
+  void bar2(const B& b = foo<int>)
+  {
+  }
+
+  void test(int argc, char** argv)
+  {
+    bar(foo<int>);
+    bar2();
+  }
+}

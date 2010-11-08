@@ -2511,18 +2511,17 @@ static void TryReferenceInitialization(Sema &S,
   // type of the resulting function.
   if (S.Context.getCanonicalType(T2) == S.Context.OverloadTy) {
     DeclAccessPair Found;
-    FunctionDecl *Fn = S.ResolveAddressOfOverloadedFunction(Initializer, 
-                                                            T1,
-                                                            false,
-                                                            Found);
-    if (!Fn) {
+    if (FunctionDecl *Fn = S.ResolveAddressOfOverloadedFunction(Initializer, 
+                                                                T1,
+                                                                false,
+                                                                Found)) {
+      Sequence.AddAddressOverloadResolutionStep(Fn, Found);
+      cv2T2 = Fn->getType();
+      T2 = cv2T2.getUnqualifiedType();
+    } else if (!T1->isRecordType()) {
       Sequence.SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
       return;
     }
-
-    Sequence.AddAddressOverloadResolutionStep(Fn, Found);
-    cv2T2 = Fn->getType();
-    T2 = cv2T2.getUnqualifiedType();
   }
 
   // Compute some basic properties of the types and the initializer.
@@ -2604,7 +2603,9 @@ static void TryReferenceInitialization(Sema &S,
   // We handled the function type stuff above.
   if (!((isLValueRef && T1Quals.hasConst() && !T1Quals.hasVolatile()) ||
         (isRValueRef && InitCategory.isRValue()))) {
-    if (ConvOvlResult && !Sequence.getFailedCandidateSet().empty())
+    if (S.Context.getCanonicalType(T2) == S.Context.OverloadTy)
+      Sequence.SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
+    else if (ConvOvlResult && !Sequence.getFailedCandidateSet().empty())
       Sequence.SetOverloadFailure(
                         InitializationSequence::FK_ReferenceInitOverloadFailed,
                                   ConvOvlResult);
@@ -2706,6 +2707,8 @@ static void TryReferenceInitialization(Sema &S,
       Sequence.SetOverloadFailure(
                         InitializationSequence::FK_ReferenceInitOverloadFailed,
                                   ConvOvlResult);
+    else if (S.Context.getCanonicalType(T2) == S.Context.OverloadTy)
+      Sequence.SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
     else
       Sequence.SetFailed(InitializationSequence::FK_ReferenceInitFailed);
     return;
