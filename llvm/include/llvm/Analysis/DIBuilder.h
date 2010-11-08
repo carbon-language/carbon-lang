@@ -43,7 +43,20 @@ namespace llvm {
 
     /// CreateCompileUnit - A CompileUnit provides an anchor for all debugging
     /// information generated during this instance of compilation.
-    void CreateCompileUnit(unsigned Lang, StringRef F, StringRef D, StringRef P,
+    /// @param Lang     Source programming language, eg. dwarf::DW_LANG_C99
+    /// @param File     File name
+    /// @param Dir      Directory
+    /// @param Producer String identify producer of debugging information. 
+    ///                 Usuall this is a compiler version string.
+    /// @param isOptimized A boolean flag which indicates whether optimization
+    ///                    is ON or not.
+    /// @param Flags    This string lists command line options. This string is 
+    ///                 directly embedded in debug info output which may be used
+    ///                 by a tool analyzing generated debugging information.
+    /// @param RV       This indicates runtime version for languages like 
+    ///                 Objective-C.
+    void CreateCompileUnit(unsigned Lang, StringRef File, StringRef Dir, 
+                           StringRef Producer,
                            bool isOptimized, StringRef Flags, unsigned RV);
 
     /// CreateFile - Create a file descriptor to hold debugging information
@@ -54,12 +67,18 @@ namespace llvm {
     DIEnumerator CreateEnumerator(StringRef Name, uint64_t Val);
 
     /// CreateBasicType - Create debugging information entry for a basic 
-    /// type, e.g 'char'.
+    /// type.
+    /// @param Name        Type name.
+    /// @param SizeInBits  Size of the type.
+    /// @param AlignInBits Type alignment.
+    /// @param Encoding    DWARF encoding code, e.g. dwarf::DW_ATE_float.
     DIType CreateBasicType(StringRef Name, uint64_t SizeInBits, 
                            uint64_t AlignInBits, unsigned Encoding);
 
-    /// CreateQaulifiedType - Create debugging information entry for a qualified
+    /// CreateQualifiedType - Create debugging information entry for a qualified
     /// type, e.g. 'const int'.
+    /// @param Tag         Tag identifing type, e.g. dwarf::TAG_volatile_type
+    /// @param FromTy      Base Type.
     DIType CreateQualifiedType(unsigned Tag, DIType FromTy);
 
     /// CreatePointerType - Create debugging information entry for a pointer.
@@ -76,7 +95,7 @@ namespace llvm {
     DIType CreateFriend(DIType Ty, DIType FriendTy);
 
     /// CreateInheritance - Create debugging information entry to establish
-    /// inheritnace relationship between two types.
+    /// inheritance relationship between two types.
     DIType CreateInheritance(DIType Ty, DIType BaseTy, uint64_t BaseOffset,
                              unsigned Flags);
 
