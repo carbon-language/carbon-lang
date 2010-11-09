@@ -1044,6 +1044,9 @@ def warn_impcast_integer_64_32 : Warning<
 def warn_impcast_integer_precision_constant : Warning<
   "implicit conversion from %2 to %3 changes value from %0 to %1">,
   InGroup<DiagGroup<"constant-conversion">>;
+def warn_impcast_bitfield_precision_constant : Warning<
+  "implicit truncation from %2 to bitfield changes value from %0 to %1">,
+  InGroup<DiagGroup<"constant-conversion">>;
 
 def warn_cast_align : Warning<
   "cast from %0 to %1 increases required alignment from %2 to %3">,

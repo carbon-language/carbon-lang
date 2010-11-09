@@ -2587,6 +2587,52 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
     << lex->getSourceRange() << rex->getSourceRange();
 }
 
+/// Analyze the given simple or compound assignment for warning-worthy
+/// operations.
+void AnalyzeAssignment(Sema &S, BinaryOperator *E) {
+  // Just recurse on the LHS.
+  AnalyzeImplicitConversions(S, E->getLHS(), E->getOperatorLoc());
+
+  // We want to recurse on the RHS as normal unless we're assigning to
+  // a bitfield.
+  if (FieldDecl *Bitfield = E->getLHS()->getBitField()) {
+    assert(Bitfield->isBitField());
+
+    Expr *RHS = E->getRHS()->IgnoreParenImpCasts();
+
+    llvm::APSInt Width(32);
+    Expr::EvalResult RHSValue;
+    if (!Bitfield->isInvalidDecl() &&
+        Bitfield->getBitWidth()->isIntegerConstantExpr(Width, S.Context) &&
+        RHS->Evaluate(RHSValue, S.Context) && RHSValue.Val.isInt()) {
+      const llvm::APSInt &Value = RHSValue.Val.getInt();
+      unsigned OriginalWidth = Value.getBitWidth();
+      unsigned FieldWidth = Width.getZExtValue();
+
+      if (OriginalWidth > FieldWidth) {
+        llvm::APSInt TruncatedValue = Value;
+        TruncatedValue.trunc(FieldWidth);
+        TruncatedValue.extend(OriginalWidth);
+
+        if (Value != TruncatedValue) {
+          std::string PrettyValue = Value.toString(10);
+          std::string PrettyTrunc = TruncatedValue.toString(10);
+
+          S.Diag(E->getOperatorLoc(),
+                 diag::warn_impcast_bitfield_precision_constant)
+            << PrettyValue << PrettyTrunc << RHS->getType()
+            << E->getRHS()->getSourceRange();
+
+          // Recurse, ignoring any implicit conversions on the RHS.
+          return AnalyzeImplicitConversions(S, RHS, E->getOperatorLoc());
+        }
+      }
+    }
+  }
+
+  AnalyzeImplicitConversions(S, E->getRHS(), E->getOperatorLoc());
+}
+
 /// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
 void DiagnoseImpCast(Sema &S, Expr *E, QualType T, SourceLocation CContext,
                      unsigned diag) {
@@ -2810,9 +2856,15 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
     return AnalyzeImplicitConversions(S, E, CC);
   }
 
-  // Do a somewhat different check with comparison operators.
-  if (isa<BinaryOperator>(E) && cast<BinaryOperator>(E)->isComparisonOp())
-    return AnalyzeComparison(S, cast<BinaryOperator>(E));
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+    // Do a somewhat different check with comparison operators.
+    if (BO->isComparisonOp())
+      return AnalyzeComparison(S, BO);
+
+    // And with assignments and compound assignments.
+    if (BO->isAssignmentOp())
+      return AnalyzeAssignment(S, BO);
+  }
 
   // These break the otherwise-useful invariant below.  Fortunately,
   // we don't really need to recurse into them, because any internal
