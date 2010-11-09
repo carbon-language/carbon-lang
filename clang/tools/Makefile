@@ -12,7 +12,7 @@ DIRS := driver libclang c-index-test
 
 include $(CLANG_LEVEL)/../../Makefile.config
 
-ifeq ($(OS), $(filter $(OS), Cygwin MingW Minix))
+ifeq ($(OS), $(filter $(OS), Minix))
 DIRS := $(filter-out libclang c-index-test, $(DIRS))
 endif
 
