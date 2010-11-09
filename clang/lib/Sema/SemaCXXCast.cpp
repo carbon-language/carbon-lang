@@ -1389,19 +1389,16 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
     }
   }
 
-  if (tcr != TC_Success && msg != 0)
-  {
-    if (CastExpr->getType() == Context.OverloadTy)
-    {
+  if (tcr != TC_Success && msg != 0) {
+    if (CastExpr->getType() == Context.OverloadTy) {
       DeclAccessPair Found;
-      FunctionDecl* Fn = ResolveAddressOfOverloadedFunction(CastExpr, 
+      FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(CastExpr, 
                                 CastTy,
                                 /* Complain */ true,
                                 Found);
       assert(!Fn && "cast failed but able to resolve overload expression!!");
-    }
-    else
-    {
+      (void)Fn;
+    } else {
       Diag(R.getBegin(), msg) << (FunctionalStyle ? CT_Functional : CT_CStyle)
         << CastExpr->getType() << CastTy << R;
     }
