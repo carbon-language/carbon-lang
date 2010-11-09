@@ -331,7 +331,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
                      ? SectionKind::getText()
                      : SectionKind::getDataRel();
   getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
-                                                         Flags, Kind, Size));
+                                                         Flags, Kind, false,
+                                                         Size));
   return false;
 }
 
@@ -405,7 +406,7 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
                                MCSectionELF::SHF_MERGE |
                                MCSectionELF::SHF_STRINGS,
                                SectionKind::getReadOnly(),
-                               1);
+                               false, 1);
 
   static bool First = true;
 

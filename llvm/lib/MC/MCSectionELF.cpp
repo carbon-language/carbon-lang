@@ -29,6 +29,14 @@ bool MCSectionELF::ShouldOmitSectionDirective(StringRef Name,
   return false;
 }
 
+// ShouldPrintSectionType - Only prints the section type if supported
+bool MCSectionELF::ShouldPrintSectionType(unsigned Ty) const {
+  if (IsExplicit && !(Ty == SHT_NOBITS || Ty == SHT_PROGBITS))
+    return false;
+
+  return true;
+}
+
 void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
                                         raw_ostream &OS) const {
    
@@ -76,29 +84,31 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
   
   OS << '"';
 
-  OS << ',';
-
-  // If comment string is '@', e.g. as on ARM - use '%' instead
-  if (MAI.getCommentString()[0] == '@')
-    OS << '%';
-  else
-    OS << '@';
-
-  if (Type == MCSectionELF::SHT_INIT_ARRAY)
-    OS << "init_array";
-  else if (Type == MCSectionELF::SHT_FINI_ARRAY)
-    OS << "fini_array";
-  else if (Type == MCSectionELF::SHT_PREINIT_ARRAY)
-    OS << "preinit_array";
-  else if (Type == MCSectionELF::SHT_NOBITS)
-    OS << "nobits";
-  else if (Type == MCSectionELF::SHT_PROGBITS)
-    OS << "progbits";
-
-  if (EntrySize) {
-    OS << "," << EntrySize;
+  if (ShouldPrintSectionType(Type)) {
+    OS << ',';
+ 
+    // If comment string is '@', e.g. as on ARM - use '%' instead
+    if (MAI.getCommentString()[0] == '@')
+      OS << '%';
+    else
+      OS << '@';
+  
+    if (Type == MCSectionELF::SHT_INIT_ARRAY)
+      OS << "init_array";
+    else if (Type == MCSectionELF::SHT_FINI_ARRAY)
+      OS << "fini_array";
+    else if (Type == MCSectionELF::SHT_PREINIT_ARRAY)
+      OS << "preinit_array";
+    else if (Type == MCSectionELF::SHT_NOBITS)
+      OS << "nobits";
+    else if (Type == MCSectionELF::SHT_PROGBITS)
+      OS << "progbits";
+  
+    if (EntrySize) {
+      OS << "," << EntrySize;
+    }
   }
-
+  
   OS << '\n';
 }
 
