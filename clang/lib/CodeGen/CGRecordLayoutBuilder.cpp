@@ -35,6 +35,24 @@ public:
   /// FieldTypes - Holds the LLVM types that the struct is created from.
   std::vector<const llvm::Type *> FieldTypes;
 
+  /// NonVirtualBaseFieldTypes - Holds the LLVM types for the non-virtual part
+  /// of the struct. For example, consider:
+  ///
+  /// struct A { int i; };
+  /// struct B { void *v; };
+  /// struct C : virtual A, B { };
+  ///
+  /// The LLVM type of C will be
+  /// %struct.C = type { i32 (...)**, %struct.A, i32, %struct.B }
+  ///
+  /// And the LLVM type of the non-virtual base struct will be
+  /// %struct.C.base = type { i32 (...)**, %struct.A, i32 }
+  std::vector<const llvm::Type *> NonVirtualBaseFieldTypes;
+
+  /// NonVirtualBaseTypeIsSameAsCompleteType - Whether the non-virtual part of
+  /// the struct is equivalent to the complete struct.
+  bool NonVirtualBaseTypeIsSameAsCompleteType;
+  
   /// LLVMFieldInfo - Holds a field and its corresponding LLVM field number.
   typedef std::pair<const FieldDecl *, unsigned> LLVMFieldInfo;
   llvm::SmallVector<LLVMFieldInfo, 16> LLVMFields;
@@ -92,6 +110,9 @@ private:
   void LayoutNonVirtualBases(const CXXRecordDecl *RD, 
                              const ASTRecordLayout &Layout);
 
+  /// ComputeNonVirtualBaseType - Compute the non-virtual base field types.
+  void ComputeNonVirtualBaseType(const CXXRecordDecl *RD);
+  
   /// LayoutField - layout a single field. Returns false if the operation failed
   /// because the current struct is not packed.
   bool LayoutField(const FieldDecl *D, uint64_t FieldOffset);
@@ -106,6 +127,10 @@ private:
   /// struct size is a multiple of the field alignment.
   void AppendPadding(uint64_t FieldOffsetInBytes, unsigned FieldAlignment);
 
+  /// getByteArrayType - Returns a byte array type with the given number of
+  /// elements.
+  const llvm::Type *getByteArrayType(uint64_t NumBytes);
+  
   /// AppendBytes - Append a given number of bytes to the record.
   void AppendBytes(uint64_t NumBytes);
 
@@ -122,8 +147,8 @@ private:
 
 public:
   CGRecordLayoutBuilder(CodeGenTypes &Types)
-    : IsZeroInitializable(true), Packed(false), Types(Types),
-      Alignment(0), AlignmentAsLLVMStruct(1),
+    : NonVirtualBaseTypeIsSameAsCompleteType(false), IsZeroInitializable(true),
+      Packed(false), Types(Types), Alignment(0), AlignmentAsLLVMStruct(1),
       BitsAvailableInLastField(0), NextFieldOffsetInBytes(0) { }
 
   /// Layout - Will layout a RecordDecl.
@@ -520,13 +545,50 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
   }
 }
 
+void 
+CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
+  const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(RD);
+
+  uint64_t AlignedNonVirtualTypeSize =
+    llvm::RoundUpToAlignment(Layout.getNonVirtualSize(),
+                             Layout.getNonVirtualAlign()) / 8;
+  
+  
+  // First check if we can use the same fields as for the complete class.
+  if (AlignedNonVirtualTypeSize == Layout.getSize() / 8) {
+    NonVirtualBaseTypeIsSameAsCompleteType = true;
+    return;
+  }
+
+  NonVirtualBaseFieldTypes = FieldTypes;
+
+  // Check if we need padding.
+  uint64_t AlignedNextFieldOffset =
+    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, AlignmentAsLLVMStruct);
+
+  assert(AlignedNextFieldOffset <= AlignedNonVirtualTypeSize && 
+         "Size mismatch!");
+
+  if (AlignedNonVirtualTypeSize == AlignedNextFieldOffset) {
+    // We don't need any padding.
+    return;
+  }
+
+  uint64_t NumBytes = AlignedNonVirtualTypeSize - AlignedNextFieldOffset;
+  NonVirtualBaseFieldTypes.push_back(getByteArrayType(NumBytes));
+
+  printf("nvts: %llu, aligned nfo: %llu\n",
+         AlignedNonVirtualTypeSize, AlignedNextFieldOffset);
+}
+
 bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   assert(!D->isUnion() && "Can't call LayoutFields on a union!");
   assert(Alignment && "Did not set alignment!");
 
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
 
-  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D))
+  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
+  if (RD)
     LayoutNonVirtualBases(RD, Layout);
 
   unsigned FieldNo = 0;
@@ -540,6 +602,14 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     }
   }
 
+  // We've laid out the non-virtual bases and the fields, now compute the
+  // non-virtual base field types.
+  if (RD)
+    ComputeNonVirtualBaseType(RD);
+  
+  // FIXME: Lay out the virtual bases instead of just treating them as tail
+  // padding.
+  
   // Append tail padding if necessary.
   AppendTailPadding(Layout.getSize());
 
@@ -595,16 +665,22 @@ void CGRecordLayoutBuilder::AppendPadding(uint64_t FieldOffsetInBytes,
   }
 }
 
-void CGRecordLayoutBuilder::AppendBytes(uint64_t NumBytes) {
-  if (NumBytes == 0)
-    return;
+const llvm::Type *CGRecordLayoutBuilder::getByteArrayType(uint64_t NumBytes) {
+  assert(NumBytes != 0 && "Empty byte array's aren't allowed.");
 
   const llvm::Type *Ty = llvm::Type::getInt8Ty(Types.getLLVMContext());
   if (NumBytes > 1)
     Ty = llvm::ArrayType::get(Ty, NumBytes);
 
+  return Ty;
+}
+
+void CGRecordLayoutBuilder::AppendBytes(uint64_t NumBytes) {
+  if (NumBytes == 0)
+    return;
+
   // Append the padding field
-  AppendField(NextFieldOffsetInBytes, Ty);
+  AppendField(NextFieldOffsetInBytes, getByteArrayType(NumBytes));
 }
 
 unsigned CGRecordLayoutBuilder::getTypeAlignment(const llvm::Type *Ty) const {
@@ -658,8 +734,18 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
                                                Builder.FieldTypes,
                                                Builder.Packed);
 
+  const llvm::Type *BaseTy = 0;
+  if (isa<CXXRecordDecl>(D)) {
+    if (Builder.NonVirtualBaseTypeIsSameAsCompleteType)
+      BaseTy = Ty;
+    else if (!Builder.NonVirtualBaseFieldTypes.empty())
+      BaseTy = llvm::StructType::get(getLLVMContext(), 
+                                     Builder.NonVirtualBaseFieldTypes, 
+                                     Builder.Packed);
+  }
+
   CGRecordLayout *RL =
-    new CGRecordLayout(Ty, Builder.IsZeroInitializable);
+    new CGRecordLayout(Ty, BaseTy, Builder.IsZeroInitializable);
 
   // Add all the non-virtual base field numbers.
   RL->NonVirtualBaseFields.insert(Builder.LLVMNonVirtualBases.begin(),
@@ -684,10 +770,22 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 
 #ifndef NDEBUG
   // Verify that the computed LLVM struct size matches the AST layout size.
-  uint64_t TypeSizeInBits = getContext().getASTRecordLayout(D).getSize();
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(D);
+
+  uint64_t TypeSizeInBits = Layout.getSize();
   assert(TypeSizeInBits == getTargetData().getTypeAllocSizeInBits(Ty) &&
          "Type size mismatch!");
 
+  if (BaseTy) {
+    uint64_t AlignedNonVirtualTypeSizeInBits =
+      llvm::RoundUpToAlignment(Layout.getNonVirtualSize(),
+                               Layout.getNonVirtualAlign());
+
+    assert(AlignedNonVirtualTypeSizeInBits == 
+           getTargetData().getTypeAllocSizeInBits(BaseTy) &&
+           "Type size mismatch!");
+  }
+                                     
   // Verify that the LLVM and AST field offsets agree.
   const llvm::StructType *ST =
     dyn_cast<llvm::StructType>(RL->getLLVMType());
@@ -730,6 +828,8 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 void CGRecordLayout::print(llvm::raw_ostream &OS) const {
   OS << "<CGRecordLayout\n";
   OS << "  LLVMType:" << *LLVMType << "\n";
+  if (BaseLLVMType)
+    OS << "  BaseLLVMType:" << *BaseLLVMType << "\n"; 
   OS << "  IsZeroInitializable:" << IsZeroInitializable << "\n";
   OS << "  BitFields:[\n";
 

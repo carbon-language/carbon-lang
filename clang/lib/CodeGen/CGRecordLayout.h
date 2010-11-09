@@ -172,8 +172,12 @@ class CGRecordLayout {
   void operator=(const CGRecordLayout&); // DO NOT IMPLEMENT
 
 private:
-  /// The LLVMType corresponding to this record layout.
+  /// The LLVM type corresponding to this record layout.
   const llvm::Type *LLVMType;
+
+  /// The LLVM type for the non-virtual part of this record layout, used for
+  /// laying out the record as a base.
+  const llvm::Type *BaseLLVMType;
 
   /// Map from (non-bit-field) struct field to the corresponding llvm struct
   /// type field no. This info is populated by record builder.
@@ -192,12 +196,18 @@ private:
   bool IsZeroInitializable : 1;
 
 public:
-  CGRecordLayout(const llvm::Type *T, bool IsZeroInitializable)
-    : LLVMType(T), IsZeroInitializable(IsZeroInitializable) {}
+  CGRecordLayout(const llvm::Type *LLVMType, const llvm::Type *BaseLLVMType,
+                 bool IsZeroInitializable)
+    : LLVMType(LLVMType), BaseLLVMType(BaseLLVMType), 
+    IsZeroInitializable(IsZeroInitializable) {}
 
   /// \brief Return the LLVM type associated with this record.
   const llvm::Type *getLLVMType() const {
     return LLVMType;
+  }
+
+  const llvm::Type *getBaseLLVMType() const {
+      return BaseLLVMType;
   }
 
   /// \brief Check whether this struct can be C++ zero-initialized
