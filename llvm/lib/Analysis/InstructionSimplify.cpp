@@ -193,6 +193,31 @@ static const Type *GetCompareTy(Value *Op) {
   return CmpInst::makeCmpResultType(Op->getType());
 }
 
+/// ThreadCmpOverSelect - In the case of a comparison with a select instruction,
+/// try to simplify the comparison by seeing whether both branches of the select
+/// result in the same value.  Returns the common value if so, otherwise returns
+/// null.
+static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
+                                  Value *RHS, const TargetData *TD) {
+  // Make sure the select is on the LHS.
+  if (!isa<SelectInst>(LHS)) {
+    std::swap(LHS, RHS);
+    Pred = CmpInst::getSwappedPredicate(Pred);
+  }
+  assert(isa<SelectInst>(LHS) && "Not comparing with a select instruction!");
+  SelectInst *SI = cast<SelectInst>(LHS);
+
+  // Now that we have "cmp select(cond, TV, FV), RHS", analyse it.
+  // Does "cmp TV, RHS" simplify?
+  if (Value *TCmp = SimplifyCmpInst(Pred, SI->getTrueValue(), RHS, TD))
+    // It does!  Does "cmp FV, RHS" simplify?
+    if (Value *FCmp = SimplifyCmpInst(Pred, SI->getFalseValue(), RHS, TD))
+      // It does!  If they simplified to the same value, then use it as the
+      // result of the original comparison.
+      if (TCmp == FCmp)
+        return TCmp;
+  return 0;
+}
 
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
 /// fold the result.  If not, this returns null.
@@ -255,23 +280,9 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
-  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)) {
-    // Make sure the select is on the LHS.
-    if (!isa<SelectInst>(LHS)) {
-      std::swap(LHS, RHS);
-      Pred = CmpInst::getSwappedPredicate(Pred);
-    }
-    SelectInst *SI = cast<SelectInst>(LHS);
-    // Now that we have "icmp select(cond, TV, FV), RHS", analyse it.
-    // Does "icmp TV, RHS" simplify?
-    if (Value *TCmp = SimplifyICmpInst(Pred, SI->getTrueValue(), RHS, TD))
-      // It does!  Does "icmp FV, RHS" simplify?
-      if (Value *FCmp = SimplifyICmpInst(Pred, SI->getFalseValue(), RHS, TD))
-        // It does!  If they simplified to the same value, then use it as the
-        // result of the original comparison.
-        if (TCmp == FCmp)
-          return TCmp;
-  }
+  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
+    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD))
+      return V;
 
   return 0;
 }
@@ -352,23 +363,9 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
-  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)) {
-    // Make sure the select is on the LHS.
-    if (!isa<SelectInst>(LHS)) {
-      std::swap(LHS, RHS);
-      Pred = CmpInst::getSwappedPredicate(Pred);
-    }
-    SelectInst *SI = cast<SelectInst>(LHS);
-    // Now that we have "fcmp select(cond, TV, FV), RHS", analyse it.
-    // Does "fcmp TV, RHS" simplify?
-    if (Value *TCmp = SimplifyFCmpInst(Pred, SI->getTrueValue(), RHS, TD))
-      // It does!  Does "fcmp FV, RHS" simplify?
-      if (Value *FCmp = SimplifyFCmpInst(Pred, SI->getFalseValue(), RHS, TD))
-        // It does!  If they simplified to the same value, then use it as the
-        // result of the original comparison.
-        if (TCmp == FCmp)
-          return TCmp;
-  }
+  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
+    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD))
+      return V;
 
   return 0;
 }
