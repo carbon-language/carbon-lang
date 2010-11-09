@@ -19,7 +19,7 @@
 // Require at least Windows 2000 API.
 #define _WIN32_WINNT 0x0500
 
-#include "llvm/Config/config.h"     // Get autoconf configuration settings
+#include "llvm/Config/config.h" // Get build system configuration settings
 #include "windows.h"
 #include <cassert>
 #include <string>
