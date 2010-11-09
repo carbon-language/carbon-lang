@@ -442,7 +442,7 @@ the use of preprocessor macros.</p>
 
 <pre class="code_example">
 #ifndef CLANG_ANALYZER_NORETURN
-#if __clang__
+#if __has_feature(attribute_analyzer_noreturn)
 <span class="code_highlight">#define CLANG_ANALYZER_NORETURN __attribute__((analyzer_noreturn))</span>
 #else
 #define CLANG_ANALYZER_NORETURN
