@@ -59,3 +59,9 @@ namespace PR6948 {
     X<char> str (read_from_file()); // expected-error{{use of undeclared identifier 'read_from_file'}}
   }
 }
+
+void unused_local_static() {
+  static int x = 0;
+  static int y = 0; // expected-warning{{unused variable 'y'}}
+#pragma unused(x)
+}
