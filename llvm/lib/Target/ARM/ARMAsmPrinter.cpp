@@ -227,73 +227,7 @@ namespace {
 
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
-    virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
-      int Size = TM.getTargetData()->getTypeAllocSize(MCPV->getType());
-
-      ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
-      SmallString<128> Str;
-      raw_svector_ostream OS(Str);
-
-      if (ACPV->isLSDA()) {
-        OS << MAI->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
-      } else if (ACPV->isBlockAddress()) {
-        OS << *GetBlockAddressSymbol(ACPV->getBlockAddress());
-      } else if (ACPV->isGlobalValue()) {
-        const GlobalValue *GV = ACPV->getGV();
-        bool isIndirect = Subtarget->isTargetDarwin() &&
-          Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
-        if (!isIndirect)
-          OS << *Mang->getSymbol(GV);
-        else {
-          // FIXME: Remove this when Darwin transition to @GOT like syntax.
-          MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-          OS << *Sym;
-
-          MachineModuleInfoMachO &MMIMachO =
-            MMI->getObjFileInfo<MachineModuleInfoMachO>();
-          MachineModuleInfoImpl::StubValueTy &StubSym =
-            GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
-                                        MMIMachO.getGVStubEntry(Sym);
-          if (StubSym.getPointer() == 0)
-            StubSym = MachineModuleInfoImpl::
-              StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
-        }
-      } else {
-        assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
-        OS << *GetExternalSymbolSymbol(ACPV->getSymbol());
-      }
-
-      // Create an MCSymbol for the reference.
-      MCSymbol *MCSym = OutContext.GetOrCreateSymbol(OS.str());
-      const MCExpr *Expr = MCSymbolRefExpr::Create(MCSym, OutContext);
-
-      // FIXME: Model the whole expression an an MCExpr and we can get rid
-      // of this hasRawTextSupport() clause and just do an EmitValue().
-      if (OutStreamer.hasRawTextSupport()) {
-        if (ACPV->hasModifier()) OS << "(" << ACPV->getModifier() << ")";
-        if (ACPV->getPCAdjustment() != 0) {
-          OS << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
-            << getFunctionNumber() << "_"  << ACPV->getLabelId()
-            << "+" << (unsigned)ACPV->getPCAdjustment();
-          if (ACPV->mustAddCurrentAddress())
-            OS << "-.";
-          OS << ')';
-        }
-        const char *DataDirective = 0;
-        switch (Size) {
-        case 1: DataDirective = MAI->getData8bitsDirective(0); break;
-        case 2: DataDirective = MAI->getData16bitsDirective(0); break;
-        case 4: DataDirective = MAI->getData32bitsDirective(0); break;
-        default: assert(0 && "Unknown CPV size");
-        }
-        Twine Text(DataDirective, OS.str());
-        OutStreamer.EmitRawText(Text);
-      } else {
-        assert(!ACPV->hasModifier() && ACPV->getPCAdjustment() == 0 &&
-               "ARM binary streamer of non-trivial constant pool value!");
-        OutStreamer.EmitValue(Expr, Size);
-      }
-    }
+    virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
   };
 } // end of anonymous namespace
 
@@ -667,6 +601,88 @@ static MCSymbol *getPICLabel(const char *Prefix, unsigned FunctionNumber,
   MCSymbol *Label = Ctx.GetOrCreateSymbol(Twine(Prefix)
                        + "PC" + Twine(FunctionNumber) + "_" + Twine(LabelId));
   return Label;
+}
+
+void ARMAsmPrinter::
+EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
+  int Size = TM.getTargetData()->getTypeAllocSize(MCPV->getType());
+
+  ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+
+  if (ACPV->isLSDA()) {
+    OS << MAI->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
+  } else if (ACPV->isBlockAddress()) {
+    OS << *GetBlockAddressSymbol(ACPV->getBlockAddress());
+  } else if (ACPV->isGlobalValue()) {
+    const GlobalValue *GV = ACPV->getGV();
+    bool isIndirect = Subtarget->isTargetDarwin() &&
+      Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
+    if (!isIndirect)
+      OS << *Mang->getSymbol(GV);
+    else {
+      // FIXME: Remove this when Darwin transition to @GOT like syntax.
+      MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+      OS << *Sym;
+
+      MachineModuleInfoMachO &MMIMachO =
+        MMI->getObjFileInfo<MachineModuleInfoMachO>();
+      MachineModuleInfoImpl::StubValueTy &StubSym =
+        GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
+        MMIMachO.getGVStubEntry(Sym);
+      if (StubSym.getPointer() == 0)
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
+    }
+  } else {
+    assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
+    OS << *GetExternalSymbolSymbol(ACPV->getSymbol());
+  }
+
+  // Create an MCSymbol for the reference.
+  MCSymbol *MCSym = OutContext.GetOrCreateSymbol(OS.str());
+  const MCExpr *Expr = MCSymbolRefExpr::Create(MCSym, OutContext);
+
+  // FIXME: Model the whole expression an an MCExpr and we can get rid
+  // of this hasRawTextSupport() clause and just do an EmitValue().
+  if (OutStreamer.hasRawTextSupport()) {
+    if (ACPV->hasModifier()) OS << "(" << ACPV->getModifier() << ")";
+    if (ACPV->getPCAdjustment() != 0) {
+      OS << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
+        << getFunctionNumber() << "_"  << ACPV->getLabelId()
+        << "+" << (unsigned)ACPV->getPCAdjustment();
+      if (ACPV->mustAddCurrentAddress())
+        OS << "-.";
+      OS << ')';
+    }
+    const char *DataDirective = 0;
+    switch (Size) {
+    case 1: DataDirective = MAI->getData8bitsDirective(0); break;
+    case 2: DataDirective = MAI->getData16bitsDirective(0); break;
+    case 4: DataDirective = MAI->getData32bitsDirective(0); break;
+    default: assert(0 && "Unknown CPV size");
+    }
+    Twine Text(DataDirective, OS.str());
+    OutStreamer.EmitRawText(Text);
+  } else {
+    assert(!ACPV->hasModifier() && !ACPV->mustAddCurrentAddress() &&
+           "ARM binary streamer of non-trivial constant pool value!");
+    if (ACPV->getPCAdjustment()) {
+      MCSymbol *PCLabel = getPICLabel(MAI->getPrivateGlobalPrefix(),
+                                      getFunctionNumber(),
+                                      ACPV->getLabelId(),
+                                      OutContext);
+      const MCExpr *PCRelExpr = MCSymbolRefExpr::Create(PCLabel, OutContext);
+      PCRelExpr =
+        MCBinaryExpr::CreateAdd(PCRelExpr,
+                                MCConstantExpr::Create(ACPV->getPCAdjustment(),
+                                                       OutContext),
+                                OutContext);
+      Expr = MCBinaryExpr::CreateSub(Expr, PCRelExpr, OutContext);
+    }
+    OutStreamer.EmitValue(Expr, Size);
+  }
 }
 
 void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {
