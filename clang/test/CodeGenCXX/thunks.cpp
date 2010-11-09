@@ -260,6 +260,25 @@ namespace Test10 {
   }
 }
 
+// PR7611
+namespace Test11 {
+  struct A {             virtual A* f(); };
+  struct B : virtual A { virtual A* f(); };
+  struct C : B         { virtual C* f(); };
+  C* C::f() { return 0; }
+
+  //  The this-adjustment and return-adjustment thunk required when
+  //  C::f appears in a vtable where A is at a nonzero offset from C.
+  // CHECK: define {{.*}} @_ZTcv0_n24_v0_n32_N6Test111C1fEv(
+
+  //  C::f itself.
+  // CHECK: define {{.*}} @_ZN6Test111C1fEv(
+
+  //  The return-adjustment thunk required when C::f appears in a vtable
+  //  where A is at a zero offset from C.
+  // CHECK: define {{.*}} @_ZTch0_v0_n32_N6Test111C1fEv(
+}
+
 /**** The following has to go at the end of the file ****/
 
 // This is from Test5:

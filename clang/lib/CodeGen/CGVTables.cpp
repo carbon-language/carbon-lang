@@ -1664,9 +1664,18 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
 
           if (ThisAdjustment.VCallOffsetOffset &&
               Overrider.Method->getParent() == MostDerivedClass) {
+
+            // There's no return adjustment from OverriddenMD and MD,
+            // but that doesn't mean there isn't one between MD and
+            // the final overrider.
+            BaseOffset ReturnAdjustmentOffset =
+              ComputeReturnAdjustmentBaseOffset(Context, Overrider.Method, MD);
+            ReturnAdjustment ReturnAdjustment = 
+              ComputeReturnAdjustment(ReturnAdjustmentOffset);
+
             // This is a virtual thunk for the most derived class, add it.
             AddThunk(Overrider.Method, 
-                     ThunkInfo(ThisAdjustment, ReturnAdjustment()));
+                     ThunkInfo(ThisAdjustment, ReturnAdjustment));
           }
         }
 
