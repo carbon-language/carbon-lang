@@ -5973,11 +5973,10 @@ FinishedParams:
 /// by Lang/StrSize. LBraceLoc, if valid, provides the location of
 /// the '{' brace. Otherwise, this linkage specification does not
 /// have any braces.
-Decl *Sema::ActOnStartLinkageSpecification(Scope *S,
-                                                     SourceLocation ExternLoc,
-                                                     SourceLocation LangLoc,
-                                                     llvm::StringRef Lang,
-                                                     SourceLocation LBraceLoc) {
+Decl *Sema::ActOnStartLinkageSpecification(Scope *S, SourceLocation ExternLoc,
+                                           SourceLocation LangLoc,
+                                           llvm::StringRef Lang,
+                                           SourceLocation LBraceLoc) {
   LinkageSpecDecl::LanguageIDs Language;
   if (Lang == "\"C\"")
     Language = LinkageSpecDecl::lang_c;

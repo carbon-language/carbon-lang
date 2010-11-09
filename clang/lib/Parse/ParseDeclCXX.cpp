@@ -183,8 +183,7 @@ Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 ///         'extern' string-literal '{' declaration-seq[opt] '}'
 ///         'extern' string-literal declaration
 ///
-Decl *Parser::ParseLinkage(ParsingDeclSpec &DS,
-                                       unsigned Context) {
+Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
   assert(Tok.is(tok::string_literal) && "Not a string literal!");
   llvm::SmallString<8> LangBuffer;
   bool Invalid = false;
@@ -203,9 +202,9 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS,
                                                            : SourceLocation());
 
   CXX0XAttributeList Attr;
-  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
     Attr = ParseCXX0XAttributes();
-  }
+
   if (getLang().Microsoft && Tok.is(tok::l_square))
     ParseMicrosoftAttributes();
 
@@ -233,7 +232,8 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS,
   }
 
   SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
-  return Actions.ActOnFinishLinkageSpecification(getCurScope(), LinkageSpec, RBrace);
+  return Actions.ActOnFinishLinkageSpecification(getCurScope(), LinkageSpec,
+                                                 RBrace);
 }
 
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
