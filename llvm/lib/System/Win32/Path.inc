@@ -293,14 +293,15 @@ Path::GetLLVMDefaultConfigDir() {
 
 Path
 Path::GetUserHomeDirectory() {
-  // TODO: Typical Windows setup doesn't define HOME.
-  const char* home = getenv("HOME");
-  if (home) {
-    Path result;
-    if (result.set(home))
-      return result;
-  }
-  return GetRootDirectory();
+  char buff[MAX_PATH];
+  HRESULT res =  SHGetFolderPathA(NULL,
+                                  CSIDL_FLAG_CREATE | CSIDL_APPDATA,
+                                  NULL,
+                                  SHGFP_TYPE_CURRENT,
+                                  buff);
+  if (res != S_OK)
+    assert(0 && "Failed to get user home directory");
+  return Path(buff);
 }
 
 Path
