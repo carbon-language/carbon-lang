@@ -234,7 +234,7 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   // If The first operand isn't a register, we have a label reference.
   const MCOperand &MO = MI.getOperand(OpIdx);
   if (!MO.isReg()) {
-    Reg = ARM::PC;              // Rn is PC.
+    Reg = getARMRegisterNumbering(ARM::PC);   // Rn is PC.
     Imm12 = 0;
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
@@ -245,9 +245,6 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
     ++MCNumCPRelocations;
   } else
     isAdd = EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm12, Fixups);
-
-  if (Reg == ARM::PC)
-    return ARM::PC << 13;       // Rn is PC;
 
   uint32_t Binary = Imm12 & 0xfff;
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
@@ -268,7 +265,7 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
   // If The first operand isn't a register, we have a label reference.
   const MCOperand &MO = MI.getOperand(OpIdx);
   if (!MO.isReg()) {
-    Reg = ARM::PC;              // Rn is PC.
+    Reg = getARMRegisterNumbering(ARM::PC);   // Rn is PC.
     Imm8 = 0;
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
@@ -279,9 +276,6 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
     ++MCNumCPRelocations;
   } else
     EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm8, Fixups);
-
-  if (Reg == ARM::PC)
-    return ARM::PC << 9;        // Rn is PC;
 
   uint32_t Binary = ARM_AM::getAM5Offset(Imm8);
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.

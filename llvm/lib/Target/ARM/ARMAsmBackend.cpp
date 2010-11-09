@@ -9,7 +9,7 @@
 
 #include "llvm/Target/TargetAsmBackend.h"
 #include "ARM.h"
-//FIXME: add #include "ARMFixupKinds.h"
+#include "ARMFixupKinds.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/ELFObjectWriter.h"
 #include "llvm/MC/MCAssembler.h"
@@ -138,9 +138,41 @@ public:
   }
 };
 
+static unsigned getFixupKindLog2Size(unsigned Kind) {
+  switch (Kind) {
+  default: llvm_unreachable("Unknown fixup kind!");
+  case FK_Data_4: return 2;
+  case ARM::fixup_arm_pcrel_12: return 2;
+  case ARM::fixup_arm_vfp_pcrel_12: return 1;
+  }
+}
+
+static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
+  switch (Kind) {
+  default:
+    llvm_unreachable("Unknown fixup kind!");
+  case FK_Data_4:
+  case ARM::fixup_arm_pcrel_12:
+    // ARM PC-relative values are offset by 8.
+    return Value - 8;
+  case ARM::fixup_arm_vfp_pcrel_12:
+    // The VFP ld/st immediate value doesn't encode the low two bits since
+    // they're always zero. Offset by 8 just as above.
+    return (Value - 8) >> 2;
+  }
+}
+
 void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                                   uint64_t Value) const {
-  assert(0 && "DarwinARMAsmBackend::ApplyFixup() unimplemented");
+  unsigned NumBytes = getFixupKindLog2Size(Fixup.getKind());
+  Value = adjustFixupValue(Fixup.getKind(), Value);
+
+  assert(Fixup.getOffset() + NumBytes <= DF.getContents().size() &&
+         "Invalid fixup offset!");
+  // For each byte of the fragment that the fixup touches, mask in the
+  // bits from the fixup value.
+  for (unsigned i = 0; i != NumBytes; ++i)
+    DF.getContents()[Fixup.getOffset() + i] |= uint8_t(Value >> (i * 8));
 }
 } // end anonymous namespace
 
