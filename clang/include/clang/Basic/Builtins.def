@@ -29,8 +29,6 @@
 //  d -> double
 //  z -> size_t
 //  F -> constant CFString
-//  G -> id
-//  H -> SEL
 //  a -> __builtin_va_list
 //  A -> "reference" to __builtin_va_list
 //  V -> Vector, following num elements and a base type.
@@ -561,8 +559,11 @@ LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h")
 // POSIX setjmp.h
 LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h")
 LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h")
+
+// FIXME: This type isn't very correct, it should be
 //   id objc_msgSend(id, SEL)
-LIBBUILTIN(objc_msgSend, "GGH.",   "f",     "objc/message.h")
+// but we need new type letters for that.
+LIBBUILTIN(objc_msgSend, "v*.",   "f",     "objc/message.h")
 BUILTIN(__builtin_objc_memmove_collectable, "v*v*vC*z", "nF")
 
 // Builtin math library functions
