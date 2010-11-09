@@ -35,6 +35,7 @@
       <li><a href="#vector_builtins">"missing" vector __builtin functions</a></li>
       <li><a href="#lvalue-cast">Lvalue casts</a></li>
       <li><a href="#blocks-in-protected-scope">Jumps to within <tt>__block</tt> variable scope</a></li>
+      <li><a href="#block-variable-initialization">Non-initialization of <tt>__block</tt> variables</a></li>
     </ul>
   </li>
   <li><a href="#objective-c">Objective-C compatibility</a>
@@ -221,6 +222,29 @@ after the jump target, however the protected scope checker does not check the
 uses of the variable, only the scopes in which it is visible. You should rewrite
 your code to put the <tt>__block</tt> variables in a scope which is only visible
 where they are used.</p>
+
+<!-- ======================================================================= -->
+<h3 id="block-variable-initialization">Non-initialization of <tt>__block</tt>
+variables</h3>
+<!-- ======================================================================= -->
+
+<p>In the following example code, the <tt>x</tt> variable is used before it is
+defined:</p>
+<pre>
+int f0() {
+  __block int x;
+  return ^(){ return x; }();
+}
+</pre>
+
+<p>By an accident of implementation, GCC and llvm-gcc unintentionally always
+zero initialized <tt>__block</tt> variables. However, any program which depends
+on this behavior is relying on unspecified compiler behavior. Programs must
+explicitly initialize all local block variables before they are used, as with
+other local variables.</p>
+
+<p>Clang does not zero initialize local block variables, and programs which rely
+on such behavior will most likely break when built with Clang.</p>
 
 <!-- ======================================================================= -->
 <h2 id="objective-c">Objective-C compatibility</h3>
