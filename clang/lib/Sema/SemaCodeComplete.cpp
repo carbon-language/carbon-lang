@@ -3306,6 +3306,10 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   llvm::SmallVector<ResultCandidate, 8> Results;
 
   Expr *NakedFn = Fn->IgnoreParenCasts();
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(NakedFn))
+    if (UnOp->getOpcode() == UO_AddrOf)
+      NakedFn = UnOp->getSubExpr()->IgnoreParens();
+
   if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(NakedFn))
     AddOverloadedCallCandidates(ULE, Args, NumArgs, CandidateSet,
                                 /*PartialOverloading=*/ true);
