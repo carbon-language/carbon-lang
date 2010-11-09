@@ -75,9 +75,11 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
     return NoModRef;
 
   ModRefResult Mask = ModRef;
-  if (MRB == OnlyReadsMemory)
+  if (onlyReadsMemory(MRB))
     Mask = Ref;
-  else if (MRB == AliasAnalysis::AccessesArguments) {
+
+  if (MRB == AccessesArguments ||
+      MRB == AccessesArgumentsReadonly) {
     bool doesAlias = false;
     for (ImmutableCallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
          AI != AE; ++AI)
@@ -115,20 +117,20 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
   if (CS2B == DoesNotAccessMemory) return NoModRef;
 
   // If they both only read from memory, there is no dependence.
-  if (CS1B == OnlyReadsMemory && CS2B == OnlyReadsMemory)
+  if (onlyReadsMemory(CS1B) && onlyReadsMemory(CS2B))
     return NoModRef;
 
   AliasAnalysis::ModRefResult Mask = ModRef;
 
   // If CS1 only reads memory, the only dependence on CS2 can be
   // from CS1 reading memory written by CS2.
-  if (CS1B == OnlyReadsMemory)
+  if (onlyReadsMemory(CS1B))
     Mask = ModRefResult(Mask & Ref);
 
   // If CS2 only access memory through arguments, accumulate the mod/ref
   // information from CS1's references to the memory referenced by
   // CS2's arguments.
-  if (CS2B == AccessesArguments) {
+  if (CS2B == AccessesArguments || CS2B == AccessesArgumentsReadonly) {
     AliasAnalysis::ModRefResult R = NoModRef;
     for (ImmutableCallSite::arg_iterator
          I = CS2.arg_begin(), E = CS2.arg_end(); I != E; ++I) {
@@ -141,7 +143,7 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
 
   // If CS1 only accesses memory through arguments, check if CS2 references
   // any of the memory referenced by CS1's arguments. If not, return NoModRef.
-  if (CS1B == AccessesArguments) {
+  if (CS1B == AccessesArguments || CS1B == AccessesArgumentsReadonly) {
     AliasAnalysis::ModRefResult R = NoModRef;
     for (ImmutableCallSite::arg_iterator
          I = CS1.arg_begin(), E = CS1.arg_end(); I != E; ++I)
