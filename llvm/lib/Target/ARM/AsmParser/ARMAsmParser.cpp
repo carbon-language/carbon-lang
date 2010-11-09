@@ -512,24 +512,27 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
   SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
     RI = Registers.begin(), RE = Registers.end();
 
-  unsigned HighRegNum = RI->first;
   DenseMap<unsigned, bool> RegMap;
   RegMap[RI->first] = true;
 
+  unsigned HighRegNum = RI->first;
+  bool EmittedWarning = false;
+
   for (++RI; RI != RE; ++RI) {
     const std::pair<unsigned, SMLoc> &RegInfo = *RI;
+    unsigned Reg = RegInfo.first;
 
-    if (RegMap[RegInfo.first]) {
+    if (RegMap[Reg]) {
       Error(RegInfo.second, "register duplicated in register list");
       return 0;
     }
 
-    if (RegInfo.first < HighRegNum)
+    if (!EmittedWarning && Reg < HighRegNum)
       Warning(RegInfo.second,
               "register not in ascending order in register list");
 
-    RegMap[RegInfo.first] = true;
-    HighRegNum = std::max(RegInfo.first, HighRegNum);
+    RegMap[Reg] = true;
+    HighRegNum = std::max(Reg, HighRegNum);
   }
 
   return ARMOperand::CreateRegList(Registers, S, E);
