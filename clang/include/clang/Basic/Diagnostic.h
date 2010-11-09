@@ -19,6 +19,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/type_traits.h"
+#include "llvm/System/DataTypes.h"
 #include <string>
 #include <vector>
 #include <cassert>
