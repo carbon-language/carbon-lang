@@ -36,6 +36,7 @@ namespace tools {
 
     void AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddMIPSTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddSparcTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
   public:

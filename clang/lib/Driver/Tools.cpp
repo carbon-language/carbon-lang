@@ -619,6 +619,51 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   }
 }
 
+void Clang::AddSparcTargetArgs(const ArgList &Args,
+                             ArgStringList &CmdArgs) const {
+  const Driver &D = getToolChain().getDriver();
+
+  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
+    llvm::StringRef MArch = A->getValue(Args);
+    CmdArgs.push_back("-target-cpu");
+    CmdArgs.push_back(MArch.str().c_str());
+  }
+
+  // Select the float ABI as determined by -msoft-float, -mhard-float, and
+  llvm::StringRef FloatABI;
+  if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
+                               options::OPT_mhard_float)) {
+    if (A->getOption().matches(options::OPT_msoft_float))
+      FloatABI = "soft";
+    else if (A->getOption().matches(options::OPT_mhard_float))
+      FloatABI = "hard";
+  }
+
+  // If unspecified, choose the default based on the platform.
+  if (FloatABI.empty()) {
+    switch (getToolChain().getTriple().getOS()) {
+    default:
+      // Assume "soft", but warn the user we are guessing.
+      FloatABI = "soft";
+      D.Diag(clang::diag::warn_drv_assuming_mfloat_abi_is) << "soft";
+      break;
+    }
+  }
+
+  if (FloatABI == "soft") {
+    // Floating point operations and argument passing are soft.
+    //
+    // FIXME: This changes CPP defines, we need -target-soft-float.
+    CmdArgs.push_back("-msoft-float");
+    CmdArgs.push_back("soft");
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+soft-float");
+  } else {
+    assert(FloatABI == "hard" && "Invalid float abi!");
+    CmdArgs.push_back("-mhard-float");
+  }
+}
+
 void Clang::AddX86TargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   if (!Args.hasFlag(options::OPT_mred_zone,
@@ -1004,6 +1049,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
     AddMIPSTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::sparc:
+    AddSparcTargetArgs(Args, CmdArgs);
     break;
 
   case llvm::Triple::x86:
