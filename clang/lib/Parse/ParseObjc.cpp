@@ -404,6 +404,7 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
       break;
         
     case tok::objc_implementation:
+    case tok::objc_interface:
       Diag(Tok, diag::err_objc_missing_end);
       ConsumeToken();
       break;
