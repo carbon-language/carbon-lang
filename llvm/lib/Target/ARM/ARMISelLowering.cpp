@@ -553,7 +553,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // ARMv6 Thumb1 (except for CPUs that support dmb / dsb) and earlier use
   // the default expansion.
   if (Subtarget->hasDataBarrier() ||
-      (Subtarget->hasV6Ops() && !Subtarget->isThumb1Only())) {
+      (Subtarget->hasV6Ops() && !Subtarget->isThumb())) {
     // membarrier needs custom lowering; the rest are legal and handled
     // normally.
     setOperationAction(ISD::MEMBARRIER, MVT::Other, Custom);
@@ -2040,7 +2040,7 @@ static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
     // Some ARMv6 cpus can support data barriers with an mcr instruction.
     // Thumb1 and pre-v6 ARM mode use a libcall instead and should never get
     // here.
-    assert(Subtarget->hasV6Ops() && !Subtarget->isThumb1Only() &&
+    assert(Subtarget->hasV6Ops() && !Subtarget->isThumb() &&
            "Unexpected ISD::MEMBARRIER encountered. Should be libcall!");
     return DAG.getNode(ARMISD::MEMBARRIER_MCR, dl, MVT::Other, Op.getOperand(0),
                        DAG.getConstant(0, MVT::i32));
