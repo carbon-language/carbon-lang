@@ -956,7 +956,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
   // Simple branch support.
-  
+
   // If we can, avoid recomputing the compare - redoing it could lead to wonky
   // behavior.
   // TODO: Factor this out.
@@ -1005,13 +1005,13 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(CmpOpc))
                       .addReg(Arg1).addReg(Arg2));
-      
+
       // For floating point we need to move the result to a comparison register
       // that we can then use for branches.
       if (isFloat)
         AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                 TII.get(ARM::FMSTAT)));
-      
+
       unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
       .addMBB(TBB).addImm(ARMPred).addReg(ARM::CPSR);
@@ -1020,7 +1020,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
       return true;
     }
   }
-  
+
   unsigned CmpReg = getRegForValue(BI->getCondition());
   if (CmpReg == 0) return false;
 
@@ -1826,10 +1826,10 @@ namespace llvm {
   llvm::FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo) {
     // Completely untested on non-darwin.
     const TargetMachine &TM = funcInfo.MF->getTarget();
-    
+
     // Darwin and thumb1 only for now.
     const ARMSubtarget *Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    if (Subtarget->isTargetDarwin() && !Subtarget->isThumb1Only() && 
+    if (Subtarget->isTargetDarwin() && !Subtarget->isThumb1Only() &&
         !DisableARMFastISel)
       return new ARMFastISel(funcInfo);
     return 0;
