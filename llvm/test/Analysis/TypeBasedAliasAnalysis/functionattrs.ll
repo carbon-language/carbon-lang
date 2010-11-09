@@ -55,6 +55,20 @@ define void @test2_no(i8* %p, i8* %q, i64 %n) nounwind {
   ret void
 }
 
+; Similar to the others, va_arg only accesses memory through its operand.
+
+; CHECK: define i32 @test3_yes(i8* nocapture %p) nounwind readnone {
+define i32 @test3_yes(i8* %p) nounwind {
+  %t = va_arg i8* %p, i32, !tbaa !1
+  ret i32 %t
+}
+
+; CHECK: define i32 @test3_no(i8* nocapture %p) nounwind {
+define i32 @test3_no(i8* %p) nounwind {
+  %t = va_arg i8* %p, i32, !tbaa !2
+  ret i32 %t
+}
+
 declare void @callee(i32* %p) nounwind
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8*, i8*, i64, i32, i1) nounwind
 

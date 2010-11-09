@@ -195,6 +195,13 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
           if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
         }
+      } else if (VAArgInst *VI = dyn_cast<VAArgInst>(I)) {
+        // Ignore vaargs on local memory.
+        AliasAnalysis::Location Loc(VI->getPointerOperand(),
+                                    AliasAnalysis::UnknownSize,
+                                    VI->getMetadata(LLVMContext::MD_tbaa));
+        if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
+          continue;
       }
 
       // Any remaining instructions need to be taken seriously!  Check if they
