@@ -247,8 +247,7 @@ public:
   /// This property corresponds to the GCC 'pure' attribute.
   ///
   bool onlyReadsMemory(ImmutableCallSite CS) {
-    ModRefBehavior MRB = getModRefBehavior(CS);
-    return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
+    return onlyReadsMemory(getModRefBehavior(CS));
   }
 
   /// onlyReadsMemory - If the specified function is known to only read from
@@ -256,7 +255,14 @@ public:
   /// when the call site is not known.
   ///
   bool onlyReadsMemory(const Function *F) {
-    ModRefBehavior MRB = getModRefBehavior(F);
+    return onlyReadsMemory(getModRefBehavior(F));
+  }
+
+  /// onlyReadsMemory - If the functions with the specified behavior are known
+  /// to only read from non-volatile memory (or not access memory at all), return
+  /// true.  For use when the call site is not known.
+  ///
+  static bool onlyReadsMemory(ModRefBehavior MRB) {
     return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
   }
 
