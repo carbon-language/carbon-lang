@@ -262,7 +262,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 
   return getContext().getELFSection(SectionName,
                                     getELFSectionType(SectionName, Kind),
-                                    getELFSectionFlags(Kind), Kind, true);
+                                    getELFSectionFlags(Kind), Kind);
 }
 
 static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {

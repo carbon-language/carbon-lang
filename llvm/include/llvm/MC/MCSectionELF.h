@@ -32,10 +32,6 @@ class MCSectionELF : public MCSection {
   /// below.
   unsigned Flags;
 
-  /// IsExplicit - Indicates that this section comes from globals with an
-  /// explicit section specified.
-  bool IsExplicit;
-
   /// EntrySize - The size of each entry in this section. This size only
   /// makes sense for sections that contain fixed-sized entries. If a
   /// section does not contain fixed-sized entries 'EntrySize' will be 0.
@@ -44,18 +40,15 @@ class MCSectionELF : public MCSection {
 private:
   friend class MCContext;
   MCSectionELF(StringRef Section, unsigned type, unsigned flags,
-               SectionKind K, bool isExplicit, unsigned entrySize)
+               SectionKind K, unsigned entrySize)
     : MCSection(SV_ELF, K), SectionName(Section), Type(type), Flags(flags),
-      IsExplicit(isExplicit), EntrySize(entrySize) {}
+      EntrySize(entrySize) {}
   ~MCSectionELF();
 public:
 
   /// ShouldOmitSectionDirective - Decides whether a '.section' directive
   /// should be printed before the section name
   bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
-
-  /// ShouldPrintSectionType - Only prints the section type if supported
-  bool ShouldPrintSectionType(unsigned Ty) const;
 
   /// HasCommonSymbols - True if this section holds common symbols, this is
   /// indicated on the ELF object file by a symbol with SHN_COMMON section

@@ -140,7 +140,6 @@ namespace llvm {
     
     const MCSection *getELFSection(StringRef Section, unsigned Type,
                                    unsigned Flags, SectionKind Kind,
-                                   bool IsExplicit = false,
                                    unsigned EntrySize = 0);
 
     const MCSection *getCOFFSection(StringRef Section, unsigned Characteristics,
