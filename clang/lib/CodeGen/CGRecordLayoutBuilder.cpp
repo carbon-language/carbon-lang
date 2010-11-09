@@ -576,9 +576,6 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
 
   uint64_t NumBytes = AlignedNonVirtualTypeSize - AlignedNextFieldOffset;
   NonVirtualBaseFieldTypes.push_back(getByteArrayType(NumBytes));
-
-  printf("nvts: %llu, aligned nfo: %llu\n",
-         AlignedNonVirtualTypeSize, AlignedNextFieldOffset);
 }
 
 bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
