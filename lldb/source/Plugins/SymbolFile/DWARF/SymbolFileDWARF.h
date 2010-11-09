@@ -20,6 +20,7 @@
 // Other libraries and framework includes
 #include "llvm/ADT/DenseMap.h"
 
+#include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/DataExtractor.h"
@@ -296,7 +297,8 @@ protected:
                                 m_debug_map_symfile = debug_map_symfile;
                             }
 
-    SymbolFileDWARFDebugMap*        m_debug_map_symfile;
+    SymbolFileDWARFDebugMap *       m_debug_map_symfile;
+    clang::TranslationUnitDecl *    m_clang_tu_decl;
     lldb_private::Flags             m_flags;
     lldb_private::DataExtractor     m_dwarf_data; 
     lldb_private::DataExtractor     m_data_debug_abbrev;

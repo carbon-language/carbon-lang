@@ -65,8 +65,7 @@ public:
     {
         eDumpFlag_Verbose               = (1<<0),   // Verbose dumping
         eDumpFlag_ShowForm              = (1<<1),   // Show the DW_form type
-        eDumpFlag_EnglishyNames         = (1<<2),   // Show the DW_TAG, DW_AT and DW_FORM types in more englishy names instead of as DWARF definitions values
-        eDumpFlag_ShowAncestors         = (1<<3)    // Show all parent DIEs when dumping single DIEs
+        eDumpFlag_ShowAncestors         = (1<<2)    // Show all parent DIEs when dumping single DIEs
     };
 
 

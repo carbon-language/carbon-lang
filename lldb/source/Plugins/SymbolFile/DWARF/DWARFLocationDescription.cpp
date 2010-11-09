@@ -61,7 +61,7 @@ print_dwarf_exp_op (Stream *s,
 
     opcode_class = DW_OP_value_to_class (opcode) & (~DRC_DWARFv3);
 
-    s->Printf("%s ", DW_OP_value_to_englishy_name (opcode));
+    s->Printf("%s ", DW_OP_value_to_name (opcode));
 
     /* Does this take zero parameters?  If so we can shortcut this function.  */
     if (opcode_class == DRC_ZEROOPERANDS)

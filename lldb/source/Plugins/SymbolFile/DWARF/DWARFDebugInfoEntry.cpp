@@ -1098,7 +1098,6 @@ DWARFDebugInfoEntry::Dump
 {
     const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
     uint32_t offset = m_offset;
-    bool english    = s->GetFlags().Test (DWARFDebugInfo::eDumpFlag_EnglishyNames);
 
     if (debug_info_data.ValidOffset(offset))
     {
@@ -1110,10 +1109,7 @@ DWARFDebugInfoEntry::Dump
         {
             if (m_abbrevDecl)
             {
-                if (english)
-                    s->PutCString(DW_TAG_value_to_englishy_name(m_abbrevDecl->Tag()));
-                else
-                    s->PutCString(DW_TAG_value_to_name(m_abbrevDecl->Tag()));
+                s->PutCString(DW_TAG_value_to_name(m_abbrevDecl->Tag()));
                 s->Printf( " [%u] %c\n", abbrCode, m_abbrevDecl->HasChildren() ? '*':' ');
 
                 // Dump all data in the .debug_info for the attributes
@@ -1172,22 +1168,16 @@ DWARFDebugInfoEntry::DumpAttribute
 {
     bool verbose    = s->GetVerbose();
     bool show_form  = s->GetFlags().Test(DWARFDebugInfo::eDumpFlag_ShowForm);
-    bool english    = s->GetFlags().Test(DWARFDebugInfo::eDumpFlag_EnglishyNames);
     const DataExtractor* debug_str_data = dwarf2Data ? &dwarf2Data->get_debug_str_data() : NULL;
     if (verbose)
-        s->Offset(*offset_ptr);
+        s->Offset (*offset_ptr);
     else
-        s->Printf( "            ");
-    s->Indent();
-
-    if (english)
-        s->PutCString(DW_AT_value_to_englishy_name(attr));
-    else
-        s->PutCString(DW_AT_value_to_name(attr));
+        s->Printf ("            ");
+    s->Indent(DW_AT_value_to_name(attr));
 
     if (show_form)
     {
-        s->Printf( "[%s", english ? DW_FORM_value_to_englishy_name(form) : DW_FORM_value_to_name(form));
+        s->Printf( "[%s", DW_FORM_value_to_name(form));
     }
 
     DWARFFormValue form_value(form);
@@ -1199,7 +1189,7 @@ DWARFDebugInfoEntry::DumpAttribute
     {
         if (form == DW_FORM_indirect)
         {
-            s->Printf( " [%s]", english ? DW_FORM_value_to_englishy_name(form_value.Form()) : DW_FORM_value_to_name(form_value.Form()));
+            s->Printf( " [%s]", DW_FORM_value_to_name(form_value.Form()));
         }
 
         s->PutCString("] ");
@@ -1326,7 +1316,8 @@ DWARFDebugInfoEntry::GetAttributes
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
     const uint8_t *fixed_form_sizes,
-    DWARFDebugInfoEntry::Attributes& attributes
+    DWARFDebugInfoEntry::Attributes& attributes,
+    uint32_t curr_depth
 ) const
 {
     if (m_abbrevDecl)
@@ -1347,7 +1338,27 @@ DWARFDebugInfoEntry::GetAttributes
         for (i=0; i<num_attributes; ++i)
         {
             m_abbrevDecl->GetAttrAndFormByIndexUnchecked (i, attr, form);
-            attributes.Append(cu, offset, attr, form);
+            
+            // If we are tracking down DW_AT_specification or DW_AT_abstract_origin
+            // attributes, the depth will be non-zero. We need to omit certain
+            // attributes that don't make sense.
+            switch (attr)
+            {
+            case DW_AT_sibling:
+            case DW_AT_declaration:
+                if (curr_depth > 0)
+                {
+                    // This attribute doesn't make sense when combined with
+                    // the DIE that references this DIE. We know a DIE is 
+                    // referencing this DIE because curr_depth is not zero
+                    break;  
+                }
+                // Fall through...
+            default:
+                attributes.Append(cu, offset, attr, form);
+                break;
+            }
+
             if ((attr == DW_AT_specification) || (attr == DW_AT_abstract_origin))
             {
                 form_value.SetForm(form);
@@ -1359,14 +1370,14 @@ DWARFDebugInfoEntry::GetAttributes
                     {
                         die = const_cast<DWARFCompileUnit*>(cu)->GetDIEPtr(die_offset);
                         if (die)
-                            die->GetAttributes(dwarf2Data, cu, fixed_form_sizes, attributes);
+                            die->GetAttributes(dwarf2Data, cu, fixed_form_sizes, attributes, curr_depth + 1);
                     }
                     else
                     {
                         DWARFCompileUnitSP cu_sp_ptr;
                         die = const_cast<SymbolFileDWARF*>(dwarf2Data)->DebugInfo()->GetDIEPtr(die_offset, &cu_sp_ptr);
                         if (die)
-                            die->GetAttributes(dwarf2Data, cu_sp_ptr.get(), fixed_form_sizes, attributes);
+                            die->GetAttributes(dwarf2Data, cu_sp_ptr.get(), fixed_form_sizes, attributes, curr_depth + 1);
                     }
                 }
             }

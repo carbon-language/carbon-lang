@@ -142,7 +142,8 @@ public:
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
                     const uint8_t *fixed_form_sizes,
-                    DWARFDebugInfoEntry::Attributes& attrs) const;
+                    DWARFDebugInfoEntry::Attributes& attrs,
+                    uint32_t curr_depth = 0) const; // "curr_depth" for internal use only, don't set this yourself!!!
 
     dw_offset_t GetAttributeValue(
                     SymbolFileDWARF* dwarf2Data,

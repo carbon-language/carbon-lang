@@ -104,6 +104,7 @@ namespace clang
     class TemplateTemplateParmDecl;
     class TemplateTypeParmDecl;
     class TextDiagnosticBuffer;
+    class TranslationUnitDecl;
     class Type;
     class TypedefDecl;
     class TypesCompatibleExpr;

@@ -27,20 +27,19 @@ enum DW_TAG_Category
 };
 
 typedef enum DW_TAG_Category DW_TAG_CategoryEnum;
+
 const char *DW_TAG_value_to_name (uint32_t val);
-const char *DW_TAG_value_to_englishy_name (uint32_t val);
+
 DW_TAG_CategoryEnum get_tag_category (uint16_t tag);
 
 const char *DW_CHILDREN_value_to_name (uint8_t val);
 
 const char *DW_AT_value_to_name (uint32_t val);
-const char *DW_AT_value_to_englishy_name (uint32_t val);
 
 const char *DW_FORM_value_to_name (uint32_t val);
-const char *DW_FORM_value_to_englishy_name (uint32_t val);
 
 const char *DW_OP_value_to_name (uint32_t val);
-const char *DW_OP_value_to_englishy_name (uint32_t val);
+
 DRC_class DW_OP_value_to_class (uint32_t val);
 
 const char *DW_ATE_value_to_name (uint32_t val);

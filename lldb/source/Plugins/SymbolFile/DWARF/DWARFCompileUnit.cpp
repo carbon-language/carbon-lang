@@ -644,15 +644,8 @@ DWARFCompileUnit::Index
                     break;
 
                 case DW_AT_declaration:
-                    // Make sure the declaration is from this DIE, and not from 
-                    // a DW_AT_specification or DW_AT_abstract_origin by checking
-                    // this die and seeing if its abbreviations have the
-                    // DW_AT_declaration attribute
-                    if (die.GetAbbreviationDeclarationPtr()->FindAttributeIndex (DW_AT_declaration) != DW_INVALID_INDEX)
-                    {
-                        if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
-                            is_declaration = form_value.Unsigned() != 0;
-                    }
+                    if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
+                        is_declaration = form_value.Unsigned() != 0;
                     break;
 
                 case DW_AT_artificial:

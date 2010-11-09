@@ -28,12 +28,9 @@ class ClangExpressionDeclMap;
 /// to Clang for these names, consulting the ClangExpressionDeclMap to do
 /// the actual lookups.
 //----------------------------------------------------------------------
-class ClangASTSource : public clang::ExternalSemaSource {
-	clang::ASTContext &m_ast_context;   ///< The parser's AST context, for copying types into
-	ClangExpressionDeclMap &m_decl_map; ///< The object that looks up named entities in LLDB
+class ClangASTSource : public clang::ExternalSemaSource 
+{
 public:
-    friend struct NameSearchContext;
-    
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -91,20 +88,21 @@ public:
     /// @return
     ///     Whatever SetExternalVisibleDeclsForName returns.
     //------------------------------------------------------------------
-    clang::DeclContextLookupResult FindExternalVisibleDeclsByName(const clang::DeclContext *DC,
-                                                                  clang::DeclarationName Name);
+    clang::DeclContextLookupResult 
+    FindExternalVisibleDeclsByName (const clang::DeclContext *DC,
+                                    clang::DeclarationName Name);
     
     //------------------------------------------------------------------
     /// Interface stub.
     //------------------------------------------------------------------
-    void MaterializeVisibleDecls(const clang::DeclContext *DC);
+    void MaterializeVisibleDecls (const clang::DeclContext *DC);
 	
     //------------------------------------------------------------------
     /// Interface stub that returns true.
     //------------------------------------------------------------------
-	bool FindExternalLexicalDecls(const clang::DeclContext *DC,
-                                  bool (*isKindWeWant)(clang::Decl::Kind),
-                                  llvm::SmallVectorImpl<clang::Decl*> &Decls);
+	bool FindExternalLexicalDecls (const clang::DeclContext *DC,
+                                   bool (*isKindWeWant)(clang::Decl::Kind),
+                                   llvm::SmallVectorImpl<clang::Decl*> &Decls);
     
     //------------------------------------------------------------------
     /// Called on entering a translation unit.  Tells Clang by calling
@@ -114,7 +112,13 @@ public:
     /// @param[in] ASTConsumer
     ///     Unused.
     //------------------------------------------------------------------
-    void StartTranslationUnit(clang::ASTConsumer *Consumer);
+    void StartTranslationUnit (clang::ASTConsumer *Consumer);
+
+protected:
+    friend struct NameSearchContext;
+
+	clang::ASTContext &m_ast_context;   ///< The parser's AST context, for copying types into
+	ClangExpressionDeclMap &m_decl_map; ///< The object that looks up named entities in LLDB
 };
 
 //----------------------------------------------------------------------

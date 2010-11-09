@@ -23,7 +23,7 @@ DW_TAG_value_to_name (uint32_t val)
   if (val == 0)
       return "NULL";
 
-  const char *llvmstr = TagString (val);
+  const char *llvmstr = llvm::dwarf::TagString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_TAG constant: 0x%x", val);
@@ -33,37 +33,10 @@ DW_TAG_value_to_name (uint32_t val)
 }   
 
 const char *
-DW_TAG_value_to_englishy_name (uint32_t val)
-{
-  static char invalid[100];
-
-  if (val == 0)
-      return "NULL";
-
-  const char *llvmstr = TagString (val);
-  if (llvmstr == NULL)
-  {
-      snprintf (invalid, sizeof (invalid), "Unknown DW_TAG constant: 0x%x", val);
-      return invalid;
-  }
-
-  std::string str;
-  if (strncmp (llvmstr, "DW_TAG_", 7) == 0)
-    llvmstr += 7;
-  
-  for (const char *i = llvmstr; *i != '\0'; i++)
-    str += *i == '_' ? ' ' : *i;
-
-  ConstString const_str (str.c_str());
-
-  return const_str.GetCString();
-}
-
-const char *
 DW_CHILDREN_value_to_name (uint8_t val)
 {
   static char invalid[100];
-  const char *llvmstr = ChildrenString (val);
+  const char *llvmstr = llvm::dwarf::ChildrenString (val);
   if (llvmstr == NULL)
   {
        snprintf (invalid, sizeof (invalid), "Unknown DW_CHILDREN constant: 0x%x", val);
@@ -76,105 +49,39 @@ const char *
 DW_AT_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = AttributeString (val);
+  const char *llvmstr = llvm::dwarf::AttributeString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_AT constant: 0x%x", val);
       return invalid;
   }
   return llvmstr;
-}
-
-const char *
-DW_AT_value_to_englishy_name (uint32_t val)
-{
-  static char invalid[100];
-  const char *llvmstr = AttributeString (val);
-  if (llvmstr == NULL)
-  {
-      snprintf (invalid, sizeof (invalid), "Unknown DW_AT constant: 0x%x", val);
-      return invalid;
-  }
-
-  std::string str;
-  if (strncmp (llvmstr, "DW_AT_", 6) == 0)
-    llvmstr += 6;
-
-  for (const char *i = llvmstr; *i != '\0'; i++)
-    str += *i == '_' ? ' ' : *i;
-
-  ConstString const_str (str.c_str());
-  return const_str.GetCString();
 }
 
 const char *
 DW_FORM_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = FormEncodingString (val);
+  const char *llvmstr = llvm::dwarf::FormEncodingString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_FORM constant: 0x%x", val);
       return invalid;
   }
   return llvmstr;
-}
-
-const char *
-DW_FORM_value_to_englishy_name (uint32_t val)
-{
-  static char invalid[100];
-  const char *llvmstr = FormEncodingString (val);
-  if (llvmstr == NULL)
-  {
-      snprintf (invalid, sizeof (invalid), "Unknown DW_FORM constant: 0x%x", val);
-      return invalid;
-  }
-
-  std::string str;
-  if (strncmp (llvmstr, "DW_FORM_", 8) == 0)
-    llvmstr += 8;
-
-  for (const char *i = llvmstr; *i != '\0'; i++)
-    str += *i == '_' ? ' ' : *i;
-
-  ConstString const_str (str.c_str());
-  return const_str.GetCString();
 }
 
 const char *
 DW_OP_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = OperationEncodingString (val);
+  const char *llvmstr = llvm::dwarf::OperationEncodingString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_OP constant: 0x%x", val);
       return invalid;
   }
   return llvmstr;
-}
-
-const char *
-DW_OP_value_to_englishy_name (uint32_t val)
-{
-  static char invalid[100];
-  const char *llvmstr = OperationEncodingString (val);
-  if (llvmstr == NULL)
-  {
-      snprintf (invalid, sizeof (invalid), "Unknown DW_OP constant: 0x%x", val);
-      return invalid;
-  }
-
-  std::string str;
-  if (strncmp (llvmstr, "DW_OP_", 6) == 0)
-    llvmstr += 6;
-
-  for (const char *i = llvmstr; *i != '\0'; i++)
-    str += *i == '_' ? ' ' : *i;
-
-  ConstString const_str (str.c_str());
-  return const_str.GetCString();
 }
 
 DRC_class
@@ -341,7 +248,7 @@ const char *
 DW_ATE_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = AttributeEncodingString (val);
+  const char *llvmstr = llvm::dwarf::AttributeEncodingString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_ATE constant: 0x%x", val);
@@ -355,7 +262,7 @@ DW_ACCESS_value_to_name (uint32_t val)
 {
   static char invalid[100];
 
-  const char *llvmstr = AccessibilityString (val);
+  const char *llvmstr = llvm::dwarf::AccessibilityString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_ACCESS constant: 0x%x", val);
@@ -368,7 +275,7 @@ const char *
 DW_VIS_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = VisibilityString (val);
+  const char *llvmstr = llvm::dwarf::VisibilityString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_VIS constant: 0x%x", val);
@@ -381,7 +288,7 @@ const char *
 DW_VIRTUALITY_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = VirtualityString (val);
+  const char *llvmstr = llvm::dwarf::VirtualityString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_VIRTUALITY constant: 0x%x", val);
@@ -394,7 +301,7 @@ const char *
 DW_LANG_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = LanguageString (val);
+  const char *llvmstr = llvm::dwarf::LanguageString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_LANG constant: 0x%x", val);
@@ -407,7 +314,7 @@ const char *
 DW_ID_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = CaseString (val);
+  const char *llvmstr = llvm::dwarf::CaseString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_ID constant: 0x%x", val);
@@ -420,7 +327,7 @@ const char *
 DW_CC_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = ConventionString (val);
+  const char *llvmstr = llvm::dwarf::ConventionString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_CC constant: 0x%x", val);
@@ -433,7 +340,7 @@ const char *
 DW_INL_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = InlineCodeString (val);
+  const char *llvmstr = llvm::dwarf::InlineCodeString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_INL constant: 0x%x", val);
@@ -446,7 +353,7 @@ const char *
 DW_ORD_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = ArrayOrderString (val);
+  const char *llvmstr = llvm::dwarf::ArrayOrderString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_ORD constant: 0x%x", val);
@@ -459,7 +366,7 @@ const char *
 DW_DSC_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = DiscriminantString (val);
+  const char *llvmstr = llvm::dwarf::DiscriminantString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_DSC constant: 0x%x", val);
@@ -472,7 +379,7 @@ const char *
 DW_LNS_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = LNStandardString (val);
+  const char *llvmstr = llvm::dwarf::LNStandardString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_LNS constant: 0x%x", val);
@@ -485,7 +392,7 @@ const char *
 DW_LNE_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = LNExtendedString (val);
+  const char *llvmstr = llvm::dwarf::LNExtendedString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_LNE constant: 0x%x", val);
@@ -498,7 +405,7 @@ const char *
 DW_MACINFO_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = MacinfoString (val);
+  const char *llvmstr = llvm::dwarf::MacinfoString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_MACINFO constant: 0x%x", val);
@@ -511,7 +418,7 @@ const char *
 DW_CFA_value_to_name (uint32_t val)
 {
   static char invalid[100];
-  const char *llvmstr = CallFrameString (val);
+  const char *llvmstr = llvm::dwarf::CallFrameString (val);
   if (llvmstr == NULL)
   {
       snprintf (invalid, sizeof (invalid), "Unknown DW_CFA constant: 0x%x", val);

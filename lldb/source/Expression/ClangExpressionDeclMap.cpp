@@ -301,15 +301,15 @@ ClangExpressionDeclMap::GetFunctionAddress
     if (m_exe_ctx.frame == NULL)
         return false;
 
-    SymbolContextList sym_ctxs;
+    SymbolContextList sc_list;
     
-    m_sym_ctx.FindFunctionsByName(name, false, sym_ctxs);
+    m_sym_ctx.FindFunctionsByName(name, false, sc_list);
     
-    if (!sym_ctxs.GetSize())
+    if (!sc_list.GetSize())
         return false;
     
     SymbolContext sym_ctx;
-    sym_ctxs.GetContextAtIndex(0, sym_ctx);
+    sc_list.GetContextAtIndex(0, sym_ctx);
     
     const Address *fun_address;
     
@@ -955,11 +955,7 @@ ClangExpressionDeclMap::FindVariableInScope
 
 // Interface for ClangASTSource
 void 
-ClangExpressionDeclMap::GetDecls 
-(
-    NameSearchContext &context,
-    const ConstString &name
-)
+ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString &name)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
         
@@ -970,7 +966,7 @@ ClangExpressionDeclMap::GetDecls
     if (m_exe_ctx.frame == NULL)
         return;
         
-    SymbolContextList sym_ctxs;
+    SymbolContextList sc_list;
     
     // Only look for functions by name out in our symbols if the function 
     // doesn't start with our phony prefix of '$'
@@ -986,18 +982,18 @@ ClangExpressionDeclMap::GetDecls
         }
         else
         {
-            m_sym_ctx.FindFunctionsByName (name, false, sym_ctxs);
+            m_sym_ctx.FindFunctionsByName (name, false, sc_list);
         
             bool found_specific = false;
             Symbol *generic_symbol = NULL;
             Symbol *non_extern_symbol = NULL;
             
-            for (uint32_t index = 0, num_indices = sym_ctxs.GetSize();
+            for (uint32_t index = 0, num_indices = sc_list.GetSize();
                  index < num_indices;
                  ++index)
             {
                 SymbolContext sym_ctx;
-                sym_ctxs.GetContextAtIndex(index, sym_ctx);
+                sc_list.GetContextAtIndex(index, sym_ctx);
 
                 if (sym_ctx.function)
                 {
