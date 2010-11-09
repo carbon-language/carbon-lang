@@ -435,7 +435,7 @@ llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::StructType *Ty,
     llvm::GlobalValue::LinkageTypes linkage) {
   llvm::Constant *C = llvm::ConstantStruct::get(Ty, V);
   return new llvm::GlobalVariable(TheModule, Ty, false,
-      llvm::GlobalValue::InternalLinkage, C, Name);
+      linkage, C, Name);
 }
 
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
@@ -443,7 +443,7 @@ llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
     llvm::GlobalValue::LinkageTypes linkage) {
   llvm::Constant *C = llvm::ConstantArray::get(Ty, V);
   return new llvm::GlobalVariable(TheModule, Ty, false,
-                                  llvm::GlobalValue::InternalLinkage, C, Name);
+                                  linkage, C, Name);
 }
 
 /// Generate an NSConstantString object.
@@ -1586,13 +1586,15 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
 
   // Resolve the class aliases, if they exist.
   if (ClassPtrAlias) {
-    ClassPtrAlias->setAliasee(
+    ClassPtrAlias->replaceAllUsesWith(
         llvm::ConstantExpr::getBitCast(ClassStruct, IdTy));
+    ClassPtrAlias->eraseFromParent();
     ClassPtrAlias = 0;
   }
   if (MetaClassPtrAlias) {
-    MetaClassPtrAlias->setAliasee(
+    MetaClassPtrAlias->replaceAllUsesWith(
         llvm::ConstantExpr::getBitCast(MetaClassStruct, IdTy));
+    MetaClassPtrAlias->eraseFromParent();
     MetaClassPtrAlias = 0;
   }
 
