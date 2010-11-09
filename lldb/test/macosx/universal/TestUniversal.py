@@ -7,7 +7,7 @@ from lldbtest import *
 
 class UniversalTestCase(TestBase):
 
-    mydir = "macosx/universal"
+    mydir = os.path.join("macosx", "universal")
 
     def setUp(self):
         # Call super's setUp().
