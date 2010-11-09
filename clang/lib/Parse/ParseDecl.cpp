@@ -889,6 +889,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         AccessSpecifier AS,
                                         DeclSpecContext DSContext) {  
   DS.SetRangeStart(Tok.getLocation());
+  DS.SetRangeEnd(Tok.getLocation());
   while (1) {
     bool isInvalid = false;
     const char *PrevSpec = 0;

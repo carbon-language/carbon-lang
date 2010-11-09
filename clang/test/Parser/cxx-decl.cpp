@@ -83,3 +83,14 @@ struct CodeCompleteConsumer {
 
 void CodeCompleteConsumer::() { // expected-error {{xpected unqualified-id}}
 } 
+
+;
+
+// PR8380
+extern ""      // expected-error {{unknown linkage language}}
+test6a { ;// expected-error {{C++ requires a type specifier for all declarations}} \
+     // expected-error {{expected ';' after top level declarator}}
+  
+  int test6b;
+  
+  

@@ -187,7 +187,6 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS,
                                        unsigned Context) {
   assert(Tok.is(tok::string_literal) && "Not a string literal!");
   llvm::SmallString<8> LangBuffer;
-  // LangBuffer is guaranteed to be big enough.
   bool Invalid = false;
   llvm::StringRef Lang = PP.getSpelling(Tok, LangBuffer, &Invalid);
   if (Invalid)
