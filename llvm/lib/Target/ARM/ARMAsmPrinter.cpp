@@ -666,7 +666,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
     Twine Text(DataDirective, OS.str());
     OutStreamer.EmitRawText(Text);
   } else {
-    assert(!ACPV->hasModifier() && !ACPV->mustAddCurrentAddress() &&
+    assert(!ACPV->hasModifier() &&
            "ARM binary streamer of non-trivial constant pool value!");
     if (ACPV->getPCAdjustment()) {
       MCSymbol *PCLabel = getPICLabel(MAI->getPrivateGlobalPrefix(),
@@ -679,6 +679,14 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
                                 MCConstantExpr::Create(ACPV->getPCAdjustment(),
                                                        OutContext),
                                 OutContext);
+      if (ACPV->mustAddCurrentAddress()) {
+        // We want "(<expr> - .)", but MC doesn't have a concept of the '.'
+        // label, so just emit a local label end reference that instead.
+        MCSymbol *DotSym = OutContext.CreateTempSymbol();
+        OutStreamer.EmitLabel(DotSym);
+        const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
+        Expr = MCBinaryExpr::CreateSub(Expr, DotExpr, OutContext);
+      }
       Expr = MCBinaryExpr::CreateSub(Expr, PCRelExpr, OutContext);
     }
     OutStreamer.EmitValue(Expr, Size);
