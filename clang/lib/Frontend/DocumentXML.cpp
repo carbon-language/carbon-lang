@@ -17,6 +17,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
+#include <cstdio>
 
 namespace clang {
 
