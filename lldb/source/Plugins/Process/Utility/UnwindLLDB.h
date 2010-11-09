@@ -63,6 +63,9 @@ private:
     typedef lldb::SharedPtr<Cursor>::Type CursorSP;
     std::vector<CursorSP> m_frames;
 
+    bool AddOneMoreFrame ();
+    bool AddFirstFrame ();
+
     //------------------------------------------------------------------
     // For UnwindLLDB only
     //------------------------------------------------------------------
