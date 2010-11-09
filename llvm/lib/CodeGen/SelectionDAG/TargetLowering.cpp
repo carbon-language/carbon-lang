@@ -2738,7 +2738,8 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
         case 32:
         case 64:
         case 128:
-          OpTy = IntegerType::get(OpTy->getContext(), BitSize);
+          OpInfo.ConstraintVT =
+              EVT::getEVT(IntegerType::get(OpTy->getContext(), BitSize), true);
           break;
         }
       } else if (dyn_cast<PointerType>(OpTy)) {
