@@ -1,5 +1,5 @@
 // RUN: %clang_cc1  -fsyntax-only -verify %s
-// rdar:// 6812436
+// rdar://6812436
 
 @interface A @end
 

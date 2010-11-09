@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-// rdar:// 8191774
+// rdar://8191774
 
 @protocol SomeProtocol
 @end

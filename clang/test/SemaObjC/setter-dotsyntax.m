@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-// rdar: //8528170
+// rdar://8528170
 
 @interface NSObject @end
 
