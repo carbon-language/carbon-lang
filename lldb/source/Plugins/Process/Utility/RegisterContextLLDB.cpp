@@ -677,6 +677,54 @@ RegisterContextLLDB::ReadRegisterBytesFromRegisterLocation (uint32_t regnum, Reg
 }
 
 bool
+RegisterContextLLDB::WriteRegisterBytesToRegisterLocation (uint32_t regnum, RegisterLocation regloc, DataExtractor &data, uint32_t data_offset)
+{
+    if (!IsValid())
+        return false;
+
+    if (regloc.type == eRegisterInRegister)
+    {
+        if (IsFrameZero ())
+        {
+            return m_base_reg_ctx->WriteRegisterBytes (regloc.location.register_number, data, data_offset);
+        }
+        else
+        {
+            return m_next_frame->WriteRegisterBytes (regloc.location.register_number, data, data_offset);
+        }
+    }
+    if (regloc.type == eRegisterNotSaved)
+    {
+        return false;
+    }
+    if (regloc.type == eRegisterValueInferred)
+    {
+        return false;
+    }
+    if (regloc.type == eRegisterSavedAtHostMemoryLocation)
+    {
+        assert ("FIXME debugger inferior function call unwind");
+    }
+    if (regloc.type != eRegisterSavedAtMemoryLocation)
+    {
+        assert ("Unknown RegisterLocation type.");
+    }
+
+    Error error;
+    const RegisterInfo *reg_info = m_base_reg_ctx->GetRegisterInfoAtIndex (regnum);
+    if (reg_info->byte_size == 0)
+        return false;
+    uint8_t *buf = (uint8_t*) alloca (reg_info->byte_size);
+    if (data.ExtractBytes (data_offset, reg_info->byte_size, m_thread.GetProcess().GetByteOrder(), buf) != reg_info->byte_size)
+        return false;
+    if (m_thread.GetProcess().WriteMemory (regloc.location.target_memory_location, buf, reg_info->byte_size, error) != reg_info->byte_size)
+        return false;
+
+    return true;
+}
+
+
+bool
 RegisterContextLLDB::IsValid () const
 {
     return m_frame_type != eNotAValidFrame;
@@ -907,7 +955,8 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
                     lldb_regnum);
     }
 
-    assert ("UnwindPlan::Row types atDWARFExpression and isDWARFExpression are unsupported.");
+    
+    // assert ("UnwindPlan::Row types atDWARFExpression and isDWARFExpression are unsupported.");
     return false;
 }
 
@@ -1013,23 +1062,50 @@ RegisterContextLLDB::ReadRegisterBytes (uint32_t lldb_reg, DataExtractor& data)
 }
 
 bool
+RegisterContextLLDB::WriteRegisterBytes (uint32_t lldb_reg, DataExtractor &data, uint32_t data_offset)
+{
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    if (!IsValid())
+        return false;
+
+    if (log && IsLogVerbose ())
+    {
+        log->Printf("%*sFrame %d looking for register saved location for reg %d",
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                    lldb_reg);
+    }
+
+    // If this is the 0th frame, hand this over to the live register context
+    if (IsFrameZero ())
+    {
+        if (log)
+        {
+            log->Printf("%*sFrame %d passing along to the live register context for reg %d",
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                        lldb_reg);
+        }
+        return m_base_reg_ctx->WriteRegisterBytes (lldb_reg, data, data_offset);
+    }
+
+    RegisterLocation regloc;
+    // Find out where the NEXT frame saved THIS frame's register contents
+    if (!((RegisterContextLLDB*)m_next_frame.get())->SavedLocationForRegister (lldb_reg, regloc))
+        return false;
+
+    return WriteRegisterBytesToRegisterLocation (lldb_reg, regloc, data, data_offset);
+}
+
+// Don't need to implement this one
+bool
 RegisterContextLLDB::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 {
-    assert ("not yet implemented");  // FIXME
     return false;
 }
 
-bool
-RegisterContextLLDB::WriteRegisterBytes (uint32_t reg, DataExtractor &data, uint32_t data_offset)
-{
-    assert ("not yet implemented");  // FIXME
-    return false;
-}
-
+// Don't need to implement this one
 bool
 RegisterContextLLDB::WriteAllRegisterValues (const lldb::DataBufferSP& data_sp)
 {
-    assert ("not yet implemented");  // FIXME
     return false;
 }
 

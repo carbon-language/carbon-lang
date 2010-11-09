@@ -139,7 +139,7 @@ private:
     ReadRegisterBytesFromRegisterLocation (uint32_t regnum, RegisterLocation regloc, lldb_private::DataExtractor &data);
 
     bool
-    WriteRegisterBytesFromRegisterLocation (uint32_t regnum, RegisterLocation regloc, lldb_private::Scalar value);
+    WriteRegisterBytesToRegisterLocation (uint32_t regnum, RegisterLocation regloc, lldb_private::DataExtractor &data, uint32_t data_offset);
 
     // Get the contents of a general purpose (address-size) register for this frame 
     // (usually retrieved from the m_next_frame)
