@@ -1065,7 +1065,7 @@ void ELFObjectWriterImpl::WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
     RelaSection = Ctx.getELFSection(RelaSectionName, HasRelocationAddend ?
                                     ELF::SHT_RELA : ELF::SHT_REL, 0,
                                     SectionKind::getReadOnly(),
-                                    false, EntrySize);
+                                    EntrySize);
 
     MCSectionData &RelaSD = Asm.getOrCreateSectionData(*RelaSection);
     RelaSD.setAlignment(Is64Bit ? 8 : 4);
@@ -1164,7 +1164,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   const MCSection *SymtabSection =
     Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
                       SectionKind::getReadOnly(),
-                      false, EntrySize);
+                      EntrySize);
   MCSectionData &SymtabSD = Asm.getOrCreateSectionData(*SymtabSection);
   SymtabSD.setAlignment(Is64Bit ? 8 : 4);
   SymbolTableIndex = Asm.size();
@@ -1174,7 +1174,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   if (NeedsSymtabShndx) {
     const MCSection *SymtabShndxSection =
       Ctx.getELFSection(".symtab_shndx", ELF::SHT_SYMTAB_SHNDX, 0,
-                        SectionKind::getReadOnly(), false, 4);
+                        SectionKind::getReadOnly(), 4);
     SymtabShndxSD = &Asm.getOrCreateSectionData(*SymtabShndxSection);
     SymtabShndxSD->setAlignment(4);
   }

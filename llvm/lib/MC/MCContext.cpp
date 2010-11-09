@@ -151,7 +151,7 @@ getMachOSection(StringRef Segment, StringRef Section,
 
 const MCSection *MCContext::
 getELFSection(StringRef Section, unsigned Type, unsigned Flags,
-              SectionKind Kind, bool IsExplicit, unsigned EntrySize) {
+              SectionKind Kind, unsigned EntrySize) {
   if (ELFUniquingMap == 0)
     ELFUniquingMap = new ELFUniqueMapTy();
   ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)ELFUniquingMap;
@@ -165,7 +165,7 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
     EntrySize = MCSectionELF::DetermineEntrySize(Kind);
   }
   MCSectionELF *Result = new (*this) MCSectionELF(Entry.getKey(), Type, Flags,
-                                                  Kind, IsExplicit, EntrySize);
+                                                  Kind, EntrySize);
   Entry.setValue(Result);
   return Result;
 }
