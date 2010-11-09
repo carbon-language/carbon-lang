@@ -1028,6 +1028,35 @@ Expr *InitListExpr::updateInit(ASTContext &C, unsigned Init, Expr *expr) {
   return Result;
 }
 
+SourceRange InitListExpr::getSourceRange() const {
+  if (SyntacticForm)
+    return SyntacticForm->getSourceRange();
+  SourceLocation Beg = LBraceLoc, End = RBraceLoc;
+  if (Beg.isInvalid()) {
+    // Find the first non-null initializer.
+    for (InitExprsTy::const_iterator I = InitExprs.begin(),
+                                     E = InitExprs.end(); 
+      I != E; ++I) {
+      if (Stmt *S = *I) {
+        Beg = S->getLocStart();
+        break;
+      }  
+    }
+  }
+  if (End.isInvalid()) {
+    // Find the first non-null initializer from the end.
+    for (InitExprsTy::const_reverse_iterator I = InitExprs.rbegin(),
+                                             E = InitExprs.rend();
+      I != E; ++I) {
+      if (Stmt *S = *I) {
+        End = S->getSourceRange().getEnd();
+        break;
+      }  
+    }
+  }
+  return SourceRange(Beg, End);
+}
+
 /// getFunctionType - Return the underlying function type for this block.
 ///
 const FunctionType *BlockExpr::getFunctionType() const {
