@@ -101,14 +101,15 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
       // External node - may write memory.  Just give up.
       return false;
 
-    if (F->doesNotAccessMemory())
+    AliasAnalysis::ModRefBehavior MRB = AA->getModRefBehavior(F);
+    if (MRB == AliasAnalysis::DoesNotAccessMemory)
       // Already perfect!
       continue;
 
     // Definitions with weak linkage may be overridden at linktime with
     // something that writes memory, so treat them like declarations.
     if (F->isDeclaration() || F->mayBeOverridden()) {
-      if (!F->onlyReadsMemory())
+      if (!AliasAnalysis::onlyReadsMemory(MRB))
         // May write memory.  Just give up.
         return false;
 
