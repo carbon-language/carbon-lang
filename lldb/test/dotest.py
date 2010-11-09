@@ -670,10 +670,14 @@ for ia in range(len(archs) if iterArchs else 1):
                          % (suite.countTestCases(),
                             suite.countTestCases() != 1 and "s" or ""))
 
-        # Invoke the test runner.
         class LLDBTestResult(unittest2.TextTestResult):
             """
-            Enforce a singleton pattern to allow inspection of test progress.
+            Enforce a singleton pattern to allow introspection of test progress.
+
+            Overwrite addError(), addFailure(), and addExpectedFailure() methods
+            to enable each test instance to track its failure/error status.  It
+            is used in the LLDB test framework to emit detailed trace messages
+            to a log file for easier human inspection of test failres/errors.
             """
             __singleton__ = None
 
@@ -709,6 +713,7 @@ for ia in range(len(archs) if iterArchs else 1):
                 if method:
                     method()
 
+        # Invoke the test runner.
         result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
                                           resultclass=LLDBTestResult).run(suite)
         
