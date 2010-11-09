@@ -277,6 +277,9 @@ getLdStSORegOpValue(const MCInst &MI, unsigned OpIdx,
   // ROR - 11
   switch (ShOp) {
   default: llvm_unreachable("Unknown shift opc!");
+  case ARM_AM::no_shift:
+    assert(ShImm == 0 && "Non-zero shift amount with no shift type!");
+    // fall through
   case ARM_AM::lsl: SBits = 0x0; break;
   case ARM_AM::lsr: SBits = 0x1; break;
   case ARM_AM::asr: SBits = 0x2; break;
