@@ -104,7 +104,7 @@ std::string DocumentXML::escapeString(const char* pStr,
       if (isprint(C))
         value += C;
       else {
-        sprintf(buffer, "\\%03o", C);
+        snprintf(buffer, sizeof(buffer), "\\%03o", C);
         value += buffer;
       }
       break;
