@@ -302,14 +302,14 @@ float4 foo(float2 a, float2 b) {
 and <tt>unavailable</tt> attributes.  For example:</p>
 
 <blockquote>
-<pre>void explode(void) __attribute__((deprecated("extremely unsafe!!!")));</pre>
+<pre>void explode(void) __attribute__((deprecated("extremely unsafe, use 'combust' instead!!!")));</pre>
 </blockquote>
 
 <p>If the deprecated or unavailable declaration is used, the message
 will be incorporated into the appropriate diagnostic:</p>
 
 <blockquote>
-<pre>harmless.c:4:3: warning: 'explode' is deprecated: extremely unsafe!!! [-Wdeprecated-declarations]
+<pre>harmless.c:4:3: warning: 'explode' is deprecated: extremely unsafe, use 'combust' instead!!! [-Wdeprecated-declarations]
   explode();
   ^</pre>
 </blockquote>
