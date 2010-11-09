@@ -189,6 +189,13 @@ public:
     // This property corresponds to the IntrNoMem LLVM intrinsic flag.
     DoesNotAccessMemory,
 
+    // AccessesArgumentsReadonly - This function loads through function
+    // arguments and does not perform any non-local stores or volatile
+    // loads.
+    //
+    // This property corresponds to the IntrReadArgMem LLVM intrinsic flag.
+    AccessesArgumentsReadonly,
+
     // AccessesArguments - This function accesses function arguments in well
     // known (possibly volatile) ways, but does not access any other memory.
     //
