@@ -128,11 +128,6 @@ protected:
   // exists, return the interfering register, which may be preg or an alias.
   unsigned checkPhysRegInterference(LiveInterval& lvr, unsigned preg);
 
-#ifndef NDEBUG
-  // Verify each LiveIntervalUnion.
-  void verify();
-#endif
-  
   // Helper that spills all live virtual registers currently unified under preg
   // that interfere with the most recently queried lvr.
   void spillInterferences(unsigned preg,
