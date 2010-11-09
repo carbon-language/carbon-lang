@@ -1,11 +1,10 @@
-; RUN: llc -march=x86-64 < %s
-
-; DAGCombiner should fold this code in finite time.
-
-; rdar://8606584
+; RUN: llc -march=x86-64 < %s | FileCheck %s
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-pc-linux-gnu"
+
+; DAGCombiner should fold this code in finite time.
+; rdar://8606584
 
 define void @D() nounwind readnone {
 bb.nph:
@@ -30,3 +29,37 @@ while.cond:                                       ; preds = %while.cond, %bb.nph
 while.end:                                        ; preds = %while.cond
   ret void
 }
+
+
+; DAGCombiner shouldn't fold the sdiv (ashr) away.
+; rdar://8636812
+; CHECK: main:
+; CHECK:   sarl
+
+define i32 @main() nounwind {
+entry:
+  %i = alloca i32, align 4
+  %j = alloca i8, align 1
+  store i32 127, i32* %i, align 4
+  store i8 0, i8* %j, align 1
+  %tmp3 = load i32* %i, align 4
+  %mul = mul nsw i32 %tmp3, 2
+  %conv4 = trunc i32 %mul to i8
+  %conv5 = sext i8 %conv4 to i32
+  %div6 = sdiv i32 %conv5, 2
+  %conv7 = trunc i32 %div6 to i8
+  %conv9 = sext i8 %conv7 to i32
+  %cmp = icmp eq i32 %conv9, -1
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  ret i32 0
+
+if.end:                                           ; preds = %entry
+  call void @abort() noreturn
+  unreachable
+}
+
+declare void @abort() noreturn
+
+declare void @exit(i32) noreturn

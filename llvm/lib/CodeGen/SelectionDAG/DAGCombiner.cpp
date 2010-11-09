@@ -4120,6 +4120,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   // we can fold the truncate through the shift.
   unsigned ShLeftAmt = 0;
   if (ShAmt == 0 && N0.getOpcode() == ISD::SHL && N0.hasOneUse() &&
+      ExtVT == VT &&
       TLI.isNarrowingProfitable(N0.getValueType(), VT)) {
     if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
       ShLeftAmt = N01->getZExtValue();
