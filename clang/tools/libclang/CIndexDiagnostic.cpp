@@ -64,8 +64,8 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
     // and source ranges.
     CXFile File;
     unsigned Line, Column;
-    clang_getSpellingLocation(clang_getDiagnosticLocation(Diagnostic),
-                              &File, &Line, &Column, 0);
+    clang_getInstantiationLocation(clang_getDiagnosticLocation(Diagnostic),
+                                   &File, &Line, &Column, 0);
     if (File) {
       CXString FName = clang_getFileName(File);
       Out << clang_getCString(FName) << ":" << Line << ":";
@@ -81,11 +81,11 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
           CXSourceRange Range = clang_getDiagnosticRange(Diagnostic, I);
           
           unsigned StartLine, StartColumn, EndLine, EndColumn;
-          clang_getSpellingLocation(clang_getRangeStart(Range),
-                                    &StartFile, &StartLine, &StartColumn,
-                                    0);
-          clang_getSpellingLocation(clang_getRangeEnd(Range),
-                                    &EndFile, &EndLine, &EndColumn, 0);
+          clang_getInstantiationLocation(clang_getRangeStart(Range),
+                                         &StartFile, &StartLine, &StartColumn,
+                                         0);
+          clang_getInstantiationLocation(clang_getRangeEnd(Range),
+                                         &EndFile, &EndLine, &EndColumn, 0);
           
           if (StartFile != EndFile || StartFile != File)
             continue;

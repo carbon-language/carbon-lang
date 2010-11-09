@@ -10,14 +10,7 @@ int f(int *ptr1, float *ptr2) {
   return ptr1 != ptr2; // CHECK: code-complete-errors.c:10:15:{10:10-10:14}{10:18-10:22}: warning: comparison of distinct pointer types ('int *' and 'float *')
 }
 
-#define expand_to_binary_function(ret, name, parm1, parm2, code) ret name(parm1, parm2) code
-
-expand_to_binary_function(int, g, int *ip, float *fp, {
-// CHECK: code-complete-errors.c:17:15:{17:12-17:14}{17:18-17:20}: warning: comparison of distinct pointer types ('int *' and 'float *')
-    return ip == fp;
-  })
-
 void g() {  }
 
-// RUN: c-index-test -code-completion-at=%s:19:12 -pedantic %s 2> %t
+// RUN: c-index-test -code-completion-at=%s:13:12 -pedantic %s 2> %t
 // RUN: FileCheck -check-prefix=CHECK %s < %t
