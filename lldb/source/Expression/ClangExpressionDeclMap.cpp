@@ -970,45 +970,6 @@ ClangExpressionDeclMap::GetDecls
     if (m_exe_ctx.frame == NULL)
         return;
         
-    static ConstString g_lldb_class_name ("$__lldb_class");
-    if (name == g_lldb_class_name)
-    {
-        // Clang is looking for the type of "this"
-        
-        VariableList *vars = m_exe_ctx.frame->GetVariableList(false);
-        
-        if (!vars)
-            return;
-        
-        lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
-        
-        if (!this_var)
-            return;
-        
-        Type *this_type = this_var->GetType();
-        
-        if (!this_type)
-            return;
-        
-        TypeFromUser this_user_type(this_type->GetClangType(),
-                                    this_type->GetClangAST());
-        
-        m_object_pointer_type = this_user_type;
-        
-        void *pointer_target_type;
-        
-        if (!ClangASTContext::IsPointerType(this_user_type.GetOpaqueQualType(),
-                                            &pointer_target_type))
-            return;
-        
-        TypeFromUser class_user_type(pointer_target_type,
-                                     this_type->GetClangAST());
-
-        AddOneType(context, class_user_type, true);
-        
-        return;
-    }
-    
     SymbolContextList sym_ctxs;
     
     // Only look for functions by name out in our symbols if the function 
@@ -1066,6 +1027,45 @@ ClangExpressionDeclMap::GetDecls
     }
     else
     {
+        static ConstString g_lldb_class_name ("$__lldb_class");
+        if (name == g_lldb_class_name)
+        {
+            // Clang is looking for the type of "this"
+            
+            VariableList *vars = m_exe_ctx.frame->GetVariableList(false);
+            
+            if (!vars)
+                return;
+            
+            lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
+            
+            if (!this_var)
+                return;
+            
+            Type *this_type = this_var->GetType();
+            
+            if (!this_type)
+                return;
+            
+            TypeFromUser this_user_type(this_type->GetClangType(),
+                                        this_type->GetClangAST());
+            
+            m_object_pointer_type = this_user_type;
+            
+            void *pointer_target_type;
+            
+            if (!ClangASTContext::IsPointerType(this_user_type.GetOpaqueQualType(),
+                                                &pointer_target_type))
+                return;
+            
+            TypeFromUser class_user_type(pointer_target_type,
+                                         this_type->GetClangAST());
+
+            AddOneType(context, class_user_type, true);
+            
+            return;
+        }
+        
         ClangExpressionVariable *pvar(m_persistent_vars->GetVariable(name));
     
         if (pvar)

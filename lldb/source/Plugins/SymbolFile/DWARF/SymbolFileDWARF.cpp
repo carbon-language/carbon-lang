@@ -2857,27 +2857,27 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     }
 
 
-//                    if (is_forward_declaration)
-//                    {
-//                        // We have a forward declaration to a type and we need
-//                        // to try and find a full declaration. We look in the
-//                        // current type index just in case we have a forward
-//                        // declaration followed by an actual declarations in the
-//                        // DWARF. If this fails, we need to look elsewhere...
-//                    
-//                        type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
-//
-//                        if (!type_sp)
-//                        {
-//                            // We weren't able to find a full declaration in
-//                            // this DWARF, see if we have a declaration anywhere    
-//                            // else...
-//                            if (m_debug_map_symfile)
-//                                type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
-//                        }
-//                        if (type_sp)
-//                            return type_sp;
-//                    }
+                    if (is_forward_declaration)
+                    {
+                        // We have a forward declaration to a type and we need
+                        // to try and find a full declaration. We look in the
+                        // current type index just in case we have a forward
+                        // declaration followed by an actual declarations in the
+                        // DWARF. If this fails, we need to look elsewhere...
+                    
+                        type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+
+                        if (!type_sp)
+                        {
+                            // We weren't able to find a full declaration in
+                            // this DWARF, see if we have a declaration anywhere    
+                            // else...
+                            if (m_debug_map_symfile)
+                                type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                        }
+                        if (type_sp)
+                            return type_sp;
+                    }
                     assert (tag_decl_kind != -1);
                     bool clang_type_was_created = false;
                     clang_type = m_forward_decl_die_to_clang_type.lookup (die);

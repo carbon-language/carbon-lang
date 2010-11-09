@@ -268,14 +268,14 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
     else
     {
         assert(snprintf(&buf->contents[0], sizeof(buf->contents), 
-                        "extern \"C\" int gdb_class_getClass(void *);       \n"
-                        "extern \"C\" void                                  \n"
-                        "%s(void *$__lldb_arg_obj)                          \n"
-                        "{                                                  \n"
-                        "    void **isa_ptr = (void **)$__lldb_arg_obj;     \n"
-                        "    if (!isa_ptr || !gdb_class_getClass(*isa_ptr)) \n"
-                        "        abort();                                   \n"
-                        "}                                                  \n", 
+                        "extern \"C\" int gdb_class_getClass(void *);         \n"
+                        "extern \"C\" void                                    \n"
+                        "%s(void *$__lldb_arg_obj)                            \n"
+                        "{                                                    \n"
+                        "    void **$isa_ptr = (void **)$__lldb_arg_obj;      \n"
+                        "    if (!$isa_ptr || !gdb_class_getClass(*$isa_ptr)) \n"
+                        "        abort();                                     \n"
+                        "}                                                    \n", 
                         name) < sizeof(buf->contents));
     }
     
