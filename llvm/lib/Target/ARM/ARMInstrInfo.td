@@ -278,7 +278,6 @@ def brtarget : Operand<OtherVT>;
 
 // A list of registers separated by comma. Used by load/store multiple.
 def reglist : Operand<i32> {
-  int NumOperands = 2;
   string EncoderMethod = "getRegisterListOpValue";
   let PrintMethod = "printRegisterList";
 }
