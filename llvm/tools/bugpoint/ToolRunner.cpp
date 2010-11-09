@@ -59,7 +59,8 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
                                  const sys::Path &StdOutFile,
                                  const sys::Path &StdErrFile,
                                  unsigned NumSeconds = 0,
-                                 unsigned MemoryLimit = 0) {
+                                 unsigned MemoryLimit = 0,
+                                 std::string *ErrMsg = 0) {
   const sys::Path* redirects[3];
   redirects[0] = &StdInFile;
   redirects[1] = &StdOutFile;
@@ -76,7 +77,7 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
 
   return
     sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects,
-                                 NumSeconds, MemoryLimit);
+                                 NumSeconds, MemoryLimit, ErrMsg);
 }
 
 /// RunProgramRemotelyWithTimeout - This function runs the given program
@@ -230,7 +231,7 @@ int LLI::ExecuteProgram(const std::string &Bitcode,
         );
   return RunProgramWithTimeout(sys::Path(LLIPath), &LLIArgs[0],
       sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
-      Timeout, MemoryLimit);
+      Timeout, MemoryLimit, Error);
 }
 
 // LLI create method - Try to find the LLI executable
@@ -301,7 +302,7 @@ int CustomExecutor::ExecuteProgram(const std::string &Bitcode,
   return RunProgramWithTimeout(
     sys::Path(ExecutionCommand),
     &ProgramArgs[0], sys::Path(InputFile), sys::Path(OutputFile),
-    sys::Path(OutputFile), Timeout, MemoryLimit);
+    sys::Path(OutputFile), Timeout, MemoryLimit, Error);
 }
 
 // Custom execution environment create method, takes the execution command
@@ -518,7 +519,7 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
   DEBUG(errs() << "\nSending output to " << OutputFile << "\n");
   return RunProgramWithTimeout(sys::Path(LLIPath), &JITArgs[0],
       sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
-      Timeout, MemoryLimit);
+      Timeout, MemoryLimit, Error);
 }
 
 /// createJIT - Try to find the LLI executable
@@ -772,7 +773,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     DEBUG(errs() << "<run locally>");
     return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
         sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
-        Timeout, MemoryLimit);
+        Timeout, MemoryLimit, Error);
   } else {
     outs() << "<run remotely>"; outs().flush();
     return RunProgramRemotelyWithTimeout(sys::Path(RemoteClientPath),
