@@ -128,8 +128,7 @@ class ARMOperand : public MCParsedAsmOperand {
     } Reg;
 
     struct {
-      unsigned RegStart;
-      unsigned Number;
+      std::vector<unsigned> *Registers;
     } RegList;
 
     struct {
@@ -196,18 +195,13 @@ public:
   }
 
   unsigned getReg() const {
-    assert((Kind == Register || Kind == RegisterList) && "Invalid access!");
-    unsigned RegNum = 0;
-    if (Kind == Register)
-      RegNum = Reg.RegNum;
-    else
-      RegNum = RegList.RegStart;
-    return RegNum;
+    assert(Kind == Register && "Invalid access!");
+    return Reg.RegNum;
   }
 
-  std::pair<unsigned, unsigned> getRegList() const {
+  const std::vector<unsigned> &getRegList() const {
     assert(Kind == RegisterList && "Invalid access!");
-    return std::make_pair(RegList.RegStart, RegList.Number);
+    return *RegList.Registers;
   }
 
   const MCExpr *getImm() const {
@@ -259,10 +253,11 @@ public:
   }
 
   void addRegListOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && "Invalid number of operands!");
-    std::pair<unsigned, unsigned> RegList = getRegList();
-    Inst.addOperand(MCOperand::CreateReg(RegList.first));
-    Inst.addOperand(MCOperand::CreateImm(RegList.second));
+    assert(N == 1 && "Invalid number of operands!");
+    const std::vector<unsigned> &RegList = getRegList();
+    for (std::vector<unsigned>::const_iterator
+           I = RegList.begin(), E = RegList.end(); I != E; ++I)
+      Inst.addOperand(MCOperand::CreateReg(*I));
   }
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
@@ -325,11 +320,15 @@ public:
     return Op;
   }
 
-  static ARMOperand *CreateRegList(unsigned RegStart, unsigned Number,
-                                   SMLoc S, SMLoc E) {
+  static ARMOperand *
+  CreateRegList(std::vector<std::pair<unsigned, SMLoc> > &Regs,
+                SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(RegisterList);
-    Op->RegList.RegStart = RegStart;
-    Op->RegList.Number = Number;
+    Op->RegList.Registers = new std::vector<unsigned>();
+    for (std::vector<std::pair<unsigned, SMLoc> >::iterator
+           I = Regs.begin(), E = Regs.end(); I != E; ++I)
+      Op->RegList.Registers->push_back(I->first);
+    std::sort(Op->RegList.Registers->begin(), Op->RegList.Registers->end());
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -386,12 +385,12 @@ void ARMOperand::dump(raw_ostream &OS) const {
     break;
   case RegisterList: {
     OS << "<register_list ";
-    std::pair<unsigned, unsigned> List = getRegList();
-    unsigned RegEnd = List.first + List.second;
 
-    for (unsigned Idx = List.first; Idx < RegEnd; ) {
-      OS << Idx;
-      if (++Idx < RegEnd) OS << ", ";
+    const std::vector<unsigned> &RegList = getRegList();
+    for (std::vector<unsigned>::const_iterator
+           I = RegList.begin(), E = RegList.end(); I != E; ) {
+      OS << *I;
+      if (++I < E) OS << ", ";
     }
 
     OS << ">";
@@ -459,30 +458,15 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
   assert(Parser.getTok().is(AsmToken::LCurly) &&
          "Token is not a Left Curly Brace");
   SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat left curly brace token.
 
-  const AsmToken &RegTok = Parser.getTok();
-  SMLoc RegLoc = RegTok.getLoc();
-  if (RegTok.isNot(AsmToken::Identifier)) {
-    Error(RegLoc, "register expected");
-    return 0;
-  }
-
-  int RegNum = TryParseRegister();
-  if (RegNum == -1) {
-    Error(RegLoc, "register expected");
-    return 0;
-  }
-
-  unsigned PrevRegNum = RegNum;
+  // Read the rest of the registers in the list.
+  unsigned PrevRegNum = 0;
   std::vector<std::pair<unsigned, SMLoc> > Registers;
   Registers.reserve(32);
-  Registers.push_back(std::make_pair(RegNum, RegLoc));
 
-  while (Parser.getTok().is(AsmToken::Comma) ||
-         Parser.getTok().is(AsmToken::Minus)) {
+  do {
     bool IsRange = Parser.getTok().is(AsmToken::Minus);
-    Parser.Lex(); // Eat comma or minus token.
+    Parser.Lex(); // Eat non-identifier token.
 
     const AsmToken &RegTok = Parser.getTok();
     SMLoc RegLoc = RegTok.getLoc();
@@ -508,7 +492,8 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
     }
 
     PrevRegNum = RegNum;
-  }
+  } while (Parser.getTok().is(AsmToken::Comma) ||
+           Parser.getTok().is(AsmToken::Minus));
 
   // Process the right curly brace of the list.
   const AsmToken &RCurlyTok = Parser.getTok();
@@ -521,18 +506,15 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
   Parser.Lex(); // Eat right curly brace token.
  
   // Verify the register list.
-  std::vector<std::pair<unsigned, SMLoc> >::iterator
+  std::vector<std::pair<unsigned, SMLoc> >::const_iterator
     RI = Registers.begin(), RE = Registers.end();
 
-  unsigned Number = Registers.size();
   unsigned HighRegNum = RI->first;
-  unsigned RegStart = RI->first;
-
   DenseMap<unsigned, bool> RegMap;
   RegMap[RI->first] = true;
 
   for (++RI; RI != RE; ++RI) {
-    std::pair<unsigned, SMLoc> &RegInfo = *RI;
+    const std::pair<unsigned, SMLoc> &RegInfo = *RI;
 
     if (RegMap[RegInfo.first]) {
       Error(RegInfo.second, "register duplicated in register list");
@@ -545,15 +527,9 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
 
     RegMap[RegInfo.first] = true;
     HighRegNum = std::max(RegInfo.first, HighRegNum);
-    RegStart = std::min(RegInfo.first, RegStart);
   }
 
-  if (RegStart + Number - 1 != HighRegNum) {
-    Error(RegLoc, "non-contiguous register range");
-    return 0;
-  }
-
-  return ARMOperand::CreateRegList(RegStart, Number, S, E);
+  return ARMOperand::CreateRegList(Registers, S, E);
 }
 
 /// Parse an ARM memory expression, return false if successful else return true
