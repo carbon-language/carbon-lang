@@ -128,7 +128,7 @@ class ARMOperand : public MCParsedAsmOperand {
     } Reg;
 
     struct {
-      std::vector<unsigned> *Registers;
+      SmallVector<unsigned, 32> *Registers;
     } RegList;
 
     struct {
@@ -203,7 +203,7 @@ public:
     return Reg.RegNum;
   }
 
-  const std::vector<unsigned> &getRegList() const {
+  const SmallVectorImpl<unsigned> &getRegList() const {
     assert(Kind == RegisterList && "Invalid access!");
     return *RegList.Registers;
   }
@@ -258,8 +258,8 @@ public:
 
   void addRegListOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const std::vector<unsigned> &RegList = getRegList();
-    for (std::vector<unsigned>::const_iterator
+    const SmallVectorImpl<unsigned> &RegList = getRegList();
+    for (SmallVectorImpl<unsigned>::const_iterator
            I = RegList.begin(), E = RegList.end(); I != E; ++I)
       Inst.addOperand(MCOperand::CreateReg(*I));
   }
@@ -325,11 +325,11 @@ public:
   }
 
   static ARMOperand *
-  CreateRegList(std::vector<std::pair<unsigned, SMLoc> > &Regs,
+  CreateRegList(const SmallVectorImpl<std::pair<unsigned, SMLoc> > &Regs,
                 SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(RegisterList);
-    Op->RegList.Registers = new std::vector<unsigned>();
-    for (std::vector<std::pair<unsigned, SMLoc> >::iterator
+    Op->RegList.Registers = new SmallVector<unsigned, 32>();
+    for (SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
            I = Regs.begin(), E = Regs.end(); I != E; ++I)
       Op->RegList.Registers->push_back(I->first);
     std::sort(Op->RegList.Registers->begin(), Op->RegList.Registers->end());
@@ -390,8 +390,8 @@ void ARMOperand::dump(raw_ostream &OS) const {
   case RegisterList: {
     OS << "<register_list ";
 
-    const std::vector<unsigned> &RegList = getRegList();
-    for (std::vector<unsigned>::const_iterator
+    const SmallVectorImpl<unsigned> &RegList = getRegList();
+    for (SmallVectorImpl<unsigned>::const_iterator
            I = RegList.begin(), E = RegList.end(); I != E; ) {
       OS << *I;
       if (++I < E) OS << ", ";
@@ -465,8 +465,7 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
 
   // Read the rest of the registers in the list.
   unsigned PrevRegNum = 0;
-  std::vector<std::pair<unsigned, SMLoc> > Registers;
-  Registers.reserve(32);
+  SmallVector<std::pair<unsigned, SMLoc>, 32> Registers;
 
   do {
     bool IsRange = Parser.getTok().is(AsmToken::Minus);
@@ -510,7 +509,7 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
   Parser.Lex(); // Eat right curly brace token.
  
   // Verify the register list.
-  std::vector<std::pair<unsigned, SMLoc> >::const_iterator
+  SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
     RI = Registers.begin(), RE = Registers.end();
 
   unsigned HighRegNum = RI->first;
