@@ -14,7 +14,6 @@ void test() {
 // CHECK: blocks.c:7:3: UnexposedStmt= Extent=[7:3 - 7:26]
 // CHECK: blocks.c:7:21: VarDecl=_foo:7:21 (Definition) Extent=[7:17 - 7:25]
 // CHECK: blocks.c:7:17: TypeRef=struct foo:4:8 Extent=[7:17 - 7:20]
-// CHECK: blocks.c:8:3: UnexposedStmt= Extent=[8:3 - 8:17]
 // CHECK: blocks.c:8:11: VarDecl=i:8:11 (Definition) Extent=[8:11 - 8:16]
 // CHECK: blocks.c:8:15: UnexposedExpr= Extent=[8:15 - 8:16]
 // CHECK: blocks.c:9:3: CallExpr= Extent=[9:3 - 9:65]

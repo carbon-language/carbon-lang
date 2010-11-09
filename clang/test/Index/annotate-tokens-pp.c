@@ -173,7 +173,7 @@ void test() {
 // CHECK: Punctuation: "," [25:26 - 25:27] UnexposedStmt=
 // CHECK: Punctuation: "{" [25:28 - 25:29] UnexposedStmt=
 // CHECK: Keyword: "int" [25:30 - 25:33] UnexposedStmt=
-// CHECK: Identifier: "z" [25:34 - 25:35] VarDecl=z:25:3 (Definition)
+// CHECK: Identifier: "z" [25:34 - 25:35] VarDecl=z:25:34 (Definition)
 // CHECK: Punctuation: "=" [25:36 - 25:37] UnexposedStmt=
 // CHECK: Identifier: "x" [25:38 - 25:39] DeclRefExpr=x:24:7
 // CHECK: Punctuation: ";" [25:39 - 25:40] UnexposedStmt=

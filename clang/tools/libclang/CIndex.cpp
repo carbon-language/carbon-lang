@@ -104,8 +104,9 @@ CXSourceRange cxloc::translateSourceRange(const SourceManager &SM,
                                           const CharSourceRange &R) {
   // We want the last character in this location, so we will adjust the
   // location accordingly.
-  // FIXME: How do do this with a macro instantiation location?
   SourceLocation EndLoc = R.getEnd();
+  if (EndLoc.isValid() && EndLoc.isMacroID())
+    EndLoc = SM.getSpellingLoc(EndLoc);
   if (R.isTokenRange() && !EndLoc.isInvalid() && EndLoc.isFileID()) {
     unsigned Length = Lexer::MeasureTokenLength(EndLoc, SM, LangOpts);
     EndLoc = EndLoc.getFileLocWithOffset(Length);
@@ -2453,6 +2454,51 @@ void clang_getInstantiationLocation(CXSourceLocation location,
     *column = SM.getInstantiationColumnNumber(InstLoc);
   if (offset)
     *offset = SM.getDecomposedLoc(InstLoc).second;
+}
+
+void clang_getSpellingLocation(CXSourceLocation location,
+                               CXFile *file,
+                               unsigned *line,
+                               unsigned *column,
+                               unsigned *offset) {
+  SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
+
+  if (!location.ptr_data[0] || Loc.isInvalid()) {
+    if (file)
+      *file = 0;
+    if (line)
+      *line = 0;
+    if (column)
+      *column = 0;
+    if (offset)
+      *offset = 0;
+    return;
+  }
+
+  const SourceManager &SM =
+    *static_cast<const SourceManager*>(location.ptr_data[0]);
+  SourceLocation SpellLoc = Loc;
+  if (SpellLoc.isMacroID()) {
+    SourceLocation SimpleSpellingLoc = SM.getImmediateSpellingLoc(SpellLoc);
+    if (SimpleSpellingLoc.isFileID() &&
+        SM.getFileEntryForID(SM.getDecomposedLoc(SimpleSpellingLoc).first))
+      SpellLoc = SimpleSpellingLoc;
+    else
+      SpellLoc = SM.getInstantiationLoc(SpellLoc);
+  }
+
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(SpellLoc);
+  FileID FID = LocInfo.first;
+  unsigned FileOffset = LocInfo.second;
+
+  if (file)
+    *file = (void *)SM.getFileEntryForID(FID);
+  if (line)
+    *line = SM.getLineNumber(FID, FileOffset);
+  if (column)
+    *column = SM.getColumnNumber(FID, FileOffset);
+  if (offset)
+    *offset = FileOffset;
 }
 
 CXSourceLocation clang_getRangeStart(CXSourceRange range) {
