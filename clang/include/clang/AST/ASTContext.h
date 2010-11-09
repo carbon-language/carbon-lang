@@ -1129,6 +1129,10 @@ public:
   NestedNameSpecifier *
   getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS);
 
+  /// \brief Retrieves the default calling convention to use for
+  /// C++ instance methods.
+  CallingConv getDefaultMethodCallConv();
+
   /// \brief Retrieves the canonical representation of the given
   /// calling convention.
   CallingConv getCanonicalCallConv(CallingConv CC) {

@@ -72,7 +72,7 @@ private:
   void mangleType(const ArrayType *T, bool IsGlobal);
   void mangleExtraDimensions(QualType T);
   void mangleFunctionClass(const FunctionDecl *FD);
-  void mangleCallingConvention(const FunctionType *T);
+  void mangleCallingConvention(const FunctionType *T, bool IsInstMethod = false);
   void mangleThrowSpecification(const FunctionProtoType *T);
 
 };
@@ -803,7 +803,7 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
   if (IsInstMethod)
     mangleQualifiers(Qualifiers::fromCVRMask(Proto->getTypeQuals()), false);
 
-  mangleCallingConvention(T);
+  mangleCallingConvention(T, IsInstMethod);
 
   // <return-type> ::= <type>
   //               ::= @ # structors (they have no declared return type)
@@ -898,7 +898,8 @@ void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
   } else
     Out << 'Y';
 }
-void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
+void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T,
+                                                      bool IsInstMethod) {
   // <calling-convention> ::= A # __cdecl
   //                      ::= B # __export __cdecl
   //                      ::= C # __pascal
@@ -914,7 +915,10 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
   // that keyword. (It didn't actually export them, it just made them so
   // that they could be in a DLL and somebody from another module could call
   // them.)
-  switch (T->getCallConv()) {
+  CallingConv CC = T->getCallConv();
+  if (CC == CC_Default)
+    CC = IsInstMethod ? getASTContext().getDefaultMethodCallConv() : CC_C;
+  switch (CC) {
     case CC_Default:
     case CC_C: Out << 'A'; break;
     case CC_X86Pascal: Out << 'C'; break;

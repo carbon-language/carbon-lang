@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-apple-darwin10 | FileCheck %s
+// RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
 
 // CHECK: @"\01?a@@3HA"
 // CHECK: @"\01?b@N@@3HA"
@@ -11,7 +11,7 @@
 // CHECK: @"\01?i@@3PAY0BE@HA"
 // CHECK: @"\01?j@@3P6GHCE@ZA"
 // CHECK: @"\01?k@@3PTfoo@@DA"
-// CHECK: @"\01?l@@3P8foo@@AAHH@ZA"
+// CHECK: @"\01?l@@3P8foo@@AEHH@ZA"
 
 int a;
 
@@ -46,10 +46,8 @@ enum quux {
   qthree
 };
 
-// NOTE: The calling convention is supposed to be __thiscall by default,
-// but that needs to be fixed in Sema/AST.
 int foo::operator+(int a) {return a;}
-// CHECK: @"\01??Hfoo@@QAAHH@Z"
+// CHECK: @"\01??Hfoo@@QAEHH@Z"
 
 const short foo::d = 0;
 volatile long foo::e;

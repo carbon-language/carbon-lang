@@ -5838,4 +5838,9 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   return true;
 }
 
+CallingConv ASTContext::getDefaultMethodCallConv() {
+  // Pass through to the C++ ABI object
+  return ABI->getDefaultMethodCallConv();
+}
+
 CXXABI::~CXXABI() {}
