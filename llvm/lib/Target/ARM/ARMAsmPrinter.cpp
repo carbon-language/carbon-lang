@@ -647,7 +647,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   // FIXME: Model the whole expression an an MCExpr and we can get rid
   // of this hasRawTextSupport() clause and just do an EmitValue().
   if (OutStreamer.hasRawTextSupport()) {
-    if (ACPV->hasModifier()) OS << "(" << ACPV->getModifier() << ")";
+    if (ACPV->hasModifier()) OS << "(" << ACPV->getModifierText() << ")";
     if (ACPV->getPCAdjustment() != 0) {
       OS << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
         << getFunctionNumber() << "_"  << ACPV->getLabelId()

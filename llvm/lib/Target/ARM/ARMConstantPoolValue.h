@@ -15,6 +15,7 @@
 #define LLVM_TARGET_ARM_CONSTANTPOOLVALUE_H
 
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstddef>
 
 namespace llvm {
@@ -31,6 +32,15 @@ namespace ARMCP {
     CPBlockAddress,
     CPLSDA
   };
+
+  enum ARMCPModifier {
+    no_modifier,
+    TLSGD,
+    GOT,
+    GOTOFF,
+    GOTTPOFF,
+    TPOFF
+  };
 }
 
 /// ARMConstantPoolValue - ARM specific constantpool value. This is used to
@@ -43,26 +53,41 @@ class ARMConstantPoolValue : public MachineConstantPoolValue {
   ARMCP::ARMCPKind Kind;   // Kind of constant.
   unsigned char PCAdjust;  // Extra adjustment if constantpool is pc-relative.
                            // 8 for ARM, 4 for Thumb.
-  const char *Modifier;    // GV modifier i.e. (&GV(modifier)-(LPIC+8))
+  ARMCP::ARMCPModifier Modifier;   // GV modifier i.e. (&GV(modifier)-(LPIC+8))
   bool AddCurrentAddress;
 
 public:
   ARMConstantPoolValue(const Constant *cval, unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
-                       unsigned char PCAdj = 0, const char *Modifier = NULL,
+                       unsigned char PCAdj = 0,
+                       ARMCP::ARMCPModifier Modifier = ARMCP::no_modifier,
                        bool AddCurrentAddress = false);
   ARMConstantPoolValue(LLVMContext &C, const char *s, unsigned id,
-                       unsigned char PCAdj = 0, const char *Modifier = NULL,
+                       unsigned char PCAdj = 0,
+                       ARMCP::ARMCPModifier Modifier = ARMCP::no_modifier,
                        bool AddCurrentAddress = false);
-  ARMConstantPoolValue(const GlobalValue *GV, const char *Modifier);
+  ARMConstantPoolValue(const GlobalValue *GV, ARMCP::ARMCPModifier Modifier);
   ARMConstantPoolValue();
   ~ARMConstantPoolValue();
 
   const GlobalValue *getGV() const;
   const char *getSymbol() const { return S; }
   const BlockAddress *getBlockAddress() const;
-  const char *getModifier() const { return Modifier; }
-  bool hasModifier() const { return Modifier != NULL; }
+  ARMCP::ARMCPModifier getModifier() const { return Modifier; }
+  const char *getModifierText() const {
+    switch (Modifier) {
+    default: llvm_unreachable("Unknown modifier!");
+    // FIXME: Are these case sensitive? It'd be nice to lower-case all the
+    // strings if that's legal.
+    case ARMCP::no_modifier: return "none";
+    case ARMCP::TLSGD:       return "tlsgd";
+    case ARMCP::GOT:         return "GOT";
+    case ARMCP::GOTOFF:      return "GOTOFF";
+    case ARMCP::GOTTPOFF:    return "gottpoff";
+    case ARMCP::TPOFF:       return "tpoff";
+    }
+  }
+  bool hasModifier() const { return Modifier != ARMCP::no_modifier; }
   bool mustAddCurrentAddress() const { return AddCurrentAddress; }
   unsigned getLabelId() const { return LabelId; }
   unsigned char getPCAdjustment() const { return PCAdjust; }

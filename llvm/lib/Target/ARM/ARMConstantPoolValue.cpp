@@ -24,7 +24,7 @@ using namespace llvm;
 ARMConstantPoolValue::ARMConstantPoolValue(const Constant *cval, unsigned id,
                                            ARMCP::ARMCPKind K,
                                            unsigned char PCAdj,
-                                           const char *Modif,
+                                           ARMCP::ARMCPModifier Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((const Type*)cval->getType()),
     CVal(cval), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
@@ -33,14 +33,14 @@ ARMConstantPoolValue::ARMConstantPoolValue(const Constant *cval, unsigned id,
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            const char *s, unsigned id,
                                            unsigned char PCAdj,
-                                           const char *Modif,
+                                           ARMCP::ARMCPModifier Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((const Type*)Type::getInt32Ty(C)),
     CVal(NULL), S(strdup(s)), LabelId(id), Kind(ARMCP::CPExtSymbol),
     PCAdjust(PCAdj), Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(const GlobalValue *gv,
-                                           const char *Modif)
+                                           ARMCP::ARMCPModifier Modif)
   : MachineConstantPoolValue((const Type*)Type::getInt32Ty(gv->getContext())),
     CVal(gv), S(NULL), LabelId(0), Kind(ARMCP::CPValue), PCAdjust(0),
     Modifier(Modif) {}
@@ -74,7 +74,7 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
           CPV->LabelId == LabelId &&
           CPV->PCAdjust == PCAdjust &&
           CPV_streq(CPV->S, S) &&
-          CPV_streq(CPV->Modifier, Modifier))
+          CPV->Modifier == Modifier)
         return i;
     }
   }
@@ -100,7 +100,7 @@ ARMConstantPoolValue::hasSameValue(ARMConstantPoolValue *ACPV) {
       ACPV->CVal == CVal &&
       ACPV->PCAdjust == PCAdjust &&
       CPV_streq(ACPV->S, S) &&
-      CPV_streq(ACPV->Modifier, Modifier)) {
+      ACPV->Modifier == Modifier) {
     if (ACPV->LabelId == LabelId)
       return true;
     // Two PC relative constpool entries containing the same GV address or
@@ -121,7 +121,7 @@ void ARMConstantPoolValue::print(raw_ostream &O) const {
     O << CVal->getName();
   else
     O << S;
-  if (Modifier) O << "(" << Modifier << ")";
+  if (Modifier) O << "(" << getModifierText() << ")";
   if (PCAdjust != 0) {
     O << "-(LPC" << LabelId << "+" << (unsigned)PCAdjust;
     if (AddCurrentAddress) O << "-.";
