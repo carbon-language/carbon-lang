@@ -764,9 +764,14 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             {
                 if (log)
                 {
-                    log->Printf("%*sFrame %d could not convert lldb regnum %d into %d RegisterKind reg numbering scheme",
-                                m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                                lldb_regnum, (int) unwindplan_registerkind);
+                    if (unwindplan_registerkind == eRegisterKindGeneric)
+                        log->Printf("%*sFrame %d could not convert lldb regnum %d into eRegisterKindGeneric reg numbering scheme",
+                                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                                    lldb_regnum);
+                    else
+                        log->Printf("%*sFrame %d could not convert lldb regnum %d into %d RegisterKind reg numbering scheme",
+                                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                                    lldb_regnum, (int) unwindplan_registerkind);
                 }
                 return false;
             }

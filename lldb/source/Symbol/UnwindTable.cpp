@@ -77,11 +77,6 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
 
     initialize();
 
-    if (m_eh_frame == NULL)
-    {
-        return no_unwind_found;
-    }
-
     // Create a FuncUnwinders object for the binary search below
     AddressRange search_range(addr, 1);
     FuncUnwindersSP search_unwind(new FuncUnwinders (*this, NULL, search_range));
@@ -111,7 +106,7 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
     if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range) || !range.GetBaseAddress().IsValid())
     {
         // Does the eh_frame unwind info has a function bounds for this addr?
-        if (!m_eh_frame->GetAddressRange (addr, range))
+        if (m_eh_frame == NULL || !m_eh_frame->GetAddressRange (addr, range))
         {
             return no_unwind_found;
         }

@@ -61,8 +61,8 @@ public:
         return m_range.ContainsFileAddress (addr);
     }
 
-protected:
 
+private:
     UnwindTable& m_unwind_table;
     UnwindAssemblyProfiler *m_assembly_profiler;
     AddressRange m_range;

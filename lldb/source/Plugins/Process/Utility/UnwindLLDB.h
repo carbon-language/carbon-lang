@@ -56,6 +56,7 @@ private:
         lldb::RegisterContextSP reg_ctx; // These are all RegisterContextLLDB's
 
         Cursor () : start_pc (LLDB_INVALID_ADDRESS), cfa (LLDB_INVALID_ADDRESS), sctx(), reg_ctx() { }
+    private:
         DISALLOW_COPY_AND_ASSIGN (Cursor);
     };
 
