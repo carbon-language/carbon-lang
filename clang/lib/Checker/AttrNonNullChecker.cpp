@@ -67,6 +67,28 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
     if (!DV)
       continue;
 
+    if (!isa<Loc>(*DV)) {
+      // If the argument is a union type, we want to handle a potential
+      // transparent_unoin GCC extension.
+      QualType T = (*I)->getType();
+      const RecordType *UT = T->getAsUnionType();
+      if (!UT || !UT->getDecl()->hasAttr<TransparentUnionAttr>())
+        continue;
+      if (nonloc::CompoundVal *CSV = dyn_cast<nonloc::CompoundVal>(DV)) {
+        nonloc::CompoundVal::iterator CSV_I = CSV->begin();
+        assert(CSV_I != CSV->end());
+        V = *CSV_I;
+        DV = dyn_cast<DefinedSVal>(&V);
+        assert(++CSV_I == CSV->end());
+        if (!DV)
+          continue;        
+      }
+      else {
+        // FIXME: Handle LazyCompoundVals?
+        continue;
+      }
+    }
+
     ConstraintManager &CM = C.getConstraintManager();
     const GRState *stateNotNull, *stateNull;
     llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);

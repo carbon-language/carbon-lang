@@ -1188,4 +1188,18 @@ static void RDar8424269_B(RDar8424269_A *p, unsigned char *RDar8424269_D,
   tmp2 = tmp2t[2];
 }
 
+// <rdar://problem/8642434> - Handle transparent unions with the AttrNonNullChecker.
+typedef union {
+  struct rdar_8642434_typeA *_dq;
+}
+rdar_8642434_typeB __attribute__((transparent_union));
+
+__attribute__((visibility("default"))) __attribute__((__nonnull__)) __attribute__((__nothrow__))
+void rdar_8642434_funcA(rdar_8642434_typeB object);
+
+void rdar_8642434_funcB(struct rdar_8642434_typeA *x, struct rdar_8642434_typeA *y) {
+  rdar_8642434_funcA(x);
+  if (!y)
+    rdar_8642434_funcA(y); // expected-warning{{Null pointer passed as an argument to a 'nonnull' parameter}}
+}
 
