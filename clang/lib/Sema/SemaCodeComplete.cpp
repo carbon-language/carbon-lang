@@ -505,6 +505,14 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND,
     }
   }
    
+  // Skip out-of-line declarations and definitions.
+  // NOTE: Unless it's an Objective-C property, method, or ivar, where
+  // the contexts can be messy.
+  if (!ND->getDeclContext()->Equals(ND->getLexicalDeclContext()) &&
+      !(isa<ObjCPropertyDecl>(ND) || isa<ObjCIvarDecl>(ND) ||
+        isa<ObjCMethodDecl>(ND)))
+    return false;
+
   if (Filter == &ResultBuilder::IsNestedNameSpecifier ||
       ((isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) &&
        Filter != &ResultBuilder::IsNamespace &&
@@ -5724,7 +5732,6 @@ void Sema::CodeCompleteNaturalLanguage() {
 void Sema::GatherGlobalCodeCompletions(
                  llvm::SmallVectorImpl<CodeCompletionResult> &Results) {
   ResultBuilder Builder(*this, CodeCompletionContext::CCC_Recovery);
-
   if (!CodeCompleter || CodeCompleter->includeGlobals()) {
     CodeCompletionDeclConsumer Consumer(Builder, 
                                         Context.getTranslationUnitDecl());

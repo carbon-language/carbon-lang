@@ -11,17 +11,19 @@ template<typename T>
 class vector {
 public:
   vector(const T &, unsigned n);
-
   template<typename InputIterator>
   vector(InputIterator first, InputIterator last);
+  void push_back(const T&);
 };
-
+template<typename T> void vector<T>::push_back(const T&) { }
 void f() {
   
 }
 
 // RUN: c-index-test -code-completion-at=%s:20:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:20:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
+// CHECK-CC1: NotImplemented:{TypedText operator} (40)
+// CHECK-CC1-NOT: push_back
 // CHECK-CC1: ClassDecl:{TypedText string} (50)
 // CHECK-CC1: CXXConstructor:{TypedText string}{LeftParen (}{RightParen )} (50)
 // CHECK-CC1: CXXConstructor:{TypedText string}{LeftParen (}{Placeholder const char *}{RightParen )} (50)
