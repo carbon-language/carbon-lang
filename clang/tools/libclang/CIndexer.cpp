@@ -31,6 +31,11 @@
 #include <vector>
 #include <sstream>
 
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+#define LLVM_ON_WIN32 1
+#endif
+
 #ifdef LLVM_ON_WIN32
 #include <windows.h>
 #else
@@ -51,7 +56,13 @@ std::string CIndexer::getClangResourcesPath() {
   VirtualQuery((void *)(uintptr_t)clang_createTranslationUnit, &mbi,
                sizeof(mbi));
   GetModuleFileNameA((HINSTANCE)mbi.AllocationBase, path, MAX_PATH);
-  
+
+#ifdef __CYGWIN__
+  char w32path[MAX_PATH];
+  strcpy(w32path, path);
+  cygwin_conv_to_full_posix_path(w32path, path);
+#endif
+
   llvm::sys::Path LibClangPath(path);
   LibClangPath.eraseComponent();
 #else
