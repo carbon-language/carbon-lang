@@ -2165,8 +2165,12 @@ struct IntRange {
     if (const ComplexType *CT = dyn_cast<ComplexType>(T))
       T = CT->getElementType().getTypePtr();
 
+    // For enum types, use the known bit width of the enumerators.
     if (const EnumType *ET = dyn_cast<EnumType>(T)) {
       EnumDecl *Enum = ET->getDecl();
+      if (!Enum->isDefinition())
+        return IntRange(C.getIntWidth(QualType(T, 0)), false);
+
       unsigned NumPositive = Enum->getNumPositiveBits();
       unsigned NumNegative = Enum->getNumNegativeBits();
 
@@ -2590,6 +2594,15 @@ void DiagnoseImpCast(Sema &S, Expr *E, QualType T, SourceLocation CContext,
     << E->getType() << T << E->getSourceRange() << SourceRange(CContext);
 }
 
+std::string PrettyPrintInRange(const llvm::APSInt &Value, IntRange Range) {
+  if (!Range.Width) return "0";
+
+  llvm::APSInt ValueInRange = Value;
+  ValueInRange.setIsSigned(!Range.NonNegative);
+  ValueInRange.trunc(Range.Width);
+  return ValueInRange.toString(10);
+}
+
 void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
                              SourceLocation CC, bool *ICContext = 0) {
   if (E->isTypeDependent() || E->isValueDependent()) return;
@@ -2670,6 +2683,19 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   IntRange TargetRange = IntRange::forCanonicalType(S.Context, Target);
 
   if (SourceRange.Width > TargetRange.Width) {
+    // If the source is a constant, use a default-on diagnostic.
+    // TODO: this should happen for bitfield stores, too.
+    llvm::APSInt Value(32);
+    if (E->isIntegerConstantExpr(Value, S.Context)) {
+      std::string PrettySourceValue = Value.toString(10);
+      std::string PrettyTargetValue = PrettyPrintInRange(Value, TargetRange);
+
+      S.Diag(E->getExprLoc(), diag::warn_impcast_integer_precision_constant)
+        << PrettySourceValue << PrettyTargetValue
+        << E->getType() << T << E->getSourceRange() << clang::SourceRange(CC);
+      return;
+    }
+
     // People want to build with -Wshorten-64-to-32 and not -Wconversion
     // and by god we'll let them.
     if (SourceRange.Width == 64 && TargetRange.Width == 32)

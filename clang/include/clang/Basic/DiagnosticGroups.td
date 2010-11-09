@@ -164,10 +164,15 @@ def CharSubscript : DiagGroup<"char-subscripts">;
 // missing parentheses;  it is off by default.
 def Parentheses : DiagGroup<"parentheses", [DiagGroup<"idiomatic-parentheses">]>;
 
-// -Wconversion has its own warnings, but we split this one out for
-// legacy reasons.
+// -Wconversion has its own warnings, but we split a few out for
+// legacy reasons:
+//   - some people want just 64-to-32 warnings
+//   - conversion warnings with constant sources are on by default
+//   - bool-to-pointer conversion warnings are on by default
 def Conversion : DiagGroup<"conversion",
-                           [DiagGroup<"shorten-64-to-32">, BoolConversions]>,
+                           [DiagGroup<"shorten-64-to-32">,
+                            DiagGroup<"constant-conversion">,
+                            BoolConversions]>,
                  DiagCategory<"Value Conversion Issue">;
 
 def Unused : DiagGroup<"unused",

@@ -1458,12 +1458,25 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       return Error(E->getOperatorLoc(), diag::note_expr_divide_by_zero, E);
     return Success(Result.getInt() % RHS, E);
   case BO_Shl: {
-    // FIXME: Warn about out of range shift amounts!
-    unsigned SA =
-      (unsigned) RHS.getLimitedValue(Result.getInt().getBitWidth()-1);
+    // During constant-folding, a negative shift is an opposite shift.
+    if (RHS.isSigned() && RHS.isNegative()) {
+      RHS = -RHS;
+      goto shift_right;
+    }
+
+  shift_left:
+    unsigned SA
+      = (unsigned) RHS.getLimitedValue(Result.getInt().getBitWidth()-1);
     return Success(Result.getInt() << SA, E);
   }
   case BO_Shr: {
+    // During constant-folding, a negative shift is an opposite shift.
+    if (RHS.isSigned() && RHS.isNegative()) {
+      RHS = -RHS;
+      goto shift_left;
+    }
+
+  shift_right:
     unsigned SA =
       (unsigned) RHS.getLimitedValue(Result.getInt().getBitWidth()-1);
     return Success(Result.getInt() >> SA, E);

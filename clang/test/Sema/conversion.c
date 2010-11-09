@@ -40,17 +40,17 @@ void test0(char c, short s, int i, long l, long long ll) {
   l = (long) 0;
 
   c = (char) BIG;
-  c = (short) BIG; // expected-warning {{implicit conversion loses integer precision}}
-  c = (int) BIG; // expected-warning {{implicit conversion loses integer precision}}
-  c = (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  c = (short) BIG; // expected-warning {{implicit conversion from 'short' to 'char' changes value}}
+  c = (int) BIG; // expected-warning {{implicit conversion from 'int' to 'char' changes value}}
+  c = (long) BIG; // expected-warning {{implicit conversion from 'long' to 'char' changes value}}
   s = (char) BIG;
   s = (short) BIG;
-  s = (int) BIG; // expected-warning {{implicit conversion loses integer precision}}
-  s = (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  s = (int) BIG; // expected-warning {{implicit conversion from 'int' to 'short' changes value}}
+  s = (long) BIG; // expected-warning {{implicit conversion from 'long' to 'short' changes value}}
   i = (char) BIG;
   i = (short) BIG;
   i = (int) BIG;
-  i = (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  i = (long) BIG; // expected-warning {{implicit conversion from 'long' to 'int' changes value}}
   l = (char) BIG;
   l = (short) BIG;
   l = (int) BIG;
@@ -63,10 +63,10 @@ char test1(long long ll) {
   return (int) ll; // expected-warning {{implicit conversion loses integer precision}}
   return (short) ll; // expected-warning {{implicit conversion loses integer precision}}
   return (char) ll;
-  return (long long) BIG; // expected-warning {{implicit conversion loses integer precision}}
-  return (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
-  return (int) BIG; // expected-warning {{implicit conversion loses integer precision}}
-  return (short) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  return (long long) BIG; // expected-warning {{implicit conversion from 'long long' to 'char' changes value}}
+  return (long) BIG; // expected-warning {{implicit conversion from 'long' to 'char' changes value}}
+  return (int) BIG; // expected-warning {{implicit conversion from 'int' to 'char' changes value}}
+  return (short) BIG; // expected-warning {{implicit conversion from 'short' to 'char' changes value}}
   return (char) BIG;
 }
 
@@ -76,9 +76,9 @@ short test2(long long ll) {
   return (int) ll; // expected-warning {{implicit conversion loses integer precision}}
   return (short) ll;
   return (char) ll;
-  return (long long) BIG;  // expected-warning {{implicit conversion loses integer precision}}
-  return (long) BIG;  // expected-warning {{implicit conversion loses integer precision}}
-  return (int) BIG;  // expected-warning {{implicit conversion loses integer precision}}
+  return (long long) BIG;  // expected-warning {{implicit conversion from 'long long' to 'short' changes value}}
+  return (long) BIG;  // expected-warning {{implicit conversion from 'long' to 'short' changes value}}
+  return (int) BIG;  // expected-warning {{implicit conversion from 'int' to 'short' changes value}}
   return (short) BIG;
   return (char) BIG;
 }
@@ -89,8 +89,8 @@ int test3(long long ll) {
   return (int) ll;
   return (short) ll;
   return (char) ll;
-  return (long long) BIG;  // expected-warning {{implicit conversion loses integer precision}}
-  return (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  return (long long) BIG;  // expected-warning {{implicit conversion from 'long long' to 'int' changes value}}
+  return (long) BIG; // expected-warning {{implicit conversion from 'long' to 'int' changes value}}
   return (int) BIG;
   return (short) BIG;
   return (char) BIG;
@@ -277,7 +277,7 @@ unsigned char test19(unsigned long u64) {
 // <rdar://problem/7631400>
 void test_7631400(void) {
   // This should show up despite the caret being inside a macro substitution
-  char s = LONG_MAX; // expected-warning {{implicit conversion loses integer precision: 'long' to 'char'}}
+  char s = LONG_MAX; // expected-warning {{implicit conversion from 'long' to 'char' changes value}}
 }
 
 // <rdar://problem/7676608>: assertion for compound operators with non-integral RHS

@@ -15,7 +15,7 @@ float Y = 08.123456;
 #endif
 
 
-char c[] = {
+int c[] = {
   'df',   // expected-warning {{multi-character character constant}}
   '\t',
   '\\
@@ -34,12 +34,12 @@ int m3 = '\\\
 
 #pragma clang diagnostic ignored "-Wmultichar"
 
-char d = 'df'; // no warning.
-char e = 'abcd';  // still warn: expected-warning {{multi-character character constant}}
+int d = 'df'; // no warning.
+int e = 'abcd';  // still warn: expected-warning {{multi-character character constant}}
 
 #pragma clang diagnostic ignored "-Wfour-char-constants"
 
-char f = 'abcd';  // ignored.
+int f = 'abcd';  // ignored.
 
 // rdar://problem/6974641
 float t0[] = {
