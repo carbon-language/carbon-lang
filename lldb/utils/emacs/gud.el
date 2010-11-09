@@ -1057,9 +1057,9 @@ and source-file directory for your debugger."
   (gud-def gud-pstar  "expression -- *%e"
                       nil    "Evaluate C dereferenced pointer expression at point.")
   (gud-def gud-run    "run"
-                      nil    "Run the program.")
+                      "r"    "Run the program.")
   (gud-def gud-stop-subjob    "process kill"
-                      nil    "Stop the program.")
+                      "s"    "Stop the program.")
 
   (setq comint-prompt-regexp  "\\(^\\|\n\\)\\*")
   (setq paragraph-start comint-prompt-regexp)
