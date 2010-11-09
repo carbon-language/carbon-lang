@@ -64,13 +64,13 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
 
   // Determine default and user specified characteristics
 
-  // Parse features string.
-  CPUString = ParseSubtargetFeatures(FS, CPUString);
-
   // When no arch is specified either by CPU or by attributes, make the default
   // ARMv4T.
-  if (CPUString == "generic" && (FS.empty() || FS == "generic"))
+  const char *ARMArchFeature = "";
+  if (CPUString == "generic" && (FS.empty() || FS == "generic")) {
     ARMArchVersion = V4T;
+    ARMArchFeature = ",+v4t";
+  }
 
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
@@ -88,29 +88,35 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
     unsigned SubVer = TT[Idx];
     if (SubVer >= '7' && SubVer <= '9') {
       ARMArchVersion = V7A;
-      if (Len >= Idx+2 && TT[Idx+1] == 'm')
+      ARMArchFeature = ",+v7a";
+      if (Len >= Idx+2 && TT[Idx+1] == 'm') {
         ARMArchVersion = V7M;
+        ARMArchFeature = ",+v7m";
+      }
     } else if (SubVer == '6') {
       ARMArchVersion = V6;
-      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
+      ARMArchFeature = ",+v6";
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2') {
         ARMArchVersion = V6T2;
+        ARMArchFeature = ",+v6t2";
+      }
     } else if (SubVer == '5') {
       ARMArchVersion = V5T;
-      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e')
+      ARMArchFeature = ",+v5t";
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e') {
         ARMArchVersion = V5TE;
+        ARMArchFeature = ",+v5te";
+      }
     } else if (SubVer == '4') {
-      if (Len >= Idx+2 && TT[Idx+1] == 't')
+      if (Len >= Idx+2 && TT[Idx+1] == 't') {
         ARMArchVersion = V4T;
-      else
+        ARMArchFeature = ",+v4t";
+      } else {
         ARMArchVersion = V4;
+        ARMArchFeature = "";
+      }
     }
   }
-
-  // Thumb2 implies at least V6T2.
-  if (ARMArchVersion >= V6T2)
-    ThumbMode = Thumb2;
-  else if (ThumbMode >= Thumb2)
-    ARMArchVersion = V6T2;
 
   if (Len >= 10) {
     if (TT.find("-darwin") != std::string::npos)
@@ -120,6 +126,25 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
 
   if (TT.find("eabi") != std::string::npos)
     TargetABI = ARM_ABI_AAPCS;
+
+  // Parse features string.  If the first entry in FS (the CPU) is missing,
+  // insert the architecture feature derived from the target triple.  This is
+  // important for setting features that are implied based on the architecture
+  // version.
+  std::string FSWithArch;
+  if (FS.empty())
+    FSWithArch = std::string(ARMArchFeature);
+  else if (FS.find(',') == 0)
+    FSWithArch = std::string(ARMArchFeature) + FS;
+  else
+    FSWithArch = FS;
+  CPUString = ParseSubtargetFeatures(FSWithArch, CPUString);
+
+  // Thumb2 implies at least V6T2.
+  if (ARMArchVersion >= V6T2)
+    ThumbMode = Thumb2;
+  else if (ThumbMode >= Thumb2)
+    ARMArchVersion = V6T2;
 
   if (isAAPCS_ABI())
     stackAlignment = 8;
