@@ -7,7 +7,7 @@ import unittest2
 import lldb
 import sys
 
-class FloatTypesTestCase(AbstractBase.GenericTester):
+class FloatTypesExprTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 

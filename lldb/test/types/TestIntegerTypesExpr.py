@@ -7,7 +7,7 @@ import unittest2
 import lldb
 import sys
 
-class IntegerTypesTestCase(AbstractBase.GenericTester):
+class IntegerTypesExprTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
 
