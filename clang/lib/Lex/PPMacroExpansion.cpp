@@ -498,8 +498,13 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
   };
 
   char TmpBuffer[32];
+#ifdef LLVM_ON_WIN32
+  sprintf(TmpBuffer, "\"%s %2d %4d\"", Months[TM->tm_mon], TM->tm_mday,
+          TM->tm_year+1900);
+#else
   snprintf(TmpBuffer, sizeof(TmpBuffer), "\"%s %2d %4d\"", Months[TM->tm_mon], TM->tm_mday,
           TM->tm_year+1900);
+#endif
 
   Token TmpTok;
   TmpTok.startToken();

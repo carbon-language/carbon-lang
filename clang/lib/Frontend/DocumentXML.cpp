@@ -105,7 +105,11 @@ std::string DocumentXML::escapeString(const char* pStr,
       if (isprint(C))
         value += C;
       else {
+#ifdef LLVM_ON_WIN32
+        sprintf(buffer, "\\%03o", C);
+#else
         snprintf(buffer, sizeof(buffer), "\\%03o", C);
+#endif
         value += buffer;
       }
       break;
