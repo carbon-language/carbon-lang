@@ -77,6 +77,11 @@ public:
   uint32_t getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups) const;
 
+  /// getLdStSORegOpValue - Return encoding info for 'reg +/- reg shop imm'
+  /// operand as needed by load/store instructions.
+  uint32_t getLdStSORegOpValue(const MCInst &MI, unsigned OpIdx,
+                               SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getAddrMode5OpValue - Return encoding info for 'reg +/- imm8' operand.
   uint32_t getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups) const;
@@ -251,6 +256,46 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   if (isAdd)
     Binary |= (1 << 12);
   Binary |= (Reg << 13);
+  return Binary;
+}
+
+uint32_t ARMMCCodeEmitter::
+getLdStSORegOpValue(const MCInst &MI, unsigned OpIdx,
+                    SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx+1);
+  const MCOperand &MO2 = MI.getOperand(OpIdx+2);
+  unsigned Rn = getARMRegisterNumbering(MO.getReg());
+  unsigned Rm = getARMRegisterNumbering(MO1.getReg());
+  ARM_AM::ShiftOpc ShOp = ARM_AM::getAM2ShiftOpc(MO2.getImm());
+  unsigned ShImm = ARM_AM::getAM2Offset(MO2.getImm());
+  bool isAdd = ARM_AM::getAM2Op(MO2.getImm()) == ARM_AM::add;
+  unsigned SBits;
+  // LSL - 00
+  // LSR - 01
+  // ASR - 10
+  // ROR - 11
+  switch (ShOp) {
+  default: llvm_unreachable("Unknown shift opc!");
+  case ARM_AM::lsl: SBits = 0x0; break;
+  case ARM_AM::lsr: SBits = 0x1; break;
+  case ARM_AM::asr: SBits = 0x2; break;
+  case ARM_AM::ror: SBits = 0x3; break;
+  }
+
+  // {16-13} = Rn
+  // {12}    = isAdd
+  // {11-0}  = shifter
+  //  {3-0}  = Rm
+  //  {4}    = 0
+  //  {6-5}  = type
+  //  {11-7} = imm
+  int64_t Binary = Rm;
+  Binary |= Rn << 13;
+  Binary |= SBits << 5;
+  Binary |= ShImm << 7;
+  if (isAdd)
+    Binary |= 1 << 12;
   return Binary;
 }
 

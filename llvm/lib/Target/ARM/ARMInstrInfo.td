@@ -415,8 +415,8 @@ def addrmode_imm12 : Operand<i32>,
 //
 def ldst_so_reg : Operand<i32>,
                   ComplexPattern<i32, 3, "SelectLdStSOReg", []> {
+  string EncoderMethod = "getLdStSORegOpValue";
   // FIXME: Simplify the printer
-  // FIXME: Add EncoderMethod for this addressing mode
   let PrintMethod = "printAddrMode2Operand";
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
