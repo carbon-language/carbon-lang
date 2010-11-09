@@ -124,7 +124,7 @@ void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
   AliasAnalysis::ModRefBehavior Behavior = AA.getModRefBehavior(CS);
   if (Behavior == AliasAnalysis::DoesNotAccessMemory)
     return;
-  else if (Behavior == AliasAnalysis::OnlyReadsMemory) {
+  if (AliasAnalysis::onlyReadsMemory(Behavior)) {
     AliasTy = MayAlias;
     AccessTy |= Refs;
     return;

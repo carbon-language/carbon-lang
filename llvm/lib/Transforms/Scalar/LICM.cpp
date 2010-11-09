@@ -412,7 +412,7 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
     AliasAnalysis::ModRefBehavior Behavior = AA->getModRefBehavior(CI);
     if (Behavior == AliasAnalysis::DoesNotAccessMemory)
       return true;
-    else if (Behavior == AliasAnalysis::OnlyReadsMemory) {
+    if (AliasAnalysis::onlyReadsMemory(Behavior)) {
       // If this call only reads from memory and there are no writes to memory
       // in the loop, we can hoist or sink the call as appropriate.
       bool FoundMod = false;
