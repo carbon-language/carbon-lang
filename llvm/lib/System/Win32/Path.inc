@@ -287,8 +287,10 @@ Path::GetBitcodeLibraryPaths(std::vector<sys::Path>& Paths) {
 
 Path
 Path::GetLLVMDefaultConfigDir() {
-  // TODO: this isn't going to fly on Windows
-  return Path("/etc/llvm");
+  Path ret = GetUserHomeDirectory();
+  if(!ret.appendComponent(".llvm"))
+    assert(0 && "Failed to append .llvm");
+  return ret;
 }
 
 Path
