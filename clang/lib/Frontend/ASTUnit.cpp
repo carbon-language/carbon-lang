@@ -52,26 +52,17 @@ namespace {
     TimeRecord Start;
     std::string Output;
 
-  public:    
+  public:
     explicit SimpleTimer(bool WantTiming) : WantTiming(WantTiming) {
-      Start = TimeRecord::getCurrentTime(); 
-    }
-    
-    void setOutput(llvm::StringRef Output) { 
       if (WantTiming)
-        this->Output = Output; 
+        Start = TimeRecord::getCurrentTime();
     }
 
-    void setOutput(llvm::Twine Output) { 
+    void setOutput(const llvm::Twine &Output) {
       if (WantTiming)
-        this->Output = Output.str(); 
+        this->Output = Output.str();
     }
 
-    void setOutput(const char *Output) { 
-      if (WantTiming)
-        this->Output = Output; 
-    }
-    
     ~SimpleTimer() {
       if (WantTiming) {
         TimeRecord Elapsed = TimeRecord::getCurrentTime();
@@ -207,8 +198,7 @@ void ASTUnit::CacheCodeCompletionResults() {
     return;
   
   SimpleTimer Timer(WantTiming);
-  if (WantTiming)
-    Timer.setOutput( "Cache global code completions for " + getMainFileName());
+  Timer.setOutput("Cache global code completions for " + getMainFileName());
 
   // Clear out the previous results.
   ClearCachedCompletionResults();
@@ -1162,8 +1152,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   // We did not previously compute a preamble, or it can't be reused anyway.
   SimpleTimer PreambleTimer(WantTiming);
-  if (WantTiming)
-    PreambleTimer.setOutput("Precompiling preamble");
+  PreambleTimer.setOutput("Precompiling preamble");
   
   // Create a new buffer that stores the preamble. The buffer also contains
   // extra space for the original contents of the file (which will be present
@@ -1367,8 +1356,7 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   }
   
   SimpleTimer ParsingTimer(WantTiming);
-  if (WantTiming)
-    ParsingTimer.setOutput( "Parsing " + getMainFileName());
+  ParsingTimer.setOutput("Parsing " + getMainFileName());
   
   return Parse(OverrideMainBuffer);
 }
@@ -1513,8 +1501,7 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
     return true;
   
   SimpleTimer ParsingTimer(WantTiming);
-  if (WantTiming)
-    ParsingTimer.setOutput( "Reparsing " + getMainFileName());
+  ParsingTimer.setOutput("Reparsing " + getMainFileName());
 
   // Remap files.
   PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();
@@ -1799,13 +1786,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     return;
 
   SimpleTimer CompletionTimer(WantTiming);
-  if (WantTiming) {
-    llvm::SmallString<128> TimerName;
-    llvm::raw_svector_ostream TimerNameOut(TimerName);
-    TimerNameOut << "Code completion @ " << File << ":" << Line << ":" 
-                 << Column;
-    CompletionTimer.setOutput(TimerNameOut.str());
-  }
+  CompletionTimer.setOutput("Code completion @ " + File + ":" +
+                            llvm::Twine(Line) + ":" + llvm::Twine(Column));
 
   CompilerInvocation CCInvocation(*Invocation);
   FrontendOptions &FrontendOpts = CCInvocation.getFrontendOpts();
