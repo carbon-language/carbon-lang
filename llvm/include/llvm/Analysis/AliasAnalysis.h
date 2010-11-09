@@ -270,7 +270,9 @@ public:
   /// true.  For use when the call site is not known.
   ///
   static bool onlyReadsMemory(ModRefBehavior MRB) {
-    return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
+    return MRB == DoesNotAccessMemory ||
+           MRB == AccessesArgumentsReadonly ||
+           MRB == OnlyReadsMemory;
   }
 
 
