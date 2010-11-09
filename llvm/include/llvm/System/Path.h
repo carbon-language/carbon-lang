@@ -89,7 +89,7 @@ namespace sys {
       /// Construct a path to the root directory of the file system. The root
       /// directory is a top level directory above which there are no more
       /// directories. For example, on UNIX, the root directory is /. On Windows
-      /// it is C:\. Other operating systems may have different notions of
+      /// it is file:///. Other operating systems may have different notions of
       /// what the root directory is or none at all. In that case, a consistent
       /// default root directory will be used.
       static Path GetRootDirectory();
