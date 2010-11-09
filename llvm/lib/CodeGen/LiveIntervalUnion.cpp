@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "LiveIntervalUnion.h"
+#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -73,12 +74,10 @@ void LiveIntervalUnion::unify(LiveInterval &lvr) {
 #ifndef NDEBUG
     // check for overlap (inductively)
     if (segPos != segments_.begin()) {
-      SegmentIter prevPos = segPos;
-      --prevPos;
-      assert(prevPos->end <= segment.start && "overlapping segments" );
+      assert(llvm::prior(segPos)->end <= segment.start &&
+             "overlapping segments" );
     }
-    SegmentIter nextPos = segPos;
-    ++nextPos;
+    SegmentIter nextPos = llvm::next(segPos);
     if (nextPos != segments_.end())
       assert(segment.end <= nextPos->start && "overlapping segments" );
 #endif // NDEBUG
@@ -97,6 +96,49 @@ void LiveIntervalUnion::extract(const LiveInterval &lvr) {
     segments_.erase(segPos++);
   }
 }
+
+raw_ostream& llvm::operator<<(raw_ostream& os, const LiveSegment &ls) {
+  return os << '[' << ls.start << ',' << ls.end << ':' <<
+    ls.liveVirtReg->reg << ")";
+}
+
+void LiveSegment::dump() const {
+  dbgs() << *this << "\n";
+}
+
+void
+LiveIntervalUnion::print(raw_ostream &os,
+                         const AbstractRegisterDescription *rdesc) const {
+  os << "LIU ";
+  if (rdesc != NULL)
+    os << rdesc->getName(repReg_);
+  else {
+    os << repReg_;
+  }
+  for (LiveSegments::const_iterator segI = segments_.begin(),
+         segEnd = segments_.end(); segI != segEnd; ++segI) {
+    dbgs() << " " << *segI;
+  }
+  os << "\n";
+}
+
+void LiveIntervalUnion::dump(const AbstractRegisterDescription *rdesc) const {
+  print(dbgs(), rdesc);
+}
+
+#ifndef NDEBUG
+// Verify the live intervals in this union and add them to the visited set.
+void LiveIntervalUnion::verify(LvrBitSet& visitedVRegs) {
+  SegmentIter segI = segments_.begin();
+  SegmentIter segEnd = segments_.end();
+  if (segI == segEnd) return;
+  visitedVRegs.set(segI->liveVirtReg->reg);
+  for (++segI; segI != segEnd; ++segI) {
+    visitedVRegs.set(segI->liveVirtReg->reg);
+    assert(llvm::prior(segI)->end <= segI->start && "overlapping segments" );
+  }
+}
+#endif //!NDEBUG
 
 // Private interface accessed by Query.
 //

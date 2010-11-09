@@ -34,6 +34,9 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#ifndef NDEBUG
+#include "llvm/ADT/SparseBitVector.h"
+#endif
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -45,6 +48,19 @@ using namespace llvm;
 
 static RegisterRegAlloc basicRegAlloc("basic", "basic register allocator",
                                       createBasicRegisterAllocator);
+
+// Temporary verification option until we can put verification inside
+// MachineVerifier.
+static cl::opt<bool>
+VerifyRegAlloc("verify-regalloc",
+               cl::desc("Verify live intervals before renaming"));
+
+class PhysicalRegisterDescription : public AbstractRegisterDescription {
+  const TargetRegisterInfo *tri_;
+public:
+  PhysicalRegisterDescription(const TargetRegisterInfo *tri): tri_(tri) {}
+  virtual const char *getName(unsigned reg) const { return tri_->getName(reg); }
+};
 
 namespace {
 
@@ -153,6 +169,40 @@ void RABasic::releaseMemory() {
   RegAllocBase::releaseMemory();
 }
 
+#ifndef NDEBUG
+// Verify each LiveIntervalUnion.
+void RegAllocBase::verify() {
+  LvrBitSet visitedVRegs;
+  OwningArrayPtr<LvrBitSet> unionVRegs(new LvrBitSet[physReg2liu_.numRegs()]);
+  // Verify disjoint unions.
+  for (unsigned preg = 0; preg < physReg2liu_.numRegs(); ++preg) {
+    DEBUG(PhysicalRegisterDescription prd(tri_); physReg2liu_[preg].dump(&prd));
+    LvrBitSet &vregs = unionVRegs[preg];
+    physReg2liu_[preg].verify(vregs);
+    // Union + intersection test could be done efficiently in one pass, but
+    // don't add a method to SparseBitVector unless we really need it.
+    assert(!visitedVRegs.intersects(vregs) && "vreg in multiple unions");
+    visitedVRegs |= vregs;
+  }
+  // Verify vreg coverage.
+  for (LiveIntervals::iterator liItr = lis_->begin(), liEnd = lis_->end();
+       liItr != liEnd; ++liItr) {
+    unsigned reg = liItr->first;
+    LiveInterval &li = *liItr->second;
+    if (li.empty() ) continue;
+    if (TargetRegisterInfo::isPhysicalRegister(reg)) continue;
+    if (!vrm_->hasPhys(reg)) continue; // spilled?
+    unsigned preg = vrm_->getPhys(reg);
+    if (!unionVRegs[preg].test(reg)) {
+      dbgs() << "LiveVirtReg " << reg << " not in union " <<
+        tri_->getName(preg) << "\n";
+      llvm_unreachable("unallocated live vreg");
+    }
+  }
+  // FIXME: I'm not sure how to verify spilled intervals.
+}
+#endif //!NDEBUG
+
 //===----------------------------------------------------------------------===//
 //                         RegAllocBase Implementation
 //===----------------------------------------------------------------------===//
@@ -222,6 +272,7 @@ void RegAllocBase::seedLiveVirtRegs(LiveVirtRegQueue &lvrQ) {
        liItr != liEnd; ++liItr) {
     unsigned reg = liItr->first;
     LiveInterval &li = *liItr->second;
+    if (li.empty()) continue;
     if (TargetRegisterInfo::isPhysicalRegister(reg)) {
       physReg2liu_[reg].unify(li);
     }
@@ -243,13 +294,14 @@ void RegAllocBase::allocatePhysRegs() {
     unsigned availablePhysReg = selectOrSplit(*lvr, splitLVRs);
     if (availablePhysReg) {
       DEBUG(dbgs() << "allocating: " << tri_->getName(availablePhysReg) <<
-            " " << lvr << '\n');
+            " " << *lvr << '\n');
       assert(!vrm_->hasPhys(lvr->reg) && "duplicate vreg in interval unions");
       vrm_->assignVirt2Phys(lvr->reg, availablePhysReg);
       physReg2liu_[availablePhysReg].unify(*lvr);
     }
     for (LVRVec::iterator lvrI = splitLVRs.begin(), lvrEnd = splitLVRs.end();
          lvrI != lvrEnd; ++lvrI) {
+      if ((*lvrI)->empty()) continue;
       DEBUG(dbgs() << "queuing new interval: " << **lvrI << "\n");
       assert(TargetRegisterInfo::isVirtualRegister((*lvrI)->reg) &&
              "expect split value in virtual register");
@@ -274,26 +326,32 @@ unsigned RegAllocBase::checkPhysRegInterference(LiveInterval &lvr,
   return 0;
 }
 
-// Spill all live virtual registers currently unified under preg that interfere
-// with lvr.
+// Spill or split all live virtual registers currently unified under preg that
+// interfere with lvr. The newly spilled or split live intervals are returned by
+// appending them to splitLVRs.
 void RABasic::spillInterferences(unsigned preg,
                                  SmallVectorImpl<LiveInterval*> &splitLVRs) {
   SmallPtrSet<LiveInterval*, 8> spilledLVRs;
   LiveIntervalUnion::Query &query = queries_[preg];
+  // Record each interference before mutating either the union or live
+  // intervals.
   LiveIntervalUnion::InterferenceResult ir = query.firstInterference();
   assert(query.isInterference(ir) && "expect interference");
   do {
-    LiveInterval *lvr = ir.liuSegPos()->liveVirtReg;
-    if (!spilledLVRs.insert(lvr)) continue;
-    // Spill the previously allocated lvr.
-    SmallVector<LiveInterval*, 1> spillIs; // ignored
-    spiller_->spill(lvr, splitLVRs, spillIs);
+    spilledLVRs.insert(ir.liuSegPos()->liveVirtReg);
   } while (query.nextInterference(ir));
   for (SmallPtrSetIterator<LiveInterval*> lvrI = spilledLVRs.begin(),
          lvrEnd = spilledLVRs.end();
        lvrI != lvrEnd; ++lvrI ) {
+    LiveInterval& lvr = **lvrI;
+    // Spill the previously allocated lvr.
+    DEBUG(dbgs() << "extracting from " << preg << " " << lvr << '\n');
     // Deallocate the interfering lvr by removing it from the preg union.
-    physReg2liu_[preg].extract(**lvrI);
+    // Live intervals may not be in a union during modification.
+    physReg2liu_[preg].extract(lvr);
+    // Spill the extracted interval.
+    SmallVector<LiveInterval*, 8> spillIs;
+    spiller_->spill(&lvr, splitLVRs, spillIs);
   }
   // After extracting segments, the query's results are invalid.
   query.clear();
@@ -399,6 +457,24 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   // optional HTML output
   DEBUG(rmf_->renderMachineFunction("After basic register allocation.", vrm_));
 
+  // FIXME: Verification currently must run before VirtRegRewriter. We should
+  // make the rewriter a separate pass and override verifyAnalysis instead. When
+  // that happens, verification naturally falls under VerifyMachineCode.
+#ifndef NDEBUG
+  if (VerifyRegAlloc) {
+    // Verify accuracy of LiveIntervals. The standard machine code verifier
+    // ensures that each LiveIntervals covers all uses of the virtual reg.
+
+    // FIXME: MachineVerifier is currently broken when using the standard
+    // spiller. Enable it for InlineSpiller only.
+    // mf_->verify(this);
+    
+    // Verify that LiveIntervals are partitioned into unions and disjoint within
+    // the unions.
+    verify();
+  }
+#endif // !NDEBUG
+  
   // Run rewriter
   std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
   rewriter->runOnMachineFunction(*mf_, *vrm_, lis_);
