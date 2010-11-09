@@ -733,8 +733,11 @@ ClangASTContext::CopyType (ASTContext *dest_context,
     ASTImporter importer(diagnostics,
                          *dest_context, file_manager,
                          *source_context, file_manager);
-    QualType ret = importer.Import(QualType::getFromOpaquePtr(clang_type));
-    return ret.getAsOpaquePtr();
+    
+    QualType src = QualType::getFromOpaquePtr(clang_type);
+    QualType dst = importer.Import(src);
+    
+    return dst.getAsOpaquePtr();
 }
 
 bool
