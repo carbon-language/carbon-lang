@@ -34,3 +34,7 @@ struct {unsigned x : 2;} x2;
 __typeof__((x.x+=1)+1) y;
 __typeof__(x.x<<1) y;
 int y;
+
+struct PR8025 {
+  double : 2; // expected-error{{anonymous bit-field has non-integral type 'double'}}
+};

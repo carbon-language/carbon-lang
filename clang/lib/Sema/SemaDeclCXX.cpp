@@ -843,6 +843,11 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
   SourceLocation Loc = NameInfo.getLoc();
+
+  // For anonymous bitfields, the location should point to the type.
+  if (Loc.isInvalid())
+    Loc = D.getSourceRange().getBegin();
+
   Expr *BitWidth = static_cast<Expr*>(BW);
   Expr *Init = static_cast<Expr*>(InitExpr);
 
