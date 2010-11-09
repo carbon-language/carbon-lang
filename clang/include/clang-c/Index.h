@@ -257,8 +257,8 @@ CINDEX_LINKAGE CXFile clang_getFile(CXTranslationUnit tu,
  * \brief Identifies a specific source location within a translation
  * unit.
  *
- * Use clang_getInstantiationLocation() to map a source location to a
- * particular file, line, and column.
+ * Use clang_getInstantiationLocation() or clang_getSpellingLocation()
+ * to map a source location to a particular file, line, and column.
  */
 typedef struct {
   void *ptr_data[2];
@@ -325,6 +325,9 @@ CINDEX_LINKAGE CXSourceRange clang_getRange(CXSourceLocation begin,
  * \brief Retrieve the file, line, column, and offset represented by
  * the given source location.
  *
+ * If the location refers into a macro instantiation, retrieves the
+ * location of the macro instantiation.
+ *
  * \param location the location within a source file that will be decomposed
  * into its parts.
  *
@@ -345,6 +348,34 @@ CINDEX_LINKAGE void clang_getInstantiationLocation(CXSourceLocation location,
                                                    unsigned *line,
                                                    unsigned *column,
                                                    unsigned *offset);
+
+/**
+ * \brief Retrieve the file, line, column, and offset represented by
+ * the given source location.
+ *
+ * If the location refers into a macro instantiation, return where the
+ * location was originally spelled in the source file.
+ *
+ * \param location the location within a source file that will be decomposed
+ * into its parts.
+ *
+ * \param file [out] if non-NULL, will be set to the file to which the given
+ * source location points.
+ *
+ * \param line [out] if non-NULL, will be set to the line to which the given
+ * source location points.
+ *
+ * \param column [out] if non-NULL, will be set to the column to which the given
+ * source location points.
+ *
+ * \param offset [out] if non-NULL, will be set to the offset into the
+ * buffer to which the given source location points.
+ */
+CINDEX_LINKAGE void clang_getSpellingLocation(CXSourceLocation location,
+                                              CXFile *file,
+                                              unsigned *line,
+                                              unsigned *column,
+                                              unsigned *offset);
 
 /**
  * \brief Retrieve a source location representing the first character within a

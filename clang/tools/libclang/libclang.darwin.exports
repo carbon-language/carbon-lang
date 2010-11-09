@@ -88,6 +88,7 @@ _clang_getRangeEnd
 _clang_getRangeStart
 _clang_getResultType
 _clang_getSpecializedCursorTemplate
+_clang_getSpellingLocation
 _clang_getTemplateCursorKind
 _clang_getTokenExtent
 _clang_getTokenKind
