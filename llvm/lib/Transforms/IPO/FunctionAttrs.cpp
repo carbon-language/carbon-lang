@@ -152,6 +152,25 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
           }
           // Only reads and writes local memory.
           continue;
+        case AliasAnalysis::AccessesArgumentsReadonly:
+          // Check whether all pointer arguments point to local memory, and
+          // ignore calls that only access local memory.
+          for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+               CI != CE; ++CI) {
+            Value *Arg = *CI;
+            if (Arg->getType()->isPointerTy()) {
+              AliasAnalysis::Location Loc(Arg,
+                                          AliasAnalysis::UnknownSize,
+                                          I->getMetadata(LLVMContext::MD_tbaa));
+              if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
+                // Reads non-local memory.
+                ReadsMemory = true;
+                break;
+              }
+            }
+          }
+          // Only reads memory.
+          continue;
         default:
           // Otherwise, be conservative.
           break;
