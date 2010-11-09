@@ -23,6 +23,12 @@
 
 namespace llvm {
 
+#ifndef NDEBUG
+// forward declaration
+template <unsigned Element> class SparseBitVector;
+typedef SparseBitVector<128> LvrBitSet;
+#endif
+
 /// A LiveSegment is a copy of a LiveRange object used within
 /// LiveIntervalUnion. LiveSegment additionally contains a pointer to its
 /// original live virtual register (LiveInterval). This allows quick lookup of
@@ -51,6 +57,9 @@ struct LiveSegment {
 
   // Order segments by starting point only--we expect them to be disjoint.
   bool operator<(const LiveSegment &ls) const { return start < ls.start; }
+
+  void dump() const;
+  void print(raw_ostream &os) const;
 };
 
 inline bool operator<(SlotIndex V, const LiveSegment &ls) {
@@ -66,6 +75,16 @@ inline bool overlap(const LiveRange &lvrSeg, const LiveSegment &liuSeg) {
   return lvrSeg.start < liuSeg.end && liuSeg.start < lvrSeg.end;
 }
 
+template <> struct isPodLike<LiveSegment> { static const bool value = true; };
+
+raw_ostream& operator<<(raw_ostream& os, const LiveSegment &ls);
+
+/// Abstraction to provide info for the representative register.
+class AbstractRegisterDescription {
+public:
+  virtual const char *getName(unsigned reg) const = 0;
+};
+  
 /// Union of live intervals that are strong candidates for coalescing into a
 /// single register (either physical or virtual depending on the context).  We
 /// expect the constituent live intervals to be disjoint, although we may
@@ -121,6 +140,16 @@ public:
 
   // Remove a live virtual register's segments from this union.
   void extract(const LiveInterval &lvr);
+
+  void dump(const AbstractRegisterDescription *regInfo) const;
+
+  // If tri != NULL, use it to decode repReg_
+  void print(raw_ostream &os, const AbstractRegisterDescription *rdesc) const;
+  
+#ifndef NDEBUG
+  // Verify the live intervals in this union and add them to the visited set.
+  void verify(LvrBitSet& visitedVRegs);
+#endif
 
   /// Cache a single interference test result in the form of two intersecting
   /// segments. This allows efficiently iterating over the interferences. The
