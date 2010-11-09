@@ -177,11 +177,15 @@ VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
 #
 # And a generic "Command '%s' returns successfully" message generator.
 #
-def CMD_MSG(str, exe):
-    if exe:
-        return "Command '%s' returns successfully" % str
-    else:
-        return "'%s' compares successfully" % str
+def CMD_MSG(str):
+    return "Command '%s' returns successfully" % str
+
+#
+# And a generic "'%s' returns expected result" message generator if exe.
+# Otherwise, it's "'%s' matches expected result"
+#
+def EXP_MSG(str, exe):
+    return "'%s' %s expected result" % (str, 'returns' if exe else 'matches')
 
 #
 # And a generic "Value of setting '%s' is correct" message generator.
@@ -657,7 +661,7 @@ class TestBase(unittest2.TestCase):
 
         if check:
             self.assertTrue(self.res.Succeeded(),
-                            msg if msg else CMD_MSG(cmd, True))
+                            msg if msg else CMD_MSG(cmd))
 
     def expect(self, str, msg=None, patterns=None, startstr=None, substrs=None, trace=False, error=False, matching=True, exe=True):
         """
@@ -741,7 +745,7 @@ class TestBase(unittest2.TestCase):
                     break
 
         self.assertTrue(matched if matching else not matched,
-                        msg if msg else CMD_MSG(str, exe))
+                        msg if msg else EXP_MSG(str, exe))
 
     def invoke(self, obj, name, trace=False):
         """Use reflection to call a method dynamically with no argument."""
