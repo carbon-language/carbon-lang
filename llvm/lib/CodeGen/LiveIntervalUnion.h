@@ -66,6 +66,17 @@ inline bool overlap(const LiveRange &lvrSeg, const LiveSegment &liuSeg) {
   return lvrSeg.start < liuSeg.end && liuSeg.start < lvrSeg.end;
 }
 
+template <> struct isPodLike<LiveSegment> { static const bool value = true; };
+
+raw_ostream& operator<<(raw_ostream& os, const LiveSegment &ls);
+
+/// Abstraction to provide info for the representative register.
+class AbstractRegisterDescription {
+public:
+  virtual const char *getName(unsigned reg) const = 0;
+  virtual ~AbstractRegisterDescription() { }
+};
+  
 /// Union of live intervals that are strong candidates for coalescing into a
 /// single register (either physical or virtual depending on the context).  We
 /// expect the constituent live intervals to be disjoint, although we may
