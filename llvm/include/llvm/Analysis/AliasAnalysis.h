@@ -181,37 +181,37 @@ public:
   /// interface.  Also, functions may freely modify stack space local to their
   /// invocation without having to report it through these interfaces.
   enum ModRefBehavior {
-    // DoesNotAccessMemory - This function does not perform any non-local loads
-    // or stores to memory.
-    //
-    // This property corresponds to the GCC 'const' attribute.
-    // This property corresponds to the LLVM IR 'readnone' attribute.
-    // This property corresponds to the IntrNoMem LLVM intrinsic flag.
+    /// DoesNotAccessMemory - This function does not perform any non-local loads
+    /// or stores to memory.
+    ///
+    /// This property corresponds to the GCC 'const' attribute.
+    /// This property corresponds to the LLVM IR 'readnone' attribute.
+    /// This property corresponds to the IntrNoMem LLVM intrinsic flag.
     DoesNotAccessMemory,
 
-    // AccessesArgumentsReadonly - This function loads through function
-    // arguments and does not perform any non-local stores or volatile
-    // loads.
-    //
-    // This property corresponds to the IntrReadArgMem LLVM intrinsic flag.
+    /// AccessesArgumentsReadonly - This function loads through function
+    /// arguments and does not perform any non-local stores or volatile
+    /// loads.
+    ///
+    /// This property corresponds to the IntrReadArgMem LLVM intrinsic flag.
     AccessesArgumentsReadonly,
 
-    // AccessesArguments - This function accesses function arguments in well
-    // known (possibly volatile) ways, but does not access any other memory.
-    //
-    // This property corresponds to the IntrReadWriteArgMem LLVM intrinsic flag.
+    /// AccessesArguments - This function accesses function arguments in well
+    /// known (possibly volatile) ways, but does not access any other memory.
+    ///
+    /// This property corresponds to the IntrReadWriteArgMem LLVM intrinsic flag.
     AccessesArguments,
 
-    // OnlyReadsMemory - This function does not perform any non-local stores or
-    // volatile loads, but may read from any memory location.
-    //
-    // This property corresponds to the GCC 'pure' attribute.
-    // This property corresponds to the LLVM IR 'readonly' attribute.
-    // This property corresponds to the IntrReadMem LLVM intrinsic flag.
+    /// OnlyReadsMemory - This function does not perform any non-local stores or
+    /// volatile loads, but may read from any memory location.
+    ///
+    /// This property corresponds to the GCC 'pure' attribute.
+    /// This property corresponds to the LLVM IR 'readonly' attribute.
+    /// This property corresponds to the IntrReadMem LLVM intrinsic flag.
     OnlyReadsMemory,
 
-    // UnknownModRefBehavior - This indicates that the function could not be
-    // classified into one of the behaviors above.
+    /// UnknownModRefBehavior - This indicates that the function could not be
+    /// classified into one of the behaviors above.
     UnknownModRefBehavior
   };
 
