@@ -573,7 +573,7 @@ if not sdir_name:
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
     sdir_name = timestamp
 os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
-sys.stderr.write("\nSession info for test failures/errors will go into directory '%s'\n" % sdir_name)
+sys.stderr.write("\nSession logs for test failures/errors will go into directory '%s'\n" % sdir_name)
 
 #
 # Invoke the default TextTestRunner to run the test suite, possibly iterating
@@ -714,7 +714,7 @@ for ia in range(len(archs) if iterArchs else 1):
         
 
 if sdir_has_content:
-    sys.stderr.write("\nSession logs for test failures/errors can be found in directory '%s'\n" % sdir_name)
+    sys.stderr.write("Session logs for test failures/errors can be found in directory '%s'\n" % sdir_name)
 
 # Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
 # This should not be necessary now.
