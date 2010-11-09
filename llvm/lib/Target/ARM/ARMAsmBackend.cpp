@@ -152,6 +152,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   default:
     llvm_unreachable("Unknown fixup kind!");
   case FK_Data_4:
+    return Value;
   case ARM::fixup_arm_pcrel_12:
     // ARM PC-relative values are offset by 8.
     return Value - 8;
