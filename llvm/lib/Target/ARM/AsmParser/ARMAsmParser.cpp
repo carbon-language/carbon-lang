@@ -178,6 +178,10 @@ public:
       break;
     }
   }
+  ~ARMOperand() {
+    if (isRegList())
+      delete RegList.Registers;
+  }
 
   /// getStartLoc - Get the location of the first token of this operand.
   SMLoc getStartLoc() const { return StartLoc; }
