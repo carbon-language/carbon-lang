@@ -512,7 +512,11 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
   PP.CreateString(TmpBuffer, strlen(TmpBuffer), TmpTok);
   DATELoc = TmpTok.getLocation();
 
+#ifdef LLVM_ON_WIN32
+  sprintf(TmpBuffer, "\"%02d:%02d:%02d\"", TM->tm_hour, TM->tm_min, TM->tm_sec);
+#else
   snprintf(TmpBuffer, sizeof(TmpBuffer), "\"%02d:%02d:%02d\"", TM->tm_hour, TM->tm_min, TM->tm_sec);
+#endif
   PP.CreateString(TmpBuffer, strlen(TmpBuffer), TmpTok);
   TIMELoc = TmpTok.getLocation();
 }
