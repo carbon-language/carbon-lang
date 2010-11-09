@@ -89,7 +89,7 @@ int test2(int n)
 // CHECK: define double @test_PR8567
 double test_PR8567(int n, double (*p)[n][5]) {
   // CHECK: store [[vla_type:.*]] %p,
-  // CHECK: load i32* %n
+  // CHECK: load i32*
   // CHECK-NEXT: mul i32 40
   // CHECK-NEXT: [[byte_idx:%.*]] = mul i32 1
   // CHECK-NEXT: [[tmp_1:%.*]] = load [[vla_type]]*
