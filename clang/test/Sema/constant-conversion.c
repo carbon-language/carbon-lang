@@ -11,5 +11,5 @@ void test_6792488(void) {
 void test_7809123(void) {
   struct { int i5 : 5; } a;
 
-  a.i5 = 36; // expected-warning {{implicit truncation for 'int' to bitfield changes value from 36 to 4}}
+  a.i5 = 36; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 36 to 4}}
 }
