@@ -195,11 +195,6 @@ public:
     // This property corresponds to the IntrReadWriteArgMem LLVM intrinsic flag.
     AccessesArguments,
 
-    // AccessesArgumentsAndGlobals - This function has accesses function
-    // arguments and global variables well known (possibly volatile) ways, but
-    // does not access any other memory.
-    AccessesArgumentsAndGlobals,
-
     // OnlyReadsMemory - This function does not perform any non-local stores or
     // volatile loads, but may read from any memory location.
     //
