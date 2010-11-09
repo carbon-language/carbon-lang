@@ -4309,6 +4309,21 @@ ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
 QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
                                         Expr *&SAVE,
                                         SourceLocation QuestionLoc) {
+  // If both LHS and RHS are overloaded functions, try to resolve them.
+  if (Context.hasSameType(LHS->getType(), RHS->getType()) && 
+      LHS->getType()->isSpecificBuiltinType(BuiltinType::Overload)) {
+    ExprResult LHSResult = CheckPlaceholderExpr(LHS, QuestionLoc);
+    if (LHSResult.isInvalid())
+      return QualType();
+
+    ExprResult RHSResult = CheckPlaceholderExpr(RHS, QuestionLoc);
+    if (RHSResult.isInvalid())
+      return QualType();
+
+    LHS = LHSResult.take();
+    RHS = RHSResult.take();
+  }
+
   // C++ is sufficiently different to merit its own checker.
   if (getLangOptions().CPlusPlus)
     return CXXCheckConditionalOperands(Cond, LHS, RHS, SAVE, QuestionLoc);
@@ -6249,6 +6264,15 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
 // C99 6.5.17
 QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
   DiagnoseUnusedExprResult(LHS);
+
+  ExprResult LHSResult = CheckPlaceholderExpr(LHS, Loc);
+  if (LHSResult.isInvalid()) 
+    return QualType();
+
+  ExprResult RHSResult = CheckPlaceholderExpr(RHS, Loc);
+  if (RHSResult.isInvalid())
+    return QualType();
+  RHS = RHSResult.take();
 
   // C's comma performs lvalue conversion (C99 6.3.2.1) on both its
   // operands, but not unary promotions.
