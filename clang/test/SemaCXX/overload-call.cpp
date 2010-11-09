@@ -503,11 +503,3 @@ namespace rdar8499524 {
     g(W());
   }
 }
-
-namespace PR8013 {
-  void f(int,int);
-  void f(int,int,int);
-  void g() {
-    (&f)(1,2,3);
-  }
-}
