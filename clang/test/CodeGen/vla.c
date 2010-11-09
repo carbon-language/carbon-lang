@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o - | FileCheck %s
 
 int b(char* x);
 
@@ -85,3 +85,16 @@ int test2(int n)
   return GLOB;
 }
 
+// http://llvm.org/PR8567
+// CHECK: define double @test_PR8567
+double test_PR8567(int n, double (*p)[n][5]) {
+  // CHECK: store [[vla_type:.*]] %p,
+  // CHECK: load i32* %n
+  // CHECK-NEXT: mul i32 40
+  // CHECK-NEXT: [[byte_idx:%.*]] = mul i32 1
+  // CHECK-NEXT: [[tmp_1:%.*]] = load [[vla_type]]*
+  // CHECK-NEXT: [[tmp_2:%.*]] = bitcast [[vla_type]] [[tmp_1]] to i8*
+  // CHECK-NEXT: [[idx:%.*]] = getelementptr inbounds i8* [[tmp_2]], i32 [[byte_idx]]
+  // CHECK-NEXT: bitcast i8* [[idx]] to [[vla_type]]
+ return p[1][2][3];
+}

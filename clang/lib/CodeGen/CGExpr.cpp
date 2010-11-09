@@ -1433,17 +1433,14 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 
     Idx = Builder.CreateMul(Idx, VLASize);
 
-    QualType BaseType = getContext().getBaseElementType(VAT);
+    const llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(VMContext);
 
-    CharUnits BaseTypeSize = getContext().getTypeSizeInChars(BaseType);
-    Idx = Builder.CreateUDiv(Idx,
-                             llvm::ConstantInt::get(Idx->getType(),
-                                 BaseTypeSize.getQuantity()));
-    
     // The base must be a pointer, which is not an aggregate.  Emit it.
     llvm::Value *Base = EmitScalarExpr(E->getBase());
     
-    Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
+    Address = Builder.CreateInBoundsGEP(Builder.CreateBitCast(Base, i8PTy),
+                                        Idx, "arrayidx");
+    Address = Builder.CreateBitCast(Address, Base->getType());
   } else if (const ObjCObjectType *OIT = E->getType()->getAs<ObjCObjectType>()){
     // Indexing over an interface, as in "NSString *P; P[4];"
     llvm::Value *InterfaceSize =
