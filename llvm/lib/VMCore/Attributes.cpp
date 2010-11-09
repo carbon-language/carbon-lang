@@ -132,7 +132,7 @@ public:
   void DropRef() {
     sys::SmartScopedLock<true> Lock(*ALMutex);
     sys::cas_flag old = RefCount++;
-    if (old == 0)
+    if (old == 1)
       delete this;
   }
   
