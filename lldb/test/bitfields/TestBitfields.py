@@ -100,10 +100,11 @@ class BitfieldsTestCase(TestBase):
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
-        from lldbutil import StopReasonString
         thread = target.GetProcess().GetThreadAtIndex(0)
-        self.assertTrue(thread.GetStopReason() == lldb.eStopReasonBreakpoint,
-                        STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS % StopReasonString(thread.GetStopReason()))
+        if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
+            from lldbutil import StopReasonString
+            self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
+                      StopReasonString(thread.GetStopReason()))
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
