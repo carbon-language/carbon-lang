@@ -84,8 +84,6 @@ class BitfieldsTestCase(TestBase):
 
     def bitfields_variable_python(self):
         """Use Python APIs to inspect a bitfields variable."""
-        from lldbutil import StopReasonString
-
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -102,6 +100,7 @@ class BitfieldsTestCase(TestBase):
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
+        from lldbutil import StopReasonString
         thread = target.GetProcess().GetThreadAtIndex(0)
         self.assertTrue(thread.GetStopReason() == lldb.eStopReasonBreakpoint,
                         STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS % StopReasonString(thread.GetStopReason()))

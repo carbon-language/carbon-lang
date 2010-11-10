@@ -68,9 +68,10 @@ class HelloWorldTestCase(TestBase):
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
+        from lldbutil import StopReasonString
         thread = self.process.GetThreadAtIndex(0)
         self.assertTrue(thread.GetStopReason() == lldb.eStopReasonBreakpoint,
-                        STOPPED_DUE_TO_BREAKPOINT)
+                        STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS % StopReasonString(thread.GetStopReason()))
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
