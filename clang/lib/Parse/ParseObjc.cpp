@@ -833,9 +833,9 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     ReturnType = ParseObjCTypeName(DSRet, false);
 
   // If attributes exist before the method, parse them.
-  llvm::OwningPtr<AttributeList> MethodAttrs;
+  AttributeList *MethodAttrs = 0;
   if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-    MethodAttrs.reset(ParseGNUAttributes());
+    MethodAttrs = ParseGNUAttributes();
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCMethodDecl(getCurScope(), mType == tok::minus, 
@@ -860,8 +860,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   if (Tok.isNot(tok::colon)) {
     // If attributes exist after the method, parse them.
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-      MethodAttrs.reset(addAttributeLists(MethodAttrs.take(),
-                                          ParseGNUAttributes()));
+      MethodAttrs = addAttributeLists(MethodAttrs, ParseGNUAttributes());
 
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     Decl *Result
@@ -869,8 +868,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                           mType, IDecl, DSRet, ReturnType, Sel,
                                           0, 
                                           CParamInfo.data(), CParamInfo.size(),
-                                          MethodAttrs.get(),
-                                          MethodImplKind);
+                                          MethodAttrs, MethodImplKind);
     PD.complete(Result);
     return Result;
   }
@@ -970,8 +968,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   // FIXME: Add support for optional parameter list...
   // If attributes exist after the method, parse them.
   if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-    MethodAttrs.reset(addAttributeLists(MethodAttrs.take(),
-                                        ParseGNUAttributes()));
+    MethodAttrs = addAttributeLists(MethodAttrs, ParseGNUAttributes());
 
   if (KeyIdents.size() == 0)
     return 0;
@@ -982,15 +979,9 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                         mType, IDecl, DSRet, ReturnType, Sel,
                                         &ArgInfos[0], 
                                         CParamInfo.data(), CParamInfo.size(),
-                                        MethodAttrs.get(),
+                                        MethodAttrs,
                                         MethodImplKind, isVariadic);
   PD.complete(Result);
-  
-  // Delete referenced AttributeList objects.
-  for (llvm::SmallVectorImpl<Sema::ObjCArgInfo>::iterator
-       I = ArgInfos.begin(), E = ArgInfos.end(); I != E; ++I)
-    delete I->ArgAttrs;
-  
   return Result;
 }
 

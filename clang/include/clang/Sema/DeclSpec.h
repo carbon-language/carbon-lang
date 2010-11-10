@@ -274,7 +274,6 @@ public:
       writtenBS() {
   }
   ~DeclSpec() {
-    delete AttrList;
     delete [] ProtocolQualifiers;
     delete [] ProtocolLocs;
   }
@@ -813,7 +812,6 @@ struct DeclaratorChunk {
     unsigned TypeQuals : 3;
     AttributeList *AttrList;
     void destroy() {
-      delete AttrList;
     }
   };
 
@@ -824,7 +822,6 @@ struct DeclaratorChunk {
     bool LValueRef : 1;
     AttributeList *AttrList;
     void destroy() {
-      delete AttrList;
     }
   };
 
@@ -967,7 +964,6 @@ struct DeclaratorChunk {
     unsigned TypeQuals : 3;
     AttributeList *AttrList;
     void destroy() {
-      delete AttrList;
     }
   };
 
@@ -988,7 +984,6 @@ struct DeclaratorChunk {
       return *reinterpret_cast<const CXXScopeSpec*>(ScopeMem.Mem);
     }
     void destroy() {
-      delete AttrList;
       Scope().~CXXScopeSpec();
     }
   };
@@ -1244,7 +1239,6 @@ public:
     for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
       DeclTypeInfo[i].destroy();
     DeclTypeInfo.clear();
-    delete AttrList;
     AttrList = 0;
     AsmLabel = 0;
     InlineParamsUsed = false;

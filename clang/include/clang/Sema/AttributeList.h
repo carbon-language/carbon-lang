@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_SEMA_ATTRLIST_H
 #define LLVM_CLANG_SEMA_ATTRLIST_H
 
+#include "llvm/Support/Allocator.h"
 #include "clang/Sema/Ownership.h"
 #include "clang/Basic/SourceLocation.h"
 #include <cassert>
@@ -32,6 +33,9 @@ namespace clang {
 /// 4: __attribute__(( aligned(16) )). ParmName is unused, Args/Num used.
 ///
 class AttributeList {
+public:
+  class Factory;
+private:
   IdentifierInfo *AttrName;
   SourceLocation AttrLoc;
   IdentifierInfo *ScopeName;
@@ -45,14 +49,33 @@ class AttributeList {
   mutable bool Invalid; /// True if already diagnosed as invalid.
   AttributeList(const AttributeList &); // DO NOT IMPLEMENT
   void operator=(const AttributeList &); // DO NOT IMPLEMENT
-public:
-  AttributeList(IdentifierInfo *AttrName, SourceLocation AttrLoc,
+  void operator delete(void *); // DO NOT IMPLEMENT
+  ~AttributeList(); // DO NOT IMPLEMENT
+  AttributeList(llvm::BumpPtrAllocator &Alloc,
+                IdentifierInfo *AttrName, SourceLocation AttrLoc,
                 IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
                 Expr **args, unsigned numargs,
-                AttributeList *Next, bool declspec = false, bool cxx0x = false);
-  ~AttributeList();
-
+                AttributeList *Next, bool declspec, bool cxx0x);
+public:
+  class Factory {
+    llvm::BumpPtrAllocator Alloc;
+  public:
+    Factory() {}
+    ~Factory() {}
+    AttributeList *Create(IdentifierInfo *AttrName, SourceLocation AttrLoc,
+      IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
+      IdentifierInfo *ParmName, SourceLocation ParmLoc,
+      Expr **args, unsigned numargs,
+      AttributeList *Next, bool declspec = false, bool cxx0x = false) {
+        AttributeList *Mem = Alloc.Allocate<AttributeList>();
+        new (Mem) AttributeList(Alloc, AttrName, AttrLoc, ScopeName, ScopeLoc,
+                                ParmName, ParmLoc, args, numargs,
+                                Next, declspec, cxx0x);
+        return Mem;
+      }
+  };
+  
   enum Kind {             // Please keep this list alphabetized.
     AT_IBAction,          // Clang-specific.
     AT_IBOutlet,          // Clang-specific.

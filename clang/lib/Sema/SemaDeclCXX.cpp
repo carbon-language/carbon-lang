@@ -3483,7 +3483,6 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
   }
 
   // FIXME: We ignore attributes for now.
-  delete AttrList;
   return UDir;
 }
 
@@ -3810,7 +3809,6 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   assert(IdentLoc.isValid() && "Invalid TargetName location.");
 
   // FIXME: We ignore attributes for now.
-  delete AttrList;
 
   if (SS.isEmpty()) {
     Diag(IdentLoc, diag::err_using_requires_qualname);

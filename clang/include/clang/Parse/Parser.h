@@ -25,8 +25,6 @@
 #include <list>
 
 namespace clang {
-  class AttributeList;
-  struct CXX0XAttributeList;
   class PragmaHandler;
   class Scope;
   class DeclGroupRef;
@@ -142,6 +140,9 @@ class Parser : public CodeCompletionHandler {
   
   /// The "depth" of the template parameters currently being parsed.
   unsigned TemplateParameterDepth;
+  
+  /// Factory object for creating AttributeList objects.
+  AttributeList::Factory AttrFactory;
 
 public:
   Parser(Preprocessor &PP, Sema &Actions);

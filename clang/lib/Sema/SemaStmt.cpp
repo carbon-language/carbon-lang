@@ -238,13 +238,12 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
   // According to GCC docs, "the only attribute that makes sense after a label
   // is 'unused'".
   bool HasUnusedAttr = false;
-  llvm::OwningPtr<const AttributeList> AttrList(Attr);
-  for (const AttributeList* a = AttrList.get(); a; a = a->getNext()) {
-    if (a->getKind() == AttributeList::AT_unused) {
+  for ( ; Attr; Attr = Attr->getNext()) {
+    if (Attr->getKind() == AttributeList::AT_unused) {
       HasUnusedAttr = true;
     } else {
-      Diag(a->getLoc(), diag::warn_label_attribute_not_unused);
-      a->setInvalid(true);
+      Diag(Attr->getLoc(), diag::warn_label_attribute_not_unused);
+      Attr->setInvalid(true);
     }
   }
 

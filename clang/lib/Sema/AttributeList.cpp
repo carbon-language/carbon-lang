@@ -16,35 +16,24 @@
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
-AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
+AttributeList::AttributeList(llvm::BumpPtrAllocator &Alloc,
+                             IdentifierInfo *aName, SourceLocation aLoc,
                              IdentifierInfo *sName, SourceLocation sLoc,
                              IdentifierInfo *pName, SourceLocation pLoc,
                              Expr **ExprList, unsigned numArgs,
                              AttributeList *n, bool declspec, bool cxx0x)
-  : AttrName(aName), AttrLoc(aLoc), ScopeName(sName), ScopeLoc(sLoc),
+  : AttrName(aName), AttrLoc(aLoc), ScopeName(sName),
+    ScopeLoc(sLoc),
     ParmName(pName), ParmLoc(pLoc), NumArgs(numArgs), Next(n),
     DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), Invalid(false) {
 
   if (numArgs == 0)
     Args = 0;
   else {
-    Args = new Expr*[numArgs];
+    // Allocate the Args array using the BumpPtrAllocator.
+    Args = Alloc.Allocate<Expr*>(numArgs);
     memcpy(Args, ExprList, numArgs*sizeof(Args[0]));
   }
-}
-
-AttributeList::~AttributeList() {
-  if (Args) {
-    // FIXME: before we delete the vector, we need to make sure the Expr's
-    // have been deleted. Since ActionBase::ExprTy is "void", we are dependent
-    // on the actions module for actually freeing the memory. The specific
-    // hooks are ActOnDeclarator, ActOnTypeName, ActOnParamDeclaratorType,
-    // ParseField, ParseTag. Once these routines have freed the expression,
-    // they should zero out the Args slot (to indicate the memory has been
-    // freed). If any element of the vector is non-null, we should assert.
-    delete [] Args;
-  }
-  delete Next;
 }
 
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {

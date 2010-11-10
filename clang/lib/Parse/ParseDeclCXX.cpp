@@ -69,12 +69,12 @@ Decl *Parser::ParseNamespace(unsigned Context,
   }
 
   // Read label attributes, if present.
-  llvm::OwningPtr<AttributeList> AttrList;
+  AttributeList *AttrList = 0;
   if (Tok.is(tok::kw___attribute)) {
     attrTok = Tok;
 
     // FIXME: save these somewhere.
-    AttrList.reset(ParseGNUAttributes());
+    AttrList = ParseGNUAttributes();
   }
 
   if (Tok.is(tok::equal)) {
@@ -112,7 +112,7 @@ Decl *Parser::ParseNamespace(unsigned Context,
 
   Decl *NamespcDecl =
     Actions.ActOnStartNamespaceDef(getCurScope(), InlineLoc, IdentLoc, Ident,
-                                   LBrace, AttrList.get());
+                                   LBrace, AttrList);
 
   PrettyDeclStackTraceEntry CrashInfo(Actions, NamespcDecl, NamespaceLoc,
                                       "parsing namespace");
@@ -391,9 +391,9 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   }
 
   // Parse (optional) attributes (most likely GNU strong-using extension).
-  llvm::OwningPtr<AttributeList> AttrList;
+  AttributeList *AttrList = 0;
   if (Tok.is(tok::kw___attribute))
-    AttrList.reset(ParseGNUAttributes());
+    AttrList = ParseGNUAttributes();
 
   // Eat ';'.
   DeclEnd = Tok.getLocation();
@@ -413,8 +413,8 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     return 0;
   }
 
-  return Actions.ActOnUsingDeclaration(getCurScope(), AS, true, UsingLoc, SS, Name,
-                                       AttrList.get(), IsTypeName, TypenameLoc);
+  return Actions.ActOnUsingDeclaration(getCurScope(), AS, true, UsingLoc, SS,
+                                       Name, AttrList, IsTypeName, TypenameLoc);
 }
 
 /// ParseStaticAssertDeclaration - Parse C++0x static_assert-declaratoion.
@@ -1708,14 +1708,14 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   }
 
   // If attributes exist after class contents, parse them.
-  llvm::OwningPtr<AttributeList> AttrList;
+  AttributeList *AttrList = 0;
   if (Tok.is(tok::kw___attribute))
-    AttrList.reset(ParseGNUAttributes());
+    AttrList = ParseGNUAttributes();
 
   if (TagDecl)
     Actions.ActOnFinishCXXMemberSpecification(getCurScope(), RecordLoc, TagDecl,
                                               LBraceLoc, RBraceLoc,
-                                              AttrList.get());
+                                              AttrList);
 
   // C++ 9.2p2: Within the class member-specification, the class is regarded as
   // complete within function bodies, default arguments,
@@ -2093,9 +2093,9 @@ CXX0XAttributeList Parser::ParseCXX0XAttributes(SourceLocation *EndLoc) {
           break;
         }
 
-        CurrAttr = new AttributeList(AttrName, AttrLoc, 0, AttrLoc, 0,
-                                     SourceLocation(), 0, 0, CurrAttr, false,
-                                     true);
+        CurrAttr = AttrFactory.Create(AttrName, AttrLoc, 0, AttrLoc, 0,
+                                      SourceLocation(), 0, 0, CurrAttr, false,
+                                      true);
         AttrParsed = true;
         break;
       }
@@ -2115,9 +2115,9 @@ CXX0XAttributeList Parser::ParseCXX0XAttributes(SourceLocation *EndLoc) {
 
         ExprVector ArgExprs(Actions);
         ArgExprs.push_back(ArgExpr.release());
-        CurrAttr = new AttributeList(AttrName, AttrLoc, 0, AttrLoc,
-                                     0, ParamLoc, ArgExprs.take(), 1, CurrAttr,
-                                     false, true);
+        CurrAttr = AttrFactory.Create(AttrName, AttrLoc, 0, AttrLoc,
+                                      0, ParamLoc, ArgExprs.take(), 1, CurrAttr,
+                                      false, true);
 
         AttrParsed = true;
         break;

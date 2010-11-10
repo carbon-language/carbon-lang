@@ -122,8 +122,8 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
           if (Tok.is(tok::r_paren)) {
             // __attribute__(( mode(byte) ))
             ConsumeParen(); // ignore the right paren loc for now
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
-                                         ParmName, ParmLoc, 0, 0, CurrAttr);
+            CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0, AttrNameLoc,
+                                          ParmName, ParmLoc, 0, 0, CurrAttr);
           } else if (Tok.is(tok::comma)) {
             ConsumeToken();
             // __attribute__(( format(printf, 1, 2) ))
@@ -146,10 +146,10 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
             }
             if (ArgExprsOk && Tok.is(tok::r_paren)) {
               ConsumeParen(); // ignore the right paren loc for now
-              CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
-                                           AttrNameLoc, ParmName, ParmLoc,
-                                           ArgExprs.take(), ArgExprs.size(),
-                                           CurrAttr);
+              CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0,
+                                            AttrNameLoc, ParmName, ParmLoc,
+                                            ArgExprs.take(), ArgExprs.size(),
+                                            CurrAttr);
             }
           }
         } else { // not an identifier
@@ -158,8 +158,8 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
           // parse a possibly empty comma separated list of expressions
             // __attribute__(( nonnull() ))
             ConsumeParen(); // ignore the right paren loc for now
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
-                                         0, SourceLocation(), 0, 0, CurrAttr);
+            CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0, AttrNameLoc,
+                                          0, SourceLocation(), 0, 0, CurrAttr);
             break;
           case tok::kw_char:
           case tok::kw_wchar_t:
@@ -175,8 +175,8 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
           case tok::kw_double:
           case tok::kw_void:
           case tok::kw_typeof:
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
-                                         0, SourceLocation(), 0, 0, CurrAttr);
+            CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0, AttrNameLoc,
+                                          0, SourceLocation(), 0, 0, CurrAttr);
             if (CurrAttr->getKind() == AttributeList::AT_IBOutletCollection)
               Diag(Tok, diag::err_iboutletcollection_builtintype);
             // If it's a builtin type name, eat it and expect a rparen
@@ -207,7 +207,7 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
             // Match the ')'.
             if (ArgExprsOk && Tok.is(tok::r_paren)) {
               ConsumeParen(); // ignore the right paren loc for now
-              CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
+              CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0,
                            AttrNameLoc, 0, SourceLocation(), ArgExprs.take(),
                            ArgExprs.size(),
                            CurrAttr);
@@ -216,8 +216,8 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
           }
         }
       } else {
-        CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
-                                     0, SourceLocation(), 0, 0, CurrAttr);
+        CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0, AttrNameLoc,
+                                      0, SourceLocation(), 0, 0, CurrAttr);
       }
     }
     if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
@@ -260,15 +260,15 @@ AttributeList* Parser::ParseMicrosoftDeclSpec(AttributeList *CurrAttr) {
       ExprResult ArgExpr(ParseAssignmentExpression());
       if (!ArgExpr.isInvalid()) {
         Expr *ExprList = ArgExpr.take();
-        CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
-                                     SourceLocation(), &ExprList, 1,
-                                     CurrAttr, true);
+        CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
+                                      SourceLocation(), &ExprList, 1,
+                                      CurrAttr, true);
       }
       if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
         SkipUntil(tok::r_paren, false);
     } else {
-      CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
-                                   0, SourceLocation(), 0, 0, CurrAttr, true);
+      CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0, AttrNameLoc,
+                                    0, SourceLocation(), 0, 0, CurrAttr, true);
     }
   }
   if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
@@ -287,8 +287,8 @@ AttributeList* Parser::ParseMicrosoftTypeAttributes(AttributeList *CurrAttr) {
     if (Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64))
       // FIXME: Support these properly!
       continue;
-    CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
-                                 SourceLocation(), 0, 0, CurrAttr, true);
+    CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
+                                  SourceLocation(), 0, 0, CurrAttr, true);
   }
   return CurrAttr;
 }
@@ -298,8 +298,8 @@ AttributeList* Parser::ParseBorlandTypeAttributes(AttributeList *CurrAttr) {
   while (Tok.is(tok::kw___pascal)) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
-    CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
-                                 SourceLocation(), 0, 0, CurrAttr, true);
+    CurrAttr = AttrFactory.Create(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
+                                  SourceLocation(), 0, 0, CurrAttr, true);
   }
   return CurrAttr;
 }
@@ -1899,15 +1899,15 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
-  llvm::OwningPtr<AttributeList> AttrList;
+  AttributeList *AttrList = 0;
   // If attributes exist after struct contents, parse them.
   if (Tok.is(tok::kw___attribute))
-    AttrList.reset(ParseGNUAttributes());
+    AttrList = ParseGNUAttributes();
 
   Actions.ActOnFields(getCurScope(),
                       RecordLoc, TagDecl, FieldDecls.data(), FieldDecls.size(),
                       LBraceLoc, RBraceLoc,
-                      AttrList.get());
+                      AttrList);
   StructScope.Exit();
   Actions.ActOnTagFinishDefinition(getCurScope(), TagDecl, RBraceLoc);
 }
@@ -1950,10 +1950,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     ConsumeCodeCompletionToken();
   }
   
-  llvm::OwningPtr<AttributeList> Attr;
+  AttributeList *Attr = 0;
   // If attributes exist after tag, parse them.
   if (Tok.is(tok::kw___attribute))
-    Attr.reset(ParseGNUAttributes());
+    Attr = ParseGNUAttributes();
 
   CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLang().CPlusPlus) {
@@ -2044,7 +2044,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   const char *PrevSpec = 0;
   unsigned DiagID;
   Decl *TagDecl = Actions.ActOnTag(getCurScope(), DeclSpec::TST_enum, TUK,
-                                   StartLoc, SS, Name, NameLoc, Attr.get(),
+                                   StartLoc, SS, Name, NameLoc, Attr,
                                    AS,
                                    MultiTemplateParamsArg(Actions),
                                    Owned, IsDependent, IsScopedEnum,
@@ -2127,9 +2127,9 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     SourceLocation IdentLoc = ConsumeToken();
 
     // If attributes exist after the enumerator, parse them.
-    llvm::OwningPtr<AttributeList> Attr;
+    AttributeList *Attr = 0;
     if (Tok.is(tok::kw___attribute))
-      Attr.reset(ParseGNUAttributes());
+      Attr = ParseGNUAttributes();
 
     SourceLocation EqualLoc;
     ExprResult AssignedVal;
@@ -2144,7 +2144,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     Decl *EnumConstDecl = Actions.ActOnEnumConstant(getCurScope(), EnumDecl,
                                                     LastEnumConstDecl,
                                                     IdentLoc, Ident,
-                                                    Attr.get(), EqualLoc,
+                                                    Attr, EqualLoc,
                                                     AssignedVal.release());
     EnumConstantDecls.push_back(EnumConstDecl);
     LastEnumConstDecl = EnumConstDecl;
@@ -2171,14 +2171,14 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
   // Eat the }.
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
-  llvm::OwningPtr<AttributeList> Attr;
+  AttributeList *Attr = 0;
   // If attributes exist after the identifier list, parse them.
   if (Tok.is(tok::kw___attribute))
-    Attr.reset(ParseGNUAttributes()); // FIXME: where do they do?
+    Attr = ParseGNUAttributes(); // FIXME: where do they do?
 
   Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
                         EnumConstantDecls.data(), EnumConstantDecls.size(),
-                        getCurScope(), Attr.get());
+                        getCurScope(), Attr);
 
   EnumScope.Exit();
   Actions.ActOnTagFinishDefinition(getCurScope(), EnumDecl, RBraceLoc);
@@ -2928,10 +2928,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // In either case, we need to eat any attributes to be able to determine what
   // sort of paren this is.
   //
-  llvm::OwningPtr<AttributeList> AttrList;
+  AttributeList *AttrList = 0;
   bool RequiresArg = false;
   if (Tok.is(tok::kw___attribute)) {
-    AttrList.reset(ParseGNUAttributes());
+    AttrList = ParseGNUAttributes();
 
     // We require that the argument list (if this is a non-grouping paren) be
     // present even if the attribute list was empty.
@@ -2941,12 +2941,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   if  (Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
        Tok.is(tok::kw___thiscall) || Tok.is(tok::kw___fastcall) ||
        Tok.is(tok::kw___w64) || Tok.is(tok::kw___ptr64)) {
-    AttrList.reset(ParseMicrosoftTypeAttributes(AttrList.take()));
+    AttrList = ParseMicrosoftTypeAttributes(AttrList);
   }
   // Eat any Borland extensions.
-  if  (Tok.is(tok::kw___pascal)) {
-    AttrList.reset(ParseBorlandTypeAttributes(AttrList.take()));
-  }
+  if  (Tok.is(tok::kw___pascal))
+    AttrList = ParseBorlandTypeAttributes(AttrList);
 
   // If we haven't past the identifier yet (or where the identifier would be
   // stored, if this is an abstract declarator), then this is probably just
@@ -2976,7 +2975,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     bool hadGroupingParens = D.hasGroupingParens();
     D.setGroupingParens(true);
     if (AttrList)
-      D.AddAttributes(AttrList.take(), SourceLocation());
+      D.AddAttributes(AttrList, SourceLocation());
 
     ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
     // Match the ')'.
@@ -2993,7 +2992,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // ParseFunctionDeclarator to handle of argument list.
   D.SetIdentifier(0, Tok.getLocation());
 
-  ParseFunctionDeclarator(StartLoc, D, AttrList.take(), RequiresArg);
+  ParseFunctionDeclarator(StartLoc, D, AttrList, RequiresArg);
 }
 
 /// ParseFunctionDeclarator - We are after the identifier and have parsed the
@@ -3038,10 +3037,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
   // This parameter list may be empty.
   if (Tok.is(tok::r_paren)) {
-    if (RequiresArg) {
+    if (RequiresArg)
       Diag(Tok, diag::err_argument_required_after_attribute);
-      delete AttrList;
-    }
 
     SourceLocation RParenLoc = ConsumeParen();  // Eat the closing ')'.
     SourceLocation EndLoc = RParenLoc;
@@ -3099,10 +3096,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     if (TryAnnotateTypeOrScopeToken() || !Tok.is(tok::annot_typename)) {
       // K&R identifier lists can't have typedefs as identifiers, per
       // C99 6.7.5.3p11.
-      if (RequiresArg) {
+      if (RequiresArg)
         Diag(Tok, diag::err_argument_required_after_attribute);
-        delete AttrList;
-      }
       
       // Identifier list.  Note that '(' identifier-list ')' is only allowed for
       // normal declarators, not for abstract-declarators.  Get the first

@@ -84,7 +84,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   CXX0XAttributeList Attr;
   if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
     Attr = ParseCXX0XAttributes();
-  llvm::OwningPtr<AttributeList> AttrList(Attr.AttrList);
+  AttributeList *AttrList = Attr.AttrList;
 
   // Cases in this switch statement should fall through if the parser expects
   // the token to end in a semicolon (in which case SemiError should be set),
@@ -106,16 +106,15 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   case tok::identifier:
     if (NextToken().is(tok::colon)) { // C99 6.8.1: labeled-statement
       // identifier ':' statement
-      return ParseLabeledStatement(AttrList.take());
+      return ParseLabeledStatement(AttrList);
     }
     // PASS THROUGH.
 
   default: {
     if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
-      AttrList.take(); //Passing 'Attr' to ParseDeclaration transfers ownership.
-      DeclGroupPtrTy Decl = ParseDeclaration(Stmts, Declarator::BlockContext, DeclEnd,
-                                             Attr);
+      DeclGroupPtrTy Decl = ParseDeclaration(Stmts, Declarator::BlockContext,
+                                             DeclEnd, Attr);
       return Actions.ActOnDeclStmt(Decl, DeclStart, DeclEnd);
     }
 
@@ -142,43 +141,43 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
-    return ParseCaseStatement(AttrList.take());
+    return ParseCaseStatement(AttrList);
   case tok::kw_default:             // C99 6.8.1: labeled-statement
-    return ParseDefaultStatement(AttrList.take());
+    return ParseDefaultStatement(AttrList);
 
   case tok::l_brace:                // C99 6.8.2: compound-statement
-    return ParseCompoundStatement(AttrList.take());
+    return ParseCompoundStatement(AttrList);
   case tok::semi:                   // C99 6.8.3p3: expression[opt] ';'
     return Actions.ActOnNullStmt(ConsumeToken());
 
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
-    return ParseIfStatement(AttrList.take());
+    return ParseIfStatement(AttrList);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
-    return ParseSwitchStatement(AttrList.take());
+    return ParseSwitchStatement(AttrList);
 
   case tok::kw_while:               // C99 6.8.5.1: while-statement
-    return ParseWhileStatement(AttrList.take());
+    return ParseWhileStatement(AttrList);
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
-    Res = ParseDoStatement(AttrList.take());
+    Res = ParseDoStatement(AttrList);
     SemiError = "do/while";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
-    return ParseForStatement(AttrList.take());
+    return ParseForStatement(AttrList);
 
   case tok::kw_goto:                // C99 6.8.6.1: goto-statement
-    Res = ParseGotoStatement(AttrList.take());
+    Res = ParseGotoStatement(AttrList);
     SemiError = "goto";
     break;
   case tok::kw_continue:            // C99 6.8.6.2: continue-statement
-    Res = ParseContinueStatement(AttrList.take());
+    Res = ParseContinueStatement(AttrList);
     SemiError = "continue";
     break;
   case tok::kw_break:               // C99 6.8.6.3: break-statement
-    Res = ParseBreakStatement(AttrList.take());
+    Res = ParseBreakStatement(AttrList);
     SemiError = "break";
     break;
   case tok::kw_return:              // C99 6.8.6.4: return-statement
-    Res = ParseReturnStatement(AttrList.take());
+    Res = ParseReturnStatement(AttrList);
     SemiError = "return";
     break;
 
@@ -195,7 +194,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   }
 
   case tok::kw_try:                 // C++ 15: try-block
-    return ParseCXXTryBlock(AttrList.take());
+    return ParseCXXTryBlock(AttrList);
   }
 
   // If we reached this code, the statement must end in a semicolon.
@@ -223,7 +222,6 @@ StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
   assert(Tok.is(tok::identifier) && Tok.getIdentifierInfo() &&
          "Not an identifier!");
 
-  llvm::OwningPtr<AttributeList> AttrList(Attr);
   Token IdentTok = Tok;  // Save the whole token.
   ConsumeToken();  // eat the identifier.
 
@@ -234,7 +232,7 @@ StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
 
   // Read label attributes, if present.
   if (Tok.is(tok::kw___attribute))
-    AttrList.reset(addAttributeLists(AttrList.take(), ParseGNUAttributes()));
+    Attr = addAttributeLists(Attr, ParseGNUAttributes());
 
   StmtResult SubStmt(ParseStatement());
 
@@ -244,7 +242,7 @@ StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
 
   return Actions.ActOnLabelStmt(IdentTok.getLocation(),
                                 IdentTok.getIdentifierInfo(),
-                                ColonLoc, SubStmt.get(), AttrList.take());
+                                ColonLoc, SubStmt.get(), Attr);
 }
 
 /// ParseCaseStatement
@@ -255,7 +253,6 @@ StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
 StmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
   assert(Tok.is(tok::kw_case) && "Not a case stmt!");
   // FIXME: Use attributes?
-  delete Attr;
 
   // It is very very common for code to contain many case statements recursively
   // nested, as in (but usually without indentation):
@@ -381,7 +378,6 @@ StmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
 ///
 StmtResult Parser::ParseDefaultStatement(AttributeList *Attr) {
   //FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_default) && "Not a default stmt!");
   SourceLocation DefaultLoc = ConsumeToken();  // eat the 'default'.
@@ -439,7 +435,6 @@ StmtResult Parser::ParseDefaultStatement(AttributeList *Attr) {
 StmtResult Parser::ParseCompoundStatement(AttributeList *Attr,
                                                         bool isStmtExpr) {
   //FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::l_brace) && "Not a compount stmt!");
 
@@ -586,7 +581,6 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
 ///
 StmtResult Parser::ParseIfStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_if) && "Not an if stmt!");
   SourceLocation IfLoc = ConsumeToken();  // eat the 'if'.
@@ -709,7 +703,6 @@ StmtResult Parser::ParseIfStatement(AttributeList *Attr) {
 /// [C++]   'switch' '(' condition ')' statement
 StmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_switch) && "Not a switch stmt!");
   SourceLocation SwitchLoc = ConsumeToken();  // eat the 'switch'.
@@ -795,7 +788,6 @@ StmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
 /// [C++]   'while' '(' condition ')' statement
 StmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_while) && "Not a while stmt!");
   SourceLocation WhileLoc = Tok.getLocation();
@@ -870,7 +862,6 @@ StmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
 /// Note: this lets the caller parse the end ';'.
 StmtResult Parser::ParseDoStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_do) && "Not a do stmt!");
   SourceLocation DoLoc = ConsumeToken();  // eat the 'do'.
@@ -947,7 +938,6 @@ StmtResult Parser::ParseDoStatement(AttributeList *Attr) {
 ///
 StmtResult Parser::ParseForStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_for) && "Not a for stmt!");
   SourceLocation ForLoc = ConsumeToken();  // eat the 'for'.
@@ -1141,7 +1131,6 @@ StmtResult Parser::ParseForStatement(AttributeList *Attr) {
 ///
 StmtResult Parser::ParseGotoStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_goto) && "Not a goto stmt!");
   SourceLocation GotoLoc = ConsumeToken();  // eat the 'goto'.
@@ -1177,7 +1166,6 @@ StmtResult Parser::ParseGotoStatement(AttributeList *Attr) {
 ///
 StmtResult Parser::ParseContinueStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
   return Actions.ActOnContinueStmt(ContinueLoc, getCurScope());
@@ -1191,7 +1179,6 @@ StmtResult Parser::ParseContinueStatement(AttributeList *Attr) {
 ///
 StmtResult Parser::ParseBreakStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
   return Actions.ActOnBreakStmt(BreakLoc, getCurScope());
@@ -1202,7 +1189,6 @@ StmtResult Parser::ParseBreakStatement(AttributeList *Attr) {
 ///         'return' expression[opt] ';'
 StmtResult Parser::ParseReturnStatement(AttributeList *Attr) {
   // FIXME: Use attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_return) && "Not a return stmt!");
   SourceLocation ReturnLoc = ConsumeToken();  // eat the 'return'.
@@ -1522,7 +1508,6 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl) {
 ///
 StmtResult Parser::ParseCXXTryBlock(AttributeList* Attr) {
   // FIXME: Add attributes?
-  delete Attr;
 
   assert(Tok.is(tok::kw_try) && "Expected 'try'");
 
