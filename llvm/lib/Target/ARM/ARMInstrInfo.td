@@ -1186,7 +1186,6 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
                        "$Rn = $wb", []> {
   bits<4> p;
   let Inst{31-28} = p;
-  let Inst{24-23} = 0b01;
   let Inst{21}    = 1;
 }
 
@@ -1709,13 +1708,21 @@ let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
 def LDM : AXI4ld<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                           reglist:$dsts, variable_ops),
                  IndexModeNone, LdStMulFrm, IIC_iLoad_m,
-                 "ldm${amode}${p}\t$Rn, $dsts", "", []>;
+                 "ldm${amode}${p}\t$Rn, $dsts", "", []> {
+  bits<4> p;
+  let Inst{31-28} = p;
+  let Inst{21} = 0;
+}
 
 def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
                                       reglist:$dsts, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iLoad_mu,
                      "ldm${amode}${p}\t$Rn!, $dsts",
-                     "$Rn = $wb", []>;
+                     "$Rn = $wb", []> {
+  bits<4> p;
+  let Inst{31-28} = p;
+  let Inst{21} = 1;
+}
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
