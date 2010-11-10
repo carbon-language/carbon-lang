@@ -21,7 +21,7 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
-#define MaxRecursionDepth 5
+#define MaxRecursionDepth 3
 
 static Value *SimplifyBinOp(unsigned, Value *, Value *, const TargetData *,
                             unsigned);
