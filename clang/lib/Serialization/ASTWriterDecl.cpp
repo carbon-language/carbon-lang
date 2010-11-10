@@ -673,10 +673,7 @@ void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
   Writer.AddSourceLocation(D->getUsingLocation(), Record);
   Writer.AddNestedNameSpecifier(D->getTargetNestedNameDecl(), Record);
   Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
-  Record.push_back(D->getNumShadowDecls());
-  for (UsingDecl::shadow_iterator P = D->shadow_begin(),
-       PEnd = D->shadow_end(); P != PEnd; ++P)
-    Writer.AddDeclRef(*P, Record);
+  Writer.AddDeclRef(D->FirstUsingShadow, Record);
   Record.push_back(D->isTypeName());
   Writer.AddDeclRef(Context.getInstantiatedFromUsingDecl(D), Record);
   Code = serialization::DECL_USING;
@@ -685,7 +682,7 @@ void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
 void ASTDeclWriter::VisitUsingShadowDecl(UsingShadowDecl *D) {
   VisitNamedDecl(D);
   Writer.AddDeclRef(D->getTargetDecl(), Record);
-  Writer.AddDeclRef(D->getUsingDecl(), Record);
+  Writer.AddDeclRef(D->UsingOrNextShadow, Record);
   Writer.AddDeclRef(Context.getInstantiatedFromUsingShadowDecl(D), Record);
   Code = serialization::DECL_USING_SHADOW;
 }

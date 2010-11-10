@@ -41,7 +41,7 @@ namespace my_rel_ops = std::rel_ops;
 // CHECK: load-namespaces.cpp:18:11: Namespace=std:18:11 (Definition) Extent=[18:11 - 20:2]
 // CHECK: load-namespaces.cpp:19:7: FunctionDecl=g:19:7 Extent=[19:7 - 19:13]
 // CHECK: load-namespaces.cpp:19:12: ParmDecl=:19:12 (Definition) Extent=[19:9 - 19:13]
-// CHECK: load-namespaces.cpp:22:12: UsingDeclaration=g[10:8, 19:7] Extent=[22:1 - 22:13]
+// CHECK: load-namespaces.cpp:22:12: UsingDeclaration=g[19:7, 10:8] Extent=[22:1 - 22:13]
 // CHECK: load-namespaces.cpp:22:7: NamespaceRef=std:18:11 Extent=[22:7 - 22:10]
 // CHECK: load-namespaces.cpp:24:11: FunctionDecl=g:24:11 (Definition) Extent=[24:11 - 25:2]
 // CHECK: load-namespaces.cpp:24:6: NamespaceRef=std:18:11 Extent=[24:6 - 24:9]

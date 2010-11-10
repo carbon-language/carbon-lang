@@ -3645,7 +3645,7 @@ unsigned clang_getNumOverloadedDecls(CXCursor C) {
   
   Decl *D = Storage.get<Decl*>();
   if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
-    return Using->getNumShadowDecls();
+    return Using->shadow_size();
   if (ObjCClassDecl *Classes = dyn_cast<ObjCClassDecl>(D))
     return Classes->size();
   if (ObjCForwardProtocolDecl *Protocols =dyn_cast<ObjCForwardProtocolDecl>(D))

@@ -1276,6 +1276,44 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                     Qualifier, IdentLoc, Namespace);
 }
 
+UsingDecl *UsingShadowDecl::getUsingDecl() const {
+  const UsingShadowDecl *Shadow = this;
+  while (const UsingShadowDecl *NextShadow =
+         dyn_cast<UsingShadowDecl>(Shadow->UsingOrNextShadow))
+    Shadow = NextShadow;
+  return cast<UsingDecl>(Shadow->UsingOrNextShadow);
+}
+
+void UsingDecl::addShadowDecl(UsingShadowDecl *S) {
+  assert(std::find(shadow_begin(), shadow_end(), S) == shadow_end() &&
+         "declaration already in set");
+  assert(S->getUsingDecl() == this);
+
+  if (FirstUsingShadow)
+    S->UsingOrNextShadow = FirstUsingShadow;
+  FirstUsingShadow = S;
+}
+
+void UsingDecl::removeShadowDecl(UsingShadowDecl *S) {
+  assert(std::find(shadow_begin(), shadow_end(), S) != shadow_end() &&
+         "declaration not in set");
+  assert(S->getUsingDecl() == this);
+
+  // Remove S from the shadow decl chain. This is O(n) but hopefully rare.
+
+  if (FirstUsingShadow == S) {
+    FirstUsingShadow = dyn_cast<UsingShadowDecl>(S->UsingOrNextShadow);
+    S->UsingOrNextShadow = this;
+    return;
+  }
+
+  UsingShadowDecl *Prev = FirstUsingShadow;
+  while (Prev->UsingOrNextShadow != S)
+    Prev = cast<UsingShadowDecl>(Prev->UsingOrNextShadow);
+  Prev->UsingOrNextShadow = S->UsingOrNextShadow;
+  S->UsingOrNextShadow = this;
+}
+
 UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceRange NNR, SourceLocation UL,
                              NestedNameSpecifier* TargetNNS,

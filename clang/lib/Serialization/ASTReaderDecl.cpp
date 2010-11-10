@@ -717,16 +717,7 @@ void ASTDeclReader::VisitUsingDecl(UsingDecl *D) {
   D->setNestedNameRange(ReadSourceRange(Record, Idx));
   D->setTargetNestedNameDecl(Reader.ReadNestedNameSpecifier(Record, Idx));
   ReadDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record, Idx);
-
-  // FIXME: It would probably be more efficient to read these into a vector
-  // and then re-cosntruct the shadow decl set over that vector since it
-  // would avoid existence checks.
-  unsigned NumShadows = Record[Idx++];
-  for(unsigned I = 0; I != NumShadows; ++I) {
-    // Avoid invariant checking of UsingDecl::addShadowDecl, the decl may still
-    // be initializing.
-    D->Shadows.insert(cast<UsingShadowDecl>(Reader.GetDecl(Record[Idx++])));
-  }
+  D->FirstUsingShadow = cast_or_null<UsingShadowDecl>(Reader.GetDecl(Record[Idx++]));
   D->setTypeName(Record[Idx++]);
   NamedDecl *Pattern = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
   if (Pattern)
@@ -736,7 +727,7 @@ void ASTDeclReader::VisitUsingDecl(UsingDecl *D) {
 void ASTDeclReader::VisitUsingShadowDecl(UsingShadowDecl *D) {
   VisitNamedDecl(D);
   D->setTargetDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
-  D->setUsingDecl(cast<UsingDecl>(Reader.GetDecl(Record[Idx++])));
+  D->UsingOrNextShadow = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
   UsingShadowDecl *Pattern
       = cast_or_null<UsingShadowDecl>(Reader.GetDecl(Record[Idx++]));
   if (Pattern)

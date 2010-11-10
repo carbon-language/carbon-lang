@@ -1881,13 +1881,16 @@ class UsingShadowDecl : public NamedDecl {
   /// The referenced declaration.
   NamedDecl *Underlying;
 
-  /// The using declaration which introduced this decl.
-  UsingDecl *Using;
+  /// \brief The using declaration which introduced this decl or the next using
+  /// shadow declaration contained in the aforementioned using declaration.
+  NamedDecl *UsingOrNextShadow;
+  friend class UsingDecl;
 
   UsingShadowDecl(DeclContext *DC, SourceLocation Loc, UsingDecl *Using,
                   NamedDecl *Target)
     : NamedDecl(UsingShadow, DC, Loc, DeclarationName()),
-      Underlying(Target), Using(Using) {
+      Underlying(Target),
+      UsingOrNextShadow(reinterpret_cast<NamedDecl *>(Using)) {
     if (Target) {
       setDeclName(Target->getDeclName());
       IdentifierNamespace = Target->getIdentifierNamespace();
@@ -1915,15 +1918,20 @@ public:
   }
 
   /// \brief Gets the using declaration to which this declaration is tied.
-  UsingDecl *getUsingDecl() const { return Using; }
+  UsingDecl *getUsingDecl() const;
 
-  /// \brief Sets the using declaration that introduces this target
-  /// declaration.
-  void setUsingDecl(UsingDecl* UD) { Using = UD; }
+  /// \brief The next using shadow declaration contained in the shadow decl
+  /// chain of the using declaration which introduced this decl.
+  UsingShadowDecl *getNextUsingShadowDecl() const {
+    return dyn_cast_or_null<UsingShadowDecl>(UsingOrNextShadow);
+  }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingShadowDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Decl::UsingShadow; }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 /// UsingDecl - Represents a C++ using-declaration. For example:
@@ -1943,10 +1951,9 @@ class UsingDecl : public NamedDecl {
   /// declaration name embedded in the ValueDecl base class.
   DeclarationNameLoc DNLoc;
 
-  /// \brief The collection of shadow declarations associated with
-  /// this using declaration.  This set can change as a class is
-  /// processed.
-  llvm::SmallPtrSet<UsingShadowDecl*, 8> Shadows;
+  /// \brief The first shadow declaration of the shadow decl chain associated
+  /// with this using declaration.
+  UsingShadowDecl *FirstUsingShadow;
 
   // \brief Has 'typename' keyword.
   bool IsTypeName;
@@ -1956,7 +1963,7 @@ class UsingDecl : public NamedDecl {
             const DeclarationNameInfo &NameInfo, bool IsTypeNameArg)
     : NamedDecl(Using, DC, NameInfo.getLoc(), NameInfo.getName()),
       NestedNameRange(NNR), UsingLocation(UL), TargetNestedName(TargetNNS),
-      DNLoc(NameInfo.getInfo()), IsTypeName(IsTypeNameArg) {
+      DNLoc(NameInfo.getInfo()), FirstUsingShadow(0),IsTypeName(IsTypeNameArg) {
   }
 
 public:
@@ -1994,28 +2001,57 @@ public:
   /// \brief Sets whether the using declaration has 'typename'.
   void setTypeName(bool TN) { IsTypeName = TN; }
 
-  typedef llvm::SmallPtrSet<UsingShadowDecl*,8>::const_iterator shadow_iterator;
-  shadow_iterator shadow_begin() const { return Shadows.begin(); }
-  shadow_iterator shadow_end() const { return Shadows.end(); }
+  /// \brief Iterates through the using shadow declarations assosiated with
+  /// this using declaration.
+  class shadow_iterator {
+    /// \brief The current using shadow declaration.
+    UsingShadowDecl *Current;
 
-  void addShadowDecl(UsingShadowDecl *S) {
-    assert(S->getUsingDecl() == this);
-    if (!Shadows.insert(S)) {
-      assert(false && "declaration already in set");
+  public:
+    typedef UsingShadowDecl*          value_type;
+    typedef UsingShadowDecl*          reference;
+    typedef UsingShadowDecl*          pointer;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef std::ptrdiff_t            difference_type;
+
+    shadow_iterator() : Current(0) { }
+    explicit shadow_iterator(UsingShadowDecl *C) : Current(C) { }
+
+    reference operator*() const { return Current; }
+    pointer operator->() const { return Current; }
+
+    shadow_iterator& operator++() {
+      Current = Current->getNextUsingShadowDecl();
+      return *this;
     }
-  }
-  void removeShadowDecl(UsingShadowDecl *S) {
-    assert(S->getUsingDecl() == this);
-    if (!Shadows.erase(S)) {
-      assert(false && "declaration not in set");
+
+    shadow_iterator operator++(int) {
+      shadow_iterator tmp(*this);
+      ++(*this);
+      return tmp;
     }
+
+    friend bool operator==(shadow_iterator x, shadow_iterator y) {
+      return x.Current == y.Current;
+    }
+    friend bool operator!=(shadow_iterator x, shadow_iterator y) {
+      return x.Current != y.Current;
+    }
+  };
+
+  shadow_iterator shadow_begin() const {
+    return shadow_iterator(FirstUsingShadow);
   }
+  shadow_iterator shadow_end() const { return shadow_iterator(); }
 
   /// \brief Return the number of shadowed declarations associated with this
   /// using declaration.
-  unsigned getNumShadowDecls() const {
-    return Shadows.size();
+  unsigned shadow_size() const {
+    return std::distance(shadow_begin(), shadow_end());
   }
+
+  void addShadowDecl(UsingShadowDecl *S);
+  void removeShadowDecl(UsingShadowDecl *S);
 
   static UsingDecl *Create(ASTContext &C, DeclContext *DC,
                            SourceRange NNR, SourceLocation UsingL,
