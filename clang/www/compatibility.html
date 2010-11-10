@@ -56,6 +56,7 @@
       <li><a href="#default_init_const">Default initialization of const
       variable of a class type requires user-defined default
       constructor</a></li>
+      <li><a href="#param_name_lookup">Parameter name lookup</a></li>
     </ul>
   </li>
   <li><a href="#objective-c++">Objective-C++ compatibility</a>
@@ -673,6 +674,18 @@ void Bar() {
   ...
 }
 </pre>
+
+<!-- ======================================================================= -->
+<h3 id="param_name_lookup">Parameter name lookup</h3>
+<!-- ======================================================================= -->
+
+<p>Due to a bug in its implementation, GCC allows the redeclaration of function parameter names within a function prototype in C++ code, e.g.</p>
+<blockquote>
+<pre>
+void f(int a, int a);
+</pre>
+</blockquote>
+<p>Clang diagnoses this error (where the parameter name has been redeclared). To fix this problem, rename one of the parameters.</p>
 
 <!-- ======================================================================= -->
 <h2 id="objective-c++">Objective-C++ compatibility</h3>
