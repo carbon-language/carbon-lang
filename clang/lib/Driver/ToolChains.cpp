@@ -1201,6 +1201,7 @@ enum LinuxDistro {
   Fedora13,
   Fedora14,
   OpenSuse11_3,
+  UbuntuJaunty,
   UbuntuLucid,
   UbuntuMaverick,
   UnknownDistro
@@ -1219,7 +1220,7 @@ static bool IsDebian(enum LinuxDistro Distro) {
 }
 
 static bool IsUbuntu(enum LinuxDistro Distro) {
-  return Distro == UbuntuLucid || Distro == UbuntuMaverick;
+  return Distro == UbuntuLucid || Distro == UbuntuMaverick || Distro == UbuntuJaunty;
 }
 
 static bool IsDebianBased(enum LinuxDistro Distro) {
@@ -1246,6 +1247,8 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
         return UbuntuMaverick;
       else if (Lines[i] == "DISTRIB_CODENAME=lucid")
         return UbuntuLucid;
+      else if (Lines[i] == "DISTRIB_CODENAME=jaunty")
+	return UbuntuJaunty;
     }
     return UnknownDistro;
   }
@@ -1330,7 +1333,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   }
 
   const char* GccVersions[] = {"4.5.1", "4.5", "4.4.5", "4.4.4", "4.4.3",
-                               "4.3.2"};
+                               "4.3.3", "4.3.2"};
   std::string Base = "";
   for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
     std::string Suffix = GccTriple + "/" + GccVersions[i];
@@ -1379,14 +1382,14 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   if (IsFedora(Distro) || Distro == UbuntuMaverick)
     ExtraOpts.push_back("--hash-style=gnu");
 
-  if (IsDebian(Distro) || Distro == UbuntuLucid)
+  if (IsDebian(Distro) || Distro == UbuntuLucid || Distro == UbuntuJaunty)
     ExtraOpts.push_back("--hash-style=both");
 
   if (IsFedora(Distro))
     ExtraOpts.push_back("--no-add-needed");
 
-  if (Distro == DebianSqueeze || IsUbuntu(Distro) || IsOpenSuse(Distro) ||
-      IsFedora(Distro))
+  if (Distro == DebianSqueeze || IsOpenSuse(Distro) ||
+      IsFedora(Distro) || Distro == UbuntuLucid || Distro == UbuntuMaverick)
     ExtraOpts.push_back("--build-id");
 
   Paths.push_back(Base + Suffix);
