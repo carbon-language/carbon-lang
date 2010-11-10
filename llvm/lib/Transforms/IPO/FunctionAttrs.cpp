@@ -131,9 +131,8 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
         AliasAnalysis::ModRefBehavior MRB = AA->getModRefBehavior(CS);
         // If the call doesn't access arbitrary memory, we may be able to
         // figure out something.
-        if (!(MRB & AliasAnalysis::Anywhere &
-              ~AliasAnalysis::ArgumentPointees)) {
-          // If the call accesses argument pointees, check each argument.
+        if (AliasAnalysis::onlyAccessesArgPointees(MRB)) {
+          // If the call does access argument pointees, check each argument.
           if (MRB & AliasAnalysis::AccessesArguments)
             // Check whether all pointer arguments point to local memory, and
             // ignore calls that only access local memory.

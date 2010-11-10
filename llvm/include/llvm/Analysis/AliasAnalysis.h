@@ -268,12 +268,19 @@ public:
     return onlyReadsMemory(getModRefBehavior(F));
   }
 
-  /// onlyReadsMemory - If the functions with the specified behavior are known
-  /// to only read from non-volatile memory (or not access memory at all), return
-  /// true.  For use when the call site is not known.
+  /// onlyReadsMemory - Return true if functions with the specified behavior are
+  /// known to only read from non-volatile memory (or not access memory at all).
   ///
   static bool onlyReadsMemory(ModRefBehavior MRB) {
     return !(MRB & Mod);
+  }
+
+  /// onlyAccessesArgPointees - Return true if functions with the specified
+  /// behavior are known to read at most from objects pointed to by their
+  /// pointer-typed arguments (with arbitrary offsets).
+  ///
+  static bool onlyAccessesArgPointees(ModRefBehavior MRB) {
+    return !(MRB & Anywhere & ~ArgumentPointees);
   }
 
   /// getModRefInfo - Return information about whether or not an instruction may
