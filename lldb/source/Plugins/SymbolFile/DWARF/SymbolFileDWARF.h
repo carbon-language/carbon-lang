@@ -110,7 +110,9 @@ public:
     virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::TypeList& types);
 //  virtual uint32_t        FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb::Type::Encoding encoding, lldb::user_id_t udt_uid, lldb_private::TypeList& types);
     virtual lldb_private::TypeList *GetTypeList ();
-
+    virtual clang::NamespaceDecl *
+            FindNamespace (const lldb_private::SymbolContext& sc, 
+                           const lldb_private::ConstString &name);
 
     //------------------------------------------------------------------
     // PluginInterface protocol
@@ -299,8 +301,11 @@ protected:
                             }
 
     lldb_private::ClangASTContext &
-                            GetClangASTContext();
+    GetClangASTContext();
 
+    clang::NamespaceDecl *
+    ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die);
+    
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;
     lldb_private::Flags             m_flags;

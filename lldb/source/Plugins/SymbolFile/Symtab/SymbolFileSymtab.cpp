@@ -277,6 +277,11 @@ SymbolFileSymtab::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Typ
     return NULL;
 }
 
+clang::NamespaceDecl *
+SymbolFileSymtab::FindNamespace (const SymbolContext& sc, const ConstString &name)
+{
+    return NULL;
+}
 
 uint32_t
 SymbolFileSymtab::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc)

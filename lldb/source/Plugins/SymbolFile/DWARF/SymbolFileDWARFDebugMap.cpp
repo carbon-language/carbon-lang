@@ -952,6 +952,36 @@ SymbolFileDWARFDebugMap::FindTypes
 //  return 0;
 //}
 
+
+clang::NamespaceDecl *
+SymbolFileDWARFDebugMap::FindNamespace (const lldb_private::SymbolContext& sc, 
+                                        const lldb_private::ConstString &name)
+{
+    clang::NamespaceDecl *matching_namespace = NULL;
+    SymbolFileDWARF *oso_dwarf;
+
+    if (sc.comp_unit)
+    {
+        oso_dwarf = GetSymbolFile (sc);
+        if (oso_dwarf)
+            matching_namespace = oso_dwarf->FindNamespace (sc, name);
+    }
+    else
+    {
+        for (uint32_t oso_idx = 0; 
+             ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); 
+             ++oso_idx)
+        {
+            matching_namespace = oso_dwarf->FindNamespace (sc, name);
+
+            if (matching_namespace)
+                break;
+        }
+    }
+
+    return matching_namespace;
+}
+
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
