@@ -17,6 +17,7 @@
 #include "LiveRangeEdit.h"
 #include "SplitKit.h"
 #include "VirtRegMap.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -47,6 +48,7 @@ class InlineSpiller : public Spiller {
   LiveStacks &lss_;
   MachineDominatorTree &mdt_;
   MachineLoopInfo &loops_;
+  AliasAnalysis *aa_;
   VirtRegMap &vrm_;
   MachineFrameInfo &mfi_;
   MachineRegisterInfo &mri_;
@@ -76,6 +78,7 @@ public:
       lss_(pass.getAnalysis<LiveStacks>()),
       mdt_(pass.getAnalysis<MachineDominatorTree>()),
       loops_(pass.getAnalysis<MachineLoopInfo>()),
+      aa_(&pass.getAnalysis<AliasAnalysis>()),
       vrm_(vrm),
       mfi_(*mf.getFrameInfo()),
       mri_(mf.getRegInfo()),
@@ -219,7 +222,7 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
 /// and trim the live ranges after.
 void InlineSpiller::reMaterializeAll() {
   // Do a quick scan of the interval values to find if any are remattable.
-  if (!edit_->anyRematerializable(lis_, tii_, 0))
+  if (!edit_->anyRematerializable(lis_, tii_, aa_))
     return;
 
   usedValues_.clear();
