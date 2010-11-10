@@ -622,40 +622,40 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   int Size = TM.getTargetData()->getTypeAllocSize(MCPV->getType());
 
   ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
-  SmallString<128> Str;
-  raw_svector_ostream OS(Str);
 
+  MCSymbol *MCSym;
   if (ACPV->isLSDA()) {
+    SmallString<128> Str;
+    raw_svector_ostream OS(Str);
     OS << MAI->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
+    MCSym = OutContext.GetOrCreateSymbol(OS.str());
   } else if (ACPV->isBlockAddress()) {
-    OS << *GetBlockAddressSymbol(ACPV->getBlockAddress());
+    MCSym = GetBlockAddressSymbol(ACPV->getBlockAddress());
   } else if (ACPV->isGlobalValue()) {
     const GlobalValue *GV = ACPV->getGV();
     bool isIndirect = Subtarget->isTargetDarwin() &&
       Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
     if (!isIndirect)
-      OS << *Mang->getSymbol(GV);
+      MCSym = Mang->getSymbol(GV);
     else {
       // FIXME: Remove this when Darwin transition to @GOT like syntax.
-      MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-      OS << *Sym;
+      MCSym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
 
       MachineModuleInfoMachO &MMIMachO =
         MMI->getObjFileInfo<MachineModuleInfoMachO>();
       MachineModuleInfoImpl::StubValueTy &StubSym =
-        GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
-        MMIMachO.getGVStubEntry(Sym);
+        GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym) :
+        MMIMachO.getGVStubEntry(MCSym);
       if (StubSym.getPointer() == 0)
         StubSym = MachineModuleInfoImpl::
           StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
     }
   } else {
     assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
-    OS << *GetExternalSymbolSymbol(ACPV->getSymbol());
+    MCSym = GetExternalSymbolSymbol(ACPV->getSymbol());
   }
 
   // Create an MCSymbol for the reference.
-  MCSymbol *MCSym = OutContext.GetOrCreateSymbol(OS.str());
   const MCExpr *Expr =
     MCSymbolRefExpr::Create(MCSym, getModifierVariantKind(ACPV->getModifier()),
                             OutContext);
