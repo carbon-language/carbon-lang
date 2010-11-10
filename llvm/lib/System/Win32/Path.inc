@@ -288,7 +288,7 @@ Path::GetBitcodeLibraryPaths(std::vector<sys::Path>& Paths) {
 Path
 Path::GetLLVMDefaultConfigDir() {
   Path ret = GetUserHomeDirectory();
-  if(!ret.appendComponent(".llvm"))
+  if (!ret.appendComponent(".llvm"))
     assert(0 && "Failed to append .llvm");
   return ret;
 }
@@ -296,11 +296,11 @@ Path::GetLLVMDefaultConfigDir() {
 Path
 Path::GetUserHomeDirectory() {
   char buff[MAX_PATH];
-  HRESULT res =  SHGetFolderPathA(NULL,
-                                  CSIDL_FLAG_CREATE | CSIDL_APPDATA,
-                                  NULL,
-                                  SHGFP_TYPE_CURRENT,
-                                  buff);
+  HRESULT res = SHGetFolderPathA(NULL,
+                                 CSIDL_FLAG_CREATE | CSIDL_APPDATA,
+                                 NULL,
+                                 SHGFP_TYPE_CURRENT,
+                                 buff);
   if (res != S_OK)
     assert(0 && "Failed to get user home directory");
   return Path(buff);
