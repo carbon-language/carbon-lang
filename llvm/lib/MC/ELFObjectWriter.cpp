@@ -293,7 +293,7 @@ namespace {
     void WriteSymbolTable(MCDataFragment *SymtabF, MCDataFragment *ShndxF,
                           const MCAssembler &Asm,
                           const MCAsmLayout &Layout,
-                          unsigned NumRegularSections);
+                          const SectionIndexMapTy &SectionIndexMap);
 
     void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                           const MCFragment *Fragment, const MCFixup &Fixup,
@@ -323,7 +323,8 @@ namespace {
       }
     }
 
-    void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout);
+    void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout,
+                                const SectionIndexMapTy &SectionIndexMap);
 
     void ExecutePostLayoutBinding(MCAssembler &Asm);
 
@@ -570,7 +571,7 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *SymtabF,
                                            MCDataFragment *ShndxF,
                                            const MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
-                                           unsigned NumRegularSections) {
+                                     const SectionIndexMapTy &SectionIndexMap) {
   // The string table must be emitted first because we need the index
   // into the string table for all the symbol names.
   assert(StringTable.size() && "Missing string table");
@@ -588,17 +589,17 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *SymtabF,
   }
 
   // Write out a symbol table entry for each regular section.
-  unsigned Index = 1;
-  for (MCAssembler::const_iterator it = Asm.begin();
-       Index <= NumRegularSections; ++it, ++Index) {
+  for (MCAssembler::const_iterator i = Asm.begin(), e = Asm.end(); i != e;
+       ++i) {
     const MCSectionELF &Section =
-      static_cast<const MCSectionELF&>(it->getSection());
-    // Leave out relocations so we don't have indexes within
-    // the relocations messed up
-    if (Section.getType() == ELF::SHT_RELA || Section.getType() == ELF::SHT_REL)
+      static_cast<const MCSectionELF&>(i->getSection());
+    if (Section.getType() == ELF::SHT_RELA ||
+        Section.getType() == ELF::SHT_REL ||
+        Section.getType() == ELF::SHT_STRTAB ||
+        Section.getType() == ELF::SHT_SYMTAB)
       continue;
     WriteSymbolEntry(SymtabF, ShndxF, 0, ELF::STT_SECTION, 0, 0,
-                     ELF::STV_DEFAULT, Index, false);
+                     ELF::STV_DEFAULT, SectionIndexMap.lookup(&Section), false);
     LastLocalSymbolIndex++;
   }
 
@@ -1122,13 +1123,12 @@ void ELFObjectWriterImpl::WriteRelocationsFragment(const MCAssembler &Asm,
 }
 
 void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
-                                                 MCAsmLayout &Layout) {
+                                                 MCAsmLayout &Layout,
+                                    const SectionIndexMapTy &SectionIndexMap) {
   MCContext &Ctx = Asm.getContext();
   MCDataFragment *F;
 
   unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
-
-  unsigned NumRegularSections = Asm.size();
 
   // We construct .shstrtab, .symtab and .strtab in this order to match gnu as.
   const MCSectionELF *ShstrtabSection =
@@ -1172,7 +1172,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
     ShndxF = new MCDataFragment(SymtabShndxSD);
     Asm.AddSectionToTheEnd(*Writer, *SymtabShndxSD, Layout);
   }
-  WriteSymbolTable(F, ShndxF, Asm, Layout, NumRegularSections);
+  WriteSymbolTable(F, ShndxF, Asm, Layout, SectionIndexMap);
   Asm.AddSectionToTheEnd(*Writer, SymtabSD, Layout);
 
   F = new MCDataFragment(&StrtabSD);
@@ -1250,7 +1250,8 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
   ComputeSymbolTable(Asm, SectionIndexMap);
 
   CreateMetadataSections(const_cast<MCAssembler&>(Asm),
-                         const_cast<MCAsmLayout&>(Layout));
+                         const_cast<MCAsmLayout&>(Layout),
+                         SectionIndexMap);
 
   // Add 1 for the null section.
   unsigned NumSections = Asm.size() + 1;
