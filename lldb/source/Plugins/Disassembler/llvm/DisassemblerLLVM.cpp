@@ -115,7 +115,7 @@ DisassemblerLLVM::InstructionLLVM::Dump
         exe_scope = exe_ctx->GetBestExecutionContextScope();
 
     // If we have an address, print it out
-    if (GetAddress().IsValid())
+    if (GetAddress().IsValid() && show_address)
     {
         if (GetAddress().Dump (s, 
                                exe_scope, 
