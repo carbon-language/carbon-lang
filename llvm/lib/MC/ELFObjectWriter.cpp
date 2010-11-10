@@ -342,6 +342,10 @@ namespace {
                               const MCFragment *DF) const;
 
     void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
+    void WriteSection(MCAssembler &Asm,
+                      const SectionIndexMapTy &SectionIndexMap,
+                      uint64_t Offset, uint64_t Size, uint64_t Alignment,
+                      const MCSectionELF &Section);
   };
 
 }
@@ -1240,6 +1244,71 @@ bool ELFObjectWriterImpl::IsFixupFullyResolved(const MCAssembler &Asm,
   return !SectionB && BaseSection == SectionA;
 }
 
+void ELFObjectWriterImpl::WriteSection(MCAssembler &Asm,
+                                       const SectionIndexMapTy &SectionIndexMap,
+                                       uint64_t Offset, uint64_t Size,
+                                       uint64_t Alignment,
+                                       const MCSectionELF &Section) {
+  uint64_t sh_link = 0;
+  uint64_t sh_info = 0;
+
+  switch(Section.getType()) {
+  case ELF::SHT_DYNAMIC:
+    sh_link = SectionStringTableIndex[&Section];
+    sh_info = 0;
+    break;
+
+  case ELF::SHT_REL:
+  case ELF::SHT_RELA: {
+    const MCSectionELF *SymtabSection;
+    const MCSectionELF *InfoSection;
+    SymtabSection = Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB,
+                                                   0,
+                                                   SectionKind::getReadOnly(),
+                                                   false);
+    sh_link = SectionIndexMap.lookup(SymtabSection);
+    assert(sh_link && ".symtab not found");
+
+    // Remove ".rel" and ".rela" prefixes.
+    unsigned SecNameLen = (Section.getType() == ELF::SHT_REL) ? 4 : 5;
+    StringRef SectionName = Section.getSectionName().substr(SecNameLen);
+
+    InfoSection = Asm.getContext().getELFSection(SectionName,
+                                                 ELF::SHT_PROGBITS, 0,
+                                                 SectionKind::getReadOnly(),
+                                                 false);
+    sh_info = SectionIndexMap.lookup(InfoSection);
+    break;
+  }
+
+  case ELF::SHT_SYMTAB:
+  case ELF::SHT_DYNSYM:
+    sh_link = StringTableIndex;
+    sh_info = LastLocalSymbolIndex;
+    break;
+
+  case ELF::SHT_SYMTAB_SHNDX:
+    sh_link = SymbolTableIndex;
+    break;
+
+  case ELF::SHT_PROGBITS:
+  case ELF::SHT_STRTAB:
+  case ELF::SHT_NOBITS:
+  case ELF::SHT_NULL:
+  case ELF::SHT_ARM_ATTRIBUTES:
+    // Nothing to do.
+    break;
+
+  default:
+    assert(0 && "FIXME: sh_type value not supported!");
+    break;
+  }
+
+  WriteSecHdrEntry(SectionStringTableIndex[&Section], Section.getType(),
+                   Section.getFlags(), 0, Offset, Size, sh_link, sh_info,
+                   Alignment, Section.getEntrySize());
+}
+
 void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
                                       const MCAsmLayout &Layout) {
   SectionIndexMapTy SectionIndexMap;
@@ -1320,68 +1389,9 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
     const MCSectionELF &Section =
       static_cast<const MCSectionELF&>(SD.getSection());
 
-    uint64_t sh_link = 0;
-    uint64_t sh_info = 0;
-
-    switch(Section.getType()) {
-    case ELF::SHT_DYNAMIC:
-      sh_link = SectionStringTableIndex[&it->getSection()];
-      sh_info = 0;
-      break;
-
-    case ELF::SHT_REL:
-    case ELF::SHT_RELA: {
-      const MCSectionELF *SymtabSection;
-      const MCSectionELF *InfoSection;
-
-      SymtabSection = Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
-                                                     SectionKind::getReadOnly(),
-                                                     false);
-      sh_link = SectionIndexMap[SymtabSection];
-      assert(sh_link && ".symtab not found");
-
-      // Remove ".rel" and ".rela" prefixes.
-      unsigned SecNameLen = (Section.getType() == ELF::SHT_REL) ? 4 : 5;
-      StringRef SectionName = Section.getSectionName().substr(SecNameLen);
-
-      InfoSection = Asm.getContext().getELFSection(SectionName,
-                                                   ELF::SHT_PROGBITS, 0,
-                                                   SectionKind::getReadOnly(),
-                                                   false);
-      sh_info = SectionIndexMap[InfoSection];
-      break;
-    }
-
-    case ELF::SHT_SYMTAB:
-    case ELF::SHT_DYNSYM:
-      sh_link = StringTableIndex;
-      sh_info = LastLocalSymbolIndex;
-      break;
-
-    case ELF::SHT_SYMTAB_SHNDX:
-      sh_link = SymbolTableIndex;
-      break;
-
-    case ELF::SHT_PROGBITS:
-    case ELF::SHT_STRTAB:
-    case ELF::SHT_NOBITS:
-    case ELF::SHT_NULL:
-    case ELF::SHT_ARM_ATTRIBUTES:
-      // Nothing to do.
-      break;
-
-    default:
-      assert(0 && "FIXME: sh_type value not supported!");
-      break;
-    }
-
-    WriteSecHdrEntry(SectionStringTableIndex[&it->getSection()],
-                     Section.getType(), Section.getFlags(),
-                     0,
-                     SectionOffsetMap.lookup(&SD.getSection()),
-                     Layout.getSectionSize(&SD), sh_link,
-                     sh_info, SD.getAlignment(),
-                     Section.getEntrySize());
+    WriteSection(Asm, SectionIndexMap, SectionOffsetMap[&Section],
+                 Layout.getSectionSize(&SD),
+                 SD.getAlignment(), Section);
   }
 }
 
