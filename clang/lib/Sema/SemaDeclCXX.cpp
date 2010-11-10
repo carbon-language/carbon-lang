@@ -3402,6 +3402,10 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
   assert(NamespcName && "Invalid NamespcName.");
   assert(IdentLoc.isValid() && "Invalid NamespceName location.");
+
+  // This can only happen along a recovery path.
+  while (S->getFlags() & Scope::TemplateParamScope)
+    S = S->getParent();
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
   UsingDirectiveDecl *UDir = 0;
@@ -3497,14 +3501,14 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
 
 
 Decl *Sema::ActOnUsingDeclaration(Scope *S,
-                                            AccessSpecifier AS,
-                                            bool HasUsingKeyword,
-                                            SourceLocation UsingLoc,
-                                            CXXScopeSpec &SS,
-                                            UnqualifiedId &Name,
-                                            AttributeList *AttrList,
-                                            bool IsTypeName,
-                                            SourceLocation TypenameLoc) {
+                                  AccessSpecifier AS,
+                                  bool HasUsingKeyword,
+                                  SourceLocation UsingLoc,
+                                  CXXScopeSpec &SS,
+                                  UnqualifiedId &Name,
+                                  AttributeList *AttrList,
+                                  bool IsTypeName,
+                                  SourceLocation TypenameLoc) {
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
   switch (Name.getKind()) {

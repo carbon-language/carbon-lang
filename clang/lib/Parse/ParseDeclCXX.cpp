@@ -239,8 +239,9 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
 /// using-directive. Assumes that current token is 'using'.
 Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
-                                                     SourceLocation &DeclEnd,
-                                                     CXX0XAttributeList Attr) {
+                                         const ParsedTemplateInfo &TemplateInfo,
+                                               SourceLocation &DeclEnd,
+                                               CXX0XAttributeList Attr) {
   assert(Tok.is(tok::kw_using) && "Not using token");
 
   // Eat 'using'.
@@ -251,17 +252,26 @@ Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
     ConsumeCodeCompletionToken();
   }
 
-  if (Tok.is(tok::kw_namespace))
-    // Next token after 'using' is 'namespace' so it must be using-directive
-    return ParseUsingDirective(Context, UsingLoc, DeclEnd, Attr.AttrList);
+  // 'using namespace' means this is a using-directive.
+  if (Tok.is(tok::kw_namespace)) {
+    // Template parameters are always an error here.
+    if (TemplateInfo.Kind) {
+      SourceRange R = TemplateInfo.getSourceRange();
+      Diag(UsingLoc, diag::err_templated_using_directive)
+        << R << FixItHint::CreateRemoval(R);
+    }
 
+    return ParseUsingDirective(Context, UsingLoc, DeclEnd, Attr.AttrList);
+  }
+
+  // Otherwise, it must be a using-declaration.
+
+  // Using declarations can't have attributes.
   if (Attr.HasAttr)
     Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
       << Attr.Range;
 
-  // Otherwise, it must be using-declaration.
-  // Ignore illegal attributes (the caller should already have issued an error.
-  return ParseUsingDeclaration(Context, UsingLoc, DeclEnd);
+  return ParseUsingDeclaration(Context, TemplateInfo, UsingLoc, DeclEnd);
 }
 
 /// ParseUsingDirective - Parse C++ using-directive, assumes
@@ -275,9 +285,9 @@ Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
 ///                 namespace-name attributes[opt] ;
 ///
 Decl *Parser::ParseUsingDirective(unsigned Context,
-                                              SourceLocation UsingLoc,
-                                              SourceLocation &DeclEnd,
-                                              AttributeList *Attr) {
+                                  SourceLocation UsingLoc,
+                                  SourceLocation &DeclEnd,
+                                  AttributeList *Attr) {
   assert(Tok.is(tok::kw_namespace) && "Not 'namespace' token");
 
   // Eat 'namespace'.
@@ -335,12 +345,17 @@ Decl *Parser::ParseUsingDirective(unsigned Context,
 ///       'using' :: unqualified-id
 ///
 Decl *Parser::ParseUsingDeclaration(unsigned Context,
-                                                SourceLocation UsingLoc,
-                                                SourceLocation &DeclEnd,
-                                                AccessSpecifier AS) {
+                                    const ParsedTemplateInfo &TemplateInfo,
+                                    SourceLocation UsingLoc,
+                                    SourceLocation &DeclEnd,
+                                    AccessSpecifier AS) {
   CXXScopeSpec SS;
   SourceLocation TypenameLoc;
   bool IsTypeName;
+
+  // TODO: in C++0x, if we have template parameters this must be a
+  // template alias:
+  //   template <...> using id = type;
 
   // Ignore optional 'typename'.
   // FIXME: This is wrong; we should parse this as a typename-specifier.
@@ -385,6 +400,18 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                    AttrList ? "attributes list" : "using declaration",
                    tok::semi);
+
+  // Diagnose an attempt to declare a templated using-declaration.
+  if (TemplateInfo.Kind) {
+    SourceRange R = TemplateInfo.getSourceRange();
+    Diag(UsingLoc, diag::err_templated_using_declaration)
+      << R << FixItHint::CreateRemoval(R);
+
+    // Unfortunately, we have to bail out instead of recovering by
+    // ignoring the parameters, just in case the nested name specifier
+    // depends on the parameters.
+    return 0;
+  }
 
   return Actions.ActOnUsingDeclaration(getCurScope(), AS, true, UsingLoc, SS, Name,
                                        AttrList.get(), IsTypeName, TypenameLoc);
@@ -1360,7 +1387,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     } else {
       SourceLocation DeclEnd;
       // Otherwise, it must be using-declaration.
-      ParseUsingDeclaration(Declarator::MemberContext, UsingLoc, DeclEnd, AS);
+      ParseUsingDeclaration(Declarator::MemberContext, TemplateInfo,
+                            UsingLoc, DeclEnd, AS);
     }
     return;
   }

@@ -30,6 +30,14 @@
 using namespace clang;
 using namespace sema;
 
+// Exported for use by Parser.
+SourceRange
+clang::getTemplateParamsRange(TemplateParameterList const * const *Ps,
+                              unsigned N) {
+  if (!N) return SourceRange();
+  return SourceRange(Ps[0]->getTemplateLoc(), Ps[N-1]->getRAngleLoc());
+}
+
 /// \brief Determine whether the declaration found is acceptable as the name
 /// of a template and, if so, return that template declaration. Otherwise,
 /// returns NULL.

@@ -200,6 +200,10 @@ def err_unknown_typename : Error<
   "unknown type name %0">;
 def err_use_of_tag_name_without_tag : Error<
   "must use '%1' tag to refer to type %0%select{| in this scope}2">;
+def err_templated_using_directive : Error<
+  "cannot template a using directive">;
+def err_templated_using_declaration : Error<
+  "cannot template a using declaration">;
 def err_expected_ident_in_using : Error<
   "expected an identifier in using directive">;
 def err_unexected_colon_in_nested_name_spec : Error<

@@ -95,3 +95,16 @@ namespace test1 {
     foo(p); // expected-error {{no matching function}}
   }
 }
+
+namespace test2 {
+  namespace ns { int foo; }
+  template <class T> using ns::foo; // expected-error {{cannot template a using declaration}}
+
+  // PR8022
+  struct A {
+    template <typename T> void f(T);
+  };
+  class B : A {
+    template <typename T> using A::f<T>; // expected-error {{cannot template a using declaration}}
+  };
+}

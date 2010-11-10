@@ -196,12 +196,20 @@ Parser::ParseSingleDeclarationAfterTemplate(
     return 0;
   }
 
+  CXX0XAttributeList PrefixAttrs;
+  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
+    PrefixAttrs = ParseCXX0XAttributes();
+
+  if (Tok.is(tok::kw_using))
+    return ParseUsingDirectiveOrDeclaration(Context, TemplateInfo, DeclEnd,
+                                            PrefixAttrs);
+
   // Parse the declaration specifiers, stealing the accumulated
   // diagnostics from the template parameters.
   ParsingDeclSpec DS(DiagsFromTParams);
 
-  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
-    DS.AddAttributes(ParseCXX0XAttributes().AttrList);
+  if (PrefixAttrs.HasAttr)
+    DS.AddAttributes(PrefixAttrs.AttrList);
 
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS,
                              getDeclSpecContextFromDeclaratorContext(Context));
@@ -1074,4 +1082,15 @@ Decl *Parser::ParseExplicitInstantiation(SourceLocation ExternLoc,
                                                                 TemplateLoc),
                                              ParsingTemplateParams,
                                              DeclEnd, AS_none);
+}
+
+SourceRange Parser::ParsedTemplateInfo::getSourceRange() const {
+  if (TemplateParams)
+    return getTemplateParamsRange(TemplateParams->data(),
+                                  TemplateParams->size());
+
+  SourceRange R(TemplateLoc);
+  if (ExternLoc.isValid())
+    R.setBegin(ExternLoc);
+  return R;
 }

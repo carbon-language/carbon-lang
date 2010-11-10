@@ -892,6 +892,8 @@ private:
     
     /// \brief Whether the last template parameter list was empty.
     bool LastParameterListWasEmpty;
+
+    SourceRange getSourceRange() const;
   };
 
   void PushParsingClass(Decl *TagOrTemplate, bool TopLevelClass);
@@ -1508,11 +1510,15 @@ private:
                        SourceLocation InlineLoc = SourceLocation());
   Decl *ParseLinkage(ParsingDeclSpec &DS, unsigned Context);
   Decl *ParseUsingDirectiveOrDeclaration(unsigned Context,
+                                         const ParsedTemplateInfo &TemplateInfo,
                                          SourceLocation &DeclEnd,
                                          CXX0XAttributeList Attrs);
-  Decl *ParseUsingDirective(unsigned Context, SourceLocation UsingLoc,
+  Decl *ParseUsingDirective(unsigned Context,
+                            SourceLocation UsingLoc,
                             SourceLocation &DeclEnd, AttributeList *Attr);
-  Decl *ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc,
+  Decl *ParseUsingDeclaration(unsigned Context,
+                              const ParsedTemplateInfo &TemplateInfo,
+                              SourceLocation UsingLoc,
                               SourceLocation &DeclEnd,
                               AccessSpecifier AS = AS_none);
   Decl *ParseStaticAssertDeclaration(SourceLocation &DeclEnd);

@@ -161,7 +161,10 @@ namespace clang {
     
     void Destroy() { free(this); }
   };
-  
+
+  /// Retrieves the range of the given template parameter lists.
+  SourceRange getTemplateParamsRange(TemplateParameterList const *const *Params,
+                                     unsigned NumParams);  
   
   inline const ParsedTemplateArgument &
   ASTTemplateArgsPtr::operator[](unsigned Arg) const { 

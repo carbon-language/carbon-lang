@@ -126,3 +126,10 @@ void f4() { f2(1); }
 using namespace std; // expected-warning{{using directive refers to implicitly-defined namespace 'std'}}
 using namespace ::std; // expected-warning{{using directive refers to implicitly-defined namespace 'std'}}
 
+namespace test1 {
+  namespace ns { typedef int test1; }
+  template <class T> using namespace ns; // expected-error {{cannot template a using directive}}
+
+  // Test that we recovered okay.
+  test1 x;
+}

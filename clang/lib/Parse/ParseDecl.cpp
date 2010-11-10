@@ -354,7 +354,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
     SingleDecl = ParseNamespace(Context, DeclEnd);
     break;
   case tok::kw_using:
-    SingleDecl = ParseUsingDirectiveOrDeclaration(Context, DeclEnd, Attr);
+    SingleDecl = ParseUsingDirectiveOrDeclaration(Context, ParsedTemplateInfo(),
+                                                  DeclEnd, Attr);
     break;
   case tok::kw_static_assert:
     if (Attr.HasAttr)
