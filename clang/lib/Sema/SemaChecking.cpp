@@ -2145,19 +2145,19 @@ struct IntRange {
     : Width(Width), NonNegative(NonNegative)
   {}
 
-  // Returns the range of the bool type.
+  /// Returns the range of the bool type.
   static IntRange forBoolType() {
     return IntRange(1, true);
   }
 
-  // Returns the range of an integral type.
-  static IntRange forType(ASTContext &C, QualType T) {
-    return forCanonicalType(C, T->getCanonicalTypeInternal().getTypePtr());
+  /// Returns the range of an opaque value of the given integral type.
+  static IntRange forValueOfType(ASTContext &C, QualType T) {
+    return forValueOfCanonicalType(C,
+                          T->getCanonicalTypeInternal().getTypePtr());
   }
 
-  // Returns the range of an integeral type based on its canonical
-  // representation.
-  static IntRange forCanonicalType(ASTContext &C, const Type *T) {
+  /// Returns the range of an opaque value of a canonical integral type.
+  static IntRange forValueOfCanonicalType(ASTContext &C, const Type *T) {
     assert(T->isCanonicalUnqualified());
 
     if (const VectorType *VT = dyn_cast<VectorType>(T))
@@ -2183,13 +2183,34 @@ struct IntRange {
     return IntRange(C.getIntWidth(QualType(T, 0)), BT->isUnsignedInteger());
   }
 
-  // Returns the supremum of two ranges: i.e. their conservative merge.
+  /// Returns the "target" range of a canonical integral type, i.e.
+  /// the range of values expressible in the type.
+  ///
+  /// This matches forValueOfCanonicalType except that enums have the
+  /// full range of their type, not the range of their enumerators.
+  static IntRange forTargetOfCanonicalType(ASTContext &C, const Type *T) {
+    assert(T->isCanonicalUnqualified());
+
+    if (const VectorType *VT = dyn_cast<VectorType>(T))
+      T = VT->getElementType().getTypePtr();
+    if (const ComplexType *CT = dyn_cast<ComplexType>(T))
+      T = CT->getElementType().getTypePtr();
+    if (const EnumType *ET = dyn_cast<EnumType>(T))
+      T = ET->getDecl()->getIntegerType().getTypePtr();
+
+    const BuiltinType *BT = cast<BuiltinType>(T);
+    assert(BT->isInteger());
+
+    return IntRange(C.getIntWidth(QualType(T, 0)), BT->isUnsignedInteger());
+  }
+
+  /// Returns the supremum of two ranges: i.e. their conservative merge.
   static IntRange join(IntRange L, IntRange R) {
     return IntRange(std::max(L.Width, R.Width),
                     L.NonNegative && R.NonNegative);
   }
 
-  // Returns the infinum of two ranges: i.e. their aggressive merge.
+  /// Returns the infinum of two ranges: i.e. their aggressive merge.
   static IntRange meet(IntRange L, IntRange R) {
     return IntRange(std::min(L.Width, R.Width),
                     L.NonNegative || R.NonNegative);
@@ -2256,7 +2277,7 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     if (CE->getCastKind() == CK_NoOp)
       return GetExprRange(C, CE->getSubExpr(), MaxWidth);
 
-    IntRange OutputTypeRange = IntRange::forType(C, CE->getType());
+    IntRange OutputTypeRange = IntRange::forValueOfType(C, CE->getType());
 
     bool isIntegerCast = (CE->getCastKind() == CK_IntegralCast);
     if (!isIntegerCast && CE->getCastKind() == CK_Unknown)
@@ -2315,12 +2336,12 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     case BO_RemAssign:
     case BO_AddAssign:
     case BO_SubAssign:
-      return IntRange::forType(C, E->getType());
+      return IntRange::forValueOfType(C, E->getType());
 
     // Operations with opaque sources are black-listed.
     case BO_PtrMemD:
     case BO_PtrMemI:
-      return IntRange::forType(C, E->getType());
+      return IntRange::forValueOfType(C, E->getType());
 
     // Bitwise-and uses the *infinum* of the two source ranges.
     case BO_And:
@@ -2335,14 +2356,14 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
       if (IntegerLiteral *I
             = dyn_cast<IntegerLiteral>(BO->getLHS()->IgnoreParenCasts())) {
         if (I->getValue() == 1) {
-          IntRange R = IntRange::forType(C, E->getType());
+          IntRange R = IntRange::forValueOfType(C, E->getType());
           return IntRange(R.Width, /*NonNegative*/ true);
         }
       }
       // fallthrough
 
     case BO_ShlAssign:
-      return IntRange::forType(C, E->getType());
+      return IntRange::forValueOfType(C, E->getType());
 
     // Right shift by a constant can narrow its left argument.
     case BO_Shr:
@@ -2371,7 +2392,7 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     // Black-list pointer subtractions.
     case BO_Sub:
       if (BO->getLHS()->getType()->isPointerType())
-        return IntRange::forType(C, E->getType());
+        return IntRange::forValueOfType(C, E->getType());
       // fallthrough
 
     default:
@@ -2394,7 +2415,7 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     // Operations with opaque sources are black-listed.
     case UO_Deref:
     case UO_AddrOf: // should be impossible
-      return IntRange::forType(C, E->getType());
+      return IntRange::forValueOfType(C, E->getType());
 
     default:
       return GetExprRange(C, UO->getSubExpr(), MaxWidth);
@@ -2402,7 +2423,7 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
   }
   
   if (dyn_cast<OffsetOfExpr>(E)) {
-    IntRange::forType(C, E->getType());
+    IntRange::forValueOfType(C, E->getType());
   }
 
   FieldDecl *BitField = E->getBitField();
@@ -2413,7 +2434,7 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     return IntRange(BitWidth, BitField->getType()->isUnsignedIntegerType());
   }
 
-  return IntRange::forType(C, E->getType());
+  return IntRange::forValueOfType(C, E->getType());
 }
 
 IntRange GetExprRange(ASTContext &C, Expr *E) {
@@ -2733,7 +2754,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     return;
 
   IntRange SourceRange = GetExprRange(S.Context, E);
-  IntRange TargetRange = IntRange::forCanonicalType(S.Context, Target);
+  IntRange TargetRange = IntRange::forTargetOfCanonicalType(S.Context, Target);
 
   if (SourceRange.Width > TargetRange.Width) {
     // If the source is a constant, use a default-on diagnostic.

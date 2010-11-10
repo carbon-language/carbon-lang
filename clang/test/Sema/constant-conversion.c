@@ -18,3 +18,9 @@ void test() {
   struct { int bit : 1; } a;
   a.bit = 1; // shouldn't warn
 }
+
+enum Test2 { K_zero, K_one };
+enum Test2 test2(enum Test2 *t) {
+  *t = 20;
+  return 10; // shouldn't warn
+}
