@@ -603,6 +603,20 @@ static MCSymbol *getPICLabel(const char *Prefix, unsigned FunctionNumber,
   return Label;
 }
 
+static MCSymbolRefExpr::VariantKind
+getModifierVariantKind(ARMCP::ARMCPModifier Modifier) {
+  switch (Modifier) {
+  default: llvm_unreachable("Unknown modifier!");
+  case ARMCP::no_modifier: return MCSymbolRefExpr::VK_None;
+  case ARMCP::TLSGD:       return MCSymbolRefExpr::VK_ARM_TLSGD;
+  case ARMCP::TPOFF:       return MCSymbolRefExpr::VK_ARM_TPOFF;
+  case ARMCP::GOTTPOFF:    return MCSymbolRefExpr::VK_ARM_GOTTPOFF;
+  case ARMCP::GOT:         return MCSymbolRefExpr::VK_ARM_GOT;
+  case ARMCP::GOTOFF:      return MCSymbolRefExpr::VK_ARM_GOTOFF;
+  }
+  return MCSymbolRefExpr::VK_None;
+}
+
 void ARMAsmPrinter::
 EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   int Size = TM.getTargetData()->getTypeAllocSize(MCPV->getType());
@@ -642,55 +656,32 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
 
   // Create an MCSymbol for the reference.
   MCSymbol *MCSym = OutContext.GetOrCreateSymbol(OS.str());
-  const MCExpr *Expr = MCSymbolRefExpr::Create(MCSym, OutContext);
+  const MCExpr *Expr =
+    MCSymbolRefExpr::Create(MCSym, getModifierVariantKind(ACPV->getModifier()),
+                            OutContext);
 
-  // FIXME: Model the whole expression an an MCExpr and we can get rid
-  // of this hasRawTextSupport() clause and just do an EmitValue().
-  if (OutStreamer.hasRawTextSupport()) {
-    if (ACPV->hasModifier()) OS << "(" << ACPV->getModifierText() << ")";
-    if (ACPV->getPCAdjustment() != 0) {
-      OS << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
-        << getFunctionNumber() << "_"  << ACPV->getLabelId()
-        << "+" << (unsigned)ACPV->getPCAdjustment();
-      if (ACPV->mustAddCurrentAddress())
-        OS << "-.";
-      OS << ')';
+  if (ACPV->getPCAdjustment()) {
+    MCSymbol *PCLabel = getPICLabel(MAI->getPrivateGlobalPrefix(),
+                                    getFunctionNumber(),
+                                    ACPV->getLabelId(),
+                                    OutContext);
+    const MCExpr *PCRelExpr = MCSymbolRefExpr::Create(PCLabel, OutContext);
+    PCRelExpr =
+      MCBinaryExpr::CreateAdd(PCRelExpr,
+                              MCConstantExpr::Create(ACPV->getPCAdjustment(),
+                                                     OutContext),
+                              OutContext);
+    if (ACPV->mustAddCurrentAddress()) {
+      // We want "(<expr> - .)", but MC doesn't have a concept of the '.'
+      // label, so just emit a local label end reference that instead.
+      MCSymbol *DotSym = OutContext.CreateTempSymbol();
+      OutStreamer.EmitLabel(DotSym);
+      const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
+      PCRelExpr = MCBinaryExpr::CreateSub(PCRelExpr, DotExpr, OutContext);
     }
-    const char *DataDirective = 0;
-    switch (Size) {
-    case 1: DataDirective = MAI->getData8bitsDirective(0); break;
-    case 2: DataDirective = MAI->getData16bitsDirective(0); break;
-    case 4: DataDirective = MAI->getData32bitsDirective(0); break;
-    default: assert(0 && "Unknown CPV size");
-    }
-    Twine Text(DataDirective, OS.str());
-    OutStreamer.EmitRawText(Text);
-  } else {
-    assert(!ACPV->hasModifier() &&
-           "ARM binary streamer of non-trivial constant pool value!");
-    if (ACPV->getPCAdjustment()) {
-      MCSymbol *PCLabel = getPICLabel(MAI->getPrivateGlobalPrefix(),
-                                      getFunctionNumber(),
-                                      ACPV->getLabelId(),
-                                      OutContext);
-      const MCExpr *PCRelExpr = MCSymbolRefExpr::Create(PCLabel, OutContext);
-      PCRelExpr =
-        MCBinaryExpr::CreateAdd(PCRelExpr,
-                                MCConstantExpr::Create(ACPV->getPCAdjustment(),
-                                                       OutContext),
-                                OutContext);
-      if (ACPV->mustAddCurrentAddress()) {
-        // We want "(<expr> - .)", but MC doesn't have a concept of the '.'
-        // label, so just emit a local label end reference that instead.
-        MCSymbol *DotSym = OutContext.CreateTempSymbol();
-        OutStreamer.EmitLabel(DotSym);
-        const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
-        Expr = MCBinaryExpr::CreateSub(Expr, DotExpr, OutContext);
-      }
-      Expr = MCBinaryExpr::CreateSub(Expr, PCRelExpr, OutContext);
-    }
-    OutStreamer.EmitValue(Expr, Size);
+    Expr = MCBinaryExpr::CreateSub(Expr, PCRelExpr, OutContext);
   }
+  OutStreamer.EmitValue(Expr, Size);
 }
 
 void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {

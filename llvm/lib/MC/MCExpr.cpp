@@ -51,7 +51,12 @@ void MCExpr::print(raw_ostream &OS) const {
     else
       OS << Sym;
 
-    if (SRE.getKind() == MCSymbolRefExpr::VK_ARM_PLT)
+    if (SRE.getKind() == MCSymbolRefExpr::VK_ARM_PLT ||
+        SRE.getKind() == MCSymbolRefExpr::VK_ARM_TLSGD ||
+        SRE.getKind() == MCSymbolRefExpr::VK_ARM_GOT ||
+        SRE.getKind() == MCSymbolRefExpr::VK_ARM_GOTOFF ||
+        SRE.getKind() == MCSymbolRefExpr::VK_ARM_TPOFF ||
+        SRE.getKind() == MCSymbolRefExpr::VK_ARM_GOTTPOFF)
       OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
     else if (SRE.getKind() != MCSymbolRefExpr::VK_None &&
              SRE.getKind() != MCSymbolRefExpr::VK_ARM_HI16 &&
@@ -185,6 +190,11 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_ARM_HI16: return ":upper16:";
   case VK_ARM_LO16: return ":lower16:";
   case VK_ARM_PLT: return "(PLT)";
+  case VK_ARM_GOT: return "(GOT)";
+  case VK_ARM_GOTOFF: return "(GOTOFF)";
+  case VK_ARM_TPOFF: return "(tpoff)";
+  case VK_ARM_GOTTPOFF: return "(gottpoff)";
+  case VK_ARM_TLSGD: return "(tldgd)";
   case VK_TLVP: return "TLVP";
   }
 }

@@ -141,9 +141,15 @@ public:
     VK_TLSLDM,
     VK_TPOFF,
     VK_DTPOFF,
-    VK_ARM_HI16, // The R_ARM_MOVT_ABS relocation (:upper16: in the asm file)
-    VK_ARM_LO16, // The R_ARM_MOVW_ABS_NC relocation (:lower16: in the asm file)
-    VK_ARM_PLT,  // ARM-style PLT symbol references. i.e., (PLT) instead of @PLT
+    VK_ARM_HI16,  // The R_ARM_MOVT_ABS relocation (:upper16: in the .s file)
+    VK_ARM_LO16,  // The R_ARM_MOVW_ABS_NC relocation (:lower16: in the .w file)
+    // FIXME: We'd really like to use the generic Kinds listed above for these.
+    VK_ARM_PLT,   // ARM-style PLT references. i.e., (PLT) instead of @PLT
+    VK_ARM_TLSGD, //   ditto for TLSGD, GOT, GOTOFF, TPOFF and GOTTPOFF
+    VK_ARM_GOT,
+    VK_ARM_GOTOFF,
+    VK_ARM_TPOFF,
+    VK_ARM_GOTTPOFF,
     VK_TLVP // Mach-O thread local variable relocation
   };
 
