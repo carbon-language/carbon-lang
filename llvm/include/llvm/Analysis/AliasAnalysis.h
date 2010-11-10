@@ -276,8 +276,8 @@ public:
   }
 
   /// onlyAccessesArgPointees - Return true if functions with the specified
-  /// behavior are known to read at most from objects pointed to by their
-  /// pointer-typed arguments (with arbitrary offsets).
+  /// behavior are known to read and write at most from objects pointed to by
+  /// their pointer-typed arguments (with arbitrary offsets).
   ///
   static bool onlyAccessesArgPointees(ModRefBehavior MRB) {
     return !(MRB & Anywhere & ~ArgumentPointees);
