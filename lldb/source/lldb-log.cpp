@@ -120,6 +120,7 @@ lldb_private::DisableLog (Args &args, Stream *feedback_strm)
             else if (strcasestr(arg, "expr")    == arg) flag_bits &= ~LIBLLDB_LOG_EXPRESSIONS;
             else if (strcasestr(arg, "object")  == arg) flag_bits &= ~LIBLLDB_LOG_OBJECT;
             else if (strcasecmp(arg, "process") == 0  ) flag_bits &= ~LIBLLDB_LOG_PROCESS;
+            else if (strcasecmp(arg, "script") == 0)    flag_bits &= ~LIBLLDB_LOG_SCRIPT;
             else if (strcasecmp(arg, "state")   == 0  ) flag_bits &= ~LIBLLDB_LOG_STATE;
             else if (strcasecmp(arg, "step")    == 0  ) flag_bits &= ~LIBLLDB_LOG_STEP;
             else if (strcasecmp(arg, "thread")  == 0  ) flag_bits &= ~LIBLLDB_LOG_THREAD;
@@ -183,6 +184,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
             else if (strcasestr(arg, "expr")    == arg) flag_bits |= LIBLLDB_LOG_EXPRESSIONS;
             else if (strcasestr(arg, "object")  == arg) flag_bits |= LIBLLDB_LOG_OBJECT;
             else if (strcasecmp(arg, "process") == 0  ) flag_bits |= LIBLLDB_LOG_PROCESS;
+            else if (strcasecmp(arg, "script") == 0)    flag_bits |= LIBLLDB_LOG_SCRIPT;
             else if (strcasecmp(arg, "state")   == 0  ) flag_bits |= LIBLLDB_LOG_STATE;
             else if (strcasecmp(arg, "step")    == 0  ) flag_bits |= LIBLLDB_LOG_STEP;
             else if (strcasecmp(arg, "thread")  == 0  ) flag_bits |= LIBLLDB_LOG_THREAD;
@@ -225,6 +227,7 @@ lldb_private::ListLogCategories (Stream *strm)
         "\tobject - log object construction/destruction for important objects\n"
         "\tprocess - log process events and activities\n"
         "\tthread - log thread events and activities\n"
+        "\tscript - log events about the script interpreter\n"
         "\tshlib - log shared library related activities\n"
         "\tstate - log private and public process state changes\n"
         "\tstep - log step related activities\n"

@@ -161,7 +161,10 @@ _check_and_flush (FILE *stream)
 ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
     ScriptInterpreter (interpreter, eScriptLanguagePython),
     m_compiled_module (NULL),
-    m_termios_valid (false)
+    m_termios (),
+    m_termios_valid (false),
+    m_embedded_python_pty (),
+    m_embedded_thread_input_reader_sp ()
 {
 
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
@@ -342,6 +345,9 @@ ScriptInterpreterPython::InputReaderCallback
     size_t bytes_len
 )
 {
+    lldb::thread_t embedded_interpreter_thread;
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+
     if (baton == NULL)
         return 0;
 
@@ -366,6 +372,37 @@ ScriptInterpreterPython::InputReaderCallback
                 tmp_termios.c_cc[VEOF] = _POSIX_VDISABLE;
                 ::tcsetattr (input_fd, TCSANOW, &tmp_termios);
             }
+            char error_str[1024];
+            if (script_interpreter->m_embedded_python_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, error_str, 
+                                                                                    sizeof(error_str)))
+            {
+                if (log)
+                    log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, succeeded in opening master pty (fd = %d).",
+                                  script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor());
+                embedded_interpreter_thread = Host::ThreadCreate ("<lldb.script-interpreter.embedded-python-loop>",
+                                                                  ScriptInterpreterPython::RunEmbeddedPythonInterpreter,
+                                                                  script_interpreter, NULL);
+                if (embedded_interpreter_thread != LLDB_INVALID_HOST_THREAD)
+                {
+                    if (log)
+                        log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, succeeded in creating thread (thread = %d)", embedded_interpreter_thread);
+                    Error detach_error;
+                    Host::ThreadDetach (embedded_interpreter_thread, &detach_error);
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, failed in creating thread");
+                    reader.SetIsDone (true);
+                }
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, failed to open master pty ");
+                reader.SetIsDone (true);
+            }
+
         }
         break;
 
@@ -376,14 +413,29 @@ ScriptInterpreterPython::InputReaderCallback
         break;
 
     case eInputReaderGotToken:
-        if (bytes && bytes_len)
+        if (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor() != -1)
         {
-            if ((int) bytes[0] == 4)
-                ::write (script_interpreter->GetMasterFileDescriptor(), "quit()", 6);
-            else
-                ::write (script_interpreter->GetMasterFileDescriptor(), bytes, bytes_len);
+            if (log)
+                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %d", bytes,
+                             bytes_len);
+            if (bytes && bytes_len)
+            {
+                if ((int) bytes[0] == 4)
+                    ::write (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor(), "quit()", 6);
+                else
+                    ::write (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor(), bytes, bytes_len);
+            }
+            ::write (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor(), "\n", 1);
         }
-        ::write (script_interpreter->GetMasterFileDescriptor(), "\n", 1);
+        else
+        {
+            if (log)
+                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %d, Master File Descriptor is bad.", 
+                             bytes,
+                             bytes_len);
+            reader.SetIsDone (true);
+        }
+
         break;
         
     case eInputReaderDone:
@@ -392,6 +444,8 @@ ScriptInterpreterPython::InputReaderCallback
         // Write a newline out to the reader output
         //::fwrite ("\n", 1, 1, out_fh);
         // Restore terminal settings if they were validly saved
+        if (log)
+            log->Printf ("ScriptInterpreterPython::InputReaderCallback, Done, closing down input reader.");
         if (script_interpreter->m_termios_valid)
         {
             int input_fd;
@@ -403,6 +457,7 @@ ScriptInterpreterPython::InputReaderCallback
             
             ::tcsetattr (input_fd, TCSANOW, &script_interpreter->m_termios);
         }
+        script_interpreter->m_embedded_python_pty.CloseMasterFileDescriptor();
         break;
     }
 
@@ -438,8 +493,7 @@ ScriptInterpreterPython::ExecuteInterpreterLoop ()
         if (error.Success())
         {
             debugger.PushInputReader (reader_sp);
-            ExecuteOneLine ("run_python_interpreter(ConsoleDict)", NULL);
-            debugger.PopInputReader (reader_sp);
+            m_embedded_thread_input_reader_sp = reader_sp;
         }
     }
 }
@@ -858,3 +912,58 @@ ScriptInterpreterPython::BreakpointCallbackFunction
     // trying to call the script function
     return true;
 }
+
+lldb::thread_result_t
+ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
+{
+    ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;
+    
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+    
+    if (log)
+        log->Printf ("%p ScriptInterpreterPython::RunEmbeddedPythonInterpreter () thread starting...", baton);
+    
+    char error_str[1024];
+    const char *pty_slave_name = script_interpreter->m_embedded_python_pty.GetSlaveName (error_str, sizeof (error_str));
+    if (pty_slave_name != NULL)
+    {
+        StreamString run_string;
+        PyRun_SimpleString ("save_stderr = sys.stderr");
+        PyRun_SimpleString ("sys.stderr = sys.stdout");
+        PyRun_SimpleString ("save_stdin = sys.stdin");
+        run_string.Printf ("sys.stdin = open ('%s', 'r')", pty_slave_name);
+        PyRun_SimpleString (run_string.GetData());
+        PyRun_SimpleString ("new_mode = tcgetattr(sys.stdin)");
+        PyRun_SimpleString ("new_mode[3] = new_mode[3] | ECHO | ICANON");
+        PyRun_SimpleString ("new_mode[6][VEOF] = 255");
+        PyRun_SimpleString ("tcsetattr (sys.stdin, TCSANOW, new_mode)");
+        
+	    // The following call drops into the embedded interpreter loop and stays there until the
+	    // user chooses to exit from the Python interpreter.
+        script_interpreter->ExecuteOneLine ("run_python_interpreter(ConsoleDict)", NULL);
+        
+        PyRun_SimpleString ("sys.stdin = save_stdin");
+        PyRun_SimpleString ("sys.stderr = save_stderr");
+    }
+    
+    if (script_interpreter->m_embedded_thread_input_reader_sp)
+        script_interpreter->m_embedded_thread_input_reader_sp->SetIsDone (true);
+    
+    script_interpreter->m_embedded_python_pty.CloseSlaveFileDescriptor();
+    
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT);
+    if (log)
+        log->Printf ("%p ScriptInterpreterPython::RunEmbeddedPythonInterpreter () thread exiting...", baton);
+    
+
+	// Clean up the input reader and make the debugger pop it off the stack.    
+    Debugger &debugger = script_interpreter->m_interpreter.GetDebugger();
+    const InputReaderSP reader_sp = script_interpreter->m_embedded_thread_input_reader_sp;
+    script_interpreter->m_embedded_thread_input_reader_sp.reset();
+    debugger.PopInputReader (reader_sp);
+        
+    return NULL;
+}
+
+
+

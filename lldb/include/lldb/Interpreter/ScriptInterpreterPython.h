@@ -11,6 +11,7 @@
 #ifndef liblldb_ScriptInterpreterPython_h_
 #define liblldb_ScriptInterpreterPython_h_
 
+#include "lldb/lldb-private.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/InputReader.h"
 
@@ -68,6 +69,9 @@ public:
 
     StringList
     ReadCommandInputFromUser (FILE *in_file);
+    
+    static lldb::thread_result_t
+    RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton);
 
 private:
 
@@ -81,6 +85,8 @@ private:
     void *m_compiled_module;
     struct termios m_termios;
     bool m_termios_valid;
+    lldb_utility::PseudoTerminal m_embedded_python_pty;
+    lldb::InputReaderSP m_embedded_thread_input_reader_sp;
 };
 
 } // namespace lldb_private
