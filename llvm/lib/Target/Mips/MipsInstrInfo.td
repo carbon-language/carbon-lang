@@ -281,10 +281,13 @@ class EffectiveAddress<string instr_asm> :
      instr_asm, [(set CPURegs:$dst, addr:$addr)], IIAlu>;
 
 // Count Leading Ones/Zeros in Word
-class CountLeading<bits<6> func, string instr_asm, SDNode CountOp>:
+class CountLeading<bits<6> func, string instr_asm, list<dag> pattern>:
   FR<0x1c, func, (outs CPURegs:$dst), (ins CPURegs:$src),
-     !strconcat(instr_asm, "\t$dst, $src"),
-     [(set CPURegs:$dst, (CountOp CPURegs:$src))], IIAlu>;
+     !strconcat(instr_asm, "\t$dst, $src"), pattern, IIAlu>,
+     Requires<[HasBitCount]> {
+  let shamt = 0;
+  let rt = rd;
+}
 
 // Sign Extend in Register.
 class SignExtInReg<bits<6> func, string instr_asm, ValueType vt>:
@@ -446,10 +449,10 @@ let Predicates = [HasSEInReg] in {
 }
 
 /// Count Leading
-let Predicates = [HasBitCount] in {
-  let rt = 0 in
-    def CLZ : CountLeading<0b010110, "clz", ctlz>;
-}
+def CLZ : CountLeading<0b100000, "clz",
+                       [(set CPURegs:$dst, (ctlz CPURegs:$src))]>;
+def CLO : CountLeading<0b100001, "clo",
+                       [(set CPURegs:$dst, (ctlz (not CPURegs:$src)))]>;
 
 /// Byte Swap
 let Predicates = [HasSwap] in {
