@@ -326,15 +326,15 @@ public:
 
   static ARMOperand *
   CreateRegList(const SmallVectorImpl<std::pair<unsigned, SMLoc> > &Regs,
-                SMLoc S, SMLoc E) {
+                SMLoc StartLoc, SMLoc EndLoc) {
     ARMOperand *Op = new ARMOperand(RegisterList);
     Op->RegList.Registers = new SmallVector<unsigned, 32>();
     for (SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
            I = Regs.begin(), E = Regs.end(); I != E; ++I)
       Op->RegList.Registers->push_back(I->first);
     std::sort(Op->RegList.Registers->begin(), Op->RegList.Registers->end());
-    Op->StartLoc = S;
-    Op->EndLoc = E;
+    Op->StartLoc = StartLoc;
+    Op->EndLoc = EndLoc;
     return Op;
   }
 
