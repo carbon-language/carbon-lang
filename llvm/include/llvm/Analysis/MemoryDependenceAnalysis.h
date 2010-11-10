@@ -133,37 +133,6 @@ namespace llvm {
     }
   };
 
-  /// NonLocalDepResult - This is a result from a NonLocal dependence query.
-  /// For each BasicBlock (the BB entry) it keeps a MemDepResult and the
-  /// (potentially phi translated) address that was live in the block.
-  class NonLocalDepResult {
-    BasicBlock *BB;
-    MemDepResult Result;
-    Value *Address;
-  public:
-    NonLocalDepResult(BasicBlock *bb, MemDepResult result, Value *address)
-      : BB(bb), Result(result), Address(address) {}
-    
-    // BB is the sort key, it can't be changed.
-    BasicBlock *getBB() const { return BB; }
-    
-    void setResult(const MemDepResult &R, Value *Addr) {
-      Result = R;
-      Address = Addr;
-    }
-    
-    const MemDepResult &getResult() const { return Result; }
-    
-    /// getAddress - Return the address of this pointer in this block.  This can
-    /// be different than the address queried for the non-local result because
-    /// of phi translation.  This returns null if the address was not available
-    /// in a block (i.e. because phi translation failed) or if this is a cached
-    /// result and that address was deleted.
-    ///
-    /// The address is always null for a non-local 'call' dependence.
-    Value *getAddress() const { return Address; }
-  };
-  
   /// NonLocalDepEntry - This is an entry in the NonLocalDepInfo cache.  For
   /// each BasicBlock (the BB entry) it keeps a MemDepResult.
   class NonLocalDepEntry {
@@ -186,6 +155,36 @@ namespace llvm {
     bool operator<(const NonLocalDepEntry &RHS) const {
       return BB < RHS.BB;
     }
+  };
+  
+  /// NonLocalDepResult - This is a result from a NonLocal dependence query.
+  /// For each BasicBlock (the BB entry) it keeps a MemDepResult and the
+  /// (potentially phi translated) address that was live in the block.
+  class NonLocalDepResult {
+    NonLocalDepEntry Entry;
+    Value *Address;
+  public:
+    NonLocalDepResult(BasicBlock *bb, MemDepResult result, Value *address)
+      : Entry(bb, result), Address(address) {}
+    
+    // BB is the sort key, it can't be changed.
+    BasicBlock *getBB() const { return Entry.getBB(); }
+    
+    void setResult(const MemDepResult &R, Value *Addr) {
+      Entry.setResult(R);
+      Address = Addr;
+    }
+    
+    const MemDepResult &getResult() const { return Entry.getResult(); }
+    
+    /// getAddress - Return the address of this pointer in this block.  This can
+    /// be different than the address queried for the non-local result because
+    /// of phi translation.  This returns null if the address was not available
+    /// in a block (i.e. because phi translation failed) or if this is a cached
+    /// result and that address was deleted.
+    ///
+    /// The address is always null for a non-local 'call' dependence.
+    Value *getAddress() const { return Address; }
   };
   
   /// MemoryDependenceAnalysis - This is an analysis that determines, for a
