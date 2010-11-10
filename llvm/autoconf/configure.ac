@@ -1414,12 +1414,37 @@ fi
 dnl Check, whether __dso_handle is present
 AC_CHECK_FUNCS([__dso_handle])
 
+dnl Check wether llvm-gcc is based on dragonegg
+AC_CACHE_CHECK([whether llvm-gcc is dragonegg],[llvm_cv_llvmgcc_dragonegg],
+[llvm_cv_llvmgcc_dragonegg="no"
+if test -x "$LLVMGCC" ; then
+  cp /dev/null conftest.c
+  "$LLVMGCC" -fplugin-arg-dragonegg-emit-ir -S -o - conftest.c | \
+  grep 'target datalayout =' > /dev/null 2>&1
+  if test $? -eq 0 ; then
+    llvm_cv_llvmgcc_dragonegg="yes"
+  fi
+  rm conftest.c
+fi])
+
+dnl Set the flags needed to emit LLVM IR and to disable optimizations
+dnl in llvmgcc
+if test "$llvm_cv_llvmgcc_dragonegg" = "yes" ; then
+  LLVMCC_EMITIR_FLAG="-fplugin-arg-dragonegg-emit-ir"
+  LLVMGCC_DISABLEOPT_FLAGS="-fplugin-arg-dragonegg-disable-llvm-optzns"
+else
+  LLVMCC_EMITIR_FLAG="-emit-llvm"
+  LLVMGCC_DISABLEOPT_FLAGS="-mllvm -disable-llvm-optzns"
+fi
+
+AC_SUBST(LLVMCC_EMITIR_FLAG)
+
 dnl See if the llvm-gcc executable can compile to LLVM assembly
 AC_CACHE_CHECK([whether llvm-gcc is sane],[llvm_cv_llvmgcc_sanity],
 [llvm_cv_llvmgcc_sanity="no"
 if test -x "$LLVMGCC" ; then
   cp /dev/null conftest.c
-  "$LLVMGCC" -emit-llvm -S -o - conftest.c | \
+  "$LLVMGCC" "$LLVMCC_EMITIR_FLAG" -S -o - conftest.c | \
       grep 'target datalayout =' > /dev/null 2>&1
   if test $? -eq 0 ; then
     llvm_cv_llvmgcc_sanity="yes"
@@ -1428,6 +1453,7 @@ if test -x "$LLVMGCC" ; then
 fi])
 
 dnl Since we have a sane llvm-gcc, identify it and its sub-tools
+dnl Furthermore, add some information about the tools
 if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   AC_MSG_CHECKING([llvm-gcc component support])
   llvmcc1path=`"$LLVMGCC" --print-prog-name=cc1`
@@ -1438,6 +1464,8 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   AC_SUBST(LLVMGCCDIR,$llvmgccdir)
   llvmgcclangs=[`"$LLVMGCC" -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ ]*\).*/\1/'`]
   AC_SUBST(LLVMGCC_LANGS,$llvmgcclangs)
+  AC_SUBST(LLVMGCC_DRAGONEGG,$llvm_cv_llvmgcc_dragonegg)
+  AC_SUBST(LLVMGCC_DISABLEOPT_FLAGS)
   AC_MSG_RESULT([ok])
 fi
 

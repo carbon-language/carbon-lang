@@ -195,6 +195,8 @@ LLVMGXX  := @LLVMGXX@
 LLVMCC1  := @LLVMCC1@
 LLVMCC1PLUS := @LLVMCC1PLUS@
 LLVMGCC_LANGS := @LLVMGCC_LANGS@
+LLVMGCC_DRAGONEGG := @LLVMGCC_DRAGONEGG@
+LLVMGCC_DISABLEOPT_FLAGS := @LLVMGCC_DISABLEOPT_FLAGS@
 
 # Information on Clang, if configured.
 CLANGPATH := @CLANGPATH@
@@ -203,6 +205,9 @@ ENABLE_BUILT_CLANG := @ENABLE_BUILT_CLANG@
 
 # The LLVM capable compiler to use.
 LLVMCC_OPTION := @LLVMCC_OPTION@
+
+# The flag used to emit LLVM IR.
+LLVMCC_EMITIR_FLAG = @LLVMCC_EMITIR_FLAG@
 
 # Path to directory where object files should be stored during a build.
 # Set OBJ_ROOT to "." if you do not want to use a separate place for
