@@ -227,11 +227,14 @@ namespace llvm {
       BBSkipFirstBlockPair Pair;
       /// NonLocalDeps - The results of the query for each relevant block.
       NonLocalDepInfo NonLocalDeps;
+      /// Size - The maximum size of the dereferences of the
+      /// pointer. May be UnknownSize if the sizes are unknown.
+      uint64_t Size;
       /// TBAATag - The TBAA tag associated with dereferences of the
       /// pointer. May be null if there are no tags or conflicting tags.
-      MDNode *TBAATag;
+      const MDNode *TBAATag;
 
-      NonLocalPointerInfo() : TBAATag(0) {}
+      NonLocalPointerInfo() : Size(0), TBAATag(0) {}
     };
 
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing
@@ -315,14 +318,6 @@ namespace llvm {
                                       bool isLoad, BasicBlock *BB,
                                     SmallVectorImpl<NonLocalDepResult> &Result);
 
-    /// getNonLocalPointerDependence - A convenience wrapper.
-    void getNonLocalPointerDependency(Value *Pointer, bool isLoad,
-                                      BasicBlock *BB,
-                                    SmallVectorImpl<NonLocalDepResult> &Result){
-      return getNonLocalPointerDependency(AliasAnalysis::Location(Pointer),
-                                          isLoad, BB, Result);
-    }
-    
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
     void removeInstruction(Instruction *InstToRemove);

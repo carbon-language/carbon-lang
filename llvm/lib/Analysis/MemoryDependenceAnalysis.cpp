@@ -741,16 +741,40 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
   
   // Look up the cached info for Pointer.
   ValueIsLoadPair CacheKey(Pointer.getAddr(), isLoad);
-  NonLocalPointerInfo *CacheInfo = &NonLocalPointerDeps[CacheKey];
 
-  // If this query's TBAATag is inconsistent with the cached one, discard the
-  // tag and restart the query.
-  if (CacheInfo->TBAATag != Loc.TBAATag) {
-    CacheInfo->TBAATag = 0;
-    NonLocalPointerDeps.erase(CacheKey);
-    return getNonLocalPointerDepFromBB(Pointer, Loc.getWithoutTBAATag(),
-                                       isLoad, StartBB, Result, Visited,
-                                       SkipFirstBlock);
+  // Set up a temporary NLPI value. If the map doesn't yet have an entry for
+  // CacheKey, this value will be inserted as the associated value. Otherwise,
+  // it'll be ignored, and we'll have to check to see if the cached size and
+  // tbaa tag are consistent with the current query.
+  NonLocalPointerInfo InitialNLPI;
+  InitialNLPI.Size = Loc.Size;
+  InitialNLPI.TBAATag = Loc.TBAATag;
+
+  // Get the NLPI for CacheKey, inserting one into the map if it doesn't
+  // already have one.
+  std::pair<CachedNonLocalPointerInfo::iterator, bool> Pair = 
+    NonLocalPointerDeps.insert(std::make_pair(CacheKey, InitialNLPI));
+  NonLocalPointerInfo *CacheInfo = &Pair.first->second;
+
+  if (!Pair.second) {
+    // If this query's Size is inconsistent with the cached one, take the
+    // maximum size and restart the query.
+    if (CacheInfo->Size != Loc.Size) {
+      CacheInfo->Size = std::max(CacheInfo->Size, Loc.Size);
+      return getNonLocalPointerDepFromBB(Pointer,
+                                         Loc.getWithNewSize(CacheInfo->Size),
+                                         isLoad, StartBB, Result, Visited,
+                                         SkipFirstBlock);
+    }
+
+    // If this query's TBAATag is inconsistent with the cached one, discard the
+    // tag and restart the query.
+    if (CacheInfo->TBAATag != Loc.TBAATag) {
+      CacheInfo->TBAATag = 0;
+      return getNonLocalPointerDepFromBB(Pointer, Loc.getWithoutTBAATag(),
+                                         isLoad, StartBB, Result, Visited,
+                                         SkipFirstBlock);
+    }
   }
 
   NonLocalDepInfo *Cache = &CacheInfo->NonLocalDeps;
@@ -796,6 +820,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     CacheInfo->Pair = BBSkipFirstBlockPair(StartBB, SkipFirstBlock);
   else {
     CacheInfo->Pair = BBSkipFirstBlockPair();
+    CacheInfo->Size = 0;
     CacheInfo->TBAATag = 0;
   }
   
@@ -921,6 +946,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         // cached value to do more work but not miss the phi trans failure.
         NonLocalPointerInfo &NLPI = NonLocalPointerDeps[CacheKey];
         NLPI.Pair = BBSkipFirstBlockPair();
+        NLPI.Size = 0;
         NLPI.TBAATag = 0;
         continue;
       }
@@ -949,6 +975,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // specific block queries) but we can't do the fastpath "return all
     // results from the set"  Clear out the indicator for this.
     CacheInfo->Pair = BBSkipFirstBlockPair();
+    CacheInfo->Size = 0;
     CacheInfo->TBAATag = 0;
     SkipFirstBlock = false;
     continue;
@@ -967,6 +994,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // specific block queries) but we can't do the fastpath "return all
     // results from the set".  Clear out the indicator for this.
     CacheInfo->Pair = BBSkipFirstBlockPair();
+    CacheInfo->Size = 0;
     CacheInfo->TBAATag = 0;
     
     // If *nothing* works, mark the pointer as being clobbered by the first
@@ -1184,6 +1212,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       
       // The cache is not valid for any specific block anymore.
       NonLocalPointerDeps[P].Pair = BBSkipFirstBlockPair();
+      NonLocalPointerDeps[P].Size = 0;
       NonLocalPointerDeps[P].TBAATag = 0;
       
       // Update any entries for RemInst to use the instruction after it.

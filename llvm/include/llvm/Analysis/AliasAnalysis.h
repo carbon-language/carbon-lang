@@ -107,6 +107,12 @@ public:
       return Copy;
     }
 
+    Location getWithNewSize(uint64_t NewSize) const {
+      Location Copy(*this);
+      Copy.Size = NewSize;
+      return Copy;
+    }
+
     Location getWithoutTBAATag() const {
       Location Copy(*this);
       Copy.TBAATag = 0;

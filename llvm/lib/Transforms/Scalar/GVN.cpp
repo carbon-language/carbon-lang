@@ -1351,8 +1351,10 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                               SmallVectorImpl<Instruction*> &toErase) {
   // Find the non-local dependencies of the load.
   SmallVector<NonLocalDepResult, 64> Deps;
-  MD->getNonLocalPointerDependency(LI->getPointerOperand(), true,
-                                   LI->getParent(),
+  AliasAnalysis::Location Loc(LI->getPointerOperand(),
+                         VN.getAliasAnalysis()->getTypeStoreSize(LI->getType()),
+                              LI->getMetadata(LLVMContext::MD_tbaa));
+  MD->getNonLocalPointerDependency(Loc, true, LI->getParent(),
                                    Deps);
   //DEBUG(dbgs() << "INVESTIGATING NONLOCAL LOAD: "
   //             << Deps.size() << *LI << '\n');
