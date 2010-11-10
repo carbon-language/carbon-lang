@@ -132,7 +132,8 @@ bool Process::StandardErrIsDisplayed() {
 }
 
 bool Process::FileDescriptorIsDisplayed(int fd) {
-  return GetFileType((HANDLE)_get_osfhandle(fd)) == FILE_TYPE_CHAR;
+  DWORD Mode;	// Unused
+  return (GetConsoleMode((HANDLE)_get_osfhandle(fd), &Mode) != 0);
 }
 
 unsigned Process::StandardOutColumns() {
