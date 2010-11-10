@@ -164,7 +164,7 @@ void LiveIntervalUnion::Query::findIntersection(InterferenceResult &ir) const {
   while (ir.liuSegI_ != liuEnd) {
     // Slowly advance the live virtual reg iterator until we surpass the next
     // segment in this union. If this is ever used for coalescing of fixed
-    // registers and we have a LiveInterval with thousands of segments, then use
+    // registers and we have a live vreg with thousands of segments, then use
     // upper bound instead.
     while (ir.lvrSegI_ != lvrEnd && ir.lvrSegI_->end <= ir.liuSegI_->start)
       ++ir.lvrSegI_;
@@ -219,4 +219,74 @@ bool LiveIntervalUnion::Query::nextInterference(InterferenceResult &ir) const {
   // find the next intersection
   findIntersection(ir);
   return isInterference(ir);
+}
+
+// Scan the vector of interfering virtual registers in this union. Assuming it's
+// quite small.
+bool LiveIntervalUnion::Query::isSeenInterference(LiveInterval *lvr) const {
+  SmallVectorImpl<LiveInterval*>::const_iterator I =
+    std::find(interferingVRegs_.begin(), interferingVRegs_.end(), lvr);
+  return I != interferingVRegs_.end();
+}
+
+// Count the number of virtual registers in this union that interfere with this
+// query's live virtual register. 
+// 
+// The number of times that we either advance ir.lvrSegI_ or call
+// liu_.upperBound() will be no more than the number of holes in
+// lvr_. So each invocation of collectInterferingVirtReg() takes
+// time proportional to |lvr-holes| * time(liu_.upperBound()).
+//
+// For comments on how to speed it up, see Query::findIntersection().
+unsigned LiveIntervalUnion::Query::
+collectInterferingVRegs(unsigned maxInterferingRegs) {
+  InterferenceResult ir = firstInterference();
+  LiveInterval::iterator lvrEnd = lvr_->end();
+  SegmentIter liuEnd = liu_->end();
+  LiveInterval *recentInterferingVReg = NULL;
+  while (ir.liuSegI_ != liuEnd) {
+    // Advance the union's iterator to reach an unseen interfering vreg.
+    do {
+      if (ir.liuSegI_->liveVirtReg == recentInterferingVReg)
+        continue;
+
+      if (!isSeenInterference(ir.liuSegI_->liveVirtReg))
+        break;
+
+      // Cache the most recent interfering vreg to bypass isSeenInterference.
+      recentInterferingVReg = ir.liuSegI_->liveVirtReg;
+
+    } while( ++ir.liuSegI_ != liuEnd);
+    if (ir.liuSegI_ == liuEnd)
+      break;
+
+    // Advance the live vreg reg iterator until surpassing the next
+    // segment in this union. If this is ever used for coalescing of fixed
+    // registers and we have a live vreg with thousands of segments, then use
+    // upper bound instead.
+    while (ir.lvrSegI_ != lvrEnd && ir.lvrSegI_->end <= ir.liuSegI_->start)
+      ++ir.lvrSegI_;
+    if (ir.lvrSegI_ == lvrEnd)
+      break;
+
+    // Check for intersection with the union's segment.
+    if (overlap(*ir.lvrSegI_, *ir.liuSegI_)) {
+      if (!ir.liuSegI_->liveVirtReg->isSpillable())
+        seenUnspillableVReg_ = true;
+      
+      interferingVRegs_.push_back(ir.liuSegI_->liveVirtReg);
+      if (interferingVRegs_.size() == maxInterferingRegs)
+        return maxInterferingRegs;
+
+      // Cache the most recent interfering vreg to bypass isSeenInterference.
+      recentInterferingVReg = ir.liuSegI_->liveVirtReg;
+      ++ir.liuSegI_;
+      continue;
+    }
+    // lvrSegI_ may have advanced far beyond liuSegI_,
+    // do a fast intersection test to "catch up"
+    LiveSegment seg(ir.lvrSegI_->start, ir.lvrSegI_->end, lvr_);
+    ir.liuSegI_ = liu_->upperBound(ir.liuSegI_, seg);
+  }
+  return interferingVRegs_.size();
 }

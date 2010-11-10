@@ -45,6 +45,7 @@ template<typename T> class SmallVectorImpl;
 class TargetRegisterInfo;
 class VirtRegMap;
 class LiveIntervals;
+class Spiller;
 
 // Heuristic that determines the priority of assigning virtual to physical
 // registers. The main impact of the heuristic is expected to be compile time.
@@ -113,6 +114,9 @@ protected:
   // LiveVirtRegQueue.
   void allocatePhysRegs();
 
+  // Get a temporary reference to a Spiller instance.
+  virtual Spiller &spiller() = 0;
+  
   // A RegAlloc pass should override this to provide the allocation heuristics.
   // Each call must guarantee forward progess by returning an available PhysReg
   // or new set of split live virtual registers. It is up to the splitter to
@@ -128,18 +132,21 @@ protected:
   // exists, return the interfering register, which may be preg or an alias.
   unsigned checkPhysRegInterference(LiveInterval& lvr, unsigned preg);
 
+  // Helper for spilling all live virtual registers currently unified under preg
+  // that interfere with the most recently queried lvr.  Return true if spilling
+  // was successful, and append any new spilled/split intervals to splitLVRs.
+  bool spillInterferences(unsigned preg,
+                          SmallVectorImpl<LiveInterval*> &splitLVRs);
+
 #ifndef NDEBUG
   // Verify each LiveIntervalUnion.
   void verify();
 #endif
   
-  // Helper that spills all live virtual registers currently unified under preg
-  // that interfere with the most recently queried lvr.
-  void spillInterferences(unsigned preg,
-                          SmallVectorImpl<LiveInterval*> &splitLVRs);
-
 private:
   void seedLiveVirtRegs(LiveVirtRegQueue &lvrQ);
+
+  void spillReg(unsigned reg, SmallVectorImpl<LiveInterval*> &splitLVRs);
 };
 
 } // end namespace llvm

@@ -183,7 +183,7 @@ public:
 
   void spill(LiveInterval *li,
              SmallVectorImpl<LiveInterval*> &newIntervals,
-             SmallVectorImpl<LiveInterval*> &) {
+             const SmallVectorImpl<LiveInterval*> &) {
     // Ignore spillIs - we don't use it.
     trivialSpillEverywhere(li, newIntervals);
   }
@@ -213,7 +213,7 @@ public:
   /// Falls back on LiveIntervals::addIntervalsForSpills.
   void spill(LiveInterval *li,
              SmallVectorImpl<LiveInterval*> &newIntervals,
-             SmallVectorImpl<LiveInterval*> &spillIs) {
+             const SmallVectorImpl<LiveInterval*> &spillIs) {
     std::vector<LiveInterval*> added =
       lis->addIntervalsForSpills(*li, spillIs, loopInfo, *vrm);
     newIntervals.insert(newIntervals.end(), added.begin(), added.end());
@@ -250,7 +250,7 @@ public:
 
   void spill(LiveInterval *li,
              SmallVectorImpl<LiveInterval*> &newIntervals,
-             SmallVectorImpl<LiveInterval*> &spillIs) {
+             const SmallVectorImpl<LiveInterval*> &spillIs) {
     if (worthTryingToSplit(li))
       tryVNISplit(li);
     else

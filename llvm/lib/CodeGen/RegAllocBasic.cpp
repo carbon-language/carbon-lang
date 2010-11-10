@@ -96,12 +96,11 @@ public:
 
   virtual void releaseMemory();
 
+  virtual Spiller &spiller() { return *spiller_; }
+
   virtual unsigned selectOrSplit(LiveInterval &lvr,
                                  SmallVectorImpl<LiveInterval*> &splitLVRs);
 
-  void spillInterferences(unsigned preg,
-                          SmallVectorImpl<LiveInterval*> &splitLVRs);
-  
   /// Perform register allocation.
   virtual bool runOnMachineFunction(MachineFunction &mf);
 
@@ -326,35 +325,70 @@ unsigned RegAllocBase::checkPhysRegInterference(LiveInterval &lvr,
   return 0;
 }
 
+// Sort live virtual registers by their register number.
+struct LessLiveVirtualReg
+  : public std::binary_function<LiveInterval, LiveInterval, bool> {
+  bool operator()(const LiveInterval *left, const LiveInterval *right) const {
+    return left->reg < right->reg;
+  }
+};
+
+// Spill all interferences currently assigned to this physical register.
+void RegAllocBase::spillReg(unsigned reg,
+                            SmallVectorImpl<LiveInterval*> &splitLVRs) {
+  LiveIntervalUnion::Query &query = queries_[reg];
+  const SmallVectorImpl<LiveInterval*> &pendingSpills =
+    query.interferingVRegs();
+  for (SmallVectorImpl<LiveInterval*>::const_iterator I = pendingSpills.begin(),
+         E = pendingSpills.end(); I != E; ++I) {
+    LiveInterval &lvr = **I;
+    DEBUG(dbgs() <<
+          "extracting from " << tri_->getName(reg) << " " << lvr << '\n');
+    
+    // Deallocate the interfering vreg by removing it from the union.
+    // A LiveInterval instance may not be in a union during modification!
+    physReg2liu_[reg].extract(lvr);
+  
+    // After extracting segments, the query's results are invalid.
+    query.clear();
+  
+    // Clear the vreg assignment.
+    vrm_->clearVirt(lvr.reg);
+  
+    // Spill the extracted interval.
+    spiller().spill(&lvr, splitLVRs, pendingSpills);
+  }
+}
+
 // Spill or split all live virtual registers currently unified under preg that
 // interfere with lvr. The newly spilled or split live intervals are returned by
 // appending them to splitLVRs.
-void RABasic::spillInterferences(unsigned preg,
+bool
+RegAllocBase::spillInterferences(unsigned preg,
                                  SmallVectorImpl<LiveInterval*> &splitLVRs) {
-  SmallPtrSet<LiveInterval*, 8> spilledLVRs;
-  LiveIntervalUnion::Query &query = queries_[preg];
-  // Record each interference before mutating either the union or live
-  // intervals.
-  LiveIntervalUnion::InterferenceResult ir = query.firstInterference();
-  assert(query.isInterference(ir) && "expect interference");
-  do {
-    spilledLVRs.insert(ir.liuSegPos()->liveVirtReg);
-  } while (query.nextInterference(ir));
-  for (SmallPtrSetIterator<LiveInterval*> lvrI = spilledLVRs.begin(),
-         lvrEnd = spilledLVRs.end();
-       lvrI != lvrEnd; ++lvrI ) {
-    LiveInterval& lvr = **lvrI;
-    // Spill the previously allocated lvr.
-    DEBUG(dbgs() << "extracting from " << preg << " " << lvr << '\n');
-    // Deallocate the interfering lvr by removing it from the preg union.
-    // Live intervals may not be in a union during modification.
-    physReg2liu_[preg].extract(lvr);
-    // Spill the extracted interval.
-    SmallVector<LiveInterval*, 8> spillIs;
-    spiller_->spill(&lvr, splitLVRs, spillIs);
+  // Record each interference and determine if all are spillable before mutating
+  // either the union or live intervals.
+  std::vector<LiveInterval*> spilledLVRs;
+
+  unsigned numInterferences = queries_[preg].collectInterferingVRegs();
+  if (queries_[preg].seenUnspillableVReg()) {
+    return false;
   }
-  // After extracting segments, the query's results are invalid.
-  query.clear();
+  for (const unsigned *asI = tri_->getAliasSet(preg); *asI; ++asI) {
+    numInterferences += queries_[*asI].collectInterferingVRegs();
+    if (queries_[*asI].seenUnspillableVReg()) {
+      return false;
+    }
+  }
+  DEBUG(dbgs() << "spilling " << tri_->getName(preg) <<
+        " interferences with " << queries_[preg].lvr() << "\n");
+  assert(numInterferences > 0 && "expect interference");
+  
+  // Spill each interfering vreg allocated to preg or an alias.
+  spillReg(preg, splitLVRs);
+  for (const unsigned *asI = tri_->getAliasSet(preg); *asI; ++asI)
+    spillReg(*asI, splitLVRs);
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -374,53 +408,57 @@ void RABasic::spillInterferences(unsigned preg,
 // minimal, there is no value in caching them.
 unsigned RABasic::selectOrSplit(LiveInterval &lvr,
                                 SmallVectorImpl<LiveInterval*> &splitLVRs) {
-  // Accumulate the min spill cost among the interferences, in case we spill.
-  unsigned minSpillReg = 0;
-  unsigned minSpillAlias = 0;
-  float minSpillWeight = lvr.weight;
+  // Populate a list of physical register spill candidates.
+  std::vector<unsigned> pregSpillCands;
 
-  // Check for an available reg in this class. 
+  // Check for an available register in this class. 
   const TargetRegisterClass *trc = mri_->getRegClass(lvr.reg);
   for (TargetRegisterClass::iterator trcI = trc->allocation_order_begin(*mf_),
          trcEnd = trc->allocation_order_end(*mf_);
        trcI != trcEnd; ++trcI) {
     unsigned preg = *trcI;
+    // Check interference and intialize queries for this lvr as a side effect.
     unsigned interfReg = checkPhysRegInterference(lvr, preg);
     if (interfReg == 0) {
+      // Found an available register.
       return preg;
     }
-    LiveIntervalUnion::InterferenceResult interf =
-      queries_[interfReg].firstInterference();
-    float interfWeight = interf.liuSegPos()->liveVirtReg->weight;
-    if (interfWeight < minSpillWeight ) {
-      minSpillReg = interfReg;
-      minSpillAlias = preg;
-      minSpillWeight = interfWeight;
+    LiveInterval *interferingVirtReg =
+      queries_[interfReg].firstInterference().liuSegPos()->liveVirtReg;
+
+    // The current lvr must either spillable, or one of its interferences must
+    // have less spill weight.
+    if (interferingVirtReg->weight < lvr.weight ) {
+      pregSpillCands.push_back(preg);
     }
   }
-  if (minSpillReg == 0) {
-    DEBUG(dbgs() << "spilling: " << lvr << '\n');
-    SmallVector<LiveInterval*, 1> spillIs; // ignored
-    spiller_->spill(&lvr, splitLVRs, spillIs);
-    // The live virtual register requesting to be allocated was spilled. So tell
-    // the caller not to allocate anything for this round.
-    return 0;
+  // Try to spill another interfering reg with less spill weight.
+  // 
+  // FIXME: RAGreedy will sort this list by spill weight.
+  for (std::vector<unsigned>::iterator pregI = pregSpillCands.begin(),
+         pregE = pregSpillCands.end(); pregI != pregE; ++pregI) {
+
+    if (!spillInterferences(*pregI, splitLVRs)) continue;
+    
+    unsigned interfReg = checkPhysRegInterference(lvr, *pregI);
+    if (interfReg != 0) {
+      const LiveSegment &seg =
+        *queries_[interfReg].firstInterference().liuSegPos();
+      dbgs() << "spilling cannot free " << tri_->getName(*pregI) <<
+        " for " << lvr.reg << " with interference " << seg.liveVirtReg << "\n";
+      llvm_unreachable("Interference after spill.");
+    }
+    // Tell the caller to allocate to this newly freed physical register.
+    return *pregI;
   }
-  // Free the cheapest physical register.
-  spillInterferences(minSpillReg, splitLVRs);
-  // Tell the caller to allocate to this newly freed physical register.
-  assert(minSpillAlias != 0 && "need a free register after spilling");
-  // We just spilled the first register that interferes with minSpillAlias. We
-  // now assume minSpillAlias is free because only one register alias may
-  // interfere at a time. e.g. we ignore predication.
-  unsigned interfReg = checkPhysRegInterference(lvr, minSpillAlias);
-  if (interfReg != 0) {
-    dbgs() << "spilling cannot free " << tri_->getName(minSpillAlias) <<
-      " for " << lvr.reg << " with interference " <<
-      *queries_[interfReg].firstInterference().liuSegPos()->liveVirtReg << "\n";
-    llvm_unreachable("Interference after spill.");
-  }
-  return minSpillAlias;
+  // No other spill candidates were found, so spill the current lvr.
+  DEBUG(dbgs() << "spilling: " << lvr << '\n');
+  SmallVector<LiveInterval*, 1> pendingSpills;
+  spiller().spill(&lvr, splitLVRs, pendingSpills);
+    
+  // The live virtual register requesting allocation was spilled, so tell
+  // the caller not to allocate anything during this round.
+  return 0;
 }
 
 namespace llvm {

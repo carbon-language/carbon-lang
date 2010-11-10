@@ -36,7 +36,7 @@ namespace llvm {
     /// @param newIntervals  The newly created intervals will be appended here.
     virtual void spill(LiveInterval *li,
                        SmallVectorImpl<LiveInterval*> &newIntervals,
-                       SmallVectorImpl<LiveInterval*> &spillIs) = 0;
+                       const SmallVectorImpl<LiveInterval*> &spillIs) = 0;
 
   };
 
