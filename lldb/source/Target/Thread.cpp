@@ -374,7 +374,7 @@ Thread::PopPlan ()
         ThreadPlanSP &plan = m_plan_stack.back();
         if (log)
         {
-            log->Printf("Popping plan: \"%s\", tid = 0x%4.4x, immediate = false.", plan->GetName(), plan->GetThread().GetID());
+            log->Printf("Popping plan: \"%s\", tid = 0x%4.4x.", plan->GetName(), plan->GetThread().GetID());
         }
         m_completed_plan_stack.push_back (plan);
         plan->WillPop();
