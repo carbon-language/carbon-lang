@@ -554,6 +554,7 @@ Host::SetCrashDescriptionWithFormat (const char *format, ...)
     {
         va_list args;
         va_start (args, format);
+        g_crash_description.GetString().clear();
         g_crash_description.PrintfVarArg(format, args);
         va_end (args);
         __crashreporter_info__ = g_crash_description.GetData();
