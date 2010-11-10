@@ -756,24 +756,37 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     NonLocalPointerDeps.insert(std::make_pair(CacheKey, InitialNLPI));
   NonLocalPointerInfo *CacheInfo = &Pair.first->second;
 
+  // If we already have a cache entry for this CacheKey, we may need to do some
+  // work to reconcile the cache entry and the current query.
   if (!Pair.second) {
-    // If this query's Size is inconsistent with the cached one, take the
-    // maximum size and restart the query.
-    if (CacheInfo->Size != Loc.Size) {
-      CacheInfo->Size = std::max(CacheInfo->Size, Loc.Size);
+    if (CacheInfo->Size < Loc.Size) {
+      // The query's Size is greater than the cached one. Throw out the
+      // cached data and procede with the query at the greater size.
+      CacheInfo->Pair = BBSkipFirstBlockPair();
+      CacheInfo->Size = Loc.Size;
+      CacheInfo->NonLocalDeps.clear();
+    } else if (CacheInfo->Size > Loc.Size) {
+      // This query's Size is less than the cached one. Conservatively restart
+      // the query using the greater size.
       return getNonLocalPointerDepFromBB(Pointer,
                                          Loc.getWithNewSize(CacheInfo->Size),
                                          isLoad, StartBB, Result, Visited,
                                          SkipFirstBlock);
     }
 
-    // If this query's TBAATag is inconsistent with the cached one, discard the
-    // tag and restart the query.
+    // If the query's TBAATag is inconsistent with the cached one,
+    // conservatively throw out the cached data and restart the query with
+    // no tag if needed.
     if (CacheInfo->TBAATag != Loc.TBAATag) {
-      CacheInfo->TBAATag = 0;
-      return getNonLocalPointerDepFromBB(Pointer, Loc.getWithoutTBAATag(),
-                                         isLoad, StartBB, Result, Visited,
-                                         SkipFirstBlock);
+      if (CacheInfo->TBAATag) {
+        CacheInfo->Pair = BBSkipFirstBlockPair();
+        CacheInfo->TBAATag = 0;
+        CacheInfo->NonLocalDeps.clear();
+      }
+      if (Loc.TBAATag)
+        return getNonLocalPointerDepFromBB(Pointer, Loc.getWithoutTBAATag(),
+                                           isLoad, StartBB, Result, Visited,
+                                           SkipFirstBlock);
     }
   }
 
