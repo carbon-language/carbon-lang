@@ -192,18 +192,19 @@ public:
     /// This property corresponds to the IntrNoMem LLVM intrinsic flag.
     DoesNotAccessMemory = Nowhere | NoModRef,
 
-    /// AccessesArgumentsReadonly - This function loads through function
-    /// arguments and does not perform any non-local stores or volatile
-    /// loads.
+    /// OnlyReadsArgumentPointees - The only memory references in this function
+    /// (if it has any) are non-volatile loads from objects pointed to by its
+    /// pointer-typed arguments, with arbitrary offsets.
     ///
     /// This property corresponds to the IntrReadArgMem LLVM intrinsic flag.
-    AccessesArgumentsReadonly = ArgumentPointees | Ref,
+    OnlyReadsArgumentPointees = ArgumentPointees | Ref,
 
-    /// AccessesArguments - This function accesses function arguments in well
-    /// known (possibly volatile) ways, but does not access any other memory.
+    /// OnlyAccessesArgumentPointees - The only memory references in this
+    /// function (if it has any) are non-volatile loads and stores from objects
+    /// pointed to by its pointer-typed arguments, with arbitrary offsets.
     ///
     /// This property corresponds to the IntrReadWriteArgMem LLVM intrinsic flag.
-    AccessesArguments = ArgumentPointees | ModRef,
+    OnlyAccessesArgumentPointees = ArgumentPointees | ModRef,
 
     /// OnlyReadsMemory - This function does not perform any non-local stores or
     /// volatile loads, but may read from any memory location.

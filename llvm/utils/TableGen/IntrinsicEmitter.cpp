@@ -573,13 +573,13 @@ EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
       OS << "  return DoesNotAccessMemory;\n";
       break;
     case CodeGenIntrinsic::ReadArgMem:
-      OS << "  return AccessesArgumentsReadonly;\n";
+      OS << "  return OnlyReadsArgumentPointees;\n";
       break;
     case CodeGenIntrinsic::ReadMem:
       OS << "  return OnlyReadsMemory;\n";
       break;
     case CodeGenIntrinsic::ReadWriteArgMem:
-      OS << "  return AccessesArguments;\n";
+      OS << "  return OnlyAccessesArgumentPointees;\n";
       break;
     }
   }
