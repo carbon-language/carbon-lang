@@ -289,6 +289,7 @@ namespace {
                      ELFSymbolData &MSD,
                      const MCAsmLayout &Layout);
 
+    typedef DenseMap<const MCSectionELF*, uint32_t> SectionIndexMapTy;
     void WriteSymbolTable(MCDataFragment *SymtabF, MCDataFragment *ShndxF,
                           const MCAssembler &Asm,
                           const MCAsmLayout &Layout,
@@ -306,7 +307,11 @@ namespace {
     /// \param StringTable [out] - The string table data.
     /// \param StringIndexMap [out] - Map from symbol names to offsets in the
     /// string table.
-    void ComputeSymbolTable(MCAssembler &Asm);
+    void ComputeSymbolTable(MCAssembler &Asm,
+                            const SectionIndexMapTy &SectionIndexMap);
+
+    void ComputeIndexMap(MCAssembler &Asm,
+                         SectionIndexMapTy &SectionIndexMap);
 
     void WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
                          const MCSectionData &SD);
@@ -919,7 +924,19 @@ static bool isLocal(const MCSymbolData &Data) {
   return true;
 }
 
-void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
+void ELFObjectWriterImpl::ComputeIndexMap(MCAssembler &Asm,
+                                          SectionIndexMapTy &SectionIndexMap) {
+  unsigned Index = 1;
+  for (MCAssembler::iterator it = Asm.begin(),
+         ie = Asm.end(); it != ie; ++it) {
+    const MCSectionELF &Section =
+      static_cast<const MCSectionELF &>(it->getSection());
+    SectionIndexMap[&Section] = Index++;
+  }
+}
+
+void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm,
+                                     const SectionIndexMapTy &SectionIndexMap) {
   // FIXME: Is this the correct place to do this?
   if (NeedsGOT) {
     llvm::StringRef Name = "_GLOBAL_OFFSET_TABLE_";
@@ -931,11 +948,6 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
 
   // Build section lookup table.
   NumRegularSections = Asm.size();
-  DenseMap<const MCSection*, uint32_t> SectionIndexMap;
-  unsigned Index = 1;
-  for (MCAssembler::iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it, ++Index)
-    SectionIndexMap[&it->getSection()] = Index;
 
   // Index 0 is always the empty string.
   StringMap<uint64_t> StringIndexMap;
@@ -968,7 +980,9 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
     } else if (RefSymbol.isUndefined()) {
       MSD.SectionIndex = ELF::SHN_UNDEF;
     } else {
-      MSD.SectionIndex = SectionIndexMap.lookup(&RefSymbol.getSection());
+      const MCSectionELF &Section =
+        static_cast<const MCSectionELF&>(RefSymbol.getSection());
+      MSD.SectionIndex = SectionIndexMap.lookup(&Section);
       if (MSD.SectionIndex >= ELF::SHN_LORESERVE)
         NeedsSymtabShndx = true;
       assert(MSD.SectionIndex && "Invalid section index!");
@@ -1010,7 +1024,7 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
 
   // Set the symbol indices. Local symbols must come before all other
   // symbols with non-local bindings.
-  Index = 0;
+  unsigned Index = 0;
   for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
     LocalSymbolData[i].SymbolData->setIndex(Index++);
   for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
@@ -1228,8 +1242,12 @@ bool ELFObjectWriterImpl::IsFixupFullyResolved(const MCAssembler &Asm,
 
 void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
                                       const MCAsmLayout &Layout) {
+  SectionIndexMapTy SectionIndexMap;
+
+  ComputeIndexMap(Asm, SectionIndexMap);
+
   // Compute symbol table information.
-  ComputeSymbolTable(Asm);
+  ComputeSymbolTable(Asm, SectionIndexMap);
 
   CreateMetadataSections(const_cast<MCAssembler&>(Asm),
                          const_cast<MCAsmLayout&>(Layout));
@@ -1262,9 +1280,6 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
   // ... then all of the sections ...
   DenseMap<const MCSection*, uint64_t> SectionOffsetMap;
 
-  DenseMap<const MCSection*, uint32_t> SectionIndexMap;
-
-  unsigned Index = 1;
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
     const MCSectionData &SD = *it;
@@ -1275,7 +1290,6 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
 
     // Remember the offset into the file for this section.
     SectionOffsetMap[&it->getSection()] = FileOff;
-    SectionIndexMap[&it->getSection()] = Index++;
 
     FileOff += Layout.getSectionFileSize(&SD);
 
