@@ -579,8 +579,9 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
       new PrintPPOutputPPCallbacks(PP, *OS, !Opts.ShowLineMarkers,
                                    Opts.ShowMacros, Opts.ShowHeaderIncludes);
   PP.AddPragmaHandler(new UnknownPragmaHandler("#pragma", Callbacks));
-  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
-                                                      Callbacks));
+  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",Callbacks));
+  PP.AddPragmaHandler("clang",
+                      new UnknownPragmaHandler("#pragma clang", Callbacks));
 
   PP.addPPCallbacks(Callbacks);
 
