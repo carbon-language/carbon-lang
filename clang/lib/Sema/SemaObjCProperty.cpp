@@ -1076,6 +1076,17 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
   }
 }
 
+/// AddPropertyAttrs - Propagates attributes from a property to the
+/// implicitly-declared getter or setter for that property.
+static void AddPropertyAttrs(Sema &S, ObjCMethodDecl *PropertyMethod,
+                             ObjCPropertyDecl *Property) {
+  // Should we just clone all attributes over?
+  if (DeprecatedAttr *A = Property->getAttr<DeprecatedAttr>())
+    PropertyMethod->addAttr(A->clone(S.Context));
+  if (UnavailableAttr *A = Property->getAttr<UnavailableAttr>())
+    PropertyMethod->addAttr(A->clone(S.Context));
+}
+
 /// ProcessPropertyDecl - Make sure that any user-defined setter/getter methods
 /// have the property type and issue diagnostics if they don't.
 /// Also synthesize a getter/setter method if none exist (and update the
@@ -1133,6 +1144,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                              ObjCMethodDecl::Optional :
                              ObjCMethodDecl::Required);
     CD->addDecl(GetterMethod);
+
+    AddPropertyAttrs(*this, GetterMethod, property);
+
     // FIXME: Eventually this shouldn't be needed, as the lexical context
     // and the real context should be the same.
     if (lexicalDC)
@@ -1173,6 +1187,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   SC_None,
                                                   0);
       SetterMethod->setMethodParams(Context, &Argument, 1, 1);
+
+      AddPropertyAttrs(*this, SetterMethod, property);
+
       CD->addDecl(SetterMethod);
       // FIXME: Eventually this shouldn't be needed, as the lexical context
       // and the real context should be the same.

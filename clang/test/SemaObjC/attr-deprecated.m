@@ -97,3 +97,14 @@ __attribute ((deprecated))
 @end
 
 
+@interface Test2
+@property int test2 __attribute__((deprecated));
+@end
+
+void test(Test2 *foo) {
+  int x;
+  x = foo.test2; // expected-warning {{'test2' is deprecated}}
+  x = [foo test2]; // expected-warning {{'test2' is deprecated}}
+  foo.test2 = x; // expected-warning {{'test2' is deprecated}}
+  [foo setTest2: x]; // expected-warning {{'setTest2:' is deprecated}}
+}
