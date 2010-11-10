@@ -1048,7 +1048,7 @@ void ELFObjectWriterImpl::WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
                                           const MCSectionData &SD) {
   if (!Relocations[&SD].empty()) {
     MCContext &Ctx = Asm.getContext();
-    const MCSection *RelaSection;
+    const MCSectionELF *RelaSection;
     const MCSectionELF &Section =
       static_cast<const MCSectionELF&>(SD.getSection());
 
@@ -1154,14 +1154,14 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   unsigned NumRegularSections = Asm.size();
 
   // We construct .shstrtab, .symtab and .strtab in this order to match gnu as.
-  const MCSection *ShstrtabSection =
+  const MCSectionELF *ShstrtabSection =
     Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0,
                       SectionKind::getReadOnly(), false);
   MCSectionData &ShstrtabSD = Asm.getOrCreateSectionData(*ShstrtabSection);
   ShstrtabSD.setAlignment(1);
   ShstrtabIndex = Asm.size();
 
-  const MCSection *SymtabSection =
+  const MCSectionELF *SymtabSection =
     Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
                       SectionKind::getReadOnly(),
                       EntrySize);
@@ -1172,7 +1172,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   MCSectionData *SymtabShndxSD = NULL;
 
   if (NeedsSymtabShndx) {
-    const MCSection *SymtabShndxSection =
+    const MCSectionELF *SymtabShndxSection =
       Ctx.getELFSection(".symtab_shndx", ELF::SHT_SYMTAB_SHNDX, 0,
                         SectionKind::getReadOnly(), 4);
     SymtabShndxSD = &Asm.getOrCreateSectionData(*SymtabShndxSection);
@@ -1350,8 +1350,8 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
 
     case ELF::SHT_REL:
     case ELF::SHT_RELA: {
-      const MCSection *SymtabSection;
-      const MCSection *InfoSection;
+      const MCSectionELF *SymtabSection;
+      const MCSectionELF *InfoSection;
 
       SymtabSection = Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
                                                      SectionKind::getReadOnly(),

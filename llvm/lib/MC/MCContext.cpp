@@ -148,8 +148,7 @@ getMachOSection(StringRef Segment, StringRef Section,
                                             Reserved2, Kind);
 }
 
-
-const MCSection *MCContext::
+const MCSectionELF *MCContext::
 getELFSection(StringRef Section, unsigned Type, unsigned Flags,
               SectionKind Kind, unsigned EntrySize) {
   if (ELFUniquingMap == 0)
