@@ -764,10 +764,7 @@ void SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
   truncatedValues.insert(ParentVNI);
-  VNInfo *VNI = defFromParent(openli_, ParentVNI, End, MBB,
-                              MBB.getFirstTerminator());
-  // Make sure openli is live out of MBB.
-  openli_.getLI()->addRange(LiveRange(VNI->def, End.getNextSlot(), VNI));
+  defFromParent(openli_, ParentVNI, End, MBB, MBB.getFirstTerminator());
   DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
 
