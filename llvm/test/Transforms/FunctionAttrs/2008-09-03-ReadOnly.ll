@@ -1,4 +1,4 @@
-; RUN: opt < %s -functionattrs -S | grep readonly | count 2
+; RUN: opt < %s -basicaa -functionattrs -S | grep readonly | count 2
 
 define i32 @f() {
 entry:

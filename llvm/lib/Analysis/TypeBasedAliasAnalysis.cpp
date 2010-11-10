@@ -256,11 +256,12 @@ TypeBasedAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
     if (TBAANode(M).TypeIsImmutable())
       Min = OnlyReadsMemory;
 
-  return std::min(AliasAnalysis::getModRefBehavior(CS), Min);
+  return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
 }
 
 AliasAnalysis::ModRefBehavior
 TypeBasedAliasAnalysis::getModRefBehavior(const Function *F) {
+  // Functions don't have metadata. Just chain to the next implementation.
   return AliasAnalysis::getModRefBehavior(F);
 }
 

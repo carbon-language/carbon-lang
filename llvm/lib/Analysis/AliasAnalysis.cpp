@@ -179,7 +179,7 @@ AliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
 
   // Otherwise, fall back to the next AA in the chain. But we can merge
   // in any result we've managed to compute.
-  return std::min(AA->getModRefBehavior(CS), Min);
+  return ModRefBehavior(AA->getModRefBehavior(CS) & Min);
 }
 
 AliasAnalysis::ModRefBehavior

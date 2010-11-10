@@ -120,28 +120,33 @@ namespace {
     /// called from the specified call site.  The call site may be null in which
     /// case the most generic behavior of this function should be returned.
     ModRefBehavior getModRefBehavior(const Function *F) {
+      ModRefBehavior Min = UnknownModRefBehavior;
+
       if (FunctionRecord *FR = getFunctionInfo(F)) {
         if (FR->FunctionEffect == 0)
-          return DoesNotAccessMemory;
+          Min = DoesNotAccessMemory;
         else if ((FR->FunctionEffect & Mod) == 0)
-          return OnlyReadsMemory;
+          Min = OnlyReadsMemory;
       }
-      return AliasAnalysis::getModRefBehavior(F);
+
+      return ModRefBehavior(AliasAnalysis::getModRefBehavior(F) & Min);
     }
     
     /// getModRefBehavior - Return the behavior of the specified function if
     /// called from the specified call site.  The call site may be null in which
     /// case the most generic behavior of this function should be returned.
     ModRefBehavior getModRefBehavior(ImmutableCallSite CS) {
-      const Function* F = CS.getCalledFunction();
-      if (!F) return AliasAnalysis::getModRefBehavior(CS);
-      if (FunctionRecord *FR = getFunctionInfo(F)) {
-        if (FR->FunctionEffect == 0)
-          return DoesNotAccessMemory;
-        else if ((FR->FunctionEffect & Mod) == 0)
-          return OnlyReadsMemory;
-      }
-      return AliasAnalysis::getModRefBehavior(CS);
+      ModRefBehavior Min = UnknownModRefBehavior;
+
+      if (const Function* F = CS.getCalledFunction())
+        if (FunctionRecord *FR = getFunctionInfo(F)) {
+          if (FR->FunctionEffect == 0)
+            Min = DoesNotAccessMemory;
+          else if ((FR->FunctionEffect & Mod) == 0)
+            Min = OnlyReadsMemory;
+        }
+
+      return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
     }
 
     virtual void deleteValue(Value *V);

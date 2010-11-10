@@ -175,6 +175,9 @@ public:
   ///
   enum ModRefResult { NoModRef = 0, Ref = 1, Mod = 2, ModRef = 3 };
 
+  /// These values define additional bits used to define the
+  /// ModRefBehavior values.
+  enum { Nowhere = 0, ArgumentPointees = 4, Anywhere = 8 | ArgumentPointees };
 
   /// ModRefBehavior - Summary of how a function affects memory in the program.
   /// Loads from constant globals are not considered memory accesses for this
@@ -187,20 +190,20 @@ public:
     /// This property corresponds to the GCC 'const' attribute.
     /// This property corresponds to the LLVM IR 'readnone' attribute.
     /// This property corresponds to the IntrNoMem LLVM intrinsic flag.
-    DoesNotAccessMemory,
+    DoesNotAccessMemory = Nowhere | NoModRef,
 
     /// AccessesArgumentsReadonly - This function loads through function
     /// arguments and does not perform any non-local stores or volatile
     /// loads.
     ///
     /// This property corresponds to the IntrReadArgMem LLVM intrinsic flag.
-    AccessesArgumentsReadonly,
+    AccessesArgumentsReadonly = ArgumentPointees | Ref,
 
     /// AccessesArguments - This function accesses function arguments in well
     /// known (possibly volatile) ways, but does not access any other memory.
     ///
     /// This property corresponds to the IntrReadWriteArgMem LLVM intrinsic flag.
-    AccessesArguments,
+    AccessesArguments = ArgumentPointees | ModRef,
 
     /// OnlyReadsMemory - This function does not perform any non-local stores or
     /// volatile loads, but may read from any memory location.
@@ -208,11 +211,11 @@ public:
     /// This property corresponds to the GCC 'pure' attribute.
     /// This property corresponds to the LLVM IR 'readonly' attribute.
     /// This property corresponds to the IntrReadMem LLVM intrinsic flag.
-    OnlyReadsMemory,
+    OnlyReadsMemory = Anywhere | Ref,
 
     /// UnknownModRefBehavior - This indicates that the function could not be
     /// classified into one of the behaviors above.
-    UnknownModRefBehavior
+    UnknownModRefBehavior = Anywhere | ModRef
   };
 
   /// getModRefBehavior - Return the behavior when calling the given call site.
@@ -270,11 +273,8 @@ public:
   /// true.  For use when the call site is not known.
   ///
   static bool onlyReadsMemory(ModRefBehavior MRB) {
-    return MRB == DoesNotAccessMemory ||
-           MRB == AccessesArgumentsReadonly ||
-           MRB == OnlyReadsMemory;
+    return !(MRB & Mod);
   }
-
 
   /// getModRefInfo - Return information about whether or not an instruction may
   /// read or write the specified memory location.  An instruction

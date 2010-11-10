@@ -128,54 +128,41 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
         // Ignore calls to functions in the same SCC.
         if (CS.getCalledFunction() && SCCNodes.count(CS.getCalledFunction()))
           continue;
-        switch (AA->getModRefBehavior(CS)) {
-        case AliasAnalysis::DoesNotAccessMemory:
-          // Ignore calls that don't access memory.
-          continue;
-        case AliasAnalysis::OnlyReadsMemory:
-          // Handle calls that only read from memory.
-          ReadsMemory = true;
-          continue;
-        case AliasAnalysis::AccessesArguments:
-          // Check whether all pointer arguments point to local memory, and
-          // ignore calls that only access local memory.
-          for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-               CI != CE; ++CI) {
-            Value *Arg = *CI;
-            if (Arg->getType()->isPointerTy()) {
-              AliasAnalysis::Location Loc(Arg,
-                                          AliasAnalysis::UnknownSize,
-                                          I->getMetadata(LLVMContext::MD_tbaa));
-              if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
-                // Writes memory.  Just give up.
-                return false;
-            }
-          }
-          // Only reads and writes local memory.
-          continue;
-        case AliasAnalysis::AccessesArgumentsReadonly:
-          // Check whether all pointer arguments point to local memory, and
-          // ignore calls that only access local memory.
-          for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-               CI != CE; ++CI) {
-            Value *Arg = *CI;
-            if (Arg->getType()->isPointerTy()) {
-              AliasAnalysis::Location Loc(Arg,
-                                          AliasAnalysis::UnknownSize,
-                                          I->getMetadata(LLVMContext::MD_tbaa));
-              if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
-                // Reads non-local memory.
-                ReadsMemory = true;
-                break;
+        AliasAnalysis::ModRefBehavior MRB = AA->getModRefBehavior(CS);
+        // If the call doesn't access arbitrary memory, we may be able to
+        // figure out something.
+        if (!(MRB & AliasAnalysis::Anywhere &
+              ~AliasAnalysis::ArgumentPointees)) {
+          // If the call accesses argument pointees, check each argument.
+          if (MRB & AliasAnalysis::AccessesArguments)
+            // Check whether all pointer arguments point to local memory, and
+            // ignore calls that only access local memory.
+            for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+                 CI != CE; ++CI) {
+              Value *Arg = *CI;
+              if (Arg->getType()->isPointerTy()) {
+                AliasAnalysis::Location Loc(Arg,
+                                            AliasAnalysis::UnknownSize,
+                                            I->getMetadata(LLVMContext::MD_tbaa));
+                if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
+                  if (MRB & AliasAnalysis::Mod)
+                    // Writes non-local memory.  Give up.
+                    return false;
+                  if (MRB & AliasAnalysis::Ref)
+                    // Ok, it reads non-local memory.
+                    ReadsMemory = true;
+                }
               }
             }
-          }
-          // Only reads memory.
           continue;
-        default:
-          // Otherwise, be conservative.
-          break;
         }
+        // The call could access any memory. If that includes writes, give up.
+        if (MRB & AliasAnalysis::Mod)
+          return false;
+        // If it reads, note it.
+        if (MRB & AliasAnalysis::Ref)
+          ReadsMemory = true;
+        continue;
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore non-volatile loads from local memory.
         if (!LI->isVolatile()) {

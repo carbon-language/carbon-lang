@@ -595,7 +595,7 @@ BasicAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
     Min = OnlyReadsMemory;
 
   // The AliasAnalysis base class has some smarts, lets use them.
-  return std::min(AliasAnalysis::getModRefBehavior(CS), Min);
+  return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
 }
 
 /// getModRefBehavior - Return the behavior when calling the given function.
@@ -613,12 +613,14 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
 #undef GET_INTRINSIC_MODREF_BEHAVIOR
   }
 
+  ModRefBehavior Min = UnknownModRefBehavior;
+
   // If the function declares it only reads memory, go with that.
   if (F->onlyReadsMemory())
-    return OnlyReadsMemory;
+    Min = OnlyReadsMemory;
 
   // Otherwise be conservative.
-  return AliasAnalysis::getModRefBehavior(F);
+  return ModRefBehavior(AliasAnalysis::getModRefBehavior(F) & Min);
 }
 
 /// getModRefInfo - Check to see if the specified callsite can clobber the
@@ -671,6 +673,8 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       return NoModRef;
   }
 
+  ModRefResult Min = ModRef;
+
   // Finally, handle specific knowledge of intrinsics.
   const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
   if (II != 0)
@@ -686,7 +690,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       if (isNoAlias(Location(Dest, Len), Loc)) {
         if (isNoAlias(Location(Src, Len), Loc))
           return NoModRef;
-        return Ref;
+        Min = Ref;
       }
       break;
     }
@@ -745,7 +749,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
     }
 
   // The AliasAnalysis base class has some smarts, lets use them.
-  return AliasAnalysis::getModRefInfo(CS, Loc);
+  return ModRefResult(AliasAnalysis::getModRefInfo(CS, Loc) & Min);
 }
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
