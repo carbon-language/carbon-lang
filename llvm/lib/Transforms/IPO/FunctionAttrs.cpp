@@ -133,7 +133,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
         // figure out something.
         if (AliasAnalysis::onlyAccessesArgPointees(MRB)) {
           // If the call does access argument pointees, check each argument.
-          if (MRB & AliasAnalysis::AccessesArguments)
+          if (AliasAnalysis::doesAccessArgPointees(MRB))
             // Check whether all pointer arguments point to local memory, and
             // ignore calls that only access local memory.
             for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();

@@ -283,6 +283,14 @@ public:
     return !(MRB & Anywhere & ~ArgumentPointees);
   }
 
+  /// doesAccessArgPointees - Return true if functions with the specified
+  /// behavior are known to potentially read or write  from objects pointed
+  /// to be their pointer-typed arguments (with arbitrary offsets).
+  ///
+  static bool doesAccessArgPointees(ModRefBehavior MRB) {
+    return (MRB & ModRef) && (MRB & ArgumentPointees);
+  }
+
   /// getModRefInfo - Return information about whether or not an instruction may
   /// read or write the specified memory location.  An instruction
   /// that doesn't read or write memory may be trivially LICM'd for example.

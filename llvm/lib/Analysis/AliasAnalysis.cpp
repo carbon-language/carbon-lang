@@ -78,15 +78,15 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   if (onlyReadsMemory(MRB))
     Mask = Ref;
 
-  if (MRB == AccessesArguments ||
-      MRB == AccessesArgumentsReadonly) {
+  if (onlyAccessesArgPointees(MRB)) {
     bool doesAlias = false;
-    for (ImmutableCallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
-         AI != AE; ++AI)
-      if (!isNoAlias(Location(*AI), Loc)) {
-        doesAlias = true;
-        break;
-      }
+    if (doesAccessArgPointees(MRB))
+      for (ImmutableCallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+           AI != AE; ++AI)
+        if (!isNoAlias(Location(*AI), Loc)) {
+          doesAlias = true;
+          break;
+        }
 
     if (!doesAlias)
       return NoModRef;
@@ -130,27 +130,29 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
   // If CS2 only access memory through arguments, accumulate the mod/ref
   // information from CS1's references to the memory referenced by
   // CS2's arguments.
-  if (CS2B == AccessesArguments || CS2B == AccessesArgumentsReadonly) {
+  if (onlyAccessesArgPointees(CS2B)) {
     AliasAnalysis::ModRefResult R = NoModRef;
-    for (ImmutableCallSite::arg_iterator
-         I = CS2.arg_begin(), E = CS2.arg_end(); I != E; ++I) {
-      R = ModRefResult((R | getModRefInfo(CS1, *I, UnknownSize)) & Mask);
-      if (R == Mask)
-        break;
-    }
+    if (doesAccessArgPointees(CS2B))
+      for (ImmutableCallSite::arg_iterator
+           I = CS2.arg_begin(), E = CS2.arg_end(); I != E; ++I) {
+        R = ModRefResult((R | getModRefInfo(CS1, *I, UnknownSize)) & Mask);
+        if (R == Mask)
+          break;
+      }
     return R;
   }
 
   // If CS1 only accesses memory through arguments, check if CS2 references
   // any of the memory referenced by CS1's arguments. If not, return NoModRef.
-  if (CS1B == AccessesArguments || CS1B == AccessesArgumentsReadonly) {
+  if (onlyAccessesArgPointees(CS1B)) {
     AliasAnalysis::ModRefResult R = NoModRef;
-    for (ImmutableCallSite::arg_iterator
-         I = CS1.arg_begin(), E = CS1.arg_end(); I != E; ++I)
-      if (getModRefInfo(CS2, *I, UnknownSize) != NoModRef) {
-        R = Mask;
-        break;
-      }
+    if (doesAccessArgPointees(CS1B))
+      for (ImmutableCallSite::arg_iterator
+           I = CS1.arg_begin(), E = CS1.arg_end(); I != E; ++I)
+        if (getModRefInfo(CS2, *I, UnknownSize) != NoModRef) {
+          R = Mask;
+          break;
+        }
     if (R == NoModRef)
       return R;
   }
