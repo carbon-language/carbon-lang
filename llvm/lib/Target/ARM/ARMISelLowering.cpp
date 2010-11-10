@@ -3546,8 +3546,8 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       for (unsigned i = 0; i < NumElts; ++i)
         Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32,
                                   Op.getOperand(i)));
-      SDValue Val = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &Ops[0],
-                                NumElts);
+      EVT VecVT = EVT::getVectorVT(*DAG.getContext(), MVT::i32, NumElts);
+      SDValue Val = DAG.getNode(ISD::BUILD_VECTOR, dl, VecVT, &Ops[0], NumElts);
       Val = LowerBUILD_VECTOR(Val, DAG, ST);
       if (Val.getNode())
         return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Val);
