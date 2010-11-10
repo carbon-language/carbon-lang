@@ -584,10 +584,12 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
         Match = *I;
         return Ovl_Match;
       }
-    } else if (isa<UsingDecl>(OldD) || isa<TagDecl>(OldD)) {
+    } else if (isa<UsingDecl>(OldD)) {
       // We can overload with these, which can show up when doing
       // redeclaration checks for UsingDecls.
       assert(Old.getLookupKind() == LookupUsingDeclName);
+    } else if (isa<TagDecl>(OldD)) {
+      // We can always overload with tags by hiding them.
     } else if (isa<UnresolvedUsingValueDecl>(OldD)) {
       // Optimistically assume that an unresolved using decl will
       // overload; if it doesn't, we'll have to diagnose during

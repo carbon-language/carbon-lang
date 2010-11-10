@@ -71,3 +71,11 @@ struct B : A
   template<int> friend A::~A(); // expected-error {{does not match}}
 };
 }
+
+// PR7915
+namespace test5 {
+  struct A;
+  struct A1 { friend void A(); };
+
+  struct B { friend void B(); };
+}
