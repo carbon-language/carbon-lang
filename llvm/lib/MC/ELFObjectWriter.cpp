@@ -214,10 +214,6 @@ namespace {
         Writer->Write32(W);
     }
 
-    void String8(char *buf, uint8_t Value) {
-      buf[0] = Value;
-    }
-
     void StringLE16(char *buf, uint16_t Value) {
       buf[0] = char(Value >> 0);
       buf[1] = char(Value >> 8);
@@ -248,25 +244,37 @@ namespace {
       StringBE32(buf + 4, uint32_t(Value >> 0));
     }
 
-    void String16(char *buf, uint16_t Value) {
+    void String8(MCDataFragment &F, uint8_t Value) {
+      char buf[1];
+      buf[0] = Value;
+      F.getContents() += StringRef(buf, 1);
+    }
+
+    void String16(MCDataFragment &F, uint16_t Value) {
+      char buf[2];
       if (Writer->isLittleEndian())
         StringLE16(buf, Value);
       else
         StringBE16(buf, Value);
+      F.getContents() += StringRef(buf, 2);
     }
 
-    void String32(char *buf, uint32_t Value) {
+    void String32(MCDataFragment &F, uint32_t Value) {
+      char buf[4];
       if (Writer->isLittleEndian())
         StringLE32(buf, Value);
       else
         StringBE32(buf, Value);
+      F.getContents() += StringRef(buf, 4);
     }
 
-    void String64(char *buf, uint64_t Value) {
+    void String64(MCDataFragment &F, uint64_t Value) {
+      char buf[8];
       if (Writer->isLittleEndian())
         StringLE64(buf, Value);
       else
         StringBE64(buf, Value);
+      F.getContents() += StringRef(buf, 8);
     }
 
     void WriteHeader(uint64_t SectionDataSize, unsigned NumberOfSections);
@@ -407,62 +415,29 @@ void ELFObjectWriterImpl::WriteSymbolEntry(MCDataFragment *SymtabF,
                                            uint32_t shndx,
                                            bool Reserved) {
   if (ShndxF) {
-    char buf[4];
     if (shndx >= ELF::SHN_LORESERVE && !Reserved)
-      String32(buf, shndx);
+      String32(*ShndxF, shndx);
     else
-      String32(buf, 0);
-    ShndxF->getContents() += StringRef(buf, 4);
+      String32(*ShndxF, 0);
   }
 
+  uint16_t Index = (shndx >= ELF::SHN_LORESERVE && !Reserved) ?
+    uint16_t(ELF::SHN_XINDEX) : shndx;
+
   if (Is64Bit) {
-    char buf[8];
-
-    String32(buf, name);
-    SymtabF->getContents() += StringRef(buf, 4); // st_name
-
-    String8(buf, info);
-    SymtabF->getContents() += StringRef(buf, 1);  // st_info
-
-    String8(buf, other);
-    SymtabF->getContents() += StringRef(buf, 1); // st_other
-
-    if (shndx >= ELF::SHN_LORESERVE && !Reserved)
-      String16(buf, ELF::SHN_XINDEX);
-    else
-      String16(buf, shndx);
-
-    SymtabF->getContents() += StringRef(buf, 2); // st_shndx
-
-    String64(buf, value);
-    SymtabF->getContents() += StringRef(buf, 8); // st_value
-
-    String64(buf, size);
-    SymtabF->getContents() += StringRef(buf, 8);  // st_size
+    String32(*SymtabF, name);  // st_name
+    String8(*SymtabF, info);   // st_info
+    String8(*SymtabF, other);  // st_other
+    String16(*SymtabF, Index); // st_shndx
+    String64(*SymtabF, value); // st_value
+    String64(*SymtabF, size);  // st_size
   } else {
-    char buf[4];
-
-    String32(buf, name);
-    SymtabF->getContents() += StringRef(buf, 4);  // st_name
-
-    String32(buf, value);
-    SymtabF->getContents() += StringRef(buf, 4); // st_value
-
-    String32(buf, size);
-    SymtabF->getContents() += StringRef(buf, 4);  // st_size
-
-    String8(buf, info);
-    SymtabF->getContents() += StringRef(buf, 1);  // st_info
-
-    String8(buf, other);
-    SymtabF->getContents() += StringRef(buf, 1); // st_other
-
-    if (shndx >= ELF::SHN_LORESERVE && !Reserved)
-      String16(buf, ELF::SHN_XINDEX);
-    else
-      String16(buf, shndx);
-
-    SymtabF->getContents() += StringRef(buf, 2); // st_shndx
+    String32(*SymtabF, name);  // st_name
+    String32(*SymtabF, value); // st_value
+    String32(*SymtabF, size);  // st_size
+    String8(*SymtabF, info);   // st_info
+    String8(*SymtabF, other);  // st_other
+    String16(*SymtabF, Index); // st_shndx
   }
 }
 
@@ -1111,35 +1086,23 @@ void ELFObjectWriterImpl::WriteRelocationsFragment(const MCAssembler &Asm,
     else
       entry.Index += LocalSymbolData.size() + 1;
     if (Is64Bit) {
-      char buf[8];
-
-      String64(buf, entry.r_offset);
-      F->getContents() += StringRef(buf, 8);
+      String64(*F, entry.r_offset);
 
       struct ELF::Elf64_Rela ERE64;
       ERE64.setSymbolAndType(entry.Index, entry.Type);
-      String64(buf, ERE64.r_info);
-      F->getContents() += StringRef(buf, 8);
+      String64(*F, ERE64.r_info);
 
-      if (HasRelocationAddend) {
-        String64(buf, entry.r_addend);
-        F->getContents() += StringRef(buf, 8);
-      }
+      if (HasRelocationAddend)
+        String64(*F, entry.r_addend);
     } else {
-      char buf[4];
-
-      String32(buf, entry.r_offset);
-      F->getContents() += StringRef(buf, 4);
+      String32(*F, entry.r_offset);
 
       struct ELF::Elf32_Rela ERE32;
       ERE32.setSymbolAndType(entry.Index, entry.Type);
-      String32(buf, ERE32.r_info);
-      F->getContents() += StringRef(buf, 4);
+      String32(*F, ERE32.r_info);
 
-      if (HasRelocationAddend) {
-        String32(buf, entry.r_addend);
-        F->getContents() += StringRef(buf, 4);
-      }
+      if (HasRelocationAddend)
+        String32(*F, entry.r_addend);
     }
   }
 }
