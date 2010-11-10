@@ -26,6 +26,7 @@ class MachineLoop;
 class MachineLoopInfo;
 class MachineRegisterInfo;
 class TargetInstrInfo;
+class TargetRegisterInfo;
 class VirtRegMap;
 class VNInfo;
 class raw_ostream;
@@ -245,14 +246,6 @@ public:
   /// All needed values whose def is not inside [Start;End) must be defined
   /// beforehand so mapValue will work.
   void addRange(SlotIndex Start, SlotIndex End);
-
-  /// defByCopy- Insert a copy from parentli to li, assuming that ParentVNI is
-  /// live at the insert location. Add a minimal live range for the new value
-  /// and return it.
-  VNInfo *defByCopy(const VNInfo *ParentVNI,
-                    MachineBasicBlock &MBB,
-                    MachineBasicBlock::iterator I);
-
 };
 
 
@@ -273,6 +266,7 @@ class SplitEditor {
   VirtRegMap &vrm_;
   MachineRegisterInfo &mri_;
   const TargetInstrInfo &tii_;
+  const TargetRegisterInfo &tri_;
 
   /// edit_ - The current parent register and new intervals created.
   LiveRangeEdit &edit_;
@@ -284,6 +278,14 @@ class SplitEditor {
 
   /// Currently open LiveInterval.
   LiveIntervalMap openli_;
+
+  /// defFromParent - Define Reg from ParentVNI at UseIdx using either
+  /// rematerialization or a COPY from parent. Return the new value.
+  VNInfo *defFromParent(LiveIntervalMap &Reg,
+                        VNInfo *ParentVNI,
+                        SlotIndex UseIdx,
+                        MachineBasicBlock &MBB,
+                        MachineBasicBlock::iterator I);
 
   /// intervalsLiveAt - Return true if any member of intervals_ is live at Idx.
   bool intervalsLiveAt(SlotIndex Idx) const;

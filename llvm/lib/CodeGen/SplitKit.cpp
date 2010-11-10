@@ -659,19 +659,6 @@ void LiveIntervalMap::addRange(SlotIndex Start, SlotIndex End) {
     addSimpleRange(I->start, std::min(End, I->end), I->valno);
 }
 
-VNInfo *LiveIntervalMap::defByCopy(const VNInfo *ParentVNI,
-                                   MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator I) {
-  const TargetInstrDesc &TID = MBB.getParent()->getTarget().getInstrInfo()->
-    get(TargetOpcode::COPY);
-  MachineInstr *MI = BuildMI(MBB, I, DebugLoc(), TID, li_->reg)
-    .addReg(parentli_.reg);
-  SlotIndex DefIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
-  VNInfo *VNI = defValue(ParentVNI, DefIdx);
-  VNI->setCopy(MI);
-  li_->addRange(LiveRange(DefIdx, DefIdx.getNextSlot(), VNI));
-  return VNI;
-}
 
 //===----------------------------------------------------------------------===//
 //                               Split Editor
@@ -686,10 +673,14 @@ SplitEditor::SplitEditor(SplitAnalysis &sa,
   : sa_(sa), lis_(lis), vrm_(vrm),
     mri_(vrm.getMachineFunction().getRegInfo()),
     tii_(*vrm.getMachineFunction().getTarget().getInstrInfo()),
+    tri_(*vrm.getMachineFunction().getTarget().getRegisterInfo()),
     edit_(edit),
     dupli_(lis_, mdt, edit.getParent()),
     openli_(lis_, mdt, edit.getParent())
 {
+  // We don't need an AliasAnalysis since we will only be performing
+  // cheap-as-a-copy remats anyway.
+  edit_.anyRematerializable(lis_, tii_, 0);
 }
 
 bool SplitEditor::intervalsLiveAt(SlotIndex Idx) const {
@@ -699,10 +690,41 @@ bool SplitEditor::intervalsLiveAt(SlotIndex Idx) const {
   return false;
 }
 
+VNInfo *SplitEditor::defFromParent(LiveIntervalMap &Reg,
+                                   VNInfo *ParentVNI,
+                                   SlotIndex UseIdx,
+                                   MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator I) {
+  VNInfo *VNI = 0;
+  MachineInstr *CopyMI = 0;
+  SlotIndex Def;
+
+  // Attempt cheap-as-a-copy rematerialization.
+  LiveRangeEdit::Remat RM(ParentVNI);
+  if (edit_.canRematerializeAt(RM, UseIdx, true, lis_)) {
+    Def = edit_.rematerializeAt(MBB, I, Reg.getLI()->reg, RM,
+                                          lis_, tii_, tri_);
+  } else {
+    // Can't remat, just insert a copy from parent.
+    CopyMI = BuildMI(MBB, I, DebugLoc(), tii_.get(TargetOpcode::COPY),
+                     Reg.getLI()->reg).addReg(edit_.getReg());
+    Def = lis_.InsertMachineInstrInMaps(CopyMI).getDefIndex();
+  }
+
+  // Define the value in Reg.
+  VNI = Reg.defValue(ParentVNI, Def);
+  VNI->setCopy(CopyMI);
+
+  // Add minimal liveness for the new value.
+  if (UseIdx < Def)
+    UseIdx = Def;
+  Reg.getLI()->addRange(LiveRange(Def, UseIdx.getNextSlot(), VNI));
+  return VNI;
+}
+
 /// Create a new virtual register and live interval.
 void SplitEditor::openIntv() {
   assert(!openli_.getLI() && "Previous LI not closed before openIntv");
-
   if (!dupli_.getLI())
     dupli_.reset(&edit_.create(mri_, lis_, vrm_));
 
@@ -713,8 +735,9 @@ void SplitEditor::openIntv() {
 /// not live before Idx, a COPY is not inserted.
 void SplitEditor::enterIntvBefore(SlotIndex Idx) {
   assert(openli_.getLI() && "openIntv not called before enterIntvBefore");
+  Idx = Idx.getUseIndex();
   DEBUG(dbgs() << "    enterIntvBefore " << Idx);
-  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(Idx.getUseIndex());
+  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(Idx);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return;
@@ -723,26 +746,28 @@ void SplitEditor::enterIntvBefore(SlotIndex Idx) {
   truncatedValues.insert(ParentVNI);
   MachineInstr *MI = lis_.getInstructionFromIndex(Idx);
   assert(MI && "enterIntvBefore called with invalid index");
-  VNInfo *VNI = openli_.defByCopy(ParentVNI, *MI->getParent(), MI);
-  openli_.getLI()->addRange(LiveRange(VNI->def, Idx.getDefIndex(), VNI));
+
+  defFromParent(openli_, ParentVNI, Idx, *MI->getParent(), MI);
+
   DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
 
 /// enterIntvAtEnd - Enter openli at the end of MBB.
 void SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   assert(openli_.getLI() && "openIntv not called before enterIntvAtEnd");
-  SlotIndex End = lis_.getMBBEndIdx(&MBB);
+  SlotIndex End = lis_.getMBBEndIdx(&MBB).getPrevSlot();
   DEBUG(dbgs() << "    enterIntvAtEnd BB#" << MBB.getNumber() << ", " << End);
-  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(End.getPrevSlot());
+  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(End);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return;
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
   truncatedValues.insert(ParentVNI);
-  VNInfo *VNI = openli_.defByCopy(ParentVNI, MBB, MBB.getFirstTerminator());
+  VNInfo *VNI = defFromParent(openli_, ParentVNI, End, MBB,
+                              MBB.getFirstTerminator());
   // Make sure openli is live out of MBB.
-  openli_.getLI()->addRange(LiveRange(VNI->def, End, VNI));
+  openli_.getLI()->addRange(LiveRange(VNI->def, End.getNextSlot(), VNI));
   DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
 
@@ -764,7 +789,8 @@ void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   DEBUG(dbgs() << "    leaveIntvAfter " << Idx);
 
   // The interval must be live beyond the instruction at Idx.
-  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(Idx.getBoundaryIndex());
+  Idx = Idx.getBoundaryIndex();
+  VNInfo *ParentVNI = edit_.getParent().getVNInfoAt(Idx);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return;
@@ -772,12 +798,13 @@ void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
 
   MachineBasicBlock::iterator MII = lis_.getInstructionFromIndex(Idx);
-  MachineBasicBlock *MBB = MII->getParent();
-  VNInfo *VNI = dupli_.defByCopy(ParentVNI, *MBB, llvm::next(MII));
+  VNInfo *VNI = defFromParent(dupli_, ParentVNI, Idx,
+                              *MII->getParent(), llvm::next(MII));
 
-  // Finally we must make sure that openli is properly extended from Idx to the
-  // new copy.
-  openli_.addSimpleRange(Idx.getBoundaryIndex(), VNI->def, ParentVNI);
+  // Make sure that openli is properly extended from Idx to the new copy.
+  // FIXME: This shouldn't be necessary for remats.
+  openli_.addSimpleRange(Idx, VNI->def, ParentVNI);
+
   DEBUG(dbgs() << ": " << *openli_.getLI() << '\n');
 }
 
@@ -794,9 +821,8 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
     return;
   }
 
-  // We are going to insert a back copy, so we must have a dupli_.
-  VNInfo *VNI = dupli_.defByCopy(ParentVNI, MBB,
-                                 MBB.SkipPHIsAndLabels(MBB.begin()));
+  VNInfo *VNI = defFromParent(dupli_, ParentVNI, Start, MBB,
+                              MBB.SkipPHIsAndLabels(MBB.begin()));
 
   // Finally we must make sure that openli is properly extended from Start to
   // the new copy.
