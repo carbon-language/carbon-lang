@@ -21,12 +21,19 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
+#define MaxRecursionDepth 5
+
+static Value *SimplifyBinOp(unsigned, Value *, Value *, const TargetData *,
+                            unsigned);
+static Value *SimplifyCmpInst(unsigned, Value *, Value *, const TargetData *,
+                              unsigned);
+
 /// ThreadBinOpOverSelect - In the case of a binary operation with a select
 /// instruction as an operand, try to simplify the binop by seeing whether
 /// evaluating it on both branches of the select results in the same value.
 /// Returns the common value if so, otherwise returns null.
 static Value *ThreadBinOpOverSelect(unsigned Opcode, Value *LHS, Value *RHS,
-                                    const TargetData *TD) {
+                                    const TargetData *TD, unsigned MaxRecurse) {
   SelectInst *SI;
   if (isa<SelectInst>(LHS)) {
     SI = cast<SelectInst>(LHS);
@@ -39,11 +46,11 @@ static Value *ThreadBinOpOverSelect(unsigned Opcode, Value *LHS, Value *RHS,
   Value *TV;
   Value *FV;
   if (SI == LHS) {
-    TV = SimplifyBinOp(Opcode, SI->getTrueValue(), RHS, TD);
-    FV = SimplifyBinOp(Opcode, SI->getFalseValue(), RHS, TD);
+    TV = SimplifyBinOp(Opcode, SI->getTrueValue(), RHS, TD, MaxRecurse);
+    FV = SimplifyBinOp(Opcode, SI->getFalseValue(), RHS, TD, MaxRecurse);
   } else {
-    TV = SimplifyBinOp(Opcode, LHS, SI->getTrueValue(), TD);
-    FV = SimplifyBinOp(Opcode, LHS, SI->getFalseValue(), TD);
+    TV = SimplifyBinOp(Opcode, LHS, SI->getTrueValue(), TD, MaxRecurse);
+    FV = SimplifyBinOp(Opcode, LHS, SI->getFalseValue(), TD, MaxRecurse);
   }
 
   // If they simplified to the same value, then return the common value.
@@ -94,7 +101,8 @@ static Value *ThreadBinOpOverSelect(unsigned Opcode, Value *LHS, Value *RHS,
 /// result in the same value.  Returns the common value if so, otherwise returns
 /// null.
 static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
-                                  Value *RHS, const TargetData *TD) {
+                                  Value *RHS, const TargetData *TD,
+                                  unsigned MaxRecurse) {
   // Make sure the select is on the LHS.
   if (!isa<SelectInst>(LHS)) {
     std::swap(LHS, RHS);
@@ -105,14 +113,75 @@ static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
 
   // Now that we have "cmp select(cond, TV, FV), RHS", analyse it.
   // Does "cmp TV, RHS" simplify?
-  if (Value *TCmp = SimplifyCmpInst(Pred, SI->getTrueValue(), RHS, TD))
+  if (Value *TCmp = SimplifyCmpInst(Pred, SI->getTrueValue(), RHS, TD,
+                                    MaxRecurse))
     // It does!  Does "cmp FV, RHS" simplify?
-    if (Value *FCmp = SimplifyCmpInst(Pred, SI->getFalseValue(), RHS, TD))
+    if (Value *FCmp = SimplifyCmpInst(Pred, SI->getFalseValue(), RHS, TD,
+                                      MaxRecurse))
       // It does!  If they simplified to the same value, then use it as the
       // result of the original comparison.
       if (TCmp == FCmp)
         return TCmp;
   return 0;
+}
+
+/// ThreadBinOpOverPHI - In the case of a binary operation with an operand that
+/// is a PHI instruction, try to simplify the binop by seeing whether evaluating
+/// it on the incoming phi values yields the same result for every value.  If so
+/// returns the common value, otherwise returns null.
+static Value *ThreadBinOpOverPHI(unsigned Opcode, Value *LHS, Value *RHS,
+                                 const TargetData *TD, unsigned MaxRecurse) {
+  PHINode *PI;
+  if (isa<PHINode>(LHS)) {
+    PI = cast<PHINode>(LHS);
+  } else {
+    assert(isa<PHINode>(RHS) && "No PHI instruction operand!");
+    PI = cast<PHINode>(RHS);
+  }
+
+  // Evaluate the BinOp on the incoming phi values.
+  Value *CommonValue = 0;
+  for (unsigned i = 0, e = PI->getNumIncomingValues(); i != e; ++i) {
+    Value *V = PI == LHS ?
+      SimplifyBinOp(Opcode, PI->getIncomingValue(i), RHS, TD, MaxRecurse) :
+      SimplifyBinOp(Opcode, LHS, PI->getIncomingValue(i), TD, MaxRecurse);
+    // If the operation failed to simplify, or simplified to a different value
+    // to previously, then give up.
+    if (!V || (CommonValue && V != CommonValue))
+      return 0;
+    CommonValue = V;
+  }
+
+  return CommonValue;
+}
+
+/// ThreadCmpOverPHI - In the case of a comparison with a PHI instruction, try
+/// try to simplify the comparison by seeing whether comparing with all of the
+/// incoming phi values yields the same result every time.  If so returns the
+/// common result, otherwise returns null.
+static Value *ThreadCmpOverPHI(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
+                               const TargetData *TD, unsigned MaxRecurse) {
+  // Make sure the phi is on the LHS.
+  if (!isa<PHINode>(LHS)) {
+    std::swap(LHS, RHS);
+    Pred = CmpInst::getSwappedPredicate(Pred);
+  }
+  assert(isa<PHINode>(LHS) && "Not comparing with a phi instruction!");
+  PHINode *PI = cast<PHINode>(LHS);
+
+  // Evaluate the BinOp on the incoming phi values.
+  Value *CommonValue = 0;
+  for (unsigned i = 0, e = PI->getNumIncomingValues(); i != e; ++i) {
+    Value *V = SimplifyCmpInst(Pred, PI->getIncomingValue(i), RHS, TD,
+                               MaxRecurse);
+    // If the operation failed to simplify, or simplified to a different value
+    // to previously, then give up.
+    if (!V || (CommonValue && V != CommonValue))
+      return 0;
+    CommonValue = V;
+  }
+
+  return CommonValue;
 }
 
 /// SimplifyAddInst - Given operands for an Add, see if we can
@@ -146,7 +215,8 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 
 /// SimplifyAndInst - Given operands for an And, see if we can
 /// fold the result.  If not, this returns null.
-Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD) {
+static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
+                              unsigned MaxRecurse) {
   if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
     if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { CLHS, CRHS };
@@ -212,16 +282,29 @@ Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD) {
 
   // If the operation is with the result of a select instruction, check whether
   // operating on either branch of the select always yields the same value.
-  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
-    if (Value *V = ThreadBinOpOverSelect(Instruction::And, Op0, Op1, TD))
+  if (MaxRecurse && (isa<SelectInst>(Op0) || isa<SelectInst>(Op1)))
+    if (Value *V = ThreadBinOpOverSelect(Instruction::And, Op0, Op1, TD,
+                                         MaxRecurse-1))
+      return V;
+
+  // If the operation is with the result of a phi instruction, check whether
+  // operating on all incoming values of the phi always yields the same value.
+  if (MaxRecurse && (isa<PHINode>(Op0) || isa<PHINode>(Op1)))
+    if (Value *V = ThreadBinOpOverPHI(Instruction::And, Op0, Op1, TD,
+                                      MaxRecurse-1))
       return V;
 
   return 0;
 }
 
+Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD) {
+  return ::SimplifyAndInst(Op0, Op1, TD, MaxRecursionDepth);
+}
+
 /// SimplifyOrInst - Given operands for an Or, see if we can
 /// fold the result.  If not, this returns null.
-Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD) {
+static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
+                             unsigned MaxRecurse) {
   if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
     if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { CLHS, CRHS };
@@ -287,13 +370,24 @@ Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD) {
 
   // If the operation is with the result of a select instruction, check whether
   // operating on either branch of the select always yields the same value.
-  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
-    if (Value *V = ThreadBinOpOverSelect(Instruction::Or, Op0, Op1, TD))
+  if (MaxRecurse && (isa<SelectInst>(Op0) || isa<SelectInst>(Op1)))
+    if (Value *V = ThreadBinOpOverSelect(Instruction::Or, Op0, Op1, TD,
+                                         MaxRecurse-1))
+      return V;
+
+  // If the operation is with the result of a phi instruction, check whether
+  // operating on all incoming values of the phi always yields the same value.
+  if (MaxRecurse && (isa<PHINode>(Op0) || isa<PHINode>(Op1)))
+    if (Value *V = ThreadBinOpOverPHI(Instruction::Or, Op0, Op1, TD,
+                                      MaxRecurse-1))
       return V;
 
   return 0;
 }
 
+Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD) {
+  return ::SimplifyOrInst(Op0, Op1, TD, MaxRecursionDepth);
+}
 
 static const Type *GetCompareTy(Value *Op) {
   return CmpInst::makeCmpResultType(Op->getType());
@@ -301,8 +395,8 @@ static const Type *GetCompareTy(Value *Op) {
 
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
 /// fold the result.  If not, this returns null.
-Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                              const TargetData *TD) {
+static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                               const TargetData *TD, unsigned MaxRecurse) {
   CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
   assert(CmpInst::isIntPredicate(Pred) && "Not an integer compare!");
   
@@ -360,17 +454,28 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
-  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
-    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD))
+  if (MaxRecurse && (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)))
+    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD, MaxRecurse-1))
+      return V;
+
+  // If the comparison is with the result of a phi instruction, check whether
+  // doing the compare with each incoming phi value yields a common result.
+  if (MaxRecurse && (isa<PHINode>(LHS) || isa<PHINode>(RHS)))
+    if (Value *V = ThreadCmpOverPHI(Pred, LHS, RHS, TD, MaxRecurse-1))
       return V;
 
   return 0;
 }
 
+Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                              const TargetData *TD) {
+  return ::SimplifyICmpInst(Predicate, LHS, RHS, TD, MaxRecursionDepth);
+}
+
 /// SimplifyFCmpInst - Given operands for an FCmpInst, see if we can
 /// fold the result.  If not, this returns null.
-Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                              const TargetData *TD) {
+static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                               const TargetData *TD, unsigned MaxRecurse) {
   CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
   assert(CmpInst::isFPPredicate(Pred) && "Not an FP compare!");
 
@@ -443,11 +548,22 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
-  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
-    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD))
+  if (MaxRecurse && (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)))
+    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD, MaxRecurse-1))
+      return V;
+
+  // If the comparison is with the result of a phi instruction, check whether
+  // doing the compare with each incoming phi value yields a common result.
+  if (MaxRecurse && (isa<PHINode>(LHS) || isa<PHINode>(RHS)))
+    if (Value *V = ThreadCmpOverPHI(Pred, LHS, RHS, TD, MaxRecurse-1))
       return V;
 
   return 0;
+}
+
+Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                              const TargetData *TD) {
+  return ::SimplifyFCmpInst(Predicate, LHS, RHS, TD, MaxRecursionDepth);
 }
 
 /// SimplifySelectInst - Given operands for a SelectInst, see if we can fold
@@ -509,11 +625,11 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
 
 /// SimplifyBinOp - Given operands for a BinaryOperator, see if we can
 /// fold the result.  If not, this returns null.
-Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS, 
-                           const TargetData *TD) {
+static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
+                            const TargetData *TD, unsigned MaxRecurse) {
   switch (Opcode) {
-  case Instruction::And: return SimplifyAndInst(LHS, RHS, TD);
-  case Instruction::Or:  return SimplifyOrInst(LHS, RHS, TD);
+  case Instruction::And: return SimplifyAndInst(LHS, RHS, TD, MaxRecurse);
+  case Instruction::Or:  return SimplifyOrInst(LHS, RHS, TD, MaxRecurse);
   default:
     if (Constant *CLHS = dyn_cast<Constant>(LHS))
       if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
@@ -523,23 +639,38 @@ Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 
     // If the operation is with the result of a select instruction, check whether
     // operating on either branch of the select always yields the same value.
-    if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
-      if (Value *V = ThreadBinOpOverSelect(Opcode, LHS, RHS, TD))
+    if (MaxRecurse && (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)))
+      if (Value *V = ThreadBinOpOverSelect(Opcode, LHS, RHS, TD, MaxRecurse-1))
+        return V;
+
+    // If the operation is with the result of a phi instruction, check whether
+    // operating on all incoming values of the phi always yields the same value.
+    if (MaxRecurse && (isa<PHINode>(LHS) || isa<PHINode>(RHS)))
+      if (Value *V = ThreadBinOpOverPHI(Opcode, LHS, RHS, TD, MaxRecurse-1))
         return V;
 
     return 0;
   }
 }
 
-/// SimplifyCmpInst - Given operands for a CmpInst, see if we can
-/// fold the result.
-Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                             const TargetData *TD) {
-  if (CmpInst::isIntPredicate((CmpInst::Predicate)Predicate))
-    return SimplifyICmpInst(Predicate, LHS, RHS, TD);
-  return SimplifyFCmpInst(Predicate, LHS, RHS, TD);
+Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS, 
+                           const TargetData *TD) {
+  return ::SimplifyBinOp(Opcode, LHS, RHS, TD, MaxRecursionDepth);
 }
 
+/// SimplifyCmpInst - Given operands for a CmpInst, see if we can
+/// fold the result.
+static Value *SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                              const TargetData *TD, unsigned MaxRecurse) {
+  if (CmpInst::isIntPredicate((CmpInst::Predicate)Predicate))
+    return SimplifyICmpInst(Predicate, LHS, RHS, TD, MaxRecurse);
+  return SimplifyFCmpInst(Predicate, LHS, RHS, TD, MaxRecurse);
+}
+
+Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                             const TargetData *TD) {
+  return ::SimplifyCmpInst(Predicate, LHS, RHS, TD, MaxRecursionDepth);
+}
 
 /// SimplifyInstruction - See if we can compute a simplified version of this
 /// instruction.  If not, this returns null.
