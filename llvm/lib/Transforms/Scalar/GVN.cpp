@@ -1071,12 +1071,12 @@ static int AnalyzeLoadFromClobberingStore(const Type *LoadTy, Value *LoadPtr,
                                           StoreInst *DepSI,
                                           const TargetData &TD) {
   // Cannot handle reading from store of first-class aggregate yet.
-  if (DepSI->getOperand(0)->getType()->isStructTy() ||
-      DepSI->getOperand(0)->getType()->isArrayTy())
+  if (DepSI->getValueOperand()->getType()->isStructTy() ||
+      DepSI->getValueOperand()->getType()->isArrayTy())
     return -1;
 
   Value *StorePtr = DepSI->getPointerOperand();
-  uint64_t StoreSize = TD.getTypeSizeInBits(DepSI->getOperand(0)->getType());
+  uint64_t StoreSize =TD.getTypeSizeInBits(DepSI->getValueOperand()->getType());
   return AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr,
                                         StorePtr, StoreSize, TD);
 }
@@ -1351,7 +1351,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                               SmallVectorImpl<Instruction*> &toErase) {
   // Find the non-local dependencies of the load.
   SmallVector<NonLocalDepResult, 64> Deps;
-  MD->getNonLocalPointerDependency(LI->getOperand(0), true, LI->getParent(),
+  MD->getNonLocalPointerDependency(LI->getPointerOperand(), true,
+                                   LI->getParent(),
                                    Deps);
   //DEBUG(dbgs() << "INVESTIGATING NONLOCAL LOAD: "
   //             << Deps.size() << *LI << '\n');
@@ -1403,7 +1404,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                                                       DepSI, *TD);
           if (Offset != -1) {
             ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
-                                                           DepSI->getOperand(0),
+                                                       DepSI->getValueOperand(),
                                                                 Offset));
             continue;
           }
@@ -1444,13 +1445,13 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     if (StoreInst *S = dyn_cast<StoreInst>(DepInst)) {
       // Reject loads and stores that are to the same address but are of
       // different types if we have to.
-      if (S->getOperand(0)->getType() != LI->getType()) {
+      if (S->getValueOperand()->getType() != LI->getType()) {
         if (TD == 0)
           TD = getAnalysisIfAvailable<TargetData>();
         
         // If the stored value is larger or equal to the loaded value, we can
         // reuse it.
-        if (TD == 0 || !CanCoerceMustAliasedValueToLoad(S->getOperand(0),
+        if (TD == 0 || !CanCoerceMustAliasedValueToLoad(S->getValueOperand(),
                                                         LI->getType(), *TD)) {
           UnavailableBlocks.push_back(DepBB);
           continue;
@@ -1458,7 +1459,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       }
 
       ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
-                                                          S->getOperand(0)));
+                                                         S->getValueOperand()));
       continue;
     }
     
@@ -1630,7 +1631,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     // If all preds have a single successor, then we know it is safe to insert
     // the load on the pred (?!?), so we can insert code to materialize the
     // pointer if it is not available.
-    PHITransAddr Address(LI->getOperand(0), TD);
+    PHITransAddr Address(LI->getPointerOperand(), TD);
     Value *LoadPtr = 0;
     if (allSingleSucc) {
       LoadPtr = Address.PHITranslateWithInsertion(LoadBB, UnavailablePred,
@@ -1644,7 +1645,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     // we fail PRE.
     if (LoadPtr == 0) {
       DEBUG(dbgs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
-            << *LI->getOperand(0) << "\n");
+            << *LI->getPointerOperand() << "\n");
       CanDoPRE = false;
       break;
     }
@@ -1754,7 +1755,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
                                                     L->getPointerOperand(),
                                                     DepSI, *TD);
         if (Offset != -1)
-          AvailVal = GetStoreValueForLoad(DepSI->getOperand(0), Offset,
+          AvailVal = GetStoreValueForLoad(DepSI->getValueOperand(), Offset,
                                           L->getType(), L, *TD);
       }
     
@@ -1800,7 +1801,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
 
   Instruction *DepInst = Dep.getInst();
   if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInst)) {
-    Value *StoredVal = DepSI->getOperand(0);
+    Value *StoredVal = DepSI->getValueOperand();
     
     // The store and load are to a must-aliased pointer, but they may not
     // actually have the same type.  See if we know how to reuse the stored
