@@ -382,10 +382,10 @@ void ARMOperand::dump(raw_ostream &OS) const {
     getImm()->print(OS);
     break;
   case Memory:
-    OS << "<memory>";
+    OS << "<memory" << (!Mem.Writeback ? ">" : "!>");
     break;
   case Register:
-    OS << "<register " << getReg() << ">";
+    OS << "<register " << getReg() << (!Reg.Writeback ? ">" : "!>");
     break;
   case RegisterList: {
     OS << "<register_list ";
