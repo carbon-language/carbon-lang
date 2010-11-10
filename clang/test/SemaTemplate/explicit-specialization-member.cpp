@@ -13,11 +13,9 @@ template<> void X0<char>::f1(type);
 namespace PR6161 {
   template<typename _CharT>
   class numpunct : public locale::facet // expected-error{{use of undeclared identifier 'locale'}} \
-              // expected-error{{expected class name}} \
-  // expected-note{{attempt to specialize declaration here}}
+              // expected-error{{expected class name}}
   {
     static locale::id id; // expected-error{{use of undeclared identifier}}
   };
-  numpunct<char>::~numpunct(); // expected-error{{template specialization requires 'template<>'}} \
-  // expected-error{{specialization of member 'PR6161::numpunct<char>::~numpunct' does not specialize an instantiated member}}
+  numpunct<char>::~numpunct(); // expected-error{{expected the class name after '~' to name a destructor}}
 }

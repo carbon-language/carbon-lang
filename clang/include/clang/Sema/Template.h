@@ -13,8 +13,10 @@
 #define LLVM_CLANG_SEMA_TEMPLATE_H
 
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/DeclVisitor.h"
 #include "llvm/ADT/SmallVector.h"
 #include <cassert>
+#include <utility>
 
 namespace clang {
   /// \brief Data structure that captures multiple levels of template argument
@@ -237,6 +239,113 @@ namespace clang {
     }
 
     void InstantiatedLocal(const Decl *D, Decl *Inst);
+  };
+
+  class TemplateDeclInstantiator
+    : public DeclVisitor<TemplateDeclInstantiator, Decl *> {
+    Sema &SemaRef;
+    DeclContext *Owner;
+    const MultiLevelTemplateArgumentList &TemplateArgs;
+
+    /// \brief A list of out-of-line class template partial
+    /// specializations that will need to be instantiated after the
+    /// enclosing class's instantiation is complete.
+    llvm::SmallVector<std::pair<ClassTemplateDecl *,
+                                ClassTemplatePartialSpecializationDecl *>, 4>
+      OutOfLinePartialSpecs;
+
+  public:
+    TemplateDeclInstantiator(Sema &SemaRef, DeclContext *Owner,
+                             const MultiLevelTemplateArgumentList &TemplateArgs)
+      : SemaRef(SemaRef), Owner(Owner), TemplateArgs(TemplateArgs) { }
+
+    // FIXME: Once we get closer to completion, replace these manually-written
+    // declarations with automatically-generated ones from
+    // clang/AST/DeclNodes.inc.
+    Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
+    Decl *VisitNamespaceDecl(NamespaceDecl *D);
+    Decl *VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
+    Decl *VisitTypedefDecl(TypedefDecl *D);
+    Decl *VisitVarDecl(VarDecl *D);
+    Decl *VisitAccessSpecDecl(AccessSpecDecl *D);
+    Decl *VisitFieldDecl(FieldDecl *D);
+    Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
+    Decl *VisitEnumDecl(EnumDecl *D);
+    Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
+    Decl *VisitFriendDecl(FriendDecl *D);
+    Decl *VisitFunctionDecl(FunctionDecl *D,
+                            TemplateParameterList *TemplateParams = 0);
+    Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
+    Decl *VisitCXXMethodDecl(CXXMethodDecl *D,
+                             TemplateParameterList *TemplateParams = 0);
+    Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
+    Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
+    Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
+    ParmVarDecl *VisitParmVarDecl(ParmVarDecl *D);
+    Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
+    Decl *VisitClassTemplatePartialSpecializationDecl(
+                                    ClassTemplatePartialSpecializationDecl *D);
+    Decl *VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
+    Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
+    Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
+    Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
+    Decl *VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
+    Decl *VisitUsingDecl(UsingDecl *D);
+    Decl *VisitUsingShadowDecl(UsingShadowDecl *D);
+    Decl *VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
+    Decl *VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
+
+    // Base case. FIXME: Remove once we can instantiate everything.
+    Decl *VisitDecl(Decl *D) {
+      unsigned DiagID = SemaRef.getDiagnostics().getCustomDiagID(
+                                                            Diagnostic::Error,
+                                                   "cannot instantiate %0 yet");
+      SemaRef.Diag(D->getLocation(), DiagID)
+        << D->getDeclKindName();
+      
+      return 0;
+    }
+    
+    typedef 
+      llvm::SmallVectorImpl<std::pair<ClassTemplateDecl *,
+                                     ClassTemplatePartialSpecializationDecl *> >
+        ::iterator
+      delayed_partial_spec_iterator;
+
+    /// \brief Return an iterator to the beginning of the set of
+    /// "delayed" partial specializations, which must be passed to
+    /// InstantiateClassTemplatePartialSpecialization once the class
+    /// definition has been completed.
+    delayed_partial_spec_iterator delayed_partial_spec_begin() {
+      return OutOfLinePartialSpecs.begin();
+    }
+
+    /// \brief Return an iterator to the end of the set of
+    /// "delayed" partial specializations, which must be passed to
+    /// InstantiateClassTemplatePartialSpecialization once the class
+    /// definition has been completed.
+    delayed_partial_spec_iterator delayed_partial_spec_end() {
+      return OutOfLinePartialSpecs.end();
+    }
+
+    // Helper functions for instantiating methods.
+    TypeSourceInfo *SubstFunctionType(FunctionDecl *D,
+                             llvm::SmallVectorImpl<ParmVarDecl *> &Params);
+    bool InitFunctionInstantiation(FunctionDecl *New, FunctionDecl *Tmpl);
+    bool InitMethodInstantiation(CXXMethodDecl *New, CXXMethodDecl *Tmpl);
+
+    TemplateParameterList *
+      SubstTemplateParams(TemplateParameterList *List);
+
+    bool SubstQualifier(const DeclaratorDecl *OldDecl,
+                        DeclaratorDecl *NewDecl);
+    bool SubstQualifier(const TagDecl *OldDecl,
+                        TagDecl *NewDecl);
+      
+    ClassTemplatePartialSpecializationDecl *
+    InstantiateClassTemplatePartialSpecialization(
+                                              ClassTemplateDecl *ClassTemplate,
+                           ClassTemplatePartialSpecializationDecl *PartialSpec);
   };
 }
 

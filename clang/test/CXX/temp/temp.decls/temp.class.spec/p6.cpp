@@ -53,3 +53,24 @@ struct X0<float>::Inner0<Z*> {
 int array3[X0<float>::Inner0<int>::value == 0? 1 : -1];
 int array4[X0<float>::Inner0<int*>::value == 3? 1 : -1];
 int array5[X0<float>::Inner0<const int*>::value == 2? 1 : -1];
+
+namespace rdar8651930 {
+  template<typename OuterT>
+  struct Outer {
+    template<typename T, typename U>
+    struct Inner;
+
+    template<typename T>
+    struct Inner<T, T> { 
+      static const bool value = true;
+    };
+
+    template<typename T, typename U>
+    struct Inner { 
+      static const bool value = false;
+    };
+  };
+
+  int array0[Outer<int>::Inner<int, int>::value? 1 : -1];
+  int array1[Outer<int>::Inner<int, float>::value? -1 : 1];
+}

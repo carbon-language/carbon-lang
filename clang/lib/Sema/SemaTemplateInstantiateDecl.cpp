@@ -25,85 +25,6 @@
 
 using namespace clang;
 
-namespace {
-  class TemplateDeclInstantiator
-    : public DeclVisitor<TemplateDeclInstantiator, Decl *> {
-    Sema &SemaRef;
-    DeclContext *Owner;
-    const MultiLevelTemplateArgumentList &TemplateArgs;
-
-  public:
-    TemplateDeclInstantiator(Sema &SemaRef, DeclContext *Owner,
-                             const MultiLevelTemplateArgumentList &TemplateArgs)
-      : SemaRef(SemaRef), Owner(Owner), TemplateArgs(TemplateArgs) { }
-
-    // FIXME: Once we get closer to completion, replace these manually-written
-    // declarations with automatically-generated ones from
-    // clang/AST/DeclNodes.inc.
-    Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
-    Decl *VisitNamespaceDecl(NamespaceDecl *D);
-    Decl *VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
-    Decl *VisitTypedefDecl(TypedefDecl *D);
-    Decl *VisitVarDecl(VarDecl *D);
-    Decl *VisitAccessSpecDecl(AccessSpecDecl *D);
-    Decl *VisitFieldDecl(FieldDecl *D);
-    Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
-    Decl *VisitEnumDecl(EnumDecl *D);
-    Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
-    Decl *VisitFriendDecl(FriendDecl *D);
-    Decl *VisitFunctionDecl(FunctionDecl *D,
-                            TemplateParameterList *TemplateParams = 0);
-    Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
-    Decl *VisitCXXMethodDecl(CXXMethodDecl *D,
-                             TemplateParameterList *TemplateParams = 0);
-    Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
-    Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
-    Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
-    ParmVarDecl *VisitParmVarDecl(ParmVarDecl *D);
-    Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
-    Decl *VisitClassTemplatePartialSpecializationDecl(
-                                    ClassTemplatePartialSpecializationDecl *D);
-    Decl *VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
-    Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
-    Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
-    Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
-    Decl *VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
-    Decl *VisitUsingDecl(UsingDecl *D);
-    Decl *VisitUsingShadowDecl(UsingShadowDecl *D);
-    Decl *VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
-    Decl *VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
-
-    // Base case. FIXME: Remove once we can instantiate everything.
-    Decl *VisitDecl(Decl *D) {
-      unsigned DiagID = SemaRef.getDiagnostics().getCustomDiagID(
-                                                            Diagnostic::Error,
-                                                   "cannot instantiate %0 yet");
-      SemaRef.Diag(D->getLocation(), DiagID)
-        << D->getDeclKindName();
-      
-      return 0;
-    }
-
-    // Helper functions for instantiating methods.
-    TypeSourceInfo *SubstFunctionType(FunctionDecl *D,
-                             llvm::SmallVectorImpl<ParmVarDecl *> &Params);
-    bool InitFunctionInstantiation(FunctionDecl *New, FunctionDecl *Tmpl);
-    bool InitMethodInstantiation(CXXMethodDecl *New, CXXMethodDecl *Tmpl);
-
-    TemplateParameterList *
-      SubstTemplateParams(TemplateParameterList *List);
-
-    bool SubstQualifier(const DeclaratorDecl *OldDecl,
-                        DeclaratorDecl *NewDecl);
-    bool SubstQualifier(const TagDecl *OldDecl,
-                        TagDecl *NewDecl);
-      
-    bool InstantiateClassTemplatePartialSpecialization(
-                                              ClassTemplateDecl *ClassTemplate,
-                           ClassTemplatePartialSpecializationDecl *PartialSpec);
-  };
-}
-
 bool TemplateDeclInstantiator::SubstQualifier(const DeclaratorDecl *OldDecl,
                                               DeclaratorDecl *NewDecl) {
   NestedNameSpecifier *OldQual = OldDecl->getQualifier();
@@ -860,14 +781,18 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   }
   
   Owner->addDecl(Inst);
-  
-  // Instantiate all of the partial specializations of this member class 
-  // template.
-  llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
-  D->getPartialSpecializations(PartialSpecs);
-  for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I)
-    InstantiateClassTemplatePartialSpecialization(Inst, PartialSpecs[I]);
-  
+
+  if (!PrevClassTemplate) {
+    // Queue up any out-of-line partial specializations of this member
+    // class template; the client will force their instantiation once
+    // the enclosing class has been instantiated.
+    llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
+    D->getPartialSpecializations(PartialSpecs);
+    for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I)
+      if (PartialSpecs[I]->isOutOfLine())
+        OutOfLinePartialSpecs.push_back(std::make_pair(Inst, PartialSpecs[I]));
+  }
+
   return Inst;
 }
 
@@ -888,7 +813,11 @@ TemplateDeclInstantiator::VisitClassTemplatePartialSpecializationDecl(
   if (!InstClassTemplate)
     return 0;
   
-  return InstClassTemplate->findPartialSpecInstantiatedFromMember(D);
+  if (ClassTemplatePartialSpecializationDecl *Result
+        = InstClassTemplate->findPartialSpecInstantiatedFromMember(D))
+    return Result;
+
+  return InstantiateClassTemplatePartialSpecialization(InstClassTemplate, D);
 }
 
 Decl *
@@ -1818,8 +1747,9 @@ TemplateDeclInstantiator::SubstTemplateParams(TemplateParameterList *L) {
 /// \param PartialSpec the (uninstantiated) class template partial 
 /// specialization that we are instantiating.
 ///
-/// \returns true if there was an error, false otherwise.
-bool 
+/// \returns The instantiated partial specialization, if successful; otherwise,
+/// NULL to indicate an error.
+ClassTemplatePartialSpecializationDecl *
 TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                             ClassTemplateDecl *ClassTemplate,
                           ClassTemplatePartialSpecializationDecl *PartialSpec) {
@@ -1833,7 +1763,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   TemplateParameterList *TempParams = PartialSpec->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
   if (!InstParams)
-    return true;
+    return 0;
   
   // Substitute into the template arguments of the class template partial
   // specialization.
@@ -1845,7 +1775,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   for (unsigned I = 0; I != N; ++I) {
     TemplateArgumentLoc Loc;
     if (SemaRef.Subst(PartialSpecTemplateArgs[I], Loc, TemplateArgs))
-      return true;
+      return 0;
     InstTemplateArgs.addArgument(Loc);
   }
   
@@ -1858,7 +1788,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                         InstTemplateArgs, 
                                         false,
                                         Converted))
-    return true;
+    return 0;
 
   // Figure out where to insert this class template partial specialization
   // in the member template's set of class template partial specializations.
@@ -1905,10 +1835,10 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
     //   Outer<int, int> outer; // error: the partial specializations of Inner
     //                          // have the same signature.
     SemaRef.Diag(PartialSpec->getLocation(), diag::err_partial_spec_redeclared)
-      << WrittenTy;
+      << WrittenTy->getType();
     SemaRef.Diag(PrevDecl->getLocation(), diag::note_prev_partial_spec_here)
       << SemaRef.Context.getTypeDeclType(PrevDecl);
-    return true;
+    return 0;
   }
   
   
@@ -1936,7 +1866,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   // Add this partial specialization to the set of class template partial
   // specializations.
   ClassTemplate->AddPartialSpecialization(InstPartialSpec, InsertPos);
-  return false;
+  return InstPartialSpec;
 }
 
 TypeSourceInfo*

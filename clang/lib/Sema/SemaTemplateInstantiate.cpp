@@ -1221,6 +1221,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   if (SubstBaseSpecifiers(Instantiation, Pattern, TemplateArgs))
     Invalid = true;
 
+  TemplateDeclInstantiator Instantiator(*this, Instantiation, TemplateArgs);
   llvm::SmallVector<Decl*, 4> Fields;
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
          MemberEnd = Pattern->decls_end();
@@ -1237,7 +1238,12 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     if ((*Member)->getDeclContext() != Pattern)
       continue;
 
-    Decl *NewMember = SubstDecl(*Member, Instantiation, TemplateArgs);
+    if ((*Member)->isInvalidDecl()) {
+      Invalid = true; 
+      continue;
+    }
+
+    Decl *NewMember = Instantiator.Visit(*Member);
     if (NewMember) {
       if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
         Fields.push_back(Field);
@@ -1257,7 +1263,22 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   CheckCompletedCXXClass(Instantiation);
   if (Instantiation->isInvalidDecl())
     Invalid = true;
-  
+  else {
+    // Instantiate any out-of-line class template partial
+    // specializations now.
+    for (TemplateDeclInstantiator::delayed_partial_spec_iterator 
+              P = Instantiator.delayed_partial_spec_begin(),
+           PEnd = Instantiator.delayed_partial_spec_end();
+         P != PEnd; ++P) {
+      if (!Instantiator.InstantiateClassTemplatePartialSpecialization(
+                                                                P->first,
+                                                                P->second)) {
+        Invalid = true;
+        break;
+      }
+    }
+  }
+
   // Exit the scope of this instantiation.
   SavedContext.pop();
 
