@@ -131,9 +131,9 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
     // We can turn shl(c1)+shr(c2) -> shl(c3)+and(c4), but it isn't
     // profitable unless we know the and'd out bits are already zero.
     if (CI->getZExtValue() > NumBits) {
-      unsigned HighBits = CI->getZExtValue() - NumBits;
+      unsigned LowBits = TypeWidth - CI->getZExtValue();
       if (MaskedValueIsZero(I->getOperand(0),
-                            APInt::getHighBitsSet(TypeWidth, HighBits)))
+                       APInt::getLowBitsSet(TypeWidth, NumBits) << LowBits))
         return true;
     }
       
