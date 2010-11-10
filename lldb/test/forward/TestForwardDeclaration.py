@@ -19,7 +19,6 @@ class ForwardDeclarationTestCase(TestBase):
     # 'expression *bar_ptr' seg faults
     # rdar://problem/8546815
     # './dotest.py -v -t forward' fails for test_with_dwarf_and_run_command
-    @unittest2.skip("rdar://problem/8648070 'expression *bar_ptr' seg faults")
     def test_with_dwarf_and_run_command(self):
         """Display *bar_ptr when stopped on a function with forward declaration of struct bar."""
         self.buildDwarf()
