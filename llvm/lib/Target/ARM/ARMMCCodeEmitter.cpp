@@ -82,6 +82,19 @@ public:
   uint32_t getLdStSORegOpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups) const;
 
+  /// getLdStmModeOpValue - Return encoding for load/store multiple mode.
+  uint32_t getLdStmModeOpValue(const MCInst &MI, unsigned OpIdx,
+                               SmallVectorImpl<MCFixup> &Fixups) const {
+    ARM_AM::AMSubMode Mode = (ARM_AM::AMSubMode)MI.getOperand(OpIdx).getImm();
+    switch (Mode) {
+    default: assert(0 && "Unknown addressing sub-mode!");
+    case ARM_AM::da: return 0;
+    case ARM_AM::ia: return 1;
+    case ARM_AM::db: return 2;
+    case ARM_AM::ib: return 3;
+    }
+  }
+
   /// getAddrMode5OpValue - Return encoding info for 'reg +/- imm8' operand.
   uint32_t getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups) const;

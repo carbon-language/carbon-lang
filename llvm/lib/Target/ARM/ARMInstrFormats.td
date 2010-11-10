@@ -942,8 +942,10 @@ class AXI4ld<dag oops, dag iops, IndexMode im, Format f, InstrItinClass itin,
        asm, cstr, pattern> {
   bits<16> dsts;
   bits<4> Rn;
+  bits<2> amode;
   let Inst{27-25} = 0b100;
-  let Inst{24-22} = 0b010;
+  let Inst{24-23} = amode;
+  let Inst{22}    = 0; // S bit
   let Inst{20}    = 1; // L bit
   let Inst{19-16} = Rn;
   let Inst{15-0}  = dsts;

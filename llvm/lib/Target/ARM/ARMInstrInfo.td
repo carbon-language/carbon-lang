@@ -456,6 +456,7 @@ def am3offset : Operand<i32>,
 // ldstm_mode := {ia, ib, da, db}
 //
 def ldstm_mode : OptionalDefOperand<OtherVT, (ops i32), (ops (i32 1))> {
+  string EncoderMethod = "getLdStmModeOpValue";
   let PrintMethod = "printLdStmModeOperand";
 }
 
