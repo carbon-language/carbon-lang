@@ -36,6 +36,7 @@
       <li><a href="#lvalue-cast">Lvalue casts</a></li>
       <li><a href="#blocks-in-protected-scope">Jumps to within <tt>__block</tt> variable scope</a></li>
       <li><a href="#block-variable-initialization">Non-initialization of <tt>__block</tt> variables</a></li>
+      <li><a href="#inline-asm">Inline assembly</a></li>
     </ul>
   </li>
   <li><a href="#objective-c">Objective-C compatibility</a>
@@ -246,6 +247,49 @@ other local variables.</p>
 
 <p>Clang does not zero initialize local block variables, and programs which rely
 on such behavior will most likely break when built with Clang.</p>
+
+
+<!-- ======================================================================= -->
+<h3 id="inline-asm">Inline assembly</h3>
+<!-- ======================================================================= -->
+
+<p>In general, Clang is highly compatible with the GCC inline assembly
+extensions, allowing the same set of constraints, modifiers and operands as GCC
+inline assembly.</p>
+
+<p>On targets that use the integrated assembler (such as most X86 targets),
+inline assembly is run through the integrated assembler instead of your system
+assembler (which is most commonly "gas", the GNU assembler).  The LLVM
+integrated assembler is extremely compatible with GAS, but there are a couple of
+minor places where it is more picky, particularly due to outright GAS bugs.</p>
+
+<p>One specific example is that the assembler rejects ambiguous X86 instructions
+that don't have suffixes.  For example:</p>
+
+<pre>
+  asm("add %al, (%rax)");
+  asm("addw $4, (%rax)");
+  asm("add $4, (%rax)");
+</pre>
+
+<p>Both clang and GAS accept the first instruction: because the first
+instruction uses the 8-bit <tt>%al</tt> register as an operand, it is clear that
+it is an 8-bit add.  The second instruction is accepted by both because the "w"
+suffix indicates that it is a 16-bit add.  The last instruction is accepted by
+GAS even though there is nothing that specifies the size of the instruction (and
+the assembler randomly picks a 32-bit add).  Because it is ambiguous, Clang
+rejects the instruction with this error message:
+</p>
+
+<pre>
+&lt;inline asm&gt;:3:1: error: ambiguous instructions require an explicit suffix (could be 'addb', 'addw', 'addl', or 'addq')
+add $4, (%rax)
+^
+1 error generated.
+</pre>
+
+<p>To fix this compatibility issue, add an explicit suffix to the instruction:
+this makes your code more clear and is compatible with both GCC and Clang.</p>
 
 <!-- ======================================================================= -->
 <h2 id="objective-c">Objective-C compatibility</h3>
