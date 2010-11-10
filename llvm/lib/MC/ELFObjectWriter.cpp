@@ -1253,6 +1253,9 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
                          const_cast<MCAsmLayout&>(Layout),
                          SectionIndexMap);
 
+  // Update to include the metadata sections.
+  ComputeIndexMap(Asm, SectionIndexMap);
+
   // Add 1 for the null section.
   unsigned NumSections = Asm.size() + 1;
   uint64_t NaturalAlignment = Is64Bit ? 8 : 4;
@@ -1335,6 +1338,7 @@ void ELFObjectWriterImpl::WriteObject(MCAssembler &Asm,
                                                      SectionKind::getReadOnly(),
                                                      false);
       sh_link = SectionIndexMap[SymtabSection];
+      assert(sh_link && ".symtab not found");
 
       // Remove ".rel" and ".rela" prefixes.
       unsigned SecNameLen = (Section.getType() == ELF::SHT_REL) ? 4 : 5;
