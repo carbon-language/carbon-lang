@@ -142,7 +142,7 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
     FSRef app_fsref;
     CFCString app_cfstr (app_path, kCFStringEncodingUTF8);
     
-    OSStatus error = ::FSPathMakeRef ((const UInt8 *)app_path, &app_fsref, false);
+    OSStatus error = ::FSPathMakeRef ((const UInt8 *)app_path, &app_fsref, NULL);
     
     // If we found the app, then store away the name so we don't have to re-look it up.
     if (error != noErr)

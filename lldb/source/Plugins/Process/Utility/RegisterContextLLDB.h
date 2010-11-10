@@ -76,7 +76,7 @@ public:
 
 private:
 
-    typedef enum FrameType
+    enum FrameType
     {
         eNormalFrame,
         eSigtrampFrame,

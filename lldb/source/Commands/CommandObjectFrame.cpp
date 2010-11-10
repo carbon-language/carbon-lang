@@ -124,7 +124,7 @@ public:
                 break;
 
             default:
-                ("Invalid short option character '%c'.\n", short_option);
+                error.SetErrorStringWithFormat ("Invalid short option character '%c'.\n", short_option);
                 break;
             }
 
