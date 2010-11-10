@@ -93,14 +93,22 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
   // Diagnose if this property is already in continuation class.
   DeclContext *DC = cast<DeclContext>(CDecl);
   IdentifierInfo *PropertyId = FD.D.getIdentifier();
-
-  if (ObjCPropertyDecl *prevDecl =
-        ObjCPropertyDecl::findPropertyDecl(DC, PropertyId)) {
-    Diag(AtLoc, diag::err_duplicate_property);
-    Diag(prevDecl->getLocation(), diag::note_property_declare);
-    return 0;
-  }
-
+  ObjCInterfaceDecl *CCPrimary = CDecl->getClassInterface();
+  
+  if (CCPrimary)
+    // Check for duplicate declaration of this property in current and
+    // other class extensions.
+    for (const ObjCCategoryDecl *ClsExtDecl = 
+         CCPrimary->getFirstClassExtension();
+         ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
+      if (ObjCPropertyDecl *prevDecl =
+          ObjCPropertyDecl::findPropertyDecl(ClsExtDecl, PropertyId)) {
+        Diag(AtLoc, diag::err_duplicate_property);
+        Diag(prevDecl->getLocation(), diag::note_property_declare);
+        return 0;
+      }
+    }
+  
   // Create a new ObjCPropertyDecl with the DeclContext being
   // the class extension.
   ObjCPropertyDecl *PDecl =
@@ -115,7 +123,6 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
 
   // We need to look in the @interface to see if the @property was
   // already declared.
-  ObjCInterfaceDecl *CCPrimary = CDecl->getClassInterface();
   if (!CCPrimary) {
     Diag(CDecl->getLocation(), diag::err_continuation_class);
     *isOverridingProperty = true;
