@@ -71,13 +71,13 @@ public:
                                struct stat *FileInfo = 0);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
-  /// that EndPtr[0] must be a null byte and be accessible!
+  /// that InputData must be null terminated.
   static MemoryBuffer *getMemBuffer(StringRef InputData,
                                     StringRef BufferName = "");
 
   /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
-  /// copying the contents and taking ownership of it.  This has no requirements
-  /// on EndPtr[0].
+  /// copying the contents and taking ownership of it.  InputData does not
+  /// have to be null terminated.
   static MemoryBuffer *getMemBufferCopy(StringRef InputData,
                                         StringRef BufferName = "");
 
