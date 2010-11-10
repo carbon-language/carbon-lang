@@ -88,36 +88,29 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
   return true;
 }
 
-LiveRangeEdit::Remat LiveRangeEdit::canRematerializeAt(VNInfo *ParentVNI,
-                                                       SlotIndex UseIdx,
-                                                       bool cheapAsAMove,
-                                                       LiveIntervals &lis) {
+bool LiveRangeEdit::canRematerializeAt(Remat &RM,
+                                       SlotIndex UseIdx,
+                                       bool cheapAsAMove,
+                                       LiveIntervals &lis) {
   assert(scannedRemattable_ && "Call anyRematerializable first");
-  Remat RM = { 0, 0 };
-
-  // We could remat an undefined value as IMPLICIT_DEF, but all that should have
-  // been taken care of earlier.
-  if (!(RM.ParentVNI = parent_.getVNInfoAt(UseIdx)))
-    return RM;
 
   // Use scanRemattable info.
   if (!remattable_.count(RM.ParentVNI))
-    return RM;
+    return false;
 
   // No defining instruction.
-  MachineInstr *OrigMI = lis.getInstructionFromIndex(RM.ParentVNI->def);
-  assert(OrigMI && "Defining instruction for remattable value disappeared");
+  RM.OrigMI = lis.getInstructionFromIndex(RM.ParentVNI->def);
+  assert(RM.OrigMI && "Defining instruction for remattable value disappeared");
 
   // If only cheap remats were requested, bail out early.
-  if (cheapAsAMove && !OrigMI->getDesc().isAsCheapAsAMove())
-    return RM;
+  if (cheapAsAMove && !RM.OrigMI->getDesc().isAsCheapAsAMove())
+    return false;
 
   // Verify that all used registers are available with the same values.
-  if (!allUsesAvailableAt(OrigMI, RM.ParentVNI->def, UseIdx, lis))
-    return RM;
+  if (!allUsesAvailableAt(RM.OrigMI, RM.ParentVNI->def, UseIdx, lis))
+    return false;
 
-  RM.OrigMI = OrigMI;
-  return RM;
+  return true;
 }
 
 SlotIndex LiveRangeEdit::rematerializeAt(MachineBasicBlock &MBB,

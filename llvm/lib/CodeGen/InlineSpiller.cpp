@@ -167,9 +167,8 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
     return true;
   }
 
-  LiveRangeEdit::Remat RM = edit_->canRematerializeAt(OrigVNI, UseIdx, false,
-                                                      lis_);
-  if (!RM) {
+  LiveRangeEdit::Remat RM(OrigVNI);
+  if (!edit_->canRematerializeAt(RM, UseIdx, false, lis_)) {
     usedValues_.insert(OrigVNI);
     DEBUG(dbgs() << "\tcannot remat for " << UseIdx << '\t' << *MI);
     return false;
