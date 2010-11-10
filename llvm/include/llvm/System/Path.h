@@ -105,9 +105,7 @@ namespace sys {
       static Path GetTemporaryDirectory(std::string* ErrMsg = 0);
 
       /// Construct a vector of sys::Path that contains the "standard" system
-      /// library paths suitable for linking into programs. This function *must*
-      /// return the value of LLVM_LIB_SEARCH_PATH as the first item in \p Paths
-      /// if that environment variable is set and it references a directory.
+      /// library paths suitable for linking into programs.
       /// @brief Construct a path to the system library directory
       static void GetSystemLibraryPaths(std::vector<sys::Path>& Paths);
 
