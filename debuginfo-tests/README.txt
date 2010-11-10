@@ -8,10 +8,10 @@ as comments in source file using DEBUGGER: and CHECK: as prefixes respectively.
 For exmaple,
 
 define i32 @f1(i32 %i) nounwind ssp {
-; DEBUGGER: break f1                                                                                                                                                 
-; DEBUGGER: r                                                                                                                                                        
-; DEBUGGER: p i                                                                                                                                                      
-; CHECK: $1 = 42                                                                                                                                                     
+; DEBUGGER: break f1
+; DEBUGGER: r
+; DEBUGGER: p i 
+; CHECK: $1 = 42 
 entry:
 }
 
