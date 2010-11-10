@@ -783,6 +783,10 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       // cached data and procede with the query at the greater size.
       CacheInfo->Pair = BBSkipFirstBlockPair();
       CacheInfo->Size = Loc.Size;
+      for (NonLocalDepInfo::iterator DI = CacheInfo->NonLocalDeps.begin(),
+           DE = CacheInfo->NonLocalDeps.end(); DI != DE; ++DI)
+        if (Instruction *Inst = DI->getResult().getInst())
+          RemoveFromReverseMap(ReverseNonLocalPtrDeps, Inst, CacheKey);
       CacheInfo->NonLocalDeps.clear();
     } else if (CacheInfo->Size > Loc.Size) {
       // This query's Size is less than the cached one. Conservatively restart
@@ -800,6 +804,10 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       if (CacheInfo->TBAATag) {
         CacheInfo->Pair = BBSkipFirstBlockPair();
         CacheInfo->TBAATag = 0;
+        for (NonLocalDepInfo::iterator DI = CacheInfo->NonLocalDeps.begin(),
+             DE = CacheInfo->NonLocalDeps.end(); DI != DE; ++DI)
+          if (Instruction *Inst = DI->getResult().getInst())
+            RemoveFromReverseMap(ReverseNonLocalPtrDeps, Inst, CacheKey);
         CacheInfo->NonLocalDeps.clear();
       }
       if (Loc.TBAATag)
