@@ -2128,8 +2128,7 @@ void DwarfDebug::endModule() {
       StringRef FName = SP.getLinkageName();
       if (FName.empty())
         FName = SP.getName();
-      NamedMDNode *NMD =
-        M->getNamedMetadata(Twine("llvm.dbg.lv.", getRealLinkageName(FName)));
+      NamedMDNode *NMD = getFnSpecificMDNode(*(MMI->getModule()), FName);
       if (!NMD) continue;
       unsigned E = NMD->getNumOperands();
       if (!E) continue;
@@ -2422,10 +2421,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
 
   // Collect info for variables that were optimized out.
   const Function *F = MF->getFunction();
-  const Module *M = F->getParent();
-  if (NamedMDNode *NMD =
-      M->getNamedMetadata(Twine("llvm.dbg.lv.",
-                                getRealLinkageName(F->getName())))) {
+  if (NamedMDNode *NMD = getFnSpecificMDNode(*(F->getParent()), F->getName())) {
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       DIVariable DV(cast<MDNode>(NMD->getOperand(i)));
       if (!DV || !Processed.insert(DV))
@@ -2912,10 +2908,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
         StringRef FName = SP.getLinkageName();
         if (FName.empty())
           FName = SP.getName();
-        const Module *M = MF->getFunction()->getParent();
-        if (NamedMDNode *NMD =
-            M->getNamedMetadata(Twine("llvm.dbg.lv.",
-                                      getRealLinkageName(FName)))) {
+        if (NamedMDNode *NMD = 
+            getFnSpecificMDNode(*(MF->getFunction()->getParent()), FName)) {
           for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
           DIVariable DV(cast<MDNode>(NMD->getOperand(i)));
           if (!DV || !ProcessedVars.insert(DV))
