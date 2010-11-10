@@ -1602,7 +1602,7 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
 /// getVectorType - Return the unique reference to a vector type of
 /// the specified element type and size. VectorType must be a built-in type.
 QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
-                                   VectorType::AltiVecSpecific AltiVecSpec) {
+                                   VectorType::VectorKind VecKind) {
   BuiltinType *BaseType;
 
   BaseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
@@ -1610,7 +1610,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
 
   // Check if we've already instantiated a vector of this type.
   llvm::FoldingSetNodeID ID;
-  VectorType::Profile(ID, vecType, NumElts, Type::Vector, AltiVecSpec);
+  VectorType::Profile(ID, vecType, NumElts, Type::Vector, VecKind);
 
   void *InsertPos = 0;
   if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
@@ -1621,14 +1621,14 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
   QualType Canonical;
   if (!vecType.isCanonical()) {
     Canonical = getVectorType(getCanonicalType(vecType), NumElts,
-      VectorType::NotAltiVec);
+      VectorType::GenericVector);
 
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   VectorType *New = new (*this, TypeAlignment)
-    VectorType(vecType, NumElts, Canonical, AltiVecSpec);
+    VectorType(vecType, NumElts, Canonical, VecKind);
   VectorTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
@@ -1645,7 +1645,7 @@ QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
   // Check if we've already instantiated a vector of this type.
   llvm::FoldingSetNodeID ID;
   VectorType::Profile(ID, vecType, NumElts, Type::ExtVector,
-                      VectorType::NotAltiVec);
+                      VectorType::GenericVector);
   void *InsertPos = 0;
   if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(VTP, 0);
@@ -4287,10 +4287,10 @@ bool ASTContext::areCompatibleVectorTypes(QualType FirstVec,
   // AltiVec vectors types are identical to equivalent GCC vector types
   const VectorType *First = FirstVec->getAs<VectorType>();
   const VectorType *Second = SecondVec->getAs<VectorType>();
-  if ((((First->getAltiVecSpecific() == VectorType::AltiVec) &&
-        (Second->getAltiVecSpecific() == VectorType::NotAltiVec)) ||
-       ((First->getAltiVecSpecific() == VectorType::NotAltiVec) &&
-        (Second->getAltiVecSpecific() == VectorType::AltiVec))) &&
+  if ((((First->getVectorKind() == VectorType::AltiVecVector) &&
+        (Second->getVectorKind() == VectorType::GenericVector)) ||
+       ((First->getVectorKind() == VectorType::GenericVector) &&
+        (Second->getVectorKind() == VectorType::AltiVecVector))) &&
       hasSameType(First->getElementType(), Second->getElementType()) &&
       (First->getNumElements() == Second->getNumElements()))
     return true;
@@ -5243,7 +5243,7 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
   // Turn <4 x signed int> -> <4 x unsigned int>
   if (const VectorType *VTy = T->getAs<VectorType>())
     return getVectorType(getCorrespondingUnsignedType(VTy->getElementType()),
-             VTy->getNumElements(), VTy->getAltiVecSpecific());
+                         VTy->getNumElements(), VTy->getVectorKind());
 
   // For enums, we return the unsigned version of the base type.
   if (const EnumType *ETy = T->getAs<EnumType>())
@@ -5422,7 +5422,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     
     // TODO: No way to make AltiVec vectors in builtins yet.
     Type = Context.getVectorType(ElementType, NumElements,
-                                 VectorType::NotAltiVec);
+                                 VectorType::GenericVector);
     break;
   }
   case 'X': {

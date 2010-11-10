@@ -143,7 +143,7 @@ void ASTTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
 void ASTTypeWriter::VisitVectorType(const VectorType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
   Record.push_back(T->getNumElements());
-  Record.push_back(T->getAltiVecSpecific());
+  Record.push_back(T->getVectorKind());
   Code = TYPE_VECTOR;
 }
 

@@ -914,7 +914,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
         VecType = SemaRef.Context.getExtVectorType(elementType, numIElts);
       else
         VecType = SemaRef.Context.getVectorType(elementType, numIElts,
-                                                IVT->getAltiVecSpecific());
+                                                IVT->getVectorKind());
       CheckSubElementType(ElementEntity, IList, VecType, Index,
                           StructuredList, StructuredIndex);
       numEltsInit += numIElts;

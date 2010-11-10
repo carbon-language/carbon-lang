@@ -388,12 +388,12 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
   } else if (DS.isTypeAltiVecVector()) {
     unsigned typeSize = static_cast<unsigned>(Context.getTypeSize(Result));
     assert(typeSize > 0 && "type size for vector must be greater than 0 bits");
-    VectorType::AltiVecSpecific AltiVecSpec = VectorType::AltiVec;
+    VectorType::VectorKind VecKind = VectorType::AltiVecVector;
     if (DS.isTypeAltiVecPixel())
-      AltiVecSpec = VectorType::Pixel;
+      VecKind = VectorType::AltiVecPixel;
     else if (DS.isTypeAltiVecBool())
-      AltiVecSpec = VectorType::Bool;
-    Result = Context.getVectorType(Result, 128/typeSize, AltiVecSpec);
+      VecKind = VectorType::AltiVecBool;
+    Result = Context.getVectorType(Result, 128/typeSize, VecKind);
   }
 
   // FIXME: Imaginary.
@@ -2044,7 +2044,7 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
   // Success! Instantiate the vector type, the number of elements is > 0, and
   // not required to be a power of 2, unlike GCC.
   CurType = S.Context.getVectorType(CurType, vectorSize/typeSize,
-                                    VectorType::NotAltiVec);
+                                    VectorType::GenericVector);
 }
 
 void ProcessTypeAttributeList(Sema &S, QualType &Result,

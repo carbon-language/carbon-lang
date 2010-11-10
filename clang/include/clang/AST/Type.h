@@ -929,9 +929,9 @@ protected:
 
     unsigned : NumTypeBits;
 
-    /// AltiVecSpec - AltiVec-specific vector information, used
-    /// to differentiate things like 'pixel'.
-    unsigned AltiVecSpec : 2;
+    /// VecKind - The kind of vector, either a generic vector type or some
+    /// target-specific vector type such as for AltiVec or Neon.
+    unsigned VecKind : 2;
 
     /// NumElements - The number of elements in the vector.
     unsigned NumElements : 30 - NumTypeBits;
@@ -1913,29 +1913,30 @@ public:
 /// client is responsible for converting the size into the number of elements.
 class VectorType : public Type, public llvm::FoldingSetNode {
 public:
-  enum AltiVecSpecific {
-    NotAltiVec,  // is not AltiVec vector
-    AltiVec,     // is AltiVec vector
-    Pixel,       // is AltiVec 'vector Pixel'
-    Bool         // is AltiVec 'vector bool ...'
+  enum VectorKind {
+    GenericVector,  // not a target-specific vector type
+    AltiVecVector,  // is AltiVec vector
+    AltiVecPixel,   // is AltiVec 'vector Pixel'
+    AltiVecBool,    // is AltiVec 'vector bool ...'
+    NeonVector      // is ARM Neon vector
   };
 protected:
   /// ElementType - The element type of the vector.
   QualType ElementType;
 
   VectorType(QualType vecType, unsigned nElements, QualType canonType,
-      AltiVecSpecific altiVecSpec) :
+             VectorKind vecKind) :
     Type(Vector, canonType, vecType->isDependentType(),
          vecType->isVariablyModifiedType()), ElementType(vecType) {
-    VectorTypeBits.AltiVecSpec = altiVecSpec;
+    VectorTypeBits.VecKind = vecKind;
     VectorTypeBits.NumElements = nElements;
   }
   
   VectorType(TypeClass tc, QualType vecType, unsigned nElements,
-             QualType canonType, AltiVecSpecific altiVecSpec)
+             QualType canonType, VectorKind vecKind)
     : Type(tc, canonType, vecType->isDependentType(),
            vecType->isVariablyModifiedType()), ElementType(vecType) {
-    VectorTypeBits.AltiVecSpec = altiVecSpec;
+    VectorTypeBits.VecKind = vecKind;
     VectorTypeBits.NumElements = nElements;
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -1950,21 +1951,21 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
-  AltiVecSpecific getAltiVecSpecific() const {
-    return AltiVecSpecific(VectorTypeBits.AltiVecSpec);
+  VectorKind getVectorKind() const {
+    return VectorKind(VectorTypeBits.VecKind);
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType(), getNumElements(),
-            getTypeClass(), getAltiVecSpecific());
+            getTypeClass(), getVectorKind());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ElementType,
                       unsigned NumElements, TypeClass TypeClass,
-                      AltiVecSpecific AltiVecSpec) {
+                      VectorKind VecKind) {
     ID.AddPointer(ElementType.getAsOpaquePtr());
     ID.AddInteger(NumElements);
     ID.AddInteger(TypeClass);
-    ID.AddInteger(AltiVecSpec);
+    ID.AddInteger(VecKind);
   }
 
   static bool classof(const Type *T) {
@@ -1980,7 +1981,7 @@ public:
 /// points, colors, and textures (modeled after OpenGL Shading Language).
 class ExtVectorType : public VectorType {
   ExtVectorType(QualType vecType, unsigned nElements, QualType canonType) :
-    VectorType(ExtVector, vecType, nElements, canonType, NotAltiVec) {}
+    VectorType(ExtVector, vecType, nElements, canonType, GenericVector) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   static int getPointAccessorIdx(char c) {

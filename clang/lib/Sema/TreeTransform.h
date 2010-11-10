@@ -440,7 +440,7 @@ public:
   /// By default, performs semantic analysis when building the vector type.
   /// Subclasses may override this routine to provide different behavior.
   QualType RebuildVectorType(QualType ElementType, unsigned NumElements,
-    VectorType::AltiVecSpecific AltiVecSpec);
+                             VectorType::VectorKind VecKind);
 
   /// \brief Build a new extended vector type given the element type and
   /// number of elements.
@@ -2841,7 +2841,7 @@ QualType TreeTransform<Derived>::TransformVectorType(TypeLocBuilder &TLB,
   if (getDerived().AlwaysRebuild() ||
       ElementType != T->getElementType()) {
     Result = getDerived().RebuildVectorType(ElementType, T->getNumElements(),
-      T->getAltiVecSpecific());
+                                            T->getVectorKind());
     if (Result.isNull())
       return QualType();
   }
@@ -6458,10 +6458,10 @@ TreeTransform<Derived>::RebuildDependentSizedArrayType(QualType ElementType,
 
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildVectorType(QualType ElementType,
-                                     unsigned NumElements,
-                                     VectorType::AltiVecSpecific AltiVecSpec) {
+                                               unsigned NumElements,
+                                               VectorType::VectorKind VecKind) {
   // FIXME: semantic checking!
-  return SemaRef.Context.getVectorType(ElementType, NumElements, AltiVecSpec);
+  return SemaRef.Context.getVectorType(ElementType, NumElements, VecKind);
 }
 
 template<typename Derived>

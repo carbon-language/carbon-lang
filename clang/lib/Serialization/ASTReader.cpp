@@ -2783,9 +2783,9 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
     QualType ElementType = GetType(Record[0]);
     unsigned NumElements = Record[1];
-    unsigned AltiVecSpec = Record[2];
+    unsigned VecKind = Record[2];
     return Context->getVectorType(ElementType, NumElements,
-                                  (VectorType::AltiVecSpecific)AltiVecSpec);
+                                  (VectorType::VectorKind)VecKind);
   }
 
   case TYPE_EXT_VECTOR: {

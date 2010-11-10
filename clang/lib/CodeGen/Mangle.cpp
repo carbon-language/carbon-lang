@@ -1411,9 +1411,9 @@ void CXXNameMangler::mangleType(const ComplexType *T) {
 //                         ::= p # AltiVec vector pixel
 void CXXNameMangler::mangleType(const VectorType *T) {
   Out << "Dv" << T->getNumElements() << '_';
-  if (T->getAltiVecSpecific() == VectorType::Pixel)
+  if (T->getVectorKind() == VectorType::AltiVecPixel)
     Out << 'p';
-  else if (T->getAltiVecSpecific() == VectorType::Bool)
+  else if (T->getVectorKind() == VectorType::AltiVecBool)
     Out << 'b';
   else
     mangleType(T->getElementType());
