@@ -376,7 +376,15 @@ Path::isDirectory() const {
 
 bool
 Path::isSymLink() const {
-  return false;
+  DWORD attributes = GetFileAttributes(path.c_str());
+
+  if (attributes == INVALID_FILE_ATTRIBUTES)
+    // There's no sane way to report this :(.
+    assert(0 && "GetFileAttributes returned INVALID_FILE_ATTRIBUTES");
+
+  // This isn't exactly what defines a NTFS symlink, but it is only true for
+  // paths that act like a symlink.
+  return attributes & FILE_ATTRIBUTE_REPARSE_POINT;
 }
 
 bool
