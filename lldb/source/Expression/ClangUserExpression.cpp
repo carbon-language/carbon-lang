@@ -402,7 +402,7 @@ ClangUserExpression::Execute (Stream &error_stream,
     }
     else
     {
-        error_stream.Printf("Expression can't be run; neither DWARF nor a JIT compiled function are present");
+        error_stream.Printf("Expression can't be run; neither DWARF nor a JIT compiled function is present");
         return false;
     }
 }
