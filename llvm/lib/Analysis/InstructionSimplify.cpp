@@ -21,6 +21,100 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
+/// ThreadBinOpOverSelect - In the case of a binary operation with a select
+/// instruction as an operand, try to simplify the binop by seeing whether
+/// evaluating it on both branches of the select results in the same value.
+/// Returns the common value if so, otherwise returns null.
+static Value *ThreadBinOpOverSelect(unsigned Opcode, Value *LHS, Value *RHS,
+                                    const TargetData *TD) {
+  SelectInst *SI;
+  if (isa<SelectInst>(LHS)) {
+    SI = cast<SelectInst>(LHS);
+  } else {
+    assert(isa<SelectInst>(RHS) && "No select instruction operand!");
+    SI = cast<SelectInst>(RHS);
+  }
+
+  // Evaluate the BinOp on the true and false branches of the select.
+  Value *TV;
+  Value *FV;
+  if (SI == LHS) {
+    TV = SimplifyBinOp(Opcode, SI->getTrueValue(), RHS, TD);
+    FV = SimplifyBinOp(Opcode, SI->getFalseValue(), RHS, TD);
+  } else {
+    TV = SimplifyBinOp(Opcode, LHS, SI->getTrueValue(), TD);
+    FV = SimplifyBinOp(Opcode, LHS, SI->getFalseValue(), TD);
+  }
+
+  // If they simplified to the same value, then return the common value.
+  // If they both failed to simplify then return null.
+  if (TV == FV)
+    return TV;
+
+  // If one branch simplified to undef, return the other one.
+  if (TV && isa<UndefValue>(TV))
+    return FV;
+  if (FV && isa<UndefValue>(FV))
+    return TV;
+
+  // If applying the operation did not change the true and false select values,
+  // then the result of the binop is the select itself.
+  if (TV == SI->getTrueValue() && FV == SI->getFalseValue())
+    return SI;
+
+  // If one branch simplified and the other did not, and the simplified
+  // value is equal to the unsimplified one, return the simplified value.
+  // For example, select (cond, X, X & Z) & Z -> X & Z.
+  if ((FV && !TV) || (TV && !FV)) {
+    // Check that the simplified value has the form "X op Y" where "op" is the
+    // same as the original operation.
+    Instruction *Simplified = dyn_cast<Instruction>(FV ? FV : TV);
+    if (Simplified && Simplified->getOpcode() == Opcode) {
+      // The value that didn't simplify is "UnsimplifiedLHS op UnsimplifiedRHS".
+      // We already know that "op" is the same as for the simplified value.  See
+      // if the operands match too.  If so, return the simplified value.
+      Value *UnsimplifiedBranch = FV ? SI->getTrueValue() : SI->getFalseValue();
+      Value *UnsimplifiedLHS = SI == LHS ? UnsimplifiedBranch : LHS;
+      Value *UnsimplifiedRHS = SI == LHS ? RHS : UnsimplifiedBranch;
+      if (Simplified->getOperand(0) == UnsimplifiedLHS &&
+          Simplified->getOperand(1) == UnsimplifiedRHS)
+        return Simplified;
+      if (Simplified->isCommutative() &&
+          Simplified->getOperand(1) == UnsimplifiedLHS &&
+          Simplified->getOperand(0) == UnsimplifiedRHS)
+        return Simplified;
+    }
+  }
+
+  return 0;
+}
+
+/// ThreadCmpOverSelect - In the case of a comparison with a select instruction,
+/// try to simplify the comparison by seeing whether both branches of the select
+/// result in the same value.  Returns the common value if so, otherwise returns
+/// null.
+static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
+                                  Value *RHS, const TargetData *TD) {
+  // Make sure the select is on the LHS.
+  if (!isa<SelectInst>(LHS)) {
+    std::swap(LHS, RHS);
+    Pred = CmpInst::getSwappedPredicate(Pred);
+  }
+  assert(isa<SelectInst>(LHS) && "Not comparing with a select instruction!");
+  SelectInst *SI = cast<SelectInst>(LHS);
+
+  // Now that we have "cmp select(cond, TV, FV), RHS", analyse it.
+  // Does "cmp TV, RHS" simplify?
+  if (Value *TCmp = SimplifyCmpInst(Pred, SI->getTrueValue(), RHS, TD))
+    // It does!  Does "cmp FV, RHS" simplify?
+    if (Value *FCmp = SimplifyCmpInst(Pred, SI->getFalseValue(), RHS, TD))
+      // It does!  If they simplified to the same value, then use it as the
+      // result of the original comparison.
+      if (TCmp == FCmp)
+        return TCmp;
+  return 0;
+}
+
 /// SimplifyAddInst - Given operands for an Add, see if we can
 /// fold the result.  If not, this returns null.
 Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
@@ -116,6 +210,12 @@ Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD) {
       (A == Op0 || B == Op0))
     return Op1;
 
+  // If the operation is with the result of a select instruction, check whether
+  // operating on either branch of the select always yields the same value.
+  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
+    if (Value *V = ThreadBinOpOverSelect(Instruction::And, Op0, Op1, TD))
+      return V;
+
   return 0;
 }
 
@@ -185,38 +285,18 @@ Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD) {
       (A == Op0 || B == Op0))
     return Op1;
 
+  // If the operation is with the result of a select instruction, check whether
+  // operating on either branch of the select always yields the same value.
+  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
+    if (Value *V = ThreadBinOpOverSelect(Instruction::Or, Op0, Op1, TD))
+      return V;
+
   return 0;
 }
 
 
 static const Type *GetCompareTy(Value *Op) {
   return CmpInst::makeCmpResultType(Op->getType());
-}
-
-/// ThreadCmpOverSelect - In the case of a comparison with a select instruction,
-/// try to simplify the comparison by seeing whether both branches of the select
-/// result in the same value.  Returns the common value if so, otherwise returns
-/// null.
-static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
-                                  Value *RHS, const TargetData *TD) {
-  // Make sure the select is on the LHS.
-  if (!isa<SelectInst>(LHS)) {
-    std::swap(LHS, RHS);
-    Pred = CmpInst::getSwappedPredicate(Pred);
-  }
-  assert(isa<SelectInst>(LHS) && "Not comparing with a select instruction!");
-  SelectInst *SI = cast<SelectInst>(LHS);
-
-  // Now that we have "cmp select(cond, TV, FV), RHS", analyse it.
-  // Does "cmp TV, RHS" simplify?
-  if (Value *TCmp = SimplifyCmpInst(Pred, SI->getTrueValue(), RHS, TD))
-    // It does!  Does "cmp FV, RHS" simplify?
-    if (Value *FCmp = SimplifyCmpInst(Pred, SI->getFalseValue(), RHS, TD))
-      // It does!  If they simplified to the same value, then use it as the
-      // result of the original comparison.
-      if (TCmp == FCmp)
-        return TCmp;
-  return 0;
 }
 
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
@@ -393,8 +473,6 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
     return FalseVal;
   }
   
-  
-  
   return 0;
 }
 
@@ -442,6 +520,13 @@ Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
         Constant *COps[] = {CLHS, CRHS};
         return ConstantFoldInstOperands(Opcode, LHS->getType(), COps, 2, TD);
       }
+
+    // If the operation is with the result of a select instruction, check whether
+    // operating on either branch of the select always yields the same value.
+    if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
+      if (Value *V = ThreadBinOpOverSelect(Opcode, LHS, RHS, TD))
+        return V;
+
     return 0;
   }
 }
