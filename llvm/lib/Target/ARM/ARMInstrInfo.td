@@ -1183,7 +1183,12 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
                                         reglist:$dsts, variable_ops),
                        IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
                        "ldm${mode}${p}\t$Rn!, $dsts",
-                       "$Rn = $wb", []>;
+                       "$Rn = $wb", []> {
+  bits<4> p;
+  let Inst{31-28} = p;
+  let Inst{24-23} = 0b01;
+  let Inst{21}    = 1;
+}
 
 // On non-Darwin platforms R9 is callee-saved.
 let isCall = 1,
