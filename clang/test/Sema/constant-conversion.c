@@ -13,3 +13,8 @@ void test_7809123(void) {
 
   a.i5 = 36; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 36 to 4}}
 }
+
+void test() {
+  struct { int bit : 1; } a;
+  a.bit = 1; // shouldn't warn
+}

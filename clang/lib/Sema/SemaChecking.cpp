@@ -2612,7 +2612,14 @@ void AnalyzeAssignment(Sema &S, BinaryOperator *E) {
       if (OriginalWidth > FieldWidth) {
         llvm::APSInt TruncatedValue = Value;
         TruncatedValue.trunc(FieldWidth);
-        TruncatedValue.extend(OriginalWidth);
+
+        // It's fairly common to write values into signed bitfields
+        // that, if sign-extended, would end up becoming a different
+        // value.  We don't want to warn about that.
+        if (Value.isSigned() && Value.isNegative())
+          TruncatedValue.sext(OriginalWidth);
+        else
+          TruncatedValue.zext(OriginalWidth);
 
         if (Value != TruncatedValue) {
           std::string PrettyValue = Value.toString(10);
