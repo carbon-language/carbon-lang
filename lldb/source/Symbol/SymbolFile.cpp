@@ -9,7 +9,9 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/SymbolFile.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Symbol/ObjectFile.h"
 
 using namespace lldb_private;
 
@@ -47,4 +49,8 @@ SymbolFile::FindPlugin (ObjectFile* obj_file)
     return best_sym_file_ap.release();
 }
 
-
+TypeList *
+SymbolFile::GetTypeList ()
+{
+    return m_obj_file->GetModule()->GetTypeList();
+}

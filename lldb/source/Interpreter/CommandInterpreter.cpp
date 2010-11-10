@@ -45,6 +45,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/TargetList.h"
+#include "lldb/Utility/CleanUp.h"
 
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -503,6 +504,12 @@ CommandInterpreter::HandleCommand
 {
     // FIXME: there should probably be a mutex to make sure only one thread can
     // run the interpreter at a time.
+
+    Host::SetCrashDescriptionWithFormat ("HandleCommand(command = \"%s\")", command_line);
+    
+    // Make a scoped cleanup object that will clear the crash description string 
+    // on exit of this function.
+    lldb_utility::CleanUp <const char *, void> crash_description_cleanup(NULL, Host::SetCrashDescription);
 
     // TODO: this should be a logging channel in lldb.
 //    if (DebugSelf())

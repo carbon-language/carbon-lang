@@ -72,6 +72,12 @@ SymbolFileDWARFDebugMap::~SymbolFileDWARFDebugMap()
 {
 }
 
+lldb_private::ClangASTContext &       
+SymbolFileDWARFDebugMap::GetClangASTContext ()
+{
+    return GetTypeList()->GetClangASTContext();
+}
+
 void
 SymbolFileDWARFDebugMap::InitOSO ()
 {

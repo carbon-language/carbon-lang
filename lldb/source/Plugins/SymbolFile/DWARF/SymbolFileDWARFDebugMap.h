@@ -197,6 +197,9 @@ protected:
                               const DWARFDebugInfoEntry *die, 
                               const lldb_private::ConstString &type_name);    
 
+    lldb_private::ClangASTContext &       
+    GetClangASTContext ();
+
     //------------------------------------------------------------------
     // Member Variables
     //------------------------------------------------------------------

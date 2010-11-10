@@ -867,6 +867,15 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     return false;
 }
 
+void
+Host::SetCrashDescriptionWithFormat (const char *format, ...)
+{
+}
+
+void
+Host::SetCrashDescription (const char *description)
+{
+}
 
 lldb::pid_t
 LaunchApplication (const FileSpec &app_file_spec)

@@ -80,6 +80,7 @@ public:
     virtual uint32_t        FindFunctions (const RegularExpression& regex, bool append, SymbolContextList& sc_list) = 0;
     virtual uint32_t        FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types) = 0;
 //  virtual uint32_t        FindTypes (const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, TypeList& types) = 0;
+    virtual TypeList *      GetTypeList ();
 
     ObjectFile*             GetObjectFile() { return m_obj_file; }
     const ObjectFile*       GetObjectFile() const { return m_obj_file; }

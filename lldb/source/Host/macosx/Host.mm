@@ -528,6 +528,48 @@ Host::LaunchInNewTerminal
 #endif
 }
 
+// On MacOSX CrashReporter will display a string for each shared library if
+// the shared library has an exported symbol named "__crashreporter_info__".
+
+static Mutex&
+GetCrashReporterMutex ()
+{
+    static Mutex g_mutex;
+    return g_mutex;
+}
+
+extern "C" {
+    const char *__crashreporter_info__ = NULL;
+};
+
+asm(".desc ___crashreporter_info__, 0x10");
+
+void
+Host::SetCrashDescriptionWithFormat (const char *format, ...)
+{
+    static StreamString g_crash_description;
+    Mutex::Locker locker (GetCrashReporterMutex ());
+    
+    if (format)
+    {
+        va_list args;
+        va_start (args, format);
+        g_crash_description.PrintfVarArg(format, args);
+        va_end (args);
+        __crashreporter_info__ = g_crash_description.GetData();
+    }
+    else
+    {
+        __crashreporter_info__ = NULL;
+    }
+}
+
+void
+Host::SetCrashDescription (const char *cstr)
+{
+    Mutex::Locker locker (GetCrashReporterMutex ());
+    __crashreporter_info__ = cstr;
+}
 
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)

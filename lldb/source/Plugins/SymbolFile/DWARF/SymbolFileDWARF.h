@@ -109,6 +109,7 @@ public:
     virtual uint32_t        FindFunctions(const lldb_private::RegularExpression& regex, bool append, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::TypeList& types);
 //  virtual uint32_t        FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb::Type::Encoding encoding, lldb::user_id_t udt_uid, lldb_private::TypeList& types);
+    virtual lldb_private::TypeList *GetTypeList ();
 
 
     //------------------------------------------------------------------
@@ -296,6 +297,9 @@ protected:
                             {
                                 m_debug_map_symfile = debug_map_symfile;
                             }
+
+    lldb_private::ClangASTContext &
+                            GetClangASTContext();
 
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;

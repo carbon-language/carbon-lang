@@ -412,7 +412,7 @@ lldb_private::Type::WriteToMemory (lldb_private::ExecutionContext *exe_ctx, lldb
 lldb_private::TypeList*
 lldb_private::Type::GetTypeList()
 {
-    return GetSymbolFile()->GetObjectFile()->GetModule()->GetTypeList();
+    return GetSymbolFile()->GetTypeList();
 }
 
 const lldb_private::Declaration &

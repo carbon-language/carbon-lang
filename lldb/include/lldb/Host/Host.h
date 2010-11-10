@@ -297,6 +297,25 @@ public:
     GetLLDBPath (lldb::PathType path_type,
                  FileSpec &file_spec);
 
+    //------------------------------------------------------------------
+    /// Set a string that can be displayed if host application crashes.
+    ///
+    /// Some operating systems have the ability to print a description
+    /// for shared libraries when a program crashes. If the host OS
+    /// supports such a mechanism, it should be implemented to help
+    /// with crash triage.
+    ///
+    /// @param[in] format
+    ///     A printf format that will be used to form a new crash
+    ///     description string.
+    //------------------------------------------------------------------
+    static void
+    SetCrashDescriptionWithFormat (const char *format, ...);
+
+    static void
+    SetCrashDescription (const char *description);
+
+
     static uint32_t
     ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
     
