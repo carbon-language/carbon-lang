@@ -169,7 +169,33 @@ OK
 Running of this script also sets up the LLDB_TEST environment variable so that
 individual test cases can locate their supporting files correctly.  The script
 tries to set up Python's search paths for modules by looking at the build tree
-relative to this script.  See also the '-i' option.
+relative to this script.  See also the '-i' option in the following example.
+
+Finally, this is an example of using the lldb.py module distributed/installed by
+Xcode4 to run against the tests under the 'forward' directory, and with the '-w'
+option to add some delay between two tests.  It uses ARCH=x86_64 to specify that
+as the architecture and CC=clang to specify the compiler used for the test run:
+
+$ PYTHONPATH=/Xcode4/Library/PrivateFrameworks/LLDB.framework/Versions/A/Resources/Python ARCH=x86_64 CC=clang ./dotest.py -v -w -i forward
+
+Session logs for test failures/errors will go into directory '2010-11-11-13_56_16'
+----------------------------------------------------------------------
+Collected 2 tests
+
+test_with_dsym_and_run_command (TestForwardDeclaration.ForwardDeclarationTestCase)
+Display *bar_ptr when stopped on a function with forward declaration of struct bar. ... ok
+test_with_dwarf_and_run_command (TestForwardDeclaration.ForwardDeclarationTestCase)
+Display *bar_ptr when stopped on a function with forward declaration of struct bar. ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 5.659s
+
+OK
+
+The 'Session ...' verbiage is recently introduced (see also the '-s' option) to
+notify the directory containing the session logs for test failures or errors.
+In case there is any test failure/error, a similar message is appended at the
+end of the stderr output for your convenience.
 
 Environment variables related to loggings:
 
