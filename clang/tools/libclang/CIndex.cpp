@@ -235,6 +235,8 @@ public:
     StmtParent = 0;
   }
 
+  ASTUnit *getASTUnit() const { return TU; }
+
   bool Visit(CXCursor Cursor, bool CheckedRegionOfInterest = false);
   
   std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
@@ -3998,6 +4000,9 @@ public:
   void VisitChildren(CXCursor C) { AnnotateVis.VisitChildren(C); }
   enum CXChildVisitResult Visit(CXCursor cursor, CXCursor parent);
   void AnnotateTokens(CXCursor parent);
+  void AnnotateTokens() {
+    AnnotateTokens(clang_getTranslationUnitCursor(AnnotateVis.getASTUnit()));
+  }
 };
 }
 
@@ -4202,6 +4207,11 @@ static enum CXChildVisitResult AnnotateTokensVisitor(CXCursor cursor,
   return static_cast<AnnotateTokensWorker*>(client_data)->Visit(cursor, parent);
 }
 
+// This gets run a separate thread to avoid stack blowout.
+static void runAnnotateTokensWorker(void *UserData) {
+  ((AnnotateTokensWorker*)UserData)->AnnotateTokens();
+}
+
 extern "C" {
 
 void clang_annotateTokens(CXTranslationUnit TU,
@@ -4298,7 +4308,12 @@ void clang_annotateTokens(CXTranslationUnit TU,
   // a specific cursor.
   AnnotateTokensWorker W(Annotated, Tokens, Cursors, NumTokens,
                          CXXUnit, RegionOfInterest);
-  W.AnnotateTokens(clang_getTranslationUnitCursor(CXXUnit));
+
+  // Run the worker within a CrashRecoveryContext.
+  llvm::CrashRecoveryContext CRC;
+  if (!RunSafely(CRC, runAnnotateTokensWorker, &W)) {
+    fprintf(stderr, "libclang: crash detected while annotating tokens\n");
+  }
 }
 } // end: extern "C"
 
