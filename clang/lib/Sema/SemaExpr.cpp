@@ -1911,16 +1911,18 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
         Expr *E = new (Context) 
                     DeclRefExpr(const_cast<ValueDecl*>(BDRE->getDecl()), T,
                                           SourceLocation());
-      
-        ExprResult Res = PerformCopyInitialization(
+        if (T->getAs<RecordType>())
+          if (!T->isUnionType()) {
+            ExprResult Res = PerformCopyInitialization(
                           InitializedEntity::InitializeBlock(VD->getLocation(), 
                                                          T, false),
                                                          SourceLocation(),
                                                          Owned(E));
-        if (!Res.isInvalid()) {
-          Res = MaybeCreateCXXExprWithTemporaries(Res.get());
-          Expr *Init = Res.takeAs<Expr>();
-          BDRE->setCopyConstructorExpr(Init);
+            if (!Res.isInvalid()) {
+              Res = MaybeCreateCXXExprWithTemporaries(Res.get());
+              Expr *Init = Res.takeAs<Expr>();
+              BDRE->setCopyConstructorExpr(Init);
+            }
         }
       }
     }

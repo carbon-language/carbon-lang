@@ -1,5 +1,6 @@
-// RUN: %clang_cc1 -fblocks -fobjc-gc -triple x86_64-apple-darwin -O0 -S %s -o %t-64.s
+// RUN: %clang_cc1 -x objective-c++ -fblocks -fobjc-gc -triple x86_64-apple-darwin -O0 -S %s -o %t-64.s
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
+
 
 struct S {
     int i1;
@@ -139,11 +140,11 @@ void test_empty_block() {
 // CHECK-LP64: L_OBJC_CLASS_NAME_11:
 // CHECK-LP64-NEXT: .asciz   "\001A\021\021"
 
-// CHECK-LP64: L_OBJC_CLASS_NAME_14:
+// CHECK-LP64: L_OBJC_CLASS_NAME_16:
 // CHECK-LP64-NEXT: .asciz   "\001A\021\022p"
 
-// CHECK-LP64: L_OBJC_CLASS_NAME_16:
+// CHECK-LP64: L_OBJC_CLASS_NAME_20:
 // CHECK-LP64-NEXT: .asciz   "\0013"
 
-// CHECK-LP64: L_OBJC_CLASS_NAME_20:
+// CHECK-LP64: L_OBJC_CLASS_NAME_24:
 // CHECK-LP64-NEXT: .asciz   "\001"

@@ -311,11 +311,10 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       }
 
       const BlockDeclRefExpr *BDRE = cast<BlockDeclRefExpr>(E);
+      Note.RequiresCopying = BlockRequiresCopying(BDRE);
+      
       const ValueDecl *VD = BDRE->getDecl();
       QualType T = VD->getType();
-
-      Note.RequiresCopying = BlockRequiresCopying(T);
-
       if (BDRE->isByRef()) {
         Note.flag = BLOCK_FIELD_IS_BYREF;
         if (T.isObjCGCWeak())
@@ -563,7 +562,7 @@ void CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
   // Don't run the expensive check, unless we have to.
   if (!BlockHasCopyDispose)
     if (E->isByRef()
-        || BlockRequiresCopying(E->getType()))
+        || BlockRequiresCopying(E))
       BlockHasCopyDispose = true;
 
   const ValueDecl *D = cast<ValueDecl>(E->getDecl());

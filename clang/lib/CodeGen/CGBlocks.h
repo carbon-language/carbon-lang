@@ -103,6 +103,9 @@ public:
 
   bool BlockRequiresCopying(QualType Ty)
     { return getContext().BlockRequiresCopying(Ty); }
+  bool BlockRequiresCopying(const BlockDeclRefExpr *E)
+  { return E->getCopyConstructorExpr() != 0 ||
+           getContext().BlockRequiresCopying(E->getType()); }
 };
 
 class BlockFunction : public BlockBase {
@@ -197,6 +200,9 @@ public:
 
   bool BlockRequiresCopying(QualType Ty)
     { return getContext().BlockRequiresCopying(Ty); }
+  bool BlockRequiresCopying(const BlockDeclRefExpr *E)
+  { return E->getCopyConstructorExpr() != 0 ||
+           getContext().BlockRequiresCopying(E->getType()); }
 };
 
 }  // end namespace CodeGen
