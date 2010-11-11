@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "sink"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -158,9 +159,11 @@ static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
 
     Value *Ptr = L->getPointerOperand();
     uint64_t Size = AA->getTypeStoreSize(L->getType());
+    const MDNode *TBAAInfo = L->getMetadata(LLVMContext::MD_tbaa);
+    AliasAnalysis::Location Loc(Ptr, Size, TBAAInfo);
     for (SmallPtrSet<Instruction *, 8>::iterator I = Stores.begin(),
          E = Stores.end(); I != E; ++I)
-      if (AA->getModRefInfo(*I, Ptr, Size) & AliasAnalysis::Mod)
+      if (AA->getModRefInfo(*I, Loc) & AliasAnalysis::Mod)
         return false;
   }
 
