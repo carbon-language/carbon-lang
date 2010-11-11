@@ -1179,3 +1179,17 @@ void baz_pr8440(int n)
      saved_pr8440.data[i] = foo_pr8440(); // no-warning
 }
 
+// Support direct accesses to non-null memory.  Reported in:
+//  PR 5272
+//  <rdar://problem/6839683>
+int test_direct_address_load() {
+  int *p = (int*) 0x4000;
+  return *p; // no-warning
+}
+
+void pr5272_test() {
+  struct pr5272 { int var2; };
+  (*(struct pr5272*)0xBC000000).var2 = 0; // no-warning
+  (*(struct pr5272*)0xBC000000).var2 += 2; // no-warning
+}
+

@@ -194,10 +194,9 @@ SVal BasicStoreManager::Retrieve(Store store, Loc loc, QualType T) {
     }
 
     case loc::ConcreteIntKind:
-      // Some clients may call GetSVal with such an option simply because
-      // they are doing a quick scan through their Locs (potentially to
-      // invalidate their bindings).  Just return Undefined.
-      return UndefinedVal();
+      // Support direct accesses to memory.  It's up to individual checkers
+      // to flag an error.
+      return UnknownVal();
 
     default:
       assert (false && "Invalid Loc.");

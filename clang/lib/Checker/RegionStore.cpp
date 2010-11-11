@@ -952,10 +952,15 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
 
-  // FIXME: Is this even possible?  Shouldn't this be treated as a null
-  //  dereference at a higher level?
-  if (isa<loc::ConcreteInt>(L))
-    return UndefinedVal();
+  // For access to concrete addresses, return UnknownVal.  Checks
+  // for null dereferences (and similar errors) are done by checkers, not
+  // the Store.
+  // FIXME: We can consider lazily symbolicating such memory, but we really
+  // should defer this when we can reason easily about symbolicating arrays
+  // of bytes.
+  if (isa<loc::ConcreteInt>(L)) {
+    return UnknownVal();
+  }
 
   const MemRegion *MR = cast<loc::MemRegionVal>(L).getRegion();
 
