@@ -122,6 +122,10 @@ class FoundationTestCase(TestBase):
             patterns = ["ARG: \(.*\) _cmd",
                         "(struct objc_selector *)|(SEL)"])
 
+        # rdar://problem/8651752
+        # don't crash trying to ask clang how many children an empty record has
+        self.runCmd("frame variable *_cmd")
+
         # rdar://problem/8492646
         # test/foundation fails after updating to tot r115023
         # self->str displays nothing as output
