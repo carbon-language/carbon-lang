@@ -1,4 +1,6 @@
 #include <sys/signal.h>
+#include <stdio.h>
+#include <unistd.h>
 
 void handler_usr1 (int i)
 {
@@ -10,7 +12,7 @@ void handler_alrm (int i)
   puts ("got signal ALRM");
 }
 
-main ()
+int main ()
 {
   int i = 0;
 
