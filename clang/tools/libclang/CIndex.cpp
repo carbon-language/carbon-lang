@@ -123,6 +123,36 @@ CXSourceRange cxloc::translateSourceRange(const SourceManager &SM,
 //===----------------------------------------------------------------------===//
 
 namespace {
+  
+class VisitorJob {
+public:
+  enum Kind { StmtVisitKind, MemberExprPartsKind };
+protected:
+  void *data;
+  CXCursor parent;
+  Kind K;
+  VisitorJob(void *d, CXCursor C, Kind k) : data(d), parent(C), K(k) {}
+public:
+  Kind getKind() const { return K; }
+  const CXCursor &getParent() const { return parent; }
+  static bool classof(VisitorJob *VJ) { return true; }
+};
+  
+typedef llvm::SmallVector<VisitorJob, 10> VisitorWorkList;
+
+#define DEF_JOB(NAME, DATA, KIND)\
+class NAME : public VisitorJob {\
+public:\
+  NAME(DATA *d, CXCursor parent) : VisitorJob(d, parent, VisitorJob::KIND) {}\
+  static bool classof(const VisitorJob *VJ) { return VJ->getKind() == KIND; }\
+  DATA *get() const { return static_cast<DATA*>(data); }\
+};
+
+DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
+DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
+  
+#undef DEF_JOB
+
 
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
@@ -300,14 +330,12 @@ public:
   bool VisitDeclRefExpr(DeclRefExpr *E);
   bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
-  bool VisitBinaryOperator(BinaryOperator *B);
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   bool VisitExplicitCastExpr(ExplicitCastExpr *E);
   bool VisitObjCMessageExpr(ObjCMessageExpr *E);
   bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
-  bool VisitMemberExpr(MemberExpr *E);
   bool VisitAddrLabelExpr(AddrLabelExpr *E);
   bool VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   bool VisitVAArgExpr(VAArgExpr *E);
@@ -326,6 +354,18 @@ public:
   bool VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
   bool VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
+  
+#define DATA_RECURSIVE_VISIT(NAME)\
+bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
+  DATA_RECURSIVE_VISIT(BinaryOperator)
+  DATA_RECURSIVE_VISIT(MemberExpr)
+  DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
+  
+  // Data-recursive visitor functions.
+  bool IsInRegionOfInterest(CXCursor C);
+  bool RunVisitorWorkList(VisitorWorkList &WL);
+  void EnqueueWorkList(VisitorWorkList &WL, Stmt *S);
+  bool VisitDataRecursive(Stmt *S);
 };
 
 } // end anonymous namespace
@@ -1531,95 +1571,6 @@ bool CursorVisitor::VisitForStmt(ForStmt *S) {
   return false;
 }
 
-bool CursorVisitor::VisitBinaryOperator(BinaryOperator *B) {
-  // We can blow the stack in some cases where we have deeply nested BinaryOperators,
-  // often involving logical expressions, e.g.: '(x || y) || (y || z) || ...
-  // To handle this, we visitation of BinaryOperators is data recursive instead of
-  // directly recursive.  This makes the algorithm more complicated, but handles
-  // arbitrary depths.  We should consider making the entire CursorVisitor data
-  // recursive.
-  typedef std::pair</* Current expression = */ Expr*, /* Parent = */ CXCursor>
-          WorkListItem;
-  typedef llvm::SmallVector<WorkListItem, 5> WorkList;
-
-  CXCursor Cursor = MakeCXCursor(B, StmtParent, TU);
-  WorkList WL;
-  WL.push_back(std::make_pair(B->getRHS(), Cursor));
-  WL.push_back(std::make_pair(B->getLHS(), Cursor));
-
-  while (!WL.empty()) {
-    // Dequeue the worklist item.
-    WorkListItem LI = WL.back(); WL.pop_back(); Expr *Ex = LI.first;
-
-    // Set the Parent field, then back to its old value once we're done.
-    SetParentRAII SetParent(Parent, StmtParent, LI.second);
-
-    // Update the current cursor.
-    Cursor = MakeCXCursor(Ex, StmtParent, TU);
-
-    // For non-BinaryOperators, perform the default visitation.
-    if (!isa<BinaryOperator>(Ex)) {
-      if (Visit(Cursor)) {
-        // Skip all other items in the worklist that also have
-        // the same parent.
-        while (!WL.empty()) {
-          const WorkListItem &LIb = WL.back();
-          if (LIb.second == LI.second)
-            WL.pop_back();
-          else
-            break;
-        }
-        // If the worklist is now empty, we should immediately return
-        // to the caller, since this is the base case.
-        if (WL.empty())
-          return true;
-      }
-      continue;
-    }
-    // For BinaryOperators, perform a custom visitation where we add the
-    // children to a worklist.
-    if (RegionOfInterest.isValid()) {
-      SourceRange Range = getRawCursorExtent(Cursor);
-      if (Range.isInvalid() || CompareRegionOfInterest(Range)) {
-        // Proceed to the next item on the worklist.
-        continue;
-      }
-    }
-    switch (Visitor(Cursor, Parent, ClientData)) {
-      case CXChildVisit_Break: {
-        // Skip all other items in the worklist that also have
-        // the same parent.
-        while (!WL.empty()) {
-          const WorkListItem &LIb = WL.back();
-          if (LIb.second == LI.second)
-            WL.pop_back();
-          else
-            break;
-        }
-        // If the worklist is now empty, we should immediately return
-        // to the caller, since this is the base case.
-        if (WL.empty())
-          return true;
-        break;
-      }
-      case CXChildVisit_Continue:
-        break;
-      case CXChildVisit_Recurse: {
-        BinaryOperator *B = cast<BinaryOperator>(Ex);
-        // FIXME: Note that we ignore parentheses, since these are often
-        // unimportant during cursor visitation.  If we care about these, we
-        // can unroll the visitation one more level.  Alternatively, we
-        // can convert the entire visitor to be data recursive, eliminating
-        // all edge cases.
-        WL.push_back(std::make_pair(B->getRHS()->IgnoreParens(), Cursor));
-        WL.push_back(std::make_pair(B->getLHS()->IgnoreParens(), Cursor));
-        break;
-      }
-    }
-  }
-  return false;
-}
-
 bool CursorVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
   // Visit nested-name-specifier, if present.
   if (NestedNameSpecifier *Qualifier = E->getQualifier())
@@ -1714,34 +1665,6 @@ bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   }
 
   return VisitExpr(E);
-}
-
-bool CursorVisitor::VisitMemberExpr(MemberExpr *E) {
-  // Visit the base expression.
-  if (Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
-    return true;
-  
-  // Visit the nested-name-specifier
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
-      return true;
-  
-  // Visit the declaration name.
-  if (VisitDeclarationNameInfo(E->getMemberNameInfo()))
-    return true;
-  
-  // Visit the explicitly-specified template arguments, if any.
-  if (E->hasExplicitTemplateArgs()) {
-    for (const TemplateArgumentLoc *Arg = E->getTemplateArgs(),
-                                *ArgEnd = Arg + E->getNumTemplateArgs();
-         Arg != ArgEnd;
-         ++Arg) {
-      if (VisitTemplateArgumentLoc(*Arg))
-        return true;
-    }
-  }
-  
-  return false;
 }
 
 bool CursorVisitor::VisitExplicitCastExpr(ExplicitCastExpr *E) {
@@ -2025,6 +1948,139 @@ bool CursorVisitor::VisitAttributes(Decl *D) {
 
   return false;
 }
+
+//===----------------------------------------------------------------------===//
+// Data-recursive visitor methods.
+//===----------------------------------------------------------------------===//
+
+void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
+  CXCursor C = MakeCXCursor(S, StmtParent, TU);
+  switch (S->getStmtClass()) {
+    default: {
+      unsigned size = WL.size();
+      for (Stmt::child_iterator Child = S->child_begin(),
+              ChildEnd = S->child_end(); Child != ChildEnd; ++Child) {
+        if (Stmt *child = *Child) {
+          WL.push_back(StmtVisit(child, C));
+        }
+      }
+      
+      if (size == WL.size())
+        return;
+        
+      // Now reverse the entries we just added.  This will match the DFS
+      // ordering performed by the worklist.
+      VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
+      std::reverse(I, E);
+      break;
+    }      
+    case Stmt::ParenExprClass: {
+      WL.push_back(StmtVisit(cast<ParenExpr>(S)->getSubExpr(), C));
+      break;
+    }
+    case Stmt::BinaryOperatorClass: {
+      BinaryOperator *B = cast<BinaryOperator>(S);
+      WL.push_back(StmtVisit(B->getRHS(), C));
+      WL.push_back(StmtVisit(B->getLHS(), C));
+      break;
+    }
+    case Stmt::MemberExprClass: {
+      MemberExpr *M = cast<MemberExpr>(S);
+      WL.push_back(MemberExprParts(M, C));
+      WL.push_back(StmtVisit(M->getBase(), C));
+      break;
+    }
+  }
+}
+
+bool CursorVisitor::IsInRegionOfInterest(CXCursor C) {
+  if (RegionOfInterest.isValid()) {
+    SourceRange Range = getRawCursorExtent(C);
+    if (Range.isInvalid() || CompareRegionOfInterest(Range))
+      return false;
+  }
+  return true;
+}
+
+bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
+  while (!WL.empty()) {
+    // Dequeue the worklist item.
+    VisitorJob LI = WL.back(); WL.pop_back();
+  
+    // Set the Parent field, then back to its old value once we're done.
+    SetParentRAII SetParent(Parent, StmtParent, LI.getParent());
+  
+    switch (LI.getKind()) {
+      case VisitorJob::StmtVisitKind: {
+        // Update the current cursor.
+        Stmt *S = cast<StmtVisit>(LI).get();
+        CXCursor Cursor = MakeCXCursor(S, StmtParent, TU);
+        
+        switch (S->getStmtClass()) {
+          default: {
+            // Perform default visitation for other cases.
+            if (Visit(Cursor))
+              return true;
+            continue;
+          }
+          case Stmt::CallExprClass:
+          case Stmt::CXXMemberCallExprClass:
+          case Stmt::ParenExprClass:
+          case Stmt::MemberExprClass:
+          case Stmt::BinaryOperatorClass: {
+            if (!IsInRegionOfInterest(Cursor))
+              continue;
+            switch (Visitor(Cursor, Parent, ClientData)) {
+              case CXChildVisit_Break:
+                return true;
+              case CXChildVisit_Continue:
+                break;
+              case CXChildVisit_Recurse:
+                EnqueueWorkList(WL, S);
+                break;
+            }
+          }
+        }
+        continue;
+      }
+      case VisitorJob::MemberExprPartsKind: {
+        // Handle the other pieces in the MemberExpr besides the base.
+        MemberExpr *M = cast<MemberExprParts>(LI).get();
+        
+        // Visit the nested-name-specifier
+        if (NestedNameSpecifier *Qualifier = M->getQualifier())
+          if (VisitNestedNameSpecifier(Qualifier, M->getQualifierRange()))
+            return true;
+        
+        // Visit the declaration name.
+        if (VisitDeclarationNameInfo(M->getMemberNameInfo()))
+          return true;
+        
+        // Visit the explicitly-specified template arguments, if any.
+        if (M->hasExplicitTemplateArgs()) {
+          for (const TemplateArgumentLoc *Arg = M->getTemplateArgs(),
+               *ArgEnd = Arg + M->getNumTemplateArgs();
+               Arg != ArgEnd; ++Arg) {
+            if (VisitTemplateArgumentLoc(*Arg))
+              return true;
+          }
+        }
+        continue;
+      }
+    }
+  }
+  return false;
+}
+
+bool CursorVisitor::VisitDataRecursive(Stmt *S) {
+  VisitorWorkList WL;
+  EnqueueWorkList(WL, S);
+  return RunVisitorWorkList(WL);
+}
+
+//===----------------------------------------------------------------------===//
+// Misc. API hooks.
+//===----------------------------------------------------------------------===//               
 
 static llvm::sys::Mutex EnableMultithreadingMutex;
 static bool EnabledMultithreading;
