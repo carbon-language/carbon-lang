@@ -4086,20 +4086,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     SDValue Op3 = getValue(I.getArgOperand(2));
     unsigned Align = cast<ConstantInt>(I.getArgOperand(3))->getZExtValue();
     bool isVol = cast<ConstantInt>(I.getArgOperand(4))->getZExtValue();
-
-    // If the source and destination are known to not be aliases, we can
-    // lower memmove as memcpy.
-    uint64_t Size = -1ULL;
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op3))
-      Size = C->getZExtValue();
-    if (AA->alias(I.getArgOperand(0), Size, I.getArgOperand(1), Size) ==
-        AliasAnalysis::NoAlias) {
-      DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, isVol,
-                                false, MachinePointerInfo(I.getArgOperand(0)),
-                                MachinePointerInfo(I.getArgOperand(1))));
-      return 0;
-    }
-
     DAG.setRoot(DAG.getMemmove(getRoot(), dl, Op1, Op2, Op3, Align, isVol,
                                MachinePointerInfo(I.getArgOperand(0)),
                                MachinePointerInfo(I.getArgOperand(1))));
