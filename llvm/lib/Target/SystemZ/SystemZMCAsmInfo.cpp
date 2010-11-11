@@ -25,5 +25,5 @@ SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, StringRef TT) {
 const MCSection *SystemZMCAsmInfo::
 getNonexecutableStackSection(MCContext &Ctx) const{
   return Ctx.getELFSection(".note.GNU-stack", MCSectionELF::SHT_PROGBITS,
-                           0, SectionKind::getMetadata(), false);
+                           0, SectionKind::getMetadata());
 }

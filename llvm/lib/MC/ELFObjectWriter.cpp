@@ -1137,7 +1137,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
   // We construct .shstrtab, .symtab and .strtab in this order to match gnu as.
   const MCSectionELF *ShstrtabSection =
     Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0,
-                      SectionKind::getReadOnly(), false);
+                      SectionKind::getReadOnly());
   MCSectionData &ShstrtabSD = Asm.getOrCreateSectionData(*ShstrtabSection);
   ShstrtabSD.setAlignment(1);
   ShstrtabIndex = Asm.size();
@@ -1162,7 +1162,7 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
 
   const MCSection *StrtabSection;
   StrtabSection = Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0,
-                                    SectionKind::getReadOnly(), false);
+                                    SectionKind::getReadOnly());
   MCSectionData &StrtabSD = Asm.getOrCreateSectionData(*StrtabSection);
   StrtabSD.setAlignment(1);
   StringTableIndex = Asm.size();
@@ -1264,8 +1264,7 @@ void ELFObjectWriterImpl::WriteSection(MCAssembler &Asm,
     const MCSectionELF *InfoSection;
     SymtabSection = Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB,
                                                    0,
-                                                   SectionKind::getReadOnly(),
-                                                   false);
+                                                   SectionKind::getReadOnly());
     sh_link = SectionIndexMap.lookup(SymtabSection);
     assert(sh_link && ".symtab not found");
 
@@ -1275,8 +1274,7 @@ void ELFObjectWriterImpl::WriteSection(MCAssembler &Asm,
 
     InfoSection = Asm.getContext().getELFSection(SectionName,
                                                  ELF::SHT_PROGBITS, 0,
-                                                 SectionKind::getReadOnly(),
-                                                 false);
+                                                 SectionKind::getReadOnly());
     sh_info = SectionIndexMap.lookup(InfoSection);
     break;
   }

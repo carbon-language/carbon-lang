@@ -99,7 +99,7 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
 const MCSection *X86ELFMCAsmInfo::
 getNonexecutableStackSection(MCContext &Ctx) const {
   return Ctx.getELFSection(".note.GNU-stack", MCSectionELF::SHT_PROGBITS,
-                           0, SectionKind::getMetadata(), false);
+                           0, SectionKind::getMetadata());
 }
 
 X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple) {
