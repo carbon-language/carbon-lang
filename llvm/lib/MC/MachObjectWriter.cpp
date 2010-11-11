@@ -633,7 +633,7 @@ public:
       if (A_Base == B_Base && A_Base)
         report_fatal_error("unsupported relocation with identical base");
 
-      Value += Layout.getSymbolAddress(&A_SD) - 
+      Value += Layout.getSymbolAddress(&A_SD) -
                (A_Base == NULL ? 0 : Layout.getSymbolAddress(A_Base));
       Value -= Layout.getSymbolAddress(&B_SD) -
                (B_Base == NULL ? 0 : Layout.getSymbolAddress(B_Base));
@@ -875,7 +875,7 @@ public:
     } else {
       FixedValue = 0;
     }
-    
+
     // struct relocation_info (8 bytes)
     MachRelocationEntry MRE;
     MRE.Word0 = Value;
@@ -886,7 +886,7 @@ public:
                  (RIT_TLV   << 28)); // Type
     Relocations[Fragment->getParent()].push_back(MRE);
   }
-  
+
   void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, uint64_t &FixedValue) {
@@ -904,7 +904,7 @@ public:
       RecordTLVPRelocation(Asm, Layout, Fragment, Fixup, Target, FixedValue);
       return;
     }
-    
+
     // If this is a difference or a defined symbol plus an offset, then we need
     // a scattered relocation entry.
     // Differences always require scattered relocations.
@@ -988,7 +988,7 @@ public:
       // Initialize the section indirect symbol base, if necessary.
       if (!IndirectSymBase.count(it->SectionData))
         IndirectSymBase[it->SectionData] = IndirectIndex;
-      
+
       Asm.getOrCreateSymbolData(*it->Symbol);
     }
 
