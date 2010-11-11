@@ -735,48 +735,7 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
                                       unsigned &Index,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
-  if (Index < IList->getNumInits()) {
-    Expr *expr = IList->getInit(Index);
-    if (InitListExpr *SubIList = dyn_cast<InitListExpr>(expr)) {
-      SemaRef.Diag(SubIList->getLocStart(),
-                    diag::warn_many_braces_around_scalar_init)
-        << SubIList->getSourceRange();
-
-      CheckScalarType(Entity, SubIList, DeclType, Index, StructuredList,
-                      StructuredIndex);
-      return;
-    } else if (isa<DesignatedInitExpr>(expr)) {
-      SemaRef.Diag(expr->getSourceRange().getBegin(),
-                    diag::err_designator_for_scalar_init)
-        << DeclType << expr->getSourceRange();
-      hadError = true;
-      ++Index;
-      ++StructuredIndex;
-      return;
-    }
-
-    ExprResult Result =
-      SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
-                                        SemaRef.Owned(expr));
-
-    Expr *ResultExpr = 0;
-
-    if (Result.isInvalid())
-      hadError = true; // types weren't compatible.
-    else {
-      ResultExpr = Result.takeAs<Expr>();
-      
-      if (ResultExpr != expr) {
-        // The type was promoted, update initializer list.
-        IList->setInit(Index, ResultExpr);
-      }
-    }
-    if (hadError)
-      ++StructuredIndex;
-    else
-      UpdateStructuredListElement(StructuredList, StructuredIndex, ResultExpr);
-    ++Index;
-  } else {
+  if (Index >= IList->getNumInits()) {
     SemaRef.Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
       << IList->getSourceRange();
     hadError = true;
@@ -784,6 +743,47 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
     ++StructuredIndex;
     return;
   }
+
+  Expr *expr = IList->getInit(Index);
+  if (InitListExpr *SubIList = dyn_cast<InitListExpr>(expr)) {
+    SemaRef.Diag(SubIList->getLocStart(),
+                 diag::warn_many_braces_around_scalar_init)
+      << SubIList->getSourceRange();
+
+    CheckScalarType(Entity, SubIList, DeclType, Index, StructuredList,
+                    StructuredIndex);
+    return;
+  } else if (isa<DesignatedInitExpr>(expr)) {
+    SemaRef.Diag(expr->getSourceRange().getBegin(),
+                 diag::err_designator_for_scalar_init)
+      << DeclType << expr->getSourceRange();
+    hadError = true;
+    ++Index;
+    ++StructuredIndex;
+    return;
+  }
+
+  ExprResult Result =
+    SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
+                                      SemaRef.Owned(expr));
+
+  Expr *ResultExpr = 0;
+
+  if (Result.isInvalid())
+    hadError = true; // types weren't compatible.
+  else {
+    ResultExpr = Result.takeAs<Expr>();
+      
+    if (ResultExpr != expr) {
+      // The type was promoted, update initializer list.
+      IList->setInit(Index, ResultExpr);
+    }
+  }
+  if (hadError)
+    ++StructuredIndex;
+  else
+    UpdateStructuredListElement(StructuredList, StructuredIndex, ResultExpr);
+  ++Index;
 }
 
 void InitListChecker::CheckReferenceType(const InitializedEntity &Entity,
