@@ -267,6 +267,9 @@ public:
     }
     
   private:
+    Query(const Query&);          // DO NOT IMPLEMENT
+    void operator=(const Query&); // DO NOT IMPLEMENT
+    
     // Private interface for queries
     void findIntersection(InterferenceResult &ir) const;
   };
