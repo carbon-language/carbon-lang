@@ -138,12 +138,13 @@ public:
   }
 };
 
-static unsigned getFixupKindLog2Size(unsigned Kind) {
+static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
   default: llvm_unreachable("Unknown fixup kind!");
-  case FK_Data_4: return 2;
+  case FK_Data_4: return 4;
   case ARM::fixup_arm_pcrel_12: return 2;
   case ARM::fixup_arm_vfp_pcrel_12: return 1;
+  case ARM::fixup_arm_branch: return 3;
   }
 }
 
@@ -156,16 +157,17 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case ARM::fixup_arm_pcrel_12:
     // ARM PC-relative values are offset by 8.
     return Value - 8;
+  case ARM::fixup_arm_branch:
   case ARM::fixup_arm_vfp_pcrel_12:
-    // The VFP ld/st immediate value doesn't encode the low two bits since
-    // they're always zero. Offset by 8 just as above.
+    // These values don't encode the low two bits since they're always zero.
+    // Offset by 8 just as above.
     return (Value - 8) >> 2;
   }
 }
 
 void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
-                                  uint64_t Value) const {
-  unsigned NumBytes = getFixupKindLog2Size(Fixup.getKind());
+                                     uint64_t Value) const {
+  unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
   Value = adjustFixupValue(Fixup.getKind(), Value);
 
   assert(Fixup.getOffset() + NumBytes <= DF.getContents().size() &&

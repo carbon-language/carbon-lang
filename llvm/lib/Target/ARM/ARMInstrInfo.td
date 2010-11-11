@@ -274,7 +274,9 @@ def sube_live_carry :
 //
 
 // Branch target.
-def brtarget : Operand<OtherVT>;
+def brtarget : Operand<OtherVT> {
+  string EncoderMethod = "getBranchTargetOpValue";
+}
 
 // A list of registers separated by comma. Used by load/store multiple.
 def reglist : Operand<i32> {
@@ -1363,7 +1365,10 @@ let isBranch = 1, isTerminator = 1 in {
   let isBarrier = 1 in {
     let isPredicable = 1 in
     def B : ABXI<0b1010, (outs), (ins brtarget:$target), IIC_Br,
-                "b\t$target", [(br bb:$target)]>;
+                "b\t$target", [(br bb:$target)]> {
+      bits<24> target;
+      let Inst{23-0} = target;
+    }
 
     let isNotDuplicable = 1, isIndirectBranch = 1,
         // FIXME: $imm field is not specified by asm string.  Mark as cgonly.
@@ -1406,7 +1411,10 @@ let isBranch = 1, isTerminator = 1 in {
   // a two-value operand where a dag node expects two operands. :(
   def Bcc : ABI<0b1010, (outs), (ins brtarget:$target),
                IIC_Br, "b", "\t$target",
-               [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]>;
+               [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]> {
+    bits<24> target;
+    let Inst{23-0} = target;
+  }
 }
 
 // Branch and Exchange Jazelle -- for disassembly only

@@ -161,6 +161,8 @@ namespace {
     //  are already handled elsewhere. They are placeholders to allow this
     //  encoder to continue to function until the MC encoder is sufficiently
     //  far along that this one can be eliminated entirely.
+    unsigned getBranchTargetOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
     unsigned getCCOutOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getSOImmOpValue(const MachineInstr &MI, unsigned Op)

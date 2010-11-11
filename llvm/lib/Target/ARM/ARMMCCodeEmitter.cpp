@@ -41,12 +41,14 @@ public:
 
   ~ARMMCCodeEmitter() {}
 
-  unsigned getNumFixupKinds() const { return 2; }
+  unsigned getNumFixupKinds() const { return ARM::NumTargetFixupKinds; }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
-      { "fixup_arm_pcrel_12", 2, 12, MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_vfp_pcrel_12", 3, 8, MCFixupKindInfo::FKF_IsPCRel },
+      // name                     offset  bits  flags
+      { "fixup_arm_pcrel_12",     2,      12,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_vfp_pcrel_12", 3,      8,    MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
     };
 
     if (Kind < FirstTargetFixupKind)
@@ -71,6 +73,11 @@ public:
   bool EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx,
                               unsigned &Reg, unsigned &Imm,
                               SmallVectorImpl<MCFixup> &Fixups) const;
+
+  /// getBranchTargetOpValue - Return encoding info for 24-bit immediate
+  /// branch target.
+  uint32_t getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                                  SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
   /// operand.
@@ -245,6 +252,24 @@ EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx, unsigned &Reg,
 
   Imm = SImm;
   return isAdd;
+}
+
+/// getBranchTargetOpValue - Return encoding info for 24-bit immediate
+/// branch target.
+uint32_t ARMMCCodeEmitter::
+getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                        SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpIdx);
+
+  // If the destination is an immediate, we have nothing to do.
+  if (MO.isImm()) return MO.getImm();
+  assert (MO.isExpr() && "Unexpected branch target type!");
+  const MCExpr *Expr = MO.getExpr();
+  MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_branch);
+  Fixups.push_back(MCFixup::Create(0, Expr, Kind));
+
+  // All of the information is in the fixup.
+  return 0;
 }
 
 /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12' operand.
