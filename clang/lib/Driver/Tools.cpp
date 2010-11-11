@@ -1425,7 +1425,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                        options::OPT_fno_objc_nonfragile_abi,
                        getToolChain().IsObjCNonFragileABIDefault())) {
         // Determine the non-fragile ABI version to use.
+#ifdef DISABLE_DEFAULT_NONFRAGILEABI_TWO
+        unsigned NonFragileABIVersion = 1;
+#else
         unsigned NonFragileABIVersion = 2;
+#endif
 
         if (Arg *A = Args.getLastArg(
               options::OPT_fobjc_nonfragile_abi_version_EQ)) {
