@@ -56,10 +56,14 @@ void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
 }
 
 bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
-  if ((Count % 4) != 0) {
-    // Fixme: % 2 for Thumb?
-    return false;
-  }
+//  if ((Count % 4) != 0) {
+//    // Fixme: % 2 for Thumb?
+//    return false;
+//  }
+  // FIXME: Zero fill for now. That's not right, but at least will get the
+  // section size right.
+  for (uint64_t i = 0; i != Count; ++i)
+    OW->Write8(0);
   return true;
 }
 } // end anonymous namespace

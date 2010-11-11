@@ -608,10 +608,17 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   // Pseudo instructions don't get encoded.
   const TargetInstrDesc &Desc = TII.get(MI.getOpcode());
-  if ((Desc.TSFlags & ARMII::FormMask) == ARMII::Pseudo)
+  uint64_t TSFlags = Desc.TSFlags;
+  if ((TSFlags & ARMII::FormMask) == ARMII::Pseudo)
     return;
-
-  EmitConstant(getBinaryCodeForInstr(MI, Fixups), 4, OS);
+  int Size;
+  // Basic size info comes from the TSFlags field.
+  switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
+  default: llvm_unreachable("Unexpected instruction size!");
+  case ARMII::Size2Bytes: Size = 2; break;
+  case ARMII::Size4Bytes: Size = 4; break;
+  }
+  EmitConstant(getBinaryCodeForInstr(MI, Fixups), Size, OS);
   ++MCNumEmitted;  // Keep track of the # of mi's emitted.
 }
 
