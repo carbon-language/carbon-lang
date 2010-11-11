@@ -37,14 +37,14 @@ configure_file(
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
   set(CLANG_TEST_EXTRA_ARGS)
-  if (MSVC OR XCODE)
-    set(CLANG_TEST_EXTRA_ARGS "--no-progress-bar")
-  endif()
 
   option(CLANG_TEST_USE_VG "Run Clang tests under Valgrind" OFF)
   if(CLANG_TEST_USE_VG)
     set(CLANG_TEST_EXTRA_ARGS ${CLANG_TEST_EXTRA_ARGS} "--vg")
   endif ()
+
+  set(LIT_ARGS "${CLANG_TEST_EXTRA_ARGS} ${LLVM_LIT_ARGS}")
+  separate_arguments(LIT_ARGS)
 
   foreach(testdir ${CLANG_TEST_DIRECTORIES})
     add_custom_target(clang-test-${testdir}
@@ -52,7 +52,7 @@ if(PYTHONINTERP_FOUND)
                   ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                   --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                   --param build_config=${CMAKE_CFG_INTDIR}
-                  -sv ${CLANG_TEST_EXTRA_ARGS}
+                  ${LIT_ARGS}
                   ${CMAKE_CURRENT_BINARY_DIR}/${testdir}
                   DEPENDS clang c-index-test FileCheck not count
                   COMMENT "Running Clang regression tests in ${testdir}")
@@ -63,7 +63,7 @@ if(PYTHONINTERP_FOUND)
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                 --param build_config=${CMAKE_CFG_INTDIR}
-                -sv ${CLANG_TEST_EXTRA_ARGS}
+                ${LIT_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 DEPENDS clang c-index-test FileCheck not count
                 COMMENT "Running Clang regression tests")
@@ -73,7 +73,7 @@ if(PYTHONINTERP_FOUND)
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                 --param build_config=${CMAKE_CFG_INTDIR}
-                -sv ${CLANG_TEST_EXTRA_ARGS}
+                ${LIT_ARGS}
                 ${CMAKE_CURRENT_SOURCE_DIR}/../utils/C++Tests
                 DEPENDS clang c-index-test FileCheck not count
                 COMMENT "Running Clang regression tests")
