@@ -127,8 +127,12 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
       index += (Slots + 1) * SlotIndex::NUM;
     }
 
-    // One blank instruction at the end.
-    push_back(createEntry(0, index));    
+    // We insert two blank instructions between basic blocks.
+    // One to represent live-out registers and one to represent live-ins.
+    push_back(createEntry(0, index));
+    index += SlotIndex::NUM;
+
+    push_back(createEntry(0, index));
 
     SlotIndex blockEndIndex(back(), SlotIndex::LOAD);
     mbb2IdxMap.insert(

@@ -738,6 +738,7 @@ namespace llvm {
       MachineFunction::iterator nextMBB =
         llvm::next(MachineFunction::iterator(mbb));
       IndexListEntry *startEntry = createEntry(0, 0);
+      IndexListEntry *stopEntry = createEntry(0, 0);
       IndexListEntry *nextEntry = 0;
 
       if (nextMBB == mbb->getParent()->end()) {
@@ -747,6 +748,7 @@ namespace llvm {
       }
 
       insert(nextEntry, startEntry);
+      insert(nextEntry, stopEntry);
 
       SlotIndex startIdx(startEntry, SlotIndex::LOAD);
       SlotIndex endIdx(nextEntry, SlotIndex::LOAD);
