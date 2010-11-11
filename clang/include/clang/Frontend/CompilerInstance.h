@@ -477,8 +477,14 @@ public:
   /// Create the diagnostics engine using the invocation's diagnostic options
   /// and replace any existing one with it.
   ///
-  /// Note that this routine also replaces the diagnostic client.
-  void createDiagnostics(int Argc, const char* const *Argv);
+  /// Note that this routine also replaces the diagnostic client,
+  /// allocating one if one is not provided.
+  ///
+  /// \param Client If non-NULL, a diagnostic client that will be
+  /// attached to (and, then, owned by) the Diagnostic inside this AST
+  /// unit.
+  void createDiagnostics(int Argc, const char* const *Argv,
+                         DiagnosticClient *Client = 0);
 
   /// Create a Diagnostic object with a the TextDiagnosticPrinter.
   ///
@@ -486,18 +492,24 @@ public:
   /// when the diagnostic options indicate that the compiler should output
   /// logging information.
   ///
-  /// Note that this creates an unowned DiagnosticClient, if using directly the
-  /// caller is responsible for releasing the returned Diagnostic's client
-  /// eventually.
+  /// If no diagnostic client is provided, this creates a
+  /// DiagnosticClient that is owned by the returned diagnostic
+  /// object, if using directly the caller is responsible for
+  /// releasing the returned Diagnostic's client eventually.
   ///
   /// \param Opts - The diagnostic options; note that the created text
   /// diagnostic object contains a reference to these options and its lifetime
   /// must extend past that of the diagnostic engine.
   ///
+  /// \param Client If non-NULL, a diagnostic client that will be
+  /// attached to (and, then, owned by) the returned Diagnostic
+  /// object.
+  ///
   /// \return The new object on success, or null on failure.
   static llvm::IntrusiveRefCntPtr<Diagnostic> 
   createDiagnostics(const DiagnosticOptions &Opts, int Argc,
-                    const char* const *Argv);
+                    const char* const *Argv,
+                    DiagnosticClient *Client = 0);
 
   /// Create the file manager and replace any existing one with it.
   void createFileManager();

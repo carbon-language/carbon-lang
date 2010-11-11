@@ -406,7 +406,7 @@ class CaptureDroppedDiagnostics {
 
 public:
   CaptureDroppedDiagnostics(bool RequestCapture, Diagnostic &Diags, 
-                           llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags)
+                          llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags)
     : Diags(Diags), Client(StoredDiags), PreviousClient(0)
   {
     if (RequestCapture || Diags.getClient() == 0) {
@@ -447,6 +447,22 @@ llvm::MemoryBuffer *ASTUnit::getBufferForFile(llvm::StringRef Filename,
                                    ErrorStr, FileSize, FileInfo);
 }
 
+/// \brief Configure the diagnostics object for use with ASTUnit.
+void ASTUnit::ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
+                             ASTUnit &AST, bool CaptureDiagnostics) {
+  if (!Diags.getPtr()) {
+    // No diagnostics engine was provided, so create our own diagnostics object
+    // with the default options.
+    DiagnosticOptions DiagOpts;
+    DiagnosticClient *Client = 0;
+    if (CaptureDiagnostics)
+      Client = new StoredDiagnosticClient(AST.StoredDiagnostics);
+    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0, Client);
+  } else if (CaptureDiagnostics) {
+    Diags->setClient(new StoredDiagnosticClient(AST.StoredDiagnostics));
+  }
+}
+
 ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                   const FileSystemOptions &FileSystemOpts,
@@ -455,16 +471,10 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   unsigned NumRemappedFiles,
                                   bool CaptureDiagnostics) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
-  
-  if (!Diags.getPtr()) {
-    // No diagnostics engine was provided, so create our own diagnostics object
-    // with the default options.
-    DiagnosticOptions DiagOpts;
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
-  }
+  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
 
-  AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->OnlyLocalDecls = OnlyLocalDecls;
+  AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->Diagnostics = Diags;
   AST->FileSystemOpts = FileSystemOpts;
   AST->FileMgr.reset(new FileManager);
@@ -474,10 +484,6 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager(),
                                          AST->getFileSystemOpts()));
   
-  // If requested, capture diagnostics in the ASTUnit.
-  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, AST->getDiagnostics(),
-                                    AST->StoredDiagnostics);
-
   for (unsigned I = 0; I != NumRemappedFiles; ++I) {
     // Create the file entry for the file that we're mapping from.
     const FileEntry *FromFile
@@ -708,9 +714,6 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // Set up diagnostics, capturing any diagnostics that would
   // otherwise be dropped.
   Clang.setDiagnostics(&getDiagnostics());
-  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
-                                    getDiagnostics(),
-                                    StoredDiagnostics);
   
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
@@ -1200,9 +1203,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   // Set up diagnostics, capturing all of the diagnostics produced.
   Clang.setDiagnostics(&getDiagnostics());
-  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
-                                    getDiagnostics(),
-                                    StoredDiagnostics);
   
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
@@ -1367,20 +1367,14 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
                                              bool CompleteTranslationUnit,
-                                             bool CacheCodeCompletionResults) {
-  if (!Diags.getPtr()) {
-    // No diagnostics engine was provided, so create our own diagnostics object
-    // with the default options.
-    DiagnosticOptions DiagOpts;
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
-  }
-  
+                                             bool CacheCodeCompletionResults) {  
   // Create the AST unit.
   llvm::OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
+  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
-  AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->OnlyLocalDecls = OnlyLocalDecls;
+  AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->CompleteTranslationUnit = CompleteTranslationUnit;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->Invocation.reset(CI);
@@ -1393,22 +1387,19 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                     llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
+                                      bool CaptureDiagnostics,
                                       RemappedFile *RemappedFiles,
                                       unsigned NumRemappedFiles,
-                                      bool CaptureDiagnostics,
                                       bool PrecompilePreamble,
                                       bool CompleteTranslationUnit,
                                       bool CacheCodeCompletionResults,
                                       bool CXXPrecompilePreamble,
                                       bool CXXChainedPCH) {
-  bool CreatedDiagnosticsObject = false;
-  
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
     DiagnosticOptions DiagOpts;
     Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
-    CreatedDiagnosticsObject = true;
   }
   
   llvm::SmallVector<const char *, 16> Args;
@@ -1422,9 +1413,9 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
   
   llvm::OwningPtr<CompilerInvocation> CI;
+
   {
-    CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
-                                      *Diags,
+    CaptureDroppedDiagnostics Capture(CaptureDiagnostics, *Diags, 
                                       StoredDiagnostics);
 
     // FIXME: We shouldn't have to pass in the path info.
@@ -1457,12 +1448,12 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     const driver::ArgStringList &CCArgs = Cmd->getArguments();
     CI.reset(new CompilerInvocation);
     CompilerInvocation::CreateFromArgs(*CI,
-                                       const_cast<const char **>(CCArgs.data()),
-                                       const_cast<const char **>(CCArgs.data()) +
+                                     const_cast<const char **>(CCArgs.data()),
+                                     const_cast<const char **>(CCArgs.data()) +
                                        CCArgs.size(),
                                        *Diags);
   }
-  
+
   // Override any files that need remapping
   for (unsigned I = 0; I != NumRemappedFiles; ++I)
     CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
@@ -1484,9 +1475,10 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // Create the AST unit.
   llvm::OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
+  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
-  AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->OnlyLocalDecls = OnlyLocalDecls;
+  AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->CompleteTranslationUnit = CompleteTranslationUnit;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->NumStoredDiagnosticsFromDriver = StoredDiagnostics.size();
@@ -1813,7 +1805,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   Clang.setDiagnostics(&Diag);
   ProcessWarningOptions(Diag, CCInvocation.getDiagnosticOpts());
   CaptureDroppedDiagnostics Capture(true, 
-                                    Clang.getDiagnostics(),
+                                    Clang.getDiagnostics(), 
                                     StoredDiagnostics);
   
   // Create the target instance.

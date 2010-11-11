@@ -113,19 +113,23 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
 }
 
-void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv) {
-  Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv);
+void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
+                                         DiagnosticClient *Client) {
+  Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv, Client);
 }
 
 llvm::IntrusiveRefCntPtr<Diagnostic> 
 CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
-                                    int Argc, const char* const *Argv) {
+                                    int Argc, const char* const *Argv,
+                                    DiagnosticClient *Client) {
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic());
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
-  llvm::OwningPtr<DiagnosticClient> DiagClient;
-  Diags->setClient(new TextDiagnosticPrinter(llvm::errs(), Opts));
+  if (Client)
+    Diags->setClient(Client);
+  else
+    Diags->setClient(new TextDiagnosticPrinter(llvm::errs(), Opts));
 
   // Chain in -verify checker, if requested.
   if (Opts.VerifyDiagnostics)

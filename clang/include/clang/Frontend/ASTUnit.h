@@ -91,7 +91,7 @@ private:
 
   /// \brief Whether to capture any diagnostics produced.
   bool CaptureDiagnostics;
-  
+
   /// \brief Track whether the main file was loaded from an AST or not.
   bool MainFileIsAST;
 
@@ -218,6 +218,9 @@ private:
   /// \brief Whether we should be caching code-completion results.
   bool ShouldCacheCodeCompletionResults;
   
+  static void ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
+                             ASTUnit &AST, bool CaptureDiagnostics);
+
 public:
   /// \brief A cached code-completion result, which may be introduced in one of
   /// many different contexts.
@@ -540,9 +543,9 @@ public:
                                     llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
+                                      bool CaptureDiagnostics = false,
                                       RemappedFile *RemappedFiles = 0,
                                       unsigned NumRemappedFiles = 0,
-                                      bool CaptureDiagnostics = false,
                                       bool PrecompilePreamble = false,
                                       bool CompleteTranslationUnit = true,
                                       bool CacheCodeCompletionResults = false,
