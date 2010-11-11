@@ -442,6 +442,7 @@ def am2offset : Operand<i32>,
 //
 def addrmode3 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode3", []> {
+  string EncoderMethod = "getAddrMode3OpValue";
   let PrintMethod = "printAddrMode3Operand";
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
@@ -1604,9 +1605,9 @@ def LDRSHT : AI3ldshpo<(outs GPR:$dst, GPR:$base_wb),
 // Store
 
 // Stores with truncate
-def STRH : AI3sth<(outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
-               IIC_iStore_bh_r, "strh", "\t$src, $addr",
-               [(truncstorei16 GPR:$src, addrmode3:$addr)]>;
+def STRH : AI3sth<(outs), (ins GPR:$Rt, addrmode3:$addr), StMiscFrm,
+               IIC_iStore_bh_r, "strh", "\t$Rt, $addr",
+               [(truncstorei16 GPR:$Rt, addrmode3:$addr)]>;
 
 // Store doubleword
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
