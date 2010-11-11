@@ -500,7 +500,16 @@ Function::GetPrologueByteSize ()
         {
             LineEntry line_entry;
             if (line_table->FindLineEntryByAddress(GetAddressRange().GetBaseAddress(), line_entry))
-                m_prologue_byte_size = line_entry.range.GetByteSize();
+            {
+                // We need to take the delta of the end of the first line entry
+                // as a file address and the start file address of the function
+                // in case the first line entry doesn't start at the beginning 
+                // of the function.
+                const addr_t func_start_file_addr = m_range.GetBaseAddress().GetFileAddress();
+                const addr_t line_entry_end_file_addr = line_entry.range.GetBaseAddress().GetFileAddress() + line_entry.range.GetByteSize();
+                if (line_entry_end_file_addr > func_start_file_addr)
+                    m_prologue_byte_size = line_entry_end_file_addr - func_start_file_addr;
+            }
         }
     }
     return m_prologue_byte_size;
