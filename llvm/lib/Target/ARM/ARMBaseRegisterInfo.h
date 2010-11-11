@@ -44,20 +44,6 @@ static inline bool isARMLowRegister(unsigned Reg) {
   }
 }
 
-/// isARMPushRegister - Returns true if the register is a low register (r0-r7)
-/// or a stack/pc register that we should push/pop.
-static inline bool isARMPushRegister(unsigned Reg) {
-  using namespace ARM;
-  switch (Reg) {
-    case R0:  case R1:  case R2:  case R3:
-    case R4:  case R5:  case R6:  case R7:
-    case LR:  case SP:  case PC:
-      return true;
-    default:
-      return false;
-  }
-}
-
 class ARMBaseRegisterInfo : public ARMGenRegisterInfo {
 protected:
   const ARMBaseInstrInfo &TII;

@@ -1667,9 +1667,9 @@ static void movePastCSLoadStoreOps(MachineBasicBlock &MBB,
                                    int Opc1, int Opc2, unsigned Area,
                                    const ARMSubtarget &STI) {
   while (MBBI != MBB.end() &&
-         ((MBBI->getOpcode() == Opc1) || (MBBI->getOpcode() == Opc2))) {
-
-    if (Area == 3) {
+         ((MBBI->getOpcode() == Opc1) || (MBBI->getOpcode() == Opc2)) &&
+         MBBI->getOperand(1).isFI()) {
+    if (Area != 0) {
       bool Done = false;
       unsigned Category = 0;
       switch (MBBI->getOperand(0).getReg()) {
@@ -1759,7 +1759,9 @@ emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  movePastCSLoadStoreOps(MBB, MBBI, ARM::tPUSH, 0, 1, STI);
+  // Build the new SUBri to adjust SP for integer callee-save spill area 1.
+  emitSPUpdate(isARM, MBB, MBBI, dl, TII, -GPRCS1Size);
+  movePastCSLoadStoreOps(MBB, MBBI, ARM::STRi12, ARM::t2STRi12, 1, STI);
 
   // Set FP to point to the stack slot that contains the previous FP.
   // For Darwin, FP is R7, which has now been stored in spill area 1.
@@ -1779,7 +1781,7 @@ emitPrologue(MachineFunction &MF) const {
   emitSPUpdate(isARM, MBB, MBBI, dl, TII, -GPRCS2Size);
 
   // Build the new SUBri to adjust SP for FP callee-save spill area.
-  movePastCSLoadStoreOps(MBB, MBBI, ARM::tPUSH, 0, 2, STI);
+  movePastCSLoadStoreOps(MBB, MBBI, ARM::STRi12, ARM::t2STRi12, 2, STI);
   emitSPUpdate(isARM, MBB, MBBI, dl, TII, -DPRCSSize);
 
   // Determine starting offsets of spill areas.
@@ -1873,25 +1875,11 @@ static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
 static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII,
                         const unsigned *CSRegs) {
-
-  // Integer spill area is handled with pop.
-  if (MI->getOpcode() == ARM::tRestore ||
-      MI->getOpcode() == ARM::tPOP) {
-    // The first two operands are predicates. The last two are
-    // imp-def and imp-use of SP. Check everything in between.
-    for (int i = 2, e = MI->getNumOperands() - 2; i != e; ++i)
-      if (!isCalleeSavedRegister(MI->getOperand(i).getReg(), CSRegs))
-        return false;
-      return true;
-  }
-
-  // Or if this is a fp reg spill.
-  if (MI->getOpcode() == (int)ARM::VLDRD &&
-      MI->getOperand(1).isFI() &&
-      isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs))
-    return true;
-
-  return false;
+  return ((MI->getOpcode() == (int)ARM::VLDRD ||
+           MI->getOpcode() == (int)ARM::LDRi12 ||
+           MI->getOpcode() == (int)ARM::t2LDRi12) &&
+          MI->getOperand(1).isFI() &&
+          isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs));
 }
 
 void ARMBaseRegisterInfo::
@@ -1957,8 +1945,12 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getDPRCalleeSavedAreaSize());
 
     // Move SP to start of integer callee save spill area 1.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::tPOP, 0, 2, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDRi12, ARM::t2LDRi12, 2, STI);
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getGPRCalleeSavedArea2Size());
+
+    // Move SP to SP upon entry to the function.
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDRi12, ARM::t2LDRi12, 1, STI);
+    emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getGPRCalleeSavedArea1Size());
   }
 
   if (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNdiND ||

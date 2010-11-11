@@ -211,11 +211,6 @@ public:
                                  const std::vector<CalleeSavedInfo> &CSI,
                                  const TargetRegisterInfo *TRI) const;
 
-  bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MI,
-                                   const std::vector<CalleeSavedInfo> &CSI,
-                                   const TargetRegisterInfo *TRI) const;
-
   // Branch analysis.
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
