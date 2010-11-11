@@ -1836,6 +1836,7 @@ ClangASTContext::GetNumChildren (clang_type_t clang_qual_type, bool omit_empty_b
         break;
         
     case clang::Type::Record:
+        if (ClangASTType::IsDefined (clang_qual_type))
         {
             const RecordType *record_type = cast<RecordType>(qual_type.getTypePtr());
             const RecordDecl *record_decl = record_type->getDecl();
