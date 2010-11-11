@@ -1516,45 +1516,45 @@ def LDRD : AI3ldd<(outs GPR:$dst1, GPR:$dst2), (ins addrmode3:$addr), LdMiscFrm,
                  []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed loads
-def LDR_PRE  : AI2ldwpr<(outs GPR:$dst, GPR:$base_wb),
+def LDR_PRE  : AI2ldwpr<(outs GPR:$Rt, GPR:$Rn_wb),
                      (ins addrmode2:$addr), LdFrm, IIC_iLoad_ru,
-                     "ldr", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
+                     "ldr", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
 
-def LDR_POST : AI2ldwpo<(outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base, am2offset:$offset), LdFrm, IIC_iLoad_ru,
-                     "ldr", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
+def LDR_POST : AI2ldwpo<(outs GPR:$Rt, GPR:$Rn_wb),
+                     (ins GPR:$Rn, am2offset:$offset), LdFrm, IIC_iLoad_ru,
+                     "ldr", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 
-def LDRH_PRE  : AI3ldhpr<(outs GPR:$dst, GPR:$base_wb),
+def LDRH_PRE  : AI3ldhpr<(outs GPR:$Rt, GPR:$Rn_wb),
                      (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
-                     "ldrh", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
+                     "ldrh", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
 
-def LDRH_POST : AI3ldhpo<(outs GPR:$dst, GPR:$base_wb),
-                  (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
-                    "ldrh", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
+def LDRH_POST : AI3ldhpo<(outs GPR:$Rt, GPR:$Rn_wb),
+                  (ins GPR:$Rn,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
+                    "ldrh", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 
-def LDRB_PRE  : AI2ldbpr<(outs GPR:$dst, GPR:$base_wb),
+def LDRB_PRE  : AI2ldbpr<(outs GPR:$Rt, GPR:$Rn_wb),
                      (ins addrmode2:$addr), LdFrm, IIC_iLoad_bh_ru,
-                     "ldrb", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
+                     "ldrb", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
 
-def LDRB_POST : AI2ldbpo<(outs GPR:$dst, GPR:$base_wb),
-                     (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoad_bh_ru,
-                    "ldrb", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
+def LDRB_POST : AI2ldbpo<(outs GPR:$Rt, GPR:$Rn_wb),
+                     (ins GPR:$Rn,am2offset:$offset), LdFrm, IIC_iLoad_bh_ru,
+                    "ldrb", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 
-def LDRSH_PRE : AI3ldshpr<(outs GPR:$dst, GPR:$base_wb),
+def LDRSH_PRE : AI3ldshpr<(outs GPR:$Rt, GPR:$Rn_wb),
                       (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
-                      "ldrsh", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
+                      "ldrsh", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
 
-def LDRSH_POST: AI3ldshpo<(outs GPR:$dst, GPR:$base_wb),
-                  (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
-                   "ldrsh", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
+def LDRSH_POST: AI3ldshpo<(outs GPR:$Rt, GPR:$Rn_wb),
+                  (ins GPR:$Rn,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
+                   "ldrsh", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 
-def LDRSB_PRE : AI3ldsbpr<(outs GPR:$dst, GPR:$base_wb),
+def LDRSB_PRE : AI3ldsbpr<(outs GPR:$Rt, GPR:$Rn_wb),
                       (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
-                      "ldrsb", "\t$dst, $addr!", "$addr.base = $base_wb", []>;
+                      "ldrsb", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
 
-def LDRSB_POST: AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
-                    (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_ru,
-                   "ldrsb", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
+def LDRSB_POST: AI3ldsbpo<(outs GPR:$Rt, GPR:$Rn_wb),
+                    (ins GPR:$Rn,am3offset:$offset), LdMiscFrm, IIC_iLoad_ru,
+                   "ldrsb", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 
 // For disassembly only
 def LDRD_PRE : AI3lddpr<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
