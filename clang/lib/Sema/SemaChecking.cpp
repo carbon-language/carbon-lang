@@ -2617,12 +2617,16 @@ bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
   if (Bitfield->isInvalidDecl())
     return false;
 
+  // White-list bool bitfields.
+  if (Bitfield->getType()->isBooleanType())
+    return false;
+
   Expr *OriginalInit = Init->IgnoreParenImpCasts();
 
   llvm::APSInt Width(32);
   Expr::EvalResult InitValue;
   if (!Bitfield->getBitWidth()->isIntegerConstantExpr(Width, S.Context) ||
-      !Init->Evaluate(InitValue, S.Context) ||
+      !OriginalInit->Evaluate(InitValue, S.Context) ||
       !InitValue.Val.isInt())
     return false;
 

@@ -37,3 +37,21 @@ void test3() {
   struct A d = (struct A) { 10, 0 }; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
   struct A e = { .foo = 10 };        // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
 }
+
+void test4() {
+  struct A {
+    char c : 2;
+  } a;
+
+  a.c = 0x101; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 257 to 1}}
+}
+
+void test5() {
+  struct A {
+    _Bool b : 1;
+  } a;
+
+  // Don't warn about this implicit conversion to bool, or at least
+  // don't warn about it just because it's a bitfield.
+  a.b = 100;
+}
