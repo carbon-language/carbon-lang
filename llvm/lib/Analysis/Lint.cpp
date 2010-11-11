@@ -231,10 +231,11 @@ void Lint::visitCallSite(CallSite CS) {
         // to do. Known partial overlap is not distinguished from the case
         // where nothing is known.
         if (Formal->hasNoAliasAttr() && Actual->getType()->isPointerTy())
-          for (CallSite::arg_iterator BI = CS.arg_begin(); BI != AE; ++BI) {
-            Assert1(AI == BI || AA->alias(*AI, *BI) != AliasAnalysis::MustAlias,
+          for (CallSite::arg_iterator BI = CS.arg_begin(); BI != AE; ++BI)
+            Assert1(AI == BI ||
+                    !(*BI)->getType()->isPointerTy() ||
+                    AA->alias(*AI, *BI) != AliasAnalysis::MustAlias,
                     "Unusual: noalias argument aliases another argument", &I);
-          }
 
         // Check that an sret argument points to valid memory.
         if (Formal->hasStructRetAttr() && Actual->getType()->isPointerTy()) {
