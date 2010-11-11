@@ -16,11 +16,21 @@
 // which automatically provides functionality for the entire suite of client
 // APIs.
 //
-// This API represents memory as a (Pointer, Size) pair.  The Pointer component
-// specifies the base memory address of the region, the Size specifies how large
-// of an area is being queried, or UnknownSize if the size is not known.
-// Pointers that point to two completely different objects in memory never
-// alias, regardless of the value of the Size component.
+// This API identifies memory regions with the Location class. The pointer
+// component specifies the base memory address of the region. The Size specifies
+// the maximum size (in address units) of the memory region, or UnknownSize if
+// the size is not known. The TBAA tag identifies the "type" of the memory
+// reference; see the TypeBasedAliasAnalysis class for details.
+//
+// Some non-obvious details include:
+//  - Pointers that point to two completely different objects in memory never
+//    alias, regardless of the value of the Size component.
+//  - NoAlias doesn't imply inequal pointers. The most obvious example of this
+//    is two pointers to constant memory. Even if they are equal, constant
+//    memory is never stored to, so there will never be any dependencies.
+//    In this and other situations, the pointers may be both NoAlias and
+//    MustAlias at the same time. The current API can only return one result,
+//    though this is rarely a problem in practice.
 //
 //===----------------------------------------------------------------------===//
 
