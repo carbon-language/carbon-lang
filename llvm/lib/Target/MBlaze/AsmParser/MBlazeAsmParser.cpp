@@ -446,14 +446,14 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   if (!Op)
     Op = ParseImmediate();
 
-  // Move past the parsed token in the token stream
-  getLexer().Lex();
-
   // If the token could not be parsed then fail
   if (!Op) {
     Error(Parser.getTok().getLoc(), "unknown operand");
     return 0;
   }
+
+  // Move past the parsed token in the token stream
+  getLexer().Lex();
 
   // Push the parsed operand into the list of operands
   Operands.push_back(Op);
@@ -472,7 +472,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     return false;
 
   // Parse the first operand
-  if (ParseOperand(Operands))
+  if (!ParseOperand(Operands))
     return true;
 
   while (getLexer().isNot(AsmToken::EndOfStatement) &&
@@ -485,7 +485,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     getLexer().Lex();
 
     // Parse the next operand
-    if (ParseOperand(Operands))
+    if (!ParseOperand(Operands))
       return true;
   }
 
