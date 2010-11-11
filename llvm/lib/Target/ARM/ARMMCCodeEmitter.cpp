@@ -94,6 +94,10 @@ public:
     case ARM_AM::ib: return 3;
     }
   }
+  /// getAddrMode3OffsetOpValue - Return encoding for am3offset operands.
+  uint32_t getAddrMode3OffsetOpValue(const MCInst &MI, unsigned OpIdx,
+                                     SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getAddrMode3OpValue - Return encoding for addrmode3 operands.
   uint32_t getAddrMode3OpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups) const;
@@ -316,6 +320,25 @@ getLdStSORegOpValue(const MCInst &MI, unsigned OpIdx,
   if (isAdd)
     Binary |= 1 << 12;
   return Binary;
+}
+
+uint32_t ARMMCCodeEmitter::
+getAddrMode3OffsetOpValue(const MCInst &MI, unsigned OpIdx,
+                          SmallVectorImpl<MCFixup> &Fixups) const {
+  // {9}      1 == imm8, 0 == Rm
+  // {8}      isAdd
+  // {7-4}    imm7_4/zero
+  // {3-0}    imm3_0/Rm
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx+1);
+  unsigned Imm = MO1.getImm();
+  bool isAdd = ARM_AM::getAM3Op(Imm) == ARM_AM::add;
+  bool isImm = MO.getReg() == 0;
+  uint32_t Imm8 = ARM_AM::getAM3Offset(Imm);
+  // if reg +/- reg, Rm will be non-zero. Otherwise, we have reg +/- imm8
+  if (!isImm)
+    Imm8 = getARMRegisterNumbering(MO.getReg());
+  return Imm8 | (isAdd << 8) | (isImm << 9);
 }
 
 uint32_t ARMMCCodeEmitter::

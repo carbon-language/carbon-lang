@@ -202,6 +202,8 @@ namespace {
       Binary |= (Reg << 13);
       return Binary;
     }
+    uint32_t getAddrMode3OffsetOpValue(const MachineInstr &MI, unsigned OpIdx)
+      const { return 0;}
     uint32_t getAddrMode3OpValue(const MachineInstr &MI, unsigned Op) const
       { return 0; }
     uint32_t getAddrMode5OpValue(const MachineInstr &MI, unsigned Op) const {

@@ -886,14 +886,20 @@ class AI3ldshpo<dag oops, dag iops, Format f, InstrItinClass itin,
                 string opc, string asm, string cstr, list<dag> pattern>
   : I<oops, iops, AddrMode3, Size4Bytes, IndexModePost, f, itin,
       opc, asm, cstr,pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 1; // H bit
-  let Inst{6}     = 1; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{24}    = 0; // P bit
+  bits<10> offset;
+  bits<4> Rt;
+  bits<4> Rn;
   let Inst{27-25} = 0b000;
+  let Inst{24}    = 0;            // P bit
+  let Inst{23}    = offset{8};    // U bit
+  let Inst{22}    = offset{9};    // 1 == imm8, 0 == Rm
+  let Inst{21}    = 0;            // W bit
+  let Inst{20}    = 1;            // L bit
+  let Inst{19-16} = Rn;           // Rn
+  let Inst{15-12} = Rt;           // Rt
+  let Inst{11-8}  = offset{7-4};  // imm7_4/zero
+  let Inst{7-4}   = 0b1111;
+  let Inst{3-0}   = offset{3-0};  // imm3_0/Rm
 }
 class AI3ldsbpo<dag oops, dag iops, Format f, InstrItinClass itin,
                 string opc, string asm, string cstr, list<dag> pattern>
