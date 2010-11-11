@@ -176,6 +176,8 @@ public:
                                       unsigned EncodedValue) const;
   unsigned NEONThumb2LoadStorePostEncoder(const MCInst &MI,
                                       unsigned EncodedValue) const;
+  unsigned NEONThumb2DupPostEncoder(const MCInst &MI,
+                                      unsigned EncodedValue) const;
 
   void EmitByte(unsigned char C, raw_ostream &OS) const {
     OS << (char)C;
@@ -233,6 +235,21 @@ unsigned ARMMCCodeEmitter::NEONThumb2LoadStorePostEncoder(const MCInst &MI,
   
   return EncodedValue;
 }
+
+/// NEONThumb2DupPostEncoder - Post-process encoded NEON vdup
+/// instructions, and rewrite them to their Thumb2 form if we are currently in 
+/// Thumb2 mode.
+unsigned ARMMCCodeEmitter::NEONThumb2DupPostEncoder(const MCInst &MI,
+                                                 unsigned EncodedValue) const {
+  const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+  if (Subtarget.isThumb2()) {
+    EncodedValue &= 0x00FFFFFF;
+    EncodedValue |= 0xEE000000;
+  }
+  
+  return EncodedValue;
+}
+
 
 
 /// getMachineOpValue - Return binary encoding of operand. If the machine

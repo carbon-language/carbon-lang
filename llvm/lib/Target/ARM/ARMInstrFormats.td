@@ -2046,6 +2046,8 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
   
+  string PostEncoderMethod = "NEONThumb2DupPostEncoder";
+  
   bits<5> V;
   bits<4> R;
   bits<4> p;
