@@ -208,8 +208,10 @@ ARMBaseInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
+  MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, get(ARM::tPUSH));
+  AddDefaultPred(MIB);
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
     bool isKill = true;
 
     // Add the callee-saved register as live-in unless it's LR and
@@ -225,14 +227,57 @@ ARMBaseInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     if (isKill)
       MBB.addLiveIn(Reg);
 
-    // Insert the spill to the stack frame. The register is killed at the spill
-    //
-    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    storeRegToStackSlot(MBB, MI, Reg, isKill,
-                        CSI[i].getFrameIdx(), RC, TRI);
+    if (!isARMPushRegister(Reg)) {
+      const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+      storeRegToStackSlot(MBB, MI, Reg, isKill,
+                          CSI[i-1].getFrameIdx(), RC, TRI);
+    } else
+      MIB.addReg(Reg, getKillRegState(isKill));
   }
   return true;
 }
+
+bool
+ARMBaseInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator MI,
+                                        const std::vector<CalleeSavedInfo> &CSI,
+                                        const TargetRegisterInfo *TRI) const {
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  if (CSI.empty())
+    return false;
+
+  bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
+  DebugLoc DL = MI->getDebugLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(ARM::tPOP));
+  AddDefaultPred(MIB);
+
+  bool NumRegs = false;
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    if (Reg == ARM::LR && !isVarArg) {
+      Reg = ARM::PC;
+      (*MIB).setDesc(get(ARM::tPOP_RET));
+      MI = MBB.erase(MI);
+    }
+
+    if (!isARMPushRegister(Reg)) {
+      const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+      loadRegFromStackSlot(MBB, MI, Reg, CSI[i-1].getFrameIdx(), RC, TRI);
+    } else
+      MIB.addReg(Reg, getDefRegState(true));
+    NumRegs = true;
+  }
+
+  // It's illegal to emit pop instruction without operands.
+  if (NumRegs)
+    MBB.insert(MI, &*MIB);
+  else
+    MF.DeleteMachineInstr(MIB);
+
+  return true;
+}
+
 
 // Branch analysis.
 bool
@@ -2046,7 +2091,7 @@ int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   case ARM::VLDMQ:
   case ARM::VSTMQ:
     return 2;
-  }  
+  }
 }
 
 bool ARMBaseInstrInfo::
