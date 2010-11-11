@@ -89,6 +89,13 @@ set(C_INCLUDE_DIRS "" CACHE STRING
 set(LLVM_TARGET_ARCH "host"
   CACHE STRING "Set target to use for LLVM JIT or use \"host\" for automatic detection.")
 
+set(LIT_ARGS_DEFAULT "-sv")
+if (MSVC OR XCODE)
+  set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+endif()
+set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}"
+    CACHE STRING "Default options for lit")
+
 option(LLVM_ENABLE_THREADS "Use threads if available." ON)
 
 if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )

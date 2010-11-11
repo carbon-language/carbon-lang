@@ -325,6 +325,13 @@
   <dd>Full path to a native TableGen executable (usually
     named <i>tblgen</i>). This is intented for cross-compiling: if the
     user sets this variable, no native TableGen will be created.</dd>
+
+  <dt><b>LLVM_LIT_ARGS</b>:STRING</dt>
+  <dd>Arguments given to lit.
+    <tt>make check</tt> and <tt>make clang-test</tt> are affected.
+    By default, <tt>&quot;-sv --no-progress-bar&quot;</tt>
+    on Visual C++ and Xcode,
+    <tt>&quot;-sv&quot;</tt> on others.</dd>
 </dl>
 
 </div>

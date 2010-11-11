@@ -24,6 +24,9 @@ endif()
 
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
+  set(LIT_ARGS "${LLVM_LIT_ARGS}")
+  separate_arguments(LIT_ARGS)
+
   get_directory_property(DEFINITIONS COMPILE_DEFINITIONS)
   foreach(DEF ${DEFINITIONS})
     set(DEFS "${DEFS} -D${DEF}")
@@ -78,7 +81,7 @@ if(PYTHONINTERP_FOUND)
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 --param llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                 --param llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
-                -sv
+                ${LIT_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 DEPENDS
                 COMMENT "Running LLVM regression tests")
