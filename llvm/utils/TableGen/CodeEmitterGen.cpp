@@ -230,6 +230,10 @@ void CodeEmitterGen::run(raw_ostream &o) {
       }
     }
 
+    if (R->getValue("PostEncoderMethod"))
+      Case += "      Value = " +
+              R->getValueAsString("PostEncoderMethod") + "(MI, Value);\n";
+
     std::vector<std::string> &InstList = CaseMap[Case];
     InstList.push_back(InstName);
   }
