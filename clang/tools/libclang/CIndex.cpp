@@ -330,7 +330,6 @@ public:
 
   // Expression visitors
   bool VisitDeclRefExpr(DeclRefExpr *E);
-  bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   bool VisitExplicitCastExpr(ExplicitCastExpr *E);
@@ -362,6 +361,7 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(BinaryOperator)
   DATA_RECURSIVE_VISIT(MemberExpr)
   DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
+  DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
   
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
@@ -1596,20 +1596,6 @@ bool CursorVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
   return false;
 }
 
-bool CursorVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
-  if (Visit(MakeCXCursor(E->getArg(0), StmtParent, TU)))
-    return true;
-  
-  if (Visit(MakeCXCursor(E->getCallee(), StmtParent, TU)))
-    return true;
-  
-  for (unsigned I = 1, N = E->getNumArgs(); I != N; ++I)
-    if (Visit(MakeCXCursor(E->getArg(I), StmtParent, TU)))
-      return true;
-  
-  return false;
-}
-
 bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
   if (D->isDefinition()) {
     for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
@@ -1992,6 +1978,18 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
       WL.push_back(StmtVisit(M->getBase(), C));
       break;
     }
+    case Stmt::CXXOperatorCallExprClass: {
+      CXXOperatorCallExpr *CE = cast<CXXOperatorCallExpr>(S);
+      // Note that we enqueue things in reverse order so that
+      // they are visited correctly by the DFS.
+
+      for (unsigned I = 1, N = CE->getNumArgs(); I != N; ++I)
+        WL.push_back(StmtVisit(CE->getArg(N-I), C));
+
+      WL.push_back(StmtVisit(CE->getCallee(), C));
+      WL.push_back(StmtVisit(CE->getArg(0), C));
+      break;
+    }
   }
 }
 
@@ -2016,6 +2014,9 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
       case VisitorJob::StmtVisitKind: {
         // Update the current cursor.
         Stmt *S = cast<StmtVisit>(LI).get();
+        if (!S)
+          continue;
+
         CXCursor Cursor = MakeCXCursor(S, StmtParent, TU);
         
         switch (S->getStmtClass()) {
@@ -2027,6 +2028,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           }
           case Stmt::CallExprClass:
           case Stmt::CXXMemberCallExprClass:
+          case Stmt::CXXOperatorCallExprClass:
           case Stmt::ParenExprClass:
           case Stmt::MemberExprClass:
           case Stmt::BinaryOperatorClass: {
