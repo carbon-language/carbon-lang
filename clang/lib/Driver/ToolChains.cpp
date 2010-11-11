@@ -1198,6 +1198,7 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
 enum LinuxDistro {
   DebianLenny,
   DebianSqueeze,
+  Exherbo,
   Fedora13,
   Fedora14,
   OpenSuse11_3,
@@ -1228,8 +1229,12 @@ static bool IsDebianBased(enum LinuxDistro Distro) {
 }
 
 static bool HasMultilib(llvm::Triple::ArchType Arch, enum LinuxDistro Distro) {
-  if (Arch == llvm::Triple::x86_64)
+  if (Arch == llvm::Triple::x86_64) {
+    if (Distro == Exherbo && !llvm::sys::Path("/usr/lib32/libc.so").exists())
+      return false;
+
     return true;
+  }
   if (Arch == llvm::Triple::x86 && IsDebianBased(Distro))
     return true;
   return false;
@@ -1284,6 +1289,9 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
+  if (llvm::sys::Path("/etc/exherbo-release").exists())
+    return Exherbo;
+
   return UnknownDistro;
 }
 
@@ -1317,6 +1325,8 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   } else if (Arch == llvm::Triple::x86_64) {
     if (llvm::sys::Path("/usr/lib/gcc/x86_64-linux-gnu").exists())
       GccTriple = "x86_64-linux-gnu";
+    else if (llvm::sys::Path("/usr/lib/gcc/x86_64-pc-linux-gnu").exists())
+      GccTriple = "x86_64-pc-linux-gnu";
     else if (llvm::sys::Path("/usr/lib/gcc/x86_64-redhat-linux").exists())
       GccTriple = "x86_64-redhat-linux";
     else if (llvm::sys::Path("/usr/lib64/gcc/x86_64-suse-linux").exists())
