@@ -130,6 +130,12 @@ public:
     }
   };
 
+  /// getLocation - Fill in Loc with information about the memory reference by
+  /// the given instruction.
+  Location getLocation(const LoadInst *LI);
+  Location getLocation(const StoreInst *SI);
+  Location getLocation(const VAArgInst *VI);
+
   /// Alias analysis result - Either we know for sure that it does not alias, we
   /// know for sure it must alias, or we don't know anything: The two pointers
   /// _might_ alias.  This enum is designed so you can do things like:

@@ -115,9 +115,7 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
       Loc = AliasAnalysis::Location();
       return AliasAnalysis::ModRef;
     }
-    Loc = AliasAnalysis::Location(LI->getPointerOperand(),
-                                  AA->getTypeStoreSize(LI->getType()),
-                                  LI->getMetadata(LLVMContext::MD_tbaa));
+    Loc = AA->getLocation(LI);
     return AliasAnalysis::Ref;
   }
 
@@ -126,17 +124,12 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
       Loc = AliasAnalysis::Location();
       return AliasAnalysis::ModRef;
     }
-    Loc = AliasAnalysis::Location(SI->getPointerOperand(),
-                                  AA->getTypeStoreSize(SI->getValueOperand()
-                                                         ->getType()),
-                                  SI->getMetadata(LLVMContext::MD_tbaa));
+    Loc = AA->getLocation(SI);
     return AliasAnalysis::Mod;
   }
 
   if (const VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
-    Loc = AliasAnalysis::Location(V->getPointerOperand(),
-                                  AA->getTypeStoreSize(V->getType()),
-                                  V->getMetadata(LLVMContext::MD_tbaa));
+    Loc = AA->getLocation(V);
     return AliasAnalysis::ModRef;
   }
 
@@ -288,10 +281,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // Values depend on loads if the pointers are must aliased.  This means that
     // a load depends on another must aliased load from the same value.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-      Value *Pointer = LI->getPointerOperand();
-      uint64_t PointerSize = AA->getTypeStoreSize(LI->getType());
-      MDNode *TBAATag = LI->getMetadata(LLVMContext::MD_tbaa);
-      AliasAnalysis::Location LoadLoc(Pointer, PointerSize, TBAATag);
+      AliasAnalysis::Location LoadLoc = AA->getLocation(LI);
       
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R = AA->alias(LoadLoc, MemLoc);
@@ -324,14 +314,10 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
 
       // Ok, this store might clobber the query pointer.  Check to see if it is
       // a must alias: in this case, we want to return this as a def.
-      Value *Pointer = SI->getPointerOperand();
-      uint64_t PointerSize = AA->getTypeStoreSize(SI->getOperand(0)->getType());
-      MDNode *TBAATag = SI->getMetadata(LLVMContext::MD_tbaa);
+      AliasAnalysis::Location StoreLoc = AA->getLocation(SI);
       
       // If we found a pointer, check if it could be the same as our pointer.
-      AliasAnalysis::AliasResult R =
-        AA->alias(AliasAnalysis::Location(Pointer, PointerSize, TBAATag),
-                  MemLoc);
+      AliasAnalysis::AliasResult R = AA->alias(StoreLoc, MemLoc);
       
       if (R == AliasAnalysis::NoAlias)
         continue;

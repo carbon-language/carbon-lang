@@ -165,27 +165,20 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore non-volatile loads from local memory.
         if (!LI->isVolatile()) {
-          AliasAnalysis::Location Loc(LI->getPointerOperand(),
-                                        AA->getTypeStoreSize(LI->getType()),
-                                        LI->getMetadata(LLVMContext::MD_tbaa));
+          AliasAnalysis::Location Loc = AA->getLocation(LI);
           if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
         }
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Ignore non-volatile stores to local memory.
         if (!SI->isVolatile()) {
-          const Type *StoredType = SI->getValueOperand()->getType();
-          AliasAnalysis::Location Loc(SI->getPointerOperand(),
-                                      AA->getTypeStoreSize(StoredType),
-                                      SI->getMetadata(LLVMContext::MD_tbaa));
+          AliasAnalysis::Location Loc = AA->getLocation(SI);
           if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
         }
       } else if (VAArgInst *VI = dyn_cast<VAArgInst>(I)) {
         // Ignore vaargs on local memory.
-        AliasAnalysis::Location Loc(VI->getPointerOperand(),
-                                    AliasAnalysis::UnknownSize,
-                                    VI->getMetadata(LLVMContext::MD_tbaa));
+        AliasAnalysis::Location Loc = AA->getLocation(VI);
         if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
           continue;
       }

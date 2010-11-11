@@ -433,10 +433,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
     LoadInst *Load = Loads[i];
     BasicBlock *BB = Load->getParent();
 
-    AliasAnalysis::Location Loc(Load->getPointerOperand(),
-                                AA.getTypeStoreSize(Load->getType()),
-                                Load->getMetadata(LLVMContext::MD_tbaa));
-
+    AliasAnalysis::Location Loc = AA.getLocation(Load);
     if (AA.canInstructionRangeModify(BB->front(), *Load, Loc))
       return false;  // Pointer is invalidated!
 

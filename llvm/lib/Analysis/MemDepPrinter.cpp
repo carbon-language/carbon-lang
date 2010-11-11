@@ -102,22 +102,15 @@ bool MemDepPrinter::runOnFunction(Function &F) {
       SmallVector<NonLocalDepResult, 4> NLDI;
       if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
         // FIXME: Volatile is not handled properly here.
-        AliasAnalysis::Location Loc(LI->getPointerOperand(),
-                                    AA.getTypeStoreSize(LI->getType()),
-                                    LI->getMetadata(LLVMContext::MD_tbaa));
+        AliasAnalysis::Location Loc = AA.getLocation(LI);
         MDA.getNonLocalPointerDependency(Loc, !LI->isVolatile(),
                                          LI->getParent(), NLDI);
       } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
         // FIXME: Volatile is not handled properly here.
-        AliasAnalysis::Location Loc(SI->getPointerOperand(),
-                                    AA.getTypeStoreSize(SI->getValueOperand()
-                                                          ->getType()),
-                                    SI->getMetadata(LLVMContext::MD_tbaa));
+        AliasAnalysis::Location Loc = AA.getLocation(SI);
         MDA.getNonLocalPointerDependency(Loc, false, SI->getParent(), NLDI);
       } else if (VAArgInst *VI = dyn_cast<VAArgInst>(Inst)) {
-        AliasAnalysis::Location Loc(SI->getPointerOperand(),
-                                    AliasAnalysis::UnknownSize,
-                                    SI->getMetadata(LLVMContext::MD_tbaa));
+        AliasAnalysis::Location Loc = AA.getLocation(VI);
         MDA.getNonLocalPointerDependency(Loc, false, VI->getParent(), NLDI);
       } else {
         llvm_unreachable("Unknown memory instruction!");

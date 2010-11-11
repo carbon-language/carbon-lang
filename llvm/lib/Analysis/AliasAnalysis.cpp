@@ -194,6 +194,24 @@ AliasAnalysis::getModRefBehavior(const Function *F) {
 // AliasAnalysis non-virtual helper method implementation
 //===----------------------------------------------------------------------===//
 
+AliasAnalysis::Location AliasAnalysis::getLocation(const LoadInst *LI) {
+  return Location(LI->getPointerOperand(),
+                  getTypeStoreSize(LI->getType()),
+                  LI->getMetadata(LLVMContext::MD_tbaa));
+}
+
+AliasAnalysis::Location AliasAnalysis::getLocation(const StoreInst *SI) {
+  return Location(SI->getPointerOperand(),
+                  getTypeStoreSize(SI->getValueOperand()->getType()),
+                  SI->getMetadata(LLVMContext::MD_tbaa));
+}
+
+AliasAnalysis::Location AliasAnalysis::getLocation(const VAArgInst *VI) {
+  return Location(VI->getPointerOperand(),
+                  UnknownSize,
+                  VI->getMetadata(LLVMContext::MD_tbaa));
+}
+
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
   // Be conservative in the face of volatile.
@@ -202,10 +220,7 @@ AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
 
   // If the load address doesn't alias the given address, it doesn't read
   // or write the specified memory.
-  if (!alias(Location(L->getOperand(0),
-                      getTypeStoreSize(L->getType()),
-                      L->getMetadata(LLVMContext::MD_tbaa)),
-             Loc))
+  if (!alias(getLocation(L), Loc))
     return NoModRef;
 
   // Otherwise, a load just reads.
@@ -220,10 +235,7 @@ AliasAnalysis::getModRefInfo(const StoreInst *S, const Location &Loc) {
 
   // If the store address cannot alias the pointer in question, then the
   // specified memory cannot be modified by the store.
-  if (!alias(Location(S->getOperand(1),
-                      getTypeStoreSize(S->getOperand(0)->getType()),
-                      S->getMetadata(LLVMContext::MD_tbaa)),
-             Loc))
+  if (!alias(getLocation(S), Loc))
     return NoModRef;
 
   // If the pointer is a pointer to constant memory, then it could not have been
@@ -239,10 +251,7 @@ AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const VAArgInst *V, const Location &Loc) {
   // If the va_arg address cannot alias the pointer in question, then the
   // specified memory cannot be accessed by the va_arg.
-  if (!alias(Location(V->getOperand(0),
-                      UnknownSize,
-                      V->getMetadata(LLVMContext::MD_tbaa)),
-             Loc))
+  if (!alias(getLocation(V), Loc))
     return NoModRef;
 
   // If the pointer is a pointer to constant memory, then it could not have been
