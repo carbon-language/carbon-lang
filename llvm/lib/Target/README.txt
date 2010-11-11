@@ -1984,3 +1984,31 @@ void check_c28 () {
 }
 
 //===---------------------------------------------------------------------===//
+
+We compile this:
+
+int foo(int a) { return (a & (~15)) / 16; }
+
+Into:
+
+define i32 @foo(i32 %a) nounwind readnone ssp {
+entry:
+  %and = and i32 %a, -16
+  %div = sdiv i32 %and, 16
+  ret i32 %div
+}
+
+but this code (X & -A)/A is X >> log2(A) when A is a power of 2, so this case
+should be instcombined into just "a >> 4".
+
+We do get this at the codegen level, so something knows about it, but 
+instcombine should catch it earlier:
+
+_foo:                                   ## @foo
+## BB#0:                                ## %entry
+	movl	%edi, %eax
+	sarl	$4, %eax
+	ret
+
+//===---------------------------------------------------------------------===//
+
