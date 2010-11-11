@@ -39,7 +39,6 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
@@ -440,8 +439,6 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   SmallPtrSet<BasicBlock*, 16> TranspBlocks;
 
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  TargetData *TD = getAnalysisIfAvailable<TargetData>();
-  if (!TD) return false; // Without TargetData, assume the worst.
 
   for (unsigned i = 0, e = Loads.size(); i != e; ++i) {
     // Check to see if the load is invalidated from the start of the block to
@@ -449,11 +446,11 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
     LoadInst *Load = Loads[i];
     BasicBlock *BB = Load->getParent();
 
-    const PointerType *LoadTy =
-      cast<PointerType>(Load->getPointerOperand()->getType());
-    uint64_t LoadSize = TD->getTypeStoreSize(LoadTy->getElementType());
+    AliasAnalysis::Location Loc(Load->getPointerOperand(),
+                                AA.getTypeStoreSize(Load->getType()),
+                                Load->getMetadata(LLVMContext::MD_tbaa));
 
-    if (AA.canInstructionRangeModify(BB->front(), *Load, Arg, LoadSize))
+    if (AA.canInstructionRangeModify(BB->front(), *Load, Loc))
       return false;  // Pointer is invalidated!
 
     // Now check every path from the entry block to the load for transparency.
@@ -464,7 +461,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
       for (idf_ext_iterator<BasicBlock*, SmallPtrSet<BasicBlock*, 16> >
              I = idf_ext_begin(P, TranspBlocks),
              E = idf_ext_end(P, TranspBlocks); I != E; ++I)
-        if (AA.canBasicBlockModify(**I, Arg, LoadSize))
+        if (AA.canBasicBlockModify(**I, Loc))
           return false;
     }
   }
@@ -700,6 +697,9 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
           // of the previous load.
           LoadInst *newLoad = new LoadInst(V, V->getName()+".val", Call);
           newLoad->setAlignment(OrigLoad->getAlignment());
+          // Transfer the TBAA info too.
+          newLoad->setMetadata(LLVMContext::MD_tbaa,
+                               OrigLoad->getMetadata(LLVMContext::MD_tbaa));
           Args.push_back(newLoad);
           AA.copyValue(OrigLoad, Args.back());
         }
