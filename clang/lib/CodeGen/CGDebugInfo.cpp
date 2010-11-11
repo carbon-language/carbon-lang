@@ -153,12 +153,13 @@ CGDebugInfo::getClassName(RecordDecl *RD) {
 
 /// getOrCreateFile - Get the file debug info descriptor for the input location.
 llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
-  if (!Loc.isValid())
-    // If Location is not valid then use main input file.
-    return DebugFactory.CreateFile(TheCU.getFilename(), TheCU.getDirectory(),
-                                   TheCU);
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+
+  if (PLoc.isInvalid())
+    // If the location is not valid then use main input file.
+    return DebugFactory.CreateFile(TheCU.getFilename(), TheCU.getDirectory(),
+                                   TheCU);
 
   // Cache the results.
   const char *fname = PLoc.getFilename();
@@ -191,7 +192,7 @@ unsigned CGDebugInfo::getLineNumber(SourceLocation Loc) {
   assert (CurLoc.isValid() && "Invalid current location!");
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc.isValid() ? Loc : CurLoc);
-  return PLoc.getLine();
+  return PLoc.isValid()? PLoc.getLine() : 0;
 }
 
 /// getColumnNumber - Get column number for the location. If location is 
@@ -200,7 +201,7 @@ unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc) {
   assert (CurLoc.isValid() && "Invalid current location!");
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc.isValid() ? Loc : CurLoc);
-  return PLoc.getColumn();
+  return PLoc.isValid()? PLoc.getColumn() : 0;
 }
 
 llvm::StringRef CGDebugInfo::getCurrentDirname() {
@@ -1653,7 +1654,8 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
   PresumedLoc PCLoc = SM.getPresumedLoc(CurLoc);
   PresumedLoc PPLoc = SM.getPresumedLoc(PrevLoc);
 
-  if (!strcmp(PPLoc.getFilename(), PCLoc.getFilename()))
+  if (PCLoc.isInvalid() || PPLoc.isInvalid() ||
+      !strcmp(PPLoc.getFilename(), PCLoc.getFilename()))
     return;
 
   // If #line directive stack is empty then we are entering a new scope.
