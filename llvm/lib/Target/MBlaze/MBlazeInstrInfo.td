@@ -606,8 +606,8 @@ let rd=0x0, Form=FCRR in {
                 "wic       $a, $b", [], IIAlu>;
 }
 
-def BRK  :  Branch<0x26, 0x0C, 0x000, "brk    ">;
-def BRKI : BranchI<0x2E, 0x0C, "brki   ">;
+def BRK  :  BranchL<0x26, 0x0C, 0x000, "brk    ">;
+def BRKI : BranchLI<0x2E, 0x0C, "brki   ">;
 
 def IMM : MBlazeInst<0x2C, FCCI, (outs), (ins simm16:$imm),
                      "imm       $imm", [], IIAlu>;
