@@ -168,7 +168,7 @@ ThreadPlanTestCondition::WillStop ()
 }
 
 StateType
-ThreadPlanTestCondition::RunState ()
+ThreadPlanTestCondition::GetPlanRunState ()
 {
     return eStateRunning;
 }

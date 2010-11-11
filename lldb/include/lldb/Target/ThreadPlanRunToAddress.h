@@ -59,7 +59,7 @@ public:
     SetStopOthers (bool new_value);
     
     virtual lldb::StateType
-    RunState ();
+    GetPlanRunState ();
 
     virtual bool
     WillStop ();

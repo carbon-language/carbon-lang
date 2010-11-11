@@ -330,7 +330,7 @@ ThreadPlanCallFunction::SetStopOthers (bool new_value)
 }
 
 StateType
-ThreadPlanCallFunction::RunState ()
+ThreadPlanCallFunction::GetPlanRunState ()
 {
     return eStateRunning;
 }

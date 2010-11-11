@@ -50,7 +50,7 @@ public:
 
 
     virtual lldb::StateType
-    RunState ();
+    GetPlanRunState ();
 
     virtual bool
     ShouldStop (Event *event_ptr);

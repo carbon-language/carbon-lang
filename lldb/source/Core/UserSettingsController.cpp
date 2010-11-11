@@ -1010,7 +1010,7 @@ UserSettingsController::GetTypeString (lldb::SettableVariableType var_type)
     {
         case lldb::eSetVarTypeInt:
             return "int";
-        case lldb::eSetVarTypeBool:
+        case lldb::eSetVarTypeBoolean:
             return "boolean";
         case lldb::eSetVarTypeString:
             return "string";
@@ -1520,7 +1520,7 @@ UserSettingsController::CompleteSettingsValue (lldb::UserSettingsControllerSP ro
     if (entry == NULL)
         return 0;
 
-    if (entry->var_type == lldb::eSetVarTypeBool)
+    if (entry->var_type == lldb::eSetVarTypeBoolean)
         return UserSettingsController::BooleanMatches (partial_value, word_complete, matches);
     else if (entry->var_type == lldb::eSetVarTypeEnum)
         return UserSettingsController::EnumMatches (partial_value, entry->enum_values, word_complete, matches);

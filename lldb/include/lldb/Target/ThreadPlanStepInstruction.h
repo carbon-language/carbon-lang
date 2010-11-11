@@ -30,7 +30,7 @@ public:
     virtual bool PlanExplainsStop ();
     virtual bool ShouldStop (Event *event_ptr);
     virtual bool StopOthers ();
-    virtual lldb::StateType RunState ();
+    virtual lldb::StateType GetPlanRunState ();
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
 

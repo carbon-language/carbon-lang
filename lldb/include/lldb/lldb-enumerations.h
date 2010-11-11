@@ -486,7 +486,7 @@ typedef enum AccessType
 typedef enum SettableVariableType
 {
     eSetVarTypeInt,
-    eSetVarTypeBool,
+    eSetVarTypeBoolean,
     eSetVarTypeString,
     eSetVarTypeArray,
     eSetVarTypeDictionary,

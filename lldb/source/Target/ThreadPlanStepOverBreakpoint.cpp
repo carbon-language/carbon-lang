@@ -77,7 +77,7 @@ ThreadPlanStepOverBreakpoint::StopOthers ()
 }
 
 StateType
-ThreadPlanStepOverBreakpoint::RunState ()
+ThreadPlanStepOverBreakpoint::GetPlanRunState ()
 {
     return eStateStepping;
 }

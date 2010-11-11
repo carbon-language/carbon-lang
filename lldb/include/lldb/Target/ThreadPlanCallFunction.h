@@ -58,7 +58,7 @@ public:
     SetStopOthers (bool new_value);
 
     virtual lldb::StateType
-    RunState ();
+    GetPlanRunState ();
 
     virtual void
     DidPush ();

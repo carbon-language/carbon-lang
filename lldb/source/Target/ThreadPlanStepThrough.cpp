@@ -82,7 +82,7 @@ ThreadPlanStepThrough::StopOthers ()
 }
 
 StateType
-ThreadPlanStepThrough::RunState ()
+ThreadPlanStepThrough::GetPlanRunState ()
 {
     return eStateStepping;
 }

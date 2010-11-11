@@ -94,7 +94,7 @@ AppleThreadPlanStepThroughObjCTrampoline::PlanExplainsStop ()
 }
 
 lldb::StateType
-AppleThreadPlanStepThroughObjCTrampoline::RunState ()
+AppleThreadPlanStepThroughObjCTrampoline::GetPlanRunState ()
 {
     return eStateRunning;
 }

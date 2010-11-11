@@ -20,9 +20,6 @@
 
 #define LLDB_THREAD_MAX_STOP_EXC_DATA 8
 
-// I forward declare these here so I don't have to #include ThreadPlan, so in turn I
-// can use Thread.h in ThreadPlan.h.
-
 namespace lldb_private {
 
 class ThreadInstanceSettings : public InstanceSettings
@@ -64,6 +61,14 @@ public:
 
     static const ConstString &
     StepAvoidRegexpVarName ();
+    
+    bool
+    GetTraceEnabledState()
+    {
+        return m_trace_enabled;
+    }
+    static const ConstString &
+    GetTraceThreadVarName ();
 
 protected:
 
@@ -77,6 +82,7 @@ protected:
 private:
 
     std::auto_ptr<RegularExpression> m_avoid_regexp_ap;
+    bool m_trace_enabled;
 };
 
 class Thread :
@@ -589,6 +595,12 @@ public:
     //------------------------------------------------------------------
     void
     DumpThreadPlans (Stream *s) const;
+    
+    void
+    EnableTracer (bool value, bool single_step);
+    
+    void
+    SetTracer (lldb::ThreadPlanTracerSP &tracer_sp);
     
     //------------------------------------------------------------------
     /// The regular expression returned determines symbols that this

@@ -41,7 +41,7 @@ public:
     virtual bool ShouldStop (Event *event_ptr);
     virtual lldb::Vote ShouldReportStop (Event *event_ptr);
     virtual bool StopOthers ();
-    virtual lldb::StateType RunState ();
+    virtual lldb::StateType GetPlanRunState ();
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
     virtual void DidPush ();

@@ -226,7 +226,7 @@ ThreadPlanStepRange::WillStop ()
 }
 
 StateType
-ThreadPlanStepRange::RunState ()
+ThreadPlanStepRange::GetPlanRunState ()
 {
     return eStateStepping;
 }

@@ -19,6 +19,8 @@
 #include "lldb/Core/UserID.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadPlanTracer.h"
+#include "lldb/Target/StopInfo.h"
 
 namespace lldb_private {
 
@@ -155,7 +157,7 @@ namespace lldb_private {
 //
 //------------------------------------------------------------------
 
-class ThreadPlan:
+class ThreadPlan :
     public UserID
 {
 public:
@@ -247,10 +249,19 @@ public:
 
     virtual bool
     PlanExplainsStop () = 0;
+    
+    bool
+    TracerExplainsStop ()
+    {
+        if (!m_tracer_sp)
+            return false;
+        else
+            return m_tracer_sp->TracerExplainsStop();
+    }
 
 
-    virtual lldb::StateType
-    RunState () = 0;
+    lldb::StateType
+    RunState ();
 
     virtual bool
     ShouldStop (Event *event_ptr) = 0;
@@ -325,6 +336,25 @@ public:
     
     void
     SetPlanComplete ();
+    
+    lldb::ThreadPlanTracerSP &
+    GetThreadPlanTracer()
+    {
+        return m_tracer_sp;
+    }
+    
+    void
+    SetThreadPlanTracer (lldb::ThreadPlanTracerSP new_tracer_sp)
+    {
+        m_tracer_sp = new_tracer_sp;
+    }
+    
+    void
+    DoTraceLog ()
+    {
+        if (m_tracer_sp && m_tracer_sp->TracingEnabled())
+            m_tracer_sp->Log();
+    }
 
 protected:
     //------------------------------------------------------------------
@@ -352,6 +382,10 @@ protected:
     {
         m_thread.SetStopInfo (stop_reason_sp);
     }
+    
+    virtual lldb::StateType
+    GetPlanRunState () = 0;
+
 
     Thread &m_thread;
     lldb::Vote m_stop_vote;
@@ -369,6 +403,8 @@ private:
     bool m_plan_complete;
     bool m_plan_private;
     bool m_okay_to_discard;
+    
+    lldb::ThreadPlanTracerSP m_tracer_sp;
 
 private:
     DISALLOW_COPY_AND_ASSIGN(ThreadPlan);

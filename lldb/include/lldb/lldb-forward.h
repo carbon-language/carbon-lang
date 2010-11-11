@@ -135,6 +135,7 @@ class   ThreadPlanStepOut;
 class   ThreadPlanStepOverBreakpoint;
 class   ThreadPlanStepRange;
 class   ThreadPlanStepThrough;
+class   ThreadPlanTracer;
 class   ThreadSpec;
 class   TimeValue;
 class   Type;

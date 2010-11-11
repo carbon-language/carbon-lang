@@ -2374,7 +2374,7 @@ Process::SettingsController::instance_settings_table[] =
     { "output-path", eSetVarTypeString,      "/dev/stdout", NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
     { "error-path",  eSetVarTypeString,      "/dev/stderr", NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
     { "plugin",      eSetVarTypeEnum,        NULL         , g_plugins,  false,  false,  "The plugin to be used to run the process." },
-    { "disable-aslr", eSetVarTypeBool,       "true",        NULL,       false,  false, "Disable Address Space Layout Randomization (ASLR)" },
+    { "disable-aslr", eSetVarTypeBoolean,       "true",        NULL,       false,  false, "Disable Address Space Layout Randomization (ASLR)" },
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
 

@@ -162,7 +162,7 @@ ThreadPlanStepInstruction::StopOthers ()
 }
 
 StateType
-ThreadPlanStepInstruction::RunState ()
+ThreadPlanStepInstruction::GetPlanRunState ()
 {
     return eStateStepping;
 }

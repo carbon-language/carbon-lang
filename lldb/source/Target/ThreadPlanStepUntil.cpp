@@ -290,7 +290,7 @@ ThreadPlanStepUntil::StopOthers ()
 }
 
 StateType
-ThreadPlanStepUntil::RunState ()
+ThreadPlanStepUntil::GetPlanRunState ()
 {
     return eStateRunning;
 }

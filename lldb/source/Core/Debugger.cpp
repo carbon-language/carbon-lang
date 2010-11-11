@@ -1681,7 +1681,7 @@ Debugger::SettingsController::instance_settings_table[] =
 {   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
 {   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
 {   "thread-format",        eSetVarTypeString,      DEFAULT_THREAD_FORMAT,  NULL, false, false, "The default thread format string to use when displaying thread information." },
-{   "use-external-editor",  eSetVarTypeBool,        "false",                NULL, false, false, "Whether to use an external editor or not." },
-{   "auto-confirm",         eSetVarTypeBool,        "false",                NULL, false, false, "If true all confirmation prompts will receive their default reply." },
+{   "use-external-editor",  eSetVarTypeBoolean,        "false",                NULL, false, false, "Whether to use an external editor or not." },
+{   "auto-confirm",         eSetVarTypeBoolean,        "false",                NULL, false, false, "If true all confirmation prompts will receive their default reply." },
 {   NULL,                   eSetVarTypeNone,        NULL,                   NULL, false, false, NULL }
 };

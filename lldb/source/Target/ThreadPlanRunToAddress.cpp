@@ -201,7 +201,7 @@ ThreadPlanRunToAddress::SetStopOthers (bool new_value)
 }
 
 StateType
-ThreadPlanRunToAddress::RunState ()
+ThreadPlanRunToAddress::GetPlanRunState ()
 {
     return eStateRunning;
 }

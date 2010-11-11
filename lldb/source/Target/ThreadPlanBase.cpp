@@ -35,7 +35,10 @@ using namespace lldb_private;
 ThreadPlanBase::ThreadPlanBase (Thread &thread) :
     ThreadPlan(ThreadPlan::eKindBase, "base plan", thread, eVoteYes, eVoteNoOpinion)
 {
-
+    // Set the tracer to a default tracer.
+    ThreadPlanTracerSP new_tracer_sp (new ThreadPlanTracer (m_thread));
+    new_tracer_sp->EnableTracing (m_thread.GetTraceEnabledState());
+    SetThreadPlanTracer(new_tracer_sp);
 }
 
 ThreadPlanBase::~ThreadPlanBase ()
@@ -58,7 +61,12 @@ ThreadPlanBase::ValidatePlan (Stream *error)
 bool
 ThreadPlanBase::PlanExplainsStop ()
 {
-    return true;
+    // The base plan should defer to its tracer, since by default it
+    // always handles the stop.
+    if (TracerExplainsStop())
+        return false;
+    else
+        return true;
 }
 
 bool
@@ -153,7 +161,7 @@ ThreadPlanBase::StopOthers ()
 }
 
 StateType
-ThreadPlanBase::RunState ()
+ThreadPlanBase::GetPlanRunState ()
 {
     return eStateRunning;
 }

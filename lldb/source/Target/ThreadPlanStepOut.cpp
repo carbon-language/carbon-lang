@@ -161,7 +161,7 @@ ThreadPlanStepOut::StopOthers ()
 }
 
 StateType
-ThreadPlanStepOut::RunState ()
+ThreadPlanStepOut::GetPlanRunState ()
 {
     return eStateRunning;
 }

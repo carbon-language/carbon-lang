@@ -227,6 +227,9 @@ Thread::ShouldStop (Event* event_ptr)
         DumpThreadPlans(&s);
         log->PutCString (s.GetData());
     }
+    
+    // The top most plan always gets to do the trace log...
+    current_plan->DoTraceLog ();
 
     if (current_plan->PlanExplainsStop())
     {
@@ -267,6 +270,10 @@ Thread::ShouldStop (Event* event_ptr)
         }
         if (over_ride_stop)
             should_stop = false;
+    }
+    else if (current_plan->TracerExplainsStop())
+    {
+        return false;
     }
     else
     {
@@ -346,8 +353,11 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
 {
     if (thread_plan_sp)
     {
+        // If the thread plan doesn't already have a tracer, give it its parent's tracer:
+        if (!thread_plan_sp->GetThreadPlanTracer())
+            thread_plan_sp->SetThreadPlanTracer(m_plan_stack.back()->GetThreadPlanTracer());
         m_plan_stack.push_back (thread_plan_sp);
-
+            
         thread_plan_sp->DidPush();
 
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -487,6 +497,29 @@ Thread::QueueThreadPlan (ThreadPlanSP &thread_plan_sp, bool abort_other_plans)
        DiscardThreadPlans(true);
 
     PushPlan (thread_plan_sp);
+}
+
+
+void
+Thread::EnableTracer (bool value, bool single_stepping)
+{
+    int stack_size = m_plan_stack.size();
+    for (int i = 0; i < stack_size; i++)
+    {
+        if (m_plan_stack[i]->GetThreadPlanTracer())
+        {
+            m_plan_stack[i]->GetThreadPlanTracer()->EnableTracing(value);
+            m_plan_stack[i]->GetThreadPlanTracer()->EnableSingleStep(single_stepping);
+        }
+    }
+}
+
+void
+Thread::SetTracer (lldb::ThreadPlanTracerSP &tracer_sp)
+{
+    int stack_size = m_plan_stack.size();
+    for (int i = 0; i < stack_size; i++)
+        m_plan_stack[i]->SetThreadPlanTracer(tracer_sp);
 }
 
 void
@@ -936,197 +969,6 @@ Thread::UpdateInstanceName ()
 	Thread::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(), sstr.GetData());
 }
 
-//--------------------------------------------------------------
-// class Thread::ThreadSettingsController
-//--------------------------------------------------------------
-
-Thread::ThreadSettingsController::ThreadSettingsController () :
-    UserSettingsController ("thread", Process::GetSettingsController())
-{
-    m_default_settings.reset (new ThreadInstanceSettings (*this, false, 
-                                                          InstanceSettings::GetDefaultName().AsCString()));
-}
-
-Thread::ThreadSettingsController::~ThreadSettingsController ()
-{
-}
-
-lldb::InstanceSettingsSP
-Thread::ThreadSettingsController::CreateInstanceSettings (const char *instance_name)
-{
-    ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*(Thread::GetSettingsController().get()),
-                                                                       false, instance_name);
-    lldb::InstanceSettingsSP new_settings_sp (new_settings);
-    return new_settings_sp;
-}
-
-//--------------------------------------------------------------
-// class ThreadInstanceSettings
-//--------------------------------------------------------------
-
-ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, bool live_instance, const char *name) :
-    InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance), 
-    m_avoid_regexp_ap ()
-{
-    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
-    // until the vtables for ThreadInstanceSettings are properly set up, i.e. AFTER all the initializers.
-    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
-    // This is true for CreateInstanceName() too.
-   
-    if (GetInstanceName() == InstanceSettings::InvalidName())
-    {
-        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
-        m_owner.RegisterInstanceSettings (this);
-    }
-
-    if (live_instance)
-    {
-        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
-        CopyInstanceSettings (pending_settings,false);
-        //m_owner.RemovePendingSettings (m_instance_name);
-    }
-}
-
-ThreadInstanceSettings::ThreadInstanceSettings (const ThreadInstanceSettings &rhs) :
-    InstanceSettings (*(Thread::GetSettingsController().get()), CreateInstanceName().AsCString()),
-    m_avoid_regexp_ap ()
-{
-    if (m_instance_name != InstanceSettings::GetDefaultName())
-    {
-        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
-        CopyInstanceSettings (pending_settings,false);
-        m_owner.RemovePendingSettings (m_instance_name);
-    }
-    if (rhs.m_avoid_regexp_ap.get() != NULL)
-        m_avoid_regexp_ap.reset(new RegularExpression(rhs.m_avoid_regexp_ap->GetText()));
-}
-
-ThreadInstanceSettings::~ThreadInstanceSettings ()
-{
-}
-
-ThreadInstanceSettings&
-ThreadInstanceSettings::operator= (const ThreadInstanceSettings &rhs)
-{
-    if (this != &rhs)
-    {
-        if (rhs.m_avoid_regexp_ap.get() != NULL)
-            m_avoid_regexp_ap.reset(new RegularExpression(rhs.m_avoid_regexp_ap->GetText()));
-        else
-            m_avoid_regexp_ap.reset(NULL);
-    }
-    
-    return *this;
-}
-
-
-void
-ThreadInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
-                                                         const char *index_value,
-                                                         const char *value,
-                                                         const ConstString &instance_name,
-                                                         const SettingEntry &entry,
-                                                         lldb::VarSetOperationType op,
-                                                         Error &err,
-                                                         bool pending)
-{
-    if (var_name == StepAvoidRegexpVarName())
-    {
-        std::string regexp_text;
-        if (m_avoid_regexp_ap.get() != NULL)
-            regexp_text.append (m_avoid_regexp_ap->GetText());
-        UserSettingsController::UpdateStringVariable (op, regexp_text, value, err);
-        if (regexp_text.empty())
-            m_avoid_regexp_ap.reset();
-        else
-        {
-            m_avoid_regexp_ap.reset(new RegularExpression(regexp_text.c_str()));
-            
-        }
-    }
-}
-
-void
-ThreadInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
-                                               bool pending)
-{
-    if (new_settings.get() == NULL)
-        return;
-
-    ThreadInstanceSettings *new_process_settings = (ThreadInstanceSettings *) new_settings.get();
-    if (new_process_settings->GetSymbolsToAvoidRegexp() != NULL)
-        m_avoid_regexp_ap.reset (new RegularExpression (new_process_settings->GetSymbolsToAvoidRegexp()->GetText()));
-    else 
-        m_avoid_regexp_ap.reset ();
-}
-
-bool
-ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
-                                                  const ConstString &var_name,
-                                                  StringList &value,
-                                                  Error *err)
-{
-    if (var_name == StepAvoidRegexpVarName())
-    {
-        if (m_avoid_regexp_ap.get() != NULL)
-        {
-            std::string regexp_text("\"");
-            regexp_text.append(m_avoid_regexp_ap->GetText());
-            regexp_text.append ("\"");
-            value.AppendString (regexp_text.c_str());
-        }
-
-    }
-    else
-    {
-        if (err)
-            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
-        return false;
-    }
-    return true;
-}
-
-const ConstString
-ThreadInstanceSettings::CreateInstanceName ()
-{
-    static int instance_count = 1;
-    StreamString sstr;
-
-    sstr.Printf ("thread_%d", instance_count);
-    ++instance_count;
-
-    const ConstString ret_val (sstr.GetData());
-    return ret_val;
-}
-
-const ConstString &
-ThreadInstanceSettings::StepAvoidRegexpVarName ()
-{
-    static ConstString run_args_var_name ("step-avoid-regexp");
-
-    return run_args_var_name;
-}
-
-//--------------------------------------------------
-// ThreadSettingsController Variable Tables
-//--------------------------------------------------
-
-SettingEntry
-Thread::ThreadSettingsController::global_settings_table[] =
-{
-  //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
-    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
-};
-
-
-SettingEntry
-Thread::ThreadSettingsController::instance_settings_table[] =
-{
-  //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
-    { "step-avoid-regexp",  eSetVarTypeString,      "",  NULL,       false,  false,  "A regular expression defining functions step-in won't stop in." },
-    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
-};
-
 lldb::StackFrameSP
 Thread::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
 {
@@ -1168,3 +1010,231 @@ Thread::RunModeAsCString (lldb::RunMode mode)
     snprintf(unknown_state_string, sizeof (unknown_state_string), "RunMode = %i", mode);
     return unknown_state_string;
 }
+
+#pragma mark "Thread::ThreadSettingsController"
+//--------------------------------------------------------------
+// class Thread::ThreadSettingsController
+//--------------------------------------------------------------
+
+Thread::ThreadSettingsController::ThreadSettingsController () :
+    UserSettingsController ("thread", Process::GetSettingsController())
+{
+    m_default_settings.reset (new ThreadInstanceSettings (*this, false, 
+                                                          InstanceSettings::GetDefaultName().AsCString()));
+}
+
+Thread::ThreadSettingsController::~ThreadSettingsController ()
+{
+}
+
+lldb::InstanceSettingsSP
+Thread::ThreadSettingsController::CreateInstanceSettings (const char *instance_name)
+{
+    ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*(Thread::GetSettingsController().get()),
+                                                                       false, instance_name);
+    lldb::InstanceSettingsSP new_settings_sp (new_settings);
+    return new_settings_sp;
+}
+
+#pragma mark "ThreadInstanceSettings"
+//--------------------------------------------------------------
+// class ThreadInstanceSettings
+//--------------------------------------------------------------
+
+ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, bool live_instance, const char *name) :
+    InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance), 
+    m_avoid_regexp_ap (),
+    m_trace_enabled (false)
+{
+    // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
+    // until the vtables for ThreadInstanceSettings are properly set up, i.e. AFTER all the initializers.
+    // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
+    // This is true for CreateInstanceName() too.
+   
+    if (GetInstanceName() == InstanceSettings::InvalidName())
+    {
+        ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
+        m_owner.RegisterInstanceSettings (this);
+    }
+
+    if (live_instance)
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings,false);
+        //m_owner.RemovePendingSettings (m_instance_name);
+    }
+}
+
+ThreadInstanceSettings::ThreadInstanceSettings (const ThreadInstanceSettings &rhs) :
+    InstanceSettings (*(Thread::GetSettingsController().get()), CreateInstanceName().AsCString()),
+    m_avoid_regexp_ap (),
+    m_trace_enabled (rhs.m_trace_enabled)
+{
+    if (m_instance_name != InstanceSettings::GetDefaultName())
+    {
+        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        CopyInstanceSettings (pending_settings,false);
+        m_owner.RemovePendingSettings (m_instance_name);
+    }
+    if (rhs.m_avoid_regexp_ap.get() != NULL)
+        m_avoid_regexp_ap.reset(new RegularExpression(rhs.m_avoid_regexp_ap->GetText()));
+}
+
+ThreadInstanceSettings::~ThreadInstanceSettings ()
+{
+}
+
+ThreadInstanceSettings&
+ThreadInstanceSettings::operator= (const ThreadInstanceSettings &rhs)
+{
+    if (this != &rhs)
+    {
+        if (rhs.m_avoid_regexp_ap.get() != NULL)
+            m_avoid_regexp_ap.reset(new RegularExpression(rhs.m_avoid_regexp_ap->GetText()));
+        else
+            m_avoid_regexp_ap.reset(NULL);
+    }
+    m_trace_enabled = rhs.m_trace_enabled;
+    return *this;
+}
+
+
+void
+ThreadInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
+                                                         const char *index_value,
+                                                         const char *value,
+                                                         const ConstString &instance_name,
+                                                         const SettingEntry &entry,
+                                                         lldb::VarSetOperationType op,
+                                                         Error &err,
+                                                         bool pending)
+{
+    if (var_name == StepAvoidRegexpVarName())
+    {
+        std::string regexp_text;
+        if (m_avoid_regexp_ap.get() != NULL)
+            regexp_text.append (m_avoid_regexp_ap->GetText());
+        UserSettingsController::UpdateStringVariable (op, regexp_text, value, err);
+        if (regexp_text.empty())
+            m_avoid_regexp_ap.reset();
+        else
+        {
+            m_avoid_regexp_ap.reset(new RegularExpression(regexp_text.c_str()));
+            
+        }
+    }
+    else if (var_name == GetTraceThreadVarName())
+    {
+        bool success;
+        bool result = Args::StringToBoolean(value, false, &success);
+
+        if (success)
+        {
+            m_trace_enabled = result;
+            if (!pending)
+            {
+                Thread *myself = static_cast<Thread *> (this);
+                myself->EnableTracer(m_trace_enabled, true);
+            }
+        }
+        else
+        {
+            err.SetErrorStringWithFormat ("Bad value \"%s\" for trace-thread, should be Boolean.", value);
+        }
+
+    }
+}
+
+void
+ThreadInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+                                               bool pending)
+{
+    if (new_settings.get() == NULL)
+        return;
+
+    ThreadInstanceSettings *new_process_settings = (ThreadInstanceSettings *) new_settings.get();
+    if (new_process_settings->GetSymbolsToAvoidRegexp() != NULL)
+        m_avoid_regexp_ap.reset (new RegularExpression (new_process_settings->GetSymbolsToAvoidRegexp()->GetText()));
+    else 
+        m_avoid_regexp_ap.reset ();
+}
+
+bool
+ThreadInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
+                                                  const ConstString &var_name,
+                                                  StringList &value,
+                                                  Error *err)
+{
+    if (var_name == StepAvoidRegexpVarName())
+    {
+        if (m_avoid_regexp_ap.get() != NULL)
+        {
+            std::string regexp_text("\"");
+            regexp_text.append(m_avoid_regexp_ap->GetText());
+            regexp_text.append ("\"");
+            value.AppendString (regexp_text.c_str());
+        }
+
+    }
+    else if (var_name == GetTraceThreadVarName())
+    {
+        value.AppendString(m_trace_enabled ? "true" : "false");
+    }
+    else
+    {
+        if (err)
+            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+        return false;
+    }
+    return true;
+}
+
+const ConstString
+ThreadInstanceSettings::CreateInstanceName ()
+{
+    static int instance_count = 1;
+    StreamString sstr;
+
+    sstr.Printf ("thread_%d", instance_count);
+    ++instance_count;
+
+    const ConstString ret_val (sstr.GetData());
+    return ret_val;
+}
+
+const ConstString &
+ThreadInstanceSettings::StepAvoidRegexpVarName ()
+{
+    static ConstString step_avoid_var_name ("step-avoid-regexp");
+
+    return step_avoid_var_name;
+}
+
+const ConstString &
+ThreadInstanceSettings::GetTraceThreadVarName ()
+{
+    static ConstString trace_thread_var_name ("trace-thread");
+
+    return trace_thread_var_name;
+}
+
+//--------------------------------------------------
+// ThreadSettingsController Variable Tables
+//--------------------------------------------------
+
+SettingEntry
+Thread::ThreadSettingsController::global_settings_table[] =
+{
+  //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};
+
+
+SettingEntry
+Thread::ThreadSettingsController::instance_settings_table[] =
+{
+  //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
+    { "step-avoid-regexp",  eSetVarTypeString,      "",  NULL,       false,  false,  "A regular expression defining functions step-in won't stop in." },
+    { "trace-thread",  eSetVarTypeBoolean,      "false",  NULL,       false,  false,  "If true, this thread will single-step and log execution." },
+    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+};

@@ -344,6 +344,8 @@
 		4CB4436C124944B000C13DC2 /* ItaniumABILanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB4436A124944B000C13DC2 /* ItaniumABILanguageRuntime.cpp */; };
 		4CB443BE1249920C00C13DC2 /* CPPLanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB443BC1249920C00C13DC2 /* CPPLanguageRuntime.cpp */; };
 		4CB443F312499B5000C13DC2 /* ObjCLanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB443F212499B5000C13DC2 /* ObjCLanguageRuntime.cpp */; };
+		4CC2A149128C73ED001531C4 /* ThreadPlanTracer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CC2A148128C73ED001531C4 /* ThreadPlanTracer.cpp */; };
+		4CC2A14D128C7409001531C4 /* ThreadPlanTracer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CC2A14C128C7409001531C4 /* ThreadPlanTracer.h */; };
 		69A01E211236C5D400C660B5 /* Condition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1B1236C5D400C660B5 /* Condition.cpp */; };
 		69A01E221236C5D400C660B5 /* Host.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1C1236C5D400C660B5 /* Host.cpp */; };
 		69A01E241236C5D400C660B5 /* Mutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69A01E1E1236C5D400C660B5 /* Mutex.cpp */; };
@@ -993,6 +995,8 @@
 		4CB443BC1249920C00C13DC2 /* CPPLanguageRuntime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CPPLanguageRuntime.cpp; path = source/Target/CPPLanguageRuntime.cpp; sourceTree = "<group>"; };
 		4CB443F212499B5000C13DC2 /* ObjCLanguageRuntime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ObjCLanguageRuntime.cpp; path = source/Target/ObjCLanguageRuntime.cpp; sourceTree = "<group>"; };
 		4CB443F612499B6E00C13DC2 /* ObjCLanguageRuntime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ObjCLanguageRuntime.h; path = include/lldb/Target/ObjCLanguageRuntime.h; sourceTree = "<group>"; };
+		4CC2A148128C73ED001531C4 /* ThreadPlanTracer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanTracer.cpp; path = source/Target/ThreadPlanTracer.cpp; sourceTree = "<group>"; };
+		4CC2A14C128C7409001531C4 /* ThreadPlanTracer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanTracer.h; path = include/lldb/Target/ThreadPlanTracer.h; sourceTree = "<group>"; };
 		4CEDAED311754F5E00E875A6 /* ThreadPlanStepUntil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanStepUntil.h; path = include/lldb/Target/ThreadPlanStepUntil.h; sourceTree = "<group>"; };
 		4CEE62FA1145F2130064CF93 /* ProcessGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessGDBRemote.cpp; path = "source/Plugins/Process/gdb-remote/ProcessGDBRemote.cpp"; sourceTree = "<group>"; };
 		4CEE62FB1145F2130064CF93 /* ProcessGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProcessGDBRemote.h; path = "source/Plugins/Process/gdb-remote/ProcessGDBRemote.h"; sourceTree = "<group>"; };
@@ -2073,6 +2077,8 @@
 				2660D9FE11922A7F00958FBD /* ThreadPlanStepUntil.cpp */,
 				4C1AB23E1263E61100D0F04A /* ThreadPlanTestCondition.h */,
 				4C1AB23A1263E5F400D0F04A /* ThreadPlanTestCondition.cpp */,
+				4CC2A14C128C7409001531C4 /* ThreadPlanTracer.h */,
+				4CC2A148128C73ED001531C4 /* ThreadPlanTracer.cpp */,
 				4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */,
 				4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */,
 				4C00986F11500B4300F316B0 /* UnixSignals.h */,
@@ -2367,6 +2373,7 @@
 				2635DA87127D0D0400675BC1 /* SharingPtr.h in Headers */,
 				4C61978D12823D4300FAFFCC /* AppleObjCRuntime.h in Headers */,
 				4C61978F12823D4300FAFFCC /* AppleObjCRuntimeV1.h in Headers */,
+				4CC2A14D128C7409001531C4 /* ThreadPlanTracer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2438,7 +2445,6 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
-			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
@@ -2869,6 +2875,7 @@
 				4C1AB23B1263E5F400D0F04A /* ThreadPlanTestCondition.cpp in Sources */,
 				4C61978C12823D4300FAFFCC /* AppleObjCRuntime.cpp in Sources */,
 				4C61978E12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp in Sources */,
+				4CC2A149128C73ED001531C4 /* ThreadPlanTracer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
