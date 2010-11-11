@@ -17,6 +17,11 @@ import lldbtest
 
 #print "Hello, darwin plugin!"
 
+def getRunSpec():
+    """Environment variable spec to run this test again, invoked from within
+    dumpSessionInfo()."""
+    return "%s%s" % (getArchSpec(None), getCCSpec(None))
+
 def getArchSpec(architecture):
     """
     Helper function to return the key-value string to specify the architecture

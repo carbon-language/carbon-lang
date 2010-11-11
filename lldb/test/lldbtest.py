@@ -576,8 +576,9 @@ class TestBase(unittest2.TestCase):
             print >> f, "Session info generated @", datetime.datetime.now().ctime()
             print >> f, self.session.getvalue()
             print >> f, "To rerun this test, issue the following command from the 'test' directory:\n"
-            print >> f, "./dotest.py -v -t -f %s.%s" % (self.__class__.__name__,
-                                                        self._testMethodName)
+            print >> f, "%s ./dotest.py -v -t -f %s.%s" % (self.getRunSpec(),
+                                                           self.__class__.__name__,
+                                                           self._testMethodName)
 
     def setTearDownCleanup(self, dictionary=None):
         """Register a cleanup action at tearDown() time with a dictinary"""
@@ -806,6 +807,12 @@ class TestBase(unittest2.TestCase):
 
             # End of while loop.
 
+
+    def getRunSpec(self):
+        """Environment variable spec to run this test again, invoked from within
+        dumpSessionInfo()."""
+        module = __import__(sys.platform)
+        return module.getRunSpec()        
 
     def buildDefault(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build the default binaries."""
