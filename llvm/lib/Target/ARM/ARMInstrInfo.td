@@ -2533,7 +2533,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
 
 
 multiclass AI_smla<string opc, PatFrag opnode> {
-  def BB : AMulxyI<0b0001000, 0b00, (outs GPR:$Rd),
+  def BB : AMulxyIa<0b0001000, 0b00, (outs GPR:$Rd),
               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
               IIC_iMAC16, !strconcat(opc, "bb"), "\t$Rd, $Rn, $Rm, $Ra",
               [(set GPR:$Rd, (add GPR:$Ra,
@@ -2541,35 +2541,35 @@ multiclass AI_smla<string opc, PatFrag opnode> {
                                        (sext_inreg GPR:$Rm, i16))))]>,
            Requires<[IsARM, HasV5TE]>;
 
-  def BT : AMulxyI<0b0001000, 0b10, (outs GPR:$Rd),
+  def BT : AMulxyIa<0b0001000, 0b10, (outs GPR:$Rd),
               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
               IIC_iMAC16, !strconcat(opc, "bt"), "\t$Rd, $Rn, $Rm, $Ra",
               [(set GPR:$Rd, (add GPR:$Ra, (opnode (sext_inreg GPR:$Rn, i16),
                                                    (sra GPR:$Rm, (i32 16)))))]>,
            Requires<[IsARM, HasV5TE]>;
 
-  def TB : AMulxyI<0b0001000, 0b01, (outs GPR:$Rd),
+  def TB : AMulxyIa<0b0001000, 0b01, (outs GPR:$Rd),
               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
               IIC_iMAC16, !strconcat(opc, "tb"), "\t$Rd, $Rn, $Rm, $Ra",
               [(set GPR:$Rd, (add GPR:$Ra, (opnode (sra GPR:$Rn, (i32 16)),
                                                 (sext_inreg GPR:$Rm, i16))))]>,
            Requires<[IsARM, HasV5TE]>;
 
-  def TT : AMulxyI<0b0001000, 0b11, (outs GPR:$Rd),
+  def TT : AMulxyIa<0b0001000, 0b11, (outs GPR:$Rd),
               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
               IIC_iMAC16, !strconcat(opc, "tt"), "\t$Rd, $Rn, $Rm, $Ra",
              [(set GPR:$Rd, (add GPR:$Ra, (opnode (sra GPR:$Rn, (i32 16)),
                                                    (sra GPR:$Rm, (i32 16)))))]>,
             Requires<[IsARM, HasV5TE]>;
 
-  def WB : AMulxyI<0b0001001, 0b00, (outs GPR:$Rd),
+  def WB : AMulxyIa<0b0001001, 0b00, (outs GPR:$Rd),
               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
               IIC_iMAC16, !strconcat(opc, "wb"), "\t$Rd, $Rn, $Rm, $Ra",
               [(set GPR:$Rd, (add GPR:$Ra, (sra (opnode GPR:$Rn,
                                       (sext_inreg GPR:$Rm, i16)), (i32 16))))]>,
            Requires<[IsARM, HasV5TE]>;
 
-  def WT : AMulxyI<0b0001001, 0b10, (outs GPR:$Rd),
+  def WT : AMulxyIa<0b0001001, 0b10, (outs GPR:$Rd),
               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
               IIC_iMAC16, !strconcat(opc, "wt"), "\t$Rd, $Rn, $Rm, $Ra",
               [(set GPR:$Rd, (add GPR:$Ra, (sra (opnode GPR:$Rn,
