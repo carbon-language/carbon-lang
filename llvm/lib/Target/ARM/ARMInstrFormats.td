@@ -1868,6 +1868,7 @@ class NDataI<dag oops, dag iops, Format f, InstrItinClass itin,
   : NeonI<oops, iops, AddrModeNone, IndexModeNone, f, itin, opc, dt, asm, cstr,
           pattern> {
   let Inst{31-25} = 0b1111001;
+  string PostEncoderMethod = "NEONThumb2DataIPostEncoder";
 }
 
 class NDataXI<dag oops, dag iops, Format f, InstrItinClass itin,

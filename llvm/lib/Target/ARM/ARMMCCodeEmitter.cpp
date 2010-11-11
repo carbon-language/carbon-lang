@@ -172,6 +172,9 @@ public:
   unsigned getAddrMode6OffsetOpValue(const MCInst &MI, unsigned Op,
                                      SmallVectorImpl<MCFixup> &Fixups) const;
 
+  unsigned NEONThumb2DataIPostEncoder(const MCInst &MI,
+                                      unsigned EncodedValue) const;
+
   void EmitByte(unsigned char C, raw_ostream &OS) const {
     OS << (char)C;
   }
@@ -193,6 +196,26 @@ public:
 MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &, TargetMachine &TM,
                                             MCContext &Ctx) {
   return new ARMMCCodeEmitter(TM, Ctx);
+}
+
+/// NEONThumb2PostEncoder - Post-process encoded NEON data-processing 
+/// instructions, and rewrite them to their Thumb2 form if we are currently in 
+/// Thumb2 mode.
+unsigned ARMMCCodeEmitter::NEONThumb2DataIPostEncoder(const MCInst &MI,
+                                                 unsigned EncodedValue) const {
+  const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+  if (Subtarget.isThumb2()) {
+    // NEON Thumb2 data-processsing encodings are very simple: bit 24 is moved 
+    // to bit 12 of the high half-word (i.e. bit 28), and bits 27-24 are
+    // set to 1111.
+    unsigned Bit24 = EncodedValue & 0x01000000;
+    unsigned Bit28 = Bit24 << 4;
+    EncodedValue &= 0xEFFFFFFF;
+    EncodedValue |= Bit28;
+    EncodedValue |= 0x0F000000;
+  }
+  
+  return EncodedValue;
 }
 
 /// getMachineOpValue - Return binary encoding of operand. If the machine
