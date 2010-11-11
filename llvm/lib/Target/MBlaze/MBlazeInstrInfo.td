@@ -297,17 +297,16 @@ class BranchLI<bits<6> op, bits<5> br, string instr_asm> :
 //===----------------------------------------------------------------------===//
 // Conditional Branch Instructions
 //===----------------------------------------------------------------------===//
-class BranchC<bits<6> op, bits<5> br, bits<11> flags, string instr_asm,
-              PatFrag cond_op> :
+class BranchC<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
               TA<op, flags, (outs),
-                 (ins GPR:$a, GPR:$b, brtarget:$offset),
-                 !strconcat(instr_asm, "   $a, $b, $offset"),
+                 (ins GPR:$a, GPR:$b),
+                 !strconcat(instr_asm, "   $a, $b"),
                  [], IIBranch> {
   let rd = br;
   let Form = FCRR;
 }
 
-class BranchCI<bits<6> op, bits<5> br, string instr_asm, PatFrag cond_op> :
+class BranchCI<bits<6> op, bits<5> br, string instr_asm> :
                TB<op, (outs), (ins GPR:$a, brtarget:$offset),
                   !strconcat(instr_asm, "   $a, $offset"),
                   [], IIBranch> {
@@ -430,12 +429,12 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
-  def BEQI   : BranchCI<0x2F, 0x00, "beqi   ", seteq>;
-  def BNEI   : BranchCI<0x2F, 0x01, "bnei   ", setne>;
-  def BLTI   : BranchCI<0x2F, 0x02, "blti   ", setlt>;
-  def BLEI   : BranchCI<0x2F, 0x03, "blei   ", setle>;
-  def BGTI   : BranchCI<0x2F, 0x04, "bgti   ", setgt>;
-  def BGEI   : BranchCI<0x2F, 0x05, "bgei   ", setge>;
+  def BEQI   : BranchCI<0x2F, 0x00, "beqi   ">;
+  def BNEI   : BranchCI<0x2F, 0x01, "bnei   ">;
+  def BLTI   : BranchCI<0x2F, 0x02, "blti   ">;
+  def BLEI   : BranchCI<0x2F, 0x03, "blei   ">;
+  def BGTI   : BranchCI<0x2F, 0x04, "bgti   ">;
+  def BGEI   : BranchCI<0x2F, 0x05, "bgei   ">;
 }
 
 let isBranch = 1, isIndirectBranch = 1, isTerminator = 1, hasCtrlDep = 1,
@@ -445,12 +444,12 @@ let isBranch = 1, isIndirectBranch = 1, isTerminator = 1, hasCtrlDep = 1,
 }
 
 let isBranch = 1, isIndirectBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
-  def BEQ    :  BranchC<0x27, 0x00, 0x000, "beq    ", seteq>;
-  def BNE    :  BranchC<0x27, 0x01, 0x000, "bne    ", setne>;
-  def BLT    :  BranchC<0x27, 0x02, 0x000, "blt    ", setlt>;
-  def BLE    :  BranchC<0x27, 0x03, 0x000, "ble    ", setle>;
-  def BGT    :  BranchC<0x27, 0x04, 0x000, "bgt    ", setgt>;
-  def BGE    :  BranchC<0x27, 0x05, 0x000, "bge    ", setge>;
+  def BEQ    :  BranchC<0x27, 0x00, 0x000, "beq    ">;
+  def BNE    :  BranchC<0x27, 0x01, 0x000, "bne    ">;
+  def BLT    :  BranchC<0x27, 0x02, 0x000, "blt    ">;
+  def BLE    :  BranchC<0x27, 0x03, 0x000, "ble    ">;
+  def BGT    :  BranchC<0x27, 0x04, 0x000, "bgt    ">;
+  def BGE    :  BranchC<0x27, 0x05, 0x000, "bge    ">;
 }
 
 let isBranch = 1, isTerminator = 1, hasDelaySlot = 1, hasCtrlDep = 1,
@@ -460,12 +459,12 @@ let isBranch = 1, isTerminator = 1, hasDelaySlot = 1, hasCtrlDep = 1,
 }
 
 let isBranch = 1, isTerminator = 1, hasDelaySlot = 1, hasCtrlDep = 1 in {
-  def BEQID  : BranchCI<0x2F, 0x10, "beqid  ", seteq>;
-  def BNEID  : BranchCI<0x2F, 0x11, "bneid  ", setne>;
-  def BLTID  : BranchCI<0x2F, 0x12, "bltid  ", setlt>;
-  def BLEID  : BranchCI<0x2F, 0x13, "bleid  ", setle>;
-  def BGTID  : BranchCI<0x2F, 0x14, "bgtid  ", setgt>;
-  def BGEID  : BranchCI<0x2F, 0x15, "bgeid  ", setge>;
+  def BEQID  : BranchCI<0x2F, 0x10, "beqid  ">;
+  def BNEID  : BranchCI<0x2F, 0x11, "bneid  ">;
+  def BLTID  : BranchCI<0x2F, 0x12, "bltid  ">;
+  def BLEID  : BranchCI<0x2F, 0x13, "bleid  ">;
+  def BGTID  : BranchCI<0x2F, 0x14, "bgtid  ">;
+  def BGEID  : BranchCI<0x2F, 0x15, "bgeid  ">;
 }
 
 let isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
@@ -476,12 +475,12 @@ let isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
 
 let isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
     hasDelaySlot = 1, hasCtrlDep = 1 in {
-  def BEQD   :  BranchC<0x27, 0x10, 0x000, "beqd   ", seteq>;
-  def BNED   :  BranchC<0x27, 0x11, 0x000, "bned   ", setne>;
-  def BLTD   :  BranchC<0x27, 0x12, 0x000, "bltd   ", setlt>;
-  def BLED   :  BranchC<0x27, 0x13, 0x000, "bled   ", setle>;
-  def BGTD   :  BranchC<0x27, 0x14, 0x000, "bgtd   ", setgt>;
-  def BGED   :  BranchC<0x27, 0x15, 0x000, "bged   ", setge>;
+  def BEQD   :  BranchC<0x27, 0x10, 0x000, "beqd   ">;
+  def BNED   :  BranchC<0x27, 0x11, 0x000, "bned   ">;
+  def BLTD   :  BranchC<0x27, 0x12, 0x000, "bltd   ">;
+  def BLED   :  BranchC<0x27, 0x13, 0x000, "bled   ">;
+  def BGTD   :  BranchC<0x27, 0x14, 0x000, "bgtd   ">;
+  def BGED   :  BranchC<0x27, 0x15, 0x000, "bged   ">;
 }
 
 let isCall = 1, hasDelaySlot = 1, hasCtrlDep = 1, isBarrier = 1,

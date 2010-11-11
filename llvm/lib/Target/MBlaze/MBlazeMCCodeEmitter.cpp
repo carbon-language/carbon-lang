@@ -146,7 +146,7 @@ unsigned MBlazeMCCodeEmitter::getMachineOpValue(const MCInst &MI,
 void MBlazeMCCodeEmitter::
 EmitIMM(const MCOperand &imm, unsigned &CurByte, raw_ostream &OS) const {
   int32_t val = (int32_t)imm.getImm();
-  if (val > 32767 || val < -32678) {
+  if (val > 32767 || val < -32768) {
     EmitByte(0x0D, CurByte, OS);
     EmitByte(0x00, CurByte, OS);
     EmitRawByte((val >> 24) & 0xFF, CurByte, OS);
