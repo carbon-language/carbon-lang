@@ -118,12 +118,12 @@ private:
   /// \brief Create the initialization entity for a variable.
   InitializedEntity(VarDecl *Var)
     : Kind(EK_Variable), Parent(0), Type(Var->getType()),
-      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Var)) { }
+      VariableOrMember(Var) { }
   
   /// \brief Create the initialization entity for a parameter.
   InitializedEntity(ParmVarDecl *Parm)
     : Kind(EK_Parameter), Parent(0), Type(Parm->getType().getUnqualifiedType()),
-      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Parm)) { }
+      VariableOrMember(Parm) { }
   
   /// \brief Create the initialization entity for the result of a
   /// function, throwing an object, performing an explicit cast, or
@@ -139,7 +139,7 @@ private:
   /// \brief Create the initialization entity for a member subobject.
   InitializedEntity(FieldDecl *Member, const InitializedEntity *Parent) 
     : Kind(EK_Member), Parent(Parent), Type(Member->getType()),
-      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Member)) { }
+      VariableOrMember(Member) { }
   
   /// \brief Create the initialization entity for an array element.
   InitializedEntity(ASTContext &Context, unsigned Index, 
