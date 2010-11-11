@@ -858,11 +858,8 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
   // otherwise it isn't.
   if (Cache->empty())
     CacheInfo->Pair = BBSkipFirstBlockPair(StartBB, SkipFirstBlock);
-  else {
+  else
     CacheInfo->Pair = BBSkipFirstBlockPair();
-    CacheInfo->Size = AliasAnalysis::UnknownSize;
-    CacheInfo->TBAATag = 0;
-  }
   
   SmallVector<BasicBlock*, 32> Worklist;
   Worklist.push_back(StartBB);
@@ -986,8 +983,6 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         // cached value to do more work but not miss the phi trans failure.
         NonLocalPointerInfo &NLPI = NonLocalPointerDeps[CacheKey];
         NLPI.Pair = BBSkipFirstBlockPair();
-        NLPI.Size = AliasAnalysis::UnknownSize;
-        NLPI.TBAATag = 0;
         continue;
       }
 
@@ -1015,8 +1010,6 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // specific block queries) but we can't do the fastpath "return all
     // results from the set"  Clear out the indicator for this.
     CacheInfo->Pair = BBSkipFirstBlockPair();
-    CacheInfo->Size = AliasAnalysis::UnknownSize;
-    CacheInfo->TBAATag = 0;
     SkipFirstBlock = false;
     continue;
 
@@ -1034,8 +1027,6 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // specific block queries) but we can't do the fastpath "return all
     // results from the set".  Clear out the indicator for this.
     CacheInfo->Pair = BBSkipFirstBlockPair();
-    CacheInfo->Size = AliasAnalysis::UnknownSize;
-    CacheInfo->TBAATag = 0;
     
     // If *nothing* works, mark the pointer as being clobbered by the first
     // instruction in this block.
@@ -1252,8 +1243,6 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       
       // The cache is not valid for any specific block anymore.
       NonLocalPointerDeps[P].Pair = BBSkipFirstBlockPair();
-      NonLocalPointerDeps[P].Size = AliasAnalysis::UnknownSize;
-      NonLocalPointerDeps[P].TBAATag = 0;
       
       // Update any entries for RemInst to use the instruction after it.
       for (NonLocalDepInfo::iterator DI = NLPDI.begin(), DE = NLPDI.end();
