@@ -3211,6 +3211,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_rdynamic))
     CmdArgs.push_back("-export-dynamic");
 
+  if (Args.hasArg(options::OPT_s))
+    CmdArgs.push_back("-s");
+
   for (std::vector<std::string>::const_iterator i = ToolChain.ExtraOpts.begin(),
          e = ToolChain.ExtraOpts.end();
        i != e; ++i)
@@ -3306,6 +3309,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-lgcc_eh");
   else if (!Args.hasArg(options::OPT_shared) && D.CCCIsCXX)
     CmdArgs.push_back("-lgcc");
+
+  if (Args.hasArg(options::OPT_pthread) || Args.hasArg(options::OPT_pthreads))
+    CmdArgs.push_back("-lpthread");
 
   CmdArgs.push_back("-lc");
 
