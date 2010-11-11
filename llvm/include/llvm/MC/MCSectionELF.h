@@ -18,6 +18,8 @@
 
 namespace llvm {
 
+class MCSymbol;
+
 /// MCSectionELF - This represents a section on linux, lots of unix variants
 /// and some bare metal systems.
 class MCSectionELF : public MCSection {
@@ -37,12 +39,14 @@ class MCSectionELF : public MCSection {
   /// section does not contain fixed-sized entries 'EntrySize' will be 0.
   unsigned EntrySize;
 
+  const MCSymbol *Group;
+
 private:
   friend class MCContext;
   MCSectionELF(StringRef Section, unsigned type, unsigned flags,
-               SectionKind K, unsigned entrySize)
+               SectionKind K, unsigned entrySize, const MCSymbol *group)
     : MCSection(SV_ELF, K), SectionName(Section), Type(type), Flags(flags),
-      EntrySize(entrySize) {}
+      EntrySize(entrySize), Group(group) {}
   ~MCSectionELF();
 public:
 
@@ -179,6 +183,7 @@ public:
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
   unsigned getEntrySize() const { return EntrySize; }
+  const MCSymbol *getGroup() const { return Group; }
 
   void PrintSwitchToSection(const MCAsmInfo &MAI,
                             raw_ostream &OS) const;

@@ -150,7 +150,13 @@ getMachOSection(StringRef Segment, StringRef Section,
 
 const MCSectionELF *MCContext::
 getELFSection(StringRef Section, unsigned Type, unsigned Flags,
-              SectionKind Kind, unsigned EntrySize) {
+              SectionKind Kind) {
+  return getELFSection(Section, Type, Flags, Kind, 0, "");
+}
+
+const MCSectionELF *MCContext::
+getELFSection(StringRef Section, unsigned Type, unsigned Flags,
+              SectionKind Kind, unsigned EntrySize, StringRef Group) {
   if (ELFUniquingMap == 0)
     ELFUniquingMap = new ELFUniqueMapTy();
   ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)ELFUniquingMap;
@@ -163,9 +169,21 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   if (!EntrySize) {
     EntrySize = MCSectionELF::DetermineEntrySize(Kind);
   }
+
+  MCSymbol *GroupSym = NULL;
+  if (!Group.empty())
+    GroupSym = GetOrCreateSymbol(Group);
+
   MCSectionELF *Result = new (*this) MCSectionELF(Entry.getKey(), Type, Flags,
-                                                  Kind, EntrySize);
+                                                  Kind, EntrySize, GroupSym);
   Entry.setValue(Result);
+  return Result;
+}
+
+const MCSectionELF *MCContext::CreateELFGroupSection() {
+  MCSectionELF *Result =
+    new (*this) MCSectionELF(".group", MCSectionELF::SHT_GROUP, 0,
+                             SectionKind::getReadOnly(), 4, NULL);
   return Result;
 }
 

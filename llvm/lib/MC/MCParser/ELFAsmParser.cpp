@@ -203,6 +203,7 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   StringRef FlagsStr;
   StringRef TypeName;
   int64_t Size = 0;
+  StringRef GroupName;
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
 
@@ -249,7 +250,6 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
         if (getLexer().isNot(AsmToken::Comma))
           return TokError("expected group name");
         Lex();
-        StringRef GroupName;
         if (getParser().ParseIdentifier(GroupName))
           return true;
         if (getLexer().is(AsmToken::Comma)) {
@@ -257,8 +257,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
           StringRef Linkage;
           if (getParser().ParseIdentifier(Linkage))
             return true;
-          if (Linkage != "comdat" && Linkage != ".gnu.linkonce")
-            return TokError("Linkage must be 'comdat' or '.gnu.linkonce'");
+          if (Linkage != "comdat")
+            return TokError("Linkage must be 'comdat'");
         }
       }
     }
@@ -306,6 +306,7 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
       Flags |= MCSectionELF::XCORE_SHF_DP_SECTION;
       break;
     case 'G':
+      Flags |= MCSectionELF::SHF_GROUP;
       break;
     default:
       return TokError("unknown flag");
@@ -331,7 +332,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
                      ? SectionKind::getText()
                      : SectionKind::getDataRel();
   getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
-                                                         Flags, Kind, Size));
+                                                         Flags, Kind, Size,
+                                                         GroupName));
   return false;
 }
 
@@ -405,7 +407,7 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
                                MCSectionELF::SHF_MERGE |
                                MCSectionELF::SHF_STRINGS,
                                SectionKind::getReadOnly(),
-                               1);
+                               1, "");
 
   static bool First = true;
 

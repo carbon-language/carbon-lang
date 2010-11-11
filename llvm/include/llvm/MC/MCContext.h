@@ -138,10 +138,15 @@ namespace llvm {
                                           SectionKind K) {
       return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
     }
-    
+
+    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                      unsigned Flags, SectionKind Kind);
+
     const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
                                       unsigned Flags, SectionKind Kind,
-                                      unsigned EntrySize = 0);
+                                      unsigned EntrySize, StringRef Group);
+
+    const MCSectionELF *CreateELFGroupSection();
 
     const MCSection *getCOFFSection(StringRef Section, unsigned Characteristics,
                                     int Selection, SectionKind Kind);

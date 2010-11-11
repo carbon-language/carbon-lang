@@ -348,6 +348,13 @@ enum {
   SHF_MASKPROC  = 0xf0000000 // Bits indicating processor-specific flags.
 };
 
+// Section Group Flags
+enum {
+  GRP_COMDAT = 0x1,
+  GRP_MASKOS = 0x0ff00000,
+  GRP_MASKPROC = 0xf0000000
+};
+
 // Symbol table entries for ELF32.
 struct Elf32_Sym {
   Elf32_Word    st_name;  // Symbol name (index into string table)
