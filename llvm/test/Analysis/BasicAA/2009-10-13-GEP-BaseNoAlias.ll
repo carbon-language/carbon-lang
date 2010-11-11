@@ -5,7 +5,7 @@
 @Y = common global i32 0
 @Z = common global i32 0
 
-define void @foo(i32 %cond) nounwind ssp {
+define void @foo(i32 %cond) nounwind {
 entry:
   %a = alloca i32
   %tmp = icmp ne i32 %cond, 0

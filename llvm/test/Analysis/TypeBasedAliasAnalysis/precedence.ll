@@ -7,7 +7,7 @@
 
 target datalayout = "e-p:64:64:64"
 
-define i32 @trouble(i32* %x) nounwind ssp {
+define i32 @trouble(i32* %x) nounwind {
 entry:
   store i32 0, i32* %x, !tbaa !0
   %0 = bitcast i32* %x to float*
