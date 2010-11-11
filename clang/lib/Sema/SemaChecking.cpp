@@ -2608,6 +2608,55 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
     << lex->getSourceRange() << rex->getSourceRange();
 }
 
+/// Analyzes an attempt to assign the given value to a bitfield.
+///
+/// Returns true if there was something fishy about the attempt.
+bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
+                               SourceLocation InitLoc) {
+  assert(Bitfield->isBitField());
+  if (Bitfield->isInvalidDecl())
+    return false;
+
+  Expr *OriginalInit = Init->IgnoreParenImpCasts();
+
+  llvm::APSInt Width(32);
+  Expr::EvalResult InitValue;
+  if (!Bitfield->getBitWidth()->isIntegerConstantExpr(Width, S.Context) ||
+      !Init->Evaluate(InitValue, S.Context) ||
+      !InitValue.Val.isInt())
+    return false;
+
+  const llvm::APSInt &Value = InitValue.Val.getInt();
+  unsigned OriginalWidth = Value.getBitWidth();
+  unsigned FieldWidth = Width.getZExtValue();
+
+  if (OriginalWidth <= FieldWidth)
+    return false;
+
+  llvm::APSInt TruncatedValue = Value;
+  TruncatedValue.trunc(FieldWidth);
+
+  // It's fairly common to write values into signed bitfields
+  // that, if sign-extended, would end up becoming a different
+  // value.  We don't want to warn about that.
+  if (Value.isSigned() && Value.isNegative())
+    TruncatedValue.sext(OriginalWidth);
+  else
+    TruncatedValue.zext(OriginalWidth);
+
+  if (Value == TruncatedValue)
+    return false;
+
+  std::string PrettyValue = Value.toString(10);
+  std::string PrettyTrunc = TruncatedValue.toString(10);
+
+  S.Diag(InitLoc, diag::warn_impcast_bitfield_precision_constant)
+    << PrettyValue << PrettyTrunc << OriginalInit->getType()
+    << Init->getSourceRange();
+
+  return true;
+}
+
 /// Analyze the given simple or compound assignment for warning-worthy
 /// operations.
 void AnalyzeAssignment(Sema &S, BinaryOperator *E) {
@@ -2617,44 +2666,11 @@ void AnalyzeAssignment(Sema &S, BinaryOperator *E) {
   // We want to recurse on the RHS as normal unless we're assigning to
   // a bitfield.
   if (FieldDecl *Bitfield = E->getLHS()->getBitField()) {
-    assert(Bitfield->isBitField());
-
-    Expr *RHS = E->getRHS()->IgnoreParenImpCasts();
-
-    llvm::APSInt Width(32);
-    Expr::EvalResult RHSValue;
-    if (!Bitfield->isInvalidDecl() &&
-        Bitfield->getBitWidth()->isIntegerConstantExpr(Width, S.Context) &&
-        RHS->Evaluate(RHSValue, S.Context) && RHSValue.Val.isInt()) {
-      const llvm::APSInt &Value = RHSValue.Val.getInt();
-      unsigned OriginalWidth = Value.getBitWidth();
-      unsigned FieldWidth = Width.getZExtValue();
-
-      if (OriginalWidth > FieldWidth) {
-        llvm::APSInt TruncatedValue = Value;
-        TruncatedValue.trunc(FieldWidth);
-
-        // It's fairly common to write values into signed bitfields
-        // that, if sign-extended, would end up becoming a different
-        // value.  We don't want to warn about that.
-        if (Value.isSigned() && Value.isNegative())
-          TruncatedValue.sext(OriginalWidth);
-        else
-          TruncatedValue.zext(OriginalWidth);
-
-        if (Value != TruncatedValue) {
-          std::string PrettyValue = Value.toString(10);
-          std::string PrettyTrunc = TruncatedValue.toString(10);
-
-          S.Diag(E->getOperatorLoc(),
-                 diag::warn_impcast_bitfield_precision_constant)
-            << PrettyValue << PrettyTrunc << RHS->getType()
-            << E->getRHS()->getSourceRange();
-
-          // Recurse, ignoring any implicit conversions on the RHS.
-          return AnalyzeImplicitConversions(S, RHS, E->getOperatorLoc());
-        }
-      }
+    if (AnalyzeBitFieldAssignment(S, Bitfield, E->getRHS(),
+                                  E->getOperatorLoc())) {
+      // Recurse, ignoring any implicit conversions on the RHS.
+      return AnalyzeImplicitConversions(S, E->getRHS()->IgnoreParenImpCasts(),
+                                        E->getOperatorLoc());
     }
   }
 
@@ -2930,6 +2946,12 @@ void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
 
   // This is not the right CC for (e.g.) a variable initialization.
   AnalyzeImplicitConversions(*this, E, CC);
+}
+
+void Sema::CheckBitFieldInitialization(SourceLocation InitLoc,
+                                       FieldDecl *BitField,
+                                       Expr *Init) {
+  (void) AnalyzeBitFieldAssignment(*this, BitField, Init, InitLoc);
 }
 
 /// CheckParmsForFunctionDef - Check that the parameters of the given

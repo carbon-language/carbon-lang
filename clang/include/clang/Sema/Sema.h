@@ -4539,6 +4539,9 @@ private:
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
   void CheckImplicitConversions(Expr *E, SourceLocation CC = SourceLocation());
 
+  void CheckBitFieldInitialization(SourceLocation InitLoc, FieldDecl *Field,
+                                   Expr *Init);
+
   /// \brief The parser's current scope.
   ///
   /// The parser maintains this state here.
@@ -4546,6 +4549,7 @@ private:
   
 protected:
   friend class Parser;
+  friend class InitializationSequence;
   
   /// \brief Retrieve the parser's current scope.
   Scope *getCurScope() const { return CurScope; }  

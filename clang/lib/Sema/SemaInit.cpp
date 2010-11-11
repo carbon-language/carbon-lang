@@ -4047,6 +4047,13 @@ InitializationSequence::Perform(Sema &S,
       break;
     }
   }
+
+  // Diagnose non-fatal problems with the completed initialization.
+  if (Entity.getKind() == InitializedEntity::EK_Member &&
+      cast<FieldDecl>(Entity.getDecl())->isBitField())
+    S.CheckBitFieldInitialization(Kind.getLocation(),
+                                  cast<FieldDecl>(Entity.getDecl()),
+                                  CurInit.get());
   
   return move(CurInit);
 }
@@ -4534,7 +4541,7 @@ Sema::PerformCopyInitialization(const InitializedEntity &Entity,
   if (Init.isInvalid())
     return ExprError();
 
-  Expr *InitE = (Expr *)Init.get();
+  Expr *InitE = Init.get();
   assert(InitE && "No initialization expression?");
 
   if (EqualLoc.isInvalid())

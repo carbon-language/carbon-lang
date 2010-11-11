@@ -24,3 +24,16 @@ enum Test2 test2(enum Test2 *t) {
   *t = 20;
   return 10; // shouldn't warn
 }
+
+void test3() {
+  struct A {
+    unsigned int foo : 2;
+    int bar : 2;
+  };
+
+  struct A a = { 0, 10 };            // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
+  struct A b[] = { 0, 10, 0, 0 };    // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
+  struct A c[] = {{10, 0}};          // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
+  struct A d = (struct A) { 10, 0 }; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
+  struct A e = { .foo = 10 };        // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
+}

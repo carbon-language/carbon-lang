@@ -43,3 +43,10 @@ namespace test1 {
     return p == foo();
   }
 }
+
+namespace test2 {
+  struct A {
+    unsigned int x : 2;
+    A() : x(10) {} // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
+  };
+}
