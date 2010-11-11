@@ -1965,6 +1965,7 @@ bb3:            ; preds = %entry
 //===---------------------------------------------------------------------===//
 
 clang -O3 fails to devirtualize this virtual inheritance case: (GCC PR45875)
+Looks related to PR3100
 
 struct c1 {};
 struct c10 : c1{
