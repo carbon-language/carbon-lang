@@ -22,6 +22,7 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -364,6 +365,60 @@ Value *Value::getUnderlyingObject(unsigned MaxLookup) {
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
   }
   return V;
+}
+
+/// isDereferenceablePointer - Test if this value is always a pointer to
+// allocated and suitably aligned memory for a simple load or store.
+bool Value::isDereferenceablePointer() const {
+  // Note that it is not safe to speculate into a malloc'd region because
+  // malloc may return null.
+  // It's also not always safe to follow a bitcast, for example:
+  //   bitcast i8* (alloca i8) to i32*
+  // would result in a 4-byte load from a 1-byte alloca. Some cases could
+  // be handled using TargetData to check sizes and alignments though.
+
+  // These are obviously ok.
+  if (isa<AllocaInst>(this)) return true;
+
+  // Global variables which can't collapse to null are ok.
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(this))
+    return !GV->hasExternalWeakLinkage();
+
+  // For GEPs, determine if the indexing lands within the allocated object.
+  if (const GEPOperator *GEP = dyn_cast<GEPOperator>(this)) {
+    // Conservatively require that the base pointer be fully dereferenceable.
+    if (!GEP->getOperand(0)->isDereferenceablePointer())
+      return false;
+    // Check the indices.
+    gep_type_iterator GTI = gep_type_begin(GEP);
+    for (User::const_op_iterator I = GEP->op_begin()+1,
+         E = GEP->op_end(); I != E; ++I) {
+      Value *Index = *I;
+      const Type *Ty = *GTI++;
+      // Struct indices can't be out of bounds.
+      if (isa<StructType>(Ty))
+        continue;
+      ConstantInt *CI = dyn_cast<ConstantInt>(Index);
+      if (!CI)
+        return false;
+      // Zero is always ok.
+      if (CI->isZero())
+        continue;
+      // Check to see that it's within the bounds of an array.
+      const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
+      if (!ATy)
+        return false;
+      if (CI->getValue().getActiveBits() > 64)
+        return false;
+      if (CI->getZExtValue() >= ATy->getNumElements())
+        return false;
+    }
+    // Indices check out; this is dereferenceable.
+    return true;
+  }
+
+  // If we don't know, assume the worst.
+  return false;
 }
 
 /// DoPHITranslation - If this value is a PHI node with CurBB as its parent,

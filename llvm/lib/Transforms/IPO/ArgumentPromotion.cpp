@@ -188,19 +188,6 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   return DoPromotion(F, ArgsToPromote, ByValArgsToTransform);
 }
 
-/// IsAlwaysValidPointer - Return true if the specified pointer is always legal
-/// to load.
-static bool IsAlwaysValidPointer(Value *V) {
-  if (isa<AllocaInst>(V) || isa<GlobalVariable>(V)) return true;
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V))
-    return IsAlwaysValidPointer(GEP->getOperand(0));
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    if (CE->getOpcode() == Instruction::GetElementPtr)
-      return IsAlwaysValidPointer(CE->getOperand(0));
-
-  return false;
-}
-
 /// AllCalleesPassInValidPointerForArgument - Return true if we can prove that
 /// all callees pass in a valid pointer for the specified function argument.
 static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
@@ -216,7 +203,7 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
     CallSite CS(*UI);
     assert(CS && "Should only have direct calls!");
 
-    if (!IsAlwaysValidPointer(CS.getArgument(ArgNo)))
+    if (!CS.getArgument(ArgNo)->isDereferenceablePointer())
       return false;
   }
   return true;
