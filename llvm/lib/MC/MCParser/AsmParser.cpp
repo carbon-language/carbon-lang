@@ -193,7 +193,6 @@ private:
   /// ParseDirectiveSymbolAttribute - Parse a directive like ".globl" which
   /// accepts a single symbol (which should be a label or an external).
   bool ParseDirectiveSymbolAttribute(MCSymbolAttr Attr);
-  bool ParseDirectiveELFType(); // ELF specific ".type"
 
   bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
 

@@ -35,6 +35,38 @@ using namespace llvm;
 
 namespace {
 
+static void SetBinding(MCSymbolData &SD, unsigned Binding) {
+  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
+         Binding == ELF::STB_WEAK);
+  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STB_Shift);
+  SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
+}
+
+static unsigned GetBinding(const MCSymbolData &SD) {
+  uint32_t Binding = (SD.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
+  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
+         Binding == ELF::STB_WEAK);
+  return Binding;
+}
+
+static void SetType(MCSymbolData &SD, unsigned Type) {
+  assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
+         Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
+         Type == ELF::STT_FILE || Type == ELF::STT_COMMON ||
+         Type == ELF::STT_TLS);
+
+  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STT_Shift);
+  SD.setFlags(OtherFlags | (Type << ELF_STT_Shift));
+}
+
+static void SetVisibility(MCSymbolData &SD, unsigned Visibility) {
+  assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
+         Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
+
+  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STV_Shift);
+  SD.setFlags(OtherFlags | (Visibility << ELF_STV_Shift));
+}
+
 class MCELFStreamer : public MCObjectStreamer {
 public:
   MCELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
@@ -166,6 +198,11 @@ void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
 
+  const MCSectionELF &Section =
+    static_cast<const MCSectionELF&>(Symbol->getSection());
+  if (Section.getFlags() & MCSectionELF::SHF_TLS)
+    SetType(SD, ELF::STT_TLS);
+
   // FIXME: This is wasteful, we don't necessarily need to create a data
   // fragment. Instead, we should mark the symbol as pointing into the data
   // fragment if it exists, otherwise we should just queue the label and set its
@@ -260,38 +297,6 @@ void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
 
   const MCExpr *Value = WeakRefExpr::Create(RealAlias, getContext());
   Alias->setVariableValue(Value);
-}
-
-static void SetBinding(MCSymbolData &SD, unsigned Binding) {
-  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK);
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STB_Shift);
-  SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
-}
-
-static unsigned GetBinding(const MCSymbolData &SD) {
-  uint32_t Binding = (SD.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
-  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK);
-  return Binding;
-}
-
-static void SetType(MCSymbolData &SD, unsigned Type) {
-  assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
-         Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
-         Type == ELF::STT_FILE || Type == ELF::STT_COMMON ||
-         Type == ELF::STT_TLS);
-
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STT_Shift);
-  SD.setFlags(OtherFlags | (Type << ELF_STT_Shift));
-}
-
-static void SetVisibility(MCSymbolData &SD, unsigned Visibility) {
-  assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
-         Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
-
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STV_Shift);
-  SD.setFlags(OtherFlags | (Visibility << ELF_STV_Shift));
 }
 
 void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
