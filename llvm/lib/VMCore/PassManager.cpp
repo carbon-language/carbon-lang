@@ -675,6 +675,12 @@ void PMTopLevelManager::dumpArguments() const {
     return;
 
   dbgs() << "Pass Arguments: ";
+  for (SmallVector<ImmutablePass *, 8>::const_iterator I =
+       ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
+    if (const PassInfo *PI =
+          PassRegistry::getPassRegistry()->getPassInfo((*I)->getPassID()))
+      if (!PI->isAnalysisGroup())
+        dbgs() << " -" << PI->getPassArgument();
   for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
     (*I)->dumpPassArguments();
