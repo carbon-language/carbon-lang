@@ -14,8 +14,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-using namespace std;
-
 pthread_t g_thread_1 = NULL;
 pthread_t g_thread_2 = NULL;
 pthread_t g_thread_3 = NULL;
@@ -65,10 +63,10 @@ thread_func (void *arg)
         long usec = ::random() % 3000000;
         printf ("%s (thread = %u) doing a usleep (%li)...\n", __FUNCTION__, thread_index, usec);
         ::usleep (usec);
-        printf ("%s (thread = %u) after usleep ...\n", __FUNCTION__, thread_index);
+        printf ("%s (thread = %u) after usleep ...\n", __FUNCTION__, thread_index); // Set break point at this line.
     }
     printf ("%s (thread index = %u) exiting...\n", __FUNCTION__, thread_index);
-
+    return NULL;
 }
 
 

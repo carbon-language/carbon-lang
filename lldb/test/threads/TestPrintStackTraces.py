@@ -12,6 +12,12 @@ class ThreadsStackTracesTestCase(TestBase):
 
     mydir = "threads"
 
+    def setUp(self):
+        # Call super's setUp().
+        TestBase.setUp(self)
+        # Find the line number to break inside main().
+        self.line = line_number('main.cpp', '// Set break point at this line.')
+
     def test_stack_traces(self):
         """Test SBprocess and SBThread APIs with printing of the stack traces."""
         self.buildDefault()
@@ -24,7 +30,7 @@ class ThreadsStackTracesTestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
-        breakpoint = target.BreakpointCreateByLocation("main.cpp", 68)
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
