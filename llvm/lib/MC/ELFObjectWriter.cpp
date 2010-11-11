@@ -470,10 +470,23 @@ static const MCSymbol &AliasedSymbol(const MCSymbol &Symbol) {
   const MCSymbol *S = &Symbol;
   while (S->isVariable()) {
     const MCExpr *Value = S->getVariableValue();
-    if (Value->getKind() != MCExpr::SymbolRef)
+    MCExpr::ExprKind Kind = Value->getKind();
+    switch (Kind) {
+    case MCExpr::SymbolRef: {
+      const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
+      S = &Ref->getSymbol();
+      break;
+    }
+    case MCExpr::Target: {
+      const MCTargetExpr *TExp = static_cast<const MCTargetExpr*>(Value);
+      MCValue Res;
+      TExp->EvaluateAsRelocatableImpl(Res, NULL);
+      S = &Res.getSymA()->getSymbol();
+      break;
+    }
+    default:
       return *S;
-    const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
-    S = &Ref->getSymbol();
+    }
   }
   return *S;
 }
