@@ -1827,6 +1827,8 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
   let Inst{11-8}  = op11_8;
   let Inst{7-4}   = op7_4;
   
+  string PostEncoderMethod = "NEONThumb2LoadStorePostEncoder";
+  
   bits<5> Vd;
   bits<6> Rn;
   bits<4> Rm;

@@ -163,6 +163,8 @@ namespace {
     //  far along that this one can be eliminated entirely.
     unsigned NEONThumb2DataIPostEncoder(const MachineInstr &MI, unsigned Val) 
       const { return 0; }
+    unsigned NEONThumb2LoadStorePostEncoder(const MachineInstr &MI,unsigned Val) 
+      const { return 0; }
     unsigned getBranchTargetOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getCCOutOpValue(const MachineInstr &MI, unsigned Op)

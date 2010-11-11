@@ -174,6 +174,8 @@ public:
 
   unsigned NEONThumb2DataIPostEncoder(const MCInst &MI,
                                       unsigned EncodedValue) const;
+  unsigned NEONThumb2LoadStorePostEncoder(const MCInst &MI,
+                                      unsigned EncodedValue) const;
 
   void EmitByte(unsigned char C, raw_ostream &OS) const {
     OS << (char)C;
@@ -198,7 +200,7 @@ MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &, TargetMachine &TM,
   return new ARMMCCodeEmitter(TM, Ctx);
 }
 
-/// NEONThumb2PostEncoder - Post-process encoded NEON data-processing 
+/// NEONThumb2DataIPostEncoder - Post-process encoded NEON data-processing 
 /// instructions, and rewrite them to their Thumb2 form if we are currently in 
 /// Thumb2 mode.
 unsigned ARMMCCodeEmitter::NEONThumb2DataIPostEncoder(const MCInst &MI,
@@ -217,6 +219,21 @@ unsigned ARMMCCodeEmitter::NEONThumb2DataIPostEncoder(const MCInst &MI,
   
   return EncodedValue;
 }
+
+/// NEONThumb2LoadStorePostEncoder - Post-process encoded NEON load/store
+/// instructions, and rewrite them to their Thumb2 form if we are currently in 
+/// Thumb2 mode.
+unsigned ARMMCCodeEmitter::NEONThumb2LoadStorePostEncoder(const MCInst &MI,
+                                                 unsigned EncodedValue) const {
+  const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+  if (Subtarget.isThumb2()) {
+    EncodedValue &= 0xF0FFFFFF;
+    EncodedValue |= 0x09000000;
+  }
+  
+  return EncodedValue;
+}
+
 
 /// getMachineOpValue - Return binary encoding of operand. If the machine
 /// operand requires relocation, record the relocation and return zero.
