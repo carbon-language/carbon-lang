@@ -129,7 +129,11 @@ public:
   /// See docs/AliasAnalysis.html for more information on the specific meanings
   /// of these values.
   ///
-  enum AliasResult { NoAlias = 0, MayAlias = 1, MustAlias = 2 };
+  enum AliasResult {
+    NoAlias = 0,        ///< No dependencies.
+    MayAlias = 1,       ///< Anything goes.
+    MustAlias = 2       ///< Pointers are equal.
+  };
 
   /// alias - The main low level interface to the alias analysis implementation.
   /// Returns an AliasResult indicating whether the two pointers are aliased to
