@@ -46,7 +46,12 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
     PointerRec *R = AS.getSomePointer();
 
     // If the pointers are not a must-alias pair, this set becomes a may alias.
-    if (AA.alias(L->getValue(), L->getSize(), R->getValue(), R->getSize())
+    if (AA.alias(AliasAnalysis::Location(L->getValue(),
+                                         L->getSize(),
+                                         L->getTBAAInfo()),
+                 AliasAnalysis::Location(R->getValue(),
+                                         R->getSize(),
+                                         R->getTBAAInfo()))
         != AliasAnalysis::MustAlias)
       AliasTy = MayAlias;
   }
