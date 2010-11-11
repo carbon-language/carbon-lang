@@ -860,7 +860,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     CacheInfo->Pair = BBSkipFirstBlockPair(StartBB, SkipFirstBlock);
   else {
     CacheInfo->Pair = BBSkipFirstBlockPair();
-    CacheInfo->Size = 0;
+    CacheInfo->Size = AliasAnalysis::UnknownSize;
     CacheInfo->TBAATag = 0;
   }
   
@@ -986,7 +986,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         // cached value to do more work but not miss the phi trans failure.
         NonLocalPointerInfo &NLPI = NonLocalPointerDeps[CacheKey];
         NLPI.Pair = BBSkipFirstBlockPair();
-        NLPI.Size = 0;
+        NLPI.Size = AliasAnalysis::UnknownSize;
         NLPI.TBAATag = 0;
         continue;
       }
@@ -1015,7 +1015,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // specific block queries) but we can't do the fastpath "return all
     // results from the set"  Clear out the indicator for this.
     CacheInfo->Pair = BBSkipFirstBlockPair();
-    CacheInfo->Size = 0;
+    CacheInfo->Size = AliasAnalysis::UnknownSize;
     CacheInfo->TBAATag = 0;
     SkipFirstBlock = false;
     continue;
@@ -1034,7 +1034,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // specific block queries) but we can't do the fastpath "return all
     // results from the set".  Clear out the indicator for this.
     CacheInfo->Pair = BBSkipFirstBlockPair();
-    CacheInfo->Size = 0;
+    CacheInfo->Size = AliasAnalysis::UnknownSize;
     CacheInfo->TBAATag = 0;
     
     // If *nothing* works, mark the pointer as being clobbered by the first
@@ -1252,7 +1252,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       
       // The cache is not valid for any specific block anymore.
       NonLocalPointerDeps[P].Pair = BBSkipFirstBlockPair();
-      NonLocalPointerDeps[P].Size = 0;
+      NonLocalPointerDeps[P].Size = AliasAnalysis::UnknownSize;
       NonLocalPointerDeps[P].TBAATag = 0;
       
       // Update any entries for RemInst to use the instruction after it.

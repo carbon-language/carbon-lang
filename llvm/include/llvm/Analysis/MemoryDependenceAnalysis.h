@@ -234,7 +234,7 @@ namespace llvm {
       /// pointer. May be null if there are no tags or conflicting tags.
       const MDNode *TBAATag;
 
-      NonLocalPointerInfo() : Size(0), TBAATag(0) {}
+      NonLocalPointerInfo() : Size(AliasAnalysis::UnknownSize), TBAATag(0) {}
     };
 
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing
