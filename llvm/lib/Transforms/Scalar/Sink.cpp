@@ -169,7 +169,10 @@ static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
     return false;
   }
 
-  return Inst->isSafeToSpeculativelyExecute();
+  if (isa<TerminatorInst>(Inst) || isa<PHINode>(Inst))
+    return false;
+
+  return true;
 }
 
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
