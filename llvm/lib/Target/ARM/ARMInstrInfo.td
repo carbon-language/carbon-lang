@@ -278,6 +278,12 @@ def brtarget : Operand<OtherVT> {
   string EncoderMethod = "getBranchTargetOpValue";
 }
 
+// Call target.
+def bltarget : Operand<i32> {
+  // Encoded the same as branch targets.
+  string EncoderMethod = "getBranchTargetOpValue";
+}
+
 // A list of registers separated by comma. Used by load/store multiple.
 def reglist : Operand<i32> {
   string EncoderMethod = "getRegisterListOpValue";
@@ -1198,18 +1204,22 @@ let isCall = 1,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
-  def BL  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
+  def BL  : ABXI<0b1011, (outs), (ins bltarget:$func, variable_ops),
                 IIC_Br, "bl\t$func",
                 [(ARMcall tglobaladdr:$func)]>,
             Requires<[IsARM, IsNotDarwin]> {
     let Inst{31-28} = 0b1110;
-    // FIXME: Encoding info for $func. Needs fixups bits.
+    bits<24> func;
+    let Inst{23-0} = func;
   }
 
-  def BL_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
+  def BL_pred : ABI<0b1011, (outs), (ins bltarget:$func, variable_ops),
                    IIC_Br, "bl", "\t$func",
                    [(ARMcall_pred tglobaladdr:$func)]>,
-                Requires<[IsARM, IsNotDarwin]>;
+                Requires<[IsARM, IsNotDarwin]> {
+    bits<24> func;
+    let Inst{23-0} = func;
+  }
 
   // ARMv5T and above
   def BLX : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
@@ -1249,17 +1259,21 @@ let isCall = 1,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
-  def BLr9  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
+  def BLr9  : ABXI<0b1011, (outs), (ins bltarget:$func, variable_ops),
                 IIC_Br, "bl\t$func",
                 [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]> {
     let Inst{31-28} = 0b1110;
-    // FIXME: Encoding info for $func. Needs fixups bits.
+    bits<24> func;
+    let Inst{23-0} = func;
   }
 
-  def BLr9_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
+  def BLr9_pred : ABI<0b1011, (outs), (ins bltarget:$func, variable_ops),
                    IIC_Br, "bl", "\t$func",
                    [(ARMcall_pred tglobaladdr:$func)]>,
-                  Requires<[IsARM, IsDarwin]>;
+                  Requires<[IsARM, IsDarwin]> {
+    bits<24> func;
+    let Inst{23-0} = func;
+  }
 
   // ARMv5T and above
   def BLXr9 : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
