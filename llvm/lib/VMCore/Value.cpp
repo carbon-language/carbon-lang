@@ -368,7 +368,7 @@ Value *Value::getUnderlyingObject(unsigned MaxLookup) {
 }
 
 /// isDereferenceablePointer - Test if this value is always a pointer to
-// allocated and suitably aligned memory for a simple load or store.
+/// allocated and suitably aligned memory for a simple load or store.
 bool Value::isDereferenceablePointer() const {
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
