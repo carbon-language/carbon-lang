@@ -24,6 +24,14 @@ class ThreadPlanTracer
 friend class ThreadPlan;
 
 public:
+
+    typedef enum ThreadPlanTracerStyle
+    {
+        eLocation = 0,
+        eStateChange,
+        eCheckFrames,
+        ePython,
+    } ThreadPlanTracerStyle;
     ThreadPlanTracer (Thread &thread, lldb::StreamSP &stream_sp);    
     ThreadPlanTracer (Thread &thread);
         
@@ -31,11 +39,26 @@ public:
     {
     }
     
+    virtual void TracingStarted ()
+    {
+    
+    }
+    
+    virtual void TracingEnded ()
+    {
+    
+    }
+    
     bool
     EnableTracing(bool value)
     {
         bool old_value = m_enabled;
         m_enabled = value;
+        if (old_value == false && value == true)
+            TracingStarted();
+        else if (old_value == true && value == false)
+            TracingEnded();
+            
         return old_value;
     }
     
