@@ -343,7 +343,6 @@ public:
   bool VisitAddrLabelExpr(AddrLabelExpr *E);
   bool VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   bool VisitVAArgExpr(VAArgExpr *E);
-  bool VisitInitListExpr(InitListExpr *E);
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
   bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
@@ -366,11 +365,12 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
   DATA_RECURSIVE_VISIT(DoStmt)
   DATA_RECURSIVE_VISIT(IfStmt)
+  DATA_RECURSIVE_VISIT(InitListExpr)
   DATA_RECURSIVE_VISIT(ForStmt)
   DATA_RECURSIVE_VISIT(MemberExpr)
   DATA_RECURSIVE_VISIT(SwitchStmt)
   DATA_RECURSIVE_VISIT(WhileStmt)
-  
+
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
   bool RunVisitorWorkList(VisitorWorkList &WL);
@@ -1587,14 +1587,6 @@ bool CursorVisitor::VisitVAArgExpr(VAArgExpr *E) {
   return Visit(MakeCXCursor(E->getSubExpr(), StmtParent, TU));
 }
 
-bool CursorVisitor::VisitInitListExpr(InitListExpr *E) {
-  // We care about the syntactic form of the initializer list, only.
-  if (InitListExpr *Syntactic = E->getSyntacticForm())
-    return VisitExpr(Syntactic);
-
-  return VisitExpr(E);
-}
-
 bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   // Visit the designators.
   typedef DesignatedInitExpr::Designator Designator;
@@ -1841,23 +1833,26 @@ bool CursorVisitor::VisitAttributes(Decl *D) {
 // Data-recursive visitor methods.
 //===----------------------------------------------------------------------===//
 
+static void EnqueueChildren(VisitorWorkList &WL, CXCursor Parent, Stmt *S) {
+  unsigned size = WL.size();
+  for (Stmt::child_iterator Child = S->child_begin(), ChildEnd = S->child_end();
+       Child != ChildEnd; ++Child) {
+    WLAddStmt(WL, Parent, *Child);
+  }
+  if (size == WL.size())
+    return;
+  // Now reverse the entries we just added.  This will match the DFS
+  // ordering performed by the worklist.
+  VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
+  std::reverse(I, E);
+}
+
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
   CXCursor C = MakeCXCursor(S, StmtParent, TU);
   switch (S->getStmtClass()) {
-    default: {
-      unsigned size = WL.size();
-      for (Stmt::child_iterator Child = S->child_begin(),
-              ChildEnd = S->child_end(); Child != ChildEnd; ++Child) {
-        WLAddStmt(WL, C, *Child);
-      }
-      if (size == WL.size())
-        return;
-      // Now reverse the entries we just added.  This will match the DFS
-      // ordering performed by the worklist.
-      VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
-      std::reverse(I, E);
+    default:
+      EnqueueChildren(WL, C, S);
       break;
-    }
     case Stmt::CXXOperatorCallExprClass: {
       CXXOperatorCallExpr *CE = cast<CXXOperatorCallExpr>(S);
       // Note that we enqueue things in reverse order so that
@@ -1890,6 +1885,14 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
       WLAddStmt(WL, C, If->getThen());
       WLAddStmt(WL, C, If->getCond());
       WLAddDecl(WL, C, If->getConditionVariable());      
+      break;
+    }
+    case Stmt::InitListExprClass: {
+      InitListExpr *IE = cast<InitListExpr>(S);
+      // We care about the syntactic form of the initializer list, only.
+      if (InitListExpr *Syntactic = IE->getSyntacticForm())
+        IE = Syntactic;
+      EnqueueChildren(WL, C, IE);
       break;
     }
     case Stmt::MemberExprClass: {
@@ -1973,6 +1976,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::DoStmtClass:
           case Stmt::ForStmtClass:
           case Stmt::IfStmtClass:
+          case Stmt::InitListExprClass:
           case Stmt::MemberExprClass:
           case Stmt::ParenExprClass:
           case Stmt::SwitchStmtClass:
