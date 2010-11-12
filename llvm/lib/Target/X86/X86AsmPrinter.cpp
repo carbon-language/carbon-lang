@@ -580,9 +580,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
   }
 
-  if (Subtarget->isTargetWindows()
-   && !Subtarget->isTargetCygMing()
-   && MMI->callsExternalVAFunctionWithFloatingPointArguments()) {
+  if (Subtarget->isTargetWindows() && !Subtarget->isTargetCygMing() &&
+      MMI->callsExternalVAFunctionWithFloatingPointArguments()) {
     StringRef SymbolName = Subtarget->is64Bit() ? "_fltused" : "__fltused";
     MCSymbol *S = MMI->getContext().GetOrCreateSymbol(SymbolName);
     OutStreamer.EmitSymbolAttribute(S, MCSA_Global);

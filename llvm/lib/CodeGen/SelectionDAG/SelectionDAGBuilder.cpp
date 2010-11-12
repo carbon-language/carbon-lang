@@ -5030,13 +5030,11 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
       !MMI.callsExternalVAFunctionWithFloatingPointArguments()) {
     for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
       const Type* T = I.getArgOperand(i)->getType();
-      for (po_iterator<const Type*> i = po_begin(T),
-                                    e = po_end(T);
-                                    i != e; ++i) {
-        if (i->isFloatingPointTy()) {
-          MMI.setCallsExternalVAFunctionWithFloatingPointArguments(true);
-          break;
-        }
+      for (po_iterator<const Type*> i = po_begin(T), e = po_end(T); 
+           i != e; ++i) {
+        if (!i->isFloatingPointTy()) continue;
+        MMI.setCallsExternalVAFunctionWithFloatingPointArguments(true);
+        break;
       }
     }
   }
