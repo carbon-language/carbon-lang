@@ -359,12 +359,17 @@ def so_imm : Operand<i32>, PatLeaf<(imm), [{ return Pred_so_imm(N); }]> {
 // Break so_imm's up into two pieces.  This handles immediates with up to 16
 // bits set in them.  This uses so_imm2part to match and so_imm2part_[12] to
 // get the first/second pieces.
-def so_imm2part : Operand<i32>,
-                  PatLeaf<(imm), [{
+def so_imm2part : PatLeaf<(imm), [{
       return ARM_AM::isSOImmTwoPartVal((unsigned)N->getZExtValue());
-    }]> {
-  let PrintMethod = "printSOImm2PartOperand";
-}
+}]>;
+
+/// arm_i32imm - True for +V6T2, or true only if so_imm2part is true.
+///
+def arm_i32imm : PatLeaf<(imm), [{
+  if (Subtarget->hasV6T2Ops())
+    return true;
+  return ARM_AM::isSOImmTwoPartVal((unsigned)N->getZExtValue());
+}]>;
 
 def so_imm2part_1 : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getSOImmTwoPartFirst((unsigned)N->getZExtValue());
@@ -3223,7 +3228,7 @@ def : ARMPat<(add GPR:$LHS, so_neg_imm2part:$RHS),
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
 def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2, "",
-                           [(set GPR:$dst, (i32 imm:$src))]>,
+                           [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;
 
 // ConstantPool, GlobalAddress, and JumpTable

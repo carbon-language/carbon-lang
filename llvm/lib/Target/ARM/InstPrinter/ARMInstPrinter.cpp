@@ -160,14 +160,6 @@ void ARMInstPrinter::printSOImmOperand(const MCInst *MI, unsigned OpNum,
   printSOImm(O, MO.getImm(), CommentStream, &MAI);
 }
 
-/// printSOImm2PartOperand - SOImm is broken into two pieces using a 'mov'
-/// followed by an 'orr' to materialize.
-void ARMInstPrinter::printSOImm2PartOperand(const MCInst *MI, unsigned OpNum,
-                                            raw_ostream &O) {
-  // FIXME: REMOVE this method.
-  abort();
-}
-
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1
 // "Addressing Mode 1 - Data-processing operands" forms.  This includes:
 //    REG 0   0           - e.g. R5
