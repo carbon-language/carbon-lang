@@ -42,41 +42,12 @@ using namespace llvm;
 namespace {
   std::map<unsigned, const char *> node_names;
 
-  //! EVT mapping to useful data for Cell SPU
-  struct valtype_map_s {
-    EVT   valtype;
-    int   prefslot_byte;
-  };
-
-  const valtype_map_s valtype_map[] = {
-    { MVT::i1,   3 },
-    { MVT::i8,   3 },
-    { MVT::i16,  2 },
-    { MVT::i32,  0 },
-    { MVT::f32,  0 },
-    { MVT::i64,  0 },
-    { MVT::f64,  0 },
-    { MVT::i128, 0 }
-  };
-
-  const size_t n_valtype_map = sizeof(valtype_map) / sizeof(valtype_map[0]);
-
-  const valtype_map_s *getValueTypeMapEntry(EVT VT) {
-    const valtype_map_s *retval = 0;
-
-    for (size_t i = 0; i < n_valtype_map; ++i) {
-      if (valtype_map[i].valtype == VT) {
-        retval = valtype_map + i;
-        break;
-      }
-    }
-
-#ifndef NDEBUG
-    if (retval == 0) {
-      report_fatal_error("getValueTypeMapEntry returns NULL for " +
-                         Twine(VT.getEVTString()));
-    }
-#endif
+  // Byte offset of the preferred slot (counted from the MSB)
+  int prefslotOffset(EVT VT) {
+    int retval=0;
+    if (VT==MVT::i1) retval=3; 
+    if (VT==MVT::i8) retval=3; 
+    if (VT==MVT::i16) retval=2; 
 
     return retval;
   }
@@ -440,9 +411,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::AND,     VT, Legal);
     setOperationAction(ISD::OR,      VT, Legal);
     setOperationAction(ISD::XOR,     VT, Legal);
-    setOperationAction(ISD::LOAD,    VT, Legal);
+    setOperationAction(ISD::LOAD,    VT, Custom);
     setOperationAction(ISD::SELECT,  VT, Legal);
-    setOperationAction(ISD::STORE,   VT, Legal);
+    setOperationAction(ISD::STORE,   VT, Custom);
 
     // These operations need to be expanded:
     setOperationAction(ISD::SDIV,    VT, Expand);
@@ -503,8 +474,8 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::CNTB] = "SPUISD::CNTB";
     node_names[(unsigned) SPUISD::PREFSLOT2VEC] = "SPUISD::PREFSLOT2VEC";
     node_names[(unsigned) SPUISD::VEC2PREFSLOT] = "SPUISD::VEC2PREFSLOT";
-    node_names[(unsigned) SPUISD::SHLQUAD_L_BITS] = "SPUISD::SHLQUAD_L_BITS";
-    node_names[(unsigned) SPUISD::SHLQUAD_L_BYTES] = "SPUISD::SHLQUAD_L_BYTES";
+    node_names[(unsigned) SPUISD::SHL_BITS] = "SPUISD::SHL_BITS";
+    node_names[(unsigned) SPUISD::SHL_BYTES] = "SPUISD::SHL_BYTES";
     node_names[(unsigned) SPUISD::VEC_ROTL] = "SPUISD::VEC_ROTL";
     node_names[(unsigned) SPUISD::VEC_ROTR] = "SPUISD::VEC_ROTR";
     node_names[(unsigned) SPUISD::ROTBYTES_LEFT] = "SPUISD::ROTBYTES_LEFT";
@@ -573,11 +544,26 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   EVT OutVT = Op.getValueType();
   ISD::LoadExtType ExtType = LN->getExtensionType();
   unsigned alignment = LN->getAlignment();
-  const valtype_map_s *vtm = getValueTypeMapEntry(InVT);
+  int pso = prefslotOffset(InVT);
   DebugLoc dl = Op.getDebugLoc();
+  EVT vecVT = InVT.isVector()? InVT: EVT::getVectorVT(*DAG.getContext(), InVT,
+                                                  (128 / InVT.getSizeInBits()));
 
-  switch (LN->getAddressingMode()) {
-  case ISD::UNINDEXED: {
+  // two sanity checks
+  assert( LN->getAddressingMode() == ISD::UNINDEXED  
+          && "we should get only UNINDEXED adresses");
+  // clean aligned loads can be selected as-is
+  if (InVT.getSizeInBits() == 128 && alignment == 16)
+    return SDValue();
+
+  // Get pointerinfos to the memory chunk(s) that contain the data to load 
+  uint64_t mpi_offset = LN->getPointerInfo().Offset;
+  mpi_offset -= mpi_offset%16;
+  MachinePointerInfo lowMemPtr( LN->getPointerInfo().V, mpi_offset);
+  MachinePointerInfo highMemPtr( LN->getPointerInfo().V, mpi_offset+16);
+
+
+
     SDValue result;
     SDValue basePtr = LN->getBasePtr();
     SDValue rotate;
@@ -591,7 +577,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
           && (CN = dyn_cast<ConstantSDNode > (basePtr.getOperand(1))) != 0) {
         // Known offset into basePtr
         int64_t offset = CN->getSExtValue();
-        int64_t rotamt = int64_t((offset & 0xf) - vtm->prefslot_byte);
+        int64_t rotamt = int64_t((offset & 0xf) - pso);
 
         if (rotamt < 0)
           rotamt += 16;
@@ -611,14 +597,14 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                      && basePtr.getOperand(1).getOpcode() == SPUISD::Lo)) {
         // Plain aligned a-form address: rotate into preferred slot
         // Same for (SPUindirect (SPUhi ...), (SPUlo ...))
-        int64_t rotamt = -vtm->prefslot_byte;
+        int64_t rotamt = -pso;
         if (rotamt < 0)
           rotamt += 16;
         rotate = DAG.getConstant(rotamt, MVT::i16);
       } else {
         // Offset the rotate amount by the basePtr and the preferred slot
         // byte offset
-        int64_t rotamt = -vtm->prefslot_byte;
+        int64_t rotamt = -pso;
         if (rotamt < 0)
           rotamt += 16;
         rotate = DAG.getNode(ISD::ADD, dl, PtrVT,
@@ -658,20 +644,23 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       // byte offset
       rotate = DAG.getNode(ISD::ADD, dl, PtrVT,
                            basePtr,
-                           DAG.getConstant(-vtm->prefslot_byte, PtrVT));
+                           DAG.getConstant(-pso, PtrVT));
     }
 
-    // Re-emit as a v16i8 vector load
-    result = DAG.getLoad(MVT::v16i8, dl, the_chain, basePtr,
-                         LN->getPointerInfo(),
+    // Do the load as a i128 to allow possible shifting
+    SDValue low = DAG.getLoad(MVT::i128, dl, the_chain, basePtr,
+                         lowMemPtr,
                          LN->isVolatile(), LN->isNonTemporal(), 16);
-
+ 
+  // When the size is not greater than alignment we get all data with just
+  // one load
+  if (alignment >= InVT.getSizeInBits()/8) {
     // Update the chain
-    the_chain = result.getValue(1);
+    the_chain = low.getValue(1);
 
     // Rotate into the preferred slot:
-    result = DAG.getNode(SPUISD::ROTBYTES_LEFT, dl, MVT::v16i8,
-                         result.getValue(0), rotate);
+    result = DAG.getNode(SPUISD::ROTBYTES_LEFT, dl, MVT::i128,
+                         low.getValue(0), rotate);
 
     // Convert the loaded v16i8 vector to the appropriate vector type
     // specified by the operand:
@@ -679,7 +668,56 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                  InVT, (128 / InVT.getSizeInBits()));
     result = DAG.getNode(SPUISD::VEC2PREFSLOT, dl, InVT,
                          DAG.getNode(ISD::BIT_CONVERT, dl, vecVT, result));
+  }
+  // When alignment is less than the size, we might need (known only at
+  // run-time) two loads
+  // TODO: if the memory address is composed only from constants, we have 
+  // extra kowledge, and might avoid the second load
+  else {
+    // storage position offset from lower 16 byte aligned memory chunk
+    SDValue offset = DAG.getNode( ISD::AND, dl, MVT::i32, 
+                                  basePtr, DAG.getConstant( 0xf, MVT::i32 ) );
+    // 16 - offset
+    SDValue offset_compl = DAG.getNode( ISD::SUB, dl, MVT::i32, 
+                                        DAG.getConstant( 16, MVT::i32),
+                                        offset );
+    // get a registerfull of ones. (this implementation is a workaround: LLVM 
+    // cannot handle 128 bit signed int constants)
+    SDValue ones = DAG.getConstant( -1, MVT::v4i32 );
+    ones = DAG.getNode( ISD::BIT_CONVERT, dl, MVT::i128, ones);
 
+    SDValue high = DAG.getLoad(MVT::i128, dl, the_chain,
+                               DAG.getNode(ISD::ADD, dl, PtrVT, 
+                                           basePtr,
+                                           DAG.getConstant(16, PtrVT)),
+                               highMemPtr,
+                               LN->isVolatile(), LN->isNonTemporal(), 16);
+
+    the_chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, low.getValue(1),
+                                                              high.getValue(1));
+
+    // Shift the (possible) high part right to compensate the misalignemnt.
+    // if there is no highpart (i.e. value is i64 and offset is 4), this 
+    // will zero out the high value.
+    high = DAG.getNode( SPUISD::SRL_BYTES, dl, MVT::i128, high, 
+                                     DAG.getNode( ISD::SUB, dl, MVT::i32,
+                                                 DAG.getConstant( 16, MVT::i32),
+                                                 offset
+                                                ));
+   
+    // Shift the low similarily
+    // TODO: add SPUISD::SHL_BYTES
+    low = DAG.getNode( SPUISD::SHL_BYTES, dl, MVT::i128, low, offset );
+
+    // Merge the two parts
+    result = DAG.getNode( ISD::BIT_CONVERT, dl, vecVT,
+                          DAG.getNode(ISD::OR, dl, MVT::i128, low, high));
+
+    if (!InVT.isVector()) {
+      result = DAG.getNode( SPUISD::VEC2PREFSLOT, dl, InVT, result );
+     }
+
+  }
     // Handle extending loads by extending the scalar result:
     if (ExtType == ISD::SEXTLOAD) {
       result = DAG.getNode(ISD::SIGN_EXTEND, dl, OutVT, result);
@@ -703,21 +741,6 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     result = DAG.getNode(SPUISD::LDRESULT, dl, retvts,
                          retops, sizeof(retops) / sizeof(retops[0]));
     return result;
-  }
-  case ISD::PRE_INC:
-  case ISD::PRE_DEC:
-  case ISD::POST_INC:
-  case ISD::POST_DEC:
-  case ISD::LAST_INDEXED_MODE:
-    {
-      report_fatal_error("LowerLOAD: Got a LoadSDNode with an addr mode other "
-                         "than UNINDEXED\n" +
-                         Twine((unsigned)LN->getAddressingMode()));
-      /*NOTREACHED*/
-    }
-  }
-
-  return SDValue();
 }
 
 /// Custom lower stores for CellSPU
@@ -735,12 +758,24 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   DebugLoc dl = Op.getDebugLoc();
   unsigned alignment = SN->getAlignment();
+  SDValue result;
+  EVT vecVT = StVT.isVector()? StVT: EVT::getVectorVT(*DAG.getContext(), StVT,
+                                                 (128 / StVT.getSizeInBits()));
+  // Get pointerinfos to the memory chunk(s) that contain the data to load 
+  uint64_t mpi_offset = SN->getPointerInfo().Offset;
+  mpi_offset -= mpi_offset%16;
+  MachinePointerInfo lowMemPtr( SN->getPointerInfo().V, mpi_offset);
+  MachinePointerInfo highMemPtr( SN->getPointerInfo().V, mpi_offset+16);
 
-  switch (SN->getAddressingMode()) {
-  case ISD::UNINDEXED: {
-    // The vector type we really want to load from the 16-byte chunk.
-    EVT vecVT = EVT::getVectorVT(*DAG.getContext(),
-                                 VT, (128 / VT.getSizeInBits()));
+
+  // two sanity checks
+  assert( SN->getAddressingMode() == ISD::UNINDEXED  
+          && "we should get only UNINDEXED adresses");
+  // clean aligned loads can be selected as-is
+  if (StVT.getSizeInBits() == 128 && alignment == 16)
+    return SDValue();
+
+
 
     SDValue alignLoadVec;
     SDValue basePtr = SN->getBasePtr();
@@ -811,17 +846,17 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                   DAG.getConstant(0, PtrVT));
     }
 
-    // Load the memory to which to store.
-    alignLoadVec = DAG.getLoad(vecVT, dl, the_chain, basePtr,
-                               SN->getPointerInfo(),
-                               SN->isVolatile(), SN->isNonTemporal(), 16);
+    // Load the lower part of the memory to which to store.
+    SDValue low = DAG.getLoad(vecVT, dl, the_chain, basePtr,
+                              lowMemPtr, SN->isVolatile(), SN->isNonTemporal(), 16);
 
+  // if we don't need to store over the 16 byte boundary, one store suffices
+  if (alignment >= StVT.getSizeInBits()/8) {
     // Update the chain
-    the_chain = alignLoadVec.getValue(1);
+    the_chain = low.getValue(1);
 
-    LoadSDNode *LN = cast<LoadSDNode>(alignLoadVec);
+    LoadSDNode *LN = cast<LoadSDNode>(low);
     SDValue theValue = SN->getValue();
-    SDValue result;
 
     if (StVT != VT
         && (theValue.getOpcode() == ISD::AssertZext
@@ -849,14 +884,14 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                       theValue);
 
     result = DAG.getNode(SPUISD::SHUFB, dl, vecVT,
-                         vectorizeOp, alignLoadVec,
+                         vectorizeOp, low,
                          DAG.getNode(ISD::BIT_CONVERT, dl,
                                      MVT::v4i32, insertEltOp));
 
     result = DAG.getStore(the_chain, dl, result, basePtr,
-                          LN->getPointerInfo(),
+                          lowMemPtr,
                           LN->isVolatile(), LN->isNonTemporal(),
-                          LN->getAlignment());
+                          16);
 
 #if 0 && !defined(NDEBUG)
     if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
@@ -869,24 +904,106 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       DAG.setRoot(currentRoot);
     }
 #endif
-
-    return result;
-    /*UNREACHED*/
   }
-  case ISD::PRE_INC:
-  case ISD::PRE_DEC:
-  case ISD::POST_INC:
-  case ISD::POST_DEC:
-  case ISD::LAST_INDEXED_MODE:
-    {
-      report_fatal_error("LowerLOAD: Got a LoadSDNode with an addr mode other "
-                         "than UNINDEXED\n" +
-                         Twine((unsigned)SN->getAddressingMode()));
-      /*NOTREACHED*/
+  // do the store when it might cross the 16 byte memory access boundary.
+  else {
+    // TODO issue a warning if SN->isVolatile()== true? This is likely not 
+    // what the user wanted.
+    
+    // address offset from nearest lower 16byte alinged address
+    SDValue offset = DAG.getNode(ISD::AND, dl, MVT::i32, 
+                                    SN->getBasePtr(), 
+                                    DAG.getConstant(0xf, MVT::i32));
+    // 16 - offset
+    SDValue offset_compl = DAG.getNode(ISD::SUB, dl, MVT::i32, 
+                                           DAG.getConstant( 16, MVT::i32),
+                                           offset);
+    SDValue hi_shift = DAG.getNode(ISD::SUB, dl, MVT::i32, 
+                                      DAG.getConstant( VT.getSizeInBits()/8,
+                                                       MVT::i32),
+                                      offset_compl);
+    // 16 - sizeof(Value)
+    SDValue surplus = DAG.getNode(ISD::SUB, dl, MVT::i32, 
+                                     DAG.getConstant( 16, MVT::i32),
+                                     DAG.getConstant( VT.getSizeInBits()/8,
+                                                      MVT::i32));
+    // get a registerfull of ones 
+    SDValue ones = DAG.getConstant(-1, MVT::v4i32);
+    ones = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, ones);
+
+    // Create the 128 bit masks that have ones where the data to store is
+    // located.
+    SDValue lowmask, himask; 
+    // if the value to store don't fill up the an entire 128 bits, zero 
+    // out the last bits of the mask so that only the value we want to store
+    // is masked. 
+    // this is e.g. in the case of store i32, align 2
+    if (!VT.isVector()){
+      Value = DAG.getNode(SPUISD::PREFSLOT2VEC, dl, vecVT, Value);
+      lowmask = DAG.getNode(SPUISD::SRL_BYTES, dl, MVT::i128, ones, surplus);
+      lowmask = DAG.getNode(SPUISD::SHL_BYTES, dl, MVT::i128, lowmask, 
+                                                               surplus);
+      Value = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, Value);
+      Value = DAG.getNode(ISD::AND, dl, MVT::i128, Value, lowmask);
+     
     }
-  }
+    else {
+      lowmask = ones;
+      Value = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, Value);
+    }
+    // this will zero, if there are no data that goes to the high quad 
+    himask = DAG.getNode(SPUISD::SHL_BYTES, dl, MVT::i128, lowmask, 
+                                                            offset_compl);
+    lowmask = DAG.getNode(SPUISD::SRL_BYTES, dl, MVT::i128, lowmask, 
+                                                             offset);
+  
+    // Load in the old data and zero out the parts that will be overwritten with
+    // the new data to store.
+    SDValue hi = DAG.getLoad(MVT::i128, dl, the_chain, 
+                               DAG.getNode(ISD::ADD, dl, PtrVT, basePtr,
+                                           DAG.getConstant( 16, PtrVT)),
+                               highMemPtr,
+                               SN->isVolatile(), SN->isNonTemporal(), 16);
+    the_chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, low.getValue(1),
+                                                              hi.getValue(1));
 
-  return SDValue();
+    low = DAG.getNode(ISD::AND, dl, MVT::i128, 
+                        DAG.getNode( ISD::BIT_CONVERT, dl, MVT::i128, low),
+                        DAG.getNode( ISD::XOR, dl, MVT::i128, lowmask, ones));
+    hi = DAG.getNode(ISD::AND, dl, MVT::i128, 
+                        DAG.getNode( ISD::BIT_CONVERT, dl, MVT::i128, hi),
+                        DAG.getNode( ISD::XOR, dl, MVT::i128, himask, ones));
+
+    // Shift the Value to store into place. rlow contains the parts that go to
+    // the lower memory chunk, rhi has the parts that go to the upper one. 
+    SDValue rlow = DAG.getNode(SPUISD::SRL_BYTES, dl, MVT::i128, Value, offset);
+    rlow = DAG.getNode(ISD::AND, dl, MVT::i128, rlow, lowmask);
+    SDValue rhi = DAG.getNode(SPUISD::SHL_BYTES, dl, MVT::i128, Value, 
+                                                            offset_compl);
+
+    // Merge the old data and the new data and store the results
+    // Need to convert vectors here to integer as 'OR'ing floats assert 
+    rlow = DAG.getNode(ISD::OR, dl, MVT::i128, 
+                          DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, low),
+                          DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, rlow));
+    rhi = DAG.getNode(ISD::OR, dl, MVT::i128, 
+                         DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, hi),
+                         DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, rhi));
+
+    low = DAG.getStore(the_chain, dl, rlow, basePtr,
+                          lowMemPtr,
+                          SN->isVolatile(), SN->isNonTemporal(), 16);
+    hi  = DAG.getStore(the_chain, dl, rhi, 
+                            DAG.getNode(ISD::ADD, dl, PtrVT, basePtr,
+                                        DAG.getConstant( 16, PtrVT)),
+                            highMemPtr,
+                            SN->isVolatile(), SN->isNonTemporal(), 16);
+    result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, low.getValue(0),
+                                                           hi.getValue(0));
+  } 
+
+  return result;
+
 }
 
 //! Generate the address of a constant pool entry.
@@ -2002,7 +2119,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
                         DAG.getConstant(scaleShift, MVT::i32));
     }
 
-    vecShift = DAG.getNode(SPUISD::SHLQUAD_L_BYTES, dl, VecVT, N, Elt);
+    vecShift = DAG.getNode(SPUISD::SHL_BYTES, dl, VecVT, N, Elt);
 
     // Replicate the bytes starting at byte 0 across the entire vector (for
     // consistency with the notion of a unified register set)
@@ -2911,8 +3028,8 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
     }
     break;
   }
-  case SPUISD::SHLQUAD_L_BITS:
-  case SPUISD::SHLQUAD_L_BYTES:
+  case SPUISD::SHL_BITS:
+  case SPUISD::SHL_BYTES:
   case SPUISD::ROTBYTES_LEFT: {
     SDValue Op1 = N->getOperand(1);
 

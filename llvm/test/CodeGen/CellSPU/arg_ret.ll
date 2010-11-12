@@ -26,7 +26,7 @@ define ccc i32 @test_regs_and_stack( %paramstruct %prm, i32 %stackprm )
 
 define ccc %paramstruct @test_return( i32 %param,  %paramstruct %prm )
 {
-;CHECK:  lqd	$75, 80($sp)
+;CHECK:  lqd	{{\$[0-9]+}}, 80($sp)
 ;CHECK-NOT:	ori	{{\$[0-9]+, \$[0-9]+, 0}}
 ;CHECK:  lr    $3, $4
   ret %paramstruct %prm

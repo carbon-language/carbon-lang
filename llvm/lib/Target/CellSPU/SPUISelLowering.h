@@ -41,8 +41,9 @@ namespace llvm {
       CNTB,                     ///< Count leading ones in bytes
       PREFSLOT2VEC,             ///< Promote scalar->vector
       VEC2PREFSLOT,             ///< Extract element 0
-      SHLQUAD_L_BITS,           ///< Rotate quad left, by bits
-      SHLQUAD_L_BYTES,          ///< Rotate quad left, by bytes
+      SHL_BITS,                 ///< Shift quad left, by bits
+      SHL_BYTES,                ///< Shift quad left, by bytes
+      SRL_BYTES,                ///< Shift quad right, by bytes. Insert zeros.
       VEC_ROTL,                 ///< Vector rotate left
       VEC_ROTR,                 ///< Vector rotate right
       ROTBYTES_LEFT,            ///< Rotate bytes (loads -> ROTQBYI)

@@ -14,6 +14,7 @@
 ; RUN: grep iohl                %t1.s | count 8
 ; RUN: grep shufb               %t1.s | count 15
 ; RUN: grep frds                %t1.s | count 1
+; RUN: llc < %s -march=cellspu | FileCheck %s
 
 ; ModuleID = 'stores.bc'
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
@@ -148,4 +149,16 @@ entry:
 	%conv = fptrunc double %val to float
 	store float %conv, float* %dest
 	ret float %conv
+}
+
+;Check stores that might span two 16 byte memory blocks
+define void @store_misaligned( i32 %val, i32* %ptr) {	
+;CHECK: store_misaligned
+;CHECK: lqd
+;CHECK: lqd
+;CHECK: stqd
+;CHECK: stqd
+;CHECK: bi $lr
+	store i32 %val, i32*%ptr, align 2
+	ret void
 }

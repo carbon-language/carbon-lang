@@ -38,3 +38,15 @@ define <4 x float> @load_undef(){
 	%val = load <4 x float>* undef
 	ret <4 x float> %val
 }
+
+;check that 'misaligned' loads that may span two memory chunks
+;have two loads. Don't check for the bitmanipulation, as that 
+;might change with improved algorithms or scheduling 
+define i32 @load_misaligned( i32* %ptr ){
+;CHECK: load_misaligned
+;CHECK: lqd
+;CHECK: lqd
+;CHECK: bi $lr
+  %rv = load i32* %ptr, align 2
+  ret i32 %rv
+}

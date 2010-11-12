@@ -2369,10 +2369,13 @@ class ROTQBYInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b00111011100, OOL, IOL, "rotqby\t$rT, $rA, $rB",
            RotateShift, pattern>;
 
-class ROTQBYVecInst<ValueType vectype>:
-    ROTQBYInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
-               [(set (vectype VECREG:$rT),
-                     (SPUrotbytes_left (vectype VECREG:$rA), R32C:$rB))]>;
+class ROTQBYGenInst<ValueType type, RegisterClass rc>:
+    ROTQBYInst<(outs rc:$rT), (ins rc:$rA, R32C:$rB),
+               [(set (type rc:$rT),
+                     (SPUrotbytes_left (type rc:$rA), R32C:$rB))]>;
+
+class ROTQBYVecInst<ValueType type>:
+    ROTQBYGenInst<type, VECREG>;
 
 multiclass RotateQuadLeftByBytes
 {
@@ -2382,6 +2385,7 @@ multiclass RotateQuadLeftByBytes
   def v4f32: ROTQBYVecInst<v4f32>;
   def v2i64: ROTQBYVecInst<v2i64>;
   def v2f64: ROTQBYVecInst<v2f64>;
+  def i128:  ROTQBYGenInst<i128, GPRC>;
 }
 
 defm ROTQBY: RotateQuadLeftByBytes;
@@ -2394,10 +2398,13 @@ class ROTQBYIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b00111111100, OOL, IOL, "rotqbyi\t$rT, $rA, $val",
             RotateShift, pattern>;
 
+class ROTQBYIGenInst<ValueType type, RegisterClass rclass>:
+    ROTQBYIInst<(outs rclass:$rT), (ins rclass:$rA, u7imm:$val),
+                [(set (type rclass:$rT),
+                      (SPUrotbytes_left (type rclass:$rA), (i16 uimm7:$val)))]>;
+
 class ROTQBYIVecInst<ValueType vectype>:
-    ROTQBYIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
-                [(set (vectype VECREG:$rT),
-                      (SPUrotbytes_left (vectype VECREG:$rA), (i16 uimm7:$val)))]>;
+    ROTQBYIGenInst<vectype, VECREG>;
 
 multiclass RotateQuadByBytesImm
 {
@@ -2407,6 +2414,7 @@ multiclass RotateQuadByBytesImm
   def v4f32: ROTQBYIVecInst<v4f32>;
   def v2i64: ROTQBYIVecInst<v2i64>;
   def vfi64: ROTQBYIVecInst<v2f64>;
+  def i128:  ROTQBYIGenInst<i128, GPRC>;
 }
 
 defm ROTQBYI: RotateQuadByBytesImm;
@@ -2661,6 +2669,10 @@ multiclass RotateQuadBytes
 
 defm ROTQMBY : RotateQuadBytes;
 
+def : Pat<(SPUsrl_bytes GPRC:$rA, R32C:$rB),
+          (ROTQMBYr128  GPRC:$rA, 
+                        (SFIr32 R32C:$rB, 0))>;
+
 class ROTQMBYIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b10111111100, OOL, IOL, "rotqmbyi\t$rT, $rA, $val",
             RotateShift, pattern>;
@@ -2748,6 +2760,11 @@ multiclass RotateMaskQuadByBits
 }
 
 defm ROTQMBI: RotateMaskQuadByBits;
+
+def : Pat<(srl GPRC:$rA, R32C:$rB),
+          (ROTQMBIr128  GPRC:$rA, 
+                        (SFIr32 R32C:$rB, 0))>;
+
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // Rotate quad and mask by bits, immediate

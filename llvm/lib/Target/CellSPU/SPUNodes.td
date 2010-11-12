@@ -83,10 +83,6 @@ def SPUcntb : SDNode<"SPUISD::CNTB", SDTIntUnaryOp>;
 // SPUISelLowering.h):
 def SPUshuffle: SDNode<"SPUISD::SHUFB", SDT_SPUshuffle, []>;
 
-// Shift left quadword by bits and bytes
-def SPUshlquad_l_bits: SDNode<"SPUISD::SHLQUAD_L_BITS", SPUvecshift_type, []>;
-def SPUshlquad_l_bytes: SDNode<"SPUISD::SHLQUAD_L_BYTES", SPUvecshift_type, []>;
-
 // Vector shifts (ISD::SHL,SRL,SRA are for _integers_ only):
 def SPUvec_shl: SDNode<"ISD::SHL", SPUvecshift_type, []>;
 def SPUvec_srl: SDNode<"ISD::SRL", SPUvecshift_type, []>;
@@ -104,6 +100,12 @@ def SPUrotbytes_left: SDNode<"SPUISD::ROTBYTES_LEFT",
 // three bits)
 def SPUrotbytes_left_bits : SDNode<"SPUISD::ROTBYTES_LEFT_BITS",
                                    SPUvecshift_type>;
+
+// Shift entire quad left by bytes/bits. Zeros are shifted in on the right
+// SHL_BITS the same as SHL for i128, but ISD::SHL is not implemented for i128
+def SPUshlquad_l_bytes: SDNode<"SPUISD::SHL_BYTES", SPUvecshift_type, []>;
+def SPUshlquad_l_bits: SDNode<"SPUISD::SHL_BITS", SPUvecshift_type, []>;
+def SPUsrl_bytes: SDNode<"SPUISD::SRL_BYTES", SPUvecshift_type, []>;
 
 // SPU form select mask for bytes, immediate
 def SPUselmask: SDNode<"SPUISD::SELECT_MASK", SPUselmask_type, []>;
