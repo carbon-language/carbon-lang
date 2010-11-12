@@ -136,10 +136,21 @@ public:
     Binary |= ARM_AM::getSOImmValImm((unsigned)SoImmVal);
     return Binary;
   }
+  
+  /// getT2SOImmOpValue - Return an encoded 12-bit shifted-immediate value.
+  unsigned getT2SOImmOpValue(const MCInst &MI, unsigned Op,
+                           SmallVectorImpl<MCFixup> &Fixups) const {
+    unsigned SoImm = MI.getOperand(Op).getImm();
+    unsigned Encoded =  ARM_AM::getT2SOImmVal(SoImm);
+    assert(Encoded != ~0U && "Not a Thumb2 so_imm value?");
+    return Encoded;
+  }
 
   /// getSORegOpValue - Return an encoded so_reg shifted register value.
   unsigned getSORegOpValue(const MCInst &MI, unsigned Op,
                            SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getT2SORegOpValue(const MCInst &MI, unsigned Op,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
 
   unsigned getRotImmOpValue(const MCInst &MI, unsigned Op,
                             SmallVectorImpl<MCFixup> &Fixups) const {
@@ -546,6 +557,47 @@ getSORegOpValue(const MCInst &MI, unsigned OpIdx,
 
   // Encode shift_imm bit[11:7].
   return Binary | ARM_AM::getSORegOffset(MO2.getImm()) << 7;
+}
+
+unsigned ARMMCCodeEmitter::
+getT2SORegOpValue(const MCInst &MI, unsigned OpIdx,
+                SmallVectorImpl<MCFixup> &Fixups) const {
+  // Sub-operands are [reg, imm]. The first register is Rm, the reg to be
+  // shifted. The second is the amount to shift by.
+  //
+  // {3-0} = Rm.
+  // {4}   = 0
+  // {6-5} = type
+  // {11-7} = imm
+
+  const MCOperand &MO  = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(MO1.getImm());
+
+  // Encode Rm.
+  unsigned Binary = getARMRegisterNumbering(MO.getReg());
+
+  // Encode the shift opcode.
+  unsigned SBits = 0;
+  // Set shift operand (bit[6:4]).
+  // LSL - 000
+  // LSR - 010
+  // ASR - 100
+  // ROR - 110
+  switch (SOpc) {
+  default: llvm_unreachable("Unknown shift opc!");
+  case ARM_AM::lsl: SBits = 0x0; break;
+  case ARM_AM::lsr: SBits = 0x2; break;
+  case ARM_AM::asr: SBits = 0x4; break;
+  case ARM_AM::ror: SBits = 0x6; break;
+  }
+
+  Binary |= SBits << 4;
+  if (SOpc == ARM_AM::rrx)
+    return Binary;
+
+  // Encode shift_imm bit[11:7].
+  return Binary | ARM_AM::getSORegOffset(MO1.getImm()) << 7;
 }
 
 unsigned ARMMCCodeEmitter::
