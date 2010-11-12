@@ -1381,6 +1381,7 @@ let isBranch = 1, isTerminator = 1 in {
     def B : ABXI<0b1010, (outs), (ins brtarget:$target), IIC_Br,
                 "b\t$target", [(br bb:$target)]> {
       bits<24> target;
+      let Inst{31-28} = 0b1110;
       let Inst{23-0} = target;
     }
 
