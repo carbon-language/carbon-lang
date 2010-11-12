@@ -769,6 +769,10 @@ iretq
 // CHECK:  encoding: [0x66,0xca,0xce,0x7a]
         	lretw	$0x7ace
 
+// PR8592
+lretq  // CHECK: lretq # encoding: [0x48,0xcb]
+lret   // CHECK: lret  # encoding: [0xcb]
+
 // rdar://8403907
 sysret
 // CHECK: sysretl
