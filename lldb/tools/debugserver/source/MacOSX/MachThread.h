@@ -89,6 +89,10 @@ public:
     nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len);
     nub_size_t      SetRegisterContext (const void *buf, nub_size_t buf_len);
     void            NotifyBreakpointChanged (const DNBBreakpoint *bp);
+
+    bool            IsUserReady();
+    struct thread_basic_info *
+                    GetBasicInfo ();
     const char *    GetBasicInfoAsString () const;
     const char *    GetName ();
 protected:

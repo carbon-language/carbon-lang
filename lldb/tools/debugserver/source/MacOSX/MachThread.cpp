@@ -39,7 +39,10 @@ MachThread::MachThread (MachProcess *process, thread_t thread) :
     if (num_reg_sets > 0)
         m_regSets.assign(regSetInfo, regSetInfo + num_reg_sets);
 
-    ::memset (&m_basicInfo, 0, sizeof (m_basicInfo));
+    // Get the thread state so we know if a thread is in a state where we can't
+    // muck with it and also so we get the suspend count correct in case it was
+    // already suspended
+    GetBasicInfo();
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::MachThread ( process = %p, tid = 0x%4.4x, seq_id = %u )", &m_process, m_tid, m_seq_id);
 }
 
@@ -187,6 +190,36 @@ MachThread::InferiorThreadID() const
     }
     return inferior_tid;
 }
+
+bool
+MachThread::IsUserReady()
+{
+    if (m_basicInfo.run_state == 0)
+        GetBasicInfo ();
+    
+    switch (m_basicInfo.run_state)
+    {
+    default:
+    case TH_STATE_UNINTERRUPTIBLE:  
+        break;
+
+    case TH_STATE_RUNNING:
+    case TH_STATE_STOPPED:
+    case TH_STATE_WAITING:
+    case TH_STATE_HALTED:
+        return true;
+    }
+    return false;
+}
+
+struct thread_basic_info *
+MachThread::GetBasicInfo ()
+{
+    if (MachThread::GetBasicInfo(m_tid, &m_basicInfo))
+        return &m_basicInfo;
+    return NULL;
+}
+
 
 bool
 MachThread::GetBasicInfo(thread_t thread, struct thread_basic_info *basicInfoPtr)

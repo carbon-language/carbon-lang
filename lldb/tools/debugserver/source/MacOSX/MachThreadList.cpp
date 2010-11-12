@@ -237,7 +237,10 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update)
                 {
                     // We don't have this thread, lets add it.
                     MachThreadSP threadSP(new MachThread(process, thread_list[idx]));
-                    currThreads.push_back(threadSP);
+                    // Make sure the thread is ready to be displayed and shown to users
+                    // before we add this thread to our list...
+                    if (threadSP->IsUserReady())
+                        currThreads.push_back(threadSP);
                 }
             }
 
