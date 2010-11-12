@@ -1264,6 +1264,9 @@ def : MnemonicAlias<"cdq", "cltd">;
 def : MnemonicAlias<"cwde", "cwtl">;
 def : MnemonicAlias<"cdqe", "cltq">;
 
+// lret maps to lretl, it is not ambiguous with lretq.
+def : MnemonicAlias<"lret", "lretl">;
+
 def : MnemonicAlias<"pop", "popl">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"pop", "popq">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"popf", "popfl">, Requires<[In32BitMode]>;
