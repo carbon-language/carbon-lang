@@ -127,7 +127,7 @@ namespace {
 class VisitorJob {
 public:
   enum Kind { DeclVisitKind, StmtVisitKind, MemberExprPartsKind,
-              TypeLocVisitKind };
+              TypeLocVisitKind, OverloadExprPartsKind };
 protected:
   void *dataA;
   void *dataB;
@@ -154,6 +154,7 @@ public:\
 DEF_JOB(DeclVisit, Decl, DeclVisitKind)
 DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
 DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
+DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
 #undef DEF_JOB
 
 class TypeLocVisit : public VisitorJob {
@@ -375,11 +376,9 @@ public:
   bool VisitCXXNewExpr(CXXNewExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   bool VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
-  bool VisitOverloadExpr(OverloadExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
   bool VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
-  bool VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
   
 #define DATA_RECURSIVE_VISIT(NAME)\
 bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
@@ -392,8 +391,10 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(InitListExpr)
   DATA_RECURSIVE_VISIT(ForStmt)
   DATA_RECURSIVE_VISIT(MemberExpr)
+  DATA_RECURSIVE_VISIT(OverloadExpr)
   DATA_RECURSIVE_VISIT(SwitchStmt)
   DATA_RECURSIVE_VISIT(WhileStmt)
+  DATA_RECURSIVE_VISIT(UnresolvedMemberExpr)
 
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
@@ -1722,34 +1723,6 @@ bool CursorVisitor::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   return Visit(E->getQueriedTypeSourceInfo()->getTypeLoc());
 }
 
-bool CursorVisitor::VisitOverloadExpr(OverloadExpr *E) {
-  // Visit the nested-name-specifier.
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
-      return true;
-  
-  // Visit the declaration name.
-  if (VisitDeclarationNameInfo(E->getNameInfo()))
-    return true;
-
-  // Visit the overloaded declaration reference.
-  if (Visit(MakeCursorOverloadedDeclRef(E, TU)))
-    return true;
-
-  // Visit the explicitly-specified template arguments.
-  if (const ExplicitTemplateArgumentList *ArgList
-                                      = E->getOptionalExplicitTemplateArgs()) {
-    for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
-                                *ArgEnd = Arg + ArgList->NumTemplateArgs;
-         Arg != ArgEnd; ++Arg) {
-      if (VisitTemplateArgumentLoc(*Arg))
-        return true;
-    }
-  }
-    
-  return false;
-}
-
 bool CursorVisitor::VisitDependentScopeDeclRefExpr(
                                                 DependentScopeDeclRefExpr *E) {
   // Visit the nested-name-specifier.
@@ -1814,15 +1787,6 @@ bool CursorVisitor::VisitCXXDependentScopeMemberExpr(
   return false;
 }
 
-bool CursorVisitor::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
-  // Visit the base expression, if there is one.
-  if (!E->isImplicitAccess() &&
-      Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
-    return true;
-
-  return VisitOverloadExpr(E);
-}
-
 bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   if (TypeSourceInfo *TSInfo = E->getClassReceiverTypeInfo())
     if (Visit(TSInfo->getTypeLoc()))
@@ -1861,6 +1825,11 @@ static void EnqueueChildren(VisitorWorkList &WL, CXCursor Parent, Stmt *S) {
   // ordering performed by the worklist.
   VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
   std::reverse(I, E);
+}
+
+static void EnqueueOverloadExpr(VisitorWorkList &WL, CXCursor Parent,
+                                OverloadExpr *E) {
+  WL.push_back(OverloadExprParts(E, Parent));
 }
 
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
@@ -1941,6 +1910,16 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
       WLAddDecl(WL, C, W->getConditionVariable());
       break;
     }
+    case Stmt::UnresolvedLookupExprClass:
+      EnqueueOverloadExpr(WL, C, cast<OverloadExpr>(S));
+      break;
+   case Stmt::UnresolvedMemberExprClass: {
+     UnresolvedMemberExpr *U = cast<UnresolvedMemberExpr>(S);
+     EnqueueOverloadExpr(WL, C, U);
+     if (!U->isImplicitAccess())
+       WLAddStmt(WL, C, U->getBase());
+     break;
+   }
   }
 }
 
@@ -2010,6 +1989,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::ParenExprClass:
           case Stmt::SwitchStmtClass:
           case Stmt::UnaryOperatorClass:
+          case Stmt::UnresolvedLookupExprClass:
+          case Stmt::UnresolvedMemberExprClass:
           case Stmt::WhileStmtClass:
           {
             if (!IsInRegionOfInterest(Cursor))
@@ -2044,6 +2025,30 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         if (M->hasExplicitTemplateArgs()) {
           for (const TemplateArgumentLoc *Arg = M->getTemplateArgs(),
                *ArgEnd = Arg + M->getNumTemplateArgs();
+               Arg != ArgEnd; ++Arg) {
+            if (VisitTemplateArgumentLoc(*Arg))
+              return true;
+          }
+        }
+        continue;
+      }
+      case VisitorJob::OverloadExprPartsKind: {
+        OverloadExpr *O = cast<OverloadExprParts>(LI).get();
+        // Visit the nested-name-specifier.
+        if (NestedNameSpecifier *Qualifier = O->getQualifier())
+          if (VisitNestedNameSpecifier(Qualifier, O->getQualifierRange()))
+            return true;
+        // Visit the declaration name.
+        if (VisitDeclarationNameInfo(O->getNameInfo()))
+          return true;
+        // Visit the overloaded declaration reference.
+        if (Visit(MakeCursorOverloadedDeclRef(O, TU)))
+          return true;
+        // Visit the explicitly-specified template arguments.
+        if (const ExplicitTemplateArgumentList *ArgList
+                                      = O->getOptionalExplicitTemplateArgs()) {
+          for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
+                 *ArgEnd = Arg + ArgList->NumTemplateArgs;
                Arg != ArgEnd; ++Arg) {
             if (VisitTemplateArgumentLoc(*Arg))
               return true;
