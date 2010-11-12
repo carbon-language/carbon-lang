@@ -1016,21 +1016,20 @@ void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm,
     // The @@@ in symbol version is replaced with @ in undefined symbols and
     // @@ in defined ones.
     StringRef Name = Symbol.getName();
+    SmallString<32> Buf;
+
     size_t Pos = Name.find("@@@");
-    std::string FinalName;
     if (Pos != StringRef::npos) {
-      StringRef Prefix = Name.substr(0, Pos);
-      unsigned n = MSD.SectionIndex == ELF::SHN_UNDEF ? 2 : 1;
-      StringRef Suffix = Name.substr(Pos + n);
-      FinalName = Prefix.str() + Suffix.str();
-    } else {
-      FinalName = Name.str();
+      Buf += Name.substr(0, Pos);
+      unsigned Skip = MSD.SectionIndex == ELF::SHN_UNDEF ? 2 : 1;
+      Buf += Name.substr(Pos + Skip);
+      Name = Buf;
     }
 
-    uint64_t &Entry = StringIndexMap[FinalName];
+    uint64_t &Entry = StringIndexMap[Name];
     if (!Entry) {
       Entry = StringTable.size();
-      StringTable += FinalName;
+      StringTable += Name;
       StringTable += '\x00';
     }
     MSD.StringIndex = Entry;
