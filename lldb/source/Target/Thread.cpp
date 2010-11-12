@@ -726,18 +726,6 @@ Thread::QueueThreadPlanForCallFunction (bool abort_other_plans,
 }
 
 ThreadPlan *
-Thread::QueueThreadPlanForCallFunction (bool abort_other_plans,
-                                        Address& function,
-                                        ValueList &args,
-                                        bool stop_other_threads,
-                                        bool discard_on_error)
-{
-    ThreadPlanSP thread_plan_sp (new ThreadPlanCallFunction (*this, function, args, stop_other_threads, discard_on_error));
-    QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
-}
-
-ThreadPlan *
 Thread::QueueThreadPlanForRunToAddress (bool abort_other_plans,
                                         Address &target_addr,
                                         bool stop_other_threads)

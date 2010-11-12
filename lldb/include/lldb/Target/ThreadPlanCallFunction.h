@@ -30,12 +30,6 @@ public:
                             bool discard_on_error = true,
                             lldb::addr_t *this_arg = 0);
     
-    ThreadPlanCallFunction (Thread &thread,
-                            Address &function,
-                            ValueList &args,
-                            bool stop_other_threads,
-                            bool discard_on_error = true);
-    
     virtual
     ~ThreadPlanCallFunction ();
 

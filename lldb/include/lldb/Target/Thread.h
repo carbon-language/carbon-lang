@@ -492,13 +492,6 @@ public:
                                     lldb::addr_t arg,
                                     bool stop_other_threads,
                                     bool discard_on_error = false);
-    
-    virtual ThreadPlan *
-    QueueThreadPlanForCallFunction (bool abort_other_plans,
-                                    Address& function,
-                                    ValueList &args,
-                                    bool stop_other_threads,
-                                    bool discard_on_error = false);
                                             
     //------------------------------------------------------------------
     // Thread Plan accessors:

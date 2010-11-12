@@ -38,13 +38,6 @@ public:
                         lldb::addr_t *this_arg) const = 0;
     
     virtual bool
-    PrepareNormalCall (Thread &thread,
-                       lldb::addr_t sp,
-                       lldb::addr_t functionAddress,
-                       lldb::addr_t returnAddress,
-                       ValueList &args) const = 0;
-    
-    virtual bool
     GetArgumentValues (Thread &thread,
                        ValueList &values) const = 0;
     
