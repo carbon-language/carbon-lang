@@ -629,15 +629,13 @@ namespace {
                                                 NonTypeTemplateParmDecl *D);
 
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
-                                        FunctionProtoTypeLoc TL,
-                                        QualType ObjectType);
+                                        FunctionProtoTypeLoc TL);
     ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm);
 
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
     QualType TransformTemplateTypeParmType(TypeLocBuilder &TLB,
-                                           TemplateTypeParmTypeLoc TL,
-                                           QualType ObjectType);
+                                           TemplateTypeParmTypeLoc TL);
 
     ExprResult TransformCallExpr(CallExpr *CE) {
       getSema().CallsUndergoingInstantiation.push_back(CE);
@@ -869,11 +867,10 @@ ExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
 }
 
 QualType TemplateInstantiator::TransformFunctionProtoType(TypeLocBuilder &TLB,
-                                                        FunctionProtoTypeLoc TL,
-                                                          QualType ObjectType) {
+                                                      FunctionProtoTypeLoc TL) {
   // We need a local instantiation scope for this function prototype.
   LocalInstantiationScope Scope(SemaRef, /*CombineWithOuterScope=*/true);
-  return inherited::TransformFunctionProtoType(TLB, TL, ObjectType);
+  return inherited::TransformFunctionProtoType(TLB, TL);
 }
 
 ParmVarDecl *
@@ -883,8 +880,7 @@ TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm) {
 
 QualType
 TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
-                                                TemplateTypeParmTypeLoc TL, 
-                                                    QualType ObjectType) {
+                                                TemplateTypeParmTypeLoc TL) {
   TemplateTypeParmType *T = TL.getTypePtr();
   if (T->getDepth() < TemplateArgs.getNumLevels()) {
     // Replace the template type parameter with its corresponding
@@ -1035,7 +1031,7 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
   TypeLoc TL = T->getTypeLoc();
   TLB.reserve(TL.getFullDataSize());
 
-  QualType Result = Instantiator.TransformType(TLB, TL, QualType());
+  QualType Result = Instantiator.TransformType(TLB, TL);
   if (Result.isNull())
     return 0;
 

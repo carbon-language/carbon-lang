@@ -49,3 +49,20 @@ namespace test1 {
   };
   template struct O::B<int>; // expected-note {{in instantiation}}
 }
+
+// PR7248
+namespace test2 {
+  template <class T> struct A {
+    void foo() {
+      T::bar(); // expected-error {{type 'int' cannot}}
+    }
+  };
+
+  template <class T> class B {
+    void foo(A<T> a) {
+      a.test2::template A<T>::foo(); // expected-note {{in instantiation}}
+    }
+  };
+
+  template class B<int>;
+}
