@@ -148,12 +148,9 @@ class FoundationTestCase(TestBase):
                     COMMAND_FAILED_AS_EXPECTED, error=True,
             startstr = "error: 'MyString' does not have a member named 'non_existent_member'")
 
-        # This currently fails.
-        # rdar://problem/8492646
-        #
         # Use expression parser.
-        #self.runCmd("expression self->str")
-        #self.runCmd("expression self->date")
+        self.runCmd("expression self->str")
+        self.runCmd("expression self->date")
 
         # (lldb) expression self->str
         # error: instance variable 'str' is protected
