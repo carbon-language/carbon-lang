@@ -123,7 +123,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
     bool stop_others = true;
     
     ClangFunction::ExecutionResults results 
-        = func.ExecuteFunction(exe_ctx, &wrapper_struct_addr, error_stream, stop_others, 1000, try_all_threads, unwind_on_error, ret);
+        = func.ExecuteFunction(exe_ctx, &wrapper_struct_addr, error_stream, stop_others, 1000000, try_all_threads, unwind_on_error, ret);
     if (results != ClangFunction::eExecutionCompleted)
     {
         str.Printf("Error evaluating Print Object function: %d.\n", results);
