@@ -1411,30 +1411,30 @@ bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
   QualType EltType = T->getElementType();
   if (!EltType->isBuiltinType())
     return false;
-  unsigned EltBits = 0;
   const char *EltName = 0;
   if (T->getVectorKind() == VectorType::NeonPolyVector) {
     switch (cast<BuiltinType>(EltType)->getKind()) {
-    case BuiltinType::SChar:     EltBits =  8; EltName = "poly8_t"; break;
-    case BuiltinType::Short:     EltBits = 16; EltName = "poly16_t"; break;
+    case BuiltinType::SChar:     EltName = "poly8_t"; break;
+    case BuiltinType::Short:     EltName = "poly16_t"; break;
     default: return false;
     }
   } else {
     switch (cast<BuiltinType>(EltType)->getKind()) {
-    case BuiltinType::SChar:     EltBits =  8; EltName = "int8_t"; break;
-    case BuiltinType::UChar:     EltBits =  8; EltName = "uint8_t"; break;
-    case BuiltinType::Short:     EltBits = 16; EltName = "int16_t"; break;
-    case BuiltinType::UShort:    EltBits = 16; EltName = "uint16_t"; break;
-    case BuiltinType::Int:       EltBits = 32; EltName = "int32_t"; break;
-    case BuiltinType::UInt:      EltBits = 32; EltName = "uint32_t"; break;
-    case BuiltinType::LongLong:  EltBits = 64; EltName = "int64_t"; break;
-    case BuiltinType::ULongLong: EltBits = 64; EltName = "uint64_t"; break;
-    case BuiltinType::Float:     EltBits = 32; EltName = "float32_t"; break;
+    case BuiltinType::SChar:     EltName = "int8_t"; break;
+    case BuiltinType::UChar:     EltName = "uint8_t"; break;
+    case BuiltinType::Short:     EltName = "int16_t"; break;
+    case BuiltinType::UShort:    EltName = "uint16_t"; break;
+    case BuiltinType::Int:       EltName = "int32_t"; break;
+    case BuiltinType::UInt:      EltName = "uint32_t"; break;
+    case BuiltinType::LongLong:  EltName = "int64_t"; break;
+    case BuiltinType::ULongLong: EltName = "uint64_t"; break;
+    case BuiltinType::Float:     EltName = "float32_t"; break;
     default: return false;
     }
   }
   const char *BaseName = 0;
-  unsigned BitSize = T->getNumElements() * EltBits;
+  unsigned BitSize = (T->getNumElements() *
+                      getASTContext().getTypeInfo(EltType).first);
   if (BitSize == 64)
     BaseName = "__simd64_";
   else if (BitSize == 128)
