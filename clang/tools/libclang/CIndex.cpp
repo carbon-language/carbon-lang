@@ -153,6 +153,14 @@ DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
 DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
 #undef DEF_JOB
 
+static inline void WLAddStmt(VisitorWorkList &WL, CXCursor Parent, Stmt *S) {
+  if (S)
+    WL.push_back(StmtVisit(S, Parent));
+}
+static inline void WLAddDecl(VisitorWorkList &WL, CXCursor Parent, Decl *D) {
+  if (D)
+    WL.push_back(DeclVisit(D, Parent));
+}
 
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
@@ -322,7 +330,6 @@ public:
   bool VisitStmt(Stmt *S);
   bool VisitDeclStmt(DeclStmt *S);
   bool VisitGotoStmt(GotoStmt *S);
-  bool VisitIfStmt(IfStmt *S);
   bool VisitWhileStmt(WhileStmt *S);
   bool VisitForStmt(ForStmt *S);
 
@@ -357,9 +364,10 @@ public:
 #define DATA_RECURSIVE_VISIT(NAME)\
 bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(BinaryOperator)
-  DATA_RECURSIVE_VISIT(MemberExpr)
   DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
   DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
+  DATA_RECURSIVE_VISIT(IfStmt)
+  DATA_RECURSIVE_VISIT(MemberExpr)
   DATA_RECURSIVE_VISIT(SwitchStmt)
   
   // Data-recursive visitor functions.
@@ -1464,22 +1472,6 @@ bool CursorVisitor::VisitGotoStmt(GotoStmt *S) {
   return Visit(MakeCursorLabelRef(S->getLabel(), S->getLabelLoc(), TU));
 }
 
-bool CursorVisitor::VisitIfStmt(IfStmt *S) {
-  if (VarDecl *Var = S->getConditionVariable()) {
-    if (Visit(MakeCXCursor(Var, TU)))
-      return true;
-  }
-
-  if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
-    return true;
-  if (S->getThen() && Visit(MakeCXCursor(S->getThen(), StmtParent, TU)))
-    return true;
-  if (S->getElse() && Visit(MakeCXCursor(S->getElse(), StmtParent, TU)))
-    return true;
-
-  return false;
-}
-
 bool CursorVisitor::VisitWhileStmt(WhileStmt *S) {
   if (VarDecl *Var = S->getConditionVariable()) {
     if (Visit(MakeCXCursor(Var, TU)))
@@ -1919,6 +1911,14 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
       WL.push_back(StmtVisit(B->getLHS(), C));
       break;
     }
+    case Stmt::IfStmtClass: {
+      IfStmt *If = cast<IfStmt>(S);
+      WLAddStmt(WL, C, If->getElse());
+      WLAddStmt(WL, C, If->getThen());
+      WLAddStmt(WL, C, If->getCond());
+      WLAddDecl(WL, C, If->getConditionVariable());
+      break;
+    }
     case Stmt::MemberExprClass: {
       MemberExpr *M = cast<MemberExpr>(S);
       WL.push_back(MemberExprParts(M, C));
@@ -1993,6 +1993,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::CXXMemberCallExprClass:
           case Stmt::CXXOperatorCallExprClass:
           case Stmt::DefaultStmtClass:
+          case Stmt::IfStmtClass:
           case Stmt::MemberExprClass:
           case Stmt::ParenExprClass:
           case Stmt::SwitchStmtClass:
