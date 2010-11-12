@@ -62,6 +62,7 @@ def HasSEInReg  : Predicate<"Subtarget.hasSEInReg()">;
 def HasBitCount : Predicate<"Subtarget.hasBitCount()">;
 def HasSwap     : Predicate<"Subtarget.hasSwap()">;
 def HasCondMov  : Predicate<"Subtarget.hasCondMov()">;
+def IsMips32    : Predicate<"Subtarget.isMips32()">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -487,7 +488,7 @@ def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
 
 // MUL is a assembly macro in the current used ISAs. In recent ISA's
 // it is a real instruction.
-//def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul>;
+def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul>, Requires<[IsMips32]>;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

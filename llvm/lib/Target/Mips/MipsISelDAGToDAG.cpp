@@ -386,6 +386,8 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
 
     /// Special Muls
     case ISD::MUL: 
+      if (Subtarget.isMips32())
+        break;
     case ISD::MULHS:
     case ISD::MULHU: {
       SDValue MulOp1 = Node->getOperand(0);
