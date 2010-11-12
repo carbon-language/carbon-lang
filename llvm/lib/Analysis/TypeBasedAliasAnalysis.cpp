@@ -67,7 +67,7 @@
 using namespace llvm;
 
 // For testing purposes, enable TBAA only via a special option.
-static cl::opt<bool> EnableTBAA("enable-tbaa", cl::init(true));
+static cl::opt<bool> EnableTBAA("enable-tbaa", cl::init(false));
 
 namespace {
   /// TBAANode - This is a simple wrapper around an MDNode which provides a
