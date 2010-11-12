@@ -931,10 +931,10 @@ protected:
 
     /// VecKind - The kind of vector, either a generic vector type or some
     /// target-specific vector type such as for AltiVec or Neon.
-    unsigned VecKind : 2;
+    unsigned VecKind : 3;
 
     /// NumElements - The number of elements in the vector.
-    unsigned NumElements : 30 - NumTypeBits;
+    unsigned NumElements : 29 - NumTypeBits;
   };
 
   union {
