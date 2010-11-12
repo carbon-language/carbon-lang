@@ -62,15 +62,15 @@ class TypeLocBuilder {
   /// Pushes a copy of the given TypeLoc onto this builder.  The builder
   /// must be empty for this to work.
   void pushFullCopy(TypeLoc L) {
-#ifndef NDEBUG
-    assert(LastTy.isNull() && "pushing copy on non-empty TypeLocBuilder");
-    LastTy = L.getNextTypeLoc().getType();
-#endif
-    assert(Index == Capacity && "pushing copy on non-empty TypeLocBuilder");
-
-    unsigned Size = L.getFullDataSize();
-    TypeLoc Copy = pushImpl(L.getType(), Size);
+    size_t Size = L.getFullDataSize();
+    TypeLoc Copy = pushFullUninitializedImpl(L.getType(), Size);
     memcpy(Copy.getOpaqueData(), L.getOpaqueData(), Size);
+  }
+
+  /// Pushes uninitialized space for the given type.  The builder must
+  /// be empty.
+  TypeLoc pushFullUninitialized(QualType T) {
+    return pushFullUninitializedImpl(T, TypeLoc::getFullDataSizeForType(T));
   }
 
   /// Pushes space for a typespec TypeLoc.  Invalidates any TypeLocs
@@ -127,7 +127,7 @@ private:
 
     Index -= LocalSize;
 
-    return TypeLoc(T, &Buffer[Index]);
+    return getTypeLoc(T);
   }
 
   /// Grow to the given capacity.
@@ -147,6 +147,31 @@ private:
     Buffer = NewBuffer;
     Capacity = NewCapacity;
     Index = NewIndex;
+  }
+
+  TypeLoc pushFullUninitializedImpl(QualType T, size_t Size) {
+#ifndef NDEBUG
+    assert(LastTy.isNull() && "pushing full on non-empty TypeLocBuilder");
+    LastTy = T;
+#endif
+    assert(Index == Capacity && "pushing full on non-empty TypeLocBuilder");
+
+    reserve(Size);
+    Index -= Size;
+
+    return getTypeLoc(T);
+  }
+
+
+  // This is private because, when we kill off TypeSourceInfo in favor
+  // of TypeLoc, we'll want an interface that creates a TypeLoc given
+  // an ASTContext, and we don't want people to think they can just
+  // use this as an equivalent.
+  TypeLoc getTypeLoc(QualType T) {
+#ifndef NDEBUG
+    assert(LastTy == T && "type doesn't match last type pushed!");
+#endif
+    return TypeLoc(T, &Buffer[Index]);
   }
 };
 
