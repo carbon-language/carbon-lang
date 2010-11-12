@@ -417,14 +417,6 @@ class AI1x2<dag oops, dag iops, Format f, InstrItinClass itin,
       opc, asm, "", pattern>;
 
 
-// addrmode2 loads and stores
-class AI2<dag oops, dag iops, Format f, InstrItinClass itin,
-          string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-      opc, asm, "", pattern> {
-  let Inst{27-26} = 0b01;
-}
-
 // loads
 
 // LDR/LDRB/STR/STRB
