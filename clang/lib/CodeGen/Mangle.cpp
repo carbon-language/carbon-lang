@@ -235,6 +235,7 @@ private:
   void mangleType(TemplateName);
   void mangleBareFunctionType(const FunctionType *T,
                               bool MangleReturnType);
+  bool mangleNeonVectorType(const VectorType *T);
 
   void mangleIntegerLiteral(QualType T, const llvm::APSInt &Value);
   void mangleMemberExpr(const Expr *Base, bool IsArrow,
@@ -1402,6 +1403,41 @@ void CXXNameMangler::mangleType(const ComplexType *T) {
   mangleType(T->getElementType());
 }
 
+// ARM's ABI for Neon vector types specifies that they should be mangled as
+// if they are structs (to match ARM's initial implementation).  If the
+// vector type is not one of the special types predefined by ARM, return false
+// so it will be mangled as an ordinary vector type.
+bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
+  QualType EltType = T->getElementType();
+  if (!EltType->isBuiltinType())
+    return false;
+  unsigned EltBits = 0;
+  const char *EltName = 0;
+  switch (cast<BuiltinType>(EltType)->getKind()) {
+  case BuiltinType::SChar:     EltBits =  8; EltName = "int8_t"; break;
+  case BuiltinType::UChar:     EltBits =  8; EltName = "uint8_t"; break;
+  case BuiltinType::Short:     EltBits = 16; EltName = "int16_t"; break;
+  case BuiltinType::UShort:    EltBits = 16; EltName = "uint16_t"; break;
+  case BuiltinType::Int:       EltBits = 32; EltName = "int32_t"; break;
+  case BuiltinType::UInt:      EltBits = 32; EltName = "uint32_t"; break;
+  case BuiltinType::LongLong:  EltBits = 64; EltName = "int64_t"; break;
+  case BuiltinType::ULongLong: EltBits = 64; EltName = "uint64_t"; break;
+  case BuiltinType::Float:     EltBits = 32; EltName = "float32_t"; break;
+  default: return false;
+  }
+  const char *BaseName = 0;
+  unsigned BitSize = T->getNumElements() * EltBits;
+  if (BitSize == 64)
+    BaseName = "__simd64_";
+  else if (BitSize == 128)
+    BaseName = "__simd128_";
+  else
+    return false;
+  Out << strlen(BaseName) + strlen(EltName);
+  Out << BaseName << EltName;
+  return true;
+}
+
 // GNU extension: vector types
 // <type>                  ::= <vector-type>
 // <vector-type>           ::= Dv <positive dimension number> _
@@ -1410,6 +1446,8 @@ void CXXNameMangler::mangleType(const ComplexType *T) {
 // <extended element type> ::= <element type>
 //                         ::= p # AltiVec vector pixel
 void CXXNameMangler::mangleType(const VectorType *T) {
+  if (T->getVectorKind() == VectorType::NeonVector && mangleNeonVectorType(T))
+    return;
   Out << "Dv" << T->getNumElements() << '_';
   if (T->getVectorKind() == VectorType::AltiVecPixel)
     Out << 'p';
