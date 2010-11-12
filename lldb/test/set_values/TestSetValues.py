@@ -77,8 +77,10 @@ class SetValuesTestCase(TestBase):
         self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(char) i = 'a'")
 
-        # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
+        self.runCmd("expression i = \\'b\\'") # Escape the single quotes.
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = "(char) i = 'b'")
 
         self.runCmd("continue")
 
@@ -87,8 +89,10 @@ class SetValuesTestCase(TestBase):
         self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = ["\((short unsigned int|unsigned short)\) i = 33"])
 
-        # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
+        self.runCmd("expression i = 333")
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
+            patterns = ["\((short unsigned int|unsigned short)\) i = 333"])
 
         self.runCmd("continue")
 
@@ -97,8 +101,10 @@ class SetValuesTestCase(TestBase):
         self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(long int) i = 33")
 
-        # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
+        self.runCmd("expression i = 33333")
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = "(long int) i = 33333")
 
         self.runCmd("continue")
 
@@ -107,8 +113,10 @@ class SetValuesTestCase(TestBase):
         self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(double) i = 3.14159")
 
-        # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
+        self.runCmd("expression i = 3.14")
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = "(double) i = 3.14")
 
         self.runCmd("continue")
 
@@ -119,8 +127,10 @@ class SetValuesTestCase(TestBase):
         self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(long double) i = 3.14159")
 
-        # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
+        self.runCmd("expression i = 3.1")
+        self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = "(long double) i = 3.1")
 
 
 if __name__ == '__main__':
