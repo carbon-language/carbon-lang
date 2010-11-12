@@ -18,7 +18,6 @@
 #include "clang/AST/RecordLayout.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -2563,8 +2562,7 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
       // Step 3: Emit ISR vector alias.
       unsigned Num = attr->getNumber() + 0xffe0;
       new llvm::GlobalAlias(GV->getType(), llvm::Function::ExternalLinkage,
-                            "vector_" +
-                            llvm::LowercaseString(llvm::utohexstr(Num)),
+                            "vector_" + llvm::Twine::utohexstr(Num),
                             GV, &M.getModule());
     }
   }
