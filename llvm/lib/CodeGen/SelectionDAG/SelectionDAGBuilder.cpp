@@ -71,6 +71,21 @@ LimitFPPrecision("limit-float-precision",
                  cl::location(LimitFloatPrecision),
                  cl::init(0));
 
+// Limit the width of DAG chains. This is important in general to prevent
+// prevent DAG-based analysis from blowing up. For example, alias analysis and
+// load clustering may not complete in reasonable time. It is difficult to
+// recognize and avoid this situation within each individual analysis, and
+// future analyses are likely to have the same behavior. Limiting DAG width is
+// the safe approach, and will be especially important with global DAGs. See
+// 2010-11-11-ReturnBigBuffer.ll.
+//
+// MaxParallelChains default is arbitrarily high to avoid affecting
+// optimization, but could be lowered to improve compile time. Any ld-ld-st-st
+// sequence over this should have been converted to llvm.memcpy by the fronend.
+static cl::opt<unsigned>
+MaxParallelChains("dag-chain-limit", cl::desc("Max parallel isel dag chains"),
+                  cl::init(64), cl::Hidden);
+
 static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
                                       const SDValue *Parts, unsigned NumParts,
                                       EVT PartVT, EVT ValueVT);
@@ -2945,7 +2960,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
 
   SDValue Root;
   bool ConstantMemory = false;
-  if (I.isVolatile())
+  if (I.isVolatile() || NumValues > MaxParallelChains)
     // Serialize volatile loads with other side effects.
     Root = getRoot();
   else if (AA->pointsToConstantMemory(
@@ -2957,11 +2972,26 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
     // Do not serialize non-volatile loads against each other.
     Root = DAG.getRoot();
   }
-
+  
   SmallVector<SDValue, 4> Values(NumValues);
-  SmallVector<SDValue, 4> Chains(NumValues);
+  SmallVector<SDValue, 4> Chains(std::min(unsigned(MaxParallelChains),
+                                          NumValues));
   EVT PtrVT = Ptr.getValueType();
-  for (unsigned i = 0; i != NumValues; ++i) {
+  unsigned ChainI = 0;
+  for (unsigned i = 0; i != NumValues; ++i, ++ChainI) {
+    // Serializing loads here may result in excessive register pressure, and
+    // TokenFactor places arbitrary choke points on the scheduler. SD scheduling
+    // could recover a bit by hoisting nodes upward in the chain by recognizing
+    // they are side-effect free or do not alias. The optimizer should really
+    // avoid this case by converting large object/array copies to llvm.memcpy
+    // (MaxParallelChains should always remain as failsafe).
+    if (ChainI == MaxParallelChains) {
+      assert(PendingLoads.empty() && "PendingLoads must be serialized first");
+      SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
+                                  MVT::Other, &Chains[0], ChainI);
+      Root = Chain;
+      ChainI = 0;
+    }
     SDValue A = DAG.getNode(ISD::ADD, getCurDebugLoc(),
                             PtrVT, Ptr,
                             DAG.getConstant(Offsets[i], PtrVT));
@@ -2970,12 +3000,12 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
                             isNonTemporal, Alignment, TBAAInfo);
 
     Values[i] = L;
-    Chains[i] = L.getValue(1);
+    Chains[ChainI] = L.getValue(1);
   }
 
   if (!ConstantMemory) {
     SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
-                                MVT::Other, &Chains[0], NumValues);
+                                MVT::Other, &Chains[0], ChainI);
     if (isVolatile)
       DAG.setRoot(Chain);
     else
@@ -3005,24 +3035,34 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
   SDValue Ptr = getValue(PtrV);
 
   SDValue Root = getRoot();
-  SmallVector<SDValue, 4> Chains(NumValues);
+  SmallVector<SDValue, 4> Chains(std::min(unsigned(MaxParallelChains),
+                                          NumValues));
   EVT PtrVT = Ptr.getValueType();
   bool isVolatile = I.isVolatile();
   bool isNonTemporal = I.getMetadata("nontemporal") != 0;
   unsigned Alignment = I.getAlignment();
   const MDNode *TBAAInfo = I.getMetadata(LLVMContext::MD_tbaa);
 
-  for (unsigned i = 0; i != NumValues; ++i) {
+  unsigned ChainI = 0;
+  for (unsigned i = 0; i != NumValues; ++i, ++ChainI) {
+    // See visitLoad comments.
+    if (ChainI == MaxParallelChains) {
+      SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
+                                  MVT::Other, &Chains[0], ChainI);
+      Root = Chain;
+      ChainI = 0;
+    }
     SDValue Add = DAG.getNode(ISD::ADD, getCurDebugLoc(), PtrVT, Ptr,
                               DAG.getConstant(Offsets[i], PtrVT));
-    Chains[i] = DAG.getStore(Root, getCurDebugLoc(),
-                             SDValue(Src.getNode(), Src.getResNo() + i),
-                             Add, MachinePointerInfo(PtrV, Offsets[i]),
-                             isVolatile, isNonTemporal, Alignment, TBAAInfo);
+    SDValue St = DAG.getStore(Root, getCurDebugLoc(),
+                              SDValue(Src.getNode(), Src.getResNo() + i),
+                              Add, MachinePointerInfo(PtrV, Offsets[i]),
+                              isVolatile, isNonTemporal, Alignment, TBAAInfo);
+    Chains[ChainI] = St;
   }
 
   SDValue StoreNode = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
-                                  MVT::Other, &Chains[0], NumValues);
+                                  MVT::Other, &Chains[0], ChainI);
   ++SDNodeOrder;
   AssignOrderingToNode(StoreNode.getNode());
   DAG.setRoot(StoreNode);
