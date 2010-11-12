@@ -156,6 +156,8 @@ namespace MBlazeII {
     FCX,
     FCR,
     FRIR,
+    FRRRR,
+    FRI,
     FC,
     FormMask = 63
 

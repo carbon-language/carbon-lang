@@ -133,8 +133,8 @@ SelectAddrRegReg(SDValue N, SDValue &Base, SDValue &Index) {
         N.getOperand(1).getOpcode() == ISD::TargetJumpTable)
       return false; // jump tables.
 
-    Base = N.getOperand(1);
-    Index = N.getOperand(0);
+    Base = N.getOperand(0);
+    Index = N.getOperand(1);
     return true;
   }
 
@@ -145,9 +145,9 @@ SelectAddrRegReg(SDValue N, SDValue &Base, SDValue &Index) {
 /// a signed 32-bit displacement [r+imm], and if it is not better
 /// represented as reg+reg.
 bool MBlazeDAGToDAGISel::
-SelectAddrRegImm(SDValue N, SDValue &Disp, SDValue &Base) {
+SelectAddrRegImm(SDValue N, SDValue &Base, SDValue &Disp) {
   // If this can be more profitably realized as r+r, fail.
-  if (SelectAddrRegReg(N, Disp, Base))
+  if (SelectAddrRegReg(N, Base, Disp))
     return false;
 
   if (N.getOpcode() == ISD::ADD || N.getOpcode() == ISD::OR) {

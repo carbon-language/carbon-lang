@@ -15,8 +15,8 @@ class Format<bits<6> val> {
 }
 
 def FPseudo : Format<0>;
-def FRRR    : Format<1>;  // ADD, RSUB, OR, etc.
-def FRRI    : Format<2>;  // ADDI, RSUBI, ORI, etc.
+def FRRR    : Format<1>;  // ADD, OR, etc.
+def FRRI    : Format<2>;  // ADDI, ORI, etc.
 def FCRR    : Format<3>;  // PUTD, WDC, WIC, BEQ, BNE, BGE, etc.
 def FCRI    : Format<4>;  // RTID, RTED, RTSD, BEQI, BNEI, BGEI, etc.
 def FRCR    : Format<5>;  // BRLD, BRALD, GETD
@@ -32,7 +32,9 @@ def FCRCX   : Format<14>; // PUT
 def FCX     : Format<15>; // TPUT
 def FCR     : Format<16>; // TPUTD
 def FRIR    : Format<17>; // RSUBI
-def FC      : Format<18>; // NOP
+def FRRRR   : Format<18>; // RSUB, FRSUB
+def FRI     : Format<19>; // RSUB, FRSUB
+def FC      : Format<20>; // NOP
 
 //===----------------------------------------------------------------------===//
 //  Describe MBlaze instructions format
@@ -48,7 +50,7 @@ def FC      : Format<18>; // NOP
 //===----------------------------------------------------------------------===//
 
 // Generic MBlaze Format
-class MBlazeInst<bits<6> op, Format form, dag outs, dag ins, string asmstr, 
+class MBlazeInst<bits<6> op, Format form, dag outs, dag ins, string asmstr,
                  list<dag> pattern, InstrItinClass itin> : Instruction {
   let Namespace = "MBlaze";
   field bits<32> Inst;
@@ -63,7 +65,7 @@ class MBlazeInst<bits<6> op, Format form, dag outs, dag ins, string asmstr,
   // If the instruction is marked as a pseudo, set isCodeGenOnly so that the
   // assembler and disassmbler ignore it.
   let isCodeGenOnly = !eq(!cast<string>(form), "FPseudo");
-  
+
   dag OutOperandList = outs;
   dag InOperandList  = ins;
 
@@ -117,6 +119,27 @@ class TB<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 }
 
 //===----------------------------------------------------------------------===//
+// Type A instruction class in MBlaze but with the operands reversed
+// in the LLVM DAG : <|opcode|rd|ra|rb|flags|>
+//===----------------------------------------------------------------------===//
+
+class TAR<bits<6> op, bits<11> flags, dag outs, dag ins, string asmstr,
+          list<dag> pattern, InstrItinClass itin> :
+          MBlazeInst<op,FRRR,outs, ins, asmstr, pattern, itin>
+{
+  bits<5> rd;
+  bits<5> rb;
+  bits<5> ra;
+
+  let Form = FRRRR;
+
+  let Inst{6-10}  = rd;
+  let Inst{11-15} = ra;
+  let Inst{16-20} = rb;
+  let Inst{21-31} = flags;
+}
+
+//===----------------------------------------------------------------------===//
 // Type B instruction class in MBlaze but with the operands reversed in
 // the LLVM DAG : <|opcode|rd|ra|immediate|>
 //===----------------------------------------------------------------------===//
@@ -132,4 +155,51 @@ class TBR<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   let rd = rrd;
   let ra = rra;
   let imm16 = rimm16;
+}
+
+//===----------------------------------------------------------------------===//
+// Shift immediate instruction class in MBlaze : <|opcode|rd|ra|immediate|>
+//===----------------------------------------------------------------------===//
+class SHT<bits<6> op, bits<2> flags, dag outs, dag ins, string asmstr,
+          list<dag> pattern, InstrItinClass itin> :
+          MBlazeInst<op, FRRI, outs, ins, asmstr, pattern, itin> {
+  bits<5>  rd;
+  bits<5>  ra;
+  bits<5>  imm5;
+
+  let Inst{6-10}  = rd;
+  let Inst{11-15} = ra;
+  let Inst{16-20} = 0x0;
+  let Inst{21-22} = flags;
+  let Inst{23-26} = 0x0;
+  let Inst{27-31} = imm5;
+}
+
+//===----------------------------------------------------------------------===//
+// Special instruction class in MBlaze : <|opcode|rd|imm14|>
+//===----------------------------------------------------------------------===//
+class SPC<bits<6> op, bits<2> flags, dag outs, dag ins, string asmstr,
+          list<dag> pattern, InstrItinClass itin> :
+          MBlazeInst<op, FRI, outs, ins, asmstr, pattern, itin> {
+  bits<5>  rd;
+  bits<14> imm14;
+
+  let Inst{6-10}  = rd;
+  let Inst{11-15} = 0x0;
+  let Inst{16-17} = flags;
+  let Inst{18-31} = imm14;
+}
+
+//===----------------------------------------------------------------------===//
+// MSR instruction class in MBlaze : <|opcode|rd|imm15|>
+//===----------------------------------------------------------------------===//
+class MSR<bits<6> op, bits<6> flags, dag outs, dag ins, string asmstr,
+          list<dag> pattern, InstrItinClass itin> :
+          MBlazeInst<op, FRI, outs, ins, asmstr, pattern, itin> {
+  bits<5>  rd;
+  bits<15> imm15;
+
+  let Inst{6-10}  = rd;
+  let Inst{11-16} = flags;
+  let Inst{17-31} = imm15;
 }

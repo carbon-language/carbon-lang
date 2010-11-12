@@ -9,6 +9,9 @@
 # TYPE FD:  OPCODE RD          RB      NCTAE
 # BINARY:   011011 00000 00000 00000 0 00000 00000
 
+# TYPE FP:  OPCODE       RA      NCTA         FSL
+#           000000 00000 00000 1 0000 0000000 0000
+
 # CHECK:    get
 # BINARY:   011011 00000 000000 00000 000000 0000
 # CHECK:    encoding: [0x6c,0x00,0x00,0x00]
@@ -168,6 +171,326 @@
 # BINARY:   011011 00000 000000 11111 000000 0000
 # CHECK:    encoding: [0x6c,0x00,0x7c,0x00]
             tnecaget    r0, rfsl0
+
+# CHECK:    getd
+# BINARY:   010011 00000 00000 00001 0 00000 00000
+# CHECK:    encoding: [0x4c,0x00,0x08,0x00]
+            getd        r0, r1
+
+# CHECK:    ngetd
+# BINARY:   010011 00000 00000 00001 0 10000 00000
+# CHECK:    encoding: [0x4c,0x00,0x0a,0x00]
+            ngetd       r0, r1
+
+# CHECK:    cgetd
+# BINARY:   010011 00000 00000 00001 0 01000 00000
+# CHECK:    encoding: [0x4c,0x00,0x09,0x00]
+            cgetd       r0, r1
+
+# CHECK:    ncgetd
+# BINARY:   010011 00000 00000 00001 0 11000 00000
+# CHECK:    encoding: [0x4c,0x00,0x0b,0x00]
+            ncgetd      r0, r1
+
+# CHECK:    tgetd
+# BINARY:   010011 00000 00000 00001 0 00100 00000
+# CHECK:    encoding: [0x4c,0x00,0x08,0x80]
+            tgetd       r0, r1
+
+# CHECK:    tngetd
+# BINARY:   010011 00000 00000 00001 0 10100 00000
+# CHECK:    encoding: [0x4c,0x00,0x0a,0x80]
+            tngetd      r0, r1
+
+# CHECK:    tcgetd
+# BINARY:   010011 00000 00000 00001 0 01100 00000
+# CHECK:    encoding: [0x4c,0x00,0x09,0x80]
+            tcgetd      r0, r1
+
+# CHECK:    tncgetd
+# BINARY:   010011 00000 00000 00001 0 11100 00000
+# CHECK:    encoding: [0x4c,0x00,0x0b,0x80]
+            tncgetd     r0, r1
+
+# CHECK:    agetd
+# BINARY:   010011 00000 00000 00001 0 00010 00000
+# CHECK:    encoding: [0x4c,0x00,0x08,0x40]
+            agetd       r0, r1
+
+# CHECK:    nagetd
+# BINARY:   010011 00000 00000 00001 0 10010 00000
+# CHECK:    encoding: [0x4c,0x00,0x0a,0x40]
+            nagetd      r0, r1
+
+# CHECK:    cagetd
+# BINARY:   010011 00000 00000 00001 0 01010 00000
+# CHECK:    encoding: [0x4c,0x00,0x09,0x40]
+            cagetd     r0, r1
+
+# CHECK:    ncagetd
+# BINARY:   010011 00000 00000 00001 0 11010 00000
+# CHECK:    encoding: [0x4c,0x00,0x0b,0x40]
+            ncagetd     r0, r1
+
+# CHECK:    tagetd
+# BINARY:   010011 00000 00000 00001 0 00110 00000
+# CHECK:    encoding: [0x4c,0x00,0x08,0xc0]
+            tagetd      r0, r1
+
+# CHECK:    tnagetd
+# BINARY:   010011 00000 00000 00001 0 10110 00000
+# CHECK:    encoding: [0x4c,0x00,0x0a,0xc0]
+            tnagetd     r0, r1
+
+# CHECK:    tcagetd
+# BINARY:   010011 00000 00000 00001 0 01110 00000
+# CHECK:    encoding: [0x4c,0x00,0x09,0xc0]
+            tcagetd     r0, r1
+
+# CHECK:    tncagetd
+# BINARY:   010011 00000 00000 00001 0 11110 00000
+# CHECK:    encoding: [0x4c,0x00,0x0b,0xc0]
+            tncagetd    r0, r1
+
+# CHECK:    egetd
+# BINARY:   010011 00000 00000 00001 0 00001 00000
+# CHECK:    encoding: [0x4c,0x00,0x08,0x20]
+            egetd       r0, r1
+
+# CHECK:    negetd
+# BINARY:   010011 00000 00000 00001 0 10001 00000
+# CHECK:    encoding: [0x4c,0x00,0x0a,0x20]
+            negetd      r0, r1
+
+# CHECK:    ecgetd
+# BINARY:   010011 00000 00000 00001 0 01001 00000
+# CHECK:    encoding: [0x4c,0x00,0x09,0x20]
+            ecgetd      r0, r1
+
+# CHECK:    necgetd
+# BINARY:   010011 00000 00000 00001 0 11001 00000
+# CHECK:    encoding: [0x4c,0x00,0x0b,0x20]
+            necgetd     r0, r1
+
+# CHECK:    tegetd
+# BINARY:   010011 00000 00000 00001 0 00101 00000
+# CHECK:    encoding: [0x4c,0x00,0x08,0xa0]
+            tegetd      r0, r1
+
+# CHECK:    tnegetd
+# BINARY:   010011 00000 00000 00001 0 10101 00000
+# CHECK:    encoding: [0x4c,0x00,0x0a,0xa0]
+            tnegetd     r0, r1
+
+# CHECK:    tecgetd
+# BINARY:   010011 00000 00000 00001 0 01101 00000
+# CHECK:    encoding: [0x4c,0x00,0x09,0xa0]
+            tecgetd     r0, r1
+
+# CHECK:    tnecgetd
+# BINARY:   010011 00000 00000 00001 0 11101 00000
+# CHECK:    encoding: [0x4c,0x00,0x0b,0xa0]
+            tnecgetd    r0, r1
+
+# CHECK:    eagetd
+# BINARY:   010011 00000 00000 00001 0 00011 00000
+# CHECK:    encoding: [0x4c,0x00,0x08,0x60]
+            eagetd      r0, r1
+
+# CHECK:    neagetd
+# BINARY:   010011 00000 00000 00001 0 10011 00000
+# CHECK:    encoding: [0x4c,0x00,0x0a,0x60]
+            neagetd     r0, r1
+
+# CHECK:    ecagetd
+# BINARY:   010011 00000 00000 00001 0 01011 00000
+# CHECK:    encoding: [0x4c,0x00,0x09,0x60]
+            ecagetd     r0, r1
+
+# CHECK:    necagetd
+# BINARY:   010011 00000 00000 00001 0 11011 00000
+# CHECK:    encoding: [0x4c,0x00,0x0b,0x60]
+            necagetd    r0, r1
+
+# CHECK:    teagetd
+# BINARY:   010011 00000 00000 00001 0 00111 00000
+# CHECK:    encoding: [0x4c,0x00,0x08,0xe0]
+            teagetd     r0, r1
+
+# CHECK:    tneagetd
+# BINARY:   010011 00000 00000 00001 0 10111 00000
+# CHECK:    encoding: [0x4c,0x00,0x0a,0xe0]
+            tneagetd    r0, r1
+
+# CHECK:    tecagetd
+# BINARY:   010011 00000 00000 00001 0 01111 00000
+# CHECK:    encoding: [0x4c,0x00,0x09,0xe0]
+            tecagetd    r0, r1
+
+# CHECK:    tnecagetd
+# BINARY:   010011 00000 00000 00001 0 11111 00000
+# CHECK:    encoding: [0x4c,0x00,0x0b,0xe0]
+            tnecagetd   r0, r1
+
+# CHECK:    put
+# BINARY:   011011 00000 00000 1 0000 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0x80,0x00]
+            put         r0, rfsl0
+
+# CHECK:    aput
+# BINARY:   011011 00000 00000 1 0001 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0x88,0x00]
+            aput        r0, rfsl0
+
+# CHECK:    cput
+# BINARY:   011011 00000 00000 1 0100 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xa0,0x00]
+            cput        r0, rfsl0
+
+# CHECK:    caput
+# BINARY:   011011 00000 00000 1 0101 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xa8,0x00]
+            caput       r0, rfsl0
+
+# CHECK:    nput
+# BINARY:   011011 00000 00000 1 1000 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xc0,0x00]
+            nput        r0, rfsl0
+
+# CHECK:    naput
+# BINARY:   011011 00000 00000 1 1001 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xc8,0x00]
+            naput       r0, rfsl0
+
+# CHECK:    ncput
+# BINARY:   011011 00000 00000 1 1100 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xe0,0x00]
+            ncput       r0, rfsl0
+
+# CHECK:    ncaput
+# BINARY:   011011 00000 00000 1 1101 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xe8,0x00]
+            ncaput      r0, rfsl0
+
+# CHECK:    tput
+# BINARY:   011011 00000 00000 1 0010 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0x90,0x00]
+            tput        rfsl0
+
+# CHECK:    taput
+# BINARY:   011011 00000 00000 1 0011 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0x98,0x00]
+            taput       rfsl0
+
+# CHECK:    tcput
+# BINARY:   011011 00000 00000 1 0110 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xb0,0x00]
+            tcput       rfsl0
+
+# CHECK:    tcaput
+# BINARY:   011011 00000 00000 1 0111 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xb8,0x00]
+            tcaput      rfsl0
+
+# CHECK:    tnput
+# BINARY:   011011 00000 00000 1 1010 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xd0,0x00]
+            tnput       rfsl0
+
+# CHECK:    tnaput
+# BINARY:   011011 00000 00000 1 1011 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xd8,0x00]
+            tnaput      rfsl0
+
+# CHECK:    tncput
+# BINARY:   011011 00000 00000 1 1110 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xf0,0x00]
+            tncput      rfsl0
+
+# CHECK:    tncaput
+# BINARY:   011011 00000 00000 1 1111 0000000 0000
+# CHECK:    encoding: [0x6c,0x00,0xf8,0x00]
+            tncaput     rfsl0
+
+# CHECK:    putd
+# BINARY:   010011 00000 00000 00001 1 0000 000000
+# CHECK:    encoding: [0x4c,0x00,0x0c,0x00]
+            putd        r0, r1
+
+# CHECK:    aputd
+# BINARY:   010011 00000 00000 00001 1 0001 000000
+# CHECK:    encoding: [0x4c,0x00,0x0c,0x40]
+            aputd       r0, r1
+
+# CHECK:    cputd
+# BINARY:   010011 00000 00000 00001 1 0100 000000
+# CHECK:    encoding: [0x4c,0x00,0x0d,0x00]
+            cputd       r0, r1
+
+# CHECK:    caputd
+# BINARY:   010011 00000 00000 00001 1 0101 000000
+# CHECK:    encoding: [0x4c,0x00,0x0d,0x40]
+            caputd      r0, r1
+
+# CHECK:    nputd
+# BINARY:   010011 00000 00000 00001 1 1000 000000
+# CHECK:    encoding: [0x4c,0x00,0x0e,0x00]
+            nputd       r0, r1
+
+# CHECK:    naputd
+# BINARY:   010011 00000 00000 00001 1 1001 000000
+# CHECK:    encoding: [0x4c,0x00,0x0e,0x40]
+            naputd      r0, r1
+
+# CHECK:    ncputd
+# BINARY:   010011 00000 00000 00001 1 1100 000000
+# CHECK:    encoding: [0x4c,0x00,0x0f,0x00]
+            ncputd      r0, r1
+
+# CHECK:    ncaputd
+# BINARY:   010011 00000 00000 00001 1 1101 000000
+# CHECK:    encoding: [0x4c,0x00,0x0f,0x40]
+            ncaputd     r0, r1
+
+# CHECK:    tputd
+# BINARY:   010011 00000 00000 00001 1 0010 000000
+# CHECK:    encoding: [0x4c,0x00,0x0c,0x80]
+            tputd       r1
+
+# CHECK:    taputd
+# BINARY:   010011 00000 00000 00001 1 0011 000000
+# CHECK:    encoding: [0x4c,0x00,0x0c,0xc0]
+            taputd      r1
+
+# CHECK:    tcputd
+# BINARY:   010011 00000 00000 00001 1 0110 000000
+# CHECK:    encoding: [0x4c,0x00,0x0d,0x80]
+            tcputd      r1
+
+# CHECK:    tcaputd
+# BINARY:   010011 00000 00000 00001 1 0111 000000
+# CHECK:    encoding: [0x4c,0x00,0x0d,0xc0]
+            tcaputd     r1
+
+# CHECK:    tnputd
+# BINARY:   010011 00000 00000 00001 1 1010 000000
+# CHECK:    encoding: [0x4c,0x00,0x0e,0x80]
+            tnputd      r1
+
+# CHECK:    tnaputd
+# BINARY:   010011 00000 00000 00001 1 1011 000000
+# CHECK:    encoding: [0x4c,0x00,0x0e,0xc0]
+            tnaputd     r1
+
+# CHECK:    tncputd
+# BINARY:   010011 00000 00000 00001 1 1110 000000
+# CHECK:    encoding: [0x4c,0x00,0x0f,0x80]
+            tncputd     r1
+
+# CHECK:    tncaputd
+# BINARY:   010011 00000 00000 00001 1 1111 000000
+# CHECK:    encoding: [0x4c,0x00,0x0f,0xc0]
+            tncaputd    r1
 
 # CHECK:    get
 # BINARY:   011011 00000 000000 00000 000000 0001

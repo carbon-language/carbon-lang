@@ -79,6 +79,8 @@ def brtarget    : Operand<OtherVT>;
 def calltarget  : Operand<i32>;
 def simm16      : Operand<i32>;
 def uimm5       : Operand<i32>;
+def uimm14      : Operand<i32>;
+def uimm15      : Operand<i32>;
 def fimm        : Operand<f32>;
 
 // Unsigned Operand
@@ -95,7 +97,7 @@ def fslimm      : Operand<i32> {
 // Address operand
 def memri : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops simm16, GPR);
+  let MIOperandInfo = (ops GPR, simm16);
   let ParserMatchClass = MBlazeMemAsmOperand;
 }
 
@@ -167,9 +169,15 @@ class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
                 !strconcat(instr_asm, "   $dst, $b, $c"),
                 [(set GPR:$dst, (OpNode GPR:$b, imm_type:$c))], IIAlu>;
 
+class ShiftI<bits<6> op, bits<2> flags, string instr_asm, SDNode OpNode,
+             Operand Od, PatLeaf imm_type> :
+             SHT<op, flags, (outs GPR:$dst), (ins GPR:$b, Od:$c),
+                 !strconcat(instr_asm, "   $dst, $b, $c"),
+                 [(set GPR:$dst, (OpNode GPR:$b, imm_type:$c))], IIAlu>;
+
 class ArithR<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
             InstrItinClass itin> :
-            TA<op, flags, (outs GPR:$dst), (ins GPR:$c, GPR:$b),
+            TAR<op, flags, (outs GPR:$dst), (ins GPR:$c, GPR:$b),
                 !strconcat(instr_asm, "   $dst, $c, $b"),
                 [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], itin>;
 
@@ -192,14 +200,14 @@ class ArithNI<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
 
 class ArithRN<bits<6> op, bits<11> flags, string instr_asm,
             InstrItinClass itin> :
-            TA<op, flags, (outs GPR:$dst), (ins GPR:$c, GPR:$b),
-               !strconcat(instr_asm, "   $dst, $b, $c"),
-               [], itin>;
+            TAR<op, flags, (outs GPR:$dst), (ins GPR:$c, GPR:$b),
+                !strconcat(instr_asm, "   $dst, $b, $c"),
+                [], itin>;
 
 class ArithRNI<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
-             TB<op, (outs GPR:$dst), (ins Od:$c, GPR:$b),
-                !strconcat(instr_asm, "   $dst, $b, $c"),
-                [], IIAlu>;
+             TBR<op, (outs GPR:$dst), (ins Od:$c, GPR:$b),
+                 !strconcat(instr_asm, "   $dst, $b, $c"),
+                 [], IIAlu>;
 
 //===----------------------------------------------------------------------===//
 // Misc Arithmetic Instructions
@@ -224,35 +232,25 @@ class PatCmp<bits<6> op, bits<11> flags, string instr_asm> :
 //===----------------------------------------------------------------------===//
 // Memory Access Instructions
 //===----------------------------------------------------------------------===//
-class LoadM<bits<6> op, string instr_asm, PatFrag OpNode> :
-            TA<op, 0x000, (outs GPR:$dst), (ins memrr:$addr),
-               !strconcat(instr_asm, "   $dst, $addr"),
-               [(set (i32 GPR:$dst), (OpNode xaddr:$addr))], IILoad>;
-
-class LoadW<bits<6> op, bits<11> flags, string instr_asm> :
+class LoadM<bits<6> op, bits<11> flags, string instr_asm> :
             TA<op, flags, (outs GPR:$dst), (ins memrr:$addr),
                !strconcat(instr_asm, "   $dst, $addr"),
                [], IILoad>;
 
 class LoadMI<bits<6> op, string instr_asm, PatFrag OpNode> :
-             TBR<op, (outs GPR:$dst), (ins memri:$addr),
-                 !strconcat(instr_asm, "   $dst, $addr"),
-                 [(set (i32 GPR:$dst), (OpNode iaddr:$addr))], IILoad>;
-
-class StoreM<bits<6> op, string instr_asm, PatFrag OpNode> :
-             TA<op, 0x000, (outs), (ins GPR:$dst, memrr:$addr),
+             TB<op, (outs GPR:$dst), (ins memri:$addr),
                 !strconcat(instr_asm, "   $dst, $addr"),
-                [(OpNode (i32 GPR:$dst), xaddr:$addr)], IIStore>;
+                [(set (i32 GPR:$dst), (OpNode iaddr:$addr))], IILoad>;
 
-class StoreW<bits<6> op, bits<11> flags, string instr_asm> :
+class StoreM<bits<6> op, bits<11> flags, string instr_asm> :
              TA<op, flags, (outs), (ins GPR:$dst, memrr:$addr),
                 !strconcat(instr_asm, "   $dst, $addr"),
                 [], IIStore>;
 
 class StoreMI<bits<6> op, string instr_asm, PatFrag OpNode> :
-              TBR<op, (outs), (ins GPR:$dst, memri:$addr),
-                  !strconcat(instr_asm, "   $dst, $addr"),
-                  [(OpNode (i32 GPR:$dst), iaddr:$addr)], IIStore>;
+              TB<op, (outs), (ins GPR:$dst, memri:$addr),
+                 !strconcat(instr_asm, "   $dst, $addr"),
+                 [(OpNode (i32 GPR:$dst), iaddr:$addr)], IIStore>;
 
 //===----------------------------------------------------------------------===//
 // Branch Instructions
@@ -358,9 +356,9 @@ let Predicates=[HasBarrel] in {
   def BSRL   :   Arith<0x11, 0x000, "bsrl   ", srl, IIAlu>;
   def BSRA   :   Arith<0x11, 0x200, "bsra   ", sra, IIAlu>;
   def BSLL   :   Arith<0x11, 0x400, "bsll   ", shl, IIAlu>;
-  def BSRLI  :  ArithI<0x11, "bsrli  ", srl, uimm5, immZExt5>;
-  def BSRAI  :  ArithI<0x11, "bsrai  ", sra, uimm5, immZExt5>;
-  def BSLLI  :  ArithI<0x11, "bslli  ", shl, uimm5, immZExt5>;
+  def BSRLI  :  ShiftI<0x19, 0x0, "bsrli  ", srl, uimm5, immZExt5>;
+  def BSRAI  :  ShiftI<0x19, 0x1, "bsrai  ", sra, uimm5, immZExt5>;
+  def BSLLI  :  ShiftI<0x19, 0x2, "bslli  ", shl, uimm5, immZExt5>;
 }
 
 let Predicates=[HasDiv] in {
@@ -396,24 +394,30 @@ let Predicates=[HasMul] in {
 //===----------------------------------------------------------------------===//
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
-  def LBU  :  LoadM<0x30, "lbu    ", zextloadi8>;
-  def LHU  :  LoadM<0x31, "lhu    ", zextloadi16>;
+  def LBU  :  LoadM<0x30, 0x000, "lbu    ">;
+  def LBUR :  LoadM<0x30, 0x200, "lbur   ">;
 
-  def LW   :  LoadW<0x32, 0x0, "lw     ">;
-  def LWR  :  LoadW<0x32, 0x2, "lwr    ">;
-  def LWX  :  LoadW<0x32, 0x4, "lwx    ">;
+  def LHU  :  LoadM<0x31, 0x000, "lhu    ">;
+  def LHUR :  LoadM<0x31, 0x200, "lhur   ">;
+
+  def LW   :  LoadM<0x32, 0x000, "lw     ">;
+  def LWR  :  LoadM<0x32, 0x200, "lwr    ">;
+  def LWX  :  LoadM<0x32, 0x400, "lwx    ">;
 
   def LBUI : LoadMI<0x38, "lbui   ", zextloadi8>;
   def LHUI : LoadMI<0x39, "lhui   ", zextloadi16>;
   def LWI  : LoadMI<0x3A, "lwi    ", load>;
 }
 
-  def SB  :  StoreM<0x34, "sb     ", truncstorei8>;
-  def SH  :  StoreM<0x35, "sh     ", truncstorei16>;
+  def SB  :  StoreM<0x34, 0x000, "sb     ">;
+  def SBR :  StoreM<0x34, 0x200, "sbr    ">;
 
-  def SW  :  StoreW<0x36, 0x0, "sw     ">;
-  def SWR :  StoreW<0x36, 0x2, "swr    ">;
-  def SWX :  StoreW<0x36, 0x4, "swx    ">;
+  def SH  :  StoreM<0x35, 0x000, "sh     ">;
+  def SHR :  StoreM<0x35, 0x200, "shr    ">;
+
+  def SW  :  StoreM<0x36, 0x000, "sw     ">;
+  def SWR :  StoreM<0x36, 0x200, "swr    ">;
+  def SWX :  StoreM<0x36, 0x400, "swx    ">;
 
   def SBI : StoreMI<0x3C, "sbi    ", truncstorei8>;
   def SHI : StoreMI<0x3D, "shi    ", truncstorei16>;
@@ -583,17 +587,17 @@ let opcode=0x08, isCodeGenOnly=1 in {
 //===----------------------------------------------------------------------===//
 // Misc. instructions
 //===----------------------------------------------------------------------===//
-def MFS : MBlazeInst<0x25, FPseudo, (outs), (ins), "mfs", [], IIAlu> {
-}
+def MFS : SPC<0x25, 0x2, (outs GPR:$dst), (ins uimm14:$rg),
+              "mfs       $dst, $rg", [], IIAlu>;
 
-def MTS : MBlazeInst<0x25, FPseudo, (outs), (ins), "mts", [], IIAlu> {
-}
+def MTS : SPC<0x25, 0x3, (outs), (ins uimm14:$dst, GPR:$rg),
+              "mts       $dst, $rg", [], IIAlu>;
 
-def MSRSET : MBlazeInst<0x25, FPseudo, (outs), (ins), "msrset", [], IIAlu> {
-}
+def MSRSET : MSR<0x25, 0x20, (outs GPR:$dst), (ins uimm15:$set),
+                 "msrset    $dst, $set", [], IIAlu>;
 
-def MSRCLR : MBlazeInst<0x25, FPseudo, (outs), (ins), "msrclr", [], IIAlu> {
-}
+def MSRCLR : MSR<0x25, 0x22, (outs GPR:$dst), (ins uimm15:$clr),
+                 "msrclr    $dst, $clr", [], IIAlu>;
 
 let rd=0x0, Form=FCRR in {
   def WDC  : TA<0x24, 0x64, (outs), (ins GPR:$a, GPR:$b),
@@ -764,6 +768,14 @@ def : Pat<(extloadi16 xaddr:$src), (i32 (LHU xaddr:$src))>;
 // 32-bit load and store
 def : Pat<(store (i32 GPR:$dst), xaddr:$addr), (SW GPR:$dst, xaddr:$addr)>;
 def : Pat<(load xaddr:$addr), (i32 (LW xaddr:$addr))>;
+
+// 16-bit load and store
+def : Pat<(truncstorei16 (i32 GPR:$dst), xaddr:$addr), (SH GPR:$dst, xaddr:$addr)>;
+def : Pat<(zextloadi16 xaddr:$addr), (i32 (LHU xaddr:$addr))>;
+
+// 8-bit load and store
+def : Pat<(truncstorei8 (i32 GPR:$dst), xaddr:$addr), (SB GPR:$dst, xaddr:$addr)>;
+def : Pat<(zextloadi8 xaddr:$addr), (i32 (LBU xaddr:$addr))>;
 
 // Peepholes
 def : Pat<(store (i32 0), iaddr:$dst), (SWI (i32 R0), iaddr:$dst)>;

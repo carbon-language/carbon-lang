@@ -9,6 +9,7 @@
 
 #include "MBlaze.h"
 #include "MBlazeSubtarget.h"
+#include "MBlazeRegisterInfo.h"
 #include "MBlazeISelLowering.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -44,6 +45,8 @@ class MBlazeAsmParser : public TargetAsmParser {
   MBlazeOperand *ParseImmediate();
   MBlazeOperand *ParseFsl();
   MBlazeOperand* ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
+  bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -201,13 +204,13 @@ public:
   void addMemOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
 
+    Inst.addOperand(MCOperand::CreateReg(getMemBase()));
+
     unsigned RegOff = getMemOffReg();
     if (RegOff)
       Inst.addOperand(MCOperand::CreateReg(RegOff));
     else
       addExpr(Inst, getMemOff());
-
-    Inst.addOperand(MCOperand::CreateReg(getMemBase()));
   }
 
   StringRef getToken() const {
@@ -281,13 +284,24 @@ void MBlazeOperand::dump(raw_ostream &OS) const {
     getImm()->print(OS);
     break;
   case Register:
-    OS << "<register " << getReg() << ">";
+    OS << "<register R";
+    OS << MBlazeRegisterInfo::getRegisterNumbering(getReg()) << ">";
     break;
   case Token:
     OS << "'" << getToken() << "'";
     break;
-  case Memory:
-    OS << "MEMORY";
+  case Memory: {
+    OS << "<memory R";
+    OS << MBlazeRegisterInfo::getRegisterNumbering(getMemBase());
+    OS << ", ";
+
+    unsigned RegOff = getMemOffReg();
+    if (RegOff)
+      OS << "R" << MBlazeRegisterInfo::getRegisterNumbering(RegOff);
+    else
+      OS << getMemOff();
+    OS << ">";
+    }
     break;
   case Fsl:
     getFslImm()->print(OS);
@@ -381,6 +395,7 @@ MBlazeOperand *MBlazeAsmParser::ParseRegister() {
     if (RegNo == 0)
       return 0;
 
+    getLexer().Lex();
     return MBlazeOperand::CreateReg(RegNo, S, E);
   }
 }
@@ -407,6 +422,7 @@ MBlazeOperand *MBlazeAsmParser::ParseFsl() {
     if (reg >= 16)
       return 0;
 
+    getLexer().Lex();
     const MCExpr *EVal = MCConstantExpr::Create(reg,getContext());
     return MBlazeOperand::CreateFslImm(EVal,S,E);
   }
@@ -452,9 +468,6 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return 0;
   }
 
-  // Move past the parsed token in the token stream
-  getLexer().Lex();
-
   // Push the parsed operand into the list of operands
   Operands.push_back(Op);
   return Op;
@@ -464,8 +477,11 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 bool MBlazeAsmParser::
 ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // The first operand is the token for the instruction name
-  Operands.push_back(MBlazeOperand::CreateToken(Name, NameLoc));
+  // The first operands is the token for the instruction name
+  size_t dotLoc = Name.find('.');
+  Operands.push_back(MBlazeOperand::CreateToken(Name.substr(0,dotLoc),NameLoc));
+  if (dotLoc < Name.size())
+    Operands.push_back(MBlazeOperand::CreateToken(Name.substr(dotLoc),NameLoc));
 
   // If there are no more operands then finish
   if (getLexer().is(AsmToken::EndOfStatement))
@@ -477,10 +493,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   while (getLexer().isNot(AsmToken::EndOfStatement) &&
          getLexer().is(AsmToken::Comma)) {
-    // Make sure there is a comma separating operands
-    // if (getLexer().isNot(AsmToken::Comma))
-    //  return false;
-
     // Consume the comma token
     getLexer().Lex();
 
@@ -495,14 +507,42 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (Name.startswith("lw") || Name.startswith("sw") ||
       Name.startswith("lh") || Name.startswith("sh") ||
       Name.startswith("lb") || Name.startswith("sb"))
-    return ParseMemory(Operands);
+    return (ParseMemory(Operands) == NULL);
 
   return false;
 }
 
 /// ParseDirective parses the arm specific directives
 bool MBlazeAsmParser::ParseDirective(AsmToken DirectiveID) {
+  StringRef IDVal = DirectiveID.getIdentifier();
+  if (IDVal == ".word")
+    return ParseDirectiveWord(2, DirectiveID.getLoc());
   return true;
+}
+
+/// ParseDirectiveWord
+///  ::= .word [ expression (, expression)* ]
+bool MBlazeAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    for (;;) {
+      const MCExpr *Value;
+      if (getParser().ParseExpression(Value))
+        return true;
+
+      getParser().getStreamer().EmitValue(Value, Size, 0 /*addrspace*/);
+
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
+
+      // FIXME: Improve diagnostic.
+      if (getLexer().isNot(AsmToken::Comma))
+        return Error(L, "unexpected token in directive");
+      Parser.Lex();
+    }
+  }
+
+  Parser.Lex();
+  return false;
 }
 
 extern "C" void LLVMInitializeMBlazeAsmLexer();

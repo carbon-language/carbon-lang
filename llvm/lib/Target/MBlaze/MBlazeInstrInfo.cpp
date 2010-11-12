@@ -38,10 +38,10 @@ static bool isZeroImm(const MachineOperand &op) {
 unsigned MBlazeInstrInfo::
 isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const {
   if (MI->getOpcode() == MBlaze::LWI) {
-    if ((MI->getOperand(2).isFI()) && // is a stack slot
-        (MI->getOperand(1).isImm()) &&  // the imm is zero
-        (isZeroImm(MI->getOperand(1)))) {
-      FrameIndex = MI->getOperand(2).getIndex();
+    if ((MI->getOperand(1).isFI()) && // is a stack slot
+        (MI->getOperand(2).isImm()) &&  // the imm is zero
+        (isZeroImm(MI->getOperand(2)))) {
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
   }
@@ -57,10 +57,10 @@ isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const {
 unsigned MBlazeInstrInfo::
 isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const {
   if (MI->getOpcode() == MBlaze::SWI) {
-    if ((MI->getOperand(2).isFI()) && // is a stack slot
-        (MI->getOperand(1).isImm()) &&  // the imm is zero
-        (isZeroImm(MI->getOperand(1)))) {
-      FrameIndex = MI->getOperand(2).getIndex();
+    if ((MI->getOperand(1).isFI()) && // is a stack slot
+        (MI->getOperand(2).isImm()) &&  // the imm is zero
+        (isZeroImm(MI->getOperand(2)))) {
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
   }
@@ -91,7 +91,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   BuildMI(MBB, I, DL, get(MBlaze::SWI)).addReg(SrcReg,getKillRegState(isKill))
-    .addImm(0).addFrameIndex(FI);
+    .addFrameIndex(FI).addImm(0); //.addFrameIndex(FI);
 }
 
 void MBlazeInstrInfo::
@@ -101,7 +101,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   BuildMI(MBB, I, DL, get(MBlaze::LWI), DestReg)
-      .addImm(0).addFrameIndex(FI);
+      .addFrameIndex(FI).addImm(0); //.addFrameIndex(FI);
 }
 
 //===----------------------------------------------------------------------===//

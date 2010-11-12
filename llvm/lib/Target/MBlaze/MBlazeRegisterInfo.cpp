@@ -1,5 +1,5 @@
 //===- MBlazeRegisterInfo.cpp - MBlaze Register Information -== -*- C++ -*-===//
-//
+//DJ
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
@@ -308,7 +308,7 @@ emitPrologue(MachineFunction &MF) const {
   // swi  R15, R1, stack_loc
   if (MFI->adjustsStack()) {
     BuildMI(MBB, MBBI, DL, TII.get(MBlaze::SWI))
-        .addReg(MBlaze::R15).addImm(RAOffset).addReg(MBlaze::R1);
+        .addReg(MBlaze::R15).addReg(MBlaze::R1).addImm(RAOffset);
   }
 
   // if framepointer enabled, save it and set it
@@ -316,7 +316,7 @@ emitPrologue(MachineFunction &MF) const {
   if (hasFP(MF)) {
     // swi  R19, R1, stack_loc
     BuildMI(MBB, MBBI, DL, TII.get(MBlaze::SWI))
-      .addReg(MBlaze::R19).addImm(FPOffset).addReg(MBlaze::R1);
+      .addReg(MBlaze::R19).addReg(MBlaze::R1).addImm(FPOffset);
 
     // add R19, R1, R0
     BuildMI(MBB, MBBI, DL, TII.get(MBlaze::ADD), MBlaze::R19)
@@ -344,14 +344,14 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
 
     // lwi  R19, R1, stack_loc
     BuildMI(MBB, MBBI, dl, TII.get(MBlaze::LWI), MBlaze::R19)
-      .addImm(FPOffset).addReg(MBlaze::R1);
+      .addReg(MBlaze::R1).addImm(FPOffset);
   }
 
   // Restore the return address only if the function isnt a leaf one.
   // lwi R15, R1, stack_loc
   if (MFI->adjustsStack()) {
     BuildMI(MBB, MBBI, dl, TII.get(MBlaze::LWI), MBlaze::R15)
-      .addImm(RAOffset).addReg(MBlaze::R1);
+      .addReg(MBlaze::R1).addImm(RAOffset);
   }
 
   // Get the number of bytes from FrameInfo

@@ -52,9 +52,9 @@ class CmpFN<bits<6> op, bits<11> flags, string instr_asm,
 
 class ArithFR<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
              InstrItinClass itin> :
-             TA<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
-                !strconcat(instr_asm, "   $dst, $c, $b"),
-                [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], itin>;
+             TAR<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
+                 !strconcat(instr_asm, "   $dst, $c, $b"),
+                 [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], itin>;
 
 class LogicF<bits<6> op, string instr_asm> :
              TB<op, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
@@ -99,18 +99,20 @@ let Predicates=[HasFPU] in {
   def FRSUB  : ArithFR<0x16, 0x080, "frsub  ", fsub, IIAlu>;
   def FMUL   :  ArithF<0x16, 0x100, "fmul   ", fmul, IIAlu>;
   def FDIV   :  ArithF<0x16, 0x180, "fdiv   ", fdiv, IIAlu>;
+}
 
+let Predicates=[HasFPU], isCodeGenOnly=1 in {
   def LWF    :   LoadFM<0x32, "lw      ", load>;
-  def LWFI   :  LoadFMI<0x32, "lwi     ", load>;
+  def LWFI   :  LoadFMI<0x3A, "lwi     ", load>;
 
-  def SWF    :  StoreFM<0x32, "sw      ", store>;
-  def SWFI   : StoreFMI<0x32, "swi     ", store>;
+  def SWF    :  StoreFM<0x36, "sw      ", store>;
+  def SWFI   : StoreFMI<0x3E, "swi     ", store>;
 }
 
 let Predicates=[HasFPU,HasSqrt] in {
   def FLT    : ArithIF<0x16, 0x280, "flt    ", IIAlu>;
   def FINT   : ArithFI<0x16, 0x300, "fint   ", IIAlu>;
-  def FSQRT  : ArithF2<0x16, 0x300, "fsqrt  ", IIAlu>;
+  def FSQRT  : ArithF2<0x16, 0x380, "fsqrt  ", IIAlu>;
 }
 
 let isAsCheapAsAMove = 1 in {
