@@ -1918,7 +1918,8 @@ public:
     AltiVecVector,  // is AltiVec vector
     AltiVecPixel,   // is AltiVec 'vector Pixel'
     AltiVecBool,    // is AltiVec 'vector bool ...'
-    NeonVector      // is ARM Neon vector
+    NeonVector,     // is ARM Neon vector
+    NeonPolyVector  // is ARM Neon polynomial vector
   };
 protected:
   /// ElementType - The element type of the vector.

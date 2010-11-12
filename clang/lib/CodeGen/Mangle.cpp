@@ -1413,17 +1413,25 @@ bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
     return false;
   unsigned EltBits = 0;
   const char *EltName = 0;
-  switch (cast<BuiltinType>(EltType)->getKind()) {
-  case BuiltinType::SChar:     EltBits =  8; EltName = "int8_t"; break;
-  case BuiltinType::UChar:     EltBits =  8; EltName = "uint8_t"; break;
-  case BuiltinType::Short:     EltBits = 16; EltName = "int16_t"; break;
-  case BuiltinType::UShort:    EltBits = 16; EltName = "uint16_t"; break;
-  case BuiltinType::Int:       EltBits = 32; EltName = "int32_t"; break;
-  case BuiltinType::UInt:      EltBits = 32; EltName = "uint32_t"; break;
-  case BuiltinType::LongLong:  EltBits = 64; EltName = "int64_t"; break;
-  case BuiltinType::ULongLong: EltBits = 64; EltName = "uint64_t"; break;
-  case BuiltinType::Float:     EltBits = 32; EltName = "float32_t"; break;
-  default: return false;
+  if (T->getVectorKind() == VectorType::NeonPolyVector) {
+    switch (cast<BuiltinType>(EltType)->getKind()) {
+    case BuiltinType::SChar:     EltBits =  8; EltName = "poly8_t"; break;
+    case BuiltinType::Short:     EltBits = 16; EltName = "poly16_t"; break;
+    default: return false;
+    }
+  } else {
+    switch (cast<BuiltinType>(EltType)->getKind()) {
+    case BuiltinType::SChar:     EltBits =  8; EltName = "int8_t"; break;
+    case BuiltinType::UChar:     EltBits =  8; EltName = "uint8_t"; break;
+    case BuiltinType::Short:     EltBits = 16; EltName = "int16_t"; break;
+    case BuiltinType::UShort:    EltBits = 16; EltName = "uint16_t"; break;
+    case BuiltinType::Int:       EltBits = 32; EltName = "int32_t"; break;
+    case BuiltinType::UInt:      EltBits = 32; EltName = "uint32_t"; break;
+    case BuiltinType::LongLong:  EltBits = 64; EltName = "int64_t"; break;
+    case BuiltinType::ULongLong: EltBits = 64; EltName = "uint64_t"; break;
+    case BuiltinType::Float:     EltBits = 32; EltName = "float32_t"; break;
+    default: return false;
+    }
   }
   const char *BaseName = 0;
   unsigned BitSize = T->getNumElements() * EltBits;
@@ -1446,7 +1454,9 @@ bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
 // <extended element type> ::= <element type>
 //                         ::= p # AltiVec vector pixel
 void CXXNameMangler::mangleType(const VectorType *T) {
-  if (T->getVectorKind() == VectorType::NeonVector && mangleNeonVectorType(T))
+  if ((T->getVectorKind() == VectorType::NeonVector ||
+       T->getVectorKind() == VectorType::NeonPolyVector) &&
+      mangleNeonVectorType(T))
     return;
   Out << "Dv" << T->getNumElements() << '_';
   if (T->getVectorKind() == VectorType::AltiVecPixel)
