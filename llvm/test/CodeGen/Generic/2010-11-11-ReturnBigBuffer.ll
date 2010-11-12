@@ -1,4 +1,5 @@
-; RUN: llc < %s PR8287: SelectionDag scheduling time. 
+; RUN: llc < %s
+; PR8287: SelectionDag scheduling time. 
 ; Yes, some front end really produces this code. But that is a
 ; separate bug. This is more an example than a real test, because I
 ; don't know how give llvm-lit a timeout.
