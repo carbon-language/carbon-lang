@@ -359,7 +359,6 @@ public:
   // Expression visitors
   bool VisitDeclRefExpr(DeclRefExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
-  bool VisitExplicitCastExpr(ExplicitCastExpr *E);
   bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
@@ -385,6 +384,7 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(CompoundLiteralExpr)
   DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
   DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
+  DATA_RECURSIVE_VISIT(ExplicitCastExpr)
   DATA_RECURSIVE_VISIT(DoStmt)
   DATA_RECURSIVE_VISIT(IfStmt)
   DATA_RECURSIVE_VISIT(InitListExpr)
@@ -1580,14 +1580,6 @@ bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   return VisitExpr(E);
 }
 
-bool CursorVisitor::VisitExplicitCastExpr(ExplicitCastExpr *E) {
-  if (TypeSourceInfo *TSInfo = E->getTypeInfoAsWritten())
-    if (Visit(TSInfo->getTypeLoc()))
-      return true;
-
-  return VisitCastExpr(E);
-}
-
 bool CursorVisitor::VisitAddrLabelExpr(AddrLabelExpr *E) {
   return Visit(MakeCursorLabelRef(E->getLabel(), E->getLabelLoc(), TU));
 }
@@ -1824,8 +1816,16 @@ static void EnqueueOverloadExpr(VisitorWorkList &WL, CXCursor Parent,
   WL.push_back(OverloadExprParts(E, Parent));
 }
 
+// FIXME: Refactor into StmtVisitor?
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
   CXCursor C = MakeCXCursor(S, StmtParent, TU);
+
+  if (ExplicitCastExpr *E = dyn_cast<ExplicitCastExpr>(S)) {
+    EnqueueChildren(WL, C, S);
+    WLAddTypeLoc(WL, C, cast<ExplicitCastExpr>(S)->getTypeInfoAsWritten());
+    return;
+  }
+
   switch (S->getStmtClass()) {
     default:
       EnqueueChildren(WL, C, S);
@@ -1964,10 +1964,15 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         
         switch (S->getStmtClass()) {
           default: {
-            // Perform default visitation for other cases.
-            if (Visit(Cursor))
-              return true;
-            continue;
+            // FIXME: this entire switch stmt will eventually
+            // go away.
+            if (!isa<ExplicitCastExpr>(S)) {
+              // Perform default visitation for other cases.
+              if (Visit(Cursor))
+                return true;
+              continue;
+            }
+            // Fall-through.
           }
           case Stmt::BinaryOperatorClass:
           case Stmt::CallExprClass:
