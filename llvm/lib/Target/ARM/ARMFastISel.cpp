@@ -460,7 +460,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
                             TII.get(ARM::t2LDRpci), DestReg)
                     .addConstantPoolIndex(Idx));
   else
-    // The extra reg and immediate are for addrmode2.
+    // The extra immediate is for addrmode2.
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::LDRcp), DestReg)
                     .addConstantPoolIndex(Idx)
@@ -505,11 +505,11 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
     if (RelocM == Reloc::PIC_)
       MIB.addImm(Id);
   } else {
-    // The extra reg and immediate are for addrmode2.
+    // The extra immediate is for addrmode2.
     MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(ARM::LDRcp),
                   DestReg)
           .addConstantPoolIndex(Idx)
-          .addReg(0).addImm(0);
+          .addImm(0);
   }
   AddOptionalDefs(MIB);
   return DestReg;
@@ -790,9 +790,15 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   if (isFloat)
     Offset /= 4;
 
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(Opc), ResultReg)
-                  .addReg(Base).addImm(Offset));
+  // LDRH needs an additional operand.
+  if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(Opc), ResultReg)
+                    .addReg(Base).addReg(0).addImm(Offset));
+  else
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(Opc), ResultReg)
+                    .addReg(Base).addImm(Offset));
   return true;
 }
 
