@@ -402,7 +402,7 @@ struct DeclarationNameLoc {
 
   DeclarationNameLoc(DeclarationName Name);
   // FIXME: this should go away once all DNLocs are properly initialized.
-  DeclarationNameLoc() { NamedType.TInfo = 0; }
+  DeclarationNameLoc() { memset((void*) this, 0, sizeof(*this)); }
 }; // struct DeclarationNameLoc
 
 
