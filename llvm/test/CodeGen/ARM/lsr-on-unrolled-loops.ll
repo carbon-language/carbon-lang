@@ -4,14 +4,14 @@
 ; constant offset addressing, so that each of the following stores
 ; uses the same register.
 
-; CHECK: vstr.32 s{{.*}}, [lr, #-128]
-; CHECK: vstr.32 s{{.*}}, [lr, #-96]
-; CHECK: vstr.32 s{{.*}}, [lr, #-64]
-; CHECK: vstr.32 s{{.*}}, [lr, #-32]
-; CHECK: vstr.32 s{{.*}}, [lr]
-; CHECK: vstr.32 s{{.*}}, [lr, #32]
-; CHECK: vstr.32 s{{.*}}, [lr, #64]
-; CHECK: vstr.32 s{{.*}}, [lr, #96]
+; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #-128]
+; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #-96]
+; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #-64]
+; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #-32]
+; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}]
+; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #32]
+; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #64]
+; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #96]
 
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 
@@ -627,7 +627,7 @@ bb24:                                             ; preds = %bb23
 ; in a register.
 
 ;      CHECK: @ %bb24
-; CHECK: subs{{.*}} [[REGISTER:(r[0-9]+)|(lr)]], #1
+; CHECK: subs{{.*}} {{(r[0-9]+)|(lr)}}, #1
 ; CHECK: bne.w
 
   %92 = icmp eq i32 %tmp81, %indvar78             ; <i1> [#uses=1]

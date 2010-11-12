@@ -168,7 +168,8 @@ def : Processor<"cortex-a8",        CortexA8Itineraries,
                                     [ArchV7A, ProcA8,
                                      FeatureHasSlowVMLx, FeatureT2XtPk]>;
 def : Processor<"cortex-a9",        CortexA9Itineraries,
-                                    [ArchV7A, ProcA9, FeatureT2XtPk]>;
+                                    [ArchV7A, ProcA9,
+                                     FeatureHasSlowVMLx, FeatureT2XtPk]>;
 
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [ArchV7M]>;

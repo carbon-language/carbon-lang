@@ -738,80 +738,96 @@ def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
 // FP FMA Operations.
 //
 
-def VMLAD : ADbI_vmlX<0b11100, 0b00, 0, 0,
-                      (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
-                      IIC_fpMAC64, "vmla", ".f64\t$Dd, $Dn, $Dm",
-                      [(set DPR:$Dd, (fadd (fmul DPR:$Dn, DPR:$Dm),
-                                           (f64 DPR:$Ddin)))]>,
-              RegConstraint<"$Ddin = $Dd">;
+def VMLAD : ADbI<0b11100, 0b00, 0, 0,
+                 (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                 IIC_fpMAC64, "vmla", ".f64\t$Dd, $Dn, $Dm",
+                 [(set DPR:$Dd, (fadd (fmul DPR:$Dn, DPR:$Dm),
+                                      (f64 DPR:$Ddin)))]>,
+              RegConstraint<"$Ddin = $Dd">,
+              Requires<[HasVFP2,UseVMLx]>;
 
 def VMLAS : ASbIn<0b11100, 0b00, 0, 0,
                   (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
                   IIC_fpMAC32, "vmla", ".f32\t$Sd, $Sn, $Sm",
                   [(set SPR:$Sd, (fadd (fmul SPR:$Sn, SPR:$Sm),
                                        SPR:$Sdin))]>,
-              RegConstraint<"$Sdin = $Sd">;
+              RegConstraint<"$Sdin = $Sd">,
+              Requires<[HasVFP2,DontUseNEONForFP,UseVMLx]>;
 
 def : Pat<(fadd DPR:$dstin, (fmul DPR:$a, (f64 DPR:$b))),
-          (VMLAD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
+          (VMLAD DPR:$dstin, DPR:$a, DPR:$b)>,
+          Requires<[HasVFP2,UseVMLx]>;
 def : Pat<(fadd SPR:$dstin, (fmul SPR:$a, SPR:$b)),
-          (VMLAS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
+          (VMLAS SPR:$dstin, SPR:$a, SPR:$b)>,
+          Requires<[HasVFP2,DontUseNEONForFP, UseVMLx]>;
 
-def VMLSD : ADbI_vmlX<0b11100, 0b00, 1, 0,
-                      (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
-                      IIC_fpMAC64, "vmls", ".f64\t$Dd, $Dn, $Dm",
-                      [(set DPR:$Dd, (fadd (fneg (fmul DPR:$Dn,DPR:$Dm)),
-                                                 (f64 DPR:$Ddin)))]>,
-              RegConstraint<"$Ddin = $Dd">;
+def VMLSD : ADbI<0b11100, 0b00, 1, 0,
+                 (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                 IIC_fpMAC64, "vmls", ".f64\t$Dd, $Dn, $Dm",
+                 [(set DPR:$Dd, (fadd (fneg (fmul DPR:$Dn,DPR:$Dm)),
+                                            (f64 DPR:$Ddin)))]>,
+              RegConstraint<"$Ddin = $Dd">,
+              Requires<[HasVFP2,UseVMLx]>;
 
 def VMLSS : ASbIn<0b11100, 0b00, 1, 0,
                   (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
                   IIC_fpMAC32, "vmls", ".f32\t$Sd, $Sn, $Sm",
                   [(set SPR:$Sd, (fadd (fneg (fmul SPR:$Sn, SPR:$Sm)),
                                        SPR:$Sdin))]>,
-              RegConstraint<"$Sdin = $Sd">;
+              RegConstraint<"$Sdin = $Sd">,
+              Requires<[HasVFP2,DontUseNEONForFP,UseVMLx]>;
 
 def : Pat<(fsub DPR:$dstin, (fmul DPR:$a, (f64 DPR:$b))),
-          (VMLSD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
+          (VMLSD DPR:$dstin, DPR:$a, DPR:$b)>,
+          Requires<[HasVFP2,UseVMLx]>;
 def : Pat<(fsub SPR:$dstin, (fmul SPR:$a, SPR:$b)),
-          (VMLSS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
+          (VMLSS SPR:$dstin, SPR:$a, SPR:$b)>,
+          Requires<[HasVFP2,DontUseNEONForFP,UseVMLx]>;
 
-def VNMLAD : ADbI_vmlX<0b11100, 0b01, 1, 0,
-                       (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
-                       IIC_fpMAC64, "vnmla", ".f64\t$Dd, $Dn, $Dm",
-                       [(set DPR:$Dd,(fsub (fneg (fmul DPR:$Dn,DPR:$Dm)),
-                                           (f64 DPR:$Ddin)))]>,
-                RegConstraint<"$Ddin = $Dd">;
+def VNMLAD : ADbI<0b11100, 0b01, 1, 0,
+                  (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                  IIC_fpMAC64, "vnmla", ".f64\t$Dd, $Dn, $Dm",
+                  [(set DPR:$Dd,(fsub (fneg (fmul DPR:$Dn,DPR:$Dm)),
+                                      (f64 DPR:$Ddin)))]>,
+                RegConstraint<"$Ddin = $Dd">,
+                Requires<[HasVFP2,UseVMLx]>;
 
 def VNMLAS : ASbI<0b11100, 0b01, 1, 0,
                   (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
                   IIC_fpMAC32, "vnmla", ".f32\t$Sd, $Sn, $Sm",
                   [(set SPR:$Sd, (fsub (fneg (fmul SPR:$Sn, SPR:$Sm)),
                                        SPR:$Sdin))]>,
-                RegConstraint<"$Sdin = $Sd">;
+                RegConstraint<"$Sdin = $Sd">,
+                Requires<[HasVFP2,DontUseNEONForFP,UseVMLx]>;
 
 def : Pat<(fsub (fneg (fmul DPR:$a, (f64 DPR:$b))), DPR:$dstin),
-          (VNMLAD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
+          (VNMLAD DPR:$dstin, DPR:$a, DPR:$b)>,
+          Requires<[HasVFP2,UseVMLx]>;
 def : Pat<(fsub (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin),
-          (VNMLAS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
+          (VNMLAS SPR:$dstin, SPR:$a, SPR:$b)>,
+          Requires<[HasVFP2,DontUseNEONForFP,UseVMLx]>;
 
-def VNMLSD : ADbI_vmlX<0b11100, 0b01, 0, 0,
-                       (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
-                       IIC_fpMAC64, "vnmls", ".f64\t$Dd, $Dn, $Dm",
-                       [(set DPR:$Dd, (fsub (fmul DPR:$Dn, DPR:$Dm),
-                                            (f64 DPR:$Ddin)))]>,
-               RegConstraint<"$Ddin = $Dd">;
+def VNMLSD : ADbI<0b11100, 0b01, 0, 0,
+                  (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
+                  IIC_fpMAC64, "vnmls", ".f64\t$Dd, $Dn, $Dm",
+                  [(set DPR:$Dd, (fsub (fmul DPR:$Dn, DPR:$Dm),
+                                       (f64 DPR:$Ddin)))]>,
+               RegConstraint<"$Ddin = $Dd">,
+               Requires<[HasVFP2,UseVMLx]>;
 
 def VNMLSS : ASbI<0b11100, 0b01, 0, 0,
                   (outs SPR:$Sd), (ins SPR:$Sdin, SPR:$Sn, SPR:$Sm),
                   IIC_fpMAC32, "vnmls", ".f32\t$Sd, $Sn, $Sm",
                   [(set SPR:$Sd, (fsub (fmul SPR:$Sn, SPR:$Sm), SPR:$Sdin))]>,
-                         RegConstraint<"$Sdin = $Sd">;
+                         RegConstraint<"$Sdin = $Sd">,
+                  Requires<[HasVFP2,DontUseNEONForFP,UseVMLx]>;
 
 def : Pat<(fsub (fmul DPR:$a, (f64 DPR:$b)), DPR:$dstin),
-          (VNMLSD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
+          (VNMLSD DPR:$dstin, DPR:$a, DPR:$b)>,
+          Requires<[HasVFP2,UseVMLx]>;
 def : Pat<(fsub (fmul SPR:$a, SPR:$b), SPR:$dstin),
-          (VNMLSS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
+          (VNMLSS SPR:$dstin, SPR:$a, SPR:$b)>,
+          Requires<[HasVFP2,DontUseNEONForFP,UseVMLx]>;
 
 
 //===----------------------------------------------------------------------===//

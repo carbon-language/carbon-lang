@@ -1,24 +1,51 @@
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=NFP0
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=CORTEXA8
-; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s -check-prefix=CORTEXA9
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=NEON
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=A8
 
-define float @test(float %acc, float %a, float %b) {
+define float @t1(float %acc, float %a, float %b) {
 entry:
+; VFP2: t1:
+; VFP2: vmla.f32
+
+; NEON: t1:
+; NEON: vmla.f32
+
+; A8: t1:
+; A8: vmul.f32
+; A8: vadd.f32
 	%0 = fmul float %a, %b
         %1 = fadd float %acc, %0
 	ret float %1
 }
 
-; VFP2: test:
-; VFP2: 	vmla.f32	s2, s1, s0
+define double @t2(double %acc, double %a, double %b) {
+entry:
+; VFP2: t2:
+; VFP2: vmla.f64
 
-; NFP1: test:
-; NFP1: 	vmul.f32	d0, d1, d0
-; NFP0: test:
-; NFP0: 	vmla.f32	s2, s1, s0
+; NEON: t2:
+; NEON: vmla.f64
 
-; CORTEXA8: test:
-; CORTEXA8: 	vmul.f32	d0, d1, d0
-; CORTEXA9: test:
-; CORTEXA9: 	vmla.f32	s2, s1, s0
+; A8: t2:
+; A8: vmul.f64
+; A8: vadd.f64
+	%0 = fmul double %a, %b
+        %1 = fadd double %acc, %0
+	ret double %1
+}
+
+define float @t3(float %acc, float %a, float %b) {
+entry:
+; VFP2: t3:
+; VFP2: vmla.f32
+
+; NEON: t3:
+; NEON: vmla.f32
+
+; A8: t3:
+; A8: vmul.f32
+; A8: vadd.f32
+	%0 = fmul float %a, %b
+        %1 = fadd float %0, %acc
+	ret float %1
+}
