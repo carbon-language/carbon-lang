@@ -448,19 +448,6 @@ class AIldr2<bits<4> op, bit opc22, bit opc20, dag oops, dag iops, AddrMode am,
   let Inst{7-4} = op;
 }
 
-
-
-
-class AI2ldw<dag oops, dag iops, Format f, InstrItinClass itin,
-             string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-      opc, asm, "", pattern> {
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
 class AXI2ldw<dag oops, dag iops, Format f, InstrItinClass itin,
               string asm, list<dag> pattern>
   : XI<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
@@ -468,16 +455,6 @@ class AXI2ldw<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-class AI2ldb<dag oops, dag iops, Format f, InstrItinClass itin,
-             string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-      opc, asm, "", pattern> {
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 1; // B bit
   let Inst{24}    = 1; // P bit
   let Inst{27-26} = 0b01;
 }
@@ -493,16 +470,6 @@ class AXI2ldb<dag oops, dag iops, Format f, InstrItinClass itin,
 }
 
 // stores
-class AI2stw<dag oops, dag iops, Format f, InstrItinClass itin,
-             string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-      opc, asm, "", pattern> {
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
 class AXI2stw<dag oops, dag iops, Format f, InstrItinClass itin,
               string asm, list<dag> pattern>
   : XI<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
@@ -510,16 +477,6 @@ class AXI2stw<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-class AI2stb<dag oops, dag iops, Format f, InstrItinClass itin,
-             string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-      opc, asm, "", pattern> {
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 1; // B bit
   let Inst{24}    = 1; // P bit
   let Inst{27-26} = 0b01;
 }
