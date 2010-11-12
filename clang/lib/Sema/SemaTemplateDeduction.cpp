@@ -2125,7 +2125,31 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
                            bool OnlyDeduced,
                            unsigned Level,
                            llvm::SmallVectorImpl<bool> &Deduced);
-  
+ 
+/// \brief If this is a non-static member function, 
+static void MaybeAddImplicitObjectParameterType(ASTContext &Context,
+                                                CXXMethodDecl *Method,
+                                 llvm::SmallVectorImpl<QualType> &ArgTypes) {
+  if (Method->isStatic())
+    return;
+
+  // C++ [over.match.funcs]p4:
+  //
+  //   For non-static member functions, the type of the implicit
+  //   object parameter is
+  //     — "lvalue reference to cv X" for functions declared without a
+  //       ref-qualifier or with the & ref-qualifier
+  //     - "rvalue reference to cv X" for functions declared with the
+  //       && ref-qualifier
+  //
+  // FIXME: We don't have ref-qualifiers yet, so we don't do that part.
+  QualType ArgTy = Context.getTypeDeclType(Method->getParent());
+  ArgTy = Context.getQualifiedType(ArgTy,
+                        Qualifiers::fromCVRMask(Method->getTypeQualifiers()));
+  ArgTy = Context.getLValueReferenceType(ArgTy);
+  ArgTypes.push_back(ArgTy);
+}
+
 /// \brief Determine whether the function template \p FT1 is at least as
 /// specialized as \p FT2.
 static bool isAtLeastAsSpecializedAs(Sema &S,
@@ -2152,12 +2176,24 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   case TPOC_Call: {
     //   - In the context of a function call, the function parameter types are
     //     used.
-    unsigned NumParams = std::min(Proto1->getNumArgs(), Proto2->getNumArgs());
+    llvm::SmallVector<QualType, 4> Args1;
+    if (CXXMethodDecl *Method1 = dyn_cast<CXXMethodDecl>(FD1))
+      MaybeAddImplicitObjectParameterType(S.Context, Method1, Args1);
+    Args1.insert(Args1.end(), 
+                 Proto1->arg_type_begin(), Proto1->arg_type_end());
+
+    llvm::SmallVector<QualType, 4> Args2;
+    if (CXXMethodDecl *Method2 = dyn_cast<CXXMethodDecl>(FD2))
+      MaybeAddImplicitObjectParameterType(S.Context, Method2, Args2);
+    Args2.insert(Args2.end(), 
+                 Proto2->arg_type_begin(), Proto2->arg_type_end());
+
+    unsigned NumParams = std::min(Args1.size(), Args2.size());
     for (unsigned I = 0; I != NumParams; ++I)
       if (DeduceTemplateArgumentsDuringPartialOrdering(S,
                                                        TemplateParams,
-                                                       Proto2->getArgType(I),
-                                                       Proto1->getArgType(I),
+                                                       Args2[I],
+                                                       Args1[I],
                                                        Info,
                                                        Deduced,
                                                        QualifierComparisons))
