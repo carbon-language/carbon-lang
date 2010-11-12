@@ -37,8 +37,13 @@ public:
 
     ~FuncUnwinders ();
 
+    // current_offset is the byte offset into the function.
+    // 0 means no instructions have executed yet.  -1 means the offset is unknown.
+    // On architectures where the pc points to the next instruction that will execute, this
+    // offset value will have already been decremented by 1 to stay within the bounds of the 
+    // correct function body.
     UnwindPlan*
-    GetUnwindPlanAtCallSite ();
+    GetUnwindPlanAtCallSite (int current_offset);
 
     UnwindPlan*
     GetUnwindPlanAtNonCallSite (lldb_private::Thread& thread);

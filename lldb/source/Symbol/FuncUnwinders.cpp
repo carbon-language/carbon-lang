@@ -47,24 +47,39 @@ FuncUnwinders::~FuncUnwinders ()
 }
 
 UnwindPlan*
-FuncUnwinders::GetUnwindPlanAtCallSite ()
+FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
 {
     if (m_unwind_at_call_site != NULL)
         return m_unwind_at_call_site;
     if (!m_range.GetBaseAddress().IsValid())
         return NULL;
 
+    // We have cases (e.g. with _sigtramp on Mac OS X) where the hand-written eh_frame unwind info for a
+    // function does not cover the entire range of the function and so the FDE only lists a subset of the
+    // address range.  If we try to look up the unwind info by the starting address of the function 
+    // (i.e. m_range.GetBaseAddress()) we may not find the eh_frame FDE.  We need to use the actual byte offset
+    // into the function when looking it up.
+
+    Address current_pc (m_range.GetBaseAddress ());
+    if (current_offset != -1)
+        current_pc.SetOffset (current_pc.GetOffset() + current_offset);
+
     DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
+    UnwindPlan *up = NULL;
     if (eh_frame)
     {
-        UnwindPlan *up = new UnwindPlan;
-        if (eh_frame->GetUnwindPlan (m_range.GetBaseAddress (), *up) == true)
+        up = new UnwindPlan;
+        if (!eh_frame->GetUnwindPlan (current_pc, *up))
         {
-            m_unwind_at_call_site = up;
-            return m_unwind_at_call_site;
+            delete up;
+            return NULL;
         }
     }
-    return NULL;
+    if (!up)
+        return NULL;
+
+    m_unwind_at_call_site = up;
+    return m_unwind_at_call_site;
 }
 
 UnwindPlan*

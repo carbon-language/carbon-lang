@@ -35,7 +35,7 @@ RegisterContextLLDB::RegisterContextLLDB (Thread& thread,
     m_sym_ctx(sym_ctx), m_all_registers_available(false), m_registers(),
     m_cfa (LLDB_INVALID_ADDRESS), m_start_pc (), m_current_pc (), m_frame_number (frame_number),
     m_full_unwind_plan(NULL), m_fast_unwind_plan(NULL), m_base_reg_ctx (), m_frame_type (-1), 
-    m_current_offset (0), m_sym_ctx_valid (false)
+    m_current_offset (0), m_current_offset_backed_up_one (0), m_sym_ctx_valid (false)
 {
     m_sym_ctx.Clear();
     m_sym_ctx_valid = false;
@@ -107,11 +107,13 @@ RegisterContextLLDB::InitializeZerothFrame()
     {
         m_start_pc = addr_range.GetBaseAddress();
         m_current_offset = frame_sp->GetFrameCodeAddress().GetOffset() - m_start_pc.GetOffset();
+        m_current_offset_backed_up_one = m_current_offset;
     }
     else
     {
         m_start_pc = m_current_pc;
         m_current_offset = -1;
+        m_current_offset_backed_up_one = -1;
     }
 
     // We've set m_frame_type and m_sym_ctx before these calls.
@@ -224,6 +226,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             m_frame_type = eNormalFrame;
             m_all_registers_available = false;
             m_current_offset = -1;
+            m_current_offset_backed_up_one = -1;
             addr_t cfa_regval;
             int row_register_kind = m_full_unwind_plan->GetRegisterKind ();
             uint32_t cfa_regnum = m_full_unwind_plan->GetRowForFunctionOffset(0)->GetCFARegister();
@@ -276,6 +279,61 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_sym_ctx_valid = false;
     }
 
+    bool decr_pc_and_recompute_addr_range = false;
+
+    // If the symbol lookup failed...
+    if (m_sym_ctx_valid == false)
+       decr_pc_and_recompute_addr_range = true;
+
+    // Or if we're in the middle of the stack (and not "above" an asynchornous event like sigtramp),
+    // and our "current" pc is the start of a function...
+    if (m_sym_ctx_valid
+        && ((RegisterContextLLDB*) m_next_frame.get())->m_frame_type != eSigtrampFrame
+        && ((RegisterContextLLDB*) m_next_frame.get())->m_frame_type != eDebuggerFrame
+        && addr_range.GetBaseAddress().IsValid()
+        && addr_range.GetBaseAddress().GetSection() == m_current_pc.GetSection()
+        && addr_range.GetBaseAddress().GetOffset() == m_current_pc.GetOffset())
+    {
+        decr_pc_and_recompute_addr_range = true;
+    }
+
+    // We need to back up the pc by 1 byte and re-search for the Symbol to handle the case where the "saved pc"
+    // value is pointing to the next function, e.g. if a function ends with a CALL instruction.
+    // FIXME this may need to be an architectural-dependent behavior; if so we'll need to add a member function
+    // to the ABI plugin and consult that.
+    if (decr_pc_and_recompute_addr_range) 
+    {
+        Address temporary_pc(m_current_pc);
+        temporary_pc.SetOffset(m_current_pc.GetOffset() - 1);
+        m_sym_ctx.Clear();
+        m_sym_ctx_valid = false;
+        if ((m_current_pc.GetModule()->ResolveSymbolContextForAddress (temporary_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+        {
+            m_sym_ctx_valid = true;
+        }
+        if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, addr_range))
+        {
+            m_sym_ctx_valid = false;
+        }
+    }
+
+    // If we were able to find a symbol/function, set addr_range_ptr to the bounds of that symbol/function.
+    // else treat the current pc value as the start_pc and record no offset.
+    if (addr_range.GetBaseAddress().IsValid())
+    {
+        m_start_pc = addr_range.GetBaseAddress();
+        m_current_offset = m_current_pc.GetOffset() - m_start_pc.GetOffset();
+        m_current_offset_backed_up_one = m_current_offset;
+        if (decr_pc_and_recompute_addr_range && m_current_offset_backed_up_one > 0)
+            m_current_offset_backed_up_one--;
+    }
+    else
+    {
+        m_start_pc = m_current_pc;
+        m_current_offset = -1;
+        m_current_offset_backed_up_one = -1;
+    }
+
     static ConstString sigtramp_name ("_sigtramp");
     if ((m_sym_ctx.function && m_sym_ctx.function->GetMangled().GetMangledName() == sigtramp_name)
         || (m_sym_ctx.symbol && m_sym_ctx.symbol->GetMangled().GetMangledName() == sigtramp_name))
@@ -286,19 +344,6 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     {
         // FIXME:  Detect eDebuggerFrame here.
         m_frame_type = eNormalFrame;
-    }
-
-    // If we were able to find a symbol/function, set addr_range_ptr to the bounds of that symbol/function.
-    // else treat the current pc value as the start_pc and record no offset.
-    if (addr_range.GetBaseAddress().IsValid())
-    {
-        m_start_pc = addr_range.GetBaseAddress();
-        m_current_offset = m_current_pc.GetOffset() - m_start_pc.GetOffset();
-    }
-    else
-    {
-        m_start_pc = m_current_pc;
-        m_current_offset = -1;
     }
 
     // We've set m_frame_type and m_sym_ctx before this call.
@@ -386,6 +431,7 @@ RegisterContextLLDB::IsFrameZero () const
 //   1. m_frame_type should already be set to eSigtrampFrame/eDebuggerFrame if either of those are correct, 
 //   2. m_sym_ctx should already be filled in, and
 //   3. m_current_pc should have the current pc value for this frame
+//   4. m_current_offset_backed_up_one should have the current byte offset into the function, maybe backed up by 1, -1 if unknown
 
 UnwindPlan *
 RegisterContextLLDB::GetFastUnwindPlanForFrame ()
@@ -437,6 +483,7 @@ RegisterContextLLDB::GetFastUnwindPlanForFrame ()
 //   1. m_frame_type should already be set to eSigtrampFrame/eDebuggerFrame if either of those are correct, 
 //   2. m_sym_ctx should already be filled in, and
 //   3. m_current_pc should have the current pc value for this frame
+//   4. m_current_offset_backed_up_one should have the current byte offset into the function, maybe backed up by 1, -1 if unknown
 
 UnwindPlan *
 RegisterContextLLDB::GetFullUnwindPlanForFrame ()
@@ -499,8 +546,8 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     if (m_frame_type == eSigtrampFrame)
     {
         m_fast_unwind_plan = NULL;
-        up = fu->GetUnwindPlanAtCallSite ();
-        if (up->PlanValidAtAddress (m_current_pc))
+        up = fu->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
+        if (up && up->PlanValidAtAddress (m_current_pc))
         {
             return up;
         }
@@ -521,7 +568,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     }
 
     // Typically this is unwind info from an eh_frame section intended for exception handling; only valid at call sites
-    up = fu->GetUnwindPlanAtCallSite ();
+    up = fu->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
     if (up && up->PlanValidAtAddress (m_current_pc))
     {
         if (log && IsLogVerbose())
