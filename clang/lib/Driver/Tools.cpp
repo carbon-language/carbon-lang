@@ -3255,20 +3255,21 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
 
-  if (!Args.hasArg(options::OPT_shared))
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt1.o")));
+  if (!Args.hasArg(options::OPT_nostdlib)) {
+    if (!Args.hasArg(options::OPT_shared))
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt1.o")));
 
-  CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
 
-  const char *crtbegin;
-  if (Args.hasArg(options::OPT_static))
-    crtbegin = "crtbeginT.o";
-  else if (Args.hasArg(options::OPT_shared))
-    crtbegin = "crtbeginS.o";
-  else
-    crtbegin = "crtbegin.o";
-
-  CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtbegin)));
+    const char *crtbegin;
+    if (Args.hasArg(options::OPT_static))
+      crtbegin = "crtbeginT.o";
+    else if (Args.hasArg(options::OPT_shared))
+      crtbegin = "crtbeginS.o";
+    else
+      crtbegin = "crtbegin.o";
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtbegin)));
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
@@ -3283,7 +3284,7 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
 
-  if (D.CCCIsCXX) {
+  if (D.CCCIsCXX && !Args.hasArg(options::OPT_nostdlib)) {
     ToolChain.AddCXXStdlibLibArgs(Args, CmdArgs);
     CmdArgs.push_back("-lm");
   }
@@ -3291,52 +3292,55 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_static))
     CmdArgs.push_back("--start-group");
 
-  if (!D.CCCIsCXX)
-    CmdArgs.push_back("-lgcc");
-
-  if (Args.hasArg(options::OPT_static)) {
-    if (D.CCCIsCXX)
+  if (!Args.hasArg(options::OPT_nostdlib)) {
+    if (!D.CCCIsCXX)
       CmdArgs.push_back("-lgcc");
-  } else {
-    if (!D.CCCIsCXX)
-      CmdArgs.push_back("--as-needed");
-    CmdArgs.push_back("-lgcc_s");
-    if (!D.CCCIsCXX)
-      CmdArgs.push_back("--no-as-needed");
+
+    if (Args.hasArg(options::OPT_static)) {
+      if (D.CCCIsCXX)
+        CmdArgs.push_back("-lgcc");
+    } else {
+      if (!D.CCCIsCXX)
+        CmdArgs.push_back("--as-needed");
+      CmdArgs.push_back("-lgcc_s");
+      if (!D.CCCIsCXX)
+        CmdArgs.push_back("--no-as-needed");
+    }
+
+    if (Args.hasArg(options::OPT_static))
+      CmdArgs.push_back("-lgcc_eh");
+    else if (!Args.hasArg(options::OPT_shared) && D.CCCIsCXX)
+      CmdArgs.push_back("-lgcc");
+
+    if (Args.hasArg(options::OPT_pthread) ||
+        Args.hasArg(options::OPT_pthreads))
+      CmdArgs.push_back("-lpthread");
+
+    CmdArgs.push_back("-lc");
+
+    if (Args.hasArg(options::OPT_static))
+      CmdArgs.push_back("--end-group");
+    else {
+      if (!D.CCCIsCXX)
+        CmdArgs.push_back("-lgcc");
+
+      if (!D.CCCIsCXX)
+        CmdArgs.push_back("--as-needed");
+      CmdArgs.push_back("-lgcc_s");
+      if (!D.CCCIsCXX)
+        CmdArgs.push_back("--no-as-needed");
+
+      if (!Args.hasArg(options::OPT_shared) && D.CCCIsCXX)
+        CmdArgs.push_back("-lgcc");
+    }
+
+    if (Args.hasArg(options::OPT_shared))
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtendS.o")));
+    else
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
+
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
   }
-
-  if (Args.hasArg(options::OPT_static))
-    CmdArgs.push_back("-lgcc_eh");
-  else if (!Args.hasArg(options::OPT_shared) && D.CCCIsCXX)
-    CmdArgs.push_back("-lgcc");
-
-  if (Args.hasArg(options::OPT_pthread) || Args.hasArg(options::OPT_pthreads))
-    CmdArgs.push_back("-lpthread");
-
-  CmdArgs.push_back("-lc");
-
-  if (Args.hasArg(options::OPT_static))
-    CmdArgs.push_back("--end-group");
-  else {
-    if (!D.CCCIsCXX)
-      CmdArgs.push_back("-lgcc");
-
-    if (!D.CCCIsCXX)
-      CmdArgs.push_back("--as-needed");
-    CmdArgs.push_back("-lgcc_s");
-    if (!D.CCCIsCXX)
-      CmdArgs.push_back("--no-as-needed");
-
-    if (!Args.hasArg(options::OPT_shared) && D.CCCIsCXX)
-      CmdArgs.push_back("-lgcc");
-  }
-
-  if (Args.hasArg(options::OPT_shared))
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtendS.o")));
-  else
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
-
-  CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
 
   if (Args.hasArg(options::OPT_use_gold_plugin)) {
     CmdArgs.push_back("-plugin");
