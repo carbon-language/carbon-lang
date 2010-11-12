@@ -10,8 +10,8 @@ class Y : public X { };
 
 void f(Y y, int *ip, float *fp) {
   X x1 = y; // expected-error{{no matching constructor for initialization of 'X'}}
-  X x2 = 0; // expected-error{{no viable constructor copying variable}}
-  X x3 = ip; // expected-error{{no viable constructor copying variable}}
+  X x2 = 0;
+  X x3 = ip;
   X x4 = fp; // expected-error{{no viable conversion}}
   X x2a(0); // expected-error{{call to constructor of 'X' is ambiguous}}
   X x3a(ip);

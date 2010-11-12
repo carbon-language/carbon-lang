@@ -53,7 +53,7 @@ void g4(const X4<int>&);
 void g5(const X5&);
 
 void test() {
-  g1(X1()); // expected-warning{{no viable constructor copying parameter of type 'X1'; C++98 requires a copy constructor when binding a reference to a temporary [-Wbind-to-temporary-copy]}}
+  g1(X1());
   g2(X2()); // expected-warning{{C++98 requires an accessible copy constructor for class 'X2' when binding a reference to a temporary; was private [-Wbind-to-temporary-copy]}}
   g3(X3()); // expected-warning{{no viable constructor copying parameter of type 'X3'}}
   g4(X4<int>());

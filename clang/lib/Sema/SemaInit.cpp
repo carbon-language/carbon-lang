@@ -3391,14 +3391,16 @@ static ExprResult CopyObject(Sema &S,
   OverloadCandidateSet CandidateSet(Loc);
   for (llvm::tie(Con, ConEnd) = S.LookupConstructors(Class);
        Con != ConEnd; ++Con) {
-    // Only consider copy constructors and constructor templates.
+    // Only consider copy constructors and constructor templates. Per
+    // C++0x [dcl.init]p16, second bullet to class types, this
+    // initialization is direct-initialization.
     CXXConstructorDecl *Constructor = 0;
 
     if ((Constructor = dyn_cast<CXXConstructorDecl>(*Con))) {
       // Handle copy constructors, only.
       if (!Constructor || Constructor->isInvalidDecl() ||
           !Constructor->isCopyConstructor() ||
-          !Constructor->isConvertingConstructor(/*AllowExplicit=*/false))
+          !Constructor->isConvertingConstructor(/*AllowExplicit=*/true))
         continue;
 
       DeclAccessPair FoundDecl
@@ -3415,7 +3417,7 @@ static ExprResult CopyObject(Sema &S,
 
     Constructor = cast<CXXConstructorDecl>(
                                          ConstructorTmpl->getTemplatedDecl());
-    if (!Constructor->isConvertingConstructor(/*AllowExplicit=*/false))
+    if (!Constructor->isConvertingConstructor(/*AllowExplicit=*/true))
       continue;
 
     // FIXME: Do we need to limit this to copy-constructor-like
