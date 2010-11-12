@@ -238,11 +238,13 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
       unsigned preg = *pregItr;
       const LiveInterval *pregLI = &lis->getInterval(preg);
 
-      if (pregLI->empty())
+      if (pregLI->empty()) {
         continue;
+      }
 
-      if (!vregLI->overlaps(*pregLI))
+      if (!vregLI->overlaps(*pregLI)) {
         continue;
+      }
 
       // Remove the register from the allowed set.
       VRAllowed::iterator eraseItr =
@@ -318,10 +320,10 @@ void PBQPBuilder::addInterferenceCosts(
   assert(costMat.getRows() == vr1Allowed.size() + 1 && "Matrix height mismatch.");
   assert(costMat.getCols() == vr2Allowed.size() + 1 && "Matrix width mismatch.");
 
-  for (unsigned i = 0; i < vr1Allowed.size(); ++i) {
+  for (unsigned i = 0; i != vr1Allowed.size(); ++i) {
     unsigned preg1 = vr1Allowed[i];
 
-    for (unsigned j = 0; j < vr2Allowed.size(); ++j) {
+    for (unsigned j = 0; j != vr2Allowed.size(); ++j) {
       unsigned preg2 = vr2Allowed[j];
 
       if (tri->regsOverlap(preg1, preg2)) {
@@ -355,11 +357,13 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
          miItr != miEnd; ++miItr) {
       const MachineInstr *mi = &*miItr;
 
-      if (!cp.setRegisters(mi))
+      if (!cp.setRegisters(mi)) {
         continue; // Not coalescable.
+      }
 
-      if (cp.getSrcReg() == cp.getDstReg())
+      if (cp.getSrcReg() == cp.getDstReg()) {
         continue; // Already coalesced.
+      }
 
       unsigned dst = cp.getDstReg(),
                src = cp.getSrcReg();
@@ -372,13 +376,15 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
                                                    loopInfo->getLoopDepth(mbb));
 
       if (cp.isPhys()) {
-        if (!lis->isAllocatable(dst))
+        if (!lis->isAllocatable(dst)) {
           continue;
+        }
 
         const PBQPRAProblem::AllowedSet &allowed = p->getAllowedSet(src);
         unsigned pregOpt = 0;  
-        while (pregOpt < allowed.size() && allowed[pregOpt] != dst)
+        while (pregOpt < allowed.size() && allowed[pregOpt] != dst) {
           ++pregOpt;
+        }
         if (pregOpt < allowed.size()) {
           ++pregOpt; // +1 to account for spill option.
           PBQP::Graph::NodeItr node = p->getNodeForVReg(src);
@@ -425,9 +431,9 @@ void PBQPBuilderWithCoalescing::addVirtRegCoalesce(
   assert(costMat.getRows() == vr1Allowed.size() + 1 && "Size mismatch.");
   assert(costMat.getCols() == vr2Allowed.size() + 1 && "Size mismatch.");
 
-  for (unsigned i = 0; i < vr1Allowed.size(); ++i) {
+  for (unsigned i = 0; i != vr1Allowed.size(); ++i) {
     unsigned preg1 = vr1Allowed[i];
-    for (unsigned j = 0; j < vr2Allowed.size(); ++j) {
+    for (unsigned j = 0; j != vr2Allowed.size(); ++j) {
       unsigned preg2 = vr2Allowed[j];
 
       if (preg1 == preg2) {
@@ -473,8 +479,7 @@ void RegAllocPBQP::findVRegIntervalsToAlloc() {
     // finalizeAlloc.
     if (!li->empty()) {
       vregsToAlloc.insert(li->reg);
-    }
-    else {
+    } else {
       emptyIntervalVRegs.insert(li->reg);
     }
   }
@@ -484,18 +489,20 @@ void RegAllocPBQP::addStackInterval(const LiveInterval *spilled,
                                     MachineRegisterInfo* mri) {
   int stackSlot = vrm->getStackSlot(spilled->reg);
 
-  if (stackSlot == VirtRegMap::NO_STACK_SLOT)
+  if (stackSlot == VirtRegMap::NO_STACK_SLOT) {
     return;
+  }
 
   const TargetRegisterClass *RC = mri->getRegClass(spilled->reg);
   LiveInterval &stackInterval = lss->getOrCreateInterval(stackSlot, RC);
 
   VNInfo *vni;
-  if (stackInterval.getNumValNums() != 0)
+  if (stackInterval.getNumValNums() != 0) {
     vni = stackInterval.getValNumInfo(0);
-  else
+  } else {
     vni = stackInterval.getNextValue(
       SlotIndex(), 0, lss->getVNInfoAllocator());
+  }
 
   LiveInterval &rhsInterval = lis->getInterval(spilled->reg);
   stackInterval.MergeRangesInAsValue(rhsInterval, vni);
@@ -594,11 +601,9 @@ void RegAllocPBQP::finalizeAlloc() const {
     // Get the physical register for this interval
     if (TargetRegisterInfo::isPhysicalRegister(li->reg)) {
       reg = li->reg;
-    }
-    else if (vrm->isAssignedReg(li->reg)) {
+    } else if (vrm->isAssignedReg(li->reg)) {
       reg = vrm->getPhys(li->reg);
-    }
-    else {
+    } else {
       // Ranges which are assigned a stack slot only are ignored.
       continue;
     }
@@ -615,7 +620,7 @@ void RegAllocPBQP::finalizeAlloc() const {
       // Find the set of basic blocks which this range is live into...
       if (lis->findLiveInMBBs(lrItr->start, lrItr->end,  liveInMBBs)) {
         // And add the physreg for this interval to their live-in sets.
-        for (unsigned i = 0; i < liveInMBBs.size(); ++i) {
+        for (unsigned i = 0; i != liveInMBBs.size(); ++i) {
           if (liveInMBBs[i] != entryMBB) {
             if (!liveInMBBs[i]->isLiveIn(reg)) {
               liveInMBBs[i]->addLiveIn(reg);
