@@ -2368,7 +2368,6 @@ def  MVNs  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg:$shift), DPSoRegFrm,
                   IIC_iMVNsr, "mvn", "\t$Rd, $shift",
                   [(set GPR:$Rd, (not so_reg:$shift))]>, UnaryDP {
   bits<4> Rd;
-  bits<4> Rm;
   bits<12> shift;
   let Inst{25} = 0;
   let Inst{19-16} = 0b0000;
@@ -2380,7 +2379,6 @@ def  MVNi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm,
                   IIC_iMVNi, "mvn", "\t$Rd, $imm",
                   [(set GPR:$Rd, so_imm_not:$imm)]>,UnaryDP {
   bits<4> Rd;
-  bits<4> Rm;
   bits<12> imm;
   let Inst{25} = 1;
   let Inst{19-16} = 0b0000;
