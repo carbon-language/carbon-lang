@@ -491,90 +491,28 @@ class AXI2stb<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{27-26} = 0b01;
 }
 
-// Pre-indexed loads
-class AI2ldwpr<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
+// Pre-indexed load/stores
+class AI2ldstpr<bit isLd, bit opc22, dag oops, dag iops, Format f,
+               InstrItinClass itin, string opc, string asm, string cstr,
+               list<dag> pattern>
   : I<oops, iops, AddrMode2, Size4Bytes, IndexModePre, f, itin,
       opc, asm, cstr, pattern> {
-  let Inst{20}    = 1; // L bit
+  let Inst{20}    = isLd; // L bit
   let Inst{21}    = 1; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-class AI2ldbpr<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModePre, f, itin,
-      opc, asm, cstr, pattern> {
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 1; // W bit
-  let Inst{22}    = 1; // B bit
+  let Inst{22}    = opc22; // B bit
   let Inst{24}    = 1; // P bit
   let Inst{27-26} = 0b01;
 }
 
-// Pre-indexed stores
-class AI2stwpr<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModePre, f, itin,
-      opc, asm, cstr, pattern> {
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 1; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-class AI2stbpr<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModePre, f, itin,
-      opc, asm, cstr, pattern> {
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 1; // W bit
-  let Inst{22}    = 1; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-
-// Post-indexed loads
-class AI2ldwpo<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
+// Post-indexed load/stores
+class AI2ldstpo<bit isLd, bit opc22, dag oops, dag iops, Format f,
+                InstrItinClass itin, string opc, string asm, string cstr,
+                list<dag> pattern>
   : I<oops, iops, AddrMode2, Size4Bytes, IndexModePost, f, itin,
       opc, asm, cstr,pattern> {
-  let Inst{20}    = 1; // L bit
+  let Inst{20}    = isLd; // L bit
   let Inst{21}    = 0; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 0; // P bit
-  let Inst{27-26} = 0b01;
-}
-class AI2ldbpo<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModePost, f, itin,
-      opc, asm, cstr,pattern> {
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 1; // B bit
-  let Inst{24}    = 0; // P bit
-  let Inst{27-26} = 0b01;
-}
-
-// Post-indexed stores
-class AI2stwpo<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModePost, f, itin,
-      opc, asm, cstr,pattern> {
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 0; // P bit
-  let Inst{27-26} = 0b01;
-}
-class AI2stbpo<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode2, Size4Bytes, IndexModePost, f, itin,
-      opc, asm, cstr,pattern> {
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 1; // B bit
+  let Inst{22}    = opc22; // B bit
   let Inst{24}    = 0; // P bit
   let Inst{27-26} = 0b01;
 }

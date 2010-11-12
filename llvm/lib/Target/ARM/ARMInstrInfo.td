@@ -1540,11 +1540,11 @@ def LDRD : AI3ldd<(outs GPR:$dst1, GPR:$dst2), (ins addrmode3:$addr), LdMiscFrm,
                  []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed loads
-def LDR_PRE  : AI2ldwpr<(outs GPR:$Rt, GPR:$Rn_wb),
+def LDR_PRE  : AI2ldstpr<1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                      (ins addrmode2:$addr), LdFrm, IIC_iLoad_ru,
                      "ldr", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
 
-def LDR_POST : AI2ldwpo<(outs GPR:$Rt, GPR:$Rn_wb),
+def LDR_POST : AI2ldstpo<1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                      (ins GPR:$Rn, am2offset:$offset), LdFrm, IIC_iLoad_ru,
                      "ldr", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 
@@ -1556,11 +1556,11 @@ def LDRH_POST : AI3ldhpo<(outs GPR:$Rt, GPR:$Rn_wb),
                   (ins GPR:$Rn,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
                     "ldrh", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 
-def LDRB_PRE  : AI2ldbpr<(outs GPR:$Rt, GPR:$Rn_wb),
+def LDRB_PRE  : AI2ldstpr<1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                      (ins addrmode2:$addr), LdFrm, IIC_iLoad_bh_ru,
                      "ldrb", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
 
-def LDRB_POST : AI2ldbpo<(outs GPR:$Rt, GPR:$Rn_wb),
+def LDRB_POST : AI2ldstpo<1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                      (ins GPR:$Rn,am2offset:$offset), LdFrm, IIC_iLoad_bh_ru,
                     "ldrb", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 
@@ -1596,13 +1596,13 @@ def LDRD_POST : AI3lddpo<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
 
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
 
-def LDRT : AI2ldwpo<(outs GPR:$dst, GPR:$base_wb),
+def LDRT : AI2ldstpo<1, 0, (outs GPR:$dst, GPR:$base_wb),
                    (ins GPR:$base, am2offset:$offset), LdFrm, IIC_iLoad_ru,
                    "ldrt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 
-def LDRBT : AI2ldbpo<(outs GPR:$dst, GPR:$base_wb),
+def LDRBT : AI2ldstpo<1, 1, (outs GPR:$dst, GPR:$base_wb),
                   (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoad_bh_ru,
                   "ldrbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
@@ -1641,14 +1641,14 @@ def STRD : AI3std<(outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),
                "strd", "\t$src1, $addr", []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed stores
-def STR_PRE  : AI2stwpr<(outs GPR:$base_wb),
+def STR_PRE  : AI2ldstpr<0, 0, (outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base, am2offset:$offset),
                      StFrm, IIC_iStore_ru,
                     "str", "\t$src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
-def STR_POST : AI2stwpo<(outs GPR:$base_wb),
+def STR_POST : AI2ldstpo<0, 0, (outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am2offset:$offset),
                      StFrm, IIC_iStore_ru,
                     "str", "\t$src, [$base], $offset", "$base = $base_wb",
@@ -1669,14 +1669,14 @@ def STRH_POST: AI3sthpo<(outs GPR:$base_wb),
                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
                                          GPR:$base, am3offset:$offset))]>;
 
-def STRB_PRE : AI2stbpr<(outs GPR:$base_wb),
+def STRB_PRE : AI2ldstpr<0, 1, (outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am2offset:$offset),
                      StFrm, IIC_iStore_bh_ru,
                      "strb", "\t$src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb, (pre_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
 
-def STRB_POST: AI2stbpo<(outs GPR:$base_wb),
+def STRB_POST: AI2ldstpo<0, 1, (outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am2offset:$offset),
                      StFrm, IIC_iStore_bh_ru,
                      "strb", "\t$src, [$base], $offset", "$base = $base_wb",
@@ -1699,7 +1699,7 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
 
 // STRT, STRBT, and STRHT are for disassembly only.
 
-def STRT : AI2stwpo<(outs GPR:$base_wb),
+def STRT : AI2ldstpo<0, 0, (outs GPR:$base_wb),
                     (ins GPR:$src, GPR:$base,am2offset:$offset),
                     StFrm, IIC_iStore_ru,
                     "strt", "\t$src, [$base], $offset", "$base = $base_wb",
@@ -1707,7 +1707,7 @@ def STRT : AI2stwpo<(outs GPR:$base_wb),
   let Inst{21} = 1; // overwrite
 }
 
-def STRBT : AI2stbpo<(outs GPR:$base_wb),
+def STRBT : AI2ldstpo<0, 1, (outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am2offset:$offset),
                      StFrm, IIC_iStore_bh_ru,
                      "strbt", "\t$src, [$base], $offset", "$base = $base_wb",
