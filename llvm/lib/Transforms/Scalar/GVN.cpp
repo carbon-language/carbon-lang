@@ -35,6 +35,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
@@ -670,6 +671,7 @@ namespace {
     bool NoLoads;
     MemoryDependenceAnalysis *MD;
     DominatorTree *DT;
+    const TargetData* TD;
 
     ValueTable VN;
     DenseMap<BasicBlock*, ValueNumberScope*> localAvail;
@@ -1380,8 +1382,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   SmallVector<AvailableValueInBlock, 16> ValuesPerBlock;
   SmallVector<BasicBlock*, 16> UnavailableBlocks;
 
-  const TargetData *TD = 0;
-  
   for (unsigned i = 0, e = Deps.size(); i != e; ++i) {
     BasicBlock *DepBB = Deps[i].getBB();
     MemDepResult DepInfo = Deps[i].getResult();
@@ -1396,8 +1396,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       // read by the load, we can extract the bits we need for the load from the
       // stored value.
       if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInfo.getInst())) {
-        if (TD == 0)
-          TD = getAnalysisIfAvailable<TargetData>();
         if (TD && Address) {
           int Offset = AnalyzeLoadFromClobberingStore(LI->getType(), Address,
                                                       DepSI, *TD);
@@ -1413,8 +1411,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       // If the clobbering value is a memset/memcpy/memmove, see if we can
       // forward a value on from it.
       if (MemIntrinsic *DepMI = dyn_cast<MemIntrinsic>(DepInfo.getInst())) {
-        if (TD == 0)
-          TD = getAnalysisIfAvailable<TargetData>();
         if (TD && Address) {
           int Offset = AnalyzeLoadFromClobberingMemInst(LI->getType(), Address,
                                                         DepMI, *TD);
@@ -1445,9 +1441,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       // Reject loads and stores that are to the same address but are of
       // different types if we have to.
       if (S->getValueOperand()->getType() != LI->getType()) {
-        if (TD == 0)
-          TD = getAnalysisIfAvailable<TargetData>();
-        
         // If the stored value is larger or equal to the loaded value, we can
         // reuse it.
         if (TD == 0 || !CanCoerceMustAliasedValueToLoad(S->getValueOperand(),
@@ -1465,9 +1458,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     if (LoadInst *LD = dyn_cast<LoadInst>(DepInst)) {
       // If the types mismatch and we can't handle it, reject reuse of the load.
       if (LD->getType() != LI->getType()) {
-        if (TD == 0)
-          TD = getAnalysisIfAvailable<TargetData>();
-        
         // If the stored value is larger or equal to the loaded value, we can
         // reuse it.
         if (TD == 0 || !CanCoerceMustAliasedValueToLoad(LD, LI->getType(),*TD)){
@@ -1749,7 +1739,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // access code.
     Value *AvailVal = 0;
     if (StoreInst *DepSI = dyn_cast<StoreInst>(Dep.getInst()))
-      if (const TargetData *TD = getAnalysisIfAvailable<TargetData>()) {
+      if (TD) {
         int Offset = AnalyzeLoadFromClobberingStore(L->getType(),
                                                     L->getPointerOperand(),
                                                     DepSI, *TD);
@@ -1761,7 +1751,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // If the clobbering value is a memset/memcpy/memmove, see if we can forward
     // a value on from it.
     if (MemIntrinsic *DepMI = dyn_cast<MemIntrinsic>(Dep.getInst())) {
-      if (const TargetData *TD = getAnalysisIfAvailable<TargetData>()) {
+      if (TD) {
         int Offset = AnalyzeLoadFromClobberingMemInst(L->getType(),
                                                       L->getPointerOperand(),
                                                       DepMI, *TD);
@@ -1805,9 +1795,8 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // The store and load are to a must-aliased pointer, but they may not
     // actually have the same type.  See if we know how to reuse the stored
     // value (depending on its type).
-    const TargetData *TD = 0;
     if (StoredVal->getType() != L->getType()) {
-      if ((TD = getAnalysisIfAvailable<TargetData>())) {
+      if (TD) {
         StoredVal = CoerceAvailableValueToLoadType(StoredVal, L->getType(),
                                                    L, *TD);
         if (StoredVal == 0)
@@ -1836,9 +1825,8 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // The loads are of a must-aliased pointer, but they may not actually have
     // the same type.  See if we know how to reuse the previously loaded value
     // (depending on its type).
-    const TargetData *TD = 0;
     if (DepLI->getType() != L->getType()) {
-      if ((TD = getAnalysisIfAvailable<TargetData>())) {
+      if (TD) {
         AvailableVal = CoerceAvailableValueToLoadType(DepLI, L->getType(), L,*TD);
         if (AvailableVal == 0)
           return false;
@@ -1910,6 +1898,19 @@ bool GVN::processInstruction(Instruction *I,
   // Ignore dbg info intrinsics.
   if (isa<DbgInfoIntrinsic>(I))
     return false;
+
+  // If the instruction can be easily simplified then do so now in preference
+  // to value numbering it.  Value numbering often exposes redundancies, for
+  // example if it determines that %y is equal to %x then the instruction
+  // "%z = and i32 %x, %y" becomes "%z = and i32 %x, %x" which we now simplify.
+  if (Value *V = SimplifyInstruction(I, TD)) {
+    I->replaceAllUsesWith(V);
+    if (MD && V->getType()->isPointerTy())
+      MD->invalidateCachedPointerInfo(V);
+    VN.erase(I);
+    toErase.push_back(I);
+    return true;
+  }
 
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     bool Changed = processLoad(LI, toErase);
@@ -1997,6 +1998,7 @@ bool GVN::runOnFunction(Function& F) {
   if (!NoLoads)
     MD = &getAnalysis<MemoryDependenceAnalysis>();
   DT = &getAnalysis<DominatorTree>();
+  TD = getAnalysisIfAvailable<TargetData>();
   VN.setAliasAnalysis(&getAnalysis<AliasAnalysis>());
   VN.setMemDep(MD);
   VN.setDomTree(DT);
