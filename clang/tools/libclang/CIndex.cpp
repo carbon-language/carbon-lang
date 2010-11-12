@@ -1879,14 +1879,10 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
       unsigned size = WL.size();
       for (Stmt::child_iterator Child = S->child_begin(),
               ChildEnd = S->child_end(); Child != ChildEnd; ++Child) {
-        if (Stmt *child = *Child) {
-          WL.push_back(StmtVisit(child, C));
-        }
+        WLAddStmt(WL, C, *Child);
       }
-      
       if (size == WL.size())
         return;
-        
       // Now reverse the entries we just added.  This will match the DFS
       // ordering performed by the worklist.
       VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
@@ -1897,18 +1893,17 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
       CXXOperatorCallExpr *CE = cast<CXXOperatorCallExpr>(S);
       // Note that we enqueue things in reverse order so that
       // they are visited correctly by the DFS.
-
       for (unsigned I = 1, N = CE->getNumArgs(); I != N; ++I)
-        WL.push_back(StmtVisit(CE->getArg(N-I), C));
+        WLAddStmt(WL, C, CE->getArg(N-I));
 
-      WL.push_back(StmtVisit(CE->getCallee(), C));
-      WL.push_back(StmtVisit(CE->getArg(0), C));
+      WLAddStmt(WL, C, CE->getCallee());
+      WLAddStmt(WL, C, CE->getArg(0));
       break;
     }
     case Stmt::BinaryOperatorClass: {
       BinaryOperator *B = cast<BinaryOperator>(S);
-      WL.push_back(StmtVisit(B->getRHS(), C));
-      WL.push_back(StmtVisit(B->getLHS(), C));
+      WLAddStmt(WL, C, B->getRHS());
+      WLAddStmt(WL, C, B->getLHS());
       break;
     }
     case Stmt::IfStmtClass: {
@@ -1916,27 +1911,24 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
       WLAddStmt(WL, C, If->getElse());
       WLAddStmt(WL, C, If->getThen());
       WLAddStmt(WL, C, If->getCond());
-      WLAddDecl(WL, C, If->getConditionVariable());
+      WLAddDecl(WL, C, If->getConditionVariable());      
       break;
     }
     case Stmt::MemberExprClass: {
       MemberExpr *M = cast<MemberExpr>(S);
       WL.push_back(MemberExprParts(M, C));
-      WL.push_back(StmtVisit(M->getBase(), C));
+      WLAddStmt(WL, C, M->getBase());
       break;
     }
     case Stmt::ParenExprClass: {
-      WL.push_back(StmtVisit(cast<ParenExpr>(S)->getSubExpr(), C));
+      WLAddStmt(WL, C, cast<ParenExpr>(S)->getSubExpr());
       break;
     }
     case Stmt::SwitchStmtClass: {
       SwitchStmt *SS = cast<SwitchStmt>(S);
-      if (Stmt *Body = SS->getBody())
-        WL.push_back(StmtVisit(Body, C));
-      if (Stmt *Cond = SS->getCond())
-        WL.push_back(StmtVisit(Cond, C));
-      if (VarDecl *Var = SS->getConditionVariable())
-        WL.push_back(DeclVisit(Var, C));
+      WLAddStmt(WL, C, SS->getBody());
+      WLAddStmt(WL, C, SS->getCond());
+      WLAddDecl(WL, C, SS->getConditionVariable());
       break;
     }
   }
@@ -1997,6 +1989,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::MemberExprClass:
           case Stmt::ParenExprClass:
           case Stmt::SwitchStmtClass:
+          case Stmt::UnaryOperatorClass:
           {
             if (!IsInRegionOfInterest(Cursor))
               continue;
