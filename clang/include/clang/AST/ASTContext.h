@@ -941,9 +941,10 @@ public:
   ///
   Qualifiers::GC getObjCGCAttrKind(const QualType &Ty) const;
 
-  /// areCompatibleVectorTypes - Return true if the given vector types either
-  /// are of the same unqualified type or if one is GCC and other - equivalent
-  /// AltiVec vector type.
+  /// areCompatibleVectorTypes - Return true if the given vector types
+  /// are of the same unqualified type or if they are equivalent to the same
+  /// GCC vector type, ignoring whether they are target-specific (AltiVec or
+  /// Neon) types.
   bool areCompatibleVectorTypes(QualType FirstVec, QualType SecondVec);
 
   /// isObjCNSObjectType - Return true if this is an NSObject object with

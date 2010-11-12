@@ -4284,15 +4284,16 @@ bool ASTContext::areCompatibleVectorTypes(QualType FirstVec,
   if (hasSameUnqualifiedType(FirstVec, SecondVec))
     return true;
 
-  // AltiVec vectors types are identical to equivalent GCC vector types
+  // Treat Neon vector types and most AltiVec vector types as if they are the
+  // equivalent GCC vector types.
   const VectorType *First = FirstVec->getAs<VectorType>();
   const VectorType *Second = SecondVec->getAs<VectorType>();
-  if ((((First->getVectorKind() == VectorType::AltiVecVector) &&
-        (Second->getVectorKind() == VectorType::GenericVector)) ||
-       ((First->getVectorKind() == VectorType::GenericVector) &&
-        (Second->getVectorKind() == VectorType::AltiVecVector))) &&
+  if (First->getNumElements() == Second->getNumElements() &&
       hasSameType(First->getElementType(), Second->getElementType()) &&
-      (First->getNumElements() == Second->getNumElements()))
+      First->getVectorKind() != VectorType::AltiVecPixel &&
+      First->getVectorKind() != VectorType::AltiVecBool &&
+      Second->getVectorKind() != VectorType::AltiVecPixel &&
+      Second->getVectorKind() != VectorType::AltiVecBool)
     return true;
 
   return false;
