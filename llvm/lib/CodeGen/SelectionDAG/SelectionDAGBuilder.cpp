@@ -81,7 +81,7 @@ LimitFPPrecision("limit-float-precision",
 //
 // MaxParallelChains default is arbitrarily high to avoid affecting
 // optimization, but could be lowered to improve compile time. Any ld-ld-st-st
-// sequence over this should have been converted to llvm.memcpy by the fronend.
+// sequence over this should have been converted to llvm.memcpy by the frontend.
 static cl::opt<unsigned>
 MaxParallelChains("dag-chain-limit", cl::desc("Max parallel isel dag chains"),
                   cl::init(64), cl::Hidden);
