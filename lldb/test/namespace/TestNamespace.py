@@ -17,6 +17,7 @@ class NamespaceTestCase(TestBase):
         self.buildDsym()
         self.namespace_variable_commands()
 
+    @unittest2.expectedFailre("rdar://problem/8659840")
     def test_with_dwarf_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
         self.buildDwarf()
