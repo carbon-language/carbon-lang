@@ -360,7 +360,6 @@ public:
   bool VisitDeclRefExpr(DeclRefExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
   bool VisitExplicitCastExpr(ExplicitCastExpr *E);
-  bool VisitObjCMessageExpr(ObjCMessageExpr *E);
   bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
@@ -391,6 +390,7 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(InitListExpr)
   DATA_RECURSIVE_VISIT(ForStmt)
   DATA_RECURSIVE_VISIT(MemberExpr)
+  DATA_RECURSIVE_VISIT(ObjCMessageExpr)
   DATA_RECURSIVE_VISIT(OverloadExpr)
   DATA_RECURSIVE_VISIT(SwitchStmt)
   DATA_RECURSIVE_VISIT(WhileStmt)
@@ -1787,14 +1787,6 @@ bool CursorVisitor::VisitCXXDependentScopeMemberExpr(
   return false;
 }
 
-bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
-  if (TypeSourceInfo *TSInfo = E->getClassReceiverTypeInfo())
-    if (Visit(TSInfo->getTypeLoc()))
-      return true;
-
-  return VisitExpr(E);
-}
-
 bool CursorVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   return Visit(E->getEncodedTypeSourceInfo()->getTypeLoc());
 }
@@ -1892,6 +1884,10 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
       WLAddStmt(WL, C, M->getBase());
       break;
     }
+    case Stmt::ObjCMessageExprClass:
+      EnqueueChildren(WL, C, S);
+      WLAddTypeLoc(WL, C, cast<ObjCMessageExpr>(S)->getClassReceiverTypeInfo());
+      break;
     case Stmt::ParenExprClass: {
       WLAddStmt(WL, C, cast<ParenExpr>(S)->getSubExpr());
       break;
@@ -1986,6 +1982,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::IfStmtClass:
           case Stmt::InitListExprClass:
           case Stmt::MemberExprClass:
+          case Stmt::ObjCMessageExprClass:
           case Stmt::ParenExprClass:
           case Stmt::SwitchStmtClass:
           case Stmt::UnaryOperatorClass:
