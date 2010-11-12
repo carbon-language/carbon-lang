@@ -24,15 +24,15 @@ GetSequenceID()
 }
 
 MachThread::MachThread (MachProcess *process, thread_t thread) :
-    m_process(process),
-    m_tid(thread),
-    m_seq_id(GetSequenceID()),
-    m_state(eStateUnloaded),
-    m_state_mutex(PTHREAD_MUTEX_RECURSIVE),
-    m_breakID(INVALID_NUB_BREAK_ID),
-    m_suspendCount(0),
-    m_arch(this),
-    m_regSets()
+    m_process (process),
+    m_tid (thread),
+    m_seq_id (GetSequenceID()),
+    m_state (eStateUnloaded),
+    m_state_mutex (PTHREAD_MUTEX_RECURSIVE),
+    m_breakID (INVALID_NUB_BREAK_ID),
+    m_suspendCount (0),
+    m_arch (this),
+    m_regSets ()
 {
     nub_size_t num_reg_sets = 0;
     const DNBRegisterSetInfo *regSetInfo = m_arch.GetRegisterSetInfo(&num_reg_sets);
@@ -74,14 +74,7 @@ MachThread::Resume()
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
     if (ThreadIDIsValid(m_tid))
     {
-        while (m_suspendCount > 0)
-        {
-            DNBError err(::thread_resume (m_tid), DNBError::MachKernel);
-            if (err.Success())
-                m_suspendCount--;
-            if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
-                err.LogThreaded("::thread_resume (%4.4x)", m_tid);
-        }
+        RestoreSuspendCount();
     }
     return SuspendCount();
 }
@@ -93,29 +86,40 @@ MachThread::RestoreSuspendCount()
     DNBError err;
     if (ThreadIDIsValid(m_tid) == false)
         return false;
-    else if (m_suspendCount > m_basicInfo.suspend_count)
+    if (m_suspendCount > 0)
     {
-        while (m_suspendCount > m_basicInfo.suspend_count)
+        while (m_suspendCount > 0)
         {
             err = ::thread_resume (m_tid);
-            if (err.Success())
-                --m_suspendCount;
             if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
                 err.LogThreaded("::thread_resume (%4.4x)", m_tid);
-        }
-    }
-    else if (m_suspendCount < m_basicInfo.suspend_count)
-    {
-        while (m_suspendCount < m_basicInfo.suspend_count)
-        {
-            err = ::thread_suspend (m_tid);
             if (err.Success())
                 --m_suspendCount;
-            if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
-                err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
+            else
+            {
+                if (GetBasicInfo())
+                    m_suspendCount = m_basicInfo.suspend_count;
+                else
+                    m_suspendCount = 0;
+                return false; // ??? 
+            }
         }
     }
-    return  m_suspendCount == m_basicInfo.suspend_count;
+    // We don't currently really support resuming a thread that was externally
+    // suspended. If/when we do, we will need to make the code below work and
+    // m_suspendCount will need to become signed instead of unsigned.
+//    else if (m_suspendCount < 0)
+//    {
+//        while (m_suspendCount < 0)
+//        {
+//            err = ::thread_suspend (m_tid);
+//            if (err.Success())
+//                ++m_suspendCount;
+//            if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
+//                err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
+//        }
+//    }
+    return true;
 }
 
 
@@ -199,7 +203,9 @@ MachThread::IsUserReady()
     
     switch (m_basicInfo.run_state)
     {
-    default:
+    default: 
+        assert (!"Invalid run_state encountered");
+
     case TH_STATE_UNINTERRUPTIBLE:  
         break;
 
@@ -430,7 +436,6 @@ MachThread::ThreadDidStop()
 
     // Update the basic information for a thread
     MachThread::GetBasicInfo(m_tid, &m_basicInfo);
-    m_suspendCount = m_basicInfo.suspend_count;
 
     // See if we were at a breakpoint when we last resumed that we disabled,
     // re-enable it.
@@ -439,7 +444,7 @@ MachThread::ThreadDidStop()
     if (NUB_BREAK_ID_IS_VALID(breakID))
     {
         m_process->EnableBreakpoint(breakID);
-        if (m_suspendCount > 0)
+        if (m_basicInfo.suspend_count > 0)
         {
             SetState(eStateSuspended);
         }
@@ -462,7 +467,7 @@ MachThread::ThreadDidStop()
     }
     else
     {
-        if (m_suspendCount > 0)
+        if (m_basicInfo.suspend_count > 0)
         {
             SetState(eStateSuspended);
         }
