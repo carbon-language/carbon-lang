@@ -47,6 +47,10 @@ ifneq ($(ENABLE_SHARED),1)
   DIRS := $(filter-out tools/llvm-shlib, $(DIRS))
 endif
 
+ifneq ($(ENABLE_DOCS),1)
+  DIRS := $(filter-out docs, $(DIRS))
+endif
+
 ifeq ($(MAKECMDGOALS),libs-only)
   DIRS := $(filter-out tools runtime docs, $(DIRS))
   OPTIONAL_DIRS :=

@@ -264,6 +264,9 @@ OPTIMIZE_OPTION := @OPTIMIZE_OPTION@
 # information to allow gprof to be used to get execution frequencies.
 #ENABLE_PROFILING = 1
 
+# When ENABLE_DOCS is disabled, docs/ will not be built.
+ENABLE_DOCS = @ENABLE_DOCS@
+
 # When ENABLE_DOXYGEN is enabled, the doxygen documentation will be built
 ENABLE_DOXYGEN = @ENABLE_DOXYGEN@
 

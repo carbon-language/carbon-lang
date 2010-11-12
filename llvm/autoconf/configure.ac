@@ -493,6 +493,18 @@ else
   esac
 fi
 
+dnl Allow enablement of building and installing docs
+AC_ARG_ENABLE(docs,
+              AS_HELP_STRING([--enable-docs],
+                             [Build documents (default is YES)]),,
+                             enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_DOCS,[1]) ;;
+  no)  AC_SUBST(ENABLE_DOCS,[0]) ;;
+  default) AC_SUBST(ENABLE_DOCS,[1]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-docs. Use "yes" or "no"]) ;;
+esac
+
 dnl Allow enablement of doxygen generated documentation
 AC_ARG_ENABLE(doxygen,
               AS_HELP_STRING([--enable-doxygen],
