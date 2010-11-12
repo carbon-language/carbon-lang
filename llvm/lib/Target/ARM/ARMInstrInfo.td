@@ -212,12 +212,12 @@ def imm16_31 : PatLeaf<(i32 imm), [{
 
 def so_imm_neg :
   PatLeaf<(imm), [{
-    return ARM_AM::getSOImmVal(-(int)N->getZExtValue()) != -1;
+    return ARM_AM::getSOImmVal(-(uint32_t)N->getZExtValue()) != -1;
   }], so_imm_neg_XFORM>;
 
 def so_imm_not :
   PatLeaf<(imm), [{
-    return ARM_AM::getSOImmVal(~(int)N->getZExtValue()) != -1;
+    return ARM_AM::getSOImmVal(~(uint32_t)N->getZExtValue()) != -1;
   }], so_imm_not_XFORM>;
 
 // sext_16_node predicate - True if the SDNode is sign-extended 16 or more bits.
@@ -2875,6 +2875,7 @@ def BCCZi64 : PseudoInst<(outs),
 //        the normal MOV instructions. That would fix the dependency on
 //        special casing them in tblgen.
 let neverHasSideEffects = 1 in {
+let isAsCheapAsAMove = 1 in
 def MOVCCr : AI1<0b1101, (outs GPR:$Rd), (ins GPR:$false, GPR:$Rm), DPFrm,
                 IIC_iCMOVr, "mov", "\t$Rd, $Rm",
       [/*(set GPR:$Rd, (ARMcmov GPR:$false, GPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
@@ -2903,6 +2904,7 @@ def MOVCCs : AI1<0b1101, (outs GPR:$Rd),
   let Inst{11-0} = shift;
 }
 
+let isAsCheapAsAMove = 1 in
 def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm:$imm),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$Rd, $imm",
@@ -2918,10 +2920,26 @@ def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm:$imm),
   let Inst{11-0}  = imm{11-0};
 }
 
+let isAsCheapAsAMove = 1 in
 def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
                          (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
                 "mov", "\t$Rd, $imm",
    [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm:$imm, imm:$cc, CCR:$ccr))*/]>,
+                RegConstraint<"$false = $Rd">, UnaryDP {
+  bits<4> Rd;
+  bits<12> imm;
+  let Inst{25} = 1;
+  let Inst{20} = 0;
+  let Inst{19-16} = 0b0000;
+  let Inst{15-12} = Rd;
+  let Inst{11-0} = imm;
+}
+
+let isAsCheapAsAMove = 1 in
+def MVNCCi : AI1<0b1111, (outs GPR:$Rd),
+                         (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
+                "mvn", "\t$Rd, $imm",
+ [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm_not:$imm, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $Rd">, UnaryDP {
   bits<4> Rd;
   bits<12> imm;

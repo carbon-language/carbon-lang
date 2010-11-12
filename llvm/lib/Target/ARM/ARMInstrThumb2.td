@@ -66,7 +66,7 @@ def t2_so_imm_not : Operand<i32>,
 // t2_so_imm_neg - Match an immediate that is a negation of a t2_so_imm.
 def t2_so_imm_neg : Operand<i32>,
                     PatLeaf<(imm), [{
-  return ARM_AM::getT2SOImmVal(-((int)N->getZExtValue())) != -1;
+  return ARM_AM::getT2SOImmVal(-((uint32_t)N->getZExtValue())) != -1;
 }], t2_so_imm_neg_XFORM>;
 
 // Break t2_so_imm's up into two pieces.  This handles immediates with up to 16
@@ -2243,7 +2243,7 @@ defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, isAsCheapAsAMove = 1 in {
 def t2MOVCCr : T2I<(outs rGPR:$dst), (ins rGPR:$false, rGPR:$true), IIC_iCMOVr,
                    "mov", ".w\t$dst, $true",
    [/*(set rGPR:$dst, (ARMcmov rGPR:$false, rGPR:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2270,13 +2270,26 @@ def t2MOVCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
 }
 
 def t2MOVCCi16 : T2I<(outs rGPR:$dst), (ins rGPR:$false, i32imm:$src),
-                      IIC_iMOVi,
+                      IIC_iCMOVi,
                       "movw", "\t$dst, $src", []>,
                       RegConstraint<"$false = $dst"> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-21} = 0b0010;
   let Inst{20} = 0; // The S bit.
+  let Inst{15} = 0;
+}
+
+def t2MVNCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
+                   IIC_iCMOVi, "mvn", ".w\t$dst, $true",
+[/*(set rGPR:$dst,(ARMcmov rGPR:$false,t2_so_imm_not:$true,
+                   imm:$cc, CCR:$ccr))*/]>,
+                   RegConstraint<"$false = $dst"> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25} = 0;
+  let Inst{24-21} = 0b0011;
+  let Inst{20} = 0; // The S bit.
+  let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
 }
 
