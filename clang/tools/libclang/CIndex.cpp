@@ -1822,7 +1822,7 @@ void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
 
   if (ExplicitCastExpr *E = dyn_cast<ExplicitCastExpr>(S)) {
     EnqueueChildren(WL, C, S);
-    WLAddTypeLoc(WL, C, cast<ExplicitCastExpr>(S)->getTypeInfoAsWritten());
+    WLAddTypeLoc(WL, C, E->getTypeInfoAsWritten());
     return;
   }
 
