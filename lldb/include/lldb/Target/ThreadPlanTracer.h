@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/Thread.h"
 
 namespace lldb_private {
@@ -97,6 +98,24 @@ private:
     bool m_single_step;
     bool m_enabled;
     lldb::StreamSP m_stream_sp;
+};
+    
+class ThreadPlanAssemblyTracer : public ThreadPlanTracer
+{
+public:
+    ThreadPlanAssemblyTracer (Thread &thread, lldb::StreamSP &stream_sp);    
+    virtual ~ThreadPlanAssemblyTracer ();
+    virtual void TracingStarted ();
+    virtual void TracingEnded ();
+    virtual void Log();
+private:
+    Process                &m_process;
+    Target                 &m_target;
+    Disassembler           *m_disassembler;
+    const ABI              *m_abi;
+    TypeFromUser            m_intptr_type;
+    std::vector<uint64_t>   m_register_values;
+    lldb::DataBufferSP      m_buffer_sp;
 };
 
 } // namespace lldb_private
