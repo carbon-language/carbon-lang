@@ -213,12 +213,6 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
     FlagsStr = getTok().getStringContents();
     Lex();
 
-    AsmToken::TokenKind TypeStartToken;
-    if (getContext().getAsmInfo().getCommentString()[0] == '@')
-      TypeStartToken = AsmToken::Percent;
-    else
-      TypeStartToken = AsmToken::At;
-
     bool Mergeable = FlagsStr.find('M') != StringRef::npos;
     bool Group = FlagsStr.find('G') != StringRef::npos;
 
@@ -229,8 +223,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
         return TokError("Group section must specify the type");
     } else {
       Lex();
-      if (getLexer().isNot(TypeStartToken))
-        return TokError("expected the type");
+      if (getLexer().isNot(AsmToken::Percent) && getLexer().isNot(AsmToken::At))
+        return TokError("expected '@' or '%' before type");
 
       Lex();
       if (getParser().ParseIdentifier(TypeName))
@@ -359,8 +353,8 @@ bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
     return TokError("unexpected token in '.type' directive");
   Lex();
 
-  if (getLexer().isNot(AsmToken::At))
-    return TokError("expected '@' before type");
+  if (getLexer().isNot(AsmToken::Percent) && getLexer().isNot(AsmToken::At))
+    return TokError("expected '@' or '%' before type");
   Lex();
 
   StringRef Type;
