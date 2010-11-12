@@ -81,24 +81,24 @@
 # CHECK:    encoding: [0x80,0x22,0x18,0x00]
             or      r1, r2, r3
 
-# FIXMEC:   rsub
+# CHECK:    rsub
 # BINARY:   000001 00001 00010 00011 00000000000
-# FIXMEC:   encoding: [0x04,0x22,0x18,0x00]
+# CHECK:    encoding: [0x04,0x22,0x18,0x00]
             rsub    r1, r2, r3
 
-# FIXMEC:   rsubc
+# CHECK:    rsubc
 # BINARY:   000011 00001 00010 00011 00000000000
-# FIXMEC:   encoding: [0x0c,0x22,0x18,0x00]
+# CHECK:    encoding: [0x0c,0x22,0x18,0x00]
             rsubc   r1, r2, r3
 
-# FIXMEC:   rsubk
+# CHECK:    rsubk
 # BINARY:   000101 00001 00010 00011 00000000000
-# FIXMEC:   encoding: [0x14,0x22,0x18,0x00]
+# CHECK:    encoding: [0x14,0x22,0x18,0x00]
             rsubk   r1, r2, r3
 
-# FIXMEC:   rsubkc
+# CHECK:    rsubkc
 # BINARY:   000111 00001 00010 00011 00000000000
-# FIXMEC:   encoding: [0x1c,0x22,0x18,0x00]
+# CHECK:    encoding: [0x1c,0x22,0x18,0x00]
             rsubkc  r1, r2, r3
 
 # CHECK:    sext16

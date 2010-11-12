@@ -125,18 +125,17 @@ class TB<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 
 class TAR<bits<6> op, bits<11> flags, dag outs, dag ins, string asmstr,
           list<dag> pattern, InstrItinClass itin> :
-          MBlazeInst<op,FRRR,outs, ins, asmstr, pattern, itin>
+          TA<op, flags, outs, ins, asmstr, pattern, itin>
 {
-  bits<5> rd;
-  bits<5> rb;
-  bits<5> ra;
+  bits<5> rrd;
+  bits<5> rrb;
+  bits<5> rra;
 
   let Form = FRRRR;
 
-  let Inst{6-10}  = rd;
-  let Inst{11-15} = ra;
-  let Inst{16-20} = rb;
-  let Inst{21-31} = flags;
+  let rd = rrd;
+  let ra = rra;
+  let rb = rrb;
 }
 
 //===----------------------------------------------------------------------===//

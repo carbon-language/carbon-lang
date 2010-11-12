@@ -177,7 +177,7 @@ class ShiftI<bits<6> op, bits<2> flags, string instr_asm, SDNode OpNode,
 
 class ArithR<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
             InstrItinClass itin> :
-            TAR<op, flags, (outs GPR:$dst), (ins GPR:$c, GPR:$b),
+            TAR<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
                 !strconcat(instr_asm, "   $dst, $c, $b"),
                 [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], itin>;
 
