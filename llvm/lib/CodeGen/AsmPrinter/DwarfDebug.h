@@ -176,9 +176,6 @@ class DwarfDebug {
   /// machine instruction.
   DenseMap<const DbgVariable *, const MachineInstr *> DbgVariableToDbgInstMap;
 
-  /// DbgVariableLabelsMap - Maps DbgVariable to corresponding MCSymbol.
-  DenseMap<const DbgVariable *, const MCSymbol *> DbgVariableLabelsMap;
-
   /// DotDebugLocEntry - This struct describes location entries emitted in
   /// .debug_loc section.
   typedef struct DotDebugLocEntry {
@@ -350,13 +347,13 @@ private:
                   const MachineLocation &Location);
 
   /// addRegisterAddress - Add register location entry in variable DIE.
-  bool addRegisterAddress(DIE *Die, const MCSymbol *VS, const MachineOperand &MO);
+  bool addRegisterAddress(DIE *Die, const MachineOperand &MO);
 
   /// addConstantValue - Add constant value entry in variable DIE.
-  bool addConstantValue(DIE *Die, const MCSymbol *VS, const MachineOperand &MO);
+  bool addConstantValue(DIE *Die, const MachineOperand &MO);
 
   /// addConstantFPValue - Add constant value entry in variable DIE.
-  bool addConstantFPValue(DIE *Die, const MCSymbol *VS, const MachineOperand &MO);
+  bool addConstantFPValue(DIE *Die, const MachineOperand &MO);
 
   /// addComplexAddress - Start with the address based on the location provided,
   /// and generate the DWARF information necessary to find the actual variable
@@ -578,9 +575,6 @@ private:
   /// findVariableFrameIndex - Return true if frame index for the variable
   /// is found. Update FI to hold value of the index.
   bool findVariableFrameIndex(const DbgVariable *V, int *FI);
-
-  /// findVariableLabel - Find MCSymbol for the variable.
-  const MCSymbol *findVariableLabel(const DbgVariable *V);
 
   /// findDbgScope - Find DbgScope for the debug loc attached with an 
   /// instruction.
