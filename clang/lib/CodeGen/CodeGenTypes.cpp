@@ -371,26 +371,31 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();
     const llvm::Type *Res = ConvertTagDeclType(TD);
 
-    std::string TypeName(TD->getKindName());
-    TypeName += '.';
+    llvm::SmallString<256> TypeName;
+    llvm::raw_svector_ostream OS(TypeName);
+    OS << TD->getKindName() << '.';
 
     // Name the codegen type after the typedef name
     // if there is no tag type name available
-    if (TD->getIdentifier())
+    if (TD->getIdentifier()) {
       // FIXME: We should not have to check for a null decl context here.
       // Right now we do it because the implicit Obj-C decls don't have one.
-      TypeName += TD->getDeclContext() ? TD->getQualifiedNameAsString() :
-        TD->getNameAsString();
-    else if (const TypedefType *TdT = dyn_cast<TypedefType>(T))
+      if (TD->getDeclContext())
+        OS << TD->getQualifiedNameAsString();
+      else
+        TD->printName(OS);
+    } else if (const TypedefType *TdT = dyn_cast<TypedefType>(T)) {
       // FIXME: We should not have to check for a null decl context here.
       // Right now we do it because the implicit Obj-C decls don't have one.
-      TypeName += TdT->getDecl()->getDeclContext() ? 
-        TdT->getDecl()->getQualifiedNameAsString() :
-        TdT->getDecl()->getNameAsString();
-    else
-      TypeName += "anon";
+      if (TdT->getDecl()->getDeclContext())
+        OS << TdT->getDecl()->getQualifiedNameAsString();
+      else
+        TdT->getDecl()->printName(OS);
+    } else {
+      OS << "anon";
+    }
 
-    TheModule.addTypeName(TypeName, Res);
+    TheModule.addTypeName(OS.str(), Res);
     return Res;
   }
 
