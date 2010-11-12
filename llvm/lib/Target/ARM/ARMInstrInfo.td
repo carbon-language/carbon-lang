@@ -3201,14 +3201,9 @@ def Int_eh_sjlj_dispatchsetup :
 
 // Large immediate handling.
 
-// Two piece so_imms.
-// FIXME: Remove this when we can do generalized remat.
-let isReMaterializable = 1 in
-def MOVi2pieces : PseudoInst<(outs GPR:$dst), (ins so_imm2part:$src),
-                             IIC_iMOVix2, "",
-                             [(set GPR:$dst, (so_imm2part:$src))]>,
-                  Requires<[IsARM, NoV6T2]>;
-
+// FIXME: Folding immediates into these logical operations aren't necessary
+// good ideas. If it's in a loop machine licm could have hoisted the immediate
+// computation out of the loop.
 def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
              (ORRri (ORRri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
                     (so_imm2part_2 imm:$RHS))>;
@@ -3222,14 +3217,14 @@ def : ARMPat<(add GPR:$LHS, so_neg_imm2part:$RHS),
              (SUBri (SUBri GPR:$LHS, (so_neg_imm2part_1 imm:$RHS)),
                     (so_neg_imm2part_2 imm:$RHS))>;
 
-// 32-bit immediate using movw + movt.
+// 32-bit immediate using two piece so_imms or movw + movt.
 // This is a single pseudo instruction, the benefit is that it can be remat'd
 // as a single unit instead of having to handle reg inputs.
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
 def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2, "",
                            [(set GPR:$dst, (i32 imm:$src))]>,
-                           Requires<[IsARM, HasV6T2]>;
+                           Requires<[IsARM]>;
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>,

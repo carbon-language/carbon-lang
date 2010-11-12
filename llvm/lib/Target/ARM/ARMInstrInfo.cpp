@@ -59,27 +59,3 @@ unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
 
   return 0;
 }
-
-void ARMInstrInfo::
-reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-              unsigned DestReg, unsigned SubIdx, const MachineInstr *Orig,
-              const TargetRegisterInfo &TRI) const {
-  DebugLoc dl = Orig->getDebugLoc();
-  unsigned Opcode = Orig->getOpcode();
-  switch (Opcode) {
-  default:
-    break;
-  case ARM::MOVi2pieces: {
-    RI.emitLoadConstPool(MBB, I, dl,
-                         DestReg, SubIdx,
-                         Orig->getOperand(1).getImm(),
-                         ARMCC::AL, 0); // Pre-if-conversion, so default pred.
-    MachineInstr *NewMI = prior(I);
-    NewMI->getOperand(0).setSubReg(SubIdx);
-    return;
-  }
-  }
-
-  return ARMBaseInstrInfo::reMaterialize(MBB, I, DestReg, SubIdx, Orig, TRI);
-}
-

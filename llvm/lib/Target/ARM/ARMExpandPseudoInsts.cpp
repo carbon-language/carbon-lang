@@ -36,6 +36,7 @@ namespace {
 
     const ARMBaseInstrInfo *TII;
     const TargetRegisterInfo *TRI;
+    const ARMSubtarget *STI;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -698,6 +699,28 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       const MachineOperand &MO = MI.getOperand(1);
       MachineInstrBuilder LO16, HI16;
 
+      if (Opcode == ARM::MOVi32imm && !STI->hasV6T2Ops()) {
+        // Expand into a movi + orr.
+        LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi), DstReg);
+        HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::ORRri))
+          .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
+          .addReg(DstReg);
+
+        assert (MO.isImm() && "MOVi32imm w/ non-immediate source operand!");
+        unsigned ImmVal = (unsigned)MO.getImm();
+        unsigned SOImmValV1 = ARM_AM::getSOImmTwoPartFirst(ImmVal);
+        unsigned SOImmValV2 = ARM_AM::getSOImmTwoPartSecond(ImmVal);
+        LO16 = LO16.addImm(SOImmValV1);
+        HI16 = HI16.addImm(SOImmValV2);
+        (*LO16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+        (*HI16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+        LO16.addImm(Pred).addReg(PredReg).addReg(0);
+        HI16.addImm(Pred).addReg(PredReg).addReg(0);
+        TransferImpOps(MI, LO16, HI16);
+        MI.eraseFromParent();
+        break;
+      }
+
       LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                      TII->get(Opcode == ARM::MOVi32imm ?
                               ARM::MOVi16 : ARM::t2MOVi16),
@@ -724,34 +747,6 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       (*HI16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       LO16.addImm(Pred).addReg(PredReg);
       HI16.addImm(Pred).addReg(PredReg);
-      TransferImpOps(MI, LO16, HI16);
-      MI.eraseFromParent();
-      break;
-    }
-
-    case ARM::MOVi2pieces: {
-      unsigned PredReg = 0;
-      ARMCC::CondCodes Pred = llvm::getInstrPredicate(&MI, PredReg);
-      unsigned DstReg = MI.getOperand(0).getReg();
-      bool DstIsDead = MI.getOperand(0).isDead();
-      const MachineOperand &MO = MI.getOperand(1);
-      MachineInstrBuilder LO16, HI16;
-
-      LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi), DstReg);
-      HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::ORRri))
-        .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
-        .addReg(DstReg);
-
-      assert (MO.isImm() && "MOVi2pieces w/ non-immediate source operand!");
-      unsigned ImmVal = (unsigned)MO.getImm();
-      unsigned SOImmValV1 = ARM_AM::getSOImmTwoPartFirst(ImmVal);
-      unsigned SOImmValV2 = ARM_AM::getSOImmTwoPartSecond(ImmVal);
-      LO16 = LO16.addImm(SOImmValV1);
-      HI16 = HI16.addImm(SOImmValV2);
-      (*LO16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-      (*HI16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-      LO16.addImm(Pred).addReg(PredReg).addReg(0);
-      HI16.addImm(Pred).addReg(PredReg).addReg(0);
       TransferImpOps(MI, LO16, HI16);
       MI.eraseFromParent();
       break;
@@ -1060,6 +1055,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
 bool ARMExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
   TII = static_cast<const ARMBaseInstrInfo*>(MF.getTarget().getInstrInfo());
   TRI = MF.getTarget().getRegisterInfo();
+  STI = &MF.getTarget().getSubtarget<ARMSubtarget>();
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = MF.begin(), E = MF.end(); MFI != E;

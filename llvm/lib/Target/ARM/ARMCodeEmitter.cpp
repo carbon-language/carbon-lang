@@ -805,13 +805,13 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
   }
 
   case ARM::MOVi32imm:
-    emitMOVi32immInstruction(MI);
+    // Two instructions to materialize a constant.
+    if (Subtarget->hasV6T2Ops())
+      emitMOVi32immInstruction(MI);
+    else
+      emitMOVi2piecesInstruction(MI);
     break;
 
-  case ARM::MOVi2pieces:
-    // Two instructions to materialize a constant.
-    emitMOVi2piecesInstruction(MI);
-    break;
   case ARM::LEApcrelJT:
     // Materialize jumptable address.
     emitLEApcrelJTInstruction(MI);
