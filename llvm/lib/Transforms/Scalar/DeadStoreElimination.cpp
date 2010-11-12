@@ -59,6 +59,7 @@ namespace {
     
     bool runOnBasicBlock(BasicBlock &BB);
     bool handleFreeWithNonTrivialDependency(const CallInst *F,
+                                            Instruction *Inst,
                                             MemDepResult Dep);
     bool handleEndBlock(BasicBlock &BB);
     bool RemoveUndeadPointers(Value *Ptr, uint64_t killPointerSize,
@@ -212,7 +213,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   
     // Handle frees whose dependencies are non-trivial.
     if (const CallInst *F = isFreeCall(Inst)) {
-      MadeChange |= handleFreeWithNonTrivialDependency(F, InstDep);
+      MadeChange |= handleFreeWithNonTrivialDependency(F, Inst, InstDep);
       continue;
     }
     
@@ -298,23 +299,34 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 /// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
 /// dependency is a store to a field of that structure.
 bool DSE::handleFreeWithNonTrivialDependency(const CallInst *F,
+                                             Instruction *Inst,
                                              MemDepResult Dep) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
   
-  Instruction *Dependency = Dep.getInst();
-  if (!Dependency || !doesClobberMemory(Dependency) || !isElidable(Dependency))
-    return false;
+  do {
+    Instruction *Dependency = Dep.getInst();
+    if (!Dependency || !doesClobberMemory(Dependency) || !isElidable(Dependency))
+      return false;
   
-  Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
+    Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
 
-  // Check for aliasing.
-  if (AA.alias(F->getArgOperand(0), 1, DepPointer, 1) !=
-         AliasAnalysis::MustAlias)
-    return false;
+    // Check for aliasing.
+    if (AA.alias(F->getArgOperand(0), 1, DepPointer, 1) !=
+           AliasAnalysis::MustAlias)
+      return false;
   
-  // DCE instructions only used to calculate that store
-  DeleteDeadInstruction(Dependency);
-  ++NumFastStores;
+    // DCE instructions only used to calculate that store
+    DeleteDeadInstruction(Dependency);
+    ++NumFastStores;
+
+    // Inst's old Dependency is now deleted. Compute the next dependency,
+    // which may also be dead, as in
+    //    s[0] = 0;
+    //    s[1] = 0; // This has just been deleted.
+    //    free(s);
+    Dep = MD.getDependency(Inst);
+  } while (!Dep.isNonLocal());
   return true;
 }
 

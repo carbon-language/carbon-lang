@@ -24,3 +24,17 @@ define void @test2({i32, i32}* %P) {
 	ret void
 }
 
+; CHECK: @test4
+; CHECK-NOT: store
+; CHECK: ret void
+define void @test4() {
+  %m = call i8* @malloc(i64 24)
+  store i8 0, i8* %m
+  %m1 = getelementptr i8* %m, i64 1
+  store i8 1, i8* %m1
+  call void @free(i8* %m)
+  ret void
+}
+
+declare void @free(i8*)
+declare i8* @malloc(i64)
