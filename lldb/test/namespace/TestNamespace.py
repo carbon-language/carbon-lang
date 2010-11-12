@@ -19,6 +19,9 @@ class NamespaceTestCase(TestBase):
 
     @unittest2.expectedFailure
     # rdar://problem/8659840
+    # runCmd: frame variable -c -G i
+    # runCmd failed!
+    # error: can't find global variable 'i'
     def test_with_dwarf_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
         self.buildDwarf()
@@ -60,6 +63,8 @@ class NamespaceTestCase(TestBase):
             startstr = "main.cpp:%d: (int) A::B::j = 4" % self.line_var_j)
         # main.cpp:19: (int) A::B::j = 4
 
+        # rdar://problem/8660275
+        # test/namespace: 'expression -- i+j' not working
         #self.expect("expression -- i + j",
         #    startstr = "(int) $0 = 7")
         # (int) $0 = 7
