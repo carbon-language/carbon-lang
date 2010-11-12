@@ -590,11 +590,10 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Base,
     // Don't walk into other basic blocks; it's possible we haven't
     // visited them yet, so the instructions may not yet be assigned
     // virtual registers.
-    if (FuncInfo.StaticAllocaMap.count(static_cast<const AllocaInst *>(Obj)) ||
-        FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB) {
-      Opcode = I->getOpcode();
-      U = I;
-    }
+    if (FuncInfo.MBBMap[I->getParent()] != FuncInfo.MBB)
+      return false;
+    Opcode = I->getOpcode();
+    U = I;
   } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(Obj)) {
     Opcode = C->getOpcode();
     U = C;
