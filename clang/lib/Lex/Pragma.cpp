@@ -329,6 +329,9 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
 
 
   PresumedLoc PLoc = SourceMgr.getPresumedLoc(SysHeaderTok.getLocation());
+  if (PLoc.isInvalid())
+    return;
+  
   unsigned FilenameLen = strlen(PLoc.getFilename());
   unsigned FilenameID = SourceMgr.getLineTableFilenameID(PLoc.getFilename(),
                                                          FilenameLen);

@@ -131,7 +131,10 @@ public:
 
   bool HandleFirstTokOnLine(Token &Tok);
   bool MoveToLine(SourceLocation Loc) {
-    return MoveToLine(SM.getPresumedLoc(Loc).getLine());
+    PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+    if (PLoc.isInvalid())
+      return false;
+    return MoveToLine(PLoc.getLine());
   }
   bool MoveToLine(unsigned LineNo);
 
@@ -238,10 +241,13 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   SourceManager &SourceMgr = SM;
   
   PresumedLoc UserLoc = SourceMgr.getPresumedLoc(Loc);
+  if (UserLoc.isInvalid())
+    return;
+  
   unsigned NewLine = UserLoc.getLine();
 
   if (Reason == PPCallbacks::EnterFile) {
-    SourceLocation IncludeLoc = SourceMgr.getPresumedLoc(Loc).getIncludeLoc();
+    SourceLocation IncludeLoc = UserLoc.getIncludeLoc();
     if (IncludeLoc.isValid())
       MoveToLine(IncludeLoc);
   } else if (Reason == PPCallbacks::SystemHeaderPragma) {
@@ -593,10 +599,18 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
   // start.
   const SourceManager &SourceMgr = PP.getSourceManager();
   Token Tok;
-  do PP.Lex(Tok);
-  while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
-         !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
-                 "<built-in>"));
+  do {
+    PP.Lex(Tok);
+    if (Tok.is(tok::eof) || !Tok.getLocation().isFileID())
+      break;
+
+    PresumedLoc PLoc = SourceMgr.getPresumedLoc(Tok.getLocation());
+    if (PLoc.isInvalid())
+      break;
+
+    if (strcmp(PLoc.getFilename(), "<built-in>"))
+      break;
+  } while (true);
 
   // Read all the preprocessed tokens, printing them out to the stream.
   PrintPreprocessedTokens(PP, Tok, Callbacks, *OS);

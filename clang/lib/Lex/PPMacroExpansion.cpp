@@ -723,7 +723,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     PresumedLoc PLoc = SourceMgr.getPresumedLoc(Loc);
 
     // __LINE__ expands to a simple numeric value.
-    OS << PLoc.getLine();
+    OS << (PLoc.isValid()? PLoc.getLine() : 1);
     Tok.setKind(tok::numeric_constant);
   } else if (II == Ident__FILE__ || II == Ident__BASE_FILE__) {
     // C99 6.10.8: "__FILE__: The presumed name of the current source file (a
@@ -732,19 +732,24 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
 
     // __BASE_FILE__ is a GNU extension that returns the top of the presumed
     // #include stack instead of the current file.
-    if (II == Ident__BASE_FILE__) {
+    if (II == Ident__BASE_FILE__ && PLoc.isValid()) {
       SourceLocation NextLoc = PLoc.getIncludeLoc();
       while (NextLoc.isValid()) {
         PLoc = SourceMgr.getPresumedLoc(NextLoc);
+        if (PLoc.isInvalid())
+          break;
+        
         NextLoc = PLoc.getIncludeLoc();
       }
     }
 
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
     llvm::SmallString<128> FN;
-    FN += PLoc.getFilename();
-    Lexer::Stringify(FN);
-    OS << '"' << FN.str() << '"';
+    if (PLoc.isValid()) {
+      FN += PLoc.getFilename();
+      Lexer::Stringify(FN);
+      OS << '"' << FN.str() << '"';
+    }
     Tok.setKind(tok::string_literal);
   } else if (II == Ident__DATE__) {
     if (!DATELoc.isValid())
@@ -770,9 +775,11 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     unsigned Depth = 0;
 
     PresumedLoc PLoc = SourceMgr.getPresumedLoc(Tok.getLocation());
-    PLoc = SourceMgr.getPresumedLoc(PLoc.getIncludeLoc());
-    for (; PLoc.isValid(); ++Depth)
+    if (PLoc.isValid()) {
       PLoc = SourceMgr.getPresumedLoc(PLoc.getIncludeLoc());
+      for (; PLoc.isValid(); ++Depth)
+        PLoc = SourceMgr.getPresumedLoc(PLoc.getIncludeLoc());
+    }
 
     // __INCLUDE_LEVEL__ expands to a simple numeric value.
     OS << Depth;

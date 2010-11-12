@@ -804,7 +804,9 @@ static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
     FileID CurFileID =
       SM.getDecomposedInstantiationLoc(FlagTok.getLocation()).first;
     PresumedLoc PLoc = SM.getPresumedLoc(FlagTok.getLocation());
-
+    if (PLoc.isInvalid())
+      return true;
+    
     // If there is no include loc (main file) or if the include loc is in a
     // different physical file, then we aren't in a "1" line marker flag region.
     SourceLocation IncLoc = PLoc.getIncludeLoc();

@@ -55,7 +55,7 @@ void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
     while (L.isValid()) {
       PresumedLoc PLoc = SM.getPresumedLoc(L);
       InclusionStack.push_back(cxloc::translateSourceLocation(Ctx, L));
-      L = PLoc.getIncludeLoc();
+      L = PLoc.isValid()? PLoc.getIncludeLoc() : SourceLocation();
     }
             
     // Callback to the client.

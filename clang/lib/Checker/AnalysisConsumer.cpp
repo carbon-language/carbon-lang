@@ -143,19 +143,21 @@ public:
 
     SourceManager &SM = Mgr->getASTContext().getSourceManager();
     PresumedLoc Loc = SM.getPresumedLoc(D->getLocation());
-    llvm::errs() << "ANALYZE: " << Loc.getFilename();
+    if (Loc.isValid()) {
+      llvm::errs() << "ANALYZE: " << Loc.getFilename();
 
-    if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
-      const NamedDecl *ND = cast<NamedDecl>(D);
-      llvm::errs() << ' ' << ND << '\n';
-    }
-    else if (isa<BlockDecl>(D)) {
-      llvm::errs() << ' ' << "block(line:" << Loc.getLine() << ",col:"
-                   << Loc.getColumn() << '\n';
-    }
-    else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-      Selector S = MD->getSelector();
-      llvm::errs() << ' ' << S.getAsString();
+      if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
+        const NamedDecl *ND = cast<NamedDecl>(D);
+        llvm::errs() << ' ' << ND << '\n';
+      }
+      else if (isa<BlockDecl>(D)) {
+        llvm::errs() << ' ' << "block(line:" << Loc.getLine() << ",col:"
+                     << Loc.getColumn() << '\n';
+      }
+      else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+        Selector S = MD->getSelector();
+        llvm::errs() << ' ' << S.getAsString();
+      }
     }
   }
 

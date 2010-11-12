@@ -57,7 +57,9 @@ PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
   if (Loc.isInvalid()) return;
 
   PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-
+  if (PLoc.isInvalid())
+    return;
+  
   // Print out the other include frames first.
   PrintIncludeStack(PLoc.getIncludeLoc(), SM);
 
@@ -328,7 +330,9 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     if (!Suppressed) {
       // Get the pretty name, according to #line directives etc.
       PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-
+      if (PLoc.isInvalid())
+        return;
+      
       // If this diagnostic is not in the main file, print out the
       // "included from" lines.
       if (LastWarningLoc != PLoc.getIncludeLoc()) {
@@ -567,6 +571,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
         // We specifically do not do word-wrapping or tab-expansion here,
         // because this is supposed to be easy to parse.
+        PresumedLoc PLoc = SM.getPresumedLoc(B);
+        if (PLoc.isInvalid())
+          break;
+        
         OS << "fix-it:\"";
         OS.write_escaped(SM.getPresumedLoc(B).getFilename());
         OS << "\":{" << SM.getLineNumber(BInfo.first, BInfo.second)
@@ -770,6 +778,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   if (Info.getLocation().isValid()) {
     const SourceManager &SM = Info.getLocation().getManager();
     PresumedLoc PLoc = SM.getPresumedLoc(Info.getLocation());
+    if (PLoc.isInvalid())
+      return;
+    
     unsigned LineNo = PLoc.getLine();
 
     // First, if this diagnostic is not in the main file, print out the

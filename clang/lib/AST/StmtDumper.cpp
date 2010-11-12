@@ -169,14 +169,14 @@ namespace  {
 void StmtDumper::DumpLocation(SourceLocation Loc) {
   SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
 
-  if (SpellingLoc.isInvalid()) {
-    OS << "<invalid sloc>";
-    return;
-  }
-
   // The general format we print out is filename:line:col, but we drop pieces
   // that haven't changed since the last loc printed.
   PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
+
+  if (PLoc.isInvalid()) {
+    OS << "<invalid sloc>";
+    return;
+  }
 
   if (strcmp(PLoc.getFilename(), LastLocFilename) != 0) {
     OS << PLoc.getFilename() << ':' << PLoc.getLine()

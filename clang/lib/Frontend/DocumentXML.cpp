@@ -327,9 +327,11 @@ PresumedLoc DocumentXML::addLocation(const SourceLocation& Loc)
   if (!SpellingLoc.isInvalid())
   {
     PLoc = SM.getPresumedLoc(SpellingLoc);
-    addSourceFileAttribute(PLoc.getFilename());
-    addAttribute("line", PLoc.getLine());
-    addAttribute("col", PLoc.getColumn());
+    if (PLoc.isValid()) {
+      addSourceFileAttribute(PLoc.getFilename());
+      addAttribute("line", PLoc.getLine());
+      addAttribute("col", PLoc.getColumn());
+    }
   }
   // else there is no error in some cases (eg. CXXThisExpr)
   return PLoc;
@@ -346,8 +348,9 @@ void DocumentXML::addLocationRange(const SourceRange& R)
     if (!SpellingLoc.isInvalid())
     {
       PresumedLoc PLoc = SM.getPresumedLoc(SpellingLoc);
-      if (PStartLoc.isInvalid() ||
-          strcmp(PLoc.getFilename(), PStartLoc.getFilename()) != 0) {
+      if (PLoc.isInvalid()) {
+      } else if (PStartLoc.isInvalid() ||
+                 strcmp(PLoc.getFilename(), PStartLoc.getFilename()) != 0) {
         addToMap(SourceFiles, PLoc.getFilename(), ID_FILE);
         addAttribute("endfile", PLoc.getFilename());
         addAttribute("endline", PLoc.getLine());

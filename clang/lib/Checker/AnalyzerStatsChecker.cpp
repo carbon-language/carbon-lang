@@ -83,16 +83,18 @@ void AnalyzerStatsChecker::VisitEndAnalysis(ExplodedGraph &G,
   llvm::SmallString<128> buf;
   llvm::raw_svector_ostream output(buf);
   PresumedLoc Loc = SM.getPresumedLoc(D->getLocation());
-  output << Loc.getFilename() << " : ";
+  if (Loc.isValid()) {
+    output << Loc.getFilename() << " : ";
 
-  if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
-    const NamedDecl *ND = cast<NamedDecl>(D);
-    output << ND;
+    if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
+      const NamedDecl *ND = cast<NamedDecl>(D);
+      output << ND;
+    }
+    else if (isa<BlockDecl>(D)) {
+      output << "block(line:" << Loc.getLine() << ":col:" << Loc.getColumn();
+    }
   }
-  else if (isa<BlockDecl>(D)) {
-    output << "block(line:" << Loc.getLine() << ":col:" << Loc.getColumn();
-  }
-
+  
   output << " -> Total CFGBlocks: " << total << " | Unreachable CFGBlocks: "
       << unreachable << " | Aborted Block: "
       << (Eng.wasBlockAborted() ? "yes" : "no")

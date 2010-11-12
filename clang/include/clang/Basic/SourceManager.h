@@ -724,6 +724,11 @@ public:
   ///
   /// Note that a presumed location is always given as the instantiation point
   /// of an instantiation location, not at the spelling location.
+  ///
+  /// \returns The presumed location of the specified SourceLocation. If the
+  /// presumed location cannot be calculate (e.g., because \p Loc is invalid
+  /// or the file containing \p Loc has changed on disk), returns an invalid
+  /// presumed location.
   PresumedLoc getPresumedLoc(SourceLocation Loc) const;
 
   /// isFromSameFile - Returns true if both SourceLocations correspond to

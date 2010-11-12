@@ -43,6 +43,11 @@ void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
 
   if (isFileID()) {
     PresumedLoc PLoc = SM.getPresumedLoc(*this);
+    
+    if (PLoc.isInvalid()) {
+      OS << "<invalid>";
+      return;
+    }
     // The instantiation and spelling pos is identical for file locs.
     OS << PLoc.getFilename() << ':' << PLoc.getLine()
        << ':' << PLoc.getColumn();
