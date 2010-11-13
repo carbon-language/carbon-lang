@@ -582,6 +582,15 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
       if (StmtPoint *SP = dyn_cast<StmtPoint>(&P)) {
         B = CBM->getBlock(SP->getStmt());
       }
+      else if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+        B = BE->getDst();
+      }
+      else if (BlockEntrance *BEnt = dyn_cast<BlockEntrance>(&P)) {
+        B = BEnt->getBlock();
+      }
+      else if (BlockExit *BExit = dyn_cast<BlockExit>(&P)) {
+        B = BExit->getBlock();
+      }
       if (!B)
         return true;
       
