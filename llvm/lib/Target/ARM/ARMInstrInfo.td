@@ -2882,7 +2882,6 @@ def BCCZi64 : PseudoInst<(outs),
 //        the normal MOV instructions. That would fix the dependency on
 //        special casing them in tblgen.
 let neverHasSideEffects = 1 in {
-let isAsCheapAsAMove = 1 in
 def MOVCCr : AI1<0b1101, (outs GPR:$Rd), (ins GPR:$false, GPR:$Rm), DPFrm,
                 IIC_iCMOVr, "mov", "\t$Rd, $Rm",
       [/*(set GPR:$Rd, (ARMcmov GPR:$false, GPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
@@ -2911,7 +2910,6 @@ def MOVCCs : AI1<0b1101, (outs GPR:$Rd),
   let Inst{11-0} = shift;
 }
 
-let isAsCheapAsAMove = 1 in
 def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm:$imm),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$Rd, $imm",
@@ -2927,7 +2925,6 @@ def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm:$imm),
   let Inst{11-0}  = imm{11-0};
 }
 
-let isAsCheapAsAMove = 1 in
 def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
                          (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
                 "mov", "\t$Rd, $imm",
@@ -2945,9 +2942,8 @@ def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
 // Two instruction predicate mov immediate.
 def MOVCCi32imm : PseudoInst<(outs GPR:$Rd),
                              (ins GPR:$false, i32imm:$src, pred:$p),
-                  IIC_iMOVix2, "", []>, RegConstraint<"$false = $Rd">;
+                  IIC_iCMOVix2, "", []>, RegConstraint<"$false = $Rd">;
 
-let isAsCheapAsAMove = 1 in
 def MVNCCi : AI1<0b1111, (outs GPR:$Rd),
                          (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
                 "mvn", "\t$Rd, $imm",

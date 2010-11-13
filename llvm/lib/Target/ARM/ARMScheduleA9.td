@@ -149,6 +149,10 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_ALU0, A9_ALU1]>], [1, 1]>,
   InstrItinData<IIC_iCMOVsr , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<2, [A9_ALU0, A9_ALU1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iCMOVix2, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>,
+                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>], [2]>,
 
   // Integer multiply pipeline
   //

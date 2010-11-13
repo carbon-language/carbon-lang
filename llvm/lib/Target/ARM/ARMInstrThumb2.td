@@ -2244,7 +2244,6 @@ defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
 let neverHasSideEffects = 1 in {
-let isAsCheapAsAMove = 1 in
 def t2MOVCCr : T2I<(outs rGPR:$dst), (ins rGPR:$false, rGPR:$true), IIC_iCMOVr,
                    "mov", ".w\t$dst, $true",
    [/*(set rGPR:$dst, (ARMcmov rGPR:$false, rGPR:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2258,7 +2257,6 @@ def t2MOVCCr : T2I<(outs rGPR:$dst), (ins rGPR:$false, rGPR:$true), IIC_iCMOVr,
   let Inst{7-4} = 0b0000;
 }
 
-let isAsCheapAsAMove = 1 in
 def t2MOVCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
                    IIC_iCMOVi, "mov", ".w\t$dst, $true",
 [/*(set rGPR:$dst,(ARMcmov rGPR:$false,t2_so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2271,7 +2269,6 @@ def t2MOVCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
   let Inst{15} = 0;
 }
 
-let isAsCheapAsAMove = 1 in
 def t2MOVCCi16 : T2I<(outs rGPR:$dst), (ins rGPR:$false, i32imm:$src),
                       IIC_iCMOVi,
                       "movw", "\t$dst, $src", []>,
@@ -2285,9 +2282,8 @@ def t2MOVCCi16 : T2I<(outs rGPR:$dst), (ins rGPR:$false, i32imm:$src),
 
 def t2MOVCCi32imm : PseudoInst<(outs rGPR:$dst),
                                (ins rGPR:$false, i32imm:$src, pred:$p),
-                    IIC_iMOVix2, "", []>, RegConstraint<"$false = $dst">;
+                    IIC_iCMOVix2, "", []>, RegConstraint<"$false = $dst">;
 
-let isAsCheapAsAMove = 1 in
 def t2MVNCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
                    IIC_iCMOVi, "mvn", ".w\t$dst, $true",
 [/*(set rGPR:$dst,(ARMcmov rGPR:$false,t2_so_imm_not:$true,

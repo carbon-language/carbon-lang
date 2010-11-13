@@ -77,6 +77,8 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iCMOVr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iCMOVsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
   InstrItinData<IIC_iCMOVsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iCMOVix2,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                              InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [3, 1]>,
   //
   // MVN instructions
   InstrItinData<IIC_iMVNi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1]>,

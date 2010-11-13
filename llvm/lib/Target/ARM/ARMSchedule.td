@@ -46,6 +46,7 @@ def IIC_iCMOVi     : InstrItinClass;
 def IIC_iCMOVr     : InstrItinClass;
 def IIC_iCMOVsi    : InstrItinClass;
 def IIC_iCMOVsr    : InstrItinClass;
+def IIC_iCMOVix2   : InstrItinClass;
 def IIC_iMUL16     : InstrItinClass;
 def IIC_iMAC16     : InstrItinClass;
 def IIC_iMUL32     : InstrItinClass;
