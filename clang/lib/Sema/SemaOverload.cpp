@@ -4493,6 +4493,7 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     }
     return VRQuals;
 }
+
   
 /// AddBuiltinOperatorCandidates - Add the appropriate built-in
 /// operator overloads to the candidate set (C++ [over.built]), based
@@ -4504,19 +4505,35 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                                    SourceLocation OpLoc,
                                    Expr **Args, unsigned NumArgs,
                                    OverloadCandidateSet& CandidateSet) {
-  // The set of "promoted arithmetic types", which are the arithmetic
-  // types are that preserved by promotion (C++ [over.built]p2). Note
-  // that the first few of these types are the promoted integral
-  // types; these types need to be first.
-  // FIXME: What about complex?
-  const unsigned FirstIntegralType = 0;
-  const unsigned LastIntegralType = 15;
-  const unsigned FirstPromotedIntegralType = 9,
-                 LastPromotedIntegralType = 15;
-  const unsigned FirstPromotedArithmeticType = 9,
-                 LastPromotedArithmeticType = 18;
-  const unsigned NumArithmeticTypes = 18;
+  // Information about arithmetic types useful to builtin-type
+  // calculations.
+
+  // The "promoted arithmetic types" are the arithmetic
+  // types are that preserved by promotion (C++ [over.built]p2).
+
+  static const unsigned FirstIntegralType = 3;
+  static const unsigned LastIntegralType = 18;
+  static const unsigned FirstPromotedIntegralType = 3,
+                        LastPromotedIntegralType = 9;
+  static const unsigned FirstPromotedArithmeticType = 0,
+                        LastPromotedArithmeticType = 9;
+  static const unsigned NumArithmeticTypes = 18;
+
   static CanQualType ASTContext::* const ArithmeticTypes[NumArithmeticTypes] = {
+    // Start of promoted types.
+    &ASTContext::FloatTy,
+    &ASTContext::DoubleTy,
+    &ASTContext::LongDoubleTy,
+
+    // Start of integral types.
+    &ASTContext::IntTy,
+    &ASTContext::LongTy,
+    &ASTContext::LongLongTy,
+    &ASTContext::UnsignedIntTy,
+    &ASTContext::UnsignedLongTy,
+    &ASTContext::UnsignedLongLongTy,
+    // End of promoted types.
+
     &ASTContext::BoolTy,
     &ASTContext::CharTy,
     &ASTContext::WCharTy,
@@ -4525,27 +4542,69 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     &ASTContext::SignedCharTy,
     &ASTContext::ShortTy,
     &ASTContext::UnsignedCharTy,
-    &ASTContext::UnsignedShortTy,
-    &ASTContext::IntTy,
-    &ASTContext::LongTy,
-    &ASTContext::LongLongTy,
-    &ASTContext::UnsignedIntTy,
-    &ASTContext::UnsignedLongTy,
-    &ASTContext::UnsignedLongLongTy,
-    &ASTContext::FloatTy,
-    &ASTContext::DoubleTy,
-    &ASTContext::LongDoubleTy
+    &ASTContext::UnsignedShortTy
+    // End of integral types.
   };
+  // FIXME: What about complex?
   assert(ArithmeticTypes[FirstPromotedIntegralType] == &ASTContext::IntTy &&
          "Invalid first promoted integral type");
   assert(ArithmeticTypes[LastPromotedIntegralType - 1] 
            == &ASTContext::UnsignedLongLongTy &&
          "Invalid last promoted integral type");
-  assert(ArithmeticTypes[FirstPromotedArithmeticType] == &ASTContext::IntTy &&
+  assert(ArithmeticTypes[FirstPromotedArithmeticType] == &ASTContext::FloatTy &&
          "Invalid first promoted arithmetic type");
   assert(ArithmeticTypes[LastPromotedArithmeticType - 1] 
-           == &ASTContext::LongDoubleTy &&
+           == &ASTContext::UnsignedLongLongTy &&
          "Invalid last promoted arithmetic type");
+
+  // Accelerator table for performing the usual arithmetic conversions.
+  // The rules are basically:
+  //   - if either is floating-point, use the wider floating-point
+  //   - if same signedness, use the higher rank
+  //   - if same size, use unsigned of the higher rank
+  //   - use the larger type
+  // These rules, together with the axiom that higher ranks are
+  // never smaller, are sufficient to precompute all of these results
+  // *except* when dealing with signed types of higher rank.
+  // (we could precompute SLL x UI for all known platforms, but it's
+  // better not to make any assumptions).
+  enum PromT {  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL, Dep=-1 };
+  static PromT UsualArithmeticConversionsTypes
+    [LastPromotedArithmeticType][LastPromotedArithmeticType] = {
+    /* Flt*/ {  Flt,  Dbl, LDbl,  Flt,  Flt,  Flt,  Flt,  Flt,  Flt },
+    /* Dbl*/ {  Dbl,  Dbl, LDbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl },
+    /*LDbl*/ { LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl },
+    /*  SI*/ {  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL },
+    /*  SL*/ {  Flt,  Dbl, LDbl,   SL,   SL,  SLL,  Dep,   UL,  ULL },
+    /* SLL*/ {  Flt,  Dbl, LDbl,  SLL,  SLL,  SLL,  Dep,  Dep,  ULL },
+    /*  UI*/ {  Flt,  Dbl, LDbl,   UI,  Dep,  Dep,   UI,   UL,  ULL },
+    /*  UL*/ {  Flt,  Dbl, LDbl,   UL,   UL,  Dep,   UL,   UL,  ULL },
+    /* ULL*/ {  Flt,  Dbl, LDbl,  ULL,  ULL,  ULL,  ULL,  ULL,  ULL }
+  };
+  struct UsualArithmeticConversionsType {
+    static CanQualType find(ASTContext &C, unsigned L, unsigned R) {
+      assert(L < LastPromotedArithmeticType);
+      assert(R < LastPromotedArithmeticType);
+      signed char Idx = UsualArithmeticConversionsTypes[L][R];
+
+      // Fast path: the table gives us a concrete answer.
+      if (Idx != Dep) return C.*ArithmeticTypes[Idx];
+
+      // Slow path: we need to compare widths.
+      // An invariant is that the signed type has higher rank.
+      CanQualType LT = C.*ArithmeticTypes[L], RT = C.*ArithmeticTypes[R];
+      unsigned LW = C.getIntWidth(LT), RW = C.getIntWidth(RT);
+
+      // If they're different widths, use the signed type.
+      if (LW > RW) return LT;
+      else if (LW > RW) return RT;
+
+      // Otherwise, use the unsigned type of the signed type's rank.
+      if (L == SL || R == SL) return C.UnsignedLongTy;
+      assert(L == SLL || R == SLL);
+      return C.UnsignedLongLongTy;
+    }
+  };
          
   // Find all of the types that the arguments can convert to, but only
   // if the operator we're looking at has built-in operator candidates
@@ -5007,7 +5066,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         QualType Result
           = isComparison
           ? Context.BoolTy
-          : Context.UsualArithmeticConversionsType(LandR[0], LandR[1]);
+          : UsualArithmeticConversionsType::find(Context, Left, Right);
         AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
       }
     }
@@ -5066,7 +5125,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                               Context.*ArithmeticTypes[Right] };
         QualType Result = (Op == OO_LessLess || Op == OO_GreaterGreater)
             ? LandR[0]
-            : Context.UsualArithmeticConversionsType(LandR[0], LandR[1]);
+            : UsualArithmeticConversionsType::find(Context, Left, Right);
         AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
       }
     }
