@@ -251,8 +251,8 @@ const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
     for (ExecutionEngineState::GlobalAddressMapTy::iterator
          I = EEState.getGlobalAddressMap(locked).begin(),
          E = EEState.getGlobalAddressMap(locked).end(); I != E; ++I)
-      EEState.getGlobalAddressReverseMap(locked).insert(std::make_pair(I->second,
-                                                                     I->first));
+      EEState.getGlobalAddressReverseMap(locked).insert(std::make_pair(
+                                                          I->second, I->first));
   }
 
   std::map<void *, AssertingVH<const GlobalValue> >::iterator I =
@@ -748,7 +748,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       case Type::FP128TyID: {
         APFloat apfLHS = APFloat(LHS.IntVal);
         switch (CE->getOpcode()) {
-          default: llvm_unreachable("Invalid long double opcode");llvm_unreachable(0);
+          default: llvm_unreachable("Invalid long double opcode");
           case Instruction::FAdd:
             apfLHS.add(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
             GV.IntVal = apfLHS.bitcastToAPInt();
