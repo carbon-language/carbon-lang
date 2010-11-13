@@ -1546,7 +1546,7 @@ def LDRD : AI3ldd<(outs GPR:$dst1, GPR:$dst2), (ins addrmode3:$addr), LdMiscFrm,
                  []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed loads
-multiclass AI2_ldridx<bit isByte, InstrItinClass itin, string opc> {
+multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
   def _PRE  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                       (ins addrmode2:$addr), IndexModePre, LdFrm, itin,
                       opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
@@ -1558,8 +1558,8 @@ multiclass AI2_ldridx<bit isByte, InstrItinClass itin, string opc> {
                       opc, "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
 }
 
-defm LDR  : AI2_ldridx<0, IIC_iLoad_ru, "ldr">;
-defm LDRB : AI2_ldridx<1, IIC_iLoad_bh_ru, "ldrb">;
+defm LDR  : AI2_ldridx<0, "ldr", IIC_iLoad_ru>;
+defm LDRB : AI2_ldridx<1, "ldrb", IIC_iLoad_bh_ru>;
 
 def LDRH_PRE  : AI3ldhpr<(outs GPR:$Rt, GPR:$Rn_wb),
                      (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
