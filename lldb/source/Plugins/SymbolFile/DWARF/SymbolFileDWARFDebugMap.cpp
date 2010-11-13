@@ -716,14 +716,29 @@ SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name, bool appe
     // we are appending the results to a variable list.
     const uint32_t original_size = variables.GetSize();
 
-    Symtab* symtab = m_obj_file->GetSymtab();
-    if (symtab)
+    uint32_t total_matches = 0;
+    SymbolFileDWARF *oso_dwarf;
+    for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
     {
-        std::vector<uint32_t> indexes;
-        const size_t match_count = m_obj_file->GetSymtab()->FindAllSymbolsWithNameAndType (name, eSymbolTypeData, Symtab::eDebugYes, Symtab::eVisibilityAny, indexes);
-        if (match_count)
+        const uint32_t oso_matches = oso_dwarf->FindGlobalVariables (name, 
+                                                                     true, 
+                                                                     max_matches, 
+                                                                     variables);
+        if (oso_matches > 0)
         {
-            PrivateFindGlobalVariables (name, indexes, max_matches, variables);
+            total_matches += oso_matches;
+
+            // Are we getting all matches?
+            if (max_matches == UINT32_MAX)
+                continue;   // Yep, continue getting everything
+
+            // If we have found enough matches, lets get out
+            if (max_matches >= total_matches)
+                break;
+
+            // Update the max matches for any subsequent calls to find globals
+            // in any other object files with DWARF
+            max_matches -= oso_matches;
         }
     }
     // Return the number of variable that were appended to the list
@@ -734,7 +749,41 @@ SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name, bool appe
 uint32_t
 SymbolFileDWARFDebugMap::FindGlobalVariables (const RegularExpression& regex, bool append, uint32_t max_matches, VariableList& variables)
 {
-    return 0;
+    // If we aren't appending the results to this list, then clear the list
+    if (!append)
+        variables.Clear();
+
+    // Remember how many variables are in the list before we search in case
+    // we are appending the results to a variable list.
+    const uint32_t original_size = variables.GetSize();
+
+    uint32_t total_matches = 0;
+    SymbolFileDWARF *oso_dwarf;
+    for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
+    {
+        const uint32_t oso_matches = oso_dwarf->FindGlobalVariables (regex, 
+                                                                     true, 
+                                                                     max_matches, 
+                                                                     variables);
+        if (oso_matches > 0)
+        {
+            total_matches += oso_matches;
+
+            // Are we getting all matches?
+            if (max_matches == UINT32_MAX)
+                continue;   // Yep, continue getting everything
+
+            // If we have found enough matches, lets get out
+            if (max_matches >= total_matches)
+                break;
+
+            // Update the max matches for any subsequent calls to find globals
+            // in any other object files with DWARF
+            max_matches -= oso_matches;
+        }
+    }
+    // Return the number of variable that were appended to the list
+    return variables.GetSize() - original_size;
 }
 
 

@@ -1086,7 +1086,10 @@ SymbolFileDWARF::ParseChildMembers
         case DW_TAG_member:
             {
                 DWARFDebugInfoEntry::Attributes attributes;
-                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, fixed_form_sizes, attributes);
+                const size_t num_attributes = die->GetAttributes (this, 
+                                                                  dwarf_cu, 
+                                                                  fixed_form_sizes, 
+                                                                  attributes);
                 if (num_attributes > 0)
                 {
                     Declaration decl;
@@ -1158,7 +1161,11 @@ SymbolFileDWARF::ParseChildMembers
                             accessibility = default_accessibility;
                         member_accessibilities.push_back(accessibility);
 
-                        GetClangASTContext().AddFieldToRecordType (class_clang_type, name, member_type->GetClangLayoutType(), accessibility, bit_size);
+                        GetClangASTContext().AddFieldToRecordType (class_clang_type, 
+                                                                   name, 
+                                                                   member_type->GetClangLayoutType(), 
+                                                                   accessibility, 
+                                                                   bit_size);
                     }
                 }
             }
@@ -1176,7 +1183,10 @@ SymbolFileDWARF::ParseChildMembers
                     default_accessibility = eAccessPrivate;
                 // TODO: implement DW_TAG_inheritance type parsing
                 DWARFDebugInfoEntry::Attributes attributes;
-                const size_t num_attributes = die->GetAttributes(this, dwarf_cu, fixed_form_sizes, attributes);
+                const size_t num_attributes = die->GetAttributes (this, 
+                                                                  dwarf_cu, 
+                                                                  fixed_form_sizes, 
+                                                                  attributes);
                 if (num_attributes > 0)
                 {
                     Declaration decl;
@@ -1207,7 +1217,17 @@ SymbolFileDWARF::ParseChildMembers
                                     const DataExtractor& debug_info_data = get_debug_info_data();
                                     uint32_t block_length = form_value.Unsigned();
                                     uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
-                                    if (DWARFExpression::Evaluate(NULL, NULL, debug_info_data, NULL, NULL, block_offset, block_length, eRegisterKindDWARF, &initialValue, memberOffset, NULL))
+                                    if (DWARFExpression::Evaluate (NULL, 
+                                                                   NULL, 
+                                                                   debug_info_data, 
+                                                                   NULL, 
+                                                                   NULL, 
+                                                                   block_offset, 
+                                                                   block_length, 
+                                                                   eRegisterKindDWARF, 
+                                                                   &initialValue, 
+                                                                   memberOffset, 
+                                                                   NULL))
                                     {
                                         member_offset = memberOffset.ResolveValue(NULL, NULL).UInt();
                                     }
@@ -1235,7 +1255,10 @@ SymbolFileDWARF::ParseChildMembers
                     }
                     else
                     {
-                        base_classes.push_back (GetClangASTContext().CreateBaseClassSpecifier (base_class_type->GetClangType(), accessibility, is_virtual, is_base_of_class));
+                        base_classes.push_back (GetClangASTContext().CreateBaseClassSpecifier (base_class_type->GetClangType(), 
+                                                                                               accessibility, 
+                                                                                               is_virtual, 
+                                                                                               is_base_of_class));
                         assert(base_classes.back());
                     }
                 }
@@ -1776,15 +1799,14 @@ SymbolFileDWARF::Index ()
                   GetObjectFile()->GetModule()->GetArchitecture().AsCString(),
                   GetObjectFile()->GetFileSpec().GetDirectory().AsCString(), 
                   GetObjectFile()->GetFileSpec().GetFilename().AsCString());
-//        s.Printf("\nFunction basenames:\n");    m_function_basename_index.Dump (&s);
-//        s.Printf("\nFunction fullnames:\n");    m_function_fullname_index.Dump (&s);
-//        s.Printf("\nFunction methods:\n");      m_function_method_index.Dump (&s);
-//        s.Printf("\nFunction selectors:\n");    m_function_selector_index.Dump (&s);
-//        s.Printf("\nObjective C class selectors:\n");    m_objc_class_selectors_index.Dump (&s);
-//        s.Printf("\nGlobals and statics:\n");   m_global_index.Dump (&s); 
+        s.Printf("\nFunction basenames:\n");    m_function_basename_index.Dump (&s);
+        s.Printf("\nFunction fullnames:\n");    m_function_fullname_index.Dump (&s);
+        s.Printf("\nFunction methods:\n");      m_function_method_index.Dump (&s);
+        s.Printf("\nFunction selectors:\n");    m_function_selector_index.Dump (&s);
+        s.Printf("\nObjective C class selectors:\n");    m_objc_class_selectors_index.Dump (&s);
+        s.Printf("\nGlobals and statics:\n");   m_global_index.Dump (&s); 
         s.Printf("\nTypes:\n");                 m_type_index.Dump (&s);
-//        s.Printf("\nNamepaces:\n");             m_namespace_index.Dump (&s);
-        
+        s.Printf("\nNamepaces:\n");             m_namespace_index.Dump (&s);
 #endif
     }
 }
