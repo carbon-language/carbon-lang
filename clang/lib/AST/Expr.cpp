@@ -764,6 +764,8 @@ const char *CastExpr::getCastKindName() const {
     return "FunctionToPointerDecay";
   case CK_NullToMemberPointer:
     return "NullToMemberPointer";
+  case CK_NullToPointer:
+    return "NullToPointer";
   case CK_BaseToDerivedMemberPointer:
     return "BaseToDerivedMemberPointer";
   case CK_DerivedToBaseMemberPointer:

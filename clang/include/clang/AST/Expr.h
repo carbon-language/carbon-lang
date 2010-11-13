@@ -1982,6 +1982,7 @@ private:
     case CK_ArrayToPointerDecay:
     case CK_FunctionToPointerDecay:
     case CK_NullToMemberPointer:
+    case CK_NullToPointer:
     case CK_UserDefinedConversion:
     case CK_ConstructorConversion:
     case CK_IntegralToPointer:

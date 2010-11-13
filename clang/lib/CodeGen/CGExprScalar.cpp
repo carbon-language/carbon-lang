@@ -48,6 +48,13 @@ struct BinOpInfo {
   const Expr *E;      // Entire expr, for error unsupported.  May not be binop.
 };
 
+static bool MustVisitNullValue(const Expr *E) {
+  // If a null pointer expression's type is the C++0x nullptr_t, then
+  // it's not necessarily a simple constant and it must be evaluated
+  // for its potential side effects.
+  return E->getType()->isNullPtrType();
+}
+
 class ScalarExprEmitter
   : public StmtVisitor<ScalarExprEmitter, Value*> {
   CodeGenFunction &CGF;
@@ -1044,10 +1051,15 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   case CK_FunctionToPointerDecay:
     return EmitLValue(E).getAddress();
 
+  case CK_NullToPointer:
+    if (MustVisitNullValue(E))
+      (void) Visit(E);
+
+    return llvm::ConstantPointerNull::get(
+                               cast<llvm::PointerType>(ConvertType(DestTy)));
+
   case CK_NullToMemberPointer: {
-    // If the subexpression's type is the C++0x nullptr_t, emit the
-    // subexpression, which may have side effects.
-    if (E->getType()->isNullPtrType())
+    if (MustVisitNullValue(E))
       (void) Visit(E);
 
     const MemberPointerType *MPT = CE->getType()->getAs<MemberPointerType>();

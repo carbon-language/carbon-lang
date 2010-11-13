@@ -1806,6 +1806,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_ArrayToPointerDecay:
   case CK_FunctionToPointerDecay:
   case CK_NullToMemberPointer:
+  case CK_NullToPointer:
   case CK_IntegralToPointer:
   case CK_PointerToIntegral:
   case CK_VectorSplat:

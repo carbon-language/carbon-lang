@@ -57,6 +57,9 @@ enum CastKind {
   /// CK_FunctionToPointerDecay - Function to pointer decay.
   CK_FunctionToPointerDecay,
 
+  /// CK_NullToPointer - Null pointer to pointer.
+  CK_NullToPointer,
+
   /// CK_NullToMemberPointer - Null pointer to member pointer.
   CK_NullToMemberPointer,
 

@@ -2750,14 +2750,14 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
     if (T2->isMemberPointerType())
       ImpCastExprToType(E1, T2, CK_NullToMemberPointer);
     else
-      ImpCastExprToType(E1, T2, CK_IntegralToPointer);
+      ImpCastExprToType(E1, T2, CK_NullToPointer);
     return T2;
   }
   if (E2->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     if (T1->isMemberPointerType())
       ImpCastExprToType(E2, T1, CK_NullToMemberPointer);
     else
-      ImpCastExprToType(E2, T1, CK_IntegralToPointer);
+      ImpCastExprToType(E2, T1, CK_NullToPointer);
     return T1;
   }
 

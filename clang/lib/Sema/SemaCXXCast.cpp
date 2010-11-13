@@ -1131,7 +1131,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
 
   // Is the source an overloaded name? (i.e. &foo)
   // If so, reinterpret_cast can not help us here (13.4, p1, bullet 5)
-  if (SrcType == Self.Context.OverloadTy )
+  if (SrcType == Self.Context.OverloadTy)
     return TC_NotApplicable;
 
   if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {
@@ -1270,6 +1270,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     assert(destIsPtr && "One type must be a pointer");
     // C++ 5.2.10p5: A value of integral or enumeration type can be explicitly
     //   converted to a pointer.
+    // C++ 5.2.10p9: [Note: ...a null pointer constant of integral type is not
+    //   necessarily converted to a null pointer value.]
     Kind = CK_IntegralToPointer;
     return TC_Success;
   }

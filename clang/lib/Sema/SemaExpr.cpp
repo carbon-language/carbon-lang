@@ -4003,7 +4003,8 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
 }
 
 static CastKind getScalarCastKind(ASTContext &Context,
-                                            QualType SrcTy, QualType DestTy) {
+                                  Expr *Src, QualType DestTy) {
+  QualType SrcTy = Src->getType();
   if (Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CK_NoOp;
 
@@ -4019,8 +4020,11 @@ static CastKind getScalarCastKind(ASTContext &Context,
   if (SrcTy->isIntegerType()) {
     if (DestTy->isIntegerType())
       return CK_IntegralCast;
-    if (DestTy->hasPointerRepresentation())
+    if (DestTy->hasPointerRepresentation()) {
+      if (Src->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
+        return CK_NullToPointer;
       return CK_IntegralToPointer;
+    }
     if (DestTy->isRealFloatingType())
       return CK_IntegralToFloating;
   }
@@ -4131,7 +4135,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
         << castType << castExpr->getSourceRange();
   }
 
-  Kind = getScalarCastKind(Context, castExpr->getType(), castType);
+  Kind = getScalarCastKind(Context, castExpr, castType);
 
   if (Kind == CK_Unknown || Kind == CK_BitCast)
     CheckCastAlign(castExpr, castType, TyR);
@@ -4185,7 +4189,7 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr,
 
   QualType DestElemTy = DestTy->getAs<ExtVectorType>()->getElementType();
   ImpCastExprToType(CastExpr, DestElemTy,
-                    getScalarCastKind(Context, SrcTy, DestElemTy));
+                    getScalarCastKind(Context, CastExpr, DestElemTy));
 
   Kind = CK_VectorSplat;
   return false;
@@ -4533,7 +4537,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     return LHSTy;
   }
 
-  // GCC compatibility: soften pointer/integer mismatch.
+  // GCC compatibility: soften pointer/integer mismatch.  Note that
+  // null pointers have been filtered out by this point.
   if (RHSTy->isPointerType() && LHSTy->isIntegerType()) {
     Diag(QuestionLoc, diag::warn_typecheck_cond_pointer_integer_mismatch)
       << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
@@ -5104,7 +5109,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
 
       if (rExpr->isNullPointerConstant(Context,
                                        Expr::NPC_ValueDependentIsNull)) {
-        ImpCastExprToType(rExpr, it->getType(), CK_IntegralToPointer);
+        ImpCastExprToType(rExpr, it->getType(), CK_NullToPointer);
         InitField = *it;
         break;
       }
@@ -5827,7 +5832,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       ImpCastExprToType(rex, lType, 
                         lType->isMemberPointerType()
                           ? CK_NullToMemberPointer
-                          : CK_IntegralToPointer);
+                          : CK_NullToPointer);
       return ResultTy;
     }
     if (LHSIsNull &&
@@ -5836,7 +5841,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       ImpCastExprToType(lex, rType, 
                         rType->isMemberPointerType()
                           ? CK_NullToMemberPointer
-                          : CK_IntegralToPointer);
+                          : CK_NullToPointer);
       return ResultTy;
     }
 
@@ -5951,21 +5956,23 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     }
     
     if (lType->isIntegerType())
-      ImpCastExprToType(lex, rType, CK_IntegralToPointer);
+      ImpCastExprToType(lex, rType,
+                        LHSIsNull ? CK_NullToPointer : CK_IntegralToPointer);
     else
-      ImpCastExprToType(rex, lType, CK_IntegralToPointer);
+      ImpCastExprToType(rex, lType,
+                        RHSIsNull ? CK_NullToPointer : CK_IntegralToPointer);
     return ResultTy;
   }
   
   // Handle block pointers.
   if (!isRelational && RHSIsNull
       && lType->isBlockPointerType() && rType->isIntegerType()) {
-    ImpCastExprToType(rex, lType, CK_IntegralToPointer);
+    ImpCastExprToType(rex, lType, CK_NullToPointer);
     return ResultTy;
   }
   if (!isRelational && LHSIsNull
       && lType->isIntegerType() && rType->isBlockPointerType()) {
-    ImpCastExprToType(lex, rType, CK_IntegralToPointer);
+    ImpCastExprToType(lex, rType, CK_NullToPointer);
     return ResultTy;
   }
   return InvalidOperands(Loc, lex, rex);

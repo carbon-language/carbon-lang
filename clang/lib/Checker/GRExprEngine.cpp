@@ -2518,6 +2518,7 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   case CK_BitCast:
   case CK_LValueBitCast:
   case CK_IntegralCast:
+  case CK_NullToPointer:
   case CK_IntegralToPointer:
   case CK_PointerToIntegral:
   case CK_IntegralToFloating:

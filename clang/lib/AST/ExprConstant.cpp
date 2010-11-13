@@ -604,6 +604,12 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
     return true;
   }
 
+  case CK_NullToPointer: {
+    Result.Base = 0;
+    Result.Offset = CharUnits::Zero();
+    return true;
+  }
+
   case CK_IntegralToPointer: {
     APValue Value;
     if (!EvaluateIntegerOrLValue(SubExpr, Value, Info))

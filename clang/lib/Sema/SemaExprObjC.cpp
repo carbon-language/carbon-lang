@@ -1014,9 +1014,13 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         if (ReceiverType->isPointerType())
           ImpCastExprToType(Receiver, Context.getObjCIdType(), 
                             CK_BitCast);
-        else
+        else {
+          // TODO: specialized warning on null receivers?
+          bool IsNull = Receiver->isNullPointerConstant(Context,
+                                              Expr::NPC_ValueDependentIsNull);
           ImpCastExprToType(Receiver, Context.getObjCIdType(),
-                            CK_IntegralToPointer);
+                            IsNull ? CK_NullToPointer : CK_IntegralToPointer);
+        }
         ReceiverType = Receiver->getType();
       } 
       else if (getLangOptions().CPlusPlus &&
