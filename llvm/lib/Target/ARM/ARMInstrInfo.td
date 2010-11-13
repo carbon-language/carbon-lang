@@ -285,14 +285,15 @@ def bltarget : Operand<i32> {
 }
 
 // A list of registers separated by comma. Used by load/store multiple.
-def reglist : Operand<i32> {
-  string EncoderMethod = "getRegisterListOpValue";
-  let PrintMethod = "printRegisterList";
-}
-
 def RegListAsmOperand : AsmOperandClass {
   let Name = "RegList";
   let SuperClasses = [];
+}
+
+def reglist : Operand<i32> {
+  string EncoderMethod = "getRegisterListOpValue";
+  let ParserMatchClass = RegListAsmOperand;
+  let PrintMethod = "printRegisterList";
 }
 
 // An operand for the CONSTPOOL_ENTRY pseudo-instruction.

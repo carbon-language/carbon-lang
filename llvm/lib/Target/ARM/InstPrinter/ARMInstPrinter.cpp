@@ -31,8 +31,10 @@ StringRef ARMInstPrinter::getOpcodeName(unsigned Opcode) const {
 
 
 void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
+  unsigned Opcode = MI->getOpcode();
+
   // Check for MOVs and print canonical forms, instead.
-  if (MI->getOpcode() == ARM::MOVs) {
+  if (Opcode == ARM::MOVs) {
     // FIXME: Thumb variants?
     const MCOperand &Dst = MI->getOperand(0);
     const MCOperand &MO1 = MI->getOperand(1);
@@ -61,7 +63,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   }
 
   // A8.6.123 PUSH
-  if ((MI->getOpcode() == ARM::STM_UPD || MI->getOpcode() == ARM::t2STM_UPD) &&
+  if ((Opcode == ARM::STM_UPD || Opcode == ARM::t2STM_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
     const MCOperand &MO1 = MI->getOperand(2);
     if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
@@ -74,7 +76,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   }
 
   // A8.6.122 POP
-  if ((MI->getOpcode() == ARM::LDM_UPD || MI->getOpcode() == ARM::t2LDM_UPD) &&
+  if ((Opcode == ARM::LDM_UPD || Opcode == ARM::t2LDM_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
     const MCOperand &MO1 = MI->getOperand(2);
     if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
@@ -87,7 +89,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   }
 
   // A8.6.355 VPUSH
-  if ((MI->getOpcode() == ARM::VSTMS_UPD || MI->getOpcode() ==ARM::VSTMD_UPD) &&
+  if ((Opcode == ARM::VSTMS_UPD || Opcode == ARM::VSTMD_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
     const MCOperand &MO1 = MI->getOperand(2);
     if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
@@ -100,7 +102,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   }
 
   // A8.6.354 VPOP
-  if ((MI->getOpcode() == ARM::VLDMS_UPD || MI->getOpcode() ==ARM::VLDMD_UPD) &&
+  if ((Opcode == ARM::VLDMS_UPD || Opcode == ARM::VLDMD_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
     const MCOperand &MO1 = MI->getOperand(2);
     if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
@@ -113,7 +115,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   }
 
   printInstruction(MI, O);
- }
+}
 
 void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                   raw_ostream &O) {
