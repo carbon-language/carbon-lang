@@ -127,7 +127,8 @@ namespace {
 class VisitorJob {
 public:
   enum Kind { DeclVisitKind, StmtVisitKind, MemberExprPartsKind,
-              TypeLocVisitKind, OverloadExprPartsKind };
+              TypeLocVisitKind, OverloadExprPartsKind,
+              DeclRefExprPartsKind };
 protected:
   void *dataA;
   void *dataB;
@@ -311,7 +312,6 @@ public:
   bool VisitStmt(Stmt *S);
 
   // Expression visitors
-  bool VisitDeclRefExpr(DeclRefExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
   bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
@@ -338,6 +338,7 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(CompoundLiteralExpr)
   DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
   DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
+  DATA_RECURSIVE_VISIT(DeclRefExpr)
   DATA_RECURSIVE_VISIT(DeclStmt)
   DATA_RECURSIVE_VISIT(ExplicitCastExpr)
   DATA_RECURSIVE_VISIT(DoStmt)
@@ -1438,29 +1439,6 @@ bool CursorVisitor::VisitStmt(Stmt *S) {
   return false;
 }
 
-bool CursorVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
-  // Visit nested-name-specifier, if present.
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
-      return true;
-  
-  // Visit declaration name.
-  if (VisitDeclarationNameInfo(E->getNameInfo()))
-    return true;
-  
-  // Visit explicitly-specified template arguments.
-  if (E->hasExplicitTemplateArgs()) {
-    ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
-    for (TemplateArgumentLoc *Arg = Args.getTemplateArgs(),
-                          *ArgEnd = Arg + Args.NumTemplateArgs;
-         Arg != ArgEnd; ++Arg)
-      if (VisitTemplateArgumentLoc(*Arg))
-        return true;
-  }
-  
-  return false;
-}
-
 bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
   if (D->isDefinition()) {
     for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
@@ -1748,6 +1726,7 @@ public:\
 
 DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
 DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
+DEF_JOB(DeclRefExprParts, DeclRefExpr, DeclRefExprPartsKind)
 DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
 #undef DEF_JOB
 
@@ -1788,6 +1767,7 @@ public:
 
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+  void VisitDeclRefExpr(DeclRefExpr *D);
   void VisitDeclStmt(DeclStmt *S);
   void VisitExplicitCastExpr(ExplicitCastExpr *E);
   void VisitForStmt(ForStmt *FS);
@@ -1845,6 +1825,9 @@ void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
     AddStmt(CE->getArg(N-I));
   AddStmt(CE->getCallee());
   AddStmt(CE->getArg(0));
+}
+void EnqueueVisitor::VisitDeclRefExpr(DeclRefExpr *DR) {
+  WL.push_back(DeclRefExprParts(DR, Parent));
 }
 void EnqueueVisitor::VisitDeclStmt(DeclStmt *S) {
   unsigned size = WL.size();
@@ -2038,6 +2021,26 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
             if (VisitTemplateArgumentLoc(*Arg))
               return true;
           }
+        }
+        continue;
+      }
+      case VisitorJob::DeclRefExprPartsKind: {
+        DeclRefExpr *DR = cast<DeclRefExprParts>(LI).get();
+        // Visit nested-name-specifier, if present.
+        if (NestedNameSpecifier *Qualifier = DR->getQualifier())
+          if (VisitNestedNameSpecifier(Qualifier, DR->getQualifierRange()))
+            return true;
+        // Visit declaration name.
+        if (VisitDeclarationNameInfo(DR->getNameInfo()))
+          return true;
+        // Visit explicitly-specified template arguments.
+        if (DR->hasExplicitTemplateArgs()) {
+          ExplicitTemplateArgumentList &Args = DR->getExplicitTemplateArgs();
+          for (TemplateArgumentLoc *Arg = Args.getTemplateArgs(),
+                 *ArgEnd = Arg + Args.NumTemplateArgs;
+               Arg != ArgEnd; ++Arg)
+            if (VisitTemplateArgumentLoc(*Arg))
+              return true;
         }
         continue;
       }
