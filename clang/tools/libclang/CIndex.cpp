@@ -312,8 +312,6 @@ public:
   bool VisitStmt(Stmt *S);
 
   // Expression visitors
-  bool VisitBlockExpr(BlockExpr *B);
-  bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   bool VisitAddrLabelExpr(AddrLabelExpr *E);
@@ -323,7 +321,6 @@ public:
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
   bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
   bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
-  bool VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitCXXNewExpr(CXXNewExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
@@ -335,9 +332,11 @@ public:
 #define DATA_RECURSIVE_VISIT(NAME)\
 bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(BinaryOperator)
+  DATA_RECURSIVE_VISIT(BlockExpr)
   DATA_RECURSIVE_VISIT(CompoundLiteralExpr)
   DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
   DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
+  DATA_RECURSIVE_VISIT(CXXTemporaryObjectExpr)
   DATA_RECURSIVE_VISIT(DeclRefExpr)
   DATA_RECURSIVE_VISIT(DeclStmt)
   DATA_RECURSIVE_VISIT(ExplicitCastExpr)
@@ -347,6 +346,7 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(ForStmt)
   DATA_RECURSIVE_VISIT(GotoStmt)
   DATA_RECURSIVE_VISIT(MemberExpr)
+  DATA_RECURSIVE_VISIT(ObjCEncodeExpr)
   DATA_RECURSIVE_VISIT(ObjCMessageExpr)
   DATA_RECURSIVE_VISIT(OverloadExpr)
   DATA_RECURSIVE_VISIT(SwitchStmt)
@@ -1451,11 +1451,6 @@ bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
   return VisitTagDecl(D);
 }
 
-
-bool CursorVisitor::VisitBlockExpr(BlockExpr *B) {
-  return Visit(B->getBlockDecl());
-}
-
 bool CursorVisitor::VisitOffsetOfExpr(OffsetOfExpr *E) {
   // Visit the type into which we're computing an offset.
   if (Visit(E->getTypeSourceInfo()->getTypeLoc()))
@@ -1565,14 +1560,6 @@ bool CursorVisitor::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
   }
   
   return VisitExpr(E);  
-}
-
-bool CursorVisitor::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
-  if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
-    if (Visit(TSInfo->getTypeLoc()))
-      return true;
-  
-  return VisitExpr(E);
 }
 
 bool CursorVisitor::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
@@ -1697,11 +1684,6 @@ bool CursorVisitor::VisitCXXDependentScopeMemberExpr(
   return false;
 }
 
-bool CursorVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
-  return Visit(E->getEncodedTypeSourceInfo()->getTypeLoc());
-}
-
-
 bool CursorVisitor::VisitAttributes(Decl *D) {
   for (AttrVec::const_iterator i = D->attr_begin(), e = D->attr_end();
        i != e; ++i)
@@ -1765,8 +1747,10 @@ public:
   EnqueueVisitor(VisitorWorkList &wl, CXCursor parent)
     : WL(wl), Parent(parent) {}
 
+  void VisitBlockExpr(BlockExpr *B);
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+  void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
   void VisitDeclRefExpr(DeclRefExpr *D);
   void VisitDeclStmt(DeclStmt *S);
   void VisitExplicitCastExpr(ExplicitCastExpr *E);
@@ -1774,6 +1758,7 @@ public:
   void VisitIfStmt(IfStmt *If);
   void VisitInitListExpr(InitListExpr *IE);
   void VisitMemberExpr(MemberExpr *M);
+  void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   void VisitObjCMessageExpr(ObjCMessageExpr *M);
   void VisitOverloadExpr(OverloadExpr *E);
   void VisitStmt(Stmt *S);
@@ -1814,6 +1799,9 @@ void EnqueueVisitor::EnqueueChildren(Stmt *S) {
   VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
   std::reverse(I, E);
 }
+void EnqueueVisitor::VisitBlockExpr(BlockExpr *B) {
+  AddDecl(B->getBlockDecl());
+}
 void EnqueueVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   EnqueueChildren(E);
   AddTypeLoc(E->getTypeSourceInfo());
@@ -1825,6 +1813,10 @@ void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
     AddStmt(CE->getArg(N-I));
   AddStmt(CE->getCallee());
   AddStmt(CE->getArg(0));
+}
+void EnqueueVisitor::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
+  EnqueueChildren(E);
+  AddTypeLoc(E->getTypeSourceInfo());
 }
 void EnqueueVisitor::VisitDeclRefExpr(DeclRefExpr *DR) {
   WL.push_back(DeclRefExprParts(DR, Parent));
@@ -1870,6 +1862,9 @@ void EnqueueVisitor::VisitInitListExpr(InitListExpr *IE) {
 void EnqueueVisitor::VisitMemberExpr(MemberExpr *M) {
   WL.push_back(MemberExprParts(M, Parent));
   AddStmt(M->getBase());
+}
+void EnqueueVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
+  AddTypeLoc(E->getEncodedTypeSourceInfo());
 }
 void EnqueueVisitor::VisitObjCMessageExpr(ObjCMessageExpr *M) {
   EnqueueChildren(M);
@@ -1965,18 +1960,21 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
             // Fall-through.
           }
           case Stmt::BinaryOperatorClass:
+          case Stmt::BlockExprClass:
           case Stmt::CallExprClass:
           case Stmt::CaseStmtClass:
           case Stmt::CompoundLiteralExprClass:
           case Stmt::CompoundStmtClass:
           case Stmt::CXXMemberCallExprClass:
           case Stmt::CXXOperatorCallExprClass:
+          case Stmt::CXXTemporaryObjectExprClass:
           case Stmt::DefaultStmtClass:
           case Stmt::DoStmtClass:
           case Stmt::ForStmtClass:
           case Stmt::IfStmtClass:
           case Stmt::InitListExprClass:
           case Stmt::MemberExprClass:
+          case Stmt::ObjCEncodeExprClass:
           case Stmt::ObjCMessageExprClass:
           case Stmt::ParenExprClass:
           case Stmt::SwitchStmtClass:
