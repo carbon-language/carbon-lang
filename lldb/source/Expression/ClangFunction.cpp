@@ -327,7 +327,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         // Special case: if it's a pointer, don't do anything (the ABI supports passing cstrings)
         
         if (arg_value->GetValueType() == Value::eValueTypeHostAddress &&
-            arg_value->GetContextType() == Value::eContextTypeOpaqueClangQualType &&
+            arg_value->GetContextType() == Value::eContextTypeClangType &&
             ClangASTContext::IsPointerType(arg_value->GetClangType()))
             continue;
         
@@ -421,7 +421,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     uint32_t offset = 0;
     uint64_t return_integer = data.GetMaxU64(&offset, m_return_size);
     
-    ret_value.SetContext (Value::eContextTypeOpaqueClangQualType, m_function_return_qual_type);
+    ret_value.SetContext (Value::eContextTypeClangType, m_function_return_qual_type);
     ret_value.SetValueType(Value::eValueTypeScalar);
     ret_value.GetScalar() = return_integer;
     return true;

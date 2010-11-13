@@ -179,7 +179,7 @@ ValueObject::GetLocationAsCString (ExecutionContextScope *exe_scope)
                 break;
 
             case Value::eValueTypeScalar:
-                if (m_value.GetContextType() == Value::eContextTypeDCRegisterInfo)
+                if (m_value.GetContextType() == Value::eContextTypeRegisterInfo)
                 {
                     RegisterInfo *reg_info = m_value.GetRegisterInfo();
                     if (reg_info)
@@ -611,9 +611,9 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
 
                 switch (context_type)
                 {
-                case Value::eContextTypeOpaqueClangQualType:
-                case Value::eContextTypeDCType:
-                case Value::eContextTypeDCVariable:
+                case Value::eContextTypeClangType:
+                case Value::eContextTypeLLDBType:
+                case Value::eContextTypeVariable:
                     {
                         clang_type_t clang_type = GetClangType ();
                         if (clang_type)
@@ -638,7 +638,7 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
                     }
                     break;
 
-                case Value::eContextTypeDCRegisterInfo:
+                case Value::eContextTypeRegisterInfo:
                     {
                         const RegisterInfo *reg_info = m_value.GetRegisterInfo();
                         if (reg_info)

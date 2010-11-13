@@ -277,10 +277,10 @@ SymbolFileSymtab::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Typ
     return NULL;
 }
 
-clang::NamespaceDecl *
+ClangNamespaceDecl 
 SymbolFileSymtab::FindNamespace (const SymbolContext& sc, const ConstString &name)
 {
-    return NULL;
+    return ClangNamespaceDecl();
 }
 
 uint32_t

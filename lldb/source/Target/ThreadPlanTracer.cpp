@@ -245,7 +245,7 @@ void ThreadPlanAssemblyTracer::Log ()
         {
             Value value;
             value.SetValueType (Value::eValueTypeScalar);
-            value.SetContext (Value::eContextTypeOpaqueClangQualType, m_intptr_type.GetOpaqueQualType());
+            value.SetContext (Value::eContextTypeClangType, m_intptr_type.GetOpaqueQualType());
             value_list.PushValue (value);
         }
         

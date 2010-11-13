@@ -120,7 +120,7 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
     Value old_value(m_value);
     if (expr.Evaluate (&exe_ctx, GetClangAST(), loclist_base_load_addr, NULL, m_value, &m_error))
     {
-        m_value.SetContext(Value::eContextTypeDCVariable, variable);
+        m_value.SetContext(Value::eContextTypeVariable, variable);
 
         Value::ValueType value_type = m_value.GetValueType();
 
@@ -184,7 +184,7 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
                 // Copy the Value and set the context to use our Variable
                 // so it can extract read its value into m_data appropriately
                 Value value(m_value);
-                value.SetContext(Value::eContextTypeDCVariable, variable);
+                value.SetContext(Value::eContextTypeVariable, variable);
                 m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0);
             }
             break;

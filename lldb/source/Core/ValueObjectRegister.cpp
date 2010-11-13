@@ -319,7 +319,7 @@ ValueObjectRegister::UpdateValue (ExecutionContextScope *exe_scope)
     {
         if (m_reg_ctx->ReadRegisterBytes (m_reg_num, m_data))
         {
-            m_value.SetContext(Value::eContextTypeDCRegisterInfo, (void *)m_reg_info);
+            m_value.SetContext(Value::eContextTypeRegisterInfo, (void *)m_reg_info);
             m_value.SetValueType(Value::eValueTypeHostAddress);
             m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
             SetValueIsValid (true);

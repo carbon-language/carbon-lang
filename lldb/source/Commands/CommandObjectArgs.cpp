@@ -249,7 +249,7 @@ CommandObjectArgs::Execute
             return false;
         }
                      
-        value.SetContext (Value::eContextTypeOpaqueClangQualType, type);
+        value.SetContext (Value::eContextTypeClangType, type);
         
         value_list.PushValue(value);
     }

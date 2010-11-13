@@ -16,6 +16,7 @@
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/TypeList.h"
 
 
@@ -126,12 +127,9 @@ public:
                uint32_t max_matches, 
                TypeList& types);
 
-//    virtual uint32_t
-//    FindTypes (const SymbolContext& sc, 
-//               const RegularExpression& regex, 
-//               bool append, 
-//               uint32_t max_matches, 
-//               TypeList& types);
+    virtual lldb_private::ClangNamespaceDecl
+    FindNamespace (const SymbolContext& sc, 
+                   const ConstString &name);
     
     virtual uint32_t
     GetNumCompileUnits();

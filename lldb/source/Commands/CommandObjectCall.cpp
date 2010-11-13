@@ -257,7 +257,7 @@ CommandObjectCall::Execute
                 
                 
                 void *cstr_type = exe_ctx.target->GetScratchClangASTContext()->GetCStringType(true);
-                val.SetContext (Value::eContextTypeOpaqueClangQualType, cstr_type);
+                val.SetContext (Value::eContextTypeClangType, cstr_type);
                 value_list.PushValue(val);
                 
                 success = true;

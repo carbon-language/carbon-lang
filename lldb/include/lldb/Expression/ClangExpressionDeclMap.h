@@ -93,6 +93,10 @@ public:
     const ConstString &
     GetPersistentResultName ();
     
+    clang::NamespaceDecl *
+    AddNamespace (NameSearchContext &context, 
+                  const ClangNamespaceDecl &namespace_decl);
+
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Add a variable to the list of persistent
     ///     variables for the process.

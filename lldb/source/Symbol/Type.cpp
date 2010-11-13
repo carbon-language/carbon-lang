@@ -39,7 +39,7 @@ lldb_private::Type::Type
     EncodingDataType encoding_data_type,
     const Declaration& decl,
     clang_type_t clang_type,
-    bool is_forward_decl
+    ResolveState clang_type_resolve_state
 ) :
     UserID (uid),
     m_name (name),
@@ -51,9 +51,7 @@ lldb_private::Type::Type
     m_byte_size (byte_size),
     m_decl (decl),
     m_clang_type (clang_type),
-    m_is_forward_decl (is_forward_decl),
-    m_encoding_type_forward_decl_resolved (false),
-    m_encoding_type_decl_resolved (false)
+    m_clang_type_resolve_state (clang_type ? clang_type_resolve_state : eResolveStateUnresolved)
 {
 }
 
@@ -66,9 +64,9 @@ lldb_private::Type::Type () :
     m_encoding_uid_type (eEncodingInvalid),
     m_encoding_uid (0),
     m_byte_size (0),
-    m_is_forward_decl (false),
     m_decl (),
-    m_clang_type (NULL)
+    m_clang_type (NULL),
+    m_clang_type_resolve_state (eResolveStateUnresolved)
 {
 }
 
@@ -86,9 +84,9 @@ lldb_private::Type::operator= (const Type& rhs)
         m_encoding_uid_type = rhs.m_encoding_uid_type;
         m_encoding_uid = rhs.m_encoding_uid;
         m_byte_size = rhs.m_byte_size;
-        m_is_forward_decl = rhs.m_is_forward_decl;
         m_decl = rhs.m_decl;
         m_clang_type = rhs.m_clang_type;
+        m_clang_type_resolve_state = rhs.m_clang_type_resolve_state;
     }
     return *this;
 }
@@ -190,7 +188,7 @@ lldb_private::Type::GetName()
 {
     if (!(m_name))
     {
-        if (ResolveClangType(true))
+        if (ResolveClangType(eResolveStateForward))
         {
             std::string type_name = ClangASTContext::GetTypeName (m_clang_type);
             if (!type_name.empty())
@@ -220,7 +218,7 @@ lldb_private::Type::DumpValue
     lldb::Format format
 )
 {
-    if (ResolveClangType(true))
+    if (ResolveClangType(eResolveStateForward))
     {
         if (show_types)
         {
@@ -251,11 +249,8 @@ lldb_private::Type::DumpValue
 lldb_private::Type *
 lldb_private::Type::GetEncodingType ()
 {
-    if (m_encoding_type == NULL)
-    {
-        if (m_encoding_uid != LLDB_INVALID_UID)
-            m_encoding_type = m_symbol_file->ResolveTypeUID(m_encoding_uid);
-    }
+    if (m_encoding_type == NULL && m_encoding_uid != LLDB_INVALID_UID)
+        m_encoding_type = m_symbol_file->ResolveTypeUID(m_encoding_uid);
     return m_encoding_type;
 }
     
@@ -279,7 +274,7 @@ lldb_private::Type::GetByteSize()
                     m_byte_size = encoding_type->GetByteSize();
                 if (m_byte_size == 0)
                 {
-                    uint64_t bit_width = ClangASTType::GetClangTypeBitWidth (GetClangAST(), GetClangType());
+                    uint64_t bit_width = ClangASTType::GetClangTypeBitWidth (GetClangAST(), GetClangLayoutType());
                     m_byte_size = (bit_width + 7 ) / 8;
                 }
             }
@@ -300,7 +295,7 @@ lldb_private::Type::GetByteSize()
 uint32_t
 lldb_private::Type::GetNumChildren (bool omit_empty_base_classes)
 {
-    if (!ResolveClangType())
+    if (!ResolveClangType(eResolveStateFull))
         return 0;
     return ClangASTContext::GetNumChildren (m_clang_type, omit_empty_base_classes);
 
@@ -309,7 +304,7 @@ lldb_private::Type::GetNumChildren (bool omit_empty_base_classes)
 bool
 lldb_private::Type::IsAggregateType ()
 {
-    if (ResolveClangType())
+    if (ResolveClangType(eResolveStateForward))
         return ClangASTContext::IsAggregateType (m_clang_type);
     return false;
 }
@@ -318,7 +313,7 @@ lldb::Format
 lldb_private::Type::GetFormat ()
 {
     // Make sure we resolve our type if it already hasn't been.
-    if (!ResolveClangType())
+    if (!ResolveClangType(eResolveStateForward))
         return lldb::eFormatInvalid;
     return lldb_private::ClangASTType::GetFormat (m_clang_type);
 }
@@ -329,7 +324,7 @@ lldb::Encoding
 lldb_private::Type::GetEncoding (uint32_t &count)
 {
     // Make sure we resolve our type if it already hasn't been.
-    if (!ResolveClangType())
+    if (!ResolveClangType(eResolveStateForward))
         return lldb::eEncodingInvalid;
 
     return lldb_private::ClangASTType::GetEncoding (m_clang_type, count);
@@ -422,18 +417,23 @@ lldb_private::Type::GetDeclaration () const
 }
 
 bool
-lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
+lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
 {
+    Type *encoding_type = NULL;
     if (m_clang_type == NULL)
     {
         TypeList *type_list = GetTypeList();
-        Type *encoding_type = GetEncodingType();
+        encoding_type = GetEncodingType();
         if (encoding_type)
         {
             switch (m_encoding_uid_type)
             {
             case eEncodingIsUID:
-                m_clang_type = encoding_type->GetClangType();
+                if (encoding_type->ResolveClangType(clang_type_resolve_state))
+                {
+                    m_clang_type = encoding_type->m_clang_type;
+                    m_clang_type_resolve_state = encoding_type->m_clang_type_resolve_state;
+                }
                 break;
 
             case eEncodingIsConstUID:
@@ -518,11 +518,9 @@ lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
     }
     
     // Check if we have a forward reference to a class/struct/union/enum?
-    if (m_clang_type != NULL && 
-        m_is_forward_decl == true && 
-        forward_decl_is_ok == false)
+    if (m_clang_type && m_clang_type_resolve_state < clang_type_resolve_state)
     {
-        m_is_forward_decl = false;
+        m_clang_type_resolve_state = eResolveStateFull;
         if (!ClangASTType::IsDefined (m_clang_type))
         {
             // We have a forward declaration, we need to resolve it to a complete
@@ -533,45 +531,25 @@ lldb_private::Type::ResolveClangType (bool forward_decl_is_ok)
     
     // If we have an encoding type, then we need to make sure it is 
     // resolved appropriately.
-    if (m_encoding_type_decl_resolved == false)
+    if (m_encoding_uid != LLDB_INVALID_UID)
     {
-        if ((forward_decl_is_ok == true  && !m_encoding_type_forward_decl_resolved) ||
-            (forward_decl_is_ok == false))
+        if (encoding_type == NULL)
+            encoding_type = GetEncodingType();
+        if (encoding_type)
         {
-            Type *encoding_type = GetEncodingType ();
-            if (encoding_type != NULL)
+            ResolveState encoding_clang_type_resolve_state = eResolveStateFull;
+            switch (m_encoding_uid_type)
             {
-                bool forward_decl_is_ok_for_encoding = forward_decl_is_ok;
-//                switch (m_encoding_uid_type)
-//                {
-//                case eEncodingIsPointerUID:
-//                case eEncodingIsLValueReferenceUID:
-//                case eEncodingIsRValueReferenceUID:
-//                    forward_decl_is_ok_for_encoding = true;
-//                    break;
-//                default:
-//                    break;
-//                }
-                
-                if (encoding_type->ResolveClangType (forward_decl_is_ok_for_encoding))
-                {
-                    // We have at least resolve the forward declaration for our
-                    // encoding type...
-                    m_encoding_type_forward_decl_resolved = true;
-                
-                    // Check if we fully resolved our encoding type, and if so
-                    // mark it as having been completely resolved.
-                    if (forward_decl_is_ok_for_encoding == false)
-                        m_encoding_type_decl_resolved = true;
-                }
+            case eEncodingIsPointerUID:
+            case eEncodingIsLValueReferenceUID:
+            case eEncodingIsRValueReferenceUID:
+                if (clang_type_resolve_state == eResolveStateLayout)
+                    encoding_clang_type_resolve_state = eResolveStateForward;
+                break;
+            default:
+                break;
             }
-            else
-            {
-                // We don't have an encoding type, so mark everything as being 
-                // resolved so we don't get into this if statement again
-                m_encoding_type_decl_resolved = true;
-                m_encoding_type_forward_decl_resolved = true;
-            }
+            encoding_type->ResolveClangType (encoding_clang_type_resolve_state);
         }
     }
     return m_clang_type != NULL;
@@ -592,29 +570,30 @@ lldb_private::Type::GetChildClangTypeAtIndex
     bool &child_is_base_class
 )
 {
-    if (!ResolveClangType())
-        return NULL;
-
-    std::string name_str;
-    clang_type_t child_qual_type = GetClangASTContext().GetChildClangTypeAtIndex (
-            parent_name,
-            m_clang_type,
-            idx,
-            transparent_pointers,
-            omit_empty_base_classes,
-            name_str,
-            child_byte_size,
-            child_byte_offset,
-            child_bitfield_bit_size,
-            child_bitfield_bit_offset,
-            child_is_base_class);
-
-    if (child_qual_type)
+    clang_type_t child_qual_type = NULL;
+    
+    if (GetClangType())
     {
-        if (!name_str.empty())
-            name.SetCString(name_str.c_str());
-        else
-            name.Clear();
+        std::string name_str;
+        child_qual_type = GetClangASTContext().GetChildClangTypeAtIndex (parent_name,
+                                                                         m_clang_type,
+                                                                         idx,
+                                                                         transparent_pointers,
+                                                                         omit_empty_base_classes,
+                                                                         name_str,
+                                                                         child_byte_size,
+                                                                         child_byte_offset,
+                                                                         child_bitfield_bit_size,
+                                                                         child_bitfield_bit_offset,
+                                                                         child_is_base_class);
+        
+        if (child_qual_type)
+        {
+            if (!name_str.empty())
+                name.SetCString(name_str.c_str());
+            else
+                name.Clear();
+        }
     }
     return child_qual_type;
 }
@@ -623,16 +602,21 @@ lldb_private::Type::GetChildClangTypeAtIndex
 clang_type_t 
 lldb_private::Type::GetClangType ()
 {
-    const bool forward_decl_is_ok = false;
-    ResolveClangType(forward_decl_is_ok);
+    ResolveClangType(eResolveStateFull);
+    return m_clang_type;
+}
+
+clang_type_t 
+lldb_private::Type::GetClangLayoutType ()
+{
+    ResolveClangType(eResolveStateLayout);
     return m_clang_type;
 }
 
 clang_type_t 
 lldb_private::Type::GetClangForwardType ()
 {
-    const bool forward_decl_is_ok = true;
-    ResolveClangType (forward_decl_is_ok);
+    ResolveClangType (eResolveStateForward);
     return m_clang_type;
 }
 

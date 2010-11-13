@@ -101,7 +101,7 @@ public:
 //  virtual uint32_t
 //  FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::TypeList& types);
 
-    virtual clang::NamespaceDecl *
+    virtual lldb_private::ClangNamespaceDecl
     FindNamespace (const lldb_private::SymbolContext& sc, 
                    const lldb_private::ConstString &name);
 

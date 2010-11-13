@@ -135,7 +135,7 @@ ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
     {
         if (parent->UpdateValueIfNeeded(exe_scope))
         {
-            m_value.SetContext(Value::eContextTypeOpaqueClangQualType, m_clang_type);
+            m_value.SetContext(Value::eContextTypeClangType, m_clang_type);
 
             // Copy the parent scalar value and the scalar value type
             m_value.GetScalar() = parent->GetValue().GetScalar();

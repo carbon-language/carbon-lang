@@ -658,7 +658,7 @@ ReadRegisterValueAsScalar
             else
             {
                 value.SetValueType (Value::eValueTypeScalar);
-                value.SetContext (Value::eContextTypeDCRegisterInfo, const_cast<RegisterInfo *>(reg_context->GetRegisterInfoAtIndex(native_reg)));
+                value.SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_context->GetRegisterInfoAtIndex(native_reg)));
 
                 if (reg_context->ReadRegisterValue (native_reg, value.GetScalar()))
                     return true;
@@ -2121,7 +2121,7 @@ DWARFExpression::Evaluate
                     return false;
                 }
             
-                if (array_val.GetContextType() != Value::eContextTypeOpaqueClangQualType)
+                if (array_val.GetContextType() != Value::eContextTypeClangType)
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("Arrays without Clang types are unhandled at this time.");
@@ -2169,7 +2169,7 @@ DWARFExpression::Evaluate
                 
                 Value member;
                 
-                member.SetContext(Value::eContextTypeOpaqueClangQualType, member_type);
+                member.SetContext(Value::eContextTypeClangType, member_type);
                 member.SetValueType(array_val.GetValueType());
                 
                 addr_t array_base = (addr_t)array_val.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
@@ -2212,7 +2212,7 @@ DWARFExpression::Evaluate
                 StreamString new_value(Stream::eBinary, 4, eByteOrderHost);
                 switch (context_type)
                 {
-                case Value::eContextTypeOpaqueClangQualType:
+                case Value::eContextTypeClangType:
                     {
                         void *clang_type = stack.back().GetClangType();
                         
@@ -2427,7 +2427,7 @@ DWARFExpression::Evaluate
                 tmp = stack.back();
                 stack.pop_back();
                 
-                if (tmp.GetContextType() != Value::eContextTypeOpaqueClangQualType)
+                if (tmp.GetContextType() != Value::eContextTypeClangType)
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("Item at top of expression stack must have a Clang type");
@@ -2450,7 +2450,7 @@ DWARFExpression::Evaluate
                 tmp.ResolveValue(exe_ctx, ast_context);
                 
                 tmp.SetValueType(value_type);
-                tmp.SetContext(Value::eContextTypeOpaqueClangQualType, target_type);
+                tmp.SetContext(Value::eContextTypeClangType, target_type);
                 
                 stack.push_back(tmp);
             }
@@ -2483,7 +2483,7 @@ DWARFExpression::Evaluate
                 Value *proxy = expr_local_variable->CreateProxy();
                 stack.push_back(*proxy);
                 delete proxy;
-                //stack.back().SetContext (Value::eContextTypeOpaqueClangQualType, expr_local_variable->GetClangType());
+                //stack.back().SetContext (Value::eContextTypeClangType, expr_local_variable->GetClangType());
                 */
             }
             break;
@@ -2548,7 +2548,7 @@ DWARFExpression::Evaluate
             else
             {
                 void *clang_type = (void *)opcodes.GetMaxU64(&offset, sizeof(void*));
-                stack.back().SetContext (Value::eContextTypeOpaqueClangQualType, clang_type);
+                stack.back().SetContext (Value::eContextTypeClangType, clang_type);
             }
             break;
         //----------------------------------------------------------------------

@@ -74,15 +74,15 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::SetUpRegion()
     }
     
     uint32_t offset_ptr = 0;
-    uint16_t header_size = data.GetU16(&offset_ptr);
-    uint16_t descriptor_size = data.GetU16(&offset_ptr);
-    size_t num_descriptors = data.GetU32(&offset_ptr);
+    const uint16_t header_size = data.GetU16(&offset_ptr);
+    const uint16_t descriptor_size = data.GetU16(&offset_ptr);
+    const size_t num_descriptors = data.GetU32(&offset_ptr);
     
     m_next_region = data.GetPointer(&offset_ptr);
     
     // If the header size is 0, that means we've come in too early before this data is set up.
     // Set ourselves as not valid, and continue.
-    if (header_size == 0)
+    if (header_size == 0 || num_descriptors == 0)
     {
         m_valid = false;
         return;
@@ -100,8 +100,8 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::SetUpRegion()
     // to compute it over and over.
     
     // Ingest the whole descriptor array:
-    lldb::addr_t desc_ptr = m_header_addr + header_size;
-    size_t desc_array_size = num_descriptors * descriptor_size;
+    const lldb::addr_t desc_ptr = m_header_addr + header_size;
+    const size_t desc_array_size = num_descriptors * descriptor_size;
     DataBufferSP data_sp(new DataBufferHeap (desc_array_size, '\0'));
     uint8_t* dst = (uint8_t*)data_sp->GetBytes();
 
@@ -291,7 +291,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton,
         Value input_value;
         void *clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
         input_value.SetValueType (Value::eValueTypeScalar);
-        input_value.SetContext (Value::eContextTypeOpaqueClangQualType, clang_void_ptr_type);
+        input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
         argument_values.PushValue(input_value);
         
         bool success = abi->GetArgumentValues (*(context->exe_ctx.thread), argument_values);
@@ -515,7 +515,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         Value input_value;
         void *clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
         input_value.SetValueType (Value::eValueTypeScalar);
-        input_value.SetContext (Value::eContextTypeOpaqueClangQualType, clang_void_ptr_type);
+        input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
         
         int obj_index;
         int sel_index;

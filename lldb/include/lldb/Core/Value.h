@@ -44,10 +44,10 @@ public:
                                         // m_context contains...
                                         // ====================
         eContextTypeInvalid,            // undefined
-        eContextTypeOpaqueClangQualType,// void * (an opaque clang::QualType * that can be fed to "static QualType QualType::getFromOpaquePtr(void *)")
-        eContextTypeDCRegisterInfo,     // lldb::RegisterInfo *
-        eContextTypeDCType,             // Type *
-        eContextTypeDCVariable,         // Variable *
+        eContextTypeClangType,          // void * (an opaque clang::QualType * that can be fed to "static QualType QualType::getFromOpaquePtr(void *)")
+        eContextTypeRegisterInfo,       // lldb::RegisterInfo *
+        eContextTypeLLDBType,           // lldb_private::Type *
+        eContextTypeVariable,           // lldb_private::Variable *
         eContextTypeValue               // Value * (making this a proxy value.  Used when putting locals on the DWARF expression parser stack)
     };
 

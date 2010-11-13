@@ -12,6 +12,8 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/Type.h"
 
 namespace lldb_private {
@@ -81,7 +83,7 @@ public:
     virtual uint32_t        FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types) = 0;
 //  virtual uint32_t        FindTypes (const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, TypeList& types) = 0;
     virtual TypeList *      GetTypeList ();
-    virtual clang::NamespaceDecl *
+    virtual ClangNamespaceDecl
                             FindNamespace (const SymbolContext& sc, 
                                            const ConstString &name) = 0;
 

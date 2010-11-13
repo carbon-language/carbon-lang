@@ -23,6 +23,7 @@
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -760,7 +761,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
         break;
     case Value::eValueTypeScalar:
         {
-            if (location_value->GetContextType() != Value::eContextTypeDCRegisterInfo)
+            if (location_value->GetContextType() != Value::eContextTypeRegisterInfo)
             {
                 StreamString ss;
                 
@@ -1019,6 +1020,18 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
                 else if (non_extern_symbol)
                     AddOneFunction(context, NULL, non_extern_symbol);
             }
+
+            ClangNamespaceDecl namespace_decl (m_sym_ctx.FindNamespace(name));
+            if (namespace_decl)
+            {
+//                clang::NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decl);
+//                if (clang_namespace_decl)
+//                {
+//                    // TODO: is this how we get the decl lookups to be called for
+//                    // this namespace??
+//                    clang_namespace_decl->setHasExternalLexicalStorage();
+//                }
+            }
         }
     }
     else
@@ -1179,7 +1192,7 @@ ClangExpressionDeclMap::GetVariableValue
         type_to_use = var_opaque_type;
     
     if (var_location.get()->GetContextType() == Value::eContextTypeInvalid)
-        var_location.get()->SetContext(Value::eContextTypeOpaqueClangQualType, type_to_use);
+        var_location.get()->SetContext(Value::eContextTypeClangType, type_to_use);
     
     if (var_location.get()->GetValueType() == Value::eValueTypeFileAddress)
     {
@@ -1277,6 +1290,19 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
         
         log->Printf("Added pvar %s, returned %s", pvar->m_name.GetCString(), var_decl_print_string.c_str());
     }
+}
+
+clang::NamespaceDecl *
+ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, const ClangNamespaceDecl &namespace_decl)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    
+    clang::Decl *copied_decl = ClangASTContext::CopyDecl (context.GetASTContext(),
+                                                          namespace_decl.GetASTContext(),
+                                                          namespace_decl.GetNamespaceDecl());
+
+    return dyn_cast<clang::NamespaceDecl>(copied_decl);
 }
 
 void

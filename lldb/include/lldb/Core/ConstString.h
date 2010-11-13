@@ -134,8 +134,8 @@ public:
     /// @endcode
     ///
     /// @return
-    ///     A pointer to this object if the string isn't empty, NULL
-    ///     otherwise.
+    ///     /b True this object contains a valid non-empty C string, \b 
+    ///     false otherwise.
     //------------------------------------------------------------------
     operator bool() const
     {

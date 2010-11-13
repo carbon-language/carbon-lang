@@ -15,6 +15,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/LineEntry.h"
 
 namespace lldb_private {
@@ -208,6 +209,10 @@ public:
                          bool append, 
                          SymbolContextList &sc_list) const;
 
+
+    ClangNamespaceDecl
+    FindNamespace (const ConstString &name) const;
+
     //------------------------------------------------------------------
     /// Find a variable matching the given name, working out from this
     /// symbol context.
@@ -215,8 +220,8 @@ public:
     /// @return
     ///     A shared pointer to the variable found.
     //------------------------------------------------------------------
-    lldb::VariableSP
-    FindVariableByName (const char *name) const;
+    //lldb::VariableSP
+    //FindVariableByName (const char *name) const;
 
     //------------------------------------------------------------------
     /// Find a type matching the given name, working out from this

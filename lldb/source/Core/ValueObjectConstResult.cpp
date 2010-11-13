@@ -44,7 +44,7 @@ ValueObjectConstResult::ValueObjectConstResult
     m_data.SetData(data_sp);
     m_value.GetScalar() = (uintptr_t)data_sp->GetBytes();
     m_value.SetValueType(Value::eValueTypeHostAddress);
-    m_value.SetContext(Value::eContextTypeOpaqueClangQualType, clang_type);
+    m_value.SetContext(Value::eContextTypeClangType, clang_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);

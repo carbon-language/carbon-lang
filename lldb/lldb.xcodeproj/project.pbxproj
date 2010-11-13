@@ -63,6 +63,8 @@
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
+		266A42D6128E3FFB0090CF7C /* ClangNamespaceDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */; };
+		266A42D8128E40040090CF7C /* ClangNamespaceDecl.h in Headers */ = {isa = PBXBuildFile; fileRef = 266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */; };
 		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42B1E1187A92B0079C8C8 /* lldb-include.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -567,6 +569,8 @@
 		266960611199F4230075C61A /* edit-swig-python-wrapper-file.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = "edit-swig-python-wrapper-file.py"; sourceTree = "<group>"; };
 		266960621199F4230075C61A /* finish-swig-Python-lldb.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "finish-swig-Python-lldb.sh"; sourceTree = "<group>"; };
 		266960631199F4230075C61A /* sed-sources */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "sed-sources"; sourceTree = "<group>"; };
+		266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangNamespaceDecl.cpp; path = source/Symbol/ClangNamespaceDecl.cpp; sourceTree = "<group>"; };
+		266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangNamespaceDecl.h; path = include/lldb/Symbol/ClangNamespaceDecl.h; sourceTree = "<group>"; };
 		2672D8461189055500FF4019 /* CommandObjectFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectFrame.cpp; path = source/Commands/CommandObjectFrame.cpp; sourceTree = "<group>"; };
 		2672D8471189055500FF4019 /* CommandObjectFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectFrame.h; path = source/Commands/CommandObjectFrame.h; sourceTree = "<group>"; };
 		2676A093119C93C8008A98EF /* StringExtractorGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractorGDBRemote.cpp; path = source/Utility/StringExtractorGDBRemote.cpp; sourceTree = "<group>"; };
@@ -1783,6 +1787,8 @@
 				26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */,
 				49E45FA911F660DC008F7B28 /* ClangASTType.h */,
 				49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */,
+				266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */,
+				266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */,
 				26BC7C5710F1B6E900F91463 /* CompileUnit.h */,
 				26BC7F1510F1B8EC00F91463 /* CompileUnit.cpp */,
 				26BC7C5810F1B6E900F91463 /* Declaration.h */,
@@ -2374,6 +2380,7 @@
 				4C61978D12823D4300FAFFCC /* AppleObjCRuntime.h in Headers */,
 				4C61978F12823D4300FAFFCC /* AppleObjCRuntimeV1.h in Headers */,
 				4CC2A14D128C7409001531C4 /* ThreadPlanTracer.h in Headers */,
+				266A42D8128E40040090CF7C /* ClangNamespaceDecl.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2445,6 +2452,7 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
@@ -2876,6 +2884,7 @@
 				4C61978C12823D4300FAFFCC /* AppleObjCRuntime.cpp in Sources */,
 				4C61978E12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp in Sources */,
 				4CC2A149128C73ED001531C4 /* ThreadPlanTracer.cpp in Sources */,
+				266A42D6128E3FFB0090CF7C /* ClangNamespaceDecl.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2933,7 +2942,6 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
 				VALID_ARCHS = "x86_64 i386";
 			};
@@ -2964,7 +2972,6 @@
 		26579F6A126A25920007C5CB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;

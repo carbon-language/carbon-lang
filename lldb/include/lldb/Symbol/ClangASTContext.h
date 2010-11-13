@@ -144,6 +144,11 @@ public:
              clang::ASTContext *source_context,
              lldb::clang_type_t clang_type);
     
+    static clang::Decl *
+    CopyDecl (clang::ASTContext *dest_context, 
+              clang::ASTContext *source_context,
+              clang::Decl *source_decl);
+
     static bool
     AreTypesSame(clang::ASTContext *ast_context,
                  lldb::clang_type_t type1,

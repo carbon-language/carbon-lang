@@ -953,11 +953,11 @@ SymbolFileDWARFDebugMap::FindTypes
 //}
 
 
-clang::NamespaceDecl *
+ClangNamespaceDecl
 SymbolFileDWARFDebugMap::FindNamespace (const lldb_private::SymbolContext& sc, 
                                         const lldb_private::ConstString &name)
 {
-    clang::NamespaceDecl *matching_namespace = NULL;
+    ClangNamespaceDecl matching_namespace;
     SymbolFileDWARF *oso_dwarf;
 
     if (sc.comp_unit)

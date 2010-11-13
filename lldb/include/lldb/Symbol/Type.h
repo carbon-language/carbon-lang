@@ -21,10 +21,10 @@ namespace lldb_private {
 class Type : public UserID
 {
 public:
-    typedef enum
+    typedef enum EncodingDataTypeTag
     {
         eEncodingInvalid,
-        eEncodingIsUID,         ///< This type is the type whose UID is m_encoding_uid
+        eEncodingIsUID,                 ///< This type is the type whose UID is m_encoding_uid
         eEncodingIsConstUID,            ///< This type is the type whose UID is m_encoding_uid with the const qualifier added
         eEncodingIsRestrictUID,         ///< This type is the type whose UID is m_encoding_uid with the restrict qualifier added
         eEncodingIsVolatileUID,         ///< This type is the type whose UID is m_encoding_uid with the volatile qualifier added
@@ -35,6 +35,14 @@ public:
         eEncodingIsSyntheticUID
     } EncodingDataType;
 
+    typedef enum ResolveStateTag
+    {
+        eResolveStateUnresolved = 0,
+        eResolveStateForward    = 1,
+        eResolveStateLayout     = 2,
+        eResolveStateFull       = 3
+    } ResolveState;
+
     Type (lldb::user_id_t uid,
           SymbolFile* symbol_file,
           const ConstString &name,
@@ -44,7 +52,7 @@ public:
           EncodingDataType encoding_type,
           const Declaration& decl,
           lldb::clang_type_t clang_qual_type,
-          bool is_forward_decl);
+          ResolveState clang_type_resolve_state);
     
     // This makes an invalid type.  Used for functions that return a Type when they
     // get an error.
@@ -177,6 +185,12 @@ public:
     lldb::clang_type_t 
     GetClangType ();
 
+    // Get the clang type, and resolve definitions enough so that the type could
+    // have layout performed. This allows ptrs and refs to class/struct/union/enum 
+    // types remain forward declarations.
+    lldb::clang_type_t 
+    GetClangLayoutType ();
+
     // Get the clang type and leave class/struct/union/enum types as forward
     // declarations if they haven't already been fully defined.
     lldb::clang_type_t 
@@ -203,6 +217,12 @@ public:
     static int
     Compare(const Type &a, const Type &b);
 
+    void
+    SetEncodingType (Type *encoding_type)
+    {
+        m_encoding_type = encoding_type;
+    }
+
 protected:
     ConstString m_name;
     SymbolFile *m_symbol_file;
@@ -213,14 +233,12 @@ protected:
     uint32_t m_byte_size;
     Declaration m_decl;
     lldb::clang_type_t m_clang_type;
-    bool    m_is_forward_decl:1,
-            m_encoding_type_forward_decl_resolved:1,
-            m_encoding_type_decl_resolved:1;
+    ResolveState m_clang_type_resolve_state;
 
     Type *
     GetEncodingType ();
     
-    bool ResolveClangType(bool forward_decl_is_ok = false);
+    bool ResolveClangType (ResolveState clang_type_resolve_state);
 };
 
 } // namespace lldb_private

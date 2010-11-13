@@ -234,7 +234,7 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
             {
             default:
                 return false;
-            case Value::eContextTypeOpaqueClangQualType:
+            case Value::eContextTypeClangType:
                 {
                     void *val_type = val->GetClangType();
                     uint32_t cstr_length;
@@ -433,7 +433,7 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
         {
             default:
                 return false;
-            case Value::eContextTypeOpaqueClangQualType:
+            case Value::eContextTypeClangType:
             {
                 void *value_type = value->GetClangType();
                 bool is_signed;
@@ -472,7 +472,7 @@ ABIMacOSX_i386::GetReturnValue (Thread &thread,
     {
         default:
             return false;
-        case Value::eContextTypeOpaqueClangQualType:
+        case Value::eContextTypeClangType:
         {
             // Extract the Clang AST context from the PC so that we can figure out type
             // sizes

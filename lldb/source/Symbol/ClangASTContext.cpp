@@ -740,6 +740,23 @@ ClangASTContext::CopyType (ASTContext *dest_context,
     return dst.getAsOpaquePtr();
 }
 
+
+clang::Decl *
+ClangASTContext::CopyDecl (ASTContext *dest_context, 
+                           ASTContext *source_context,
+                           clang::Decl *source_decl)
+{
+    // null_client's ownership is transferred to diagnostics
+    NullDiagnosticClient *null_client = new NullDiagnosticClient;
+    Diagnostic diagnostics(null_client);
+    FileManager file_manager;
+    ASTImporter importer(diagnostics,
+                         *dest_context, file_manager,
+                         *source_context, file_manager);
+    
+    return importer.Import(source_decl);
+}
+
 bool
 ClangASTContext::AreTypesSame(ASTContext *ast_context,
              clang_type_t type1,

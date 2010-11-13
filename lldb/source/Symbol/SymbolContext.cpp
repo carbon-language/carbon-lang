@@ -400,6 +400,14 @@ SymbolContext::GetAddressRange (uint32_t scope, AddressRange &range) const
     return false;
 }
 
+ClangNamespaceDecl
+SymbolContext::FindNamespace (const ConstString &name) const
+{
+    ClangNamespaceDecl namespace_decl;
+    if (module_sp)
+        namespace_decl = module_sp->GetSymbolVendor()->FindNamespace (*this, name);
+    return namespace_decl;
+}
 
 size_t
 SymbolContext::FindFunctionsByName (const ConstString &name, bool append, SymbolContextList &sc_list) const
@@ -422,12 +430,12 @@ SymbolContext::FindFunctionsByName (const ConstString &name, bool append, Symbol
     return sc_list.GetSize();
 }
 
-lldb::VariableSP
-SymbolContext::FindVariableByName (const char *name) const
-{
-    lldb::VariableSP return_value;
-    return return_value;
-}
+//lldb::VariableSP
+//SymbolContext::FindVariableByName (const char *name) const
+//{
+//    lldb::VariableSP return_value;
+//    return return_value;
+//}
 
 lldb::TypeSP
 SymbolContext::FindTypeByName (const ConstString &name) const

@@ -83,7 +83,7 @@ ClangExpressionVariable::PointValueAtData(Value &value, ExecutionContext *exe_ct
     if (m_data_sp.get() == NULL)
         return false;
     
-    value.SetContext(Value::eContextTypeOpaqueClangQualType, m_user_type.GetOpaqueQualType());
+    value.SetContext(Value::eContextTypeClangType, m_user_type.GetOpaqueQualType());
     value.SetValueType(Value::eValueTypeHostAddress);
     value.GetScalar() = (uintptr_t)m_data_sp->GetBytes();
     clang::ASTContext *ast_context = m_user_type.GetASTContext();

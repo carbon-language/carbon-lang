@@ -304,7 +304,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
         {
         default:
             return false;
-        case Value::eContextTypeOpaqueClangQualType:
+        case Value::eContextTypeClangType:
             {
                 void *value_type = value->GetClangType();
                 bool is_signed;
@@ -347,7 +347,7 @@ ABISysV_x86_64::GetReturnValue (Thread &thread,
     {
         default:
             return false;
-        case Value::eContextTypeOpaqueClangQualType:
+        case Value::eContextTypeClangType:
         {
             void *value_type = value.GetClangType();
             bool is_signed;

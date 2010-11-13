@@ -287,7 +287,7 @@ Value::GetRegisterInfo()
     if (m_context_type == eContextTypeValue)
         return ((Value*)m_context)->GetRegisterInfo();
         
-    if (m_context_type == eContextTypeDCRegisterInfo)
+    if (m_context_type == eContextTypeRegisterInfo)
         return static_cast<RegisterInfo *> (m_context);
     return NULL;
 }
@@ -298,7 +298,7 @@ Value::GetType()
     if (m_context_type == eContextTypeValue)
         return ((Value*)m_context)->GetType();
     
-    if (m_context_type == eContextTypeDCType)
+    if (m_context_type == eContextTypeLLDBType)
         return static_cast<Type *> (m_context);
     return NULL;
 }
@@ -336,12 +336,12 @@ Value::ValueOf(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
     {
     default:
     case eContextTypeInvalid:
-    case eContextTypeOpaqueClangQualType:          // clang::Type *
-    case eContextTypeDCRegisterInfo:     // RegisterInfo *
-    case eContextTypeDCType:             // Type *
+    case eContextTypeClangType:          // clang::Type *
+    case eContextTypeRegisterInfo:     // RegisterInfo *
+    case eContextTypeLLDBType:             // Type *
         break;
 
-    case eContextTypeDCVariable:         // Variable *
+    case eContextTypeVariable:         // Variable *
         ResolveValue(exe_ctx, ast_context);
         return true;
     }
@@ -365,7 +365,7 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
             error_ptr->SetErrorString ("Invalid context type, there is no way to know how much memory to read.");
         break;
 
-    case eContextTypeOpaqueClangQualType:
+    case eContextTypeClangType:
         if (ast_context == NULL)
         {
             if (error_ptr)
@@ -378,7 +378,7 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
         }
         break;
 
-    case eContextTypeDCRegisterInfo:     // RegisterInfo *
+    case eContextTypeRegisterInfo:     // RegisterInfo *
         if (GetRegisterInfo())
             byte_size = GetRegisterInfo()->byte_size;
         else if (error_ptr)
@@ -386,14 +386,14 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
 
         break;
 
-    case eContextTypeDCType:             // Type *
+    case eContextTypeLLDBType:             // Type *
         if (GetType())
             byte_size = GetType()->GetByteSize();
         else if (error_ptr)
             error_ptr->SetErrorString ("Can't determine byte size with NULL Type *.");
         break;
 
-    case eContextTypeDCVariable:         // Variable *
+    case eContextTypeVariable:         // Variable *
         if (GetVariable())
             byte_size = GetVariable()->GetType()->GetByteSize();
         else if (error_ptr)
@@ -428,18 +428,18 @@ Value::GetClangType ()
     case eContextTypeInvalid:
         break;
 
-    case eContextTypeOpaqueClangQualType:
+    case eContextTypeClangType:
         return m_context;
 
-    case eContextTypeDCRegisterInfo:
+    case eContextTypeRegisterInfo:
         break;    // TODO: Eventually convert into a clang type?
 
-    case eContextTypeDCType:
+    case eContextTypeLLDBType:
         if (GetType())
             return GetType()->GetClangType();
         break;
 
-    case eContextTypeDCVariable:
+    case eContextTypeVariable:
         if (GetVariable())
             return GetVariable()->GetType()->GetClangType();
         break;
@@ -460,20 +460,20 @@ Value::GetValueDefaultFormat ()
     case eContextTypeInvalid:
         break;
 
-    case eContextTypeOpaqueClangQualType:
+    case eContextTypeClangType:
         return ClangASTType::GetFormat (m_context);
 
-    case eContextTypeDCRegisterInfo:
+    case eContextTypeRegisterInfo:
         if (GetRegisterInfo())
             return GetRegisterInfo()->format;
         break;
 
-    case eContextTypeDCType:
+    case eContextTypeLLDBType:
         if (GetType())
             return GetType()->GetFormat();
         break;
 
-    case eContextTypeDCVariable:
+    case eContextTypeVariable:
         if (GetVariable())
             return GetVariable()->GetType()->GetFormat();
         break;
@@ -669,7 +669,7 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
         }
     }
     
-    if (m_context_type == eContextTypeOpaqueClangQualType)
+    if (m_context_type == eContextTypeClangType)
     {
         void *opaque_clang_qual_type = GetClangType();
         switch (m_value_type)
@@ -731,7 +731,7 @@ Value::GetVariable()
     if (m_context_type == eContextTypeValue)
         return ((Value*)m_context)->GetVariable();
     
-    if (m_context_type == eContextTypeDCVariable)
+    if (m_context_type == eContextTypeVariable)
         return static_cast<Variable *> (m_context);
     return NULL;
 }
@@ -757,10 +757,10 @@ Value::GetContextTypeAsCString (ContextType context_type)
     switch (context_type)
     {
     case eContextTypeInvalid:               return "invalid";
-    case eContextTypeOpaqueClangQualType:   return "clang::Type *";
-    case eContextTypeDCRegisterInfo:        return "RegisterInfo *";
-    case eContextTypeDCType:                return "Type *";
-    case eContextTypeDCVariable:            return "Variable *";
+    case eContextTypeClangType:   return "clang::Type *";
+    case eContextTypeRegisterInfo:        return "RegisterInfo *";
+    case eContextTypeLLDBType:                return "Type *";
+    case eContextTypeVariable:            return "Variable *";
     case eContextTypeValue:                 return "Value"; // TODO: Sean, more description here?
     };
     return "???";

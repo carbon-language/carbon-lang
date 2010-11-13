@@ -97,7 +97,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
         void *opaque_type_ptr = ast_context->GetBuiltInType_objc_id();
         if (opaque_type_ptr == NULL)
             opaque_type_ptr = ast_context->GetVoidPtrType(false);
-        value.SetContext(Value::eContextTypeOpaqueClangQualType, opaque_type_ptr);    
+        value.SetContext(Value::eContextTypeClangType, opaque_type_ptr);    
     }
 
     ValueList arg_value_list;
@@ -109,7 +109,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
     
     void *return_qualtype = ast_context->GetCStringType(true);
     Value ret;
-    ret.SetContext(Value::eContextTypeOpaqueClangQualType, return_qualtype);
+    ret.SetContext(Value::eContextTypeClangType, return_qualtype);
     
     // Now we're ready to call the function:
     ClangFunction func(target_triple, ast_context, return_qualtype, *function_address, arg_value_list);

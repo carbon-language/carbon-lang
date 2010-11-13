@@ -261,22 +261,16 @@ SymbolVendor::FindTypes (const SymbolContext& sc, const ConstString &name, bool 
         types.Clear();
     return 0;
 }
-//
-//uint32_t
-//SymbolVendor::FindTypes(const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, const char *udt_name, TypeList& types)
-//{
-//  Mutex::Locker locker(m_mutex);
-//  if (m_sym_file_ap.get())
-//  {
-//      lldb::user_id_t udt_uid = LLDB_INVALID_UID;
-//
-//      if (encoding == Type::user_defined_type)
-//          udt_uid = UserDefType::GetUserDefTypeUID(udt_name);
-//
-//      return m_sym_file_ap->FindTypes(sc, regex, append, max_matches, encoding, udt_uid, types);
-//  }
-//  return 0;
-//}
+
+ClangNamespaceDecl
+SymbolVendor::FindNamespace(const SymbolContext& sc, const ConstString &name)
+{
+    Mutex::Locker locker(m_mutex);
+    ClangNamespaceDecl namespace_decl;
+    if (m_sym_file_ap.get())
+        namespace_decl = m_sym_file_ap->FindNamespace (sc, name);
+    return namespace_decl;
+}
 
 void
 SymbolVendor::Dump(Stream *s)
