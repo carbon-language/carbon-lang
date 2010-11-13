@@ -82,6 +82,7 @@ private:
                                               const Expr *RHS);
   bool PathWasCompletelyAnalyzed(const CFG *C,
                                  const CFGBlock *CB,
+                                 const CFGStmtMap *CBM,
                                  const GRCoreEngine &CE);
   static bool CanVary(const Expr *Ex,
                       AnalysisContext *AC);
@@ -386,7 +387,7 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
 
       // If we can trace back
       if (!PathWasCompletelyAnalyzed(AC->getCFG(),
-                                     CBM->getBlock(B),
+                                     CBM->getBlock(B), CBM,
                                      Eng.getCoreEngine()))
         continue;
 
@@ -550,6 +551,7 @@ bool IdempotentOperationChecker::isTruncationExtensionAssignment(
 bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
                                                        const CFG *C,
                                                        const CFGBlock *CB,
+                                                       const CFGStmtMap *CBM,
                                                        const GRCoreEngine &CE) {
   // Test for reachability from any aborted blocks to this block
   typedef GRCoreEngine::BlocksAborted::const_iterator AbortedIterator;
@@ -563,6 +565,34 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
     if (CRA.isReachable(BE.getDst(), CB))
       return false;
   }
+  
+  // For the items still on the worklist, see if they are in blocks that
+  // can eventually reach 'CB'.
+  class VisitWL : public GRWorkList::Visitor {
+    const CFGStmtMap *CBM;
+    const CFGBlock *TargetBlock;
+    CFGReachabilityAnalysis &CRA;
+  public:
+    VisitWL(const CFGStmtMap *cbm, const CFGBlock *targetBlock,
+            CFGReachabilityAnalysis &cra)
+      : CBM(cbm), TargetBlock(targetBlock), CRA(cra) {}
+    virtual bool Visit(const GRWorkListUnit &U) {
+      ProgramPoint P = U.getNode()->getLocation();
+      const CFGBlock *B = 0;
+      if (StmtPoint *SP = dyn_cast<StmtPoint>(&P)) {
+        B = CBM->getBlock(SP->getStmt());
+      }
+      if (!B)
+        return true;
+      
+      return CRA.isReachable(B, TargetBlock);
+    }
+  };
+  VisitWL visitWL(CBM, CB, CRA);
+  // Were there any items in the worklist that could potentially reach
+  // this block?
+  if (CE.getWorkList()->VisitItemsInWorkList(visitWL))
+    return false;
 
   // Verify that this block is reachable from the entry block
   if (!CRA.isReachable(&C->getEntry(), CB))
