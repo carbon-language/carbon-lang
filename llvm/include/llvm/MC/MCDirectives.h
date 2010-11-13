@@ -26,6 +26,7 @@ enum MCSymbolAttr {
   MCSA_ELF_TypeTLS,         ///< .type _foo, STT_TLS     # aka @tls_object
   MCSA_ELF_TypeCommon,      ///< .type _foo, STT_COMMON  # aka @common
   MCSA_ELF_TypeNoType,      ///< .type _foo, STT_NOTYPE  # aka @notype
+  MCSA_ELF_TypeGnuUniqueObject, /// .type _foo, @gnu_unique_object
   MCSA_Global,              ///< .globl
   MCSA_Hidden,              ///< .hidden (ELF)
   MCSA_IndirectSymbol,      ///< .indirect_symbol (MachO)

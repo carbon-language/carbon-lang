@@ -370,6 +370,7 @@ bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
     .Case("tls_object", MCSA_ELF_TypeTLS)
     .Case("common", MCSA_ELF_TypeCommon)
     .Case("notype", MCSA_ELF_TypeNoType)
+    .Case("gnu_unique_object", MCSA_ELF_TypeGnuUniqueObject)
     .Default(MCSA_Invalid);
 
   if (Attr == MCSA_Invalid)

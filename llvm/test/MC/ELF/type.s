@@ -9,6 +9,9 @@ foo:
         .type bar,@object
 bar:
 
+// Test that gnu_unique_object is accepted.
+        .type zed,@gnu_unique_object
+
 // CHECK:      # Symbol 0x00000004
 // CHECK-NEXT: (('st_name', 0x00000005) # 'bar'
 // CHECK-NEXT:  ('st_bind', 0x00000001)
