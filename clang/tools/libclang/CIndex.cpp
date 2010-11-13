@@ -320,9 +320,7 @@ public:
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
   bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
-  bool VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { return false; }
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
-  bool VisitCXXNewExpr(CXXNewExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   bool VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
@@ -334,7 +332,9 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(BinaryOperator)
   DATA_RECURSIVE_VISIT(BlockExpr)
   DATA_RECURSIVE_VISIT(CompoundLiteralExpr)
+  DATA_RECURSIVE_VISIT(CXXDefaultArgExpr)
   DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
+  DATA_RECURSIVE_VISIT(CXXNewExpr)
   DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
   DATA_RECURSIVE_VISIT(CXXTemporaryObjectExpr)
   DATA_RECURSIVE_VISIT(DeclRefExpr)
@@ -1569,29 +1569,6 @@ bool CursorVisitor::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
   return false;
 }
 
-bool CursorVisitor::VisitCXXNewExpr(CXXNewExpr *E) {
-  // Visit placement arguments.
-  for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I)
-    if (Visit(MakeCXCursor(E->getPlacementArg(I), StmtParent, TU)))
-      return true;
-  
-  // Visit the allocated type.
-  if (TypeSourceInfo *TSInfo = E->getAllocatedTypeSourceInfo())
-    if (Visit(TSInfo->getTypeLoc()))
-      return true;
-  
-  // Visit the array size, if any.
-  if (E->isArray() && Visit(MakeCXCursor(E->getArraySize(), StmtParent, TU)))
-    return true;
-  
-  // Visit the initializer or constructor arguments.
-  for (unsigned I = 0, N = E->getNumConstructorArgs(); I != N; ++I)
-    if (Visit(MakeCXCursor(E->getConstructorArg(I), StmtParent, TU)))
-      return true;
-  
-  return false;
-}
-
 bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   // Visit base expression.
   if (Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
@@ -1750,6 +1727,8 @@ public:
   void VisitBlockExpr(BlockExpr *B);
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitCompoundStmt(CompoundStmt *S);
+  void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { /* Do nothing. */ }
+  void VisitCXXNewExpr(CXXNewExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
   void VisitDeclRefExpr(DeclRefExpr *D);
@@ -1812,7 +1791,19 @@ void EnqueueVisitor::VisitCompoundStmt(CompoundStmt *S) {
         E = S->body_rend(); I != E; ++I) {
     AddStmt(*I);
   }
-}  
+}
+void EnqueueVisitor::VisitCXXNewExpr(CXXNewExpr *E) {
+  // Enqueue the initializer or constructor arguments.
+  for (unsigned I = E->getNumConstructorArgs(); I > 0; --I)
+    AddStmt(E->getConstructorArg(I-1));
+  // Enqueue the array size, if any.
+  AddStmt(E->getArraySize());
+  // Enqueue the allocated type.
+  AddTypeLoc(E->getAllocatedTypeSourceInfo());
+  // Enqueue the placement arguments.
+  for (unsigned I = E->getNumPlacementArgs(); I > 0; --I)
+    AddStmt(E->getPlacementArg(I-1));
+}
 void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
   // Note that we enqueue things in reverse order so that
   // they are visited correctly by the DFS.
@@ -1972,7 +1963,9 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::CaseStmtClass:
           case Stmt::CompoundLiteralExprClass:
           case Stmt::CompoundStmtClass:
+          case Stmt::CXXDefaultArgExprClass:
           case Stmt::CXXMemberCallExprClass:
+          case Stmt::CXXNewExprClass:
           case Stmt::CXXOperatorCallExprClass:
           case Stmt::CXXTemporaryObjectExprClass:
           case Stmt::DefaultStmtClass:
