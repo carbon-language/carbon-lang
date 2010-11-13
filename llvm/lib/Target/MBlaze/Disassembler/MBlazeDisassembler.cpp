@@ -492,6 +492,9 @@ bool MBlazeDisassembler::getInstruction(MCInst &instr,
   uint32_t insn;
   uint8_t bytes[4];
 
+  // We always consume 4 bytes of data
+  size = 4;
+
   // We want to read exactly 4 bytes of data.
   if (region.readBytes(address, 4, (uint8_t*)bytes, NULL) == -1)
     return false;
