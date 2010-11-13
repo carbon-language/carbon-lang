@@ -198,7 +198,7 @@ Value *Loop::getTripCount() const {
 
 /// getSmallConstantTripCount - Returns the trip count of this loop as a
 /// normal unsigned value, if possible. Returns 0 if the trip count is unknown
-/// of not constant. Will also return 0 if the trip count is very large
+/// or not constant. Will also return 0 if the trip count is very large
 /// (>= 2^32)
 unsigned Loop::getSmallConstantTripCount() const {
   Value* TripCount = this->getTripCount();
