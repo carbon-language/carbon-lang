@@ -106,53 +106,135 @@ bool InstCombiner::ShouldChangeType(const Type *From, const Type *To) const {
 }
 
 
-// SimplifyCommutative - This performs a few simplifications for commutative
-// operators:
+/// SimplifyAssociativeOrCommutative - This performs a few simplifications for
+/// operators which are associative or commutative:
+//
+//  Commutative operators:
 //
 //  1. Order operands such that they are listed from right (least complex) to
 //     left (most complex).  This puts constants before unary operators before
 //     binary operators.
 //
-//  2. Transform: (op (op V, C1), C2) ==> (op V, (op C1, C2))
-//  3. Transform: (op (op V1, C1), (op V2, C2)) ==> (op (op V1, V2), (op C1,C2))
+//  Associative operators:
 //
-bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
-  bool Changed = false;
-  if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1)))
-    Changed = !I.swapOperands();
-
-  if (!I.isAssociative()) return Changed;
-  
+//  2. Transform: "(A op B) op C" ==> "A op (B op C)" if "B op C" simplifies.
+//  3. Transform: "A op (B op C)" ==> "(A op B) op C" if "A op B" simplifies.
+//
+//  Associative and commutative operators:
+//
+//  4. Transform: "(A op B) op C" ==> "(C op A) op B" if "C op A" simplifies.
+//  5. Transform: "A op (B op C)" ==> "B op (C op A)" if "C op A" simplifies.
+//  6. Transform: "(A op C1) op (B op C2)" ==> "(A op B) op (C1 op C2)"
+//     if C1 and C2 are constants.
+//
+bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
   Instruction::BinaryOps Opcode = I.getOpcode();
-  if (BinaryOperator *Op = dyn_cast<BinaryOperator>(I.getOperand(0)))
-    if (Op->getOpcode() == Opcode && isa<Constant>(Op->getOperand(1))) {
-      if (isa<Constant>(I.getOperand(1))) {
-        Constant *Folded = ConstantExpr::get(I.getOpcode(),
-                                             cast<Constant>(I.getOperand(1)),
-                                             cast<Constant>(Op->getOperand(1)));
-        I.setOperand(0, Op->getOperand(0));
-        I.setOperand(1, Folded);
-        return true;
-      }
-      
-      if (BinaryOperator *Op1 = dyn_cast<BinaryOperator>(I.getOperand(1)))
-        if (Op1->getOpcode() == Opcode && isa<Constant>(Op1->getOperand(1)) &&
-            Op->hasOneUse() && Op1->hasOneUse()) {
-          Constant *C1 = cast<Constant>(Op->getOperand(1));
-          Constant *C2 = cast<Constant>(Op1->getOperand(1));
+  bool Changed = false;
 
-          // Fold (op (op V1, C1), (op V2, C2)) ==> (op (op V1, V2), (op C1,C2))
-          Constant *Folded = ConstantExpr::get(I.getOpcode(), C1, C2);
-          Instruction *New = BinaryOperator::Create(Opcode, Op->getOperand(0),
-                                                    Op1->getOperand(0),
-                                                    Op1->getName(), &I);
-          Worklist.Add(New);
-          I.setOperand(0, New);
-          I.setOperand(1, Folded);
-          return true;
+  do {
+    // Order operands such that they are listed from right (least complex) to
+    // left (most complex).  This puts constants before unary operators before
+    // binary operators.
+    if (I.isCommutative() && getComplexity(I.getOperand(0)) <
+        getComplexity(I.getOperand(1)))
+      Changed = !I.swapOperands();
+
+    BinaryOperator *Op0 = dyn_cast<BinaryOperator>(I.getOperand(0));
+    BinaryOperator *Op1 = dyn_cast<BinaryOperator>(I.getOperand(1));
+
+    if (I.isAssociative()) {
+      // Transform: "(A op B) op C" ==> "A op (B op C)" if "B op C" simplifies.
+      if (Op0 && Op0->getOpcode() == Opcode) {
+        Value *A = Op0->getOperand(0);
+        Value *B = Op0->getOperand(1);
+        Value *C = I.getOperand(1);
+
+        // Does "B op C" simplify?
+        if (Value *V = SimplifyBinOp(Opcode, B, C, TD)) {
+          // It simplifies to V.  Form "A op V".
+          I.setOperand(0, A);
+          I.setOperand(1, V);
+          Changed = true;
+          continue;
         }
+      }
+
+      // Transform: "A op (B op C)" ==> "(A op B) op C" if "A op B" simplifies.
+      if (Op1 && Op1->getOpcode() == Opcode) {
+        Value *A = I.getOperand(0);
+        Value *B = Op1->getOperand(0);
+        Value *C = Op1->getOperand(1);
+
+        // Does "A op B" simplify?
+        if (Value *V = SimplifyBinOp(Opcode, A, B, TD)) {
+          // It simplifies to V.  Form "V op C".
+          I.setOperand(0, V);
+          I.setOperand(1, C);
+          Changed = true;
+          continue;
+        }
+      }
     }
-  return Changed;
+
+    if (I.isAssociative() && I.isCommutative()) {
+      // Transform: "(A op B) op C" ==> "(C op A) op B" if "C op A" simplifies.
+      if (Op0 && Op0->getOpcode() == Opcode) {
+        Value *A = Op0->getOperand(0);
+        Value *B = Op0->getOperand(1);
+        Value *C = I.getOperand(1);
+
+        // Does "C op A" simplify?
+        if (Value *V = SimplifyBinOp(Opcode, C, A, TD)) {
+          // It simplifies to V.  Form "V op B".
+          I.setOperand(0, V);
+          I.setOperand(1, B);
+          Changed = true;
+          continue;
+        }
+      }
+
+      // Transform: "A op (B op C)" ==> "B op (C op A)" if "C op A" simplifies.
+      if (Op1 && Op1->getOpcode() == Opcode) {
+        Value *A = I.getOperand(0);
+        Value *B = Op1->getOperand(0);
+        Value *C = Op1->getOperand(1);
+
+        // Does "C op A" simplify?
+        if (Value *V = SimplifyBinOp(Opcode, C, A, TD)) {
+          // It simplifies to V.  Form "B op V".
+          I.setOperand(0, B);
+          I.setOperand(1, V);
+          Changed = true;
+          continue;
+        }
+      }
+
+      // Transform: "(A op C1) op (B op C2)" ==> "(A op B) op (C1 op C2)"
+      // if C1 and C2 are constants.
+      if (Op0 && Op1 &&
+          Op0->getOpcode() == Opcode && Op1->getOpcode() == Opcode &&
+          isa<Constant>(Op0->getOperand(1)) &&
+          isa<Constant>(Op1->getOperand(1)) &&
+          Op0->hasOneUse() && Op1->hasOneUse()) {
+        Value *A = Op0->getOperand(0);
+        Constant *C1 = cast<Constant>(Op0->getOperand(1));
+        Value *B = Op1->getOperand(0);
+        Constant *C2 = cast<Constant>(Op1->getOperand(1));
+
+        Constant *Folded = ConstantExpr::get(Opcode, C1, C2);
+        Instruction *New = BinaryOperator::Create(Opcode, A, B, Op1->getName(),
+                                                  &I);
+        Worklist.Add(New);
+        I.setOperand(0, New);
+        I.setOperand(1, Folded);
+        Changed = true;
+        continue;
+      }
+    }
+
+    // No further simplifications.
+    return Changed;
+  } while (1);
 }
 
 // dyn_castNegVal - Given a 'sub' instruction, return the RHS of the instruction

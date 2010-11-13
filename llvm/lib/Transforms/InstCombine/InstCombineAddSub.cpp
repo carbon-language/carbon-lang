@@ -84,7 +84,7 @@ bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS) {
 }
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
-  bool Changed = SimplifyCommutative(I);
+  bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
   if (Value *V = SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(),
@@ -342,7 +342,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
-  bool Changed = SimplifyCommutative(I);
+  bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
   if (Constant *RHSC = dyn_cast<Constant>(RHS)) {

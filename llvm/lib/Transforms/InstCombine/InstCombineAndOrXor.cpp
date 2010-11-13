@@ -978,7 +978,7 @@ Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
 
 
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
-  bool Changed = SimplifyCommutative(I);
+  bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (Value *V = SimplifyAndInst(Op0, Op1, TD))
@@ -1686,7 +1686,7 @@ Instruction *InstCombiner::FoldOrWithConstants(BinaryOperator &I, Value *Op,
 }
 
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
-  bool Changed = SimplifyCommutative(I);
+  bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (Value *V = SimplifyOrInst(Op0, Op1, TD))
@@ -1973,7 +1973,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitXor(BinaryOperator &I) {
-  bool Changed = SimplifyCommutative(I);
+  bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (isa<UndefValue>(Op1)) {
