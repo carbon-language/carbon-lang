@@ -1079,7 +1079,11 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return CGF.CGM.getCXXABI().EmitMemberPointerConversion(CGF, CE, Src);
   }
   
-
+  case CK_FloatingRealToComplex:
+  case CK_FloatingComplexCast:
+  case CK_IntegralRealToComplex:
+  case CK_IntegralComplexCast:
+  case CK_IntegralToFloatingComplex:
   case CK_ConstructorConversion:
     assert(0 && "Should be unreachable!");
     break;

@@ -118,7 +118,22 @@ enum CastKind {
   /// \brief Converting between two Objective-C object types, which
   /// can occur when performing reference binding to an Objective-C
   /// object.
-  CK_ObjCObjectLValueCast
+  CK_ObjCObjectLValueCast,
+
+  /// \brief Floating point real to floating point complex
+  CK_FloatingRealToComplex,
+
+  /// \brief Casting between floating point complex types of different size
+  CK_FloatingComplexCast,
+
+  /// \brief Integral real to integral complex
+  CK_IntegralRealToComplex,
+
+  /// \brief Casting between integral complex types of different size
+  CK_IntegralComplexCast,
+
+  /// \brief Casting from an integral complex to a floating complex.
+  CK_IntegralToFloatingComplex
 };
 
 

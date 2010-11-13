@@ -2165,6 +2165,8 @@ bool ComplexExprEvaluator::VisitCastExpr(CastExpr *E) {
   QualType EltType = E->getType()->getAs<ComplexType>()->getElementType();
   QualType SubType = SubExpr->getType();
 
+  // TODO: just trust CastKind
+
   if (SubType->isRealFloatingType()) {
     APFloat &Real = Result.FloatReal;
     if (!EvaluateFloat(SubExpr, Real, Info))

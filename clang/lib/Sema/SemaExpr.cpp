@@ -399,18 +399,30 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   if (LHSComplexFloat || RHSComplexFloat) {
     // if we have an integer operand, the result is the complex type.
 
-    if (LHSComplexFloat &&
-        (rhs->isIntegerType() || rhs->isComplexIntegerType())) {
-      // convert the rhs to the lhs complex type.
-      ImpCastExprToType(rhsExpr, lhs, CK_Unknown);
+    if (!RHSComplexFloat && !rhs->isRealFloatingType()) {
+      if (rhs->isIntegerType()) {
+        QualType fp = cast<ComplexType>(lhs)->getElementType();
+        ImpCastExprToType(rhsExpr, fp, CK_IntegralToFloating);
+        ImpCastExprToType(rhsExpr, lhs, CK_FloatingRealToComplex);
+      } else {
+        assert(rhs->isComplexIntegerType());
+        ImpCastExprToType(rhsExpr, lhs, CK_IntegralToFloatingComplex);
+      }
       return lhs;
     }
 
-    if (!LHSComplexFloat && RHSComplexFloat &&
-        (lhs->isIntegerType() || lhs->isComplexIntegerType())) {
-      // convert the lhs to the rhs complex type.
-      if (!isCompAssign)
-        ImpCastExprToType(lhsExpr, rhs, CK_Unknown);
+    if (!LHSComplexFloat && !lhs->isRealFloatingType()) {
+      if (!isCompAssign) {
+        // int -> float -> _Complex float
+        if (lhs->isIntegerType()) {
+          QualType fp = cast<ComplexType>(rhs)->getElementType();
+          ImpCastExprToType(lhsExpr, fp, CK_IntegralToFloating);
+          ImpCastExprToType(lhsExpr, rhs, CK_FloatingRealToComplex);
+        } else {
+          assert(lhs->isComplexIntegerType());
+          ImpCastExprToType(lhsExpr, rhs, CK_IntegralToFloatingComplex);
+        }
+      }
       return rhs;
     }
 
@@ -430,13 +442,13 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     if (LHSComplexFloat && RHSComplexFloat) {
       if (order > 0) {
         // _Complex float -> _Complex double
-        ImpCastExprToType(rhsExpr, lhs, CK_Unknown);
+        ImpCastExprToType(rhsExpr, lhs, CK_FloatingComplexCast);
         return lhs;
 
       } else if (order < 0) {
         // _Complex float -> _Complex double
         if (!isCompAssign)
-          ImpCastExprToType(lhsExpr, rhs, CK_Unknown);
+          ImpCastExprToType(lhsExpr, rhs, CK_FloatingComplexCast);
         return rhs;
       }
       return lhs;
@@ -447,7 +459,9 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     if (LHSComplexFloat) {
       if (order > 0) { // LHS is wider
         // float -> _Complex double
-        ImpCastExprToType(rhsExpr, lhs, CK_Unknown);
+        QualType fp = cast<ComplexType>(lhs)->getElementType();
+        ImpCastExprToType(rhsExpr, fp, CK_FloatingCast);
+        ImpCastExprToType(rhsExpr, lhs, CK_FloatingRealToComplex);
         return lhs;        
       }
 
@@ -455,11 +469,11 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
       QualType result = (order == 0 ? lhs : Context.getComplexType(rhs));
 
       // double -> _Complex double
-      ImpCastExprToType(rhsExpr, result, CK_Unknown);
+      ImpCastExprToType(rhsExpr, result, CK_FloatingRealToComplex);
 
       // _Complex float -> _Complex double
       if (!isCompAssign && order < 0)
-        ImpCastExprToType(lhsExpr, result, CK_Unknown);
+        ImpCastExprToType(lhsExpr, result, CK_FloatingComplexCast);
 
       return result;
     }
@@ -470,8 +484,10 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 
     if (order < 0) { // RHS is wider
       // float -> _Complex double
-      if (!isCompAssign)
-        ImpCastExprToType(lhsExpr, rhs, CK_Unknown);
+      if (!isCompAssign) {
+        ImpCastExprToType(lhsExpr, rhs, CK_FloatingCast);
+        ImpCastExprToType(lhsExpr, rhs, CK_FloatingRealToComplex);
+      }
       return rhs;
     }
 
@@ -480,11 +496,11 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 
     // double -> _Complex double
     if (!isCompAssign)
-      ImpCastExprToType(lhsExpr, result, CK_Unknown);
+      ImpCastExprToType(lhsExpr, result, CK_FloatingRealToComplex);
 
     // _Complex float -> _Complex double
     if (order > 0)
-      ImpCastExprToType(rhsExpr, result, CK_Unknown);
+      ImpCastExprToType(rhsExpr, result, CK_FloatingComplexCast);
 
     return result;
   }
@@ -521,11 +537,11 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
       QualType result = Context.getComplexType(lhs);
 
       // _Complex int -> _Complex float
-      ImpCastExprToType(rhsExpr, result, CK_Unknown);
+      ImpCastExprToType(rhsExpr, result, CK_IntegralToFloatingComplex);
 
       // float -> _Complex float
       if (!isCompAssign)
-        ImpCastExprToType(lhsExpr, result, CK_Unknown);
+        ImpCastExprToType(lhsExpr, result, CK_FloatingRealToComplex);
 
       return result;
     }
@@ -544,10 +560,10 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 
     // _Complex int -> _Complex float
     if (!isCompAssign)
-      ImpCastExprToType(lhsExpr, result, CK_Unknown);
+      ImpCastExprToType(lhsExpr, result, CK_IntegralToFloatingComplex);
 
     // float -> _Complex float
-    ImpCastExprToType(rhsExpr, result, CK_Unknown);
+    ImpCastExprToType(rhsExpr, result, CK_FloatingRealToComplex);
 
     return result;
   }
@@ -563,21 +579,21 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     assert(order && "inequal types with equal element ordering");
     if (order > 0) {
       // _Complex int -> _Complex long
-      ImpCastExprToType(rhsExpr, lhs, CK_Unknown);
+      ImpCastExprToType(rhsExpr, lhs, CK_IntegralComplexCast);
       return lhs;
     }
 
     if (!isCompAssign)
-      ImpCastExprToType(lhsExpr, rhs, CK_Unknown);
+      ImpCastExprToType(lhsExpr, rhs, CK_IntegralComplexCast);
     return rhs;
   } else if (lhsComplexInt) {
     // int -> _Complex int
-    ImpCastExprToType(rhsExpr, lhs, CK_Unknown);
+    ImpCastExprToType(rhsExpr, lhs, CK_IntegralRealToComplex);
     return lhs;
   } else if (rhsComplexInt) {
     // int -> _Complex int
     if (!isCompAssign)
-      ImpCastExprToType(lhsExpr, rhs, CK_Unknown);
+      ImpCastExprToType(lhsExpr, rhs, CK_IntegralRealToComplex);
     return rhs;
   }
 

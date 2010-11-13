@@ -156,8 +156,8 @@ protected:
     friend class CastExpr;
     unsigned : NumExprBits;
 
-    unsigned Kind : 5;
-    unsigned BasePathSize : 32 - NumExprBits - 5;
+    unsigned Kind : 6;
+    unsigned BasePathSize : 32 - 6 - NumExprBits;
   };
 
   union {

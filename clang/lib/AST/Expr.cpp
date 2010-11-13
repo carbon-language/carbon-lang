@@ -798,9 +798,19 @@ const char *CastExpr::getCastKindName() const {
     return "AnyPointerToBlockPointerCast";
   case CK_ObjCObjectLValueCast:
     return "ObjCObjectLValueCast";
+  case CK_FloatingRealToComplex:
+    return "FloatingRealToComplex";
+  case CK_FloatingComplexCast:
+    return "FloatingComplexCast";
+  case CK_IntegralRealToComplex:
+    return "IntegralRealToComplex";
+  case CK_IntegralComplexCast:
+    return "IntegralComplexCast";
+  case CK_IntegralToFloatingComplex:
+    return "IntegralToFloatingComplex";
   }
 
-  assert(0 && "Unhandled cast kind!");
+  llvm_unreachable("Unhandled cast kind!");
   return 0;
 }
 
