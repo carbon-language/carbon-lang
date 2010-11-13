@@ -1,5 +1,5 @@
 ; PR672
-; RUN: llvm-as < %s | lli
+; RUN: lli %s
 
 define i32 @main() {
 	%f = bitcast i32 (i32, i32*, i32)* @check_tail to i32*		; <i32*> [#uses=1]

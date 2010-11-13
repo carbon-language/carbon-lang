@@ -1,5 +1,4 @@
-; RUN: llvm-as %s -o %t.bc
-; RUN: lli %t.bc > /dev/null
+; RUN: lli %s > /dev/null
 
 ; Testcase distilled from 256.bzip2.
 

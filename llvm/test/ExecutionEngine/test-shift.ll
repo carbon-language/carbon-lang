@@ -1,5 +1,4 @@
-; RUN: llvm-as %s -o %t.bc
-; RUN: lli %t.bc > /dev/null
+; RUN: lli %s > /dev/null
 
 define i32 @main() {
 	%shamt = add i8 0, 1		; <i8> [#uses=8]

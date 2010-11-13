@@ -1,5 +1,4 @@
-; RUN: llvm-as %s -o %t.bc
-; RUN: lli %t.bc > /dev/null
+; RUN: lli %s > /dev/null
 
 ; test phi node
 @Y = global i32 6		; <i32*> [#uses=1]

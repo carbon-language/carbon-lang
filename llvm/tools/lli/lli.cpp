@@ -24,6 +24,7 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/IRReader.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
@@ -136,20 +137,15 @@ int main(int argc, char **argv, char * const *envp) {
     sys::Process::PreventCoreFiles();
   
   // Load the bitcode...
-  std::string ErrorMsg;
-  Module *Mod = NULL;
-  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
-    Mod = getLazyBitcodeModule(Buffer, Context, &ErrorMsg);
-    if (!Mod) delete Buffer;
-  }
-  
+  SMDiagnostic Err;
+  Module *Mod = ParseIRFile(InputFile, Err, Context);
   if (!Mod) {
-    errs() << argv[0] << ": error loading program '" << InputFile << "': "
-           << ErrorMsg << "\n";
-    exit(1);
+    Err.Print(argv[0], errs());
+    return 1;
   }
 
   // If not jitting lazily, load the whole bitcode file eagerly too.
+  std::string ErrorMsg;
   if (NoLazyCompilation) {
     if (Mod->MaterializeAllPermanently(&ErrorMsg)) {
       errs() << argv[0] << ": bitcode didn't read correctly.\n";

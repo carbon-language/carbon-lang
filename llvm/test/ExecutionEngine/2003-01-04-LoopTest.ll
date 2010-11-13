@@ -1,5 +1,4 @@
-; RUN: llvm-as %s -o %t.bc
-; RUN: lli %t.bc > /dev/null
+; RUN: lli %s > /dev/null
 
 define i32 @main() {
 	call i32 @mylog( i32 4 )		; <i32>:1 [#uses=0]

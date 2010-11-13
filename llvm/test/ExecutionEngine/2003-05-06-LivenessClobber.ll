@@ -1,6 +1,6 @@
-; This testcase shoudl return with an exit code of 1.
+; This testcase should return with an exit code of 1.
 ;
-; RUN: llvm-as < %s | not lli
+; RUN: not lli %s
 
 @test = global i64 0		; <i64*> [#uses=1]
 

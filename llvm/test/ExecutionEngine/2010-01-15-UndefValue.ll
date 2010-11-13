@@ -1,5 +1,4 @@
-; RUN: llvm-as %s -o %t.bc
-; RUN: lli -force-interpreter=true %t.bc
+; RUN: lli -force-interpreter=true %s
 
 define i32 @main() {
        %a = add i32 0, undef

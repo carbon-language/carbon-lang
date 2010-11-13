@@ -1,5 +1,4 @@
-; RUN: llvm-as %s -o %t.bc
-; RUN: lli %t.bc > /dev/null
+; RUN: lli %s > /dev/null
 
 define i32 @main() {
 	%A = and i8 4, 8		; <i8> [#uses=2]

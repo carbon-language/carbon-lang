@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o - | lli -force-interpreter
+; RUN: lli -force-interpreter %s
 ; PR1836
 
 define i32 @main() {
