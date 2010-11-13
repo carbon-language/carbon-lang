@@ -4516,24 +4516,35 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   const unsigned FirstPromotedArithmeticType = 9,
                  LastPromotedArithmeticType = 18;
   const unsigned NumArithmeticTypes = 18;
-  QualType ArithmeticTypes[NumArithmeticTypes] = {
-    Context.BoolTy, Context.CharTy, Context.WCharTy,
-    Context.Char16Ty, Context.Char32Ty,
-    Context.SignedCharTy, Context.ShortTy,
-    Context.UnsignedCharTy, Context.UnsignedShortTy,
-    Context.IntTy, Context.LongTy, Context.LongLongTy,
-    Context.UnsignedIntTy, Context.UnsignedLongTy, Context.UnsignedLongLongTy,
-    Context.FloatTy, Context.DoubleTy, Context.LongDoubleTy
+  static CanQualType ASTContext::* const ArithmeticTypes[NumArithmeticTypes] = {
+    &ASTContext::BoolTy,
+    &ASTContext::CharTy,
+    &ASTContext::WCharTy,
+    &ASTContext::Char16Ty,
+    &ASTContext::Char32Ty,
+    &ASTContext::SignedCharTy,
+    &ASTContext::ShortTy,
+    &ASTContext::UnsignedCharTy,
+    &ASTContext::UnsignedShortTy,
+    &ASTContext::IntTy,
+    &ASTContext::LongTy,
+    &ASTContext::LongLongTy,
+    &ASTContext::UnsignedIntTy,
+    &ASTContext::UnsignedLongTy,
+    &ASTContext::UnsignedLongLongTy,
+    &ASTContext::FloatTy,
+    &ASTContext::DoubleTy,
+    &ASTContext::LongDoubleTy
   };
-  assert(ArithmeticTypes[FirstPromotedIntegralType] == Context.IntTy &&
+  assert(ArithmeticTypes[FirstPromotedIntegralType] == &ASTContext::IntTy &&
          "Invalid first promoted integral type");
   assert(ArithmeticTypes[LastPromotedIntegralType - 1] 
-           == Context.UnsignedLongLongTy &&
+           == &ASTContext::UnsignedLongLongTy &&
          "Invalid last promoted integral type");
-  assert(ArithmeticTypes[FirstPromotedArithmeticType] == Context.IntTy &&
+  assert(ArithmeticTypes[FirstPromotedArithmeticType] == &ASTContext::IntTy &&
          "Invalid first promoted arithmetic type");
   assert(ArithmeticTypes[LastPromotedArithmeticType - 1] 
-            == Context.LongDoubleTy &&
+           == &ASTContext::LongDoubleTy &&
          "Invalid last promoted arithmetic type");
          
   // Find all of the types that the arguments can convert to, but only
@@ -4655,7 +4666,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //       T          operator--(VQ T&, int);
     for (unsigned Arith = (Op == OO_PlusPlus? 0 : 1);
          Arith < NumArithmeticTypes; ++Arith) {
-      QualType ArithTy = ArithmeticTypes[Arith];
+      QualType ArithTy = Context.*ArithmeticTypes[Arith];
       QualType ParamTypes[2]
         = { Context.getLValueReferenceType(ArithTy), Context.IntTy };
 
@@ -4765,7 +4776,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //       T         operator-(T);
     for (unsigned Arith = FirstPromotedArithmeticType;
          Arith < LastPromotedArithmeticType; ++Arith) {
-      QualType ArithTy = ArithmeticTypes[Arith];
+      QualType ArithTy = Context.*ArithmeticTypes[Arith];
       AddBuiltinCandidate(ArithTy, &ArithTy, Args, 1, CandidateSet);
     }
       
@@ -4787,7 +4798,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //        T         operator~(T);
     for (unsigned Int = FirstPromotedIntegralType;
          Int < LastPromotedIntegralType; ++Int) {
-      QualType IntTy = ArithmeticTypes[Int];
+      QualType IntTy = Context.*ArithmeticTypes[Int];
       AddBuiltinCandidate(IntTy, &IntTy, Args, 1, CandidateSet);
     }
       
@@ -4991,7 +5002,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
          Left < LastPromotedArithmeticType; ++Left) {
       for (unsigned Right = FirstPromotedArithmeticType;
            Right < LastPromotedArithmeticType; ++Right) {
-        QualType LandR[2] = { ArithmeticTypes[Left], ArithmeticTypes[Right] };
+        QualType LandR[2] = { Context.*ArithmeticTypes[Left],
+                              Context.*ArithmeticTypes[Right] };
         QualType Result
           = isComparison
           ? Context.BoolTy
@@ -5050,7 +5062,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
          Left < LastPromotedIntegralType; ++Left) {
       for (unsigned Right = FirstPromotedIntegralType;
            Right < LastPromotedIntegralType; ++Right) {
-        QualType LandR[2] = { ArithmeticTypes[Left], ArithmeticTypes[Right] };
+        QualType LandR[2] = { Context.*ArithmeticTypes[Left],
+                              Context.*ArithmeticTypes[Right] };
         QualType Result = (Op == OO_LessLess || Op == OO_GreaterGreater)
             ? LandR[0]
             : Context.UsualArithmeticConversionsType(LandR[0], LandR[1]);
@@ -5184,16 +5197,18 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       for (unsigned Right = FirstPromotedArithmeticType;
            Right < LastPromotedArithmeticType; ++Right) {
         QualType ParamTypes[2];
-        ParamTypes[1] = ArithmeticTypes[Right];
+        ParamTypes[1] = Context.*ArithmeticTypes[Right];
 
         // Add this built-in operator as a candidate (VQ is empty).
-        ParamTypes[0] = Context.getLValueReferenceType(ArithmeticTypes[Left]);
+        ParamTypes[0] =
+          Context.getLValueReferenceType(Context.*ArithmeticTypes[Left]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
 
         // Add this built-in operator as a candidate (VQ is 'volatile').
         if (VisibleTypeConversionsQuals.hasVolatile()) {
-          ParamTypes[0] = Context.getVolatileType(ArithmeticTypes[Left]);
+          ParamTypes[0] =
+            Context.getVolatileType(Context.*ArithmeticTypes[Left]);
           ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
           AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                               /*IsAssigmentOperator=*/Op == OO_Equal);
@@ -5249,14 +5264,15 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       for (unsigned Right = FirstPromotedIntegralType;
            Right < LastPromotedIntegralType; ++Right) {
         QualType ParamTypes[2];
-        ParamTypes[1] = ArithmeticTypes[Right];
+        ParamTypes[1] = Context.*ArithmeticTypes[Right];
 
         // Add this built-in operator as a candidate (VQ is empty).
-        ParamTypes[0] = Context.getLValueReferenceType(ArithmeticTypes[Left]);
+        ParamTypes[0] =
+          Context.getLValueReferenceType(Context.*ArithmeticTypes[Left]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
         if (VisibleTypeConversionsQuals.hasVolatile()) {
           // Add this built-in operator as a candidate (VQ is 'volatile').
-          ParamTypes[0] = ArithmeticTypes[Left];
+          ParamTypes[0] = Context.*ArithmeticTypes[Left];
           ParamTypes[0] = Context.getVolatileType(ParamTypes[0]);
           ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
           AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
