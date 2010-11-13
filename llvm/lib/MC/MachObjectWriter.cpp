@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/MachObjectWriter.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
@@ -159,7 +158,7 @@ static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
 
 namespace {
 
-class MachObjectWriterImpl {
+class MachObjectWriter : public MCObjectWriter {
   // See <mach-o/loader.h>.
   enum {
     Header_Magic32 = 0xFEEDFACE,
@@ -284,29 +283,17 @@ class MachObjectWriterImpl {
 
   /// @}
 
-  MachObjectWriter *Writer;
-
-  raw_ostream &OS;
-
   unsigned Is64Bit : 1;
 
   uint32_t CPUType;
   uint32_t CPUSubtype;
 
 public:
-  MachObjectWriterImpl(MachObjectWriter *_Writer, bool _Is64Bit,
-                       uint32_t _CPUType, uint32_t _CPUSubtype)
-    : Writer(_Writer), OS(Writer->getStream()), Is64Bit(_Is64Bit),
-      CPUType(_CPUType), CPUSubtype(_CPUSubtype) {
-  }
-
-  void Write8(uint8_t Value) { Writer->Write8(Value); }
-  void Write16(uint16_t Value) { Writer->Write16(Value); }
-  void Write32(uint32_t Value) { Writer->Write32(Value); }
-  void Write64(uint64_t Value) { Writer->Write64(Value); }
-  void WriteZeros(unsigned N) { Writer->WriteZeros(N); }
-  void WriteBytes(StringRef Str, unsigned ZeroFillSize = 0) {
-    Writer->WriteBytes(Str, ZeroFillSize);
+  MachObjectWriter(raw_ostream &_OS,
+                   bool _Is64Bit, uint32_t _CPUType, uint32_t _CPUSubtype,
+                   bool _IsLittleEndian)
+    : MCObjectWriter(_OS, _IsLittleEndian),
+      Is64Bit(_Is64Bit), CPUType(_CPUType), CPUSubtype(_CPUSubtype) {
   }
 
   void WriteHeader(unsigned NumLoadCommands, unsigned LoadCommandsSize,
@@ -1170,7 +1157,7 @@ public:
     return true;
   }
 
-  void WriteObject(const MCAssembler &Asm, const MCAsmLayout &Layout) {
+  void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) {
     unsigned NumSections = Asm.size();
 
     // The section data starts after the header, the segment load command (and
@@ -1271,7 +1258,7 @@ public:
     // Write the actual section data.
     for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it)
-      Asm.WriteSectionData(it, Layout, Writer);
+      Asm.WriteSectionData(it, Layout, this);
 
     // Write the extra padding.
     WriteZeros(SectionDataPadding);
@@ -1331,42 +1318,9 @@ public:
 
 }
 
-MachObjectWriter::MachObjectWriter(raw_ostream &OS,
-                                   bool Is64Bit,
-                                   uint32_t CPUType,
-                                   uint32_t CPUSubtype,
-                                   bool IsLittleEndian)
-  : MCObjectWriter(OS, IsLittleEndian)
-{
-  Impl = new MachObjectWriterImpl(this, Is64Bit, CPUType, CPUSubtype);
-}
-
-MachObjectWriter::~MachObjectWriter() {
-  delete (MachObjectWriterImpl*) Impl;
-}
-
-void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm) {
-  ((MachObjectWriterImpl*) Impl)->ExecutePostLayoutBinding(Asm);
-}
-
-void MachObjectWriter::RecordRelocation(const MCAssembler &Asm,
-                                        const MCAsmLayout &Layout,
-                                        const MCFragment *Fragment,
-                                        const MCFixup &Fixup, MCValue Target,
-                                        uint64_t &FixedValue) {
-  ((MachObjectWriterImpl*) Impl)->RecordRelocation(Asm, Layout, Fragment, Fixup,
-                                                   Target, FixedValue);
-}
-
-bool MachObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
-                                           const MCValue Target,
-                                           bool IsPCRel,
-                                           const MCFragment *DF) const {
-  return ((MachObjectWriterImpl*) Impl)->IsFixupFullyResolved(Asm, Target,
-                                                              IsPCRel, DF);
-}
-
-void MachObjectWriter::WriteObject(MCAssembler &Asm,
-                                   const MCAsmLayout &Layout) {
-  ((MachObjectWriterImpl*) Impl)->WriteObject(Asm, Layout);
+MCObjectWriter *llvm::createMachObjectWriter(raw_ostream &OS, bool is64Bit,
+                                             uint32_t CPUType,
+                                             uint32_t CPUSubtype,
+                                             bool IsLittleEndian) {
+  return new MachObjectWriter(OS, is64Bit, CPUType, CPUSubtype, IsLittleEndian);
 }

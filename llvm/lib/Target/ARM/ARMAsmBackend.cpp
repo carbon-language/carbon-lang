@@ -11,14 +11,12 @@
 #include "ARM.h"
 #include "ARMFixupKinds.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/MC/ELFObjectWriter.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectFormat.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/MC/MachObjectWriter.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -94,10 +92,10 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return new ELFObjectWriter(OS, /*Is64Bit=*/false,
-                               OSType, ELF::EM_ARM,
-                               /*IsLittleEndian=*/true,
-                               /*HasRelocationAddend=*/false);
+    return createELFObjectWriter(OS, /*Is64Bit=*/false,
+                                 OSType, ELF::EM_ARM,
+                                 /*IsLittleEndian=*/true,
+                                 /*HasRelocationAddend=*/false);
   }
 };
 
@@ -133,8 +131,9 @@ public:
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     // FIXME: Subtarget info should be derived. Force v7 for now.
-    return new MachObjectWriter(OS, /*Is64Bit=*/false, MachO::CPUTypeARM,
-                                MachO::CPUSubType_ARM_V7);
+    return createMachObjectWriter(OS, /*Is64Bit=*/false, MachO::CPUTypeARM,
+                                  MachO::CPUSubType_ARM_V7,
+                                  /*IsLittleEndian=*/true);
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {

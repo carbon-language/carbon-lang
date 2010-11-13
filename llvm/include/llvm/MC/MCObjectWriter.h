@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCOBJECTWRITER_H
 #define LLVM_MC_MCOBJECTWRITER_H
 
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/DataTypes.h"
 #include <cassert>
@@ -177,6 +178,13 @@ public:
   static void EncodeULEB128(uint64_t Value, raw_ostream &OS);
 };
 
+MCObjectWriter *createMachObjectWriter(raw_ostream &OS, bool is64Bit,
+                                       uint32_t CPUType, uint32_t CPUSubtype,
+                                       bool IsLittleEndian);
+MCObjectWriter *createELFObjectWriter(raw_ostream &OS, bool is64Bit,
+                                      Triple::OSType OSType, uint16_t EMachine,
+                                      bool IsLittleEndian,
+                                      bool HasRelocationAddend);
 MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS, bool is64Bit);
 
 } // End llvm namespace

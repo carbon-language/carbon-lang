@@ -11,7 +11,6 @@
 #include "X86.h"
 #include "X86FixupKinds.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/MC/ELFObjectWriter.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectFormat.h"
@@ -19,7 +18,6 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/MC/MachObjectWriter.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -310,10 +308,10 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return new ELFObjectWriter(OS, /*Is64Bit=*/false,
-                               OSType, ELF::EM_386,
-                               /*IsLittleEndian=*/true,
-                               /*HasRelocationAddend=*/false);
+    return createELFObjectWriter(OS, /*Is64Bit=*/false,
+                                 OSType, ELF::EM_386,
+                                 /*IsLittleEndian=*/true,
+                                 /*HasRelocationAddend=*/false);
   }
 };
 
@@ -327,10 +325,10 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return new ELFObjectWriter(OS, /*Is64Bit=*/true,
-                               OSType, ELF::EM_X86_64,
-                               /*IsLittleEndian=*/true,
-                               /*HasRelocationAddend=*/true);
+    return createELFObjectWriter(OS, /*Is64Bit=*/true,
+                                 OSType, ELF::EM_X86_64,
+                                 /*IsLittleEndian=*/true,
+                                 /*HasRelocationAddend=*/true);
   }
 };
 
@@ -397,8 +395,9 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return new MachObjectWriter(OS, /*Is64Bit=*/false, MachO::CPUTypeI386,
-                                MachO::CPUSubType_I386_ALL);
+    return createMachObjectWriter(OS, /*Is64Bit=*/false, MachO::CPUTypeI386,
+                                  MachO::CPUSubType_I386_ALL,
+                                  /*IsLittleEndian=*/true);
   }
 };
 
@@ -414,8 +413,9 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return new MachObjectWriter(OS, /*Is64Bit=*/true, MachO::CPUTypeX86_64,
-                                MachO::CPUSubType_I386_ALL);
+    return createMachObjectWriter(OS, /*Is64Bit=*/true, MachO::CPUTypeX86_64,
+                                  MachO::CPUSubType_I386_ALL,
+                                  /*IsLittleEndian=*/true);
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
