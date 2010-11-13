@@ -1151,6 +1151,64 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 }
 
 void
+CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
+                                        llvm::Value *This, llvm::Value *Src,
+                                        CallExpr::const_arg_iterator ArgBeg,
+                                        CallExpr::const_arg_iterator ArgEnd) {
+  if (D->isTrivial()) {
+    assert(ArgBeg + 1 == ArgEnd && "unexpected argcount for trivial ctor");
+    assert(D->isCopyConstructor() && "trivial 1-arg ctor not a copy ctor");
+    EmitAggregateCopy(This, Src, (*ArgBeg)->getType());
+    return;
+  }
+  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, 
+                                                    clang::Ctor_Complete);
+  assert(D->isInstance() &&
+         "Trying to emit a member call expr on a static method!");
+  
+  const FunctionProtoType *FPT = D->getType()->getAs<FunctionProtoType>();
+  
+  CallArgList Args;
+  
+  // Push the this ptr.
+  Args.push_back(std::make_pair(RValue::get(This),
+                                D->getThisType(getContext())));
+  
+  
+  // Push the src ptr.
+  QualType QT = *(FPT->arg_type_begin());
+  const llvm::Type *t = CGM.getTypes().ConvertType(QT);
+  Src = Builder.CreateBitCast(Src, t);
+  Args.push_back(std::make_pair(RValue::get(Src), QT));
+  
+  // Skip over first argument (Src).
+  ++ArgBeg;
+  CallExpr::const_arg_iterator Arg = ArgBeg;
+  for (FunctionProtoType::arg_type_iterator I = FPT->arg_type_begin()+1,
+       E = FPT->arg_type_end(); I != E; ++I, ++Arg) {
+    assert(Arg != ArgEnd && "Running over edge of argument list!");
+    QualType ArgType = *I;
+    Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
+                                  ArgType));
+  }
+  // Either we've emitted all the call args, or we have a call to a
+  // variadic function.
+  assert((Arg == ArgEnd || FPT->isVariadic()) &&
+         "Extra arguments in non-variadic function!");
+  // If we still have any arguments, emit them using the type of the argument.
+  for (; Arg != ArgEnd; ++Arg) {
+    QualType ArgType = Arg->getType();
+    Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
+                                  ArgType));
+  }
+  
+  QualType ResultType = FPT->getResultType();
+  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
+                                          FPT->getExtInfo()),
+                  Callee, ReturnValueSlot(), Args, D);
+}
+
+void
 CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                                 CXXCtorType CtorType,
                                                 const FunctionArgList &Args) {

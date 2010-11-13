@@ -341,6 +341,33 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
   }
 }
 
+void
+CodeGenFunction::EmitSynthesizedCXXCopyCtor(llvm::Value *Dest, 
+                                            llvm::Value *Src,
+                                            const BlockDeclRefExpr *BDRE) {
+  const Expr *Exp = BDRE->getCopyConstructorExpr();
+  if (const CXXExprWithTemporaries *E = dyn_cast<CXXExprWithTemporaries>(Exp))
+    Exp = E->getSubExpr();
+  assert(isa<CXXConstructExpr>(Exp) && 
+         "EmitSynthesizedCXXCopyCtor - unknown copy ctor expr");
+  const CXXConstructExpr* E = cast<CXXConstructExpr>(Exp);
+  const CXXConstructorDecl *CD = E->getConstructor();
+  RunCleanupsScope Scope(*this);
+  
+  // If we require zero initialization before (or instead of) calling the
+  // constructor, as can be the case with a non-user-provided default
+  // constructor, emit the zero initialization now.
+  // FIXME. Do I still need this for a copy ctor synthesis?
+  if (E->requiresZeroInitialization())
+    EmitNullInitialization(Dest, E->getType());
+  
+  const ConstantArrayType *Array 
+    = getContext().getAsConstantArrayType(E->getType());
+  assert (!Array && "EmitSynthesizedCXXCopyCtor - Copied-in Array");
+  EmitSynthesizedCXXCopyCtorCall(CD, Dest, Src,
+                                 E->arg_begin(), E->arg_end());
+}
+
 /// Check whether the given operator new[] is the global placement
 /// operator new[].
 static bool IsPlacementOperatorNewArray(ASTContext &Ctx,

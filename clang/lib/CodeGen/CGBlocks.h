@@ -122,6 +122,7 @@ public:
   struct HelperInfo {
     int index;
     int flag;
+    const BlockDeclRefExpr *cxxvar_import;
     bool RequiresCopying;
   };
 

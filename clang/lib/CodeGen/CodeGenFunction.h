@@ -1171,6 +1171,11 @@ public:
                               bool ForVirtualBase, llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,
                               CallExpr::const_arg_iterator ArgEnd);
+  
+  void EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
+                              llvm::Value *This, llvm::Value *Src,
+                              CallExpr::const_arg_iterator ArgBeg,
+                              CallExpr::const_arg_iterator ArgEnd);
 
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                   const ConstantArrayType *ArrayTy,
@@ -1651,6 +1656,9 @@ public:
                                         llvm::GlobalVariable *Addr);
 
   void EmitCXXConstructExpr(const CXXConstructExpr *E, AggValueSlot Dest);
+  
+  void EmitSynthesizedCXXCopyCtor(llvm::Value *Dest, llvm::Value *Src,
+                                  const BlockDeclRefExpr *BDRE);
 
   RValue EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
                                     AggValueSlot Slot
@@ -1799,10 +1807,14 @@ public:
 
   /// NeedsObjCSelf - True if something in this block has an implicit
   /// reference to 'self'.
-  bool NeedsObjCSelf;
-
+  bool NeedsObjCSelf : 1;
+  
+  /// HasCXXObject - True if block has imported c++ object requiring copy
+  /// construction in copy helper and destruction in copy dispose helpers.
+  bool HasCXXObject : 1;
+  
   /// These are initialized by GenerateBlockFunction.
-  bool BlockHasCopyDispose;
+  bool BlockHasCopyDispose : 1;
   CharUnits BlockSize;
   CharUnits BlockAlign;
   llvm::SmallVector<const Expr*, 8> BlockLayout;

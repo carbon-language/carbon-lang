@@ -112,8 +112,11 @@ static void CollectBlockDeclRefInfo(const Stmt *S, CGBlockInfo &Info) {
     }
 
     // Only Decls that escape are added.
-    if (!Info.InnerBlocks.count(D->getDeclContext()))
+    if (!Info.InnerBlocks.count(D->getDeclContext())) {
+      if (BDRE->getCopyConstructorExpr())
+        Info.HasCXXObject = true;
       Info.DeclRefs.push_back(BDRE);
+    }
   }
 
   // Make sure to capture implicit 'self' references due to super calls.
@@ -221,6 +224,9 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // necessary, for example: { ^{ __block int i; ^{ i = 1; }(); }(); }
     if (Info.BlockHasCopyDispose)
       flags |= BLOCK_HAS_COPY_DISPOSE;
+    // This block may import a c++ object.
+    if (Info.HasCXXObject)
+      flags |= BLOCK_HAS_CXX_OBJ;
 
     // __isa
     C = CGM.getNSConcreteStackBlock();
@@ -312,9 +318,11 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
       const BlockDeclRefExpr *BDRE = cast<BlockDeclRefExpr>(E);
       Note.RequiresCopying = BlockRequiresCopying(BDRE);
-      
+      Note.cxxvar_import = 
+        BDRE->getCopyConstructorExpr() ? BDRE : 0;
       const ValueDecl *VD = BDRE->getDecl();
       QualType T = VD->getType();
+
       if (BDRE->isByRef()) {
         Note.flag = BLOCK_FIELD_IS_BYREF;
         if (T.isObjCGCWeak())
@@ -1000,14 +1008,18 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
         Srcv = Builder.CreateStructGEP(Srcv, index);
         Srcv = Builder.CreateBitCast(Srcv,
                                      llvm::PointerType::get(PtrToInt8Ty, 0));
-        Srcv = Builder.CreateLoad(Srcv);
-
         llvm::Value *Dstv = Builder.CreateStructGEP(DstObj, index);
-        Dstv = Builder.CreateBitCast(Dstv, PtrToInt8Ty);
-
-        llvm::Value *N = llvm::ConstantInt::get(CGF.Int32Ty, flag);
-        llvm::Value *F = CGM.getBlockObjectAssign();
-        Builder.CreateCall3(F, Dstv, Srcv, N);
+        if (NoteForHelper[i].cxxvar_import) {
+          CGF.EmitSynthesizedCXXCopyCtor(Dstv, Srcv, 
+                                         NoteForHelper[i].cxxvar_import);
+        }
+        else {
+          Srcv = Builder.CreateLoad(Srcv);
+          Dstv = Builder.CreateBitCast(Dstv, PtrToInt8Ty);
+          llvm::Value *N = llvm::ConstantInt::get(CGF.Int32Ty, flag);
+          llvm::Value *F = CGM.getBlockObjectAssign();
+          Builder.CreateCall3(F, Dstv, Srcv, N);
+        }
       }
     }
   }
@@ -1063,7 +1075,7 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
     PtrPtrT = llvm::PointerType::get(llvm::PointerType::get(T, 0), 0);
     SrcObj = Builder.CreateBitCast(SrcObj, PtrPtrT);
     SrcObj = Builder.CreateLoad(SrcObj);
-
+    EHScopeStack::stable_iterator CleanupDepth = CGF.EHStack.stable_begin();
     for (unsigned i=0; i < NoteForHelper.size(); ++i) {
       int flag = NoteForHelper[i].flag;
       int index = NoteForHelper[i].index;
@@ -1074,11 +1086,22 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
         Srcv = Builder.CreateStructGEP(Srcv, index);
         Srcv = Builder.CreateBitCast(Srcv,
                                      llvm::PointerType::get(PtrToInt8Ty, 0));
-        Srcv = Builder.CreateLoad(Srcv);
-
-        BuildBlockRelease(Srcv, flag);
+        if (NoteForHelper[i].cxxvar_import) {
+          const BlockDeclRefExpr *BDRE = NoteForHelper[i].cxxvar_import;
+          const Expr *E = BDRE->getCopyConstructorExpr();
+          QualType ClassTy = E->getType();
+          QualType PtrClassTy = getContext().getPointerType(ClassTy);
+          const llvm::Type *t = CGM.getTypes().ConvertType(PtrClassTy);
+          Srcv = Builder.CreateBitCast(Srcv, t);
+          CGF.PushDestructorCleanup(ClassTy, Srcv);
+        }
+        else {
+          Srcv = Builder.CreateLoad(Srcv);
+          BuildBlockRelease(Srcv, flag);
+        }
       }
     }
+    CGF.PopCleanupBlocks(CleanupDepth);
   }
 
   CGF.FinishFunction();
