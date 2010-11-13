@@ -539,11 +539,11 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
 multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
                            InstrItinClass itin_upd, bits<6> T1Enc,
                            bit L_bit> {
-  def IA :
+  def ia :
     T1I<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
         itin, !strconcat(asm, "${p}\t$Rn, $regs"), []>,
        T1Encoding<T1Enc>;
-  def IA_UPD :
+  def ia_UPD :
     T1It<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          itin_upd, !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []>,
         T1Encoding<T1Enc>;

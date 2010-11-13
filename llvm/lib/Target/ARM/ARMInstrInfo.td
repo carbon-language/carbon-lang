@@ -1737,7 +1737,7 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb),
 
 multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
                          InstrItinClass itin, InstrItinClass itin_upd> {
-  def IA :
+  def ia :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
          !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
@@ -1745,7 +1745,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def IA_UPD :
+  def ia_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
          !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
@@ -1753,7 +1753,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 1;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def DA :
+  def da :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
          !strconcat(asm, "da${p}\t$Rn, $regs"), "", []> {
@@ -1761,7 +1761,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def DA_UPD :
+  def da_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
          !strconcat(asm, "da${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
@@ -1769,7 +1769,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 1;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def DB :
+  def db :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
          !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
@@ -1777,7 +1777,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def DB_UPD :
+  def db_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
          !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
@@ -1785,7 +1785,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 1;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def IB :
+  def ib :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
          !strconcat(asm, "ib${p}\t$Rn, $regs"), "", []> {
@@ -1793,7 +1793,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def IB_UPD :
+  def ib_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
          !strconcat(asm, "ib${p}\t$Rn!, $regs"), "$Rn = $wb", []> {

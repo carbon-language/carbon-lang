@@ -1285,7 +1285,7 @@ defm t2PLI  : T2Ipl<0, 1, "pli">,  Requires<[IsThumb2,HasV7]>;
 
 multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
                             InstrItinClass itin_upd, bit L_bit> {
-  def IA :
+  def ia :
     T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          itin, !strconcat(asm, "${p}.w\t$Rn, $regs"), []> {
     bits<4>  Rn;
@@ -1300,7 +1300,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{19-16} = Rn;
     let Inst{15-0}  = regs;
   }
-  def IA_UPD :
+  def ia_UPD :
     T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           itin_upd, !strconcat(asm, "${p}.w\t$Rn!, $regs"), "$Rn = $wb", []> {
     bits<4>  Rn;
@@ -1315,7 +1315,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{19-16} = Rn;
     let Inst{15-0}  = regs;
   }
-  def DB :
+  def db :
     T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          itin, !strconcat(asm, "db${p}.w\t$Rn, $regs"), []> {
     bits<4>  Rn;
@@ -1330,7 +1330,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{19-16} = Rn;
     let Inst{15-0}  = regs;
   }
-  def DB_UPD :
+  def db_UPD :
     T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           itin_upd, !strconcat(asm, "db${p}.w\t$Rn, $regs"), "$Rn = $wb", []> {
     bits<4>  Rn;
