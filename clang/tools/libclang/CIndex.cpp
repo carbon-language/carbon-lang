@@ -143,36 +143,6 @@ public:
   
 typedef llvm::SmallVector<VisitorJob, 10> VisitorWorkList;
 
-#define DEF_JOB(NAME, DATA, KIND)\
-class NAME : public VisitorJob {\
-public:\
-  NAME(DATA *d, CXCursor parent) : VisitorJob(parent, VisitorJob::KIND, d) {} \
-  static bool classof(const VisitorJob *VJ) { return VJ->getKind() == KIND; }\
-  DATA *get() const { return static_cast<DATA*>(dataA); }\
-};
-
-DEF_JOB(DeclVisit, Decl, DeclVisitKind)
-DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
-DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
-DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
-#undef DEF_JOB
-
-class TypeLocVisit : public VisitorJob {
-public:
-  TypeLocVisit(TypeLoc tl, CXCursor parent) :
-    VisitorJob(parent, VisitorJob::TypeLocVisitKind,
-               tl.getType().getAsOpaquePtr(), tl.getOpaqueData()) {}
-
-  static bool classof(const VisitorJob *VJ) {
-    return VJ->getKind() == TypeLocVisitKind;
-  }
-
-  TypeLoc get() { 
-    QualType T = QualType::getFromOpaquePtr(dataA);
-    return TypeLoc(T, dataB);
-  }
-};
-
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
                       public TypeLocVisitor<CursorVisitor, bool>,
@@ -339,7 +309,6 @@ public:
 
   // Statement visitors
   bool VisitStmt(Stmt *S);
-  bool VisitDeclStmt(DeclStmt *S);
   bool VisitGotoStmt(GotoStmt *S);
 
   // Expression visitors
@@ -370,6 +339,7 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(CompoundLiteralExpr)
   DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
   DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
+  DATA_RECURSIVE_VISIT(DeclStmt)
   DATA_RECURSIVE_VISIT(ExplicitCastExpr)
   DATA_RECURSIVE_VISIT(DoStmt)
   DATA_RECURSIVE_VISIT(IfStmt)
@@ -1468,18 +1438,6 @@ bool CursorVisitor::VisitStmt(Stmt *S) {
   return false;
 }
 
-bool CursorVisitor::VisitDeclStmt(DeclStmt *S) {
-  bool isFirst = true;
-  for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
-       D != DEnd; ++D) {
-    if (*D && Visit(MakeCXCursor(*D, TU, isFirst)))
-      return true;
-    isFirst = false;
-  }
-
-  return false;
-}
-
 bool CursorVisitor::VisitGotoStmt(GotoStmt *S) {
   return Visit(MakeCursorLabelRef(S->getLabel(), S->getLabelLoc(), TU));
 }
@@ -1784,6 +1742,47 @@ bool CursorVisitor::VisitAttributes(Decl *D) {
 //===----------------------------------------------------------------------===//
 
 namespace {
+#define DEF_JOB(NAME, DATA, KIND)\
+class NAME : public VisitorJob {\
+public:\
+  NAME(DATA *d, CXCursor parent) : VisitorJob(parent, VisitorJob::KIND, d) {} \
+  static bool classof(const VisitorJob *VJ) { return VJ->getKind() == KIND; }\
+  DATA *get() const { return static_cast<DATA*>(dataA); }\
+};
+
+DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
+DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
+DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
+#undef DEF_JOB
+
+class DeclVisit : public VisitorJob {
+public:
+  DeclVisit(Decl *d, CXCursor parent, bool isFirst) :
+    VisitorJob(parent, VisitorJob::DeclVisitKind,
+               d, isFirst ? (void*) 1 : (void*) 0) {}
+  static bool classof(const VisitorJob *VJ) {
+    return VJ->getKind () == DeclVisitKind;
+  }
+  Decl *get() { return static_cast<Decl*>(dataA);}
+  bool isFirst() const { return dataB ? true : false; }
+};
+
+class TypeLocVisit : public VisitorJob {
+public:
+  TypeLocVisit(TypeLoc tl, CXCursor parent) :
+    VisitorJob(parent, VisitorJob::TypeLocVisitKind,
+               tl.getType().getAsOpaquePtr(), tl.getOpaqueData()) {}
+
+  static bool classof(const VisitorJob *VJ) {
+    return VJ->getKind() == TypeLocVisitKind;
+  }
+
+  TypeLoc get() { 
+    QualType T = QualType::getFromOpaquePtr(dataA);
+    return TypeLoc(T, dataB);
+  }
+};
+
 class EnqueueVisitor : public StmtVisitor<EnqueueVisitor, void> {
   VisitorWorkList &WL;
   CXCursor Parent;
@@ -1793,6 +1792,7 @@ public:
 
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+  void VisitDeclStmt(DeclStmt *S);
   void VisitExplicitCastExpr(ExplicitCastExpr *E);
   void VisitForStmt(ForStmt *FS);
   void VisitIfStmt(IfStmt *If);
@@ -1807,7 +1807,7 @@ public:
 
 private:
   void AddStmt(Stmt *S);
-  void AddDecl(Decl *D);
+  void AddDecl(Decl *D, bool isFirst = true);
   void AddTypeLoc(TypeSourceInfo *TI);
   void EnqueueChildren(Stmt *S);
 };
@@ -1817,9 +1817,9 @@ void EnqueueVisitor::AddStmt(Stmt *S) {
   if (S)
     WL.push_back(StmtVisit(S, Parent));
 }
-void EnqueueVisitor::AddDecl(Decl *D) {
+void EnqueueVisitor::AddDecl(Decl *D, bool isFirst) {
   if (D)
-    WL.push_back(DeclVisit(D, Parent));
+    WL.push_back(DeclVisit(D, Parent, isFirst));
 }
 void EnqueueVisitor::AddTypeLoc(TypeSourceInfo *TI) {
   if (TI)
@@ -1849,6 +1849,21 @@ void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
     AddStmt(CE->getArg(N-I));
   AddStmt(CE->getCallee());
   AddStmt(CE->getArg(0));
+}
+void EnqueueVisitor::VisitDeclStmt(DeclStmt *S) {
+  unsigned size = WL.size();
+  bool isFirst = true;
+  for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+       D != DEnd; ++D) {
+    AddDecl(*D, isFirst);
+    isFirst = false;
+  }
+  if (size == WL.size())
+    return;
+  // Now reverse the entries we just added.  This will match the DFS
+  // ordering performed by the worklist.
+  VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
+  std::reverse(I, E);
 }
 void EnqueueVisitor::VisitExplicitCastExpr(ExplicitCastExpr *E) {
   EnqueueChildren(E);
@@ -1931,7 +1946,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           continue;
 
         // For now, perform default visitation for Decls.
-        if (Visit(MakeCXCursor(D, TU)))
+        if (Visit(MakeCXCursor(D, TU, cast<DeclVisit>(LI).isFirst())))
             return true;
 
         continue;
