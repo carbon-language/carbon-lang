@@ -1791,7 +1791,7 @@ SelectT2CMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
     return CurDAG->SelectNodeTo(N, (isSoImm ? ARM::t2MOVCCi : ARM::t2MOVCCi16),
                                 MVT::i32, Ops, 5);
   } else if (is_t2_so_imm_not(TrueImm)) {
-    SDValue True = CurDAG->getTargetConstant(TrueImm, MVT::i32);
+    SDValue True = CurDAG->getTargetConstant(~TrueImm, MVT::i32);
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
     return CurDAG->SelectNodeTo(N, ARM::t2MVNCCi, MVT::i32, Ops, 5);
