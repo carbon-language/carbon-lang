@@ -1805,10 +1805,8 @@ void EnqueueVisitor::VisitCXXNewExpr(CXXNewExpr *E) {
     AddStmt(E->getPlacementArg(I-1));
 }
 void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
-  // Note that we enqueue things in reverse order so that
-  // they are visited correctly by the DFS.
-  for (unsigned I = 1, N = CE->getNumArgs(); I != N; ++I)
-    AddStmt(CE->getArg(N-I));
+  for (unsigned I = CE->getNumArgs(); I > 1 /* Yes, this is 1 */; --I)
+    AddStmt(CE->getArg(I-1));
   AddStmt(CE->getCallee());
   AddStmt(CE->getArg(0));
 }
