@@ -24,35 +24,38 @@ namespace llvm {
 class Function;
 class MachineFunction;
 
-/// Empty for now, but this object will contain all details about the
-/// generated machine code that a Listener might care about.
+/// JITEvent_EmittedFunctionDetails - Helper struct for containing information
+/// about a generated machine code function.
 struct JITEvent_EmittedFunctionDetails {
-  const MachineFunction *MF;
-
   struct LineStart {
-    // The address at which the current line changes.
+    /// The address at which the current line changes.
     uintptr_t Address;
-    // The new location information.  These can be translated to
-    // DebugLocTuples using MF->getDebugLocTuple().
+
+    /// The new location information.  These can be translated to DebugLocTuples
+    /// using MF->getDebugLocTuple().
     DebugLoc Loc;
   };
-  // This holds line boundary information sorted by address.
+
+  /// The machine function the struct contains information for.
+  const MachineFunction *MF;
+
+  /// The list of line boundary information, sorted by address.
   std::vector<LineStart> LineStarts;
 };
 
-/// JITEventListener - This interface is used by the JIT to notify clients about
-/// significant events during compilation.  For example, we could have
-/// implementations for profilers and debuggers that need to know where
-/// functions have been emitted.
+/// JITEventListener - Abstract interface for use by the JIT to notify clients
+/// about significant events during compilation. For example, to notify
+/// profilers and debuggers that need to know where functions have been emitted.
 ///
-/// Each method defaults to doing nothing, so you only need to override the ones
-/// you care about.
+/// The default implementation of each method does nothing.
 class JITEventListener {
 public:
-  JITEventListener() {}
-  virtual ~JITEventListener();  // Defined in JIT.cpp.
-
   typedef JITEvent_EmittedFunctionDetails EmittedFunctionDetails;
+
+public:
+  JITEventListener() {}
+  virtual ~JITEventListener();
+
   /// NotifyFunctionEmitted - Called after a function has been successfully
   /// emitted to memory.  The function still has its MachineFunction attached,
   /// if you should happen to need that.
@@ -60,13 +63,14 @@ public:
                                      void *Code, size_t Size,
                                      const EmittedFunctionDetails &Details) {}
 
-  /// NotifyFreeingMachineCode - This is called inside of
-  /// freeMachineCodeForFunction(), after the global mapping is removed, but
-  /// before the machine code is returned to the allocator.  OldPtr is the
-  /// address of the machine code and will be the same as the Code parameter to
-  /// a previous NotifyFunctionEmitted call.  The Function passed to
-  /// NotifyFunctionEmitted may have been destroyed by the time of the matching
-  /// NotifyFreeingMachineCode call.
+  /// NotifyFreeingMachineCode - Called from freeMachineCodeForFunction(), after
+  /// the global mapping is removed, but before the machine code is returned to
+  /// the allocator.
+  ///
+  /// OldPtr is the address of the machine code and will be the same as the Code
+  /// parameter to a previous NotifyFunctionEmitted call.  The Function passed
+  /// to NotifyFunctionEmitted may have been destroyed by the time of the
+  /// matching NotifyFreeingMachineCode call.
   virtual void NotifyFreeingMachineCode(void *OldPtr) {}
 };
 
