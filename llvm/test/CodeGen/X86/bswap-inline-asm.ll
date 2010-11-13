@@ -65,6 +65,13 @@ define i32 @t32(i32 %x) nounwind {
   ret i32 %asmtmp
 }
 
+; CHECK: u32:
+; CHECK: bswapl
+define i32 @u32(i32 %x) nounwind {
+  %asmtmp = tail call i32 asm "rorw $$8, ${0:w};rorl $$16, $0;rorw $$8, ${0:w}", "=r,0,~{cc},~{dirflag},~{flags},~{fpsr}"(i32 %x) nounwind
+  ret i32 %asmtmp
+}
+
 ; CHECK: s64:
 ; CHECK: bswapq
 define i64 @s64(i64 %x) nounwind {

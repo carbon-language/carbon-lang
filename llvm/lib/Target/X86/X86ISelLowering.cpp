@@ -11451,6 +11451,35 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
     }
     break;
   case 3:
+    if (CI->getType()->isIntegerTy(32) &&
+        IA->getConstraintString().compare(0, 5, "=r,0,") == 0) {
+      SmallVector<StringRef, 4> Words;
+      SplitString(AsmPieces[0], Words, " \t,");
+      if (Words.size() == 3 && Words[0] == "rorw" && Words[1] == "$$8" &&
+          Words[2] == "${0:w}") {
+        Words.clear();
+        SplitString(AsmPieces[1], Words, " \t,");
+        if (Words.size() == 3 && Words[0] == "rorl" && Words[1] == "$$16" &&
+            Words[2] == "$0") {
+          Words.clear();
+          SplitString(AsmPieces[2], Words, " \t,");
+          if (Words.size() == 3 && Words[0] == "rorw" && Words[1] == "$$8" &&
+              Words[2] == "${0:w}") {
+            AsmPieces.clear();
+            const std::string &Constraints = IA->getConstraintString();
+            SplitString(StringRef(Constraints).substr(5), AsmPieces, ",");
+            std::sort(AsmPieces.begin(), AsmPieces.end());
+            if (AsmPieces.size() == 4 &&
+                AsmPieces[0] == "~{cc}" &&
+                AsmPieces[1] == "~{dirflag}" &&
+                AsmPieces[2] == "~{flags}" &&
+                AsmPieces[3] == "~{fpsr}") {
+              return LowerToBSwap(CI);
+            }
+          }
+        }
+      }
+    }
     if (CI->getType()->isIntegerTy(64) &&
         Constraints.size() >= 2 &&
         Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
