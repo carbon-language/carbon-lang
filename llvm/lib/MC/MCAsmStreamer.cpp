@@ -292,6 +292,7 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_ELF_TypeTLS:         /// .type _foo, STT_TLS     # aka @tls_object
   case MCSA_ELF_TypeCommon:      /// .type _foo, STT_COMMON  # aka @common
   case MCSA_ELF_TypeNoType:      /// .type _foo, STT_NOTYPE  # aka @notype
+  case MCSA_ELF_TypeGnuUniqueObject:  /// .type _foo, @gnu_unique_object
     assert(MAI.hasDotTypeDotSizeDirective() && "Symbol Attr not supported");
     OS << "\t.type\t" << *Symbol << ','
        << ((MAI.getCommentString()[0] != '@') ? '@' : '%');
@@ -303,6 +304,7 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     case MCSA_ELF_TypeTLS:         OS << "tls_object"; break;
     case MCSA_ELF_TypeCommon:      OS << "common"; break;
     case MCSA_ELF_TypeNoType:      OS << "no_type"; break;
+    case MCSA_ELF_TypeGnuUniqueObject: OS << "gnu_unique_object"; break;
     }
     EmitEOL();
     return;
