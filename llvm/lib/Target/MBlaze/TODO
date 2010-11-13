@@ -37,3 +37,6 @@
     - The assembly parser does not use any MicroBlaze specific directives.
       I should investigate if there are MicroBlaze specific directive and,
       if there are, add them.
+    - The instruction MFS and MTS use special names for some of the
+      special registers that can be accessed. These special register
+      names should be parsed by the assembly parser.

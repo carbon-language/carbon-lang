@@ -11,12 +11,12 @@
 # CHECK:    encoding: [0x80,0x01,0x14,0x00]
             pcmpbf      r0, r1, r2
 
-# CHECK:    pcmpeq
+# CHECK:    pcmpne
 # BINARY:   100011 00000 00001 00010 10000000000
 # CHECK:    encoding: [0x8c,0x01,0x14,0x00]
-            pcmpeq      r0, r1, r2
+            pcmpne      r0, r1, r2
 
-# CHECK:    pcmpne
+# CHECK:    pcmpeq
 # BINARY:   100010 00000 00001 00010 10000000000
 # CHECK:    encoding: [0x88,0x01,0x14,0x00]
-            pcmpne      r0, r1, r2
+            pcmpeq      r0, r1, r2

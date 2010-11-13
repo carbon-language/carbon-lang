@@ -325,8 +325,8 @@ let isCommutable = 1, isAsCheapAsAMove = 1 in {
   def OR     :  Logic<0x20, 0x000, "or     ", or>;
   def XOR    :  Logic<0x22, 0x000, "xor    ", xor>;
   def PCMPBF : PatCmp<0x20, 0x400, "pcmpbf ">;
-  def PCMPEQ : PatCmp<0x23, 0x400, "pcmpeq ">;
-  def PCMPNE : PatCmp<0x22, 0x400, "pcmpne ">;
+  def PCMPEQ : PatCmp<0x22, 0x400, "pcmpeq ">;
+  def PCMPNE : PatCmp<0x23, 0x400, "pcmpne ">;
 }
 
 let isAsCheapAsAMove = 1 in {
