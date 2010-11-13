@@ -146,6 +146,20 @@ multiclass vfp_ldst_s_mult<string asm, bit L_bit,
   }
 }
 
+let neverHasSideEffects = 1 in {
+
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
+defm VLDMD : vfp_ldst_d_mult<"vldm", 1, IIC_fpLoad_m, IIC_fpLoad_mu>;
+defm VLDMS : vfp_ldst_s_mult<"vldm", 1, IIC_fpLoad_m, IIC_fpLoad_mu>;
+} // mayLoad, hasExtraDefRegAllocReq
+
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
+defm VSTMD : vfp_ldst_d_mult<"vstm", 0, IIC_fpLoad_m, IIC_fpLoad_mu>;
+defm VSTMS : vfp_ldst_s_mult<"vstm", 0, IIC_fpLoad_m, IIC_fpLoad_mu>;
+} // mayStore, hasExtraSrcRegAllocReq
+
+} // neverHasSideEffects
+
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
 def VLDMD : AXDI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,

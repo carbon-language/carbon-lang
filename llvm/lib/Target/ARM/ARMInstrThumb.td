@@ -549,6 +549,20 @@ multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
         T1Encoding<T1Enc>;
 }
 
+/* FIXME: Uncommented, this causes a decoding conflict.
+let neverHasSideEffects = 1 in {
+
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
+defm tLDM : thumb_ldst_mult<"ldm", IIC_iLoad_m, IIC_iLoad_mu,
+                            {1,1,0,0,1,?}, 1>;
+
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
+defm tSTM : thumb_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu,
+                            {1,1,0,0,0,?}, 0>;
+ 
+} // neverHasSideEffects
+*/
+
 // These require base address to be written back or one of the loaded regs.
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {

@@ -1347,6 +1347,16 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
   }
 }
 
+let neverHasSideEffects = 1, isCodeGenOnly = 1 in {
+
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
+defm t2LDM : thumb2_ldst_mult<"ldm", IIC_iLoad_m, IIC_iLoad_mu, 1>;
+
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
+defm t2STM : thumb2_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu, 0>;
+
+} // neverHasSideEffects
+
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
 def t2LDM : T2XI<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
