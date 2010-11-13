@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_ERRORHANDLING_H
 
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/StringRef.h"
 #include <string>
 
 namespace llvm {
@@ -74,6 +75,7 @@ namespace llvm {
   /// does not return.
   LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const char *reason);
   LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const std::string &reason);
+  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(StringRef reason);
   LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const Twine &reason);
 
   /// This function calls abort(), and prints the optional message to stderr.

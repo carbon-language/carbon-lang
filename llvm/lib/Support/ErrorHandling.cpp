@@ -58,6 +58,10 @@ void llvm::report_fatal_error(const std::string &Reason) {
   report_fatal_error(Twine(Reason));
 }
 
+void llvm::report_fatal_error(StringRef Reason) {
+  report_fatal_error(Twine(Reason));
+}
+
 void llvm::report_fatal_error(const Twine &Reason) {
   if (ErrorHandler) {
     ErrorHandler(ErrorHandlerUserData, Reason.str());
