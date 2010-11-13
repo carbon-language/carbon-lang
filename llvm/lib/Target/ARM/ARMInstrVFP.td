@@ -74,6 +74,78 @@ def VSTRS : ASI5<0b1101, 0b00, (outs), (ins SPR:$Sd, addrmode5:$addr),
 //  Load / store multiple Instructions.
 //
 
+multiclass vfp_ldst_d_mult<string asm, bit L_bit,
+                           InstrItinClass itin, InstrItinClass itin_upd> {
+  def IA :
+    AXDI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          IndexModeNone, itin,
+          !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b01;       // Increment After
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def IA_UPD :
+    AXDI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          IndexModeUpd, itin_upd,
+          !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b01;       // Increment After
+    let Inst{21}    = 1;          // Writeback
+    let Inst{20}    = L_bit;
+  }
+  def DB :
+    AXDI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          IndexModeNone, itin,
+          !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b10;       // Decrement Before
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def DB_UPD :
+    AXDI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          IndexModeUpd, itin_upd,
+          !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b10;       // Decrement Before
+    let Inst{21}    = 1;          // Writeback
+    let Inst{20}    = L_bit;
+  }
+}
+
+multiclass vfp_ldst_s_mult<string asm, bit L_bit,
+                           InstrItinClass itin, InstrItinClass itin_upd> {
+  def IA :
+    AXSI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          IndexModeNone, itin,
+          !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b01;       // Increment After
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def IA_UPD :
+    AXSI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          IndexModeUpd, itin_upd,
+          !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b01;       // Increment After
+    let Inst{21}    = 1;          // Writeback
+    let Inst{20}    = L_bit;
+  }
+  def DB :
+    AXSI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          IndexModeNone, itin,
+          !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b10;       // Decrement Before
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def DB_UPD :
+    AXSI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          IndexModeUpd, itin_upd,
+          !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b10;       // Decrement Before
+    let Inst{21}    = 1;          // Writeback
+    let Inst{20}    = L_bit;
+  }
+}
+
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
 def VLDMD : AXDI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,

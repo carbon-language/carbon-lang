@@ -1734,6 +1734,74 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb),
 //  Load / store multiple Instructions.
 //
 
+multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
+                         InstrItinClass itin, InstrItinClass itin_upd> {
+  def IA :
+    AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         IndexModeNone, f, itin,
+         !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b01;       // Increment After
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def IA_UPD :
+    AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         IndexModeUpd, f, itin_upd,
+         !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b01;       // Increment After
+    let Inst{21}    = 1;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def DA :
+    AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         IndexModeNone, f, itin,
+         !strconcat(asm, "da${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b00;       // Decrement After
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def DA_UPD :
+    AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         IndexModeUpd, f, itin_upd,
+         !strconcat(asm, "da${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b00;       // Decrement After
+    let Inst{21}    = 1;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def DB :
+    AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         IndexModeNone, f, itin,
+         !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b10;       // Decrement Before
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def DB_UPD :
+    AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         IndexModeUpd, f, itin_upd,
+         !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b10;       // Decrement Before
+    let Inst{21}    = 1;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def IB :
+    AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         IndexModeNone, f, itin,
+         !strconcat(asm, "ib${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b11;       // Increment Before
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def IB_UPD :
+    AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         IndexModeUpd, f, itin_upd,
+         !strconcat(asm, "ib${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b11;       // Increment Before
+    let Inst{21}    = 1;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+} 
+
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
 def LDM : AXI4ld<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,

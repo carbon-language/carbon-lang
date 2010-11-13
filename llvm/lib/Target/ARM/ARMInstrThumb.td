@@ -536,6 +536,19 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
 //  Load / store multiple Instructions.
 //
 
+multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
+                           InstrItinClass itin_upd, bits<6> T1Enc,
+                           bit L_bit> {
+  def IA :
+    T1I<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+        itin, !strconcat(asm, "${p}\t$Rn, $regs"), []>,
+       T1Encoding<T1Enc>;
+  def IA_UPD :
+    T1It<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         itin_upd, !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []>,
+        T1Encoding<T1Enc>;
+}
+
 // These require base address to be written back or one of the loaded regs.
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {

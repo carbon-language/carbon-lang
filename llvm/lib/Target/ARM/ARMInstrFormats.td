@@ -820,6 +820,18 @@ class AI3stdpo<dag oops, dag iops, Format f, InstrItinClass itin,
 }
 
 // addrmode4 instructions
+class AXI4<dag oops, dag iops, IndexMode im, Format f, InstrItinClass itin,
+           string asm, string cstr, list<dag> pattern>
+  : XI<oops, iops, AddrMode4, Size4Bytes, im, f, itin, asm, cstr, pattern> {
+  bits<4>  p;
+  bits<16> regs;
+  bits<4>  Rn;
+  let Inst{31-28} = p;
+  let Inst{27-25} = 0b100;
+  let Inst{22}    = 0; // S bit
+  let Inst{19-16} = Rn;
+  let Inst{15-0}  = regs;
+}
 class AXI4ld<dag oops, dag iops, IndexMode im, Format f, InstrItinClass itin,
              string asm, string cstr, list<dag> pattern>
   : XI<oops, iops, AddrMode4, Size4Bytes, im, f, itin,
