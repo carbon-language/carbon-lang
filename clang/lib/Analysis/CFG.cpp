@@ -2579,11 +2579,18 @@ CFGBlock *CFGBuilder::VisitBinaryOperatorForTemporaryDtors(BinaryOperator *E) {
   return RHSBlock ? RHSBlock : LHSBlock;
 }
 
+static bool hasElidableCXXConstructExpr(CXXBindTemporaryExpr *E) {
+  if (CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(E->getSubExpr()))
+    if (CE->isElidable())
+      return true;
+  return false;
+}
+
 CFGBlock *CFGBuilder::VisitCXXBindTemporaryExprForTemporaryDtors(
     CXXBindTemporaryExpr *E, bool BindToTemporary) {
   // First add destructors for temporaries in subexpression.
   CFGBlock *B = VisitForTemporaryDtors(E->getSubExpr());
-  if (!BindToTemporary) {
+  if (!BindToTemporary && !hasElidableCXXConstructExpr(E)) {
     // If lifetime of temporary is not prolonged (by assigning to constant
     // reference) add destructor for it.
     autoCreateBlock();
