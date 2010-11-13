@@ -11410,7 +11410,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
 
   // TODO: should remove alternatives from the asmstring: "foo {a|b}" -> "foo a"
   SmallVector<StringRef, 4> AsmPieces;
-  SplitString(AsmStr, AsmPieces, "\n");  // ; as separator?
+  SplitString(AsmStr, AsmPieces, ";\n");
 
   switch (AsmPieces.size()) {
   default: return false;
