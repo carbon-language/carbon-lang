@@ -7163,8 +7163,9 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       break;
 
     case OR_Ambiguous:
-      Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
+      Diag(OpLoc,  diag::err_ovl_ambiguous_oper_unary)
           << UnaryOperator::getOpcodeStr(Opc)
+          << Input->getType()
           << Input->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_ViableCandidates,
                                   Args, NumArgs,
@@ -7401,8 +7402,9 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     }
 
     case OR_Ambiguous:
-      Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
+      Diag(OpLoc,  diag::err_ovl_ambiguous_oper_binary)
           << BinaryOperator::getOpcodeStr(Opc)
+          << Args[0]->getType() << Args[1]->getType()
           << Args[0]->getSourceRange() << Args[1]->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_ViableCandidates, Args, 2,
                                   BinaryOperator::getOpcodeStr(Opc), OpLoc);
@@ -7543,8 +7545,10 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     }
 
     case OR_Ambiguous:
-      Diag(LLoc,  diag::err_ovl_ambiguous_oper)
-          << "[]" << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+      Diag(LLoc,  diag::err_ovl_ambiguous_oper_binary)
+          << "[]" 
+          << Args[0]->getType() << Args[1]->getType()
+          << Args[0]->getSourceRange() << Args[1]->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_ViableCandidates, Args, 2,
                                   "[]", LLoc);
       return ExprError();
@@ -8013,8 +8017,8 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
     return ExprError();
 
   case OR_Ambiguous:
-    Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
-      << "->" << Base->getSourceRange();
+    Diag(OpLoc,  diag::err_ovl_ambiguous_oper_unary)
+      << "->" << Base->getType() << Base->getSourceRange();
     CandidateSet.NoteCandidates(*this, OCD_ViableCandidates, &Base, 1);
     return ExprError();
 

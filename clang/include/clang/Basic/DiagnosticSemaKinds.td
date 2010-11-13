@@ -1328,8 +1328,10 @@ def err_ref_init_ambiguous : Error<
   "reference initialization of type %0 with initializer of type %1 is ambiguous">;
 def err_ovl_deleted_init : Error<
   "call to %select{unavailable|deleted}0 constructor of %1">;
-def err_ovl_ambiguous_oper : Error<
-  "use of overloaded operator '%0' is ambiguous">;
+def err_ovl_ambiguous_oper_unary : Error<
+  "use of overloaded operator '%0' is ambiguous (operand type %1)">;
+def err_ovl_ambiguous_oper_binary : Error<
+  "use of overloaded operator '%0' is ambiguous (with operand types %1 and %2)">;
 def err_ovl_no_viable_oper : Error<"no viable overloaded '%0'">;
 def err_ovl_deleted_oper : Error<
   "overload resolution selected %select{unavailable|deleted}0 operator '%1'">;
