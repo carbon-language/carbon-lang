@@ -2,8 +2,8 @@
 // RUN: %clang %s -S -emit-llvm -o - -DPROTOTYPE | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
 // RUN: %clang %s -S -emit-llvm -o - -DINSTANTIATE | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
 // RUN: %clang %s -S -emit-llvm -o - -DPROTOTYPE -DINSTANTIATE | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
-// RUN: %clang -cc1 %s -DREDEFINE -verify
-// RUN: %clang -cc1 %s -DPROTOTYPE -DREDEFINE -verify
+// RUN: %clang_cc1 %s -DREDEFINE -verify
+// RUN: %clang_cc1 %s -DPROTOTYPE -DREDEFINE -verify
 // PR8007: friend function not instantiated, reordered version.
 // Corresponds to http://gcc.gnu.org/bugzilla/show_bug.cgi?id=38392
 
