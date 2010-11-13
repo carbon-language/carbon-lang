@@ -126,3 +126,23 @@ namespace pr7199 {
 
   template class B<int>; // expected-note {{in instantiation}}
 }
+
+namespace PR8425 {
+  template <typename T>
+  class BaseT {};
+
+  template <typename T>
+  class DerivedT : public BaseT<T> {};
+
+  template <typename T>
+  class FromT {
+  public:
+    operator DerivedT<T>() const { return DerivedT<T>(); }
+  };
+
+  void test() {
+    FromT<int> ft;
+    BaseT<int> bt(ft);
+  }
+}
+
