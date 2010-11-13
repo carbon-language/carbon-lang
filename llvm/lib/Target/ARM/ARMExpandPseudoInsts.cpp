@@ -691,15 +691,19 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
     }
 
     case ARM::MOVi32imm:
-    case ARM::t2MOVi32imm: {
+    case ARM::MOVCCi32imm:
+    case ARM::t2MOVi32imm:
+    case ARM::t2MOVCCi32imm: {
       unsigned PredReg = 0;
       ARMCC::CondCodes Pred = llvm::getInstrPredicate(&MI, PredReg);
       unsigned DstReg = MI.getOperand(0).getReg();
       bool DstIsDead = MI.getOperand(0).isDead();
-      const MachineOperand &MO = MI.getOperand(1);
+      bool isCC = Opcode == ARM::MOVCCi32imm || Opcode == ARM::t2MOVCCi32imm;
+      const MachineOperand &MO = MI.getOperand(isCC ? 2 : 1);
       MachineInstrBuilder LO16, HI16;
 
-      if (Opcode == ARM::MOVi32imm && !STI->hasV6T2Ops()) {
+      if (!STI->hasV6T2Ops() &&
+          (Opcode == ARM::MOVi32imm || Opcode == ARM::MOVCCi32imm)) {
         // Expand into a movi + orr.
         LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi), DstReg);
         HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::ORRri))

@@ -1782,20 +1782,26 @@ SelectT2CMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
   if (!T)
     return 0;
 
+  unsigned Opc = 0;
   unsigned TrueImm = T->getZExtValue();
   bool isSoImm = is_t2_so_imm(TrueImm);
   if (isSoImm || TrueImm <= 0xffff) {
+    Opc = isSoImm ? ARM::t2MOVCCi : ARM::t2MOVCCi16;
+  } else if (is_t2_so_imm_not(TrueImm)) {
+    TrueImm = ~TrueImm;
+    Opc = ARM::t2MVNCCi;
+  } else if (Subtarget->hasV6T2Ops()) {
+    // Large immediate.
+    Opc = ARM::t2MOVCCi32imm;
+  }
+
+  if (Opc) {
     SDValue True = CurDAG->getTargetConstant(TrueImm, MVT::i32);
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
-    return CurDAG->SelectNodeTo(N, (isSoImm ? ARM::t2MOVCCi : ARM::t2MOVCCi16),
-                                MVT::i32, Ops, 5);
-  } else if (is_t2_so_imm_not(TrueImm)) {
-    SDValue True = CurDAG->getTargetConstant(~TrueImm, MVT::i32);
-    SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
-    SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
-    return CurDAG->SelectNodeTo(N, ARM::t2MVNCCi, MVT::i32, Ops, 5);
+    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
   }
+
   return 0;
 }
 
@@ -1806,20 +1812,26 @@ SelectARMCMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
   if (!T)
     return 0;
 
+  unsigned Opc = 0;
   unsigned TrueImm = T->getZExtValue();
   bool isSoImm = is_so_imm(TrueImm);
   if (isSoImm || (Subtarget->hasV6T2Ops() && TrueImm <= 0xffff)) {
+    Opc = isSoImm ? ARM::MOVCCi : ARM::MOVCCi16;
+  } else if (is_so_imm_not(TrueImm)) {
+    TrueImm = ~TrueImm;
+    Opc = ARM::MVNCCi;
+  } else if (Subtarget->hasV6T2Ops() || ARM_AM::isSOImmTwoPartVal(TrueImm)) {
+    // Large immediate.
+    Opc = ARM::MOVCCi32imm;
+  }
+
+  if (Opc) {
     SDValue True = CurDAG->getTargetConstant(TrueImm, MVT::i32);
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
-    return CurDAG->SelectNodeTo(N, (isSoImm ? ARM::MOVCCi : ARM::MOVCCi16),
-                                MVT::i32, Ops, 5);
-  } else if (is_so_imm_not(TrueImm)) {
-    SDValue True = CurDAG->getTargetConstant(~TrueImm, MVT::i32);
-    SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
-    SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
-    return CurDAG->SelectNodeTo(N, ARM::MVNCCi, MVT::i32, Ops, 5);
+    return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
   }
+  
   return 0;
 }
 

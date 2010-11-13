@@ -2942,6 +2942,11 @@ def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
   let Inst{11-0} = imm;
 }
 
+// Two instruction predicate mov immediate.
+def MOVCCi32imm : PseudoInst<(outs GPR:$Rd),
+                             (ins GPR:$false, i32imm:$src, pred:$p),
+                  IIC_iMOVix2, "", []>, RegConstraint<"$false = $Rd">;
+
 let isAsCheapAsAMove = 1 in
 def MVNCCi : AI1<0b1111, (outs GPR:$Rd),
                          (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
