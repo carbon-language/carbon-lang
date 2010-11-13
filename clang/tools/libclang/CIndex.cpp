@@ -1749,6 +1749,7 @@ public:
 
   void VisitBlockExpr(BlockExpr *B);
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
+  void VisitCompoundStmt(CompoundStmt *S);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
   void VisitDeclRefExpr(DeclRefExpr *D);
@@ -1806,6 +1807,12 @@ void EnqueueVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   EnqueueChildren(E);
   AddTypeLoc(E->getTypeSourceInfo());
 }
+void EnqueueVisitor::VisitCompoundStmt(CompoundStmt *S) {
+  for (CompoundStmt::reverse_body_iterator I = S->body_rbegin(),
+        E = S->body_rend(); I != E; ++I) {
+    AddStmt(*I);
+  }
+}  
 void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
   // Note that we enqueue things in reverse order so that
   // they are visited correctly by the DFS.
