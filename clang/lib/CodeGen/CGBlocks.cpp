@@ -25,7 +25,8 @@ using namespace clang;
 using namespace CodeGen;
 
 CGBlockInfo::CGBlockInfo(const char *N)
-  : Name(N), CXXThisRef(0), NeedsObjCSelf(false) {
+  : Name(N), CXXThisRef(0), NeedsObjCSelf(false),
+    HasCXXObject(false), BlockHasCopyDispose(false) {
     
   // Skip asm prefix, if any.
   if (Name && Name[0] == '\01')
