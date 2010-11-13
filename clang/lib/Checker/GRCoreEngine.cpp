@@ -36,6 +36,8 @@ GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
 // Worklist classes for exploration of reachable states.
 //===----------------------------------------------------------------------===//
 
+GRWorkList::Visitor::~Visitor() {}
+
 namespace {
 class DFS : public GRWorkList {
   llvm::SmallVector<GRWorkListUnit,20> Stack;
@@ -54,25 +56,41 @@ public:
     Stack.pop_back(); // This technically "invalidates" U, but we are fine.
     return U;
   }
+  
+  virtual bool VisitItemsInWorkList(Visitor &V) {
+    for (llvm::SmallVectorImpl<GRWorkListUnit>::iterator
+         I = Stack.begin(), E = Stack.end(); I != E; ++I) {
+      if (V.Visit(*I))
+        return true;
+    }
+    return false;
+  }
 };
 
 class BFS : public GRWorkList {
-  std::queue<GRWorkListUnit> Queue;
+  std::deque<GRWorkListUnit> Queue;
 public:
   virtual bool hasWork() const {
     return !Queue.empty();
   }
 
   virtual void Enqueue(const GRWorkListUnit& U) {
-    Queue.push(U);
+    Queue.push_front(U);
   }
 
   virtual GRWorkListUnit Dequeue() {
-    // Don't use const reference.  The subsequent pop_back() might make it
-    // unsafe.
     GRWorkListUnit U = Queue.front();
-    Queue.pop();
+    Queue.pop_front();
     return U;
+  }
+  
+  virtual bool VisitItemsInWorkList(Visitor &V) {
+    for (std::deque<GRWorkListUnit>::iterator
+         I = Queue.begin(), E = Queue.end(); I != E; ++I) {
+      if (V.Visit(*I))
+        return true;
+    }
+    return false;
   }
 };
 
@@ -87,7 +105,7 @@ GRWorkList *GRWorkList::MakeBFS() { return new BFS(); }
 
 namespace {
   class BFSBlockDFSContents : public GRWorkList {
-    std::queue<GRWorkListUnit> Queue;
+    std::deque<GRWorkListUnit> Queue;
     llvm::SmallVector<GRWorkListUnit,20> Stack;
   public:
     virtual bool hasWork() const {
@@ -96,7 +114,7 @@ namespace {
 
     virtual void Enqueue(const GRWorkListUnit& U) {
       if (isa<BlockEntrance>(U.getNode()->getLocation()))
-        Queue.push(U);
+        Queue.push_front(U);
       else
         Stack.push_back(U);
     }
@@ -113,9 +131,23 @@ namespace {
       // Don't use const reference.  The subsequent pop_back() might make it
       // unsafe.
       GRWorkListUnit U = Queue.front();
-      Queue.pop();
+      Queue.pop_front();
       return U;
     }
+    virtual bool VisitItemsInWorkList(Visitor &V) {
+      for (llvm::SmallVectorImpl<GRWorkListUnit>::iterator
+           I = Stack.begin(), E = Stack.end(); I != E; ++I) {
+        if (V.Visit(*I))
+          return true;
+      }
+      for (std::deque<GRWorkListUnit>::iterator
+           I = Queue.begin(), E = Queue.end(); I != E; ++I) {
+        if (V.Visit(*I))
+          return true;
+      }
+      return false;
+    }
+
   };
 } // end anonymous namespace
 

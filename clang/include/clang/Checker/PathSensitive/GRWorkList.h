@@ -71,6 +71,14 @@ public:
   void setBlockCounter(GRBlockCounter C) { CurrentCounter = C; }
   GRBlockCounter getBlockCounter() const { return CurrentCounter; }
 
+  class Visitor {
+  public:
+    Visitor() {}
+    virtual ~Visitor();
+    virtual bool Visit(const GRWorkListUnit &U) = 0;
+  };
+  virtual bool VisitItemsInWorkList(Visitor &V) = 0;
+  
   static GRWorkList *MakeDFS();
   static GRWorkList *MakeBFS();
   static GRWorkList *MakeBFSBlockDFSContents();
