@@ -309,7 +309,6 @@ public:
 
   // Statement visitors
   bool VisitStmt(Stmt *S);
-  bool VisitGotoStmt(GotoStmt *S);
 
   // Expression visitors
   bool VisitDeclRefExpr(DeclRefExpr *E);
@@ -345,6 +344,7 @@ bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
   DATA_RECURSIVE_VISIT(IfStmt)
   DATA_RECURSIVE_VISIT(InitListExpr)
   DATA_RECURSIVE_VISIT(ForStmt)
+  DATA_RECURSIVE_VISIT(GotoStmt)
   DATA_RECURSIVE_VISIT(MemberExpr)
   DATA_RECURSIVE_VISIT(ObjCMessageExpr)
   DATA_RECURSIVE_VISIT(OverloadExpr)
@@ -1438,10 +1438,6 @@ bool CursorVisitor::VisitStmt(Stmt *S) {
   return false;
 }
 
-bool CursorVisitor::VisitGotoStmt(GotoStmt *S) {
-  return Visit(MakeCursorLabelRef(S->getLabel(), S->getLabelLoc(), TU));
-}
-
 bool CursorVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
   // Visit nested-name-specifier, if present.
   if (NestedNameSpecifier *Qualifier = E->getQualifier())
@@ -1966,6 +1962,14 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         CXCursor Cursor = MakeCXCursor(S, StmtParent, TU);
         
         switch (S->getStmtClass()) {
+          case Stmt::GotoStmtClass: {
+            GotoStmt *GS = cast<GotoStmt>(S);
+            if (Visit(MakeCursorLabelRef(GS->getLabel(),
+                                         GS->getLabelLoc(), TU))) {
+              return true;
+            }
+            continue;
+          } 
           default: {
             // FIXME: this entire switch stmt will eventually
             // go away.
