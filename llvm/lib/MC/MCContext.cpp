@@ -25,7 +25,7 @@ typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 
 MCContext::MCContext(const MCAsmInfo &mai) : MAI(mai), NextUniqueID(0),
-                     CurrentDwarfLoc(0,0,0,0,0) {
+                     CurrentDwarfLoc(0,0,0,0,0,0) {
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
   COFFUniquingMap = 0;

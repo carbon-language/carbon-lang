@@ -2019,6 +2019,7 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
 
   unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
   unsigned Isa = 0;
+  int64_t Discriminator = 0;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       if (getLexer().is(AsmToken::EndOfStatement))
@@ -2070,6 +2071,10 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
           return Error(Loc, "isa number not a constant value");
         }
       }
+      else if (Name == "discriminator") {
+        if (getParser().ParseAbsoluteExpression(Discriminator))
+          return true;
+      }
       else {
         return Error(Loc, "unknown sub-directive in '.loc' directive");
       }
@@ -2079,7 +2084,8 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
     }
   }
 
-  getContext().setCurrentDwarfLoc(FileNumber, LineNumber, ColumnPos, Flags,Isa);
+  getContext().setCurrentDwarfLoc(FileNumber, LineNumber, ColumnPos, Flags,
+                                  Isa, Discriminator);
 
   return false;
 }

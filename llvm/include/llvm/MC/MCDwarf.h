@@ -83,6 +83,8 @@ namespace llvm {
     unsigned Flags;
     // Isa
     unsigned Isa;
+    // Discriminator
+    unsigned Discriminator;
 
 // Flag that indicates the initial value of the is_stmt_start flag.
 #define DWARF2_LINE_DEFAULT_IS_STMT     1
@@ -96,8 +98,9 @@ namespace llvm {
     friend class MCContext;
     friend class MCLineEntry;
     MCDwarfLoc(unsigned fileNum, unsigned line, unsigned column, unsigned flags,
-               unsigned isa)
-      : FileNum(fileNum), Line(line), Column(column), Flags(flags), Isa(isa) {}
+               unsigned isa, unsigned discriminator)
+      : FileNum(fileNum), Line(line), Column(column), Flags(flags), Isa(isa),
+        Discriminator(discriminator) {}
 
     // Allow the default copy constructor and assignment operator to be used
     // for an MCDwarfLoc object.
@@ -118,6 +121,9 @@ namespace llvm {
     /// getIsa - Get the Isa of this MCDwarfLoc.
     unsigned getIsa() { return Isa; }
 
+    /// getDiscriminator - Get the Discriminator of this MCDwarfLoc.
+    unsigned getDiscriminator() { return Discriminator; }
+
     /// setFileNum - Set the FileNum of this MCDwarfLoc.
     void setFileNum(unsigned fileNum) { FileNum = fileNum; }
 
@@ -132,6 +138,11 @@ namespace llvm {
 
     /// setIsa - Set the Isa of this MCDwarfLoc.
     void setIsa(unsigned isa) { Isa = isa; }
+
+    /// setDiscriminator - Set the Discriminator of this MCDwarfLoc.
+    void setDiscriminator(unsigned discriminator) {
+      Discriminator = discriminator;
+    }
   };
 
   /// MCLineEntry - Instances of this class represent the line information for
