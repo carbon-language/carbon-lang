@@ -10,6 +10,8 @@
 #ifndef liblldb_ClangASTSource_h_
 #define liblldb_ClangASTSource_h_
 
+#include <set>
+
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Sema/ExternalSemaSource.h"
 
@@ -44,8 +46,9 @@ public:
     //------------------------------------------------------------------
 	ClangASTSource(clang::ASTContext &context,
                    ClangExpressionDeclMap &decl_map) : 
-        m_ast_context(context),
-        m_decl_map(decl_map) 
+        m_ast_context (context),
+        m_decl_map (decl_map),
+        m_active_lookups ()
     {
     }
     
@@ -119,6 +122,7 @@ protected:
 
 	clang::ASTContext &m_ast_context;   ///< The parser's AST context, for copying types into
 	ClangExpressionDeclMap &m_decl_map; ///< The object that looks up named entities in LLDB
+    std::set<const char *> m_active_lookups;
 };
 
 //----------------------------------------------------------------------

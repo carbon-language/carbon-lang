@@ -1024,13 +1024,13 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             ClangNamespaceDecl namespace_decl (m_sym_ctx.FindNamespace(name));
             if (namespace_decl)
             {
-//                clang::NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decl);
-//                if (clang_namespace_decl)
-//                {
-//                    // TODO: is this how we get the decl lookups to be called for
-//                    // this namespace??
-//                    clang_namespace_decl->setHasExternalLexicalStorage();
-//                }
+                clang::NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decl);
+                if (clang_namespace_decl)
+                {
+                    // TODO: is this how we get the decl lookups to be called for
+                    // this namespace??
+                    clang_namespace_decl->setHasExternalLexicalStorage();
+                }
             }
         }
     }

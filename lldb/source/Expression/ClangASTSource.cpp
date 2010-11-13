@@ -90,12 +90,21 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName
         }
     }
 
-	llvm::SmallVector<NamedDecl*, 4> name_decls;
-    
-    NameSearchContext name_search_context(*this, name_decls, clang_decl_name, decl_ctx);
     ConstString const_decl_name(decl_name.c_str());
+    
+    const char *uniqued_const_decl_name = const_decl_name.GetCString();
+    if (m_active_lookups.find (uniqued_const_decl_name) != m_active_lookups.end())
+    {
+        // We are currently looking up this name...
+        return DeclContext::lookup_result();
+    }
+    m_active_lookups.insert(uniqued_const_decl_name);
+    llvm::SmallVector<NamedDecl*, 4> name_decls;    
+    NameSearchContext name_search_context(*this, name_decls, clang_decl_name, decl_ctx);
     m_decl_map.GetDecls(name_search_context, const_decl_name);
-    return SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, name_decls);
+    DeclContext::lookup_result result (SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, name_decls));
+    m_active_lookups.erase (uniqued_const_decl_name);
+    return result;
 }
 
 void ClangASTSource::MaterializeVisibleDecls(const DeclContext *DC)
