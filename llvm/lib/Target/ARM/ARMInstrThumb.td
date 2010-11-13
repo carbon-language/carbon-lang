@@ -549,7 +549,7 @@ multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
         T1Encoding<T1Enc>;
 }
 
-/* FIXME: Uncommented, this causes a decoding conflict.
+/* TODO: Uncommented, this causes a decoding conflict.
 let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in

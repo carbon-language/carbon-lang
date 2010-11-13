@@ -1803,7 +1803,8 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
   }
 } 
 
-let neverHasSideEffects = 1, isCodeGenOnly = 1 in {
+/* TODO:
+let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
 defm LDM : arm_ldst_mult<"ldm", 1, LdStMulFrm, IIC_iLoad_m, IIC_iLoad_mu>;
@@ -1812,6 +1813,7 @@ let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm STM : arm_ldst_mult<"stm", 0, LdStMulFrm, IIC_iStore_m, IIC_iStore_mu>;
 
 } // neverHasSideEffects
+*/
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in {
