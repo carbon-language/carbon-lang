@@ -1304,11 +1304,6 @@ public:
   
   QualType mergeObjCGCQualifiers(QualType, QualType);
 
-  /// UsualArithmeticConversionsType - handles the various conversions
-  /// that are common to binary operators (C99 6.3.1.8, C++ [expr]p9)
-  /// and returns the result type of that conversion.
-  QualType UsualArithmeticConversionsType(QualType lhs, QualType rhs);
-  
   void ResetObjCLayout(const ObjCContainerDecl *CD) {
     ObjCLayouts[CD] = 0;
   }
