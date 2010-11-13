@@ -376,8 +376,8 @@ let isAsCheapAsAMove = 1 in {
   def ADDIK   :  ArithNI<0x0C, "addik  ", simm16, immSExt16>;
   def ADDIKC  :   ArithI<0x0E, "addikc ", addc, simm16, immSExt16>;
   def RSUBI   :  ArithRI<0x09, "rsubi  ", sub,  simm16, immSExt16>;
-  def RSUBIC  : ArithRNI<0x0B, "rsubi  ", simm16, immSExt16>;
-  def RSUBIK  : ArithRNI<0x0E, "rsubic ", simm16, immSExt16>;
+  def RSUBIC  : ArithRNI<0x0B, "rsubic ", simm16, immSExt16>;
+  def RSUBIK  : ArithRNI<0x0D, "rsubik ", simm16, immSExt16>;
   def RSUBIKC :  ArithRI<0x0F, "rsubikc", subc, simm16, immSExt16>;
   def ANDNI   :  ArithNI<0x2B, "andni  ", uimm16, immZExt16>;
   def ANDI    :   LogicI<0x29, "andi   ", and>;
