@@ -173,20 +173,6 @@ public:
   }
 };
 
-static inline void WLAddStmt(VisitorWorkList &WL, CXCursor Parent, Stmt *S) {
-  if (S)
-    WL.push_back(StmtVisit(S, Parent));
-}
-static inline void WLAddDecl(VisitorWorkList &WL, CXCursor Parent, Decl *D) {
-  if (D)
-    WL.push_back(DeclVisit(D, Parent));
-}
-static inline void WLAddTypeLoc(VisitorWorkList &WL, CXCursor Parent,
-                                TypeSourceInfo *TI) {
-  if (TI)
-    WL.push_back(TypeLocVisit(TI->getTypeLoc(), Parent));
-}
-
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
                       public TypeLocVisitor<CursorVisitor, bool>,
@@ -1797,11 +1783,53 @@ bool CursorVisitor::VisitAttributes(Decl *D) {
 // Data-recursive visitor methods.
 //===----------------------------------------------------------------------===//
 
-static void EnqueueChildren(VisitorWorkList &WL, CXCursor Parent, Stmt *S) {
+namespace {
+class EnqueueVisitor : public StmtVisitor<EnqueueVisitor, void> {
+  VisitorWorkList &WL;
+  CXCursor Parent;
+public:
+  EnqueueVisitor(VisitorWorkList &wl, CXCursor parent)
+    : WL(wl), Parent(parent) {}
+
+  void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
+  void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+  void VisitExplicitCastExpr(ExplicitCastExpr *E);
+  void VisitForStmt(ForStmt *FS);
+  void VisitIfStmt(IfStmt *If);
+  void VisitInitListExpr(InitListExpr *IE);
+  void VisitMemberExpr(MemberExpr *M);
+  void VisitObjCMessageExpr(ObjCMessageExpr *M);
+  void VisitOverloadExpr(OverloadExpr *E);
+  void VisitStmt(Stmt *S);
+  void VisitSwitchStmt(SwitchStmt *S);
+  void VisitWhileStmt(WhileStmt *W);
+  void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
+
+private:
+  void AddStmt(Stmt *S);
+  void AddDecl(Decl *D);
+  void AddTypeLoc(TypeSourceInfo *TI);
+  void EnqueueChildren(Stmt *S);
+};
+} // end anonyous namespace
+
+void EnqueueVisitor::AddStmt(Stmt *S) {
+  if (S)
+    WL.push_back(StmtVisit(S, Parent));
+}
+void EnqueueVisitor::AddDecl(Decl *D) {
+  if (D)
+    WL.push_back(DeclVisit(D, Parent));
+}
+void EnqueueVisitor::AddTypeLoc(TypeSourceInfo *TI) {
+  if (TI)
+    WL.push_back(TypeLocVisit(TI->getTypeLoc(), Parent));
+ }
+void EnqueueVisitor::EnqueueChildren(Stmt *S) {
   unsigned size = WL.size();
   for (Stmt::child_iterator Child = S->child_begin(), ChildEnd = S->child_end();
        Child != ChildEnd; ++Child) {
-    WLAddStmt(WL, Parent, *Child);
+    AddStmt(*Child);
   }
   if (size == WL.size())
     return;
@@ -1810,113 +1838,73 @@ static void EnqueueChildren(VisitorWorkList &WL, CXCursor Parent, Stmt *S) {
   VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
   std::reverse(I, E);
 }
-
-static void EnqueueOverloadExpr(VisitorWorkList &WL, CXCursor Parent,
-                                OverloadExpr *E) {
+void EnqueueVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+  EnqueueChildren(E);
+  AddTypeLoc(E->getTypeSourceInfo());
+}
+void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
+  // Note that we enqueue things in reverse order so that
+  // they are visited correctly by the DFS.
+  for (unsigned I = 1, N = CE->getNumArgs(); I != N; ++I)
+    AddStmt(CE->getArg(N-I));
+  AddStmt(CE->getCallee());
+  AddStmt(CE->getArg(0));
+}
+void EnqueueVisitor::VisitExplicitCastExpr(ExplicitCastExpr *E) {
+  EnqueueChildren(E);
+  AddTypeLoc(E->getTypeInfoAsWritten());
+}
+void EnqueueVisitor::VisitForStmt(ForStmt *FS) {
+  AddStmt(FS->getBody());
+  AddStmt(FS->getInc());
+  AddStmt(FS->getCond());
+  AddDecl(FS->getConditionVariable());
+  AddStmt(FS->getInit());
+}
+void EnqueueVisitor::VisitIfStmt(IfStmt *If) {
+  AddStmt(If->getElse());
+  AddStmt(If->getThen());
+  AddStmt(If->getCond());
+  AddDecl(If->getConditionVariable());
+}
+void EnqueueVisitor::VisitInitListExpr(InitListExpr *IE) {
+  // We care about the syntactic form of the initializer list, only.
+  if (InitListExpr *Syntactic = IE->getSyntacticForm())
+    IE = Syntactic;
+  EnqueueChildren(IE);
+}
+void EnqueueVisitor::VisitMemberExpr(MemberExpr *M) {
+  WL.push_back(MemberExprParts(M, Parent));
+  AddStmt(M->getBase());
+}
+void EnqueueVisitor::VisitObjCMessageExpr(ObjCMessageExpr *M) {
+  EnqueueChildren(M);
+  AddTypeLoc(M->getClassReceiverTypeInfo());
+}
+void EnqueueVisitor::VisitOverloadExpr(OverloadExpr *E) {
   WL.push_back(OverloadExprParts(E, Parent));
 }
+void EnqueueVisitor::VisitStmt(Stmt *S) {
+  EnqueueChildren(S);
+}
+void EnqueueVisitor::VisitSwitchStmt(SwitchStmt *S) {
+  AddStmt(S->getBody());
+  AddStmt(S->getCond());
+  AddDecl(S->getConditionVariable());
+}
+void EnqueueVisitor::VisitWhileStmt(WhileStmt *W) {
+  AddStmt(W->getBody());
+  AddStmt(W->getCond());
+  AddDecl(W->getConditionVariable());
+}
+void EnqueueVisitor::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U) {
+  VisitOverloadExpr(U);
+  if (!U->isImplicitAccess())
+    AddStmt(U->getBase());
+}
 
-// FIXME: Refactor into StmtVisitor?
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
-  CXCursor C = MakeCXCursor(S, StmtParent, TU);
-
-  if (ExplicitCastExpr *E = dyn_cast<ExplicitCastExpr>(S)) {
-    EnqueueChildren(WL, C, S);
-    WLAddTypeLoc(WL, C, E->getTypeInfoAsWritten());
-    return;
-  }
-
-  switch (S->getStmtClass()) {
-    default:
-      EnqueueChildren(WL, C, S);
-      break;
-    case Stmt::CompoundLiteralExprClass: {
-      CompoundLiteralExpr *CL = cast<CompoundLiteralExpr>(S);
-      EnqueueChildren(WL, C, CL);
-      WLAddTypeLoc(WL, C, CL->getTypeSourceInfo());
-      break;
-    }
-    case Stmt::CXXOperatorCallExprClass: {
-      CXXOperatorCallExpr *CE = cast<CXXOperatorCallExpr>(S);
-      // Note that we enqueue things in reverse order so that
-      // they are visited correctly by the DFS.
-      for (unsigned I = 1, N = CE->getNumArgs(); I != N; ++I)
-        WLAddStmt(WL, C, CE->getArg(N-I));
-
-      WLAddStmt(WL, C, CE->getCallee());
-      WLAddStmt(WL, C, CE->getArg(0));
-      break;
-    }
-    case Stmt::BinaryOperatorClass: {
-      BinaryOperator *B = cast<BinaryOperator>(S);
-      WLAddStmt(WL, C, B->getRHS());
-      WLAddStmt(WL, C, B->getLHS());
-      break;
-    }
-    case Stmt::ForStmtClass: {
-      ForStmt *FS = cast<ForStmt>(S);
-      WLAddStmt(WL, C, FS->getBody());
-      WLAddStmt(WL, C, FS->getInc());
-      WLAddStmt(WL, C, FS->getCond());
-      WLAddDecl(WL, C, FS->getConditionVariable());
-      WLAddStmt(WL, C, FS->getInit());
-      break;
-    }
-    case Stmt::IfStmtClass: {
-      IfStmt *If = cast<IfStmt>(S);
-      WLAddStmt(WL, C, If->getElse());
-      WLAddStmt(WL, C, If->getThen());
-      WLAddStmt(WL, C, If->getCond());
-      WLAddDecl(WL, C, If->getConditionVariable());      
-      break;
-    }
-    case Stmt::InitListExprClass: {
-      InitListExpr *IE = cast<InitListExpr>(S);
-      // We care about the syntactic form of the initializer list, only.
-      if (InitListExpr *Syntactic = IE->getSyntacticForm())
-        IE = Syntactic;
-      EnqueueChildren(WL, C, IE);
-      break;
-    }
-    case Stmt::MemberExprClass: {
-      MemberExpr *M = cast<MemberExpr>(S);
-      WL.push_back(MemberExprParts(M, C));
-      WLAddStmt(WL, C, M->getBase());
-      break;
-    }
-    case Stmt::ObjCMessageExprClass:
-      EnqueueChildren(WL, C, S);
-      WLAddTypeLoc(WL, C, cast<ObjCMessageExpr>(S)->getClassReceiverTypeInfo());
-      break;
-    case Stmt::ParenExprClass: {
-      WLAddStmt(WL, C, cast<ParenExpr>(S)->getSubExpr());
-      break;
-    }
-    case Stmt::SwitchStmtClass: {
-      SwitchStmt *SS = cast<SwitchStmt>(S);
-      WLAddStmt(WL, C, SS->getBody());
-      WLAddStmt(WL, C, SS->getCond());
-      WLAddDecl(WL, C, SS->getConditionVariable());
-      break;
-    }
-    case Stmt::WhileStmtClass: {
-      WhileStmt *W = cast<WhileStmt>(S);
-      WLAddStmt(WL, C, W->getBody());
-      WLAddStmt(WL, C, W->getCond());
-      WLAddDecl(WL, C, W->getConditionVariable());
-      break;
-    }
-    case Stmt::UnresolvedLookupExprClass:
-      EnqueueOverloadExpr(WL, C, cast<OverloadExpr>(S));
-      break;
-   case Stmt::UnresolvedMemberExprClass: {
-     UnresolvedMemberExpr *U = cast<UnresolvedMemberExpr>(S);
-     EnqueueOverloadExpr(WL, C, U);
-     if (!U->isImplicitAccess())
-       WLAddStmt(WL, C, U->getBase());
-     break;
-   }
-  }
+  EnqueueVisitor(WL, MakeCXCursor(S, StmtParent, TU)).Visit(S);
 }
 
 bool CursorVisitor::IsInRegionOfInterest(CXCursor C) {
