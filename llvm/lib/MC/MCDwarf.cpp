@@ -179,7 +179,7 @@ static inline void EmitDwarfLineTable(MCObjectStreamer *MCOS,
     if (it->getFlags() & DWARF2_FLAG_EPILOGUE_BEGIN)
       MCOS->EmitIntValue(dwarf::DW_LNS_set_epilogue_begin, 1);
 
-    int64_t LineDelta = it->getLine() - LastLine;
+    int64_t LineDelta = static_cast<int64_t>(it->getLine()) - LastLine;
     MCSymbol *Label = it->getLabel();
 
     // At this point we want to emit/create the sequence to encode the delta in
