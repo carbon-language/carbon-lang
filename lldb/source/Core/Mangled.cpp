@@ -13,6 +13,7 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Mangled.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
 #include <ctype.h>
@@ -191,6 +192,19 @@ Mangled::GetDemangledName () const
 
     return m_demangled;
 }
+
+
+bool
+Mangled::NameMatches (const RegularExpression& regex) const
+{
+    if (m_mangled && regex.Execute (m_mangled.AsCString()))
+        return true;
+    
+    if (GetDemangledName() && regex.Execute (m_demangled.AsCString()))
+        return true;
+    return false;
+}
+
 
 //----------------------------------------------------------------------
 // Mangled name get accessor

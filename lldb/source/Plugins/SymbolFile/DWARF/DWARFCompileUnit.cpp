@@ -883,6 +883,14 @@ DWARFCompileUnit::Index
             if (name && has_location && is_global_or_static_variable)
             {
                 globals.Insert (ConstString(name), die_info);
+                // Be sure to include variables by their mangled and demangled
+                // names if they have any since a variable can have a basename
+                // "i", a mangled named "_ZN12_GLOBAL__N_11iE" and a demangled 
+                // mangled name "(anonymous namespace)::i"...
+                if (mangled.GetMangledName())
+                    globals.Insert (mangled.GetMangledName(), die_info);
+                if (mangled.GetDemangledName())
+                    globals.Insert (mangled.GetDemangledName(), die_info);
             }
             break;
             

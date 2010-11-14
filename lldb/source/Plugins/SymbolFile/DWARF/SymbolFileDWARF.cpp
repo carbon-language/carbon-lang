@@ -1776,16 +1776,16 @@ SymbolFileDWARF::Index ()
             bool clear_dies = curr_cu->ExtractDIEsIfNeeded (false) > 1;
 
             curr_cu->Index (cu_idx,
-                       m_function_basename_index,
-                       m_function_fullname_index,
-                       m_function_method_index,
-                       m_function_selector_index,
-                       m_objc_class_selectors_index,
-                       m_global_index, 
-                       m_type_index,
-                       m_namespace_index,
-                       DebugRanges(),
-                       m_aranges.get());  
+                            m_function_basename_index,
+                            m_function_fullname_index,
+                            m_function_method_index,
+                            m_function_selector_index,
+                            m_objc_class_selectors_index,
+                            m_global_index, 
+                            m_type_index,
+                            m_namespace_index,
+                            DebugRanges(),
+                            m_aranges.get());  
             
             // Keep memory down by clearing DIEs if this generate function
             // caused them to be parsed
@@ -3719,7 +3719,7 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                     VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, dwarf_cu->GetDIEAtIndexUnchecked(global_die_info_array[idx].die_idx), LLDB_INVALID_ADDRESS));
                     if (var_sp)
                     {
-                        variables->AddVariable(var_sp);
+                        variables->AddVariableIfUnique (var_sp);
                         ++vars_added;
                     }
                 }
@@ -3741,7 +3741,9 @@ SymbolFileDWARF::ParseVariableDIE
 )
 {
 
-    VariableSP var_sp;
+    VariableSP var_sp (m_die_to_variable_sp[die]);
+    if (var_sp)
+        return var_sp;  // Already been parsed!
     
     const dw_tag_t tag = die->Tag();
     DWARFDebugInfoEntry::Attributes attributes;
@@ -3821,18 +3823,6 @@ SymbolFileDWARF::ParseVariableDIE
         {
             assert(var_type != DIE_IS_BEING_PARSED);
 
-            ConstString var_name;
-            if (mangled)
-            {
-                Mangled mangled_var_name (mangled, true);
-                var_name = mangled_var_name.GetDemangledName();
-            }
-            
-            if (!var_name && name)
-            {
-                var_name.SetCString(name);
-            }
-
             ValueType scope = eValueTypeInvalid;
 
             const DWARFDebugInfoEntry *sc_parent_die = GetParentSymbolContextDIE(die);
@@ -3859,7 +3849,8 @@ SymbolFileDWARF::ParseVariableDIE
 
             assert(symbol_context_scope != NULL);
             var_sp.reset (new Variable(die->GetOffset(), 
-                                       var_name, 
+                                       name, 
+                                       mangled,
                                        var_type, 
                                        scope, 
                                        symbol_context_scope, 
@@ -3868,9 +3859,13 @@ SymbolFileDWARF::ParseVariableDIE
                                        is_external, 
                                        is_artificial));
             
-            m_die_to_variable_sp[die] = var_sp;
         }
     }
+    // Cache var_sp even if NULL (the variable was just a specification or
+    // was missing vital information to be able to be displayed in the debugger
+    // (missing location due to optimization, etc)) so we don't re-parse
+    // this DIE over and over later...
+    m_die_to_variable_sp[die] = var_sp;
     return var_sp;
 }
 
@@ -3952,7 +3947,7 @@ SymbolFileDWARF::ParseVariables
         if (m_die_to_variable_sp[die])
         {
             if (cc_variable_list)
-                cc_variable_list->AddVariable (m_die_to_variable_sp[die]);
+                cc_variable_list->AddVariableIfUnique (m_die_to_variable_sp[die]);
         }
         else
         {
@@ -3964,9 +3959,9 @@ SymbolFileDWARF::ParseVariables
                 VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die, func_low_pc));
                 if (var_sp)
                 {
-                    variables->AddVariable(var_sp);
+                    variables->AddVariableIfUnique (var_sp);
                     if (cc_variable_list)
-                        cc_variable_list->AddVariable (var_sp);
+                        cc_variable_list->AddVariableIfUnique (var_sp);
                     ++vars_added;
                 }
             }

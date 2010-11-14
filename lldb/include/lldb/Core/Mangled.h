@@ -433,6 +433,26 @@ public:
     GetName (NamePreference preference = ePreferDemangled) const;
 
     //----------------------------------------------------------------------
+    /// Check if "name" matches either the mangled or demangled name.
+    ///
+    /// @param[in] name
+    ///     A name to match against both strings.
+    ///
+    /// @return
+    ///     \b True if \a name matches either name, \b false otherwise.
+    //----------------------------------------------------------------------
+    bool
+    NameMatches (const ConstString &name) const
+    {
+        if (m_mangled == name)
+            return true;
+        return GetDemangledName () == name;
+    }
+    
+    bool
+    NameMatches (const RegularExpression& regex) const;
+
+    //----------------------------------------------------------------------
     /// Generate the tokens from the demangled name.
     ///
     /// @param[out] tokens

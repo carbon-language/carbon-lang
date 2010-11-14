@@ -10,6 +10,7 @@
 #include "lldb/Symbol/Variable.h"
 
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -26,17 +27,22 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // Variable constructor
 //----------------------------------------------------------------------
-Variable::Variable(lldb::user_id_t uid,
-                       const ConstString& name,
-                       Type *type,
-                       ValueType scope,
-                       SymbolContextScope *context,
-                       Declaration* decl_ptr,
-                       const DWARFExpression& location,
-                       bool external,
-                       bool artificial) :
+Variable::Variable 
+(
+    lldb::user_id_t uid,
+    const char *name, 
+    const char *mangled,   // The mangled variable name for variables in namespaces
+    Type *type,
+    ValueType scope,
+    SymbolContextScope *context,
+    Declaration* decl_ptr,
+    const DWARFExpression& location,
+    bool external,
+    bool artificial
+) :
     UserID(uid),
     m_name(name),
+    m_mangled (mangled, true),
     m_type(type),
     m_scope(scope),
     m_owner_scope(context),
@@ -54,6 +60,22 @@ Variable::~Variable()
 {
 }
 
+
+const ConstString&
+Variable::GetName() const
+{
+    if (m_mangled)
+        return m_mangled.GetName();
+    return m_name;
+}
+
+bool
+Variable::NameMatches (const RegularExpression& regex) const
+{
+    if (regex.Execute (m_name.AsCString()))
+        return true;
+    return m_mangled.NameMatches (regex);
+}
 
 void
 Variable::Dump(Stream *s, bool show_context) const

@@ -39,6 +39,7 @@
 #include "lldb/Target/Target.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace lldb;
 using namespace lldb_private;
 using namespace clang;
 
@@ -364,8 +365,8 @@ ClangExpressionDeclMap::GetObjectPointer
         return false;
     }
     
-    static ConstString g_this_cs ("this");
-    Variable *object_ptr_var = FindVariableInScope(*exe_ctx->frame, g_this_cs, &m_object_pointer_type);
+    static ConstString g_this_const_str ("this");
+    Variable *object_ptr_var = FindVariableInScope (*exe_ctx->frame, g_this_const_str, &m_object_pointer_type);
     
     if (!object_ptr_var)
     {
@@ -681,7 +682,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     if (!exe_ctx.frame || !exe_ctx.process)
         return false;
     
-    Variable *var = FindVariableInScope(*exe_ctx.frame, name, &type);
+    Variable *var = FindVariableInScope (*exe_ctx.frame, name, &type);
     
     if (!var)
     {
@@ -931,27 +932,50 @@ ClangExpressionDeclMap::FindVariableInScope
     if (!var_list)
         return NULL;
     
-    lldb::VariableSP var = var_list->FindVariable(name);
-    
-    if (!var)
-        return NULL;
-    
-    if (!type)
-        return var.get();
-    
-    if (type->GetASTContext() == var->GetType()->GetClangAST())
+    lldb::VariableSP var_sp (var_list->FindVariable(name));
+        
+    const bool append = true;
+    const uint32_t max_matches = 1;
+    if (!var_sp)
     {
-        if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var->GetType()->GetClangType()))
+        // Look for globals elsewhere in the module for the frame
+        ModuleSP module_sp (m_exe_ctx.frame->GetSymbolContext(eSymbolContextModule).module_sp);
+        if (module_sp)
+        {
+            VariableList module_globals;
+            if (module_sp->FindGlobalVariables (name, append, max_matches, module_globals))
+                var_sp = module_globals.GetVariableAtIndex (0);
+        }
+    }
+
+    if (!var_sp)
+    {
+        // Look for globals elsewhere in the program (all images)
+        TargetSP target_sp (m_exe_ctx.frame->GetSymbolContext(eSymbolContextTarget).target_sp);
+        if (target_sp)
+        {
+            VariableList program_globals;
+            if (target_sp->GetImages().FindGlobalVariables (name, append, max_matches, program_globals))
+                var_sp = program_globals.GetVariableAtIndex (0);
+        }
+    }
+
+    if (var_sp && type)
+    {
+        if (type->GetASTContext() == var_sp->GetType()->GetClangAST())
+        {
+            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var_sp->GetType()->GetClangType()))
+                return NULL;
+        }
+        else
+        {
+            if (log)
+                log->PutCString("Skipping a candidate variable because of different AST contexts");
             return NULL;
+        }
     }
-    else
-    {
-        if (log)
-            log->PutCString("Skipping a candidate variable because of different AST contexts");
-        return NULL;
-    }
-    
-    return var.get();
+
+    return var_sp.get();
 }
 
 // Interface for ClangASTSource
@@ -969,9 +993,14 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         
     SymbolContextList sc_list;
     
+    const char *name_unique_cstr = name.GetCString();
+    
+    if (name_unique_cstr == NULL)
+        return;
+
     // Only look for functions by name out in our symbols if the function 
     // doesn't start with our phony prefix of '$'
-    if (name.GetCString()[0] != '$')
+    if (name_unique_cstr[0] != '$')
     {
         
         Variable *var = FindVariableInScope(*m_exe_ctx.frame, name);
@@ -1084,13 +1113,11 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
     
     // See information on gating of this operation next to the definition for
     // m_lookedup_types.
-    
-    const char *name_uniq = name.GetCString();
-    
-    if (m_lookedup_types.find(name_uniq) == m_lookedup_types.end())
+
+    if (m_lookedup_types.find(name_unique_cstr) == m_lookedup_types.end())
     {
         // 1 The name is added to m_lookedup_types.
-        m_lookedup_types.insert(std::pair<const char*, bool>(name_uniq, true));
+        m_lookedup_types.insert(std::pair<const char*, bool>(name_unique_cstr, true));
         
         // 2 The type is looked up and added, potentially causing more type loookups.
         lldb::TypeSP type = m_sym_ctx.FindTypeByName (name);
@@ -1104,7 +1131,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         }
         
         // 3 The name is removed from m_lookedup_types.
-        m_lookedup_types.erase(name_uniq);
+        m_lookedup_types.erase(name_unique_cstr);
     }
 }
         

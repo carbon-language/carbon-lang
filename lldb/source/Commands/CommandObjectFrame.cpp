@@ -727,7 +727,7 @@ public:
                                     ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                   exe_ctx.frame, 
                                                                   valobj_sp.get(), 
-                                                                  name_cstr, 
+                                                                  valobj_sp->GetParent() ? name_cstr : NULL, 
                                                                   ptr_depth, 
                                                                   0, 
                                                                   m_options.max_depth, 

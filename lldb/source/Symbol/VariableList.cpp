@@ -91,7 +91,7 @@ VariableList::FindVariable(const ConstString& name)
     iterator pos, end = m_variables.end();
     for (pos = m_variables.begin(); pos != end; ++pos)
     {
-        if ((*pos)->GetName() == name)
+        if ((*pos)->NameMatches(name))
         {
             var_sp = (*pos);
             break;
@@ -107,7 +107,7 @@ VariableList::AppendVariablesIfUnique (const RegularExpression& regex, VariableL
     iterator pos, end = m_variables.end();
     for (pos = m_variables.begin(); pos != end; ++pos)
     {
-        if (regex.Execute ((*pos)->GetName().AsCString()))
+        if ((*pos)->NameMatches (regex))
         {
             // Note the total matches found
             total_matches++;

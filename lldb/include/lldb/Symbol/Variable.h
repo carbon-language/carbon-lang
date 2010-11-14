@@ -14,9 +14,10 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-enumerations.h"
+#include "lldb/Core/Mangled.h"
+#include "lldb/Core/UserID.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Symbol/Declaration.h"
-#include "lldb/Core/UserID.h"
 
 namespace lldb_private {
 
@@ -26,14 +27,16 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    Variable(lldb::user_id_t uid,
-             const ConstString& name, Type *type,
-             lldb::ValueType scope,
-             SymbolContextScope *owner_scope,
-             Declaration* decl,
-             const DWARFExpression& location,
-             bool external,
-             bool artificial);
+    Variable (lldb::user_id_t uid,
+              const char *name, 
+              const char *mangled,   // The mangled variable name for variables in namespaces
+              Type *type,
+              lldb::ValueType scope,
+              SymbolContextScope *owner_scope,
+              Declaration* decl,
+              const DWARFExpression& location,
+              bool external,
+              bool artificial);
 
     virtual
     ~Variable();
@@ -48,10 +51,23 @@ public:
     }
 
     const ConstString&
-    GetName() const
+    GetName() const;
+
+    // Since a variable can have a basename "i" and also a mangled 
+    // named "_ZN12_GLOBAL__N_11iE" and a demangled mangled name 
+    // "(anonymous namespace)::i", this function will allow a generic match
+    // function that can be called by commands and expression parsers to make
+    // sure we match anything we come across.
+    bool
+    NameMatches (const ConstString &name) const
     {
-        return m_name;
+        if (m_name == name)
+            return true;
+        return m_mangled.NameMatches (name);
     }
+
+    bool
+    NameMatches (const RegularExpression& regex) const;
 
     Type *
     GetType()
@@ -105,7 +121,8 @@ public:
     IsInScope (StackFrame *frame);
 
 protected:
-    ConstString m_name;                 // Name of the variable
+    ConstString m_name;                 // The basename of the variable (no namespaces)
+    Mangled m_mangled;                  // The mangled name of hte variable
     Type *m_type;                       // The type pointer of the variable (int, struct, class, etc)
     lldb::ValueType m_scope;            // global, parameter, local
     SymbolContextScope *m_owner_scope;  // The symbol file scope that this variable was defined in
