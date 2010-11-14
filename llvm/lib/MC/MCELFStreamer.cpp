@@ -337,6 +337,10 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     assert(0 && "Invalid symbol attribute for ELF!");
     break;
 
+  case MCSA_ELF_TypeGnuUniqueObject:
+    // Ignore for now.
+    break;
+
   case MCSA_Global:
     SetBinding(SD, ELF::STB_GLOBAL);
     SD.setExternal(true);
