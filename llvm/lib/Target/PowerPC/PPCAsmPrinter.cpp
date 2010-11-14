@@ -20,6 +20,7 @@
 #include "PPC.h"
 #include "PPCPredicates.h"
 #include "PPCTargetMachine.h"
+#include "PPCMCInstLower.h"
 #include "PPCSubtarget.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Constants.h"
@@ -35,6 +36,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -43,6 +45,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -52,6 +55,11 @@
 #include "llvm/ADT/SmallString.h"
 #include "InstPrinter/PPCInstPrinter.h"
 using namespace llvm;
+
+// This option tells the asmprinter to use the new (experimental) MCInstPrinter
+// path.
+static cl::opt<bool> UseInstPrinter("enable-ppc-inst-printer",
+                                    cl::ReallyHidden);
 
 namespace {
   class PPCAsmPrinter : public AsmPrinter {
@@ -544,6 +552,22 @@ void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
 /// the current output stream.
 ///
 void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  if (UseInstPrinter) {
+    PPCMCInstLower MCInstLowering(OutContext, *Mang, *this);
+    
+    // Lower multi-instruction pseudo operations.
+    switch (MI->getOpcode()) {
+    default: break;
+    // TODO: implement me.
+    }
+
+    MCInst TmpInst;
+    MCInstLowering.Lower(MI, TmpInst);
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
+  
+  
   SmallString<128> Str;
   raw_svector_ostream O(Str);
 
