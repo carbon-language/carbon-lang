@@ -1120,9 +1120,16 @@ def MTCRF : XFXForm_5<31, 144, (outs), (ins crbitm:$FXM, GPRC:$rS),
 // As it turns out, in all cases where we currently use this,
 // we're only interested in one subregister of it.  Represent this in the
 // instruction to keep the register allocator from becoming confused.
+//
+// FIXME: Make this a real Pseudo instruction when the JIT switches to MC.
 def MFCRpseud: XFXForm_3<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "mfcr $rT ${:comment} $FXM", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
+            
+def MFCR : XFXForm_3<31, 19, (outs GPRC:$rT), (ins),
+                     "mfcr $rT", SprMFCR>,
+                     PPC970_MicroCode, PPC970_Unit_CRU;
+
 def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "mfcr $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;

@@ -554,13 +554,22 @@ void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
 ///
 void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   if (UseInstPrinter) {
+    MCInst TmpInst;
+    
     // Lower multi-instruction pseudo operations.
     switch (MI->getOpcode()) {
     default: break;
-    // TODO: implement me.
+        
+    case PPC::MFCRpseud:
+      // Transform: %R3 = MFCRpseud %CR7
+      // Into:      %R3 = MFCR      ;; cr7
+      OutStreamer.AddComment(getRegisterName(MI->getOperand(1).getReg()));
+      TmpInst.setOpcode(PPC::MFCR);
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+      OutStreamer.EmitInstruction(TmpInst);
+      return;
     }
 
-    MCInst TmpInst;
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
     return;
