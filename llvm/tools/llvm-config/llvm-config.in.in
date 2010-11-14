@@ -320,6 +320,9 @@ sub build_name_map {
             $NAME_MAP{$target} = [$target.'info',
                                   $target.'asmprinter', 
                                   $target.'codegen']
+        } elsif (defined $NAME_MAP{$target.'codegen'}) {
+          $NAME_MAP{$target} = [$target.'info',
+                                $target.'codegen']
         } else {
             $NAME_MAP{$target} = [$target.'info',
                                   $NAME_MAP{$target}[0]]
