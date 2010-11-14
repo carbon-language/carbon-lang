@@ -180,6 +180,11 @@ namespace {
 
     unsigned ShstrtabIndex;
 
+
+    const MCSymbol *SymbolToReloc(const MCAssembler &Asm,
+                                  const MCValue &Target,
+                                  const MCFragment &F) const;
+
   public:
     ELFObjectWriter(raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
                     uint16_t _EMachine, bool _HasRelAddend,
@@ -624,36 +629,53 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
   }
 }
 
-static bool ShouldRelocOnSymbol(const MCSymbolData &SD,
-                                const MCValue &Target,
-                                const MCFragment &F) {
-  const MCSymbol &Symbol = SD.getSymbol();
+const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
+                                               const MCValue &Target,
+                                               const MCFragment &F) const {
+  const MCSymbol &Symbol = Target.getSymA()->getSymbol();
+  const MCSymbol &ASymbol = AliasedSymbol(Symbol);
+  const MCSymbol *RenamedP = Renames.lookup(&Symbol);
+
+  if (!RenamedP) {
+    if (Target.getSymA()->getKind() == MCSymbolRefExpr::VK_None ||
+        Asm.getSymbolData(Symbol).getFlags() & ELF_Other_Weakref)
+      RenamedP = &ASymbol;
+    else
+      RenamedP = &Symbol;
+  }
+  const MCSymbol &Renamed = *RenamedP;
+
+  MCSymbolData &SD = Asm.getSymbolData(Symbol);
+
   if (Symbol.isUndefined())
-    return true;
+    return &Renamed;
+
+  if (SD.isExternal())
+    return &Renamed;
 
   const MCSectionELF &Section =
     static_cast<const MCSectionELF&>(Symbol.getSection());
 
-  if (SD.isExternal())
-    return true;
+  if (Section.getKind().isBSS())
+    return NULL;
 
   MCSymbolRefExpr::VariantKind Kind = Target.getSymA()->getKind();
   const MCSectionELF &Sec2 =
     static_cast<const MCSectionELF&>(F.getParent()->getSection());
 
-  if (Section.getKind().isBSS())
-    return false;
-
   if (&Sec2 != &Section &&
       (Kind == MCSymbolRefExpr::VK_PLT ||
        Kind == MCSymbolRefExpr::VK_GOTPCREL ||
        Kind == MCSymbolRefExpr::VK_GOTOFF))
-    return true;
+    return &Renamed;
 
-  if (Section.getFlags() & MCSectionELF::SHF_MERGE)
-    return Target.getConstant() != 0;
+  if (Section.getFlags() & MCSectionELF::SHF_MERGE) {
+    if (Target.getConstant() != 0)
+      return &Renamed;
+    return NULL;
+  }
 
-  return false;
+  return NULL;
 }
 
 // FIXME: this is currently X86/X86_64 only
@@ -667,17 +689,10 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   int Index = 0;
   int64_t Value = Target.getConstant();
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();
-  const MCSymbol &ASymbol = AliasedSymbol(Symbol);
-  const MCSymbol *RenamedP = Renames.lookup(&Symbol);
-  if (!RenamedP)
-    RenamedP = &ASymbol;
-  const MCSymbol &Renamed = *RenamedP;
+  const MCSymbol *RelocSymbol = SymbolToReloc(Asm, Target, *Fragment);
 
   bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
   if (!Target.isAbsolute()) {
-    MCSymbolData &SD = Asm.getSymbolData(Symbol);
-    MCFragment *F = SD.getFragment();
-
     if (const MCSymbolRefExpr *RefB = Target.getSymB()) {
       const MCSymbol &SymbolB = RefB->getSymbol();
       MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
@@ -692,8 +707,10 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       Value += b - a;
     }
 
-    bool RelocOnSymbol = ShouldRelocOnSymbol(SD, Target, *Fragment);
-    if (!RelocOnSymbol) {
+    if (!RelocSymbol) {
+      MCSymbolData &SD = Asm.getSymbolData(Symbol);
+      MCFragment *F = SD.getFragment();
+
       Index = F->getParent()->getOrdinal();
 
       MCSectionData *FSD = F->getParent();
@@ -701,9 +718,9 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
     } else {
       if (Asm.getSymbolData(Symbol).getFlags() & ELF_Other_Weakref)
-        WeakrefUsedInReloc.insert(&Renamed);
+        WeakrefUsedInReloc.insert(RelocSymbol);
       else
-        UsedInReloc.insert(&Renamed);
+        UsedInReloc.insert(RelocSymbol);
       Index = -1;
     }
     Addend = Value;
@@ -851,7 +868,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   ERE.Index = Index;
   ERE.Type = Type;
-  ERE.Symbol = &Renamed;
+  ERE.Symbol = RelocSymbol;
 
   ERE.r_offset = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
 
