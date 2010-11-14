@@ -37,6 +37,10 @@ LEVEL := $(CLANG_LEVEL)/../..
 # Include LLVM common makefile.
 include $(LEVEL)/Makefile.common
 
+ifneq ($(ENABLE_DOCS),1)
+  DIRS := $(filter-out docs, $(DIRS))
+endif
+
 # Set common Clang build flags.
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(CLANG_LEVEL)/include -I$(PROJ_OBJ_DIR)/$(CLANG_LEVEL)/include
 ifdef CLANG_VENDOR
