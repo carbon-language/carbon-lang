@@ -558,6 +558,28 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Lower multi-instruction pseudo operations.
     switch (MI->getOpcode()) {
     default: break;
+    case PPC::MovePCtoLR:
+    case PPC::MovePCtoLR8: {
+      // Transform %LR = MovePCtoLR
+      // Into this, where the label is the PIC base: 
+      //     bl L1$pb
+      // L1$pb:
+      MCSymbol *PICBase = MF->getPICBaseSymbol();
+      
+      // Emit the 'bl'.
+      TmpInst.setOpcode(PPC::BL_Darwin); // Darwin vs SVR4 doesn't matter here.
+      
+      
+      // FIXME: We would like an efficient form for this, so we don't have to do
+      // a lot of extra uniquing.
+      TmpInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::
+                                               Create(PICBase, OutContext)));
+      OutStreamer.EmitInstruction(TmpInst);
+      
+      // Emit the label.
+      OutStreamer.EmitLabel(PICBase);
+      return;
+    }
     case PPC::LDtoc: {
       // Transform %X3 = LDtoc <ga:@min1>, %X2
       LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
