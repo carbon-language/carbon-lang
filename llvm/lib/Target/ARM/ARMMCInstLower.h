@@ -32,31 +32,24 @@ class LLVM_LIBRARY_VISIBILITY ARMMCInstLower {
   MCContext &Ctx;
   Mangler &Mang;
   AsmPrinter &Printer;
-
-  //const ARMSubtarget &getSubtarget() const;
 public:
   ARMMCInstLower(MCContext &ctx, Mangler &mang, AsmPrinter &printer)
     : Ctx(ctx), Mang(mang), Printer(printer) {}
 
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
-  //MCSymbol *GetPICBaseSymbol() const;
+private:
   MCSymbol *GetGlobalAddressSymbol(const GlobalValue *GV) const;
   const MCSymbolRefExpr *GetSymbolRef(const MachineOperand &MO) const;
   const MCSymbolRefExpr *GetExternalSymbolSymbol(const MachineOperand &MO)
     const;
-  MCSymbol *GetJumpTableSymbol(const MachineOperand &MO) const;
-  MCSymbol *GetConstantPoolIndexSymbol(const MachineOperand &MO) const;
+  const MCSymbolRefExpr *GetJumpTableSymbol(const MachineOperand &MO) const;
+  const MCSymbolRefExpr *
+  GetConstantPoolIndexSymbol(const MachineOperand &MO) const;
   MCOperand LowerSymbolRefOperand(const MachineOperand &MO,
                                   const MCSymbolRefExpr *Expr) const;
-  MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
-
-/*
-private:
-  MachineModuleInfoMachO &getMachOMMI() const;
- */
 };
 
-}
+} // end namespace llvm
 
 #endif

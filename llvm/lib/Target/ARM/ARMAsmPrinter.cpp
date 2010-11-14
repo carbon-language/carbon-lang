@@ -802,9 +802,8 @@ void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   ARMMCInstLower MCInstLowering(OutContext, *Mang, *this);
   switch (MI->getOpcode()) {
-  case ARM::t2MOVi32imm:
-    assert(0 && "Should be lowered by thumb2it pass");
   default: break;
+  case ARM::t2MOVi32imm: assert(0 && "Should be lowered by thumb2it pass");
   case ARM::DBG_VALUE: {
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
       SmallString<128> TmpStr;

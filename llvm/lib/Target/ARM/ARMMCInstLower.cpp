@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARM.h"
 #include "ARMMCInstLower.h"
+#include "ARM.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -82,7 +82,7 @@ GetExternalSymbolSymbol(const MachineOperand &MO) const {
 
 
 
-MCSymbol *ARMMCInstLower::
+const MCSymbolRefExpr *ARMMCInstLower::
 GetJumpTableSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
   raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "JTI"
@@ -94,10 +94,10 @@ GetJumpTableSymbol(const MachineOperand &MO) const {
   }
 
   // Create a symbol for the name.
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return MCSymbolRefExpr::Create(Ctx.GetOrCreateSymbol(Name.str()), Ctx);
 }
 
-MCSymbol *ARMMCInstLower::
+const MCSymbolRefExpr *ARMMCInstLower::
 GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
   raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "CPI"
@@ -109,25 +109,7 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   }
 
   // Create a symbol for the name.
-  return Ctx.GetOrCreateSymbol(Name.str());
-}
-
-MCOperand ARMMCInstLower::
-LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const {
-  // FIXME: We would like an efficient form for this, so we don't have to do a
-  // lot of extra uniquing.
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
-
-  switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on Symbol operand");
-  case 0: break;
-  }
-
-  if (!MO.isJTI() && MO.getOffset())
-    Expr = MCBinaryExpr::CreateAdd(Expr,
-                                   MCConstantExpr::Create(MO.getOffset(), Ctx),
-                                   Ctx);
-  return MCOperand::CreateExpr(Expr);
+  return MCSymbolRefExpr::Create(Ctx.GetOrCreateSymbol(Name.str()), Ctx);
 }
 
 MCOperand ARMMCInstLower::
@@ -173,14 +155,15 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = LowerSymbolRefOperand(MO, GetExternalSymbolSymbol(MO));
       break;
     case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));
+      MCOp = LowerSymbolRefOperand(MO, GetJumpTableSymbol(MO));
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerSymbolOperand(MO, GetConstantPoolIndexSymbol(MO));
+      MCOp = LowerSymbolRefOperand(MO, GetConstantPoolIndexSymbol(MO));
       break;
     case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolOperand(MO, Printer.GetBlockAddressSymbol(
-                                              MO.getBlockAddress()));
+      MCOp = LowerSymbolRefOperand(MO,
+                    MCSymbolRefExpr::Create(Printer.GetBlockAddressSymbol(
+                                              MO.getBlockAddress()), Ctx));
       break;
     case MachineOperand::MO_FPImmediate:
       APFloat Val = MO.getFPImm()->getValueAPF();
