@@ -83,7 +83,7 @@ namespace clang {
   ///
   /// \return False if a crash was detected.
   bool RunSafely(llvm::CrashRecoveryContext &CRC,
-                 void (*Fn)(void*), void *UserData);
+                 void (*Fn)(void*), void *UserData, unsigned Size = 0);
 }
 
 #endif

@@ -4251,8 +4251,14 @@ void clang_annotateTokens(CXTranslationUnit TU,
                          CXXUnit, RegionOfInterest);
 
   // Run the worker within a CrashRecoveryContext.
+  // FIXME: We use a ridiculous stack size here because the data-recursion
+  // algorithm uses a large stack frame than the non-data recursive version,
+  // and AnnotationTokensWorker currently transforms the data-recursion
+  // algorithm back into a traditional recursion by explicitly calling
+  // VisitChildren().  We will need to remove this explicit recursive call.
   llvm::CrashRecoveryContext CRC;
-  if (!RunSafely(CRC, runAnnotateTokensWorker, &W)) {
+  if (!RunSafely(CRC, runAnnotateTokensWorker, &W,
+                 GetSafetyThreadStackSize() * 2)) {
     fprintf(stderr, "libclang: crash detected while annotating tokens\n");
   }
 }
@@ -4597,8 +4603,11 @@ static unsigned SafetyStackThreadSize = 8 << 20;
 namespace clang {
 
 bool RunSafely(llvm::CrashRecoveryContext &CRC,
-               void (*Fn)(void*), void *UserData) {
-  if (unsigned Size = GetSafetyThreadStackSize())
+               void (*Fn)(void*), void *UserData,
+               unsigned Size) {
+  if (!Size)
+    Size = GetSafetyThreadStackSize();
+  if (Size)
     return CRC.RunSafelyOnThread(Fn, UserData, Size);
   return CRC.RunSafely(Fn, UserData);
 }
