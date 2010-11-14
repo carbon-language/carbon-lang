@@ -5,7 +5,6 @@ tablegen(AlphaGenRegisterNames.inc -gen-register-enums)
 tablegen(AlphaGenRegisterInfo.inc -gen-register-desc)
 tablegen(AlphaGenInstrNames.inc -gen-instr-enums)
 tablegen(AlphaGenInstrInfo.inc -gen-instr-desc)
-tablegen(AlphaGenCodeEmitter.inc -gen-emitter)
 tablegen(AlphaGenAsmWriter.inc -gen-asm-writer)
 tablegen(AlphaGenDAGISel.inc -gen-dag-isel)
 tablegen(AlphaGenCallingConv.inc -gen-callingconv)
@@ -17,7 +16,6 @@ add_llvm_target(AlphaCodeGen
   AlphaInstrInfo.cpp
   AlphaISelDAGToDAG.cpp
   AlphaISelLowering.cpp
-  AlphaJITInfo.cpp
   AlphaLLRP.cpp
   AlphaMCAsmInfo.cpp
   AlphaRegisterInfo.cpp

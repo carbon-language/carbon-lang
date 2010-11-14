@@ -388,9 +388,7 @@ ifeq ($(ENABLE_PIC),0)
   CXX.Flags     += -fPIC
   CPP.BaseFlags += -fPIC
 endif
-endif
 
-ifeq ($(ARCH),Alpha)
   LD.Flags += -Wl,--no-relax
 endif
 

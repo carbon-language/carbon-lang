@@ -4850,7 +4850,7 @@ else
  ;;
     x86_64)      TARGET_HAS_JIT=1
  ;;
-    Alpha)       TARGET_HAS_JIT=1
+    Alpha)       TARGET_HAS_JIT=0
  ;;
     ARM)         TARGET_HAS_JIT=1
  ;;

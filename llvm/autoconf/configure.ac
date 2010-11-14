@@ -480,7 +480,7 @@ else
     Sparc)       AC_SUBST(TARGET_HAS_JIT,0) ;;
     PowerPC)     AC_SUBST(TARGET_HAS_JIT,1) ;;
     x86_64)      AC_SUBST(TARGET_HAS_JIT,1) ;;
-    Alpha)       AC_SUBST(TARGET_HAS_JIT,1) ;;
+    Alpha)       AC_SUBST(TARGET_HAS_JIT,0) ;;
     ARM)         AC_SUBST(TARGET_HAS_JIT,1) ;;
     Mips)        AC_SUBST(TARGET_HAS_JIT,0) ;;
     XCore)       AC_SUBST(TARGET_HAS_JIT,0) ;;
