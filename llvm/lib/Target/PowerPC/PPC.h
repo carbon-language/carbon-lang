@@ -18,12 +18,12 @@
 // GCC #defines PPC on Linux but we use it as our namespace name
 #undef PPC
 
-#include "llvm/Target/TargetMachine.h"
-
 namespace llvm {
   class PPCTargetMachine;
   class FunctionPass;
   class formatted_raw_ostream;
+  class JITCodeEmitter;
+  class Target;
   
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
