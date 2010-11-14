@@ -456,6 +456,11 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
 
   for (const char *Ptr = MB->getBufferStart(), *End = MB->getBufferEnd();
        Ptr != End; ++Ptr) {
+    // Eliminate trailing dosish \r.
+    if (Ptr <= End - 2 && Ptr[0] == '\r' && Ptr[1] == '\n') {
+      continue;
+    }
+
     // If C is not a horizontal whitespace, skip it.
     if (*Ptr != ' ' && *Ptr != '\t') {
       NewFile.push_back(*Ptr);
