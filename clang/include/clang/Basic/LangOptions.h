@@ -19,9 +19,8 @@
 
 namespace clang {
 
-/// LangOptions - This class keeps track of the various options that can be
-/// enabled, which controls the dialect of C that is accepted.
-class LangOptions {
+/// Contains all the flags in LangOptions, default initialized to 0.
+class LangOptionsFlags {
 public:
   unsigned Trigraphs         : 1;  // Trigraphs in source files.
   unsigned BCPLComment       : 1;  // BCPL-style '//' comments.
@@ -59,60 +58,60 @@ public:
   unsigned NoBuiltin         : 1; // Do not use builtin functions (-fno-builtin)
 
   unsigned ThreadsafeStatics : 1; // Whether static initializers are protected
-                                  // by locks.
+  // by locks.
   unsigned POSIXThreads      : 1; // Compiling with POSIX thread support
-                                  // (-pthread)
+  // (-pthread)
   unsigned Blocks            : 1; // block extension to C
   unsigned EmitAllDecls      : 1; // Emit all declarations, even if
-                                  // they are unused.
+  // they are unused.
   unsigned MathErrno         : 1; // Math functions must respect errno
-                                  // (modulo the platform support).
+  // (modulo the platform support).
 
   unsigned HeinousExtensions : 1; // Extensions that we really don't like and
-                                  // may be ripped out at any time.
+  // may be ripped out at any time.
 
   unsigned Optimize          : 1; // Whether __OPTIMIZE__ should be defined.
   unsigned OptimizeSize      : 1; // Whether __OPTIMIZE_SIZE__ should be
-                                  // defined.
+  // defined.
   unsigned Static            : 1; // Should __STATIC__ be defined (as
-                                  // opposed to __DYNAMIC__).
+  // opposed to __DYNAMIC__).
   unsigned PICLevel          : 2; // The value for __PIC__, if non-zero.
 
   unsigned GNUInline         : 1; // Should GNU inline semantics be
-                                  // used (instead of C99 semantics).
+  // used (instead of C99 semantics).
   unsigned NoInline          : 1; // Should __NO_INLINE__ be defined.
 
   unsigned ObjCGCBitmapPrint : 1; // Enable printing of gc's bitmap layout
-                                  // for __weak/__strong ivars.
+  // for __weak/__strong ivars.
 
   unsigned AccessControl     : 1; // Whether C++ access control should
-                                  // be enabled.
+  // be enabled.
   unsigned CharIsSigned      : 1; // Whether char is a signed or unsigned type
   unsigned ShortWChar        : 1; // Force wchar_t to be unsigned short int.
 
   unsigned ShortEnums        : 1; // The enum type will be equivalent to the
-                                  // smallest integer type with enough room.
+  // smallest integer type with enough room.
 
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
 
   unsigned AssumeSaneOperatorNew : 1; // Whether to add __attribute__((malloc))
-                                      // to the declaration of C++'s new
-                                      // operators
+  // to the declaration of C++'s new
+  // operators
   unsigned ElideConstructors : 1; // Whether C++ copy constructors should be
-                                  // elided if possible.
+  // elided if possible.
   unsigned CatchUndefined    : 1; // Generate code to check for undefined ops.
   unsigned DumpRecordLayouts : 1; /// Dump the layout of IRgen'd records.
   unsigned DumpVTableLayouts : 1; /// Dump the layouts of emitted vtables.
   unsigned NoConstantCFStrings : 1;  // Do not do CF strings
   unsigned InlineVisibilityHidden : 1; // Whether inline C++ methods have
-                                       // hidden visibility by default.
+  // hidden visibility by default.
 
   unsigned SpellChecking : 1; // Whether to perform spell-checking for error
-                              // recovery.
+  // recovery.
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
 
-private:
+protected:
   // We declare multibit enums as unsigned because MSVC insists on making enums
   // signed.  Set/Query these values using accessors.
   unsigned GC : 2;                // Objective-C Garbage Collection modes.
@@ -120,6 +119,13 @@ private:
   unsigned StackProtector    : 2; // Whether stack protectors are on.
   unsigned SignedOverflowBehavior : 2; // How to handle signed integer overflow.
 
+
+  LangOptionsFlags() { memset(this, 0, sizeof(this)); }
+};
+
+/// This class keeps track of the various options that can be
+/// enabled, which controls the dialect of C that is accepted.
+class LangOptions : public LangOptionsFlags {
 public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
@@ -143,55 +149,19 @@ public:
   std::string OverflowHandler;
 
   LangOptions() {
-    Trigraphs = BCPLComment = Bool = DollarIdents = AsmPreprocessor = 0;
-    GNUMode = GNUKeywords = ImplicitInt = Digraphs = 0;
-    HexFloats = 0;
-    GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
-    NoConstantCFStrings = 0; InlineVisibilityHidden = 0;
-    C99 = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
-    CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
-    Exceptions = SjLjExceptions = Freestanding = NoBuiltin = 0;
     NeXTRuntime = 1;
     RTTI = 1;
     LaxVectorConversions = 1;
-    HeinousExtensions = 0;
-    AltiVec = OpenCL = StackProtector = 0;
-
     SymbolVisibility = (unsigned) DefaultVisibility;
-
     ThreadsafeStatics = 1;
-    POSIXThreads = 0;
-    Blocks = 0;
-    EmitAllDecls = 0;
     MathErrno = 1;
     SignedOverflowBehavior = SOB_Undefined;
-
     AssumeSaneOperatorNew = 1;
     AccessControl = 1;
     ElideConstructors = 1;
-
-    SignedOverflowBehavior = 0;
-    ObjCGCBitmapPrint = 0;
-
     InstantiationDepth = 1024;
-
-    Optimize = 0;
-    OptimizeSize = 0;
-
-    Static = 0;
-    PICLevel = 0;
-
-    GNUInline = 0;
-    NoInline = 0;
-
     CharIsSigned = 1;
-    ShortWChar = 0;
-    ShortEnums = 0;
-    CatchUndefined = 0;
-    DumpRecordLayouts = 0;
-    DumpVTableLayouts = 0;
     SpellChecking = 1;
-    NoBitFieldTypeAlign = 0;
   }
 
   GCMode getGCMode() const { return (GCMode) GC; }
