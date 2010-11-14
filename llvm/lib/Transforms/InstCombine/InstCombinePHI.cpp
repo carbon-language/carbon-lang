@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
@@ -731,8 +732,8 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // If LCSSA is around, don't mess with Phi nodes
   if (MustPreserveLCSSA) return 0;
-  
-  if (Value *V = PN.hasConstantValue())
+
+  if (Value *V = SimplifyInstruction(&PN, TD))
     return ReplaceInstUsesWith(PN, V);
 
   // If all PHI operands are the same operation, pull them through the PHI,

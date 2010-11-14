@@ -699,6 +699,8 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
     SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
     return SimplifyGEPInst(&Ops[0], Ops.size(), TD);
   }
+  case Instruction::PHI:
+    return cast<PHINode>(I)->hasConstantValue();
   }
 }
 
