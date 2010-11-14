@@ -566,7 +566,7 @@ def LDinto_toc: DSForm_1<58, 0, (outs), (ins G8RC:$reg),
 let RST = 2, DS = 40, RA = 1 in
 def LDtoc_restore : DSForm_1<58, 0, (outs), (ins),
                     "ld 2, 40(1)", LdStLD,
-                    []>, isPPC64;
+                    [(PPCtoc_restore)]>, isPPC64;
 def LDX  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
@@ -579,8 +579,6 @@ def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memrix:$addr
 
 }
 
-def : Pat<(PPCtoc_restore),
-          (LDtoc_restore)>;
 def : Pat<(PPCload ixaddr:$src),
           (LD ixaddr:$src)>;
 def : Pat<(PPCload xaddr:$src),

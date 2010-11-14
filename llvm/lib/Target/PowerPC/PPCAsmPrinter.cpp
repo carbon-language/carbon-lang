@@ -560,6 +560,32 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     switch (MI->getOpcode()) {
     default: break;
         
+    case PPC::LDtoc: {
+      // Transform %X3 = LDtoc <ga:@min1>, %X2
+      LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
+        
+      // Change the opcode to LD, and the global address operand to be a
+      // reference to the TOC entry we will synthesize later.
+      TmpInst.setOpcode(PPC::LD);
+      const MachineOperand &MO = MI->getOperand(1);
+      assert(MO.isGlobal());
+        
+      // Map symbol -> label of TOC entry.
+      MCSymbol *&TOCEntry = TOC[Mang->getSymbol(MO.getGlobal())];
+      if (TOCEntry == 0) {
+        TOCEntry = OutContext.
+          GetOrCreateSymbol(StringRef(MAI->getPrivateGlobalPrefix()) +
+                            "C" + Twine(LabelID++));
+      }
+        
+      const MCExpr *Exp =
+        MCSymbolRefExpr::Create(TOCEntry, MCSymbolRefExpr::VK_PPC_TOC,
+                                OutContext);
+      TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
+      OutStreamer.EmitInstruction(TmpInst);
+      return;
+    }
+        
     case PPC::MFCRpseud:
       // Transform: %R3 = MFCRpseud %CR7
       // Into:      %R3 = MFCR      ;; cr7
