@@ -30,11 +30,24 @@
 // CHECK-NEXT: ('st_value', 0x00000001)
 // CHECK-NEXT: ('st_size', 0x00000001)
 
+        .local	common6
+        .comm	common6,8,16
+
+// CHECK:      # Symbol 0x00000003
+// CHECK-NEXT: (('st_name', 0x00000011) # 'common6'
+// CHECK-NEXT:  ('st_bind', 0x00000000)
+// CHECK-NEXT:  ('st_type', 0x00000001)
+// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_shndx', 0x00000003)
+// CHECK-NEXT:  ('st_value', 0x00000010)
+// CHECK-NEXT:  ('st_size', 0x00000008)
+// CHECK-NEXT: ),
+
 // Test that without an explicit .local we produce a global.
 	.type	common3,@object
 	.comm	common3,4,4
 
-// CHECK: ('st_name', 0x00000011) # 'common3'
+// CHECK: ('st_name', 0x00000019) # 'common3'
 // CHECK-NEXT: ('st_bind', 0x00000001)
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
@@ -54,7 +67,7 @@ foo:
 	.type	common4,@object
 	.comm	common4,40,16
 
-// CHECK: ('st_name', 0x0000001d) # 'common4'
+// CHECK: ('st_name', 0x00000025) # 'common4'
 // CHECK-NEXT: ('st_bind', 0x00000001)
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
@@ -64,8 +77,8 @@ foo:
 
         .comm	common5,4,4
 
-// CHECK:      # Symbol 0x00000008
-// CHECK-NEXT: (('st_name', 0x00000025) # 'common5'
+// CHECK:      # Symbol 0x00000009
+// CHECK-NEXT: (('st_name', 0x0000002d) # 'common5'
 // CHECK-NEXT:  ('st_bind', 0x00000001)
 // CHECK-NEXT:  ('st_type', 0x00000001)
 // CHECK-NEXT:  ('st_other', 0x00000000)

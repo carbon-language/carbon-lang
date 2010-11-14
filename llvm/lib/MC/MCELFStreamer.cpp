@@ -409,8 +409,9 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   if (!BindingExplicitlySet.count(Symbol)) {
     SetBinding(SD, ELF::STB_GLOBAL);
     SD.setExternal(true);
-    SetType(SD, ELF::STT_OBJECT);
   }
+
+  SetType(SD, ELF::STT_OBJECT);
 
   if (GetBinding(SD) == ELF_STB_Local) {
     const MCSection *Section = getAssembler().getContext().getELFSection(".bss",
