@@ -11,6 +11,7 @@ tablegen(AlphaGenCallingConv.inc -gen-callingconv)
 tablegen(AlphaGenSubtarget.inc -gen-subtarget)
 
 add_llvm_target(AlphaCodeGen
+  AlphaAsmPrinter.cpp
   AlphaBranchSelector.cpp
   AlphaInstrInfo.cpp
   AlphaISelDAGToDAG.cpp

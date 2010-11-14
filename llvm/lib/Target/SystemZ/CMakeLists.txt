@@ -11,6 +11,7 @@ tablegen(SystemZGenCallingConv.inc -gen-callingconv)
 tablegen(SystemZGenSubtarget.inc -gen-subtarget)
 
 add_llvm_target(SystemZCodeGen
+  SystemZAsmPrinter.cpp
   SystemZISelDAGToDAG.cpp
   SystemZISelLowering.cpp
   SystemZInstrInfo.cpp

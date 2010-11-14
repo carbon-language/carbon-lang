@@ -18,7 +18,7 @@ BUILT_SOURCES = XCoreGenRegisterInfo.h.inc XCoreGenRegisterNames.inc \
                 XCoreGenDAGISel.inc XCoreGenCallingConv.inc \
 		XCoreGenSubtarget.inc
 
-DIRS = AsmPrinter TargetInfo
+DIRS = TargetInfo
 
 include $(LEVEL)/Makefile.common
 

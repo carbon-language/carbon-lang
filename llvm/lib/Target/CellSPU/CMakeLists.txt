@@ -12,6 +12,7 @@ tablegen(SPUGenSubtarget.inc -gen-subtarget)
 tablegen(SPUGenCallingConv.inc -gen-callingconv)
 
 add_llvm_target(CellSPUCodeGen
+  SPUAsmPrinter.cpp
   SPUFrameInfo.cpp
   SPUHazardRecognizers.cpp
   SPUInstrInfo.cpp

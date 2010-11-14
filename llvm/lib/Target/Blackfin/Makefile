@@ -18,7 +18,7 @@ BUILT_SOURCES = BlackfinGenRegisterInfo.h.inc BlackfinGenRegisterNames.inc \
                 BlackfinGenDAGISel.inc BlackfinGenSubtarget.inc \
 		BlackfinGenCallingConv.inc BlackfinGenIntrinsics.inc
 
-DIRS = AsmPrinter TargetInfo
+DIRS = TargetInfo
 
 include $(LEVEL)/Makefile.common
 

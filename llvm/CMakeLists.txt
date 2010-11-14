@@ -328,11 +328,6 @@ foreach(t ${LLVM_TARGETS_TO_BUILD})
   message(STATUS "Targeting ${t}")
   add_subdirectory(lib/Target/${t})
   add_subdirectory(lib/Target/${t}/TargetInfo)
-  if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
-    add_subdirectory(lib/Target/${t}/AsmPrinter)
-    set(LLVM_ENUM_ASM_PRINTERS 
-      "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
-  endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
   if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/InstPrinter/CMakeLists.txt )
     add_subdirectory(lib/Target/${t}/InstPrinter)
     set(LLVM_ENUM_ASM_PRINTERS

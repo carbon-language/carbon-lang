@@ -16,6 +16,6 @@ BUILT_SOURCES = SPUGenInstrNames.inc SPUGenRegisterNames.inc \
 		SPUGenInstrInfo.inc SPUGenDAGISel.inc \
 		SPUGenSubtarget.inc SPUGenCallingConv.inc
 
-DIRS = AsmPrinter TargetInfo
+DIRS = TargetInfo
 
 include $(LEVEL)/Makefile.common

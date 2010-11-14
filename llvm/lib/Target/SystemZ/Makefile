@@ -17,7 +17,7 @@ BUILT_SOURCES = SystemZGenRegisterInfo.h.inc SystemZGenRegisterNames.inc \
                 SystemZGenInstrInfo.inc SystemZGenAsmWriter.inc \
                 SystemZGenDAGISel.inc SystemZGenSubtarget.inc SystemZGenCallingConv.inc
 
-DIRS = AsmPrinter TargetInfo
+DIRS = TargetInfo
 
 include $(LEVEL)/Makefile.common
 

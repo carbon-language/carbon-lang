@@ -21,6 +21,6 @@ BUILT_SOURCES = PTXGenAsmWriter.inc \
 		PTXGenRegisterNames.inc \
 		PTXGenSubtarget.inc
 
-DIRS = AsmPrinter TargetInfo
+DIRS = TargetInfo
 
 include $(LEVEL)/Makefile.common
