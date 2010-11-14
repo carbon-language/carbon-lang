@@ -1,6 +1,5 @@
 // RUN: %clang_cc1 -I%S -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t.ll
 // RUN: FileCheck -check-prefix LL --input-file=%t.ll %s
-// XFAIL: win32
 
 #include <typeinfo>
 
