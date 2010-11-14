@@ -39,6 +39,22 @@ void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
 extern Target ThePPC32Target;
 extern Target ThePPC64Target;
 
+  namespace PPCII {
+    
+  /// Target Operand Flag enum.
+  enum TOF {
+    //===------------------------------------------------------------------===//
+    // PPC Specific MachineOperand flags.
+    MO_NO_FLAG,
+    
+    /// MO_DARWIN_STUB - On a symbol operand "FOO", this indicates that the
+    /// reference is actually to the "FOO$stub" symbol.  This is used for calls
+    /// and jumps to external functions on Tiger and earlier.
+    MO_DARWIN_STUB
+    
+  };
+  } // end namespace PPCII
+  
 } // end namespace llvm;
 
 // Defines symbolic names for PowerPC registers.  This defines a mapping from

@@ -2451,7 +2451,11 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
                      SDValue &Chain, DebugLoc dl, int SPDiff, bool isTailCall,
                      SmallVector<std::pair<unsigned, SDValue>, 8> &RegsToPass,
                      SmallVector<SDValue, 8> &Ops, std::vector<EVT> &NodeTys,
-                     bool isPPC64, bool isSVR4ABI) {
+                     const PPCSubtarget &PPCSubTarget) {
+  
+  bool isPPC64 = PPCSubTarget.isPPC64();
+  bool isSVR4ABI = PPCSubTarget.isSVR4ABI();
+
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
@@ -2464,24 +2468,49 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     Callee = SDValue(Dest, 0);
     needIndirectCall = false;
   }
-  // XXX Work around for http://llvm.org/bugs/show_bug.cgi?id=5201
-  // Use indirect calls for ALL functions calls in JIT mode, since the
-  // far-call stubs may be outside relocation limits for a BL instruction.
-  if (!DAG.getTarget().getSubtarget<PPCSubtarget>().isJITCodeModel()) {
-    // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
-    // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
-    // node so that legalize doesn't hack it.
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+  
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    // XXX Work around for http://llvm.org/bugs/show_bug.cgi?id=5201
+    // Use indirect calls for ALL functions calls in JIT mode, since the
+    // far-call stubs may be outside relocation limits for a BL instruction.
+    if (!DAG.getTarget().getSubtarget<PPCSubtarget>().isJITCodeModel()) {
+      unsigned OpFlags = 0;
+      if (DAG.getTarget().getRelocationModel() != Reloc::Static &&
+          PPCSubTarget.getDarwinVers() < 9 &&
+          (G->getGlobal()->isDeclaration() ||
+           G->getGlobal()->isWeakForLinker())) {
+        // PC-relative references to external symbols should go through $stub,
+        // unless we're building with the leopard linker or later, which
+        // automatically synthesizes these stubs.
+        OpFlags = PPCII::MO_DARWIN_STUB;
+      }
+      
+      // If the callee is a GlobalAddress/ExternalSymbol node (quite common,
+      // every direct call is) turn it into a TargetGlobalAddress /
+      // TargetExternalSymbol node so that legalize doesn't hack it.
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
-            Callee.getValueType());
+                                          Callee.getValueType(),
+                                          0, OpFlags);
       needIndirectCall = false;
-    }
+    }               
   }
+  
   if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-      Callee = DAG.getTargetExternalSymbol(S->getSymbol(),
-             Callee.getValueType());
-      needIndirectCall = false;
+    unsigned char OpFlags = 0;
+    
+    if (DAG.getTarget().getRelocationModel() != Reloc::Static &&
+        PPCSubTarget.getDarwinVers() < 9) {
+      // PC-relative references to external symbols should go through $stub,
+      // unless we're building with the leopard linker or later, which
+      // automatically synthesizes these stubs.
+      OpFlags = PPCII::MO_DARWIN_STUB;
+    }
+    
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), Callee.getValueType(),
+                                         OpFlags);
+    needIndirectCall = false;
   }
+  
   if (needIndirectCall) {
     // Otherwise, this is an indirect call.  We have to use a MTCTR/BCTRL pair
     // to do the call, we can't use PPCISD::CALL.
@@ -2628,8 +2657,7 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
   SmallVector<SDValue, 8> Ops;
   unsigned CallOpc = PrepareCall(DAG, Callee, InFlag, Chain, dl, SPDiff,
                                  isTailCall, RegsToPass, Ops, NodeTys,
-                                 PPCSubTarget.isPPC64(),
-                                 PPCSubTarget.isSVR4ABI());
+                                 PPCSubTarget);
 
   // When performing tail call optimization the callee pops its arguments off
   // the stack. Account for this here so these bytes can be pushed back on in
@@ -2717,15 +2745,14 @@ PPCTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
                                                    Ins, DAG);
 
-  if (PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64()) {
+  if (PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64())
     return LowerCall_SVR4(Chain, Callee, CallConv, isVarArg,
                           isTailCall, Outs, OutVals, Ins,
                           dl, DAG, InVals);
-  } else {
-    return LowerCall_Darwin(Chain, Callee, CallConv, isVarArg,
-                            isTailCall, Outs, OutVals, Ins,
-                            dl, DAG, InVals);
-  }
+
+  return LowerCall_Darwin(Chain, Callee, CallConv, isVarArg,
+                          isTailCall, Outs, OutVals, Ins,
+                          dl, DAG, InVals);
 }
 
 SDValue
@@ -2924,10 +2951,9 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
     InFlag = Chain.getValue(1);
   }
 
-  if (isTailCall) {
+  if (isTailCall)
     PrepareTailCall(DAG, InFlag, Chain, dl, false, SPDiff, NumBytes, LROp, FPOp,
                     false, TailCallArguments);
-  }
 
   return FinishCall(CallConv, dl, isTailCall, isVarArg, DAG,
                     RegsToPass, InFlag, Chain, Callee, SPDiff, NumBytes,
@@ -3293,10 +3319,9 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
     InFlag = Chain.getValue(1);
   }
 
-  if (isTailCall) {
+  if (isTailCall)
     PrepareTailCall(DAG, InFlag, Chain, dl, isPPC64, SPDiff, NumBytes, LROp,
                     FPOp, true, TailCallArguments);
-  }
 
   return FinishCall(CallConv, dl, isTailCall, isVarArg, DAG,
                     RegsToPass, InFlag, Chain, Callee, SPDiff, NumBytes,

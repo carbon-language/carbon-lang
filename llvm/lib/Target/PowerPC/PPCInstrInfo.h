@@ -58,7 +58,7 @@ enum PPC970_Unit {
   PPC970_VPERM  = 6 << PPC970_Shift,   // Vector Permute Unit
   PPC970_BRU    = 7 << PPC970_Shift    // Branch Unit
 };
-}
+} // end namespace PPCII
   
   
 class PPCInstrInfo : public TargetInstrInfoImpl {
