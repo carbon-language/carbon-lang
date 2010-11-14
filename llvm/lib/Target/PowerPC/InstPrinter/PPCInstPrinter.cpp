@@ -282,3 +282,18 @@ void PPCInstPrinter::printSymbolHi(const MCInst *MI, unsigned OpNo,
   else
     printOperand(MI, OpNo, O);
 }
+
+
+void PPCInstPrinter::PrintSpecial(const MCInst *MI, raw_ostream &O,
+                                  const char *Modifier) {
+  assert(0 && "FIXME: PrintSpecial should be dead");
+}
+void PPCInstPrinter::printPICLabel(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  assert(0 && "FIXME: printPICLabel should be dead");
+}
+void PPCInstPrinter::printTOCEntryLabel(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  assert(0 && "FIXME: printTOCEntryLabel should be dead");
+}
+

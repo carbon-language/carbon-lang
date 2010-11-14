@@ -64,11 +64,11 @@ public:
   void printMemRegReg(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   
   // FIXME: Remove
-  void PrintSpecial(const MCInst *MI, raw_ostream &O, const char *Modifier) {}
+  void PrintSpecial(const MCInst *MI, raw_ostream &O, const char *Modifier);
   void printSymbolLo(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printSymbolHi(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPICLabel(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
-  void printTOCEntryLabel(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
+  void printPICLabel(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printTOCEntryLabel(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   
 };
 } // end namespace llvm
