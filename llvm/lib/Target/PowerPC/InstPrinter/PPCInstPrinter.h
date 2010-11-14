@@ -45,12 +45,12 @@ public:
                              raw_ostream &O, const char *Modifier) {}
 
 
-  void printS5ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
-  void printU5ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
-  void printU6ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
-  void printS16ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
-  void printU16ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
-  void printS16X4ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
+  void printS5ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printU5ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printU6ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printS16ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printU16ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printS16X4ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printBranchOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
   void printCallOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
   void printAbsAddrOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}

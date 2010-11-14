@@ -39,6 +39,56 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   printInstruction(MI, O);
 }
 
+void PPCInstPrinter::printS5ImmOperand(const MCInst *MI, unsigned OpNo,
+                                       raw_ostream &O) {
+  char Value = MI->getOperand(OpNo).getImm();
+  Value = (Value << (32-5)) >> (32-5);
+  O << (int)Value;
+}
+
+void PPCInstPrinter::printU5ImmOperand(const MCInst *MI, unsigned OpNo,
+                                       raw_ostream &O) {
+  unsigned char Value = MI->getOperand(OpNo).getImm();
+  assert(Value <= 31 && "Invalid u5imm argument!");
+  O << (unsigned int)Value;
+}
+
+void PPCInstPrinter::printU6ImmOperand(const MCInst *MI, unsigned OpNo,
+                                       raw_ostream &O) {
+  unsigned char Value = MI->getOperand(OpNo).getImm();
+  assert(Value <= 63 && "Invalid u6imm argument!");
+  O << (unsigned int)Value;
+}
+
+void PPCInstPrinter::printS16ImmOperand(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  O << (short)MI->getOperand(OpNo).getImm();
+}
+
+void PPCInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  O << (unsigned short)MI->getOperand(OpNo).getImm();
+}
+
+void PPCInstPrinter::printS16X4ImmOperand(const MCInst *MI, unsigned OpNo,
+                                          raw_ostream &O) {
+  if (MI->getOperand(OpNo).isImm()) {
+    O << (short)(MI->getOperand(OpNo).getImm()*4);
+    return;
+  }
+  
+  assert(0 && "Unhandled operand");
+#if 0
+  O << "lo16(";
+  printOp(MI->getOperand(OpNo), O);
+  if (TM.getRelocationModel() == Reloc::PIC_)
+    O << "-\"L" << getFunctionNumber() << "$pb\")";
+  else
+    O << ')';
+#endif
+}
+
+
 /// stripRegisterPrefix - This method strips the character prefix from a
 /// register name so that only the number is left.  Used by for linux asm.
 const char *stripRegisterPrefix(const char *RegName) {
