@@ -20,8 +20,15 @@ namespace llvm {
   class MCOperand;
 
 class PPCInstPrinter : public MCInstPrinter {
+  // 0 -> AIX, 1 -> Darwin.
+  unsigned SyntaxVariant;
 public:
-  PPCInstPrinter(const MCAsmInfo &MAI) : MCInstPrinter(MAI) {}
+  PPCInstPrinter(const MCAsmInfo &MAI, unsigned syntaxVariant)
+    : MCInstPrinter(MAI), SyntaxVariant(syntaxVariant) {}
+  
+  bool isDarwinSyntax() const {
+    return SyntaxVariant == 1;
+  }
   
   virtual void printInst(const MCInst *MI, raw_ostream &O);
   virtual StringRef getOpcodeName(unsigned Opcode) const;
@@ -33,7 +40,7 @@ public:
   static const char *getRegisterName(unsigned RegNo);
   
 
-  void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
+  void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printPredicateOperand(const MCInst *MI, unsigned OpNo,
                              raw_ostream &O, const char *Modifier) {}
 
