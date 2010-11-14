@@ -285,13 +285,19 @@ namespace {
     uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                          const MCSymbol *S);
 
+    // Map from a group section to the signature symbol
+    typedef DenseMap<const MCSectionELF*, const MCSymbol*> GroupMapTy;
+    // Map from a signature symbol to the group section
+    typedef DenseMap<const MCSymbol*, const MCSectionELF*> RevGroupMapTy;
+
     /// ComputeSymbolTable - Compute the symbol table data
     ///
     /// \param StringTable [out] - The string table data.
     /// \param StringIndexMap [out] - Map from symbol names to offsets in the
     /// string table.
     void ComputeSymbolTable(MCAssembler &Asm,
-                            const SectionIndexMapTy &SectionIndexMap);
+                            const SectionIndexMapTy &SectionIndexMap,
+                            RevGroupMapTy RevGroupMap);
 
     void ComputeIndexMap(MCAssembler &Asm,
                          SectionIndexMapTy &SectionIndexMap);
@@ -309,10 +315,8 @@ namespace {
     void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout,
                                 const SectionIndexMapTy &SectionIndexMap);
 
-    // Map from a group section to the signature symbol
-    typedef DenseMap<const MCSectionELF*, const MCSymbol*> GroupMapTy;
     void CreateGroupSections(MCAssembler &Asm, MCAsmLayout &Layout,
-                             GroupMapTy &GroupMap);
+                             GroupMapTy &GroupMap, RevGroupMapTy &RevGroupMap);
 
     void ExecutePostLayoutBinding(MCAssembler &Asm);
 
@@ -489,15 +493,6 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm) {
     const MCSymbol &Alias = it->getSymbol();
     const MCSymbol &Symbol = AliasedSymbol(Alias);
     MCSymbolData &SD = Asm.getSymbolData(Symbol);
-
-    // Undefined symbols are global, but this is the first place we
-    // are able to set it.
-    if (Symbol.isUndefined() && !Symbol.isVariable()) {
-      if (GetBinding(SD) == ELF::STB_LOCAL) {
-        SetBinding(SD, ELF::STB_GLOBAL);
-        SetBinding(*it, ELF::STB_GLOBAL);
-      }
-    }
 
     // Not an alias.
     if (&Symbol == &Alias)
@@ -904,13 +899,20 @@ static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
   return true;
 }
 
-static bool isLocal(const MCSymbolData &Data) {
+static bool isLocal(const MCSymbolData &Data, bool isSignature,
+                    bool isUsedInReloc) {
   if (Data.isExternal())
     return false;
 
   const MCSymbol &Symbol = Data.getSymbol();
-  if (Symbol.isUndefined() && !Symbol.isVariable())
+  const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
+
+  if (RefSymbol.isUndefined() && !RefSymbol.isVariable()) {
+    if (isSignature && !isUsedInReloc)
+      return true;
+
     return false;
+  }
 
   return true;
 }
@@ -938,7 +940,8 @@ void ELFObjectWriter::ComputeIndexMap(MCAssembler &Asm,
 }
 
 void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
-                                     const SectionIndexMapTy &SectionIndexMap) {
+                                      const SectionIndexMapTy &SectionIndexMap,
+                                      RevGroupMapTy RevGroupMap) {
   // FIXME: Is this the correct place to do this?
   if (NeedsGOT) {
     llvm::StringRef Name = "_GLOBAL_OFFSET_TABLE_";
@@ -962,14 +965,25 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
 
     bool Used = UsedInReloc.count(&Symbol);
     bool WeakrefUsed = WeakrefUsedInReloc.count(&Symbol);
-    if (!isInSymtab(Asm, *it, Used || WeakrefUsed,
+    bool isSignature = RevGroupMap.count(&Symbol);
+
+    if (!isInSymtab(Asm, *it,
+                    Used || WeakrefUsed || isSignature,
                     Renames.count(&Symbol)))
       continue;
 
     ELFSymbolData MSD;
     MSD.SymbolData = it;
-    bool Local = isLocal(*it);
     const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
+
+    // Undefined symbols are global, but this is the first place we
+    // are able to set it.
+    bool Local = isLocal(*it, isSignature, Used);
+    if (!Local && GetBinding(*it) == ELF::STB_LOCAL) {
+      MCSymbolData &SD = Asm.getSymbolData(RefSymbol);
+      SetBinding(*it, ELF::STB_GLOBAL);
+      SetBinding(SD, ELF::STB_GLOBAL);
+    }
 
     if (RefSymbol.isUndefined() && !Used && WeakrefUsed)
       SetBinding(*it, ELF::STB_WEAK);
@@ -980,7 +994,10 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
     } else if (Symbol.isAbsolute() || RefSymbol.isVariable()) {
       MSD.SectionIndex = ELF::SHN_ABS;
     } else if (RefSymbol.isUndefined()) {
-      MSD.SectionIndex = ELF::SHN_UNDEF;
+      if (isSignature && !Used)
+        MSD.SectionIndex = SectionIndexMap.lookup(RevGroupMap[&Symbol]);
+      else
+        MSD.SectionIndex = ELF::SHN_UNDEF;
     } else {
       const MCSectionELF &Section =
         static_cast<const MCSectionELF&>(RefSymbol.getSection());
@@ -1252,10 +1269,9 @@ bool ELFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
 
 void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
                                           MCAsmLayout &Layout,
-                                          GroupMapTy &GroupMap) {
-  typedef DenseMap<const MCSymbol*, const MCSectionELF*> RevGroupMapTy;
+                                          GroupMapTy &GroupMap,
+                                          RevGroupMapTy &RevGroupMap) {
   // Build the groups
-  RevGroupMapTy Groups;
   for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
        it != ie; ++it) {
     const MCSectionELF &Section =
@@ -1265,7 +1281,7 @@ void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
 
     const MCSymbol *SignatureSymbol = Section.getGroup();
     Asm.getOrCreateSymbolData(*SignatureSymbol);
-    const MCSectionELF *&Group = Groups[SignatureSymbol];
+    const MCSectionELF *&Group = RevGroupMap[SignatureSymbol];
     if (!Group) {
       Group = Asm.getContext().CreateELFGroupSection();
       MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
@@ -1278,22 +1294,22 @@ void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
 
   // Add sections to the groups
   unsigned Index = 1;
-  unsigned NumGroups = Groups.size();
+  unsigned NumGroups = RevGroupMap.size();
   for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
        it != ie; ++it, ++Index) {
     const MCSectionELF &Section =
       static_cast<const MCSectionELF&>(it->getSection());
     if (!(Section.getFlags() & MCSectionELF::SHF_GROUP))
       continue;
-    const MCSectionELF *Group = Groups[Section.getGroup()];
+    const MCSectionELF *Group = RevGroupMap[Section.getGroup()];
     MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
     // FIXME: we could use the previous fragment
     MCDataFragment *F = new MCDataFragment(&Data);
     String32(*F, NumGroups + Index);
   }
 
-  for (RevGroupMapTy::const_iterator i = Groups.begin(), e = Groups.end();
-       i != e; ++i) {
+  for (RevGroupMapTy::const_iterator i = RevGroupMap.begin(),
+         e = RevGroupMap.end(); i != e; ++i) {
     const MCSectionELF *Group = i->second;
     MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
     Asm.AddSectionToTheEnd(*this, Data, Layout);
@@ -1373,14 +1389,16 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
 void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) {
   GroupMapTy GroupMap;
-  CreateGroupSections(Asm, const_cast<MCAsmLayout&>(Layout), GroupMap);
+  RevGroupMapTy RevGroupMap;
+  CreateGroupSections(Asm, const_cast<MCAsmLayout&>(Layout), GroupMap,
+                      RevGroupMap);
 
   SectionIndexMapTy SectionIndexMap;
 
   ComputeIndexMap(Asm, SectionIndexMap);
 
   // Compute symbol table information.
-  ComputeSymbolTable(Asm, SectionIndexMap);
+  ComputeSymbolTable(Asm, SectionIndexMap, RevGroupMap);
 
   CreateMetadataSections(const_cast<MCAssembler&>(Asm),
                          const_cast<MCAsmLayout&>(Layout),

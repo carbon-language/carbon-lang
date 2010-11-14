@@ -84,6 +84,7 @@ public:
   virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
+  virtual void SwitchSection(const MCSection *Section);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
     assert(0 && "ELF doesn't support this directive");
@@ -281,6 +282,13 @@ public:
   }
 };
 } // end anonymous namespace
+
+void MCELFStreamer::SwitchSection(const MCSection *Section) {
+  const MCSymbol *Grp = static_cast<const MCSectionELF *>(Section)->getGroup();
+  if (Grp)
+    getAssembler().getOrCreateSymbolData(*Grp);
+  this->MCObjectStreamer::SwitchSection(Section);
+}
 
 void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
   getAssembler().getOrCreateSymbolData(*Symbol);
