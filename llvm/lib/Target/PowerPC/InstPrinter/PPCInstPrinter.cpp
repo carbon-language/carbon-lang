@@ -88,6 +88,71 @@ void PPCInstPrinter::printS16X4ImmOperand(const MCInst *MI, unsigned OpNo,
 #endif
 }
 
+void PPCInstPrinter::printcrbitm(const MCInst *MI, unsigned OpNo,
+                                 raw_ostream &O) {
+  unsigned CCReg = MI->getOperand(OpNo).getReg();
+  unsigned RegNo;
+  switch (CCReg) {
+  default: assert(0 && "Unknown CR register");
+  case PPC::CR0: RegNo = 0; break;
+  case PPC::CR1: RegNo = 1; break;
+  case PPC::CR2: RegNo = 2; break;
+  case PPC::CR3: RegNo = 3; break;
+  case PPC::CR4: RegNo = 4; break;
+  case PPC::CR5: RegNo = 5; break;
+  case PPC::CR6: RegNo = 6; break;
+  case PPC::CR7: RegNo = 7; break;
+  }
+  O << (0x80 >> RegNo);
+}
+
+void PPCInstPrinter::printMemRegImm(const MCInst *MI, unsigned OpNo,
+                                    raw_ostream &O) {
+  printSymbolLo(MI, OpNo, O);
+  O << '(';
+  assert(MI->getOperand(OpNo+1).isReg() && "Bad operand");
+  // FIXME: Simplify.
+  if (MI->getOperand(OpNo+1).isReg() &&
+      MI->getOperand(OpNo+1).getReg() == PPC::R0)
+    O << "0";
+  else
+    printOperand(MI, OpNo+1, O);
+  O << ')';
+}
+
+void PPCInstPrinter::printMemRegImmShifted(const MCInst *MI, unsigned OpNo,
+                                           raw_ostream &O) {
+  if (MI->getOperand(OpNo).isImm())
+    printS16X4ImmOperand(MI, OpNo, O);
+  else
+    printSymbolLo(MI, OpNo, O);
+  O << '(';
+  
+  assert(MI->getOperand(OpNo+1).isReg() && "Bad operand");
+  // FIXME: Simplify.
+  if (MI->getOperand(OpNo+1).isReg() &&
+      MI->getOperand(OpNo+1).getReg() == PPC::R0)
+    O << "0";
+  else
+    printOperand(MI, OpNo+1, O);
+  O << ')';
+}
+
+
+void PPCInstPrinter::printMemRegReg(const MCInst *MI, unsigned OpNo,
+                                    raw_ostream &O) {
+  // When used as the base register, r0 reads constant zero rather than
+  // the value contained in the register.  For this reason, the darwin
+  // assembler requires that we print r0 as 0 (no r) when used as the base.
+  if (MI->getOperand(OpNo).getReg() == PPC::R0)
+    O << "0";
+  else
+    printOperand(MI, OpNo, O);
+  O << ", ";
+  printOperand(MI, OpNo+1, O);
+}
+
+
 
 /// stripRegisterPrefix - This method strips the character prefix from a
 /// register name so that only the number is left.  Used by for linux asm.
