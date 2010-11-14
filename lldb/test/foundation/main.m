@@ -10,9 +10,11 @@
 @implementation MyString
 - (id)initWithNSString:(NSString *)string
 {
-    [super init];
-    str = [NSString stringWithString:string];
-    date = [NSDate date];
+    if (self = [super init])
+    {
+        str = [NSString stringWithString:string];
+        date = [NSDate date];
+    }
     return self;
 }
 
