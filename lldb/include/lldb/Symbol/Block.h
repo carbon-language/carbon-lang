@@ -420,6 +420,8 @@ public:
     bool
     GetRangeContainingAddress (const Address& addr, AddressRange &range);
 
+    bool
+    GetStartAddress (Address &addr);
     
 protected:
     typedef std::vector<lldb::BlockSP> collection;

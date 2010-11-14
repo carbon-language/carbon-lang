@@ -358,6 +358,24 @@ Block::GetRangeContainingAddress (const Address& addr, AddressRange &range)
     return false;
 }
 
+
+bool
+Block::GetStartAddress (Address &addr)
+{
+    if (m_ranges.empty())
+        return false;
+
+    SymbolContext sc;
+    CalculateSymbolContext(&sc);
+    if (sc.function)
+    {
+        addr = sc.function->GetAddressRange().GetBaseAddress();
+        addr.Slide(m_ranges.front().GetBaseAddress ());
+        return true;
+    }
+    return false;
+}
+
 void
 Block::AddRange(addr_t start_offset, addr_t end_offset)
 {

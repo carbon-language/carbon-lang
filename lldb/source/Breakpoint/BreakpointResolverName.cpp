@@ -191,8 +191,21 @@ BreakpointResolverName::SearchCallback
                     remove = true;
                 else if (sc.function == NULL)
                     remove = true;
-                else if (::strstr (sc.function->GetName().AsCString(), basename_filter) == NULL)
-                    remove = true;
+                else
+                {
+                    const InlineFunctionInfo* inlined_info = NULL;
+                    
+                    if (sc.block)
+                        inlined_info = sc.block->GetInlinedFunctionInfo();
+
+                    if (inlined_info)
+                    {
+                        if (::strstr (inlined_info->GetName().AsCString(), basename_filter) == NULL)
+                            remove = true;
+                    }
+                    else if (::strstr (sc.function->GetName().AsCString(), basename_filter) == NULL)
+                        remove = true;
+                }
 
                 if (remove)
                 {
@@ -259,16 +272,27 @@ BreakpointResolverName::SearchCallback
         {
             if (func_list.GetContextAtIndex(i, sc))
             {
-                if (sc.function)
+                if (sc.block && sc.block->GetInlinedFunctionInfo())
+                {
+                    if (!sc.block->GetStartAddress(break_addr))
+                        break_addr.Clear();
+                }
+                else if (sc.function)
                 {
                     break_addr = sc.function->GetAddressRange().GetBaseAddress();
                     if (skip_prologue)
                     {
-                        const uint32_t prologue_byte_size = sc.function->GetPrologueByteSize();
-                        if (prologue_byte_size)
-                            break_addr.SetOffset(break_addr.GetOffset() + prologue_byte_size);
+                        if (break_addr.IsValid())
+                        {
+                            const uint32_t prologue_byte_size = sc.function->GetPrologueByteSize();
+                            if (prologue_byte_size)
+                                break_addr.SetOffset(break_addr.GetOffset() + prologue_byte_size);
+                        }
                     }
-                    
+                }
+                
+                if (break_addr.IsValid())
+                {
                     if (filter.AddressPasses(break_addr))
                     {
                         BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(break_addr, &new_location));

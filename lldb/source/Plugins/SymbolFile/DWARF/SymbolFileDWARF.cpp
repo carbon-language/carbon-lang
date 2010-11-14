@@ -659,7 +659,9 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
             FunctionSP func_sp;
             std::auto_ptr<Declaration> decl_ap;
             if (decl_file != 0 || decl_line != 0 || decl_column != 0)
-                decl_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(decl_file), decl_line, decl_column));
+                decl_ap.reset(new Declaration (sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(decl_file), 
+                                               decl_line, 
+                                               decl_column));
 
             Type *func_type = m_die_to_type.lookup (die);
 
@@ -1932,7 +1934,7 @@ SymbolFileDWARF::FindFunctions
     DWARFCompileUnit* prev_cu = NULL;
     const DWARFDebugInfoEntry* die = NULL;
     std::vector<NameToDIE::Info> die_info_array;
-    const size_t num_matches = name_to_die.Find(name, die_info_array);
+    const size_t num_matches = name_to_die.Find (name, die_info_array);
     for (size_t i=0; i<num_matches; ++i, prev_cu = curr_cu)
     {
         curr_cu = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
@@ -1941,20 +1943,52 @@ SymbolFileDWARF::FindFunctions
             curr_cu->ExtractDIEsIfNeeded (false);
 
         die = curr_cu->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
+        
+        const DWARFDebugInfoEntry* inlined_die = NULL;
+        if (die->Tag() == DW_TAG_inlined_subroutine)
+        {
+            inlined_die = die;
+            
+            while ((die = die->GetParent()) != NULL)
+            {
+                if (die->Tag() == DW_TAG_subprogram)
+                    break;
+            }
+        }
+        assert (die->Tag() == DW_TAG_subprogram);
         if (GetFunction (curr_cu, die, sc))
         {
-            // We found the function, so we should find the line table
-            // and line table entry as well
-            LineTable *line_table = sc.comp_unit->GetLineTable();
-            if (line_table == NULL)
+            Address addr;
+            // Parse all blocks if needed
+            if (inlined_die)
             {
-                if (ParseCompileUnitLineTable(sc))
-                    line_table = sc.comp_unit->GetLineTable();
+                sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
+                assert (sc.block != NULL);
+                if (sc.block->GetStartAddress (addr) == false)
+                    addr.Clear();
             }
-            if (line_table != NULL)
-                line_table->FindLineEntryByAddress (sc.function->GetAddressRange().GetBaseAddress(), sc.line_entry);
+            else 
+            {
+                sc.block = NULL;
+                addr = sc.function->GetAddressRange().GetBaseAddress();
+            }
 
-            sc_list.Append(sc);
+            if (addr.IsValid())
+            {
+            
+                // We found the function, so we should find the line table
+                // and line table entry as well
+                LineTable *line_table = sc.comp_unit->GetLineTable();
+                if (line_table == NULL)
+                {
+                    if (ParseCompileUnitLineTable(sc))
+                        line_table = sc.comp_unit->GetLineTable();
+                }
+                if (line_table != NULL)
+                    line_table->FindLineEntryByAddress (addr, sc.line_entry);
+
+                sc_list.Append(sc);
+            }
         }
     }
 }
