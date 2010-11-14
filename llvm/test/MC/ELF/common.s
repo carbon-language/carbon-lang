@@ -61,3 +61,15 @@ foo:
 // CHECK-NEXT: ('st_shndx', 0x0000fff2)
 // CHECK-NEXT: ('st_value', 0x00000010)
 // CHECK-NEXT: ('st_size', 0x00000028)
+
+        .comm	common5,4,4
+
+// CHECK:      # Symbol 0x00000008
+// CHECK-NEXT: (('st_name', 0x00000025) # 'common5'
+// CHECK-NEXT:  ('st_bind', 0x00000001)
+// CHECK-NEXT:  ('st_type', 0x00000001)
+// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_shndx', 0x0000fff2)
+// CHECK-NEXT:  ('st_value', 0x00000004)
+// CHECK-NEXT:  ('st_size', 0x00000004)
+// CHECK-NEXT: ),
