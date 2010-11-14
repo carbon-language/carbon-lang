@@ -537,17 +537,20 @@ lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
             encoding_type = GetEncodingType();
         if (encoding_type)
         {
-            ResolveState encoding_clang_type_resolve_state = eResolveStateFull;
-            switch (m_encoding_uid_type)
+            ResolveState encoding_clang_type_resolve_state = clang_type_resolve_state;
+            
+            if (clang_type_resolve_state == eResolveStateLayout)
             {
-            case eEncodingIsPointerUID:
-            case eEncodingIsLValueReferenceUID:
-            case eEncodingIsRValueReferenceUID:
-                if (clang_type_resolve_state == eResolveStateLayout)
+                switch (m_encoding_uid_type)
+                {
+                case eEncodingIsPointerUID:
+                case eEncodingIsLValueReferenceUID:
+                case eEncodingIsRValueReferenceUID:
                     encoding_clang_type_resolve_state = eResolveStateForward;
-                break;
-            default:
-                break;
+                    break;
+                default:
+                    break;
+                }
             }
             encoding_type->ResolveClangType (encoding_clang_type_resolve_state);
         }
