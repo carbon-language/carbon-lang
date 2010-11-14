@@ -159,8 +159,6 @@ namespace {
 
     /// @}
 
-    int NumRegularSections;
-
     bool NeedsGOT;
 
     bool NeedsSymtabShndx;
@@ -874,13 +872,7 @@ uint64_t
 ELFObjectWriter::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                              const MCSymbol *S) {
   MCSymbolData &SD = Asm.getSymbolData(*S);
-
-  // Local symbol.
-  if (!SD.isExternal() && !S->isUndefined())
-    return SD.getIndex() + /* empty symbol */ 1;
-
-  // External or undefined symbol.
-  return SD.getIndex() + NumRegularSections + /* empty symbol */ 1;
+  return SD.getIndex();
 }
 
 static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
@@ -957,7 +949,7 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
   }
 
   // Build section lookup table.
-  NumRegularSections = Asm.size();
+  int NumRegularSections = Asm.size();
 
   // Index 0 is always the empty string.
   StringMap<uint64_t> StringIndexMap;
@@ -1033,9 +1025,12 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
 
   // Set the symbol indices. Local symbols must come before all other
   // symbols with non-local bindings.
-  unsigned Index = 0;
+  unsigned Index = 1;
   for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
     LocalSymbolData[i].SymbolData->setIndex(Index++);
+
+  Index += NumRegularSections;
+
   for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
     ExternalSymbolData[i].SymbolData->setIndex(Index++);
   for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
