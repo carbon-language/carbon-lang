@@ -14,18 +14,14 @@
 
 namespace llvm {
   class AsmPrinter;
-  class GlobalValue;
   class MCAsmInfo;
   class MCContext;
   class MCInst;
   class MCOperand;
   class MCSymbol;
-  class MCSymbolRefExpr;
   class MachineInstr;
-  class MachineModuleInfoMachO;
   class MachineOperand;
   class Mangler;
-  //class ARMSubtarget;
 
 /// ARMMCInstLower - This class is used to lower an MachineInstr into an MCInst.
 class LLVM_LIBRARY_VISIBILITY ARMMCInstLower {
@@ -39,7 +35,6 @@ public:
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
 private:
-  MCSymbol *GetGlobalAddressSymbol(const GlobalValue *GV) const;
   MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Sym) const;
 };
 

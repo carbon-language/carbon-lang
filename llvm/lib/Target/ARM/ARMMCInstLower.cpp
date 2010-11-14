@@ -26,10 +26,6 @@
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
-MCSymbol *ARMMCInstLower::GetGlobalAddressSymbol(const GlobalValue *GV) const {
-  return Printer.Mang->getSymbol(GV);
-}
-
 MCOperand ARMMCInstLower::
 GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol) const {
   const MCExpr *Expr;
@@ -82,7 +78,7 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
                        MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress:
-      MCOp = GetSymbolRef(MO, GetGlobalAddressSymbol(MO.getGlobal()));
+      MCOp = GetSymbolRef(MO, Printer.Mang->getSymbol(MO.getGlobal()));
       break;
     case MachineOperand::MO_ExternalSymbol:
       MCOp = GetSymbolRef(MO, 
