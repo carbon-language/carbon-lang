@@ -453,19 +453,16 @@ def GR64 : RegisterClass<"X86", [i64], 64,
 // Segment registers for use by MOV instructions (and others) that have a
 //   segment register as one operand.  Always contain a 16-bit segment
 //   descriptor.
-def SEGMENT_REG : RegisterClass<"X86", [i16], 16, [CS, DS, SS, ES, FS, GS]> {
-}
+def SEGMENT_REG : RegisterClass<"X86", [i16], 16, [CS, DS, SS, ES, FS, GS]>;
 
 // Debug registers.
 def DEBUG_REG : RegisterClass<"X86", [i32], 32,
-                              [DR0, DR1, DR2, DR3, DR4, DR5, DR6, DR7]> {
-}
+                              [DR0, DR1, DR2, DR3, DR4, DR5, DR6, DR7]>;
 
 // Control registers.
 def CONTROL_REG : RegisterClass<"X86", [i64], 64,
                                 [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7, CR8,
-                                 CR9, CR10, CR11, CR12, CR13, CR14, CR15]> {
-}
+                                 CR9, CR10, CR11, CR12, CR13, CR14, CR15]>;
 
 // GR8_ABCD_L, GR8_ABCD_H, GR16_ABCD, GR32_ABCD, GR64_ABCD - Subclasses of
 // GR8, GR16, GR32, and GR64 which contain just the "a" "b", "c", and "d"
@@ -473,10 +470,8 @@ def CONTROL_REG : RegisterClass<"X86", [i64], 64,
 // that support 8-bit subreg operations. On x86-64, GR16_ABCD, GR32_ABCD,
 // and GR64_ABCD are classes for registers that support 8-bit h-register
 // operations.
-def GR8_ABCD_L : RegisterClass<"X86", [i8], 8, [AL, CL, DL, BL]> {
-}
-def GR8_ABCD_H : RegisterClass<"X86", [i8], 8, [AH, CH, DH, BH]> {
-}
+def GR8_ABCD_L : RegisterClass<"X86", [i8], 8, [AL, CL, DL, BL]>;
+def GR8_ABCD_H : RegisterClass<"X86", [i8], 8, [AH, CH, DH, BH]>;
 def GR16_ABCD : RegisterClass<"X86", [i16], 16, [AX, CX, DX, BX]> {
   let SubRegClasses = [(GR8_ABCD_L sub_8bit), (GR8_ABCD_H sub_8bit_hi)];
 }
