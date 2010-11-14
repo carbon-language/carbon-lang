@@ -174,7 +174,7 @@ namespace X86II {
     
     /// MO_DARWIN_STUB - On a symbol operand "FOO", this indicates that the
     /// reference is actually to the "FOO$stub" symbol.  This is used for calls
-    /// and jumps to external functions on Tiger and before.
+    /// and jumps to external functions on Tiger and earlier.
     MO_DARWIN_STUB,
     
     /// MO_DARWIN_NONLAZY - On a symbol operand "FOO", this indicates that the
