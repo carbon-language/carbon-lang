@@ -274,15 +274,13 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
                                                     bool isVolatile) {
   llvm::Value *Real=0, *Imag=0;
 
-  // FIXME: we should really not be suppressing volatile loads.
-
-  if (!IgnoreReal) {
+  if (!IgnoreReal || isVolatile) {
     llvm::Value *RealP = Builder.CreateStructGEP(SrcPtr, 0,
                                                  SrcPtr->getName() + ".realp");
     Real = Builder.CreateLoad(RealP, isVolatile, SrcPtr->getName() + ".real");
   }
 
-  if (!IgnoreImag) {
+  if (!IgnoreImag || isVolatile) {
     llvm::Value *ImagP = Builder.CreateStructGEP(SrcPtr, 1,
                                                  SrcPtr->getName() + ".imagp");
     Imag = Builder.CreateLoad(ImagP, isVolatile, SrcPtr->getName() + ".imag");
@@ -619,12 +617,7 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   IgnoreRealAssign = ignreal;
   IgnoreImagAssign = ignimag;
 
-  // Objective-C property assignment never reloads the value following a store.
-  if (LHS.isPropertyRef() || LHS.isKVCRef())
-    return Val;
-
-  // Otherwise, reload the value.
-  return EmitLoadOfComplex(LHS.getAddress(), LHS.isVolatileQualified());
+  return Val;
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
