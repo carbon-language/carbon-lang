@@ -800,14 +800,24 @@ const char *CastExpr::getCastKindName() const {
     return "ObjCObjectLValueCast";
   case CK_FloatingRealToComplex:
     return "FloatingRealToComplex";
+  case CK_FloatingComplexToReal:
+    return "FloatingComplexToReal";
+  case CK_FloatingComplexToBoolean:
+    return "FloatingComplexToBoolean";
   case CK_FloatingComplexCast:
     return "FloatingComplexCast";
+  case CK_FloatingComplexToIntegralComplex:
+    return "FloatingComplexToIntegralComplex";
   case CK_IntegralRealToComplex:
     return "IntegralRealToComplex";
+  case CK_IntegralComplexToReal:
+    return "IntegralComplexToReal";
+  case CK_IntegralComplexToBoolean:
+    return "IntegralComplexToBoolean";
   case CK_IntegralComplexCast:
     return "IntegralComplexCast";
-  case CK_IntegralToFloatingComplex:
-    return "IntegralToFloatingComplex";
+  case CK_IntegralComplexToFloatingComplex:
+    return "IntegralComplexToFloatingComplex";
   }
 
   llvm_unreachable("Unhandled cast kind!");

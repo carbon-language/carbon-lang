@@ -1083,7 +1083,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   case CK_FloatingComplexCast:
   case CK_IntegralRealToComplex:
   case CK_IntegralComplexCast:
-  case CK_IntegralToFloatingComplex:
+  case CK_IntegralComplexToFloatingComplex:
+  case CK_FloatingComplexToIntegralComplex:
   case CK_ConstructorConversion:
     assert(0 && "Should be unreachable!");
     break;
@@ -1151,6 +1152,20 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
     return CGF.CGM.getCXXABI().EmitMemberPointerIsNotNull(CGF, MemPtr, MPT);
   }
+
+  case CK_FloatingComplexToReal:
+  case CK_IntegralComplexToReal:
+    return CGF.EmitComplexExpr(E, false, true, false, true).first;
+
+  case CK_FloatingComplexToBoolean:
+  case CK_IntegralComplexToBoolean: {
+    CodeGenFunction::ComplexPairTy V
+      = CGF.EmitComplexExpr(E, false, false, false, false);
+
+    // TODO: kill this function off, inline appropriate case here
+    return EmitComplexToScalarConversion(V, E->getType(), DestTy);
+  }
+
   }
   
   // Handle cases where the source is an non-complex type.
@@ -1162,8 +1177,10 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return EmitScalarConversion(Src, E->getType(), DestTy);
   }
 
+  // Handle cases where the source is a complex type.
+  // TODO: when we're certain about cast kinds, we should just be able
+  // to assert that no complexes make it here.
   if (E->getType()->isAnyComplexType()) {
-    // Handle cases where the source is a complex type.
     bool IgnoreImag = true;
     bool IgnoreImagAssign = true;
     bool IgnoreReal = IgnoreResultAssign;

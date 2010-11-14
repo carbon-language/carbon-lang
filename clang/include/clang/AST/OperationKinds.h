@@ -123,17 +123,32 @@ enum CastKind {
   /// \brief Floating point real to floating point complex
   CK_FloatingRealToComplex,
 
+  /// \brief Floating pointer complex to floating point real
+  CK_FloatingComplexToReal,
+
+  /// \brief Converting a floating complex to bool
+  CK_FloatingComplexToBoolean,
+
   /// \brief Casting between floating point complex types of different size
   CK_FloatingComplexCast,
+
+  /// \brief Casting from a floating complex to an integral complex
+  CK_FloatingComplexToIntegralComplex,
 
   /// \brief Integral real to integral complex
   CK_IntegralRealToComplex,
 
+  /// \brief Integral complex to integral real
+  CK_IntegralComplexToReal,
+
+  /// \brief Converting an integral complex to bool
+  CK_IntegralComplexToBoolean,
+
   /// \brief Casting between integral complex types of different size
   CK_IntegralComplexCast,
 
-  /// \brief Casting from an integral complex to a floating complex.
-  CK_IntegralToFloatingComplex
+  /// \brief Casting from an integral complex to a floating complex
+  CK_IntegralComplexToFloatingComplex
 };
 
 

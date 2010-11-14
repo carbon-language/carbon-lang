@@ -274,6 +274,8 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
                                                     bool isVolatile) {
   llvm::Value *Real=0, *Imag=0;
 
+  // FIXME: we should really not be suppressing volatile loads.
+
   if (!IgnoreReal) {
     llvm::Value *RealP = Builder.CreateStructGEP(SrcPtr, 0,
                                                  SrcPtr->getName() + ".realp");

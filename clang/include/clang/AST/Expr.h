@@ -1998,10 +1998,15 @@ private:
     case CK_AnyPointerToBlockPointerCast:
     case CK_ObjCObjectLValueCast:
     case CK_FloatingRealToComplex:
+    case CK_FloatingComplexToReal:
+    case CK_FloatingComplexToBoolean:
     case CK_FloatingComplexCast:
+    case CK_FloatingComplexToIntegralComplex:
     case CK_IntegralRealToComplex:
+    case CK_IntegralComplexToReal:
+    case CK_IntegralComplexToBoolean:
     case CK_IntegralComplexCast:
-    case CK_IntegralToFloatingComplex:
+    case CK_IntegralComplexToFloatingComplex:
       assert(path_empty() && "Cast kind should not have a base path!");
       break;
     }

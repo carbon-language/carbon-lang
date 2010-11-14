@@ -2525,10 +2525,15 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   case CK_FloatingToIntegral:
   case CK_FloatingCast:
   case CK_FloatingRealToComplex:
+  case CK_FloatingComplexToReal:
+  case CK_FloatingComplexToBoolean:
   case CK_FloatingComplexCast:
+  case CK_FloatingComplexToIntegralComplex:
   case CK_IntegralRealToComplex:
+  case CK_IntegralComplexToReal:
+  case CK_IntegralComplexToBoolean:
   case CK_IntegralComplexCast:
-  case CK_IntegralToFloatingComplex:
+  case CK_IntegralComplexToFloatingComplex:
   case CK_AnyPointerToObjCPointerCast:
   case CK_AnyPointerToBlockPointerCast:
   case CK_DerivedToBase:

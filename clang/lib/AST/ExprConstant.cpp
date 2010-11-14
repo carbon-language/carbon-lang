@@ -2073,7 +2073,14 @@ bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
                                     Result, Info.Ctx);
     return true;
   }
-  // FIXME: Handle complex types
+
+  if (E->getCastKind() == CK_FloatingComplexToReal) {
+    ComplexValue V;
+    if (!EvaluateComplex(SubExpr, V, Info))
+      return false;
+    Result = V.getComplexFloatReal();
+    return true;
+  }
 
   return false;
 }

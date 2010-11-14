@@ -406,7 +406,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
         ImpCastExprToType(rhsExpr, lhs, CK_FloatingRealToComplex);
       } else {
         assert(rhs->isComplexIntegerType());
-        ImpCastExprToType(rhsExpr, lhs, CK_IntegralToFloatingComplex);
+        ImpCastExprToType(rhsExpr, lhs, CK_IntegralComplexToFloatingComplex);
       }
       return lhs;
     }
@@ -420,7 +420,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
           ImpCastExprToType(lhsExpr, rhs, CK_FloatingRealToComplex);
         } else {
           assert(lhs->isComplexIntegerType());
-          ImpCastExprToType(lhsExpr, rhs, CK_IntegralToFloatingComplex);
+          ImpCastExprToType(lhsExpr, rhs, CK_IntegralComplexToFloatingComplex);
         }
       }
       return rhs;
@@ -537,7 +537,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
       QualType result = Context.getComplexType(lhs);
 
       // _Complex int -> _Complex float
-      ImpCastExprToType(rhsExpr, result, CK_IntegralToFloatingComplex);
+      ImpCastExprToType(rhsExpr, result, CK_IntegralComplexToFloatingComplex);
 
       // float -> _Complex float
       if (!isCompAssign)
@@ -560,7 +560,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 
     // _Complex int -> _Complex float
     if (!isCompAssign)
-      ImpCastExprToType(lhsExpr, result, CK_IntegralToFloatingComplex);
+      ImpCastExprToType(lhsExpr, result, CK_IntegralComplexToFloatingComplex);
 
     // float -> _Complex float
     ImpCastExprToType(rhsExpr, result, CK_FloatingRealToComplex);
@@ -4252,43 +4252,131 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
   return Owned(E);
 }
 
-static CastKind getScalarCastKind(ASTContext &Context,
-                                  Expr *Src, QualType DestTy) {
+enum ScalarKind {
+  SK_Pointer,
+  SK_Bool,
+  SK_Integral,
+  SK_Floating,
+  SK_IntegralComplex,
+  SK_FloatingComplex
+};
+static ScalarKind ClassifyScalarType(QualType QT) {
+  assert(QT->isScalarType());
+
+  const Type *T = QT->getCanonicalTypeUnqualified().getTypePtr();
+  if (T->hasPointerRepresentation())
+    return SK_Pointer;
+  if (T->isBooleanType())
+    return SK_Bool;
+  if (T->isRealFloatingType())
+    return SK_Floating;
+  if (const ComplexType *CT = dyn_cast<ComplexType>(T)) {
+    if (CT->getElementType()->isRealFloatingType())
+      return SK_FloatingComplex;
+    return SK_IntegralComplex;
+  }
+  assert(T->isIntegerType());
+  return SK_Integral;
+}
+
+/// Prepares for a scalar cast, performing all the necessary stages
+/// except the final cast and returning the kind required.
+static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
+  // Both Src and Dest are scalar types, i.e. arithmetic or pointer.
+  // Also, callers should have filtered out the invalid cases with
+  // pointers.  Everything else should be possible.
+
   QualType SrcTy = Src->getType();
-  if (Context.hasSameUnqualifiedType(SrcTy, DestTy))
+  if (S.Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CK_NoOp;
 
-  if (SrcTy->hasPointerRepresentation()) {
-    if (DestTy->hasPointerRepresentation())
-      return DestTy->isObjCObjectPointerType() ?
-                CK_AnyPointerToObjCPointerCast :
-                CK_BitCast;
+  switch (ClassifyScalarType(SrcTy)) {
+  case SK_Pointer:
     if (DestTy->isIntegerType())
       return CK_PointerToIntegral;
-  }
+    assert(DestTy->hasPointerRepresentation());
+    return DestTy->isObjCObjectPointerType() ?
+                CK_AnyPointerToObjCPointerCast :
+                CK_BitCast;
 
-  if (SrcTy->isIntegerType()) {
-    if (DestTy->isIntegerType())
-      return CK_IntegralCast;
-    if (DestTy->hasPointerRepresentation()) {
-      if (Src->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
+  case SK_Bool: // casting from bool is like casting from an integer
+  case SK_Integral:
+    switch (ClassifyScalarType(DestTy)) {
+    case SK_Pointer:
+      if (Src->isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNull))
         return CK_NullToPointer;
       return CK_IntegralToPointer;
-    }
-    if (DestTy->isRealFloatingType())
+
+    case SK_Bool: // TODO: there should be an int->bool cast kind
+    case SK_Integral:
+      return CK_IntegralCast;
+    case SK_Floating:
       return CK_IntegralToFloating;
-  }
+    case SK_IntegralComplex:
+      return CK_IntegralRealToComplex;
+    case SK_FloatingComplex:
+      S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
+                          CK_IntegralToFloating);
+      return CK_FloatingRealToComplex;
+    }
+    break;
 
-  if (SrcTy->isRealFloatingType()) {
-    if (DestTy->isRealFloatingType())
+  case SK_Floating:
+    switch (ClassifyScalarType(DestTy)) {
+    case SK_Floating:
       return CK_FloatingCast;
-    if (DestTy->isIntegerType())
+    case SK_Bool: // TODO: there should be a float->bool cast kind
+    case SK_Integral:
       return CK_FloatingToIntegral;
+    case SK_FloatingComplex:
+      return CK_FloatingRealToComplex;
+    case SK_IntegralComplex:
+      S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
+                          CK_FloatingToIntegral);
+      return CK_IntegralRealToComplex;
+    case SK_Pointer: llvm_unreachable("valid float->pointer cast?");
+    }
+    break;
+
+  case SK_FloatingComplex:
+    switch (ClassifyScalarType(DestTy)) {
+    case SK_FloatingComplex:
+      return CK_FloatingComplexCast;
+    case SK_IntegralComplex:
+      return CK_FloatingComplexToIntegralComplex;
+    case SK_Floating:
+      return CK_FloatingComplexToReal;
+    case SK_Bool:
+      return CK_FloatingComplexToBoolean;
+    case SK_Integral:
+      S.ImpCastExprToType(Src, cast<ComplexType>(SrcTy)->getElementType(),
+                          CK_FloatingComplexToReal);
+      return CK_FloatingToIntegral;
+    case SK_Pointer: llvm_unreachable("valid complex float->pointer cast?");
+    }
+    break;
+
+  case SK_IntegralComplex:
+    switch (ClassifyScalarType(DestTy)) {
+    case SK_FloatingComplex:
+      return CK_IntegralComplexToFloatingComplex;
+    case SK_IntegralComplex:
+      return CK_IntegralComplexCast;
+    case SK_Integral:
+      return CK_IntegralComplexToReal;
+    case SK_Bool:
+      return CK_IntegralComplexToBoolean;
+    case SK_Floating:
+      S.ImpCastExprToType(Src, cast<ComplexType>(SrcTy)->getElementType(),
+                          CK_IntegralComplexToReal);
+      return CK_IntegralToFloating;
+    case SK_Pointer: llvm_unreachable("valid complex int->pointer cast?");
+    }
+    break;
   }
 
-  // FIXME: Assert here.
-  // assert(false && "Unhandled cast combination!");
-  return CK_Unknown;
+  llvm_unreachable("Unhandled scalar cast");
+  return CK_BitCast;
 }
 
 /// CheckCastTypes - Check type constraints for casting between types.
@@ -4353,6 +4441,9 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       << castType << castExpr->getSourceRange();
   }
 
+  // The type we're casting to is known to be a scalar or vector.
+
+  // Require the operand to be a scalar or vector.
   if (!castExpr->getType()->isScalarType() &&
       !castExpr->getType()->isVectorType()) {
     return Diag(castExpr->getLocStart(),
@@ -4368,9 +4459,16 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
   if (castExpr->getType()->isVectorType())
     return CheckVectorCast(TyR, castExpr->getType(), castType, Kind);
 
+  // The source and target types are both scalars, i.e.
+  //   - arithmetic types (fundamental, enum, and complex)
+  //   - all kinds of pointers
+  // Note that member pointers were filtered out with C++, above.
+
   if (isa<ObjCSelectorExpr>(castExpr))
     return Diag(castExpr->getLocStart(), diag::err_cast_selector_expr);
 
+  // If either type is a pointer, the other type has to be either an
+  // integer or a pointer.
   if (!castType->isArithmeticType()) {
     QualType castExprType = castExpr->getType();
     if (!castExprType->isIntegralType(Context) && 
@@ -4385,9 +4483,9 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
         << castType << castExpr->getSourceRange();
   }
 
-  Kind = getScalarCastKind(Context, castExpr, castType);
+  Kind = PrepareScalarCast(*this, castExpr, castType);
 
-  if (Kind == CK_Unknown || Kind == CK_BitCast)
+  if (Kind == CK_BitCast)
     CheckCastAlign(castExpr, castType, TyR);
 
   return false;
@@ -4439,7 +4537,7 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr,
 
   QualType DestElemTy = DestTy->getAs<ExtVectorType>()->getElementType();
   ImpCastExprToType(CastExpr, DestElemTy,
-                    getScalarCastKind(Context, CastExpr, DestElemTy));
+                    PrepareScalarCast(*this, CastExpr, DestElemTy));
 
   Kind = CK_VectorSplat;
   return false;
