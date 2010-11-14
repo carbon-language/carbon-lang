@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMMCInstLower.h"
 #include "ARM.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Constants.h"
@@ -26,8 +25,10 @@
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
-MCOperand ARMMCInstLower::
-GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol) const {
+
+static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
+                              AsmPrinter &Printer) {
+  MCContext &Ctx = Printer.OutContext;
   const MCExpr *Expr;
   switch (MO.getTargetFlags()) {
   default: assert(0 && "Unknown target flag on symbol operand");
@@ -53,7 +54,7 @@ GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol) const {
   
 }
 
-void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
+void llvm::LowerToMCInst(const MachineInstr *MI, MCInst &OutMI, AsmPrinter &AP){
   OutMI.setOpcode(MI->getOpcode());
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -75,24 +76,23 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       break;
     case MachineOperand::MO_MachineBasicBlock:
       MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
-                       MO.getMBB()->getSymbol(), Ctx));
+                       MO.getMBB()->getSymbol(), AP.OutContext));
       break;
     case MachineOperand::MO_GlobalAddress:
-      MCOp = GetSymbolRef(MO, Printer.Mang->getSymbol(MO.getGlobal()));
+      MCOp = GetSymbolRef(MO, AP.Mang->getSymbol(MO.getGlobal()), AP);
       break;
     case MachineOperand::MO_ExternalSymbol:
       MCOp = GetSymbolRef(MO, 
-                          Printer.GetExternalSymbolSymbol(MO.getSymbolName()));
+                          AP.GetExternalSymbolSymbol(MO.getSymbolName()), AP);
       break;
     case MachineOperand::MO_JumpTableIndex:
-      MCOp = GetSymbolRef(MO, Printer.GetJTISymbol(MO.getIndex()));
+      MCOp = GetSymbolRef(MO, AP.GetJTISymbol(MO.getIndex()), AP);
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = GetSymbolRef(MO, Printer.GetCPISymbol(MO.getIndex()));
+      MCOp = GetSymbolRef(MO, AP.GetCPISymbol(MO.getIndex()), AP);
       break;
     case MachineOperand::MO_BlockAddress:
-      MCOp = GetSymbolRef(MO,
-                          Printer.GetBlockAddressSymbol(MO.getBlockAddress()));
+      MCOp = GetSymbolRef(MO,AP.GetBlockAddressSymbol(MO.getBlockAddress()),AP);
       break;
     case MachineOperand::MO_FPImmediate:
       APFloat Val = MO.getFPImm()->getValueAPF();
@@ -104,5 +104,4 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
     OutMI.addOperand(MCOp);
   }
-
 }

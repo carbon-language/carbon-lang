@@ -19,7 +19,6 @@
 #include "ARMConstantPoolValue.h"
 #include "InstPrinter/ARMInstPrinter.h"
 #include "ARMMachineFunctionInfo.h"
-#include "ARMMCInstLower.h"
 #include "ARMTargetMachine.h"
 #include "ARMTargetObjectFile.h"
 #include "llvm/Analysis/DebugInfo.h"
@@ -800,7 +799,6 @@ void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
 }
 
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  ARMMCInstLower MCInstLowering(OutContext, *Mang, *this);
   switch (MI->getOpcode()) {
   default: break;
   case ARM::t2MOVi32imm: assert(0 && "Should be lowered by thumb2it pass");
@@ -931,7 +929,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::t2BR_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
-    MCInstLowering.Lower(MI, TmpInst);
+    LowerToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
     EmitJump2Table(MI);
     return;
@@ -942,7 +940,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::BR_JTadd: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
-    MCInstLowering.Lower(MI, TmpInst);
+    LowerToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
     EmitJumpTable(MI);
     return;
@@ -1253,7 +1251,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   MCInst TmpInst;
-  MCInstLowering.Lower(MI, TmpInst);
+  LowerToMCInst(MI, TmpInst, *this);
   OutStreamer.EmitInstruction(TmpInst);
 }
 
