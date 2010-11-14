@@ -431,7 +431,7 @@ namespace llvm {
     explicit X86TargetLowering(X86TargetMachine &TM);
 
     /// getPICBaseSymbol - Return the X86-32 PIC base.
-    MCSymbol *getPICBaseSymbol(const MachineFunction *MF, MCContext &Ctx) const;
+    MCSymbol *getPICBaseSymbol(const MachineFunction &MF) const;
 
     virtual unsigned getJumpTableEncoding() const;
 

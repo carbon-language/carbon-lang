@@ -50,8 +50,7 @@ using namespace llvm;
 
 void X86AsmPrinter::PrintPICBaseSymbol(raw_ostream &O) const {
   const TargetLowering *TLI = TM.getTargetLowering();
-  O << *static_cast<const X86TargetLowering*>(TLI)->getPICBaseSymbol(MF,
-                                                                    OutContext);
+  O << *static_cast<const X86TargetLowering*>(TLI)->getPICBaseSymbol(*MF);
 }
 
 /// runOnMachineFunction - Emit the function body.

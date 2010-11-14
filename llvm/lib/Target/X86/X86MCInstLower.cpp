@@ -41,7 +41,7 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 
 MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
   return static_cast<const X86TargetLowering*>(TM.getTargetLowering())->
-    getPICBaseSymbol(&MF, Ctx);
+    getPICBaseSymbol(MF);
 }
 
 /// GetSymbolFromOperand - Lower an MO_GlobalAddress or MO_ExternalSymbol
