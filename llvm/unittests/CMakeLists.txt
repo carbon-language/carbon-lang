@@ -80,6 +80,7 @@ add_llvm_unittest(VMCore
   VMCore/InstructionsTest.cpp
   VMCore/MetadataTest.cpp
   VMCore/PassManagerTest.cpp
+  VMCore/ValueMapTest.cpp
   VMCore/VerifierTest.cpp
   )
 
