@@ -12,7 +12,6 @@ tablegen(AlphaGenSubtarget.inc -gen-subtarget)
 
 add_llvm_target(AlphaCodeGen
   AlphaBranchSelector.cpp
-  AlphaCodeEmitter.cpp
   AlphaInstrInfo.cpp
   AlphaISelDAGToDAG.cpp
   AlphaISelLowering.cpp
