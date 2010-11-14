@@ -30,99 +30,32 @@ MCSymbol *ARMMCInstLower::GetGlobalAddressSymbol(const GlobalValue *GV) const {
   return Printer.Mang->getSymbol(GV);
 }
 
-const MCSymbolRefExpr *ARMMCInstLower::
-GetSymbolRef(const MachineOperand &MO) const {
-  assert(MO.isGlobal() && "Isn't a global address reference?");
-
-  const MCSymbolRefExpr *SymRef;
-  const MCSymbol *Symbol = GetGlobalAddressSymbol(MO.getGlobal());
-
-  switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on GV operand");
-  case 0:
-    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
-    break;
-  case ARMII::MO_LO16:
-    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_LO16, Ctx);
-    break;
-  case ARMII::MO_HI16:
-    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_HI16, Ctx);
-    break;
-  case ARMII::MO_PLT:
-    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_PLT, Ctx);
-    break;
-  }
-
-  return SymRef;
-}
-
-const MCSymbolRefExpr *ARMMCInstLower::
-GetExternalSymbolSymbol(const MachineOperand &MO) const {
-  const MCSymbolRefExpr *SymRef;
-  const MCSymbol *Symbol = Printer.GetExternalSymbolSymbol(MO.getSymbolName());
-
-  switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on external symbol operand");
-  case 0:
-    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
-    break;
-  case ARMII::MO_LO16:
-    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_LO16, Ctx);
-    break;
-  case ARMII::MO_HI16:
-    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_HI16, Ctx);
-    break;
-  case ARMII::MO_PLT:
-    SymRef = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_PLT, Ctx);
-    break;
-  }
-
-  return SymRef;
-}
-
-
-
-const MCSymbolRefExpr *ARMMCInstLower::
-GetJumpTableSymbol(const MachineOperand &MO) const {
-  SmallString<256> Name;
-  raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "JTI"
-    << Printer.getFunctionNumber() << '_' << MO.getIndex();
-
-  switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on jump table operand");
-  case 0: break;
-  }
-
-  // Create a symbol for the name.
-  return MCSymbolRefExpr::Create(Ctx.GetOrCreateSymbol(Name.str()), Ctx);
-}
-
-const MCSymbolRefExpr *ARMMCInstLower::
-GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
-  SmallString<256> Name;
-  raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "CPI"
-    << Printer.getFunctionNumber() << '_' << MO.getIndex();
-
-  switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on CPI operand");
-  case 0: break;
-  }
-
-  // Create a symbol for the name.
-  return MCSymbolRefExpr::Create(Ctx.GetOrCreateSymbol(Name.str()), Ctx);
-}
-
 MCOperand ARMMCInstLower::
-LowerSymbolRefOperand(const MachineOperand &MO,
-                      const MCSymbolRefExpr *Sym) const {
-  const MCExpr *Expr = Sym;
+GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol) const {
+  const MCExpr *Expr;
+  switch (MO.getTargetFlags()) {
+  default: assert(0 && "Unknown target flag on symbol operand");
+  case 0:
+    Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
+    break;
+  case ARMII::MO_LO16:
+    Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_LO16, Ctx);
+    break;
+  case ARMII::MO_HI16:
+    Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_HI16, Ctx);
+    break;
+  case ARMII::MO_PLT:
+    Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_PLT, Ctx);
+    break;
+  }
+  
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,
                                    MCConstantExpr::Create(MO.getOffset(), Ctx),
                                    Ctx);
   return MCOperand::CreateExpr(Expr);
+  
 }
-
 
 void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
@@ -149,21 +82,21 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
                        MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress:
-      MCOp = LowerSymbolRefOperand(MO, GetSymbolRef(MO));
+      MCOp = GetSymbolRef(MO, GetGlobalAddressSymbol(MO.getGlobal()));
       break;
     case MachineOperand::MO_ExternalSymbol:
-      MCOp = LowerSymbolRefOperand(MO, GetExternalSymbolSymbol(MO));
+      MCOp = GetSymbolRef(MO, 
+                          Printer.GetExternalSymbolSymbol(MO.getSymbolName()));
       break;
     case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerSymbolRefOperand(MO, GetJumpTableSymbol(MO));
+      MCOp = GetSymbolRef(MO, Printer.GetJTISymbol(MO.getIndex()));
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerSymbolRefOperand(MO, GetConstantPoolIndexSymbol(MO));
+      MCOp = GetSymbolRef(MO, Printer.GetCPISymbol(MO.getIndex()));
       break;
     case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolRefOperand(MO,
-                    MCSymbolRefExpr::Create(Printer.GetBlockAddressSymbol(
-                                              MO.getBlockAddress()), Ctx));
+      MCOp = GetSymbolRef(MO,
+                          Printer.GetBlockAddressSymbol(MO.getBlockAddress()));
       break;
     case MachineOperand::MO_FPImmediate:
       APFloat Val = MO.getFPImm()->getValueAPF();

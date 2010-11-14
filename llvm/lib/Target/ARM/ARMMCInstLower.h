@@ -40,14 +40,7 @@ public:
 
 private:
   MCSymbol *GetGlobalAddressSymbol(const GlobalValue *GV) const;
-  const MCSymbolRefExpr *GetSymbolRef(const MachineOperand &MO) const;
-  const MCSymbolRefExpr *GetExternalSymbolSymbol(const MachineOperand &MO)
-    const;
-  const MCSymbolRefExpr *GetJumpTableSymbol(const MachineOperand &MO) const;
-  const MCSymbolRefExpr *
-  GetConstantPoolIndexSymbol(const MachineOperand &MO) const;
-  MCOperand LowerSymbolRefOperand(const MachineOperand &MO,
-                                  const MCSymbolRefExpr *Expr) const;
+  MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Sym) const;
 };
 
 } // end namespace llvm
