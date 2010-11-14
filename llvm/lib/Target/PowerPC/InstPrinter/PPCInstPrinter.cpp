@@ -13,14 +13,12 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "PPCInstPrinter.h"
+#include "PPCPredicates.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 //#include "llvm/MC/MCAsmInfo.h"
 //#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
-
-#include "PPCGenRegisterNames.inc"
-#include "PPCGenInstrNames.inc"
 using namespace llvm;
 
 #define GET_INSTRUCTION_NAME
@@ -84,6 +82,34 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   printInstruction(MI, O);
 }
 
+
+void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
+                                           raw_ostream &O, 
+                                           const char *Modifier) {
+  assert(Modifier && "Must specify 'cc' or 'reg' as predicate op modifier!");
+  unsigned Code = MI->getOperand(OpNo).getImm();
+  if (StringRef(Modifier) == "cc") {
+    switch ((PPC::Predicate)Code) {
+    default: assert(0 && "Invalid predicate");
+    case PPC::PRED_ALWAYS: return; // Don't print anything for always.
+    case PPC::PRED_LT: O << "lt"; return;
+    case PPC::PRED_LE: O << "le"; return;
+    case PPC::PRED_EQ: O << "eq"; return;
+    case PPC::PRED_GE: O << "ge"; return;
+    case PPC::PRED_GT: O << "gt"; return;
+    case PPC::PRED_NE: O << "ne"; return;
+    case PPC::PRED_UN: O << "un"; return;
+    case PPC::PRED_NU: O << "nu"; return;
+    }
+  }
+  
+  assert(StringRef(Modifier) == "reg" &&
+         "Need to specify 'cc' or 'reg' as predicate op modifier!");
+  // Don't print the register for 'always'.
+  if (Code == PPC::PRED_ALWAYS) return;
+  printOperand(MI, OpNo+1, O);
+}
+
 void PPCInstPrinter::printS5ImmOperand(const MCInst *MI, unsigned OpNo,
                                        raw_ostream &O) {
   char Value = MI->getOperand(OpNo).getImm();
@@ -117,20 +143,10 @@ void PPCInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
 
 void PPCInstPrinter::printS16X4ImmOperand(const MCInst *MI, unsigned OpNo,
                                           raw_ostream &O) {
-  if (MI->getOperand(OpNo).isImm()) {
+  if (MI->getOperand(OpNo).isImm())
     O << (short)(MI->getOperand(OpNo).getImm()*4);
-    return;
-  }
-  
-  assert(0 && "Unhandled operand");
-#if 0
-  O << "lo16(";
-  printOp(MI->getOperand(OpNo), O);
-  if (TM.getRelocationModel() == Reloc::PIC_)
-    O << "-\"L" << getFunctionNumber() << "$pb\")";
   else
-    O << ')';
-#endif
+    printOperand(MI, OpNo, O);
 }
 
 void PPCInstPrinter::printBranchOperand(const MCInst *MI, unsigned OpNo,
@@ -140,10 +156,14 @@ void PPCInstPrinter::printBranchOperand(const MCInst *MI, unsigned OpNo,
 
   // Branches can take an immediate operand.  This is used by the branch
   // selection pass to print $+8, an eight byte displacement from the PC.
-  O << "$+" << MI->getOperand(OpNo).getImm()*4;
+  O << "$+";
+  printAbsAddrOperand(MI, OpNo, O);
 }
 
-
+void PPCInstPrinter::printAbsAddrOperand(const MCInst *MI, unsigned OpNo,
+                                         raw_ostream &O) {
+  O << (int)MI->getOperand(OpNo).getImm()*4;
+}
 
 
 void PPCInstPrinter::printcrbitm(const MCInst *MI, unsigned OpNo,

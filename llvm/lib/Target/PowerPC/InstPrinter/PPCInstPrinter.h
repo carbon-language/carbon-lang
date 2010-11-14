@@ -42,7 +42,7 @@ public:
 
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printPredicateOperand(const MCInst *MI, unsigned OpNo,
-                             raw_ostream &O, const char *Modifier) {}
+                             raw_ostream &O, const char *Modifier);
 
 
   void printS5ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
@@ -55,7 +55,7 @@ public:
   void printCallOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printOperand(MI, OpNo, O);
   }
-  void printAbsAddrOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
+  void printAbsAddrOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 
   void printcrbitm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 
