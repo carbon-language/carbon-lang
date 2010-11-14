@@ -331,7 +331,7 @@ foreach(t ${LLVM_TARGETS_TO_BUILD})
   if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/*AsmPrinter.cpp )
     set(LLVM_ENUM_ASM_PRINTERS 
       "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
-  endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
+  endif()
 
   if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/InstPrinter/CMakeLists.txt )
     add_subdirectory(lib/Target/${t}/InstPrinter)
