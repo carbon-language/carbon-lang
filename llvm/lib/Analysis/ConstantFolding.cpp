@@ -695,20 +695,26 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
 /// instructions like loads and stores, which have no constant expression form.
 ///
 Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
+  // Handle PHI nodes specially here...
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
-    if (PN->getNumIncomingValues() == 0)
-      return UndefValue::get(PN->getType());
+    Constant *CommonValue = 0;
 
-    Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
-    if (Result == 0) return 0;
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      Value *Incoming = PN->getIncomingValue(i);
+      // If the incoming value is equal to the phi node itself or is undef then
+      // skip it.
+      if (Incoming == PN || isa<UndefValue>(Incoming))
+        continue;
+      // If the incoming value is not a constant, or is a different constant to
+      // the one we saw previously, then give up.
+      Constant *C = dyn_cast<Constant>(Incoming);
+      if (!C || (CommonValue && C != CommonValue))
+        return 0;
+      CommonValue = C;
+    }
 
-    // Handle PHI nodes specially here...
-    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (PN->getIncomingValue(i) != Result && PN->getIncomingValue(i) != PN)
-        return 0;   // Not all the same incoming constants...
-
-    // If we reach here, all incoming values are the same constant.
-    return Result;
+    // If we reach here, all incoming values are the same constant or undef.
+    return CommonValue ? CommonValue : UndefValue::get(PN->getType());
   }
 
   // Scan the operand list, checking to see if they are all constants, if so,
