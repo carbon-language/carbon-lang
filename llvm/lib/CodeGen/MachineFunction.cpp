@@ -426,6 +426,13 @@ MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 
+/// getPICBaseSymbol - Return a function-local symbol to represent the PIC
+/// base.
+MCSymbol *MachineFunction::getPICBaseSymbol() const {
+  const MCAsmInfo &MAI = *Target.getMCAsmInfo();
+  return Ctx.GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix())+
+                               Twine(getFunctionNumber())+"$pb");
+}
 
 //===----------------------------------------------------------------------===//
 //  MachineFrameInfo implementation

@@ -1102,17 +1102,6 @@ unsigned X86TargetLowering::getJumpTableEncoding() const {
   return TargetLowering::getJumpTableEncoding();
 }
 
-/// getPICBaseSymbol - Return the X86-32 PIC base.
-MCSymbol *
-X86TargetLowering::getPICBaseSymbol(const MachineFunction &MF) const {
-  
-  const MCAsmInfo &MAI = *getTargetMachine().getMCAsmInfo();
-  MCContext &Ctx = MF.getContext();
-  return Ctx.GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix())+
-                               Twine(MF.getFunctionNumber())+"$pb");
-}
-
-
 const MCExpr *
 X86TargetLowering::LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                              const MachineBasicBlock *MBB,
@@ -1147,7 +1136,7 @@ getPICJumpTableRelocBaseExpr(const MachineFunction *MF, unsigned JTI,
     return TargetLowering::getPICJumpTableRelocBaseExpr(MF, JTI, Ctx);
 
   // Otherwise, the reference is relative to the PIC base.
-  return MCSymbolRefExpr::Create(getPICBaseSymbol(*MF), Ctx);
+  return MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), Ctx);
 }
 
 /// getFunctionAlignment - Return the Log2 alignment of this function.

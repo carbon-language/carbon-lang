@@ -555,6 +555,8 @@ let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LD   : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrix:$src),
                     "ld $rD, $src", LdStLD,
                     [(set G8RC:$rD, (load ixaddr:$src))]>, isPPC64;
+// FIXME: This is a pseudo instruction.  When the JIT switches to MC, remove its
+// encoding information.
 def LDtoc: DSForm_1<58, 0, (outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
                     "ld $rD, $disp($reg)", LdStLD,
                     [(set G8RC:$rD,
@@ -563,6 +565,7 @@ let RST = 2, DS = 8 in
 def LDinto_toc: DSForm_1<58, 0, (outs), (ins G8RC:$reg),
                     "ld 2, 8($reg)", LdStLD,
                     [(PPCload_toc G8RC:$reg)]>, isPPC64;
+                    
 let RST = 2, DS = 40, RA = 1 in
 def LDtoc_restore : DSForm_1<58, 0, (outs), (ins),
                     "ld 2, 40(1)", LdStLD,

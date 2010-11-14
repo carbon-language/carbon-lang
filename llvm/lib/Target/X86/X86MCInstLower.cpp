@@ -39,11 +39,6 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 }
 
 
-MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
-  return static_cast<const X86TargetLowering*>(TM.getTargetLowering())->
-    getPICBaseSymbol(MF);
-}
-
 /// GetSymbolFromOperand - Lower an MO_GlobalAddress or MO_ExternalSymbol
 /// operand to an MCSymbol.
 MCSymbol *X86MCInstLower::
@@ -155,7 +150,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_TLVP, Ctx);
     // Subtract the pic base.
     Expr = MCBinaryExpr::CreateSub(Expr,
-                                   MCSymbolRefExpr::Create(GetPICBaseSymbol(),
+                                  MCSymbolRefExpr::Create(MF.getPICBaseSymbol(),
                                                            Ctx),
                                    Ctx);
     break;
@@ -174,7 +169,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     Expr = MCSymbolRefExpr::Create(Sym, Ctx);
     // Subtract the pic base.
     Expr = MCBinaryExpr::CreateSub(Expr, 
-                               MCSymbolRefExpr::Create(GetPICBaseSymbol(), Ctx),
+                            MCSymbolRefExpr::Create(MF.getPICBaseSymbol(), Ctx),
                                    Ctx);
     if (MO.isJTI() && MAI.hasSetDirective()) {
       // If .set directive is supported, use it to reduce the number of
@@ -576,7 +571,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     //     popl %esi
     
     // Emit the call.
-    MCSymbol *PICBase = MCInstLowering.GetPICBaseSymbol();
+    MCSymbol *PICBase = MF->getPICBaseSymbol();
     TmpInst.setOpcode(X86::CALLpcrel32);
     // FIXME: We would like an efficient form for this, so we don't have to do a
     // lot of extra uniquing.
@@ -614,7 +609,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     
     const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
     const MCExpr *PICBase =
-      MCSymbolRefExpr::Create(MCInstLowering.GetPICBaseSymbol(), OutContext);
+      MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), OutContext);
     DotExpr = MCBinaryExpr::CreateSub(DotExpr, PICBase, OutContext);
     
     DotExpr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(OpSym,OutContext), 

@@ -412,6 +412,10 @@ public:
   /// normal 'L' label is returned.
   MCSymbol *getJTISymbol(unsigned JTI, MCContext &Ctx, 
                          bool isLinkerPrivate = false) const;
+  
+  /// getPICBaseSymbol - Return a function-local symbol to represent the PIC
+  /// base.
+  MCSymbol *getPICBaseSymbol() const;
 };
 
 //===--------------------------------------------------------------------===//

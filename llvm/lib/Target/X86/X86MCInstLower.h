@@ -40,8 +40,6 @@ public:
   
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
-  MCSymbol *GetPICBaseSymbol() const;
-  
   MCSymbol *GetSymbolFromOperand(const MachineOperand &MO) const;
   MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
   

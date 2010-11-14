@@ -548,7 +548,6 @@ void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
   }
 }
 
-
 /// EmitInstruction -- Print out a single PowerPC MI in Darwin syntax to
 /// the current output stream.
 ///
@@ -559,7 +558,6 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Lower multi-instruction pseudo operations.
     switch (MI->getOpcode()) {
     default: break;
-        
     case PPC::LDtoc: {
       // Transform %X3 = LDtoc <ga:@min1>, %X2
       LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
