@@ -65,10 +65,8 @@ public:
   
   // FIXME: Remove
   void PrintSpecial(const MCInst *MI, raw_ostream &O, const char *Modifier) {}
-  void printSymbolLo(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printS16ImmOperand(MI, OpNo, O);
-  }
-  void printSymbolHi(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
+  void printSymbolLo(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printSymbolHi(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printPICLabel(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
   void printTOCEntryLabel(const MCInst *MI, unsigned OpNo, raw_ostream &O) {}
   

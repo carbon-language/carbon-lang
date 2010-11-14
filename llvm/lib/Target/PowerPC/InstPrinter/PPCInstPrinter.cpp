@@ -202,3 +202,18 @@ void PPCInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   O << *Op.getExpr();
 }
   
+void PPCInstPrinter::printSymbolLo(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  if (MI->getOperand(OpNo).isImm())
+    printS16ImmOperand(MI, OpNo, O);
+  else
+    printOperand(MI, OpNo, O);
+}
+
+void PPCInstPrinter::printSymbolHi(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  if (MI->getOperand(OpNo).isImm())
+    printS16ImmOperand(MI, OpNo, O);
+  else
+    printOperand(MI, OpNo, O);
+}
