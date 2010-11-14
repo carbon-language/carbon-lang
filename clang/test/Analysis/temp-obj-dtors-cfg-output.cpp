@@ -264,11 +264,14 @@ TestCtorInits::TestCtorInits()
 // CHECK:    Successors (2): B3 B2
 // CHECK: [ B5 ]
 // CHECK:      1: ~A() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
 // CHECK:    Predecessors (1): B7
 // CHECK:    Successors (1): B4
 // CHECK: [ B6 ]
 // CHECK:      1: ~A() (Temporary object destructor)
-// CHECK:      2: ~B() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
+// CHECK:      3: ~A() (Temporary object destructor)
+// CHECK:      4: ~B() (Temporary object destructor)
 // CHECK:    Predecessors (1): B7
 // CHECK:    Successors (1): B4
 // CHECK: [ B7 ]
@@ -308,11 +311,14 @@ TestCtorInits::TestCtorInits()
 // CHECK:    Successors (1): B0
 // CHECK: [ B2 ]
 // CHECK:      1: ~A() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
 // CHECK:    Predecessors (1): B4
 // CHECK:    Successors (1): B1
 // CHECK: [ B3 ]
 // CHECK:      1: ~A() (Temporary object destructor)
-// CHECK:      2: ~B() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
+// CHECK:      3: ~A() (Temporary object destructor)
+// CHECK:      4: ~B() (Temporary object destructor)
 // CHECK:    Predecessors (1): B4
 // CHECK:    Successors (1): B1
 // CHECK: [ B4 ]
@@ -345,7 +351,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:    Successors (1): B7
 // CHECK: [ B9 ]
 // CHECK:      1: ~A() (Temporary object destructor)
-// CHECK:      2: ~B() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
+// CHECK:      3: ~B() (Temporary object destructor)
 // CHECK:    Predecessors (1): B10
 // CHECK:    Successors (1): B7
 // CHECK: [ B10 ]
@@ -385,6 +392,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:    Successors (1): B0
 // CHECK: [ B2 ]
 // CHECK:      1: ~A() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
 // CHECK:    Predecessors (1): B3
 // CHECK:    Successors (1): B1
 // CHECK: [ B3 ]
@@ -418,6 +426,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:    Successors (1): B0
 // CHECK: [ B2 ]
 // CHECK:      1: ~A() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
 // CHECK:    Predecessors (1): B3
 // CHECK:    Successors (1): B1
 // CHECK: [ B3 ]
