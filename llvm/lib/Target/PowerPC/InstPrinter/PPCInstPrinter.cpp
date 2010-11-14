@@ -36,6 +36,51 @@ StringRef PPCInstPrinter::getOpcodeName(unsigned Opcode) const {
 void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   // TODO: pseudo ops.
   
+  // Check for slwi/srwi mnemonics.
+  if (MI->getOpcode() == PPC::RLWINM) {
+    unsigned char SH = MI->getOperand(2).getImm();
+    unsigned char MB = MI->getOperand(3).getImm();
+    unsigned char ME = MI->getOperand(4).getImm();
+    bool useSubstituteMnemonic = false;
+    if (SH <= 31 && MB == 0 && ME == (31-SH)) {
+      O << "\tslwi "; useSubstituteMnemonic = true;
+    }
+    if (SH <= 31 && MB == (32-SH) && ME == 31) {
+      O << "\tsrwi "; useSubstituteMnemonic = true;
+      SH = 32-SH;
+    }
+    if (useSubstituteMnemonic) {
+      printOperand(MI, 0, O);
+      O << ", ";
+      printOperand(MI, 1, O);
+      O << ", " << (unsigned int)SH;
+      return;
+    }
+  }
+  
+  if ((MI->getOpcode() == PPC::OR || MI->getOpcode() == PPC::OR8) &&
+      MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
+    O << "\tmr ";
+    printOperand(MI, 0, O);
+    O << ", ";
+    printOperand(MI, 1, O);
+    return;
+  }
+  
+  if (MI->getOpcode() == PPC::RLDICR) {
+    unsigned char SH = MI->getOperand(2).getImm();
+    unsigned char ME = MI->getOperand(3).getImm();
+    // rldicr RA, RS, SH, 63-SH == sldi RA, RS, SH
+    if (63-SH == ME) {
+      O << "\tsldi ";
+      printOperand(MI, 0, O);
+      O << ", ";
+      printOperand(MI, 1, O);
+      O << ", " << (unsigned int)SH;
+      return;
+    }
+  }
+  
   printInstruction(MI, O);
 }
 
