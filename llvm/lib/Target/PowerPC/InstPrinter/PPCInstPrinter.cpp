@@ -88,6 +88,19 @@ void PPCInstPrinter::printS16X4ImmOperand(const MCInst *MI, unsigned OpNo,
 #endif
 }
 
+void PPCInstPrinter::printBranchOperand(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  if (!MI->getOperand(OpNo).isImm())
+    return printOperand(MI, OpNo, O);
+
+  // Branches can take an immediate operand.  This is used by the branch
+  // selection pass to print $+8, an eight byte displacement from the PC.
+  O << "$+" << MI->getOperand(OpNo).getImm()*4;
+}
+
+
+
+
 void PPCInstPrinter::printcrbitm(const MCInst *MI, unsigned OpNo,
                                  raw_ostream &O) {
   unsigned CCReg = MI->getOperand(OpNo).getReg();
