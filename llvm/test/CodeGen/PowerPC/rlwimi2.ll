@@ -4,7 +4,7 @@
 ; RUN: grep srwi   %t | count 1
 ; RUN: not grep slwi %t
 
-define i16 @test1(i32 %srcA, i32 %srcB, i32 %alpha) {
+define i16 @test1(i32 %srcA, i32 %srcB, i32 %alpha) nounwind {
 entry:
 	%tmp.1 = shl i32 %srcA, 15		; <i32> [#uses=1]
 	%tmp.4 = and i32 %tmp.1, 32505856		; <i32> [#uses=1]

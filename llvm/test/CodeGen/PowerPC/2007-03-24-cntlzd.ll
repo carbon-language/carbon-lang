@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=ppc64 -mcpu=g5 | grep cntlzd
 
-define i32 @_ZNK4llvm5APInt17countLeadingZerosEv(i64 *%t) {
+define i32 @_ZNK4llvm5APInt17countLeadingZerosEv(i64 *%t) nounwind {
         %tmp19 = load i64* %t
         %tmp22 = tail call i64 @llvm.ctlz.i64( i64 %tmp19 )             ; <i64> [#uses=1]
         %tmp23 = trunc i64 %tmp22 to i32
