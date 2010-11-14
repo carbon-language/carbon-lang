@@ -1903,7 +1903,7 @@ bool GVN::processInstruction(Instruction *I,
   // to value numbering it.  Value numbering often exposes redundancies, for
   // example if it determines that %y is equal to %x then the instruction
   // "%z = and i32 %x, %y" becomes "%z = and i32 %x, %x" which we now simplify.
-  if (Value *V = SimplifyInstruction(I, TD)) {
+  if (Value *V = SimplifyInstruction(I, TD, DT)) {
     I->replaceAllUsesWith(V);
     if (MD && V->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(V);

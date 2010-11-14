@@ -17,6 +17,7 @@
 #define LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
 
 namespace llvm {
+  class DominatorTree;
   class Instruction;
   class Value;
   class TargetData;
@@ -73,7 +74,8 @@ namespace llvm {
   /// instruction.  If not, this returns null.
   /// WARNING: If called on unreachable code, an instruction may be reported
   /// to simplify to itself.
-  Value *SimplifyInstruction(Instruction *I, const TargetData *TD = 0);
+  Value *SimplifyInstruction(Instruction *I, const TargetData *TD = 0,
+                             const DominatorTree *DT = 0);
 
 
   /// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
@@ -83,7 +85,8 @@ namespace llvm {
   /// simplifies and deletes scalar operations, it does not change the CFG.
   ///
   void ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
-                                 const TargetData *TD = 0);
+                                 const TargetData *TD = 0,
+                                 const DominatorTree *DT = 0);
 } // end namespace llvm
 
 #endif

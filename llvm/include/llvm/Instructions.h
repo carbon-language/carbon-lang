@@ -1952,7 +1952,7 @@ public:
   /// value dominates the PHI. If DT is null, use a conservative check,
   /// otherwise use DT to test for dominance.
   ///
-  Value *hasConstantValue(DominatorTree *DT = 0) const;
+  Value *hasConstantValue(const DominatorTree *DT = 0) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }

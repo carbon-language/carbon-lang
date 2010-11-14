@@ -170,7 +170,7 @@ void PHINode::resizeOperands(unsigned NumOps) {
 /// value dominates the PHI. If DT is null, use a conservative check,
 /// otherwise use DT to test for dominance.
 ///
-Value *PHINode::hasConstantValue(DominatorTree *DT) const {
+Value *PHINode::hasConstantValue(const DominatorTree *DT) const {
   // If the PHI node only has one incoming value, eliminate the PHI node.
   if (getNumIncomingValues() == 1) {
     if (getIncomingValue(0) != this)   // not  X = phi X

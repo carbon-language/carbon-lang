@@ -674,7 +674,8 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
 /// SimplifyInstruction - See if we can compute a simplified version of this
 /// instruction.  If not, this returns null.
-Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
+Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
+                                 const DominatorTree *DT) {
   switch (I->getOpcode()) {
   default:
     return ConstantFoldInstruction(I, TD);
@@ -700,7 +701,7 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
     return SimplifyGEPInst(&Ops[0], Ops.size(), TD);
   }
   case Instruction::PHI:
-    return cast<PHINode>(I)->hasConstantValue();
+    return cast<PHINode>(I)->hasConstantValue(DT);
   }
 }
 
@@ -711,7 +712,8 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
 /// simplifies and deletes scalar operations, it does not change the CFG.
 ///
 void llvm::ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
-                                     const TargetData *TD) {
+                                     const TargetData *TD,
+                                     const DominatorTree *DT) {
   assert(From != To && "ReplaceAndSimplifyAllUses(X,X) is not valid!");
 
   // FromHandle/ToHandle - This keeps a WeakVH on the from/to values so that
@@ -735,12 +737,12 @@ void llvm::ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
       // SimplifyInstruction.
       AssertingVH<> UserHandle(User);
 
-      SimplifiedVal = SimplifyInstruction(User, TD);
+      SimplifiedVal = SimplifyInstruction(User, TD, DT);
       if (SimplifiedVal == 0) continue;
     }
 
     // Recursively simplify this user to the new value.
-    ReplaceAndSimplifyAllUses(User, SimplifiedVal, TD);
+    ReplaceAndSimplifyAllUses(User, SimplifiedVal, TD, DT);
     From = dyn_cast_or_null<Instruction>((Value*)FromHandle);
     To = ToHandle;
 
