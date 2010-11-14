@@ -50,6 +50,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "InstPrinter/PPCInstPrinter.h"
 using namespace llvm;
 
 namespace {
@@ -911,8 +912,20 @@ static AsmPrinter *createPPCAsmPrinterPass(TargetMachine &tm,
   return new PPCLinuxAsmPrinter(tm, Streamer);
 }
 
+static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
+                                             unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI) {
+  if (SyntaxVariant == 0)
+    return new PPCInstPrinter(MAI);
+  return 0;
+}
+
+
 // Force static initialization.
 extern "C" void LLVMInitializePowerPCAsmPrinter() { 
   TargetRegistry::RegisterAsmPrinter(ThePPC32Target, createPPCAsmPrinterPass);
   TargetRegistry::RegisterAsmPrinter(ThePPC64Target, createPPCAsmPrinterPass);
+  
+  TargetRegistry::RegisterMCInstPrinter(ThePPC32Target, createPPCMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(ThePPC32Target, createPPCMCInstPrinter);
 }
