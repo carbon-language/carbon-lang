@@ -12,15 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPCMCInstLower.h"
+#include "PPC.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-
 using namespace llvm;
 
-void PPCMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
+void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                        AsmPrinter &Printer) {
   OutMI.setOpcode(MI->getOpcode());
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -38,36 +38,6 @@ void PPCMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_Immediate:
       MCOp = MCOperand::CreateImm(MO.getImm());
       break;
-    case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
-                                              MO.getMBB()->getSymbol(), Ctx));
-      break;
-#if 0
-    case MachineOperand::MO_GlobalAddress:
-      MCOp = LowerSymbolRefOperand(MO, GetSymbolRef(MO));
-      break;
-    case MachineOperand::MO_ExternalSymbol:
-      MCOp = LowerSymbolRefOperand(MO, GetExternalSymbolSymbol(MO));
-      break;
-    case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));
-      break;
-    case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerSymbolOperand(MO, GetConstantPoolIndexSymbol(MO));
-      break;
-    case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolOperand(MO, Printer.GetBlockAddressSymbol(
-                                                       MO.getBlockAddress()));
-      break;
-#endif
-#if 0
-    case MachineOperand::MO_FPImmediate:
-      APFloat Val = MO.getFPImm()->getValueAPF();
-      bool ignored;
-      Val.convert(APFloat::IEEEdouble, APFloat::rmTowardZero, &ignored);
-      MCOp = MCOperand::CreateFPImm(Val.convertToDouble());
-      break;
-#endif
     }
     
     OutMI.addOperand(MCOp);

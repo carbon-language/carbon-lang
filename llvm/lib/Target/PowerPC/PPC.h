@@ -24,11 +24,17 @@ namespace llvm {
   class formatted_raw_ostream;
   class JITCodeEmitter;
   class Target;
+  class MachineInstr;
+  class MCInst;
+  class AsmPrinter;
   
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
 FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                           JITCodeEmitter &MCE);
+
+void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                  AsmPrinter &AP);
 
 extern Target ThePPC32Target;
 extern Target ThePPC64Target;
