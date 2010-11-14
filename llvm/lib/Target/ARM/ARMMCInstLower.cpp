@@ -16,13 +16,9 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Target/Mangler.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
 
@@ -55,7 +51,7 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
 }
 
 void llvm::LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
-                                        AsmPrinter &AP){
+                                        AsmPrinter &AP) {
   OutMI.setOpcode(MI->getOpcode());
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
