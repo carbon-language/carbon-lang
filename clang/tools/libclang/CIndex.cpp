@@ -323,32 +323,6 @@ public:
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
   bool VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
-  
-#define DATA_RECURSIVE_VISIT(NAME)\
-bool Visit##NAME(NAME *S) { return VisitDataRecursive(S); }
-  DATA_RECURSIVE_VISIT(BinaryOperator)
-  DATA_RECURSIVE_VISIT(BlockExpr)
-  DATA_RECURSIVE_VISIT(CompoundLiteralExpr)
-  DATA_RECURSIVE_VISIT(CXXDefaultArgExpr)
-  DATA_RECURSIVE_VISIT(CXXMemberCallExpr)
-  DATA_RECURSIVE_VISIT(CXXNewExpr)
-  DATA_RECURSIVE_VISIT(CXXOperatorCallExpr)
-  DATA_RECURSIVE_VISIT(CXXTemporaryObjectExpr)
-  DATA_RECURSIVE_VISIT(DeclRefExpr)
-  DATA_RECURSIVE_VISIT(DeclStmt)
-  DATA_RECURSIVE_VISIT(ExplicitCastExpr)
-  DATA_RECURSIVE_VISIT(DoStmt)
-  DATA_RECURSIVE_VISIT(IfStmt)
-  DATA_RECURSIVE_VISIT(InitListExpr)
-  DATA_RECURSIVE_VISIT(ForStmt)
-  DATA_RECURSIVE_VISIT(GotoStmt)
-  DATA_RECURSIVE_VISIT(MemberExpr)
-  DATA_RECURSIVE_VISIT(ObjCEncodeExpr)
-  DATA_RECURSIVE_VISIT(ObjCMessageExpr)
-  DATA_RECURSIVE_VISIT(OverloadExpr)
-  DATA_RECURSIVE_VISIT(SwitchStmt)
-  DATA_RECURSIVE_VISIT(WhileStmt)
-  DATA_RECURSIVE_VISIT(UnresolvedMemberExpr)
 
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
@@ -1426,14 +1400,7 @@ bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitStmt(Stmt *S) {
-  for (Stmt::child_iterator Child = S->child_begin(), ChildEnd = S->child_end();
-       Child != ChildEnd; ++Child) {
-    if (Stmt *C = *Child)
-      if (Visit(MakeCXCursor(C, StmtParent, TU)))
-        return true;
-  }
-
-  return false;
+  return VisitDataRecursive(S);
 }
 
 bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
@@ -1940,44 +1907,27 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
               return true;
             }
             continue;
-          } 
-          default: {
-            // FIXME: this entire switch stmt will eventually
-            // go away.
-            if (!isa<ExplicitCastExpr>(S)) {
-              // Perform default visitation for other cases.
-              if (Visit(Cursor))
-                return true;
-              continue;
-            }
-            // Fall-through.
           }
-          case Stmt::BinaryOperatorClass:
-          case Stmt::BlockExprClass:
-          case Stmt::CallExprClass:
-          case Stmt::CaseStmtClass:
-          case Stmt::CompoundLiteralExprClass:
-          case Stmt::CompoundStmtClass:
-          case Stmt::CXXDefaultArgExprClass:
-          case Stmt::CXXMemberCallExprClass:
-          case Stmt::CXXNewExprClass:
-          case Stmt::CXXOperatorCallExprClass:
-          case Stmt::CXXTemporaryObjectExprClass:
-          case Stmt::DefaultStmtClass:
-          case Stmt::DoStmtClass:
-          case Stmt::ForStmtClass:
-          case Stmt::IfStmtClass:
-          case Stmt::InitListExprClass:
-          case Stmt::MemberExprClass:
-          case Stmt::ObjCEncodeExprClass:
-          case Stmt::ObjCMessageExprClass:
-          case Stmt::ParenExprClass:
-          case Stmt::SwitchStmtClass:
-          case Stmt::UnaryOperatorClass:
-          case Stmt::UnresolvedLookupExprClass:
-          case Stmt::UnresolvedMemberExprClass:
-          case Stmt::WhileStmtClass:
-          {
+          // Cases not yet handled by the data-recursion
+          // algorithm.
+          case Stmt::OffsetOfExprClass:
+          case Stmt::SizeOfAlignOfExprClass:
+          case Stmt::AddrLabelExprClass:
+          case Stmt::TypesCompatibleExprClass:
+          case Stmt::VAArgExprClass:
+          case Stmt::DesignatedInitExprClass:
+          case Stmt::CXXTypeidExprClass:
+          case Stmt::CXXUuidofExprClass:
+          case Stmt::CXXScalarValueInitExprClass:
+          case Stmt::CXXPseudoDestructorExprClass:
+          case Stmt::UnaryTypeTraitExprClass:
+          case Stmt::DependentScopeDeclRefExprClass:
+          case Stmt::CXXUnresolvedConstructExprClass:
+          case Stmt::CXXDependentScopeMemberExprClass:
+            if (Visit(Cursor))
+              return true;
+            continue;
+          default:
             if (!IsInRegionOfInterest(Cursor))
               continue;
             switch (Visitor(Cursor, Parent, ClientData)) {
@@ -1989,9 +1939,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
                 EnqueueWorkList(WL, S);
                 break;
             }
-          }
+            continue;
         }
-        continue;
       }
       case VisitorJob::MemberExprPartsKind: {
         // Handle the other pieces in the MemberExpr besides the base.
