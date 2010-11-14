@@ -194,21 +194,21 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
       return ConstantFoldInstOperands(Instruction::Add, CLHS->getType(),
                                       Ops, 2, TD);
     }
-    
+
     // Canonicalize the constant to the RHS.
     std::swap(Op0, Op1);
   }
-  
+
   if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
     // X + undef -> undef
     if (isa<UndefValue>(Op1C))
       return Op1C;
-    
+
     // X + 0 --> X
     if (Op1C->isNullValue())
       return Op0;
   }
-  
+
   // FIXME: Could pull several more out of instcombine.
   return 0;
 }
@@ -223,28 +223,28 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
       return ConstantFoldInstOperands(Instruction::And, CLHS->getType(),
                                       Ops, 2, TD);
     }
-  
+
     // Canonicalize the constant to the RHS.
     std::swap(Op0, Op1);
   }
-  
+
   // X & undef -> 0
   if (isa<UndefValue>(Op1))
     return Constant::getNullValue(Op0->getType());
-  
+
   // X & X = X
   if (Op0 == Op1)
     return Op0;
-  
+
   // X & <0,0> = <0,0>
   if (isa<ConstantAggregateZero>(Op1))
     return Op1;
-  
+
   // X & <-1,-1> = X
   if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1))
     if (CP->isAllOnesValue())
       return Op0;
-  
+
   if (ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1)) {
     // X & 0 = 0
     if (Op1CI->isZero())
@@ -253,23 +253,23 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
     if (Op1CI->isAllOnesValue())
       return Op0;
   }
-  
+
   // A & ~A  =  ~A & A  =  0
   Value *A, *B;
   if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
       (match(Op1, m_Not(m_Value(A))) && A == Op0))
     return Constant::getNullValue(Op0->getType());
-  
+
   // (A | ?) & A = A
   if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
       (A == Op1 || B == Op1))
     return Op1;
-  
+
   // A & (A | ?) = A
   if (match(Op1, m_Or(m_Value(A), m_Value(B))) &&
       (A == Op0 || B == Op0))
     return Op0;
-  
+
   // (A & B) & A -> A & B
   if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
       (A == Op1 || B == Op1))
@@ -311,15 +311,15 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
       return ConstantFoldInstOperands(Instruction::Or, CLHS->getType(),
                                       Ops, 2, TD);
     }
-    
+
     // Canonicalize the constant to the RHS.
     std::swap(Op0, Op1);
   }
-  
+
   // X | undef -> -1
   if (isa<UndefValue>(Op1))
     return Constant::getAllOnesValue(Op0->getType());
-  
+
   // X | X = X
   if (Op0 == Op1)
     return Op0;
@@ -327,12 +327,12 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
   // X | <0,0> = X
   if (isa<ConstantAggregateZero>(Op1))
     return Op0;
-  
+
   // X | <-1,-1> = <-1,-1>
   if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1))
-    if (CP->isAllOnesValue())            
+    if (CP->isAllOnesValue())
       return Op1;
-  
+
   if (ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1)) {
     // X | 0 = X
     if (Op1CI->isZero())
@@ -341,23 +341,23 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
     if (Op1CI->isAllOnesValue())
       return Op1CI;
   }
-  
+
   // A | ~A  =  ~A | A  =  -1
   Value *A, *B;
   if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
       (match(Op1, m_Not(m_Value(A))) && A == Op0))
     return Constant::getAllOnesValue(Op0->getType());
-  
+
   // (A & ?) | A = A
   if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
       (A == Op1 || B == Op1))
     return Op1;
-  
+
   // A | (A & ?) = A
   if (match(Op1, m_And(m_Value(A), m_Value(B))) &&
       (A == Op0 || B == Op0))
     return Op0;
-  
+
   // (A | B) | A -> A | B
   if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
       (A == Op1 || B == Op1))
@@ -399,7 +399,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
                                const TargetData *TD, unsigned MaxRecurse) {
   CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
   assert(CmpInst::isIntPredicate(Pred) && "Not an integer compare!");
-  
+
   if (Constant *CLHS = dyn_cast<Constant>(LHS)) {
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
       return ConstantFoldCompareInstOperands(Pred, CLHS, CRHS, TD);
@@ -408,24 +408,24 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     std::swap(LHS, RHS);
     Pred = CmpInst::getSwappedPredicate(Pred);
   }
-  
+
   // ITy - This is the return type of the compare we're considering.
   const Type *ITy = GetCompareTy(LHS);
-  
+
   // icmp X, X -> true/false
   // X icmp undef -> true/false.  For example, icmp ugt %X, undef -> false
   // because X could be 0.
   if (LHS == RHS || isa<UndefValue>(RHS))
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
-  
+
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
-  if ((isa<GlobalValue>(LHS) || isa<AllocaInst>(LHS) || 
+  if ((isa<GlobalValue>(LHS) || isa<AllocaInst>(LHS) ||
        isa<ConstantPointerNull>(LHS)) &&
-      (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) || 
+      (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) ||
        isa<ConstantPointerNull>(RHS)))
     return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
-  
+
   // See if we are doing a comparison with a constant.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
     // If we have an icmp le or icmp ge instruction, turn it into the
@@ -482,12 +482,12 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   if (Constant *CLHS = dyn_cast<Constant>(LHS)) {
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
       return ConstantFoldCompareInstOperands(Pred, CLHS, CRHS, TD);
-   
+
     // If we have a constant, make sure it is on the RHS.
     std::swap(LHS, RHS);
     Pred = CmpInst::getSwappedPredicate(Pred);
   }
-  
+
   // Fold trivial predicates.
   if (Pred == FCmpInst::FCMP_FALSE)
     return ConstantInt::get(GetCompareTy(LHS), 0);
@@ -504,7 +504,7 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     if (CmpInst::isFalseWhenEqual(Pred))
       return ConstantInt::get(GetCompareTy(LHS), 0);
   }
-  
+
   // Handle fcmp with constant RHS
   if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
     // If the constant is a nan, see if we can fold the comparison based on it.
@@ -545,7 +545,7 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       }
     }
   }
-  
+
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
   if (MaxRecurse && (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)))
@@ -574,11 +574,11 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
   // select false, X, Y -> Y
   if (ConstantInt *CB = dyn_cast<ConstantInt>(CondVal))
     return CB->getZExtValue() ? TrueVal : FalseVal;
-  
+
   // select C, X, X -> X
   if (TrueVal == FalseVal)
     return TrueVal;
-  
+
   if (isa<UndefValue>(TrueVal))   // select C, undef, X -> X
     return FalseVal;
   if (isa<UndefValue>(FalseVal))   // select C, X, undef -> X
@@ -588,7 +588,7 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
       return TrueVal;
     return FalseVal;
   }
-  
+
   return 0;
 }
 
@@ -610,12 +610,12 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
     if (ConstantInt *C = dyn_cast<ConstantInt>(Ops[1]))
       if (C->isZero())
         return Ops[0];
-  
+
   // Check to see if this is constant foldable.
   for (unsigned i = 0; i != NumOps; ++i)
     if (!isa<Constant>(Ops[i]))
       return 0;
-  
+
   return ConstantExpr::getGetElementPtr(cast<Constant>(Ops[0]),
                                         (Constant *const*)Ops+1, NumOps-1);
 }
@@ -653,7 +653,7 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
   }
 }
 
-Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS, 
+Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
                            const TargetData *TD) {
   return ::SimplifyBinOp(Opcode, LHS, RHS, TD, MaxRecursionDepth);
 }
@@ -711,13 +711,13 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
 void llvm::ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
                                      const TargetData *TD) {
   assert(From != To && "ReplaceAndSimplifyAllUses(X,X) is not valid!");
-  
+
   // FromHandle/ToHandle - This keeps a WeakVH on the from/to values so that
   // we can know if it gets deleted out from under us or replaced in a
   // recursive simplification.
   WeakVH FromHandle(From);
   WeakVH ToHandle(To);
-  
+
   while (!From->use_empty()) {
     // Update the instruction to use the new value.
     Use &TheUse = From->use_begin().getUse();
@@ -732,27 +732,26 @@ void llvm::ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
       // Sanity check to make sure 'User' doesn't dangle across
       // SimplifyInstruction.
       AssertingVH<> UserHandle(User);
-    
+
       SimplifiedVal = SimplifyInstruction(User, TD);
       if (SimplifiedVal == 0) continue;
     }
-    
+
     // Recursively simplify this user to the new value.
     ReplaceAndSimplifyAllUses(User, SimplifiedVal, TD);
     From = dyn_cast_or_null<Instruction>((Value*)FromHandle);
     To = ToHandle;
-      
+
     assert(ToHandle && "To value deleted by recursive simplification?");
-      
+
     // If the recursive simplification ended up revisiting and deleting
     // 'From' then we're done.
     if (From == 0)
       return;
   }
-  
+
   // If 'From' has value handles referring to it, do a real RAUW to update them.
   From->replaceAllUsesWith(To);
-  
+
   From->eraseFromParent();
 }
-
