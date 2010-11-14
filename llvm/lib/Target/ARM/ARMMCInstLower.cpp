@@ -54,7 +54,8 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   
 }
 
-void llvm::LowerToMCInst(const MachineInstr *MI, MCInst &OutMI, AsmPrinter &AP){
+void llvm::LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                        AsmPrinter &AP){
   OutMI.setOpcode(MI->getOpcode());
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {

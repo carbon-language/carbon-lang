@@ -54,7 +54,8 @@ FunctionPass *createThumb2SizeReductionPass();
 
 extern Target TheARMTarget, TheThumbTarget;
 
-void LowerToMCInst(const MachineInstr *MI, MCInst &OutMI, AsmPrinter &AP);
+void LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                  AsmPrinter &AP);
   
 } // end namespace llvm;
 

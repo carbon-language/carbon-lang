@@ -929,7 +929,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::t2BR_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
-    LowerToMCInst(MI, TmpInst, *this);
+    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
     EmitJump2Table(MI);
     return;
@@ -940,7 +940,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::BR_JTadd: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
-    LowerToMCInst(MI, TmpInst, *this);
+    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
     EmitJumpTable(MI);
     return;
@@ -1251,7 +1251,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   MCInst TmpInst;
-  LowerToMCInst(MI, TmpInst, *this);
+  LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
   OutStreamer.EmitInstruction(TmpInst);
 }
 
