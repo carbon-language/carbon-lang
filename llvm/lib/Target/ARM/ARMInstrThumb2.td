@@ -1047,12 +1047,24 @@ multiclass T2I_exta_rrot_DO<bits<3> opcod, string opc> {
 //  Miscellaneous Instructions.
 //
 
+class T2PCOneRegImm<dag oops, dag iops, InstrItinClass itin,
+           string asm, list<dag> pattern>
+  : T2XI<oops, iops, itin, asm, pattern> {
+  bits<4> Rd;
+  bits<12> label;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{26}    = label{11};
+  let Inst{14-12} = label{10-8};
+  let Inst{7-0}   = label{7-0};
+}
+
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 let neverHasSideEffects = 1 in {
 let isReMaterializable = 1 in
-def t2LEApcrel : T2XI<(outs rGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
-                      "adr${p}.w\t$dst, #$label", []> {
+def t2LEApcrel : T2PCOneRegImm<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p), IIC_iALUi,
+                      "adr${p}.w\t$Rd, #$label", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-24} = 0b10;
   // Inst{23:21} = '11' (add = FALSE) or '00' (add = TRUE)
@@ -1060,11 +1072,13 @@ def t2LEApcrel : T2XI<(outs rGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
   let Inst{20} = 0;
   let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
+  
+  
 }
 } // neverHasSideEffects
-def t2LEApcrelJT : T2XI<(outs rGPR:$dst),
+def t2LEApcrelJT : T2PCOneRegImm<(outs rGPR:$Rd),
                         (ins i32imm:$label, nohash_imm:$id, pred:$p), IIC_iALUi,
-                        "adr${p}.w\t$dst, #${label}_${id}", []> {
+                        "adr${p}.w\t$Rd, #${label}_${id}", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-24} = 0b10;
   // Inst{23:21} = '11' (add = FALSE) or '00' (add = TRUE)
@@ -1075,8 +1089,8 @@ def t2LEApcrelJT : T2XI<(outs rGPR:$dst),
 }
 
 // ADD r, sp, {so_imm|i12}
-def t2ADDrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
-                        IIC_iALUi, "add", ".w\t$dst, $sp, $imm", []> {
+def t2ADDrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_imm:$imm),
+                        IIC_iALUi, "add", ".w\t$Rd, $sp, $imm", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b1000;
@@ -1084,8 +1098,8 @@ def t2ADDrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
-def t2ADDrSPi12 : T2I<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm),
-                       IIC_iALUi, "addw", "\t$dst, $sp, $imm", []> {
+def t2ADDrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, imm0_4095:$imm),
+                       IIC_iALUi, "addw", "\t$Rd, $sp, $imm", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-21} = 0b0000;
@@ -1095,8 +1109,9 @@ def t2ADDrSPi12 : T2I<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm),
 }
 
 // ADD r, sp, so_reg
-def t2ADDrSPs   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
-                        IIC_iALUsi, "add", ".w\t$dst, $sp, $rhs", []> {
+def t2ADDrSPs   : T2sTwoRegShiftedReg<
+                        (outs GPR:$Rd), (ins GPR:$sp, t2_so_reg:$ShiftedRm),
+                        IIC_iALUsi, "add", ".w\t$Rd, $sp, $ShiftedRm", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b1000;
@@ -1106,8 +1121,8 @@ def t2ADDrSPs   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
 }
 
 // SUB r, sp, {so_imm|i12}
-def t2SUBrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
-                        IIC_iALUi, "sub", ".w\t$dst, $sp, $imm", []> {
+def t2SUBrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_imm:$imm),
+                        IIC_iALUi, "sub", ".w\t$Rd, $sp, $imm", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b1101;
@@ -1115,8 +1130,8 @@ def t2SUBrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
-def t2SUBrSPi12 : T2I<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm),
-                       IIC_iALUi, "subw", "\t$dst, $sp, $imm", []> {
+def t2SUBrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, imm0_4095:$imm),
+                       IIC_iALUi, "subw", "\t$Rd, $sp, $imm", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-21} = 0b0101;
