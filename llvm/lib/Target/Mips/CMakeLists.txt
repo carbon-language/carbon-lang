@@ -16,6 +16,7 @@ add_llvm_target(MipsCodeGen
   MipsInstrInfo.cpp
   MipsISelDAGToDAG.cpp
   MipsISelLowering.cpp
+  MipsFrameInfo.cpp
   MipsMCAsmInfo.cpp
   MipsRegisterInfo.cpp
   MipsSubtarget.cpp

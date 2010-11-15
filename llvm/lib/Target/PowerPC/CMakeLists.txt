@@ -19,6 +19,7 @@ add_llvm_target(PowerPCCodeGen
   PPCInstrInfo.cpp
   PPCISelDAGToDAG.cpp
   PPCISelLowering.cpp
+  PPCFrameInfo.cpp
   PPCJITInfo.cpp
   PPCMCAsmInfo.cpp
   PPCMCInstLower.cpp

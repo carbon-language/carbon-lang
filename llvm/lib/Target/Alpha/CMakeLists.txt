@@ -16,6 +16,7 @@ add_llvm_target(AlphaCodeGen
   AlphaInstrInfo.cpp
   AlphaISelDAGToDAG.cpp
   AlphaISelLowering.cpp
+  AlphaFrameInfo.cpp
   AlphaLLRP.cpp
   AlphaMCAsmInfo.cpp
   AlphaRegisterInfo.cpp

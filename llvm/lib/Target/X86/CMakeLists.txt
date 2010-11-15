@@ -24,6 +24,7 @@ set(sources
   X86ELFWriterInfo.cpp
   X86FastISel.cpp
   X86FloatingPoint.cpp
+  X86FrameInfo.cpp
   X86ISelDAGToDAG.cpp
   X86ISelLowering.cpp
   X86InstrInfo.cpp

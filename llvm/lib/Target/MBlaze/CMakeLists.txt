@@ -19,6 +19,7 @@ add_llvm_target(MBlazeCodeGen
   MBlazeInstrInfo.cpp
   MBlazeISelDAGToDAG.cpp
   MBlazeISelLowering.cpp
+  MBlazeFrameInfo.cpp
   MBlazeMCAsmInfo.cpp
   MBlazeRegisterInfo.cpp
   MBlazeSubtarget.cpp
