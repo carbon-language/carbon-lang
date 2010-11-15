@@ -102,18 +102,16 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   const FileSystemOptions &FSOpts = Headers.getFileSystemOpts();
 
   // Compute the actual path, taking into consideration -isysroot.
-  llvm::SmallString<256> MappedPathStr;
-  llvm::raw_svector_ostream MappedPath(MappedPathStr);
+  llvm::SmallString<256> MappedPathStorage;
+  llvm::StringRef MappedPath = Path.toStringRef(MappedPathStorage);
 
   // Handle isysroot.
-  if (Group == System && !IgnoreSysRoot) {
+  if (Group == System && !IgnoreSysRoot && MappedPath[0] == '/') {
     // FIXME: Portability.  This should be a sys::Path interface, this doesn't
     // handle things like C:\ right, nor win32 \\network\device\blah.
     if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.
-      MappedPath << isysroot;
+      MappedPath = (isysroot + Path).toStringRef(MappedPathStorage);
   }
-
-  Path.print(MappedPath);
 
   // Compute the DirectoryLookup type.
   SrcMgr::CharacteristicKind Type;
@@ -126,7 +124,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
 
 
   // If the directory exists, add it.
-  if (const DirectoryEntry *DE = FM.getDirectory(MappedPath.str(), FSOpts)) {
+  if (const DirectoryEntry *DE = FM.getDirectory(MappedPath, FSOpts)) {
     IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
                                                   isFramework));
     return;
@@ -135,7 +133,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   // Check to see if this is an apple-style headermap (which are not allowed to
   // be frameworks).
   if (!isFramework) {
-    if (const FileEntry *FE = FM.getFile(MappedPath.str(), FSOpts)) {
+    if (const FileEntry *FE = FM.getFile(MappedPath, FSOpts)) {
       if (const HeaderMap *HM = Headers.CreateHeaderMap(FE)) {
         // It is a headermap, add it to the search path.
         IncludeGroup[Group].push_back(DirectoryLookup(HM, Type,isUserSupplied));
@@ -145,8 +143,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   }
 
   if (Verbose)
-    llvm::errs() << "ignoring nonexistent directory \""
-                 << MappedPath.str() << "\"\n";
+    llvm::errs() << "ignoring nonexistent directory \"" << MappedPath << "\"\n";
 }
 
 
