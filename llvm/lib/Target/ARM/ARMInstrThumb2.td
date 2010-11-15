@@ -170,18 +170,87 @@ def t2addrmode_so_reg : Operand<i32>,
 // Multiclass helpers...
 //
 
-class T2TwoRegImm<dag oops, dag iops, InstrItinClass itin,
+
+class T2OneRegImm<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  bits<12> imm;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{26}    = imm{11};
+  let Inst{14-12} = imm{10-8};
+  let Inst{7-0}   = imm{7-0};
+}
+
+class T2sOneRegImm<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2sI<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<4> Rn;
   bits<12> imm;
   
   let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
+}
+
+class T2OneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  bits<12> ShiftedRm;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{3-0}   = ShiftedRm{3-0};
+  let Inst{5-4}   = ShiftedRm{6-5};
+  let Inst{14-12} = ShiftedRm{11-9};
+  let Inst{7-6}   = ShiftedRm{8-7};
+}
+
+class T2sOneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  bits<12> ShiftedRm;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{3-0}   = ShiftedRm{3-0};
+  let Inst{5-4}   = ShiftedRm{6-5};
+  let Inst{14-12} = ShiftedRm{11-9};
+  let Inst{7-6}   = ShiftedRm{8-7};
+}
+
+class T2TwoReg<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  bits<4> Rd;
+  bits<4> Rm;
+     
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{3-0}   = Rm{3-0};
+}
+
+class T2sTwoReg<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2sI<oops, iops, itin, opc, asm, pattern> { 
+  bits<4> Rd;
+  bits<4> Rm;
+     
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{3-0}   = Rm{3-0};
+}
+
+
+class T2TwoRegImm<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  bits<4> Rm;
+     
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{3-0}   = Rm{3-0};
 }
 
 class T2sTwoRegImm<dag oops, dag iops, InstrItinClass itin,
@@ -259,9 +328,9 @@ multiclass T2I_un_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                       PatFrag opnode, bit Cheap = 0, bit ReMat = 0> {
    // shifted imm
-   def i : T2sI<(outs rGPR:$dst), (ins t2_so_imm:$src), iii,
-                opc, "\t$dst, $src",
-                [(set rGPR:$dst, (opnode t2_so_imm:$src))]> {
+   def i : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), iii,
+                opc, "\t$Rd, $imm",
+                [(set rGPR:$Rd, (opnode t2_so_imm:$imm))]> {
      let isAsCheapAsAMove = Cheap;
      let isReMaterializable = ReMat;
      let Inst{31-27} = 0b11110;
@@ -272,9 +341,9 @@ multiclass T2I_un_irs<bits<4> opcod, string opc,
      let Inst{15} = 0;
    }
    // register
-   def r : T2sI<(outs rGPR:$dst), (ins rGPR:$src), iir,
-                opc, ".w\t$dst, $src",
-                [(set rGPR:$dst, (opnode rGPR:$src))]> {
+   def r : T2sTwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), iir,
+                opc, ".w\t$Rd, $Rm",
+                [(set rGPR:$Rd, (opnode rGPR:$Rm))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
@@ -285,9 +354,9 @@ multiclass T2I_un_irs<bits<4> opcod, string opc,
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def s : T2sI<(outs rGPR:$dst), (ins t2_so_reg:$src), iis,
-                opc, ".w\t$dst, $src",
-                [(set rGPR:$dst, (opnode t2_so_reg:$src))]> {
+   def s : T2sOneRegShiftedReg<(outs rGPR:$Rd), (ins t2_so_reg:$ShiftedRm), iis,
+                opc, ".w\t$Rd, $ShiftedRm",
+                [(set rGPR:$Rd, (opnode t2_so_reg:$ShiftedRm))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
