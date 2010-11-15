@@ -142,9 +142,12 @@ static Value *ThreadBinOpOverPHI(unsigned Opcode, Value *LHS, Value *RHS,
   // Evaluate the BinOp on the incoming phi values.
   Value *CommonValue = 0;
   for (unsigned i = 0, e = PI->getNumIncomingValues(); i != e; ++i) {
+    Value *Incoming = PI->getIncomingValue(i);
+    // If the incoming value is the phi node itself, it can be safely skipped.
+    if (Incoming == PI) continue;
     Value *V = PI == LHS ?
-      SimplifyBinOp(Opcode, PI->getIncomingValue(i), RHS, TD, MaxRecurse) :
-      SimplifyBinOp(Opcode, LHS, PI->getIncomingValue(i), TD, MaxRecurse);
+      SimplifyBinOp(Opcode, Incoming, RHS, TD, MaxRecurse) :
+      SimplifyBinOp(Opcode, LHS, Incoming, TD, MaxRecurse);
     // If the operation failed to simplify, or simplified to a different value
     // to previously, then give up.
     if (!V || (CommonValue && V != CommonValue))
@@ -172,8 +175,10 @@ static Value *ThreadCmpOverPHI(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
   // Evaluate the BinOp on the incoming phi values.
   Value *CommonValue = 0;
   for (unsigned i = 0, e = PI->getNumIncomingValues(); i != e; ++i) {
-    Value *V = SimplifyCmpInst(Pred, PI->getIncomingValue(i), RHS, TD,
-                               MaxRecurse);
+    Value *Incoming = PI->getIncomingValue(i);
+    // If the incoming value is the phi node itself, it can be safely skipped.
+    if (Incoming == PI) continue;
+    Value *V = SimplifyCmpInst(Pred, Incoming, RHS, TD, MaxRecurse);
     // If the operation failed to simplify, or simplified to a different value
     // to previously, then give up.
     if (!V || (CommonValue && V != CommonValue))

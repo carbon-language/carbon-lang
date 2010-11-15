@@ -469,3 +469,22 @@ ret:
 ; CHECK: @test20
 ; CHECK: ret i1 false
 }
+
+define i1 @test21(i1 %c1, i1 %c2) {
+  %a = alloca i32
+  %b = alloca i32
+  %c = alloca i32
+  br i1 %c1, label %true, label %false
+true:
+  br label %loop
+false:
+  br label %loop
+loop:
+  %p = phi i32* [ %a, %true ], [ %b, %false ], [ %p, %loop ]
+  %r = icmp eq i32* %p, %c
+  br i1 %c2, label %ret, label %loop
+ret:
+  ret i1 %r
+; CHECK: @test21
+; CHECK: ret i1 false
+}
