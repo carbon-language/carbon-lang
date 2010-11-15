@@ -504,31 +504,6 @@ static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
   return 0;
 }
 
-static const MCSymbol &AliasedSymbol(const MCSymbol &Symbol) {
-  const MCSymbol *S = &Symbol;
-  while (S->isVariable()) {
-    const MCExpr *Value = S->getVariableValue();
-    MCExpr::ExprKind Kind = Value->getKind();
-    switch (Kind) {
-    case MCExpr::SymbolRef: {
-      const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
-      S = &Ref->getSymbol();
-      break;
-    }
-    case MCExpr::Target: {
-      const MCTargetExpr *TExp = static_cast<const MCTargetExpr*>(Value);
-      MCValue Res;
-      TExp->EvaluateAsRelocatableImpl(Res, NULL);
-      S = &Res.getSymA()->getSymbol();
-      break;
-    }
-    default:
-      return *S;
-    }
-  }
-  return *S;
-}
-
 void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm) {
   // The presence of symbol versions causes undefined symbols and
   // versions declared with @@@ to be renamed.
@@ -536,7 +511,7 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm) {
   for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
          ie = Asm.symbol_end(); it != ie; ++it) {
     const MCSymbol &Alias = it->getSymbol();
-    const MCSymbol &Symbol = AliasedSymbol(Alias);
+    const MCSymbol &Symbol = Alias.AliasedSymbol();
     MCSymbolData &SD = Asm.getSymbolData(Symbol);
 
     // Not an alias.
@@ -572,7 +547,7 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
   MCSymbolData &Data =
-    Layout.getAssembler().getSymbolData(AliasedSymbol(OrigData.getSymbol()));
+    Layout.getAssembler().getSymbolData(OrigData.getSymbol().AliasedSymbol());
 
   bool IsReserved = Data.isCommon() || Data.getSymbol().isAbsolute() ||
     Data.getSymbol().isVariable();
@@ -673,28 +648,24 @@ const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
                                                const MCValue &Target,
                                                const MCFragment &F) const {
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();
-  const MCSymbol &ASymbol = AliasedSymbol(Symbol);
-  const MCSymbol *RenamedP = Renames.lookup(&Symbol);
+  const MCSymbol &ASymbol = Symbol.AliasedSymbol();
+  const MCSymbol *Renamed = Renames.lookup(&Symbol);
+  const MCSymbolData &SD = Asm.getSymbolData(Symbol);
 
-  if (!RenamedP) {
-    if (Target.getSymA()->getKind() == MCSymbolRefExpr::VK_None ||
-        Asm.getSymbolData(Symbol).getFlags() & ELF_Other_Weakref)
-      RenamedP = &ASymbol;
-    else
-      RenamedP = &Symbol;
+  if (ASymbol.isUndefined()) {
+    if (Renamed)
+      return Renamed;
+    return &ASymbol;
   }
-  const MCSymbol &Renamed = *RenamedP;
 
-  MCSymbolData &SD = Asm.getSymbolData(Symbol);
-
-  if (Symbol.isUndefined())
-    return &Renamed;
-
-  if (SD.isExternal())
-    return &Renamed;
+  if (SD.isExternal()) {
+    if (Renamed)
+      return Renamed;
+    return &Symbol;
+  }
 
   const MCSectionELF &Section =
-    static_cast<const MCSectionELF&>(Symbol.getSection());
+    static_cast<const MCSectionELF&>(ASymbol.getSection());
 
   if (Section.getKind().isBSS())
     return NULL;
@@ -706,13 +677,18 @@ const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
   if (&Sec2 != &Section &&
       (Kind == MCSymbolRefExpr::VK_PLT ||
        Kind == MCSymbolRefExpr::VK_GOTPCREL ||
-       Kind == MCSymbolRefExpr::VK_GOTOFF))
-    return &Renamed;
+       Kind == MCSymbolRefExpr::VK_GOTOFF)) {
+    if (Renamed)
+      return Renamed;
+    return &Symbol;
+  }
 
   if (Section.getFlags() & MCSectionELF::SHF_MERGE) {
-    if (Target.getConstant() != 0)
-      return &Renamed;
-    return NULL;
+    if (Target.getConstant() == 0)
+      return NULL;
+    if (Renamed)
+      return Renamed;
+    return &Symbol;
   }
 
   return NULL;
@@ -742,7 +718,7 @@ static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
   if (Symbol.getName() == "_GLOBAL_OFFSET_TABLE_")
     return true;
 
-  const MCSymbol &A = AliasedSymbol(Symbol);
+  const MCSymbol &A = Symbol.AliasedSymbol();
   if (!A.isVariable() && A.isUndefined() && !Data.isCommon())
     return false;
 
@@ -761,7 +737,7 @@ static bool isLocal(const MCSymbolData &Data, bool isSignature,
     return false;
 
   const MCSymbol &Symbol = Data.getSymbol();
-  const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
+  const MCSymbol &RefSymbol = Symbol.AliasedSymbol();
 
   if (RefSymbol.isUndefined() && !RefSymbol.isVariable()) {
     if (isSignature && !isUsedInReloc)
@@ -830,7 +806,7 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
 
     ELFSymbolData MSD;
     MSD.SymbolData = it;
-    const MCSymbol &RefSymbol = AliasedSymbol(Symbol);
+    const MCSymbol &RefSymbol = Symbol.AliasedSymbol();
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.
@@ -1104,13 +1080,13 @@ bool ELFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
   const MCSection *SectionA = 0;
   const MCSymbol *SymbolA = 0;
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
-    SymbolA = &A->getSymbol();
+    SymbolA = &A->getSymbol().AliasedSymbol();
     SectionA = &SymbolA->getSection();
   }
 
   const MCSection *SectionB = 0;
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    SectionB = &B->getSymbol().getSection();
+    SectionB = &B->getSymbol().AliasedSymbol().getSection();
   }
 
   if (!BaseSection)
@@ -1413,6 +1389,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   int Index = 0;
   int64_t Value = Target.getConstant();
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();
+  const MCSymbol &ASymbol = Symbol.AliasedSymbol();
   const MCSymbol *RelocSymbol = SymbolToReloc(Asm, Target, *Fragment);
 
   bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
@@ -1432,7 +1409,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     }
 
     if (!RelocSymbol) {
-      MCSymbolData &SD = Asm.getSymbolData(Symbol);
+      MCSymbolData &SD = Asm.getSymbolData(ASymbol);
       MCFragment *F = SD.getFragment();
 
       Index = F->getParent()->getOrdinal();

@@ -240,49 +240,6 @@ void MCELFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   Symbol->setVariableValue(AddValueSymbols(Value));
 }
 
-// This is a hack. To be able to implement weakrefs the writer has to be able
-// to distinguish
-//    .weakref foo, bar
-//    .long foo
-// from
-//   .weakref foo, bar
-//   .long bar
-// since the first case should produce a weak undefined reference and the second
-// one a strong one.
-// If we created foo as a regular alias pointing to bar (foo = bar), then
-// MCExpr::EvaluateAsRelocatable would recurse on foo and the writer would
-// never see it used in a relocation.
-// What we do is create a MCTargetExpr that when evaluated produces a symbol
-// ref to a temporary symbol. This temporary symbol in turn is a variable
-// that equals the original symbol (tmp = bar). With this hack the writer
-// gets a relocation with tmp and can correctly implement weak references.
-
-namespace {
-class WeakRefExpr : public MCTargetExpr {
-private:
-  const MCSymbolRefExpr *Alias;
-
-  explicit WeakRefExpr(const MCSymbolRefExpr *Alias_)
-    : MCTargetExpr(), Alias(Alias_) {}
-
-public:
-  virtual void PrintImpl(raw_ostream &OS) const {
-    llvm_unreachable("Unimplemented");
-  }
-
-  virtual bool EvaluateAsRelocatableImpl(MCValue &Res,
-                                         const MCAsmLayout *Layout) const {
-    Res = MCValue::get(Alias, 0, 0);
-    return true;
-  }
-
-  static const WeakRefExpr *Create(const MCSymbol *Alias, MCContext &Ctx) {
-    const MCSymbolRefExpr *A = MCSymbolRefExpr::Create(Alias, Ctx);
-    return new (Ctx) WeakRefExpr(A);
-  }
-};
-} // end anonymous namespace
-
 void MCELFStreamer::SwitchSection(const MCSection *Section) {
   const MCSymbol *Grp = static_cast<const MCSectionELF *>(Section)->getGroup();
   if (Grp)
@@ -294,16 +251,7 @@ void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
   getAssembler().getOrCreateSymbolData(*Symbol);
   MCSymbolData &AliasSD = getAssembler().getOrCreateSymbolData(*Alias);
   AliasSD.setFlags(AliasSD.getFlags() | ELF_Other_Weakref);
-
-  // Create the alias that actually points to Symbol
-  const MCSymbolRefExpr *SymRef = MCSymbolRefExpr::Create(Symbol, getContext());
-  MCSymbol *RealAlias = getContext().CreateTempSymbol();
-  RealAlias->setVariableValue(SymRef);
-
-  MCSymbolData &RealAliasSD = getAssembler().getOrCreateSymbolData(*RealAlias);
-  RealAliasSD.setFlags(RealAliasSD.getFlags() | ELF_Other_Weakref);
-
-  const MCExpr *Value = WeakRefExpr::Create(RealAlias, getContext());
+  const MCExpr *Value = MCSymbolRefExpr::Create(Symbol, getContext());
   Alias->setVariableValue(Value);
 }
 

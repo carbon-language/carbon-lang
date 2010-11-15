@@ -336,9 +336,14 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     const MCSymbol &Sym = SRE->getSymbol();
 
     // Evaluate recursively if this is a variable.
-    if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None)
-      return Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Layout,
-                                                               true);
+    if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None) {
+      bool Ret = Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Layout,
+                                                                   true);
+      // If we failed to simplify this to a constant, let the target
+      // handle it.
+      if (Ret && !Res.getSymA() && !Res.getSymB())
+        return true;
+    }
 
     Res = MCValue::get(SRE, 0, 0);
     return true;

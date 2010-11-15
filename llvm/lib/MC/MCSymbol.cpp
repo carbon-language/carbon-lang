@@ -39,6 +39,18 @@ static bool NameNeedsQuoting(StringRef Str) {
   return false;
 }
 
+const MCSymbol &MCSymbol::AliasedSymbol() const {
+  const MCSymbol *S = this;
+  while (S->isVariable()) {
+    const MCExpr *Value = S->getVariableValue();
+    if (Value->getKind() != MCExpr::SymbolRef)
+      return *S;
+    const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Value);
+    S = &Ref->getSymbol();
+  }
+  return *S;
+}
+
 void MCSymbol::setVariableValue(const MCExpr *Value) {
   assert(!IsUsed && "Cannot set a variable that has already been used.");
   assert(Value && "Invalid variable value!");

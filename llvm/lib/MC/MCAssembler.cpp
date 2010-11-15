@@ -285,14 +285,16 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
     Fixup.getKind()).Flags & MCFixupKindInfo::FKF_IsPCRel;
   bool IsResolved = true;
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
-    if (A->getSymbol().isDefined())
-      Value += Layout.getSymbolAddress(&getSymbolData(A->getSymbol()));
+    const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
+    if (Sym.isDefined())
+      Value += Layout.getSymbolAddress(&getSymbolData(Sym));
     else
       IsResolved = false;
   }
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    if (B->getSymbol().isDefined())
-      Value -= Layout.getSymbolAddress(&getSymbolData(B->getSymbol()));
+    const MCSymbol &Sym = B->getSymbol().AliasedSymbol();
+    if (Sym.isDefined())
+      Value -= Layout.getSymbolAddress(&getSymbolData(Sym));
     else
       IsResolved = false;
   }
