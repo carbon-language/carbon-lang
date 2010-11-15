@@ -32,3 +32,6 @@
   cmp.w	r0, #1114112
 @ CHECK: cmp.w	r0, r1, lsl #5          @ encoding: [0x41,0x1f,0xb0,0xeb]
   cmp.w	r0, r1, lsl #5
+
+@ CHECK: sxtab	r0, r1, r0              @ encoding: [0x80,0xf0,0x41,0xfa]
+  sxtab	r0, r1, r0              @ encoding: [0x80,0xf0,0x41,0xfa]

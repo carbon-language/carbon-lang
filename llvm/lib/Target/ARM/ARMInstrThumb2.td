@@ -901,9 +901,9 @@ multiclass T2I_st<bits<2> opcod, string opc,
 /// T2I_ext_rrot - A unary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
 multiclass T2I_ext_rrot<bits<3> opcod, string opc, PatFrag opnode> {
-  def r     : T2I<(outs rGPR:$dst), (ins rGPR:$src), IIC_iEXTr,
-                  opc, ".w\t$dst, $src",
-                 [(set rGPR:$dst, (opnode rGPR:$src))]> {
+  def r     : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iEXTr,
+                  opc, ".w\t$Rd, $Rm",
+                 [(set rGPR:$Rd, (opnode rGPR:$Rm))]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -912,24 +912,26 @@ multiclass T2I_ext_rrot<bits<3> opcod, string opc, PatFrag opnode> {
      let Inst{7} = 1;
      let Inst{5-4} = 0b00; // rotate
    }
-  def r_rot : T2I<(outs rGPR:$dst), (ins rGPR:$src, i32imm:$rot), IIC_iEXTr,
-                  opc, ".w\t$dst, $src, ror $rot",
-                 [(set rGPR:$dst, (opnode (rotr rGPR:$src, rot_imm:$rot)))]> {
+  def r_rot : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm, i32imm:$rot), IIC_iEXTr,
+                  opc, ".w\t$Rd, $Rm, ror $rot",
+                 [(set rGPR:$Rd, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
      let Inst{19-16} = 0b1111; // Rn
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     let Inst{5-4} = {?,?}; // rotate
+     
+     bits<2> rot;
+     let Inst{5-4} = rot{1-0}; // rotate
    }
 }
 
 // UXTB16 - Requres T2ExtractPack, does not need the .w qualifier.
 multiclass T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode> {
-  def r     : T2I<(outs rGPR:$dst), (ins rGPR:$src), IIC_iEXTr,
-                  opc, "\t$dst, $src",
-                 [(set rGPR:$dst, (opnode rGPR:$src))]>,
+  def r     : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iEXTr,
+                  opc, "\t$Rd, $Rm",
+                 [(set rGPR:$Rd, (opnode rGPR:$Rm))]>,
                  Requires<[HasT2ExtractPack, IsThumb2]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
@@ -939,9 +941,9 @@ multiclass T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode> {
      let Inst{7} = 1;
      let Inst{5-4} = 0b00; // rotate
    }
-  def r_rot : T2I<(outs rGPR:$dst), (ins rGPR:$src, i32imm:$rot), IIC_iEXTr,
-                  opc, "\t$dst, $src, ror $rot",
-                 [(set rGPR:$dst, (opnode (rotr rGPR:$src, rot_imm:$rot)))]>,
+  def r_rot : T2TwoReg<(outs rGPR:$dst), (ins rGPR:$Rm, i32imm:$rot), IIC_iEXTr,
+                  opc, "\t$dst, $Rm, ror $rot",
+                 [(set rGPR:$dst, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]>,
                  Requires<[HasT2ExtractPack, IsThumb2]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
@@ -949,15 +951,17 @@ multiclass T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode> {
      let Inst{19-16} = 0b1111; // Rn
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     let Inst{5-4} = {?,?}; // rotate
+    
+     bits<2> rot;
+     let Inst{5-4} = rot{1-0}; // rotate
    }
 }
 
 // SXTB16 - Requres T2ExtractPack, does not need the .w qualifier, no pattern
 // supported yet.
 multiclass T2I_ext_rrot_sxtb16<bits<3> opcod, string opc> {
-  def r     : T2I<(outs rGPR:$dst), (ins rGPR:$src), IIC_iEXTr,
-                  opc, "\t$dst, $src", []> {
+  def r     : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iEXTr,
+                  opc, "\t$Rd, $Rm", []> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -966,24 +970,26 @@ multiclass T2I_ext_rrot_sxtb16<bits<3> opcod, string opc> {
      let Inst{7} = 1;
      let Inst{5-4} = 0b00; // rotate
    }
-  def r_rot : T2I<(outs rGPR:$dst), (ins rGPR:$src, i32imm:$rot), IIC_iEXTr,
-                  opc, "\t$dst, $src, ror $rot", []> {
+  def r_rot : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm, i32imm:$rot), IIC_iEXTr,
+                  opc, "\t$Rd, $Rm, ror $rot", []> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
      let Inst{19-16} = 0b1111; // Rn
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     let Inst{5-4} = {?,?}; // rotate
+     
+      bits<2> rot;
+      let Inst{5-4} = rot{1-0}; // rotate
    }
 }
 
 /// T2I_exta_rrot - A binary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
 multiclass T2I_exta_rrot<bits<3> opcod, string opc, PatFrag opnode> {
-  def rr     : T2I<(outs rGPR:$dst), (ins rGPR:$LHS, rGPR:$RHS), IIC_iEXTAr,
-                  opc, "\t$dst, $LHS, $RHS",
-                  [(set rGPR:$dst, (opnode rGPR:$LHS, rGPR:$RHS))]>,
+  def rr     : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iEXTAr,
+                  opc, "\t$Rd, $Rn, $Rm",
+                  [(set rGPR:$Rd, (opnode rGPR:$Rn, rGPR:$Rm))]>,
                   Requires<[HasT2ExtractPack, IsThumb2]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
@@ -992,25 +998,27 @@ multiclass T2I_exta_rrot<bits<3> opcod, string opc, PatFrag opnode> {
      let Inst{7} = 1;
      let Inst{5-4} = 0b00; // rotate
    }
-  def rr_rot : T2I<(outs rGPR:$dst), (ins rGPR:$LHS, rGPR:$RHS, i32imm:$rot),
-                  IIC_iEXTAsr, opc, "\t$dst, $LHS, $RHS, ror $rot",
-                  [(set rGPR:$dst, (opnode rGPR:$LHS,
-                                          (rotr rGPR:$RHS, rot_imm:$rot)))]>,
+  def rr_rot : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$rot),
+                  IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm, ror $rot",
+                  [(set rGPR:$Rd, (opnode rGPR:$Rn,
+                                          (rotr rGPR:$Rm, rot_imm:$rot)))]>,
                   Requires<[HasT2ExtractPack, IsThumb2]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     let Inst{5-4} = {?,?}; // rotate
+     
+     bits<2> rot;
+     let Inst{5-4} = rot{1-0}; // rotate
    }
 }
 
 // DO variant - disassembly only, no pattern
 
 multiclass T2I_exta_rrot_DO<bits<3> opcod, string opc> {
-  def rr     : T2I<(outs rGPR:$dst), (ins rGPR:$LHS, rGPR:$RHS), IIC_iEXTAr,
-                  opc, "\t$dst, $LHS, $RHS", []> {
+  def rr     : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iEXTAr,
+                  opc, "\t$Rd, $Rn, $Rm", []> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
@@ -1018,14 +1026,16 @@ multiclass T2I_exta_rrot_DO<bits<3> opcod, string opc> {
      let Inst{7} = 1;
      let Inst{5-4} = 0b00; // rotate
    }
-  def rr_rot : T2I<(outs rGPR:$dst), (ins rGPR:$LHS, rGPR:$RHS, i32imm:$rot),
-                  IIC_iEXTAsr, opc, "\t$dst, $LHS, $RHS, ror $rot", []> {
+  def rr_rot : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$rot),
+                  IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm, ror $rot", []> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-20} = opcod;
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     let Inst{5-4} = {?,?}; // rotate
+     
+     bits<2> rot;
+     let Inst{5-4} = rot{1-0}; // rotate
    }
 }
 
