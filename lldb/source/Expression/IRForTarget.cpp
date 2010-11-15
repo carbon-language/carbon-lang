@@ -108,7 +108,7 @@ IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     }
     
     if (log)
-        log->Printf("Result name: %s", result_name);
+        log->Printf("Result name: \"%s\"", result_name);
     
     Value *result_value = llvm_module.getNamedValue(result_name);
     
@@ -121,7 +121,7 @@ IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     }
         
     if (log)
-        log->Printf("Found result in the IR: %s", PrintValue(result_value, false).c_str());
+        log->Printf("Found result in the IR: \"%s\"", PrintValue(result_value, false).c_str());
     
     GlobalVariable *result_global = dyn_cast<GlobalVariable>(result_value);
     
@@ -171,7 +171,7 @@ IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &ll
         
     ConstantInt *constant_int = dyn_cast<ConstantInt>(metadata_node->getOperand(1));
         
-    uint64_t result_decl_intptr = constant_int->getZExtValue();
+    lldb::addr_t result_decl_intptr = constant_int->getZExtValue();
     
     clang::VarDecl *result_decl = reinterpret_cast<clang::VarDecl *>(result_decl_intptr);
         
@@ -185,7 +185,7 @@ IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     m_decl_map->AddPersistentVariable(result_decl, new_result_name, result_decl_type);
     
     if (log)
-        log->Printf("Creating a new result global: %s", new_result_name.GetCString());
+        log->Printf("Creating a new result global: \"%s\"", new_result_name.GetCString());
         
     // Construct a new result global and set up its metadata
     
@@ -215,7 +215,7 @@ IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     named_metadata->addOperand(persistent_global_md);
     
     if (log)
-        log->Printf("Replacing %s with %s",
+        log->Printf("Replacing \"%s\" with \"%s\"",
                     PrintValue(result_global).c_str(),
                     PrintValue(new_result_global).c_str());
     
@@ -244,7 +244,7 @@ IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &ll
                                                                 first_entry_instruction);
         
         if (log)
-            log->Printf("Synthesized result store %s\n", PrintValue(synthesized_store).c_str());
+            log->Printf("Synthesized result store \"%s\"\n", PrintValue(synthesized_store).c_str());
     }
     else
     {
@@ -323,20 +323,20 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
     std::string omvn_initializer_string = omvn_initializer_array->getAsString();
     
     if (log)
-        log->Printf("Found Objective-C selector reference %s", omvn_initializer_string.c_str());
+        log->Printf("Found Objective-C selector reference \"%s\"", omvn_initializer_string.c_str());
     
     // Construct a call to sel_registerName
     
     if (!m_sel_registerName)
     {
-        uint64_t srN_addr;
+        lldb::addr_t sel_registerName_addr;
         
         static lldb_private::ConstString g_sel_registerName_str ("sel_registerName");
-        if (!m_decl_map->GetFunctionAddress (g_sel_registerName_str, srN_addr))
+        if (!m_decl_map->GetFunctionAddress (g_sel_registerName_str, sel_registerName_addr))
             return false;
         
         if (log)
-            log->Printf("Found sel_registerName at 0x%llx", srN_addr);
+            log->Printf("Found sel_registerName at 0x%llx", sel_registerName_addr);
         
         // Build the function type: struct objc_selector *sel_registerName(uint8_t*)
         
@@ -353,7 +353,7 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
         const IntegerType *intptr_ty = Type::getIntNTy(M.getContext(),
                                                        (M.getPointerSize() == Module::Pointer64) ? 64 : 32);
         PointerType *srN_ptr_ty = PointerType::getUnqual(srN_type);
-        Constant *srN_addr_int = ConstantInt::get(intptr_ty, srN_addr, false);
+        Constant *srN_addr_int = ConstantInt::get(intptr_ty, sel_registerName_addr, false);
         m_sel_registerName = ConstantExpr::getIntToPtr(srN_addr_int, srN_ptr_ty);
     }
     
@@ -590,7 +590,7 @@ IRForTarget::MaybeHandleVariable
                 return true;
             
             if (log)
-                log->Printf("Found global variable %s without metadata", global_variable->getName().str().c_str());
+                log->Printf("Found global variable \"%s\" without metadata", global_variable->getName().str().c_str());
             return false;
         }
         
@@ -617,7 +617,7 @@ IRForTarget::MaybeHandleVariable
         off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7) / 8;
                 
         if (log)
-            log->Printf("Type of %s is [clang %s, lldb %s] [size %d, align %d]", 
+            log->Printf("Type of \"%s\" is [clang \"%s\", lldb \"%s\"] [size %d, align %d]", 
                         name.c_str(), 
                         qual_type.getAsString().c_str(), 
                         PrintType(value_type).c_str(), 
@@ -688,7 +688,7 @@ IRForTarget::MaybeHandleCall(Module &llvm_module,
         {
         default:
             if (log)
-                log->Printf("Unresolved intrinsic %s", Intrinsic::getName(intrinsic_id).c_str());
+                log->Printf("Unresolved intrinsic \"%s\"", Intrinsic::getName(intrinsic_id).c_str());
             return false;
         case Intrinsic::memcpy:
             {
@@ -699,7 +699,7 @@ IRForTarget::MaybeHandleCall(Module &llvm_module,
         }
         
         if (log && str)
-            log->Printf("Resolved intrinsic name %s", str.GetCString());
+            log->Printf("Resolved intrinsic name \"%s\"", str.GetCString());
     }
     else
     {
@@ -707,7 +707,7 @@ IRForTarget::MaybeHandleCall(Module &llvm_module,
     }
     
     clang::NamedDecl *fun_decl = DeclForGlobalValue (llvm_module, fun);
-    uint64_t fun_addr;
+    lldb::addr_t fun_addr = LLDB_INVALID_ADDRESS;
     Value **fun_value_ptr = NULL;
     
     if (fun_decl)
@@ -719,7 +719,7 @@ IRForTarget::MaybeHandleCall(Module &llvm_module,
             if (!m_decl_map->GetFunctionAddress (str, fun_addr))
             {
                 if (log)
-                    log->Printf("Function %s had no address", str.GetCString());
+                    log->Printf("Function \"%s\" had no address", str.GetCString());
                 
                 return false;
             }
@@ -730,12 +730,12 @@ IRForTarget::MaybeHandleCall(Module &llvm_module,
         if (!m_decl_map->GetFunctionAddress (str, fun_addr))
         {
             if (log)
-                log->Printf ("Metadataless function %s had no address", str.GetCString());
+                log->Printf ("Metadataless function \"%s\" had no address", str.GetCString());
         }
     }
         
     if (log)
-        log->Printf("Found %s at %llx", str.GetCString(), fun_addr);
+        log->Printf("Found \"%s\" at 0x%llx", str.GetCString(), fun_addr);
     
     Value *fun_addr_ptr;
             
@@ -766,7 +766,7 @@ IRForTarget::MaybeHandleCall(Module &llvm_module,
     llvm_call_inst->setMetadata("lldb.call.realName", func_metadata);
     
     if (log)
-        log->Printf("Set metadata for %p [%d, %s]", llvm_call_inst, func_name->isString(), func_name->getAsString().c_str());
+        log->Printf("Set metadata for %p [%d, \"%s\"]", llvm_call_inst, func_name->isString(), func_name->getAsString().c_str());
     
     return true;
 }
@@ -952,7 +952,7 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
                 {
                 default:
                     if (log)
-                        log->Printf("Unhandled constant expression type: %s", PrintValue(constant_expr).c_str());
+                        log->Printf("Unhandled constant expression type: \"%s\"", PrintValue(constant_expr).c_str());
                     return false;
                 case Instruction::BitCast:
                     {
@@ -1007,7 +1007,7 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
             else
             {
                 if (log)
-                    log->Printf("Unhandled constant type: %s", PrintValue(constant).c_str());
+                    log->Printf("Unhandled constant type: \"%s\"", PrintValue(constant).c_str());
                 return false;
             }
         }
@@ -1064,7 +1064,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
         return false;
     
     if (log)
-        log->Printf("Arg: %s", PrintValue(argument).c_str());
+        log->Printf("Arg: \"%s\"", PrintValue(argument).c_str());
     
     BasicBlock &entry_block(F.getEntryBlock());
     Instruction *first_entry_instruction(entry_block.getFirstNonPHIOrDbg());
@@ -1089,7 +1089,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
             return false;
         
         if (log)
-            log->Printf("  %s [%s] (%s) placed at %d",
+            log->Printf("  \"%s\" [\"%s\"] (\"%s\") placed at %d",
                         value->getName().str().c_str(),
                         name.GetCString(),
                         PrintValue(value, true).c_str(),
@@ -1124,7 +1124,7 @@ IRForTarget::runOnModule(Module &M)
     if (!function)
     {
         if (log)
-            log->Printf("Couldn't find %s() in the module", m_func_name.c_str());
+            log->Printf("Couldn't find \"%s()\" in the module", m_func_name.c_str());
         
         return false;
     }
@@ -1178,7 +1178,7 @@ IRForTarget::runOnModule(Module &M)
         
         oss.flush();
         
-        log->Printf("Module after preparing for execution: \n%s", s.c_str());
+        log->Printf("Module after preparing for execution: \n\"%s\"", s.c_str());
     }
     
     return true;    
