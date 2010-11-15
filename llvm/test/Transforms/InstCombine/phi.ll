@@ -423,3 +423,49 @@ bb2:        ; preds = %bb1, %entry
     ret i32 %res
 }
 
+define i1 @test18(i1 %cond) {
+  %zero = alloca i32
+  %one = alloca i32
+  br i1 %cond, label %true, label %false
+true:
+  br label %ret
+false:
+  br label %ret
+ret:
+  %ptr = phi i32* [ %zero, %true ] , [ %one, %false ]
+  %isnull = icmp eq i32* %ptr, null
+  ret i1 %isnull
+; CHECK: @test18
+; CHECK: ret i1 false
+}
+
+define i1 @test19(i1 %cond, double %x) {
+  br i1 %cond, label %true, label %false
+true:
+  br label %ret
+false:
+  br label %ret
+ret:
+  %p = phi double [ %x, %true ], [ 0x7FF0000000000000, %false ]; RHS = +infty
+  %cmp = fcmp ule double %x, %p
+  ret i1 %cmp
+; CHECK: @test19
+; CHECK: ret i1 true
+}
+
+define i1 @test20(i1 %cond) {
+  %a = alloca i32
+  %b = alloca i32
+  %c = alloca i32
+  br i1 %cond, label %true, label %false
+true:
+  br label %ret
+false:
+  br label %ret
+ret:
+  %p = phi i32* [ %a, %true ], [ %b, %false ]
+  %r = icmp eq i32* %p, %c
+  ret i1 %r
+; CHECK: @test20
+; CHECK: ret i1 false
+}
