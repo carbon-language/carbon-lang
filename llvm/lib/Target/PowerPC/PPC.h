@@ -25,13 +25,18 @@ namespace llvm {
   class JITCodeEmitter;
   class Target;
   class MachineInstr;
-  class MCInst;
   class AsmPrinter;
+  class MCInst;
+  class MCCodeEmitter;
+  class MCContext;
+  class TargetMachine;
   
   FunctionPass *createPPCBranchSelectionPass();
   FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
   FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                             JITCodeEmitter &MCE);
+  MCCodeEmitter *createPPCMCCodeEmitter(const Target &, TargetMachine &TM,
+                                        MCContext &Ctx);
   
   void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                     AsmPrinter &AP);

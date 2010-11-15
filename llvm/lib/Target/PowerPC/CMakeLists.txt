@@ -4,6 +4,7 @@ tablegen(PPCGenInstrNames.inc -gen-instr-enums)
 tablegen(PPCGenRegisterNames.inc -gen-register-enums)
 tablegen(PPCGenAsmWriter.inc -gen-asm-writer)
 tablegen(PPCGenCodeEmitter.inc -gen-emitter)
+tablegen(PPCGenMCCodeEmitter.inc -gen-emitter -mc-emitter)
 tablegen(PPCGenRegisterInfo.h.inc -gen-register-desc-header)
 tablegen(PPCGenRegisterInfo.inc -gen-register-desc)
 tablegen(PPCGenInstrInfo.inc -gen-instr-desc)
@@ -22,6 +23,7 @@ add_llvm_target(PowerPCCodeGen
   PPCFrameInfo.cpp
   PPCJITInfo.cpp
   PPCMCAsmInfo.cpp
+  PPCMCCodeEmitter.cpp
   PPCMCInstLower.cpp
   PPCPredicates.cpp
   PPCRegisterInfo.cpp

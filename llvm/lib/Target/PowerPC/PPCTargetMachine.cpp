@@ -36,6 +36,10 @@ extern "C" void LLVMInitializePowerPCTarget() {
   
   RegisterAsmInfoFn C(ThePPC32Target, createMCAsmInfo);
   RegisterAsmInfoFn D(ThePPC64Target, createMCAsmInfo);
+  
+  // Register the MC Code Emitter
+  TargetRegistry::RegisterCodeEmitter(ThePPC32Target, createPPCMCCodeEmitter);
+  TargetRegistry::RegisterCodeEmitter(ThePPC64Target, createPPCMCCodeEmitter);
 }
 
 
