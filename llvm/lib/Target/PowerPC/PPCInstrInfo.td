@@ -286,11 +286,15 @@ def u16imm  : Operand<i32> {
 def s16immX4  : Operand<i32> {   // Multiply imm by 4 before printing.
   let PrintMethod = "printS16X4ImmOperand";
 }
-def target : Operand<OtherVT> {
+def directbrtarget : Operand<OtherVT> {
   let PrintMethod = "printBranchOperand";
+  let EncoderMethod = "getDirectBrEncoding";
+}
+def condbrtarget : Operand<OtherVT> {
+  let EncoderMethod = "getCondBrEncoding";
 }
 def calltarget : Operand<iPTR> {
-  let EncoderMethod = "getCallTargetEncoding";
+  let EncoderMethod = "getDirectBrEncoding";
 }
 def aaddr : Operand<iPTR> {
   let PrintMethod = "printAbsAddrOperand";
@@ -409,7 +413,7 @@ let Defs = [LR] in
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   let isBarrier = 1 in {
-  def B   : IForm<18, 0, 0, (outs), (ins target:$dst),
+  def B   : IForm<18, 0, 0, (outs), (ins directbrtarget:$dst),
                   "b $dst", BrB,
                   [(br bb:$dst)]>;
   }
@@ -417,7 +421,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   // BCC represents an arbitrary conditional branch on a predicate.
   // FIXME: should be able to write a pattern for PPCcondbranch, but can't use
   // a two-value operand where a dag node expects two operands. :( 
-  def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, target:$dst),
+  def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, condbrtarget:$dst),
                   "b${cond:cc} ${cond:reg}, $dst"
                   /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
 }

@@ -58,9 +58,12 @@ public:
     return Infos[Kind - FirstTargetFixupKind];
   }
 
-  unsigned getCallTargetEncoding(const MCInst &MI, unsigned OpNo,
-                                 SmallVectorImpl<MCFixup> &Fixups) const;
-  
+  unsigned getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
+                               SmallVectorImpl<MCFixup> &Fixups) const;
+
+  unsigned getCondBrEncoding(const MCInst &MI, unsigned OpNo,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
+
   unsigned get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups) const;
 
@@ -96,8 +99,8 @@ MCCodeEmitter *llvm::createPPCMCCodeEmitter(const Target &, TargetMachine &TM,
 }
 
 unsigned PPCMCCodeEmitter::
-getCallTargetEncoding(const MCInst &MI, unsigned OpNo,
-                      SmallVectorImpl<MCFixup> &Fixups) const {
+getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
+                    SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand &MO = MI.getOperand(OpNo);
   if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
   
@@ -106,6 +109,17 @@ getCallTargetEncoding(const MCInst &MI, unsigned OpNo,
                                    (MCFixupKind)PPC::fixup_ppc_br24));
   return 0;
 }
+
+unsigned PPCMCCodeEmitter::getCondBrEncoding(const MCInst &MI, unsigned OpNo,
+                                     SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+
+  
+  
+  return 0;
+}
+
 
 unsigned PPCMCCodeEmitter::
 get_crbitm_encoding(const MCInst &MI, unsigned OpNo,

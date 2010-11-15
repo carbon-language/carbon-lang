@@ -61,7 +61,8 @@ namespace {
                                const MachineOperand &MO) const;
 
     unsigned get_crbitm_encoding(const MachineInstr &MI, unsigned OpNo) const;
-    unsigned getCallTargetEncoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getDirectBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getCondBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
     
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
 
@@ -159,12 +160,19 @@ MachineRelocation PPCCodeEmitter::GetRelocation(const MachineOperand &MO,
                                          RelocID, MO.getIndex(), 0);
 }
 
-unsigned PPCCodeEmitter::getCallTargetEncoding(const MachineInstr &MI,
-                                               unsigned OpNo) const {
+unsigned PPCCodeEmitter::getDirectBrEncoding(const MachineInstr &MI,
+                                             unsigned OpNo) const {
   const MachineOperand &MO = MI.getOperand(OpNo);
   if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
   
   MCE.addRelocation(GetRelocation(MO, PPC::reloc_pcrel_bx));
+  return 0;
+}
+
+unsigned PPCCodeEmitter::getCondBrEncoding(const MachineInstr &MI,
+                                           unsigned OpNo) const {
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  MCE.addRelocation(GetRelocation(MO, PPC::reloc_pcrel_bcx));
   return 0;
 }
 
@@ -239,17 +247,6 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       R.setConstantVal(-(intptr_t)MovePCtoLROffset - 4);
     }
     MCE.addRelocation(R);
-
-  } else if (MO.isMBB()) {
-    unsigned Reloc = 0;
-    unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::B)
-      Reloc = PPC::reloc_pcrel_bx;
-    else // BCC instruction
-      Reloc = PPC::reloc_pcrel_bcx;
-
-    MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
-                                               Reloc, MO.getMBB()));
   } else {
 #ifndef NDEBUG
     errs() << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
