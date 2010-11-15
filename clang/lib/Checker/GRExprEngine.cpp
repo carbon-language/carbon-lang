@@ -552,8 +552,27 @@ void GRExprEngine::ProcessEndWorklist(bool hasWorkRemaining) {
   }
 }
 
-void GRExprEngine::ProcessStmt(const CFGElement CE,GRStmtNodeBuilder& builder) {
-  CurrentStmt = CE.getAs<CFGStmt>();
+void GRExprEngine::ProcessElement(const CFGElement E, 
+                                  GRStmtNodeBuilder& builder) {
+  switch (E.getKind()) {
+  case CFGElement::Statement:
+  case CFGElement::StatementAsLValue:
+    ProcessStmt(E.getAs<CFGStmt>(), builder);
+    break;
+  case CFGElement::Initializer:
+    ProcessInitializer(E.getAs<CFGInitializer>(), builder);
+    break;
+  case CFGElement::ImplicitDtor:
+    ProcessImplicitDtor(E.getAs<CFGImplicitDtor>(), builder);
+    break;
+  default:
+    // Suppress compiler warning.
+    llvm_unreachable("Unexpected CFGElement kind.");
+  }
+}
+
+void GRExprEngine::ProcessStmt(const CFGStmt S, GRStmtNodeBuilder& builder) {
+  CurrentStmt = S.getStmt();
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 CurrentStmt->getLocStart(),
                                 "Error evaluating statement");
@@ -636,7 +655,7 @@ void GRExprEngine::ProcessStmt(const CFGElement CE,GRStmtNodeBuilder& builder) {
     Builder->SetCleanedState(*I == EntryNode ? CleanedState : GetState(*I));
 
     // Visit the statement.
-    if (CE.getAs<CFGStmt>().asLValue())
+    if (S.asLValue())
       VisitLValue(cast<Expr>(CurrentStmt), *I, Dst);
     else
       Visit(CurrentStmt, *I, Dst);
@@ -658,6 +677,14 @@ void GRExprEngine::ProcessStmt(const CFGElement CE,GRStmtNodeBuilder& builder) {
   CurrentStmt = 0;
 
   Builder = NULL;
+}
+
+void GRExprEngine::ProcessInitializer(const CFGInitializer I,
+                                      GRStmtNodeBuilder &builder) {
+}
+
+void GRExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
+                                       GRStmtNodeBuilder &builder) {
 }
 
 void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred, 

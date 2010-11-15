@@ -309,7 +309,7 @@ void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
   if (CFGElement E = L.getFirstElement()) {
     GRStmtNodeBuilder Builder(L.getBlock(), 0, Pred, this,
                               SubEngine.getStateManager());
-    ProcessStmt(E, Builder);
+    ProcessElement(E, Builder);
   }
   else
     HandleBlockExit(L.getBlock(), Pred);
@@ -423,7 +423,7 @@ void GRCoreEngine::HandlePostStmt(const PostStmt& L, const CFGBlock* B,
   else {
     GRStmtNodeBuilder Builder(B, StmtIdx, Pred, this,
                               SubEngine.getStateManager());
-    ProcessStmt((*B)[StmtIdx], Builder);
+    ProcessElement((*B)[StmtIdx], Builder);
   }
 }
 

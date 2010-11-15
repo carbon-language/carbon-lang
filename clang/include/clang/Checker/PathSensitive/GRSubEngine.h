@@ -47,7 +47,7 @@ public:
 
   /// Called by GRCoreEngine. Used to generate new successor
   /// nodes by processing the 'effects' of a block-level statement.
-  virtual void ProcessStmt(const CFGElement E, GRStmtNodeBuilder& builder) = 0;
+  virtual void ProcessElement(const CFGElement E, GRStmtNodeBuilder& builder)=0;
 
   /// Called by GRCoreEngine when start processing
   /// a CFGBlock.  This method returns true if the analysis should continue

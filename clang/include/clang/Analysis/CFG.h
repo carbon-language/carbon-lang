@@ -49,7 +49,7 @@ public:
     Statement,
     StatementAsLValue,
     Initializer,
-    Dtor,
+    ImplicitDtor,
     // dtor kind
     AutomaticObjectDtor,
     BaseDtor,
@@ -74,7 +74,7 @@ public:
   Kind getKind() const { return static_cast<Kind>(Data1.getInt()); }
 
   Kind getDtorKind() const {
-    assert(getKind() == Dtor);
+    assert(getKind() == ImplicitDtor);
     return static_cast<Kind>(Data2.getInt() + DTOR_BEGIN);
   }
 
@@ -132,13 +132,13 @@ public:
 class CFGImplicitDtor : public CFGElement {
 protected:
   CFGImplicitDtor(unsigned K, void* P, void* S)
-      : CFGElement(P, Dtor, S, K - DTOR_BEGIN) {}
+      : CFGElement(P, ImplicitDtor, S, K - DTOR_BEGIN) {}
 
 public:
   CFGImplicitDtor() {}
 
   static bool classof(const CFGElement *E) {
-    return E->getKind() == Dtor;
+    return E->getKind() == ImplicitDtor;
   }
 };
 
@@ -161,7 +161,8 @@ public:
   }
 
   static bool classof(const CFGElement *E) {
-    return E->getKind() == Dtor && E->getDtorKind() == AutomaticObjectDtor;
+    return E->getKind() == ImplicitDtor && 
+           E->getDtorKind() == AutomaticObjectDtor;
   }
 };
 
@@ -178,7 +179,7 @@ public:
   }
 
   static bool classof(const CFGElement *E) {
-    return E->getKind() == Dtor && E->getDtorKind() == BaseDtor;
+    return E->getKind() == ImplicitDtor && E->getDtorKind() == BaseDtor;
   }
 };
 
@@ -195,7 +196,7 @@ public:
   }
 
   static bool classof(const CFGElement *E) {
-    return E->getKind() == Dtor && E->getDtorKind() == MemberDtor;
+    return E->getKind() == ImplicitDtor && E->getDtorKind() == MemberDtor;
   }
 };
 
@@ -212,7 +213,7 @@ public:
   }
 
   static bool classof(const CFGElement *E) {
-    return E->getKind() == Dtor && E->getDtorKind() == TemporaryDtor;
+    return E->getKind() == ImplicitDtor && E->getDtorKind() == TemporaryDtor;
   }
 };
 

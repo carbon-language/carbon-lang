@@ -175,9 +175,15 @@ public:
      return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
   }
 
-  /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
-  ///  nodes by processing the 'effects' of a block-level statement.
-  void ProcessStmt(const CFGElement E, GRStmtNodeBuilder& builder);
+  /// ProcessElement - Called by GRCoreEngine. Used to generate new successor
+  ///  nodes by processing the 'effects' of a CFG element.
+  void ProcessElement(const CFGElement E, GRStmtNodeBuilder& builder);
+
+  void ProcessStmt(const CFGStmt S, GRStmtNodeBuilder &builder);
+
+  void ProcessInitializer(const CFGInitializer I, GRStmtNodeBuilder &builder);
+
+  void ProcessImplicitDtor(const CFGImplicitDtor D, GRStmtNodeBuilder &builder);
 
   /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
   ///  a CFGBlock.  This method returns true if the analysis should continue

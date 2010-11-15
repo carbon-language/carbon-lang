@@ -90,8 +90,8 @@ private:
     SubEngine.ProcessEndPath(Builder);
   }
 
-  void ProcessStmt(const CFGElement E, GRStmtNodeBuilder& Builder) {
-    SubEngine.ProcessStmt(E, Builder);
+  void ProcessElement(const CFGElement E, GRStmtNodeBuilder& Builder) {
+    SubEngine.ProcessElement(E, Builder);
   }
 
   bool ProcessBlockEntrance(const CFGBlock* Blk, const ExplodedNode *Pred,
