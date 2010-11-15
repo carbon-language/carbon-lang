@@ -295,9 +295,7 @@ def calltarget : Operand<iPTR> {
 def aaddr : Operand<iPTR> {
   let PrintMethod = "printAbsAddrOperand";
 }
-def piclabel: Operand<iPTR> {
-  let PrintMethod = "printPICLabel";
-}
+def piclabel: Operand<iPTR> {}
 def symbolHi: Operand<i32> {
   let PrintMethod = "printSymbolHi";
 }
@@ -321,7 +319,6 @@ def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let MIOperandInfo = (ops i32imm:$imm, ptr_rc:$reg);
 }
 def tocentry : Operand<iPTR> {
-  let PrintMethod = "printTOCEntryLabel";
   let MIOperandInfo = (ops i32imm:$imm);
 }
 

@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "mccodeemitter"
 #include "PPC.h"
+#include "PPCRegisterInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/ADT/Statistic.h"
@@ -91,6 +92,12 @@ MCCodeEmitter *llvm::createPPCMCCodeEmitter(const Target &, TargetMachine &TM,
 unsigned PPCMCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                   SmallVectorImpl<MCFixup> &Fixups) const {
+  if (MO.isReg())
+    return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
+  
+  if (MO.isImm())
+    return MO.getImm();
+  
   // FIXME.
   return 0;
 }
