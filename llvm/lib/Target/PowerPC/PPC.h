@@ -28,17 +28,17 @@ namespace llvm {
   class MCInst;
   class AsmPrinter;
   
-FunctionPass *createPPCBranchSelectionPass();
-FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
-FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
-                                          JITCodeEmitter &MCE);
-
-void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
-                                  AsmPrinter &AP);
-
-extern Target ThePPC32Target;
-extern Target ThePPC64Target;
-
+  FunctionPass *createPPCBranchSelectionPass();
+  FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
+  FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
+                                            JITCodeEmitter &MCE);
+  
+  void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                    AsmPrinter &AP);
+  
+  extern Target ThePPC32Target;
+  extern Target ThePPC64Target;
+  
   namespace PPCII {
     
   /// Target Operand Flag enum.
@@ -50,23 +50,23 @@ extern Target ThePPC64Target;
     /// MO_DARWIN_STUB - On a symbol operand "FOO", this indicates that the
     /// reference is actually to the "FOO$stub" symbol.  This is used for calls
     /// and jumps to external functions on Tiger and earlier.
-    MO_DARWIN_STUB,
+    MO_DARWIN_STUB = 1,
     
-    /// MO_LO16 - On a symbol operand, this represents a relocation containing
-    /// lower 16 bit of the address.
-    MO_LO16,
-    
-    /// MO_HA16 - On a symbol operand, this represents a relocation containing
-    /// higher 16 bit of the address.
-    MO_HA16,
+    /// MO_LO16, MO_HA16 - lo16(symbol) and ha16(symbol)
+    MO_LO16 = 4, MO_HA16 = 8,
 
-    /// MO_LO16_PIC - On a symbol operand, this represents a relocation
-    /// containing lower 16 bit of the address with the picbase subtracted.
-    MO_LO16_PIC,
+    /// MO_PIC_FLAG - If this bit is set, the symbol reference is relative to
+    /// the function's picbase, e.g. lo16(symbol-picbase).
+    MO_PIC_FLAG = 16,
+
+    /// MO_NLP_FLAG - If this bit is set, the symbol reference is actually to
+    /// the non_lazy_ptr for the global, e.g. lo16(symbol$non_lazy_ptr-picbase).
+    MO_NLP_FLAG = 32,
     
-    /// MO_HA16_PIC - On a symbol operand, this represents a relocation
-    /// containing higher 16 bit of the address with the picbase subtracted.
-    MO_HA16_PIC
+    /// MO_NLP_HIDDEN_FLAG - If this bit is set, the symbol reference is to a
+    /// symbol with hidden visibility.  This causes a different kind of
+    /// non-lazy-pointer to be generated.
+    MO_NLP_HIDDEN_FLAG = 64
   };
   } // end namespace PPCII
   

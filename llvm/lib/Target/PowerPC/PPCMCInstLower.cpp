@@ -40,10 +40,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
     const GlobalValue *GV = MO.getGlobal();
     bool isImplicitlyPrivate = false;
     if (MO.getTargetFlags() == PPCII::MO_DARWIN_STUB ||
-        //MO.getTargetFlags() == PPCII::MO_DARWIN_NONLAZY ||
-        //MO.getTargetFlags() == PPCII::MO_DARWIN_NONLAZY_PIC_BASE ||
-        //MO.getTargetFlags() == PPCII::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE
-        0)
+        (MO.getTargetFlags() & PPCII::MO_NLP_FLAG))
       isImplicitlyPrivate = true;
     
     AP.Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
@@ -51,41 +48,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
   
   // If the target flags on the operand changes the name of the symbol, do that
   // before we return the symbol.
-  switch (MO.getTargetFlags()) {
-  default: break;
-#if 0
-  case X86II::MO_DARWIN_NONLAZY:
-  case X86II::MO_DARWIN_NONLAZY_PIC_BASE: {
-    Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    
-    MachineModuleInfoImpl::StubValueTy &StubSym =
-      getMachOMMI(AP).getGVStubEntry(Sym);
-    if (StubSym.getPointer() == 0) {
-      assert(MO.isGlobal() && "Extern symbol not handled yet");
-      StubSym =
-      MachineModuleInfoImpl::
-      StubValueTy(Mang->getSymbol(MO.getGlobal()),
-                  !MO.getGlobal()->hasInternalLinkage());
-    }
-    return Sym;
-  }
-  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
-    Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    MachineModuleInfoImpl::StubValueTy &StubSym =
-      getMachOMMI(AP).getHiddenGVStubEntry(Sym);
-    if (StubSym.getPointer() == 0) {
-      assert(MO.isGlobal() && "Extern symbol not handled yet");
-      StubSym =
-      MachineModuleInfoImpl::
-      StubValueTy(Mang->getSymbol(MO.getGlobal()),
-                  !MO.getGlobal()->hasInternalLinkage());
-    }
-    return Sym;
-  }
-#endif
-  case PPCII::MO_DARWIN_STUB: {
+  if (MO.getTargetFlags() == PPCII::MO_DARWIN_STUB) {
     Name += "$stub";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
     MachineModuleInfoImpl::StubValueTy &StubSym =
@@ -106,6 +69,26 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
     }
     return Sym;
   }
+
+  // If the symbol reference is actually to a non_lazy_ptr, not to the symbol,
+  // then add the suffix.
+  if (MO.getTargetFlags() & PPCII::MO_NLP_FLAG) {
+    Name += "$non_lazy_ptr";
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+  
+    MachineModuleInfoMachO &MachO = getMachOMMI(AP);
+    
+    MachineModuleInfoImpl::StubValueTy &StubSym =
+      (MO.getTargetFlags() & PPCII::MO_NLP_HIDDEN_FLAG) ? 
+         MachO.getHiddenGVStubEntry(Sym) : MachO.getGVStubEntry(Sym);
+    
+    if (StubSym.getPointer() == 0) {
+      assert(MO.isGlobal() && "Extern symbol not handled yet");
+      StubSym = MachineModuleInfoImpl::
+                   StubValueTy(AP.Mang->getSymbol(MO.getGlobal()),
+                               !MO.getGlobal()->hasInternalLinkage());
+    }
+    return Sym;
   }
   
   return Ctx.GetOrCreateSymbol(Name.str());
@@ -116,31 +99,25 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   MCContext &Ctx = Printer.OutContext;
   MCSymbolRefExpr::VariantKind RefKind = MCSymbolRefExpr::VK_None;
 
-  const MCExpr *Expr = 0;
-  switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on symbol operand");
-  case PPCII::MO_NO_FLAG:
-  // These affect the name of the symbol, not any suffix.
-  case PPCII::MO_DARWIN_STUB:
-    break;
-      
-  case PPCII::MO_LO16: RefKind = MCSymbolRefExpr::VK_PPC_LO16; break;
-  case PPCII::MO_HA16: RefKind = MCSymbolRefExpr::VK_PPC_HA16; break;
-  case PPCII::MO_LO16_PIC: break;
-  case PPCII::MO_HA16_PIC: break;
-  }
+  if (MO.getTargetFlags() & PPCII::MO_LO16)
+    RefKind = MCSymbolRefExpr::VK_PPC_LO16;
+  else if (MO.getTargetFlags() & PPCII::MO_HA16)
+    RefKind = MCSymbolRefExpr::VK_PPC_HA16;
 
-  if (Expr == 0)
-    Expr = MCSymbolRefExpr::Create(Symbol, RefKind, Ctx);
+  // FIXME: This isn't right, but we don't have a good way to express this in
+  // the MC Level, see below.
+  if (MO.getTargetFlags() & PPCII::MO_PIC_FLAG)
+    RefKind = MCSymbolRefExpr::VK_None;
+  
+  const MCExpr *Expr = MCSymbolRefExpr::Create(Symbol, RefKind, Ctx);
 
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,
                                    MCConstantExpr::Create(MO.getOffset(), Ctx),
                                    Ctx);
 
-  // Subtract off the PIC base.
-  if (MO.getTargetFlags() == PPCII::MO_LO16_PIC ||
-      MO.getTargetFlags() == PPCII::MO_HA16_PIC) {
+  // Subtract off the PIC base if required.
+  if (MO.getTargetFlags() & PPCII::MO_PIC_FLAG) {
     const MachineFunction *MF = MO.getParent()->getParent()->getParent();
     
     const MCExpr *PB = MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), Ctx);

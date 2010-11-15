@@ -1101,14 +1101,31 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
 /// GetLabelAccessInfo - Return true if we should reference labels using a
 /// PICBase, set the HiOpFlags and LoOpFlags to the target MO flags.
 static bool GetLabelAccessInfo(const TargetMachine &TM, unsigned &HiOpFlags,
-                               unsigned &LoOpFlags) {
+                               unsigned &LoOpFlags, const GlobalValue *GV = 0) {
+  HiOpFlags = PPCII::MO_HA16;
+  LoOpFlags = PPCII::MO_LO16;
+  
   // Don't use the pic base if not in PIC relocation model.  Or if we are on a
   // non-darwin platform.  We don't support PIC on other platforms yet.
   bool isPIC = TM.getRelocationModel() == Reloc::PIC_ && 
                TM.getSubtarget<PPCSubtarget>().isDarwin();
+  if (isPIC) {
+    HiOpFlags |= PPCII::MO_PIC_FLAG;
+    LoOpFlags |= PPCII::MO_PIC_FLAG;
+  }
+
+  // If this is a reference to a global value that requires a non-lazy-ptr, make
+  // sure that instruction lowering adds it.
+  if (GV && TM.getSubtarget<PPCSubtarget>().hasLazyResolverStub(GV, TM)) {
+    HiOpFlags |= PPCII::MO_NLP_FLAG;
+    LoOpFlags |= PPCII::MO_NLP_FLAG;
+    
+    if (GV->hasHiddenVisibility()) {
+      HiOpFlags |= PPCII::MO_NLP_HIDDEN_FLAG;
+      LoOpFlags |= PPCII::MO_NLP_HIDDEN_FLAG;
+    }
+  }
   
-  HiOpFlags = isPIC ? PPCII::MO_HA16_PIC : PPCII::MO_HA16;
-  LoOpFlags = isPIC ? PPCII::MO_LO16_PIC : PPCII::MO_LO16;
   return isPIC;
 }
 
@@ -1178,8 +1195,6 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
   DebugLoc DL = GSDN->getDebugLoc();
   const GlobalValue *GV = GSDN->getGlobal();
 
-  const TargetMachine &TM = DAG.getTarget();
-
   // 64-bit SVR4 ABI code is always position-independent.
   // The actual address of the GlobalValue is stored in the TOC.
   if (PPCSubTarget.isSVR4ABI() && PPCSubTarget.isPPC64()) {
@@ -1188,38 +1203,22 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
                        DAG.getRegister(PPC::X2, MVT::i64));
   }
 
-  SDValue GA = DAG.getTargetGlobalAddress(GV, DL, PtrVT, GSDN->getOffset());
+  unsigned MOHiFlag, MOLoFlag;
+  bool isPIC = GetLabelAccessInfo(DAG.getTarget(), MOHiFlag, MOLoFlag, GV);
 
+  SDValue GAHi =
+    DAG.getTargetGlobalAddress(GV, DL, PtrVT, GSDN->getOffset(), MOHiFlag);
+  SDValue GALo =
+    DAG.getTargetGlobalAddress(GV, DL, PtrVT, GSDN->getOffset(), MOLoFlag);
   
-  SDValue Zero = DAG.getConstant(0, PtrVT);
-  SDValue Hi = DAG.getNode(PPCISD::Hi, DL, PtrVT, GA, Zero);
-  SDValue Lo = DAG.getNode(PPCISD::Lo, DL, PtrVT, GA, Zero);
+  SDValue Ptr = LowerLabelRef(GAHi, GALo, isPIC, DAG);
 
-  // If this is a non-darwin platform, we don't support non-static relo models
-  // yet.
-  if (TM.getRelocationModel() == Reloc::Static ||
-      !TM.getSubtarget<PPCSubtarget>().isDarwin()) {
-    // Generate non-pic code that has direct accesses to globals.
-    // The address of the global is just (hi(&g)+lo(&g)).
-    return DAG.getNode(ISD::ADD, DL, PtrVT, Hi, Lo);
-  }
-
-  if (TM.getRelocationModel() == Reloc::PIC_) {
-    // With PIC, the first instruction is actually "GR+hi(&G)".
-    Hi = DAG.getNode(ISD::ADD, DL, PtrVT,
-                     DAG.getNode(PPCISD::GlobalBaseReg,
-                                 DebugLoc(), PtrVT), Hi);
-  }
-
-  Lo = DAG.getNode(ISD::ADD, DL, PtrVT, Hi, Lo);
-
-  if (!TM.getSubtarget<PPCSubtarget>().hasLazyResolverStub(GV, TM))
-    return Lo;
-
-  // If the global is weak or external, we have to go through the lazy
-  // resolution stub.
-  return DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), Lo, MachinePointerInfo(),
-                     false, false, 0);
+  // If the global reference is actually to a non-lazy-pointer, we have to do an
+  // extra load to get the address of the global.
+  if (MOHiFlag & PPCII::MO_NLP_FLAG)
+    Ptr = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), Ptr, MachinePointerInfo(),
+                      false, false, 0);
+  return Ptr;
 }
 
 SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
