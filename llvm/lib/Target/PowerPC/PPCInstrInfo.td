@@ -324,6 +324,7 @@ def memrr : Operand<iPTR> {
 def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
   let MIOperandInfo = (ops i32imm:$imm, ptr_rc:$reg);
+  let EncoderMethod = "getMemRIXEncoding";
 }
 def tocentry : Operand<iPTR> {
   let MIOperandInfo = (ops i32imm:$imm);

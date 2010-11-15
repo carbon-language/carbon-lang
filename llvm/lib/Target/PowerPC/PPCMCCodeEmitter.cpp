@@ -66,8 +66,8 @@ public:
                            SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getLO16Encoding(const MCInst &MI, unsigned OpNo,
                            SmallVectorImpl<MCFixup> &Fixups) const;
-  unsigned getLO14Encoding(const MCInst &MI, unsigned OpNo,
-                           SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups) const;
 
@@ -147,15 +147,20 @@ unsigned PPCMCCodeEmitter::getLO16Encoding(const MCInst &MI, unsigned OpNo,
   return 0;
 }
 
-unsigned PPCMCCodeEmitter::getLO14Encoding(const MCInst &MI, unsigned OpNo,
+unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
                                        SmallVectorImpl<MCFixup> &Fixups) const {
+  // Encode (imm, reg) as a memrix, which has the low 14-bits as the
+  // displacement and the next 5 bits as the register #.
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups) << 14;
+  
   const MCOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  if (MO.isImm())
+    return (getMachineOpValue(MI, MO, Fixups) & 0x3FFF) | RegBits;
   
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_lo14));
-  return 0;
+  return RegBits;
 }
 
 

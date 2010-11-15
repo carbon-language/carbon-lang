@@ -552,12 +552,13 @@ def LDtoc: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
                   "",
                   [(set G8RC:$rD,
                      (PPCtoc_entry tglobaladdr:$disp, G8RC:$reg))]>, isPPC64;
-let RST = 2, DS = 8 in
+                     
+let RST = 2, DS_RA = 0 in // FIXME: Should be a pseudo.
 def LDinto_toc: DSForm_1<58, 0, (outs), (ins G8RC:$reg),
                     "ld 2, 8($reg)", LdStLD,
                     [(PPCload_toc G8RC:$reg)]>, isPPC64;
                     
-let RST = 2, DS = 40, RA = 1 in
+let RST = 2, DS_RA = 0 in // FIXME: Should be a pseudo.
 def LDtoc_restore : DSForm_1<58, 0, (outs), (ins),
                     "ld 2, 40(1)", LdStLD,
                     [(PPCtoc_restore)]>, isPPC64;
@@ -628,8 +629,8 @@ def STHU8 : DForm_1<45, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                                         iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
 
-def STDU : DSForm_1<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
-                                s16immX4:$ptroff, ptr_rc:$ptrreg),
+def STDU : DSForm_1a<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
+                                        s16immX4:$ptroff, ptr_rc:$ptrreg),
                     "stdu $rS, $ptroff($ptrreg)", LdStSTD,
                     [(set ptr_rc:$ea_res, (pre_store G8RC:$rS, ptr_rc:$ptrreg, 
                                                      iaddroff:$ptroff))]>,

@@ -188,15 +188,29 @@ class DSForm_1<bits<6> opcode, bits<2> xo, dag OOL, dag IOL, string asmstr,
                InstrItinClass itin, list<dag> pattern>
          : I<opcode, OOL, IOL, asmstr, itin> {
   bits<5>  RST;
-  bits<14> DS;
-  bits<5>  RA;
+  bits<19> DS_RA;
 
   let Pattern = pattern;
   
   let Inst{6-10}  = RST;
-  let Inst{11-15} = RA;
-  let Inst{16-29} = DS;
+  let Inst{11-15} = DS_RA{18-14};  // Register #
+  let Inst{16-29} = DS_RA{13-0};   // Displacement.
   let Inst{30-31} = xo;
+}
+
+class DSForm_1a<bits<6> opcode, bits<2> xo, dag OOL, dag IOL, string asmstr,
+                InstrItinClass itin, list<dag> pattern>
+         : I<opcode, OOL, IOL, asmstr, itin> {
+   bits<5>  RST;
+   bits<14> DS;
+   bits<5>  RA;
+ 
+   let Pattern = pattern;
+   
+   let Inst{6-10}  = RST;
+   let Inst{11-15} = RA;
+   let Inst{16-29} = DS;
+   let Inst{30-31} = xo;
 }
 
 // 1.7.6 X-Form

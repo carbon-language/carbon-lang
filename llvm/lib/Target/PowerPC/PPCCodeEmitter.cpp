@@ -66,7 +66,7 @@ namespace {
 
     unsigned getHA16Encoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getLO16Encoding(const MachineInstr &MI, unsigned OpNo) const;
-    unsigned getLO14Encoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getMemRIXEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
 
@@ -209,13 +209,19 @@ unsigned PPCCodeEmitter::getLO16Encoding(const MachineInstr &MI,
   return 0;
 }
 
-unsigned PPCCodeEmitter::getLO14Encoding(const MachineInstr &MI,
-                                         unsigned OpNo) const {
+unsigned PPCCodeEmitter::getMemRIXEncoding(const MachineInstr &MI,
+                                           unsigned OpNo) const {
+  // Encode (imm, reg) as a memrix, which has the low 14-bits as the
+  // displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1)) << 14;
+  
   const MachineOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
+  if (MO.isImm())
+    return (getMachineOpValue(MI, MO) & 0x3FFF) | RegBits;
   
   MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_low_ix));
-  return 0;
+  return RegBits;
 }
 
 
@@ -258,13 +264,6 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     case PPC::STFS:
     case PPC::STFD:
       Reloc = PPC::reloc_absolute_low;
-      break;
-
-    case PPC::LWA:
-    case PPC::LD:
-    case PPC::STD:
-    case PPC::STD_32:
-      Reloc = PPC::reloc_absolute_low_ix;
       break;
     }
 
