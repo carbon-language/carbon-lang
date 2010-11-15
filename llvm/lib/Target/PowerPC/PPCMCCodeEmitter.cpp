@@ -40,9 +40,9 @@ public:
   
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
-#if 0
       // name                     offset  bits  flags
-      { "fixup_arm_pcrel_12",     2,      12,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_pcrel_12",     2,      12,   MCFixupKindInfo::FKF_IsPCRel }
+#if 0
       { "fixup_arm_vfp_pcrel_12", 3,      8,    MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
 #endif
