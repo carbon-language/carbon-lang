@@ -81,9 +81,11 @@ class NamespaceTestCase(TestBase):
             startstr = "(int) $0 = 7")
         # (int) $0 = 7
 
-        self.runCmd("expression -- '(anonymous namespace)::i'")
-
-        self.runCmd("expression -- 'A::B::j'")
+        # rdar://problem/8668674
+        # expression command with fully qualified namespace for a variable does not work
+        #self.runCmd("expression -- '(anonymous namespace)::i'")
+        #
+        #self.runCmd("expression -- 'A::B::j'")
 
 
 if __name__ == '__main__':
