@@ -168,8 +168,8 @@ MachineRelocation PPCCodeEmitter::GetRelocation(const MachineOperand &MO,
                                            RelocID, MO.getIndex(), Cst);
 
   if (MO.isMBB())
-    MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
-                                               RelocID, MO.getMBB()));
+    return MachineRelocation::getBB(MCE.getCurrentPCOffset(),
+                                    RelocID, MO.getMBB());
   
   assert(MO.isJTI());
   return MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
