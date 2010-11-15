@@ -17,7 +17,6 @@ class NamespaceTestCase(TestBase):
         self.buildDsym()
         self.namespace_variable_commands()
 
-    @unittest2.expectedFailure
     # rdar://problem/8659840
     # runCmd: frame variable -c -G i
     # runCmd failed!
@@ -65,8 +64,8 @@ class NamespaceTestCase(TestBase):
 
         # rdar://problem/8660275
         # test/namespace: 'expression -- i+j' not working
-        #self.expect("expression -- i + j",
-        #    startstr = "(int) $0 = 7")
+        self.expect("expression -- i + j",
+            startstr = "(int) $0 = 7")
         # (int) $0 = 7
 
 if __name__ == '__main__':
