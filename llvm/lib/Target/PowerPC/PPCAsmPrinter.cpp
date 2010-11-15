@@ -60,11 +60,11 @@ namespace {
   protected:
     DenseMap<MCSymbol*, MCSymbol*> TOC;
     const PPCSubtarget &Subtarget;
-    uint64_t LabelID;
+    uint64_t TOCLabelID;
   public:
     explicit PPCAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer),
-        Subtarget(TM.getSubtarget<PPCSubtarget>()), LabelID(0) {}
+        Subtarget(TM.getSubtarget<PPCSubtarget>()), TOCLabelID(0) {}
 
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
@@ -332,11 +332,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       
     // Map symbol -> label of TOC entry.
     MCSymbol *&TOCEntry = TOC[Mang->getSymbol(MO.getGlobal())];
-    if (TOCEntry == 0) {
-      TOCEntry = OutContext.
-        GetOrCreateSymbol(StringRef(MAI->getPrivateGlobalPrefix()) +
-                          "C" + Twine(LabelID++));
-    }
+    if (TOCEntry == 0)
+      TOCEntry = GetTempSymbol("C", TOCLabelID++);
       
     const MCExpr *Exp =
       MCSymbolRefExpr::Create(TOCEntry, MCSymbolRefExpr::VK_PPC_TOC,
