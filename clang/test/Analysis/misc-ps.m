@@ -1193,3 +1193,13 @@ void pr5272_test() {
   (*(struct pr5272*)0xBC000000).var2 += 2; // no-warning
 }
 
+// Support casting the return value of function to another different type
+// This previously caused a crash, although we likely need more precise
+// reasoning here. <rdar://problem/8663544>
+void* rdar8663544();
+typedef struct {} Val8663544;
+Val8663544 bazR8663544() {
+  Val8663544(*func) () = (Val8663544(*) ()) rdar8663544;
+  return func();
+}
+

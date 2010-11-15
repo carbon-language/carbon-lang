@@ -122,7 +122,18 @@ SVal SValuator::EvalCast(SVal val, QualType castTy, QualType originalTy) {
     // FIXME: We should handle the case where we strip off view layers to get
     //  to a desugared type.
 
-    assert(Loc::IsLocType(castTy));
+    if (!Loc::IsLocType(castTy)) {
+      // FIXME: There can be gross cases where one casts the result of a function
+      // (that returns a pointer) to some other value that happens to fit
+      // within that pointer value.  We currently have no good way to
+      // model such operations.  When this happens, the underlying operation
+      // is that the caller is reasoning about bits.  Conceptually we are
+      // layering a "view" of a location on top of those bits.  Perhaps
+      // we need to be more lazy about mutual possible views, even on an
+      // SVal?  This may be necessary for bit-level reasoning as well.
+      return UnknownVal();
+    }
+
     // We get a symbolic function pointer for a dereference of a function
     // pointer, but it is of function type. Example:
 
