@@ -176,9 +176,17 @@ class ClassTypesTestCase(TestBase):
         # Continue on inside the ctor() body...
         self.runCmd("thread step-over")
 
+        # Verify that 'frame variable this' gets the data type correct.
+        self.expect("frame variable this",VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['class C *'])
+
         # Verify that frame variable -t this->m_c_int behaves correctly.
         self.expect("frame variable -t this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) this->m_c_int = 66')
+
+        # Verify that 'expression this' gets the data type correct.
+        self.expect("expression this", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['class C *'])
 
         # rdar://problem/8430916
         # expr this->m_c_int returns an incorrect value
