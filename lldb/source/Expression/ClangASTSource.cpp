@@ -99,10 +99,14 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName
         return DeclContext::lookup_result();
     }
     m_active_lookups.insert(uniqued_const_decl_name);
+//  static uint32_t g_depth = 0;
+//  ++g_depth;
+//  printf("[%5u] FindExternalVisibleDeclsByName() \"%s\"\n", g_depth, uniqued_const_decl_name);
     llvm::SmallVector<NamedDecl*, 4> name_decls;    
     NameSearchContext name_search_context(*this, name_decls, clang_decl_name, decl_ctx);
     m_decl_map.GetDecls(name_search_context, const_decl_name);
     DeclContext::lookup_result result (SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, name_decls));
+//  --g_depth;
     m_active_lookups.erase (uniqued_const_decl_name);
     return result;
 }
