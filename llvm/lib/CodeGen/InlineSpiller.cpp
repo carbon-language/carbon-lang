@@ -343,7 +343,13 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
 void InlineSpiller::insertSpill(LiveInterval &NewLI,
                                 MachineBasicBlock::iterator MI) {
   MachineBasicBlock &MBB = *MI->getParent();
+
+  // Get the defined value. It could be an early clobber so keep the def index.
   SlotIndex Idx = lis_.getInstructionIndex(MI).getDefIndex();
+  VNInfo *VNI = edit_->getParent().getVNInfoAt(Idx);
+  assert(VNI && VNI->def.getDefIndex() == Idx && "Inconsistent VNInfo");
+  Idx = VNI->def;
+
   tii_.storeRegToStackSlot(MBB, ++MI, NewLI.reg, true, stackSlot_, rc_, &tri_);
   --MI; // Point to store instruction.
   SlotIndex StoreIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
