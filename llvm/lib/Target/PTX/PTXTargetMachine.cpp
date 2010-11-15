@@ -32,7 +32,7 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
                                    const std::string &FS)
   : LLVMTargetMachine(T, TT),
     DataLayout("e-p:32:32-i64:32:32-f64:32:32-v128:32:128-v64:32:64-n32:64"),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 2, -2),
+    FrameInfo(Subtarget),
     InstrInfo(*this),
     TLInfo(*this),
     Subtarget(TT, FS) {

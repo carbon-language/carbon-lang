@@ -44,11 +44,6 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  /// targetHandlesStackFrameRounding - Returns true if the target is
-  /// responsible for rounding up the stack frame (probably at emitPrologue
-  /// time).
-  bool targetHandlesStackFrameRounding() const { return true; }
-
   /// requiresRegisterScavenging - We require a register scavenger.
   /// FIXME (64-bit): Should be inlined.
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
@@ -65,10 +60,6 @@ public:
                        int SPAdj, RegScavenger *RS) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;
-
-  /// determineFrameLayout - Determine the size of the frame and maximum call
-  /// frame size.
-  void determineFrameLayout(MachineFunction &MF) const;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS = NULL) const;

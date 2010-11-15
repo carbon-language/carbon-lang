@@ -68,9 +68,6 @@ struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
   /// Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
@@ -78,11 +75,6 @@ struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
   /// Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
-
-  /// targetHandlesStackFrameRounding - Returns true if the target is
-  /// responsible for rounding up the stack frame (probably at emitPrologue
-  /// time).
-  bool targetHandlesStackFrameRounding() const { return true; }
 
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 };

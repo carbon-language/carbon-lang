@@ -62,9 +62,6 @@ public:
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-  
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;

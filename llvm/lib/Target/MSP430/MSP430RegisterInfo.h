@@ -49,9 +49,6 @@ public:
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;
 
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
   // Debug information queries.

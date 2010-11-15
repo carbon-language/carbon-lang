@@ -18,6 +18,13 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
+  namespace Alpha {
+    // These describe LDAx
+
+    static const int IMM_LOW  = -32768;
+    static const int IMM_HIGH = 32767;
+    static const int IMM_MULT = 65536;
+  }
 
   class AlphaTargetMachine;
   class FunctionPass;

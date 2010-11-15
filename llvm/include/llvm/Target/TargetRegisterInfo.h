@@ -577,13 +577,6 @@ public:
     // Do nothing.
   }
 
-  /// targetHandlesStackFrameRounding - Returns true if the target is
-  /// responsible for rounding up the stack frame (probably at emitPrologue
-  /// time).
-  virtual bool targetHandlesStackFrameRounding() const {
-    return false;
-  }
-
   /// requiresRegisterScavenging - returns true if the target requires (and can
   /// make use of) the register scavenger.
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const {
@@ -748,12 +741,6 @@ public:
   /// instruction.
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                    int SPAdj, RegScavenger *RS=NULL) const = 0;
-
-  /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
-  /// the function.
-  virtual void emitPrologue(MachineFunction &MF) const = 0;
-  virtual void emitEpilogue(MachineFunction &MF,
-                            MachineBasicBlock &MBB) const = 0;
 
   //===--------------------------------------------------------------------===//
   /// Debug information queries.

@@ -19,6 +19,7 @@
 #include "MBlazeISelLowering.h"
 #include "MBlazeSelectionDAGInfo.h"
 #include "MBlazeIntrinsicInfo.h"
+#include "MBlazeFrameInfo.h"
 #include "MBlazeELFWriterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetMachine.h"
@@ -32,7 +33,7 @@ namespace llvm {
     MBlazeSubtarget       Subtarget;
     const TargetData    DataLayout; // Calculates type size & alignment
     MBlazeInstrInfo       InstrInfo;
-    TargetFrameInfo     FrameInfo;
+    MBlazeFrameInfo     FrameInfo;
     MBlazeTargetLowering  TLInfo;
     MBlazeSelectionDAGInfo TSInfo;
     MBlazeIntrinsicInfo IntrinsicInfo;

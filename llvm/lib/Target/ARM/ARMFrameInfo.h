@@ -19,12 +19,21 @@
 #include "llvm/Target/TargetFrameInfo.h"
 
 namespace llvm {
+  class ARMSubtarget;
 
 class ARMFrameInfo : public TargetFrameInfo {
+protected:
+  const ARMSubtarget &STI;
+
 public:
-  explicit ARMFrameInfo(const ARMSubtarget &ST)
-    : TargetFrameInfo(StackGrowsDown, ST.getStackAlignment(), 0, 4) {
+  explicit ARMFrameInfo(const ARMSubtarget &sti)
+    : TargetFrameInfo(StackGrowsDown, sti.getStackAlignment(), 0, 4), STI(sti) {
   }
+
+  /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
+  /// the function.
+  void emitPrologue(MachineFunction &MF) const;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 };
 
 } // End llvm namespace

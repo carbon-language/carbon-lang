@@ -50,9 +50,6 @@ struct SystemZRegisterInfo : public SystemZGenRegisterInfo {
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS) const;
 
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;

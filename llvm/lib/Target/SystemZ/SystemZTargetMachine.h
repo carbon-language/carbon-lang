@@ -17,6 +17,7 @@
 
 #include "SystemZInstrInfo.h"
 #include "SystemZISelLowering.h"
+#include "SystemZFrameInfo.h"
 #include "SystemZSelectionDAGInfo.h"
 #include "SystemZRegisterInfo.h"
 #include "SystemZSubtarget.h"
@@ -34,10 +35,7 @@ class SystemZTargetMachine : public LLVMTargetMachine {
   SystemZInstrInfo        InstrInfo;
   SystemZTargetLowering   TLInfo;
   SystemZSelectionDAGInfo TSInfo;
-
-  // SystemZ does not have any call stack frame, therefore not having
-  // any SystemZ specific FrameInfo class.
-  TargetFrameInfo       FrameInfo;
+  SystemZFrameInfo        FrameInfo;
 public:
   SystemZTargetMachine(const Target &T, const std::string &TT,
                        const std::string &FS);

@@ -89,7 +89,6 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
                                            bool isThumb)
   : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS, isThumb),
-    FrameInfo(Subtarget),
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData())
 {
@@ -106,7 +105,8 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
                            "v128:64:128-v64:64:64-n32")),
     ELFWriterInfo(*this),
     TLInfo(*this),
-    TSInfo(*this) {
+    TSInfo(*this),
+    FrameInfo(Subtarget) {
   if (!Subtarget.hasARMOps())
     report_fatal_error("CPU: '" + Subtarget.getCPUString() + "' does not "
                        "support ARM mode execution!");
@@ -127,7 +127,10 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
                            "v128:64:128-v64:64:64-a:0:32-n32")),
     ELFWriterInfo(*this),
     TLInfo(*this),
-    TSInfo(*this) {
+    TSInfo(*this),
+    FrameInfo(Subtarget.hasThumb2()
+              ? new ARMFrameInfo(Subtarget)
+              : (ARMFrameInfo*)new Thumb1FrameInfo(Subtarget)) {
 }
 
 // Pass Pipeline Configuration

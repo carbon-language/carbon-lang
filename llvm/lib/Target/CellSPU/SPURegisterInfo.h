@@ -33,7 +33,7 @@ namespace llvm {
 
   public:
     SPURegisterInfo(const SPUSubtarget &subtarget, const TargetInstrInfo &tii);
-    
+ 
     //! Translate a register's enum value to a register number
     /*!
       This method translates a register's enum value to it's regiser number,
@@ -65,15 +65,10 @@ namespace llvm {
     //! Convert frame indicies into machine operands
     void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                              RegScavenger *RS = NULL) const;
-    //! Determine the frame's layour
-    void determineFrameLayout(MachineFunction &MF) const;
 
     void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                               RegScavenger *RS = NULL) const;
-    //! Emit the function prologue
-    void emitPrologue(MachineFunction &MF) const;
-    //! Emit the function epilogue
-    void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+
     //! Get return address register (LR, aka R0)
     unsigned getRARegister() const;
     //! Get the stack frame register (SP, aka R1)

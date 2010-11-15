@@ -20,14 +20,27 @@
 #include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
+  class PPCSubtarget;
 
 class PPCFrameInfo: public TargetFrameInfo {
-  const TargetMachine &TM;
+  const PPCSubtarget &Subtarget;
 
 public:
-  PPCFrameInfo(const TargetMachine &tm, bool LP64)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), TM(tm) {
+  PPCFrameInfo(const PPCSubtarget &sti)
+    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), Subtarget(sti) {
   }
+
+  void determineFrameLayout(MachineFunction &MF) const;
+
+  /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
+  /// the function.
+  void emitPrologue(MachineFunction &MF) const;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+
+  /// targetHandlesStackFrameRounding - Returns true if the target is
+  /// responsible for rounding up the stack frame (probably at emitPrologue
+  /// time).
+  bool targetHandlesStackFrameRounding() const { return true; }
 
   /// getReturnSaveOffset - Return the previous frame offset to save the
   /// return address.
@@ -91,9 +104,9 @@ public:
   // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
   const SpillSlot *
   getCalleeSavedSpillSlots(unsigned &NumEntries) const {
-    if (TM.getSubtarget<PPCSubtarget>().isDarwinABI()) {
+    if (Subtarget.isDarwinABI()) {
       NumEntries = 1;
-      if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {
+      if (Subtarget.isPPC64()) {
         static const SpillSlot darwin64Offsets = {PPC::X31, -8};
         return &darwin64Offsets;
       } else {
@@ -103,7 +116,7 @@ public:
     }
 
     // Early exit if not using the SVR4 ABI.
-    if (!TM.getSubtarget<PPCSubtarget>().isSVR4ABI()) {
+    if (!Subtarget.isSVR4ABI()) {
       NumEntries = 0;
       return 0;
     }
@@ -283,7 +296,7 @@ public:
       {PPC::V20, -192}
     };
 
-    if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {
+    if (Subtarget.isPPC64()) {
       NumEntries = array_lengthof(Offsets64);
 
       return Offsets64;

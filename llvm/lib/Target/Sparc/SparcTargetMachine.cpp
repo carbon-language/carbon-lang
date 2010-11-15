@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Sparc.h"
 #include "SparcMCAsmInfo.h"
 #include "SparcTargetMachine.h"
-#include "Sparc.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
@@ -34,8 +34,8 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, const std::string &TT,
   : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS, is64bit),
     DataLayout(Subtarget.getDataLayout()),
-     TLInfo(*this), TSInfo(*this), InstrInfo(Subtarget),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
+    TLInfo(*this), TSInfo(*this), InstrInfo(Subtarget),
+    FrameInfo(Subtarget) {
 }
 
 bool SparcTargetMachine::addInstSelector(PassManagerBase &PM,

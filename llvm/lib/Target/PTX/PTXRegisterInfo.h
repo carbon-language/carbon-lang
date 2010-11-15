@@ -46,10 +46,6 @@ struct PTXRegisterInfo : public PTXGenRegisterInfo {
     llvm_unreachable("PTX does not support general function call");
   }
 
-  virtual void emitPrologue(MachineFunction &MF) const {}
-  virtual void emitEpilogue(MachineFunction &MF,
-                            MachineBasicBlock &MBB) const {}
-
   virtual unsigned getFrameRegister(const MachineFunction &MF) const {
     llvm_unreachable("PTX does not have a frame register");
     return 0;

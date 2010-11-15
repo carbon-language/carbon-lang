@@ -16,6 +16,7 @@
 
 #include "PTXISelLowering.h"
 #include "PTXInstrInfo.h"
+#include "PTXFrameInfo.h"
 #include "PTXSubtarget.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -25,7 +26,7 @@ namespace llvm {
 class PTXTargetMachine : public LLVMTargetMachine {
   private:
     const TargetData DataLayout;
-    TargetFrameInfo FrameInfo;
+    PTXFrameInfo FrameInfo;
     PTXInstrInfo InstrInfo;
     PTXTargetLowering TLInfo;
     PTXSubtarget Subtarget;

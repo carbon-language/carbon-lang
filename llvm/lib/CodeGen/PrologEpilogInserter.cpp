@@ -641,7 +641,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
   }
 
-  if (!RegInfo->targetHandlesStackFrameRounding()) {
+  if (!TFI.targetHandlesStackFrameRounding()) {
     // If we have reserved argument space for call sites in the function
     // immediately on entry to the current function, count it as part of the
     // overall stack size.
@@ -676,16 +676,16 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 /// prolog and epilog code to the function.
 ///
 void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
-  const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
+  const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
 
   // Add prologue to the function...
-  TRI->emitPrologue(Fn);
+  TFI.emitPrologue(Fn);
 
   // Add epilogue to restore the callee-save registers in each exiting block
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
     if (!I->empty() && I->back().getDesc().isReturn())
-      TRI->emitEpilogue(Fn, *I);
+      TFI.emitEpilogue(Fn, *I);
   }
 }
 

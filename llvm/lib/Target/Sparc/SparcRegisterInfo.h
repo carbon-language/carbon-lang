@@ -26,10 +26,10 @@ class Type;
 struct SparcRegisterInfo : public SparcGenRegisterInfo {
   SparcSubtarget &Subtarget;
   const TargetInstrInfo &TII;
-  
+
   SparcRegisterInfo(SparcSubtarget &st, const TargetInstrInfo &tii);
 
-  /// Code Generation virtual methods...  
+  /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
@@ -45,9 +45,6 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-  
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;

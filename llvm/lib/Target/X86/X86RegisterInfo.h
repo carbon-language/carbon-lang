@@ -132,14 +132,13 @@ public:
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS = NULL) const;
 
-  void emitCalleeSavedFrameMoves(MachineFunction &MF, MCSymbol *Label,
-                                 unsigned FramePtr) const;
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
+  unsigned getStackRegister() const { return StackPtr; }
+  // FIXME: Move to FrameInfok
+  unsigned getSlotSize() const { return SlotSize; }
+
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
   void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 

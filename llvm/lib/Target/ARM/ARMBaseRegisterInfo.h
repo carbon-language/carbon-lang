@@ -122,6 +122,7 @@ public:
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
+  unsigned getBaseRegister() const { return BasePtr; };
   int getFrameIndexReference(const MachineFunction &MF, int FI,
                              unsigned &FrameReg) const;
   int ResolveFrameIndexReference(const MachineFunction &MF, int FI,
@@ -165,9 +166,6 @@ public:
 
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator II,
                                    int SPAdj, RegScavenger *RS = NULL) const;
-
-  virtual void emitPrologue(MachineFunction &MF) const;
-  virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
 private:
   unsigned estimateRSStackSizeLimit(MachineFunction &MF) const;

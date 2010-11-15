@@ -14,16 +14,17 @@
 #ifndef X86TARGETMACHINE_H
 #define X86TARGETMACHINE_H
 
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetFrameInfo.h"
 #include "X86.h"
 #include "X86ELFWriterInfo.h"
 #include "X86InstrInfo.h"
-#include "X86JITInfo.h"
-#include "X86Subtarget.h"
 #include "X86ISelLowering.h"
+#include "X86FrameInfo.h"
+#include "X86JITInfo.h"
 #include "X86SelectionDAGInfo.h"
+#include "X86Subtarget.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetFrameInfo.h"
 
 namespace llvm {
   
@@ -31,7 +32,7 @@ class formatted_raw_ostream;
 
 class X86TargetMachine : public LLVMTargetMachine {
   X86Subtarget      Subtarget;
-  TargetFrameInfo   FrameInfo;
+  X86FrameInfo      FrameInfo;
   X86ELFWriterInfo  ELFWriterInfo;
   Reloc::Model      DefRelocModel; // Reloc model before it's overridden.
 

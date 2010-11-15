@@ -14,13 +14,14 @@
 #ifndef SPARCTARGETMACHINE_H
 #define SPARCTARGETMACHINE_H
 
+#include "SparcInstrInfo.h"
+#include "SparcISelLowering.h"
+#include "SparcFrameInfo.h"
+#include "SparcSelectionDAGInfo.h"
+#include "SparcSubtarget.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "SparcInstrInfo.h"
-#include "SparcSubtarget.h"
-#include "SparcISelLowering.h"
-#include "SparcSelectionDAGInfo.h"
 
 namespace llvm {
 
@@ -30,7 +31,7 @@ class SparcTargetMachine : public LLVMTargetMachine {
   SparcTargetLowering TLInfo;
   SparcSelectionDAGInfo TSInfo;
   SparcInstrInfo InstrInfo;
-  TargetFrameInfo FrameInfo;
+  SparcFrameInfo FrameInfo;
 public:
   SparcTargetMachine(const Target &T, const std::string &TT,
                      const std::string &FS, bool is64bit);

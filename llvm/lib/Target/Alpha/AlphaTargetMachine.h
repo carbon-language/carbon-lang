@@ -14,13 +14,14 @@
 #ifndef ALPHA_TARGETMACHINE_H
 #define ALPHA_TARGETMACHINE_H
 
+#include "AlphaInstrInfo.h"
+#include "AlphaISelLowering.h"
+#include "AlphaFrameInfo.h"
+#include "AlphaSelectionDAGInfo.h"
+#include "AlphaSubtarget.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "AlphaInstrInfo.h"
-#include "AlphaISelLowering.h"
-#include "AlphaSelectionDAGInfo.h"
-#include "AlphaSubtarget.h"
 
 namespace llvm {
 
@@ -29,7 +30,7 @@ class GlobalValue;
 class AlphaTargetMachine : public LLVMTargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
   AlphaInstrInfo InstrInfo;
-  TargetFrameInfo FrameInfo;
+  AlphaFrameInfo FrameInfo;
   AlphaSubtarget Subtarget;
   AlphaTargetLowering TLInfo;
   AlphaSelectionDAGInfo TSInfo;

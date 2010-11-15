@@ -57,9 +57,6 @@ namespace llvm {
     void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                               RegScavenger *RS) const;
 
-    void emitPrologue(MachineFunction &MF) const;
-    void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
     unsigned getFrameRegister(const MachineFunction &MF) const;
     unsigned getRARegister() const;
 

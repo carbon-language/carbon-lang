@@ -28,13 +28,13 @@ extern "C" void LLVMInitializeMSP430Target() {
 
 MSP430TargetMachine::MSP430TargetMachine(const Target &T,
                                          const std::string &TT,
-                                         const std::string &FS) :
-  LLVMTargetMachine(T, TT),
-  Subtarget(TT, FS),
-  // FIXME: Check TargetData string.
-  DataLayout("e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32-n8:16"),
-  InstrInfo(*this), TLInfo(*this), TSInfo(*this),
-  FrameInfo(TargetFrameInfo::StackGrowsDown, 2, -2) { }
+                                         const std::string &FS)
+  : LLVMTargetMachine(T, TT),
+    Subtarget(TT, FS),
+    // FIXME: Check TargetData string.
+    DataLayout("e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32-n8:16"),
+    InstrInfo(*this), TLInfo(*this), TSInfo(*this),
+    FrameInfo(Subtarget) { }
 
 
 bool MSP430TargetMachine::addInstSelector(PassManagerBase &PM,

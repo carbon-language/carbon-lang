@@ -17,6 +17,8 @@
 #include <utility>
 
 namespace llvm {
+  class MachineFunction;
+  class MachineBasicBlock;
 
 /// Information about stack frame layout on the target.  It holds the direction
 /// of stack growth, the known stack alignment on entry to each function, and
@@ -90,6 +92,19 @@ public:
     NumEntries = 0;
     return 0;
   }
+
+  /// targetHandlesStackFrameRounding - Returns true if the target is
+  /// responsible for rounding up the stack frame (probably at emitPrologue
+  /// time).
+  virtual bool targetHandlesStackFrameRounding() const {
+    return false;
+  }
+
+  /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
+  /// the function.
+  virtual void emitPrologue(MachineFunction &MF) const = 0;
+  virtual void emitEpilogue(MachineFunction &MF,
+                            MachineBasicBlock &MBB) const = 0;
 };
 
 } // End llvm namespace

@@ -19,10 +19,17 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
-  class XCoreFrameInfo: public TargetFrameInfo {
+  class XCoreSubtarget;
 
+  class XCoreFrameInfo: public TargetFrameInfo {
+    const XCoreSubtarget &STI;
   public:
-    XCoreFrameInfo(const TargetMachine &tm);
+    XCoreFrameInfo(const XCoreSubtarget &STI);
+
+    /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
+    /// the function.
+    void emitPrologue(MachineFunction &MF) const;
+    void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
     //! Stack slot size (4 bytes)
     static int stackSlotSize() {

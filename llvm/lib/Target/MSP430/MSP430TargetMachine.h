@@ -17,6 +17,7 @@
 
 #include "MSP430InstrInfo.h"
 #include "MSP430ISelLowering.h"
+#include "MSP430FrameInfo.h"
 #include "MSP430SelectionDAGInfo.h"
 #include "MSP430RegisterInfo.h"
 #include "MSP430Subtarget.h"
@@ -34,10 +35,7 @@ class MSP430TargetMachine : public LLVMTargetMachine {
   MSP430InstrInfo        InstrInfo;
   MSP430TargetLowering   TLInfo;
   MSP430SelectionDAGInfo TSInfo;
-
-  // MSP430 does not have any call stack frame, therefore not having
-  // any MSP430 specific FrameInfo class.
-  TargetFrameInfo       FrameInfo;
+  MSP430FrameInfo        FrameInfo;
 
 public:
   MSP430TargetMachine(const Target &T, const std::string &TT,

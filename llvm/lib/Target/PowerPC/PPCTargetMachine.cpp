@@ -44,7 +44,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const std::string &TT,
   : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
-    FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit),
+    FrameInfo(Subtarget), JITInfo(*this, is64Bit),
     TLInfo(*this), TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
 
