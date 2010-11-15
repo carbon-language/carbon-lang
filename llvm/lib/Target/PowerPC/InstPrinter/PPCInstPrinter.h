@@ -52,9 +52,6 @@ public:
   void printU16ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printS16X4ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printBranchOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printCallOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printOperand(MI, OpNo, O);
-  }
   void printAbsAddrOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 
   void printcrbitm(const MCInst *MI, unsigned OpNo, raw_ostream &O);

@@ -290,7 +290,6 @@ def target : Operand<OtherVT> {
   let PrintMethod = "printBranchOperand";
 }
 def calltarget : Operand<iPTR> {
-  let PrintMethod = "printCallOperand";
   let EncoderMethod = "getCallTargetEncoding";
 }
 def aaddr : Operand<iPTR> {
