@@ -290,7 +290,7 @@ namespace {
                           const MCFragment *Fragment, const MCFixup &Fixup,
                                   MCValue Target, uint64_t &FixedValue) {
       assert(0 && "RecordRelocation is not specific enough");
-    };
+    }
 
     virtual uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                          const MCSymbol *S);
@@ -1335,7 +1335,7 @@ MCObjectWriter *llvm::createELFObjectWriter(raw_ostream &OS,
     case ELF::EM_ARM:
       return new ARMELFObjectWriter(OS, Is64Bit, IsLittleEndian, EMachine,
                                     HasRelocationAddend, OSType); break;
-    default: assert(0 && "Unsupported architecture"); break;
+    default: llvm_unreachable("Unsupported architecture"); break;
   }
 }
 
