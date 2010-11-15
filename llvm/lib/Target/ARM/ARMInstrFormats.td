@@ -438,11 +438,13 @@ class AI2ldstidx<bit isLd, bit isByte, bit isPre, dag oops, dag iops,
                 string asm, string cstr, list<dag> pattern>
   : I<oops, iops, AddrMode2, Size4Bytes, im, f, itin,
       opc, asm, cstr, pattern> {
+  bits<4> Rt;
   let Inst{27-26} = 0b01;
   let Inst{24}    = isPre; // P bit
   let Inst{22}    = isByte; // B bit
   let Inst{21}    = isPre; // W bit
   let Inst{20}    = isLd; // L bit
+  let Inst{15-12} = Rt;
 }
 
 class AXI2ldw<dag oops, dag iops, Format f, InstrItinClass itin,
