@@ -74,10 +74,65 @@ void CodeEmitterGen::
 AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
                         unsigned &NumberedOp,
                         std::string &Case, CodeGenTarget &Target) {
-  bool gotOp = false;
   CodeGenInstruction &CGI = Target.getInstruction(R);
 
-  for (int bit = BI->getNumBits()-1; bit >= 0; ) {
+  // Determine if VarName actually contributes to the Inst encoding.
+  int bit = BI->getNumBits()-1;
+
+  // Scan for a bit that this contributed to.
+  for (; bit >= 0; ) {
+    if (getVariableBit(VarName, BI, bit) != -1)
+      break;
+    
+    --bit;
+  }
+  
+  // If we found no bits, ignore this value, otherwise emit the call to get the
+  // operand encoding.
+  if (bit < 0) return;
+  
+  // If the operand matches by name, reference according to that
+  // operand number. Non-matching operands are assumed to be in
+  // order.
+  unsigned OpIdx;
+  if (CGI.Operands.hasOperandNamed(VarName, OpIdx)) {
+    // Get the machine operand number for the indicated operand.
+    OpIdx = CGI.Operands[OpIdx].MIOperandNo;
+    assert(!CGI.Operands.isFlatOperandNotEmitted(OpIdx) &&
+           "Explicitly used operand also marked as not emitted!");
+  } else {
+    /// If this operand is not supposed to be emitted by the
+    /// generated emitter, skip it.
+    while (CGI.Operands.isFlatOperandNotEmitted(NumberedOp))
+      ++NumberedOp;
+    OpIdx = NumberedOp++;
+  }
+  
+  std::pair<unsigned, unsigned> SO = CGI.Operands.getSubOperandNumber(OpIdx);
+  std::string &EncoderMethodName = CGI.Operands[SO.first].EncoderMethodName;
+  
+  // If the source operand has a custom encoder, use it. This will
+  // get the encoding for all of the suboperands.
+  if (!EncoderMethodName.empty()) {
+    // A custom encoder has all of the information for the
+    // sub-operands, if there are more than one, so only
+    // query the encoder once per source operand.
+    if (SO.second == 0) {
+      Case += "      // op: " + VarName + "\n" +
+              "      op = " + EncoderMethodName + "(MI, " + utostr(OpIdx);
+      if (MCEmitter)
+        Case += ", Fixups";
+      Case += ");\n";
+    }
+  } else {
+    Case += "      // op: " + VarName + "\n" +
+      "      op = getMachineOpValue(MI, MI.getOperand(" + utostr(OpIdx) + ")";
+    if (MCEmitter)
+      Case += ", Fixups";
+    Case += ");\n";
+  }
+  
+  for (; bit >= 0; ) {
     int varBit = getVariableBit(VarName, BI, bit);
     
     // If this bit isn't from a variable, skip it.
@@ -97,52 +152,7 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
       ++N;
       --bit;
     }
-    
-    if (!gotOp) {
-      // If the operand matches by name, reference according to that
-      // operand number. Non-matching operands are assumed to be in
-      // order.
-      unsigned OpIdx;
-      if (CGI.Operands.hasOperandNamed(VarName, OpIdx)) {
-        // Get the machine operand number for the indicated operand.
-        OpIdx = CGI.Operands[OpIdx].MIOperandNo;
-        assert(!CGI.Operands.isFlatOperandNotEmitted(OpIdx) &&
-               "Explicitly used operand also marked as not emitted!");
-      } else {
-        /// If this operand is not supposed to be emitted by the
-        /// generated emitter, skip it.
-        while (CGI.Operands.isFlatOperandNotEmitted(NumberedOp))
-          ++NumberedOp;
-        OpIdx = NumberedOp++;
-      }
-      std::pair<unsigned, unsigned> SO =CGI.Operands.getSubOperandNumber(OpIdx);
-      std::string &EncoderMethodName = CGI.Operands[SO.first].EncoderMethodName;
-      
-      // If the source operand has a custom encoder, use it. This will
-      // get the encoding for all of the suboperands.
-      if (!EncoderMethodName.empty()) {
-        // A custom encoder has all of the information for the
-        // sub-operands, if there are more than one, so only
-        // query the encoder once per source operand.
-        if (SO.second == 0) {
-          Case += "      // op: " + VarName + "\n"
-          + "      op = " + EncoderMethodName + "(MI, "
-          + utostr(OpIdx);
-          if (MCEmitter)
-            Case += ", Fixups";
-          Case += ");\n";
-        }
-      } else {
-        Case += "      // op: " + VarName + "\n" +
-                "      op = getMachineOpValue(MI, MI.getOperand(" +
-                utostr(OpIdx) + ")";
-        if (MCEmitter)
-          Case += ", Fixups";
-        Case += ");\n";
-      }
-      gotOp = true;
-    }
-    
+     
     unsigned opMask = ~0U >> (32-N);
     int opShift = beginVarBit - N + 1;
     opMask <<= opShift;
