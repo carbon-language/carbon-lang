@@ -40,6 +40,12 @@ ParentMap::~ParentMap() {
   delete (MapTy*) Impl;
 }
 
+void ParentMap::addStmt(Stmt* S) {
+  if (S) {
+    BuildParentMap(*(MapTy*) Impl, S);
+  }
+}
+
 Stmt* ParentMap::getParent(Stmt* S) const {
   MapTy* M = (MapTy*) Impl;
   MapTy::iterator I = M->find(S);
