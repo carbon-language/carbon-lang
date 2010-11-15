@@ -54,6 +54,18 @@ class NamespaceTestCase(TestBase):
             substrs = ['state is stopped',
                        'stop reason = breakpoint'])
 
+        # rdar://problem/8668740
+        # 'frame variable' output for namespace variables look wrong
+        # (lldb) frame variable
+        # (int) a = 12
+        # (A::B::uint_t) anon_uint = 0
+        # (A::B::uint_t) a_uint = 1
+        # (A::B::uint_t) b_uint = 2
+        # (A::B::uint_t) y_uint = 3
+        # (lldb) 
+        self.expect('frame variable', VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = [''])
+
         # 'frame variable' with basename 'i' should work.
         self.expect("frame variable -c -G i",
             startstr = "main.cpp:%d: (int) (anonymous namespace)::i = 3" % self.line_var_i)
