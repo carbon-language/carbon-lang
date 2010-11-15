@@ -302,9 +302,11 @@ def aaddr : Operand<iPTR> {
 def piclabel: Operand<iPTR> {}
 def symbolHi: Operand<i32> {
   let PrintMethod = "printSymbolHi";
+  let EncoderMethod = "getHA16Encoding";
 }
 def symbolLo: Operand<i32> {
   let PrintMethod = "printSymbolLo";
+  let EncoderMethod = "getLO16Encoding";
 }
 def crbitm: Operand<i8> {
   let PrintMethod = "printcrbitm";

@@ -23,6 +23,18 @@ enum Fixups {
   /// branches.
   fixup_ppc_brcond14,
   
+  /// fixup_ppc_lo16 - A 16-bit fixup corresponding to lo16(_foo) for instrs
+  /// like 'li'.
+  fixup_ppc_lo16,
+  
+  /// fixup_ppc_ha16 - A 16-bit fixup corresponding to ha16(_foo) for instrs
+  /// like 'lis'.
+  fixup_ppc_ha16,
+  
+  /// fixup_ppc_lo14 - A 14-bit fixup corresponding to lo16(_foo) for instrs
+  /// like 'std'.
+  fixup_ppc_lo14,
+  
   // Marker
   LastTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind

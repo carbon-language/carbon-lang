@@ -63,7 +63,11 @@ namespace {
     unsigned get_crbitm_encoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getDirectBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getCondBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
-    
+
+    unsigned getHA16Encoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getLO16Encoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getLO14Encoding(const MachineInstr &MI, unsigned OpNo) const;
+
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
 
     /// runOnMachineFunction - emits the given MachineFunction to memory
@@ -140,16 +144,27 @@ unsigned PPCCodeEmitter::get_crbitm_encoding(const MachineInstr &MI,
 
 MachineRelocation PPCCodeEmitter::GetRelocation(const MachineOperand &MO, 
                                                 unsigned RelocID) const {
+  // If in PIC mode, we need to encode the negated address of the
+  // 'movepctolr' into the unrelocated field.  After relocation, we'll have
+  // &gv-&movepctolr-4 in the imm field.  Once &movepctolr is added to the imm
+  // field, we get &gv.  This doesn't happen for branch relocations, which are
+  // always implicitly pc relative.
+  intptr_t Cst = 0;
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
+    Cst = -(intptr_t)MovePCtoLROffset - 4;
+  }
+  
   if (MO.isGlobal())
     return MachineRelocation::getGV(MCE.getCurrentPCOffset(), RelocID,
-                                    const_cast<GlobalValue *>(MO.getGlobal()),0,
-                                    isa<Function>(MO.getGlobal()));
+                                    const_cast<GlobalValue *>(MO.getGlobal()),
+                                    Cst, isa<Function>(MO.getGlobal()));
   if (MO.isSymbol())
     return MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
-                                        RelocID, MO.getSymbolName(), 0);
+                                        RelocID, MO.getSymbolName(), Cst);
   if (MO.isCPI())
     return MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
-                                           RelocID, MO.getIndex(), 0);
+                                           RelocID, MO.getIndex(), Cst);
 
   if (MO.isMBB())
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
@@ -157,7 +172,7 @@ MachineRelocation PPCCodeEmitter::GetRelocation(const MachineOperand &MO,
   
   assert(MO.isJTI());
   return MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
-                                         RelocID, MO.getIndex(), 0);
+                                         RelocID, MO.getIndex(), Cst);
 }
 
 unsigned PPCCodeEmitter::getDirectBrEncoding(const MachineInstr &MI,
@@ -173,6 +188,33 @@ unsigned PPCCodeEmitter::getCondBrEncoding(const MachineInstr &MI,
                                            unsigned OpNo) const {
   const MachineOperand &MO = MI.getOperand(OpNo);
   MCE.addRelocation(GetRelocation(MO, PPC::reloc_pcrel_bcx));
+  return 0;
+}
+
+unsigned PPCCodeEmitter::getHA16Encoding(const MachineInstr &MI,
+                                         unsigned OpNo) const {
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
+
+  MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_high));
+  return 0;
+}
+
+unsigned PPCCodeEmitter::getLO16Encoding(const MachineInstr &MI,
+                                         unsigned OpNo) const {
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
+  
+  MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_low));
+  return 0;
+}
+
+unsigned PPCCodeEmitter::getLO14Encoding(const MachineInstr &MI,
+                                         unsigned OpNo) const {
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
+  
+  MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_low_ix));
   return 0;
 }
 
@@ -194,15 +236,6 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
            "MovePCtoLR not seen yet?");
     switch (MI.getOpcode()) {
     default: MI.dump(); llvm_unreachable("Unknown instruction for relocation!");
-    case PPC::LIS:
-    case PPC::LIS8:
-    case PPC::ADDIS:
-    case PPC::ADDIS8:
-      Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
-      break;
-    case PPC::LI:
-    case PPC::LI8:
-    case PPC::LA:
     // Loads.
     case PPC::LBZ:
     case PPC::LBZ8:
@@ -235,18 +268,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       break;
     }
 
-    MachineRelocation R = GetRelocation(MO, Reloc);
-
-    // If in PIC mode, we need to encode the negated address of the
-    // 'movepctolr' into the unrelocated field.  After relocation, we'll have
-    // &gv-&movepctolr-4 in the imm field.  Once &movepctolr is added to the imm
-    // field, we get &gv.  This doesn't happen for branch relocations, which are
-    // always implicitly pc relative.
-    if (TM.getRelocationModel() == Reloc::PIC_) {
-      assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
-      R.setConstantVal(-(intptr_t)MovePCtoLROffset - 4);
-    }
-    MCE.addRelocation(R);
+    MCE.addRelocation(GetRelocation(MO, Reloc));
   } else {
 #ifndef NDEBUG
     errs() << "ERROR: Unknown type of MachineOperand: " << MO << "\n";

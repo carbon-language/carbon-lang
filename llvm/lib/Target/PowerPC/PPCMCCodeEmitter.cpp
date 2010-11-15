@@ -44,7 +44,10 @@ public:
     const static MCFixupKindInfo Infos[] = {
       // name                     offset  bits  flags
       { "fixup_ppc_br24",         6,      24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ppc_brcond14",     16,     14,   MCFixupKindInfo::FKF_IsPCRel }
+      { "fixup_ppc_brcond14",     16,     14,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ppc_lo16",         16,     16,   0 },
+      { "fixup_ppc_ha16",         16,     16,   0 },
+      { "fixup_ppc_lo14",         16,     14,   0 }
     };
     
     if (Kind < FirstTargetFixupKind)
@@ -57,10 +60,14 @@ public:
 
   unsigned getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups) const;
-
   unsigned getCondBrEncoding(const MCInst &MI, unsigned OpNo,
                              SmallVectorImpl<MCFixup> &Fixups) const;
-
+  unsigned getHA16Encoding(const MCInst &MI, unsigned OpNo,
+                           SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getLO16Encoding(const MCInst &MI, unsigned OpNo,
+                           SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getLO14Encoding(const MCInst &MI, unsigned OpNo,
+                           SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups) const;
 
@@ -115,6 +122,39 @@ unsigned PPCMCCodeEmitter::getCondBrEncoding(const MCInst &MI, unsigned OpNo,
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_brcond14));
+  return 0;
+}
+
+unsigned PPCMCCodeEmitter::getHA16Encoding(const MCInst &MI, unsigned OpNo,
+                                       SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  
+  // Add a fixup for the branch target.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_ha16));
+  return 0;
+}
+
+unsigned PPCMCCodeEmitter::getLO16Encoding(const MCInst &MI, unsigned OpNo,
+                                       SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  
+  // Add a fixup for the branch target.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_lo16));
+  return 0;
+}
+
+unsigned PPCMCCodeEmitter::getLO14Encoding(const MCInst &MI, unsigned OpNo,
+                                       SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  
+  // Add a fixup for the branch target.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_lo14));
   return 0;
 }
 
