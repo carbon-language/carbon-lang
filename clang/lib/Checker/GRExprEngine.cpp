@@ -744,6 +744,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::NoStmtClass:
     case Stmt::NullStmtClass:
     case Stmt::SwitchCaseClass:
+    case Stmt::OpaqueValueExprClass:
       llvm_unreachable("Stmt should not be in analyzer evaluation loop");
       break;
 

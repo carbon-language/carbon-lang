@@ -3509,6 +3509,35 @@ public:
   virtual child_iterator child_end();
 };
 
+/// OpaqueValueExpr - An expression referring to an opaque object of a
+/// fixed type and value class.  These don't correspond to concrete
+/// syntax; instead they're used to express operations (usually copy
+/// operations) on values whose source is generally obvious from
+/// context.
+class OpaqueValueExpr : public Expr {
+  friend class ASTStmtReader;
+public:
+  OpaqueValueExpr(QualType T, ExprValueKind VK)
+    : Expr(OpaqueValueExprClass, T, T->isDependentType(),
+           T->isDependentType()) {
+    setValueKind(VK);
+  }
+
+  explicit OpaqueValueExpr(EmptyShell Empty)
+    : Expr(OpaqueValueExprClass, Empty) { }
+
+  using Expr::getValueKind;
+
+  virtual SourceRange getSourceRange() const;
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OpaqueValueExprClass;
+  }
+  static bool classof(const OpaqueValueExpr *) { return true; }
+};
+
 }  // end namespace clang
 
 #endif

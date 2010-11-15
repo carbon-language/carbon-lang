@@ -4444,6 +4444,14 @@ TreeTransform<Derived>::TransformOffsetOfExpr(OffsetOfExpr *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformOpaqueValueExpr(OpaqueValueExpr *E) {
+  assert(getDerived().AlreadyTransformed(E->getType()) &&
+         "opaque value expression requires transformation");
+  return SemaRef.Owned(E);
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   if (E->isArgumentType()) {
     TypeSourceInfo *OldT = E->getArgumentTypeInfo();

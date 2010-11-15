@@ -2709,3 +2709,9 @@ Stmt::child_iterator BlockExpr::child_end() { return child_iterator(); }
 
 Stmt::child_iterator BlockDeclRefExpr::child_begin() { return child_iterator();}
 Stmt::child_iterator BlockDeclRefExpr::child_end() { return child_iterator(); }
+
+// OpaqueValueExpr
+SourceRange OpaqueValueExpr::getSourceRange() const { return SourceRange(); }
+Stmt::child_iterator OpaqueValueExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator OpaqueValueExpr::child_end() { return child_iterator(); }
+

@@ -922,7 +922,9 @@ namespace clang {
       EXPR_CXX_UNRESOLVED_LOOKUP,        // UnresolvedLookupExpr
 
       EXPR_CXX_UNARY_TYPE_TRAIT,  // UnaryTypeTraitExpr
-      EXPR_CXX_NOEXCEPT           // CXXNoexceptExpr
+      EXPR_CXX_NOEXCEPT,          // CXXNoexceptExpr
+
+      EXPR_OPAQUE_VALUE           // OpaqueValueExpr
     };
 
     /// \brief The kinds of designators that can occur in a

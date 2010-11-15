@@ -178,6 +178,8 @@ namespace clang {
 
     void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
     void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
+
+    void VisitOpaqueValueExpr(OpaqueValueExpr *E);
   };
 }
 
@@ -1280,6 +1282,11 @@ void ASTStmtReader::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
   E->Operand = Reader.ReadSubExpr();
 }
 
+void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
+  VisitExpr(E);
+  E->setValueKind(static_cast<ExprValueKind>(Record[Idx++]));
+}
+
 Stmt *ASTReader::ReadStmt(PerFileData &F) {
   switch (ReadingKind) {
   case Read_Decl:
@@ -1794,6 +1801,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
 
     case EXPR_CXX_NOEXCEPT:
       S = new (Context) CXXNoexceptExpr(Empty);
+      break;
+
+    case EXPR_OPAQUE_VALUE:
+      S = new (Context) OpaqueValueExpr(Empty);
       break;
     }
     

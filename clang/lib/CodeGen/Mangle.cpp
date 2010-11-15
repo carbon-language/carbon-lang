@@ -1681,6 +1681,9 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     break;
   }
 
+  case Expr::OpaqueValueExprClass:
+    llvm_unreachable("cannot mangle opaque value; mangling wrong thing?");
+
   case Expr::CXXDefaultArgExprClass:
     mangleExpression(cast<CXXDefaultArgExpr>(E)->getExpr(), Arity);
     break;

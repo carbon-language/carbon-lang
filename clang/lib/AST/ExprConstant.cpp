@@ -2541,6 +2541,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::BlockExprClass:
   case Expr::BlockDeclRefExprClass:
   case Expr::NoStmtClass:
+  case Expr::OpaqueValueExprClass:
     return ICEDiag(2, E->getLocStart());
 
   case Expr::GNUNullExprClass:

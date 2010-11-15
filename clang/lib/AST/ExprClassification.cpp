@@ -33,6 +33,22 @@ static Cl::Kinds ClassifyConditional(ASTContext &Ctx,
 static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
                                        Cl::Kinds Kind, SourceLocation &Loc);
 
+static Cl::Kinds ClassifyExprValueKind(const LangOptions &Lang,
+                                       const Expr *E,
+                                       ExprValueKind Kind) {
+  switch (Kind) {
+  case VK_RValue:
+    return Lang.CPlusPlus && E->getType()->isRecordType() ?
+      Cl::CL_ClassTemporary : Cl::CL_PRValue;
+  case VK_LValue:
+    return Cl::CL_LValue;
+  case VK_XValue:
+    return Cl::CL_XValue;
+  }
+  llvm_unreachable("Invalid value category of implicit cast.");
+  return Cl::CL_PRValue;
+}
+
 Cl Expr::ClassifyImpl(ASTContext &Ctx, SourceLocation *Loc) const {
   assert(!TR->isReferenceType() && "Expressions can't have reference type.");
 
@@ -171,19 +187,15 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
       return Cl::CL_PRValue;
     }
 
+  case Expr::OpaqueValueExprClass:
+    return ClassifyExprValueKind(Lang, E,
+                                 cast<OpaqueValueExpr>(E)->getValueKind());
+
     // Implicit casts are lvalues if they're lvalue casts. Other than that, we
     // only specifically record class temporaries.
   case Expr::ImplicitCastExprClass:
-    switch (cast<ImplicitCastExpr>(E)->getValueKind()) {
-    case VK_RValue:
-      return Lang.CPlusPlus && E->getType()->isRecordType() ?
-        Cl::CL_ClassTemporary : Cl::CL_PRValue;
-    case VK_LValue:
-      return Cl::CL_LValue;
-    case VK_XValue:
-      return Cl::CL_XValue;
-    }
-    llvm_unreachable("Invalid value category of implicit cast.");
+    return ClassifyExprValueKind(Lang, E,
+                                 cast<ImplicitCastExpr>(E)->getValueKind());
 
     // C++ [expr.prim.general]p4: The presence of parentheses does not affect
     //   whether the expression is an lvalue.

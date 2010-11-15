@@ -834,6 +834,10 @@ void StmtProfiler::VisitCXXNoexceptExpr(CXXNoexceptExpr *S) {
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
+  VisitExpr(E);  
+}
+
 void StmtProfiler::VisitObjCStringLiteral(ObjCStringLiteral *S) {
   VisitExpr(S);
 }
