@@ -2172,21 +2172,46 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   //   The types used to determine the ordering depend on the context in which
   //   the partial ordering is done:
   TemplateDeductionInfo Info(S.Context, Loc);
+  CXXMethodDecl *Method1 = 0;
+  CXXMethodDecl *Method2 = 0;
+  bool IsNonStatic2 = false;
+  bool IsNonStatic1 = false;
+  unsigned Skip2 = 0;
   switch (TPOC) {
   case TPOC_Call: {
     //   - In the context of a function call, the function parameter types are
     //     used.
+    Method1 = dyn_cast<CXXMethodDecl>(FD1);
+    Method2 = dyn_cast<CXXMethodDecl>(FD2);
+    IsNonStatic1 = Method1 && !Method1->isStatic();
+    IsNonStatic2 = Method2 && !Method2->isStatic();
+
+    // C++0x [temp.func.order]p3:
+    //   [...] If only one of the function templates is a non-static
+    //   member, that function template is considered to have a new
+    //   first parameter inserted in its function parameter list. The
+    //   new parameter is of type "reference to cv A," where cv are
+    //   the cv-qualifiers of the function template (if any) and A is
+    //   the class of which the function template is a member.
+    //
+    // C++98/03 doesn't have this provision, so instead we drop the
+    // first argument of the free function or static member, which
+    // seems to match existing practice.
     llvm::SmallVector<QualType, 4> Args1;
-    if (CXXMethodDecl *Method1 = dyn_cast<CXXMethodDecl>(FD1))
+    unsigned Skip1 = !S.getLangOptions().CPlusPlus0x && 
+      IsNonStatic2 && !IsNonStatic1;
+    if (S.getLangOptions().CPlusPlus0x && IsNonStatic1 && !IsNonStatic2)
       MaybeAddImplicitObjectParameterType(S.Context, Method1, Args1);
     Args1.insert(Args1.end(), 
-                 Proto1->arg_type_begin(), Proto1->arg_type_end());
+                 Proto1->arg_type_begin() + Skip1, Proto1->arg_type_end());
 
     llvm::SmallVector<QualType, 4> Args2;
-    if (CXXMethodDecl *Method2 = dyn_cast<CXXMethodDecl>(FD2))
+    Skip2 = !S.getLangOptions().CPlusPlus0x && 
+      IsNonStatic1 && !IsNonStatic2;
+    if (S.getLangOptions().CPlusPlus0x && IsNonStatic2 && !IsNonStatic1)
       MaybeAddImplicitObjectParameterType(S.Context, Method2, Args2);
     Args2.insert(Args2.end(), 
-                 Proto2->arg_type_begin(), Proto2->arg_type_end());
+                 Proto2->arg_type_begin() + Skip2, Proto2->arg_type_end());
 
     unsigned NumParams = std::min(Args1.size(), Args2.size());
     for (unsigned I = 0; I != NumParams; ++I)
@@ -2252,7 +2277,10 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   switch (TPOC) {
   case TPOC_Call: {
     unsigned NumParams = std::min(Proto1->getNumArgs(), Proto2->getNumArgs());
-    for (unsigned I = 0; I != NumParams; ++I)
+    if (S.getLangOptions().CPlusPlus0x && IsNonStatic2 && !IsNonStatic1)
+      ::MarkUsedTemplateParameters(S, Method2->getThisType(S.Context), false, 
+                                   TemplateParams->getDepth(), UsedParameters);
+    for (unsigned I = Skip2; I < NumParams; ++I)
       ::MarkUsedTemplateParameters(S, Proto2->getArgType(I), false, 
                                    TemplateParams->getDepth(),
                                    UsedParameters);
