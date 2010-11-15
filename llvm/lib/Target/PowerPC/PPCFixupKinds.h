@@ -15,8 +15,13 @@
 namespace llvm {
 namespace PPC {
 enum Fixups {
-  // fixup_ppc_br24 - 24-bit PC relative relocation for calls like 'bl'.
+  // fixup_ppc_br24 - 24-bit PC relative relocation for direct branches like 'b'
+  // and 'bl'.
   fixup_ppc_br24 = FirstTargetFixupKind,
+  
+  /// fixup_ppc_brcond14 - 14-bit PC relative relocation for conditional
+  /// branches.
+  fixup_ppc_brcond14,
   
   // Marker
   LastTargetFixupKind,

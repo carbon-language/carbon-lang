@@ -43,11 +43,8 @@ public:
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
       // name                     offset  bits  flags
-      { "fixup_ppc_br24",         6,      24,   MCFixupKindInfo::FKF_IsPCRel }
-#if 0
-      { "fixup_arm_vfp_pcrel_12", 3,      8,    MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
-#endif
+      { "fixup_ppc_br24",         6,      24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ppc_brcond14",     16,     14,   MCFixupKindInfo::FKF_IsPCRel }
     };
     
     if (Kind < FirstTargetFixupKind)
@@ -115,8 +112,9 @@ unsigned PPCMCCodeEmitter::getCondBrEncoding(const MCInst &MI, unsigned OpNo,
   const MCOperand &MO = MI.getOperand(OpNo);
   if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
 
-  
-  
+  // Add a fixup for the branch target.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_brcond14));
   return 0;
 }
 
