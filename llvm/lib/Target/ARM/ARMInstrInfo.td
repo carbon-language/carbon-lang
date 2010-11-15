@@ -1550,9 +1550,7 @@ def LDRD : AI3ldd<(outs GPR:$dst1, GPR:$dst2), (ins addrmode3:$addr), LdMiscFrm,
 multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
   def _PRE  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                       (ins addrmode2:$addr), IndexModePre, LdFrm, itin,
-                      opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
-    let Inst{21} = 1; // W bit (overwrite)
-  }
+                      opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
   def _POST : AI2ldstidx<1, isByte, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                       (ins GPR:$Rn, am2offset:$offset),
                       IndexModePost, LdFrm, itin,
