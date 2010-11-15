@@ -66,6 +66,7 @@ namespace {
 
     unsigned getHA16Encoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getLO16Encoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getMemRIEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIXEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
@@ -209,6 +210,22 @@ unsigned PPCCodeEmitter::getLO16Encoding(const MachineInstr &MI,
   return 0;
 }
 
+unsigned PPCCodeEmitter::getMemRIEncoding(const MachineInstr &MI,
+                                          unsigned OpNo) const {
+  // Encode (imm, reg) as a memri, which has the low 16-bits as the
+  // displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1)) << 16;
+  
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  if (MO.isImm())
+    return (getMachineOpValue(MI, MO) & 0xFFFF) | RegBits;
+  
+  // Add a fixup for the displacement field.
+  MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_low));
+  return RegBits;
+}
+
 unsigned PPCCodeEmitter::getMemRIXEncoding(const MachineInstr &MI,
                                            unsigned OpNo) const {
   // Encode (imm, reg) as a memrix, which has the low 14-bits as the
@@ -233,49 +250,9 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
   }
   
-  if (MO.isImm())
-    return MO.getImm();
-  
-  if (MO.isGlobal() || MO.isSymbol() || MO.isCPI() || MO.isJTI()) {
-    unsigned Reloc = 0;
-    assert((TM.getRelocationModel() != Reloc::PIC_ || MovePCtoLROffset) &&
-           "MovePCtoLR not seen yet?");
-    switch (MI.getOpcode()) {
-    default: MI.dump(); llvm_unreachable("Unknown instruction for relocation!");
-    // Loads.
-    case PPC::LBZ:
-    case PPC::LBZ8:
-    case PPC::LHA:
-    case PPC::LHA8:
-    case PPC::LHZ:
-    case PPC::LHZ8:
-    case PPC::LWZ:
-    case PPC::LWZ8:
-    case PPC::LFS:
-    case PPC::LFD:
-
-    // Stores.
-    case PPC::STB:
-    case PPC::STB8:
-    case PPC::STH:
-    case PPC::STH8:
-    case PPC::STW:
-    case PPC::STW8:
-    case PPC::STFS:
-    case PPC::STFD:
-      Reloc = PPC::reloc_absolute_low;
-      break;
-    }
-
-    MCE.addRelocation(GetRelocation(MO, Reloc));
-  } else {
-#ifndef NDEBUG
-    errs() << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
-#endif
-    llvm_unreachable(0);
-  }
-
-  return 0;
+  assert(MO.isImm() &&
+         "Relocation required in an instruction that we cannot encode!");
+  return MO.getImm();
 }
 
 #include "PPCGenCodeEmitter.inc"

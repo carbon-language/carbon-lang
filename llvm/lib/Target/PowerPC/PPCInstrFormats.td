@@ -102,6 +102,19 @@ class DForm_1<bits<6> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>
   : I<opcode, OOL, IOL, asmstr, itin> {
   bits<5>  A;
+  bits<21> Addr;
+
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = A;
+  let Inst{11-15} = Addr{20-16}; // Base Reg
+  let Inst{16-31} = Addr{15-0};  // Displacement
+}
+
+class DForm_1a<bits<6> opcode, dag OOL, dag IOL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+  : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<5>  A;
   bits<16> C;
   bits<5>  B;
 
@@ -111,6 +124,7 @@ class DForm_1<bits<6> opcode, dag OOL, dag IOL, string asmstr,
   let Inst{11-15} = B;
   let Inst{16-31} = C;
 }
+
 
 class DForm_2<bits<6> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>
@@ -147,8 +161,7 @@ class DForm_4_zero<bits<6> opcode, dag OOL, dag IOL, string asmstr,
                    InstrItinClass itin, list<dag> pattern>
   : DForm_1<opcode, OOL, IOL, asmstr, itin, pattern> {
   let A = 0;
-  let B = 0;
-  let C = 0;
+  let Addr = 0;
 }
 
 class DForm_5<bits<6> opcode, dag OOL, dag IOL, string asmstr,

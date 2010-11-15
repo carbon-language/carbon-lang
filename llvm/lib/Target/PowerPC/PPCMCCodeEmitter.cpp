@@ -66,6 +66,8 @@ public:
                            SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getLO16Encoding(const MCInst &MI, unsigned OpNo,
                            SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getMemRIEncoding(const MCInst &MI, unsigned OpNo,
+                            SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
                              SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
@@ -147,10 +149,29 @@ unsigned PPCMCCodeEmitter::getLO16Encoding(const MCInst &MI, unsigned OpNo,
   return 0;
 }
 
+unsigned PPCMCCodeEmitter::getMemRIEncoding(const MCInst &MI, unsigned OpNo,
+                                            SmallVectorImpl<MCFixup> &Fixups) const {
+  // Encode (imm, reg) as a memri, which has the low 16-bits as the
+  // displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups) << 16;
+  
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isImm())
+    return (getMachineOpValue(MI, MO, Fixups) & 0xFFFF) | RegBits;
+  
+  // Add a fixup for the displacement field.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_lo16));
+  return RegBits;
+}
+
+
 unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
                                        SmallVectorImpl<MCFixup> &Fixups) const {
   // Encode (imm, reg) as a memrix, which has the low 14-bits as the
   // displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
   unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups) << 14;
   
   const MCOperand &MO = MI.getOperand(OpNo);
@@ -182,11 +203,9 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
   }
   
-  if (MO.isImm())
-    return MO.getImm();
-  
-  // FIXME.
-  return 0;
+  assert(MO.isImm() &&
+         "Relocation required in an instruction that we cannot encode!");
+  return MO.getImm();
 }
 
 

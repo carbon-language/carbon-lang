@@ -493,7 +493,7 @@ def LWAX : XForm_1<31, 341, (outs G8RC:$rD), (ins memrr:$src),
 
 // Update forms.
 let mayLoad = 1 in
-def LHAU8 : DForm_1<43, (outs G8RC:$rD, ptr_rc:$ea_result), (ins symbolLo:$disp,
+def LHAU8 : DForm_1a<43, (outs G8RC:$rD, ptr_rc:$ea_result), (ins symbolLo:$disp,
                             ptr_rc:$rA),
                     "lhau $rD, $disp($rA)", LdStGeneral,
                     []>, RegConstraint<"$rA = $ea_result">,
@@ -614,14 +614,14 @@ def STDX  : XForm_8<31, 149, (outs), (ins G8RC:$rS, memrr:$dst),
 
 let PPC970_Unit = 2 in {
 
-def STBU8 : DForm_1<38, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
+def STBU8 : DForm_1a<38, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stbu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
                           (pre_truncsti8 G8RC:$rS, ptr_rc:$ptrreg, 
                                          iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STHU8 : DForm_1<45, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
+def STHU8 : DForm_1a<45, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "sthu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
