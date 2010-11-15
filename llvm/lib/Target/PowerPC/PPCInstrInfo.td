@@ -291,6 +291,7 @@ def target : Operand<OtherVT> {
 }
 def calltarget : Operand<iPTR> {
   let PrintMethod = "printCallOperand";
+  let EncoderMethod = "getCallTargetEncoding";
 }
 def aaddr : Operand<iPTR> {
   let PrintMethod = "printAbsAddrOperand";

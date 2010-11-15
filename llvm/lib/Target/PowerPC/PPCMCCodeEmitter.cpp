@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "mccodeemitter"
 #include "PPC.h"
 #include "PPCRegisterInfo.h"
+#include "PPCFixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/ADT/Statistic.h"
@@ -37,12 +38,12 @@ public:
   
   ~PPCMCCodeEmitter() {}
   
-  unsigned getNumFixupKinds() const { return 0 /*PPC::NumTargetFixupKinds*/; }
+  unsigned getNumFixupKinds() const { return PPC::NumTargetFixupKinds; }
   
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
       // name                     offset  bits  flags
-      { "fixup_arm_pcrel_12",     2,      12,   MCFixupKindInfo::FKF_IsPCRel }
+      { "fixup_ppc_br24",         6,      24,   MCFixupKindInfo::FKF_IsPCRel }
 #if 0
       { "fixup_arm_vfp_pcrel_12", 3,      8,    MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
@@ -57,6 +58,9 @@ public:
     return Infos[Kind - FirstTargetFixupKind];
   }
 
+  unsigned getCallTargetEncoding(const MCInst &MI, unsigned OpNo,
+                                 SmallVectorImpl<MCFixup> &Fixups) const;
+  
   unsigned get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups) const;
 
@@ -89,6 +93,18 @@ public:
 MCCodeEmitter *llvm::createPPCMCCodeEmitter(const Target &, TargetMachine &TM,
                                             MCContext &Ctx) {
   return new PPCMCCodeEmitter(TM, Ctx);
+}
+
+unsigned PPCMCCodeEmitter::
+getCallTargetEncoding(const MCInst &MI, unsigned OpNo,
+                      SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  
+  // Add a fixup for the branch target.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_br24));
+  return 0;
 }
 
 unsigned PPCMCCodeEmitter::
