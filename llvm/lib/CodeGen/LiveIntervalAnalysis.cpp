@@ -1136,14 +1136,11 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       rewriteImplicitOps(li, MI, NewVReg, vrm);
 
     // Reuse NewVReg for other reads.
-    bool HasEarlyClobber = false;
     for (unsigned j = 0, e = Ops.size(); j != e; ++j) {
       MachineOperand &mopj = MI->getOperand(Ops[j]);
       mopj.setReg(NewVReg);
       if (mopj.isImplicit())
         rewriteImplicitOps(li, MI, NewVReg, vrm);
-      if (mopj.isEarlyClobber())
-        HasEarlyClobber = true;
     }
 
     if (CreatedNewVReg) {
@@ -1202,8 +1199,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       }
     }
     if (HasDef) {
-      LiveRange LR(HasEarlyClobber ? index.getUseIndex() : index.getDefIndex(),
-                   index.getStoreIndex(),
+      LiveRange LR(index.getDefIndex(), index.getStoreIndex(),
                    nI.getNextValue(SlotIndex(), 0, VNInfoAllocator));
       DEBUG(dbgs() << " +" << LR);
       nI.addRange(LR);
