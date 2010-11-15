@@ -829,6 +829,8 @@ int main() {
   // Set up the optimizer pipeline.  Start with registering info about how the
   // target lays out data structures.
   OurFPM.add(new TargetData(*TheExecutionEngine->getTargetData()));
+  // Provide basic AliasAnalysis support for GVN.
+  OurFPM.add(createBasicAliasAnalysisPass());
   // Do simple "peephole" optimizations and bit-twiddling optzns.
   OurFPM.add(createInstructionCombiningPass());
   // Reassociate expressions.
