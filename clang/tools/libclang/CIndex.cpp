@@ -1659,9 +1659,9 @@ public:
     VisitorJob(parent, VisitorJob::DeclVisitKind,
                d, isFirst ? (void*) 1 : (void*) 0) {}
   static bool classof(const VisitorJob *VJ) {
-    return VJ->getKind () == DeclVisitKind;
+    return VJ->getKind() == DeclVisitKind;
   }
-  Decl *get() { return static_cast<Decl*>(dataA);}
+  Decl *get() const { return static_cast<Decl*>(dataA); }
   bool isFirst() const { return dataB ? true : false; }
 };
 
@@ -1675,7 +1675,7 @@ public:
     return VJ->getKind() == TypeLocVisitKind;
   }
 
-  TypeLoc get() { 
+  TypeLoc get() const { 
     QualType T = QualType::getFromOpaquePtr(dataA);
     return TypeLoc(T, dataB);
   }
@@ -1868,31 +1868,32 @@ bool CursorVisitor::IsInRegionOfInterest(CXCursor C) {
 bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
   while (!WL.empty()) {
     // Dequeue the worklist item.
-    VisitorJob LI = WL.back(); WL.pop_back();
-  
+    VisitorJob LI = WL.back();
+    WL.pop_back();
+
     // Set the Parent field, then back to its old value once we're done.
     SetParentRAII SetParent(Parent, StmtParent, LI.getParent());
   
     switch (LI.getKind()) {
       case VisitorJob::DeclVisitKind: {
-        Decl *D = cast<DeclVisit>(LI).get();
+        Decl *D = cast<DeclVisit>(&LI)->get();
         if (!D)
           continue;
 
         // For now, perform default visitation for Decls.
-        if (Visit(MakeCXCursor(D, TU, cast<DeclVisit>(LI).isFirst())))
+        if (Visit(MakeCXCursor(D, TU, cast<DeclVisit>(&LI)->isFirst())))
             return true;
 
         continue;
       }
       case VisitorJob::TypeLocVisitKind: {
         // Perform default visitation for TypeLocs.
-        if (Visit(cast<TypeLocVisit>(LI).get()))
+        if (Visit(cast<TypeLocVisit>(&LI)->get()))
           return true;
         continue;
       }
       case VisitorJob::StmtVisitKind: {
-        Stmt *S = cast<StmtVisit>(LI).get();
+        Stmt *S = cast<StmtVisit>(&LI)->get();
         if (!S)
           continue;
 
@@ -1926,7 +1927,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::CXXDependentScopeMemberExprClass:
             if (Visit(Cursor))
               return true;
-            continue;
+            break;
           default:
             if (!IsInRegionOfInterest(Cursor))
               continue;
@@ -1939,12 +1940,13 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
                 EnqueueWorkList(WL, S);
                 break;
             }
-            continue;
+            break;
         }
+        continue;
       }
       case VisitorJob::MemberExprPartsKind: {
         // Handle the other pieces in the MemberExpr besides the base.
-        MemberExpr *M = cast<MemberExprParts>(LI).get();
+        MemberExpr *M = cast<MemberExprParts>(&LI)->get();
         
         // Visit the nested-name-specifier
         if (NestedNameSpecifier *Qualifier = M->getQualifier())
@@ -1967,7 +1969,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         continue;
       }
       case VisitorJob::DeclRefExprPartsKind: {
-        DeclRefExpr *DR = cast<DeclRefExprParts>(LI).get();
+        DeclRefExpr *DR = cast<DeclRefExprParts>(&LI)->get();
         // Visit nested-name-specifier, if present.
         if (NestedNameSpecifier *Qualifier = DR->getQualifier())
           if (VisitNestedNameSpecifier(Qualifier, DR->getQualifierRange()))
@@ -1987,7 +1989,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         continue;
       }
       case VisitorJob::OverloadExprPartsKind: {
-        OverloadExpr *O = cast<OverloadExprParts>(LI).get();
+        OverloadExpr *O = cast<OverloadExprParts>(&LI)->get();
         // Visit the nested-name-specifier.
         if (NestedNameSpecifier *Qualifier = O->getQualifier())
           if (VisitNestedNameSpecifier(Qualifier, O->getQualifierRange()))
