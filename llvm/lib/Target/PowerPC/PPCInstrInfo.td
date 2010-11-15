@@ -355,11 +355,9 @@ def In64BitMode  : Predicate<"PPCSubTarget.isPPC64()">;
 
 let hasCtrlDep = 1 in {
 let Defs = [R1], Uses = [R1] in {
-def ADJCALLSTACKDOWN : Pseudo<(outs), (ins u16imm:$amt),
-                              "${:comment} ADJCALLSTACKDOWN",
+def ADJCALLSTACKDOWN : Pseudo<(outs), (ins u16imm:$amt), "",
                               [(callseq_start timm:$amt)]>;
-def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm:$amt1, u16imm:$amt2),
-                              "${:comment} ADJCALLSTACKUP",
+def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm:$amt1, u16imm:$amt2), "",
                               [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
 
@@ -368,8 +366,7 @@ def UPDATE_VRSAVE    : Pseudo<(outs GPRC:$rD), (ins GPRC:$rS),
 }
 
 let Defs = [R1], Uses = [R1] in
-def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi),
-                       "${:comment} DYNALLOC $result, $negsize, $fpsi",
+def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi), "",
                        [(set GPRC:$result,
                              (PPCdynalloc GPRC:$negsize, iaddr:$fpsi))]>;
                          
@@ -378,26 +375,26 @@ def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi),
 let usesCustomInserter = 1,    // Expanded after instruction selection.
     PPC970_Single = 1 in {
   def SELECT_CC_I4 : Pseudo<(outs GPRC:$dst), (ins CRRC:$cond, GPRC:$T, GPRC:$F,
-                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              i32imm:$BROPC), "",
                               []>;
   def SELECT_CC_I8 : Pseudo<(outs G8RC:$dst), (ins CRRC:$cond, G8RC:$T, G8RC:$F,
-                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              i32imm:$BROPC), "",
                               []>;
   def SELECT_CC_F4  : Pseudo<(outs F4RC:$dst), (ins CRRC:$cond, F4RC:$T, F4RC:$F,
-                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              i32imm:$BROPC), "",
                               []>;
   def SELECT_CC_F8  : Pseudo<(outs F8RC:$dst), (ins CRRC:$cond, F8RC:$T, F8RC:$F,
-                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              i32imm:$BROPC), "",
                               []>;
   def SELECT_CC_VRRC: Pseudo<(outs VRRC:$dst), (ins CRRC:$cond, VRRC:$T, VRRC:$F,
-                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              i32imm:$BROPC), "",
                               []>;
 }
 
 // SPILL_CR - Indicate that we're dumping the CR register, so we'll need to
 // scavenge a register for it.
 def SPILL_CR : Pseudo<(outs), (ins GPRC:$cond, memri:$F),
-                     "${:comment} SPILL_CR $cond $F", []>;
+                     "", []>;
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
   let isReturn = 1, Uses = [LR, RM] in
@@ -409,7 +406,7 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
 }
 
 let Defs = [LR] in
-  def MovePCtoLR : Pseudo<(outs), (ins piclabel:$label), "bl $label", []>,
+  def MovePCtoLR : Pseudo<(outs), (ins piclabel:$label), "", []>,
                    PPC970_Unit_BRU;
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
@@ -548,105 +545,81 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
 let usesCustomInserter = 1 in {
   let Uses = [CR0] in {
     def ATOMIC_LOAD_ADD_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_ADD_I8 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_add_8 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_SUB_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_SUB_I8 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_sub_8 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_AND_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_AND_I8 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_and_8 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_OR_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_OR_I8 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_or_8 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_XOR_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_XOR_I8 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_xor_8 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_NAND_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_NAND_I8 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_nand_8 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_ADD_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_ADD_I16 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_add_16 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_SUB_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_SUB_I16 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_sub_16 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_AND_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_AND_I16 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_and_16 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_OR_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_OR_I16 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_or_16 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_XOR_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_XOR_I16 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_xor_16 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_NAND_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_NAND_I16 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_nand_16 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_ADD_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_ADD_I32 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_add_32 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_SUB_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_SUB_I32 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_sub_32 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_AND_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_AND_I32 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_and_32 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_OR_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_OR_I32 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_or_32 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_XOR_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_XOR_I32 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_xor_32 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_NAND_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
-      "${:comment} ATOMIC_LOAD_NAND_I32 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_nand_32 xoaddr:$ptr, GPRC:$incr))]>;
 
     def ATOMIC_CMP_SWAP_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
-      "${:comment} ATOMIC_CMP_SWAP_I8 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new), "",
       [(set GPRC:$dst, 
                     (atomic_cmp_swap_8 xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
     def ATOMIC_CMP_SWAP_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
-      "${:comment} ATOMIC_CMP_SWAP_I16 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new), "",
       [(set GPRC:$dst, 
                     (atomic_cmp_swap_16 xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
     def ATOMIC_CMP_SWAP_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
-      "${:comment} ATOMIC_CMP_SWAP_I32 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new), "",
       [(set GPRC:$dst, 
                     (atomic_cmp_swap_32 xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
 
     def ATOMIC_SWAP_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
-      "${:comment} ATOMIC_SWAP_I8 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new), "",
       [(set GPRC:$dst, (atomic_swap_8 xoaddr:$ptr, GPRC:$new))]>;
     def ATOMIC_SWAP_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
-      "${:comment} ATOMIC_SWAP_I16 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new), "",
       [(set GPRC:$dst, (atomic_swap_16 xoaddr:$ptr, GPRC:$new))]>;
     def ATOMIC_SWAP_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
-      "${:comment} ATOMIC_SWAP_I32 PSEUDO!",
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new), "",
       [(set GPRC:$dst, (atomic_swap_32 xoaddr:$ptr, GPRC:$new))]>;
   }
 }
@@ -1123,7 +1096,7 @@ def MTCRF : XFXForm_5<31, 144, (outs), (ins crbitm:$FXM, GPRC:$rS),
 //
 // FIXME: Make this a real Pseudo instruction when the JIT switches to MC.
 def MFCRpseud: XFXForm_3<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
-                       "mfcr $rT ${:comment} $FXM", SprMFCR>,
+                       "", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
             
 def MFCR : XFXForm_3<31, 19, (outs GPRC:$rT), (ins),

@@ -58,7 +58,7 @@ def HI48_64 : SDNodeXForm<imm, [{
 //
 
 let Defs = [LR8] in
-  def MovePCtoLR8 : Pseudo<(outs), (ins piclabel:$label), "bl $label", []>,
+  def MovePCtoLR8 : Pseudo<(outs), (ins piclabel:$label), "", []>,
                     PPC970_Unit_BRU;
 
 // Darwin ABI Calls.
@@ -130,39 +130,31 @@ def : Pat<(PPCnop),
 let usesCustomInserter = 1 in {
   let Uses = [CR0] in {
     def ATOMIC_LOAD_ADD_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
-      "${:comment} ATOMIC_LOAD_ADD_I64 PSEUDO!",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
       [(set G8RC:$dst, (atomic_load_add_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_SUB_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
-      "${:comment} ATOMIC_LOAD_SUB_I64 PSEUDO!",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
       [(set G8RC:$dst, (atomic_load_sub_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_OR_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
-      "${:comment} ATOMIC_LOAD_OR_I64 PSEUDO!",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
       [(set G8RC:$dst, (atomic_load_or_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_XOR_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
-      "${:comment} ATOMIC_LOAD_XOR_I64 PSEUDO!",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
       [(set G8RC:$dst, (atomic_load_xor_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_AND_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
-      "${:comment} ATOMIC_LOAD_AND_I64 PSEUDO!",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
       [(set G8RC:$dst, (atomic_load_and_64 xoaddr:$ptr, G8RC:$incr))]>;
     def ATOMIC_LOAD_NAND_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
-      "${:comment} ATOMIC_LOAD_NAND_I64 PSEUDO!",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
       [(set G8RC:$dst, (atomic_load_nand_64 xoaddr:$ptr, G8RC:$incr))]>;
 
     def ATOMIC_CMP_SWAP_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$old, G8RC:$new),
-      "${:comment} ATOMIC_CMP_SWAP_I64 PSEUDO!",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$old, G8RC:$new), "",
       [(set G8RC:$dst, 
                     (atomic_cmp_swap_64 xoaddr:$ptr, G8RC:$old, G8RC:$new))]>;
 
     def ATOMIC_SWAP_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$new),
-      "${:comment} ATOMIC_SWAP_I64 PSEUDO!",
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$new), "",
       [(set G8RC:$dst, (atomic_swap_64 xoaddr:$ptr, G8RC:$new))]>;
   }
 }
@@ -240,8 +232,7 @@ def MTCTR8 : XFXForm_7_ext<31, 467, 9, (outs), (ins G8RC:$rS),
 }
 
 let Defs = [X1], Uses = [X1] in
-def DYNALLOC8 : Pseudo<(outs G8RC:$result), (ins G8RC:$negsize, memri:$fpsi),
-                       "${:comment} DYNALLOC8 $result, $negsize, $fpsi",
+def DYNALLOC8 : Pseudo<(outs G8RC:$result), (ins G8RC:$negsize, memri:$fpsi),"",
                        [(set G8RC:$result,
                              (PPCdynalloc G8RC:$negsize, iaddr:$fpsi))]>;
 
@@ -555,11 +546,9 @@ let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LD   : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrix:$src),
                     "ld $rD, $src", LdStLD,
                     [(set G8RC:$rD, (load ixaddr:$src))]>, isPPC64;
-// FIXME: This is a pseudo instruction.  When the JIT switches to MC, remove its
-// encoding information.
-def LDtoc: DSForm_1<58, 0, (outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
-                    "ld $rD, $disp($reg)", LdStLD,
-                    [(set G8RC:$rD,
+def LDtoc: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
+                  "",
+                  [(set G8RC:$rD,
                      (PPCtoc_entry tglobaladdr:$disp, G8RC:$reg))]>, isPPC64;
 let RST = 2, DS = 8 in
 def LDinto_toc: DSForm_1<58, 0, (outs), (ins G8RC:$reg),
