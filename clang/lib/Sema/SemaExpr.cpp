@@ -5282,7 +5282,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType,
     if (rhsType->isExtVectorType())
       return Incompatible;
     if (rhsType->isArithmeticType()) {
-      Kind = CK_Unknown; // FIXME: vector splat, requires two casts
+      Kind = CK_Unknown; // FIXME: vector splat, potentially requires two casts
       return Compatible;
     }
   }
@@ -5294,14 +5294,14 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType,
       // no bits are changed but the result type is different.
       if (getLangOptions().LaxVectorConversions &&
           (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))) {
-        Kind = CK_Unknown; // FIXME: vector reinterpret is... bitcast?
+        Kind = CK_BitCast;
         return IncompatibleVectors;
       }
 
       // Allow assignments of an AltiVec vector type to an equivalent GCC
       // vector type and vice versa
       if (Context.areCompatibleVectorTypes(lhsType, rhsType)) {
-        Kind = CK_Unknown; // FIXME: vector conversion
+        Kind = CK_BitCast;
         return Compatible;
       }
     }
