@@ -21,3 +21,14 @@
   mvn	r0, #-872363008
 @ CHECK: mvn	r0, #1114112            @ encoding: [0x88,0x10,0x6f,0xf4]
   mvn	r0, #1114112
+
+@ CHECK: cmp.w	r0, #11141290           @ encoding: [0xaa,0x1f,0xb0,0xf1]
+  cmp.w	r0, #11141290
+@ CHECK: cmp.w	r0, #-872363008         @ encoding: [0xcc,0x2f,0xb0,0xf1]
+  cmp.w	r0, #-872363008
+@ CHECK: cmp.w	r0, #-572662307         @ encoding: [0xdd,0x3f,0xb0,0xf1]
+  cmp.w	r0, #-572662307
+@ CHECK: cmp.w	r0, #1114112            @ encoding: [0x88,0x1f,0xb0,0xf5]
+  cmp.w	r0, #1114112
+@ CHECK: cmp.w	r0, r1, lsl #5          @ encoding: [0x41,0x1f,0xb0,0xeb]
+  cmp.w	r0, r1, lsl #5

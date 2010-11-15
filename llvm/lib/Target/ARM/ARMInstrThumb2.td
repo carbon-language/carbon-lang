@@ -183,6 +183,7 @@ class T2OneRegImm<dag oops, dag iops, InstrItinClass itin,
   let Inst{7-0}   = imm{7-0};
 }
 
+
 class T2sOneRegImm<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
   : T2sI<oops, iops, itin, opc, asm, pattern> {
@@ -195,6 +196,19 @@ class T2sOneRegImm<dag oops, dag iops, InstrItinClass itin,
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
 }
+
+class T2OneRegCmpImm<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rn;
+  bits<12> imm;
+  
+  let Inst{19-16}  = Rn{3-0};
+  let Inst{26}    = imm{11};
+  let Inst{14-12} = imm{10-8};
+  let Inst{7-0}   = imm{7-0};
+}
+
 
 class T2OneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
@@ -222,6 +236,19 @@ class T2sOneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   let Inst{7-6}   = ShiftedRm{8-7};
 }
 
+class T2OneRegCmpShiftedReg<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rn;
+  bits<12> ShiftedRm;
+  
+  let Inst{19-16} = Rn{3-0};
+  let Inst{3-0}   = ShiftedRm{3-0};
+  let Inst{5-4}   = ShiftedRm{6-5};
+  let Inst{14-12} = ShiftedRm{11-9};
+  let Inst{7-6}   = ShiftedRm{8-7};
+}
+
 class T2TwoReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> { 
@@ -239,6 +266,16 @@ class T2sTwoReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rm;
      
   let Inst{11-8}  = Rd{3-0};
+  let Inst{3-0}   = Rm{3-0};
+}
+
+class T2TwoRegCmp<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  bits<4> Rn;
+  bits<4> Rm;
+     
+  let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = Rm{3-0};
 }
 
@@ -265,6 +302,32 @@ class T2sTwoRegImm<dag oops, dag iops, InstrItinClass itin,
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
+}
+
+class T2TwoRegShiftImm<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  bits<4> Rm;
+  bits<5> imm;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{3-0}   = Rm{3-0};
+  let Inst{14-12} = imm{4-2};
+  let Inst{7-6}   = imm{1-0};
+}
+
+class T2sTwoRegShiftImm<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2sI<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  bits<4> Rm;
+  bits<5> imm;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{3-0}   = Rm{3-0};
+  let Inst{14-12} = imm{4-2};
+  let Inst{7-6}   = imm{1-0};
 }
 
 class T2ThreeReg<dag oops, dag iops, InstrItinClass itin,
@@ -678,18 +741,20 @@ multiclass T2I_rbin_s_is<bits<4> opcod, string opc, PatFrag opnode> {
 //  rotate operation that produces a value.
 multiclass T2I_sh_ir<bits<2> opcod, string opc, PatFrag opnode> {
    // 5-bit imm
-   def ri : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, i32imm:$rhs), IIC_iMOVsi,
-                 opc, ".w\t$dst, $lhs, $rhs",
-                 [(set rGPR:$dst, (opnode rGPR:$lhs, imm1_31:$rhs))]> {
+   def ri : T2sTwoRegShiftImm<
+                 (outs rGPR:$Rd), (ins rGPR:$Rm, i32imm:$imm), IIC_iMOVsi,
+                 opc, ".w\t$Rd, $Rm, $imm",
+                 [(set rGPR:$Rd, (opnode rGPR:$Rm, imm1_31:$imm))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-21} = 0b010010;
      let Inst{19-16} = 0b1111; // Rn
      let Inst{5-4} = opcod;
    }
    // register
-   def rr : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, rGPR:$rhs), IIC_iMOVsr,
-                 opc, ".w\t$dst, $lhs, $rhs",
-                 [(set rGPR:$dst, (opnode rGPR:$lhs, rGPR:$rhs))]> {
+   def rr : T2sThreeReg<
+                 (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iMOVsr,
+                 opc, ".w\t$Rd, $Rn, $Rm",
+                 [(set rGPR:$Rd, (opnode rGPR:$Rn, rGPR:$Rm))]> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
      let Inst{22-21} = opcod;
@@ -706,9 +771,10 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                        PatFrag opnode> {
    // shifted imm
-   def ri : T2I<(outs), (ins GPR:$lhs, t2_so_imm:$rhs), iii,
-                opc, ".w\t$lhs, $rhs",
-                [(opnode GPR:$lhs, t2_so_imm:$rhs)]> {
+   def ri : T2OneRegCmpImm<
+                (outs), (ins GPR:$Rn, t2_so_imm:$imm), iii,
+                opc, ".w\t$Rn, $imm",
+                [(opnode GPR:$Rn, t2_so_imm:$imm)]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
@@ -717,7 +783,8 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
      let Inst{11-8} = 0b1111; // Rd
    }
    // register
-   def rr : T2I<(outs), (ins GPR:$lhs, rGPR:$rhs), iir,
+   def rr : T2TwoRegCmp<
+                (outs), (ins GPR:$lhs, rGPR:$rhs), iir,
                 opc, ".w\t$lhs, $rhs",
                 [(opnode GPR:$lhs, rGPR:$rhs)]> {
      let Inst{31-27} = 0b11101;
@@ -730,9 +797,10 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def rs : T2I<(outs), (ins GPR:$lhs, t2_so_reg:$rhs), iis,
-                opc, ".w\t$lhs, $rhs",
-                [(opnode GPR:$lhs, t2_so_reg:$rhs)]> {
+   def rs : T2OneRegCmpShiftedReg<
+                (outs), (ins GPR:$Rn, t2_so_reg:$ShiftedRm), iis,
+                opc, ".w\t$Rn, $ShiftedRm",
+                [(opnode GPR:$Rn, t2_so_reg:$ShiftedRm)]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
@@ -1857,9 +1925,10 @@ def t2RRX : T2sI<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVsi,
 }
 
 let Defs = [CPSR] in {
-def t2MOVsrl_flag : T2I<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVsi,
-                        "lsrs", ".w\t$dst, $src, #1",
-                        [(set rGPR:$dst, (ARMsrl_flag rGPR:$src))]> {
+def t2MOVsrl_flag : T2TwoRegShiftImm<
+                        (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iMOVsi,
+                        "lsrs", ".w\t$Rd, $Rm, #1",
+                        [(set rGPR:$Rd, (ARMsrl_flag rGPR:$Rm))]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
@@ -1870,9 +1939,10 @@ def t2MOVsrl_flag : T2I<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVsi,
   let Inst{14-12} = 0b000;
   let Inst{7-6} = 0b01;
 }
-def t2MOVsra_flag : T2I<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVsi,
-                        "asrs", ".w\t$dst, $src, #1",
-                        [(set rGPR:$dst, (ARMsra_flag rGPR:$src))]> {
+def t2MOVsra_flag : T2TwoRegShiftImm<
+                        (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iMOVsi,
+                        "asrs", ".w\t$Rd, $Rm, #1",
+                        [(set rGPR:$Rd, (ARMsra_flag rGPR:$Rm))]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
@@ -2498,7 +2568,7 @@ def t2MVNCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
 
 class T2I_movcc_sh<bits<2> opcod, dag oops, dag iops, InstrItinClass itin,
                    string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> {
+  : T2TwoRegShiftImm<oops, iops, itin, opc, asm, pattern> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
@@ -2506,22 +2576,22 @@ class T2I_movcc_sh<bits<2> opcod, dag oops, dag iops, InstrItinClass itin,
   let Inst{19-16} = 0b1111; // Rn
   let Inst{5-4} = opcod; // Shift type.
 }
-def t2MOVCClsl : T2I_movcc_sh<0b00, (outs rGPR:$dst),
-                             (ins rGPR:$false, rGPR:$true, i32imm:$rhs),
-                             IIC_iCMOVsi, "lsl", ".w\t$dst, $true, $rhs", []>,
-                 RegConstraint<"$false = $dst">;
-def t2MOVCClsr : T2I_movcc_sh<0b01, (outs rGPR:$dst),
-                             (ins rGPR:$false, rGPR:$true, i32imm:$rhs),
-                             IIC_iCMOVsi, "lsr", ".w\t$dst, $true, $rhs", []>,
-                 RegConstraint<"$false = $dst">;
-def t2MOVCCasr : T2I_movcc_sh<0b10, (outs rGPR:$dst),
-                             (ins rGPR:$false, rGPR:$true, i32imm:$rhs),
-                             IIC_iCMOVsi, "asr", ".w\t$dst, $true, $rhs", []>,
-                 RegConstraint<"$false = $dst">;
-def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$dst),
-                             (ins rGPR:$false, rGPR:$true, i32imm:$rhs),
-                             IIC_iCMOVsi, "ror", ".w\t$dst, $true, $rhs", []>,
-                 RegConstraint<"$false = $dst">;
+def t2MOVCClsl : T2I_movcc_sh<0b00, (outs rGPR:$Rd),
+                             (ins rGPR:$false, rGPR:$Rm, i32imm:$imm),
+                             IIC_iCMOVsi, "lsl", ".w\t$Rd, $Rm, $imm", []>,
+                 RegConstraint<"$false = $Rd">;
+def t2MOVCClsr : T2I_movcc_sh<0b01, (outs rGPR:$Rd),
+                             (ins rGPR:$false, rGPR:$Rm, i32imm:$imm),
+                             IIC_iCMOVsi, "lsr", ".w\t$Rd, $Rm, $imm", []>,
+                 RegConstraint<"$false = $Rd">;
+def t2MOVCCasr : T2I_movcc_sh<0b10, (outs rGPR:$Rd),
+                             (ins rGPR:$false, rGPR:$Rm, i32imm:$imm),
+                             IIC_iCMOVsi, "asr", ".w\t$Rd, $Rm, $imm", []>,
+                 RegConstraint<"$false = $Rd">;
+def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$Rd),
+                             (ins rGPR:$false, rGPR:$Rm, i32imm:$imm),
+                             IIC_iCMOVsi, "ror", ".w\t$Rd, $Rm, $imm", []>,
+                 RegConstraint<"$false = $Rd">;
 } // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
