@@ -52,15 +52,14 @@ namespace llvm {
     /// "Lfoo" or ".foo".
     unsigned IsTemporary : 1;
 
-    /// IsUsedInExpr - True if this symbol has been used in an expression and
-    /// cannot be redefined.
-    unsigned IsUsedInExpr : 1;
+    /// IsUsed - True if this symbol has been used.
+    mutable unsigned IsUsed : 1;
 
   private:  // MCContext creates and uniques these.
     friend class MCContext;
     MCSymbol(StringRef name, bool isTemporary)
       : Name(name), Section(0), Value(0),
-        IsTemporary(isTemporary), IsUsedInExpr(false) {}
+        IsTemporary(isTemporary), IsUsed(false) {}
 
     MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT
     void operator=(const MCSymbol&); // DO NOT IMPLEMENT
@@ -74,9 +73,9 @@ namespace llvm {
     /// isTemporary - Check if this is an assembler temporary symbol.
     bool isTemporary() const { return IsTemporary; }
 
-    /// isUsedInExpr - Check if this is an assembler temporary symbol.
-    bool isUsedInExpr() const { return IsUsedInExpr; }
-    void setUsedInExpr(bool Value) { IsUsedInExpr = Value; }
+    /// isUsed - Check if this is used.
+    bool isUsed() const { return IsUsed; }
+    void setUsed(bool Value) const { IsUsed = Value; }
 
     /// @}
     /// @name Associated Sections
@@ -135,6 +134,7 @@ namespace llvm {
     /// getValue() - Get the value for variable symbols.
     const MCExpr *getVariableValue() const {
       assert(isVariable() && "Invalid accessor!");
+      IsUsed = true;
       return Value;
     }
 

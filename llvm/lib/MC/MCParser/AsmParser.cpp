@@ -485,9 +485,6 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     std::pair<StringRef, StringRef> Split = Identifier.split('@');
     MCSymbol *Sym = getContext().GetOrCreateSymbol(Split.first);
 
-    // Mark the symbol as used in an expression.
-    Sym->setUsedInExpr(true);
-
     // Lookup the symbol variant if used.
     MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
     if (Split.first.size() != Identifier.size()) {
@@ -1191,6 +1188,25 @@ void AsmParser::HandleMacroExit() {
   ActiveMacros.pop_back();
 }
 
+static void MarkUsed(const MCExpr *Value) {
+  switch (Value->getKind()) {
+  case MCExpr::Binary:
+    MarkUsed(static_cast<const MCBinaryExpr*>(Value)->getLHS());
+    MarkUsed(static_cast<const MCBinaryExpr*>(Value)->getRHS());
+    break;
+  case MCExpr::Target:
+  case MCExpr::Constant:
+    break;
+  case MCExpr::SymbolRef: {
+    static_cast<const MCSymbolRefExpr*>(Value)->getSymbol().setUsed(true);
+    break;
+  }
+  case MCExpr::Unary:
+    MarkUsed(static_cast<const MCUnaryExpr*>(Value)->getSubExpr());
+    break;
+  }
+}
+
 bool AsmParser::ParseAssignment(StringRef Name) {
   // FIXME: Use better location, we should use proper tokens.
   SMLoc EqualLoc = Lexer.getLoc();
@@ -1198,6 +1214,8 @@ bool AsmParser::ParseAssignment(StringRef Name) {
   const MCExpr *Value;
   if (ParseExpression(Value))
     return true;
+
+  MarkUsed(Value);
 
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in assignment");
@@ -1213,7 +1231,7 @@ bool AsmParser::ParseAssignment(StringRef Name) {
     //
     // FIXME: Diagnostics. Note the location of the definition as a label.
     // FIXME: Diagnose assignment to protected identifier (e.g., register name).
-    if (Sym->isUndefined() && !Sym->isUsedInExpr())
+    if (Sym->isUndefined() && !Sym->isUsed() && !Sym->isVariable())
       ; // Allow redefinitions of undefined symbols only used in directives.
     else if (!Sym->isUndefined() && !Sym->isAbsolute())
       return Error(EqualLoc, "redefinition of '" + Name + "'");
@@ -1222,12 +1240,13 @@ bool AsmParser::ParseAssignment(StringRef Name) {
     else if (!isa<MCConstantExpr>(Sym->getVariableValue()))
       return Error(EqualLoc, "invalid reassignment of non-absolute variable '" +
                    Name + "'");
+
+    // Don't count these checks as uses.
+    Sym->setUsed(false);
   } else
     Sym = getContext().GetOrCreateSymbol(Name);
 
   // FIXME: Handle '.'.
-
-  Sym->setUsedInExpr(true);
 
   // Do the assignment.
   Out.EmitAssignment(Sym, Value);

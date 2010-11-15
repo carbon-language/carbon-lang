@@ -40,6 +40,7 @@ static bool NameNeedsQuoting(StringRef Str) {
 }
 
 void MCSymbol::setVariableValue(const MCExpr *Value) {
+  assert(!IsUsed && "Cannot set a variable that has already been used.");
   assert(Value && "Invalid variable value!");
   assert((isUndefined() || (isAbsolute() && isa<MCConstantExpr>(Value))) &&
          "Invalid redefinition!");
