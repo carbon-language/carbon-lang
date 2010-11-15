@@ -177,6 +177,10 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   DeclContext::decl_iterator *DI_current;
   DeclContext::decl_iterator DE_current;
 
+  // Cache of pre-allocated worklists for data-recursion walk of Stmts.
+  llvm::SmallVector<VisitorWorkList*, 5> WorkListFreeList;
+  llvm::SmallVector<VisitorWorkList*, 5> WorkListCache;
+
   using DeclVisitor<CursorVisitor, bool>::Visit;
   using TypeLocVisitor<CursorVisitor, bool>::Visit;
   using StmtVisitor<CursorVisitor, bool>::Visit;
@@ -221,6 +225,14 @@ public:
     Parent.data[1] = 0;
     Parent.data[2] = 0;
     StmtParent = 0;
+  }
+
+  ~CursorVisitor() {
+    // Free the pre-allocated worklists for data-recursion.
+    for (llvm::SmallVectorImpl<VisitorWorkList*>::iterator
+          I = WorkListCache.begin(), E = WorkListCache.end(); I != E; ++I) {
+      delete *I;
+    }
   }
 
   ASTUnit *getASTUnit() const { return TU; }
@@ -2019,9 +2031,20 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
 }
 
 bool CursorVisitor::VisitDataRecursive(Stmt *S) {
-  VisitorWorkList WL;
-  EnqueueWorkList(WL, S);
-  return RunVisitorWorkList(WL);
+  VisitorWorkList *WL = 0;
+  if (!WorkListFreeList.empty()) {
+    WL = WorkListFreeList.back();
+    WL->clear();
+    WorkListFreeList.pop_back();
+  }
+  else {
+    WL = new VisitorWorkList();
+    WorkListCache.push_back(WL);
+  }
+  EnqueueWorkList(*WL, S);
+  bool result = RunVisitorWorkList(*WL);
+  WorkListFreeList.push_back(WL);
+  return result;
 }
 
 //===----------------------------------------------------------------------===//
