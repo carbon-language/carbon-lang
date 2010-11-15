@@ -3207,6 +3207,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const Driver &D = ToolChain.getDriver();
   ArgStringList CmdArgs;
 
+  // Silence warning for "clang -g foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_g_Group);
+
   if (Arg *A = Args.getLastArg(options::OPT__sysroot_EQ)) {
     CmdArgs.push_back("--sysroot");
     CmdArgs.push_back(A->getValue(Args));
