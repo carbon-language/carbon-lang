@@ -42,6 +42,7 @@
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Threading.h"
+#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 using namespace clang::cxcursor;
@@ -328,7 +329,7 @@ public:
   bool IsInRegionOfInterest(CXCursor C);
   bool RunVisitorWorkList(VisitorWorkList &WL);
   void EnqueueWorkList(VisitorWorkList &WL, Stmt *S);
-  bool VisitDataRecursive(Stmt *S) __attribute__((noinline));
+  bool VisitDataRecursive(Stmt *S) LLVM_ATTRIBUTE_NOINLINE;
 };
 
 } // end anonymous namespace
