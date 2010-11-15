@@ -48,17 +48,17 @@ public:
     // around that does use it, and that needs to continue to work.
     if (isDarwinABI)
       return isPPC64 ? -8U : -4U;
-    
+
     // SVR4 ABI: First slot in the general register save area.
     return isPPC64 ? -8U : -4U;
   }
-  
+
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
   ///
   static unsigned getLinkageSize(bool isPPC64, bool isDarwinABI) {
     if (isDarwinABI || isPPC64)
       return 6 * (isPPC64 ? 8 : 4);
-    
+
     // SVR4 ABI:
     return 8;
   }
@@ -74,7 +74,7 @@ public:
     // least enough stack space for the caller to store the 8 GPRs.
     if (isDarwinABI || isPPC64)
       return 8 * (isPPC64 ? 8 : 4);
-    
+
     // 32-bit SVR4 ABI:
     // There is no default stack allocated for the 8 first GPR arguments.
     return 0;
