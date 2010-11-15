@@ -16,14 +16,10 @@
 #include "PPCPredicates.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-//#include "llvm/MC/MCAsmInfo.h"
-//#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 #define GET_INSTRUCTION_NAME
-#define PPCAsmPrinter PPCInstPrinter
-#define MachineInstr MCInst
 #include "PPCGenAsmWriter.inc"
 
 StringRef PPCInstPrinter::getOpcodeName(unsigned Opcode) const {
@@ -32,8 +28,6 @@ StringRef PPCInstPrinter::getOpcodeName(unsigned Opcode) const {
 
 
 void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
-  // TODO: pseudo ops.
-  
   // Check for slwi/srwi mnemonics.
   if (MI->getOpcode() == PPC::RLWINM) {
     unsigned char SH = MI->getOperand(2).getImm();

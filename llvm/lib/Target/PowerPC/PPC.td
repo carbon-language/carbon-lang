@@ -99,8 +99,14 @@ def PPCInstrInfo : InstrInfo {
   let isLittleEndianEncoding = 1;
 }
 
+def PPCAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
+}
 
 def PPC : Target {
   // Information about the instructions.
   let InstructionSet = PPCInstrInfo;
+  
+  let AssemblyWriters = [PPCAsmWriter];
 }
