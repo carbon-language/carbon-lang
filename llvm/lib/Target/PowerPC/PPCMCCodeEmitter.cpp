@@ -56,12 +56,14 @@ public:
            "Invalid kind!");
     return Infos[Kind - FirstTargetFixupKind];
   }
-  
+
+  unsigned get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
+                               SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getMachineOpValue - Return binary encoding of operand. If the machine
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
                              SmallVectorImpl<MCFixup> &Fixups) const;
-    
   
   // getBinaryCodeForInstr - TableGen'erated function for getting the
   // binary encoding for an instruction.
@@ -90,10 +92,22 @@ MCCodeEmitter *llvm::createPPCMCCodeEmitter(const Target &, TargetMachine &TM,
 }
 
 unsigned PPCMCCodeEmitter::
+get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
+                    SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  assert((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFOCRF) &&
+         (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7));
+  return 0x80 >> PPCRegisterInfo::getRegisterNumbering(MO.getReg());
+}
+
+
+unsigned PPCMCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                   SmallVectorImpl<MCFixup> &Fixups) const {
-  if (MO.isReg())
+  if (MO.isReg()) {
+    assert(MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF);
     return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
+  }
   
   if (MO.isImm())
     return MO.getImm();

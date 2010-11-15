@@ -58,6 +58,8 @@ namespace {
     unsigned getMachineOpValue(const MachineInstr &MI,
                                const MachineOperand &MO) const;
 
+    unsigned get_crbitm_encoding(const MachineInstr &MI, unsigned OpNo) const;
+    
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
 
     /// runOnMachineFunction - emits the given MachineFunction to memory
@@ -124,24 +126,29 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   }
 }
 
+unsigned PPCCodeEmitter::get_crbitm_encoding(const MachineInstr &MI,
+                                             unsigned OpNo) const {
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  assert((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFOCRF) &&
+         (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7));
+  return 0x80 >> PPCRegisterInfo::getRegisterNumbering(MO.getReg());
+}
+
+
 unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                            const MachineOperand &MO) const {
 
   unsigned rv = 0; // Return value; defaults to 0 for unhandled cases
                    // or things that get fixed up later by the JIT.
   if (MO.isReg()) {
-    rv = PPCRegisterInfo::getRegisterNumbering(MO.getReg());
-
-    // Special encoding for MTCRF and MFOCRF, which uses a bit mask for the
-    // register, not the register number directly.
-    if ((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFOCRF) &&
-        (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7)) {
-      rv = 0x80 >> rv;
-    }
-  } else if (MO.isImm()) {
-    rv = MO.getImm();
-  } else if (MO.isGlobal() || MO.isSymbol() ||
-             MO.isCPI() || MO.isJTI()) {
+    assert(MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF);
+    return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
+  }
+  
+  if (MO.isImm())
+    return MO.getImm();
+  
+  if (MO.isGlobal() || MO.isSymbol() || MO.isCPI() || MO.isJTI()) {
     unsigned Reloc = 0;
     if (MI.getOpcode() == PPC::BL_Darwin || MI.getOpcode() == PPC::BL8_Darwin ||
         MI.getOpcode() == PPC::BL_SVR4 || MI.getOpcode() == PPC::BL8_ELF ||

@@ -304,6 +304,7 @@ def symbolLo: Operand<i32> {
 }
 def crbitm: Operand<i8> {
   let PrintMethod = "printcrbitm";
+  let EncoderMethod = "get_crbitm_encoding";
 }
 // Address operands
 def memri : Operand<iPTR> {
