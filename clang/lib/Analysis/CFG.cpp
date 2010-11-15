@@ -1204,7 +1204,8 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
       // want the first predecessor to the the block containing the expression
       // for the case when the ternary expression evaluates to true.
       AddSuccessor(Block, ConfluenceBlock);
-      assert(ConfluenceBlock->pred_size() == 2);
+      // Note that there can possibly only be one predecessor if one of the
+      // subexpressions resulted in calling a noreturn function.
       std::reverse(ConfluenceBlock->pred_begin(),
                    ConfluenceBlock->pred_end());
     }

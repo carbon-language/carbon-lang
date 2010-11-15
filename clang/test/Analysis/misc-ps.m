@@ -1203,3 +1203,12 @@ Val8663544 bazR8663544() {
   return func();
 }
 
+// PR 8619 - Handle ternary expressions with a call to a noreturn function.
+// This previously resulted in a crash.
+void pr8619_noreturn(int x) __attribute__((noreturn));
+
+void pr8619(int a, int b, int c) {
+  a ?: pr8619_noreturn(b || c);
+}
+
+
