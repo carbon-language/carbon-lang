@@ -929,6 +929,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::t2BR_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
+    // FIXME: The branch instruction is really a pseudo. We should xform it
+    // explicitly.
     LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
     EmitJump2Table(MI);
@@ -940,6 +942,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::BR_JTadd: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
+    // FIXME: The branch instruction is really a pseudo. We should xform it
+    // explicitly.
     LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
     EmitJumpTable(MI);
