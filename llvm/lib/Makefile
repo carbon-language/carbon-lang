@@ -11,7 +11,7 @@ LEVEL = ..
 include $(LEVEL)/Makefile.config
 
 PARALLEL_DIRS := VMCore AsmParser Bitcode Archive Analysis Transforms CodeGen \
-                Target ExecutionEngine Linker MC CompilerDriver
+                Target ExecutionEngine Linker MC CompilerDriver Object
 
 include $(LEVEL)/Makefile.common
 

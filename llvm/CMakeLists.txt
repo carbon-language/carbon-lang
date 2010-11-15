@@ -315,6 +315,7 @@ add_subdirectory(lib/Analysis/IPA)
 add_subdirectory(lib/MC)
 add_subdirectory(lib/MC/MCParser)
 add_subdirectory(lib/MC/MCDisassembler)
+add_subdirectory(lib/Object)
 
 add_subdirectory(utils/FileCheck)
 add_subdirectory(utils/count)
