@@ -602,12 +602,10 @@ public:
 
   /// OptimizeCompareInstr - See if the comparison instruction can be converted
   /// into something more efficient. E.g., on ARM most instructions can set the
-  /// flags register, obviating the need for a separate CMP. Update the iterator
-  /// *only* if a transformation took place.
+  /// flags register, obviating the need for a separate CMP.
   virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr,
                                     unsigned SrcReg, int Mask, int Value,
-                                    const MachineRegisterInfo *MRI,
-                                    MachineBasicBlock::iterator &) const {
+                                    const MachineRegisterInfo *MRI) const {
     return false;
   }
 

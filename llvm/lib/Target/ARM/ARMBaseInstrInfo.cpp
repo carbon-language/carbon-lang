@@ -1484,12 +1484,10 @@ static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
 }
 
 /// OptimizeCompareInstr - Convert the instruction supplying the argument to the
-/// comparison into one that sets the zero bit in the flags register. Update the
-/// iterator *only* if a transformation took place.
+/// comparison into one that sets the zero bit in the flags register.
 bool ARMBaseInstrInfo::
 OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
-                     int CmpValue, const MachineRegisterInfo *MRI,
-                     MachineBasicBlock::iterator &MII) const {
+                     int CmpValue, const MachineRegisterInfo *MRI) const {
   if (CmpValue != 0)
     return false;
 
@@ -1561,7 +1559,6 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
     MI->RemoveOperand(5);
     MachineInstrBuilder(MI)
       .addReg(ARM::CPSR, RegState::Define | RegState::Implicit);
-    MII = llvm::next(MachineBasicBlock::iterator(CmpInstr));
     CmpInstr->eraseFromParent();
     return true;
   }

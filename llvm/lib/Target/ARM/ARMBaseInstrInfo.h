@@ -344,8 +344,7 @@ public:
   /// that we can remove a "comparison with zero".
   virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
                                     int CmpMask, int CmpValue,
-                                    const MachineRegisterInfo *MRI,
-                                    MachineBasicBlock::iterator &MII) const;
+                                    const MachineRegisterInfo *MRI) const;
 
   virtual unsigned getNumMicroOps(const InstrItineraryData *ItinData,
                                   const MachineInstr *MI) const;

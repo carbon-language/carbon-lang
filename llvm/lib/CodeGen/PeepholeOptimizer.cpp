@@ -82,8 +82,7 @@ namespace {
     }
 
   private:
-    bool OptimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB,
-                          MachineBasicBlock::iterator &MII);
+    bool OptimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB);
     bool OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                           SmallPtrSet<MachineInstr*, 8> &LocalMIs);
   };
@@ -112,12 +111,10 @@ FunctionPass *llvm::createPeepholeOptimizerPass() {
 bool PeepholeOptimizer::
 OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                  SmallPtrSet<MachineInstr*, 8> &LocalMIs) {
-  LocalMIs.insert(MI);
-
   unsigned SrcReg, DstReg, SubIdx;
   if (!TII->isCoalescableExtInstr(*MI, SrcReg, DstReg, SubIdx))
     return false;
-
+  
   if (TargetRegisterInfo::isPhysicalRegister(DstReg) ||
       TargetRegisterInfo::isPhysicalRegister(SrcReg))
     return false;
@@ -242,8 +239,7 @@ OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
 /// set) the same flag as the compare, then we can remove the comparison and use
 /// the flag from the previous instruction.
 bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
-                                         MachineBasicBlock *MBB,
-                                         MachineBasicBlock::iterator &NextIter){
+                                         MachineBasicBlock *MBB){
   // If this instruction is a comparison against zero and isn't comparing a
   // physical register, we can try to optimize it.
   unsigned SrcReg;
@@ -253,7 +249,7 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
     return false;
 
   // Attempt to optimize the comparison instruction.
-  if (TII->OptimizeCompareInstr(MI, SrcReg, CmpMask, CmpValue, MRI, NextIter)) {
+  if (TII->OptimizeCompareInstr(MI, SrcReg, CmpMask, CmpValue, MRI)) {
     ++NumEliminated;
     return true;
   }
@@ -262,6 +258,9 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
 }
 
 bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
+  if (DisablePeephole)
+    return false;
+  
   TM  = &MF.getTarget();
   TII = TM->getInstrInfo();
   MRI = &MF.getRegInfo();
@@ -276,17 +275,16 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
     for (MachineBasicBlock::iterator
            MII = I->begin(), MIE = I->end(); MII != MIE; ) {
-      MachineInstr *MI = &*MII;
+      MachineInstr *MI = &*MII++;
+      LocalMIs.insert(MI);
 
-      if (MI->getDesc().isCompare() &&
-          !MI->getDesc().hasUnmodeledSideEffects()) {
-        if (!DisablePeephole && OptimizeCmpInstr(MI, MBB, MII))
-          Changed = true;
-        else
-          ++MII;
+      if (MI->getDesc().hasUnmodeledSideEffects())
+        continue;
+
+      if (MI->getDesc().isCompare()) {
+        Changed |= OptimizeCmpInstr(MI, MBB);
       } else {
         Changed |= OptimizeExtInstr(MI, MBB, LocalMIs);
-        ++MII;
       }
     }
   }
