@@ -43,8 +43,8 @@ L2:                                               ; preds = %L3, %bb2
 
 L1:                                               ; preds = %L2, %bb2
   %res.3 = phi i32 [ %phitmp, %L2 ], [ 2, %bb2 ]  ; <i32> [#uses=1]
-; PIC: addis r4, r4, ha16(Ltmp0-"L0$pb")
-; PIC: li r6, lo16(Ltmp0-"L0$pb")
+; PIC: addis r4, r4, ha16(Ltmp0-L0$pb)
+; PIC: li r6, lo16(Ltmp0-L0$pb)
 ; PIC: add r4, r4, r6
 ; PIC: stw r4
 ; STATIC: li r5, lo16(Ltmp0)

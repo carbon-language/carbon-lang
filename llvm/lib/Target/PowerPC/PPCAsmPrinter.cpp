@@ -254,7 +254,7 @@ namespace {
         if (Subtarget.isDarwin()) O << "ha16(";
         printOp(MI->getOperand(OpNo), O);
         if (TM.getRelocationModel() == Reloc::PIC_)
-          O << "-\"L" << getFunctionNumber() << "$pb\"";
+          O << "-L" << getFunctionNumber() << "$pb";
         if (Subtarget.isDarwin())
           O << ')';
         else
@@ -268,7 +268,7 @@ namespace {
         if (Subtarget.isDarwin()) O << "lo16(";
         printOp(MI->getOperand(OpNo), O);
         if (TM.getRelocationModel() == Reloc::PIC_)
-          O << "-\"L" << getFunctionNumber() << "$pb\"";
+          O << "-L" << getFunctionNumber() << "$pb";
         if (Subtarget.isDarwin())
           O << ')';
         else
