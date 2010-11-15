@@ -41,7 +41,7 @@ class InitHeaderSearch {
   std::vector<DirectoryLookup> IncludeGroup[4];
   HeaderSearch& Headers;
   bool Verbose;
-  std::string isysroot;
+  llvm::sys::Path isysroot;
 
 public:
 
@@ -103,14 +103,15 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
 
   // Compute the actual path, taking into consideration -isysroot.
   llvm::SmallString<256> MappedPathStorage;
-  llvm::StringRef MappedPath = Path.toStringRef(MappedPathStorage);
+  llvm::StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
+  llvm::sys::Path MappedPath(MappedPathStr);
 
   // Handle isysroot.
-  if (Group == System && !IgnoreSysRoot && MappedPath[0] == '/') {
-    // FIXME: Portability.  This should be a sys::Path interface, this doesn't
-    // handle things like C:\ right, nor win32 \\network\device\blah.
-    if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.
-      MappedPath = (isysroot + Path).toStringRef(MappedPathStorage);
+  if (Group == System && !IgnoreSysRoot && MappedPath.isAbsolute()) {
+    // Prepend isysroot if present.
+    if (isysroot.isValid() && isysroot.isAbsolute() &&
+        isysroot != llvm::sys::Path::GetRootDirectory())
+      MappedPathStr = (isysroot.str() + Path).toStringRef(MappedPathStorage);
   }
 
   // Compute the DirectoryLookup type.
@@ -124,7 +125,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
 
 
   // If the directory exists, add it.
-  if (const DirectoryEntry *DE = FM.getDirectory(MappedPath, FSOpts)) {
+  if (const DirectoryEntry *DE = FM.getDirectory(MappedPathStr, FSOpts)) {
     IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
                                                   isFramework));
     return;
@@ -133,7 +134,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   // Check to see if this is an apple-style headermap (which are not allowed to
   // be frameworks).
   if (!isFramework) {
-    if (const FileEntry *FE = FM.getFile(MappedPath, FSOpts)) {
+    if (const FileEntry *FE = FM.getFile(MappedPathStr, FSOpts)) {
       if (const HeaderMap *HM = Headers.CreateHeaderMap(FE)) {
         // It is a headermap, add it to the search path.
         IncludeGroup[Group].push_back(DirectoryLookup(HM, Type,isUserSupplied));
@@ -143,7 +144,8 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   }
 
   if (Verbose)
-    llvm::errs() << "ignoring nonexistent directory \"" << MappedPath << "\"\n";
+    llvm::errs() << "ignoring nonexistent directory \""
+                 << MappedPathStr << "\"\n";
 }
 
 
