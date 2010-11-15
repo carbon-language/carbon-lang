@@ -15,6 +15,8 @@
 #ifndef LLVM_TARGET_POWERPC_H
 #define LLVM_TARGET_POWERPC_H
 
+#include <string>
+
 // GCC #defines PPC on Linux but we use it as our namespace name
 #undef PPC
 
@@ -30,6 +32,7 @@ namespace llvm {
   class MCCodeEmitter;
   class MCContext;
   class TargetMachine;
+  class TargetAsmBackend;
   
   FunctionPass *createPPCBranchSelectionPass();
   FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
@@ -37,6 +40,7 @@ namespace llvm {
                                             JITCodeEmitter &MCE);
   MCCodeEmitter *createPPCMCCodeEmitter(const Target &, TargetMachine &TM,
                                         MCContext &Ctx);
+  TargetAsmBackend *createPPCAsmBackend(const Target &, const std::string &);
   
   void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                     AsmPrinter &AP);

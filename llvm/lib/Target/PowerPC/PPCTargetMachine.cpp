@@ -15,6 +15,7 @@
 #include "PPCMCAsmInfo.h"
 #include "PPCTargetMachine.h"
 #include "llvm/PassManager.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/FormattedStream.h"
@@ -29,6 +30,20 @@ static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   
 }
 
+// This is duplicated code. Refactor this.
+static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
+                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    raw_ostream &OS,
+                                    MCCodeEmitter *Emitter,
+                                    bool RelaxAll) {
+  switch (Triple(TT).getOS()) {
+  case Triple::Darwin:
+    return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
+  default:
+    return NULL;
+  }
+}
+
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);  
@@ -40,6 +55,15 @@ extern "C" void LLVMInitializePowerPCTarget() {
   // Register the MC Code Emitter
   TargetRegistry::RegisterCodeEmitter(ThePPC32Target, createPPCMCCodeEmitter);
   TargetRegistry::RegisterCodeEmitter(ThePPC64Target, createPPCMCCodeEmitter);
+  
+  
+  // Register the asm backend.
+  TargetRegistry::RegisterAsmBackend(ThePPC32Target, createPPCAsmBackend);
+  TargetRegistry::RegisterAsmBackend(ThePPC64Target, createPPCAsmBackend);
+  
+  // Register the object streamer.
+  TargetRegistry::RegisterObjectStreamer(ThePPC32Target, createMCStreamer);
+  TargetRegistry::RegisterObjectStreamer(ThePPC64Target, createMCStreamer);
 }
 
 

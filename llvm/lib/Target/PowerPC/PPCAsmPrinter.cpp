@@ -438,7 +438,10 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (Subtarget.isPPC64() && Directive < PPC::DIR_970)
     Directive = PPC::DIR_64;
   assert(Directive <= PPC::DIR_64 && "Directive out of range.");
-  OutStreamer.EmitRawText("\t.machine " + Twine(CPUDirectives[Directive]));
+  
+  // FIXME: This is a total hack, finish mc'izing the PPC backend.
+  if (OutStreamer.hasRawTextSupport())
+    OutStreamer.EmitRawText("\t.machine " + Twine(CPUDirectives[Directive]));
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.

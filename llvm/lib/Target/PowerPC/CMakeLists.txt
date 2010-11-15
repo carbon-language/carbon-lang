@@ -13,6 +13,7 @@ tablegen(PPCGenCallingConv.inc -gen-callingconv)
 tablegen(PPCGenSubtarget.inc -gen-subtarget)
 
 add_llvm_target(PowerPCCodeGen
+  PPCAsmBackend.cpp
   PPCAsmPrinter.cpp
   PPCBranchSelector.cpp
   PPCCodeEmitter.cpp
