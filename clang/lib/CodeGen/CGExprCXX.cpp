@@ -361,9 +361,8 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtor(llvm::Value *Dest,
   if (E->requiresZeroInitialization())
     EmitNullInitialization(Dest, E->getType());
   
-  const ConstantArrayType *Array 
-    = getContext().getAsConstantArrayType(E->getType());
-  assert (!Array && "EmitSynthesizedCXXCopyCtor - Copied-in Array");
+  assert(!getContext().getAsConstantArrayType(E->getType())
+         && "EmitSynthesizedCXXCopyCtor - Copied-in Array");
   EmitSynthesizedCXXCopyCtorCall(CD, Dest, Src,
                                  E->arg_begin(), E->arg_end());
 }
