@@ -39,7 +39,6 @@ BuildDescriptorBlockDecl(const BlockExpr *BE, const CGBlockInfo &Info,
                          const llvm::StructType* Ty,
                          llvm::Constant *BlockVarLayout,
                          std::vector<HelperInfo> *NoteForHelper) {
-  bool BlockHasCopyDispose = Info.BlockHasCopyDispose;
   CharUnits Size = Info.BlockSize;
   const llvm::Type *UnsignedLongTy
     = CGM.getTypes().ConvertType(getContext().UnsignedLongTy);
@@ -58,7 +57,7 @@ BuildDescriptorBlockDecl(const BlockExpr *BE, const CGBlockInfo &Info,
   Elts.push_back(C);
 
   // optional copy/dispose helpers
-  if (BlockHasCopyDispose) {
+  if (Info.BlockHasCopyDispose) {
     // copy_func_helper_decl
     Elts.push_back(BuildCopyHelper(Ty, NoteForHelper));
 
@@ -218,7 +217,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       = CodeGenFunction(CGM).GenerateBlockFunction(CurGD, BE, Info, CurFuncDecl,
                                                    BlockVarLayout,
                                                    LocalDeclMap);
-    BlockHasCopyDispose |= Info.BlockHasCopyDispose;
+    SynthesizeCopyDisposeHelpers |= Info.BlockHasCopyDispose;
     Elts[3] = Fn;
 
     // FIXME: Don't use BlockHasCopyDispose, it is set more often then
@@ -569,10 +568,9 @@ void CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
     return;
 
   // Don't run the expensive check, unless we have to.
-  if (!BlockHasCopyDispose)
-    if (E->isByRef()
-        || BlockRequiresCopying(E))
-      BlockHasCopyDispose = true;
+  if (!SynthesizeCopyDisposeHelpers)
+    if (E->isByRef() || BlockRequiresCopying(E))
+      SynthesizeCopyDisposeHelpers = true;
 
   const ValueDecl *D = cast<ValueDecl>(E->getDecl());
 
@@ -605,7 +603,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const ValueDecl *VD,
     const llvm::Type *PtrStructTy
       = llvm::PointerType::get(BuildByRefType(VD), 0);
     // The block literal will need a copy/destroy helper.
-    BlockHasCopyDispose = true;
+    SynthesizeCopyDisposeHelpers = true;
     
     const llvm::Type *Ty = PtrStructTy;
     Ty = llvm::PointerType::get(Ty, 0);
@@ -776,8 +774,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
   else
     BlockVarLayout = llvm::Constant::getNullValue(PtrToInt8Ty);
   
-  QualType ParmTy = getContext().getBlockParmType(BlockHasCopyDispose,
-                                                  BlockLayout);
+  QualType ParmTy = getContext().getBlockParmType(
+                                        SynthesizeCopyDisposeHelpers,
+                                        BlockLayout);
 
   // FIXME: This leaks
   ImplicitParamDecl *SelfDecl =
@@ -907,7 +906,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
   Info.BlockSize = BlockOffset;
   Info.BlockAlign = BlockAlign;
   Info.BlockLayout = BlockLayout;
-  Info.BlockHasCopyDispose = BlockHasCopyDispose;
+  Info.BlockHasCopyDispose = SynthesizeCopyDisposeHelpers;
   return Fn;
 }
 
@@ -942,7 +941,7 @@ CharUnits BlockFunction::getBlockOffset(CharUnits Size, CharUnits Align) {
 }
 
 llvm::Constant *BlockFunction::
-GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
+GenerateCopyHelperFunction(const llvm::StructType *T,
                            std::vector<HelperInfo> *NoteForHelperp) {
   QualType R = getContext().VoidTy;
 
@@ -1031,8 +1030,7 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
 }
 
 llvm::Constant *BlockFunction::
-GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
-                              const llvm::StructType* T,
+GenerateDestroyHelperFunction(const llvm::StructType* T,
                               std::vector<HelperInfo> *NoteForHelperp) {
   QualType R = getContext().VoidTy;
 
@@ -1112,14 +1110,12 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
 
 llvm::Constant *BlockFunction::BuildCopyHelper(const llvm::StructType *T,
                                        std::vector<HelperInfo> *NoteForHelper) {
-  return CodeGenFunction(CGM).GenerateCopyHelperFunction(BlockHasCopyDispose,
-                                                         T, NoteForHelper);
+  return CodeGenFunction(CGM).GenerateCopyHelperFunction(T, NoteForHelper);
 }
 
 llvm::Constant *BlockFunction::BuildDestroyHelper(const llvm::StructType *T,
                                       std::vector<HelperInfo> *NoteForHelperp) {
-  return CodeGenFunction(CGM).GenerateDestroyHelperFunction(BlockHasCopyDispose,
-                                                            T, NoteForHelperp);
+  return CodeGenFunction(CGM).GenerateDestroyHelperFunction(T, NoteForHelperp);
 }
 
 llvm::Constant *BlockFunction::
@@ -1293,5 +1289,5 @@ BlockFunction::BlockFunction(CodeGenModule &cgm, CodeGenFunction &cgf,
   PtrToInt8Ty = llvm::PointerType::getUnqual(
             llvm::Type::getInt8Ty(VMContext));
 
-  BlockHasCopyDispose = false;
+  SynthesizeCopyDisposeHelpers = false;
 }

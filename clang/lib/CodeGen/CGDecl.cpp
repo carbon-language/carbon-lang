@@ -687,7 +687,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
     Builder.CreateStore(V, size_field);
 
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
-      BlockHasCopyDispose = true;
+      SynthesizeCopyDisposeHelpers = true;
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
       Builder.CreateStore(BuildbyrefCopyHelper(DeclPtr->getType(), flag, 
                                                Align.getQuantity()),

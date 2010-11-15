@@ -154,8 +154,8 @@ public:
   /// for a value with the given size and alignment requirements.
   CharUnits getBlockOffset(CharUnits Size, CharUnits Align);
 
-  /// BlockHasCopyDispose - True iff the block uses copy/dispose.
-  bool BlockHasCopyDispose;
+  /// SynthesizeCopyDisposeHelpers - True iff the block uses copy/dispose.
+  bool SynthesizeCopyDisposeHelpers;
 
   /// BlockLayout - The layout of the block's storage, represented as
   /// a sequence of expressions which require such storage.  The
@@ -179,9 +179,9 @@ public:
   ImplicitParamDecl *BlockStructDecl;
   ImplicitParamDecl *getBlockStructDecl() { return BlockStructDecl; }
 
-  llvm::Constant *GenerateCopyHelperFunction(bool, const llvm::StructType *,
+  llvm::Constant *GenerateCopyHelperFunction(const llvm::StructType *,
                                              std::vector<HelperInfo> *);
-  llvm::Constant *GenerateDestroyHelperFunction(bool, const llvm::StructType *,
+  llvm::Constant *GenerateDestroyHelperFunction(const llvm::StructType *,
                                                 std::vector<HelperInfo> *);
 
   llvm::Constant *BuildCopyHelper(const llvm::StructType *,
