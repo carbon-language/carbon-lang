@@ -328,7 +328,7 @@ public:
   bool IsInRegionOfInterest(CXCursor C);
   bool RunVisitorWorkList(VisitorWorkList &WL);
   void EnqueueWorkList(VisitorWorkList &WL, Stmt *S);
-  bool VisitDataRecursive(Stmt *S);
+  bool VisitDataRecursive(Stmt *S) __attribute__((noinline));
 };
 
 } // end anonymous namespace
