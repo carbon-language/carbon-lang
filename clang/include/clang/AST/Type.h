@@ -1123,6 +1123,18 @@ public:
   bool isTemplateTypeParmType() const;          // C++ template type parameter
   bool isNullPtrType() const;                   // C++0x nullptr_t
 
+  enum ScalarTypeKind {
+    STK_Pointer,
+    STK_MemberPointer,
+    STK_Bool,
+    STK_Integral,
+    STK_Floating,
+    STK_IntegralComplex,
+    STK_FloatingComplex
+  };
+  /// getScalarTypeKind - Given that this is a scalar type, classify it.
+  ScalarTypeKind getScalarTypeKind() const;
+
   /// isDependentType - Whether this type is a dependent type, meaning
   /// that its definition somehow depends on a template parameter
   /// (C++ [temp.dep.type]).

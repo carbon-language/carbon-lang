@@ -742,6 +742,8 @@ const char *CastExpr::getCastKindName() const {
   switch (getCastKind()) {
   case CK_Unknown:
     return "Unknown";
+  case CK_Dependent:
+    return "Dependent";
   case CK_BitCast:
     return "BitCast";
   case CK_LValueBitCast:
@@ -778,18 +780,24 @@ const char *CastExpr::getCastKindName() const {
     return "IntegralToPointer";
   case CK_PointerToIntegral:
     return "PointerToIntegral";
+  case CK_PointerToBoolean:
+    return "PointerToBoolean";
   case CK_ToVoid:
     return "ToVoid";
   case CK_VectorSplat:
     return "VectorSplat";
   case CK_IntegralCast:
     return "IntegralCast";
+  case CK_IntegralToBoolean:
+    return "IntegralToBoolean";
   case CK_IntegralToFloating:
     return "IntegralToFloating";
   case CK_FloatingToIntegral:
     return "FloatingToIntegral";
   case CK_FloatingCast:
     return "FloatingCast";
+  case CK_FloatingToBoolean:
+    return "FloatingToBoolean";
   case CK_MemberPointerToBoolean:
     return "MemberPointerToBoolean";
   case CK_AnyPointerToObjCPointerCast:

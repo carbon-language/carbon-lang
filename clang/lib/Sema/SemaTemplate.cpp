@@ -3087,7 +3087,10 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       Diag(StartLoc, diag::err_deduced_non_type_template_arg_type_mismatch)
         << ArgType << ParamType;
       Diag(Param->getLocation(), diag::note_template_param_here);
-      return true;      
+      return true;
+    } else if (ParamType->isBooleanType()) {
+      // This is an integral-to-boolean conversion.
+      ImpCastExprToType(Arg, ParamType, CK_IntegralToBoolean);
     } else if (IsIntegralPromotion(Arg, ArgType, ParamType) ||
                !ParamType->isEnumeralType()) {
       // This is an integral promotion or conversion.

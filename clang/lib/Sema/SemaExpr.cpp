@@ -4252,33 +4252,6 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
   return Owned(E);
 }
 
-enum ScalarKind {
-  SK_Pointer,
-  SK_Bool,
-  SK_Integral,
-  SK_Floating,
-  SK_IntegralComplex,
-  SK_FloatingComplex
-};
-static ScalarKind ClassifyScalarType(QualType QT) {
-  assert(QT->isScalarType());
-
-  const Type *T = QT->getCanonicalTypeUnqualified().getTypePtr();
-  if (T->hasPointerRepresentation())
-    return SK_Pointer;
-  if (T->isBooleanType())
-    return SK_Bool;
-  if (T->isRealFloatingType())
-    return SK_Floating;
-  if (const ComplexType *CT = dyn_cast<ComplexType>(T)) {
-    if (CT->getElementType()->isRealFloatingType())
-      return SK_FloatingComplex;
-    return SK_IntegralComplex;
-  }
-  assert(T->isIntegerType());
-  return SK_Integral;
-}
-
 /// Prepares for a scalar cast, performing all the necessary stages
 /// except the final cast and returning the kind required.
 static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
@@ -4290,87 +4263,112 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
   if (S.Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CK_NoOp;
 
-  switch (ClassifyScalarType(SrcTy)) {
-  case SK_Pointer:
-    if (DestTy->isIntegerType())
-      return CK_PointerToIntegral;
-    assert(DestTy->hasPointerRepresentation());
-    return DestTy->isObjCObjectPointerType() ?
+  switch (SrcTy->getScalarTypeKind()) {
+  case Type::STK_MemberPointer:
+    llvm_unreachable("member pointer type in C");
+    
+  case Type::STK_Pointer:
+    switch (DestTy->getScalarTypeKind()) {
+    case Type::STK_Pointer:
+      return DestTy->isObjCObjectPointerType() ?
                 CK_AnyPointerToObjCPointerCast :
                 CK_BitCast;
+    case Type::STK_Bool:
+      return CK_PointerToBoolean;
+    case Type::STK_Integral:
+      return CK_PointerToIntegral;
+    case Type::STK_Floating:
+    case Type::STK_FloatingComplex:
+    case Type::STK_IntegralComplex:
+    case Type::STK_MemberPointer:
+      llvm_unreachable("illegal cast from pointer");
+    }
+    break;
 
-  case SK_Bool: // casting from bool is like casting from an integer
-  case SK_Integral:
-    switch (ClassifyScalarType(DestTy)) {
-    case SK_Pointer:
+  case Type::STK_Bool: // casting from bool is like casting from an integer
+  case Type::STK_Integral:
+    switch (DestTy->getScalarTypeKind()) {
+    case Type::STK_Pointer:
       if (Src->isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNull))
         return CK_NullToPointer;
       return CK_IntegralToPointer;
-
-    case SK_Bool: // TODO: there should be an int->bool cast kind
-    case SK_Integral:
+    case Type::STK_Bool:
+      return CK_IntegralToBoolean;
+    case Type::STK_Integral:
       return CK_IntegralCast;
-    case SK_Floating:
+    case Type::STK_Floating:
       return CK_IntegralToFloating;
-    case SK_IntegralComplex:
+    case Type::STK_IntegralComplex:
       return CK_IntegralRealToComplex;
-    case SK_FloatingComplex:
+    case Type::STK_FloatingComplex:
       S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
                           CK_IntegralToFloating);
       return CK_FloatingRealToComplex;
+    case Type::STK_MemberPointer:
+      llvm_unreachable("member pointer type in C");
     }
     break;
 
-  case SK_Floating:
-    switch (ClassifyScalarType(DestTy)) {
-    case SK_Floating:
+  case Type::STK_Floating:
+    switch (DestTy->getScalarTypeKind()) {
+    case Type::STK_Floating:
       return CK_FloatingCast;
-    case SK_Bool: // TODO: there should be a float->bool cast kind
-    case SK_Integral:
+    case Type::STK_Bool:
+      return CK_FloatingToBoolean;
+    case Type::STK_Integral:
       return CK_FloatingToIntegral;
-    case SK_FloatingComplex:
+    case Type::STK_FloatingComplex:
       return CK_FloatingRealToComplex;
-    case SK_IntegralComplex:
+    case Type::STK_IntegralComplex:
       S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
                           CK_FloatingToIntegral);
       return CK_IntegralRealToComplex;
-    case SK_Pointer: llvm_unreachable("valid float->pointer cast?");
+    case Type::STK_Pointer:
+      llvm_unreachable("valid float->pointer cast?");
+    case Type::STK_MemberPointer:
+      llvm_unreachable("member pointer type in C");
     }
     break;
 
-  case SK_FloatingComplex:
-    switch (ClassifyScalarType(DestTy)) {
-    case SK_FloatingComplex:
+  case Type::STK_FloatingComplex:
+    switch (DestTy->getScalarTypeKind()) {
+    case Type::STK_FloatingComplex:
       return CK_FloatingComplexCast;
-    case SK_IntegralComplex:
+    case Type::STK_IntegralComplex:
       return CK_FloatingComplexToIntegralComplex;
-    case SK_Floating:
+    case Type::STK_Floating:
       return CK_FloatingComplexToReal;
-    case SK_Bool:
+    case Type::STK_Bool:
       return CK_FloatingComplexToBoolean;
-    case SK_Integral:
+    case Type::STK_Integral:
       S.ImpCastExprToType(Src, cast<ComplexType>(SrcTy)->getElementType(),
                           CK_FloatingComplexToReal);
       return CK_FloatingToIntegral;
-    case SK_Pointer: llvm_unreachable("valid complex float->pointer cast?");
+    case Type::STK_Pointer:
+      llvm_unreachable("valid complex float->pointer cast?");
+    case Type::STK_MemberPointer:
+      llvm_unreachable("member pointer type in C");
     }
     break;
 
-  case SK_IntegralComplex:
-    switch (ClassifyScalarType(DestTy)) {
-    case SK_FloatingComplex:
+  case Type::STK_IntegralComplex:
+    switch (DestTy->getScalarTypeKind()) {
+    case Type::STK_FloatingComplex:
       return CK_IntegralComplexToFloatingComplex;
-    case SK_IntegralComplex:
+    case Type::STK_IntegralComplex:
       return CK_IntegralComplexCast;
-    case SK_Integral:
+    case Type::STK_Integral:
       return CK_IntegralComplexToReal;
-    case SK_Bool:
+    case Type::STK_Bool:
       return CK_IntegralComplexToBoolean;
-    case SK_Floating:
+    case Type::STK_Floating:
       S.ImpCastExprToType(Src, cast<ComplexType>(SrcTy)->getElementType(),
                           CK_IntegralComplexToReal);
       return CK_IntegralToFloating;
-    case SK_Pointer: llvm_unreachable("valid complex int->pointer cast?");
+    case Type::STK_Pointer:
+      llvm_unreachable("valid complex int->pointer cast?");
+    case Type::STK_MemberPointer:
+      llvm_unreachable("member pointer type in C");
     }
     break;
   }
@@ -4565,7 +4563,7 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, ParsedType Ty,
 ExprResult
 Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
                           SourceLocation RParenLoc, Expr *castExpr) {
-  CastKind Kind = CK_Unknown;
+  CastKind Kind = CK_Invalid;
   CXXCastPath BasePath;
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), Ty->getType(), castExpr,
                      Kind, BasePath))
@@ -4772,12 +4770,12 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if ((LHSTy->isAnyPointerType() || LHSTy->isBlockPointerType()) &&
       RHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     // promote the null to a pointer.
-    ImpCastExprToType(RHS, LHSTy, CK_Unknown);
+    ImpCastExprToType(RHS, LHSTy, CK_NullToPointer);
     return LHSTy;
   }
   if ((RHSTy->isAnyPointerType() || RHSTy->isBlockPointerType()) &&
       LHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(LHS, RHSTy, CK_Unknown);
+    ImpCastExprToType(LHS, RHSTy, CK_NullToPointer);
     return RHSTy;
   }
 
@@ -5242,21 +5240,26 @@ Sema::CheckObjCPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 /// As a result, the code for dealing with pointers is more complex than the
 /// C99 spec dictates.
 ///
+/// Sets 'Kind' for any result kind except Incompatible.
 Sema::AssignConvertType
-Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
+Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType,
+                                 CastKind &Kind) {
   // Get canonical types.  We're not formatting these types, just comparing
   // them.
   lhsType = Context.getCanonicalType(lhsType).getUnqualifiedType();
   rhsType = Context.getCanonicalType(rhsType).getUnqualifiedType();
 
-  if (lhsType == rhsType)
+  if (lhsType == rhsType) {
+    Kind = CK_NoOp;
     return Compatible; // Common case: fast path an exact match.
+  }
 
   if ((lhsType->isObjCClassType() &&
        (rhsType.getDesugaredType() == Context.ObjCClassRedefinitionType)) ||
      (rhsType->isObjCClassType() &&
        (lhsType.getDesugaredType() == Context.ObjCClassRedefinitionType))) {
-      return Compatible;
+    Kind = CK_BitCast;
+    return Compatible;
   }
 
   // If the left-hand side is a reference type, then we are in a
@@ -5267,17 +5270,21 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   // lhsType so that the resulting expression does not have reference
   // type.
   if (const ReferenceType *lhsTypeRef = lhsType->getAs<ReferenceType>()) {
-    if (Context.typesAreCompatible(lhsTypeRef->getPointeeType(), rhsType))
+    if (Context.typesAreCompatible(lhsTypeRef->getPointeeType(), rhsType)) {
+      Kind = CK_LValueBitCast;
       return Compatible;
+    }
     return Incompatible;
   }
   // Allow scalar to ExtVector assignments, and assignments of an ExtVector type
   // to the same ExtVector type.
   if (lhsType->isExtVectorType()) {
     if (rhsType->isExtVectorType())
-      return lhsType == rhsType ? Compatible : Incompatible;
-    if (rhsType->isArithmeticType())
+      return Incompatible;
+    if (rhsType->isArithmeticType()) {
+      Kind = CK_Unknown; // FIXME: vector splat, requires two casts
       return Compatible;
+    }
   }
 
   if (lhsType->isVectorType() || rhsType->isVectorType()) {
@@ -5286,48 +5293,67 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       // vectors, the total size only needs to be the same. This is a bitcast;
       // no bits are changed but the result type is different.
       if (getLangOptions().LaxVectorConversions &&
-         (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType)))
+          (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))) {
+        Kind = CK_Unknown; // FIXME: vector reinterpret is... bitcast?
         return IncompatibleVectors;
+      }
 
       // Allow assignments of an AltiVec vector type to an equivalent GCC
       // vector type and vice versa
-      if (Context.areCompatibleVectorTypes(lhsType, rhsType))
+      if (Context.areCompatibleVectorTypes(lhsType, rhsType)) {
+        Kind = CK_Unknown; // FIXME: vector conversion
         return Compatible;
+      }
     }
     return Incompatible;
   }
 
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType() &&
-      !(getLangOptions().CPlusPlus && lhsType->isEnumeralType()))
+      !(getLangOptions().CPlusPlus && lhsType->isEnumeralType())) {
+    Kind = CK_Unknown; // FIXME: reuse the cast logic if possible
     return Compatible;
+  }
 
   if (isa<PointerType>(lhsType)) {
-    if (rhsType->isIntegerType())
+    if (rhsType->isIntegerType()) {
+      Kind = CK_IntegralToPointer; // FIXME: null?
       return IntToPointer;
+    }
 
-    if (isa<PointerType>(rhsType))
+    if (isa<PointerType>(rhsType)) {
+      Kind = CK_BitCast;
       return CheckPointerTypesForAssignment(lhsType, rhsType);
+    }
 
     // In general, C pointers are not compatible with ObjC object pointers.
     if (isa<ObjCObjectPointerType>(rhsType)) {
+      Kind = CK_AnyPointerToObjCPointerCast;
       if (lhsType->isVoidPointerType()) // an exception to the rule.
         return Compatible;
       return IncompatiblePointer;
     }
     if (rhsType->getAs<BlockPointerType>()) {
-      if (lhsType->getAs<PointerType>()->getPointeeType()->isVoidType())
+      if (lhsType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
+        Kind = CK_BitCast;
         return Compatible;
+      }
 
       // Treat block pointers as objects.
-      if (getLangOptions().ObjC1 && lhsType->isObjCIdType())
+      if (getLangOptions().ObjC1 && lhsType->isObjCIdType()) {
+        Kind = CK_AnyPointerToObjCPointerCast;
         return Compatible;
+      }
     }
     return Incompatible;
   }
 
   if (isa<BlockPointerType>(lhsType)) {
-    if (rhsType->isIntegerType())
+    if (rhsType->isIntegerType()) {
+      Kind = CK_IntegralToPointer; // FIXME: null
       return IntToBlockPointer;
+    }
+
+    Kind = CK_AnyPointerToObjCPointerCast;
 
     // Treat block pointers as objects.
     if (getLangOptions().ObjC1 && rhsType->isObjCIdType())
@@ -5336,16 +5362,20 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (rhsType->isBlockPointerType())
       return CheckBlockPointerTypesForAssignment(lhsType, rhsType);
 
-    if (const PointerType *RHSPT = rhsType->getAs<PointerType>()) {
+    if (const PointerType *RHSPT = rhsType->getAs<PointerType>())
       if (RHSPT->getPointeeType()->isVoidType())
         return Compatible;
-    }
+
     return Incompatible;
   }
 
   if (isa<ObjCObjectPointerType>(lhsType)) {
-    if (rhsType->isIntegerType())
+    if (rhsType->isIntegerType()) {
+      Kind = CK_IntegralToPointer; // FIXME: null
       return IntToPointer;
+    }
+
+    Kind = CK_BitCast;
 
     // In general, C pointers are not compatible with ObjC object pointers.
     if (isa<PointerType>(rhsType)) {
@@ -5367,27 +5397,36 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   }
   if (isa<PointerType>(rhsType)) {
     // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
-    if (lhsType == Context.BoolTy)
+    if (lhsType == Context.BoolTy) {
+      Kind = CK_PointerToBoolean;
       return Compatible;
+    }
 
-    if (lhsType->isIntegerType())
+    if (lhsType->isIntegerType()) {
+      Kind = CK_PointerToIntegral;
       return PointerToInt;
-
-    if (isa<PointerType>(lhsType))
-      return CheckPointerTypesForAssignment(lhsType, rhsType);
+    }
 
     if (isa<BlockPointerType>(lhsType) &&
-        rhsType->getAs<PointerType>()->getPointeeType()->isVoidType())
+        rhsType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
+      Kind = CK_AnyPointerToBlockPointerCast;
       return Compatible;
+    }
     return Incompatible;
   }
   if (isa<ObjCObjectPointerType>(rhsType)) {
     // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
-    if (lhsType == Context.BoolTy)
+    if (lhsType == Context.BoolTy) {
+      Kind = CK_PointerToBoolean;
       return Compatible;
+    }
 
-    if (lhsType->isIntegerType())
+    if (lhsType->isIntegerType()) {
+      Kind = CK_PointerToIntegral;
       return PointerToInt;
+    }
+
+    Kind = CK_BitCast;
 
     // In general, C pointers are not compatible with ObjC object pointers.
     if (isa<PointerType>(lhsType)) {
@@ -5396,14 +5435,18 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return IncompatiblePointer;
     }
     if (isa<BlockPointerType>(lhsType) &&
-        rhsType->getAs<PointerType>()->getPointeeType()->isVoidType())
+        rhsType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
+      Kind = CK_AnyPointerToBlockPointerCast;
       return Compatible;
+    }
     return Incompatible;
   }
 
   if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
-    if (Context.typesAreCompatible(lhsType, rhsType))
+    if (Context.typesAreCompatible(lhsType, rhsType)) {
+      Kind = CK_NoOp;
       return Compatible;
+    }
   }
   return Incompatible;
 }
@@ -5463,9 +5506,10 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
       }
     }
 
-    if (CheckAssignmentConstraints(it->getType(), rExpr->getType())
+    CastKind Kind = CK_Invalid;
+    if (CheckAssignmentConstraints(it->getType(), rExpr->getType(), Kind)
           == Compatible) {
-      ImpCastExprToType(rExpr, it->getType(), CK_Unknown);
+      ImpCastExprToType(rExpr, it->getType(), Kind);
       InitField = *it;
       break;
     }
@@ -5502,7 +5546,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
        lhsType->isBlockPointerType())
       && rExpr->isNullPointerConstant(Context,
                                       Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(rExpr, lhsType, CK_Unknown);
+    ImpCastExprToType(rExpr, lhsType, CK_NullToPointer);
     return Compatible;
   }
 
@@ -5515,8 +5559,9 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   if (!lhsType->isReferenceType())
     DefaultFunctionArrayLvalueConversion(rExpr);
 
+  CastKind Kind = CK_Invalid;
   Sema::AssignConvertType result =
-    CheckAssignmentConstraints(lhsType, rExpr->getType());
+    CheckAssignmentConstraints(lhsType, rExpr->getType(), Kind);
 
   // C99 6.5.16.1p2: The value of the right operand is converted to the
   // type of the assignment expression.
@@ -5525,8 +5570,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // The getNonReferenceType() call makes sure that the resulting expression
   // does not have reference type.
   if (result != Incompatible && rExpr->getType() != lhsType)
-    ImpCastExprToType(rExpr, lhsType.getNonLValueExprType(Context),
-                      CK_Unknown);
+    ImpCastExprToType(rExpr, lhsType.getNonLValueExprType(Context), Kind);
   return result;
 }
 
@@ -5594,16 +5638,22 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   if (const ExtVectorType *LV = lhsType->getAs<ExtVectorType>()) {
     QualType EltTy = LV->getElementType();
     if (EltTy->isIntegralType(Context) && rhsType->isIntegralType(Context)) {
-      if (Context.getIntegerTypeOrder(EltTy, rhsType) >= 0) {
-        ImpCastExprToType(rex, lhsType, CK_IntegralCast);
+      int order = Context.getIntegerTypeOrder(EltTy, rhsType);
+      if (order > 0)
+        ImpCastExprToType(rex, EltTy, CK_IntegralCast);
+      if (order >= 0) {
+        ImpCastExprToType(rex, lhsType, CK_VectorSplat);
         if (swapped) std::swap(rex, lex);
         return lhsType;
       }
     }
     if (EltTy->isRealFloatingType() && rhsType->isScalarType() &&
         rhsType->isRealFloatingType()) {
-      if (Context.getFloatingTypeOrder(EltTy, rhsType) >= 0) {
-        ImpCastExprToType(rex, lhsType, CK_FloatingCast);
+      int order = Context.getFloatingTypeOrder(EltTy, rhsType);
+      if (order > 0)
+        ImpCastExprToType(rex, EltTy, CK_FloatingCast);
+      if (order >= 0) {
+        ImpCastExprToType(rex, lhsType, CK_VectorSplat);
         if (swapped) std::swap(rex, lex);
         return lhsType;
       }
@@ -6583,7 +6633,8 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
     }
   } else {
     // Compound assignment "x += y"
-    ConvTy = CheckAssignmentConstraints(LHSType, RHSType);
+    CastKind Kind = CK_Invalid; // forgotten?
+    ConvTy = CheckAssignmentConstraints(LHSType, RHSType, Kind);
   }
 
   if (DiagnoseAssignmentResult(ConvTy, Loc, LHSType, RHSType,

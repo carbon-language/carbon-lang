@@ -1064,17 +1064,26 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     // Complex promotion (Clang extension)
     SCS.Second = ICK_Complex_Promotion;
     FromType = ToType.getUnqualifiedType();
+  } else if (ToType->isBooleanType() &&
+             (FromType->isArithmeticType() ||
+              FromType->isAnyPointerType() ||
+              FromType->isBlockPointerType() ||
+              FromType->isMemberPointerType() ||
+              FromType->isNullPtrType())) {
+    // Boolean conversions (C++ 4.12).
+    SCS.Second = ICK_Boolean_Conversion;
+    FromType = S.Context.BoolTy;
   } else if (FromType->isIntegralOrUnscopedEnumerationType() &&
              ToType->isIntegralType(S.Context)) {
     // Integral conversions (C++ 4.7).
     SCS.Second = ICK_Integral_Conversion;
     FromType = ToType.getUnqualifiedType();
-  } else if (FromType->isComplexType() && ToType->isComplexType()) {
+  } else if (FromType->isAnyComplexType() && ToType->isComplexType()) {
     // Complex conversions (C99 6.3.1.6)
     SCS.Second = ICK_Complex_Conversion;
     FromType = ToType.getUnqualifiedType();
-  } else if ((FromType->isComplexType() && ToType->isArithmeticType()) ||
-             (ToType->isComplexType() && FromType->isArithmeticType())) {
+  } else if ((FromType->isAnyComplexType() && ToType->isArithmeticType()) ||
+             (ToType->isAnyComplexType() && FromType->isArithmeticType())) {
     // Complex-real conversions (C99 6.3.1.7)
     SCS.Second = ICK_Complex_Real;
     FromType = ToType.getUnqualifiedType();
@@ -1083,7 +1092,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     SCS.Second = ICK_Floating_Conversion;
     FromType = ToType.getUnqualifiedType();
   } else if ((FromType->isRealFloatingType() && 
-              ToType->isIntegralType(S.Context) && !ToType->isBooleanType()) ||
+              ToType->isIntegralType(S.Context)) ||
              (FromType->isIntegralOrUnscopedEnumerationType() &&
               ToType->isRealFloatingType())) {
     // Floating-integral conversions (C++ 4.9).
@@ -1098,15 +1107,6 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                          InOverloadResolution, FromType)) {
     // Pointer to member conversions (4.11).
     SCS.Second = ICK_Pointer_Member;
-  } else if (ToType->isBooleanType() &&
-             (FromType->isArithmeticType() ||
-              FromType->isAnyPointerType() ||
-              FromType->isBlockPointerType() ||
-              FromType->isMemberPointerType() ||
-              FromType->isNullPtrType())) {
-    // Boolean conversions (C++ 4.12).
-    SCS.Second = ICK_Boolean_Conversion;
-    FromType = S.Context.BoolTy;
   } else if (IsVectorConversion(S.Context, FromType, ToType, SecondICK)) {
     SCS.Second = SecondICK;
     FromType = ToType.getUnqualifiedType();
@@ -1755,6 +1755,8 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
   QualType FromType = From->getType();
   bool IsCStyleOrFunctionalCast = IgnoreBaseAccess;
 
+  Kind = CK_BitCast;
+
   if (CXXBoolLiteralExpr* LitBool
                           = dyn_cast<CXXBoolLiteralExpr>(From->IgnoreParens()))
     if (!IsCStyleOrFunctionalCast && LitBool->getValue() == false)
@@ -1781,7 +1783,7 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
       }
     }
   if (const ObjCObjectPointerType *FromPtrType =
-        FromType->getAs<ObjCObjectPointerType>())
+        FromType->getAs<ObjCObjectPointerType>()) {
     if (const ObjCObjectPointerType *ToPtrType =
           ToType->getAs<ObjCObjectPointerType>()) {
       // Objective-C++ conversions are always okay.
@@ -1789,8 +1791,14 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
       // Objective-C++ implicit conversions.
       if (FromPtrType->isObjCBuiltinType() || ToPtrType->isObjCBuiltinType())
         return false;
-
+    }
   }
+
+  // We shouldn't fall into this case unless it's valid for other
+  // reasons.
+  if (From->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
+    Kind = CK_NullToPointer;
+
   return false;
 }
 

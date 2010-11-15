@@ -1961,7 +1961,7 @@ public:
 private:
   Stmt *Op;
 
-  void CheckBasePath() const {
+  void CheckCastConsistency() const {
 #ifndef NDEBUG
     switch (getCastKind()) {
     case CK_DerivedToBase:
@@ -1973,17 +1973,14 @@ private:
       break;
 
     // These should not have an inheritance path.
-    case CK_Unknown:
     case CK_BitCast:
     case CK_LValueBitCast:
-    case CK_NoOp:
     case CK_Dynamic:
     case CK_ToUnion:
     case CK_ArrayToPointerDecay:
     case CK_FunctionToPointerDecay:
     case CK_NullToMemberPointer:
     case CK_NullToPointer:
-    case CK_UserDefinedConversion:
     case CK_ConstructorConversion:
     case CK_IntegralToPointer:
     case CK_PointerToIntegral:
@@ -1993,20 +1990,30 @@ private:
     case CK_IntegralToFloating:
     case CK_FloatingToIntegral:
     case CK_FloatingCast:
-    case CK_MemberPointerToBoolean:
     case CK_AnyPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
     case CK_ObjCObjectLValueCast:
     case CK_FloatingRealToComplex:
     case CK_FloatingComplexToReal:
-    case CK_FloatingComplexToBoolean:
     case CK_FloatingComplexCast:
     case CK_FloatingComplexToIntegralComplex:
     case CK_IntegralRealToComplex:
     case CK_IntegralComplexToReal:
-    case CK_IntegralComplexToBoolean:
     case CK_IntegralComplexCast:
     case CK_IntegralComplexToFloatingComplex:
+      assert(!getType()->isBooleanType() && "unheralded conversion to bool");
+      // fallthrough to check for null base path
+
+    case CK_Dependent:
+    case CK_Unknown:
+    case CK_NoOp:
+    case CK_UserDefinedConversion:
+    case CK_PointerToBoolean:
+    case CK_IntegralToBoolean:
+    case CK_FloatingToBoolean:
+    case CK_MemberPointerToBoolean:
+    case CK_FloatingComplexToBoolean:
+    case CK_IntegralComplexToBoolean:
       assert(path_empty() && "Cast kind should not have a base path!");
       break;
     }
@@ -2029,9 +2036,10 @@ protected:
          // dependent or if the subexpression is value-dependent.
          ty->isDependentType() || (op && op->isValueDependent())),
     Op(op) {
+    assert(kind != CK_Invalid && "creating cast with invalid cast kind");
     CastExprBits.Kind = kind;
     CastExprBits.BasePathSize = BasePathSize;
-    CheckBasePath();
+    CheckCastConsistency();
   }
 
   /// \brief Construct an empty cast.

@@ -2541,6 +2541,7 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
     return;
 
   case CK_Unknown:
+  case CK_Dependent:
   case CK_ArrayToPointerDecay:
   case CK_BitCast:
   case CK_LValueBitCast:
@@ -2548,8 +2549,11 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   case CK_NullToPointer:
   case CK_IntegralToPointer:
   case CK_PointerToIntegral:
+  case CK_PointerToBoolean:
+  case CK_IntegralToBoolean:
   case CK_IntegralToFloating:
   case CK_FloatingToIntegral:
+  case CK_FloatingToBoolean:
   case CK_FloatingCast:
   case CK_FloatingRealToComplex:
   case CK_FloatingComplexToReal:

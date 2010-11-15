@@ -1783,7 +1783,10 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   switch (E->getCastKind()) {
   case CK_ToVoid:
     return EmitUnsupportedLValue(E, "unexpected cast lvalue");
-   
+
+  case CK_Dependent:
+    llvm_unreachable("dependent cast kind in IR gen!");
+
   case CK_NoOp:
     if (E->getSubExpr()->Classify(getContext()).getKind() 
                                           != Expr::Classification::CL_PRValue) {
@@ -1800,7 +1803,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
       return LV;
     }
     // Fall through to synthesize a temporary.
-      
+
   case CK_Unknown:
   case CK_BitCast:
   case CK_ArrayToPointerDecay:
@@ -1809,10 +1812,13 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_NullToPointer:
   case CK_IntegralToPointer:
   case CK_PointerToIntegral:
+  case CK_PointerToBoolean:
   case CK_VectorSplat:
   case CK_IntegralCast:
+  case CK_IntegralToBoolean:
   case CK_IntegralToFloating:
   case CK_FloatingToIntegral:
+  case CK_FloatingToBoolean:
   case CK_FloatingCast:
   case CK_FloatingRealToComplex:
   case CK_FloatingComplexToReal:

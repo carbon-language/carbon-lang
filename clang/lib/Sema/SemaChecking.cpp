@@ -547,7 +547,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
 
     // GCC does an implicit conversion to the pointer or integer ValType.  This
     // can fail in some cases (1i -> int**), check for this error case now.
-    CastKind Kind = CK_Unknown;
+    CastKind Kind = CK_Invalid;
     CXXCastPath BasePath;
     if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind, BasePath))
       return ExprError();

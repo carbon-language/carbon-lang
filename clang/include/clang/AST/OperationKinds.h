@@ -25,6 +25,10 @@ enum CastKind {
   /// going on.
   CK_Unknown,
 
+  /// CK_Dependent - This explicit cast cannot yet be analyzed because
+  /// the type or expression is dependent.
+  CK_Dependent,
+
   /// CK_BitCast - Used for reinterpret_cast.
   CK_BitCast,
 
@@ -83,6 +87,9 @@ enum CastKind {
     
   /// CK_PointerToIntegral - Pointer to integral
   CK_PointerToIntegral,
+
+  /// CK_PointerToBoolean - Pointer to boolean (i.e. is not null)
+  CK_PointerToBoolean,
     
   /// CK_ToVoid - Cast to void.
   CK_ToVoid,
@@ -92,14 +99,21 @@ enum CastKind {
   /// src expression into the destination expression.
   CK_VectorSplat,
     
-  /// CK_IntegralCast - Casting between integral types of different size.
+  /// CK_IntegralCast - A truncating or extending cast between integral
+  /// types of different size.
   CK_IntegralCast,
+
+  /// CK_IntegralToBoolean - Integral to boolean.
+  CK_IntegralToBoolean,
 
   /// CK_IntegralToFloating - Integral to floating point.
   CK_IntegralToFloating,
     
   /// CK_FloatingToIntegral - Floating point to integral.
   CK_FloatingToIntegral,
+
+  /// CK_FloatingToBoolean - Floating point to boolean.
+  CK_FloatingToBoolean,
     
   /// CK_FloatingCast - Casting between floating types of different size.
   CK_FloatingCast,
@@ -151,6 +165,7 @@ enum CastKind {
   CK_IntegralComplexToFloatingComplex
 };
 
+#define CK_Invalid ((CastKind) -1)
 
 enum BinaryOperatorKind {
   // Operators listed in order of precedence.

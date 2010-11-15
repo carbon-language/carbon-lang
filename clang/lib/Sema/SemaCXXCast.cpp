@@ -157,7 +157,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
       << Ex->getSourceRange();
 
   switch (Kind) {
-  default: assert(0 && "Unknown C++ cast!");
+  default: llvm_unreachable("Unknown C++ cast!");
 
   case tok::kw_const_cast:
     if (!TypeDependent)
@@ -167,7 +167,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                                           Ex, DestTInfo, OpLoc));
 
   case tok::kw_dynamic_cast: {
-    CastKind Kind = CK_Unknown;
+    CastKind Kind = CK_Dependent;
     CXXCastPath BasePath;
     if (!TypeDependent)
       CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange, Kind, BasePath);
@@ -177,7 +177,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                                             OpLoc));
   }
   case tok::kw_reinterpret_cast: {
-    CastKind Kind = CK_Unknown;
+    CastKind Kind = CK_Dependent;
     if (!TypeDependent)
       CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange, Kind);
     return Owned(CXXReinterpretCastExpr::Create(Context,
@@ -186,7 +186,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                                   DestTInfo, OpLoc));
   }
   case tok::kw_static_cast: {
-    CastKind Kind = CK_Unknown;
+    CastKind Kind = CK_Dependent;
     CXXCastPath BasePath;
     if (!TypeDependent)
       CheckStaticCast(*this, Ex, DestType, OpRange, Kind, BasePath);
@@ -515,7 +515,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, msg,
                     Kind, BasePath) != TC_Success && msg != 0)
   {
-    if ( SrcExpr->getType() == Self.Context.OverloadTy )
+    if (SrcExpr->getType() == Self.Context.OverloadTy)
     {
       OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
       Self.Diag(OpRange.getBegin(), diag::err_bad_static_cast_overload)
@@ -593,7 +593,11 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   // C++0x 5.2.9p9: A value of a scoped enumeration type can be explicitly
   // converted to an integral type.
   if (Self.getLangOptions().CPlusPlus0x && SrcType->isEnumeralType()) {
-    if (DestType->isIntegralType(Self.Context)) {
+    assert(SrcType->getAs<EnumType>()->getDecl()->isScoped());
+    if (DestType->isBooleanType()) {
+      Kind = CK_IntegralToBoolean;
+      return TC_Success;
+    } else if (DestType->isIntegralType(Self.Context)) {
       Kind = CK_IntegralCast;
       return TC_Success;
     }
@@ -665,8 +669,10 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   }
   // Allow arbitray objective-c pointer conversion with static casts.
   if (SrcType->isObjCObjectPointerType() &&
-      DestType->isObjCObjectPointerType())
+      DestType->isObjCObjectPointerType()) {
+    Kind = CK_BitCast;
     return TC_Success;
+  }
   
   // We tried everything. Everything! Nothing works! :-(
   return TC_NotApplicable;
@@ -1357,8 +1363,10 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   }
 
   // If the type is dependent, we won't do any other semantic analysis now.
-  if (CastTy->isDependentType() || CastExpr->isTypeDependent())
+  if (CastTy->isDependentType() || CastExpr->isTypeDependent()) {
+    Kind = CK_Dependent;
     return false;
+  }
 
   if (!CastTy->isLValueReferenceType() && !CastTy->isRecordType())
     DefaultFunctionArrayLvalueConversion(CastExpr);

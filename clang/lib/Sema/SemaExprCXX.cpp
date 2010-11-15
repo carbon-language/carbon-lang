@@ -604,7 +604,7 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   // corresponding cast expression.
   //
   if (NumExprs == 1) {
-    CastKind Kind = CK_Unknown;
+    CastKind Kind = CK_Invalid;
     CXXCastPath BasePath;
     if (CheckCastTypes(TInfo->getTypeLoc().getSourceRange(), Ty, Exprs[0], 
                        Kind, BasePath,
@@ -1708,7 +1708,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   case ImplicitConversionSequence::UserDefinedConversion: {
     
       FunctionDecl *FD = ICS.UserDefined.ConversionFunction;
-      CastKind CastKind = CK_Unknown;
+      CastKind CastKind;
       QualType BeforeToType;
       if (const CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(FD)) {
         CastKind = CK_UserDefinedConversion;
@@ -1893,9 +1893,23 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Complex_Promotion:
-  case ICK_Complex_Conversion:
-    ImpCastExprToType(From, ToType, CK_Unknown);
+  case ICK_Complex_Conversion: {
+    QualType FromEl = From->getType()->getAs<ComplexType>()->getElementType();
+    QualType ToEl = ToType->getAs<ComplexType>()->getElementType();
+    CastKind CK;
+    if (FromEl->isRealFloatingType()) {
+      if (ToEl->isRealFloatingType())
+        CK = CK_FloatingComplexCast;
+      else
+        CK = CK_FloatingComplexToIntegralComplex;
+    } else if (ToEl->isRealFloatingType()) {
+      CK = CK_IntegralComplexToFloatingComplex;
+    } else {
+      CK = CK_IntegralComplexCast;
+    }
+    ImpCastExprToType(From, ToType, CK);
     break;
+  }
 
   case ICK_Floating_Integral:
     if (ToType->isRealFloatingType())
@@ -1916,9 +1930,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         << From->getType() << ToType << Action
         << From->getSourceRange();
     }
-
     
-    CastKind Kind = CK_Unknown;
+    CastKind Kind = CK_Invalid;
     CXXCastPath BasePath;
     if (CheckPointerConversion(From, ToType, Kind, BasePath, IgnoreBaseAccess))
       return true;
@@ -1927,7 +1940,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   }
   
   case ICK_Pointer_Member: {
-    CastKind Kind = CK_Unknown;
+    CastKind Kind = CK_Invalid;
     CXXCastPath BasePath;
     if (CheckMemberPointerConversion(From, ToType, Kind, BasePath,
                                      IgnoreBaseAccess))
@@ -1938,9 +1951,16 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
   }
   case ICK_Boolean_Conversion: {
-    CastKind Kind = CK_Unknown;
-    if (FromType->isMemberPointerType())
-      Kind = CK_MemberPointerToBoolean;
+    CastKind Kind = CK_Invalid;
+    switch (FromType->getScalarTypeKind()) {
+    case Type::STK_Pointer: Kind = CK_PointerToBoolean; break;
+    case Type::STK_MemberPointer: Kind = CK_MemberPointerToBoolean; break;
+    case Type::STK_Bool: llvm_unreachable("bool -> bool conversion?");
+    case Type::STK_Integral: Kind = CK_IntegralToBoolean; break;
+    case Type::STK_Floating: Kind = CK_FloatingToBoolean; break;
+    case Type::STK_IntegralComplex: Kind = CK_IntegralComplexToBoolean; break;
+    case Type::STK_FloatingComplex: Kind = CK_FloatingComplexToBoolean; break;
+    }
     
     ImpCastExprToType(From, Context.BoolTy, Kind);
     break;
@@ -1971,7 +1991,52 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
       
   case ICK_Complex_Real:
-    ImpCastExprToType(From, ToType, CK_Unknown);
+    // Case 1.  x -> _Complex y
+    if (const ComplexType *ToComplex = ToType->getAs<ComplexType>()) {
+      QualType ElType = ToComplex->getElementType();
+      bool isFloatingComplex = ElType->isRealFloatingType();
+
+      // x -> y
+      if (Context.hasSameUnqualifiedType(ElType, From->getType())) {
+        // do nothing
+      } else if (From->getType()->isRealFloatingType()) {
+        ImpCastExprToType(From, ElType,
+                isFloatingComplex ? CK_FloatingCast : CK_FloatingToIntegral);
+      } else {
+        assert(From->getType()->isIntegerType());
+        ImpCastExprToType(From, ElType,
+                isFloatingComplex ? CK_IntegralToFloating : CK_IntegralCast);
+      }
+      // y -> _Complex y
+      ImpCastExprToType(From, ToType,
+                   isFloatingComplex ? CK_FloatingRealToComplex
+                                     : CK_IntegralRealToComplex);
+
+    // Case 2.  _Complex x -> y
+    } else {
+      const ComplexType *FromComplex = From->getType()->getAs<ComplexType>();
+      assert(FromComplex);
+
+      QualType ElType = FromComplex->getElementType();
+      bool isFloatingComplex = ElType->isRealFloatingType();
+
+      // _Complex x -> x
+      ImpCastExprToType(From, ElType,
+                   isFloatingComplex ? CK_FloatingComplexToReal
+                                     : CK_IntegralComplexToReal);
+
+      // x -> y
+      if (Context.hasSameUnqualifiedType(ElType, ToType)) {
+        // do nothing
+      } else if (ToType->isRealFloatingType()) {
+        ImpCastExprToType(From, ToType,
+                isFloatingComplex ? CK_FloatingCast : CK_IntegralToFloating);
+      } else {
+        assert(ToType->isIntegerType());
+        ImpCastExprToType(From, ToType,
+                isFloatingComplex ? CK_FloatingToIntegral : CK_IntegralCast);
+      }
+    }
     break;
       
   case ICK_Lvalue_To_Rvalue:

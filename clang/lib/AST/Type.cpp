@@ -572,7 +572,8 @@ bool Type::isArithmeticType() const {
 
 bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() != BuiltinType::Void && !BT->isPlaceholderType();
+    return BT->getKind() > BuiltinType::Void &&
+           BT->getKind() <= BuiltinType::NullPtr;
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // Enums are scalar types, but only if they are defined.  Incomplete enums
     // are not treated as scalar types.
@@ -582,6 +583,35 @@ bool Type::isScalarType() const {
          isa<MemberPointerType>(CanonicalType) ||
          isa<ComplexType>(CanonicalType) ||
          isa<ObjCObjectPointerType>(CanonicalType);
+}
+
+Type::ScalarTypeKind Type::getScalarTypeKind() const {
+  assert(isScalarType());
+
+  const Type *T = CanonicalType.getTypePtr();
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(T)) {
+    if (BT->getKind() == BuiltinType::Bool) return STK_Bool;
+    if (BT->getKind() == BuiltinType::NullPtr) return STK_Pointer;
+    if (BT->isInteger()) return STK_Integral;
+    if (BT->isFloatingPoint()) return STK_Floating;
+    llvm_unreachable("unknown scalar builtin type");
+  } else if (isa<PointerType>(T) ||
+             isa<BlockPointerType>(T) ||
+             isa<ObjCObjectPointerType>(T)) {
+    return STK_Pointer;
+  } else if (isa<MemberPointerType>(T)) {
+    return STK_MemberPointer;
+  } else if (isa<EnumType>(T)) {
+    assert(cast<EnumType>(T)->getDecl()->isComplete());
+    return STK_Integral;
+  } else if (const ComplexType *CT = dyn_cast<ComplexType>(T)) {
+    if (CT->getElementType()->isRealFloatingType())
+      return STK_FloatingComplex;
+    return STK_IntegralComplex;
+  }
+
+  llvm_unreachable("unknown scalar type");
+  return STK_Pointer;
 }
 
 /// \brief Determines whether the type is a C++ aggregate type or C

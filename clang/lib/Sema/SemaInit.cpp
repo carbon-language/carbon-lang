@@ -3745,7 +3745,7 @@ InitializationSequence::Perform(Sema &S,
     case SK_UserConversion: {
       // We have a user-defined conversion that invokes either a constructor
       // or a conversion function.
-      CastKind CastKind = CK_Unknown;
+      CastKind CastKind;
       bool IsCopy = false;
       FunctionDecl *Fn = Step->Function.Function;
       DeclAccessPair FoundFn = Step->Function.FoundDecl;

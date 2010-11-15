@@ -110,6 +110,41 @@ public:
   /// EmitNullValue - Emit a value that corresponds to null for the given type.
   Value *EmitNullValue(QualType Ty);
 
+  /// EmitFloatToBoolConversion - Perform an FP to boolean conversion.
+  Value *EmitFloatToBoolConversion(Value *V) {
+    // Compare against 0.0 for fp scalars.
+    llvm::Value *Zero = llvm::Constant::getNullValue(V->getType());
+    return Builder.CreateFCmpUNE(V, Zero, "tobool");
+  }
+
+  /// EmitPointerToBoolConversion - Perform a pointer to boolean conversion.
+  Value *EmitPointerToBoolConversion(Value *V) {
+    Value *Zero = llvm::ConstantPointerNull::get(
+                                      cast<llvm::PointerType>(V->getType()));
+    return Builder.CreateICmpNE(V, Zero, "tobool");
+  }
+
+  Value *EmitIntToBoolConversion(Value *V) {
+    // Because of the type rules of C, we often end up computing a
+    // logical value, then zero extending it to int, then wanting it
+    // as a logical value again.  Optimize this common case.
+    if (llvm::ZExtInst *ZI = dyn_cast<llvm::ZExtInst>(V)) {
+      if (ZI->getOperand(0)->getType() == Builder.getInt1Ty()) {
+        Value *Result = ZI->getOperand(0);
+        // If there aren't any more uses, zap the instruction to save space.
+        // Note that there can be more uses, for example if this
+        // is the result of an assignment.
+        if (ZI->use_empty())
+          ZI->eraseFromParent();
+        return Result;
+      }
+    }
+
+    const llvm::IntegerType *Ty = cast<llvm::IntegerType>(V->getType());
+    Value *Zero = llvm::ConstantInt::get(Ty, 0);
+    return Builder.CreateICmpNE(V, Zero, "tobool");
+  }
+
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
@@ -461,11 +496,8 @@ public:
 Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
   assert(SrcType.isCanonical() && "EmitScalarConversion strips typedefs");
 
-  if (SrcType->isRealFloatingType()) {
-    // Compare against 0.0 for fp scalars.
-    llvm::Value *Zero = llvm::Constant::getNullValue(Src->getType());
-    return Builder.CreateFCmpUNE(Src, Zero, "tobool");
-  }
+  if (SrcType->isRealFloatingType())
+    return EmitFloatToBoolConversion(Src);
 
   if (const MemberPointerType *MPT = dyn_cast<MemberPointerType>(SrcType))
     return CGF.CGM.getCXXABI().EmitMemberPointerIsNotNull(CGF, Src, MPT);
@@ -473,25 +505,11 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
   assert((SrcType->isIntegerType() || isa<llvm::PointerType>(Src->getType())) &&
          "Unknown scalar type to convert");
 
-  // Because of the type rules of C, we often end up computing a logical value,
-  // then zero extending it to int, then wanting it as a logical value again.
-  // Optimize this common case.
-  if (llvm::ZExtInst *ZI = dyn_cast<llvm::ZExtInst>(Src)) {
-    if (ZI->getOperand(0)->getType() ==
-        llvm::Type::getInt1Ty(CGF.getLLVMContext())) {
-      Value *Result = ZI->getOperand(0);
-      // If there aren't any more uses, zap the instruction to save space.
-      // Note that there can be more uses, for example if this
-      // is the result of an assignment.
-      if (ZI->use_empty())
-        ZI->eraseFromParent();
-      return Result;
-    }
-  }
+  if (isa<llvm::IntegerType>(Src->getType()))
+    return EmitIntToBoolConversion(Src);
 
-  // Compare against an integer or pointer null.
-  llvm::Value *Zero = llvm::Constant::getNullValue(Src->getType());
-  return Builder.CreateICmpNE(Src, Zero, "tobool");
+  assert(isa<llvm::PointerType>(Src->getType()));
+  return EmitPointerToBoolConversion(Src);
 }
 
 /// EmitScalarConversion - Emit a conversion from the specified type to the
@@ -979,6 +997,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   // a default case, so the compiler will warn on a missing case.  The cases
   // are in the same order as in the CastKind enum.
   switch (Kind) {
+  case CK_Dependent: llvm_unreachable("dependent cast kind in IR gen!");
+      
   case CK_Unknown:
     // FIXME: All casts should have a known kind!
     //assert(0 && "Unknown cast kind!");
@@ -1134,19 +1154,27 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     // Splat the element across to all elements
     llvm::SmallVector<llvm::Constant*, 16> Args;
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
+    llvm::Constant *Zero = llvm::ConstantInt::get(CGF.Int32Ty, 0);
     for (unsigned i = 0; i < NumElements; i++)
-      Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, 0));
+      Args.push_back(Zero);
 
     llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
     return Yay;
   }
+
   case CK_IntegralCast:
   case CK_IntegralToFloating:
   case CK_FloatingToIntegral:
   case CK_FloatingCast:
     return EmitScalarConversion(Visit(E), E->getType(), DestTy);
 
+  case CK_IntegralToBoolean:
+    return EmitIntToBoolConversion(Visit(E));
+  case CK_PointerToBoolean:
+    return EmitPointerToBoolConversion(Visit(E));
+  case CK_FloatingToBoolean:
+    return EmitFloatToBoolConversion(Visit(E));
   case CK_MemberPointerToBoolean: {
     llvm::Value *MemPtr = Visit(E);
     const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
