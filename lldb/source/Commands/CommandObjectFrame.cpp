@@ -586,11 +586,17 @@ public:
                         }
                         else
                         {
+                            bool address_of = false;
                             // If first character is a '*', then show pointer contents
                             if (name_cstr[0] == '*')
                             {
                                 ++ptr_depth;
                                 name_cstr++; // Skip the '*'
+                            }
+                            else if (name_cstr[0] == '&')
+                            {
+                                address_of = true;
+                                name_cstr++; // Skip the '&'
                             }
 
                             std::string var_path (name_cstr);
@@ -724,18 +730,25 @@ public:
                                     }
 
 
-                                    ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                                  exe_ctx.frame, 
-                                                                  valobj_sp.get(), 
-                                                                  valobj_sp->GetParent() ? name_cstr : NULL, 
-                                                                  ptr_depth, 
-                                                                  0, 
-                                                                  m_options.max_depth, 
-                                                                  m_options.show_types,
-                                                                  m_options.show_location,
-                                                                  m_options.use_objc, 
-                                                                  false,
-                                                                  m_options.flat_output);                                        
+                                    if (address_of)
+                                    {
+                                        s.Printf("&%s = %s\n", name_cstr, valobj_sp->GetLocationAsCString (exe_ctx.frame));
+                                    }
+                                    else
+                                    {
+                                        ValueObject::DumpValueObject (result.GetOutputStream(), 
+                                                                      exe_ctx.frame, 
+                                                                      valobj_sp.get(), 
+                                                                      valobj_sp->GetParent() ? name_cstr : NULL, 
+                                                                      ptr_depth, 
+                                                                      0, 
+                                                                      m_options.max_depth, 
+                                                                      m_options.show_types,
+                                                                      m_options.show_location,
+                                                                      m_options.use_objc, 
+                                                                      false,
+                                                                      m_options.flat_output);
+                                    }
                                 }
                             }
                             else
