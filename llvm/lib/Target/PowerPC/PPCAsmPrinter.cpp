@@ -298,6 +298,28 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   // Lower multi-instruction pseudo operations.
   switch (MI->getOpcode()) {
   default: break;
+  case TargetOpcode::DBG_VALUE: {
+    if (!isVerbose() || !OutStreamer.hasRawTextSupport()) return;
+      
+    SmallString<32> Str;
+    raw_svector_ostream O(Str);
+    unsigned NOps = MI->getNumOperands();
+    assert(NOps==4);
+    O << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
+    // cast away const; DIetc do not take const operands for some reason.
+    DIVariable V(const_cast<MDNode *>(MI->getOperand(NOps-1).getMetadata()));
+    O << V.getName();
+    O << " <- ";
+    // Frame address.  Currently handles register +- offset only.
+    assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
+    O << '['; printOperand(MI, 0, O); O << '+'; printOperand(MI, 1, O);
+    O << ']';
+    O << "+";
+    printOperand(MI, NOps-2, O);
+    OutStreamer.EmitRawText(O.str());
+    return;
+  }
+      
   case PPC::MovePCtoLR:
   case PPC::MovePCtoLR8: {
     // Transform %LR = MovePCtoLR
