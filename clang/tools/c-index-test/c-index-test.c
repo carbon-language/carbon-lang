@@ -1040,6 +1040,11 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
     fprintf(stderr, "Unable to load translation unit!\n");
     return 1;
   }
+
+  if (clang_reparseTranslationUnit(TU, 0, 0, clang_defaultReparseOptions(TU))) {
+    fprintf(stderr, "Unable to reparse translation init!\n");
+    return 1;
+  }
   
   for (I = 0; I != Repeats; ++I) {
     results = clang_codeCompleteAt(TU, filename, line, column,
