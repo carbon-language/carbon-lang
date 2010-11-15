@@ -62,13 +62,10 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
 // return the variable bit position.  Otherwise return -1.
 int CodeEmitterGen::getVariableBit(const std::string &VarName,
             BitsInit *BI, int bit) {
-  if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit))) {
-    TypedInit *TI = VBI->getVariable();
-
-    if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
-      if (VI->getName() == VarName) return VBI->getBitNum();
-    }
-  }
+  if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit)))
+    if (VarInit *VI = dynamic_cast<VarInit*>(VBI->getVariable()))
+      if (VI->getName() == VarName)
+        return VBI->getBitNum();
 
   return -1;
 }
@@ -141,91 +138,95 @@ void CodeEmitterGen::run(raw_ostream &o) {
     // operands to the instruction.
     unsigned NumberedOp = 0;
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-      if (!Vals[i].getPrefix() && !Vals[i].getValue()->isComplete()) {
-        // Is the operand continuous? If so, we can just mask and OR it in
-        // instead of doing it bit-by-bit, saving a lot in runtime cost.
-        const std::string &VarName = Vals[i].getName();
-        bool gotOp = false;
+      // Ignore fixed fields.
+      if (Vals[i].getPrefix() || Vals[i].getValue()->isComplete())
+        continue;
+      
+      // Is the operand continuous? If so, we can just mask and OR it in
+      // instead of doing it bit-by-bit, saving a lot in runtime cost.
+      const std::string &VarName = Vals[i].getName();
+      bool gotOp = false;
 
-        for (int bit = BI->getNumBits()-1; bit >= 0; ) {
-          int varBit = getVariableBit(VarName, BI, bit);
+      for (int bit = BI->getNumBits()-1; bit >= 0; ) {
+        int varBit = getVariableBit(VarName, BI, bit);
 
-          if (varBit == -1) {
-            --bit;
+        // If this bit isn't from a variable, skip it.
+        if (varBit == -1) {
+          --bit;
+          continue;
+        }
+
+        int beginInstBit = bit;
+        int beginVarBit = varBit;
+        int N = 1;
+
+        for (--bit; bit >= 0;) {
+          varBit = getVariableBit(VarName, BI, bit);
+          if (varBit == -1 || varBit != (beginVarBit - N)) break;
+          ++N;
+          --bit;
+        }
+
+        if (!gotOp) {
+          // If the operand matches by name, reference according to that
+          // operand number. Non-matching operands are assumed to be in
+          // order.
+          unsigned OpIdx;
+          if (CGI.Operands.hasOperandNamed(VarName, OpIdx)) {
+            // Get the machine operand number for the indicated operand.
+            OpIdx = CGI.Operands[OpIdx].MIOperandNo;
+            assert (!CGI.Operands.isFlatOperandNotEmitted(OpIdx) &&
+                    "Explicitly used operand also marked as not emitted!");
           } else {
-            int beginInstBit = bit;
-            int beginVarBit = varBit;
-            int N = 1;
-
-            for (--bit; bit >= 0;) {
-              varBit = getVariableBit(VarName, BI, bit);
-              if (varBit == -1 || varBit != (beginVarBit - N)) break;
-              ++N;
-              --bit;
-            }
-
-            if (!gotOp) {
-              // If the operand matches by name, reference according to that
-              // operand number. Non-matching operands are assumed to be in
-              // order.
-              unsigned OpIdx;
-              if (CGI.Operands.hasOperandNamed(VarName, OpIdx)) {
-                // Get the machine operand number for the indicated operand.
-                OpIdx = CGI.Operands[OpIdx].MIOperandNo;
-                assert (!CGI.Operands.isFlatOperandNotEmitted(OpIdx) &&
-                        "Explicitly used operand also marked as not emitted!");
-              } else {
-                /// If this operand is not supposed to be emitted by the
-                /// generated emitter, skip it.
-                while (CGI.Operands.isFlatOperandNotEmitted(NumberedOp))
-                  ++NumberedOp;
-                OpIdx = NumberedOp++;
-              }
-              std::pair<unsigned, unsigned> SO =
-                CGI.Operands.getSubOperandNumber(OpIdx);
-              std::string &EncoderMethodName =
-                CGI.Operands[SO.first].EncoderMethodName;
-
-              // If the source operand has a custom encoder, use it. This will
-              // get the encoding for all of the suboperands.
-              if (!EncoderMethodName.empty()) {
-                // A custom encoder has all of the information for the
-                // sub-operands, if there are more than one, so only
-                // query the encoder once per source operand.
-                if (SO.second == 0) {
-                  Case += "      // op: " + VarName + "\n"
-                       + "      op = " + EncoderMethodName + "(MI, "
-                       + utostr(OpIdx);
-                  if (MCEmitter)
-                    Case += ", Fixups";
-                  Case += ");\n";
-                }
-              } else {
-                Case += "      // op: " + VarName + "\n"
-                     +  "      op = getMachineOpValue(MI, MI.getOperand("
-                     +  utostr(OpIdx) + ")";
-                if (MCEmitter)
-                  Case += ", Fixups";
-                Case += ");\n";
-              }
-              gotOp = true;
-            }
-
-            unsigned opMask = ~0U >> (32-N);
-            int opShift = beginVarBit - N + 1;
-            opMask <<= opShift;
-            opShift = beginInstBit - beginVarBit;
-
-            if (opShift > 0) {
-              Case += "      Value |= (op & " + utostr(opMask) + "U) << "
-                   +  itostr(opShift) + ";\n";
-            } else if (opShift < 0) {
-              Case += "      Value |= (op & " + utostr(opMask) + "U) >> "
-                   +  itostr(-opShift) + ";\n";
-            } else {
-              Case += "      Value |= op & " + utostr(opMask) + "U;\n";
-            }
+            /// If this operand is not supposed to be emitted by the
+            /// generated emitter, skip it.
+            while (CGI.Operands.isFlatOperandNotEmitted(NumberedOp))
+              ++NumberedOp;
+            OpIdx = NumberedOp++;
           }
+          std::pair<unsigned, unsigned> SO =
+            CGI.Operands.getSubOperandNumber(OpIdx);
+          std::string &EncoderMethodName =
+            CGI.Operands[SO.first].EncoderMethodName;
+
+          // If the source operand has a custom encoder, use it. This will
+          // get the encoding for all of the suboperands.
+          if (!EncoderMethodName.empty()) {
+            // A custom encoder has all of the information for the
+            // sub-operands, if there are more than one, so only
+            // query the encoder once per source operand.
+            if (SO.second == 0) {
+              Case += "      // op: " + VarName + "\n"
+                   + "      op = " + EncoderMethodName + "(MI, "
+                   + utostr(OpIdx);
+              if (MCEmitter)
+                Case += ", Fixups";
+              Case += ");\n";
+            }
+          } else {
+            Case += "      // op: " + VarName + "\n"
+                 +  "      op = getMachineOpValue(MI, MI.getOperand("
+                 +  utostr(OpIdx) + ")";
+            if (MCEmitter)
+              Case += ", Fixups";
+            Case += ");\n";
+          }
+          gotOp = true;
+        }
+
+        unsigned opMask = ~0U >> (32-N);
+        int opShift = beginVarBit - N + 1;
+        opMask <<= opShift;
+        opShift = beginInstBit - beginVarBit;
+
+        if (opShift > 0) {
+          Case += "      Value |= (op & " + utostr(opMask) + "U) << "
+               +  itostr(opShift) + ";\n";
+        } else if (opShift < 0) {
+          Case += "      Value |= (op & " + utostr(opMask) + "U) >> "
+               +  itostr(-opShift) + ";\n";
+        } else {
+          Case += "      Value |= op & " + utostr(opMask) + "U;\n";
         }
       }
     }
