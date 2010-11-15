@@ -113,6 +113,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   if (Group == System && !IgnoreSysRoot && MappedPath.isAbsolute() &&
       IncludeSysroot.isValid() && IncludeSysroot.isAbsolute() &&
       IncludeSysroot != llvm::sys::Path::GetRootDirectory()) {
+    MappedPathStorage.clear();
     MappedPathStr =
       (IncludeSysroot.str() + Path).toStringRef(MappedPathStorage);
   }
