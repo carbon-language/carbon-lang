@@ -14,7 +14,7 @@
 
 #include "PPC.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
@@ -124,23 +124,32 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   case PPCII::MO_DARWIN_STUB:
     break;
       
-#if 0
-  case PPCII::MO_LO16:
-    Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_LO16, Ctx);
-    break;
-#endif
+  case PPCII::MO_LO16: RefKind = MCSymbolRefExpr::VK_PPC_LO16; break;
+  case PPCII::MO_HA16: RefKind = MCSymbolRefExpr::VK_PPC_HA16; break;
+  case PPCII::MO_LO16_PIC: break;
+  case PPCII::MO_HA16_PIC: break;
   }
 
   if (Expr == 0)
     Expr = MCSymbolRefExpr::Create(Symbol, RefKind, Ctx);
 
-  
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,
                                    MCConstantExpr::Create(MO.getOffset(), Ctx),
                                    Ctx);
-  return MCOperand::CreateExpr(Expr);
+
+  // Subtract off the PIC base.
+  if (MO.getTargetFlags() == PPCII::MO_LO16_PIC ||
+      MO.getTargetFlags() == PPCII::MO_HA16_PIC) {
+    const MachineFunction *MF = MO.getParent()->getParent()->getParent();
+    
+    const MCExpr *PB = MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), Ctx);
+    Expr = MCBinaryExpr::CreateSub(Expr, PB, Ctx);
+    // FIXME: We have no way to make the result be VK_PPC_LO16/VK_PPC_HA16,
+    // since it is not a symbol!
+  }
   
+  return MCOperand::CreateExpr(Expr);
 }
 
 void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,

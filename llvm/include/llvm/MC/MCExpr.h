@@ -152,7 +152,9 @@ public:
     VK_ARM_TPOFF,
     VK_ARM_GOTTPOFF,
     
-    VK_PPC_TOC
+    VK_PPC_TOC,
+    VK_PPC_HA16,  // ha16(symbol)
+    VK_PPC_LO16   // lo16(symbol)
   };
 
 private:

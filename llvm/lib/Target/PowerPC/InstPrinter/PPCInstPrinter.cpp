@@ -270,17 +270,35 @@ void PPCInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 void PPCInstPrinter::printSymbolLo(const MCInst *MI, unsigned OpNo,
                                    raw_ostream &O) {
   if (MI->getOperand(OpNo).isImm())
-    printS16ImmOperand(MI, OpNo, O);
-  else
+    return printS16ImmOperand(MI, OpNo, O);
+  
+  // FIXME: This is a terrible hack because we can't encode lo16() as an operand
+  // flag of a subtraction.  See the FIXME in GetSymbolRef in PPCMCInstLower.
+  if (MI->getOperand(OpNo).isExpr() &&
+      isa<MCBinaryExpr>(MI->getOperand(OpNo).getExpr())) {
+    O << "lo16(";
     printOperand(MI, OpNo, O);
+    O << ')';
+  } else {
+    printOperand(MI, OpNo, O);
+  }
 }
 
 void PPCInstPrinter::printSymbolHi(const MCInst *MI, unsigned OpNo,
                                    raw_ostream &O) {
   if (MI->getOperand(OpNo).isImm())
-    printS16ImmOperand(MI, OpNo, O);
-  else
+    return printS16ImmOperand(MI, OpNo, O);
+
+  // FIXME: This is a terrible hack because we can't encode lo16() as an operand
+  // flag of a subtraction.  See the FIXME in GetSymbolRef in PPCMCInstLower.
+  if (MI->getOperand(OpNo).isExpr() &&
+      isa<MCBinaryExpr>(MI->getOperand(OpNo).getExpr())) {
+    O << "ha16(";
     printOperand(MI, OpNo, O);
+    O << ')';
+  } else {
+    printOperand(MI, OpNo, O);
+  }
 }
 
 

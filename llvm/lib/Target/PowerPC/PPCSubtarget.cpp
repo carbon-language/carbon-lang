@@ -129,7 +129,7 @@ void PPCSubtarget::SetJITMode() {
 /// is required to get the address of the global.
 bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV,
                                        const TargetMachine &TM) const {
-  // We never hae stubs if HasLazyResolverStubs=false or if in static mode.
+  // We never have stubs if HasLazyResolverStubs=false or if in static mode.
   if (!HasLazyResolverStubs || TM.getRelocationModel() == Reloc::Static)
     return false;
   // If symbol visibility is hidden, the extra load is not needed if

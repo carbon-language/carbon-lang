@@ -50,8 +50,23 @@ extern Target ThePPC64Target;
     /// MO_DARWIN_STUB - On a symbol operand "FOO", this indicates that the
     /// reference is actually to the "FOO$stub" symbol.  This is used for calls
     /// and jumps to external functions on Tiger and earlier.
-    MO_DARWIN_STUB
+    MO_DARWIN_STUB,
     
+    /// MO_LO16 - On a symbol operand, this represents a relocation containing
+    /// lower 16 bit of the address.
+    MO_LO16,
+    
+    /// MO_HA16 - On a symbol operand, this represents a relocation containing
+    /// higher 16 bit of the address.
+    MO_HA16,
+
+    /// MO_LO16_PIC - On a symbol operand, this represents a relocation
+    /// containing lower 16 bit of the address with the picbase subtracted.
+    MO_LO16_PIC,
+    
+    /// MO_HA16_PIC - On a symbol operand, this represents a relocation
+    /// containing higher 16 bit of the address with the picbase subtracted.
+    MO_HA16_PIC
   };
   } // end namespace PPCII
   
