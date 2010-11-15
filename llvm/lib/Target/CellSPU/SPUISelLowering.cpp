@@ -559,98 +559,96 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // Get pointerinfos to the memory chunk(s) that contain the data to load 
   uint64_t mpi_offset = LN->getPointerInfo().Offset;
   mpi_offset -= mpi_offset%16;
-  MachinePointerInfo lowMemPtr( LN->getPointerInfo().V, mpi_offset);
-  MachinePointerInfo highMemPtr( LN->getPointerInfo().V, mpi_offset+16);
+  MachinePointerInfo lowMemPtr(LN->getPointerInfo().V, mpi_offset);
+  MachinePointerInfo highMemPtr(LN->getPointerInfo().V, mpi_offset+16);
 
+  SDValue result;
+  SDValue basePtr = LN->getBasePtr();
+  SDValue rotate;
 
+  if (alignment == 16) {
+    ConstantSDNode *CN;
 
-    SDValue result;
-    SDValue basePtr = LN->getBasePtr();
-    SDValue rotate;
+    // Special cases for a known aligned load to simplify the base pointer
+    // and the rotation amount:
+    if (basePtr.getOpcode() == ISD::ADD
+        && (CN = dyn_cast<ConstantSDNode > (basePtr.getOperand(1))) != 0) {
+      // Known offset into basePtr
+      int64_t offset = CN->getSExtValue();
+      int64_t rotamt = int64_t((offset & 0xf) - pso);
 
-    if (alignment == 16) {
-      ConstantSDNode *CN;
+      if (rotamt < 0)
+        rotamt += 16;
 
-      // Special cases for a known aligned load to simplify the base pointer
-      // and the rotation amount:
-      if (basePtr.getOpcode() == ISD::ADD
-          && (CN = dyn_cast<ConstantSDNode > (basePtr.getOperand(1))) != 0) {
-        // Known offset into basePtr
-        int64_t offset = CN->getSExtValue();
-        int64_t rotamt = int64_t((offset & 0xf) - pso);
+      rotate = DAG.getConstant(rotamt, MVT::i16);
 
-        if (rotamt < 0)
-          rotamt += 16;
-
-        rotate = DAG.getConstant(rotamt, MVT::i16);
-
-        // Simplify the base pointer for this case:
-        basePtr = basePtr.getOperand(0);
-        if ((offset & ~0xf) > 0) {
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
-                                basePtr,
-                                DAG.getConstant((offset & ~0xf), PtrVT));
-        }
-      } else if ((basePtr.getOpcode() == SPUISD::AFormAddr)
-                 || (basePtr.getOpcode() == SPUISD::IndirectAddr
-                     && basePtr.getOperand(0).getOpcode() == SPUISD::Hi
-                     && basePtr.getOperand(1).getOpcode() == SPUISD::Lo)) {
-        // Plain aligned a-form address: rotate into preferred slot
-        // Same for (SPUindirect (SPUhi ...), (SPUlo ...))
-        int64_t rotamt = -pso;
-        if (rotamt < 0)
-          rotamt += 16;
-        rotate = DAG.getConstant(rotamt, MVT::i16);
-      } else {
-        // Offset the rotate amount by the basePtr and the preferred slot
-        // byte offset
-        int64_t rotamt = -pso;
-        if (rotamt < 0)
-          rotamt += 16;
-        rotate = DAG.getNode(ISD::ADD, dl, PtrVT,
-                             basePtr,
-                             DAG.getConstant(rotamt, PtrVT));
-      }
-    } else {
-      // Unaligned load: must be more pessimistic about addressing modes:
-      if (basePtr.getOpcode() == ISD::ADD) {
-        MachineFunction &MF = DAG.getMachineFunction();
-        MachineRegisterInfo &RegInfo = MF.getRegInfo();
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
-        SDValue Flag;
-
-        SDValue Op0 = basePtr.getOperand(0);
-        SDValue Op1 = basePtr.getOperand(1);
-
-        if (isa<ConstantSDNode>(Op1)) {
-          // Convert the (add <ptr>, <const>) to an indirect address contained
-          // in a register. Note that this is done because we need to avoid
-          // creating a 0(reg) d-form address due to the SPU's block loads.
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
-          the_chain = DAG.getCopyToReg(the_chain, dl, VReg, basePtr, Flag);
-          basePtr = DAG.getCopyFromReg(the_chain, dl, VReg, PtrVT);
-        } else {
-          // Convert the (add <arg1>, <arg2>) to an indirect address, which
-          // will likely be lowered as a reg(reg) x-form address.
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
-        }
-      } else {
+      // Simplify the base pointer for this case:
+      basePtr = basePtr.getOperand(0);
+      if ((offset & ~0xf) > 0) {
         basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                               basePtr,
-                              DAG.getConstant(0, PtrVT));
+                              DAG.getConstant((offset & ~0xf), PtrVT));
       }
-
+    } else if ((basePtr.getOpcode() == SPUISD::AFormAddr)
+               || (basePtr.getOpcode() == SPUISD::IndirectAddr
+                   && basePtr.getOperand(0).getOpcode() == SPUISD::Hi
+                   && basePtr.getOperand(1).getOpcode() == SPUISD::Lo)) {
+      // Plain aligned a-form address: rotate into preferred slot
+      // Same for (SPUindirect (SPUhi ...), (SPUlo ...))
+      int64_t rotamt = -pso;
+      if (rotamt < 0)
+        rotamt += 16;
+      rotate = DAG.getConstant(rotamt, MVT::i16);
+    } else {
       // Offset the rotate amount by the basePtr and the preferred slot
       // byte offset
+      int64_t rotamt = -pso;
+      if (rotamt < 0)
+        rotamt += 16;
       rotate = DAG.getNode(ISD::ADD, dl, PtrVT,
                            basePtr,
-                           DAG.getConstant(-pso, PtrVT));
+                           DAG.getConstant(rotamt, PtrVT));
     }
+  } else {
+    // Unaligned load: must be more pessimistic about addressing modes:
+    if (basePtr.getOpcode() == ISD::ADD) {
+      MachineFunction &MF = DAG.getMachineFunction();
+      MachineRegisterInfo &RegInfo = MF.getRegInfo();
+      unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
+      SDValue Flag;
 
-    // Do the load as a i128 to allow possible shifting
-    SDValue low = DAG.getLoad(MVT::i128, dl, the_chain, basePtr,
-                         lowMemPtr,
-                         LN->isVolatile(), LN->isNonTemporal(), 16);
+      SDValue Op0 = basePtr.getOperand(0);
+      SDValue Op1 = basePtr.getOperand(1);
+
+      if (isa<ConstantSDNode>(Op1)) {
+        // Convert the (add <ptr>, <const>) to an indirect address contained
+        // in a register. Note that this is done because we need to avoid
+        // creating a 0(reg) d-form address due to the SPU's block loads.
+        basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
+        the_chain = DAG.getCopyToReg(the_chain, dl, VReg, basePtr, Flag);
+        basePtr = DAG.getCopyFromReg(the_chain, dl, VReg, PtrVT);
+      } else {
+        // Convert the (add <arg1>, <arg2>) to an indirect address, which
+        // will likely be lowered as a reg(reg) x-form address.
+        basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
+      }
+    } else {
+      basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
+                            basePtr,
+                            DAG.getConstant(0, PtrVT));
+   }
+
+    // Offset the rotate amount by the basePtr and the preferred slot
+    // byte offset
+    rotate = DAG.getNode(ISD::ADD, dl, PtrVT,
+                         basePtr,
+                         DAG.getConstant(-pso, PtrVT));
+  }
+
+  // Do the load as a i128 to allow possible shifting
+  SDValue low = DAG.getLoad(MVT::i128, dl, the_chain, basePtr,
+                       lowMemPtr,
+                       LN->isVolatile(), LN->isNonTemporal(), 16);
  
   // When the size is not greater than alignment we get all data with just
   // one load
@@ -675,16 +673,16 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // extra kowledge, and might avoid the second load
   else {
     // storage position offset from lower 16 byte aligned memory chunk
-    SDValue offset = DAG.getNode( ISD::AND, dl, MVT::i32, 
+    SDValue offset = DAG.getNode(ISD::AND, dl, MVT::i32, 
                                   basePtr, DAG.getConstant( 0xf, MVT::i32 ) );
     // 16 - offset
-    SDValue offset_compl = DAG.getNode( ISD::SUB, dl, MVT::i32, 
+    SDValue offset_compl = DAG.getNode(ISD::SUB, dl, MVT::i32, 
                                         DAG.getConstant( 16, MVT::i32),
                                         offset );
     // get a registerfull of ones. (this implementation is a workaround: LLVM 
     // cannot handle 128 bit signed int constants)
-    SDValue ones = DAG.getConstant( -1, MVT::v4i32 );
-    ones = DAG.getNode( ISD::BIT_CONVERT, dl, MVT::i128, ones);
+    SDValue ones = DAG.getConstant(-1, MVT::v4i32 );
+    ones = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, ones);
 
     SDValue high = DAG.getLoad(MVT::i128, dl, the_chain,
                                DAG.getNode(ISD::ADD, dl, PtrVT, 
@@ -699,22 +697,22 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // Shift the (possible) high part right to compensate the misalignemnt.
     // if there is no highpart (i.e. value is i64 and offset is 4), this 
     // will zero out the high value.
-    high = DAG.getNode( SPUISD::SRL_BYTES, dl, MVT::i128, high, 
-                                     DAG.getNode( ISD::SUB, dl, MVT::i32,
+    high = DAG.getNode(SPUISD::SRL_BYTES, dl, MVT::i128, high, 
+                                     DAG.getNode(ISD::SUB, dl, MVT::i32,
                                                  DAG.getConstant( 16, MVT::i32),
                                                  offset
                                                 ));
    
     // Shift the low similarily
     // TODO: add SPUISD::SHL_BYTES
-    low = DAG.getNode( SPUISD::SHL_BYTES, dl, MVT::i128, low, offset );
+    low = DAG.getNode(SPUISD::SHL_BYTES, dl, MVT::i128, low, offset );
 
     // Merge the two parts
-    result = DAG.getNode( ISD::BIT_CONVERT, dl, vecVT,
+    result = DAG.getNode(ISD::BIT_CONVERT, dl, vecVT,
                           DAG.getNode(ISD::OR, dl, MVT::i128, low, high));
 
     if (!InVT.isVector()) {
-      result = DAG.getNode( SPUISD::VEC2PREFSLOT, dl, InVT, result );
+      result = DAG.getNode(SPUISD::VEC2PREFSLOT, dl, InVT, result );
      }
 
   }
@@ -764,8 +762,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // Get pointerinfos to the memory chunk(s) that contain the data to load 
   uint64_t mpi_offset = SN->getPointerInfo().Offset;
   mpi_offset -= mpi_offset%16;
-  MachinePointerInfo lowMemPtr( SN->getPointerInfo().V, mpi_offset);
-  MachinePointerInfo highMemPtr( SN->getPointerInfo().V, mpi_offset+16);
+  MachinePointerInfo lowMemPtr(SN->getPointerInfo().V, mpi_offset);
+  MachinePointerInfo highMemPtr(SN->getPointerInfo().V, mpi_offset+16);
 
 
   // two sanity checks
@@ -775,80 +773,78 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   if (StVT.getSizeInBits() == 128 && alignment == 16)
     return SDValue();
 
+  SDValue alignLoadVec;
+  SDValue basePtr = SN->getBasePtr();
+  SDValue the_chain = SN->getChain();
+  SDValue insertEltOffs;
 
+  if (alignment == 16) {
+    ConstantSDNode *CN;
+    // Special cases for a known aligned load to simplify the base pointer
+    // and insertion byte:
+    if (basePtr.getOpcode() == ISD::ADD
+        && (CN = dyn_cast<ConstantSDNode>(basePtr.getOperand(1))) != 0) {
+      // Known offset into basePtr
+      int64_t offset = CN->getSExtValue();
 
-    SDValue alignLoadVec;
-    SDValue basePtr = SN->getBasePtr();
-    SDValue the_chain = SN->getChain();
-    SDValue insertEltOffs;
+      // Simplify the base pointer for this case:
+      basePtr = basePtr.getOperand(0);
+      insertEltOffs = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
+                                  basePtr,
+                                  DAG.getConstant((offset & 0xf), PtrVT));
 
-    if (alignment == 16) {
-      ConstantSDNode *CN;
-      // Special cases for a known aligned load to simplify the base pointer
-      // and insertion byte:
-      if (basePtr.getOpcode() == ISD::ADD
-          && (CN = dyn_cast<ConstantSDNode>(basePtr.getOperand(1))) != 0) {
-        // Known offset into basePtr
-        int64_t offset = CN->getSExtValue();
-
-        // Simplify the base pointer for this case:
-        basePtr = basePtr.getOperand(0);
-        insertEltOffs = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
-                                    basePtr,
-                                    DAG.getConstant((offset & 0xf), PtrVT));
-
-        if ((offset & ~0xf) > 0) {
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
-                                basePtr,
-                                DAG.getConstant((offset & ~0xf), PtrVT));
-        }
-      } else {
-        // Otherwise, assume it's at byte 0 of basePtr
-        insertEltOffs = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
-                                    basePtr,
-                                    DAG.getConstant(0, PtrVT));
-        basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
-                                    basePtr,
-                                    DAG.getConstant(0, PtrVT));
-      }
-    } else {
-      // Unaligned load: must be more pessimistic about addressing modes:
-      if (basePtr.getOpcode() == ISD::ADD) {
-        MachineFunction &MF = DAG.getMachineFunction();
-        MachineRegisterInfo &RegInfo = MF.getRegInfo();
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
-        SDValue Flag;
-
-        SDValue Op0 = basePtr.getOperand(0);
-        SDValue Op1 = basePtr.getOperand(1);
-
-        if (isa<ConstantSDNode>(Op1)) {
-          // Convert the (add <ptr>, <const>) to an indirect address contained
-          // in a register. Note that this is done because we need to avoid
-          // creating a 0(reg) d-form address due to the SPU's block loads.
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
-          the_chain = DAG.getCopyToReg(the_chain, dl, VReg, basePtr, Flag);
-          basePtr = DAG.getCopyFromReg(the_chain, dl, VReg, PtrVT);
-        } else {
-          // Convert the (add <arg1>, <arg2>) to an indirect address, which
-          // will likely be lowered as a reg(reg) x-form address.
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
-        }
-      } else {
+      if ((offset & ~0xf) > 0) {
         basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                               basePtr,
-                              DAG.getConstant(0, PtrVT));
+                              DAG.getConstant((offset & ~0xf), PtrVT));
       }
-
-      // Insertion point is solely determined by basePtr's contents
-      insertEltOffs = DAG.getNode(ISD::ADD, dl, PtrVT,
+    } else {
+      // Otherwise, assume it's at byte 0 of basePtr
+      insertEltOffs = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
+                                  basePtr,
+                                  DAG.getConstant(0, PtrVT));
+      basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                                   basePtr,
                                   DAG.getConstant(0, PtrVT));
     }
+  } else {
+    // Unaligned load: must be more pessimistic about addressing modes:
+    if (basePtr.getOpcode() == ISD::ADD) {
+      MachineFunction &MF = DAG.getMachineFunction();
+      MachineRegisterInfo &RegInfo = MF.getRegInfo();
+      unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
+      SDValue Flag;
 
-    // Load the lower part of the memory to which to store.
-    SDValue low = DAG.getLoad(vecVT, dl, the_chain, basePtr,
-                              lowMemPtr, SN->isVolatile(), SN->isNonTemporal(), 16);
+      SDValue Op0 = basePtr.getOperand(0);
+      SDValue Op1 = basePtr.getOperand(1);
+
+      if (isa<ConstantSDNode>(Op1)) {
+        // Convert the (add <ptr>, <const>) to an indirect address contained
+        // in a register. Note that this is done because we need to avoid
+        // creating a 0(reg) d-form address due to the SPU's block loads.
+        basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
+        the_chain = DAG.getCopyToReg(the_chain, dl, VReg, basePtr, Flag);
+        basePtr = DAG.getCopyFromReg(the_chain, dl, VReg, PtrVT);
+      } else {
+        // Convert the (add <arg1>, <arg2>) to an indirect address, which
+        // will likely be lowered as a reg(reg) x-form address.
+        basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
+      }
+    } else {
+      basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
+                            basePtr,
+                            DAG.getConstant(0, PtrVT));
+    }
+
+    // Insertion point is solely determined by basePtr's contents
+    insertEltOffs = DAG.getNode(ISD::ADD, dl, PtrVT,
+                                basePtr,
+                                DAG.getConstant(0, PtrVT));
+  }
+
+  // Load the lower part of the memory to which to store.
+  SDValue low = DAG.getLoad(vecVT, dl, the_chain, basePtr,
+                          lowMemPtr, SN->isVolatile(), SN->isNonTemporal(), 16);
 
   // if we don't need to store over the 16 byte boundary, one store suffices
   if (alignment >= StVT.getSizeInBits()/8) {
@@ -893,17 +889,6 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                           LN->isVolatile(), LN->isNonTemporal(),
                           16);
 
-#if 0 && !defined(NDEBUG)
-    if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
-      const SDValue &currentRoot = DAG.getRoot();
-
-      DAG.setRoot(result);
-      errs() << "------- CellSPU:LowerStore result:\n";
-      DAG.dump();
-      errs() << "-------\n";
-      DAG.setRoot(currentRoot);
-    }
-#endif
   }
   // do the store when it might cross the 16 byte memory access boundary.
   else {
@@ -1003,7 +988,6 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   } 
 
   return result;
-
 }
 
 //! Generate the address of a constant pool entry.
