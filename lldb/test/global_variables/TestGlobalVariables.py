@@ -56,6 +56,9 @@ class GlobalVariablesTestCase(TestBase):
                        'GLOBAL: (const char *) g_file_static_cstr',
                        '"g_file_static_cstr"'])
 
+        # 'frame variable' should support address-of operator.
+        self.runCmd("frame variable &g_file_global_int")
+
 
 if __name__ == '__main__':
     import atexit
