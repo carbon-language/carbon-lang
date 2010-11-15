@@ -59,7 +59,7 @@ using namespace llvm;
 // path.
 static cl::opt<bool> UseInstPrinter("enable-ppc-inst-printer",
                                     cl::ReallyHidden
-                                    //, cl::init(true)
+                                    , cl::init(true)
                                     );
 
 namespace {
