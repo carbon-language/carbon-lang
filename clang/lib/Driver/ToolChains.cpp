@@ -1203,6 +1203,7 @@ enum LinuxDistro {
   Fedora14,
   OpenSuse11_3,
   UbuntuJaunty,
+  UbuntuKarmic,
   UbuntuLucid,
   UbuntuMaverick,
   UnknownDistro
@@ -1221,7 +1222,8 @@ static bool IsDebian(enum LinuxDistro Distro) {
 }
 
 static bool IsUbuntu(enum LinuxDistro Distro) {
-  return Distro == UbuntuLucid || Distro == UbuntuMaverick || Distro == UbuntuJaunty;
+  return Distro == UbuntuLucid || Distro == UbuntuMaverick || 
+         Distro == UbuntuJaunty || Distro == UbuntuKarmic;
 }
 
 static bool IsDebianBased(enum LinuxDistro Distro) {
@@ -1254,6 +1256,8 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
         return UbuntuLucid;
       else if (Lines[i] == "DISTRIB_CODENAME=jaunty")
 	return UbuntuJaunty;
+      else if (Lines[i] == "DISTRIB_CODENAME=karmic")
+        return UbuntuKarmic;
     }
     return UnknownDistro;
   }
@@ -1342,7 +1346,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
       GccTriple = "i586-suse-linux";
   }
 
-  const char* GccVersions[] = {"4.5.1", "4.5", "4.4.5", "4.4.4", "4.4.3",
+  const char* GccVersions[] = {"4.5.1", "4.5", "4.4.5", "4.4.4", "4.4.3", "4.4",
                                "4.3.3", "4.3.2"};
   std::string Base = "";
   for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
@@ -1392,14 +1396,16 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   if (IsFedora(Distro) || Distro == UbuntuMaverick)
     ExtraOpts.push_back("--hash-style=gnu");
 
-  if (IsDebian(Distro) || Distro == UbuntuLucid || Distro == UbuntuJaunty)
+  if (IsDebian(Distro) || Distro == UbuntuLucid || Distro == UbuntuJaunty ||
+      Distro == UbuntuKarmic)
     ExtraOpts.push_back("--hash-style=both");
 
   if (IsFedora(Distro))
     ExtraOpts.push_back("--no-add-needed");
 
   if (Distro == DebianSqueeze || IsOpenSuse(Distro) ||
-      IsFedora(Distro) || Distro == UbuntuLucid || Distro == UbuntuMaverick)
+      IsFedora(Distro) || Distro == UbuntuLucid || Distro == UbuntuMaverick ||
+      Distro == UbuntuKarmic)
     ExtraOpts.push_back("--build-id");
 
   Paths.push_back(Base + Suffix);
