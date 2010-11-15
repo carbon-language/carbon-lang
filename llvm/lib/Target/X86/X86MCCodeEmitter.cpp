@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "x86-emitter"
+#define DEBUG_TYPE "mccodeemitter"
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "X86FixupKinds.h"

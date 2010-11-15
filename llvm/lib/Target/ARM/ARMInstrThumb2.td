@@ -31,7 +31,7 @@ def tb_addrmode : Operand<i32> {
 def t2_so_reg : Operand<i32>,    // reg imm
                 ComplexPattern<i32, 2, "SelectT2ShifterOperandReg",
                                [shl,srl,sra,rotr]> {
-  string EncoderMethod = "getT2SORegOpValue";
+  let EncoderMethod = "getT2SORegOpValue";
   let PrintMethod = "printT2SOOperand";
   let MIOperandInfo = (ops rGPR, i32imm);
 }
@@ -53,7 +53,7 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
 // into t2_so_imm instructions: the 8-bit immediate is the least significant
 // bits [bits 0-7], the 4-bit shift/splat amount is the next 4 bits [bits 8-11].
 def t2_so_imm : Operand<i32>, PatLeaf<(imm), [{ return Pred_t2_so_imm(N); }]> {
-  string EncoderMethod = "getT2SOImmOpValue";
+  let EncoderMethod = "getT2SOImmOpValue";
 }
 
 // t2_so_imm_not - Match an immediate that is a complement

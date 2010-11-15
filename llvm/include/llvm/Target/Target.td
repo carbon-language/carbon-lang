@@ -243,6 +243,8 @@ class Instruction {
   /// be encoded into the output machineinstr.
   string DisableEncoding = "";
 
+  string PostEncoderMethod = "";
+
   /// Target-specific flags. This becomes the TSFlags field in TargetInstrDesc.
   bits<64> TSFlags = 0;
 }
@@ -343,6 +345,7 @@ def ImmAsmOperand : AsmOperandClass {
 class Operand<ValueType ty> {
   ValueType Type = ty;
   string PrintMethod = "printOperand";
+  string EncoderMethod = "";
   string AsmOperandLowerMethod = ?;
   dag MIOperandInfo = (ops);
 

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-emitter"
+#define DEBUG_TYPE "mccodeemitter"
 #include "ARM.h"
 #include "ARMAddressingModes.h"
 #include "ARMFixupKinds.h"

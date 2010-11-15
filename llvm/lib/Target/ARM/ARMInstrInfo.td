@@ -231,7 +231,7 @@ def bf_inv_mask_imm : Operand<i32>,
                       PatLeaf<(imm), [{
   return ARM::isBitFieldInvertedMask(N->getZExtValue());
 }] > {
-  string EncoderMethod = "getBitfieldInvertedMaskOpValue";
+  let EncoderMethod = "getBitfieldInvertedMaskOpValue";
   let PrintMethod = "printBitfieldInvMaskImmOperand";
 }
 
@@ -275,13 +275,13 @@ def sube_live_carry :
 
 // Branch target.
 def brtarget : Operand<OtherVT> {
-  string EncoderMethod = "getBranchTargetOpValue";
+  let EncoderMethod = "getBranchTargetOpValue";
 }
 
 // Call target.
 def bltarget : Operand<i32> {
   // Encoded the same as branch targets.
-  string EncoderMethod = "getBranchTargetOpValue";
+  let EncoderMethod = "getBranchTargetOpValue";
 }
 
 // A list of registers separated by comma. Used by load/store multiple.
@@ -291,7 +291,7 @@ def RegListAsmOperand : AsmOperandClass {
 }
 
 def reglist : Operand<i32> {
-  string EncoderMethod = "getRegisterListOpValue";
+  let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = RegListAsmOperand;
   let PrintMethod = "printRegisterList";
 }
@@ -314,14 +314,14 @@ def pclabel : Operand<i32> {
 }
 
 def neon_vcvt_imm32 : Operand<i32> {
-  string EncoderMethod = "getNEONVcvtImm32OpValue";
+  let EncoderMethod = "getNEONVcvtImm32OpValue";
 }
 
 // rot_imm: An integer that encodes a rotate amount. Must be 8, 16, or 24.
 def rot_imm : Operand<i32>, PatLeaf<(i32 imm), [{
-  int32_t v = (int32_t)N->getZExtValue();
-  return v == 8 || v == 16 || v == 24; }]> {
-  string EncoderMethod = "getRotImmOpValue";
+    int32_t v = (int32_t)N->getZExtValue();
+    return v == 8 || v == 16 || v == 24; }]> {
+  let EncoderMethod = "getRotImmOpValue";
 }
 
 // shift_imm: An integer that encodes a shift amount and the type of shift
@@ -335,14 +335,14 @@ def shift_imm : Operand<i32> {
 def so_reg : Operand<i32>,    // reg reg imm
              ComplexPattern<i32, 3, "SelectShifterOperandReg",
                             [shl,srl,sra,rotr]> {
-  string EncoderMethod = "getSORegOpValue";
+  let EncoderMethod = "getSORegOpValue";
   let PrintMethod = "printSORegOperand";
   let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
 def shift_so_reg : Operand<i32>,    // reg reg imm
                    ComplexPattern<i32, 3, "SelectShiftShifterOperandReg",
                                   [shl,srl,sra,rotr]> {
-  string EncoderMethod = "getSORegOpValue";
+  let EncoderMethod = "getSORegOpValue";
   let PrintMethod = "printSORegOperand";
   let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
@@ -353,7 +353,7 @@ def shift_so_reg : Operand<i32>,    // reg reg imm
 // into so_imm instructions: the 8-bit immediate is the least significant bits
 // [bits 0-7], the 4-bit shift amount is the next 4 bits [bits 8-11].
 def so_imm : Operand<i32>, PatLeaf<(imm), [{ return Pred_so_imm(N); }]> {
-  string EncoderMethod = "getSOImmOpValue";
+  let EncoderMethod = "getSOImmOpValue";
   let PrintMethod = "printSOImmOperand";
 }
 
@@ -407,7 +407,7 @@ def imm0_31 : Operand<i32>, PatLeaf<(imm), [{
 def imm0_31_m1 : Operand<i32>, PatLeaf<(imm), [{
   return (int32_t)N->getZExtValue() < 32;
 }]> {
-  string EncoderMethod = "getImmMinusOneOpValue";
+  let EncoderMethod = "getImmMinusOneOpValue";
 }
 
 // Define ARM specific addressing modes.
@@ -421,7 +421,7 @@ def addrmode_imm12 : Operand<i32>,
   // #0 and #-0 differently. We flag #-0 as the magic value INT32_MIN. All other
   // immediate values are as normal.
 
-  string EncoderMethod = "getAddrModeImm12OpValue";
+  let EncoderMethod = "getAddrModeImm12OpValue";
   let PrintMethod = "printAddrModeImm12Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
@@ -429,7 +429,7 @@ def addrmode_imm12 : Operand<i32>,
 //
 def ldst_so_reg : Operand<i32>,
                   ComplexPattern<i32, 3, "SelectLdStSOReg", []> {
-  string EncoderMethod = "getLdStSORegOpValue";
+  let EncoderMethod = "getLdStSORegOpValue";
   // FIXME: Simplify the printer
   let PrintMethod = "printAddrMode2Operand";
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
@@ -456,7 +456,7 @@ def am2offset : Operand<i32>,
 //
 def addrmode3 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode3", []> {
-  string EncoderMethod = "getAddrMode3OpValue";
+  let EncoderMethod = "getAddrMode3OpValue";
   let PrintMethod = "printAddrMode3Operand";
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
@@ -464,7 +464,7 @@ def addrmode3 : Operand<i32>,
 def am3offset : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode3Offset",
                                [], [SDNPWantRoot]> {
-  string EncoderMethod = "getAddrMode3OffsetOpValue";
+  let EncoderMethod = "getAddrMode3OffsetOpValue";
   let PrintMethod = "printAddrMode3OffsetOperand";
   let MIOperandInfo = (ops GPR, i32imm);
 }
@@ -472,7 +472,7 @@ def am3offset : Operand<i32>,
 // ldstm_mode := {ia, ib, da, db}
 //
 def ldstm_mode : OptionalDefOperand<OtherVT, (ops i32), (ops (i32 1))> {
-  string EncoderMethod = "getLdStmModeOpValue";
+  let EncoderMethod = "getLdStmModeOpValue";
   let PrintMethod = "printLdStmModeOperand";
 }
 
@@ -488,7 +488,7 @@ def addrmode5 : Operand<i32>,
   let PrintMethod = "printAddrMode5Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm);
   let ParserMatchClass = MemMode5AsmOperand;
-  string EncoderMethod = "getAddrMode5OpValue";
+  let EncoderMethod = "getAddrMode5OpValue";
 }
 
 // addrmode6 := reg with optional writeback
@@ -497,13 +497,13 @@ def addrmode6 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode6", [], [SDNPWantParent]>{
   let PrintMethod = "printAddrMode6Operand";
   let MIOperandInfo = (ops GPR:$addr, i32imm);
-  string EncoderMethod = "getAddrMode6AddressOpValue";
+  let EncoderMethod = "getAddrMode6AddressOpValue";
 }
 
 def am6offset : Operand<i32> {
   let PrintMethod = "printAddrMode6OffsetOperand";
   let MIOperandInfo = (ops GPR);
-  string EncoderMethod = "getAddrMode6OffsetOpValue";
+  let EncoderMethod = "getAddrMode6OffsetOpValue";
 }
 
 // addrmodepc := pc + reg

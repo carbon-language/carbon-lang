@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mblaze-emitter"
+#define DEBUG_TYPE "mccodeemitter"
 #include "MBlaze.h"
 #include "MBlazeInstrInfo.h"
 #include "MBlazeFixupKinds.h"

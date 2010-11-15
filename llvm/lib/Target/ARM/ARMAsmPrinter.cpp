@@ -200,7 +200,7 @@ namespace {
 
     MachineLocation getDebugValueLocation(const MachineInstr *MI) const {
       MachineLocation Location;
-      assert (MI->getNumOperands() == 4 && "Invalid no. of machine operands!");
+      assert(MI->getNumOperands() == 4 && "Invalid no. of machine operands!");
       // Frame address.  Currently handles register +- offset only.
       if (MI->getOperand(0).isReg() && MI->getOperand(1).isImm())
         Location.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());

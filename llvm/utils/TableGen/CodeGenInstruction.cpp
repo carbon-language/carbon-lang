@@ -71,8 +71,7 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
     if (Rec->isSubClassOf("Operand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
       // If there is an explicit encoder method, use it.
-      if (Rec->getValue("EncoderMethod"))
-        EncoderMethod = Rec->getValueAsString("EncoderMethod");
+      EncoderMethod = Rec->getValueAsString("EncoderMethod");
       MIOpInfo = Rec->getValueAsDag("MIOperandInfo");
       
       // Verify that MIOpInfo has an 'ops' root value.

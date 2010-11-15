@@ -154,13 +154,13 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
 
 // Conditional code result for instructions whose 's' bit is set, e.g. subs.
 def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
-  string EncoderMethod = "getCCOutOpValue";
+  let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
 }
 
 // Same as cc_out except it defaults to setting CPSR.
 def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
-  string EncoderMethod = "getCCOutOpValue";
+  let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
 }
 
@@ -1675,7 +1675,7 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
   let Inst{11-8}  = op11_8;
   let Inst{7-4}   = op7_4;
   
-  string PostEncoderMethod = "NEONThumb2LoadStorePostEncoder";
+  let PostEncoderMethod = "NEONThumb2LoadStorePostEncoder";
   
   bits<5> Vd;
   bits<6> Rn;
@@ -1718,7 +1718,7 @@ class NDataI<dag oops, dag iops, Format f, InstrItinClass itin,
   : NeonI<oops, iops, AddrModeNone, IndexModeNone, f, itin, opc, dt, asm, cstr,
           pattern> {
   let Inst{31-25} = 0b1111001;
-  string PostEncoderMethod = "NEONThumb2DataIPostEncoder";
+  let PostEncoderMethod = "NEONThumb2DataIPostEncoder";
 }
 
 class NDataXI<dag oops, dag iops, Format f, InstrItinClass itin,
@@ -1894,7 +1894,7 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
   
-  string PostEncoderMethod = "NEONThumb2DupPostEncoder";
+  let PostEncoderMethod = "NEONThumb2DupPostEncoder";
   
   bits<5> V;
   bits<4> R;
