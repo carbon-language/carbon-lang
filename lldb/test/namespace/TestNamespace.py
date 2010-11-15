@@ -71,11 +71,20 @@ class NamespaceTestCase(TestBase):
         self.expect("frame variable 'A::B::j", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) A::B::j = 4')
 
+        # So should the anonymous namespace case.
+        self.expect("frame variable '(anonymous namespace)::i", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = '(int) (anonymous namespace)::i = 3')
+
         # rdar://problem/8660275
         # test/namespace: 'expression -- i+j' not working
         self.expect("expression -- i + j",
             startstr = "(int) $0 = 7")
         # (int) $0 = 7
+
+        self.runCmd("expression -- '(anonymous namespace)::i'")
+
+        self.runCmd("expression -- 'A::B::j'")
+
 
 if __name__ == '__main__':
     import atexit
