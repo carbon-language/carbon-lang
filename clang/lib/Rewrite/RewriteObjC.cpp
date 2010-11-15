@@ -1416,7 +1416,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
       CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, castT,
-                                                    CK_Unknown,
+                                                    CK_BitCast,
                                                     IV->getBase());
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new (Context) ParenExpr(IV->getBase()->getLocStart(),
@@ -1461,7 +1461,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
       CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, castT,
-                                                    CK_Unknown,
+                                                    CK_BitCast,
                                                     IV->getBase());
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new (Context) ParenExpr(IV->getBase()->getLocStart(),
@@ -1797,7 +1797,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   std::string syncBuf;
   syncBuf += " objc_sync_exit(";
   Expr *syncExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                            CK_Unknown,
+                                            CK_BitCast,
                                             S->getSynchExpr());
   std::string syncExprBufS;
   llvm::raw_string_ostream syncExprBuf(syncExprBufS);
@@ -2140,7 +2140,7 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
   // Now, we cast the reference to a pointer to the objc_msgSend type.
   QualType pToFunc = Context->getPointerType(msgSendType);
   ImplicitCastExpr *ICE = 
-    ImplicitCastExpr::Create(*Context, pToFunc, CK_Unknown,
+    ImplicitCastExpr::Create(*Context, pToFunc, CK_FunctionToPointerDecay,
                              DRE, 0, VK_RValue);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
@@ -2668,7 +2668,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                                  SourceLocation());
   // cast to NSConstantString *
   CastExpr *cast = NoTypeInfoCStyleCastExpr(Context, Exp->getType(),
-                                            CK_Unknown, Unop);
+                                            CK_BitCast, Unop);
   ReplaceStmt(Exp, cast);
   // delete Exp; leak for now, see RewritePropertyOrImplicitSetter() usage for more info.
   return cast;
@@ -2782,7 +2782,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // set the receiver to self, the first argument to all methods.
     InitExprs.push_back(
       NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                               CK_Unknown,
+                               CK_BitCast,
                    new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
                                    Context->getObjCIdType(),
                                    SourceLocation()))
@@ -2803,7 +2803,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // (Class)objc_getClass("CurrentClass")
     CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
                                              Context->getObjCClassType(),
-                                             CK_Unknown, Cls);
+                                             CK_BitCast, Cls);
     ClsExprs.clear();
     ClsExprs.push_back(ArgExpr);
     Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
@@ -2815,7 +2815,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     InitExprs.push_back( // set 'super class', using class_getSuperclass().
                         NoTypeInfoCStyleCastExpr(Context,
                                                  Context->getObjCIdType(),
-                                                 CK_Unknown, Cls));
+                                                 CK_BitCast, Cls));
     // struct objc_super
     QualType superType = getSuperStructType();
     Expr *SuperRep;
@@ -2839,7 +2839,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                SourceLocation());
       SuperRep = NoTypeInfoCStyleCastExpr(Context,
                                           Context->getPointerType(superType),
-                                          CK_Unknown, SuperRep);
+                                          CK_BitCast, SuperRep);
     } else {
       // (struct objc_super) { <exprs from above> }
       InitListExpr *ILE =
@@ -2888,7 +2888,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
 
     InitExprs.push_back(
       NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                               CK_Unknown,
+                               CK_BitCast,
                    new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
                                    Context->getObjCIdType(),
                                    SourceLocation()))
@@ -2908,7 +2908,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // (Class)objc_getClass("CurrentClass")
     CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
                                                  Context->getObjCClassType(),
-                                                 CK_Unknown, Cls);
+                                                 CK_BitCast, Cls);
     ClsExprs.clear();
     ClsExprs.push_back(ArgExpr);
     Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
@@ -2920,7 +2920,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     InitExprs.push_back(
       // set 'super class', using class_getSuperclass().
       NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                               CK_Unknown, Cls));
+                               CK_BitCast, Cls));
     // struct objc_super
     QualType superType = getSuperStructType();
     Expr *SuperRep;
@@ -2944,7 +2944,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                SourceLocation());
       SuperRep = NoTypeInfoCStyleCastExpr(Context,
                                Context->getPointerType(superType),
-                               CK_Unknown, SuperRep);
+                               CK_BitCast, SuperRep);
     } else {
       // (struct objc_super) { <exprs from above> }
       InitListExpr *ILE =
@@ -2967,7 +2967,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     while (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(recExpr))
       recExpr = CE->getSubExpr();
     recExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                       CK_Unknown, recExpr);
+                                       CK_BitCast, recExpr);
     MsgExprs.push_back(recExpr);
     break;
   }
@@ -2997,7 +2997,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                 : ICE->getType();
       // Make sure we convert "type (^)(...)" to "type (*)(...)".
       (void)convertBlockPointerToFunctionPointer(type);
-      userExpr = NoTypeInfoCStyleCastExpr(Context, type, CK_Unknown,
+      userExpr = NoTypeInfoCStyleCastExpr(Context, type, CK_BitCast,
                                           userExpr);
     }
     // Make id<P...> cast into an 'id' cast.
@@ -3006,7 +3006,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
         while ((CE = dyn_cast<CStyleCastExpr>(userExpr)))
           userExpr = CE->getSubExpr();
         userExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                            CK_Unknown, userExpr);
+                                            CK_BitCast, userExpr);
       }
     }
     MsgExprs.push_back(userExpr);
@@ -3056,7 +3056,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   // xx.m:13: note: if this code is reached, the program will abort
   cast = NoTypeInfoCStyleCastExpr(Context,
                                   Context->getPointerType(Context->VoidTy),
-                                  CK_Unknown, DRE);
+                                  CK_BitCast, DRE);
 
   // Now do the "normal" pointer to function cast.
   QualType castType = Context->getFunctionType(returnType,
@@ -3066,7 +3066,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                                false, false, 0, 0,
                                                FunctionType::ExtInfo());
   castType = Context->getPointerType(castType);
-  cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_Unknown,
+  cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_BitCast,
                                   cast);
 
   // Don't forget the parens to enforce the proper binding.
@@ -3089,7 +3089,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // Need to cast objc_msgSend_stret to "void *" (see above comment).
     cast = NoTypeInfoCStyleCastExpr(Context,
                                     Context->getPointerType(Context->VoidTy),
-                                    CK_Unknown, STDRE);
+                                    CK_BitCast, STDRE);
     // Now do the "normal" pointer to function cast.
     castType = Context->getFunctionType(returnType,
       &ArgTypes[0], ArgTypes.size(),
@@ -3097,7 +3097,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                         false, false, 0, 0,
                                         FunctionType::ExtInfo());
     castType = Context->getPointerType(castType);
-    cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_Unknown,
+    cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_BitCast,
                                     cast);
 
     // Don't forget the parens to enforce the proper binding.
@@ -3179,7 +3179,7 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
                              Context->getPointerType(DRE->getType()),
                              SourceLocation());
   CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, DerefExpr->getType(),
-                                                CK_Unknown,
+                                                CK_BitCast,
                                                 DerefExpr);
   ReplaceStmt(Exp, castExpr);
   ProtocolExprDecls.insert(Exp->getProtocol());
@@ -4709,7 +4709,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
   PtrToFuncCastType = Context->getPointerType(PtrToFuncCastType);
 
   CastExpr *BlkCast = NoTypeInfoCStyleCastExpr(Context, PtrBlock,
-                                               CK_Unknown,
+                                               CK_BitCast,
                                                const_cast<Expr*>(BlockExp));
   // Don't forget the parens to enforce the proper binding.
   ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(),
@@ -4724,7 +4724,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
 
   
   CastExpr *FunkCast = NoTypeInfoCStyleCastExpr(Context, PtrToFuncCastType,
-                                                CK_Unknown, ME);
+                                                CK_BitCast, ME);
   PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), FunkCast);
 
   llvm::SmallVector<Expr*, 8> BlkExprs;
@@ -5344,7 +5344,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
   DeclRefExpr *Arg = new (Context) DeclRefExpr(FD, FD->getType(),
                                                SourceLocation());
   CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, Context->VoidPtrTy,
-                                                CK_Unknown, Arg);
+                                                CK_BitCast, Arg);
   InitExprs.push_back(castExpr);
 
   // Initialize the block descriptor.
@@ -5382,7 +5382,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
         FD = SynthBlockInitFunctionDecl((*I)->getName());
         Arg = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
         Exp = NoTypeInfoCStyleCastExpr(Context, Context->VoidPtrTy,
-                                       CK_Unknown, Arg);
+                                       CK_BitCast, Arg);
       } else {
         FD = SynthBlockInitFunctionDecl((*I)->getName());
         Exp = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
@@ -5415,7 +5415,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
       Exp = new (Context) UnaryOperator(Exp, UO_AddrOf,
                               Context->getPointerType(Exp->getType()),
                               SourceLocation());
-      Exp = NoTypeInfoCStyleCastExpr(Context, castT, CK_Unknown, Exp);
+      Exp = NoTypeInfoCStyleCastExpr(Context, castT, CK_BitCast, Exp);
       InitExprs.push_back(Exp);
     }
   }
@@ -5433,7 +5433,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
   NewRep = new (Context) UnaryOperator(NewRep, UO_AddrOf,
                              Context->getPointerType(NewRep->getType()),
                              SourceLocation());
-  NewRep = NoTypeInfoCStyleCastExpr(Context, FType, CK_Unknown,
+  NewRep = NoTypeInfoCStyleCastExpr(Context, FType, CK_BitCast,
                                     NewRep);
   BlockDeclRefs.clear();
   BlockByRefDecls.clear();
