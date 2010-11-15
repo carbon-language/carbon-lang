@@ -41,13 +41,16 @@ class InitHeaderSearch {
   std::vector<DirectoryLookup> IncludeGroup[4];
   HeaderSearch& Headers;
   bool Verbose;
-  llvm::sys::Path isysroot;
+  llvm::sys::Path IncludeSysroot;
 
 public:
 
-  InitHeaderSearch(HeaderSearch &HS,
-      bool verbose = false, const std::string &iSysroot = "")
-    : Headers(HS), Verbose(verbose), isysroot(iSysroot) {}
+  InitHeaderSearch(HeaderSearch &HS, bool verbose, llvm::StringRef sysroot)
+    : Headers(HS), Verbose(verbose),
+      IncludeSysroot((sysroot.empty() || sysroot == "/") ?
+                     llvm::sys::Path::GetRootDirectory() :
+                     llvm::sys::Path(sysroot)) {
+  }
 
   /// AddPath - Add the specified path to the specified group list.
   void AddPath(const llvm::Twine &Path, IncludeDirGroup Group,
@@ -107,11 +110,11 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   llvm::sys::Path MappedPath(MappedPathStr);
 
   // Handle isysroot.
-  if (Group == System && !IgnoreSysRoot && MappedPath.isAbsolute()) {
-    // Prepend isysroot if present.
-    if (isysroot.isValid() && isysroot.isAbsolute() &&
-        isysroot != llvm::sys::Path::GetRootDirectory())
-      MappedPathStr = (isysroot.str() + Path).toStringRef(MappedPathStorage);
+  if (Group == System && !IgnoreSysRoot && MappedPath.isAbsolute() &&
+      IncludeSysroot.isValid() && IncludeSysroot.isAbsolute() &&
+      IncludeSysroot != llvm::sys::Path::GetRootDirectory()) {
+    MappedPathStr =
+      (IncludeSysroot.str() + Path).toStringRef(MappedPathStorage);
   }
 
   // Compute the DirectoryLookup type.
