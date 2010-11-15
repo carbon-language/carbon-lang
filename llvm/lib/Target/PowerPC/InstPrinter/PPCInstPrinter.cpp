@@ -188,10 +188,7 @@ void PPCInstPrinter::printMemRegImm(const MCInst *MI, unsigned OpNo,
                                     raw_ostream &O) {
   printSymbolLo(MI, OpNo, O);
   O << '(';
-  assert(MI->getOperand(OpNo+1).isReg() && "Bad operand");
-  // FIXME: Simplify.
-  if (MI->getOperand(OpNo+1).isReg() &&
-      MI->getOperand(OpNo+1).getReg() == PPC::R0)
+  if (MI->getOperand(OpNo+1).getReg() == PPC::R0)
     O << "0";
   else
     printOperand(MI, OpNo+1, O);
@@ -206,10 +203,7 @@ void PPCInstPrinter::printMemRegImmShifted(const MCInst *MI, unsigned OpNo,
     printSymbolLo(MI, OpNo, O);
   O << '(';
   
-  assert(MI->getOperand(OpNo+1).isReg() && "Bad operand");
-  // FIXME: Simplify.
-  if (MI->getOperand(OpNo+1).isReg() &&
-      MI->getOperand(OpNo+1).getReg() == PPC::R0)
+  if (MI->getOperand(OpNo+1).getReg() == PPC::R0)
     O << "0";
   else
     printOperand(MI, OpNo+1, O);
