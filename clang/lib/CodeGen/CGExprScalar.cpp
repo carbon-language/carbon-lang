@@ -1041,9 +1041,6 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(CE);
     return CGF.EmitDynamicCast(V, DCE);
   }
-  case CK_ToUnion:
-    assert(0 && "Should be unreachable!");
-    break;
 
   case CK_ArrayToPointerDecay: {
     assert(E->getType()->isArrayType() &&
@@ -1101,7 +1098,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   case CK_IntegralComplexToFloatingComplex:
   case CK_FloatingComplexToIntegralComplex:
   case CK_ConstructorConversion:
-    assert(0 && "Should be unreachable!");
+  case CK_ToUnion:
+    llvm_unreachable("scalar cast to non-scalar value");
     break;
 
   case CK_IntegralToPointer: {
@@ -1190,39 +1188,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   }
 
   }
-  
-  // Handle cases where the source is an non-complex type.
 
-  if (!CGF.hasAggregateLLVMType(E->getType())) {
-    Value *Src = Visit(const_cast<Expr*>(E));
-
-    // Use EmitScalarConversion to perform the conversion.
-    return EmitScalarConversion(Src, E->getType(), DestTy);
-  }
-
-  // Handle cases where the source is a complex type.
-  // TODO: when we're certain about cast kinds, we should just be able
-  // to assert that no complexes make it here.
-  if (E->getType()->isAnyComplexType()) {
-    bool IgnoreImag = true;
-    bool IgnoreImagAssign = true;
-    bool IgnoreReal = IgnoreResultAssign;
-    bool IgnoreRealAssign = IgnoreResultAssign;
-    if (DestTy->isBooleanType())
-      IgnoreImagAssign = IgnoreImag = false;
-    else if (DestTy->isVoidType()) {
-      IgnoreReal = IgnoreImag = false;
-      IgnoreRealAssign = IgnoreImagAssign = true;
-    }
-    CodeGenFunction::ComplexPairTy V
-      = CGF.EmitComplexExpr(E, IgnoreReal, IgnoreImag, IgnoreRealAssign,
-                            IgnoreImagAssign);
-    return EmitComplexToScalarConversion(V, E->getType(), DestTy);
-  }
-
-  // Okay, this is a cast from an aggregate.  It must be a cast to void.  Just
-  // evaluate the result and return.
-  CGF.EmitAggExpr(E, AggValueSlot::ignored(), true);
+  llvm_unreachable("unknown scalar cast");
   return 0;
 }
 
