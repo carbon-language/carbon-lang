@@ -397,9 +397,10 @@ portable code.  If there are cases where it isn't possible to write portable
 code, isolate it behind a well defined (and well documented) interface.</p>
 
 <p>In practice, this means that you shouldn't assume much about the host
-compiler, including its support for "high tech" features like partial
-specialization of templates.  If these features are used, they should only be
-an implementation detail of a library which has a simple exposed API.</p>
+compiler, and Visual Studio tends to be the lowest common denominator.
+If advanced features are used, they should only be an implementation detail of 
+a library which has a simple exposed API, and preferably be buried in 
+libSystem.</p>
 
 </div>
 
