@@ -533,20 +533,16 @@ Changes</a></div>
 <div class="doc_subsection"><a name="license">License</a></div>
 <div class="doc_text">
 <p>We intend to keep LLVM perpetually open source and to use a liberal open
-   source license. The current license is the
+   source license. All of the code in LLVM is available under the
    <a href="http://www.opensource.org/licenses/UoI-NCSA.php">University of
    Illinois/NCSA Open Source License</a>, which boils down to this:</p>
 
 <ul>
   <li>You can freely distribute LLVM.</li>
-
   <li>You must retain the copyright notice if you redistribute LLVM.</li>
-
-  <li>Binaries derived from LLVM must reproduce the copyright notice (e.g.  in
-      an included readme file).</li>
-
+  <li>Binaries derived from LLVM must reproduce the copyright notice (e.g. in an
+      included readme file).</li>
   <li>You can't use our names to promote your LLVM derived products.</li>
-
   <li>There's no warranty on LLVM at all.</li>
 </ul>
   
@@ -556,7 +552,22 @@ Changes</a></div>
    LLVM's license is not a "copyleft" license like the GPL). We suggest that you
    read the <a href="http://www.opensource.org/licenses/UoI-NCSA.php">License</a>
    if further clarification is needed.</p>
-  
+   
+<p>In addition to the UIUC license, the runtime library components of LLVM
+   (<b>compiler_rt and libc++</b>) are also licensed under the <a
+   href="http://www.opensource.org/licenses/mit-license.php">MIT license</a>,
+   which does not contain the binary redistribution clause.  As a user of these
+   runtime libraries, it means that you can choose to use the code under either
+   license (and thus don't need the binary redistribution clause), and as a
+   contributor to the code that you agree that any contributions to these
+   libraries be licensed under both licenses.  We feel that this is important
+   for runtime libraries, because they are implicitly linked into applications
+   and therefore should not subject those applications to the binary
+   redistribution clause. This also means that it is ok to move code from (e.g.)
+   libc++ to the LLVM core without concern, but that code cannot be moved from
+   the LLVM core to libc++ without the copyright owner's permission.
+</p>
+
 <p>Note that the LLVM Project does distribute llvm-gcc, <b>which is GPL.</b>
    This means that anything "linked" into llvm-gcc must itself be compatible
    with the GPL, and must be releasable under the terms of the GPL.  This
@@ -570,7 +581,7 @@ Changes</a></div>
   
 <p>We have no plans to change the license of LLVM.  If you have questions or
    comments about the license, please contact the
-   <a href="mailto:llvm-oversight@cs.uiuc.edu">LLVM Oversight Group</a>.</p>
+   <a href="mailto:llvmdev@cs.uiuc.edu">LLVM Developer's Mailing List</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
