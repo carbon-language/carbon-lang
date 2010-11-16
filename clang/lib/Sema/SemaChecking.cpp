@@ -1090,12 +1090,16 @@ Sema::CheckPrintfScanfArguments(const CallExpr *TheCall, bool HasVAListArg,
   // of member functions is counted. However, it doesn't appear in our own
   // lists, so decrement format_idx in that case.
   if (isa<CXXMemberCallExpr>(TheCall)) {
-    // Catch a format attribute mistakenly referring to the object argument.
-    if (format_idx == 0)
-      return;
-    --format_idx;
-    if(firstDataArg != 0)
-      --firstDataArg;
+    const CXXMethodDecl *method_decl =
+      dyn_cast<CXXMethodDecl>(TheCall->getCalleeDecl());
+    if (method_decl && method_decl->isInstance()) {
+      // Catch a format attribute mistakenly referring to the object argument.
+      if (format_idx == 0)
+        return;
+      --format_idx;
+      if(firstDataArg != 0)
+        --firstDataArg;
+    }
   }
 
   // CHECK: printf/scanf-like function is called with no format string.
