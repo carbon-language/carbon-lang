@@ -155,6 +155,9 @@ defm VSTM : vfp_ldst_mult<"vstm", 0, IIC_fpLoad_m, IIC_fpLoad_mu>;
 
 } // neverHasSideEffects
 
+def : MnemonicAlias<"vldm", "vldmia">;
+def : MnemonicAlias<"vstm", "vstmia">;
+
 // FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
 
 //===----------------------------------------------------------------------===//
