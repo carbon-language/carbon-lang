@@ -1434,7 +1434,7 @@ bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
   }
   const char *BaseName = 0;
   unsigned BitSize = (T->getNumElements() *
-                      getASTContext().getTypeInfo(EltType).first);
+                      getASTContext().getTypeSize(EltType));
   if (BitSize == 64)
     BaseName = "__simd64_";
   else if (BitSize == 128)
