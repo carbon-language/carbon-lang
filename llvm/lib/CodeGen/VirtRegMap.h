@@ -134,6 +134,9 @@ namespace llvm {
     /// UnusedRegs - A list of physical registers that have not been used.
     BitVector UnusedRegs;
 
+    /// createSpillSlot - Allocate a spill slot for RC from MFI.
+    unsigned createSpillSlot(const TargetRegisterClass *RC);
+
     VirtRegMap(const VirtRegMap&);     // DO NOT IMPLEMENT
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
 
