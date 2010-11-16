@@ -3008,11 +3008,10 @@ def MOVCCs : AI1<0b1101, (outs GPR:$Rd),
    [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg:$shift, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $Rd">, UnaryDP {
   bits<4> Rd;
-  bits<4> Rn;
   bits<12> shift;
   let Inst{25} = 0;
   let Inst{20} = 0;
-  let Inst{19-16} = Rn;
+  let Inst{19-16} = 0;
   let Inst{15-12} = Rd;
   let Inst{11-0} = shift;
 }
