@@ -771,6 +771,10 @@ def err_reference_bind_init_list : Error<
 def err_init_list_bad_dest_type : Error<
   "%select{|non-aggregate }0type %1 cannot be initialized with an initializer "
   "list">;
+def err_member_function_call_bad_cvr : Error<"member function %0 not viable: "
+    "'this' argument has type %1, but function is not marked "
+    "%select{const|restrict|const or restrict|volatile|const or volatile|"
+    "volatile or restrict|const, volatile, or restrict}2">;
 
 def err_reference_init_drops_quals : Error<
   "initialization of reference to type %0 with a %select{value|temporary}1 of type %2 drops "

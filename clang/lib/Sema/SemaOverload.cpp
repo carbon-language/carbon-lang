@@ -3187,10 +3187,26 @@ Sema::PerformObjectArgumentInitialization(Expr *&From,
   ImplicitConversionSequence ICS
     = TryObjectArgumentInitialization(*this, From->getType(), Method,
                                       Method->getParent());
-  if (ICS.isBad())
+  if (ICS.isBad()) {
+    if (ICS.Bad.Kind == BadConversionSequence::bad_qualifiers) {
+      Qualifiers FromQs = FromRecordType.getQualifiers();
+      Qualifiers ToQs = DestType.getQualifiers();
+      unsigned CVR = FromQs.getCVRQualifiers() & ~ToQs.getCVRQualifiers();
+      if (CVR) {
+        Diag(From->getSourceRange().getBegin(),
+             diag::err_member_function_call_bad_cvr)
+          << Method->getDeclName() << FromRecordType << (CVR - 1)
+          << From->getSourceRange();
+        Diag(Method->getLocation(), diag::note_previous_decl)
+          << Method->getDeclName();
+        return true;
+      }
+    }
+
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_implicit_object_parameter_init)
        << ImplicitParamRecordType << FromRecordType << From->getSourceRange();
+  }
 
   if (ICS.Standard.Second == ICK_Derived_To_Base)
     return PerformObjectMemberConversion(From, Qualifier, FoundDecl, Method);

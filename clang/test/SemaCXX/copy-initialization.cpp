@@ -19,11 +19,11 @@ void f(Y y, int *ip, float *fp) {
 }
 
 struct foo {
- void bar();
+ void bar(); // expected-note{{declared here}}
 };
 
 // PR3600
-void test(const foo *P) { P->bar(); } // expected-error{{cannot initialize object parameter of type 'foo' with an expression of type 'const foo'}}
+void test(const foo *P) { P->bar(); } // expected-error{{'bar' not viable: 'this' argument has type 'const foo', but function is not marked const}}
 
 namespace PR6757 {
   struct Foo {
