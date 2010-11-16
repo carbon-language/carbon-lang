@@ -125,7 +125,7 @@ CXString clang_getCompletionChunkText(CXCompletionString completion_string,
   CXStoredCodeCompletionString *CCStr
     = (CXStoredCodeCompletionString *)completion_string;
   if (!CCStr || chunk_number >= CCStr->size())
-    return createCXString(0);
+    return createCXString((const char*)0);
 
   switch ((*CCStr)[chunk_number].Kind) {
   case CodeCompletionString::CK_TypedText:
@@ -156,7 +156,7 @@ CXString clang_getCompletionChunkText(CXCompletionString completion_string,
   }
 
   // Should be unreachable, but let's be careful.
-  return createCXString(0);
+  return createCXString((const char*)0);
 }
 
 
@@ -355,7 +355,7 @@ void clang_codeCompleteAt_Impl(void *UserData) {
 
   bool EnableLogging = getenv("LIBCLANG_CODE_COMPLETION_LOGGING") != 0;
   
-  ASTUnit *AST = static_cast<ASTUnit *>(TU);
+  ASTUnit *AST = static_cast<ASTUnit *>(TU->TUData);
   if (!AST)
     return;
 
@@ -483,7 +483,7 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
 
   if (!RunSafely(CRC, clang_codeCompleteAt_Impl, &CCAI)) {
     fprintf(stderr, "libclang: crash detected in code completion\n");
-    static_cast<ASTUnit *>(TU)->setUnsafeToFree(true);
+    static_cast<ASTUnit *>(TU->TUData)->setUnsafeToFree(true);
     return 0;
   }
 

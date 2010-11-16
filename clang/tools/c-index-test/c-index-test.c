@@ -1305,7 +1305,7 @@ int print_usrs(const char **I, const char **E) {
             return not_usr("<class USR>", I[2]);
           else {
             CXString x;
-            x.Spelling = I[2];
+            x.data = (void*) I[2];
             x.private_flags = 0;
             print_usr(clang_constructUSR_ObjCIvar(I[1], x));
           }
@@ -1332,7 +1332,7 @@ int print_usrs(const char **I, const char **E) {
             return not_usr("<class USR>", I[3]);
           else {
             CXString x;
-            x.Spelling = I[3];
+            x.data = (void*) I[3];
             x.private_flags = 0;
             print_usr(clang_constructUSR_ObjCMethod(I[1], atoi(I[2]), x));
           }
@@ -1362,7 +1362,7 @@ int print_usrs(const char **I, const char **E) {
             return not_usr("<class USR>", I[2]);
           else {
             CXString x;
-            x.Spelling = I[2];
+            x.data = (void*) I[2];
             x.private_flags = 0;
             print_usr(clang_constructUSR_ObjCProperty(I[1], x));
           }

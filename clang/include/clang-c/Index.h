@@ -63,7 +63,10 @@ typedef void *CXIndex;
 /**
  * \brief A single translation unit, which resides in an index.
  */
-typedef void *CXTranslationUnit;  /* A translation unit instance. */
+typedef struct CXTranslationUnitImpl {
+  void *TUData;
+  void *StringPool;
+} *CXTranslationUnit;  /* A translation unit instance. */
 
 /**
  * \brief Opaque pointer representing client data that will be passed through
@@ -133,7 +136,7 @@ enum CXAvailabilityKind {
  * with the string data, call \c clang_disposeString() to free the string.
  */
 typedef struct {
-  const char *Spelling;
+  void *data;
   unsigned private_flags;
 } CXString;
 

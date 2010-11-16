@@ -33,12 +33,12 @@ using namespace llvm;
 extern "C" {
 
 unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(Unit);
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(Unit->TUData);
   return CXXUnit? CXXUnit->stored_diag_size() : 0;
 }
 
 CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(Unit);
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(Unit->TUData);
   if (!CXXUnit || Index >= CXXUnit->stored_diag_size())
     return 0;
 

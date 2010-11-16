@@ -89,7 +89,7 @@ static CXTypeKind GetTypeKind(QualType T) {
 }
 
 
-CXType cxtype::MakeCXType(QualType T, ASTUnit *TU) {
+CXType cxtype::MakeCXType(QualType T, CXTranslationUnit TU) {
   CXTypeKind TK = GetTypeKind(T);
   CXType CT = { TK, { TK == CXType_Invalid ? 0 : T.getAsOpaquePtr(), TU }};
   return CT;
@@ -101,8 +101,8 @@ static inline QualType GetQualType(CXType CT) {
   return QualType::getFromOpaquePtr(CT.data[0]);
 }
 
-static inline ASTUnit* GetASTU(CXType CT) {
-  return static_cast<ASTUnit*>(CT.data[1]);
+static inline CXTranslationUnit GetTU(CXType CT) {
+  return static_cast<CXTranslationUnit>(CT.data[1]);
 }
 
 extern "C" {
@@ -110,27 +110,26 @@ extern "C" {
 CXType clang_getCursorType(CXCursor C) {
   using namespace cxcursor;
   
-  ASTUnit *AU = cxcursor::getCursorASTUnit(C);
-
+  CXTranslationUnit TU = cxcursor::getCursorTU(C);
   if (clang_isExpression(C.kind)) {
     QualType T = cxcursor::getCursorExpr(C)->getType();
-    return MakeCXType(T, AU);
+    return MakeCXType(T, TU);
   }
 
   if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
 
     if (TypeDecl *TD = dyn_cast<TypeDecl>(D))
-      return MakeCXType(QualType(TD->getTypeForDecl(), 0), AU);
+      return MakeCXType(QualType(TD->getTypeForDecl(), 0), TU);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
-      return MakeCXType(QualType(ID->getTypeForDecl(), 0), AU);
+      return MakeCXType(QualType(ID->getTypeForDecl(), 0), TU);
     if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
-      return MakeCXType(VD->getType(), AU);
+      return MakeCXType(VD->getType(), TU);
     if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D))
-      return MakeCXType(PD->getType(), AU);
+      return MakeCXType(PD->getType(), TU);
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-      return MakeCXType(FD->getType(), AU);
-    return MakeCXType(QualType(), AU);
+      return MakeCXType(FD->getType(), TU);
+    return MakeCXType(QualType(), TU);
   }
   
   if (clang_isReference(C.kind)) {
@@ -139,21 +138,21 @@ CXType clang_getCursorType(CXCursor C) {
       return MakeCXType(
                 QualType(getCursorObjCSuperClassRef(C).first->getTypeForDecl(), 
                          0), 
-                        AU);
+                        TU);
       
     case CXCursor_ObjCClassRef:
       return MakeCXType(
                       QualType(getCursorObjCClassRef(C).first->getTypeForDecl(), 
                                0), 
-                        AU);
+                        TU);
       
     case CXCursor_TypeRef:
       return MakeCXType(QualType(getCursorTypeRef(C).first->getTypeForDecl(), 
                                  0), 
-                        AU);
+                        TU);
       
     case CXCursor_CXXBaseSpecifier:
-      return cxtype::MakeCXType(getCursorCXXBaseSpecifier(C)->getType(), AU);
+      return cxtype::MakeCXType(getCursorCXXBaseSpecifier(C)->getType(), TU);
       
     case CXCursor_ObjCProtocolRef:        
     case CXCursor_TemplateRef:
@@ -164,10 +163,10 @@ CXType clang_getCursorType(CXCursor C) {
       break;
     }
     
-    return MakeCXType(QualType(), AU);
+    return MakeCXType(QualType(), TU);
   }
 
-  return MakeCXType(QualType(), AU);
+  return MakeCXType(QualType(), TU);
 }
 
 CXType clang_getCanonicalType(CXType CT) {
@@ -175,12 +174,13 @@ CXType clang_getCanonicalType(CXType CT) {
     return CT;
 
   QualType T = GetQualType(CT);
+  CXTranslationUnit TU = GetTU(CT);
 
   if (T.isNull())
-    return MakeCXType(QualType(), GetASTU(CT));
+    return MakeCXType(QualType(), GetTU(CT));
 
-  ASTUnit *AU = GetASTU(CT);
-  return MakeCXType(AU->getASTContext().getCanonicalType(T), AU);
+  ASTUnit *AU = static_cast<ASTUnit*>(TU->TUData);
+  return MakeCXType(AU->getASTContext().getCanonicalType(T), TU);
 }
 
 CXType clang_getPointeeType(CXType CT) {
@@ -188,7 +188,7 @@ CXType clang_getPointeeType(CXType CT) {
   Type *TP = T.getTypePtr();
   
   if (!TP)
-    return MakeCXType(QualType(), GetASTU(CT));
+    return MakeCXType(QualType(), GetTU(CT));
   
   switch (TP->getTypeClass()) {
     case Type::Pointer:
@@ -208,7 +208,7 @@ CXType clang_getPointeeType(CXType CT) {
       T = QualType();
       break;
   }
-  return MakeCXType(T, GetASTU(CT));
+  return MakeCXType(T, GetTU(CT));
 }
 
 CXCursor clang_getTypeDeclaration(CXType CT) {
@@ -263,7 +263,7 @@ try_again:
   if (!D)
     return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
 
-  return cxcursor::MakeCXCursor(D, GetASTU(CT));
+  return cxcursor::MakeCXCursor(D, GetTU(CT));
 }
 
 CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
@@ -324,24 +324,24 @@ unsigned clang_equalTypes(CXType A, CXType B) {
 CXType clang_getResultType(CXType X) {
   QualType T = GetQualType(X);
   if (!T.getTypePtr())
-    return MakeCXType(QualType(), GetASTU(X));
+    return MakeCXType(QualType(), GetTU(X));
   
   if (const FunctionType *FD = T->getAs<FunctionType>())
-    return MakeCXType(FD->getResultType(), GetASTU(X));
+    return MakeCXType(FD->getResultType(), GetTU(X));
   
-  return MakeCXType(QualType(), GetASTU(X));
+  return MakeCXType(QualType(), GetTU(X));
 }
 
 CXType clang_getCursorResultType(CXCursor C) {
   if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
     if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
-      return MakeCXType(MD->getResultType(), cxcursor::getCursorASTUnit(C));
+      return MakeCXType(MD->getResultType(), cxcursor::getCursorTU(C));
 
     return clang_getResultType(clang_getCursorType(C));
   }
 
-  return MakeCXType(QualType(), cxcursor::getCursorASTUnit(C));
+  return MakeCXType(QualType(), cxcursor::getCursorTU(C));
 }
 
 unsigned clang_isPODType(CXType X) {

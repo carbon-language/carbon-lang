@@ -23,7 +23,7 @@ class ASTUnit;
   
 namespace cxtype {
   
-CXType MakeCXType(QualType T, ASTUnit *TU);
+CXType MakeCXType(QualType T, CXTranslationUnit TU);
   
 }} // end namespace clang::cxtype
 #endif
