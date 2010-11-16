@@ -208,6 +208,8 @@ def err_expected_ident_in_using : Error<
   "expected an identifier in using directive">;
 def err_unexected_colon_in_nested_name_spec : Error<
   "unexpected ':' in nested name specifier">;
+def err_bool_redeclaration : Error<
+  "redeclaration of C++ built-in type 'bool'">;
 
 /// Objective-C parser diagnostics
 def err_expected_minus_or_plus : Error<

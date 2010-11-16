@@ -1348,8 +1348,16 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       break;
     case tok::kw_bool:
     case tok::kw__Bool:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec,
-                                     DiagID);
+      if (Tok.is(tok::kw_bool) &&
+          DS.getTypeSpecType() != DeclSpec::TST_unspecified &&
+          DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
+        PrevSpec = ""; // Not used by the diagnostic.
+        DiagID = diag::err_bool_redeclaration;
+        isInvalid = true;
+      } else {
+        isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec,
+                                       DiagID);
+      }
       break;
     case tok::kw__Decimal32:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal32, Loc, PrevSpec,
