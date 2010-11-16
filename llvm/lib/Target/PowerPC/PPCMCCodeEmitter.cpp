@@ -199,7 +199,8 @@ unsigned PPCMCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   if (MO.isReg()) {
-    assert(MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF);
+    assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF) ||
+           MO.getReg() < PPC::CR0 || MO.getReg() > PPC::CR7);
     return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
   }
   

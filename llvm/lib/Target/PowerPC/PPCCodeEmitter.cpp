@@ -246,7 +246,10 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                            const MachineOperand &MO) const {
 
   if (MO.isReg()) {
-    assert(MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF);
+    // MTCRF/MFOCRF should go through get_crbitm_encoding for the CR operand.
+    // The GPR operand should come through here though.
+    assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF) ||
+           MO.getReg() < PPC::CR0 || MO.getReg() > PPC::CR7);
     return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
   }
   
