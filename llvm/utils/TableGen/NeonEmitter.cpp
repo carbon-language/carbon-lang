@@ -535,8 +535,10 @@ static std::string Duplicate(unsigned nElts, StringRef typestr,
 }
 
 // Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
+// If structTypes is true, the NEON types are structs of vector types rather
+// than vector types, and the call becomes "a.val + b.val"
 static std::string GenOpString(OpKind op, const std::string &proto,
-                               StringRef typestr) {
+                               StringRef typestr, bool structTypes = true) {
   bool dummy, quad = false;
   char type = ClassifyType(typestr, quad, dummy, dummy);
   unsigned nElts = 0;
@@ -555,95 +557,100 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s = "union { " + ts + " r; double d; } u; u.d";
   } else {
     s = ts + " r; r";
+    if (structTypes)
+      s += ".val";
   }
   
   s += " = ";
 
+  std::string a, b, c;
+  if (proto.size() > 1)
+    a = (structTypes && proto[1] != 'l' && proto[1] != 's') ? "a.val" : "a";
+  b = structTypes ? "b.val" : "b";
+  c = structTypes ? "c.val" : "c";
+  
   switch(op) {
   case OpAdd:
-    s += "a + b";
+    s += a + " + " + b;
     break;
   case OpSub:
-    s += "a - b";
+    s += a + " - " + b;
     break;
   case OpMulN:
-    s += "a * " + Duplicate(nElts << (int)quad, typestr, "b");
-    break;
+    b = Duplicate(nElts << (int)quad, typestr, "b");
   case OpMul:
-    s += "a * b";
+    s += a + " * " + b;
     break;
   case OpMlaN:
-    s += "a + (b * " + Duplicate(nElts << (int)quad, typestr, "c") + ")";
-    break;
+    c = Duplicate(nElts << (int)quad, typestr, "c");
   case OpMla:
-    s += "a + (b * c)";
+    s += a + " + ( " + b + " * " + c + " )";
     break;
   case OpMlsN:
-    s += "a - (b * " + Duplicate(nElts << (int)quad, typestr, "c") + ")";
-    break;
+    c = Duplicate(nElts << (int)quad, typestr, "c");
   case OpMls:
-    s += "a - (b * c)";
+    s += a + " - ( " + b + " * " + c + " )";
     break;
   case OpEq:
-    s += "(__neon_" + ts + ")(a == b)";
+    s += "(__neon_" + ts + ")(" + a + " == " + b + ")";
     break;
   case OpGe:
-    s += "(__neon_" + ts + ")(a >= b)";
+    s += "(__neon_" + ts + ")(" + a + " >= " + b + ")";
     break;
   case OpLe:
-    s += "(__neon_" + ts + ")(a <= b)";
+    s += "(__neon_" + ts + ")(" + a + " <= " + b + ")";
     break;
   case OpGt:
-    s += "(__neon_" + ts + ")(a > b)";
+    s += "(__neon_" + ts + ")(" + a + " > " + b + ")";
     break;
   case OpLt:
-    s += "(__neon_" + ts + ")(a < b)";
+    s += "(__neon_" + ts + ")(" + a + " < " + b + ")";
     break;
   case OpNeg:
-    s += " -a";
+    s += " -" + a;
     break;
   case OpNot:
-    s += " ~a";
+    s += " ~" + a;
     break;
   case OpAnd:
-    s += "a & b";
+    s += a + " & " + b;
     break;
   case OpOr:
-    s += "a | b";
+    s += a + " | " + b;
     break;
   case OpXor:
-    s += "a ^ b";
+    s += a + " ^ " + b;
     break;
   case OpAndNot:
-    s += "a & ~b";
+    s += a + " & ~" + b;
     break;
   case OpOrNot:
-    s += "a | ~b";
+    s += a + " | ~" + b;
     break;
   case OpCast:
-    s += "(__neon_" + ts + ")a";
+    s += "(__neon_" + ts + ")" + a;
     break;
   case OpConcat:
-    s += "__builtin_shufflevector((__neon_int64x1_t)a";
-    s += ", (__neon_int64x1_t)b, 0, 1)";
+    s += "__builtin_shufflevector((__neon_int64x1_t)" + a;
+    s += ", (__neon_int64x1_t)" + b + ", 0, 1)";
     break;
   case OpHi:
-    s += "(((__neon_float64x2_t)a)[1])";
+    s += "(((__neon_float64x2_t)" + a + ")[1])";
     break;
   case OpLo:
-    s += "(((__neon_float64x2_t)a)[0])";
+    s += "(((__neon_float64x2_t)" + a + ")[0])";
     break;
   case OpDup:
-    s += Duplicate(nElts << (int)quad, typestr, "a");
+    s += Duplicate(nElts << (int)quad, typestr, a);
     break;
   case OpSelect:
     // ((0 & 1) | (~0 & 2))
     ts = TypeString(proto[1], typestr);
-    s += "(a & (__neon_" + ts + ")b) | ";
-    s += "(~a & (__neon_" + ts + ")c)";
+    s += "( " + a + " & (__neon_" + ts + ")" + b + ") | ";
+    s += "(~" + a + " & (__neon_" + ts + ")" + c + ")";
     break;
   case OpRev16:
-    s += "__builtin_shufflevector(a, a";
+    s += "__builtin_shufflevector(" + a + ", " + a;
     for (unsigned i = 2; i <= nElts << (int)quad; i += 2)
       for (unsigned j = 0; j != 2; ++j)
         s += ", " + utostr(i - j - 1);
@@ -651,14 +658,14 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpRev32:
     nElts >>= 1;
-    s += "__builtin_shufflevector(a, a";
+    s += "__builtin_shufflevector(" + a + ", " + a;
     for (unsigned i = nElts; i <= nElts << (1 + (int)quad); i += nElts)
       for (unsigned j = 0; j != nElts; ++j)
         s += ", " + utostr(i - j - 1);
     s += ")";
     break;
   case OpRev64:
-    s += "__builtin_shufflevector(a, a";
+    s += "__builtin_shufflevector(" + a + ", " + a;
     for (unsigned i = nElts; i <= nElts << (int)quad; i += nElts)
       for (unsigned j = 0; j != nElts; ++j)
         s += ", " + utostr(i - j - 1);
@@ -727,8 +734,11 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
 }
 
 // Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
+// If structTypes is true, the NEON types are structs of vector types rather
+// than vector types, and the call becomes __builtin_neon_cls(a.val)
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
-                              StringRef typestr, ClassKind ck) {
+                              StringRef typestr, ClassKind ck,
+                              bool structTypes = true) {
   bool dummy, quad = false;
   char type = ClassifyType(typestr, quad, dummy, dummy);
   unsigned nElts = 0;
@@ -767,11 +777,15 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       if (sret)
         s += "({ " + ts + " r; ";
       else if (proto[0] != 's')
-        s += "(" + ts + ")";
+        s += "(" + ts + "){(__neon_" + ts + ")";
     } else if (sret) {
       s += ts + " r; ";
     } else {
-      s += ts + " r; r = ";
+      s += ts + " r; r";
+      if (structTypes && proto[0] != 's' && proto[0] != 'i' && proto[0] != 'l')
+        s += ".val";
+      
+      s += " = ";
     }
   }
   
@@ -798,9 +812,9 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     
     // Handle multiple-vector values specially, emitting each subvector as an
     // argument to the __builtin.
-    if (proto[i] == '2' || proto[i] == '3' || proto[i] == '4') {
+    if (structTypes && (proto[i] == '2' || proto[i] == '3' || proto[i] == '4')){
       for (unsigned vi = 0, ve = proto[i] - '0'; vi != ve; ++vi) {
-        s += args + ".val[" + utostr(vi) + "]";
+        s += args + ".val[" + utostr(vi) + "].val";
         if ((vi + 1) < ve)
           s += ", ";
       }
@@ -814,6 +828,11 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       s += Duplicate(nElts, typestr, args);
     else
       s += args;
+    
+    if (structTypes && proto[i] != 's' && proto[i] != 'i' && proto[i] != 'l' &&
+        proto[i] != 'p' && proto[i] != 'c' && proto[i] != 'a') {
+      s += ".val";
+    }
     if ((i + 1) < e)
       s += ", ";
   }
@@ -831,6 +850,8 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     if (define) {
       if (sret)
         s += "; r; })";
+      else if (proto[0] != 's')
+        s += "}";
     } else {
       s += " return r;";
     }
@@ -921,15 +942,11 @@ void NeonEmitter::run(raw_ostream &OS) {
       std::string ts = TypeString('d', TDTypeVec[i], vi == 1);
       std::string vs = TypeString((vi > 1) ? '0' + vi : 'd', TDTypeVec[i]);
       std::string tag = (vi > 1) ? vs : StructTag(TDTypeVec[i]);
-      if (vi > 1) {
-        OS << "typedef struct " << tag << " {\n";
-        OS << "  " << ts << " val";
+      OS << "typedef struct " << tag << " {\n";
+      OS << "  " << ts << " val";
+      if (vi > 1)
         OS << "[" << utostr(vi) << "]";
-        OS << ";\n} ";
-      } else {
-        OS << "typedef " << ts << " ";
-      }
-      OS << vs << ";\n\n";
+      OS << ";\n} " << vs << ";\n\n";
     }
   }
   
