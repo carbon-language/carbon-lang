@@ -483,20 +483,31 @@ static std::string Duplicate(unsigned nElts, StringRef typestr,
   return s;
 }
 
-// Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
-static std::string GenOpString(OpKind op, const std::string &proto,
-                               StringRef typestr) {
-  bool dummy, quad = false;
+static unsigned GetNumElements(StringRef typestr, bool &quad) {
+  quad = false;
+  bool dummy = false;
   char type = ClassifyType(typestr, quad, dummy, dummy);
   unsigned nElts = 0;
   switch (type) {
-    case 'c': nElts = 8; break;
-    case 's': nElts = 4; break;
-    case 'i': nElts = 2; break;
-    case 'l': nElts = 1; break;
-    case 'h': nElts = 4; break;
-    case 'f': nElts = 2; break;
+  case 'c': nElts = 8; break;
+  case 's': nElts = 4; break;
+  case 'i': nElts = 2; break;
+  case 'l': nElts = 1; break;
+  case 'h': nElts = 4; break;
+  case 'f': nElts = 2; break;
+  default:
+    throw "unhandled type!";
+    break;
   }
+  if (quad) nElts <<= 1;
+  return nElts;
+}
+
+// Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
+static std::string GenOpString(OpKind op, const std::string &proto,
+                               StringRef typestr) {
+  bool quad;
+  unsigned nElts = GetNumElements(typestr, quad);
   
   std::string ts = TypeString(proto[0], typestr);
   std::string s;
@@ -516,19 +527,19 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "a - b";
     break;
   case OpMulN:
-    s += "a * " + Duplicate(nElts << (int)quad, typestr, "b");
+    s += "a * " + Duplicate(nElts, typestr, "b");
     break;
   case OpMul:
     s += "a * b";
     break;
   case OpMlaN:
-    s += "a + (b * " + Duplicate(nElts << (int)quad, typestr, "c") + ")";
+    s += "a + (b * " + Duplicate(nElts, typestr, "c") + ")";
     break;
   case OpMla:
     s += "a + (b * c)";
     break;
   case OpMlsN:
-    s += "a - (b * " + Duplicate(nElts << (int)quad, typestr, "c") + ")";
+    s += "a - (b * " + Duplicate(nElts, typestr, "c") + ")";
     break;
   case OpMls:
     s += "a - (b * c)";
@@ -583,7 +594,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "(((float64x2_t)a)[0])";
     break;
   case OpDup:
-    s += Duplicate(nElts << (int)quad, typestr, "a");
+    s += Duplicate(nElts, typestr, "a");
     break;
   case OpSelect:
     // ((0 & 1) | (~0 & 2))
@@ -593,26 +604,29 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpRev16:
     s += "__builtin_shufflevector(a, a";
-    for (unsigned i = 2; i <= nElts << (int)quad; i += 2)
+    for (unsigned i = 2; i <= nElts; i += 2)
       for (unsigned j = 0; j != 2; ++j)
         s += ", " + utostr(i - j - 1);
     s += ")";
     break;
-  case OpRev32:
-    nElts >>= 1;
+  case OpRev32: {
+    unsigned WordElts = nElts >> (1 + (int)quad);
     s += "__builtin_shufflevector(a, a";
-    for (unsigned i = nElts; i <= nElts << (1 + (int)quad); i += nElts)
-      for (unsigned j = 0; j != nElts; ++j)
+    for (unsigned i = WordElts; i <= nElts; i += WordElts)
+      for (unsigned j = 0; j != WordElts; ++j)
         s += ", " + utostr(i - j - 1);
     s += ")";
     break;
-  case OpRev64:
+  }
+  case OpRev64: {
+    unsigned DblWordElts = nElts >> (int)quad;
     s += "__builtin_shufflevector(a, a";
-    for (unsigned i = nElts; i <= nElts << (int)quad; i += nElts)
-      for (unsigned j = 0; j != nElts; ++j)
+    for (unsigned i = DblWordElts; i <= nElts; i += DblWordElts)
+      for (unsigned j = 0; j != DblWordElts; ++j)
         s += ", " + utostr(i - j - 1);
     s += ")";
     break;
+  }
   default:
     throw "unknown OpKind!";
     break;
@@ -678,19 +692,8 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
 // Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               StringRef typestr, ClassKind ck) {
-  bool dummy, quad = false;
-  char type = ClassifyType(typestr, quad, dummy, dummy);
-  unsigned nElts = 0;
-  switch (type) {
-    case 'c': nElts = 8; break;
-    case 's': nElts = 4; break;
-    case 'i': nElts = 2; break;
-    case 'l': nElts = 1; break;
-    case 'h': nElts = 4; break;
-    case 'f': nElts = 2; break;
-  }
-  if (quad) nElts <<= 1;
-
+  bool quad;
+  unsigned nElts = GetNumElements(typestr, quad);
   char arg = 'a';
   std::string s;
 
