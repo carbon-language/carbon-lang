@@ -2145,17 +2145,21 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
     MarkDeclarationReferenced(Loc, VD);
     QualType ExprTy = VD->getType().getNonReferenceType();
     // The BlocksAttr indicates the variable is bound by-reference.
-    if (VD->getAttr<BlocksAttr>())
-      return Owned(new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, true));
-    // This is to record that a 'const' was actually synthesize and added.
-    bool constAdded = !ExprTy.isConstQualified();
-    // Variable will be bound by-copy, make it const within the closure.
-
-    ExprTy.addConst();
+    bool byrefVar = (VD->getAttr<BlocksAttr>() != 0);
     QualType T = VD->getType();
-    BlockDeclRefExpr *BDRE = new (Context) BlockDeclRefExpr(VD, 
-                                                            ExprTy, Loc, false,
-                                                            constAdded);
+    BlockDeclRefExpr *BDRE;
+    
+    if (!byrefVar) {
+      // This is to record that a 'const' was actually synthesize and added.
+      bool constAdded = !ExprTy.isConstQualified();
+      // Variable will be bound by-copy, make it const within the closure.
+      ExprTy.addConst();
+      BDRE = new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, false,
+                                            constAdded);
+    }
+    else
+      BDRE = new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, true);
+    
     if (getLangOptions().CPlusPlus) {
       if (!T->isDependentType() && !T->isReferenceType()) {
         Expr *E = new (Context) 

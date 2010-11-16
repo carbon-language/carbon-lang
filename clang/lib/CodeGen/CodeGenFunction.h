@@ -683,7 +683,11 @@ public:
   /// isInConditionalBranch - Return true if we're currently emitting
   /// one branch or the other of a conditional expression.
   bool isInConditionalBranch() const { return ConditionalBranchLevel != 0; }
-
+  
+  /// getByrefValueFieldNumber - Given a declaration, returns the LLVM field
+  /// number that holds the value.
+  unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
+  
 private:
   CGDebugInfo *DebugInfo;
 
@@ -756,10 +760,6 @@ private:
   /// type as well as the field number that contains the actual data.
   llvm::DenseMap<const ValueDecl *, std::pair<const llvm::Type *,
                                               unsigned> > ByRefValueInfo;
-
-  /// getByrefValueFieldNumber - Given a declaration, returns the LLVM field
-  /// number that holds the value.
-  unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
 
   llvm::BasicBlock *TerminateLandingPad;
   llvm::BasicBlock *TerminateHandler;

@@ -1006,14 +1006,36 @@ GenerateCopyHelperFunction(const llvm::StructType *T,
           || NoteForHelper[i].RequiresCopying) {
         llvm::Value *Srcv = SrcObj;
         Srcv = Builder.CreateStructGEP(Srcv, index);
-        Srcv = Builder.CreateBitCast(Srcv,
-                                     llvm::PointerType::get(PtrToInt8Ty, 0));
-        llvm::Value *Dstv = Builder.CreateStructGEP(DstObj, index);
+        llvm::Value *Dstv;
         if (NoteForHelper[i].cxxvar_import) {
-          CGF.EmitSynthesizedCXXCopyCtor(Dstv, Srcv, 
-                                         NoteForHelper[i].cxxvar_import);
+          if (NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF) {
+            const ValueDecl *VD = NoteForHelper[i].cxxvar_import->getDecl();
+            const llvm::Type *PtrStructTy
+              = llvm::PointerType::get(CGF.BuildByRefType(VD), 0);
+            Srcv = Builder.CreateLoad(Srcv);
+            Srcv = Builder.CreateBitCast(Srcv, PtrStructTy);
+            Srcv = Builder.CreateStructGEP(Srcv, CGF.getByRefValueLLVMField(VD),
+                                        VD->getNameAsString());
+            Dstv = Builder.CreateStructGEP(DstObj, index);
+            Dstv = Builder.CreateLoad(Dstv);
+            Dstv = Builder.CreateBitCast(Dstv, PtrStructTy);
+            Dstv = Builder.CreateStructGEP(Dstv, CGF.getByRefValueLLVMField(VD),
+                                           VD->getNameAsString());
+            CGF.EmitSynthesizedCXXCopyCtor(Dstv, Srcv, 
+                                           NoteForHelper[i].cxxvar_import);
+          }
+          else {
+            Srcv = Builder.CreateBitCast(Srcv,
+                                         llvm::PointerType::get(PtrToInt8Ty, 0));
+            Dstv = Builder.CreateStructGEP(DstObj, index);
+            CGF.EmitSynthesizedCXXCopyCtor(Dstv, Srcv, 
+                                           NoteForHelper[i].cxxvar_import);
+          }
         }
         else {
+          Srcv = Builder.CreateBitCast(Srcv,
+                                       llvm::PointerType::get(PtrToInt8Ty, 0));
+          Dstv = Builder.CreateStructGEP(DstObj, index);
           Srcv = Builder.CreateLoad(Srcv);
           Dstv = Builder.CreateBitCast(Dstv, PtrToInt8Ty);
           llvm::Value *N = llvm::ConstantInt::get(CGF.Int32Ty, flag);
@@ -1091,6 +1113,17 @@ GenerateDestroyHelperFunction(const llvm::StructType* T,
           QualType ClassTy = E->getType();
           QualType PtrClassTy = getContext().getPointerType(ClassTy);
           const llvm::Type *t = CGM.getTypes().ConvertType(PtrClassTy);
+          
+          if (NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF) {
+            const ValueDecl *VD = NoteForHelper[i].cxxvar_import->getDecl();
+            const llvm::Type *PtrStructTy
+              = llvm::PointerType::get(CGF.BuildByRefType(VD), 0);
+            Srcv = Builder.CreateLoad(Srcv);
+            Srcv = Builder.CreateBitCast(Srcv, PtrStructTy);
+            Srcv = Builder.CreateStructGEP(Srcv, CGF.getByRefValueLLVMField(VD),
+                                           VD->getNameAsString());
+            
+          }
           Srcv = Builder.CreateBitCast(Srcv, t);
           CGF.PushDestructorCleanup(ClassTy, Srcv);
         }
