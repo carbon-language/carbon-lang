@@ -1974,7 +1974,6 @@ private:
 
     // These should not have an inheritance path.
     case CK_BitCast:
-    case CK_LValueBitCast:
     case CK_Dynamic:
     case CK_ToUnion:
     case CK_ArrayToPointerDecay:
@@ -2007,13 +2006,14 @@ private:
     case CK_Dependent:
     case CK_Unknown:
     case CK_NoOp:
-    case CK_UserDefinedConversion:
     case CK_PointerToBoolean:
     case CK_IntegralToBoolean:
     case CK_FloatingToBoolean:
     case CK_MemberPointerToBoolean:
     case CK_FloatingComplexToBoolean:
     case CK_IntegralComplexToBoolean:
+    case CK_LValueBitCast:            // -> bool&
+    case CK_UserDefinedConversion:    // operator bool()
       assert(path_empty() && "Cast kind should not have a base path!");
       break;
     }

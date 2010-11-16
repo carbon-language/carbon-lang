@@ -130,3 +130,7 @@ namespace PR7149 {
     X0< const int[1]> c(p1);
   }
 }
+
+namespace PR8608 {
+  bool& f(unsigned char& c) { return (bool&)c; }
+}
