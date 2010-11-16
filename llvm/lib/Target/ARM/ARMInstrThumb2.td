@@ -2772,7 +2772,7 @@ def t2LDMIA_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
   let Inst{24-23} = 0b01;     // Increment After
   let Inst{22}    = 0;
   let Inst{21}    = 1;        // Writeback
-  let Inst{20}    = L_bit;
+  let Inst{20}    = 1;
   let Inst{19-16} = Rn;
   let Inst{15-0}  = regs;
 }
