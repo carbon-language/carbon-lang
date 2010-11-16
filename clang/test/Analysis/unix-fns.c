@@ -8,6 +8,9 @@ struct _opaque_pthread_once_t {
 typedef struct _opaque_pthread_once_t    __darwin_pthread_once_t;
 typedef __darwin_pthread_once_t pthread_once_t;
 int pthread_once(pthread_once_t *, void (*)(void));
+typedef long unsigned int __darwin_size_t;
+typedef __darwin_size_t size_t;
+void *malloc(size_t);
 
 typedef void (^dispatch_block_t)(void);
 typedef long dispatch_once_t;
@@ -49,4 +52,18 @@ void test_pthread_once() {
 void test_pthread_once_neg() {
   static pthread_once_t pred = {0x30B1BCBA, {0}};
   pthread_once(&pred, test_pthread_once_aux); // no-warning
+}
+
+// PR 2899 - warn of zero-sized allocations to malloc().
+void pr2899() {
+  char* foo = malloc(0); // expected-warning{{Call to 'malloc' has an allocation size of 0 bytes}}
+  for (unsigned i = 0; i < 100; i++) {
+    foo[i] = 0;
+  }
+}
+void pr2899_nowarn(size_t size) {
+  char* foo = malloc(size); // no-warning
+  for (unsigned i = 0; i < 100; i++) {
+    foo[i] = 0;
+  }
 }

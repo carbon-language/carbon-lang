@@ -28,6 +28,7 @@ class UnixAPIChecker : public CheckerVisitor<UnixAPIChecker> {
   enum SubChecks {
     OpenFn = 0,
     PthreadOnceFn = 1,
+    MallocZero = 2,
     NumChecks
   };
 
@@ -174,6 +175,53 @@ static void CheckPthreadOnce(CheckerContext &C, UnixAPIChecker &,
 }
 
 //===----------------------------------------------------------------------===//
+// "malloc" with allocation size 0
+//===----------------------------------------------------------------------===//
+
+// FIXME: Eventually this should be rolled into the MallocChecker, but this
+// check is more basic and is valuable for widespread use.
+static void CheckMallocZero(CheckerContext &C, UnixAPIChecker &UC,
+                            const CallExpr *CE, BugType *&BT) {
+
+  // Sanity check that malloc takes one argument.
+  if (CE->getNumArgs() != 1)
+    return;
+
+  // Check if the allocation size is 0.
+  const GRState *state = C.getState();
+  SVal argVal = state->getSVal(CE->getArg(0));
+
+  if (argVal.isUnknownOrUndef())
+    return;
+  
+  const GRState *trueState, *falseState;
+  llvm::tie(trueState, falseState) = state->Assume(cast<DefinedSVal>(argVal));
+  
+  // Is the value perfectly constrained to zero?
+  if (falseState && !trueState) {
+    ExplodedNode *N = C.GenerateSink(falseState);
+    if (!N)
+      return;
+    
+    LazyInitialize(BT, "bad allocation of 0 bytes");
+    
+    EnhancedBugReport *report =
+      new EnhancedBugReport(*BT, "Call to 'malloc' has an allocation size"
+                                 " of 0 bytes", N);
+    report->addRange(CE->getArg(0)->getSourceRange());
+    report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
+                              CE->getArg(0));
+    C.EmitReport(report);
+    return;
+  }
+  // Assume the the value is non-zero going forward.
+  assert(trueState);
+  if (trueState != state) {
+    C.addTransition(trueState);
+  }
+}
+  
+//===----------------------------------------------------------------------===//
 // Central dispatch function.
 //===----------------------------------------------------------------------===//
 
@@ -213,9 +261,12 @@ void UnixAPIChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
 
   const SubCheck &SC =
     llvm::StringSwitch<SubCheck>(FI->getName())
-      .Case("open", SubCheck(CheckOpen, this, BTypes[OpenFn]))
-      .Case("pthread_once", SubCheck(CheckPthreadOnce, this,
-                                     BTypes[PthreadOnceFn]))
+      .Case("open",
+            SubCheck(CheckOpen, this, BTypes[OpenFn]))
+      .Case("pthread_once",
+            SubCheck(CheckPthreadOnce, this, BTypes[PthreadOnceFn]))
+      .Case("malloc",
+            SubCheck(CheckMallocZero, this, BTypes[MallocZero]))
       .Default(SubCheck());
 
   SC.run(C, CE);
