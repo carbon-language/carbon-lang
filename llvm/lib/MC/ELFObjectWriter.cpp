@@ -1080,8 +1080,8 @@ bool ELFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
   const MCSection *SectionA = 0;
   const MCSymbol *SymbolA = 0;
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
-    SymbolA = &A->getSymbol().AliasedSymbol();
-    SectionA = &SymbolA->getSection();
+    SymbolA = &A->getSymbol();
+    SectionA = &SymbolA->AliasedSymbol().getSection();
   }
 
   const MCSection *SectionB = 0;
@@ -1092,6 +1092,9 @@ bool ELFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
   if (!BaseSection)
     return SectionA == SectionB;
 
+  // FIXME: This is in here just to match gnu as output. If the two ends
+  // are in the same section, there is nothing that the linker can do to
+  // break it.
   const MCSymbolData &DataA = Asm.getSymbolData(*SymbolA);
   if (DataA.isExternal())
     return false;
