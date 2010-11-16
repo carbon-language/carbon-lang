@@ -44,6 +44,7 @@ public:
               PostPurgeDeadSymbolsKind,
               PostStmtCustomKind,
               PostLValueKind,
+              PostInitializerKind,
               CallEnterKind,
               CallExitKind,
               MinPostStmtKind = PostStmtKind,
@@ -301,6 +302,17 @@ public:
 
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == BlockEdgeKind;
+  }
+};
+
+class PostInitializer : public ProgramPoint {
+public:
+  PostInitializer(const CXXBaseOrMemberInitializer *I, 
+                  const LocationContext *L)
+    : ProgramPoint(I, PostInitializerKind, L) {}
+
+  static bool classof(const ProgramPoint *Location) {
+    return Location->getKind() == PostInitializerKind;
   }
 };
 

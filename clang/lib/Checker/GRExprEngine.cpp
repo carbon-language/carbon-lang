@@ -327,7 +327,7 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
     SymMgr(StateMgr.getSymbolManager()),
     ValMgr(StateMgr.getValueManager()),
     SVator(ValMgr.getSValuator()),
-    CurrentStmt(NULL),
+    EntryNode(NULL), CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
     BR(mgr, *this), TF(tf) {
@@ -679,8 +679,41 @@ void GRExprEngine::ProcessStmt(const CFGStmt S, GRStmtNodeBuilder& builder) {
   Builder = NULL;
 }
 
-void GRExprEngine::ProcessInitializer(const CFGInitializer I,
+void GRExprEngine::ProcessInitializer(const CFGInitializer Init,
                                       GRStmtNodeBuilder &builder) {
+  // We don't set EntryNode and CurrentStmt. And we don't clean up state.
+  const CXXBaseOrMemberInitializer *BMI = Init.getInitializer();
+
+  ExplodedNode *Pred = builder.getBasePredecessor();
+  const LocationContext *LC = Pred->getLocationContext();
+
+  if (BMI->isMemberInitializer()) {
+    ExplodedNodeSet Dst;
+
+    // Evaluate the initializer.
+    Visit(BMI->getInit(), Pred, Dst);
+
+    for (ExplodedNodeSet::iterator I = Dst.begin(), E = Dst.end(); I != E; ++I){
+      ExplodedNode *Pred = *I;
+      const GRState *state = Pred->getState();
+
+      const FieldDecl *FD = BMI->getMember();
+      const RecordDecl *RD = FD->getParent();
+      const CXXThisRegion *ThisR = getCXXThisRegion(cast<CXXRecordDecl>(RD),
+                           cast<StackFrameContext>(LC));
+
+      SVal ThisV = state->getSVal(ThisR);
+      SVal FieldLoc = state->getLValue(FD, ThisV);
+      SVal InitVal = state->getSVal(BMI->getInit());
+      state = state->bindLoc(FieldLoc, InitVal);
+
+      // Use a custom node building process.
+      PostInitializer PP(BMI, LC);
+      // Builder automatically add the generated node to the deferred set,
+      // which are processed in the builder's dtor.
+      builder.generateNode(PP, state, Pred);
+    }
+  }
 }
 
 void GRExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
@@ -1566,7 +1599,8 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
 
   // Bind the constructed object value to CXXConstructExpr.
   if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(CE)) {
-    const CXXThisRegion *ThisR = getCXXThisRegion(CCE->getConstructor(),LocCtx);
+    const CXXThisRegion *ThisR =
+      getCXXThisRegion(CCE->getConstructor()->getParent(), LocCtx);
     // We might not have 'this' region in the binding if we didn't inline
     // the ctor call.
     SVal ThisV = state->getSVal(ThisR);

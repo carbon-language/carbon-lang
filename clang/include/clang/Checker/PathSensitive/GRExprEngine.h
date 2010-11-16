@@ -438,7 +438,7 @@ public:
                                 ExplodedNodeSet &Dst);
 
   /// Synthesize CXXThisRegion.
-  const CXXThisRegion *getCXXThisRegion(const CXXMethodDecl *MD,
+  const CXXThisRegion *getCXXThisRegion(const CXXRecordDecl *RD,
                                         const StackFrameContext *SFC);
 
   /// Evaluate arguments with a work list algorithm.

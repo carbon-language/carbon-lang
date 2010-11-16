@@ -3468,7 +3468,7 @@ public:
   BlockDeclRefExpr(ValueDecl *d, QualType t, SourceLocation l, bool ByRef,
                    bool constAdded = false,
                    Stmt *copyConstructorVal = 0)
-  : Expr(BlockDeclRefExprClass, t, (!t.isNull() && t->isDependentType()),false), 
+  : Expr(BlockDeclRefExprClass, t, (!t.isNull() && t->isDependentType()),false),
     D(d), Loc(l), IsByRef(ByRef),
     ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) {}
 

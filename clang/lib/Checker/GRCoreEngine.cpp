@@ -233,9 +233,9 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
         break;
 
       default:
-        assert(isa<PostStmt>(Node->getLocation()));
-        HandlePostStmt(cast<PostStmt>(Node->getLocation()), WU.getBlock(),
-                       WU.getIndex(), Node);
+        assert(isa<PostStmt>(Node->getLocation()) || 
+               isa<PostInitializer>(Node->getLocation()));
+        HandlePostStmt(WU.getBlock(), WU.getIndex(), Node);
         break;
     }
   }
@@ -413,9 +413,8 @@ void GRCoreEngine::HandleBranch(const Stmt* Cond, const Stmt* Term,
   ProcessBranch(Cond, Term, Builder);
 }
 
-void GRCoreEngine::HandlePostStmt(const PostStmt& L, const CFGBlock* B,
-                                  unsigned StmtIdx, ExplodedNode* Pred) {
-
+void GRCoreEngine::HandlePostStmt(const CFGBlock* B, unsigned StmtIdx, 
+                                  ExplodedNode* Pred) {
   assert (!B->empty());
 
   if (StmtIdx == B->size())
@@ -470,6 +469,12 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
     // Still use the index of the CallExpr. It's needed to create the callee
     // StackFrameContext.
     Eng.WList->Enqueue(N, &B, Idx);
+    return;
+  }
+
+  // Do not create extra nodes. Move to the next CFG element.
+  if (isa<PostInitializer>(N->getLocation())) {
+    Eng.WList->Enqueue(N, &B, Idx+1);
     return;
   }
 

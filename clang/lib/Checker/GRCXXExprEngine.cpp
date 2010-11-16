@@ -64,10 +64,10 @@ void GRExprEngine::EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
   }
 }
 
-const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXMethodDecl *D,
+const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
                                                  const StackFrameContext *SFC) {
-  Type *T = D->getParent()->getTypeForDecl();
-  QualType PT = getContext().getPointerType(QualType(T,0));
+  Type *T = D->getTypeForDecl();
+  QualType PT = getContext().getPointerType(QualType(T, 0));
   return ValMgr.getRegionManager().getCXXThisRegion(PT, SFC);
 }
 
@@ -121,7 +121,8 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
                                                     Pred->getLocationContext(),
                                    E, Builder->getBlock(), Builder->getIndex());
 
-  const CXXThisRegion *ThisR = getCXXThisRegion(E->getConstructor(), SFC);
+  const CXXThisRegion *ThisR =getCXXThisRegion(E->getConstructor()->getParent(),
+                                               SFC);
 
   CallEnter Loc(E, SFC->getAnalysisContext(), Pred->getLocationContext());
   for (ExplodedNodeSet::iterator NI = ArgsEvaluated.begin(),
@@ -182,7 +183,7 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
                                                     MCE, 
                                                     Builder->getBlock(), 
                                                     Builder->getIndex());
-  const CXXThisRegion *ThisR = getCXXThisRegion(MD, SFC);
+  const CXXThisRegion *ThisR = getCXXThisRegion(MD->getParent(), SFC);
   CallEnter Loc(MCE, SFC->getAnalysisContext(), Pred->getLocationContext());
   for (ExplodedNodeSet::iterator I = PreVisitChecks.begin(),
          E = PreVisitChecks.end(); I != E; ++I) {
