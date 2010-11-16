@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This was lifted from libc++ and modified for C++03.
+// This was lifted from libc++ and modified for C++03. This is called
+// system_error even though it does not define that class because that's what
+// it's called in C++0x. We don't define system_error because it is only used
+// for exception handling, which we don't use in LLVM.
 //
 //===----------------------------------------------------------------------===//
 
@@ -224,6 +227,8 @@ template <> struct hash<std::error_code>;
 #include <cerrno>
 #include <string>
 
+// This must be here instead of a .inc file because it is used in the definition
+// of the enum values below.
 #ifdef LLVM_ON_WIN32
   // VS 2008 needs this for some of the defines below.
 # include <WinSock2.h>
@@ -691,7 +696,7 @@ inline error_condition make_error_condition(errc _e) {
 
 inline bool operator<(const error_condition& _x, const error_condition& _y) {
   return _x.category() < _y.category()
-      || _x.category() == _y.category() && _x.value() < _y.value();
+      || (_x.category() == _y.category() && _x.value() < _y.value());
 }
 
 // error_code
@@ -750,7 +755,7 @@ inline error_code make_error_code(errc _e) {
 
 inline bool operator<(const error_code& _x, const error_code& _y) {
   return _x.category() < _y.category()
-      || _x.category() == _y.category() && _x.value() < _y.value();
+      || (_x.category() == _y.category() && _x.value() < _y.value());
 }
 
 inline bool operator==(const error_code& _x, const error_code& _y) {
@@ -788,97 +793,73 @@ inline bool operator!=(const error_condition& _x, const error_condition& _y) {
 
 // system_error
 
-class system_error : public std::runtime_error {
-  error_code _ec_;
-public:
-  system_error(error_code _ec, const std::string& _what_arg);
-  system_error(error_code _ec, const char* _what_arg);
-  system_error(error_code _ec);
-  system_error(int _ev, const error_category& _ecat,
-               const std::string& _what_arg);
-  system_error(int _ev, const error_category& _ecat, const char* _what_arg);
-  system_error(int _ev, const error_category& _ecat);
-  ~system_error() throw();
-
-  const error_code& code() const throw() {return _ec_;}
-
-private:
-  static std::string _init(const error_code&, std::string);
-};
-
-void _throw_system_error(int ev, const char* what_arg);
-
 } // end namespace llvm
 
+// This needs to stay here for KillTheDoctor.
 #ifdef LLVM_ON_WIN32
 #include <Windows.h>
 #include <WinError.h>
 
 namespace llvm {
 
-//  To construct an error_code after a API error:
+//  To construct an error_code after an API error:
 //
 //      error_code( ::GetLastError(), system_category() )
 struct windows_error {
 enum _ {
   success = 0,
   // These names and values are based on Windows winerror.h
-  invalid_function = ERROR_INVALID_FUNCTION,
-  file_not_found = ERROR_FILE_NOT_FOUND,
-  path_not_found = ERROR_PATH_NOT_FOUND,
-  too_many_open_files = ERROR_TOO_MANY_OPEN_FILES,
-  access_denied = ERROR_ACCESS_DENIED,
-  invalid_handle = ERROR_INVALID_HANDLE,
-  arena_trashed = ERROR_ARENA_TRASHED,
-  not_enough_memory = ERROR_NOT_ENOUGH_MEMORY,
-  invalid_block = ERROR_INVALID_BLOCK,
-  bad_environment = ERROR_BAD_ENVIRONMENT,
-  bad_format = ERROR_BAD_FORMAT,
-  invalid_access = ERROR_INVALID_ACCESS,
-  outofmemory = ERROR_OUTOFMEMORY,
-  invalid_drive = ERROR_INVALID_DRIVE,
-  current_directory = ERROR_CURRENT_DIRECTORY,
-  not_same_device = ERROR_NOT_SAME_DEVICE,
-  no_more_files = ERROR_NO_MORE_FILES,
-  write_protect = ERROR_WRITE_PROTECT,
-  bad_unit = ERROR_BAD_UNIT,
-  not_ready = ERROR_NOT_READY,
-  bad_command = ERROR_BAD_COMMAND,
-  crc = ERROR_CRC,
-  bad_length = ERROR_BAD_LENGTH,
-  seek = ERROR_SEEK,
-  not_dos_disk = ERROR_NOT_DOS_DISK,
-  sector_not_found = ERROR_SECTOR_NOT_FOUND,
-  out_of_paper = ERROR_OUT_OF_PAPER,
-  write_fault = ERROR_WRITE_FAULT,
-  read_fault = ERROR_READ_FAULT,
-  gen_failure = ERROR_GEN_FAILURE,
-  sharing_violation = ERROR_SHARING_VIOLATION,
-  lock_violation = ERROR_LOCK_VIOLATION,
-  wrong_disk = ERROR_WRONG_DISK,
+  // This is not a complete list.
+  invalid_function        = ERROR_INVALID_FUNCTION,
+  file_not_found          = ERROR_FILE_NOT_FOUND,
+  path_not_found          = ERROR_PATH_NOT_FOUND,
+  too_many_open_files     = ERROR_TOO_MANY_OPEN_FILES,
+  access_denied           = ERROR_ACCESS_DENIED,
+  invalid_handle          = ERROR_INVALID_HANDLE,
+  arena_trashed           = ERROR_ARENA_TRASHED,
+  not_enough_memory       = ERROR_NOT_ENOUGH_MEMORY,
+  invalid_block           = ERROR_INVALID_BLOCK,
+  bad_environment         = ERROR_BAD_ENVIRONMENT,
+  bad_format              = ERROR_BAD_FORMAT,
+  invalid_access          = ERROR_INVALID_ACCESS,
+  outofmemory             = ERROR_OUTOFMEMORY,
+  invalid_drive           = ERROR_INVALID_DRIVE,
+  current_directory       = ERROR_CURRENT_DIRECTORY,
+  not_same_device         = ERROR_NOT_SAME_DEVICE,
+  no_more_files           = ERROR_NO_MORE_FILES,
+  write_protect           = ERROR_WRITE_PROTECT,
+  bad_unit                = ERROR_BAD_UNIT,
+  not_ready               = ERROR_NOT_READY,
+  bad_command             = ERROR_BAD_COMMAND,
+  crc                     = ERROR_CRC,
+  bad_length              = ERROR_BAD_LENGTH,
+  seek                    = ERROR_SEEK,
+  not_dos_disk            = ERROR_NOT_DOS_DISK,
+  sector_not_found        = ERROR_SECTOR_NOT_FOUND,
+  out_of_paper            = ERROR_OUT_OF_PAPER,
+  write_fault             = ERROR_WRITE_FAULT,
+  read_fault              = ERROR_READ_FAULT,
+  gen_failure             = ERROR_GEN_FAILURE,
+  sharing_violation       = ERROR_SHARING_VIOLATION,
+  lock_violation          = ERROR_LOCK_VIOLATION,
+  wrong_disk              = ERROR_WRONG_DISK,
   sharing_buffer_exceeded = ERROR_SHARING_BUFFER_EXCEEDED,
-  handle_eof = ERROR_HANDLE_EOF,
-  handle_disk_full= ERROR_HANDLE_DISK_FULL,
-  rem_not_list = ERROR_REM_NOT_LIST,
-  dup_name = ERROR_DUP_NAME,
-  bad_net_path = ERROR_BAD_NETPATH,
-  network_busy = ERROR_NETWORK_BUSY,
-  // ...
-  file_exists = ERROR_FILE_EXISTS,
-  cannot_make = ERROR_CANNOT_MAKE,
-  // ...
-  broken_pipe = ERROR_BROKEN_PIPE,
-  open_failed = ERROR_OPEN_FAILED,
-  buffer_overflow = ERROR_BUFFER_OVERFLOW,
-  disk_full= ERROR_DISK_FULL,
-  // ...
-  lock_failed = ERROR_LOCK_FAILED,
-  busy = ERROR_BUSY,
-  cancel_violation = ERROR_CANCEL_VIOLATION,
-  already_exists = ERROR_ALREADY_EXISTS
-  // ...
-
-  // TODO: add more Windows errors
+  handle_eof              = ERROR_HANDLE_EOF,
+  handle_disk_full        = ERROR_HANDLE_DISK_FULL,
+  rem_not_list            = ERROR_REM_NOT_LIST,
+  dup_name                = ERROR_DUP_NAME,
+  bad_net_path            = ERROR_BAD_NETPATH,
+  network_busy            = ERROR_NETWORK_BUSY,
+  file_exists             = ERROR_FILE_EXISTS,
+  cannot_make             = ERROR_CANNOT_MAKE,
+  broken_pipe             = ERROR_BROKEN_PIPE,
+  open_failed             = ERROR_OPEN_FAILED,
+  buffer_overflow         = ERROR_BUFFER_OVERFLOW,
+  disk_full               = ERROR_DISK_FULL,
+  lock_failed             = ERROR_LOCK_FAILED,
+  busy                    = ERROR_BUSY,
+  cancel_violation        = ERROR_CANCEL_VIOLATION,
+  already_exists          = ERROR_ALREADY_EXISTS
 };
   _ v_;
 

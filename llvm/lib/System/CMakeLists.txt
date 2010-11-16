@@ -19,6 +19,7 @@ add_llvm_library(LLVMSystem
   RWMutex.cpp
   SearchForAddressOfSpecialSymbol.cpp
   Signals.cpp
+  system_error.cpp
   ThreadLocal.cpp
   Threading.cpp
   TimeValue.cpp
@@ -32,6 +33,7 @@ add_llvm_library(LLVMSystem
   Unix/Program.inc
   Unix/RWMutex.inc
   Unix/Signals.inc
+  Unix/system_error.inc
   Unix/ThreadLocal.inc
   Unix/TimeValue.inc
   Win32/Alarm.inc
@@ -44,6 +46,7 @@ add_llvm_library(LLVMSystem
   Win32/Program.inc
   Win32/RWMutex.inc
   Win32/Signals.inc
+  Win32/system_error.inc
   Win32/ThreadLocal.inc
   Win32/TimeValue.inc
   )
