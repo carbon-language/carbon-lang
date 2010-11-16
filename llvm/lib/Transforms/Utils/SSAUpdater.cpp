@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "ssaupdater"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/CFG.h"
@@ -178,9 +179,9 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
 
   // See if the PHI node can be merged to a single value.  This can happen in
   // loop cases when we get a PHI of itself and one other value.
-  if (Value *ConstVal = InsertedPHI->hasConstantValue()) {
+  if (Value *V = SimplifyInstruction(InsertedPHI)) {
     InsertedPHI->eraseFromParent();
-    return ConstVal;
+    return V;
   }
 
   // If the client wants to know about all new instructions, tell it.

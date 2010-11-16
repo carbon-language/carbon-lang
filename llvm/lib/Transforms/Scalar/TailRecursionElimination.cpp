@@ -60,6 +60,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/InlineCost.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
@@ -177,7 +178,7 @@ bool TailCallElim::runOnFunction(Function &F) {
       PHINode *PN = ArgumentPHIs[i];
 
       // If the PHI Node is a dynamic constant, replace it with the value it is.
-      if (Value *PNV = PN->hasConstantValue()) {
+      if (Value *PNV = SimplifyInstruction(PN)) {
         PN->replaceAllUsesWith(PNV);
         PN->eraseFromParent();
       }

@@ -16,6 +16,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -96,13 +97,13 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
     P->setIncomingValue(i, C);
     Changed = true;
   }
-  
-  if (Value *ConstVal = P->hasConstantValue()) {
-    P->replaceAllUsesWith(ConstVal);
+
+  if (Value *V = SimplifyInstruction(P)) {
+    P->replaceAllUsesWith(V);
     P->eraseFromParent();
     Changed = true;
   }
-  
+
   ++NumPhis;
   
   return Changed;
