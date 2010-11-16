@@ -34,6 +34,7 @@ class ExternalSemaSource; // layering violation required for downcasting
 class NamedDecl;
 class Selector;
 class Stmt;
+class TagDecl;
 
 /// \brief Abstract interface for external sources of AST nodes.
 ///
@@ -141,6 +142,10 @@ public:
                                 llvm::SmallVectorImpl<Decl*> &Result) {
     return FindExternalLexicalDecls(DC, DeclTy::classofKind, Result);
   }
+
+  /// \brief Gives the external AST source an opportunity to complete
+  /// an incomplete type.
+  virtual void CompleteType(TagDecl *Tag) {}
 
   /// \brief Notify ExternalASTSource that we started deserialization of
   /// a decl or type so until FinishedDeserializing is called there may be

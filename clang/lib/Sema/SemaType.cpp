@@ -2227,15 +2227,18 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   if (diag == 0)
     return true;
 
-  const TagType *Tag = 0;
-  if (const RecordType *Record = T->getAs<RecordType>())
-    Tag = Record;
-  else if (const EnumType *Enum = T->getAs<EnumType>())
-    Tag = Enum;
+  const TagType *Tag = T->getAs<TagType>();
 
   // Avoid diagnosing invalid decls as incomplete.
   if (Tag && Tag->getDecl()->isInvalidDecl())
     return true;
+
+  // Give the external AST source a chance to complete the type.
+  if (Tag && Tag->getDecl()->hasExternalLexicalStorage()) {
+    Context.getExternalSource()->CompleteType(Tag->getDecl());
+    if (!Tag->isIncompleteType())
+      return false;
+  }
 
   // We have an incomplete type. Produce a diagnostic.
   Diag(Loc, PD) << T;
