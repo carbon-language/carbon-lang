@@ -1869,15 +1869,15 @@ def : MnemonicAlias<"stm", "stmia">;
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-def LDMIA_RET : AXI4ld<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
-                                        reglist:$dsts, variable_ops),
-                       IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
-                       "ldmia${p}\t$Rn!, $dsts",
-                       "$Rn = $wb", []> {
-  let Inst{24-23} = 0b01;     // Increment After
-  let Inst{21}    = 1;        // Writeback
+def LDMIA_RET : AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
+                                      reglist:$dsts, variable_ops),
+                     IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
+                     "ldmia${p}\t$Rn!, $dsts",
+                     "$Rn = $wb", []> {
+  let Inst{24-23} = 0b01;       // Increment After
+  let Inst{21}    = 1;          // Writeback
+  let Inst{20}    = 1;          // Load
 }
-
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.

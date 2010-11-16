@@ -2764,9 +2764,17 @@ def t2LDMIA_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
                         IIC_iLoad_mBr,
                         "ldmia${p}.w\t$Rn!, $dsts",
                         "$Rn = $wb", []> {
-  let Inst{24-23} = 0b01; // IA: '01', DB: '10'
-  let Inst{21}    = 1; // The W bit.
-  let Inst{20}    = 1; // Load
+  bits<4>  Rn;
+  bits<16> regs;
+ 
+  let Inst{31-27} = 0b11101;
+  let Inst{26-25} = 0b00;
+  let Inst{24-23} = 0b01;     // Increment After
+  let Inst{22}    = 0;
+  let Inst{21}    = 1;        // Writeback
+  let Inst{20}    = L_bit;
+  let Inst{19-16} = Rn;
+  let Inst{15-0}  = regs;
 }
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
