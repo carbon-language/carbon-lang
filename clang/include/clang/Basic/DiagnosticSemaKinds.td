@@ -895,6 +895,8 @@ def err_iboutletcollection_object_type : Error<
 def err_attribute_missing_parameter_name : Error<
   "attribute requires unquoted parameter">;
 def err_attribute_invalid_vector_type : Error<"invalid vector element type %0">;
+def err_attribute_bad_neon_vector_size : Error<
+  "Neon vector size must be 64 or 128 bits">;
 def err_attribute_argument_not_int : Error<
   "'%0' attribute requires integer constant">;
 def err_attribute_argument_outof_range : Error<

@@ -2047,6 +2047,65 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
                                     VectorType::GenericVector);
 }
 
+/// HandleNeonVectorTypeAttr - The "neon_vector_type" and
+/// "neon_polyvector_type" attributes are used to create vector types that
+/// are mangled according to ARM's ABI.  Otherwise, these types are identical
+/// to those created with the "vector_size" attribute.  Unlike "vector_size"
+/// the argument to these Neon attributes is the number of vector elements,
+/// not the vector size in bytes.  The vector width and element type must
+/// match one of the standard Neon vector types.
+static void HandleNeonVectorTypeAttr(QualType& CurType,
+                                     const AttributeList &Attr, Sema &S,
+                                     VectorType::VectorKind VecKind,
+                                     const char *AttrName) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    Attr.setInvalid();
+    return;
+  }
+  // The number of elements must be an ICE.
+  Expr *numEltsExpr = static_cast<Expr *>(Attr.getArg(0));
+  llvm::APSInt numEltsInt(32);
+  if (numEltsExpr->isTypeDependent() || numEltsExpr->isValueDependent() ||
+      !numEltsExpr->isIntegerConstantExpr(numEltsInt, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << AttrName << numEltsExpr->getSourceRange();
+    Attr.setInvalid();
+    return;
+  }
+  // Only certain element types are supported for Neon vectors.
+  const BuiltinType* BTy = CurType->getAs<BuiltinType>();
+  if (!BTy ||
+      (VecKind == VectorType::NeonPolyVector &&
+       BTy->getKind() != BuiltinType::SChar &&
+       BTy->getKind() != BuiltinType::Short) ||
+      (BTy->getKind() != BuiltinType::SChar &&
+       BTy->getKind() != BuiltinType::UChar &&
+       BTy->getKind() != BuiltinType::Short &&
+       BTy->getKind() != BuiltinType::UShort &&
+       BTy->getKind() != BuiltinType::Int &&
+       BTy->getKind() != BuiltinType::UInt &&
+       BTy->getKind() != BuiltinType::LongLong &&
+       BTy->getKind() != BuiltinType::ULongLong &&
+       BTy->getKind() != BuiltinType::Float)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) <<CurType;
+    Attr.setInvalid();
+    return;
+  }
+  // The total size of the vector must be 64 or 128 bits.
+  unsigned typeSize = static_cast<unsigned>(S.Context.getTypeSize(CurType));
+  unsigned numElts = static_cast<unsigned>(numEltsInt.getZExtValue());
+  unsigned vecSize = typeSize * numElts;
+  if (vecSize != 64 && vecSize != 128) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_bad_neon_vector_size) << CurType;
+    Attr.setInvalid();
+    return;
+  }
+
+  CurType = S.Context.getVectorType(CurType, numElts, VecKind);
+}
+
 void ProcessTypeAttributeList(Sema &S, QualType &Result,
                               bool IsDeclSpec, const AttributeList *AL,
                               DelayedAttributeSet &FnAttrs) {
@@ -2072,6 +2131,14 @@ void ProcessTypeAttributeList(Sema &S, QualType &Result,
       break;
     case AttributeList::AT_vector_size:
       HandleVectorSizeAttr(Result, *AL, S);
+      break;
+    case AttributeList::AT_neon_vector_type:
+      HandleNeonVectorTypeAttr(Result, *AL, S, VectorType::NeonVector,
+                               "neon_vector_type");
+      break;
+    case AttributeList::AT_neon_polyvector_type:
+      HandleNeonVectorTypeAttr(Result, *AL, S, VectorType::NeonPolyVector,
+                               "neon_polyvector_type");
       break;
 
     case AttributeList::AT_noreturn:

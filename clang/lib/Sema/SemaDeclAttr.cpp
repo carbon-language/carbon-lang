@@ -2297,6 +2297,8 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_address_space:
   case AttributeList::AT_objc_gc:
   case AttributeList::AT_vector_size:
+  case AttributeList::AT_neon_vector_type:
+  case AttributeList::AT_neon_polyvector_type:
     // Ignore these, these are type attributes, handled by
     // ProcessTypeAttributes.
     break;

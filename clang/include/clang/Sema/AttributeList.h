@@ -106,6 +106,8 @@ public:
     AT_hiding,
     AT_malloc,
     AT_mode,
+    AT_neon_polyvector_type,    // Clang-specific.
+    AT_neon_vector_type,        // Clang-specific.
     AT_naked,
     AT_nodebug,
     AT_noinline,

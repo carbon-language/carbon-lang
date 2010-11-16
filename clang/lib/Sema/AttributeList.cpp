@@ -102,6 +102,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("vec_type_hint", IgnoredAttribute)
     .Case("objc_exception", AT_objc_exception)
     .Case("ext_vector_type", AT_ext_vector_type)
+    .Case("neon_vector_type", AT_neon_vector_type)
+    .Case("neon_polyvector_type", AT_neon_polyvector_type)
     .Case("transparent_union", AT_transparent_union)
     .Case("analyzer_noreturn", AT_analyzer_noreturn)
     .Case("warn_unused_result", AT_warn_unused_result)
