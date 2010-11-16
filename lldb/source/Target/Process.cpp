@@ -14,7 +14,9 @@
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Event.h"
+#include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/InputReader.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
@@ -85,7 +87,11 @@ Process::Process(Target &target, Listener &listener) :
     m_notifications (),
     m_persistent_vars(),
     m_listener(listener),
-    m_unix_signals ()
+    m_unix_signals (),
+    m_process_input_reader (),
+    m_stdio_communication ("lldb.process.stdio"),
+    m_stdio_comm_mutex (Mutex::eMutexTypeRecursive),
+    m_stdout_data ()
 {
     UpdateInstanceName();
 
@@ -1160,6 +1166,7 @@ Process::Launch
     Error error;
     m_target_triple.Clear();
     m_abi_sp.reset();
+    m_process_input_reader.reset();
 
     Module *exe_module = m_target.GetExecutableModule().get();
     if (exe_module)
@@ -1305,6 +1312,7 @@ Process::Attach (lldb::pid_t attach_pid)
 
     m_target_triple.Clear();
     m_abi_sp.reset();
+    m_process_input_reader.reset();
 
     // Find the process and its architecture.  Make sure it matches the architecture
     // of the current Target, and if not adjust it.
@@ -1347,6 +1355,7 @@ Process::Attach (const char *process_name, bool wait_for_launch)
 {
     m_target_triple.Clear();
     m_abi_sp.reset();
+    m_process_input_reader.reset();
     
     // Find the process and its architecture.  Make sure it matches the architecture
     // of the current Target, and if not adjust it.
@@ -1467,6 +1476,12 @@ Process::Destroy ()
             DidDestroy();
             StopPrivateStateThread();
         }
+        m_stdio_communication.StopReadThread();
+        m_stdio_communication.Disconnect();
+        if (m_process_input_reader && m_process_input_reader->IsActive())
+            m_target.GetDebugger().PopInputReader (m_process_input_reader);
+        if (m_process_input_reader)
+            m_process_input_reader.reset();
     }
     return error;
 }
@@ -1714,6 +1729,10 @@ Process::HandlePrivateEvent (EventSP &event_sp)
         {
             log->Printf ("\tChanging public state from: %s to %s", StateAsCString(GetState ()), StateAsCString (internal_state));
         }
+        if (StateIsRunningState (internal_state))
+            PushProcessInputReader ();
+        else 
+            PopProcessInputReader ();
         Process::ProcessEventData::SetUpdateStateOnRemoval(event_sp.get());
         BroadcastEvent (event_sp);
     }
@@ -2033,6 +2052,111 @@ ArchSpec
 Process::GetArchSpecForExistingProcess (const char *process_name)
 {
     return Host::GetArchSpecForExistingProcess (process_name);
+}
+
+void
+Process::AppendSTDOUT (const char * s, size_t len)
+{
+    Mutex::Locker locker (m_stdio_comm_mutex);
+    m_stdout_data.append (s, len);
+    
+    BroadcastEventIfUnique (eBroadcastBitSTDOUT);
+}
+
+void
+Process::STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len)
+{
+    Process *process = (Process *) baton;
+    process->AppendSTDOUT (static_cast<const char *>(src), src_len);
+}
+
+size_t
+Process::ProcessInputReaderCallback (void *baton,
+                                     InputReader &reader,
+                                     lldb::InputReaderAction notification,
+                                     const char *bytes,
+                                     size_t bytes_len)
+{
+    Process *process = (Process *) baton;
+    
+    switch (notification)
+    {
+    case eInputReaderActivate:
+        break;
+        
+    case eInputReaderDeactivate:
+        break;
+        
+    case eInputReaderReactivate:
+        break;
+        
+    case eInputReaderGotToken:
+        {
+            Error error;
+            process->PutSTDIN (bytes, bytes_len, error);
+        }
+        break;
+        
+    case eInputReaderDone:
+        break;
+        
+    }
+    
+    return bytes_len;
+}
+
+void
+Process::ResetProcessInputReader ()
+{   
+    m_process_input_reader.reset();
+}
+
+void
+Process::SetUpProcessInputReader (int file_descriptor)
+{
+    // First set up the Read Thread for reading/handling process I/O
+    
+    std::auto_ptr<ConnectionFileDescriptor> conn_ap (new ConnectionFileDescriptor (file_descriptor, true));
+    
+    if (conn_ap.get())
+    {
+        m_stdio_communication.SetConnection (conn_ap.release());
+        if (m_stdio_communication.IsConnected())
+        {
+            m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
+            m_stdio_communication.StartReadThread();
+            
+            // Now read thread is set up, set up input reader.
+            
+            if (!m_process_input_reader.get())
+            {
+                m_process_input_reader.reset (new InputReader(m_target.GetDebugger()));
+                Error err (m_process_input_reader->Initialize (Process::ProcessInputReaderCallback,
+                                                               this,
+                                                               eInputReaderGranularityByte,
+                                                               NULL,
+                                                               NULL,
+                                                               false));
+                
+                if  (err.Fail())
+                    m_process_input_reader.reset();
+            }
+        }
+    }
+}
+
+void
+Process::PushProcessInputReader ()
+{
+    if (m_process_input_reader && !m_process_input_reader->IsActive())
+        m_target.GetDebugger().PushInputReader (m_process_input_reader);
+}
+
+void
+Process::PopProcessInputReader ()
+{
+    if (m_process_input_reader && m_process_input_reader->IsActive())
+        m_target.GetDebugger().PopInputReader (m_process_input_reader);
 }
 
 lldb::UserSettingsControllerSP

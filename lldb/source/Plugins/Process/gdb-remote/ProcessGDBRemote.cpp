@@ -104,9 +104,7 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     Process (target, listener),
     m_dynamic_loader_ap (),
     m_flags (0),
-    m_stdio_communication ("gdb-remote.stdio"),
     m_stdio_mutex (Mutex::eMutexTypeRecursive),
-    m_stdout_data (),
     m_byte_order (eByteOrderHost),
     m_gdb_comm(),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
@@ -1634,23 +1632,23 @@ ProcessGDBRemote::DoSignal (int signo)
     return error;
 }
 
-void
-ProcessGDBRemote::STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len)
-{
-    ProcessGDBRemote *process = (ProcessGDBRemote *)baton;
-    process->AppendSTDOUT(static_cast<const char *>(src), src_len);
-}
+//void
+//ProcessGDBRemote::STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len)
+//{
+//    ProcessGDBRemote *process = (ProcessGDBRemote *)baton;
+//    process->AppendSTDOUT(static_cast<const char *>(src), src_len);
+//}
 
-void
-ProcessGDBRemote::AppendSTDOUT (const char* s, size_t len)
-{
-    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::%s (<%d> %s) ...", __FUNCTION__, len, s);
-    Mutex::Locker locker(m_stdio_mutex);
-    m_stdout_data.append(s, len);
-
-    // FIXME: Make a real data object for this and put it out.
-    BroadcastEventIfUnique (eBroadcastBitSTDOUT);
-}
+//void
+//ProcessGDBRemote::AppendSTDOUT (const char* s, size_t len)
+//{
+//    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::%s (<%d> %s) ...", __FUNCTION__, len, s);
+//    Mutex::Locker locker(m_stdio_mutex);
+//    m_stdout_data.append(s, len);
+//
+//    // FIXME: Make a real data object for this and put it out.
+//    BroadcastEventIfUnique (eBroadcastBitSTDOUT);
+//}
 
 
 Error
@@ -1867,18 +1865,7 @@ ProcessGDBRemote::StartDebugserverProcess
             if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
             {
                 if (pty.GetMasterFileDescriptor() != lldb_utility::PseudoTerminal::invalid_fd)
-                {
-                    std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor (pty.ReleaseMasterFileDescriptor(), true));
-                    if (conn_ap.get())
-                    {
-                        m_stdio_communication.SetConnection(conn_ap.release());
-                        if (m_stdio_communication.IsConnected())
-                        {
-                            m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
-                            m_stdio_communication.StartReadThread();
-                        }
-                    }
-                }
+                    SetUpProcessInputReader (pty.ReleaseMasterFileDescriptor());
             }
         }
         else

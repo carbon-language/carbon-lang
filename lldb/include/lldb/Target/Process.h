@@ -20,6 +20,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/Communication.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/StringList.h"
@@ -1678,6 +1679,10 @@ protected:
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     ConstString                 m_target_triple;
     lldb::ABISP                 m_abi_sp;
+    lldb::InputReaderSP         m_process_input_reader;
+    lldb_private::Communication m_stdio_communication;
+    lldb_private::Mutex         m_stdio_comm_mutex;
+    std::string                 m_stdout_data;
     
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;
@@ -1738,7 +1743,33 @@ protected:
 
     size_t
     WriteMemoryPrivate (lldb::addr_t addr, const void *buf, size_t size, Error &error);
-
+    
+    void
+    AppendSTDOUT (const char *s, size_t len);
+    
+    static void
+    STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
+    
+    void
+    PushProcessInputReader ();
+    
+    void 
+    PopProcessInputReader ();
+    
+    void
+    ResetProcessInputReader ();
+    
+    void
+    SetUpProcessInputReader (int file_descriptor);
+    
+    static size_t
+    ProcessInputReaderCallback (void *baton,
+                                InputReader &reader,
+                                lldb::InputReaderAction notification,
+                                const char *bytes,
+                                size_t bytes_len);
+    
+    
 private:
     //------------------------------------------------------------------
     // For Process only

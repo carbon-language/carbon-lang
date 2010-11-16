@@ -324,22 +324,8 @@ Debugger::DispatchInputCallback (void *baton, const void *bytes, size_t bytes_le
 void
 Debugger::DispatchInput (const char *bytes, size_t bytes_len)
 {
-    if (bytes == NULL || bytes_len == 0)
-        return;
-
-    // TODO: implement the STDIO to the process as an input reader...
-    TargetSP target = GetSelectedTarget();
-    if (target.get() != NULL)
-    {
-        ProcessSP process_sp = target->GetProcessSP();
-        if (process_sp.get() != NULL
-            && StateIsRunningState (process_sp->GetState()))
-        {
-            Error error;
-            if (process_sp->PutSTDIN (bytes, bytes_len, error) == bytes_len)
-                return;
-        }
-    }
+//    if (bytes == NULL || bytes_len == 0)
+//        return;
 
     WriteToDefaultReader (bytes, bytes_len);
 }

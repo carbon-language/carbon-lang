@@ -261,11 +261,11 @@ protected:
     bool
     ProcessIDIsValid ( ) const;
 
-    static void
-    STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
+//    static void
+//    STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
 
-    void
-    AppendSTDOUT (const char* s, size_t len);
+//    void
+//    AppendSTDOUT (const char* s, size_t len);
 
     void
     Clear ( );
@@ -321,9 +321,7 @@ protected:
 
     std::auto_ptr<lldb_private::DynamicLoader> m_dynamic_loader_ap;
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
-    lldb_private::Communication m_stdio_communication;
     lldb_private::Mutex m_stdio_mutex;      // Multithreaded protection for stdio
-    std::string m_stdout_data;
     lldb::ByteOrder m_byte_order;
     GDBRemoteCommunication m_gdb_comm;
     lldb::pid_t m_debugserver_pid;

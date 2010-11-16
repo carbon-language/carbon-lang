@@ -38,6 +38,7 @@ using namespace lldb_private;
 ConnectionFileDescriptor::ConnectionFileDescriptor () :
     Connection(),
     m_fd (-1),
+    m_is_socket (false),
     m_should_close_fd (false)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT,
@@ -48,6 +49,7 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
 ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     Connection(),
     m_fd (fd),
+    m_is_socket (false),
     m_should_close_fd (owns_fd)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT,
