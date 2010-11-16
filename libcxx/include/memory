@@ -1471,7 +1471,7 @@ struct _LIBCPP_VISIBLE uses_allocator
 {
 };
 
-#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
 // uses-allocator construction
 
@@ -1489,7 +1489,7 @@ struct __uses_alloc_ctor
     : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
     {};
 
-#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
 // allocator
 

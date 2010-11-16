@@ -1254,9 +1254,8 @@ private:
     static _Tp __t();
     static _Up __u();
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    static bool __f();
 public:
-    typedef decltype(__f() ? __t() : __u()) type;
+    typedef decltype(true ? __t() : __u()) type;
 };
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
@@ -1335,10 +1334,9 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename remove_reference<_Tp>::type&&
 move(_Tp&& __t)
 {
-    return static_cast<typename remove_reference<_Tp>::type&&>(__t);
+    typedef typename remove_reference<_Tp>::type _Up;
+    return static_cast<_Up&&>(__t);
 }
-
-#if 1
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1357,54 +1355,6 @@ forward(typename std::remove_reference<_Tp>::type&& __t)
  	              "Can not forward an rvalue as an lvalue.");
  	return static_cast<_Tp&&>(__t);
 }
-
-#else
-
-template <class _Tp,
-          class = typename enable_if<
-                     !is_lvalue_reference<_Tp>::value
-                  >::type
-         >
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp&&
-forward(typename common_type<_Tp>::type& __t)
-{
-    return static_cast<_Tp&&>(__t);
-}
-
-template <class _Tp,
-          class = typename enable_if<
-                     !is_lvalue_reference<_Tp>::value
-                  >::type
-         >
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp&&
-forward(typename common_type<_Tp>::type&& __t)
-{
-    return static_cast<_Tp&&>(__t);
-}
-
-template <class _Tp,
-          class = typename enable_if<
-                     is_lvalue_reference<_Tp>::value
-                  >::type
-         >
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp
-forward(typename common_type<_Tp>::type __t)
-{
-    return __t;
-}
-
-template <class _Tp,
-          class = typename enable_if<
-                     is_lvalue_reference<_Tp>::value
-                  >::type
-         >
-_Tp
-forward(typename remove_reference<_Tp>::type&& __t) = delete;
-
-#endif
 
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 

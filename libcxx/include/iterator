@@ -1616,7 +1616,7 @@ operator+(typename __debug_iter<_Container, _Iter>::difference_type __n,
 
 #endif  // _LIBCPP_DEBUG
 
-#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_DECLTYPE)
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_TRAILING_RETURN)
 
 template <class _C>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1650,7 +1650,7 @@ end(const _C& __c) -> decltype(__c.end())
     return __c.end();
 }
 
-#else  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_DECLTYPE)
+#else  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_TRAILING_RETURN)
 
 template <class _C>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1684,7 +1684,7 @@ end(const _C& __c)
     return __c.end();
 }
 
-#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_DECLTYPE)
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_TRAILING_RETURN)
 
 template <class _T, size_t _N>
 inline _LIBCPP_INLINE_VISIBILITY

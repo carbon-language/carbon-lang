@@ -253,13 +253,8 @@ class _LIBCPP_VISIBLE thread
 {
     pthread_t __t_;
 
-#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
-    thread(const thread&) = delete;
-    thread& operator=(const thread&) = delete;
-#else  // _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     thread(const thread&);
     thread& operator=(const thread&);
-#endif  // _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 public:
     typedef __thread_id id;
     typedef pthread_t native_handle_type;
