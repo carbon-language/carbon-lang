@@ -189,10 +189,8 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
 }
 
 /// TypeString - for a modifier and type, generate the name of the typedef for
-/// that type.  If generic is true, emit the generic vector type rather than
-/// the public NEON type. QUc -> uint8x8_t / __neon_uint8x8_t.
-static std::string TypeString(const char mod, StringRef typestr,
-                              bool generic = false) {
+/// that type.  QUc -> uint8x8_t.
+static std::string TypeString(const char mod, StringRef typestr) {
   bool quad = false;
   bool poly = false;
   bool usgn = false;
@@ -212,9 +210,6 @@ static std::string TypeString(const char mod, StringRef typestr,
   type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
   
   SmallString<128> s;
-  
-  if (generic)
-    s += "__neon_";
   
   if (usgn)
     s.push_back('u');
@@ -371,52 +366,6 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   return quad ? "V16c" : "V8c";
 }
 
-/// StructTag - generate the name of the struct tag for a type.
-/// These names are mandated by ARM's ABI.
-static std::string StructTag(StringRef typestr) {
-  bool quad = false;
-  bool poly = false;
-  bool usgn = false;
-  
-  // base type to get the type string for.
-  char type = ClassifyType(typestr, quad, poly, usgn);
-  
-  SmallString<128> s;
-  s += "__simd";
-  s += quad ? "128_" : "64_";
-  if (usgn)
-    s.push_back('u');
-  
-  switch (type) {
-    case 'c':
-      s += poly ? "poly8" : "int8";
-      break;
-    case 's':
-      s += poly ? "poly16" : "int16";
-      break;
-    case 'i':
-      s += "int32";
-      break;
-    case 'l':
-      s += "int64";
-      break;
-    case 'h':
-      s += "float16";
-      break;
-    case 'f':
-      s += "float32";
-      break;
-    default:
-      throw "unhandled type!";
-      break;
-  }
-
-  // Append _t, finishing the struct tag name.
-  s += "_t";
-  
-  return s.str();
-}
-
 /// MangleName - Append a type or width suffix to a base neon function name, 
 /// and insert a 'q' in the appropriate location if the operation works on
 /// 128b rather than 64b.   E.g. turn "vst2_lane" into "vst2q_lane_f32", etc.
@@ -523,7 +472,7 @@ static std::string Duplicate(unsigned nElts, StringRef typestr,
                              const std::string &a) {
   std::string s;
   
-  s = "(__neon_" + TypeString('d', typestr) + "){ ";
+  s = "(" + TypeString('d', typestr) + "){ ";
   for (unsigned i = 0; i != nElts; ++i) {
     s += a;
     if ((i + 1) < nElts)
@@ -585,19 +534,19 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "a - (b * c)";
     break;
   case OpEq:
-    s += "(__neon_" + ts + ")(a == b)";
+    s += "(" + ts + ")(a == b)";
     break;
   case OpGe:
-    s += "(__neon_" + ts + ")(a >= b)";
+    s += "(" + ts + ")(a >= b)";
     break;
   case OpLe:
-    s += "(__neon_" + ts + ")(a <= b)";
+    s += "(" + ts + ")(a <= b)";
     break;
   case OpGt:
-    s += "(__neon_" + ts + ")(a > b)";
+    s += "(" + ts + ")(a > b)";
     break;
   case OpLt:
-    s += "(__neon_" + ts + ")(a < b)";
+    s += "(" + ts + ")(a < b)";
     break;
   case OpNeg:
     s += " -a";
@@ -621,17 +570,17 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "a | ~b";
     break;
   case OpCast:
-    s += "(__neon_" + ts + ")a";
+    s += "(" + ts + ")a";
     break;
   case OpConcat:
-    s += "__builtin_shufflevector((__neon_int64x1_t)a";
-    s += ", (__neon_int64x1_t)b, 0, 1)";
+    s += "__builtin_shufflevector((int64x1_t)a";
+    s += ", (int64x1_t)b, 0, 1)";
     break;
   case OpHi:
-    s += "(((__neon_float64x2_t)a)[1])";
+    s += "(((float64x2_t)a)[1])";
     break;
   case OpLo:
-    s += "(((__neon_float64x2_t)a)[0])";
+    s += "(((float64x2_t)a)[0])";
     break;
   case OpDup:
     s += Duplicate(nElts << (int)quad, typestr, "a");
@@ -639,8 +588,8 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpSelect:
     // ((0 & 1) | (~0 & 2))
     ts = TypeString(proto[1], typestr);
-    s += "(a & (__neon_" + ts + ")b) | ";
-    s += "(~a & (__neon_" + ts + ")c)";
+    s += "(a & (" + ts + ")b) | ";
+    s += "(~a & (" + ts + ")c)";
     break;
   case OpRev16:
     s += "__builtin_shufflevector(a, a";
@@ -891,44 +840,34 @@ void NeonEmitter::run(raw_ostream &OS) {
   ParseTypes(0, TypedefTypes, TDTypeVec);
 
   // Emit vector typedefs.
-  for (unsigned v = 1; v != 5; ++v) {
-    for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
-      bool dummy, quad = false;
-      (void) ClassifyType(TDTypeVec[i], quad, dummy, dummy);
-      OS << "typedef __attribute__(( __vector_size__(";
+  for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
+    bool dummy, quad = false;
+    (void) ClassifyType(TDTypeVec[i], quad, dummy, dummy);
+    OS << "typedef __attribute__(( __vector_size__(";
       
-      OS << utostr(8*v*(quad ? 2 : 1)) << ") )) ";
-      if (!quad && v == 1)
-        OS << " ";
+    OS << utostr(8*(quad ? 2 : 1)) << ") )) ";
+    if (!quad)
+      OS << " ";
       
-      OS << TypeString('s', TDTypeVec[i]);
-      OS << " __neon_";
-      
-      char t = (v == 1) ? 'd' : '0' + v;
-      OS << TypeString(t, TDTypeVec[i]) << ";\n";
-    }
+    OS << TypeString('s', TDTypeVec[i]);
+    OS << " " << TypeString('d', TDTypeVec[i]) << ";\n";
   }
   OS << "\n";
   OS << "typedef __attribute__(( __vector_size__(8) ))  "
-    "double __neon_float64x1_t;\n";
+    "double float64x1_t;\n";
   OS << "typedef __attribute__(( __vector_size__(16) )) "
-    "double __neon_float64x2_t;\n";
+    "double float64x2_t;\n";
   OS << "\n";
 
   // Emit struct typedefs.
-  for (unsigned vi = 1; vi != 5; ++vi) {
+  for (unsigned vi = 2; vi != 5; ++vi) {
     for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
-      std::string ts = TypeString('d', TDTypeVec[i], vi == 1);
-      std::string vs = TypeString((vi > 1) ? '0' + vi : 'd', TDTypeVec[i]);
-      std::string tag = (vi > 1) ? vs : StructTag(TDTypeVec[i]);
-      if (vi > 1) {
-        OS << "typedef struct " << tag << " {\n";
-        OS << "  " << ts << " val";
-        OS << "[" << utostr(vi) << "]";
-        OS << ";\n} ";
-      } else {
-        OS << "typedef " << ts << " ";
-      }
+      std::string ts = TypeString('d', TDTypeVec[i]);
+      std::string vs = TypeString('0' + vi, TDTypeVec[i]);
+      OS << "typedef struct " << vs << " {\n";
+      OS << "  " << ts << " val";
+      OS << "[" << utostr(vi) << "]";
+      OS << ";\n} ";
       OS << vs << ";\n\n";
     }
   }
