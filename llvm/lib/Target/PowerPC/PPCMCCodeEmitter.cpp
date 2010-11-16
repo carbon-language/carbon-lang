@@ -199,6 +199,8 @@ unsigned PPCMCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   if (MO.isReg()) {
+    // MTCRF/MFOCRF should go through get_crbitm_encoding for the CR operand.
+    // The GPR operand should come through here though.
     assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF) ||
            MO.getReg() < PPC::CR0 || MO.getReg() > PPC::CR7);
     return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
