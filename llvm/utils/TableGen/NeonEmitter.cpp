@@ -833,8 +833,8 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   // Emit NEON-specific scalar typedefs.
   OS << "typedef float float32_t;\n";
-  OS << "typedef uint8_t poly8_t;\n";
-  OS << "typedef uint16_t poly16_t;\n";
+  OS << "typedef int8_t poly8_t;\n";
+  OS << "typedef int16_t poly16_t;\n";
   OS << "typedef uint16_t float16_t;\n";
 
   // Emit Neon vector typedefs.
