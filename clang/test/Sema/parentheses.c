@@ -25,4 +25,7 @@ void bitwise_rel(unsigned i) {
   // Eager logical op
   (void)(i == 1 | i == 2 | i == 3);
   (void)(i != 1 & i != 2 & i != 3);
+
+  (void)(i || i && i); // expected-warning {{'&&' within '||'}} \
+                       // expected-note {{place parentheses around the '&&' expression to silence this warning}}
 }

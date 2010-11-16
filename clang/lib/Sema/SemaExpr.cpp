@@ -7329,13 +7329,33 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
                        rhs->getSourceRange());
 }
 
+static void DiagnoseLogicalAndInLogicalOr(Sema &Self, SourceLocation OpLoc,
+                                          Expr *E) {
+  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(E)) {
+    if (Bop->getOpcode() == BO_LAnd) {
+      SuggestParentheses(Self, OpLoc,
+        Self.PDiag(diag::warn_logical_and_in_logical_or)
+            << E->getSourceRange(),
+        Self.PDiag(diag::note_logical_and_in_logical_or_silence),
+        E->getSourceRange(),
+        Self.PDiag(0), SourceRange());
+    }
+  }
+}
+
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
-/// precedence. This currently diagnoses only "arg1 'bitwise' arg2 'eq' arg3".
-/// But it could also warn about arg1 && arg2 || arg3, as GCC 4.3+ does.
+/// precedence.
 static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
                                     SourceLocation OpLoc, Expr *lhs, Expr *rhs){
+  // Diagnose "arg1 'bitwise' arg2 'eq' arg3".
   if (BinaryOperator::isBitwiseOp(Opc))
-    DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
+    return DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
+
+  /// Warn about arg1 && arg2 || arg3, as GCC 4.3+ does.
+  if (Opc == BO_LOr) {
+    DiagnoseLogicalAndInLogicalOr(Self, OpLoc, lhs);
+    DiagnoseLogicalAndInLogicalOr(Self, OpLoc, rhs);
+  }
 }
 
 // Binary Operators.  'Tok' is the token for the operator.

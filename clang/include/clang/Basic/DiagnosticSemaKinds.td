@@ -2156,7 +2156,12 @@ def note_precedence_bitwise_silence : Note<
 def warn_logical_instead_of_bitwise : Warning<
   "use of logical %0 with constant operand; switch to bitwise %1 or "
   "remove constant">, InGroup<DiagGroup<"constant-logical-operand">>;
-  
+
+def warn_logical_and_in_logical_or : Warning<
+  "'&&' within '||'">, InGroup<Parentheses>;
+def note_logical_and_in_logical_or_silence : Note<
+  "place parentheses around the '&&' expression to silence this warning">;
+
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
   "non-fragile ABI">;
