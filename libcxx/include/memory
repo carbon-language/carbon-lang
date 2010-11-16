@@ -2535,7 +2535,7 @@ public:
         : __shared_owners_(__refs) {}
 
     void __add_shared();
-    void __release_shared();
+    bool __release_shared();
     _LIBCPP_INLINE_VISIBILITY
     long use_count() const {return __shared_owners_ + 1;}
 };

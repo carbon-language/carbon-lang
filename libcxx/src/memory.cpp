@@ -50,11 +50,15 @@ __shared_count::__add_shared()
     increment(__shared_owners_);
 }
 
-void
+bool
 __shared_count::__release_shared()
 {
     if (decrement(__shared_owners_) == -1)
+    {
         __on_zero_shared();
+        return true;
+    }
+    return false;
 }
 
 __shared_weak_count::~__shared_weak_count()
@@ -65,7 +69,6 @@ void
 __shared_weak_count::__add_shared()
 {
     __shared_count::__add_shared();
-    __add_weak();
 }
 
 void
@@ -77,8 +80,8 @@ __shared_weak_count::__add_weak()
 void
 __shared_weak_count::__release_shared()
 {
-    __shared_count::__release_shared();
-    __release_weak();
+    if (__shared_count::__release_shared())
+        __release_weak();
 }
 
 void
