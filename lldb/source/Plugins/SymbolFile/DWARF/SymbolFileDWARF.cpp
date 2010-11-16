@@ -2335,9 +2335,9 @@ SymbolFileDWARF::ParseChildParameters
                                                 if (encoding_mask & Type::eEncodingIsPointerUID)
                                                 {
                                                     if (encoding_mask & (1u << Type::eEncodingIsConstUID))
-                                                        type_quals |= clang::DeclSpec::TQ_const;
+                                                        type_quals |= clang::Qualifiers::Const;
                                                     if (encoding_mask & (1u << Type::eEncodingIsVolatileUID))
-                                                        type_quals |= clang::DeclSpec::TQ_volatile;
+                                                        type_quals |= clang::Qualifiers::Volatile;
                                                 }
                                             }
                                         }
