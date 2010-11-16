@@ -128,37 +128,117 @@ namespace {
   char ARMLoadStoreOpt::ID = 0;
 }
 
-static int getLoadStoreMultipleOpcode(int Opcode) {
+static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
   switch (Opcode) {
+  default: llvm_unreachable("Unhandled opcode!");
   case ARM::LDRi12:
     ++NumLDMGened;
-    return ARM::LDM;
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::LDMIA;
+    case ARM_AM::da: return ARM::LDMDA;
+    case ARM_AM::db: return ARM::LDMDB;
+    case ARM_AM::ib: return ARM::LDMIB;
+    }
+    break;
   case ARM::STRi12:
     ++NumSTMGened;
-    return ARM::STM;
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::STMIA;
+    case ARM_AM::da: return ARM::STMDA;
+    case ARM_AM::db: return ARM::STMDB;
+    case ARM_AM::ib: return ARM::STMIB;
+    }
+    break;
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
     ++NumLDMGened;
-    return ARM::t2LDM;
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::t2LDMIA;
+    case ARM_AM::db: return ARM::t2LDMDB;
+    }
+    break;
   case ARM::t2STRi8:
   case ARM::t2STRi12:
     ++NumSTMGened;
-    return ARM::t2STM;
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::t2STMIA;
+    case ARM_AM::db: return ARM::t2STMDB;
+    }
+    break;
   case ARM::VLDRS:
     ++NumVLDMGened;
-    return ARM::VLDMS;
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::VLDMSIA;
+    case ARM_AM::db: return ARM::VLDMSDB;
+    }
+    break;
   case ARM::VSTRS:
     ++NumVSTMGened;
-    return ARM::VSTMS;
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::VSTMSIA;
+    case ARM_AM::db: return ARM::VSTMSDB;
+    }
+    break;
   case ARM::VLDRD:
     ++NumVLDMGened;
-    return ARM::VLDMD;
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::VLDMDIA;
+    case ARM_AM::db: return ARM::VLDMDDB;
+    }
+    break;
   case ARM::VSTRD:
     ++NumVSTMGened;
-    return ARM::VSTMD;
-  default: llvm_unreachable("Unhandled opcode!");
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::VSTMDIA;
+    case ARM_AM::db: return ARM::VSTMDDB;
+    }
+    break;
   }
+
   return 0;
+}
+
+static ARM_AM::AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
+  switch (Opcode) {
+  default: llvm_unreachable("Unhandled opcode!");
+  case ARM::LDMIA:
+  case ARM::STMIA:
+  case ARM::t2LDMIA:
+  case ARM::t2STMIA:
+  case ARM::VLDMSIA:
+  case ARM::VSTMSIA:
+  case ARM::VLDMDIA:
+  case ARM::VSTMDIA:
+    return ARM_AM::ia;
+
+  case ARM::LDMDA:
+  case ARM::STMDA:
+    return ARM_AM::da;
+
+  case ARM::LDMDB:
+  case ARM::STMDB:
+  case ARM::t2LDMDB:
+  case ARM::t2STMDB:
+  case ARM::VLDMSDB:
+  case ARM::VSTMSDB:
+  case ARM::VLDMDDB:
+  case ARM::VSTMDDB:
+    return ARM_AM::db;
+
+  case ARM::LDMIB:
+  case ARM::STMIB:
+    return ARM_AM::ib;
+  }
+
+  return ARM_AM::bad_am_submode;
 }
 
 static bool isT2i32Load(unsigned Opc) {
@@ -245,10 +325,10 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
 
   bool isDef = (isi32Load(Opcode) || Opcode == ARM::VLDRS ||
                 Opcode == ARM::VLDRD);
-  Opcode = getLoadStoreMultipleOpcode(Opcode);
+  Opcode = getLoadStoreMultipleOpcode(Opcode, Mode);
   MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII->get(Opcode))
     .addReg(Base, getKillRegState(BaseKill))
-    .addImm(ARM_AM::getAM4ModeImm(Mode)).addImm(Pred).addReg(PredReg);
+    .addImm(Pred).addReg(PredReg);
   for (unsigned i = 0; i != NumRegs; ++i)
     MIB = MIB.addReg(Regs[i].first, getDefRegState(isDef)
                      | getKillRegState(Regs[i].second));
@@ -452,31 +532,109 @@ static inline unsigned getLSMultipleTransferSize(MachineInstr *MI) {
   case ARM::VLDRD:
   case ARM::VSTRD:
     return 8;
-  case ARM::LDM:
-  case ARM::STM:
-  case ARM::t2LDM:
-  case ARM::t2STM:
-  case ARM::VLDMS:
-  case ARM::VSTMS:
+  case ARM::LDMIA:
+  case ARM::LDMDA:
+  case ARM::LDMDB:
+  case ARM::LDMIB:
+  case ARM::STMIA:
+  case ARM::STMDA:
+  case ARM::STMDB:
+  case ARM::STMIB:
+  case ARM::t2LDMIA:
+  case ARM::t2LDMDB:
+  case ARM::t2STMIA:
+  case ARM::t2STMDB:
+  case ARM::VLDMSIA:
+  case ARM::VLDMSDB:
+  case ARM::VSTMSIA:
+  case ARM::VSTMSDB:
     return (MI->getNumOperands() - MI->getDesc().getNumOperands() + 1) * 4;
-  case ARM::VLDMD:
-  case ARM::VSTMD:
+  case ARM::VLDMDIA:
+  case ARM::VLDMDDB:
+  case ARM::VSTMDIA:
+  case ARM::VSTMDDB:
     return (MI->getNumOperands() - MI->getDesc().getNumOperands() + 1) * 8;
   }
 }
 
-static unsigned getUpdatingLSMultipleOpcode(unsigned Opc) {
+static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
+                                            ARM_AM::AMSubMode Mode) {
   switch (Opc) {
-  case ARM::LDM: return ARM::LDM_UPD;
-  case ARM::STM: return ARM::STM_UPD;
-  case ARM::t2LDM: return ARM::t2LDM_UPD;
-  case ARM::t2STM: return ARM::t2STM_UPD;
-  case ARM::VLDMS: return ARM::VLDMS_UPD;
-  case ARM::VLDMD: return ARM::VLDMD_UPD;
-  case ARM::VSTMS: return ARM::VSTMS_UPD;
-  case ARM::VSTMD: return ARM::VSTMD_UPD;
   default: llvm_unreachable("Unhandled opcode!");
+  case ARM::LDMIA:
+  case ARM::LDMDA:
+  case ARM::LDMDB:
+  case ARM::LDMIB:
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::LDMIA_UPD;
+    case ARM_AM::ib: return ARM::LDMIB_UPD;
+    case ARM_AM::da: return ARM::LDMDA_UPD;
+    case ARM_AM::db: return ARM::LDMDB_UPD;
+    }
+    break;
+  case ARM::STMIA:
+  case ARM::STMDA:
+  case ARM::STMDB:
+  case ARM::STMIB:
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::STMIA_UPD;
+    case ARM_AM::ib: return ARM::STMIB_UPD;
+    case ARM_AM::da: return ARM::STMDA_UPD;
+    case ARM_AM::db: return ARM::STMDB_UPD;
+    }
+    break;
+  case ARM::t2LDMIA:
+  case ARM::t2LDMDB:
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::t2LDMIA_UPD;
+    case ARM_AM::db: return ARM::t2LDMDB_UPD;
+    }
+    break;
+  case ARM::t2STMIA:
+  case ARM::t2STMDB:
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::t2STMIA_UPD;
+    case ARM_AM::db: return ARM::t2STMDB_UPD;
+    }
+    break;
+  case ARM::VLDMSIA:
+  case ARM::VLDMSDB:
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::VLDMSIA_UPD;
+    case ARM_AM::db: return ARM::VLDMSDB_UPD;
+    }
+    break;
+  case ARM::VLDMDIA:
+  case ARM::VLDMDDB:
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::VLDMDIA_UPD;
+    case ARM_AM::db: return ARM::VLDMDDB_UPD;
+    }
+    break;
+  case ARM::VSTMSIA:
+  case ARM::VSTMSDB:
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::VSTMSIA_UPD;
+    case ARM_AM::db: return ARM::VSTMSDB_UPD;
+    }
+    break;
+  case ARM::VSTMDIA:
+  case ARM::VSTMDDB:
+    switch (Mode) {
+    default: llvm_unreachable("Unhandled submode!");
+    case ARM_AM::ia: return ARM::VSTMDIA_UPD;
+    case ARM_AM::db: return ARM::VSTMDDB_UPD;
+    }
+    break;
   }
+
   return 0;
 }
 
@@ -505,16 +663,14 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   int Opcode = MI->getOpcode();
   DebugLoc dl = MI->getDebugLoc();
 
-  bool DoMerge = false;
-  ARM_AM::AMSubMode Mode = ARM_AM::ia;
-
   // Can't use an updating ld/st if the base register is also a dest
   // register. e.g. ldmdb r0!, {r0, r1, r2}. The behavior is undefined.
-  for (unsigned i = 3, e = MI->getNumOperands(); i != e; ++i) {
+  for (unsigned i = 2, e = MI->getNumOperands(); i != e; ++i)
     if (MI->getOperand(i).getReg() == Base)
       return false;
-  }
-  Mode = ARM_AM::getAM4SubMode(MI->getOperand(1).getImm());
+
+  bool DoMerge = false;
+  ARM_AM::AMSubMode Mode = getLoadStoreMultipleSubMode(Opcode);
 
   // Try merging with the previous instruction.
   MachineBasicBlock::iterator BeginMBBI = MBB.begin();
@@ -560,15 +716,16 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   if (!DoMerge)
     return false;
 
-  unsigned NewOpc = getUpdatingLSMultipleOpcode(Opcode);
+  unsigned NewOpc = getUpdatingLSMultipleOpcode(Opcode, Mode);
   MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
     .addReg(Base, getDefRegState(true)) // WB base register
     .addReg(Base, getKillRegState(BaseKill))
-    .addImm(ARM_AM::getAM4ModeImm(Mode))
     .addImm(Pred).addReg(PredReg);
+
   // Transfer the rest of operands.
-  for (unsigned OpNum = 4, e = MI->getNumOperands(); OpNum != e; ++OpNum)
+  for (unsigned OpNum = 3, e = MI->getNumOperands(); OpNum != e; ++OpNum)
     MIB.addOperand(MI->getOperand(OpNum));
+
   // Transfer memoperands.
   (*MIB).setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
 
@@ -576,14 +733,21 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   return true;
 }
 
-static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc) {
+static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc,
+                                             ARM_AM::AddrOpc Mode) {
   switch (Opc) {
-  case ARM::LDRi12: return ARM::LDR_PRE;
-  case ARM::STRi12: return ARM::STR_PRE;
-  case ARM::VLDRS: return ARM::VLDMS_UPD;
-  case ARM::VLDRD: return ARM::VLDMD_UPD;
-  case ARM::VSTRS: return ARM::VSTMS_UPD;
-  case ARM::VSTRD: return ARM::VSTMD_UPD;
+  case ARM::LDRi12:
+    return ARM::LDR_PRE;
+  case ARM::STRi12:
+    return ARM::STR_PRE;
+  case ARM::VLDRS:
+    return Mode == ARM_AM::add ? ARM::VLDMSIA_UPD : ARM::VLDMSDB_UPD;
+  case ARM::VLDRD:
+    return Mode == ARM_AM::add ? ARM::VLDMDIA_UPD : ARM::VLDMDDB_UPD;
+  case ARM::VSTRS:
+    return Mode == ARM_AM::add ? ARM::VSTMSIA_UPD : ARM::VSTMSDB_UPD;
+  case ARM::VSTRD:
+    return Mode == ARM_AM::add ? ARM::VSTMDIA_UPD : ARM::VSTMDDB_UPD;
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
     return ARM::t2LDR_PRE;
@@ -595,14 +759,21 @@ static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc) {
   return 0;
 }
 
-static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc) {
+static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc,
+                                              ARM_AM::AddrOpc Mode) {
   switch (Opc) {
-  case ARM::LDRi12: return ARM::LDR_POST;
-  case ARM::STRi12: return ARM::STR_POST;
-  case ARM::VLDRS: return ARM::VLDMS_UPD;
-  case ARM::VLDRD: return ARM::VLDMD_UPD;
-  case ARM::VSTRS: return ARM::VSTMS_UPD;
-  case ARM::VSTRD: return ARM::VSTMD_UPD;
+  case ARM::LDRi12:
+    return ARM::LDR_POST;
+  case ARM::STRi12:
+    return ARM::STR_POST;
+  case ARM::VLDRS:
+    return Mode == ARM_AM::add ? ARM::VLDMSIA_UPD : ARM::VLDMSDB_UPD;
+  case ARM::VLDRD:
+    return Mode == ARM_AM::add ? ARM::VLDMDIA_UPD : ARM::VLDMDDB_UPD;
+  case ARM::VSTRS:
+    return Mode == ARM_AM::add ? ARM::VSTMSIA_UPD : ARM::VSTMSDB_UPD;
+  case ARM::VSTRD:
+    return Mode == ARM_AM::add ? ARM::VSTMDIA_UPD : ARM::VSTMDDB_UPD;
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
     return ARM::t2LDR_POST;
@@ -664,7 +835,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
       DoMerge = true;
     }
     if (DoMerge) {
-      NewOpc = getPreIndexedLoadStoreOpcode(Opcode);
+      NewOpc = getPreIndexedLoadStoreOpcode(Opcode, AddSub);
       MBB.erase(PrevMBBI);
     }
   }
@@ -683,7 +854,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
       DoMerge = true;
     }
     if (DoMerge) {
-      NewOpc = getPostIndexedLoadStoreOpcode(Opcode);
+      NewOpc = getPostIndexedLoadStoreOpcode(Opcode, AddSub);
       if (NextMBBI == I) {
         Advance = true;
         ++I;
@@ -696,12 +867,9 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     return false;
 
   unsigned Offset = 0;
-  if (isAM5)
-    Offset = ARM_AM::getAM4ModeImm(AddSub == ARM_AM::sub ?
-                                   ARM_AM::db : ARM_AM::ia);
-  else if (isAM2)
+  if (isAM2)
     Offset = ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift);
-  else
+  else if (!isAM5)
     Offset = AddSub == ARM_AM::sub ? -Bytes : Bytes;
 
   if (isAM5) {
@@ -713,7 +881,6 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
       .addReg(Base, getDefRegState(true)) // WB base register
       .addReg(Base, getKillRegState(isLd ? BaseKill : false))
-      .addImm(Offset)
       .addImm(Pred).addReg(PredReg)
       .addReg(MO.getReg(), (isLd ? getDefRegState(true) :
                             getKillRegState(MO.isKill())));
@@ -897,12 +1064,11 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
       // Ascending register numbers and no offset. It's safe to change it to a
       // ldm or stm.
       unsigned NewOpc = (isLd)
-        ? (isT2 ? ARM::t2LDM : ARM::LDM)
-        : (isT2 ? ARM::t2STM : ARM::STM);
+        ? (isT2 ? ARM::t2LDMIA : ARM::LDMIA)
+        : (isT2 ? ARM::t2STMIA : ARM::STMIA);
       if (isLd) {
         BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
           .addReg(BaseReg, getKillRegState(BaseKill))
-          .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
           .addImm(Pred).addReg(PredReg)
           .addReg(EvenReg, getDefRegState(isLd) | getDeadRegState(EvenDeadKill))
           .addReg(OddReg,  getDefRegState(isLd) | getDeadRegState(OddDeadKill));
@@ -910,7 +1076,6 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
       } else {
         BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
           .addReg(BaseReg, getKillRegState(BaseKill))
-          .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
           .addImm(Pred).addReg(PredReg)
           .addReg(EvenReg,
                   getKillRegState(EvenDeadKill) | getUndefRegState(EvenUndef))
@@ -1164,12 +1329,16 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
        MBBI->getOpcode() == ARM::tBX_RET ||
        MBBI->getOpcode() == ARM::MOVPCLR)) {
     MachineInstr *PrevMI = prior(MBBI);
-    if (PrevMI->getOpcode() == ARM::LDM_UPD ||
-        PrevMI->getOpcode() == ARM::t2LDM_UPD) {
+    unsigned Opcode = PrevMI->getOpcode();
+    if (Opcode == ARM::LDMIA_UPD || Opcode == ARM::LDMDA_UPD ||
+        Opcode == ARM::LDMDB_UPD || Opcode == ARM::LDMIB_UPD ||
+        Opcode == ARM::t2LDMIA_UPD || Opcode == ARM::t2LDMDB_UPD) {
       MachineOperand &MO = PrevMI->getOperand(PrevMI->getNumOperands()-1);
       if (MO.getReg() != ARM::LR)
         return false;
-      unsigned NewOpc = isThumb2 ? ARM::t2LDM_RET : ARM::LDM_RET;
+      unsigned NewOpc = (isThumb2 ? ARM::t2LDMIA_RET : ARM::LDMIA_RET);
+      assert(((isThumb2 && Opcode == ARM::t2LDMIA_UPD) ||
+              Opcode == ARM::LDMIA_UPD) && "Unsupported multiple load-return!");
       PrevMI->setDesc(TII->get(NewOpc));
       MO.setReg(ARM::PC);
       PrevMI->copyImplicitOps(&*MBBI);

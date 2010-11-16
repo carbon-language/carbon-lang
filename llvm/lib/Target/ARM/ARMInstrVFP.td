@@ -74,25 +74,26 @@ def VSTRS : ASI5<0b1101, 0b00, (outs), (ins SPR:$Sd, addrmode5:$addr),
 //  Load / store multiple Instructions.
 //
 
-multiclass vfp_ldst_d_mult<string asm, bit L_bit,
-                           InstrItinClass itin, InstrItinClass itin_upd> {
-  def ia :
+multiclass vfp_ldst_mult<string asm, bit L_bit,
+                         InstrItinClass itin, InstrItinClass itin_upd> {
+  // Double Precision
+  def DIA :
     AXDI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           IndexModeNone, itin,
-          !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
+          !strconcat(asm, "ia${p}\t$Rn, $regs"), "", []> {
     let Inst{24-23} = 0b01;       // Increment After
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def ia_UPD :
+  def DIA_UPD :
     AXDI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           IndexModeUpd, itin_upd,
-          !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+          !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b01;       // Increment After
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
   }
-  def db :
+  def DDB :
     AXDI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           IndexModeNone, itin,
           !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
@@ -100,7 +101,7 @@ multiclass vfp_ldst_d_mult<string asm, bit L_bit,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def db_UPD :
+  def DDB_UPD :
     AXDI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           IndexModeUpd, itin_upd,
           !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
@@ -108,27 +109,25 @@ multiclass vfp_ldst_d_mult<string asm, bit L_bit,
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
   }
-}
 
-multiclass vfp_ldst_s_mult<string asm, bit L_bit,
-                           InstrItinClass itin, InstrItinClass itin_upd> {
-  def ia :
+  // Single Precision
+  def SIA :
     AXSI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           IndexModeNone, itin,
-          !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
+          !strconcat(asm, "ia${p}\t$Rn, $regs"), "", []> {
     let Inst{24-23} = 0b01;       // Increment After
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def ia_UPD :
+  def SIA_UPD :
     AXSI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           IndexModeUpd, itin_upd,
-          !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+          !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b01;       // Increment After
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
   }
-  def db :
+  def SDB :
     AXSI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           IndexModeNone, itin,
           !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
@@ -136,7 +135,7 @@ multiclass vfp_ldst_s_mult<string asm, bit L_bit,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def db_UPD :
+  def SDB_UPD :
     AXSI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           IndexModeUpd, itin_upd,
           !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
@@ -148,91 +147,13 @@ multiclass vfp_ldst_s_mult<string asm, bit L_bit,
 
 let neverHasSideEffects = 1 in {
 
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
-defm VLDMD : vfp_ldst_d_mult<"vldm", 1, IIC_fpLoad_m, IIC_fpLoad_mu>;
-defm VLDMS : vfp_ldst_s_mult<"vldm", 1, IIC_fpLoad_m, IIC_fpLoad_mu>;
-} // mayLoad, hasExtraDefRegAllocReq
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
+defm VLDM : vfp_ldst_mult<"vldm", 1, IIC_fpLoad_m, IIC_fpLoad_mu>;
 
-let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
-defm VSTMD : vfp_ldst_d_mult<"vstm", 0, IIC_fpLoad_m, IIC_fpLoad_mu>;
-defm VSTMS : vfp_ldst_s_mult<"vstm", 0, IIC_fpLoad_m, IIC_fpLoad_mu>;
-} // mayStore, hasExtraSrcRegAllocReq
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
+defm VSTM : vfp_ldst_mult<"vstm", 0, IIC_fpLoad_m, IIC_fpLoad_mu>;
 
 } // neverHasSideEffects
-
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
-def VLDMD : AXDI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                           reglist:$dsts, variable_ops),
-                  IndexModeNone, IIC_fpLoad_m,
-                  "vldm${amode}${p}\t$Rn, $dsts", "", []> {
-  let Inst{21} = 0;             // wback = (W == '1')
-  let Inst{20} = 1;             // Load
-}
-
-def VLDMS : AXSI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                           reglist:$dsts, variable_ops),
-                  IndexModeNone, IIC_fpLoad_m,
-                  "vldm${amode}${p}\t$Rn, $dsts", "", []> {
-  let Inst{21} = 0;             // wback = (W == '1')
-  let Inst{20} = 1;             // Load
-}
-
-def VLDMD_UPD : AXDI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                                       reglist:$dsts, variable_ops),
-                      IndexModeUpd, IIC_fpLoad_mu,
-                      "vldm${amode}${p}\t$Rn!, $dsts",
-                      "$Rn = $wb", []> {
-  let Inst{21} = 1;             // wback = (W == '1')
-  let Inst{20} = 1;             // Load
-}
-
-def VLDMS_UPD : AXSI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                                       reglist:$dsts, variable_ops),
-                      IndexModeUpd, IIC_fpLoad_mu, 
-                      "vldm${amode}${p}\t$Rn!, $dsts",
-                      "$Rn = $wb", []> {
-  let Inst{21} = 1;             // wback = (W == '1')
-  let Inst{20} = 1;             // Load
-}
-} // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
-
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
-def VSTMD : AXDI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                           reglist:$srcs, variable_ops),
-                  IndexModeNone, IIC_fpStore_m,
-                  "vstm${amode}${p}\t$Rn, $srcs", "", []> {
-  let Inst{21} = 0;             // wback = (W == '1')
-  let Inst{20} = 0;             // Store
-}
-
-def VSTMS : AXSI4<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                           reglist:$srcs, variable_ops), IndexModeNone,
-                   IIC_fpStore_m,
-                  "vstm${amode}${p}\t$Rn, $srcs", "", []> {
-  let Inst{21} = 0;             // wback = (W == '1')
-  let Inst{20} = 0;             // Store
-}
-
-def VSTMD_UPD : AXDI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                                       reglist:$srcs, variable_ops),
-                      IndexModeUpd, IIC_fpStore_mu,
-                      "vstm${amode}${p}\t$Rn!, $srcs",
-                      "$Rn = $wb", []> {
-  let Inst{21} = 1;             // wback = (W == '1')
-  let Inst{20} = 0;             // Store
-}
-
-def VSTMS_UPD : AXSI4<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                                       reglist:$srcs, variable_ops),
-                      IndexModeUpd, IIC_fpStore_mu,
-                      "vstm${amode}${p}\t$Rn!, $srcs",
-                      "$Rn = $wb", []> {
-  let Inst{21} = 1;             // wback = (W == '1')
-  let Inst{20} = 0;             // Store
-}
-} // mayStore, neverHasSideEffects, hasExtraSrcRegAllocReq
 
 // FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
 

@@ -1629,10 +1629,10 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     // operations in order to work around some performance issues.
     if (Name.find("_sfp") != std::string::npos) return false;
 
-    // LDM_RET is a special case of LDM (Load Multiple) where the registers
+    // LDMIA_RET is a special case of LDM (Load Multiple) where the registers
     // loaded include the PC, causing a branch to a loaded address.  Ignore
-    // the LDM_RET instruction when decoding.
-    if (Name == "LDM_RET") return false;
+    // the LDMIA_RET instruction when decoding.
+    if (Name == "LDMIA_RET") return false;
 
     // Bcc is in a more generic form than B.  Ignore B when decoding.
     if (Name == "B") return false;
@@ -1726,7 +1726,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     //
     //   tBfar conflicts with tBLr9
     //   tCMNz conflicts with tCMN (with assembly format strings being equal)
-    //   tPOP_RET/t2LDM_RET conflict with tPOP/t2LDM (ditto)
+    //   tPOP_RET/t2LDMIA_RET conflict with tPOP/t2LDM (ditto)
     //   tMOVCCi conflicts with tMOVi8
     //   tMOVCCr conflicts with tMOVgpr2gpr
     //   tBR_JTr conflicts with tBRIND
@@ -1739,7 +1739,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
         /* Name == "tCMNz" || */ Name == "tCMPzi8" || Name == "tCMPzr" ||
         Name == "tCMPzhir" || /* Name == "t2CMNzrr" || Name == "t2CMNzrs" ||
         Name == "t2CMNzri" || */ Name == "t2CMPzrr" || Name == "t2CMPzrs" ||
-        Name == "t2CMPzri" || Name == "tPOP_RET" || Name == "t2LDM_RET" ||
+        Name == "t2CMPzri" || Name == "tPOP_RET" || Name == "t2LDMIA_RET" ||
         Name == "tMOVCCi" || Name == "tMOVCCr" || Name == "tBR_JTr" ||
         Name == "tSpill" || Name == "tLDRcp" || Name == "tRestore" ||
         Name == "t2LEApcrelJT" || Name == "t2MOVCCi16")

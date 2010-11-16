@@ -539,17 +539,17 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
 multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
                            InstrItinClass itin_upd, bits<6> T1Enc,
                            bit L_bit> {
-  def ia :
+  def IA :
     T1I<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-        itin, !strconcat(asm, "${p}\t$Rn, $regs"), []>,
+        itin, !strconcat(asm, "ia${p}\t$Rn, $regs"), []>,
        T1Encoding<T1Enc>;
-  def ia_UPD :
+  def IA_UPD :
     T1It<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-         itin_upd, !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []>,
+         itin_upd, !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []>,
         T1Encoding<T1Enc>;
 }
 
-/* TODO: Uncommented, this causes a decoding conflict.
+// These require base address to be written back or one of the loaded regs.
 let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
@@ -561,36 +561,6 @@ defm tSTM : thumb_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu,
                             {1,1,0,0,0,?}, 0>;
  
 } // neverHasSideEffects
-*/
-
-// These require base address to be written back or one of the loaded regs.
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
-def tLDM : T1I<(outs),
-               (ins GPR:$Rn, ldstm_mode:$amode, pred:$p, reglist:$dsts,
-                variable_ops),
-               IIC_iLoad_m,
-               "ldm${amode}${p}\t$Rn, $dsts", []>,
-           T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
-
-def tLDM_UPD : T1It<(outs tGPR:$wb),
-                    (ins GPR:$Rn, ldstm_mode:$amode, pred:$p, reglist:$dsts,
-                     variable_ops),
-                    IIC_iLoad_m,
-                    "ldm${amode}${p}\t$Rn!, $dsts",
-                    "$Rn = $wb", []>,
-               T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
-} // mayLoad, neverHasSideEffects = 1, hasExtraDefRegAllocReq
-
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in
-def tSTM_UPD : T1It<(outs tGPR:$wb),
-                    (ins GPR:$Rn, ldstm_mode:$amode, pred:$p, reglist:$srcs,
-                     variable_ops),
-                    IIC_iStore_mu,
-                    "stm${amode}${p}\t$Rn!, $srcs",
-                    "$Rn = $wb", []>,
-           T1Encoding<{1,1,0,0,0,?}>; // A6.2 & A8.6.189
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
 def tPOP : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops),

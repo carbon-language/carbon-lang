@@ -121,11 +121,11 @@ namespace {
     { ARM::t2STRHi12,ARM::tSTRH,  0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRHs, ARM::tSTRH,   0,             0,   0,    1,   0,  0,0, 1 },
 
-    { ARM::t2LDM,   ARM::tLDM,    0,             0,   0,    1,   1,  1,1, 1 },
-    { ARM::t2LDM_RET,0,           ARM::tPOP_RET, 0,   0,    1,   1,  1,1, 1 },
-    { ARM::t2LDM_UPD,ARM::tLDM_UPD,ARM::tPOP,    0,   0,    1,   1,  1,1, 1 },
+    { ARM::t2LDMIA, ARM::tLDMIA,  0,             0,   0,    1,   1,  1,1, 1 },
+    { ARM::t2LDMIA_RET,0,         ARM::tPOP_RET, 0,   0,    1,   1,  1,1, 1 },
+    { ARM::t2LDMIA_UPD,ARM::tLDMIA_UPD,ARM::tPOP,0,   0,    1,   1,  1,1, 1 },
     // ARM::t2STM (with no basereg writeback) has no Thumb1 equivalent
-    { ARM::t2STM_UPD,ARM::tSTM_UPD,ARM::tPUSH,   0,   0,    1,   1,  1,1, 1 },
+    { ARM::t2STMIA_UPD,ARM::tSTMIA_UPD,ARM::tPUSH,0,  0,    1,   1,  1,1, 1 },
   };
 
   class Thumb2SizeReduce : public MachineFunctionPass {
@@ -233,9 +233,10 @@ Thumb2SizeReduce::VerifyPredAndCC(MachineInstr *MI, const ReduceEntry &Entry,
 
 static bool VerifyLowRegs(MachineInstr *MI) {
   unsigned Opc = MI->getOpcode();
-  bool isPCOk = (Opc == ARM::t2LDM_RET || Opc == ARM::t2LDM ||
-                 Opc == ARM::t2LDM_UPD);
-  bool isLROk = (Opc == ARM::t2STM_UPD);
+  bool isPCOk = (Opc == ARM::t2LDMIA_RET || Opc == ARM::t2LDMIA     ||
+                 Opc == ARM::t2LDMDB     || Opc == ARM::t2LDMIA_UPD ||
+                 Opc == ARM::t2LDMDB_UPD);
+  bool isLROk = (Opc == ARM::t2STMIA_UPD || Opc == ARM::t2STMDB_UPD);
   bool isSPOk = isPCOk || isLROk || (Opc == ARM::t2ADDrSPi);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
@@ -275,6 +276,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   unsigned Opc = Entry.NarrowOpc1;
   unsigned OpNum = 3; // First 'rest' of operands.
   uint8_t  ImmLimit = Entry.Imm1Limit;
+
   switch (Entry.WideOpc) {
   default:
     llvm_unreachable("Unexpected Thumb2 load / store opcode!");
@@ -310,10 +312,10 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     HasShift = true;
     OpNum = 4;
     break;
-  case ARM::t2LDM: {
+  case ARM::t2LDMIA:
+  case ARM::t2LDMDB: {
     unsigned BaseReg = MI->getOperand(0).getReg();
-    ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MI->getOperand(1).getImm());
-    if (!isARMLowRegister(BaseReg) || Mode != ARM_AM::ia)
+    if (!isARMLowRegister(BaseReg) || Entry.WideOpc != ARM::t2LDMIA)
       return false;
     // For the non-writeback version (this one), the base register must be
     // one of the registers being loaded.
@@ -331,26 +333,29 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     isLdStMul = true;
     break;
   }
-  case ARM::t2LDM_RET: {
+  case ARM::t2LDMIA_RET: {
     unsigned BaseReg = MI->getOperand(1).getReg();
     if (BaseReg != ARM::SP)
       return false;
     Opc = Entry.NarrowOpc2; // tPOP_RET
-    OpNum = 3;
+    OpNum = 2;
     isLdStMul = true;
     break;
   }
-  case ARM::t2LDM_UPD:
-  case ARM::t2STM_UPD: {
+  case ARM::t2LDMIA_UPD:
+  case ARM::t2LDMDB_UPD:
+  case ARM::t2STMIA_UPD:
+  case ARM::t2STMDB_UPD: {
     OpNum = 0;
     unsigned BaseReg = MI->getOperand(1).getReg();
-    ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MI->getOperand(2).getImm());
     if (BaseReg == ARM::SP &&
-        ((Entry.WideOpc == ARM::t2LDM_UPD && Mode == ARM_AM::ia) ||
-         (Entry.WideOpc == ARM::t2STM_UPD && Mode == ARM_AM::db))) {
+        (Entry.WideOpc == ARM::t2LDMIA_UPD ||
+         Entry.WideOpc == ARM::t2STMDB_UPD)) {
       Opc = Entry.NarrowOpc2; // tPOP or tPUSH
-      OpNum = 3;
-    } else if (!isARMLowRegister(BaseReg) || Mode != ARM_AM::ia) {
+      OpNum = 2;
+    } else if (!isARMLowRegister(BaseReg) ||
+               (Entry.WideOpc != ARM::t2LDMIA_UPD &&
+                Entry.WideOpc != ARM::t2STMIA_UPD)) {
       return false;
     }
     isLdStMul = true;

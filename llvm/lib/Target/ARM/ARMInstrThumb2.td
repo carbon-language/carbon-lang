@@ -1501,9 +1501,9 @@ defm t2PLI  : T2Ipl<0, 1, "pli">,  Requires<[IsThumb2,HasV7]>;
 
 multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
                             InstrItinClass itin_upd, bit L_bit> {
-  def ia :
+  def IA :
     T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-         itin, !strconcat(asm, "${p}.w\t$Rn, $regs"), []> {
+         itin, !strconcat(asm, "ia${p}.w\t$Rn, $regs"), []> {
     bits<4>  Rn;
     bits<16> regs;
  
@@ -1516,9 +1516,9 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{19-16} = Rn;
     let Inst{15-0}  = regs;
   }
-  def ia_UPD :
+  def IA_UPD :
     T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-          itin_upd, !strconcat(asm, "${p}.w\t$Rn!, $regs"), "$Rn = $wb", []> {
+          itin_upd, !strconcat(asm, "ia${p}.w\t$Rn!, $regs"), "$Rn = $wb", []> {
     bits<4>  Rn;
     bits<16> regs;
  
@@ -1531,7 +1531,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{19-16} = Rn;
     let Inst{15-0}  = regs;
   }
-  def db :
+  def DB :
     T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          itin, !strconcat(asm, "db${p}.w\t$Rn, $regs"), []> {
     bits<4>  Rn;
@@ -1546,7 +1546,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{19-16} = Rn;
     let Inst{15-0}  = regs;
   }
-  def db_UPD :
+  def DB_UPD :
     T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
           itin_upd, !strconcat(asm, "db${p}.w\t$Rn, $regs"), "$Rn = $wb", []> {
     bits<4>  Rn;
@@ -1563,7 +1563,6 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
   }
 }
 
-/* TODO:
 let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
@@ -1573,61 +1572,7 @@ let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm t2STM : thumb2_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu, 0>;
 
 } // neverHasSideEffects
-*/
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
-def t2LDM : T2XI<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                          reglist:$dsts, variable_ops), IIC_iLoad_m,
-                 "ldm${amode}${p}.w\t$Rn, $dsts", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b00;
-  let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
-  let Inst{22} = 0;
-  let Inst{21} = 0; // The W bit.
-  let Inst{20} = 1; // Load
-}
-
-def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                                       reglist:$dsts, variable_ops),
-                      IIC_iLoad_mu,
-                      "ldm${amode}${p}.w\t$Rn!, $dsts",
-                      "$Rn = $wb", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b00;
-  let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
-  let Inst{22} = 0;
-  let Inst{21} = 1; // The W bit.
-  let Inst{20} = 1; // Load
-}
-} // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
-
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
-def t2STM : T2XI<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                          reglist:$srcs, variable_ops), IIC_iStore_m,
-                 "stm${amode}${p}.w\t$Rn, $srcs", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b00;
-  let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
-  let Inst{22} = 0;
-  let Inst{21} = 0; // The W bit.
-  let Inst{20} = 0; // Store
-}
-
-def t2STM_UPD : T2XIt<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                                       reglist:$srcs, variable_ops),
-                      IIC_iStore_m,
-                      "stm${amode}${p}.w\t$Rn!, $srcs",
-                      "$Rn = $wb", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b00;
-  let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
-  let Inst{22} = 0;
-  let Inst{21} = 1; // The W bit.
-  let Inst{20} = 0; // Store
-}
-} // mayStore, neverHasSideEffects, hasExtraSrcRegAllocReq
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
@@ -2814,17 +2759,14 @@ let Defs =
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-  def t2LDM_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
+def t2LDMIA_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
                                         reglist:$dsts, variable_ops),
                         IIC_iLoad_mBr,
-                        "ldm${amode}${p}.w\t$Rn!, $dsts",
+                        "ldmia${p}.w\t$Rn!, $dsts",
                         "$Rn = $wb", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b00;
-  let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
-  let Inst{22} = 0;
-  let Inst{21} = 1; // The W bit.
-  let Inst{20} = 1; // Load
+  let Inst{24-23} = 0b01; // IA: '01', DB: '10'
+  let Inst{21}    = 1; // The W bit.
+  let Inst{20}    = 1; // Load
 }
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {

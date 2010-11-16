@@ -697,10 +697,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addReg(SrcReg, getKillRegState(isKill))
                      .addMemOperand(MMO));
     } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQ))
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQIA))
                      .addReg(SrcReg, getKillRegState(isKill))
                      .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
                      .addMemOperand(MMO));
     }
     break;
@@ -715,9 +714,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addMemOperand(MMO));
     } else {
       MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMD))
-                       .addFrameIndex(FI)
-                       .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)))
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMDIA))
+                       .addFrameIndex(FI))
         .addMemOperand(MMO);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
@@ -727,9 +725,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     break;
   case ARM::QQQQPRRegClassID: {
     MachineInstrBuilder MIB =
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMD))
-                     .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)))
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMDIA))
+                     .addFrameIndex(FI))
       .addMemOperand(MMO);
     MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
     MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
@@ -781,10 +778,8 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
       return MI->getOperand(2).getReg();
     }
     break;
-  case ARM::VSTMQ:
+  case ARM::VSTMQIA:
     if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(2).getImm() == ARM_AM::getAM4ModeImm(ARM_AM::ia) &&
         MI->getOperand(0).getSubReg() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
@@ -841,9 +836,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addFrameIndex(FI).addImm(16)
                      .addMemOperand(MMO));
     } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQ), DestReg)
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQIA), DestReg)
                      .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
                      .addMemOperand(MMO));
     }
     break;
@@ -855,9 +849,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addMemOperand(MMO));
     } else {
       MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMD))
-                       .addFrameIndex(FI)
-                       .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)))
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMDIA))
+                       .addFrameIndex(FI))
         .addMemOperand(MMO);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
@@ -867,9 +860,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     break;
   case ARM::QQQQPRRegClassID: {
     MachineInstrBuilder MIB =
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMD))
-                     .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)))
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMDIA))
+                     .addFrameIndex(FI))
       .addMemOperand(MMO);
     MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
     MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
@@ -921,10 +913,8 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
       return MI->getOperand(0).getReg();
     }
     break;
-  case ARM::VLDMQ:
+  case ARM::VLDMQIA:
     if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(2).getImm() == ARM_AM::getAM4ModeImm(ARM_AM::ia) &&
         MI->getOperand(0).getSubReg() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
@@ -1583,46 +1573,75 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
   default:
     llvm_unreachable("Unexpected multi-uops instruction!");
     break;
-  case ARM::VLDMQ:
-  case ARM::VSTMQ:
+  case ARM::VLDMQIA:
+  case ARM::VLDMQDB:
+  case ARM::VSTMQIA:
+  case ARM::VSTMQDB:
     return 2;
 
   // The number of uOps for load / store multiple are determined by the number
   // registers.
+  // 
   // On Cortex-A8, each pair of register loads / stores can be scheduled on the
   // same cycle. The scheduling for the first load / store must be done
   // separately by assuming the the address is not 64-bit aligned.
+  //
   // On Cortex-A9, the formula is simply (#reg / 2) + (#reg % 2). If the address
-  // is not 64-bit aligned, then AGU would take an extra cycle.
-  // For VFP / NEON load / store multiple, the formula is
-  // (#reg / 2) + (#reg % 2) + 1.
-  case ARM::VLDMD:
-  case ARM::VLDMS:
-  case ARM::VLDMD_UPD:
-  case ARM::VLDMS_UPD:
-  case ARM::VSTMD:
-  case ARM::VSTMS:
-  case ARM::VSTMD_UPD:
-  case ARM::VSTMS_UPD: {
+  // is not 64-bit aligned, then AGU would take an extra cycle.  For VFP / NEON
+  // load / store multiple, the formula is (#reg / 2) + (#reg % 2) + 1.
+  case ARM::VLDMDIA:
+  case ARM::VLDMDDB:
+  case ARM::VLDMDIA_UPD:
+  case ARM::VLDMDDB_UPD:
+  case ARM::VLDMSIA:
+  case ARM::VLDMSDB:
+  case ARM::VLDMSIA_UPD:
+  case ARM::VLDMSDB_UPD:
+  case ARM::VSTMDIA:
+  case ARM::VSTMDDB:
+  case ARM::VSTMDIA_UPD:
+  case ARM::VSTMDDB_UPD:
+  case ARM::VSTMSIA:
+  case ARM::VSTMSDB:
+  case ARM::VSTMSIA_UPD:
+  case ARM::VSTMSDB_UPD: {
     unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands();
     return (NumRegs / 2) + (NumRegs % 2) + 1;
   }
-  case ARM::LDM_RET:
-  case ARM::LDM:
-  case ARM::LDM_UPD:
-  case ARM::STM:
-  case ARM::STM_UPD:
-  case ARM::tLDM:
-  case ARM::tLDM_UPD:
-  case ARM::tSTM_UPD:
+
+  case ARM::LDMIA_RET:
+  case ARM::LDMIA:
+  case ARM::LDMDA:
+  case ARM::LDMDB:
+  case ARM::LDMIB:
+  case ARM::LDMIA_UPD:
+  case ARM::LDMDA_UPD:
+  case ARM::LDMDB_UPD:
+  case ARM::LDMIB_UPD:
+  case ARM::STMIA:
+  case ARM::STMDA:
+  case ARM::STMDB:
+  case ARM::STMIB:
+  case ARM::STMIA_UPD:
+  case ARM::STMDA_UPD:
+  case ARM::STMDB_UPD:
+  case ARM::STMIB_UPD:
+  case ARM::tLDMIA:
+  case ARM::tLDMIA_UPD:
+  case ARM::tSTMIA:
+  case ARM::tSTMIA_UPD:
   case ARM::tPOP_RET:
   case ARM::tPOP:
   case ARM::tPUSH:
-  case ARM::t2LDM_RET:
-  case ARM::t2LDM:
-  case ARM::t2LDM_UPD:
-  case ARM::t2STM:
-  case ARM::t2STM_UPD: {
+  case ARM::t2LDMIA_RET:
+  case ARM::t2LDMIA:
+  case ARM::t2LDMDB:
+  case ARM::t2LDMIA_UPD:
+  case ARM::t2LDMDB_UPD:
+  case ARM::t2STMIA:
+  case ARM::t2STMDB:
+  case ARM::t2STMIA_UPD:
+  case ARM::t2STMDB_UPD: {
     unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands() + 1;
     if (Subtarget.isCortexA8()) {
       if (NumRegs < 4)
@@ -1669,13 +1688,17 @@ ARMBaseInstrInfo::getVLDMDefCycle(const InstrItineraryData *ItinData,
   } else if (Subtarget.isCortexA9()) {
     DefCycle = RegNo;
     bool isSLoad = false;
+
     switch (DefTID.getOpcode()) {
     default: break;
-    case ARM::VLDMS:
-    case ARM::VLDMS_UPD:
+    case ARM::VLDMSIA:
+    case ARM::VLDMSDB:
+    case ARM::VLDMSIA_UPD:
+    case ARM::VLDMSDB_UPD:
       isSLoad = true;
       break;
     }
+
     // If there are odd number of 'S' registers or if it's not 64-bit aligned,
     // then it takes an extra cycle.
     if ((isSLoad && (RegNo % 2)) || DefAlign < 8)
@@ -1741,13 +1764,17 @@ ARMBaseInstrInfo::getVSTMUseCycle(const InstrItineraryData *ItinData,
   } else if (Subtarget.isCortexA9()) {
     UseCycle = RegNo;
     bool isSStore = false;
+
     switch (UseTID.getOpcode()) {
     default: break;
-    case ARM::VSTMS:
-    case ARM::VSTMS_UPD:
+    case ARM::VSTMSIA:
+    case ARM::VSTMSDB:
+    case ARM::VSTMSIA_UPD:
+    case ARM::VSTMSDB_UPD:
       isSStore = true;
       break;
     }
+
     // If there are odd number of 'S' registers or if it's not 64-bit aligned,
     // then it takes an extra cycle.
     if ((isSStore && (RegNo % 2)) || UseAlign < 8)
@@ -1810,26 +1837,38 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   default:
     DefCycle = ItinData->getOperandCycle(DefClass, DefIdx);
     break;
-  case ARM::VLDMD:
-  case ARM::VLDMS:
-  case ARM::VLDMD_UPD:
-  case ARM::VLDMS_UPD:  {
+
+  case ARM::VLDMDIA:
+  case ARM::VLDMDDB:
+  case ARM::VLDMDIA_UPD:
+  case ARM::VLDMDDB_UPD:
+  case ARM::VLDMSIA:
+  case ARM::VLDMSDB:
+  case ARM::VLDMSIA_UPD:
+  case ARM::VLDMSDB_UPD:
     DefCycle = getVLDMDefCycle(ItinData, DefTID, DefClass, DefIdx, DefAlign);
     break;
-  }
-  case ARM::LDM_RET:
-  case ARM::LDM:
-  case ARM::LDM_UPD:
-  case ARM::tLDM:
-  case ARM::tLDM_UPD:
+
+  case ARM::LDMIA_RET:
+  case ARM::LDMIA:
+  case ARM::LDMDA:
+  case ARM::LDMDB:
+  case ARM::LDMIB:
+  case ARM::LDMIA_UPD:
+  case ARM::LDMDA_UPD:
+  case ARM::LDMDB_UPD:
+  case ARM::LDMIB_UPD:
+  case ARM::tLDMIA:
+  case ARM::tLDMIA_UPD:
   case ARM::tPUSH:
-  case ARM::t2LDM_RET:
-  case ARM::t2LDM:
-  case ARM::t2LDM_UPD: {
+  case ARM::t2LDMIA_RET:
+  case ARM::t2LDMIA:
+  case ARM::t2LDMDB:
+  case ARM::t2LDMIA_UPD:
+  case ARM::t2LDMDB_UPD:
     LdmBypass = 1;
     DefCycle = getLDMDefCycle(ItinData, DefTID, DefClass, DefIdx, DefAlign);
     break;
-  }
   }
 
   if (DefCycle == -1)
@@ -1841,23 +1880,36 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   default:
     UseCycle = ItinData->getOperandCycle(UseClass, UseIdx);
     break;
-  case ARM::VSTMD:
-  case ARM::VSTMS:
-  case ARM::VSTMD_UPD:
-  case ARM::VSTMS_UPD: {
+
+  case ARM::VSTMDIA:
+  case ARM::VSTMDDB:
+  case ARM::VSTMDIA_UPD:
+  case ARM::VSTMDDB_UPD:
+  case ARM::VSTMSIA:
+  case ARM::VSTMSDB:
+  case ARM::VSTMSIA_UPD:
+  case ARM::VSTMSDB_UPD:
     UseCycle = getVSTMUseCycle(ItinData, UseTID, UseClass, UseIdx, UseAlign);
     break;
-  }
-  case ARM::STM:
-  case ARM::STM_UPD:
-  case ARM::tSTM_UPD:
+
+  case ARM::STMIA:
+  case ARM::STMDA:
+  case ARM::STMDB:
+  case ARM::STMIB:
+  case ARM::STMIA_UPD:
+  case ARM::STMDA_UPD:
+  case ARM::STMDB_UPD:
+  case ARM::STMIB_UPD:
+  case ARM::tSTMIA:
+  case ARM::tSTMIA_UPD:
   case ARM::tPOP_RET:
   case ARM::tPOP:
-  case ARM::t2STM:
-  case ARM::t2STM_UPD: {
+  case ARM::t2STMIA:
+  case ARM::t2STMDB:
+  case ARM::t2STMIA_UPD:
+  case ARM::t2STMDB_UPD:
     UseCycle = getSTMUseCycle(ItinData, UseTID, UseClass, UseIdx, UseAlign);
     break;
-  }
   }
 
   if (UseCycle == -1)
@@ -1873,8 +1925,9 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
                                           UseClass, UseIdx))
         --UseCycle;
     } else if (ItinData->hasPipelineForwarding(DefClass, DefIdx,
-                                               UseClass, UseIdx))
+                                               UseClass, UseIdx)) {
       --UseCycle;
+    }
   }
 
   return UseCycle;
@@ -2040,8 +2093,10 @@ int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   switch (Opcode) {
   default:
     return ItinData->getStageLatency(get(Opcode).getSchedClass());
-  case ARM::VLDMQ:
-  case ARM::VSTMQ:
+  case ARM::VLDMQIA:
+  case ARM::VLDMQDB:
+  case ARM::VSTMQIA:
+  case ARM::VSTMQDB:
     return 2;
   }  
 }

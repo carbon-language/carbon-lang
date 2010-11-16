@@ -63,55 +63,43 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   }
 
   // A8.6.123 PUSH
-  if ((Opcode == ARM::STM_UPD || Opcode == ARM::t2STM_UPD) &&
+  if ((Opcode == ARM::STMDB_UPD || Opcode == ARM::t2STMDB_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
-    const MCOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
-      O << '\t' << "push";
-      printPredicateOperand(MI, 3, O);
-      O << '\t';
-      printRegisterList(MI, 5, O);
-      return;
-    }
+    O << '\t' << "push";
+    printPredicateOperand(MI, 2, O);
+    O << '\t';
+    printRegisterList(MI, 4, O);
+    return;
   }
 
   // A8.6.122 POP
-  if ((Opcode == ARM::LDM_UPD || Opcode == ARM::t2LDM_UPD) &&
+  if ((Opcode == ARM::LDMIA_UPD || Opcode == ARM::t2LDMIA_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
-    const MCOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
-      O << '\t' << "pop";
-      printPredicateOperand(MI, 3, O);
-      O << '\t';
-      printRegisterList(MI, 5, O);
-      return;
-    }
+    O << '\t' << "pop";
+    printPredicateOperand(MI, 2, O);
+    O << '\t';
+    printRegisterList(MI, 4, O);
+    return;
   }
 
   // A8.6.355 VPUSH
-  if ((Opcode == ARM::VSTMS_UPD || Opcode == ARM::VSTMD_UPD) &&
+  if ((Opcode == ARM::VSTMSDB_UPD || Opcode == ARM::VSTMDDB_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
-    const MCOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
-      O << '\t' << "vpush";
-      printPredicateOperand(MI, 3, O);
-      O << '\t';
-      printRegisterList(MI, 5, O);
-      return;
-    }
+    O << '\t' << "vpush";
+    printPredicateOperand(MI, 2, O);
+    O << '\t';
+    printRegisterList(MI, 4, O);
+    return;
   }
 
   // A8.6.354 VPOP
-  if ((Opcode == ARM::VLDMS_UPD || Opcode == ARM::VLDMD_UPD) &&
+  if ((Opcode == ARM::VLDMSIA_UPD || Opcode == ARM::VLDMDIA_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
-    const MCOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
-      O << '\t' << "vpop";
-      printPredicateOperand(MI, 3, O);
-      O << '\t';
-      printRegisterList(MI, 5, O);
-      return;
-    }
+    O << '\t' << "vpop";
+    printPredicateOperand(MI, 2, O);
+    O << '\t';
+    printRegisterList(MI, 4, O);
+    return;
   }
 
   printInstruction(MI, O);

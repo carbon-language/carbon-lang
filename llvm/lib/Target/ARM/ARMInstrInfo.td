@@ -1194,18 +1194,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   }
 }
 
-// FIXME: remove when we have a way to marking a MI with these properties.
-// FIXME: Should pc be an implicit operand like PICADD, etc?
-let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
-    hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-  def LDM_RET : AXI4ld<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$mode, pred:$p,
-                                        reglist:$dsts, variable_ops),
-                       IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
-                       "ldm${mode}${p}\t$Rn!, $dsts",
-                       "$Rn = $wb", []> {
-  let Inst{21}    = 1;
-}
-
 // On non-Darwin platforms R9 is callee-saved.
 let isCall = 1,
   Defs = [R0,  R1,  R2,  R3,  R12, LR,
@@ -1797,23 +1785,23 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb),
 
 multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
                          InstrItinClass itin, InstrItinClass itin_upd> {
-  def ia :
+  def IA :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
-         !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
+         !strconcat(asm, "ia${p}\t$Rn, $regs"), "", []> {
     let Inst{24-23} = 0b01;       // Increment After
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def ia_UPD :
+  def IA_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
-         !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+         !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b01;       // Increment After
-    let Inst{21}    = 1;          // No writeback
+    let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
   }
-  def da :
+  def DA :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
          !strconcat(asm, "da${p}\t$Rn, $regs"), "", []> {
@@ -1821,15 +1809,15 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def da_UPD :
+  def DA_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
          !strconcat(asm, "da${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b00;       // Decrement After
-    let Inst{21}    = 1;          // No writeback
+    let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
   }
-  def db :
+  def DB :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
          !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
@@ -1837,15 +1825,15 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def db_UPD :
+  def DB_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
          !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b10;       // Decrement Before
-    let Inst{21}    = 1;          // No writeback
+    let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
   }
-  def ib :
+  def IB :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
          !strconcat(asm, "ib${p}\t$Rn, $regs"), "", []> {
@@ -1853,17 +1841,16 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
-  def ib_UPD :
+  def IB_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
          !strconcat(asm, "ib${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b11;       // Increment Before
-    let Inst{21}    = 1;          // No writeback
+    let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
   }
 } 
 
-/* TODO:
 let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
@@ -1873,45 +1860,24 @@ let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm STM : arm_ldst_mult<"stm", 0, LdStMulFrm, IIC_iStore_m, IIC_iStore_mu>;
 
 } // neverHasSideEffects
-*/
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
-def LDM : AXI4ld<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                          reglist:$dsts, variable_ops),
-                 IndexModeNone, LdStMulFrm, IIC_iLoad_m,
-                 "ldm${amode}${p}\t$Rn, $dsts", "", []> {
-  let Inst{21} = 0;
+// Load / Store Multiple Mnemnoic Aliases
+def : MnemonicAlias<"ldm", "ldmia">;
+def : MnemonicAlias<"stm", "stmia">;
+
+// FIXME: remove when we have a way to marking a MI with these properties.
+// FIXME: Should pc be an implicit operand like PICADD, etc?
+let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
+    hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
+def LDMIA_RET : AXI4ld<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
+                                        reglist:$dsts, variable_ops),
+                       IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
+                       "ldmia${p}\t$Rn!, $dsts",
+                       "$Rn = $wb", []> {
+  let Inst{24-23} = 0b01;     // Increment After
+  let Inst{21}    = 1;        // Writeback
 }
 
-def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                                      reglist:$dsts, variable_ops),
-                     IndexModeUpd, LdStMulFrm, IIC_iLoad_mu,
-                     "ldm${amode}${p}\t$Rn!, $dsts",
-                     "$Rn = $wb", []> {
-  let Inst{21} = 1;
-}
-} // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
-
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in {
-def STM : AXI4st<(outs), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                          reglist:$srcs, variable_ops),
-                 IndexModeNone, LdStMulFrm, IIC_iStore_m,
-                 "stm${amode}${p}\t$Rn, $srcs", "", []> {
-  let Inst{21} = 0;
-}
-
-def STM_UPD : AXI4st<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
-                                      reglist:$srcs, variable_ops),
-                     IndexModeUpd, LdStMulFrm, IIC_iStore_mu,
-                     "stm${amode}${p}\t$Rn!, $srcs",
-                     "$Rn = $wb", []> {
-  bits<4> p;
-  let Inst{31-28} = p;
-  let Inst{21} = 1;
-}
-} // mayStore, neverHasSideEffects, hasExtraSrcRegAllocReq
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.

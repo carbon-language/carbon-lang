@@ -833,40 +833,32 @@ static bool DisassembleThumb1Misc(MCInst &MI, unsigned Opcode, uint32_t insn,
 // A8.6.53  LDM / LDMIA
 // A8.6.189 STM / STMIA
 //
-// tLDM_UPD/tSTM_UPD: tRt tRt AM4ModeImm Pred-Imm Pred-CCR register_list
-// tLDM:              tRt AM4ModeImm Pred-Imm Pred-CCR register_list
+// tLDMIA_UPD/tSTMIA_UPD: tRt tRt AM4ModeImm Pred-Imm Pred-CCR register_list
+// tLDMIA:                tRt AM4ModeImm Pred-Imm Pred-CCR register_list
 static bool DisassembleThumb1LdStMul(bool Ld, MCInst &MI, unsigned Opcode,
-    uint32_t insn, unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
-
-  assert((Opcode == ARM::tLDM || Opcode == ARM::tLDM_UPD ||
-          Opcode == ARM::tSTM_UPD) && "Unexpected opcode");
-
-  unsigned &OpIdx = NumOpsAdded;
+                                     uint32_t insn, unsigned short NumOps,
+                                     unsigned &NumOpsAdded, BO B) {
+  assert((Opcode == ARM::tLDMIA || Opcode == ARM::tLDMIA_UPD ||
+          Opcode == ARM::tSTMIA_UPD) && "Unexpected opcode");
 
   unsigned tRt = getT1tRt(insn);
-
-  OpIdx = 0;
+  NumOpsAdded = 0;
 
   // WB register, if necessary.
-  if (Opcode == ARM::tLDM_UPD || Opcode == ARM::tSTM_UPD) {
+  if (Opcode == ARM::tLDMIA_UPD || Opcode == ARM::tSTMIA_UPD) {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        tRt)));
-    ++OpIdx;
+    ++NumOpsAdded;
   }
 
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                      tRt)));
-  ++OpIdx;
-
-  // A8.6.53 LDM / LDMIA / LDMFD - Encoding T1
-  // A8.6.53 STM / STMIA / STMEA - Encoding T1
-  MI.addOperand(MCOperand::CreateImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)));
-  ++OpIdx;
+  ++NumOpsAdded;
 
   // Handling the two predicate operands before the reglist.
-  if (B->DoPredicateOperands(MI, Opcode, insn, NumOps))
-    OpIdx += 2;
-  else {
+  if (B->DoPredicateOperands(MI, Opcode, insn, NumOps)) {
+    NumOpsAdded += 2;
+  } else {
     DEBUG(errs() << "Expected predicate operands not found.\n");
     return false;
   }
@@ -874,13 +866,12 @@ static bool DisassembleThumb1LdStMul(bool Ld, MCInst &MI, unsigned Opcode,
   unsigned RegListBits = slice(insn, 7, 0);
 
   // Fill the variadic part of reglist.
-  for (unsigned i = 0; i < 8; ++i) {
+  for (unsigned i = 0; i < 8; ++i)
     if ((RegListBits >> i) & 1) {
       MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::tGPRRegClassID,
                                                          i)));
-      ++OpIdx;
+      ++NumOpsAdded;
     }
-  }
 
   return true;
 }
@@ -1122,34 +1113,31 @@ static bool DisassembleThumb2LdStMul(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (Thumb2RFEOpcode(Opcode))
     return DisassembleThumb2RFE(MI, Opcode, insn, NumOps, NumOpsAdded, B);
 
-  assert((Opcode == ARM::t2LDM || Opcode == ARM::t2LDM_UPD ||
-          Opcode == ARM::t2STM || Opcode == ARM::t2STM_UPD)
+  assert((Opcode == ARM::t2LDMIA || Opcode == ARM::t2LDMIA_UPD ||
+          Opcode == ARM::t2LDMDB || Opcode == ARM::t2LDMDB_UPD ||
+          Opcode == ARM::t2STMIA || Opcode == ARM::t2STMIA_UPD ||
+          Opcode == ARM::t2STMDB || Opcode == ARM::t2STMDB_UPD)
          && "Unexpected opcode");
   assert(NumOps >= 5 && "Thumb2 LdStMul expects NumOps >= 5");
 
-  unsigned &OpIdx = NumOpsAdded;
-
-  OpIdx = 0;
+  NumOpsAdded = 0;
 
   unsigned Base = getRegisterEnum(B, ARM::GPRRegClassID, decodeRn(insn));
 
   // Writeback to base.
-  if (Opcode == ARM::t2LDM_UPD || Opcode == ARM::t2STM_UPD) {
+  if (Opcode == ARM::t2LDMIA_UPD || Opcode == ARM::t2LDMDB_UPD ||
+      Opcode == ARM::t2STMIA_UPD || Opcode == ARM::t2STMDB_UPD) {
     MI.addOperand(MCOperand::CreateReg(Base));
-    ++OpIdx;
+    ++NumOpsAdded;
   }
 
   MI.addOperand(MCOperand::CreateReg(Base));
-  ++OpIdx;
-
-  ARM_AM::AMSubMode SubMode = getAMSubModeForBits(getPUBits(insn));
-  MI.addOperand(MCOperand::CreateImm(ARM_AM::getAM4ModeImm(SubMode)));
-  ++OpIdx;
+  ++NumOpsAdded;
 
   // Handling the two predicate operands before the reglist.
-  if (B->DoPredicateOperands(MI, Opcode, insn, NumOps))
-    OpIdx += 2;
-  else {
+  if (B->DoPredicateOperands(MI, Opcode, insn, NumOps)) {
+    NumOpsAdded += 2;
+  } else {
     DEBUG(errs() << "Expected predicate operands not found.\n");
     return false;
   }
@@ -1157,13 +1145,12 @@ static bool DisassembleThumb2LdStMul(MCInst &MI, unsigned Opcode, uint32_t insn,
   unsigned RegListBits = insn & ((1 << 16) - 1);
 
   // Fill the variadic part of reglist.
-  for (unsigned i = 0; i < 16; ++i) {
+  for (unsigned i = 0; i < 16; ++i)
     if ((RegListBits >> i) & 1) {
       MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                          i)));
-      ++OpIdx;
+      ++NumOpsAdded;
     }
-  }
 
   return true;
 }

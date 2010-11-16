@@ -1306,30 +1306,28 @@ static bool DisassembleLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
   assert(NumOps >= 5 && "LdStMulFrm expects NumOps >= 5");
-
-  unsigned &OpIdx = NumOpsAdded;
-
-  OpIdx = 0;
+  NumOpsAdded = 0;
 
   unsigned Base = getRegisterEnum(B, ARM::GPRRegClassID, decodeRn(insn));
 
   // Writeback to base, if necessary.
-  if (Opcode == ARM::LDM_UPD || Opcode == ARM::STM_UPD) {
+  if (Opcode == ARM::LDMIA_UPD || Opcode == ARM::STMIA_UPD ||
+      Opcode == ARM::LDMDA_UPD || Opcode == ARM::STMDA_UPD ||
+      Opcode == ARM::LDMDB_UPD || Opcode == ARM::STMDB_UPD ||
+      Opcode == ARM::LDMIB_UPD || Opcode == ARM::STMIB_UPD) {
     MI.addOperand(MCOperand::CreateReg(Base));
-    ++OpIdx;
+    ++NumOpsAdded;
   }
 
+  // Add the base register operand.
   MI.addOperand(MCOperand::CreateReg(Base));
-
-  ARM_AM::AMSubMode SubMode = getAMSubModeForBits(getPUBits(insn));
-  MI.addOperand(MCOperand::CreateImm(ARM_AM::getAM4ModeImm(SubMode)));
 
   // Handling the two predicate operands before the reglist.
   int64_t CondVal = insn >> ARMII::CondShift;
   MI.addOperand(MCOperand::CreateImm(CondVal == 0xF ? 0xE : CondVal));
   MI.addOperand(MCOperand::CreateReg(ARM::CPSR));
 
-  OpIdx += 4;
+  NumOpsAdded += 3;
 
   // Fill the variadic part of reglist.
   unsigned RegListBits = insn & ((1 << 16) - 1);
@@ -1337,7 +1335,7 @@ static bool DisassembleLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     if ((RegListBits >> i) & 1) {
       MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                          i)));
-      ++OpIdx;
+      ++NumOpsAdded;
     }
   }
 
@@ -1882,8 +1880,10 @@ static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   unsigned Base = getRegisterEnum(B, ARM::GPRRegClassID, decodeRn(insn));
 
   // Writeback to base, if necessary.
-  if (Opcode == ARM::VLDMD_UPD || Opcode == ARM::VLDMS_UPD ||
-      Opcode == ARM::VSTMD_UPD || Opcode == ARM::VSTMS_UPD) {
+  if (Opcode == ARM::VLDMDIA_UPD || Opcode == ARM::VLDMSIA_UPD ||
+      Opcode == ARM::VLDMDDB_UPD || Opcode == ARM::VLDMSDB_UPD ||
+      Opcode == ARM::VSTMDIA_UPD || Opcode == ARM::VSTMSIA_UPD ||
+      Opcode == ARM::VSTMDDB_UPD || Opcode == ARM::VSTMSDB_UPD) {
     MI.addOperand(MCOperand::CreateReg(Base));
     ++OpIdx;
   }
@@ -1906,8 +1906,10 @@ static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   OpIdx += 4;
 
-  bool isSPVFP = (Opcode == ARM::VLDMS || Opcode == ARM::VLDMS_UPD ||
-                  Opcode == ARM::VSTMS || Opcode == ARM::VSTMS_UPD);
+  bool isSPVFP = (Opcode == ARM::VLDMSIA     || Opcode == ARM::VLDMSDB     ||
+                  Opcode == ARM::VLDMSIA_UPD || Opcode == ARM::VLDMSDB_UPD ||
+                  Opcode == ARM::VSTMSIA     || Opcode == ARM::VSTMSDB     ||
+                  Opcode == ARM::VSTMSIA_UPD || Opcode == ARM::VSTMSDB_UPD);
   unsigned RegClassID = isSPVFP ? ARM::SPRRegClassID : ARM::DPRRegClassID;
 
   // Extract Dd/Sd.
