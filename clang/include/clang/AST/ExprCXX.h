@@ -1150,6 +1150,9 @@ public:
   Expr *getArgument() { return cast<Expr>(Argument); }
   const Expr *getArgument() const { return cast<Expr>(Argument); }
 
+  /// \brief Retrieve the type being destroyed.  If the type being
+  /// destroyed is a dependent type which may or may not be a pointer,
+  /// return an invalid type.
   QualType getDestroyedType() const;
   
   virtual SourceRange getSourceRange() const {

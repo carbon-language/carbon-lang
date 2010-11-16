@@ -162,8 +162,9 @@ QualType CXXDeleteExpr::getDestroyedType() const {
   }
   // The type-to-delete may not be a pointer if it's a dependent type.
   const QualType ArgType = Arg->getType();
-  if (ArgType->isDependentType())
-    return ArgType;
+
+  if (ArgType->isDependentType() && !ArgType->isPointerType())
+    return QualType();
 
   return ArgType->getAs<PointerType>()->getPointeeType();
 }
