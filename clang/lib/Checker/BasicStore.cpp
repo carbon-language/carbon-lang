@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/AnalysisContext.h"
@@ -179,7 +180,8 @@ SVal BasicStoreManager::Retrieve(Store store, Loc loc, QualType T) {
     case loc::MemRegionKind: {
       const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
 
-      if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
+      if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R) ||
+          isa<CXXThisRegion>(R)))
         return UnknownVal();
 
       BindingsTy B = GetBindings(store);
@@ -231,7 +233,7 @@ Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
         R = ER->getSuperRegion();
     }
 
-  if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
+  if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R) || isa<CXXThisRegion>(R)))
     return store;
 
   const TypedRegion *TyR = cast<TypedRegion>(R);
@@ -263,7 +265,8 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
     case loc::MemRegionKind: {
       const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
 
-      if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
+      if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R) ||
+          isa<CXXThisRegion>(R)))
         return store;
 
       return VBFactory.Remove(GetBindings(store), R).getRoot();
@@ -291,7 +294,8 @@ Store BasicStoreManager::RemoveDeadBindings(Store store,
         continue;
     }
     else if (isa<ObjCIvarRegion>(I.getKey()) ||
-             isa<NonStaticGlobalSpaceRegion>(I.getKey()))
+             isa<NonStaticGlobalSpaceRegion>(I.getKey()) ||
+             isa<CXXThisRegion>(I.getKey()))
       RegionRoots.push_back(I.getKey());
     else
       continue;
@@ -315,7 +319,7 @@ Store BasicStoreManager::RemoveDeadBindings(Store store,
         break;
       }
       else if (isa<VarRegion>(MR) || isa<ObjCIvarRegion>(MR) ||
-               isa<NonStaticGlobalSpaceRegion>(MR)) {
+               isa<NonStaticGlobalSpaceRegion>(MR) || isa<CXXThisRegion>(MR)) {
         if (Marked.count(MR))
           break;
 
@@ -463,7 +467,8 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
     // Process local scalar variables.
     QualType T = VD->getType();
     // BasicStore only supports scalars.
-    if (T->isScalarType() && ValMgr.getSymbolManager().canSymbolicate(T)) {
+    if ((T->isScalarType() || T->isReferenceType()) &&
+        ValMgr.getSymbolManager().canSymbolicate(T)) {
       SVal V = InitVal ? *InitVal : UndefinedVal();
       store = Bind(store, loc::MemRegionVal(VR), V);
     }
