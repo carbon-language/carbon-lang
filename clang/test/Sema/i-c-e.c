@@ -1,4 +1,4 @@
-// RUN: %clang %s -fsyntax-only -Xclang -verify -pedantic -fpascal-strings
+// RUN: %clang %s -ffreestanding -fsyntax-only -Xclang -verify -pedantic -fpascal-strings
 
 #include <stdint.h>
 #include <limits.h>

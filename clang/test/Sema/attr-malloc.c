@@ -1,7 +1,10 @@
 // RUN: %clang -Xclang -verify -fsyntax-only %s
 // RUN: %clang -emit-llvm -S -o %t %s
 
-#include <stdlib.h>
+#include <stddef.h>
+
+// Declare malloc here explicitly so we don't depend on system headers.
+void * malloc(size_t) __attribute((malloc));
 
 int no_vars __attribute((malloc)); // expected-warning {{functions returning a pointer type}}
 

@@ -1,4 +1,4 @@
-// RUN: %clang -Wall -fsyntax-only -Xclang -verify %s
+// RUN: %clang -Wall -ffreestanding -fsyntax-only -Xclang -verify %s
 
 #include <limits.h>
 
