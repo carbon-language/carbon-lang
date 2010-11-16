@@ -92,6 +92,7 @@ void initializeDomViewerPass(PassRegistry&);
 void initializeDominanceFrontierPass(PassRegistry&);
 void initializeDominatorTreePass(PassRegistry&);
 void initializeEdgeProfilerPass(PassRegistry&);
+void initializeExpandPseudosPass(PassRegistry&);
 void initializeFindUsedTypesPass(PassRegistry&);
 void initializeFunctionAttrsPass(PassRegistry&);
 void initializeGCModuleInfoPass(PassRegistry&);

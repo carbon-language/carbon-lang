@@ -721,19 +721,6 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   // hook knows where in the block to insert the replacement code.
   MBB->insert(InsertPos, MI);
 
-  if (II.usesCustomInsertionHook()) {
-    // Insert this instruction into the basic block using a target
-    // specific inserter which may returns a new basic block.
-    bool AtEnd = InsertPos == MBB->end();
-    MachineBasicBlock *NewMBB = TLI->EmitInstrWithCustomInserter(MI, MBB);
-    if (NewMBB != MBB) {
-      if (AtEnd)
-        InsertPos = NewMBB->end();
-      MBB = NewMBB;
-    }
-    return;
-  }
-  
   // Additional results must be an physical register def.
   if (HasPhysRegOuts) {
     for (unsigned i = II.getNumDefs(); i < NumResults; ++i) {
