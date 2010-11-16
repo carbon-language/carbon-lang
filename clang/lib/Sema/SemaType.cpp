@@ -2002,7 +2002,7 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
 /// this routine will return a new vector type.
 static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
                                  Sema &S) {
-  // Check the attribute arugments.
+  // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     Attr.setInvalid();
