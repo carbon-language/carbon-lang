@@ -102,10 +102,13 @@ B<llvm-as E<lt> /dev/null | llc -march=xyz -mattr=help>
 
 Disable optimizations that may increase floating point precision.
 
-=item B<-enable-finite-only-fp-math>
+=item B<-enable-no-infs-fp-math>
 
-Enable optimizations that assumes only finite floating point math. That is,
-there is no NAN or Inf values.
+Enable optimizations that assume no Inf values.
+
+=item B<-enable-no-nans-fp-math>
+
+Enable optimizations that assume no NAN values.
 
 =item B<-enable-unsafe-fp-math>
 

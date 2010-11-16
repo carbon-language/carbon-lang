@@ -84,6 +84,14 @@ Disable optimizations that may produce excess precision for floating point.
 Note that this option can dramatically slow down code on some systems
 (e.g. X86).
 
+=item B<--enable-no-infs-fp-math>
+
+Enable optimizations that assume no Inf values.
+
+=item B<--enable-no-nans-fp-math>
+
+Enable optimizations that assume no NAN values.
+
 =item B<--enable-unsafe-fp-math>
 
 Enable optimizations that make unsafe assumptions about IEEE math (e.g. that
