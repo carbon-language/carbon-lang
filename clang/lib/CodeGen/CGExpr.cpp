@@ -1981,19 +1981,27 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   if (E->getOpcode() == BO_PtrMemD ||
       E->getOpcode() == BO_PtrMemI)
     return EmitPointerToDataMemberBinaryExpr(E);
-  
-  // Can only get l-value for binary operator expressions which are a
-  // simple assignment of aggregate type.
-  if (E->getOpcode() != BO_Assign)
-    return EmitUnsupportedLValue(E, "binary l-value expression");
 
+  assert(E->isAssignmentOp() && "unexpected binary l-value");
+  
   if (!hasAggregateLLVMType(E->getType())) {
+    if (E->isCompoundAssignmentOp())
+      return EmitCompoundAssignOperatorLValue(cast<CompoundAssignOperator>(E));
+
+    assert(E->getOpcode() == BO_Assign && "unexpected binary l-value");
+
     // Emit the LHS as an l-value.
     LValue LV = EmitLValue(E->getLHS());
     // Store the value through the l-value.
     EmitStoreThroughLValue(EmitAnyExpr(E->getRHS()), LV, E->getType());
     return LV;
   }
+
+  if (E->getType()->isAnyComplexType())
+    return EmitComplexAssignmentLValue(E);
+
+  // The compound assignment operators are not used for aggregates.
+  assert(E->getOpcode() == BO_Assign && "aggregate compound assignment?");
   
   return EmitAggExprToLValue(E);
 }

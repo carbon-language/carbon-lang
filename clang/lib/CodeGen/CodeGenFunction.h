@@ -1404,6 +1404,9 @@ public:
   void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst, QualType Ty,
                                       llvm::Value **Result=0);
 
+  /// Emit an l-value for an assignment (simple or compound) of complex type.
+  LValue EmitComplexAssignmentLValue(const BinaryOperator *E);
+
   // Note: only availabe for agg return types
   LValue EmitBinaryOperatorLValue(const BinaryOperator *E);
   LValue EmitCompoundAssignOperatorLValue(const CompoundAssignOperator *E);

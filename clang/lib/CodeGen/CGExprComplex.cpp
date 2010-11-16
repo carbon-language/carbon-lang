@@ -760,3 +760,26 @@ ComplexPairTy CodeGenFunction::LoadComplexFromAddr(llvm::Value *SrcAddr,
                                                    bool SrcIsVolatile) {
   return ComplexExprEmitter(*this).EmitLoadOfComplex(SrcAddr, SrcIsVolatile);
 }
+
+LValue CodeGenFunction::EmitComplexAssignmentLValue(const BinaryOperator *E) {
+  ComplexPairTy Val; // ignored
+
+  ComplexPairTy(ComplexExprEmitter::*Op)(const ComplexExprEmitter::BinOpInfo &);
+
+  switch (E->getOpcode()) {
+  case BO_Assign:
+    return ComplexExprEmitter(*this).EmitBinAssignLValue(E, Val);
+
+  case BO_MulAssign: Op = &ComplexExprEmitter::EmitBinMul; break;
+  case BO_DivAssign: Op = &ComplexExprEmitter::EmitBinDiv; break;
+  case BO_SubAssign: Op = &ComplexExprEmitter::EmitBinSub; break;
+  case BO_AddAssign: Op = &ComplexExprEmitter::EmitBinAdd; break;
+
+  default:
+    llvm_unreachable("unexpected complex compound assignment");
+    Op = 0;
+  }
+
+  return ComplexExprEmitter(*this).EmitCompoundAssignLValue(
+                                   cast<CompoundAssignOperator>(E), Op, Val);
+}
