@@ -235,7 +235,7 @@ private:
   void mangleType(TemplateName);
   void mangleBareFunctionType(const FunctionType *T,
                               bool MangleReturnType);
-  bool mangleNeonVectorType(const VectorType *T);
+  void mangleNeonVectorType(const VectorType *T);
 
   void mangleIntegerLiteral(QualType T, const llvm::APSInt &Value);
   void mangleMemberExpr(const Expr *Base, bool IsArrow,
@@ -1404,19 +1404,17 @@ void CXXNameMangler::mangleType(const ComplexType *T) {
 }
 
 // ARM's ABI for Neon vector types specifies that they should be mangled as
-// if they are structs (to match ARM's initial implementation).  If the
-// vector type is not one of the special types predefined by ARM, return false
-// so it will be mangled as an ordinary vector type.
-bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
+// if they are structs (to match ARM's initial implementation).  The
+// vector type must be one of the special types predefined by ARM.
+void CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
   QualType EltType = T->getElementType();
-  if (!EltType->isBuiltinType())
-    return false;
+  assert(EltType->isBuiltinType() && "Neon vector element not a BuiltinType");
   const char *EltName = 0;
   if (T->getVectorKind() == VectorType::NeonPolyVector) {
     switch (cast<BuiltinType>(EltType)->getKind()) {
     case BuiltinType::SChar:     EltName = "poly8_t"; break;
     case BuiltinType::Short:     EltName = "poly16_t"; break;
-    default: return false;
+    default: llvm_unreachable("unexpected Neon polynomial vector element type");
     }
   } else {
     switch (cast<BuiltinType>(EltType)->getKind()) {
@@ -1429,7 +1427,7 @@ bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
     case BuiltinType::LongLong:  EltName = "int64_t"; break;
     case BuiltinType::ULongLong: EltName = "uint64_t"; break;
     case BuiltinType::Float:     EltName = "float32_t"; break;
-    default: return false;
+    default: llvm_unreachable("unexpected Neon vector element type");
     }
   }
   const char *BaseName = 0;
@@ -1437,13 +1435,12 @@ bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
                       getASTContext().getTypeSize(EltType));
   if (BitSize == 64)
     BaseName = "__simd64_";
-  else if (BitSize == 128)
+  else {
+    assert(BitSize == 128 && "Neon vector type not 64 or 128 bits");
     BaseName = "__simd128_";
-  else
-    return false;
+  }
   Out << strlen(BaseName) + strlen(EltName);
   Out << BaseName << EltName;
-  return true;
 }
 
 // GNU extension: vector types
@@ -1455,9 +1452,10 @@ bool CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
 //                         ::= p # AltiVec vector pixel
 void CXXNameMangler::mangleType(const VectorType *T) {
   if ((T->getVectorKind() == VectorType::NeonVector ||
-       T->getVectorKind() == VectorType::NeonPolyVector) &&
-      mangleNeonVectorType(T))
+       T->getVectorKind() == VectorType::NeonPolyVector)) {
+    mangleNeonVectorType(T);
     return;
+  }
   Out << "Dv" << T->getNumElements() << '_';
   if (T->getVectorKind() == VectorType::AltiVecPixel)
     Out << 'p';
