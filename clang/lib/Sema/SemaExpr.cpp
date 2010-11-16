@@ -5224,6 +5224,19 @@ Sema::CheckObjCPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   return IncompatiblePointer;
 }
 
+Sema::AssignConvertType
+Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
+  // Fake up an opaque expression.  We don't actually care about what
+  // cast operations are required, so if CheckAssignmentConstraints
+  // adds casts to this they'll be wasted, but fortunately that doesn't
+  // usually happen on valid code.
+  OpaqueValueExpr rhs(rhsType, VK_RValue);
+  Expr *rhsPtr = &rhs;
+  CastKind K = CK_Invalid;
+
+  return CheckAssignmentConstraints(lhsType, rhsPtr, K);
+}
+
 /// CheckAssignmentConstraints (C99 6.5.16) - This routine currently
 /// has code to accommodate several GCC extensions when type checking
 /// pointers. Here are some objectionable examples that GCC considers warnings:
@@ -5242,8 +5255,10 @@ Sema::CheckObjCPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 ///
 /// Sets 'Kind' for any result kind except Incompatible.
 Sema::AssignConvertType
-Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType,
+Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
                                  CastKind &Kind) {
+  QualType rhsType = rhs->getType();
+
   // Get canonical types.  We're not formatting these types, just comparing
   // them.
   lhsType = Context.getCanonicalType(lhsType).getUnqualifiedType();
@@ -5282,7 +5297,14 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType,
     if (rhsType->isExtVectorType())
       return Incompatible;
     if (rhsType->isArithmeticType()) {
-      Kind = CK_Unknown; // FIXME: vector splat, potentially requires two casts
+      // CK_VectorSplat does T -> vector T, so first cast to the
+      // element type.
+      QualType elType = cast<ExtVectorType>(lhsType)->getElementType();
+      if (elType != rhsType) {
+        Kind = PrepareScalarCast(*this, rhs, elType);
+        ImpCastExprToType(rhs, elType, Kind);
+      }
+      Kind = CK_VectorSplat;
       return Compatible;
     }
   }
@@ -5310,7 +5332,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType,
 
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType() &&
       !(getLangOptions().CPlusPlus && lhsType->isEnumeralType())) {
-    Kind = CK_Unknown; // FIXME: reuse the cast logic if possible
+    Kind = PrepareScalarCast(*this, rhs, lhsType);
     return Compatible;
   }
 
@@ -5506,10 +5528,12 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
       }
     }
 
+    Expr *rhs = rExpr;
     CastKind Kind = CK_Invalid;
-    if (CheckAssignmentConstraints(it->getType(), rExpr->getType(), Kind)
+    if (CheckAssignmentConstraints(it->getType(), rhs, Kind)
           == Compatible) {
-      ImpCastExprToType(rExpr, it->getType(), Kind);
+      ImpCastExprToType(rhs, it->getType(), Kind);
+      rExpr = rhs;
       InitField = *it;
       break;
     }
@@ -5561,7 +5585,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
 
   CastKind Kind = CK_Invalid;
   Sema::AssignConvertType result =
-    CheckAssignmentConstraints(lhsType, rExpr->getType(), Kind);
+    CheckAssignmentConstraints(lhsType, rExpr, Kind);
 
   // C99 6.5.16.1p2: The value of the right operand is converted to the
   // type of the assignment expression.
@@ -6633,8 +6657,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
     }
   } else {
     // Compound assignment "x += y"
-    CastKind Kind = CK_Invalid; // forgotten?
-    ConvTy = CheckAssignmentConstraints(LHSType, RHSType, Kind);
+    ConvTy = CheckAssignmentConstraints(LHSType, RHSType);
   }
 
   if (DiagnoseAssignmentResult(ConvTy, Loc, LHSType, RHSType,

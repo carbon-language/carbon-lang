@@ -4108,8 +4108,12 @@ public:
 
   /// CheckAssignmentConstraints - Perform type checking for assignment,
   /// argument passing, variable initialization, and function return values.
-  /// This routine is only used by the following two methods. C99 6.5.16.
-  AssignConvertType CheckAssignmentConstraints(QualType lhs, QualType rhs,
+  /// C99 6.5.16.
+  AssignConvertType CheckAssignmentConstraints(QualType lhs, QualType rhs);
+
+  /// Check assignment constraints and prepare for a conversion of the
+  /// RHS to the LHS type.
+  AssignConvertType CheckAssignmentConstraints(QualType lhs, Expr *&rhs,
                                                CastKind &Kind);
 
   // CheckSingleAssignmentConstraints - Currently used by
