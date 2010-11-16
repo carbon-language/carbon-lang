@@ -255,7 +255,8 @@ protected:
                                 bool skip_artificial,
                                 lldb_private::TypeList* type_list,
                                 std::vector<lldb::clang_type_t>& function_args,
-                                std::vector<clang::ParmVarDecl*>& function_param_decls);
+                                std::vector<clang::ParmVarDecl*>& function_param_decls,
+                                unsigned &type_quals);
 
     size_t                  ParseChildEnumerators(
                                 const lldb_private::SymbolContext& sc,

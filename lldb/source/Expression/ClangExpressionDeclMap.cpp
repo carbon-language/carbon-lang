@@ -1085,6 +1085,14 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             if (!this_type)
                 return;
             
+            if (log)
+            {
+                log->PutCString ("Type for \"this\" is: ");
+                StreamString strm;
+                this_type->Dump(&strm, true);
+                log->PutCString (strm.GetData());
+            }
+
             TypeFromUser this_user_type(this_type->GetClangType(),
                                         this_type->GetClangAST());
             
@@ -1120,12 +1128,20 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         m_lookedup_types.insert(std::pair<const char*, bool>(name_unique_cstr, true));
         
         // 2 The type is looked up and added, potentially causing more type loookups.
-        lldb::TypeSP type = m_sym_ctx.FindTypeByName (name);
+        lldb::TypeSP type_sp (m_sym_ctx.FindTypeByName (name));
         
-        if (type.get())
+        if (type_sp)
         {
-            TypeFromUser user_type(type->GetClangType(),
-                                   type->GetClangAST());
+            if (log)
+            {
+                log->Printf ("Matching type found for \"%s\": ", name.GetCString());
+                StreamString strm;
+                type_sp->Dump(&strm, true);
+                log->PutCString (strm.GetData());
+            }
+
+            TypeFromUser user_type(type_sp->GetClangType(),
+                                   type_sp->GetClangAST());
             
             AddOneType(context, user_type, false);
         }

@@ -20,6 +20,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Specifiers.h"
+#include "clang/Sema/DeclSpec.h"
 
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
@@ -2235,7 +2236,8 @@ SymbolFileDWARF::ParseChildParameters
     bool skip_artificial,
     TypeList* type_list,
     std::vector<clang_type_t>& function_param_types,
-    std::vector<clang::ParmVarDecl*>& function_param_decls
+    std::vector<clang::ParmVarDecl*>& function_param_decls,
+    unsigned &type_quals
 )
 {
     if (parent_die == NULL)
@@ -2243,7 +2245,7 @@ SymbolFileDWARF::ParseChildParameters
 
     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
 
-    size_t count = 0;
+    size_t arg_idx = 0;
     const DWARFDebugInfoEntry *die;
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
     {
@@ -2308,7 +2310,42 @@ SymbolFileDWARF::ParseChildParameters
                     if (skip_artificial)
                     {
                         if (is_artificial)
+                        {
+                            // In order to determine if a C++ member function is
+                            // "const" we have to look at the const-ness of "this"...
+                            // Ugly, but that
+                            if (arg_idx == 0)
+                            {
+                                const DWARFDebugInfoEntry *grandparent_die = parent_die->GetParent();
+                                if (grandparent_die && (grandparent_die->Tag() == DW_TAG_structure_type || 
+                                                        grandparent_die->Tag() == DW_TAG_class_type))
+                                {
+                                    LanguageType language = sc.comp_unit->GetLanguage();
+                                    if (language == eLanguageTypeObjC_plus_plus || language == eLanguageTypeC_plus_plus)
+                                    {
+                                        // Often times compilers omit the "this" name for the
+                                        // specification DIEs, so we can't rely upon the name
+                                        // being in the formal parameter DIE...
+                                        if (name == NULL || ::strcmp(name, "this")==0)
+                                        {
+                                            Type *this_type = ResolveTypeUID (param_type_die_offset);
+                                            if (this_type)
+                                            {
+                                                uint32_t encoding_mask = this_type->GetEncodingMask();
+                                                if (encoding_mask & Type::eEncodingIsPointerUID)
+                                                {
+                                                    if (encoding_mask & (1u << Type::eEncodingIsConstUID))
+                                                        type_quals |= clang::DeclSpec::TQ_const;
+                                                    if (encoding_mask & (1u << Type::eEncodingIsVolatileUID))
+                                                        type_quals |= clang::DeclSpec::TQ_volatile;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             skip = true;
+                        }
                         else
                         {
 
@@ -2336,6 +2373,7 @@ SymbolFileDWARF::ParseChildParameters
                         }
                     }
                 }
+                arg_idx++;
             }
             break;
 
@@ -2343,7 +2381,7 @@ SymbolFileDWARF::ParseChildParameters
             break;
         }
     }
-    return count;
+    return arg_idx;
 }
 
 size_t
@@ -3257,7 +3295,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                               skip_artificial, 
                                               type_list, 
                                               function_param_types, 
-                                              function_param_decls);
+                                              function_param_decls,
+                                              type_quals);
                     }
 
                     // clang_type will get the function prototype clang type after this call

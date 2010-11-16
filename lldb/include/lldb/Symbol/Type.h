@@ -223,6 +223,9 @@ public:
         m_encoding_type = encoding_type;
     }
 
+    uint32_t
+    GetEncodingMask ();
+
 protected:
     ConstString m_name;
     SymbolFile *m_symbol_file;

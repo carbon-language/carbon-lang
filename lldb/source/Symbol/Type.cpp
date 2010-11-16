@@ -601,6 +601,16 @@ lldb_private::Type::GetChildClangTypeAtIndex
     return child_qual_type;
 }
 
+uint32_t
+lldb_private::Type::GetEncodingMask ()
+{
+    uint32_t encoding_mask = 1u << m_encoding_uid_type;
+    Type *encoding_type = GetEncodingType();
+    assert (encoding_type != this);
+    if (encoding_type)
+        encoding_mask |= encoding_type->GetEncodingMask ();
+    return encoding_mask;
+}
 
 clang_type_t 
 lldb_private::Type::GetClangType ()
