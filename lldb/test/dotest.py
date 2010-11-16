@@ -48,6 +48,9 @@ suite = unittest2.TestSuite()
 # The config file is optional.
 configFile = None
 
+# Test suite repeat count.  Can be overwritten with '-# count'.
+count = 1
+
 # The dictionary as a result of sourcing configFile.
 config = {}
 
@@ -122,6 +125,7 @@ where options:
 -t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
 -w   : insert some wait time (currently 0.5 sec) between consecutive test cases
+-#   : Repeat the test suite for a specified number of times
 
 and:
 args : specify a list of directory names to search for test modules named after
@@ -216,6 +220,7 @@ def parseOptionsAndInitTestdirs():
     """
 
     global configFile
+    global count
     global delay
     global filterspec
     global fs4all
@@ -300,6 +305,13 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-w'):
             os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] = 'YES'
+            index += 1
+        elif sys.argv[index].startswith('-#'):
+            # Increment by 1 to fetch the repeat count argument.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            count = int(sys.argv[index])
             index += 1
         else:
             print "Unknown option: ", sys.argv[index]
@@ -709,7 +721,7 @@ for ia in range(len(archs) if iterArchs else 1):
 
             def __init__(self, *args):
                 if LLDBTestResult.__singleton__:
-                    raise "LLDBTestResult instantiated more than once"
+                    raise Exception("LLDBTestResult instantiated more than once")
                 super(LLDBTestResult, self).__init__(*args)
                 LLDBTestResult.__singleton__ = self
                 # Now put this singleton into the lldb module namespace.
@@ -740,8 +752,12 @@ for ia in range(len(archs) if iterArchs else 1):
                     method()
 
         # Invoke the test runner.
-        result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
-                                          resultclass=LLDBTestResult).run(suite)
+        if count == 1:
+            result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
+                                              resultclass=LLDBTestResult).run(suite)
+        else:
+            for i in range(count):
+                result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose).run(suite)
         
 
 if sdir_has_content:
