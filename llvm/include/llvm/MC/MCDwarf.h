@@ -107,22 +107,22 @@ namespace llvm {
 
   public:
     /// getFileNum - Get the FileNum of this MCDwarfLoc.
-    unsigned getFileNum() { return FileNum; }
+    unsigned getFileNum() const { return FileNum; }
 
     /// getLine - Get the Line of this MCDwarfLoc.
-    unsigned getLine() { return Line; }
+    unsigned getLine() const { return Line; }
 
     /// getColumn - Get the Column of this MCDwarfLoc.
-    unsigned getColumn() { return Column; }
+    unsigned getColumn() const { return Column; }
 
     /// getFlags - Get the Flags of this MCDwarfLoc.
-    unsigned getFlags() { return Flags; }
+    unsigned getFlags() const { return Flags; }
 
     /// getIsa - Get the Isa of this MCDwarfLoc.
-    unsigned getIsa() { return Isa; }
+    unsigned getIsa() const { return Isa; }
 
     /// getDiscriminator - Get the Discriminator of this MCDwarfLoc.
-    unsigned getDiscriminator() { return Discriminator; }
+    unsigned getDiscriminator() const { return Discriminator; }
 
     /// setFileNum - Set the FileNum of this MCDwarfLoc.
     void setFileNum(unsigned fileNum) { FileNum = fileNum; }
