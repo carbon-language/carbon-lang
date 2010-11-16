@@ -30,7 +30,8 @@ using namespace clang::cxstring;
 
 namespace {
 class USRGenerator : public DeclVisitor<USRGenerator> {
-  llvm::SmallString<1024> Buf;
+  llvm::OwningPtr<llvm::SmallString<128> > OwnedBuf;
+  llvm::SmallVectorImpl<char> &Buf;
   llvm::raw_svector_ostream Out;
   bool IgnoreResults;
   ASTUnit *AU;
@@ -39,11 +40,13 @@ class USRGenerator : public DeclVisitor<USRGenerator> {
   llvm::DenseMap<const Type *, unsigned> TypeSubstitutions;
   
 public:
-  USRGenerator(const CXCursor *C = 0)
-    : Out(Buf),
-      IgnoreResults(false),
-      AU(C ? cxcursor::getCursorASTUnit(*C) : 0),
-      generatedLoc(false)
+  USRGenerator(const CXCursor *C = 0, llvm::SmallVectorImpl<char> *extBuf = 0)
+  : OwnedBuf(extBuf ? 0 : new llvm::SmallString<128>()),
+    Buf(extBuf ? *extBuf : *OwnedBuf.get()),
+    Out(Buf),
+    IgnoreResults(false),
+    AU(C ? cxcursor::getCursorASTUnit(*C) : 0),
+    generatedLoc(false)
   {
     // Add the USR space prefix.
     Out << "c:";
@@ -794,19 +797,27 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
           break;
     }
 
-  USRGenerator UG(&C);
-  UG->Visit(D);
-
-  if (UG->ignoreResults())
+  CXTranslationUnit TU = cxcursor::getCursorTU(C);
+  if (!TU)
     return createCXString("");
 
-#if 0
-  // For development testing.
-  assert(UG.str().size() > 2);
-#endif
+  CXStringBuf *buf = cxstring::getCXStringBuf(TU);
+  if (!buf)
+    return createCXString("");
+  
+  {
+    USRGenerator UG(&C, &buf->Data);
+    UG->Visit(D);
 
-    // Return a copy of the string that must be disposed by the caller.
-  return createCXString(UG.str(), true);
+    if (UG->ignoreResults()) {
+      disposeCXStringBuf(buf);
+      return createCXString("");
+    }
+  }
+  // Return the C-string, but don't make a copy since it is already in
+  // the string buffer.
+  buf->Data.push_back('\0');
+  return createCXString(buf);
 }
 
 extern "C" {
@@ -818,10 +829,21 @@ CXString clang_getCursorUSR(CXCursor C) {
       return getDeclCursorUSR(C);
 
   if (K == CXCursor_MacroDefinition) {
-    USRGenerator UG(&C);
-    UG << "macro@"
-       << cxcursor::getCursorMacroDefinition(C)->getName()->getNameStart();
-    return createCXString(UG.str(), true);
+    CXTranslationUnit TU = cxcursor::getCursorTU(C);
+    if (!TU)
+      return createCXString("");
+
+    CXStringBuf *buf = cxstring::getCXStringBuf(TU);
+    if (!buf)
+      return createCXString("");
+
+    {
+      USRGenerator UG(&C, &buf->Data);
+      UG << "macro@"
+        << cxcursor::getCursorMacroDefinition(C)->getName()->getNameStart();
+    }
+    buf->Data.push_back('\0');
+    return createCXString(buf);
   }
 
   return createCXString("");
