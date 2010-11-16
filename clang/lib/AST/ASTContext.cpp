@@ -1620,8 +1620,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
   // so fill in the canonical type field.
   QualType Canonical;
   if (!vecType.isCanonical()) {
-    Canonical = getVectorType(getCanonicalType(vecType), NumElts,
-      VectorType::GenericVector);
+    Canonical = getVectorType(getCanonicalType(vecType), NumElts, VecKind);
 
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
