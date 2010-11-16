@@ -1928,6 +1928,9 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
                                             unsigned PhysReg, VirtRegMap &vrm) {
   unsigned SpillReg = getRepresentativeReg(PhysReg);
 
+  DEBUG(dbgs() << "spillPhysRegAroundRegDefsUses " << tri_->getName(PhysReg)
+               << " represented by " << tri_->getName(SpillReg) << '\n');
+
   for (const unsigned *AS = tri_->getAliasSet(PhysReg); *AS; ++AS)
     // If there are registers which alias PhysReg, but which are not a
     // sub-register of the chosen representative super register. Assert
@@ -1939,15 +1942,16 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
   SmallVector<unsigned, 4> PRegs;
   if (hasInterval(SpillReg))
     PRegs.push_back(SpillReg);
-  else {
-    SmallSet<unsigned, 4> Added;
-    for (const unsigned* AS = tri_->getSubRegisters(SpillReg); *AS; ++AS)
-      if (Added.insert(*AS) && hasInterval(*AS)) {
-        PRegs.push_back(*AS);
-        for (const unsigned* ASS = tri_->getSubRegisters(*AS); *ASS; ++ASS)
-          Added.insert(*ASS);
-      }
-  }
+  for (const unsigned *SR = tri_->getSubRegisters(SpillReg); *SR; ++SR)
+    if (hasInterval(*SR))
+      PRegs.push_back(*SR);
+
+  DEBUG({
+    dbgs() << "Trying to spill:";
+    for (unsigned i = 0, e = PRegs.size(); i != e; ++i)
+      dbgs() << ' ' << tri_->getName(PRegs[i]);
+    dbgs() << '\n';
+  });
 
   SmallPtrSet<MachineInstr*, 8> SeenMIs;
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(li.reg),
@@ -1958,18 +1962,16 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
       continue;
     SeenMIs.insert(MI);
     SlotIndex Index = getInstructionIndex(MI);
+    bool LiveReg = false;
     for (unsigned i = 0, e = PRegs.size(); i != e; ++i) {
       unsigned PReg = PRegs[i];
       LiveInterval &pli = getInterval(PReg);
       if (!pli.liveAt(Index))
         continue;
-      vrm.addEmergencySpill(PReg, MI);
+      LiveReg = true;
       SlotIndex StartIdx = Index.getLoadIndex();
       SlotIndex EndIdx = Index.getNextIndex().getBaseIndex();
-      if (pli.isInOneLiveRange(StartIdx, EndIdx)) {
-        pli.removeRange(StartIdx, EndIdx);
-        Cut = true;
-      } else {
+      if (!pli.isInOneLiveRange(StartIdx, EndIdx)) {
         std::string msg;
         raw_string_ostream Msg(msg);
         Msg << "Ran out of registers during register allocation!";
@@ -1980,15 +1982,14 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
         }
         report_fatal_error(Msg.str());
       }
-      for (const unsigned* AS = tri_->getSubRegisters(PReg); *AS; ++AS) {
-        if (!hasInterval(*AS))
-          continue;
-        LiveInterval &spli = getInterval(*AS);
-        if (spli.liveAt(Index))
-          spli.removeRange(Index.getLoadIndex(),
-                           Index.getNextIndex().getBaseIndex());
-      }
+      pli.removeRange(StartIdx, EndIdx);
+      LiveReg = true;
     }
+    if (!LiveReg)
+      continue;
+    DEBUG(dbgs() << "Emergency spill around " << Index << '\t' << *MI);
+    vrm.addEmergencySpill(SpillReg, MI);
+    Cut = true;
   }
   return Cut;
 }
