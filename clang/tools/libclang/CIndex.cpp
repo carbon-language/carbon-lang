@@ -355,7 +355,7 @@ public:
   bool IsInRegionOfInterest(CXCursor C);
   bool RunVisitorWorkList(VisitorWorkList &WL);
   void EnqueueWorkList(VisitorWorkList &WL, Stmt *S);
-  bool VisitDataRecursive(Stmt *S) LLVM_ATTRIBUTE_NOINLINE;
+  LLVM_ATTRIBUTE_NOINLINE bool VisitDataRecursive(Stmt *S);
 };
 
 } // end anonymous namespace
