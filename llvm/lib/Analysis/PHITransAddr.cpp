@@ -217,7 +217,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
       return GEP;
     
     // Simplify the GEP to handle 'gep x, 0' -> x etc.
-    if (Value *V = SimplifyGEPInst(&GEPOps[0], GEPOps.size(), TD)) {
+    if (Value *V = SimplifyGEPInst(&GEPOps[0], GEPOps.size(), TD, DT)) {
       for (unsigned i = 0, e = GEPOps.size(); i != e; ++i)
         RemoveInstInputs(GEPOps[i], InstInputs);
       
@@ -273,7 +273,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
         }
     
     // See if the add simplifies away.
-    if (Value *Res = SimplifyAddInst(LHS, RHS, isNSW, isNUW, TD)) {
+    if (Value *Res = SimplifyAddInst(LHS, RHS, isNSW, isNUW, TD, DT)) {
       // If we simplified the operands, the LHS is no longer an input, but Res
       // is.
       RemoveInstInputs(LHS, InstInputs);

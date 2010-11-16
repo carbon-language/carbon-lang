@@ -488,3 +488,18 @@ ret:
 ; CHECK: @test21
 ; CHECK: ret i1 false
 }
+
+define void @test22() {
+; CHECK: @test22
+entry:
+  br label %loop
+loop:
+  %phi = phi i32 [ 0, %entry ], [ %y, %loop ]
+  %y = add i32 %phi, 1
+  %o = or i32 %y, %phi
+  %e = icmp eq i32 %o, %y
+  br i1 %e, label %loop, label %ret
+; CHECK: br i1 %e
+ret:
+  ret void
+}
