@@ -50,25 +50,25 @@ BUILTIN(__builtin_altivec_vctuxs, "V4UiV4fi", "")
 
 BUILTIN(__builtin_altivec_dss, "vUi", "")
 BUILTIN(__builtin_altivec_dssall, "v", "")
-BUILTIN(__builtin_altivec_dst, "vv*iUi", "") 
-BUILTIN(__builtin_altivec_dstt, "vv*iUi", "")
-BUILTIN(__builtin_altivec_dstst, "vv*iUi", "")
-BUILTIN(__builtin_altivec_dststt, "vv*iUi", "")
+BUILTIN(__builtin_altivec_dst, "vvC*iUi", "") 
+BUILTIN(__builtin_altivec_dstt, "vvC*iUi", "")
+BUILTIN(__builtin_altivec_dstst, "vvC*iUi", "")
+BUILTIN(__builtin_altivec_dststt, "vvC*iUi", "")
 
 BUILTIN(__builtin_altivec_vexptefp, "V4fV4f", "")
 
 BUILTIN(__builtin_altivec_vrfim, "V4fV4f", "")
 
-BUILTIN(__builtin_altivec_lvx, "V4iiv*", "")
-BUILTIN(__builtin_altivec_lvxl, "V4iiv*", "")
-BUILTIN(__builtin_altivec_lvebx, "V16civ*", "")
-BUILTIN(__builtin_altivec_lvehx, "V8siv*", "")
-BUILTIN(__builtin_altivec_lvewx, "V4iiv*", "")
+BUILTIN(__builtin_altivec_lvx, "V4iivC*", "")
+BUILTIN(__builtin_altivec_lvxl, "V4iivC*", "")
+BUILTIN(__builtin_altivec_lvebx, "V16civC*", "")
+BUILTIN(__builtin_altivec_lvehx, "V8sivC*", "")
+BUILTIN(__builtin_altivec_lvewx, "V4iivC*", "")
 
 BUILTIN(__builtin_altivec_vlogefp, "V4fV4f", "")
 
-BUILTIN(__builtin_altivec_lvsl, "V16cUcv*", "")
-BUILTIN(__builtin_altivec_lvsr, "V16cUcv*", "")
+BUILTIN(__builtin_altivec_lvsl, "V16cUcvC*", "")
+BUILTIN(__builtin_altivec_lvsr, "V16cUcvC*", "")
 
 BUILTIN(__builtin_altivec_vmaddfp, "V4fV4fV4fV4f", "")
 BUILTIN(__builtin_altivec_vmhaddshs, "V8sV8sV8sV8s", "")
