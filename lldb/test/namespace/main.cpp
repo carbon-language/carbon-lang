@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 namespace {
-    typedef unsigned int uint_t;
+    typedef unsigned int my_uint_t;
     int i; // Find the line number for anonymous namespace variable i.
 }
 
@@ -53,7 +53,7 @@ namespace A {
 
 int Foo::myfunc(int a)
 {
-    ::uint_t anon_uint = 0;
+    ::my_uint_t anon_uint = 0;
     A::uint_t a_uint = 1;
     B::uint_t b_uint = 2;
     Y::uint_t y_uint = 3;
