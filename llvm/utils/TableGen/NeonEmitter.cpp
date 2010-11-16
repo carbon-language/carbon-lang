@@ -844,21 +844,25 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   // Emit vector typedefs.
   for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
-    bool dummy, quad = false;
-    (void) ClassifyType(TDTypeVec[i], quad, dummy, dummy);
-    OS << "typedef __attribute__(( __vector_size__(";
+    bool dummy, quad = false, poly = false;
+    (void) ClassifyType(TDTypeVec[i], quad, poly, dummy);
+    if (poly)
+      OS << "typedef __attribute__((neon_polyvector_type(";
+    else
+      OS << "typedef __attribute__((neon_vector_type(";
       
-    OS << utostr(8*(quad ? 2 : 1)) << ") )) ";
-    if (!quad)
+    unsigned nElts = GetNumElements(TDTypeVec[i], quad);
+    OS << utostr(nElts) << "))) ";
+    if (nElts < 10)
       OS << " ";
       
     OS << TypeString('s', TDTypeVec[i]);
     OS << " " << TypeString('d', TDTypeVec[i]) << ";\n";
   }
   OS << "\n";
-  OS << "typedef __attribute__(( __vector_size__(8) ))  "
+  OS << "typedef __attribute__((__vector_size__(8)))  "
     "double float64x1_t;\n";
-  OS << "typedef __attribute__(( __vector_size__(16) )) "
+  OS << "typedef __attribute__((__vector_size__(16))) "
     "double float64x2_t;\n";
   OS << "\n";
 
