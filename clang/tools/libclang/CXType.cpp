@@ -13,6 +13,7 @@
 
 #include "CIndexer.h"
 #include "CXCursor.h"
+#include "CXString.h"
 #include "CXType.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"

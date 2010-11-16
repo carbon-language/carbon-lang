@@ -18,7 +18,6 @@
 #include "clang/AST/DeclTemplate.h"
 
 using namespace clang;
-using namespace clang::cxstring;
 using namespace clang::cxcursor;
 
 extern "C" {

@@ -13,6 +13,7 @@
 #include "CIndexDiagnostic.h"
 #include "CIndexer.h"
 #include "CXSourceLocation.h"
+#include "CXString.h"
 
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/FrontendDiagnostic.h"

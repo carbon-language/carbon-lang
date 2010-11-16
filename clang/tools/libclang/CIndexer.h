@@ -24,13 +24,6 @@ namespace llvm {
   class CrashRecoveryContext;
 }
 
-namespace clang {
-namespace cxstring {
-  CXString createCXString(const char *String, bool DupString = false);
-  CXString createCXString(llvm::StringRef String, bool DupString = true);  
-}
-}
-
 class CIndexer {
   bool OnlyLocalDecls;
   bool DisplayDiagnostics;

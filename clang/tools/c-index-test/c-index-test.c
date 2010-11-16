@@ -1306,7 +1306,7 @@ int print_usrs(const char **I, const char **E) {
           else {
             CXString x;
             x.Spelling = I[2];
-            x.MustFreeString = 0;
+            x.private_flags = 0;
             print_usr(clang_constructUSR_ObjCIvar(I[1], x));
           }
 
@@ -1333,7 +1333,7 @@ int print_usrs(const char **I, const char **E) {
           else {
             CXString x;
             x.Spelling = I[3];
-            x.MustFreeString = 0;
+            x.private_flags = 0;
             print_usr(clang_constructUSR_ObjCMethod(I[1], atoi(I[2]), x));
           }
           I += 4;
@@ -1363,7 +1363,7 @@ int print_usrs(const char **I, const char **E) {
           else {
             CXString x;
             x.Spelling = I[2];
-            x.MustFreeString = 0;
+            x.private_flags = 0;
             print_usr(clang_constructUSR_ObjCProperty(I[1], x));
           }
           I += 3;

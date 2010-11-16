@@ -134,9 +134,7 @@ enum CXAvailabilityKind {
  */
 typedef struct {
   const char *Spelling;
-  /* A 1 value indicates the clang_ indexing API needed to allocate the string
-     (and it must be freed by clang_disposeString()). */
-  int MustFreeString;
+  unsigned private_flags;
 } CXString;
 
 /**

@@ -14,6 +14,7 @@
 
 #include "CIndexer.h"
 #include "CXCursor.h"
+#include "CXString.h"
 #include "CXType.h"
 #include "CXSourceLocation.h"
 #include "CIndexDiagnostic.h"
@@ -4573,51 +4574,6 @@ CXType clang_getIBOutletCollectionType(CXCursor C) {
   return cxtype::MakeCXType(A->getInterface(), cxcursor::getCursorASTUnit(C));  
 }
 } // end: extern "C"
-
-//===----------------------------------------------------------------------===//
-// CXString Operations.
-//===----------------------------------------------------------------------===//
-
-extern "C" {
-const char *clang_getCString(CXString string) {
-  return string.Spelling;
-}
-
-void clang_disposeString(CXString string) {
-  if (string.MustFreeString && string.Spelling)
-    free((void*)string.Spelling);
-}
-
-} // end: extern "C"
-
-namespace clang { namespace cxstring {
-CXString createCXString(const char *String, bool DupString){
-  CXString Str;
-  if (DupString) {
-    Str.Spelling = strdup(String);
-    Str.MustFreeString = 1;
-  } else {
-    Str.Spelling = String;
-    Str.MustFreeString = 0;
-  }
-  return Str;
-}
-
-CXString createCXString(llvm::StringRef String, bool DupString) {
-  CXString Result;
-  if (DupString || (!String.empty() && String.data()[String.size()] != 0)) {
-    char *Spelling = (char *)malloc(String.size() + 1);
-    memmove(Spelling, String.data(), String.size());
-    Spelling[String.size()] = 0;
-    Result.Spelling = Spelling;
-    Result.MustFreeString = 1;
-  } else {
-    Result.Spelling = String.data();
-    Result.MustFreeString = 0;
-  }
-  return Result;
-}
-}}
 
 //===----------------------------------------------------------------------===//
 // Misc. utility functions.

@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CXCursor.h"
+#include "CXString.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
