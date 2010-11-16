@@ -1995,9 +1995,8 @@ bool GenericAsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   if (FileNumber == -1)
     getStreamer().EmitFileDirective(Filename);
   else {
-    if (getContext().GetDwarfFile(Filename, FileNumber) == 0)
+    if (getStreamer().EmitDwarfFileDirective(FileNumber, Filename))
       Error(FileNumberLoc, "file number already allocated");
-    getStreamer().EmitDwarfFileDirective(FileNumber, Filename);
   }
 
   return false;
@@ -2125,8 +2124,8 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
     }
   }
 
-  getContext().setCurrentDwarfLoc(FileNumber, LineNumber, ColumnPos, Flags,
-                                  Isa, Discriminator);
+  getStreamer().EmitDwarfLocDirective(FileNumber, LineNumber, ColumnPos, Flags,
+                                      Isa, Discriminator);
 
   return false;
 }

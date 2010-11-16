@@ -83,7 +83,12 @@ namespace {
                                    unsigned char Value = 0) {}
     
     virtual void EmitFileDirective(StringRef Filename) {}
-    virtual void EmitDwarfFileDirective(unsigned FileNo,StringRef Filename) {}
+    virtual bool EmitDwarfFileDirective(unsigned FileNo,StringRef Filename) {
+      return false;
+    }
+    virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
+                                       unsigned Column, unsigned Flags,
+                                       unsigned Isa, unsigned Discriminator) {}
     virtual void EmitInstruction(const MCInst &Inst) {}
 
     virtual void Finish() {}

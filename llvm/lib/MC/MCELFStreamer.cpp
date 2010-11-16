@@ -137,9 +137,6 @@ public:
                                  unsigned char Value = 0);
 
   virtual void EmitFileDirective(StringRef Filename);
-  virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
-    DEBUG(dbgs() << "FIXME: MCELFStreamer:EmitDwarfFileDirective not implemented\n");
-  }
 
   virtual void Finish();
 

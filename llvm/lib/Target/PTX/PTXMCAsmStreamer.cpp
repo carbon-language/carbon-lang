@@ -337,11 +337,13 @@ void PTXMCAsmStreamer::EmitFileDirective(StringRef Filename) {
   EmitEOL();
 }
 
-void PTXMCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo,
+// FIXME: should we inherit from MCAsmStreamer?
+bool PTXMCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo,
                                               StringRef Filename){
   OS << "\t.file\t" << FileNo << ' ';
   PrintQuotedString(Filename, OS);
   EmitEOL();
+  return this->MCStreamer::EmitDwarfFileDirective(FileNo, Filename);
 }
 
 void PTXMCAsmStreamer::AddEncodingComment(const MCInst &Inst) {}

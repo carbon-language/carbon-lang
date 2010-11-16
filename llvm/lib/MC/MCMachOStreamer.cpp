@@ -92,12 +92,6 @@ public:
 
     //report_fatal_error("unsupported directive: '.file'");
   }
-  virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
-    // FIXME: Just ignore the .file; it isn't important enough to fail the
-    // entire assembly.
-
-    //report_fatal_error("unsupported directive: '.file'");
-  }
 
   virtual void Finish();
 

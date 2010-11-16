@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -61,6 +62,19 @@ void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
   const MCExpr *E = MCConstantExpr::Create(FillValue, getContext());
   for (uint64_t i = 0, e = NumBytes; i != e; ++i)
     EmitValue(E, 1, AddrSpace);
+}
+
+bool MCStreamer::EmitDwarfFileDirective(unsigned FileNo,
+                                        StringRef Filename) {
+  return getContext().GetDwarfFile(Filename, FileNo) == 0;
+}
+
+void MCStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
+                                       unsigned Column, unsigned Flags,
+                                       unsigned Isa,
+                                       unsigned Discriminator) {
+  getContext().setCurrentDwarfLoc(FileNo, Line, Column, Flags, Isa,
+                                  Discriminator);
 }
 
 /// EmitRawText - If this file is backed by an assembly streamer, this dumps

@@ -166,7 +166,10 @@ public:
                                  unsigned char Value = 0);
 
   virtual void EmitFileDirective(StringRef Filename);
-  virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename);
+  virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Filename);
+  virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
+                                     unsigned Column, unsigned Flags,
+                                     unsigned Isa, unsigned Discriminator);
 
   virtual void EmitInstruction(const MCInst &Inst);
 
@@ -633,10 +636,42 @@ void MCAsmStreamer::EmitFileDirective(StringRef Filename) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
+bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
   OS << "\t.file\t" << FileNo << ' ';
   PrintQuotedString(Filename, OS);
   EmitEOL();
+  return this->MCStreamer::EmitDwarfFileDirective(FileNo, Filename);
+}
+
+void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
+                                          unsigned Column, unsigned Flags,
+                                          unsigned Isa,
+                                          unsigned Discriminator) {
+  OS << "\t.loc\t" << FileNo << " " << Line << " " << Column;
+  if (Flags & DWARF2_FLAG_BASIC_BLOCK)
+    OS << " basic_block";
+  if (Flags & DWARF2_FLAG_PROLOGUE_END)
+    OS << " prologue_end";
+  if (Flags & DWARF2_FLAG_EPILOGUE_BEGIN)
+    OS << " epilogue_begin";
+
+  unsigned OldFlags = getContext().getCurrentDwarfLoc().getFlags();
+  if ((Flags & DWARF2_FLAG_IS_STMT) != (OldFlags & DWARF2_FLAG_IS_STMT)) {
+    OS << " is_stmt ";
+
+    if (Flags & DWARF2_FLAG_IS_STMT)
+      OS << "1";
+    else
+      OS << "0";
+  }
+
+  if (Isa)
+    OS << "isa " << Isa;
+  if (Discriminator)
+    OS << "discriminator " << Discriminator;
+  EmitEOL();
+  return this->MCStreamer::EmitDwarfLocDirective(FileNo, Line, Column, Flags,
+                                                 Isa, Discriminator);
 }
 
 void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {

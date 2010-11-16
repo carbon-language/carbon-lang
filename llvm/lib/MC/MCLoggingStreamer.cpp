@@ -205,10 +205,21 @@ public:
     return Child->EmitFileDirective(Filename);
   }
 
-  virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
+  virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
     LogCall("EmitDwarfFileDirective",
             "FileNo:" + Twine(FileNo) + " Filename:" + Filename);
     return Child->EmitDwarfFileDirective(FileNo, Filename);
+  }
+
+  virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
+                                     unsigned Column, unsigned Flags,
+                                     unsigned Isa, unsigned Discriminator) {
+    LogCall("EmitDwarfLocDirective",
+            "FileNo:" + Twine(FileNo) + " Line:" + Twine(Line) +
+            " Column:" + Twine(Column) + " Flags:" + Twine(Flags) +
+            " Isa:" + Twine(Isa) + " Discriminator:" + Twine(Discriminator));
+            return Child->EmitDwarfLocDirective(FileNo, Line, Column, Flags,
+                                                Isa, Discriminator);
   }
 
   virtual void EmitInstruction(const MCInst &Inst) {

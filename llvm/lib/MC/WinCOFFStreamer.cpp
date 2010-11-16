@@ -77,7 +77,6 @@ public:
                                  unsigned MaxBytesToEmit);
   virtual void EmitValueToOffset(const MCExpr *Offset, unsigned char Value);
   virtual void EmitFileDirective(StringRef Filename);
-  virtual void EmitDwarfFileDirective(unsigned FileNo,StringRef Filename);
   virtual void EmitInstruction(const MCInst &Instruction);
   virtual void Finish();
 
@@ -412,11 +411,6 @@ void WinCOFFStreamer::EmitValueToOffset(const MCExpr *Offset,
 void WinCOFFStreamer::EmitFileDirective(StringRef Filename) {
   // Ignore for now, linkers don't care, and proper debug
   // info will be a much large effort.
-}
-
-void WinCOFFStreamer::EmitDwarfFileDirective(unsigned FileNo,
-                                             StringRef Filename) {
-  llvm_unreachable("not implemented");
 }
 
 void WinCOFFStreamer::EmitInstruction(const MCInst &Instruction) {
