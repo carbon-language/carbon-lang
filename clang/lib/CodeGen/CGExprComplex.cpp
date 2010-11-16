@@ -540,10 +540,14 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
 
   // Load the RHS and LHS operands.
   // __block variables need to have the rhs evaluated first, plus this should
-  // improve codegen a little.  It is possible for the RHS to be complex or
-  // scalar.
+  // improve codegen a little.
   OpInfo.Ty = E->getComputationResultType();
-  OpInfo.RHS = EmitCast(CK_Unknown, E->getRHS(), OpInfo.Ty);
+
+  // The RHS should have been converted to the computation type.
+  assert(OpInfo.Ty->isAnyComplexType());
+  assert(CGF.getContext().hasSameUnqualifiedType(OpInfo.Ty,
+                                                 E->getRHS()->getType()));
+  OpInfo.RHS = Visit(E->getRHS());
   
   LValue LHS = CGF.EmitLValue(E->getLHS());
   // We know the LHS is a complex lvalue.
