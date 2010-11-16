@@ -2760,9 +2760,9 @@ let Defs =
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
 def t2LDMIA_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
-                                        reglist:$dsts, variable_ops),
+                                        reglist:$regs, variable_ops),
                         IIC_iLoad_mBr,
-                        "ldmia${p}.w\t$Rn!, $dsts",
+                        "ldmia${p}.w\t$Rn!, $regs",
                         "$Rn = $wb", []> {
   bits<4>  Rn;
   bits<16> regs;

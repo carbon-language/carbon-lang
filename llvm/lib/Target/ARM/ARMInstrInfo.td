@@ -1870,9 +1870,9 @@ def : MnemonicAlias<"stm", "stmia">;
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
 def LDMIA_RET : AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
-                                      reglist:$dsts, variable_ops),
+                                      reglist:$regs, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
-                     "ldmia${p}\t$Rn!, $dsts",
+                     "ldmia${p}\t$Rn!, $regs",
                      "$Rn = $wb", []> {
   let Inst{24-23} = 0b01;       // Increment After
   let Inst{21}    = 1;          // Writeback
