@@ -570,7 +570,11 @@ enum _ {
   operation_not_permitted             = EPERM,
   operation_not_supported             = EOPNOTSUPP,
   operation_would_block               = EWOULDBLOCK,
+#ifdef EOWNERDEAD
   owner_dead                          = EOWNERDEAD,
+#else
+  owner_dead                          = EINVAL,
+#endif
   permission_denied                   = EACCES,
   protocol_error                      = EPROTO,
   protocol_not_supported              = EPROTONOSUPPORT,
@@ -578,7 +582,11 @@ enum _ {
   resource_deadlock_would_occur       = EDEADLK,
   resource_unavailable_try_again      = EAGAIN,
   result_out_of_range                 = ERANGE,
+#ifdef ENOTRECOVERABLE
   state_not_recoverable               = ENOTRECOVERABLE,
+#else
+  state_not_recoverable               = EINVAL,
+#endif
 #ifdef ETIME
   stream_timeout                      = ETIME,
 #else
