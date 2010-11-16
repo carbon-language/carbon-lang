@@ -251,15 +251,29 @@ void TypePrinter::PrintDependentSizedExtVector(
 }
 
 void TypePrinter::PrintVector(const VectorType *T, std::string &S) { 
-  if (T->getVectorKind() != VectorType::GenericVector) {
-    if (T->getVectorKind() == VectorType::AltiVecPixel)
-      S = "__vector __pixel " + S;
-    else {
-      Print(T->getElementType(), S);
-      S = ((T->getVectorKind() == VectorType::AltiVecBool)
-           ? "__vector __bool " : "__vector ") + S;
-    }
-  } else {
+  switch (T->getVectorKind()) {
+  case VectorType::AltiVecPixel:
+    S = "__vector __pixel " + S;
+    break;
+  case VectorType::AltiVecBool:
+    Print(T->getElementType(), S);
+    S = "__vector __bool " + S;
+    break;
+  case VectorType::AltiVecVector:
+    Print(T->getElementType(), S);
+    S = "__vector " + S;
+    break;
+  case VectorType::NeonVector:
+    Print(T->getElementType(), S);
+    S = ("__attribute__((neon_vector_type(" +
+         llvm::utostr_32(T->getNumElements()) + "))) " + S);
+    break;
+  case VectorType::NeonPolyVector:
+    Print(T->getElementType(), S);
+    S = ("__attribute__((neon_polyvector_type(" +
+         llvm::utostr_32(T->getNumElements()) + "))) " + S);
+    break;
+  case VectorType::GenericVector: {
     // FIXME: We prefer to print the size directly here, but have no way
     // to get the size of the type.
     Print(T->getElementType(), S);
@@ -269,6 +283,8 @@ void TypePrinter::PrintVector(const VectorType *T, std::string &S) {
     Print(T->getElementType(), ET);
     V += " * sizeof(" + ET + ")))) ";
     S = V + S;
+    break;
+  }
   }
 }
 
