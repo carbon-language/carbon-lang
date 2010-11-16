@@ -238,6 +238,22 @@ public:
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLoc>(".loc");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveStabs>(".stabs");
 
+    // CFI directives.
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIStartProc>(
+                                                              ".cfi_startproc");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIEndProc>(
+                                                                ".cfi_endproc");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIDefCfaOffset>(
+                                                         ".cfi_def_cfa_offset");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIDefCfaRegister>(
+                                                       ".cfi_def_cfa_register");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIOffset>(
+                                                                 ".cfi_offset");
+    AddDirectiveHandler<
+     &GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda>(".cfi_personality");
+    AddDirectiveHandler<
+            &GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda>(".cfi_lsda");
+
     // Macro directives.
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveMacrosOnOff>(
       ".macros_on");
@@ -255,6 +271,12 @@ public:
   bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveStabs(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIStartProc(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIDefCfaOffset(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIDefCfaRegister(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIPersonalityOrLsda(StringRef, SMLoc DirectiveLoc);
 
   bool ParseDirectiveMacrosOnOff(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveMacro(StringRef, SMLoc DirectiveLoc);
@@ -2114,6 +2136,79 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
 bool GenericAsmParser::ParseDirectiveStabs(StringRef Directive,
                                            SMLoc DirectiveLoc) {
   return TokError("unsupported directive '" + Directive + "'");
+}
+
+/// ParseDirectiveCFIStartProc
+/// ::= .cfi_startproc
+bool GenericAsmParser::ParseDirectiveCFIStartProc(StringRef,
+                                                  SMLoc DirectiveLoc) {
+  return false;
+}
+
+/// ParseDirectiveCFIEndProc
+/// ::= .cfi_endproc
+bool GenericAsmParser::ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc) {
+  return false;
+}
+
+/// ParseDirectiveCFIDefCfaOffset
+/// ::= .cfi_def_cfa_offset offset
+bool GenericAsmParser::ParseDirectiveCFIDefCfaOffset(StringRef,
+                                                     SMLoc DirectiveLoc) {
+  int64_t Offset = 0;
+  if (getParser().ParseAbsoluteExpression(Offset))
+    return true;
+
+  return false;
+}
+
+/// ParseDirectiveCFIDefCfaRegister
+/// ::= .cfi_def_cfa_register register
+bool GenericAsmParser::ParseDirectiveCFIDefCfaRegister(StringRef,
+                                                       SMLoc DirectiveLoc) {
+  int64_t Register = 0;
+  if (getParser().ParseAbsoluteExpression(Register))
+    return true;
+  return false;
+}
+
+/// ParseDirectiveCFIOffset
+/// ::= .cfi_off register, offset
+bool GenericAsmParser::ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc) {
+  int64_t Register = 0;
+  int64_t Offset = 0;
+  if (getParser().ParseAbsoluteExpression(Register))
+    return true;
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("unexpected token in directive");
+  Lex();
+
+  if (getParser().ParseAbsoluteExpression(Offset))
+    return true;
+
+  return false;
+}
+
+/// ParseDirectiveCFIPersonalityOrLsda
+/// ::= .cfi_personality encoding, [symbol_name]
+/// ::= .cfi_lsda encoding, [symbol_name]
+bool GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda(StringRef,
+                                                    SMLoc DirectiveLoc) {
+  int64_t Encoding = 0;
+  if (getParser().ParseAbsoluteExpression(Encoding))
+    return true;
+  if (Encoding == 255)
+    return false;
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("unexpected token in directive");
+  Lex();
+
+  StringRef Name;
+  if (getParser().ParseIdentifier(Name))
+    return TokError("expected identifier in directive");
+  return false;
 }
 
 /// ParseDirectiveMacrosOnOff
