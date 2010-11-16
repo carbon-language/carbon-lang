@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Expand Psuedo-instructions produced by ISel. These is usually to allow
+// Expand Psuedo-instructions produced by ISel. These are usually to allow
 // the expansion to contain control flow, such as a conditional move
 // implemented with a conditional branch and a phi, or an atomic operation
 // implemented with a loop.
