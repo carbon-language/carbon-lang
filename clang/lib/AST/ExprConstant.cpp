@@ -532,35 +532,6 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
   default:
     break;
 
-  case CK_Unknown: {
-    // FIXME: The handling for CK_Unknown is ugly/shouldn't be necessary!
-
-    // Check for pointer->pointer cast
-    if (SubExpr->getType()->isPointerType() ||
-        SubExpr->getType()->isObjCObjectPointerType() ||
-        SubExpr->getType()->isNullPtrType() ||
-        SubExpr->getType()->isBlockPointerType())
-      return Visit(SubExpr);
-
-    if (SubExpr->getType()->isIntegralOrEnumerationType()) {
-      APValue Value;
-      if (!EvaluateIntegerOrLValue(SubExpr, Value, Info))
-        break;
-
-      if (Value.isInt()) {
-        Value.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
-        Result.Base = 0;
-        Result.Offset = CharUnits::fromQuantity(Value.getInt().getZExtValue());
-        return true;
-      } else {
-        Result.Base = Value.getLValueBase();
-        Result.Offset = Value.getLValueOffset();
-        return true;
-      }
-    }
-    break;
-  }
-
   case CK_NoOp:
   case CK_BitCast:
   case CK_LValueBitCast:

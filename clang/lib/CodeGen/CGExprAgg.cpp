@@ -285,8 +285,6 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
   }
 
-  // FIXME: Remove the CK_Unknown check here.
-  case CK_Unknown:
   case CK_NoOp:
   case CK_UserDefinedConversion:
   case CK_ConstructorConversion:

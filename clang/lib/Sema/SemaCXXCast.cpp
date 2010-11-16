@@ -526,7 +526,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       Self.Diag(OpRange.getBegin(), msg) << CT_Static
       << SrcExpr->getType() << DestType << OpRange;
   }
-  else if (Kind == CK_Unknown || Kind == CK_BitCast)
+  else if (Kind == CK_BitCast)
     Self.CheckCastAlign(SrcExpr, DestType, OpRange);
 }
 
@@ -1413,7 +1413,7 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
         << CastExpr->getType() << CastTy << R;
     }
   }
-  else if (Kind == CK_Unknown || Kind == CK_BitCast)
+  else if (Kind == CK_BitCast)
     CheckCastAlign(CastExpr, CastTy, R);
 
   return tcr != TC_Success;

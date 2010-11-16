@@ -2541,7 +2541,6 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
     }
     return;
 
-  case CK_Unknown:
   case CK_Dependent:
   case CK_ArrayToPointerDecay:
   case CK_BitCast:

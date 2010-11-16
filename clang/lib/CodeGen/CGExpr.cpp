@@ -1804,7 +1804,6 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     }
     // Fall through to synthesize a temporary.
 
-  case CK_Unknown:
   case CK_BitCast:
   case CK_ArrayToPointerDecay:
   case CK_FunctionToPointerDecay:

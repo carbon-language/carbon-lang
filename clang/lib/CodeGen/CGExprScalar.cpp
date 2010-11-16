@@ -999,11 +999,6 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   switch (Kind) {
   case CK_Dependent: llvm_unreachable("dependent cast kind in IR gen!");
       
-  case CK_Unknown:
-    // FIXME: All casts should have a known kind!
-    //assert(0 && "Unknown cast kind!");
-    break;
-
   case CK_LValueBitCast: 
   case CK_ObjCObjectLValueCast: {
     Value *V = EmitLValue(E).getAddress();

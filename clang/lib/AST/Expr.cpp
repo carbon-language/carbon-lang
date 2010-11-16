@@ -740,8 +740,6 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
 
 const char *CastExpr::getCastKindName() const {
   switch (getCastKind()) {
-  case CK_Unknown:
-    return "Unknown";
   case CK_Dependent:
     return "Dependent";
   case CK_BitCast:
