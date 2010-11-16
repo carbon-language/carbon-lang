@@ -954,10 +954,11 @@ namespace {
 /// assignRegOrStackSlotAtInterval - assign a register if one is available, or
 /// spill.
 void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
-  DEBUG(dbgs() << "\tallocating current interval: ");
+  const TargetRegisterClass *RC = mri_->getRegClass(cur->reg);
+  DEBUG(dbgs() << "\tallocating current interval from "
+               << RC->getName() << ": ");
 
   // This is an implicitly defined live interval, just assign any register.
-  const TargetRegisterClass *RC = mri_->getRegClass(cur->reg);
   if (cur->empty()) {
     unsigned physReg = vrm_->getRegAllocPref(cur->reg);
     if (!physReg)
