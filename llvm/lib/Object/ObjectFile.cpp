@@ -14,9 +14,10 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/System/Path.h"
 
-namespace llvm {
-namespace object {
+using namespace llvm;
+using namespace object;
 
 ObjectFile::ObjectFile(MemoryBuffer *Object)
   : MapFile(Object) {
@@ -60,9 +61,6 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   }
 }
 
-ObjectFile *ObjectFile::createObjectFile(const sys::Path &ObjectPath) {
-  return createObjectFile(MemoryBuffer::getFile(ObjectPath.c_str()));
+ObjectFile *ObjectFile::createObjectFile(StringRef ObjectPath) {
+  return createObjectFile(MemoryBuffer::getFile(ObjectPath));
 }
-
-} // end namespace object
-} // end namespace llvm

@@ -14,12 +14,13 @@
 #ifndef LLVM_OBJECT_OBJECT_FILE_H
 #define LLVM_OBJECT_OBJECT_FILE_H
 
-#include "llvm/ADT/Triple.h"
-#include "llvm/System/Path.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 
 class MemoryBuffer;
+class StringRef;
 
 namespace object {
 
@@ -155,7 +156,7 @@ public:
   virtual uint8_t getBytesInAddress() const = 0;
 
   virtual StringRef getFileFormatName() const = 0;
-  virtual Triple::ArchType getArch() const = 0;
+  virtual /* Triple::ArchType */ unsigned getArch() const = 0;
 
   StringRef getFilename() const;
 
@@ -163,7 +164,7 @@ public:
   /// @param ObjectPath The path to the object file. ObjectPath.isObject must
   ///        return true.
   /// @brief Create ObjectFile from path.
-  static ObjectFile *createObjectFile(const sys::Path &ObjectPath);
+  static ObjectFile *createObjectFile(StringRef ObjectPath);
   static ObjectFile *createObjectFile(MemoryBuffer *Object);
 
 private:
