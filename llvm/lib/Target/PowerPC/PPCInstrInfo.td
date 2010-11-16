@@ -291,6 +291,7 @@ def directbrtarget : Operand<OtherVT> {
   let EncoderMethod = "getDirectBrEncoding";
 }
 def condbrtarget : Operand<OtherVT> {
+  let PrintMethod = "printBranchOperand";
   let EncoderMethod = "getCondBrEncoding";
 }
 def calltarget : Operand<iPTR> {
