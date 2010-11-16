@@ -1141,9 +1141,9 @@ def t2SUBrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, imm0_4095:$imm),
 }
 
 // SUB r, sp, so_reg
-def t2SUBrSPs   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
+def t2SUBrSPs   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_reg:$imm),
                        IIC_iALUsi,
-                       "sub", "\t$dst, $sp, $rhs", []> {
+                       "sub", "\t$Rd, $sp, $imm", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b1101;
@@ -1153,9 +1153,9 @@ def t2SUBrSPs   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
 }
 
 // Signed and unsigned division on v7-M
-def t2SDIV : T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), IIC_iALUi, 
-                 "sdiv", "\t$dst, $a, $b",
-                 [(set rGPR:$dst, (sdiv rGPR:$a, rGPR:$b))]>,
+def t2SDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi, 
+                 "sdiv", "\t$Rd, $Rn, $Rm",
+                 [(set rGPR:$Rd, (sdiv rGPR:$Rn, rGPR:$Rm))]>,
                  Requires<[HasDivide]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-21} = 0b011100;
@@ -1164,9 +1164,9 @@ def t2SDIV : T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), IIC_iALUi,
   let Inst{7-4} = 0b1111;
 }
 
-def t2UDIV : T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), IIC_iALUi, 
-                 "udiv", "\t$dst, $a, $b",
-                 [(set rGPR:$dst, (udiv rGPR:$a, rGPR:$b))]>,
+def t2UDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi, 
+                 "udiv", "\t$Rd, $Rn, $Rm",
+                 [(set rGPR:$Rd, (udiv rGPR:$Rn, rGPR:$Rm))]>,
                  Requires<[HasDivide]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-21} = 0b011101;
@@ -1634,8 +1634,8 @@ def t2STM_UPD : T2XIt<(outs GPR:$wb), (ins GPR:$Rn, ldstm_mode:$amode, pred:$p,
 //
 
 let neverHasSideEffects = 1 in
-def t2MOVr : T2sI<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
-                   "mov", ".w\t$dst, $src", []> {
+def t2MOVr : T2sTwoReg<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
+                   "mov", ".w\t$Rd, $Rm", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
@@ -1647,9 +1647,9 @@ def t2MOVr : T2sI<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
 
 // AddedComplexity to ensure isel tries t2MOVi before t2MOVi16.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, AddedComplexity = 1 in
-def t2MOVi : T2sI<(outs rGPR:$dst), (ins t2_so_imm:$src), IIC_iMOVi,
-                   "mov", ".w\t$dst, $src",
-                   [(set rGPR:$dst, t2_so_imm:$src)]> {
+def t2MOVi : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), IIC_iMOVi,
+                   "mov", ".w\t$Rd, $imm",
+                   [(set rGPR:$Rd, t2_so_imm:$imm)]> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b0010;
@@ -1659,26 +1659,44 @@ def t2MOVi : T2sI<(outs rGPR:$dst), (ins t2_so_imm:$src), IIC_iMOVi,
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def t2MOVi16 : T2I<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVi,
-                   "movw", "\t$dst, $src",
-                   [(set rGPR:$dst, imm0_65535:$src)]> {
+def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm:$imm), IIC_iMOVi,
+                   "movw", "\t$Rd, $imm",
+                   [(set rGPR:$Rd, imm0_65535:$imm)]> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-21} = 0b0010;
   let Inst{20} = 0; // The S bit.
   let Inst{15} = 0;
+  
+  bits<4> Rd;
+  bits<16> imm;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{19-16} = imm{15-12};
+  let Inst{26}    = imm{11};
+  let Inst{14-12} = imm{10-8};
+  let Inst{7-0}   = imm{7-0};
 }
 
-let Constraints = "$src = $dst" in
-def t2MOVTi16 : T2I<(outs rGPR:$dst), (ins rGPR:$src, i32imm:$imm), IIC_iMOVi,
-                    "movt", "\t$dst, $imm",
-                    [(set rGPR:$dst,
+let Constraints = "$src = $Rd" in
+def t2MOVTi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$src, i32imm:$imm), IIC_iMOVi,
+                    "movt", "\t$Rd, $imm",
+                    [(set rGPR:$Rd,
                           (or (and rGPR:$src, 0xffff), lo16AllZero:$imm))]> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-21} = 0b0110;
   let Inst{20} = 0; // The S bit.
   let Inst{15} = 0;
+  
+  bits<4> Rd;
+  bits<16> imm;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{19-16} = imm{15-12};
+  let Inst{26}    = imm{11};
+  let Inst{14-12} = imm{10-8};
+  let Inst{7-0}   = imm{7-0};
 }
 
 def : T2Pat<(or rGPR:$src, 0xffff0000), (t2MOVTi16 rGPR:$src, 0xffff)>;
@@ -2563,15 +2581,24 @@ def t2MOVCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
   let Inst{15} = 0;
 }
 
-def t2MOVCCi16 : T2I<(outs rGPR:$dst), (ins rGPR:$false, i32imm:$src),
+def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm:$imm),
                       IIC_iCMOVi,
-                      "movw", "\t$dst, $src", []>,
-                      RegConstraint<"$false = $dst"> {
+                      "movw", "\t$Rd, $imm", []>,
+                      RegConstraint<"$false = $Rd"> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-21} = 0b0010;
   let Inst{20} = 0; // The S bit.
   let Inst{15} = 0;
+  
+  bits<4> Rd;
+  bits<16> imm;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{19-16} = imm{15-12};
+  let Inst{26}    = imm{11};
+  let Inst{14-12} = imm{10-8};
+  let Inst{7-0}   = imm{7-0};
 }
 
 def t2MOVCCi32imm : PseudoInst<(outs rGPR:$dst),

@@ -35,3 +35,16 @@
 
 @ CHECK: sxtab	r0, r1, r0              @ encoding: [0x80,0xf0,0x41,0xfa]
   sxtab	r0, r1, r0              @ encoding: [0x80,0xf0,0x41,0xfa]
+  
+@ CHECK: movw	r0, #65535              @ encoding: [0xff,0x70,0x4f,0xf6]
+  movw	r0, #65535
+@ CHECK: movw	r1, #43777              @ encoding: [0x01,0x31,0x4a,0xf6]
+  movw	r1, #43777
+@ CHECK: movt	r1, #427                @ encoding: [0xab,0x11,0xc0,0xf2]
+  movt	r1, #427
+@ CHECK: movw	r1, #43792              @ encoding: [0x10,0x31,0x4a,0xf6]
+  movw	r1, #43792
+@ CHECK: movt	r1, #4267               @ encoding: [0xab,0x01,0xc0,0xf2]
+  movt	r1, #4267
+@ CHECK: mov.w	r0, #66846720           @ encoding: [0x7f,0x70,0x4f,0xf0]
+  mov.w	r0, #66846720
