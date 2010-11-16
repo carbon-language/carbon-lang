@@ -1176,12 +1176,11 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
   case CK_FloatingComplexToReal:
   case CK_IntegralComplexToReal:
-    return CGF.EmitComplexExpr(E, false, true, false, true).first;
+    return CGF.EmitComplexExpr(E, false, true).first;
 
   case CK_FloatingComplexToBoolean:
   case CK_IntegralComplexToBoolean: {
-    CodeGenFunction::ComplexPairTy V
-      = CGF.EmitComplexExpr(E, false, false, false, false);
+    CodeGenFunction::ComplexPairTy V = CGF.EmitComplexExpr(E);
 
     // TODO: kill this function off, inline appropriate case here
     return EmitComplexToScalarConversion(V, E->getType(), DestTy);
@@ -1471,21 +1470,38 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
 
 Value *ScalarExprEmitter::VisitUnaryReal(const UnaryOperator *E) {
   Expr *Op = E->getSubExpr();
-  if (Op->getType()->isAnyComplexType())
-    return CGF.EmitComplexExpr(Op, false, true, false, true).first;
+  if (Op->getType()->isAnyComplexType()) {
+    // If it's an l-value, load through the appropriate subobject l-value.
+    // Note that we have to ask E because Op might be an l-value that
+    // this won't work for, e.g. an Obj-C property.
+    if (E->isLvalue(CGF.getContext()) == Expr::LV_Valid)
+      return CGF.EmitLoadOfLValue(CGF.EmitLValue(E), E->getType())
+                .getScalarVal();
+
+    // Otherwise, calculate and project.
+    return CGF.EmitComplexExpr(Op, false, true).first;
+  }
+
   return Visit(Op);
 }
+
 Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
   Expr *Op = E->getSubExpr();
-  if (Op->getType()->isAnyComplexType())
-    return CGF.EmitComplexExpr(Op, true, false, true, false).second;
+  if (Op->getType()->isAnyComplexType()) {
+    // If it's an l-value, load through the appropriate subobject l-value.
+    // Note that we have to ask E because Op might be an l-value that
+    // this won't work for, e.g. an Obj-C property.
+    if (Op->isLvalue(CGF.getContext()) == Expr::LV_Valid)
+      return CGF.EmitLoadOfLValue(CGF.EmitLValue(E), E->getType())
+                .getScalarVal();
+
+    // Otherwise, calculate and project.
+    return CGF.EmitComplexExpr(Op, true, false).second;
+  }
 
   // __imag on a scalar returns zero.  Emit the subexpr to ensure side
   // effects are evaluated, but not the actual value.
-  if (E->isLvalue(CGF.getContext()) == Expr::LV_Valid)
-    CGF.EmitLValue(Op);
-  else
-    CGF.EmitScalarExpr(Op, true);
+  CGF.EmitScalarExpr(Op, true);
   return llvm::Constant::getNullValue(ConvertType(E->getType()));
 }
 
@@ -1561,6 +1577,10 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   // If the result is clearly ignored, return now.
   if (Ignore)
     return 0;
+
+  // The result of an assignment in C is the assigned r-value.
+  if (!CGF.getContext().getLangOptions().CPlusPlus)
+    return RHS;
 
   // Objective-C property assignment never reloads the value following a store.
   if (LHS.isPropertyRef() || LHS.isKVCRef())
@@ -2049,6 +2069,10 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // If the result is clearly ignored, return now.
   if (Ignore)
     return 0;
+
+  // The result of an assignment in C is the assigned r-value.
+  if (!CGF.getContext().getLangOptions().CPlusPlus)
+    return RHS;
 
   // Objective-C property assignment never reloads the value following a store.
   if (LHS.isPropertyRef() || LHS.isKVCRef())

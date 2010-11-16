@@ -1593,10 +1593,9 @@ public:
 
   /// EmitComplexExpr - Emit the computation of the specified expression of
   /// complex type, returning the result.
-  ComplexPairTy EmitComplexExpr(const Expr *E, bool IgnoreReal = false,
-                                bool IgnoreImag = false,
-                                bool IgnoreRealAssign = false,
-                                bool IgnoreImagAssign = false);
+  ComplexPairTy EmitComplexExpr(const Expr *E,
+                                bool IgnoreReal = false,
+                                bool IgnoreImag = false);
 
   /// EmitComplexExprIntoAddr - Emit the computation of the specified expression
   /// of complex type, storing into the specified Value*.

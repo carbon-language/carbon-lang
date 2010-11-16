@@ -35,14 +35,9 @@ class ComplexExprEmitter
   // True is we should ignore the value of a
   bool IgnoreReal;
   bool IgnoreImag;
-  // True if we should ignore the value of a=b
-  bool IgnoreRealAssign;
-  bool IgnoreImagAssign;
 public:
-  ComplexExprEmitter(CodeGenFunction &cgf, bool ir=false, bool ii=false,
-                     bool irn=false, bool iin=false)
-    : CGF(cgf), Builder(CGF.Builder), IgnoreReal(ir), IgnoreImag(ii),
-    IgnoreRealAssign(irn), IgnoreImagAssign(iin) {
+  ComplexExprEmitter(CodeGenFunction &cgf, bool ir=false, bool ii=false)
+    : CGF(cgf), Builder(CGF.Builder), IgnoreReal(ir), IgnoreImag(ii) {
   }
 
 
@@ -58,16 +53,6 @@ public:
   bool TestAndClearIgnoreImag() {
     bool I = IgnoreImag;
     IgnoreImag = false;
-    return I;
-  }
-  bool TestAndClearIgnoreRealAssign() {
-    bool I = IgnoreRealAssign;
-    IgnoreRealAssign = false;
-    return I;
-  }
-  bool TestAndClearIgnoreImagAssign() {
-    bool I = IgnoreImagAssign;
-    IgnoreImagAssign = false;
     return I;
   }
 
@@ -174,8 +159,6 @@ public:
   ComplexPairTy VisitUnaryPlus     (const UnaryOperator *E) {
     TestAndClearIgnoreReal();
     TestAndClearIgnoreImag();
-    TestAndClearIgnoreRealAssign();
-    TestAndClearIgnoreImagAssign();
     return Visit(E->getSubExpr());
   }
   ComplexPairTy VisitUnaryMinus    (const UnaryOperator *E);
@@ -211,6 +194,10 @@ public:
   };
 
   BinOpInfo EmitBinOps(const BinaryOperator *E);
+  LValue EmitCompoundAssignLValue(const CompoundAssignOperator *E,
+                                  ComplexPairTy (ComplexExprEmitter::*Func)
+                                  (const BinOpInfo &),
+                                  ComplexPairTy &Val);
   ComplexPairTy EmitCompoundAssign(const CompoundAssignOperator *E,
                                    ComplexPairTy (ComplexExprEmitter::*Func)
                                    (const BinOpInfo &));
@@ -220,14 +207,14 @@ public:
   ComplexPairTy EmitBinMul(const BinOpInfo &Op);
   ComplexPairTy EmitBinDiv(const BinOpInfo &Op);
 
-  ComplexPairTy VisitBinMul(const BinaryOperator *E) {
-    return EmitBinMul(EmitBinOps(E));
-  }
   ComplexPairTy VisitBinAdd(const BinaryOperator *E) {
     return EmitBinAdd(EmitBinOps(E));
   }
   ComplexPairTy VisitBinSub(const BinaryOperator *E) {
     return EmitBinSub(EmitBinOps(E));
+  }
+  ComplexPairTy VisitBinMul(const BinaryOperator *E) {
+    return EmitBinMul(EmitBinOps(E));
   }
   ComplexPairTy VisitBinDiv(const BinaryOperator *E) {
     return EmitBinDiv(EmitBinOps(E));
@@ -251,6 +238,9 @@ public:
   // Logical and/or always return int, never complex.
 
   // No comparisons produce a complex result.
+
+  LValue EmitBinAssignLValue(const BinaryOperator *E,
+                             ComplexPairTy &Val);
   ComplexPairTy VisitBinAssign     (const BinaryOperator *E);
   ComplexPairTy VisitBinComma      (const BinaryOperator *E);
 
@@ -383,8 +373,6 @@ ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op,
 ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
-  TestAndClearIgnoreRealAssign();
-  TestAndClearIgnoreImagAssign();
   ComplexPairTy Op = Visit(E->getSubExpr());
 
   llvm::Value *ResR, *ResI;
@@ -401,8 +389,6 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
 ComplexPairTy ComplexExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
-  TestAndClearIgnoreRealAssign();
-  TestAndClearIgnoreImagAssign();
   // ~(a+ib) = a + i*-b
   ComplexPairTy Op = Visit(E->getSubExpr());
   llvm::Value *ResI;
@@ -516,8 +502,6 @@ ComplexExprEmitter::BinOpInfo
 ComplexExprEmitter::EmitBinOps(const BinaryOperator *E) {
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
-  TestAndClearIgnoreRealAssign();
-  TestAndClearIgnoreImagAssign();
   BinOpInfo Ops;
   Ops.LHS = Visit(E->getLHS());
   Ops.RHS = Visit(E->getRHS());
@@ -526,14 +510,12 @@ ComplexExprEmitter::EmitBinOps(const BinaryOperator *E) {
 }
 
 
-// Compound assignments.
-ComplexPairTy ComplexExprEmitter::
-EmitCompoundAssign(const CompoundAssignOperator *E,
-                   ComplexPairTy (ComplexExprEmitter::*Func)(const BinOpInfo&)){
+LValue ComplexExprEmitter::
+EmitCompoundAssignLValue(const CompoundAssignOperator *E,
+          ComplexPairTy (ComplexExprEmitter::*Func)(const BinOpInfo&),
+                         ComplexPairTy &Val) {
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
-  bool ignreal = TestAndClearIgnoreRealAssign();
-  bool ignimag = TestAndClearIgnoreImagAssign();
   QualType LHSTy = E->getLHS()->getType(), RHSTy = E->getRHS()->getType();
 
   BinOpInfo OpInfo;
@@ -569,6 +551,7 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
 
   // Truncate the result back to the LHS type.
   Result = EmitComplexToComplexCast(Result, OpInfo.Ty, LHSTy);
+  Val = Result;
 
   // Store the result value into the LHS lvalue.
   if (LHS.isPropertyRef())
@@ -579,30 +562,41 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
   else
     EmitStoreOfComplex(Result, LHS.getAddress(), LHS.isVolatileQualified());
 
-  // Restore the Ignore* flags.
-  IgnoreReal = ignreal;
-  IgnoreImag = ignimag;
-  IgnoreRealAssign = ignreal;
-  IgnoreImagAssign = ignimag;
- 
-  // Objective-C property assignment never reloads the value following a store.
-  if (LHS.isPropertyRef() || LHS.isKVCRef())
-    return Result;
-
-  // Otherwise, reload the value.
-  return EmitLoadOfComplex(LHS.getAddress(), LHS.isVolatileQualified());
+  return LHS;
 }
 
-ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
-  TestAndClearIgnoreReal();
-  TestAndClearIgnoreImag();
-  bool ignreal = TestAndClearIgnoreRealAssign();
-  bool ignimag = TestAndClearIgnoreImagAssign();
+// Compound assignments.
+ComplexPairTy ComplexExprEmitter::
+EmitCompoundAssign(const CompoundAssignOperator *E,
+                   ComplexPairTy (ComplexExprEmitter::*Func)(const BinOpInfo&)){
+  ComplexPairTy Val;
+  LValue LV = EmitCompoundAssignLValue(E, Func, Val);
+
+  // The result of an assignment in C is the assigned r-value.
+  if (!CGF.getContext().getLangOptions().CPlusPlus)
+    return Val;
+
+  // Objective-C property assignment never reloads the value following a store.
+  if (LV.isPropertyRef() || LV.isKVCRef())
+    return Val;
+
+  // If the lvalue is non-volatile, return the computed value of the assignment.
+  if (!LV.isVolatileQualified())
+    return Val;
+
+  return EmitLoadOfComplex(LV.getAddress(), LV.isVolatileQualified());
+}
+
+LValue ComplexExprEmitter::EmitBinAssignLValue(const BinaryOperator *E,
+                                               ComplexPairTy &Val) {
   assert(CGF.getContext().hasSameUnqualifiedType(E->getLHS()->getType(), 
                                                  E->getRHS()->getType()) &&
          "Invalid assignment");
+  TestAndClearIgnoreReal();
+  TestAndClearIgnoreImag();
+
   // Emit the RHS.
-  ComplexPairTy Val = Visit(E->getRHS());
+  Val = Visit(E->getRHS());
 
   // Compute the address to store into.
   LValue LHS = CGF.EmitLValue(E->getLHS());
@@ -615,13 +609,26 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   else
     EmitStoreOfComplex(Val, LHS.getAddress(), LHS.isVolatileQualified());
 
-  // Restore the Ignore* flags.
-  IgnoreReal = ignreal;
-  IgnoreImag = ignimag;
-  IgnoreRealAssign = ignreal;
-  IgnoreImagAssign = ignimag;
+  return LHS;
+}
 
-  return Val;
+ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
+  ComplexPairTy Val;
+  LValue LV = EmitBinAssignLValue(E, Val);
+
+  // The result of an assignment in C is the assigned r-value.
+  if (!CGF.getContext().getLangOptions().CPlusPlus)
+    return Val;
+
+  // Objective-C property assignment never reloads the value following a store.
+  if (LV.isPropertyRef() || LV.isKVCRef())
+    return Val;
+
+  // If the lvalue is non-volatile, return the computed value of the assignment.
+  if (!LV.isVolatileQualified())
+    return Val;
+
+  return EmitLoadOfComplex(LV.getAddress(), LV.isVolatileQualified());
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
@@ -632,11 +639,8 @@ ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 ComplexPairTy ComplexExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
-
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
-  TestAndClearIgnoreRealAssign();
-  TestAndClearIgnoreImagAssign();
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
@@ -724,12 +728,11 @@ ComplexPairTy ComplexExprEmitter::VisitVAArgExpr(VAArgExpr *E) {
 /// EmitComplexExpr - Emit the computation of the specified expression of
 /// complex type, ignoring the result.
 ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E, bool IgnoreReal,
-                                               bool IgnoreImag, bool IgnoreRealAssign, bool IgnoreImagAssign) {
+                                               bool IgnoreImag) {
   assert(E && E->getType()->isAnyComplexType() &&
          "Invalid complex expression to emit");
 
-  return ComplexExprEmitter(*this, IgnoreReal, IgnoreImag, IgnoreRealAssign,
-                            IgnoreImagAssign)
+  return ComplexExprEmitter(*this, IgnoreReal, IgnoreImag)
     .Visit(const_cast<Expr*>(E));
 }
 

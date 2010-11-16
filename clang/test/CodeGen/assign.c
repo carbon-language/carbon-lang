@@ -15,15 +15,15 @@ void f0() {
   y = (x = 1);
 }
 
-// Check that we do generate reloads for volatile access.
+// This used to test that we generate reloads for volatile access,
+// but that does not appear to be correct behavior for C.
 //
 // CHECK: define void @f1()
 // CHECK:      [[x_1:%.*]] = alloca i32, align 4
 // CHECK-NEXT: [[y_1:%.*]] = alloca i32, align 4
 // CHECK-NEXT: volatile store i32 1, i32* [[x_1]]
 // CHECK-NEXT: volatile store i32 1, i32* [[x_1]]
-// CHECK-NEXT: [[tmp_1:%.*]] = volatile load i32* [[x_1]]
-// CHECK-NEXT: volatile store i32 [[tmp_1]], i32* [[y_1]]
+// CHECK-NEXT: volatile store i32 1, i32* [[y_1]]
 // CHECK: }
 void f1() {
   volatile int x, y;

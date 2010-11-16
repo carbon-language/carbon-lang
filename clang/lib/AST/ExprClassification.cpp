@@ -171,10 +171,22 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
       return Cl::CL_LValue;
 
       // GNU extensions, simply look through them.
-    case UO_Real:
-    case UO_Imag:
     case UO_Extension:
       return ClassifyInternal(Ctx, cast<UnaryOperator>(E)->getSubExpr());
+
+    // Treat _Real and _Imag basically as if they were member
+    // expressions:  l-value only if the operand is a true l-value.
+    case UO_Real:
+    case UO_Imag: {
+      const Expr *Op = cast<UnaryOperator>(E)->getSubExpr()->IgnoreParens();
+      Cl::Kinds K = ClassifyInternal(Ctx, Op);
+      if (K != Cl::CL_LValue) return K;
+
+      if (isa<ObjCPropertyRefExpr>(Op) ||
+          isa<ObjCImplicitSetterGetterRefExpr>(Op))
+        return Cl::CL_SubObjCPropertySetting;
+      return Cl::CL_LValue;
+    }
 
       // C++ [expr.pre.incr]p1: The result is the updated operand; it is an
       //   lvalue, [...]
@@ -343,7 +355,7 @@ static Cl::Kinds ClassifyMemberExpr(ASTContext &Ctx, const MemberExpr *E) {
     if (E->isArrow())
       return Cl::CL_LValue;
     // ObjC property accesses are not lvalues, but get special treatment.
-    Expr *Base = E->getBase();
+    Expr *Base = E->getBase()->IgnoreParens();
     if (isa<ObjCPropertyRefExpr>(Base) ||
         isa<ObjCImplicitSetterGetterRefExpr>(Base))
       return Cl::CL_SubObjCPropertySetting;

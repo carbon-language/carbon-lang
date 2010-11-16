@@ -87,8 +87,7 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, AggValueSlot AggSlot,
   if (!hasAggregateLLVMType(E->getType()))
     return RValue::get(EmitScalarExpr(E, IgnoreResult));
   else if (E->getType()->isAnyComplexType())
-    return RValue::getComplex(EmitComplexExpr(E, false, false,
-                                              IgnoreResult, IgnoreResult));
+    return RValue::getComplex(EmitComplexExpr(E, IgnoreResult, IgnoreResult));
 
   EmitAggExpr(E, AggSlot, IgnoreResult);
   return AggSlot.asRValue();
