@@ -66,8 +66,7 @@ void GRExprEngine::EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
 
 const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
                                                  const StackFrameContext *SFC) {
-  Type *T = D->getTypeForDecl();
-  QualType PT = getContext().getPointerType(QualType(T, 0));
+  QualType PT = D->getThisType(getContext());
   return ValMgr.getRegionManager().getCXXThisRegion(PT, SFC);
 }
 
