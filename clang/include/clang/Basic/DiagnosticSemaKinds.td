@@ -919,6 +919,8 @@ def err_attribute_requires_objc_interface : Error<
   "attribute may only be applied to an Objective-C interface">;
 def warn_nonnull_pointers_only : Warning<
   "nonnull attribute only applies to pointer arguments">;
+def err_attribute_invalid_implicit_this_argument : Error<
+  "'%0' attribute is invalid for the implicit this argument">;
 def err_ownership_type : Error<
   "%0 attribute only applies to %1 arguments">;
 def err_format_strftime_third_parameter : Error<
@@ -927,6 +929,9 @@ def err_format_attribute_requires_variadic : Error<
   "format attribute requires variadic function">;
 def err_format_attribute_not : Error<"format argument not %0">;
 def err_format_attribute_result_not : Error<"function does not return %0">;
+def err_format_attribute_implicit_this_format_string : Error<
+  "format attribute cannot specify the implicit this argument as the format "
+  "string">;
 def err_attribute_invalid_size : Error<
   "vector size not an integral multiple of component size">;
 def err_attribute_zero_size : Error<"zero vector size">;

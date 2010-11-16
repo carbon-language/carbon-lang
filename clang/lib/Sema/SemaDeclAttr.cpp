@@ -127,6 +127,12 @@ static bool isFunctionOrMethodVariadic(const Decl *d) {
   }
 }
 
+static bool isInstanceMethod(const Decl *d) {
+  if (const CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(d))
+    return MethodDecl->isInstance();
+  return false;
+}
+
 static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
   const ObjCObjectPointerType *PT = T->getAs<ObjCObjectPointerType>();
   if (!PT)
@@ -323,7 +329,10 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  unsigned NumArgs = getFunctionOrMethodNumArgs(d);
+  // In C++ the implicit 'this' function parameter also counts, and they are
+  // counted from one.
+  bool HasImplicitThisParam = isInstanceMethod(d);
+  unsigned NumArgs  = getFunctionOrMethodNumArgs(d) + HasImplicitThisParam;
 
   // The nonnull attribute only applies to pointers.
   llvm::SmallVector<unsigned, 10> NonNullArgs;
@@ -351,6 +360,15 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }
 
     --x;
+    if (HasImplicitThisParam) {
+      if (x == 0) {
+        S.Diag(Attr.getLoc(),
+               diag::err_attribute_invalid_implicit_this_argument)
+          << "nonnull" << Ex->getSourceRange();
+        return;
+      }
+      --x;
+    }
 
     // Is the function argument a pointer type?
     QualType T = getFunctionOrMethodArgType(d, x);
@@ -454,7 +472,10 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
     return;
   }
 
-  unsigned NumArgs = getFunctionOrMethodNumArgs(d);
+  // In C++ the implicit 'this' function parameter also counts, and they are
+  // counted from one.
+  bool HasImplicitThisParam = isInstanceMethod(d);
+  unsigned NumArgs  = getFunctionOrMethodNumArgs(d) + HasImplicitThisParam;
 
   llvm::StringRef Module = AL.getParameterName()->getName();
 
@@ -484,6 +505,15 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
       continue;
     }
     --x;
+    if (HasImplicitThisParam) {
+      if (x == 0) {
+        S.Diag(AL.getLoc(), diag::err_attribute_invalid_implicit_this_argument)
+          << "ownership" << IdxExpr->getSourceRange();
+        return;
+      }
+      --x;
+    }
+
     switch (K) {
     case OwnershipAttr::Takes:
     case OwnershipAttr::Holds: {
@@ -1397,10 +1427,13 @@ static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     << Attr.getName() << 0 /*function*/;
     return;
   }
-  // FIXME: in C++ the implicit 'this' function parameter also counts.  this is
-  // needed in order to be compatible with GCC the index must start with 1.
-  unsigned NumArgs  = getFunctionOrMethodNumArgs(d);
+
+  // In C++ the implicit 'this' function parameter also counts, and they are
+  // counted from one.
+  bool HasImplicitThisParam = isInstanceMethod(d);
+  unsigned NumArgs  = getFunctionOrMethodNumArgs(d) + HasImplicitThisParam;
   unsigned FirstIdx = 1;
+
   // checks for the 2nd argument
   Expr *IdxExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt Idx(32);
@@ -1418,6 +1451,15 @@ static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   unsigned ArgIdx = Idx.getZExtValue() - 1;
+
+  if (HasImplicitThisParam) {
+    if (ArgIdx == 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_invalid_implicit_this_argument)
+        << "format_arg" << IdxExpr->getSourceRange();
+      return;
+    }
+    ArgIdx--;
+  }
 
   // make sure the format string is really a string
   QualType Ty = getFunctionOrMethodArgType(d, ArgIdx);
@@ -1445,7 +1487,8 @@ static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) FormatArgAttr(Attr.getLoc(), S.Context, Idx.getZExtValue()));
+  d->addAttr(::new (S.Context) FormatArgAttr(Attr.getLoc(), S.Context,
+                                             Idx.getZExtValue()));
 }
 
 enum FormatAttrKind {
@@ -1551,7 +1594,10 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  unsigned NumArgs  = getFunctionOrMethodNumArgs(d);
+  // In C++ the implicit 'this' function parameter also counts, and they are
+  // counted from one.
+  bool HasImplicitThisParam = isInstanceMethod(d);
+  unsigned NumArgs  = getFunctionOrMethodNumArgs(d) + HasImplicitThisParam;
   unsigned FirstIdx = 1;
 
   llvm::StringRef Format = Attr.getParameterName()->getName();
@@ -1582,16 +1628,6 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  // FIXME: We should handle the implicit 'this' parameter in a more generic
-  // way that can be used for other arguments.
-  bool HasImplicitThisParam = false;
-  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(d)) {
-    if (MD->isInstance()) {
-      HasImplicitThisParam = true;
-      NumArgs++;
-    }
-  }
-
   if (Idx.getZExtValue() < FirstIdx || Idx.getZExtValue() > NumArgs) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
       << "format" << 2 << IdxExpr->getSourceRange();
@@ -1603,8 +1639,9 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (HasImplicitThisParam) {
     if (ArgIdx == 0) {
-      S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
-        << "a string type" << IdxExpr->getSourceRange();
+      S.Diag(Attr.getLoc(),
+             diag::err_format_attribute_implicit_this_format_string)
+        << IdxExpr->getSourceRange();
       return;
     }
     ArgIdx--;
