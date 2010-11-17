@@ -1546,9 +1546,9 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   case ARM::SUBri:
   case ARM::t2ADDri:
   case ARM::t2SUBri:
-    MI->RemoveOperand(5);
-    MachineInstrBuilder(MI)
-      .addReg(ARM::CPSR, RegState::Define | RegState::Implicit);
+    // Toggle the optional operand to CPSR.
+    MI->getOperand(5).setReg(ARM::CPSR);
+    MI->getOperand(5).setIsDef(true);
     CmpInstr->eraseFromParent();
     return true;
   }
