@@ -1694,6 +1694,9 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   assert(Inputs.size() == 1 && "Unexpected number of inputs.");
   const InputInfo &Input = Inputs[0];
 
+  // Don't warn about "clang -w -c foo.s"
+  Args.ClaimAllArgs(options::OPT_w);
+
   // Invoke ourselves in -cc1as mode.
   //
   // FIXME: Implement custom jobs for internal actions.
