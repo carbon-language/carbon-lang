@@ -738,12 +738,6 @@ static void HandleMayAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (!isa<TypeDecl>(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 2 /*variable and function*/;
-    return;
-  }
-
   d->addAttr(::new (S.Context) MayAliasAttr(Attr.getLoc(), S.Context));
 }
 
