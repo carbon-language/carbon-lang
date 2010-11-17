@@ -168,8 +168,9 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                              uint32_t &UcnVal, unsigned short &UcnLen,
                              SourceLocation Loc, Preprocessor &PP,
-                             bool Complain) {
-  if (!PP.getLangOptions().CPlusPlus && !PP.getLangOptions().C99)
+                             Diagnostic *Diags, 
+                             const LangOptions &Features) {
+  if (!Features.CPlusPlus && !Features.C99 && Diags)
     PP.Diag(Loc, diag::warn_ucn_not_valid_in_c89);
 
   // Save the beginning of the string (for error diagnostics).
@@ -179,7 +180,7 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   ThisTokBuf += 2;
 
   if (ThisTokBuf == ThisTokEnd || !isxdigit(*ThisTokBuf)) {
-    if (Complain)
+    if (Diags)
       PP.Diag(Loc, diag::err_ucn_escape_no_digits);
     return false;
   }
@@ -193,7 +194,7 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   }
   // If we didn't consume the proper number of digits, there is a problem.
   if (UcnLenSave) {
-    if (Complain)
+    if (Diags)
       PP.Diag(PP.AdvanceToTokenCharacter(Loc, ThisTokBuf-ThisTokBegin),
               diag::err_ucn_escape_incomplete);
     return false;
@@ -203,7 +204,7 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
       (UcnVal != 0x24 && UcnVal != 0x40 && UcnVal != 0x60 )) // $, @, `
       || (UcnVal >= 0xD800 && UcnVal <= 0xDFFF)
       || (UcnVal > 0x10FFFF)) /* the maximum legal UTF32 value */ {
-    if (Complain)
+    if (Diags)
       PP.Diag(Loc, diag::err_ucn_escape_invalid);
     return false;
   }
@@ -217,13 +218,13 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
 static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                              char *&ResultBuf, bool &HadError,
                              SourceLocation Loc, Preprocessor &PP,
-                             bool wide,
-                             bool Complain) {
+                             bool wide, bool Complain) {
   typedef uint32_t UTF32;
   UTF32 UcnVal = 0;
   unsigned short UcnLen = 0;
-  if (!ProcessUCNEscape(ThisTokBuf, ThisTokEnd,
-                        UcnVal, UcnLen, Loc, PP, Complain)) {
+  if (!ProcessUCNEscape(ThisTokBuf, ThisTokEnd, UcnVal, UcnLen, Loc, PP,
+                        Complain ? &PP.getDiagnostics() : 0,
+                        PP.getLangOptions())){
     HadError = 1;
     return;
   }
@@ -723,8 +724,8 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
       if (begin[1] == 'u' || begin[1] == 'U') {
         uint32_t utf32 = 0;
         unsigned short UcnLen = 0;
-        if (!ProcessUCNEscape(begin, end, utf32, UcnLen,
-                              Loc, PP, /*Complain=*/true)) {
+        if (!ProcessUCNEscape(begin, end, utf32, UcnLen, Loc, PP,
+                              &PP.getDiagnostics(), PP.getLangOptions())) {
           HadError = 1;
         }
         ResultChar = utf32;
@@ -824,7 +825,9 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 ///
 StringLiteralParser::
 StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
-                    Preprocessor &pp, bool Complain) : PP(pp) {
+                    Preprocessor &pp, bool Complain)
+  : PP(pp), SM(PP.getSourceManager()), Features(PP.getLangOptions()),
+    Target(PP.getTargetInfo()), Diags(Complain ? &PP.getDiagnostics() : 0) {
   // Scan all of the string portions, remember the max individual token length,
   // computing a bound on the concatenated string length, and see whether any
   // piece is a wide-string.  If any of the string portions is a wide-string
@@ -953,13 +956,10 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
         continue;
       }
       // Otherwise, this is a non-UCN escape character.  Process it.
-      Diagnostic *Diags = Complain ? &PP.getDiagnostics() : 0;
       unsigned ResultChar =
         ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
-                          FullSourceLoc(StringToks[i].getLocation(),
-                                        PP.getSourceManager()),
-                          AnyWide, Diags,
-                          PP.getTargetInfo());
+                          FullSourceLoc(StringToks[i].getLocation(), SM),
+                          AnyWide, Diags, Target);
 
       // Note: our internal rep of wide char tokens is always little-endian.
       *ResultPtr++ = ResultChar & 0xFF;
@@ -1006,11 +1006,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
 /// specified byte of the string data represented by Token.  This handles
 /// advancing over escape sequences in the string.
 unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
-                                                    unsigned ByteNo,
-                                                    const SourceManager &SM,
-                                                    const LangOptions &Features, 
-                                                    const TargetInfo &Target,
-                                                    Diagnostic *Diags) {
+                                                    unsigned ByteNo) const {
   // Get the spelling of the token.
   llvm::SmallString<32> SpellingBuffer;
   SpellingBuffer.resize(Tok.getLength());

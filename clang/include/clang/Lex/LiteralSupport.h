@@ -141,7 +141,11 @@ public:
 /// literals) (C99 5.1.1.2p1).
 class StringLiteralParser {
   Preprocessor &PP;
-
+  const SourceManager &SM;
+  const LangOptions &Features;
+  const TargetInfo &Target;
+  Diagnostic *Diags;
+  
   unsigned MaxTokenLength;
   unsigned SizeBound;
   unsigned wchar_tByteWidth;
@@ -168,11 +172,7 @@ public:
   ///
   /// If the Diagnostics pointer is non-null, then this will do semantic
   /// checking of the string literal and emit errors and warnings.
-  static unsigned getOffsetOfStringByte(const Token &TheTok, unsigned ByteNo,
-                                        const SourceManager &SM,
-                                        const LangOptions &Features,
-                                        const TargetInfo &Target,
-                                        Diagnostic *Diags = 0);
+  unsigned getOffsetOfStringByte(const Token &TheTok, unsigned ByteNo) const;
 };
 
 }  // end namespace clang

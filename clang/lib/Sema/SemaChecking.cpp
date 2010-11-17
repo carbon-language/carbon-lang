@@ -84,16 +84,13 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
 
     // Use the StringLiteralParser to compute the length of the string in bytes.
     StringLiteralParser SLP(&TheTok, 1, PP, /*Complain=*/false);
+    // PP.getSourceManager(), PP.getLangOptions(), PP.getTargetInfo());
     unsigned TokNumBytes = SLP.GetStringLength();
 
     // If the byte is in this token, return the location of the byte.
     if (ByteNo < TokNumBytes ||
         (ByteNo == TokNumBytes && TokNo == SL->getNumConcatenated())) {
-      unsigned Offset =
-        StringLiteralParser::getOffsetOfStringByte(TheTok, ByteNo, 
-                                                   PP.getSourceManager(),
-                                                   PP.getLangOptions(),
-                                                   PP.getTargetInfo());
+      unsigned Offset = SLP.getOffsetOfStringByte(TheTok, ByteNo); 
 
       // Now that we know the offset of the token in the spelling, use the
       // preprocessor to get the offset in the original source.
