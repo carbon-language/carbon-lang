@@ -718,6 +718,38 @@ void GRExprEngine::ProcessInitializer(const CFGInitializer Init,
 
 void GRExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
                                        GRStmtNodeBuilder &builder) {
+  switch (D.getDtorKind()) {
+  case CFGElement::AutomaticObjectDtor:
+    ProcessAutomaticObjDtor(cast<CFGAutomaticObjDtor>(D), builder);
+    break;
+  case CFGElement::BaseDtor:
+    ProcessBaseDtor(cast<CFGBaseDtor>(D), builder);
+    break;
+  case CFGElement::MemberDtor:
+    ProcessMemberDtor(cast<CFGMemberDtor>(D), builder);
+    break;
+  case CFGElement::TemporaryDtor:
+    ProcessTemporaryDtor(cast<CFGTemporaryDtor>(D), builder);
+    break;
+  default:
+    llvm_unreachable("Unexpected dtor kind.");
+  }
+}
+
+void GRExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D,
+                                           GRStmtNodeBuilder &builder) {
+}
+
+void GRExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
+                                   GRStmtNodeBuilder &builder) {
+}
+
+void GRExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
+                                     GRStmtNodeBuilder &builder) {
+}
+
+void GRExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
+                                        GRStmtNodeBuilder &builder) {
 }
 
 void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred, 

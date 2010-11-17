@@ -185,6 +185,13 @@ public:
 
   void ProcessImplicitDtor(const CFGImplicitDtor D, GRStmtNodeBuilder &builder);
 
+  void ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D, 
+                            GRStmtNodeBuilder &builder);
+  void ProcessBaseDtor(const CFGBaseDtor D, GRStmtNodeBuilder &builder);
+  void ProcessMemberDtor(const CFGMemberDtor D, GRStmtNodeBuilder &builder);
+  void ProcessTemporaryDtor(const CFGTemporaryDtor D, 
+                            GRStmtNodeBuilder &builder);
+
   /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
   ///  a CFGBlock.  This method returns true if the analysis should continue
   ///  exploring the given path, and false otherwise.
