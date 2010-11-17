@@ -914,11 +914,13 @@ such, we never use '<tt>using namespace std;</tt>' in LLVM.</p>
 <p>The exception to the general rule (i.e. it's not an exception for
 the <tt>std</tt> namespace) is for implementation files.  For example, all of
 the code in the LLVM project implements code that lives in the 'llvm' namespace.
-As such, it is ok, and actually clearer, for the <tt>.cpp</tt> files to have a '<tt>using
-namespace llvm</tt>' directive at their top, after the <tt>#include</tt>s.  The
-general form of this rule is that any <tt>.cpp</tt> file that implements code in any
-namespace may use that namespace (and its parents'), but should not use any
-others.</p>
+As such, it is ok, and actually clearer, for the <tt>.cpp</tt> files to have a
+'<tt>using namespace llvm</tt>' directive at their top, after the
+<tt>#include</tt>s.  This reduces indentation in the body of the file for source
+editors that indent based on braces, and keeps the conceptual context cleaner.
+The general form of this rule is that any <tt>.cpp</tt> file that implements
+code in any namespace may use that namespace (and its parents'), but should not
+use any others.</p>
 
 </div>
 
