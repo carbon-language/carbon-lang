@@ -12,6 +12,7 @@
 \*===----------------------------------------------------------------------===*/
 #include "CIndexDiagnostic.h"
 #include "CIndexer.h"
+#include "CXTranslationUnit.h"
 #include "CXSourceLocation.h"
 #include "CXString.h"
 

@@ -63,10 +63,7 @@ typedef void *CXIndex;
 /**
  * \brief A single translation unit, which resides in an index.
  */
-typedef struct CXTranslationUnitImpl {
-  void *TUData;
-  void *StringPool;
-} *CXTranslationUnit;  /* A translation unit instance. */
+typedef struct CXTranslationUnitImpl *CXTranslationUnit;
 
 /**
  * \brief Opaque pointer representing client data that will be passed through

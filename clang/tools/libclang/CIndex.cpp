@@ -14,6 +14,7 @@
 
 #include "CIndexer.h"
 #include "CXCursor.h"
+#include "CXTranslationUnit.h"
 #include "CXString.h"
 #include "CXType.h"
 #include "CXSourceLocation.h"

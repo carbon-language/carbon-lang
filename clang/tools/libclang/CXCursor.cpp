@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CXTranslationUnit.h"
 #include "CXCursor.h"
 #include "CXString.h"
 #include "clang/Frontend/ASTUnit.h"

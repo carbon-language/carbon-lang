@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CXString.h"
+#include "CXTranslationUnit.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang-c/Index.h"
 #include "llvm/ADT/SmallString.h"

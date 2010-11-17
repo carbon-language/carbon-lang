@@ -12,6 +12,7 @@
 //===--------------------------------------------------------------------===//
 
 #include "CIndexer.h"
+#include "CXTranslationUnit.h"
 #include "CXCursor.h"
 #include "CXString.h"
 #include "CXType.h"
