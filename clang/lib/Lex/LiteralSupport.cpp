@@ -194,9 +194,11 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   // If we didn't consume the proper number of digits, there is a problem.
   if (UcnLenSave) {
     if (Diags) {
-      Loc = Preprocessor::AdvanceToTokenCharacter(Loc, ThisTokBuf-ThisTokBegin,
-                                                  Features);
-      Diags->Report(Loc, diag::err_ucn_escape_incomplete);
+      SourceLocation L =
+        Lexer::AdvanceToTokenCharacter(Loc, ThisTokBuf-ThisTokBegin,
+                                       Loc.getManager(), Features);
+      Diags->Report(FullSourceLoc(L, Loc.getManager()),
+                    diag::err_ucn_escape_incomplete);
     }
     return false;
   }

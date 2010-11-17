@@ -429,68 +429,6 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
 }
 
 
-/// AdvanceToTokenCharacter - Given a location that specifies the start of a
-/// token, return a new location that specifies a character within the token.
-FullSourceLoc Preprocessor::AdvanceToTokenCharacter(FullSourceLoc TokStart,
-                                                    unsigned CharNo,
-                                                  const LangOptions &Features) {
-  // Figure out how many physical characters away the specified instantiation
-  // character is.  This needs to take into consideration newlines and
-  // trigraphs.
-  bool Invalid = false;
-  const char *TokPtr = TokStart.getCharacterData(&Invalid);
-
-  // If they request the first char of the token, we're trivially done.
-  if (Invalid || (CharNo == 0 && Lexer::isObviouslySimpleCharacter(*TokPtr)))
-    return TokStart;
-
-  unsigned PhysOffset = 0;
-
-  // The usual case is that tokens don't contain anything interesting.  Skip
-  // over the uninteresting characters.  If a token only consists of simple
-  // chars, this method is extremely fast.
-  while (Lexer::isObviouslySimpleCharacter(*TokPtr)) {
-    if (CharNo == 0)
-      return FullSourceLoc(TokStart.getFileLocWithOffset(PhysOffset),
-                           TokStart.getManager());
-    ++TokPtr, --CharNo, ++PhysOffset;
-  }
-
-  // If we have a character that may be a trigraph or escaped newline, use a
-  // lexer to parse it correctly.
-  for (; CharNo; --CharNo) {
-    unsigned Size;
-    Lexer::getCharAndSizeNoWarn(TokPtr, Size, Features);
-    TokPtr += Size;
-    PhysOffset += Size;
-  }
-
-  // Final detail: if we end up on an escaped newline, we want to return the
-  // location of the actual byte of the token.  For example foo\<newline>bar
-  // advanced by 3 should return the location of b, not of \\.  One compounding
-  // detail of this is that the escape may be made by a trigraph.
-  if (!Lexer::isObviouslySimpleCharacter(*TokPtr))
-    PhysOffset += Lexer::SkipEscapedNewLines(TokPtr)-TokPtr;
-
-  return FullSourceLoc(TokStart.getFileLocWithOffset(PhysOffset),
-                       TokStart.getManager());
-}
-
-SourceLocation Preprocessor::getLocForEndOfToken(SourceLocation Loc,
-                                                 unsigned Offset) {
-  if (Loc.isInvalid() || !Loc.isFileID())
-    return SourceLocation();
-
-  unsigned Len = Lexer::MeasureTokenLength(Loc, getSourceManager(), Features);
-  if (Len > Offset)
-    Len = Len - Offset;
-  else
-    return Loc;
-
-  return AdvanceToTokenCharacter(Loc, Len);
-}
-
-
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Initialization Methods

@@ -717,7 +717,9 @@ public:
   /// location should refer to. The default offset (0) produces a source
   /// location pointing just past the end of the token; an offset of 1 produces
   /// a source location pointing to the last character in the token, etc.
-  SourceLocation getLocForEndOfToken(SourceLocation Loc, unsigned Offset = 0);
+  SourceLocation getLocForEndOfToken(SourceLocation Loc, unsigned Offset = 0) {
+    return Lexer::getLocForEndOfToken(Loc, Offset, SourceMgr, Features);
+  }
 
   /// DumpToken - Print the token to stderr, used for debugging.
   ///
@@ -729,12 +731,8 @@ public:
   /// token, return a new location that specifies a character within the token.
   SourceLocation AdvanceToTokenCharacter(SourceLocation TokStart,
                                          unsigned Char) const {
-    return AdvanceToTokenCharacter(FullSourceLoc(TokStart, SourceMgr), Char,
-                                   Features);
+    return Lexer::AdvanceToTokenCharacter(TokStart, Char, SourceMgr, Features);
   }
-  static FullSourceLoc AdvanceToTokenCharacter(FullSourceLoc TokStart,
-                                               unsigned Char,
-                                               const LangOptions &Features);
 
 
   /// IncrementPasteCounter - Increment the counters for the number of token

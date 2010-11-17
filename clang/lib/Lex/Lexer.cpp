@@ -444,6 +444,83 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer, unsigned MaxLines) {
                                : TheTok.isAtStartOfLine());
 }
 
+
+/// AdvanceToTokenCharacter - Given a location that specifies the start of a
+/// token, return a new location that specifies a character within the token.
+SourceLocation Lexer::AdvanceToTokenCharacter(SourceLocation TokStart,
+                                              unsigned CharNo,
+                                              const SourceManager &SM,
+                                              const LangOptions &Features) {
+  // Figure out how many physical characters away the specified instantiation
+  // character is.  This needs to take into consideration newlines and
+  // trigraphs.
+  bool Invalid = false;
+  const char *TokPtr = SM.getCharacterData(TokStart, &Invalid);
+  
+  // If they request the first char of the token, we're trivially done.
+  if (Invalid || (CharNo == 0 && Lexer::isObviouslySimpleCharacter(*TokPtr)))
+    return TokStart;
+  
+  unsigned PhysOffset = 0;
+  
+  // The usual case is that tokens don't contain anything interesting.  Skip
+  // over the uninteresting characters.  If a token only consists of simple
+  // chars, this method is extremely fast.
+  while (Lexer::isObviouslySimpleCharacter(*TokPtr)) {
+    if (CharNo == 0)
+      return TokStart.getFileLocWithOffset(PhysOffset);
+    ++TokPtr, --CharNo, ++PhysOffset;
+  }
+  
+  // If we have a character that may be a trigraph or escaped newline, use a
+  // lexer to parse it correctly.
+  for (; CharNo; --CharNo) {
+    unsigned Size;
+    Lexer::getCharAndSizeNoWarn(TokPtr, Size, Features);
+    TokPtr += Size;
+    PhysOffset += Size;
+  }
+  
+  // Final detail: if we end up on an escaped newline, we want to return the
+  // location of the actual byte of the token.  For example foo\<newline>bar
+  // advanced by 3 should return the location of b, not of \\.  One compounding
+  // detail of this is that the escape may be made by a trigraph.
+  if (!Lexer::isObviouslySimpleCharacter(*TokPtr))
+    PhysOffset += Lexer::SkipEscapedNewLines(TokPtr)-TokPtr;
+  
+  return TokStart.getFileLocWithOffset(PhysOffset);
+}
+
+/// \brief Computes the source location just past the end of the
+/// token at this source location.
+///
+/// This routine can be used to produce a source location that
+/// points just past the end of the token referenced by \p Loc, and
+/// is generally used when a diagnostic needs to point just after a
+/// token where it expected something different that it received. If
+/// the returned source location would not be meaningful (e.g., if
+/// it points into a macro), this routine returns an invalid
+/// source location.
+///
+/// \param Offset an offset from the end of the token, where the source
+/// location should refer to. The default offset (0) produces a source
+/// location pointing just past the end of the token; an offset of 1 produces
+/// a source location pointing to the last character in the token, etc.
+SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
+                                          const SourceManager &SM,
+                                          const LangOptions &Features) {
+  if (Loc.isInvalid() || !Loc.isFileID())
+    return SourceLocation();
+  
+  unsigned Len = Lexer::MeasureTokenLength(Loc, SM, Features);
+  if (Len > Offset)
+    Len = Len - Offset;
+  else
+    return Loc;
+  
+  return AdvanceToTokenCharacter(Loc, Len, SM, Features);
+}
+
 //===----------------------------------------------------------------------===//
 // Character information.
 //===----------------------------------------------------------------------===//

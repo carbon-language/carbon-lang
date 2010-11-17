@@ -565,7 +565,7 @@ x = foo + bar;
 representation, the 'last' location needs to be adjusted to point to
 (or past) the end of that token with either
 <code>Lexer::MeasureTokenLength()</code> or
-<code>Preprocessor::getLocForEndOfToken()</code>. For the rare cases
+<code>Lexer::getLocForEndOfToken()</code>. For the rare cases
 where character-level source ranges information is needed we use
 the <code>CharSourceRange</code> class.</p>
 

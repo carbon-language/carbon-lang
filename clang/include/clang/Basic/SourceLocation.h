@@ -121,7 +121,6 @@ public:
   /// directly.
   unsigned getRawEncoding() const { return ID; }
 
-
   /// getFromRawEncoding - Turn a raw encoding of a SourceLocation object into
   /// a real SourceLocation.
   static SourceLocation getFromRawEncoding(unsigned Encoding) {
