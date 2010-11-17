@@ -211,6 +211,32 @@ public:
   /// and " characters.  This does not add surrounding ""'s to the string.
   static void Stringify(llvm::SmallVectorImpl<char> &Str);
 
+  
+  /// getSpelling - This method is used to get the spelling of a token into a
+  /// preallocated buffer, instead of as an std::string.  The caller is required
+  /// to allocate enough space for the token, which is guaranteed to be at least
+  /// Tok.getLength() bytes long.  The length of the actual result is returned.
+  ///
+  /// Note that this method may do two possible things: it may either fill in
+  /// the buffer specified with characters, or it may *change the input pointer*
+  /// to point to a constant buffer with the data already in it (avoiding a
+  /// copy).  The caller is not allowed to modify the returned buffer pointer
+  /// if an internal buffer is returned.
+  static unsigned getSpelling(const Token &Tok, const char *&Buffer, 
+                              const SourceManager &SourceMgr,
+                              const LangOptions &Features,
+                              bool *Invalid = 0);
+  
+  /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
+  /// token is the characters used to represent the token in the source file
+  /// after trigraph expansion and escaped-newline folding.  In particular, this
+  /// wants to get the true, uncanonicalized, spelling of things like digraphs
+  /// UCNs, etc.
+  static std::string getSpelling(const Token &Tok,
+                                 const SourceManager &SourceMgr,
+                                 const LangOptions &Features, 
+                                 bool *Invalid = 0);
+  
   /// MeasureTokenLength - Relex the token at the specified location and return
   /// its length in bytes in the input file.  If the token needs cleaning (e.g.
   /// includes a trigraph or an escaped newline) then this count includes bytes

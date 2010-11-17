@@ -641,17 +641,9 @@ public:
   /// UCNs, etc.
   ///
   /// \param Invalid If non-NULL, will be set \c true if an error occurs.
-  std::string getSpelling(const Token &Tok, bool *Invalid = 0) const;
-
-  /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
-  /// token is the characters used to represent the token in the source file
-  /// after trigraph expansion and escaped-newline folding.  In particular, this
-  /// wants to get the true, uncanonicalized, spelling of things like digraphs
-  /// UCNs, etc.
-  static std::string getSpelling(const Token &Tok,
-                                 const SourceManager &SourceMgr,
-                                 const LangOptions &Features, 
-                                 bool *Invalid = 0);
+  std::string getSpelling(const Token &Tok, bool *Invalid = 0) const {
+    return Lexer::getSpelling(Tok, SourceMgr, Features, Invalid);
+  }
 
   /// getSpelling - This method is used to get the spelling of a token into a
   /// preallocated buffer, instead of as an std::string.  The caller is required
@@ -665,12 +657,8 @@ public:
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer, 
                        bool *Invalid = 0) const {
-    return getSpelling(Tok, Buffer, SourceMgr, Features, Invalid);
+    return Lexer::getSpelling(Tok, Buffer, SourceMgr, Features, Invalid);
   }
-  static unsigned getSpelling(const Token &Tok, const char *&Buffer, 
-                              const SourceManager &SourceMgr,
-                              const LangOptions &Features,
-                              bool *Invalid = 0);
 
   /// getSpelling - This method is used to get the spelling of a token into a
   /// SmallVector. Note that the returned StringRef may not point to the

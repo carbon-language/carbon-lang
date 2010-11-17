@@ -898,8 +898,8 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
     // and 'spelled' tokens can only shrink.
     bool StringInvalid = false;
     unsigned ThisTokLen = 
-      Preprocessor::getSpelling(StringToks[i], ThisTokBuf, SM, Features,
-                                &StringInvalid);
+      Lexer::getSpelling(StringToks[i], ThisTokBuf, SM, Features,
+                         &StringInvalid);
     if (StringInvalid) {
       hadError = 1;
       continue;
@@ -1019,8 +1019,8 @@ unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
 
   bool StringInvalid = false;
   const char *SpellingPtr = &SpellingBuffer[0];
-  unsigned TokLen = Preprocessor::getSpelling(Tok, SpellingPtr, SM, Features,
-                                              &StringInvalid);
+  unsigned TokLen = Lexer::getSpelling(Tok, SpellingPtr, SM, Features,
+                                       &StringInvalid);
   if (StringInvalid)
     return 0;
 
