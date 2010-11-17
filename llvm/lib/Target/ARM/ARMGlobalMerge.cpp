@@ -140,7 +140,7 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
     Constant *MergedInit = ConstantStruct::get(MergedTy, Inits);
     GlobalVariable *MergedGV = new GlobalVariable(M, MergedTy, isConst,
                                                   GlobalValue::InternalLinkage,
-                                                  MergedInit, "merged");
+                                                  MergedInit, "_MergedGlobals");
     for (size_t k = i; k < j; ++k) {
       Constant *Idx[2] = {
         ConstantInt::get(Int32Ty, 0),
