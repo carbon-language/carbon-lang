@@ -198,16 +198,16 @@ public:
     assert((HL > HR ? HL-HR : HR-HL) <= 2
            && "Balancing invariant violated");
 
-    assert(!getLeft()
-           || ImutInfo::isLess(ImutInfo::KeyOfValue(getLeft()->getValue()),
-                               ImutInfo::KeyOfValue(getValue()))
-           && "Value in left child is not less that current value");
+    assert((!getLeft() ||
+            ImutInfo::isLess(ImutInfo::KeyOfValue(getLeft()->getValue()),
+                             ImutInfo::KeyOfValue(getValue()))) &&
+           "Value in left child is not less that current value");
 
 
-    assert(!getRight()
-           || ImutInfo::isLess(ImutInfo::KeyOfValue(getValue()),
-                               ImutInfo::KeyOfValue(getRight()->getValue()))
-           && "Current value is not less that value of right child");
+    assert(!(getRight() ||
+             ImutInfo::isLess(ImutInfo::KeyOfValue(getValue()),
+                              ImutInfo::KeyOfValue(getRight()->getValue()))) &&
+           "Current value is not less that value of right child");
 
     return getHeight();
   }
