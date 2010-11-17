@@ -1437,16 +1437,11 @@ let isBranch = 1, isTerminator = 1 in {
       let Inst{24}    = 1; // P bit
       let Inst{27-25} = 0b011;
     }
-    def BR_JTadd : JTI<(outs),
-                     (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
-                      IIC_Br, "add\tpc, $target, $idx$jt",
-                      [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
-                        imm:$id)]> {
-      let Inst{15-12} = 0b1111;
-      let Inst{20}    = 0; // S bit
-      let Inst{24-21} = 0b0100;
-      let Inst{27-25} = 0b000;
-    }
+    def BR_JTadd : PseudoInst<(outs),
+                   (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
+                   IIC_Br, "",
+                   [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
+                     imm:$id)]>;
     } // isNotDuplicable = 1, isIndirectBranch = 1
   } // isBarrier = 1
 

@@ -938,14 +938,32 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case ARM::tBR_JTr:
   case ARM::BR_JTr:
-  case ARM::BR_JTm:
-  case ARM::BR_JTadd: {
+  case ARM::BR_JTm: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
     // FIXME: The branch instruction is really a pseudo. We should xform it
     // explicitly.
     LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
+    EmitJumpTable(MI);
+    return;
+  }
+  case ARM::BR_JTadd: {
+    // Lower and emit the instruction itself, then the jump table following it.
+    // add pc, target, idx
+    MCInst AddInst;
+    AddInst.setOpcode(ARM::ADDrr);
+    AddInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+    // Add predicate operands.
+    AddInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    AddInst.addOperand(MCOperand::CreateReg(0));
+    // Add 's' bit operand (always reg0 for this)
+    AddInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(AddInst);
+
+    // Output the data for the jump table itself
     EmitJumpTable(MI);
     return;
   }
