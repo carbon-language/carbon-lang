@@ -17,6 +17,7 @@ namespace llvm {
     class CallInst;
     class Constant;
     class Function;
+    class GlobalVariable;
     class Instruction;
     class Module;
     class Value;
@@ -112,6 +113,54 @@ private:
     //------------------------------------------------------------------
     bool createResultVariable(llvm::Module &M,
                               llvm::Function &F);
+    
+    //------------------------------------------------------------------
+    /// A function-level pass to find Objective-C constant strings and
+    /// transform them to calls to CFStringCreateWithBytes.
+    //------------------------------------------------------------------
+
+    //------------------------------------------------------------------
+    /// Rewrite a single Objective-C constant string.
+    ///
+    /// @param[in] M
+    ///     The module currently being processed.
+    ///
+    /// @param[in] NSStr
+    ///     The constant NSString to be transformed
+    ///
+    /// @param[in] CStr
+    ///     The constant C string inside the NSString.  This will be
+    ///     passed as the bytes argument to CFStringCreateWithBytes.
+    ///
+    /// @param[in] FirstEntryInstruction
+    ///     An instruction early in the execution of the function.
+    ///     When this function synthesizes a call to 
+    ///     CFStringCreateWithBytes, it places the call before this
+    ///     instruction.  The instruction should come before all 
+    ///     uses of the NSString.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool rewriteObjCConstString(llvm::Module &M,
+                                llvm::GlobalVariable *NSStr,
+                                llvm::GlobalVariable *CStr,
+                                llvm::Instruction *FirstEntryInstruction);    
+    
+    //------------------------------------------------------------------
+    /// The top-level pass implementation
+    ///
+    /// @param[in] M
+    ///     The module currently being processed.
+    ///
+    /// @param[in] F
+    ///     The function currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool rewriteObjCConstStrings(llvm::Module &M,
+                                 llvm::Function &F);
 
     //------------------------------------------------------------------
     /// A basic block-level pass to find all Objective-C method calls and
@@ -323,11 +372,40 @@ private:
                           llvm::Function &F);
     
     /// Flags
-    bool                                    m_resolve_vars;         ///< True if external variable references and persistent variable references should be resolved
+    bool                                    m_resolve_vars;             ///< True if external variable references and persistent variable references should be resolved
     
-    std::string                             m_func_name;            ///< The name of the function to translate
-    lldb_private::ClangExpressionDeclMap   *m_decl_map;             ///< The DeclMap containing the Decls 
-    llvm::Constant                         *m_sel_registerName;     ///< The address of the function sel_registerName, cast to the appropriate function pointer type
+    std::string                             m_func_name;                ///< The name of the function to translate
+    lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
+    llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
+    llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
+    
+private:
+    //------------------------------------------------------------------
+    /// UnfoldConstant operates on a constant [Old] which has just been 
+    /// replaced with a value [New].  We assume that new_value has 
+    /// been properly placed early in the function, in front of the 
+    /// first instruction in the entry basic block 
+    /// [FirstEntryInstruction].  
+    ///
+    /// UnfoldConstant reads through the uses of Old and replaces Old 
+    /// in those uses with New.  Where those uses are constants, the 
+    /// function generates new instructions to compute the result of the 
+    /// new, non-constant expression and places them before 
+    /// FirstEntryInstruction.  These instructions replace the constant
+    /// uses, so UnfoldConstant calls itself recursively for those.
+    ///
+    /// @param[in] M
+    ///     The module currently being processed.
+    ///
+    /// @param[in] F
+    ///     The function currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    static bool UnfoldConstant(llvm::Constant *Old, 
+                               llvm::Value *New, 
+                               llvm::Instruction *FirstEntryInstruction);
 };
 
 #endif

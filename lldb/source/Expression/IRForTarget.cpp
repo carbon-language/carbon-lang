@@ -37,6 +37,7 @@ IRForTarget::IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                          const char *func_name) :
     ModulePass(ID),
     m_decl_map(decl_map),
+    m_CFStringCreateWithBytes(NULL),
     m_sel_registerName(NULL),
     m_func_name(func_name),
     m_resolve_vars(resolve_vars)
@@ -256,6 +257,295 @@ IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     return true;
 }
 
+static void DebugUsers(lldb::LogSP &log, Value *V, uint8_t depth)
+{    
+    if (!depth)
+        return;
+    
+    depth--;
+    
+    log->Printf("  <Begin %d users>", V->getNumUses());
+    
+    for (Value::use_iterator ui = V->use_begin(), ue = V->use_end();
+         ui != ue;
+         ++ui)
+    {
+        log->Printf("  <Use %p> %s", *ui, PrintValue(*ui).c_str());
+        DebugUsers(log, *ui, depth);
+    }
+    
+    log->Printf("  <End uses>");
+}
+
+bool 
+IRForTarget::rewriteObjCConstString(llvm::Module &M,
+                                    llvm::GlobalVariable *NSStr,
+                                    llvm::GlobalVariable *CStr,
+                                    Instruction *FirstEntryInstruction)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    const Type *i8_ptr_ty = Type::getInt8PtrTy(M.getContext());
+    const IntegerType *intptr_ty = Type::getIntNTy(M.getContext(),
+                                                   (M.getPointerSize() == Module::Pointer64) ? 64 : 32);
+    const Type *i32_ty = Type::getInt32Ty(M.getContext());
+    const Type *i8_ty = Type::getInt8Ty(M.getContext());
+    
+    if (!m_CFStringCreateWithBytes)
+    {
+        lldb::addr_t CFStringCreateWithBytes_addr;
+        
+        static lldb_private::ConstString g_CFStringCreateWithBytes_str ("CFStringCreateWithBytes");
+        
+        if (!m_decl_map->GetFunctionAddress (g_CFStringCreateWithBytes_str, CFStringCreateWithBytes_addr))
+        {
+            if (log)
+                log->PutCString("Couldn't find CFStringCreateWithBytes in the target");
+            
+            return false;
+        }
+            
+        if (log)
+            log->Printf("Found CFStringCreateWithBytes at 0x%llx", CFStringCreateWithBytes_addr);
+        
+        // Build the function type:
+        //
+        // CFStringRef CFStringCreateWithBytes (
+        //   CFAllocatorRef alloc,
+        //   const UInt8 *bytes,
+        //   CFIndex numBytes,
+        //   CFStringEncoding encoding,
+        //   Boolean isExternalRepresentation
+        // );
+        //
+        // We make the following substitutions:
+        //
+        // CFStringRef -> i8*
+        // CFAllocatorRef -> i8*
+        // UInt8 * -> i8*
+        // CFIndex -> long (i32 or i64, as appropriate; we ask the module for its pointer size for now)
+        // CFStringEncoding -> i32
+        // Boolean -> i8
+        
+        std::vector <const Type *> CFSCWB_arg_types;
+        CFSCWB_arg_types.push_back(i8_ptr_ty);
+        CFSCWB_arg_types.push_back(i8_ptr_ty);
+        CFSCWB_arg_types.push_back(intptr_ty);
+        CFSCWB_arg_types.push_back(i32_ty);
+        CFSCWB_arg_types.push_back(i8_ty);
+        llvm::Type *CFSCWB_ty = FunctionType::get(i8_ptr_ty, CFSCWB_arg_types, false);
+        
+        // Build the constant containing the pointer to the function
+        PointerType *CFSCWB_ptr_ty = PointerType::getUnqual(CFSCWB_ty);
+        Constant *CFSCWB_addr_int = ConstantInt::get(intptr_ty, CFStringCreateWithBytes_addr, false);
+        m_CFStringCreateWithBytes = ConstantExpr::getIntToPtr(CFSCWB_addr_int, CFSCWB_ptr_ty);
+    }
+    
+    ConstantArray *string_array = dyn_cast<ConstantArray>(CStr->getInitializer());
+                        
+    SmallVector <Value*, 5> CFSCWB_arguments;
+    
+    Constant *alloc_arg         = Constant::getNullValue(i8_ptr_ty);
+    Constant *bytes_arg         = ConstantExpr::getBitCast(CStr, i8_ptr_ty);
+    Constant *numBytes_arg      = ConstantInt::get(intptr_ty, string_array->getType()->getNumElements(), false);
+    Constant *encoding_arg      = ConstantInt::get(i32_ty, 0x0600, false); /* 0x0600 is kCFStringEncodingASCII */
+    Constant *isExternal_arg    = ConstantInt::get(i8_ty, 0x0, false); /* 0x0 is false */
+    
+    CFSCWB_arguments.push_back(alloc_arg);
+    CFSCWB_arguments.push_back(bytes_arg);
+    CFSCWB_arguments.push_back(numBytes_arg);
+    CFSCWB_arguments.push_back(encoding_arg);
+    CFSCWB_arguments.push_back(isExternal_arg);
+    
+    CallInst *CFSCWB_call = CallInst::Create(m_CFStringCreateWithBytes, 
+                                             CFSCWB_arguments.begin(),
+                                             CFSCWB_arguments.end(),
+                                             "CFStringCreateWithBytes",
+                                             FirstEntryInstruction);
+    
+    Constant *initializer = NSStr->getInitializer();
+        
+    if (!UnfoldConstant(NSStr, CFSCWB_call, FirstEntryInstruction))
+    {
+        if (log)
+            log->PutCString("Couldn't replace the NSString with the result of the call");
+        
+        return false;
+    }
+    
+    NSStr->eraseFromParent();
+    
+    return true;
+}
+
+bool
+IRForTarget::rewriteObjCConstStrings(Module &M,
+                                     Function &F)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    ValueSymbolTable& value_symbol_table = M.getValueSymbolTable();
+    
+    BasicBlock &entry_block(F.getEntryBlock());
+    Instruction *FirstEntryInstruction(entry_block.getFirstNonPHIOrDbg());
+    
+    if (!FirstEntryInstruction)
+    {
+        if (log)
+            log->PutCString("Couldn't find first instruction for rewritten Objective-C strings");
+        
+        return false;
+    }
+    
+    for (ValueSymbolTable::iterator vi = value_symbol_table.begin(), ve = value_symbol_table.end();
+         vi != ve;
+         ++vi)
+    {
+        if (strstr(vi->first(), "_unnamed_cfstring_"))
+        {
+            Value *nsstring_value = vi->second;
+            
+            GlobalVariable *nsstring_global = dyn_cast<GlobalVariable>(nsstring_value);
+            
+            if (!nsstring_global)
+            {
+                if (log)
+                    log->PutCString("NSString variable is not a GlobalVariable");
+                return false;
+            }
+            
+            if (!nsstring_global->hasInitializer())
+            {
+                if (log)
+                    log->PutCString("NSString variable does not have an initializer");
+                return false;
+            }
+            
+            ConstantStruct *nsstring_struct = dyn_cast<ConstantStruct>(nsstring_global->getInitializer());
+            
+            if (!nsstring_struct)
+            {
+                if (log)
+                    log->PutCString("NSString variable's initializer is not a ConstantStruct");
+                return false;
+            }
+            
+            // We expect the following structure:
+            //
+            // struct {
+            //   int *isa;
+            //   int flags;
+            //   char *str;
+            //   long length;
+            // };
+            
+            if (nsstring_struct->getNumOperands() != 4)
+            {
+                if (log)
+                    log->Printf("NSString variable's initializer structure has an unexpected number of members.  Should be 4, is %d", nsstring_struct->getNumOperands());
+                return false;
+            }
+            
+            Constant *nsstring_member = nsstring_struct->getOperand(2);
+            
+            if (!nsstring_member)
+            {
+                if (log)
+                    log->PutCString("NSString initializer's str element was empty");
+                return false;
+            }
+            
+            ConstantExpr *nsstring_expr = dyn_cast<ConstantExpr>(nsstring_member);
+            
+            if (!nsstring_expr)
+            {
+                if (log)
+                    log->PutCString("NSString initializer's str element is not a ConstantExpr");
+                return false;
+            }
+            
+            if (nsstring_expr->getOpcode() != Instruction::GetElementPtr)
+            {
+                if (log)
+                    log->Printf("NSString initializer's str element is not a GetElementPtr expression, it's a %s", nsstring_expr->getOpcodeName());
+                return false;
+            }
+            
+            Constant *nsstring_cstr = nsstring_expr->getOperand(0);
+            
+            GlobalVariable *cstr_global = dyn_cast<GlobalVariable>(nsstring_cstr);
+            
+            if (!cstr_global)
+            {
+                if (log)
+                    log->PutCString("NSString initializer's str element is not a GlobalVariable");
+                
+                nsstring_cstr->dump();
+                
+                return false;
+            }
+            
+            if (!cstr_global->hasInitializer())
+            {
+                if (log)
+                    log->PutCString("NSString initializer's str element does not have an initializer");
+                return false;
+            }
+            
+            ConstantArray *cstr_array = dyn_cast<ConstantArray>(cstr_global->getInitializer());
+            
+            if (!cstr_array)
+            {
+                if (log)
+                    log->PutCString("NSString initializer's str element is not a ConstantArray");
+                return false;
+            }
+            
+            if (!cstr_array->isCString())
+            {
+                if (log)
+                    log->PutCString("NSString initializer's str element is not a C string array");
+                return false;
+            }
+            
+            if (log)
+                log->Printf("Found NSString constant %s, which contains \"%s\"", vi->first(), cstr_array->getAsString().c_str());
+            
+            if (!rewriteObjCConstString(M, nsstring_global, cstr_global, FirstEntryInstruction))
+            {
+                if (log)
+                    log->PutCString("Error rewriting the constant string");
+                return false;
+            }
+            
+            
+        }
+    }
+    
+    for (ValueSymbolTable::iterator vi = value_symbol_table.begin(), ve = value_symbol_table.end();
+         vi != ve;
+         ++vi)
+    {
+        if (!strcmp(vi->first(), "__CFConstantStringClassReference"))
+        {
+            GlobalVariable *gv = dyn_cast<GlobalVariable>(vi->second);
+            
+            if (!gv)
+            {
+                if (log)
+                    log->PutCString("__CFConstantStringClassReference is not a global variable");
+                return false;
+            }
+                
+            gv->eraseFromParent();
+                
+            break;
+        }
+    }
+    
+    return true;
+}
+
 static bool isObjCSelectorRef(Value *V)
 {
     GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
@@ -366,7 +656,7 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
     CallInst *srN_call = CallInst::Create(m_sel_registerName, 
                                           srN_arguments.begin(),
                                           srN_arguments.end(),
-                                          "srN",
+                                          "sel_registerName",
                                           selector_load);
     
     // Replace the load with the call in all users
@@ -638,14 +928,14 @@ IRForTarget::MaybeHandleVariable
 
 bool
 IRForTarget::MaybeHandleCallArguments(Module &M,
-                                      CallInst *C)
+                                      CallInst *Old)
 {
     // lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    for (unsigned op_index = 0, num_ops = C->getNumArgOperands();
+    for (unsigned op_index = 0, num_ops = Old->getNumArgOperands();
          op_index < num_ops;
          ++op_index)
-        if (!MaybeHandleVariable(M, C->getArgOperand(op_index))) // conservatively believe that this is a store
+        if (!MaybeHandleVariable(M, Old->getArgOperand(op_index))) // conservatively believe that this is a store
             return false;
     
     return true;
@@ -813,9 +1103,9 @@ IRForTarget::resolveExternals(Module &M,
 
 static bool isGuardVariableRef(Value *V)
 {
-    Constant *C;
+    Constant *Old;
     
-    if (!(C = dyn_cast<Constant>(V)))
+    if (!(Old = dyn_cast<Constant>(V)))
         return false;
     
     ConstantExpr *CE;
@@ -825,10 +1115,10 @@ static bool isGuardVariableRef(Value *V)
         if (CE->getOpcode() != Instruction::BitCast)
             return false;
         
-        C = CE->getOperand(0);
+        Old = CE->getOperand(0);
     }
     
-    GlobalVariable *GV = dyn_cast<GlobalVariable>(C);
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(Old);
     
     if (!GV || !GV->hasName() || !GV->getName().startswith("_ZGV"))
         return false;
@@ -909,19 +1199,8 @@ IRForTarget::removeGuards(Module &M, BasicBlock &BB)
     return true;
 }
 
-// UnfoldConstant operates on a constant [C] which has just been replaced with a value
-// [new_value].  We assume that new_value has been properly placed early in the function,
-// most likely somewhere in front of the first instruction in the entry basic block 
-// [first_entry_instruction].  
-//
-// UnfoldConstant reads through the uses of C and replaces C in those uses with new_value.
-// Where those uses are constants, the function generates new instructions to compute the
-// result of the new, non-constant expression and places them before first_entry_instruction.  
-// These instructions replace the constant uses, so UnfoldConstant calls itself recursively
-// for those.
-
-static bool
-UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instruction)
+bool
+IRForTarget::UnfoldConstant(Constant *Old, Value *New, Instruction *FirstEntryInstruction)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -931,8 +1210,8 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
     
     // We do this because the use list might change, invalidating our iterator.
     // Much better to keep a work list ourselves.
-    for (ui = C->use_begin();
-         ui != C->use_end();
+    for (ui = Old->use_begin();
+         ui != Old->use_end();
          ++ui)
         users.push_back(*ui);
         
@@ -961,12 +1240,12 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
                         
                         Value *s = constant_expr->getOperand(0);
                         
-                        if (s == C)
-                            s = new_value;
+                        if (s == Old)
+                            s = New;
                         
-                        BitCastInst *bit_cast(new BitCastInst(s, C->getType(), "", first_entry_instruction));
+                        BitCastInst *bit_cast(new BitCastInst(s, Old->getType(), "", FirstEntryInstruction));
                         
-                        UnfoldConstant(constant_expr, bit_cast, first_entry_instruction);
+                        UnfoldConstant(constant_expr, bit_cast, FirstEntryInstruction);
                     }
                     break;
                 case Instruction::GetElementPtr:
@@ -977,8 +1256,8 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
                         
                         Value *ptr = constant_expr->getOperand(0);
                         
-                        if (ptr == C)
-                            ptr = new_value;
+                        if (ptr == Old)
+                            ptr = New;
                         
                         SmallVector<Value*, 16> indices;
                         
@@ -991,15 +1270,15 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
                         {
                             Value *operand = constant_expr->getOperand(operand_index);
                             
-                            if (operand == C)
-                                operand = new_value;
+                            if (operand == Old)
+                                operand = New;
                             
                             indices.push_back(operand);
                         }
                         
-                        GetElementPtrInst *get_element_ptr(GetElementPtrInst::Create(ptr, indices.begin(), indices.end(), "", first_entry_instruction));
+                        GetElementPtrInst *get_element_ptr(GetElementPtrInst::Create(ptr, indices.begin(), indices.end(), "", FirstEntryInstruction));
                         
-                        UnfoldConstant(constant_expr, get_element_ptr, first_entry_instruction);
+                        UnfoldConstant(constant_expr, get_element_ptr, FirstEntryInstruction);
                     }
                     break;
                 }
@@ -1014,7 +1293,7 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
         else
         {
             // simple fall-through case for non-constants
-            user->replaceUsesOfWith(C, new_value);
+            user->replaceUsesOfWith(Old, New);
         }
     }
     
@@ -1067,9 +1346,9 @@ IRForTarget::replaceVariables(Module &M, Function &F)
         log->Printf("Arg: \"%s\"", PrintValue(argument).c_str());
     
     BasicBlock &entry_block(F.getEntryBlock());
-    Instruction *first_entry_instruction(entry_block.getFirstNonPHIOrDbg());
+    Instruction *FirstEntryInstruction(entry_block.getFirstNonPHIOrDbg());
     
-    if (!first_entry_instruction)
+    if (!FirstEntryInstruction)
         return false;
     
     LLVMContext &context(M.getContext());
@@ -1096,11 +1375,11 @@ IRForTarget::replaceVariables(Module &M, Function &F)
                         offset);
         
         ConstantInt *offset_int(ConstantInt::getSigned(offset_type, offset));
-        GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument, offset_int, "", first_entry_instruction);
-        BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", first_entry_instruction);
+        GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument, offset_int, "", FirstEntryInstruction);
+        BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", FirstEntryInstruction);
         
         if (Constant *constant = dyn_cast<Constant>(value))
-            UnfoldConstant(constant, bit_cast, first_entry_instruction);
+            UnfoldConstant(constant, bit_cast, FirstEntryInstruction);
         else
             value->replaceAllUsesWith(bit_cast);
         
@@ -1137,6 +1416,37 @@ IRForTarget::runOnModule(Module &M)
     
     if (!createResultVariable(M, *function))
         return false;
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // Fix all Objective-C constant strings to use NSStringWithCString:encoding:
+    //
+    
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream oss(s);
+        
+        M.print(oss, NULL);
+        
+        oss.flush();
+        
+        log->Printf("Module after creating the result variable: \n\"%s\"", s.c_str());
+    }
+    
+    if (!rewriteObjCConstStrings(M, *function))
+        return false;
+    
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream oss(s);
+        
+        M.print(oss, NULL);
+        
+        oss.flush();
+        
+        log->Printf("Module after rewriting Objective-C const strings: \n\"%s\"", s.c_str());
+    }
     
     //////////////////////////////////
     // Run basic-block level passes
