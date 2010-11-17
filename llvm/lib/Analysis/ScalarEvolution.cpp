@@ -2879,18 +2879,22 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
   // risks breaking LCSSA form. Instcombine would normally zap these, but
   // it doesn't have DominatorTree information, so it may miss cases.
   if (Value *V = SimplifyInstruction(PN, TD, DT)) {
-    // TODO: The following check is suboptimal.  For example, it is pointless
-    // if V is a constant.  Since the problematic case is if V is defined inside
-    // a deeper loop, it would be better to check for that directly.
-    bool AllSameLoop = true;
-    Loop *PNLoop = LI->getLoopFor(PN->getParent());
-    for (size_t i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (LI->getLoopFor(PN->getIncomingBlock(i)) != PNLoop) {
-        AllSameLoop = false;
-        break;
-      }
-    if (AllSameLoop)
+    Instruction *I = dyn_cast<Instruction>(V);
+    // Only instructions are problematic for preserving LCSSA form.
+    if (!I)
       return getSCEV(V);
+
+    // If the instruction is not defined in a loop, then it can be used freely.
+    Loop *ILoop = LI->getLoopFor(I->getParent());
+    if (!ILoop)
+      return getSCEV(I);
+
+    // If the instruction is defined in the same loop as the phi node, or in a
+    // loop that contains the phi node loop as an inner loop, then using it as
+    // a replacement for the phi node will not break LCSSA form.
+    Loop *PNLoop = LI->getLoopFor(PN->getParent());
+    if (ILoop->contains(PNLoop))
+      return getSCEV(I);
   }
 
   // If it's not a loop phi, we can't handle it yet.
