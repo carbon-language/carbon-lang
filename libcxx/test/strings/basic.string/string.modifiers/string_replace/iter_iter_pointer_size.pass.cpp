@@ -10,7 +10,7 @@
 // <string>
 
 // basic_string<charT,traits,Allocator>&
-//   replace(iterator i1, iterator i2, const charT* s, size_type n);
+//   replace(const_iterator i1, const_iterator i2, const charT* s, size_type n);
 
 #include <stdio.h>
 
@@ -25,8 +25,8 @@ test(S s, S::size_type pos1, S::size_type n1, const S::value_type* str,
      S::size_type n2, S expected)
 {
     S::size_type old_size = s.size();
-    S::iterator first = s.begin() + pos1;
-    S::iterator last = s.begin() + pos1 + n1;
+    S::const_iterator first = s.begin() + pos1;
+    S::const_iterator last = s.begin() + pos1 + n1;
     s.replace(first, last, str, n2);
     assert(s.__invariants());
     assert(s == expected);

@@ -54,12 +54,12 @@ template
 template
     enable_if<__is_input_iterator<char const*>::value, string&>::type
     string::
-    replace<char const*>(string::iterator, string::iterator, char const*, char const*);
+    replace<char const*>(string::const_iterator, string::const_iterator, char const*, char const*);
 
 template
     enable_if<__is_input_iterator<wchar_t const*>::value, wstring&>::type
     wstring::
-    replace<wchar_t const*>(wstring::iterator, wstring::iterator, wchar_t const*, wchar_t const*);
+    replace<wchar_t const*>(wstring::const_iterator, wstring::const_iterator, wchar_t const*, wchar_t const*);
 
 template
     enable_if<__is_forward_iterator<wchar_t*>::value, wstring&>::type

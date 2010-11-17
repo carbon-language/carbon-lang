@@ -9,7 +9,7 @@
 
 // <string>
 
-// basic_string& replace(iterator i1, iterator i2, initializer_list<charT> il);
+// basic_string& replace(const_iterator i1, const_iterator i2, initializer_list<charT> il);
 
 #include <string>
 #include <cassert>
@@ -19,7 +19,7 @@ int main()
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::string s("123def456");
-        s.replace(s.begin() + 3, s.begin() + 6, {'a', 'b', 'c'});
+        s.replace(s.cbegin() + 3, s.cbegin() + 6, {'a', 'b', 'c'});
         assert(s == "123abc456");
     }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES

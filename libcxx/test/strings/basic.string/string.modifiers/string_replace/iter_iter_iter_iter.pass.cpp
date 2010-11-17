@@ -11,7 +11,7 @@
 
 // template<class InputIterator>
 //   basic_string&
-//   replace(iterator i1, iterator i2, InputIterator j1, InputIterator j2);
+//   replace(const_iterator i1, const_iterator i2, InputIterator j1, InputIterator j2);
 
 #include <string>
 #include <iterator>
@@ -24,8 +24,8 @@ void
 test(S s, typename S::size_type pos1, typename S::size_type n1, It f, It l, S expected)
 {
     typename S::size_type old_size = s.size();
-    typename S::iterator first = s.begin() + pos1;
-    typename S::iterator last = s.begin() + pos1 + n1;
+    typename S::const_iterator first = s.begin() + pos1;
+    typename S::const_iterator last = s.begin() + pos1 + n1;
     s.replace(first, last, f, l);
     assert(s.__invariants());
     assert(s == expected);
