@@ -2698,6 +2698,9 @@ def note_condition_assign_to_comparison : Note<
 def note_condition_assign_silence : Note<
   "place parentheses around the assignment to silence this warning">;
 
+def warn_synthesized_ivar_access : Warning<
+  "direct access of synthesized ivar by using property access %0">,
+  InGroup<NonfragileAbi2>, DefaultIgnore;
 def warn_ivar_variable_conflict : Warning<
   "when default property synthesis is on, "
   "%0 lookup will access property ivar instead of global variable">, 

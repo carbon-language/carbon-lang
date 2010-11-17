@@ -1446,9 +1446,15 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       if (Ex) return Owned(Ex);
       // Synthesize ivars lazily
       if (getLangOptions().ObjCNonFragileABI2) {
-        if (SynthesizeProvisionalIvar(*this, R, II, NameLoc))
+        if (SynthesizeProvisionalIvar(*this, R, II, NameLoc)) {
+          if (const ObjCPropertyDecl *Property = 
+                canSynthesizeProvisionalIvar(II)) {
+            Diag(NameLoc, diag::warn_synthesized_ivar_access) << II;
+            Diag(Property->getLocation(), diag::note_property_declare);
+          }
           return ActOnIdExpression(S, SS, Id, HasTrailingLParen,
                                    isAddressOfOperand);
+        }
       }
       // for further use, this must be set to false if in class method.
       IvarLookupFollowUp = getCurMethodDecl()->isInstanceMethod();
