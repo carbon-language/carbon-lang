@@ -1555,14 +1555,6 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   return true;
 }
 
-static MachineMemOperand *CopyMMO(const MachineMemOperand *MMO,
-                                  unsigned NewSize, MachineFunction *MF) {
-  return MF->getMachineMemOperand(MachinePointerInfo(MMO->getValue(),
-                                                     MMO->getOffset()),
-                                  MMO->getFlags(), NewSize,
-                                  MMO->getAlignment(), MMO->getTBAAInfo());
-}
-
 bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
                                  SmallVector<MachineInstr*, 4> &Ops,
                                  unsigned Base, bool isLd,
@@ -1670,11 +1662,6 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
             if (!isT2)
               MIB.addReg(0);
             MIB.addImm(Offset).addImm(Pred).addReg(PredReg);
-
-            // Copy memoperands bug change size to 8.
-            for (MachineInstr::mmo_iterator mmo = Op0->memoperands_begin();
-                 mmo != Op0->memoperands_end(); ++mmo)
-              MIB.addMemOperand(CopyMMO(*mmo, 8, MF));
             ++NumLDRDFormed;
           } else {
             MachineInstrBuilder MIB = BuildMI(*MBB, InsertPos,
@@ -1688,10 +1675,6 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
             if (!isT2)
               MIB.addReg(0);
             MIB.addImm(Offset).addImm(Pred).addReg(PredReg);
-             // Copy memoperands bug change size to 8.
-            for (MachineInstr::mmo_iterator mmo = Op0->memoperands_begin();
-                 mmo != Op0->memoperands_end(); ++mmo)
-              MIB.addMemOperand(CopyMMO(*mmo, 8, MF));
             ++NumSTRDFormed;
           }
           MBB->erase(Op0);
