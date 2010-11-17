@@ -78,16 +78,6 @@ namespace llvm {
 
     unsigned getSCEVType() const { return SCEVType; }
 
-    /// isLoopInvariant - Return true if the value of this SCEV is unchanging in
-    /// the specified loop.
-    virtual bool isLoopInvariant(const Loop *L) const = 0;
-
-    /// hasComputableLoopEvolution - Return true if this SCEV changes value in a
-    /// known way in the specified loop.  This property being true implies that
-    /// the value is variant in the loop AND that we can emit an expression to
-    /// compute the value of the expression at any particular loop iteration.
-    virtual bool hasComputableLoopEvolution(const Loop *L) const = 0;
-
     /// getType - Return the LLVM type of this SCEV expression.
     ///
     virtual const Type *getType() const = 0;
@@ -156,9 +146,7 @@ namespace llvm {
     SCEVCouldNotCompute();
 
     // None of these methods are valid for this object.
-    virtual bool isLoopInvariant(const Loop *L) const;
     virtual const Type *getType() const;
-    virtual bool hasComputableLoopEvolution(const Loop *L) const;
     virtual void print(raw_ostream &OS) const;
     virtual bool hasOperand(const SCEV *Op) const;
 
@@ -700,6 +688,16 @@ namespace llvm {
     bool SimplifyICmpOperands(ICmpInst::Predicate &Pred,
                               const SCEV *&LHS,
                               const SCEV *&RHS);
+
+    /// isLoopInvariant - Return true if the value of the given SCEV is
+    /// unchanging in the specified loop.
+    bool isLoopInvariant(const SCEV *S, const Loop *L);
+
+    /// hasComputableLoopEvolution - Return true if the given SCEV changes value
+    /// in a known way in the specified loop.  This property being true implies
+    /// that the value is variant in the loop AND that we can emit an expression
+    /// to compute the value of the expression at any particular loop iteration.
+    bool hasComputableLoopEvolution(const SCEV *S, const Loop *L);
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();

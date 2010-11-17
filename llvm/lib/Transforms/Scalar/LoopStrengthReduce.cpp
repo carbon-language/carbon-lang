@@ -730,7 +730,7 @@ void Cost::RateRegister(const SCEV *Reg,
     ++SetupCost;
 
     NumIVMuls += isa<SCEVMulExpr>(Reg) &&
-                 Reg->hasComputableLoopEvolution(L);
+                 SE.hasComputableLoopEvolution(Reg, L);
 }
 
 /// RatePrimaryRegister - Record this register in the set. If we haven't seen it
@@ -2056,7 +2056,7 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
 
         // x == y  -->  x - y == 0
         const SCEV *N = SE.getSCEV(NV);
-        if (N->isLoopInvariant(L)) {
+        if (SE.isLoopInvariant(N, L)) {
           Kind = LSRUse::ICmpZero;
           S = SE.getMinusSCEV(N, S);
         }
@@ -2196,7 +2196,7 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
         if (const ICmpInst *ICI = dyn_cast<ICmpInst>(UserInst)) {
           unsigned OtherIdx = !UI.getOperandNo();
           Value *OtherOp = const_cast<Value *>(ICI->getOperand(OtherIdx));
-          if (SE.getSCEV(OtherOp)->hasComputableLoopEvolution(L))
+          if (SE.hasComputableLoopEvolution(SE.getSCEV(OtherOp), L))
             continue;
         }
 
@@ -2279,7 +2279,7 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
 
       // Loop-variant "unknown" values are uninteresting; we won't be able to
       // do anything meaningful with them.
-      if (isa<SCEVUnknown>(*J) && !(*J)->isLoopInvariant(L))
+      if (isa<SCEVUnknown>(*J) && !SE.isLoopInvariant(*J, L))
         continue;
 
       // Don't pull a constant into a register if the constant could be folded
@@ -2331,7 +2331,7 @@ void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
        I = Base.BaseRegs.begin(), E = Base.BaseRegs.end(); I != E; ++I) {
     const SCEV *BaseReg = *I;
     if (BaseReg->properlyDominates(L->getHeader(), &DT) &&
-        !BaseReg->hasComputableLoopEvolution(L))
+        !SE.hasComputableLoopEvolution(BaseReg, L))
       Ops.push_back(BaseReg);
     else
       F.BaseRegs.push_back(BaseReg);

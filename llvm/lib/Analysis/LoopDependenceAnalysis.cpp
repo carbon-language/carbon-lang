@@ -132,7 +132,7 @@ void LoopDependenceAnalysis::getLoops(const SCEV *S,
                                       DenseSet<const Loop*>* Loops) const {
   // Refactor this into an SCEVVisitor, if efficiency becomes a concern.
   for (const Loop *L = this->L; L != 0; L = L->getParentLoop())
-    if (!S->isLoopInvariant(L))
+    if (!SE->isLoopInvariant(S, L))
       Loops->insert(L);
 }
 

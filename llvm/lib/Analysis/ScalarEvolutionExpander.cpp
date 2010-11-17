@@ -1278,7 +1278,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
   Instruction *InsertPt = Builder.GetInsertPoint();
   for (Loop *L = SE.LI->getLoopFor(Builder.GetInsertBlock()); ;
        L = L->getParentLoop())
-    if (S->isLoopInvariant(L)) {
+    if (SE.isLoopInvariant(S, L)) {
       if (!L) break;
       if (BasicBlock *Preheader = L->getLoopPreheader())
         InsertPt = Preheader->getTerminator();
@@ -1286,7 +1286,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
       // If the SCEV is computable at this level, insert it into the header
       // after the PHIs (and after any other instructions that we've inserted
       // there) so that it is guaranteed to dominate any user inside the loop.
-      if (L && S->hasComputableLoopEvolution(L) && !PostIncLoops.count(L))
+      if (L && SE.hasComputableLoopEvolution(S, L) && !PostIncLoops.count(L))
         InsertPt = L->getHeader()->getFirstNonPHI();
       while (isInsertedInstruction(InsertPt) || isa<DbgInfoIntrinsic>(InsertPt))
         InsertPt = llvm::next(BasicBlock::iterator(InsertPt));

@@ -148,19 +148,9 @@ bool SCEV::isAllOnesValue() const {
 SCEVCouldNotCompute::SCEVCouldNotCompute() :
   SCEV(FoldingSetNodeIDRef(), scCouldNotCompute) {}
 
-bool SCEVCouldNotCompute::isLoopInvariant(const Loop *L) const {
-  llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-  return false;
-}
-
 const Type *SCEVCouldNotCompute::getType() const {
   llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
   return 0;
-}
-
-bool SCEVCouldNotCompute::hasComputableLoopEvolution(const Loop *L) const {
-  llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-  return false;
 }
 
 bool SCEVCouldNotCompute::hasOperand(const SCEV *) const {
@@ -276,30 +266,6 @@ bool SCEVNAryExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
   return true;
 }
 
-bool SCEVNAryExpr::isLoopInvariant(const Loop *L) const {
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
-    if (!(*I)->isLoopInvariant(L))
-      return false;
-  return true;
-}
-
-// hasComputableLoopEvolution - N-ary expressions have computable loop
-// evolutions iff they have at least one operand that varies with the loop,
-// but that all varying operands are computable.
-bool SCEVNAryExpr::hasComputableLoopEvolution(const Loop *L) const {
-  bool HasVarying = false;
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
-    const SCEV *S = *I;
-    if (!S->isLoopInvariant(L)) {
-      if (S->hasComputableLoopEvolution(L))
-        HasVarying = true;
-      else
-        return false;
-    }
-  }
-  return HasVarying;
-}
-
 bool SCEVNAryExpr::hasOperand(const SCEV *O) const {
   for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
     const SCEV *S = *I;
@@ -328,29 +294,6 @@ const Type *SCEVUDivExpr::getType() const {
   // avoid extra casts in the SCEVExpander. The LHS is more likely to be
   // a pointer type than the RHS, so use the RHS' type here.
   return RHS->getType();
-}
-
-bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
-  // Add recurrences are never invariant in the function-body (null loop).
-  if (!QueryLoop)
-    return false;
-
-  // This recurrence is variant w.r.t. QueryLoop if QueryLoop contains L.
-  if (QueryLoop->contains(L))
-    return false;
-
-  // This recurrence is invariant w.r.t. QueryLoop if L contains QueryLoop.
-  if (L->contains(QueryLoop))
-    return true;
-
-  // This recurrence is variant w.r.t. QueryLoop if any of its operands
-  // are variant.
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
-    if (!(*I)->isLoopInvariant(QueryLoop))
-      return false;
-
-  // Otherwise it's loop-invariant.
-  return true;
 }
 
 bool
@@ -403,16 +346,6 @@ void SCEVUnknown::allUsesReplacedWith(Value *New) {
   // because there may still be outstanding SCEVs which still point to
   // this SCEVUnknown.
   setValPtr(New);
-}
-
-bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
-  // All non-instruction values are loop invariant.  All instructions are loop
-  // invariant if they are not contained in the specified loop.
-  // Instructions are never considered invariant in the function body
-  // (null loop) because they are defined within the "loop".
-  if (Instruction *I = dyn_cast<Instruction>(getValue()))
-    return L && !L->contains(I);
-  return true;
 }
 
 bool SCEVUnknown::dominates(BasicBlock *BB, DominatorTree *DT) const {
@@ -1648,7 +1581,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     const SCEVAddRecExpr *AddRec = cast<SCEVAddRecExpr>(Ops[Idx]);
     const Loop *AddRecLoop = AddRec->getLoop();
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-      if (Ops[i]->isLoopInvariant(AddRecLoop)) {
+      if (isLoopInvariant(Ops[i], AddRecLoop)) {
         LIOps.push_back(Ops[i]);
         Ops.erase(Ops.begin()+i);
         --i; --e;
@@ -1854,7 +1787,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
     const SCEVAddRecExpr *AddRec = cast<SCEVAddRecExpr>(Ops[Idx]);
     const Loop *AddRecLoop = AddRec->getLoop();
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-      if (Ops[i]->isLoopInvariant(AddRecLoop)) {
+      if (isLoopInvariant(Ops[i], AddRecLoop)) {
         LIOps.push_back(Ops[i]);
         Ops.erase(Ops.begin()+i);
         --i; --e;
@@ -2074,7 +2007,7 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
     assert(getEffectiveSCEVType(Operands[i]->getType()) == ETy &&
            "SCEVAddRecExpr operand types don't match!");
   for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-    assert(Operands[i]->isLoopInvariant(L) &&
+    assert(isLoopInvariant(Operands[i], L) &&
            "SCEVAddRecExpr operand is not loop-invariant!");
 #endif
 
@@ -2116,7 +2049,7 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
       // requirement.
       bool AllInvariant = true;
       for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-        if (!Operands[i]->isLoopInvariant(L)) {
+        if (!isLoopInvariant(Operands[i], L)) {
           AllInvariant = false;
           break;
         }
@@ -2124,7 +2057,7 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
         NestedOperands[0] = getAddRecExpr(Operands, L);
         AllInvariant = true;
         for (unsigned i = 0, e = NestedOperands.size(); i != e; ++i)
-          if (!NestedOperands[i]->isLoopInvariant(NestedLoop)) {
+          if (!isLoopInvariant(NestedOperands[i], NestedLoop)) {
             AllInvariant = false;
             break;
           }
@@ -2812,7 +2745,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 
             // This is not a valid addrec if the step amount is varying each
             // loop iteration, but is not itself an addrec in this loop.
-            if (Accum->isLoopInvariant(L) ||
+            if (isLoopInvariant(Accum, L) ||
                 (isa<SCEVAddRecExpr>(Accum) &&
                  cast<SCEVAddRecExpr>(Accum)->getLoop() == L)) {
               bool HasNUW = false;
@@ -2833,7 +2766,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 
               // Since the no-wrap flags are on the increment, they apply to the
               // post-incremented value as well.
-              if (Accum->isLoopInvariant(L))
+              if (isLoopInvariant(Accum, L))
                 (void)getAddRecExpr(getAddExpr(StartVal, Accum),
                                     Accum, L, HasNUW, HasNSW);
 
@@ -3736,8 +3669,8 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   if (Pair.second) {
     BackedgeTakenInfo BECount = ComputeBackedgeTakenCount(L);
     if (BECount.Exact != getCouldNotCompute()) {
-      assert(BECount.Exact->isLoopInvariant(L) &&
-             BECount.Max->isLoopInvariant(L) &&
+      assert(isLoopInvariant(BECount.Exact, L) &&
+             isLoopInvariant(BECount.Max, L) &&
              "Computed backedge-taken count isn't loop invariant for loop!");
       ++NumTripCountsComputed;
 
@@ -4099,7 +4032,7 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
 
   // At this point, we would like to compute how many iterations of the
   // loop the predicate will return true for these inputs.
-  if (LHS->isLoopInvariant(L) && !RHS->isLoopInvariant(L)) {
+  if (isLoopInvariant(LHS, L) && !isLoopInvariant(RHS, L)) {
     // If there is a loop-invariant, force it into the RHS.
     std::swap(LHS, RHS);
     Cond = ICmpInst::getSwappedPredicate(Cond);
@@ -4261,7 +4194,7 @@ ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
   // We can only recognize very limited forms of loop index expressions, in
   // particular, only affine AddRec's like {C1,+,C2}.
   const SCEVAddRecExpr *IdxExpr = dyn_cast<SCEVAddRecExpr>(Idx);
-  if (!IdxExpr || !IdxExpr->isAffine() || IdxExpr->isLoopInvariant(L) ||
+  if (!IdxExpr || !IdxExpr->isAffine() || isLoopInvariant(IdxExpr, L) ||
       !isa<SCEVConstant>(IdxExpr->getOperand(0)) ||
       !isa<SCEVConstant>(IdxExpr->getOperand(1)))
     return getCouldNotCompute();
@@ -4988,7 +4921,7 @@ bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
   // as both operands could be addrecs loop-invariant in each other's loop.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(RHS)) {
     const Loop *L = AR->getLoop();
-    if (LHS->isLoopInvariant(L) && LHS->properlyDominates(L->getHeader(), DT)) {
+    if (isLoopInvariant(LHS, L) && LHS->properlyDominates(L->getHeader(), DT)) {
       std::swap(LHS, RHS);
       Pred = ICmpInst::getSwappedPredicate(Pred);
       Changed = true;
@@ -5605,7 +5538,7 @@ ScalarEvolution::BackedgeTakenInfo
 ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                                   const Loop *L, bool isSigned) {
   // Only handle:  "ADDREC < LoopInvariant".
-  if (!RHS->isLoopInvariant(L)) return getCouldNotCompute();
+  if (!isLoopInvariant(RHS, L)) return getCouldNotCompute();
 
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(LHS);
   if (!AddRec || AddRec->getLoop() != L)
@@ -5988,7 +5921,7 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
       if (L) {
         OS << "\t\t" "Exits: ";
         const SCEV *ExitValue = SE.getSCEVAtScope(SV, L->getParentLoop());
-        if (!ExitValue->isLoopInvariant(L)) {
+        if (!SE.isLoopInvariant(ExitValue, L)) {
           OS << "<<Unknown>>";
         } else {
           OS << *ExitValue;
@@ -6005,3 +5938,124 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
     PrintLoopInfo(OS, &SE, *I);
 }
 
+bool ScalarEvolution::isLoopInvariant(const SCEV *S, const Loop *L) {
+  switch (S->getSCEVType()) {
+  case scConstant:
+    return true;
+  case scTruncate:
+  case scZeroExtend:
+  case scSignExtend:
+    return isLoopInvariant(cast<SCEVCastExpr>(S)->getOperand(), L);
+  case scAddRecExpr: {
+    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
+
+    // Add recurrences are never invariant in the function-body (null loop).
+    if (!L)
+      return false;
+
+    // This recurrence is variant w.r.t. L if L contains AR's loop.
+    if (L->contains(AR->getLoop()))
+      return false;
+
+    // This recurrence is invariant w.r.t. L if AR's loop contains L.
+    if (AR->getLoop()->contains(L))
+      return true;
+
+    // This recurrence is variant w.r.t. L if any of its operands
+    // are variant.
+    for (SCEVAddRecExpr::op_iterator I = AR->op_begin(), E = AR->op_end();
+         I != E; ++I)
+      if (!isLoopInvariant(*I, L))
+        return false;
+
+    // Otherwise it's loop-invariant.
+    return true;
+  }
+  case scAddExpr:
+  case scMulExpr:
+  case scUMaxExpr:
+  case scSMaxExpr: {
+    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
+         I != E; ++I)
+      if (!isLoopInvariant(*I, L))
+        return false;
+    return true;
+  }
+  case scUDivExpr: {
+    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
+    return isLoopInvariant(UDiv->getLHS(), L) &&
+           isLoopInvariant(UDiv->getRHS(), L);
+  }
+  case scUnknown:
+    // All non-instruction values are loop invariant.  All instructions are loop
+    // invariant if they are not contained in the specified loop.
+    // Instructions are never considered invariant in the function body
+    // (null loop) because they are defined within the "loop".
+    if (Instruction *I = dyn_cast<Instruction>(cast<SCEVUnknown>(S)->getValue()))
+      return L && !L->contains(I);
+    return true;
+  case scCouldNotCompute:
+    llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+    return false;
+  default: break;
+  }
+  llvm_unreachable("Unknown SCEV kind!");
+  return false;
+}
+
+bool ScalarEvolution::hasComputableLoopEvolution(const SCEV *S, const Loop *L) {
+  switch (S->getSCEVType()) {
+  case scConstant:
+    return false;
+  case scTruncate:
+  case scZeroExtend:
+  case scSignExtend:
+    return hasComputableLoopEvolution(cast<SCEVCastExpr>(S)->getOperand(), L);
+  case scAddRecExpr:
+    return cast<SCEVAddRecExpr>(S)->getLoop() == L;
+  case scAddExpr:
+  case scMulExpr:
+  case scUMaxExpr:
+  case scSMaxExpr: {
+    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+    bool HasVarying = false;
+    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
+         I != E; ++I) {
+      const SCEV *Op = *I;
+      if (!isLoopInvariant(Op, L)) {
+        if (hasComputableLoopEvolution(Op, L))
+          HasVarying = true;
+        else
+          return false;
+      }
+    }
+    return HasVarying;
+  }
+  case scUDivExpr: {
+    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
+    bool HasVarying = false;
+    if (!isLoopInvariant(UDiv->getLHS(), L)) {
+      if (hasComputableLoopEvolution(UDiv->getLHS(), L))
+        HasVarying = true;
+      else
+        return false;
+    }
+    if (!isLoopInvariant(UDiv->getRHS(), L)) {
+      if (hasComputableLoopEvolution(UDiv->getRHS(), L))
+        HasVarying = true;
+      else
+        return false;
+    }
+    return HasVarying;
+  }
+  case scUnknown:
+    return false;
+  case scCouldNotCompute:
+    llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+    return false;
+  default: break;
+  }
+  llvm_unreachable("Unknown SCEV kind!");
+  return false;
+}

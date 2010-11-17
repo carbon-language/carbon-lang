@@ -42,14 +42,6 @@ namespace llvm {
   public:
     ConstantInt *getValue() const { return V; }
 
-    virtual bool isLoopInvariant(const Loop *L) const {
-      return true;
-    }
-
-    virtual bool hasComputableLoopEvolution(const Loop *L) const {
-      return false;  // Not loop variant
-    }
-
     virtual const Type *getType() const;
 
     virtual bool hasOperand(const SCEV *) const {
@@ -87,14 +79,6 @@ namespace llvm {
   public:
     const SCEV *getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
-
-    virtual bool isLoopInvariant(const Loop *L) const {
-      return Op->isLoopInvariant(L);
-    }
-
-    virtual bool hasComputableLoopEvolution(const Loop *L) const {
-      return Op->hasComputableLoopEvolution(L);
-    }
 
     virtual bool hasOperand(const SCEV *O) const {
       return Op == O || Op->hasOperand(O);
@@ -201,13 +185,6 @@ namespace llvm {
     typedef const SCEV *const *op_iterator;
     op_iterator op_begin() const { return Operands; }
     op_iterator op_end() const { return Operands + NumOperands; }
-
-    virtual bool isLoopInvariant(const Loop *L) const;
-
-    // hasComputableLoopEvolution - N-ary expressions have computable loop
-    // evolutions iff they have at least one operand that varies with the loop,
-    // but that all varying operands are computable.
-    virtual bool hasComputableLoopEvolution(const Loop *L) const;
 
     virtual bool hasOperand(const SCEV *O) const;
 
@@ -328,15 +305,6 @@ namespace llvm {
     const SCEV *getLHS() const { return LHS; }
     const SCEV *getRHS() const { return RHS; }
 
-    virtual bool isLoopInvariant(const Loop *L) const {
-      return LHS->isLoopInvariant(L) && RHS->isLoopInvariant(L);
-    }
-
-    virtual bool hasComputableLoopEvolution(const Loop *L) const {
-      return LHS->hasComputableLoopEvolution(L) &&
-             RHS->hasComputableLoopEvolution(L);
-    }
-
     virtual bool hasOperand(const SCEV *O) const {
       return O == LHS || O == RHS || LHS->hasOperand(O) || RHS->hasOperand(O);
     }
@@ -388,12 +356,6 @@ namespace llvm {
                                                            op_end()),
                               getLoop());
     }
-
-    virtual bool hasComputableLoopEvolution(const Loop *QL) const {
-      return L == QL;
-    }
-
-    virtual bool isLoopInvariant(const Loop *QueryLoop) const;
 
     bool dominates(BasicBlock *BB, DominatorTree *DT) const;
 
@@ -529,11 +491,6 @@ namespace llvm {
     bool isSizeOf(const Type *&AllocTy) const;
     bool isAlignOf(const Type *&AllocTy) const;
     bool isOffsetOf(const Type *&STy, Constant *&FieldNo) const;
-
-    virtual bool isLoopInvariant(const Loop *L) const;
-    virtual bool hasComputableLoopEvolution(const Loop *QL) const {
-      return false; // not computable
-    }
 
     virtual bool hasOperand(const SCEV *) const {
       return false;
