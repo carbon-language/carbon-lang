@@ -1002,7 +1002,6 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
     // doesn't start with our phony prefix of '$'
     if (name_unique_cstr[0] != '$')
     {
-        
         Variable *var = FindVariableInScope(*m_exe_ctx.frame, name);
         
         // If we found a variable in scope, no need to pull up function names
