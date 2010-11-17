@@ -339,9 +339,7 @@ public:
 
   // Expression visitors
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
-  bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
-  bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
   bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
@@ -1476,17 +1474,6 @@ bool CursorVisitor::VisitOffsetOfExpr(OffsetOfExpr *E) {
   return false;
 }
 
-bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
-  if (E->isArgumentType()) {
-    if (TypeSourceInfo *TSInfo = E->getArgumentTypeInfo())
-      return Visit(TSInfo->getTypeLoc());
-
-    return false;
-  }
-
-  return VisitExpr(E);
-}
-
 bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   // Visit the designators.
   typedef DesignatedInitExpr::Designator Designator;
@@ -1516,13 +1503,6 @@ bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
  
   // Visit the initializer value itself.
   return Visit(MakeCXCursor(E->getInit(), StmtParent, TU));
-}
-
-bool CursorVisitor::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
-  if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
-    return Visit(TSInfo->getTypeLoc());
-  
-  return false;
 }
 
 bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
@@ -1688,6 +1668,7 @@ public:
   void VisitCompoundStmt(CompoundStmt *S);
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { /* Do nothing. */ }
   void VisitCXXNewExpr(CXXNewExpr *E);
+  void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
   void VisitCXXTypeidExpr(CXXTypeidExpr *E);
@@ -1704,6 +1685,7 @@ public:
   void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   void VisitObjCMessageExpr(ObjCMessageExpr *M);
   void VisitOverloadExpr(OverloadExpr *E);
+  void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   void VisitStmt(Stmt *S);
   void VisitSwitchStmt(SwitchStmt *S);
   void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
@@ -1786,6 +1768,9 @@ void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
   AddStmt(CE->getCallee());
   AddStmt(CE->getArg(0));
 }
+void EnqueueVisitor::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
+  AddTypeLoc(E->getTypeSourceInfo());
+}
 void EnqueueVisitor::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   EnqueueChildren(E);
   AddTypeLoc(E->getTypeSourceInfo());
@@ -1867,6 +1852,11 @@ void EnqueueVisitor::VisitObjCMessageExpr(ObjCMessageExpr *M) {
 void EnqueueVisitor::VisitOverloadExpr(OverloadExpr *E) {
   AddExplicitTemplateArgs(E->getOptionalExplicitTemplateArgs());
   WL.push_back(OverloadExprParts(E, Parent));
+}
+void EnqueueVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+  EnqueueChildren(E);
+  if (E->isArgumentType())
+    AddTypeLoc(E->getArgumentTypeInfo());
 }
 void EnqueueVisitor::VisitStmt(Stmt *S) {
   EnqueueChildren(S);
@@ -1970,9 +1960,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           // Cases not yet handled by the data-recursion
           // algorithm.
           case Stmt::OffsetOfExprClass:
-          case Stmt::SizeOfAlignOfExprClass:
           case Stmt::DesignatedInitExprClass:
-          case Stmt::CXXScalarValueInitExprClass:
           case Stmt::CXXPseudoDestructorExprClass:
           case Stmt::DependentScopeDeclRefExprClass:
           case Stmt::CXXDependentScopeMemberExprClass:
