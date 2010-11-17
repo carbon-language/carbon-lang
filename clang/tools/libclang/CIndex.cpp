@@ -339,7 +339,6 @@ public:
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   bool VisitAddrLabelExpr(AddrLabelExpr *E);
-  bool VisitVAArgExpr(VAArgExpr *E);
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
   bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
@@ -1486,13 +1485,6 @@ bool CursorVisitor::VisitAddrLabelExpr(AddrLabelExpr *E) {
   return Visit(MakeCursorLabelRef(E->getLabel(), E->getLabelLoc(), TU));
 }
 
-bool CursorVisitor::VisitVAArgExpr(VAArgExpr *E) {
-  if (Visit(E->getWrittenTypeInfo()->getTypeLoc()))
-    return true;
-  
-  return Visit(MakeCXCursor(E->getSubExpr(), StmtParent, TU));
-}
-
 bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   // Visit the designators.
   typedef DesignatedInitExpr::Designator Designator;
@@ -1712,6 +1704,7 @@ public:
   void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   void VisitWhileStmt(WhileStmt *W);
   void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
+  void VisitVAArgExpr(VAArgExpr *E);
 
 private:
   void AddStmt(Stmt *S);
@@ -1869,6 +1862,10 @@ void EnqueueVisitor::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U) {
   VisitOverloadExpr(U);
   if (!U->isImplicitAccess())
     AddStmt(U->getBase());
+}
+void EnqueueVisitor::VisitVAArgExpr(VAArgExpr *E) {
+  AddStmt(E->getSubExpr());
+  AddTypeLoc(E->getWrittenTypeInfo());
 }
 
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
