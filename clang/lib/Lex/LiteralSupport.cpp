@@ -167,11 +167,10 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 /// return the UTF32.
 static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                              uint32_t &UcnVal, unsigned short &UcnLen,
-                             SourceLocation Loc, Preprocessor &PP,
-                             Diagnostic *Diags, 
+                             FullSourceLoc Loc, Diagnostic *Diags, 
                              const LangOptions &Features) {
   if (!Features.CPlusPlus && !Features.C99 && Diags)
-    PP.Diag(Loc, diag::warn_ucn_not_valid_in_c89);
+    Diags->Report(Loc, diag::warn_ucn_not_valid_in_c89);
 
   // Save the beginning of the string (for error diagnostics).
   const char *ThisTokBegin = ThisTokBuf;
@@ -181,7 +180,7 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
 
   if (ThisTokBuf == ThisTokEnd || !isxdigit(*ThisTokBuf)) {
     if (Diags)
-      PP.Diag(Loc, diag::err_ucn_escape_no_digits);
+      Diags->Report(Loc, diag::err_ucn_escape_no_digits);
     return false;
   }
   UcnLen = (ThisTokBuf[-1] == 'u' ? 4 : 8);
@@ -194,9 +193,11 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   }
   // If we didn't consume the proper number of digits, there is a problem.
   if (UcnLenSave) {
-    if (Diags)
-      PP.Diag(PP.AdvanceToTokenCharacter(Loc, ThisTokBuf-ThisTokBegin),
-              diag::err_ucn_escape_incomplete);
+    if (Diags) {
+      Loc = Preprocessor::AdvanceToTokenCharacter(Loc, ThisTokBuf-ThisTokBegin,
+                                                  Features);
+      Diags->Report(Loc, diag::err_ucn_escape_incomplete);
+    }
     return false;
   }
   // Check UCN constraints (C99 6.4.3p2).
@@ -205,7 +206,7 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
       || (UcnVal >= 0xD800 && UcnVal <= 0xDFFF)
       || (UcnVal > 0x10FFFF)) /* the maximum legal UTF32 value */ {
     if (Diags)
-      PP.Diag(Loc, diag::err_ucn_escape_invalid);
+      Diags->Report(Loc, diag::err_ucn_escape_invalid);
     return false;
   }
   return true;
@@ -222,7 +223,8 @@ static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   typedef uint32_t UTF32;
   UTF32 UcnVal = 0;
   unsigned short UcnLen = 0;
-  if (!ProcessUCNEscape(ThisTokBuf, ThisTokEnd, UcnVal, UcnLen, Loc, PP,
+  if (!ProcessUCNEscape(ThisTokBuf, ThisTokEnd, UcnVal, UcnLen,
+                        FullSourceLoc(Loc, PP.getSourceManager()),
                         Complain ? &PP.getDiagnostics() : 0,
                         PP.getLangOptions())){
     HadError = 1;
@@ -724,7 +726,8 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
       if (begin[1] == 'u' || begin[1] == 'U') {
         uint32_t utf32 = 0;
         unsigned short UcnLen = 0;
-        if (!ProcessUCNEscape(begin, end, utf32, UcnLen, Loc, PP,
+        if (!ProcessUCNEscape(begin, end, utf32, UcnLen,
+                              FullSourceLoc(Loc, PP.getSourceManager()),
                               &PP.getDiagnostics(), PP.getLangOptions())) {
           HadError = 1;
         }

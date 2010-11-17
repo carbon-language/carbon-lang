@@ -727,7 +727,15 @@ public:
 
   /// AdvanceToTokenCharacter - Given a location that specifies the start of a
   /// token, return a new location that specifies a character within the token.
-  SourceLocation AdvanceToTokenCharacter(SourceLocation TokStart,unsigned Char);
+  SourceLocation AdvanceToTokenCharacter(SourceLocation TokStart,
+                                         unsigned Char) const {
+    return AdvanceToTokenCharacter(FullSourceLoc(TokStart, SourceMgr), Char,
+                                   Features);
+  }
+  static FullSourceLoc AdvanceToTokenCharacter(FullSourceLoc TokStart,
+                                               unsigned Char,
+                                               const LangOptions &Features);
+
 
   /// IncrementPasteCounter - Increment the counters for the number of token
   /// paste operations performed.  If fast was specified, this is a 'fast paste'

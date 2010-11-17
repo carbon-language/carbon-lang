@@ -431,13 +431,14 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
 
 /// AdvanceToTokenCharacter - Given a location that specifies the start of a
 /// token, return a new location that specifies a character within the token.
-SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
-                                                     unsigned CharNo) {
+FullSourceLoc Preprocessor::AdvanceToTokenCharacter(FullSourceLoc TokStart,
+                                                    unsigned CharNo,
+                                                  const LangOptions &Features) {
   // Figure out how many physical characters away the specified instantiation
   // character is.  This needs to take into consideration newlines and
   // trigraphs.
   bool Invalid = false;
-  const char *TokPtr = SourceMgr.getCharacterData(TokStart, &Invalid);
+  const char *TokPtr = TokStart.getCharacterData(&Invalid);
 
   // If they request the first char of the token, we're trivially done.
   if (Invalid || (CharNo == 0 && Lexer::isObviouslySimpleCharacter(*TokPtr)))
@@ -450,7 +451,8 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   // chars, this method is extremely fast.
   while (Lexer::isObviouslySimpleCharacter(*TokPtr)) {
     if (CharNo == 0)
-      return TokStart.getFileLocWithOffset(PhysOffset);
+      return FullSourceLoc(TokStart.getFileLocWithOffset(PhysOffset),
+                           TokStart.getManager());
     ++TokPtr, --CharNo, ++PhysOffset;
   }
 
@@ -470,7 +472,8 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   if (!Lexer::isObviouslySimpleCharacter(*TokPtr))
     PhysOffset += Lexer::SkipEscapedNewLines(TokPtr)-TokPtr;
 
-  return TokStart.getFileLocWithOffset(PhysOffset);
+  return FullSourceLoc(TokStart.getFileLocWithOffset(PhysOffset),
+                       TokStart.getManager());
 }
 
 SourceLocation Preprocessor::getLocForEndOfToken(SourceLocation Loc,
