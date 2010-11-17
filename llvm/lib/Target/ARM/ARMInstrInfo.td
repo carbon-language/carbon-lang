@@ -290,9 +290,31 @@ def RegListAsmOperand : AsmOperandClass {
   let SuperClasses = [];
 }
 
+def DPRRegListAsmOperand : AsmOperandClass {
+  let Name = "DPRRegList";
+  let SuperClasses = [];
+}
+
+def SPRRegListAsmOperand : AsmOperandClass {
+  let Name = "SPRRegList";
+  let SuperClasses = [];
+}
+
 def reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = RegListAsmOperand;
+  let PrintMethod = "printRegisterList";
+}
+
+def dpr_reglist : Operand<i32> {
+  let EncoderMethod = "getRegisterListOpValue";
+  let ParserMatchClass = DPRRegListAsmOperand;
+  let PrintMethod = "printRegisterList";
+}
+
+def spr_reglist : Operand<i32> {
+  let EncoderMethod = "getRegisterListOpValue";
+  let ParserMatchClass = SPRRegListAsmOperand;
   let PrintMethod = "printRegisterList";
 }
 

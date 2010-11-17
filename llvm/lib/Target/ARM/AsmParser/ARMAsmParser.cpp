@@ -107,6 +107,8 @@ class ARMOperand : public MCParsedAsmOperand {
     Memory,
     Register,
     RegisterList,
+    DPRRegisterList,
+    SPRRegisterList,
     Token
   } Kind;
 
@@ -168,6 +170,8 @@ public:
       Reg = o.Reg;
       break;
     case RegisterList:
+    case DPRRegisterList:
+    case SPRRegisterList:
       RegList = o.RegList;
       break;
     case Immediate:
@@ -204,7 +208,8 @@ public:
   }
 
   const SmallVectorImpl<unsigned> &getRegList() const {
-    assert(Kind == RegisterList && "Invalid access!");
+    assert((Kind == RegisterList || Kind == DPRRegisterList ||
+            Kind == SPRRegisterList) && "Invalid access!");
     return *RegList.Registers;
   }
 
@@ -217,6 +222,8 @@ public:
   bool isImm() const { return Kind == Immediate; }
   bool isReg() const { return Kind == Register; }
   bool isRegList() const { return Kind == RegisterList; }
+  bool isDPRRegList() const { return Kind == DPRRegisterList; }
+  bool isSPRRegList() const { return Kind == SPRRegisterList; }
   bool isToken() const { return Kind == Token; }
   bool isMemory() const { return Kind == Memory; }
   bool isMemMode5() const {
@@ -262,6 +269,14 @@ public:
     for (SmallVectorImpl<unsigned>::const_iterator
            I = RegList.begin(), E = RegList.end(); I != E; ++I)
       Inst.addOperand(MCOperand::CreateReg(*I));
+  }
+
+  void addDPRRegListOperands(MCInst &Inst, unsigned N) const {
+    addRegListOperands(Inst, N);
+  }
+
+  void addSPRRegListOperands(MCInst &Inst, unsigned N) const {
+    addRegListOperands(Inst, N);
   }
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
@@ -327,7 +342,14 @@ public:
   static ARMOperand *
   CreateRegList(const SmallVectorImpl<std::pair<unsigned, SMLoc> > &Regs,
                 SMLoc StartLoc, SMLoc EndLoc) {
-    ARMOperand *Op = new ARMOperand(RegisterList);
+    KindTy Kind = RegisterList;
+
+    if (ARM::DPRRegClass.contains(Regs.front().first))
+      Kind = DPRRegisterList;
+    else if (ARM::SPRRegClass.contains(Regs.front().first))
+      Kind = SPRRegisterList;
+
+    ARMOperand *Op = new ARMOperand(Kind);
     Op->RegList.Registers = new SmallVector<unsigned, 32>();
     for (SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
            I = Regs.begin(), E = Regs.end(); I != E; ++I)
@@ -387,7 +409,9 @@ void ARMOperand::dump(raw_ostream &OS) const {
   case Register:
     OS << "<register " << getReg() << (!Reg.Writeback ? ">" : "!>");
     break;
-  case RegisterList: {
+  case RegisterList:
+  case DPRRegisterList:
+  case SPRRegisterList: {
     OS << "<register_list ";
 
     const SmallVectorImpl<unsigned> &RegList = getRegList();

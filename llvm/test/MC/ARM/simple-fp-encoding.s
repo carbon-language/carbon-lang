@@ -207,3 +207,13 @@
         vstr.32 s4, [r1]
         vstr.32 s4, [r1, #24]
         vstr.32 s4, [r1, #-24]
+
+@ CHECK: vldmia r1, {d2, d3, d4, d5, d6, d7} @ encoding: [0x0c,0x2b,0x91,0xec]
+@ CHECK: vldmia r1, {s2, s3, s4, s5, s6, s7} @ encoding: [0x06,0x1a,0x91,0xec]
+        vldmia  r1, {d2,d3-d6,d7}
+        vldmia  r1, {s2,s3-s6,s7}
+
+@ CHECK: vstmia r1, {d2, d3, d4, d5, d6, d7} @ encoding: [0x0c,0x2b,0x81,0xec]
+@ CHECK: vstmia	r1, {s2, s3, s4, s5, s6, s7} @ encoding: [0x06,0x1a,0x81,0xec]
+        vstmia  r1, {d2,d3-d6,d7}
+        vstmia  r1, {s2,s3-s6,s7}

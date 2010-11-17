@@ -78,7 +78,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
                          InstrItinClass itin, InstrItinClass itin_upd> {
   // Double Precision
   def DIA :
-    AXDI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+    AXDI4<(outs), (ins GPR:$Rn, pred:$p, dpr_reglist:$regs, variable_ops),
           IndexModeNone, itin,
           !strconcat(asm, "ia${p}\t$Rn, $regs"), "", []> {
     let Inst{24-23} = 0b01;       // Increment After
@@ -86,7 +86,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
     let Inst{20}    = L_bit;
   }
   def DIA_UPD :
-    AXDI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+    AXDI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, dpr_reglist:$regs, variable_ops),
           IndexModeUpd, itin_upd,
           !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b01;       // Increment After
@@ -94,7 +94,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
     let Inst{20}    = L_bit;
   }
   def DDB :
-    AXDI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+    AXDI4<(outs), (ins GPR:$Rn, pred:$p, dpr_reglist:$regs, variable_ops),
           IndexModeNone, itin,
           !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
     let Inst{24-23} = 0b10;       // Decrement Before
@@ -102,7 +102,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
     let Inst{20}    = L_bit;
   }
   def DDB_UPD :
-    AXDI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+    AXDI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, dpr_reglist:$regs, variable_ops),
           IndexModeUpd, itin_upd,
           !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b10;       // Decrement Before
@@ -112,7 +112,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
 
   // Single Precision
   def SIA :
-    AXSI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+    AXSI4<(outs), (ins GPR:$Rn, pred:$p, spr_reglist:$regs, variable_ops),
           IndexModeNone, itin,
           !strconcat(asm, "ia${p}\t$Rn, $regs"), "", []> {
     let Inst{24-23} = 0b01;       // Increment After
@@ -120,7 +120,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
     let Inst{20}    = L_bit;
   }
   def SIA_UPD :
-    AXSI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+    AXSI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, spr_reglist:$regs, variable_ops),
           IndexModeUpd, itin_upd,
           !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b01;       // Increment After
@@ -128,7 +128,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
     let Inst{20}    = L_bit;
   }
   def SDB :
-    AXSI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+    AXSI4<(outs), (ins GPR:$Rn, pred:$p, spr_reglist:$regs, variable_ops),
           IndexModeNone, itin,
           !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
     let Inst{24-23} = 0b10;       // Decrement Before
@@ -136,7 +136,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
     let Inst{20}    = L_bit;
   }
   def SDB_UPD :
-    AXSI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+    AXSI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, spr_reglist:$regs, variable_ops),
           IndexModeUpd, itin_upd,
           !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b10;       // Decrement Before
