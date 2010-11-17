@@ -394,8 +394,8 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   CGF.BeginConditionalBranch();
   CGF.EmitBlock(LHSBlock);
 
-  // Handle the GNU extension for missing LHS.
-  assert(E->getLHS() && "Must have LHS for aggregate value");
+  // Save whether the destination's lifetime is externally managed.
+  bool DestLifetimeManaged = Dest.isLifetimeExternallyManaged();
 
   Visit(E->getLHS());
   CGF.EndConditionalBranch();
@@ -403,6 +403,12 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
 
   CGF.BeginConditionalBranch();
   CGF.EmitBlock(RHSBlock);
+
+  // If the result of an agg expression is unused, then the emission
+  // of the LHS might need to create a destination slot.  That's fine
+  // with us, and we can safely emit the RHS into the same slot, but
+  // we shouldn't claim that its lifetime is externally managed.
+  Dest.setLifetimeExternallyManaged(DestLifetimeManaged);
 
   Visit(E->getRHS());
   CGF.EndConditionalBranch();

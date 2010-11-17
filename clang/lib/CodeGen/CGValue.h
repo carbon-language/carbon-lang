@@ -379,8 +379,8 @@ public:
   bool isLifetimeExternallyManaged() const {
     return LifetimeFlag;
   }
-  void setLifetimeExternallyManaged() {
-    LifetimeFlag = true;
+  void setLifetimeExternallyManaged(bool Managed = true) {
+    LifetimeFlag = Managed;
   }
 
   bool isVolatile() const {

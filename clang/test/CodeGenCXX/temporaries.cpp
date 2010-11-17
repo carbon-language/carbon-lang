@@ -493,3 +493,35 @@ namespace Elision {
     A(*x).foo();
   }
 }
+
+namespace PR8623 {
+  struct A { A(int); ~A(); };
+
+  // CHECK: define void @_ZN6PR86233fooEb(
+  void foo(bool b) {
+    // CHECK:      [[TMP:%.*]] = alloca [[A:%.*]], align 1
+    // CHECK-NEXT: [[LCONS:%.*]] = alloca i1
+    // CHECK-NEXT: [[RCONS:%.*]] = alloca i1
+    // CHECK-NEXT: store i1 false, i1* [[RCONS]]
+    // CHECK-NEXT: store i1 false, i1* [[LCONS]]
+    // CHECK:      br i1
+    // CHECK:      call void @_ZN6PR86231AC1Ei([[A]]* [[TMP]], i32 2)
+    // CHECK-NEXT: store i1 true, i1* [[LCONS]]
+    // CHECK-NEXT: br label
+    // CHECK:      call void @_ZN6PR86231AC1Ei([[A]]* [[TMP]], i32 3)
+    // CHECK-NEXT: store i1 true, i1* [[RCONS]]
+    // CHECK-NEXT: br label
+    // CHECK:      load i1* [[RCONS]]
+    // CHECK-NEXT: br i1
+    // CHECK:      call void @_ZN6PR86231AD1Ev([[A]]* [[TMP]])
+    // CHECK-NEXT: store i1 false, i1* [[RCONS]]
+    // CHECK-NEXT: br label
+    // CHECK:      load i1* [[LCONS]]
+    // CHECK-NEXT: br i1
+    // CHECK:      call void @_ZN6PR86231AD1Ev([[A]]* [[TMP]])
+    // CHECK-NEXT: store i1 false, i1* [[LCONS]]
+    // CHECK-NEXT: br label
+    // CHECK:      ret void
+    b ? A(2) : A(3);
+  }
+}
