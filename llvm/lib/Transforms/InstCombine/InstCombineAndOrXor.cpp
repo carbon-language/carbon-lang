@@ -1976,25 +1976,13 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (isa<UndefValue>(Op1)) {
-    if (isa<UndefValue>(Op0))
-      // Handle undef ^ undef -> 0 special case. This is a common
-      // idiom (misuse).
-      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-    return ReplaceInstUsesWith(I, Op1);  // X ^ undef -> undef
-  }
+  if (Value *V = SimplifyXorInst(Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
 
-  // xor X, X = 0
-  if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-  
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(I))
     return &I;
-  if (I.getType()->isVectorTy())
-    if (isa<ConstantAggregateZero>(Op1))
-      return ReplaceInstUsesWith(I, Op0);  // X ^ <0,0> -> X
 
   // Is this a ~ operation?
   if (Value *NotOp = dyn_castNotVal(&I)) {
@@ -2113,15 +2101,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         return NV;
   }
 
-  if (Value *X = dyn_castNotVal(Op0))   // ~A ^ A == -1
-    if (X == Op1)
-      return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
-
-  if (Value *X = dyn_castNotVal(Op1))   // A ^ ~A == -1
-    if (X == Op0)
-      return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
-
-  
   BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1);
   if (Op1I) {
     Value *A, *B;
@@ -2134,10 +2113,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         I.swapOperands();     // Simplified below.
         std::swap(Op0, Op1);
       }
-    } else if (match(Op1I, m_Xor(m_Specific(Op0), m_Value(B)))) {
-      return ReplaceInstUsesWith(I, B);                      // A^(A^B) == B
-    } else if (match(Op1I, m_Xor(m_Value(A), m_Specific(Op0)))) {
-      return ReplaceInstUsesWith(I, A);                      // A^(B^A) == B
     } else if (match(Op1I, m_And(m_Value(A), m_Value(B))) && 
                Op1I->hasOneUse()){
       if (A == Op0) {                                      // A^(A&B) -> A^(B&A)
@@ -2160,10 +2135,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         std::swap(A, B);
       if (B == Op1)                                  // (A|B)^B == A & ~B
         return BinaryOperator::CreateAnd(A, Builder->CreateNot(Op1, "tmp"));
-    } else if (match(Op0I, m_Xor(m_Specific(Op1), m_Value(B)))) {
-      return ReplaceInstUsesWith(I, B);                      // (A^B)^A == B
-    } else if (match(Op0I, m_Xor(m_Value(A), m_Specific(Op1)))) {
-      return ReplaceInstUsesWith(I, A);                      // (B^A)^A == B
     } else if (match(Op0I, m_And(m_Value(A), m_Value(B))) && 
                Op0I->hasOneUse()){
       if (A == Op1)                                        // (A&B)^A -> (B&A)^A

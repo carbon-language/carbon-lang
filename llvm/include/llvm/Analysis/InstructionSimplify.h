@@ -37,6 +37,11 @@ namespace llvm {
   Value *SimplifyOrInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
                         const DominatorTree *DT = 0);
 
+  /// SimplifyXorInst - Given operands for a Xor, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyXorInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
+                         const DominatorTree *DT = 0);
+
   /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,

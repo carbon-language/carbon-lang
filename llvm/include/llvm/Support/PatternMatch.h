@@ -96,9 +96,23 @@ struct one_ty {
   }
 };
 
-/// m_One() - Match a an integer 1.
+/// m_One() - Match an integer 1.
 inline one_ty m_One() { return one_ty(); }
   
+struct all_ones_ty {
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (const ConstantInt *C = dyn_cast<ConstantInt>(V))
+      return C->isAllOnesValue();
+    if (const ConstantVector *C = dyn_cast<ConstantVector>(V))
+      return C->isAllOnesValue();
+    return false;
+  }
+};
+
+/// m_AllOnes() - Match an integer or vector with all bits set to true.
+inline all_ones_ty m_AllOnes() { return all_ones_ty(); }
+
 
 template<typename Class>
 struct bind_ty {

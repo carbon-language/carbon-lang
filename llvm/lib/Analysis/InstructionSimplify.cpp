@@ -276,23 +276,13 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
   if (Op0 == Op1)
     return Op0;
 
-  // X & <0,0> = <0,0>
-  if (isa<ConstantAggregateZero>(Op1))
+  // X & 0 = 0
+  if (match(Op1, m_Zero()))
     return Op1;
 
-  // X & <-1,-1> = X
-  if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1))
-    if (CP->isAllOnesValue())
-      return Op0;
-
-  if (ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1)) {
-    // X & 0 = 0
-    if (Op1CI->isZero())
-      return Op1CI;
-    // X & -1 = X
-    if (Op1CI->isAllOnesValue())
-      return Op0;
-  }
+  // X & -1 = X
+  if (match(Op1, m_AllOnes()))
+    return Op0;
 
   // A & ~A  =  ~A & A  =  0
   Value *A, *B;
@@ -365,23 +355,13 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
   if (Op0 == Op1)
     return Op0;
 
-  // X | <0,0> = X
-  if (isa<ConstantAggregateZero>(Op1))
+  // X | 0 = X
+  if (match(Op1, m_Zero()))
     return Op0;
 
-  // X | <-1,-1> = <-1,-1>
-  if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1))
-    if (CP->isAllOnesValue())
-      return Op1;
-
-  if (ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1)) {
-    // X | 0 = X
-    if (Op1CI->isZero())
-      return Op0;
-    // X | -1 = -1
-    if (Op1CI->isAllOnesValue())
-      return Op1CI;
-  }
+  // X | -1 = -1
+  if (match(Op1, m_AllOnes()))
+    return Op1;
 
   // A | ~A  =  ~A | A  =  -1
   Value *A, *B;
@@ -429,6 +409,71 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
 Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
                             const DominatorTree *DT) {
   return ::SimplifyOrInst(Op0, Op1, TD, DT, RecursionLimit);
+}
+
+/// SimplifyXorInst - Given operands for a Xor, see if we can
+/// fold the result.  If not, this returns null.
+static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
+                              const DominatorTree *DT, unsigned MaxRecurse) {
+  if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
+    if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { CLHS, CRHS };
+      return ConstantFoldInstOperands(Instruction::Xor, CLHS->getType(),
+                                      Ops, 2, TD);
+    }
+
+    // Canonicalize the constant to the RHS.
+    std::swap(Op0, Op1);
+  }
+
+  // A ^ undef -> undef
+  if (isa<UndefValue>(Op1))
+    return UndefValue::get(Op0->getType());
+
+  // A ^ 0 = A
+  if (match(Op1, m_Zero()))
+    return Op0;
+
+  // A ^ A = 0
+  if (Op0 == Op1)
+    return Constant::getNullValue(Op0->getType());
+
+  // A ^ ~A  =  ~A ^ A  =  -1
+  Value *A, *B;
+  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
+      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+    return Constant::getAllOnesValue(Op0->getType());
+
+  // (A ^ B) ^ A = B
+  if (match(Op0, m_Xor(m_Value(A), m_Value(B))) &&
+      (A == Op1 || B == Op1))
+    return A == Op1 ? B : A;
+
+  // A ^ (A ^ B) = B
+  if (match(Op1, m_Xor(m_Value(A), m_Value(B))) &&
+      (A == Op0 || B == Op0))
+    return A == Op0 ? B : A;
+
+  // If the operation is with the result of a select instruction, check whether
+  // operating on either branch of the select always yields the same value.
+  if (MaxRecurse && (isa<SelectInst>(Op0) || isa<SelectInst>(Op1)))
+    if (Value *V = ThreadBinOpOverSelect(Instruction::Xor, Op0, Op1, TD, DT,
+                                         MaxRecurse-1))
+      return V;
+
+  // If the operation is with the result of a phi instruction, check whether
+  // operating on all incoming values of the phi always yields the same value.
+  if (MaxRecurse && (isa<PHINode>(Op0) || isa<PHINode>(Op1)))
+    if (Value *V = ThreadBinOpOverPHI(Instruction::Xor, Op0, Op1, TD, DT,
+                                      MaxRecurse-1))
+      return V;
+
+  return 0;
+}
+
+Value *llvm::SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
+                             const DominatorTree *DT) {
+  return ::SimplifyXorInst(Op0, Op1, TD, DT, RecursionLimit);
 }
 
 static const Type *GetCompareTy(Value *Op) {
@@ -773,6 +818,9 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     break;
   case Instruction::Or:
     Result = SimplifyOrInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
+  case Instruction::Xor:
+    Result = SimplifyXorInst(I->getOperand(0), I->getOperand(1), TD, DT);
     break;
   case Instruction::ICmp:
     Result = SimplifyICmpInst(cast<ICmpInst>(I)->getPredicate(),
