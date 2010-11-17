@@ -43,7 +43,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Support/CFG.h"
@@ -83,7 +82,7 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<AliasAnalysis>();
       AU.addPreserved<AliasAnalysis>();
-      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved("scalar-evolution");
       AU.addPreservedID(LoopSimplifyID);
     }
 
