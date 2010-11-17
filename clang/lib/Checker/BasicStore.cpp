@@ -419,6 +419,15 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
     }
   }
 
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(InitLoc->getDecl())) {
+    // For C++ methods add symbolic region for 'this' in initial stack frame.
+    QualType ThisT = MD->getThisType(StateMgr.getContext());
+    MemRegionManager &RegMgr = ValMgr.getRegionManager();
+    const CXXThisRegion *ThisR = RegMgr.getCXXThisRegion(ThisT, InitLoc);
+    SVal ThisV = ValMgr.getRegionValueSymbolVal(ThisR);
+    St = Bind(St, ValMgr.makeLoc(ThisR), ThisV);
+  }
+
   return St;
 }
 
