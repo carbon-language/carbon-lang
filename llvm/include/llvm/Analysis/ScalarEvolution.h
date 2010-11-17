@@ -267,6 +267,12 @@ namespace llvm {
     std::map<const SCEV *,
              std::map<const Loop *, const SCEV *> > ValuesAtScopes;
 
+    /// UnsignedRanges - Memoized results from getUnsignedRange
+    DenseMap<const SCEV *, ConstantRange> UnsignedRanges;
+
+    /// SignedRanges - Memoized results from getSignedRange
+    DenseMap<const SCEV *, ConstantRange> SignedRanges;
+
     /// createSCEV - We know that there is no SCEV for the specified value.
     /// Analyze the expression.
     const SCEV *createSCEV(Value *V);
