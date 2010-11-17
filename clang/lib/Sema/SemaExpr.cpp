@@ -7393,7 +7393,7 @@ static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
 
   // Warn about arg1 || arg2 && arg3, as GCC 4.3+ does.
   // We don't warn for 'assert(a || b && "bad")' since this is safe.
-  if (Opc == BO_LOr) {
+  if (Opc == BO_LOr && !OpLoc.isMacroID()/* Don't warn in macros. */) {
     DiagnoseLogicalAndInLogicalOrLHS(Self, OpLoc, lhs);
     DiagnoseLogicalAndInLogicalOrRHS(Self, OpLoc, rhs);
   }
