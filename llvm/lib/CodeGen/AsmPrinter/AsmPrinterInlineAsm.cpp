@@ -35,7 +35,7 @@
 using namespace llvm;
 
 /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
+void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
   assert(!Str.empty() && "Can't emit empty inline asm block");
 
   // Remember if the buffer is nul terminated or not so we can avoid a copy.
@@ -57,6 +57,12 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
   LLVMContext &LLVMCtx = MMI->getModule()->getContext();
   bool HasDiagHandler = false;
   if (void *DiagHandler = LLVMCtx.getInlineAsmDiagnosticHandler()) {
+    unsigned LocCookie = 0;
+    if (LocMDNode && LocMDNode->getNumOperands() > 0)
+      if (const ConstantInt *CI =
+            dyn_cast<ConstantInt>(LocMDNode->getOperand(0)))
+        LocCookie = CI->getZExtValue();
+    
     SrcMgr.setDiagHandler((SourceMgr::DiagHandlerTy)(intptr_t)DiagHandler,
                           LLVMCtx.getInlineAsmDiagnosticContext(), LocCookie);
     HasDiagHandler = true;
@@ -128,15 +134,16 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   // Get the !srcloc metadata node if we have it, and decode the loc cookie from
   // it.
   unsigned LocCookie = 0;
+  const MDNode *LocMD = 0;
   for (unsigned i = MI->getNumOperands(); i != 0; --i) {
-    if (MI->getOperand(i-1).isMetadata())
-      if (const MDNode *SrcLoc = MI->getOperand(i-1).getMetadata())
-        if (SrcLoc->getNumOperands() != 0)
-          if (const ConstantInt *CI =
-              dyn_cast<ConstantInt>(SrcLoc->getOperand(0))) {
-            LocCookie = CI->getZExtValue();
-            break;
-          }
+    if (MI->getOperand(i-1).isMetadata() &&
+        (LocMD = MI->getOperand(i-1).getMetadata()) &&
+        LocMD->getNumOperands() != 0) {
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocMD->getOperand(0))) {
+        LocCookie = CI->getZExtValue();
+        break;
+      }
+    }
   }
 
   // Emit the inline asm to a temporary string so we can emit it through
@@ -310,7 +317,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     }
   }
   OS << '\n' << (char)0;  // null terminate string.
-  EmitInlineAsm(OS.str(), LocCookie);
+  EmitInlineAsm(OS.str(), LocMD);
 
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
   // enabled, so we use EmitRawText.
