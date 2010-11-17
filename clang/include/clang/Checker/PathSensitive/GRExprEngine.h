@@ -451,7 +451,8 @@ public:
   /// Evaluate arguments with a work list algorithm.
   void EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
                      const FunctionProtoType *FnType, 
-                     ExplodedNode *Pred, ExplodedNodeSet &Dst);
+                     ExplodedNode *Pred, ExplodedNodeSet &Dst,
+                     bool FstArgAsLValue = false);
 
   /// EvalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)

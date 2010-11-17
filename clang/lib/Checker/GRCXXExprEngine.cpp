@@ -30,7 +30,8 @@ public:
 
 void GRExprEngine::EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
                                  const FunctionProtoType *FnType, 
-                                 ExplodedNode *Pred, ExplodedNodeSet &Dst) {
+                                 ExplodedNode *Pred, ExplodedNodeSet &Dst,
+                                 bool FstArgAsLValue) {
 
 
   llvm::SmallVector<CallExprWLItem, 20> WorkList;
@@ -48,10 +49,15 @@ void GRExprEngine::EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
 
     // Evaluate the argument.
     ExplodedNodeSet Tmp;
-    const unsigned ParamIdx = Item.I - AI;
-    const bool VisitAsLvalue = FnType && ParamIdx < FnType->getNumArgs() 
-      ? FnType->getArgType(ParamIdx)->isReferenceType()
-      : false;
+    bool VisitAsLvalue = FstArgAsLValue;
+    if (FstArgAsLValue) {
+      FstArgAsLValue = false;
+    } else {
+      const unsigned ParamIdx = Item.I - AI;
+      VisitAsLvalue = FnType && ParamIdx < FnType->getNumArgs() 
+        ? FnType->getArgType(ParamIdx)->isReferenceType()
+        : false;
+    }
 
     if (VisitAsLvalue)
       VisitLValue(*Item.I, Item.N, Tmp);
