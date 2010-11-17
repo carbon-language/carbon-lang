@@ -2689,9 +2689,14 @@ unsigned clang_visitChildrenWithBlock(CXCursor parent,
 
 static CXString getDeclSpelling(Decl *D) {
   NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D);
-  if (!ND)
+  if (!ND) {
+    if (ObjCPropertyImplDecl *PropImpl =llvm::dyn_cast<ObjCPropertyImplDecl>(D))
+      if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
+        return createCXString(Property->getIdentifier()->getName());
+    
     return createCXString("");
-
+  }
+  
   if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
     return createCXString(OMD->getSelector().getAsString());
 
@@ -3392,7 +3397,10 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     if (ObjCForwardProtocolDecl *Protocols
                                         = dyn_cast<ObjCForwardProtocolDecl>(D))
       return MakeCursorOverloadedDeclRef(Protocols, D->getLocation(), tu);
-      
+    if (ObjCPropertyImplDecl *PropImpl =llvm::dyn_cast<ObjCPropertyImplDecl>(D))
+      if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
+        return MakeCXCursor(Property, tu);
+    
     return C;
   }
   

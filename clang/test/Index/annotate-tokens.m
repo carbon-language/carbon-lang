@@ -102,7 +102,21 @@ Rdar8595462_A * Rdar8595462_aFunction() {
 static Rdar8595462_A * Rdar8595462_staticVar;
 @end
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:104:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
+// <rdar://problem/8595386> Issues doing syntax coloring of properties
+@interface Rdar8595386 {
+  Foo *_foo;
+}
+
+@property (readonly, copy) Foo *foo;
+@property (readonly) Foo *foo2;
+@end
+
+@implementation Rdar8595386
+@synthesize foo = _foo;
+@dynamic foo2;
+@end
+
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:118:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Identifier: "Foo" [1:12 - 1:15] ObjCInterfaceDecl=Foo:1:12
@@ -287,11 +301,11 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: ")" [55:30 - 55:31] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Identifier: "arg" [55:31 - 55:34] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: ";" [55:34 - 55:35] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "@" [56:1 - 56:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Keyword: "property" [56:2 - 56:10] ObjCInterfaceDecl=IBOutletTests:51:12
+// CHECK: Punctuation: "@" [56:1 - 56:2] ObjCPropertyDecl=aPropOutlet:56:26
+// CHECK: Keyword: "property" [56:2 - 56:10] ObjCPropertyDecl=aPropOutlet:56:26
 // CHECK: Identifier: "IBOutlet" [56:11 - 56:19] macro instantiation=IBOutlet
-// CHECK: Keyword: "int" [56:20 - 56:23] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "*" [56:24 - 56:25] ObjCInterfaceDecl=IBOutletTests:51:12
+// CHECK: Keyword: "int" [56:20 - 56:23] ObjCPropertyDecl=aPropOutlet:56:26
+// CHECK: Punctuation: "*" [56:24 - 56:25] ObjCPropertyDecl=aPropOutlet:56:26
 // CHECK: Identifier: "aPropOutlet" [56:26 - 56:37] ObjCPropertyDecl=aPropOutlet:56:26
 // CHECK: Punctuation: ";" [56:37 - 56:38] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "@" [57:1 - 57:2] ObjCInterfaceDecl=IBOutletTests:51:12
@@ -447,3 +461,22 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: "@" [103:1 - 103:2] ObjCImplementationDecl=Rdar8595462_B:97:1 (Definition)
 // CHECK: Keyword: "end" [103:2 - 103:5]
 
+// CHECK: Punctuation: "@" [110:1 - 110:2] ObjCPropertyDecl=foo:110:33
+// CHECK: Keyword: "property" [110:2 - 110:10] ObjCPropertyDecl=foo:110:33
+// CHECK: Punctuation: "(" [110:11 - 110:12] ObjCPropertyDecl=foo:110:33
+// CHECK: Identifier: "readonly" [110:12 - 110:20] ObjCPropertyDecl=foo:110:33
+// CHECK: Punctuation: "," [110:20 - 110:21] ObjCPropertyDecl=foo:110:33
+// CHECK: Identifier: "copy" [110:22 - 110:26] ObjCPropertyDecl=foo:110:33
+// CHECK: Punctuation: ")" [110:26 - 110:27] ObjCPropertyDecl=foo:110:33
+// CHECK: Identifier: "Foo" [110:28 - 110:31] ObjCClassRef=Foo:1:12
+// CHECK: Punctuation: "*" [110:32 - 110:33] ObjCPropertyDecl=foo:110:33
+// CHECK: Identifier: "foo" [110:33 - 110:36] ObjCPropertyDecl=foo:110:33
+// CHECK: Keyword: "property" [111:2 - 111:10] ObjCPropertyDecl=foo2:111:27
+// CHECK: Punctuation: "(" [111:11 - 111:12] ObjCPropertyDecl=foo2:111:27
+// CHECK: Identifier: "readonly" [111:12 - 111:20] ObjCPropertyDecl=foo2:111:27
+// CHECK: Punctuation: ")" [111:20 - 111:21] ObjCPropertyDecl=foo2:111:27
+// CHECK: Identifier: "Foo" [111:22 - 111:25] ObjCClassRef=Foo:1:12
+// CHECK: Punctuation: "*" [111:26 - 111:27] ObjCPropertyDecl=foo2:111:27
+// CHECK: Identifier: "foo2" [111:27 - 111:31] ObjCPropertyDecl=foo2:111:27
+
+// FIXME: Very poor handling of @synthesized

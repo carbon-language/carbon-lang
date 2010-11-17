@@ -250,9 +250,20 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   llvm::SmallVector<const llvm::MemoryBuffer *, 1> TemporaryBuffers;
 };
 
+/// \brief Tracks the number of code-completion result objects that are 
+/// currently active.
+///
+/// Used for debugging purposes only.
+static unsigned CodeCompletionResultObjects;
+  
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults() 
   : CXCodeCompleteResults(), Diag(new Diagnostic),
-    SourceMgr(*Diag, FileMgr, FileSystemOpts) { }
+    SourceMgr(*Diag, FileMgr, FileSystemOpts) { 
+  if (getenv("LIBCLANG_OBJTRACKING")) {
+    ++CodeCompletionResultObjects;
+    fprintf(stderr, "+++ %d completion results\n", CodeCompletionResultObjects);
+  }    
+}
   
 AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   for (unsigned I = 0, N = NumResults; I != N; ++I)
@@ -263,6 +274,11 @@ AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
     TemporaryFiles[I].eraseFromDisk();
   for (unsigned I = 0, N = TemporaryBuffers.size(); I != N; ++I)
     delete TemporaryBuffers[I];
+
+  if (getenv("LIBCLANG_OBJTRACKING")) {
+    --CodeCompletionResultObjects;
+    fprintf(stderr, "--- %d completion results\n", CodeCompletionResultObjects);
+  }    
 }
   
 } // end extern "C"

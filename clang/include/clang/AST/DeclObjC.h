@@ -1430,6 +1430,10 @@ public:
     return PropertyIvarDecl;
   }
 
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtLoc, getLocation());
+  }
+
   /// Lookup a property by name in the specified DeclContext.
   static ObjCPropertyDecl *findPropertyDecl(const DeclContext *DC,
                                             IdentifierInfo *propertyID);
