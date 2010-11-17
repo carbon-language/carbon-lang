@@ -1190,8 +1190,8 @@ void ARMCodeEmitter::emitLoadStoreMultipleInstruction(const MachineInstr &MI) {
   Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
   // Set addressing mode by modifying bits U(23) and P(24)
-  const MachineOperand &MO = MI.getOperand(OpIdx++);
-  Binary |= getAddrModeUPBits(ARM_AM::getAM4SubMode(MO.getImm()));
+  ARM_AM::AMSubMode Mode = ARM_AM::getLoadStoreMultipleSubMode(MI.getOpcode());
+  Binary |= getAddrModeUPBits(ARM_AM::getAM4SubMode(Mode));
 
   // Set bit W(21)
   if (IsUpdating)
@@ -1638,8 +1638,8 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
   Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
   // Set addressing mode by modifying bits U(23) and P(24)
-  const MachineOperand &MO = MI.getOperand(OpIdx++);
-  Binary |= getAddrModeUPBits(ARM_AM::getAM4SubMode(MO.getImm()));
+  ARM_AM::AMSubMode Mode = ARM_AM::getLoadStoreMultipleSubMode(MI.getOpcode());
+  Binary |= getAddrModeUPBits(ARM_AM::getAM4SubMode(Mode));
 
   // Set bit W(21)
   if (IsUpdating)

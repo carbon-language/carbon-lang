@@ -576,6 +576,8 @@ namespace ARM_AM {
     return Val;
   }
 
+  AMSubMode getLoadStoreMultipleSubMode(int Opcode);
+
 } // end namespace ARM_AM
 } // end namespace llvm
 

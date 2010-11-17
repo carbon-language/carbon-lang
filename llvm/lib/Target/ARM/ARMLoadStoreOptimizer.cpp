@@ -206,7 +206,10 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
   return 0;
 }
 
-static ARM_AM::AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
+namespace llvm {
+  namespace ARM_AM {
+
+AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
   switch (Opcode) {
   default: llvm_unreachable("Unhandled opcode!");
   case ARM::LDMIA:
@@ -240,6 +243,9 @@ static ARM_AM::AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
 
   return ARM_AM::bad_am_submode;
 }
+
+  } // end namespace ARM_AM
+} // end namespace llvm
 
 static bool isT2i32Load(unsigned Opc) {
   return Opc == ARM::t2LDRi12 || Opc == ARM::t2LDRi8;
@@ -670,7 +676,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       return false;
 
   bool DoMerge = false;
-  ARM_AM::AMSubMode Mode = getLoadStoreMultipleSubMode(Opcode);
+  ARM_AM::AMSubMode Mode = ARM_AM::getLoadStoreMultipleSubMode(Opcode);
 
   // Try merging with the previous instruction.
   MachineBasicBlock::iterator BeginMBBI = MBB.begin();
