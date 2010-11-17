@@ -94,8 +94,8 @@ void f() {
 // CHECK: [31:18 - 31:21] ObjCSuperClassRef=Bar:12:12
 // CHECK: [31:21 - 31:23] ObjCInterfaceDecl=Baz:31:12
 // CHECK: [31:23 - 31:27] ObjCProtocolRef=SubP:27:1
-// CHECK: [31:27 - 33:9] ObjCInterfaceDecl=Baz:31:12
-// CHECK: [33:9 - 33:16] ObjCIvarDecl=_anIVar:33:9 (Definition)
+// CHECK: [31:27 - 33:5] ObjCInterfaceDecl=Baz:31:12
+// CHECK: [33:5 - 33:16] ObjCIvarDecl=_anIVar:33:9 (Definition)
 // CHECK: [33:16 - 36:1] ObjCInterfaceDecl=Baz:31:12
 // CHECK: [36:1 - 36:4] ObjCInstanceMethodDecl=bazMethod:36:1
 // CHECK: [36:4 - 36:7] ObjCClassRef=Foo:3:12
@@ -105,8 +105,8 @@ void f() {
 // CHECK: [40:1 - 41:3] EnumDecl=:40:1 (Definition)
 // CHECK: [41:3 - 41:11] EnumConstantDecl=someEnum:41:3 (Definition)
 // CHECK: [41:11 - 42:2] EnumDecl=:40:1 (Definition)
-// CHECK: [42:2 - 44:5] Invalid Cursor => NoDeclFound
-// CHECK: [44:5 - 44:11] FunctionDecl=main:44:5 (Definition)
+// CHECK: [42:2 - 44:1] Invalid Cursor => NoDeclFound
+// CHECK: [44:1 - 44:11] FunctionDecl=main:44:5 (Definition)
 // CHECK: [44:11 - 44:19] ParmDecl=argc:44:15 (Definition)
 // CHECK: [44:19 - 44:27] FunctionDecl=main:44:5 (Definition)
 // CHECK: [44:27 - 44:38] ParmDecl=argv:44:34 (Definition)
@@ -163,6 +163,6 @@ void f() {
 // CHECK: [52:36 - 52:37] CallExpr=main:44:5
 // CHECK: [52:37 - 53:2] UnexposedStmt=
 // CHECK: [55:9 - 55:26] macro definition=CONCAT
-// CHECK: [57:6 - 57:10] FunctionDecl=f:57:6 (Definition)
+// CHECK: [57:1 - 57:10] FunctionDecl=f:57:6 (Definition)
 // CHECK: [58:4 - 58:8] VarDecl=my_var:58:8 (Definition)
 // CHECK: [58:8 - 58:14] macro instantiation=CONCAT:55:9

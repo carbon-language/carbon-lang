@@ -20,8 +20,8 @@ void function(Foo * arg)
 // CHECK-scan: [8:8 - 8:11] ObjCClassRef=Foo:10:12
 // CHECK-scan: [8:11 - 10:1] Invalid Cursor => NoDeclFound
 // CHECK-scan: [10:1 - 11:5] ObjCInterfaceDecl=Foo:10:12
-// CHECK-scan: [11:5 - 13:6] Invalid Cursor => NoDeclFound
-// CHECK-scan: [13:6 - 13:15] FunctionDecl=function:13:6 (Definition)
+// CHECK-scan: [11:5 - 13:1] Invalid Cursor => NoDeclFound
+// CHECK-scan: [13:1 - 13:15] FunctionDecl=function:13:6 (Definition)
 // CHECK-scan: [13:15 - 13:18] ObjCClassRef=Foo:10:12
 // CHECK-scan: [13:18 - 13:24] ParmDecl=arg:13:21 (Definition)
 // CHECK-scan: [13:24 - 14:1] FunctionDecl=function:13:6 (Definition)

@@ -354,6 +354,8 @@ public:
 } // end anonymous namespace
 
 static SourceRange getRawCursorExtent(CXCursor C);
+static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr);
+
 
 RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
   return RangeCompare(AU->getSourceManager(), R, RegionOfInterest);
@@ -534,10 +536,10 @@ bool CursorVisitor::VisitBlockDecl(BlockDecl *B) {
 
 llvm::Optional<bool> CursorVisitor::shouldVisitCursor(CXCursor Cursor) {
   if (RegionOfInterest.isValid()) {
-    SourceRange Range = getRawCursorExtent(Cursor);
+    SourceRange Range = getFullCursorExtent(Cursor, AU->getSourceManager());
     if (Range.isInvalid())
       return llvm::Optional<bool>();
-
+    
     switch (CompareRegionOfInterest(Range)) {
     case RangeBefore:
       // This declaration comes before the region of interest; skip it.
@@ -1839,7 +1841,7 @@ void EnqueueVisitor::VisitInitListExpr(InitListExpr *IE) {
   EnqueueChildren(IE);
 }
 void EnqueueVisitor::VisitMemberExpr(MemberExpr *M) {
-  WL.push_back(MemberExprParts(M, Parent));
+  WL.push_back(MemberExprParts(M, Parent));  
   AddStmt(M->getBase());
 }
 void EnqueueVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
@@ -3097,7 +3099,8 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     unsigned SearchLine, SearchColumn;
     CXFile ResultFile;
     unsigned ResultLine, ResultColumn;
-    CXString SearchFileName, ResultFileName, KindSpelling;
+    CXString SearchFileName, ResultFileName, KindSpelling, USR;
+    const char *IsDef = clang_isCursorDefinition(Result)? " (Definition)" : "";
     CXSourceLocation ResultLoc = clang_getCursorLocation(Result);
     
     clang_getInstantiationLocation(Loc, &SearchFile, &SearchLine, &SearchColumn,
@@ -3107,13 +3110,16 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     SearchFileName = clang_getFileName(SearchFile);
     ResultFileName = clang_getFileName(ResultFile);
     KindSpelling = clang_getCursorKindSpelling(Result.kind);
-    fprintf(stderr, "clang_getCursor(%s:%d:%d) = %s(%s:%d:%d)\n",
+    USR = clang_getCursorUSR(Result);
+    fprintf(stderr, "clang_getCursor(%s:%d:%d) = %s(%s:%d:%d):%s%s\n",
             clang_getCString(SearchFileName), SearchLine, SearchColumn,
             clang_getCString(KindSpelling),
-            clang_getCString(ResultFileName), ResultLine, ResultColumn);
+            clang_getCString(ResultFileName), ResultLine, ResultColumn,
+            clang_getCString(USR), IsDef);
     clang_disposeString(SearchFileName);
     clang_disposeString(ResultFileName);
     clang_disposeString(KindSpelling);
+    clang_disposeString(USR);
   }
 
   return Result;
@@ -3363,7 +3369,41 @@ static SourceRange getRawCursorExtent(CXCursor C) {
     }
     return R;
   }
-  return SourceRange();}
+  return SourceRange();
+}
+
+/// \brief Retrieves the "raw" cursor extent, which is then extended to include
+/// the decl-specifier-seq for declarations.
+static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr) {
+  if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
+    Decl *D = cxcursor::getCursorDecl(C);
+    SourceRange R = D->getSourceRange();
+    
+    if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
+      if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
+        TypeLoc TL = TI->getTypeLoc();
+        SourceLocation TLoc = TL.getSourceRange().getBegin();
+        if (TLoc.isValid() && R.getBegin().isValid() &&
+            SrcMgr.isBeforeInTranslationUnit(TLoc, R.getBegin()))
+          R.setBegin(TLoc);
+      }
+
+      // FIXME: Multiple variables declared in a single declaration
+      // currently lack the information needed to correctly determine their
+      // ranges when accounting for the type-specifier.  We use context
+      // stored in the CXCursor to determine if the VarDecl is in a DeclGroup,
+      // and if so, whether it is the first decl.
+      if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+        if (!cxcursor::isFirstInDeclGroup(C))
+          R.setBegin(VD->getLocation());
+      }
+    }
+
+    return R;    
+  }
+  
+  return getRawCursorExtent(C);
+}
 
 extern "C" {
 
