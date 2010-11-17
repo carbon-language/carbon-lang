@@ -140,7 +140,6 @@ public:
 /// wide string analysis and Translation Phase #6 (concatenation of string
 /// literals) (C99 5.1.1.2p1).
 class StringLiteralParser {
-  Preprocessor &PP;
   const SourceManager &SM;
   const LangOptions &Features;
   const TargetInfo &Target;
@@ -154,6 +153,14 @@ class StringLiteralParser {
 public:
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                       Preprocessor &PP, bool Complain = true);
+  StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
+                      const SourceManager &sm, const LangOptions &features,
+                      const TargetInfo &target, Diagnostic *diags = 0)
+    : SM(sm), Features(features), Target(target), Diags(diags) {
+    init(StringToks, NumStringToks);
+  }
+    
+
   bool hadError;
   bool AnyWide;
   bool Pascal;
@@ -173,6 +180,9 @@ public:
   /// If the Diagnostics pointer is non-null, then this will do semantic
   /// checking of the string literal and emit errors and warnings.
   unsigned getOffsetOfStringByte(const Token &TheTok, unsigned ByteNo) const;
+  
+private:
+  void init(const Token *StringToks, unsigned NumStringToks);
 };
 
 }  // end namespace clang

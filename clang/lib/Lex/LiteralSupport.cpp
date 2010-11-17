@@ -827,9 +827,13 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 ///
 StringLiteralParser::
 StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
-                    Preprocessor &pp, bool Complain)
-  : PP(pp), SM(PP.getSourceManager()), Features(PP.getLangOptions()),
+                    Preprocessor &PP, bool Complain)
+  : SM(PP.getSourceManager()), Features(PP.getLangOptions()),
     Target(PP.getTargetInfo()), Diags(Complain ? &PP.getDiagnostics() : 0) {
+  init(StringToks, NumStringToks);
+}
+
+void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
   // Scan all of the string portions, remember the max individual token length,
   // computing a bound on the concatenated string length, and see whether any
   // piece is a wide-string.  If any of the string portions is a wide-string
@@ -893,8 +897,9 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     // that ThisTokBuf points to a buffer that is big enough for the whole token
     // and 'spelled' tokens can only shrink.
     bool StringInvalid = false;
-    unsigned ThisTokLen = PP.getSpelling(StringToks[i], ThisTokBuf, 
-                                         &StringInvalid);
+    unsigned ThisTokLen = 
+      Preprocessor::getSpelling(StringToks[i], ThisTokBuf, SM, Features,
+                                &StringInvalid);
     if (StringInvalid) {
       hadError = 1;
       continue;
@@ -979,19 +984,22 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
       ResultBuf[0] /= wchar_tByteWidth;
 
     // Verify that pascal strings aren't too large.
-    if (GetStringLength() > 256 && Complain) {
-      PP.Diag(StringToks[0].getLocation(), diag::err_pascal_string_too_long)
-        << SourceRange(StringToks[0].getLocation(),
-                       StringToks[NumStringToks-1].getLocation());
+    if (GetStringLength() > 256) {
+      if (Diags) 
+        Diags->Report(FullSourceLoc(StringToks[0].getLocation(), SM),
+                      diag::err_pascal_string_too_long)
+          << SourceRange(StringToks[0].getLocation(),
+                         StringToks[NumStringToks-1].getLocation());
       hadError = 1;
       return;
     }
-  } else if (Complain) {
+  } else if (Diags) {
     // Complain if this string literal has too many characters.
     unsigned MaxChars = Features.CPlusPlus? 65536 : Features.C99 ? 4095 : 509;
     
     if (GetNumStringChars() > MaxChars)
-      PP.Diag(StringToks[0].getLocation(), diag::ext_string_too_long)
+      Diags->Report(FullSourceLoc(StringToks[0].getLocation(), SM),
+                    diag::ext_string_too_long)
         << GetNumStringChars() << MaxChars
         << (Features.CPlusPlus ? 2 : Features.C99 ? 1 : 0)
         << SourceRange(StringToks[0].getLocation(),

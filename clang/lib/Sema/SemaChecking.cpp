@@ -83,8 +83,8 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     TheLexer.LexFromRawLexer(TheTok);
 
     // Use the StringLiteralParser to compute the length of the string in bytes.
-    StringLiteralParser SLP(&TheTok, 1, PP, /*Complain=*/false);
-    // PP.getSourceManager(), PP.getLangOptions(), PP.getTargetInfo());
+    StringLiteralParser SLP(&TheTok, 1, PP.getSourceManager(),
+                            PP.getLangOptions(), PP.getTargetInfo());
     unsigned TokNumBytes = SLP.GetStringLength();
 
     // If the byte is in this token, return the location of the byte.
