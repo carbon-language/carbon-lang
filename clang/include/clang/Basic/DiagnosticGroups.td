@@ -54,6 +54,7 @@ def : DiagGroup<"effc++">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def GlobalConstructors : DiagGroup<"global-constructors">;
 def : DiagGroup<"idiomatic-parentheses">;
+def LogicalOpParentheses: DiagGroup<"logical-op-parentheses">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;
 def : DiagGroup<"init-self">;
@@ -162,7 +163,9 @@ def CharSubscript : DiagGroup<"char-subscripts">;
 
 // -Widiomatic-parentheses contains warnings about 'idiomatic'
 // missing parentheses;  it is off by default.
-def Parentheses : DiagGroup<"parentheses", [DiagGroup<"idiomatic-parentheses">]>;
+def Parentheses : DiagGroup<"parentheses",
+                            [LogicalOpParentheses,
+                             DiagGroup<"idiomatic-parentheses">]>;
 
 // -Wconversion has its own warnings, but we split a few out for
 // legacy reasons:

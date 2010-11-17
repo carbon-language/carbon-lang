@@ -2158,7 +2158,7 @@ def warn_logical_instead_of_bitwise : Warning<
   "remove constant">, InGroup<DiagGroup<"constant-logical-operand">>;
 
 def warn_logical_and_in_logical_or : Warning<
-  "'&&' within '||'">, InGroup<Parentheses>;
+  "'&&' within '||'">, InGroup<LogicalOpParentheses>;
 def note_logical_and_in_logical_or_silence : Note<
   "place parentheses around the '&&' expression to silence this warning">;
 
