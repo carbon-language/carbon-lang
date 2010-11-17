@@ -136,7 +136,8 @@ class VisitorJob {
 public:
   enum Kind { DeclVisitKind, StmtVisitKind, MemberExprPartsKind,
               TypeLocVisitKind, OverloadExprPartsKind,
-              DeclRefExprPartsKind, LabelRefVisitKind };
+              DeclRefExprPartsKind, LabelRefVisitKind,
+              ExplicitTemplateArgsVisitKind };
 protected:
   void *dataA;
   void *dataB;
@@ -1638,6 +1639,8 @@ DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
 DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
 DEF_JOB(DeclRefExprParts, DeclRefExpr, DeclRefExprPartsKind)
 DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
+DEF_JOB(ExplicitTemplateArgsVisit, ExplicitTemplateArgumentList, 
+        ExplicitTemplateArgsVisitKind)
 #undef DEF_JOB
 
 class DeclVisit : public VisitorJob {
@@ -1651,7 +1654,6 @@ public:
   Decl *get() const { return static_cast<Decl*>(dataA); }
   bool isFirst() const { return dataB ? true : false; }
 };
-
 class TypeLocVisit : public VisitorJob {
 public:
   TypeLocVisit(TypeLoc tl, CXCursor parent) :
@@ -1718,6 +1720,7 @@ public:
   void VisitVAArgExpr(VAArgExpr *E);
 
 private:
+  void AddExplicitTemplateArgs(const ExplicitTemplateArgumentList *A);
   void AddStmt(Stmt *S);
   void AddDecl(Decl *D, bool isFirst = true);
   void AddTypeLoc(TypeSourceInfo *TI);
@@ -1732,6 +1735,12 @@ void EnqueueVisitor::AddStmt(Stmt *S) {
 void EnqueueVisitor::AddDecl(Decl *D, bool isFirst) {
   if (D)
     WL.push_back(DeclVisit(D, Parent, isFirst));
+}
+void EnqueueVisitor::
+  AddExplicitTemplateArgs(const ExplicitTemplateArgumentList *A) {
+  if (A)
+    WL.push_back(ExplicitTemplateArgsVisit(
+                        const_cast<ExplicitTemplateArgumentList*>(A), Parent));
 }
 void EnqueueVisitor::AddTypeLoc(TypeSourceInfo *TI) {
   if (TI)
@@ -1800,6 +1809,9 @@ void EnqueueVisitor::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr
   AddTypeLoc(E->getTypeSourceInfo());
 }
 void EnqueueVisitor::VisitDeclRefExpr(DeclRefExpr *DR) {
+  if (DR->hasExplicitTemplateArgs()) {
+    AddExplicitTemplateArgs(&DR->getExplicitTemplateArgs());
+  }
   WL.push_back(DeclRefExprParts(DR, Parent));
 }
 void EnqueueVisitor::VisitDeclStmt(DeclStmt *S) {
@@ -1855,6 +1867,7 @@ void EnqueueVisitor::VisitObjCMessageExpr(ObjCMessageExpr *M) {
   AddTypeLoc(M->getClassReceiverTypeInfo());
 }
 void EnqueueVisitor::VisitOverloadExpr(OverloadExpr *E) {
+  AddExplicitTemplateArgs(E->getOptionalExplicitTemplateArgs());
   WL.push_back(OverloadExprParts(E, Parent));
 }
 void EnqueueVisitor::VisitStmt(Stmt *S) {
@@ -1917,6 +1930,17 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         if (Visit(MakeCXCursor(D, TU, cast<DeclVisit>(&LI)->isFirst())))
             return true;
 
+        continue;
+      }
+      case VisitorJob::ExplicitTemplateArgsVisitKind: {
+        const ExplicitTemplateArgumentList *ArgList =
+          cast<ExplicitTemplateArgsVisit>(&LI)->get();
+        for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
+               *ArgEnd = Arg + ArgList->NumTemplateArgs;
+               Arg != ArgEnd; ++Arg) {
+          if (VisitTemplateArgumentLoc(*Arg))
+            return true;
+        }
         continue;
       }
       case VisitorJob::TypeLocVisitKind: {
@@ -2005,15 +2029,6 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         // Visit declaration name.
         if (VisitDeclarationNameInfo(DR->getNameInfo()))
           return true;
-        // Visit explicitly-specified template arguments.
-        if (DR->hasExplicitTemplateArgs()) {
-          ExplicitTemplateArgumentList &Args = DR->getExplicitTemplateArgs();
-          for (TemplateArgumentLoc *Arg = Args.getTemplateArgs(),
-                 *ArgEnd = Arg + Args.NumTemplateArgs;
-               Arg != ArgEnd; ++Arg)
-            if (VisitTemplateArgumentLoc(*Arg))
-              return true;
-        }
         continue;
       }
       case VisitorJob::OverloadExprPartsKind: {
@@ -2028,16 +2043,6 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         // Visit the overloaded declaration reference.
         if (Visit(MakeCursorOverloadedDeclRef(O, TU)))
           return true;
-        // Visit the explicitly-specified template arguments.
-        if (const ExplicitTemplateArgumentList *ArgList
-                                      = O->getOptionalExplicitTemplateArgs()) {
-          for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
-                 *ArgEnd = Arg + ArgList->NumTemplateArgs;
-               Arg != ArgEnd; ++Arg) {
-            if (VisitTemplateArgumentLoc(*Arg))
-              return true;
-          }
-        }
         continue;
       }
     }
