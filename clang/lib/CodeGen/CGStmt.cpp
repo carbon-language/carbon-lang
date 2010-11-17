@@ -948,6 +948,15 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
   return EmitAsmInputLValue(S, Info, Dest, InputExpr->getType(), ConstraintStr);
 }
 
+/// getAsmSrcLocInfo - Return the !srcloc metadata node to attach to an inline
+/// asm call instruction.
+static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
+                                      CodeGenFunction &CGF) {
+  unsigned LocID = Str->getLocStart().getRawEncoding();
+  llvm::Value *LocIDC = llvm::ConstantInt::get(CGF.Int32Ty, LocID);
+  return llvm::MDNode::get(LocIDC->getContext(), &LocIDC, 1);
+}
+
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   // Analyze the asm string to decompose it into its pieces.  We know that Sema
   // has already done this, so it is guaranteed to be successful.
@@ -1171,10 +1180,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
   // Slap the source location of the inline asm into a !srcloc metadata on the
   // call.
-  unsigned LocID = S.getAsmString()->getLocStart().getRawEncoding();
-  llvm::Value *LocIDC =
-    llvm::ConstantInt::get(Int32Ty, LocID);
-  Result->setMetadata("srcloc", llvm::MDNode::get(VMContext, &LocIDC, 1));
+  Result->setMetadata("srcloc", getAsmSrcLocInfo(S.getAsmString(), *this));
 
   // Extract all of the register value results from the asm.
   std::vector<llvm::Value*> RegResults;
