@@ -4,7 +4,7 @@
 ; RUN: llc < %s -march=thumb | grep ble | count 1
 ; RUN: llc < %s -march=thumb | grep bls | count 1
 ; RUN: llc < %s -march=thumb | grep bhi | count 1
-; RUN: llc < %s -march=thumb | grep __ltdf2
+; RUN: llc < %s -mtriple=thumb-apple-darwin | grep __ltdf2
 
 define i32 @f1(i32 %a.s) {
 entry:

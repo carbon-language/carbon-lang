@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s -check-prefix=CHECK-ARM
+; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s -check-prefix=CHECK-ARM
 
 define i32 @f1(i32 %a, i32 %b) {
 entry:

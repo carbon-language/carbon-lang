@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 \
+; RUN: llc < %s -mtriple=thumb-apple-darwin -mattr=+thumb2 \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-THUMB
 ; RUN: llc < %s -march=thumb -mcpu=cortex-m3 -mattr=+thumb2 \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-THUMBV7M

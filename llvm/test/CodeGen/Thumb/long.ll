@@ -4,7 +4,7 @@
 ; RUN:   grep adc | count 1
 ; RUN: llc < %s -march=thumb | \
 ; RUN:   grep sbc | count 1
-; RUN: llc < %s -march=thumb | grep __muldi3
+; RUN: llc < %s -mtriple=thumb-apple-darwin | grep __muldi3
 
 define i64 @f1() {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | grep moveq 
+; RUN: llc < %s -mtriple=arm-apple-darwin | grep moveq 
 ; RUN: llc < %s -mtriple=armv7-apple-darwin -mcpu=cortex-a8 | FileCheck %s
 
 define i32 @f7(float %a, float %b) {

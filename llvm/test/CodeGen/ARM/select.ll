@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s --check-prefix=CHECK-VFP
 ; RUN: llc < %s -mattr=+neon,+thumb2 -mtriple=thumbv7-apple-darwin | FileCheck %s --check-prefix=CHECK-NEON
 
