@@ -339,7 +339,6 @@ public:
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   bool VisitAddrLabelExpr(AddrLabelExpr *E);
-  bool VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   bool VisitVAArgExpr(VAArgExpr *E);
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
   bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
@@ -1488,11 +1487,6 @@ bool CursorVisitor::VisitAddrLabelExpr(AddrLabelExpr *E) {
   return Visit(MakeCursorLabelRef(E->getLabel(), E->getLabelLoc(), TU));
 }
 
-bool CursorVisitor::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
-  return Visit(E->getArgTInfo1()->getTypeLoc()) || 
-         Visit(E->getArgTInfo2()->getTypeLoc());
-}
-
 bool CursorVisitor::VisitVAArgExpr(VAArgExpr *E) {
   if (Visit(E->getWrittenTypeInfo()->getTypeLoc()))
     return true;
@@ -1726,6 +1720,7 @@ public:
   void VisitOverloadExpr(OverloadExpr *E);
   void VisitStmt(Stmt *S);
   void VisitSwitchStmt(SwitchStmt *S);
+  void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   void VisitWhileStmt(WhileStmt *W);
   void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
 
@@ -1866,6 +1861,11 @@ void EnqueueVisitor::VisitSwitchStmt(SwitchStmt *S) {
   AddStmt(S->getCond());
   AddDecl(S->getConditionVariable());
 }
+void EnqueueVisitor::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
+  AddTypeLoc(E->getArgTInfo2());
+  AddTypeLoc(E->getArgTInfo1());
+}
+
 void EnqueueVisitor::VisitWhileStmt(WhileStmt *W) {
   AddStmt(W->getBody());
   AddStmt(W->getCond());
