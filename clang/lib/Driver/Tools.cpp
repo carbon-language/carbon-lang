@@ -3212,6 +3212,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Silence warning for "clang -g foo.o -o foo"
   Args.ClaimAllArgs(options::OPT_g_Group);
+  // and for "clang -g foo.o -o foo". Other warning options are already
+  // handled somewhere else.
+  Args.ClaimAllArgs(options::OPT_w);
 
   if (Arg *A = Args.getLastArg(options::OPT__sysroot_EQ)) {
     CmdArgs.push_back("--sysroot");
