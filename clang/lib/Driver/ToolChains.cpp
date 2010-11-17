@@ -1329,6 +1329,8 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   } else if (Arch == llvm::Triple::x86_64) {
     if (llvm::sys::Path("/usr/lib/gcc/x86_64-linux-gnu").exists())
       GccTriple = "x86_64-linux-gnu";
+    else if (llvm::sys::Path("/usr/lib/gcc/x86_64-unknown-linux-gnu").exists())
+      GccTriple = "x86_64-unknown-linux-gnu";
     else if (llvm::sys::Path("/usr/lib/gcc/x86_64-pc-linux-gnu").exists())
       GccTriple = "x86_64-pc-linux-gnu";
     else if (llvm::sys::Path("/usr/lib/gcc/x86_64-redhat-linux").exists())
