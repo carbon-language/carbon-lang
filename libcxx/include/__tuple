@@ -83,6 +83,10 @@ template <size_t _Ip, class ..._Tp>
 const typename tuple_element<_Ip, tuple<_Tp...>>::type&
 get(const tuple<_Tp...>&);
 
+template <size_t _Ip, class ..._Tp>
+typename tuple_element<_Ip, tuple<_Tp...>>::type&&
+get(tuple<_Tp...>&&);
+
 template <size_t _Ip, class _T1, class _T2>
 typename tuple_element<_Ip, pair<_T1, _T2> >::type&
 get(pair<_T1, _T2>&);
@@ -91,6 +95,10 @@ template <size_t _Ip, class _T1, class _T2>
 const typename tuple_element<_Ip, pair<_T1, _T2> >::type&
 get(const pair<_T1, _T2>&);
 
+template <size_t _Ip, class _T1, class _T2>
+typename tuple_element<_Ip, pair<_T1, _T2> >::type&&
+get(pair<_T1, _T2>&&);
+
 template <size_t _Ip, class _Tp, size_t _Size>
 _Tp&
 get(array<_Tp, _Size>&);
@@ -98,6 +106,10 @@ get(array<_Tp, _Size>&);
 template <size_t _Ip, class _Tp, size_t _Size>
 const _Tp&
 get(const array<_Tp, _Size>&);
+
+template <size_t _Ip, class _Tp, size_t _Size>
+_Tp&&
+get(array<_Tp, _Size>&&);
 
 // __make_tuple_indices
 

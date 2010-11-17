@@ -94,6 +94,7 @@ template <class T, size_t N> struct tuple_size<array<T, N>>;
 template <int I, class T, size_t N> struct tuple_element<I, array<T, N>>;
 template <int I, class T, size_t N> T& get(array<T, N>&);
 template <int I, class T, size_t N> const T& get(const array<T, N>&);
+template <int I, class T, size_t N> T&& get(array<T, N>&&);
 
 }  // std
 
@@ -294,6 +295,18 @@ get(const array<_Tp, _Size>& __a)
 {
     return __a[_Ip];
 }
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <size_t _Ip, class _Tp, size_t _Size>
+_LIBCPP_INLINE_VISIBILITY inline
+_Tp&&
+get(array<_Tp, _Size>&& __a)
+{
+    return _STD::move(__a[_Ip]);
+}
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 _LIBCPP_END_NAMESPACE_STD
 
