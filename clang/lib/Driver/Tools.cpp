@@ -1147,6 +1147,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
   }
 
+  // Silence warning for "clang -O2 -O0 -c foo.c -o foo.o"
+  Args.ClaimAllArgs(options::OPT_O_Group);
+
   Args.AddAllArgs(CmdArgs, options::OPT_W_Group);
   Args.AddLastArg(CmdArgs, options::OPT_pedantic);
   Args.AddLastArg(CmdArgs, options::OPT_pedantic_errors);
