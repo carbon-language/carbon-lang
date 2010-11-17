@@ -203,7 +203,10 @@ static void CheckMallocZero(CheckerContext &C, UnixAPIChecker &UC,
     if (!N)
       return;
     
-    LazyInitialize(BT, "bad allocation of 0 bytes");
+    // FIXME: Add reference to CERT advisory, and/or C99 standard in bug
+    // output.
+
+    LazyInitialize(BT, "Undefined allocation of 0 bytes");
     
     EnhancedBugReport *report =
       new EnhancedBugReport(*BT, "Call to 'malloc' has an allocation size"
