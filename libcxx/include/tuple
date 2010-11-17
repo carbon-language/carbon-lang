@@ -127,12 +127,6 @@ class _LIBCPP_VISIBLE tuple_size<tuple<_Tp...>>
 {
 };
 
-template <class ..._Tp>
-class _LIBCPP_VISIBLE tuple_size<const tuple<_Tp...>>
-    : public integral_constant<size_t, sizeof...(_Tp)>
-{
-};
-
 // tuple_element
 
 template <size_t _Ip, class ..._Tp>
@@ -140,13 +134,6 @@ class _LIBCPP_VISIBLE tuple_element<_Ip, tuple<_Tp...>>
 {
 public:
     typedef typename tuple_element<_Ip, __tuple_types<_Tp...>>::type type;
-};
-
-template <size_t _Ip, class ..._Tp>
-class _LIBCPP_VISIBLE tuple_element<_Ip, const tuple<_Tp...>>
-{
-public:
-    typedef const typename tuple_element<_Ip, __tuple_types<_Tp...>>::type type;
 };
 
 // __tuple_leaf

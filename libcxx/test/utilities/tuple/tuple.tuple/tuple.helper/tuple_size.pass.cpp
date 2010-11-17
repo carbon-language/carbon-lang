@@ -18,26 +18,23 @@
 #include <tuple>
 #include <type_traits>
 
+template <class T, std::size_t N>
+void test()
+{
+    static_assert((std::is_base_of<std::integral_constant<std::size_t, N>,
+                                   std::tuple_size<T> >::value), "");
+    static_assert((std::is_base_of<std::integral_constant<std::size_t, N>,
+                                   std::tuple_size<const T> >::value), "");
+    static_assert((std::is_base_of<std::integral_constant<std::size_t, N>,
+                                   std::tuple_size<volatile T> >::value), "");
+    static_assert((std::is_base_of<std::integral_constant<std::size_t, N>,
+                                   std::tuple_size<const volatile T> >::value), "");
+}
+
 int main()
 {
-    {
-        typedef std::tuple<> T;
-        static_assert((std::is_base_of<std::integral_constant<std::size_t, 0>,
-                                      std::tuple_size<T> >::value), "");
-    }
-    {
-        typedef std::tuple<int> T;
-        static_assert((std::is_base_of<std::integral_constant<std::size_t, 1>,
-                                      std::tuple_size<T> >::value), "");
-    }
-    {
-        typedef std::tuple<char, int> T;
-        static_assert((std::is_base_of<std::integral_constant<std::size_t, 2>,
-                                      std::tuple_size<T> >::value), "");
-    }
-    {
-        typedef std::tuple<char, char*, int> T;
-        static_assert((std::is_base_of<std::integral_constant<std::size_t, 3>,
-                                      std::tuple_size<T> >::value), "");
-    }
+    test<std::tuple<>, 0>();
+    test<std::tuple<int>, 1>();
+    test<std::tuple<char, int>, 2>();
+    test<std::tuple<char, char*, int>, 3>();
 }

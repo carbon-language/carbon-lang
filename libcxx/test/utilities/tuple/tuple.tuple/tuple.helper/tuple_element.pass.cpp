@@ -21,27 +21,20 @@
 #include <tuple>
 #include <type_traits>
 
+template <class T, std::size_t N, class U>
+void test()
+{
+    static_assert((std::is_same<typename std::tuple_element<N, T>::type, U>::value), "");
+    static_assert((std::is_same<typename std::tuple_element<N, const T>::type, const U>::value), "");
+    static_assert((std::is_same<typename std::tuple_element<N, volatile T>::type, volatile U>::value), "");
+    static_assert((std::is_same<typename std::tuple_element<N, const volatile T>::type, const volatile U>::value), "");
+}
 int main()
 {
-    {
-        typedef std::tuple<int> T;
-        static_assert((std::is_same<std::tuple_element<0, T>::type,
-                                    int>::value), "");
-    }
-    {
-        typedef std::tuple<char, int> T;
-        static_assert((std::is_same<std::tuple_element<0, T>::type,
-                                    char>::value), "");
-        static_assert((std::is_same<std::tuple_element<1, T>::type,
-                                    int>::value), "");
-    }
-    {
-        typedef std::tuple<int*, char, int> T;
-        static_assert((std::is_same<std::tuple_element<0, T>::type,
-                                    int*>::value), "");
-        static_assert((std::is_same<std::tuple_element<1, T>::type,
-                                    char>::value), "");
-        static_assert((std::is_same<std::tuple_element<2, T>::type,
-                                    int>::value), "");
-    }
+    test<std::tuple<int>, 0, int>();
+    test<std::tuple<char, int>, 0, char>();
+    test<std::tuple<char, int>, 1, int>();
+    test<std::tuple<int*, char, int>, 0, int*>();
+    test<std::tuple<int*, char, int>, 1, char>();
+    test<std::tuple<int*, char, int>, 2, int>();
 }

@@ -26,7 +26,41 @@
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Tp> class _LIBCPP_VISIBLE tuple_size;
+
+template <class _Tp>
+class _LIBCPP_VISIBLE tuple_size<const _Tp>
+    : public tuple_size<_Tp> {};
+
+template <class _Tp>
+class _LIBCPP_VISIBLE tuple_size<volatile _Tp>
+    : public tuple_size<_Tp> {};
+
+template <class _Tp>
+class _LIBCPP_VISIBLE tuple_size<const volatile _Tp>
+    : public tuple_size<_Tp> {};
+
 template <size_t _Ip, class _Tp> class _LIBCPP_VISIBLE tuple_element;
+
+template <size_t _Ip, class _Tp>
+class _LIBCPP_VISIBLE tuple_element<_Ip, const _Tp>
+{
+public:
+    typedef typename add_const<typename tuple_element<_Ip, _Tp>::type>::type type;
+};
+
+template <size_t _Ip, class _Tp>
+class _LIBCPP_VISIBLE tuple_element<_Ip, volatile _Tp>
+{
+public:
+    typedef typename add_volatile<typename tuple_element<_Ip, _Tp>::type>::type type;
+};
+
+template <size_t _Ip, class _Tp>
+class _LIBCPP_VISIBLE tuple_element<_Ip, const volatile _Tp>
+{
+public:
+    typedef typename add_cv<typename tuple_element<_Ip, _Tp>::type>::type type;
+};
 
 template <class ..._Tp> class _LIBCPP_VISIBLE tuple;
 template <class _T1, class _T2> class _LIBCPP_VISIBLE pair;
