@@ -1,0 +1,29 @@
+# RUN: llvm-mc --disassemble %s -triple=mblaze-unknown-unknown | FileCheck %s
+
+################################################################################
+# Special instructions
+################################################################################
+
+# CHECK:    mfs         r0, 0
+0x94 0x00 0x80 0x00
+
+# CHECK:    msrclr      r0, 0
+0x94 0x11 0x00 0x00
+
+# CHECK:    msrset      r0, 0
+0x94 0x10 0x00 0x00
+
+# CHECK:    mts         0, r0
+0x94 0x00 0xc0 0x00
+
+# CHECK:    wdc         r0, r1
+0x90 0x00 0x08 0x64
+
+# CHECK:    wdc.clear   r0, r1
+0x90 0x00 0x08 0x66
+
+# CHECK:    wdc.flush   r0, r1
+0x90 0x00 0x08 0x74
+
+# CHECK:    wic         r0, r1
+0x90 0x00 0x08 0x68
