@@ -413,6 +413,9 @@ namespace llvm {
     bool isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
                                     const SCEV *LHS, const SCEV *RHS);
 
+    /// forgetMemoizedResults - Drop memoized information computed for S.
+    void forgetMemoizedResults(const SCEV *S);
+
   public:
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution();

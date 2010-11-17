@@ -325,10 +325,7 @@ SCEVSignExtendExpr::SCEVSignExtendExpr(const FoldingSetNodeIDRef ID,
 
 void SCEVUnknown::deleted() {
   // Clear this SCEVUnknown from various maps.
-  SE->ValuesAtScopes.erase(this);
-  SE->LoopDispositions.erase(this);
-  SE->UnsignedRanges.erase(this);
-  SE->SignedRanges.erase(this);
+  SE->forgetMemoizedResults(this);
 
   // Remove this SCEVUnknown from the uniquing map.
   SE->UniqueSCEVs.RemoveNode(this);
@@ -339,10 +336,7 @@ void SCEVUnknown::deleted() {
 
 void SCEVUnknown::allUsesReplacedWith(Value *New) {
   // Clear this SCEVUnknown from various maps.
-  SE->ValuesAtScopes.erase(this);
-  SE->LoopDispositions.erase(this);
-  SE->UnsignedRanges.erase(this);
-  SE->SignedRanges.erase(this);
+  SE->forgetMemoizedResults(this);
 
   // Remove this SCEVUnknown from the uniquing map.
   SE->UniqueSCEVs.RemoveNode(this);
@@ -2636,10 +2630,7 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
       if (!isa<PHINode>(I) ||
           !isa<SCEVUnknown>(Old) ||
           (I != PN && Old == SymName)) {
-        ValuesAtScopes.erase(Old);
-        LoopDispositions.erase(Old);
-        UnsignedRanges.erase(Old);
-        SignedRanges.erase(Old);
+        forgetMemoizedResults(Old);
         ValueExprMap.erase(It);
       }
     }
@@ -3677,10 +3668,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
           // case, createNodeForPHI will perform the necessary updates on its
           // own when it gets to that point.
           if (!isa<PHINode>(I) || !isa<SCEVUnknown>(Old)) {
-            ValuesAtScopes.erase(Old);
-            LoopDispositions.erase(Old);
-            UnsignedRanges.erase(Old);
-            SignedRanges.erase(Old);
+            forgetMemoizedResults(Old);
             ValueExprMap.erase(It);
           }
           if (PHINode *PN = dyn_cast<PHINode>(I))
@@ -3712,11 +3700,7 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
 
     ValueExprMapType::iterator It = ValueExprMap.find(static_cast<Value *>(I));
     if (It != ValueExprMap.end()) {
-      const SCEV *Old = It->second;
-      ValuesAtScopes.erase(Old);
-      LoopDispositions.erase(Old);
-      UnsignedRanges.erase(Old);
-      SignedRanges.erase(Old);
+      forgetMemoizedResults(It->second);
       ValueExprMap.erase(It);
       if (PHINode *PN = dyn_cast<PHINode>(I))
         ConstantEvolutionLoopExitValue.erase(PN);
@@ -3749,11 +3733,7 @@ void ScalarEvolution::forgetValue(Value *V) {
 
     ValueExprMapType::iterator It = ValueExprMap.find(static_cast<Value *>(I));
     if (It != ValueExprMap.end()) {
-      const SCEV *Old = It->second;
-      ValuesAtScopes.erase(Old);
-      LoopDispositions.erase(Old);
-      UnsignedRanges.erase(Old);
-      SignedRanges.erase(Old);
+      forgetMemoizedResults(It->second);
       ValueExprMap.erase(It);
       if (PHINode *PN = dyn_cast<PHINode>(I))
         ConstantEvolutionLoopExitValue.erase(PN);
@@ -6140,4 +6120,11 @@ bool ScalarEvolution::hasOperand(const SCEV *S, const SCEV *Op) const {
   }
   llvm_unreachable("Unknown SCEV kind!");
   return false;
+}
+
+void ScalarEvolution::forgetMemoizedResults(const SCEV *S) {
+  ValuesAtScopes.erase(S);
+  LoopDispositions.erase(S);
+  UnsignedRanges.erase(S);
+  SignedRanges.erase(S);
 }
