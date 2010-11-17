@@ -1431,6 +1431,7 @@ Decl *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
     IdentifierInfo *propertyIvar = 0;
     IdentifierInfo *propertyId = Tok.getIdentifierInfo();
     SourceLocation propertyLoc = ConsumeToken(); // consume property name
+    SourceLocation propertyIvarLoc;
     if (Tok.is(tok::equal)) {
       // property '=' ivar-name
       ConsumeToken(); // consume '='
@@ -1446,10 +1447,10 @@ Decl *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
         break;
       }
       propertyIvar = Tok.getIdentifierInfo();
-      ConsumeToken(); // consume ivar-name
+      propertyIvarLoc = ConsumeToken(); // consume ivar-name
     }
     Actions.ActOnPropertyImplDecl(getCurScope(), atLoc, propertyLoc, true, ObjCImpDecl,
-                                  propertyId, propertyIvar);
+                                  propertyId, propertyIvar, propertyIvarLoc);
     if (Tok.isNot(tok::comma))
       break;
     ConsumeToken(); // consume ','
@@ -1489,7 +1490,7 @@ Decl *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
     IdentifierInfo *propertyId = Tok.getIdentifierInfo();
     SourceLocation propertyLoc = ConsumeToken(); // consume property name
     Actions.ActOnPropertyImplDecl(getCurScope(), atLoc, propertyLoc, false, ObjCImpDecl,
-                                  propertyId, 0);
+                                  propertyId, 0, SourceLocation());
 
     if (Tok.isNot(tok::comma))
       break;

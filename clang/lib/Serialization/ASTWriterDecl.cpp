@@ -511,6 +511,7 @@ void ASTDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   Writer.AddSourceLocation(D->getLocStart(), Record);
   Writer.AddDeclRef(D->getPropertyDecl(), Record);
   Writer.AddDeclRef(D->getPropertyIvarDecl(), Record);
+  Writer.AddSourceLocation(D->getPropertyIvarDeclLoc(), Record);
   Writer.AddStmt(D->getGetterCXXConstructor());
   Writer.AddStmt(D->getSetterCXXAssignment());
   Code = serialization::DECL_OBJC_PROPERTY_IMPL;

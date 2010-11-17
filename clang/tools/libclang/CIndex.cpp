@@ -293,6 +293,7 @@ public:
   // FIXME: ObjCCompatibleAliasDecl requires aliased-class locations.
   bool VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
   bool VisitObjCClassDecl(ObjCClassDecl *D);
+  bool VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PD);
   bool VisitLinkageSpecDecl(LinkageSpecDecl *D);
   bool VisitNamespaceDecl(NamespaceDecl *D);
   bool VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
@@ -1041,6 +1042,13 @@ bool CursorVisitor::VisitObjCClassDecl(ObjCClassDecl *D) {
     if (Visit(MakeCursorObjCClassRef(C->getInterface(), C->getLocation(), TU)))
       return true;
 
+  return false;
+}
+
+bool CursorVisitor::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PD) {
+  if (ObjCIvarDecl *Ivar = PD->getPropertyIvarDecl())
+    return Visit(MakeCursorMemberRef(Ivar, PD->getPropertyIvarDeclLoc(), TU));
+  
   return false;
 }
 

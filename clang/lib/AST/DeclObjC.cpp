@@ -896,7 +896,6 @@ ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCPropertyDecl(DC, L, Id, AtLoc, T);
 }
 
-
 //===----------------------------------------------------------------------===//
 // ObjCPropertyImplDecl
 //===----------------------------------------------------------------------===//
@@ -907,8 +906,16 @@ ObjCPropertyImplDecl *ObjCPropertyImplDecl::Create(ASTContext &C,
                                                    SourceLocation L,
                                                    ObjCPropertyDecl *property,
                                                    Kind PK,
-                                                   ObjCIvarDecl *ivar) {
-  return new (C) ObjCPropertyImplDecl(DC, atLoc, L, property, PK, ivar);
+                                                   ObjCIvarDecl *ivar,
+                                                   SourceLocation ivarLoc) {
+  return new (C) ObjCPropertyImplDecl(DC, atLoc, L, property, PK, ivar,
+                                      ivarLoc);
 }
 
+SourceRange ObjCPropertyImplDecl::getSourceRange() const {
+  SourceLocation EndLoc = getLocation();
+  if (IvarLoc.isValid())
+    EndLoc = IvarLoc;
 
+  return SourceRange(AtLoc, EndLoc);
+}

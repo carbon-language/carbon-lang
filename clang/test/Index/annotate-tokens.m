@@ -479,4 +479,9 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: "*" [111:26 - 111:27] ObjCPropertyDecl=foo2:111:27
 // CHECK: Identifier: "foo2" [111:27 - 111:31] ObjCPropertyDecl=foo2:111:27
 
-// FIXME: Very poor handling of @synthesized
+// CHECK: Punctuation: "@" [115:1 - 115:2] UnexposedDecl=foo:110:33 (Definition)
+// CHECK: Keyword: "synthesize" [115:2 - 115:12] UnexposedDecl=foo:110:33 (Definition)
+// CHECK: Identifier: "foo" [115:13 - 115:16] UnexposedDecl=foo:110:33 (Definition)
+// CHECK: Punctuation: "=" [115:17 - 115:18] UnexposedDecl=foo:110:33 (Definition)
+// CHECK: Identifier: "_foo" [115:19 - 115:23] MemberRef=_foo:107:8
+// CHECK: Punctuation: ";" [115:23 - 115:24] ObjCImplementationDecl=Rdar8595386:114:1 (Definition)

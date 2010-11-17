@@ -1455,6 +1455,15 @@ public:
   };
 private:
   SourceLocation AtLoc;   // location of @synthesize or @dynamic
+  
+  /// \brief For @synthesize, the location of the ivar, if it was written in
+  /// the source code.
+  ///
+  /// \code
+  /// @synthesize int a = b
+  /// \endcode
+  SourceLocation IvarLoc;
+  
   /// Property declaration being implemented
   ObjCPropertyDecl *PropertyDecl;
 
@@ -1471,9 +1480,10 @@ private:
   ObjCPropertyImplDecl(DeclContext *DC, SourceLocation atLoc, SourceLocation L,
                        ObjCPropertyDecl *property,
                        Kind PK,
-                       ObjCIvarDecl *ivarDecl)
+                       ObjCIvarDecl *ivarDecl,
+                       SourceLocation ivarLoc)
     : Decl(ObjCPropertyImpl, DC, L), AtLoc(atLoc),
-      PropertyDecl(property), PropertyIvarDecl(ivarDecl),
+      IvarLoc(ivarLoc), PropertyDecl(property), PropertyIvarDecl(ivarDecl), 
       GetterCXXConstructor(0), SetterCXXAssignment(0) {
     assert (PK == Dynamic || PropertyIvarDecl);
   }
@@ -1483,11 +1493,11 @@ public:
                                       SourceLocation atLoc, SourceLocation L,
                                       ObjCPropertyDecl *property,
                                       Kind PK,
-                                      ObjCIvarDecl *ivarDecl);
+                                      ObjCIvarDecl *ivarDecl,
+                                      SourceLocation ivarLoc);
 
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(AtLoc, getLocation());
-  }
+  virtual SourceRange getSourceRange() const;
+  
   SourceLocation getLocStart() const { return AtLoc; }
   void setAtLoc(SourceLocation Loc) { AtLoc = Loc; }
 
@@ -1503,7 +1513,13 @@ public:
   ObjCIvarDecl *getPropertyIvarDecl() const {
     return PropertyIvarDecl;
   }
-  void setPropertyIvarDecl(ObjCIvarDecl *Ivar) { PropertyIvarDecl = Ivar; }
+  SourceLocation getPropertyIvarDeclLoc() const { return IvarLoc; }
+  
+  void setPropertyIvarDecl(ObjCIvarDecl *Ivar,
+                           SourceLocation IvarLoc) { 
+    PropertyIvarDecl = Ivar; 
+    this->IvarLoc = IvarLoc;
+  }
   
   Expr *getGetterCXXConstructor() const {
     return GetterCXXConstructor;
@@ -1522,6 +1538,8 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCPropertyImplDecl *D) { return true; }
   static bool classofKind(Decl::Kind K) { return K == ObjCPropertyImpl; }
+  
+  friend class ASTDeclReader;
 };
 
 }  // end namespace clang

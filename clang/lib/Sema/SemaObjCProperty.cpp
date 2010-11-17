@@ -318,7 +318,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                   bool Synthesize,
                                   Decl *ClassCatImpDecl,
                                   IdentifierInfo *PropertyId,
-                                  IdentifierInfo *PropertyIvar) {
+                                  IdentifierInfo *PropertyIvar,
+                                  SourceLocation PropertyIvarLoc) {
   ObjCContainerDecl *ClassImpDecl =
     cast_or_null<ObjCContainerDecl>(ClassCatImpDecl);
   // Make sure we have a context for the property implementation declaration.
@@ -474,7 +475,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                (Synthesize ?
                                 ObjCPropertyImplDecl::Synthesize
                                 : ObjCPropertyImplDecl::Dynamic),
-                               Ivar);
+                               Ivar, PropertyIvarLoc);
   if (ObjCMethodDecl *getterMethod = property->getGetterMethodDecl()) {
     getterMethod->createImplicitParams(Context, IDecl);
     if (getLangOptions().CPlusPlus && Synthesize &&
@@ -997,7 +998,8 @@ void Sema::DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
     // to help users.
     ActOnPropertyImplDecl(S, SourceLocation(), SourceLocation(),
                           true,IMPDecl,
-                          Prop->getIdentifier(), Prop->getIdentifier());
+                          Prop->getIdentifier(), Prop->getIdentifier(),
+                          SourceLocation());
   }
 }
 

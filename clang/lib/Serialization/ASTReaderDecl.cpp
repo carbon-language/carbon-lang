@@ -616,8 +616,9 @@ void ASTDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   D->setAtLoc(ReadSourceLocation(Record, Idx));
   D->setPropertyDecl(
                cast_or_null<ObjCPropertyDecl>(Reader.GetDecl(Record[Idx++])));
-  D->setPropertyIvarDecl(
-                   cast_or_null<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
+  D->PropertyIvarDecl = 
+                   cast_or_null<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++]));
+  D->IvarLoc = ReadSourceLocation(Record, Idx);
   D->setGetterCXXConstructor(Reader.ReadExpr(F));
   D->setSetterCXXAssignment(Reader.ReadExpr(F));
 }
@@ -1467,7 +1468,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   case DECL_OBJC_PROPERTY_IMPL:
     D = ObjCPropertyImplDecl::Create(*Context, 0, SourceLocation(),
                                      SourceLocation(), 0,
-                                     ObjCPropertyImplDecl::Dynamic, 0);
+                                     ObjCPropertyImplDecl::Dynamic, 0,
+                                     SourceLocation());
     break;
   case DECL_FIELD:
     D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 0,
