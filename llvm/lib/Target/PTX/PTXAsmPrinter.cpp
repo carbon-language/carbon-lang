@@ -64,11 +64,23 @@ static const char PARAM_PREFIX[] = "__param_";
 static const char *getRegisterTypeName(unsigned RegNo){
 #define TEST_REGCLS(cls, clsstr) \
   if (PTX::cls ## RegisterClass->contains(RegNo)) return # clsstr;
-  TEST_REGCLS(RRegs32, .s32);
-  TEST_REGCLS(Preds, .pred);
+  TEST_REGCLS(RRegs32, s32);
+  TEST_REGCLS(Preds, pred);
 #undef TEST_REGCLS
 
   llvm_unreachable("Not in any register class!");
+  return NULL;
+}
+
+static const char *getInstructionTypeName(const MachineInstr *MI)
+{
+  for (int i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (MO.getType() == MachineOperand::MO_Register)
+      return getRegisterTypeName(MO.getReg());
+  }
+
+  llvm_unreachable("No reg operand found in instruction!");
   return NULL;
 }
 
@@ -89,7 +101,7 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
        i = MFI->localVarRegBegin(), e = MFI->localVarRegEnd(); i != e; ++ i) {
     unsigned reg = *i;
 
-    std::string def = "\t.reg ";
+    std::string def = "\t.reg .";
     def += getRegisterTypeName(reg);
     def += ' ';
     def += getRegisterName(reg);
@@ -99,11 +111,21 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
 }
 
 void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  SmallString<128> str;
-  raw_svector_ostream OS(str);
+  SmallString<128> sstr;
+  raw_svector_ostream OS(sstr);
   printInstruction(MI, OS);
   OS << ';';
-  OutStreamer.EmitRawText(OS.str());
+
+  // Replace "%type" if found
+  StringRef strref = OS.str();
+  size_t pos;
+  if ((pos = strref.find("%type")) == StringRef::npos) {
+    OutStreamer.EmitRawText(strref);
+    return;
+  }
+  std::string str = strref;
+  str.replace(pos, /*strlen("%type")==*/5, getInstructionTypeName(MI));
+  OutStreamer.EmitRawText(StringRef(str));
 }
 
 void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
@@ -141,7 +163,7 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
   // Print return register
   reg = MFI->retReg();
   if (!isKernel && reg != PTX::NoRegister) {
-    decl += " (.reg "; // FIXME: could it return in .param space?
+    decl += " (.reg ."; // FIXME: could it return in .param space?
     decl += getRegisterTypeName(reg);
     decl += " ";
     decl += getRegisterName(reg);
@@ -170,7 +192,7 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
         assert(reg != PTX::NoRegister && "Not a valid register!");
         if (i != b)
           decl += ", ";
-        decl += ".reg ";
+        decl += ".reg .";
         decl += getRegisterTypeName(reg);
         decl += " ";
         decl += getRegisterName(reg);

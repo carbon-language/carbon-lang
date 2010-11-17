@@ -27,8 +27,28 @@ def PTXret
   : SDNode<"PTXISD::RET",  SDTNone, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
+// Instruction Class Templates
+//===----------------------------------------------------------------------===//
+
+multiclass INT3<string opcstr, SDNode opnode> {
+  def rr : InstPTX<(outs RRegs32:$d),
+                   (ins RRegs32:$a, RRegs32:$b),
+                   !strconcat(opcstr, ".%type\t$d, $a, $b"),
+                   [(set RRegs32:$d, (opnode RRegs32:$a, RRegs32:$b))]>;
+  def ri : InstPTX<(outs RRegs32:$d),
+                   (ins RRegs32:$a, i32imm:$b),
+                   !strconcat(opcstr, ".%type\t$d, $a, $b"),
+                   [(set RRegs32:$d, (opnode RRegs32:$a, imm:$b))]>;
+}
+
+//===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
+
+///===- Integer Arithmetic Instructions -----------------------------------===//
+
+defm ADD : INT3<"add", add>;
+defm SUB : INT3<"sub", sub>;
 
 ///===- Data Movement and Conversion Instructions -------------------------===//
 
@@ -37,7 +57,7 @@ let neverHasSideEffects = 1 in {
   def MOVpp
     : InstPTX<(outs Preds:$d), (ins Preds:$a), "mov.pred\t$d, $a", []>;
   def MOVrr
-    : InstPTX<(outs RRegs32:$d), (ins RRegs32:$a), "mov.s32\t$d, $a", []>;
+    : InstPTX<(outs RRegs32:$d), (ins RRegs32:$a), "mov.%type\t$d, $a", []>;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
