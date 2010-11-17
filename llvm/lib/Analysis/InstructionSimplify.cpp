@@ -173,7 +173,7 @@ static Value *ThreadBinOpOverPHI(unsigned Opcode, Value *LHS, Value *RHS,
   Value *CommonValue = 0;
   for (unsigned i = 0, e = PI->getNumIncomingValues(); i != e; ++i) {
     Value *Incoming = PI->getIncomingValue(i);
-    // If the incoming value is the phi node itself, it can be safely skipped.
+    // If the incoming value is the phi node itself, it can safely be skipped.
     if (Incoming == PI) continue;
     Value *V = PI == LHS ?
       SimplifyBinOp(Opcode, Incoming, RHS, TD, DT, MaxRecurse) :
@@ -211,7 +211,7 @@ static Value *ThreadCmpOverPHI(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
   Value *CommonValue = 0;
   for (unsigned i = 0, e = PI->getNumIncomingValues(); i != e; ++i) {
     Value *Incoming = PI->getIncomingValue(i);
-    // If the incoming value is the phi node itself, it can be safely skipped.
+    // If the incoming value is the phi node itself, it can safely be skipped.
     if (Incoming == PI) continue;
     Value *V = SimplifyCmpInst(Pred, Incoming, RHS, TD, DT, MaxRecurse);
     // If the operation failed to simplify, or simplified to a different value
@@ -663,6 +663,40 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
                                         (Constant *const*)Ops+1, NumOps-1);
 }
 
+/// SimplifyPHINode - See if we can fold the given phi.  If not, returns null.
+static Value *SimplifyPHINode(PHINode *PN, const DominatorTree *DT) {
+  // If all of the PHI's incoming values are the same then replace the PHI node
+  // with the common value.
+  Value *CommonValue = 0;
+  bool HasUndefInput = false;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    Value *Incoming = PN->getIncomingValue(i);
+    // If the incoming value is the phi node itself, it can safely be skipped.
+    if (Incoming == PN) continue;
+    if (isa<UndefValue>(Incoming)) {
+      // Remember that we saw an undef value, but otherwise ignore them.
+      HasUndefInput = true;
+      continue;
+    }
+    if (CommonValue && Incoming != CommonValue)
+      return 0;  // Not the same, bail out.
+    CommonValue = Incoming;
+  }
+
+  // If CommonValue is null then all of the incoming values were either undef or
+  // equal to the phi node itself.
+  if (!CommonValue)
+    return UndefValue::get(PN->getType());
+
+  // If we have a PHI node like phi(X, undef, X), where X is defined by some
+  // instruction, we cannot return X as the result of the PHI node unless it
+  // dominates the PHI block.
+  if (HasUndefInput)
+    return ValueDominatesPHI(CommonValue, PN, DT) ? CommonValue : 0;
+
+  return CommonValue;
+}
+
 
 //=== Helper functions for higher up the class hierarchy.
 
@@ -748,7 +782,7 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     return SimplifyGEPInst(&Ops[0], Ops.size(), TD, DT);
   }
   case Instruction::PHI:
-    return cast<PHINode>(I)->hasConstantValue(DT);
+    return SimplifyPHINode(cast<PHINode>(I), DT);
   }
 }
 

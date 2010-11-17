@@ -582,7 +582,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
       BBI = BB->end();
     }
   } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
-    if (Value *W = PN->hasConstantValue(DT))
+    if (Value *W = PN->hasConstantValue())
       return findValueImpl(W, OffsetOk, Visited);
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
     if (CI->isNoopCast(TD ? TD->getIntPtrType(V->getContext()) :
@@ -615,7 +615,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
 
   // As a last resort, try SimplifyInstruction or constant folding.
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
-    if (Value *W = SimplifyInstruction(Inst, TD))
+    if (Value *W = SimplifyInstruction(Inst, TD, DT))
       if (W != Inst)
         return findValueImpl(W, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
