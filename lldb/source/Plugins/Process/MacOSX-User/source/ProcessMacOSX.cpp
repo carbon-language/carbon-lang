@@ -674,7 +674,7 @@ ProcessMacOSX::RefreshStateAfterStop ()
 }
 
 Error
-ProcessMacOSX::DoHalt ()
+ProcessMacOSX::DoHalt (bool &caused_stop)
 {
     return Signal (SIGSTOP);
 }
@@ -718,8 +718,10 @@ ProcessMacOSX::DoSIGSTOP (bool clear_all_breakpoints)
 
         // Pause the Private State Thread so it doesn't intercept the events we need to wait for.
         PausePrivateStateThread();
-
-        m_thread_list.DiscardThreadPlans();
+        // I don't think this is right.  Halt should just stop the process, and then whoever called halt should
+        // arrange whatever they need to with the thread plans.
+        
+        //m_thread_list.DiscardThreadPlans();
 
         // First jettison all the current thread plans, since we want to make sure it
         // really just stops.

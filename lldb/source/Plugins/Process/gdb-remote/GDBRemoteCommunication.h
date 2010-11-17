@@ -203,6 +203,9 @@ public:
     }
     
     bool
+    WaitForIsRunning (uint32_t timeout_sec);
+    
+    bool
     GetHostInfo (uint32_t timeout_seconds);
 
     bool 

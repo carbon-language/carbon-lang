@@ -144,7 +144,7 @@ public:
     DoResume ();
 
     virtual lldb_private::Error
-    DoHalt ();
+    DoHalt (bool &caused_stop);
 
     virtual lldb_private::Error
     WillDetach ();

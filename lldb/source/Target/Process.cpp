@@ -1438,9 +1438,19 @@ Process::Halt ()
     
     if (error.Success())
     {
-        error = DoHalt();
+        bool caused_stop;
+        error = DoHalt(caused_stop);
         if (error.Success())
+        {
             DidHalt();
+            if (caused_stop)
+            {
+                ProcessEventData *new_data = new ProcessEventData (GetTarget().GetProcessSP(), eStateStopped);
+                new_data->SetInterrupted(true);
+                BroadcastEvent (eBroadcastBitStateChanged, new_data);
+            }
+        }
+        
     }
     return error;
 }
@@ -1591,9 +1601,14 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // If we are going to stop, then we always broadcast the event.
             // If we aren't going to stop, let the thread plans decide if we're going to report this event.
             // If no thread has an opinion, we don't report it.
-            if (state != eStateInvalid)
+            if (ProcessEventData::GetInterruptedFromEvent (event_ptr))
             {
-
+                    if (log)
+                        log->Printf ("Process::ShouldBroadcastEvent (%p) stopped due to an interrupt, state: %s", event_ptr, StateAsCString(state));
+                return true;
+            }
+            else
+            {
                 RefreshStateAfterStop ();
 
                 if (m_thread_list.ShouldStop (event_ptr) == false)
@@ -1610,7 +1625,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                     }
 
                     if (log)
-                        log->Printf ("Process::ShouldBroadcastEvent (%p) Restarting process", event_ptr, StateAsCString(state));
+                        log->Printf ("Process::ShouldBroadcastEvent (%p) Restarting process from state: %s", event_ptr, StateAsCString(state));
                     Resume ();
                 }
                 else
@@ -1785,7 +1800,13 @@ Process::RunPrivateStateThread ()
                 control_only = false;
                 break;
             }
+            
+            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+            if (log)
+                log->Printf ("Process::%s (arg = %p, pid = %i) got a control event: %d", __FUNCTION__, this, GetID(), event_sp->GetType());
+
             m_private_state_control_wait.SetValue (true, eBroadcastAlways);
+            continue;
         }
 
 
@@ -1799,7 +1820,13 @@ Process::RunPrivateStateThread ()
         if (internal_state == eStateInvalid || 
             internal_state == eStateExited  ||
             internal_state == eStateDetached )
+        {
+            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+            if (log)
+                log->Printf ("Process::%s (arg = %p, pid = %i) about to exit with internal state %s...", __FUNCTION__, this, GetID(), StateAsCString(internal_state));
+
             break;
+        }
     }
 
     // Verify log is still enabled before attempting to write to it...
@@ -1820,7 +1847,8 @@ Process::ProcessEventData::ProcessEventData () :
     m_process_sp (),
     m_state (eStateInvalid),
     m_restarted (false),
-    m_update_state (false)
+    m_update_state (false),
+    m_interrupted (false)
 {
 }
 
@@ -1829,7 +1857,8 @@ Process::ProcessEventData::ProcessEventData (const ProcessSP &process_sp, StateT
     m_process_sp (process_sp),
     m_state (state),
     m_restarted (false),
-    m_update_state (false)
+    m_update_state (false),
+    m_interrupted (false)
 {
 }
 
@@ -1848,30 +1877,6 @@ const ConstString &
 Process::ProcessEventData::GetFlavor () const
 {
     return ProcessEventData::GetFlavorString ();
-}
-
-const ProcessSP &
-Process::ProcessEventData::GetProcessSP () const
-{
-    return m_process_sp;
-}
-
-StateType
-Process::ProcessEventData::GetState () const
-{
-    return m_state;
-}
-
-bool
-Process::ProcessEventData::GetRestarted () const
-{
-    return m_restarted;
-}
-
-void
-Process::ProcessEventData::SetRestarted (bool new_value)
-{
-    m_restarted = new_value;
 }
 
 void
@@ -1974,6 +1979,24 @@ Process::ProcessEventData::SetRestartedInEvent (Event *event_ptr, bool new_value
 }
 
 bool
+Process::ProcessEventData::GetInterruptedFromEvent (const Event *event_ptr)
+{
+    const ProcessEventData *data = GetEventDataFromEvent (event_ptr);
+    if (data == NULL)
+        return false;
+    else
+        return data->GetInterrupted ();
+}
+
+void
+Process::ProcessEventData::SetInterruptedInEvent (Event *event_ptr, bool new_value)
+{
+    ProcessEventData *data = const_cast<ProcessEventData *>(GetEventDataFromEvent (event_ptr));
+    if (data != NULL)
+        data->SetInterrupted(new_value);
+}
+
+bool
 Process::ProcessEventData::SetUpdateStateOnRemoval (Event *event_ptr)
 {
     ProcessEventData *data = const_cast<ProcessEventData *>(GetEventDataFromEvent (event_ptr));
@@ -1983,12 +2006,6 @@ Process::ProcessEventData::SetUpdateStateOnRemoval (Event *event_ptr)
         return true;
     }
     return false;
-}
-
-void
-Process::ProcessEventData::SetUpdateStateOnRemoval()
-{
-    m_update_state = true;
 }
 
 Target *

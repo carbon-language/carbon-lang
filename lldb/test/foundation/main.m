@@ -1,13 +1,20 @@
 #import <Foundation/Foundation.h>
+#include <unistd.h>
 
 @interface MyString : NSObject {
     NSString *str;
     NSDate *date;
+    BOOL _desc_pauses;
 }
+
+@property BOOL descriptionPauses;
+
 - (id)initWithNSString:(NSString *)string;
 @end
 
 @implementation MyString
+@synthesize descriptionPauses = _desc_pauses;
+
 - (id)initWithNSString:(NSString *)string
 {
     if (self = [super init])
@@ -15,6 +22,7 @@
         str = [NSString stringWithString:string];
         date = [NSDate date];
     }
+    self.descriptionPauses = NO;
     return self;
 }
 
@@ -27,6 +35,12 @@
 
 - (NSString *)description
 {
+    if (self.descriptionPauses)
+    {
+        printf ("\nAbout to sleep.\n");
+        usleep(100000);
+    }
+
     return [str stringByAppendingFormat:@" with timestamp: %@", date];
 }
 @end
@@ -39,6 +53,8 @@ int main (int argc, char const *argv[])
 
     MyString *my = [[MyString alloc] initWithNSString:str];
     NSLog(@"MyString instance: %@", [my description]);
+
+    my.descriptionPauses = YES;
 
     id str_id = str; // Set break point at this line.
     SEL sel = @selector(length);

@@ -26,6 +26,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/State.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -509,18 +510,25 @@ ClangFunction::ExecuteFunction (
     if (call_plan_sp == NULL)
         return eExecutionSetupError;
     
-//#define SINGLE_STEP_EXPRESSIONS
-    
-#ifdef SINGLE_STEP_EXPRESSIONS
-    return eExecutionInterrupted;
-#else
     call_plan_sp->SetPrivate(true);
     exe_ctx.thread->QueueThreadPlan(call_plan_sp, true);
-#endif
+    
+    Listener listener("ClangFunction temporary listener");
+    exe_ctx.process->HijackProcessEvents(&listener);
+    
+    Error resume_error = exe_ctx.process->Resume ();
+    if (!resume_error.Success())
+    {
+        errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
+        exe_ctx.process->RestoreProcessEvents();
+        return eExecutionSetupError;
+    }
     
     // We need to call the function synchronously, so spin waiting for it to return.
     // If we get interrupted while executing, we're going to lose our context, and
     // won't be able to gather the result at this point.
+    // We set the timeout AFTER the resume, since the resume takes some time and we
+    // don't want to charge that to the timeout.
     
     TimeValue* timeout_ptr = NULL;
     TimeValue real_timeout;
@@ -532,18 +540,7 @@ ClangFunction::ExecuteFunction (
         timeout_ptr = &real_timeout;
     }
     
-    Listener listener("ClangFunction temporary listener");
-    exe_ctx.process->HijackProcessEvents(&listener);
-    
-    Error resume_error = exe_ctx.process->Resume ();
-    if (!resume_error.Success())
-    {
-        errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
-        return eExecutionSetupError;
-    }
-    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    
     while (1)
     {
         lldb::EventSP event_sp;
@@ -551,12 +548,11 @@ ClangFunction::ExecuteFunction (
         // Now wait for the process to stop again:
         bool got_event = listener.WaitForEvent (timeout_ptr, event_sp);
         
-        if (!got_event && !call_plan_sp->IsPlanComplete())
+        if (!got_event)
         {
             // Right now this is the only way to tell we've timed out...
             // We should interrupt the process here...
             // Not really sure what to do if Halt fails here...
-            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
             if (log)
                 if (try_all_threads)
                     log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.",
@@ -568,45 +564,54 @@ ClangFunction::ExecuteFunction (
             if (exe_ctx.process->Halt().Success())
             {
                 timeout_ptr = NULL;
-                
-                got_event = listener.WaitForEvent (timeout_ptr, event_sp);
-                stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
-
-                if (stop_state == lldb::eStateInvalid)
-                {
-                    errors.Printf ("Got an invalid stop state after halt.");
-                }
-                else if (stop_state != lldb::eStateStopped)
-                {
-                    StreamString s;
-                    event_sp->Dump (&s);
+                if (log)
+                    log->Printf ("Halt succeeded.");
                     
-                    errors.Printf("Didn't get a stopped event after Halting the target, got: \"%s\"", s.GetData());
-                }
+                // Between the time that we got the timeout and the time we halted, but target
+                // might have actually completed the plan.  If so, we're done.  Note, I call WFE here with a short 
+                // timeout to 
+                got_event = listener.WaitForEvent(NULL, event_sp);
                 
-                if (try_all_threads)
+                if (got_event)
                 {
-                    // Between the time that we got the timeout and the time we halted, but target
-                    // might have actually completed the plan.  If so, we're done.
+                    stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+                    if (log)
+                    {
+                        log->Printf ("Stopped with event: %s", StateAsCString(stop_state));
+                        if (stop_state == lldb::eStateStopped && Process::ProcessEventData::GetInterruptedFromEvent(event_sp.get()))
+                            log->Printf ("    Event was the Halt interruption event.");
+                    }
+                    
                     if (exe_ctx.thread->IsThreadPlanDone (call_plan_sp.get()))
                     {
+                        if (log)
+                            log->Printf ("Even though we timed out, the call plan was done.  Exiting wait loop.");
                         return_value = eExecutionCompleted;
                         break;
                     }
-                    
-                    call_plan_ptr->SetStopOthers (false);
-                    exe_ctx.process->Resume();
-                    continue;
-                }
-                else
-                {
-                    exe_ctx.process->RestoreProcessEvents ();
-                    return eExecutionInterrupted;
+
+                    if (try_all_threads)
+                    {
+                        
+                        call_plan_ptr->SetStopOthers (false);
+                        if (log)
+                            log->Printf ("About to resume.");
+
+                        exe_ctx.process->Resume();
+                        continue;
+                    }
+                    else
+                    {
+                        exe_ctx.process->RestoreProcessEvents ();
+                        return eExecutionInterrupted;
+                    }
                 }
             }
         }
         
         stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+        if (log)
+            log->Printf("Got event: %s.", StateAsCString(stop_state));
         
         if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
             continue;
@@ -623,7 +628,6 @@ ClangFunction::ExecuteFunction (
         }
         else
         {
-            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
             if (log)
             {
                 StreamString s;
@@ -690,7 +694,6 @@ ClangFunction::ExecuteFunction (
                     event_explanation = ts.GetData();
                 } while (0);
                 
-                log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
                 if (log)
                     log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
             }

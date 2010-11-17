@@ -199,13 +199,13 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
         log->Printf ("GDBRemoteCommunication::%s ()", __FUNCTION__);
 
     Mutex::Locker locker(m_sequence_mutex);
-    m_is_running.SetValue (true, eBroadcastNever);
-
 //    ScopedValueChanger<bool> restore_running_to_false (m_is_running, false);
     StateType state = eStateRunning;
 
     if (SendPacket(payload, packet_length) == 0)
         state = eStateInvalid;
+
+    m_is_running.SetValue (true, eBroadcastAlways);
 
     while (state == eStateRunning)
     {
@@ -856,3 +856,19 @@ GDBRemoteCommunication::DeallocateMemory (addr_t addr, uint32_t timeout_seconds)
     }
     return false;
 }
+
+bool
+GDBRemoteCommunication::WaitForIsRunning (uint32_t timeout_sec)
+{
+    TimeValue timeout;
+    if (timeout_sec)
+    {
+        timeout = TimeValue::Now();
+        timeout.OffsetWithSeconds (timeout_sec);
+    }
+    bool timed_out = false;
+    m_is_running.WaitForValueEqualTo (true, &timeout, &timed_out);
+    return timed_out;
+}
+    
+

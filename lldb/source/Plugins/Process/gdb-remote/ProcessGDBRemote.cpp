@@ -895,9 +895,15 @@ ProcessGDBRemote::WillResume ()
 Error
 ProcessGDBRemote::DoResume ()
 {
+    Error error;
     ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::Resume()");
     m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (m_continue_packet.GetData(), m_continue_packet.GetSize()));
-    return Error();
+    const uint32_t timedout_sec = 1;
+    if (m_gdb_comm.WaitForIsRunning (timedout_sec))
+    {
+        error.SetErrorString("Resume timed out.");
+    }
+    return error;
 }
 
 size_t
@@ -1115,20 +1121,47 @@ ProcessGDBRemote::RefreshStateAfterStop ()
 }
 
 Error
-ProcessGDBRemote::DoHalt ()
+ProcessGDBRemote::DoHalt (bool &caused_stop)
 {
     Error error;
+    caused_stop = false;
+    
     if (m_gdb_comm.IsRunning())
     {
+        PausePrivateStateThread();
         bool timed_out = false;
         Mutex::Locker locker;
-        if (!m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
+
+        if (m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
+        {
+            EventSP event_sp;
+            TimeValue timeout_time;
+            timeout_time = TimeValue::Now();
+            timeout_time.OffsetWithSeconds(2);
+
+            StateType state = WaitForStateChangedEventsPrivate (&timeout_time, event_sp);
+
+            if (!StateIsStoppedState (state))
+            {
+                LogSP log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+                if (log)
+                    log->Printf("ProcessGDBRemote::DoHalt() failed to stop after sending interrupt");
+                error.SetErrorString ("Did not get stopped event after interrupt succeeded.");
+            }
+            else
+                caused_stop = true;
+        }
+        else
         {
             if (timed_out)
                 error.SetErrorString("timed out sending interrupt packet");
             else
                 error.SetErrorString("unknown error sending interrupt packet");
         }
+        
+        // Resume the private state thread at this point.
+        ResumePrivateStateThread();
+
     }
     return error;
 }
@@ -2082,6 +2115,9 @@ ProcessGDBRemote::AsyncThread (void *arg)
             if (listener.WaitForEvent (NULL, event_sp))
             {
                 const uint32_t event_type = event_sp->GetType();
+                if (log)
+                    log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) Got an event of type: %d...", __FUNCTION__, arg, process->GetID(), event_type);
+
                 switch (event_type)
                 {
                     case eBroadcastBitAsyncContinue:
