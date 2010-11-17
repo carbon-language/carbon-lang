@@ -219,26 +219,23 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
 /// StringLiteralParser. When we decide to implement UCN's for identifiers,
 /// we will likely rework our support for UCN's.
 static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
-                             char *&ResultBuf, bool &HadError,
-                             SourceLocation Loc, Preprocessor &PP,
-                             bool wide, bool Complain) {
+                            char *&ResultBuf, bool &HadError,
+                            FullSourceLoc Loc, bool wide, Diagnostic *Diags, 
+                            const LangOptions &Features) {
   typedef uint32_t UTF32;
   UTF32 UcnVal = 0;
   unsigned short UcnLen = 0;
-  if (!ProcessUCNEscape(ThisTokBuf, ThisTokEnd, UcnVal, UcnLen,
-                        FullSourceLoc(Loc, PP.getSourceManager()),
-                        Complain ? &PP.getDiagnostics() : 0,
-                        PP.getLangOptions())){
+  if (!ProcessUCNEscape(ThisTokBuf, ThisTokEnd, UcnVal, UcnLen, Loc, Diags,
+                        Features)) {
     HadError = 1;
     return;
   }
 
   if (wide) {
     (void)UcnLen;
-    assert((UcnLen== 4 || UcnLen== 8) && 
-           "EncodeUCNEscape - only ucn length of 4 or 8 supported");
+    assert((UcnLen== 4 || UcnLen== 8) && "only ucn length of 4 or 8 supported");
 
-    if (!PP.getLangOptions().ShortWChar) {
+    if (!Features.ShortWChar) {
       // Note: our internal rep of wide char tokens is always little-endian.
       *ResultBuf++ = (UcnVal & 0x000000FF);
       *ResultBuf++ = (UcnVal & 0x0000FF00) >> 8;
@@ -253,7 +250,7 @@ static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
       *ResultBuf++ = (UcnVal & 0x0000FF00) >> 8;
       return;
     }
-    PP.Diag(Loc, diag::warn_ucn_escape_too_large);
+    if (Diags) Diags->Report(Loc, diag::warn_ucn_escape_too_large);
 
     typedef uint16_t UTF16;
     UcnVal -= 0x10000;
@@ -867,7 +864,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
   // query the target.  As such, wchar_tByteWidth is only valid if AnyWide=true.
   wchar_tByteWidth = ~0U;
   if (AnyWide) {
-    wchar_tByteWidth = PP.getTargetInfo().getWCharWidth();
+    wchar_tByteWidth = Target.getWCharWidth();
     assert((wchar_tByteWidth & 7) == 0 && "Assumes wchar_t is byte multiple!");
     wchar_tByteWidth /= 8;
   }
@@ -917,7 +914,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     ++ThisTokBuf;
 
     // Check if this is a pascal string
-    if (pp.getLangOptions().PascalStrings && ThisTokBuf + 1 != ThisTokEnd &&
+    if (Features.PascalStrings && ThisTokBuf + 1 != ThisTokEnd &&
         ThisTokBuf[0] == '\\' && ThisTokBuf[1] == 'p') {
 
       // If the \p sequence is found in the first token, we have a pascal string
@@ -956,8 +953,8 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
       // Is this a Universal Character Name escape?
       if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
         EncodeUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr,
-                        hadError, StringToks[i].getLocation(), PP, wide, 
-                        Complain);
+                        hadError, FullSourceLoc(StringToks[i].getLocation(),SM),
+                        wide, Diags, Features);
         continue;
       }
       // Otherwise, this is a non-UCN escape character.  Process it.
@@ -991,16 +988,12 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     }
   } else if (Complain) {
     // Complain if this string literal has too many characters.
-    unsigned MaxChars = PP.getLangOptions().CPlusPlus? 65536
-                      : PP.getLangOptions().C99 ? 4095
-                      : 509;
+    unsigned MaxChars = Features.CPlusPlus? 65536 : Features.C99 ? 4095 : 509;
     
     if (GetNumStringChars() > MaxChars)
       PP.Diag(StringToks[0].getLocation(), diag::ext_string_too_long)
         << GetNumStringChars() << MaxChars
-        << (PP.getLangOptions().CPlusPlus? 2
-            : PP.getLangOptions().C99 ? 1
-            : 0)
+        << (Features.CPlusPlus ? 2 : Features.C99 ? 1 : 0)
         << SourceRange(StringToks[0].getLocation(),
                        StringToks[NumStringToks-1].getLocation());
   }

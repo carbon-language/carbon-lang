@@ -734,7 +734,6 @@ public:
     return Lexer::AdvanceToTokenCharacter(TokStart, Char, SourceMgr, Features);
   }
 
-
   /// IncrementPasteCounter - Increment the counters for the number of token
   /// paste operations performed.  If fast was specified, this is a 'fast paste'
   /// case we handled.
