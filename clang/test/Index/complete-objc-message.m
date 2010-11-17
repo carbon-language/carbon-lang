@@ -204,7 +204,7 @@ void test_redundancy(C *c) {
 // CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)}{HorizontalSpace  }{TypedText Arg2:}{Placeholder (int)}
 // CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)}{HorizontalSpace  }{TypedText OtherArg:}{Placeholder (id)}
 // CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText SomeArg:}{Placeholder (int)}{HorizontalSpace  }{TypedText OtherArg:}{Placeholder (id)}
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText }
+// CHECK-CC8-NOT: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText }
 // RUN: c-index-test -code-completion-at=%s:95:24 %s | FileCheck -check-prefix=CHECK-CC9 %s
 // CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)}
 // CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)}
@@ -232,7 +232,7 @@ void test_redundancy(C *c) {
 // CHECK-CCD: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)}{HorizontalSpace  }{TypedText Arg2:}{Placeholder (int)}
 // CHECK-CCD: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)}{HorizontalSpace  }{TypedText OtherArg:}{Placeholder (id)}
 // CHECK-CCD: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText SomeArg:}{Placeholder (int)}{HorizontalSpace  }{TypedText OtherArg:}{Placeholder (id)}
-// CHECK-CCD: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText }
+// CHECK-CCD-NOT: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{TypedText }
 // RUN: c-index-test -code-completion-at=%s:116:30 %s | FileCheck -check-prefix=CHECK-CCE %s
 // CHECK-CCE: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)}
 // CHECK-CCE: ObjCClassMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)}

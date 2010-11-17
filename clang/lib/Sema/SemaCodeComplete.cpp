@@ -4007,7 +4007,8 @@ enum ObjCMethodKind {
 static bool isAcceptableObjCSelector(Selector Sel,
                                      ObjCMethodKind WantKind,
                                      IdentifierInfo **SelIdents,
-                                     unsigned NumSelIdents) {
+                                     unsigned NumSelIdents,
+                                     bool AllowSameLength = true) {
   if (NumSelIdents > Sel.getNumArgs())
     return false;
   
@@ -4016,6 +4017,9 @@ static bool isAcceptableObjCSelector(Selector Sel,
     case MK_ZeroArgSelector: return Sel.isUnarySelector();
     case MK_OneArgSelector:  return Sel.getNumArgs() == 1;
   }
+  
+  if (!AllowSameLength && NumSelIdents && NumSelIdents == Sel.getNumArgs())
+    return false;
   
   for (unsigned I = 0; I != NumSelIdents; ++I)
     if (SelIdents[I] != Sel.getIdentifierInfoForSlot(I))
@@ -4027,9 +4031,10 @@ static bool isAcceptableObjCSelector(Selector Sel,
 static bool isAcceptableObjCMethod(ObjCMethodDecl *Method,
                                    ObjCMethodKind WantKind,
                                    IdentifierInfo **SelIdents,
-                                   unsigned NumSelIdents) {
+                                   unsigned NumSelIdents,
+                                   bool AllowSameLength = true) {
   return isAcceptableObjCSelector(Method->getSelector(), WantKind, SelIdents,
-                                  NumSelIdents);
+                                  NumSelIdents, AllowSameLength);
 }
 
 namespace {
@@ -4054,6 +4059,9 @@ namespace {
 /// \param CurContext the context in which we're performing the lookup that
 /// finds methods.
 ///
+/// \param AllowSameLength Whether we allow a method to be added to the list
+/// when it has the same number of parameters as we have selector identifiers.
+///
 /// \param Results the structure into which we'll add results.
 static void AddObjCMethods(ObjCContainerDecl *Container, 
                            bool WantInstanceMethods,
@@ -4062,6 +4070,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                            unsigned NumSelIdents,
                            DeclContext *CurContext,
                            VisitedSelectorSet &Selectors,
+                           bool AllowSameLength,
                            ResultBuilder &Results,
                            bool InOriginalClass = true) {
   typedef CodeCompletionResult Result;
@@ -4071,7 +4080,8 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
     if ((*M)->isInstanceMethod() == WantInstanceMethods) {
       // Check whether the selector identifiers we've been given are a 
       // subset of the identifiers for this particular method.
-      if (!isAcceptableObjCMethod(*M, WantKind, SelIdents, NumSelIdents))
+      if (!isAcceptableObjCMethod(*M, WantKind, SelIdents, NumSelIdents,
+                                  AllowSameLength))
         continue;
 
       if (!Selectors.insert((*M)->getSelector()))
@@ -4094,7 +4104,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                                               E = Protocols.end(); 
          I != E; ++I)
       AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
-                     CurContext, Selectors, Results, false);    
+                     CurContext, Selectors, AllowSameLength, Results, false);    
   }
   
   ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container);
@@ -4107,14 +4117,14 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                                             E = Protocols.end(); 
        I != E; ++I)
     AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
-                   CurContext, Selectors, Results, false);
+                   CurContext, Selectors, AllowSameLength, Results, false);
   
   // Add methods in categories.
   for (ObjCCategoryDecl *CatDecl = IFace->getCategoryList(); CatDecl;
        CatDecl = CatDecl->getNextClassCategory()) {
     AddObjCMethods(CatDecl, WantInstanceMethods, WantKind, SelIdents, 
-                   NumSelIdents, CurContext, Selectors, Results, 
-                   InOriginalClass);
+                   NumSelIdents, CurContext, Selectors, AllowSameLength, 
+                   Results, InOriginalClass);
     
     // Add a categories protocol methods.
     const ObjCList<ObjCProtocolDecl> &Protocols 
@@ -4123,26 +4133,27 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                                               E = Protocols.end();
          I != E; ++I)
       AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, 
-                     NumSelIdents, CurContext, Selectors, Results, false);
+                     NumSelIdents, CurContext, Selectors, AllowSameLength, 
+                     Results, false);
     
     // Add methods in category implementations.
     if (ObjCCategoryImplDecl *Impl = CatDecl->getImplementation())
       AddObjCMethods(Impl, WantInstanceMethods, WantKind, SelIdents, 
-                     NumSelIdents, CurContext, Selectors, Results, 
-                     InOriginalClass);
+                     NumSelIdents, CurContext, Selectors, AllowSameLength, 
+                     Results, InOriginalClass);
   }
   
   // Add methods in superclass.
   if (IFace->getSuperClass())
     AddObjCMethods(IFace->getSuperClass(), WantInstanceMethods, WantKind, 
-                   SelIdents, NumSelIdents, CurContext, Selectors, Results, 
-                   false);
+                   SelIdents, NumSelIdents, CurContext, Selectors, 
+                   AllowSameLength, Results, false);
 
   // Add methods in our implementation, if any.
   if (ObjCImplementationDecl *Impl = IFace->getImplementation())
     AddObjCMethods(Impl, WantInstanceMethods, WantKind, SelIdents,
-                   NumSelIdents, CurContext, Selectors, Results, 
-                   InOriginalClass);
+                   NumSelIdents, CurContext, Selectors, AllowSameLength, 
+                   Results, InOriginalClass);
 }
 
 
@@ -4181,7 +4192,7 @@ void Sema::CodeCompleteObjCPropertyGetter(Scope *S, Decl *ClassDecl,
 
   VisitedSelectorSet Selectors;
   AddObjCMethods(Class, true, MK_ZeroArgSelector, 0, 0, CurContext, Selectors,
-                 Results);
+                 /*AllowSameLength=*/true, Results);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter,
                             CodeCompletionContext::CCC_Other,
@@ -4224,7 +4235,7 @@ void Sema::CodeCompleteObjCPropertySetter(Scope *S, Decl *ObjCImplDecl,
 
   VisitedSelectorSet Selectors;
   AddObjCMethods(Class, true, MK_OneArgSelector, 0, 0, CurContext, 
-                 Selectors, Results);
+                 Selectors, /*AllowSameLength=*/true, Results);
 
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter,
@@ -4617,7 +4628,8 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
   VisitedSelectorSet Selectors;
   if (CDecl) 
     AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, 
-                   SemaRef.CurContext, Selectors, Results);  
+                   SemaRef.CurContext, Selectors, AtArgumentExpression,
+                   Results);  
   else {
     // We're messaging "id" as a type; provide all class/factory methods.
     
@@ -4747,7 +4759,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
     if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
       if (ObjCInterfaceDecl *ClassDecl = CurMethod->getClassInterface())
         AddObjCMethods(ClassDecl, false, MK_Any, SelIdents, NumSelIdents, 
-                       CurContext, Selectors, Results);
+                       CurContext, Selectors, AtArgumentExpression, Results);
     }
   } 
   // Handle messages to a qualified ID ("id<foo>").
@@ -4758,21 +4770,22 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                               E = QualID->qual_end(); 
          I != E; ++I)
       AddObjCMethods(*I, true, MK_Any, SelIdents, NumSelIdents, CurContext, 
-                     Selectors, Results);
+                     Selectors, AtArgumentExpression, Results);
   }
   // Handle messages to a pointer to interface type.
   else if (const ObjCObjectPointerType *IFacePtr
                               = ReceiverType->getAsObjCInterfacePointerType()) {
     // Search the class, its superclasses, etc., for instance methods.
     AddObjCMethods(IFacePtr->getInterfaceDecl(), true, MK_Any, SelIdents,
-                   NumSelIdents, CurContext, Selectors, Results);
+                   NumSelIdents, CurContext, Selectors, AtArgumentExpression, 
+                   Results);
     
     // Search protocols for instance methods.
     for (ObjCObjectPointerType::qual_iterator I = IFacePtr->qual_begin(),
          E = IFacePtr->qual_end(); 
          I != E; ++I)
       AddObjCMethods(*I, true, MK_Any, SelIdents, NumSelIdents, CurContext, 
-                     Selectors, Results);
+                     Selectors, AtArgumentExpression, Results);
   }
   // Handle messages to "id".
   else if (ReceiverType->isObjCIdType()) {
