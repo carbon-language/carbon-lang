@@ -273,6 +273,26 @@ namespace llvm {
     /// SignedRanges - Memoized results from getSignedRange
     DenseMap<const SCEV *, ConstantRange> SignedRanges;
 
+    /// setUnsignedRange - Set the memoized unsigned range for the given SCEV.
+    const ConstantRange &setUnsignedRange(const SCEV *S,
+                                          const ConstantRange &CR) {
+      std::pair<DenseMap<const SCEV *, ConstantRange>::iterator, bool> Pair =
+        UnsignedRanges.insert(std::make_pair(S, CR));
+      if (!Pair.second)
+        Pair.first->second = CR;
+      return Pair.first->second;
+    }
+
+    /// setUnsignedRange - Set the memoized signed range for the given SCEV.
+    const ConstantRange &setSignedRange(const SCEV *S,
+                                        const ConstantRange &CR) {
+      std::pair<DenseMap<const SCEV *, ConstantRange>::iterator, bool> Pair =
+        SignedRanges.insert(std::make_pair(S, CR));
+      if (!Pair.second)
+        Pair.first->second = CR;
+      return Pair.first->second;
+    }
+
     /// createSCEV - We know that there is no SCEV for the specified value.
     /// Analyze the expression.
     const SCEV *createSCEV(Value *V);

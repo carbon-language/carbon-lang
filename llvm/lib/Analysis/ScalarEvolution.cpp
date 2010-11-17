@@ -3036,7 +3036,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
     return I->second;
 
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
-    return UnsignedRanges[C] = ConstantRange(C->getValue()->getValue());
+    return setUnsignedRange(C, ConstantRange(C->getValue()->getValue()));
 
   unsigned BitWidth = getTypeSizeInBits(S->getType());
   ConstantRange ConservativeResult(BitWidth, /*isFullSet=*/true);
@@ -3053,52 +3053,52 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
     ConstantRange X = getUnsignedRange(Add->getOperand(0));
     for (unsigned i = 1, e = Add->getNumOperands(); i != e; ++i)
       X = X.add(getUnsignedRange(Add->getOperand(i)));
-    return UnsignedRanges[Add] = ConservativeResult.intersectWith(X);
+    return setUnsignedRange(Add, ConservativeResult.intersectWith(X));
   }
 
   if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
     ConstantRange X = getUnsignedRange(Mul->getOperand(0));
     for (unsigned i = 1, e = Mul->getNumOperands(); i != e; ++i)
       X = X.multiply(getUnsignedRange(Mul->getOperand(i)));
-    return UnsignedRanges[Mul] = ConservativeResult.intersectWith(X);
+    return setUnsignedRange(Mul, ConservativeResult.intersectWith(X));
   }
 
   if (const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(S)) {
     ConstantRange X = getUnsignedRange(SMax->getOperand(0));
     for (unsigned i = 1, e = SMax->getNumOperands(); i != e; ++i)
       X = X.smax(getUnsignedRange(SMax->getOperand(i)));
-    return UnsignedRanges[SMax] = ConservativeResult.intersectWith(X);
+    return setUnsignedRange(SMax, ConservativeResult.intersectWith(X));
   }
 
   if (const SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(S)) {
     ConstantRange X = getUnsignedRange(UMax->getOperand(0));
     for (unsigned i = 1, e = UMax->getNumOperands(); i != e; ++i)
       X = X.umax(getUnsignedRange(UMax->getOperand(i)));
-    return UnsignedRanges[UMax] = ConservativeResult.intersectWith(X);
+    return setUnsignedRange(UMax, ConservativeResult.intersectWith(X));
   }
 
   if (const SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(S)) {
     ConstantRange X = getUnsignedRange(UDiv->getLHS());
     ConstantRange Y = getUnsignedRange(UDiv->getRHS());
-    return UnsignedRanges[UDiv] = ConservativeResult.intersectWith(X.udiv(Y));
+    return setUnsignedRange(UDiv, ConservativeResult.intersectWith(X.udiv(Y)));
   }
 
   if (const SCEVZeroExtendExpr *ZExt = dyn_cast<SCEVZeroExtendExpr>(S)) {
     ConstantRange X = getUnsignedRange(ZExt->getOperand());
-    return UnsignedRanges[ZExt] =
-      ConservativeResult.intersectWith(X.zeroExtend(BitWidth));
+    return setUnsignedRange(ZExt,
+      ConservativeResult.intersectWith(X.zeroExtend(BitWidth)));
   }
 
   if (const SCEVSignExtendExpr *SExt = dyn_cast<SCEVSignExtendExpr>(S)) {
     ConstantRange X = getUnsignedRange(SExt->getOperand());
-    return UnsignedRanges[SExt] =
-      ConservativeResult.intersectWith(X.signExtend(BitWidth));
+    return setUnsignedRange(SExt,
+      ConservativeResult.intersectWith(X.signExtend(BitWidth)));
   }
 
   if (const SCEVTruncateExpr *Trunc = dyn_cast<SCEVTruncateExpr>(S)) {
     ConstantRange X = getUnsignedRange(Trunc->getOperand());
-    return UnsignedRanges[Trunc] =
-      ConservativeResult.intersectWith(X.truncate(BitWidth));
+    return setUnsignedRange(Trunc,
+      ConservativeResult.intersectWith(X.truncate(BitWidth)));
   }
 
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
@@ -3138,20 +3138,20 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
         ConstantRange ExtEndRange = EndRange.zextOrTrunc(BitWidth*2+1);
         if (ExtStartRange.add(ExtMaxBECountRange.multiply(ExtStepRange)) !=
             ExtEndRange)
-          return UnsignedRanges[AddRec] = ConservativeResult;
+          return setUnsignedRange(AddRec, ConservativeResult);
 
         APInt Min = APIntOps::umin(StartRange.getUnsignedMin(),
                                    EndRange.getUnsignedMin());
         APInt Max = APIntOps::umax(StartRange.getUnsignedMax(),
                                    EndRange.getUnsignedMax());
         if (Min.isMinValue() && Max.isMaxValue())
-          return UnsignedRanges[AddRec] = ConservativeResult;
-        return UnsignedRanges[AddRec] =
-          ConservativeResult.intersectWith(ConstantRange(Min, Max+1));
+          return setUnsignedRange(AddRec, ConservativeResult);
+        return setUnsignedRange(AddRec,
+          ConservativeResult.intersectWith(ConstantRange(Min, Max+1)));
       }
     }
 
-    return UnsignedRanges[AddRec] = ConservativeResult;
+    return setUnsignedRange(AddRec, ConservativeResult);
   }
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
@@ -3160,25 +3160,24 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
     ComputeMaskedBits(U->getValue(), Mask, Zeros, Ones, TD);
     if (Ones == ~Zeros + 1)
-      return UnsignedRanges[U] = ConservativeResult;
-    return UnsignedRanges[U] =
-      ConservativeResult.intersectWith(ConstantRange(Ones, ~Zeros + 1));
+      return setUnsignedRange(U, ConservativeResult);
+    return setUnsignedRange(U,
+      ConservativeResult.intersectWith(ConstantRange(Ones, ~Zeros + 1)));
   }
 
-  return UnsignedRanges[S] = ConservativeResult;
+  return setUnsignedRange(S, ConservativeResult);
 }
 
 /// getSignedRange - Determine the signed range for a particular SCEV.
 ///
 ConstantRange
 ScalarEvolution::getSignedRange(const SCEV *S) {
-  // See if we've computed this range already.
   DenseMap<const SCEV *, ConstantRange>::iterator I = SignedRanges.find(S);
   if (I != SignedRanges.end())
     return I->second;
 
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
-    return SignedRanges[C] = ConstantRange(C->getValue()->getValue());
+    return setSignedRange(C, ConstantRange(C->getValue()->getValue()));
 
   unsigned BitWidth = getTypeSizeInBits(S->getType());
   ConstantRange ConservativeResult(BitWidth, /*isFullSet=*/true);
@@ -3195,52 +3194,52 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
     ConstantRange X = getSignedRange(Add->getOperand(0));
     for (unsigned i = 1, e = Add->getNumOperands(); i != e; ++i)
       X = X.add(getSignedRange(Add->getOperand(i)));
-    return SignedRanges[Add] = ConservativeResult.intersectWith(X);
+    return setSignedRange(Add, ConservativeResult.intersectWith(X));
   }
 
   if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
     ConstantRange X = getSignedRange(Mul->getOperand(0));
     for (unsigned i = 1, e = Mul->getNumOperands(); i != e; ++i)
       X = X.multiply(getSignedRange(Mul->getOperand(i)));
-    return SignedRanges[Mul] = ConservativeResult.intersectWith(X);
+    return setSignedRange(Mul, ConservativeResult.intersectWith(X));
   }
 
   if (const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(S)) {
     ConstantRange X = getSignedRange(SMax->getOperand(0));
     for (unsigned i = 1, e = SMax->getNumOperands(); i != e; ++i)
       X = X.smax(getSignedRange(SMax->getOperand(i)));
-    return SignedRanges[SMax] = ConservativeResult.intersectWith(X);
+    return setSignedRange(SMax, ConservativeResult.intersectWith(X));
   }
 
   if (const SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(S)) {
     ConstantRange X = getSignedRange(UMax->getOperand(0));
     for (unsigned i = 1, e = UMax->getNumOperands(); i != e; ++i)
       X = X.umax(getSignedRange(UMax->getOperand(i)));
-    return SignedRanges[UMax] = ConservativeResult.intersectWith(X);
+    return setSignedRange(UMax, ConservativeResult.intersectWith(X));
   }
 
   if (const SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(S)) {
     ConstantRange X = getSignedRange(UDiv->getLHS());
     ConstantRange Y = getSignedRange(UDiv->getRHS());
-    return SignedRanges[UDiv] = ConservativeResult.intersectWith(X.udiv(Y));
+    return setSignedRange(UDiv, ConservativeResult.intersectWith(X.udiv(Y)));
   }
 
   if (const SCEVZeroExtendExpr *ZExt = dyn_cast<SCEVZeroExtendExpr>(S)) {
     ConstantRange X = getSignedRange(ZExt->getOperand());
-    return SignedRanges[ZExt] =
-      ConservativeResult.intersectWith(X.zeroExtend(BitWidth));
+    return setSignedRange(ZExt,
+      ConservativeResult.intersectWith(X.zeroExtend(BitWidth)));
   }
 
   if (const SCEVSignExtendExpr *SExt = dyn_cast<SCEVSignExtendExpr>(S)) {
     ConstantRange X = getSignedRange(SExt->getOperand());
-    return SignedRanges[SExt] =
-      ConservativeResult.intersectWith(X.signExtend(BitWidth));
+    return setSignedRange(SExt,
+      ConservativeResult.intersectWith(X.signExtend(BitWidth)));
   }
 
   if (const SCEVTruncateExpr *Trunc = dyn_cast<SCEVTruncateExpr>(S)) {
     ConstantRange X = getSignedRange(Trunc->getOperand());
-    return SignedRanges[Trunc] =
-      ConservativeResult.intersectWith(X.truncate(BitWidth));
+    return setSignedRange(Trunc,
+      ConservativeResult.intersectWith(X.truncate(BitWidth)));
   }
 
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
@@ -3290,35 +3289,35 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
         ConstantRange ExtEndRange = EndRange.sextOrTrunc(BitWidth*2+1);
         if (ExtStartRange.add(ExtMaxBECountRange.multiply(ExtStepRange)) !=
             ExtEndRange)
-          return SignedRanges[AddRec] = ConservativeResult;
+          return setSignedRange(AddRec, ConservativeResult);
 
         APInt Min = APIntOps::smin(StartRange.getSignedMin(),
                                    EndRange.getSignedMin());
         APInt Max = APIntOps::smax(StartRange.getSignedMax(),
                                    EndRange.getSignedMax());
         if (Min.isMinSignedValue() && Max.isMaxSignedValue())
-          return SignedRanges[AddRec] = ConservativeResult;
-        return SignedRanges[AddRec] =
-          ConservativeResult.intersectWith(ConstantRange(Min, Max+1));
+          return setSignedRange(AddRec, ConservativeResult);
+        return setSignedRange(AddRec,
+          ConservativeResult.intersectWith(ConstantRange(Min, Max+1)));
       }
     }
 
-    return SignedRanges[AddRec] = ConservativeResult;
+    return setSignedRange(AddRec, ConservativeResult);
   }
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
     if (!U->getValue()->getType()->isIntegerTy() && !TD)
-      return SignedRanges[U] = ConservativeResult;
+      return setSignedRange(U, ConservativeResult);
     unsigned NS = ComputeNumSignBits(U->getValue(), TD);
     if (NS == 1)
-      return SignedRanges[U] = ConservativeResult;
-    return SignedRanges[U] = ConservativeResult.intersectWith(
+      return setSignedRange(U, ConservativeResult);
+    return setSignedRange(U, ConservativeResult.intersectWith(
       ConstantRange(APInt::getSignedMinValue(BitWidth).ashr(NS - 1),
-                    APInt::getSignedMaxValue(BitWidth).ashr(NS - 1)+1));
+                    APInt::getSignedMaxValue(BitWidth).ashr(NS - 1)+1)));
   }
 
-  return SignedRanges[S] = ConservativeResult;
+  return setSignedRange(S, ConservativeResult);
 }
 
 /// createSCEV - We know that there is no SCEV for the specified value.

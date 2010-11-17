@@ -47,9 +47,6 @@ public:
   ///
   explicit ConstantRange(uint32_t BitWidth, bool isFullSet = true);
 
-  /// Default constructor that creates an uninitialized ConstantRange.
-  ConstantRange() {}
-
   /// Initialize a range to hold the single specified value.
   ///
   ConstantRange(const APInt &Value);
