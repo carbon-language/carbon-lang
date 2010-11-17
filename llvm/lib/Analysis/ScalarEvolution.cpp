@@ -2073,6 +2073,9 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
   for (unsigned i = 1, e = Operands.size(); i != e; ++i)
     assert(getEffectiveSCEVType(Operands[i]->getType()) == ETy &&
            "SCEVAddRecExpr operand types don't match!");
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+    assert(Operands[i]->isLoopInvariant(L) &&
+           "SCEVAddRecExpr operand is not loop-invariant!");
 #endif
 
   if (Operands.back()->isZero()) {

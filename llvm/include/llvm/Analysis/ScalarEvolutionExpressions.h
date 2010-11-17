@@ -373,11 +373,7 @@ namespace llvm {
 
     SCEVAddRecExpr(const FoldingSetNodeIDRef ID,
                    const SCEV *const *O, size_t N, const Loop *l)
-      : SCEVNAryExpr(ID, scAddRecExpr, O, N), L(l) {
-      for (size_t i = 0, e = NumOperands; i != e; ++i)
-        assert(Operands[i]->isLoopInvariant(l) &&
-               "Operands of AddRec must be loop-invariant!");
-    }
+      : SCEVNAryExpr(ID, scAddRecExpr, O, N), L(l) {}
 
   public:
     const SCEV *getStart() const { return Operands[0]; }
