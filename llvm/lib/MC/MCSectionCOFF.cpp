@@ -78,3 +78,7 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
 bool MCSectionCOFF::UseCodeAlign() const {
   return getKind().isText();
 }
+
+bool MCSectionCOFF::isVirtualSection() const {
+  return getCharacteristics() & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+}

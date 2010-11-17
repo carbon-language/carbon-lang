@@ -86,10 +86,6 @@ public:
     return true;
   }
 
-  /// isVirtualSection - Check whether the given section is "virtual", that is
-  /// has no actual object file contents.
-  virtual bool isVirtualSection(const MCSection &Section) const = 0;
-
   /// getPointerSize - Get the pointer size in bytes.
   virtual unsigned getPointerSize() const = 0;
 

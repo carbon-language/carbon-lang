@@ -152,6 +152,12 @@ bool MCSectionMachO::UseCodeAlign() const {
   return hasAttribute(MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
 }
 
+bool MCSectionMachO::isVirtualSection() const {
+  return (getType() == MCSectionMachO::S_ZEROFILL ||
+          getType() == MCSectionMachO::S_GB_ZEROFILL ||
+          getType() == MCSectionMachO::S_THREAD_LOCAL_ZEROFILL);
+}
+
 /// StripSpaces - This removes leading and trailing spaces from the StringRef.
 static void StripSpaces(StringRef &Str) {
   while (!Str.empty() && isspace(Str[0]))

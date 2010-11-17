@@ -289,11 +289,6 @@ public:
     const MCSectionELF &ES = static_cast<const MCSectionELF&>(Section);
     return ES.getFlags() & MCSectionELF::SHF_MERGE;
   }
-
-  bool isVirtualSection(const MCSection &Section) const {
-    const MCSectionELF &SE = static_cast<const MCSectionELF&>(Section);
-    return SE.getType() == MCSectionELF::SHT_NOBITS;
-  }
 };
 
 class ELFX86_32AsmBackend : public ELFX86AsmBackend {
@@ -355,11 +350,6 @@ public:
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createWinCOFFObjectWriter(OS, Is64Bit);
   }
-
-  bool isVirtualSection(const MCSection &Section) const {
-    const MCSectionCOFF &SE = static_cast<const MCSectionCOFF&>(Section);
-    return SE.getCharacteristics() & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
-  }
 };
 
 class DarwinX86AsmBackend : public X86AsmBackend {
@@ -373,13 +363,6 @@ public:
 
   virtual const MCObjectFormat &getObjectFormat() const {
     return Format;
-  }
-
-  bool isVirtualSection(const MCSection &Section) const {
-    const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
-    return (SMO.getType() == MCSectionMachO::S_ZEROFILL ||
-            SMO.getType() == MCSectionMachO::S_GB_ZEROFILL ||
-            SMO.getType() == MCSectionMachO::S_THREAD_LOCAL_ZEROFILL);
   }
 };
 

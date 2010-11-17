@@ -371,7 +371,7 @@ public:
     uint64_t SectionSize = Layout.getSectionSize(&SD);
 
     // The offset is unused for virtual sections.
-    if (Asm.getBackend().isVirtualSection(SD.getSection())) {
+    if (SD.getSection().isVirtualSection()) {
       assert(Layout.getSectionFileSize(&SD) == 0 && "Invalid file size!");
       FileOffset = 0;
     }
@@ -1191,7 +1191,7 @@ public:
 
       VMSize = std::max(VMSize, Address + Size);
 
-      if (Asm.getBackend().isVirtualSection(SD.getSection()))
+      if (SD.getSection().isVirtualSection())
         continue;
 
       SectionDataSize = std::max(SectionDataSize, Address + Size);

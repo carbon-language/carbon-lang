@@ -83,11 +83,6 @@ public:
   void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                   uint64_t Value) const;
 
-  bool isVirtualSection(const MCSection &Section) const {
-    const MCSectionELF &SE = static_cast<const MCSectionELF&>(Section);
-    return SE.getType() == MCSectionELF::SHT_NOBITS;
-  }
-
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createELFObjectWriter(OS, /*Is64Bit=*/false,
                                  OSType, ELF::EM_ARM,
@@ -117,13 +112,6 @@ public:
 
   void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                   uint64_t Value) const;
-
-  bool isVirtualSection(const MCSection &Section) const {
-    const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
-    return (SMO.getType() == MCSectionMachO::S_ZEROFILL ||
-            SMO.getType() == MCSectionMachO::S_GB_ZEROFILL ||
-            SMO.getType() == MCSectionMachO::S_THREAD_LOCAL_ZEROFILL);
-  }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     // FIXME: Subtarget info should be derived. Force v7 for now.

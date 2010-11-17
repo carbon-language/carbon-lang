@@ -107,6 +107,10 @@ bool MCSectionELF::UseCodeAlign() const {
   return getFlags() & MCSectionELF::SHF_EXECINSTR;
 }
 
+bool MCSectionELF::isVirtualSection() const {
+  return getType() == MCSectionELF::SHT_NOBITS;
+}
+
 // HasCommonSymbols - True if this section holds common symbols, this is
 // indicated on the ELF object file by a symbol with SHN_COMMON section 
 // header index.
