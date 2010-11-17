@@ -372,6 +372,7 @@ configure_file(
 add_subdirectory(lib/ExecutionEngine)
 add_subdirectory(lib/ExecutionEngine/Interpreter)
 add_subdirectory(lib/ExecutionEngine/JIT)
+add_subdirectory(lib/ExecutionEngine/MCJIT)
 add_subdirectory(lib/Target)
 add_subdirectory(lib/AsmParser)
 add_subdirectory(lib/Archive)
