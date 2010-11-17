@@ -42,13 +42,7 @@ namespace llvm {
   public:
     ConstantInt *getValue() const { return V; }
 
-    virtual const Type *getType() const;
-
-    virtual bool hasOperand(const SCEV *) const {
-      return false;
-    }
-
-    virtual void print(raw_ostream &OS) const;
+    const Type *getType() const { return V->getType(); }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVConstant *S) { return true; }
@@ -70,11 +64,7 @@ namespace llvm {
 
   public:
     const SCEV *getOperand() const { return Op; }
-    virtual const Type *getType() const { return Ty; }
-
-    virtual bool hasOperand(const SCEV *O) const {
-      return Op == O || Op->hasOperand(O);
-    }
+    const Type *getType() const { return Ty; }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCastExpr *S) { return true; }
@@ -96,8 +86,6 @@ namespace llvm {
                      const SCEV *op, const Type *ty);
 
   public:
-    virtual void print(raw_ostream &OS) const;
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVTruncateExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -116,8 +104,6 @@ namespace llvm {
                        const SCEV *op, const Type *ty);
 
   public:
-    virtual void print(raw_ostream &OS) const;
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVZeroExtendExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -136,8 +122,6 @@ namespace llvm {
                        const SCEV *op, const Type *ty);
 
   public:
-    virtual void print(raw_ostream &OS) const;
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVSignExtendExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -174,9 +158,7 @@ namespace llvm {
     op_iterator op_begin() const { return Operands; }
     op_iterator op_end() const { return Operands + NumOperands; }
 
-    virtual bool hasOperand(const SCEV *O) const;
-
-    virtual const Type *getType() const { return getOperand(0)->getType(); }
+    const Type *getType() const { return getOperand(0)->getType(); }
 
     bool hasNoUnsignedWrap() const { return SubclassData & (1 << 0); }
     void setHasNoUnsignedWrap(bool B) {
@@ -209,10 +191,6 @@ namespace llvm {
       : SCEVNAryExpr(ID, T, O, N) {}
 
   public:
-    virtual const char *getOperationStr() const = 0;
-
-    virtual void print(raw_ostream &OS) const;
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCommutativeExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -236,9 +214,7 @@ namespace llvm {
     }
 
   public:
-    virtual const char *getOperationStr() const { return " + "; }
-
-    virtual const Type *getType() const {
+    const Type *getType() const {
       // Use the type of the last operand, which is likely to be a pointer
       // type, if there is one. This doesn't usually matter, but it can help
       // reduce casts when the expressions are expanded.
@@ -264,8 +240,6 @@ namespace llvm {
     }
 
   public:
-    virtual const char *getOperationStr() const { return " * "; }
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVMulExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -289,13 +263,14 @@ namespace llvm {
     const SCEV *getLHS() const { return LHS; }
     const SCEV *getRHS() const { return RHS; }
 
-    virtual bool hasOperand(const SCEV *O) const {
-      return O == LHS || O == RHS || LHS->hasOperand(O) || RHS->hasOperand(O);
+    const Type *getType() const {
+      // In most cases the types of LHS and RHS will be the same, but in some
+      // crazy cases one or the other may be a pointer. ScalarEvolution doesn't
+      // depend on the type for correctness, but handling types carefully can
+      // avoid extra casts in the SCEVExpander. The LHS is more likely to be
+      // a pointer type than the RHS, so use the RHS' type here.
+      return getRHS()->getType();
     }
-
-    virtual const Type *getType() const;
-
-    void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVUDivExpr *S) { return true; }
@@ -371,8 +346,6 @@ namespace llvm {
       return cast<SCEVAddRecExpr>(SE.getAddExpr(this, getStepRecurrence(SE)));
     }
 
-    virtual void print(raw_ostream &OS) const;
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVAddRecExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -396,8 +369,6 @@ namespace llvm {
     }
 
   public:
-    virtual const char *getOperationStr() const { return " smax "; }
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVSMaxExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -421,8 +392,6 @@ namespace llvm {
     }
 
   public:
-    virtual const char *getOperationStr() const { return " umax "; }
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVUMaxExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -468,13 +437,7 @@ namespace llvm {
     bool isAlignOf(const Type *&AllocTy) const;
     bool isOffsetOf(const Type *&STy, Constant *&FieldNo) const;
 
-    virtual bool hasOperand(const SCEV *) const {
-      return false;
-    }
-
-    virtual const Type *getType() const;
-
-    virtual void print(raw_ostream &OS) const;
+    const Type *getType() const { return getValPtr()->getType(); }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVUnknown *S) { return true; }

@@ -70,8 +70,7 @@ namespace llvm {
   private:
     SCEV(const SCEV &);            // DO NOT IMPLEMENT
     void operator=(const SCEV &);  // DO NOT IMPLEMENT
-  protected:
-    virtual ~SCEV();
+
   public:
     explicit SCEV(const FoldingSetNodeIDRef ID, unsigned SCEVTy) :
       FastID(ID), SCEVType(SCEVTy), SubclassData(0) {}
@@ -80,7 +79,7 @@ namespace llvm {
 
     /// getType - Return the LLVM type of this SCEV expression.
     ///
-    virtual const Type *getType() const = 0;
+    const Type *getType() const;
 
     /// isZero - Return true if the expression is a constant zero.
     ///
@@ -95,14 +94,10 @@ namespace llvm {
     ///
     bool isAllOnesValue() const;
 
-    /// hasOperand - Test whether this SCEV has Op as a direct or
-    /// indirect operand.
-    virtual bool hasOperand(const SCEV *Op) const = 0;
-
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.
-    virtual void print(raw_ostream &OS) const = 0;
+    void print(raw_ostream &OS) const;
 
     /// dump - This method is used for debugging.
     ///
@@ -136,11 +131,6 @@ namespace llvm {
   /// marker.
   struct SCEVCouldNotCompute : public SCEV {
     SCEVCouldNotCompute();
-
-    // None of these methods are valid for this object.
-    virtual const Type *getType() const;
-    virtual void print(raw_ostream &OS) const;
-    virtual bool hasOperand(const SCEV *Op) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCouldNotCompute *S) { return true; }
@@ -690,6 +680,10 @@ namespace llvm {
     /// properlyDominates - Return true if elements that makes up the given SCEV
     /// properly dominate the specified basic block.
     bool properlyDominates(const SCEV *S, BasicBlock *BB) const;
+
+    /// hasOperand - Test whether the given SCEV has Op as a direct or
+    /// indirect operand.
+    bool hasOperand(const SCEV *S, const SCEV *Op) const;
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();

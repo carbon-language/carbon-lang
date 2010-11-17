@@ -120,11 +120,133 @@ char ScalarEvolution::ID = 0;
 // Implementation of the SCEV class.
 //
 
-SCEV::~SCEV() {}
-
 void SCEV::dump() const {
   print(dbgs());
   dbgs() << '\n';
+}
+
+void SCEV::print(raw_ostream &OS) const {
+  switch (getSCEVType()) {
+  case scConstant:
+    WriteAsOperand(OS, cast<SCEVConstant>(this)->getValue(), false);
+    return;
+  case scTruncate: {
+    const SCEVTruncateExpr *Trunc = cast<SCEVTruncateExpr>(this);
+    const SCEV *Op = Trunc->getOperand();
+    OS << "(trunc " << *Op->getType() << " " << *Op << " to "
+       << *Trunc->getType() << ")";
+    return;
+  }
+  case scZeroExtend: {
+    const SCEVZeroExtendExpr *ZExt = cast<SCEVZeroExtendExpr>(this);
+    const SCEV *Op = ZExt->getOperand();
+    OS << "(zext " << *Op->getType() << " " << *Op << " to "
+       << *ZExt->getType() << ")";
+    return;
+  }
+  case scSignExtend: {
+    const SCEVSignExtendExpr *SExt = cast<SCEVSignExtendExpr>(this);
+    const SCEV *Op = SExt->getOperand();
+    OS << "(sext " << *Op->getType() << " " << *Op << " to "
+       << *SExt->getType() << ")";
+    return;
+  }
+  case scAddRecExpr: {
+    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(this);
+    OS << "{" << *AR->getOperand(0);
+    for (unsigned i = 1, e = AR->getNumOperands(); i != e; ++i)
+      OS << ",+," << *AR->getOperand(i);
+    OS << "}<";
+    WriteAsOperand(OS, AR->getLoop()->getHeader(), /*PrintType=*/false);
+    OS << ">";
+    return;
+  }
+  case scAddExpr:
+  case scMulExpr:
+  case scUMaxExpr:
+  case scSMaxExpr: {
+    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(this);
+    const char *OpStr;
+    switch (NAry->getSCEVType()) {
+    case scAddExpr: OpStr = " + "; break;
+    case scMulExpr: OpStr = " * "; break;
+    case scUMaxExpr: OpStr = " umax "; break;
+    case scSMaxExpr: OpStr = " smax "; break;
+    }
+    OS << "(";
+    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
+         I != E; ++I) {
+      OS << **I;
+      if (llvm::next(I) != E)
+        OS << OpStr;
+    }
+    OS << ")";
+    return;
+  }
+  case scUDivExpr: {
+    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(this);
+    OS << "(" << *UDiv->getLHS() << " /u " << *UDiv->getRHS() << ")";
+    return;
+  }
+  case scUnknown: {
+    const SCEVUnknown *U = cast<SCEVUnknown>(this);
+    const Type *AllocTy;
+    if (U->isSizeOf(AllocTy)) {
+      OS << "sizeof(" << *AllocTy << ")";
+      return;
+    }
+    if (U->isAlignOf(AllocTy)) {
+      OS << "alignof(" << *AllocTy << ")";
+      return;
+    }
+  
+    const Type *CTy;
+    Constant *FieldNo;
+    if (U->isOffsetOf(CTy, FieldNo)) {
+      OS << "offsetof(" << *CTy << ", ";
+      WriteAsOperand(OS, FieldNo, false);
+      OS << ")";
+      return;
+    }
+  
+    // Otherwise just print it normally.
+    WriteAsOperand(OS, U->getValue(), false);
+    return;
+  }
+  case scCouldNotCompute:
+    OS << "***COULDNOTCOMPUTE***";
+    return;
+  default: break;
+  }
+  llvm_unreachable("Unknown SCEV kind!");
+}
+
+const Type *SCEV::getType() const {
+  switch (getSCEVType()) {
+  case scConstant:
+    return cast<SCEVConstant>(this)->getType();
+  case scTruncate:
+  case scZeroExtend:
+  case scSignExtend:
+    return cast<SCEVCastExpr>(this)->getType();
+  case scAddRecExpr:
+  case scMulExpr:
+  case scUMaxExpr:
+  case scSMaxExpr:
+    return cast<SCEVNAryExpr>(this)->getType();
+  case scAddExpr:
+    return cast<SCEVAddExpr>(this)->getType();
+  case scUDivExpr:
+    return cast<SCEVUDivExpr>(this)->getType();
+  case scUnknown:
+    return cast<SCEVUnknown>(this)->getType();
+  case scCouldNotCompute:
+    llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+    return 0;
+  default: break;
+  }
+  llvm_unreachable("Unknown SCEV kind!");
+  return 0;
 }
 
 bool SCEV::isZero() const {
@@ -147,20 +269,6 @@ bool SCEV::isAllOnesValue() const {
 
 SCEVCouldNotCompute::SCEVCouldNotCompute() :
   SCEV(FoldingSetNodeIDRef(), scCouldNotCompute) {}
-
-const Type *SCEVCouldNotCompute::getType() const {
-  llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-  return 0;
-}
-
-bool SCEVCouldNotCompute::hasOperand(const SCEV *) const {
-  llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-  return false;
-}
-
-void SCEVCouldNotCompute::print(raw_ostream &OS) const {
-  OS << "***COULDNOTCOMPUTE***";
-}
 
 bool SCEVCouldNotCompute::classof(const SCEV *S) {
   return S->getSCEVType() == scCouldNotCompute;
@@ -187,12 +295,6 @@ ScalarEvolution::getConstant(const Type *Ty, uint64_t V, bool isSigned) {
   return getConstant(ConstantInt::get(ITy, V, isSigned));
 }
 
-const Type *SCEVConstant::getType() const { return V->getType(); }
-
-void SCEVConstant::print(raw_ostream &OS) const {
-  WriteAsOperand(OS, V, false);
-}
-
 SCEVCastExpr::SCEVCastExpr(const FoldingSetNodeIDRef ID,
                            unsigned SCEVTy, const SCEV *op, const Type *ty)
   : SCEV(ID, SCEVTy), Op(op), Ty(ty) {}
@@ -205,10 +307,6 @@ SCEVTruncateExpr::SCEVTruncateExpr(const FoldingSetNodeIDRef ID,
          "Cannot truncate non-integer value!");
 }
 
-void SCEVTruncateExpr::print(raw_ostream &OS) const {
-  OS << "(trunc " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
-}
-
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const FoldingSetNodeIDRef ID,
                                        const SCEV *op, const Type *ty)
   : SCEVCastExpr(ID, scZeroExtend, op, ty) {
@@ -217,62 +315,12 @@ SCEVZeroExtendExpr::SCEVZeroExtendExpr(const FoldingSetNodeIDRef ID,
          "Cannot zero extend non-integer value!");
 }
 
-void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
-  OS << "(zext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
-}
-
 SCEVSignExtendExpr::SCEVSignExtendExpr(const FoldingSetNodeIDRef ID,
                                        const SCEV *op, const Type *ty)
   : SCEVCastExpr(ID, scSignExtend, op, ty) {
   assert((Op->getType()->isIntegerTy() || Op->getType()->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Cannot sign extend non-integer value!");
-}
-
-void SCEVSignExtendExpr::print(raw_ostream &OS) const {
-  OS << "(sext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
-}
-
-void SCEVCommutativeExpr::print(raw_ostream &OS) const {
-  const char *OpStr = getOperationStr();
-  OS << "(";
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
-    OS << **I;
-    if (llvm::next(I) != E)
-      OS << OpStr;
-  }
-  OS << ")";
-}
-
-bool SCEVNAryExpr::hasOperand(const SCEV *O) const {
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
-    const SCEV *S = *I;
-    if (O == S || S->hasOperand(O))
-      return true;
-  }
-  return false;
-}
-
-void SCEVUDivExpr::print(raw_ostream &OS) const {
-  OS << "(" << *LHS << " /u " << *RHS << ")";
-}
-
-const Type *SCEVUDivExpr::getType() const {
-  // In most cases the types of LHS and RHS will be the same, but in some
-  // crazy cases one or the other may be a pointer. ScalarEvolution doesn't
-  // depend on the type for correctness, but handling types carefully can
-  // avoid extra casts in the SCEVExpander. The LHS is more likely to be
-  // a pointer type than the RHS, so use the RHS' type here.
-  return RHS->getType();
-}
-
-void SCEVAddRecExpr::print(raw_ostream &OS) const {
-  OS << "{" << *Operands[0];
-  for (unsigned i = 1, e = NumOperands; i != e; ++i)
-    OS << ",+," << *Operands[i];
-  OS << "}<";
-  WriteAsOperand(OS, L->getHeader(), /*PrintType=*/false);
-  OS << ">";
 }
 
 void SCEVUnknown::deleted() {
@@ -301,10 +349,6 @@ void SCEVUnknown::allUsesReplacedWith(Value *New) {
   // because there may still be outstanding SCEVs which still point to
   // this SCEVUnknown.
   setValPtr(New);
-}
-
-const Type *SCEVUnknown::getType() const {
-  return getValue()->getType();
 }
 
 bool SCEVUnknown::isSizeOf(const Type *&AllocTy) const {
@@ -369,30 +413,6 @@ bool SCEVUnknown::isOffsetOf(const Type *&CTy, Constant *&FieldNo) const {
         }
 
   return false;
-}
-
-void SCEVUnknown::print(raw_ostream &OS) const {
-  const Type *AllocTy;
-  if (isSizeOf(AllocTy)) {
-    OS << "sizeof(" << *AllocTy << ")";
-    return;
-  }
-  if (isAlignOf(AllocTy)) {
-    OS << "alignof(" << *AllocTy << ")";
-    return;
-  }
-
-  const Type *CTy;
-  Constant *FieldNo;
-  if (isOffsetOf(CTy, FieldNo)) {
-    OS << "offsetof(" << *CTy << ", ";
-    WriteAsOperand(OS, FieldNo, false);
-    OS << ")";
-    return;
-  }
-
-  // Otherwise just print it normally.
-  WriteAsOperand(OS, getValue(), false);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2601,7 +2621,7 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
 
       // Short-circuit the def-use traversal if the symbolic name
       // ceases to appear in expressions.
-      if (Old != SymName && !Old->hasOperand(SymName))
+      if (Old != SymName && !hasOperand(Old, SymName))
         continue;
 
       // SCEVUnknown for a PHI either means that it has an unrecognized
@@ -6084,6 +6104,48 @@ bool ScalarEvolution::properlyDominates(const SCEV *S, BasicBlock *BB) const {
           dyn_cast<Instruction>(cast<SCEVUnknown>(S)->getValue()))
       return DT->properlyDominates(I->getParent(), BB);
     return true;
+  case scCouldNotCompute:
+    llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+    return false;
+  default: break;
+  }
+  llvm_unreachable("Unknown SCEV kind!");
+  return false;
+}
+
+bool ScalarEvolution::hasOperand(const SCEV *S, const SCEV *Op) const {
+  switch (S->getSCEVType()) {
+  case scConstant:
+    return false;
+  case scTruncate:
+  case scZeroExtend:
+  case scSignExtend: {
+    const SCEVCastExpr *Cast = cast<SCEVCastExpr>(S);
+    const SCEV *CastOp = Cast->getOperand();
+    return Op == CastOp || hasOperand(CastOp, Op);
+  }
+  case scAddRecExpr:
+  case scAddExpr:
+  case scMulExpr:
+  case scUMaxExpr:
+  case scSMaxExpr: {
+    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
+         I != E; ++I) {
+      const SCEV *NAryOp = *I;
+      if (NAryOp == Op || hasOperand(NAryOp, Op))
+        return true;
+    }
+    return false;
+  }
+  case scUDivExpr: {
+    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
+    const SCEV *LHS = UDiv->getLHS(), *RHS = UDiv->getRHS();
+    return LHS == Op || hasOperand(LHS, Op) ||
+           RHS == Op || hasOperand(RHS, Op);
+  }
+  case scUnknown:
+    return false;
   case scCouldNotCompute:
     llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
     return false;
