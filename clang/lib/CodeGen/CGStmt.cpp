@@ -949,12 +949,32 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
 }
 
 /// getAsmSrcLocInfo - Return the !srcloc metadata node to attach to an inline
-/// asm call instruction.
+/// asm call instruction.  The !srcloc MDNode contains a list of constant
+/// integers which are the source locations of the start of each line in the
+/// asm.
 static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
                                       CodeGenFunction &CGF) {
-  unsigned LocID = Str->getLocStart().getRawEncoding();
-  llvm::Value *LocIDC = llvm::ConstantInt::get(CGF.Int32Ty, LocID);
-  return llvm::MDNode::get(LocIDC->getContext(), &LocIDC, 1);
+  llvm::SmallVector<llvm::Value *, 8> Locs;
+  // Add the location of the first line to the MDNode.
+  Locs.push_back(llvm::ConstantInt::get(CGF.Int32Ty,
+                                        Str->getLocStart().getRawEncoding()));
+  llvm::StringRef StrVal = Str->getString();
+  if (!StrVal.empty()) {
+    const SourceManager &SM = CGF.CGM.getContext().getSourceManager();
+    const LangOptions &LangOpts = CGF.CGM.getLangOptions();
+    
+    // Add the location of the start of each subsequent line of the asm to the
+    // MDNode.
+    for (unsigned i = 0, e = StrVal.size()-1; i != e; ++i) {
+      if (StrVal[i] != '\n') continue;
+      SourceLocation LineLoc = Str->getLocationOfByte(i+1, SM, LangOpts,
+                                                      CGF.Target);
+      Locs.push_back(llvm::ConstantInt::get(CGF.Int32Ty,
+                                            LineLoc.getRawEncoding()));
+    }
+  }    
+  
+  return llvm::MDNode::get(CGF.getLLVMContext(), Locs.data(), Locs.size());
 }
 
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
