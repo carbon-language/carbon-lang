@@ -2939,9 +2939,9 @@ bool CmpInst::isFalseWhenEqual(unsigned short predicate) {
 //                        SwitchInst Implementation
 //===----------------------------------------------------------------------===//
 
-void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumCases) {
-  assert(Value && Default);
-  ReservedSpace = 2+NumCases*2;
+void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumReserved) {
+  assert(Value && Default && NumReserved);
+  ReservedSpace = NumReserved;
   NumOperands = 2;
   OperandList = allocHungoffUses(ReservedSpace);
 
@@ -2957,7 +2957,7 @@ SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
                        Instruction *InsertBefore)
   : TerminatorInst(Type::getVoidTy(Value->getContext()), Instruction::Switch,
                    0, 0, InsertBefore) {
-  init(Value, Default, NumCases);
+  init(Value, Default, 2+NumCases*2);
 }
 
 /// SwitchInst ctor - Create a new switch instruction, specifying a value to
@@ -2968,14 +2968,15 @@ SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
                        BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::getVoidTy(Value->getContext()), Instruction::Switch,
                    0, 0, InsertAtEnd) {
-  init(Value, Default, NumCases);
+  init(Value, Default, 2+NumCases*2);
 }
 
 SwitchInst::SwitchInst(const SwitchInst &SI)
-  : TerminatorInst(Type::getVoidTy(SI.getContext()), Instruction::Switch,
-                   allocHungoffUses(SI.getNumOperands()), SI.getNumOperands()) {
+  : TerminatorInst(SI.getType(), Instruction::Switch, 0, 0) {
+  init(SI.getCondition(), SI.getDefaultDest(), SI.getNumOperands());
+  NumOperands = SI.getNumOperands();
   Use *OL = OperandList, *InOL = SI.OperandList;
-  for (unsigned i = 0, E = SI.getNumOperands(); i != E; i+=2) {
+  for (unsigned i = 2, E = SI.getNumOperands(); i != E; i += 2) {
     OL[i] = InOL[i];
     OL[i+1] = InOL[i+1];
   }

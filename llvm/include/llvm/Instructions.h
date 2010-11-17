@@ -2161,7 +2161,7 @@ class SwitchInst : public TerminatorInst {
   // Operand[2n  ] = Value to match
   // Operand[2n+1] = BasicBlock to go to on match
   SwitchInst(const SwitchInst &SI);
-  void init(Value *Value, BasicBlock *Default, unsigned NumCases);
+  void init(Value *Value, BasicBlock *Default, unsigned NumReserved);
   void resizeOperands(unsigned No);
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
