@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-// test bitset(const char *str);
+// template <class charT>
+//     explicit bitset(const charT* str,
+//                     typename basic_string<charT>::size_type n = basic_string<charT>::npos,
+//                     charT zero = charT('0'), charT one = charT('1'));
 
 #include <bitset>
 #include <cassert>

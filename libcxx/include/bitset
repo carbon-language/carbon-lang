@@ -40,7 +40,10 @@ public:
     // 23.3.5.1 constructors:
     constexpr bitset();
     constexpr bitset(unsigned long long val);
-    explicit bitset( const char* str );
+    template <class charT>
+        explicit bitset(const charT* str,
+                        typename basic_string<charT>::size_type n = basic_string<charT>::npos,
+                        charT zero = charT('0'), charT one = charT('1'));
     template<class charT, class traits, class Allocator>
         explicit bitset(const basic_string<charT,traits,Allocator>& str,
                         typename basic_string<charT,traits,Allocator>::size_type pos = 0,
@@ -605,7 +608,10 @@ public:
     // 23.3.5.1 constructors:
     /*constexpr*/ _LIBCPP_INLINE_VISIBILITY bitset() {}
     /*constexpr*/ _LIBCPP_INLINE_VISIBILITY bitset(unsigned long long __v) : base(__v) {}
-    explicit bitset(const char* __str);
+    template<class _CharT>
+        explicit bitset(const _CharT* __str,
+                        typename basic_string<_CharT>::size_type __n = basic_string<_CharT>::npos,
+                        _CharT __zero = _CharT('0'), _CharT __one = _CharT('1'));
     template<class _CharT, class _Traits, class _Allocator>
         explicit bitset(const basic_string<_CharT,_Traits,_Allocator>& __str,
                         typename basic_string<_CharT,_Traits,_Allocator>::size_type __pos = 0,
@@ -663,11 +669,14 @@ private:
 };
 
 template <size_t _Size>
-bitset<_Size>::bitset(const char* __str)
+template<class _CharT>
+bitset<_Size>::bitset(const _CharT* __str,
+                      typename basic_string<_CharT>::size_type __n,
+                      _CharT __zero, _CharT __one)
 {
-    size_t __rlen = strlen(__str);
+    size_t __rlen = _STD::min(__n, char_traits<_CharT>::length(__str));
     for (size_t __i = 0; __i < __rlen; ++__i)
-        if (__str[__i] != '0' && __str[__i] != '1')
+        if (__str[__i] != __zero && __str[__i] != __one)
 #ifndef _LIBCPP_NO_EXCEPTIONS
             throw invalid_argument("bitset string ctor has invalid argument");
 #else
@@ -677,15 +686,11 @@ bitset<_Size>::bitset(const char* __str)
     size_t __i = 0;
     for (; __i < _M; ++__i)
     {
-        switch (__str[_M - 1 - __i])
-        {
-        case '0':
+        _CharT __c = __str[_M - 1 - __i];
+        if (__c == __zero)
             (*this)[__i] = false;
-            break;
-        case '1':
+        else
             (*this)[__i] = true;
-            break;
-        }
     }
     _STD::fill(base::__make_iter(__i), base::__make_iter(_Size), false);
 }
