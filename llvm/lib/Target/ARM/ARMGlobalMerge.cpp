@@ -129,11 +129,14 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
     uint64_t MergedSize = 0;
     std::vector<const Type*> Tys;
     std::vector<Constant*> Inits;
-    for (j = i; MergedSize < MaxOffset && j != e; ++j) {
+    for (j = i; j != e; ++j) {
       const Type *Ty = Globals[j]->getType()->getElementType();
+      MergedSize += TD->getTypeAllocSize(Ty);
+      if (MergedSize > MaxOffset) {
+        break;
+      }
       Tys.push_back(Ty);
       Inits.push_back(Globals[j]->getInitializer());
-      MergedSize += TD->getTypeAllocSize(Ty);
     }
 
     StructType *MergedTy = StructType::get(M.getContext(), Tys);
