@@ -34,7 +34,7 @@
     </ol></li>
   <li><a href="#styleissues">Style Issues</a>
     <ol>
-      <li><a href="#macro">The High Level Issues</a>
+      <li><a href="#macro">The High-Level Issues</a>
         <ol>
           <li><a href="#hl_module">A Public Header File <b>is</b> a
               Module</a></li>
@@ -48,7 +48,7 @@
           <li><a href="#hl_predicateloops">Turn Predicate Loops into Predicate
               Functions</a></li>
         </ol></li>
-      <li><a href="#micro">The Low Level Issues</a>
+      <li><a href="#micro">The Low-Level Issues</a>
         <ol>
           <li><a href="#ll_assert">Assert Liberally</a></li>
           <li><a href="#ll_ns_std">Do not use 'using namespace std'</a></li>
@@ -58,8 +58,8 @@
               loop</a></li>
           <li><a href="#ll_iostream"><tt>#include &lt;iostream&gt;</tt> is
               <em>forbidden</em></a></li>
-          <li><a href="#ll_avoidendl">Avoid <tt>std::endl</tt></a></li>
           <li><a href="#ll_raw_ostream">Use <tt>raw_ostream</tt></a</li>
+          <li><a href="#ll_avoidendl">Avoid <tt>std::endl</tt></a></li>
         </ol></li>
         
       <li><a href="#nano">Microscopic Details</a>
@@ -167,8 +167,8 @@ this:</p>
 
 <p>A few things to note about this particular format:  The "<tt>-*- C++
 -*-</tt>" string on the first line is there to tell Emacs that the source file
-is a C++ file, not a C file (Emacs assumes .h files are C files by default).
-Note that this tag is not necessary in .cpp files.  The name of the file is also
+is a C++ file, not a C file (Emacs assumes <tt>.h</tt> files are C files by default).
+Note that this tag is not necessary in <tt>.cpp</tt> files.  The name of the file is also
 on the first line, along with a very short description of the purpose of the
 file.  This is important when printing out code and flipping though lots of
 pages.</p>
@@ -244,7 +244,7 @@ file should be listed.  We prefer these <tt>#include</tt>s to be listed in this
 order:</p>
 
 <ol>
-  <li><a href="#mmheader">Main Module header</a></li>
+  <li><a href="#mmheader">Main Module Header</a></li>
   <li><a href="#hl_privateheaders">Local/Private Headers</a></li>
   <li><tt>llvm/*</tt></li>
   <li><tt>llvm/Analysis/*</tt></li>
@@ -259,13 +259,13 @@ order:</p>
 
 <p>... and each category should be sorted by name.</p>
 
-<p><a name="mmheader">The "Main Module Header"</a> file applies to .cpp file
-which implement an interface defined by a .h file.  This <tt>#include</tt>
+<p><a name="mmheader">The "Main Module Header"</a> file applies to <tt>.cpp</tt> files
+which implement an interface defined by a <tt>.h</tt> file.  This <tt>#include</tt>
 should always be included <b>first</b> regardless of where it lives on the file
-system.  By including a header file first in the .cpp files that implement the
+system.  By including a header file first in the <tt>.cpp</tt> files that implement the
 interfaces, we ensure that the header does not have any hidden dependencies
 which are not explicitly #included in the header, but should be.  It is also a
-form of documentation in the .cpp file to indicate where the interfaces it
+form of documentation in the <tt>.cpp</tt> file to indicate where the interfaces it
 implements are defined.</p>
 
 </div>
@@ -323,7 +323,7 @@ makes for incredible diffs that are absolutely worthless.</p>
 
 <div class="doc_text">
 
-<p>Okay, your first year of programming you were told that indentation is
+<p>Okay, in your first year of programming you were told that indentation is
 important.  If you didn't believe and internalize this then, now is the time.
 Just do it.</p>
 
@@ -434,7 +434,7 @@ declare the symbol.  This can lead to problems at link time.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="macro">The High Level Issues</a>
+  <a name="macro">The High-Level Issues</a>
 </div>
 <!-- ======================================================================= -->
 
@@ -462,7 +462,7 @@ together.</p>
 
 <p>In general, a module should be implemented with one or more <tt>.cpp</tt>
 files.  Each of these <tt>.cpp</tt> files should include the header that defines
-their interface first.  This ensure that all of the dependences of the module
+their interface first.  This ensures that all of the dependences of the module
 header have been properly added to the module header itself, and are not
 implicit.  System headers should be included after user headers for a
 translation unit.</p>
@@ -581,7 +581,7 @@ Value *DoSomething(Instruction *I) {
 </pre>
 </div>
 
-<p>This fixes these problems.  A similar problem frequently happens in for
+<p>This fixes these problems.  A similar problem frequently happens in <tt>for</tt>
 loops.  A silly example is something like this:</p>
 
 <div class="doc_code">
@@ -616,6 +616,7 @@ structure the loop like this:</p>
     Value *LHS = BO-&gt;getOperand(0);
     Value *RHS = BO-&gt;getOperand(1);
     if (LHS == RHS) continue;
+    ...
   }
 </pre>
 </div>
@@ -778,7 +779,7 @@ locality.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="micro">The Low Level Issues</a>
+  <a name="micro">The Low-Level Issues</a>
 </div>
 <!-- ======================================================================= -->
 
@@ -790,7 +791,7 @@ locality.</p>
 
 <div class="doc_text">
 
-<p>Use the "<tt>assert</tt>" function to its fullest.  Check all of your
+<p>Use the "<tt>assert</tt>" macro to its fullest.  Check all of your
 preconditions and assumptions, you never know when a bug (not necessarily even
 yours) might be caught early by an assertion, which reduces debugging time
 dramatically.  The "<tt>&lt;cassert&gt;</tt>" header file is probably already
@@ -799,7 +800,7 @@ it.</p>
 
 <p>To further assist with debugging, make sure to put some kind of error message
 in the assertion statement (which is printed if the assertion is tripped). This
-helps the poor debugging make sense of why an assertion is being made and
+helps the poor debugger make sense of why an assertion is being made and
 enforced, and hopefully what to do about it.  Here is one complete example:</p>
 
 <div class="doc_code">
@@ -900,7 +901,7 @@ namespace with an "<tt>std::</tt>" prefix, rather than rely on
 the namespace of any source file that <tt>#include</tt>s the header.  This is
 clearly a bad thing.</p>
 
-<p>In implementation files (e.g. .cpp files), the rule is more of a stylistic
+<p>In implementation files (e.g. <tt>.cpp</tt> files), the rule is more of a stylistic
 rule, but is still important.  Basically, using explicit namespace prefixes
 makes the code <b>clearer</b>, because it is immediately obvious what facilities
 are being used and where they are coming from, and <b>more portable</b>, because
@@ -913,9 +914,9 @@ such, we never use '<tt>using namespace std;</tt>' in LLVM.</p>
 <p>The exception to the general rule (i.e. it's not an exception for
 the <tt>std</tt> namespace) is for implementation files.  For example, all of
 the code in the LLVM project implements code that lives in the 'llvm' namespace.
-As such, it is ok, and actually clearer, for the .cpp files to have a '<tt>using
+As such, it is ok, and actually clearer, for the <tt>.cpp</tt> files to have a '<tt>using
 namespace llvm</tt>' directive at their top, after the <tt>#include</tt>s.  The
-general form of this rule is that any .cpp file that implements code in any
+general form of this rule is that any <tt>.cpp</tt> file that implements code in any
 namespace may use that namespace (and its parents'), but should not use any
 others.</p>
 
@@ -1024,13 +1025,31 @@ library. There are two problems with this:</p>
 
 <p>Note that using the other stream headers (<tt>&lt;sstream&gt;</tt> for
 example) is not problematic in this regard (just <tt>&lt;iostream&gt;</tt>).
-However, raw_ostream provides various APIs that are better performing for almost
-every use than std::ostream style APIs, so you should just use it for new
-code.</p>
-
-<p><b>New code should always
+However, <tt>raw_ostream</tt> provides various APIs that are better performing for almost
+every use than <tt>std::ostream</tt> style APIs.
+<b>Therefore new code should always
 use <a href="#ll_raw_ostream"><tt>raw_ostream</tt></a> for writing, or
 the <tt>llvm::MemoryBuffer</tt> API for reading files.</b></p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ll_raw_ostream">Use <tt>raw_ostream</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM includes a lightweight, simple, and efficient stream implementation
+in <tt>llvm/Support/raw_ostream.h</tt> which provides all of the common features
+of <tt>std::ostream</tt>.  All new code should use <tt>raw_ostream</tt> instead
+of <tt>ostream</tt>.</p>
+
+<p>Unlike <tt>std::ostream</tt>, <tt>raw_ostream</tt> is not a template and can
+be forward declared as <tt>class raw_ostream</tt>.  Public headers should
+generally not include the <tt>raw_ostream</tt> header, but use forward
+declarations and constant references to <tt>raw_ostream</tt> instances.</p>
 
 </div>
 
@@ -1059,26 +1078,6 @@ it's better to use a literal <tt>'\n'</tt>.</p>
 </div>
 
 
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="ll_raw_ostream">Use <tt>raw_ostream</tt></a>
-</div>
-
-<div class="doc_text">
-
-<p>LLVM includes a lightweight, simple, and efficient stream implementation
-in <tt>llvm/Support/raw_ostream.h</tt> which provides all of the common features
-of <tt>std::ostream</tt>.  All new code should use <tt>raw_ostream</tt> instead
-of <tt>ostream</tt>.</p>
-
-<p>Unlike <tt>std::ostream</tt>, <tt>raw_ostream</tt> is not a template and can
-be forward declared as <tt>class raw_ostream</tt>.  Public headers should
-generally not include the <tt>raw_ostream</tt> header, but use forward
-declarations and constant references to <tt>raw_ostream</tt> instances.</p>
-
-</div>
-
-
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="nano">Microscopic Details</a>
@@ -1095,7 +1094,7 @@ reasoning on why we prefer them.</p>
 
 <div class="doc_text">
 
-<p>We prefer to put a space before a parentheses only in control flow
+<p>We prefer to put a space before an open parenthesis only in control flow
 statements, but not in normal function call expressions and function-like
 macros.  For example, this is good:</p>
 
@@ -1174,7 +1173,7 @@ get in the habit of always using preincrement, and you won't have a problem.</p>
 <div class="doc_text">
 
 <p>
-In general, we strive to reduce indentation where ever possible.  This is useful
+In general, we strive to reduce indentation wherever possible.  This is useful
 because we want code to <a href="#scf_codewidth">fit into 80 columns</a> without
 wrapping horribly, but also because it makes it easier to understand the code.
 Namespaces are a funny thing: they are often large, and we often desire to put
@@ -1219,7 +1218,7 @@ namespace llvm {
 <p>Since the body is small, indenting adds value because it makes it very clear
 where the namespace starts and ends, and it is easy to take the whole thing in
 in one "gulp" when reading the code.  If the blob of code in the namespace is
-larger (as it typically is in a header in the llvm or clang namespaces), do not
+larger (as it typically is in a header in the <tt>llvm</tt> or <tt>clang</tt> namespaces), do not
 indent the code, and add a comment indicating what namespace is being closed.
 For example:</p>
 
