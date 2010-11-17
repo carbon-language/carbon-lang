@@ -1125,7 +1125,7 @@ class T1DataProcessing<bits<4> opcode> : Encoding16 {
 // A6.2.3 Special data instructions and branch and exchange encoding.
 class T1Special<bits<4> opcode> : Encoding16 {
   let Inst{15-10} = 0b010001;
-  let Inst{9-6} = opcode;
+  let Inst{9-6}   = opcode;
 }
 
 // A6.2.4 Load/store single data item encoding.
@@ -1321,6 +1321,8 @@ class VFPXI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
             IndexMode im, Format f, InstrItinClass itin,
             string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, im, f, VFPDomain, cstr, itin> {
+  bits<4> p;
+  let Inst{31-28} = p;
   let OutOperandList = oops;
   let InOperandList = iops;
   let AsmString = asm;
@@ -1399,6 +1401,16 @@ class AXDI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
             string asm, string cstr, list<dag> pattern>
   : VFPXI<oops, iops, AddrMode4, Size4Bytes, im,
           VFPLdStMulFrm, itin, asm, cstr, pattern> {
+  // Instruction operands.
+  bits<4>  Rn;
+  bits<13> regs;
+
+  // Encode instruction operands.
+  let Inst{19-16} = Rn;
+  let Inst{22}    = regs{12};
+  let Inst{15-12} = regs{11-8};
+  let Inst{7-0}   = regs{7-0};
+
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
   let Inst{11-9}  = 0b101;
@@ -1412,6 +1424,16 @@ class AXSI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
             string asm, string cstr, list<dag> pattern>
   : VFPXI<oops, iops, AddrMode4, Size4Bytes, im,
           VFPLdStMulFrm, itin, asm, cstr, pattern> {
+  // Instruction operands.
+  bits<4> Rn;
+  bits<13> regs;
+
+  // Encode instruction operands.
+  let Inst{19-16} = Rn;
+  let Inst{22}    = regs{8};
+  let Inst{15-12} = regs{12-9};
+  let Inst{7-0}   = regs{7-0};
+
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
   let Inst{11-9}  = 0b101;
