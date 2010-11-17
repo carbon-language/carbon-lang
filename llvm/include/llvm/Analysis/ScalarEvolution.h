@@ -142,6 +142,16 @@ namespace llvm {
   /// they must ask this class for services.
   ///
   class ScalarEvolution : public FunctionPass {
+  public:
+    /// LoopDisposition - An enum describing the relationship between a
+    /// SCEV and a loop.
+    enum LoopDisposition {
+      LoopVariant,    ///< The SCEV is loop-variant (unknown).
+      LoopInvariant,  ///< The SCEV is loop-invariant.
+      LoopComputable  ///< The SCEV varies predictably with the loop.
+    };
+
+  private:
     /// SCEVCallbackVH - A CallbackVH to arrange for ScalarEvolution to be
     /// notified whenever a Value is deleted.
     class SCEVCallbackVH : public CallbackVH {
@@ -228,6 +238,13 @@ namespace llvm {
     /// be expensive in extreme cases.
     std::map<const SCEV *,
              std::map<const Loop *, const SCEV *> > ValuesAtScopes;
+
+    /// LoopDispositions - Memoized computeLoopDisposition results.
+    std::map<const SCEV *,
+             std::map<const Loop *, LoopDisposition> > LoopDispositions;
+
+    /// computeLoopDisposition - Compute a LoopDisposition value.
+    LoopDisposition computeLoopDisposition(const SCEV *S, const Loop *L);
 
     /// UnsignedRanges - Memoized results from getUnsignedRange
     DenseMap<const SCEV *, ConstantRange> UnsignedRanges;
@@ -662,6 +679,10 @@ namespace llvm {
     bool SimplifyICmpOperands(ICmpInst::Predicate &Pred,
                               const SCEV *&LHS,
                               const SCEV *&RHS);
+
+    /// getLoopDisposition - Return the "disposition" of the given SCEV with
+    /// respect to the given loop.
+    LoopDisposition getLoopDisposition(const SCEV *S, const Loop *L);
 
     /// isLoopInvariant - Return true if the value of the given SCEV is
     /// unchanging in the specified loop.
