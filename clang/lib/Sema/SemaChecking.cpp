@@ -90,7 +90,9 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     if (ByteNo < TokNumBytes ||
         (ByteNo == TokNumBytes && TokNo == SL->getNumConcatenated())) {
       unsigned Offset =
-        StringLiteralParser::getOffsetOfStringByte(TheTok, ByteNo, PP,
+        StringLiteralParser::getOffsetOfStringByte(TheTok, ByteNo, 
+                                                   PP.getSourceManager(),
+                                                   PP.getLangOptions(),
                                                    PP.getTargetInfo());
 
       // Now that we know the offset of the token in the spelling, use the

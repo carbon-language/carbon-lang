@@ -1007,18 +1007,17 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
 /// advancing over escape sequences in the string.
 unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
                                                     unsigned ByteNo,
-                                                    Preprocessor &PP, 
+                                                    const SourceManager &SM,
+                                                    const LangOptions &Features, 
                                                     const TargetInfo &Target,
                                                     Diagnostic *Diags) {
   // Get the spelling of the token.
-  llvm::SmallString<16> SpellingBuffer;
+  llvm::SmallString<32> SpellingBuffer;
   SpellingBuffer.resize(Tok.getLength());
 
   bool StringInvalid = false;
   const char *SpellingPtr = &SpellingBuffer[0];
-  unsigned TokLen = Preprocessor::getSpelling(Tok, SpellingPtr,
-                                              PP.getSourceManager(),
-                                              PP.getLangOptions(),
+  unsigned TokLen = Preprocessor::getSpelling(Tok, SpellingPtr, SM, Features,
                                               &StringInvalid);
   if (StringInvalid)
     return 0;
@@ -1047,7 +1046,7 @@ unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
     // Otherwise, this is an escape character.  Advance over it.
     bool HadError = false;
     ProcessCharEscape(SpellingPtr, SpellingEnd, HadError,
-                      FullSourceLoc(Tok.getLocation(), PP.getSourceManager()),
+                      FullSourceLoc(Tok.getLocation(), SM),
                       false, Diags, Target);
     assert(!HadError && "This method isn't valid on erroneous strings");
     --ByteNo;

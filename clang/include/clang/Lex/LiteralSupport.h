@@ -27,6 +27,8 @@ class Preprocessor;
 class Token;
 class SourceLocation;
 class TargetInfo;
+class SourceManager;
+class LangOptions;
 
 /// NumericLiteralParser - This performs strict semantic analysis of the content
 /// of a ppnumber, classifying it as either integer, floating, or erroneous,
@@ -167,7 +169,8 @@ public:
   /// If the Diagnostics pointer is non-null, then this will do semantic
   /// checking of the string literal and emit errors and warnings.
   static unsigned getOffsetOfStringByte(const Token &TheTok, unsigned ByteNo,
-                                        Preprocessor &PP,
+                                        const SourceManager &SM,
+                                        const LangOptions &Features,
                                         const TargetInfo &Target,
                                         Diagnostic *Diags = 0);
 };
