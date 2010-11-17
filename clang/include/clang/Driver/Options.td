@@ -562,6 +562,7 @@ def private__bundle : Flag<"-private_bundle">;
 def pthreads : Flag<"-pthreads">;
 def pthread : Flag<"-pthread">;
 def p : Flag<"-p">;
+def pie : Flag<"-pie">;
 def read__only__relocs : Separate<"-read_only_relocs">;
 def remap : Flag<"-remap">;
 def rewrite_objc : Flag<"-rewrite-objc">, Flags<[DriverOption]>,

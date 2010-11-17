@@ -3224,6 +3224,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  if (Args.hasArg(options::OPT_pie))
+    CmdArgs.push_back("-pie");
+
   if (Args.hasArg(options::OPT_rdynamic))
     CmdArgs.push_back("-export-dynamic");
 
@@ -3272,15 +3275,22 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Output.getFilename());
 
   if (!Args.hasArg(options::OPT_nostdlib)) {
-    if (!Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt1.o")));
+    const char *crt1 = NULL;
+    if (!Args.hasArg(options::OPT_shared)){
+      if (Args.hasArg(options::OPT_pie))
+        crt1 = "Scrt1.o";
+      else
+        crt1 = "crt1.o";
+    }
+    if (crt1)
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crt1)));
 
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
 
     const char *crtbegin;
     if (Args.hasArg(options::OPT_static))
       crtbegin = "crtbeginT.o";
-    else if (Args.hasArg(options::OPT_shared))
+    else if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_pie))
       crtbegin = "crtbeginS.o";
     else
       crtbegin = "crtbegin.o";
@@ -3350,10 +3360,13 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-lgcc");
     }
 
-    if (Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtendS.o")));
+    const char *crtend;
+    if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_pie))
+      crtend = "crtendS.o";
     else
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
+      crtend = "crtend.o";
+
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtend)));
 
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
   }
