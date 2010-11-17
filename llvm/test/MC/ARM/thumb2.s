@@ -52,3 +52,9 @@
 @ CHECK: rrx	r0, r0                  @ encoding: [0x30,0x00,0x4f,0xea]
   rrx	r0, r0
 
+@ CHECK: bfc	r0, #4, #20             @ encoding: [0x17,0x10,0x6f,0xf3]
+  bfc	r0, #4, #20
+@ CHECK: bfc	r0, #0, #23             @ encoding: [0x16,0x00,0x6f,0xf3]
+  bfc	r0, #0, #23
+@ CHECK: bfc	r0, #12, #20            @ encoding: [0x1f,0x30,0x6f,0xf3]
+  bfc	r0, #12, #20
