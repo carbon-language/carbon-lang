@@ -192,10 +192,6 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
     state = state->bindLoc(loc::MemRegionVal(ThisR),state->getSVal(ObjArgExpr));
     SetupThis.Add(Builder->generateNode(Loc, state, *I));
   }
-
-  // Perform post-visit.
-  CheckerVisit(MCE, Dst, /* FIXME: don't forget to update later */ SetupThis,
-               PostVisitStmtCallback);
 }
 
 void GRExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
