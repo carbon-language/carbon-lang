@@ -55,6 +55,10 @@ namespace {
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
 
+  cl::opt<bool> UseMCJIT(
+    "use-mcjit", cl::desc("Enable use of the MC-based JIT (if available)"),
+    cl::init(false));
+
   // Determine optimization level.
   cl::opt<char>
   OptLevel("O",
@@ -166,6 +170,10 @@ int main(int argc, char **argv, char * const *envp) {
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())
     Mod->setTargetTriple(Triple::normalize(TargetTriple));
+
+  // Enable MCJIT, if desired.
+  if (UseMCJIT)
+    builder.setUseMCJIT(true);
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {

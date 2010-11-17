@@ -126,9 +126,19 @@ protected:
   virtual char *getMemoryForGV(const GlobalVariable *GV);
 
   // To avoid having libexecutionengine depend on the JIT and interpreter
-  // libraries, the JIT and Interpreter set these functions to ctor pointers at
-  // startup time if they are linked in.
+  // libraries, the execution engine implementations set these functions to ctor
+  // pointers at startup time if they are linked in.
   static ExecutionEngine *(*JITCtor)(
+    Module *M,
+    std::string *ErrorStr,
+    JITMemoryManager *JMM,
+    CodeGenOpt::Level OptLevel,
+    bool GVsWithCode,
+    CodeModel::Model CMM,
+    StringRef MArch,
+    StringRef MCPU,
+    const SmallVectorImpl<std::string>& MAttrs);
+  static ExecutionEngine *(*MCJITCtor)(
     Module *M,
     std::string *ErrorStr,
     JITMemoryManager *JMM,
@@ -447,6 +457,7 @@ private:
   std::string MArch;
   std::string MCPU;
   SmallVector<std::string, 4> MAttrs;
+  bool UseMCJIT;
 
   /// InitEngine - Does the common initialization of default options.
   void InitEngine() {
@@ -456,6 +467,7 @@ private:
     JMM = NULL;
     AllocateGVsWithCode = false;
     CMModel = CodeModel::Default;
+    UseMCJIT = false;
   }
 
 public:
@@ -524,6 +536,12 @@ public:
   EngineBuilder &setMCPU(StringRef mcpu) {
     MCPU.assign(mcpu.begin(), mcpu.end());
     return *this;
+  }
+
+  /// setUseMCJIT - Set whether the MC-JIT implementation should be used
+  /// (experimental).
+  void setUseMCJIT(bool Value) {
+    UseMCJIT = Value;
   }
 
   /// setMAttrs - Set cpu-specific attributes.
