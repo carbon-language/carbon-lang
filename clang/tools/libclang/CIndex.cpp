@@ -136,7 +136,7 @@ class VisitorJob {
 public:
   enum Kind { DeclVisitKind, StmtVisitKind, MemberExprPartsKind,
               TypeLocVisitKind, OverloadExprPartsKind,
-              DeclRefExprPartsKind };
+              DeclRefExprPartsKind, LabelRefVisitKind };
 protected:
   void *dataA;
   void *dataB;
@@ -338,7 +338,6 @@ public:
   // Expression visitors
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
-  bool VisitAddrLabelExpr(AddrLabelExpr *E);
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
   bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
@@ -1481,10 +1480,6 @@ bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   return VisitExpr(E);
 }
 
-bool CursorVisitor::VisitAddrLabelExpr(AddrLabelExpr *E) {
-  return Visit(MakeCursorLabelRef(E->getLabel(), E->getLabelLoc(), TU));
-}
-
 bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   // Visit the designators.
   typedef DesignatedInitExpr::Designator Designator;
@@ -1673,6 +1668,20 @@ public:
   }
 };
 
+class LabelRefVisit : public VisitorJob {
+public:
+  LabelRefVisit(LabelStmt *LS, SourceLocation labelLoc, CXCursor parent)
+    : VisitorJob(parent, VisitorJob::LabelRefVisitKind, LS,
+                 (void*) labelLoc.getRawEncoding()) {}
+  
+  static bool classof(const VisitorJob *VJ) {
+    return VJ->getKind() == VisitorJob::LabelRefVisitKind;
+  }
+  LabelStmt *get() const { return static_cast<LabelStmt*>(dataA); }
+  SourceLocation getLoc() const { 
+    return SourceLocation::getFromRawEncoding((unsigned)(uintptr_t) dataB); }
+};
+
 class EnqueueVisitor : public StmtVisitor<EnqueueVisitor, void> {
   VisitorWorkList &WL;
   CXCursor Parent;
@@ -1680,6 +1689,7 @@ public:
   EnqueueVisitor(VisitorWorkList &wl, CXCursor parent)
     : WL(wl), Parent(parent) {}
 
+  void VisitAddrLabelExpr(AddrLabelExpr *E);
   void VisitBlockExpr(BlockExpr *B);
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitCompoundStmt(CompoundStmt *S);
@@ -1693,6 +1703,7 @@ public:
   void VisitDeclStmt(DeclStmt *S);
   void VisitExplicitCastExpr(ExplicitCastExpr *E);
   void VisitForStmt(ForStmt *FS);
+  void VisitGotoStmt(GotoStmt *GS);
   void VisitIfStmt(IfStmt *If);
   void VisitInitListExpr(InitListExpr *IE);
   void VisitMemberExpr(MemberExpr *M);
@@ -1738,6 +1749,9 @@ void EnqueueVisitor::EnqueueChildren(Stmt *S) {
   // ordering performed by the worklist.
   VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
   std::reverse(I, E);
+}
+void EnqueueVisitor::VisitAddrLabelExpr(AddrLabelExpr *E) {
+  WL.push_back(LabelRefVisit(E->getLabel(), E->getLabelLoc(), Parent));
 }
 void EnqueueVisitor::VisitBlockExpr(BlockExpr *B) {
   AddDecl(B->getBlockDecl());
@@ -1813,6 +1827,9 @@ void EnqueueVisitor::VisitForStmt(ForStmt *FS) {
   AddStmt(FS->getCond());
   AddDecl(FS->getConditionVariable());
   AddStmt(FS->getInit());
+}
+void EnqueueVisitor::VisitGotoStmt(GotoStmt *GS) {
+  WL.push_back(LabelRefVisit(GS->getLabel(), GS->getLabelLoc(), Parent));
 }
 void EnqueueVisitor::VisitIfStmt(IfStmt *If) {
   AddStmt(If->getElse());
@@ -1908,6 +1925,14 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           return true;
         continue;
       }
+      case VisitorJob::LabelRefVisitKind: {
+        LabelStmt *LS = cast<LabelRefVisit>(&LI)->get();
+        if (Visit(MakeCursorLabelRef(LS,
+                                     cast<LabelRefVisit>(&LI)->getLoc(),
+                                     TU)))
+          return true;
+        continue;
+      }
       case VisitorJob::StmtVisitKind: {
         Stmt *S = cast<StmtVisit>(&LI)->get();
         if (!S)
@@ -1917,29 +1942,16 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         CXCursor Cursor = MakeCXCursor(S, StmtParent, TU);
         
         switch (S->getStmtClass()) {
-          case Stmt::GotoStmtClass: {
-            GotoStmt *GS = cast<GotoStmt>(S);
-            if (Visit(MakeCursorLabelRef(GS->getLabel(),
-                                         GS->getLabelLoc(), TU))) {
-              return true;
-            }
-            continue;
-          }
           // Cases not yet handled by the data-recursion
           // algorithm.
           case Stmt::OffsetOfExprClass:
           case Stmt::SizeOfAlignOfExprClass:
-          case Stmt::AddrLabelExprClass:
-          case Stmt::TypesCompatibleExprClass:
-          case Stmt::VAArgExprClass:
           case Stmt::DesignatedInitExprClass:
-          case Stmt::CXXTypeidExprClass:
           case Stmt::CXXUuidofExprClass:
           case Stmt::CXXScalarValueInitExprClass:
           case Stmt::CXXPseudoDestructorExprClass:
           case Stmt::UnaryTypeTraitExprClass:
           case Stmt::DependentScopeDeclRefExprClass:
-          case Stmt::CXXUnresolvedConstructExprClass:
           case Stmt::CXXDependentScopeMemberExprClass:
             if (Visit(Cursor))
               return true;
