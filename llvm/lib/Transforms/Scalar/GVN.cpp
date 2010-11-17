@@ -701,7 +701,6 @@ namespace {
     bool processBlock(BasicBlock *BB);
     void dump(DenseMap<uint32_t, Value*>& d);
     bool iterateOnFunction(Function &F);
-    Value *CollapsePhi(PHINode* p);
     bool performPRE(Function& F);
     Value *lookupNumber(BasicBlock *BB, uint32_t num);
     void cleanupGlobalSets();
@@ -731,33 +730,6 @@ void GVN::dump(DenseMap<uint32_t, Value*>& d) {
       I->second->dump();
   }
   errs() << "}\n";
-}
-
-static bool isSafeReplacement(PHINode* p, Instruction *inst) {
-  if (!isa<PHINode>(inst))
-    return true;
-
-  for (Instruction::use_iterator UI = p->use_begin(), E = p->use_end();
-       UI != E; ++UI)
-    if (PHINode* use_phi = dyn_cast<PHINode>(*UI))
-      if (use_phi->getParent() == inst->getParent())
-        return false;
-
-  return true;
-}
-
-Value *GVN::CollapsePhi(PHINode *PN) {
-  Value *ConstVal = PN->hasConstantValue(DT);
-  if (!ConstVal) return 0;
-
-  Instruction *Inst = dyn_cast<Instruction>(ConstVal);
-  if (!Inst)
-    return ConstVal;
-
-  if (DT->dominates(Inst, PN))
-    if (isSafeReplacement(PN, Inst))
-      return Inst;
-  return 0;
 }
 
 /// IsValueFullyAvailableInBlock - Return true if we can prove that the value
@@ -1954,21 +1926,8 @@ bool GVN::processInstruction(Instruction *I,
     return false;
   }
 
-  // Collapse PHI nodes
-  if (PHINode* p = dyn_cast<PHINode>(I)) {
-    Value *constVal = CollapsePhi(p);
-
-    if (constVal) {
-      p->replaceAllUsesWith(constVal);
-      if (MD && constVal->getType()->isPointerTy())
-        MD->invalidateCachedPointerInfo(constVal);
-      VN.erase(p);
-
-      toErase.push_back(p);
-    } else {
-      localAvail[I->getParent()]->table.insert(std::make_pair(Num, I));
-    }
-
+  if (isa<PHINode>(I)) {
+    localAvail[I->getParent()]->table.insert(std::make_pair(Num, I));
   // If the number we were assigned was a brand new VN, then we don't
   // need to do a lookup to see if the number already exists
   // somewhere in the domtree: it can't!
