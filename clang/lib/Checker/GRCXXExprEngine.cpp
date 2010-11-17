@@ -193,9 +193,6 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
     SetupThis.Add(Builder->generateNode(Loc, state, *I));
   }
 
-  // FIXME: Perform the actual method call.  Right now all we do is evaluate
-  // the arguments.
-
   // Perform post-visit.
   CheckerVisit(MCE, Dst, /* FIXME: don't forget to update later */ SetupThis,
                PostVisitStmtCallback);
