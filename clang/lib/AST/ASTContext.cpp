@@ -3282,6 +3282,13 @@ bool ASTContext::BlockRequiresCopying(QualType Ty) {
     return true;
   if (Ty->isObjCObjectPointerType())
     return true;
+  if (getLangOptions().CPlusPlus) {
+    if (const RecordType *RT = Ty->getAs<RecordType>()) {
+      CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+      return RD->hasConstCopyConstructor(*this);
+      
+    }
+  }
   return false;
 }
 

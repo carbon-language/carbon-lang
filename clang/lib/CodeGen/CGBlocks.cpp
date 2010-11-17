@@ -1016,9 +1016,8 @@ GenerateCopyHelperFunction(const llvm::StructType *T,
             Srcv = Builder.CreateBitCast(Srcv, PtrStructTy);
             Srcv = Builder.CreateStructGEP(Srcv, CGF.getByRefValueLLVMField(VD),
                                         VD->getNameAsString());
-            Dstv = Builder.CreateStructGEP(DstObj, index);
-            Dstv = Builder.CreateLoad(Dstv);
-            Dstv = Builder.CreateBitCast(Dstv, PtrStructTy);
+
+            Dstv = Builder.CreateBitCast(DstObj, PtrStructTy);
             Dstv = Builder.CreateStructGEP(Dstv, CGF.getByRefValueLLVMField(VD),
                                            VD->getNameAsString());
             CGF.EmitSynthesizedCXXCopyCtor(Dstv, Srcv, 

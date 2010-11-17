@@ -659,7 +659,8 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
     if (Ty->isBlockPointerType()) {
       flag |= BLOCK_FIELD_IS_BLOCK;
       flags |= BLOCK_HAS_COPY_DISPOSE;
-    } else if (BlockRequiresCopying(Ty)) {
+    } else if (getContext().isObjCNSObjectType(Ty) || 
+               Ty->isObjCObjectPointerType()) {
       flag |= BLOCK_FIELD_IS_OBJECT;
       flags |= BLOCK_HAS_COPY_DISPOSE;
     }
