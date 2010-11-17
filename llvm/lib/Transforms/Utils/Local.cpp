@@ -346,13 +346,13 @@ void llvm::RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
   WeakVH PhiIt = &BB->front();
   while (PHINode *PN = dyn_cast<PHINode>(PhiIt)) {
     PhiIt = &*++BasicBlock::iterator(cast<Instruction>(PhiIt));
-    
-    Value *PNV = PN->hasConstantValue();
+
+    Value *PNV = SimplifyInstruction(PN, TD);
     if (PNV == 0) continue;
-    
+
     // If we're able to simplify the phi to a single value, substitute the new
     // value into all of its uses.
-    assert(PNV != PN && "hasConstantValue broken");
+    assert(PNV != PN && "SimplifyInstruction broken!");
     
     Value *OldPhiIt = PhiIt;
     ReplaceAndSimplifyAllUses(PN, PNV, TD);
