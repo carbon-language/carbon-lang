@@ -7329,16 +7329,56 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
                        rhs->getSourceRange());
 }
 
-static void DiagnoseLogicalAndInLogicalOr(Sema &Self, SourceLocation OpLoc,
-                                          Expr *E) {
+/// \brief It accepts a '&&' expr that is inside a '||' one.
+/// Emit a diagnostic together with a fixit hint that wraps the '&&' expression
+/// in parentheses.
+static void
+EmitDiagnosticForLogicalAndInLogicalOr(Sema &Self, SourceLocation OpLoc,
+                                       Expr *E) {
+  assert(isa<BinaryOperator>(E) &&
+         cast<BinaryOperator>(E)->getOpcode() == BO_LAnd);
+  SuggestParentheses(Self, OpLoc,
+    Self.PDiag(diag::warn_logical_and_in_logical_or)
+        << E->getSourceRange(),
+    Self.PDiag(diag::note_logical_and_in_logical_or_silence),
+    E->getSourceRange(),
+    Self.PDiag(0), SourceRange());
+}
+
+/// \brief Returns true if the given expression can be evaluated as a constant
+/// 'true'.
+static bool EvaluatesAsTrue(Sema &S, Expr *E) {
+  bool Res;
+  return E->EvaluateAsBooleanCondition(Res, S.getASTContext()) && Res;
+}
+
+/// \brief Look for '&&' in the left hand of a '||' expr.
+static void DiagnoseLogicalAndInLogicalOrLHS(Sema &S, SourceLocation OpLoc,
+                                             Expr *E) {
   if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(E)) {
     if (Bop->getOpcode() == BO_LAnd) {
-      SuggestParentheses(Self, OpLoc,
-        Self.PDiag(diag::warn_logical_and_in_logical_or)
-            << E->getSourceRange(),
-        Self.PDiag(diag::note_logical_and_in_logical_or_silence),
-        E->getSourceRange(),
-        Self.PDiag(0), SourceRange());
+      // If it's "1 && a || b" don't warn since the precedence doesn't matter.
+      if (!EvaluatesAsTrue(S, Bop->getLHS()))
+        return EmitDiagnosticForLogicalAndInLogicalOr(S, OpLoc, Bop);
+    } else if (Bop->getOpcode() == BO_LOr) {
+      if (BinaryOperator *RBop = dyn_cast<BinaryOperator>(Bop->getRHS())) {
+        // If it's "a || b && 1 || c" we didn't warn earlier for
+        // "a || b && 1", but warn now.
+        if (RBop->getOpcode() == BO_LAnd && EvaluatesAsTrue(S, RBop->getRHS()))
+          return EmitDiagnosticForLogicalAndInLogicalOr(S, OpLoc, RBop);
+      }
+    }
+  }
+}
+
+/// \brief Look for '&&' in the right hand of a '||' expr.
+static void DiagnoseLogicalAndInLogicalOrRHS(Sema &S, SourceLocation OpLoc,
+                                             Expr *E) {
+  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(E)) {
+    if (Bop->getOpcode() == BO_LAnd) {
+      // If it's "a || b && 1" don't warn since the precedence doesn't matter.
+      if (!EvaluatesAsTrue(S, Bop->getRHS()))
+        return EmitDiagnosticForLogicalAndInLogicalOr(S, OpLoc, Bop);
     }
   }
 }
@@ -7351,10 +7391,11 @@ static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
   if (BinaryOperator::isBitwiseOp(Opc))
     return DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
 
-  /// Warn about arg1 && arg2 || arg3, as GCC 4.3+ does.
+  // Warn about arg1 || arg2 && arg3, as GCC 4.3+ does.
+  // We don't warn for 'assert(a || b && "bad")' since this is safe.
   if (Opc == BO_LOr) {
-    DiagnoseLogicalAndInLogicalOr(Self, OpLoc, lhs);
-    DiagnoseLogicalAndInLogicalOr(Self, OpLoc, rhs);
+    DiagnoseLogicalAndInLogicalOrLHS(Self, OpLoc, lhs);
+    DiagnoseLogicalAndInLogicalOrRHS(Self, OpLoc, rhs);
   }
 }
 
