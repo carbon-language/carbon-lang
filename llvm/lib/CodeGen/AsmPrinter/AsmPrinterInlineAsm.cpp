@@ -49,11 +49,19 @@ static void SrcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo) {
   SrcMgrDiagInfo *DiagInfo = static_cast<SrcMgrDiagInfo *>(diagInfo);
   assert(DiagInfo && "Diagnostic context not passed down?");
   
+  // If the inline asm had metadata associated with it, pull out a location
+  // cookie corresponding to which line the error occurred on.
   unsigned LocCookie = 0;
-  if (const MDNode *LocInfo = DiagInfo->LocInfo) 
-    if (LocInfo->getNumOperands() > 0)
-      if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocInfo->getOperand(0)))
+  if (const MDNode *LocInfo = DiagInfo->LocInfo) {
+    unsigned ErrorLine = Diag.getLineNo()-1;
+    if (ErrorLine >= LocInfo->getNumOperands())
+      ErrorLine = 0;
+    
+    if (LocInfo->getNumOperands() != 0)
+      if (const ConstantInt *CI =
+          dyn_cast<ConstantInt>(LocInfo->getOperand(ErrorLine)))
         LocCookie = CI->getZExtValue();
+  }
   
   DiagInfo->DiagHandler(Diag, DiagInfo->DiagContext, LocCookie);
 }

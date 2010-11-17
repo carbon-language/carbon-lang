@@ -2625,8 +2625,8 @@ call void asm alignstack "eieio", ""()
 <div class="doc_text">
 
 <p>The call instructions that wrap inline asm nodes may have a "!srcloc" MDNode
-   attached to it that contains a constant integer.  If present, the code
-   generator will use the integer as the location cookie value when report
+   attached to it that contains a list of constant integers.  If present, the
+  code generator will use the integer as the location cookie value when report
    errors through the LLVMContext error reporting mechanisms.  This allows a
    front-end to correlate backend errors that occur with inline asm back to the
    source code that produced it.  For example:</p>
@@ -2638,7 +2638,8 @@ call void asm sideeffect "something bad", ""()<b>, !srcloc !42</b>
 </pre>
 
 <p>It is up to the front-end to make sense of the magic numbers it places in the
-   IR.</p>
+   IR.  If the MDNode contains multiple constants, the code generator will use
+   the one that corresponds to the line of the asm that the error occurs on.</p>
 
 </div>
 
