@@ -105,6 +105,7 @@ public:
     AT_gnu_inline,
     AT_hiding,
     AT_malloc,
+    AT_may_alias,
     AT_mode,
     AT_neon_polyvector_type,    // Clang-specific.
     AT_neon_vector_type,        // Clang-specific.

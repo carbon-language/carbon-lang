@@ -241,6 +241,10 @@ def MaxFieldAlignment : Attr {
   let Args = [UnsignedArgument<"Alignment">];
 }
 
+def MayAlias : Attr {
+  let Spellings = ["may_alias"];
+}
+
 def MSP430Interrupt : Attr {
   let Spellings = [];
   let Args = [UnsignedArgument<"Number">];

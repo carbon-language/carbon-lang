@@ -731,6 +731,22 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   S.Diag(Attr.getLoc(), diag::warn_attribute_malloc_pointer_only);
 }
 
+static void HandleMayAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isa<TypeDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 2 /*variable and function*/;
+    return;
+  }
+
+  d->addAttr(::new (S.Context) MayAliasAttr(Attr.getLoc(), S.Context));
+}
+
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   /* Diagnostics (if any) was emitted by Sema::ProcessFnAttr(). */
   assert(Attr.isInvalid() == false);
@@ -2361,6 +2377,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_hiding:      HandleHidingAttr      (D, Attr, S); break;
   case AttributeList::AT_mode:        HandleModeAttr        (D, Attr, S); break;
   case AttributeList::AT_malloc:      HandleMallocAttr      (D, Attr, S); break;
+  case AttributeList::AT_may_alias:   HandleMayAliasAttr    (D, Attr, S); break;
   case AttributeList::AT_nonnull:     HandleNonNullAttr     (D, Attr, S); break;
   case AttributeList::AT_ownership_returns:
   case AttributeList::AT_ownership_takes:

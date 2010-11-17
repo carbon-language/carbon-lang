@@ -83,7 +83,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("NSObject", AT_nsobject)
     .Case("dllimport", AT_dllimport)
     .Case("dllexport", AT_dllexport)
-    .Case("may_alias", IgnoredAttribute) // FIXME: TBAA
+    .Case("may_alias", AT_may_alias)
     .Case("base_check", AT_base_check)
     .Case("deprecated", AT_deprecated)
     .Case("visibility", AT_visibility)
