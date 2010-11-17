@@ -179,7 +179,7 @@ bool ARMGlobalMerge::doInitialization(Module &M) {
         I->getName().startswith(".llvm."))
       continue;
 
-    if (TD->getTypeAllocSize(I->getType()) < MaxOffset) {
+    if (TD->getTypeAllocSize(I->getType()->getElementType()) < MaxOffset) {
       if (I->isConstant())
         ConstGlobals.push_back(I);
       else
