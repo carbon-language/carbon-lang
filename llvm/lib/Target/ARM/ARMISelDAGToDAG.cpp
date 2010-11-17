@@ -1777,20 +1777,21 @@ SelectARMCMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
 
 SDNode *ARMDAGToDAGISel::
 SelectT2CMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
-                    ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
+                  ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
   ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
-  if (!T)
+  if (!T || !TrueVal.getNode()->hasOneUse())
     return 0;
 
   unsigned Opc = 0;
   unsigned TrueImm = T->getZExtValue();
-  bool isSoImm = is_t2_so_imm(TrueImm);
-  if (isSoImm || TrueImm <= 0xffff) {
-    Opc = isSoImm ? ARM::t2MOVCCi : ARM::t2MOVCCi16;
+  if (is_t2_so_imm(TrueImm)) {
+    Opc = ARM::t2MOVCCi;
+  } else if (TrueImm <= 0xffff) {
+    Opc = ARM::t2MOVCCi16;
   } else if (is_t2_so_imm_not(TrueImm)) {
     TrueImm = ~TrueImm;
     Opc = ARM::t2MVNCCi;
-  } else if (Subtarget->hasV6T2Ops()) {
+  } else if (TrueVal.getNode()->hasOneUse() && Subtarget->hasV6T2Ops()) {
     // Large immediate.
     Opc = ARM::t2MOVCCi32imm;
   }
@@ -1807,7 +1808,7 @@ SelectT2CMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
 
 SDNode *ARMDAGToDAGISel::
 SelectARMCMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
-                     ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
+                   ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
   ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
   if (!T)
     return 0;
@@ -1815,12 +1816,15 @@ SelectARMCMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
   unsigned Opc = 0;
   unsigned TrueImm = T->getZExtValue();
   bool isSoImm = is_so_imm(TrueImm);
-  if (isSoImm || (Subtarget->hasV6T2Ops() && TrueImm <= 0xffff)) {
-    Opc = isSoImm ? ARM::MOVCCi : ARM::MOVCCi16;
+  if (isSoImm) {
+    Opc = ARM::MOVCCi;
+  } else if (Subtarget->hasV6T2Ops() && TrueImm <= 0xffff) {
+    Opc = ARM::MOVCCi16;
   } else if (is_so_imm_not(TrueImm)) {
     TrueImm = ~TrueImm;
     Opc = ARM::MVNCCi;
-  } else if (Subtarget->hasV6T2Ops() || ARM_AM::isSOImmTwoPartVal(TrueImm)) {
+  } else if (TrueVal.getNode()->hasOneUse() &&
+             (Subtarget->hasV6T2Ops() || ARM_AM::isSOImmTwoPartVal(TrueImm))) {
     // Large immediate.
     Opc = ARM::MOVCCi32imm;
   }
