@@ -69,6 +69,7 @@
 #include "llvm/Operator.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Assembly/Writer.h"
@@ -2874,7 +2875,10 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
   // PHI's incoming blocks are in a different loop, in which case doing so
   // risks breaking LCSSA form. Instcombine would normally zap these, but
   // it doesn't have DominatorTree information, so it may miss cases.
-  if (Value *V = PN->hasConstantValue(DT)) {
+  if (Value *V = SimplifyInstruction(PN, TD, DT)) {
+    // TODO: The following check is suboptimal.  For example, it is pointless
+    // if V is a constant.  Since the problematic case is if V is defined inside
+    // a deeper loop, it would be better to check for that directly.
     bool AllSameLoop = true;
     Loop *PNLoop = LI->getLoopFor(PN->getParent());
     for (size_t i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
