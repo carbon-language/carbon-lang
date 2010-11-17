@@ -348,7 +348,6 @@ public:
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   bool VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
-  bool VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
 
   // Data-recursive visitor functions.
@@ -1614,15 +1613,6 @@ bool CursorVisitor::VisitDependentScopeDeclRefExpr(
   return false;
 }
 
-bool CursorVisitor::VisitCXXUnresolvedConstructExpr(
-                                                CXXUnresolvedConstructExpr *E) {
-  if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
-    if (Visit(TSInfo->getTypeLoc()))
-      return true;
-  
-  return VisitExpr(E);
-}
-
 bool CursorVisitor::VisitCXXDependentScopeMemberExpr(
                                               CXXDependentScopeMemberExpr *E) {
   // Visit the base expression, if there is one.
@@ -1723,6 +1713,7 @@ public:
   void VisitCXXNewExpr(CXXNewExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
+  void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   void VisitDeclRefExpr(DeclRefExpr *D);
   void VisitDeclStmt(DeclStmt *S);
   void VisitExplicitCastExpr(ExplicitCastExpr *E);
@@ -1803,6 +1794,12 @@ void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
   AddStmt(CE->getArg(0));
 }
 void EnqueueVisitor::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
+  EnqueueChildren(E);
+  AddTypeLoc(E->getTypeSourceInfo());
+}
+
+void EnqueueVisitor::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr 
+                                                     *E) {
   EnqueueChildren(E);
   AddTypeLoc(E->getTypeSourceInfo());
 }
