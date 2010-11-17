@@ -32,6 +32,11 @@
 using namespace clang;
 using namespace clang::driver;
 
+// This function isn't referenced outside its translation unit, but it
+// can't use the "static" keyword because its address is used for
+// GetMainExecutable (since some platforms don't support taking the
+// address of main, and some platforms can't implement GetMainExecutable
+// without being given the address of a function in the main executable).
 llvm::sys::Path GetExecutablePath(const char *Argv0) {
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
