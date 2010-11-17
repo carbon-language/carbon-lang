@@ -558,9 +558,9 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     else if (MO->isImplicit())
       report("Explicit definition marked as implicit", MO, MONum);
   } else if (MONum < TI.getNumOperands()) {
-    // Don't check if it's a variadic instruction. See, e.g., LDM_RET in the arm
-    // back end.
-    if (MO->isReg() && MONum != TI.getNumOperands()-1) {
+    // Don't check if it's the last operand in a variadic instruction. See,
+    // e.g., LDM_RET in the arm back end.
+    if (MO->isReg() && !(TI.isVariadic() && MONum == TI.getNumOperands()-1)) {
       if (MO->isDef())
         report("Explicit operand marked as def", MO, MONum);
       if (MO->isImplicit())
