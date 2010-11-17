@@ -33,8 +33,8 @@ static int HexDigitValue(char C) {
 /// either a character or a string literal.
 static unsigned ProcessCharEscape(const char *&ThisTokBuf,
                                   const char *ThisTokEnd, bool &HadError,
-                                  SourceLocation Loc, bool IsWide,
-                                  Preprocessor &PP, bool Complain) {
+                                  FullSourceLoc Loc, bool IsWide,
+                                  Diagnostic *Diags, const TargetInfo &Target) {
   // Skip the '\' char.
   ++ThisTokBuf;
 
@@ -54,13 +54,13 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     ResultChar = 8;
     break;
   case 'e':
-    if (Complain)
-      PP.Diag(Loc, diag::ext_nonstandard_escape) << "e";
+    if (Diags)
+      Diags->Report(Loc, diag::ext_nonstandard_escape) << "e";
     ResultChar = 27;
     break;
   case 'E':
-    if (Complain)
-      PP.Diag(Loc, diag::ext_nonstandard_escape) << "E";
+    if (Diags)
+      Diags->Report(Loc, diag::ext_nonstandard_escape) << "E";
     ResultChar = 27;
     break;
   case 'f':
@@ -81,8 +81,8 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
   case 'x': { // Hex escape.
     ResultChar = 0;
     if (ThisTokBuf == ThisTokEnd || !isxdigit(*ThisTokBuf)) {
-      if (Complain)
-        PP.Diag(Loc, diag::err_hex_escape_no_digits);
+      if (Diags)
+        Diags->Report(Loc, diag::err_hex_escape_no_digits);
       HadError = 1;
       break;
     }
@@ -99,9 +99,8 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     }
 
     // See if any bits will be truncated when evaluated as a character.
-    unsigned CharWidth = IsWide
-                       ? PP.getTargetInfo().getWCharWidth()
-                       : PP.getTargetInfo().getCharWidth();
+    unsigned CharWidth =
+      IsWide ? Target.getWCharWidth() : Target.getCharWidth();
 
     if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
       Overflow = true;
@@ -109,8 +108,8 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     }
 
     // Check for overflow.
-    if (Overflow && Complain)   // Too many digits to fit in
-      PP.Diag(Loc, diag::warn_hex_escape_too_large);
+    if (Overflow && Diags)   // Too many digits to fit in
+      Diags->Report(Loc, diag::warn_hex_escape_too_large);
     break;
   }
   case '0': case '1': case '2': case '3':
@@ -130,13 +129,12 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
              ThisTokBuf[0] >= '0' && ThisTokBuf[0] <= '7');
 
     // Check for overflow.  Reject '\777', but not L'\777'.
-    unsigned CharWidth = IsWide
-                       ? PP.getTargetInfo().getWCharWidth()
-                       : PP.getTargetInfo().getCharWidth();
+    unsigned CharWidth =
+      IsWide ? Target.getWCharWidth() : Target.getCharWidth();
 
     if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
-      if (Complain)
-        PP.Diag(Loc, diag::warn_octal_escape_too_large);
+      if (Diags)
+        Diags->Report(Loc, diag::warn_octal_escape_too_large);
       ResultChar &= ~0U >> (32-CharWidth);
     }
     break;
@@ -145,18 +143,20 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     // Otherwise, these are not valid escapes.
   case '(': case '{': case '[': case '%':
     // GCC accepts these as extensions.  We warn about them as such though.
-    if (Complain)
-      PP.Diag(Loc, diag::ext_nonstandard_escape)
+    if (Diags)
+      Diags->Report(Loc, diag::ext_nonstandard_escape)
         << std::string()+(char)ResultChar;
     break;
   default:
-    if (!Complain)
+    if (Diags == 0)
       break;
       
     if (isgraph(ThisTokBuf[0]))
-      PP.Diag(Loc, diag::ext_unknown_escape) << std::string()+(char)ResultChar;
+      Diags->Report(Loc, diag::ext_unknown_escape)
+        << std::string()+(char)ResultChar;
     else
-      PP.Diag(Loc, diag::ext_unknown_escape) << "x"+llvm::utohexstr(ResultChar);
+      Diags->Report(Loc, diag::ext_unknown_escape)
+        << "x"+llvm::utohexstr(ResultChar);
     break;
   }
 
@@ -730,8 +730,10 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
         ResultChar = utf32;
       } else {
         // Otherwise, this is a non-UCN escape character.  Process it.
-        ResultChar = ProcessCharEscape(begin, end, HadError, Loc, IsWide, PP,
-                                       /*Complain=*/true);
+        ResultChar = ProcessCharEscape(begin, end, HadError,
+                                       FullSourceLoc(Loc,PP.getSourceManager()),
+                                       IsWide,
+                                       &PP.getDiagnostics(), PP.getTargetInfo());
       }
     }
 
@@ -951,9 +953,13 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
         continue;
       }
       // Otherwise, this is a non-UCN escape character.  Process it.
-      unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
-                                              StringToks[i].getLocation(),
-                                              AnyWide, PP, Complain);
+      Diagnostic *Diags = Complain ? &PP.getDiagnostics() : 0;
+      unsigned ResultChar =
+        ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
+                          FullSourceLoc(StringToks[i].getLocation(),
+                                        PP.getSourceManager()),
+                          AnyWide, Diags,
+                          PP.getTargetInfo());
 
       // Note: our internal rep of wide char tokens is always little-endian.
       *ResultPtr++ = ResultChar & 0xFF;
@@ -1002,7 +1008,8 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
 unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
                                                     unsigned ByteNo,
                                                     Preprocessor &PP, 
-                                                    bool Complain) {
+                                                    const TargetInfo &Target,
+                                                    Diagnostic *Diags) {
   // Get the spelling of the token.
   llvm::SmallString<16> SpellingBuffer;
   SpellingBuffer.resize(Tok.getLength());
@@ -1010,9 +1017,8 @@ unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
   bool StringInvalid = false;
   const char *SpellingPtr = &SpellingBuffer[0];
   unsigned TokLen = PP.getSpelling(Tok, SpellingPtr, &StringInvalid);
-  if (StringInvalid) {
+  if (StringInvalid)
     return 0;
-  }
 
   assert(SpellingPtr[0] != 'L' && "Doesn't handle wide strings yet");
 
@@ -1038,7 +1044,8 @@ unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
     // Otherwise, this is an escape character.  Advance over it.
     bool HadError = false;
     ProcessCharEscape(SpellingPtr, SpellingEnd, HadError,
-                      Tok.getLocation(), false, PP, Complain);
+                      FullSourceLoc(Tok.getLocation(), PP.getSourceManager()),
+                      false, Diags, Target);
     assert(!HadError && "This method isn't valid on erroneous strings");
     --ByteNo;
   }

@@ -163,8 +163,13 @@ public:
   /// getOffsetOfStringByte - This function returns the offset of the
   /// specified byte of the string data represented by Token.  This handles
   /// advancing over escape sequences in the string.
+  ///
+  /// If the Diagnostics pointer is non-null, then this will do semantic
+  /// checking of the string literal and emit errors and warnings.
   static unsigned getOffsetOfStringByte(const Token &TheTok, unsigned ByteNo,
-                                        Preprocessor &PP, bool Complain = true);
+                                        Preprocessor &PP,
+                                        const TargetInfo &Target,
+                                        Diagnostic *Diags = 0);
 };
 
 }  // end namespace clang
