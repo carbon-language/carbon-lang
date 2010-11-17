@@ -21,6 +21,7 @@ class LLVMContextImpl;
 class StringRef;
 class Instruction;
 class Module;
+class SMDiagnostic;
 template <typename T> class SmallVectorImpl;
 
 /// This is an important class for using LLVM in a threaded context.  It
@@ -49,18 +50,23 @@ public:
   /// custom metadata IDs registered in this LLVMContext.
   void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
   
+  
+  typedef void (*InlineAsmDiagHandlerTy)(const SMDiagnostic&, void *Context,
+                                         unsigned LocCookie);
+  
   /// setInlineAsmDiagnosticHandler - This method sets a handler that is invoked
   /// when problems with inline asm are detected by the backend.  The first
-  /// argument is a function pointer (of type SourceMgr::DiagHandlerTy) and the
-  /// second is a context pointer that gets passed into the DiagHandler.
+  /// argument is a function pointer and the second is a context pointer that
+  /// gets passed into the DiagHandler.
   ///
-  /// LLVMContext doesn't take ownership or interpreter either of these
+  /// LLVMContext doesn't take ownership or interpret either of these
   /// pointers.
-  void setInlineAsmDiagnosticHandler(void *DiagHandler, void *DiagContext = 0);
+  void setInlineAsmDiagnosticHandler(InlineAsmDiagHandlerTy DiagHandler,
+                                     void *DiagContext = 0);
 
   /// getInlineAsmDiagnosticHandler - Return the diagnostic handler set by
   /// setInlineAsmDiagnosticHandler.
-  void *getInlineAsmDiagnosticHandler() const;
+  InlineAsmDiagHandlerTy getInlineAsmDiagnosticHandler() const;
 
   /// getInlineAsmDiagnosticContext - Return the diagnostic context set by
   /// setInlineAsmDiagnosticHandler.

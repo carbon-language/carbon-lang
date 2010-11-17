@@ -37,7 +37,7 @@ using namespace llvm;
 namespace {
   struct SrcMgrDiagInfo {
     const MDNode *LocInfo;
-    void *DiagHandler;
+    LLVMContext::InlineAsmDiagHandlerTy DiagHandler;
     void *DiagContext;
   };
 }
@@ -45,8 +45,7 @@ namespace {
 /// SrcMgrDiagHandler - This callback is invoked when the SourceMgr for an
 /// inline asm has an error in it.  diagInfo is a pointer to the SrcMgrDiagInfo
 /// struct above.
-static void SrcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo,
-                              unsigned locCookie) {
+static void SrcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo) {
   SrcMgrDiagInfo *DiagInfo = static_cast<SrcMgrDiagInfo *>(diagInfo);
   assert(DiagInfo && "Diagnostic context not passed down?");
   
@@ -56,10 +55,7 @@ static void SrcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo,
       if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocInfo->getOperand(0)))
         LocCookie = CI->getZExtValue();
   
-  SourceMgr::DiagHandlerTy ChainHandler = 
-    (SourceMgr::DiagHandlerTy)(intptr_t)DiagInfo->DiagHandler;
-  
-  ChainHandler(Diag, DiagInfo->DiagContext, LocCookie);
+  DiagInfo->DiagHandler(Diag, DiagInfo->DiagContext, LocCookie);
 }
 
 /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
@@ -85,11 +81,11 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
   // If the current LLVMContext has an inline asm handler, set it in SourceMgr.
   LLVMContext &LLVMCtx = MMI->getModule()->getContext();
   bool HasDiagHandler = false;
-  if (void *DiagHandler = LLVMCtx.getInlineAsmDiagnosticHandler()) {
+  if (LLVMCtx.getInlineAsmDiagnosticHandler() != 0) {
     // If the source manager has an issue, we arrange for SrcMgrDiagHandler
     // to be invoked, getting DiagInfo passed into it.
     DiagInfo.LocInfo = LocMDNode;
-    DiagInfo.DiagHandler = DiagHandler;
+    DiagInfo.DiagHandler = LLVMCtx.getInlineAsmDiagnosticHandler();
     DiagInfo.DiagContext = LLVMCtx.getInlineAsmDiagnosticContext();
     SrcMgr.setDiagHandler(SrcMgrDiagHandler, &DiagInfo);
     HasDiagHandler = true;

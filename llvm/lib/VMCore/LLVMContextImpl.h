@@ -119,7 +119,8 @@ public:
   /// will be automatically deleted if this context is deleted.
   SmallPtrSet<Module*, 4> OwnedModules;
   
-  void *InlineAsmDiagHandler, *InlineAsmDiagContext;
+  LLVMContext::InlineAsmDiagHandlerTy InlineAsmDiagHandler;
+  void *InlineAsmDiagContext;
   
   typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
                          DenseMapAPIntKeyInfo> IntMapTy;
