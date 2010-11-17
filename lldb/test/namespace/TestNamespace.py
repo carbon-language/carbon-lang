@@ -54,17 +54,18 @@ class NamespaceTestCase(TestBase):
             substrs = ['state is stopped',
                        'stop reason = breakpoint'])
 
-        # rdar://problem/8668740
-        # 'frame variable' output for namespace variables look wrong
-        # (lldb) frame variable
-        # (int) a = 12
-        # (A::B::uint_t) anon_uint = 0
-        # (A::B::uint_t) a_uint = 1
-        # (A::B::uint_t) b_uint = 2
-        # (A::B::uint_t) y_uint = 3
-        # (lldb) 
+        # On Mac OS X, gcc 4.2 emits the wrong debug info with respect to types.
+        slist = ['(int) a = 12', 'anon_uint', 'a_uint', 'b_uint', 'y_uint']
+        if sys.platform.startswith("darwin") and self.getCompiler() in ['clang', 'llvm-gcc']:
+            slist = ['(int) a = 12',
+                     '(my_uint_t) anon_uint = 0',
+                     '(A::uint_t) a_uint = 1',
+                     '(A::B::uint_t) b_uint = 2',
+                     '(Y::uint_t) y_uint = 3']        
+            
+        # 'frame variable' displays the local variables with type information.
         self.expect('frame variable', VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = [''])
+            substrs = slist)
 
         # 'frame variable' with basename 'i' should work.
         self.expect("frame variable -c -G i",

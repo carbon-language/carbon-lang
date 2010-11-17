@@ -17,6 +17,10 @@ import lldbtest
 
 #print "Hello, darwin plugin!"
 
+def getCompiler():
+    """Returns the compiler in effect the test suite is now running with."""
+    return os.environ["CC"] if "CC" in os.environ else ""
+
 def getRunSpec():
     """Environment variable spec to run this test again, invoked from within
     dumpSessionInfo()."""

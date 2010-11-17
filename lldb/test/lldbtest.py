@@ -808,11 +808,16 @@ class TestBase(unittest2.TestCase):
             # End of while loop.
 
 
+    def getCompiler(self):
+        """Returns the compiler in effect the test suite is now running with."""
+        module = __import__(sys.platform)
+        return module.getCompiler()
+
     def getRunSpec(self):
         """Environment variable spec to run this test again, invoked from within
         dumpSessionInfo()."""
         module = __import__(sys.platform)
-        return module.getRunSpec()        
+        return module.getRunSpec()
 
     def buildDefault(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build the default binaries."""
