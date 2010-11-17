@@ -158,6 +158,7 @@ def VLA : DiagGroup<"vla">;
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
 def CharSubscript : DiagGroup<"char-subscripts">;
+def ArgumentSizeLargerThan : DiagGroup<"argument-larger-than">;
 
 // Aggregation warning settings.
 

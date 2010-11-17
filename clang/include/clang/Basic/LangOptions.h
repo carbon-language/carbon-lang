@@ -122,6 +122,8 @@ private:
 
 public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
+  unsigned ArgumentLargerThan;    // Warn if parameter/return value is larger
+                                  // in bytes than this setting. 0 is no check.
 
   // Version of Microsoft Visual C/C++ we are pretending to be. This is
   // temporary until we support all MS extensions used in Windows SDK and stdlib
@@ -174,6 +176,8 @@ public:
     ObjCGCBitmapPrint = 0;
 
     InstantiationDepth = 1024;
+
+    ArgumentLargerThan = 0;
 
     Optimize = 0;
     OptimizeSize = 0;

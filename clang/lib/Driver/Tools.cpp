@@ -1199,6 +1199,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_Wargument_larger_than_EQ,
+                               options::OPT_Wargument_larger_than_def)) {
+    CmdArgs.push_back("-Wargument-larger-than");
+    if (A->getNumValues())
+      CmdArgs.push_back(A->getValue(Args));
+    else
+      CmdArgs.push_back("64"); // default value for -Wargument-larger-than
+  }
+
   if (Args.hasArg(options::OPT__relocatable_pch))
     CmdArgs.push_back("-relocatable-pch");
 

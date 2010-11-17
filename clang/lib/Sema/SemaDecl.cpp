@@ -26,6 +26,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Parse/ParseDiagnostic.h"
@@ -4864,6 +4865,36 @@ void Sema::DiagnoseUnusedParameters(ParmVarDecl * const *Param,
   }
 }
 
+void Sema::DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Param,
+                                                  ParmVarDecl * const *ParamEnd,
+                                                  QualType ReturnTy,
+                                                  NamedDecl *D) {
+  if (LangOpts.ArgumentLargerThan == 0) // No check.
+    return;
+
+  if (ReturnTy->isPODType() &&
+      Diags.getDiagnosticLevel(diag::warn_return_value_size) !=
+          Diagnostic::Ignored) {
+    unsigned Size = Context.getTypeSizeInChars(ReturnTy).getQuantity();
+    if (Size > LangOpts.ArgumentLargerThan)
+      Diag(D->getLocation(), diag::warn_return_value_size)
+          << D->getDeclName() << Size;
+  }
+
+  if (Diags.getDiagnosticLevel(diag::warn_parameter_size)==Diagnostic::Ignored)
+    return;
+
+  for (; Param != ParamEnd; ++Param) {
+    QualType T = (*Param)->getType();
+    if (!T->isPODType())
+      continue;
+    unsigned Size = Context.getTypeSizeInChars(T).getQuantity();
+    if (Size > LangOpts.ArgumentLargerThan)
+      Diag((*Param)->getLocation(), diag::warn_parameter_size)
+          << (*Param)->getDeclName() << Size;
+  }
+}
+
 ParmVarDecl *Sema::CheckParameter(DeclContext *DC, 
                                   TypeSourceInfo *TSInfo, QualType T,
                                   IdentifierInfo *Name,
@@ -5162,6 +5193,8 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
 
     if (!FD->isInvalidDecl()) {
       DiagnoseUnusedParameters(FD->param_begin(), FD->param_end());
+      DiagnoseSizeOfParametersAndReturnValue(FD->param_begin(), FD->param_end(),
+                                             FD->getResultType(), FD);
       
       // If this is a constructor, we need a vtable.
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(FD))
@@ -5175,8 +5208,11 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     assert(MD == getCurMethodDecl() && "Method parsing confused");
     MD->setBody(Body);
     MD->setEndLoc(Body->getLocEnd());
-    if (!MD->isInvalidDecl())
+    if (!MD->isInvalidDecl()) {
       DiagnoseUnusedParameters(MD->param_begin(), MD->param_end());
+      DiagnoseSizeOfParametersAndReturnValue(MD->param_begin(), MD->param_end(),
+                                             MD->getResultType(), MD);
+    }
   } else {
     return 0;
   }

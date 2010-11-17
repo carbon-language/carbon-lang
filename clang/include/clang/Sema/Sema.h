@@ -760,6 +760,13 @@ public:
   void DiagnoseUnusedParameters(ParmVarDecl * const *Begin,
                                 ParmVarDecl * const *End);
 
+  /// \brief Diagnose size of parameters and return value of a Function
+  /// or ObjCMethod.
+  void DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Begin,
+                                              ParmVarDecl * const *End,
+                                              QualType ReturnTy,
+                                              NamedDecl *D);
+
   void DiagnoseInvalidJumps(Stmt *Body);
   Decl *ActOnFileScopeAsmDecl(SourceLocation Loc, Expr *expr);
 

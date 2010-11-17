@@ -1373,6 +1373,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MathErrno = Args.hasArg(OPT_fmath_errno);
   Opts.InstantiationDepth = Args.getLastArgIntValue(OPT_ftemplate_depth, 1024,
                                                Diags);
+  Opts.ArgumentLargerThan = Args.getLastArgIntValue(OPT_Wargument_larger_than,
+                                                    0, Diags);
   Opts.NeXTRuntime = !Args.hasArg(OPT_fgnu_runtime);
   Opts.ObjCConstantStringClass =
     Args.getLastArgValue(OPT_fconstant_string_class);

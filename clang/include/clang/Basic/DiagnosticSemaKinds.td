@@ -113,6 +113,11 @@ def warn_unused_member_function : Warning<"unused member function %0">,
 def warn_used_but_marked_unused: Warning<"%0 was marked unused but was used">,
   InGroup<UsedButMarkedUnused>, DefaultIgnore;
 
+def warn_parameter_size: Warning<"size of %0 is %1 bytes">,
+  InGroup<ArgumentSizeLargerThan>;
+def warn_return_value_size: Warning<"return value of %0 is %1 bytes">,
+  InGroup<ArgumentSizeLargerThan>;
+
 def warn_implicit_function_decl : Warning<
   "implicit declaration of function %0">,
   InGroup<ImplicitFunctionDeclare>, DefaultIgnore;
