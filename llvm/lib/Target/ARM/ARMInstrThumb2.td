@@ -1989,30 +1989,10 @@ defm t2BIC  : T2I_bin_w_irs<0b0001, "bic",
                             IIC_iBITi, IIC_iBITr, IIC_iBITsi,
                             BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-class T2BitFI<dag oops, dag iops, InstrItinClass itin,
-             string opc, string asm, list<dag> pattern>
-    : T2I<oops, iops, itin, opc, asm, pattern> { 
-  bits<4> Rd;
-  bits<10> imm;
-
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{4-0}   = imm{9-5};
-  let Inst{14-12} = imm{4-2};
-  let Inst{7-6}   = imm{1-0};
-}
-
-class T2TwoRegBitFI<dag oops, dag iops, InstrItinClass itin,
-             string opc, string asm, list<dag> pattern>
-    : T2BitFI<oops, iops, itin, opc, asm, pattern> { 
-  bits<4> Rn;
-
-  let Inst{3-0} = Rn{3-0};
-}
-
-let Constraints = "$src = $Rd" in
-def t2BFC : T2BitFI<(outs rGPR:$Rd), (ins rGPR:$src, bf_inv_mask_imm:$imm),
-                IIC_iUNAsi, "bfc", "\t$Rd, $imm",
-                [(set rGPR:$Rd, (and rGPR:$src, bf_inv_mask_imm:$imm))]> {
+let Constraints = "$src = $dst" in
+def t2BFC : T2I<(outs rGPR:$dst), (ins rGPR:$src, bf_inv_mask_imm:$imm),
+                IIC_iUNAsi, "bfc", "\t$dst, $imm",
+                [(set rGPR:$dst, (and rGPR:$src, bf_inv_mask_imm:$imm))]> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-20} = 0b10110;
@@ -2020,17 +2000,16 @@ def t2BFC : T2BitFI<(outs rGPR:$Rd), (ins rGPR:$src, bf_inv_mask_imm:$imm),
   let Inst{15} = 0;
 }
 
-def t2SBFX: T2TwoRegBitFI<
-                (outs rGPR:$Rd), (ins rGPR:$Rn, bf_inv_mask_imm:$imm),
-                 IIC_iUNAsi, "sbfx", "\t$Rd, $Rn, $imm", []> {
+def t2SBFX: T2I<(outs rGPR:$dst), (ins rGPR:$src, imm0_31:$lsb, imm0_31:$width),
+                 IIC_iUNAsi, "sbfx", "\t$dst, $src, $lsb, $width", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-20} = 0b10100;
   let Inst{15} = 0;
 }
 
-def t2UBFX: T2I<(outs rGPR:$Rd), (ins rGPR:$Rn, bf_inv_mask_imm:$imm),
-                 IIC_iUNAsi, "ubfx", "\t$Rd, $Rn, $imm", []> {
+def t2UBFX: T2I<(outs rGPR:$dst), (ins rGPR:$src, imm0_31:$lsb, imm0_31:$width),
+                 IIC_iUNAsi, "ubfx", "\t$dst, $src, $lsb, $width", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
   let Inst{24-20} = 0b11100;
@@ -2038,11 +2017,11 @@ def t2UBFX: T2I<(outs rGPR:$Rd), (ins rGPR:$Rn, bf_inv_mask_imm:$imm),
 }
 
 // A8.6.18  BFI - Bitfield insert (Encoding T1)
-let Constraints = "$src = $Rd" in
-def t2BFI : T2BitFI<(outs rGPR:$Rd),
-                (ins rGPR:$src, rGPR:$Rn, bf_inv_mask_imm:$imm),
-                IIC_iBITi, "bfi", "\t$Rd, $Rn, $imm",
-                [(set rGPR:$Rd, (ARMbfi rGPR:$src, rGPR:$Rn,
+let Constraints = "$src = $dst" in
+def t2BFI : T2I<(outs rGPR:$dst),
+                (ins rGPR:$src, rGPR:$val, bf_inv_mask_imm:$imm),
+                IIC_iBITi, "bfi", "\t$dst, $val, $imm",
+                [(set rGPR:$dst, (ARMbfi rGPR:$src, rGPR:$val,
                                  bf_inv_mask_imm:$imm))]> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
