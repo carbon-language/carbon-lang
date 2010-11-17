@@ -48,7 +48,7 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
     case sys::Mach_O_Executable_FileType:
     case sys::Mach_O_FixedVirtualMemorySharedLib_FileType:
     case sys::Mach_O_Core_FileType:
-    case sys::Mach_O_PreloadExectuable_FileType:
+    case sys::Mach_O_PreloadExecutable_FileType:
     case sys::Mach_O_DynamicallyLinkedSharedLib_FileType:
     case sys::Mach_O_DynamicLinker_FileType:
     case sys::Mach_O_Bundle_FileType:

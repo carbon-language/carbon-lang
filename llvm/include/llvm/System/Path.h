@@ -710,7 +710,7 @@ namespace sys {
     Mach_O_Executable_FileType,        ///< Mach-O Executable
     Mach_O_FixedVirtualMemorySharedLib_FileType, ///< Mach-O Shared Lib, FVM
     Mach_O_Core_FileType,              ///< Mach-O Core File
-    Mach_O_PreloadExectuable_FileType, ///< Mach-O Preloaded Executable
+    Mach_O_PreloadExecutable_FileType, ///< Mach-O Preloaded Executable
     Mach_O_DynamicallyLinkedSharedLib_FileType, ///< Mach-O dynlinked shared lib
     Mach_O_DynamicLinker_FileType,     ///< The Mach-O dynamic linker
     Mach_O_Bundle_FileType,            ///< Mach-O Bundle file
