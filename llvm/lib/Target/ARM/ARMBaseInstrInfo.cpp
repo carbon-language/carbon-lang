@@ -1556,6 +1556,103 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   return false;
 }
 
+bool ARMBaseInstrInfo::FoldImmediate(MachineInstr *UseMI,
+                                     MachineInstr *DefMI, unsigned Reg,
+                                     MachineRegisterInfo *MRI) const {
+  // Fold large immediates into add, sub, or, xor.
+  unsigned DefOpc = DefMI->getOpcode();
+  if (DefOpc != ARM::t2MOVi32imm && DefOpc != ARM::MOVi32imm)
+    return false;
+  if (!DefMI->getOperand(1).isImm())
+    // Could be t2MOVi32imm <ga:xx>
+    return false;
+
+  if (!MRI->hasOneNonDBGUse(Reg))
+    return false;
+
+  unsigned UseOpc = UseMI->getOpcode();
+  unsigned NewUseOpc;
+  uint32_t ImmVal = (uint32_t)DefMI->getOperand(1).getImm();
+  uint32_t SOImmValV1, SOImmValV2;
+  bool Commute = false;
+  switch (UseOpc) {
+  default: return false;
+  case ARM::SUBrr:
+  case ARM::ADDrr:
+  case ARM::ORRrr:
+  case ARM::EORrr:
+  case ARM::t2SUBrr:
+  case ARM::t2ADDrr:
+  case ARM::t2ORRrr:
+  case ARM::t2EORrr: {
+    Commute = UseMI->getOperand(2).getReg() != Reg;
+    switch (UseOpc) {
+    default: break;
+    case ARM::SUBrr: {
+      if (Commute)
+        return false;
+      ImmVal = -ImmVal;
+      NewUseOpc = ARM::SUBri;
+      // Fallthrough
+    }
+    case ARM::ADDrr:
+    case ARM::ORRrr:
+    case ARM::EORrr: {
+      if (!ARM_AM::isSOImmTwoPartVal(ImmVal))
+        return false;
+      SOImmValV1 = (uint32_t)ARM_AM::getSOImmTwoPartFirst(ImmVal);
+      SOImmValV2 = (uint32_t)ARM_AM::getSOImmTwoPartSecond(ImmVal);
+      switch (UseOpc) {
+      default: break;
+      case ARM::ADDrr: NewUseOpc = ARM::ADDri; break;
+      case ARM::ORRrr: NewUseOpc = ARM::ORRri; break;
+      case ARM::EORrr: NewUseOpc = ARM::EORri; break;
+      }
+      break;
+    }
+    case ARM::t2SUBrr: {
+      if (Commute)
+        return false;
+      ImmVal = -ImmVal;
+      NewUseOpc = ARM::t2SUBri;
+      // Fallthrough
+    }
+    case ARM::t2ADDrr:
+    case ARM::t2ORRrr:
+    case ARM::t2EORrr: {
+      if (!ARM_AM::isT2SOImmTwoPartVal(ImmVal))
+        return false;
+      SOImmValV1 = (uint32_t)ARM_AM::getT2SOImmTwoPartFirst(ImmVal);
+      SOImmValV2 = (uint32_t)ARM_AM::getT2SOImmTwoPartSecond(ImmVal);
+      switch (UseOpc) {
+      default: break;
+      case ARM::t2ADDrr: NewUseOpc = ARM::t2ADDri; break;
+      case ARM::t2ORRrr: NewUseOpc = ARM::t2ORRri; break;
+      case ARM::t2EORrr: NewUseOpc = ARM::t2EORri; break;
+      }
+      break;
+    }
+    }
+  }
+  }
+
+  unsigned OpIdx = Commute ? 2 : 1;
+  unsigned Reg1 = UseMI->getOperand(OpIdx).getReg();
+  bool isKill = UseMI->getOperand(OpIdx).isKill();
+  unsigned NewReg = MRI->createVirtualRegister(MRI->getRegClass(Reg));
+  AddDefaultCC(AddDefaultPred(BuildMI(*UseMI->getParent(),
+                                      *UseMI, UseMI->getDebugLoc(),
+                                      get(NewUseOpc), NewReg)
+                              .addReg(Reg1, getKillRegState(isKill))
+                              .addImm(SOImmValV1)));
+  UseMI->setDesc(get(NewUseOpc));
+  UseMI->getOperand(1).setReg(NewReg);
+  UseMI->getOperand(1).setIsKill();
+  UseMI->getOperand(2).ChangeToImmediate(SOImmValV2);
+  DefMI->eraseFromParent();
+  return true;
+}
+
 unsigned
 ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
                                  const MachineInstr *MI) const {

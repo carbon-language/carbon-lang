@@ -365,13 +365,15 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createDeadMachineInstructionElimPass());
     printAndVerify(PM, "After codegen DCE pass");
 
-    PM.add(createPeepholeOptimizerPass());
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
     PM.add(createMachineCSEPass());
     if (!DisableMachineSink)
       PM.add(createMachineSinkingPass());
     printAndVerify(PM, "After Machine LICM, CSE and Sinking passes");
+
+    PM.add(createPeepholeOptimizerPass());
+    printAndVerify(PM, "After codegen peephole optimization pass");
   }
 
   // Pre-ra tail duplication.

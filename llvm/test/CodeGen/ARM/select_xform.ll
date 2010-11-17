@@ -8,7 +8,8 @@ define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
 ; ARM: movgt r0, r1
 
 ; T2: t1:
-; T2: sub.w r0, r1, #-2147483648
+; T2: mvn r0, #-2147483648
+; T2: add r0, r1
 ; T2: movgt r0, r1
   %tmp1 = icmp sgt i32 %c, 10
   %tmp2 = select i1 %tmp1, i32 0, i32 2147483647

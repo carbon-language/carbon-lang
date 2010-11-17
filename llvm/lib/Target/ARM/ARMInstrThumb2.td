@@ -1591,7 +1591,8 @@ def t2MOVr : T2sTwoReg<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
 }
 
 // AddedComplexity to ensure isel tries t2MOVi before t2MOVi16.
-let isReMaterializable = 1, isAsCheapAsAMove = 1, AddedComplexity = 1 in
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
+    AddedComplexity = 1 in
 def t2MOVi : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), IIC_iMOVi,
                    "mov", ".w\t$Rd, $imm",
                    [(set rGPR:$Rd, t2_so_imm:$imm)]> {
@@ -1603,7 +1604,7 @@ def t2MOVi : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), IIC_iMOVi,
   let Inst{15} = 0;
 }
 
-let isReMaterializable = 1, isAsCheapAsAMove = 1 in
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm:$imm), IIC_iMOVi,
                    "movw", "\t$Rd, $imm",
                    [(set rGPR:$Rd, imm0_65535:$imm)]> {
@@ -2519,10 +2520,10 @@ def : T2Pat<(ARMcmpZ  GPR:$src, t2_so_imm_neg:$imm),
 
 defm t2TST  : T2I_cmp_irs<0b0000, "tst",
                           IIC_iTSTi, IIC_iTSTr, IIC_iTSTsi,
-                          BinOpFrag<(ARMcmpZ (and node:$LHS, node:$RHS), 0)>>;
+                         BinOpFrag<(ARMcmpZ (and_su node:$LHS, node:$RHS), 0)>>;
 defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
                           IIC_iTSTi, IIC_iTSTr, IIC_iTSTsi,
-                          BinOpFrag<(ARMcmpZ (xor node:$LHS, node:$RHS), 0)>>;
+                         BinOpFrag<(ARMcmpZ (xor_su node:$LHS, node:$RHS), 0)>>;
 
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
@@ -2541,6 +2542,7 @@ def t2MOVCCr : T2I<(outs rGPR:$dst), (ins rGPR:$false, rGPR:$true), IIC_iCMOVr,
   let Inst{7-4} = 0b0000;
 }
 
+let isMoveImm = 1 in
 def t2MOVCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
                    IIC_iCMOVi, "mov", ".w\t$dst, $true",
 [/*(set rGPR:$dst,(ARMcmov rGPR:$false,t2_so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2553,6 +2555,7 @@ def t2MOVCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
   let Inst{15} = 0;
 }
 
+let isMoveImm = 1 in
 def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm:$imm),
                       IIC_iCMOVi,
                       "movw", "\t$Rd, $imm", []>,
@@ -2573,10 +2576,12 @@ def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm:$imm),
   let Inst{7-0}   = imm{7-0};
 }
 
+let isMoveImm = 1 in
 def t2MOVCCi32imm : PseudoInst<(outs rGPR:$dst),
                                (ins rGPR:$false, i32imm:$src, pred:$p),
                     IIC_iCMOVix2, "", []>, RegConstraint<"$false = $dst">;
 
+let isMoveImm = 1 in
 def t2MVNCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
                    IIC_iCMOVi, "mvn", ".w\t$dst, $true",
 [/*(set rGPR:$dst,(ARMcmov rGPR:$false,t2_so_imm_not:$true,
@@ -3014,24 +3019,10 @@ def t2RFEIA  : T2I<(outs), (ins rGPR:$base), NoItinerary, "rfeia", "\t$base",
 // Non-Instruction Patterns
 //
 
-// Two piece so_imms.
-def : T2Pat<(or rGPR:$LHS, t2_so_imm2part:$RHS),
-             (t2ORRri (t2ORRri rGPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
-                    (t2_so_imm2part_2 imm:$RHS))>;
-def : T2Pat<(xor rGPR:$LHS, t2_so_imm2part:$RHS),
-             (t2EORri (t2EORri rGPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
-                    (t2_so_imm2part_2 imm:$RHS))>;
-def : T2Pat<(add rGPR:$LHS, t2_so_imm2part:$RHS),
-             (t2ADDri (t2ADDri rGPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
-                    (t2_so_imm2part_2 imm:$RHS))>;
-def : T2Pat<(add rGPR:$LHS, t2_so_neg_imm2part:$RHS),
-             (t2SUBri (t2SUBri rGPR:$LHS, (t2_so_neg_imm2part_1 imm:$RHS)),
-                    (t2_so_neg_imm2part_2 imm:$RHS))>;
-
 // 32-bit immediate using movw + movt.
 // This is a single pseudo instruction to make it re-materializable.
 // FIXME: Remove this when we can do generalized remat.
-let isReMaterializable = 1 in
+let isReMaterializable = 1, isMoveImm = 1 in
 def t2MOVi32imm : PseudoInst<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                             "", [(set rGPR:$dst, (i32 imm:$src))]>,
                             Requires<[IsThumb, HasV6T2]>;

@@ -608,6 +608,13 @@ public:
                                     const MachineRegisterInfo *MRI) const {
     return false;
   }
+  
+  /// FoldImmediate - 'Reg' is known to be defined by a move immediate
+  /// instruction, try to fold the immediate into the use instruction.
+  virtual bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
+                             unsigned Reg, MachineRegisterInfo *MRI) const {
+    return false;
+  }
 
   /// getNumMicroOps - Return the number of u-operations the given machine
   /// instruction will be decoded to on the target cpu.

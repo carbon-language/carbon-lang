@@ -711,6 +711,7 @@ def tLSRrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
              T1DataProcessing<0b0011>;
 
 // move register
+let isMoveImm = 1 in
 def tMOVi8 : T1sI<(outs tGPR:$dst), (ins i32imm:$src), IIC_iMOVi,
                   "mov", "\t$dst, $src",
                   [(set tGPR:$dst, imm0_255:$src)]>,
@@ -844,7 +845,7 @@ def tSXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
 let isCompare = 1, isCommutable = 1, Defs = [CPSR] in
 def tTST  : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iTSTr,
                  "tst", "\t$lhs, $rhs",
-                 [(ARMcmpZ (and tGPR:$lhs, tGPR:$rhs), 0)]>,
+                 [(ARMcmpZ (and_su tGPR:$lhs, tGPR:$rhs), 0)]>,
             T1DataProcessing<0b1000>;
 
 // zero-extend byte
@@ -877,6 +878,7 @@ def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
                     "mov", "\t$dst, $rhs", []>,
               T1Special<{1,0,?,?}>;
 
+let isMoveImm = 1 in
 def tMOVCCi : T1pIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
                     "mov", "\t$dst, $rhs", []>,
               T1General<{1,0,0,?,?}>;

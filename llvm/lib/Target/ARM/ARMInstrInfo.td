@@ -269,6 +269,16 @@ def sube_live_carry :
   PatFrag<(ops node:$LHS, node:$RHS), (sube node:$LHS, node:$RHS),
   [{return N->hasAnyUseOfValue(1);}]>;
 
+// An 'and' node with a single use.
+def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
+  return N->hasOneUse();
+}]>;
+
+// An 'xor' node with a single use.
+def xor_su : PatFrag<(ops node:$lhs, node:$rhs), (xor node:$lhs, node:$rhs), [{
+  return N->hasOneUse();
+}]>;
+
 //===----------------------------------------------------------------------===//
 // Operand Definitions.
 //
@@ -1941,7 +1951,7 @@ def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg:$src),
   let Inst{25} = 0;
 }
 
-let isReMaterializable = 1, isAsCheapAsAMove = 1 in
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
                 "mov", "\t$Rd, $imm", [(set GPR:$Rd, so_imm:$imm)]>, UnaryDP {
   bits<4> Rd;
@@ -1952,7 +1962,7 @@ def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
   let Inst{11-0} = imm;
 }
 
-let isReMaterializable = 1, isAsCheapAsAMove = 1 in
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins i32imm:$imm),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$Rd, $imm",
@@ -2510,7 +2520,7 @@ def  MVNs  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg:$shift), DPSoRegFrm,
   let Inst{15-12} = Rd;
   let Inst{11-0} = shift;
 }
-let isReMaterializable = 1, isAsCheapAsAMove = 1 in
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def  MVNi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm,
                   IIC_iMVNi, "mvn", "\t$Rd, $imm",
                   [(set GPR:$Rd, so_imm_not:$imm)]>,UnaryDP {
@@ -2972,10 +2982,10 @@ defm CMP  : AI1_cmp_irs<0b1010, "cmp",
 // Note that TST/TEQ don't set all the same flags that CMP does!
 defm TST  : AI1_cmp_irs<0b1000, "tst",
                         IIC_iTSTi, IIC_iTSTr, IIC_iTSTsr,
-                        BinOpFrag<(ARMcmpZ (and node:$LHS, node:$RHS), 0)>, 1>;
+                      BinOpFrag<(ARMcmpZ (and_su node:$LHS, node:$RHS), 0)>, 1>;
 defm TEQ  : AI1_cmp_irs<0b1001, "teq",
                         IIC_iTSTi, IIC_iTSTr, IIC_iTSTsr,
-                        BinOpFrag<(ARMcmpZ (xor node:$LHS, node:$RHS), 0)>, 1>;
+                      BinOpFrag<(ARMcmpZ (xor_su node:$LHS, node:$RHS), 0)>, 1>;
 
 defm CMPz  : AI1_cmp_irs<0b1010, "cmp",
                          IIC_iCMPi, IIC_iCMPr, IIC_iCMPsr,
@@ -3038,6 +3048,7 @@ def MOVCCs : AI1<0b1101, (outs GPR:$Rd),
   let Inst{11-0} = shift;
 }
 
+let isMoveImm = 1 in
 def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm:$imm),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$Rd, $imm",
@@ -3053,6 +3064,7 @@ def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm:$imm),
   let Inst{11-0}  = imm{11-0};
 }
 
+let isMoveImm = 1 in
 def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
                          (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
                 "mov", "\t$Rd, $imm",
@@ -3068,10 +3080,12 @@ def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
 }
 
 // Two instruction predicate mov immediate.
+let isMoveImm = 1 in
 def MOVCCi32imm : PseudoInst<(outs GPR:$Rd),
                              (ins GPR:$false, i32imm:$src, pred:$p),
                   IIC_iCMOVix2, "", []>, RegConstraint<"$false = $Rd">;
 
+let isMoveImm = 1 in
 def MVNCCi : AI1<0b1111, (outs GPR:$Rd),
                          (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
                 "mvn", "\t$Rd, $imm",
@@ -3337,27 +3351,11 @@ def Int_eh_sjlj_dispatchsetup :
 
 // Large immediate handling.
 
-// FIXME: Folding immediates into these logical operations aren't necessary
-// good ideas. If it's in a loop machine licm could have hoisted the immediate
-// computation out of the loop.
-def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
-             (ORRri (ORRri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
-                    (so_imm2part_2 imm:$RHS))>;
-def : ARMPat<(xor GPR:$LHS, so_imm2part:$RHS),
-             (EORri (EORri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
-                    (so_imm2part_2 imm:$RHS))>;
-def : ARMPat<(add GPR:$LHS, so_imm2part:$RHS),
-             (ADDri (ADDri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
-                    (so_imm2part_2 imm:$RHS))>;
-def : ARMPat<(add GPR:$LHS, so_neg_imm2part:$RHS),
-             (SUBri (SUBri GPR:$LHS, (so_neg_imm2part_1 imm:$RHS)),
-                    (so_neg_imm2part_2 imm:$RHS))>;
-
 // 32-bit immediate using two piece so_imms or movw + movt.
 // This is a single pseudo instruction, the benefit is that it can be remat'd
 // as a single unit instead of having to handle reg inputs.
 // FIXME: Remove this when we can do generalized remat.
-let isReMaterializable = 1 in
+let isReMaterializable = 1, isMoveImm = 1 in
 def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2, "",
                            [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;

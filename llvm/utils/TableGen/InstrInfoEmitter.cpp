@@ -271,6 +271,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isBranch)           OS << "|(1<<TID::Branch)";
   if (Inst.isIndirectBranch)   OS << "|(1<<TID::IndirectBranch)";
   if (Inst.isCompare)          OS << "|(1<<TID::Compare)";
+  if (Inst.isMoveImm)          OS << "|(1<<TID::MoveImm)";
   if (Inst.isBarrier)          OS << "|(1<<TID::Barrier)";
   if (Inst.hasDelaySlot)       OS << "|(1<<TID::DelaySlot)";
   if (Inst.isCall)             OS << "|(1<<TID::Call)";

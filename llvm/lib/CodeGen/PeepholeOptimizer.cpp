@@ -41,7 +41,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -56,6 +58,7 @@ DisablePeephole("disable-peephole", cl::Hidden, cl::init(false),
 
 STATISTIC(NumReuse,      "Number of extension results reused");
 STATISTIC(NumEliminated, "Number of compares eliminated");
+STATISTIC(NumImmFold,    "Number of move immediate foled");
 
 namespace {
   class PeepholeOptimizer : public MachineFunctionPass {
@@ -85,6 +88,12 @@ namespace {
     bool OptimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB);
     bool OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                           SmallPtrSet<MachineInstr*, 8> &LocalMIs);
+    bool isMoveImmediate(MachineInstr *MI,
+                         SmallSet<unsigned, 4> &ImmDefRegs,
+                         DenseMap<unsigned, MachineInstr*> &ImmDefMIs);
+    bool FoldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
+                       SmallSet<unsigned, 4> &ImmDefRegs,
+                       DenseMap<unsigned, MachineInstr*> &ImmDefMIs);
   };
 }
 
@@ -257,6 +266,49 @@ bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
   return false;
 }
 
+bool PeepholeOptimizer::isMoveImmediate(MachineInstr *MI,
+                                        SmallSet<unsigned, 4> &ImmDefRegs,
+                                 DenseMap<unsigned, MachineInstr*> &ImmDefMIs) {
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.isMoveImmediate())
+    return false;
+  if (TID.getNumDefs() != 1)
+    return false;
+  unsigned Reg = MI->getOperand(0).getReg();
+  if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+    ImmDefMIs.insert(std::make_pair(Reg, MI));
+    ImmDefRegs.insert(Reg);
+    return true;
+  }
+  
+  return false;
+}
+
+/// FoldImmediate - Try folding register operands that are defined by move
+/// immediate instructions, i.e. a trivial constant folding optimization, if
+/// and only if the def and use are in the same BB.
+bool PeepholeOptimizer::FoldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
+                                      SmallSet<unsigned, 4> &ImmDefRegs,
+                                 DenseMap<unsigned, MachineInstr*> &ImmDefMIs) {
+  for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || MO.isDef())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+    if (ImmDefRegs.count(Reg) == 0)
+      continue;
+    DenseMap<unsigned, MachineInstr*>::iterator II = ImmDefMIs.find(Reg);
+    assert(II != ImmDefMIs.end());
+    if (TII->FoldImmediate(MI, II->second, Reg, MRI)) {
+      ++NumImmFold;
+      return true;
+    }
+  }
+  return false;
+}
+
 bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
   if (DisablePeephole)
     return false;
@@ -269,9 +321,15 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
 
   SmallPtrSet<MachineInstr*, 8> LocalMIs;
+  SmallSet<unsigned, 4> ImmDefRegs;
+  DenseMap<unsigned, MachineInstr*> ImmDefMIs;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = &*I;
+    
+    bool SeenMoveImm = false;
     LocalMIs.clear();
+    ImmDefRegs.clear();
+    ImmDefMIs.clear();
 
     for (MachineBasicBlock::iterator
            MII = I->begin(), MIE = I->end(); MII != MIE; ) {
@@ -283,8 +341,12 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
       if (MI->getDesc().isCompare()) {
         Changed |= OptimizeCmpInstr(MI, MBB);
+      } else if (isMoveImmediate(MI, ImmDefRegs, ImmDefMIs)) {
+        SeenMoveImm = true;
       } else {
         Changed |= OptimizeExtInstr(MI, MBB, LocalMIs);
+        if (SeenMoveImm)
+          Changed |= FoldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
       }
     }
   }

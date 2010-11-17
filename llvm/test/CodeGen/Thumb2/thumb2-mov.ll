@@ -53,7 +53,7 @@ define i32 @t2_const_var2_2_ok_1(i32 %lhs) {
 
 define i32 @t2_const_var2_2_ok_2(i32 %lhs) {
 ;CHECK: t2_const_var2_2_ok_2:
-;CHECK: add.w   r0, r0, #-1426063360
+;CHECK: add.w   r0, r0, #2868903936
 ;CHECK: add.w   r0, r0, #47616
     %ret = add i32 %lhs, 2868951552 ; 0xab00ba00
     ret i32 %ret
@@ -61,7 +61,7 @@ define i32 @t2_const_var2_2_ok_2(i32 %lhs) {
 
 define i32 @t2_const_var2_2_ok_3(i32 %lhs) {
 ;CHECK: t2_const_var2_2_ok_3:
-;CHECK: add.w   r0, r0, #-1426019584
+;CHECK: add.w   r0, r0, #2868947712
 ;CHECK: adds    r0, #16
     %ret = add i32 %lhs, 2868947728 ; 0xab00ab10
     ret i32 %ret
@@ -69,7 +69,7 @@ define i32 @t2_const_var2_2_ok_3(i32 %lhs) {
 
 define i32 @t2_const_var2_2_ok_4(i32 %lhs) {
 ;CHECK: t2_const_var2_2_ok_4:
-;CHECK: add.w   r0, r0, #-1426019584
+;CHECK: add.w   r0, r0, #2868947712
 ;CHECK: add.w   r0, r0, #1048592
     %ret = add i32 %lhs, 2869996304 ; 0xab10ab10
     ret i32 %ret
