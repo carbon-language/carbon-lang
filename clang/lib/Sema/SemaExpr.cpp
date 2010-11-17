@@ -7352,11 +7352,21 @@ static bool EvaluatesAsTrue(Sema &S, Expr *E) {
   return E->EvaluateAsBooleanCondition(Res, S.getASTContext()) && Res;
 }
 
+/// \brief Returns true if the given expression can be evaluated as a constant
+/// 'false'.
+static bool EvaluatesAsFalse(Sema &S, Expr *E) {
+  bool Res;
+  return E->EvaluateAsBooleanCondition(Res, S.getASTContext()) && !Res;
+}
+
 /// \brief Look for '&&' in the left hand of a '||' expr.
 static void DiagnoseLogicalAndInLogicalOrLHS(Sema &S, SourceLocation OpLoc,
-                                             Expr *E) {
-  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(E)) {
+                                             Expr *OrLHS, Expr *OrRHS) {
+  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(OrLHS)) {
     if (Bop->getOpcode() == BO_LAnd) {
+      // If it's "a && b || 0" don't warn since the precedence doesn't matter.
+      if (EvaluatesAsFalse(S, OrRHS))
+        return;
       // If it's "1 && a || b" don't warn since the precedence doesn't matter.
       if (!EvaluatesAsTrue(S, Bop->getLHS()))
         return EmitDiagnosticForLogicalAndInLogicalOr(S, OpLoc, Bop);
@@ -7373,9 +7383,12 @@ static void DiagnoseLogicalAndInLogicalOrLHS(Sema &S, SourceLocation OpLoc,
 
 /// \brief Look for '&&' in the right hand of a '||' expr.
 static void DiagnoseLogicalAndInLogicalOrRHS(Sema &S, SourceLocation OpLoc,
-                                             Expr *E) {
-  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(E)) {
+                                             Expr *OrLHS, Expr *OrRHS) {
+  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(OrRHS)) {
     if (Bop->getOpcode() == BO_LAnd) {
+      // If it's "0 || a && b" don't warn since the precedence doesn't matter.
+      if (EvaluatesAsFalse(S, OrLHS))
+        return;
       // If it's "a || b && 1" don't warn since the precedence doesn't matter.
       if (!EvaluatesAsTrue(S, Bop->getRHS()))
         return EmitDiagnosticForLogicalAndInLogicalOr(S, OpLoc, Bop);
@@ -7394,8 +7407,8 @@ static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
   // Warn about arg1 || arg2 && arg3, as GCC 4.3+ does.
   // We don't warn for 'assert(a || b && "bad")' since this is safe.
   if (Opc == BO_LOr && !OpLoc.isMacroID()/* Don't warn in macros. */) {
-    DiagnoseLogicalAndInLogicalOrLHS(Self, OpLoc, lhs);
-    DiagnoseLogicalAndInLogicalOrRHS(Self, OpLoc, rhs);
+    DiagnoseLogicalAndInLogicalOrLHS(Self, OpLoc, lhs, rhs);
+    DiagnoseLogicalAndInLogicalOrRHS(Self, OpLoc, lhs, rhs);
   }
 }
 

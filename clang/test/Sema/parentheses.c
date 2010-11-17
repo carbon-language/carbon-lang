@@ -34,4 +34,6 @@ void bitwise_rel(unsigned i) {
                                  // expected-note {{place parentheses around the '&&' expression to silence this warning}}
   (void)(i || "w00t" && i || i); // expected-warning {{'&&' within '||'}} \
                                  // expected-note {{place parentheses around the '&&' expression to silence this warning}}
+  (void)(i && i || 0); // no warning.
+  (void)(0 || i && i); // no warning.
 }
