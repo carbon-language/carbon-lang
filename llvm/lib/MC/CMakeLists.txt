@@ -20,6 +20,7 @@ add_llvm_library(LLVMMC
   MCObjectStreamer.cpp
   MCObjectFormat.cpp
   MCObjectWriter.cpp
+  MCPureStreamer.cpp
   MCSection.cpp
   MCSectionCOFF.cpp
   MCSectionELF.cpp

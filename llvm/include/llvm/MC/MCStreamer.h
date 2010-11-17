@@ -417,6 +417,13 @@ namespace llvm {
   /// The new streamer takes ownership of the \arg Child.
   MCStreamer *createLoggingStreamer(MCStreamer *Child, raw_ostream &OS);
 
+  /// createPureStreamer - Create a machine code streamer which will generate
+  /// "pure" MC object files, for use with MC-JIT and testing tools.
+  ///
+  /// Takes ownership of \arg TAB and \arg CE.
+  MCStreamer *createPureStreamer(MCContext &Ctx, TargetAsmBackend &TAB,
+                                 raw_ostream &OS, MCCodeEmitter *CE);
+
 } // end namespace llvm
 
 #endif
