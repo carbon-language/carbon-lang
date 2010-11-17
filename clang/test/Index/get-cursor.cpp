@@ -17,6 +17,20 @@ X getX(int value) {
   return X();
 }
 
+struct Y {
+  int member;
+
+  X getX();
+};
+
+X Y::getX() {
+  return member;
+}
+
+struct YDerived : Y {
+  X getAnotherX() { return member; }
+};
+
 // RUN: c-index-test -cursor-at=%s:12:20 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
 // RUN: c-index-test -cursor-at=%s:13:21 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
 // RUN: c-index-test -cursor-at=%s:13:28 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
@@ -31,3 +45,19 @@ X getX(int value) {
 // CHECK-CONSTRUCTOR1: CallExpr=X:5:3
 // CHECK-CONSTRUCTOR2: CallExpr=X:6:3
 // CHECK-CONSTRUCTOR3: CallExpr=X:4:3
+
+// RUN: c-index-test -cursor-at=%s:23:3 %s | FileCheck -check-prefix=CHECK-RETTYPE %s
+// RUN: c-index-test -cursor-at=%s:26:1 %s | FileCheck -check-prefix=CHECK-RETTYPE %s
+// CHECK-RETTYPE: TypeRef=struct X:3:8
+
+// RUN: c-index-test -cursor-at=%s:23:7 %s | FileCheck -check-prefix=CHECK-MEMFUNC-DECL %s
+// CHECK-MEMFUNC-DECL: CXXMethod=getX:23:5
+// RUN: c-index-test -cursor-at=%s:26:7 %s | FileCheck -check-prefix=CHECK-MEMFUNC-DEF %s
+// CHECK-MEMFUNC-DEF: CXXMethod=getX:26:6
+
+// RUN: c-index-test -cursor-at=%s:26:3 %s | FileCheck -check-prefix=CHECK-TYPEREF-Y %s
+// CHECK-TYPEREF-Y: TypeRef=struct Y:20:8
+
+// RUN: c-index-test -cursor-at=%s:27:10 %s | FileCheck -check-prefix=CHECK-IMPLICIT-MEMREF %s
+// RUN: c-index-test -cursor-at=%s:31:28 %s | FileCheck -check-prefix=CHECK-IMPLICIT-MEMREF %s
+// CHECK-IMPLICIT-MEMREF: MemberRefExpr=member:21:7

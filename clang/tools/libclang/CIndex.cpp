@@ -1841,7 +1841,17 @@ void EnqueueVisitor::VisitInitListExpr(InitListExpr *IE) {
   EnqueueChildren(IE);
 }
 void EnqueueVisitor::VisitMemberExpr(MemberExpr *M) {
-  WL.push_back(MemberExprParts(M, Parent));  
+  WL.push_back(MemberExprParts(M, Parent));
+  
+  // If the base of the member access expression is an implicit 'this', don't
+  // visit it.
+  // FIXME: If we ever want to show these implicit accesses, this will be
+  // unfortunate. However, clang_getCursor() relies on this behavior.
+  if (CXXThisExpr *This
+            = llvm::dyn_cast<CXXThisExpr>(M->getBase()->IgnoreParenImpCasts()))
+    if (This->isImplicit())
+      return;
+  
   AddStmt(M->getBase());
 }
 void EnqueueVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {

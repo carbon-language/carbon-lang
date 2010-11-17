@@ -543,7 +543,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "const" [50:18 - 50:23] CXXMethod=end:50:12 (Definition)
 // CHECK-tokens: Punctuation: "{" [50:24 - 50:25] UnexposedStmt=
 // CHECK-tokens: Keyword: "return" [50:26 - 50:32] UnexposedStmt=
-// CHECK-tokens: Identifier: "Data" [50:33 - 50:37] UnexposedExpr=
+// CHECK-tokens: Identifier: "Data" [50:33 - 50:37]  MemberRefExpr=Data:43:15
 // CHECK-tokens: Punctuation: ";" [50:37 - 50:38] UnexposedStmt=
 // CHECK-tokens: Punctuation: "}" [50:39 - 50:40] UnexposedStmt=
 // CHECK-tokens: Identifier: "size_t" [51:3 - 51:9] TypeRef=size_t:2:25
@@ -553,7 +553,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "const" [51:17 - 51:22] CXXMethod=size:51:10 (Definition)
 // CHECK-tokens: Punctuation: "{" [51:23 - 51:24] UnexposedStmt=
 // CHECK-tokens: Keyword: "return" [51:25 - 51:31] UnexposedStmt=
-// CHECK-tokens: Identifier: "Length" [51:32 - 51:38] UnexposedExpr=
+// CHECK-tokens: Identifier: "Length" [51:32 - 51:38] MemberRefExpr=Length:44:10
 // CHECK-tokens: Punctuation: ";" [51:38 - 51:39] UnexposedStmt=
 // CHECK-tokens: Punctuation: "}" [51:40 - 51:41] UnexposedStmt=
 // CHECK-tokens: Keyword: "bool" [52:3 - 52:7] CXXMethod=startswith:52:8 (Definition)
@@ -565,7 +565,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "const" [52:37 - 52:42] CXXMethod=startswith:52:8 (Definition)
 // CHECK-tokens: Punctuation: "{" [52:43 - 52:44] UnexposedStmt=
 // CHECK-tokens: Keyword: "return" [53:5 - 53:11] UnexposedStmt=
-// CHECK-tokens: Identifier: "Length" [53:12 - 53:18] UnexposedExpr=
+// CHECK-tokens: Identifier: "Length" [53:12 - 53:18] MemberRefExpr=Length:44:10
 // CHECK-tokens: Punctuation: ">=" [53:19 - 53:21] UnexposedExpr=
 // CHECK-tokens: Identifier: "Prefix" [53:22 - 53:28] DeclRefExpr=Prefix:52:29
 // CHECK-tokens: Punctuation: "." [53:28 - 53:29] MemberRefExpr=Length:44:10
@@ -573,7 +573,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "&&" [53:36 - 53:38] UnexposedExpr=
 // CHECK-tokens: Identifier: "memcmp" [54:11 - 54:17] DeclRefExpr=memcmp:7:7
 // CHECK-tokens: Punctuation: "(" [54:17 - 54:18] CallExpr=memcmp:7:7
-// CHECK-tokens: Identifier: "Data" [54:18 - 54:22] UnexposedExpr=
+// CHECK-tokens: Identifier: "Data" [54:18 - 54:22]  MemberRefExpr=Data:43:15
 // CHECK-tokens: Punctuation: "," [54:22 - 54:23] CallExpr=memcmp:7:7
 // CHECK-tokens: Identifier: "Prefix" [54:24 - 54:30] DeclRefExpr=Prefix:52:29
 // CHECK-tokens: Punctuation: "." [54:30 - 54:31] MemberRefExpr=Data:43:15
@@ -596,7 +596,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "const" [56:35 - 56:40] CXXMethod=endswith:56:8 (Definition)
 // CHECK-tokens: Punctuation: "{" [56:41 - 56:42] UnexposedStmt=
 // CHECK-tokens: Keyword: "return" [57:5 - 57:11] UnexposedStmt=
-// CHECK-tokens: Identifier: "Length" [57:12 - 57:18] UnexposedExpr=
+// CHECK-tokens: Identifier: "Length" [57:12 - 57:18] MemberRefExpr=Length:44:10
 // CHECK-tokens: Punctuation: ">=" [57:19 - 57:21] UnexposedExpr=
 // CHECK-tokens: Identifier: "Suffix" [57:22 - 57:28] DeclRefExpr=Suffix:56:27
 // CHECK-tokens: Punctuation: "." [57:28 - 57:29] MemberRefExpr=Length:44:10
@@ -604,7 +604,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "&&" [57:36 - 57:38] UnexposedExpr=
 // CHECK-tokens: Identifier: "memcmp" [58:7 - 58:13] DeclRefExpr=memcmp:7:7
 // CHECK-tokens: Punctuation: "(" [58:13 - 58:14] CallExpr=memcmp:7:7
-// CHECK-tokens: Identifier: "end" [58:14 - 58:17] UnexposedExpr=
+// CHECK-tokens: Identifier: "end" [58:14 - 58:17] MemberRefExpr=end:50:12
 // CHECK-tokens: Punctuation: "(" [58:17 - 58:18] CallExpr=end:50:12
 // CHECK-tokens: Punctuation: ")" [58:18 - 58:19] CallExpr=end:50:12
 // CHECK-tokens: Punctuation: "-" [58:20 - 58:21] UnexposedExpr=
@@ -640,7 +640,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "return" [61:5 - 61:11] UnexposedStmt=
 // CHECK-tokens: Identifier: "StringRef" [61:12 - 61:21] TypeRef=class llvm::StringRef:38:7
 // CHECK-tokens: Punctuation: "(" [61:21 - 61:22] CallExpr=StringRef:49:3
-// CHECK-tokens: Identifier: "Data" [61:22 - 61:26] UnexposedExpr=
+// CHECK-tokens: Identifier: "Data" [61:22 - 61:26]  MemberRefExpr=Data:43:15
 // CHECK-tokens: Punctuation: "+" [61:27 - 61:28] UnexposedExpr=
 // CHECK-tokens: Identifier: "Start" [61:29 - 61:34] DeclRefExpr=Start:60:27
 // CHECK-tokens: Punctuation: "," [61:34 - 61:35] CallExpr=StringRef:49:3
@@ -648,7 +648,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [61:39 - 61:40] CallExpr=min:45:17
 // CHECK-tokens: Identifier: "N" [61:40 - 61:41] DeclRefExpr=N:60:41
 // CHECK-tokens: Punctuation: "," [61:41 - 61:42] CallExpr=min:45:17
-// CHECK-tokens: Identifier: "Length" [61:43 - 61:49] UnexposedExpr=
+// CHECK-tokens: Identifier: "Length" [61:43 - 61:49]  MemberRefExpr=Length:44:10
 // CHECK-tokens: Punctuation: "-" [61:50 - 61:51] UnexposedExpr=
 // CHECK-tokens: Identifier: "Start" [61:52 - 61:57] DeclRefExpr=Start:60:27
 // CHECK-tokens: Punctuation: ")" [61:57 - 61:58] CallExpr=min:45:17
@@ -784,11 +784,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "::" [78:16 - 78:18] CallExpr=StringRef:49:3
 // CHECK-tokens: Identifier: "StringRef" [78:18 - 78:27] CallExpr=StringRef:49:3
 // CHECK-tokens: Punctuation: "(" [78:27 - 78:28] CallExpr=StringRef:49:3
-// CHECK-tokens: Identifier: "getNameStart" [78:28 - 78:40] UnexposedExpr=
+// CHECK-tokens: Identifier: "getNameStart" [78:28 - 78:40] MemberRefExpr=getNameStart:68:15
 // CHECK-tokens: Punctuation: "(" [78:40 - 78:41] CallExpr=getNameStart:68:15
 // CHECK-tokens: Punctuation: ")" [78:41 - 78:42] CallExpr=getNameStart:68:15
 // CHECK-tokens: Punctuation: "," [78:42 - 78:43] CallExpr=StringRef:49:3
-// CHECK-tokens: Identifier: "getLength" [78:44 - 78:53] UnexposedExpr=
+// CHECK-tokens: Identifier: "getLength" [78:44 - 78:53]  MemberRefExpr=getLength:72:12
 // CHECK-tokens: Punctuation: "(" [78:53 - 78:54] CallExpr=getLength:72:12
 // CHECK-tokens: Punctuation: ")" [78:54 - 78:55] CallExpr=getLength:72:12
 // CHECK-tokens: Punctuation: ")" [78:55 - 78:56] CallExpr=StringRef:49:3
@@ -1684,13 +1684,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 50:24: UnexposedStmt= Extent=[50:24 - 50:40]
 // CHECK: 50:26: UnexposedStmt= Extent=[50:26 - 50:37]
 // CHECK: 50:33: MemberRefExpr=Data:43:15 Extent=[50:33 - 50:37]
-// CHECK: 50:33: UnexposedExpr= Extent=[50:33 - 50:37]
 // CHECK: 51:10: CXXMethod=size:51:10 (Definition) Extent=[51:10 - 51:41]
 // CHECK: 51:3: TypeRef=size_t:2:25 Extent=[51:3 - 51:9]
 // CHECK: 51:23: UnexposedStmt= Extent=[51:23 - 51:41]
 // CHECK: 51:25: UnexposedStmt= Extent=[51:25 - 51:38]
 // CHECK: 51:32: MemberRefExpr=Length:44:10 Extent=[51:32 - 51:38]
-// CHECK: 51:32: UnexposedExpr= Extent=[51:32 - 51:38]
 // CHECK: 52:8: CXXMethod=startswith:52:8 (Definition) Extent=[52:8 - 55:4]
 // CHECK: 52:29: ParmDecl=Prefix:52:29 (Definition) Extent=[52:19 - 52:35]
 // CHECK: 52:19: TypeRef=class llvm::StringRef:38:7 Extent=[52:19 - 52:28]
@@ -1700,7 +1698,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 53:12: UnexposedExpr= Extent=[53:12 - 53:35]
 // CHECK: 53:12: UnexposedExpr=Length:44:10 Extent=[53:12 - 53:18]
 // CHECK: 53:12: MemberRefExpr=Length:44:10 Extent=[53:12 - 53:18]
-// CHECK: 53:12: UnexposedExpr= Extent=[53:12 - 53:18]
 // CHECK: 53:29: MemberRefExpr=Length:44:10 Extent=[53:22 - 53:35]
 // CHECK: 53:22: DeclRefExpr=Prefix:52:29 Extent=[53:22 - 53:28]
 // CHECK: 54:11: UnexposedExpr= Extent=[54:11 - 54:56]
@@ -1709,7 +1706,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 54:11: DeclRefExpr=memcmp:7:7 Extent=[54:11 - 54:17]
 // CHECK: 54:18: UnexposedExpr=Data:43:15 Extent=[54:18 - 54:22]
 // CHECK: 54:18: MemberRefExpr=Data:43:15 Extent=[54:18 - 54:22]
-// CHECK: 54:18: UnexposedExpr= Extent=[54:18 - 54:22]
 // CHECK: 54:24: UnexposedExpr=Data:43:15 Extent=[54:24 - 54:35]
 // CHECK: 54:31: MemberRefExpr=Data:43:15 Extent=[54:24 - 54:35]
 // CHECK: 54:24: DeclRefExpr=Prefix:52:29 Extent=[54:24 - 54:30]
@@ -1725,7 +1721,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 57:12: UnexposedExpr= Extent=[57:12 - 57:35]
 // CHECK: 57:12: UnexposedExpr=Length:44:10 Extent=[57:12 - 57:18]
 // CHECK: 57:12: MemberRefExpr=Length:44:10 Extent=[57:12 - 57:18]
-// CHECK: 57:12: UnexposedExpr= Extent=[57:12 - 57:18]
 // CHECK: 57:29: MemberRefExpr=Length:44:10 Extent=[57:22 - 57:35]
 // CHECK: 57:22: DeclRefExpr=Suffix:56:27 Extent=[57:22 - 57:28]
 // CHECK: 58:7: UnexposedExpr= Extent=[58:7 - 58:69]
@@ -1736,7 +1731,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 58:14: UnexposedExpr= Extent=[58:14 - 58:35]
 // CHECK: 58:14: CallExpr=end:50:12 Extent=[58:14 - 58:19]
 // CHECK: 58:14: MemberRefExpr=end:50:12 Extent=[58:14 - 58:17]
-// CHECK: 58:14: UnexposedExpr= Extent=[58:14 - 58:17]
 // CHECK: 58:29: MemberRefExpr=Length:44:10 Extent=[58:22 - 58:35]
 // CHECK: 58:22: DeclRefExpr=Suffix:56:27 Extent=[58:22 - 58:28]
 // CHECK: 58:37: UnexposedExpr=Data:43:15 Extent=[58:37 - 58:48]
@@ -1761,7 +1755,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 61:22: UnexposedExpr= Extent=[61:22 - 61:34]
 // CHECK: 61:22: UnexposedExpr=Data:43:15 Extent=[61:22 - 61:26]
 // CHECK: 61:22: MemberRefExpr=Data:43:15 Extent=[61:22 - 61:26]
-// CHECK: 61:22: UnexposedExpr= Extent=[61:22 - 61:26]
 // CHECK: 61:29: DeclRefExpr=Start:60:27 Extent=[61:29 - 61:34]
 // CHECK: 61:36: CallExpr=min:45:17 Extent=[61:36 - 61:58]
 // CHECK: 61:36: UnexposedExpr=min:45:17 Extent=[61:36 - 61:39]
@@ -1770,7 +1763,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 61:43: UnexposedExpr= Extent=[61:43 - 61:57]
 // CHECK: 61:43: UnexposedExpr=Length:44:10 Extent=[61:43 - 61:49]
 // CHECK: 61:43: MemberRefExpr=Length:44:10 Extent=[61:43 - 61:49]
-// CHECK: 61:43: UnexposedExpr= Extent=[61:43 - 61:49]
 // CHECK: 61:52: DeclRefExpr=Start:60:27 Extent=[61:52 - 61:57]
 // CHECK: 65:11: Namespace=clang:65:11 (Definition) Extent=[65:11 - 81:2]
 // CHECK: 66:7: ClassDecl=IdentifierInfo:66:7 (Definition) Extent=[66:1 - 80:2]
@@ -1835,11 +1827,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 78:12: CallExpr=StringRef:49:3 Extent=[78:12 - 78:56]
 // CHECK: 78:28: CallExpr=getNameStart:68:15 Extent=[78:28 - 78:42]
 // CHECK: 78:28: MemberRefExpr=getNameStart:68:15 Extent=[78:28 - 78:40]
-// CHECK: 78:28: UnexposedExpr= Extent=[78:28 - 78:40]
 // CHECK: 78:44: UnexposedExpr=getLength:72:12 Extent=[78:44 - 78:55]
 // CHECK: 78:44: CallExpr=getLength:72:12 Extent=[78:44 - 78:55]
 // CHECK: 78:44: MemberRefExpr=getLength:72:12 Extent=[78:44 - 78:53]
-// CHECK: 78:44: UnexposedExpr= Extent=[78:44 - 78:53]
 // CHECK: 82:11: Namespace=llvm:82:11 (Definition) Extent=[82:11 - 96:2]
 // CHECK: 83:47: ClassTemplate=StringSwitch:83:47 (Definition) Extent=[83:1 - 95:2]
 // CHECK: 83:21: TemplateTypeParameter=T:83:21 (Definition) Extent=[83:21 - 83:22]
