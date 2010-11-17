@@ -20,7 +20,10 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Lex/LiteralSupport.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -466,6 +469,72 @@ void StringLiteral::setString(ASTContext &C, llvm::StringRef Str) {
   StrData = AStrData;
   ByteLength = Str.size();
 }
+
+/// getLocationOfByte - Return a source location that points to the specified
+/// byte of this string literal.
+///
+/// Strings are amazingly complex.  They can be formed from multiple tokens and
+/// can have escape sequences in them in addition to the usual trigraph and
+/// escaped newline business.  This routine handles this complexity.
+///
+SourceLocation StringLiteral::
+getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
+                  const LangOptions &Features, const TargetInfo &Target) const {
+  assert(!isWide() && "This doesn't work for wide strings yet");
+  
+  // Loop over all of the tokens in this string until we find the one that
+  // contains the byte we're looking for.
+  unsigned TokNo = 0;
+  while (1) {
+    assert(TokNo < getNumConcatenated() && "Invalid byte number!");
+    SourceLocation StrTokLoc = getStrTokenLoc(TokNo);
+    
+    // Get the spelling of the string so that we can get the data that makes up
+    // the string literal, not the identifier for the macro it is potentially
+    // expanded through.
+    SourceLocation StrTokSpellingLoc = SM.getSpellingLoc(StrTokLoc);
+    
+    // Re-lex the token to get its length and original spelling.
+    std::pair<FileID, unsigned> LocInfo =SM.getDecomposedLoc(StrTokSpellingLoc);
+    bool Invalid = false;
+    llvm::StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
+    if (Invalid)
+      return StrTokSpellingLoc;
+    
+    const char *StrData = Buffer.data()+LocInfo.second;
+    
+    // Create a langops struct and enable trigraphs.  This is sufficient for
+    // relexing tokens.
+    LangOptions LangOpts;
+    LangOpts.Trigraphs = true;
+    
+    // Create a lexer starting at the beginning of this token.
+    Lexer TheLexer(StrTokSpellingLoc, Features, Buffer.begin(), StrData,
+                   Buffer.end());
+    Token TheTok;
+    TheLexer.LexFromRawLexer(TheTok);
+    
+    // Use the StringLiteralParser to compute the length of the string in bytes.
+    StringLiteralParser SLP(&TheTok, 1, SM, Features, Target);
+    unsigned TokNumBytes = SLP.GetStringLength();
+    
+    // If the byte is in this token, return the location of the byte.
+    if (ByteNo < TokNumBytes ||
+        (ByteNo == TokNumBytes && TokNo == getNumConcatenated())) {
+      unsigned Offset = SLP.getOffsetOfStringByte(TheTok, ByteNo); 
+      
+      // Now that we know the offset of the token in the spelling, use the
+      // preprocessor to get the offset in the original source.
+      return Lexer::AdvanceToTokenCharacter(StrTokLoc, Offset, SM, Features);
+    }
+    
+    // Move to the next string token.
+    ++TokNo;
+    ByteNo -= TokNumBytes;
+  }
+}
+
+
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "sizeof" or "[pre]++".

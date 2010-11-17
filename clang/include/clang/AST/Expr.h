@@ -1034,6 +1034,17 @@ public:
     assert(TokNum < NumConcatenated && "Invalid tok number");
     TokLocs[TokNum] = L;
   }
+  
+  /// getLocationOfByte - Return a source location that points to the specified
+  /// byte of this string literal.
+  ///
+  /// Strings are amazingly complex.  They can be formed from multiple tokens
+  /// and can have escape sequences in them in addition to the usual trigraph
+  /// and escaped newline business.  This routine handles this complexity.
+  ///
+  SourceLocation getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
+                                   const LangOptions &Features,
+                                   const TargetInfo &Target) const;
 
   typedef const SourceLocation *tokloc_iterator;
   tokloc_iterator tokloc_begin() const { return TokLocs; }
