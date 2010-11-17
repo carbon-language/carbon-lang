@@ -1538,18 +1538,18 @@ def LDRcp : AIldst1<0b010, 1, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
 }
 
 // Loads with zero extension
-def LDRH  : AI3ldh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
-                  IIC_iLoad_bh_r, "ldrh", "\t$dst, $addr",
-                  [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
+def LDRH  : AI3ldh<(outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+                  IIC_iLoad_bh_r, "ldrh", "\t$Rt, $addr",
+                  [(set GPR:$Rt, (zextloadi16 addrmode3:$addr))]>;
 
 // Loads with sign extension
-def LDRSH : AI3ldsh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
-                   IIC_iLoad_bh_r, "ldrsh", "\t$dst, $addr",
-                   [(set GPR:$dst, (sextloadi16 addrmode3:$addr))]>;
+def LDRSH : AI3ldsh<(outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+                   IIC_iLoad_bh_r, "ldrsh", "\t$Rt, $addr",
+                   [(set GPR:$Rt, (sextloadi16 addrmode3:$addr))]>;
 
-def LDRSB : AI3ldsb<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
-                   IIC_iLoad_bh_r, "ldrsb", "\t$dst, $addr",
-                   [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
+def LDRSB : AI3ldsb<(outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+                   IIC_iLoad_bh_r, "ldrsb", "\t$Rt, $addr",
+                   [(set GPR:$Rt, (sextloadi8 addrmode3:$addr))]>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in { // $dst2 doesn't exist in asmstring?
