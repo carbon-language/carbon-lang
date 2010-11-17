@@ -583,7 +583,8 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
     }
   } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
     if (Value *W = PN->hasConstantValue())
-      return findValueImpl(W, OffsetOk, Visited);
+      if (W != V)
+        return findValueImpl(W, OffsetOk, Visited);
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
     if (CI->isNoopCast(TD ? TD->getIntPtrType(V->getContext()) :
                             Type::getInt64Ty(V->getContext())))

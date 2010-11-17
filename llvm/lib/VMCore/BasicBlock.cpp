@@ -248,10 +248,11 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
       // If all incoming values to the Phi are the same, we can replace the Phi
       // with that value.
       Value* PNV = 0;
-      if (!DontDeleteUselessPHIs && (PNV = PN->hasConstantValue())) {
-        PN->replaceAllUsesWith(PNV);
-        PN->eraseFromParent();
-      }
+      if (!DontDeleteUselessPHIs && (PNV = PN->hasConstantValue()))
+        if (PNV != PN) {
+          PN->replaceAllUsesWith(PNV);
+          PN->eraseFromParent();
+        }
     }
   }
 }
