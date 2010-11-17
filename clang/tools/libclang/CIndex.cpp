@@ -343,7 +343,6 @@ public:
   bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
-  bool VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
   bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
 
@@ -1554,10 +1553,6 @@ bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   return false;
 }
 
-bool CursorVisitor::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
-  return Visit(E->getQueriedTypeSourceInfo()->getTypeLoc());
-}
-
 bool CursorVisitor::VisitDependentScopeDeclRefExpr(
                                                 DependentScopeDeclRefExpr *E) {
   // Visit the nested-name-specifier.
@@ -1716,6 +1711,7 @@ public:
   void VisitSwitchStmt(SwitchStmt *S);
   void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   void VisitWhileStmt(WhileStmt *W);
+  void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
   void VisitVAArgExpr(VAArgExpr *E);
 
@@ -1887,6 +1883,9 @@ void EnqueueVisitor::VisitWhileStmt(WhileStmt *W) {
   AddStmt(W->getBody());
   AddStmt(W->getCond());
   AddDecl(W->getConditionVariable());
+}
+void EnqueueVisitor::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
+  AddTypeLoc(E->getQueriedTypeSourceInfo());
 }
 void EnqueueVisitor::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U) {
   VisitOverloadExpr(U);
