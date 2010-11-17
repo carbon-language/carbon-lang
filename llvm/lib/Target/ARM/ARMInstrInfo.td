@@ -1168,21 +1168,27 @@ def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-// FIXME: These are marked as pseudos, but they're really not(?). They're just
-// the ADR instruction. Is this the right way to handle that? They need
-// encoding information regardless.
 let neverHasSideEffects = 1 in {
 let isReMaterializable = 1 in
-def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p),
-                    Pseudo, IIC_iALUi,
-                    "adr$p\t$dst, #$label", []>;
+// FIXME: We want one cannonical LEApcrel instruction and to express one or
+// both of these as pseudo-instructions that get expanded to it.
+def LEApcrel : AXI1<0, (outs GPR:$Rd), (ins i32imm:$label, pred:$p),
+                    MiscFrm, IIC_iALUi,
+                    "adr$p\t$Rd, #$label", []>;
 
 } // neverHasSideEffects
-def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
+def LEApcrelJT : AXI1<0b0100, (outs GPR:$Rd),
                            (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                      Pseudo, IIC_iALUi,
-                      "adr$p\t$dst, #${label}_${id}", []> {
-    let Inst{25} = 1;
+                      MiscFrm, IIC_iALUi,
+                      "adr$p\t$Rd, #${label}_${id}", []> {
+  bits<4> p;
+  bits<4> Rd;
+  let Inst{31-28} = p;
+  let Inst{27-25} = 0b001;
+  let Inst{20} = 0;
+  let Inst{19-16} = 0b1111;
+  let Inst{15-12} = Rd;
+  // FIXME: Add label encoding/fixup
 }
 
 //===----------------------------------------------------------------------===//

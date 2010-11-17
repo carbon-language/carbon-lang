@@ -455,6 +455,14 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     llvm_unreachable("Unhandled instruction encoding format!");
     break;
   }
+  case ARMII::MiscFrm:
+    if (MI.getOpcode() == ARM::LEApcrelJT) {
+      // Materialize jumptable address.
+      emitLEApcrelJTInstruction(MI);
+      break;
+    }
+    llvm_unreachable("Unhandled instruction encoding!");
+    break;
   case ARMII::Pseudo:
     emitPseudoInstruction(MI);
     break;
