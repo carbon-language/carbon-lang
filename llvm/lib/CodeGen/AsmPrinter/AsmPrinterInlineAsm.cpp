@@ -34,6 +34,34 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+namespace {
+  struct SrcMgrDiagInfo {
+    const MDNode *LocInfo;
+    void *DiagHandler;
+    void *DiagContext;
+  };
+}
+
+/// SrcMgrDiagHandler - This callback is invoked when the SourceMgr for an
+/// inline asm has an error in it.  diagInfo is a pointer to the SrcMgrDiagInfo
+/// struct above.
+static void SrcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo,
+                              unsigned locCookie) {
+  SrcMgrDiagInfo *DiagInfo = static_cast<SrcMgrDiagInfo *>(diagInfo);
+  assert(DiagInfo && "Diagnostic context not passed down?");
+  
+  unsigned LocCookie = 0;
+  if (const MDNode *LocInfo = DiagInfo->LocInfo) 
+    if (LocInfo->getNumOperands() > 0)
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocInfo->getOperand(0)))
+        LocCookie = CI->getZExtValue();
+  
+  SourceMgr::DiagHandlerTy ChainHandler = 
+    (SourceMgr::DiagHandlerTy)(intptr_t)DiagInfo->DiagHandler;
+  
+  ChainHandler(Diag, DiagInfo->DiagContext, LocCookie);
+}
+
 /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
 void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
   assert(!Str.empty() && "Can't emit empty inline asm block");
@@ -52,19 +80,18 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
   }
 
   SourceMgr SrcMgr;
+  SrcMgrDiagInfo DiagInfo;
 
   // If the current LLVMContext has an inline asm handler, set it in SourceMgr.
   LLVMContext &LLVMCtx = MMI->getModule()->getContext();
   bool HasDiagHandler = false;
   if (void *DiagHandler = LLVMCtx.getInlineAsmDiagnosticHandler()) {
-    unsigned LocCookie = 0;
-    if (LocMDNode && LocMDNode->getNumOperands() > 0)
-      if (const ConstantInt *CI =
-            dyn_cast<ConstantInt>(LocMDNode->getOperand(0)))
-        LocCookie = CI->getZExtValue();
-    
-    SrcMgr.setDiagHandler((SourceMgr::DiagHandlerTy)(intptr_t)DiagHandler,
-                          LLVMCtx.getInlineAsmDiagnosticContext(), LocCookie);
+    // If the source manager has an issue, we arrange for SrcMgrDiagHandler
+    // to be invoked, getting DiagInfo passed into it.
+    DiagInfo.LocInfo = LocMDNode;
+    DiagInfo.DiagHandler = DiagHandler;
+    DiagInfo.DiagContext = LLVMCtx.getInlineAsmDiagnosticContext();
+    SrcMgr.setDiagHandler(SrcMgrDiagHandler, &DiagInfo);
     HasDiagHandler = true;
   }
 
