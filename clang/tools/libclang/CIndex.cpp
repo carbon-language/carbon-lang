@@ -341,7 +341,6 @@ public:
   bool VisitAddrLabelExpr(AddrLabelExpr *E);
   bool VisitVAArgExpr(VAArgExpr *E);
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
-  bool VisitCXXTypeidExpr(CXXTypeidExpr *E);
   bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
@@ -1525,17 +1524,6 @@ bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   return Visit(MakeCXCursor(E->getInit(), StmtParent, TU));
 }
 
-bool CursorVisitor::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
-  if (E->isTypeOperand()) {
-    if (TypeSourceInfo *TSInfo = E->getTypeOperandSourceInfo())
-      return Visit(TSInfo->getTypeLoc());
-    
-    return false;
-  }
-  
-  return VisitExpr(E);
-}
-
 bool CursorVisitor::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
   if (E->isTypeOperand()) {
     if (TypeSourceInfo *TSInfo = E->getTypeOperandSourceInfo())
@@ -1707,6 +1695,7 @@ public:
   void VisitCXXNewExpr(CXXNewExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
+  void VisitCXXTypeidExpr(CXXTypeidExpr *E);
   void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   void VisitDeclRefExpr(DeclRefExpr *D);
   void VisitDeclStmt(DeclStmt *S);
@@ -1791,6 +1780,11 @@ void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
 void EnqueueVisitor::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   EnqueueChildren(E);
   AddTypeLoc(E->getTypeSourceInfo());
+}
+void EnqueueVisitor::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
+  EnqueueChildren(E);
+  if (E->isTypeOperand())
+    AddTypeLoc(E->getTypeOperandSourceInfo());
 }
 
 void EnqueueVisitor::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr 
