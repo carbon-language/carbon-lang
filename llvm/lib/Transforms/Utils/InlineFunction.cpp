@@ -22,6 +22,7 @@
 #include "llvm/Attributes.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -579,10 +580,10 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   // any users of the original call/invoke instruction.
   const Type *RTy = CalledFunc->getReturnType();
 
+  PHINode *PHI = 0;
   if (Returns.size() > 1) {
     // The PHI node should go at the front of the new basic block to merge all
     // possible incoming values.
-    PHINode *PHI = 0;
     if (!TheCall->use_empty()) {
       PHI = PHINode::Create(RTy, TheCall->getName(),
                             AfterCallBB->begin());
@@ -599,14 +600,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
         assert(RI->getReturnValue()->getType() == PHI->getType() &&
                "Ret value not consistent in function!");
         PHI->addIncoming(RI->getReturnValue(), RI->getParent());
-      }
-    
-      // Now that we inserted the PHI, check to see if it has a single value
-      // (e.g. all the entries are the same or undef).  If so, remove the PHI so
-      // it doesn't block other optimizations.
-      if (Value *V = PHI->hasConstantValue()) {
-        PHI->replaceAllUsesWith(V);
-        PHI->eraseFromParent();
       }
     }
 
@@ -663,6 +656,15 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
 
   // Now we can remove the CalleeEntry block, which is now empty.
   Caller->getBasicBlockList().erase(CalleeEntry);
+
+  // If we inserted a phi node, check to see if it has a single value (e.g. all
+  // the entries are the same or undef).  If so, remove the PHI so it doesn't
+  // block other optimizations.
+  if (PHI)
+    if (Value *V = SimplifyInstruction(PHI, IFI.TD)) {
+      PHI->replaceAllUsesWith(V);
+      PHI->eraseFromParent();
+    }
 
   return true;
 }
