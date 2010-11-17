@@ -121,10 +121,10 @@ namespace {
       // Install an inline asm handler so that diagnostics get printed through
       // our diagnostics hooks.
       LLVMContext &Ctx = TheModule->getContext();
-      void *OldHandler = Ctx.getInlineAsmDiagnosticHandler();
+      LLVMContext::InlineAsmDiagHandlerTy OldHandler =
+        Ctx.getInlineAsmDiagnosticHandler();
       void *OldContext = Ctx.getInlineAsmDiagnosticContext();
-      Ctx.setInlineAsmDiagnosticHandler((void*)(intptr_t)InlineAsmDiagHandler,
-                                        this);
+      Ctx.setInlineAsmDiagnosticHandler(InlineAsmDiagHandler, this);
 
       EmitBackendOutput(Diags, CodeGenOpts, TargetOpts,
                         TheModule.get(), Action, AsmOutStream);
