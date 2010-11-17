@@ -213,31 +213,51 @@ AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
   switch (Opcode) {
   default: llvm_unreachable("Unhandled opcode!");
   case ARM::LDMIA:
+  case ARM::LDMIA_UPD:
   case ARM::STMIA:
+  case ARM::STMIA_UPD:
   case ARM::t2LDMIA:
+  case ARM::t2LDMIA_UPD:
   case ARM::t2STMIA:
+  case ARM::t2STMIA_UPD:
   case ARM::VLDMSIA:
+  case ARM::VLDMSIA_UPD:
   case ARM::VSTMSIA:
+  case ARM::VSTMSIA_UPD:
   case ARM::VLDMDIA:
+  case ARM::VLDMDIA_UPD:
   case ARM::VSTMDIA:
+  case ARM::VSTMDIA_UPD:
     return ARM_AM::ia;
 
   case ARM::LDMDA:
+  case ARM::LDMDA_UPD:
   case ARM::STMDA:
+  case ARM::STMDA_UPD:
     return ARM_AM::da;
 
   case ARM::LDMDB:
+  case ARM::LDMDB_UPD:
   case ARM::STMDB:
+  case ARM::STMDB_UPD:
   case ARM::t2LDMDB:
+  case ARM::t2LDMDB_UPD:
   case ARM::t2STMDB:
+  case ARM::t2STMDB_UPD:
   case ARM::VLDMSDB:
+  case ARM::VLDMSDB_UPD:
   case ARM::VSTMSDB:
+  case ARM::VSTMSDB_UPD:
   case ARM::VLDMDDB:
+  case ARM::VLDMDDB_UPD:
   case ARM::VSTMDDB:
+  case ARM::VSTMDDB_UPD:
     return ARM_AM::db;
 
   case ARM::LDMIB:
+  case ARM::LDMIB_UPD:
   case ARM::STMIB:
+  case ARM::STMIB_UPD:
     return ARM_AM::ib;
   }
 
