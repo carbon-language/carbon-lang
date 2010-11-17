@@ -677,7 +677,7 @@ void ARMCodeEmitter::emitLEApcrelJTInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
 
   // Emit the 'add' instruction.
-  unsigned Binary = 0x4 << 21;  // add: Insts{24-31} = 0b0100
+  unsigned Binary = 0x4 << 21;  // add: Insts{24-21} = 0b0100
 
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
