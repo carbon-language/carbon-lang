@@ -75,8 +75,6 @@ namespace llvm {
 
   /// SimplifyInstruction - See if we can compute a simplified version of this
   /// instruction.  If not, this returns null.
-  /// WARNING: If called on unreachable code, an instruction may be reported
-  /// to simplify to itself.
   Value *SimplifyInstruction(Instruction *I, const TargetData *TD = 0,
                              const DominatorTree *DT = 0);
 

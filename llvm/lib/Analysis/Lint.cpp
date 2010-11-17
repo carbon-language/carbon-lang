@@ -616,8 +616,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
   // As a last resort, try SimplifyInstruction or constant folding.
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Value *W = SimplifyInstruction(Inst, TD, DT))
-      if (W != Inst)
-        return findValueImpl(W, OffsetOk, Visited);
+      return findValueImpl(W, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (Value *W = ConstantFoldConstantExpression(CE, TD))
       if (W != V)

@@ -756,34 +756,50 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 /// instruction.  If not, this returns null.
 Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
                                  const DominatorTree *DT) {
+  Value *Result;
+
   switch (I->getOpcode()) {
   default:
-    return ConstantFoldInstruction(I, TD);
+    Result = ConstantFoldInstruction(I, TD);
+    break;
   case Instruction::Add:
-    return SimplifyAddInst(I->getOperand(0), I->getOperand(1),
-                           cast<BinaryOperator>(I)->hasNoSignedWrap(),
-                           cast<BinaryOperator>(I)->hasNoUnsignedWrap(),
-                           TD, DT);
+    Result = SimplifyAddInst(I->getOperand(0), I->getOperand(1),
+                             cast<BinaryOperator>(I)->hasNoSignedWrap(),
+                             cast<BinaryOperator>(I)->hasNoUnsignedWrap(),
+                             TD, DT);
+    break;
   case Instruction::And:
-    return SimplifyAndInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    Result = SimplifyAndInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
   case Instruction::Or:
-    return SimplifyOrInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    Result = SimplifyOrInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
   case Instruction::ICmp:
-    return SimplifyICmpInst(cast<ICmpInst>(I)->getPredicate(),
-                            I->getOperand(0), I->getOperand(1), TD, DT);
+    Result = SimplifyICmpInst(cast<ICmpInst>(I)->getPredicate(),
+                              I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
   case Instruction::FCmp:
-    return SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
-                            I->getOperand(0), I->getOperand(1), TD, DT);
+    Result = SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
+                              I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
   case Instruction::Select:
-    return SimplifySelectInst(I->getOperand(0), I->getOperand(1),
-                              I->getOperand(2), TD, DT);
+    Result = SimplifySelectInst(I->getOperand(0), I->getOperand(1),
+                                I->getOperand(2), TD, DT);
+    break;
   case Instruction::GetElementPtr: {
     SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
-    return SimplifyGEPInst(&Ops[0], Ops.size(), TD, DT);
+    Result = SimplifyGEPInst(&Ops[0], Ops.size(), TD, DT);
+    break;
   }
   case Instruction::PHI:
-    return SimplifyPHINode(cast<PHINode>(I), DT);
+    Result = SimplifyPHINode(cast<PHINode>(I), DT);
+    break;
   }
+
+  /// If called on unreachable code, the above logic may report that the
+  /// instruction simplified to itself.  Make life easier for users by
+  /// detecting that case here, returning null if it occurs.
+  return Result == I ? 0 : Result;
 }
 
 /// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
