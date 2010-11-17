@@ -65,6 +65,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
 
 namespace {
@@ -74,7 +75,7 @@ namespace {
     const TargetLowering *TLI;
 
     bool doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
-                 Module &M, bool) const;
+                 Module &M, bool isConst) const;
 
   public:
     static char ID;             // Pass identification, replacement for typeid.
@@ -161,7 +162,7 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
 
 
 bool ARMGlobalMerge::doInitialization(Module &M) {
-  SmallVector<GlobalVariable*, 16> Globals, ConstGlobals;
+  SmallVector<GlobalVariable*, 16> Globals, ConstGlobals, BSSGlobals;
   const TargetData *TD = TLI->getTargetData();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
   bool Changed = false;
@@ -183,7 +184,10 @@ bool ARMGlobalMerge::doInitialization(Module &M) {
       continue;
 
     if (TD->getTypeAllocSize(I->getType()->getElementType()) < MaxOffset) {
-      if (I->isConstant())
+      const TargetLoweringObjectFile &TLOF = TLI->getObjFileLowering();
+      if (TLOF.getKindForGlobal(I, TLI->getTargetMachine()).isBSSLocal())
+        BSSGlobals.push_back(I);
+      else if (I->isConstant())
         ConstGlobals.push_back(I);
       else
         Globals.push_back(I);
@@ -192,10 +196,12 @@ bool ARMGlobalMerge::doInitialization(Module &M) {
 
   if (Globals.size() > 1)
     Changed |= doMerge(Globals, M, false);
+  if (BSSGlobals.size() > 1)
+    Changed |= doMerge(BSSGlobals, M, false);
+
   // FIXME: This currently breaks the EH processing due to way how the 
   // typeinfo detection works. We might want to detect the TIs and ignore 
   // them in the future.
-  
   // if (ConstGlobals.size() > 1)
   //  Changed |= doMerge(ConstGlobals, M, true);
 
