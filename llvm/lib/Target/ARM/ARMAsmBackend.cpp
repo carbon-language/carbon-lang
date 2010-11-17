@@ -22,15 +22,12 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
 
 namespace {
 class ARMAsmBackend : public TargetAsmBackend {
 public:
-  ARMAsmBackend(const Target &T)
-    : TargetAsmBackend(T) {
-  }
+  ARMAsmBackend(const Target &T) : TargetAsmBackend(T) {}
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
 
@@ -42,6 +39,7 @@ public:
     return 4;
   }
 };
+} // end anonymous namespace
 
 bool ARMAsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
   // FIXME: Thumb targets, different move constant targets..
@@ -64,7 +62,6 @@ bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
     OW->Write8(0);
   return true;
 }
-} // end anonymous namespace
 
 namespace {
 // FIXME: This should be in a separate file.
@@ -105,13 +102,12 @@ void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
   assert(0 && "ELFARMAsmBackend::ApplyFixup() unimplemented");
 }
 
+namespace {
 // FIXME: This should be in a separate file.
 class DarwinARMAsmBackend : public ARMAsmBackend {
   MCMachOObjectFormat Format;
-
 public:
-  DarwinARMAsmBackend(const Target &T)
-    : ARMAsmBackend(T) {
+  DarwinARMAsmBackend(const Target &T) : ARMAsmBackend(T) {
     HasScatteredSymbols = true;
   }
 
@@ -140,6 +136,7 @@ public:
     return false;
   }
 };
+} // end anonymous namespace
 
 static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
