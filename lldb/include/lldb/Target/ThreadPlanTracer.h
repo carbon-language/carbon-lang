@@ -104,11 +104,14 @@ class ThreadPlanAssemblyTracer : public ThreadPlanTracer
 {
 public:
     ThreadPlanAssemblyTracer (Thread &thread, lldb::StreamSP &stream_sp);    
+    ThreadPlanAssemblyTracer (Thread &thread);    
     virtual ~ThreadPlanAssemblyTracer ();
     virtual void TracingStarted ();
     virtual void TracingEnded ();
     virtual void Log();
 private:
+    void InitializeTracer();
+    
     Process                &m_process;
     Target                 &m_target;
     Disassembler           *m_disassembler;

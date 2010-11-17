@@ -91,7 +91,21 @@ ThreadPlanAssemblyTracer::ThreadPlanAssemblyTracer (Thread &thread, lldb::Stream
     m_process(thread.GetProcess()),
     m_target(thread.GetProcess().GetTarget())
 {
-    Process &process = thread.GetProcess();
+    InitializeTracer ();
+}
+
+ThreadPlanAssemblyTracer::ThreadPlanAssemblyTracer (Thread &thread) :
+    ThreadPlanTracer (thread),
+    m_process(thread.GetProcess()),
+    m_target(thread.GetProcess().GetTarget())
+{
+    InitializeTracer ();
+}
+
+void
+ThreadPlanAssemblyTracer::InitializeTracer()
+{
+    Process &process = m_thread.GetProcess();
     Target &target = process.GetTarget();
     
     ArchSpec arch(target.GetArchitecture());
