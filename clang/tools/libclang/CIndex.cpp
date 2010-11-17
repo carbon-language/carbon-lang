@@ -340,7 +340,6 @@ public:
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
-  bool VisitCXXUuidofExpr(CXXUuidofExpr *E);
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
@@ -1511,17 +1510,6 @@ bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   return Visit(MakeCXCursor(E->getInit(), StmtParent, TU));
 }
 
-bool CursorVisitor::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
-  if (E->isTypeOperand()) {
-    if (TypeSourceInfo *TSInfo = E->getTypeOperandSourceInfo())
-      return Visit(TSInfo->getTypeLoc());
-    
-    return false;
-  }
-  
-  return VisitExpr(E);  
-}
-
 bool CursorVisitor::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
   if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
     return Visit(TSInfo->getTypeLoc());
@@ -1696,6 +1684,7 @@ public:
   void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
   void VisitCXXTypeidExpr(CXXTypeidExpr *E);
   void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
+  void VisitCXXUuidofExpr(CXXUuidofExpr *E);
   void VisitDeclRefExpr(DeclRefExpr *D);
   void VisitDeclStmt(DeclStmt *S);
   void VisitExplicitCastExpr(ExplicitCastExpr *E);
@@ -1803,6 +1792,11 @@ void EnqueueVisitor::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr
                                                      *E) {
   EnqueueChildren(E);
   AddTypeLoc(E->getTypeSourceInfo());
+}
+void EnqueueVisitor::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
+  EnqueueChildren(E);
+  if (E->isTypeOperand())
+    AddTypeLoc(E->getTypeOperandSourceInfo());
 }
 void EnqueueVisitor::VisitDeclRefExpr(DeclRefExpr *DR) {
   if (DR->hasExplicitTemplateArgs()) {
@@ -1970,10 +1964,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::OffsetOfExprClass:
           case Stmt::SizeOfAlignOfExprClass:
           case Stmt::DesignatedInitExprClass:
-          case Stmt::CXXUuidofExprClass:
           case Stmt::CXXScalarValueInitExprClass:
           case Stmt::CXXPseudoDestructorExprClass:
-          case Stmt::UnaryTypeTraitExprClass:
           case Stmt::DependentScopeDeclRefExprClass:
           case Stmt::CXXDependentScopeMemberExprClass:
             if (Visit(Cursor))
