@@ -48,3 +48,7 @@
   movt	r1, #4267
 @ CHECK: mov.w	r0, #66846720           @ encoding: [0x7f,0x70,0x4f,0xf0]
   mov.w	r0, #66846720
+
+@ CHECK: rrx	r0, r0                  @ encoding: [0x30,0x00,0x4f,0xea]
+  rrx	r0, r0
+

@@ -1771,19 +1771,27 @@ def t2SEL : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), NoItinerary, "sel",
 // And Miscellaneous operations -- for disassembly only
 class T2I_pam<bits<3> op22_20, bits<4> op7_4, string opc,
               list<dag> pat = [/* For disassembly only; pattern left blank */]>
-  : T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), NoItinerary, opc,
-        "\t$dst, $a, $b", pat> {
+  : T2I<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), NoItinerary, opc,
+        "\t$Rd, $Rn, $Rm", pat> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0101;
   let Inst{22-20} = op22_20;
   let Inst{15-12} = 0b1111;
   let Inst{7-4} = op7_4;
+  
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+     
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{19-16} = Rn{3-0};
+  let Inst{3-0}   = Rm{3-0};
 }
 
 // Saturating add/subtract -- for disassembly only
 
 def t2QADD    : T2I_pam<0b000, 0b1000, "qadd",
-                        [(set rGPR:$dst, (int_arm_qadd rGPR:$a, rGPR:$b))]>;
+                        [(set rGPR:$Rd, (int_arm_qadd rGPR:$Rn, rGPR:$Rm))]>;
 def t2QADD16  : T2I_pam<0b001, 0b0001, "qadd16">;
 def t2QADD8   : T2I_pam<0b000, 0b0001, "qadd8">;
 def t2QASX    : T2I_pam<0b010, 0b0001, "qasx">;
@@ -1791,7 +1799,7 @@ def t2QDADD   : T2I_pam<0b000, 0b1001, "qdadd">;
 def t2QDSUB   : T2I_pam<0b000, 0b1011, "qdsub">;
 def t2QSAX    : T2I_pam<0b110, 0b0001, "qsax">;
 def t2QSUB    : T2I_pam<0b000, 0b1010, "qsub",
-                        [(set rGPR:$dst, (int_arm_qsub rGPR:$a, rGPR:$b))]>;
+                        [(set rGPR:$Rd, (int_arm_qsub rGPR:$Rn, rGPR:$Rm))]>;
 def t2QSUB16  : T2I_pam<0b101, 0b0001, "qsub16">;
 def t2QSUB8   : T2I_pam<0b100, 0b0001, "qsub8">;
 def t2UQADD16 : T2I_pam<0b001, 0b0101, "uqadd16">;
@@ -1838,14 +1846,33 @@ def t2USAD8   : T2I_mac<0, 0b111, 0b0000, (outs rGPR:$dst),
                         NoItinerary, "usad8", "\t$dst, $a, $b", []> {
   let Inst{15-12} = 0b1111;
 }
-def t2USADA8  : T2I_mac<0, 0b111, 0b0000, (outs rGPR:$dst),
-                       (ins rGPR:$a, rGPR:$b, rGPR:$acc), NoItinerary, "usada8",
-                        "\t$dst, $a, $b, $acc", []>;
+def t2USADA8  : T2I_mac<0, 0b111, 0b0000, (outs rGPR:$Rd),
+                       (ins rGPR:$Rn, rGPR:$Rm, rGPR:$Ra), NoItinerary, 
+                        "usada8", "\t$Rd, $Rn, $Rm, $Ra", []> {
+   bits<4> Ra;
+   let Inst{15-12} = Ra{3-0};
+}
 
 // Signed/Unsigned saturate -- for disassembly only
 
-def t2SSAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, shift_imm:$sh),
-                NoItinerary, "ssat", "\t$dst, $bit_pos, $a$sh",
+class T2SatI<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<5> sat_imm;
+  bits<7> sh;
+  
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{19-16} = Rn{3-0};
+  let Inst{4-0}   = sat_imm{4-0};
+  let Inst{21}    = sh{6};
+  let Inst{14-12} = sh{4-2};
+  let Inst{7-6}   = sh{1-0};
+}
+
+def t2SSAT: T2I<(outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn, shift_imm:$sh),
+                NoItinerary, "ssat", "\t$Rd, $sat_imm, $Rn$sh",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1100;
@@ -1853,8 +1880,8 @@ def t2SSAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, shift_imm:$sh),
   let Inst{15} = 0;
 }
 
-def t2SSAT16: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a), NoItinerary,
-                   "ssat16", "\t$dst, $bit_pos, $a",
+def t2SSAT16: T2I<(outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn), NoItinerary,
+                   "ssat16", "\t$Rd, $sat_imm, $Rn",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1100;
@@ -1899,9 +1926,9 @@ defm t2ASR  : T2I_sh_ir<0b10, "asr", BinOpFrag<(sra  node:$LHS, node:$RHS)>>;
 defm t2ROR  : T2I_sh_ir<0b11, "ror", BinOpFrag<(rotr node:$LHS, node:$RHS)>>;
 
 let Uses = [CPSR] in {
-def t2RRX : T2sI<(outs rGPR:$dst), (ins rGPR:$src), IIC_iMOVsi,
-                   "rrx", "\t$dst, $src",
-                   [(set rGPR:$dst, (ARMrrx rGPR:$src))]> {
+def t2RRX : T2sTwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iMOVsi,
+                   "rrx", "\t$Rd, $Rm",
+                   [(set rGPR:$Rd, (ARMrrx rGPR:$Rm))]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
