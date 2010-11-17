@@ -990,7 +990,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
   // Strip off any non-loop-dominating component from the addrec start.
   const SCEV *Start = Normalized->getStart();
   const SCEV *PostLoopOffset = 0;
-  if (!Start->properlyDominates(L->getHeader(), SE.DT)) {
+  if (!SE.properlyDominates(Start, L->getHeader())) {
     PostLoopOffset = Start;
     Start = SE.getConstant(Normalized->getType(), 0);
     Normalized =
@@ -1002,7 +1002,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
   // Strip off any non-loop-dominating component from the addrec step.
   const SCEV *Step = Normalized->getStepRecurrence(SE);
   const SCEV *PostLoopScale = 0;
-  if (!Step->dominates(L->getHeader(), SE.DT)) {
+  if (!SE.dominates(Step, L->getHeader())) {
     PostLoopScale = Step;
     Step = SE.getConstant(Normalized->getType(), 1);
     Normalized =

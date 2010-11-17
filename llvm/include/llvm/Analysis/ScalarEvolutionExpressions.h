@@ -48,14 +48,6 @@ namespace llvm {
       return false;
     }
 
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const {
-      return true;
-    }
-
-    bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
-      return true;
-    }
-
     virtual void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -83,10 +75,6 @@ namespace llvm {
     virtual bool hasOperand(const SCEV *O) const {
       return Op == O || Op->hasOperand(O);
     }
-
-    virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const;
-
-    virtual bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCastExpr *S) { return true; }
@@ -187,10 +175,6 @@ namespace llvm {
     op_iterator op_end() const { return Operands + NumOperands; }
 
     virtual bool hasOperand(const SCEV *O) const;
-
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
-
-    bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const;
 
     virtual const Type *getType() const { return getOperand(0)->getType(); }
 
@@ -309,10 +293,6 @@ namespace llvm {
       return O == LHS || O == RHS || LHS->hasOperand(O) || RHS->hasOperand(O);
     }
 
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
-
-    bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const;
-
     virtual const Type *getType() const;
 
     void print(raw_ostream &OS) const;
@@ -356,10 +336,6 @@ namespace llvm {
                                                            op_end()),
                               getLoop());
     }
-
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
-
-    bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const;
 
     /// isAffine - Return true if this is an affine AddRec (i.e., it represents
     /// an expressions A+B*x where A and B are loop invariant values.
@@ -495,10 +471,6 @@ namespace llvm {
     virtual bool hasOperand(const SCEV *) const {
       return false;
     }
-
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
-
-    bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const;
 
     virtual const Type *getType() const;
 

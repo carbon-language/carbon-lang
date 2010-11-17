@@ -99,14 +99,6 @@ namespace llvm {
     /// indirect operand.
     virtual bool hasOperand(const SCEV *Op) const = 0;
 
-    /// dominates - Return true if elements that makes up this SCEV dominates
-    /// the specified basic block.
-    virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const = 0;
-
-    /// properlyDominates - Return true if elements that makes up this SCEV
-    /// properly dominate the specified basic block.
-    virtual bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const = 0;
-
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.
@@ -149,14 +141,6 @@ namespace llvm {
     virtual const Type *getType() const;
     virtual void print(raw_ostream &OS) const;
     virtual bool hasOperand(const SCEV *Op) const;
-
-    virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const {
-      return true;
-    }
-
-    virtual bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
-      return true;
-    }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCouldNotCompute *S) { return true; }
@@ -698,6 +682,14 @@ namespace llvm {
     /// that the value is variant in the loop AND that we can emit an expression
     /// to compute the value of the expression at any particular loop iteration.
     bool hasComputableLoopEvolution(const SCEV *S, const Loop *L);
+
+    /// dominates - Return true if elements that makes up the given SCEV
+    /// dominate the specified basic block.
+    bool dominates(const SCEV *S, BasicBlock *BB) const;
+
+    /// properlyDominates - Return true if elements that makes up the given SCEV
+    /// properly dominate the specified basic block.
+    bool properlyDominates(const SCEV *S, BasicBlock *BB) const;
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();

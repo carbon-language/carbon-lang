@@ -210,8 +210,7 @@ struct Formula {
 
   Formula() : ScaledReg(0) {}
 
-  void InitialMatch(const SCEV *S, Loop *L,
-                    ScalarEvolution &SE, DominatorTree &DT);
+  void InitialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE);
 
   unsigned getNumRegs() const;
   const Type *getType() const;
@@ -232,9 +231,9 @@ struct Formula {
 static void DoInitialMatch(const SCEV *S, Loop *L,
                            SmallVectorImpl<const SCEV *> &Good,
                            SmallVectorImpl<const SCEV *> &Bad,
-                           ScalarEvolution &SE, DominatorTree &DT) {
+                           ScalarEvolution &SE) {
   // Collect expressions which properly dominate the loop header.
-  if (S->properlyDominates(L->getHeader(), &DT)) {
+  if (SE.properlyDominates(S, L->getHeader())) {
     Good.push_back(S);
     return;
   }
@@ -243,18 +242,18 @@ static void DoInitialMatch(const SCEV *S, Loop *L,
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
          I != E; ++I)
-      DoInitialMatch(*I, L, Good, Bad, SE, DT);
+      DoInitialMatch(*I, L, Good, Bad, SE);
     return;
   }
 
   // Look at addrec operands.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S))
     if (!AR->getStart()->isZero()) {
-      DoInitialMatch(AR->getStart(), L, Good, Bad, SE, DT);
+      DoInitialMatch(AR->getStart(), L, Good, Bad, SE);
       DoInitialMatch(SE.getAddRecExpr(SE.getConstant(AR->getType(), 0),
                                       AR->getStepRecurrence(SE),
                                       AR->getLoop()),
-                     L, Good, Bad, SE, DT);
+                     L, Good, Bad, SE);
       return;
     }
 
@@ -266,7 +265,7 @@ static void DoInitialMatch(const SCEV *S, Loop *L,
 
       SmallVector<const SCEV *, 4> MyGood;
       SmallVector<const SCEV *, 4> MyBad;
-      DoInitialMatch(NewMul, L, MyGood, MyBad, SE, DT);
+      DoInitialMatch(NewMul, L, MyGood, MyBad, SE);
       const SCEV *NegOne = SE.getSCEV(ConstantInt::getAllOnesValue(
         SE.getEffectiveSCEVType(NewMul->getType())));
       for (SmallVectorImpl<const SCEV *>::const_iterator I = MyGood.begin(),
@@ -286,11 +285,10 @@ static void DoInitialMatch(const SCEV *S, Loop *L,
 /// InitialMatch - Incorporate loop-variant parts of S into this Formula,
 /// attempting to keep all loop-invariant and loop-computable values in a
 /// single base register.
-void Formula::InitialMatch(const SCEV *S, Loop *L,
-                           ScalarEvolution &SE, DominatorTree &DT) {
+void Formula::InitialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE) {
   SmallVector<const SCEV *, 4> Good;
   SmallVector<const SCEV *, 4> Bad;
-  DoInitialMatch(S, L, Good, Bad, SE, DT);
+  DoInitialMatch(S, L, Good, Bad, SE);
   if (!Good.empty()) {
     const SCEV *Sum = SE.getAddExpr(Good);
     if (!Sum->isZero())
@@ -2096,7 +2094,7 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
 void
 LSRInstance::InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx) {
   Formula F;
-  F.InitialMatch(S, L, SE, DT);
+  F.InitialMatch(S, L, SE);
   bool Inserted = InsertFormula(LU, LUIdx, F);
   assert(Inserted && "Initial formula already exists!"); (void)Inserted;
 }
@@ -2330,7 +2328,7 @@ void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
   for (SmallVectorImpl<const SCEV *>::const_iterator
        I = Base.BaseRegs.begin(), E = Base.BaseRegs.end(); I != E; ++I) {
     const SCEV *BaseReg = *I;
-    if (BaseReg->properlyDominates(L->getHeader(), &DT) &&
+    if (SE.properlyDominates(BaseReg, L->getHeader()) &&
         !SE.hasComputableLoopEvolution(BaseReg, L))
       Ops.push_back(BaseReg);
     else

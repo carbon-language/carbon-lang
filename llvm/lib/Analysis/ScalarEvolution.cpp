@@ -197,14 +197,6 @@ SCEVCastExpr::SCEVCastExpr(const FoldingSetNodeIDRef ID,
                            unsigned SCEVTy, const SCEV *op, const Type *ty)
   : SCEV(ID, SCEVTy), Op(op), Ty(ty) {}
 
-bool SCEVCastExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  return Op->dominates(BB, DT);
-}
-
-bool SCEVCastExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
-  return Op->properlyDominates(BB, DT);
-}
-
 SCEVTruncateExpr::SCEVTruncateExpr(const FoldingSetNodeIDRef ID,
                                    const SCEV *op, const Type *ty)
   : SCEVCastExpr(ID, scTruncate, op, ty) {
@@ -252,20 +244,6 @@ void SCEVCommutativeExpr::print(raw_ostream &OS) const {
   OS << ")";
 }
 
-bool SCEVNAryExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
-    if (!(*I)->dominates(BB, DT))
-      return false;
-  return true;
-}
-
-bool SCEVNAryExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
-    if (!(*I)->properlyDominates(BB, DT))
-      return false;
-  return true;
-}
-
 bool SCEVNAryExpr::hasOperand(const SCEV *O) const {
   for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
     const SCEV *S = *I;
@@ -273,14 +251,6 @@ bool SCEVNAryExpr::hasOperand(const SCEV *O) const {
       return true;
   }
   return false;
-}
-
-bool SCEVUDivExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  return LHS->dominates(BB, DT) && RHS->dominates(BB, DT);
-}
-
-bool SCEVUDivExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
-  return LHS->properlyDominates(BB, DT) && RHS->properlyDominates(BB, DT);
 }
 
 void SCEVUDivExpr::print(raw_ostream &OS) const {
@@ -294,21 +264,6 @@ const Type *SCEVUDivExpr::getType() const {
   // avoid extra casts in the SCEVExpander. The LHS is more likely to be
   // a pointer type than the RHS, so use the RHS' type here.
   return RHS->getType();
-}
-
-bool
-SCEVAddRecExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  return DT->dominates(L->getHeader(), BB) &&
-         SCEVNAryExpr::dominates(BB, DT);
-}
-
-bool
-SCEVAddRecExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
-  // This uses a "dominates" query instead of "properly dominates" query because
-  // the instruction which produces the addrec's value is a PHI, and a PHI
-  // effectively properly dominates its entire containing block.
-  return DT->dominates(L->getHeader(), BB) &&
-         SCEVNAryExpr::properlyDominates(BB, DT);
 }
 
 void SCEVAddRecExpr::print(raw_ostream &OS) const {
@@ -346,18 +301,6 @@ void SCEVUnknown::allUsesReplacedWith(Value *New) {
   // because there may still be outstanding SCEVs which still point to
   // this SCEVUnknown.
   setValPtr(New);
-}
-
-bool SCEVUnknown::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  if (Instruction *I = dyn_cast<Instruction>(getValue()))
-    return DT->dominates(I->getParent(), BB);
-  return true;
-}
-
-bool SCEVUnknown::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
-  if (Instruction *I = dyn_cast<Instruction>(getValue()))
-    return DT->properlyDominates(I->getParent(), BB);
-  return true;
 }
 
 const Type *SCEVUnknown::getType() const {
@@ -4921,7 +4864,7 @@ bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
   // as both operands could be addrecs loop-invariant in each other's loop.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(RHS)) {
     const Loop *L = AR->getLoop();
-    if (isLoopInvariant(LHS, L) && LHS->properlyDominates(L->getHeader(), DT)) {
+    if (isLoopInvariant(LHS, L) && properlyDominates(LHS, L->getHeader())) {
       std::swap(LHS, RHS);
       Pred = ICmpInst::getSwappedPredicate(Pred);
       Changed = true;
@@ -6051,6 +5994,96 @@ bool ScalarEvolution::hasComputableLoopEvolution(const SCEV *S, const Loop *L) {
   }
   case scUnknown:
     return false;
+  case scCouldNotCompute:
+    llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+    return false;
+  default: break;
+  }
+  llvm_unreachable("Unknown SCEV kind!");
+  return false;
+}
+
+bool ScalarEvolution::dominates(const SCEV *S, BasicBlock *BB) const {
+  switch (S->getSCEVType()) {
+  case scConstant:
+    return true;
+  case scTruncate:
+  case scZeroExtend:
+  case scSignExtend:
+    return dominates(cast<SCEVCastExpr>(S)->getOperand(), BB);
+  case scAddRecExpr: {
+    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
+    if (!DT->dominates(AR->getLoop()->getHeader(), BB))
+      return false;
+  }
+  // FALL THROUGH into SCEVNAryExpr handling.
+  case scAddExpr:
+  case scMulExpr:
+  case scUMaxExpr:
+  case scSMaxExpr: {
+    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
+         I != E; ++I)
+      if (!dominates(*I, BB))
+        return false;
+    return true;
+  }
+  case scUDivExpr: {
+    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
+    return dominates(UDiv->getLHS(), BB) && dominates(UDiv->getRHS(), BB);
+  }
+  case scUnknown:
+    if (Instruction *I =
+          dyn_cast<Instruction>(cast<SCEVUnknown>(S)->getValue()))
+      return DT->dominates(I->getParent(), BB);
+    return true;
+  case scCouldNotCompute:
+    llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+    return false;
+  default: break;
+  }
+  llvm_unreachable("Unknown SCEV kind!");
+  return false;
+}
+
+bool ScalarEvolution::properlyDominates(const SCEV *S, BasicBlock *BB) const {
+  switch (S->getSCEVType()) {
+  case scConstant:
+    return true;
+  case scTruncate:
+  case scZeroExtend:
+  case scSignExtend:
+    return properlyDominates(cast<SCEVCastExpr>(S)->getOperand(), BB);
+  case scAddRecExpr: {
+    // This uses a "dominates" query instead of "properly dominates" query
+    // because the instruction which produces the addrec's value is a PHI, and
+    // a PHI effectively properly dominates its entire containing block.
+    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
+    if (!DT->dominates(AR->getLoop()->getHeader(), BB))
+      return false;
+  }
+  // FALL THROUGH into SCEVNAryExpr handling.
+  case scAddExpr:
+  case scMulExpr:
+  case scUMaxExpr:
+  case scSMaxExpr: {
+    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
+         I != E; ++I)
+      if (!properlyDominates(*I, BB))
+        return false;
+    return true;
+  }
+  case scUDivExpr: {
+    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
+    return properlyDominates(UDiv->getLHS(), BB) &&
+           properlyDominates(UDiv->getRHS(), BB);
+  }
+  case scUnknown:
+    if (Instruction *I =
+          dyn_cast<Instruction>(cast<SCEVUnknown>(S)->getValue()))
+      return DT->properlyDominates(I->getParent(), BB);
+    return true;
   case scCouldNotCompute:
     llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
     return false;
