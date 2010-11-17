@@ -1016,7 +1016,10 @@ unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
 
   bool StringInvalid = false;
   const char *SpellingPtr = &SpellingBuffer[0];
-  unsigned TokLen = PP.getSpelling(Tok, SpellingPtr, &StringInvalid);
+  unsigned TokLen = Preprocessor::getSpelling(Tok, SpellingPtr,
+                                              PP.getSourceManager(),
+                                              PP.getLangOptions(),
+                                              &StringInvalid);
   if (StringInvalid)
     return 0;
 

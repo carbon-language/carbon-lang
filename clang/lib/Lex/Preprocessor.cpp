@@ -339,8 +339,10 @@ std::string Preprocessor::getSpelling(const Token &Tok, bool *Invalid) const {
 /// to point to a constant buffer with the data already in it (avoiding a
 /// copy).  The caller is not allowed to modify the returned buffer pointer
 /// if an internal buffer is returned.
-unsigned Preprocessor::getSpelling(const Token &Tok,
-                                   const char *&Buffer, bool *Invalid) const {
+unsigned Preprocessor::getSpelling(const Token &Tok, const char *&Buffer, 
+                                   const SourceManager &SourceMgr,
+                                   const LangOptions &Features,
+                                   bool *Invalid) {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
 
   // If this token is an identifier, just return the string from the identifier

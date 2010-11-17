@@ -664,7 +664,13 @@ public:
   /// copy).  The caller is not allowed to modify the returned buffer pointer
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer, 
-                       bool *Invalid = 0) const;
+                       bool *Invalid = 0) const {
+    return getSpelling(Tok, Buffer, SourceMgr, Features, Invalid);
+  }
+  static unsigned getSpelling(const Token &Tok, const char *&Buffer, 
+                              const SourceManager &SourceMgr,
+                              const LangOptions &Features,
+                              bool *Invalid = 0);
 
   /// getSpelling - This method is used to get the spelling of a token into a
   /// SmallVector. Note that the returned StringRef may not point to the
