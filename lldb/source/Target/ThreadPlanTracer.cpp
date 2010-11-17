@@ -292,5 +292,5 @@ void ThreadPlanAssemblyTracer::Log ()
         }
     }
     
-    stream->Printf ("Single-step: %s", desc.GetString().c_str());
+    stream->Printf ("Single-step: %s\n", desc.GetString().c_str());
 }
