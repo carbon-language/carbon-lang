@@ -769,26 +769,28 @@ Target::GetScratchClangASTContext()
     return m_scratch_ast_context_ap.get();
 }
 
-lldb::UserSettingsControllerSP
-Target::GetSettingsController (bool finish)
+void
+Target::Initialize ()
 {
-    static lldb::UserSettingsControllerSP g_settings_controller (new SettingsController);
-    static bool initialized = false;
+    UserSettingsControllerSP &usc = GetSettingsController();
+    usc.reset (new SettingsController);
+    UserSettingsController::InitializeSettingsController (usc,
+                                                          SettingsController::global_settings_table,
+                                                          SettingsController::instance_settings_table);
+}
 
-    if (!initialized)
-    {
-        initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
-                                                            Target::SettingsController::global_settings_table,
-                                                            Target::SettingsController::instance_settings_table);
-    }
+void
+Target::Terminate ()
+{
+    UserSettingsControllerSP &usc = GetSettingsController();
+    UserSettingsController::FinalizeSettingsController (usc);
+    usc.reset();
+}
 
-    if (finish)
-    {
-        UserSettingsController::FinalizeSettingsController (g_settings_controller);
-        g_settings_controller.reset();
-        initialized = false;
-    }
-
+UserSettingsControllerSP &
+Target::GetSettingsController ()
+{
+    static UserSettingsControllerSP g_settings_controller;
     return g_settings_controller;
 }
 

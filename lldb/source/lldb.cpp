@@ -57,12 +57,13 @@ lldb_private::Initialize ()
     if (!g_inited)
     {
         g_inited = true;
+        Log::Initialize();
         Timer::Initialize ();
         Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
-
-        Log::Callbacks log_callbacks = { DisableLog, EnableLog, ListLogCategories };
-
-        Log::RegisterLogChannel ("lldb", log_callbacks);
+        
+        Target::Initialize ();
+        Process::Initialize ();
+        Thread::Initialize ();
         DisassemblerLLVM::Initialize();
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
@@ -86,10 +87,6 @@ lldb_private::Initialize ()
         //ProcessMacOSX::Initialize();
         SymbolVendorMacOSX::Initialize();
 #endif
-	Debugger::GetSettingsController (false);
-        Target::GetSettingsController (false);
-	Process::GetSettingsController (false);
-        Thread::GetSettingsController (false);
 #ifdef __linux__
         ProcessLinux::Initialize();
 #endif
@@ -128,14 +125,15 @@ lldb_private::Terminate ()
     SymbolVendorMacOSX::Terminate();
 #endif
 
-    Thread::GetSettingsController (true);
-    Process::GetSettingsController (true);
-    Target::GetSettingsController (true);
-    Debugger::GetSettingsController (true);
-    
+    Thread::Terminate ();
+    Process::Terminate ();
+    Target::Terminate ();
+
 #ifdef __linux__
     ProcessLinux::Terminate();
 #endif
+
+    Log::Terminate();
 }
 
 extern "C" const double LLDBVersionNumber;

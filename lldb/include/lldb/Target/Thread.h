@@ -92,14 +92,14 @@ class Thread :
 {
 public:
 
-    class ThreadSettingsController : public UserSettingsController
+    class SettingsController : public UserSettingsController
     {
     public:
         
-        ThreadSettingsController ();
+        SettingsController ();
 
         virtual
-        ~ThreadSettingsController ();
+        ~SettingsController ();
         
         static SettingEntry global_settings_table[];
         static SettingEntry instance_settings_table[];
@@ -113,7 +113,7 @@ public:
 
         // Class-wide settings.
 
-        DISALLOW_COPY_AND_ASSIGN (ThreadSettingsController);
+        DISALLOW_COPY_AND_ASSIGN (SettingsController);
     };
 
     class RegisterCheckpoint
@@ -168,8 +168,14 @@ public:
     void
     UpdateInstanceName ();
 
-    static lldb::UserSettingsControllerSP
-    GetSettingsController (bool finish = false);
+    static void
+    Initialize ();
+
+    static void
+    Terminate ();
+
+    static lldb::UserSettingsControllerSP &
+    GetSettingsController ();
 
     Thread (Process &process, lldb::tid_t tid);
     virtual ~Thread();

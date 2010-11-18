@@ -389,7 +389,7 @@ Log::DisableAllLogChannels (Stream *feedback_strm)
 {
     CallbackMap &callback_map = GetCallbackMap ();
     CallbackMapIter pos, end = callback_map.end();
-    Args args ("all");
+    Args args;
 
     for (pos = callback_map.begin(); pos != end; ++pos)
         pos->second.disable (args, feedback_strm);
@@ -398,6 +398,19 @@ Log::DisableAllLogChannels (Stream *feedback_strm)
     LogChannelMapIter channel_pos, channel_end = channel_map.end();
     for (channel_pos = channel_map.begin(); channel_pos != channel_end; ++channel_pos)
         channel_pos->second->Disable (args, feedback_strm);
+}
+
+void
+Log::Initialize()
+{
+    Log::Callbacks log_callbacks = { DisableLog, EnableLog, ListLogCategories };
+    Log::RegisterLogChannel ("lldb", log_callbacks);
+}
+
+void
+Log::Terminate ()
+{
+    DisableAllLogChannels (NULL);
 }
 
 void

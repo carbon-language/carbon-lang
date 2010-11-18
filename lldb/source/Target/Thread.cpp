@@ -930,26 +930,29 @@ Thread::GetSP ()
     return m_process.GetThreadList().GetThreadSPForThreadPtr(this);
 }
 
-lldb::UserSettingsControllerSP
-Thread::GetSettingsController (bool finish)
+
+void
+Thread::Initialize ()
 {
-    static UserSettingsControllerSP g_settings_controller (new ThreadSettingsController);
-    static bool initialized = false;
+    UserSettingsControllerSP &usc = GetSettingsController();
+    usc.reset (new SettingsController);
+    UserSettingsController::InitializeSettingsController (usc,
+                                                          SettingsController::global_settings_table,
+                                                          SettingsController::instance_settings_table);
+}
 
-    if (!initialized)
-    {
-        initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
-                                                             Thread::ThreadSettingsController::global_settings_table,
-                                                             Thread::ThreadSettingsController::instance_settings_table);
-    }
+void
+Thread::Terminate ()
+{
+    UserSettingsControllerSP &usc = GetSettingsController();
+    UserSettingsController::FinalizeSettingsController (usc);
+    usc.reset();
+}
 
-    if (finish)
-    {
-        UserSettingsController::FinalizeSettingsController (g_settings_controller);
-        g_settings_controller.reset();
-        initialized = false;
-    }
-
+UserSettingsControllerSP &
+Thread::GetSettingsController ()
+{
+    static UserSettingsControllerSP g_settings_controller;
     return g_settings_controller;
 }
 
@@ -1010,24 +1013,24 @@ Thread::RunModeAsCString (lldb::RunMode mode)
     return unknown_state_string;
 }
 
-#pragma mark "Thread::ThreadSettingsController"
+#pragma mark "Thread::SettingsController"
 //--------------------------------------------------------------
-// class Thread::ThreadSettingsController
+// class Thread::SettingsController
 //--------------------------------------------------------------
 
-Thread::ThreadSettingsController::ThreadSettingsController () :
+Thread::SettingsController::SettingsController () :
     UserSettingsController ("thread", Process::GetSettingsController())
 {
     m_default_settings.reset (new ThreadInstanceSettings (*this, false, 
                                                           InstanceSettings::GetDefaultName().AsCString()));
 }
 
-Thread::ThreadSettingsController::~ThreadSettingsController ()
+Thread::SettingsController::~SettingsController ()
 {
 }
 
 lldb::InstanceSettingsSP
-Thread::ThreadSettingsController::CreateInstanceSettings (const char *instance_name)
+Thread::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
     ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*(Thread::GetSettingsController().get()),
                                                                        false, instance_name);
@@ -1218,11 +1221,11 @@ ThreadInstanceSettings::GetTraceThreadVarName ()
 }
 
 //--------------------------------------------------
-// ThreadSettingsController Variable Tables
+// SettingsController Variable Tables
 //--------------------------------------------------
 
 SettingEntry
-Thread::ThreadSettingsController::global_settings_table[] =
+Thread::SettingsController::global_settings_table[] =
 {
   //{ "var-name",    var-type  ,        "default", enum-table, init'd, hidden, "help-text"},
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
@@ -1230,7 +1233,7 @@ Thread::ThreadSettingsController::global_settings_table[] =
 
 
 SettingEntry
-Thread::ThreadSettingsController::instance_settings_table[] =
+Thread::SettingsController::instance_settings_table[] =
 {
   //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
     { "step-avoid-regexp",  eSetVarTypeString,      "",  NULL,       false,  false,  "A regular expression defining functions step-in won't stop in." },

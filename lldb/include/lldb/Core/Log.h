@@ -100,6 +100,12 @@ public:
     static void
     ListAllLogChannels (Stream *strm);
 
+    static void
+    Initialize ();
+
+    static void
+    Terminate ();
+
     //------------------------------------------------------------------
     // Member functions
     //------------------------------------------------------------------

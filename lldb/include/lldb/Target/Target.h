@@ -123,8 +123,14 @@ public:
         DISALLOW_COPY_AND_ASSIGN (SettingsController);
     };
 
-    static lldb::UserSettingsControllerSP
-    GetSettingsController (bool finish = false);
+    static void
+    Initialize ();
+
+    static void
+    Terminate ();
+
+    static lldb::UserSettingsControllerSP &
+    GetSettingsController ();
 
     static ArchSpec
     GetDefaultArchitecture ();

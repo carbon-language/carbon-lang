@@ -52,12 +52,27 @@ GetDebuggerList()
 
 #pragma mark Debugger
 
+UserSettingsControllerSP &
+Debugger::GetSettingsController ()
+{
+    static UserSettingsControllerSP g_settings_controller;
+    return g_settings_controller;
+}
+
 void
 Debugger::Initialize ()
 {
     if (g_shared_debugger_refcount == 0)
+    {
         lldb_private::Initialize();
+        UserSettingsControllerSP &usc = GetSettingsController();
+        usc.reset (new SettingsController);
+        UserSettingsController::InitializeSettingsController (usc,
+                                                              SettingsController::global_settings_table,
+                                                              SettingsController::instance_settings_table);
+    }
     g_shared_debugger_refcount++;
+
 }
 
 void
@@ -68,10 +83,16 @@ Debugger::Terminate ()
         g_shared_debugger_refcount--;
         if (g_shared_debugger_refcount == 0)
         {
+            UserSettingsControllerSP &usc = GetSettingsController();
+            UserSettingsController::FinalizeSettingsController (usc);
+            usc.reset();
             lldb_private::WillTerminate();
             lldb_private::Terminate();
         }
     }
+    // Clear our master list of debugger objects
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    GetDebuggerList().clear();
 }
 
 DebuggerSP
@@ -144,7 +165,7 @@ Debugger::FindTargetWithProcessID (lldb::pid_t pid)
 
 Debugger::Debugger () :
     UserID (g_unique_id++),
-    DebuggerInstanceSettings (*(Debugger::GetSettingsController().get())),
+    DebuggerInstanceSettings (*Debugger::GetSettingsController()),
     m_input_comm("debugger.input"),
     m_input_file (),
     m_output_file (),
@@ -534,29 +555,6 @@ Debugger::FindDebuggerWithID (lldb::user_id_t id)
         }
     }
     return debugger_sp;
-}
-
-lldb::UserSettingsControllerSP &
-Debugger::GetSettingsController (bool finish)
-{
-    static lldb::UserSettingsControllerSP g_settings_controller (new SettingsController);
-    static bool initialized = false;
-
-    if (!initialized)
-    {
-        initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
-                                                             Debugger::SettingsController::global_settings_table,
-                                                             Debugger::SettingsController::instance_settings_table);
-    }
-
-    if (finish)
-    {
-        UserSettingsControllerSP parent = g_settings_controller->GetParent();
-        if (parent)
-            parent->RemoveChild (g_settings_controller);
-        g_settings_controller.reset();
-    }
-    return g_settings_controller;
 }
 
 static void
@@ -1261,7 +1259,7 @@ Debugger::SettingsController::~SettingsController ()
 lldb::InstanceSettingsSP
 Debugger::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
-    DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*(Debugger::GetSettingsController().get()),
+    DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*Debugger::GetSettingsController(),
                                                                            false, instance_name);
     lldb::InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;
@@ -1306,7 +1304,7 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
 }
 
 DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
-    InstanceSettings (*(Debugger::GetSettingsController().get()), CreateInstanceName ().AsCString()),
+    InstanceSettings (*Debugger::GetSettingsController(), CreateInstanceName ().AsCString()),
     m_prompt (rhs.m_prompt),
     m_frame_format (rhs.m_frame_format),
     m_thread_format (rhs.m_thread_format),

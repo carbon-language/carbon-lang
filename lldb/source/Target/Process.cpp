@@ -2237,26 +2237,29 @@ Process::PopProcessInputReader ()
         m_target.GetDebugger().PopInputReader (m_process_input_reader);
 }
 
-lldb::UserSettingsControllerSP
-Process::GetSettingsController (bool finish)
+
+void
+Process::Initialize ()
 {
-    static UserSettingsControllerSP g_settings_controller (new SettingsController);
-    static bool initialized = false;
+    UserSettingsControllerSP &usc = GetSettingsController();
+    usc.reset (new SettingsController);
+    UserSettingsController::InitializeSettingsController (usc,
+                                                          SettingsController::global_settings_table,
+                                                          SettingsController::instance_settings_table);
+}
 
-    if (!initialized)
-    {
-        initialized = UserSettingsController::InitializeSettingsController (g_settings_controller,
-                                                             Process::SettingsController::global_settings_table,
-                                                             Process::SettingsController::instance_settings_table);
-    }
+void
+Process::Terminate ()
+{
+    UserSettingsControllerSP &usc = GetSettingsController();
+    UserSettingsController::FinalizeSettingsController (usc);
+    usc.reset();
+}
 
-    if (finish)
-    {
-        UserSettingsController::FinalizeSettingsController (g_settings_controller);
-        g_settings_controller.reset();
-        initialized = false;
-    }
-
+UserSettingsControllerSP &
+Process::GetSettingsController ()
+{
+    static UserSettingsControllerSP g_settings_controller;
     return g_settings_controller;
 }
 

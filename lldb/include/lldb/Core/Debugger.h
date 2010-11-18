@@ -247,7 +247,7 @@ public:
     };
 
     static lldb::UserSettingsControllerSP &
-    GetSettingsController (bool finish = false);
+    GetSettingsController ();
 
     static lldb::DebuggerSP
     CreateInstance ();
