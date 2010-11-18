@@ -61,8 +61,8 @@ class NamespaceTestCase(TestBase):
                      '(my_uint_t) anon_uint = 0',
                      '(A::uint_t) a_uint = 1',
                      '(A::B::uint_t) b_uint = 2',
-                     '(Y::uint_t) y_uint = 3']        
-            
+                     '(Y::uint_t) y_uint = 3']
+
         # 'frame variable' displays the local variables with type information.
         self.expect('frame variable', VARIABLES_DISPLAYED_CORRECTLY,
             substrs = slist)
