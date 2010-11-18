@@ -249,6 +249,9 @@ class PseudoInst<dag oops, dag iops, InstrItinClass itin, list<dag> pattern>
 class ARMPseudoInst<dag oops, dag iops, InstrItinClass itin,
                     list<dag> pattern>
   : PseudoInst<oops, iops, itin, pattern> {
+  // Default these to 4byte size, as they're almost always expanded to a
+  // single instruction. Any exceptions can override the SZ field value.
+  let SZ = Size4Bytes;
   list<Predicate> Predicates = [IsARM];
 }
 
