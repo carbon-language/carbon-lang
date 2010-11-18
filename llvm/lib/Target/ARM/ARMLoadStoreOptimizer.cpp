@@ -212,10 +212,12 @@ namespace llvm {
 AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
   switch (Opcode) {
   default: llvm_unreachable("Unhandled opcode!");
+  case ARM::LDMIA_RET:
   case ARM::LDMIA:
   case ARM::LDMIA_UPD:
   case ARM::STMIA:
   case ARM::STMIA_UPD:
+  case ARM::t2LDMIA_RET:
   case ARM::t2LDMIA:
   case ARM::t2LDMIA_UPD:
   case ARM::t2STMIA:
