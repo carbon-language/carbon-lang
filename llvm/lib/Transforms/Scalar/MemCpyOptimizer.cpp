@@ -325,6 +325,8 @@ namespace {
     bool processMemMove(MemMoveInst *M);
     bool performCallSlotOptzn(Instruction *cpy, Value *cpyDst, Value *cpySrc,
                               uint64_t cpyLen, CallInst *C);
+    bool processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
+                                       uint64_t MSize);
     bool iterateOnFunction(Function &F);
   };
   
@@ -665,6 +667,84 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   return true;
 }
 
+/// processMemCpyMemCpyDependence - We've found that the (upward scanning)
+/// memory dependence of memcpy 'M' is the memcpy 'MDep'.  Try to simplify M to
+/// copy from MDep's input if we can.  MSize is the size of M's copy.
+/// 
+bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
+                                              uint64_t MSize) {
+  // We can only transforms memcpy's where the dest of one is the source of the
+  // other.
+  if (M->getSource() != MDep->getDest())
+    return false;
+  
+  // Second, the length of the memcpy's must be the same, or the preceeding one
+  // must be larger than the following one.
+  ConstantInt *C1 = dyn_cast<ConstantInt>(MDep->getLength());
+  if (!C1) return false;
+  
+  uint64_t DepSize = C1->getValue().getZExtValue();
+  
+  if (DepSize < MSize)
+    return false;
+  
+  // Finally, we have to make sure that the dest of the second does not
+  // alias the source of the first
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  if (AA.alias(M->getRawDest(), MSize, MDep->getRawSource(), DepSize) !=
+      AliasAnalysis::NoAlias)
+    return false;
+  else if (AA.alias(M->getRawDest(), MSize, M->getRawSource(), MSize) !=
+           AliasAnalysis::NoAlias)
+    return false;
+  else if (AA.alias(MDep->getRawDest(), DepSize, MDep->getRawSource(), DepSize)
+           != AliasAnalysis::NoAlias)
+    return false;
+  
+  // If all checks passed, then we can transform these memcpy's
+  const Type *ArgTys[3] = { M->getRawDest()->getType(),
+    MDep->getRawSource()->getType(),
+    M->getLength()->getType() };
+  Function *MemCpyFun =
+    Intrinsic::getDeclaration(M->getParent()->getParent()->getParent(),
+                              M->getIntrinsicID(), ArgTys, 3);
+  
+  // Make sure to use the lesser of the alignment of the source and the dest
+  // since we're changing where we're reading from, but don't want to increase
+  // the alignment past what can be read from or written to.
+  // TODO: Is this worth it if we're creating a less aligned memcpy? For
+  // example we could be moving from movaps -> movq on x86.
+  unsigned Align = std::min(MDep->getAlignmentCst()->getZExtValue(),
+                            M->getAlignmentCst()->getZExtValue());
+  LLVMContext &Context = M->getContext();
+  ConstantInt *AlignCI = ConstantInt::get(Type::getInt32Ty(Context), Align);
+  Value *Args[5] = {
+    M->getRawDest(), MDep->getRawSource(), M->getLength(),
+    AlignCI, M->getVolatileCst()
+  };
+  CallInst *C = CallInst::Create(MemCpyFun, Args, Args+5, "", M);
+  
+  
+  MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
+
+  // If C and M don't interfere, then this is a valid transformation.  If they
+  // did, this would mean that the two sources overlap, which would be bad.
+  MemDepResult dep = MD.getDependency(C);
+  if (dep.isClobber() && dep.getInst() == MDep) {
+    MD.removeInstruction(M);
+    M->eraseFromParent();
+    ++NumMemCpyInstr;
+    return true;
+  }
+  
+  // Otherwise, there was no point in doing this, so we remove the call we
+  // inserted and act like nothing happened.
+  MD.removeInstruction(C);
+  C->eraseFromParent();
+  return false;
+}
+
+
 /// processMemCpy - perform simplification of memcpy's.  If we have memcpy A
 /// which copies X to Y, and memcpy B which copies Y to Z, then we can rewrite
 /// B to be a memcpy from X to Z (or potentially a memmove, depending on
@@ -683,85 +763,16 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   MemDepResult dep = MD.getDependency(M);
   if (!dep.isClobber())
     return false;
-  if (!isa<MemCpyInst>(dep.getInst())) {
-    if (CallInst *C = dyn_cast<CallInst>(dep.getInst())) {
-      bool changed = performCallSlotOptzn(M, M->getDest(), M->getSource(),
-                                  cpyLen->getZExtValue(), C);
-      if (changed) M->eraseFromParent();
-      return changed;
-    }
-    return false;
-  }
   
-  MemCpyInst *MDep = cast<MemCpyInst>(dep.getInst());
-  
-  // We can only transforms memcpy's where the dest of one is the source of the
-  // other
-  if (M->getSource() != MDep->getDest())
-    return false;
-  
-  // Second, the length of the memcpy's must be the same, or the preceeding one
-  // must be larger than the following one.
-  ConstantInt *C1 = dyn_cast<ConstantInt>(MDep->getLength());
-  ConstantInt *C2 = dyn_cast<ConstantInt>(M->getLength());
-  if (!C1 || !C2)
-    return false;
-  
-  uint64_t DepSize = C1->getValue().getZExtValue();
-  uint64_t CpySize = C2->getValue().getZExtValue();
-  
-  if (DepSize < CpySize)
-    return false;
-  
-  // Finally, we have to make sure that the dest of the second does not
-  // alias the source of the first
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  if (AA.alias(M->getRawDest(), CpySize, MDep->getRawSource(), DepSize) !=
-      AliasAnalysis::NoAlias)
-    return false;
-  else if (AA.alias(M->getRawDest(), CpySize, M->getRawSource(), CpySize) !=
-           AliasAnalysis::NoAlias)
-    return false;
-  else if (AA.alias(MDep->getRawDest(), DepSize, MDep->getRawSource(), DepSize)
-           != AliasAnalysis::NoAlias)
-    return false;
-  
-  // If all checks passed, then we can transform these memcpy's
-  const Type *ArgTys[3] = { M->getRawDest()->getType(),
-                            MDep->getRawSource()->getType(),
-                            M->getLength()->getType() };
-  Function *MemCpyFun = Intrinsic::getDeclaration(
-                                 M->getParent()->getParent()->getParent(),
-                                 M->getIntrinsicID(), ArgTys, 3);
+  if (MemCpyInst *MDep = dyn_cast<MemCpyInst>(dep.getInst()))
+    return processMemCpyMemCpyDependence(M, MDep, cpyLen->getZExtValue());
     
-  // Make sure to use the lesser of the alignment of the source and the dest
-  // since we're changing where we're reading from, but don't want to increase
-  // the alignment past what can be read from or written to.
-  // TODO: Is this worth it if we're creating a less aligned memcpy? For
-  // example we could be moving from movaps -> movq on x86.
-  unsigned Align = std::min(MDep->getAlignmentCst()->getZExtValue(),
-                            M->getAlignmentCst()->getZExtValue());
-  LLVMContext &Context = M->getContext();
-  ConstantInt *AlignCI = ConstantInt::get(Type::getInt32Ty(Context), Align);
-  Value *Args[5] = {
-    M->getRawDest(), MDep->getRawSource(), M->getLength(),
-    AlignCI, M->getVolatileCst()
-  };
-  CallInst *C = CallInst::Create(MemCpyFun, Args, Args+5, "", M);
-  
-  // If C and M don't interfere, then this is a valid transformation.  If they
-  // did, this would mean that the two sources overlap, which would be bad.
-  if (MD.getDependency(C) == dep) {
-    MD.removeInstruction(M);
-    M->eraseFromParent();
-    ++NumMemCpyInstr;
-    return true;
+  if (CallInst *C = dyn_cast<CallInst>(dep.getInst())) {
+    bool changed = performCallSlotOptzn(M, M->getDest(), M->getSource(),
+                                        cpyLen->getZExtValue(), C);
+    if (changed) M->eraseFromParent();
+    return changed;
   }
-  
-  // Otherwise, there was no point in doing this, so we remove the call we
-  // inserted and act like nothing happened.
-  MD.removeInstruction(C);
-  C->eraseFromParent();
   return false;
 }
 
