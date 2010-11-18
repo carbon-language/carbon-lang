@@ -688,11 +688,14 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   if (DepSize < MSize)
     return false;
   
-  // Finally, we have to make sure that the dest of the second does not
-  // alias the source of the first.
+  Intrinsic::ID ResultFn = Intrinsic::memcpy;
+  
+  // If the dest of the second might alias the source of the first, then the
+  // source and dest might overlap.  We still want to eliminate the intermediate
+  // value, but we have to generate a memmove instead of memcpy.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   if (!AA.isNoAlias(M->getRawDest(), MSize, MDep->getRawSource(), DepSize))
-    return false;
+    ResultFn = Intrinsic::memmove;
   
   // If all checks passed, then we can transform these memcpy's
   const Type *ArgTys[3] = {
@@ -702,7 +705,7 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   };
   Function *MemCpyFun =
     Intrinsic::getDeclaration(M->getParent()->getParent()->getParent(),
-                              M->getIntrinsicID(), ArgTys, 3);
+                              ResultFn, ArgTys, 3);
   
   // Make sure to use the lesser of the alignment of the source and the dest
   // since we're changing where we're reading from, but don't want to increase

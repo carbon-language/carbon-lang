@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -memcpyopt -dse -S | grep {call.*memcpy} | count 1
+; RUN: opt < %s -basicaa -memcpyopt -dse -S | FileCheck %s
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i686-apple-darwin9"
@@ -20,7 +20,7 @@ entry:
 
 ; CHECK: @test1
 ; CHECK: call void @ccoshl
-; CHECK: call @llvm.memcpy
+; CHECK: call void @llvm.memcpy
 ; CHECK-NOT: llvm.memcpy
 ; CHECK: ret void
 	ret void
@@ -29,3 +29,36 @@ entry:
 declare void @ccoshl({ x86_fp80, x86_fp80 }* sret , x86_fp80, x86_fp80) nounwind 
 
 declare void @llvm.memcpy.i32(i8*, i8*, i32, i32) nounwind 
+
+
+; The intermediate alloca and one of the memcpy's should be eliminated, the
+; other should be related with a memmove.
+define void @test2(i8* %P, i8* %Q) nounwind  {
+	%memtmp = alloca { x86_fp80, x86_fp80 }, align 16
+	%R = bitcast { x86_fp80, x86_fp80 }* %memtmp to i8*
+	call void @llvm.memcpy.i32( i8* %R, i8* %P, i32 32, i32 16 )
+	call void @llvm.memcpy.i32( i8* %Q, i8* %R, i32 32, i32 16 )
+        ret void
+        
+; CHECK: @test2
+; CHECK-NEXT: call void @llvm.memmove{{.*}}(i8* %Q, i8* %P
+; CHECK-NEXT: ret void
+}
+
+
+
+
+@x = external global { x86_fp80, x86_fp80 }
+
+define void @test3({ x86_fp80, x86_fp80 }* noalias sret %agg.result) nounwind  {
+	%x.0 = alloca { x86_fp80, x86_fp80 }
+	%x.01 = bitcast { x86_fp80, x86_fp80 }* %x.0 to i8*
+	call void @llvm.memcpy.i32( i8* %x.01, i8* bitcast ({ x86_fp80, x86_fp80 }* @x to i8*), i32 32, i32 16 )
+	%agg.result2 = bitcast { x86_fp80, x86_fp80 }* %agg.result to i8*
+	call void @llvm.memcpy.i32( i8* %agg.result2, i8* %x.01, i32 32, i32 16 )
+	ret void
+; CHECK: @test3
+; CHECK-NEXT: %agg.result2 = bitcast 
+; CHECK-NEXT: call void @llvm.memcpy
+; CHECK-NEXT: ret void
+}
