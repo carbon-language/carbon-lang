@@ -6712,7 +6712,8 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
                          LLD->isVolatile(), LLD->isNonTemporal(),
                          LLD->getAlignment());
     } else {
-      Load = DAG.getExtLoad(LLD->getExtensionType(),
+      Load = DAG.getExtLoad(LLD->getExtensionType() == ISD::EXTLOAD ?
+                            RLD->getExtensionType() : LLD->getExtensionType(),
                             TheSelect->getValueType(0),
                             TheSelect->getDebugLoc(),
                             // FIXME: Discards pointer info.
