@@ -126,12 +126,12 @@ def t_addrmode_sp : Operand<i32>,
 // these will always be in pairs, and asserts if it finds otherwise. Better way?
 let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def tADJCALLSTACKUP :
-PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary, "",
+PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary,
            [(ARMcallseq_end imm:$amt1, imm:$amt2)]>,
        Requires<[IsThumb, IsThumb1Only]>;
 
 def tADJCALLSTACKDOWN :
-PseudoInst<(outs), (ins i32imm:$amt), NoItinerary, "",
+PseudoInst<(outs), (ins i32imm:$amt), NoItinerary,
            [(ARMcallseq_start imm:$amt)]>,
        Requires<[IsThumb, IsThumb1Only]>;
 }
@@ -868,7 +868,7 @@ def tUXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
 let usesCustomInserter = 1 in  // Expanded after instruction selection.
   def tMOVCCr_pseudo :
   PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, pred:$cc),
-              NoItinerary, "",
+              NoItinerary,
              [/*(set tGPR:$dst, (ARMcmov tGPR:$false, tGPR:$true, imm:$cc))*/]>;
 
 
@@ -1023,7 +1023,7 @@ def : T1Pat<(i32 imm0_255_comp:$src),
 // scheduling.
 let isReMaterializable = 1 in
 def tLDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
-                   NoItinerary, "",
+                   NoItinerary,
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb, IsThumb1Only]>;

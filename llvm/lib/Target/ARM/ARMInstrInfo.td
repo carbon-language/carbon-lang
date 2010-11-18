@@ -950,18 +950,18 @@ multiclass AI_str1<bit isByte, string opc, InstrItinClass iii,
 let neverHasSideEffects = 1, isNotDuplicable = 1 in
 def CONSTPOOL_ENTRY :
 PseudoInst<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
-                    i32imm:$size), NoItinerary, "", []>;
+                    i32imm:$size), NoItinerary, []>;
 
 // FIXME: Marking these as hasSideEffects is necessary to prevent machine DCE
 // from removing one half of the matched pairs. That breaks PEI, which assumes
 // these will always be in pairs, and asserts if it finds otherwise. Better way?
 let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def ADJCALLSTACKUP :
-PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2, pred:$p), NoItinerary, "",
+PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2, pred:$p), NoItinerary,
            [(ARMcallseq_end timm:$amt1, timm:$amt2)]>;
 
 def ADJCALLSTACKDOWN :
-PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary, "",
+PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
            [(ARMcallseq_start timm:$amt)]>;
 }
 
@@ -1120,28 +1120,28 @@ def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
 // Address computation and loads and stores in PIC mode.
 let isNotDuplicable = 1 in {
 def PICADD : ARMPseudoInst<(outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
-                           IIC_iALUr, "",
+                           IIC_iALUr,
                            [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
 
 let AddedComplexity = 10 in {
 def PICLDR  : ARMPseudoInst<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_r, "",
+                            IIC_iLoad_r,
                             [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
 def PICLDRH : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_bh_r, "",
+                            IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (zextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_bh_r, "",
+                            IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (zextloadi8 addrmodepc:$addr))]>;
 
 def PICLDRSH : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_bh_r, "",
+                            IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (sextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRSB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_bh_r, "",
+                            IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
@@ -1439,7 +1439,7 @@ let isBranch = 1, isTerminator = 1 in {
     }
     def BR_JTadd : PseudoInst<(outs),
                    (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
-                   IIC_Br, "",
+                   IIC_Br,
                    [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
                      imm:$id)]>;
     } // isNotDuplicable = 1, isIndirectBranch = 1
@@ -1993,7 +1993,7 @@ def : ARMPat<(or GPR:$src, 0xffff0000), (MOVTi16 GPR:$src, 0xffff)>,
       Requires<[IsARM, HasV6T2]>;
 
 let Uses = [CPSR] in
-def RRX: PseudoInst<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVsi, "",
+def RRX: PseudoInst<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVsi,
                     [(set GPR:$Rd, (ARMrrx GPR:$Rm))]>, UnaryDP,
                     Requires<[IsARM]>;
 
@@ -2001,10 +2001,10 @@ def RRX: PseudoInst<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVsi, "",
 // due to flag operands.
 
 let Defs = [CPSR] in {
-def MOVsrl_flag : PseudoInst<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi, "",
+def MOVsrl_flag : PseudoInst<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
                       [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>, UnaryDP,
                       Requires<[IsARM]>;
-def MOVsra_flag : PseudoInst<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi, "",
+def MOVsra_flag : PseudoInst<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
                       [(set GPR:$dst, (ARMsra_flag GPR:$src))]>, UnaryDP,
                       Requires<[IsARM]>;
 }
@@ -3000,11 +3000,11 @@ let usesCustomInserter = 1, isBranch = 1, isTerminator = 1,
     Defs = [CPSR] in {
 def BCCi64 : PseudoInst<(outs),
     (ins i32imm:$cc, GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, brtarget:$dst),
-     IIC_Br, "",
+     IIC_Br,
     [(ARMBcci64 imm:$cc, GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, bb:$dst)]>;
 
 def BCCZi64 : PseudoInst<(outs),
-     (ins i32imm:$cc, GPR:$lhs1, GPR:$lhs2, brtarget:$dst), IIC_Br, "",
+     (ins i32imm:$cc, GPR:$lhs1, GPR:$lhs2, brtarget:$dst), IIC_Br,
     [(ARMBcci64 imm:$cc, GPR:$lhs1, GPR:$lhs2, 0, 0, bb:$dst)]>;
 } // usesCustomInserter
 
@@ -3078,7 +3078,7 @@ def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
 let isMoveImm = 1 in
 def MOVCCi32imm : PseudoInst<(outs GPR:$Rd),
                              (ins GPR:$false, i32imm:$src, pred:$p),
-                  IIC_iCMOVix2, "", []>, RegConstraint<"$false = $Rd">;
+                  IIC_iCMOVix2, []>, RegConstraint<"$false = $Rd">;
 
 let isMoveImm = 1 in
 def MVNCCi : AI1<0b1111, (outs GPR:$Rd),
@@ -3141,78 +3141,78 @@ def ISB : AInoP<(outs), (ins), MiscFrm, NoItinerary, "isb", "", []>,
 let usesCustomInserter = 1 in {
   let Uses = [CPSR] in {
     def ATOMIC_LOAD_ADD_I8 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_add_8 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_SUB_I8 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_sub_8 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_AND_I8 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_and_8 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_OR_I8 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_or_8 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_XOR_I8 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_xor_8 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_NAND_I8 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_nand_8 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_ADD_I16 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_add_16 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_SUB_I16 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_sub_16 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_AND_I16 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_and_16 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_OR_I16 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_or_16 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_XOR_I16 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_xor_16 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_NAND_I16 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_nand_16 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_ADD_I32 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_add_32 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_SUB_I32 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_sub_32 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_AND_I32 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_and_32 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_OR_I32 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_or_32 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_XOR_I32 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_xor_32 GPR:$ptr, GPR:$incr))]>;
     def ATOMIC_LOAD_NAND_I32 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_nand_32 GPR:$ptr, GPR:$incr))]>;
 
     def ATOMIC_SWAP_I8 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary,
       [(set GPR:$dst, (atomic_swap_8 GPR:$ptr, GPR:$new))]>;
     def ATOMIC_SWAP_I16 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary,
       [(set GPR:$dst, (atomic_swap_16 GPR:$ptr, GPR:$new))]>;
     def ATOMIC_SWAP_I32 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary,
       [(set GPR:$dst, (atomic_swap_32 GPR:$ptr, GPR:$new))]>;
 
     def ATOMIC_CMP_SWAP_I8 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
       [(set GPR:$dst, (atomic_cmp_swap_8 GPR:$ptr, GPR:$old, GPR:$new))]>;
     def ATOMIC_CMP_SWAP_I16 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
       [(set GPR:$dst, (atomic_cmp_swap_16 GPR:$ptr, GPR:$old, GPR:$new))]>;
     def ATOMIC_CMP_SWAP_I32 : PseudoInst<
-      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary, "",
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
       [(set GPR:$dst, (atomic_cmp_swap_32 GPR:$ptr, GPR:$old, GPR:$new))]>;
 }
 }
@@ -3336,7 +3336,7 @@ def Int_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
 // that need the instruction size).
 let isBarrier = 1, hasSideEffects = 1 in
 def Int_eh_sjlj_dispatchsetup :
- PseudoInst<(outs), (ins GPR:$src), NoItinerary, "",
+ PseudoInst<(outs), (ins GPR:$src), NoItinerary,
             [(ARMeh_sjlj_dispatchsetup GPR:$src)]>,
               Requires<[IsDarwin]>;
 
@@ -3351,7 +3351,7 @@ def Int_eh_sjlj_dispatchsetup :
 // as a single unit instead of having to handle reg inputs.
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1, isMoveImm = 1 in
-def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2, "",
+def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                            [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;
 

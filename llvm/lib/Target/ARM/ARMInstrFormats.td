@@ -234,8 +234,7 @@ class InstThumb<AddrMode am, SizeFlagVal sz, IndexMode im,
                 Format f, Domain d, string cstr, InstrItinClass itin>
   : InstTemplate<am, sz, im, f, d, cstr, itin>;
 
-class PseudoInst<dag oops, dag iops, InstrItinClass itin,
-                 string asm, list<dag> pattern>
+class PseudoInst<dag oops, dag iops, InstrItinClass itin, list<dag> pattern>
   // FIXME: This really should derive from InstTemplate instead, as pseudos
   //        don't need encoding information. TableGen doesn't like that
   //        currently. Need to figure out why and fix it.
@@ -243,14 +242,13 @@ class PseudoInst<dag oops, dag iops, InstrItinClass itin,
             "", itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
-  let AsmString = asm;
   let Pattern = pattern;
 }
 
 // PseudoInst that's ARM-mode only.
 class ARMPseudoInst<dag oops, dag iops, InstrItinClass itin,
-                    string asm, list<dag> pattern>
-  : PseudoInst<oops, iops, itin, asm, pattern> {
+                    list<dag> pattern>
+  : PseudoInst<oops, iops, itin, pattern> {
   list<Predicate> Predicates = [IsARM];
 }
 

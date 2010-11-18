@@ -2627,7 +2627,7 @@ def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm:$imm),
 let isMoveImm = 1 in
 def t2MOVCCi32imm : PseudoInst<(outs rGPR:$dst),
                                (ins rGPR:$false, i32imm:$src, pred:$p),
-                    IIC_iCMOVix2, "", []>, RegConstraint<"$false = $dst">;
+                    IIC_iCMOVix2, []>, RegConstraint<"$false = $dst">;
 
 let isMoveImm = 1 in
 def t2MVNCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
@@ -3072,7 +3072,7 @@ def t2RFEIA  : T2I<(outs), (ins rGPR:$base), NoItinerary, "rfeia", "\t$base",
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1, isMoveImm = 1 in
 def t2MOVi32imm : PseudoInst<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
-                            "", [(set rGPR:$dst, (i32 imm:$src))]>,
+                            [(set rGPR:$dst, (i32 imm:$src))]>,
                             Requires<[IsThumb, HasV6T2]>;
 
 // ConstantPool, GlobalAddress, and JumpTable
@@ -3090,7 +3090,7 @@ def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 // scheduling.
 let canFoldAsLoad = 1, isReMaterializable = 1 in
 def t2LDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
-                   IIC_iLoadiALU, "",
+                   IIC_iLoadiALU,
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb2]>;

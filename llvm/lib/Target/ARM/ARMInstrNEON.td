@@ -3891,10 +3891,10 @@ def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
 // Pseudo vector move instructions for QQ and QQQQ registers. This should
 // be expanded after register allocation is completed.
 def  VMOVQQ   : PseudoInst<(outs QQPR:$dst), (ins QQPR:$src),
-                NoItinerary, "", []>;
+                NoItinerary, []>;
 
 def  VMOVQQQQ : PseudoInst<(outs QQQQPR:$dst), (ins QQQQPR:$src),
-                NoItinerary, "", []>;
+                NoItinerary, []>;
 } // neverHasSideEffects
 
 //   VMOV     : Vector Move (Immediate)
