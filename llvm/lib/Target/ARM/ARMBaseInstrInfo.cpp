@@ -197,6 +197,48 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   return NewMIs[0];
 }
 
+void
+ARMBaseInstrInfo::emitPushInst(MachineBasicBlock &MBB, 
+                MachineBasicBlock::iterator MI,
+                const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,
+                bool(*Func)(unsigned, bool)) const {
+  MachineFunction &MF = *MBB.getParent();
+  DebugLoc DL;
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
+  MIB.addReg(ARM::SP, getDefRegState(true));
+  MIB.addReg(ARM::SP);
+  AddDefaultPred(MIB);
+  bool NumRegs = false;
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    if (!(Func)(Reg, Subtarget.isTargetDarwin())) continue;
+    
+    // Add the callee-saved register as live-in unless it's LR and
+    // @llvm.returnaddress is called. If LR is returned for @llvm.returnaddress
+    // then it's already added to the function and entry block live-in sets.
+    bool isKill = true;
+    if (Reg == ARM::LR) {
+      if (MF.getFrameInfo()->isReturnAddressTaken() &&
+          MF.getRegInfo().isLiveIn(Reg))
+        isKill = false;
+    }
+
+    if (isKill)
+      MBB.addLiveIn(Reg);
+    
+    NumRegs = true;
+    MIB.addReg(Reg, getKillRegState(isKill));
+  }
+  
+  // It's illegal to emit push instruction without operands.
+  if (NumRegs)
+    MBB.insert(MI, &*MIB);
+  else
+    MF.DeleteMachineInstr(MIB);        
+}
+
 bool
 ARMBaseInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
@@ -205,34 +247,78 @@ ARMBaseInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (CSI.empty())
     return false;
 
-  DebugLoc DL;
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  DebugLoc DL = MI->getDebugLoc();
+  
+  unsigned PushOpc = AFI->isThumbFunction() ? ARM::t2STMDB_UPD : ARM::STMDB_UPD;
+  unsigned FltOpc = ARM::VSTMDDB_UPD;
+  emitPushInst(MBB, MI, CSI, PushOpc, &isARMArea1Register);
+  emitPushInst(MBB, MI, CSI, PushOpc, &isARMArea2Register);
+  emitPushInst(MBB, MI, CSI, FltOpc, &isARMArea3Register);
 
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    bool isKill = true;
-
-    // Add the callee-saved register as live-in unless it's LR and
-    // @llvm.returnaddress is called. If LR is returned for @llvm.returnaddress
-    // then it's already added to the function and entry block live-in sets.
-    if (Reg == ARM::LR) {
-      MachineFunction &MF = *MBB.getParent();
-      if (MF.getFrameInfo()->isReturnAddressTaken() &&
-          MF.getRegInfo().isLiveIn(Reg))
-        isKill = false;
-    }
-
-    if (isKill)
-      MBB.addLiveIn(Reg);
-
-    // Insert the spill to the stack frame. The register is killed at the spill
-    //
-    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    storeRegToStackSlot(MBB, MI, Reg, isKill,
-                        CSI[i].getFrameIdx(), RC, TRI);
-  }
   return true;
 }
+
+void
+ARMBaseInstrInfo::emitPopInst(MachineBasicBlock &MBB, 
+                MachineBasicBlock::iterator MI,
+                const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,
+                bool isVarArg, bool(*Func)(unsigned, bool)) const {
+  
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  DebugLoc DL = MI->getDebugLoc();
+  
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
+  MIB.addReg(ARM::SP, getDefRegState(true));
+  MIB.addReg(ARM::SP);
+  AddDefaultPred(MIB);
+  bool NumRegs = false;
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    if (!(Func)(Reg, Subtarget.isTargetDarwin())) continue;
+
+    if (Reg == ARM::LR && !isVarArg) {
+      Reg = ARM::PC;
+      unsigned Opc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
+      (*MIB).setDesc(get(Opc));
+      MI = MBB.erase(MI);
+    }
+
+    MIB.addReg(Reg, RegState::Define);
+    NumRegs = true;
+  }
+    
+  // It's illegal to emit pop instruction without operands.
+  if (NumRegs)
+    MBB.insert(MI, &*MIB);
+  else
+    MF.DeleteMachineInstr(MIB);
+}
+
+bool
+ARMBaseInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator MI,
+                                        const std::vector<CalleeSavedInfo> &CSI,
+                                        const TargetRegisterInfo *TRI) const {
+  if (CSI.empty())
+    return false;
+  
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
+  DebugLoc DL = MI->getDebugLoc();
+  
+  unsigned PopOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_UPD : ARM::LDMIA_UPD;
+  unsigned FltOpc = ARM::VLDMDIA_UPD;
+  emitPopInst(MBB, MI, CSI, FltOpc, isVarArg, &isARMArea3Register);
+  emitPopInst(MBB, MI, CSI, PopOpc, isVarArg, &isARMArea2Register);
+  emitPopInst(MBB, MI, CSI, PopOpc, isVarArg, &isARMArea1Register);
+
+  return true;
+}
+
 
 // Branch analysis.
 bool
@@ -2195,7 +2281,7 @@ int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   case ARM::VSTMQIA:
   case ARM::VSTMQDB:
     return 2;
-  }  
+  }
 }
 
 bool ARMBaseInstrInfo::

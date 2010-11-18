@@ -44,6 +44,45 @@ static inline bool isARMLowRegister(unsigned Reg) {
   }
 }
 
+/// isARMArea1Register - Returns true if the register is a low register (r0-r7)
+/// or a stack/pc register that we should push/pop.
+static inline bool isARMArea1Register(unsigned Reg, bool isDarwin) {
+  using namespace ARM;
+  switch (Reg) {
+    case R0:  case R1:  case R2:  case R3:
+    case R4:  case R5:  case R6:  case R7:
+    case LR:  case SP:  case PC:
+      return true;
+    case R8:  case R9:  case R10: case R11:
+      // For darwin we want r7 and lr to be next to each other.
+      return !isDarwin;
+    default:
+      return false;
+  }
+}
+
+static inline bool isARMArea2Register(unsigned Reg, bool isDarwin) {
+  using namespace ARM;
+  switch (Reg) {
+    case R8: case R9: case R10: case R11:
+      // Darwin has this second area.
+      return isDarwin;
+    default:
+      return false;
+  }
+}
+
+static inline bool isARMArea3Register(unsigned Reg, bool isDarwin) {
+  using namespace ARM;
+  switch (Reg) {
+    case D15: case D14: case D13: case D12:
+    case D11: case D10: case D9:  case D8:
+      return true;
+    default:
+      return false;
+  }
+}
+
 class ARMBaseRegisterInfo : public ARMGenRegisterInfo {
 protected:
   const ARMBaseInstrInfo &TII;

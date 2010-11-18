@@ -3,7 +3,7 @@
 ; LDM instruction, was causing an assertion failure because the microop count
 ; was being treated as an instruction count.
 
-; CHECK: ldmia
+; CHECK: push
 ; CHECK: ldmia
 ; CHECK: ldmia
 ; CHECK: ldmia

@@ -20,43 +20,6 @@
 
 using namespace llvm;
 
-/// Move iterator past the next bunch of callee save load / store ops for
-/// the particular spill area (1: integer area 1, 2: integer area 2,
-/// 3: fp area, 0: don't care).
-static void movePastCSLoadStoreOps(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator &MBBI,
-                                   int Opc1, int Opc2, unsigned Area,
-                                   const ARMSubtarget &STI) {
-  while (MBBI != MBB.end() &&
-         ((MBBI->getOpcode() == Opc1) || (MBBI->getOpcode() == Opc2)) &&
-         MBBI->getOperand(1).isFI()) {
-    if (Area != 0) {
-      bool Done = false;
-      unsigned Category = 0;
-      switch (MBBI->getOperand(0).getReg()) {
-      case ARM::R4:  case ARM::R5:  case ARM::R6: case ARM::R7:
-      case ARM::LR:
-        Category = 1;
-        break;
-      case ARM::R8:  case ARM::R9:  case ARM::R10: case ARM::R11:
-        Category = STI.isTargetDarwin() ? 2 : 1;
-        break;
-      case ARM::D8:  case ARM::D9:  case ARM::D10: case ARM::D11:
-      case ARM::D12: case ARM::D13: case ARM::D14: case ARM::D15:
-        Category = 3;
-        break;
-      default:
-        Done = true;
-        break;
-      }
-      if (Done || Category != Area)
-        break;
-    }
-
-    ++MBBI;
-  }
-}
-
 static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
   for (unsigned i = 0; CSRegs[i]; ++i)
     if (Reg == CSRegs[i])
@@ -67,11 +30,21 @@ static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
 static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII,
                         const unsigned *CSRegs) {
-  return ((MI->getOpcode() == (int)ARM::VLDRD ||
-           MI->getOpcode() == (int)ARM::LDRi12 ||
-           MI->getOpcode() == (int)ARM::t2LDRi12) &&
-          MI->getOperand(1).isFI() &&
-          isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs));
+  // Integer spill area is handled with "pop".
+  if (MI->getOpcode() == ARM::LDMIA_RET ||
+      MI->getOpcode() == ARM::t2LDMIA_RET ||
+      MI->getOpcode() == ARM::LDMIA_UPD ||
+      MI->getOpcode() == ARM::t2LDMIA_UPD ||
+      MI->getOpcode() == ARM::VLDMDIA_UPD) {
+    // The first two operands are predicates. The last two are
+    // imp-def and imp-use of SP. Check everything in between.
+    for (int i = 5, e = MI->getNumOperands(); i != e; ++i)
+      if (!isCalleeSavedRegister(MI->getOperand(i).getReg(), CSRegs))
+        return false;
+    return true;
+  }
+
+  return false;
 }
 
 static void
@@ -154,11 +127,10 @@ void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
       DPRCSSize += 8;
     }
   }
-
-  // Build the new SUBri to adjust SP for integer callee-save spill area 1.
-  emitSPUpdate(isARM, MBB, MBBI, dl, TII, -GPRCS1Size);
-  movePastCSLoadStoreOps(MBB, MBBI, ARM::STRi12, ARM::t2STRi12, 1, STI);
-
+  
+  // Move past area 1.
+  if (GPRCS1Size > 0) MBBI++;
+  
   // Set FP to point to the stack slot that contains the previous FP.
   // For Darwin, FP is R7, which has now been stored in spill area 1.
   // Otherwise, if this is not Darwin, all the callee-saved registers go
@@ -172,14 +144,10 @@ void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
       .addFrameIndex(FramePtrSpillFI).addImm(0);
     AddDefaultCC(AddDefaultPred(MIB));
   }
-
-  // Build the new SUBri to adjust SP for integer callee-save spill area 2.
-  emitSPUpdate(isARM, MBB, MBBI, dl, TII, -GPRCS2Size);
-
-  // Build the new SUBri to adjust SP for FP callee-save spill area.
-  movePastCSLoadStoreOps(MBB, MBBI, ARM::STRi12, ARM::t2STRi12, 2, STI);
-  emitSPUpdate(isARM, MBB, MBBI, dl, TII, -DPRCSSize);
-
+  
+  // Move past area 2.
+  if (GPRCS2Size > 0) MBBI++;
+  
   // Determine starting offsets of spill areas.
   unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
   unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
@@ -191,7 +159,9 @@ void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
   AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
 
-  movePastCSLoadStoreOps(MBB, MBBI, ARM::VSTRD, 0, 3, STI);
+  // Move past area 3.
+  if (DPRCSSize > 0) MBBI++;
+  
   NumBytes = DPRCSOffset;
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
@@ -325,17 +295,10 @@ void ARMFrameInfo::emitEpilogue(MachineFunction &MF,
     } else if (NumBytes)
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
 
-    // Move SP to start of integer callee save spill area 2.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::VLDRD, 0, 3, STI);
-    emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getDPRCalleeSavedAreaSize());
-
-    // Move SP to start of integer callee save spill area 1.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDRi12, ARM::t2LDRi12, 2, STI);
-    emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getGPRCalleeSavedArea2Size());
-
-    // Move SP to SP upon entry to the function.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDRi12, ARM::t2LDRi12, 1, STI);
-    emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getGPRCalleeSavedArea1Size());
+    // Increment past our save areas.
+    if (AFI->getDPRCalleeSavedAreaSize()) MBBI++;
+    if (AFI->getGPRCalleeSavedArea2Size()) MBBI++;
+    if (AFI->getGPRCalleeSavedArea1Size()) MBBI++;
   }
 
   if (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNdiND ||
