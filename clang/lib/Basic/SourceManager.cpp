@@ -15,6 +15,7 @@
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -131,30 +132,20 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
     // http://en.wikipedia.org/wiki/Byte_order_mark for more information.
     if (!isBufferInvalid()) {
       llvm::StringRef BufStr = Buffer.getPointer()->getBuffer();
-      const char *BOM = 0;
-      if (BufStr.startswith("\xFE\xBB\xBF"))
-        BOM = "UTF-8";
-      else if (BufStr.startswith("\xFE\xFF"))
-        BOM = "UTF-16 (BE)";
-      else if (BufStr.startswith("\xFF\xFE"))
-        BOM = "UTF-16 (LE)";
-      else if (BufStr.startswith(llvm::StringRef("\x00\x00\xFE\xFF", 4)))
-        BOM = "UTF-32 (BE)";
-      else if (BufStr.startswith(llvm::StringRef("\xFF\xFE\x00\x00", 4)))
-        BOM = "UTF-32 (LE)";
-      else if (BufStr.startswith("\x2B\x2F\x76"))
-        BOM = "UTF-7";
-      else if (BufStr.startswith("\xF7\x64\x4C"))
-        BOM = "UTF-1";
-      else if (BufStr.startswith("\xDD\x73\x66\x73"))
-        BOM = "UTF-EBCDIC";
-      else if (BufStr.startswith("\x0E\xFE\xFF"))
-        BOM = "SDSU";
-      else if (BufStr.startswith("\xFB\xEE\x28"))
-        BOM = "BOCU-1";
-      else if (BufStr.startswith("\x84\x31\x95\x33"))
-        BOM = "BOCU-1";
-      
+      const char *BOM = llvm::StringSwitch<const char *>(BufStr)
+        .StartsWith("\xEF\xBB\xBF", "UTF-8")
+        .StartsWith("\xFE\xFF", "UTF-16 (BE)")
+        .StartsWith("\xFF\xFE", "UTF-16 (LE)")
+        .StartsWith("\x00\x00\xFE\xFF", "UTF-32 (BE)")
+        .StartsWith("\xFF\xFE\x00\x00", "UTF-32 (LE)")
+        .StartsWith("\x2B\x2F\x76", "UTF-7")
+        .StartsWith("\xF7\x64\x4C", "UTF-1")
+        .StartsWith("\xDD\x73\x66\x73", "UTF-EBCDIC")
+        .StartsWith("\x0E\xFE\xFF", "SDSU")
+        .StartsWith("\xFB\xEE\x28", "BOCU-1")
+        .StartsWith("\x84\x31\x95\x33", "GB-18030")
+        .Default(0);
+
       if (BOM) {
         Diag.Report(FullSourceLoc(Loc, SM), diag::err_unsupported_bom)
           << BOM << Entry->getName();
