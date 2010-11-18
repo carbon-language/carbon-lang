@@ -68,3 +68,16 @@ define void @test2() {
 }
 
 declare void @bar(i8*)
+
+
+;; Should be able to eliminate the alloca.
+define void @test3() {
+  %A = alloca %T
+  %a = bitcast %T* %A to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
+  call void @bar(i8* %a) readonly
+; CHECK: @test3
+; CHECK-NEXT: %a = bitcast %T* @G to i8*
+; CHECK-NEXT: call void @bar(i8* %a)
+  ret void
+}

@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -1809,6 +1810,12 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
         return false;
       continue;
     }
+    
+    // If this is a readonly/readnone call site, then we know it is just a load
+    // and we can ignore it.
+    if (CallSite CS = U)
+      if (CS.onlyReadsMemory())
+        continue;
     
     // If this is isn't our memcpy/memmove, reject it as something we can't
     // handle.
