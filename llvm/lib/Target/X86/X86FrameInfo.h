@@ -19,17 +19,17 @@
 
 namespace llvm {
   class MCSymbol;
+  class X86TargetMachine;
 
 class X86FrameInfo : public TargetFrameInfo {
-protected:
+  const X86TargetMachine &TM;
   const X86Subtarget &STI;
-
 public:
-  explicit X86FrameInfo(const X86Subtarget &sti)
+  explicit X86FrameInfo(const X86TargetMachine &tm, const X86Subtarget &sti)
     : TargetFrameInfo(StackGrowsDown,
                       sti.getStackAlignment(),
                       (sti.isTargetWin64() ? -40 : (sti.is64Bit() ? -8 : -4))),
-      STI(sti) {
+      TM(tm), STI(sti) {
   }
 
   void emitCalleeSavedFrameMoves(MachineFunction &MF, MCSymbol *Label,
@@ -43,6 +43,7 @@ public:
   bool hasFP(const MachineFunction &MF) const;
   bool hasReservedCallFrame(const MachineFunction &MF) const;
 
+  void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 };
 
 } // End llvm namespace

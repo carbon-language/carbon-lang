@@ -364,13 +364,5 @@ unsigned XCoreRegisterInfo::getRARegister() const {
   return XCore::LR;
 }
 
-void XCoreRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
-                                                                         const {
-  // Initial state of the frame pointer is SP.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(XCore::SP, 0);
-  Moves.push_back(MachineMove(0, Dst, Src));
-}
-
 #include "XCoreGenRegisterInfo.inc"
 

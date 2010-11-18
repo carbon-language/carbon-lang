@@ -943,14 +943,6 @@ unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
     return TFI->hasFP(MF) ? PPC::X31 : PPC::X1;
 }
 
-void PPCRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
-                                                                         const {
-  // Initial state of the frame pointer is R1.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(PPC::R1, 0);
-  Moves.push_back(MachineMove(0, Dst, Src));
-}
-
 unsigned PPCRegisterInfo::getEHExceptionRegister() const {
   return !Subtarget.isPPC64() ? PPC::R3 : PPC::X3;
 }

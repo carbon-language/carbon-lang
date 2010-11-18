@@ -66,7 +66,6 @@ public:
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
-  void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;

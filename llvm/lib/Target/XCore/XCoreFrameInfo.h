@@ -33,6 +33,8 @@ namespace llvm {
 
     bool hasFP(const MachineFunction &MF) const;
 
+    void getInitialFrameState(std::vector<MachineMove> &Moves) const;
+
     //! Stack slot size (4 bytes)
     static int stackSlotSize() {
       return 4;

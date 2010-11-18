@@ -340,16 +340,6 @@ SPURegisterInfo::getFrameRegister(const MachineFunction &MF) const
   return SPU::R1;
 }
 
-void
-SPURegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const
-{
-  // Initial state of the frame pointer is R1.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(SPU::R1, 0);
-  Moves.push_back(MachineMove(0, Dst, Src));
-}
-
-
 int
 SPURegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   // FIXME: Most probably dwarf numbers differs for Linux and Darwin

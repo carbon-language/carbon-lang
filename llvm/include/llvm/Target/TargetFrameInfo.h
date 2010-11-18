@@ -15,10 +15,12 @@
 #define LLVM_TARGET_TARGETFRAMEINFO_H
 
 #include <utility>
+#include <vector>
 
 namespace llvm {
   class MachineFunction;
   class MachineBasicBlock;
+  class MachineMove;
 
 /// Information about stack frame layout on the target.  It holds the direction
 /// of stack growth, the known stack alignment on entry to each function, and
@@ -131,6 +133,10 @@ public:
     return hasReservedCallFrame(MF) || hasFP(MF);
   }
 
+  /// getInitialFrameState - Returns a list of machine moves that are assumed
+  /// on entry to all functions.  Note that LabelID is ignored (assumed to be
+  /// the beginning of the function.)
+  virtual void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 };
 
 } // End llvm namespace

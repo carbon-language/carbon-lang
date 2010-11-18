@@ -98,13 +98,6 @@ int TargetRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
     TFI.getOffsetOfLocalArea() + MFI->getOffsetAdjustment();
 }
 
-/// getInitialFrameState - Returns a list of machine moves that are assumed
-/// on entry to a function.
-void
-TargetRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const{
-  // Default is to do nothing.
-}
-
 const TargetRegisterClass *
 llvm::getCommonSubClass(const TargetRegisterClass *A,
                         const TargetRegisterClass *B) {

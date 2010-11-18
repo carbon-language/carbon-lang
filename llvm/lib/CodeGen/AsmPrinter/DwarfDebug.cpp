@@ -3293,10 +3293,11 @@ void DwarfDebug::emitCommonDebugFrame() {
   Asm->EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
   Asm->OutStreamer.AddComment("CIE RA Column");
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
+  const TargetFrameInfo *TFI = Asm->TM.getFrameInfo();
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), false));
 
   std::vector<MachineMove> Moves;
-  RI->getInitialFrameState(Moves);
+  TFI->getInitialFrameState(Moves);
 
   Asm->EmitFrameMoves(Moves, 0, false);
 

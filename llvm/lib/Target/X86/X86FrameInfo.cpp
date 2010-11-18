@@ -15,6 +15,7 @@
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
+#include "X86TargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -40,7 +41,7 @@ bool X86FrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
 bool X86FrameInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const MachineModuleInfo &MMI = MF.getMMI();
-  const TargetRegisterInfo *RI = MF.getTarget().getRegisterInfo();
+  const TargetRegisterInfo *RI = TM.getRegisterInfo();
 
   return (DisableFramePointerElim(MF) ||
           RI->needsStackRealignment(MF) ||
@@ -211,12 +212,12 @@ void X86FrameInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
   if (CSI.empty()) return;
 
   std::vector<MachineMove> &Moves = MMI.getFrameMoves();
-  const TargetData *TD = MF.getTarget().getTargetData();
+  const TargetData *TD = TM.getTargetData();
   bool HasFP = hasFP(MF);
 
   // Calculate amount of bytes used for return address storing.
   int stackGrowth =
-    (MF.getTarget().getFrameInfo()->getStackGrowthDirection() ==
+    (TM.getFrameInfo()->getStackGrowthDirection() ==
      TargetFrameInfo::StackGrowsUp ?
      TD->getPointerSize() : -TD->getPointerSize());
 
@@ -276,11 +277,8 @@ void X86FrameInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *Fn = MF.getFunction();
-  const X86Subtarget *Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
-  const X86RegisterInfo *RegInfo =
-    static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
-  const X86InstrInfo &TII =
-    *static_cast<const X86InstrInfo*>(MF.getTarget().getInstrInfo());
+  const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
+  const X86InstrInfo &TII = *TM.getInstrInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   bool needsFrameMoves = MMI.hasDebugInfo() ||
@@ -487,13 +485,12 @@ void X86FrameInfo::emitPrologue(MachineFunction &MF) const {
   // responsible for adjusting the stack pointer.  Touching the stack at 4K
   // increments is necessary to ensure that the guard pages used by the OS
   // virtual memory manager are allocated in correct sequence.
-  if (NumBytes >= 4096 &&
-     (Subtarget->isTargetCygMing() || Subtarget->isTargetWin32())) {
+  if (NumBytes >= 4096 && (STI.isTargetCygMing() || STI.isTargetWin32())) {
     // Check whether EAX is livein for this function.
     bool isEAXAlive = isEAXLiveIn(MF);
 
     const char *StackProbeSymbol =
-      Subtarget->isTargetWindows() ? "_chkstk" : "_alloca";
+      STI.isTargetWindows() ? "_chkstk" : "_alloca";
     unsigned CallOp = Is64Bit ? X86::CALL64pcrel32 : X86::CALLpcrel32;
     if (!isEAXAlive) {
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
@@ -522,7 +519,7 @@ void X86FrameInfo::emitPrologue(MachineFunction &MF) const {
                                       StackPtr, false, NumBytes - 4);
       MBB.insert(MBBI, MI);
     }
-  } else if (NumBytes >= 4096 && Subtarget->isTargetWin64()) {
+  } else if (NumBytes >= 4096 && STI.isTargetWin64()) {
     // Sanity check that EAX is not livein for this function.  It should
     // should not be, so throw an assert.
     assert(!isEAXLiveIn(MF) && "EAX is livein in the Win64 case!");
@@ -568,10 +565,8 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
                                 MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  const X86RegisterInfo *RegInfo =
-    static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
-  const X86InstrInfo &TII =
-    *static_cast<const X86InstrInfo*>(MF.getTarget().getInstrInfo());
+  const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
+  const X86InstrInfo &TII = *TM.getInstrInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc DL = MBBI->getDebugLoc();
@@ -751,4 +746,21 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
     delta += mergeSPUpdates(MBB, MBBI, StackPtr, true);
     emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, TII);
   }
+}
+
+void
+X86FrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+  // Calculate amount of bytes used for return address storing
+  int stackGrowth = (STI.is64Bit() ? -8 : -4);
+  const X86RegisterInfo *RI = TM.getRegisterInfo();
+
+  // Initial state of the frame pointer is esp+stackGrowth.
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(RI->getStackRegister(), stackGrowth);
+  Moves.push_back(MachineMove(0, Dst, Src));
+
+  // Add return address to move list
+  MachineLocation CSDst(RI->getStackRegister(), stackGrowth);
+  MachineLocation CSSrc(RI->getRARegister());
+  Moves.push_back(MachineMove(0, CSDst, CSSrc));
 }

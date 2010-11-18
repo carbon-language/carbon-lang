@@ -17,3 +17,10 @@ using namespace llvm;
 
 TargetFrameInfo::~TargetFrameInfo() {
 }
+
+/// getInitialFrameState - Returns a list of machine moves that are assumed
+/// on entry to a function.
+void
+TargetFrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+  // Default is to do nothing.
+}

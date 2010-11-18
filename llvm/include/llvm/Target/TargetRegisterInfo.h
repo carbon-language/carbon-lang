@@ -749,11 +749,6 @@ public:
   /// getRARegister - This method should return the register where the return
   /// address can be found.
   virtual unsigned getRARegister() const = 0;
-
-  /// getInitialFrameState - Returns a list of machine moves that are assumed
-  /// on entry to all functions.  Note that LabelID is ignored (assumed to be
-  /// the beginning of the function.)
-  virtual void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 };
 
 

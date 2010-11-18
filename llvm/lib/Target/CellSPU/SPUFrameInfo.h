@@ -40,6 +40,9 @@ namespace llvm {
     //! Prediate: Target has dedicated frame pointer
     bool hasFP(const MachineFunction &MF) const;
 
+    //! Perform target-specific stack frame setup.
+    void getInitialFrameState(std::vector<MachineMove> &Moves) const;
+
     //! Return a function's saved spill slots
     /*!
       For CellSPU, a function's saved spill slots is just the link register.

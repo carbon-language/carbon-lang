@@ -689,3 +689,10 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
     BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBA8)).addImm(JumpTarget.getImm());
   }
 }
+
+void PPCFrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+  // Initial state of the frame pointer is R1.
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(PPC::R1, 0);
+  Moves.push_back(MachineMove(0, Dst, Src));
+}

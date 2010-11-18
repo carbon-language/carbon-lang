@@ -136,7 +136,6 @@ public:
   unsigned getSlotSize() const { return SlotSize; }
 
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
-  void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;

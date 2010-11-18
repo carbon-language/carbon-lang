@@ -71,8 +71,6 @@ namespace llvm {
     unsigned getRARegister() const;
     //! Get the stack frame register (SP, aka R1)
     unsigned getFrameRegister(const MachineFunction &MF) const;
-    //! Perform target-specific stack frame setup.
-    void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 
     //------------------------------------------------------------------------
     // New methods added:
