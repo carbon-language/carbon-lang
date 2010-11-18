@@ -113,6 +113,7 @@ class ARMOperand : public MCParsedAsmOperand {
   } Kind;
 
   SMLoc StartLoc, EndLoc;
+  SmallVector<unsigned, 8> Registers;
 
   union {
     struct {
@@ -128,10 +129,6 @@ class ARMOperand : public MCParsedAsmOperand {
       unsigned RegNum;
       bool Writeback;
     } Reg;
-
-    struct {
-      SmallVector<unsigned, 32> *Registers;
-    } RegList;
 
     struct {
       const MCExpr *Val;
@@ -172,7 +169,7 @@ public:
     case RegisterList:
     case DPRRegisterList:
     case SPRRegisterList:
-      RegList = o.RegList;
+      Registers = o.Registers;
       break;
     case Immediate:
       Imm = o.Imm;
@@ -181,10 +178,6 @@ public:
       Mem = o.Mem;
       break;
     }
-  }
-  ~ARMOperand() {
-    if (isRegList())
-      delete RegList.Registers;
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
@@ -210,7 +203,7 @@ public:
   const SmallVectorImpl<unsigned> &getRegList() const {
     assert((Kind == RegisterList || Kind == DPRRegisterList ||
             Kind == SPRRegisterList) && "Invalid access!");
-    return *RegList.Registers;
+    return Registers;
   }
 
   const MCExpr *getImm() const {
@@ -350,11 +343,10 @@ public:
       Kind = SPRRegisterList;
 
     ARMOperand *Op = new ARMOperand(Kind);
-    Op->RegList.Registers = new SmallVector<unsigned, 32>();
     for (SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
            I = Regs.begin(), E = Regs.end(); I != E; ++I)
-      Op->RegList.Registers->push_back(I->first);
-    std::sort(Op->RegList.Registers->begin(), Op->RegList.Registers->end());
+      Op->Registers.push_back(I->first);
+    std::sort(Op->Registers.begin(), Op->Registers.end());
     Op->StartLoc = StartLoc;
     Op->EndLoc = EndLoc;
     return Op;
