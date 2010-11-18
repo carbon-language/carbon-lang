@@ -483,6 +483,7 @@ APInt APInt::operator-(const APInt& RHS) const {
 }
 
 bool APInt::operator[](unsigned bitPosition) const {
+  assert(bitPosition < getBitWidth() && "Bit position out of bounds!");
   return (maskBit(bitPosition) &
           (isSingleWord() ?  VAL : pVal[whichWord(bitPosition)])) != 0;
 }
