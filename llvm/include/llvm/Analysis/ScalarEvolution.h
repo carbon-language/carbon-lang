@@ -151,6 +151,14 @@ namespace llvm {
       LoopComputable  ///< The SCEV varies predictably with the loop.
     };
 
+    /// BlockDisposition - An enum describing the relationship between a
+    /// SCEV and a basic block.
+    enum BlockDisposition {
+      DoesNotDominateBlock,  ///< The SCEV does not dominate the block.
+      DominatesBlock,        ///< The SCEV dominates the block.
+      ProperlyDominatesBlock ///< The SCEV properly dominates the block.
+    };
+
   private:
     /// SCEVCallbackVH - A CallbackVH to arrange for ScalarEvolution to be
     /// notified whenever a Value is deleted.
@@ -245,6 +253,13 @@ namespace llvm {
 
     /// computeLoopDisposition - Compute a LoopDisposition value.
     LoopDisposition computeLoopDisposition(const SCEV *S, const Loop *L);
+
+    /// BlockDispositions - Memoized computeBlockDisposition results.
+    std::map<const SCEV *,
+             std::map<const BasicBlock *, BlockDisposition> > BlockDispositions;
+
+    /// computeBlockDisposition - Compute a BlockDisposition value.
+    BlockDisposition computeBlockDisposition(const SCEV *S, const BasicBlock *BB);
 
     /// UnsignedRanges - Memoized results from getUnsignedRange
     DenseMap<const SCEV *, ConstantRange> UnsignedRanges;
@@ -697,13 +712,17 @@ namespace llvm {
     /// to compute the value of the expression at any particular loop iteration.
     bool hasComputableLoopEvolution(const SCEV *S, const Loop *L);
 
+    /// getLoopDisposition - Return the "disposition" of the given SCEV with
+    /// respect to the given block.
+    BlockDisposition getBlockDisposition(const SCEV *S, const BasicBlock *BB);
+
     /// dominates - Return true if elements that makes up the given SCEV
     /// dominate the specified basic block.
-    bool dominates(const SCEV *S, BasicBlock *BB) const;
+    bool dominates(const SCEV *S, const BasicBlock *BB);
 
     /// properlyDominates - Return true if elements that makes up the given SCEV
     /// properly dominate the specified basic block.
-    bool properlyDominates(const SCEV *S, BasicBlock *BB) const;
+    bool properlyDominates(const SCEV *S, const BasicBlock *BB);
 
     /// hasOperand - Test whether the given SCEV has Op as a direct or
     /// indirect operand.

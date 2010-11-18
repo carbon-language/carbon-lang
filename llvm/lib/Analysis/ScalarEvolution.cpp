@@ -5790,6 +5790,7 @@ void ScalarEvolution::releaseMemory() {
   ConstantEvolutionLoopExitValue.clear();
   ValuesAtScopes.clear();
   LoopDispositions.clear();
+  BlockDispositions.clear();
   UnsignedRanges.clear();
   SignedRanges.clear();
   UniqueSCEVs.clear();
@@ -5990,64 +5991,35 @@ bool ScalarEvolution::hasComputableLoopEvolution(const SCEV *S, const Loop *L) {
   return getLoopDisposition(S, L) == LoopComputable;
 }
 
-bool ScalarEvolution::dominates(const SCEV *S, BasicBlock *BB) const {
-  switch (S->getSCEVType()) {
-  case scConstant:
-    return true;
-  case scTruncate:
-  case scZeroExtend:
-  case scSignExtend:
-    return dominates(cast<SCEVCastExpr>(S)->getOperand(), BB);
-  case scAddRecExpr: {
-    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
-    if (!DT->dominates(AR->getLoop()->getHeader(), BB))
-      return false;
-  }
-  // FALL THROUGH into SCEVNAryExpr handling.
-  case scAddExpr:
-  case scMulExpr:
-  case scUMaxExpr:
-  case scSMaxExpr: {
-    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
-    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
-         I != E; ++I)
-      if (!dominates(*I, BB))
-        return false;
-    return true;
-  }
-  case scUDivExpr: {
-    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
-    return dominates(UDiv->getLHS(), BB) && dominates(UDiv->getRHS(), BB);
-  }
-  case scUnknown:
-    if (Instruction *I =
-          dyn_cast<Instruction>(cast<SCEVUnknown>(S)->getValue()))
-      return DT->dominates(I->getParent(), BB);
-    return true;
-  case scCouldNotCompute:
-    llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-    return false;
-  default: break;
-  }
-  llvm_unreachable("Unknown SCEV kind!");
-  return false;
+ScalarEvolution::BlockDisposition
+ScalarEvolution::getBlockDisposition(const SCEV *S, const BasicBlock *BB) {
+  std::map<const BasicBlock *, BlockDisposition> &Values = BlockDispositions[S];
+  std::pair<std::map<const BasicBlock *, BlockDisposition>::iterator, bool>
+    Pair = Values.insert(std::make_pair(BB, DoesNotDominateBlock));
+  if (!Pair.second)
+    return Pair.first->second;
+
+  BlockDisposition D = computeBlockDisposition(S, BB);
+  return BlockDispositions[S][BB] = D;
 }
 
-bool ScalarEvolution::properlyDominates(const SCEV *S, BasicBlock *BB) const {
+ScalarEvolution::BlockDisposition
+ScalarEvolution::computeBlockDisposition(const SCEV *S, const BasicBlock *BB) {
   switch (S->getSCEVType()) {
   case scConstant:
-    return true;
+    return ProperlyDominatesBlock;
   case scTruncate:
   case scZeroExtend:
   case scSignExtend:
-    return properlyDominates(cast<SCEVCastExpr>(S)->getOperand(), BB);
+    return getBlockDisposition(cast<SCEVCastExpr>(S)->getOperand(), BB);
   case scAddRecExpr: {
     // This uses a "dominates" query instead of "properly dominates" query
-    // because the instruction which produces the addrec's value is a PHI, and
-    // a PHI effectively properly dominates its entire containing block.
+    // to test for proper dominance too, because the instruction which
+    // produces the addrec's value is a PHI, and a PHI effectively properly
+    // dominates its entire containing block.
     const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
     if (!DT->dominates(AR->getLoop()->getHeader(), BB))
-      return false;
+      return DoesNotDominateBlock;
   }
   // FALL THROUGH into SCEVNAryExpr handling.
   case scAddExpr:
@@ -6055,29 +6027,54 @@ bool ScalarEvolution::properlyDominates(const SCEV *S, BasicBlock *BB) const {
   case scUMaxExpr:
   case scSMaxExpr: {
     const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+    bool Proper = true;
     for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
-         I != E; ++I)
-      if (!properlyDominates(*I, BB))
-        return false;
-    return true;
+         I != E; ++I) {
+      BlockDisposition D = getBlockDisposition(*I, BB);
+      if (D == DoesNotDominateBlock)
+        return DoesNotDominateBlock;
+      if (D == DominatesBlock)
+        Proper = false;
+    }
+    return Proper ? ProperlyDominatesBlock : DominatesBlock;
   }
   case scUDivExpr: {
     const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
-    return properlyDominates(UDiv->getLHS(), BB) &&
-           properlyDominates(UDiv->getRHS(), BB);
+    const SCEV *LHS = UDiv->getLHS(), *RHS = UDiv->getRHS();
+    BlockDisposition LD = getBlockDisposition(LHS, BB);
+    if (LD == DoesNotDominateBlock)
+      return DoesNotDominateBlock;
+    BlockDisposition RD = getBlockDisposition(RHS, BB);
+    if (RD == DoesNotDominateBlock)
+      return DoesNotDominateBlock;
+    return (LD == ProperlyDominatesBlock && RD == ProperlyDominatesBlock) ?
+      ProperlyDominatesBlock : DominatesBlock;
   }
   case scUnknown:
     if (Instruction *I =
-          dyn_cast<Instruction>(cast<SCEVUnknown>(S)->getValue()))
-      return DT->properlyDominates(I->getParent(), BB);
-    return true;
+          dyn_cast<Instruction>(cast<SCEVUnknown>(S)->getValue())) {
+      if (I->getParent() == BB)
+        return DominatesBlock;
+      if (DT->properlyDominates(I->getParent(), BB))
+        return ProperlyDominatesBlock;
+      return DoesNotDominateBlock;
+    }
+    return ProperlyDominatesBlock;
   case scCouldNotCompute:
     llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-    return false;
+    return DoesNotDominateBlock;
   default: break;
   }
   llvm_unreachable("Unknown SCEV kind!");
-  return false;
+  return DoesNotDominateBlock;
+}
+
+bool ScalarEvolution::dominates(const SCEV *S, const BasicBlock *BB) {
+  return getBlockDisposition(S, BB) >= DominatesBlock;
+}
+
+bool ScalarEvolution::properlyDominates(const SCEV *S, const BasicBlock *BB) {
+  return getBlockDisposition(S, BB) == ProperlyDominatesBlock;
 }
 
 bool ScalarEvolution::hasOperand(const SCEV *S, const SCEV *Op) const {
@@ -6125,6 +6122,7 @@ bool ScalarEvolution::hasOperand(const SCEV *S, const SCEV *Op) const {
 void ScalarEvolution::forgetMemoizedResults(const SCEV *S) {
   ValuesAtScopes.erase(S);
   LoopDispositions.erase(S);
+  BlockDispositions.erase(S);
   UnsignedRanges.erase(S);
   SignedRanges.erase(S);
 }

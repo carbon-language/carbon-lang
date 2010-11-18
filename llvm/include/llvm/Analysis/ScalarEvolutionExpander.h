@@ -35,6 +35,9 @@ namespace llvm {
     std::set<AssertingVH<Value> > InsertedValues;
     std::set<AssertingVH<Value> > InsertedPostIncValues;
 
+    /// RelevantLoops - A memoization of the "relevant" loop for a given SCEV.
+    DenseMap<const SCEV *, const Loop *> RelevantLoops;
+
     /// PostIncLoops - Addrecs referring to any of the given loops are expanded
     /// in post-inc mode. For example, expanding {1,+,1}<L> in post-inc mode
     /// returns the add instruction that adds one to the phi for {0,+,1}<L>,
@@ -167,6 +170,9 @@ namespace llvm {
     bool isInsertedInstruction(Instruction *I) const {
       return InsertedValues.count(I) || InsertedPostIncValues.count(I);
     }
+
+    /// getRelevantLoop - Determine the most "relevant" loop for the given SCEV.
+    const Loop *getRelevantLoop(const SCEV *);
 
     Value *visitConstant(const SCEVConstant *S) {
       return S->getValue();
