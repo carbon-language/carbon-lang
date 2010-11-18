@@ -384,6 +384,21 @@ class T2sTwoRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   let Inst{7-6}   = ShiftedRm{8-7};
 }
 
+class T2FourReg<dag oops, dag iops, InstrItinClass itin,
+           string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rm;
+  bits<4> Ra;
+     
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{19-16} = Rn{3-0};
+  let Inst{3-0}   = Rm{3-0};
+  let Inst{15-12} = Ra{3-0};
+}
+
+
 /// T2I_un_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
 /// unary operation that produces a value. These are predicable and can be
 /// changed to modify CPSR.
@@ -2087,9 +2102,9 @@ def : T2Pat<(t2_so_imm_not:$src),
 //  Multiply Instructions.
 //
 let isCommutable = 1 in
-def t2MUL: T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), IIC_iMUL32,
-                "mul", "\t$dst, $a, $b",
-                [(set rGPR:$dst, (mul rGPR:$a, rGPR:$b))]> {
+def t2MUL: T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iMUL32,
+                "mul", "\t$Rd, $Rn, $Rm",
+                [(set rGPR:$Rd, (mul rGPR:$Rn, rGPR:$Rm))]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0110;
   let Inst{22-20} = 0b000;
@@ -2097,41 +2112,43 @@ def t2MUL: T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), IIC_iMUL32,
   let Inst{7-4} = 0b0000; // Multiply
 }
 
-def t2MLA: T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b, rGPR:$c), IIC_iMAC32,
-                "mla", "\t$dst, $a, $b, $c",
-                [(set rGPR:$dst, (add (mul rGPR:$a, rGPR:$b), rGPR:$c))]> {
+def t2MLA: T2FourReg<
+                (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, rGPR:$Ra), IIC_iMAC32,
+                "mla", "\t$Rd, $Rn, $Rm, $Ra",
+                [(set rGPR:$Rd, (add (mul rGPR:$Rn, rGPR:$Rm), rGPR:$Ra))]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0110;
   let Inst{22-20} = 0b000;
-  let Inst{15-12} = {?, ?, ?, ?}; // Ra
   let Inst{7-4} = 0b0000; // Multiply
 }
 
-def t2MLS: T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b, rGPR:$c), IIC_iMAC32,
-                "mls", "\t$dst, $a, $b, $c",
-                [(set rGPR:$dst, (sub rGPR:$c, (mul rGPR:$a, rGPR:$b)))]> {
+def t2MLS: T2FourReg<
+                (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, rGPR:$Ra), IIC_iMAC32,
+                "mls", "\t$Rd, $Rn, $Rm, $Ra",
+                [(set rGPR:$Rd, (sub rGPR:$Ra, (mul rGPR:$Rn, rGPR:$Rm)))]> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0110;
   let Inst{22-20} = 0b000;
-  let Inst{15-12} = {?, ?, ?, ?}; // Ra
   let Inst{7-4} = 0b0001; // Multiply and Subtract
 }
 
 // Extra precision multiplies with low / high results
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
-def t2SMULL : T2I<(outs rGPR:$ldst, rGPR:$hdst),
-                  (ins rGPR:$a, rGPR:$b), IIC_iMUL64,
-                   "smull", "\t$ldst, $hdst, $a, $b", []> {
+def t2SMULL : T2FourReg<
+                  (outs rGPR:$Rd, rGPR:$Ra),
+                  (ins rGPR:$Rn, rGPR:$Rm), IIC_iMUL64,
+                   "smull", "\t$Rd, $Ra, $Rn, $Rm", []> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0111;
   let Inst{22-20} = 0b000;
   let Inst{7-4} = 0b0000;
 }
 
-def t2UMULL : T2I<(outs rGPR:$ldst, rGPR:$hdst),
-                  (ins rGPR:$a, rGPR:$b), IIC_iMUL64,
-                   "umull", "\t$ldst, $hdst, $a, $b", []> {
+def t2UMULL : T2FourReg<
+                  (outs rGPR:$Rd, rGPR:$Ra),
+                  (ins rGPR:$Rn, rGPR:$Rm), IIC_iMUL64,
+                   "umull", "\t$Rd, $Ra, $Rn, $Rm", []> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0111;
   let Inst{22-20} = 0b010;
@@ -2140,27 +2157,27 @@ def t2UMULL : T2I<(outs rGPR:$ldst, rGPR:$hdst),
 } // isCommutable
 
 // Multiply + accumulate
-def t2SMLAL : T2I<(outs rGPR:$ldst, rGPR:$hdst),
-                  (ins rGPR:$a, rGPR:$b), IIC_iMAC64,
-                  "smlal", "\t$ldst, $hdst, $a, $b", []>{
+def t2SMLAL : T2FourReg<(outs rGPR:$Rd, rGPR:$Ra),
+                  (ins rGPR:$Rn, rGPR:$Rm), IIC_iMAC64,
+                  "smlal", "\t$Rd, $Ra, $Rn, $Rm", []>{
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0111;
   let Inst{22-20} = 0b100;
   let Inst{7-4} = 0b0000;
 }
 
-def t2UMLAL : T2I<(outs rGPR:$ldst, rGPR:$hdst),
-                  (ins rGPR:$a, rGPR:$b), IIC_iMAC64,
-                  "umlal", "\t$ldst, $hdst, $a, $b", []>{
+def t2UMLAL : T2FourReg<(outs rGPR:$Rd, rGPR:$Ra),
+                  (ins rGPR:$Rn, rGPR:$Rm), IIC_iMAC64,
+                  "umlal", "\t$Rd, $Ra, $Rn, $Rm", []>{
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0111;
   let Inst{22-20} = 0b110;
   let Inst{7-4} = 0b0000;
 }
 
-def t2UMAAL : T2I<(outs rGPR:$ldst, rGPR:$hdst),
-                  (ins rGPR:$a, rGPR:$b), IIC_iMAC64,
-                  "umaal", "\t$ldst, $hdst, $a, $b", []>{
+def t2UMAAL : T2FourReg<(outs rGPR:$Rd, rGPR:$Ra),
+                  (ins rGPR:$Rn, rGPR:$Rm), IIC_iMAC64,
+                  "umaal", "\t$Rd, $Ra, $Rn, $Rm", []>{
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0111;
   let Inst{22-20} = 0b110;
