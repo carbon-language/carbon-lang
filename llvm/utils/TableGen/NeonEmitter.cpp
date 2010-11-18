@@ -134,7 +134,12 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       break;
     case 'u':
       usgn = true;
+      poly = false;
+      if (type == 'f')
+        type = 'i';
+      break;
     case 'x':
+      usgn = false;
       poly = false;
       if (type == 'f')
         type = 'i';
