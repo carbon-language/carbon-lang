@@ -3487,7 +3487,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
     SDValue Store = DAG.getStore(Chain, dl, Value,
                                  getMemBasePlusOffset(Dst, DstOff, DAG),
                                  DstPtrInfo.getWithOffset(DstOff),
-                                 isVol, false, 0);
+                                 isVol, false, Align);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
