@@ -125,9 +125,10 @@ namespace {
 // Create a bitmask with all callee saved registers for CPU or Floating Point 
 // registers. For CPU registers consider RA, GP and FP for saving if necessary.
 void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
+  const TargetFrameInfo *TFI = TM.getFrameInfo();
+  const TargetRegisterInfo *RI = TM.getRegisterInfo();
   const MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
-             
+
   // CPU and FPU Saved Registers Bitmasks
   unsigned int CPUBitmask = 0;
   unsigned int FPUBitmask = 0;
@@ -145,13 +146,13 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   }
 
   // Return Address and Frame registers must also be set in CPUBitmask.
-  if (RI.hasFP(*MF)) 
+  if (TFI->hasFP(*MF))
     CPUBitmask |= (1 << MipsRegisterInfo::
-                getRegisterNumbering(RI.getFrameRegister(*MF)));
-  
-  if (MFI->adjustsStack()) 
+                getRegisterNumbering(RI->getFrameRegister(*MF)));
+
+  if (MFI->adjustsStack())
     CPUBitmask |= (1 << MipsRegisterInfo::
-                getRegisterNumbering(RI.getRARegister()));
+                getRegisterNumbering(RI->getRARegister()));
 
   // Print CPUBitmask
   O << "\t.mask \t"; printHex32(CPUBitmask, O);

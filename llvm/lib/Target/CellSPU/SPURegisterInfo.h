@@ -56,8 +56,6 @@ namespace llvm {
     //! Return the reserved registers
     BitVector getReservedRegs(const MachineFunction &MF) const;
 
-    //! Prediate: Target has dedicated frame pointer
-    bool hasFP(const MachineFunction &MF) const;
     //! Eliminate the call frame setup pseudo-instructions
     void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                        MachineBasicBlock &MBB,

@@ -34,6 +34,9 @@ public:
   /// the function.
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+
+  bool hasReservedCallFrame(const MachineFunction &MF) const { return true; }
+  bool hasFP(const MachineFunction &MF) const;
 };
 
 } // End llvm namespace

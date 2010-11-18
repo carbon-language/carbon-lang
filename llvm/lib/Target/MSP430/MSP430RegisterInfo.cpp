@@ -38,6 +38,7 @@ MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm,
 
 const unsigned*
 MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
+  const TargetFrameInfo *TFI = MF->getTarget().getFrameInfo();
   const Function* F = MF->getFunction();
   static const unsigned CalleeSavedRegs[] = {
     MSP430::FPW, MSP430::R5W, MSP430::R6W, MSP430::R7W,
@@ -62,7 +63,7 @@ MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     0
   };
 
-  if (hasFP(*MF))
+  if (TFI->hasFP(*MF))
     return (F->getCallingConv() == CallingConv::MSP430_INTR ?
             CalleeSavedRegsIntrFP : CalleeSavedRegsFP);
   else
@@ -73,6 +74,7 @@ MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
 
   // Mark 4 special registers as reserved.
   Reserved.set(MSP430::PCW);
@@ -81,7 +83,7 @@ BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(MSP430::CGW);
 
   // Mark frame pointer as reserved if needed.
-  if (hasFP(MF))
+  if (TFI->hasFP(MF))
     Reserved.set(MSP430::FPW);
 
   return Reserved;
@@ -92,23 +94,12 @@ MSP430RegisterInfo::getPointerRegClass(unsigned Kind) const {
   return &MSP430::GR16RegClass;
 }
 
-
-bool MSP430RegisterInfo::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-
-  return (DisableFramePointerElim(MF) ||
-          MF.getFrameInfo()->hasVarSizedObjects() ||
-          MFI->isFrameAddressTaken());
-}
-
-bool MSP430RegisterInfo::hasReservedCallFrame(const MachineFunction &MF) const {
-  return !MF.getFrameInfo()->hasVarSizedObjects();
-}
-
 void MSP430RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (!hasReservedCallFrame(MF)) {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (!TFI->hasReservedCallFrame(MF)) {
     // If the stack pointer can be changed after prologue, turn the
     // adjcallstackup instruction into a 'sub SPW, <amt>' and the
     // adjcallstackdown instruction into 'add SPW, <amt>'
@@ -172,6 +163,7 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   DebugLoc dl = MI.getDebugLoc();
   while (!MI.getOperand(i).isFI()) {
     ++i;
@@ -180,13 +172,13 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   int FrameIndex = MI.getOperand(i).getIndex();
 
-  unsigned BasePtr = (hasFP(MF) ? MSP430::FPW : MSP430::SPW);
+  unsigned BasePtr = (TFI->hasFP(MF) ? MSP430::FPW : MSP430::SPW);
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
   // Skip the saved PC
   Offset += 2;
 
-  if (!hasFP(MF))
+  if (!TFI->hasFP(MF))
     Offset += MF.getFrameInfo()->getStackSize();
   else
     Offset += 2; // Skip the saved FPW
@@ -224,8 +216,10 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 void
 MSP430RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
                                                                          const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   // Create a frame entry for the FPW register that must be saved.
-  if (hasFP(MF)) {
+  if (TFI->hasFP(MF)) {
     int FrameIdx = MF.getFrameInfo()->CreateFixedObject(2, -4, true);
     (void)FrameIdx;
     assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
@@ -238,7 +232,9 @@ unsigned MSP430RegisterInfo::getRARegister() const {
 }
 
 unsigned MSP430RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  return hasFP(MF) ? MSP430::FPW : MSP430::SPW;
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  return TFI->hasFP(MF) ? MSP430::FPW : MSP430::SPW;
 }
 
 int MSP430RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {

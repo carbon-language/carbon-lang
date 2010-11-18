@@ -32,6 +32,8 @@ public:
   /// the function.
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+
+  bool hasFP(const MachineFunction &MF) const { return false; }
 };
 
 } // End llvm namespace

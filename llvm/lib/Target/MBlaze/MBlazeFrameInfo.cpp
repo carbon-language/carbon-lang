@@ -40,11 +40,17 @@ using namespace llvm;
 //
 //===----------------------------------------------------------------------===//
 
+// hasFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
+bool MBlazeFrameInfo::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
+}
+
 void MBlazeFrameInfo::adjustMBlazeStackFrame(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
-  const MBlazeRegisterInfo *RegInfo =
-    static_cast<const MBlazeRegisterInfo*>(MF.getTarget().getRegisterInfo());
 
   // See the description at MicroBlazeMachineFunction.h
   int TopCPUSavedRegOff = -1;
@@ -61,7 +67,7 @@ void MBlazeFrameInfo::adjustMBlazeStackFrame(MachineFunction &MF) const {
   MBlazeFI->adjustLoadArgsFI(MFI);
   MBlazeFI->adjustStoreVarArgsFI(MFI);
 
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true),
                          StackOffset);
     MBlazeFI->setFPStackOffset(StackOffset);
@@ -90,8 +96,6 @@ void MBlazeFrameInfo::adjustMBlazeStackFrame(MachineFunction &MF) const {
 void MBlazeFrameInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB   = MF.front();
   MachineFrameInfo *MFI    = MF.getFrameInfo();
-  const MBlazeRegisterInfo *RegInfo =
-    static_cast<const MBlazeRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MBlazeInstrInfo &TII =
     *static_cast<const MBlazeInstrInfo*>(MF.getTarget().getInstrInfo());
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
@@ -124,7 +128,7 @@ void MBlazeFrameInfo::emitPrologue(MachineFunction &MF) const {
 
   // if framepointer enabled, save it and set it
   // to point to the stack pointer
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     // swi  R19, R1, stack_loc
     BuildMI(MBB, MBBI, DL, TII.get(MBlaze::SWI))
       .addReg(MBlaze::R19).addReg(MBlaze::R1).addImm(FPOffset);
@@ -139,9 +143,7 @@ void MBlazeFrameInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineFrameInfo *MFI            = MF.getFrameInfo();
-  MBlazeFunctionInfo *MBlazeFI         = MF.getInfo<MBlazeFunctionInfo>();
-  const MBlazeRegisterInfo *RegInfo =
-    static_cast<const MBlazeRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  MBlazeFunctionInfo *MBlazeFI     = MF.getInfo<MBlazeFunctionInfo>();
   const MBlazeInstrInfo &TII =
     *static_cast<const MBlazeInstrInfo*>(MF.getTarget().getInstrInfo());
 
@@ -153,7 +155,7 @@ void MBlazeFrameInfo::emitEpilogue(MachineFunction &MF,
 
   // if framepointer enabled, restore it and restore the
   // stack pointer
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     // add R1, R19, R0
     BuildMI(MBB, MBBI, dl, TII.get(MBlaze::ADD), MBlaze::R1)
       .addReg(MBlaze::R19).addReg(MBlaze::R0);

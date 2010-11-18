@@ -52,10 +52,6 @@ BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-bool SparcRegisterInfo::hasFP(const MachineFunction &MF) const {
-  return false;
-}
-
 void SparcRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {

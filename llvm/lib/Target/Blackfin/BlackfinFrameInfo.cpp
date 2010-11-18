@@ -16,9 +16,19 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
 
+
+// hasFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
+bool BlackfinFrameInfo::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return DisableFramePointerElim(MF) ||
+    MFI->adjustsStack() || MFI->hasVarSizedObjects();
+}
 
 // Emit a prologue that sets up a stack frame.
 // On function entry, R0-R2 and P0 may hold arguments.
@@ -40,7 +50,7 @@ void BlackfinFrameInfo::emitPrologue(MachineFunction &MF) const {
     MFI->setStackSize(FrameSize);
   }
 
-  if (!RegInfo->hasFP(MF)) {
+  if (!hasFP(MF)) {
     assert(!MFI->adjustsStack() &&
            "FP elimination on a non-leaf function is not supported");
     RegInfo->adjustRegister(MBB, MBBI, dl, BF::SP, BF::P1, -FrameSize);
@@ -85,7 +95,7 @@ void BlackfinFrameInfo::emitEpilogue(MachineFunction &MF,
   int FrameSize = MFI->getStackSize();
   assert(FrameSize%4 == 0 && "Misaligned frame size");
 
-  if (!RegInfo->hasFP(MF)) {
+  if (!hasFP(MF)) {
     assert(!MFI->adjustsStack() &&
            "FP elimination on a non-leaf function is not supported");
     RegInfo->adjustRegister(MBB, MBBI, dl, BF::SP, BF::P1, FrameSize);

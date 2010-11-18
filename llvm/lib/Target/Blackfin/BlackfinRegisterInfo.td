@@ -252,9 +252,9 @@ def P : RegisterClass<"BF", [i32], 32, [P0, P1, P2, P3, P4, P5, FP, SP]> {
     PClass::iterator
     PClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
       return allocation_order_begin(MF)
-             + (RI->hasFP(MF) ? 7 : 6);
+             + (TFI->hasFP(MF) ? 7 : 6);
     }
   }];
 }
@@ -275,9 +275,9 @@ def DP : RegisterClass<"BF", [i32], 32,
     DPClass::iterator
     DPClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
       return allocation_order_begin(MF)
-             + (RI->hasFP(MF) ? 15 : 14);
+             + (TFI->hasFP(MF) ? 15 : 14);
     }
   }];
 }
@@ -295,9 +295,9 @@ def GR : RegisterClass<"BF", [i32], 32,
     GRClass::iterator
     GRClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
       return allocation_order_begin(MF)
-             + (RI->hasFP(MF) ? 31 : 30);
+             + (TFI->hasFP(MF) ? 31 : 30);
     }
   }];
 }
@@ -318,9 +318,9 @@ def ALL : RegisterClass<"BF", [i32], 32,
     ALLClass::iterator
     ALLClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
       return allocation_order_begin(MF)
-             + (RI->hasFP(MF) ? 31 : 30);
+             + (TFI->hasFP(MF) ? 31 : 30);
     }
   }];
 }
@@ -334,9 +334,9 @@ def PI : RegisterClass<"BF", [i32], 32,
     PIClass::iterator
     PIClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
       return allocation_order_begin(MF)
-             + (RI->hasFP(MF) ? 11 : 10);
+             + (TFI->hasFP(MF) ? 11 : 10);
     }
   }];
 }

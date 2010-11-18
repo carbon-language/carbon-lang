@@ -68,19 +68,6 @@ void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
           .addConstantPoolIndex(Idx).addImm(Pred).addReg(PredReg);
 }
 
-bool Thumb1RegisterInfo::hasReservedCallFrame(const MachineFunction &MF) const {
-  const MachineFrameInfo *FFI = MF.getFrameInfo();
-  unsigned CFSize = FFI->getMaxCallFrameSize();
-  // It's not always a good idea to include the call frame as part of the
-  // stack frame. ARM (especially Thumb) has small immediate offset to
-  // address the stack frame. So a large call frame can cause poor codegen
-  // and may even makes it impossible to scavenge a register.
-  if (CFSize >= ((1 << 8) - 1) * 4 / 2) // Half of imm8 * 4
-    return false;
-
-  return !MF.getFrameInfo()->hasVarSizedObjects();
-}
-
 
 /// emitThumbRegPlusImmInReg - Emits a series of instructions to materialize
 /// a destreg = basereg + immediate in Thumb code. Materialize the immediate
@@ -303,7 +290,9 @@ static void emitSPUpdate(MachineBasicBlock &MBB,
 void Thumb1RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (!hasReservedCallFrame(MF)) {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (!TFI->hasReservedCallFrame(MF)) {
     // If we have alloca, convert as follows:
     // ADJCALLSTACKDOWN -> sub, sp, sp, amount
     // ADJCALLSTACKUP   -> add, sp, sp, amount
@@ -583,6 +572,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc dl = MI.getDebugLoc();
 
@@ -601,7 +591,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   else if (AFI->isGPRCalleeSavedArea2Frame(FrameIndex))
     Offset -= AFI->getGPRCalleeSavedArea2Offset();
   else if (MF.getFrameInfo()->hasVarSizedObjects()) {
-    assert(SPAdj == 0 && hasFP(MF) && "Unexpected");
+    assert(SPAdj == 0 && TFI->hasFP(MF) && "Unexpected");
     // There are alloca()'s in this function, must reference off the frame
     // pointer or base pointer instead.
     if (!hasBasePointer(MF)) {

@@ -37,6 +37,9 @@ namespace llvm {
     void emitPrologue(MachineFunction &MF) const;
     void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
+    //! Prediate: Target has dedicated frame pointer
+    bool hasFP(const MachineFunction &MF) const;
+
     //! Return a function's saved spill slots
     /*!
       For CellSPU, a function's saved spill slots is just the link register.

@@ -84,11 +84,13 @@ const unsigned* XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
 
 BitVector XCoreRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   Reserved.set(XCore::CP);
   Reserved.set(XCore::DP);
   Reserved.set(XCore::SP);
   Reserved.set(XCore::LR);
-  if (hasFP(MF)) {
+  if (TFI->hasFP(MF)) {
     Reserved.set(XCore::R10);
   }
   return Reserved;
@@ -96,12 +98,10 @@ BitVector XCoreRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 bool
 XCoreRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
-  // TODO can we estimate stack size?
-  return hasFP(MF);
-}
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
 
-bool XCoreRegisterInfo::hasFP(const MachineFunction &MF) const {
-  return DisableFramePointerElim(MF) || MF.getFrameInfo()->hasVarSizedObjects();
+  // TODO can we estimate stack size?
+  return TFI->hasFP(MF);
 }
 
 // This function eliminates ADJCALLSTACKDOWN,
@@ -109,7 +109,9 @@ bool XCoreRegisterInfo::hasFP(const MachineFunction &MF) const {
 void XCoreRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (!hasReservedCallFrame(MF)) {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (!TFI->hasReservedCallFrame(MF)) {
     // Turn the adjcallstackdown instruction into 'extsp <amt>' and the
     // adjcallstackup instruction into 'ldaw sp, sp[<amt>]'
     MachineInstr *Old = I;
@@ -172,6 +174,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FrameIndex = FrameOp.getIndex();
 
   MachineFunction &MF = *MI.getParent()->getParent();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
   int StackSize = MF.getFrameInfo()->getStackSize();
 
@@ -197,7 +200,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   
   Offset/=4;
   
-  bool FP = hasFP(MF);
+  bool FP = TFI->hasFP(MF);
   
   unsigned Reg = MI.getOperand(0).getReg();
   bool isKill = MI.getOpcode() == XCore::STWFI && MI.getOperand(0).isKill();
@@ -296,6 +299,7 @@ void
 XCoreRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                       RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   bool LRUsed = MF.getRegInfo().isPhysRegUsed(XCore::LR);
   const TargetRegisterClass *RC = XCore::GRRegsRegisterClass;
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
@@ -320,7 +324,7 @@ XCoreRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                        RC->getAlignment(),
                                                        false));
   }
-  if (hasFP(MF)) {
+  if (TFI->hasFP(MF)) {
     // A callee save register is used to hold the FP.
     // This needs saving / restoring in the epilogue / prologue.
     XFI->setFPSpillSlot(MFI->CreateStackObject(RC->getSize(),
@@ -351,9 +355,9 @@ int XCoreRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
 }
 
 unsigned XCoreRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  bool FP = hasFP(MF);
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
 
-  return FP ? XCore::R10 : XCore::SP;
+  return TFI->hasFP(MF) ? XCore::R10 : XCore::SP;
 }
 
 unsigned XCoreRegisterInfo::getRARegister() const {

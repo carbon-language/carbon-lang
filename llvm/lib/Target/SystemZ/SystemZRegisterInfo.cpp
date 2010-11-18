@@ -49,19 +49,13 @@ SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector SystemZRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  if (hasFP(MF))
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (TFI->hasFP(MF))
     Reserved.set(SystemZ::R11D);
   Reserved.set(SystemZ::R14D);
   Reserved.set(SystemZ::R15D);
   return Reserved;
-}
-
-/// needsFP - Return true if the specified function should have a dedicated
-/// frame pointer register.  This is true if the function has variable sized
-/// allocas or if frame pointer elimination is disabled.
-bool SystemZRegisterInfo::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
 
 void SystemZRegisterInfo::
@@ -100,6 +94,8 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   while (!MI.getOperand(i).isFI()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
@@ -107,7 +103,7 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   int FrameIndex = MI.getOperand(i).getIndex();
 
-  unsigned BasePtr = (hasFP(MF) ? SystemZ::R11D : SystemZ::R15D);
+  unsigned BasePtr = (TFI->hasFP(MF) ? SystemZ::R11D : SystemZ::R15D);
 
   // This must be part of a rri or ri operand memory reference.  Replace the
   // FrameIndex with base register with BasePtr.  Add an offset to the

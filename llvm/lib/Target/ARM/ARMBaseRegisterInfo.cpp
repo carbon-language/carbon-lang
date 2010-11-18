@@ -85,12 +85,14 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector ARMBaseRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   // FIXME: avoid re-calculating this everytime.
   BitVector Reserved(getNumRegs());
   Reserved.set(ARM::SP);
   Reserved.set(ARM::PC);
   Reserved.set(ARM::FPSCR);
-  if (hasFP(MF))
+  if (TFI->hasFP(MF))
     Reserved.set(FramePtr);
   if (hasBasePointer(MF))
     Reserved.set(BasePtr);
@@ -102,6 +104,8 @@ getReservedRegs(const MachineFunction &MF) const {
 
 bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
                                         unsigned Reg) const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   switch (Reg) {
   default: break;
   case ARM::SP:
@@ -113,7 +117,7 @@ bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
     break;
   case ARM::R7:
   case ARM::R11:
-    if (FramePtr == Reg && hasFP(MF))
+    if (FramePtr == Reg && TFI->hasFP(MF))
       return true;
     break;
   case ARM::R9:
@@ -349,6 +353,7 @@ std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
 ARMBaseRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
                                         unsigned HintType, unsigned HintReg,
                                         const MachineFunction &MF) const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   // Alternative register allocation orders when favoring even / odd registers
   // of register pairs.
 
@@ -430,7 +435,7 @@ ARMBaseRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
       return std::make_pair(RC->allocation_order_begin(MF),
                             RC->allocation_order_end(MF));
 
-    if (!hasFP(MF)) {
+    if (!TFI->hasFP(MF)) {
       if (!STI.isR9Reserved())
         return std::make_pair(GPREven1,
                               GPREven1 + (sizeof(GPREven1)/sizeof(unsigned)));
@@ -459,7 +464,7 @@ ARMBaseRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
       return std::make_pair(RC->allocation_order_begin(MF),
                             RC->allocation_order_end(MF));
 
-    if (!hasFP(MF)) {
+    if (!TFI->hasFP(MF)) {
       if (!STI.isR9Reserved())
         return std::make_pair(GPROdd1,
                               GPROdd1 + (sizeof(GPROdd1)/sizeof(unsigned)));
@@ -522,23 +527,6 @@ ARMBaseRegisterInfo::UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
       // Make sure the pair has not already divorced.
       MRI->setRegAllocationHint(OtherReg, Hint.first, NewReg);
   }
-}
-
-/// hasFP - Return true if the specified function should have a dedicated frame
-/// pointer register.  This is true if the function has variable sized allocas
-/// or if frame pointer elimination is disabled.
-///
-bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
-  // Mac OS X requires FP not to be clobbered for backtracing purpose.
-  if (STI.isTargetDarwin())
-    return true;
-
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  // Always eliminate non-leaf frame pointers.
-  return ((DisableFramePointerElim(MF) && MFI->hasCalls()) ||
-          needsStackRealignment(MF) ||
-          MFI->hasVarSizedObjects() ||
-          MFI->isFrameAddressTaken());
 }
 
 bool ARMBaseRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
@@ -626,6 +614,7 @@ static unsigned estimateStackSize(MachineFunction &MF) {
 /// instructions will require a scratch register during their expansion later.
 unsigned
 ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   unsigned Limit = (1 << 12) - 1;
   for (MachineFunction::iterator BB = MF.begin(),E = MF.end(); BB != E; ++BB) {
@@ -654,7 +643,7 @@ ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
         case ARMII::AddrModeT2_i12:
           // i12 supports only positive offset so these will be converted to
           // i8 opcodes. See llvm::rewriteT2FrameIndex.
-          if (hasFP(MF) && AFI->hasStackFrame())
+          if (TFI->hasFP(MF) && AFI->hasStackFrame())
             Limit = std::min(Limit, (1U << 8) - 1);
           break;
         case ARMII::AddrMode4:
@@ -699,6 +688,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   unsigned NumGPRSpills = 0;
   SmallVector<unsigned, 4> UnspilledCS1GPRs;
   SmallVector<unsigned, 4> UnspilledCS2GPRs;
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
@@ -813,10 +803,10 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //        worth the effort and added fragility?
   bool BigStack =
     (RS &&
-     (estimateStackSize(MF) + ((hasFP(MF) && AFI->hasStackFrame()) ? 4:0) >=
+     (estimateStackSize(MF) + ((TFI->hasFP(MF) && AFI->hasStackFrame()) ? 4:0) >=
       estimateRSStackSizeLimit(MF)))
     || MFI->hasVarSizedObjects()
-    || (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF));
+    || (MFI->adjustsStack() && !TFI->canSimplifyCallFramePseudos(MF));
 
   bool ExtraCSSpill = false;
   if (BigStack || !CanEliminateFrame || cannotEliminateFrame(MF)) {
@@ -834,7 +824,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       ExtraCSSpill = true;
     }
 
-    if (hasFP(MF)) {
+    if (TFI->hasFP(MF)) {
       MF.getRegInfo().setPhysRegUsed(FramePtr);
       NumGPRSpills++;
     }
@@ -927,7 +917,9 @@ unsigned ARMBaseRegisterInfo::getRARegister() const {
 
 unsigned
 ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  if (hasFP(MF))
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (TFI->hasFP(MF))
     return FramePtr;
   return ARM::SP;
 }
@@ -948,6 +940,7 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
                                                 unsigned &FrameReg,
                                                 int SPAdj) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize();
   int FPOffset = Offset - AFI->getFramePtrSpillOffset();
@@ -965,7 +958,7 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
   // When dynamically realigning the stack, use the frame pointer for
   // parameters, and the stack/base pointer for locals.
   if (needsStackRealignment(MF)) {
-    assert (hasFP(MF) && "dynamic stack realignment without a FP!");
+    assert (TFI->hasFP(MF) && "dynamic stack realignment without a FP!");
     if (isFixed) {
       FrameReg = getFrameRegister(MF);
       Offset = FPOffset;
@@ -978,7 +971,7 @@ ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
   }
 
   // If there is a frame pointer, use it when we can.
-  if (hasFP(MF) && AFI->hasStackFrame()) {
+  if (TFI->hasFP(MF) && AFI->hasStackFrame()) {
     // Use frame pointer to reference fixed objects. Use it for locals if
     // there are VLAs (and thus the SP isn't reliable as a base).
     if (isFixed || (MFI->hasVarSizedObjects() && !hasBasePointer(MF))) {
@@ -1252,34 +1245,6 @@ requiresVirtualBaseRegisters(const MachineFunction &MF) const {
   return EnableLocalStackAlloc;
 }
 
-// hasReservedCallFrame - Under normal circumstances, when a frame pointer is
-// not required, we reserve argument space for call sites in the function
-// immediately on entry to the current function. This eliminates the need for
-// add/sub sp brackets around call sites. Returns true if the call frame is
-// included as part of the stack frame.
-bool ARMBaseRegisterInfo::
-hasReservedCallFrame(const MachineFunction &MF) const {
-  const MachineFrameInfo *FFI = MF.getFrameInfo();
-  unsigned CFSize = FFI->getMaxCallFrameSize();
-  // It's not always a good idea to include the call frame as part of the
-  // stack frame. ARM (especially Thumb) has small immediate offset to
-  // address the stack frame. So a large call frame can cause poor codegen
-  // and may even makes it impossible to scavenge a register.
-  if (CFSize >= ((1 << 12) - 1) / 2)  // Half of imm12
-    return false;
-
-  return !MF.getFrameInfo()->hasVarSizedObjects();
-}
-
-// canSimplifyCallFramePseudos - If there is a reserved call frame, the
-// call frame pseudos can be simplified. Unlike most targets, having a FP
-// is not sufficient here since we still may reference some objects via SP
-// even when FP is available in Thumb2 mode.
-bool ARMBaseRegisterInfo::
-canSimplifyCallFramePseudos(const MachineFunction &MF) const {
-  return hasReservedCallFrame(MF) || MF.getFrameInfo()->hasVarSizedObjects();
-}
-
 static void
 emitSPUpdate(bool isARM,
              MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
@@ -1298,7 +1263,8 @@ emitSPUpdate(bool isARM,
 void ARMBaseRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (!hasReservedCallFrame(MF)) {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+  if (!TFI->hasReservedCallFrame(MF)) {
     // If we have alloca, convert as follows:
     // ADJCALLSTACKDOWN -> sub, sp, sp, amount
     // ADJCALLSTACKUP   -> add, sp, sp, amount
@@ -1429,6 +1395,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   // Note that the incoming offset is based on the SP value at function entry,
   // so it'll be negative.
   MachineFunction &MF = *MI->getParent()->getParent();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
@@ -1456,7 +1423,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   // don't know for sure yet whether we'll need that, so we guess based
   // on whether there are any local variables that would trigger it.
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
-  if (hasFP(MF) &&
+  if (TFI->hasFP(MF) &&
       !((MFI->getLocalFrameMaxAlign() > StackAlign) && canRealignStack(MF))) {
     if (isFrameOffsetLegal(MI, FPOffset))
       return false;

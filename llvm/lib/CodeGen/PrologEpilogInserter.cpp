@@ -142,6 +142,7 @@ void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
 /// pseudo instructions.
 void PEI::calculateCallsInformation(MachineFunction &Fn) {
   const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
+  const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = Fn.getFrameInfo();
 
   unsigned MaxCallFrameSize = 0;
@@ -184,7 +185,7 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
     // the target doesn't indicate otherwise, remove the call frame pseudos
     // here. The sub/add sp instruction pairs are still inserted, but we don't
     // need to track the SP adjustment for frame index elimination.
-    if (RegInfo->canSimplifyCallFramePseudos(Fn))
+    if (TFI->canSimplifyCallFramePseudos(Fn))
       RegInfo->eliminateCallFramePseudoInstr(Fn, *I->getParent(), I);
   }
 }
@@ -553,7 +554,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Make sure the special register scavenging spill slot is closest to the
   // frame pointer if a frame pointer is required.
   const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
-  if (RS && RegInfo->hasFP(Fn) && !RegInfo->needsStackRealignment(Fn)) {
+  if (RS && TFI.hasFP(Fn) && !RegInfo->needsStackRealignment(Fn)) {
     int SFI = RS->getScavengingFrameIndex();
     if (SFI >= 0)
       AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
@@ -635,7 +636,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Make sure the special register scavenging spill slot is closest to the
   // stack pointer.
-  if (RS && (!RegInfo->hasFP(Fn) || RegInfo->needsStackRealignment(Fn))) {
+  if (RS && (!TFI.hasFP(Fn) || RegInfo->needsStackRealignment(Fn))) {
     int SFI = RS->getScavengingFrameIndex();
     if (SFI >= 0)
       AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
@@ -645,7 +646,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     // If we have reserved argument space for call sites in the function
     // immediately on entry to the current function, count it as part of the
     // overall stack size.
-    if (MFI->adjustsStack() && RegInfo->hasReservedCallFrame(Fn))
+    if (MFI->adjustsStack() && TFI.hasReservedCallFrame(Fn))
       Offset += MFI->getMaxCallFrameSize();
 
     // Round up the size to a multiple of the alignment.  If the function has

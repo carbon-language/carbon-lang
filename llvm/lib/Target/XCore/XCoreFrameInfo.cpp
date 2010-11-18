@@ -82,6 +82,10 @@ XCoreFrameInfo::XCoreFrameInfo(const XCoreSubtarget &sti)
   // Do nothing
 }
 
+bool XCoreFrameInfo::hasFP(const MachineFunction &MF) const {
+  return DisableFramePointerElim(MF) || MF.getFrameInfo()->hasVarSizedObjects();
+}
+
 void XCoreFrameInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
@@ -94,7 +98,7 @@ void XCoreFrameInfo::emitPrologue(MachineFunction &MF) const {
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
-  bool FP = RegInfo->hasFP(MF);
+  bool FP = hasFP(MF);
 
   // Work out frame sizes.
   int FrameSize = MFI->getStackSize();
@@ -204,14 +208,11 @@ void XCoreFrameInfo::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   MachineFrameInfo *MFI            = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  const XCoreRegisterInfo *RegInfo =
-    static_cast<const XCoreRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const XCoreInstrInfo &TII =
     *static_cast<const XCoreInstrInfo*>(MF.getTarget().getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();
 
-  bool FP = RegInfo->hasFP(MF);
-
+  bool FP = hasFP(MF);
   if (FP) {
     // Restore the stack pointer.
     unsigned FramePtr = XCore::R10;

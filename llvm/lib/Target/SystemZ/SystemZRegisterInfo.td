@@ -190,8 +190,8 @@ def GR32 : RegisterClass<"SystemZ", [i32], 32,
     GR32Class::iterator
     GR32Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_REG32_nofp;
       else
         return SystemZ_REG32;
@@ -199,8 +199,8 @@ def GR32 : RegisterClass<"SystemZ", [i32], 32,
     GR32Class::iterator
     GR32Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_REG32_nofp + (sizeof(SystemZ_REG32_nofp) / sizeof(unsigned));
       else
         return SystemZ_REG32 + (sizeof(SystemZ_REG32) / sizeof(unsigned));
@@ -237,8 +237,8 @@ def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
     ADDR32Class::iterator
     ADDR32Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_ADDR32_nofp;
       else
         return SystemZ_ADDR32;
@@ -246,8 +246,8 @@ def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
     ADDR32Class::iterator
     ADDR32Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_ADDR32_nofp + (sizeof(SystemZ_ADDR32_nofp) / sizeof(unsigned));
       else
         return SystemZ_ADDR32 + (sizeof(SystemZ_ADDR32) / sizeof(unsigned));
@@ -284,8 +284,8 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
     GR64Class::iterator
     GR64Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_REG64_nofp;
       else
         return SystemZ_REG64;
@@ -293,8 +293,8 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
     GR64Class::iterator
     GR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_REG64_nofp + (sizeof(SystemZ_REG64_nofp) / sizeof(unsigned));
       else
         return SystemZ_REG64 + (sizeof(SystemZ_REG64) / sizeof(unsigned));
@@ -331,8 +331,8 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
     ADDR64Class::iterator
     ADDR64Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_ADDR64_nofp;
       else
         return SystemZ_ADDR64;
@@ -340,8 +340,8 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
     ADDR64Class::iterator
     ADDR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_ADDR64_nofp + (sizeof(SystemZ_ADDR64_nofp) / sizeof(unsigned));
       else
         return SystemZ_ADDR64 + (sizeof(SystemZ_ADDR64) / sizeof(unsigned));
@@ -368,8 +368,8 @@ def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
     GR64PClass::iterator
     GR64PClass::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_REG64P_nofp;
       else
         return SystemZ_REG64P;
@@ -377,8 +377,8 @@ def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
     GR64PClass::iterator
     GR64PClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_REG64P_nofp + (sizeof(SystemZ_REG64P_nofp) / sizeof(unsigned));
       else
         return SystemZ_REG64P + (sizeof(SystemZ_REG64P) / sizeof(unsigned));
@@ -405,8 +405,8 @@ def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
     GR128Class::iterator
     GR128Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_REG128_nofp;
       else
         return SystemZ_REG128;
@@ -414,8 +414,8 @@ def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
     GR128Class::iterator
     GR128Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      if (RI->hasFP(MF))
+      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      if (TFI->hasFP(MF))
         return SystemZ_REG128_nofp + (sizeof(SystemZ_REG128_nofp) / sizeof(unsigned));
       else
         return SystemZ_REG128 + (sizeof(SystemZ_REG128) / sizeof(unsigned));

@@ -20,6 +20,19 @@
 
 using namespace llvm;
 
+bool Thumb1FrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
+  const MachineFrameInfo *FFI = MF.getFrameInfo();
+  unsigned CFSize = FFI->getMaxCallFrameSize();
+  // It's not always a good idea to include the call frame as part of the
+  // stack frame. ARM (especially Thumb) has small immediate offset to
+  // address the stack frame. So a large call frame can cause poor codegen
+  // and may even makes it impossible to scavenge a register.
+  if (CFSize >= ((1 << 8) - 1) * 4 / 2) // Half of imm8 * 4
+    return false;
+
+  return !MF.getFrameInfo()->hasVarSizedObjects();
+}
+
 static void emitSPUpdate(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator &MBBI,
                          const TargetInstrInfo &TII, DebugLoc dl,
@@ -105,7 +118,7 @@ void Thumb1FrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 
   // Adjust FP so it point to the stack slot that contains the previous FP.
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0);
     AFI->setShouldRestoreSPFromFP(true);
@@ -126,7 +139,7 @@ void Thumb1FrameInfo::emitPrologue(MachineFunction &MF) const {
     emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes);
   }
 
-  if (STI.isTargetELF() && RegInfo->hasFP(MF))
+  if (STI.isTargetELF() && hasFP(MF))
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
                              AFI->getFramePtrSpillOffset());
 

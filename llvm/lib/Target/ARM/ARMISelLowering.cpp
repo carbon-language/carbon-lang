@@ -891,13 +891,15 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
 unsigned
 ARMTargetLowering::getRegPressureLimit(const TargetRegisterClass *RC,
                                        MachineFunction &MF) const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   switch (RC->getID()) {
   default:
     return 0;
   case ARM::tGPRRegClassID:
-    return RegInfo->hasFP(MF) ? 4 : 5;
+    return TFI->hasFP(MF) ? 4 : 5;
   case ARM::GPRRegClassID: {
-    unsigned FP = RegInfo->hasFP(MF) ? 1 : 0;
+    unsigned FP = TFI->hasFP(MF) ? 1 : 0;
     return 10 - FP - (Subtarget->isR9Reserved() ? 1 : 0);
   }
   case ARM::SPRRegClassID:  // Currently not used as 'rep' register class.

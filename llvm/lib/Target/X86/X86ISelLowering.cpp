@@ -1172,7 +1172,9 @@ X86TargetLowering::findRepresentativeClass(EVT VT) const{
 unsigned
 X86TargetLowering::getRegPressureLimit(const TargetRegisterClass *RC,
                                        MachineFunction &MF) const {
-  unsigned FPDiff = RegInfo->hasFP(MF) ? 1 : 0;
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  unsigned FPDiff = TFI->hasFP(MF) ? 1 : 0;
   switch (RC->getID()) {
   default:
     return 0;

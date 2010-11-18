@@ -50,6 +50,8 @@ BlackfinRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector
 BlackfinRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   using namespace BF;
   BitVector Reserved(getNumRegs());
   Reserved.set(AZ);
@@ -70,18 +72,9 @@ BlackfinRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(L3);
   Reserved.set(SP);
   Reserved.set(RETS);
-  if (hasFP(MF))
+  if (TFI->hasFP(MF))
     Reserved.set(FP);
   return Reserved;
-}
-
-// hasFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
-bool BlackfinRegisterInfo::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return DisableFramePointerElim(MF) ||
-    MFI->adjustsStack() || MFI->hasVarSizedObjects();
 }
 
 bool BlackfinRegisterInfo::
@@ -161,7 +154,9 @@ void BlackfinRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF,
                               MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (!hasReservedCallFrame(MF)) {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (!TFI->hasReservedCallFrame(MF)) {
     int64_t Amount = I->getOperand(0).getImm();
     if (Amount != 0) {
       assert(Amount%4 == 0 && "Unaligned call frame size");
@@ -196,6 +191,7 @@ BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   DebugLoc DL = MI.getDebugLoc();
 
   unsigned FIPos;
@@ -208,7 +204,7 @@ BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex)
     + MI.getOperand(FIPos+1).getImm();
   unsigned BaseReg = BF::FP;
-  if (hasFP(MF)) {
+  if (TFI->hasFP(MF)) {
     assert(SPAdj==0 && "Unexpected SP adjust in function with frame pointer");
   } else {
     BaseReg = BF::SP;
@@ -348,7 +344,9 @@ unsigned BlackfinRegisterInfo::getRARegister() const {
 
 unsigned
 BlackfinRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  return hasFP(MF) ? BF::FP : BF::SP;
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  return TFI->hasFP(MF) ? BF::FP : BF::SP;
 }
 
 unsigned BlackfinRegisterInfo::getEHExceptionRegister() const {

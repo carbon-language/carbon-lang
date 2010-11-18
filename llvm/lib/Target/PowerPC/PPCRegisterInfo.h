@@ -48,8 +48,6 @@ public:
   /// FIXME (64-bit): Should be inlined.
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
-  bool hasFP(const MachineFunction &MF) const;
-
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
@@ -64,9 +62,6 @@ public:
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS = NULL) const;
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
-
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   // Debug information queries.
   unsigned getRARegister() const;

@@ -297,7 +297,7 @@ SystemZInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   MachineFunction &MF = *MBB.getParent();
-  const TargetRegisterInfo *RegInfo= MF.getTarget().getRegisterInfo();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   SystemZMachineFunctionInfo *MFI = MF.getInfo<SystemZMachineFunctionInfo>();
 
   // Restore FP registers
@@ -323,7 +323,7 @@ SystemZInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     if (LowReg != HighReg)
       MIB.addReg(HighReg, RegState::Define);
 
-    MIB.addReg((RegInfo->hasFP(MF) ? SystemZ::R11D : SystemZ::R15D));
+    MIB.addReg(TFI->hasFP(MF) ? SystemZ::R11D : SystemZ::R15D);
     MIB.addImm(StartOffset);
     if (LowReg == HighReg)
       MIB.addReg(0);

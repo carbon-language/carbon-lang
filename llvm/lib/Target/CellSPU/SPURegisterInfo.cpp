@@ -240,25 +240,6 @@ BitVector SPURegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
 
-// needsFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
-//
-static bool needsFP(const MachineFunction &MF) {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
-}
-
-//--------------------------------------------------------------------------
-// hasFP - Return true if the specified function actually has a dedicated frame
-// pointer register.  This is true if the function needs a frame pointer and has
-// a non-zero stack size.
-bool
-SPURegisterInfo::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->getStackSize() && needsFP(MF);
-}
-
 //--------------------------------------------------------------------------
 void
 SPURegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,

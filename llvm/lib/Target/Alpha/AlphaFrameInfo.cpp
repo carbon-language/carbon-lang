@@ -34,17 +34,23 @@ static long getLower16(long l) {
   return l - h * Alpha::IMM_MULT;
 }
 
+// hasFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
+//
+bool AlphaFrameInfo::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return MFI->hasVarSizedObjects();
+}
+
 void AlphaFrameInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const AlphaRegisterInfo *RegInfo =
-    static_cast<const AlphaRegisterInfo*>(MF.getTarget().getRegisterInfo());
-  const AlphaInstrInfo &TII =
-    *static_cast<const AlphaInstrInfo*>(MF.getTarget().getInstrInfo());
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
 
   DebugLoc dl = (MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc());
-  bool FP = RegInfo->hasFP(MF);
+  bool FP = hasFP(MF);
 
   // Handle GOP offset
   BuildMI(MBB, MBBI, dl, TII.get(Alpha::LDAHg), Alpha::R29)
@@ -99,17 +105,14 @@ void AlphaFrameInfo::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  const AlphaRegisterInfo *RegInfo =
-    static_cast<const AlphaRegisterInfo*>(MF.getTarget().getRegisterInfo());
-  const AlphaInstrInfo &TII =
-    *static_cast<const AlphaInstrInfo*>(MF.getTarget().getInstrInfo());
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
 
   assert((MBBI->getOpcode() == Alpha::RETDAG ||
           MBBI->getOpcode() == Alpha::RETDAGp)
          && "Can only insert epilog into returning blocks");
   DebugLoc dl = MBBI->getDebugLoc();
 
-  bool FP = RegInfo->hasFP(MF);
+  bool FP = hasFP(MF);
 
   // Get the number of bytes allocated from the FrameInfo...
   long NumBytes = MFI->getStackSize();

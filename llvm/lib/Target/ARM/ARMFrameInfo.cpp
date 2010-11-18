@@ -17,8 +17,54 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
+
+/// hasFP - Return true if the specified function should have a dedicated frame
+/// pointer register.  This is true if the function has variable sized allocas
+/// or if frame pointer elimination is disabled.
+///
+bool ARMFrameInfo::hasFP(const MachineFunction &MF) const {
+  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
+
+  // Mac OS X requires FP not to be clobbered for backtracing purpose.
+  if (STI.isTargetDarwin())
+    return true;
+
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  // Always eliminate non-leaf frame pointers.
+  return ((DisableFramePointerElim(MF) && MFI->hasCalls()) ||
+          RegInfo->needsStackRealignment(MF) ||
+          MFI->hasVarSizedObjects() ||
+          MFI->isFrameAddressTaken());
+}
+
+// hasReservedCallFrame - Under normal circumstances, when a frame pointer is
+// not required, we reserve argument space for call sites in the function
+// immediately on entry to the current function. This eliminates the need for
+// add/sub sp brackets around call sites. Returns true if the call frame is
+// included as part of the stack frame.
+bool ARMFrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
+  const MachineFrameInfo *FFI = MF.getFrameInfo();
+  unsigned CFSize = FFI->getMaxCallFrameSize();
+  // It's not always a good idea to include the call frame as part of the
+  // stack frame. ARM (especially Thumb) has small immediate offset to
+  // address the stack frame. So a large call frame can cause poor codegen
+  // and may even makes it impossible to scavenge a register.
+  if (CFSize >= ((1 << 12) - 1) / 2)  // Half of imm12
+    return false;
+
+  return !MF.getFrameInfo()->hasVarSizedObjects();
+}
+
+// canSimplifyCallFramePseudos - If there is a reserved call frame, the
+// call frame pseudos can be simplified. Unlike most targets, having a FP
+// is not sufficient here since we still may reference some objects via SP
+// even when FP is available in Thumb2 mode.
+bool ARMFrameInfo::canSimplifyCallFramePseudos(const MachineFunction &MF)const {
+  return hasReservedCallFrame(MF) || MF.getFrameInfo()->hasVarSizedObjects();
+}
 
 static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
   for (unsigned i = 0; CSRegs[i]; ++i)
@@ -136,7 +182,7 @@ void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
   // Otherwise, if this is not Darwin, all the callee-saved registers go
   // into spill area 1, including the FP in R11.  In either case, it is
   // now safe to emit this assignment.
-  bool HasFP = RegInfo->hasFP(MF);
+  bool HasFP = hasFP(MF);
   if (HasFP) {
     unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri : ARM::t2ADDri;
     MachineInstrBuilder MIB =
@@ -170,7 +216,7 @@ void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
       AFI->setShouldRestoreSPFromFP(true);
   }
 
-  if (STI.isTargetELF() && RegInfo->hasFP(MF)) {
+  if (STI.isTargetELF() && hasFP(MF)) {
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
                              AFI->getFramePtrSpillOffset());
     AFI->setShouldRestoreSPFromFP(true);

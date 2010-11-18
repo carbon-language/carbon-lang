@@ -117,8 +117,7 @@ getCalleeSavedRegs(const MachineFunction *MF) const
 }
 
 BitVector MipsRegisterInfo::
-getReservedRegs(const MachineFunction &MF) const
-{
+getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(Mips::ZERO);
   Reserved.set(Mips::AT);
@@ -135,15 +134,6 @@ getReservedRegs(const MachineFunction &MF) const
       Reserved.set(FReg);
   
   return Reserved;
-}
-
-// hasFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
-bool MipsRegisterInfo::
-hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
 
 // This function eliminate ADJCALLSTACKDOWN, 
@@ -209,7 +199,9 @@ getRARegister() const {
 
 unsigned MipsRegisterInfo::
 getFrameRegister(const MachineFunction &MF) const {
-  return hasFP(MF) ? Mips::FP : Mips::SP;
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  return TFI->hasFP(MF) ? Mips::FP : Mips::SP;
 }
 
 unsigned MipsRegisterInfo::

@@ -259,19 +259,6 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return Subtarget.isPPC64() ? SVR4_64_CalleeSavedRegs : SVR4_CalleeSavedRegs;
 }
 
-// needsFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
-//
-static bool needsFP(const MachineFunction &MF) {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  // Naked functions have no stack frame pushed, so we don't have a frame pointer.
-  if (MF.getFunction()->hasFnAttr(Attribute::Naked))
-    return false;
-  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects() ||
-    (GuaranteedTailCallOpt && MF.getInfo<PPCFunctionInfo>()->hasFastCall());
-}
-
 static bool spillsCR(const MachineFunction &MF) {
   const PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
   return FuncInfo->isCRSpilled();
@@ -279,6 +266,8 @@ static bool spillsCR(const MachineFunction &MF) {
 
 BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   Reserved.set(PPC::R0);
   Reserved.set(PPC::R1);
   Reserved.set(PPC::LR);
@@ -324,7 +313,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     }
   }
 
-  if (needsFP(MF))
+  if (TFI->hasFP(MF))
     Reserved.set(PPC::R31);
 
   return Reserved;
@@ -333,14 +322,6 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
-
-// hasFP - Return true if the specified function actually has a dedicated frame
-// pointer register.  This is true if the function needs a frame pointer and has
-// a non-zero stack size.
-bool PPCRegisterInfo::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->getStackSize() && needsFP(MF);
-}
 
 /// MustSaveLR - Return true if this function requires that we save the LR
 /// register onto the stack in the prolog and restore it in the epilog of the
@@ -583,6 +564,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineFunction &MF = *MBB.getParent();
   // Get the frame info.
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   DebugLoc dl = MI.getDebugLoc();
 
   // Find out which operand is the frame index.
@@ -622,7 +604,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
-  MI.getOperand(FIOperandNo).ChangeToRegister(hasFP(MF) ? PPC::R31 : PPC::R1,
+  MI.getOperand(FIOperandNo).ChangeToRegister(TFI->hasFP(MF) ?
+                                              PPC::R31 : PPC::R1,
                                               false);
 
   // Figure out if the offset in the instruction is shifted right two bits. This
@@ -708,6 +691,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 void
 PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                       RegScavenger *RS) const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   //  Save and clear the LR state.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   unsigned LR = getRARegister();
@@ -719,9 +704,9 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   bool isPPC64 = Subtarget.isPPC64();
   bool isDarwinABI  = Subtarget.isDarwinABI();
   MachineFrameInfo *MFI = MF.getFrameInfo();
- 
+
   // If the frame pointer save index hasn't been defined yet.
-  if (!FPSI && needsFP(MF)) {
+  if (!FPSI && TFI->hasFP(MF)) {
     // Find out what the fix offset of the frame pointer save area.
     int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(isPPC64,
                                                            isDarwinABI);
@@ -736,7 +721,7 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (GuaranteedTailCallOpt && (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
     MF.getFrameInfo()->CreateFixedObject(-1 * TCSPDelta, TCSPDelta, true);
   }
-  
+
   // Reserve a slot closest to SP or frame pointer if we have a dynalloc or
   // a large stack, which will require scavenging a register to materialize a
   // large offset.
@@ -745,7 +730,7 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //        r0 for now.
 
   if (EnableRegisterScavenging) // FIXME (64-bit): Enable.
-    if (needsFP(MF) || spillsCR(MF)) {
+    if (TFI->hasFP(MF) || spillsCR(MF)) {
       const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
       const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
       const TargetRegisterClass *RC = isPPC64 ? G8RC : GPRC;
@@ -766,12 +751,13 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
   // Get callee saved register information.
   MachineFrameInfo *FFI = MF.getFrameInfo();
   const std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
 
   // Early exit if no callee saved registers are modified!
-  if (CSI.empty() && !needsFP(MF)) {
+  if (CSI.empty() && !TFI->hasFP(MF)) {
     return;
   }
-  
+
   unsigned MinGPR = PPC::R31;
   unsigned MinG8R = PPC::X31;
   unsigned MinFPR = PPC::F31;
@@ -858,7 +844,7 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
 
   // Check whether the frame pointer register is allocated. If so, make sure it
   // is spilled to the correct offset.
-  if (needsFP(MF)) {
+  if (TFI->hasFP(MF)) {
     HasGPSaveArea = true;
     
     int FI = PFI->getFramePointerSaveIndex();
@@ -949,10 +935,12 @@ unsigned PPCRegisterInfo::getRARegister() const {
 }
 
 unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   if (!Subtarget.isPPC64())
-    return hasFP(MF) ? PPC::R31 : PPC::R1;
+    return TFI->hasFP(MF) ? PPC::R31 : PPC::R1;
   else
-    return hasFP(MF) ? PPC::X31 : PPC::X1;
+    return TFI->hasFP(MF) ? PPC::X31 : PPC::X1;
 }
 
 void PPCRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)

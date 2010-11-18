@@ -111,13 +111,9 @@ public:
   /// register scavenger to determine what registers are free.
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  bool hasFP(const MachineFunction &MF) const;
-
   bool canRealignStack(const MachineFunction &MF) const;
 
   bool needsStackRealignment(const MachineFunction &MF) const;
-
-  bool hasReservedCallFrame(const MachineFunction &MF) const;
 
   bool hasReservedSpillSlot(const MachineFunction &MF, unsigned Reg,
                             int &FrameIdx) const;

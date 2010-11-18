@@ -139,7 +139,6 @@ public:
   void UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
                           MachineFunction &MF) const;
 
-  bool hasFP(const MachineFunction &MF) const;
   bool hasBasePointer(const MachineFunction &MF) const;
 
   bool canRealignStack(const MachineFunction &MF) const;
@@ -195,9 +194,6 @@ public:
   virtual bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
 
   virtual bool requiresVirtualBaseRegisters(const MachineFunction &MF) const;
-
-  virtual bool hasReservedCallFrame(const MachineFunction &MF) const;
-  virtual bool canSimplifyCallFramePseudos(const MachineFunction &MF) const;
 
   virtual void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                            MachineBasicBlock &MBB,

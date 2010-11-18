@@ -164,14 +164,6 @@ getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-// hasFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
-bool MBlazeRegisterInfo::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
-}
-
 // This function eliminate ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
 void MBlazeRegisterInfo::
@@ -235,7 +227,9 @@ unsigned MBlazeRegisterInfo::getRARegister() const {
 }
 
 unsigned MBlazeRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  return hasFP(MF) ? MBlaze::R19 : MBlaze::R1;
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  return TFI->hasFP(MF) ? MBlaze::R19 : MBlaze::R1;
 }
 
 unsigned MBlazeRegisterInfo::getEHExceptionRegister() const {

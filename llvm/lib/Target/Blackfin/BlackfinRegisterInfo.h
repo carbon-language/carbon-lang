@@ -41,8 +41,6 @@ namespace llvm {
       return &BF::PRegClass;
     }
 
-    bool hasFP(const MachineFunction &MF) const;
-
     // bool hasReservedCallFrame(MachineFunction &MF) const;
 
     bool requiresRegisterScavenging(const MachineFunction &MF) const;

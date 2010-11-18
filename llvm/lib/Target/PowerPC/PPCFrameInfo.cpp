@@ -222,12 +222,25 @@ void PPCFrameInfo::determineFrameLayout(MachineFunction &MF) const {
   MFI->setStackSize(FrameSize);
 }
 
+// hasFP - Return true if the specified function actually has a dedicated frame
+// pointer register.
+bool PPCFrameInfo::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+
+  // Naked functions have no stack frame pushed, so we don't have a frame
+  // pointer.
+  if (MF.getFunction()->hasFnAttr(Attribute::Naked))
+    return false;
+
+  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects() ||
+    (GuaranteedTailCallOpt && MF.getInfo<PPCFunctionInfo>()->hasFastCall());
+}
+
+
 void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const PPCRegisterInfo *RegInfo =
-    static_cast<const PPCRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const PPCInstrInfo &TII =
     *static_cast<const PPCInstrInfo*>(MF.getTarget().getInstrInfo());
 
@@ -266,7 +279,7 @@ void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
   // Do we have a frame pointer for this function?
-  bool HasFP = RegInfo->hasFP(MF) && FrameSize;
+  bool HasFP = hasFP(MF) && FrameSize;
 
   int LROffset = PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI);
 
@@ -471,21 +484,19 @@ void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
 void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
                                 MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  const PPCRegisterInfo *RegInfo =
-    static_cast<const PPCRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const PPCInstrInfo &TII =
     *static_cast<const PPCInstrInfo*>(MF.getTarget().getInstrInfo());
 
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc dl;
 
-  assert( (RetOpcode == PPC::BLR ||
-           RetOpcode == PPC::TCRETURNri ||
-           RetOpcode == PPC::TCRETURNdi ||
-           RetOpcode == PPC::TCRETURNai ||
-           RetOpcode == PPC::TCRETURNri8 ||
-           RetOpcode == PPC::TCRETURNdi8 ||
-           RetOpcode == PPC::TCRETURNai8) &&
+  assert((RetOpcode == PPC::BLR ||
+          RetOpcode == PPC::TCRETURNri ||
+          RetOpcode == PPC::TCRETURNdi ||
+          RetOpcode == PPC::TCRETURNai ||
+          RetOpcode == PPC::TCRETURNri8 ||
+          RetOpcode == PPC::TCRETURNdi8 ||
+          RetOpcode == PPC::TCRETURNai8) &&
          "Can only insert epilog into returning blocks");
 
   // Get alignment info so we know how to restore r1
@@ -504,7 +515,7 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
   // Do we have a frame pointer for this function?
-  bool HasFP = RegInfo->hasFP(MF) && FrameSize;
+  bool HasFP = hasFP(MF) && FrameSize;
 
   int LROffset = PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI);
 
@@ -550,7 +561,7 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
       // call which invalidates the stack pointer value in SP(0). So we use the
       // value of R31 in this case.
       if (FI->hasFastCall() && isInt<16>(FrameSize)) {
-        assert(RegInfo->hasFP(MF) && "Expecting a valid the frame pointer.");
+        assert(hasFP(MF) && "Expecting a valid the frame pointer.");
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI), PPC::R1)
           .addReg(PPC::R31).addImm(FrameSize);
       } else if(FI->hasFastCall()) {
@@ -574,7 +585,7 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
       }
     } else {
       if (FI->hasFastCall() && isInt<16>(FrameSize)) {
-        assert(RegInfo->hasFP(MF) && "Expecting a valid the frame pointer.");
+        assert(hasFP(MF) && "Expecting a valid the frame pointer.");
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI8), PPC::X1)
           .addReg(PPC::X31).addImm(FrameSize);
       } else if(FI->hasFastCall()) {

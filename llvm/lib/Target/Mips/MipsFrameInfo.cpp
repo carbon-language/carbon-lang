@@ -79,11 +79,17 @@ using namespace llvm;
 //
 //===----------------------------------------------------------------------===//
 
+// hasFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
+bool MipsFrameInfo::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
+}
+
 void MipsFrameInfo::adjustMipsStackFrame(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-  const MipsRegisterInfo *RegInfo =
-    static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned RegSize = STI.isGP32bit() ? 4 : 8;
@@ -152,7 +158,7 @@ void MipsFrameInfo::adjustMipsStackFrame(MachineFunction &MF) const {
 
   // Stack locations for FP and RA. If only one of them is used,
   // the space must be allocated for both, otherwise no space at all.
-  if (RegInfo->hasFP(MF) || MFI->adjustsStack()) {
+  if (hasFP(MF) || MFI->adjustsStack()) {
     // FP stack location
     MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true),
                          StackOffset);
@@ -242,7 +248,7 @@ void MipsFrameInfo::emitPrologue(MachineFunction &MF) const {
 
   // if framepointer enabled, save it and set it
   // to point to the stack pointer
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     // sw  $fp,stack_loc($sp)
     BuildMI(MBB, MBBI, dl, TII.get(Mips::SW))
       .addReg(Mips::FP).addImm(FPOffset).addReg(Mips::SP);
@@ -263,8 +269,6 @@ void MipsFrameInfo::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineFrameInfo *MFI            = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI         = MF.getInfo<MipsFunctionInfo>();
-  const MipsRegisterInfo *RegInfo =
-    static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MipsInstrInfo &TII =
     *static_cast<const MipsInstrInfo*>(MF.getTarget().getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();
@@ -278,7 +282,7 @@ void MipsFrameInfo::emitEpilogue(MachineFunction &MF,
 
   // if framepointer enabled, restore it and restore the
   // stack pointer
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     // move $sp, $fp
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::SP)
       .addReg(Mips::FP).addReg(Mips::ZERO);

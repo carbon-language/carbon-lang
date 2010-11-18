@@ -30,6 +30,26 @@ using namespace llvm;
 // FIXME: completely move here.
 extern cl::opt<bool> ForceStackAlign;
 
+bool X86FrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
+  return !MF.getFrameInfo()->hasVarSizedObjects();
+}
+
+/// hasFP - Return true if the specified function should have a dedicated frame
+/// pointer register.  This is true if the function has variable sized allocas
+/// or if frame pointer elimination is disabled.
+bool X86FrameInfo::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const MachineModuleInfo &MMI = MF.getMMI();
+  const TargetRegisterInfo *RI = MF.getTarget().getRegisterInfo();
+
+  return (DisableFramePointerElim(MF) ||
+          RI->needsStackRealignment(MF) ||
+          MFI->hasVarSizedObjects() ||
+          MFI->isFrameAddressTaken() ||
+          MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
+          MMI.callsUnwindInit());
+}
+
 static unsigned getSUBriOpcode(unsigned is64Bit, int64_t Imm) {
   if (is64Bit) {
     if (isInt<8>(Imm))
@@ -184,8 +204,6 @@ void X86FrameInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
                                              MCSymbol *Label,
                                              unsigned FramePtr) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const X86RegisterInfo *RegInfo =
-    static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
   MachineModuleInfo &MMI = MF.getMMI();
 
   // Add callee saved registers to move list.
@@ -194,7 +212,7 @@ void X86FrameInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
 
   std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   const TargetData *TD = MF.getTarget().getTargetData();
-  bool HasFP = RegInfo->hasFP(MF);
+  bool HasFP = hasFP(MF);
 
   // Calculate amount of bytes used for return address storing.
   int stackGrowth =
@@ -269,7 +287,7 @@ void X86FrameInfo::emitPrologue(MachineFunction &MF) const {
                           !Fn->doesNotThrow() || UnwindTablesMandatory;
   uint64_t MaxAlign  = MFI->getMaxAlignment(); // Desired stack alignment.
   uint64_t StackSize = MFI->getStackSize();    // Number of bytes to allocate.
-  bool HasFP = RegInfo->hasFP(MF);
+  bool HasFP = hasFP(MF);
   bool Is64Bit = STI.is64Bit();
   bool IsWin64 = STI.isTargetWin64();
   unsigned StackAlign = getStackAlignment();
@@ -596,7 +614,7 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
       MaxAlign = MaxAlign ? MaxAlign : 4;
   }
 
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     // Calculate required stack adjustment.
     uint64_t FrameSize = StackSize - SlotSize;
     if (RegInfo->needsStackRealignment(MF))

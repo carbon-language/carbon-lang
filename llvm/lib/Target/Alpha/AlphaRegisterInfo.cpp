@@ -78,19 +78,12 @@ BitVector AlphaRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
 
-// hasFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
-//
-bool AlphaRegisterInfo::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->hasVarSizedObjects();
-}
-
 void AlphaRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (hasFP(MF)) {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (TFI->hasFP(MF)) {
     // If we have a frame pointer, turn the adjcallstackup instruction into a
     // 'sub ESP, <amt>' and the adjcallstackdown instruction into 'add ESP,
     // <amt>'
@@ -138,7 +131,9 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  bool FP = hasFP(MF);
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  bool FP = TFI->hasFP(MF);
 
   while (!MI.getOperand(i).isFI()) {
     ++i;
@@ -183,7 +178,9 @@ unsigned AlphaRegisterInfo::getRARegister() const {
 }
 
 unsigned AlphaRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  return hasFP(MF) ? Alpha::R15 : Alpha::R30;
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  return TFI->hasFP(MF) ? Alpha::R15 : Alpha::R30;
 }
 
 unsigned AlphaRegisterInfo::getEHExceptionRegister() const {

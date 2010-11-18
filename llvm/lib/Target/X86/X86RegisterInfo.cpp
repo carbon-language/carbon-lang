@@ -388,6 +388,8 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
   // Set the stack-pointer register and its aliases as reserved.
   Reserved.set(X86::RSP);
   Reserved.set(X86::ESP);
@@ -400,7 +402,7 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(X86::IP);
 
   // Set the frame-pointer register and its aliases as reserved if needed.
-  if (hasFP(MF)) {
+  if (TFI->hasFP(MF)) {
     Reserved.set(X86::RBP);
     Reserved.set(X86::EBP);
     Reserved.set(X86::BP);
@@ -424,21 +426,6 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
-
-/// hasFP - Return true if the specified function should have a dedicated frame
-/// pointer register.  This is true if the function has variable sized allocas
-/// or if frame pointer elimination is disabled.
-bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const MachineModuleInfo &MMI = MF.getMMI();
-
-  return (DisableFramePointerElim(MF) ||
-          needsStackRealignment(MF) ||
-          MFI->hasVarSizedObjects() ||
-          MFI->isFrameAddressTaken() ||
-          MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
-          MMI.callsUnwindInit());
-}
 
 bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -466,13 +453,11 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   return requiresRealignment && canRealignStack(MF);
 }
 
-bool X86RegisterInfo::hasReservedCallFrame(const MachineFunction &MF) const {
-  return !MF.getFrameInfo()->hasVarSizedObjects();
-}
-
 bool X86RegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
                                            unsigned Reg, int &FrameIdx) const {
-  if (Reg == FramePtr && hasFP(MF)) {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (Reg == FramePtr && TFI->hasFP(MF)) {
     FrameIdx = MF.getFrameInfo()->getObjectIndexBegin();
     return true;
   }
@@ -481,9 +466,9 @@ bool X86RegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
 
 int
 X86RegisterInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
-  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  int Offset = MFI->getObjectOffset(FI) - TFI.getOffsetOfLocalArea();
+  int Offset = MFI->getObjectOffset(FI) - TFI->getOffsetOfLocalArea();
   uint64_t StackSize = MFI->getStackSize();
 
   if (needsStackRealignment(MF)) {
@@ -498,7 +483,7 @@ X86RegisterInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
     }
     // FIXME: Support tail calls
   } else {
-    if (!hasFP(MF))
+    if (!TFI->hasFP(MF))
       return Offset + StackSize;
 
     // Skip the saved EBP.
@@ -541,7 +526,9 @@ static unsigned getADDriOpcode(unsigned is64Bit, int64_t Imm) {
 void X86RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (!hasReservedCallFrame(MF)) {
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+
+  if (!TFI->hasReservedCallFrame(MF)) {
     // If the stack pointer can be changed after prologue, turn the
     // adjcallstackup instruction into a 'sub ESP, <amt>' and the
     // adjcallstackdown instruction into 'add ESP, <amt>'
@@ -614,6 +601,7 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
 
   while (!MI.getOperand(i).isFI()) {
     ++i;
@@ -630,7 +618,7 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   else if (AfterFPPop)
     BasePtr = StackPtr;
   else
-    BasePtr = (hasFP(MF) ? FramePtr : StackPtr);
+    BasePtr = (TFI->hasFP(MF) ? FramePtr : StackPtr);
 
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register with EBP.  Add an offset to the offset.
@@ -640,9 +628,8 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FIOffset;
   if (AfterFPPop) {
     // Tail call jmp happens after FP is popped.
-    const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
     const MachineFrameInfo *MFI = MF.getFrameInfo();
-    FIOffset = MFI->getObjectOffset(FrameIndex) - TFI.getOffsetOfLocalArea();
+    FIOffset = MFI->getObjectOffset(FrameIndex) - TFI->getOffsetOfLocalArea();
   } else
     FIOffset = getFrameIndexOffset(MF, FrameIndex);
 
@@ -661,6 +648,7 @@ void
 X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                       RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
 
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   int32_t TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
@@ -679,7 +667,7 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                            (-1U*SlotSize)+TailCallReturnAddrDelta, true);
   }
 
-  if (hasFP(MF)) {
+  if (TFI->hasFP(MF)) {
     assert((TailCallReturnAddrDelta <= 0) &&
            "The Delta should always be zero or negative");
     const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
@@ -702,7 +690,8 @@ unsigned X86RegisterInfo::getRARegister() const {
 }
 
 unsigned X86RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  return hasFP(MF) ? FramePtr : StackPtr;
+  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+  return TFI->hasFP(MF) ? FramePtr : StackPtr;
 }
 
 void

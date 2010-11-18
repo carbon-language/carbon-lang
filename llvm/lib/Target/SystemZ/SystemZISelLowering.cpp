@@ -377,8 +377,8 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                       DebugLoc dl, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) const {
-
   MachineFunction &MF = DAG.getMachineFunction();
+  const TargetFrameInfo *TFI = TM.getFrameInfo();
 
   // Offset to first argument stack slot.
   const unsigned FirstArgOffset = 160;
@@ -431,7 +431,7 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
       if (StackPtr.getNode() == 0)
         StackPtr =
           DAG.getCopyFromReg(Chain, dl,
-                             (RegInfo->hasFP(MF) ?
+                             (TFI->hasFP(MF) ?
                               SystemZ::R11D : SystemZ::R15D),
                              getPointerTy());
 

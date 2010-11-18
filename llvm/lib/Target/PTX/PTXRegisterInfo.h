@@ -38,8 +38,6 @@ struct PTXRegisterInfo : public PTXGenRegisterInfo {
     return Reserved; // reserve no regs
   }
 
-  virtual bool hasFP(const MachineFunction &MF) const { return false; }
-
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                    int SPAdj,
                                    RegScavenger *RS = NULL) const {

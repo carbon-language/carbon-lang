@@ -31,6 +31,8 @@ namespace llvm {
     void emitPrologue(MachineFunction &MF) const;
     void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
+    bool hasFP(const MachineFunction &MF) const;
+
     //! Stack slot size (4 bytes)
     static int stackSlotSize() {
       return 4;

@@ -27,6 +27,15 @@
 
 using namespace llvm;
 
+
+/// needsFP - Return true if the specified function should have a dedicated
+/// frame pointer register.  This is true if the function has variable sized
+/// allocas or if frame pointer elimination is disabled.
+bool SystemZFrameInfo::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
+}
+
 /// emitSPUpdate - Emit a series of instructions to increment / decrement the
 /// stack pointer by a constant value.
 static
@@ -61,8 +70,6 @@ void SystemZFrameInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const SystemZRegisterInfo *RegInfo =
-    static_cast<const SystemZRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const SystemZInstrInfo &TII =
     *static_cast<const SystemZInstrInfo*>(MF.getTarget().getInstrInfo());
   SystemZMachineFunctionInfo *SystemZMFI =
@@ -94,7 +101,7 @@ void SystemZFrameInfo::emitPrologue(MachineFunction &MF) const {
     emitSPUpdate(MBB, MBBI, -(int64_t)NumBytes, TII);
   }
 
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     // Update R11 with the new base value...
     BuildMI(MBB, MBBI, DL, TII.get(SystemZ::MOV64rr), SystemZ::R11D)
       .addReg(SystemZ::R15D);

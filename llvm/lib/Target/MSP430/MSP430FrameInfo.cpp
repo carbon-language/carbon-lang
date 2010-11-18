@@ -26,12 +26,22 @@
 
 using namespace llvm;
 
+bool MSP430FrameInfo::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+
+  return (DisableFramePointerElim(MF) ||
+          MF.getFrameInfo()->hasVarSizedObjects() ||
+          MFI->isFrameAddressTaken());
+}
+
+bool MSP430FrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
+  return !MF.getFrameInfo()->hasVarSizedObjects();
+}
+
 void MSP430FrameInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MSP430MachineFunctionInfo *MSP430FI = MF.getInfo<MSP430MachineFunctionInfo>();
-  const MSP430RegisterInfo *RegInfo =
-    static_cast<const MSP430RegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MSP430InstrInfo &TII =
     *static_cast<const MSP430InstrInfo*>(MF.getTarget().getInstrInfo());
 
@@ -42,7 +52,7 @@ void MSP430FrameInfo::emitPrologue(MachineFunction &MF) const {
   uint64_t StackSize = MFI->getStackSize();
 
   uint64_t NumBytes = 0;
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     // Calculate required stack adjustment
     uint64_t FrameSize = StackSize - 2;
     NumBytes = FrameSize - MSP430FI->getCalleeSavedFrameSize();
@@ -97,8 +107,6 @@ void MSP430FrameInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MSP430MachineFunctionInfo *MSP430FI = MF.getInfo<MSP430MachineFunctionInfo>();
-  const MSP430RegisterInfo *RegInfo =
-    static_cast<const MSP430RegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MSP430InstrInfo &TII =
     *static_cast<const MSP430InstrInfo*>(MF.getTarget().getInstrInfo());
 
@@ -118,7 +126,7 @@ void MSP430FrameInfo::emitEpilogue(MachineFunction &MF,
   unsigned CSSize = MSP430FI->getCalleeSavedFrameSize();
   uint64_t NumBytes = 0;
 
-  if (RegInfo->hasFP(MF)) {
+  if (hasFP(MF)) {
     // Calculate required stack adjustment
     uint64_t FrameSize = StackSize - 2;
     NumBytes = FrameSize - CSSize;

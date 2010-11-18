@@ -37,6 +37,8 @@ public:
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
+  bool hasFP(const MachineFunction &MF) const;
+
   /// targetHandlesStackFrameRounding - Returns true if the target is
   /// responsible for rounding up the stack frame (probably at emitPrologue
   /// time).
