@@ -14,7 +14,7 @@
 #ifndef __DNBArchImplI386_h__
 #define __DNBArchImplI386_h__
 
-#if defined (__i386__)
+#if defined (__i386__) || defined (__x86_64__)
 
 #include "DNBArch.h"
 #include <mach/mach_types.h>
@@ -34,9 +34,8 @@ public:
     virtual ~DNBArchImplI386()
     {
     }
-
-    static const DNBRegisterSetInfo *
-    GetRegisterSetInfo(nub_size_t *num_reg_sets);
+    
+    static  void            Initialize();
 
     virtual bool            GetRegisterValue(int set, int reg, DNBRegisterValue *value);
     virtual bool            SetRegisterValue(int set, int reg, const DNBRegisterValue *value);
@@ -52,9 +51,6 @@ public:
     virtual void            ThreadWillResume();
     virtual bool            ThreadDidStop();
     virtual bool            NotifyException(MachException::Data& exc);
-
-    static const uint8_t * const SoftwareBreakpointOpcode (nub_size_t byte_size);
-    static uint32_t         GetCPUType();
 
 protected:
     kern_return_t           EnableHardwareSingleStep (bool enable);
@@ -186,11 +182,18 @@ protected:
     kern_return_t SetFPUState ();
     kern_return_t SetEXCState ();
 
+    static DNBArchProtocol *
+    Create (MachThread *thread);
+    
+    static const uint8_t * const
+    SoftwareBreakpointOpcode (nub_size_t byte_size);
+
+    static const DNBRegisterSetInfo *
+    GetRegisterSetInfo(nub_size_t *num_reg_sets);
+
     MachThread *m_thread;
     State        m_state;
 };
 
-typedef DNBArchImplI386    DNBArch;
-
-#endif    // #if defined (__i386__)
+#endif    // #if defined (__i386__) || defined (__x86_64__)
 #endif    // #ifndef __DNBArchImplI386_h__

@@ -90,10 +90,10 @@ public:
     DidLaunch ();
 
     virtual lldb_private::Error
-    WillAttach (lldb::pid_t pid);
+    WillAttachToProcessWithID (lldb::pid_t pid);
 
     virtual lldb_private::Error
-    WillAttach (const char *process_name, bool wait_for_launch);
+    WillAttachToProcessWithName (const char *process_name, bool wait_for_launch);
 
     lldb_private::Error
     WillLaunchOrAttach ();
@@ -215,9 +215,6 @@ public:
     virtual lldb_private::Error
     DisableWatchpoint (lldb_private::WatchpointLocation *wp_loc);
 
-    virtual lldb::ByteOrder
-    GetByteOrder () const;
-
     virtual lldb_private::DynamicLoader *
     GetDynamicLoader ();
 
@@ -322,7 +319,6 @@ protected:
     std::auto_ptr<lldb_private::DynamicLoader> m_dynamic_loader_ap;
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
     lldb_private::Mutex m_stdio_mutex;      // Multithreaded protection for stdio
-    lldb::ByteOrder m_byte_order;
     GDBRemoteCommunication m_gdb_comm;
     lldb::pid_t m_debugserver_pid;
     lldb::thread_t m_debugserver_thread;

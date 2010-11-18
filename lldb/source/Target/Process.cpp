@@ -85,12 +85,19 @@ Process::Process(Target &target, Listener &listener) :
     m_exit_string (),
     m_thread_list (this),
     m_notifications (),
-    m_persistent_vars(),
-    m_listener(listener),
+    m_image_tokens (),
+    m_listener (listener),
+    m_breakpoint_site_list (),
+    m_persistent_vars (),
+    m_dynamic_checkers_ap (),
     m_unix_signals (),
+    m_target_triple (),
+    m_byte_order (eByteOrderHost),
+    m_addr_byte_size (0),
+    m_abi_sp (),
     m_process_input_reader (),
     m_stdio_communication ("lldb.process.stdio"),
-    m_stdio_comm_mutex (Mutex::eMutexTypeRecursive),
+    m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data ()
 {
     UpdateInstanceName();
@@ -1438,19 +1445,71 @@ Process::Halt ()
     
     if (error.Success())
     {
-        bool caused_stop;
+        
+        bool caused_stop = false;
+        EventSP event_sp;
+        
+        // Pause our private state thread so we can ensure no one else eats
+        // the stop event out from under us.
+        PausePrivateStateThread();
+
+        // Ask the process subclass to actually halt our process
         error = DoHalt(caused_stop);
         if (error.Success())
         {
-            DidHalt();
+            // If "caused_stop" is true, then DoHalt stopped the process. If
+            // "caused_stop" is false, the process was already stopped.
+            // If the DoHalt caused the process to stop, then we want to catch
+            // this event and set the interrupted bool to true before we pass
+            // this along so clients know that the process was interrupted by
+            // a halt command.
             if (caused_stop)
             {
-                ProcessEventData *new_data = new ProcessEventData (GetTarget().GetProcessSP(), eStateStopped);
-                new_data->SetInterrupted(true);
-                BroadcastEvent (eBroadcastBitStateChanged, new_data);
+                // Wait for 2 seconds for the process to stop.
+                TimeValue timeout_time;
+                timeout_time = TimeValue::Now();
+                timeout_time.OffsetWithSeconds(2);
+                StateType state = WaitForStateChangedEventsPrivate (&timeout_time, event_sp);
+                
+                if (state == eStateInvalid)
+                {
+                    // We timeout out and didn't get a stop event...
+                    error.SetErrorString ("Halt timed out.");
+                }
+                else
+                {
+                    // Since we are eating the event, we need to update our state
+                    // otherwise the process state will not match reality...
+                    SetPublicState(state);
+
+                    if (StateIsStoppedState (state))
+                    {
+                        // We caused the process to interrupt itself, so mark this
+                        // as such in the stop event so clients can tell an interrupted
+                        // process from a natural stop
+                        ProcessEventData::SetInterruptedInEvent (event_sp.get(), true);
+                    }
+                    else
+                    {
+                        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+                        if (log)
+                            log->Printf("Process::Halt() failed to stop, state is: %s", StateAsCString(state));
+                        error.SetErrorString ("Did not get stopped event after halt.");
+                    }
+                }
             }
+            DidHalt();
+
         }
-        
+        // Resume our private state thread before we post the event (if any)
+        ResumePrivateStateThread();
+
+        // Post any event we might have consumed. If all goes well, we will have
+        // stopped the process, intercepted the event and set the interrupted
+        // bool in the event.
+        if (event_sp)
+            BroadcastEvent(event_sp);
+
     }
     return error;
 }
@@ -1530,7 +1589,9 @@ Process::GetTarget () const
 uint32_t
 Process::GetAddressByteSize()
 {
-    return m_target.GetArchitecture().GetAddressByteSize();
+    if (m_addr_byte_size == 0)
+        return m_target.GetArchitecture().GetAddressByteSize();
+    return m_addr_byte_size;
 }
 
 bool
@@ -1603,8 +1664,8 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // If no thread has an opinion, we don't report it.
             if (ProcessEventData::GetInterruptedFromEvent (event_ptr))
             {
-                    if (log)
-                        log->Printf ("Process::ShouldBroadcastEvent (%p) stopped due to an interrupt, state: %s", event_ptr, StateAsCString(state));
+                if (log)
+                    log->Printf ("Process::ShouldBroadcastEvent (%p) stopped due to an interrupt, state: %s", event_ptr, StateAsCString(state));
                 return true;
             }
             else
@@ -2074,7 +2135,7 @@ Process::GetArchSpecForExistingProcess (const char *process_name)
 void
 Process::AppendSTDOUT (const char * s, size_t len)
 {
-    Mutex::Locker locker (m_stdio_comm_mutex);
+    Mutex::Locker locker (m_stdio_communication_mutex);
     m_stdout_data.append (s, len);
     
     BroadcastEventIfUnique (eBroadcastBitSTDOUT);

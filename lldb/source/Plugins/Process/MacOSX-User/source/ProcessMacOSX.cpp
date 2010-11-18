@@ -235,9 +235,7 @@ ProcessMacOSX::ProcessMacOSX(Target& target, Listener &listener) :
     m_exception_messages (),
     m_exception_messages_mutex (Mutex::eMutexTypeRecursive),
     m_arch_spec (),
-    m_dynamic_loader_ap (),
-//    m_wait_thread (LLDB_INVALID_HOST_THREAD),
-    m_byte_order (eByteOrderHost)
+    m_dynamic_loader_ap ()
 {
 }
 
@@ -676,6 +674,7 @@ ProcessMacOSX::RefreshStateAfterStop ()
 Error
 ProcessMacOSX::DoHalt (bool &caused_stop)
 {
+    caused_stop = true;
     return Signal (SIGSTOP);
 }
 

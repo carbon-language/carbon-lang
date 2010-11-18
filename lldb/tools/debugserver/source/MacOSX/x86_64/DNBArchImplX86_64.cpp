@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if defined (__x86_64__)
+#if defined (__i386__) || defined (__x86_64__)
 
 #include <sys/cdefs.h>
 
@@ -19,22 +19,6 @@
 #include "DNBLog.h"
 #include "MachThread.h"
 #include "MachProcess.h"
-
-static const uint8_t g_breakpoint_opcode[] = { 0xCC };
-
-const uint8_t * const
-DNBArchImplX86_64::SoftwareBreakpointOpcode (nub_size_t byte_size)
-{
-    if (byte_size == 1)
-        return g_breakpoint_opcode;
-    return NULL;
-}
-
-uint32_t
-DNBArchImplX86_64::GetCPUType()
-{
-    return CPU_TYPE_X86_64;
-}
 
 uint64_t
 DNBArchImplX86_64::GetPC(uint64_t failValue)
@@ -718,11 +702,41 @@ DNBArchImplX86_64::g_reg_sets[] =
 const size_t DNBArchImplX86_64::k_num_register_sets = sizeof(g_reg_sets)/sizeof(DNBRegisterSetInfo);
 
 
+DNBArchProtocol *
+DNBArchImplX86_64::Create (MachThread *thread)
+{
+    return new DNBArchImplX86_64 (thread);
+}
+
+const uint8_t * const
+DNBArchImplX86_64::SoftwareBreakpointOpcode (nub_size_t byte_size)
+{
+    static const uint8_t g_breakpoint_opcode[] = { 0xCC };
+    if (byte_size == 1)
+        return g_breakpoint_opcode;
+    return NULL;
+}
+
 const DNBRegisterSetInfo *
-DNBArchImplX86_64::GetRegisterSetInfo (nub_size_t *num_reg_sets)
+DNBArchImplX86_64::GetRegisterSetInfo(nub_size_t *num_reg_sets)
 {
     *num_reg_sets = k_num_register_sets;
     return g_reg_sets;
+}
+
+void
+DNBArchImplX86_64::Initialize()
+{
+    DNBArchPluginInfo arch_plugin_info = 
+    {
+        CPU_TYPE_X86_64, 
+        DNBArchImplX86_64::Create, 
+        DNBArchImplX86_64::GetRegisterSetInfo,
+        DNBArchImplX86_64::SoftwareBreakpointOpcode
+    };
+    
+    // Register this arch plug-in with the main protocol class
+    DNBArchProtocol::RegisterArchPlugin (arch_plugin_info);
 }
 
 bool
@@ -1032,4 +1046,4 @@ DNBArchImplX86_64::RegisterSetStateIsValid (int set) const
 
 
 
-#endif    // #if defined (__i386__)
+#endif    // #if defined (__i386__) || defined (__x86_64__)

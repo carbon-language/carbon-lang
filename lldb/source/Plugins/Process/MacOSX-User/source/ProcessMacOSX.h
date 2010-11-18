@@ -247,8 +247,6 @@ protected:
     lldb_private::Mutex m_exception_messages_mutex; // Multithreaded protection for m_exception_messages
     lldb_private::ArchSpec m_arch_spec;
     std::auto_ptr<lldb_private::DynamicLoader> m_dynamic_loader_ap;
-//    lldb::thread_t m_wait_thread;
-    lldb::ByteOrder m_byte_order;
 
     //----------------------------------------------------------------------
     // Child process control

@@ -115,6 +115,7 @@ MachProcess::MachProcess() :
     m_image_infos_baton(NULL)
 {
     DNBLogThreadedIf(LOG_PROCESS | LOG_VERBOSE, "%s", __PRETTY_FUNCTION__);
+    bzero(&m_arch_plugin_info, sizeof(m_arch_plugin_info));
 }
 
 MachProcess::~MachProcess()
@@ -208,7 +209,15 @@ MachProcess::GetThreadInfo(nub_thread_t tid) const
 const DNBRegisterSetInfo *
 MachProcess::GetRegisterSetInfo(nub_thread_t tid, nub_size_t *num_reg_sets ) const
 {
-    return DNBArch::GetRegisterSetInfo (num_reg_sets);
+    MachThread *thread = m_thread_list.GetThreadByID (tid);
+    if (thread)
+    {
+        DNBArchProtocol *arch = thread->GetArchProtocol();
+        if (arch)
+            return arch->GetRegisterSetInfo (num_reg_sets);
+    }
+    *num_reg_sets = 0;
+    return NULL;
 }
 
 bool
@@ -766,7 +775,7 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
 
         const nub_size_t break_op_size = bp->ByteSize();
         assert (break_op_size > 0);
-        const uint8_t * const break_op = DNBArch::SoftwareBreakpointOpcode(bp->ByteSize());
+        const uint8_t * const break_op = DNBArchProtocol::GetBreakpointOpcode (bp->ByteSize());
         if (break_op_size > 0)
         {
             // Clear a software breakoint instruction
@@ -954,7 +963,7 @@ MachProcess::EnableBreakpoint(nub_break_t breakID)
 
             const nub_size_t break_op_size = bp->ByteSize();
             assert (break_op_size != 0);
-            const uint8_t * const break_op = DNBArch::SoftwareBreakpointOpcode(break_op_size);
+            const uint8_t * const break_op = DNBArchProtocol::GetBreakpointOpcode (break_op_size);
             if (break_op_size > 0)
             {
                 // Save the original opcode by reading it
@@ -1507,7 +1516,14 @@ MachProcess::LaunchForDebug
         break;
 
     case eLaunchFlavorPosixSpawn:
-        m_pid = MachProcess::PosixSpawnChildForPTraceDebugging (path, argv, envp, stdio_path, this, disable_aslr, launch_err);
+        m_pid = MachProcess::PosixSpawnChildForPTraceDebugging (path, 
+                                                                m_arch_plugin_info.cpu_type,
+                                                                argv, 
+                                                                envp, 
+                                                                stdio_path, 
+                                                                this, 
+                                                                disable_aslr, 
+                                                                launch_err);
         break;
 
 #if defined (__arm__)
@@ -1590,6 +1606,7 @@ pid_t
 MachProcess::PosixSpawnChildForPTraceDebugging
 (
     const char *path,
+    cpu_type_t cpu_type,
     char const *argv[],
     char const *envp[],
     const char *stdio_path,
@@ -1628,7 +1645,6 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     // We don't need to do this for ARM, and we really shouldn't now that we
     // have multiple CPU subtypes and no posix_spawnattr call that allows us
     // to set which CPU subtype to launch...
-    cpu_type_t cpu_type = DNBArch::GetCPUType();
     size_t ocount = 0;
     err.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu_type, &ocount), DNBError::POSIX);
     if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))

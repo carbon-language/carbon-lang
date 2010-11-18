@@ -22,12 +22,38 @@
 
 struct DNBRegisterValue;
 struct DNBRegisterSetInfo;
+class DNBArchProtocol;
+class MachThread;
+
+typedef DNBArchProtocol * (* DNBArchCallbackCreate)(MachThread *thread);
+typedef const DNBRegisterSetInfo * (* DNBArchCallbackGetRegisterSetInfo)(nub_size_t *num_reg_sets);
+typedef const uint8_t * const (* DNBArchCallbackGetBreakpointOpcode)(nub_size_t byte_size);
+
+typedef struct DNBArchPluginInfoTag
+{
+    uint32_t cpu_type;
+    DNBArchCallbackCreate               Create;
+    DNBArchCallbackGetRegisterSetInfo   GetRegisterSetInfo;
+    DNBArchCallbackGetBreakpointOpcode  GetBreakpointOpcode;
+} DNBArchPluginInfo;
 
 class DNBArchProtocol
 {
 public:
-    static const DNBRegisterSetInfo *
+    static DNBArchProtocol *
+    Create (MachThread *thread);
+
+    static const DNBRegisterSetInfo * 
     GetRegisterSetInfo (nub_size_t *num_reg_sets);
+
+    static const uint8_t * const 
+    GetBreakpointOpcode (nub_size_t byte_size);
+
+    static void
+    RegisterArchPlugin (const DNBArchPluginInfo &arch_info);
+
+    static void
+    SetDefaultArchitecture (uint32_t cpu_type);
 
     virtual bool            GetRegisterValue (int set, int reg, DNBRegisterValue *value) = 0;
     virtual bool            SetRegisterValue (int set, int reg, const DNBRegisterValue *value) = 0;
@@ -39,6 +65,7 @@ public:
     virtual bool            RegisterSetStateIsValid (int set) const = 0;
 
     virtual uint64_t        GetPC (uint64_t failValue) = 0;    // Get program counter
+    virtual kern_return_t   SetPC (uint64_t value) = 0;
     virtual uint64_t        GetSP (uint64_t failValue) = 0;    // Get stack pointer
     virtual void            ThreadWillResume () = 0;
     virtual bool            ThreadDidStop () = 0;

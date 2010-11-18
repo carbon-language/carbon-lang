@@ -59,8 +59,10 @@ DynamicLoaderMacOSXDYLD::DynamicLoaderMacOSXDYLD (Process* process) :
     m_dyld(),
     m_dyld_all_image_infos_addr(LLDB_INVALID_ADDRESS),
     m_dyld_all_image_infos(),
+    m_dyld_all_image_infos_stop_id (UINT32_MAX),
     m_break_id(LLDB_INVALID_BREAK_ID),
     m_dyld_image_infos(),
+    m_dyld_image_infos_stop_id (UINT32_MAX),
     m_mutex(Mutex::eMutexTypeRecursive)
 {
 }
@@ -83,10 +85,8 @@ void
 DynamicLoaderMacOSXDYLD::DidAttach ()
 {
     PrivateInitialize(m_process);
-    if (NeedToLocateDYLD ())
-        LocateDYLD ();
+    LocateDYLD ();
     SetNotificationBreakpoint ();
-    UpdateAllImageInfos();
 }
 
 //------------------------------------------------------------------
@@ -99,10 +99,8 @@ void
 DynamicLoaderMacOSXDYLD::DidLaunch ()
 {
     PrivateInitialize(m_process);
-    if (NeedToLocateDYLD ())
-        LocateDYLD ();
+    LocateDYLD ();
     SetNotificationBreakpoint ();
-    UpdateAllImageInfos();
 }
 
 
@@ -401,12 +399,23 @@ bool
 DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
 {
     Mutex::Locker locker(m_mutex);
+
+    // the all image infos is already valid for this process stop ID
+    if (m_process->GetStopID() == m_dyld_all_image_infos_stop_id)
+        return true;
+
     m_dyld_all_image_infos.Clear();
     if (m_dyld_all_image_infos_addr != LLDB_INVALID_ADDRESS)
     {
-        const ByteOrder endian = m_process->GetByteOrder();
-        const uint32_t addr_size = m_process->GetAddressByteSize();
+        ByteOrder byte_order = m_process->GetByteOrder();
+        uint32_t addr_size = 4;
+        if (m_dyld_all_image_infos_addr > UINT32_MAX)
+            addr_size = 8;
+
         uint8_t buf[256];
+        DataExtractor data (buf, sizeof(buf), byte_order, addr_size);
+        uint32_t offset = 0;
+
         const size_t count_v2 =  sizeof (uint32_t) + // version
                                  sizeof (uint32_t) + // infoArrayCount
                                  addr_size +         // infoArray
@@ -434,9 +443,23 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
         Error error;
         if (m_process->ReadMemory (m_dyld_all_image_infos_addr, buf, 4, error) == 4)
         {
-            DataExtractor data(buf, 4, endian, addr_size);
-            uint32_t offset = 0;
             m_dyld_all_image_infos.version = data.GetU32(&offset);
+            // If anything in the high byte is set, we probably got the byte 
+            // order incorrect (the process might not have it set correctly 
+            // yet due to attaching to a program without a specified file).
+            if (m_dyld_all_image_infos.version & 0xff000000)
+            {
+                // We have guessed the wrong byte order. Swap it and try
+                // reading the version again.
+                if (byte_order == eByteOrderLittle)
+                    byte_order = eByteOrderBig;
+                else
+                    byte_order = eByteOrderLittle;
+
+                data.SetByteOrder (byte_order);
+                offset = 0;
+                m_dyld_all_image_infos.version = data.GetU32(&offset);
+            }
         }
         else
         {
@@ -451,8 +474,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
         const size_t bytes_read = m_process->ReadMemory (m_dyld_all_image_infos_addr, buf, count, error);
         if (bytes_read == count)
         {
-            DataExtractor data(buf, count, endian, addr_size);
-            uint32_t offset = 0;
+            offset = 0;
             m_dyld_all_image_infos.version = data.GetU32(&offset);
             m_dyld_all_image_infos.dylib_info_count = data.GetU32(&offset);
             m_dyld_all_image_infos.dylib_info_addr = data.GetPointer(&offset);
@@ -486,6 +508,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
                     m_dyld_all_image_infos.notification = m_dyld_all_image_infos.dyldImageLoadAddress + notification_offset;
                 }
             }
+            m_dyld_all_image_infos_stop_id = m_process->GetStopID();
             return true;
         }
     }
@@ -504,6 +527,9 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
     if (ReadAllImageInfosStructure ())
     {
         Mutex::Locker locker(m_mutex);
+        if (m_process->GetStopID() == m_dyld_image_infos_stop_id)
+            m_dyld_image_infos.size();
+
         uint32_t idx;
         uint32_t i = 0;
         DYLDImageInfo::collection old_dyld_all_image_infos;
@@ -511,8 +537,8 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 
         // If we made it here, we are assuming that the all dylib info data should
         // be valid, lets read the info array.
-        const ByteOrder endian = m_process->GetByteOrder();
-        const uint32_t addr_size = m_process->GetAddressByteSize();
+        const ByteOrder endian = m_dyld.GetByteOrder();
+        const uint32_t addr_size = m_dyld.GetAddressByteSize();
 
         if (m_dyld_all_image_infos.dylib_info_count > 0)
         {
@@ -605,6 +631,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
             if (log)
                 PutToLog(log.get());
         }
+        m_dyld_image_infos_stop_id = m_process->GetStopID();
     }
     else
     {

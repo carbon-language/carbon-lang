@@ -106,10 +106,12 @@ public:
 
     typedef rnb_err_t (RNBRemote::*HandlePacketCallback)(const char *p);
 
-    RNBRemote(bool use_native_regs);
-    ~RNBRemote();
+    RNBRemote (bool use_native_regs, const char *arch);
+    ~RNBRemote ();
 
-    static void     InitializeRegisters (int use_native);
+    void            Initialize();
+
+    bool            InitializeRegisters ();
 
     rnb_err_t       HandleAsyncPacket(PacketEnum *type = NULL);
     rnb_err_t       HandleReceivedPacket(PacketEnum *type = NULL);
@@ -194,9 +196,6 @@ private:
 
 protected:
 
-    static void
-    InitializeNativeRegisters ();
-
     rnb_err_t GetCommData ();
     void CommDataReceived(const std::string& data);
     struct Packet
@@ -273,8 +272,7 @@ protected:
     typedef BreakpointMap::const_iterator    BreakpointMapConstIter;
     RNBContext      m_ctx;              // process context
     RNBSocket       m_comm;             // communication port
-    bool            m_extended_mode;    // are we in extended mode?
-    bool            m_noack_mode;       // are we in no-ack mode?
+    std::string     m_arch;
     nub_thread_t    m_continue_thread;  // thread to continue; 0 for any, -1 for all
     nub_thread_t    m_thread;           // thread for other ops; 0 for any, -1 for all
     PThreadMutex    m_mutex;            // Mutex that protects
@@ -286,7 +284,9 @@ protected:
     BreakpointMap   m_breakpoints;
     BreakpointMap   m_watchpoints;
     uint32_t        m_max_payload_size;  // the maximum sized payload we should send to gdb
-    bool            m_use_native_regs;
+    bool            m_extended_mode:1,   // are we in extended mode?
+                    m_noack_mode:1,      // are we in no-ack mode?
+                    m_use_native_regs:1; // Use native registers by querying DNB layer for register definitions?
 };
 
 /* We translate the /usr/include/mach/exception_types.h exception types

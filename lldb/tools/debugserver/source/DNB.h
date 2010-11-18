@@ -25,6 +25,9 @@ extern "C" {
 
 typedef bool (*DNBShouldCancelCallback) (void *);
 
+void            DNBInitialize ();
+void            DNBTerminate ();
+
 //----------------------------------------------------------------------
 // Process control
 //----------------------------------------------------------------------

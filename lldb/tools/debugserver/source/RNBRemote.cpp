@@ -60,11 +60,10 @@
 
 extern void ASLLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
 
-RNBRemote::RNBRemote (bool use_native_regs) :
-    m_ctx(),
-    m_comm(),
-    m_extended_mode(false),
-    m_noack_mode(false),
+RNBRemote::RNBRemote (bool use_native_regs, const char *arch) :
+    m_ctx (),
+    m_comm (),
+    m_arch (),
     m_continue_thread(-1),
     m_thread(-1),
     m_mutex(),
@@ -75,10 +74,14 @@ RNBRemote::RNBRemote (bool use_native_regs) :
     m_rx_pthread(0),
     m_breakpoints(),
     m_max_payload_size(DEFAULT_GDB_REMOTE_PROTOCOL_BUFSIZE - 4),
+    m_extended_mode(false),
+    m_noack_mode(false),
     m_use_native_regs (use_native_regs)
 {
     DNBLogThreadedIf (LOG_RNB_REMOTE, "%s", __PRETTY_FUNCTION__);
     CreatePacketTable ();
+    if (arch && arch[0])
+        m_arch.assign (arch);
 }
 
 
@@ -803,12 +806,10 @@ RegisterEntryNotAvailable (register_map_entry_t *reg_entry)
     reg_entry->nub_info.reg_gdb = INVALID_NUB_REGNUM;
 }
 
-#if defined (__arm__)
 
 //----------------------------------------------------------------------
 // ARM regiseter sets as gdb knows them
 //----------------------------------------------------------------------
-
 register_map_entry_t
 g_gdb_register_map_arm[] =
 {
@@ -873,32 +874,6 @@ g_gdb_register_map_arm[] =
     { 58,  4, "fpscr",  {0}, NULL, 0}
 };
 
-void
-RNBRemote::InitializeRegisters (int use_native_registers)
-{
-    if (use_native_registers)
-    {
-        RNBRemote::InitializeNativeRegisters();
-    }
-    else
-    {
-        const size_t num_regs = sizeof (g_gdb_register_map_arm) / sizeof (register_map_entry_t);
-        for (uint32_t i=0; i<num_regs; ++i)
-        {
-            if (!DNBGetRegisterInfoByName (g_gdb_register_map_arm[i].gdb_name, &g_gdb_register_map_arm[i].nub_info))
-            {
-                RegisterEntryNotAvailable (&g_gdb_register_map_arm[i]);
-                assert (g_gdb_register_map_arm[i].gdb_size <= MAX_REGISTER_BYTE_SIZE);
-            }
-        }
-        g_reg_entries = g_gdb_register_map_arm;
-        g_num_reg_entries = sizeof (g_gdb_register_map_arm) / sizeof (register_map_entry_t);
-    }
-}
-
-
-#elif defined (__i386__)
-
 register_map_entry_t
 g_gdb_register_map_i386[] =
 {
@@ -944,32 +919,6 @@ g_gdb_register_map_i386[] =
     { 39,  16, "xmm7"   , {0}, NULL, 0 },
     { 40,   4, "mxcsr"  , {0}, NULL, 0 },
 };
-
-void
-RNBRemote::InitializeRegisters (int use_native_registers)
-{
-    if (use_native_registers)
-    {
-        RNBRemote::InitializeNativeRegisters();
-    }
-    else
-    {
-        const size_t num_regs = sizeof (g_gdb_register_map_i386) / sizeof (register_map_entry_t);
-        for (uint32_t i=0; i<num_regs; ++i)
-        {
-            if (!DNBGetRegisterInfoByName (g_gdb_register_map_i386[i].gdb_name, &g_gdb_register_map_i386[i].nub_info))
-            {
-                RegisterEntryNotAvailable (&g_gdb_register_map_i386[i]);
-                assert (g_gdb_register_map_i386[i].gdb_size <= MAX_REGISTER_BYTE_SIZE);
-            }
-        }
-        g_reg_entries = g_gdb_register_map_i386;
-        g_num_reg_entries = sizeof (g_gdb_register_map_i386) / sizeof (register_map_entry_t);
-    }
-}
-
-
-#elif defined (__x86_64__)
 
 register_map_entry_t
 g_gdb_register_map_x86_64[] =
@@ -1033,86 +982,113 @@ g_gdb_register_map_x86_64[] =
     { 56,   4, "mxcsr" , {0}, NULL, 0 }
 };
 
+
 void
-RNBRemote::InitializeRegisters (int use_native_registers)
+RNBRemote::Initialize()
 {
-    if (use_native_registers)
+    DNBInitialize();
+}
+
+
+bool
+RNBRemote::InitializeRegisters ()
+{
+    pid_t pid = m_ctx.ProcessID();
+    if (pid == INVALID_NUB_PROCESS)
+        return false;
+
+    if (m_use_native_regs)
     {
-        RNBRemote::InitializeNativeRegisters();
+        DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting native registers from DNB interface (%s)", __FUNCTION__, m_arch.c_str());
+        // Discover the registers by querying the DNB interface and letting it
+        // state the registers that it would like to export. This allows the
+        // registers to be discovered using multiple qRegisterInfo calls to get
+        // all register information after the architecture for the process is
+        // determined.
+        if (g_dynamic_register_map.empty())
+        {
+            nub_size_t num_reg_sets = 0;
+            const DNBRegisterSetInfo *reg_sets = DNBGetRegisterSetInfo (&num_reg_sets);
+
+            assert (num_reg_sets > 0 && reg_sets != NULL);
+
+            uint32_t regnum = 0;
+            for (nub_size_t set = 0; set < num_reg_sets; ++set)
+            {
+                if (reg_sets[set].registers == NULL)
+                    continue;
+
+                for (uint32_t reg=0; reg < reg_sets[set].num_registers; ++reg)
+                {
+                    register_map_entry_t reg_entry = {
+                        regnum++,                           // register number starts at zero and goes up with no gaps
+                        reg_sets[set].registers[reg].size,  // register size in bytes
+                        reg_sets[set].registers[reg].name,  // register name
+                        reg_sets[set].registers[reg],       // DNBRegisterInfo
+                        NULL,                               // Value to print if case we fail to reg this register (if this is NULL, we will return an error)
+                        reg_sets[set].registers[reg].reg_generic != INVALID_NUB_REGNUM};
+
+                    g_dynamic_register_map.push_back (reg_entry);
+                }
+            }
+            g_reg_entries = g_dynamic_register_map.data();
+            g_num_reg_entries = g_dynamic_register_map.size();
+        }
+        return true;
     }
     else
     {
-        const size_t num_regs = sizeof (g_gdb_register_map_x86_64) / sizeof (register_map_entry_t);
-        for (uint32_t i=0; i<num_regs; ++i)
+        DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting gdb registers (%s)", __FUNCTION__, m_arch.c_str());
+#if defined (__i386__) || defined (__x86_64__)
+        if (m_arch.compare("x86_64") == 0)
         {
-            if (!DNBGetRegisterInfoByName (g_gdb_register_map_x86_64[i].gdb_name, &g_gdb_register_map_x86_64[i].nub_info))
+            const size_t num_regs = sizeof (g_gdb_register_map_x86_64) / sizeof (register_map_entry_t);
+            for (uint32_t i=0; i<num_regs; ++i)
             {
-                RegisterEntryNotAvailable (&g_gdb_register_map_x86_64[i]);
-                assert (g_gdb_register_map_x86_64[i].gdb_size < MAX_REGISTER_BYTE_SIZE);
+                if (!DNBGetRegisterInfoByName (g_gdb_register_map_x86_64[i].gdb_name, &g_gdb_register_map_x86_64[i].nub_info))
+                {
+                    RegisterEntryNotAvailable (&g_gdb_register_map_x86_64[i]);
+                    assert (g_gdb_register_map_x86_64[i].gdb_size < MAX_REGISTER_BYTE_SIZE);
+                }
             }
+            g_reg_entries = g_gdb_register_map_x86_64;
+            g_num_reg_entries = sizeof (g_gdb_register_map_x86_64) / sizeof (register_map_entry_t);
+            return true;
         }
-        g_reg_entries = g_gdb_register_map_x86_64;
-        g_num_reg_entries = sizeof (g_gdb_register_map_x86_64) / sizeof (register_map_entry_t);
-    }
-}
-
-
-#else
-
-void
-RNBRemote::InitializeRegisters (int use_native_registers)
-{
-    // No choice, we don't have a GDB register definition for this arch.
-    RNBRemote::InitializeNativeRegisters();
-}
-
+        else if (m_arch.compare("i386") == 0)
+        {
+            const size_t num_regs = sizeof (g_gdb_register_map_i386) / sizeof (register_map_entry_t);
+            for (uint32_t i=0; i<num_regs; ++i)
+            {
+                if (!DNBGetRegisterInfoByName (g_gdb_register_map_i386[i].gdb_name, &g_gdb_register_map_i386[i].nub_info))
+                {
+                    RegisterEntryNotAvailable (&g_gdb_register_map_i386[i]);
+                    assert (g_gdb_register_map_i386[i].gdb_size <= MAX_REGISTER_BYTE_SIZE);
+                }
+            }
+            g_reg_entries = g_gdb_register_map_i386;
+            g_num_reg_entries = sizeof (g_gdb_register_map_i386) / sizeof (register_map_entry_t);
+            return true;
+        }
+#elif defined (__arm__)
+        if (m_arch.find ("arm") == 0)
+        {
+            const size_t num_regs = sizeof (g_gdb_register_map_arm) / sizeof (register_map_entry_t);
+            for (uint32_t i=0; i<num_regs; ++i)
+            {
+                if (!DNBGetRegisterInfoByName (g_gdb_register_map_arm[i].gdb_name, &g_gdb_register_map_arm[i].nub_info))
+                {
+                    RegisterEntryNotAvailable (&g_gdb_register_map_arm[i]);
+                    assert (g_gdb_register_map_arm[i].gdb_size <= MAX_REGISTER_BYTE_SIZE);
+                }
+            }
+            g_reg_entries = g_gdb_register_map_arm;
+            g_num_reg_entries = sizeof (g_gdb_register_map_arm) / sizeof (register_map_entry_t);
+            return true;
+        }
 #endif
-
-
-void
-RNBRemote::InitializeNativeRegisters()
-{
-    if (g_dynamic_register_map.empty())
-    {
-        nub_size_t num_reg_sets = 0;
-        const DNBRegisterSetInfo *reg_sets = DNBGetRegisterSetInfo (&num_reg_sets);
-
-        assert (num_reg_sets > 0 && reg_sets != NULL);
-
-        uint32_t regnum = 0;
-        for (nub_size_t set = 0; set < num_reg_sets; ++set)
-        {
-            if (reg_sets[set].registers == NULL)
-                continue;
-
-            for (uint32_t reg=0; reg < reg_sets[set].num_registers; ++reg)
-            {
-                register_map_entry_t reg_entry = {
-                    regnum++,                           // register number starts at zero and goes up with no gaps
-                    reg_sets[set].registers[reg].size,  // register size in bytes
-                    reg_sets[set].registers[reg].name,  // register name
-                    reg_sets[set].registers[reg],       // DNBRegisterInfo
-                    NULL,                               // Value to print if case we fail to reg this register (if this is NULL, we will return an error)
-                    reg_sets[set].registers[reg].reg_generic != INVALID_NUB_REGNUM};
-
-                g_dynamic_register_map.push_back (reg_entry);
-            }
-        }
-        g_reg_entries = g_dynamic_register_map.data();
-        g_num_reg_entries = g_dynamic_register_map.size();
     }
-}
-
-
-const register_map_entry_t *
-register_mapping_by_regname (const char *n)
-{
-    for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
-    {
-        if (strcmp (g_reg_entries[reg].gdb_name, n) == 0)
-            return &g_reg_entries[reg];
-    }
-    return NULL;
+    return false;
 }
 
 /* The inferior has stopped executing; send a packet
@@ -1121,7 +1097,7 @@ register_mapping_by_regname (const char *n)
 void
 RNBRemote::NotifyThatProcessStopped (void)
 {
-    RNBRemote::HandlePacket_last_signal ("");
+    RNBRemote::HandlePacket_last_signal (NULL);
     return;
 }
 
@@ -1396,6 +1372,9 @@ RNBRemote::HandlePacket_qC (const char *p)
 rnb_err_t
 RNBRemote::HandlePacket_qRegisterInfo (const char *p)
 {
+    if (g_num_reg_entries == 0)
+        InitializeRegisters ();
+
     p += strlen ("qRegisterInfo");
 
     nub_size_t num_reg_sets = 0;
@@ -1951,6 +1930,9 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
             if (thread_ident_info.dispatch_qaddr != 0)
                 ostrm << std::hex << "qaddr:" << thread_ident_info.dispatch_qaddr << ';';
         }
+        if (g_num_reg_entries == 0)
+            InitializeRegisters ();
+
         DNBRegisterValue reg_value;
         for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
         {
@@ -2002,45 +1984,45 @@ RNBRemote::HandlePacket_last_signal (const char *unused)
         case eStateSuspended:
         case eStateStopped:
         case eStateCrashed:
-        {
-            nub_thread_t tid = DNBProcessGetCurrentThread (pid);
-            // Make sure we set the current thread so g and p packets return
-            // the data the gdb will expect.
-            SetCurrentThread (tid);
+            {
+                nub_thread_t tid = DNBProcessGetCurrentThread (pid);
+                // Make sure we set the current thread so g and p packets return
+                // the data the gdb will expect.
+                SetCurrentThread (tid);
 
-            SendStopReplyPacketForThread (tid);
-        }
+                SendStopReplyPacketForThread (tid);
+            }
             break;
 
         case eStateInvalid:
         case eStateUnloaded:
         case eStateExited:
-        {
-            char pid_exited_packet[16] = "";
-            int pid_status = 0;
-            // Process exited with exit status
-            if (!DNBProcessGetExitStatus(pid, &pid_status))
-                pid_status = 0;
-
-            if (pid_status)
             {
-                if (WIFEXITED (pid_status))
-                    snprintf (pid_exited_packet, sizeof(pid_exited_packet), "W%02x", WEXITSTATUS (pid_status));
-                else if (WIFSIGNALED (pid_status))
-                    snprintf (pid_exited_packet, sizeof(pid_exited_packet), "X%02x", WEXITSTATUS (pid_status));
-                else if (WIFSTOPPED (pid_status))
-                    snprintf (pid_exited_packet, sizeof(pid_exited_packet), "S%02x", WSTOPSIG (pid_status));
-            }
+                char pid_exited_packet[16] = "";
+                int pid_status = 0;
+                // Process exited with exit status
+                if (!DNBProcessGetExitStatus(pid, &pid_status))
+                    pid_status = 0;
 
-            // If we have an empty exit packet, lets fill one in to be safe.
-            if (!pid_exited_packet[0])
-            {
-                strncpy (pid_exited_packet, "W00", sizeof(pid_exited_packet)-1);
-                pid_exited_packet[sizeof(pid_exited_packet)-1] = '\0';
-            }
+                if (pid_status)
+                {
+                    if (WIFEXITED (pid_status))
+                        snprintf (pid_exited_packet, sizeof(pid_exited_packet), "W%02x", WEXITSTATUS (pid_status));
+                    else if (WIFSIGNALED (pid_status))
+                        snprintf (pid_exited_packet, sizeof(pid_exited_packet), "X%02x", WEXITSTATUS (pid_status));
+                    else if (WIFSTOPPED (pid_status))
+                        snprintf (pid_exited_packet, sizeof(pid_exited_packet), "S%02x", WSTOPSIG (pid_status));
+                }
 
-            return SendPacket (pid_exited_packet);
-        }
+                // If we have an empty exit packet, lets fill one in to be safe.
+                if (!pid_exited_packet[0])
+                {
+                    strncpy (pid_exited_packet, "W00", sizeof(pid_exited_packet)-1);
+                    pid_exited_packet[sizeof(pid_exited_packet)-1] = '\0';
+                }
+
+                return SendPacket (pid_exited_packet);
+            }
             break;
     }
     return rnb_success;
@@ -2244,6 +2226,10 @@ RNBRemote::HandlePacket_g (const char *p)
     {
         return SendPacket ("E11");
     }
+
+    if (g_num_reg_entries == 0)
+        InitializeRegisters ();
+
     nub_process_t pid = m_ctx.ProcessID ();
     nub_thread_t tid = GetCurrentThread();
 
@@ -2283,6 +2269,10 @@ RNBRemote::HandlePacket_G (const char *p)
     {
         return SendPacket ("E11");
     }
+
+    if (g_num_reg_entries == 0)
+        InitializeRegisters ();
+
     StringExtractor packet(p);
     packet.SetFilePos(1); // Skip the 'G'
     
@@ -2872,6 +2862,9 @@ RNBRemote::HandlePacket_z (const char *p)
 rnb_err_t
 RNBRemote::HandlePacket_p (const char *p)
 {
+    if (g_num_reg_entries == 0)
+        InitializeRegisters ();
+
     if (p == NULL || *p == '\0')
     {
         return HandlePacket_ILLFORMED ("No thread specified in p packet");
@@ -2931,6 +2924,9 @@ RNBRemote::HandlePacket_p (const char *p)
 rnb_err_t
 RNBRemote::HandlePacket_P (const char *p)
 {
+    if (g_num_reg_entries == 0)
+        InitializeRegisters ();
+
     if (p == NULL || *p == '\0')
     {
         return HandlePacket_ILLFORMED ("Empty P packet");

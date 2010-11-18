@@ -235,6 +235,5 @@ protected:
 
 };
 
-typedef DNBArchMachARM    DNBArch;
 #endif    // #if defined (__arm__)
 #endif    // #ifndef __DebugNubArchMachARM_h__

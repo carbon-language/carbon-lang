@@ -265,10 +265,8 @@ DNBProcessAttachByName (const char *name, struct timespec *timeout, char *err_st
             DNBLogError ("%6u - %s\n", matching_proc_infos[i].kp_proc.p_pid, matching_proc_infos[i].kp_proc.p_comm);
         return INVALID_NUB_PROCESS;
     }
-    else
-    {
-        return DNBProcessAttach (matching_proc_infos[0].kp_proc.p_pid, timeout, err_str, err_len);
-    }
+    
+    return DNBProcessAttach (matching_proc_infos[0].kp_proc.p_pid, timeout, err_str, err_len);
 }
 
 nub_process_t
@@ -294,15 +292,20 @@ DNBProcessAttach (nub_process_t attach_pid, struct timespec *timeout, char *err_
     while (pid != INVALID_NUB_PROCESS)
     {
         // Wait for process to start up and hit entry point
-        DNBLogThreadedIf (LOG_PROCESS, "%s DNBProcessWaitForEvent (%4.4x, eEventProcessRunningStateChanged "
-                "| eEventProcessStoppedStateChanged, true, INFINITE)...",
-                __FUNCTION__, pid);
+        DNBLogThreadedIf (LOG_PROCESS, 
+                          "%s DNBProcessWaitForEvent (%4.4x, eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged, true, INFINITE)...",
+                          __FUNCTION__, 
+                          pid);
         nub_event_t set_events = DNBProcessWaitForEvents (pid,
-                eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged,
-                true, timeout);
-        DNBLogThreadedIf (LOG_PROCESS, "%s DNBProcessWaitForEvent (%4.4x, eEventProcessRunningStateChanged "
-                "| eEventProcessStoppedStateChanged, true, INFINITE) => 0x%8.8x",
-                __FUNCTION__, pid, set_events);
+                                                          eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged,
+                                                          true, 
+                                                          timeout);
+
+        DNBLogThreadedIf (LOG_PROCESS, 
+                          "%s DNBProcessWaitForEvent (%4.4x, eEventProcessRunningStateChanged | eEventProcessStoppedStateChanged, true, INFINITE) => 0x%8.8x",
+                          __FUNCTION__, 
+                          pid, 
+                          set_events);
 
         if (set_events == 0)
         {
@@ -320,29 +323,30 @@ DNBProcessAttach (nub_process_t attach_pid, struct timespec *timeout, char *err_
 
                 switch (pid_state)
                 {
-                default:
-                case eStateInvalid:
-                case eStateUnloaded:
-                case eStateAttaching:
-                case eStateLaunching:
-                case eStateSuspended:
-                    break;  // Ignore
+                    default:
+                    case eStateInvalid:
+                    case eStateUnloaded:
+                    case eStateAttaching:
+                    case eStateLaunching:
+                    case eStateSuspended:
+                        break;  // Ignore
+                        
+                    case eStateRunning:
+                    case eStateStepping:
+                        // Still waiting to stop at entry point...
+                        break;
+                        
+                    case eStateStopped:
+                    case eStateCrashed:
+                        return pid;
 
-                case eStateRunning:
-                case eStateStepping:
-                    // Still waiting to stop at entry point...
-                    break;
-
-                case eStateStopped:
-                case eStateCrashed:
-            return pid;
-                case eStateDetached:
-                case eStateExited:
-                    if (err_str && err_len > 0)
-                        snprintf(err_str, err_len, "process exited");
-                    return INVALID_NUB_PROCESS;
-        }
-    }
+                    case eStateDetached:
+                    case eStateExited:
+                        if (err_str && err_len > 0)
+                            snprintf(err_str, err_len, "process exited");
+                        return INVALID_NUB_PROCESS;
+                }
+            }
 
             DNBProcessResetEvents(pid, set_events);
         }
@@ -352,7 +356,7 @@ DNBProcessAttach (nub_process_t attach_pid, struct timespec *timeout, char *err_
 }
 
 static size_t
-GetAllInfos(std::vector<struct kinfo_proc>& proc_infos)
+GetAllInfos (std::vector<struct kinfo_proc>& proc_infos)
 {
     size_t size;
     int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
@@ -1722,7 +1726,7 @@ DNBProcessGetSharedLibraryInfo (nub_process_t pid, nub_bool_t only_changed, stru
 const DNBRegisterSetInfo *
 DNBGetRegisterSetInfo (nub_size_t *num_reg_sets)
 {
-    return DNBArch::GetRegisterSetInfo (num_reg_sets);
+    return DNBArchProtocol::GetRegisterSetInfo (num_reg_sets);
 }
 
 
@@ -1998,3 +2002,20 @@ DNBResolveExecutablePath (const char *path, char *resolved_path, size_t resolved
     return false;
 }
 
+
+void
+DNBInitialize()
+{
+    DNBLogThreadedIf (LOG_PROCESS, "DNBInitialize ()");
+#if defined (__i386__) || defined (__x86_64__)
+    DNBArchImplI386::Initialize();
+    DNBArchImplX86_64::Initialize();
+#elif defined (__arm__)
+    DNBArchMachARM::Initialize();
+#endif
+}
+
+void
+DNBTerminate()
+{
+}

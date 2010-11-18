@@ -55,6 +55,8 @@ public:
     bool            DisableHardwareWatchpoint (const DNBBreakpoint *wp) const;
     uint32_t        GetThreadIndexForThreadStoppedWithSignal (const int signo) const;
 
+    MachThread *    GetThreadByID (nub_thread_t tid) const;
+
 protected:
     typedef std::vector<MachThreadSP>   collection;
     typedef collection::iterator        iterator;

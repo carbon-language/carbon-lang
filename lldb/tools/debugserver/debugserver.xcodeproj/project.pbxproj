@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		264D5D581293835600ED4C01 /* DNBArch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D5D571293835600ED4C01 /* DNBArch.cpp */; };
 		2660D9CE1192280900958FBD /* StringExtractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2660D9CC1192280900958FBD /* StringExtractor.cpp */; };
 		26CE05A7115C360D0022F371 /* DNBError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637DE0C71334A0024798E /* DNBError.cpp */; };
 		26CE05A8115C36170022F371 /* DNBThreadResumeActions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E7331114BFFE600D1DFB3 /* DNBThreadResumeActions.cpp */; };
@@ -48,6 +49,7 @@
 		260E7332114BFFE600D1DFB3 /* DNBThreadResumeActions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DNBThreadResumeActions.h; sourceTree = "<group>"; };
 		260FC7320E5B290400043FC9 /* debugnub-exports */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "debugnub-exports"; sourceTree = SOURCE_ROOT; };
 		26242C390DDBD33C0054A4CC /* debugserver-entitlements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "debugserver-entitlements.plist"; sourceTree = "<group>"; };
+		264D5D571293835600ED4C01 /* DNBArch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DNBArch.cpp; sourceTree = "<group>"; };
 		26593A060D4931CC001C9FE3 /* ChangeLog */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ChangeLog; sourceTree = "<group>"; };
 		2660D9CC1192280900958FBD /* StringExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractor.cpp; path = ../../source/Utility/StringExtractor.cpp; sourceTree = SOURCE_ROOT; };
 		2660D9CD1192280900958FBD /* StringExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringExtractor.h; path = ../../source/Utility/StringExtractor.h; sourceTree = SOURCE_ROOT; };
@@ -190,6 +192,7 @@
 				26C637D70C71334A0024798E /* DNB.h */,
 				26C637D60C71334A0024798E /* DNB.cpp */,
 				26C637D80C71334A0024798E /* DNBArch.h */,
+				264D5D571293835600ED4C01 /* DNBArch.cpp */,
 				26C637DA0C71334A0024798E /* DNBBreakpoint.h */,
 				26C637D90C71334A0024798E /* DNBBreakpoint.cpp */,
 				26C637DC0C71334A0024798E /* DNBDataRef.h */,
@@ -441,6 +444,7 @@
 				26CE05C5115C36590022F371 /* CFBundle.cpp in Sources */,
 				26CE05F1115C387C0022F371 /* PseudoTerminal.cpp in Sources */,
 				2660D9CE1192280900958FBD /* StringExtractor.cpp in Sources */,
+				264D5D581293835600ED4C01 /* DNBArch.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

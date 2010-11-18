@@ -334,7 +334,6 @@ RNBRunLoopLaunchAttaching (RNBRemoteSP &remote, nub_process_t attach_pid, nub_pr
     }
     else
     {
-
         ctx.SetProcessID(pid);
         return eRNBRunLoopModeInferiorExecuting;
     }
@@ -644,6 +643,7 @@ show_usage_and_exit (int exit_code)
 static struct option g_long_options[] =
 {
     { "attach",             required_argument,  NULL,               'a' },
+    { "arch",               required_argument,  NULL,               'A' },
     { "debug",              no_argument,        NULL,               'g' },
     { "verbose",            no_argument,        NULL,               'v' },
     { "lockdown",           no_argument,        &g_lockdown_opt,    1   },  // short option "-k"
@@ -695,6 +695,7 @@ main (int argc, char *argv[])
     std::string waitfor_pid_name;           // Wait for a process that starts with this name
     std::string attach_pid_name;
     std::string stdio_path;
+    std::string arch_name;
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
     useconds_t waitfor_duration = 0;        // Time in seconds to wait for a process by name, 0 means wait forever.
 
@@ -704,7 +705,7 @@ main (int argc, char *argv[])
 
     RNBRunLoopMode start_mode = eRNBRunLoopModeExit;
 
-    while ((ch = getopt_long(argc, argv, "a:d:gi:vktl:f:w:x:rs:", g_long_options, &long_option_index)) != -1)
+    while ((ch = getopt_long(argc, argv, "a:A:d:gi:vktl:f:w:x:rs:", g_long_options, &long_option_index)) != -1)
     {
         DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
                     ch, (uint8_t)ch,
@@ -714,6 +715,11 @@ main (int argc, char *argv[])
         switch (ch)
         {
             case 0:   // Any optional that auto set themselves will return 0
+                break;
+
+            case 'A':
+                if (optarg && optarg[0])
+                    arch_name.assign(optarg);
                 break;
 
             case 'a':
@@ -869,12 +875,28 @@ main (int argc, char *argv[])
                 break;
         }
     }
+    
+    if (arch_name.empty())
+    {
+#if defined (__i386__)
+        arch_name.assign ("i386");
+#elif defined (__x86_64__)
+        arch_name.assign ("x86_64");
+#elif defined (__arm__) 
+        arch_name.assign ("arm");
+#endif
+    }
 
+    if (arch_name.empty())
+    {
+        fprintf(stderr, "error: no architecture was specified\n");
+        exit (8);
+    }
     // Skip any options we consumed with getopt_long
     argc -= optind;
     argv += optind;
 
-    g_remoteSP.reset (new RNBRemote (use_native_registers));
+    g_remoteSP.reset (new RNBRemote (use_native_registers, arch_name.c_str()));
 
     RNBRemote *remote = g_remoteSP.get();
     if (remote == NULL)
@@ -882,6 +904,8 @@ main (int argc, char *argv[])
         RNBLogSTDERR ("error: failed to create a remote connection class\n");
         return -1;
     }
+
+    g_remoteSP->Initialize();
 
     RNBContext& ctx = remote->Context();
 
@@ -910,11 +934,6 @@ main (int argc, char *argv[])
         for (i=0; i<argc; i++)
             DNBLogDebug("argv[%i] = %s", i, argv[i]);
     }
-
-    // Now that we have read in the options and enabled logging, initialize
-    // the rest of RNBRemote
-    RNBRemote::InitializeRegisters (use_native_registers);
-
 
     // as long as we're dropping remotenub in as a replacement for gdbserver,
     // explicitly note that this is not gdbserver.

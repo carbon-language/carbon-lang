@@ -35,6 +35,30 @@ public:
 
     lldb::StopReason
     GetStopReason();
+//
+//    // Get the number of words associated with the stop reason.
+//    size_t
+//    GetStopReasonDataCount();
+//
+//    //--------------------------------------------------------------------------
+//    // Get information associated with a stop reason.
+//    //
+//    // Breakpoint and watchpoint stop reasons will have data that consists of 
+//    // pairs of breakpoint/watchpoint IDs followed by the breakpoint/watchpoint
+//    // location IDs (they always come in pairs).
+//    //
+//    // Stop Reason              Count Data Type
+//    // ======================== ===== ==========================================
+//    // eStopReasonNone          0
+//    // eStopReasonTrace         0
+//    // eStopReasonBreakpoint    N     duple: {breakpoint id, location id}
+//    // eStopReasonWatchpoint    N     duple: {watchpoint id, location id}
+//    // eStopReasonSignal        1     unix signal number
+//    // eStopReasonException     N     exception data
+//    // eStopReasonPlanComplete  0
+//    //--------------------------------------------------------------------------
+//    uint64_t
+//    GetStopReasonDataAtIndex(uint32_t idx);
 
     size_t
     GetStopDescription (char *dst, size_t dst_len);

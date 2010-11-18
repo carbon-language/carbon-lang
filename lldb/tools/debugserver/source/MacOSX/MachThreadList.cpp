@@ -12,6 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "MachThreadList.h"
+
+#include <sys/sysctl.h>
+
 #include "DNBLog.h"
 #include "DNBThreadResumeActions.h"
 #include "MachProcess.h"
@@ -101,6 +104,15 @@ MachThreadList::GetThreadInfo(nub_thread_t tid) const
     uint32_t idx = GetThreadIndexByID(tid);
     if (idx < m_threads.size())
         return m_threads[idx]->GetBasicInfoAsString();
+    return NULL;
+}
+
+MachThread *
+MachThreadList::GetThreadByID (nub_thread_t tid) const
+{
+    uint32_t idx = GetThreadIndexByID(tid);
+    if (idx < m_threads.size())
+        return m_threads[idx].get();
     return NULL;
 }
 
@@ -202,9 +214,28 @@ uint32_t
 MachThreadList::UpdateThreadList(MachProcess *process, bool update)
 {
     // locker will keep a mutex locked until it goes out of scope
-    DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThreadList::UpdateThreadList (pid = %4.4x, update = %u )", process->ProcessID(), update);
+    DNBLogThreadedIf (LOG_THREAD, "MachThreadList::UpdateThreadList (pid = %4.4x, update = %u) process stop count = %u", process->ProcessID(), update, process->StopCount());
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
 
+#if defined (__i386__) || defined (__x86_64__)
+    if (process->StopCount() == 0)
+    {
+        int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, process->ProcessID() };
+        struct kinfo_proc processInfo;
+        size_t bufsize = sizeof(processInfo);
+        bool is_64_bit = false;
+        if (sysctl(mib, (unsigned)(sizeof(mib)/sizeof(int)), &processInfo, &bufsize, NULL, 0) == 0 && bufsize > 0)
+        {
+            if (processInfo.kp_proc.p_flag & P_LP64)
+                is_64_bit = true;
+        }
+        if (is_64_bit)
+            DNBArchProtocol::SetDefaultArchitecture(CPU_TYPE_X86_64);
+        else
+            DNBArchProtocol::SetDefaultArchitecture(CPU_TYPE_I386);
+    }
+#endif
+    
     if (m_threads.empty() || update)
     {
         thread_array_t thread_list = NULL;

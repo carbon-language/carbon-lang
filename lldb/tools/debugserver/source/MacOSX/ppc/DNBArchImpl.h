@@ -175,6 +175,5 @@ protected:
     State            m_state;
 };
 
-typedef DNBArchMachPPC    DNBArch;
 #endif    // #if defined (__powerpc__) || defined (__ppc__) || defined (__ppc64__)
 #endif    // #ifndef __DebugNubArchMachPPC_h__

@@ -628,6 +628,12 @@ public:
     uint32_t
     GetAddressByteSize();
 
+    void
+    SetAddressByteSize (uint32_t addr_byte_size)
+    {
+        m_addr_byte_size = addr_byte_size;
+    }
+
     //------------------------------------------------------------------
     /// Get the image information address for the current process.
     ///
@@ -1007,12 +1013,12 @@ public:
     //------------------------------------------------------------------
     /// Halts a running process.
     ///
-    /// DoHalt should consume any process events that were delivered in the
-    /// process of implementing the halt.
+    /// DoHalt should consume any process events that were delivered in
+    /// the process of implementing the halt.
     ///
     /// @param[out] caused_stop
-    ///    If true, then this Halt caused the stop, otherwise, the process was
-    ///    already stopped.
+    ///     If true, then this Halt caused the stop, otherwise, the 
+    ///     process was already stopped.
     ///
     /// @return
     ///     Returns \b true if the process successfully halts, \b false
@@ -1633,8 +1639,17 @@ public:
     /// @return
     ///     A valid ByteOrder enumeration, or eByteOrderInvalid.
     //------------------------------------------------------------------
-    virtual lldb::ByteOrder
-    GetByteOrder () const = 0;
+    lldb::ByteOrder
+    GetByteOrder () const
+    {
+        return m_byte_order;
+    }
+    
+    void
+    SetByteOrder (lldb::ByteOrder byte_order)
+    {
+        m_byte_order = byte_order;
+    }
 
     const ConstString &
     GetTargetTriple ()
@@ -1720,10 +1735,12 @@ protected:
     std::auto_ptr<DynamicCheckerFunctions>  m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     ConstString                 m_target_triple;
+    lldb::ByteOrder             m_byte_order;           /// The byte order of the process. Should be set in DidLaunch/DidAttach.
+    uint32_t                    m_addr_byte_size;       /// The size in bytes of an address/pointer for the inferior process. Should be set in DidLaunch/DidAttach.
     lldb::ABISP                 m_abi_sp;
     lldb::InputReaderSP         m_process_input_reader;
     lldb_private::Communication m_stdio_communication;
-    lldb_private::Mutex         m_stdio_comm_mutex;
+    lldb_private::Mutex         m_stdio_communication_mutex;
     std::string                 m_stdout_data;
     
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 

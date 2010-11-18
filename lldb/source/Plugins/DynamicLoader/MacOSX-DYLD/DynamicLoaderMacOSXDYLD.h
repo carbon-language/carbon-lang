@@ -266,6 +266,41 @@ protected:
             return uuid.IsValid();
         }
 
+        uint32_t
+        GetAddressByteSize ()
+        {
+            if (header.cputype)
+            {
+                if (header.cputype & llvm::MachO::CPUArchABI64)
+                    return 8;
+                else
+                    return 4;
+            }
+            return 0;
+        }
+
+        lldb::ByteOrder
+        GetByteOrder()
+        {
+            switch (header.magic)
+            {
+            case llvm::MachO::HeaderMagic32:        // MH_MAGIC
+            case llvm::MachO::HeaderMagic64:        // MH_MAGIC_64
+                return lldb::eByteOrderHost;
+
+            case llvm::MachO::HeaderMagic32Swapped: // MH_CIGAM
+            case llvm::MachO::HeaderMagic64Swapped: // MH_CIGAM_64
+                if (lldb::eByteOrderHost == lldb::eByteOrderLittle)
+                    return lldb::eByteOrderBig;
+                else
+                    return lldb::eByteOrderLittle;
+            default:
+                assert (!"invalid header.magic value");
+                break;
+            }
+            return lldb::eByteOrderHost;
+        }
+
         const Segment *
         FindSegment (const lldb_private::ConstString &name) const;
 
@@ -348,8 +383,10 @@ protected:
     DYLDImageInfo m_dyld;               // Info about the curent dyld being used
     lldb::addr_t m_dyld_all_image_infos_addr;
     DYLDAllImageInfos m_dyld_all_image_infos;
+    uint32_t m_dyld_all_image_infos_stop_id;
     lldb::user_id_t m_break_id;
     DYLDImageInfo::collection m_dyld_image_infos;   // Current shared libraries information
+    uint32_t m_dyld_image_infos_stop_id;    // The process stop ID that "m_dyld_image_infos" is valid for
     mutable lldb_private::Mutex m_mutex;
     lldb_private::Process::Notifications m_notification_callbacks;
 

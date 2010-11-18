@@ -48,7 +48,7 @@ public:
     pid_t                   AttachForDebug (pid_t pid, char *err_str, size_t err_len);
     pid_t                   LaunchForDebug (const char *path, char const *argv[], char const *envp[], const char *stdio_path, nub_launch_flavor_t launch_flavor, int disable_aslr, DNBError &err);
     static pid_t            ForkChildForPTraceDebugging (const char *path, char const *argv[], char const *envp[], MachProcess* process, DNBError &err);
-    static pid_t            PosixSpawnChildForPTraceDebugging (const char *path, char const *argv[], char const *envp[], const char *stdio_path, MachProcess* process, int disable_aslr, DNBError& err);
+    static pid_t            PosixSpawnChildForPTraceDebugging (const char *path, cpu_type_t cpu_type, char const *argv[], char const *envp[], const char *stdio_path, MachProcess* process, int disable_aslr, DNBError& err);
     nub_addr_t              GetDYLDAllImageInfosAddress ();
     static const void *     PrepareForAttach (const char *path, nub_launch_flavor_t launch_flavor, bool waitfor, DNBError &err_str);
     static void             CleanupAfterAttach (const void *attach_token, bool success, DNBError &err_str);
@@ -254,6 +254,7 @@ private:
     DNBCallbackCopyExecutableImageInfos
                                 m_image_infos_callback;
     void *                      m_image_infos_baton;
+    DNBArchPluginInfo           m_arch_plugin_info;
 };
 
 

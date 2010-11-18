@@ -95,6 +95,13 @@ public:
                     GetBasicInfo ();
     const char *    GetBasicInfoAsString () const;
     const char *    GetName ();
+    
+    DNBArchProtocol* 
+    GetArchProtocol()
+    {
+        return m_arch_ap.get();
+    }
+
 protected:
     static bool     GetBasicInfo(thread_t threadID, struct thread_basic_info *basic_info);
 
@@ -113,8 +120,9 @@ protected:
     struct thread_basic_info        m_basicInfo;    // Basic information for a thread used to see if a thread is valid
     uint32_t                        m_suspendCount; // The current suspend count
     MachException::Data             m_stop_exception; // The best exception that describes why this thread is stopped
-    DNBArch                         m_arch;         // Arch specific information for register state and more
-    std::vector<DNBRegisterSetInfo> m_regSets;      // Register set information for this thread
+    std::auto_ptr<DNBArchProtocol>  m_arch_ap;      // Arch specific information for register state and more
+    const DNBRegisterSetInfo *const m_reg_sets;      // Register set information for this thread
+    nub_size_t                      n_num_reg_sets;
 #ifdef THREAD_IDENTIFIER_INFO_COUNT
     thread_identifier_info_data_t   m_ident_info;
     struct proc_threadinfo          m_proc_threadinfo;

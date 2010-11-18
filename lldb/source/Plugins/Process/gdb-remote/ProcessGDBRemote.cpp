@@ -105,7 +105,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_dynamic_loader_ap (),
     m_flags (0),
     m_stdio_mutex (Mutex::eMutexTypeRecursive),
-    m_byte_order (eByteOrderHost),
     m_gdb_comm(),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
     m_debugserver_thread (LLDB_INVALID_HOST_THREAD),
@@ -339,13 +338,13 @@ ProcessGDBRemote::WillLaunch (Module* module)
 }
 
 Error
-ProcessGDBRemote::WillAttach (lldb::pid_t pid)
+ProcessGDBRemote::WillAttachToProcessWithID (lldb::pid_t pid)
 {
     return WillLaunchOrAttach ();
 }
 
 Error
-ProcessGDBRemote::WillAttach (const char *process_name, bool wait_for_launch)
+ProcessGDBRemote::WillAttachToProcessWithName (const char *process_name, bool wait_for_launch)
 {
     return WillLaunchOrAttach ();
 }
@@ -556,8 +555,6 @@ ProcessGDBRemote::ConnectToDebugserver (const char *host_port)
             if (response.IsOKPacket())
                 m_gdb_comm.SetAckMode (false);
         }
-
-        BuildDynamicRegisterInfo ();
     }
     return error;
 }
@@ -574,14 +571,15 @@ ProcessGDBRemote::DidLaunchOrAttach ()
     {
         m_dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
 
-        Module * exe_module = GetTarget().GetExecutableModule ().get();        
+        BuildDynamicRegisterInfo ();
+
+        m_byte_order = m_gdb_comm.GetByteOrder();
+
+        Module * exe_module = GetTarget().GetExecutableModule().get();        
         assert(exe_module);
 
         ObjectFile *exe_objfile = exe_module->GetObjectFile();
         assert(exe_objfile);
-
-        m_byte_order = exe_objfile->GetByteOrder();
-        assert (m_byte_order != eByteOrderInvalid);
 
         StreamString strm;
 
@@ -589,7 +587,7 @@ ProcessGDBRemote::DidLaunchOrAttach ()
         // See if the GDB server supports the qHostInfo information
         const char *vendor = m_gdb_comm.GetVendorString().AsCString();
         const char *os_type = m_gdb_comm.GetOSString().AsCString();
-        ArchSpec arch_spec = GetTarget().GetArchitecture();
+        ArchSpec arch_spec (GetTarget().GetArchitecture());
         
         if (arch_spec.IsValid() && arch_spec == ArchSpec ("arm"))
         {
@@ -858,25 +856,8 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
 void
 ProcessGDBRemote::DidAttach ()
 {
-    // If we haven't got an executable module yet, then we should make a dynamic loader, and
-    // see if it can find the executable module for us.  If we do have an executable module,
-    // make sure it matches the process we've just attached to.
-    
-    ModuleSP exe_module_sp = GetTarget().GetExecutableModule();        
-    if (!m_dynamic_loader_ap.get())
-    {
-       m_dynamic_loader_ap.reset(DynamicLoader::FindPlugin(this, "dynamic-loader.macosx-dyld"));
-    }
-
     if (m_dynamic_loader_ap.get())
         m_dynamic_loader_ap->DidAttach();
-
-    Module * new_exe_module = GetTarget().GetExecutableModule().get();        
-    if (new_exe_module == NULL)
-    {
-        
-    }
-    
     DidLaunchOrAttach ();
 }
 
@@ -1124,45 +1105,26 @@ Error
 ProcessGDBRemote::DoHalt (bool &caused_stop)
 {
     Error error;
-    caused_stop = false;
     
     if (m_gdb_comm.IsRunning())
     {
-        PausePrivateStateThread();
+        caused_stop = true;
         bool timed_out = false;
         Mutex::Locker locker;
 
-        if (m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
-        {
-            EventSP event_sp;
-            TimeValue timeout_time;
-            timeout_time = TimeValue::Now();
-            timeout_time.OffsetWithSeconds(2);
-
-            StateType state = WaitForStateChangedEventsPrivate (&timeout_time, event_sp);
-
-            if (!StateIsStoppedState (state))
-            {
-                LogSP log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
-                if (log)
-                    log->Printf("ProcessGDBRemote::DoHalt() failed to stop after sending interrupt");
-                error.SetErrorString ("Did not get stopped event after interrupt succeeded.");
-            }
-            else
-                caused_stop = true;
-        }
-        else
+        if (!m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
         {
             if (timed_out)
                 error.SetErrorString("timed out sending interrupt packet");
             else
                 error.SetErrorString("unknown error sending interrupt packet");
         }
-        
-        // Resume the private state thread at this point.
-        ResumePrivateStateThread();
-
     }
+    else
+    {
+        caused_stop = false;
+    }
+
     return error;
 }
 
@@ -1263,12 +1225,6 @@ ProcessGDBRemote::DoDestroy ()
     KillDebugserverProcess ();
     m_gdb_comm.Disconnect();    // Disconnect from the debug server.
     return error;
-}
-
-ByteOrder
-ProcessGDBRemote::GetByteOrder () const
-{
-    return m_byte_order;
 }
 
 //------------------------------------------------------------------

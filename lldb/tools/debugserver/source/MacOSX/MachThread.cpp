@@ -31,14 +31,9 @@ MachThread::MachThread (MachProcess *process, thread_t thread) :
     m_state_mutex (PTHREAD_MUTEX_RECURSIVE),
     m_breakID (INVALID_NUB_BREAK_ID),
     m_suspendCount (0),
-    m_arch (this),
-    m_regSets ()
+    m_arch_ap (DNBArchProtocol::Create (this)),
+    m_reg_sets (m_arch_ap->GetRegisterSetInfo (&n_num_reg_sets))
 {
-    nub_size_t num_reg_sets = 0;
-    const DNBRegisterSetInfo *regSetInfo = m_arch.GetRegisterSetInfo(&num_reg_sets);
-    if (num_reg_sets > 0)
-        m_regSets.assign(regSetInfo, regSetInfo + num_reg_sets);
-
     // Get the thread state so we know if a thread is in a state where we can't
     // muck with it and also so we get the suspend count correct in case it was
     // already suspended
@@ -251,34 +246,34 @@ MachThread::ThreadIDIsValid(thread_t thread)
 bool
 MachThread::GetRegisterState(int flavor, bool force)
 {
-    return m_arch.GetRegisterState(flavor, force) == KERN_SUCCESS;
+    return m_arch_ap->GetRegisterState(flavor, force) == KERN_SUCCESS;
 }
 
 bool
 MachThread::SetRegisterState(int flavor)
 {
-    return m_arch.SetRegisterState(flavor) == KERN_SUCCESS;
+    return m_arch_ap->SetRegisterState(flavor) == KERN_SUCCESS;
 }
 
 uint64_t
 MachThread::GetPC(uint64_t failValue)
 {
     // Get program counter
-    return m_arch.GetPC(failValue);
+    return m_arch_ap->GetPC(failValue);
 }
 
 bool
 MachThread::SetPC(uint64_t value)
 {
     // Set program counter
-    return m_arch.SetPC(value);
+    return m_arch_ap->SetPC(value);
 }
 
 uint64_t
 MachThread::GetSP(uint64_t failValue)
 {
     // Get stack pointer
-    return m_arch.GetSP(failValue);
+    return m_arch_ap->GetSP(failValue);
 }
 
 nub_process_t
@@ -342,7 +337,7 @@ MachThread::ThreadWillResume(const DNBThreadResumeAction *thread_action)
         Resume();
         break;
     }
-    m_arch.ThreadWillResume();
+    m_arch_ap->ThreadWillResume();
     m_stop_exception.Clear();
 }
 
@@ -372,7 +367,7 @@ MachThread::ShouldStop(bool &step_more)
     }
     else
     {
-        if (m_arch.StepNotComplete())
+        if (m_arch_ap->StepNotComplete())
         {
             step_more = true;
             return false;
@@ -426,7 +421,7 @@ MachThread::ThreadDidStop()
 
     // When this method gets called, the process state is still in the
     // state it was in while running so we can act accordingly.
-    m_arch.ThreadDidStop();
+    m_arch_ap->ThreadDidStop();
 
 
     // We may have suspended this thread so the primary thread could step
@@ -499,7 +494,7 @@ MachThread::NotifyException(MachException::Data& exc)
     {
         m_stop_exception = exc;
     }
-    bool handled = m_arch.NotifyException(exc);
+    bool handled = m_arch_ap->NotifyException(exc);
     if (!handled)
     {
         handled = true;
@@ -551,25 +546,25 @@ MachThread::SetState(nub_state_t state)
 uint32_t
 MachThread::GetNumRegistersInSet(int regSet) const
 {
-    if (regSet < m_regSets.size())
-        return m_regSets[regSet].num_registers;
+    if (regSet < n_num_reg_sets)
+        return m_reg_sets[regSet].num_registers;
     return 0;
 }
 
 const char *
 MachThread::GetRegisterSetName(int regSet) const
 {
-    if (regSet < m_regSets.size())
-        return m_regSets[regSet].name;
+    if (regSet < n_num_reg_sets)
+        return m_reg_sets[regSet].name;
     return NULL;
 }
 
 const DNBRegisterInfo *
 MachThread::GetRegisterInfo(int regSet, int regIndex) const
 {
-    if (regSet < m_regSets.size())
-        if (regIndex < m_regSets[regSet].num_registers)
-            return &m_regSets[regSet].registers[regIndex];
+    if (regSet < n_num_reg_sets)
+        if (regIndex < m_reg_sets[regSet].num_registers)
+            return &m_reg_sets[regSet].registers[regIndex];
     return NULL;
 }
 void
@@ -577,19 +572,19 @@ MachThread::DumpRegisterState(int regSet)
 {
     if (regSet == REGISTER_SET_ALL)
     {
-        for (regSet = 1; regSet < m_regSets.size(); regSet++)
+        for (regSet = 1; regSet < n_num_reg_sets; regSet++)
             DumpRegisterState(regSet);
     }
     else
     {
-        if (m_arch.RegisterSetStateIsValid(regSet))
+        if (m_arch_ap->RegisterSetStateIsValid(regSet))
         {
             const size_t numRegisters = GetNumRegistersInSet(regSet);
             size_t regIndex = 0;
             DNBRegisterValueClass reg;
             for (regIndex = 0; regIndex < numRegisters; ++regIndex)
             {
-                if (m_arch.GetRegisterValue(regSet, regIndex, &reg))
+                if (m_arch_ap->GetRegisterValue(regSet, regIndex, &reg))
                 {
                     reg.Dump(NULL, NULL);
                 }
@@ -605,39 +600,39 @@ MachThread::DumpRegisterState(int regSet)
 const DNBRegisterSetInfo *
 MachThread::GetRegisterSetInfo(nub_size_t *num_reg_sets ) const
 {
-    *num_reg_sets = m_regSets.size();
-    return &m_regSets[0];
+    *num_reg_sets = n_num_reg_sets;
+    return &m_reg_sets[0];
 }
 
 bool
 MachThread::GetRegisterValue ( uint32_t set, uint32_t reg, DNBRegisterValue *value )
 {
-    return m_arch.GetRegisterValue(set, reg, value);
+    return m_arch_ap->GetRegisterValue(set, reg, value);
 }
 
 bool
 MachThread::SetRegisterValue ( uint32_t set, uint32_t reg, const DNBRegisterValue *value )
 {
-    return m_arch.SetRegisterValue(set, reg, value);
+    return m_arch_ap->SetRegisterValue(set, reg, value);
 }
 
 nub_size_t
 MachThread::GetRegisterContext (void *buf, nub_size_t buf_len)
 {
-    return m_arch.GetRegisterContext(buf, buf_len);
+    return m_arch_ap->GetRegisterContext(buf, buf_len);
 }
 
 nub_size_t
 MachThread::SetRegisterContext (const void *buf, nub_size_t buf_len)
 {
-    return m_arch.SetRegisterContext(buf, buf_len);
+    return m_arch_ap->SetRegisterContext(buf, buf_len);
 }
 
 uint32_t
 MachThread::EnableHardwareBreakpoint (const DNBBreakpoint *bp)
 {
     if (bp != NULL && bp->IsBreakpoint())
-        return m_arch.EnableHardwareBreakpoint(bp->Address(), bp->ByteSize());
+        return m_arch_ap->EnableHardwareBreakpoint(bp->Address(), bp->ByteSize());
     return INVALID_NUB_HW_INDEX;
 }
 
@@ -645,7 +640,7 @@ uint32_t
 MachThread::EnableHardwareWatchpoint (const DNBBreakpoint *wp)
 {
     if (wp != NULL && wp->IsWatchpoint())
-        return m_arch.EnableHardwareWatchpoint(wp->Address(), wp->ByteSize(), wp->WatchpointRead(), wp->WatchpointWrite());
+        return m_arch_ap->EnableHardwareWatchpoint(wp->Address(), wp->ByteSize(), wp->WatchpointRead(), wp->WatchpointWrite());
     return INVALID_NUB_HW_INDEX;
 }
 
@@ -653,7 +648,7 @@ bool
 MachThread::DisableHardwareBreakpoint (const DNBBreakpoint *bp)
 {
     if (bp != NULL && bp->IsHardware())
-        return m_arch.DisableHardwareBreakpoint(bp->GetHardwareIndex());
+        return m_arch_ap->DisableHardwareBreakpoint(bp->GetHardwareIndex());
     return false;
 }
 
@@ -661,7 +656,7 @@ bool
 MachThread::DisableHardwareWatchpoint (const DNBBreakpoint *wp)
 {
     if (wp != NULL && wp->IsHardware())
-        return m_arch.DisableHardwareWatchpoint(wp->GetHardwareIndex());
+        return m_arch_ap->DisableHardwareWatchpoint(wp->GetHardwareIndex());
     return false;
 }
 
