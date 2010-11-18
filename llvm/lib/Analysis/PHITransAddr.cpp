@@ -20,8 +20,11 @@ using namespace llvm;
 
 static bool CanPHITrans(Instruction *Inst) {
   if (isa<PHINode>(Inst) ||
-      isa<BitCastInst>(Inst) ||
       isa<GetElementPtrInst>(Inst))
+    return true;
+
+  if (isa<CastInst>(Inst) &&
+      Inst->isSafeToSpeculativelyExecute())
     return true;
   
   if (Inst->getOpcode() == Instruction::Add &&
@@ -177,26 +180,29 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
   // or because we just incorporated it into the expression).  See if its
   // operands need to be phi translated, and if so, reconstruct it.
   
-  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
-    Value *PHIIn = PHITranslateSubExpr(BC->getOperand(0), CurBB, PredBB, DT);
+  if (CastInst *Cast = dyn_cast<CastInst>(Inst)) {
+    if (!Cast->isSafeToSpeculativelyExecute()) return 0;
+    Value *PHIIn = PHITranslateSubExpr(Cast->getOperand(0), CurBB, PredBB, DT);
     if (PHIIn == 0) return 0;
-    if (PHIIn == BC->getOperand(0))
-      return BC;
+    if (PHIIn == Cast->getOperand(0))
+      return Cast;
     
     // Find an available version of this cast.
     
     // Constants are trivial to find.
     if (Constant *C = dyn_cast<Constant>(PHIIn))
-      return AddAsInput(ConstantExpr::getBitCast(C, BC->getType()));
+      return AddAsInput(ConstantExpr::getCast(Cast->getOpcode(),
+                                              C, Cast->getType()));
     
-    // Otherwise we have to see if a bitcasted version of the incoming pointer
+    // Otherwise we have to see if a casted version of the incoming pointer
     // is available.  If so, we can use it, otherwise we have to fail.
     for (Value::use_iterator UI = PHIIn->use_begin(), E = PHIIn->use_end();
          UI != E; ++UI) {
-      if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI))
-        if (BCI->getType() == BC->getType() &&
-            (!DT || DT->dominates(BCI->getParent(), PredBB)))
-          return BCI;
+      if (CastInst *CastI = dyn_cast<CastInst>(*UI))
+        if (CastI->getOpcode() == Cast->getOpcode() &&
+            CastI->getType() == Cast->getType() &&
+            (!DT || DT->dominates(CastI->getParent(), PredBB)))
+          return CastI;
     }
     return 0;
   }
@@ -368,16 +374,18 @@ InsertPHITranslatedSubExpr(Value *InVal, BasicBlock *CurBB,
   // instruction.
   Instruction *Inst = cast<Instruction>(InVal);
   
-  // Handle bitcast of PHI translatable value.
-  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
-    Value *OpVal = InsertPHITranslatedSubExpr(BC->getOperand(0),
+  // Handle cast of PHI translatable value.
+  if (CastInst *Cast = dyn_cast<CastInst>(Inst)) {
+    if (!Cast->isSafeToSpeculativelyExecute()) return 0;
+    Value *OpVal = InsertPHITranslatedSubExpr(Cast->getOperand(0),
                                               CurBB, PredBB, DT, NewInsts);
     if (OpVal == 0) return 0;
     
-    // Otherwise insert a bitcast at the end of PredBB.
-    BitCastInst *New = new BitCastInst(OpVal, InVal->getType(),
-                                       InVal->getName()+".phi.trans.insert",
-                                       PredBB->getTerminator());
+    // Otherwise insert a cast at the end of PredBB.
+    CastInst *New = CastInst::Create(Cast->getOpcode(),
+                                     OpVal, InVal->getType(),
+                                     InVal->getName()+".phi.trans.insert",
+                                     PredBB->getTerminator());
     NewInsts.push_back(New);
     return New;
   }
