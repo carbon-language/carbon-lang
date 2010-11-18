@@ -10,7 +10,7 @@
 // <memory>
 
 // template <class ForwardIterator, class Size, class T>
-//   void
+//   ForwardIterator
 //   uninitialized_fill_n(ForwardIterator first, Size n, const T& x);
 
 #include <memory>
@@ -43,7 +43,8 @@ int main()
             assert(bp[i].data_ == 0);
     }
     B::count_ = 0;
-    std::uninitialized_fill_n(bp, 2, B());
+    B* r = std::uninitialized_fill_n(bp, 2, B());
+    assert(r == bp + 2);
     for (int i = 0; i < 2; ++i)
         assert(bp[i].data_ == 1);
 }
