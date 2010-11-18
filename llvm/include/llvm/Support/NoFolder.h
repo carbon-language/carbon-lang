@@ -15,8 +15,7 @@
 // llvm/Analysis/ConstantFolding.h.
 //
 // Note: since it is not actually possible to create unfolded constants, this
-// class returns values rather than constants.  The values do not have names,
-// even if names were provided to IRBuilder, which may be confusing.
+// class returns instructions rather than constants.
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +29,7 @@ namespace llvm {
 
 class LLVMContext;
 
-/// NoFolder - Create "constants" (actually, values) with no folding.
+/// NoFolder - Create "constants" (actually, instructions) with no folding.
 class NoFolder {
 public:
   explicit NoFolder(LLVMContext &) {}
@@ -39,84 +38,84 @@ public:
   // Binary Operators
   //===--------------------------------------------------------------------===//
 
-  Value *CreateAdd(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateAdd(LHS, RHS);
   }
-  Value *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWAdd(LHS, RHS);
   }
-  Value *CreateNUWAdd(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateNUWAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNUWAdd(LHS, RHS);
   }
-  Value *CreateFAdd(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateFAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFAdd(LHS, RHS);
   }
-  Value *CreateSub(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateSub(LHS, RHS);
   }
-  Value *CreateNSWSub(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateNSWSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWSub(LHS, RHS);
   }
-  Value *CreateNUWSub(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateNUWSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNUWSub(LHS, RHS);
   }
-  Value *CreateFSub(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateFSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFSub(LHS, RHS);
   }
-  Value *CreateMul(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateMul(LHS, RHS);
   }
-  Value *CreateNSWMul(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateNSWMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWMul(LHS, RHS);
   }
-  Value *CreateNUWMul(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateNUWMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNUWMul(LHS, RHS);
   }
-  Value *CreateFMul(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateFMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFMul(LHS, RHS);
   }
-  Value *CreateUDiv(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateUDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateUDiv(LHS, RHS);
   }
-  Value *CreateSDiv(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateSDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateSDiv(LHS, RHS);
   }
-  Value *CreateExactSDiv(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateExactSDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateExactSDiv(LHS, RHS);
   }
-  Value *CreateFDiv(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateFDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFDiv(LHS, RHS);
   }
-  Value *CreateURem(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateURem(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateURem(LHS, RHS);
   }
-  Value *CreateSRem(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateSRem(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateSRem(LHS, RHS);
   }
-  Value *CreateFRem(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateFRem(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFRem(LHS, RHS);
   }
-  Value *CreateShl(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateShl(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateShl(LHS, RHS);
   }
-  Value *CreateLShr(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateLShr(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateLShr(LHS, RHS);
   }
-  Value *CreateAShr(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateAShr(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateAShr(LHS, RHS);
   }
-  Value *CreateAnd(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateAnd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateAnd(LHS, RHS);
   }
-  Value *CreateOr(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateOr(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateOr(LHS, RHS);
   }
-  Value *CreateXor(Constant *LHS, Constant *RHS) const {
+  Instruction *CreateXor(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateXor(LHS, RHS);
   }
 
-  Value *CreateBinOp(Instruction::BinaryOps Opc,
-                     Constant *LHS, Constant *RHS) const {
+  Instruction *CreateBinOp(Instruction::BinaryOps Opc,
+                           Constant *LHS, Constant *RHS) const {
     return BinaryOperator::Create(Opc, LHS, RHS);
   }
 
@@ -124,16 +123,19 @@ public:
   // Unary Operators
   //===--------------------------------------------------------------------===//
 
-  Value *CreateNeg(Constant *C) const {
+  Instruction *CreateNeg(Constant *C) const {
     return BinaryOperator::CreateNeg(C);
   }
-  Value *CreateNSWNeg(Constant *C) const {
+  Instruction *CreateNSWNeg(Constant *C) const {
     return BinaryOperator::CreateNSWNeg(C);
   }
-  Value *CreateNUWNeg(Constant *C) const {
+  Instruction *CreateNUWNeg(Constant *C) const {
     return BinaryOperator::CreateNUWNeg(C);
   }
-  Value *CreateNot(Constant *C) const {
+  Instruction *CreateFNeg(Constant *C) const {
+    return BinaryOperator::CreateFNeg(C);
+  }
+  Instruction *CreateNot(Constant *C) const {
     return BinaryOperator::CreateNot(C);
   }
 
@@ -145,8 +147,8 @@ public:
                                 unsigned NumIdx) const {
     return ConstantExpr::getGetElementPtr(C, IdxList, NumIdx);
   }
-  Value *CreateGetElementPtr(Constant *C, Value* const *IdxList,
-                             unsigned NumIdx) const {
+  Instruction *CreateGetElementPtr(Constant *C, Value* const *IdxList,
+                                   unsigned NumIdx) const {
     return GetElementPtrInst::Create(C, IdxList, IdxList+NumIdx);
   }
 
@@ -154,8 +156,8 @@ public:
                                         unsigned NumIdx) const {
     return ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx);
   }
-  Value *CreateInBoundsGetElementPtr(Constant *C, Value* const *IdxList,
-                                     unsigned NumIdx) const {
+  Instruction *CreateInBoundsGetElementPtr(Constant *C, Value* const *IdxList,
+                                           unsigned NumIdx) const {
     return GetElementPtrInst::CreateInBounds(C, IdxList, IdxList+NumIdx);
   }
 
@@ -163,23 +165,51 @@ public:
   // Cast/Conversion Operators
   //===--------------------------------------------------------------------===//
 
-  Value *CreateCast(Instruction::CastOps Op, Constant *C,
+  Instruction *CreateCast(Instruction::CastOps Op, Constant *C,
                     const Type *DestTy) const {
     return CastInst::Create(Op, C, DestTy);
   }
-  Value *CreateIntCast(Constant *C, const Type *DestTy,
+  Instruction *CreatePointerCast(Constant *C, const Type *DestTy) const {
+    return CastInst::CreatePointerCast(C, DestTy);
+  }
+  Instruction *CreateIntCast(Constant *C, const Type *DestTy,
                        bool isSigned) const {
     return CastInst::CreateIntegerCast(C, DestTy, isSigned);
+  }
+  Instruction *CreateFPCast(Constant *C, const Type *DestTy) const {
+    return CastInst::CreateFPCast(C, DestTy);
+  }
+
+  Instruction *CreateBitCast(Constant *C, const Type *DestTy) const {
+    return CreateCast(Instruction::BitCast, C, DestTy);
+  }
+  Instruction *CreateIntToPtr(Constant *C, const Type *DestTy) const {
+    return CreateCast(Instruction::IntToPtr, C, DestTy);
+  }
+  Instruction *CreatePtrToInt(Constant *C, const Type *DestTy) const {
+    return CreateCast(Instruction::PtrToInt, C, DestTy);
+  }
+  Instruction *CreateZExtOrBitCast(Constant *C, const Type *DestTy) const {
+    return CastInst::CreateZExtOrBitCast(C, DestTy);
+  }
+  Instruction *CreateSExtOrBitCast(Constant *C, const Type *DestTy) const {
+    return CastInst::CreateSExtOrBitCast(C, DestTy);
+  }
+
+  Instruction *CreateTruncOrBitCast(Constant *C, const Type *DestTy) const {
+    return CastInst::CreateTruncOrBitCast(C, DestTy);
   }
 
   //===--------------------------------------------------------------------===//
   // Compare Instructions
   //===--------------------------------------------------------------------===//
 
-  Value *CreateICmp(CmpInst::Predicate P, Constant *LHS, Constant *RHS) const {
+  Instruction *CreateICmp(CmpInst::Predicate P,
+                          Constant *LHS, Constant *RHS) const {
     return new ICmpInst(P, LHS, RHS);
   }
-  Value *CreateFCmp(CmpInst::Predicate P, Constant *LHS, Constant *RHS) const {
+  Instruction *CreateFCmp(CmpInst::Predicate P,
+                          Constant *LHS, Constant *RHS) const {
     return new FCmpInst(P, LHS, RHS);
   }
 
@@ -187,30 +217,33 @@ public:
   // Other Instructions
   //===--------------------------------------------------------------------===//
 
-  Value *CreateSelect(Constant *C, Constant *True, Constant *False) const {
+  Instruction *CreateSelect(Constant *C,
+                            Constant *True, Constant *False) const {
     return SelectInst::Create(C, True, False);
   }
 
-  Value *CreateExtractElement(Constant *Vec, Constant *Idx) const {
+  Instruction *CreateExtractElement(Constant *Vec, Constant *Idx) const {
     return ExtractElementInst::Create(Vec, Idx);
   }
 
-  Value *CreateInsertElement(Constant *Vec, Constant *NewElt,
-                             Constant *Idx) const {
+  Instruction *CreateInsertElement(Constant *Vec, Constant *NewElt,
+                                   Constant *Idx) const {
     return InsertElementInst::Create(Vec, NewElt, Idx);
   }
 
-  Value *CreateShuffleVector(Constant *V1, Constant *V2, Constant *Mask) const {
+  Instruction *CreateShuffleVector(Constant *V1, Constant *V2,
+                                   Constant *Mask) const {
     return new ShuffleVectorInst(V1, V2, Mask);
   }
 
-  Value *CreateExtractValue(Constant *Agg, const unsigned *IdxList,
-                            unsigned NumIdx) const {
+  Instruction *CreateExtractValue(Constant *Agg, const unsigned *IdxList,
+                                  unsigned NumIdx) const {
     return ExtractValueInst::Create(Agg, IdxList, IdxList+NumIdx);
   }
 
-  Value *CreateInsertValue(Constant *Agg, Constant *Val,
-                           const unsigned *IdxList, unsigned NumIdx) const {
+  Instruction *CreateInsertValue(Constant *Agg, Constant *Val,
+                                 const unsigned *IdxList,
+                                 unsigned NumIdx) const {
     return InsertValueInst::Create(Agg, Val, IdxList, IdxList+NumIdx);
   }
 };

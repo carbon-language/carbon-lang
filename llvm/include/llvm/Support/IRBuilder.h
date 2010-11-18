@@ -298,6 +298,11 @@ public:
     return I;
   }
 
+  /// Insert - No-op overload to handle constants.
+  Constant *Insert(Constant *C, const Twine& = "") const {
+    return C;
+  }
+
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Terminators
   //===--------------------------------------------------------------------===//
@@ -400,172 +405,172 @@ public:
   Value *CreateAdd(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateAdd(LC, RC);
+        return Insert(Folder.CreateAdd(LC, RC), Name);
     return Insert(BinaryOperator::CreateAdd(LHS, RHS), Name);
   }
   Value *CreateNSWAdd(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateNSWAdd(LC, RC);
+        return Insert(Folder.CreateNSWAdd(LC, RC), Name);
     return Insert(BinaryOperator::CreateNSWAdd(LHS, RHS), Name);
   }
   Value *CreateNUWAdd(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateNUWAdd(LC, RC);
+        return Insert(Folder.CreateNUWAdd(LC, RC), Name);
     return Insert(BinaryOperator::CreateNUWAdd(LHS, RHS), Name);
   }
   Value *CreateFAdd(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateFAdd(LC, RC);
+        return Insert(Folder.CreateFAdd(LC, RC), Name);
     return Insert(BinaryOperator::CreateFAdd(LHS, RHS), Name);
   }
   Value *CreateSub(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateSub(LC, RC);
+        return Insert(Folder.CreateSub(LC, RC), Name);
     return Insert(BinaryOperator::CreateSub(LHS, RHS), Name);
   }
   Value *CreateNSWSub(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateNSWSub(LC, RC);
+        return Insert(Folder.CreateNSWSub(LC, RC), Name);
     return Insert(BinaryOperator::CreateNSWSub(LHS, RHS), Name);
   }
   Value *CreateNUWSub(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateNUWSub(LC, RC);
+        return Insert(Folder.CreateNUWSub(LC, RC), Name);
     return Insert(BinaryOperator::CreateNUWSub(LHS, RHS), Name);
   }
   Value *CreateFSub(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateFSub(LC, RC);
+        return Insert(Folder.CreateFSub(LC, RC), Name);
     return Insert(BinaryOperator::CreateFSub(LHS, RHS), Name);
   }
   Value *CreateMul(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateMul(LC, RC);
+        return Insert(Folder.CreateMul(LC, RC), Name);
     return Insert(BinaryOperator::CreateMul(LHS, RHS), Name);
   }
   Value *CreateNSWMul(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateNSWMul(LC, RC);
+        return Insert(Folder.CreateNSWMul(LC, RC), Name);
     return Insert(BinaryOperator::CreateNSWMul(LHS, RHS), Name);
   }
   Value *CreateNUWMul(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateNUWMul(LC, RC);
+        return Insert(Folder.CreateNUWMul(LC, RC), Name);
     return Insert(BinaryOperator::CreateNUWMul(LHS, RHS), Name);
   }
   Value *CreateFMul(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateFMul(LC, RC);
+        return Insert(Folder.CreateFMul(LC, RC), Name);
     return Insert(BinaryOperator::CreateFMul(LHS, RHS), Name);
   }
   Value *CreateUDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateUDiv(LC, RC);
+        return Insert(Folder.CreateUDiv(LC, RC), Name);
     return Insert(BinaryOperator::CreateUDiv(LHS, RHS), Name);
   }
   Value *CreateSDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateSDiv(LC, RC);
+        return Insert(Folder.CreateSDiv(LC, RC), Name);
     return Insert(BinaryOperator::CreateSDiv(LHS, RHS), Name);
   }
   Value *CreateExactSDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateExactSDiv(LC, RC);
+        return Insert(Folder.CreateExactSDiv(LC, RC), Name);
     return Insert(BinaryOperator::CreateExactSDiv(LHS, RHS), Name);
   }
   Value *CreateFDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateFDiv(LC, RC);
+        return Insert(Folder.CreateFDiv(LC, RC), Name);
     return Insert(BinaryOperator::CreateFDiv(LHS, RHS), Name);
   }
   Value *CreateURem(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateURem(LC, RC);
+        return Insert(Folder.CreateURem(LC, RC), Name);
     return Insert(BinaryOperator::CreateURem(LHS, RHS), Name);
   }
   Value *CreateSRem(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateSRem(LC, RC);
+        return Insert(Folder.CreateSRem(LC, RC), Name);
     return Insert(BinaryOperator::CreateSRem(LHS, RHS), Name);
   }
   Value *CreateFRem(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateFRem(LC, RC);
+        return Insert(Folder.CreateFRem(LC, RC), Name);
     return Insert(BinaryOperator::CreateFRem(LHS, RHS), Name);
   }
 
   Value *CreateShl(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateShl(LC, RC);
+        return Insert(Folder.CreateShl(LC, RC), Name);
     return Insert(BinaryOperator::CreateShl(LHS, RHS), Name);
   }
   Value *CreateShl(Value *LHS, const APInt &RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateShl(LC, RHSC);
+      return Insert(Folder.CreateShl(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateShl(LHS, RHSC), Name);
   }
   Value *CreateShl(Value *LHS, uint64_t RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateShl(LC, RHSC);
+      return Insert(Folder.CreateShl(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateShl(LHS, RHSC), Name);
   }
 
   Value *CreateLShr(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateLShr(LC, RC);
+        return Insert(Folder.CreateLShr(LC, RC), Name);
     return Insert(BinaryOperator::CreateLShr(LHS, RHS), Name);
   }
   Value *CreateLShr(Value *LHS, const APInt &RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateLShr(LC, RHSC);
+      return Insert(Folder.CreateLShr(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateLShr(LHS, RHSC), Name);
   }
   Value *CreateLShr(Value *LHS, uint64_t RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateLShr(LC, RHSC);
+      return Insert(Folder.CreateLShr(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateLShr(LHS, RHSC), Name);
   }
 
   Value *CreateAShr(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateAShr(LC, RC);
+        return Insert(Folder.CreateAShr(LC, RC), Name);
     return Insert(BinaryOperator::CreateAShr(LHS, RHS), Name);
   }
   Value *CreateAShr(Value *LHS, const APInt &RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateAShr(LC, RHSC);
+      return Insert(Folder.CreateAShr(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateAShr(LHS, RHSC), Name);
   }
   Value *CreateAShr(Value *LHS, uint64_t RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateAShr(LC, RHSC);
+      return Insert(Folder.CreateAShr(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateAShr(LHS, RHSC), Name);
   }
 
@@ -574,20 +579,20 @@ public:
       if (isa<ConstantInt>(RC) && cast<ConstantInt>(RC)->isAllOnesValue())
         return LHS;  // LHS & -1 -> LHS
       if (Constant *LC = dyn_cast<Constant>(LHS))
-        return Folder.CreateAnd(LC, RC);
+        return Insert(Folder.CreateAnd(LC, RC), Name);
     }
     return Insert(BinaryOperator::CreateAnd(LHS, RHS), Name);
   }
   Value *CreateAnd(Value *LHS, const APInt &RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateAnd(LC, RHSC);
+      return Insert(Folder.CreateAnd(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateAnd(LHS, RHSC), Name);
   }
   Value *CreateAnd(Value *LHS, uint64_t RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateAnd(LC, RHSC);
+      return Insert(Folder.CreateAnd(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateAnd(LHS, RHSC), Name);
   }
 
@@ -596,39 +601,39 @@ public:
       if (RC->isNullValue())
         return LHS;  // LHS | 0 -> LHS
       if (Constant *LC = dyn_cast<Constant>(LHS))
-        return Folder.CreateOr(LC, RC);
+        return Insert(Folder.CreateOr(LC, RC), Name);
     }
     return Insert(BinaryOperator::CreateOr(LHS, RHS), Name);
   }
   Value *CreateOr(Value *LHS, const APInt &RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateOr(LC, RHSC);
+      return Insert(Folder.CreateOr(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateOr(LHS, RHSC), Name);
   }
   Value *CreateOr(Value *LHS, uint64_t RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateOr(LC, RHSC);
+      return Insert(Folder.CreateOr(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateOr(LHS, RHSC), Name);
   }
 
   Value *CreateXor(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateXor(LC, RC);
+        return Insert(Folder.CreateXor(LC, RC), Name);
     return Insert(BinaryOperator::CreateXor(LHS, RHS), Name);
   }
   Value *CreateXor(Value *LHS, const APInt &RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateXor(LC, RHSC);
+      return Insert(Folder.CreateXor(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateXor(LHS, RHSC), Name);
   }
   Value *CreateXor(Value *LHS, uint64_t RHS, const Twine &Name = "") {
     Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
     if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Folder.CreateXor(LC, RHSC);
+      return Insert(Folder.CreateXor(LC, RHSC), Name);
     return Insert(BinaryOperator::CreateXor(LHS, RHSC), Name);
   }
 
@@ -636,33 +641,33 @@ public:
                      Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateBinOp(Opc, LC, RC);
+        return Insert(Folder.CreateBinOp(Opc, LC, RC), Name);
     return Insert(BinaryOperator::Create(Opc, LHS, RHS), Name);
   }
 
   Value *CreateNeg(Value *V, const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateNeg(VC);
+      return Insert(Folder.CreateNeg(VC), Name);
     return Insert(BinaryOperator::CreateNeg(V), Name);
   }
   Value *CreateNSWNeg(Value *V, const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateNSWNeg(VC);
+      return Insert(Folder.CreateNSWNeg(VC), Name);
     return Insert(BinaryOperator::CreateNSWNeg(V), Name);
   }
   Value *CreateNUWNeg(Value *V, const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateNUWNeg(VC);
+      return Insert(Folder.CreateNUWNeg(VC), Name);
     return Insert(BinaryOperator::CreateNUWNeg(V), Name);
   }
   Value *CreateFNeg(Value *V, const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateFNeg(VC);
+      return Insert(Folder.CreateFNeg(VC), Name);
     return Insert(BinaryOperator::CreateFNeg(V), Name);
   }
   Value *CreateNot(Value *V, const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateNot(VC);
+      return Insert(Folder.CreateNot(VC), Name);
     return Insert(BinaryOperator::CreateNot(V), Name);
   }
 
@@ -700,7 +705,9 @@ public:
         if (!isa<Constant>(*i))
           break;
       if (i == IdxEnd)
-        return Folder.CreateGetElementPtr(PC, &IdxBegin[0], IdxEnd - IdxBegin);
+        return Insert(Folder.CreateGetElementPtr(PC, &IdxBegin[0],
+                                                 IdxEnd - IdxBegin),
+                      Name);
     }
     return Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd), Name);
   }
@@ -715,9 +722,10 @@ public:
         if (!isa<Constant>(*i))
           break;
       if (i == IdxEnd)
-        return Folder.CreateInBoundsGetElementPtr(PC,
-                                                  &IdxBegin[0],
-                                                  IdxEnd - IdxBegin);
+        return Insert(Folder.CreateInBoundsGetElementPtr(PC,
+                                                         &IdxBegin[0],
+                                                         IdxEnd - IdxBegin),
+                      Name);
     }
     return Insert(GetElementPtrInst::CreateInBounds(Ptr, IdxBegin, IdxEnd),
                   Name);
@@ -725,20 +733,20 @@ public:
   Value *CreateGEP(Value *Ptr, Value *Idx, const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
-        return Folder.CreateGetElementPtr(PC, &IC, 1);
+        return Insert(Folder.CreateGetElementPtr(PC, &IC, 1), Name);
     return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
   }
   Value *CreateInBoundsGEP(Value *Ptr, Value *Idx, const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
-        return Folder.CreateInBoundsGetElementPtr(PC, &IC, 1);
+        return Insert(Folder.CreateInBoundsGetElementPtr(PC, &IC, 1), Name);
     return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idx), Name);
   }
   Value *CreateConstGEP1_32(Value *Ptr, unsigned Idx0, const Twine &Name = "") {
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Folder.CreateGetElementPtr(PC, &Idx, 1);
+      return Insert(Folder.CreateGetElementPtr(PC, &Idx, 1), Name);
 
     return Insert(GetElementPtrInst::Create(Ptr, &Idx, &Idx+1), Name);
   }
@@ -747,7 +755,7 @@ public:
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Folder.CreateInBoundsGetElementPtr(PC, &Idx, 1);
+      return Insert(Folder.CreateInBoundsGetElementPtr(PC, &Idx, 1), Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(Ptr, &Idx, &Idx+1), Name);
   }
@@ -759,7 +767,7 @@ public:
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Folder.CreateGetElementPtr(PC, Idxs, 2);
+      return Insert(Folder.CreateGetElementPtr(PC, Idxs, 2), Name);
 
     return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);
   }
@@ -771,7 +779,7 @@ public:
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Folder.CreateInBoundsGetElementPtr(PC, Idxs, 2);
+      return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idxs, 2), Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idxs, Idxs+2), Name);
   }
@@ -779,7 +787,7 @@ public:
     Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Folder.CreateGetElementPtr(PC, &Idx, 1);
+      return Insert(Folder.CreateGetElementPtr(PC, &Idx, 1), Name);
 
     return Insert(GetElementPtrInst::Create(Ptr, &Idx, &Idx+1), Name);
   }
@@ -788,7 +796,7 @@ public:
     Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Folder.CreateInBoundsGetElementPtr(PC, &Idx, 1);
+      return Insert(Folder.CreateInBoundsGetElementPtr(PC, &Idx, 1), Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(Ptr, &Idx, &Idx+1), Name);
   }
@@ -800,7 +808,7 @@ public:
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Folder.CreateGetElementPtr(PC, Idxs, 2);
+      return Insert(Folder.CreateGetElementPtr(PC, Idxs, 2), Name);
 
     return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);
   }
@@ -812,7 +820,7 @@ public:
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Folder.CreateInBoundsGetElementPtr(PC, Idxs, 2);
+      return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idxs, 2), Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idxs, Idxs+2), Name);
   }
@@ -878,7 +886,7 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateZExtOrBitCast(VC, DestTy);
+      return Insert(Folder.CreateZExtOrBitCast(VC, DestTy), Name);
     return Insert(CastInst::CreateZExtOrBitCast(V, DestTy), Name);
   }
   Value *CreateSExtOrBitCast(Value *V, const Type *DestTy,
@@ -886,7 +894,7 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateSExtOrBitCast(VC, DestTy);
+      return Insert(Folder.CreateSExtOrBitCast(VC, DestTy), Name);
     return Insert(CastInst::CreateSExtOrBitCast(V, DestTy), Name);
   }
   Value *CreateTruncOrBitCast(Value *V, const Type *DestTy,
@@ -894,7 +902,7 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateTruncOrBitCast(VC, DestTy);
+      return Insert(Folder.CreateTruncOrBitCast(VC, DestTy), Name);
     return Insert(CastInst::CreateTruncOrBitCast(V, DestTy), Name);
   }
   Value *CreateCast(Instruction::CastOps Op, Value *V, const Type *DestTy,
@@ -902,7 +910,7 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateCast(Op, VC, DestTy);
+      return Insert(Folder.CreateCast(Op, VC, DestTy), Name);
     return Insert(CastInst::Create(Op, V, DestTy), Name);
   }
   Value *CreatePointerCast(Value *V, const Type *DestTy,
@@ -910,7 +918,7 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreatePointerCast(VC, DestTy);
+      return Insert(Folder.CreatePointerCast(VC, DestTy), Name);
     return Insert(CastInst::CreatePointerCast(V, DestTy), Name);
   }
   Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
@@ -918,7 +926,7 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateIntCast(VC, DestTy, isSigned);
+      return Insert(Folder.CreateIntCast(VC, DestTy, isSigned), Name);
     return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned), Name);
   }
 private:
@@ -930,7 +938,7 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return Folder.CreateFPCast(VC, DestTy);
+      return Insert(Folder.CreateFPCast(VC, DestTy), Name);
     return Insert(CastInst::CreateFPCast(V, DestTy), Name);
   }
 
@@ -1016,14 +1024,14 @@ public:
                     const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateICmp(P, LC, RC);
+        return Insert(Folder.CreateICmp(P, LC, RC), Name);
     return Insert(new ICmpInst(P, LHS, RHS), Name);
   }
   Value *CreateFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
                     const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateFCmp(P, LC, RC);
+        return Insert(Folder.CreateFCmp(P, LC, RC), Name);
     return Insert(new FCmpInst(P, LHS, RHS), Name);
   }
 
@@ -1073,7 +1081,7 @@ public:
     if (Constant *CC = dyn_cast<Constant>(C))
       if (Constant *TC = dyn_cast<Constant>(True))
         if (Constant *FC = dyn_cast<Constant>(False))
-          return Folder.CreateSelect(CC, TC, FC);
+          return Insert(Folder.CreateSelect(CC, TC, FC), Name);
     return Insert(SelectInst::Create(C, True, False), Name);
   }
 
@@ -1085,7 +1093,7 @@ public:
                               const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(Vec))
       if (Constant *IC = dyn_cast<Constant>(Idx))
-        return Folder.CreateExtractElement(VC, IC);
+        return Insert(Folder.CreateExtractElement(VC, IC), Name);
     return Insert(ExtractElementInst::Create(Vec, Idx), Name);
   }
 
@@ -1094,7 +1102,7 @@ public:
     if (Constant *VC = dyn_cast<Constant>(Vec))
       if (Constant *NC = dyn_cast<Constant>(NewElt))
         if (Constant *IC = dyn_cast<Constant>(Idx))
-          return Folder.CreateInsertElement(VC, NC, IC);
+          return Insert(Folder.CreateInsertElement(VC, NC, IC), Name);
     return Insert(InsertElementInst::Create(Vec, NewElt, Idx), Name);
   }
 
@@ -1103,14 +1111,14 @@ public:
     if (Constant *V1C = dyn_cast<Constant>(V1))
       if (Constant *V2C = dyn_cast<Constant>(V2))
         if (Constant *MC = dyn_cast<Constant>(Mask))
-          return Folder.CreateShuffleVector(V1C, V2C, MC);
+          return Insert(Folder.CreateShuffleVector(V1C, V2C, MC), Name);
     return Insert(new ShuffleVectorInst(V1, V2, Mask), Name);
   }
 
   Value *CreateExtractValue(Value *Agg, unsigned Idx,
                             const Twine &Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
-      return Folder.CreateExtractValue(AggC, &Idx, 1);
+      return Insert(Folder.CreateExtractValue(AggC, &Idx, 1), Name);
     return Insert(ExtractValueInst::Create(Agg, Idx), Name);
   }
 
@@ -1120,7 +1128,8 @@ public:
                             RandomAccessIterator IdxEnd,
                             const Twine &Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
-      return Folder.CreateExtractValue(AggC, IdxBegin, IdxEnd - IdxBegin);
+      return Insert(Folder.CreateExtractValue(AggC, IdxBegin, IdxEnd-IdxBegin),
+                    Name);
     return Insert(ExtractValueInst::Create(Agg, IdxBegin, IdxEnd), Name);
   }
 
@@ -1128,7 +1137,7 @@ public:
                            const Twine &Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
       if (Constant *ValC = dyn_cast<Constant>(Val))
-        return Folder.CreateInsertValue(AggC, ValC, &Idx, 1);
+        return Insert(Folder.CreateInsertValue(AggC, ValC, &Idx, 1), Name);
     return Insert(InsertValueInst::Create(Agg, Val, Idx), Name);
   }
 
@@ -1139,7 +1148,9 @@ public:
                            const Twine &Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
       if (Constant *ValC = dyn_cast<Constant>(Val))
-        return Folder.CreateInsertValue(AggC, ValC, IdxBegin, IdxEnd-IdxBegin);
+        return Insert(Folder.CreateInsertValue(AggC, ValC, IdxBegin,
+                                               IdxEnd - IdxBegin),
+                      Name);
     return Insert(InsertValueInst::Create(Agg, Val, IdxBegin, IdxEnd), Name);
   }
 
