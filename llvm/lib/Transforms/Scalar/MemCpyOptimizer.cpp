@@ -689,22 +689,18 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
     return false;
   
   // Finally, we have to make sure that the dest of the second does not
-  // alias the source of the first
+  // alias the source of the first.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  if (AA.alias(M->getRawDest(), MSize, MDep->getRawSource(), DepSize) !=
-      AliasAnalysis::NoAlias)
-    return false;
-  else if (AA.alias(M->getRawDest(), MSize, M->getRawSource(), MSize) !=
-           AliasAnalysis::NoAlias)
-    return false;
-  else if (AA.alias(MDep->getRawDest(), DepSize, MDep->getRawSource(), DepSize)
-           != AliasAnalysis::NoAlias)
+  if (!AA.isNoAlias(M->getRawDest(), MSize, MDep->getRawSource(), DepSize) ||
+      !AA.isNoAlias(M->getRawDest(), MSize, M->getRawSource(), MSize))
     return false;
   
   // If all checks passed, then we can transform these memcpy's
-  const Type *ArgTys[3] = { M->getRawDest()->getType(),
+  const Type *ArgTys[3] = {
+    M->getRawDest()->getType(),
     MDep->getRawSource()->getType(),
-    M->getLength()->getType() };
+    M->getLength()->getType()
+  };
   Function *MemCpyFun =
     Intrinsic::getDeclaration(M->getParent()->getParent()->getParent(),
                               M->getIntrinsicID(), ArgTys, 3);
