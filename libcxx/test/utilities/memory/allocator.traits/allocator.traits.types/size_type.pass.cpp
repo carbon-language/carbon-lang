@@ -32,8 +32,32 @@ struct B
     typedef T value_type;
 };
 
+template <class T>
+struct C
+{
+    typedef T value_type;
+    struct pointer {};
+    struct const_pointer {};
+    struct void_pointer {};
+    struct const_void_pointer {};
+};
+
+namespace std
+{
+
+template <>
+struct pointer_traits<C<char>::pointer>
+{
+    typedef signed char difference_type;
+};
+
+}
+
 int main()
 {
     static_assert((std::is_same<std::allocator_traits<A<char> >::size_type, unsigned short>::value), "");
-    static_assert((std::is_same<std::allocator_traits<B<char> >::size_type, std::size_t>::value), "");
+    static_assert((std::is_same<std::allocator_traits<B<char> >::size_type,
+                   std::make_unsigned<std::ptrdiff_t>::type>::value), "");
+    static_assert((std::is_same<std::allocator_traits<C<char> >::size_type,
+                   unsigned char>::value), "");
 }

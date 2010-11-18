@@ -13,7 +13,7 @@
 // struct allocator_traits
 // {
 //     typedef Alloc::difference_type
-//           | ptrdiff_t                    difference_type;
+//           | pointer_traits<pointer>::difference_type         difference_type;
 //     ...
 // };
 
@@ -33,8 +33,30 @@ struct B
     typedef T value_type;
 };
 
+template <class T>
+struct C
+{
+    typedef T value_type;
+    struct pointer {};
+    struct const_pointer {};
+    struct void_pointer {};
+    struct const_void_pointer {};
+};
+
+namespace std
+{
+
+template <>
+struct pointer_traits<C<char>::pointer>
+{
+    typedef signed char difference_type;
+};
+
+}
+
 int main()
 {
     static_assert((std::is_same<std::allocator_traits<A<char> >::difference_type, short>::value), "");
     static_assert((std::is_same<std::allocator_traits<B<char> >::difference_type, std::ptrdiff_t>::value), "");
+    static_assert((std::is_same<std::allocator_traits<C<char> >::difference_type, signed char>::value), "");
 }

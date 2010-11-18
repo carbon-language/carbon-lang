@@ -52,8 +52,11 @@ struct allocator_traits
           | pointer_traits<pointer>::rebind<const void>
                                          const_void_pointer;
     typedef Alloc::difference_type
-          | ptrdiff_t                    difference_type;
-    typedef Alloc::size_type | size_t    size_type;
+          | pointer_traits<pointer>::difference_type
+                                         difference_type;
+    typedef Alloc::size_type
+          | make_unsigned<difference_type>::type
+                                         size_type;
     typedef Alloc::propagate_on_container_copy_assignment
           | false_type                   propagate_on_container_copy_assignment;
     typedef Alloc::propagate_on_container_move_assignment
@@ -856,7 +859,7 @@ struct __pointer_type<_Tp, _Dp, false>
     typedef _Tp* type;
 };
 
-}
+}  // __pointer_type_imp
 
 template <class _Tp, class _Dp>
 struct __pointer_type
@@ -972,14 +975,14 @@ public:
     static const bool value = sizeof(__test<_Tp>(0)) == 1;
 };
 
-template <class _Alloc, bool = __has_size_type<_Alloc>::value>
+template <class _Alloc, class _DiffType, bool = __has_size_type<_Alloc>::value>
 struct __size_type
 {
-    typedef size_t type;
+    typedef typename make_unsigned<_DiffType>::type type;
 };
 
-template <class _Alloc>
-struct __size_type<_Alloc, true>
+template <class _Alloc, class _DiffType>
+struct __size_type<_Alloc, _DiffType, true>
 {
     typedef typename _Alloc::size_type type;
 };
@@ -1292,6 +1295,18 @@ struct __has_select_on_container_copy_construction
 
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
+template <class _Alloc, class _Ptr, bool = __has_difference_type<_Alloc>::value>
+struct __alloc_traits_difference_type
+{
+    typedef typename pointer_traits<_Ptr>::difference_type type;
+};
+
+template <class _Alloc, class _Ptr>
+struct __alloc_traits_difference_type<_Alloc, _Ptr, true>
+{
+    typedef typename _Alloc::difference_type type;
+};
+
 template <class _Alloc>
 struct _LIBCPP_VISIBLE allocator_traits
 {
@@ -1303,8 +1318,8 @@ struct _LIBCPP_VISIBLE allocator_traits
     typedef typename __void_pointer<pointer, allocator_type>::type void_pointer;
     typedef typename __const_void_pointer<pointer, allocator_type>::type const_void_pointer;
 
-    typedef typename __pointer_traits_difference_type<allocator_type>::type difference_type;
-    typedef typename __size_type<allocator_type>::type size_type;
+    typedef typename __alloc_traits_difference_type<allocator_type, pointer>::type difference_type;
+    typedef typename __size_type<allocator_type, difference_type>::type size_type;
 
     typedef typename __propagate_on_container_copy_assignment<allocator_type>::type
                      propagate_on_container_copy_assignment;
