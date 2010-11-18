@@ -908,7 +908,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                       TemplateArgsPtr,
                                       TemplateId->RAngleLoc);
 
-      TypeResult = Actions.ActOnTagTemplateIdType(TypeResult, TUK,
+      TypeResult = Actions.ActOnTagTemplateIdType(SS, TypeResult, TUK,
                                                   TagType, StartLoc);
     } else {
       // This is an explicit specialization or a class template

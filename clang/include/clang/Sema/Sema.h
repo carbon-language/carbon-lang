@@ -2869,10 +2869,11 @@ public:
                       ASTTemplateArgsPtr TemplateArgs,
                       SourceLocation RAngleLoc);
 
-  TypeResult ActOnTagTemplateIdType(TypeResult Type,
-                                            TagUseKind TUK,
-                                            TypeSpecifierType TagSpec,
-                                            SourceLocation TagLoc);
+  TypeResult ActOnTagTemplateIdType(CXXScopeSpec &SS,
+                                    TypeResult Type,
+                                    TagUseKind TUK,
+                                    TypeSpecifierType TagSpec,
+                                    SourceLocation TagLoc);
 
   ExprResult BuildTemplateIdExpr(const CXXScopeSpec &SS,
                                  LookupResult &R,

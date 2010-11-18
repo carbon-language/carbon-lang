@@ -1646,14 +1646,14 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   return CreateParsedType(Result, DI);
 }
 
-TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
+TypeResult Sema::ActOnTagTemplateIdType(CXXScopeSpec &SS,
+                                        TypeResult TypeResult,
                                         TagUseKind TUK,
                                         TypeSpecifierType TagSpec,
                                         SourceLocation TagLoc) {
   if (TypeResult.isInvalid())
     return ::TypeResult();
 
-  // FIXME: preserve source info, ideally without copying the DI.
   TypeSourceInfo *DI;
   QualType Type = GetTypeFromParser(TypeResult.get(), &DI);
 
@@ -1678,7 +1678,12 @@ TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
     = TypeWithKeyword::getKeywordForTagTypeKind(TagKind);
   QualType ElabType = Context.getElaboratedType(Keyword, /*NNS=*/0, Type);
 
-  return ParsedType::make(ElabType);
+  TypeSourceInfo *ElabDI = Context.CreateTypeSourceInfo(ElabType);
+  ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(ElabDI->getTypeLoc());
+  TL.setKeywordLoc(TagLoc);
+  TL.setQualifierRange(SS.getRange());
+  TL.getNamedTypeLoc().initializeFullCopy(DI->getTypeLoc());
+  return CreateParsedType(ElabType, ElabDI);
 }
 
 ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,

@@ -124,6 +124,12 @@ public:
     initializeImpl(*this, Loc);
   }
 
+  /// \brief Initializes this by copying its information from another
+  /// TypeLoc of the same type.
+  void initializeFullCopy(TypeLoc Other) const {
+    initializeFullCopyImpl(*this, Other);
+  }
+
   friend bool operator==(const TypeLoc &LHS, const TypeLoc &RHS) {
     return LHS.Ty == RHS.Ty && LHS.Data == RHS.Data;
   }
@@ -136,6 +142,7 @@ public:
 
 private:
   static void initializeImpl(TypeLoc TL, SourceLocation Loc);
+  static void initializeFullCopyImpl(TypeLoc TL, TypeLoc Other);
   static TypeLoc getNextTypeLocImpl(TypeLoc TL);
   static SourceRange getLocalSourceRangeImpl(TypeLoc TL);
 };
