@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_AST_PRETTY_PRINTER_H
 #define LLVM_CLANG_AST_PRETTY_PRINTER_H
 
+#include "clang/Basic/LangOptions.h"
+
 namespace llvm {
   class raw_ostream;
 }
@@ -44,7 +46,7 @@ struct PrintingPolicy {
   unsigned Indentation : 8;
 
   /// \brief What language we're printing.
-  const LangOptions &LangOpts;
+  const LangOptions LangOpts;
 
   /// \brief Whether we should suppress printing of the actual specifiers for
   /// the given type or declaration.
