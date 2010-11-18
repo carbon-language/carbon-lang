@@ -72,6 +72,12 @@ public:
     clang::SelectorTable *
     getSelectorTable();
 
+    clang::FileManager *
+    getFileManager();
+    
+    clang::FileSystemOptions *
+    getFileSystemOptions();
+    
     clang::SourceManager *
     getSourceManager();
 
@@ -604,6 +610,8 @@ protected:
     std::string                             m_target_triple;
     std::auto_ptr<clang::ASTContext>        m_ast_context_ap;
     std::auto_ptr<clang::LangOptions>       m_language_options_ap;
+    std::auto_ptr<clang::FileManager>       m_file_manager_ap;
+    std::auto_ptr<clang::FileSystemOptions> m_file_system_options_ap;
     std::auto_ptr<clang::SourceManager>     m_source_manager_ap;
     std::auto_ptr<clang::Diagnostic>        m_diagnostic_ap;
     std::auto_ptr<clang::TargetOptions>     m_target_options_ap;

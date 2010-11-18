@@ -36,6 +36,7 @@ Stmt *ClangASTSource::GetExternalDeclStmt(uint64_t) { return 0; }
 // for method signatures!) might help.
 Selector ClangASTSource::GetExternalSelector(uint32_t) { return Selector(); }
 uint32_t ClangASTSource::GetNumExternalSelectors() { return 0; }
+CXXBaseSpecifier *ClangASTSource::GetExternalCXXBaseSpecifiers(uint64_t Offset) { return NULL; }
 
 // The core lookup interface.
 DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName

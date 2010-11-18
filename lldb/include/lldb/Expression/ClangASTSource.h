@@ -76,6 +76,11 @@ public:
     /// Interface stub that returns 0.
     //------------------------------------------------------------------
 	uint32_t GetNumExternalSelectors();
+    
+    //------------------------------------------------------------------
+    /// Interface stub that returns NULL.
+    //------------------------------------------------------------------
+    clang::CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
 	
     //------------------------------------------------------------------
     /// Look up all Decls that match a particular name.  Only handles

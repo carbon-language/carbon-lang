@@ -23,6 +23,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
@@ -351,11 +352,27 @@ ClangASTContext::getSelectorTable()
     return m_selector_table_ap.get();
 }
 
+clang::FileManager *
+ClangASTContext::getFileManager()
+{
+    if (m_file_manager_ap.get() == NULL)
+        m_file_manager_ap.reset(new clang::FileManager());
+    return m_file_manager_ap.get();
+}
+
+clang::FileSystemOptions *
+ClangASTContext::getFileSystemOptions()
+{
+    if (m_file_system_options_ap.get() == NULL)
+        m_file_system_options_ap.reset(new clang::FileSystemOptions());
+    return m_file_system_options_ap.get();
+}
+
 clang::SourceManager *
 ClangASTContext::getSourceManager()
 {
     if (m_source_manager_ap.get() == NULL)
-        m_source_manager_ap.reset(new clang::SourceManager(*getDiagnostic()));
+        m_source_manager_ap.reset(new clang::SourceManager(*getDiagnostic(), *getFileManager(), *getFileSystemOptions()));
     return m_source_manager_ap.get();
 }
 
@@ -730,9 +747,10 @@ ClangASTContext::CopyType (ASTContext *dest_context,
     NullDiagnosticClient *null_client = new NullDiagnosticClient;
     Diagnostic diagnostics(null_client);
     FileManager file_manager;
+    FileSystemOptions file_system_options;
     ASTImporter importer(diagnostics,
-                         *dest_context, file_manager,
-                         *source_context, file_manager);
+                         *dest_context, file_manager, file_system_options,
+                         *source_context, file_manager, file_system_options);
     
     QualType src = QualType::getFromOpaquePtr(clang_type);
     QualType dst = importer.Import(src);
@@ -750,9 +768,10 @@ ClangASTContext::CopyDecl (ASTContext *dest_context,
     NullDiagnosticClient *null_client = new NullDiagnosticClient;
     Diagnostic diagnostics(null_client);
     FileManager file_manager;
+    FileSystemOptions file_system_options;
     ASTImporter importer(diagnostics,
-                         *dest_context, file_manager,
-                         *source_context, file_manager);
+                         *dest_context, file_manager, file_system_options,
+                         *source_context, file_manager, file_system_options);
     
     return importer.Import(source_decl);
 }
@@ -2095,9 +2114,9 @@ ClangASTContext::GetChildClangTypeAtIndex
 
 
                             if (base_class->isVirtual())
-                                bit_offset = record_layout.getVBaseClassOffset(base_class_decl);
+                                bit_offset = record_layout.getVBaseClassOffset(base_class_decl).getQuantity();
                             else
-                                bit_offset = record_layout.getBaseClassOffset(base_class_decl);
+                                bit_offset = record_layout.getBaseClassOffset(base_class_decl).getQuantity();
 
                             // Base classes should be a multiple of 8 bits in size
                             assert (bit_offset % 8 == 0);

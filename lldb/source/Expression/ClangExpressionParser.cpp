@@ -243,8 +243,11 @@ ClangExpressionParser::ClangExpressionParser(const char *target_triple,
     
     // 5. Set up the source management objects inside the compiler
     
+    m_file_manager.reset(new clang::FileManager());
+    m_file_system_options.reset(new clang::FileSystemOptions());
+    
     if (!m_compiler->hasSourceManager())
-        m_compiler->createSourceManager();
+        m_compiler->createSourceManager(*m_file_manager.get(), *m_file_system_options.get());
     
     m_compiler->createFileManager();
     m_compiler->createPreprocessor();

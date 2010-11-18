@@ -173,6 +173,8 @@ private:
     ClangExpression                            &m_expr;                 ///< The expression to be parsed
     
     std::string                                 m_target_triple;        ///< The target triple used to initialize LLVM
+    std::auto_ptr<clang::FileManager>           m_file_manager;         ///< The Clang file manager object used by the compiler
+    std::auto_ptr<clang::FileSystemOptions>     m_file_system_options;  ///< The Clang file system options object used by the compiler
     std::auto_ptr<clang::CompilerInstance>      m_compiler;             ///< The Clang compiler used to parse expressions into IR
     std::auto_ptr<clang::Builtin::Context>      m_builtin_context;      ///< Context for Clang built-ins
     std::auto_ptr<clang::ASTContext>            m_ast_context;          ///< The AST context used to hold types and names for the parser

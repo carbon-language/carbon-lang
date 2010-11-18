@@ -57,6 +57,8 @@ namespace clang
     class ExternalASTSource;
     class ExtVectorElementExpr;
     class FieldDecl;
+    class FileManager;
+    class FileSystemOptions;
     class FloatingLiteral;
     class FrontendOptions;
     class FunctionDecl;
