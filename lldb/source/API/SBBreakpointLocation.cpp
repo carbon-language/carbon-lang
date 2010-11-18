@@ -14,6 +14,7 @@
 
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-defines.h"
+#include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Target/ThreadSpec.h"
 #include "lldb/Core/Log.h"

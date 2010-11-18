@@ -12,6 +12,7 @@
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
@@ -106,6 +107,109 @@ SBThread::GetStopReason()
                      Thread::StopReasonAsCString (reason));
 
     return reason;
+}
+
+size_t
+SBThread::GetStopReasonDataCount ()
+{
+    if (m_opaque_sp)
+    {
+        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        if (stop_info_sp)
+        {
+            StopReason reason = stop_info_sp->GetStopReason();
+            switch (reason)
+            {
+            case eStopReasonInvalid:
+            case eStopReasonNone:
+            case eStopReasonTrace:
+            case eStopReasonPlanComplete:
+                // There is no data for these stop reasons.
+                return 0;
+
+            case eStopReasonBreakpoint:
+                {
+                    break_id_t site_id = stop_info_sp->GetValue();
+                    lldb::BreakpointSiteSP bp_site_sp (m_opaque_sp->GetProcess().GetBreakpointSiteList().FindByID (site_id));
+                    if (bp_site_sp)
+                        return bp_site_sp->GetNumberOfOwners () * 2;
+                    else
+                        return 0; // Breakpoint must have cleared itself...
+                }
+                break;
+
+            case eStopReasonWatchpoint:
+                assert (!"implement watchpoint support in SBThread::GetStopReasonDataCount ()");
+                return 0; // We don't have watchpoint support yet...
+
+            case eStopReasonSignal:
+                return 1;
+
+            case eStopReasonException:
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+uint64_t
+SBThread::GetStopReasonDataAtIndex (uint32_t idx)
+{
+    if (m_opaque_sp)
+    {
+        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        if (stop_info_sp)
+        {
+            StopReason reason = stop_info_sp->GetStopReason();
+            switch (reason)
+            {
+            case eStopReasonInvalid:
+            case eStopReasonNone:
+            case eStopReasonTrace:
+            case eStopReasonPlanComplete:
+                // There is no data for these stop reasons.
+                return 0;
+
+            case eStopReasonBreakpoint:
+                {
+                    break_id_t site_id = stop_info_sp->GetValue();
+                    lldb::BreakpointSiteSP bp_site_sp (m_opaque_sp->GetProcess().GetBreakpointSiteList().FindByID (site_id));
+                    if (bp_site_sp)
+                    {
+                        uint32_t bp_index = idx / 2;
+                        BreakpointLocationSP bp_loc_sp (bp_site_sp->GetOwnerAtIndex (bp_index));
+                        if (bp_loc_sp)
+                        {
+                            if (bp_index & 1)
+                            {
+                                // Odd idx, return the breakpoint location ID
+                                return bp_loc_sp->GetID();
+                            }
+                            else
+                            {
+                                // Even idx, return the breakpoint ID
+                                return bp_loc_sp->GetBreakpoint().GetID();
+                            }
+                        }
+                    }
+                    return LLDB_INVALID_BREAK_ID;
+                }
+                break;
+
+            case eStopReasonWatchpoint:
+                assert (!"implement watchpoint support in SBThread::GetStopReasonDataCount ()");
+                return 0; // We don't have watchpoint support yet...
+
+            case eStopReasonSignal:
+                return stop_info_sp->GetValue();
+
+            case eStopReasonException:
+                return stop_info_sp->GetValue();
+            }
+        }
+    }
+    return 0;
 }
 
 size_t

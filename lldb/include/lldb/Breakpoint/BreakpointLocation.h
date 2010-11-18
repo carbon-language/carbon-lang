@@ -20,11 +20,9 @@
 
 // Project includes
 #include "lldb/lldb-private.h"
-#include "lldb/Core/UserID.h"
 #include "lldb/Breakpoint/StoppointLocation.h"
+#include "lldb/Core/UserID.h"
 #include "lldb/Core/Address.h"
-#include "lldb/Breakpoint/Breakpoint.h"
-#include "lldb/Breakpoint/BreakpointOptions.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Core/StringList.h"
 
@@ -165,7 +163,8 @@ public:
     /// @param[in] condition
     ///    The condition expression to evaluate when the breakpoint is hit.
     //------------------------------------------------------------------
-    void SetCondition (const char *condition);
+    void 
+    SetCondition (const char *condition);
     
     //------------------------------------------------------------------
     /// Test the breakpoint location's condition in the Execution context passed in.
@@ -179,7 +178,9 @@ public:
     /// @return
     ///     A thread plan to run to test the condition, or NULL if there is no condition.
     //------------------------------------------------------------------
-    ThreadPlan *GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, Stream &error);
+    ThreadPlan *
+    GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
+                                  Stream &error);
     
     //------------------------------------------------------------------
     /// Return a pointer to the text of the condition expression.
@@ -188,7 +189,8 @@ public:
     ///    A pointer to the condition expression text, or NULL if no
     //     condition has been set.
     //------------------------------------------------------------------
-    const char *GetConditionText ();
+    const char *
+    GetConditionText ();
 
 
     //------------------------------------------------------------------

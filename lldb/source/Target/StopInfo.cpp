@@ -16,6 +16,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Log.h"
+#include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/StreamString.h"
