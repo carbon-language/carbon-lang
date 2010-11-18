@@ -39,21 +39,17 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CommandLine.h"
 
-namespace llvm {
+using namespace llvm;
+
 static cl::opt<bool>
 ForceAllBaseRegAlloc("arm-force-base-reg-alloc", cl::Hidden, cl::init(false),
           cl::desc("Force use of virtual base registers for stack load/store"));
 static cl::opt<bool>
 EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(true), cl::Hidden,
           cl::desc("Enable pre-regalloc stack frame index allocation"));
-}
-
-using namespace llvm;
-
 static cl::opt<bool>
 EnableBasePointer("arm-use-base-pointer", cl::Hidden, cl::init(true),
           cl::desc("Enable use of a base pointer for complex stack frames"));
-
 
 ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
                                          const ARMSubtarget &sti)
