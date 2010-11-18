@@ -3211,6 +3211,15 @@ public:
     return Designators + NumDesignators;
   }
 
+  typedef std::reverse_iterator<designators_iterator>
+          reverse_designators_iterator;
+  reverse_designators_iterator designators_rbegin() {
+    return reverse_designators_iterator(designators_end());
+  }
+  reverse_designators_iterator designators_rend() {
+    return reverse_designators_iterator(designators_begin());
+  }
+
   Designator *getDesignator(unsigned Idx) { return &designators_begin()[Idx]; }
 
   void setDesignators(ASTContext &C, const Designator *Desigs, 

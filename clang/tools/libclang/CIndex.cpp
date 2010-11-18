@@ -140,7 +140,8 @@ public:
               DeclRefExprPartsKind, LabelRefVisitKind,
               ExplicitTemplateArgsVisitKind,
               NestedNameSpecifierVisitKind,
-              DeclarationNameInfoVisitKind };
+              DeclarationNameInfoVisitKind,
+              MemberRefVisitKind };
 protected:
   void *data[3];
   CXCursor parent;
@@ -161,8 +162,7 @@ typedef llvm::SmallVector<VisitorJob, 10> VisitorWorkList;
 
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
-                      public TypeLocVisitor<CursorVisitor, bool>,
-                      public StmtVisitor<CursorVisitor, bool>
+                      public TypeLocVisitor<CursorVisitor, bool>
 {
   /// \brief The translation unit we are traversing.
   CXTranslationUnit TU;
@@ -201,7 +201,6 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
 
   using DeclVisitor<CursorVisitor, bool>::Visit;
   using TypeLocVisitor<CursorVisitor, bool>::Visit;
-  using StmtVisitor<CursorVisitor, bool>::Visit;
 
   /// \brief Determine whether this particular source range comes before, comes
   /// after, or overlaps the region of interest.
@@ -340,19 +339,11 @@ public:
   bool VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL);
   bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
 
-  // Statement visitors
-  bool VisitStmt(Stmt *S);
-
-  // Expression visitors
-  bool VisitOffsetOfExpr(OffsetOfExpr *E);
-  bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
-  bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
-
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
   bool RunVisitorWorkList(VisitorWorkList &WL);
   void EnqueueWorkList(VisitorWorkList &WL, Stmt *S);
-  LLVM_ATTRIBUTE_NOINLINE bool VisitDataRecursive(Stmt *S);
+  LLVM_ATTRIBUTE_NOINLINE bool Visit(Stmt *S);
 };
 
 } // end anonymous namespace
@@ -1433,10 +1424,6 @@ bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
   return false;
 }
 
-bool CursorVisitor::VisitStmt(Stmt *S) {
-  return VisitDataRecursive(S);
-}
-
 bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
   if (D->isDefinition()) {
     for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
@@ -1447,92 +1434,6 @@ bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
   }
 
   return VisitTagDecl(D);
-}
-
-bool CursorVisitor::VisitOffsetOfExpr(OffsetOfExpr *E) {
-  // Visit the type into which we're computing an offset.
-  if (Visit(E->getTypeSourceInfo()->getTypeLoc()))
-    return true;
-
-  // Visit the components of the offsetof expression.
-  for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
-    typedef OffsetOfExpr::OffsetOfNode OffsetOfNode;
-    const OffsetOfNode &Node = E->getComponent(I);
-    switch (Node.getKind()) {
-    case OffsetOfNode::Array:
-      if (Visit(MakeCXCursor(E->getIndexExpr(Node.getArrayExprIndex()), 
-                             StmtParent, TU)))
-        return true;
-      break;
-        
-    case OffsetOfNode::Field:
-      if (Visit(MakeCursorMemberRef(Node.getField(), Node.getRange().getEnd(),
-                                    TU)))
-        return true;
-      break;
-        
-    case OffsetOfNode::Identifier:
-    case OffsetOfNode::Base:
-      continue;
-    }
-  }
-  
-  return false;
-}
-
-bool CursorVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
-  // Visit the designators.
-  typedef DesignatedInitExpr::Designator Designator;
-  for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
-                                             DEnd = E->designators_end();
-       D != DEnd; ++D) {
-    if (D->isFieldDesignator()) {
-      if (FieldDecl *Field = D->getField())
-        if (Visit(MakeCursorMemberRef(Field, D->getFieldLoc(), TU)))
-          return true;
-      
-      continue;
-    }
-
-    if (D->isArrayDesignator()) {
-      if (Visit(MakeCXCursor(E->getArrayIndex(*D), StmtParent, TU)))
-        return true;
-      
-      continue;
-    }
-
-    assert(D->isArrayRangeDesignator() && "Unknown designator kind");
-    if (Visit(MakeCXCursor(E->getArrayRangeStart(*D), StmtParent, TU)) ||
-        Visit(MakeCXCursor(E->getArrayRangeEnd(*D), StmtParent, TU)))
-      return true;
-  }
- 
-  // Visit the initializer value itself.
-  return Visit(MakeCXCursor(E->getInit(), StmtParent, TU));
-}
-
-bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
-  // Visit base expression.
-  if (Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
-    return true;
-  
-  // Visit the nested-name-specifier.
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
-      return true;
-  
-  // Visit the scope type that looks disturbingly like the nested-name-specifier
-  // but isn't.
-  if (TypeSourceInfo *TSInfo = E->getScopeTypeInfo())
-    if (Visit(TSInfo->getTypeLoc()))
-      return true;
-  
-  // Visit the name of the type being destroyed.
-  if (TypeSourceInfo *TSInfo = E->getDestroyedTypeInfo())
-    if (Visit(TSInfo->getTypeLoc()))
-      return true;
-  
-  return false;
 }
 
 bool CursorVisitor::VisitAttributes(Decl *D) {
@@ -1645,7 +1546,21 @@ public:
     }
   }
 };
-
+class MemberRefVisit : public VisitorJob {
+public:
+  MemberRefVisit(FieldDecl *D, SourceLocation L, CXCursor parent)
+    : VisitorJob(parent, VisitorJob::MemberRefVisitKind, D,
+                 (void*) L.getRawEncoding()) {}
+  static bool classof(const VisitorJob *VJ) {
+    return VJ->getKind() == VisitorJob::MemberRefVisitKind;
+  }
+  FieldDecl *get() const {
+    return static_cast<FieldDecl*>(data[0]);
+  }
+  SourceLocation getLoc() const {
+    return SourceLocation::getFromRawEncoding((unsigned)(uintptr_t) data[1]);
+  }
+};
 class EnqueueVisitor : public StmtVisitor<EnqueueVisitor, void> {
   VisitorWorkList &WL;
   CXCursor Parent;
@@ -1662,6 +1577,7 @@ public:
   void VisitCXXNewExpr(CXXNewExpr *E);
   void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+  void VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
   void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
   void VisitCXXTypeidExpr(CXXTypeidExpr *E);
   void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
@@ -1669,12 +1585,14 @@ public:
   void VisitDeclRefExpr(DeclRefExpr *D);
   void VisitDeclStmt(DeclStmt *S);
   void VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
+  void VisitDesignatedInitExpr(DesignatedInitExpr *E);
   void VisitExplicitCastExpr(ExplicitCastExpr *E);
   void VisitForStmt(ForStmt *FS);
   void VisitGotoStmt(GotoStmt *GS);
   void VisitIfStmt(IfStmt *If);
   void VisitInitListExpr(InitListExpr *IE);
   void VisitMemberExpr(MemberExpr *M);
+  void VisitOffsetOfExpr(OffsetOfExpr *E);
   void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   void VisitObjCMessageExpr(ObjCMessageExpr *M);
   void VisitOverloadExpr(OverloadExpr *E);
@@ -1691,6 +1609,7 @@ private:
   void AddDeclarationNameInfo(Stmt *S);
   void AddNestedNameSpecifier(NestedNameSpecifier *NS, SourceRange R);
   void AddExplicitTemplateArgs(const ExplicitTemplateArgumentList *A);
+  void AddMemberRef(FieldDecl *D, SourceLocation L);
   void AddStmt(Stmt *S);
   void AddDecl(Decl *D, bool isFirst = true);
   void AddTypeLoc(TypeSourceInfo *TI);
@@ -1721,6 +1640,10 @@ void EnqueueVisitor::
   if (A)
     WL.push_back(ExplicitTemplateArgsVisit(
                         const_cast<ExplicitTemplateArgumentList*>(A), Parent));
+}
+void EnqueueVisitor::AddMemberRef(FieldDecl *D, SourceLocation L) {
+  if (D)
+    WL.push_back(MemberRefVisit(D, L, Parent));
 }
 void EnqueueVisitor::AddTypeLoc(TypeSourceInfo *TI) {
   if (TI)
@@ -1782,6 +1705,18 @@ void EnqueueVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
   AddStmt(CE->getCallee());
   AddStmt(CE->getArg(0));
 }
+void EnqueueVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
+  // Visit the name of the type being destroyed.
+  AddTypeLoc(E->getDestroyedTypeInfo());
+  // Visit the scope type that looks disturbingly like the nested-name-specifier
+  // but isn't.
+  AddTypeLoc(E->getScopeTypeInfo());
+  // Visit the nested-name-specifier.
+  if (NestedNameSpecifier *Qualifier = E->getQualifier())
+    AddNestedNameSpecifier(Qualifier, E->getQualifierRange());
+  // Visit base expression.
+  AddStmt(E->getBase());
+}
 void EnqueueVisitor::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
   AddTypeLoc(E->getTypeSourceInfo());
 }
@@ -1832,6 +1767,26 @@ void EnqueueVisitor::VisitDeclStmt(DeclStmt *S) {
   VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
   std::reverse(I, E);
 }
+void EnqueueVisitor::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
+  AddStmt(E->getInit());
+  typedef DesignatedInitExpr::Designator Designator;
+  for (DesignatedInitExpr::reverse_designators_iterator
+         D = E->designators_rbegin(), DEnd = E->designators_rend();
+         D != DEnd; ++D) {
+    if (D->isFieldDesignator()) {
+      if (FieldDecl *Field = D->getField())
+        AddMemberRef(Field, D->getFieldLoc());
+      continue;
+    }
+    if (D->isArrayDesignator()) {
+      AddStmt(E->getArrayIndex(*D));
+      continue;
+    }
+    assert(D->isArrayRangeDesignator() && "Unknown designator kind");
+    AddStmt(E->getArrayRangeEnd(*D));
+    AddStmt(E->getArrayRangeStart(*D));
+  }
+}
 void EnqueueVisitor::VisitExplicitCastExpr(ExplicitCastExpr *E) {
   EnqueueChildren(E);
   AddTypeLoc(E->getTypeInfoAsWritten());
@@ -1878,6 +1833,26 @@ void EnqueueVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
 void EnqueueVisitor::VisitObjCMessageExpr(ObjCMessageExpr *M) {
   EnqueueChildren(M);
   AddTypeLoc(M->getClassReceiverTypeInfo());
+}
+void EnqueueVisitor::VisitOffsetOfExpr(OffsetOfExpr *E) {
+  // Visit the components of the offsetof expression.
+  for (unsigned N = E->getNumComponents(), I = N; I > 0; --I) {
+    typedef OffsetOfExpr::OffsetOfNode OffsetOfNode;
+    const OffsetOfNode &Node = E->getComponent(I-1);
+    switch (Node.getKind()) {
+    case OffsetOfNode::Array:
+      AddStmt(E->getIndexExpr(Node.getArrayExprIndex()));
+      break;
+    case OffsetOfNode::Field:
+      AddMemberRef(Node.getField(), Node.getRange().getEnd());
+      break;
+    case OffsetOfNode::Identifier:
+    case OffsetOfNode::Base:
+      continue;
+    }
+  }
+  // Visit the type into which we're computing the offset.
+  AddTypeLoc(E->getTypeSourceInfo());
 }
 void EnqueueVisitor::VisitOverloadExpr(OverloadExpr *E) {
   AddExplicitTemplateArgs(E->getOptionalExplicitTemplateArgs());
@@ -1990,6 +1965,12 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           return true;
         continue;
       }
+      case VisitorJob::MemberRefVisitKind: {
+        MemberRefVisit *V = cast<MemberRefVisit>(&LI);
+        if (Visit(MakeCursorMemberRef(V->get(), V->getLoc(), TU)))
+          return true;
+        continue;
+      }
       case VisitorJob::StmtVisitKind: {
         Stmt *S = cast<StmtVisit>(&LI)->get();
         if (!S)
@@ -1997,28 +1978,13 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
 
         // Update the current cursor.
         CXCursor Cursor = MakeCXCursor(S, StmtParent, TU);
-        
-        switch (S->getStmtClass()) {
-          // Cases not yet handled by the data-recursion
-          // algorithm.
-          case Stmt::OffsetOfExprClass:
-          case Stmt::DesignatedInitExprClass:
-          case Stmt::CXXPseudoDestructorExprClass:
-            if (Visit(Cursor))
-              return true;
-            break;
-          default:
-            if (!IsInRegionOfInterest(Cursor))
-              continue;
-            switch (Visitor(Cursor, Parent, ClientData)) {
-              case CXChildVisit_Break:
-                return true;
-              case CXChildVisit_Continue:
-                break;
-              case CXChildVisit_Recurse:
-                EnqueueWorkList(WL, S);
-                break;
-            }
+        if (!IsInRegionOfInterest(Cursor))
+          continue;
+        switch (Visitor(Cursor, Parent, ClientData)) {
+          case CXChildVisit_Break: return true;
+          case CXChildVisit_Continue: break;
+          case CXChildVisit_Recurse:
+            EnqueueWorkList(WL, S);
             break;
         }
         continue;
@@ -2077,7 +2043,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
   return false;
 }
 
-bool CursorVisitor::VisitDataRecursive(Stmt *S) {
+bool CursorVisitor::Visit(Stmt *S) {
   VisitorWorkList *WL = 0;
   if (!WorkListFreeList.empty()) {
     WL = WorkListFreeList.back();
