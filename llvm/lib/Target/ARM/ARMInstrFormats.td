@@ -244,6 +244,14 @@ class PseudoInst<dag oops, dag iops, InstrItinClass itin,
   let Pattern = pattern;
 }
 
+// PseudoInst that's ARM-mode only.
+class ARMPseudoInst<dag oops, dag iops, InstrItinClass itin,
+                    string asm, list<dag> pattern>
+  : PseudoInst<oops, iops, itin, asm, pattern> {
+  list<Predicate> Predicates = [IsARM];
+}
+
+
 // Almost all ARM instructions are predicable.
 class I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
         IndexMode im, Format f, InstrItinClass itin,
@@ -519,25 +527,6 @@ class AI3ld<bits<4> op, dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{7-4}   = op;
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
 }
-class AXI3ld<bits<4> op, dag oops, dag iops, Format f, InstrItinClass itin,
-            string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, itin,
-      asm, "", pattern> {
-  bits<14> addr;
-  bits<4> Rt;
-  let Inst{27-25} = 0b000;
-  let Inst{24}    = 1;            // P bit
-  let Inst{23}    = addr{8};      // U bit
-  let Inst{22}    = addr{13};     // 1 == imm8, 0 == Rm
-  let Inst{21}    = 0;            // W bit
-  let Inst{20}    = 1;            // L bit
-  let Inst{19-16} = addr{12-9};   // Rn
-  let Inst{15-12} = Rt;           // Rt
-  let Inst{11-8}  = addr{7-4};    // imm7_4/zero
-  let Inst{7-4}   = op;
-  let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
-}
-
 // loads
 class AI3ldd<dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string asm, list<dag> pattern>

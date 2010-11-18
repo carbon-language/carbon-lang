@@ -1118,37 +1118,31 @@ def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
 }
 
 // Address computation and loads and stores in PIC mode.
-// FIXME: These PIC insn patterns are pseudos, but derive from the normal insn
-//        classes (AXI1, et.al.) and so have encoding information and such,
-//        which is suboptimal. Once the rest of the code emitter (including
-//        JIT) is MC-ized we should look at refactoring these into true
-//        pseudos. As is, the encoding information ends up being ignored,
-//        as these instructions are lowered to individual MC-insts.
 let isNotDuplicable = 1 in {
-def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
-                  Pseudo, IIC_iALUr, "",
-                   [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
+def PICADD : ARMPseudoInst<(outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
+                           IIC_iALUr, "",
+                           [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
 
 let AddedComplexity = 10 in {
-def PICLDR  : AXI2ldw<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-                  Pseudo, IIC_iLoad_r, "",
-                  [(set GPR:$dst, (load addrmodepc:$addr))]>;
+def PICLDR  : ARMPseudoInst<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+                            IIC_iLoad_r, "",
+                            [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
-def PICLDRH : AXI3ld<0b1011, (outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                  Pseudo, IIC_iLoad_bh_r, "",
-                  [(set GPR:$Rt, (zextloadi16 addrmodepc:$addr))]>;
+def PICLDRH : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
+                            IIC_iLoad_bh_r, "",
+                            [(set GPR:$Rt, (zextloadi16 addrmodepc:$addr))]>;
 
-def PICLDRB : AXI2ldb<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-            Pseudo, IIC_iLoad_bh_r, "",
-                  [(set GPR:$Rt, (zextloadi8 addrmodepc:$addr))]>;
+def PICLDRB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
+                            IIC_iLoad_bh_r, "",
+                            [(set GPR:$Rt, (zextloadi8 addrmodepc:$addr))]>;
 
-def PICLDRSH : AXI3ld<0b1111, (outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-           Pseudo, IIC_iLoad_bh_r, "",
-                  [(set GPR:$Rt, (sextloadi16 addrmodepc:$addr))]>;
+def PICLDRSH : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
+                            IIC_iLoad_bh_r, "",
+                            [(set GPR:$Rt, (sextloadi16 addrmodepc:$addr))]>;
 
-def PICLDRSB : AXI3ld<0b1101, (outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-           Pseudo, IIC_iLoad_bh_r, "",
-                  [(set GPR:$Rt, (sextloadi8 addrmodepc:$addr))]>;
+def PICLDRSB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
+                            IIC_iLoad_bh_r, "",
+                            [(set GPR:$Rt, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
 def PICSTR  : AXI2stw<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
