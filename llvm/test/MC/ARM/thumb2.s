@@ -63,8 +63,3 @@
   sbfx	r0, r0, #7, #11
 @ CHECK: ubfx	r0, r0, #7, #11         @ encoding: [0xca,0x10,0xc0,0xf3]
   ubfx	r0, r0, #7, #11
-
-@ CHECK: mla	r0, r0, r1, r2          @ encoding: [0x01,0x20,0x00,0xfb]
-  mla	r0, r0, r1, r2
-@ CHECK: mls	r0, r0, r1, r2          @ encoding: [0x11,0x20,0x00,0xfb]
-  mls	r0, r0, r1, r2
