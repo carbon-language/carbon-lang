@@ -1981,6 +1981,48 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
   return Builder.CreateAShr(Ops.LHS, RHS, "shr");
 }
 
+enum IntrinsicType { VCMPEQ, VCMPGT };
+// return corresponding comparison intrinsic for given vector type
+static llvm::Intrinsic::ID GetIntrinsic(IntrinsicType IT,
+                                        BuiltinType::Kind ElemKind) {
+  switch (ElemKind) {
+  default: assert(0 && "unexpected element type");
+  case BuiltinType::Char_U:
+  case BuiltinType::UChar:
+    return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequb_p :
+                            llvm::Intrinsic::ppc_altivec_vcmpgtub_p;
+    break;
+  case BuiltinType::Char_S:
+  case BuiltinType::SChar:
+    return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequb_p :
+                            llvm::Intrinsic::ppc_altivec_vcmpgtsb_p;
+    break;
+  case BuiltinType::UShort:
+    return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequh_p :
+                            llvm::Intrinsic::ppc_altivec_vcmpgtuh_p;
+    break;
+  case BuiltinType::Short:
+    return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequh_p :
+                            llvm::Intrinsic::ppc_altivec_vcmpgtsh_p;
+    break;
+  case BuiltinType::UInt:
+  case BuiltinType::ULong:
+    return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequw_p :
+                            llvm::Intrinsic::ppc_altivec_vcmpgtuw_p;
+    break;
+  case BuiltinType::Int:
+  case BuiltinType::Long:
+    return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequw_p :
+                            llvm::Intrinsic::ppc_altivec_vcmpgtsw_p;
+    break;
+  case BuiltinType::Float:
+    return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpeqfp_p :
+                            llvm::Intrinsic::ppc_altivec_vcmpgtfp_p;
+    break;
+  }
+  return llvm::Intrinsic::not_intrinsic;
+}
+
 Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
                                       unsigned SICmpOpc, unsigned FCmpOpc) {
   TestAndClearIgnoreResultAssign();
@@ -1996,6 +2038,72 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
   } else if (!LHSTy->isAnyComplexType()) {
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());
+
+    // If AltiVec, the comparison results in a numeric type, so we use
+    // intrinsics comparing vectors and giving 0 or 1 as a result
+    if (LHSTy->isVectorType() && CGF.getContext().getLangOptions().AltiVec) {
+      // constants for mapping CR6 register bits to predicate result
+      enum { CR6_EQ=0, CR6_EQ_REV, CR6_LT, CR6_LT_REV } CR6;
+
+      llvm::Intrinsic::ID ID = llvm::Intrinsic::not_intrinsic;
+
+      // in several cases vector arguments order will be reversed
+      Value *FirstVecArg = LHS,
+            *SecondVecArg = RHS;
+
+      QualType ElTy = LHSTy->getAs<VectorType>()->getElementType();
+      Type *Ty = CGF.getContext().getCanonicalType(ElTy).getTypePtr();
+      const BuiltinType *BTy = dyn_cast<BuiltinType>(Ty);
+      BuiltinType::Kind ElementKind = BTy->getKind();
+
+      switch(E->getOpcode()) {
+      default: assert(0 && "is not a comparison operation");
+      case BO_EQ:
+        CR6 = CR6_LT;
+        ID = GetIntrinsic(VCMPEQ, ElementKind);
+        break;
+      case BO_NE:
+        CR6 = CR6_EQ;
+        ID = GetIntrinsic(VCMPEQ, ElementKind);
+        break;
+      case BO_LT:
+        CR6 = CR6_LT;
+        ID = GetIntrinsic(VCMPGT, ElementKind);
+        std::swap(FirstVecArg, SecondVecArg);
+        break;
+      case BO_GT:
+        CR6 = CR6_LT;
+        ID = GetIntrinsic(VCMPGT, ElementKind);
+        break;
+      case BO_LE:
+        if (ElementKind == BuiltinType::Float) {
+          CR6 = CR6_LT;
+          ID = llvm::Intrinsic::ppc_altivec_vcmpgefp_p;
+          std::swap(FirstVecArg, SecondVecArg);
+        }
+        else {
+          CR6 = CR6_EQ;
+          ID = GetIntrinsic(VCMPGT, ElementKind);
+        }
+        break;
+      case BO_GE:
+        if (ElementKind == BuiltinType::Float) {
+          CR6 = CR6_LT;
+          ID = llvm::Intrinsic::ppc_altivec_vcmpgefp_p;
+        }
+        else {
+          CR6 = CR6_EQ;
+          ID = GetIntrinsic(VCMPGT, ElementKind);
+          std::swap(FirstVecArg, SecondVecArg);
+        }
+        break;
+      }
+
+      Value *CR6Param = llvm::ConstantInt::get(CGF.Int32Ty, CR6);
+      llvm::Function *F = CGF.CGM.getIntrinsic(ID);
+      Result = Builder.CreateCall3(F, CR6Param, FirstVecArg, SecondVecArg, "");
+      return EmitScalarConversion(Result, CGF.getContext().BoolTy, E->getType());
+    }
 
     if (LHS->getType()->isFPOrFPVectorTy()) {
       Result = Builder.CreateFCmp((llvm::CmpInst::Predicate)FCmpOpc,

@@ -127,27 +127,17 @@ vector int v4 = (vector int)(1, 2, 3, 4);
 vector float v5 = (vector float)(1.0f, 2.0f, 3.0f, 4.0f);
 vector char v6 = (vector char)((vector int)(1+2, -2, (int)(2.0 * 3), -(5-3)));
 
-#if 0 // Not ready yet.
 // bug 7553 - Problem with '==' and vectors
 void func() {
-  vector int v10i = (vector int)(1, 2, 3, 4);
-  vector int v11i = (vector int)(1, 2, 3, 4);
-  bool r10ieq = (v10i == v11i);
-  bool r10ine = (v10i != v11i);
-  bool r10igt = (v10i > v11i);
-  bool r10ige = (v10i >= v11i);
-  bool r10ilt = (v10i < v11i);
-  bool r10ile = (v10i <= v11i);
-  vector float v10f = (vector float)(1.0f, 2.0f, 3.0f, 4.0f);
-  vector float v11f = (vector float)(1.0f, 2.0f, 3.0f, 4.0f);
-  bool r10feq = (v10f == v11f);
-  bool r10fne = (v10f != v11f);
-  bool r10fgt = (v10f > v11f);
-  bool r10fge = (v10f >= v11f);
-  bool r10flt = (v10f < v11f);
-  bool r10fle = (v10f <= v11f);
+  bool res_b;
+  res_b = (vv_sc == vv_sc);
+  res_b = (vv_uc != vv_uc);
+  res_b = (vv_s > vv_s);
+  res_b = (vv_us >= vv_us);
+  res_b = (vv_i < vv_i);
+  res_b = (vv_ui <= vv_ui);
+  res_b = (vv_f <= vv_f);
 }
-#endif
 
 // vecreturn attribute test
 struct Vector

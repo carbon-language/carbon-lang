@@ -3052,3 +3052,64 @@ void test6() {
   /* vec_any_out */
   res_i = vec_any_out(vf, vf);                  // CHECK: @llvm.ppc.altivec.vcmpbfp.p
 }
+
+/* ------------------------------ Relational Operators------------------------------- */
+// CHECK: define void @test7
+void test7() {
+  vector signed char vsc1 = (vector signed char)(-1);
+  vector signed char vsc2 = (vector signed char)(-2);
+  res_i = (vsc1 == vsc2);                  // CHECK: @llvm.ppc.altivec.vcmpequb.p(i32 2
+  res_i = (vsc1 != vsc2);                  // CHECK: @llvm.ppc.altivec.vcmpequb.p(i32 0
+  res_i = (vsc1 <  vsc2);                  // CHECK: @llvm.ppc.altivec.vcmpgtsb.p(i32 2
+  res_i = (vsc1 >  vsc2);                  // CHECK: @llvm.ppc.altivec.vcmpgtsb.p(i32 2
+  res_i = (vsc1 <= vsc2);                  // CHECK: @llvm.ppc.altivec.vcmpgtsb.p(i32 0
+  res_i = (vsc1 >= vsc2);                  // CHECK: @llvm.ppc.altivec.vcmpgtsb.p(i32 0
+  vector unsigned char vuc1 = (vector unsigned char)(1);
+  vector unsigned char vuc2 = (vector unsigned char)(2);
+  res_i = (vuc1 == vuc2);                  // CHECK: @llvm.ppc.altivec.vcmpequb.p(i32 2
+  res_i = (vuc1 != vuc2);                  // CHECK: @llvm.ppc.altivec.vcmpequb.p(i32 0
+  res_i = (vuc1 <  vuc2);                  // CHECK: @llvm.ppc.altivec.vcmpgtub.p(i32 2
+  res_i = (vuc1 >  vuc2);                  // CHECK: @llvm.ppc.altivec.vcmpgtub.p(i32 2
+  res_i = (vuc1 <= vuc2);                  // CHECK: @llvm.ppc.altivec.vcmpgtub.p(i32 0
+  res_i = (vuc1 >= vuc2);                  // CHECK: @llvm.ppc.altivec.vcmpgtub.p(i32 0
+  vector short vs1 = (vector short)(-1);
+  vector short vs2 = (vector short)(-2);
+  res_i = (vs1 == vs2);                    // CHECK: @llvm.ppc.altivec.vcmpequh.p(i32 2
+  res_i = (vs1 != vs2);                    // CHECK: @llvm.ppc.altivec.vcmpequh.p(i32 0
+  res_i = (vs1 <  vs2);                    // CHECK: @llvm.ppc.altivec.vcmpgtsh.p(i32 2
+  res_i = (vs1 >  vs2);                    // CHECK: @llvm.ppc.altivec.vcmpgtsh.p(i32 2
+  res_i = (vs1 <= vs2);                    // CHECK: @llvm.ppc.altivec.vcmpgtsh.p(i32 0
+  res_i = (vs1 >= vs2);                    // CHECK: @llvm.ppc.altivec.vcmpgtsh.p(i32 0
+  vector unsigned short vus1 = (vector unsigned short)(1);
+  vector unsigned short vus2 = (vector unsigned short)(2);
+  res_i = (vus1 == vus2);                  // CHECK: @llvm.ppc.altivec.vcmpequh.p(i32 2
+  res_i = (vus1 != vus2);                  // CHECK: @llvm.ppc.altivec.vcmpequh.p(i32 0
+  res_i = (vus1 <  vus2);                  // CHECK: @llvm.ppc.altivec.vcmpgtuh.p(i32 2
+  res_i = (vus1 >  vus2);                  // CHECK: @llvm.ppc.altivec.vcmpgtuh.p(i32 2
+  res_i = (vus1 <= vus2);                  // CHECK: @llvm.ppc.altivec.vcmpgtuh.p(i32 0
+  res_i = (vus1 >= vus2);                  // CHECK: @llvm.ppc.altivec.vcmpgtuh.p(i32 0
+  vector int vi1 = (vector int)(-1);
+  vector int vi2 = (vector int)(-2);
+  res_i = (vi1 == vi2);                    // CHECK: @llvm.ppc.altivec.vcmpequw.p(i32 2
+  res_i = (vi1 != vi2);                    // CHECK: @llvm.ppc.altivec.vcmpequw.p(i32 0
+  res_i = (vi1 <  vi2);                    // CHECK: @llvm.ppc.altivec.vcmpgtsw.p(i32 2
+  res_i = (vi1 >  vi2);                    // CHECK: @llvm.ppc.altivec.vcmpgtsw.p(i32 2
+  res_i = (vi1 <= vi2);                    // CHECK: @llvm.ppc.altivec.vcmpgtsw.p(i32 0
+  res_i = (vi1 >= vi2);                    // CHECK: @llvm.ppc.altivec.vcmpgtsw.p(i32 0
+  vector unsigned int vui1 = (vector unsigned int)(1);
+  vector unsigned int vui2 = (vector unsigned int)(2);
+  res_i = (vui1 == vui2);                  // CHECK: @llvm.ppc.altivec.vcmpequw.p(i32 2
+  res_i = (vui1 != vui2);                  // CHECK: @llvm.ppc.altivec.vcmpequw.p(i32 0
+  res_i = (vui1 <  vui2);                  // CHECK: @llvm.ppc.altivec.vcmpgtuw.p(i32 2
+  res_i = (vui1 >  vui2);                  // CHECK: @llvm.ppc.altivec.vcmpgtuw.p(i32 2
+  res_i = (vui1 <= vui2);                  // CHECK: @llvm.ppc.altivec.vcmpgtuw.p(i32 0
+  res_i = (vui1 >= vui2);                  // CHECK: @llvm.ppc.altivec.vcmpgtuw.p(i32 0
+  vector float vf1 = (vector float)(1.0);
+  vector float vf2 = (vector float)(2.0);
+  res_i = (vf1 == vf2);                    // CHECK: @llvm.ppc.altivec.vcmpeqfp.p(i32 2
+  res_i = (vf1 != vf2);                    // CHECK: @llvm.ppc.altivec.vcmpeqfp.p(i32 0
+  res_i = (vf1 <  vf2);                    // CHECK: @llvm.ppc.altivec.vcmpgtfp.p(i32 2
+  res_i = (vf1 >  vf2);                    // CHECK: @llvm.ppc.altivec.vcmpgtfp.p(i32 2
+  res_i = (vf1 <= vf2);                    // CHECK: @llvm.ppc.altivec.vcmpgefp.p(i32 2
+  res_i = (vf1 >= vf2);                    // CHECK: @llvm.ppc.altivec.vcmpgefp.p(i32 2
+}

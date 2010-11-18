@@ -13,6 +13,6 @@ void test()
 
   f(vAltiVec);
   vGCC = vAltiVec;
-  vGCC = vGCC > vAltiVec;
+  bool res = vGCC > vAltiVec;
   vAltiVec = 0 ? vGCC : vGCC;
 }

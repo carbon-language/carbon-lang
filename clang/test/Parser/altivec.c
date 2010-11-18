@@ -100,6 +100,16 @@ void f() {
   __vector unsigned int tv = gccv;
   gccv = v;
   gccvector unsigned int tgv = v;
+
+  int res_i;
+  // bug 7553 - Problem with '==' and vectors
+  res_i = (vv_sc == vv_sc);
+  res_i = (vv_uc != vv_uc);
+  res_i = (vv_s > vv_s);
+  res_i = (vv_us >= vv_us);
+  res_i = (vv_i < vv_i);
+  res_i = (vv_ui <= vv_ui);
+  res_i = (vv_f <= vv_f);
 }
 
 // bug 6895 - Vectorl literal casting confusion.

@@ -6423,6 +6423,11 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
   if (vType.isNull())
     return vType;
 
+  // If AltiVec, the comparison results in a numeric type, i.e.
+  // bool for C++, int for C
+  if (getLangOptions().AltiVec)
+    return (getLangOptions().CPlusPlus ? Context.BoolTy : Context.IntTy);
+
   QualType lType = lex->getType();
   QualType rType = rex->getType();
 
