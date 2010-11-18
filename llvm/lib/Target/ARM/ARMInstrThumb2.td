@@ -2614,10 +2614,11 @@ defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
 let neverHasSideEffects = 1 in {
-def t2MOVCCr : T2I<(outs rGPR:$dst), (ins rGPR:$false, rGPR:$true), IIC_iCMOVr,
-                   "mov", ".w\t$dst, $true",
-   [/*(set rGPR:$dst, (ARMcmov rGPR:$false, rGPR:$true, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $dst"> {
+def t2MOVCCr : T2TwoReg<
+                   (outs rGPR:$Rd), (ins rGPR:$false, rGPR:$Rm), IIC_iCMOVr,
+                   "mov", ".w\t$Rd, $Rm",
+   [/*(set rGPR:$Rd, (ARMcmov rGPR:$false, rGPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
+                RegConstraint<"$false = $Rd"> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
@@ -2628,10 +2629,10 @@ def t2MOVCCr : T2I<(outs rGPR:$dst), (ins rGPR:$false, rGPR:$true), IIC_iCMOVr,
 }
 
 let isMoveImm = 1 in
-def t2MOVCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
-                   IIC_iCMOVi, "mov", ".w\t$dst, $true",
-[/*(set rGPR:$dst,(ARMcmov rGPR:$false,t2_so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
-                   RegConstraint<"$false = $dst"> {
+def t2MOVCCi : T2OneRegImm<(outs rGPR:$Rd), (ins rGPR:$false, t2_so_imm:$imm),
+                   IIC_iCMOVi, "mov", ".w\t$Rd, $imm",
+[/*(set rGPR:$Rd,(ARMcmov rGPR:$false,t2_so_imm:$imm, imm:$cc, CCR:$ccr))*/]>,
+                   RegConstraint<"$false = $Rd"> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b0010;
@@ -2667,11 +2668,11 @@ def t2MOVCCi32imm : PseudoInst<(outs rGPR:$dst),
                     IIC_iCMOVix2, []>, RegConstraint<"$false = $dst">;
 
 let isMoveImm = 1 in
-def t2MVNCCi : T2I<(outs rGPR:$dst), (ins rGPR:$false, t2_so_imm:$true),
-                   IIC_iCMOVi, "mvn", ".w\t$dst, $true",
-[/*(set rGPR:$dst,(ARMcmov rGPR:$false,t2_so_imm_not:$true,
+def t2MVNCCi : T2OneRegImm<(outs rGPR:$Rd), (ins rGPR:$false, t2_so_imm:$imm),
+                   IIC_iCMOVi, "mvn", ".w\t$Rd, $imm",
+[/*(set rGPR:$Rd,(ARMcmov rGPR:$false,t2_so_imm_not:$imm,
                    imm:$cc, CCR:$ccr))*/]>,
-                   RegConstraint<"$false = $dst"> {
+                   RegConstraint<"$false = $Rd"> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b0011;
