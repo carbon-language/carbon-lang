@@ -236,6 +236,9 @@ class InstThumb<AddrMode am, SizeFlagVal sz, IndexMode im,
 
 class PseudoInst<dag oops, dag iops, InstrItinClass itin,
                  string asm, list<dag> pattern>
+  // FIXME: This really should derive from InstTemplate instead, as pseudos
+  //        don't need encoding information. TableGen doesn't like that
+  //        currently. Need to figure out why and fix it.
   : InstARM<AddrModeNone, SizeSpecial, IndexModeNone, Pseudo, GenericDomain,
             "", itin> {
   let OutOperandList = oops;
