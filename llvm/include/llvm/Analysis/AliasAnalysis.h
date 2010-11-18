@@ -96,10 +96,10 @@ public:
   struct Location {
     /// Ptr - The address of the start of the location.
     const Value *Ptr;
-    /// Size - The maximum size of the location, or UnknownSize if the size is
-    /// not known.  Note that an unknown size does not mean the pointer aliases
-    /// the entire virtual address space, because there are restrictions on
-    /// stepping out of one object and into another.
+    /// Size - The maximum size of the location, in address-units, or
+    /// UnknownSize if the size is not known.  Note that an unknown size does
+    /// not mean the pointer aliases the entire virtual address space, because
+    /// there are restrictions on stepping out of one object and into another.
     /// See http://llvm.org/docs/LangRef.html#pointeraliasing
     uint64_t Size;
     /// TBAATag - The metadata node which describes the TBAA type of
