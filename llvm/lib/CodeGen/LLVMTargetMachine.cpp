@@ -345,8 +345,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Print the instruction selected machine code...
   printAndVerify(PM, "After Instruction Selection");
 
-  // Expand pseudo-instructions emitted by isel.
-  PM.add(createExpandPseudosPass());
+  // Expand pseudo-instructions emitted by ISel.
+  PM.add(createExpandISelPseudosPass());
 
   // Optimize PHIs before DCE: removing dead PHI cycles may make more
   // instructions dead.
