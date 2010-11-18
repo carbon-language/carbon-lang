@@ -500,11 +500,11 @@ def fvisibility_inlines_hidden : Flag<"-fvisibility-inlines-hidden">,
   HelpText<"Give inline C++ member functions default visibility by default">;
 def ftemplate_depth : Separate<"-ftemplate-depth">,
   HelpText<"Maximum depth of recursive template instantiation">;
-def Wargument_larger_than : Separate<"-Wargument-larger-than">,
+def Wlarge_by_value_copy : Separate<"-Wlarge-by-value-copy">,
   HelpText<"Warn if a function definition returns or accepts an object larger "
            "in bytes that a given value">;
-def Wargument_larger_than_EQ : Joined<"-Wargument-larger-than=">,
-  Alias<Wargument_larger_than>;
+def Wlarge_by_value_copy_EQ : Joined<"-Wlarge-by-value-copy=">,
+  Alias<Wlarge_by_value_copy>;
 def trigraphs : Flag<"-trigraphs">,
   HelpText<"Process trigraph sequences">;
 def fwritable_strings : Flag<"-fwritable-strings">,

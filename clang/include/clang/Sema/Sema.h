@@ -760,8 +760,9 @@ public:
   void DiagnoseUnusedParameters(ParmVarDecl * const *Begin,
                                 ParmVarDecl * const *End);
 
-  /// \brief Diagnose size of parameters and return value of a Function
-  /// or ObjCMethod.
+  /// \brief Diagnose whether the size of parameters or return value of a
+  /// function or obj-c method definition is pass-by-value and larger than a
+  /// specified threshold.
   void DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Begin,
                                               ParmVarDecl * const *End,
                                               QualType ReturnTy,

@@ -401,8 +401,8 @@ def ferror_limit_EQ : Joined<"-ferror-limit=">, Group<f_Group>;
 def ftemplate_depth_ : Joined<"-ftemplate-depth-">, Group<f_Group>;
 def ftemplate_backtrace_limit_EQ : Joined<"-ftemplate-backtrace-limit=">,
                                    Group<f_Group>;
-def Wargument_larger_than_def : Flag<"-Wargument-larger-than">;
-def Wargument_larger_than_EQ : Joined<"-Wargument-larger-than=">;
+def Wlarge_by_value_copy_def : Flag<"-Wlarge-by-value-copy">;
+def Wlarge_by_value_copy_EQ : Joined<"-Wlarge-by-value-copy=">;
 def fterminated_vtables : Flag<"-fterminated-vtables">, Group<f_Group>;
 def fthreadsafe_statics : Flag<"-fthreadsafe-statics">, Group<f_Group>;
 def ftime_report : Flag<"-ftime-report">, Group<f_Group>;

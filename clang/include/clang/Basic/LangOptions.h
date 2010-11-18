@@ -122,7 +122,7 @@ private:
 
 public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
-  unsigned ArgumentLargerThan;    // Warn if parameter/return value is larger
+  unsigned NumLargeByValueCopy;   // Warn if parameter/return value is larger
                                   // in bytes than this setting. 0 is no check.
 
   // Version of Microsoft Visual C/C++ we are pretending to be. This is
@@ -177,7 +177,7 @@ public:
 
     InstantiationDepth = 1024;
 
-    ArgumentLargerThan = 0;
+    NumLargeByValueCopy = 0;
 
     Optimize = 0;
     OptimizeSize = 0;

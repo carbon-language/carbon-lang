@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fsyntax-only -Wargument-larger-than=100 %s
+// RUN: %clang_cc1 -verify -fsyntax-only -Wlarge-by-value-copy=100 %s
 
 // rdar://8548050
 namespace rdar8548050 {
@@ -13,8 +13,8 @@ struct S101 {
 
 S100 f100(S100 s) { return s; }
 
-S101 f101(S101 s) { return s; } // expected-warning {{return value of 'f101' is 101 bytes}} \
-                                // expected-warning {{size of 's' is 101 bytes}}
+S101 f101(S101 s) { return s; } // expected-warning {{return value of 'f101' is a large (101 bytes) pass-by-value object}} \
+                                // expected-warning {{'s' is a large (101 bytes) pass-by-value argument}}
 
 typedef int Arr[200];
 void farr(Arr a) { }
@@ -32,7 +32,7 @@ struct TS {
 };
 
 template <unsigned size>
-void tf(TS<size> ts) {} // expected-warning {{size of 'ts' is 300 bytes}}
+void tf(TS<size> ts) {} // expected-warning {{ts' is a large (300 bytes) pass-by-value argument}}
 
 void g() {
     TS<300> ts;

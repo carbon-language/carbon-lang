@@ -1199,13 +1199,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_Wargument_larger_than_EQ,
-                               options::OPT_Wargument_larger_than_def)) {
-    CmdArgs.push_back("-Wargument-larger-than");
+  if (Arg *A = Args.getLastArg(options::OPT_Wlarge_by_value_copy_EQ,
+                               options::OPT_Wlarge_by_value_copy_def)) {
+    CmdArgs.push_back("-Wlarge-by-value-copy");
     if (A->getNumValues())
       CmdArgs.push_back(A->getValue(Args));
     else
-      CmdArgs.push_back("64"); // default value for -Wargument-larger-than
+      CmdArgs.push_back("64"); // default value for -Wlarge-by-value-copy.
   }
 
   if (Args.hasArg(options::OPT__relocatable_pch))

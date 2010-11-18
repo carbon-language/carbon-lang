@@ -4869,14 +4869,16 @@ void Sema::DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Param,
                                                   ParmVarDecl * const *ParamEnd,
                                                   QualType ReturnTy,
                                                   NamedDecl *D) {
-  if (LangOpts.ArgumentLargerThan == 0) // No check.
+  if (LangOpts.NumLargeByValueCopy == 0) // No check.
     return;
 
+  // Warn if the return value is pass-by-value and larger than the specified
+  // threshold.
   if (ReturnTy->isPODType() &&
       Diags.getDiagnosticLevel(diag::warn_return_value_size) !=
           Diagnostic::Ignored) {
     unsigned Size = Context.getTypeSizeInChars(ReturnTy).getQuantity();
-    if (Size > LangOpts.ArgumentLargerThan)
+    if (Size > LangOpts.NumLargeByValueCopy)
       Diag(D->getLocation(), diag::warn_return_value_size)
           << D->getDeclName() << Size;
   }
@@ -4884,12 +4886,14 @@ void Sema::DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Param,
   if (Diags.getDiagnosticLevel(diag::warn_parameter_size)==Diagnostic::Ignored)
     return;
 
+  // Warn if any parameter is pass-by-value and larger than the specified
+  // threshold.
   for (; Param != ParamEnd; ++Param) {
     QualType T = (*Param)->getType();
     if (!T->isPODType())
       continue;
     unsigned Size = Context.getTypeSizeInChars(T).getQuantity();
-    if (Size > LangOpts.ArgumentLargerThan)
+    if (Size > LangOpts.NumLargeByValueCopy)
       Diag((*Param)->getLocation(), diag::warn_parameter_size)
           << (*Param)->getDeclName() << Size;
   }
