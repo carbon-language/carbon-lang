@@ -44,7 +44,7 @@ namespace {
 
 char ExpandPseudos::ID = 0;
 INITIALIZE_PASS(ExpandPseudos, "expand-pseudos",
-                "Expand CodeGen Psueod-instructions", false, false)
+                "Expand CodeGen Pseudo-instructions", false, false)
 
 FunctionPass *llvm::createExpandPseudosPass() {
   return new ExpandPseudos();
