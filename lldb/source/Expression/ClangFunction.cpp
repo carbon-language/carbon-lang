@@ -590,7 +590,8 @@ ClangFunction::ExecuteFunction (
                         break;
                     }
 
-                    if (try_all_threads)
+                    if (try_all_threads 
+                        && (stop_state == lldb::eStateStopped && Process::ProcessEventData::GetInterruptedFromEvent (event_sp.get())))
                     {
                         
                         call_plan_ptr->SetStopOthers (false);

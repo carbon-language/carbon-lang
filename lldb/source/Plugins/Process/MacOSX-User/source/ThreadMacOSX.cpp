@@ -55,6 +55,7 @@ ThreadMacOSX::ThreadMacOSX (ProcessMacOSX &process, lldb::tid_t tid) :
 
 ThreadMacOSX::~ThreadMacOSX ()
 {
+    DestroyThread();
 }
 
 #if defined (__i386__) || defined (__x86_64__)

@@ -36,7 +36,14 @@ ThreadPlanBase::ThreadPlanBase (Thread &thread) :
     ThreadPlan(ThreadPlan::eKindBase, "base plan", thread, eVoteYes, eVoteNoOpinion)
 {
     // Set the tracer to a default tracer.
+    // FIXME: need to add a thread settings variable to pix various tracers...
+#define THREAD_PLAN_USE_ASSEMBLY_TRACER 1
+
+#ifdef THREAD_PLAN_USE_ASSEMBLY_TRACER
+    ThreadPlanTracerSP new_tracer_sp (new ThreadPlanAssemblyTracer (m_thread));
+#else
     ThreadPlanTracerSP new_tracer_sp (new ThreadPlanTracer (m_thread));
+#endif
     new_tracer_sp->EnableTracing (m_thread.GetTraceEnabledState());
     SetThreadPlanTracer(new_tracer_sp);
 }

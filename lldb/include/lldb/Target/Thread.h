@@ -616,7 +616,7 @@ public:
     // type than the actual system thread ID.
     uint32_t
     GetIndexID () const;
-
+    
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
@@ -642,6 +642,10 @@ protected:
 
     friend class ThreadPlan;
     friend class StackFrameList;
+    
+    // This is necessary to make sure thread assets get destroyed while the thread is still in good shape
+    // to call virtual thread methods.  This must be called by classes that derive from Thread in their destructor.
+    virtual void DestroyThread ();
 
     void
     PushPlan (lldb::ThreadPlanSP &plan_sp);
@@ -688,6 +692,7 @@ protected:
     int                 m_resume_signal;    ///< The signal that should be used when continuing this thread.
     lldb::StateType     m_resume_state;     ///< The state that indicates what this thread should do when the process is resumed.
     std::auto_ptr<lldb_private::Unwind> m_unwinder_ap;
+    bool                m_destroy_called;    // This is used internally to make sure derived Thread classes call DestroyThread.
 private:
     //------------------------------------------------------------------
     // For Thread only

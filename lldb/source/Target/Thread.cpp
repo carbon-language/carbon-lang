@@ -54,7 +54,8 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_curr_frames_ap (),
     m_resume_signal (LLDB_INVALID_SIGNAL_NUMBER),
     m_resume_state (eStateRunning),
-    m_unwinder_ap ()
+    m_unwinder_ap (),
+    m_destroy_called (false)
 
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
@@ -71,6 +72,17 @@ Thread::~Thread()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Thread::~Thread(tid = 0x%4.4x)", this, GetID());
+    /// If you hit this assert, it means your derived class forgot to call DoDestroy in its destructor.
+    assert (m_destroy_called);
+}
+
+void 
+Thread::DestroyThread ()
+{
+    m_plan_stack.clear();
+    m_discarded_plan_stack.clear();
+    m_completed_plan_stack.clear();
+    m_destroy_called = true;
 }
 
 int
@@ -625,7 +637,6 @@ Thread::DiscardThreadPlans(bool force)
         }
 
     }
-    // FIXME: What should we do about the immediate plans?
 }
 
 ThreadPlan *
