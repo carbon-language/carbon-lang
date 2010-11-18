@@ -2219,7 +2219,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     Args.push_back("-detailed-preprocessing-record");
   }
   
-  unsigned NumErrors = Diags->getNumErrors();
+  unsigned NumErrors = Diags->getClient()->getNumErrors();
   llvm::OwningPtr<ASTUnit> Unit(
     ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
                                  Diags,
@@ -2234,7 +2234,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  CXXPrecompilePreamble,
                                  CXXChainedPCH));
 
-  if (NumErrors != Diags->getNumErrors()) {
+  if (NumErrors != Diags->getClient()->getNumErrors()) {
     // Make sure to check that 'Unit' is non-NULL.
     if (CXXIdx->getDisplayDiagnostics() && Unit.get()) {
       for (ASTUnit::stored_diag_iterator D = Unit->stored_diag_begin(), 
