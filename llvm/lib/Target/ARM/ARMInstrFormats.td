@@ -1214,19 +1214,6 @@ class T2Iidxldst<bit signed, bits<2> opcod, bit load, bit pre,
   let Inst{8}     = 1; // The W bit.
 }
 
-// Helper class for disassembly only
-// A6.3.16 & A6.3.17
-// T2Imac - Thumb2 multiply [accumulate, and absolute difference] instructions.
-class T2I_mac<bit long, bits<3> op22_20, bits<4> op7_4, dag oops, dag iops,
-             InstrItinClass itin, string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> {
-  let Inst{31-27} = 0b11111;
-  let Inst{26-24} = 0b011;
-  let Inst{23}    = long;
-  let Inst{22-20} = op22_20;
-  let Inst{7-4}   = op7_4;
-}
-
 // Tv5Pat - Same as Pat<>, but requires V5T Thumb mode.
 class Tv5Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb, IsThumb1Only, HasV5T];

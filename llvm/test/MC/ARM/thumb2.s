@@ -68,3 +68,6 @@
   mla	r0, r0, r1, r2
 @ CHECK: mls	r0, r0, r1, r2          @ encoding: [0x11,0x20,0x00,0xfb]
   mls	r0, r0, r1, r2
+
+@ CHECK: smlabt	r0, r1, r2, r0          @ encoding: [0xc1,0x02,0x00,0xe1]
+  smlabt	r0, r1, r2, r0
