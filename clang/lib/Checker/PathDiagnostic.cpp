@@ -84,6 +84,8 @@ PathDiagnostic::PathDiagnostic(llvm::StringRef bugtype, llvm::StringRef desc,
 
 void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                             const DiagnosticInfo &Info) {
+  // Default implementation (Warnings/errors count).
+  DiagnosticClient::HandleDiagnostic(DiagLevel, Info);
 
   // Create a PathDiagnostic with a single piece.
 

@@ -20,6 +20,9 @@ using namespace clang;
 ///
 void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
                                             const DiagnosticInfo &Info) {
+  // Default implementation (Warnings/errors count).
+  DiagnosticClient::HandleDiagnostic(Level, Info);
+
   llvm::SmallString<100> Buf;
   Info.FormatDiagnostic(Buf);
   switch (Level) {

@@ -69,15 +69,6 @@ void ASTMergeAction::ExecuteAction() {
       Importer.Import(*D);
     }
 
-    // Aggregate the number of warnings/errors from all diagnostics so
-    // that at CompilerInstance::ExecuteAction we can report the total numbers.
-    // FIXME: This is hacky, maybe keep track of total number of warnings/errors
-    // in DiagnosticClient and have CompilerInstance query that ?
-    CI.getDiagnostics().setNumWarnings(CI.getDiagnostics().getNumWarnings() +
-                                       Diags->getNumWarnings());
-    CI.getDiagnostics().setNumErrors(CI.getDiagnostics().getNumErrors() +
-                                     Diags->getNumErrors());
-
     delete Unit;
   }
 

@@ -894,7 +894,15 @@ public:
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
 class DiagnosticClient {
+  unsigned NumWarnings;       // Number of warnings reported
+  unsigned NumErrors;         // Number of errors reported
+  
 public:
+  DiagnosticClient() : NumWarnings(0), NumErrors(0) { }
+
+  unsigned getNumErrors() const { return NumErrors; }
+  unsigned getNumWarnings() const { return NumWarnings; }
+
   virtual ~DiagnosticClient();
 
   /// BeginSourceFile - Callback to inform the diagnostic client that processing
@@ -924,8 +932,11 @@ public:
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
+  ///
+  /// Default implementation just keeps track of the total number of warnings
+  /// and errors.
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                const DiagnosticInfo &Info) = 0;
+                                const DiagnosticInfo &Info);
 };
 
 }  // end namespace clang

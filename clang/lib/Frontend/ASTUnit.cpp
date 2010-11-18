@@ -440,6 +440,9 @@ public:
 
 void StoredDiagnosticClient::HandleDiagnostic(Diagnostic::Level Level,
                                               const DiagnosticInfo &Info) {
+  // Default implementation (Warnings/errors count).
+  DiagnosticClient::HandleDiagnostic(Level, Info);
+
   StoredDiags.push_back(StoredDiagnostic(Level, Info));
 }
 

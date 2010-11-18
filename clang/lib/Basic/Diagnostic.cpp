@@ -145,6 +145,16 @@ bool DiagnosticBuilder::Emit() {
 
 DiagnosticClient::~DiagnosticClient() {}
 
+void DiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                        const DiagnosticInfo &Info) {
+  if (!IncludeInDiagnosticCounts())
+    return;
+
+  if (DiagLevel == Diagnostic::Warning)
+    ++NumWarnings;
+  else if (DiagLevel >= Diagnostic::Error)
+    ++NumErrors;
+}
 
 /// ModifierIs - Return true if the specified modifier matches specified string.
 template <std::size_t StrLen>

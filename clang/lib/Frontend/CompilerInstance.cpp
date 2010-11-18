@@ -553,9 +553,10 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   }
 
   if (getDiagnosticOpts().ShowCarets) {
-    unsigned NumWarnings = getDiagnostics().getNumWarnings();
-    unsigned NumErrors = getDiagnostics().getNumErrors() - 
-                               getDiagnostics().getNumErrorsSuppressed();
+    // We can have multiple diagnostics sharing one diagnostic client.
+    // Get the total number of warnings/errors from the client.
+    unsigned NumWarnings = getDiagnostics().getClient()->getNumWarnings();
+    unsigned NumErrors = getDiagnostics().getClient()->getNumErrors();
     
     if (NumWarnings)
       OS << NumWarnings << " warning" << (NumWarnings == 1 ? "" : "s");
