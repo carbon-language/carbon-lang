@@ -43,9 +43,7 @@ namespace {
 } // end anonymous namespace
 
 char ExpandPseudos::ID = 0;
-INITIALIZE_PASS_BEGIN(ExpandPseudos, "expand-pseudos",
-                "Expand CodeGen Psueod-instructions", false, false)
-INITIALIZE_PASS_END(ExpandPseudos, "expand-pseudos",
+INITIALIZE_PASS(ExpandPseudos, "expand-pseudos",
                 "Expand CodeGen Psueod-instructions", false, false)
 
 FunctionPass *llvm::createExpandPseudosPass() {
