@@ -1789,10 +1789,11 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
     User *U = cast<Instruction>(*UI);
 
-    if (LoadInst *LI = dyn_cast<LoadInst>(U))
+    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // Ignore non-volatile loads, they are always ok.
-      if (!LI->isVolatile())
-        continue;
+      if (LI->isVolatile()) return false;
+      continue;
+    }
     
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
       // If uses of the bitcast are ok, we are ok.
@@ -1814,6 +1815,13 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
     MemTransferInst *MI = dyn_cast<MemTransferInst>(U);
     if (MI == 0)
       return false;
+    
+    // If the transfer is using the alloca as a source of the transfer, then
+    // it (unless the transfer is volatile).
+    if (UI.getOperandNo() == 1) {
+      if (MI->isVolatile()) return false;
+      continue;
+    }
 
     // If we already have seen a copy, reject the second one.
     if (TheCopy) return false;

@@ -39,3 +39,32 @@ entry:
 }
 
 declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
+
+
+
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+
+%T = type { i8, [123 x i8] }
+
+@G = constant %T {i8 1, [123 x i8] zeroinitializer }
+
+define void @test2() {
+  %A = alloca %T
+  %B = alloca %T
+  %a = bitcast %T* %A to i8*
+  %b = bitcast %T* %B to i8*
+
+; CHECK: @test2
+
+; %A alloca is deleted
+; CHECK-NEXT: %B = alloca %T
+
+; use @G instead of %A
+; CHECK-NEXT: %a = bitcast %T* @G to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %b, i8* %a, i64 124, i32 4, i1 false)
+  call void @bar(i8* %b)
+  ret void
+}
+
+declare void @bar(i8*)
