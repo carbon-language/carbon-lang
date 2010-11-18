@@ -15,6 +15,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -66,9 +67,10 @@ static bool VerifySubExpr(Value *Expr,
   // If it isn't in the InstInputs list it is a subexpr incorporated into the
   // address.  Sanity check that it is phi translatable.
   if (!CanPHITrans(I)) {
-    errs() << "Non phi translatable instruction found in PHITransAddr, either "
-              "something is missing from InstInputs or CanPHITrans is wrong:\n";
+    errs() << "Non phi translatable instruction found in PHITransAddr:\n";
     errs() << *I << '\n';
+    llvm_unreachable("Either something is missing from InstInputs or "
+                     "CanPHITrans is wrong.");
     return false;
   }
   
@@ -92,9 +94,10 @@ bool PHITransAddr::Verify() const {
     return false;
   
   if (!Tmp.empty()) {
-    errs() << "PHITransAddr inconsistent, contains extra instructions:\n";
+    errs() << "PHITransAddr contains extra instructions:\n";
     for (unsigned i = 0, e = InstInputs.size(); i != e; ++i)
       errs() << "  InstInput #" << i << " is " << *InstInputs[i] << "\n";
+    llvm_unreachable("This is unexpected.");
     return false;
   }
   
