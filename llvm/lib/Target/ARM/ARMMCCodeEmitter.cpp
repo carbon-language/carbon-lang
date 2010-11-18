@@ -70,6 +70,10 @@ public:
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
                              SmallVectorImpl<MCFixup> &Fixups) const;
 
+  /// getMovtImmOpValue - Return the encoding for the movw/movt pair
+  uint32_t getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
+
   bool EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx,
                               unsigned &Reg, unsigned &Imm,
                               SmallVectorImpl<MCFixup> &Fixups) const;
@@ -393,6 +397,33 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
     Binary |= (1 << 12);
   Binary |= (Reg << 13);
   return Binary;
+}
+
+uint32_t ARMMCCodeEmitter::
+getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
+                  SmallVectorImpl<MCFixup> &Fixups) const {
+  // {20-16} = imm{15-12}
+  // {11-0}  = imm{11-0}
+  const MCOperand &MO = MI.getOperand(OpIdx); 
+  if (MO.isImm()) {
+    return static_cast<unsigned>(MO.getImm());
+  } else if (const MCSymbolRefExpr *Expr = 
+             dyn_cast<MCSymbolRefExpr>(MO.getExpr())) {
+    MCFixupKind Kind;
+    switch (Expr->getKind()) {
+    case MCSymbolRefExpr::VK_ARM_HI16:
+      Kind = MCFixupKind(ARM::fixup_arm_movt_hi16);
+      break;
+    case MCSymbolRefExpr::VK_ARM_LO16:
+      Kind = MCFixupKind(ARM::fixup_arm_movw_lo16);
+      break;
+    default: assert(0 && "Unsupported ARMFixup"); break;
+    }
+    Fixups.push_back(MCFixup::Create(0, Expr, Kind));
+    return 0;
+  };
+  llvm_unreachable(0 && "Unsupported MCExpr type in MCOperand");
+  return 0;
 }
 
 uint32_t ARMMCCodeEmitter::

@@ -27,13 +27,27 @@ using namespace llvm;
 ARMELFWriterInfo::ARMELFWriterInfo(TargetMachine &TM)
   : TargetELFWriterInfo(TM.getTargetData()->getPointerSizeInBits() == 64,
                         TM.getTargetData()->isLittleEndian()) {
-  // silently OK construction
 }
 
 ARMELFWriterInfo::~ARMELFWriterInfo() {}
 
 unsigned ARMELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
-  assert(0 && "ARMELFWriterInfo::getRelocationType() not implemented");
+  switch (MachineRelTy) {
+  case ARM::reloc_arm_absolute:
+  case ARM::reloc_arm_relative:
+  case ARM::reloc_arm_cp_entry:
+  case ARM::reloc_arm_vfp_cp_entry:
+  case ARM::reloc_arm_machine_cp_entry:
+  case ARM::reloc_arm_jt_base:
+  case ARM::reloc_arm_pic_jt:
+    assert(0 && "unsupported ARM relocation type"); break;
+    
+  case ARM::reloc_arm_branch: return R_ARM_CALL; break;
+  case ARM::reloc_arm_movt:   return R_ARM_MOVT_ABS; break;
+  case ARM::reloc_arm_movw:   return R_ARM_MOVW_ABS_NC; break;
+  default:
+    llvm_unreachable("unknown ARM relocation type"); break;
+  }
   return 0;
 }
 

@@ -214,6 +214,11 @@ namespace {
       Binary |= (Reg << 13);
       return Binary;
     }
+
+    unsigned getMovtImmOpValue(const MachineInstr &MI, unsigned Op) const {
+      return 0;
+    }
+
     uint32_t getAddrMode2OpValue(const MachineInstr &MI, unsigned OpIdx)
       const { return 0;}
     uint32_t getAddrMode2OffsetOpValue(const MachineInstr &MI, unsigned OpIdx)

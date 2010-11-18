@@ -25,6 +25,12 @@ enum Fixups {
   // instructions.
   fixup_arm_branch,
 
+  // The next two are for the movt/movw pair
+  // the 16bit imm field are split into imm{15-12} and imm{11-0}
+  // Fixme: We need new ones for Thumb.
+  fixup_arm_movt_hi16, // :upper16:
+  fixup_arm_movw_lo16, // :lower16:
+
   // Marker
   LastTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
