@@ -9,11 +9,11 @@
 
 // <complex>
 
-// template<class T>    complex<T>  proj(const complex<T>&);
-//                      long double proj(long double);
-//                      double      proj(double);
-// template<Integral T> double      proj(T);
-//                      float       proj(float);
+// template<class T>    complex<T>           proj(const complex<T>&);
+//                      complex<long double> proj(long double);
+//                      complex<double>      proj(double);
+// template<Integral T> complex<double>      proj(T);
+//                      complex<float>       proj(float);
 
 #include <complex>
 #include <type_traits>
@@ -25,7 +25,7 @@ template <class T>
 void
 test(T x, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
 {
-    static_assert((std::is_same<decltype(std::proj(x)), double>::value), "");
+    static_assert((std::is_same<decltype(std::proj(x)), std::complex<double> >::value), "");
     assert(std::proj(x) == proj(std::complex<double>(x, 0)));
 }
 
@@ -33,7 +33,7 @@ template <class T>
 void
 test(T x, typename std::enable_if<std::is_floating_point<T>::value>::type* = 0)
 {
-    static_assert((std::is_same<decltype(std::proj(x)), T>::value), "");
+    static_assert((std::is_same<decltype(std::proj(x)), std::complex<T> >::value), "");
     assert(std::proj(x) == proj(std::complex<T>(x, 0)));
 }
 

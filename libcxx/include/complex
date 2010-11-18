@@ -191,17 +191,17 @@ template<class T>              T norm(const complex<T>&);
 template<Integral T>      double norm(T);
                           float  norm(float);
 
-template<class T>      complex<T>  conj(const complex<T>&);
-                       long double conj(long double);
-                       double      conj(double);
-template<Integral T>   double      conj(T);
-                       float       conj(float);
+template<class T>      complex<T>           conj(const complex<T>&);
+                       complex<long double> conj(long double);
+                       complex<double>      conj(double);
+template<Integral T>   complex<double>      conj(T);
+                       complex<float>       conj(float);
 
-template<class T>    complex<T>  proj(const complex<T>&);
-                     long double proj(long double);
-                     double      proj(double);
-template<Integral T> double      proj(T);
-                     float       proj(float);
+template<class T>    complex<T>           proj(const complex<T>&);
+                     complex<long double> proj(long double);
+                     complex<double>      proj(double);
+template<Integral T> complex<double>      proj(T);
+                     complex<float>       proj(float);
 
 template<class T> complex<T> polar(const T&, const T& = 0);
 
@@ -980,17 +980,17 @@ conj(const complex<_Tp>& __c)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-long double
+complex<long double>
 conj(long double __re)
 {
-    return __re;
+    return complex<long double>(__re);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-double
+complex<double>
 conj(double __re)
 {
-    return __re;
+    return complex<double>(__re);
 }
 
 template<class _Tp>
@@ -998,18 +998,18 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_integral<_Tp>::value,
-    double
+    complex<double>
 >::type
 conj(_Tp __re)
 {
-    return __re;
+    return complex<double>(__re);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-float
+complex<float>
 conj(float __re)
 {
-    return __re;
+    return complex<float>(__re);
 }
 
 // proj
@@ -1026,21 +1026,21 @@ proj(const complex<_Tp>& __c)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-long double
+complex<long double>
 proj(long double __re)
 {
     if (isinf(__re))
         __re = abs(__re);
-    return __re;
+    return complex<long double>(__re);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-double
+complex<double>
 proj(double __re)
 {
     if (isinf(__re))
         __re = abs(__re);
-    return __re;
+    return complex<double>(__re);
 }
 
 template<class _Tp>
@@ -1048,20 +1048,20 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_integral<_Tp>::value,
-    double
+    complex<double>
 >::type
 proj(_Tp __re)
 {
-    return __re;
+    return complex<double>(__re);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-float
+complex<float>
 proj(float __re)
 {
     if (isinf(__re))
         __re = abs(__re);
-    return __re;
+    return complex<float>(__re);
 }
 
 // polar

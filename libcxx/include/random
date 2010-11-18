@@ -1498,7 +1498,7 @@ class piecewise_constant_distribution
                        UnaryOperation fw);
 
         vector<result_type> intervals() const;
-        vector<double> densities() const;
+        vector<result_type> densities() const;
 
         friend bool operator==(const param_type& x, const param_type& y);
         friend bool operator!=(const param_type& x, const param_type& y);
@@ -1525,7 +1525,7 @@ class piecewise_constant_distribution
 
     // property functions
     vector<result_type> intervals() const;
-    vector<double> densities() const;
+    vector<result_type> densities() const;
 
     param_type param() const;
     void param(const param_type& parm);
@@ -1573,7 +1573,7 @@ class piecewise_linear_distribution
                        UnaryOperation fw);
 
         vector<result_type> intervals() const;
-        vector<double> densities() const;
+        vector<result_type> densities() const;
 
         friend bool operator==(const param_type& x, const param_type& y);
         friend bool operator!=(const param_type& x, const param_type& y);
@@ -1603,7 +1603,7 @@ class piecewise_linear_distribution
 
     // property functions
     vector<result_type> intervals() const;
-    vector<double> densities() const;
+    vector<result_type> densities() const;
 
     param_type param() const;
     void param(const param_type& parm);
