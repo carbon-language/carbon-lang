@@ -752,7 +752,14 @@ multiclass AI_exta_rrot<bits<8> opcod, string opc, PatFrag opnode> {
                   IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm",
                   [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>,
                Requires<[IsARM, HasV6]> {
+    bits<4> Rd;
+    bits<4> Rm;
+    bits<4> Rn;
+    let Inst{19-16} = Rn;
+    let Inst{15-12} = Rd;
     let Inst{11-10} = 0b00;
+    let Inst{9-4}   = 0b000111;
+    let Inst{3-0}   = Rm;
   }
   def rr_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
                                              rot_imm:$rot),
@@ -760,10 +767,15 @@ multiclass AI_exta_rrot<bits<8> opcod, string opc, PatFrag opnode> {
                   [(set GPR:$Rd, (opnode GPR:$Rn,
                                           (rotr GPR:$Rm, rot_imm:$rot)))]>,
                   Requires<[IsARM, HasV6]> {
+    bits<4> Rd;
+    bits<4> Rm;
     bits<4> Rn;
     bits<2> rot;
     let Inst{19-16} = Rn;
+    let Inst{15-12} = Rd;
     let Inst{11-10} = rot;
+    let Inst{9-4}   = 0b000111;
+    let Inst{3-0}   = Rm;
   }
 }
 
