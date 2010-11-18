@@ -362,9 +362,7 @@ IRForTarget::rewriteObjCConstString(llvm::Module &M,
                                              CFSCWB_arguments.end(),
                                              "CFStringCreateWithBytes",
                                              FirstEntryInstruction);
-    
-    Constant *initializer = NSStr->getInitializer();
-        
+            
     if (!UnfoldConstant(NSStr, CFSCWB_call, FirstEntryInstruction))
     {
         if (log)
@@ -1089,11 +1087,13 @@ bool
 IRForTarget::resolveExternals(Module &M,
                               Function &F)
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
     for (Module::global_iterator global = M.global_begin(), end = M.global_end();
          global != end;
          ++global)
     {
-        if ((*global).hasExternalLinkage() &&
+        if (DeclForGlobalValue(M, global) &&
             !MaybeHandleVariable (M, global))
             return false;
     }
