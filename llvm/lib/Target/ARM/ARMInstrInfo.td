@@ -1134,21 +1134,21 @@ def PICLDR  : AXI2ldw<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, IIC_iLoad_r, "",
                   [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
-def PICLDRH : AXI3ldh<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDRH : AXI3ld<0b1011, (outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
+                  Pseudo, IIC_iLoad_bh_r, "",
+                  [(set GPR:$Rt, (zextloadi16 addrmodepc:$addr))]>;
+
+def PICLDRB : AXI2ldb<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
             Pseudo, IIC_iLoad_bh_r, "",
-                  [(set GPR:$dst, (zextloadi16 addrmodepc:$addr))]>;
+                  [(set GPR:$Rt, (zextloadi8 addrmodepc:$addr))]>;
 
-def PICLDRB : AXI2ldb<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-            Pseudo, IIC_iLoad_bh_r, "",
-                  [(set GPR:$dst, (zextloadi8 addrmodepc:$addr))]>;
-
-def PICLDRSH : AXI3ldsh<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDRSH : AXI3ld<0b1111, (outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
            Pseudo, IIC_iLoad_bh_r, "",
-                  [(set GPR:$dst, (sextloadi16 addrmodepc:$addr))]>;
+                  [(set GPR:$Rt, (sextloadi16 addrmodepc:$addr))]>;
 
-def PICLDRSB : AXI3ldsb<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDRSB : AXI3ld<0b1101, (outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
            Pseudo, IIC_iLoad_bh_r, "",
-                  [(set GPR:$dst, (sextloadi8 addrmodepc:$addr))]>;
+                  [(set GPR:$Rt, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
 def PICSTR  : AXI2stw<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
@@ -1549,16 +1549,16 @@ def LDRcp : AIldst1<0b010, 1, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
 }
 
 // Loads with zero extension
-def LDRH  : AI3ldh<(outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+def LDRH  : AI3ld<0b1011, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                   IIC_iLoad_bh_r, "ldrh", "\t$Rt, $addr",
                   [(set GPR:$Rt, (zextloadi16 addrmode3:$addr))]>;
 
 // Loads with sign extension
-def LDRSH : AI3ldsh<(outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+def LDRSH : AI3ld<0b1111, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                    IIC_iLoad_bh_r, "ldrsh", "\t$Rt, $addr",
                    [(set GPR:$Rt, (sextloadi16 addrmode3:$addr))]>;
 
-def LDRSB : AI3ldsb<(outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+def LDRSB : AI3ld<0b1101, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                    IIC_iLoad_bh_r, "ldrsb", "\t$Rt, $addr",
                    [(set GPR:$Rt, (sextloadi8 addrmode3:$addr))]>;
 
