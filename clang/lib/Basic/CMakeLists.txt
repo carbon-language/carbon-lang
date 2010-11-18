@@ -4,6 +4,7 @@ add_clang_library(clangBasic
   Builtins.cpp
   ConvertUTF.c
   Diagnostic.cpp
+  DiagnosticIDs.cpp
   FileManager.cpp
   IdentifierTable.cpp
   SourceLocation.cpp
