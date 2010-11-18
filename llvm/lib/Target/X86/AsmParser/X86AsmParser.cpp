@@ -744,8 +744,9 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     }
 
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      SMLoc Loc = getLexer().getLoc();
       Parser.EatToEndOfStatement();
-      return TokError("unexpected token in argument list");
+      return Error(Loc, "unexpected token in argument list");
     }
   }
 
