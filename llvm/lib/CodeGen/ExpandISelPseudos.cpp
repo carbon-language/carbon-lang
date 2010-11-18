@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/ExpandPseudos.cpp --------------------------*- C++ -*-===//
+//===-- llvm/CodeGen/ExpandISelPseudos.cpp ----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "expand-pseudos"
+#define DEBUG_TYPE "expand-isel-pseudos"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/Passes.h"
@@ -24,16 +24,16 @@
 using namespace llvm;
 
 namespace {
-  class ExpandPseudos : public MachineFunctionPass {
+  class ExpandISelPseudos : public MachineFunctionPass {
   public:
     static char ID; // Pass identification, replacement for typeid
-    ExpandPseudos() : MachineFunctionPass(ID) {}
+    ExpandISelPseudos() : MachineFunctionPass(ID) {}
 
   private:
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
     const char *getPassName() const {
-      return "Expand CodeGen Pseudo-instructions";
+      return "Expand ISel Pseudo-instructions";
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -42,15 +42,15 @@ namespace {
   };
 } // end anonymous namespace
 
-char ExpandPseudos::ID = 0;
-INITIALIZE_PASS(ExpandPseudos, "expand-pseudos",
+char ExpandISelPseudos::ID = 0;
+INITIALIZE_PASS(ExpandISelPseudos, "expand-isel-pseudos",
                 "Expand CodeGen Pseudo-instructions", false, false)
 
-FunctionPass *llvm::createExpandPseudosPass() {
-  return new ExpandPseudos();
+FunctionPass *llvm::createExpandISelPseudosPass() {
+  return new ExpandISelPseudos();
 }
 
-bool ExpandPseudos::runOnMachineFunction(MachineFunction &MF) {
+bool ExpandISelPseudos::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
   const TargetLowering *TLI = MF.getTarget().getTargetLowering();
 

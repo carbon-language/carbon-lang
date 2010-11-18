@@ -213,9 +213,9 @@ namespace llvm {
   /// addressing.
   FunctionPass *createLocalStackSlotAllocationPass();
 
-  /// createExpandPseudosPass - This pass expands pseudo-instructions.
+  /// createExpandISelPseudosPass - This pass expands pseudo-instructions.
   ///
-  FunctionPass *createExpandPseudosPass();
+  FunctionPass *createExpandISelPseudosPass();
 
 } // End llvm namespace
 
