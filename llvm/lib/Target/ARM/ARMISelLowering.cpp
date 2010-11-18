@@ -4985,7 +4985,8 @@ static SDValue PerformShiftCombine(SDNode *N, SelectionDAG &DAG,
   EVT VT = N->getValueType(0);
 
   // Nothing to be done for scalar shifts.
-  if (! VT.isVector())
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!VT.isVector() || !TLI.isTypeLegal(VT))
     return SDValue();
 
   assert(ST->hasNEON() && "unexpected vector shift");
