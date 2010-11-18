@@ -1571,9 +1571,9 @@ bool ARMBaseInstrInfo::FoldImmediate(MachineInstr *UseMI,
     return false;
 
   unsigned UseOpc = UseMI->getOpcode();
-  unsigned NewUseOpc;
+  unsigned NewUseOpc = 0;
   uint32_t ImmVal = (uint32_t)DefMI->getOperand(1).getImm();
-  uint32_t SOImmValV1, SOImmValV2;
+  uint32_t SOImmValV1 = 0, SOImmValV2 = 0;
   bool Commute = false;
   switch (UseOpc) {
   default: return false;
