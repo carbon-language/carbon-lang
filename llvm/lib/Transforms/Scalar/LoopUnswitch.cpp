@@ -990,15 +990,16 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
       ++NumSimplify;
       continue;
     }
-    
+
     // See if instruction simplification can hack this up.  This is common for
     // things like "select false, X, Y" after unswitching made the condition be
     // 'false'.
-    if (Value *V = SimplifyInstruction(I, 0, DT)) {
-      ReplaceUsesOfWith(I, V, Worklist, L, LPM);
-      continue;
-    }
-    
+    if (Value *V = SimplifyInstruction(I, 0, DT))
+      if (LI->replacementPreservesLCSSAForm(I, V)) {
+        ReplaceUsesOfWith(I, V, Worklist, L, LPM);
+        continue;
+      }
+
     // Special case hacks that appear commonly in unswitched code.
     if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
       if (BI->isUnconditional()) {

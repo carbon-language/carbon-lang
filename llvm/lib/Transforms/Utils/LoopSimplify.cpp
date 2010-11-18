@@ -269,11 +269,12 @@ ReprocessLoop:
   PHINode *PN;
   for (BasicBlock::iterator I = L->getHeader()->begin();
        (PN = dyn_cast<PHINode>(I++)); )
-    if (Value *V = SimplifyInstruction(PN, 0, DT)) {
-      if (AA) AA->deleteValue(PN);
-      PN->replaceAllUsesWith(V);
-      PN->eraseFromParent();
-    }
+    if (Value *V = SimplifyInstruction(PN, 0, DT))
+      if (LI->replacementPreservesLCSSAForm(PN, V)) {
+          if (AA) AA->deleteValue(PN);
+          PN->replaceAllUsesWith(V);
+          PN->eraseFromParent();
+      }
 
   // If this loop has multiple exits and the exits all go to the same
   // block, attempt to merge the exits. This helps several passes, such
@@ -445,17 +446,18 @@ static void AddBlockAndPredsToSet(BasicBlock *InputBB, BasicBlock *StopBlock,
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
 /// PHI node that tells us how to partition the loops.
 static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorTree *DT,
-                                        AliasAnalysis *AA) {
+                                        AliasAnalysis *AA, LoopInfo *LI) {
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
-    if (Value *V = SimplifyInstruction(PN, 0, DT)) {
-      // This is a degenerate PHI already, don't modify it!
-      PN->replaceAllUsesWith(V);
-      if (AA) AA->deleteValue(PN);
-      PN->eraseFromParent();
-      continue;
-    }
+    if (Value *V = SimplifyInstruction(PN, 0, DT))
+      if (LI->replacementPreservesLCSSAForm(PN, V)) {
+        // This is a degenerate PHI already, don't modify it!
+        PN->replaceAllUsesWith(V);
+        if (AA) AA->deleteValue(PN);
+        PN->eraseFromParent();
+        continue;
+      }
 
     // Scan this PHI node looking for a use of the PHI node by itself.
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
@@ -523,7 +525,7 @@ void LoopSimplify::PlaceSplitBlockCarefully(BasicBlock *NewBB,
 /// created.
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM) {
-  PHINode *PN = FindPHIToPartitionLoops(L, DT, AA);
+  PHINode *PN = FindPHIToPartitionLoops(L, DT, AA, LI);
   if (PN == 0) return 0;  // No known way to partition.
 
   // Pull out all predecessors that have varying values in the loop.  This

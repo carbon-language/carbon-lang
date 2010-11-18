@@ -1020,6 +1020,25 @@ public:
   void removeBlock(BasicBlock *BB) {
     LI.removeBlock(BB);
   }
+
+  /// replacementPreservesLCSSAForm - Returns true if replacing From with To
+  /// everywhere is guaranteed to preserve LCSSA form.
+  bool replacementPreservesLCSSAForm(Instruction *From, Value *To) {
+    // Preserving LCSSA form is only problematic if the replacing value is an
+    // instruction.
+    Instruction *I = dyn_cast<Instruction>(To);
+    if (!I) return true;
+    // If the instruction is not defined in a loop then it can safely replace
+    // anything.
+    Loop *ToLoop = getLoopFor(I->getParent());
+    if (!ToLoop) return true;
+    // If the replacing instruction is defined in the same loop as the original
+    // instruction, or in a loop that contains it as an inner loop, then using
+    // it as a replacement will not break LCSSA form.
+    Loop *FromLoop = getLoopFor(From->getParent());
+    if (ToLoop->contains(FromLoop)) return true;
+    return false;
+  }
 };
 
 
