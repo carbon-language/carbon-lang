@@ -100,4 +100,5 @@
   dmb	ishst
 @ CHECK: dmb	ish                     @ encoding: [0x5b,0x8f,0xbf,0xf3]
   dmb	ish
+
   
