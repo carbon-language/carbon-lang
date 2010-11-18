@@ -106,6 +106,11 @@ Attributes Attribute::typeIncompatible(const Type *Ty) {
 // AttributeListImpl Definition
 //===----------------------------------------------------------------------===//
 
+namespace llvm {
+  class AttributeListImpl;
+}
+
+static ManagedStatic<FoldingSet<AttributeListImpl> > AttributesLists;
 
 namespace llvm {
 static ManagedStatic<sys::SmartMutex<true> > ALMutex;
@@ -131,6 +136,8 @@ public:
   }
   void DropRef() {
     sys::SmartScopedLock<true> Lock(*ALMutex);
+    if (!AttributesLists.isConstructed())
+      return;
     sys::cas_flag new_val = --RefCount;
     if (new_val == 0)
       delete this;
@@ -146,8 +153,6 @@ public:
   }
 };
 }
-
-static ManagedStatic<FoldingSet<AttributeListImpl> > AttributesLists;
 
 AttributeListImpl::~AttributeListImpl() {
   // NOTE: Lock must be acquired by caller.
