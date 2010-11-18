@@ -2536,9 +2536,9 @@ def t2PKHBT : T2ThreeReg<
   let Inst{5} = 0; // BT form
   let Inst{4} = 0;
   
-  bits<5> sh;
-  let Inst{14-12} = sh{4-2};
-  let Inst{7-6}   = sh{1-0};
+  bits<8> sh;
+  let Inst{14-12} = sh{7-5};
+  let Inst{7-6}   = sh{4-3};
 }
 
 // Alternate cases for PKHBT where identities eliminate some nodes.
@@ -2564,9 +2564,9 @@ def t2PKHTB : T2ThreeReg<
   let Inst{5} = 1; // TB form
   let Inst{4} = 0;
   
-  bits<5> sh;
-  let Inst{14-12} = sh{4-2};
-  let Inst{7-6}   = sh{1-0};
+  bits<8> sh;
+  let Inst{14-12} = sh{7-5};
+  let Inst{7-6}   = sh{4-3};
 }
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that

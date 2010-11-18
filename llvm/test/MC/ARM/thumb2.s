@@ -69,29 +69,35 @@
 @ CHECK: mls	r0, r0, r1, r2          @ encoding: [0x11,0x20,0x00,0xfb]
   mls	r0, r0, r1, r2
 
-@ CHECK: smlabt	r0, r1, r2, r0          @ encoding: [0xc1,0x02,0x00,0xe1]
+@ CHECK: smlabt	r0, r1, r2, r0          @ encoding: [0x12,0x00,0x11,0xfb]
   smlabt	r0, r1, r2, r0
 
-@ CHECK: clz	r0, r0                  @ encoding: [0x10,0x0f,0x6f,0xe1]
+@ CHECK: clz	r0, r0                  @ encoding: [0x80,0xf0,0xb0,0xfa]
   clz	r0, r0
-@ CHECK: rev	r0, r0                  @ encoding: [0x30,0x0f,0xbf,0xe6]
-  rev	r0, r0
-@ CHECK: revsh	r0, r0                  @ encoding: [0xb0,0x0f,0xff,0xe6]
-  revsh	r0, r0
 
-@ CHECK: pkhbt	r0, r0, r1, lsl #16     @ encoding: [0x11,0x08,0x80,0xe6]
+@ CHECK: pkhbt	r0, r0, r1, lsl #16     @ encoding: [0x01,0x40,0xc0,0xea]
   pkhbt	r0, r0, r1, lsl #16
-@ CHECK: pkhbt	r0, r0, r1, lsl #12     @ encoding: [0x11,0x06,0x80,0xe6]
+@ CHECK: pkhbt	r0, r0, r1, lsl #12     @ encoding: [0x01,0x30,0xc0,0xea]
   pkhbt	r0, r0, r1, lsl #16
-@ CHECK: pkhbt	r0, r0, r1, lsl #18     @ encoding: [0x11,0x09,0x80,0xe6]
+@ CHECK: pkhbt	r0, r0, r1, lsl #18     @ encoding: [0x81,0x40,0xc0,0xea]
   pkhbt	r0, r0, r1, lsl #18
-@ CHECK: pkhbt	r0, r0, r1              @ encoding: [0x11,0x00,0x80,0xe6]
+@ CHECK: pkhbt	r0, r0, r1              @ encoding: [0x01,0x00,0xc0,0xea]
   pkhbt	r0, r0, r1
-@ CHECK: pkhtb	r0, r0, r1, asr #16     @ encoding: [0x51,0x08,0x80,0xe6]
+@ CHECK: pkhtb	r0, r0, r1, asr #16     @ encoding: [0x21,0x40,0xc0,0xea]
   pkhtb	r0, r0, r1, asr #16
-@ CHECK: pkhtb	r0, r0, r1, asr #12     @ encoding: [0x51,0x06,0x80,0xe6]
+@ CHECK: pkhtb	r0, r0, r1, asr #12     @ encoding: [0x21,0x30,0xc0,0xea]
   pkhtb	r0, r0, r1, asr #12
-@ CHECK: pkhtb	r0, r0, r1, asr #18     @ encoding: [0x51,0x09,0x80,0xe6]
+@ CHECK: pkhtb	r0, r0, r1, asr #18     @ encoding: [0xa1,0x40,0xc0,0xea]
   pkhtb	r0, r0, r1, asr #18
-@ CHECK: pkhtb	r0, r0, r1, asr #22     @ encoding: [0x51,0x0b,0x80,0xe6]
+@ CHECK: pkhtb	r0, r0, r1, asr #22     @ encoding: [0xa1,0x50,0xc0,0xea]
   pkhtb	r0, r0, r1, asr #22
+
+@ CHECK: dmb	st                      @ encoding: [0x5e,0x8f,0xbf,0xf3]
+  dmb	st
+@ CHECK: dmb	sy                      @ encoding: [0x5f,0x8f,0xbf,0xf3]
+  dmb	sy
+@ CHECK: dmb	ishst                   @ encoding: [0x5a,0x8f,0xbf,0xf3]
+  dmb	ishst
+@ CHECK: dmb	ish                     @ encoding: [0x5b,0x8f,0xbf,0xf3]
+  dmb	ish
+  
