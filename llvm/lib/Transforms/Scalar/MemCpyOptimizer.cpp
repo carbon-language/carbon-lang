@@ -712,34 +712,37 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   // the alignment past what can be read from or written to.
   // TODO: Is this worth it if we're creating a less aligned memcpy? For
   // example we could be moving from movaps -> movq on x86.
-  unsigned Align = std::min(MDep->getAlignmentCst()->getZExtValue(),
-                            M->getAlignmentCst()->getZExtValue());
-  LLVMContext &Context = M->getContext();
-  ConstantInt *AlignCI = ConstantInt::get(Type::getInt32Ty(Context), Align);
+  unsigned Align = std::min(MDep->getAlignment(), M->getAlignment());
   Value *Args[5] = {
-    M->getRawDest(), MDep->getRawSource(), M->getLength(),
-    AlignCI, M->getVolatileCst()
+    M->getRawDest(),
+    MDep->getRawSource(), 
+    M->getLength(),
+    ConstantInt::get(Type::getInt32Ty(M->getContext()), Align), 
+    M->getVolatileCst()
   };
   CallInst *C = CallInst::Create(MemCpyFun, Args, Args+5, "", M);
   
   
   MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
 
-  // If C and M don't interfere, then this is a valid transformation.  If they
-  // did, this would mean that the two sources overlap, which would be bad.
-  MemDepResult dep = MD.getDependency(C);
-  if (dep.isClobber() && dep.getInst() == MDep) {
-    MD.removeInstruction(M);
-    M->eraseFromParent();
-    ++NumMemCpyInstr;
-    return true;
+  // Verify that the copied-from memory doesn't change in between the two
+  // transfers.  For example, in:
+  //    memcpy(a <- b)
+  //    *b = 42;
+  //    memcpy(c <- a)
+  // It would be invalid to transform the second memcpy into memcpy(c <- b).
+  MemDepResult NewDep = MD.getDependency(C);
+  if (!NewDep.isClobber() || NewDep.getInst() != MDep) {
+    MD.removeInstruction(C);
+    C->eraseFromParent();
+    return false;
   }
-  
-  // Otherwise, there was no point in doing this, so we remove the call we
-  // inserted and act like nothing happened.
-  MD.removeInstruction(C);
-  C->eraseFromParent();
-  return false;
+
+  // Otherwise we're good!  Nuke the instruction we're replacing.
+  MD.removeInstruction(M);
+  M->eraseFromParent();
+  ++NumMemCpyInstr;
+  return true;
 }
 
 
