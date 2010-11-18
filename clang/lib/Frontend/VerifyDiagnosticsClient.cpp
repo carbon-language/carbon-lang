@@ -23,7 +23,7 @@ using namespace clang;
 VerifyDiagnosticsClient::VerifyDiagnosticsClient(Diagnostic &_Diags,
                                                  DiagnosticClient *_Primary)
   : Diags(_Diags), PrimaryClient(_Primary),
-    Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0), NumErrors(0) {
+    Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0) {
 }
 
 VerifyDiagnosticsClient::~VerifyDiagnosticsClient() {
@@ -55,14 +55,6 @@ void VerifyDiagnosticsClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   // Send the diagnostic to the buffer, we will check it once we reach the end
   // of the source file (or are destructed).
   Buffer->HandleDiagnostic(DiagLevel, Info);
-}
-
-// FIXME: It would be nice to just get this from the primary diagnostic client
-// or something.
-bool VerifyDiagnosticsClient::HadErrors() {
-  CheckDiagnostics();
-
-  return NumErrors != 0;
 }
 
 //===----------------------------------------------------------------------===//

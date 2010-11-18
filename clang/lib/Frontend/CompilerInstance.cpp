@@ -573,15 +573,7 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
     OS << "\n";
   }
 
-  // Return the appropriate status when verifying diagnostics.
-  //
-  // FIXME: If we could make getNumErrors() do the right thing, we wouldn't need
-  // this.
-  if (getDiagnosticOpts().VerifyDiagnostics)
-    return !static_cast<VerifyDiagnosticsClient&>(
-      getDiagnosticClient()).HadErrors();
-
-  return !getDiagnostics().getNumErrors();
+  return !getDiagnostics().getClient()->getNumErrors();
 }
 
 

@@ -68,7 +68,6 @@ public:
   llvm::OwningPtr<DiagnosticClient> PrimaryClient;
   llvm::OwningPtr<TextDiagnosticBuffer> Buffer;
   Preprocessor *CurrentPreprocessor;
-  unsigned NumErrors;
 
 private:
   void CheckDiagnostics();
@@ -88,9 +87,6 @@ public:
 
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
-
-  /// HadErrors - Check if there were any mismatches in expected diagnostics.
-  bool HadErrors();
 };
 
 } // end namspace clang
