@@ -24,9 +24,8 @@ SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, StringRef TT) {
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
 
-  // Has leb128, .loc and .file
+  // Has leb128
   HasLEB128 = true;
-  HasDotLocAndDotFile = true;
 
   SupportsDebugInformation = true;
 

@@ -64,7 +64,6 @@ MCAsmInfo::MCAsmInfo() {
   HiddenVisibilityAttr = MCSA_Hidden;
   ProtectedVisibilityAttr = MCSA_Protected;
   HasLEB128 = false;
-  HasDotLocAndDotFile = false;
   SupportsDebugInformation = false;
   ExceptionsType = ExceptionHandling::None;
   DwarfRequiresFrameSection = true;

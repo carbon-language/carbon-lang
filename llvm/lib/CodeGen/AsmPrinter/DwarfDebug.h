@@ -94,30 +94,9 @@ class DwarfDebug {
   ///
   std::vector<DIEAbbrev *> Abbreviations;
 
-  /// DirectoryIdMap - Directory name to directory id map.
-  ///
-  StringMap<unsigned> DirectoryIdMap;
-
-  /// DirectoryNames - A list of directory names.
-  SmallVector<std::string, 8> DirectoryNames;
-
-  /// SourceFileIdMap - Source file name to source file id map.
-  ///
-  StringMap<unsigned> SourceFileIdMap;
-
-  /// SourceFileNames - A list of source file names.
-  SmallVector<std::string, 8> SourceFileNames;
-
   /// SourceIdMap - Source id map, i.e. pair of directory id and source file
   /// id mapped to a unique id.
-  DenseMap<std::pair<unsigned, unsigned>, unsigned> SourceIdMap;
-
-  /// SourceIds - Reverse map from source id to directory id + file id pair.
-  ///
-  SmallVector<std::pair<unsigned, unsigned>, 8> SourceIds;
-
-  /// Lines - List of source line correspondence.
-  std::vector<SrcLineInfo> Lines;
+  StringMap<unsigned> SourceIdMap;
 
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
@@ -135,10 +114,6 @@ class DwarfDebug {
   /// SectionMap - Provides a unique id per text section.
   ///
   UniqueVector<const MCSection*> SectionMap;
-
-  /// SectionSourceLines - Tracks line numbers per text section.
-  ///
-  std::vector<std::vector<SrcLineInfo> > SectionSourceLines;
 
   // CurrentFnDbgScope - Top level scope for the current function.
   //
@@ -263,35 +238,10 @@ class DwarfDebug {
 
   DIEInteger *DIEIntegerOne;
 private:
-  
-  /// getSourceDirectoryAndFileIds - Return the directory and file ids that
-  /// maps to the source id. Source id starts at 1.
-  std::pair<unsigned, unsigned>
-  getSourceDirectoryAndFileIds(unsigned SId) const {
-    return SourceIds[SId-1];
-  }
-
-  /// getNumSourceDirectories - Return the number of source directories in the
-  /// debug info.
-  unsigned getNumSourceDirectories() const {
-    return DirectoryNames.size();
-  }
-
-  /// getSourceDirectoryName - Return the name of the directory corresponding
-  /// to the id.
-  const std::string &getSourceDirectoryName(unsigned Id) const {
-    return DirectoryNames[Id - 1];
-  }
-
-  /// getSourceFileName - Return the name of the source file corresponding
-  /// to the id.
-  const std::string &getSourceFileName(unsigned Id) const {
-    return SourceFileNames[Id - 1];
-  }
 
   /// getNumSourceIds - Return the number of unique source ids.
   unsigned getNumSourceIds() const {
-    return SourceIds.size();
+    return SourceIdMap.size();
   }
 
   /// assignAbbrevNumber - Define a unique number for the abbreviation.
@@ -479,10 +429,6 @@ private:
   ///
   void emitEndOfLineMatrix(unsigned SectionEnd);
 
-  /// emitDebugLines - Emit source line information.
-  ///
-  void emitDebugLines();
-
   /// emitCommonDebugFrame - Emit common frame info into a debug frame section.
   ///
   void emitCommonDebugFrame();
@@ -541,9 +487,8 @@ private:
 
   /// GetOrCreateSourceID - Look up the source id with the given directory and
   /// source file names. If none currently exists, create a new id and insert it
-  /// in the SourceIds map. This can update DirectoryNames and SourceFileNames
-  /// maps as well.
-  unsigned GetOrCreateSourceID(StringRef DirName, StringRef FileName);
+  /// in the SourceIds map.
+  unsigned GetOrCreateSourceID(StringRef FullName);
 
   /// constructCompileUnit - Create new CompileUnit for the given 
   /// metadata node with tag DW_TAG_compile_unit.
@@ -562,12 +507,6 @@ private:
   /// unique label that was emitted and which provides correspondence to
   /// the source line list.
   MCSymbol *recordSourceLine(unsigned Line, unsigned Col, const MDNode *Scope);
-  
-  /// getSourceLineCount - Return the number of source lines in the debug
-  /// info.
-  unsigned getSourceLineCount() const {
-    return Lines.size();
-  }
   
   /// recordVariableFrameIndex - Record a variable's index.
   void recordVariableFrameIndex(const DbgVariable *V, int Index);

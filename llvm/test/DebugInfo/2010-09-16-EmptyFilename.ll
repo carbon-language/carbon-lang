@@ -1,8 +1,6 @@
 ; RUN: llc -O0 < %s - | FileCheck %s
 ; Radar 8286101
-; CHECK: File size
-; CHECK-NEXT: stdin
-; CHECK-NEXT: Directory
+; CHECK: .file   2 "<stdin>"
 
 define i32 @foo() nounwind ssp {
 entry:

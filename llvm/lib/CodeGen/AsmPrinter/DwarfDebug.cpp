@@ -514,8 +514,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DIVariable V) {
   unsigned Line = V.getLineNumber();
   if (Line == 0)
     return;
-  unsigned FileID = GetOrCreateSourceID(V.getContext().getDirectory(),
-                                        V.getContext().getFilename());
+  unsigned FileID = GetOrCreateSourceID(V.getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -531,8 +530,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DIGlobalVariable G) {
   unsigned Line = G.getLineNumber();
   if (Line == 0)
     return;
-  unsigned FileID = GetOrCreateSourceID(G.getContext().getDirectory(),
-                                        G.getContext().getFilename());
+  unsigned FileID = GetOrCreateSourceID(G.getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -551,8 +549,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DISubprogram SP) {
   unsigned Line = SP.getLineNumber();
   if (!SP.getContext().Verify())
     return;
-  unsigned FileID = GetOrCreateSourceID(SP.getDirectory(),
-                                        SP.getFilename());
+  unsigned FileID = GetOrCreateSourceID(SP.getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -568,8 +565,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DIType Ty) {
   unsigned Line = Ty.getLineNumber();
   if (Line == 0 || !Ty.getContext().Verify())
     return;
-  unsigned FileID = GetOrCreateSourceID(Ty.getDirectory(),
-                                        Ty.getFilename());
+  unsigned FileID = GetOrCreateSourceID(Ty.getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -586,9 +582,8 @@ void DwarfDebug::addSourceLine(DIE *Die, DINameSpace NS) {
   if (Line == 0)
     return;
   StringRef FN = NS.getFilename();
-  StringRef Dir = NS.getDirectory();
 
-  unsigned FileID = GetOrCreateSourceID(Dir, FN);
+  unsigned FileID = GetOrCreateSourceID(FN);
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -1772,41 +1767,21 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
 /// source file names. If none currently exists, create a new id and insert it
 /// in the SourceIds map. This can update DirectoryNames and SourceFileNames
 /// maps as well.
-unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName){
-  unsigned DId;
-  assert (DirName.empty() == false && "Invalid directory name!");
 
+unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName){
   // If FE did not provide a file name, then assume stdin.
   if (FileName.empty())
-    return GetOrCreateSourceID(DirName, "<stdin>");
+    return GetOrCreateSourceID("<stdin>");
 
-  StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
-  if (DI != DirectoryIdMap.end()) {
-    DId = DI->getValue();
-  } else {
-    DId = DirectoryNames.size() + 1;
-    DirectoryIdMap[DirName] = DId;
-    DirectoryNames.push_back(DirName);
-  }
+  StringMapEntry<unsigned> &Entry = SourceIdMap.GetOrCreateValue(FileName);
+  if (Entry.getValue())
+    return Entry.getValue();
 
-  unsigned FId;
-  StringMap<unsigned>::iterator FI = SourceFileIdMap.find(FileName);
-  if (FI != SourceFileIdMap.end()) {
-    FId = FI->getValue();
-  } else {
-    FId = SourceFileNames.size() + 1;
-    SourceFileIdMap[FileName] = FId;
-    SourceFileNames.push_back(FileName);
-  }
+  unsigned SrcId = SourceIdMap.size();
+  Entry.setValue(SrcId);
 
-  DenseMap<std::pair<unsigned, unsigned>, unsigned>::iterator SI =
-    SourceIdMap.find(std::make_pair(DId, FId));
-  if (SI != SourceIdMap.end())
-    return SI->second;
-
-  unsigned SrcId = SourceIds.size() + 1;  // DW_AT_decl_file cannot be 0.
-  SourceIdMap[std::make_pair(DId, FId)] = SrcId;
-  SourceIds.push_back(std::make_pair(DId, FId));
+  // Print out a .file directive to specify files for .loc directives.
+  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, FileName);
 
   return SrcId;
 }
@@ -1832,7 +1807,7 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
   StringRef Dir = DIUnit.getDirectory();
-  unsigned ID = GetOrCreateSourceID(Dir, FN);
+  unsigned ID = GetOrCreateSourceID(FN);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   addString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
@@ -2079,23 +2054,6 @@ void DwarfDebug::beginModule(Module *M) {
 
   // Prime section data.
   SectionMap.insert(Asm->getObjFileLowering().getTextSection());
-
-  // Print out .file directives to specify files for .loc directives. These are
-  // printed out early so that they precede any .loc directives.
-  if (Asm->MAI->hasDotLocAndDotFile()) {
-    for (unsigned i = 1, e = getNumSourceIds()+1; i != e; ++i) {
-      // Remember source id starts at 1.
-      std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(i);
-      // FIXME: don't use sys::path for this!  This should not depend on the
-      // host.
-      sys::Path FullPath(getSourceDirectoryName(Id.first));
-      bool AppendOk =
-        FullPath.appendComponent(getSourceFileName(Id.second));
-      assert(AppendOk && "Could not append filename to directory!");
-      AppendOk = false;
-      Asm->OutStreamer.EmitDwarfFileDirective(i, FullPath.str());
-    }
-  }
 }
 
 /// endModule - Emit all Dwarf sections that should come after the content.
@@ -2184,9 +2142,6 @@ void DwarfDebug::endModule() {
 
   // Corresponding abbreviations into a abbrev section.
   emitAbbreviations();
-
-  // Emit source line correspondence into a debug line section.
-  emitDebugLines();
 
   // Emit info into a debug pubnames section.
   emitDebugPubNames();
@@ -2873,17 +2828,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     SmallPtrSet<const MDNode *, 16> ProcessedVars;
     collectVariableInfo(MF, ProcessedVars);
 
-    // Get function line info.
-    if (!Lines.empty()) {
-      // Get section line info.
-      unsigned ID = SectionMap.insert(Asm->getCurrentSection());
-      if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
-      std::vector<SrcLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
-      // Append the function info to section info.
-      SectionLineInfos.insert(SectionLineInfos.end(),
-                              Lines.begin(), Lines.end());
-    }
-
     // Construct abstract scopes.
     for (SmallVector<DbgScope *, 4>::iterator AI = AbstractScopesList.begin(),
            AE = AbstractScopesList.end(); AI != AE; ++AI) {
@@ -2934,7 +2878,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   AbstractVariables.clear();
   LabelsBeforeInsn.clear();
   LabelsAfterInsn.clear();
-  Lines.clear();
   PrevLabel = NULL;
 }
 
@@ -2981,7 +2924,6 @@ DbgScope *DwarfDebug::findDbgScope(const MachineInstr *MInsn) {
 /// the source line list.
 MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
                                        const MDNode *S) {
-  StringRef Dir;
   StringRef Fn;
 
   unsigned Src = 1;
@@ -2990,29 +2932,26 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
 
     if (Scope.isCompileUnit()) {
       DICompileUnit CU(S);
-      Dir = CU.getDirectory();
       Fn = CU.getFilename();
     } else if (Scope.isFile()) {
       DIFile F(S);
-      Dir = F.getDirectory();
       Fn = F.getFilename();
     } else if (Scope.isSubprogram()) {
       DISubprogram SP(S);
-      Dir = SP.getDirectory();
       Fn = SP.getFilename();
     } else if (Scope.isLexicalBlock()) {
       DILexicalBlock DB(S);
-      Dir = DB.getDirectory();
       Fn = DB.getFilename();
     } else
       assert(0 && "Unexpected scope info");
 
-    Src = GetOrCreateSourceID(Dir, Fn);
+    Src = GetOrCreateSourceID(Fn);
   }
 
-  MCSymbol *Label = MMI->getContext().CreateTempSymbol();
-  Lines.push_back(SrcLineInfo(Line, Col, Src, Label));
+  Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, DWARF2_FLAG_IS_STMT,
+                                         0, 0);
 
+  MCSymbol *Label = MMI->getContext().CreateTempSymbol();
   Asm->OutStreamer.EmitLabel(Label);
   return Label;
 }
@@ -3321,185 +3260,6 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   Asm->EmitInt8(0);
   Asm->EmitInt8(1);
   Asm->EmitInt8(1);
-}
-
-/// emitDebugLines - Emit source line information.
-///
-void DwarfDebug::emitDebugLines() {
-  // If the target is using .loc/.file, the assembler will be emitting the
-  // .debug_line table automatically.
-  if (Asm->MAI->hasDotLocAndDotFile())
-    return;
-
-  // Minimum line delta, thus ranging from -10..(255-10).
-  const int MinLineDelta = -(dwarf::DW_LNS_fixed_advance_pc + 1);
-  // Maximum line delta, thus ranging from -10..(255-10).
-  const int MaxLineDelta = 255 + MinLineDelta;
-
-  // Start the dwarf line section.
-  Asm->OutStreamer.SwitchSection(
-                            Asm->getObjFileLowering().getDwarfLineSection());
-
-  // Construct the section header.
-  Asm->OutStreamer.AddComment("Length of Source Line Info");
-  Asm->EmitLabelDifference(Asm->GetTempSymbol("line_end"),
-                           Asm->GetTempSymbol("line_begin"), 4);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("line_begin"));
-
-  Asm->OutStreamer.AddComment("DWARF version number");
-  Asm->EmitInt16(dwarf::DWARF_VERSION);
-
-  Asm->OutStreamer.AddComment("Prolog Length");
-  Asm->EmitLabelDifference(Asm->GetTempSymbol("line_prolog_end"),
-                           Asm->GetTempSymbol("line_prolog_begin"), 4);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("line_prolog_begin"));
-
-  Asm->OutStreamer.AddComment("Minimum Instruction Length");
-  Asm->EmitInt8(1);
-  Asm->OutStreamer.AddComment("Default is_stmt_start flag");
-  Asm->EmitInt8(1);
-  Asm->OutStreamer.AddComment("Line Base Value (Special Opcodes)");
-  Asm->EmitInt8(MinLineDelta);
-  Asm->OutStreamer.AddComment("Line Range Value (Special Opcodes)");
-  Asm->EmitInt8(MaxLineDelta);
-  Asm->OutStreamer.AddComment("Special Opcode Base");
-  Asm->EmitInt8(-MinLineDelta);
-
-  // Line number standard opcode encodings argument count
-  Asm->OutStreamer.AddComment("DW_LNS_copy arg count");
-  Asm->EmitInt8(0);
-  Asm->OutStreamer.AddComment("DW_LNS_advance_pc arg count");
-  Asm->EmitInt8(1);
-  Asm->OutStreamer.AddComment("DW_LNS_advance_line arg count");
-  Asm->EmitInt8(1);
-  Asm->OutStreamer.AddComment("DW_LNS_set_file arg count");
-  Asm->EmitInt8(1);
-  Asm->OutStreamer.AddComment("DW_LNS_set_column arg count");
-  Asm->EmitInt8(1);
-  Asm->OutStreamer.AddComment("DW_LNS_negate_stmt arg count");
-  Asm->EmitInt8(0);
-  Asm->OutStreamer.AddComment("DW_LNS_set_basic_block arg count");
-  Asm->EmitInt8(0);
-  Asm->OutStreamer.AddComment("DW_LNS_const_add_pc arg count");
-  Asm->EmitInt8(0);
-  Asm->OutStreamer.AddComment("DW_LNS_fixed_advance_pc arg count");
-  Asm->EmitInt8(1);
-
-  // Emit directories.
-  for (unsigned DI = 1, DE = getNumSourceDirectories()+1; DI != DE; ++DI) {
-    const std::string &Dir = getSourceDirectoryName(DI);
-    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("Directory");
-    Asm->OutStreamer.EmitBytes(StringRef(Dir.c_str(), Dir.size()+1), 0);
-  }
-
-  Asm->OutStreamer.AddComment("End of directories");
-  Asm->EmitInt8(0);
-
-  // Emit files.
-  for (unsigned SI = 1, SE = getNumSourceIds()+1; SI != SE; ++SI) {
-    // Remember source id starts at 1.
-    std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(SI);
-    const std::string &FN = getSourceFileName(Id.second);
-    if (Asm->isVerbose()) Asm->OutStreamer.AddComment("Source");
-    Asm->OutStreamer.EmitBytes(StringRef(FN.c_str(), FN.size()+1), 0);
-
-    Asm->EmitULEB128(Id.first, "Directory #");
-    Asm->EmitULEB128(0, "Mod date");
-    Asm->EmitULEB128(0, "File size");
-  }
-
-  Asm->OutStreamer.AddComment("End of files");
-  Asm->EmitInt8(0);
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("line_prolog_end"));
-
-  // A sequence for each text section.
-  unsigned SecSrcLinesSize = SectionSourceLines.size();
-
-  for (unsigned j = 0; j < SecSrcLinesSize; ++j) {
-    // Isolate current sections line info.
-    const std::vector<SrcLineInfo> &LineInfos = SectionSourceLines[j];
-
-    // Dwarf assumes we start with first line of first source file.
-    unsigned Source = 1;
-    unsigned Line = 1;
-
-    // Construct rows of the address, source, line, column matrix.
-    for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
-      const SrcLineInfo &LineInfo = LineInfos[i];
-      MCSymbol *Label = LineInfo.getLabel();
-      if (!Label->isDefined()) continue; // Not emitted, in dead code.
-
-      if (Asm->isVerbose()) {
-        std::pair<unsigned, unsigned> SrcID =
-          getSourceDirectoryAndFileIds(LineInfo.getSourceID());
-        Asm->OutStreamer.AddComment(Twine(getSourceDirectoryName(SrcID.first)) +
-                                    "/" +
-                                    Twine(getSourceFileName(SrcID.second)) +
-                                    ":" + Twine(LineInfo.getLine()));
-      }
-
-      // Define the line address.
-      Asm->OutStreamer.AddComment("Extended Op");
-      Asm->EmitInt8(0);
-      Asm->OutStreamer.AddComment("Op size");
-      Asm->EmitInt8(Asm->getTargetData().getPointerSize() + 1);
-
-      Asm->OutStreamer.AddComment("DW_LNE_set_address");
-      Asm->EmitInt8(dwarf::DW_LNE_set_address);
-
-      Asm->OutStreamer.AddComment("Location label");
-      Asm->OutStreamer.EmitSymbolValue(Label,
-                                       Asm->getTargetData().getPointerSize(),
-                                       0/*AddrSpace*/);
-
-      // If change of source, then switch to the new source.
-      if (Source != LineInfo.getSourceID()) {
-        Source = LineInfo.getSourceID();
-        Asm->OutStreamer.AddComment("DW_LNS_set_file");
-        Asm->EmitInt8(dwarf::DW_LNS_set_file);
-        Asm->EmitULEB128(Source, "New Source");
-      }
-
-      // If change of line.
-      if (Line != LineInfo.getLine()) {
-        // Determine offset.
-        int Offset = LineInfo.getLine() - Line;
-        int Delta = Offset - MinLineDelta;
-
-        // Update line.
-        Line = LineInfo.getLine();
-
-        // If delta is small enough and in range...
-        if (Delta >= 0 && Delta < (MaxLineDelta - 1)) {
-          // ... then use fast opcode.
-          Asm->OutStreamer.AddComment("Line Delta");
-          Asm->EmitInt8(Delta - MinLineDelta);
-        } else {
-          // ... otherwise use long hand.
-          Asm->OutStreamer.AddComment("DW_LNS_advance_line");
-          Asm->EmitInt8(dwarf::DW_LNS_advance_line);
-          Asm->EmitSLEB128(Offset, "Line Offset");
-          Asm->OutStreamer.AddComment("DW_LNS_copy");
-          Asm->EmitInt8(dwarf::DW_LNS_copy);
-        }
-      } else {
-        // Copy the previous row (different address or source)
-        Asm->OutStreamer.AddComment("DW_LNS_copy");
-        Asm->EmitInt8(dwarf::DW_LNS_copy);
-      }
-    }
-
-    emitEndOfLineMatrix(j + 1);
-  }
-
-  if (SecSrcLinesSize == 0)
-    // Because we're emitting a debug_line section, we still need a line
-    // table. The linker and friends expect it to exist. If there's nothing to
-    // put into it, emit an empty table.
-    emitEndOfLineMatrix(1);
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("line_end"));
 }
 
 /// emitCommonDebugFrame - Emit common frame info into a debug frame section.

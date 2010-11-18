@@ -237,10 +237,6 @@ namespace llvm {
     /// HasLEB128 - True if target asm supports leb128 directives.
     bool HasLEB128;                          // Defaults to false.
 
-    /// hasDotLocAndDotFile - True if target asm supports .loc and .file
-    /// directives for emitting debugging information.
-    bool HasDotLocAndDotFile;                // Defaults to false.
-
     /// SupportsDebugInformation - True if target supports emission of debugging
     /// information.
     bool SupportsDebugInformation;           // Defaults to false.
@@ -409,9 +405,6 @@ namespace llvm {
     }
     bool hasLEB128() const {
       return HasLEB128;
-    }
-    bool hasDotLocAndDotFile() const {
-      return HasDotLocAndDotFile;
     }
     bool doesSupportDebugInformation() const {
       return SupportsDebugInformation;
