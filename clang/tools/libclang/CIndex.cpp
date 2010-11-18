@@ -138,14 +138,19 @@ public:
   enum Kind { DeclVisitKind, StmtVisitKind, MemberExprPartsKind,
               TypeLocVisitKind, OverloadExprPartsKind,
               DeclRefExprPartsKind, LabelRefVisitKind,
-              ExplicitTemplateArgsVisitKind };
+              ExplicitTemplateArgsVisitKind,
+              NestedNameSpecifierVisitKind,
+              DeclarationNameInfoVisitKind };
 protected:
-  void *dataA;
-  void *dataB;
+  void *data[3];
   CXCursor parent;
   Kind K;
-  VisitorJob(CXCursor C, Kind k, void *d1, void *d2 = 0)
-    : dataA(d1), dataB(d2), parent(C), K(k) {}
+  VisitorJob(CXCursor C, Kind k, void *d1, void *d2 = 0, void *d3 = 0)
+    : parent(C), K(k) {
+    data[0] = d1;
+    data[1] = d2;
+    data[2] = d3;
+  }
 public:
   Kind getKind() const { return K; }
   const CXCursor &getParent() const { return parent; }
@@ -342,8 +347,6 @@ public:
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitDesignatedInitExpr(DesignatedInitExpr *E);
   bool VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
-  bool VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
-  bool VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
 
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
@@ -1532,61 +1535,6 @@ bool CursorVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   return false;
 }
 
-bool CursorVisitor::VisitDependentScopeDeclRefExpr(
-                                                DependentScopeDeclRefExpr *E) {
-  // Visit the nested-name-specifier.
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
-      return true;
-
-  // Visit the declaration name.
-  if (VisitDeclarationNameInfo(E->getNameInfo()))
-    return true;
-
-  // Visit the explicitly-specified template arguments.
-  if (const ExplicitTemplateArgumentList *ArgList
-      = E->getOptionalExplicitTemplateArgs()) {
-    for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
-         *ArgEnd = Arg + ArgList->NumTemplateArgs;
-         Arg != ArgEnd; ++Arg) {
-      if (VisitTemplateArgumentLoc(*Arg))
-        return true;
-    }
-  }
-
-  return false;
-}
-
-bool CursorVisitor::VisitCXXDependentScopeMemberExpr(
-                                              CXXDependentScopeMemberExpr *E) {
-  // Visit the base expression, if there is one.
-  if (!E->isImplicitAccess() &&
-      Visit(MakeCXCursor(E->getBase(), StmtParent, TU)))
-    return true;
-  
-  // Visit the nested-name-specifier.
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    if (VisitNestedNameSpecifier(Qualifier, E->getQualifierRange()))
-      return true;
-  
-  // Visit the declaration name.
-  if (VisitDeclarationNameInfo(E->getMemberNameInfo()))
-    return true;
-  
-  // Visit the explicitly-specified template arguments.
-  if (const ExplicitTemplateArgumentList *ArgList
-      = E->getOptionalExplicitTemplateArgs()) {
-    for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
-         *ArgEnd = Arg + ArgList->NumTemplateArgs;
-         Arg != ArgEnd; ++Arg) {
-      if (VisitTemplateArgumentLoc(*Arg))
-        return true;
-    }
-  }
-  
-  return false;
-}
-
 bool CursorVisitor::VisitAttributes(Decl *D) {
   for (AttrVec::const_iterator i = D->attr_begin(), e = D->attr_end();
        i != e; ++i)
@@ -1606,7 +1554,7 @@ class NAME : public VisitorJob {\
 public:\
   NAME(DATA *d, CXCursor parent) : VisitorJob(parent, VisitorJob::KIND, d) {} \
   static bool classof(const VisitorJob *VJ) { return VJ->getKind() == KIND; }\
-  DATA *get() const { return static_cast<DATA*>(dataA); }\
+  DATA *get() const { return static_cast<DATA*>(data[0]); }\
 };
 
 DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
@@ -1625,8 +1573,8 @@ public:
   static bool classof(const VisitorJob *VJ) {
     return VJ->getKind() == DeclVisitKind;
   }
-  Decl *get() const { return static_cast<Decl*>(dataA); }
-  bool isFirst() const { return dataB ? true : false; }
+  Decl *get() const { return static_cast<Decl*>(data[0]); }
+  bool isFirst() const { return data[1] ? true : false; }
 };
 class TypeLocVisit : public VisitorJob {
 public:
@@ -1639,8 +1587,8 @@ public:
   }
 
   TypeLoc get() const { 
-    QualType T = QualType::getFromOpaquePtr(dataA);
-    return TypeLoc(T, dataB);
+    QualType T = QualType::getFromOpaquePtr(data[0]);
+    return TypeLoc(T, data[1]);
   }
 };
 
@@ -1653,9 +1601,49 @@ public:
   static bool classof(const VisitorJob *VJ) {
     return VJ->getKind() == VisitorJob::LabelRefVisitKind;
   }
-  LabelStmt *get() const { return static_cast<LabelStmt*>(dataA); }
+  LabelStmt *get() const { return static_cast<LabelStmt*>(data[0]); }
   SourceLocation getLoc() const { 
-    return SourceLocation::getFromRawEncoding((unsigned)(uintptr_t) dataB); }
+    return SourceLocation::getFromRawEncoding((unsigned)(uintptr_t) data[1]); }
+};
+class NestedNameSpecifierVisit : public VisitorJob {
+public:
+  NestedNameSpecifierVisit(NestedNameSpecifier *NS, SourceRange R,
+                           CXCursor parent)
+    : VisitorJob(parent, VisitorJob::NestedNameSpecifierVisitKind,
+                 NS, (void*) R.getBegin().getRawEncoding(),
+                 (void*) R.getEnd().getRawEncoding()) {}
+  static bool classof(const VisitorJob *VJ) {
+    return VJ->getKind() == VisitorJob::NestedNameSpecifierVisitKind;
+  }
+  NestedNameSpecifier *get() const {
+    return static_cast<NestedNameSpecifier*>(data[0]);
+  }
+  SourceRange getSourceRange() const {
+    SourceLocation A =
+      SourceLocation::getFromRawEncoding((unsigned)(uintptr_t) data[1]);
+    SourceLocation B =
+      SourceLocation::getFromRawEncoding((unsigned)(uintptr_t) data[2]);
+    return SourceRange(A, B);
+  }
+};
+class DeclarationNameInfoVisit : public VisitorJob {
+public:
+  DeclarationNameInfoVisit(Stmt *S, CXCursor parent)
+    : VisitorJob(parent, VisitorJob::DeclarationNameInfoVisitKind, S) {}
+  static bool classof(const VisitorJob *VJ) {
+    return VJ->getKind() == VisitorJob::DeclarationNameInfoVisitKind;
+  }
+  DeclarationNameInfo get() const {
+    Stmt *S = static_cast<Stmt*>(data[0]);
+    switch (S->getStmtClass()) {
+    default:
+      llvm_unreachable("Unhandled Stmt");
+    case Stmt::CXXDependentScopeMemberExprClass:
+      return cast<CXXDependentScopeMemberExpr>(S)->getMemberNameInfo();
+    case Stmt::DependentScopeDeclRefExprClass:
+      return cast<DependentScopeDeclRefExpr>(S)->getNameInfo();
+    }
+  }
 };
 
 class EnqueueVisitor : public StmtVisitor<EnqueueVisitor, void> {
@@ -1670,6 +1658,7 @@ public:
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitCompoundStmt(CompoundStmt *S);
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { /* Do nothing. */ }
+  void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
   void VisitCXXNewExpr(CXXNewExpr *E);
   void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
@@ -1679,6 +1668,7 @@ public:
   void VisitCXXUuidofExpr(CXXUuidofExpr *E);
   void VisitDeclRefExpr(DeclRefExpr *D);
   void VisitDeclStmt(DeclStmt *S);
+  void VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
   void VisitExplicitCastExpr(ExplicitCastExpr *E);
   void VisitForStmt(ForStmt *FS);
   void VisitGotoStmt(GotoStmt *GS);
@@ -1698,6 +1688,8 @@ public:
   void VisitVAArgExpr(VAArgExpr *E);
 
 private:
+  void AddDeclarationNameInfo(Stmt *S);
+  void AddNestedNameSpecifier(NestedNameSpecifier *NS, SourceRange R);
   void AddExplicitTemplateArgs(const ExplicitTemplateArgumentList *A);
   void AddStmt(Stmt *S);
   void AddDecl(Decl *D, bool isFirst = true);
@@ -1706,6 +1698,16 @@ private:
 };
 } // end anonyous namespace
 
+void EnqueueVisitor::AddDeclarationNameInfo(Stmt *S) {
+  // 'S' should always be non-null, since it comes from the
+  // statement we are visiting.
+  WL.push_back(DeclarationNameInfoVisit(S, Parent));
+}
+void EnqueueVisitor::AddNestedNameSpecifier(NestedNameSpecifier *N,
+                                            SourceRange R) {
+  if (N)
+    WL.push_back(NestedNameSpecifierVisit(N, R, Parent));
+}
 void EnqueueVisitor::AddStmt(Stmt *S) {
   if (S)
     WL.push_back(StmtVisit(S, Parent));
@@ -1753,6 +1755,15 @@ void EnqueueVisitor::VisitCompoundStmt(CompoundStmt *S) {
     AddStmt(*I);
   }
 }
+void EnqueueVisitor::
+VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E) {
+  AddExplicitTemplateArgs(E->getOptionalExplicitTemplateArgs());
+  AddDeclarationNameInfo(E);
+  if (NestedNameSpecifier *Qualifier = E->getQualifier())
+    AddNestedNameSpecifier(Qualifier, E->getQualifierRange());
+  if (!E->isImplicitAccess())
+    AddStmt(E->getBase());
+}
 void EnqueueVisitor::VisitCXXNewExpr(CXXNewExpr *E) {
   // Enqueue the initializer or constructor arguments.
   for (unsigned I = E->getNumConstructorArgs(); I > 0; --I)
@@ -1799,6 +1810,12 @@ void EnqueueVisitor::VisitDeclRefExpr(DeclRefExpr *DR) {
     AddExplicitTemplateArgs(&DR->getExplicitTemplateArgs());
   }
   WL.push_back(DeclRefExprParts(DR, Parent));
+}
+void EnqueueVisitor::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
+  AddExplicitTemplateArgs(E->getOptionalExplicitTemplateArgs());
+  AddDeclarationNameInfo(E);
+  if (NestedNameSpecifier *Qualifier = E->getQualifier())
+    AddNestedNameSpecifier(Qualifier, E->getQualifierRange());
 }
 void EnqueueVisitor::VisitDeclStmt(DeclStmt *S) {
   unsigned size = WL.size();
@@ -1961,6 +1978,18 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           return true;
         continue;
       }
+      case VisitorJob::NestedNameSpecifierVisitKind: {
+        NestedNameSpecifierVisit *V = cast<NestedNameSpecifierVisit>(&LI);
+        if (VisitNestedNameSpecifier(V->get(), V->getSourceRange()))
+          return true;
+        continue;
+      }
+      case VisitorJob::DeclarationNameInfoVisitKind: {
+        if (VisitDeclarationNameInfo(cast<DeclarationNameInfoVisit>(&LI)
+                                     ->get()))
+          return true;
+        continue;
+      }
       case VisitorJob::StmtVisitKind: {
         Stmt *S = cast<StmtVisit>(&LI)->get();
         if (!S)
@@ -1975,8 +2004,6 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case Stmt::OffsetOfExprClass:
           case Stmt::DesignatedInitExprClass:
           case Stmt::CXXPseudoDestructorExprClass:
-          case Stmt::DependentScopeDeclRefExprClass:
-          case Stmt::CXXDependentScopeMemberExprClass:
             if (Visit(Cursor))
               return true;
             break;
