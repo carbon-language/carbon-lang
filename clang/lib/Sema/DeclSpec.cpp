@@ -23,8 +23,8 @@ using namespace clang;
 
 
 static DiagnosticBuilder Diag(Diagnostic &D, SourceLocation Loc,
-                              SourceManager &SrcMgr, unsigned DiagID) {
-  return D.Report(FullSourceLoc(Loc, SrcMgr), DiagID);
+                              unsigned DiagID) {
+  return D.Report(Loc, DiagID);
 }
 
 
@@ -512,28 +512,27 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
   SaveStorageSpecifierAsWritten();
 
   // Check the type specifier components first.
-  SourceManager &SrcMgr = PP.getSourceManager();
 
   // Validate and finalize AltiVec vector declspec.
   if (TypeAltiVecVector) {
     if (TypeAltiVecBool) {
       // Sign specifiers are not allowed with vector bool. (PIM 2.1)
       if (TypeSpecSign != TSS_unspecified) {
-        Diag(D, TSSLoc, SrcMgr, diag::err_invalid_vector_bool_decl_spec)
+        Diag(D, TSSLoc, diag::err_invalid_vector_bool_decl_spec)
           << getSpecifierName((TSS)TypeSpecSign);
       }
 
       // Only char/int are valid with vector bool. (PIM 2.1)
       if (((TypeSpecType != TST_unspecified) && (TypeSpecType != TST_char) &&
            (TypeSpecType != TST_int)) || TypeAltiVecPixel) {
-        Diag(D, TSTLoc, SrcMgr, diag::err_invalid_vector_bool_decl_spec)
+        Diag(D, TSTLoc, diag::err_invalid_vector_bool_decl_spec)
           << (TypeAltiVecPixel ? "__pixel" :
                                  getSpecifierName((TST)TypeSpecType));
       }
 
       // Only 'short' is valid with vector bool. (PIM 2.1)
       if ((TypeSpecWidth != TSW_unspecified) && (TypeSpecWidth != TSW_short))
-        Diag(D, TSWLoc, SrcMgr, diag::err_invalid_vector_bool_decl_spec)
+        Diag(D, TSWLoc, diag::err_invalid_vector_bool_decl_spec)
           << getSpecifierName((TSW)TypeSpecWidth);
 
       // Elements of vector bool are interpreted as unsigned. (PIM 2.1)
@@ -557,7 +556,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
       TypeSpecType = TST_int; // unsigned -> unsigned int, signed -> signed int.
     else if (TypeSpecType != TST_int  &&
              TypeSpecType != TST_char && TypeSpecType != TST_wchar) {
-      Diag(D, TSSLoc, SrcMgr, diag::err_invalid_sign_spec)
+      Diag(D, TSSLoc, diag::err_invalid_sign_spec)
         << getSpecifierName((TST)TypeSpecType);
       // signed double -> double.
       TypeSpecSign = TSS_unspecified;
@@ -572,7 +571,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int; // short -> short int, long long -> long long int.
     else if (TypeSpecType != TST_int) {
-      Diag(D, TSWLoc, SrcMgr,
+      Diag(D, TSWLoc,
            TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec
                                       : diag::err_invalid_longlong_spec)
         <<  getSpecifierName((TST)TypeSpecType);
@@ -584,7 +583,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int;  // long -> long int.
     else if (TypeSpecType != TST_int && TypeSpecType != TST_double) {
-      Diag(D, TSWLoc, SrcMgr, diag::err_invalid_long_spec)
+      Diag(D, TSWLoc, diag::err_invalid_long_spec)
         << getSpecifierName((TST)TypeSpecType);
       TypeSpecType = TST_int;
       TypeSpecOwned = false;
@@ -596,16 +595,16 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
   // disallow their use.  Need information about the backend.
   if (TypeSpecComplex != TSC_unspecified) {
     if (TypeSpecType == TST_unspecified) {
-      Diag(D, TSCLoc, SrcMgr, diag::ext_plain_complex)
+      Diag(D, TSCLoc, diag::ext_plain_complex)
         << FixItHint::CreateInsertion(
                               PP.getLocForEndOfToken(getTypeSpecComplexLoc()),
                                                  " double");
       TypeSpecType = TST_double;   // _Complex -> _Complex double.
     } else if (TypeSpecType == TST_int || TypeSpecType == TST_char) {
       // Note that this intentionally doesn't include _Complex _Bool.
-      Diag(D, TSTLoc, SrcMgr, diag::ext_integer_complex);
+      Diag(D, TSTLoc, diag::ext_integer_complex);
     } else if (TypeSpecType != TST_float && TypeSpecType != TST_double) {
-      Diag(D, TSCLoc, SrcMgr, diag::err_invalid_complex_spec)
+      Diag(D, TSCLoc, diag::err_invalid_complex_spec)
         << getSpecifierName((TST)TypeSpecType);
       TypeSpecComplex = TSC_unspecified;
     }
@@ -621,7 +620,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
     SourceLocation SCLoc = getStorageClassSpecLoc();
     SourceLocation SCEndLoc = SCLoc.getFileLocWithOffset(strlen(SpecName));
 
-    Diag(D, SCLoc, SrcMgr, diag::err_friend_storage_spec)
+    Diag(D, SCLoc, diag::err_friend_storage_spec)
       << SpecName
       << FixItHint::CreateRemoval(SourceRange(SCLoc, SCEndLoc));
 

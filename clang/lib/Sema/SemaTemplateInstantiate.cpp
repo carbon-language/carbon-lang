@@ -382,7 +382,7 @@ void Sema::PrintInstantiationStack() {
     if (InstantiationIdx >= SkipStart && InstantiationIdx < SkipEnd) {
       if (InstantiationIdx == SkipStart) {
         // Note that we're skipping instantiations.
-        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+        Diags.Report(Active->PointOfInstantiation,
                      diag::note_instantiation_contexts_suppressed)
           << unsigned(ActiveTemplateInstantiations.size() - Limit);
       }
@@ -396,8 +396,7 @@ void Sema::PrintInstantiationStack() {
         unsigned DiagID = diag::note_template_member_class_here;
         if (isa<ClassTemplateSpecializationDecl>(Record))
           DiagID = diag::note_template_class_instantiation_here;
-        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
-                     DiagID)
+        Diags.Report(Active->PointOfInstantiation, DiagID)
           << Context.getTypeDeclType(Record)
           << Active->InstantiationRange;
       } else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
@@ -406,12 +405,11 @@ void Sema::PrintInstantiationStack() {
           DiagID = diag::note_function_template_spec_here;
         else
           DiagID = diag::note_template_member_function_here;
-        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
-                     DiagID)
+        Diags.Report(Active->PointOfInstantiation, DiagID)
           << Function
           << Active->InstantiationRange;
       } else {
-        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+        Diags.Report(Active->PointOfInstantiation,
                      diag::note_template_static_data_member_def_here)
           << cast<VarDecl>(D)
           << Active->InstantiationRange;
@@ -426,7 +424,7 @@ void Sema::PrintInstantiationStack() {
                                                          Active->TemplateArgs,
                                                       Active->NumTemplateArgs,
                                                       Context.PrintingPolicy);
-      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+      Diags.Report(Active->PointOfInstantiation,
                    diag::note_default_arg_instantiation_here)
         << (Template->getNameAsString() + TemplateArgsStr)
         << Active->InstantiationRange;
@@ -436,7 +434,7 @@ void Sema::PrintInstantiationStack() {
     case ActiveTemplateInstantiation::ExplicitTemplateArgumentSubstitution: {
       FunctionTemplateDecl *FnTmpl
         = cast<FunctionTemplateDecl>((Decl *)Active->Entity);
-      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+      Diags.Report(Active->PointOfInstantiation,
                    diag::note_explicit_template_arg_substitution_here)
         << FnTmpl 
         << getTemplateArgumentBindingsText(FnTmpl->getTemplateParameters(), 
@@ -450,7 +448,7 @@ void Sema::PrintInstantiationStack() {
       if (ClassTemplatePartialSpecializationDecl *PartialSpec
             = dyn_cast<ClassTemplatePartialSpecializationDecl>(
                                                     (Decl *)Active->Entity)) {
-        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+        Diags.Report(Active->PointOfInstantiation,
                      diag::note_partial_spec_deduct_instantiation_here)
           << Context.getTypeDeclType(PartialSpec)
           << getTemplateArgumentBindingsText(
@@ -461,7 +459,7 @@ void Sema::PrintInstantiationStack() {
       } else {
         FunctionTemplateDecl *FnTmpl
           = cast<FunctionTemplateDecl>((Decl *)Active->Entity);
-        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+        Diags.Report(Active->PointOfInstantiation,
                      diag::note_function_template_deduction_instantiation_here)
           << FnTmpl
           << getTemplateArgumentBindingsText(FnTmpl->getTemplateParameters(), 
@@ -480,7 +478,7 @@ void Sema::PrintInstantiationStack() {
                                                          Active->TemplateArgs,
                                                       Active->NumTemplateArgs,
                                                       Context.PrintingPolicy);
-      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+      Diags.Report(Active->PointOfInstantiation,
                    diag::note_default_function_arg_instantiation_here)
         << (FD->getNameAsString() + TemplateArgsStr)
         << Active->InstantiationRange;
@@ -493,7 +491,7 @@ void Sema::PrintInstantiationStack() {
       if (!Parm->getName().empty())
         Name = std::string(" '") + Parm->getName().str() + "'";
                                         
-      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+      Diags.Report(Active->PointOfInstantiation,
                    diag::note_prior_template_arg_substitution)
         << isa<TemplateTemplateParmDecl>(Parm)
         << Name
@@ -506,7 +504,7 @@ void Sema::PrintInstantiationStack() {
     }
 
     case ActiveTemplateInstantiation::DefaultTemplateArgumentChecking: {
-      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+      Diags.Report(Active->PointOfInstantiation,
                    diag::note_template_default_arg_checking)
         << getTemplateArgumentBindingsText(
                                      Active->Template->getTemplateParameters(), 

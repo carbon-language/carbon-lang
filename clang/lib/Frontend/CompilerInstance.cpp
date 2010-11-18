@@ -122,7 +122,8 @@ llvm::IntrusiveRefCntPtr<Diagnostic>
 CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                     int Argc, const char* const *Argv,
                                     DiagnosticClient *Client) {
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic());
+  llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic(DiagID));
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.

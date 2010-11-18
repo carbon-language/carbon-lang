@@ -209,8 +209,7 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
   // issue as being an error in the source with a note showing the instantiated
   // code.
   if (LocCookie.isValid()) {
-    Diags.Report(FullSourceLoc(LocCookie, Context->getSourceManager()),
-                 diag::err_fe_inline_asm).AddString(Message);
+    Diags.Report(LocCookie, diag::err_fe_inline_asm).AddString(Message);
     
     if (D.getLoc().isValid())
       Diags.Report(Loc, diag::note_fe_inline_asm_here);
@@ -318,7 +317,7 @@ void CodeGenAction::ExecuteAction() {
       unsigned DiagID = CI.getDiagnostics().getCustomDiagID(Diagnostic::Error,
                                                             Msg);
 
-      CI.getDiagnostics().Report(FullSourceLoc(Loc, SM), DiagID);
+      CI.getDiagnostics().Report(Loc, DiagID);
       return;
     }
 

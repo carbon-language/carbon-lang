@@ -288,7 +288,8 @@ int main(int argc_, const char **argv_) {
   TextDiagnosticPrinter *DiagClient
     = new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
   DiagClient->setPrefix(Path.getBasename());
-  Diagnostic Diags(DiagClient);
+  llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+  Diagnostic Diags(DiagID, DiagClient);
 
 #ifdef CLANG_IS_PRODUCTION
   const bool IsProduction = true;

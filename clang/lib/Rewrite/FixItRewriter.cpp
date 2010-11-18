@@ -141,7 +141,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
 }
 
 /// \brief Emit a diagnostic via the adapted diagnostic client.
-void FixItRewriter::Diag(FullSourceLoc Loc, unsigned DiagID) {
+void FixItRewriter::Diag(SourceLocation Loc, unsigned DiagID) {
   // When producing this diagnostic, we temporarily bypass ourselves,
   // clear out any current diagnostic, and let the downstream client
   // format the diagnostic.

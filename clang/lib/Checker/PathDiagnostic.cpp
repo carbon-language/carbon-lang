@@ -104,7 +104,9 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   Info.FormatDiagnostic(StrC);
 
   PathDiagnosticPiece *P =
-    new PathDiagnosticEventPiece(Info.getLocation(), StrC.str());
+    new PathDiagnosticEventPiece(FullSourceLoc(Info.getLocation(),
+                                               Info.getSourceManager()),
+                                 StrC.str());
 
   for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
     P->addRange(Info.getRange(i).getAsRange());

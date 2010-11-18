@@ -1529,7 +1529,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   assert(Diag && "Fall through without a diagnostic?");
   unsigned DiagID = CGM.getDiags().getCustomDiagID(Diagnostic::Error,
                                "debug information for %0 is not yet supported");
-  CGM.getDiags().Report(FullSourceLoc(), DiagID)
+  CGM.getDiags().Report(DiagID)
     << Diag;
   return llvm::DIType();
 }

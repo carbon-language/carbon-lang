@@ -258,7 +258,9 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
 static unsigned CodeCompletionResultObjects;
   
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults() 
-  : CXCodeCompleteResults(), Diag(new Diagnostic),
+  : CXCodeCompleteResults(),
+    Diag(new Diagnostic(
+                   llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs))),
     SourceMgr(*Diag, FileMgr, FileSystemOpts) { 
   if (getenv("LIBCLANG_OBJTRACKING")) {
     ++CodeCompletionResultObjects;

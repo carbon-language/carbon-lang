@@ -99,7 +99,7 @@ public:
                                 const DiagnosticInfo &Info);
 
   /// \brief Emit a diagnostic via the adapted diagnostic client.
-  void Diag(FullSourceLoc Loc, unsigned DiagID);
+  void Diag(SourceLocation Loc, unsigned DiagID);
 };
 
 }

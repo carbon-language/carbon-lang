@@ -49,9 +49,6 @@ namespace clang {
 
     const FileSystemOptions &ToFileSystemOpts, &FromFileSystemOpts;
     
-    /// \brief The diagnostics object that we should use to emit diagnostics.
-    Diagnostic &Diags;
-    
     /// \brief Mapping from the already-imported types in the "from" context
     /// to the corresponding types in the "to" context.
     llvm::DenseMap<Type *, Type *> ImportedTypes;
@@ -77,8 +74,7 @@ namespace clang {
     NonEquivalentDeclSet NonEquivalentDecls;
     
   public:
-    ASTImporter(Diagnostic &Diags,
-                ASTContext &ToContext, FileManager &ToFileManager,
+    ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
                 const FileSystemOptions &ToFileSystemOpts,
                 ASTContext &FromContext, FileManager &FromFileManager,
                 const FileSystemOptions &FromFileSystemOpts);
@@ -217,9 +213,6 @@ namespace clang {
 
     /// \brief Retrieve the file manager that AST nodes are being imported from.
     FileManager &getFromFileManager() const { return FromFileManager; }
-
-    /// \brief Retrieve the diagnostic formatter.
-    Diagnostic &getDiags() const { return Diags; }
     
     /// \brief Report a diagnostic in the "to" context.
     DiagnosticBuilder ToDiag(SourceLocation Loc, unsigned DiagID);

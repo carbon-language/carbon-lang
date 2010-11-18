@@ -100,7 +100,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
         Diag.SetDelayedDiagnostic(diag::err_cannot_open_file, 
                                   Entry->getName(), ErrorStr);
       else 
-        Diag.Report(FullSourceLoc(Loc, SM), diag::err_cannot_open_file)
+        Diag.Report(Loc, diag::err_cannot_open_file)
           << Entry->getName() << ErrorStr;
 
       Buffer.setInt(Buffer.getInt() | InvalidFlag);
@@ -120,7 +120,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
         Diag.SetDelayedDiagnostic(diag::err_file_modified,
                                   Entry->getName());
       else
-        Diag.Report(FullSourceLoc(Loc, SM), diag::err_file_modified)
+        Diag.Report(Loc, diag::err_file_modified)
           << Entry->getName();
 
       Buffer.setInt(Buffer.getInt() | InvalidFlag);
@@ -147,7 +147,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
         .Default(0);
 
       if (BOM) {
-        Diag.Report(FullSourceLoc(Loc, SM), diag::err_unsupported_bom)
+        Diag.Report(Loc, diag::err_unsupported_bom)
           << BOM << Entry->getName();
         Buffer.setInt(1);
       }
@@ -341,6 +341,15 @@ LineTableInfo &SourceManager::getLineTable() {
 //===----------------------------------------------------------------------===//
 // Private 'Create' methods.
 //===----------------------------------------------------------------------===//
+
+SourceManager::SourceManager(Diagnostic &Diag, FileManager &FileMgr,
+                             const FileSystemOptions &FSOpts)
+  : Diag(Diag), FileMgr(FileMgr), FileSystemOpts(FSOpts),
+    ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
+    NumBinaryProbes(0) {
+  clearIDTables();
+  Diag.setSourceManager(this);
+}
 
 SourceManager::~SourceManager() {
   delete LineTable;

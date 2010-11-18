@@ -137,9 +137,6 @@ namespace {
     /// \brief AST contexts for which we are checking structural equivalence.
     ASTContext &C1, &C2;
     
-    /// \brief Diagnostic object used to emit diagnostics.
-    Diagnostic &Diags;
-    
     /// \brief The set of "tentative" equivalences between two canonical 
     /// declarations, mapping from a declaration in the first context to the
     /// declaration in the second context that we believe to be equivalent.
@@ -158,10 +155,9 @@ namespace {
     bool StrictTypeSpelling;
     
     StructuralEquivalenceContext(ASTContext &C1, ASTContext &C2,
-                                 Diagnostic &Diags,
                llvm::DenseSet<std::pair<Decl *, Decl *> > &NonEquivalentDecls,
                                  bool StrictTypeSpelling = false)
-      : C1(C1), C2(C2), Diags(Diags), NonEquivalentDecls(NonEquivalentDecls),
+      : C1(C1), C2(C2), NonEquivalentDecls(NonEquivalentDecls),
         StrictTypeSpelling(StrictTypeSpelling) { }
 
     /// \brief Determine whether the two declarations are structurally
@@ -179,11 +175,11 @@ namespace {
     
   public:
     DiagnosticBuilder Diag1(SourceLocation Loc, unsigned DiagID) {
-      return Diags.Report(FullSourceLoc(Loc, C1.getSourceManager()), DiagID);
+      return C1.getDiagnostics().Report(Loc, DiagID);
     }
 
     DiagnosticBuilder Diag2(SourceLocation Loc, unsigned DiagID) {
-      return Diags.Report(FullSourceLoc(Loc, C2.getSourceManager()), DiagID);
+      return C2.getDiagnostics().Report(Loc, DiagID);
     }
   };
 }
@@ -1432,7 +1428,6 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
                                         RecordDecl *ToRecord) {
   StructuralEquivalenceContext Ctx(Importer.getFromContext(),
                                    Importer.getToContext(),
-                                   Importer.getDiags(),
                                    Importer.getNonEquivalentDecls());
   return Ctx.IsStructurallyEquivalent(FromRecord, ToRecord);
 }
@@ -1440,7 +1435,6 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
 bool ASTNodeImporter::IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum) {
   StructuralEquivalenceContext Ctx(Importer.getFromContext(),
                                    Importer.getToContext(),
-                                   Importer.getDiags(),
                                    Importer.getNonEquivalentDecls());
   return Ctx.IsStructurallyEquivalent(FromEnum, ToEnum);
 }
@@ -2983,15 +2977,13 @@ Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
                                 Importer.Import(E->getRParenLoc()));
 }
 
-ASTImporter::ASTImporter(Diagnostic &Diags,
-                         ASTContext &ToContext, FileManager &ToFileManager,
+ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
                          const FileSystemOptions &ToFileSystemOpts,
                          ASTContext &FromContext, FileManager &FromFileManager,
                          const FileSystemOptions &FromFileSystemOpts)
   : ToContext(ToContext), FromContext(FromContext),
     ToFileManager(ToFileManager), FromFileManager(FromFileManager),
-    ToFileSystemOpts(ToFileSystemOpts), FromFileSystemOpts(FromFileSystemOpts),
-    Diags(Diags) {
+    ToFileSystemOpts(ToFileSystemOpts), FromFileSystemOpts(FromFileSystemOpts) {
   ImportedDecls[FromContext.getTranslationUnitDecl()]
     = ToContext.getTranslationUnitDecl();
 }
@@ -3167,7 +3159,8 @@ FileID ASTImporter::Import(FileID FromID) {
                              FromSLoc.getFile().getFileCharacteristic());
   } else {
     // FIXME: We want to re-use the existing MemoryBuffer!
-    const llvm::MemoryBuffer *FromBuf = Cache->getBuffer(getDiags(), FromSM);
+    const llvm::MemoryBuffer *
+        FromBuf = Cache->getBuffer(FromContext.getDiagnostics(), FromSM);
     llvm::MemoryBuffer *ToBuf
       = llvm::MemoryBuffer::getMemBufferCopy(FromBuf->getBuffer(),
                                              FromBuf->getBufferIdentifier());
@@ -3263,13 +3256,11 @@ DeclarationName ASTImporter::HandleNameConflict(DeclarationName Name,
 }
 
 DiagnosticBuilder ASTImporter::ToDiag(SourceLocation Loc, unsigned DiagID) {
-  return Diags.Report(FullSourceLoc(Loc, ToContext.getSourceManager()), 
-                      DiagID);
+  return ToContext.getDiagnostics().Report(Loc, DiagID);
 }
 
 DiagnosticBuilder ASTImporter::FromDiag(SourceLocation Loc, unsigned DiagID) {
-  return Diags.Report(FullSourceLoc(Loc, FromContext.getSourceManager()), 
-                      DiagID);
+  return FromContext.getDiagnostics().Report(Loc, DiagID);
 }
 
 Decl *ASTImporter::Imported(Decl *From, Decl *To) {
@@ -3283,7 +3274,6 @@ bool ASTImporter::IsStructurallyEquivalent(QualType From, QualType To) {
   if (Pos != ImportedTypes.end() && ToContext.hasSameType(Import(From), To))
     return true;
       
-  StructuralEquivalenceContext Ctx(FromContext, ToContext, Diags, 
-                                   NonEquivalentDecls);
+  StructuralEquivalenceContext Ctx(FromContext, ToContext, NonEquivalentDecls);
   return Ctx.IsStructurallyEquivalent(From, To);
 }

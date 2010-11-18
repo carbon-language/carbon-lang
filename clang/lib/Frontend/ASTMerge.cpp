@@ -38,21 +38,18 @@ void ASTMergeAction::ExecuteAction() {
                                          CI.getASTContext().getLangOptions());
   CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &CI.getASTContext());
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(&CI.getDiagnostics());
+  llvm::IntrusiveRefCntPtr<DiagnosticIDs>
+      DiagIDs(CI.getDiagnostics().getDiagnosticIDs());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
+    llvm::IntrusiveRefCntPtr<Diagnostic>
+        Diags(new Diagnostic(DiagIDs, CI.getDiagnostics().getClient(),
+                             /*ShouldOwnClient=*/false));
     ASTUnit *Unit = ASTUnit::LoadFromASTFile(ASTFiles[I], Diags,
                                              CI.getFileSystemOpts(), false);
     if (!Unit)
       continue;
 
-    // Reset the argument -> string function so that it has the AST
-    // context we want, since the Sema object created by
-    // LoadFromASTFile will override it.
-    CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
-                                         &CI.getASTContext());
-
-    ASTImporter Importer(CI.getDiagnostics(),
-                         CI.getASTContext(), 
+    ASTImporter Importer(CI.getASTContext(), 
                          CI.getFileManager(),
                          CI.getFileSystemOpts(),
                          Unit->getASTContext(), 
@@ -71,6 +68,15 @@ void ASTMergeAction::ExecuteAction() {
       
       Importer.Import(*D);
     }
+
+    // Aggregate the number of warnings/errors from all diagnostics so
+    // that at CompilerInstance::ExecuteAction we can report the total numbers.
+    // FIXME: This is hacky, maybe keep track of total number of warnings/errors
+    // in DiagnosticClient and have CompilerInstance query that ?
+    CI.getDiagnostics().setNumWarnings(CI.getDiagnostics().getNumWarnings() +
+                                       Diags->getNumWarnings());
+    CI.getDiagnostics().setNumErrors(CI.getDiagnostics().getNumErrors() +
+                                     Diags->getNumErrors());
 
     delete Unit;
   }

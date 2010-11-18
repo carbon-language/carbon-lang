@@ -776,7 +776,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // If the location is specified, print out a file/line/col and include trace
   // if enabled.
   if (Info.getLocation().isValid()) {
-    const SourceManager &SM = Info.getLocation().getManager();
+    const SourceManager &SM = Info.getSourceManager();
     PresumedLoc PLoc = SM.getPresumedLoc(Info.getLocation());
     if (PLoc.isInvalid())
       return;
@@ -884,7 +884,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
   std::string OptionName;
   if (DiagOpts->ShowOptionNames) {
-    if (const char *Opt = Diagnostic::getWarningOptionForDiag(Info.getID())) {
+    if (const char *
+          Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID())) {
       OptionName = "-W";
       OptionName += Opt;
     } else if (Info.getID() == diag::fatal_too_many_errors) {
@@ -893,7 +894,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       // If the diagnostic is an extension diagnostic and not enabled by default
       // then it must have been turned on with -pedantic.
       bool EnabledByDefault;
-      if (Diagnostic::isBuiltinExtensionDiag(Info.getID(), EnabledByDefault) &&
+      if (DiagnosticIDs::isBuiltinExtensionDiag(Info.getID(),
+                                                EnabledByDefault) &&
           !EnabledByDefault)
         OptionName = "-pedantic";
     }
@@ -902,7 +904,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // If the user wants to see category information, include it too.
   unsigned DiagCategory = 0;
   if (DiagOpts->ShowCategories)
-    DiagCategory = Diagnostic::getCategoryNumberForDiag(Info.getID());
+    DiagCategory = DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
 
   // If there is any categorization information, include it.
   if (!OptionName.empty() || DiagCategory != 0) {
@@ -920,7 +922,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
         OutStr += llvm::utostr(DiagCategory);
       else {
         assert(DiagOpts->ShowCategories == 2 && "Invalid ShowCategories value");
-        OutStr += Diagnostic::getCategoryNameFromID(DiagCategory);
+        OutStr += DiagnosticIDs::getCategoryNameFromID(DiagCategory);
       }
     }
     
@@ -962,7 +964,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
        (LastCaretDiagnosticWasNote && Level != Diagnostic::Note) ||
        Info.getNumFixItHints())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
-    LastLoc = Info.getLocation();
+    LastLoc = FullSourceLoc(Info.getLocation(), Info.getSourceManager());
     LastCaretDiagnosticWasNote = (Level == Diagnostic::Note);
 
     // Get the ranges into a local array we can hack on.

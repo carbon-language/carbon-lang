@@ -432,12 +432,7 @@ class SourceManager {
   void operator=(const SourceManager&);
 public:
   SourceManager(Diagnostic &Diag, FileManager &FileMgr,
-                const FileSystemOptions &FSOpts)
-    : Diag(Diag), FileMgr(FileMgr), FileSystemOpts(FSOpts),
-      ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
-      NumBinaryProbes(0) {
-    clearIDTables();
-  }
+                const FileSystemOptions &FSOpts);
   ~SourceManager();
 
   void clearIDTables();

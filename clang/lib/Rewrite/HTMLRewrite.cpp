@@ -486,7 +486,8 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
 
   // Temporarily change the diagnostics object so that we ignore any generated
   // diagnostics from this pass.
-  Diagnostic TmpDiags(new IgnoringDiagClient);
+  Diagnostic TmpDiags(PP.getDiagnostics().getDiagnosticIDs(),
+                      new IgnoringDiagClient);
 
   // FIXME: This is a huge hack; we reuse the input preprocessor because we want
   // its state, but we aren't actually changing it (we hope). This should really

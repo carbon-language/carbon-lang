@@ -1633,8 +1633,7 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
 
 DiagnosticBuilder
 RecordLayoutBuilder::Diag(SourceLocation Loc, unsigned DiagID) {
-  return Context.getDiagnostics().Report(
-                        FullSourceLoc(Loc, Context.getSourceManager()), DiagID);
+  return Context.getDiagnostics().Report(Loc, DiagID);
 }
 
 namespace {

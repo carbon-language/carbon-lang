@@ -4383,7 +4383,7 @@ DiagnosticBuilder ASTReader::Diag(unsigned DiagID) {
 }
 
 DiagnosticBuilder ASTReader::Diag(SourceLocation Loc, unsigned DiagID) {
-  return Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
+  return Diags.Report(Loc, DiagID);
 }
 
 /// \brief Retrieve the identifier table associated with the

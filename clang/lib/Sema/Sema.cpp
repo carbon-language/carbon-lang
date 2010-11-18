@@ -438,12 +438,12 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
     return;
   
   if (TemplateDeductionInfo *Info = SemaRef.isSFINAEContext()) {
-    switch (Diagnostic::getDiagnosticSFINAEResponse(getDiagID())) {
-    case Diagnostic::SFINAE_Report:
+    switch (DiagnosticIDs::getDiagnosticSFINAEResponse(getDiagID())) {
+    case DiagnosticIDs::SFINAE_Report:
       // Fall through; we'll report the diagnostic below.
       break;
       
-    case Diagnostic::SFINAE_SubstitutionFailure:
+    case DiagnosticIDs::SFINAE_SubstitutionFailure:
       // Count this failure so that we know that template argument deduction
       // has failed.
       ++SemaRef.NumSFINAEErrors;
@@ -452,7 +452,7 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
       Clear();
       return;
       
-    case Diagnostic::SFINAE_Suppress:
+    case DiagnosticIDs::SFINAE_Suppress:
       // Make a copy of this suppressed diagnostic and store it with the
       // template-deduction information;
       FlushCounts();
@@ -478,7 +478,7 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
   // that is different from the last template instantiation where
   // we emitted an error, print a template instantiation
   // backtrace.
-  if (!SemaRef.Diags.isBuiltinNote(DiagID) &&
+  if (!DiagnosticIDs::isBuiltinNote(DiagID) &&
       !SemaRef.ActiveTemplateInstantiations.empty() &&
       SemaRef.ActiveTemplateInstantiations.back()
         != SemaRef.LastTemplateInstantiationErrorContext) {
@@ -489,7 +489,7 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
 }
 
 Sema::SemaDiagnosticBuilder Sema::Diag(SourceLocation Loc, unsigned DiagID) {
-  DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
+  DiagnosticBuilder DB = Diags.Report(Loc, DiagID);
   return SemaDiagnosticBuilder(DB, *this, DiagID);
 }
 

@@ -404,7 +404,7 @@ void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
 /// option.
 static void PrintDiagnosticCategories(llvm::raw_ostream &OS) {
   for (unsigned i = 1; // Skip the empty category.
-       const char *CategoryName = Diagnostic::getCategoryNameFromID(i); ++i)
+       const char *CategoryName = DiagnosticIDs::getCategoryNameFromID(i); ++i)
     OS << i << ',' << CategoryName << '\n';
 }
 

@@ -78,7 +78,7 @@ void PrettyStackTraceParserEntry::print(llvm::raw_ostream &OS) const {
 
 
 DiagnosticBuilder Parser::Diag(SourceLocation Loc, unsigned DiagID) {
-  return Diags.Report(FullSourceLoc(Loc, PP.getSourceManager()), DiagID);
+  return Diags.Report(Loc, DiagID);
 }
 
 DiagnosticBuilder Parser::Diag(const Token &Tok, unsigned DiagID) {

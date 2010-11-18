@@ -525,7 +525,7 @@ void CXXNameMangler::mangleUnscopedTemplateName(TemplateName Template) {
     Diagnostic &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
                                       "cannot mangle dependent operator name");
-    Diags.Report(FullSourceLoc(), DiagID);
+    Diags.Report(DiagID);
     return;
   }
   
@@ -1672,9 +1672,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     Diagnostic &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
                                      "cannot yet mangle expression type %0");
-    Diags.Report(FullSourceLoc(E->getExprLoc(),
-                               getASTContext().getSourceManager()),
-                 DiagID)
+    Diags.Report(E->getExprLoc(), DiagID)
       << E->getStmtClassName() << E->getSourceRange();
     break;
   }
