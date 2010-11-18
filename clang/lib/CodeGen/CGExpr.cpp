@@ -1198,7 +1198,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       V = Builder.CreateLoad(V, "tmp");
 
     LValue LV = MakeAddrLValue(V, E->getType(), Alignment);
-    if (NonGCable) {
+    if (NonGCable && !VD->getType()->isReferenceType()) {
       LV.getQuals().removeObjCGCAttr();
       LV.setNonGC(true);
     }
