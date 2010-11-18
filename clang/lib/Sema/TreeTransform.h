@@ -1142,26 +1142,32 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildMemberExpr(Expr *Base, SourceLocation OpLoc,
-                                     bool isArrow,
-                                     NestedNameSpecifier *Qualifier,
-                                     SourceRange QualifierRange,
-                                     const DeclarationNameInfo &MemberNameInfo,
-                                     ValueDecl *Member,
-                                     NamedDecl *FoundDecl,
+                               bool isArrow,
+                               NestedNameSpecifier *Qualifier,
+                               SourceRange QualifierRange,
+                               const DeclarationNameInfo &MemberNameInfo,
+                               ValueDecl *Member,
+                               NamedDecl *FoundDecl,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
-                                     NamedDecl *FirstQualifierInScope) {
+                               NamedDecl *FirstQualifierInScope) {
     if (!Member->getDeclName()) {
-      // We have a reference to an unnamed field.
+      // We have a reference to an unnamed field.  This is always the
+      // base of an anonymous struct/union member access, i.e. the
+      // field is always of record type.
       assert(!Qualifier && "Can't have an unnamed field with a qualifier!");
+      assert(Member->getType()->isRecordType() &&
+             "unnamed member not of record type?");
 
       if (getSema().PerformObjectMemberConversion(Base, Qualifier,
                                                   FoundDecl, Member))
         return ExprError();
 
+      ExprValueKind VK = isArrow ? VK_LValue : Base->getValueKind();
       MemberExpr *ME =
         new (getSema().Context) MemberExpr(Base, isArrow,
                                            Member, MemberNameInfo,
-                                           cast<FieldDecl>(Member)->getType());
+                                           cast<FieldDecl>(Member)->getType(),
+                                           VK, OK_Ordinary);
       return getSema().Owned(ME);
     }
 
@@ -1903,18 +1909,21 @@ public:
     // perform semantic analysis again.
     if (Super)
       return Owned(
-                   new (getSema().Context) ObjCImplicitSetterGetterRefExpr(Getter, T,
-                                                                           Setter,
-                                                                           NameLoc,
-                                                                           SuperLoc,
-                                                                           SuperTy));
+        new (getSema().Context) ObjCImplicitSetterGetterRefExpr(Getter, T,
+                                                                VK_LValue,
+                                                                OK_Ordinary,
+                                                                Setter,
+                                                                NameLoc,
+                                                                SuperLoc,
+                                                                SuperTy));
     else
       return Owned(
-                   new (getSema().Context) ObjCImplicitSetterGetterRefExpr(
-                                                                     Getter, T,
-                                                                     Setter,
-                                                                     NameLoc,
-                                                                     Base));
+        new (getSema().Context) ObjCImplicitSetterGetterRefExpr(Getter, T,
+                                                                VK_LValue,
+                                                                OK_Ordinary,
+                                                                Setter,
+                                                                NameLoc,
+                                                                Base));
   }
 
   /// \brief Build a new Objective-C "isa" expression.
@@ -1948,8 +1957,8 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildShuffleVectorExpr(SourceLocation BuiltinLoc,
-                                            MultiExprArg SubExprs,
-                                            SourceLocation RParenLoc) {
+                                      MultiExprArg SubExprs,
+                                      SourceLocation RParenLoc) {
     // Find the declaration for __builtin_shufflevector
     const IdentifierInfo &Name
       = SemaRef.Context.Idents.get("__builtin_shufflevector");
@@ -1961,7 +1970,7 @@ public:
     FunctionDecl *Builtin = cast<FunctionDecl>(*Lookup.first);
     Expr *Callee
       = new (SemaRef.Context) DeclRefExpr(Builtin, Builtin->getType(),
-                                          BuiltinLoc);
+                                          VK_LValue, BuiltinLoc);
     SemaRef.UsualUnaryConversions(Callee);
 
     // Build the CallExpr
@@ -1970,6 +1979,7 @@ public:
     CallExpr *TheCall = new (SemaRef.Context) CallExpr(SemaRef.Context, Callee,
                                                        Subs, NumSubExprs,
                                                    Builtin->getCallResultType(),
+                            Expr::getValueKindForType(Builtin->getResultType()),
                                                        RParenLoc);
     ExprResult OwnedCall(SemaRef.Owned(TheCall));
 

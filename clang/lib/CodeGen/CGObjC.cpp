@@ -393,9 +393,9 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     SourceLocation Loc = PD->getLocation();
     ValueDecl *Self = OMD->getSelfDecl();
     ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
-    DeclRefExpr Base(Self, Self->getType(), Loc);
+    DeclRefExpr Base(Self, Self->getType(), VK_RValue, Loc);
     ParmVarDecl *ArgDecl = *OMD->param_begin();
-    DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), Loc);
+    DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), VK_LValue, Loc);
     ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base, true, true);
     
     // The property type can differ from the ivar type in some situations with
@@ -406,11 +406,11 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                  Ivar->getType(), CK_BitCast, &Arg,
                                  VK_RValue);
       BinaryOperator Assign(&IvarRef, &ArgCasted, BO_Assign,
-                            Ivar->getType(), Loc);
+                            Ivar->getType(), VK_RValue, OK_Ordinary, Loc);
       EmitStmt(&Assign);
     } else {
       BinaryOperator Assign(&IvarRef, &Arg, BO_Assign,
-                            Ivar->getType(), Loc);
+                            Ivar->getType(), VK_RValue, OK_Ordinary, Loc);
       EmitStmt(&Assign);
     }
   }

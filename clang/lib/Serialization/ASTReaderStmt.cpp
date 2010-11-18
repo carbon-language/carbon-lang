@@ -59,7 +59,7 @@ namespace clang {
 
     /// \brief The number of record fields required for the Expr class
     /// itself.
-    static const unsigned NumExprFields = NumStmtFields + 3;
+    static const unsigned NumExprFields = NumStmtFields + 5;
     
     /// \brief Read and initialize a ExplicitTemplateArgumentList structure.
     void ReadExplicitTemplateArgumentList(ExplicitTemplateArgumentList &ArgList,
@@ -400,6 +400,8 @@ void ASTStmtReader::VisitExpr(Expr *E) {
   E->setType(Reader.GetType(Record[Idx++]));
   E->setTypeDependent(Record[Idx++]);
   E->setValueDependent(Record[Idx++]);
+  E->setValueKind(static_cast<ExprValueKind>(Record[Idx++]));
+  E->setObjectKind(static_cast<ExprObjectKind>(Record[Idx++]));
   assert(Idx == NumExprFields && "Incorrect expression field count");
 }
 
@@ -625,7 +627,6 @@ void ASTStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
 
 void ASTStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
-  E->setValueKind(static_cast<ExprValueKind>(Record[Idx++]));
 }
 
 void ASTStmtReader::VisitExplicitCastExpr(ExplicitCastExpr *E) {
@@ -1284,7 +1285,6 @@ void ASTStmtReader::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
 
 void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
-  E->setValueKind(static_cast<ExprValueKind>(Record[Idx++]));
 }
 
 Stmt *ASTReader::ReadStmt(PerFileData &F) {
@@ -1523,6 +1523,8 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       DeclAccessPair FoundDecl = DeclAccessPair::make(FoundD, AS);
 
       QualType T = GetType(Record[Idx++]);
+      ExprValueKind VK = static_cast<ExprValueKind>(Record[Idx++]);
+      ExprObjectKind OK = static_cast<ExprObjectKind>(Record[Idx++]);
       Expr *Base = ReadSubExpr();
       ValueDecl *MemberD = cast<ValueDecl>(GetDecl(Record[Idx++]));
       SourceLocation MemberLoc = ReadSourceLocation(F, Record, Idx);
@@ -1531,7 +1533,7 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
 
       S = MemberExpr::Create(*Context, Base, IsArrow, NNS, QualifierRange,
                              MemberD, FoundDecl, MemberNameInfo,
-                             NumTemplateArgs ? &ArgInfo : 0, T);
+                             NumTemplateArgs ? &ArgInfo : 0, T, VK, OK);
       ReadDeclarationNameLoc(F, cast<MemberExpr>(S)->MemberDNLoc,
                              MemberD->getDeclName(), Record, Idx);
       break;

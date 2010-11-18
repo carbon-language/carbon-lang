@@ -30,7 +30,8 @@ class ObjCStringLiteral : public Expr {
   SourceLocation AtLoc;
 public:
   ObjCStringLiteral(StringLiteral *SL, QualType T, SourceLocation L)
-    : Expr(ObjCStringLiteralClass, T, false, false), String(SL), AtLoc(L) {}
+    : Expr(ObjCStringLiteralClass, T, VK_RValue, OK_Ordinary, false, false),
+      String(SL), AtLoc(L) {}
   explicit ObjCStringLiteral(EmptyShell Empty)
     : Expr(ObjCStringLiteralClass, Empty) {}
 
@@ -64,7 +65,8 @@ class ObjCEncodeExpr : public Expr {
 public:
   ObjCEncodeExpr(QualType T, TypeSourceInfo *EncodedType,
                  SourceLocation at, SourceLocation rp)
-    : Expr(ObjCEncodeExprClass, T, EncodedType->getType()->isDependentType(),
+    : Expr(ObjCEncodeExprClass, T, VK_LValue, OK_Ordinary,
+           EncodedType->getType()->isDependentType(),
            EncodedType->getType()->isDependentType()), 
       EncodedType(EncodedType), AtLoc(at), RParenLoc(rp) {}
 
@@ -104,8 +106,8 @@ class ObjCSelectorExpr : public Expr {
 public:
   ObjCSelectorExpr(QualType T, Selector selInfo,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCSelectorExprClass, T, false, false), SelName(selInfo), AtLoc(at),
-    RParenLoc(rp){}
+  : Expr(ObjCSelectorExprClass, T, VK_RValue, OK_Ordinary, false, false),
+    SelName(selInfo), AtLoc(at), RParenLoc(rp){}
   explicit ObjCSelectorExpr(EmptyShell Empty)
    : Expr(ObjCSelectorExprClass, Empty) {}
 
@@ -144,8 +146,8 @@ class ObjCProtocolExpr : public Expr {
 public:
   ObjCProtocolExpr(QualType T, ObjCProtocolDecl *protocol,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCProtocolExprClass, T, false, false), TheProtocol(protocol),
-    AtLoc(at), RParenLoc(rp) {}
+  : Expr(ObjCProtocolExprClass, T, VK_RValue, OK_Ordinary, false, false),
+    TheProtocol(protocol), AtLoc(at), RParenLoc(rp) {}
   explicit ObjCProtocolExpr(EmptyShell Empty)
     : Expr(ObjCProtocolExprClass, Empty) {}
 
@@ -180,11 +182,11 @@ class ObjCIvarRefExpr : public Expr {
   bool IsFreeIvar:1;   // True if ivar reference has no base (self assumed).
 
 public:
-  ObjCIvarRefExpr(ObjCIvarDecl *d,
-                  QualType t, SourceLocation l, Expr *base,
+  ObjCIvarRefExpr(ObjCIvarDecl *d, QualType t,
+                  SourceLocation l, Expr *base,
                   bool arrow = false, bool freeIvar = false) :
-    Expr(ObjCIvarRefExprClass, t, /*TypeDependent=*/false,
-         base->isValueDependent()), D(d),
+    Expr(ObjCIvarRefExprClass, t, VK_LValue, OK_Ordinary,
+         /*TypeDependent=*/false, base->isValueDependent()), D(d),
          Loc(l), Base(base), IsArrow(arrow),
          IsFreeIvar(freeIvar) {}
 
@@ -241,15 +243,18 @@ private:
   
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
+                      ExprValueKind VK, ExprObjectKind OK,
                       SourceLocation l, Expr *base)
-    : Expr(ObjCPropertyRefExprClass, t, /*TypeDependent=*/false, 
-           base->isValueDependent()), 
+    : Expr(ObjCPropertyRefExprClass, t, VK, OK,
+           /*TypeDependent=*/false, base->isValueDependent()),
       AsProperty(PD), IdLoc(l), BaseExprOrSuperType(base) {
   }
   
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
+                      ExprValueKind VK, ExprObjectKind OK,
                       SourceLocation l, SourceLocation sl, QualType st)
-  : Expr(ObjCPropertyRefExprClass, t, /*TypeDependent=*/false, false), 
+  : Expr(ObjCPropertyRefExprClass, t, VK, OK,
+         /*TypeDependent=*/false, false), 
     AsProperty(PD), IdLoc(l), SuperLoc(sl), 
     BaseExprOrSuperType(st.getTypePtr()) {
   }
@@ -337,33 +342,33 @@ class ObjCImplicitSetterGetterRefExpr : public Expr {
   QualType SuperTy;
   
 public:
-  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
-                 QualType t,
-                 ObjCMethodDecl *setter,
-                 SourceLocation l, Expr *base)
-    : Expr(ObjCImplicitSetterGetterRefExprClass, t, /*TypeDependent=*/false, 
-           base->isValueDependent()),
+  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter, QualType t,
+                                  ExprValueKind VK, ExprObjectKind OK,
+                                  ObjCMethodDecl *setter,
+                                  SourceLocation l, Expr *base)
+    : Expr(ObjCImplicitSetterGetterRefExprClass, t, VK, OK,
+           /*TypeDependent=*/false, base->isValueDependent()),
       Setter(setter), Getter(getter), MemberLoc(l), Base(base),
       InterfaceDecl(0), ClassLoc(SourceLocation()) {}
   
-  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
-                                  QualType t,
+  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter, QualType t,
+                                  ExprValueKind VK, ExprObjectKind OK,
                                   ObjCMethodDecl *setter,
                                   SourceLocation l,
                                   SourceLocation sl, 
                                   QualType st)
-  : Expr(ObjCImplicitSetterGetterRefExprClass, t, /*TypeDependent=*/false, 
-         false),
-  Setter(setter), Getter(getter), MemberLoc(l),
-  Base(0), InterfaceDecl(0), ClassLoc(SourceLocation()), 
-  SuperLoc(sl), SuperTy(st) {
+  : Expr(ObjCImplicitSetterGetterRefExprClass, t, VK, OK,
+         /*TypeDependent=*/false, false),
+    Setter(setter), Getter(getter), MemberLoc(l),
+    Base(0), InterfaceDecl(0), ClassLoc(SourceLocation()), 
+    SuperLoc(sl), SuperTy(st) {
   }
   
-  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
-                 QualType t,
-                 ObjCMethodDecl *setter,
+  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter, QualType t,
+                                  ExprValueKind VK, ExprObjectKind OK,
+                                  ObjCMethodDecl *setter,
                  SourceLocation l, ObjCInterfaceDecl *C, SourceLocation CL)
-    : Expr(ObjCImplicitSetterGetterRefExprClass, t, false, false),
+    : Expr(ObjCImplicitSetterGetterRefExprClass, t, VK, OK, false, false),
       Setter(setter), Getter(getter), MemberLoc(l), Base(0), InterfaceDecl(C),
       ClassLoc(CL) {}
   explicit ObjCImplicitSetterGetterRefExpr(EmptyShell Empty)
@@ -471,7 +476,7 @@ class ObjCMessageExpr : public Expr {
     : Expr(ObjCMessageExprClass, Empty), NumArgs(NumArgs), Kind(0), 
       HasMethod(0), SelectorOrMethod(0) { }
 
-  ObjCMessageExpr(QualType T,
+  ObjCMessageExpr(QualType T, ExprValueKind VK,
                   SourceLocation LBracLoc,
                   SourceLocation SuperLoc,
                   bool IsInstanceSuper,
@@ -480,14 +485,14 @@ class ObjCMessageExpr : public Expr {
                   ObjCMethodDecl *Method,
                   Expr **Args, unsigned NumArgs,
                   SourceLocation RBracLoc);
-  ObjCMessageExpr(QualType T,
+  ObjCMessageExpr(QualType T, ExprValueKind VK,
                   SourceLocation LBracLoc,
                   TypeSourceInfo *Receiver,
                   Selector Sel, 
                   ObjCMethodDecl *Method,
                   Expr **Args, unsigned NumArgs,
                   SourceLocation RBracLoc);
-  ObjCMessageExpr(QualType T,
+  ObjCMessageExpr(QualType T, ExprValueKind VK,
                   SourceLocation LBracLoc,
                   Expr *Receiver,
                   Selector Sel, 
@@ -525,6 +530,10 @@ public:
   ///
   /// \param T The result type of this message.
   ///
+  /// \param VK The value kind of this message.  A message returning
+  /// a l-value or r-value reference will be an l-value or x-value,
+  /// respectively.
+  ///
   /// \param LBrac The location of the open square bracket '['.
   ///
   /// \param SuperLoc The location of the "super" keyword.
@@ -542,7 +551,8 @@ public:
   /// \param NumArgs The number of arguments.
   ///
   /// \param RBracLoc The location of the closing square bracket ']'.
-  static ObjCMessageExpr *Create(ASTContext &Context, QualType T,
+  static ObjCMessageExpr *Create(ASTContext &Context, QualType T, 
+                                 ExprValueKind VK,
                                  SourceLocation LBracLoc,
                                  SourceLocation SuperLoc,
                                  bool IsInstanceSuper,
@@ -557,6 +567,10 @@ public:
   /// \param Context The ASTContext in which this expression will be created.
   ///
   /// \param T The result type of this message.
+  ///
+  /// \param VK The value kind of this message.  A message returning
+  /// a l-value or r-value reference will be an l-value or x-value,
+  /// respectively.
   ///
   /// \param LBrac The location of the open square bracket '['.
   ///
@@ -574,6 +588,7 @@ public:
   ///
   /// \param RBracLoc The location of the closing square bracket ']'.
   static ObjCMessageExpr *Create(ASTContext &Context, QualType T,
+                                 ExprValueKind VK,
                                  SourceLocation LBracLoc,
                                  TypeSourceInfo *Receiver,
                                  Selector Sel, 
@@ -586,6 +601,10 @@ public:
   /// \param Context The ASTContext in which this expression will be created.
   ///
   /// \param T The result type of this message.
+  ///
+  /// \param VK The value kind of this message.  A message returning
+  /// a l-value or r-value reference will be an l-value or x-value,
+  /// respectively.
   ///
   /// \param LBrac The location of the open square bracket '['.
   ///
@@ -603,6 +622,7 @@ public:
   ///
   /// \param RBracLoc The location of the closing square bracket ']'.
   static ObjCMessageExpr *Create(ASTContext &Context, QualType T,
+                                 ExprValueKind VK,
                                  SourceLocation LBracLoc,
                                  Expr *Receiver,
                                  Selector Sel, 
@@ -816,8 +836,8 @@ class ObjCIsaExpr : public Expr {
   bool IsArrow;
 public:
   ObjCIsaExpr(Expr *base, bool isarrow, SourceLocation l, QualType ty)
-    : Expr(ObjCIsaExprClass, ty, /*TypeDependent=*/false, 
-           base->isValueDependent()),
+    : Expr(ObjCIsaExprClass, ty, VK_LValue, OK_Ordinary,
+           /*TypeDependent=*/false, base->isValueDependent()),
       Base(base), IsaMemberLoc(l), IsArrow(isarrow) {}
 
   /// \brief Build an empty expression.

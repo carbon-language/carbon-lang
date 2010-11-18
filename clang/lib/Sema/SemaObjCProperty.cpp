@@ -485,8 +485,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // FIXME. Eventually we want to do this for Objective-C as well.
       ImplicitParamDecl *SelfDecl = getterMethod->getSelfDecl();
       DeclRefExpr *SelfExpr = 
-        new (Context) DeclRefExpr(SelfDecl,SelfDecl->getType(),
-                                  SourceLocation());
+        new (Context) DeclRefExpr(SelfDecl, SelfDecl->getType(),
+                                  VK_RValue, SourceLocation());
       Expr *IvarRefExpr =
         new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), AtLoc,
                                       SelfExpr, true, true);
@@ -512,15 +512,15 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // FIXME. Eventually we want to do this for Objective-C as well.
       ImplicitParamDecl *SelfDecl = setterMethod->getSelfDecl();
       DeclRefExpr *SelfExpr = 
-        new (Context) DeclRefExpr(SelfDecl,SelfDecl->getType(),
-                                  SourceLocation());
+        new (Context) DeclRefExpr(SelfDecl, SelfDecl->getType(),
+                                  VK_RValue, SourceLocation());
       Expr *lhs =
         new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), AtLoc,
                                       SelfExpr, true, true);
       ObjCMethodDecl::param_iterator P = setterMethod->param_begin();
       ParmVarDecl *Param = (*P);
-      Expr *rhs = new (Context) DeclRefExpr(Param,Param->getType(),
-                                            SourceLocation());
+      Expr *rhs = new (Context) DeclRefExpr(Param, Param->getType(),
+                                            VK_LValue, SourceLocation());
       ExprResult Res = BuildBinOp(S, lhs->getLocEnd(), 
                                   BO_Assign, lhs, rhs);
       PIDecl->setSetterCXXAssignment(Res.takeAs<Expr>());

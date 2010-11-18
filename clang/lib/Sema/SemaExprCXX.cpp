@@ -605,9 +605,10 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   //
   if (NumExprs == 1) {
     CastKind Kind = CK_Invalid;
+    ExprValueKind VK = VK_RValue;
     CXXCastPath BasePath;
     if (CheckCastTypes(TInfo->getTypeLoc().getSourceRange(), Ty, Exprs[0], 
-                       Kind, BasePath,
+                       Kind, VK, BasePath,
                        /*FunctionalStyle=*/true))
       return ExprError();
 
@@ -615,7 +616,7 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
 
     return Owned(CXXFunctionalCastExpr::Create(Context,
                                                Ty.getNonLValueExprType(Context),
-                                               TInfo, TyBeginLoc, Kind,
+                                               VK, TInfo, TyBeginLoc, Kind,
                                                Exprs[0], &BasePath,
                                                RParenLoc));
   }
@@ -1582,8 +1583,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 /// \brief Check the use of the given variable as a C++ condition in an if,
 /// while, do-while, or switch statement.
 ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
-                                                      SourceLocation StmtLoc,
-                                                      bool ConvertToBoolean) {
+                                        SourceLocation StmtLoc,
+                                        bool ConvertToBoolean) {
   QualType T = ConditionVar->getType();
   
   // C++ [stmt.select]p2:
@@ -1599,7 +1600,8 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
 
   Expr *Condition = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
                                         ConditionVar->getLocation(), 
-                                 ConditionVar->getType().getNonReferenceType());
+                            ConditionVar->getType().getNonReferenceType(),
+                            Expr::getValueKindForType(ConditionVar->getType()));
   if (ConvertToBoolean && CheckBooleanCondition(Condition, StmtLoc))
     return ExprError();
   
@@ -2331,8 +2333,10 @@ ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
                                                 RParen, Context.BoolTy));
 }
 
-QualType Sema::CheckPointerToMemberOperands(
-  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isIndirect) {
+QualType Sema::CheckPointerToMemberOperands(Expr *&lex, Expr *&rex,
+                                            ExprValueKind &VK,
+                                            SourceLocation Loc,
+                                            bool isIndirect) {
   const char *OpSpelling = isIndirect ? "->*" : ".*";
   // C++ 5.5p2
   //   The binary operator .* [p3: ->*] binds its second operand, which shall
@@ -2361,7 +2365,7 @@ QualType Sema::CheckPointerToMemberOperands(
   QualType LType = lex->getType();
   if (isIndirect) {
     if (const PointerType *Ptr = LType->getAs<PointerType>())
-      LType = Ptr->getPointeeType().getNonReferenceType();
+      LType = Ptr->getPointeeType();
     else {
       Diag(Loc, diag::err_bad_memptr_lhs)
         << OpSpelling << 1 << LType
@@ -2402,6 +2406,7 @@ QualType Sema::CheckPointerToMemberOperands(
     Diag(Loc, diag::err_pointer_to_member_type) << isIndirect;
      return QualType();
   }
+
   // C++ 5.5p2
   //   The result is an object or a function of the type specified by the
   //   second operand.
@@ -2416,6 +2421,21 @@ QualType Sema::CheckPointerToMemberOperands(
   // We probably need a "MemberFunctionClosureType" or something like that.
   QualType Result = MemPtr->getPointeeType();
   Result = Context.getCVRQualifiedType(Result, LType.getCVRQualifiers());
+
+  // C++ [expr.mptr.oper]p6:
+  //   The result of a .* expression whose second operand is a pointer
+  //   to a data member is of the same value category as its
+  //   first operand. The result of a .* expression whose second
+  //   operand is a pointer to a member function is a prvalue. The
+  //   result of an ->* expression is an lvalue if its second operand
+  //   is a pointer to data member and a prvalue otherwise.
+  if (Result->isFunctionType())
+    VK = VK_RValue;
+  else if (isIndirect)
+    VK = VK_LValue;
+  else
+    VK = lex->getValueKind();
+
   return Result;
 }
 
@@ -2573,7 +2593,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E, QualType T) {
 /// See C++ [expr.cond]. Note that LHS is never null, even for the GNU x ?: y
 /// extension. In this case, LHS == Cond. (But they're not aliases.)
 QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
-                                           Expr *&SAVE,
+                                           Expr *&SAVE, ExprValueKind &VK,
                                            SourceLocation QuestionLoc) {
   // FIXME: Handle C99's complex types, vector types, block pointers and Obj-C++
   // interface pointers.
@@ -2590,6 +2610,9 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     if (CheckCXXBooleanCondition(Cond))
       return QualType();
   }
+
+  // Assume r-value.
+  VK = VK_RValue;
 
   // Either of the arguments dependent?
   if (LHS->isTypeDependent() || RHS->isTypeDependent())
@@ -2670,19 +2693,20 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   }
 
   // C++0x 5.16p4
-  //   If the second and third operands are lvalues and have the same type,
-  //   the result is of that type [...]
+  //   If the second and third operands are glvalues of the same value
+  //   category and have the same type, the result is of that type and
+  //   value category and it is a bit-field if the second or the third
+  //   operand is a bit-field, or if both are bit-fields.
+  // We can't support the bitfield parts of that correctly right now,
+  // though, so we just require both sides to be ordinary values.
   bool Same = Context.hasSameType(LTy, RTy);
-  if (Same && LHS->isLvalue(Context) == Expr::LV_Valid &&
-      RHS->isLvalue(Context) == Expr::LV_Valid) {
-    // In this context, property reference is really a message call and
-    // is not considered an l-value.
-    bool lhsProperty = (isa<ObjCPropertyRefExpr>(LHS) || 
-                        isa<ObjCImplicitSetterGetterRefExpr>(LHS));
-    bool rhsProperty = (isa<ObjCPropertyRefExpr>(RHS) || 
-                        isa<ObjCImplicitSetterGetterRefExpr>(RHS));
-    if (!lhsProperty && !rhsProperty)
-      return LTy;
+  if (Same &&
+      LHS->getValueKind() != VK_RValue &&
+      LHS->getValueKind() == RHS->getValueKind() &&
+      LHS->getObjectKind() == OK_Ordinary &&
+      RHS->getObjectKind() == OK_Ordinary) {
+    VK = LHS->getValueKind();
+    return LTy;
   }
 
   // C++0x 5.16p5
@@ -3456,11 +3480,15 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
 
   MemberExpr *ME = 
       new (Context) MemberExpr(Exp, /*IsArrow=*/false, Method,
-                               SourceLocation(), Method->getType());
-  QualType ResultType = Method->getCallResultType();
+                               SourceLocation(), Method->getType(),
+                               VK_RValue, OK_Ordinary);
+  QualType ResultType = Method->getResultType();
+  ExprValueKind VK = Expr::getValueKindForType(ResultType);
+  ResultType = ResultType.getNonLValueExprType(Context);
+
   MarkDeclarationReferenced(Exp->getLocStart(), Method);
   CXXMemberCallExpr *CE =
-    new (Context) CXXMemberCallExpr(Context, ME, 0, 0, ResultType,
+    new (Context) CXXMemberCallExpr(Context, ME, 0, 0, ResultType, VK,
                                     Exp->getLocEnd());
   return CE;
 }

@@ -116,7 +116,8 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
                        SourceLocation startLoc, SourceLocation endLoc,
                        SourceLocation constructorLParen,
                        SourceLocation constructorRParen)
-  : Expr(CXXNewExprClass, ty, ty->isDependentType(), ty->isDependentType()),
+  : Expr(CXXNewExprClass, ty, VK_RValue, OK_Ordinary,
+         ty->isDependentType(), ty->isDependentType()),
     GlobalNew(globalNew),
     Initializer(initializer), SubExprs(0), OperatorNew(operatorNew),
     OperatorDelete(operatorDelete), Constructor(constructor),
@@ -247,7 +248,7 @@ OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C, QualType T,
                            bool HasTemplateArgs,
                            UnresolvedSetIterator Begin, 
                            UnresolvedSetIterator End)
-  : Expr(K, T, Dependent, Dependent),
+  : Expr(K, T, VK_LValue, OK_Ordinary, Dependent, Dependent),
   Results(0), NumResults(0), NameInfo(NameInfo), Qualifier(Qualifier), 
   QualifierRange(QRange), HasExplicitTemplateArgs(HasTemplateArgs)
 {
@@ -436,6 +437,7 @@ const char *CXXNamedCastExpr::getCastName() const {
 }
 
 CXXStaticCastExpr *CXXStaticCastExpr::Create(ASTContext &C, QualType T,
+                                             ExprValueKind VK,
                                              CastKind K, Expr *Op,
                                              const CXXCastPath *BasePath,
                                              TypeSourceInfo *WrittenTy,
@@ -444,7 +446,7 @@ CXXStaticCastExpr *CXXStaticCastExpr::Create(ASTContext &C, QualType T,
   void *Buffer = C.Allocate(sizeof(CXXStaticCastExpr)
                             + PathSize * sizeof(CXXBaseSpecifier*));
   CXXStaticCastExpr *E =
-    new (Buffer) CXXStaticCastExpr(T, K, Op, PathSize, WrittenTy, L);
+    new (Buffer) CXXStaticCastExpr(T, VK, K, Op, PathSize, WrittenTy, L);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -457,6 +459,7 @@ CXXStaticCastExpr *CXXStaticCastExpr::CreateEmpty(ASTContext &C,
 }
 
 CXXDynamicCastExpr *CXXDynamicCastExpr::Create(ASTContext &C, QualType T,
+                                               ExprValueKind VK,
                                                CastKind K, Expr *Op,
                                                const CXXCastPath *BasePath,
                                                TypeSourceInfo *WrittenTy,
@@ -465,7 +468,7 @@ CXXDynamicCastExpr *CXXDynamicCastExpr::Create(ASTContext &C, QualType T,
   void *Buffer = C.Allocate(sizeof(CXXDynamicCastExpr)
                             + PathSize * sizeof(CXXBaseSpecifier*));
   CXXDynamicCastExpr *E =
-    new (Buffer) CXXDynamicCastExpr(T, K, Op, PathSize, WrittenTy, L);
+    new (Buffer) CXXDynamicCastExpr(T, VK, K, Op, PathSize, WrittenTy, L);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -478,14 +481,15 @@ CXXDynamicCastExpr *CXXDynamicCastExpr::CreateEmpty(ASTContext &C,
 }
 
 CXXReinterpretCastExpr *
-CXXReinterpretCastExpr::Create(ASTContext &C, QualType T, CastKind K, Expr *Op,
+CXXReinterpretCastExpr::Create(ASTContext &C, QualType T, ExprValueKind VK,
+                               CastKind K, Expr *Op,
                                const CXXCastPath *BasePath,
                                TypeSourceInfo *WrittenTy, SourceLocation L) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
   void *Buffer =
     C.Allocate(sizeof(CXXReinterpretCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
   CXXReinterpretCastExpr *E =
-    new (Buffer) CXXReinterpretCastExpr(T, K, Op, PathSize, WrittenTy, L);
+    new (Buffer) CXXReinterpretCastExpr(T, VK, K, Op, PathSize, WrittenTy, L);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -497,10 +501,11 @@ CXXReinterpretCastExpr::CreateEmpty(ASTContext &C, unsigned PathSize) {
   return new (Buffer) CXXReinterpretCastExpr(EmptyShell(), PathSize);
 }
 
-CXXConstCastExpr *CXXConstCastExpr::Create(ASTContext &C, QualType T, Expr *Op,
+CXXConstCastExpr *CXXConstCastExpr::Create(ASTContext &C, QualType T,
+                                           ExprValueKind VK, Expr *Op,
                                            TypeSourceInfo *WrittenTy,
                                            SourceLocation L) {
-  return new (C) CXXConstCastExpr(T, Op, WrittenTy, L);
+  return new (C) CXXConstCastExpr(T, VK, Op, WrittenTy, L);
 }
 
 CXXConstCastExpr *CXXConstCastExpr::CreateEmpty(ASTContext &C) {
@@ -508,7 +513,7 @@ CXXConstCastExpr *CXXConstCastExpr::CreateEmpty(ASTContext &C) {
 }
 
 CXXFunctionalCastExpr *
-CXXFunctionalCastExpr::Create(ASTContext &C, QualType T,
+CXXFunctionalCastExpr::Create(ASTContext &C, QualType T, ExprValueKind VK,
                               TypeSourceInfo *Written, SourceLocation L,
                               CastKind K, Expr *Op, const CXXCastPath *BasePath,
                                SourceLocation R) {
@@ -516,7 +521,7 @@ CXXFunctionalCastExpr::Create(ASTContext &C, QualType T,
   void *Buffer = C.Allocate(sizeof(CXXFunctionalCastExpr)
                             + PathSize * sizeof(CXXBaseSpecifier*));
   CXXFunctionalCastExpr *E =
-    new (Buffer) CXXFunctionalCastExpr(T, Written, L, K, Op, PathSize, R);
+    new (Buffer) CXXFunctionalCastExpr(T, VK, Written, L, K, Op, PathSize, R);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -592,7 +597,7 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
                                    bool ZeroInitialization, 
                                    ConstructionKind ConstructKind,
                                    SourceRange ParenRange)
-: Expr(SC, T,
+: Expr(SC, T, VK_RValue, OK_Ordinary,
        T->isDependentType(),
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
@@ -615,7 +620,8 @@ CXXExprWithTemporaries::CXXExprWithTemporaries(ASTContext &C,
                                                CXXTemporary **temps,
                                                unsigned numtemps)
   : Expr(CXXExprWithTemporariesClass, subexpr->getType(),
-       subexpr->isTypeDependent(), subexpr->isValueDependent()),
+         subexpr->getValueKind(), subexpr->getObjectKind(),
+         subexpr->isTypeDependent(), subexpr->isValueDependent()),
     SubExpr(subexpr), Temps(0), NumTemps(0) {
   if (numtemps) {
     setNumTemporaries(C, numtemps);
@@ -671,6 +677,7 @@ CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
                                                  SourceLocation RParenLoc)
   : Expr(CXXUnresolvedConstructExprClass, 
          Type->getType().getNonReferenceType(),
+         VK_RValue, OK_Ordinary,
          Type->getType()->isDependentType(), true),
     Type(Type),
     LParenLoc(LParenLoc),
@@ -722,7 +729,8 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
                                           NamedDecl *FirstQualifierFoundInScope,
                                           DeclarationNameInfo MemberNameInfo,
                                    const TemplateArgumentListInfo *TemplateArgs)
-  : Expr(CXXDependentScopeMemberExprClass, C.DependentTy, true, true),
+  : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
+         VK_LValue, OK_Ordinary, true, true),
     Base(Base), BaseType(BaseType), IsArrow(IsArrow),
     HasExplicitTemplateArgs(TemplateArgs != 0),
     OperatorLoc(OperatorLoc),

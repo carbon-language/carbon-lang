@@ -194,8 +194,8 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
                          SourceRange QualifierRange,
                          ValueDecl *D, SourceLocation NameLoc,
                          const TemplateArgumentListInfo *TemplateArgs,
-                         QualType T)
-  : Expr(DeclRefExprClass, T, false, false),
+                         QualType T, ExprValueKind VK)
+  : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false),
     DecoratedD(D,
                (Qualifier? HasQualifierFlag : 0) |
                (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
@@ -216,8 +216,8 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
                          SourceRange QualifierRange,
                          ValueDecl *D, const DeclarationNameInfo &NameInfo,
                          const TemplateArgumentListInfo *TemplateArgs,
-                         QualType T)
-  : Expr(DeclRefExprClass, T, false, false),
+                         QualType T, ExprValueKind VK)
+  : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false),
     DecoratedD(D,
                (Qualifier? HasQualifierFlag : 0) |
                (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
@@ -240,10 +240,11 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  ValueDecl *D,
                                  SourceLocation NameLoc,
                                  QualType T,
+                                 ExprValueKind VK,
                                  const TemplateArgumentListInfo *TemplateArgs) {
   return Create(Context, Qualifier, QualifierRange, D,
                 DeclarationNameInfo(D->getDeclName(), NameLoc),
-                T, TemplateArgs);
+                T, VK, TemplateArgs);
 }
 
 DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
@@ -252,6 +253,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  ValueDecl *D,
                                  const DeclarationNameInfo &NameInfo,
                                  QualType T,
+                                 ExprValueKind VK,
                                  const TemplateArgumentListInfo *TemplateArgs) {
   std::size_t Size = sizeof(DeclRefExpr);
   if (Qualifier != 0)
@@ -262,7 +264,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
   
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(Qualifier, QualifierRange, D, NameInfo,
-                               TemplateArgs, T);
+                               TemplateArgs, T, VK);
 }
 
 DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context, bool HasQualifier,
@@ -592,8 +594,9 @@ OverloadedOperatorKind UnaryOperator::getOverloadedOperator(Opcode Opc) {
 //===----------------------------------------------------------------------===//
 
 CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
-                   unsigned numargs, QualType t, SourceLocation rparenloc)
-  : Expr(SC, t,
+                   unsigned numargs, QualType t, ExprValueKind VK,
+                   SourceLocation rparenloc)
+  : Expr(SC, t, VK, OK_Ordinary,
          fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
          fn->isValueDependent() || hasAnyValueDependentArguments(args,numargs)),
     NumArgs(numargs) {
@@ -607,8 +610,8 @@ CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
 }
 
 CallExpr::CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
-                   QualType t, SourceLocation rparenloc)
-  : Expr(CallExprClass, t,
+                   QualType t, ExprValueKind VK, SourceLocation rparenloc)
+  : Expr(CallExprClass, t, VK, OK_Ordinary,
          fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
          fn->isValueDependent() || hasAnyValueDependentArguments(args,numargs)),
     NumArgs(numargs) {
@@ -740,7 +743,8 @@ OffsetOfExpr::OffsetOfExpr(ASTContext &C, QualType type,
                            OffsetOfNode* compsPtr, unsigned numComps, 
                            Expr** exprsPtr, unsigned numExprs,
                            SourceLocation RParenLoc)
-  : Expr(OffsetOfExprClass, type, /*TypeDependent=*/false, 
+  : Expr(OffsetOfExprClass, type, VK_RValue, OK_Ordinary,
+         /*TypeDependent=*/false, 
          /*ValueDependent=*/tsi->getType()->isDependentType() ||
          hasAnyTypeDependentArguments(exprsPtr, numExprs) ||
          hasAnyValueDependentArguments(exprsPtr, numExprs)),
@@ -771,7 +775,9 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                DeclAccessPair founddecl,
                                DeclarationNameInfo nameinfo,
                                const TemplateArgumentListInfo *targs,
-                               QualType ty) {
+                               QualType ty,
+                               ExprValueKind vk,
+                               ExprObjectKind ok) {
   std::size_t Size = sizeof(MemberExpr);
 
   bool hasQualOrFound = (qual != 0 ||
@@ -784,7 +790,8 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
     Size += ExplicitTemplateArgumentList::sizeFor(*targs);
 
   void *Mem = C.Allocate(Size, llvm::alignOf<MemberExpr>());
-  MemberExpr *E = new (Mem) MemberExpr(base, isarrow, memberdecl, nameinfo, ty);
+  MemberExpr *E = new (Mem) MemberExpr(base, isarrow, memberdecl, nameinfo,
+                                       ty, vk, ok);
 
   if (hasQualOrFound) {
     if (qual && qual->isDependent()) {
@@ -964,7 +971,7 @@ ImplicitCastExpr *ImplicitCastExpr::CreateEmpty(ASTContext &C,
 
 
 CStyleCastExpr *CStyleCastExpr::Create(ASTContext &C, QualType T,
-                                       CastKind K, Expr *Op,
+                                       ExprValueKind VK, CastKind K, Expr *Op,
                                        const CXXCastPath *BasePath,
                                        TypeSourceInfo *WrittenTy,
                                        SourceLocation L, SourceLocation R) {
@@ -972,7 +979,7 @@ CStyleCastExpr *CStyleCastExpr::Create(ASTContext &C, QualType T,
   void *Buffer =
     C.Allocate(sizeof(CStyleCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
   CStyleCastExpr *E =
-    new (Buffer) CStyleCastExpr(T, K, Op, PathSize, WrittenTy, L, R);
+    new (Buffer) CStyleCastExpr(T, VK, K, Op, PathSize, WrittenTy, L, R);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -1089,7 +1096,7 @@ OverloadedOperatorKind BinaryOperator::getOverloadedOperator(Opcode Opc) {
 InitListExpr::InitListExpr(ASTContext &C, SourceLocation lbraceloc,
                            Expr **initExprs, unsigned numInits,
                            SourceLocation rbraceloc)
-  : Expr(InitListExprClass, QualType(), false, false),
+  : Expr(InitListExprClass, QualType(), VK_RValue, OK_Ordinary, false, false),
     InitExprs(C, numInits),
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0),
     UnionFieldInit(0), HadArrayRangeDesignator(false) 
@@ -2158,6 +2165,7 @@ void ExtVectorElementExpr::getEncodedElementAccess(
 }
 
 ObjCMessageExpr::ObjCMessageExpr(QualType T,
+                                 ExprValueKind VK,
                                  SourceLocation LBracLoc,
                                  SourceLocation SuperLoc,
                                  bool IsInstanceSuper,
@@ -2166,8 +2174,8 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
-  : Expr(ObjCMessageExprClass, T, /*TypeDependent=*/false,
-         /*ValueDependent=*/false),
+  : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary,
+         /*TypeDependent=*/false, /*ValueDependent=*/false),
     NumArgs(NumArgs), Kind(IsInstanceSuper? SuperInstance : SuperClass),
     HasMethod(Method != 0), SuperLoc(SuperLoc),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
@@ -2180,13 +2188,14 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
 }
 
 ObjCMessageExpr::ObjCMessageExpr(QualType T,
+                                 ExprValueKind VK,
                                  SourceLocation LBracLoc,
                                  TypeSourceInfo *Receiver,
                                  Selector Sel, 
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
-  : Expr(ObjCMessageExprClass, T, T->isDependentType(),
+  : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary, T->isDependentType(),
          (T->isDependentType() || 
           hasAnyValueDependentArguments(Args, NumArgs))),
     NumArgs(NumArgs), Kind(Class), HasMethod(Method != 0),
@@ -2200,13 +2209,14 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
 }
 
 ObjCMessageExpr::ObjCMessageExpr(QualType T,
+                                 ExprValueKind VK,
                                  SourceLocation LBracLoc,
                                  Expr *Receiver,
                                  Selector Sel, 
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
-  : Expr(ObjCMessageExprClass, T, Receiver->isTypeDependent(),
+  : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary, Receiver->isTypeDependent(),
          (Receiver->isTypeDependent() || 
           hasAnyValueDependentArguments(Args, NumArgs))),
     NumArgs(NumArgs), Kind(Instance), HasMethod(Method != 0),
@@ -2220,6 +2230,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
 }
 
 ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+                                         ExprValueKind VK,
                                          SourceLocation LBracLoc,
                                          SourceLocation SuperLoc,
                                          bool IsInstanceSuper,
@@ -2231,12 +2242,13 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
   unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
-  return new (Mem) ObjCMessageExpr(T, LBracLoc, SuperLoc, IsInstanceSuper,
+  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, SuperLoc, IsInstanceSuper,
                                    SuperType, Sel, Method, Args, NumArgs, 
                                    RBracLoc);
 }
 
 ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+                                         ExprValueKind VK,
                                          SourceLocation LBracLoc,
                                          TypeSourceInfo *Receiver,
                                          Selector Sel, 
@@ -2246,11 +2258,12 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
   unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
-  return new (Mem) ObjCMessageExpr(T, LBracLoc, Receiver, Sel, Method, Args, 
+  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel, Method, Args,
                                    NumArgs, RBracLoc);
 }
 
 ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
+                                         ExprValueKind VK,
                                          SourceLocation LBracLoc,
                                          Expr *Receiver,
                                          Selector Sel, 
@@ -2260,7 +2273,7 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
   unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
-  return new (Mem) ObjCMessageExpr(T, LBracLoc, Receiver, Sel, Method, Args, 
+  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel, Method, Args, 
                                    NumArgs, RBracLoc);
 }
 
@@ -2343,6 +2356,7 @@ DesignatedInitExpr::DesignatedInitExpr(ASTContext &C, QualType Ty,
                                        unsigned NumIndexExprs,
                                        Expr *Init)
   : Expr(DesignatedInitExprClass, Ty,
+         Init->getValueKind(), Init->getObjectKind(),
          Init->isTypeDependent(), Init->isValueDependent()),
     EqualOrColonLoc(EqualOrColonLoc), GNUSyntax(GNUSyntax),
     NumDesignators(NumDesignators), NumSubExprs(NumIndexExprs + 1) {
@@ -2483,7 +2497,7 @@ void DesignatedInitExpr::ExpandDesignator(ASTContext &C, unsigned Idx,
 ParenListExpr::ParenListExpr(ASTContext& C, SourceLocation lparenloc,
                              Expr **exprs, unsigned nexprs,
                              SourceLocation rparenloc)
-: Expr(ParenListExprClass, QualType(),
+: Expr(ParenListExprClass, QualType(), VK_RValue, OK_Ordinary,
        hasAnyTypeDependentArguments(exprs, nexprs),
        hasAnyValueDependentArguments(exprs, nexprs)),
   NumExprs(nexprs), LParenLoc(lparenloc), RParenLoc(rparenloc) {

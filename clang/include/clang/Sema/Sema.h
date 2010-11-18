@@ -1731,9 +1731,11 @@ public:
                                 const TemplateArgumentListInfo *TemplateArgs);
 
   ExprResult BuildDeclRefExpr(ValueDecl *D, QualType Ty,
+                              ExprValueKind VK,
                               SourceLocation Loc,
                               const CXXScopeSpec *SS = 0);
   ExprResult BuildDeclRefExpr(ValueDecl *D, QualType Ty,
+                              ExprValueKind VK,
                               const DeclarationNameInfo &NameInfo,
                               const CXXScopeSpec *SS = 0);
   VarDecl *BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
@@ -4173,7 +4175,8 @@ public:
   /// type checking binary operators (subroutines of CreateBuiltinBinOp).
   QualType InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   QualType CheckPointerToMemberOperands( // C++ 5.5
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isIndirect);
+    Expr *&lex, Expr *&rex, ExprValueKind &VK,
+    SourceLocation OpLoc, bool isIndirect);
   QualType CheckMultiplyDivideOperands( // C99 6.5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign,
                                        bool isDivide);
@@ -4204,9 +4207,9 @@ public:
     Expr *lex, Expr *&rex, SourceLocation OpLoc);
   QualType CheckConditionalOperands( // C99 6.5.15
     Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save,
-    SourceLocation questionLoc);
+    ExprValueKind &VK, SourceLocation questionLoc);
   QualType CXXCheckConditionalOperands( // C++ 5.16
-    Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save, 
+    Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save, ExprValueKind &VK,
     SourceLocation questionLoc);
   QualType FindCompositePointerType(SourceLocation Loc, Expr *&E1, Expr *&E2,
                                     bool *NonStandardCompositeType = 0);
@@ -4268,7 +4271,7 @@ public:
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr,
-                      CastKind &Kind, CXXCastPath &BasePath,
+                      CastKind &Kind, ExprValueKind &VK, CXXCastPath &BasePath,
                       bool FunctionalStyle = false);
 
   // CheckVectorCast - check type constraints for vectors.
@@ -4288,9 +4291,9 @@ public:
 
   /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
   /// cast under C++ semantics.
-  bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
-                          CastKind &Kind, CXXCastPath &BasePath,
-                          bool FunctionalStyle);
+  bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
+                          Expr *&CastExpr, CastKind &Kind,
+                          CXXCastPath &BasePath, bool FunctionalStyle);
 
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send.
   /// \param Method - May be null.
@@ -4299,7 +4302,7 @@ public:
   bool CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs, Selector Sel,
                                  ObjCMethodDecl *Method, bool isClassMessage,
                                  SourceLocation lbrac, SourceLocation rbrac,
-                                 QualType &ReturnType);
+                                 QualType &ReturnType, ExprValueKind &VK);
 
   /// CheckBooleanCondition - Diagnose problems involving the use of
   /// the given expression as a boolean condition (e.g. in an if

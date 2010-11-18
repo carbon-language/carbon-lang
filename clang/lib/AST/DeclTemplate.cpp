@@ -318,6 +318,7 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
                  dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       Expr *E = new (Context) DeclRefExpr(NTTP,
                                   NTTP->getType().getNonLValueExprType(Context),
+                                  Expr::getValueKindForType(NTTP->getType()),
                                           NTTP->getLocation());
       TemplateArgs.push_back(TemplateArgument(E));
     } else {

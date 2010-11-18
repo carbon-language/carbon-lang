@@ -1515,7 +1515,8 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     
     Expr *CopyCtorArg = 
       DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
-                          Constructor->getLocation(), ParamType, 0);
+                          Constructor->getLocation(), ParamType,
+                          VK_LValue, 0);
     
     // Cast to the base class to avoid ambiguities.
     QualType ArgTy = 
@@ -1577,7 +1578,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     
     Expr *MemberExprBase = 
       DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
-                          Loc, ParamType, 0);
+                          Loc, ParamType, VK_LValue, 0);
 
     // Build a reference to this field within the parameter.
     CXXScopeSpec SS;
@@ -1622,7 +1623,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       
       // Create a reference to the iteration variable.
       ExprResult IterationVarRef
-        = SemaRef.BuildDeclRefExpr(IterationVar, SizeType, Loc);
+        = SemaRef.BuildDeclRefExpr(IterationVar, SizeType, VK_RValue, Loc);
       assert(!IterationVarRef.isInvalid() &&
              "Reference to invented variable cannot fail!");
       
@@ -4635,7 +4636,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   // Create a reference to the iteration variable; we'll use this several
   // times throughout.
   Expr *IterationVarRef
-    = S.BuildDeclRefExpr(IterationVar, SizeType, Loc).takeAs<Expr>();
+    = S.BuildDeclRefExpr(IterationVar, SizeType, VK_RValue, Loc).take();
   assert(IterationVarRef && "Reference to invented variable cannot fail!");
   
   // Create the DeclStmt that holds the iteration variable.
@@ -4646,15 +4647,14 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   Upper.zextOrTrunc(S.Context.getTypeSize(SizeType));
   Expr *Comparison
     = new (S.Context) BinaryOperator(IterationVarRef,
-                           IntegerLiteral::Create(S.Context,
-                                                  Upper, SizeType, Loc),
-                                                  BO_NE, S.Context.BoolTy, Loc);
+                     IntegerLiteral::Create(S.Context, Upper, SizeType, Loc),
+                                     BO_NE, S.Context.BoolTy,
+                                     VK_RValue, OK_Ordinary, Loc);
   
   // Create the pre-increment of the iteration variable.
   Expr *Increment
-    = new (S.Context) UnaryOperator(IterationVarRef,
-                                    UO_PreInc,
-                                    SizeType, Loc);
+    = new (S.Context) UnaryOperator(IterationVarRef, UO_PreInc, SizeType,
+                                    VK_LValue, OK_Ordinary, Loc);
   
   // Subscript the "from" and "to" expressions with the iteration variable.
   From = AssertSuccess(S.CreateBuiltinArraySubscriptExpr(From, Loc,
@@ -4663,10 +4663,9 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                                        IterationVarRef, Loc));
   
   // Build the copy for an individual element of the array.
-  StmtResult Copy = BuildSingleCopyAssign(S, Loc, 
-                                                ArrayTy->getElementType(),
-                                                To, From, 
-                                                CopyingBaseSubobject, Depth+1);
+  StmtResult Copy = BuildSingleCopyAssign(S, Loc, ArrayTy->getElementType(),
+                                          To, From, CopyingBaseSubobject,
+                                          Depth + 1);
   if (Copy.isInvalid())
     return StmtError();
   
@@ -4907,7 +4906,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   
   // Construct a reference to the "other" object. We'll be using this 
   // throughout the generated ASTs.
-  Expr *OtherRef = BuildDeclRefExpr(Other, OtherRefType, Loc).takeAs<Expr>();
+  Expr *OtherRef = BuildDeclRefExpr(Other, OtherRefType, VK_RValue, Loc).take();
   assert(OtherRef && "Reference to parameter cannot fail!");
   
   // Construct the "this" pointer. We'll be using this throughout the generated
@@ -5068,7 +5067,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
         
           CollectableMemCpyRef = BuildDeclRefExpr(CollectableMemCpy, 
                                                   CollectableMemCpy->getType(),
-                                                  Loc, 0).takeAs<Expr>();
+                                                  VK_LValue, Loc, 0).take();
           assert(CollectableMemCpyRef && "Builtin reference cannot fail");
         }
       }
@@ -5088,7 +5087,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
         BuiltinMemCpyRef = BuildDeclRefExpr(BuiltinMemCpy, 
                                             BuiltinMemCpy->getType(),
-                                            Loc, 0).takeAs<Expr>();
+                                            VK_LValue, Loc, 0).take();
         assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
       }
           
@@ -6105,7 +6104,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
       // it can be destroyed later.
       InitializedEntity Entity = InitializedEntity::InitializeVariable(ExDecl);
       Expr *ExDeclRef = DeclRefExpr::Create(Context, 0, SourceRange(), ExDecl, 
-                                            Loc, ExDeclType, 0);
+                                            Loc, ExDeclType, VK_LValue, 0);
       InitializationKind Kind = InitializationKind::CreateCopy(Loc, 
                                                                SourceLocation());
       InitializationSequence InitSeq(*this, Entity, Kind, &ExDeclRef, 1);

@@ -105,10 +105,27 @@ namespace  {
          << " " << (void*)Node;
       DumpSourceRange(Node);
     }
+    void DumpValueKind(ExprValueKind K) {
+      switch (K) {
+      case VK_RValue: break;
+      case VK_LValue: OS << " lvalue"; break;
+      case VK_XValue: OS << " xvalue"; break;
+      }
+    }
+    void DumpObjectKind(ExprObjectKind K) {
+      switch (K) {
+      case OK_Ordinary: break;
+      case OK_BitField: OS << " bitfield"; break;
+      case OK_ObjCProperty: OS << " objcproperty"; break;
+      case OK_VectorComponent: OS << " vectorcomponent"; break;
+      }
+    }
     void DumpExpr(const Expr *Node) {
       DumpStmt(Node);
       OS << ' ';
       DumpType(Node->getType());
+      DumpValueKind(Node->getValueKind());
+      DumpObjectKind(Node->getObjectKind());
     }
     void DumpSourceRange(const Stmt *Node);
     void DumpLocation(SourceLocation Loc);
@@ -122,7 +139,6 @@ namespace  {
     // Exprs
     void VisitExpr(Expr *Node);
     void VisitCastExpr(CastExpr *Node);
-    void VisitImplicitCastExpr(ImplicitCastExpr *Node);
     void VisitDeclRefExpr(DeclRefExpr *Node);
     void VisitPredefinedExpr(PredefinedExpr *Node);
     void VisitCharacterLiteral(CharacterLiteral *Node);
@@ -342,20 +358,6 @@ void StmtDumper::VisitCastExpr(CastExpr *Node) {
   OS << " <" << Node->getCastKindName();
   DumpBasePath(OS, Node);
   OS << ">";
-}
-
-void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
-  VisitCastExpr(Node);
-  switch (Node->getValueKind()) {
-  case VK_LValue:
-    OS << " lvalue";
-    break;
-  case VK_XValue:
-    OS << " xvalue";
-    break;
-  case VK_RValue:
-    break;
-  }
 }
 
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {

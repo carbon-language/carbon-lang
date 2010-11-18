@@ -161,7 +161,7 @@ static void AllocateAllBlockDeclRefs(CodeGenFunction &CGF, CGBlockInfo &Info) {
   if (Info.NeedsObjCSelf) {
     ValueDecl *Self = cast<ObjCMethodDecl>(CGF.CurFuncDecl)->getSelfDecl();
     BlockDeclRefExpr *BDRE =
-      new (CGF.getContext()) BlockDeclRefExpr(Self, Self->getType(),
+      new (CGF.getContext()) BlockDeclRefExpr(Self, Self->getType(), VK_RValue,
                                               SourceLocation(), false);
     Info.DeclRefs.push_back(BDRE);
     CGF.AllocateBlockDecl(BDRE);
@@ -344,26 +344,26 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
           if (BDRE->getCopyConstructorExpr()) {
             E = BDRE->getCopyConstructorExpr();
             PushDestructorCleanup(E->getType(), Addr);
-          }
-            else {
-              E = new (getContext()) DeclRefExpr(const_cast<ValueDecl*>(VD),
-                                            VD->getType().getNonReferenceType(),
-                                            SourceLocation());
-              if (VD->getType()->isReferenceType()) {
-                E = new (getContext())
-                    UnaryOperator(const_cast<Expr*>(E), UO_AddrOf,
-                                getContext().getPointerType(E->getType()),
-                                SourceLocation());
-              } 
+          } else {
+            E = new (getContext()) DeclRefExpr(const_cast<ValueDecl*>(VD),
+                                 VD->getType().getNonReferenceType(),
+                                 Expr::getValueKindForType(VD->getType()),
+                                 SourceLocation());
+            if (VD->getType()->isReferenceType()) {
+              E = new (getContext())
+                UnaryOperator(const_cast<Expr*>(E), UO_AddrOf,
+                              getContext().getPointerType(E->getType()),
+                              VK_RValue, OK_Ordinary, SourceLocation());
             }
           }
         }
+      }
 
       if (BDRE->isByRef()) {
         E = new (getContext())
           UnaryOperator(const_cast<Expr*>(E), UO_AddrOf,
                         getContext().getPointerType(E->getType()),
-                        SourceLocation());
+                        VK_RValue, OK_Ordinary, SourceLocation());
       }
 
       RValue r = EmitAnyExpr(E, AggValueSlot::forAddr(Addr, false, true));
@@ -932,7 +932,7 @@ CharUnits BlockFunction::getBlockOffset(CharUnits Size, CharUnits Align) {
                                          0, QualType(PadTy), 0,
                                          SC_None, SC_None);
     Expr *E = new (getContext()) DeclRefExpr(PadDecl, PadDecl->getType(),
-                                             SourceLocation());
+                                             VK_LValue, SourceLocation());
     BlockLayout.push_back(E);
   }
 

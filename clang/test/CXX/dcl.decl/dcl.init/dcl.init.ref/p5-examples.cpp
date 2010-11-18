@@ -7,7 +7,7 @@ void example0() {
   // CHECK-NEXT: DeclRefExpr
   double &rd = d;
   // CHECK: const double &rcd =
-  // CHECK-NEXT: ImplicitCastExpr{{.*}}'const double' <NoOp>
+  // CHECK-NEXT: ImplicitCastExpr{{.*}}'const double' lvalue <NoOp>
   const double &rcd = d;
 }
 
@@ -17,11 +17,11 @@ struct B : A { } b;
 // CHECK: example1
 void example1() {
   // CHECK: A &ra =
-  // CHECK: ImplicitCastExpr{{.*}}'struct A' <DerivedToBase (A)> lvalue
+  // CHECK: ImplicitCastExpr{{.*}}'struct A' lvalue <DerivedToBase (A)>
   A &ra = b;
   // CHECK: const A &rca =
-  // CHECK: ImplicitCastExpr{{.*}}'const struct A' <NoOp>
-  // CHECK: ImplicitCastExpr{{.*}}'struct A' <DerivedToBase (A)>
+  // CHECK: ImplicitCastExpr{{.*}}'const struct A' lvalue <NoOp>
+  // CHECK: ImplicitCastExpr{{.*}}'struct A' lvalue <DerivedToBase (A)>
   const A& rca = b;
 }
 
@@ -48,6 +48,6 @@ void example2() {
 // CHECK: example3
 void example3() {
   // CHECK: const double &rcd2 =
-  // CHECK: ImplicitCastExpr{{.*}}<IntegralToFloating>
+  // CHECK: ImplicitCastExpr{{.*}} <IntegralToFloating>
   const double& rcd2 = 2; 
 }

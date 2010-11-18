@@ -292,9 +292,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   }
       
   case Expr::CXXUuidofExprClass:
-    // Assume that Microsoft's __uuidof returns an lvalue, like typeid does.
-    // FIXME: Is this really the case?
-    return Cl::CL_LValue;
+    return Cl::CL_PRValue;
   }
   
   llvm_unreachable("unhandled expression kind in classification");

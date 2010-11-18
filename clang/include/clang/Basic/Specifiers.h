@@ -95,6 +95,23 @@ namespace clang {
     VK_XValue
   };
 
+  /// A further classification of the kind of object referenced by an
+  /// l-value or x-value.
+  enum ExprObjectKind {
+    /// An ordinary object is located at an address in memory.
+    OK_Ordinary,
+
+    /// A bitfield object is a bitfield on a C or C++ record.
+    OK_BitField,
+
+    /// A vector component is an element or range of elements on a vector.
+    OK_VectorComponent,
+
+    /// An Objective C property is a logical field of an Objective-C
+    /// object which is read and written via Objective C method calls.
+    OK_ObjCProperty
+  };
+
   // \brief Describes the kind of template specialization that a
   // particular template specialization declaration represents.
   enum TemplateSpecializationKind {

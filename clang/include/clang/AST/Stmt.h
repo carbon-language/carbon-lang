@@ -147,10 +147,11 @@ protected:
     unsigned : NumStmtBits;
 
     unsigned ValueKind : 2;
+    unsigned ObjectKind : 2;
     unsigned TypeDependent : 1;
     unsigned ValueDependent : 1;
   };
-  enum { NumExprBits = 12 };
+  enum { NumExprBits = 14 };
 
   class CastExprBitfields {
     friend class CastExpr;

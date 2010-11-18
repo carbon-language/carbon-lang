@@ -3361,9 +3361,10 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       CXXScopeSpec SS;
       SS.setScopeRep(Qualifier);
       ExprResult RefExpr = BuildDeclRefExpr(VD, 
-                                           VD->getType().getNonReferenceType(), 
-                                                  Loc,
-                                                  &SS);
+                                            VD->getType().getNonReferenceType(),
+                                            VK_LValue,
+                                            Loc,
+                                            &SS);
       if (RefExpr.isInvalid())
         return ExprError();
       
@@ -3390,7 +3391,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
   if (ParamType->isPointerType()) {
     // When the non-type template parameter is a pointer, take the
     // address of the declaration.
-    ExprResult RefExpr = BuildDeclRefExpr(VD, T, Loc);
+    ExprResult RefExpr = BuildDeclRefExpr(VD, T, VK_LValue, Loc);
     if (RefExpr.isInvalid())
       return ExprError();
 
@@ -3410,13 +3411,18 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
     return CreateBuiltinUnaryOp(Loc, UO_AddrOf, RefExpr.get());
   }
 
+  ExprValueKind VK = VK_RValue;
+
   // If the non-type template parameter has reference type, qualify the
   // resulting declaration reference with the extra qualifiers on the
   // type that the reference refers to.
-  if (const ReferenceType *TargetRef = ParamType->getAs<ReferenceType>())
-    T = Context.getQualifiedType(T, TargetRef->getPointeeType().getQualifiers());
+  if (const ReferenceType *TargetRef = ParamType->getAs<ReferenceType>()) {
+    VK = VK_LValue;
+    T = Context.getQualifiedType(T,
+                              TargetRef->getPointeeType().getQualifiers());
+  }
     
-  return BuildDeclRefExpr(VD, T, Loc);
+  return BuildDeclRefExpr(VD, T, VK, Loc);
 }
 
 /// \brief Construct a new expression that refers to the given

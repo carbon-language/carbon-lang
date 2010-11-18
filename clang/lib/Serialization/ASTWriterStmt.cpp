@@ -360,6 +360,8 @@ void ASTStmtWriter::VisitExpr(Expr *E) {
   Writer.AddTypeRef(E->getType(), Record);
   Record.push_back(E->isTypeDependent());
   Record.push_back(E->isValueDependent());
+  Record.push_back(E->getValueKind());
+  Record.push_back(E->getObjectKind());
 }
 
 void ASTStmtWriter::VisitPredefinedExpr(PredefinedExpr *E) {
@@ -555,6 +557,8 @@ void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
   Record.push_back(FoundDecl.getAccess());
 
   Writer.AddTypeRef(E->getType(), Record);
+  Record.push_back(E->getValueKind());
+  Record.push_back(E->getObjectKind());
   Writer.AddStmt(E->getBase());
   Writer.AddDeclRef(E->getMemberDecl(), Record);
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
@@ -612,7 +616,6 @@ void ASTStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
 
 void ASTStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
-  Record.push_back(E->getValueKind());
   Code = serialization::EXPR_IMPLICIT_CAST;
 }
 
@@ -1297,7 +1300,6 @@ void ASTStmtWriter::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
 
 void ASTStmtWriter::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
-  Record.push_back(E->getValueKind());
   Code = serialization::EXPR_OPAQUE_VALUE;
 }
 

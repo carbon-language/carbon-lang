@@ -51,8 +51,9 @@ class CXXOperatorCallExpr : public CallExpr {
 public:
   CXXOperatorCallExpr(ASTContext& C, OverloadedOperatorKind Op, Expr *fn,
                       Expr **args, unsigned numargs, QualType t,
-                      SourceLocation operatorloc)
-    : CallExpr(C, CXXOperatorCallExprClass, fn, args, numargs, t, operatorloc),
+                      ExprValueKind VK, SourceLocation operatorloc)
+    : CallExpr(C, CXXOperatorCallExprClass, fn, args, numargs, t, VK,
+               operatorloc),
       Operator(Op) {}
   explicit CXXOperatorCallExpr(ASTContext& C, EmptyShell Empty) :
     CallExpr(C, CXXOperatorCallExprClass, Empty) { }
@@ -89,8 +90,8 @@ public:
 class CXXMemberCallExpr : public CallExpr {
 public:
   CXXMemberCallExpr(ASTContext &C, Expr *fn, Expr **args, unsigned numargs,
-                    QualType t, SourceLocation rparenloc)
-    : CallExpr(C, CXXMemberCallExprClass, fn, args, numargs, t, rparenloc) {}
+                    QualType t, ExprValueKind VK, SourceLocation RP)
+    : CallExpr(C, CXXMemberCallExprClass, fn, args, numargs, t, VK, RP) {}
 
   CXXMemberCallExpr(ASTContext &C, EmptyShell Empty)
     : CallExpr(C, CXXMemberCallExprClass, Empty) { }
@@ -127,10 +128,10 @@ private:
   SourceLocation Loc; // the location of the casting op
 
 protected:
-  CXXNamedCastExpr(StmtClass SC, QualType ty, CastKind kind, Expr *op,
-                   unsigned PathSize, TypeSourceInfo *writtenTy,
-                   SourceLocation l)
-    : ExplicitCastExpr(SC, ty, kind, op, PathSize, writtenTy), Loc(l) {}
+  CXXNamedCastExpr(StmtClass SC, QualType ty, ExprValueKind VK,
+                   CastKind kind, Expr *op, unsigned PathSize,
+                   TypeSourceInfo *writtenTy, SourceLocation l)
+    : ExplicitCastExpr(SC, ty, VK, kind, op, PathSize, writtenTy), Loc(l) {}
 
   explicit CXXNamedCastExpr(StmtClass SC, EmptyShell Shell, unsigned PathSize)
     : ExplicitCastExpr(SC, Shell, PathSize) { }
@@ -165,10 +166,10 @@ public:
 /// This expression node represents a C++ static cast, e.g.,
 /// @c static_cast<int>(1.0).
 class CXXStaticCastExpr : public CXXNamedCastExpr {
-  CXXStaticCastExpr(QualType ty, CastKind kind, Expr *op, 
+  CXXStaticCastExpr(QualType ty, ExprValueKind vk, CastKind kind, Expr *op,
                     unsigned pathSize, TypeSourceInfo *writtenTy,
                     SourceLocation l)
-    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, pathSize,
+    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, vk, kind, op, pathSize,
                        writtenTy, l) {}
 
   explicit CXXStaticCastExpr(EmptyShell Empty, unsigned PathSize)
@@ -176,7 +177,7 @@ class CXXStaticCastExpr : public CXXNamedCastExpr {
 
 public:
   static CXXStaticCastExpr *Create(ASTContext &Context, QualType T,
-                                   CastKind K, Expr *Op,
+                                   ExprValueKind VK, CastKind K, Expr *Op,
                                    const CXXCastPath *Path,
                                    TypeSourceInfo *Written, SourceLocation L);
   static CXXStaticCastExpr *CreateEmpty(ASTContext &Context,
@@ -195,10 +196,10 @@ public:
 /// This expression node represents a dynamic cast, e.g.,
 /// @c dynamic_cast<Derived*>(BasePtr).
 class CXXDynamicCastExpr : public CXXNamedCastExpr {
-  CXXDynamicCastExpr(QualType ty, CastKind kind, Expr *op, 
-                     unsigned pathSize, TypeSourceInfo *writtenTy,
+  CXXDynamicCastExpr(QualType ty, ExprValueKind VK, CastKind kind,
+                     Expr *op, unsigned pathSize, TypeSourceInfo *writtenTy,
                      SourceLocation l)
-    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, kind, op, pathSize,
+    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, VK, kind, op, pathSize,
                        writtenTy, l) {}
 
   explicit CXXDynamicCastExpr(EmptyShell Empty, unsigned pathSize)
@@ -206,7 +207,7 @@ class CXXDynamicCastExpr : public CXXNamedCastExpr {
 
 public:
   static CXXDynamicCastExpr *Create(ASTContext &Context, QualType T,
-                                    CastKind Kind, Expr *Op,
+                                    ExprValueKind VK, CastKind Kind, Expr *Op,
                                     const CXXCastPath *Path,
                                     TypeSourceInfo *Written, SourceLocation L);
   
@@ -226,19 +227,19 @@ public:
 /// This expression node represents a reinterpret cast, e.g.,
 /// @c reinterpret_cast<int>(VoidPtr).
 class CXXReinterpretCastExpr : public CXXNamedCastExpr {
-  CXXReinterpretCastExpr(QualType ty, CastKind kind, Expr *op, 
-                         unsigned pathSize,
+  CXXReinterpretCastExpr(QualType ty, ExprValueKind vk, CastKind kind,
+                         Expr *op, unsigned pathSize,
                          TypeSourceInfo *writtenTy, SourceLocation l)
-    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, kind, op, pathSize,
-                       writtenTy, l) {}
+    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, vk, kind, op,
+                       pathSize, writtenTy, l) {}
 
   CXXReinterpretCastExpr(EmptyShell Empty, unsigned pathSize)
     : CXXNamedCastExpr(CXXReinterpretCastExprClass, Empty, pathSize) { }
 
 public:
   static CXXReinterpretCastExpr *Create(ASTContext &Context, QualType T,
-                                        CastKind Kind, Expr *Op,
-                                        const CXXCastPath *Path,
+                                        ExprValueKind VK, CastKind Kind,
+                                        Expr *Op, const CXXCastPath *Path,
                                  TypeSourceInfo *WrittenTy, SourceLocation L);
   static CXXReinterpretCastExpr *CreateEmpty(ASTContext &Context,
                                              unsigned pathSize);
@@ -255,16 +256,17 @@ public:
 /// This expression node represents a const cast, e.g.,
 /// @c const_cast<char*>(PtrToConstChar).
 class CXXConstCastExpr : public CXXNamedCastExpr {
-  CXXConstCastExpr(QualType ty, Expr *op, TypeSourceInfo *writtenTy,
-                   SourceLocation l)
-    : CXXNamedCastExpr(CXXConstCastExprClass, ty, CK_NoOp, op, 
+  CXXConstCastExpr(QualType ty, ExprValueKind VK, Expr *op,
+                   TypeSourceInfo *writtenTy, SourceLocation l)
+    : CXXNamedCastExpr(CXXConstCastExprClass, ty, VK, CK_NoOp, op, 
                        0, writtenTy, l) {}
 
   explicit CXXConstCastExpr(EmptyShell Empty)
     : CXXNamedCastExpr(CXXConstCastExprClass, Empty, 0) { }
 
 public:
-  static CXXConstCastExpr *Create(ASTContext &Context, QualType T, Expr *Op,
+  static CXXConstCastExpr *Create(ASTContext &Context, QualType T,
+                                  ExprValueKind VK, Expr *Op,
                                   TypeSourceInfo *WrittenTy, SourceLocation L);
   static CXXConstCastExpr *CreateEmpty(ASTContext &Context);
 
@@ -281,7 +283,8 @@ class CXXBoolLiteralExpr : public Expr {
   SourceLocation Loc;
 public:
   CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) :
-    Expr(CXXBoolLiteralExprClass, Ty, false, false), Value(val), Loc(l) {}
+    Expr(CXXBoolLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false),
+    Value(val), Loc(l) {}
 
   explicit CXXBoolLiteralExpr(EmptyShell Empty)
     : Expr(CXXBoolLiteralExprClass, Empty) { }
@@ -309,7 +312,8 @@ class CXXNullPtrLiteralExpr : public Expr {
   SourceLocation Loc;
 public:
   CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l) :
-    Expr(CXXNullPtrLiteralExprClass, Ty, false, false), Loc(l) {}
+    Expr(CXXNullPtrLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false),
+    Loc(l) {}
 
   explicit CXXNullPtrLiteralExpr(EmptyShell Empty)
     : Expr(CXXNullPtrLiteralExprClass, Empty) { }
@@ -340,7 +344,7 @@ private:
 
 public:
   CXXTypeidExpr(QualType Ty, TypeSourceInfo *Operand, SourceRange R)
-    : Expr(CXXTypeidExprClass, Ty, 
+    : Expr(CXXTypeidExprClass, Ty, VK_LValue, OK_Ordinary,
            // typeid is never type-dependent (C++ [temp.dep.expr]p4)
            false,
            // typeid is value-dependent if the type or expression are dependent
@@ -348,7 +352,7 @@ public:
       Operand(Operand), Range(R) { }
   
   CXXTypeidExpr(QualType Ty, Expr *Operand, SourceRange R)
-    : Expr(CXXTypeidExprClass, Ty,
+    : Expr(CXXTypeidExprClass, Ty, VK_LValue, OK_Ordinary,
         // typeid is never type-dependent (C++ [temp.dep.expr]p4)
         false,
         // typeid is value-dependent if the type or expression are dependent
@@ -414,12 +418,12 @@ private:
 
 public:
   CXXUuidofExpr(QualType Ty, TypeSourceInfo *Operand, SourceRange R)
-    : Expr(CXXUuidofExprClass, Ty, 
+    : Expr(CXXUuidofExprClass, Ty, VK_RValue, OK_Ordinary,
         false, Operand->getType()->isDependentType()),
       Operand(Operand), Range(R) { }
   
   CXXUuidofExpr(QualType Ty, Expr *Operand, SourceRange R)
-    : Expr(CXXUuidofExprClass, Ty,
+    : Expr(CXXUuidofExprClass, Ty, /*FIXME*/ VK_LValue, OK_Ordinary,
         false, Operand->isTypeDependent()),
       Operand(Operand), Range(R) { }
 
@@ -488,7 +492,7 @@ class CXXThisExpr : public Expr {
   
 public:
   CXXThisExpr(SourceLocation L, QualType Type, bool isImplicit)
-    : Expr(CXXThisExprClass, Type,
+    : Expr(CXXThisExprClass, Type, VK_RValue, OK_Ordinary,
            // 'this' is type-dependent if the class type of the enclosing
            // member function is dependent (C++ [temp.dep.expr]p2)
            Type->isDependentType(), Type->isDependentType()),
@@ -526,7 +530,8 @@ public:
   // exepression.  The l is the location of the throw keyword.  expr
   // can by null, if the optional expression to throw isn't present.
   CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l) :
-    Expr(CXXThrowExprClass, Ty, false, false), Op(expr), ThrowLoc(l) {}
+    Expr(CXXThrowExprClass, Ty, VK_RValue, OK_Ordinary, false, false),
+    Op(expr), ThrowLoc(l) {}
   CXXThrowExpr(EmptyShell Empty) : Expr(CXXThrowExprClass, Empty) {}
 
   const Expr *getSubExpr() const { return cast_or_null<Expr>(Op); }
@@ -572,12 +577,13 @@ class CXXDefaultArgExpr : public Expr {
            param->hasUnparsedDefaultArg()
              ? param->getType().getNonReferenceType()
              : param->getDefaultArg()->getType(),
-           false, false),
+           getValueKindForType(param->getType()), OK_Ordinary, false, false),
       Param(param, false), Loc(Loc) { }
 
   CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param, 
                     Expr *SubExpr)
-    : Expr(SC, SubExpr->getType(), false, false), Param(param, true), Loc(Loc) {
+    : Expr(SC, SubExpr->getType(), SubExpr->getValueKind(), OK_Ordinary,
+           false, false), Param(param, true), Loc(Loc) {
     *reinterpret_cast<Expr **>(this + 1) = SubExpr;
   }
   
@@ -674,7 +680,8 @@ class CXXBindTemporaryExpr : public Expr {
 
   CXXBindTemporaryExpr(CXXTemporary *temp, Expr* subexpr, 
                        bool TD=false, bool VD=false)
-   : Expr(CXXBindTemporaryExprClass, subexpr->getType(), TD, VD),
+   : Expr(CXXBindTemporaryExprClass, subexpr->getType(),
+          VK_RValue, OK_Ordinary, TD, VD),
      Temp(temp), SubExpr(subexpr) { }
 
 public:
@@ -833,12 +840,13 @@ class CXXFunctionalCastExpr : public ExplicitCastExpr {
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
 
-  CXXFunctionalCastExpr(QualType ty, TypeSourceInfo *writtenTy,
+  CXXFunctionalCastExpr(QualType ty, ExprValueKind VK,
+                        TypeSourceInfo *writtenTy,
                         SourceLocation tyBeginLoc, CastKind kind,
                         Expr *castExpr, unsigned pathSize,
                         SourceLocation rParenLoc) 
-    : ExplicitCastExpr(CXXFunctionalCastExprClass, ty, kind, castExpr, 
-                       pathSize, writtenTy),
+    : ExplicitCastExpr(CXXFunctionalCastExprClass, ty, VK, kind,
+                       castExpr, pathSize, writtenTy),
       TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
 
   explicit CXXFunctionalCastExpr(EmptyShell Shell, unsigned PathSize)
@@ -846,6 +854,7 @@ class CXXFunctionalCastExpr : public ExplicitCastExpr {
 
 public:
   static CXXFunctionalCastExpr *Create(ASTContext &Context, QualType T,
+                                       ExprValueKind VK,
                                        TypeSourceInfo *Written,
                                        SourceLocation TyBeginLoc,
                                        CastKind Kind, Expr *Op,
@@ -923,7 +932,8 @@ public:
   CXXScalarValueInitExpr(QualType Type,
                          TypeSourceInfo *TypeInfo,
                          SourceLocation rParenLoc ) :
-    Expr(CXXScalarValueInitExprClass, Type, false, false),
+    Expr(CXXScalarValueInitExprClass, Type, VK_RValue, OK_Ordinary,
+         false, false),
     RParenLoc(rParenLoc), TypeInfo(TypeInfo) {}
 
   explicit CXXScalarValueInitExpr(EmptyShell Shell)
@@ -1135,7 +1145,8 @@ public:
   CXXDeleteExpr(QualType ty, bool globalDelete, bool arrayForm,
                 bool arrayFormAsWritten, FunctionDecl *operatorDelete,
                 Expr *arg, SourceLocation loc)
-    : Expr(CXXDeleteExprClass, ty, false, false), GlobalDelete(globalDelete),
+    : Expr(CXXDeleteExprClass, ty, VK_RValue, OK_Ordinary, false, false),
+      GlobalDelete(globalDelete),
       ArrayForm(arrayForm), ArrayFormAsWritten(arrayFormAsWritten),
       OperatorDelete(operatorDelete), Argument(arg), Loc(loc) { }
   explicit CXXDeleteExpr(EmptyShell Shell)
@@ -1271,6 +1282,7 @@ public:
                                                           false, 0, false, 
                                                           false, 0, 0,
                                                       FunctionType::ExtInfo())),
+           VK_RValue, OK_Ordinary,
            /*isTypeDependent=*/(Base->isTypeDependent() ||
             (DestroyedType.getTypeSourceInfo() &&
               DestroyedType.getTypeSourceInfo()->getType()->isDependentType())),
@@ -1408,8 +1420,8 @@ public:
   UnaryTypeTraitExpr(SourceLocation loc, UnaryTypeTrait utt, 
                      TypeSourceInfo *queried, bool value,
                      SourceLocation rparen, QualType ty)
-    : Expr(UnaryTypeTraitExprClass, ty, false, 
-           queried->getType()->isDependentType()),
+    : Expr(UnaryTypeTraitExprClass, ty, VK_RValue, OK_Ordinary,
+           false,  queried->getType()->isDependentType()),
       UTT(utt), Value(value), Loc(loc), RParen(rparen), QueriedType(queried) { }
 
   explicit UnaryTypeTraitExpr(EmptyShell Empty)
@@ -1608,8 +1620,9 @@ class UnresolvedLookupExpr : public OverloadExpr {
                        const DeclarationNameInfo &NameInfo,
                        bool RequiresADL, bool Overloaded, bool HasTemplateArgs,
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End)
-    : OverloadExpr(UnresolvedLookupExprClass, C, T, Dependent, Qualifier, 
-                   QRange, NameInfo, HasTemplateArgs, Begin, End),
+    : OverloadExpr(UnresolvedLookupExprClass, C, T,
+                   Dependent, Qualifier,  QRange, NameInfo, HasTemplateArgs,
+                   Begin, End),
       RequiresADL(RequiresADL), Overloaded(Overloaded), NamingClass(NamingClass)
   {}
 
@@ -1760,7 +1773,8 @@ class DependentScopeDeclRefExpr : public Expr {
                             SourceRange QualifierRange,
                             const DeclarationNameInfo &NameInfo,
                             bool HasExplicitTemplateArgs)
-    : Expr(DependentScopeDeclRefExprClass, T, true, true),
+    : Expr(DependentScopeDeclRefExprClass, T, VK_LValue, OK_Ordinary,
+           true, true),
       NameInfo(NameInfo), QualifierRange(QualifierRange), Qualifier(Qualifier),
       HasExplicitTemplateArgs(HasExplicitTemplateArgs)
   {}
@@ -2096,7 +2110,8 @@ public:
                           SourceRange QualifierRange,
                           NamedDecl *FirstQualifierFoundInScope,
                           DeclarationNameInfo MemberNameInfo)
-  : Expr(CXXDependentScopeMemberExprClass, C.DependentTy, true, true),
+  : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
+         VK_LValue, OK_Ordinary, true, true),
     Base(Base), BaseType(BaseType), IsArrow(IsArrow),
     HasExplicitTemplateArgs(false), OperatorLoc(OperatorLoc),
     Qualifier(Qualifier), QualifierRange(QualifierRange),
@@ -2478,7 +2493,8 @@ class CXXNoexceptExpr : public Expr {
 public:
   CXXNoexceptExpr(QualType Ty, Expr *Operand, CanThrowResult Val,
                   SourceLocation Keyword, SourceLocation RParen)
-    : Expr(CXXNoexceptExprClass, Ty, /*TypeDependent*/false,
+    : Expr(CXXNoexceptExprClass, Ty, VK_RValue, OK_Ordinary,
+           /*TypeDependent*/false,
            /*ValueDependent*/Val == CT_Dependent),
       Value(Val == CT_Cannot), Operand(Operand), Range(Keyword, RParen)
   { }

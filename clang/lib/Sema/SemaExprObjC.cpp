@@ -199,7 +199,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
                                      Selector Sel, ObjCMethodDecl *Method,
                                      bool isClassMessage,
                                      SourceLocation lbrac, SourceLocation rbrac,
-                                     QualType &ReturnType) {
+                                     QualType &ReturnType, ExprValueKind &VK) {
   if (!Method) {
     // Apply default argument promotion as for (C99 6.5.2.2p6).
     for (unsigned i = 0; i != NumArgs; i++) {
@@ -214,10 +214,12 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     Diag(lbrac, DiagID)
       << Sel << isClassMessage << SourceRange(lbrac, rbrac);
     ReturnType = Context.getObjCIdType();
+    VK = VK_RValue;
     return false;
   }
 
   ReturnType = Method->getSendResultType();
+  VK = Expr::getValueKindForType(Method->getResultType());
 
   unsigned NumNamedArgs = Sel.getNumArgs();
   // Method might have more arguments than selector indicates. This is due
@@ -226,8 +228,8 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     NumNamedArgs = Method->param_size();
   // FIXME. This need be cleaned up.
   if (NumArgs < NumNamedArgs) {
-    Diag(lbrac, diag::err_typecheck_call_too_few_args) << 2
-    << NumNamedArgs << NumArgs;
+    Diag(lbrac, diag::err_typecheck_call_too_few_args)
+      << 2 << NumNamedArgs << NumArgs;
     return false;
   }
 
@@ -357,13 +359,16 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
     ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
     if (DiagnosePropertyAccessorMismatch(PD, Getter, MemberLoc))
-      ResTy = Getter->getSendResultType();
+      ResTy = Getter->getResultType();
+
     if (Super)
       return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
+                                                     VK_LValue, OK_ObjCProperty,
                                                      MemberLoc, 
                                                      SuperLoc, SuperType));
     else
       return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
+                                                     VK_LValue, OK_ObjCProperty,
                                                      MemberLoc, BaseExpr));
   }
   // Check protocols on qualified interfaces.
@@ -374,11 +379,15 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
       if (DiagnoseUseOfDecl(PD, MemberLoc))
         return ExprError();
       if (Super)
-      return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                                     MemberLoc, 
-                                                     SuperLoc, SuperType));
+        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
+                                                       VK_LValue,
+                                                       OK_ObjCProperty,
+                                                       MemberLoc, 
+                                                       SuperLoc, SuperType));
       else
         return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
+                                                       VK_LValue,
+                                                       OK_ObjCProperty,
                                                        MemberLoc,
                                                        BaseExpr));
     }
@@ -426,12 +435,12 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     PType = Getter->getSendResultType();
     if (Super)
       return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                    Setter, MemberLoc,
-                                    SuperLoc, SuperType));
+                                    VK_LValue, OK_ObjCProperty,
+                                    Setter, MemberLoc, SuperLoc, SuperType));
     else
       return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                                                 Setter, MemberLoc, 
-                                                                 BaseExpr));
+                                    VK_LValue, OK_ObjCProperty,
+                                    Setter, MemberLoc, BaseExpr));
 
   }
 
@@ -546,7 +555,8 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
         PType = (*PI)->getType();
     }
     return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(
-                                  Getter, PType, Setter,
+                                  Getter, PType, VK_LValue, OK_ObjCProperty,
+                                  Setter,
                                   propertyNameLoc, IFace, receiverNameLoc));
   }
   return ExprError(Diag(propertyNameLoc, diag::err_property_not_found)
@@ -751,8 +761,9 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     unsigned NumArgs = ArgsIn.size();
     Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
     assert(SuperLoc.isInvalid() && "Message to super with dependent type");
-    return Owned(ObjCMessageExpr::Create(Context, ReceiverType, LBracLoc,
-                                         ReceiverTypeInfo, Sel, /*Method=*/0, 
+    return Owned(ObjCMessageExpr::Create(Context, ReceiverType,
+                                         VK_RValue, LBracLoc, ReceiverTypeInfo,
+                                         Sel, /*Method=*/0,
                                          Args, NumArgs, RBracLoc));
   }
   
@@ -790,21 +801,23 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
 
   // Check the argument types and determine the result type.
   QualType ReturnType;
+  ExprValueKind VK = VK_RValue;
+
   unsigned NumArgs = ArgsIn.size();
   Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
   if (CheckMessageArgumentTypes(Args, NumArgs, Sel, Method, true,
-                                LBracLoc, RBracLoc, ReturnType))
+                                LBracLoc, RBracLoc, ReturnType, VK))
     return ExprError();
 
   // Construct the appropriate ObjCMessageExpr.
   Expr *Result;
   if (SuperLoc.isValid())
-    Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, 
+    Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc, 
                                      SuperLoc, /*IsInstanceSuper=*/false, 
                                      ReceiverType, Sel, Method, Args, 
                                      NumArgs, RBracLoc);
   else
-    Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, 
+    Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc, 
                                      ReceiverTypeInfo, Sel, Method, Args, 
                                      NumArgs, RBracLoc);
   return MaybeBindToTemporary(Result);
@@ -889,7 +902,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
       assert(SuperLoc.isInvalid() && "Message to super with dependent type");
       return Owned(ObjCMessageExpr::Create(Context, Context.DependentTy,
-                                           LBracLoc, Receiver, Sel, 
+                                           VK_RValue, LBracLoc, Receiver, Sel, 
                                            /*Method=*/0, Args, NumArgs, 
                                            RBracLoc));
     }
@@ -1050,8 +1063,9 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   unsigned NumArgs = ArgsIn.size();
   Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
   QualType ReturnType;
+  ExprValueKind VK = VK_RValue;
   if (CheckMessageArgumentTypes(Args, NumArgs, Sel, Method, false,
-                                LBracLoc, RBracLoc, ReturnType))
+                                LBracLoc, RBracLoc, ReturnType, VK))
     return ExprError();
   
   if (!ReturnType->isVoidType()) {
@@ -1063,12 +1077,13 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   // Construct the appropriate ObjCMessageExpr instance.
   Expr *Result;
   if (SuperLoc.isValid())
-    Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc,
+    Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
                                      SuperLoc,  /*IsInstanceSuper=*/true,
                                      ReceiverType, Sel, Method, 
                                      Args, NumArgs, RBracLoc);
   else
-    Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, Receiver, 
+    Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
+                                     Receiver, 
                                      Sel, Method, Args, NumArgs, RBracLoc);
   return MaybeBindToTemporary(Result);
 }

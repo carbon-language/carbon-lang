@@ -33,6 +33,16 @@
 namespace clang {
 using namespace sema;
 
+/// A convenience routine for creating a decayed reference to a
+/// function.
+static Expr *
+CreateFunctionRefExpr(Sema &S, FunctionDecl *Fn,
+                      SourceLocation Loc = SourceLocation()) {
+  Expr *E = new (S.Context) DeclRefExpr(Fn, Fn->getType(), VK_LValue, Loc);
+  S.DefaultFunctionArrayConversion(E);
+  return E;
+}
+
 static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                  bool InOverloadResolution,
                                  StandardConversionSequence &SCS);
@@ -3895,7 +3905,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // call on the stack and we don't need its arguments to be
   // well-formed.
   DeclRefExpr ConversionRef(Conversion, Conversion->getType(),
-                            From->getLocStart());
+                            VK_LValue, From->getLocStart());
   ImplicitCastExpr ConversionFn(ImplicitCastExpr::OnStack,
                                 Context.getPointerType(Conversion->getType()),
                                 CK_FunctionToPointerDecay,
@@ -3909,10 +3919,12 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     return;
   }
 
+  ExprValueKind VK = Expr::getValueKindForType(Conversion->getConversionType());
+
   // Note that it is safe to allocate CallExpr on the stack here because
   // there are 0 arguments (i.e., nothing is allocated using ASTContext's
   // allocator).
-  CallExpr Call(Context, &ConversionFn, 0, 0, CallResultType, 
+  CallExpr Call(Context, &ConversionFn, 0, 0, CallResultType, VK,
                 From->getLocStart());
   ImplicitConversionSequence ICS =
     TryCopyInitialization(*this, &Call, ToType,
@@ -7086,6 +7098,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       return Owned(new (Context) UnaryOperator(Input,
                                                Opc, 
                                                Context.DependentTy,
+                                               VK_RValue, OK_Ordinary,
                                                OpLoc));
     
     CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
@@ -7097,6 +7110,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
                                                    &Args[0], NumArgs,
                                                    Context.DependentTy,
+                                                   VK_RValue,
                                                    OpLoc));
   }
 
@@ -7151,18 +7165,18 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
 
       DiagnoseUseOfDecl(Best->FoundDecl, OpLoc);
 
-      // Determine the result type
-      QualType ResultTy = FnDecl->getCallResultType();
+      // Determine the result type.
+      QualType ResultTy = FnDecl->getResultType();
+      ExprValueKind VK = Expr::getValueKindForType(ResultTy);
+      ResultTy = ResultTy.getNonLValueExprType(Context);
 
       // Build the actual expression node.
-      Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
-                                               SourceLocation());
-      UsualUnaryConversions(FnExpr);
+      Expr *FnExpr = CreateFunctionRefExpr(*this, FnDecl);
 
       Args[0] = Input;
       CallExpr *TheCall =
         new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
-                                          Args, NumArgs, ResultTy, OpLoc);
+                                          Args, NumArgs, ResultTy, VK, OpLoc);
 
       if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall, 
                               FnDecl))
@@ -7248,10 +7262,14 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       // BinaryOperator or CompoundAssignment.
       if (Opc <= BO_Assign || Opc > BO_OrAssign)
         return Owned(new (Context) BinaryOperator(Args[0], Args[1], Opc,
-                                                  Context.DependentTy, OpLoc));
+                                                  Context.DependentTy,
+                                                  VK_RValue, OK_Ordinary,
+                                                  OpLoc));
       
       return Owned(new (Context) CompoundAssignOperator(Args[0], Args[1], Opc,
                                                         Context.DependentTy,
+                                                        VK_LValue,
+                                                        OK_Ordinary,
                                                         Context.DependentTy,
                                                         Context.DependentTy,
                                                         OpLoc));
@@ -7269,6 +7287,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
                                                    Args, 2,
                                                    Context.DependentTy,
+                                                   VK_RValue,
                                                    OpLoc));
   }
 
@@ -7362,19 +7381,17 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
         DiagnoseUseOfDecl(Best->FoundDecl, OpLoc);
 
-        // Determine the result type
-        QualType ResultTy
-          = FnDecl->getType()->getAs<FunctionType>()
-                                                ->getCallResultType(Context);
+        // Determine the result type.
+        QualType ResultTy = FnDecl->getResultType();
+        ExprValueKind VK = Expr::getValueKindForType(ResultTy);
+        ResultTy = ResultTy.getNonLValueExprType(Context);
 
         // Build the actual expression node.
-        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
-                                                 OpLoc);
-        UsualUnaryConversions(FnExpr);
+        Expr *FnExpr = CreateFunctionRefExpr(*this, FnDecl, OpLoc);
 
         CXXOperatorCallExpr *TheCall =
           new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
-                                            Args, 2, ResultTy, OpLoc);
+                                            Args, 2, ResultTy, VK, OpLoc);
         
         if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall, 
                                 FnDecl))
@@ -7474,6 +7491,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     return Owned(new (Context) CXXOperatorCallExpr(Context, OO_Subscript, Fn,
                                                    Args, 2,
                                                    Context.DependentTy,
+                                                   VK_RValue,
                                                    RLoc));
   }
 
@@ -7521,19 +7539,17 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         Args[1] = InputInit.takeAs<Expr>();
 
         // Determine the result type
-        QualType ResultTy
-          = FnDecl->getType()->getAs<FunctionType>()
-                                                  ->getCallResultType(Context);
+        QualType ResultTy = FnDecl->getResultType();
+        ExprValueKind VK = Expr::getValueKindForType(ResultTy);
+        ResultTy = ResultTy.getNonLValueExprType(Context);
 
         // Build the actual expression node.
-        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
-                                                 LLoc);
-        UsualUnaryConversions(FnExpr);
+        Expr *FnExpr = CreateFunctionRefExpr(*this, FnDecl, LLoc);
 
         CXXOperatorCallExpr *TheCall =
           new (Context) CXXOperatorCallExpr(Context, OO_Subscript,
                                             FnExpr, Args, 2,
-                                            ResultTy, RLoc);
+                                            ResultTy, VK, RLoc);
 
         if (CheckCallReturnType(FnDecl->getResultType(), LLoc, TheCall,
                                 FnDecl))
@@ -7704,11 +7720,14 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     MemExpr = cast<MemberExpr>(MemExprE->IgnoreParens());
   }
 
+  QualType ResultType = Method->getResultType();
+  ExprValueKind VK = Expr::getValueKindForType(ResultType);
+  ResultType = ResultType.getNonLValueExprType(Context);
+
   assert(Method && "Member call to something that isn't a method?");
   CXXMemberCallExpr *TheCall = 
     new (Context) CXXMemberCallExpr(Context, MemExprE, Args, NumArgs,
-                                    Method->getCallResultType(),
-                                    RParenLoc);
+                                    ResultType, VK, RParenLoc);
 
   // Check for a valid return type.
   if (CheckCallReturnType(Method->getResultType(), MemExpr->getMemberLoc(), 
@@ -7909,17 +7928,18 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
     MethodArgs[ArgIdx + 1] = Args[ArgIdx];
 
-  Expr *NewFn = new (Context) DeclRefExpr(Method, Method->getType(),
-                                          SourceLocation());
-  UsualUnaryConversions(NewFn);
+  Expr *NewFn = CreateFunctionRefExpr(*this, Method);
 
   // Once we've built TheCall, all of the expressions are properly
   // owned.
-  QualType ResultTy = Method->getCallResultType();
+  QualType ResultTy = Method->getResultType();
+  ExprValueKind VK = Expr::getValueKindForType(ResultTy);
+  ResultTy = ResultTy.getNonLValueExprType(Context);
+
   CXXOperatorCallExpr *TheCall =
     new (Context) CXXOperatorCallExpr(Context, OO_Call, NewFn,
                                       MethodArgs, NumArgs + 1,
-                                      ResultTy, RParenLoc);
+                                      ResultTy, VK, RParenLoc);
   delete [] MethodArgs;
 
   if (CheckCallReturnType(Method->getResultType(), LParenLoc, TheCall, 
@@ -8064,14 +8084,14 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
     return ExprError();
 
   // Build the operator call.
-  Expr *FnExpr = new (Context) DeclRefExpr(Method, Method->getType(),
-                                           SourceLocation());
-  UsualUnaryConversions(FnExpr);
+  Expr *FnExpr = CreateFunctionRefExpr(*this, Method);
   
-  QualType ResultTy = Method->getCallResultType();
+  QualType ResultTy = Method->getResultType();
+  ExprValueKind VK = Expr::getValueKindForType(ResultTy);
+  ResultTy = ResultTy.getNonLValueExprType(Context);
   CXXOperatorCallExpr *TheCall =
     new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr, 
-                                      &Base, 1, ResultTy, OpLoc);
+                                      &Base, 1, ResultTy, VK, OpLoc);
 
   if (CheckCallReturnType(Method->getResultType(), OpLoc, TheCall, 
                           Method))
@@ -8140,8 +8160,9 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
         QualType MemPtrType
           = Context.getMemberPointerType(Fn->getType(), ClassType.getTypePtr());
 
-        return new (Context) UnaryOperator(SubExpr, UO_AddrOf,
-                                           MemPtrType, UnOp->getOperatorLoc());
+        return new (Context) UnaryOperator(SubExpr, UO_AddrOf, MemPtrType,
+                                           VK_RValue, OK_Ordinary,
+                                           UnOp->getOperatorLoc());
       }
     }
     Expr *SubExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(),
@@ -8151,6 +8172,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     
     return new (Context) UnaryOperator(SubExpr, UO_AddrOf,
                                      Context.getPointerType(SubExpr->getType()),
+                                       VK_RValue, OK_Ordinary,
                                        UnOp->getOperatorLoc());
   } 
 
@@ -8168,6 +8190,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                Fn,
                                ULE->getNameLoc(),
                                Fn->getType(),
+                               VK_LValue,
                                TemplateArgs);
   }
 
@@ -8181,7 +8204,8 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
 
     Expr *Base;
 
-    // If we're filling in 
+    // If we're filling in a static method where we used to have an
+    // implicit member access, rewrite to a simple decl ref.
     if (MemExpr->isImplicitAccess()) {
       if (cast<CXXMethodDecl>(Fn)->isStatic()) {
         return DeclRefExpr::Create(Context,
@@ -8190,6 +8214,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                    Fn,
                                    MemExpr->getMemberLoc(),
                                    Fn->getType(),
+                                   VK_LValue,
                                    TemplateArgs);
       } else {
         SourceLocation Loc = MemExpr->getMemberLoc();
@@ -8210,7 +8235,10 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                               Found,
                               MemExpr->getMemberNameInfo(),
                               TemplateArgs,
-                              Fn->getType());
+                              Fn->getType(),
+                              cast<CXXMethodDecl>(Fn)->isStatic()
+                                ? VK_LValue : VK_RValue,
+                              OK_Ordinary);
   }
   
   llvm_unreachable("Invalid reference to overloaded function");

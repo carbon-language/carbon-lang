@@ -44,17 +44,21 @@ enum CastType {
 
 
 static void CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
+                           ExprValueKind &VK,
                            const SourceRange &OpRange,
                            const SourceRange &DestRange);
 static void CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
+                                 ExprValueKind &VK,
                                  const SourceRange &OpRange,
                                  const SourceRange &DestRange,
                                  CastKind &Kind);
 static void CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
+                            ExprValueKind &VK,
                             const SourceRange &OpRange,
                             CastKind &Kind,
                             CXXCastPath &BasePath);
 static void CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
+                             ExprValueKind &VK,
                              const SourceRange &OpRange,
                              const SourceRange &DestRange,
                              CastKind &Kind,
@@ -156,44 +160,46 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     Diag(Ex->getLocStart(), diag::err_invalid_use_of_bound_member_func)
       << Ex->getSourceRange();
 
+  ExprValueKind VK = VK_RValue;
   switch (Kind) {
   default: llvm_unreachable("Unknown C++ cast!");
 
   case tok::kw_const_cast:
     if (!TypeDependent)
-      CheckConstCast(*this, Ex, DestType, OpRange, DestRange);
+      CheckConstCast(*this, Ex, DestType, VK, OpRange, DestRange);
     return Owned(CXXConstCastExpr::Create(Context,
                                         DestType.getNonLValueExprType(Context),
-                                          Ex, DestTInfo, OpLoc));
+                                          VK, Ex, DestTInfo, OpLoc));
 
   case tok::kw_dynamic_cast: {
     CastKind Kind = CK_Dependent;
     CXXCastPath BasePath;
     if (!TypeDependent)
-      CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange, Kind, BasePath);
+      CheckDynamicCast(*this, Ex, DestType, VK, OpRange, DestRange,
+                       Kind, BasePath);
     return Owned(CXXDynamicCastExpr::Create(Context,
                                           DestType.getNonLValueExprType(Context),
-                                            Kind, Ex, &BasePath, DestTInfo,
+                                            VK, Kind, Ex, &BasePath, DestTInfo,
                                             OpLoc));
   }
   case tok::kw_reinterpret_cast: {
     CastKind Kind = CK_Dependent;
     if (!TypeDependent)
-      CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange, Kind);
+      CheckReinterpretCast(*this, Ex, DestType, VK, OpRange, DestRange, Kind);
     return Owned(CXXReinterpretCastExpr::Create(Context,
                                   DestType.getNonLValueExprType(Context),
-                                  Kind, Ex, 0,
+                                  VK, Kind, Ex, 0,
                                   DestTInfo, OpLoc));
   }
   case tok::kw_static_cast: {
     CastKind Kind = CK_Dependent;
     CXXCastPath BasePath;
     if (!TypeDependent)
-      CheckStaticCast(*this, Ex, DestType, OpRange, Kind, BasePath);
+      CheckStaticCast(*this, Ex, DestType, VK, OpRange, Kind, BasePath);
     
     return Owned(CXXStaticCastExpr::Create(Context,
                                          DestType.getNonLValueExprType(Context),
-                                           Kind, Ex, &BasePath,
+                                           VK, Kind, Ex, &BasePath,
                                            DestTInfo, OpLoc));
   }
   }
@@ -315,7 +321,7 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
 /// checked downcasts in class hierarchies.
 static void
 CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
-                 const SourceRange &OpRange,
+                 ExprValueKind &VK, const SourceRange &OpRange,
                  const SourceRange &DestRange, CastKind &Kind,
                  CXXCastPath &BasePath) {
   QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
@@ -326,11 +332,12 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   QualType DestPointee;
   const PointerType *DestPointer = DestType->getAs<PointerType>();
-  const ReferenceType *DestReference = DestType->getAs<ReferenceType>();
+  const ReferenceType *DestReference = 0;
   if (DestPointer) {
     DestPointee = DestPointer->getPointeeType();
-  } else if (DestReference) {
+  } else if ((DestReference = DestType->getAs<ReferenceType>())) {
     DestPointee = DestReference->getPointeeType();
+    VK = isa<LValueReferenceType>(DestReference) ? VK_LValue : VK_RValue;
   } else {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ref_or_ptr)
       << OrigDestType << DestRange;
@@ -447,9 +454,10 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 /// const char *str = "literal";
 /// legacy_function(const_cast\<char*\>(str));
 void
-CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
+CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType, ExprValueKind &VK,
                const SourceRange &OpRange, const SourceRange &DestRange) {
-  if (!DestType->isLValueReferenceType())
+  VK = Expr::getValueKindForType(DestType);
+  if (VK == VK_RValue)
     Self.DefaultFunctionArrayLvalueConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
@@ -466,9 +474,10 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 /// char *bytes = reinterpret_cast\<char*\>(int_ptr);
 void
 CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
-                     const SourceRange &OpRange, const SourceRange &DestRange,
-                     CastKind &Kind) {
-  if (!DestType->isLValueReferenceType())
+                     ExprValueKind &VK, const SourceRange &OpRange,
+                     const SourceRange &DestRange, CastKind &Kind) {
+  VK = Expr::getValueKindForType(DestType);
+  if (VK == VK_RValue)
     Self.DefaultFunctionArrayLvalueConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
@@ -498,8 +507,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 /// implicit conversions explicit and getting rid of data loss warnings.
 void
 CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
-                const SourceRange &OpRange, CastKind &Kind,
-                CXXCastPath &BasePath) {
+                ExprValueKind &VK, const SourceRange &OpRange,
+                CastKind &Kind, CXXCastPath &BasePath) {
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
@@ -508,7 +517,8 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return;
   }
 
-  if (!DestType->isLValueReferenceType() && !DestType->isRecordType())
+  VK = Expr::getValueKindForType(DestType);
+  if (VK == VK_RValue && !DestType->isRecordType())
     Self.DefaultFunctionArrayLvalueConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
@@ -1345,8 +1355,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
 }
 
 bool 
-Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
-                         CastKind &Kind, 
+Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
+                         Expr *&CastExpr, CastKind &Kind, 
                          CXXCastPath &BasePath,
                          bool FunctionalStyle) {
   if (CastExpr->isBoundMemberFunction(Context))
@@ -1368,7 +1378,8 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
     return false;
   }
 
-  if (!CastTy->isLValueReferenceType() && !CastTy->isRecordType())
+  VK = Expr::getValueKindForType(CastTy);
+  if (VK == VK_RValue && !CastTy->isRecordType())
     DefaultFunctionArrayLvalueConversion(CastExpr);
 
   // C++ [expr.cast]p5: The conversions performed by

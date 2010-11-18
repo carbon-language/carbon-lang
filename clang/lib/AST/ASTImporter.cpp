@@ -2813,7 +2813,7 @@ Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
                              Importer.Import(E->getQualifierRange()),
                              ToD,
                              Importer.Import(E->getLocation()),
-                             T,
+                             T, E->getValueKind(),
                              /*FIXME:TemplateArgs=*/0);
 }
 
@@ -2858,7 +2858,8 @@ Expr *ASTNodeImporter::VisitUnaryOperator(UnaryOperator *E) {
     return 0;
   
   return new (Importer.getToContext()) UnaryOperator(SubExpr, E->getOpcode(),
-                                                     T,
+                                                     T, E->getValueKind(),
+                                                     E->getObjectKind(),
                                          Importer.Import(E->getOperatorLoc()));                                        
 }
 
@@ -2900,7 +2901,8 @@ Expr *ASTNodeImporter::VisitBinaryOperator(BinaryOperator *E) {
     return 0;
   
   return new (Importer.getToContext()) BinaryOperator(LHS, RHS, E->getOpcode(),
-                                                      T,
+                                                      T, E->getValueKind(),
+                                                      E->getObjectKind(),
                                           Importer.Import(E->getOperatorLoc()));
 }
 
@@ -2927,7 +2929,9 @@ Expr *ASTNodeImporter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
   
   return new (Importer.getToContext()) 
                         CompoundAssignOperator(LHS, RHS, E->getOpcode(),
-                                               T, CompLHSType, CompResultType,
+                                               T, E->getValueKind(),
+                                               E->getObjectKind(),
+                                               CompLHSType, CompResultType,
                                           Importer.Import(E->getOperatorLoc()));
 }
 
@@ -2972,7 +2976,8 @@ Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
   if (ImportCastPath(E, BasePath))
     return 0;
 
-  return CStyleCastExpr::Create(Importer.getToContext(), T, E->getCastKind(),
+  return CStyleCastExpr::Create(Importer.getToContext(), T,
+                                E->getValueKind(), E->getCastKind(),
                                 SubExpr, &BasePath, TInfo,
                                 Importer.Import(E->getLParenLoc()),
                                 Importer.Import(E->getRParenLoc()));
