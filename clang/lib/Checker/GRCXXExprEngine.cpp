@@ -169,13 +169,43 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
       VisitLValue(ObjArgExpr, *I, AllArgsEvaluated);
   }
 
-  // Allow checkers to pre-visit the member call.
-  ExplodedNodeSet PreVisitChecks;
-  CheckerVisit(MCE, PreVisitChecks, AllArgsEvaluated, PreVisitStmtCallback);
-
   // Now evaluate the call itself.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
   assert(MD && "not a CXXMethodDecl?");
+  EvalMethodCall(MCE, MD, ObjArgExpr, Pred, AllArgsEvaluated, Dst);
+}
+
+void GRExprEngine::VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
+                                            ExplodedNode *Pred,
+                                            ExplodedNodeSet &Dst) {
+  const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(C->getCalleeDecl());
+  if (!MD) {
+    // If the operator doesn't represent a method call treat as regural call.
+    VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, false);
+    return;
+  }
+
+  // Determine the type of function we're calling (if available).
+  const FunctionProtoType *Proto = NULL;
+  QualType FnType = C->getCallee()->IgnoreParens()->getType();
+  if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
+    Proto = FnTypePtr->getPointeeType()->getAs<FunctionProtoType>();
+
+  // Evaluate arguments treating the first one (object method is called on)
+  // as alvalue.
+  ExplodedNodeSet ArgsEvaluated;
+  EvalArguments(C->arg_begin(), C->arg_end(), Proto, Pred, ArgsEvaluated, true);
+
+  // Now evaluate the call itself.
+  EvalMethodCall(C, MD, C->getArg(0), Pred, ArgsEvaluated, Dst);
+}
+
+void GRExprEngine::EvalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
+                                  const Expr *ThisExpr, ExplodedNode *Pred,
+                                  ExplodedNodeSet &Src, ExplodedNodeSet &Dst) {
+  // Allow checkers to pre-visit the member call.
+  ExplodedNodeSet PreVisitChecks;
+  CheckerVisit(MCE, PreVisitChecks, Src, PreVisitStmtCallback);
 
   if (!(MD->isThisDeclarationADefinition() && AMgr.shouldInlineCall())) {
     // FIXME: conservative method call evaluation.
@@ -183,7 +213,6 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
     return;
   }
 
-  ExplodedNodeSet SetupThis;
   const StackFrameContext *SFC = AMgr.getStackFrame(MD, 
                                                     Pred->getLocationContext(),
                                                     MCE, 
@@ -195,8 +224,8 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
          E = PreVisitChecks.end(); I != E; ++I) {
     // Set up 'this' region.
     const GRState *state = GetState(*I);
-    state = state->bindLoc(loc::MemRegionVal(ThisR),state->getSVal(ObjArgExpr));
-    SetupThis.Add(Builder->generateNode(Loc, state, *I));
+    state = state->bindLoc(loc::MemRegionVal(ThisR), state->getSVal(ThisExpr));
+    Dst.Add(Builder->generateNode(Loc, state, *I));
   }
 }
 

@@ -431,6 +431,9 @@ public:
   void VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, ExplodedNode *Pred,
                               ExplodedNodeSet &Dst);
 
+  void VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
+                                ExplodedNode *Pred, ExplodedNodeSet &Dst);
+
   void VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                        ExplodedNodeSet &Dst);
 
@@ -453,6 +456,12 @@ public:
                      const FunctionProtoType *FnType, 
                      ExplodedNode *Pred, ExplodedNodeSet &Dst,
                      bool FstArgAsLValue = false);
+
+  /// Evaluate method call itself. Used for CXXMethodCallExpr and
+  /// CXXOperatorCallExpr.
+  void EvalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
+                      const Expr *ThisExpr, ExplodedNode *Pred,
+                      ExplodedNodeSet &Src, ExplodedNodeSet &Dst);
 
   /// EvalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)
