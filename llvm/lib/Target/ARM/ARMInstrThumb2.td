@@ -2488,44 +2488,46 @@ def t2SMLSLDX : T2FourReg_mac<1, 0b101, 0b1101, (outs rGPR:$Ra,rGPR:$Rd),
 
 class T2I_misc<bits<2> op1, bits<2> op2, dag oops, dag iops,
       InstrItinClass itin, string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> {
+  : T2ThreeReg<oops, iops, itin, opc, asm, pattern> {
   let Inst{31-27} = 0b11111;
   let Inst{26-22} = 0b01010;
   let Inst{21-20} = op1;
   let Inst{15-12} = 0b1111;
   let Inst{7-6} = 0b10;
   let Inst{5-4} = op2;
+  let Rn{3-0} = Rm{3-0};
 }
 
-def t2CLZ : T2I_misc<0b11, 0b00, (outs rGPR:$dst), (ins rGPR:$src), IIC_iUNAr,
-                    "clz", "\t$dst, $src", [(set rGPR:$dst, (ctlz rGPR:$src))]>;
+def t2CLZ : T2I_misc<0b11, 0b00, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
+                    "clz", "\t$Rd, $Rm", [(set rGPR:$Rd, (ctlz rGPR:$Rm))]>;
 
-def t2RBIT : T2I_misc<0b01, 0b10, (outs rGPR:$dst), (ins rGPR:$src), IIC_iUNAr,
-                      "rbit", "\t$dst, $src",
-                      [(set rGPR:$dst, (ARMrbit rGPR:$src))]>;
+def t2RBIT : T2I_misc<0b01, 0b10, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
+                      "rbit", "\t$Rd, $Rm",
+                      [(set rGPR:$Rd, (ARMrbit rGPR:$Rm))]>;
 
-def t2REV : T2I_misc<0b01, 0b00, (outs rGPR:$dst), (ins rGPR:$src), IIC_iUNAr,
-                 "rev", ".w\t$dst, $src", [(set rGPR:$dst, (bswap rGPR:$src))]>;
+def t2REV : T2I_misc<0b01, 0b00, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
+                 "rev", ".w\t$Rd, $Rm", [(set rGPR:$Rd, (bswap rGPR:$Rm))]>;
 
-def t2REV16 : T2I_misc<0b01, 0b01, (outs rGPR:$dst), (ins rGPR:$src), IIC_iUNAr,
-                       "rev16", ".w\t$dst, $src",
-                [(set rGPR:$dst,
-                    (or (and (srl rGPR:$src, (i32 8)), 0xFF),
-                        (or (and (shl rGPR:$src, (i32 8)), 0xFF00),
-                            (or (and (srl rGPR:$src, (i32 8)), 0xFF0000),
-                               (and (shl rGPR:$src, (i32 8)), 0xFF000000)))))]>;
+def t2REV16 : T2I_misc<0b01, 0b01, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
+                       "rev16", ".w\t$Rd, $Rm",
+                [(set rGPR:$Rd,
+                    (or (and (srl rGPR:$Rm, (i32 8)), 0xFF),
+                        (or (and (shl rGPR:$Rm, (i32 8)), 0xFF00),
+                            (or (and (srl rGPR:$Rm, (i32 8)), 0xFF0000),
+                               (and (shl rGPR:$Rm, (i32 8)), 0xFF000000)))))]>;
 
-def t2REVSH : T2I_misc<0b01, 0b11, (outs rGPR:$dst), (ins rGPR:$src), IIC_iUNAr,
-                       "revsh", ".w\t$dst, $src",
-                 [(set rGPR:$dst,
+def t2REVSH : T2I_misc<0b01, 0b11, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
+                       "revsh", ".w\t$Rd, $Rm",
+                 [(set rGPR:$Rd,
                     (sext_inreg
-                      (or (srl (and rGPR:$src, 0xFF00), (i32 8)),
-                          (shl rGPR:$src, (i32 8))), i16))]>;
+                      (or (srl (and rGPR:$Rm, 0xFF00), (i32 8)),
+                          (shl rGPR:$Rm, (i32 8))), i16))]>;
 
-def t2PKHBT : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
-                  IIC_iBITsi, "pkhbt", "\t$dst, $src1, $src2$sh",
-                  [(set rGPR:$dst, (or (and rGPR:$src1, 0xFFFF),
-                                      (and (shl rGPR:$src2, lsl_amt:$sh),
+def t2PKHBT : T2ThreeReg<
+            (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, shift_imm:$sh),
+                  IIC_iBITsi, "pkhbt", "\t$Rd, $Rn, $Rm$sh",
+                  [(set rGPR:$Rd, (or (and rGPR:$Rn, 0xFFFF),
+                                      (and (shl rGPR:$Rm, lsl_amt:$sh),
                                            0xFFFF0000)))]>,
                   Requires<[HasT2ExtractPack, IsThumb2]> {
   let Inst{31-27} = 0b11101;
@@ -2533,6 +2535,10 @@ def t2PKHBT : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
   let Inst{24-20} = 0b01100;
   let Inst{5} = 0; // BT form
   let Inst{4} = 0;
+  
+  bits<5> sh;
+  let Inst{14-12} = sh{4-2};
+  let Inst{7-6}   = sh{1-0};
 }
 
 // Alternate cases for PKHBT where identities eliminate some nodes.
@@ -2545,10 +2551,11 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (shl rGPR:$src2, imm16_31:$sh)),
 
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
-def t2PKHTB : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
-                  IIC_iBITsi, "pkhtb", "\t$dst, $src1, $src2$sh",
-                  [(set rGPR:$dst, (or (and rGPR:$src1, 0xFFFF0000),
-                                       (and (sra rGPR:$src2, asr_amt:$sh),
+def t2PKHTB : T2ThreeReg<
+                  (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, shift_imm:$sh),
+                  IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm$sh",
+                  [(set rGPR:$Rd, (or (and rGPR:$Rn, 0xFFFF0000),
+                                       (and (sra rGPR:$Rm, asr_amt:$sh),
                                             0xFFFF)))]>,
                   Requires<[HasT2ExtractPack, IsThumb2]> {
   let Inst{31-27} = 0b11101;
@@ -2556,6 +2563,10 @@ def t2PKHTB : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
   let Inst{24-20} = 0b01100;
   let Inst{5} = 1; // TB form
   let Inst{4} = 0;
+  
+  bits<5> sh;
+  let Inst{14-12} = sh{4-2};
+  let Inst{7-6}   = sh{1-0};
 }
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
