@@ -691,8 +691,7 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   // Finally, we have to make sure that the dest of the second does not
   // alias the source of the first.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  if (!AA.isNoAlias(M->getRawDest(), MSize, MDep->getRawSource(), DepSize) ||
-      !AA.isNoAlias(M->getRawDest(), MSize, M->getRawSource(), MSize))
+  if (!AA.isNoAlias(M->getRawDest(), MSize, MDep->getRawSource(), DepSize))
     return false;
   
   // If all checks passed, then we can transform these memcpy's
