@@ -169,10 +169,10 @@ def VRSQRTS : IInst<"ddd", "fQf">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.11 Shifts by signed variable
-def VSHL   : SInst<"ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
-def VQSHL  : SInst<"ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
-def VRSHL  : SInst<"ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
-def VQRSHL : SInst<"ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
+def VSHL   : SInst<"ddx", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
+def VQSHL  : SInst<"ddx", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
+def VRSHL  : SInst<"ddx", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
+def VQRSHL : SInst<"ddx", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.12 Shifts by constant
