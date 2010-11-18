@@ -50,10 +50,10 @@ class ARMAsmParser : public TargetAsmParser {
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
   int TryParseRegister();
-  ARMOperand *TryParseRegisterWithWriteBack();
-  ARMOperand *ParseRegisterList();
-  ARMOperand *ParseMemory();
-  ARMOperand *ParseOperand();
+  bool TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &);
 
   bool ParseMemoryOffsetReg(bool &Negative,
                             bool &OffsetRegShifted,
@@ -127,7 +127,6 @@ class ARMOperand : public MCParsedAsmOperand {
 
     struct {
       unsigned RegNum;
-      bool Writeback;
     } Reg;
 
     struct {
@@ -142,11 +141,11 @@ class ARMOperand : public MCParsedAsmOperand {
       const MCExpr *ShiftAmount;     // used when OffsetRegShifted is true
       enum ShiftType ShiftType;      // used when OffsetRegShifted is true
       unsigned OffsetRegShifted : 1; // only used when OffsetIsReg is true
-      unsigned Preindexed : 1;
-      unsigned Postindexed : 1;
-      unsigned OffsetIsReg : 1;
-      unsigned Negative : 1;         // only used when OffsetIsReg is true
-      unsigned Writeback : 1;
+      unsigned Preindexed       : 1;
+      unsigned Postindexed      : 1;
+      unsigned OffsetIsReg      : 1;
+      unsigned Negative         : 1; // only used when OffsetIsReg is true
+      unsigned Writeback        : 1;
     } Mem;
   };
 
@@ -322,11 +321,9 @@ public:
     return Op;
   }
 
-  static ARMOperand *CreateReg(unsigned RegNum, bool Writeback, SMLoc S,
-                               SMLoc E) {
+  static ARMOperand *CreateReg(unsigned RegNum, SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(Register);
     Op->Reg.RegNum = RegNum;
-    Op->Reg.Writeback = Writeback;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -396,10 +393,10 @@ void ARMOperand::dump(raw_ostream &OS) const {
     getImm()->print(OS);
     break;
   case Memory:
-    OS << "<memory" << (!Mem.Writeback ? ">" : "!>");
+    OS << "<memory>";
     break;
   case Register:
-    OS << "<register " << getReg() << (!Reg.Writeback ? ">" : "!>");
+    OS << "<register " << getReg() << ">";
     break;
   case RegisterList:
   case DPRRegisterList:
@@ -447,34 +444,35 @@ int ARMAsmParser::TryParseRegister() {
 }
 
 
-/// Try to parse a register name.  The token must be an Identifier when called,
-/// and if it is a register name the token is eaten and the register number is
-/// returned.  Otherwise return -1.
+/// Try to parse a register name.  The token must be an Identifier when called.
+/// If it's a register, an AsmOperand is created. Another AsmOperand is created
+/// if there is a "writeback". 'true' if it's not a register.
 ///
 /// TODO this is likely to change to allow different register types and or to
 /// parse for a specific register type.
-ARMOperand *ARMAsmParser::TryParseRegisterWithWriteBack() {
+bool ARMAsmParser::
+TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   int RegNo = TryParseRegister();
   if (RegNo == -1)
-    return 0;
+    return true;
 
-  SMLoc E = Parser.getTok().getLoc();
+  Operands.push_back(ARMOperand::CreateReg(RegNo, S, Parser.getTok().getLoc()));
 
-  bool Writeback = false;
   const AsmToken &ExclaimTok = Parser.getTok();
   if (ExclaimTok.is(AsmToken::Exclaim)) {
-    E = ExclaimTok.getLoc();
-    Writeback = true;
+    Operands.push_back(ARMOperand::CreateToken(ExclaimTok.getString(),
+                                               ExclaimTok.getLoc()));
     Parser.Lex(); // Eat exclaim token
   }
 
-  return ARMOperand::CreateReg(RegNo, Writeback, S, E);
+  return false;
 }
 
 /// Parse a register list, return it if successful else return null.  The first
 /// token must be a '{' when called.
-ARMOperand *ARMAsmParser::ParseRegisterList() {
+bool ARMAsmParser::
+ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   assert(Parser.getTok().is(AsmToken::LCurly) &&
          "Token is not a Left Curly Brace");
   SMLoc S = Parser.getTok().getLoc();
@@ -491,13 +489,13 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
     SMLoc RegLoc = RegTok.getLoc();
     if (RegTok.isNot(AsmToken::Identifier)) {
       Error(RegLoc, "register expected");
-      return 0;
+      return true;
     }
 
     int RegNum = TryParseRegister();
     if (RegNum == -1) {
       Error(RegLoc, "register expected");
-      return 0;
+      return true;
     }
 
     if (IsRange) {
@@ -518,7 +516,7 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
   const AsmToken &RCurlyTok = Parser.getTok();
   if (RCurlyTok.isNot(AsmToken::RCurly)) {
     Error(RCurlyTok.getLoc(), "'}' expected");
-    return 0;
+    return true;
   }
 
   SMLoc E = RCurlyTok.getLoc();
@@ -540,7 +538,7 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
 
     if (RegMap[Reg]) {
       Error(RegInfo.second, "register duplicated in register list");
-      return 0;
+      return true;
     }
 
     if (!EmittedWarning && Reg < HighRegNum)
@@ -551,14 +549,17 @@ ARMOperand *ARMAsmParser::ParseRegisterList() {
     HighRegNum = std::max(Reg, HighRegNum);
   }
 
-  return ARMOperand::CreateRegList(Registers, S, E);
+  Operands.push_back(ARMOperand::CreateRegList(Registers, S, E));
+  return false;
 }
 
 /// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.
+///
 /// TODO Only preindexing and postindexing addressing are started, unindexed
 /// with option, etc are still to do.
-ARMOperand *ARMAsmParser::ParseMemory() {
+bool ARMAsmParser::
+ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S, E;
   assert(Parser.getTok().is(AsmToken::LBrac) &&
          "Token is not a Left Bracket");
@@ -568,12 +569,12 @@ ARMOperand *ARMAsmParser::ParseMemory() {
   const AsmToken &BaseRegTok = Parser.getTok();
   if (BaseRegTok.isNot(AsmToken::Identifier)) {
     Error(BaseRegTok.getLoc(), "register expected");
-    return 0;
+    return true;
   }
   int BaseRegNum = TryParseRegister();
   if (BaseRegNum == -1) {
     Error(BaseRegTok.getLoc(), "register expected");
-    return 0;
+    return true;
   }
 
   bool Preindexed = false;
@@ -595,25 +596,34 @@ ARMOperand *ARMAsmParser::ParseMemory() {
     const MCExpr *Offset;
     if (ParseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType, ShiftAmount,
                              Offset, OffsetIsReg, OffsetRegNum, E))
-      return 0;
+      return true;
     const AsmToken &RBracTok = Parser.getTok();
     if (RBracTok.isNot(AsmToken::RBrac)) {
       Error(RBracTok.getLoc(), "']' expected");
-      return 0;
+      return true;
     }
     E = RBracTok.getLoc();
     Parser.Lex(); // Eat right bracket token.
 
+    
     const AsmToken &ExclaimTok = Parser.getTok();
+    ARMOperand *WBOp = 0;
     if (ExclaimTok.is(AsmToken::Exclaim)) {
-      E = ExclaimTok.getLoc();
+      WBOp = ARMOperand::CreateToken(ExclaimTok.getString(),
+                                     ExclaimTok.getLoc());
       Writeback = true;
       Parser.Lex(); // Eat exclaim token
     }
-    return ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset, OffsetRegNum,
-                                 OffsetRegShifted, ShiftType, ShiftAmount,
-                                 Preindexed, Postindexed, Negative, Writeback,
-                                 S, E);
+
+    Operands.push_back(ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset,
+                                             OffsetRegNum, OffsetRegShifted,
+                                             ShiftType, ShiftAmount, Preindexed,
+                                             Postindexed, Negative, Writeback,
+                                             S, E));
+    if (WBOp)
+      Operands.push_back(WBOp);
+
+    return false;
   }
   // The "[Rn" we have so far was not followed by a comma.
   else if (Tok.is(AsmToken::RBrac)) {
@@ -629,27 +639,33 @@ ARMOperand *ARMAsmParser::ParseMemory() {
     const MCExpr *Offset = 0;
 
     const AsmToken &NextTok = Parser.getTok();
+    
     if (NextTok.isNot(AsmToken::EndOfStatement)) {
       Postindexed = true;
       Writeback = true;
+
       if (NextTok.isNot(AsmToken::Comma)) {
         Error(NextTok.getLoc(), "',' expected");
-        return 0;
+        return true;
       }
+
       Parser.Lex(); // Eat comma token.
+
       if (ParseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType,
                                ShiftAmount, Offset, OffsetIsReg, OffsetRegNum,
                                E))
-        return 0;
+        return true;
     }
 
-    return ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset, OffsetRegNum,
-                                 OffsetRegShifted, ShiftType, ShiftAmount,
-                                 Preindexed, Postindexed, Negative, Writeback,
-                                 S, E);
+    Operands.push_back(ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset,
+                                             OffsetRegNum, OffsetRegShifted,
+                                             ShiftType, ShiftAmount, Preindexed,
+                                             Postindexed, Negative, Writeback,
+                                             S, E));
+    return false;
   }
 
-  return 0;
+  return true;
 }
 
 /// Parse the offset of a memory operand after we have seen "[Rn," or "[Rn],"
@@ -760,28 +776,30 @@ bool ARMAsmParser::ParseShift(ShiftType &St, const MCExpr *&ShiftAmount,
 
 /// Parse a arm instruction operand.  For now this parses the operand regardless
 /// of the mnemonic.
-ARMOperand *ARMAsmParser::ParseOperand() {
+bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands){
   SMLoc S, E;
   switch (getLexer().getKind()) {
   default:
     Error(Parser.getTok().getLoc(), "unexpected token in operand");
-    return 0;
-  case AsmToken::Identifier:
-    if (ARMOperand *Op = TryParseRegisterWithWriteBack())
-      return Op;
+    return true;
+  case AsmToken::Identifier: {
+    if (!TryParseRegisterWithWriteBack(Operands))
+      return false;
 
     // This was not a register so parse other operands that start with an
     // identifier (like labels) as expressions and create them as immediates.
     const MCExpr *IdVal;
     S = Parser.getTok().getLoc();
     if (getParser().ParseExpression(IdVal))
-      return 0;
+      return true;
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-    return ARMOperand::CreateImm(IdVal, S, E);
+    Operands.push_back(ARMOperand::CreateImm(IdVal, S, E));
+    return false;
+  }
   case AsmToken::LBrac:
-    return ParseMemory();
+    return ParseMemory(Operands);
   case AsmToken::LCurly:
-    return ParseRegisterList();
+    return ParseRegisterList(Operands);
   case AsmToken::Hash:
     // #42 -> immediate.
     // TODO: ":lower16:" and ":upper16:" modifiers after # before immediate
@@ -789,9 +807,10 @@ ARMOperand *ARMAsmParser::ParseOperand() {
     Parser.Lex();
     const MCExpr *ImmVal;
     if (getParser().ParseExpression(ImmVal))
-      return 0;
+      return true;
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-    return ARMOperand::CreateImm(ImmVal, S, E);
+    Operands.push_back(ARMOperand::CreateImm(ImmVal, S, E));
+    return false;
   }
 }
 
@@ -853,9 +872,7 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Read the remaining operands.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
-    if (ARMOperand *Op = ParseOperand())
-      Operands.push_back(Op);
-    else {
+    if (ParseOperand(Operands)) {
       Parser.EatToEndOfStatement();
       return true;
     }
@@ -864,9 +881,7 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
       Parser.Lex();  // Eat the comma.
 
       // Parse and remember the operand.
-      if (ARMOperand *Op = ParseOperand())
-        Operands.push_back(Op);
-      else {
+      if (ParseOperand(Operands)) {
         Parser.EatToEndOfStatement();
         return true;
       }
