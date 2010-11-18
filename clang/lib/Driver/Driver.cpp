@@ -326,7 +326,7 @@ int Driver::ExecuteCompilation(const Compilation &C) const {
   }
 
   // If there were errors building the compilation, quit now.
-  if (getDiags().getNumErrors())
+  if (getDiags().hasErrorOccurred())
     return 1;
 
   const Command *FailingCommand = 0;
@@ -998,7 +998,7 @@ void Driver::BuildJobs(Compilation &C) const {
 
   // If the user passed -Qunused-arguments or there were errors, don't warn
   // about any unused arguments.
-  if (Diags.getNumErrors() ||
+  if (Diags.hasErrorOccurred() ||
       C.getArgs().hasArg(options::OPT_Qunused_arguments))
     return;
 

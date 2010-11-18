@@ -288,7 +288,7 @@ void FrontendAction::EndSourceFile() {
 
   // Cleanup the output streams, and erase the output files if we encountered
   // an error.
-  CI.clearOutputFiles(/*EraseFiles=*/CI.getDiagnostics().getNumErrors());
+  CI.clearOutputFiles(/*EraseFiles=*/CI.getDiagnostics().hasErrorOccurred());
 
   // Inform the diagnostic client we are done with this source file.
   CI.getDiagnosticClient().EndSourceFile();
