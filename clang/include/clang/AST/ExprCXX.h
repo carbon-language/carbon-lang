@@ -423,7 +423,7 @@ public:
       Operand(Operand), Range(R) { }
   
   CXXUuidofExpr(QualType Ty, Expr *Operand, SourceRange R)
-    : Expr(CXXUuidofExprClass, Ty, /*FIXME*/ VK_LValue, OK_Ordinary,
+    : Expr(CXXUuidofExprClass, Ty, VK_RValue, OK_Ordinary,
         false, Operand->isTypeDependent()),
       Operand(Operand), Range(R) { }
 

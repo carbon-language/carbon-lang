@@ -5,6 +5,10 @@ struct X {
   X();
   X(const X&);
   ~X();
+
+  static int staticData;
+  int data;
+  void method();
 };
 
 @interface A {
@@ -19,3 +23,19 @@ void f(A* a) {
   a.x = X(); // expected-error {{setter method is needed to assign to object using property assignment syntax}}
 }
 
+struct Y : X { };
+
+@interface B {
+@private
+  Y *y;
+}
+- (Y)value;
+- (void)setValue : (Y) arg;
+@property Y value;
+@end
+
+void g(B *b) {
+  b.value.data = 17; // expected-error {{not assignable}}
+  b.value.staticData = 17;
+  b.value.method();
+}

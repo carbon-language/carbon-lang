@@ -3151,7 +3151,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       new (Context) ConditionalOperator(lessThanExpr,
                                         SourceLocation(), CE,
                                         SourceLocation(), STCE, (Expr*)0,
-                                        returnType, VK_RValue);
+                                        returnType, VK_RValue, OK_Ordinary);
     ReplacingStmt = new (Context) ParenExpr(SourceLocation(), SourceLocation(), 
                                             CondExpr);
   }
@@ -4687,7 +4687,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
                                       SourceLocation(), cast<Expr>(LHSStmt),
                                       SourceLocation(), cast<Expr>(RHSStmt),
                                       (Expr*)0,
-                                      Exp->getType(), VK_RValue);
+                                      Exp->getType(), VK_RValue, OK_Ordinary);
     return CondExpr;
   } else if (const ObjCIvarRefExpr *IRE = dyn_cast<ObjCIvarRefExpr>(BlockExp)) {
     CPT = IRE->getType()->getAs<BlockPointerType>();

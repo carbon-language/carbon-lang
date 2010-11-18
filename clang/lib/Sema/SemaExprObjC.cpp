@@ -431,16 +431,20 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     return ExprError();
 
   if (Getter) {
-    QualType PType;
-    PType = Getter->getSendResultType();
+    QualType PType = Getter->getSendResultType();
+    ExprValueKind VK = VK_LValue;
+    ExprObjectKind OK = OK_ObjCProperty;
+    if (!getLangOptions().CPlusPlus && !PType.hasQualifiers() &&
+        PType->isVoidType())
+      VK = VK_RValue, OK = OK_Ordinary;
+
     if (Super)
       return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                    VK_LValue, OK_ObjCProperty,
-                                    Setter, MemberLoc, SuperLoc, SuperType));
+                                    VK, OK, Setter, MemberLoc,
+                                    SuperLoc, SuperType));
     else
       return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                    VK_LValue, OK_ObjCProperty,
-                                    Setter, MemberLoc, BaseExpr));
+                                    VK, OK, Setter, MemberLoc, BaseExpr));
 
   }
 
@@ -547,16 +551,23 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
   if (Getter || Setter) {
     QualType PType;
 
-    if (Getter)
+    ExprValueKind VK = VK_LValue;
+    if (Getter) {
       PType = Getter->getSendResultType();
-    else {
+      if (!getLangOptions().CPlusPlus &&
+          !PType.hasQualifiers() && PType->isVoidType())
+        VK = VK_RValue;
+    } else {
       for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
            E = Setter->param_end(); PI != E; ++PI)
         PType = (*PI)->getType();
+      VK = VK_LValue;
     }
+
+    ExprObjectKind OK = (VK == VK_RValue ? OK_Ordinary : OK_ObjCProperty);
+
     return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(
-                                  Getter, PType, VK_LValue, OK_ObjCProperty,
-                                  Setter,
+                                  Getter, PType, VK, OK, Setter,
                                   propertyNameLoc, IFace, receiverNameLoc));
   }
   return ExprError(Diag(propertyNameLoc, diag::err_property_not_found)

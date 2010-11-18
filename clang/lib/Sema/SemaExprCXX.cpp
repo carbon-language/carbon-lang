@@ -1601,7 +1601,7 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
   Expr *Condition = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
                                         ConditionVar->getLocation(), 
                             ConditionVar->getType().getNonReferenceType(),
-                            Expr::getValueKindForType(ConditionVar->getType()));
+                                        VK_LValue);
   if (ConvertToBoolean && CheckBooleanCondition(Condition, StmtLoc))
     return ExprError();
   
@@ -2594,6 +2594,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E, QualType T) {
 /// extension. In this case, LHS == Cond. (But they're not aliases.)
 QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
                                            Expr *&SAVE, ExprValueKind &VK,
+                                           ExprObjectKind &OK,
                                            SourceLocation QuestionLoc) {
   // FIXME: Handle C99's complex types, vector types, block pointers and Obj-C++
   // interface pointers.
@@ -2613,6 +2614,7 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 
   // Assume r-value.
   VK = VK_RValue;
+  OK = OK_Ordinary;
 
   // Either of the arguments dependent?
   if (LHS->isTypeDependent() || RHS->isTypeDependent())
@@ -2697,15 +2699,20 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   //   category and have the same type, the result is of that type and
   //   value category and it is a bit-field if the second or the third
   //   operand is a bit-field, or if both are bit-fields.
-  // We can't support the bitfield parts of that correctly right now,
-  // though, so we just require both sides to be ordinary values.
+  // We only extend this to bitfields, not to the crazy other kinds of
+  // l-values.
   bool Same = Context.hasSameType(LTy, RTy);
   if (Same &&
       LHS->getValueKind() != VK_RValue &&
       LHS->getValueKind() == RHS->getValueKind() &&
-      LHS->getObjectKind() == OK_Ordinary &&
-      RHS->getObjectKind() == OK_Ordinary) {
+      (LHS->getObjectKind() == OK_Ordinary ||
+       LHS->getObjectKind() == OK_BitField) &&
+      (RHS->getObjectKind() == OK_Ordinary ||
+       RHS->getObjectKind() == OK_BitField)) {
     VK = LHS->getValueKind();
+    if (LHS->getObjectKind() == OK_BitField ||
+        RHS->getObjectKind() == OK_BitField)
+      OK = OK_BitField;
     return LTy;
   }
 

@@ -4204,14 +4204,12 @@ public:
   
   void ConvertPropertyAssignment(Expr *LHS, Expr *&RHS, QualType& LHSTy);
                                    
-  QualType CheckCommaOperands( // C99 6.5.17
-    Expr *lex, Expr *&rex, SourceLocation OpLoc);
   QualType CheckConditionalOperands( // C99 6.5.15
     Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save,
-    ExprValueKind &VK, SourceLocation questionLoc);
+    ExprValueKind &VK, ExprObjectKind &OK, SourceLocation questionLoc);
   QualType CXXCheckConditionalOperands( // C++ 5.16
-    Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save, ExprValueKind &VK,
-    SourceLocation questionLoc);
+    Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save,
+    ExprValueKind &VK, ExprObjectKind &OK, SourceLocation questionLoc);
   QualType FindCompositePointerType(SourceLocation Loc, Expr *&E1, Expr *&E2,
                                     bool *NonStandardCompositeType = 0);
 
@@ -4222,19 +4220,6 @@ public:
   QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   QualType CheckVectorCompareOperands(Expr *&lex, Expr *&rx,
                                       SourceLocation l, bool isRel);
-
-  /// type checking unary operators (subroutines of ActOnUnaryOp).
-  /// C99 6.5.3.1, 6.5.3.2, 6.5.3.4
-  QualType CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
-                                          bool isInc, bool isPrefix);
-  QualType CheckAddressOfOperand(Expr *op, SourceLocation OpLoc);
-  QualType CheckIndirectionOperand(Expr *op, SourceLocation OpLoc);
-  QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc, bool isReal);
-
-  /// type checking primary expressions.
-  QualType CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
-                                   const IdentifierInfo *Comp,
-                                   SourceLocation CmpLoc);
 
   /// type checking declaration initializers (C99 6.7.8)
   bool CheckInitList(const InitializedEntity &Entity,

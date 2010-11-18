@@ -1,7 +1,11 @@
 // RUN: %clang_cc1 -fobjc-gc -triple x86_64-apple-darwin10 -emit-llvm -o - %s
 // rdar: // 7501812
 
-struct A { int member; };
+struct A {
+  int member;
+  void foo();
+  A *operator->();
+};
 struct B : A { };
 
 @interface BInt {
@@ -14,6 +18,8 @@ struct B : A { };
 @end
 
 void g(BInt *bint) {
-  bint.value.member = 17;
+  bint.value.foo();
+  bint.value->member = 17;
+  int x = bint.value.member;
 }
 

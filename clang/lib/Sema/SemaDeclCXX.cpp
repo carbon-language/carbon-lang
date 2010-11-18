@@ -4906,7 +4906,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   
   // Construct a reference to the "other" object. We'll be using this 
   // throughout the generated ASTs.
-  Expr *OtherRef = BuildDeclRefExpr(Other, OtherRefType, VK_RValue, Loc).take();
+  Expr *OtherRef = BuildDeclRefExpr(Other, OtherRefType, VK_LValue, Loc).take();
   assert(OtherRef && "Reference to parameter cannot fail!");
   
   // Construct the "this" pointer. We'll be using this throughout the generated
@@ -5012,11 +5012,11 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     MemberLookup.addDecl(*Field);
     MemberLookup.resolveKind();
     ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
-                                                     Loc, /*IsArrow=*/false,
-                                                     SS, 0, MemberLookup, 0);
+                                               Loc, /*IsArrow=*/false,
+                                               SS, 0, MemberLookup, 0);
     ExprResult To = BuildMemberReferenceExpr(This, This->getType(),
-                                                   Loc, /*IsArrow=*/true,
-                                                   SS, 0, MemberLookup, 0);
+                                             Loc, /*IsArrow=*/true,
+                                             SS, 0, MemberLookup, 0);
     assert(!From.isInvalid() && "Implicit field reference cannot fail");
     assert(!To.isInvalid() && "Implicit field reference cannot fail");
     

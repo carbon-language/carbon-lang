@@ -64,6 +64,21 @@ Cl Expr::ClassifyImpl(ASTContext &Ctx, SourceLocation *Loc) const {
       kind = Cl::CL_Void;
   }
 
+#if 0
+  // Enable this assertion for testing.
+  switch (kind) {
+  case Cl::CL_LValue: assert(getValueKind() == VK_LValue); break;
+  case Cl::CL_XValue: assert(getValueKind() == VK_XValue); break;
+  case Cl::CL_Function:
+  case Cl::CL_Void:
+  case Cl::CL_DuplicateVectorComponents:
+  case Cl::CL_MemberFunction:
+  case Cl::CL_SubObjCPropertySetting:
+  case Cl::CL_ClassTemporary:
+  case Cl::CL_PRValue: assert(getValueKind() == VK_RValue); break;
+  }
+#endif
+
   Cl::ModifiableType modifiable = Cl::CM_Untested;
   if (Loc)
     modifiable = IsModifiable(Ctx, this, kind, *Loc);
@@ -380,6 +395,10 @@ static Cl::Kinds ClassifyMemberExpr(ASTContext &Ctx, const MemberExpr *E) {
     // *E1 is an lvalue
     if (E->isArrow())
       return Cl::CL_LValue;
+    Expr *Base = E->getBase()->IgnoreParenImpCasts();
+    if (isa<ObjCPropertyRefExpr>(Base) ||
+        isa<ObjCImplicitSetterGetterRefExpr>(Base))
+      return Cl::CL_SubObjCPropertySetting;
     return ClassifyInternal(Ctx, E->getBase());
   }
 

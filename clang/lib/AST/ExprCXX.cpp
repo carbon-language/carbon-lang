@@ -677,7 +677,7 @@ CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
                                                  SourceLocation RParenLoc)
   : Expr(CXXUnresolvedConstructExprClass, 
          Type->getType().getNonReferenceType(),
-         VK_RValue, OK_Ordinary,
+         VK_LValue, OK_Ordinary,
          Type->getType()->isDependentType(), true),
     Type(Type),
     LParenLoc(LParenLoc),

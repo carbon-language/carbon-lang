@@ -267,7 +267,10 @@ public:
   /// give its value kind.
   static ExprValueKind getValueKindForType(QualType T) {
     if (const ReferenceType *RT = T->getAs<ReferenceType>())
-      return isa<LValueReferenceType>(RT) ? VK_LValue : VK_XValue;
+      return (isa<LValueReferenceType>(RT)
+                ? VK_LValue
+                : (RT->getPointeeType()->isFunctionType()
+                     ? VK_LValue : VK_XValue));
     return VK_RValue;
   }
 
@@ -2455,8 +2458,8 @@ class ConditionalOperator : public Expr {
 public:
   ConditionalOperator(Expr *cond, SourceLocation QLoc, Expr *lhs,
                       SourceLocation CLoc, Expr *rhs, Expr *save,
-                      QualType t, ExprValueKind VK)
-    : Expr(ConditionalOperatorClass, t, VK, OK_Ordinary,
+                      QualType t, ExprValueKind VK, ExprObjectKind OK)
+    : Expr(ConditionalOperatorClass, t, VK, OK,
            // FIXME: the type of the conditional operator doesn't
            // depend on the type of the conditional, but the standard
            // seems to imply that it could. File a bug!
@@ -3422,7 +3425,8 @@ class ExtVectorElementExpr : public Expr {
 public:
   ExtVectorElementExpr(QualType ty, ExprValueKind VK, Expr *base,
                        IdentifierInfo &accessor, SourceLocation loc)
-    : Expr(ExtVectorElementExprClass, ty, VK, OK_VectorComponent,
+    : Expr(ExtVectorElementExprClass, ty, VK,
+           (VK == VK_RValue ? OK_Ordinary : OK_VectorComponent),
            base->isTypeDependent(), base->isValueDependent()),
       Base(base), Accessor(&accessor), AccessorLoc(loc) {}
 
