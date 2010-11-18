@@ -1831,7 +1831,7 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       return false;
     
     // If the transfer is using the alloca as a source of the transfer, then
-    // it (unless the transfer is volatile).
+    // ignore it since it is a load (unless the transfer is volatile).
     if (UI.getOperandNo() == 1) {
       if (MI->isVolatile()) return false;
       continue;
