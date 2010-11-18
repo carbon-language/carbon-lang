@@ -81,3 +81,16 @@ define void @test3() {
 ; CHECK-NEXT: call void @bar(i8* %a)
   ret void
 }
+
+define void @test4() {
+  %A = alloca %T
+  %a = bitcast %T* %A to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
+  call void @baz(i8* byval %a) 
+; CHECK: @test4
+; CHECK-NEXT: %a = bitcast %T* @G to i8*
+; CHECK-NEXT: call void @baz(i8* byval %a)
+  ret void
+}
+
+declare void @baz(i8* byval)

@@ -1811,11 +1811,18 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       continue;
     }
     
-    // If this is a readonly/readnone call site, then we know it is just a load
-    // and we can ignore it.
-    if (CallSite CS = U)
+    if (CallSite CS = U) {
+      // If this is a readonly/readnone call site, then we know it is just a
+      // load and we can ignore it.
       if (CS.onlyReadsMemory())
         continue;
+      
+      // If this is being passed as a byval argument, the caller is making a
+      // copy, so it is only a read of the alloca.
+      unsigned ArgNo = CS.getArgumentNo(UI);
+      if (CS.paramHasAttr(ArgNo+1, Attribute::ByVal))
+        continue;
+    }
     
     // If this is isn't our memcpy/memmove, reject it as something we can't
     // handle.
