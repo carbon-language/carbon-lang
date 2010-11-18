@@ -72,29 +72,29 @@ TYPED_TEST(ValueMapTest, OperationsWork) {
   typename ValueMap<TypeParam*, int>::iterator I =
     VM.find(this->BitcastV.get());
   ASSERT_TRUE(I != VM.end());
-  EXPECT_EQ(this->BitcastV.get(), I->first);
+  EXPECT_EQ(BitcastV.get(), I->first);
   EXPECT_EQ(7, I->second);
-  EXPECT_TRUE(VM.find(this->AddV.get()) == VM.end());
+  EXPECT_TRUE(VM.find(AddV.get()) == VM.end());
 
   // Const find:
   const ValueMap<TypeParam*, int> &CVM = VM;
   typename ValueMap<TypeParam*, int>::const_iterator CI =
     CVM.find(this->BitcastV.get());
   ASSERT_TRUE(CI != CVM.end());
-  EXPECT_EQ(this->BitcastV.get(), CI->first);
+  EXPECT_EQ(BitcastV.get(), CI->first);
   EXPECT_EQ(7, CI->second);
   EXPECT_TRUE(CVM.find(this->AddV.get()) == CVM.end());
 
   // Insert:
   std::pair<typename ValueMap<TypeParam*, int>::iterator, bool> InsertResult1 =
     VM.insert(std::make_pair(this->AddV.get(), 3));
-  EXPECT_EQ(this->AddV.get(), InsertResult1.first->first);
+  EXPECT_EQ(/*->this*/AddV.get(), InsertResult1.first->first);
   EXPECT_EQ(3, InsertResult1.first->second);
   EXPECT_TRUE(InsertResult1.second);
   EXPECT_EQ(true, VM.count(this->AddV.get()));
   std::pair<typename ValueMap<TypeParam*, int>::iterator, bool> InsertResult2 =
     VM.insert(std::make_pair(this->AddV.get(), 5));
-  EXPECT_EQ(this->AddV.get(), InsertResult2.first->first);
+  EXPECT_EQ(/*this->*/AddV.get(), InsertResult2.first->first);
   EXPECT_EQ(3, InsertResult2.first->second);
   EXPECT_FALSE(InsertResult2.second);
 
@@ -131,10 +131,10 @@ TYPED_TEST(ValueMapTest, Iteration) {
     std::pair<TypeParam*, int> value = *I; (void)value;
     CompileAssertHasType<TypeParam*>(I->first);
     if (I->second == 2) {
-      EXPECT_EQ(this->BitcastV.get(), I->first);
+      EXPECT_EQ(/*this->*/BitcastV.get(), I->first);
       I->second = 5;
     } else if (I->second == 3) {
-      EXPECT_EQ(this->AddV.get(), I->first);
+      EXPECT_EQ(/*this->*/AddV.get(), I->first);
       I->second = 6;
     } else {
       ADD_FAILURE() << "Iterated through an extra value.";
@@ -153,9 +153,9 @@ TYPED_TEST(ValueMapTest, Iteration) {
     std::pair<TypeParam*, int> value = *I;  (void)value;
     CompileAssertHasType<TypeParam*>(I->first);
     if (I->second == 5) {
-      EXPECT_EQ(this->BitcastV.get(), I->first);
+      EXPECT_EQ(/*this->*/BitcastV.get(), I->first);
     } else if (I->second == 6) {
-      EXPECT_EQ(this->AddV.get(), I->first);
+      EXPECT_EQ(/*this->*/AddV.get(), I->first);
     } else {
       ADD_FAILURE() << "Iterated through an extra value.";
     }
