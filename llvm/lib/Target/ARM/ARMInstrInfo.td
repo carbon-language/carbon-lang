@@ -1563,24 +1563,28 @@ def LDRcp : AIldst1<0b010, 1, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
 }
 
 // Loads with zero extension
-def LDRH  : AI3ld<0b1011, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+def LDRH  : AI3ld<0b1011, 1, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                   IIC_iLoad_bh_r, "ldrh", "\t$Rt, $addr",
                   [(set GPR:$Rt, (zextloadi16 addrmode3:$addr))]>;
 
 // Loads with sign extension
-def LDRSH : AI3ld<0b1111, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+def LDRSH : AI3ld<0b1111, 1, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                    IIC_iLoad_bh_r, "ldrsh", "\t$Rt, $addr",
                    [(set GPR:$Rt, (sextloadi16 addrmode3:$addr))]>;
 
-def LDRSB : AI3ld<0b1101, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
+def LDRSB : AI3ld<0b1101, 1, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                    IIC_iLoad_bh_r, "ldrsb", "\t$Rt, $addr",
                    [(set GPR:$Rt, (sextloadi8 addrmode3:$addr))]>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
     isCodeGenOnly = 1 in { // $dst2 doesn't exist in asmstring?
+// FIXME: $dst2 isn't in the asm string as it's implied by $Rd (dst2 = Rd+1)
+//        how to represent that such that tblgen is happy and we don't
+//        mark this codegen only?
 // Load doubleword
-def LDRD : AI3ldd<(outs GPR:$dst1, GPR:$dst2), (ins addrmode3:$addr), LdMiscFrm,
-                 IIC_iLoad_d_r, "ldrd", "\t$dst1, $addr",
+def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
+                 (ins addrmode3:$addr), LdMiscFrm,
+                 IIC_iLoad_d_r, "ldrd", "\t$Rd, $addr",
                  []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed loads
