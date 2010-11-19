@@ -350,26 +350,25 @@ SBFrame::LookupVarInScope (const char *var_name, const char *scope)
 
         if (var_scope != eValueTypeInvalid)
         {
-            lldb_private::VariableList variable_list;
-            SBSymbolContext sc = GetSymbolContext (eSymbolContextEverything);
-
-            SBBlock block = sc.GetBlock();
-            if (block.IsValid())
-                block.AppendVariables (true, true, &variable_list);
-
-            const uint32_t num_variables = variable_list.GetSize();
-
-            bool found = false;
-            for (uint32_t i = 0; i < num_variables && !found; ++i)
+            lldb_private::VariableList *variable_list = m_opaque_sp->GetVariableList(true);
+            if (variable_list)
             {
-                var_sp = variable_list.GetVariableAtIndex(i);
-                if (var_sp
-                    && (var_sp.get()->GetName() == lldb_private::ConstString(var_name))
-                    && var_sp.get()->GetScope() == var_scope)
-                    found = true;
+                const uint32_t num_variables = variable_list->GetSize();
+                bool found = false;
+                for (uint32_t i = 0; i < num_variables && !found; ++i)
+                {
+                    var_sp = variable_list->GetVariableAtIndex(i);
+                    if (var_sp
+                        && (var_sp.get()->GetName() == lldb_private::ConstString(var_name))
+                        && var_sp.get()->GetScope() == var_scope)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    var_sp.reset();
             }
-            if (!found)
-                var_sp.reset();
         }
     }
     

@@ -45,7 +45,9 @@ static PointType g_points[] =
 int
 main (int argc, char const *argv[])
 {
+    const char *hello_world = "Hello, world!";
     printf ("A::g_points[1].x = %i\n", A::g_points[1].x); // Set break point at this line.
     printf ("::g_points[1].x = %i\n", g_points[1].x);
+    printf ("%s\n", hello_world);
     return 0;
 }

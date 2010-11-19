@@ -116,8 +116,23 @@ class StaticVariableTestCase(TestBase):
                 self.assertTrue(child1_x.GetTypeName() == 'int' and
                                 child1_x.GetValue(frame) == '11')
 
-        #variable = frame.LookupVarInScope("A::g_points", "global")
-        #print "variable:", repr(variable)
+        # SBFrame.LookupVarInScope() should also work.
+        val = frame.LookupVarInScope("A::g_points", "global")
+        self.DebugSBValue(frame, val)
+        self.assertTrue(val.GetName() == 'A::g_points')
+
+        # Also exercise the "parameter" and "local" scopes while we are at it.
+        val = frame.LookupVarInScope("argc", "parameter")
+        self.DebugSBValue(frame, val)
+        self.assertTrue(val.GetName() == 'argc')
+
+        val = frame.LookupVarInScope("argv", "parameter")
+        self.DebugSBValue(frame, val)
+        self.assertTrue(val.GetName() == 'argv')
+
+        val = frame.LookupVarInScope("hello_world", "local")
+        self.DebugSBValue(frame, val)
+        self.assertTrue(val.GetName() == 'hello_world')
 
 
 if __name__ == '__main__':
