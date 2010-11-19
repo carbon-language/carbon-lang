@@ -203,7 +203,7 @@ class InstTemplate<AddrMode am, SizeFlagVal sz, IndexMode im,
   Domain D = d;
   bit isUnaryDataProc = 0;
   bit canXformTo16Bit = 0;
-  
+
   // If this is a pseudo instruction, mark it isCodeGenOnly.
   let isCodeGenOnly = !eq(!cast<string>(f), "Pseudo");
 
@@ -1417,13 +1417,13 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
   let Inst{21-20} = op21_20;
   let Inst{11-8}  = op11_8;
   let Inst{7-4}   = op7_4;
-  
+
   let PostEncoderMethod = "NEONThumb2LoadStorePostEncoder";
-  
+
   bits<5> Vd;
   bits<6> Rn;
   bits<4> Rm;
-  
+
   let Inst{22}    = Vd{4};
   let Inst{15-12} = Vd{3-0};
   let Inst{19-16} = Rn{3-0};
@@ -1485,11 +1485,11 @@ class N1ModImm<bit op23, bits<3> op21_19, bits<4> op11_8, bit op7, bit op6,
   let Inst{6}     = op6;
   let Inst{5}     = op5;
   let Inst{4}     = op4;
-  
+
   // Instruction operands.
   bits<5> Vd;
   bits<13> SIMM;
-  
+
   let Inst{15-12} = Vd{3-0};
   let Inst{22}    = Vd{4};
   let Inst{24}    = SIMM{7};
@@ -1510,7 +1510,7 @@ class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
   let Inst{11-7}  = op11_7;
   let Inst{6}     = op6;
   let Inst{4}     = op4;
-  
+
   // Instruction operands.
   bits<5> Vd;
   bits<5> Vm;
@@ -1534,7 +1534,7 @@ class N2VX<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
   let Inst{11-7}  = op11_7;
   let Inst{6}     = op6;
   let Inst{4}     = op4;
-  
+
   // Instruction operands.
   bits<5> Vd;
   bits<5> Vm;
@@ -1556,7 +1556,7 @@ class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
   let Inst{7}    = op7;
   let Inst{6}    = op6;
   let Inst{4}    = op4;
-  
+
   // Instruction operands.
   bits<5> Vd;
   bits<5> Vm;
@@ -1580,7 +1580,7 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
   let Inst{11-8}  = op11_8;
   let Inst{6}     = op6;
   let Inst{4}     = op4;
-  
+
   // Instruction operands.
   bits<5> Vd;
   bits<5> Vn;
@@ -1606,7 +1606,7 @@ class N3VX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
   let Inst{11-8}  = op11_8;
   let Inst{6}     = op6;
   let Inst{4}     = op4;
-  
+
   // Instruction operands.
   bits<5> Vd;
   bits<5> Vn;
@@ -1636,14 +1636,14 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   let AsmString = !strconcat(opc, "${p}", ".", dt, "\t", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
-  
+
   let PostEncoderMethod = "NEONThumb2DupPostEncoder";
-  
+
   bits<5> V;
   bits<4> R;
   bits<4> p;
   bits<4> lane;
-  
+
   let Inst{31-28} = p{3-0};
   let Inst{7}     = V{4};
   let Inst{19-16} = V{3-0};
@@ -1676,11 +1676,11 @@ class NVDupLane<bits<4> op19_16, bit op6, dag oops, dag iops,
   let Inst{11-7}  = 0b11000;
   let Inst{6}     = op6;
   let Inst{4}     = 0;
-  
+
   bits<5> Vd;
   bits<5> Vm;
   bits<4> lane;
-  
+
   let Inst{22}     = Vd{4};
   let Inst{15-12} = Vd{3-0};
   let Inst{5}     = Vm{4};
