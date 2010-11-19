@@ -535,12 +535,28 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
 }
 
 void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace) {
+  int64_t IntValue;
+  if (Value->EvaluateAsAbsolute(IntValue)) {
+    SmallString<32> Tmp;
+    raw_svector_ostream OSE(Tmp);
+    MCObjectWriter::EncodeULEB128(IntValue, OSE);
+    EmitBytes(OSE.str(), AddrSpace);
+    return;
+  }
   assert(MAI.hasLEB128() && "Cannot print a .uleb");
   OS << ".uleb128 " << *Value;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace) {
+  int64_t IntValue;
+  if (Value->EvaluateAsAbsolute(IntValue)) {
+    SmallString<32> Tmp;
+    raw_svector_ostream OSE(Tmp);
+    MCObjectWriter::EncodeSLEB128(IntValue, OSE);
+    EmitBytes(OSE.str(), AddrSpace);
+    return;
+  }
   assert(MAI.hasLEB128() && "Cannot print a .sleb");
   OS << ".sleb128 " << *Value;
   EmitEOL();
