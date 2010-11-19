@@ -72,7 +72,9 @@ public:
     //------------------------------------------------------------------
     /// Run this IR transformer on a single module
     ///
-    /// @param[in] M
+    /// Implementation of the llvm::ModulePass::runOnModule() function.
+    ///
+    /// @param[in] llvm_module
     ///     The module to run on.  This module is searched for the function
     ///     $__lldb_expr, and that function is passed to the passes one by 
     ///     one.
@@ -80,18 +82,28 @@ public:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool runOnModule(llvm::Module &M);
+    virtual bool 
+    runOnModule (llvm::Module &llvm_module);
     
     //------------------------------------------------------------------
     /// Interface stub
+    ///
+    /// Implementation of the llvm::ModulePass::assignPassManager() 
+    /// function.
     //------------------------------------------------------------------
-    void assignPassManager(llvm::PMStack &PMS,
-                           llvm::PassManagerType T = llvm::PMT_ModulePassManager);
+    virtual void
+    assignPassManager (llvm::PMStack &pass_mgr_stack,
+                       llvm::PassManagerType pass_mgr_type = llvm::PMT_ModulePassManager);
     
     //------------------------------------------------------------------
     /// Returns PMT_ModulePassManager
+    ///
+    /// Implementation of the llvm::ModulePass::getPotentialPassManagerType() 
+    /// function.
     //------------------------------------------------------------------
-    llvm::PassManagerType getPotentialPassManagerType() const;
+    virtual llvm::PassManagerType 
+    getPotentialPassManagerType() const;
+
 private:
     //------------------------------------------------------------------
     /// A function-level pass to take the generated global value
@@ -102,17 +114,18 @@ private:
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] F
+    /// @param[in] llvm_function
     ///     The function currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool createResultVariable(llvm::Module &M,
-                              llvm::Function &F);
+    bool 
+    CreateResultVariable (llvm::Module &llvm_module,
+                          llvm::Function &llvm_function);
     
     //------------------------------------------------------------------
     /// A function-level pass to find Objective-C constant strings and
@@ -122,7 +135,7 @@ private:
     //------------------------------------------------------------------
     /// Rewrite a single Objective-C constant string.
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
     /// @param[in] NSStr
@@ -142,25 +155,27 @@ private:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool rewriteObjCConstString(llvm::Module &M,
-                                llvm::GlobalVariable *NSStr,
-                                llvm::GlobalVariable *CStr,
-                                llvm::Instruction *FirstEntryInstruction);    
+    bool 
+    RewriteObjCConstString (llvm::Module &llvm_module,
+                            llvm::GlobalVariable *NSStr,
+                            llvm::GlobalVariable *CStr,
+                            llvm::Instruction *FirstEntryInstruction);    
     
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] F
+    /// @param[in] llvm_function
     ///     The function currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool rewriteObjCConstStrings(llvm::Module &M,
-                                 llvm::Function &F);
+    bool 
+    RewriteObjCConstStrings (llvm::Module &llvm_module,
+                             llvm::Function &llvm_function);
 
     //------------------------------------------------------------------
     /// A basic block-level pass to find all Objective-C method calls and
@@ -179,29 +194,31 @@ private:
     /// @param[in] selector_load
     ///     The load of the statically-allocated selector.
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module containing the load.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool RewriteObjCSelector(llvm::Instruction* selector_load,
-                             llvm::Module &M);
+    bool 
+    RewriteObjCSelector (llvm::Instruction* selector_load,
+                         llvm::Module &llvm_module);
     
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] BB
+    /// @param[in] basic_block
     ///     The basic block currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool rewriteObjCSelectors(llvm::Module &M, 
-                              llvm::BasicBlock &BB);
+    bool 
+    RewriteObjCSelectors (llvm::Module &llvm_module, 
+                          llvm::BasicBlock &basic_block);
     
     //------------------------------------------------------------------
     /// A basic block-level pass to find all newly-declared persistent
@@ -211,7 +228,7 @@ private:
     /// variables look like normal locals, so they have an allocation.
     /// This pass excises these allocations and makes references look
     /// like external references where they will be resolved -- like all
-    /// other external references -- by resolveExternals().
+    /// other external references -- by ResolveExternals().
     //------------------------------------------------------------------
 
     //------------------------------------------------------------------
@@ -220,26 +237,28 @@ private:
     /// @param[in] persistent_alloc
     ///     The allocation of the persistent variable.
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
-                                llvm::Module &M);
+    bool 
+    RewritePersistentAlloc (llvm::Instruction *persistent_alloc,
+                            llvm::Module &llvm_module);
     
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] BB
+    /// @param[in] basic_block
     ///     The basic block currently being processed.
     //------------------------------------------------------------------
-    bool rewritePersistentAllocs(llvm::Module &M,
-                                 llvm::BasicBlock &BB);
+    bool 
+    RewritePersistentAllocs (llvm::Module &llvm_module,
+                             llvm::BasicBlock &basic_block);
     
     //------------------------------------------------------------------
     /// A function-level pass to find all external variables and functions 
@@ -252,7 +271,7 @@ private:
     //------------------------------------------------------------------
     /// Handle a single externally-defined variable
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
     /// @param[in] V
@@ -264,13 +283,14 @@ private:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool MaybeHandleVariable(llvm::Module &M, 
-                             llvm::Value *V);
+    bool 
+    MaybeHandleVariable (llvm::Module &llvm_module, 
+                         llvm::Value *value);
     
     //------------------------------------------------------------------
     /// Handle all the arguments to a function call
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
     /// @param[in] C
@@ -279,13 +299,14 @@ private:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool MaybeHandleCallArguments(llvm::Module &M,
-                                  llvm::CallInst *C);
+    bool 
+    MaybeHandleCallArguments (llvm::Module &llvm_module,
+                              llvm::CallInst *call_inst);
     
     //------------------------------------------------------------------
     /// Handle a single external function call
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
     /// @param[in] C
@@ -294,38 +315,41 @@ private:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool MaybeHandleCall(llvm::Module &M,
-                         llvm::CallInst *C);
+    bool 
+    MaybeHandleCall (llvm::Module &llvm_module,
+                     llvm::CallInst *C);
     
     //------------------------------------------------------------------
     /// Resolve calls to external functions
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] BB
+    /// @param[in] basic_block
     ///     The basic block currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool resolveCalls(llvm::Module &M,
-                      llvm::BasicBlock &BB);
+    bool 
+    ResolveCalls (llvm::Module &llvm_module,
+                  llvm::BasicBlock &basic_block);
     
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] BB
+    /// @param[in] basic_block
     ///     The function currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool resolveExternals(llvm::Module &M,
-                          llvm::Function &F);
+    bool 
+    ResolveExternals (llvm::Module &llvm_module,
+                      llvm::Function &llvm_function);
     
     //------------------------------------------------------------------
     /// A basic block-level pass to excise guard variables from the code.
@@ -337,17 +361,18 @@ private:
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] BB
+    /// @param[in] basic_block
     ///     The basic block currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool removeGuards(llvm::Module &M,
-                      llvm::BasicBlock &BB);
+    bool 
+    RemoveGuards (llvm::Module &llvm_module,
+                  llvm::BasicBlock &basic_block);
     
     //------------------------------------------------------------------
     /// A function-level pass to make all external variable references
@@ -359,21 +384,21 @@ private:
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] F
+    /// @param[in] llvm_function
     ///     The function currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool replaceVariables(llvm::Module &M,
-                          llvm::Function &F);
+    bool 
+    ReplaceVariables (llvm::Module &llvm_module,
+                      llvm::Function &llvm_function);
     
     /// Flags
     bool                                    m_resolve_vars;             ///< True if external variable references and persistent variable references should be resolved
-    
     std::string                             m_func_name;                ///< The name of the function to translate
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
@@ -394,18 +419,19 @@ private:
     /// FirstEntryInstruction.  These instructions replace the constant
     /// uses, so UnfoldConstant calls itself recursively for those.
     ///
-    /// @param[in] M
+    /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] F
+    /// @param[in] llvm_function
     ///     The function currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    static bool UnfoldConstant(llvm::Constant *Old, 
-                               llvm::Value *New, 
-                               llvm::Instruction *FirstEntryInstruction);
+    static bool 
+    UnfoldConstant (llvm::Constant *old_constant, 
+                    llvm::Value *new_constant, 
+                    llvm::Instruction *first_entry_inst);
 };
 
 #endif

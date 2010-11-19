@@ -32,9 +32,9 @@ using namespace llvm;
 
 static char ID;
 
-IRForTarget::IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
-                         bool resolve_vars,
-                         const char *func_name) :
+IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
+                          bool resolve_vars,
+                          const char *func_name) :
     ModulePass(ID),
     m_decl_map(decl_map),
     m_CFStringCreateWithBytes(NULL),
@@ -47,11 +47,11 @@ IRForTarget::IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
 /* Handy utility functions used at several places in the code */
 
 static std::string 
-PrintValue(const Value *V, bool truncate = false)
+PrintValue(const Value *value, bool truncate = false)
 {
     std::string s;
     raw_string_ostream rso(s);
-    V->print(rso);
+    value->print(rso);
     rso.flush();
     if (truncate)
         s.resize(s.length() - 1);
@@ -59,11 +59,11 @@ PrintValue(const Value *V, bool truncate = false)
 }
 
 static std::string
-PrintType(const Type *T, bool truncate = false)
+PrintType(const Type *type, bool truncate = false)
 {
     std::string s;
     raw_string_ostream rso(s);
-    T->print(rso);
+    type->print(rso);
     rso.flush();
     if (truncate)
         s.resize(s.length() - 1);
@@ -75,7 +75,7 @@ IRForTarget::~IRForTarget()
 }
 
 bool 
-IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &llvm_function)
+IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &llvm_function)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -257,16 +257,16 @@ IRForTarget::createResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     return true;
 }
 
-static void DebugUsers(lldb::LogSP &log, Value *V, uint8_t depth)
+static void DebugUsers(lldb::LogSP &log, Value *value, uint8_t depth)
 {    
     if (!depth)
         return;
     
     depth--;
     
-    log->Printf("  <Begin %d users>", V->getNumUses());
+    log->Printf("  <Begin %d users>", value->getNumUses());
     
-    for (Value::use_iterator ui = V->use_begin(), ue = V->use_end();
+    for (Value::use_iterator ui = value->use_begin(), ue = value->use_end();
          ui != ue;
          ++ui)
     {
@@ -278,18 +278,18 @@ static void DebugUsers(lldb::LogSP &log, Value *V, uint8_t depth)
 }
 
 bool 
-IRForTarget::rewriteObjCConstString(llvm::Module &M,
-                                    llvm::GlobalVariable *NSStr,
-                                    llvm::GlobalVariable *CStr,
-                                    Instruction *FirstEntryInstruction)
+IRForTarget::RewriteObjCConstString (llvm::Module &llvm_module,
+                                     llvm::GlobalVariable *ns_str,
+                                     llvm::GlobalVariable *cstr,
+                                     Instruction *FirstEntryInstruction)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    const Type *i8_ptr_ty = Type::getInt8PtrTy(M.getContext());
-    const IntegerType *intptr_ty = Type::getIntNTy(M.getContext(),
-                                                   (M.getPointerSize() == Module::Pointer64) ? 64 : 32);
-    const Type *i32_ty = Type::getInt32Ty(M.getContext());
-    const Type *i8_ty = Type::getInt8Ty(M.getContext());
+    const Type *i8_ptr_ty = Type::getInt8PtrTy(llvm_module.getContext());
+    const IntegerType *intptr_ty = Type::getIntNTy(llvm_module.getContext(),
+                                                   (llvm_module.getPointerSize() == Module::Pointer64) ? 64 : 32);
+    const Type *i32_ty = Type::getInt32Ty(llvm_module.getContext());
+    const Type *i8_ty = Type::getInt8Ty(llvm_module.getContext());
     
     if (!m_CFStringCreateWithBytes)
     {
@@ -341,12 +341,12 @@ IRForTarget::rewriteObjCConstString(llvm::Module &M,
         m_CFStringCreateWithBytes = ConstantExpr::getIntToPtr(CFSCWB_addr_int, CFSCWB_ptr_ty);
     }
     
-    ConstantArray *string_array = dyn_cast<ConstantArray>(CStr->getInitializer());
+    ConstantArray *string_array = dyn_cast<ConstantArray>(cstr->getInitializer());
                         
     SmallVector <Value*, 5> CFSCWB_arguments;
     
     Constant *alloc_arg         = Constant::getNullValue(i8_ptr_ty);
-    Constant *bytes_arg         = ConstantExpr::getBitCast(CStr, i8_ptr_ty);
+    Constant *bytes_arg         = ConstantExpr::getBitCast(cstr, i8_ptr_ty);
     Constant *numBytes_arg      = ConstantInt::get(intptr_ty, string_array->getType()->getNumElements(), false);
     Constant *encoding_arg      = ConstantInt::get(i32_ty, 0x0600, false); /* 0x0600 is kCFStringEncodingASCII */
     Constant *isExternal_arg    = ConstantInt::get(i8_ty, 0x0, false); /* 0x0 is false */
@@ -363,7 +363,7 @@ IRForTarget::rewriteObjCConstString(llvm::Module &M,
                                              "CFStringCreateWithBytes",
                                              FirstEntryInstruction);
             
-    if (!UnfoldConstant(NSStr, CFSCWB_call, FirstEntryInstruction))
+    if (!UnfoldConstant(ns_str, CFSCWB_call, FirstEntryInstruction))
     {
         if (log)
             log->PutCString("Couldn't replace the NSString with the result of the call");
@@ -371,20 +371,19 @@ IRForTarget::rewriteObjCConstString(llvm::Module &M,
         return false;
     }
     
-    NSStr->eraseFromParent();
+    ns_str->eraseFromParent();
     
     return true;
 }
 
 bool
-IRForTarget::rewriteObjCConstStrings(Module &M,
-                                     Function &F)
+IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_function)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    ValueSymbolTable& value_symbol_table = M.getValueSymbolTable();
+    ValueSymbolTable& value_symbol_table = llvm_module.getValueSymbolTable();
     
-    BasicBlock &entry_block(F.getEntryBlock());
+    BasicBlock &entry_block(llvm_function.getEntryBlock());
     Instruction *FirstEntryInstruction(entry_block.getFirstNonPHIOrDbg());
     
     if (!FirstEntryInstruction)
@@ -509,7 +508,7 @@ IRForTarget::rewriteObjCConstStrings(Module &M,
             if (log)
                 log->Printf("Found NSString constant %s, which contains \"%s\"", vi->first(), cstr_array->getAsString().c_str());
             
-            if (!rewriteObjCConstString(M, nsstring_global, cstr_global, FirstEntryInstruction))
+            if (!RewriteObjCConstString(llvm_module, nsstring_global, cstr_global, FirstEntryInstruction))
             {
                 if (log)
                     log->PutCString("Error rewriting the constant string");
@@ -544,19 +543,18 @@ IRForTarget::rewriteObjCConstStrings(Module &M,
     return true;
 }
 
-static bool isObjCSelectorRef(Value *V)
+static bool IsObjCSelectorRef (Value *value)
 {
-    GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
+    GlobalVariable *global_variable = dyn_cast<GlobalVariable>(value);
     
-    if (!GV || !GV->hasName() || !GV->getName().startswith("\01L_OBJC_SELECTOR_REFERENCES_"))
+    if (!global_variable || !global_variable->hasName() || !global_variable->getName().startswith("\01L_OBJC_SELECTOR_REFERENCES_"))
         return false;
     
     return true;
 }
 
 bool 
-IRForTarget::RewriteObjCSelector(Instruction* selector_load,
-                                 Module &M)
+IRForTarget::RewriteObjCSelector (Instruction* selector_load, Module &llvm_module)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -572,8 +570,8 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
     //
     // where %obj is the object pointer and %tmp is the selector.
     // 
-    // @"\01L_OBJC_SELECTOR_REFERENCES_" is a pointer to a character array called @"\01L_OBJC_METH_VAR_NAME_".
-    // @"\01L_OBJC_METH_VAR_NAME_" contains the string.
+    // @"\01L_OBJC_SELECTOR_REFERENCES_" is a pointer to a character array called @"\01L_OBJC_llvm_moduleETH_VAR_NAllvm_moduleE_".
+    // @"\01L_OBJC_llvm_moduleETH_VAR_NAllvm_moduleE_" contains the string.
     
     // Find the pointer's initializer (a ConstantExpr with opcode GetElementPtr) and get the string from its target
     
@@ -629,17 +627,17 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
         // Build the function type: struct objc_selector *sel_registerName(uint8_t*)
         
         // The below code would be "more correct," but in actuality what's required is uint8_t*
-        //Type *sel_type = StructType::get(M.getContext());
+        //Type *sel_type = StructType::get(llvm_module.getContext());
         //Type *sel_ptr_type = PointerType::getUnqual(sel_type);
-        const Type *sel_ptr_type = Type::getInt8PtrTy(M.getContext());
+        const Type *sel_ptr_type = Type::getInt8PtrTy(llvm_module.getContext());
         
         std::vector <const Type *> srN_arg_types;
-        srN_arg_types.push_back(Type::getInt8PtrTy(M.getContext()));
+        srN_arg_types.push_back(Type::getInt8PtrTy(llvm_module.getContext()));
         llvm::Type *srN_type = FunctionType::get(sel_ptr_type, srN_arg_types, false);
         
         // Build the constant containing the pointer to the function
-        const IntegerType *intptr_ty = Type::getIntNTy(M.getContext(),
-                                                       (M.getPointerSize() == Module::Pointer64) ? 64 : 32);
+        const IntegerType *intptr_ty = Type::getIntNTy(llvm_module.getContext(),
+                                                       (llvm_module.getPointerSize() == Module::Pointer64) ? 64 : 32);
         PointerType *srN_ptr_ty = PointerType::getUnqual(srN_type);
         Constant *srN_addr_int = ConstantInt::get(intptr_ty, sel_registerName_addr, false);
         m_sel_registerName = ConstantExpr::getIntToPtr(srN_addr_int, srN_ptr_ty);
@@ -647,7 +645,7 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
     
     SmallVector <Value*, 1> srN_arguments;
     
-    Constant *omvn_pointer = ConstantExpr::getBitCast(_objc_meth_var_name_, Type::getInt8PtrTy(M.getContext()));
+    Constant *omvn_pointer = ConstantExpr::getBitCast(_objc_meth_var_name_, Type::getInt8PtrTy(llvm_module.getContext()));
     
     srN_arguments.push_back(omvn_pointer);
     
@@ -667,8 +665,7 @@ IRForTarget::RewriteObjCSelector(Instruction* selector_load,
 }
 
 bool
-IRForTarget::rewriteObjCSelectors(Module &M, 
-                                  BasicBlock &BB)
+IRForTarget::RewriteObjCSelectors (Module &llvm_module, BasicBlock &basic_block)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -679,14 +676,14 @@ IRForTarget::rewriteObjCSelectors(Module &M,
     
     InstrList selector_loads;
     
-    for (ii = BB.begin();
-         ii != BB.end();
+    for (ii = basic_block.begin();
+         ii != basic_block.end();
          ++ii)
     {
         Instruction &inst = *ii;
         
         if (LoadInst *load = dyn_cast<LoadInst>(&inst))
-            if (isObjCSelectorRef(load->getPointerOperand()))
+            if (IsObjCSelectorRef(load->getPointerOperand()))
                 selector_loads.push_back(&inst);
     }
     
@@ -696,7 +693,7 @@ IRForTarget::rewriteObjCSelectors(Module &M,
          iter != selector_loads.end();
          ++iter)
     {
-        if (!RewriteObjCSelector(*iter, M))
+        if (!RewriteObjCSelector(*iter, llvm_module))
         {
             if(log)
                 log->PutCString("Couldn't rewrite a reference to an Objective-C selector");
@@ -708,8 +705,8 @@ IRForTarget::rewriteObjCSelectors(Module &M,
 }
 
 bool 
-IRForTarget::RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
-                                    llvm::Module &llvm_module)
+IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc,
+                                     llvm::Module &llvm_module)
 {
     AllocaInst *alloc = dyn_cast<AllocaInst>(persistent_alloc);
     
@@ -763,8 +760,7 @@ IRForTarget::RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
 }
 
 bool 
-IRForTarget::rewritePersistentAllocs(llvm::Module &M,
-                                     llvm::BasicBlock &BB)
+IRForTarget::RewritePersistentAllocs(llvm::Module &llvm_module, llvm::BasicBlock &basic_block)
 {
     if (!m_resolve_vars)
         return true;
@@ -778,8 +774,8 @@ IRForTarget::rewritePersistentAllocs(llvm::Module &M,
     
     InstrList pvar_allocs;
     
-    for (ii = BB.begin();
-         ii != BB.end();
+    for (ii = basic_block.begin();
+         ii != basic_block.end();
          ++ii)
     {
         Instruction &inst = *ii;
@@ -796,7 +792,7 @@ IRForTarget::rewritePersistentAllocs(llvm::Module &M,
          iter != pvar_allocs.end();
          ++iter)
     {
-        if (!RewritePersistentAlloc(*iter, M))
+        if (!RewritePersistentAlloc(*iter, llvm_module))
         {
             if(log)
                 log->PutCString("Couldn't rewrite the creation of a persistent variable");
@@ -808,8 +804,7 @@ IRForTarget::rewritePersistentAllocs(llvm::Module &M,
 }
 
 static clang::NamedDecl *
-DeclForGlobalValue(Module &module,
-                   GlobalValue *global_value)
+DeclForGlobalValue(Module &module, GlobalValue *global_value)
 {
     NamedMDNode *named_metadata = module.getNamedMetadata("clang.global.decl.ptrs");
     
@@ -848,11 +843,7 @@ DeclForGlobalValue(Module &module,
 }
 
 bool 
-IRForTarget::MaybeHandleVariable 
-(
-    Module &llvm_module, 
-    Value *llvm_value_ptr
-)
+IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -874,7 +865,7 @@ IRForTarget::MaybeHandleVariable
         
         if (!named_decl)
         {
-            if (isObjCSelectorRef(llvm_value_ptr))
+            if (IsObjCSelectorRef(llvm_value_ptr))
                 return true;
             
             if (log)
@@ -925,23 +916,21 @@ IRForTarget::MaybeHandleVariable
 }
 
 bool
-IRForTarget::MaybeHandleCallArguments(Module &M,
-                                      CallInst *Old)
+IRForTarget::MaybeHandleCallArguments (Module &llvm_module, CallInst *Old)
 {
     // lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     for (unsigned op_index = 0, num_ops = Old->getNumArgOperands();
          op_index < num_ops;
          ++op_index)
-        if (!MaybeHandleVariable(M, Old->getArgOperand(op_index))) // conservatively believe that this is a store
+        if (!MaybeHandleVariable(llvm_module, Old->getArgOperand(op_index))) // conservatively believe that this is a store
             return false;
     
     return true;
 }
 
 bool
-IRForTarget::MaybeHandleCall(Module &llvm_module,
-                             CallInst *llvm_call_inst)
+IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -1060,7 +1049,7 @@ IRForTarget::MaybeHandleCall(Module &llvm_module,
 }
 
 bool
-IRForTarget::resolveCalls(Module &M, BasicBlock &BB)
+IRForTarget::ResolveCalls(Module &llvm_module, BasicBlock &basic_block)
 {        
     /////////////////////////////////////////////////////////////////////////
     // Prepare the current basic block for execution in the remote process
@@ -1068,15 +1057,15 @@ IRForTarget::resolveCalls(Module &M, BasicBlock &BB)
     
     BasicBlock::iterator ii;
 
-    for (ii = BB.begin();
-         ii != BB.end();
+    for (ii = basic_block.begin();
+         ii != basic_block.end();
          ++ii)
     {
         Instruction &inst = *ii;
         
         CallInst *call = dyn_cast<CallInst>(&inst);
         
-        if (call && !MaybeHandleCall(M, call))
+        if (call && !MaybeHandleCall(llvm_module, call))
             return false;
     }
     
@@ -1084,17 +1073,21 @@ IRForTarget::resolveCalls(Module &M, BasicBlock &BB)
 }
 
 bool
-IRForTarget::resolveExternals(Module &M,
-                              Function &F)
+IRForTarget::ResolveExternals (Module &llvm_module, Function &llvm_function)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    for (Module::global_iterator global = M.global_begin(), end = M.global_end();
+    for (Module::global_iterator global = llvm_module.global_begin(), end = llvm_module.global_end();
          global != end;
          ++global)
     {
-        if (DeclForGlobalValue(M, global) &&
-            !MaybeHandleVariable (M, global))
+        if (log)
+            log->Printf("Examining %s, DeclForGlobalValue returns %p", 
+                        (*global).getName().str().c_str(),
+                        DeclForGlobalValue(llvm_module, global));
+    
+        if (DeclForGlobalValue(llvm_module, global) &&
+            !MaybeHandleVariable (llvm_module, global))
             return false;
     }
         
@@ -1126,9 +1119,9 @@ static bool isGuardVariableRef(Value *V)
     return true;
 }
 
-static void TurnGuardLoadIntoZero(Instruction* guard_load, Module &M)
+static void TurnGuardLoadIntoZero(Instruction* guard_load, Module &llvm_module)
 {
-    Constant* zero(ConstantInt::get(Type::getInt8Ty(M.getContext()), 0, true));
+    Constant* zero(ConstantInt::get(Type::getInt8Ty(llvm_module.getContext()), 0, true));
 
     Value::use_iterator ui;
     
@@ -1155,7 +1148,7 @@ static void ExciseGuardStore(Instruction* guard_store)
 }
 
 bool
-IRForTarget::removeGuards(Module &M, BasicBlock &BB)
+IRForTarget::RemoveGuards(Module &llvm_module, BasicBlock &basic_block)
 {        
     ///////////////////////////////////////////////////////
     // Eliminate any reference to guard variables found.
@@ -1169,8 +1162,8 @@ IRForTarget::removeGuards(Module &M, BasicBlock &BB)
     InstrList guard_loads;
     InstrList guard_stores;
     
-    for (ii = BB.begin();
-         ii != BB.end();
+    for (ii = basic_block.begin();
+         ii != basic_block.end();
          ++ii)
     {
         Instruction &inst = *ii;
@@ -1189,7 +1182,7 @@ IRForTarget::removeGuards(Module &M, BasicBlock &BB)
     for (iter = guard_loads.begin();
          iter != guard_loads.end();
          ++iter)
-        TurnGuardLoadIntoZero(*iter, M);
+        TurnGuardLoadIntoZero(*iter, llvm_module);
     
     for (iter = guard_stores.begin();
          iter != guard_stores.end();
@@ -1200,7 +1193,7 @@ IRForTarget::removeGuards(Module &M, BasicBlock &BB)
 }
 
 bool
-IRForTarget::UnfoldConstant(Constant *Old, Value *New, Instruction *FirstEntryInstruction)
+IRForTarget::UnfoldConstant(Constant *old_constant, Value *new_constant, Instruction *first_entry_inst)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -1210,8 +1203,8 @@ IRForTarget::UnfoldConstant(Constant *Old, Value *New, Instruction *FirstEntryIn
     
     // We do this because the use list might change, invalidating our iterator.
     // Much better to keep a work list ourselves.
-    for (ui = Old->use_begin();
-         ui != Old->use_end();
+    for (ui = old_constant->use_begin();
+         ui != old_constant->use_end();
          ++ui)
         users.push_back(*ui);
         
@@ -1240,12 +1233,12 @@ IRForTarget::UnfoldConstant(Constant *Old, Value *New, Instruction *FirstEntryIn
                         
                         Value *s = constant_expr->getOperand(0);
                         
-                        if (s == Old)
-                            s = New;
+                        if (s == old_constant)
+                            s = new_constant;
                         
-                        BitCastInst *bit_cast(new BitCastInst(s, Old->getType(), "", FirstEntryInstruction));
+                        BitCastInst *bit_cast(new BitCastInst(s, old_constant->getType(), "", first_entry_inst));
                         
-                        UnfoldConstant(constant_expr, bit_cast, FirstEntryInstruction);
+                        UnfoldConstant(constant_expr, bit_cast, first_entry_inst);
                     }
                     break;
                 case Instruction::GetElementPtr:
@@ -1256,8 +1249,8 @@ IRForTarget::UnfoldConstant(Constant *Old, Value *New, Instruction *FirstEntryIn
                         
                         Value *ptr = constant_expr->getOperand(0);
                         
-                        if (ptr == Old)
-                            ptr = New;
+                        if (ptr == old_constant)
+                            ptr = new_constant;
                         
                         SmallVector<Value*, 16> indices;
                         
@@ -1270,15 +1263,15 @@ IRForTarget::UnfoldConstant(Constant *Old, Value *New, Instruction *FirstEntryIn
                         {
                             Value *operand = constant_expr->getOperand(operand_index);
                             
-                            if (operand == Old)
-                                operand = New;
+                            if (operand == old_constant)
+                                operand = new_constant;
                             
                             indices.push_back(operand);
                         }
                         
-                        GetElementPtrInst *get_element_ptr(GetElementPtrInst::Create(ptr, indices.begin(), indices.end(), "", FirstEntryInstruction));
+                        GetElementPtrInst *get_element_ptr(GetElementPtrInst::Create(ptr, indices.begin(), indices.end(), "", first_entry_inst));
                         
-                        UnfoldConstant(constant_expr, get_element_ptr, FirstEntryInstruction);
+                        UnfoldConstant(constant_expr, get_element_ptr, first_entry_inst);
                     }
                     break;
                 }
@@ -1293,7 +1286,7 @@ IRForTarget::UnfoldConstant(Constant *Old, Value *New, Instruction *FirstEntryIn
         else
         {
             // simple fall-through case for non-constants
-            user->replaceUsesOfWith(Old, New);
+            user->replaceUsesOfWith(old_constant, new_constant);
         }
     }
     
@@ -1301,7 +1294,7 @@ IRForTarget::UnfoldConstant(Constant *Old, Value *New, Instruction *FirstEntryIn
 }
 
 bool 
-IRForTarget::replaceVariables(Module &M, Function &F)
+IRForTarget::ReplaceVariables (Module &llvm_module, Function &llvm_function)
 {
     if (!m_resolve_vars)
         return true;
@@ -1322,9 +1315,9 @@ IRForTarget::replaceVariables(Module &M, Function &F)
     if (!m_decl_map->GetStructInfo (num_elements, size, alignment))
         return false;
     
-    Function::arg_iterator iter(F.getArgumentList().begin());
+    Function::arg_iterator iter(llvm_function.getArgumentList().begin());
     
-    if (iter == F.getArgumentList().end())
+    if (iter == llvm_function.getArgumentList().end())
         return false;
     
     Argument *argument = iter;
@@ -1333,7 +1326,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
     {
         ++iter;
         
-        if (iter == F.getArgumentList().end())
+        if (iter == llvm_function.getArgumentList().end())
             return false;
         
         argument = iter;
@@ -1345,13 +1338,13 @@ IRForTarget::replaceVariables(Module &M, Function &F)
     if (log)
         log->Printf("Arg: \"%s\"", PrintValue(argument).c_str());
     
-    BasicBlock &entry_block(F.getEntryBlock());
+    BasicBlock &entry_block(llvm_function.getEntryBlock());
     Instruction *FirstEntryInstruction(entry_block.getFirstNonPHIOrDbg());
     
     if (!FirstEntryInstruction)
         return false;
     
-    LLVMContext &context(M.getContext());
+    LLVMContext &context(llvm_module.getContext());
     const IntegerType *offset_type(Type::getInt32Ty(context));
     
     if (!offset_type)
@@ -1394,11 +1387,11 @@ IRForTarget::replaceVariables(Module &M, Function &F)
 }
 
 bool
-IRForTarget::runOnModule(Module &M)
+IRForTarget::runOnModule (Module &llvm_module)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    Function* function = M.getFunction(StringRef(m_func_name.c_str()));
+    Function* function = llvm_module.getFunction(StringRef(m_func_name.c_str()));
     
     if (!function)
     {
@@ -1414,7 +1407,7 @@ IRForTarget::runOnModule(Module &M)
     // Replace $__lldb_expr_result with a persistent variable
     //
     
-    if (!createResultVariable(M, *function))
+    if (!CreateResultVariable(llvm_module, *function))
         return false;
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -1426,14 +1419,14 @@ IRForTarget::runOnModule(Module &M)
         std::string s;
         raw_string_ostream oss(s);
         
-        M.print(oss, NULL);
+        llvm_module.print(oss, NULL);
         
         oss.flush();
         
         log->Printf("Module after creating the result variable: \n\"%s\"", s.c_str());
     }
     
-    if (!rewriteObjCConstStrings(M, *function))
+    if (!RewriteObjCConstStrings(llvm_module, *function))
         return false;
     
     if (log)
@@ -1441,7 +1434,7 @@ IRForTarget::runOnModule(Module &M)
         std::string s;
         raw_string_ostream oss(s);
         
-        M.print(oss, NULL);
+        llvm_module.print(oss, NULL);
         
         oss.flush();
         
@@ -1456,16 +1449,16 @@ IRForTarget::runOnModule(Module &M)
          bbi != function->end();
          ++bbi)
     {
-        if (!removeGuards(M, *bbi))
+        if (!RemoveGuards(llvm_module, *bbi))
             return false;
         
-        if (!rewritePersistentAllocs(M, *bbi))
+        if (!RewritePersistentAllocs(llvm_module, *bbi))
             return false;
         
-        if (!rewriteObjCSelectors(M, *bbi))
+        if (!RewriteObjCSelectors(llvm_module, *bbi))
             return false;
 
-        if (!resolveCalls(M, *bbi))
+        if (!ResolveCalls(llvm_module, *bbi))
             return false;
     }
     
@@ -1473,10 +1466,10 @@ IRForTarget::runOnModule(Module &M)
     // Run function-level passes
     //
     
-    if (!resolveExternals(M, *function))
+    if (!ResolveExternals(llvm_module, *function))
         return false;
     
-    if (!replaceVariables(M, *function))
+    if (!ReplaceVariables(llvm_module, *function))
         return false;
     
     if (log)
@@ -1484,7 +1477,7 @@ IRForTarget::runOnModule(Module &M)
         std::string s;
         raw_string_ostream oss(s);
         
-        M.print(oss, NULL);
+        llvm_module.print(oss, NULL);
         
         oss.flush();
         
@@ -1495,8 +1488,7 @@ IRForTarget::runOnModule(Module &M)
 }
 
 void
-IRForTarget::assignPassManager(PMStack &PMS,
-                               PassManagerType T)
+IRForTarget::assignPassManager (PMStack &pass_mgr_stack, PassManagerType pass_mgr_type)
 {
 }
 
