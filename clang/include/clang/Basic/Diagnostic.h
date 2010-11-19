@@ -371,16 +371,10 @@ public:
   bool hasErrorOccurred() const { return ErrorOccurred; }
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
 
-  unsigned getNumErrors() const { return NumErrors; }
-  unsigned getNumErrorsSuppressed() const { return NumErrorsSuppressed; }
   unsigned getNumWarnings() const { return NumWarnings; }
 
   void setNumWarnings(unsigned NumWarnings) {
     this->NumWarnings = NumWarnings;
-  }
-
-  void setNumErrors(unsigned NumErrors) {
-    this->NumErrors = NumErrors;
   }
 
   /// getCustomDiagID - Return an ID for a diagnostic with the specified message
