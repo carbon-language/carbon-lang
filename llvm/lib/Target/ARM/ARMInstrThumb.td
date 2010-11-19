@@ -316,11 +316,11 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def tBRIND : TI<(outs), (ins GPR:$Rm), IIC_Br, "mov\tpc, $Rm",
                   [(brind GPR:$Rm)]>,
-               T1Special<{1,0,1,?}> {
+               T1Special<{1,0,?,?}> {
     bits<4> Rm;
-
     let Inst{6-3} = Rm;
-    let Inst{2-0} = 0b111;      // <Rd> = Inst{7:2-0} = pc
+    let Inst{7}   = 0b1;        // <Rd> = Inst{7:2-0} = pc
+    let Inst{2-0} = 0b111;
   }
 }
 
@@ -332,7 +332,6 @@ def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
                    "pop${p}\t$regs", []>,
                T1Misc<{1,1,0,?,?,?,?}> {
   bits<16> regs;
-
   let Inst{8}   = regs{15};
   let Inst{7-0} = regs{7-0};
 }
@@ -442,13 +441,25 @@ let isBranch = 1, isTerminator = 1 in
 
 // Compare and branch on zero / non-zero
 let isBranch = 1, isTerminator = 1 in {
-  def tCBZ  : T1I<(outs), (ins tGPR:$cmp, brtarget:$target), IIC_Br,
-                  "cbz\t$cmp, $target", []>,
-              T1Misc<{0,0,?,1,?,?,?}>;
+  def tCBZ  : T1I<(outs), (ins tGPR:$Rn, brtarget:$target), IIC_Br,
+                  "cbz\t$Rn, $target", []>,
+              T1Misc<{0,0,?,1,?,?,?}> {
+    bits<6> target;
+    bits<3> Rn;
+    let Inst{9}   = target{5};
+    let Inst{7-3} = target{4-0};
+    let Inst{2-0} = Rn;
+  }
 
   def tCBNZ : T1I<(outs), (ins tGPR:$cmp, brtarget:$target), IIC_Br,
                   "cbnz\t$cmp, $target", []>,
-              T1Misc<{1,0,?,1,?,?,?}>;
+              T1Misc<{1,0,?,1,?,?,?}> {
+    bits<6> target;
+    bits<3> Rn;
+    let Inst{9}   = target{5};
+    let Inst{7-3} = target{4-0};
+    let Inst{2-0} = Rn;
+  }
 }
 
 // A8.6.218 Supervisor Call (Software Interrupt) -- for disassembly only
