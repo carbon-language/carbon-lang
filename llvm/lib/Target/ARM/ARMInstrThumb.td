@@ -195,7 +195,6 @@ def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
                 [/* For disassembly only; pattern left blank */]>,
             T1Encoding<0b101111> {
   bits<8> val;
-
   let Inst{9-8} = 0b10;
   let Inst{7-0} = val;
 }
@@ -216,48 +215,77 @@ def tCPS : T1I<(outs), (ins cps_opt:$opt), NoItinerary, "cps$opt",
 // For both thumb1 and thumb2.
 let isNotDuplicable = 1, isCodeGenOnly = 1 in
 def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
-                 [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>,
+                  [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>,
               T1Special<{0,0,?,?}> {
-  let Inst{6-3} = 0b1111; // A8.6.6 Rm = pc
+  // A8.6.6 Rm = pc
+  bits<3> dst;
+  let Inst{6-3} = 0b1111;
+  let Inst{2-0} = dst;
 }
 
 // PC relative add.
 def tADDrPCi : T1I<(outs tGPR:$dst), (ins t_imm_s4:$rhs), IIC_iALUi,
-                  "add\t$dst, pc, $rhs", []>,
-               T1Encoding<{1,0,1,0,0,?}>; // A6.2 & A8.6.10
-
-// ADD rd, sp, #imm8
-// This is rematerializable, which is particularly useful for taking the
-// address of locals.
-let isReMaterializable = 1 in {
-def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, t_imm_s4:$rhs), IIC_iALUi,
-                  "add\t$dst, $sp, $rhs", []>,
-               T1Encoding<{1,0,1,0,1,?}>; // A6.2 & A8.6.8
+                   "add\t$dst, pc, $rhs", []>,
+               T1Encoding<{1,0,1,0,0,?}> {
+  // A6.2 & A8.6.10
+  bits<3> dst;
+  bits<8> rhs;
+  let Inst{10-8} = dst;
+  let Inst{7-0}  = rhs;
 }
 
-// ADD sp, sp, #imm7
+// ADD <Rd>, sp, #<imm8>
+// This is rematerializable, which is particularly useful for taking the
+// address of locals.
+let isReMaterializable = 1 in
+def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, t_imm_s4:$rhs), IIC_iALUi,
+                   "add\t$dst, $sp, $rhs", []>,
+               T1Encoding<{1,0,1,0,1,?}> {
+  // A6.2 & A8.6.8
+  bits<3> dst;
+  bits<8> rhs;
+  let Inst{10-8} = dst;
+  let Inst{7-0}  = rhs;
+}
+
+// ADD sp, sp, #<imm7>
 def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
                   "add\t$dst, $rhs", []>,
-              T1Misc<{0,0,0,0,0,?,?}>; // A6.2.5 & A8.6.8
+              T1Misc<{0,0,0,0,0,?,?}> {
+  // A6.2.5 & A8.6.8
+  bits<7> rhs;
+  let Inst{6-0} = rhs;
+}
 
-// SUB sp, sp, #imm7
+// SUB sp, sp, #<imm7>
+// FIXME: The encoding and the ASM string don't match up.
 def tSUBspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
                   "sub\t$dst, $rhs", []>,
-              T1Misc<{0,0,0,0,1,?,?}>; // A6.2.5 & A8.6.215
+              T1Misc<{0,0,0,0,1,?,?}> {
+  // A6.2.5 & A8.6.214
+  bits<7> rhs;
+  let Inst{6-0} = rhs;
+}
 
-// ADD rm, sp
+// ADD <Rm>, sp
 def tADDrSP : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
                   "add\t$dst, $rhs", []>,
               T1Special<{0,0,?,?}> {
-  let Inst{6-3} = 0b1101; // A8.6.9 Encoding T1
+  // A8.6.9 Encoding T1
+  bits<4> dst;
+  let Inst{7}   = dst{3};
+  let Inst{6-3} = 0b1101;
+  let Inst{2-0} = dst{2-0};
 }
 
-// ADD sp, rm
+// ADD sp, <Rm>
 def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
                   "add\t$dst, $rhs", []>,
               T1Special<{0,0,?,?}> {
   // A8.6.9 Encoding T2
+  bits<4> dst;
   let Inst{7} = 1;
+  let Inst{6-3} = dst;
   let Inst{2-0} = 0b101;
 }
 
