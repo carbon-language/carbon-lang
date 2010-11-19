@@ -2754,10 +2754,8 @@ class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   
   bits<4> Rn;
   bits<4> Rt;
-  bits<8> imm;
   let Inst{19-16} = Rn{3-0};
   let Inst{15-12} = Rt{3-0};
-  let Inst{7-0}   = imm{7-0};
 }
 class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                 InstrItinClass itin, string opc, string asm, string cstr,
@@ -2772,11 +2770,9 @@ class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rt;
-  bits<8> imm;
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{15-12} = Rt{3-0};
-  let Inst{7-0}   = imm{7-0};
 }
 
 let mayLoad = 1 in {
