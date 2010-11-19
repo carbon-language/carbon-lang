@@ -352,6 +352,16 @@ TEST(IntervalMapTest, Branched) {
   EXPECT_FALSE(I.valid());
   EXPECT_TRUE(I == map.end());
 
+  // Backwards iteration.
+  for (unsigned i = 99; i; --i) {
+    --I;
+    ASSERT_TRUE(I.valid());
+    EXPECT_EQ(10*i, I.start());
+    EXPECT_EQ(10*i+5, I.stop());
+    EXPECT_EQ(i, *I);
+  }
+  EXPECT_TRUE(I == map.begin());
+
 }
 
 } // namespace

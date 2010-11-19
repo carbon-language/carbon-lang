@@ -1235,7 +1235,7 @@ public:
     if (!branched()) {
       assert(rootOffset && "Cannot decrement begin()");
       --rootOffset;
-    } else if (treeLeafOffset())
+    } else if (valid() && treeLeafOffset())
       --treeLeafOffset();
     else
       treeDecrement();
