@@ -13,11 +13,13 @@ int f(int *ptr1, float *ptr2) {
 #define expand_to_binary_function(ret, name, parm1, parm2, code) ret name(parm1, parm2) code
 
 expand_to_binary_function(int, g, int *ip, float *fp, {
-// CHECK: code-complete-errors.c:17:15:{17:12-17:14}{17:18-17:20}: warning: comparison of distinct pointer types ('int *' and 'float *')
+ // CHECK: code-complete-errors.c:17:12:{17:9-17:24}: warning: using the result of an assignment as a condition without parentheses [-Wparentheses]
+    if (ip = (float*)fp) ;
+// CHECK: code-complete-errors.c:19:15:{19:12-19:14}{19:18-19:20}: warning: comparison of distinct pointer types ('int *' and 'float *')
     return ip == fp;
   })
 
 void g() {  }
 
-// RUN: c-index-test -code-completion-at=%s:19:12 -pedantic %s 2> %t
+// RUN: c-index-test -code-completion-at=%s:21:12 -pedantic %s 2> %t
 // RUN: FileCheck -check-prefix=CHECK %s < %t

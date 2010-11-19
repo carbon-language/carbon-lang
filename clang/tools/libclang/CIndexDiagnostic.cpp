@@ -119,11 +119,61 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
   else
     Out << "<no diagnostic text>";
   clang_disposeString(Text);
+  
+  if (Options & (CXDiagnostic_DisplayOption | CXDiagnostic_DisplayCategoryId |
+                 CXDiagnostic_DisplayCategoryName)) {
+    bool NeedBracket = true;
+    bool NeedComma = false;
+
+    if (Options & CXDiagnostic_DisplayOption) {
+      CXString OptionName = clang_getDiagnosticOption(Diagnostic, 0);
+      if (const char *OptionText = clang_getCString(OptionName)) {
+        if (OptionText[0]) {
+          Out << " [" << OptionText;
+          NeedBracket = false;
+          NeedComma = true;
+        }
+      }
+      clang_disposeString(OptionName);
+    }
+    
+    if (Options & (CXDiagnostic_DisplayCategoryId | 
+                   CXDiagnostic_DisplayCategoryName)) {
+      if (unsigned CategoryID = clang_getDiagnosticCategory(Diagnostic)) {
+        if (Options & CXDiagnostic_DisplayCategoryId) {
+          if (NeedBracket)
+            Out << " [";
+          if (NeedComma)
+            Out << ", ";
+          Out << CategoryID;
+          NeedBracket = false;
+          NeedComma = true;
+        }
+        
+        if (Options & CXDiagnostic_DisplayCategoryName) {
+          CXString CategoryName = clang_getDiagnosticCategoryName(CategoryID);
+          if (NeedBracket)
+            Out << " [";
+          if (NeedComma)
+            Out << ", ";
+          Out << clang_getCString(CategoryName);
+          NeedBracket = false;
+          NeedComma = true;
+          clang_disposeString(CategoryName);
+        }
+      }
+    }
+    
+    if (!NeedBracket)
+      Out << "]";
+  }
+  
   return createCXString(Out.str(), true);
 }
 
 unsigned clang_defaultDiagnosticDisplayOptions() {
-  return CXDiagnostic_DisplaySourceLocation | CXDiagnostic_DisplayColumn;
+  return CXDiagnostic_DisplaySourceLocation | CXDiagnostic_DisplayColumn |
+         CXDiagnostic_DisplayOption;
 }
 
 enum CXDiagnosticSeverity clang_getDiagnosticSeverity(CXDiagnostic Diag) {
@@ -161,6 +211,47 @@ CXString clang_getDiagnosticSpelling(CXDiagnostic Diag) {
   return createCXString(StoredDiag->Diag.getMessage(), false);
 }
 
+CXString clang_getDiagnosticOption(CXDiagnostic Diag, CXString *Disable) {
+  if (Disable)
+    *Disable = createCXString("");
+  
+  CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
+  if (!StoredDiag)
+    return createCXString("");
+  
+  unsigned ID = StoredDiag->Diag.getID();
+  if (const char *Option = DiagnosticIDs::getWarningOptionForDiag(ID)) {
+    if (Disable)
+      *Disable = createCXString((llvm::Twine("-Wno-") + Option).str());
+    return createCXString((llvm::Twine("-W") + Option).str());
+  }
+  
+  if (ID == diag::fatal_too_many_errors) {
+    if (Disable)
+      *Disable = createCXString("-ferror-limit=0");
+    return createCXString("-ferror-limit=");
+  }
+  
+  bool EnabledByDefault;
+  if (DiagnosticIDs::isBuiltinExtensionDiag(ID, EnabledByDefault) &&
+      !EnabledByDefault)
+    return createCXString("-pedantic");
+
+  return createCXString("");
+}
+
+unsigned clang_getDiagnosticCategory(CXDiagnostic Diag) {
+  CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
+  if (!StoredDiag)
+    return 0;
+
+  return DiagnosticIDs::getCategoryNumberForDiag(StoredDiag->Diag.getID());
+}
+  
+CXString clang_getDiagnosticCategoryName(unsigned Category) {
+  return createCXString(DiagnosticIDs::getCategoryNameFromID(Category));
+}
+  
 unsigned clang_getDiagnosticNumRanges(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag || StoredDiag->Diag.getLocation().isInvalid())

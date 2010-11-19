@@ -499,7 +499,34 @@ enum CXDiagnosticDisplayOptions {
    * This option corresponds to the clang flag
    * \c -fdiagnostics-print-source-range-info.
    */
-  CXDiagnostic_DisplaySourceRanges = 0x04
+  CXDiagnostic_DisplaySourceRanges = 0x04,
+  
+  /**
+   * \brief Display the option name associated with this diagnostic, if any.
+   *
+   * The option name displayed (e.g., -Wconversion) will be placed in brackets
+   * after the diagnostic text. This option corresponds to the clang flag
+   * \c -fdiagnostics-show-option.
+   */
+  CXDiagnostic_DisplayOption = 0x08,
+  
+  /**
+   * \brief Display the category number associated with this diagnostic, if any.
+   *
+   * The category number is displayed within brackets after the diagnostic text.
+   * This option corresponds to the clang flag 
+   * \c -fdiagnostics-show-category=id.
+   */
+  CXDiagnostic_DisplayCategoryId = 0x10,
+
+  /**
+   * \brief Display the category name associated with this diagnostic, if any.
+   *
+   * The category name is displayed within brackets after the diagnostic text.
+   * This option corresponds to the clang flag 
+   * \c -fdiagnostics-show-category=name.
+   */
+  CXDiagnostic_DisplayCategoryName = 0x20
 };
 
 /**
@@ -530,10 +557,6 @@ CINDEX_LINKAGE CXString clang_formatDiagnostic(CXDiagnostic Diagnostic,
 CINDEX_LINKAGE unsigned clang_defaultDiagnosticDisplayOptions(void);
 
 /**
- * \brief Print a diagnostic to the given file.
- */
-
-/**
  * \brief Determine the severity of the given diagnostic.
  */
 CINDEX_LINKAGE enum CXDiagnosticSeverity
@@ -552,6 +575,43 @@ CINDEX_LINKAGE CXSourceLocation clang_getDiagnosticLocation(CXDiagnostic);
  */
 CINDEX_LINKAGE CXString clang_getDiagnosticSpelling(CXDiagnostic);
 
+/**
+ * \brief Retrieve the name of the command-line option that enabled this
+ * diagnostic.
+ *
+ * \param Diag The diagnostic to be queried.
+ *
+ * \param Disable If non-NULL, will be set to the option that disables this
+ * diagnostic (if any).
+ *
+ * \returns A string that contains the command-line option used to enable this
+ * warning, such as "-Wconversion" or "-pedantic". 
+ */
+CINDEX_LINKAGE CXString clang_getDiagnosticOption(CXDiagnostic Diag,
+                                                  CXString *Disable);
+
+/**
+ * \brief Retrieve the category number for this diagnostic.
+ *
+ * Diagnostics can be categorized into groups along with other, related
+ * diagnostics (e.g., diagnostics under the same warning flag). This routine 
+ * retrieves the category number for the given diagnostic.
+ *
+ * \returns The number of the category that contains this diagnostic, or zero
+ * if this diagnostic is uncategorized.
+ */
+CINDEX_LINKAGE unsigned clang_getDiagnosticCategory(CXDiagnostic);
+
+/**
+ * \brief Retrieve the name of a particular diagnostic category.
+ *
+ * \param Category A diagnostic category number, as returned by 
+ * \c clang_getDiagnosticCategory().
+ *
+ * \returns The name of the given diagnostic category.
+ */
+CINDEX_LINKAGE CXString clang_getDiagnosticCategoryName(unsigned Category);
+  
 /**
  * \brief Determine the number of source ranges associated with the given
  * diagnostic.

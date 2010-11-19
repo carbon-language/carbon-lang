@@ -547,13 +547,14 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
 
 StoredDiagnostic::StoredDiagnostic() { }
 
-StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, 
+StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, unsigned ID,
                                    llvm::StringRef Message)
-  : Level(Level), Loc(), Message(Message) { }
+  : Level(Level), ID(ID), Loc(), Message(Message) { }
 
 StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, 
                                    const DiagnosticInfo &Info)
-  : Level(Level) {
+  : ID(Info.getID()), Level(Level) 
+{
   assert((Info.getLocation().isInvalid() || Info.hasSourceManager()) &&
        "Valid source location without setting a source manager for diagnostic");
   if (Info.getLocation().isValid())

@@ -309,7 +309,8 @@ void PrintDiagnostic(CXDiagnostic Diagnostic) {
   CXFile file;
   CXString Msg;
   unsigned display_opts = CXDiagnostic_DisplaySourceLocation
-    | CXDiagnostic_DisplayColumn | CXDiagnostic_DisplaySourceRanges;
+    | CXDiagnostic_DisplayColumn | CXDiagnostic_DisplaySourceRanges
+    | CXDiagnostic_DisplayOption;
   unsigned i, num_fixits;
 
   if (clang_getDiagnosticSeverity(Diagnostic) == CXDiagnostic_Ignored)

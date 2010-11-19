@@ -876,6 +876,7 @@ public:
  * corresponding source manager is destroyed. 
  */
 class StoredDiagnostic {
+  unsigned ID;
   Diagnostic::Level Level;
   FullSourceLoc Loc;
   std::string Message;
@@ -885,12 +886,14 @@ class StoredDiagnostic {
 public:
   StoredDiagnostic();
   StoredDiagnostic(Diagnostic::Level Level, const DiagnosticInfo &Info);
-  StoredDiagnostic(Diagnostic::Level Level, llvm::StringRef Message);
+  StoredDiagnostic(Diagnostic::Level Level, unsigned ID, 
+                   llvm::StringRef Message);
   ~StoredDiagnostic();
 
   /// \brief Evaluates true when this object stores a diagnostic.
   operator bool() const { return Message.size() > 0; }
 
+  unsigned getID() const { return ID; }
   Diagnostic::Level getLevel() const { return Level; }
   const FullSourceLoc &getLocation() const { return Loc; }
   llvm::StringRef getMessage() const { return Message; }
