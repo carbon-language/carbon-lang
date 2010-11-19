@@ -18,6 +18,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/System/Host.h"
 #include <cassert>
 #include <cstring>
 using namespace llvm;
@@ -110,18 +111,32 @@ void FoldingSetNodeID::AddString(StringRef String) {
     Pos = (Units + 1) * 4;
   } else {
     // Otherwise do it the hard way.
-    for (Pos += 4; Pos <= Size; Pos += 4) {
-      unsigned V = ((unsigned char)String[Pos - 4] << 24) |
-                   ((unsigned char)String[Pos - 3] << 16) |
-                   ((unsigned char)String[Pos - 2] << 8) |
-                    (unsigned char)String[Pos - 1];
-      Bits.push_back(V);
+    // To be compatible with above bulk transfer, we need to take endianness
+    // into account.
+    if (sys::isBigEndianHost()) {
+      for (Pos += 4; Pos <= Size; Pos += 4) {
+        unsigned V = ((unsigned char)String[Pos - 4] << 24) |
+                     ((unsigned char)String[Pos - 3] << 16) |
+                     ((unsigned char)String[Pos - 2] << 8) |
+                      (unsigned char)String[Pos - 1];
+        Bits.push_back(V);
+      }
+    } else {
+      assert(sys::isLittleEndianHost() && "Unexpected host endianness");
+      for (Pos += 4; Pos <= Size; Pos += 4) {
+        unsigned V = ((unsigned char)String[Pos - 1] << 24) |
+                     ((unsigned char)String[Pos - 2] << 16) |
+                     ((unsigned char)String[Pos - 3] << 8) |
+                      (unsigned char)String[Pos - 4];
+        Bits.push_back(V);
+      }
     }
   }
   
   // With the leftover bits.
   unsigned V = 0;
-  // Pos will have overshot size by 4 - #bytes left over. 
+  // Pos will have overshot size by 4 - #bytes left over.
+  // No need to take endianness into account here - this is always executed.
   switch (Pos - Size) {
   case 1: V = (V << 8) | (unsigned char)String[Size - 3]; // Fall thru.
   case 2: V = (V << 8) | (unsigned char)String[Size - 2]; // Fall thru.
