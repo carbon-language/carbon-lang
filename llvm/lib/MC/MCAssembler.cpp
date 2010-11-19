@@ -499,7 +499,9 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     // FIXME: It is probably better if we don't call EvaluateAsAbsolute in
     // here.
     int64_t Value;
-    LF.getValue().EvaluateAsAbsolute(Value, &Layout);
+    bool IsAbs = LF.getValue().EvaluateAsAbsolute(Value, &Layout);
+    assert(IsAbs);
+    (void) IsAbs;
     SmallString<32> Tmp;
     raw_svector_ostream OSE(Tmp);
     if (LF.isSigned())
