@@ -618,6 +618,32 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
                                         const Type *AccessTy,
                                         DenseMap<Value*,Value*> &SunkAddrs) {
+  // Try to collapse single-value PHI nodes.  This is necessary to undo 
+  // unprofitable PRE transformations.
+  Value *Repl = Addr;
+  if (isa<PHINode>(Addr) && MemoryInst->hasOneUse()) {
+    PHINode *P = cast<PHINode>(Addr);
+    Instruction *Consensus = 0;
+    unsigned NumUses = 0;
+    for (unsigned i = 0, e = P->getNumIncomingValues(); i != e; ++i) {
+      Instruction *Incoming = dyn_cast<Instruction>(P->getIncomingValue(i));
+      if (!Incoming || (Consensus && !Incoming->isIdenticalTo(Consensus))) {
+        Consensus = 0;
+        break;
+      }
+      
+      if (!Consensus || Incoming->isIdenticalTo(Consensus)) {
+        if (Incoming->getNumUses() > NumUses) {
+          Consensus = Incoming;
+          NumUses = Incoming->getNumUses();
+        }
+        continue;
+      }
+    }
+    
+    if (Consensus) Addr = Consensus;
+  }
+  
   // Figure out what addressing mode will be built up for this operation.
   SmallVector<Instruction*, 16> AddrModeInsts;
   ExtAddrMode AddrMode = AddressingModeMatcher::Match(Addr, AccessTy,MemoryInst,
@@ -725,10 +751,10 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
       SunkAddr = new IntToPtrInst(Result, Addr->getType(), "sunkaddr",InsertPt);
   }
 
-  MemoryInst->replaceUsesOfWith(Addr, SunkAddr);
+  MemoryInst->replaceUsesOfWith(Repl, SunkAddr);
 
-  if (Addr->use_empty()) {
-    RecursivelyDeleteTriviallyDeadInstructions(Addr);
+  if (Repl->use_empty()) {
+    RecursivelyDeleteTriviallyDeadInstructions(Repl);
     // This address is now available for reassignment, so erase the table entry;
     // we don't want to match some completely different instruction.
     SunkAddrs[Addr] = 0;
