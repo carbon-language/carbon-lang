@@ -2751,6 +2751,13 @@ class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let Inst{7-6} = 0b01;
   let Inst{5-4} = opcod;
   let Inst{3-0} = 0b1111;
+  
+  bits<4> Rn;
+  bits<4> Rt;
+  bits<8> imm;
+  let Inst{19-16} = Rn{3-0};
+  let Inst{15-12} = Rt{3-0};
+  let Inst{7-0}   = imm{7-0};
 }
 class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                 InstrItinClass itin, string opc, string asm, string cstr,
@@ -2761,50 +2768,65 @@ class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let Inst{11-8} = rt2;
   let Inst{7-6} = 0b01;
   let Inst{5-4} = opcod;
+  
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rt;
+  bits<8> imm;
+  let Inst{11-8}  = Rd{3-0};
+  let Inst{19-16} = Rn{3-0};
+  let Inst{15-12} = Rt{3-0};
+  let Inst{7-0}   = imm{7-0};
 }
 
 let mayLoad = 1 in {
-def t2LDREXB : T2I_ldrex<0b00, (outs rGPR:$dest), (ins rGPR:$ptr), AddrModeNone,
-                         Size4Bytes, NoItinerary, "ldrexb", "\t$dest, [$ptr]",
+def t2LDREXB : T2I_ldrex<0b00, (outs rGPR:$Rt), (ins rGPR:$Rn), AddrModeNone,
+                         Size4Bytes, NoItinerary, "ldrexb", "\t$Rt, [$Rn]",
                          "", []>;
-def t2LDREXH : T2I_ldrex<0b01, (outs rGPR:$dest), (ins rGPR:$ptr), AddrModeNone,
-                         Size4Bytes, NoItinerary, "ldrexh", "\t$dest, [$ptr]",
+def t2LDREXH : T2I_ldrex<0b01, (outs rGPR:$Rt), (ins rGPR:$Rn), AddrModeNone,
+                         Size4Bytes, NoItinerary, "ldrexh", "\t$Rt, [$Rn]",
                          "", []>;
-def t2LDREX  : Thumb2I<(outs rGPR:$dest), (ins rGPR:$ptr), AddrModeNone,
+def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins rGPR:$Rn), AddrModeNone,
                        Size4Bytes, NoItinerary,
-                       "ldrex", "\t$dest, [$ptr]", "",
+                       "ldrex", "\t$Rt, [$Rn]", "",
                       []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000101;
   let Inst{11-8} = 0b1111;
   let Inst{7-0} = 0b00000000; // imm8 = 0
 }
-def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$dest, rGPR:$dest2), (ins rGPR:$ptr),
+def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$Rt, rGPR:$Rt2), (ins rGPR:$Rn),
                          AddrModeNone, Size4Bytes, NoItinerary,
-                         "ldrexd", "\t$dest, $dest2, [$ptr]", "",
-                         [], {?, ?, ?, ?}>;
+                         "ldrexd", "\t$Rt, $Rt2, [$Rn]", "",
+                         [], {?, ?, ?, ?}> {
+  bits<4> Rt2;
+  let Inst{11-8} = Rt2{3-0};
+}
 }
 
-let mayStore = 1, Constraints = "@earlyclobber $success" in {
-def t2STREXB : T2I_strex<0b00, (outs rGPR:$success), (ins rGPR:$src, rGPR:$ptr),
+let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
+def t2STREXB : T2I_strex<0b00, (outs rGPR:$Rd), (ins rGPR:$Rt, rGPR:$Rn),
                          AddrModeNone, Size4Bytes, NoItinerary,
-                         "strexb", "\t$success, $src, [$ptr]", "", []>;
-def t2STREXH : T2I_strex<0b01, (outs rGPR:$success), (ins rGPR:$src, rGPR:$ptr),
+                         "strexb", "\t$Rd, $Rt, [$Rn]", "", []>;
+def t2STREXH : T2I_strex<0b01, (outs rGPR:$Rd), (ins rGPR:$Rt, rGPR:$Rn),
                          AddrModeNone, Size4Bytes, NoItinerary,
-                         "strexh", "\t$success, $src, [$ptr]", "", []>;
-def t2STREX  : Thumb2I<(outs rGPR:$success), (ins rGPR:$src, rGPR:$ptr),
+                         "strexh", "\t$Rd, $Rt, [$Rn]", "", []>;
+def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt, rGPR:$Rn),
                        AddrModeNone, Size4Bytes, NoItinerary,
-                       "strex", "\t$success, $src, [$ptr]", "",
+                       "strex", "\t$Rd, $Rt, [$Rn]", "",
                       []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000100;
   let Inst{7-0} = 0b00000000; // imm8 = 0
 }
-def t2STREXD : T2I_strex<0b11, (outs rGPR:$success),
-                         (ins rGPR:$src, rGPR:$src2, rGPR:$ptr),
+def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
+                         (ins rGPR:$Rt, rGPR:$Rt2, rGPR:$Rn),
                          AddrModeNone, Size4Bytes, NoItinerary,
-                         "strexd", "\t$success, $src, $src2, [$ptr]", "", [],
-                         {?, ?, ?, ?}>;
+                         "strexd", "\t$Rd, $Rt, $Rt2, [$Rn]", "", [],
+                         {?, ?, ?, ?}> {
+  bits<4> Rt2;
+  let Inst{11-8} = Rt2{3-0};
+}
 }
 
 // Clear-Exclusive is for disassembly only.
