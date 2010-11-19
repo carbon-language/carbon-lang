@@ -166,7 +166,7 @@ void SCEV::print(raw_ostream &OS) const {
   case scUMaxExpr:
   case scSMaxExpr: {
     const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(this);
-    const char *OpStr;
+    const char *OpStr = 0;
     switch (NAry->getSCEVType()) {
     case scAddExpr: OpStr = " + "; break;
     case scMulExpr: OpStr = " * "; break;
