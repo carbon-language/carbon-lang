@@ -104,6 +104,7 @@ protected: // Can only create subclasses.
   const MCAsmInfo *AsmInfo;
 
   unsigned MCRelaxAll : 1;
+  unsigned MCUseLoc : 1;
 
 public:
   virtual ~TargetMachine();
@@ -168,6 +169,12 @@ public:
   /// setMCRelaxAll - Set whether all machine code instructions should be
   /// relaxed.
   void setMCRelaxAll(bool Value) { MCRelaxAll = Value; }
+
+  /// hasMCUseLoc - Check whether we should use dwarf's .loc directive.
+  bool hasMCUseLoc() const { return MCUseLoc; }
+
+  /// setMCUseLoc - Set whether all we should use dwarf's .loc directive.
+  void setMCUseLoc(bool Value) { MCUseLoc = Value; }
 
   /// getRelocationModel - Returns the code generation relocation model. The
   /// choices are static, PIC, and dynamic-no-pic, and target default.

@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -144,11 +145,28 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     if (ShowMCEncoding)
       MCE = getTarget().createCodeEmitter(*this, *Context);
 
-    AsmStreamer.reset(getTarget().createAsmStreamer(*Context, Out,
-                                                    getTargetData()->isLittleEndian(),
-                                                    getVerboseAsm(),
-                                                    InstPrinter, MCE,
-                                                    ShowMCInst));
+    const TargetLoweringObjectFile &TLOF =
+      getTargetLowering()->getObjFileLowering();
+    int PointerSize = getTargetData()->getPointerSize();
+
+    MCStreamer *S;
+    if (hasMCUseLoc())
+      S = getTarget().createAsmStreamer(*Context, Out,
+                                        getTargetData()->isLittleEndian(),
+                                        getVerboseAsm(),
+                                        InstPrinter,
+                                        MCE,
+                                        ShowMCInst);
+    else
+      S = createAsmStreamerNoLoc(*Context, Out,
+                                 getTargetData()->isLittleEndian(),
+                                 getVerboseAsm(),
+                                 &TLOF,
+                                 PointerSize,
+                                 InstPrinter,
+                                 MCE,
+                                 ShowMCInst);
+    AsmStreamer.reset(S);
     break;
   }
   case CGFT_ObjectFile: {

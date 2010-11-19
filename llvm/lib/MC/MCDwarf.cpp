@@ -60,7 +60,7 @@ static inline uint64_t ScaleAddrDelta(uint64_t AddrDelta)
 // and if there is information from the last .loc directive that has yet to have
 // a line entry made for it is made.
 //
-void MCLineEntry::Make(MCObjectStreamer *MCOS, const MCSection *Section) {
+void MCLineEntry::Make(MCStreamer *MCOS, const MCSection *Section) {
   if (!MCOS->getContext().getDwarfLocSeen())
     return;
 
@@ -99,7 +99,7 @@ void MCLineEntry::Make(MCObjectStreamer *MCOS, const MCSection *Section) {
 //
 // This helper routine returns an expression of End - Start + IntVal .
 // 
-static inline const MCExpr *MakeStartMinusEndExpr(MCObjectStreamer *MCOS,
+static inline const MCExpr *MakeStartMinusEndExpr(MCStreamer *MCOS,
                                                   MCSymbol *Start,
                                                   MCSymbol *End, int IntVal) {
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
@@ -120,33 +120,33 @@ static inline const MCExpr *MakeStartMinusEndExpr(MCObjectStreamer *MCOS,
 // This emits an "absolute" address used in the start of a dwarf line number
 // table.  This will result in a relocatation entry for the address.
 //
-static inline void EmitDwarfSetAddress(MCObjectStreamer *MCOS,
-                                       MCSymbol *Symbol) {
+static inline void EmitDwarfSetAddress(MCStreamer *MCOS,
+                                       MCSymbol *Symbol,
+                                       int PointerSize) {
   MCOS->EmitIntValue(dwarf::DW_LNS_extended_op, 1);
 
-  int sizeof_address = MCOS->getAssembler().getBackend().getPointerSize();
-  MCOS->EmitULEB128IntValue(sizeof_address + 1);
+  MCOS->EmitULEB128IntValue(PointerSize + 1);
 
   MCOS->EmitIntValue(dwarf::DW_LNE_set_address, 1);
-  MCOS->EmitSymbolValue(Symbol, sizeof_address);
+  MCOS->EmitSymbolValue(Symbol, PointerSize);
 }
 
 //
 // This emits the Dwarf line table for the specified section from the entries
 // in the LineSection.
 //
-static inline void EmitDwarfLineTable(MCObjectStreamer *MCOS,
+static inline void EmitDwarfLineTable(MCStreamer *MCOS,
                                       const MCSection *Section,
                                       MCLineSection *LineSection,
-                                      const MCSection *DwarfLineSection) {
+                                      const MCSection *DwarfLineSection,
+                                      MCSectionData *DLS,
+                                      int PointerSize) {
   unsigned FileNum = 1;
   unsigned LastLine = 1;
   unsigned Column = 0;
   unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
   unsigned Isa = 0;
   MCSymbol *LastLabel = NULL;
-  MCSectionData &DLS =
-    MCOS->getAssembler().getOrCreateSectionData(*DwarfLineSection);
 
   // Loop through each MCLineEntry and encode the dwarf line number table.
   for (MCLineSection::iterator
@@ -185,9 +185,9 @@ static inline void EmitDwarfLineTable(MCObjectStreamer *MCOS,
     // At this point we want to emit/create the sequence to encode the delta in
     // line numbers and the increment of the address from the previous Label
     // and the current Label.
-    if (LastLabel == NULL) {
+    if (LastLabel == NULL || DLS == NULL) {
       // emit the sequence to set the address
-      EmitDwarfSetAddress(MCOS, Label);
+      EmitDwarfSetAddress(MCOS, Label, PointerSize);
       // emit the sequence for the LineDelta (from 1) and a zero address delta.
       MCDwarfLineAddr::Emit(MCOS, LineDelta, 0);
     }
@@ -196,7 +196,7 @@ static inline void EmitDwarfLineTable(MCObjectStreamer *MCOS,
       // this Label (plus 0).
       const MCExpr *AddrDelta = MakeStartMinusEndExpr(MCOS, LastLabel, Label,0);
       // Create a Dwarf Line fragment for the LineDelta and AddrDelta.
-      new MCDwarfLineAddrFragment(LineDelta, *AddrDelta, &DLS);
+      new MCDwarfLineAddrFragment(LineDelta, *AddrDelta, DLS);
     }
 
     LastLine = it->getLine();
@@ -218,19 +218,29 @@ static inline void EmitDwarfLineTable(MCObjectStreamer *MCOS,
 
   // Switch back the the dwarf line section.
   MCOS->SwitchSection(DwarfLineSection);
-  // Create an expression for the address delta from the LastLabel and this
-  // SectionEnd label.
-  const MCExpr *AddrDelta = MakeStartMinusEndExpr(MCOS, LastLabel, SectionEnd,
-						  0);
-  // Create a Dwarf Line fragment for the LineDelta and AddrDelta.
-  new MCDwarfLineAddrFragment(INT64_MAX, *AddrDelta, &DLS);
+
+  if (DLS == NULL) {
+    // emit the sequence to set the address
+    EmitDwarfSetAddress(MCOS, SectionEnd, PointerSize);
+    // emit the sequence for the LineDelta (from 1) and a zero address delta.
+    MCDwarfLineAddr::Emit(MCOS, INT64_MAX, 0);
+  } else {
+    // Create an expression for the address delta from the LastLabel and this
+    // SectionEnd label.
+    const MCExpr *AddrDelta = MakeStartMinusEndExpr(MCOS, LastLabel, SectionEnd,
+                                                    0);
+    // Create a Dwarf Line fragment for the LineDelta and AddrDelta.
+    new MCDwarfLineAddrFragment(INT64_MAX, *AddrDelta, DLS);
+  }
 }
 
 //
 // This emits the Dwarf file and the line tables.
 //
-void MCDwarfFileTable::Emit(MCObjectStreamer *MCOS,
-                            const MCSection *DwarfLineSection) {
+void MCDwarfFileTable::Emit(MCStreamer *MCOS,
+                            const MCSection *DwarfLineSection,
+                            MCSectionData *DLS,
+                            int PointerSize) {
   // Switch to the section where the table will be emitted into.
   MCOS->SwitchSection(DwarfLineSection);
 
@@ -315,7 +325,8 @@ void MCDwarfFileTable::Emit(MCObjectStreamer *MCOS,
     MCOS->getContext().getMCLineSections();
   for (DenseMap<const MCSection *, MCLineSection *>::iterator it =
 	MCLineSections.begin(), ie = MCLineSections.end(); it != ie; ++it) {
-    EmitDwarfLineTable(MCOS, it->first, it->second, DwarfLineSection);
+    EmitDwarfLineTable(MCOS, it->first, it->second, DwarfLineSection, DLS,
+                       PointerSize);
 
     // Now delete the MCLineSections that were created in MCLineEntry::Make()
     // and used to emit the line table.
@@ -345,7 +356,7 @@ void MCDwarfLineAddr::Write(MCObjectWriter *OW, int64_t LineDelta,
 }
 
 /// Utility function to emit the encoding to a streamer.
-void MCDwarfLineAddr::Emit(MCObjectStreamer *MCOS, int64_t LineDelta,
+void MCDwarfLineAddr::Emit(MCStreamer *MCOS, int64_t LineDelta,
                            uint64_t AddrDelta) {
   SmallString<256> Tmp;
   raw_svector_ostream OS(Tmp);

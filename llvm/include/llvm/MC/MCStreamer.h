@@ -28,6 +28,7 @@ namespace llvm {
   class MCSymbol;
   class StringRef;
   class TargetAsmBackend;
+  class TargetLoweringObjectFile;
   class Twine;
   class raw_ostream;
   class formatted_raw_ostream;
@@ -387,6 +388,14 @@ namespace llvm {
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
                                 bool ShowInst = false);
+
+  MCStreamer *createAsmStreamerNoLoc(MCContext &Ctx, formatted_raw_ostream &OS,
+                                     bool isLittleEndian, bool isVerboseAsm,
+                                     const TargetLoweringObjectFile *TLOF,
+                                     int PointerSize,
+                                     MCInstPrinter *InstPrint = 0,
+                                     MCCodeEmitter *CE = 0,
+                                     bool ShowInst = false);
 
   /// createMachOStreamer - Create a machine code streamer which will generate
   /// Mach-O format object files.

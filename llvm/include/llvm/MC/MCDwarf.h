@@ -167,7 +167,7 @@ namespace llvm {
     // This is called when an instruction is assembled into the specified
     // section and if there is information from the last .loc directive that
     // has yet to have a line entry made for it is made.
-    static void Make(MCObjectStreamer *MCOS, const MCSection *Section);
+    static void Make(MCStreamer *MCOS, const MCSection *Section);
   };
 
   /// MCLineSection - Instances of this class represent the line information
@@ -205,7 +205,8 @@ namespace llvm {
     //
     // This emits the Dwarf file and the line tables.
     //
-    static void Emit(MCObjectStreamer *MCOS, const MCSection *DwarfLineSection);
+    static void Emit(MCStreamer *MCOS, const MCSection *DwarfLineSection,
+                     MCSectionData *DLS, int PointerSize);
   };
 
   class MCDwarfLineAddr {
@@ -214,7 +215,7 @@ namespace llvm {
     static void Encode(int64_t LineDelta, uint64_t AddrDelta, raw_ostream &OS);
 
     /// Utility function to emit the encoding to a streamer.
-    static void Emit(MCObjectStreamer *MCOS,
+    static void Emit(MCStreamer *MCOS,
                      int64_t LineDelta,uint64_t AddrDelta);
 
     /// Utility function to compute the size of the encoding.

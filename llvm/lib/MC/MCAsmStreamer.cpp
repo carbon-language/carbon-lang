@@ -23,6 +23,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
 
 namespace {
@@ -36,16 +37,21 @@ class MCAsmStreamer : public MCStreamer {
   SmallString<128> CommentToEmit;
   raw_svector_ostream CommentStream;
 
+  const TargetLoweringObjectFile *TLOF;
+  int PointerSize;
+
   unsigned IsLittleEndian : 1;
   unsigned IsVerboseAsm : 1;
   unsigned ShowInst : 1;
 
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
-                bool isLittleEndian, bool isVerboseAsm, MCInstPrinter *printer,
-                MCCodeEmitter *emitter, bool showInst)
+                bool isLittleEndian, bool isVerboseAsm,
+                const TargetLoweringObjectFile *tlof, int pointerSize,
+                MCInstPrinter *printer, MCCodeEmitter *emitter, bool showInst)
     : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
       InstPrinter(printer), Emitter(emitter), CommentStream(CommentToEmit),
+      TLOF(tlof), PointerSize(pointerSize),
       IsLittleEndian(isLittleEndian), IsVerboseAsm(isVerboseAsm),
       ShowInst(showInst) {
     if (InstPrinter && IsVerboseAsm)
@@ -637,9 +643,11 @@ void MCAsmStreamer::EmitFileDirective(StringRef Filename) {
 }
 
 bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
-  OS << "\t.file\t" << FileNo << ' ';
-  PrintQuotedString(Filename, OS);
-  EmitEOL();
+  if (!TLOF) {
+    OS << "\t.file\t" << FileNo << ' ';
+    PrintQuotedString(Filename, OS);
+    EmitEOL();
+  }
   return this->MCStreamer::EmitDwarfFileDirective(FileNo, Filename);
 }
 
@@ -647,6 +655,11 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                           unsigned Column, unsigned Flags,
                                           unsigned Isa,
                                           unsigned Discriminator) {
+  this->MCStreamer::EmitDwarfLocDirective(FileNo, Line, Column, Flags,
+                                          Isa, Discriminator);
+  if (TLOF)
+    return;
+
   OS << "\t.loc\t" << FileNo << " " << Line << " " << Column;
   if (Flags & DWARF2_FLAG_BASIC_BLOCK)
     OS << " basic_block";
@@ -670,8 +683,6 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
   if (Discriminator)
     OS << "discriminator " << Discriminator;
   EmitEOL();
-  return this->MCStreamer::EmitDwarfLocDirective(FileNo, Line, Column, Flags,
-                                                 Isa, Discriminator);
 }
 
 void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
@@ -755,6 +766,9 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
 
+  if (TLOF)
+    MCLineEntry::Make(this, getCurrentSection());
+
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter)
     AddEncodingComment(Inst);
@@ -784,6 +798,11 @@ void MCAsmStreamer::EmitRawText(StringRef String) {
 }
 
 void MCAsmStreamer::Finish() {
+  // Dump out the dwarf file & directory tables and line tables.
+  if (getContext().hasDwarfFiles() && TLOF) {
+    MCDwarfFileTable::Emit(this, TLOF->getDwarfLineSection(), NULL,
+                           PointerSize);
+  }
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
@@ -792,5 +811,18 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     bool isVerboseAsm, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, bool ShowInst) {
   return new MCAsmStreamer(Context, OS, isLittleEndian, isVerboseAsm,
-                           IP, CE, ShowInst);
+                           NULL, 0, IP, CE, ShowInst);
+}
+
+
+MCStreamer *llvm::createAsmStreamerNoLoc(MCContext &Context,
+                                         formatted_raw_ostream &OS,
+                                         bool isLittleEndian,
+                                         bool isVerboseAsm,
+                                         const TargetLoweringObjectFile *TLOF,
+                                         int PointerSize,
+                                         MCInstPrinter *IP,
+                                         MCCodeEmitter *CE, bool ShowInst) {
+  return new MCAsmStreamer(Context, OS, isLittleEndian, isVerboseAsm,
+                           TLOF, PointerSize, IP, CE, ShowInst);
 }
