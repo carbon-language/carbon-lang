@@ -677,8 +677,13 @@ namespace {
 
     ValueTable VN;
     
+    /// NumberTable - A mapping from value numers to lists of Value*'s that
+    /// have that value number.  Use lookupNumber to query it.
     DenseMap<uint32_t, std::pair<Value*, void*> > NumberTable;
     BumpPtrAllocator TableAllocator;
+    
+    /// insert_table - Push a new Value to the NumberTable onto the list for
+    /// its value number.
     void insert_table(uint32_t N, Value *V) {
       std::pair<Value*, void*>& Curr = NumberTable[N];
       if (!Curr.first) {
@@ -693,6 +698,8 @@ namespace {
       Curr.second = Node;
     }
     
+    /// erase_table - Scan the list of values corresponding to a given value
+    /// number, and remove the given value if encountered.
     void erase_table(uint32_t N, Value *V) {
       std::pair<Value*, void*>* Prev = 0;
       std::pair<Value*, void*>* Curr = &NumberTable[N];
@@ -1886,6 +1893,11 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   return false;
 }
 
+// lookupNumber - In order to find a leader for a given value number at a 
+// specific basic block, we first obtain the list of all Values for that number,
+// and then scan the list to find one whose block dominates the block in 
+// question.  This is fast because dominator tree queries consist of only
+// a few comparisons of DFS numbers.
 Value *GVN::lookupNumber(BasicBlock *BB, uint32_t num) {
   std::pair<Value*, void*> Vals = NumberTable[num];
   if (!Vals.first) return 0;
