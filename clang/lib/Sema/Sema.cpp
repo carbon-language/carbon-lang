@@ -39,7 +39,7 @@ using namespace sema;
 
 FunctionScopeInfo::~FunctionScopeInfo() { }
 
-void FunctionScopeInfo::Clear(unsigned NumErrors) {
+void FunctionScopeInfo::Clear() {
   HasBranchProtectedScope = false;
   HasBranchIntoScope = false;
   HasIndirectGoto = false;
@@ -47,7 +47,7 @@ void FunctionScopeInfo::Clear(unsigned NumErrors) {
   LabelMap.clear();
   SwitchStack.clear();
   Returns.clear();
-  NumErrorsAtStartOfFunction = NumErrors;
+  ErrorTrap.reset();
 }
 
 BlockScopeInfo::~BlockScopeInfo() { }
@@ -154,7 +154,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   ExprEvalContexts.push_back(
                   ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0));  
 
-  FunctionScopes.push_back(new FunctionScopeInfo(Diags.getNumErrors()));
+  FunctionScopes.push_back(new FunctionScopeInfo(Diags));
 }
 
 void Sema::Initialize() {
@@ -535,17 +535,16 @@ void Sema::PushFunctionScope() {
   if (FunctionScopes.size() == 1) {
     // Use the "top" function scope rather than having to allocate
     // memory for a new scope.
-    FunctionScopes.back()->Clear(getDiagnostics().getNumErrors());
+    FunctionScopes.back()->Clear();
     FunctionScopes.push_back(FunctionScopes.back());
     return;
   }
   
-  FunctionScopes.push_back(
-                      new FunctionScopeInfo(getDiagnostics().getNumErrors()));
+  FunctionScopes.push_back(new FunctionScopeInfo(getDiagnostics()));
 }
 
 void Sema::PushBlockScope(Scope *BlockScope, BlockDecl *Block) {
-  FunctionScopes.push_back(new BlockScopeInfo(getDiagnostics().getNumErrors(),
+  FunctionScopes.push_back(new BlockScopeInfo(getDiagnostics(),
                                               BlockScope, Block));
 }
 
@@ -559,8 +558,7 @@ void Sema::PopFunctionOrBlockScope() {
 /// \brief Determine whether any errors occurred within this function/method/
 /// block.
 bool Sema::hasAnyErrorsInThisFunction() const {
-  return getCurFunction()->NumErrorsAtStartOfFunction
-             != getDiagnostics().getNumErrors();
+  return getCurFunction()->ErrorTrap.hasErrorOccurred();
 }
 
 BlockScopeInfo *Sema::getCurBlock() {

@@ -48,9 +48,8 @@ public:
   /// \brief Whether this function contains any indirect gotos.
   bool HasIndirectGoto;
 
-  /// \brief The number of errors that had occurred before starting this
-  /// function or block.
-  unsigned NumErrorsAtStartOfFunction;
+  /// \brief Used to determine if errors occurred in this function or block.
+  DiagnosticErrorTrap ErrorTrap;
 
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
@@ -83,18 +82,18 @@ public:
           (HasBranchProtectedScope && HasBranchIntoScope);
   }
   
-  FunctionScopeInfo(unsigned NumErrors)
+  FunctionScopeInfo(Diagnostic &Diag)
     : IsBlockInfo(false),
       HasBranchProtectedScope(false),
       HasBranchIntoScope(false),
       HasIndirectGoto(false),
-      NumErrorsAtStartOfFunction(NumErrors) { }
+      ErrorTrap(Diag) { }
 
   virtual ~FunctionScopeInfo();
 
   /// \brief Clear out the information in this function scope, making it
   /// suitable for reuse.
-  void Clear(unsigned NumErrors);
+  void Clear();
 
   static bool classof(const FunctionScopeInfo *FSI) { return true; }
 };
@@ -118,8 +117,8 @@ public:
   /// Its return type may be BuiltinType::Dependent.
   QualType FunctionType;
 
-  BlockScopeInfo(unsigned NumErrors, Scope *BlockScope, BlockDecl *Block)
-    : FunctionScopeInfo(NumErrors), hasBlockDeclRefExprs(false),
+  BlockScopeInfo(Diagnostic &Diag, Scope *BlockScope, BlockDecl *Block)
+    : FunctionScopeInfo(Diag), hasBlockDeclRefExprs(false),
       TheDecl(Block), TheScope(BlockScope)
   {
     IsBlockInfo = true;
