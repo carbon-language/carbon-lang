@@ -520,7 +520,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);
 
   // These are expanded into libcalls.
-  if (!Subtarget->hasDivide()) {
+  if (!Subtarget->hasDivide() || !Subtarget->isThumb2()) {
     // v7M has a hardware divider
     setOperationAction(ISD::SDIV,  MVT::i32, Expand);
     setOperationAction(ISD::UDIV,  MVT::i32, Expand);
