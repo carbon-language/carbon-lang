@@ -162,7 +162,7 @@ namespace llvm {
     MCLineEntry(MCSymbol *label, const MCDwarfLoc loc) : MCDwarfLoc(loc),
                 Label(label) {}
 
-    MCSymbol *getLabel() { return Label; }
+    MCSymbol *getLabel() const { return Label; }
 
     // This is called when an instruction is assembled into the specified
     // section and if there is information from the last .loc directive that
@@ -192,12 +192,15 @@ namespace llvm {
 
     typedef std::vector<MCLineEntry> MCLineEntryCollection;
     typedef MCLineEntryCollection::iterator iterator;
+    typedef MCLineEntryCollection::const_iterator const_iterator;
 
   private:
     MCLineEntryCollection MCLineEntries;
 
   public:
-    MCLineEntryCollection *getMCLineEntries() { return &MCLineEntries; }
+    const MCLineEntryCollection *getMCLineEntries() const {
+      return &MCLineEntries;
+    }
   };
 
   class MCDwarfFileTable {

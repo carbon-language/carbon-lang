@@ -80,6 +80,9 @@ namespace llvm {
     /// The dwarf line information from the .loc directives for the sections
     /// with assembled machine instructions have after seeing .loc directives.
     DenseMap<const MCSection *, MCLineSection *> MCLineSections;
+    /// We need a deterministic iteration order, so we remember the order
+    /// the elements were added.
+    std::vector<const MCSection *> MCLineSectionOrder;
 
     /// Allocator - Allocator object used for creating machine code objects.
     ///
@@ -177,8 +180,17 @@ namespace llvm {
     const std::vector<StringRef> &getMCDwarfDirs() {
       return MCDwarfDirs;
     }
-    DenseMap<const MCSection *, MCLineSection *> &getMCLineSections() {
+
+    const DenseMap<const MCSection *, MCLineSection *>
+    &getMCLineSections() const {
       return MCLineSections;
+    }
+    const std::vector<const MCSection *> &getMCLineSectionOrder() const {
+      return MCLineSectionOrder;
+    }
+    void addMCLineSection(const MCSection *Sec, MCLineSection *Line) {
+      MCLineSections[Sec] = Line;
+      MCLineSectionOrder.push_back(Sec);
     }
 
     /// setCurrentDwarfLoc - saves the information from the currently parsed

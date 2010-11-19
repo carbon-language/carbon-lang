@@ -80,16 +80,16 @@ void MCLineEntry::Make(MCStreamer *MCOS, const MCSection *Section) {
 
   // Get the MCLineSection for this section, if one does not exist for this
   // section create it.
-  DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
+  const DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
     MCOS->getContext().getMCLineSections();
-  MCLineSection *LineSection = MCLineSections[Section];
+  MCLineSection *LineSection = MCLineSections.lookup(Section);
   if (!LineSection) {
     // Create a new MCLineSection.  This will be deleted after the dwarf line
     // table is created using it by iterating through the MCLineSections
     // DenseMap.
     LineSection = new MCLineSection;
     // Save a pointer to the new LineSection into the MCLineSections DenseMap.
-    MCLineSections[Section] = LineSection;
+    MCOS->getContext().addMCLineSection(Section, LineSection);
   }
 
   // Add the line entry to this section's entries.
@@ -137,7 +137,7 @@ static inline void EmitDwarfSetAddress(MCStreamer *MCOS,
 //
 static inline void EmitDwarfLineTable(MCStreamer *MCOS,
                                       const MCSection *Section,
-                                      MCLineSection *LineSection,
+                                      const MCLineSection *LineSection,
                                       const MCSection *DwarfLineSection,
                                       MCSectionData *DLS,
                                       int PointerSize) {
@@ -149,7 +149,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   MCSymbol *LastLabel = NULL;
 
   // Loop through each MCLineEntry and encode the dwarf line number table.
-  for (MCLineSection::iterator
+  for (MCLineSection::const_iterator
          it = LineSection->getMCLineEntries()->begin(),
          ie = LineSection->getMCLineEntries()->end(); it != ie; ++it) {
 
@@ -321,16 +321,21 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
   MCOS->EmitLabel(ProEndSym);
 
   // Put out the line tables.
-  DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
+  const DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
     MCOS->getContext().getMCLineSections();
-  for (DenseMap<const MCSection *, MCLineSection *>::iterator it =
-	MCLineSections.begin(), ie = MCLineSections.end(); it != ie; ++it) {
-    EmitDwarfLineTable(MCOS, it->first, it->second, DwarfLineSection, DLS,
+  const std::vector<const MCSection *> &MCLineSectionOrder =
+    MCOS->getContext().getMCLineSectionOrder();
+  for (std::vector<const MCSection*>::const_iterator it =
+	MCLineSectionOrder.begin(), ie = MCLineSectionOrder.end(); it != ie;
+       ++it) {
+    const MCSection *Sec = *it;
+    const MCLineSection *Line = MCLineSections.lookup(Sec);
+    EmitDwarfLineTable(MCOS, Sec, Line, DwarfLineSection, DLS,
                        PointerSize);
 
     // Now delete the MCLineSections that were created in MCLineEntry::Make()
     // and used to emit the line table.
-    delete it->second;
+    delete Line;
   }
 
   // This is the end of the section, so set the value of the symbol at the end
