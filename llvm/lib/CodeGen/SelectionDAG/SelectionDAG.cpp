@@ -199,6 +199,8 @@ bool ISD::isScalarToVector(const SDNode *N) {
   if (N->getOperand(0).getOpcode() == ISD::UNDEF)
     return false;
   unsigned NumElems = N->getNumOperands();
+  if (NumElems == 1)
+    return false;
   for (unsigned i = 1; i < NumElems; ++i) {
     SDValue V = N->getOperand(i);
     if (V.getOpcode() != ISD::UNDEF)
