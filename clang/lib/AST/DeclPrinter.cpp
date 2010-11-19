@@ -379,6 +379,16 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 
     Proto += ")";
     
+    if (FT && FT->getTypeQuals()) {
+      unsigned TypeQuals = FT->getTypeQuals();
+      if (TypeQuals & Qualifiers::Const)
+        Proto += " const";
+      if (TypeQuals & Qualifiers::Volatile) 
+        Proto += " volatile";
+      if (TypeQuals & Qualifiers::Restrict)
+        Proto += " restrict";
+    }
+    
     if (FT && FT->hasExceptionSpec()) {
       Proto += " throw(";
       if (FT->hasAnyExceptionSpec())
