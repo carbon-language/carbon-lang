@@ -176,6 +176,7 @@ bool Preprocessor::isNextPPTokenLParen() {
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
 bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
                                                  MacroInfo *MI) {
+  MacroExpansionFlag = true;
   if (Callbacks) Callbacks->MacroExpands(Identifier, MI);
 
   // If this is a macro expansion in the "#if !defined(x)" line for the file,

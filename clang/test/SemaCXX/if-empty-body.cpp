@@ -16,9 +16,20 @@ void f3() {
 
 // Don't warn about an empty body if is expanded from a macro.
 void f4(int i) {
-  #define BODY ;
+  #define BODY(x)
   if (i == i) // expected-warning{{self-comparison always evaluates to true}}
-    BODY
+    BODY(0);
   #undef BODY
 }
 
+template <typename T>
+void tf() {
+  #define BODY(x)
+  if (0)
+    BODY(0);
+  #undef BODY
+}
+
+void f5() {
+    tf<int>();
+}

@@ -256,6 +256,7 @@ void ASTStmtReader::VisitIfStmt(IfStmt *S) {
   S->setElse(Reader.ReadSubStmt());
   S->setIfLoc(ReadSourceLocation(Record, Idx));
   S->setElseLoc(ReadSourceLocation(Record, Idx));
+  S->MacroExpandedInThenStmt = Record[Idx++];
 }
 
 void ASTStmtReader::VisitSwitchStmt(SwitchStmt *S) {

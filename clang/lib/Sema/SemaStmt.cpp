@@ -282,8 +282,8 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
 
 StmtResult
 Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
-                  Stmt *thenStmt, SourceLocation ElseLoc,
-                  Stmt *elseStmt) {
+                  Stmt *thenStmt, bool MacroExpandedInThenStmt,
+                  SourceLocation ElseLoc, Stmt *elseStmt) {
   ExprResult CondResult(CondVal.release());
 
   VarDecl *ConditionVar = 0;
@@ -304,17 +304,23 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
   // if (condition);
   //   do_stuff();
   //
-  // NOTE: Do not emit this warning if the body is expanded from a macro.
   if (!elseStmt) {
     if (NullStmt* stmt = dyn_cast<NullStmt>(thenStmt))
-      if (!stmt->getLocStart().isMacroID())
+      // But do not warn if the body is a macro that expands to nothing, e.g:
+      //
+      // #define CALL(x)
+      // if (condition)
+      //   CALL(0);
+      //
+      if (!MacroExpandedInThenStmt)
         Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
   }
 
   DiagnoseUnusedExprResult(elseStmt);
 
   return Owned(new (Context) IfStmt(Context, IfLoc, ConditionVar, ConditionExpr, 
-                                    thenStmt, ElseLoc, elseStmt));
+                                    thenStmt, ElseLoc, elseStmt,
+                                    MacroExpandedInThenStmt));
 }
 
 /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have

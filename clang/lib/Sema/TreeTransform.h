@@ -772,9 +772,11 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildIfStmt(SourceLocation IfLoc, Sema::FullExprArg Cond,
-                                 VarDecl *CondVar, Stmt *Then, 
+                                 VarDecl *CondVar, Stmt *Then,
+                                 bool MacroExpandedInThenStmt,
                                  SourceLocation ElseLoc, Stmt *Else) {
-    return getSema().ActOnIfStmt(IfLoc, Cond, CondVar, Then, ElseLoc, Else);
+    return getSema().ActOnIfStmt(IfLoc, Cond, CondVar, Then,
+                                 MacroExpandedInThenStmt, ElseLoc, Else);
   }
 
   /// \brief Start building a new switch statement.
@@ -3692,7 +3694,7 @@ TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
     return SemaRef.Owned(S);
 
   return getDerived().RebuildIfStmt(S->getIfLoc(), FullCond, ConditionVar,
-                                    Then.get(),
+                                    Then.get(), S->hasMacroExpandedInThenStmt(),
                                     S->getElseLoc(), Else.get());
 }
 

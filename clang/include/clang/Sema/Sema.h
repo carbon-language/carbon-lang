@@ -1590,7 +1590,7 @@ public:
                             bool HasUnusedAttr);
   StmtResult ActOnIfStmt(SourceLocation IfLoc,
                                  FullExprArg CondVal, Decl *CondVar,
-                                 Stmt *ThenVal,
+                                 Stmt *ThenVal, bool MacroExpandedInThenStmt,
                                  SourceLocation ElseLoc, Stmt *ElseVal);
   StmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
                                             Expr *Cond,

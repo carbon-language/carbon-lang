@@ -651,10 +651,19 @@ class IfStmt : public Stmt {
 
   SourceLocation IfLoc;
   SourceLocation ElseLoc;
-  
+
+  /// \brief True if we have code like:
+  /// @code
+  ///   #define CALL(x)
+  ///   if (condition)
+  ///     CALL(0);
+  /// @endcode
+  bool MacroExpandedInThenStmt;
+
 public:
   IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond, 
-         Stmt *then, SourceLocation EL = SourceLocation(), Stmt *elsev = 0);
+         Stmt *then, SourceLocation EL = SourceLocation(), Stmt *elsev = 0,
+         bool macroExpandedInThenStmt = false);
   
   /// \brief Build an empty if/then/else statement
   explicit IfStmt(EmptyShell Empty) : Stmt(IfStmtClass, Empty) { }
@@ -686,6 +695,8 @@ public:
   SourceLocation getElseLoc() const { return ElseLoc; }
   void setElseLoc(SourceLocation L) { ElseLoc = L; }
 
+  bool hasMacroExpandedInThenStmt() const { return MacroExpandedInThenStmt; }
+
   virtual SourceRange getSourceRange() const {
     if (SubExprs[ELSE])
       return SourceRange(IfLoc, SubExprs[ELSE]->getLocEnd());
@@ -702,6 +713,9 @@ public:
   // over the initialization expression referenced by the condition variable.
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.
