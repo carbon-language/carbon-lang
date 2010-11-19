@@ -951,7 +951,7 @@ private:
                                    bool WarnOnDeclarations,
                                    SourceLocation &LAngleLoc,
                                    SourceLocation &EndProtoLoc);
-  void ParseObjCProtocolQualifiers(DeclSpec &DS);
+  bool ParseObjCProtocolQualifiers(DeclSpec &DS);
   void ParseObjCInterfaceDeclList(Decl *interfaceDecl,
                                   tok::ObjCKeywordKind contextKey);
   Decl *ParseObjCAtProtocolDeclaration(SourceLocation atLoc,

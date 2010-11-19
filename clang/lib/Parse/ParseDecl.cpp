@@ -1434,11 +1434,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (DS.hasTypeSpecifier() || !getLang().ObjC1)
         goto DoneWithDeclSpec;
 
-      ParseObjCProtocolQualifiers(DS);
-
-      Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
-        << FixItHint::CreateInsertion(Loc, "id")
-        << SourceRange(Loc, DS.getSourceRange().getEnd());
+      if (!ParseObjCProtocolQualifiers(DS))
+        Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
+          << FixItHint::CreateInsertion(Loc, "id")
+          << SourceRange(Loc, DS.getSourceRange().getEnd());
       
       // Need to support trailing type qualifiers (e.g. "id<p> const").
       // If a type specifier follows, it will be diagnosed elsewhere.
