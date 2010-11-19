@@ -522,6 +522,21 @@ class AI3ld<bits<4> op, bit op20, dag oops, dag iops, Format f,
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
 }
 
+class AI3ldstidx<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
+                IndexMode im, Format f, InstrItinClass itin, string opc,
+                string asm, string cstr, list<dag> pattern>
+  : I<oops, iops, AddrMode3, Size4Bytes, im, f, itin,
+      opc, asm, cstr, pattern> {
+  bits<4> Rt;
+  let Inst{27-25} = 0b000;
+  let Inst{24}    = isPre;        // P bit
+  let Inst{21}    = isPre;        // W bit
+  let Inst{20}    = op20;         // L bit
+  let Inst{15-12} = Rt;           // Rt
+  let Inst{7-4}   = op;
+}
+
+
 // stores
 class AI3sth<dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string asm, list<dag> pattern>
@@ -567,66 +582,6 @@ class AI3std<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{27-25} = 0b000;
 }
 
-// Pre-indexed loads
-class AI3ldhpr<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePre, f, itin,
-      opc, asm, cstr, pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 1; // H bit
-  let Inst{6}     = 0; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 1; // W bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-25} = 0b000;
-}
-class AI3ldshpr<dag oops, dag iops, Format f, InstrItinClass itin,
-                string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePre, f, itin,
-      opc, asm, cstr, pattern> {
-  bits<14> addr;
-  bits<4> Rt;
-  let Inst{27-25} = 0b000;
-  let Inst{24}    = 1;            // P bit
-  let Inst{23}    = addr{8};      // U bit
-  let Inst{22}    = addr{13};     // 1 == imm8, 0 == Rm
-  let Inst{21}    = 1;            // W bit
-  let Inst{20}    = 1;            // L bit
-  let Inst{19-16} = addr{12-9};   // Rn
-  let Inst{15-12} = Rt;           // Rt
-  let Inst{11-8}  = addr{7-4};    // imm7_4/zero
-  let Inst{7-4}   = 0b1111;
-  let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
-}
-class AI3ldsbpr<dag oops, dag iops, Format f, InstrItinClass itin,
-                string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePre, f, itin,
-      opc, asm, cstr, pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 0; // H bit
-  let Inst{6}     = 1; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 1; // W bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-25} = 0b000;
-}
-class AI3lddpr<dag oops, dag iops, Format f, InstrItinClass itin,
-             string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePre, f, itin,
-      opc, asm, cstr, pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 0; // H bit
-  let Inst{6}     = 1; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 1; // W bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-25} = 0b000;
-}
-
-
 // Pre-indexed stores
 class AI3sthpr<dag oops, dag iops, Format f, InstrItinClass itin,
                string opc, string asm, string cstr, list<dag> pattern>
@@ -652,72 +607,6 @@ class AI3stdpr<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 1; // P bit
-  let Inst{27-25} = 0b000;
-}
-
-// Post-indexed loads
-class AI3ldhpo<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePost, f, itin,
-      opc, asm, cstr,pattern> {
-  bits<10> offset;
-  bits<4> Rt;
-  bits<4> Rn;
-  let Inst{27-25} = 0b000;
-  let Inst{24}    = 0;            // P bit
-  let Inst{23}    = offset{8};    // U bit
-  let Inst{22}    = offset{9};    // 1 == imm8, 0 == Rm
-  let Inst{21}    = 0;            // W bit
-  let Inst{20}    = 1;            // L bit
-  let Inst{19-16} = Rn;           // Rn
-  let Inst{15-12} = Rt;           // Rt
-  let Inst{11-8}  = offset{7-4};  // imm7_4/zero
-  let Inst{7-4}   = 0b1011;
-  let Inst{3-0}   = offset{3-0};  // imm3_0/Rm
-}
-class AI3ldshpo<dag oops, dag iops, Format f, InstrItinClass itin,
-                string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePost, f, itin,
-      opc, asm, cstr,pattern> {
-  bits<10> offset;
-  bits<4> Rt;
-  bits<4> Rn;
-  let Inst{27-25} = 0b000;
-  let Inst{24}    = 0;            // P bit
-  let Inst{23}    = offset{8};    // U bit
-  let Inst{22}    = offset{9};    // 1 == imm8, 0 == Rm
-  let Inst{21}    = 0;            // W bit
-  let Inst{20}    = 1;            // L bit
-  let Inst{19-16} = Rn;           // Rn
-  let Inst{15-12} = Rt;           // Rt
-  let Inst{11-8}  = offset{7-4};  // imm7_4/zero
-  let Inst{7-4}   = 0b1111;
-  let Inst{3-0}   = offset{3-0};  // imm3_0/Rm
-}
-class AI3ldsbpo<dag oops, dag iops, Format f, InstrItinClass itin,
-                string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePost, f, itin,
-      opc, asm, cstr,pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 0; // H bit
-  let Inst{6}     = 1; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{24}    = 0; // P bit
-  let Inst{27-25} = 0b000;
-}
-class AI3lddpo<dag oops, dag iops, Format f, InstrItinClass itin,
-             string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePost, f, itin,
-      opc, asm, cstr, pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 0; // H bit
-  let Inst{6}     = 1; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{24}    = 0; // P bit
   let Inst{27-25} = 0b000;
 }
 

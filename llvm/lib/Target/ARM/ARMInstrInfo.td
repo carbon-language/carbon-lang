@@ -1586,6 +1586,7 @@ def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
                  (ins addrmode3:$addr), LdMiscFrm,
                  IIC_iLoad_d_r, "ldrd", "\t$Rd, $addr",
                  []>, Requires<[IsARM, HasV5TE]>;
+}
 
 // Indexed loads
 multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
@@ -1618,79 +1619,77 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
   }
 }
 
+let mayLoad = 1, neverHasSideEffects = 1 in {
 defm LDR  : AI2_ldridx<0, "ldr", IIC_iLoad_ru>;
 defm LDRB : AI2_ldridx<1, "ldrb", IIC_iLoad_bh_ru>;
+}
 
-def LDRH_PRE  : AI3ldhpr<(outs GPR:$Rt, GPR:$Rn_wb),
-                     (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
-                     "ldrh", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
+multiclass AI3_ldridx<bits<4> op, bit op20, string opc, InstrItinClass itin> {
+  def _PRE  : AI3ldstidx<op, op20, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
+                        (ins addrmode3:$addr), IndexModePre,
+                        LdMiscFrm, itin,
+                        opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
+    bits<14> addr;
+    let Inst{23}    = addr{8};      // U bit
+    let Inst{22}    = addr{13};     // 1 == imm8, 0 == Rm
+    let Inst{19-16} = addr{12-9};   // Rn
+    let Inst{11-8}  = addr{7-4};    // imm7_4/zero
+    let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+  }
+  def _POST : AI3ldstidx<op, op20, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                        (ins GPR:$Rn, am3offset:$offset), IndexModePost,
+                        LdMiscFrm, itin,
+                        opc, "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []> {
+    bits<10> addr;
+    bits<4> Rn;
+    let Inst{23}    = addr{8};      // U bit
+    let Inst{22}    = addr{9};      // 1 == imm8, 0 == Rm
+    let Inst{19-16} = Rn;
+    let Inst{11-8}  = addr{7-4};    // imm7_4/zero
+    let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+  }
+}
 
-def LDRH_POST : AI3ldhpo<(outs GPR:$Rt, GPR:$Rn_wb),
-                  (ins GPR:$Rn,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
-                    "ldrh", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
-
-def LDRSH_PRE : AI3ldshpr<(outs GPR:$Rt, GPR:$Rn_wb),
-                      (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
-                      "ldrsh", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
-
-def LDRSH_POST: AI3ldshpo<(outs GPR:$Rt, GPR:$Rn_wb),
-                  (ins GPR:$Rn,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
-                   "ldrsh", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
-
-def LDRSB_PRE : AI3ldsbpr<(outs GPR:$Rt, GPR:$Rn_wb),
-                      (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_bh_ru,
-                      "ldrsb", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []>;
-
-def LDRSB_POST: AI3ldsbpo<(outs GPR:$Rt, GPR:$Rn_wb),
-                    (ins GPR:$Rn,am3offset:$offset), LdMiscFrm, IIC_iLoad_ru,
-                   "ldrsb", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []>;
-
-// For disassembly only
-def LDRD_PRE : AI3lddpr<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
-                        (ins addrmode3:$addr), LdMiscFrm, IIC_iLoad_d_ru,
-                 "ldrd", "\t$dst1, $dst2, $addr!", "$addr.base = $base_wb", []>,
-                Requires<[IsARM, HasV5TE]>;
-
-// For disassembly only
-def LDRD_POST : AI3lddpo<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
-                   (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_d_ru,
-            "ldrd", "\t$dst1, $dst2, [$base], $offset", "$base = $base_wb", []>,
-                Requires<[IsARM, HasV5TE]>;
-
-} // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
+let mayLoad = 1, neverHasSideEffects = 1 in {
+defm LDRH  : AI3_ldridx<0b1011, 1, "ldrh", IIC_iLoad_bh_ru>;
+defm LDRSH : AI3_ldridx<0b1111, 1, "ldrsh", IIC_iLoad_bh_ru>;
+defm LDRSB : AI3_ldridx<0b1101, 1, "ldrsb", IIC_iLoad_bh_ru>;
+let hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
+defm LDRD :  AI3_ldridx<0b1101, 0, "ldrd", IIC_iLoad_d_ru>;
+} // mayLoad = 1, neverHasSideEffects = 1
 
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
-
+let mayLoad = 1, neverHasSideEffects = 1 in {
 def LDRT : AI2ldstidx<1, 0, 0, (outs GPR:$dst, GPR:$base_wb),
                    (ins GPR:$base, am2offset:$offset), IndexModeNone,
                    LdFrm, IIC_iLoad_ru,
                    "ldrt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
-
 def LDRBT : AI2ldstidx<1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
-                  (ins GPR:$base,am2offset:$offset), IndexModeNone,
+                  (ins GPR:$base, am2offset:$offset), IndexModeNone,
                   LdFrm, IIC_iLoad_bh_ru,
                   "ldrbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
-
-def LDRSBT : AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
+def LDRSBT : AI3ldstidx<0b1101, 1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
+                 (ins GPR:$base, am3offset:$offset), IndexModePost,
+                 LdMiscFrm, IIC_iLoad_bh_ru,
                  "ldrsbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
-
-def LDRHT : AI3ldhpo<(outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base, am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
-                  "ldrht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+def LDRHT : AI3ldstidx<0b1011, 1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
+                 (ins GPR:$base, am3offset:$offset), IndexModePost,
+                 LdMiscFrm, IIC_iLoad_bh_ru,
+                 "ldrht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
-
-def LDRSHT : AI3ldshpo<(outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoad_bh_ru,
+def LDRSHT : AI3ldstidx<0b1111, 1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
+                 (ins GPR:$base, am3offset:$offset), IndexModePost,
+                 LdMiscFrm, IIC_iLoad_bh_ru,
                  "ldrsht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
+}
 }
 
 // Store
