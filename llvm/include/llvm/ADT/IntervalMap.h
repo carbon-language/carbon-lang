@@ -203,10 +203,10 @@ public:
   VT val[N];
 
   /// copy - Copy elements from another node.
-  /// @param other Node elements are copied from.
+  /// @param Other Node elements are copied from.
   /// @param i     Beginning of the source range in other.
   /// @param j     Beginning of the destination range in this.
-  /// @param count Number of elements to copy.
+  /// @param Count Number of elements to copy.
   template <unsigned M>
   void copy(const NodeBase<KT, VT, M> &Other, unsigned i,
             unsigned j, unsigned Count) {
@@ -216,21 +216,21 @@ public:
     std::copy(Other.val + i, Other.val + i + Count, val + j);
   }
 
-  /// lmove - Move elements to the left.
+  /// moveLeft - Move elements to the left.
   /// @param i     Beginning of the source range.
   /// @param j     Beginning of the destination range.
-  /// @param count Number of elements to copy.
-  void lmove(unsigned i, unsigned j, unsigned Count) {
-    assert(j <= i && "Use rmove shift elements right");
+  /// @param Count Number of elements to copy.
+  void moveLeft(unsigned i, unsigned j, unsigned Count) {
+    assert(j <= i && "Use moveRight shift elements right");
     copy(*this, i, j, Count);
   }
 
-  /// rmove - Move elements to the right.
+  /// moveRight - Move elements to the right.
   /// @param i     Beginning of the source range.
   /// @param j     Beginning of the destination range.
-  /// @param count Number of elements to copy.
-  void rmove(unsigned i, unsigned j, unsigned Count) {
-    assert(i <= j && "Use lmove shift elements left");
+  /// @param Count Number of elements to copy.
+  void moveRight(unsigned i, unsigned j, unsigned Count) {
+    assert(i <= j && "Use moveLeft shift elements left");
     assert(j + Count <= N && "Invalid range");
     std::copy_backward(key + i, key + i + Count, key + j + Count);
     std::copy_backward(val + i, val + i + Count, val + j + Count);
@@ -239,55 +239,57 @@ public:
   /// erase - Erase elements [i;j).
   /// @param i    Beginning of the range to erase.
   /// @param j    End of the range. (Exclusive).
-  /// @param size Number of elements in node.
+  /// @param Size Number of elements in node.
   void erase(unsigned i, unsigned j, unsigned Size) {
-    lmove(j, i, Size - j);
+    moveLeft(j, i, Size - j);
   }
 
   /// shift - Shift elements [i;size) 1 position to the right.
   /// @param i    Beginning of the range to move.
-  /// @param size Number of elements in node.
+  /// @param Size Number of elements in node.
   void shift(unsigned i, unsigned Size) {
-    rmove(i, i + 1, Size - i);
+    moveRight(i, i + 1, Size - i);
   }
 
-  /// xferLeft - Transfer elements to a left sibling node.
-  /// @param size  Number of elements in this.
-  /// @param sib   Left sibling node.
-  /// @param ssize Number of elements in sib.
-  /// @param count Number of elements to transfer.
-  void xferLeft(unsigned Size, NodeBase &Sib, unsigned SSize, unsigned Count) {
+  /// transferToLeftSib - Transfer elements to a left sibling node.
+  /// @param Size  Number of elements in this.
+  /// @param Sib   Left sibling node.
+  /// @param SSize Number of elements in sib.
+  /// @param Count Number of elements to transfer.
+  void transferToLeftSib(unsigned Size, NodeBase &Sib, unsigned SSize,
+                         unsigned Count) {
     Sib.copy(*this, 0, SSize, Count);
     erase(0, Count, Size);
   }
 
-  /// xferRight - Transfer elements to a right sibling node.
-  /// @param size  Number of elements in this.
-  /// @param sib   Right sibling node.
-  /// @param ssize Number of elements in sib.
-  /// @param count Number of elements to transfer.
-  void xferRight(unsigned Size, NodeBase &Sib, unsigned SSize, unsigned Count) {
-    Sib.rmove(0, Count, SSize);
+  /// transferToRightSib - Transfer elements to a right sibling node.
+  /// @param Size  Number of elements in this.
+  /// @param Sib   Right sibling node.
+  /// @param SSize Number of elements in sib.
+  /// @param Count Number of elements to transfer.
+  void transferToRightSib(unsigned Size, NodeBase &Sib, unsigned SSize,
+                          unsigned Count) {
+    Sib.moveRight(0, Count, SSize);
     Sib.copy(*this, Size-Count, 0, Count);
   }
 
-  /// adjLeftSib - Adjust the number if elements in this node by moving
+  /// adjustFromLeftSib - Adjust the number if elements in this node by moving
   /// elements to or from a left sibling node.
-  /// @param size  Number of elements in this.
-  /// @param sib   Right sibling node.
-  /// @param ssize Number of elements in sib.
-  /// @param add   The number of elements to add to this node, possibly < 0.
+  /// @param Size  Number of elements in this.
+  /// @param Sib   Right sibling node.
+  /// @param SSize Number of elements in sib.
+  /// @param Add   The number of elements to add to this node, possibly < 0.
   /// @return      Number of elements added to this node, possibly negative.
-  int adjLeftSib(unsigned Size, NodeBase &Sib, unsigned SSize, int Add) {
+  int adjustFromLeftSib(unsigned Size, NodeBase &Sib, unsigned SSize, int Add) {
     if (Add > 0) {
       // We want to grow, copy from sib.
       unsigned Count = std::min(std::min(unsigned(Add), SSize), N - Size);
-      Sib.xferRight(SSize, *this, Size, Count);
+      Sib.transferToRightSib(SSize, *this, Size, Count);
       return Count;
     } else {
       // We want to shrink, copy to sib.
       unsigned Count = std::min(std::min(unsigned(-Add), Size), N - SSize);
-      xferLeft(Size, Sib, SSize, Count);
+      transferToLeftSib(Size, Sib, SSize, Count);
       return -Count;
     }
   }
@@ -463,7 +465,7 @@ public:
 
   /// findFrom - Find the first interval after i that may contain x.
   /// @param i    Starting index for the search.
-  /// @param size Number of elements in node.
+  /// @param Size Number of elements in node.
   /// @param x    Key to search for.
   /// @return     First index with !stopLess(key[i].stop, x), or size.
   ///             This is the first interval that can possibly contain x.
@@ -519,7 +521,7 @@ public:
 /// possible. This may cause the node to grow by 1, or it may cause the node
 /// to shrink because of coalescing.
 /// @param i    Starting index = insertFrom(0, size, a)
-/// @param size Number of elements in node.
+/// @param Size Number of elements in node.
 /// @param a    Interval start.
 /// @param b    Interval stop.
 /// @param y    Value be mapped.
@@ -578,7 +580,7 @@ insertFrom(unsigned i, unsigned Size, KeyT a, KeyT b, ValT y) {
 
 /// extendStop - Extend stop(i) to b, coalescing with following intervals.
 /// @param i    Interval to extend.
-/// @param size Number of elements in node.
+/// @param Size Number of elements in node.
 /// @param b    New interval end point.
 /// @return     New node size after coalescing.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
@@ -644,7 +646,7 @@ public:
 
   /// findFrom - Find the first subtree after i that may contain x.
   /// @param i    Starting index for the search.
-  /// @param size Number of elements in node.
+  /// @param Size Number of elements in node.
   /// @param x    Key to search for.
   /// @return     First index with !stopLess(key[i], x), or size.
   ///             This is the first subtree that can possibly contain x.
@@ -680,9 +682,9 @@ public:
 
   /// insert - Insert a new (subtree, stop) pair.
   /// @param i    Insert position, following entries will be shifted.
-  /// @param size Number of elements in node.
-  /// @param node Subtree to insert.
-  /// @param stp  Last key in subtree.
+  /// @param Size Number of elements in node.
+  /// @param Node Subtree to insert.
+  /// @param Stop Last key in subtree.
   void insert(unsigned i, unsigned Size, NodeRefT Node, KeyT Stop) {
     assert(Size < N && "branch node overflow");
     assert(i <= Size && "Bad insert position");
@@ -1647,7 +1649,7 @@ iterator::overflowLeaf() {
     if (CurSize[n] == NewSize[n])
       continue;
     for (int m = n - 1; m != -1; --m) {
-      int d = Node[n]->adjLeftSib(CurSize[n], *Node[m], CurSize[m],
+      int d = Node[n]->adjustFromLeftSib(CurSize[n], *Node[m], CurSize[m],
                                         NewSize[n] - CurSize[n]);
       CurSize[m] -= d;
       CurSize[n] += d;
@@ -1662,7 +1664,7 @@ iterator::overflowLeaf() {
     if (CurSize[n] == NewSize[n])
       continue;
     for (unsigned m = n + 1; m != Nodes; ++m) {
-      int d = Node[m]->adjLeftSib(CurSize[m], *Node[n], CurSize[n],
+      int d = Node[m]->adjustFromLeftSib(CurSize[m], *Node[n], CurSize[n],
                                         CurSize[n] -  NewSize[n]);
       CurSize[m] += d;
       CurSize[n] -= d;
