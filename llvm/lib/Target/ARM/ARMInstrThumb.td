@@ -126,74 +126,77 @@ def t_addrmode_sp : Operand<i32>,
 // these will always be in pairs, and asserts if it finds otherwise. Better way?
 let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def tADJCALLSTACKUP :
-PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary,
-           [(ARMcallseq_end imm:$amt1, imm:$amt2)]>,
-       Requires<[IsThumb, IsThumb1Only]>;
+  PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary,
+             [(ARMcallseq_end imm:$amt1, imm:$amt2)]>,
+            Requires<[IsThumb, IsThumb1Only]>;
 
 def tADJCALLSTACKDOWN :
-PseudoInst<(outs), (ins i32imm:$amt), NoItinerary,
-           [(ARMcallseq_start imm:$amt)]>,
-       Requires<[IsThumb, IsThumb1Only]>;
+  PseudoInst<(outs), (ins i32imm:$amt), NoItinerary,
+             [(ARMcallseq_start imm:$amt)]>,
+            Requires<[IsThumb, IsThumb1Only]>;
 }
 
 def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "",
                 [/* For disassembly only; pattern left blank */]>,
            T1Encoding<0b101111> {
   let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0b00000000;
+  let Inst{7-0} = 0x00;
 } 
 
 def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "",
                   [/* For disassembly only; pattern left blank */]>,
              T1Encoding<0b101111> {
   let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0b00010000;
+  let Inst{7-0} = 0x10;
 } 
 
 def tWFE : T1pI<(outs), (ins), NoItinerary, "wfe", "",
                 [/* For disassembly only; pattern left blank */]>,
            T1Encoding<0b101111> {
   let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0b00100000;
+  let Inst{7-0} = 0x20;
 } 
 
 def tWFI : T1pI<(outs), (ins), NoItinerary, "wfi", "",
                 [/* For disassembly only; pattern left blank */]>,
            T1Encoding<0b101111> {
   let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0b00110000;
+  let Inst{7-0} = 0x30;
 } 
 
 def tSEV : T1pI<(outs), (ins), NoItinerary, "sev", "",
                 [/* For disassembly only; pattern left blank */]>,
            T1Encoding<0b101111> {
   let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0b01000000;
+  let Inst{7-0} = 0x40;
 } 
 
 def tSETENDBE : T1I<(outs), (ins), NoItinerary, "setend\tbe",
                     [/* For disassembly only; pattern left blank */]>,
                 T1Encoding<0b101101> {
   let Inst{9-5} = 0b10010;
-  let Inst{3} = 1;
+  let Inst{4}   = 1;
+  let Inst{3}   = 1;            // Big-Endian
+  let Inst{2-0} = 0b000;
 }
 
 def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
                     [/* For disassembly only; pattern left blank */]>,
                 T1Encoding<0b101101> {
   let Inst{9-5} = 0b10010;
-  let Inst{3} = 0;
+  let Inst{4}   = 1;
+  let Inst{3}   = 0;            // Little-Endian
+  let Inst{2-0} = 0b000;
 }
 
 // The i32imm operand $val can be used by a debugger to store more information
 // about the breakpoint.
-def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
+def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$imm8",
                 [/* For disassembly only; pattern left blank */]>,
             T1Encoding<0b101111> {
-  bits<8> val;
-
+  bits<8> imm8;
   let Inst{9-8} = 0b10;
-  let Inst{7-0} = val;
+  let Inst{7-0} = imm8;
 }
 
 // Change Processor State is a system instruction -- for disassembly only.
