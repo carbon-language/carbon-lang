@@ -191,12 +191,13 @@ def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
 
 // The i32imm operand $val can be used by a debugger to store more information
 // about the breakpoint.
-def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$imm8",
+def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
                 [/* For disassembly only; pattern left blank */]>,
             T1Encoding<0b101111> {
-  bits<8> imm8;
+  bits<8> val;
+
   let Inst{9-8} = 0b10;
-  let Inst{7-0} = imm8;
+  let Inst{7-0} = val;
 }
 
 // Change Processor State is a system instruction -- for disassembly only.
