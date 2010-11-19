@@ -106,10 +106,8 @@
 #include <limits>
 #include <iterator>
 
-// FIXME: Remove debugging code
-#ifndef NDEBUG
+// FIXME: Remove debugging code.
 #include "llvm/Support/raw_ostream.h"
-#endif
 
 namespace llvm {
 
