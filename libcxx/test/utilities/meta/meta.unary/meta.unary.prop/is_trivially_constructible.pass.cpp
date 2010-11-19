@@ -10,7 +10,7 @@
 // type_traits
 
 // template <class T, class... Args>
-//   struct is_constructible;
+//   struct is_trivially_constructible;
 
 #include <type_traits>
 
@@ -22,9 +22,9 @@ struct A
 
 int main()
 {
-    static_assert((std::is_constructible<int>::value), "");
-    static_assert((std::is_constructible<int, const int>::value), "");
-    static_assert((std::is_constructible<A, int>::value), "");
-    static_assert((std::is_constructible<A, int, double>::value), "");
-    static_assert((!std::is_constructible<A>::value), "");
+    static_assert(( std::is_trivially_constructible<int>::value), "");
+    static_assert(( std::is_trivially_constructible<int, const int&>::value), "");
+    static_assert((!std::is_trivially_constructible<A, int>::value), "");
+    static_assert((!std::is_trivially_constructible<A, int, double>::value), "");
+    static_assert((!std::is_trivially_constructible<A>::value), "");
 }

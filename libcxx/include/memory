@@ -2446,15 +2446,15 @@ public:
 
     template <class _Tp>
     _LIBCPP_INLINE_VISIBILITY void __incr(_Tp*)
-        {__incr(integral_constant<bool, has_trivial_destructor<_Tp>::value>());}
+        {__incr(integral_constant<bool, is_trivially_destructible<_Tp>::value>());}
 
     template <class _Tp>
     _LIBCPP_INLINE_VISIBILITY void __set(size_t __s, _Tp*)
-        {__set(__s, integral_constant<bool, has_trivial_destructor<_Tp>::value>());}
+        {__set(__s, integral_constant<bool, is_trivially_destructible<_Tp>::value>());}
 
     template <class _Tp>
     _LIBCPP_INLINE_VISIBILITY void operator()(_Tp* __p)
-        {__process(__p, integral_constant<bool, has_trivial_destructor<_Tp>::value>());}
+        {__process(__p, integral_constant<bool, is_trivially_destructible<_Tp>::value>());}
 };
 
 template <class _Alloc>

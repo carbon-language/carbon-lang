@@ -326,7 +326,7 @@ protected:
     _LIBCPP_INLINE_VISIBILITY size_type capacity() const {return static_cast<size_type>(__end_cap() - __begin_);}
 
     _LIBCPP_INLINE_VISIBILITY void __destruct_at_end(const_pointer __new_last)
-        {__destruct_at_end(__new_last, has_trivial_destructor<value_type>());}
+        {__destruct_at_end(__new_last, is_trivially_destructible<value_type>());}
         void __destruct_at_end(const_pointer __new_last, false_type);
         void __destruct_at_end(const_pointer __new_last, true_type);
 
@@ -771,8 +771,8 @@ _LIBCPP_INLINE_VISIBILITY inline
 void
 vector<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x)
 {
-    __construct_at_end(__n, __x, integral_constant<bool, has_trivial_copy_constructor<value_type>::value &&
-                                                         has_trivial_copy_assign<value_type>::value>());
+    __construct_at_end(__n, __x, integral_constant<bool, is_trivially_copy_constructible<value_type>::value &&
+                                                         is_trivially_copy_assignable<value_type>::value>());
 }
 
 template <class _Tp, class _Allocator>

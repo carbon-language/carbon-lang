@@ -14,8 +14,6 @@
 
 #include <type_traits>
 
-#ifndef _LIBCPP_HAS_NO_VARIADICS
-
 class Empty
 {
 };
@@ -42,11 +40,11 @@ struct A
     A(const A&);
 };
 
-#endif  // _LIBCPP_HAS_NO_VARIADICS
-
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_VARIADICS
-    static_assert((std::is_nothrow_constructible<int, const int>::value), "");
-#endif
+    static_assert(( std::is_nothrow_constructible<int>::value), "");
+    static_assert(( std::is_nothrow_constructible<int, const int&>::value), "");
+    static_assert((!std::is_nothrow_constructible<A, int>::value), "");
+    static_assert((!std::is_nothrow_constructible<A, int, double>::value), "");
+    static_assert((!std::is_nothrow_constructible<A>::value), "");
 }

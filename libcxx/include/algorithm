@@ -1438,7 +1438,7 @@ template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
-    has_trivial_copy_assign<_Tp>::value,
+    is_trivially_copy_assignable<_Tp>::value,
     _Tp*
 >::type
 __unwrap_iter(move_iterator<_Tp*> __i)
@@ -1450,7 +1450,7 @@ template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
-    has_trivial_copy_assign<_Tp>::value,
+    is_trivially_copy_assignable<_Tp>::value,
     _Tp*
 >::type
 __unwrap_iter(__wrap_iter<_Tp*> __i)
@@ -1473,7 +1473,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_same<typename remove_const<_Tp>::type, _Up>::value &&
-    has_trivial_copy_assign<_Up>::value,
+    is_trivially_copy_assignable<_Up>::value,
     _Up*
 >::type
 __copy(_Tp* __first, _Tp* __last, _Up* __result)
@@ -1508,7 +1508,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_same<typename remove_const<_Tp>::type, _Up>::value &&
-    has_trivial_copy_assign<_Up>::value,
+    is_trivially_copy_assignable<_Up>::value,
     _Up*
 >::type
 __copy_backward(_Tp* __first, _Tp* __last, _Up* __result)
@@ -1593,7 +1593,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_same<typename remove_const<_Tp>::type, _Up>::value &&
-    has_trivial_copy_assign<_Up>::value,
+    is_trivially_copy_assignable<_Up>::value,
     _Up*
 >::type
 __move(_Tp* __first, _Tp* __last, _Up* __result)
@@ -1628,7 +1628,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_same<typename remove_const<_Tp>::type, _Up>::value &&
-    has_trivial_copy_assign<_Up>::value,
+    is_trivially_copy_assignable<_Up>::value,
     _Up*
 >::type
 __move_backward(_Tp* __first, _Tp* __last, _Up* __result)
@@ -1766,7 +1766,7 @@ fill_n(_OutputIterator __first, _Size __n, const _Tp& __value)
 {
    return _STD::__fill_n(__first, __n, __value, integral_constant<bool,
                                               is_pointer<_OutputIterator>::value &&
-                                              has_trivial_copy_assign<_Tp>::value     &&
+                                              is_trivially_copy_assignable<_Tp>::value     &&
                                               sizeof(_Tp) == 1>());
 }
 
@@ -2169,7 +2169,7 @@ rotate(_ForwardIterator __first, _ForwardIterator __middle, _ForwardIterator __l
                                    typename iterator_traits<_ForwardIterator>::iterator_category,
                                    random_access_iterator_tag
                                >::value &&
-                               has_trivial_copy_assign
+                               is_trivially_copy_assignable
                                <
                                    typename iterator_traits<_ForwardIterator>::value_type
                                >::value
@@ -3434,8 +3434,8 @@ __sort(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __c
     // _Compare is known to be a reference type
     typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
     typedef typename iterator_traits<_RandomAccessIterator>::value_type value_type;
-    const difference_type __limit = has_trivial_copy_constructor<value_type>::value &&
-                                    has_trivial_copy_assign<value_type>::value ? 30 : 6;
+    const difference_type __limit = is_trivially_copy_constructible<value_type>::value &&
+                                    is_trivially_copy_assignable<value_type>::value ? 30 : 6;
     while (true)
     {
     __restart:
@@ -4069,7 +4069,7 @@ __inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator __middle,
 template <class _Tp>
 struct __inplace_merge_switch
 {
-    static const unsigned value = has_trivial_copy_assign<_Tp>::value;
+    static const unsigned value = is_trivially_copy_assignable<_Tp>::value;
 };
 
 template <class _BidirectionalIterator, class _Compare>
@@ -4237,7 +4237,7 @@ __stable_sort_move(_RandomAccessIterator __first1, _RandomAccessIterator __last1
 template <class _Tp>
 struct __stable_sort_switch
 {
-    static const unsigned value = 128*has_trivial_copy_assign<_Tp>::value;
+    static const unsigned value = 128*is_trivially_copy_assignable<_Tp>::value;
 };
 
 template <class _Compare, class _RandomAccessIterator>

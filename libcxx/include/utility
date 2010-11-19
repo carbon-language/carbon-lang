@@ -38,7 +38,7 @@ template <class T> typename remove_reference<T>::type&& move(T&&);
 template <class T>
     typename conditional
     <
-        !has_nothrow_move_constructor<T>::value && has_copy_constructor<T>::value,
+        !is_nothrow_move_constructible<T>::value && is_copy_constructible<T>::value,
         const T&,
         T&&
     >::type
@@ -178,7 +178,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 typename conditional
 <
-    !has_nothrow_move_constructor<_Tp>::value && has_copy_constructor<_Tp>::value,
+    !is_nothrow_move_constructible<_Tp>::value && is_copy_constructible<_Tp>::value,
     const _Tp&,
     _Tp&&
 >::type

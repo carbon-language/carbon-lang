@@ -1038,7 +1038,7 @@ template <class _B1, class _B2> _B2 move_backward(_B1, _B1, _B2);
 template <class _Tp>
 typename enable_if
 <
-    has_trivial_copy_assign<_Tp>::value,
+    is_trivially_copy_assignable<_Tp>::value,
     _Tp*
 >::type
 __unwrap_iter(__wrap_iter<_Tp*>);
@@ -1137,7 +1137,7 @@ private:
     friend
     typename enable_if
     <
-        has_trivial_copy_assign<_Tp>::value,
+        is_trivially_copy_assignable<_Tp>::value,
         _Tp*
     >::type
     __unwrap_iter(__wrap_iter<_Tp*>);

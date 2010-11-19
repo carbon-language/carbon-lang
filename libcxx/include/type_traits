@@ -92,29 +92,32 @@ namespace std
     template <class T> struct is_abstract;
 
     template <class T, class... Args> struct is_constructible;
+    template <class T>                struct is_default_constructible;
+    template <class T>                struct is_copy_constructible;
+    template <class T>                struct is_move_constructible;
+    template <class T, class U>       struct is_assignable;
+    template <class T>                struct is_copy_assignable;
+    template <class T>                struct is_move_assignable;
+    template <class T>                struct is_destructible;
+
+    template <class T, class... Args> struct is_trivially_constructible;
+    template <class T>                struct is_trivially_default_constructible;
+    template <class T>                struct is_trivially_copy_constructible;
+    template <class T>                struct is_trivially_move_constructible;
+    template <class T, class U>       struct is_trivially_assignable;
+    template <class T>                struct is_trivially_copy_assignable;
+    template <class T>                struct is_trivially_move_assignable;
+    template <class T>                struct is_trivially_destructible;
+
     template <class T, class... Args> struct is_nothrow_constructible;
+    template <class T>                struct is_nothrow_default_constructible;
+    template <class T>                struct is_nothrow_copy_constructible;
+    template <class T>                struct is_nothrow_move_constructible;
+    template <class T, class U>       struct is_nothrow_assignable;
+    template <class T>                struct is_nothrow_copy_assignable;
+    template <class T>                struct is_nothrow_move_assignable;
+    template <class T>                struct is_nothrow_destructible;
 
-    template <class T> struct has_trivial_default_constructor
-    template <class T> struct has_nothrow_default_constructor;
-    template <class T> struct has_default_constructor;
-
-    template <class T> struct has_trivial_copy_constructor;
-    template <class T> struct has_nothrow_copy_constructor;
-    template <class T> struct has_copy_constructor;
-
-    template <class T> struct has_trivial_move_constructor;
-    template <class T> struct has_nothrow_move_constructor;
-    template <class T> struct has_move_constructor;
-
-    template <class T> struct has_trivial_copy_assign;
-    template <class T> struct has_nothrow_copy_assign;
-    template <class T> struct has_copy_assign;
-
-    template <class T> struct has_trivial_move_assign;
-    template <class T> struct has_nothrow_move_assign;
-    template <class T> struct has_move_assign;
-
-    template <class T> struct has_trivial_destructor;
     template <class T> struct has_virtual_destructor;
 
     // Relationships between types:
@@ -777,118 +780,6 @@ template <class _Tp> struct __libcpp_polymorphic<_Tp, false> : public false_type
 template <class _Tp> struct _LIBCPP_VISIBLE is_polymorphic
     : public __libcpp_polymorphic<_Tp> {};
 
-// has_trivial_default_constructor
-
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_default_constructor
-    : public integral_constant<bool, __has_trivial_constructor(_Tp)> {};
-
-#else  // _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct __has_trivial_default_constructor
-    : public integral_constant<bool, is_scalar<_Tp>::value> {};
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_default_constructor
-    : public __has_trivial_default_constructor<typename remove_all_extents<_Tp>::type> {};
-
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
-
-// has_nothrow_default_constructor
-
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_default_constructor
-    : public integral_constant<bool, __has_nothrow_constructor(_Tp)> {};
-
-#else  // _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_default_constructor
-    : public has_trivial_default_constructor<_Tp> {};
-
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
-
-// has_trivial_copy_constructor
-
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_copy_constructor
-    : public integral_constant<bool, __has_trivial_copy(_Tp)> {};
-
-#else  // _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_copy_constructor
-    : public integral_constant<bool, is_scalar<_Tp>::value ||
-                                     is_reference<_Tp>::value> {};
-
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
-
-// has_nothrow_copy_constructor
-
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_copy_constructor
-    : public integral_constant<bool, __has_nothrow_copy(_Tp)> {};
-
-#else  // _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_copy_constructor
-    : public has_trivial_copy_constructor<_Tp> {};
-
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
-
-// has_nothrow_move_constructor
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_move_constructor
-    : public has_nothrow_copy_constructor<_Tp> {};
-
-// has_trivial_copy_assign
-
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_copy_assign
-    : public integral_constant<bool, __has_trivial_assign(_Tp)> {};
-
-#else  // _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_copy_assign
-    : public integral_constant<bool, is_scalar<_Tp>::value &&
-                                    !is_const<_Tp>::value> {};
-
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
-
-// has_nothrow_copy_assign
-
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_copy_assign
-    : public integral_constant<bool, __has_nothrow_assign(_Tp)> {};
-
-#else  // _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_nothrow_copy_assign
-    : public has_trivial_copy_assign<_Tp> {};
-
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
-
-// has_trivial_destructor
-
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_destructor
-    : public integral_constant<bool, __has_trivial_destructor(_Tp)> {};
-
-#else  // _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct __libcpp_trivial_destructor
-    : public integral_constant<bool, is_scalar<_Tp>::value ||
-                                     is_reference<_Tp>::value> {};
-
-template <class _Tp> struct _LIBCPP_VISIBLE has_trivial_destructor
-    : public __libcpp_trivial_destructor<typename remove_all_extents<_Tp>::type> {};
-
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
-
 // has_virtual_destructor
 
 #ifdef _LIBCPP_HAS_TYPE_TRAITS
@@ -900,23 +791,6 @@ template <class _Tp> struct _LIBCPP_VISIBLE has_virtual_destructor
 
 template <class _Tp> struct _LIBCPP_VISIBLE has_virtual_destructor
     : public false_type {};
-
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
-
-// is_pod
-
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE is_pod
-    : public integral_constant<bool, __is_pod(_Tp)> {};
-
-#else  // _LIBCPP_HAS_TYPE_TRAITS
-
-template <class _Tp> struct _LIBCPP_VISIBLE is_pod
-    : public integral_constant<bool, has_trivial_default_constructor<_Tp>::value   &&
-                                     has_trivial_copy_constructor<_Tp>::value      &&
-                                     has_trivial_copy_assign<_Tp>::value    &&
-                                     has_trivial_destructor<_Tp>::value> {};
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
 
@@ -1287,6 +1161,8 @@ struct _LIBCPP_VISIBLE common_type<_Tp, _Up, _Vp...>
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
+// is_assignable
+
 template <class _Tp, class _Arg>
 decltype((_STD::declval<_Tp>() = _STD::declval<_Arg>(), true_type()))
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1311,19 +1187,56 @@ struct __is_assignable_imp
         >::type {};
 
 template <class _Tp, class _Arg>
-struct __is_assignable
+struct is_assignable
     : public __is_assignable_imp<_Tp, _Arg> {};
 
-// has_copy_assign
+// is_copy_assignable
 
-template <class _Tp> struct _LIBCPP_VISIBLE has_copy_assign
-    : public __is_assignable<_Tp&, const _Tp&> {};
+template <class _Tp> struct _LIBCPP_VISIBLE is_copy_assignable
+    : public is_assignable<_Tp&, const _Tp&> {};
 
-template <class _Tp> struct _LIBCPP_VISIBLE has_copy_assign<_Tp[]>
+// is_move_assignable
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_move_assignable
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    : public is_assignable<_Tp&, _Tp&&> {};
+#else
+    : public is_copy_assignable<_Tp> {};
+#endif
+
+// is_destructible
+
+template <class _Tp>
+struct __destructible_test
+{
+    _Tp __t;
+};
+
+template <class _Tp>
+decltype((_STD::declval<__destructible_test<_Tp> >().~__destructible_test<_Tp>(), true_type()))
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+__is_destructible_test(_Tp&&);
+#else
+__is_destructible_test(_Tp&);
+#endif
+
+false_type
+__is_destructible_test(__any);
+
+template <class _Tp, bool = is_void<_Tp>::value || is_abstract<_Tp>::value>
+struct __destructible_imp
+    : public common_type
+        <
+            decltype(__is_destructible_test(declval<_Tp>()))
+        >::type {};
+
+template <class _Tp>
+struct __destructible_imp<_Tp, true>
     : public false_type {};
 
-template <class _Tp> struct _LIBCPP_VISIBLE has_copy_assign<_Tp&>
-    : public false_type {};
+template <class _Tp>
+struct is_destructible
+    : public __destructible_imp<_Tp> {};
 
 // move
 
@@ -1638,7 +1551,7 @@ class _LIBCPP_VISIBLE result_of<_Fn(_A0, _A1, _A2)>
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-#ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 // template <class T, class... Args> struct is_constructible;
 
@@ -1758,29 +1671,56 @@ struct __is_constructible<false, _A[], _Args...>
     : public false_type
     {};
 
-template <class _Tp>
-struct _LIBCPP_VISIBLE has_default_constructor
-    : public is_constructible<_Tp>
-    {};
-
-#else  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#else  // _LIBCPP_HAS_NO_VARIADICS
 
 // template <class T> struct is_constructible0;
 
 //      main is_constructible0 test
 
 template <class _Tp>
-decltype((_STD::move(_Tp()), true_type()))
+decltype((_Tp(), true_type()))
 __is_constructible0_test(_Tp&);
 
 false_type
 __is_constructible0_test(__any);
+
+template <class _Tp, class _A0>
+decltype((_Tp(_STD::declval<_A0>()), true_type()))
+__is_constructible1_test(_Tp&, _A0&);
+
+template <class _A0>
+false_type
+__is_constructible1_test(__any, _A0&);
+
+template <class _Tp, class _A0, class _A1>
+decltype((_Tp(_STD::declval<_A0>(), _STD::declval<_A1>()), true_type()))
+__is_constructible2_test(_Tp&, _A0&, _A1&);
+
+template <class _A0, class _A1>
+false_type
+__is_constructible2_test(__any, _A0&, _A1&);
 
 template <bool, class _Tp>
 struct __is_constructible0_imp // false, _Tp is not a scalar
     : public common_type
              <
                  decltype(__is_constructible0_test(declval<_Tp&>()))
+             >::type
+    {};
+
+template <bool, class _Tp, class _A0>
+struct __is_constructible1_imp // false, _Tp is not a scalar
+    : public common_type
+             <
+                 decltype(__is_constructible1_test(declval<_Tp&>(), declval<_A0&>()))
+             >::type
+    {};
+
+template <bool, class _Tp, class _A0, class _A1>
+struct __is_constructible2_imp // false, _Tp is not a scalar
+    : public common_type
+             <
+                 decltype(__is_constructible2_test(declval<_Tp&>(), declval<_A0>(), declval<_A1>()))
              >::type
     {};
 
@@ -1793,12 +1733,34 @@ struct __is_constructible0_imp<true, _Tp>
     : public is_scalar<_Tp>
     {};
 
+template <class _Tp, class _A0>
+struct __is_constructible1_imp<true, _Tp, _A0>
+    : public is_convertible<_A0, _Tp>
+    {};
+
+template <class _Tp, class _A0, class _A1>
+struct __is_constructible2_imp<true, _Tp, _A0, _A1>
+    : public false_type
+    {};
+
 //      Treat scalars and reference types separately
 
 template <bool, class _Tp>
 struct __is_constructible0_void_check
     : public __is_constructible0_imp<is_scalar<_Tp>::value || is_reference<_Tp>::value,
                                 _Tp>
+    {};
+
+template <bool, class _Tp, class _A0>
+struct __is_constructible1_void_check
+    : public __is_constructible1_imp<is_scalar<_Tp>::value || is_reference<_Tp>::value,
+                                _Tp, _A0>
+    {};
+
+template <bool, class _Tp, class _A0, class _A1>
+struct __is_constructible2_void_check
+    : public __is_constructible2_imp<is_scalar<_Tp>::value || is_reference<_Tp>::value,
+                                _Tp, _A0, _A1>
     {};
 
 //      If any of T or Args is void, is_constructible should be false
@@ -1808,13 +1770,51 @@ struct __is_constructible0_void_check<true, _Tp>
     : public false_type
     {};
 
-//      has_default_constructor entry point
+template <class _Tp, class _A0>
+struct __is_constructible1_void_check<true, _Tp, _A0>
+    : public false_type
+    {};
+
+template <class _Tp, class _A0, class _A1>
+struct __is_constructible2_void_check<true, _Tp, _A0, _A1>
+    : public false_type
+    {};
+
+//      is_constructible entry point
+
+namespace __is_construct
+{
+
+struct __nat {};
+
+}
+
+template <class _Tp, class _A0 = __is_construct::__nat,
+                     class _A1 = __is_construct::__nat>
+struct _LIBCPP_VISIBLE is_constructible
+    : public __is_constructible2_void_check<is_void<_Tp>::value
+                                        || is_abstract<_Tp>::value
+                                        || is_function<_Tp>::value
+                                        || is_void<_A0>::value
+                                        || is_void<_A1>::value,
+                                           _Tp, _A0, _A1>
+    {};
 
 template <class _Tp>
-struct _LIBCPP_VISIBLE has_default_constructor
+struct _LIBCPP_VISIBLE is_constructible<_Tp, __is_construct::__nat, __is_construct::__nat>
     : public __is_constructible0_void_check<is_void<_Tp>::value
-                                        || is_abstract<_Tp>::value,
+                                        || is_abstract<_Tp>::value
+                                        || is_function<_Tp>::value,
                                            _Tp>
+    {};
+
+template <class _Tp, class _A0>
+struct _LIBCPP_VISIBLE is_constructible<_Tp, _A0, __is_construct::__nat>
+    : public __is_constructible1_void_check<is_void<_Tp>::value
+                                        || is_abstract<_Tp>::value
+                                        || is_function<_Tp>::value
+                                        || is_void<_A0>::value,
+                                           _Tp, _A0>
     {};
 
 //      Array types are default constructible if their element type
@@ -1822,7 +1822,17 @@ struct _LIBCPP_VISIBLE has_default_constructor
 
 template <class _A, size_t _N>
 struct __is_constructible0_imp<false, _A[_N]>
-    : public has_default_constructor<typename remove_all_extents<_A>::type>
+    : public is_constructible<typename remove_all_extents<_A>::type>
+    {};
+
+template <class _A, size_t _N, class _A0>
+struct __is_constructible1_imp<false, _A[_N], _A0>
+    : public false_type
+    {};
+
+template <class _A, size_t _N, class _A0, class _A1>
+struct __is_constructible2_imp<false, _A[_N], _A0, _A1>
+    : public false_type
     {};
 
 //      Incomplete array types are not constructible
@@ -1832,25 +1842,468 @@ struct __is_constructible0_imp<false, _A[]>
     : public false_type
     {};
 
-#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
-
-// has_copy_constructor
-
-#ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
-
-template <class _Tp>
-struct _LIBCPP_VISIBLE has_copy_constructor
-    : public is_constructible<_Tp, typename add_lvalue_reference<const _Tp>::type>
+template <class _A, class _A0>
+struct __is_constructible1_imp<false, _A[], _A0>
+    : public false_type
     {};
 
-#else  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
-
-template <class _Tp>
-struct _LIBCPP_VISIBLE has_copy_constructor
-    : public has_nothrow_copy_constructor<_Tp>
+template <class _A, class _A0, class _A1>
+struct __is_constructible2_imp<false, _A[], _A0, _A1>
+    : public false_type
     {};
 
-#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
+// is_default_constructible
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_default_constructible
+    : public is_constructible<_Tp>
+    {};
+
+// is_copy_constructible
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_copy_constructible
+    : public is_constructible<_Tp, const typename add_lvalue_reference<_Tp>::type>
+    {};
+
+// is_move_constructible
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_move_constructible
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    : public is_constructible<_Tp, typename add_rvalue_reference<_Tp>::type>
+#else
+    : public is_copy_constructible<_Tp>
+#endif
+    {};
+
+// is_trivially_constructible
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+template <class _Tp, class... _Args>
+struct _LIBCPP_VISIBLE is_trivially_constructible
+    : false_type
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_constructor(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp&&>
+#else
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp>
+#endif
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, const _Tp&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+#else  // _LIBCPP_HAS_NO_VARIADICS
+
+template <class _Tp, class _A0 = __is_construct::__nat,
+                     class _A1 = __is_construct::__nat>
+struct _LIBCPP_VISIBLE is_trivially_constructible
+    : false_type
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, __is_construct::__nat,
+                                                       __is_construct::__nat>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_constructor(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp,
+                                                       __is_construct::__nat>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, const _Tp&,
+                                                       __is_construct::__nat>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp&,
+                                                       __is_construct::__nat>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
+// is_trivially_default_constructible
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_default_constructible
+    : public is_trivially_constructible<_Tp>
+    {};
+
+// is_trivially_copy_constructible
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_copy_constructible
+    : public is_trivially_constructible<_Tp, const typename add_lvalue_reference<_Tp>::type>
+    {};
+
+// is_trivially_move_constructible
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_move_constructible
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    : public is_trivially_constructible<_Tp, typename add_rvalue_reference<_Tp>::type>
+#else
+    : public is_trivially_copy_constructible<_Tp>
+#endif
+    {};
+
+// is_trivially_assignable
+
+template <class _Tp, class _Arg>
+struct is_trivially_assignable
+    : public false_type {};
+
+template <class _Tp>
+struct is_trivially_assignable<_Tp&, _Tp>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_assign(_Tp)> {};
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value> {};
+#endif
+
+template <class _Tp>
+struct is_trivially_assignable<_Tp&, _Tp&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_assign(_Tp)> {};
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value> {};
+#endif
+
+template <class _Tp>
+struct is_trivially_assignable<_Tp&, const _Tp&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_assign(_Tp)> {};
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value> {};
+#endif
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _Tp>
+struct is_trivially_assignable<_Tp&, _Tp&&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_trivial_assign(_Tp)> {};
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value> {};
+#endif
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+// is_trivially_copy_assignable
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_copy_assignable
+    : public is_trivially_assignable<typename add_lvalue_reference<_Tp>::type,
+                               const typename add_lvalue_reference<_Tp>::type>
+    {};
+
+// is_trivially_move_assignable
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_move_assignable
+    : public is_trivially_assignable<typename add_lvalue_reference<_Tp>::type,
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+                                     typename add_rvalue_reference<_Tp>::type>
+#else
+                                     typename add_lvalue_reference<_Tp>::type>
+#endif
+    {};
+
+// is_trivially_destructible
+
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_destructible
+    : public integral_constant<bool, __has_trivial_destructor(_Tp)> {};
+
+#else  // _LIBCPP_HAS_TYPE_TRAITS
+
+template <class _Tp> struct __libcpp_trivial_destructor
+    : public integral_constant<bool, is_scalar<_Tp>::value ||
+                                     is_reference<_Tp>::value> {};
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_destructible
+    : public __libcpp_trivial_destructor<typename remove_all_extents<_Tp>::type> {};
+
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
+
+// is_nothrow_constructible
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+template <class _Tp, class... _Args>
+struct _LIBCPP_VISIBLE is_nothrow_constructible
+    : false_type
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_constructor(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp&&>
+#else
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp>
+#endif
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, const _Tp&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+#else  // _LIBCPP_HAS_NO_VARIADICS
+
+template <class _Tp, class _A0 = __is_construct::__nat,
+                     class _A1 = __is_construct::__nat>
+struct _LIBCPP_VISIBLE is_nothrow_constructible
+    : false_type
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, __is_construct::__nat,
+                                                       __is_construct::__nat>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_constructor(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp,
+                                                       __is_construct::__nat>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, const _Tp&,
+                                                       __is_construct::__nat>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp&,
+                                                       __is_construct::__nat>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_copy(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value>
+#endif
+{
+};
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
+// is_nothrow_default_constructible
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_default_constructible
+    : public is_nothrow_constructible<_Tp>
+    {};
+
+// is_nothrow_copy_constructible
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_copy_constructible
+    : public is_nothrow_constructible<_Tp, const typename add_lvalue_reference<_Tp>::type>
+    {};
+
+// is_nothrow_move_constructible
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_move_constructible
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    : public is_nothrow_constructible<_Tp, typename add_rvalue_reference<_Tp>::type>
+#else
+    : public is_nothrow_copy_constructible<_Tp>
+#endif
+    {};
+
+// is_nothrow_assignable
+
+template <class _Tp, class _Arg>
+struct is_nothrow_assignable
+    : public false_type {};
+
+template <class _Tp>
+struct is_nothrow_assignable<_Tp&, _Tp>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value> {};
+#endif
+
+template <class _Tp>
+struct is_nothrow_assignable<_Tp&, _Tp&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value> {};
+#endif
+
+template <class _Tp>
+struct is_nothrow_assignable<_Tp&, const _Tp&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value> {};
+#endif
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _Tp>
+struct is_nothrow_assignable<_Tp&, _Tp&&>
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+    : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
+#else
+    : integral_constant<bool, is_scalar<_Tp>::value> {};
+#endif
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+// is_nothrow_copy_assignable
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_copy_assignable
+    : public is_nothrow_assignable<typename add_lvalue_reference<_Tp>::type,
+                               const typename add_lvalue_reference<_Tp>::type>
+    {};
+
+// is_nothrow_move_assignable
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_move_assignable
+    : public is_nothrow_assignable<typename add_lvalue_reference<_Tp>::type,
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+                                     typename add_rvalue_reference<_Tp>::type>
+#else
+                                     typename add_lvalue_reference<_Tp>::type>
+#endif
+    {};
+
+// is_nothrow_destructible
+
+template <class _Tp> struct __libcpp_nothrow_destructor
+    : public integral_constant<bool, is_scalar<_Tp>::value ||
+                                     is_reference<_Tp>::value> {};
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_destructible
+    : public __libcpp_nothrow_destructor<typename remove_all_extents<_Tp>::type> {};
+
+// is_pod
+
+#ifdef _LIBCPP_HAS_TYPE_TRAITS
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_pod
+    : public integral_constant<bool, __is_pod(_Tp)> {};
+
+#else  // _LIBCPP_HAS_TYPE_TRAITS
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_pod
+    : public integral_constant<bool, is_trivially_default_constructible<_Tp>::value   &&
+                                     is_trivially_copy_constructible<_Tp>::value      &&
+                                     is_trivially_copy_assignable<_Tp>::value    &&
+                                     is_trivially_destructible<_Tp>::value> {};
+
+#endif  // _LIBCPP_HAS_TYPE_TRAITS
 
 template <class _Tp> struct __is_zero_default_constructible
     : public integral_constant<bool, is_scalar<_Tp>::value || is_empty<_Tp>::value> {};
