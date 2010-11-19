@@ -250,6 +250,16 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   }
 
   // FIXME: Could pull several more out of instcombine.
+
+  // Threading Add over selects and phi nodes is pointless, so don't bother.
+  // Threading over the select in "A + select(cond, B, C)" means evaluating
+  // "A+B" and "A+C" and seeing if they are equal; but they are equal if and
+  // only if B and C are equal.  If B and C are equal then (since we assume
+  // that operands have already been simplified) "select(cond, B, C)" should
+  // have been simplified to the common value of B and C already.  Analysing
+  // "A+B" and "A+C" thus gains nothing, but costs compile time.  Similarly
+  // for threading over phi nodes.
+
   return 0;
 }
 
@@ -454,19 +464,14 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
       (A == Op0 || B == Op0))
     return A == Op0 ? B : A;
 
-  // If the operation is with the result of a select instruction, check whether
-  // operating on either branch of the select always yields the same value.
-  if (MaxRecurse && (isa<SelectInst>(Op0) || isa<SelectInst>(Op1)))
-    if (Value *V = ThreadBinOpOverSelect(Instruction::Xor, Op0, Op1, TD, DT,
-                                         MaxRecurse-1))
-      return V;
-
-  // If the operation is with the result of a phi instruction, check whether
-  // operating on all incoming values of the phi always yields the same value.
-  if (MaxRecurse && (isa<PHINode>(Op0) || isa<PHINode>(Op1)))
-    if (Value *V = ThreadBinOpOverPHI(Instruction::Xor, Op0, Op1, TD, DT,
-                                      MaxRecurse-1))
-      return V;
+  // Threading Xor over selects and phi nodes is pointless, so don't bother.
+  // Threading over the select in "A ^ select(cond, B, C)" means evaluating
+  // "A^B" and "A^C" and seeing if they are equal; but they are equal if and
+  // only if B and C are equal.  If B and C are equal then (since we assume
+  // that operands have already been simplified) "select(cond, B, C)" should
+  // have been simplified to the common value of B and C already.  Analysing
+  // "A^B" and "A^C" thus gains nothing, but costs compile time.  Similarly
+  // for threading over phi nodes.
 
   return 0;
 }
