@@ -1704,39 +1704,19 @@ def STRD : AI3std<(outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),
                "strd", "\t$src1, $addr", []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed stores
-def STR_PRE  : AI2ldstidx<0, 0, 1, (outs GPR:$Rn_wb),
+def STR_PRE  : AI2stridx<0, 1, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModePre, StFrm, IIC_iStore_ru,
                     "str", "\t$Rt, [$Rn, $offset]!", "$Rn = $Rn_wb",
                     [(set GPR:$Rn_wb,
-                      (pre_store GPR:$Rt, GPR:$Rn, am2offset:$offset))]> {
-  // {13}     1 == Rm, 0 == imm12
-  // {12}     isAdd
-  // {11-0}   imm12/Rm
-  bits<14> offset;
-  bits<4> Rn;
-  let Inst{25} = offset{13};
-  let Inst{23} = offset{12};
-  let Inst{19-16} = Rn;
-  let Inst{11-0} = offset{11-0};
-}
+                      (pre_store GPR:$Rt, GPR:$Rn, am2offset:$offset))]>;
 
-def STR_POST : AI2ldstidx<0, 0, 0, (outs GPR:$Rn_wb),
+def STR_POST : AI2stridx<0, 0, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModePost, StFrm, IIC_iStore_ru,
                     "str", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
                     [(set GPR:$Rn_wb,
-                      (post_store GPR:$Rt, GPR:$Rn, am2offset:$offset))]> {
-  // {13}     1 == Rm, 0 == imm12
-  // {12}     isAdd
-  // {11-0}   imm12/Rm
-  bits<14> offset;
-  bits<4> Rn;
-  let Inst{25} = offset{13};
-  let Inst{23} = offset{12};
-  let Inst{19-16} = Rn;
-  let Inst{11-0} = offset{11-0};
-}
+                      (post_store GPR:$Rt, GPR:$Rn, am2offset:$offset))]>;
 
 def STRH_PRE : AI3sthpr<(outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am3offset:$offset),
@@ -1752,39 +1732,18 @@ def STRH_POST: AI3sthpo<(outs GPR:$base_wb),
                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
                                          GPR:$base, am3offset:$offset))]>;
 
-def STRB_PRE : AI2ldstidx<0, 1, 1, (outs GPR:$Rn_wb),
-                     (ins GPR:$Rt, GPR:$Rn,am2offset:$offset),
+def STRB_PRE : AI2stridx<1, 1, (outs GPR:$Rn_wb),
+                     (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModePre, StFrm, IIC_iStore_bh_ru,
                      "strb", "\t$Rt, [$Rn, $offset]!", "$Rn = $Rn_wb",
                     [(set GPR:$Rn_wb, (pre_truncsti8 GPR:$Rt,
-                                         GPR:$Rn, am2offset:$offset))]> {
-  // {13}     1 == Rm, 0 == imm12
-  // {12}     isAdd
-  // {11-0}   imm12/Rm
-  bits<14> offset;
-  bits<4> Rn;
-  let Inst{25} = offset{13};
-  let Inst{23} = offset{12};
-  let Inst{19-16} = Rn;
-  let Inst{11-0} = offset{11-0};
-}
-
-def STRB_POST: AI2ldstidx<0, 1, 0, (outs GPR:$Rn_wb),
-                     (ins GPR:$Rt, GPR:$Rn,am2offset:$offset),
+                                         GPR:$Rn, am2offset:$offset))]>;
+def STRB_POST: AI2stridx<1, 0, (outs GPR:$Rn_wb),
+                     (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModePost, StFrm, IIC_iStore_bh_ru,
                      "strb", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
                     [(set GPR:$Rn_wb, (post_truncsti8 GPR:$Rt,
-                                         GPR:$Rn, am2offset:$offset))]> {
-  // {13}     1 == Rm, 0 == imm12
-  // {12}     isAdd
-  // {11-0}   imm12/Rm
-  bits<14> offset;
-  bits<4> Rn;
-  let Inst{25} = offset{13};
-  let Inst{23} = offset{12};
-  let Inst{19-16} = Rn;
-  let Inst{11-0} = offset{11-0};
-}
+                                         GPR:$Rn, am2offset:$offset))]>;
 
 // For disassembly only
 def STRD_PRE : AI3stdpr<(outs GPR:$base_wb),
@@ -1802,18 +1761,18 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
 
 // STRT, STRBT, and STRHT are for disassembly only.
 
-def STRT : AI2ldstidx<0, 0, 0, (outs GPR:$base_wb),
-                    (ins GPR:$src, GPR:$base,am2offset:$offset),
+def STRT : AI2stridx<0, 0, (outs GPR:$Rn_wb),
+                    (ins GPR:$Rt, GPR:$Rn,am2offset:$offset),
                     IndexModeNone, StFrm, IIC_iStore_ru,
-                    "strt", "\t$src, [$base], $offset", "$base = $base_wb",
+                    "strt", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
                     [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
 }
 
-def STRBT : AI2ldstidx<0, 1, 0, (outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am2offset:$offset),
+def STRBT : AI2stridx<1, 0, (outs GPR:$Rn_wb),
+                     (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModeNone, StFrm, IIC_iStore_bh_ru,
-                     "strbt", "\t$src, [$base], $offset", "$base = $base_wb",
+                     "strbt", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
                      [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
 }
