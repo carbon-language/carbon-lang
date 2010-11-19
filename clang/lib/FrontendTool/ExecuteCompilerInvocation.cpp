@@ -141,7 +141,7 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
 
   // If there were errors in processing arguments, don't do anything else.
   bool Success = false;
-  if (!Clang->getDiagnostics().getNumErrors()) {
+  if (!Clang->getDiagnostics().hasErrorOccurred()) {
     // Create and execute the frontend action.
     llvm::OwningPtr<FrontendAction> Act(CreateFrontendAction(*Clang));
     if (Act) {

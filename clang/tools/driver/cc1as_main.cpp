@@ -368,7 +368,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   // Execute the invocation, unless there were parsing errors.
   bool Success = false;
-  if (!Diags.getNumErrors())
+  if (!Diags.hasErrorOccurred())
     Success = ExecuteAssembler(Asm, Diags);
 
   // If any timers were active but haven't been destroyed yet, print their
