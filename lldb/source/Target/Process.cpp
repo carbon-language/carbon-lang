@@ -70,7 +70,7 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
 Process::Process(Target &target, Listener &listener) :
     UserID (LLDB_INVALID_PROCESS_ID),
     Broadcaster ("lldb.process"),
-    ProcessInstanceSettings (*(Process::GetSettingsController().get())),
+    ProcessInstanceSettings (*GetSettingsController()),
     m_target (target),
     m_public_state (eStateUnloaded),
     m_private_state (eStateUnloaded),
@@ -2272,7 +2272,7 @@ Process::UpdateInstanceName ()
         StreamString sstr;
         sstr.Printf ("%s", module_sp->GetFileSpec().GetFilename().AsCString());
                     
-	Process::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
+        GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
                                                                   sstr.GetData());
     }
 }
@@ -2295,8 +2295,9 @@ Process::SettingsController::~SettingsController ()
 lldb::InstanceSettingsSP
 Process::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
-    ProcessInstanceSettings *new_settings = new ProcessInstanceSettings (*(Process::GetSettingsController().get()),
-                                                                         false, instance_name);
+    ProcessInstanceSettings *new_settings = new ProcessInstanceSettings (*GetSettingsController(),
+                                                                         false, 
+                                                                         instance_name);
     lldb::InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;
 }
@@ -2336,7 +2337,7 @@ ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner,
 }
 
 ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings &rhs) :
-    InstanceSettings (*(Process::GetSettingsController().get()), CreateInstanceName().AsCString()),
+    InstanceSettings (*Process::GetSettingsController(), CreateInstanceName().AsCString()),
     m_run_args (rhs.m_run_args),
     m_env_vars (rhs.m_env_vars),
     m_input_path (rhs.m_input_path),

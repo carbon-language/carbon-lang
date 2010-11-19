@@ -64,12 +64,12 @@ Debugger::Initialize ()
 {
     if (g_shared_debugger_refcount == 0)
     {
-        lldb_private::Initialize();
         UserSettingsControllerSP &usc = GetSettingsController();
         usc.reset (new SettingsController);
         UserSettingsController::InitializeSettingsController (usc,
                                                               SettingsController::global_settings_table,
                                                               SettingsController::instance_settings_table);
+        lldb_private::Initialize();
     }
     g_shared_debugger_refcount++;
 
@@ -83,11 +83,11 @@ Debugger::Terminate ()
         g_shared_debugger_refcount--;
         if (g_shared_debugger_refcount == 0)
         {
+            lldb_private::WillTerminate();
+            lldb_private::Terminate();
             UserSettingsControllerSP &usc = GetSettingsController();
             UserSettingsController::FinalizeSettingsController (usc);
             usc.reset();
-            lldb_private::WillTerminate();
-            lldb_private::Terminate();
         }
     }
     // Clear our master list of debugger objects
@@ -165,7 +165,7 @@ Debugger::FindTargetWithProcessID (lldb::pid_t pid)
 
 Debugger::Debugger () :
     UserID (g_unique_id++),
-    DebuggerInstanceSettings (*Debugger::GetSettingsController()),
+    DebuggerInstanceSettings (*GetSettingsController()),
     m_input_comm("debugger.input"),
     m_input_file (),
     m_output_file (),
@@ -1259,7 +1259,7 @@ Debugger::SettingsController::~SettingsController ()
 lldb::InstanceSettingsSP
 Debugger::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
-    DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*Debugger::GetSettingsController(),
+    DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*GetSettingsController(),
                                                                            false, instance_name);
     lldb::InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;

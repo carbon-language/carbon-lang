@@ -42,7 +42,7 @@ using namespace lldb_private;
 
 Thread::Thread (Process &process, lldb::tid_t tid) :
     UserID (tid),
-    ThreadInstanceSettings (*(Thread::GetSettingsController().get())),
+    ThreadInstanceSettings (*GetSettingsController()),
     m_process (process),
     m_actual_stop_info_sp (),
     m_index_id (process.GetNextThreadIndexID ()),
@@ -1032,8 +1032,9 @@ Thread::SettingsController::~SettingsController ()
 lldb::InstanceSettingsSP
 Thread::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
-    ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*(Thread::GetSettingsController().get()),
-                                                                       false, instance_name);
+    ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*GetSettingsController(),
+                                                                       false, 
+                                                                       instance_name);
     lldb::InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;
 }
@@ -1068,7 +1069,7 @@ ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, b
 }
 
 ThreadInstanceSettings::ThreadInstanceSettings (const ThreadInstanceSettings &rhs) :
-    InstanceSettings (*(Thread::GetSettingsController().get()), CreateInstanceName().AsCString()),
+    InstanceSettings (*Thread::GetSettingsController(), CreateInstanceName().AsCString()),
     m_avoid_regexp_ap (),
     m_trace_enabled (rhs.m_trace_enabled)
 {

@@ -36,7 +36,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 Target::Target(Debugger &debugger) :
     Broadcaster("lldb.target"),
-    TargetInstanceSettings (*(Target::GetSettingsController().get())),
+    TargetInstanceSettings (*GetSettingsController()),
     m_debugger (debugger),
     m_images(),
     m_section_load_list (),
@@ -797,7 +797,7 @@ Target::GetSettingsController ()
 ArchSpec
 Target::GetDefaultArchitecture ()
 {
-    lldb::UserSettingsControllerSP settings_controller = Target::GetSettingsController();
+    lldb::UserSettingsControllerSP &settings_controller = GetSettingsController();
     lldb::SettableVariableType var_type;
     Error err;
     StringList result = settings_controller->GetVariable ("target.default-arch", var_type, "[]", err);
@@ -814,8 +814,11 @@ void
 Target::SetDefaultArchitecture (ArchSpec new_arch)
 {
     if (new_arch.IsValid())
-        Target::GetSettingsController ()->SetVariable ("target.default-arch", new_arch.AsCString(),
-                                                       lldb::eVarSetOperationAssign, false, "[]");
+        GetSettingsController ()->SetVariable ("target.default-arch", 
+                                               new_arch.AsCString(),
+                                               lldb::eVarSetOperationAssign, 
+                                               false, 
+                                               "[]");
 }
 
 Target *
@@ -848,8 +851,8 @@ Target::UpdateInstanceName ()
         sstr.Printf ("%s_%s", 
                      module_sp->GetFileSpec().GetFilename().AsCString(), 
                      module_sp->GetArchitecture().AsCString());
-        Target::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
-                                                                 sstr.GetData());
+        GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
+                                                         sstr.GetData());
     }
 }
 
@@ -878,8 +881,9 @@ Target::SettingsController::~SettingsController ()
 lldb::InstanceSettingsSP
 Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
-    TargetInstanceSettings *new_settings = new TargetInstanceSettings (*(Target::GetSettingsController().get()),
-                                                                       false, instance_name);
+    TargetInstanceSettings *new_settings = new TargetInstanceSettings (*GetSettingsController(),
+                                                                       false, 
+                                                                       instance_name);
     lldb::InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;
 }
@@ -958,7 +962,7 @@ TargetInstanceSettings::TargetInstanceSettings (UserSettingsController &owner, b
 }
 
 TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rhs) :
-    InstanceSettings (*(Target::GetSettingsController().get()), CreateInstanceName().AsCString())
+    InstanceSettings (*Target::GetSettingsController(), CreateInstanceName().AsCString())
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {

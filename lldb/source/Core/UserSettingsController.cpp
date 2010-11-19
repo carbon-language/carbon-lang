@@ -71,7 +71,7 @@ UserSettingsController::InitializeSettingsController (lldb::UserSettingsControll
 {
     const lldb::UserSettingsControllerSP &parent = controller_sp->GetParent ();
     if (parent)
-    parent->RegisterChild (controller_sp);
+        parent->RegisterChild (controller_sp);
 
     controller_sp->CreateSettingsVector (global_settings, true);
     controller_sp->CreateSettingsVector (instance_settings, false);
