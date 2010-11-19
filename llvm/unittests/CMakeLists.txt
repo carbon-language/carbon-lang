@@ -43,6 +43,7 @@ add_llvm_unittest(ADT
   ADT/DeltaAlgorithmTest.cpp
   ADT/DenseMapTest.cpp
   ADT/DenseSetTest.cpp
+  ADT/FoldingSet.cpp
   ADT/ilistTest.cpp
   ADT/ImmutableSetTest.cpp
   ADT/IntervalMapTest.cpp
