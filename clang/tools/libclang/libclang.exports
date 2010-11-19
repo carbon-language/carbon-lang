@@ -32,6 +32,7 @@ clang_equalTypes
 clang_formatDiagnostic
 clang_getCString
 clang_getCXXAccessSpecifier
+clang_getCanonicalCursor
 clang_getCanonicalType
 clang_getClangVersion
 clang_getCompletionAvailability

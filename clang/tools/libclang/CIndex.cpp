@@ -3717,6 +3717,16 @@ unsigned clang_isCursorDefinition(CXCursor C) {
   return clang_getCursorDefinition(C) == C;
 }
 
+CXCursor clang_getCanonicalCursor(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return C;
+  
+  if (Decl *D = getCursorDecl(C))
+    return MakeCXCursor(D->getCanonicalDecl(), getCursorTU(C));
+  
+  return C;
+}
+  
 unsigned clang_getNumOverloadedDecls(CXCursor C) {
   if (C.kind != CXCursor_OverloadedDeclRef)
     return 0;

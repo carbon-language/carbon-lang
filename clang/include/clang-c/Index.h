@@ -2075,6 +2075,32 @@ CINDEX_LINKAGE CXCursor clang_getCursorDefinition(CXCursor);
 CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
 
 /**
+ * \brief Retrieve the canonical cursor corresponding to the given cursor.
+ *
+ * In the C family of languages, many kinds of entities can be declared several
+ * times within a single translation unit. For example, a structure type can
+ * be forward-declared (possibly multiple times) and later defined:
+ *
+ * \code
+ * struct X;
+ * struct X;
+ * struct X {
+ *   int member;
+ * };
+ * \endcode
+ *
+ * The declarations and the definition of \c X are represented by three 
+ * different cursors, all of which are declarations of the same underlying 
+ * entity. One of these cursor is considered the "canonical" cursor, which
+ * is effectively the representative for the underlying entity. One can 
+ * determine if two cursors are declarations of the same underlying entity by
+ * comparing their canonical cursors.
+ *
+ * \returns The canonical cursor for the entity referred to by the given cursor.
+ */
+CINDEX_LINKAGE CXCursor clang_getCanonicalCursor(CXCursor);
+
+/**
  * @}
  */
 
