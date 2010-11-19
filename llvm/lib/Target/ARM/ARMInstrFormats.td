@@ -512,18 +512,6 @@ class AI3sth<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{7-4}   = 0b1011;
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
 }
-class AXI3sth<dag oops, dag iops, Format f, InstrItinClass itin,
-              string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, itin,
-       asm, "", pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 1; // H bit
-  let Inst{6}     = 0; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{24}    = 1; // P bit
-}
 class AI3std<dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, itin,
