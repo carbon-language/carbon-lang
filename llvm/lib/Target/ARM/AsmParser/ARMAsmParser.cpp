@@ -343,7 +343,7 @@ public:
     for (SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
            I = Regs.begin(), E = Regs.end(); I != E; ++I)
       Op->Registers.push_back(I->first);
-    std::sort(Op->Registers.begin(), Op->Registers.end());
+    array_pod_sort(Op->Registers.begin(), Op->Registers.end());
     Op->StartLoc = StartLoc;
     Op->EndLoc = EndLoc;
     return Op;
