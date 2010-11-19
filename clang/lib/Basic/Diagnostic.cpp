@@ -549,7 +549,7 @@ StoredDiagnostic::StoredDiagnostic() { }
 
 StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, unsigned ID,
                                    llvm::StringRef Message)
-  : Level(Level), ID(ID), Loc(), Message(Message) { }
+  : ID(ID), Level(Level), Loc(), Message(Message) { }
 
 StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, 
                                    const DiagnosticInfo &Info)
