@@ -466,6 +466,10 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
       CandReg = CopyMI->getOperand(0).getReg();
     else
       return Reg;
+
+    // If the target of the copy is a sub-register then don't coalesce.
+    if(CopyMI->getOperand(0).getSubReg())
+      return Reg;
   }
 
   if (TargetRegisterInfo::isVirtualRegister(CandReg)) {
