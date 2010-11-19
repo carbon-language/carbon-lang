@@ -375,7 +375,8 @@ def trap       : SDNode<"ISD::TRAP"       , SDTNone,
                         [SDNPHasChain, SDNPSideEffect]>;
 
 def prefetch   : SDNode<"ISD::PREFETCH"   , SDTPrefetch,
-                        [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
+                        [SDNPHasChain, SDNPMayLoad, SDNPMayStore,
+                         SDNPMemOperand]>;
 
 def membarrier : SDNode<"ISD::MEMBARRIER" , SDTMemBarrier,
                         [SDNPHasChain, SDNPSideEffect]>;
