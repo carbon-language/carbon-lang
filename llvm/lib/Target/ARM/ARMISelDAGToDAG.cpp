@@ -1779,7 +1779,7 @@ SDNode *ARMDAGToDAGISel::
 SelectT2CMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
                   ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
   ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
-  if (!T || !TrueVal.getNode()->hasOneUse())
+  if (!T)
     return 0;
 
   unsigned Opc = 0;
