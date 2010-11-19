@@ -315,6 +315,11 @@ TEST(IntervalMapTest, RootMultiCoalescing) {
   EXPECT_EQ(320u, I.stop());
   ++I;
   EXPECT_FALSE(I.valid());
+
+  // Test clear() on non-branched map.
+  map.clear();
+  EXPECT_TRUE(map.empty());
+  EXPECT_TRUE(map.begin() == map.end());
 }
 
 // Branched, non-coalescing tests.
@@ -362,6 +367,10 @@ TEST(IntervalMapTest, Branched) {
   }
   EXPECT_TRUE(I == map.begin());
 
+  // Test clear() on branched map.
+  map.clear();
+  EXPECT_TRUE(map.empty());
+  EXPECT_TRUE(map.begin() == map.end());
 }
 
 } // namespace

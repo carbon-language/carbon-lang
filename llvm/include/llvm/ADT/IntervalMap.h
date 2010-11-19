@@ -806,7 +806,7 @@ private:
   Leaf *allocLeaf()  {
     return new(allocator.template Allocate<Leaf>()) Leaf();
   }
-  void freeLeaf(Leaf *P) {
+  void deleteLeaf(Leaf *P) {
     P->~Leaf();
     allocator.Deallocate(P);
   }
@@ -814,7 +814,7 @@ private:
   Branch *allocBranch() {
     return new(allocator.template Allocate<Branch>()) Branch();
   }
-  void freeBranch(Branch *P) {
+  void deleteBranch(Branch *P) {
     P->~Branch();
     allocator.Deallocate(P);
   }
@@ -838,8 +838,8 @@ private:
   bool branched() const { return height > 0; }
 
   ValT treeSafeLookup(KeyT x, ValT NotFound) const;
-
   void visitNodes(void (IntervalMap::*f)(NodeRef, unsigned Level));
+  void deleteNode(NodeRef Node, unsigned Level);
 
 public:
   explicit IntervalMap(Allocator &a) : height(0), rootSize(0), allocator(a) {
@@ -880,6 +880,9 @@ public:
   void insert(KeyT a, KeyT b, ValT y) {
     find(a).insert(a, b, y);
   }
+
+  /// clear - Remove all entries.
+  void clear();
 
   class const_iterator;
   class iterator;
@@ -1046,6 +1049,25 @@ visitNodes(void (IntervalMap::*f)(NodeRef, unsigned Height)) {
   // Visit all leaf nodes.
   for (unsigned i = 0, e = Refs.size(); i != e; ++i)
     (this->*f)(Refs[i], 0);
+}
+
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+deleteNode(NodeRef Node, unsigned Level) {
+  if (Level)
+    deleteBranch(&Node.branch());
+  else
+    deleteLeaf(&Node.leaf());
+}
+
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+clear() {
+  if (branched()) {
+    visitNodes(&IntervalMap::deleteNode);
+    switchRootToLeaf();
+  }
+  rootSize = 0;
 }
 
 #ifndef NDEBUG
