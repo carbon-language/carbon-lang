@@ -378,12 +378,8 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     emitJumpTableAddress(MO.getIndex(), ARM::reloc_arm_relative);
   else if (MO.isMBB())
     emitMachineBasicBlock(MO.getMBB(), ARM::reloc_arm_branch);
-  else {
-#ifndef NDEBUG
-    errs() << MO;
-#endif
-    llvm_unreachable(0);
-  }
+  else
+    llvm_unreachable("Unable to encode MachineOperand!");
   return 0;
 }
 

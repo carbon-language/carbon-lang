@@ -1274,12 +1274,13 @@ let isCall = 1,
                 [(ARMcall GPR:$func)]>,
             Requires<[IsARM, HasV5T, IsNotDarwin]> {
     bits<4> func;
-    let Inst{27-4} = 0b000100101111111111110011;
+    let Inst{31-4} = 0b1110000100101111111111110011;
     let Inst{3-0}   = func;
   }
 
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
+  // FIXME: x2 insn patterns like this need to be pseudo instructions.
   def BX : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
@@ -1327,7 +1328,7 @@ let isCall = 1,
                 IIC_Br, "blx\t$func",
                 [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T, IsDarwin]> {
     bits<4> func;
-    let Inst{27-4} = 0b000100101111111111110011;
+    let Inst{31-4} = 0b1110000100101111111111110011;
     let Inst{3-0}   = func;
   }
 

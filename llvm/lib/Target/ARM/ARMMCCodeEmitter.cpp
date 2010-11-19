@@ -316,10 +316,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                      .bitcastToAPInt().getHiBits(32).getLimitedValue());
   }
 
-#ifndef NDEBUG
-  errs() << MO;
-#endif
-  llvm_unreachable(0);
+  llvm_unreachable("Unable to encode MCOperand!");
   return 0;
 }
 
@@ -421,8 +418,8 @@ getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
     }
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
     return 0;
-  }
-  llvm_unreachable("Unsupported MCExpr type in MCOperand");
+  };
+  llvm_unreachable("Unsupported MCExpr type in MCOperand!");
   return 0;
 }
 
