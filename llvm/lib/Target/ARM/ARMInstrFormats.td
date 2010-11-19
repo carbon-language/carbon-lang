@@ -493,7 +493,6 @@ class AI3ldstidx<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
   let Inst{7-4}   = op;
 }
 
-
 // stores
 class AI3sth<dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string asm, list<dag> pattern>
