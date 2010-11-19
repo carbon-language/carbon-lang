@@ -380,7 +380,10 @@ Diagnostic *
 ClangASTContext::getDiagnostic()
 {
     if (m_diagnostic_ap.get() == NULL)
-        m_diagnostic_ap.reset(new Diagnostic());
+    {
+        llvm::IntrusiveRefCntPtr<DiagnosticIDs> diag_id_sp(new DiagnosticIDs());
+        m_diagnostic_ap.reset(new Diagnostic(diag_id_sp));
+    }
     return m_diagnostic_ap.get();
 }
 
@@ -750,12 +753,9 @@ ClangASTContext::CopyType (ASTContext *dest_context,
                            clang_type_t clang_type)
 {
     // null_client's ownership is transferred to diagnostics
-    NullDiagnosticClient *null_client = new NullDiagnosticClient;
-    Diagnostic diagnostics(null_client);
     FileManager file_manager;
     FileSystemOptions file_system_options;
-    ASTImporter importer(diagnostics,
-                         *dest_context, file_manager, file_system_options,
+    ASTImporter importer(*dest_context, file_manager, file_system_options,
                          *source_context, file_manager, file_system_options);
     
     QualType src = QualType::getFromOpaquePtr(clang_type);
@@ -771,12 +771,9 @@ ClangASTContext::CopyDecl (ASTContext *dest_context,
                            clang::Decl *source_decl)
 {
     // null_client's ownership is transferred to diagnostics
-    NullDiagnosticClient *null_client = new NullDiagnosticClient;
-    Diagnostic diagnostics(null_client);
     FileManager file_manager;
     FileSystemOptions file_system_options;
-    ASTImporter importer(diagnostics,
-                         *dest_context, file_manager, file_system_options,
+    ASTImporter importer(*dest_context, file_manager, file_system_options,
                          *source_context, file_manager, file_system_options);
     
     return importer.Import(source_decl);
@@ -1100,6 +1097,8 @@ ClangASTContext::AddMethodToCXXRecordType
     
     QualType method_qual_type (QualType::getFromOpaquePtr (method_opaque_type));
     
+    method_qual_type.dump();
+
     CXXMethodDecl *cxx_method_decl = NULL;
     
     DeclarationName decl_name (&identifier_table->get(name));
