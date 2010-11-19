@@ -1035,9 +1035,7 @@ public:
     // If the replacing instruction is defined in the same loop as the original
     // instruction, or in a loop that contains it as an inner loop, then using
     // it as a replacement will not break LCSSA form.
-    Loop *FromLoop = getLoopFor(From->getParent());
-    if (ToLoop->contains(FromLoop)) return true;
-    return false;
+    return ToLoop->contains(getLoopFor(From->getParent()));
   }
 };
 
