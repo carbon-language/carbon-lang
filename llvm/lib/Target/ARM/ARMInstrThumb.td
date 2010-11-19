@@ -190,7 +190,10 @@ def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
 def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
                 [/* For disassembly only; pattern left blank */]>,
             T1Encoding<0b101111> {
+  bits<8> val;
+
   let Inst{9-8} = 0b10;
+  let Inst{7-0} = val;
 }
 
 // Change Processor State is a system instruction -- for disassembly only.
@@ -259,32 +262,48 @@ def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
 //
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
-  def tBX_RET : TI<(outs), (ins), IIC_Br, "bx\tlr", [(ARMretflag)]>,
+  def tBX_RET : TI<(outs), (ins), IIC_Br, "bx\tlr",
+                   [(ARMretflag)]>,
                 T1Special<{1,1,0,?}> { // A6.2.3 & A8.6.25
     let Inst{6-3} = 0b1110; // Rm = lr
+    let Inst{2-0} = 0b000;
   }
+
   // Alternative return instruction used by vararg functions.
-  def tBX_RET_vararg : TI<(outs), (ins tGPR:$target), IIC_Br, "bx\t$target",[]>,
-                       T1Special<{1,1,0,?}>; // A6.2.3 & A8.6.25
+  def tBX_RET_vararg : TI<(outs), (ins tGPR:$Rm),
+                          IIC_Br, "bx\t$Rm",
+                          []>,
+                       T1Special<{1,1,0,?}> { // A6.2.3 & A8.6.25
+    bits<4> Rm;
+    let Inst{6-3} = Rm;
+    let Inst{2-0} = 0b000;
+  }
 }
 
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
-  def tBRIND : TI<(outs), (ins GPR:$dst), IIC_Br, "mov\tpc, $dst",
-                  [(brind GPR:$dst)]>,
+  def tBRIND : TI<(outs), (ins GPR:$Rm), IIC_Br, "mov\tpc, $Rm",
+                  [(brind GPR:$Rm)]>,
                T1Special<{1,0,1,?}> {
-    // <Rd> = Inst{7:2-0} = pc
-    let Inst{2-0} = 0b111;
+    bits<4> Rm;
+
+    let Inst{6-3} = Rm;
+    let Inst{2-0} = 0b111;      // <Rd> = Inst{7:2-0} = pc
   }
 }
 
 // FIXME: remove when we have a way to marking a MI with these properties.
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
-def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops),
+def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
                    IIC_iPop_Br,
-                   "pop${p}\t$dsts", []>,
-               T1Misc<{1,1,0,?,?,?,?}>;
+                   "pop${p}\t$regs", []>,
+               T1Misc<{1,1,0,?,?,?,?}> {
+  bits<16> regs;
+
+  let Inst{8}   = regs{15};
+  let Inst{7-0} = regs{7-0};
+}
 
 let isCall = 1,
   Defs = [R0,  R1,  R2,  R3,  R12, LR,
@@ -563,10 +582,15 @@ defm tSTM : thumb_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu,
 } // neverHasSideEffects
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
-def tPOP : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops),
+def tPOP : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
                IIC_iPop,
-               "pop${p}\t$dsts", []>,
-           T1Misc<{1,1,0,?,?,?,?}>;
+               "pop${p}\t$regs", []>,
+           T1Misc<{1,1,0,?,?,?,?}> {
+  bits<16> regs;
+
+  let Inst{8}   = regs{15};
+  let Inst{7-0} = regs{7-0};
+}
 
 let mayStore = 1, Uses = [SP], Defs = [SP], hasExtraSrcRegAllocReq = 1 in
 def tPUSH : T1I<(outs), (ins pred:$p, reglist:$srcs, variable_ops),
@@ -661,10 +685,17 @@ def tCMPzi8 : T1pI<(outs), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMPi,
 
 // CMP register
 let isCompare = 1, Defs = [CPSR] in {
-def tCMPr : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
-                 "cmp", "\t$lhs, $rhs",
-                 [(ARMcmp tGPR:$lhs, tGPR:$rhs)]>,
-            T1DataProcessing<0b1010>;
+def tCMPr : T1pI<(outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iCMPr,
+                 "cmp", "\t$Rn, $Rm",
+                 [(ARMcmp tGPR:$Rn, tGPR:$Rm)]>,
+            T1DataProcessing<0b1010> {
+  bits<3> Rm;
+  bits<3> Rn;
+
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rn;
+}
+
 def tCMPzr : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
                   "cmp", "\t$lhs, $rhs",
                   [(ARMcmpZ tGPR:$lhs, tGPR:$rhs)]>,
