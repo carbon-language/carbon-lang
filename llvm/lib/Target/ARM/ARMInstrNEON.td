@@ -3883,10 +3883,10 @@ def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
 //   VMOV     : Vector Move (Register)
 
 let neverHasSideEffects = 1 in {
-def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
-                     N3RegFrm, IIC_VMOV, "vmov", "$dst, $src", "", []>;
-def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
-                     N3RegFrm, IIC_VMOV, "vmov", "$dst, $src", "", []>;
+def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$Vd), (ins DPR:$Vm),
+                     N3RegFrm, IIC_VMOV, "vmov", "$Vd, $Vm", "", []>;
+def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$Vd), (ins QPR:$Vm),
+                     N3RegFrm, IIC_VMOV, "vmov", "$Vd, $Vm", "", []>;
 
 // Pseudo vector move instructions for QQ and QQQQ registers. This should
 // be expanded after register allocation is completed.
