@@ -74,7 +74,7 @@ add_llvm_unittest(Transforms
   Transforms/Utils/Cloning.cpp
   )
 
-add_llvm_unittest(VMCore
+set(VMCoreSources
   VMCore/ConstantsTest.cpp
   VMCore/DerivedTypesTest.cpp
   VMCore/InstructionsTest.cpp
@@ -83,6 +83,14 @@ add_llvm_unittest(VMCore
   VMCore/ValueMapTest.cpp
   VMCore/VerifierTest.cpp
   )
+
+# MSVC9 and 8 cannot compile ValueMapTest.cpp due to their bug.
+# See issue#331418 in Visual Studio.
+if(MSVC AND MSVC_VERSION LESS 1600)
+  list(REMOVE_ITEM VMCoreSources VMCore/ValueMapTest.cpp)
+endif()
+
+add_llvm_unittest(VMCore ${VMCoreSources})
 
 set(LLVM_LINK_COMPONENTS
   System
