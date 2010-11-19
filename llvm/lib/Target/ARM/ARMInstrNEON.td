@@ -1562,9 +1562,9 @@ class N3VDX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            ValueType ResTy, ValueType OpTy,
            SDNode OpNode, bit Commutable>
   : N3VX<op24, op23, op21_20, op11_8, 0, op4,
-         (outs DPR:$dst), (ins DPR:$src1, DPR:$src2), N3RegFrm, itin,
-         OpcodeStr, "$dst, $src1, $src2", "",
-         [(set DPR:$dst, (ResTy (OpNode (OpTy DPR:$src1), (OpTy DPR:$src2))))]>{
+         (outs DPR:$Vd), (ins DPR:$Vn, DPR:$Vm), N3RegFrm, itin,
+         OpcodeStr, "$Vd, $Vn, $Vm", "",
+         [(set DPR:$Vd, (ResTy (OpNode (OpTy DPR:$Vn), (OpTy DPR:$Vm))))]>{
   let isCommutable = Commutable;
 }
 
