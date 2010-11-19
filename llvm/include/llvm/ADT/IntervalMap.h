@@ -848,6 +848,11 @@ public:
     new(&rootLeaf()) RootLeaf();
   }
 
+  ~IntervalMap() {
+    clear();
+    rootLeaf().~RootLeaf();
+  }
+
   /// empty -  Return true when no intervals are mapped.
   bool empty() const {
     return rootSize == 0;
