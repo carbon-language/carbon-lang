@@ -609,9 +609,8 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
   const User *U = NULL;
   unsigned Opcode = Instruction::UserOp1;
   if (const Instruction *I = dyn_cast<Instruction>(Obj)) {
-    // Don't walk into other basic blocks; it's possible we haven't
-    // visited them yet, so the instructions may not yet be assigned
-    // virtual registers.
+    // Don't walk into other basic blocks unless the object is an alloca from
+    // another block, otherwise it may not have a virtual register assigned.
     if (FuncInfo.StaticAllocaMap.count(static_cast<const AllocaInst *>(Obj)) ||
         FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB) {
       Opcode = I->getOpcode();
