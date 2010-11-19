@@ -1181,7 +1181,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     if (VD->hasExternalStorage() || VD->isFileVarDecl()) 
       return EmitGlobalVarDeclLValue(*this, E, VD);
 
-    bool NonGCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
+    bool NonGCable = VD->hasLocalStorage() &&
+                     !VD->getType()->isReferenceType() &&
+                     !VD->hasAttr<BlocksAttr>();
 
     llvm::Value *V = LocalDeclMap[VD];
     if (!V && VD->isStaticLocal()) 
@@ -1198,7 +1200,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       V = Builder.CreateLoad(V, "tmp");
 
     LValue LV = MakeAddrLValue(V, E->getType(), Alignment);
-    if (NonGCable && !VD->getType()->isReferenceType()) {
+    if (NonGCable) {
       LV.getQuals().removeObjCGCAttr();
       LV.setNonGC(true);
     }
