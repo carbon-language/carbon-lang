@@ -1637,13 +1637,13 @@ multiclass AI3_ldridx<bits<4> op, bit op20, string opc, InstrItinClass itin> {
                         (ins GPR:$Rn, am3offset:$offset), IndexModePost,
                         LdMiscFrm, itin,
                         opc, "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []> {
-    bits<10> addr;
+    bits<10> offset;
     bits<4> Rn;
-    let Inst{23}    = addr{8};      // U bit
-    let Inst{22}    = addr{9};      // 1 == imm8, 0 == Rm
+    let Inst{23}    = offset{8};      // U bit
+    let Inst{22}    = offset{9};      // 1 == imm8, 0 == Rm
     let Inst{19-16} = Rn;
-    let Inst{11-8}  = addr{7-4};    // imm7_4/zero
-    let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+    let Inst{11-8}  = offset{7-4};    // imm7_4/zero
+    let Inst{3-0}   = offset{3-0};    // imm3_0/Rm
   }
 }
 
