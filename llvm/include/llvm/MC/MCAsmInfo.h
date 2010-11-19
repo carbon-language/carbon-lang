@@ -212,6 +212,10 @@ namespace llvm {
     /// directive.
     bool HasNoDeadStrip;                     // Defaults to false.
 
+    /// HasSymbolResolver - True if this target supports the MachO
+    /// .symbol_resolver directive.
+    bool HasSymbolResolver;                     // Defaults to false.
+
     /// WeakRefDirective - This directive, if non-null, is used to declare a
     /// global as being a weak undefined symbol.
     const char *WeakRefDirective;            // Defaults to NULL.
@@ -395,6 +399,7 @@ namespace llvm {
     }
     bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
     bool hasNoDeadStrip() const { return HasNoDeadStrip; }
+    bool hasSymbolResolver() const { return HasSymbolResolver; }
     const char *getWeakRefDirective() const { return WeakRefDirective; }
     const char *getWeakDefDirective() const { return WeakDefDirective; }
     const char *getLinkOnceDirective() const { return LinkOnceDirective; }

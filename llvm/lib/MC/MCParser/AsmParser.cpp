@@ -1012,6 +1012,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveSymbolAttribute(MCSA_LazyReference);
     if (IDVal == ".no_dead_strip")
       return ParseDirectiveSymbolAttribute(MCSA_NoDeadStrip);
+    if (IDVal == ".symbol_resolver")
+      return ParseDirectiveSymbolAttribute(MCSA_SymbolResolver);
     if (IDVal == ".private_extern")
       return ParseDirectiveSymbolAttribute(MCSA_PrivateExtern);
     if (IDVal == ".protected")

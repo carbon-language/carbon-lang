@@ -36,7 +36,8 @@ namespace llvm {
     // Other 'desc' flags.
     SF_NoDeadStrip                          = 0x0020,
     SF_WeakReference                        = 0x0040,
-    SF_WeakDefinition                       = 0x0080
+    SF_WeakDefinition                       = 0x0080,
+    SF_SymbolResolver                       = 0x0100
   };
 
 } // end namespace llvm

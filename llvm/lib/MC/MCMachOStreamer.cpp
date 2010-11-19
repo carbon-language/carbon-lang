@@ -235,6 +235,10 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     SD.setFlags(SD.getFlags() | SF_NoDeadStrip);
     break;
 
+  case MCSA_SymbolResolver:
+    SD.setFlags(SD.getFlags() | SF_SymbolResolver);
+    break;
+
   case MCSA_PrivateExtern:
     SD.setExternal(true);
     SD.setPrivateExtern(true);

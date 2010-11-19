@@ -281,6 +281,7 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_LazyReference:
   case MCSA_Reference:
   case MCSA_NoDeadStrip:
+  case MCSA_SymbolResolver:
   case MCSA_PrivateExtern:
   case MCSA_WeakDefinition:
   case MCSA_WeakDefAutoPrivate:

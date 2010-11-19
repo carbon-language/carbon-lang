@@ -34,6 +34,7 @@ enum MCSymbolAttr {
   MCSA_LazyReference,       ///< .lazy_reference (MachO)
   MCSA_Local,               ///< .local (ELF)
   MCSA_NoDeadStrip,         ///< .no_dead_strip (MachO)
+  MCSA_SymbolResolver,      ///< .symbol_resolver (MachO)
   MCSA_PrivateExtern,       ///< .private_extern (MachO)
   MCSA_Protected,           ///< .protected (ELF)
   MCSA_Reference,           ///< .reference (MachO)

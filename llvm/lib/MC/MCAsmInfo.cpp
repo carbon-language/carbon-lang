@@ -58,6 +58,7 @@ MCAsmInfo::MCAsmInfo() {
   HasDotTypeDotSizeDirective = true;
   HasSingleParameterDotFile = true;
   HasNoDeadStrip = false;
+  HasSymbolResolver = false;
   WeakRefDirective = 0;
   WeakDefDirective = 0;
   LinkOnceDirective = 0;
