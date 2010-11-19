@@ -510,7 +510,7 @@ class AI3ldstidx<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
 }
 
 // stores
-class AI3sth<dag oops, dag iops, Format f, InstrItinClass itin,
+class AI3str<bits<4> op, dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, itin,
       opc, asm, "", pattern> {
@@ -525,21 +525,8 @@ class AI3sth<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{19-16} = addr{12-9};   // Rn
   let Inst{15-12} = Rt;           // Rt
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
-  let Inst{7-4}   = 0b1011;
+  let Inst{7-4}   = op;
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
-}
-class AI3std<dag oops, dag iops, Format f, InstrItinClass itin,
-             string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, itin,
-      opc, asm, "", pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 1; // H bit
-  let Inst{6}     = 1; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-25} = 0b000;
 }
 
 // Pre-indexed stores

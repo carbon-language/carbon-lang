@@ -1692,14 +1692,14 @@ def LDRSHT : AI3ldstidx<0b1111, 1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
 // Store
 
 // Stores with truncate
-def STRH : AI3sth<(outs), (ins GPR:$Rt, addrmode3:$addr), StMiscFrm,
+def STRH : AI3str<0b1011, (outs), (ins GPR:$Rt, addrmode3:$addr), StMiscFrm,
                IIC_iStore_bh_r, "strh", "\t$Rt, $addr",
                [(truncstorei16 GPR:$Rt, addrmode3:$addr)]>;
 
 // Store doubleword
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
     isCodeGenOnly = 1 in  // $src2 doesn't exist in asm string
-def STRD : AI3std<(outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),
+def STRD : AI3str<0b1111, (outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),
                StMiscFrm, IIC_iStore_d_r,
                "strd", "\t$src1, $addr", []>, Requires<[IsARM, HasV5TE]>;
 
