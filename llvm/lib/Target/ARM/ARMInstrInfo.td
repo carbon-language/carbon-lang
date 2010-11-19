@@ -2547,14 +2547,16 @@ def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
   let Inst{15-12} = Ra;
 }
 
-def MLS  : AMul1I<0b0000011, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-                   IIC_iMAC32, "mls", "\t$dst, $a, $b, $c",
-                   [(set GPR:$dst, (sub GPR:$c, (mul GPR:$a, GPR:$b)))]>,
+def MLS  : AMul1I<0b0000011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
+                   IIC_iMAC32, "mls", "\t$Rd, $Rn, $Rm, $Ra",
+                   [(set GPR:$Rd, (sub GPR:$Ra, (mul GPR:$Rn, GPR:$Rm)))]>,
                    Requires<[IsARM, HasV6T2]> {
   bits<4> Rd;
   bits<4> Rm;
   bits<4> Rn;
+  bits<4> Ra;
   let Inst{19-16} = Rd;
+  let Inst{15-12} = Ra;
   let Inst{11-8}  = Rm;
   let Inst{3-0}   = Rn;
 }
