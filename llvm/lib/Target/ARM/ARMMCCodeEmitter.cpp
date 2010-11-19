@@ -421,8 +421,8 @@ getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
     }
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
     return 0;
-  };
-  llvm_unreachable(0 && "Unsupported MCExpr type in MCOperand");
+  }
+  llvm_unreachable("Unsupported MCExpr type in MCOperand");
   return 0;
 }
 
