@@ -63,12 +63,18 @@ add_llvm_unittest(ExecutionEngine
   ExecutionEngine/ExecutionEngineTest.cpp
   )
 
-add_llvm_unittest(JIT
+set(JITTestsSources
   ExecutionEngine/JIT/JITEventListenerTest.cpp
   ExecutionEngine/JIT/JITMemoryManagerTest.cpp
   ExecutionEngine/JIT/JITTest.cpp
   ExecutionEngine/JIT/MultiJITTest.cpp
   )
+
+if(MSVC)
+  list(APPEND JITTestsSources ExecutionEngine/JIT/JITTests.def)
+endif()
+
+add_llvm_unittest(JIT ${JITTestsSources})
 
 add_llvm_unittest(Transforms
   Transforms/Utils/Cloning.cpp
