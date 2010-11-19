@@ -459,49 +459,6 @@ class AI2ldstidx<bit isLd, bit isByte, bit isPre, dag oops, dag iops,
   let Inst{15-12} = Rt;
 }
 
-class AXI2ldw<dag oops, dag iops, Format f, InstrItinClass itin,
-              string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-       asm, "", pattern> {
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-class AXI2ldb<dag oops, dag iops, Format f, InstrItinClass itin,
-              string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-       asm, "", pattern> {
-  let Inst{20}    = 1; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 1; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-
-// stores
-class AXI2stw<dag oops, dag iops, Format f, InstrItinClass itin,
-              string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-       asm, "", pattern> {
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 0; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-class AXI2stb<dag oops, dag iops, Format f, InstrItinClass itin,
-              string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, itin,
-       asm, "", pattern> {
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = 1; // B bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-26} = 0b01;
-}
-
 // addrmode3 instructions
 class AI3ld<bits<4> op, bit op20, dag oops, dag iops, Format f,
             InstrItinClass itin, string opc, string asm, list<dag> pattern>

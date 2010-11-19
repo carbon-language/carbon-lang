@@ -1164,17 +1164,14 @@ def PICLDRSB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
                             [(set GPR:$Rt, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
-def PICSTR  : AXI2stw<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iStore_r, "",
-               [(store GPR:$src, addrmodepc:$addr)]>;
+def PICSTR  : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
+               IIC_iStore_r, [(store GPR:$src, addrmodepc:$addr)]>;
 
-def PICSTRH : AXI3sth<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-           Pseudo, IIC_iStore_bh_r, "",
-               [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
+def PICSTRH : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
+               IIC_iStore_bh_r, [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
 
-def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-           Pseudo, IIC_iStore_bh_r, "",
-               [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
+def PICSTRB : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
+               IIC_iStore_bh_r, [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
 } // isNotDuplicable = 1
 
