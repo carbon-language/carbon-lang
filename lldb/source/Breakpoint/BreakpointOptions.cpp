@@ -18,6 +18,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadSpec.h"
 #include "lldb/Target/ThreadPlanTestCondition.h"
 
@@ -193,8 +194,12 @@ BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx,
         
         exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
     }
+    
+    // Get the boolean type from the process's scratch AST context
+    ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
+    TypeFromUser bool_type(ast_context->GetBuiltInType_bool(), ast_context->getASTContext());
 
-    if (!m_condition_ap->Parse (error_stream, exe_ctx))
+    if (!m_condition_ap->Parse (error_stream, exe_ctx, bool_type))
     {
         // Errors mean we should stop.
         return NULL;

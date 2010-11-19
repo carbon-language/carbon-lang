@@ -25,6 +25,7 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Symbol/TaggedASTType.h"
 
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 
@@ -73,11 +74,17 @@ public:
     ///     are needed for parsing (locations of functions, types of
     ///     variables, persistent variables, etc.)
     ///
+    /// @param[in] desired_type
+    ///     The type that the expression should be coerced to.  If NULL,
+    ///     inferred from the expression itself.
+    ///
     /// @return
     ///     True on success (no errors); false otherwise.
     //------------------------------------------------------------------
     bool
-    Parse (Stream &error_stream, ExecutionContext &exe_ctx);
+    Parse (Stream &error_stream, 
+           ExecutionContext &exe_ctx,
+           TypeFromUser desired_type);
     
     //------------------------------------------------------------------
     /// Execute the parsed expression
@@ -238,6 +245,7 @@ private:
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
+    TypeFromUser                                m_desired_type;         ///< The type to coerce the expression's result to.  If NULL, inferred from the expression.
     
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
     std::auto_ptr<ClangExpressionVariableStore> m_local_variables;      ///< The local expression variables, if the expression is DWARF.

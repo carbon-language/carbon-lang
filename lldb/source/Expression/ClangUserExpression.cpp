@@ -44,7 +44,8 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_jit_addr(LLDB_INVALID_ADDRESS),
     m_cplusplus(false),
     m_objectivec(false),
-    m_needs_object_ptr(false)
+    m_needs_object_ptr(false),
+    m_desired_type(NULL, NULL)
 {
 }
 
@@ -55,7 +56,8 @@ ClangUserExpression::~ClangUserExpression ()
 clang::ASTConsumer *
 ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 {
-    return new ASTResultSynthesizer(passthrough);
+    return new ASTResultSynthesizer(passthrough,
+                                    m_desired_type);
 }
 
 void
@@ -115,7 +117,9 @@ ApplyUnicharHack(std::string &expr)
 }
 
 bool
-ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
+ClangUserExpression::Parse (Stream &error_stream, 
+                            ExecutionContext &exe_ctx,
+                            TypeFromUser desired_type)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -193,6 +197,8 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     //////////////////////////
     // Parse the expression
     //
+    
+    m_desired_type = desired_type;
     
     m_expr_decl_map.reset(new ClangExpressionDeclMap(&exe_ctx));
     
@@ -452,7 +458,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     
     StreamString error_stream;
     
-    if (!user_expression.Parse (error_stream, exe_ctx))
+    if (!user_expression.Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL)))
     {
         if (error_stream.GetString().empty())
             error.SetErrorString ("expression failed to parse, unknown error");

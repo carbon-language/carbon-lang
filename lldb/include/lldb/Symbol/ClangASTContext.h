@@ -126,6 +126,9 @@ public:
     {
         return GetBuiltInType_void(getASTContext());
     }
+    
+    lldb::clang_type_t
+    GetBuiltInType_bool();
 
     lldb::clang_type_t
     GetBuiltInType_objc_id();

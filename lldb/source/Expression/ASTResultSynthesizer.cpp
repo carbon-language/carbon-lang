@@ -24,11 +24,13 @@ using namespace llvm;
 using namespace clang;
 using namespace lldb_private;
 
-ASTResultSynthesizer::ASTResultSynthesizer(ASTConsumer *passthrough) :
+ASTResultSynthesizer::ASTResultSynthesizer(ASTConsumer *passthrough,
+                                           TypeFromUser desired_type) :
     m_ast_context (NULL),
     m_passthrough (passthrough),
     m_passthrough_sema (NULL),
-    m_sema (NULL)
+    m_sema (NULL),
+    m_desired_type (desired_type)
 {
     if (!m_passthrough)
         return;

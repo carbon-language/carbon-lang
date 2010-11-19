@@ -12,6 +12,7 @@
 
 #include "clang/Sema/SemaConsumer.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Symbol/TaggedASTType.h"
 
 namespace lldb_private {
 
@@ -39,8 +40,13 @@ public:
     ///     in order to produce LLVM IR, this SemaConsumer must allow them to
     ///     pass to the next step in the chain after processing.  Passthrough is
     ///     the next ASTConsumer, or NULL if none is required.
+    ///
+    /// @param[in] desired_type
+    ///     The type that the result should have.  May be initialized with a
+    ///     NULL type, in which case the type is inferred.
     //----------------------------------------------------------------------
-    ASTResultSynthesizer(clang::ASTConsumer *passthrough);
+    ASTResultSynthesizer(clang::ASTConsumer *passthrough,
+                         TypeFromUser desired_type);
     
     //----------------------------------------------------------------------
     /// Destructor
@@ -128,6 +134,7 @@ private:
     clang::ASTConsumer *m_passthrough;          ///< The ASTConsumer down the chain, for passthrough.  NULL if it's a SemaConsumer.
     clang::SemaConsumer *m_passthrough_sema;    ///< The SemaConsumer down the chain, for passthrough.  NULL if it's an ASTConsumer.
     clang::Sema *m_sema;                        ///< The Sema to use.
+    TypeFromUser m_desired_type;                ///< If non-NULL, the type to coerce the result to.
 };
 
 }

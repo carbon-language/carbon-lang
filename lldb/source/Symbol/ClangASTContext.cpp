@@ -671,6 +671,12 @@ ClangASTContext::GetBuiltInType_void(ASTContext *ast_context)
 }
 
 clang_type_t
+ClangASTContext::GetBuiltInType_bool()
+{
+    return getASTContext()->BoolTy.getAsOpaquePtr();
+}
+
+clang_type_t
 ClangASTContext::GetBuiltInType_objc_id()
 {
     return getASTContext()->ObjCBuiltinIdTy.getAsOpaquePtr();
