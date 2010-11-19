@@ -176,7 +176,7 @@ class T2OneRegImm<dag oops, dag iops, InstrItinClass itin,
   : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<12> imm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
@@ -190,7 +190,7 @@ class T2sOneRegImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rn;
   bits<12> imm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
@@ -202,7 +202,7 @@ class T2OneRegCmpImm<dag oops, dag iops, InstrItinClass itin,
   : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rn;
   bits<12> imm;
-  
+
   let Inst{19-16}  = Rn{3-0};
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
@@ -215,7 +215,7 @@ class T2OneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<12> ShiftedRm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{3-0}   = ShiftedRm{3-0};
   let Inst{5-4}   = ShiftedRm{6-5};
@@ -228,7 +228,7 @@ class T2sOneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<12> ShiftedRm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{3-0}   = ShiftedRm{3-0};
   let Inst{5-4}   = ShiftedRm{6-5};
@@ -241,7 +241,7 @@ class T2OneRegCmpShiftedReg<dag oops, dag iops, InstrItinClass itin,
   : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rn;
   bits<12> ShiftedRm;
-  
+
   let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = ShiftedRm{3-0};
   let Inst{5-4}   = ShiftedRm{6-5};
@@ -251,30 +251,30 @@ class T2OneRegCmpShiftedReg<dag oops, dag iops, InstrItinClass itin,
 
 class T2TwoReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<4> Rm;
-     
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{3-0}   = Rm{3-0};
 }
 
 class T2sTwoReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
-  : T2sI<oops, iops, itin, opc, asm, pattern> { 
+  : T2sI<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<4> Rm;
-     
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{3-0}   = Rm{3-0};
 }
 
 class T2TwoRegCmp<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rn;
   bits<4> Rm;
-     
+
   let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = Rm{3-0};
 }
@@ -285,7 +285,7 @@ class T2TwoRegImm<dag oops, dag iops, InstrItinClass itin,
   : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<4> Rm;
-     
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{3-0}   = Rm{3-0};
 }
@@ -296,7 +296,7 @@ class T2sTwoRegImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rn;
   bits<12> imm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{26}    = imm{11};
@@ -310,7 +310,7 @@ class T2TwoRegShiftImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rm;
   bits<5> imm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{3-0}   = Rm{3-0};
   let Inst{14-12} = imm{4-2};
@@ -323,7 +323,7 @@ class T2sTwoRegShiftImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rm;
   bits<5> imm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{3-0}   = Rm{3-0};
   let Inst{14-12} = imm{4-2};
@@ -332,11 +332,11 @@ class T2sTwoRegShiftImm<dag oops, dag iops, InstrItinClass itin,
 
 class T2ThreeReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
-     
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = Rm{3-0};
@@ -344,11 +344,11 @@ class T2ThreeReg<dag oops, dag iops, InstrItinClass itin,
 
 class T2sThreeReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
-  : T2sI<oops, iops, itin, opc, asm, pattern> { 
+  : T2sI<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
-     
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = Rm{3-0};
@@ -360,7 +360,7 @@ class T2TwoRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rn;
   bits<12> ShiftedRm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = ShiftedRm{3-0};
@@ -375,7 +375,7 @@ class T2sTwoRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rn;
   bits<12> ShiftedRm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = ShiftedRm{3-0};
@@ -386,12 +386,12 @@ class T2sTwoRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
 
 class T2FourReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
   bits<4> Ra;
-     
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = Rm{3-0};
@@ -624,7 +624,7 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
    }
    // shifted register
    def rs : T2sTwoRegShiftedReg<
-                 (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_reg:$ShiftedRm), 
+                 (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_reg:$ShiftedRm),
                  IIC_iALUsi, opc, ".w\t$Rd, $Rn, $ShiftedRm",
                  [(set rGPR:$Rd, (opnode GPR:$Rn, t2_so_reg:$ShiftedRm))]> {
      let Inst{31-27} = 0b11101;
@@ -668,7 +668,7 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
    }
    // shifted register
    def rs : T2sTwoRegShiftedReg<
-                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm), 
+                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
                  IIC_iALUsi, opc, ".w\t$Rd, $Rn, $ShiftedRm",
                  [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_reg:$ShiftedRm))]>,
                  Requires<[IsThumb2]> {
@@ -936,7 +936,7 @@ multiclass T2I_ext_rrot<bits<3> opcod, string opc, PatFrag opnode> {
      let Inst{19-16} = 0b1111; // Rn
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     
+
      bits<2> rot;
      let Inst{5-4} = rot{1-0}; // rotate
    }
@@ -966,7 +966,7 @@ multiclass T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode> {
      let Inst{19-16} = 0b1111; // Rn
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-    
+
      bits<2> rot;
      let Inst{5-4} = rot{1-0}; // rotate
    }
@@ -993,7 +993,7 @@ multiclass T2I_ext_rrot_sxtb16<bits<3> opcod, string opc> {
      let Inst{19-16} = 0b1111; // Rn
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     
+
       bits<2> rot;
       let Inst{5-4} = rot{1-0}; // rotate
    }
@@ -1023,7 +1023,7 @@ multiclass T2I_exta_rrot<bits<3> opcod, string opc, PatFrag opnode> {
      let Inst{22-20} = opcod;
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     
+
      bits<2> rot;
      let Inst{5-4} = rot{1-0}; // rotate
    }
@@ -1048,7 +1048,7 @@ multiclass T2I_exta_rrot_DO<bits<3> opcod, string opc> {
      let Inst{22-20} = opcod;
      let Inst{15-12} = 0b1111;
      let Inst{7} = 1;
-     
+
      bits<2> rot;
      let Inst{5-4} = rot{1-0}; // rotate
    }
@@ -1067,7 +1067,7 @@ class T2PCOneRegImm<dag oops, dag iops, InstrItinClass itin,
   : T2XI<oops, iops, itin, asm, pattern> {
   bits<4> Rd;
   bits<12> label;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{26}    = label{11};
   let Inst{14-12} = label{10-8};
@@ -1087,8 +1087,8 @@ def t2LEApcrel : T2PCOneRegImm<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p), II
   let Inst{20} = 0;
   let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
-  
-  
+
+
 }
 } // neverHasSideEffects
 def t2LEApcrelJT : T2PCOneRegImm<(outs rGPR:$Rd),
@@ -1168,7 +1168,7 @@ def t2SUBrSPs   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_reg:$imm),
 }
 
 // Signed and unsigned division on v7-M
-def t2SDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi, 
+def t2SDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi,
                  "sdiv", "\t$Rd, $Rn, $Rm",
                  [(set rGPR:$Rd, (sdiv rGPR:$Rn, rGPR:$Rm))]>,
                  Requires<[HasDivide, IsThumb2]> {
@@ -1179,7 +1179,7 @@ def t2SDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi,
   let Inst{7-4} = 0b1111;
 }
 
-def t2UDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi, 
+def t2UDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi,
                  "udiv", "\t$Rd, $Rn, $Rm",
                  [(set rGPR:$Rd, (udiv rGPR:$Rn, rGPR:$Rm))]>,
                  Requires<[HasDivide, IsThumb2]> {
@@ -1326,7 +1326,7 @@ def t2LDRSH_POST : T2Iidxldst<1, 0b01, 1, 0, (outs GPR:$dst, GPR:$base_wb),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
                         "ldrsh", "\t$dst, [$base], $offset", "$base = $base_wb",
                             []>;
-} // mayLoad = 1, neverHasSideEffects = 1 
+} // mayLoad = 1, neverHasSideEffects = 1
 
 // LDRT, LDRBT, LDRHT, LDRSBT, LDRSHT all have offset mode (PUW=0b110) and are
 // for disassembly only.
@@ -1521,7 +1521,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
          itin, !strconcat(asm, "ia${p}.w\t$Rn, $regs"), []> {
     bits<4>  Rn;
     bits<16> regs;
- 
+
     let Inst{31-27} = 0b11101;
     let Inst{26-25} = 0b00;
     let Inst{24-23} = 0b01;     // Increment After
@@ -1536,7 +1536,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
           itin_upd, !strconcat(asm, "ia${p}.w\t$Rn!, $regs"), "$Rn = $wb", []> {
     bits<4>  Rn;
     bits<16> regs;
- 
+
     let Inst{31-27} = 0b11101;
     let Inst{26-25} = 0b00;
     let Inst{24-23} = 0b01;     // Increment After
@@ -1628,10 +1628,10 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm:$imm), IIC_iMOVi,
   let Inst{24-21} = 0b0010;
   let Inst{20} = 0; // The S bit.
   let Inst{15} = 0;
-  
+
   bits<4> Rd;
   bits<16> imm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = imm{15-12};
   let Inst{26}    = imm{11};
@@ -1649,10 +1649,10 @@ def t2MOVTi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$src, i32imm:$imm), IIC_iMOVi,
   let Inst{24-21} = 0b0110;
   let Inst{20} = 0; // The S bit.
   let Inst{15} = 0;
-  
+
   bits<4> Rd;
   bits<16> imm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = imm{15-12};
   let Inst{26}    = imm{11};
@@ -1794,11 +1794,11 @@ class T2I_pam<bits<3> op22_20, bits<4> op7_4, string opc,
   let Inst{22-20} = op22_20;
   let Inst{15-12} = 0b1111;
   let Inst{7-4} = op7_4;
-  
+
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
-     
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{3-0}   = Rm{3-0};
@@ -1886,19 +1886,19 @@ def t2USAD8   : T2ThreeReg_mac<0, 0b111, 0b0000, (outs rGPR:$Rd),
   let Inst{15-12} = 0b1111;
 }
 def t2USADA8  : T2FourReg_mac<0, 0b111, 0b0000, (outs rGPR:$Rd),
-                       (ins rGPR:$Rn, rGPR:$Rm, rGPR:$Ra), NoItinerary, 
+                       (ins rGPR:$Rn, rGPR:$Rm, rGPR:$Ra), NoItinerary,
                         "usada8", "\t$Rd, $Rn, $Rm, $Ra", []>;
 
 // Signed/Unsigned saturate -- for disassembly only
 
 class T2SatI<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> { 
+  : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<4> Rn;
   bits<5> sat_imm;
   bits<7> sh;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = Rn{3-0};
   let Inst{4-0}   = sat_imm{4-0};
@@ -2026,11 +2026,11 @@ defm t2BIC  : T2I_bin_w_irs<0b0001, "bic",
 
 class T2BitFI<dag oops, dag iops, InstrItinClass itin,
               string opc, string asm, list<dag> pattern>
-    : T2I<oops, iops, itin, opc, asm, pattern> { 
+    : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<5> msb;
   bits<5> lsb;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{4-0}   = msb{4-0};
   let Inst{14-12} = lsb{4-2};
@@ -2041,8 +2041,8 @@ class T2TwoRegBitFI<dag oops, dag iops, InstrItinClass itin,
               string opc, string asm, list<dag> pattern>
     : T2BitFI<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rn;
-  
-  let Inst{19-16} = Rn{3-0};  
+
+  let Inst{19-16} = Rn{3-0};
 }
 
 let Constraints = "$src = $Rd" in
@@ -2054,7 +2054,7 @@ def t2BFC : T2BitFI<(outs rGPR:$Rd), (ins rGPR:$src, bf_inv_mask_imm:$imm),
   let Inst{24-20} = 0b10110;
   let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
-  
+
   bits<10> imm;
   let msb{4-0} = imm{9-5};
   let lsb{4-0} = imm{4-0};
@@ -2089,7 +2089,7 @@ def t2BFI : T2TwoRegBitFI<(outs rGPR:$Rd),
   let Inst{25} = 1;
   let Inst{24-20} = 0b10110;
   let Inst{15} = 0;
-  
+
   bits<10> imm;
   let msb{4-0} = imm{9-5};
   let lsb{4-0} = imm{4-0};
@@ -2434,7 +2434,7 @@ def t2SMLALTT : T2FourReg_mac<1, 0b100, 0b1011, (outs rGPR:$Ra,rGPR:$Rd),
 
 // Dual halfword multiple: SMUAD, SMUSD, SMLAD, SMLSD, SMLALD, SMLSLD
 // These are for disassembly only.
-  
+
 def t2SMUAD: T2ThreeReg_mac<
             0, 0b010, 0b0000, (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm),
             IIC_iMAC32, "smuad", "\t$Rd, $Rn, $Rm", []> {
@@ -2535,7 +2535,7 @@ def t2PKHBT : T2ThreeReg<
   let Inst{24-20} = 0b01100;
   let Inst{5} = 0; // BT form
   let Inst{4} = 0;
-  
+
   bits<8> sh;
   let Inst{14-12} = sh{7-5};
   let Inst{7-6}   = sh{4-3};
@@ -2563,7 +2563,7 @@ def t2PKHTB : T2ThreeReg<
   let Inst{24-20} = 0b01100;
   let Inst{5} = 1; // TB form
   let Inst{4} = 0;
-  
+
   bits<8> sh;
   let Inst{14-12} = sh{7-5};
   let Inst{7-6}   = sh{4-3};
@@ -2651,10 +2651,10 @@ def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm:$imm),
   let Inst{24-21} = 0b0010;
   let Inst{20} = 0; // The S bit.
   let Inst{15} = 0;
-  
+
   bits<4> Rd;
   bits<16> imm;
-  
+
   let Inst{11-8}  = Rd{3-0};
   let Inst{19-16} = imm{15-12};
   let Inst{26}    = imm{11};
@@ -2751,7 +2751,7 @@ class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let Inst{7-6} = 0b01;
   let Inst{5-4} = opcod;
   let Inst{3-0} = 0b1111;
-  
+
   bits<4> Rn;
   bits<4> Rt;
   let Inst{19-16} = Rn{3-0};
@@ -2766,7 +2766,7 @@ class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let Inst{11-8} = rt2;
   let Inst{7-6} = 0b01;
   let Inst{5-4} = opcod;
-  
+
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rt;
@@ -2902,7 +2902,7 @@ def t2LDMIA_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
                         "$Rn = $wb", []> {
   bits<4>  Rn;
   bits<16> regs;
- 
+
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = 0b01;     // Increment After
