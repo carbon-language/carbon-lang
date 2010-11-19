@@ -147,11 +147,10 @@ public:
   void HandleNewlinesInToken(const char *TokStr, unsigned Len);
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
-  void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
+  void MacroDefined(const Token &MacroNameTok, const MacroInfo *MI);
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
-  void MacroUndefined(SourceLocation Loc, const IdentifierInfo *II,
-                      const MacroInfo *MI);
+  void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI);
 };
 }  // end anonymous namespace
 
@@ -323,7 +322,7 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
 }
 
 /// MacroDefined - This hook is called whenever a macro definition is seen.
-void PrintPPOutputPPCallbacks::MacroDefined(const IdentifierInfo *II,
+void PrintPPOutputPPCallbacks::MacroDefined(const Token &MacroNameTok,
                                             const MacroInfo *MI) {
   // Only print out macro definitions in -dD mode.
   if (!DumpDefines ||
@@ -331,18 +330,17 @@ void PrintPPOutputPPCallbacks::MacroDefined(const IdentifierInfo *II,
       MI->isBuiltinMacro()) return;
 
   MoveToLine(MI->getDefinitionLoc());
-  PrintMacroDefinition(*II, *MI, PP, OS);
+  PrintMacroDefinition(*MacroNameTok.getIdentifierInfo(), *MI, PP, OS);
   EmittedMacroOnThisLine = true;
 }
 
-void PrintPPOutputPPCallbacks::MacroUndefined(SourceLocation Loc,
-                                              const IdentifierInfo *II,
+void PrintPPOutputPPCallbacks::MacroUndefined(const Token &MacroNameTok,
                                               const MacroInfo *MI) {
   // Only print out macro definitions in -dD mode.
   if (!DumpDefines) return;
 
-  MoveToLine(Loc);
-  OS << "#undef " << II->getName();
+  MoveToLine(MacroNameTok.getLocation());
+  OS << "#undef " << MacroNameTok.getIdentifierInfo()->getName();
   EmittedMacroOnThisLine = true;
 }
 
@@ -616,4 +614,3 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
   PrintPreprocessedTokens(PP, Tok, Callbacks, *OS);
   *OS << '\n';
 }
-

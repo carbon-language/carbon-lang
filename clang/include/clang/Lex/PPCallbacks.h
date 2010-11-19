@@ -113,17 +113,16 @@ public:
   /// MacroExpands - This is called by
   /// Preprocessor::HandleMacroExpandedIdentifier when a macro invocation is
   /// found.
-  virtual void MacroExpands(const Token &Id, const MacroInfo* MI) {
+  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI) {
   }
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
-  virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI) {
+  virtual void MacroDefined(const Token &MacroNameTok, const MacroInfo *MI) {
   }
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
   /// MI is released immediately following this callback.
-  virtual void MacroUndefined(SourceLocation Loc, const IdentifierInfo *II,
-                              const MacroInfo *MI) {
+  virtual void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI) {
   }
 
   /// If -- This hook is called whenever an #if is seen.
@@ -141,13 +140,13 @@ public:
   /// Ifdef -- This hook is called whenever an #ifdef is seen.
   /// \param Loc The location of the token being tested.
   /// \param II Information on the token being tested.
-  virtual void Ifdef(SourceLocation Loc, const IdentifierInfo* II) {
+  virtual void Ifdef(const Token &MacroNameTok) {
   }
 
   /// Ifndef -- This hook is called whenever an #ifndef is seen.
   /// \param Loc The location of the token being tested.
   /// \param II Information on the token being tested.
-  virtual void Ifndef(SourceLocation Loc, const IdentifierInfo* II) {
+  virtual void Ifndef(const Token &MacroNameTok) {
   }
 
   /// Else -- This hook is called whenever an #else is seen.
@@ -205,20 +204,19 @@ public:
     Second->PragmaMessage(Loc, Str);
   }
 
-  virtual void MacroExpands(const Token &Id, const MacroInfo* MI) {
-    First->MacroExpands(Id, MI);
-    Second->MacroExpands(Id, MI);
+  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI) {
+    First->MacroExpands(MacroNameTok, MI);
+    Second->MacroExpands(MacroNameTok, MI);
   }
 
-  virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI) {
-    First->MacroDefined(II, MI);
-    Second->MacroDefined(II, MI);
+  virtual void MacroDefined(const Token &MacroNameTok, const MacroInfo *MI) {
+    First->MacroDefined(MacroNameTok, MI);
+    Second->MacroDefined(MacroNameTok, MI);
   }
 
-  virtual void MacroUndefined(SourceLocation Loc, const IdentifierInfo *II,
-                              const MacroInfo *MI) {
-    First->MacroUndefined(Loc, II, MI);
-    Second->MacroUndefined(Loc, II, MI);
+  virtual void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI) {
+    First->MacroUndefined(MacroNameTok, MI);
+    Second->MacroUndefined(MacroNameTok, MI);
   }
 
   /// If -- This hook is called whenever an #if is seen.
@@ -234,15 +232,15 @@ public:
   }
 
   /// Ifdef -- This hook is called whenever an #ifdef is seen.
-  virtual void Ifdef(SourceLocation Loc, const IdentifierInfo* II) {
-    First->Ifdef(Loc, II);
-    Second->Ifdef(Loc, II);
+  virtual void Ifdef(const Token &MacroNameTok) {
+    First->Ifdef(MacroNameTok);
+    Second->Ifdef(MacroNameTok);
   }
 
   /// Ifndef -- This hook is called whenever an #ifndef is seen.
-  virtual void Ifndef(SourceLocation Loc, const IdentifierInfo* II) {
-    First->Ifndef(Loc, II);
-    Second->Ifndef(Loc, II);
+  virtual void Ifndef(const Token &MacroNameTok) {
+    First->Ifndef(MacroNameTok);
+    Second->Ifndef(MacroNameTok);
   }
 
   /// Else -- This hook is called whenever an #else is seen.

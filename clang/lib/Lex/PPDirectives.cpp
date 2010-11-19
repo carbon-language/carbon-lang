@@ -1532,7 +1532,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
 
   // If the callbacks want to know, tell them about the macro definition.
   if (Callbacks)
-    Callbacks->MacroDefined(MacroNameTok.getIdentifierInfo(), MI);
+    Callbacks->MacroDefined(MacroNameTok, MI);
 }
 
 /// HandleUndefDirective - Implements #undef.
@@ -1561,8 +1561,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
 
   // If the callbacks want to know, tell them about the macro #undef.
   if (Callbacks)
-    Callbacks->MacroUndefined(MacroNameTok.getLocation(),
-                              MacroNameTok.getIdentifierInfo(), MI);
+    Callbacks->MacroUndefined(MacroNameTok, MI);
 
   // Free macro definition.
   ReleaseMacroInfo(MI);
@@ -1633,9 +1632,9 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
 
   if (Callbacks) {
     if (isIfndef)
-      Callbacks->Ifndef(MacroNameTok.getLocation(), MII);
+      Callbacks->Ifndef(MacroNameTok);
     else
-      Callbacks->Ifdef(MacroNameTok.getLocation(), MII);
+      Callbacks->Ifdef(MacroNameTok);
   }
 }
 

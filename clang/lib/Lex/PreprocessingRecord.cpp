@@ -127,17 +127,18 @@ void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI) {
                                                       Def));
 }
 
-void PreprocessingRecord::MacroDefined(const IdentifierInfo *II, 
+void PreprocessingRecord::MacroDefined(const Token &Id,
                                        const MacroInfo *MI) {
   SourceRange R(MI->getDefinitionLoc(), MI->getDefinitionEndLoc());
   MacroDefinition *Def
-    = new (*this) MacroDefinition(II, MI->getDefinitionLoc(), R);
+      = new (*this) MacroDefinition(Id.getIdentifierInfo(),
+                                    MI->getDefinitionLoc(),
+                                    R);
   MacroDefinitions[MI] = Def;
   PreprocessedEntities.push_back(Def);
 }
 
-void PreprocessingRecord::MacroUndefined(SourceLocation Loc,
-                                         const IdentifierInfo *II,
+void PreprocessingRecord::MacroUndefined(const Token &Id,
                                          const MacroInfo *MI) {
   llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
     = MacroDefinitions.find(MI);
