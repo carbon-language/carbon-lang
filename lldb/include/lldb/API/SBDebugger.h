@@ -150,6 +150,12 @@ public:
     DispatchInput (void *baton, const void *data, size_t data_len);
 
     void
+    DispatchInputInterrupt ();
+
+    void
+    DispatchInputEndOfFile ();
+    
+    void
     PushInputReader (lldb::SBInputReader &reader);
 
     const char *
@@ -173,6 +179,9 @@ public:
     void
     SetTerminalWidth (uint32_t term_width);
 
+    lldb::user_id_t
+    GetID ();
+    
     const char *
     GetPrompt() const;
 

@@ -860,6 +860,12 @@ CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
         }
         break;
         
+    case eInputReaderInterrupt:
+    case eInputReaderEndOfFile:
+        *response_ptr = false;  // Assume ^C or ^D means cancel the proposed action
+        reader.SetIsDone (true);
+        break;
+        
     case eInputReaderDone:
         break;
     }

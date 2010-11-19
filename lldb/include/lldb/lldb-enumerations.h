@@ -287,6 +287,7 @@ typedef enum ReturnStatus
 typedef enum ConnectionStatus
 {
     eConnectionStatusSuccess,         // Success
+    eConnectionStatusEndOfFile,       // End-of-file encountered
     eConnectionStatusError,           // Check GetError() for details
     eConnectionStatusTimedOut,        // Request timed out
     eConnectionStatusNoConnection,    // No connection
@@ -397,6 +398,8 @@ typedef enum InputReaderAction
     eInputReaderReactivate, // reader is on top of the stack again after another reader was popped off 
     eInputReaderDeactivate, // another reader was pushed on the stack 
     eInputReaderGotToken,   // reader got one of its tokens (granularity)
+    eInputReaderInterrupt,  // reader received an interrupt signal (probably from a control-c)
+    eInputReaderEndOfFile,  // reader received an EOF char (probably from a control-d)
     eInputReaderDone        // reader was just popped off the stack and is done
 } InputReaderAction;
 

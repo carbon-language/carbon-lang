@@ -40,6 +40,7 @@ static void reset_stdin_termios ();
 static struct termios g_old_stdin_termios;
 
 static char *g_debugger_name =  (char *) "";
+static Driver *g_driver = NULL;
 
 // In the Driver::MainLoop, we change the terminal settings.  This function is
 // added as an atexit handler to make sure we clean them up.
@@ -98,10 +99,13 @@ Driver::Driver () :
     g_debugger_name = (char *) m_debugger.GetInstanceName();
     if (g_debugger_name == NULL)
         g_debugger_name = (char *) "";
+    g_driver = this;
 }
 
 Driver::~Driver ()
 {
+    g_driver = NULL;
+    g_debugger_name = NULL;
 }
 
 void
@@ -1091,6 +1095,23 @@ Driver::EditLineInputReaderCallback
     case eInputReaderDeactivate:
         break;
 
+    case eInputReaderInterrupt:
+        if (driver->m_io_channel_ap.get() != NULL)
+        {
+            driver->m_io_channel_ap->OutWrite ("^C\n", 3);
+            driver->m_io_channel_ap->RefreshPrompt();
+        }
+        break;
+        
+    case eInputReaderEndOfFile:
+        if (driver->m_io_channel_ap.get() != NULL)
+        {
+            driver->m_io_channel_ap->OutWrite ("^D\n", 3);
+            driver->m_io_channel_ap->RefreshPrompt ();
+        }
+        write (driver->m_editline_pty.GetMasterFileDescriptor(), "quit\n", 5);
+        break;
+
     case eInputReaderGotToken:
         write (driver->m_editline_pty.GetMasterFileDescriptor(), bytes, bytes_len);
         break;
@@ -1370,6 +1391,24 @@ sigwinch_handler (int signo)
     }
 }
 
+void
+sigint_handler (int signo)
+{
+	static bool g_interrupt_sent = false;
+    if (g_driver)
+	{
+		if (!g_interrupt_sent)
+		{
+			g_interrupt_sent = true;
+        	g_driver->GetDebugger().DispatchInputInterrupt();
+			g_interrupt_sent = false;
+			return;
+		}
+	}
+    
+	exit (signo);
+}
+
 int
 main (int argc, char const *argv[])
 {
@@ -1379,6 +1418,7 @@ main (int argc, char const *argv[])
 
     signal (SIGPIPE, SIG_IGN);
     signal (SIGWINCH, sigwinch_handler);
+    signal (SIGINT, sigint_handler);
 
     // Create a scope for driver so that the driver object will destroy itself
     // before SBDebugger::Terminate() is called.

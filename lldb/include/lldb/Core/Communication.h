@@ -376,7 +376,7 @@ protected:
     ///     The number of bytes to append to the cache.
     //------------------------------------------------------------------
     virtual void
-    AppendBytesToCache (const uint8_t *src, size_t src_len, bool broadcast);
+    AppendBytesToCache (const uint8_t *src, size_t src_len, bool broadcast, lldb::ConnectionStatus status);
 
     //------------------------------------------------------------------
     /// Get any available bytes from our data cache. If this call

@@ -199,7 +199,18 @@ CommandObjectExpression::MultiLineExpressionCallback
         //    ::fprintf (out_fh, "%3u: ", cmd_object_expr->m_expr_line_count);
         break;
         
+    case eInputReaderInterrupt:
+        cmd_object_expr->m_expr_lines.clear();
+        reader.SetIsDone (true);
+        reader.GetDebugger().GetOutputStream().Printf("%s\n", "Expression evaluation cancelled.");
+        break;
+        
+    case eInputReaderEndOfFile:
+        reader.SetIsDone (true);
+        break;
+        
     case eInputReaderDone:
+		if (cmd_object_expr->m_expr_lines.size() > 0)
         {
             cmd_object_expr->EvaluateExpression (cmd_object_expr->m_expr_lines.c_str(), 
                                                  reader.GetDebugger().GetOutputStream(), 

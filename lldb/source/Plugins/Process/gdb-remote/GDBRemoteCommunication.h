@@ -110,7 +110,7 @@ public:
     // Communication overrides
     //------------------------------------------------------------------
     virtual void
-    AppendBytesToCache (const uint8_t *src, size_t src_len, bool broadcast);
+    AppendBytesToCache (const uint8_t *src, size_t src_len, bool broadcast, lldb::ConnectionStatus status);
 
 
     lldb::pid_t

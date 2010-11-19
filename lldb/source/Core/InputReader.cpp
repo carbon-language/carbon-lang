@@ -324,6 +324,10 @@ InputReader::Notify (InputReaderAction notification)
         m_active = false;
         break;
     
+    case eInputReaderInterrupt:
+    case eInputReaderEndOfFile:
+        break;
+    
     case eInputReaderGotToken:
         return; // We don't notify the tokens here, it is done in HandleRawBytes
     }

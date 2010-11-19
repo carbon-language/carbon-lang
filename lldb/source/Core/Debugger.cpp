@@ -338,17 +338,54 @@ Debugger::GetTargetList ()
 void
 Debugger::DispatchInputCallback (void *baton, const void *bytes, size_t bytes_len)
 {
-    ((Debugger *)baton)->DispatchInput ((char *)bytes, bytes_len);
-}
+    if (bytes_len > 0)
+        ((Debugger *)baton)->DispatchInput ((char *)bytes, bytes_len);
+    else
+        ((Debugger *)baton)->DispatchInputEndOfFile ();
+}   
 
 
 void
 Debugger::DispatchInput (const char *bytes, size_t bytes_len)
 {
-//    if (bytes == NULL || bytes_len == 0)
-//        return;
+    if (bytes == NULL || bytes_len == 0)
+        return;
 
     WriteToDefaultReader (bytes, bytes_len);
+}
+
+void
+Debugger::DispatchInputInterrupt ()
+{
+    m_input_reader_data.clear();
+    
+    if (!m_input_readers.empty())
+    {
+        while (CheckIfTopInputReaderIsDone ()) ;
+        
+        InputReaderSP reader_sp(m_input_readers.top());
+        if (reader_sp)
+            reader_sp->Notify (eInputReaderInterrupt);
+
+        while (CheckIfTopInputReaderIsDone ()) ;
+    }
+}
+
+void
+Debugger::DispatchInputEndOfFile ()
+{
+    m_input_reader_data.clear();
+    
+    if (!m_input_readers.empty())
+    {
+        while (CheckIfTopInputReaderIsDone ()) ;
+        
+        InputReaderSP reader_sp(m_input_readers.top());
+        if (reader_sp)
+            reader_sp->Notify (eInputReaderEndOfFile);
+
+        while (CheckIfTopInputReaderIsDone ()) ;
+    }
 }
 
 void

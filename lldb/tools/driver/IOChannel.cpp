@@ -448,12 +448,12 @@ IOChannel::RefreshPrompt ()
     if (! IsGettingCommand())
         return;
 
-    // Compare the current time versus the last time el_gets was called.  If less than
-    // 10000 microseconds (10000000 nanoseconds) have elapsed, wait 10000 microseconds, to ensure el_gets had time
-    // to finish writing the prompt before we start writing here.
+    // Compare the current time versus the last time el_gets was called.  If less than 40 milliseconds
+    // (40,0000 microseconds or 40,000,0000 nanoseconds) have elapsed, wait 40,0000 microseconds, to ensure el_gets had
+    // time to finish writing the prompt before we start writing here.
 
-    if (ElapsedNanoSecondsSinceEnteringElGets() < 10000000)
-        usleep (10000);
+    if (ElapsedNanoSecondsSinceEnteringElGets() < (40 * 1000 * 1000))
+        usleep (40 * 1000);
 
     // Use the mutex to make sure OutWrite, ErrWrite and Refresh prompt do not interfere with
     // each other's output.

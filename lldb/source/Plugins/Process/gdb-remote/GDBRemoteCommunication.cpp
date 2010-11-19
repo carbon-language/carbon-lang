@@ -551,7 +551,8 @@ GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &response,
 }
 
 void
-GDBRemoteCommunication::AppendBytesToCache (const uint8_t *src, size_t src_len, bool broadcast)
+GDBRemoteCommunication::AppendBytesToCache (const uint8_t *src, size_t src_len, bool broadcast, 
+                                            ConnectionStatus status)
 {
     // Put the packet data into the buffer in a thread safe fashion
     Mutex::Locker locker(m_bytes_mutex);

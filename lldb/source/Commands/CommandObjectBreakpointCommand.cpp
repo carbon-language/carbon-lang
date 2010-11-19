@@ -468,6 +468,29 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
         }
         break;
         
+    case eInputReaderInterrupt:
+        {
+            // Finish, and cancel the breakpoint command.
+            reader.SetIsDone (true);
+            BreakpointOptions *bp_options = (BreakpointOptions *) baton;
+            if (bp_options)
+            {
+                Baton *bp_options_baton = bp_options->GetBaton ();
+                if (bp_options_baton)
+                {
+                    ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->user_source.Clear();
+                    ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->script_source.Clear();
+                }
+            }
+            ::fprintf (out_fh, "Warning: No command attached to breakpoint.\n");
+            ::fflush (out_fh);
+        }
+        break;
+        
+    case eInputReaderEndOfFile:
+        reader.SetIsDone (true);
+        break;
+        
     case eInputReaderDone:
         break;
     }

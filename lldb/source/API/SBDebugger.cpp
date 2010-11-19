@@ -659,6 +659,20 @@ SBDebugger::DispatchInput (void *baton, const void *data, size_t data_len)
 }
 
 void
+SBDebugger::DispatchInputInterrupt ()
+{
+    if (m_opaque_sp)
+        m_opaque_sp->DispatchInputInterrupt ();
+}
+
+void
+SBDebugger::DispatchInputEndOfFile ()
+{
+    if (m_opaque_sp)
+        m_opaque_sp->DispatchInputEndOfFile ();
+}
+
+void
 SBDebugger::PushInputReader (SBInputReader &reader)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -836,4 +850,12 @@ SBDebugger::GetDescription (SBStream &description)
         description.Printf ("No value");
     
     return true;
+}
+
+lldb::user_id_t
+SBDebugger::GetID()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetID();
+    return LLDB_INVALID_UID;
 }

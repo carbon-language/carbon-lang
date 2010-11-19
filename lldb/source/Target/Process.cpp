@@ -1478,10 +1478,6 @@ Process::Halt ()
                 }
                 else
                 {
-                    // Since we are eating the event, we need to update our state
-                    // otherwise the process state will not match reality...
-                    SetPublicState(state);
-
                     if (StateIsStoppedState (state))
                     {
                         // We caused the process to interrupt itself, so mark this
@@ -1508,7 +1504,7 @@ Process::Halt ()
         // stopped the process, intercepted the event and set the interrupted
         // bool in the event.
         if (event_sp)
-            BroadcastEvent(event_sp);
+            m_private_state_broadcaster.BroadcastEvent(event_sp);
 
     }
     return error;
@@ -2173,6 +2169,14 @@ Process::ProcessInputReaderCallback (void *baton,
             Error error;
             process->PutSTDIN (bytes, bytes_len, error);
         }
+        break;
+        
+    case eInputReaderInterrupt:
+        process->Halt ();
+        break;
+            
+    case eInputReaderEndOfFile:
+        process->AppendSTDOUT ("^D", 2);
         break;
         
     case eInputReaderDone:

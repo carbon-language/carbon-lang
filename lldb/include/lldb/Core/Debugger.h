@@ -331,6 +331,12 @@ public:
     GetTargetList ();
 
     void
+    DispatchInputInterrupt ();
+
+    void
+    DispatchInputEndOfFile ();
+
+    void
     DispatchInput (const char *bytes, size_t bytes_len);
 
     void

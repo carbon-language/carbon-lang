@@ -272,11 +272,6 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         PyRun_SimpleString (run_string.GetData());
         PyRun_SimpleString ("sys.stdin = new_stdin");
 
-        PyRun_SimpleString ("new_mode = tcgetattr(new_stdin)");
-        PyRun_SimpleString ("new_mode[3] = new_mode[3] | ECHO | ICANON");
-        PyRun_SimpleString ("new_mode[6][VEOF] = 255");
-        PyRun_SimpleString ("tcsetattr (new_stdin, TCSANOW, new_mode)");
-
         run_string.Clear();
         run_string.Printf ("lldb.debugger_unique_id = %d", interpreter.GetDebugger().GetID());
         PyRun_SimpleString (run_string.GetData());
@@ -302,25 +297,9 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
     {
         int success;
 
-
-        // Save the current input file handle state before executing the command.
-        int input_fd;
-        struct termios tmp_termios;
-        bool valid_termios = false;
-        FILE *input_fh = m_interpreter.GetDebugger().GetInputFileHandle();
-        if (input_fh != NULL)
-        {
-            input_fd = ::fileno (input_fh);
-            valid_termios = ::tcgetattr (input_fd, &tmp_termios) == 0;
-        }
-
         success = PyRun_SimpleString (command);
         if (success == 0)
             return true;
-
-        // Restore the input file handle state after executing the command.
-        if (valid_termios)
-            ::tcsetattr (input_fd, TCSANOW, &tmp_termios);
 
         // The one-liner failed.  Append the error message.
         if (result)
@@ -366,12 +345,6 @@ ScriptInterpreterPython::InputReaderCallback
 
             script_interpreter->m_termios_valid = ::tcgetattr (input_fd, &script_interpreter->m_termios) == 0;
             
-            if (script_interpreter->m_termios_valid)
-            {
-                struct termios tmp_termios = script_interpreter->m_termios;
-                tmp_termios.c_cc[VEOF] = _POSIX_VDISABLE;
-                ::tcsetattr (input_fd, TCSANOW, &tmp_termios);
-            }
             char error_str[1024];
             if (script_interpreter->m_embedded_python_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, error_str, 
                                                                                     sizeof(error_str)))
@@ -410,6 +383,14 @@ ScriptInterpreterPython::InputReaderCallback
         break;
 
     case eInputReaderReactivate:
+        break;
+        
+    case eInputReaderInterrupt:
+        ::write (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor(), "raise KeyboardInterrupt\n", 24);
+        break;
+        
+    case eInputReaderEndOfFile:
+        ::write (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor(), "quit()\n", 7);
         break;
 
     case eInputReaderGotToken:
@@ -724,6 +705,17 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
         }
         break;
 
+    case eInputReaderEndOfFile:
+    case eInputReaderInterrupt:
+        // Control-c (SIGINT) & control-d both mean finish & exit.
+        reader.SetIsDone(true);
+        
+        // Control-c (SIGINT) ALSO means cancel; do NOT create a breakpoint command.
+        if (notification == eInputReaderInterrupt)
+            commands_in_progress.Clear();  
+        
+        // Fall through here...
+
     case eInputReaderDone:
         {
             BreakpointOptions *bp_options = (BreakpointOptions *)baton;
@@ -843,6 +835,10 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
     int num_lines = user_input.GetSize ();
     StreamString sstr;
 
+    // Check to see if we have any data; if not, just return.
+    if (user_input.GetSize() == 0)
+        return false;
+
     // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
     // frame and breakpoint location as parameters to the function.
 
@@ -933,10 +929,6 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
         PyRun_SimpleString ("save_stdin = sys.stdin");
         run_string.Printf ("sys.stdin = open ('%s', 'r')", pty_slave_name);
         PyRun_SimpleString (run_string.GetData());
-        PyRun_SimpleString ("new_mode = tcgetattr(sys.stdin)");
-        PyRun_SimpleString ("new_mode[3] = new_mode[3] | ECHO | ICANON");
-        PyRun_SimpleString ("new_mode[6][VEOF] = 255");
-        PyRun_SimpleString ("tcsetattr (sys.stdin, TCSANOW, new_mode)");
         
 	    // The following call drops into the embedded interpreter loop and stays there until the
 	    // user chooses to exit from the Python interpreter.
