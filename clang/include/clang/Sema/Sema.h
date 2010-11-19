@@ -3521,24 +3521,6 @@ public:
     }
   };
 
-  /// \brief RAII class that determines when any errors have occurred
-  /// between the time the instance was created and the time it was
-  /// queried.
-  class ErrorTrap {
-    Sema &SemaRef;
-    unsigned PrevErrors;
-
-  public:
-    explicit ErrorTrap(Sema &SemaRef)
-      : SemaRef(SemaRef), PrevErrors(SemaRef.getDiagnostics().getNumErrors()) {}
-
-    /// \brief Determine whether any errors have occurred since this
-    /// object instance was created.
-    bool hasErrorOccurred() const {
-      return SemaRef.getDiagnostics().getNumErrors() > PrevErrors;
-    }
-  };
-
   /// \brief The current instantiation scope used to store local
   /// variables.
   LocalInstantiationScope *CurrentInstantiationScope;

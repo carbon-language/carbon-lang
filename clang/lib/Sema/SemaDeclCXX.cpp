@@ -4365,7 +4365,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
 
   ImplicitlyDefinedFunctionScope Scope(*this, Constructor);
-  ErrorTrap Trap(*this);
+  DiagnosticErrorTrap Trap(Diags);
   if (SetBaseOrMemberInitializers(Constructor, 0, 0, /*AnyErrors=*/false) ||
       Trap.hasErrorOccurred()) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
@@ -4473,7 +4473,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
 
   ImplicitlyDefinedFunctionScope Scope(*this, Destructor);
 
-  ErrorTrap Trap(*this);
+  DiagnosticErrorTrap Trap(Diags);
   MarkBaseAndMemberDestructorsReferenced(Destructor->getLocation(),
                                          Destructor->getParent());
 
@@ -4878,7 +4878,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   CopyAssignOperator->setUsed();
 
   ImplicitlyDefinedFunctionScope Scope(*this, CopyAssignOperator);
-  ErrorTrap Trap(*this);
+  DiagnosticErrorTrap Trap(Diags);
 
   // C++0x [class.copy]p30:
   //   The implicitly-defined or explicitly-defaulted copy assignment operator
@@ -5340,7 +5340,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
 
   ImplicitlyDefinedFunctionScope Scope(*this, CopyConstructor);
-  ErrorTrap Trap(*this);
+  DiagnosticErrorTrap Trap(Diags);
 
   if (SetBaseOrMemberInitializers(CopyConstructor, 0, 0, /*AnyErrors=*/false) ||
       Trap.hasErrorOccurred()) {

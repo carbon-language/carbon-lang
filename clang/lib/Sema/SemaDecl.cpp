@@ -696,7 +696,7 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     if (!D->getDeclName()) continue;
 
     // Diagnose unused variables in this scope.
-    if (S->getNumErrorsAtStart() == getDiagnostics().getNumErrors())
+    if (!S->hasErrorOccurred())
       DiagnoseUnusedDecl(D);
     
     // Remove this name from our lexical scope.

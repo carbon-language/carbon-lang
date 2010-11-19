@@ -29,6 +29,7 @@ namespace clang {
   class DeclContext;
   class LangOptions;
   class Preprocessor;
+  class DiagnosticErrorTrap;
 
 /// \brief Annotates a diagnostic with some code that should be
 /// inserted, removed, or replaced to fix the problem.
@@ -486,6 +487,7 @@ private:
   friend class DiagnosticBuilder;
   friend class DiagnosticInfo;
   friend class PartialDiagnostic;
+  friend class DiagnosticErrorTrap;
   
   /// CurDiagLoc - This is the location of the current diagnostic that is in
   /// flight.
@@ -547,6 +549,27 @@ private:
 
   friend class ASTReader;
   friend class ASTWriter;
+};
+
+/// \brief RAII class that determines when any errors have occurred
+/// between the time the instance was created and the time it was
+/// queried.
+class DiagnosticErrorTrap {
+  Diagnostic &Diag;
+  unsigned PrevErrors;
+
+public:
+  explicit DiagnosticErrorTrap(Diagnostic &Diag)
+    : Diag(Diag), PrevErrors(Diag.NumErrors) {}
+
+  /// \brief Determine whether any errors have occurred since this
+  /// object instance was created.
+  bool hasErrorOccurred() const {
+    return Diag.NumErrors > PrevErrors;
+  }
+
+  // Set to initial state of "no errors occurred".
+  void reset() { PrevErrors = Diag.NumErrors; }
 };
 
 //===----------------------------------------------------------------------===//

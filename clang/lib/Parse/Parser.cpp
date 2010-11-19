@@ -305,9 +305,8 @@ void Parser::EnterScope(unsigned ScopeFlags) {
     N->Init(getCurScope(), ScopeFlags);
     Actions.CurScope = N;
   } else {
-    Actions.CurScope = new Scope(getCurScope(), ScopeFlags);
+    Actions.CurScope = new Scope(getCurScope(), ScopeFlags, Diags);
   }
-  getCurScope()->setNumErrorsAtStart(Diags.getNumErrors());
 }
 
 /// ExitScope - Pop a scope off the scope stack.
