@@ -904,7 +904,7 @@ multiclass AI_ldr1<bit isByte, string opc, InstrItinClass iii,
   // Note: We use the complex addrmode_imm12 rather than just an input
   // GPR and a constrained immediate so that we can use this to match
   // frame index references and avoid matching constant pool references.
-  def i12: AIldst1<0b010, 1, isByte, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
+  def i12: AI2ldst<0b010, 1, isByte, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
                    AddrMode_i12, LdFrm, iii, opc, "\t$Rt, $addr",
                   [(set GPR:$Rt, (opnode addrmode_imm12:$addr))]> {
     bits<4>  Rt;
@@ -914,7 +914,7 @@ multiclass AI_ldr1<bit isByte, string opc, InstrItinClass iii,
     let Inst{15-12} = Rt;
     let Inst{11-0}  = addr{11-0};   // imm12
   }
-  def rs : AIldst1<0b011, 1, isByte, (outs GPR:$Rt), (ins ldst_so_reg:$shift),
+  def rs : AI2ldst<0b011, 1, isByte, (outs GPR:$Rt), (ins ldst_so_reg:$shift),
                   AddrModeNone, LdFrm, iir, opc, "\t$Rt, $shift",
                  [(set GPR:$Rt, (opnode ldst_so_reg:$shift))]> {
     bits<4>  Rt;
@@ -932,7 +932,7 @@ multiclass AI_str1<bit isByte, string opc, InstrItinClass iii,
   // Note: We use the complex addrmode_imm12 rather than just an input
   // GPR and a constrained immediate so that we can use this to match
   // frame index references and avoid matching constant pool references.
-  def i12 : AIldst1<0b010, 0, isByte, (outs),
+  def i12 : AI2ldst<0b010, 0, isByte, (outs),
                    (ins GPR:$Rt, addrmode_imm12:$addr),
                    AddrMode_i12, StFrm, iii, opc, "\t$Rt, $addr",
                   [(opnode GPR:$Rt, addrmode_imm12:$addr)]> {
@@ -943,7 +943,7 @@ multiclass AI_str1<bit isByte, string opc, InstrItinClass iii,
     let Inst{15-12} = Rt;
     let Inst{11-0}  = addr{11-0};   // imm12
   }
-  def rs : AIldst1<0b011, 0, isByte, (outs), (ins GPR:$Rt, ldst_so_reg:$shift),
+  def rs : AI2ldst<0b011, 0, isByte, (outs), (ins GPR:$Rt, ldst_so_reg:$shift),
                   AddrModeNone, StFrm, iir, opc, "\t$Rt, $shift",
                  [(opnode GPR:$Rt, ldst_so_reg:$shift)]> {
     bits<4> Rt;
@@ -1551,7 +1551,7 @@ defm STRB : AI_str1<1, "strb", IIC_iStore_bh_r, IIC_iStore_bh_si,
 // Special LDR for loads from non-pc-relative constpools.
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
     isReMaterializable = 1 in
-def LDRcp : AIldst1<0b010, 1, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
+def LDRcp : AI2ldst<0b010, 1, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
                  AddrMode_i12, LdFrm, IIC_iLoad_r, "ldr", "\t$Rt, $addr",
                  []> {
   bits<4> Rt;

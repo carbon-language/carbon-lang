@@ -431,8 +431,8 @@ class AI1x2<dag oops, dag iops, Format f, InstrItinClass itin,
 
 // loads
 
-// LDR/LDRB/STR/STRB
-class AIldst1<bits<3> op, bit isLd, bit isByte, dag oops, dag iops, AddrMode am,
+// LDR/LDRB/STR/STRB/...
+class AI2ldst<bits<3> op, bit isLd, bit isByte, dag oops, dag iops, AddrMode am,
              Format f, InstrItinClass itin, string opc, string asm,
              list<dag> pattern>
   : I<oops, iops, am, Size4Bytes, IndexModeNone, f, itin, opc, asm,
