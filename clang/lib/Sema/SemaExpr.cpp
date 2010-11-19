@@ -4295,8 +4295,13 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
     if (CheckFunctionCall(FDecl, TheCall))
       return ExprError();
 
-    if (unsigned BuiltinID = FDecl->getBuiltinID())
-      return CheckBuiltinFunctionCall(BuiltinID, TheCall);
+    if (unsigned BuiltinID = FDecl->getBuiltinID()) {
+      // When not in Objective-C mode, there is no builtin 'id' type.
+      // We won't have pre-defined library functions which use this type.
+      if (getLangOptions().ObjC1 ||
+          Context.BuiltinInfo.GetTypeString(BuiltinID)[0] != 'G')
+        return CheckBuiltinFunctionCall(BuiltinID, TheCall);
+    }
   } else if (NDecl) {
     if (CheckBlockCall(NDecl, TheCall))
       return ExprError();
