@@ -572,7 +572,6 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc dl = MI.getDebugLoc();
 
@@ -591,7 +590,8 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   else if (AFI->isGPRCalleeSavedArea2Frame(FrameIndex))
     Offset -= AFI->getGPRCalleeSavedArea2Offset();
   else if (MF.getFrameInfo()->hasVarSizedObjects()) {
-    assert(SPAdj == 0 && TFI->hasFP(MF) && "Unexpected");
+    assert(SPAdj == 0 && MF.getTarget().getFrameInfo()->hasFP(MF) &&
+           "Unexpected");
     // There are alloca()'s in this function, must reference off the frame
     // pointer or base pointer instead.
     if (!hasBasePointer(MF)) {

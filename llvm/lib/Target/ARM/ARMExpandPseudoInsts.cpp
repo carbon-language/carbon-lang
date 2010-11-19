@@ -601,7 +601,6 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
 
     case ARM::Int_eh_sjlj_dispatchsetup: {
       MachineFunction &MF = *MI.getParent()->getParent();
-      const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
       const ARMBaseInstrInfo *AII =
         static_cast<const ARMBaseInstrInfo*>(TII);
       const ARMBaseRegisterInfo &RI = AII->getRegisterInfo();
@@ -612,7 +611,8 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
         int32_t NumBytes = AFI->getFramePtrSpillOffset();
         unsigned FramePtr = RI.getFrameRegister(MF);
-        assert (TFI->hasFP(MF) && "base pointer without frame pointer?");
+        assert(MF.getTarget().getFrameInfo()->hasFP(MF) &&
+               "base pointer without frame pointer?");
 
         if (AFI->isThumb2Function()) {
           llvm::emitT2RegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
