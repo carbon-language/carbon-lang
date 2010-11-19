@@ -503,16 +503,6 @@ class AXI2stb<dag oops, dag iops, Format f, InstrItinClass itin,
 }
 
 // addrmode3 instructions
-class AI3<dag oops, dag iops, Format f, InstrItinClass itin,
-          string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, itin,
-      opc, asm, "", pattern>;
-class AXI3<dag oops, dag iops, Format f, InstrItinClass itin,
-           string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, itin,
-       asm, "", pattern>;
-
-
 class AI3ld<bits<4> op, bit op20, dag oops, dag iops, Format f,
             InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, itin,
