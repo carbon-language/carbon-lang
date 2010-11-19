@@ -254,14 +254,14 @@ ClangExpressionParser::ClangExpressionParser(const char *target_triple,
     
     // 6. Most of this we get from the CompilerInstance, but we 
     // also want to give the context an ExternalASTSource.
-    SelectorTable selector_table;
+    m_selector_table.reset(new SelectorTable());
     m_builtin_context.reset(new Builtin::Context(m_compiler->getTarget()));
     
     std::auto_ptr<clang::ASTContext> ast_context(new ASTContext(m_compiler->getLangOpts(),
                                                                 m_compiler->getSourceManager(),
                                                                 m_compiler->getTarget(),
                                                                 m_compiler->getPreprocessor().getIdentifierTable(),
-                                                                selector_table,
+                                                                *m_selector_table.get(),
                                                                 *m_builtin_context.get(),
                                                                 0));
     

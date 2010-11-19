@@ -177,6 +177,7 @@ private:
     std::auto_ptr<clang::FileSystemOptions>     m_file_system_options;  ///< The Clang file system options object used by the compiler
     std::auto_ptr<clang::CompilerInstance>      m_compiler;             ///< The Clang compiler used to parse expressions into IR
     std::auto_ptr<clang::Builtin::Context>      m_builtin_context;      ///< Context for Clang built-ins
+    std::auto_ptr<clang::SelectorTable>         m_selector_table;       ///< Selector table for Objective-C methods
     std::auto_ptr<clang::ASTContext>            m_ast_context;          ///< The AST context used to hold types and names for the parser
     std::auto_ptr<clang::CodeGenerator>         m_code_generator;       ///< [owned by the Execution Engine] The Clang object that generates IR
     RecordingMemoryManager                     *m_jit_mm;               ///< The memory manager for the LLVM JIT

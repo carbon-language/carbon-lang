@@ -385,15 +385,7 @@ private:
     ConstString                 m_result_name;              ///< The name of the result variable ($1, for example)
     TypeFromUser                m_object_pointer_type;      ///< The type of the "this" variable, if one exists.
     
-    llvm::DenseMap <const char*, bool>  m_lookedup_types;   ///< Contains each type that has been looked up in the current type lookup stack.
-                                                            ///< m_lookedup_types is used to gate the type search in GetDecls().  If a name is
-                                                            ///< not in it, the following procedure occurs:
-                                                            ///<   1 The name is added to m_lookedup_types.
-                                                            ///<   2 The type is looked up and added, potentially causing more type loookups.
-                                                            ///<   3 The name is removed from m_lookedup_types.
-                                                            ///< There must be no non-fatal error path that permits the type search to complete
-                                                            ///< without removing the name from m_lookedup_types at the end.
-                                                            ///< m_lookedup_type assumes single threadedness.
+    bool                        m_ignore_lookups;           ///< True during an import when we should be ignoring type lookups.
       
     //------------------------------------------------------------------
     /// Given a stack frame, find a variable that matches the given name and 
@@ -611,6 +603,27 @@ private:
                                   TypeFromUser type,
                                   lldb::addr_t addr, 
                                   Error &err);
+    
+    //------------------------------------------------------------------
+    /// A wrapper for ClangASTContext::CopyType that sets a flag that
+    /// indicates that we should not respond to queries during import.
+    ///
+    /// @param[in] dest_context
+    ///     The target AST context, typically the parser's AST context.
+    ///
+    /// @param[in] source_context
+    ///     The source AST context, typically the AST context of whatever
+    ///     symbol file the type was found in.
+    ///
+    /// @param[in] clang_type
+    ///     The source type.
+    ///
+    /// @return
+    ///     The imported type.
+    //------------------------------------------------------------------
+    void *GuardedCopyType (clang::ASTContext *dest_context, 
+                           clang::ASTContext *source_context,
+                           void *clang_type);
 };
     
 } // namespace lldb_private

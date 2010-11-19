@@ -57,7 +57,7 @@ ClangExpressionDeclMap::ClangExpressionDeclMap (ExecutionContext *exe_ctx) :
     m_materialized_location (0),
     m_result_name (),
     m_object_pointer_type (),
-    m_lookedup_types ()
+    m_ignore_lookups (false)
 {
     if (exe_ctx)
     {
@@ -990,6 +990,13 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
     // Back out in all cases where we're not fully initialized
     if (m_exe_ctx.frame == NULL)
         return;
+    
+    if (m_ignore_lookups)
+    {
+        if (log)
+            log->Printf("Ignoring a query during an import");
+        return;
+    }
         
     SymbolContextList sc_list;
     
@@ -1117,36 +1124,22 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             AddOneVariable(context, pvar);
     }
     
-    
-    // See information on gating of this operation next to the definition for
-    // m_lookedup_types.
-
-    if (m_lookedup_types.find(name_unique_cstr) == m_lookedup_types.end())
+    lldb::TypeSP type_sp (m_sym_ctx.FindTypeByName (name));
+        
+    if (type_sp)
     {
-        // 1 The name is added to m_lookedup_types.
-        m_lookedup_types.insert(std::pair<const char*, bool>(name_unique_cstr, true));
-        
-        // 2 The type is looked up and added, potentially causing more type loookups.
-        lldb::TypeSP type_sp (m_sym_ctx.FindTypeByName (name));
-        
-        if (type_sp)
+        if (log)
         {
-            if (log)
-            {
-                log->Printf ("Matching type found for \"%s\": ", name.GetCString());
-                StreamString strm;
-                type_sp->Dump(&strm, true);
-                log->PutCString (strm.GetData());
-            }
+            log->Printf ("Matching type found for \"%s\": ", name.GetCString());
+            StreamString strm;
+            type_sp->Dump(&strm, true);
+            log->PutCString (strm.GetData());
+        }
 
-            TypeFromUser user_type(type_sp->GetClangType(),
+        TypeFromUser user_type(type_sp->GetClangType(),
                                    type_sp->GetClangAST());
             
-            AddOneType(context, user_type, false);
-        }
-        
-        // 3 The name is removed from m_lookedup_types.
-        m_lookedup_types.erase(name_unique_cstr);
+        AddOneType(context, user_type, false);
     }
 }
         
@@ -1225,7 +1218,7 @@ ClangExpressionDeclMap::GetVariableValue
     
     if (parser_ast_context)
     {
-        type_to_use = ClangASTContext::CopyType(parser_ast_context, var_ast_context, var_opaque_type);
+        type_to_use = GuardedCopyType(parser_ast_context, var_ast_context, var_opaque_type);
         
         if (parser_type)
             *parser_type = TypeFromParser(type_to_use, parser_ast_context);
@@ -1310,9 +1303,9 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     TypeFromUser user_type = pvar->m_user_type;
     
-    TypeFromParser parser_type(ClangASTContext::CopyType(context.GetASTContext(), 
-                                                         user_type.GetASTContext(), 
-                                                         user_type.GetOpaqueQualType()),
+    TypeFromParser parser_type(GuardedCopyType(context.GetASTContext(), 
+                                               user_type.GetASTContext(), 
+                                               user_type.GetOpaqueQualType()),
                                context.GetASTContext());
     
     NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
@@ -1386,7 +1379,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
         
         TypeList *type_list = fun_type->GetTypeList();
         fun_ast_context = type_list->GetClangASTContext().getASTContext();
-        void *copied_type = ClangASTContext::CopyType(context.GetASTContext(), fun_ast_context, fun_opaque_type);
+        void *copied_type = GuardedCopyType(context.GetASTContext(), fun_ast_context, fun_opaque_type);
         
         fun_decl = context.AddFunDecl(copied_type);
     }
@@ -1436,7 +1429,7 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
     clang::ASTContext *parser_ast_context = context.GetASTContext();
     clang::ASTContext *user_ast_context = ut.GetASTContext();
     
-    void *copied_type = ClangASTContext::CopyType(parser_ast_context, user_ast_context, ut.GetOpaqueQualType());
+    void *copied_type = GuardedCopyType(parser_ast_context, user_ast_context, ut.GetOpaqueQualType());
  
     TypeFromParser parser_type(copied_type, parser_ast_context);
     
@@ -1470,4 +1463,20 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
     }
     
     context.AddTypeDecl(copied_type);
+}
+
+void * 
+ClangExpressionDeclMap::GuardedCopyType (ASTContext *dest_context, 
+                                         ASTContext *source_context,
+                                         void *clang_type)
+{
+    m_ignore_lookups = true;
+    
+    void *ret = ClangASTContext::CopyType (dest_context,
+                                           source_context,
+                                           clang_type);
+    
+    m_ignore_lookups = false;
+    
+    return ret;
 }
