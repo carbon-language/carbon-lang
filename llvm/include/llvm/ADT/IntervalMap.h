@@ -327,12 +327,15 @@ struct NodeSizer {
     DesiredLeafSize = DesiredNodeBytes /
       static_cast<unsigned>(2*sizeof(KeyT)+sizeof(ValT)),
     MinLeafSize = 3,
-    LeafSize = DesiredLeafSize > MinLeafSize ? DesiredLeafSize : MinLeafSize,
+    LeafSize = DesiredLeafSize > MinLeafSize ? DesiredLeafSize : MinLeafSize
+  };
 
+  typedef NodeBase<std::pair<KeyT, KeyT>, ValT, LeafSize> LeafBase;
+
+  enum {
     // Now that we have the leaf branching factor, compute the actual allocation
     // unit size by rounding up to a whole number of cache lines.
-    LeafBytes = sizeof(NodeBase<std::pair<KeyT, KeyT>, ValT, LeafSize>),
-    AllocBytes = (LeafBytes + CacheLineBytes-1) & ~(CacheLineBytes-1),
+    AllocBytes = (sizeof(LeafBase) + CacheLineBytes-1) & ~(CacheLineBytes-1),
 
     // Determine the branching factor for branch nodes.
     BranchSize = AllocBytes /
