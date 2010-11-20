@@ -3035,7 +3035,13 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
                         }
                         if (type_sp)
+                        {
+                            // We found a real definition for this type elsewhere
+                            // so lets use it and cache the fact that we found
+                            // a complete type for this die
+                            m_die_to_type[die] = type_sp.get();
                             return type_sp;
+                        }
                     }
                     assert (tag_decl_kind != -1);
                     bool clang_type_was_created = false;
