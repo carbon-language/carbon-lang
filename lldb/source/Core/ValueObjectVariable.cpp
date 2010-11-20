@@ -118,7 +118,7 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
             loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.target);
     }
     Value old_value(m_value);
-    if (expr.Evaluate (&exe_ctx, GetClangAST(), loclist_base_load_addr, NULL, m_value, &m_error))
+    if (expr.Evaluate (&exe_ctx, GetClangAST(), NULL, loclist_base_load_addr, NULL, m_value, &m_error))
     {
         m_value.SetContext(Value::eContextTypeVariable, variable);
 

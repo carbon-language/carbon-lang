@@ -104,6 +104,12 @@ public:
             void
             SetIsDWARFExpression (const uint8_t *opcodes, uint32_t len);
 
+            const uint8_t *
+            GetDWARFExpressionBytes () { return m_location.expr.opcodes; }
+
+            int
+            GetDWARFExpressionLength () { return m_location.expr.length; }
+
             void
             Dump (Stream &s) const;
 

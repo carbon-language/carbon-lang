@@ -631,47 +631,37 @@ DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t
 static bool
 ReadRegisterValueAsScalar
 (
-    ExecutionContext *exe_ctx,
+    RegisterContext *reg_context,
     uint32_t reg_kind,
     uint32_t reg_num,
     Error *error_ptr,
     Value &value
 )
 {
-    if (exe_ctx && exe_ctx->frame)
+    if (reg_context == NULL)
     {
-        RegisterContext *reg_context = exe_ctx->frame->GetRegisterContext();
-
-        if (reg_context == NULL)
-        {
-            if (error_ptr)
-                error_ptr->SetErrorStringWithFormat("No register context in frame.\n");
-        }
-        else
-        {
-            uint32_t native_reg = reg_context->ConvertRegisterKindToRegisterNumber(reg_kind, reg_num);
-            if (native_reg == LLDB_INVALID_REGNUM)
-            {
-                if (error_ptr)
-                    error_ptr->SetErrorStringWithFormat("Unable to convert register kind=%u reg_num=%u to a native register number.\n", reg_kind, reg_num);
-            }
-            else
-            {
-                value.SetValueType (Value::eValueTypeScalar);
-                value.SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_context->GetRegisterInfoAtIndex(native_reg)));
-
-                if (reg_context->ReadRegisterValue (native_reg, value.GetScalar()))
-                    return true;
-
-                if (error_ptr)
-                    error_ptr->SetErrorStringWithFormat("Failed to read register %u.\n", native_reg);
-            }
-        }
+        if (error_ptr)
+            error_ptr->SetErrorStringWithFormat("No register context in frame.\n");
     }
     else
     {
-        if (error_ptr)
-            error_ptr->SetErrorStringWithFormat("Invalid frame in execution context.\n");
+        uint32_t native_reg = reg_context->ConvertRegisterKindToRegisterNumber(reg_kind, reg_num);
+        if (native_reg == LLDB_INVALID_REGNUM)
+        {
+            if (error_ptr)
+                error_ptr->SetErrorStringWithFormat("Unable to convert register kind=%u reg_num=%u to a native register number.\n", reg_kind, reg_num);
+        }
+        else
+        {
+            value.SetValueType (Value::eValueTypeScalar);
+            value.SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_context->GetRegisterInfoAtIndex(native_reg)));
+
+            if (reg_context->ReadRegisterValue (native_reg, value.GetScalar()))
+                return true;
+
+            if (error_ptr)
+                error_ptr->SetErrorStringWithFormat("Failed to read register %u.\n", native_reg);
+        }
     }
     return false;
 }
@@ -766,7 +756,7 @@ DWARFExpression::Evaluate
 ) const
 {
     ExecutionContext exe_ctx (exe_scope);
-    return Evaluate(&exe_ctx, ast_context, loclist_base_load_addr, initial_value_ptr, result, error_ptr);
+    return Evaluate(&exe_ctx, ast_context, NULL, loclist_base_load_addr, initial_value_ptr, result, error_ptr);
 }
 
 bool
@@ -774,6 +764,7 @@ DWARFExpression::Evaluate
 (
     ExecutionContext *exe_ctx,
     clang::ASTContext *ast_context,
+    RegisterContext *reg_ctx,
     lldb::addr_t loclist_base_load_addr,
     const Value* initial_value_ptr,
     Value& result,
@@ -783,7 +774,11 @@ DWARFExpression::Evaluate
     if (IsLocationList())
     {
         uint32_t offset = 0;
-        addr_t pc = exe_ctx->frame->GetRegisterContext()->GetPC();
+        addr_t pc;
+        if (reg_ctx)
+            pc = reg_ctx->GetPC();
+        else
+            pc = exe_ctx->frame->GetRegisterContext()->GetPC();
 
         if (loclist_base_load_addr != LLDB_INVALID_ADDRESS)
         {
@@ -814,7 +809,7 @@ DWARFExpression::Evaluate
 
                     if (length > 0 && lo_pc <= pc && pc < hi_pc)
                     {
-                        return DWARFExpression::Evaluate (exe_ctx, ast_context, m_data, m_expr_locals, m_decl_map, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
+                        return DWARFExpression::Evaluate (exe_ctx, ast_context, m_data, m_expr_locals, m_decl_map, reg_ctx, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
                     }
                     offset += length;
                 }
@@ -826,7 +821,7 @@ DWARFExpression::Evaluate
     }
 
     // Not a location list, just a single expression.
-    return DWARFExpression::Evaluate (exe_ctx, ast_context, m_data, m_expr_locals, m_decl_map, 0, m_data.GetByteSize(), m_reg_kind, initial_value_ptr, result, error_ptr);
+    return DWARFExpression::Evaluate (exe_ctx, ast_context, m_data, m_expr_locals, m_decl_map, reg_ctx, 0, m_data.GetByteSize(), m_reg_kind, initial_value_ptr, result, error_ptr);
 }
 
 
@@ -839,6 +834,7 @@ DWARFExpression::Evaluate
     const DataExtractor& opcodes,
     ClangExpressionVariableList *expr_locals,
     ClangExpressionDeclMap *decl_map,
+    RegisterContext *reg_ctx,
     const uint32_t opcodes_offset,
     const uint32_t opcodes_length,
     const uint32_t reg_kind,
@@ -848,6 +844,9 @@ DWARFExpression::Evaluate
 )
 {
     std::vector<Value> stack;
+
+    if (reg_ctx == NULL && exe_ctx && exe_ctx->frame)
+        reg_ctx = exe_ctx->frame->GetRegisterContext();
 
     if (initial_value_ptr)
         stack.push_back(*initial_value_ptr);
@@ -1015,9 +1014,86 @@ DWARFExpression::Evaluate
         // on the expression stack.
         //----------------------------------------------------------------------
         case DW_OP_deref_size:
-            if (error_ptr)
-                error_ptr->SetErrorString("Unimplemented opcode: DW_OP_deref_size.");
-            return false;
+            {
+                uint8_t size = opcodes.GetU8(&offset);
+                Value::ValueType value_type = stack.back().GetValueType();
+                switch (value_type)
+                {
+                case Value::eValueTypeHostAddress:
+                    {
+                        void *src = (void *)stack.back().GetScalar().ULongLong();
+                        intptr_t ptr;
+                        ::memcpy (&ptr, src, sizeof(void *));
+                        // I can't decide whether the size operand should apply to the bytes in their
+                        // lldb-host endianness or the target endianness.. I doubt this'll ever come up
+                        // but I'll opt for assuming big endian regardless.
+                        switch (size)
+                        {
+                            case 1: ptr = ptr & 0xff; break;
+                            case 2: ptr = ptr & 0xffff; break;
+                            case 3: ptr = ptr & 0xffffff; break;
+                            case 4: ptr = ptr & 0xffffffff; break;
+                            case 5: ptr = ptr & 0xffffffffff; break;
+                            case 6: ptr = ptr & 0xffffffffffff; break;
+                            case 7: ptr = ptr & 0xffffffffffffff; break;
+                            default: break;
+                        }
+                        stack.back().GetScalar() = ptr;
+                        stack.back().ClearContext();
+                    }
+                    break;
+                case Value::eValueTypeLoadAddress:
+                    if (exe_ctx)
+                    {
+                        if (exe_ctx->process)
+                        {
+                            lldb::addr_t pointer_addr = stack.back().GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+                            uint8_t addr_bytes[sizeof(lldb::addr_t)];
+                            Error error;
+                            if (exe_ctx->process->ReadMemory(pointer_addr, &addr_bytes, size, error) == size)
+                            {
+                                DataExtractor addr_data(addr_bytes, sizeof(addr_bytes), exe_ctx->process->GetByteOrder(), size);
+                                uint32_t addr_data_offset = 0;
+                                switch (size)
+                                {
+                                    case 1: stack.back().GetScalar() = addr_data.GetU8(&addr_data_offset); break;
+                                    case 2: stack.back().GetScalar() = addr_data.GetU16(&addr_data_offset); break;
+                                    case 4: stack.back().GetScalar() = addr_data.GetU32(&addr_data_offset); break;
+                                    case 8: stack.back().GetScalar() = addr_data.GetU64(&addr_data_offset); break;
+                                    default: stack.back().GetScalar() = addr_data.GetPointer(&addr_data_offset);
+                                }
+                                stack.back().ClearContext();
+                            }
+                            else
+                            {
+                                if (error_ptr)
+                                    error_ptr->SetErrorStringWithFormat ("Failed to dereference pointer from 0x%llx for DW_OP_deref: %s\n", 
+                                                                         pointer_addr,
+                                                                         error.AsCString());
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            if (error_ptr)
+                                error_ptr->SetErrorStringWithFormat ("NULL process for DW_OP_deref.\n");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        if (error_ptr)
+                            error_ptr->SetErrorStringWithFormat ("NULL execution context for DW_OP_deref.\n");
+                        return false;
+                    }
+                    break;
+
+                default:
+                    break;
+                }
+
+            }
+            break;
 
         //----------------------------------------------------------------------
         // OPCODE: DW_OP_xderef_size
@@ -1837,7 +1913,7 @@ DWARFExpression::Evaluate
             {
                 reg_num = op - DW_OP_reg0;
 
-                if (ReadRegisterValueAsScalar (exe_ctx, reg_kind, reg_num, error_ptr, tmp))
+                if (ReadRegisterValueAsScalar (reg_ctx, reg_kind, reg_num, error_ptr, tmp))
                     stack.push_back(tmp);
                 else
                     return false;
@@ -1852,7 +1928,7 @@ DWARFExpression::Evaluate
         case DW_OP_regx:
             {
                 reg_num = opcodes.GetULEB128(&offset);
-                if (ReadRegisterValueAsScalar (exe_ctx, reg_kind, reg_num, error_ptr, tmp))
+                if (ReadRegisterValueAsScalar (reg_ctx, reg_kind, reg_num, error_ptr, tmp))
                     stack.push_back(tmp);
                 else
                     return false;
@@ -1901,7 +1977,7 @@ DWARFExpression::Evaluate
             {
                 reg_num = op - DW_OP_breg0;
 
-                if (ReadRegisterValueAsScalar (exe_ctx, reg_kind, reg_num, error_ptr, tmp))
+                if (ReadRegisterValueAsScalar (reg_ctx, reg_kind, reg_num, error_ptr, tmp))
                 {
                     int64_t breg_offset = opcodes.GetSLEB128(&offset);
                     tmp.ResolveValue(exe_ctx, ast_context) += (uint64_t)breg_offset;
@@ -1924,7 +2000,7 @@ DWARFExpression::Evaluate
             {
                 reg_num = opcodes.GetULEB128(&offset);
 
-                if (ReadRegisterValueAsScalar (exe_ctx, reg_kind, reg_num, error_ptr, tmp))
+                if (ReadRegisterValueAsScalar (reg_ctx, reg_kind, reg_num, error_ptr, tmp))
                 {
                     int64_t breg_offset = opcodes.GetSLEB128(&offset);
                     tmp.ResolveValue(exe_ctx, ast_context) += (uint64_t)breg_offset;

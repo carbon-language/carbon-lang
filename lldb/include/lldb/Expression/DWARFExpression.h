@@ -201,6 +201,7 @@ public:
     bool
     Evaluate (ExecutionContext *exe_ctx,
               clang::ASTContext *ast_context,
+              RegisterContext *reg_ctx,
               lldb::addr_t loclist_base_load_addr,
               const Value* initial_value_ptr,
               Value& result,
@@ -234,6 +235,13 @@ public:
     ///     expression.  Can be NULL if the location expression uses no
     ///     external variables.
     ///
+    ///  @param[in] reg_ctx
+    ///     An optional parameter which provides a RegisterContext for use
+    ///     when evaluating the expression (i.e. for fetching register values).
+    ///     Normally this will come from the ExecutionContext's StackFrame but
+    ///     in the case where an expression needs to be evaluated while building
+    ///     the stack frame list, this short-cut is available.
+    ///
     /// @param[in] offset
     ///     The offset of the location expression in the data extractor.
     ///
@@ -264,6 +272,7 @@ public:
               const DataExtractor& opcodes,
               ClangExpressionVariableList *expr_locals,
               ClangExpressionDeclMap *decl_map,
+              RegisterContext *reg_ctx,
               const uint32_t offset,
               const uint32_t length,
               const uint32_t reg_set,

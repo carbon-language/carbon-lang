@@ -1225,6 +1225,7 @@ SymbolFileDWARF::ParseChildMembers
                                                                    debug_info_data, 
                                                                    NULL, 
                                                                    NULL, 
+                                                                   NULL,
                                                                    block_offset, 
                                                                    block_length, 
                                                                    eRegisterKindDWARF, 

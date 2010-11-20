@@ -22,6 +22,10 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Utility/ArchVolatileRegs.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Expression/DWARFExpression.h"
+#include "lldb/Core/Value.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/StackFrame.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -814,7 +818,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
 
     UnwindPlan::Row::RegisterLocation unwindplan_regloc;
     bool have_unwindplan_regloc = false;
-    int unwindplan_registerkind;
+    int unwindplan_registerkind = -1;
 
     if (m_fast_unwind_plan)
     {
@@ -993,6 +997,44 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
         regloc.location.register_number = row_regnum_in_lldb;
         m_registers[lldb_regnum] = regloc;
         return true;
+    }
+
+    if (unwindplan_regloc.IsDWARFExpression() || unwindplan_regloc.IsAtDWARFExpression())
+    {
+        DataExtractor dwarfdata (unwindplan_regloc.GetDWARFExpressionBytes(), 
+                                 unwindplan_regloc.GetDWARFExpressionLength(), 
+                                 m_thread.GetProcess().GetByteOrder(), m_thread.GetProcess().GetAddressByteSize());
+        DWARFExpression dwarfexpr (dwarfdata, 0, unwindplan_regloc.GetDWARFExpressionLength());
+        dwarfexpr.SetRegisterKind (unwindplan_registerkind);
+        ExecutionContext exe_ctx (&m_thread.GetProcess(), &m_thread, NULL);
+        Value result;
+        Error error;
+        if (dwarfexpr.Evaluate (&exe_ctx, NULL, this, 0, NULL, result, &error))
+        {
+            addr_t val;
+            val = result.GetScalar().ULongLong();
+            if (unwindplan_regloc.IsDWARFExpression())
+             {
+                regloc.type = eRegisterValueInferred;
+                regloc.location.register_value = val;
+                m_registers[lldb_regnum] = regloc;
+                return true;
+            }
+            else
+            {
+               regloc.type = eRegisterSavedAtMemoryLocation;
+               regloc.location.target_memory_location = val;
+               m_registers[lldb_regnum] = regloc;
+               return true;
+            }
+        }
+        if (log)
+        {
+            log->Printf("%*sFrame %d tried to use IsDWARFExpression or IsAtDWARFExpression for reg %d but failed",
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                        lldb_regnum);
+        }
+        return false;
     }
 
     if (log)

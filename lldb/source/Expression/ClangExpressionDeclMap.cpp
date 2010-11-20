@@ -1205,7 +1205,7 @@ ClangExpressionDeclMap::GetVariableValue
     }
     Error err;
     
-    if (!var_location_expr.Evaluate(&exe_ctx, exe_ast_ctx, loclist_base_load_addr, NULL, *var_location.get(), &err))
+    if (!var_location_expr.Evaluate(&exe_ctx, exe_ast_ctx, NULL, loclist_base_load_addr, NULL, *var_location.get(), &err))
     {
         if (log)
             log->Printf("Error evaluating location: %s", err.AsCString());
