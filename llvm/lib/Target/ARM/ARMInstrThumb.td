@@ -665,18 +665,38 @@ let isCommutable = 1, Uses = [CPSR] in
 def tADC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
                  "adc", "\t$dst, $rhs",
                  [(set tGPR:$dst, (adde tGPR:$lhs, tGPR:$rhs))]>,
-           T1DataProcessing<0b0101>;
+           T1DataProcessing<0b0101> {
+  // A8.6.2
+  bits<3> lhs;
+  bits<3> rhs;
+  let Inst{5-3} = lhs;
+  let Inst{2-0} = rhs;
+}
 
 // Add immediate
-def tADDi3 : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALUi,
-                   "add", "\t$dst, $lhs, $rhs",
-                   [(set tGPR:$dst, (add tGPR:$lhs, imm0_7:$rhs))]>,
-             T1General<0b01110>;
+def tADDi3 : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rn, i32imm:$imm3), IIC_iALUi,
+                   "add", "\t$Rd, $Rn, $imm3",
+                   [(set tGPR:$Rd, (add tGPR:$Rn, imm0_7:$imm3))]>,
+             T1General<0b01110> {
+  // A8.6.4 T1
+  bits<3> Rd;
+  bits<3> Rn;
+  bits<3> imm3;
+  let Inst{8-6} = imm3;
+  let Inst{5-3} = Rn;
+  let Inst{2-0} = Rd;
+}
 
 def tADDi8 : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALUi,
                    "add", "\t$dst, $rhs",
                    [(set tGPR:$dst, (add tGPR:$lhs, imm8_255:$rhs))]>,
-             T1General<{1,1,0,?,?}>;
+             T1General<{1,1,0,?,?}> {
+  // A8.6.4 T2
+  bits<3> lhs;
+  bits<8> rhs;
+  let Inst{10-8} = lhs;
+  let Inst{7-0}  = rhs;
+}
 
 // Add register
 let isCommutable = 1 in
