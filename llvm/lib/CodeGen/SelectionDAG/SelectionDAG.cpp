@@ -745,6 +745,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   return Node;
 }
 
+#ifndef NDEBUG
 /// VerifyNodeCommon - Sanity check the given node.  Aborts if it is invalid.
 static void VerifyNodeCommon(SDNode *N) {
   switch (N->getOpcode()) {
@@ -816,6 +817,7 @@ static void VerifyMachineNode(SDNode *N) {
 
   VerifyNodeCommon(N);
 }
+#endif // NDEBUG
 
 /// getEVTAlignment - Compute the default alignment value for the
 /// given type.
