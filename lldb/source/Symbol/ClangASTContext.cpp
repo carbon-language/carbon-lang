@@ -1097,8 +1097,6 @@ ClangASTContext::AddMethodToCXXRecordType
     
     QualType method_qual_type (QualType::getFromOpaquePtr (method_opaque_type));
     
-    method_qual_type.dump();
-
     CXXMethodDecl *cxx_method_decl = NULL;
     
     DeclarationName decl_name (&identifier_table->get(name));
