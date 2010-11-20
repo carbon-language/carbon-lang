@@ -1054,12 +1054,12 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
 
   // C++ [class.base.init]p2:
   //   Names in a mem-initializer-id are looked up in the scope of the
-  //   constructor’s class and, if not found in that scope, are looked
-  //   up in the scope containing the constructor’s
-  //   definition. [Note: if the constructor’s class contains a member
-  //   with the same name as a direct or virtual base class of the
-  //   class, a mem-initializer-id naming the member or base class and
-  //   composed of a single identifier refers to the class member. A
+  //   constructor's class and, if not found in that scope, are looked
+  //   up in the scope containing the constructor's definition.
+  //   [Note: if the constructor's class contains a member with the
+  //   same name as a direct or virtual base class of the class, a
+  //   mem-initializer-id naming the member or base class and composed
+  //   of a single identifier refers to the class member. A
   //   mem-initializer-id for the hidden base class may be specified
   //   using a qualified name. ]
   if (!SS.getScopeRep() && !TemplateTypeTy) {
@@ -1365,7 +1365,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
 
   // C++ [class.base.init]p2:
   //   [...] Unless the mem-initializer-id names a nonstatic data
-  //   member of the constructor’s class or a direct or virtual base
+  //   member of the constructor's class or a direct or virtual base
   //   of that class, the mem-initializer is ill-formed. A
   //   mem-initializer-list can initialize a base class using any
   //   name that denotes that base class type.

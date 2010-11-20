@@ -193,7 +193,7 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
                          ActiveTemplateInstantiation::InstantiationKind Kind,
                                    sema::TemplateDeductionInfo &DeductionInfo,
                                               SourceRange InstantiationRange)
-: SemaRef(SemaRef) {
+  : SemaRef(SemaRef) {
 
   Invalid = CheckInstantiationDepth(PointOfInstantiation,
                                     InstantiationRange);

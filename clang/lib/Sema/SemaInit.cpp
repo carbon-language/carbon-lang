@@ -11,8 +11,6 @@
 // point is Sema::CheckInitList(), but all of the work is performed
 // within the InitListChecker class.
 //
-// This file also implements Sema::CheckInitializerTypes.
-//
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/Designator.h"
@@ -1854,9 +1852,9 @@ CheckArrayDesignatorExpr(Sema &S, Expr *Index, llvm::APSInt &Value) {
 }
 
 ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
-                                                        SourceLocation Loc,
-                                                        bool GNUSyntax,
-                                                        ExprResult Init) {
+                                            SourceLocation Loc,
+                                            bool GNUSyntax,
+                                            ExprResult Init) {
   typedef DesignatedInitExpr::Designator ASTDesignator;
 
   bool Invalid = false;
@@ -3137,7 +3135,7 @@ InitializationSequence::InitializationSequence(Sema &S,
   }
   
   // Handle default initialization.
-  if (Kind.getKind() == InitializationKind::IK_Default){
+  if (Kind.getKind() == InitializationKind::IK_Default) {
     TryDefaultInitialization(S, Entity, Kind, *this);
     return;
   }

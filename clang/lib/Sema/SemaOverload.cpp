@@ -5615,8 +5615,8 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
 /// candidate is a better candidate than the second (C++ 13.3.3p1).
 bool
 isBetterOverloadCandidate(Sema &S,
-                          const OverloadCandidate& Cand1,
-                          const OverloadCandidate& Cand2,
+                          const OverloadCandidate &Cand1,
+                          const OverloadCandidate &Cand2,
                           SourceLocation Loc,
                           bool UserDefinedConversion) {
   // Define viable functions to be better candidates than non-viable
@@ -5730,7 +5730,7 @@ isBetterOverloadCandidate(Sema &S,
 /// \returns The result of overload resolution.
 OverloadingResult
 OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
-                                         iterator& Best,
+                                         iterator &Best,
                                          bool UserDefinedConversion) {
   // Find the best viable function.
   Best = end();
@@ -7676,7 +7676,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
     OverloadCandidateSet::iterator Best;
     switch (CandidateSet.BestViableFunction(*this, UnresExpr->getLocStart(),
-                               Best)) {
+                                            Best)) {
     case OR_Success:
       Method = cast<CXXMethodDecl>(Best->Function);
       FoundDecl = Best->FoundDecl;
