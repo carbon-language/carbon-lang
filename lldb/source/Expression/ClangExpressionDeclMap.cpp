@@ -1220,6 +1220,14 @@ ClangExpressionDeclMap::GetVariableValue
     {
         type_to_use = GuardedCopyType(parser_ast_context, var_ast_context, var_opaque_type);
         
+        if (!type_to_use)
+        {
+            if (log)
+                log->Printf("Couldn't copy a variable's type into the parser's AST context");
+            
+            return NULL;
+        }
+        
         if (parser_type)
             *parser_type = TypeFromParser(type_to_use, parser_ast_context);
     }
@@ -1270,6 +1278,9 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                             context.GetASTContext(),
                                             &ut,
                                             &pt);
+    
+    if (!var_location)
+        return;
     
     NamedDecl *var_decl = context.AddVarDecl(pt.GetOpaqueQualType());
     
