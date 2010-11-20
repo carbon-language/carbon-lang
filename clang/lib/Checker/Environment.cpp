@@ -101,7 +101,8 @@ static inline const Stmt *MakeLocation(const Stmt *S) {
 Environment EnvironmentManager::bindExprAndLocation(Environment Env,
                                                     const Stmt *S,
                                                     SVal location, SVal V) {
-  return Environment(F.Add(F.Add(Env.ExprBindings, MakeLocation(S), V), S, V));
+  return Environment(F.Add(F.Add(Env.ExprBindings, MakeLocation(S), location),
+                           S, V));
 }
 
 namespace {
