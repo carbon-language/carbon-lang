@@ -1394,8 +1394,6 @@ public:
     typedef decltype(declval<_Fn>()(declval<_ArgTypes>()...)) type;
 };
 
-#if 0
-
 template <class _MP, class _Tp, class ..._Args>
 struct __result_of_mp;
 
@@ -1454,8 +1452,6 @@ class __result_of<_Fn(_Tp, _ArgTypes...), false>  // _Fn must be member pointer
     : public __result_of_mp<_Fn, _Tp, _ArgTypes...>
 {
 };
-
-#endif  // 0
 
 // result_of
 

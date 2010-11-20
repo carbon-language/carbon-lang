@@ -33,7 +33,7 @@ int main()
     static_assert((std::is_same<std::result_of<S(int)>::type, short>::value), "Error!");
     static_assert((std::is_same<std::result_of<S&(unsigned char, int&)>::type, double>::value), "Error!");
     static_assert((std::is_same<std::result_of<PF1()>::type, bool>::value), "Error!");
-//     static_assert(std::is_same<std::result_of<PMS(std::unique_ptr<S>, int)>::type, void>::value, "Error!");
-//     static_assert(std::is_same<std::result_of<PMD(S)>::type, char&&>::value, "Error!");
-//     static_assert(std::is_same<std::result_of<PMD(const S*)>::type, const char&>::value, "Error!");
+    static_assert((std::is_same<std::result_of<PMS(std::unique_ptr<S>, int)>::type, void>::value), "Error!");
+    static_assert((std::is_same<std::result_of<PMD(S)>::type, char&&>::value), "Error!");
+    static_assert((std::is_same<std::result_of<PMD(const S*)>::type, const char&>::value), "Error!");
 }

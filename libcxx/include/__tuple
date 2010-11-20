@@ -240,7 +240,7 @@ struct __tuple_assignable_imp : public false_type {};
 template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
 struct __tuple_assignable_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...>>
     : public integral_constant<bool,
-                               __is_assignable<_Up0&, _Tp0>::value &&
+                               is_assignable<_Up0&, _Tp0>::value &&
                                __tuple_assignable_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...>>::value> {};
 
 template <>
