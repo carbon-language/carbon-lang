@@ -156,18 +156,8 @@ ConnectionFileDescriptor::Read (void *dst, size_t dst_len, ConnectionStatus &sta
     ssize_t bytes_read = ::read (m_fd, dst, dst_len);
     if (bytes_read == 0)
     {
-        // 'read' did not return an error, but it didn't return any bytes either ==> End-of-File.
-        //  If the file descriptor is still valid, then we don't return an error; otherwise we do.
-        //  This allows whoever called us to act on the end-of-file, with a valid file descriptor, if they wish.
-        if (fcntl (m_fd, F_GETFL, 0) >= 0)
-        {
-            error.Clear(); // End-of-file, but not an error.  Pass along for the end-of-file handlers.
-        }
-        else
-        {
-            error.SetErrorStringWithFormat("End-of-file.\n");
-        }
-        status = eConnectionStatusEndOfFile;
+        error.SetErrorStringWithFormat("End-of-file.\n");
+        status = eConnectionStatusLostConnection;
     }
     else if (bytes_read < 0)
     {
