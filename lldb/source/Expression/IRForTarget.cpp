@@ -476,9 +476,7 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString initializer's str element is not a GlobalVariable");
-                
-                nsstring_cstr->dump();
-                
+                    
                 return false;
             }
             
