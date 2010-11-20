@@ -256,6 +256,12 @@ namespace llvm {
       // WIN_ALLOCA - Windows's _chkstk call to do stack probing.
       WIN_ALLOCA,
 
+      // Memory barrier
+      MEMBARRIER,
+      MFENCE,
+      SFENCE,
+      LFENCE,
+
       // ATOMADD64_DAG, ATOMSUB64_DAG, ATOMOR64_DAG, ATOMAND64_DAG,
       // ATOMXOR64_DAG, ATOMNAND64_DAG, ATOMSWAP64_DAG -
       // Atomic 64-bit binary operations.
@@ -266,12 +272,6 @@ namespace llvm {
       ATOMAND64_DAG,
       ATOMNAND64_DAG,
       ATOMSWAP64_DAG,
-
-      // Memory barrier
-      MEMBARRIER,
-      MFENCE,
-      SFENCE,
-      LFENCE,
 
       // LCMPXCHG_DAG, LCMPXCHG8_DAG - Compare and swap.
       LCMPXCHG_DAG,

@@ -171,9 +171,6 @@ class SelectionDAG {
   /// DbgInfo - Tracks dbg_value information through SDISel.
   SDDbgInfo *DbgInfo;
 
-  /// VerifyNode - Sanity check the given node.  Aborts if it is invalid.
-  void VerifyNode(SDNode *N);
-
   /// setGraphColorHelper - Implementation of setSubgraphColor.
   /// Return whether we had to truncate the search.
   ///
