@@ -768,7 +768,13 @@ def tASRrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
 def tBIC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
                  "bic", "\t$dst, $rhs",
                  [(set tGPR:$dst, (and tGPR:$lhs, (not tGPR:$rhs)))]>,
-           T1DataProcessing<0b1110>;
+           T1DataProcessing<0b1110> {
+  // A8.6.20
+  bits<3> dst;
+  bits<3> rhs;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
 // CMN register
 let isCompare = 1, Defs = [CPSR] in {
@@ -778,33 +784,49 @@ let isCompare = 1, Defs = [CPSR] in {
 //                "cmn", "\t$lhs, $rhs",
 //                [(ARMcmp tGPR:$lhs, (ineg tGPR:$rhs))]>,
 //           T1DataProcessing<0b1011>;
-def tCMNz : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
-                 "cmn", "\t$lhs, $rhs",
-                 [(ARMcmpZ tGPR:$lhs, (ineg tGPR:$rhs))]>,
-            T1DataProcessing<0b1011>;
+def tCMNz : T1pI<(outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iCMPr,
+                 "cmn", "\t$Rn, $Rm",
+                 [(ARMcmpZ tGPR:$Rn, (ineg tGPR:$Rm))]>,
+            T1DataProcessing<0b1011> {
+  // A8.6.33
+  bits<3> Rm;
+  bits<3> Rn;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rn;
+}
 }
 
 // CMP immediate
 let isCompare = 1, Defs = [CPSR] in {
-def tCMPi8 : T1pI<(outs), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMPi,
-                  "cmp", "\t$lhs, $rhs",
-                  [(ARMcmp tGPR:$lhs, imm0_255:$rhs)]>,
-             T1General<{1,0,1,?,?}>;
-def tCMPzi8 : T1pI<(outs), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMPi,
-                  "cmp", "\t$lhs, $rhs",
-                  [(ARMcmpZ tGPR:$lhs, imm0_255:$rhs)]>,
-              T1General<{1,0,1,?,?}>;
+def tCMPi8 : T1pI<(outs), (ins tGPR:$Rn, i32imm:$imm8), IIC_iCMPi,
+                  "cmp", "\t$Rn, $imm8",
+                  [(ARMcmp tGPR:$Rn, imm0_255:$imm8)]>,
+             T1General<{1,0,1,?,?}> {
+  // A8.6.35
+  bits<3> Rn;
+  bits<8> imm8;
+  let Inst{10-8} = Rn;
+  let Inst{7-0}  = imm8;
+}
+
+def tCMPzi8 : T1pI<(outs), (ins tGPR:$Rn, i32imm:$imm8), IIC_iCMPi,
+                  "cmp", "\t$Rn, $imm8",
+                  [(ARMcmpZ tGPR:$Rn, imm0_255:$imm8)]>,
+              T1General<{1,0,1,?,?}> {
+  // A8.6.35
+  bits<3> Rn;
+  let Inst{10-8} = Rn;
+  let Inst{7-0}  = 0x00;
 }
 
 // CMP register
-let isCompare = 1, Defs = [CPSR] in {
 def tCMPr : T1pI<(outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iCMPr,
                  "cmp", "\t$Rn, $Rm",
                  [(ARMcmp tGPR:$Rn, tGPR:$Rm)]>,
             T1DataProcessing<0b1010> {
+  // A8.6.36
   bits<3> Rm;
   bits<3> Rn;
-
   let Inst{5-3} = Rm;
   let Inst{2-0} = Rn;
 }
@@ -820,7 +842,7 @@ def tCMPhir : T1pI<(outs), (ins GPR:$lhs, GPR:$rhs), IIC_iCMPr,
 def tCMPzhir : T1pI<(outs), (ins GPR:$lhs, GPR:$rhs), IIC_iCMPr,
                     "cmp", "\t$lhs, $rhs", []>,
                T1Special<{0,1,?,?}>;
-}
+} // isCompare = 1, Defs = [CPSR]
 
 
 // XOR register
