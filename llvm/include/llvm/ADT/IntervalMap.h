@@ -1141,7 +1141,7 @@ protected:
 
   Leaf &treeLeaf() const {
     assert(branched() && path.size() == map->height);
-    return path.back().first.get<Leaf>();
+    return path.back().first.template get<Leaf>();
   }
   unsigned treeLeafSize() const {
     assert(branched() && path.size() == map->height);
