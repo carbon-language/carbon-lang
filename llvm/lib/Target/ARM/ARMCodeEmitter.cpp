@@ -228,9 +228,9 @@ namespace {
     uint32_t getAddrMode3OpValue(const MachineInstr &MI, unsigned Op) const
       { return 0; }
     uint32_t getAddrMode5OpValue(const MachineInstr &MI, unsigned Op) const {
-      // {12-9}  = reg
-      // {8}     = (U)nsigned (add == '1', sub == '0')
-      // {7-0}   = imm12
+      // {17-13} = reg
+      // {12}    = (U)nsigned (add == '1', sub == '0')
+      // {11-0}  = imm12
       const MachineOperand &MO  = MI.getOperand(Op);
       const MachineOperand &MO1 = MI.getOperand(Op + 1);
       if (!MO.isReg()) {
@@ -238,12 +238,24 @@ namespace {
         return 0;
       }
       unsigned Reg = getARMRegisterNumbering(MO.getReg());
-      int32_t Imm8 = MO1.getImm();
-      uint32_t Binary;
-      Binary = Imm8 & 0xff;
-      if (Imm8 >= 0)
-        Binary |= (1 << 8);
-      Binary |= (Reg << 9);
+      int32_t Imm12 = MO1.getImm();
+
+      // Special value for #-0
+      if (Imm12 == INT32_MIN)
+        Imm12 = 0;
+
+      // Immediate is always encoded as positive. The 'U' bit controls add vs
+      // sub.
+      bool isAdd = true;
+      if (Imm12 < 0) {
+        Imm12 = -Imm12;
+        isAdd = false;
+      }
+
+      uint32_t Binary = Imm12 & 0xfff;
+      if (isAdd)
+        Binary |= (1 << 12);
+      Binary |= (Reg << 13);
       return Binary;
     }
     unsigned getNEONVcvtImm32OpValue(const MachineInstr &MI, unsigned Op)
