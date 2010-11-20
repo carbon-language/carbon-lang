@@ -265,10 +265,12 @@ public:
     : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {
     assert(RHS.empty() &&
            "Copy ctor from non-empty stringmap not implemented yet!");
+    (void)RHS;
   }
   void operator=(const StringMap &RHS) {
     assert(RHS.empty() &&
            "assignment from non-empty stringmap not implemented yet!");
+    (void)RHS;
     clear();
   }
 
