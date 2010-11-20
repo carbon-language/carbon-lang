@@ -107,6 +107,9 @@ public:
   virtual bool runOnMachineFunction(MachineFunction &mf);
 
   static char ID;
+
+private:
+  void addMBBLiveIns();
 };
 
 char RABasic::ID = 0;
@@ -465,6 +468,31 @@ unsigned RABasic::selectOrSplit(LiveInterval &lvr,
   return 0;
 }
 
+// Add newly allocated physical register to the MBB live in sets.
+void RABasic::addMBBLiveIns() {
+  SmallVector<MachineBasicBlock*, 8> liveInMBBs;
+  MachineBasicBlock &entryMBB = *mf_->begin();
+
+  for (unsigned preg = 0; preg < physReg2liu_.numRegs(); ++preg) {
+    LiveIntervalUnion &liu = physReg2liu_[preg];
+    for (LiveIntervalUnion::SegmentIter segI = liu.begin(), segE = liu.end();
+         segI != segE; ++segI) {
+      // Find the set of basic blocks which this range is live into...
+      if (lis_->findLiveInMBBs(segI->start, segI->end, liveInMBBs)) {
+        // And add the physreg for this interval to their live-in sets.
+        for (unsigned i = 0; i != liveInMBBs.size(); ++i) {
+          if (liveInMBBs[i] != &entryMBB) {
+            if (!liveInMBBs[i]->isLiveIn(preg)) {
+              liveInMBBs[i]->addLiveIn(preg);
+            }
+          }
+        }
+        liveInMBBs.clear();
+      }
+    }
+  }
+}
+
 namespace llvm {
 Spiller *createInlineSpiller(MachineFunctionPass &pass,
                              MachineFunction &mf,
@@ -495,6 +523,8 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   spiller_.reset(createSpiller(*this, *mf_, *vrm_));
 
   allocatePhysRegs();
+
+  addMBBLiveIns();
 
   // Diagnostic output before rewriting
   DEBUG(dbgs() << "Post alloc VirtRegMap:\n" << *vrm_ << "\n");
