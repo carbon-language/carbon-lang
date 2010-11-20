@@ -378,14 +378,7 @@ struct CacheAlignedPointerTraits {
   enum { NumLowBitsAvailable = Log2CacheLine };
 };
 
-template <typename KeyT, typename ValT, typename Traits>
 class NodeRef {
-public:
-  typedef LeafNode<KeyT, ValT, NodeSizer<KeyT, ValT>::LeafSize, Traits> Leaf;
-  typedef BranchNode<KeyT, ValT, NodeSizer<KeyT, ValT>::BranchSize,
-                     Traits> Branch;
-
-private:
   PointerIntPair<void*, Log2CacheLine, unsigned, CacheAlignedPointerTraits> pip;
 
 public:
@@ -395,11 +388,11 @@ public:
   /// operator bool - Detect a null ref.
   operator bool() const { return pip.getOpaqueValue(); }
 
-  /// NodeRef - Create a reference to the leaf node p with n elements.
-  NodeRef(Leaf *p, unsigned n) : pip(p, n - 1) {}
-
-  /// NodeRef - Create a reference to the branch node p with n elements.
-  NodeRef(Branch *p, unsigned n) : pip(p, n - 1) {}
+  /// NodeRef - Create a reference to the node p with n elements.
+  template <typename NodeT>
+  NodeRef(NodeT *p, unsigned n) : pip(p, n - 1) {
+    assert(n <= NodeT::Capacity && "Size too big for node");
+  }
 
   /// size - Return the number of elements in the referenced node.
   unsigned size() const { return pip.getInt() + 1; }
@@ -407,16 +400,17 @@ public:
   /// setSize - Update the node size.
   void setSize(unsigned n) { pip.setInt(n - 1); }
 
-  /// leaf - Return the referenced leaf node.
-  /// Note there are no dynamic type checks.
-  Leaf &leaf() const {
-    return *reinterpret_cast<Leaf*>(pip.getPointer());
+  /// subtree - Access the i'th subtree reference in a branch node.
+  /// This depends on branch nodes storing the NodeRef array as their first
+  /// member.
+  NodeRef &subtree(unsigned i) {
+    return reinterpret_cast<NodeRef*>(pip.getPointer())[i];
   }
 
-  /// branch - Return the referenced branch node.
-  /// Note there are no dynamic type checks.
-  Branch &branch() const {
-    return *reinterpret_cast<Branch*>(pip.getPointer());
+  /// get - Dereference as a NodeT reference.
+  template <typename NodeT>
+  NodeT &get() const {
+    return *reinterpret_cast<NodeT*>(pip.getPointer());
   }
 
   bool operator==(const NodeRef &RHS) const {
@@ -442,12 +436,12 @@ public:
 //
 // These constraints are always satisfied:
 //
-// - Traits::stopLess(key[i].start, key[i].stop) - Non-empty, sane intervals.
+// - Traits::stopLess(start(i), stop(i))    - Non-empty, sane intervals.
 //
-// - Traits::stopLess(key[i].stop, key[i + 1].start) - Sorted.
+// - Traits::stopLess(stop(i), start(i + 1) - Sorted.
 //
-// - val[i] != val[i + 1] ||
-//     !Traits::adjacent(key[i].stop, key[i + 1].start) - Fully coalesced.
+// - value(i) != value(i + 1) || !Traits::adjacent(stop(i), start(i + 1))
+//                                          - Fully coalesced.
 //
 //===----------------------------------------------------------------------===//
 
@@ -634,14 +628,13 @@ extendStop(unsigned i, unsigned Size, KeyT b) {
 //===----------------------------------------------------------------------===//
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
-class BranchNode : public NodeBase<NodeRef<KeyT, ValT, Traits>, KeyT, N> {
-  typedef  NodeRef<KeyT, ValT, Traits> NodeRefT;
+class BranchNode : public NodeBase<NodeRef, KeyT, N> {
 public:
   const KeyT &stop(unsigned i) const { return this->second[i]; }
-  const NodeRefT &subtree(unsigned i) const { return this->first[i]; }
+  const NodeRef &subtree(unsigned i) const { return this->first[i]; }
 
   KeyT &stop(unsigned i) { return this->second[i]; }
-  NodeRefT &subtree(unsigned i) { return this->first[i]; }
+  NodeRef &subtree(unsigned i) { return this->first[i]; }
 
   /// findFrom - Find the first subtree after i that may contain x.
   /// @param i    Starting index for the search.
@@ -675,7 +668,7 @@ public:
   /// safeLookup - Get the subtree containing x, Assuming that x is in range.
   /// @param x Key to search for.
   /// @return  Subtree containing x
-  NodeRefT safeLookup(KeyT x) const {
+  NodeRef safeLookup(KeyT x) const {
     return subtree(safeFind(0, x));
   }
 
@@ -684,7 +677,7 @@ public:
   /// @param Size Number of elements in node.
   /// @param Node Subtree to insert.
   /// @param Stop Last key in subtree.
-  void insert(unsigned i, unsigned Size, NodeRefT Node, KeyT Stop) {
+  void insert(unsigned i, unsigned Size, NodeRef Node, KeyT Stop) {
     assert(Size < N && "branch node overflow");
     assert(i <= Size && "Bad insert position");
     this->shift(i, Size);
@@ -700,7 +693,7 @@ public:
     errs() << "\"];\n";
     for (unsigned i = 0; i != Size; ++i)
       errs() << "  N" << this << ":s" << i << " -> N"
-             << &subtree(i).branch() << ";\n";
+             << &subtree(i).template get<BranchNode>() << ";\n";
   }
 #endif
 
@@ -717,10 +710,10 @@ template <typename KeyT, typename ValT,
           unsigned N = IntervalMapImpl::NodeSizer<KeyT, ValT>::LeafSize,
           typename Traits = IntervalMapInfo<KeyT> >
 class IntervalMap {
-  typedef IntervalMapImpl::NodeRef<KeyT, ValT, Traits> NodeRef;
-  typedef IntervalMapImpl::NodeSizer<KeyT, ValT> NodeSizer;
-  typedef typename NodeRef::Leaf Leaf;
-  typedef typename NodeRef::Branch Branch;
+  typedef IntervalMapImpl::NodeSizer<KeyT, ValT> Sizer;
+  typedef IntervalMapImpl::LeafNode<KeyT, ValT, Sizer::LeafSize, Traits> Leaf;
+  typedef IntervalMapImpl::BranchNode<KeyT, ValT, Sizer::BranchSize, Traits>
+    Branch;
   typedef IntervalMapImpl::LeafNode<KeyT, ValT, N, Traits> RootLeaf;
   typedef IntervalMapImpl::IdxPair IdxPair;
 
@@ -728,11 +721,12 @@ class IntervalMap {
   // corresponding RootBranch capacity.
   enum {
     DesiredRootBranchCap = (sizeof(RootLeaf) - sizeof(KeyT)) /
-      (sizeof(KeyT) + sizeof(NodeRef)),
+      (sizeof(KeyT) + sizeof(IntervalMapImpl::NodeRef)),
     RootBranchCap = DesiredRootBranchCap ? DesiredRootBranchCap : 1
   };
 
-  typedef IntervalMapImpl::BranchNode<KeyT, ValT, RootBranchCap, Traits> RootBranch;
+  typedef IntervalMapImpl::BranchNode<KeyT, ValT, RootBranchCap, Traits>
+    RootBranch;
 
   // When branched, we store a global start key as well as the branch node.
   struct RootBranchData {
@@ -746,7 +740,7 @@ class IntervalMap {
   };
 
 public:
-  typedef typename NodeSizer::Allocator Allocator;
+  typedef typename Sizer::Allocator Allocator;
 
 private:
   // The root data is either a RootLeaf or a RootBranchData instance.
@@ -837,8 +831,9 @@ private:
   bool branched() const { return height > 0; }
 
   ValT treeSafeLookup(KeyT x, ValT NotFound) const;
-  void visitNodes(void (IntervalMap::*f)(NodeRef, unsigned Level));
-  void deleteNode(NodeRef Node, unsigned Level);
+  void visitNodes(void (IntervalMap::*f)(IntervalMapImpl::NodeRef,
+                  unsigned Level));
+  void deleteNode(IntervalMapImpl::NodeRef Node, unsigned Level);
 
 public:
   explicit IntervalMap(Allocator &a) : height(0), rootSize(0), allocator(a) {
@@ -933,7 +928,7 @@ public:
 
 #ifndef NDEBUG
   void dump();
-  void dumpNode(NodeRef Node, unsigned Height);
+  void dumpNode(IntervalMapImpl::NodeRef Node, unsigned Height);
 #endif
 };
 
@@ -944,10 +939,10 @@ ValT IntervalMap<KeyT, ValT, N, Traits>::
 treeSafeLookup(KeyT x, ValT NotFound) const {
   assert(branched() && "treeLookup assumes a branched root");
 
-  NodeRef NR = rootBranch().safeLookup(x);
+  IntervalMapImpl::NodeRef NR = rootBranch().safeLookup(x);
   for (unsigned h = height-1; h; --h)
-    NR = NR.branch().safeLookup(x);
-  return NR.leaf().safeLookup(x, NotFound);
+    NR = NR.get<Branch>().safeLookup(x);
+  return NR.get<Leaf>().safeLookup(x, NotFound);
 }
 
 
@@ -956,6 +951,7 @@ treeSafeLookup(KeyT x, ValT NotFound) const {
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 IntervalMapImpl::IdxPair IntervalMap<KeyT, ValT, N, Traits>::
 branchRoot(unsigned Position) {
+  using namespace IntervalMapImpl;
   // How many external leaf nodes to hold RootLeaf+1?
   const unsigned Nodes = RootLeaf::Capacity / Leaf::Capacity + 1;
 
@@ -975,17 +971,17 @@ branchRoot(unsigned Position) {
   NodeRef node[Nodes];
   for (unsigned n = 0; n != Nodes; ++n) {
     node[n] = NodeRef(allocLeaf(), size[n]);
-    node[n].leaf().copy(rootLeaf(), pos, 0, size[n]);
+    node[n].template get<Leaf>().copy(rootLeaf(), pos, 0, size[n]);
     pos += size[n];
   }
 
   // Destroy the old leaf node, construct branch node instead.
   switchRootToBranch();
   for (unsigned n = 0; n != Nodes; ++n) {
-    rootBranch().stop(n) = node[n].leaf().stop(size[n]-1);
+    rootBranch().stop(n) = node[n].template get<Leaf>().stop(size[n]-1);
     rootBranch().subtree(n) = node[n];
   }
-  rootBranchStart() = node[0].leaf().start(0);
+  rootBranchStart() = node[0].template get<Leaf>().start(0);
   rootSize = Nodes;
   return NewOffset;
 }
@@ -995,6 +991,7 @@ branchRoot(unsigned Position) {
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 IntervalMapImpl::IdxPair IntervalMap<KeyT, ValT, N, Traits>::
 splitRoot(unsigned Position) {
+  using namespace IntervalMapImpl;
   // How many external leaf nodes to hold RootBranch+1?
   const unsigned Nodes = RootBranch::Capacity / Branch::Capacity + 1;
 
@@ -1014,12 +1011,12 @@ splitRoot(unsigned Position) {
   NodeRef Node[Nodes];
   for (unsigned n = 0; n != Nodes; ++n) {
     Node[n] = NodeRef(allocBranch(), Size[n]);
-    Node[n].branch().copy(rootBranch(), Pos, 0, Size[n]);
+    Node[n].template get<Branch>().copy(rootBranch(), Pos, 0, Size[n]);
     Pos += Size[n];
   }
 
   for (unsigned n = 0; n != Nodes; ++n) {
-    rootBranch().stop(n) = Node[n].branch().stop(Size[n]-1);
+    rootBranch().stop(n) = Node[n].template get<Branch>().stop(Size[n]-1);
     rootBranch().subtree(n) = Node[n];
   }
   rootSize = Nodes;
@@ -1029,10 +1026,10 @@ splitRoot(unsigned Position) {
 /// visitNodes - Visit each external node.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
-visitNodes(void (IntervalMap::*f)(NodeRef, unsigned Height)) {
+visitNodes(void (IntervalMap::*f)(IntervalMapImpl::NodeRef, unsigned Height)) {
   if (!branched())
     return;
-  SmallVector<NodeRef, 4> Refs, NextRefs;
+  SmallVector<IntervalMapImpl::NodeRef, 4> Refs, NextRefs;
 
   // Collect level 0 nodes from the root.
   for (unsigned i = 0; i != rootSize; ++i)
@@ -1041,9 +1038,8 @@ visitNodes(void (IntervalMap::*f)(NodeRef, unsigned Height)) {
   // Visit all branch nodes.
   for (unsigned h = height - 1; h; --h) {
     for (unsigned i = 0, e = Refs.size(); i != e; ++i) {
-      Branch &B = Refs[i].branch();
       for (unsigned j = 0, s = Refs[i].size(); j != s; ++j)
-        NextRefs.push_back(B.subtree(j));
+        NextRefs.push_back(Refs[i].subtree(j));
       (this->*f)(Refs[i], h);
     }
     Refs.clear();
@@ -1057,11 +1053,11 @@ visitNodes(void (IntervalMap::*f)(NodeRef, unsigned Height)) {
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
-deleteNode(NodeRef Node, unsigned Level) {
+deleteNode(IntervalMapImpl::NodeRef Node, unsigned Level) {
   if (Level)
-    deleteBranch(&Node.branch());
+    deleteBranch(&Node.get<Branch>());
   else
-    deleteLeaf(&Node.leaf());
+    deleteLeaf(&Node.get<Leaf>());
 }
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
@@ -1077,11 +1073,11 @@ clear() {
 #ifndef NDEBUG
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
-dumpNode(NodeRef Node, unsigned Height) {
+dumpNode(IntervalMapImpl::NodeRef Node, unsigned Height) {
   if (Height)
-    Node.branch().dump(Node.size());
+    Node.get<Branch>().dump(Node.size());
   else
-    Node.leaf().dump(Node.size());
+    Node.get<Leaf>().dump(Node.size());
 }
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
@@ -1106,7 +1102,7 @@ class IntervalMap<KeyT, ValT, N, Traits>::const_iterator :
   public std::iterator<std::bidirectional_iterator_tag, ValT> {
 protected:
   friend class IntervalMap;
-  typedef std::pair<NodeRef, unsigned> PathEntry;
+  typedef std::pair<IntervalMapImpl::NodeRef, unsigned> PathEntry;
   typedef SmallVector<PathEntry, 4> Path;
 
   // The map referred to.
@@ -1121,7 +1117,7 @@ protected:
   // Otherwise, when branched these conditions hold:
   //
   // 1. path.front().first == rootBranch().subtree(rootOffset)
-  // 2. path[i].first == path[i-1].first.branch().subtree(path[i-1].second)
+  // 2. path[i].first == path[i-1].first.subtree(path[i-1].second)
   // 3. path.size() == map->height.
   //
   // Thus, path.back() always refers to the current leaf node unless the root is
@@ -1138,14 +1134,14 @@ protected:
     return map->branched();
   }
 
-  NodeRef   pathNode(unsigned h)   const { return path[h].first; }
-  NodeRef  &pathNode(unsigned h)         { return path[h].first; }
+  IntervalMapImpl::NodeRef pathNode(unsigned h) const { return path[h].first; }
+  IntervalMapImpl::NodeRef  &pathNode(unsigned h) { return path[h].first; }
   unsigned  pathOffset(unsigned h) const { return path[h].second; }
   unsigned &pathOffset(unsigned h)       { return path[h].second; }
 
   Leaf &treeLeaf() const {
     assert(branched() && path.size() == map->height);
-    return path.back().first.leaf();
+    return path.back().first.get<Leaf>();
   }
   unsigned treeLeafSize() const {
     assert(branched() && path.size() == map->height);
@@ -1161,21 +1157,21 @@ protected:
   }
 
   // Get the next node ptr for an incomplete path.
-  NodeRef pathNextDown() {
+  IntervalMapImpl::NodeRef pathNextDown() {
     assert(path.size() < map->height && "Path is already complete");
 
     if (path.empty())
       return map->rootBranch().subtree(rootOffset);
     else
-      return path.back().first.branch().subtree(path.back().second);
+      return path.back().first.subtree(path.back().second);
   }
 
   void pathFillLeft();
   void pathFillFind(KeyT x);
   void pathFillRight();
 
-  NodeRef leftSibling(unsigned level) const;
-  NodeRef rightSibling(unsigned level) const;
+  IntervalMapImpl::NodeRef leftSibling(unsigned level) const;
+  IntervalMapImpl::NodeRef rightSibling(unsigned level) const;
 
   void treeIncrement();
   void treeDecrement();
@@ -1300,10 +1296,10 @@ public:
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 const_iterator::pathFillLeft() {
-  NodeRef NR = pathNextDown();
+  IntervalMapImpl::NodeRef NR = pathNextDown();
   for (unsigned i = map->height - path.size() - 1; i; --i) {
     path.push_back(PathEntry(NR, 0));
-    NR = NR.branch().subtree(0);
+    NR = NR.subtree(0);
   }
   path.push_back(PathEntry(NR, 0));
 }
@@ -1312,24 +1308,24 @@ const_iterator::pathFillLeft() {
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 const_iterator::pathFillFind(KeyT x) {
-  NodeRef NR = pathNextDown();
+  IntervalMapImpl::NodeRef NR = pathNextDown();
   for (unsigned i = map->height - path.size() - 1; i; --i) {
-    unsigned p = NR.branch().safeFind(0, x);
+    unsigned p = NR.get<Branch>().safeFind(0, x);
     path.push_back(PathEntry(NR, p));
-    NR = NR.branch().subtree(p);
+    NR = NR.subtree(p);
   }
-  path.push_back(PathEntry(NR, NR.leaf().safeFind(0, x)));
+  path.push_back(PathEntry(NR, NR.get<Leaf>().safeFind(0, x)));
 }
 
 // pathFillRight - Complete path by adding rightmost entries.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 const_iterator::pathFillRight() {
-  NodeRef NR = pathNextDown();
+  IntervalMapImpl::NodeRef NR = pathNextDown();
   for (unsigned i = map->height - path.size() - 1; i; --i) {
     unsigned p = NR.size() - 1;
     path.push_back(PathEntry(NR, p));
-    NR = NR.branch().subtree(p);
+    NR = NR.subtree(p);
   }
   path.push_back(PathEntry(NR, NR.size() - 1));
 }
@@ -1338,9 +1334,9 @@ const_iterator::pathFillRight() {
 /// @param level 0 is just below the root, map->height - 1 for the leaves.
 /// @return The left sibling NodeRef, or NULL.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
-typename IntervalMap<KeyT, ValT, N, Traits>::NodeRef
-IntervalMap<KeyT, ValT, N, Traits>::
+IntervalMapImpl::NodeRef IntervalMap<KeyT, ValT, N, Traits>::
 const_iterator::leftSibling(unsigned level) const {
+  using namespace IntervalMapImpl;
   assert(branched() && "Not at a branched node");
   assert(level <= path.size() && "Bad level");
 
@@ -1355,12 +1351,12 @@ const_iterator::leftSibling(unsigned level) const {
 
   // NR is the subtree containing our left sibling.
   NodeRef NR = h ?
-    pathNode(h - 1).branch().subtree(pathOffset(h - 1) - 1) :
+    pathNode(h - 1).subtree(pathOffset(h - 1) - 1) :
     map->rootBranch().subtree(rootOffset - 1);
 
   // Keep right all the way down.
   for (; h != level; ++h)
-    NR = NR.branch().subtree(NR.size() - 1);
+    NR = NR.subtree(NR.size() - 1);
   return NR;
 }
 
@@ -1368,9 +1364,9 @@ const_iterator::leftSibling(unsigned level) const {
 /// @param level 0 is just below the root, map->height - 1 for the leaves.
 /// @return The right sibling NodeRef, or NULL.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
-typename IntervalMap<KeyT, ValT, N, Traits>::NodeRef
-IntervalMap<KeyT, ValT, N, Traits>::
+IntervalMapImpl::NodeRef IntervalMap<KeyT, ValT, N, Traits>::
 const_iterator::rightSibling(unsigned level) const {
+  using namespace IntervalMapImpl;
   assert(branched() && "Not at a branched node");
   assert(level <= this->path.size() && "Bad level");
 
@@ -1385,12 +1381,12 @@ const_iterator::rightSibling(unsigned level) const {
 
   // NR is the subtree containing our right sibling.
   NodeRef NR = h ?
-    pathNode(h - 1).branch().subtree(pathOffset(h - 1) + 1) :
+    pathNode(h - 1).subtree(pathOffset(h - 1) + 1) :
     map->rootBranch().subtree(rootOffset + 1);
 
   // Keep left all the way down.
   for (; h != level; ++h)
-    NR = NR.branch().subtree(0);
+    NR = NR.subtree(0);
   return NR;
 }
 
@@ -1493,7 +1489,7 @@ class IntervalMap<KeyT, ValT, N, Traits>::iterator : public const_iterator {
 
   void setNodeSize(unsigned Level, unsigned Size);
   void setNodeStop(unsigned Level, KeyT Stop);
-  void insertNode(unsigned Level, NodeRef Node, KeyT Stop);
+  void insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop);
   void overflowLeaf();
   void treeInsert(KeyT a, KeyT b, ValT y);
 
@@ -1512,8 +1508,7 @@ void IntervalMap<KeyT, ValT, N, Traits>::
 iterator::setNodeSize(unsigned Level, unsigned Size) {
   this->pathNode(Level).setSize(Size);
   if (Level)
-    this->pathNode(Level-1).branch()
-      .subtree(this->pathOffset(Level-1)).setSize(Size);
+    this->pathNode(Level-1).subtree(this->pathOffset(Level-1)).setSize(Size);
   else
     this->map->rootBranch().subtree(this->rootOffset).setSize(Size);
 }
@@ -1523,7 +1518,8 @@ template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 iterator::setNodeStop(unsigned Level, KeyT Stop) {
   while (Level--) {
-    this->pathNode(Level).branch().stop(this->pathOffset(Level)) = Stop;
+    this->pathNode(Level).template get<Branch>()
+      .stop(this->pathOffset(Level)) = Stop;
     if (this->pathOffset(Level) != this->pathNode(Level).size() - 1)
       return;
   }
@@ -1534,7 +1530,7 @@ iterator::setNodeStop(unsigned Level, KeyT Stop) {
 /// Leave the current path pointing at the new node.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
-iterator::insertNode(unsigned Level, NodeRef Node, KeyT Stop) {
+iterator::insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop) {
   if (!Level) {
     // Insert into the root branch node.
     IntervalMap &IM = *this->map;
@@ -1559,10 +1555,10 @@ iterator::insertNode(unsigned Level, NodeRef Node, KeyT Stop) {
   }
 
   // Insert into the branch node at level-1.
-  NodeRef NR = this->pathNode(Level-1);
+  IntervalMapImpl::NodeRef NR = this->pathNode(Level-1);
   unsigned Offset = this->pathOffset(Level-1);
   assert(NR.size() < Branch::Capacity && "Branch overflow");
-  NR.branch().insert(Offset, NR.size(), Node, Stop);
+  NR.get<Branch>().insert(Offset, NR.size(), Node, Stop);
   setNodeSize(Level - 1, NR.size() + 1);
 }
 
@@ -1624,6 +1620,7 @@ iterator::treeInsert(KeyT a, KeyT b, ValT y) {
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 iterator::overflowLeaf() {
+  using namespace IntervalMapImpl;
   unsigned CurSize[4];
   Leaf *Node[4];
   unsigned Nodes = 0;
@@ -1634,7 +1631,7 @@ iterator::overflowLeaf() {
   NodeRef LeftSib = this->leftSibling(this->map->height-1);
   if (LeftSib) {
     Offset += Elements = CurSize[Nodes] = LeftSib.size();
-    Node[Nodes++] = &LeftSib.leaf();
+    Node[Nodes++] = &LeftSib.get<Leaf>();
   }
 
   // Current leaf node.
@@ -1645,7 +1642,7 @@ iterator::overflowLeaf() {
   NodeRef RightSib = this->rightSibling(this->map->height-1);
   if (RightSib) {
     Offset += Elements = CurSize[Nodes] = RightSib.size();
-    Node[Nodes++] = &RightSib.leaf();
+    Node[Nodes++] = &RightSib.get<Leaf>();
   }
 
   // Do we need to allocate a new node?
@@ -1662,9 +1659,8 @@ iterator::overflowLeaf() {
 
   // Compute the new element distribution.
   unsigned NewSize[4];
-  IdxPair NewOffset =
-    IntervalMapImpl::distribute(Nodes, Elements, Leaf::Capacity,
-                                CurSize, NewSize, Offset, true);
+  IdxPair NewOffset = distribute(Nodes, Elements, Leaf::Capacity,
+                                 CurSize, NewSize, Offset, true);
 
   // Move current location to the leftmost node.
   if (LeftSib)
