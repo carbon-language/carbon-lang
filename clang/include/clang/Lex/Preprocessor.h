@@ -47,7 +47,6 @@ class PPCallbacks;
 class CodeCompletionHandler;
 class DirectoryLookup;
 class PreprocessingRecord;
-class PPMacroExpansionTrap;
   
 /// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
@@ -110,11 +109,6 @@ class Preprocessor {
 
   /// DisableMacroExpansion - True if macro expansion is disabled.
   bool DisableMacroExpansion : 1;
-
-  /// \brief This is set to true when a macro is expanded.
-  /// Used by PPMacroExpansionTrap.
-  bool MacroExpansionFlag : 1;
-  friend class PPMacroExpansionTrap;
 
   /// \brief Whether we have already loaded macros from the external source.
   mutable bool ReadMacrosFromExternalSource : 1;
@@ -1033,17 +1027,6 @@ public:
   // The handler shall return true if it has pushed any tokens
   // to be read using e.g. EnterToken or EnterTokenStream.
   virtual bool HandleComment(Preprocessor &PP, SourceRange Comment) = 0;
-};
-
-/// \brief RAII class that determines when any macro expansion has occurred
-/// between the time the instance was created and the time it was
-/// queried.
-class PPMacroExpansionTrap {
-  Preprocessor &PP;
-public:
-  PPMacroExpansionTrap(Preprocessor &PP) : PP(PP) { reset(); }
-  bool hasMacroExpansionOccured() const { return PP.MacroExpansionFlag; }
-  void reset() { PP.MacroExpansionFlag = false; }
 };
 
 }  // end namespace clang

@@ -360,14 +360,24 @@ public:
 ///
 class NullStmt : public Stmt {
   SourceLocation SemiLoc;
+
+  /// \brief Whether the null statement was preceded by an empty macro, e.g:
+  /// @code
+  ///   #define CALL(x)
+  ///   CALL(0);
+  /// @endcode
+  bool LeadingEmptyMacro;
 public:
-  NullStmt(SourceLocation L) : Stmt(NullStmtClass), SemiLoc(L) {}
+  NullStmt(SourceLocation L, bool LeadingEmptyMacro = false)
+    : Stmt(NullStmtClass), SemiLoc(L), LeadingEmptyMacro(LeadingEmptyMacro) {}
 
   /// \brief Build an empty null statement.
   explicit NullStmt(EmptyShell Empty) : Stmt(NullStmtClass, Empty) { }
 
   SourceLocation getSemiLoc() const { return SemiLoc; }
   void setSemiLoc(SourceLocation L) { SemiLoc = L; }
+
+  bool hasLeadingEmptyMacro() const { return LeadingEmptyMacro; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(SemiLoc); }
 
@@ -379,6 +389,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
@@ -651,19 +664,10 @@ class IfStmt : public Stmt {
 
   SourceLocation IfLoc;
   SourceLocation ElseLoc;
-
-  /// \brief True if we have code like:
-  /// @code
-  ///   #define CALL(x)
-  ///   if (condition)
-  ///     CALL(0);
-  /// @endcode
-  bool MacroExpandedInThenStmt;
-
+  
 public:
   IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond, 
-         Stmt *then, SourceLocation EL = SourceLocation(), Stmt *elsev = 0,
-         bool macroExpandedInThenStmt = false);
+         Stmt *then, SourceLocation EL = SourceLocation(), Stmt *elsev = 0);
   
   /// \brief Build an empty if/then/else statement
   explicit IfStmt(EmptyShell Empty) : Stmt(IfStmtClass, Empty) { }
@@ -695,8 +699,6 @@ public:
   SourceLocation getElseLoc() const { return ElseLoc; }
   void setElseLoc(SourceLocation L) { ElseLoc = L; }
 
-  bool hasMacroExpandedInThenStmt() const { return MacroExpandedInThenStmt; }
-
   virtual SourceRange getSourceRange() const {
     if (SubExprs[ELSE])
       return SourceRange(IfLoc, SubExprs[ELSE]->getLocEnd());
@@ -713,9 +715,6 @@ public:
   // over the initialization expression referenced by the condition variable.
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  friend class ASTStmtReader;
-  friend class ASTStmtWriter;
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.

@@ -1566,7 +1566,8 @@ public:
 
   StmtResult ActOnExprStmt(FullExprArg Expr);
 
-  StmtResult ActOnNullStmt(SourceLocation SemiLoc);
+  StmtResult ActOnNullStmt(SourceLocation SemiLoc,
+                           bool LeadingEmptyMacro = false);
   StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                        MultiStmtArg Elts,
                                        bool isStmtExpr);
@@ -1590,7 +1591,7 @@ public:
                             bool HasUnusedAttr);
   StmtResult ActOnIfStmt(SourceLocation IfLoc,
                                  FullExprArg CondVal, Decl *CondVar,
-                                 Stmt *ThenVal, bool MacroExpandedInThenStmt,
+                                 Stmt *ThenVal,
                                  SourceLocation ElseLoc, Stmt *ElseVal);
   StmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
                                             Expr *Cond,

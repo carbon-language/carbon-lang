@@ -147,8 +147,10 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
 
   case tok::l_brace:                // C99 6.8.2: compound-statement
     return ParseCompoundStatement(AttrList);
-  case tok::semi:                   // C99 6.8.3p3: expression[opt] ';'
-    return Actions.ActOnNullStmt(ConsumeToken());
+  case tok::semi: {                 // C99 6.8.3p3: expression[opt] ';'
+    bool LeadingEmptyMacro = Tok.hasLeadingEmptyMacro();
+    return Actions.ActOnNullStmt(ConsumeToken(), LeadingEmptyMacro);
+  }
 
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
     return ParseIfStatement(AttrList);
@@ -538,8 +540,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
                                        Decl *&DeclResult,
                                        SourceLocation Loc,
-                                       bool ConvertToBoolean,
-                                       bool *MacroExpandedAfterRParen) {
+                                       bool ConvertToBoolean) {
   bool ParseError = false;
   
   SourceLocation LParenLoc = ConsumeParen();
@@ -568,14 +569,7 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
   }
 
   // Otherwise the condition is valid or the rparen is present.
-
-  // Catch a macro expansion after ')'. This is used to know that there is a
-  // macro for 'if' body and not warn for empty body if the macro is empty.
-  PPMacroExpansionTrap MacroExpansionTrap(PP);
   MatchRHSPunctuation(tok::r_paren, LParenLoc);
-  if (MacroExpandedAfterRParen)
-    *MacroExpandedAfterRParen = MacroExpansionTrap.hasMacroExpansionOccured();
-
   return false;
 }
 
@@ -618,9 +612,7 @@ StmtResult Parser::ParseIfStatement(AttributeList *Attr) {
   // Parse the condition.
   ExprResult CondExp;
   Decl *CondVar = 0;
-  bool MacroExpandedInThenStmt;
-  if (ParseParenExprOrCondition(CondExp, CondVar, IfLoc, true,
-                                &MacroExpandedInThenStmt))
+  if (ParseParenExprOrCondition(CondExp, CondVar, IfLoc, true))
     return StmtError();
 
   FullExprArg FullCondExp(Actions.MakeFullExpr(CondExp.get()));
@@ -704,7 +696,7 @@ StmtResult Parser::ParseIfStatement(AttributeList *Attr) {
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
 
   return Actions.ActOnIfStmt(IfLoc, FullCondExp, CondVar, ThenStmt.get(),
-                             MacroExpandedInThenStmt, ElseLoc, ElseStmt.get());
+                             ElseLoc, ElseStmt.get());
 }
 
 /// ParseSwitchStatement

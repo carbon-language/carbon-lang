@@ -470,10 +470,8 @@ CXXTryStmt::CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock,
 }
 
 IfStmt::IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond, 
-               Stmt *then, SourceLocation EL, Stmt *elsev,
-               bool macroExpandedInThenStmt)
-  : Stmt(IfStmtClass), IfLoc(IL), ElseLoc(EL),
-    MacroExpandedInThenStmt(macroExpandedInThenStmt)
+               Stmt *then, SourceLocation EL, Stmt *elsev)
+  : Stmt(IfStmtClass), IfLoc(IL), ElseLoc(EL)
 {
   setConditionVariable(C, var);
   SubExprs[COND] = reinterpret_cast<Stmt*>(cond);

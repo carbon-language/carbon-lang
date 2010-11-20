@@ -42,8 +42,8 @@ StmtResult Sema::ActOnExprStmt(FullExprArg expr) {
 }
 
 
-StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc) {
-  return Owned(new (Context) NullStmt(SemiLoc));
+StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc, bool LeadingEmptyMacro) {
+  return Owned(new (Context) NullStmt(SemiLoc, LeadingEmptyMacro));
 }
 
 StmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
@@ -282,8 +282,8 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
 
 StmtResult
 Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
-                  Stmt *thenStmt, bool MacroExpandedInThenStmt,
-                  SourceLocation ElseLoc, Stmt *elseStmt) {
+                  Stmt *thenStmt, SourceLocation ElseLoc,
+                  Stmt *elseStmt) {
   ExprResult CondResult(CondVal.release());
 
   VarDecl *ConditionVar = 0;
@@ -312,15 +312,14 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
       // if (condition)
       //   CALL(0);
       //
-      if (!MacroExpandedInThenStmt)
+      if (!stmt->hasLeadingEmptyMacro())
         Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
   }
 
   DiagnoseUnusedExprResult(elseStmt);
 
   return Owned(new (Context) IfStmt(Context, IfLoc, ConditionVar, ConditionExpr, 
-                                    thenStmt, ElseLoc, elseStmt,
-                                    MacroExpandedInThenStmt));
+                                    thenStmt, ElseLoc, elseStmt));
 }
 
 /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have

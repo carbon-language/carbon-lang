@@ -1199,8 +1199,7 @@ private:
   bool ParseParenExprOrCondition(ExprResult &ExprResult,
                                  Decl *&DeclResult,
                                  SourceLocation Loc,
-                                 bool ConvertToBoolean,
-                                 bool *MacroExpandedAfterRParen = 0);
+                                 bool ConvertToBoolean);
   StmtResult ParseIfStatement(AttributeList *Attr);
   StmtResult ParseSwitchStatement(AttributeList *Attr);
   StmtResult ParseWhileStatement(AttributeList *Attr);

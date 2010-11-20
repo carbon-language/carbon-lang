@@ -76,7 +76,8 @@ public:
     StartOfLine   = 0x01,  // At start of line or only after whitespace.
     LeadingSpace  = 0x02,  // Whitespace exists before this token.
     DisableExpand = 0x04,  // This identifier may never be macro expanded.
-    NeedsCleaning = 0x08   // Contained an escaped newline or trigraph.
+    NeedsCleaning = 0x08,   // Contained an escaped newline or trigraph.
+    LeadingEmptyMacro = 0x10 // Empty macro exists before this token.
   };
 
   tok::TokenKind getKind() const { return (tok::TokenKind)Kind; }
@@ -231,7 +232,13 @@ public:
   /// newlines in it.
   ///
   bool needsCleaning() const { return (Flags & NeedsCleaning) ? true : false; }
-    
+
+  /// \brief Return true if this token has an empty macro before it.
+  ///
+  bool hasLeadingEmptyMacro() const {
+    return (Flags & LeadingEmptyMacro) ? true : false;
+  }
+
 };
 
 /// PPConditionalInfo - Information about the conditional stack (#if directives)

@@ -171,6 +171,7 @@ void ASTStmtWriter::VisitStmt(Stmt *S) {
 void ASTStmtWriter::VisitNullStmt(NullStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getSemiLoc(), Record);
+  Record.push_back(S->LeadingEmptyMacro);
   Code = serialization::STMT_NULL;
 }
 
@@ -228,7 +229,6 @@ void ASTStmtWriter::VisitIfStmt(IfStmt *S) {
   Writer.AddStmt(S->getElse());
   Writer.AddSourceLocation(S->getIfLoc(), Record);
   Writer.AddSourceLocation(S->getElseLoc(), Record);
-  Record.push_back(S->MacroExpandedInThenStmt);
   Code = serialization::STMT_IF;
 }
 
