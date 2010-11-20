@@ -382,11 +382,11 @@ condition_variable::wait_for(unique_lock<mutex>& __lk,
                              const chrono::duration<_Rep, _Period>& __d)
 {
     using namespace chrono;
-    system_clock::time_point     __s_now = system_clock::now();
-    monotonic_clock::time_point  __c_now = monotonic_clock::now();
+    system_clock::time_point __s_now = system_clock::now();
+    steady_clock::time_point __c_now = steady_clock::now();
     __do_timed_wait(__lk, __s_now + __ceil<nanoseconds>(__d));
-    return monotonic_clock::now() - __c_now < __d ? cv_status::no_timeout :
-                                                    cv_status::timeout;
+    return steady_clock::now() - __c_now < __d ? cv_status::no_timeout :
+                                                 cv_status::timeout;
 }
 
 template <class _Rep, class _Period, class _Predicate>
@@ -396,7 +396,7 @@ condition_variable::wait_for(unique_lock<mutex>& __lk,
                              const chrono::duration<_Rep, _Period>& __d,
                              _Predicate __pred)
 {
-    return wait_until(__lk, chrono::monotonic_clock::now() + __d,
+    return wait_until(__lk, chrono::steady_clock::now() + __d,
                       _STD::move(__pred));
 }
 

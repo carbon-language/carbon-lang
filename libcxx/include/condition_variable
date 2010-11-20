@@ -232,7 +232,7 @@ cv_status
 condition_variable_any::wait_for(_Lock& __lock,
                                  const chrono::duration<_Rep, _Period>& __d)
 {
-    return wait_until(__lock, chrono::monotonic_clock::now() + __d);
+    return wait_until(__lock, chrono::steady_clock::now() + __d);
 }
 
 template <class _Lock, class _Rep, class _Period, class _Predicate>
@@ -242,7 +242,7 @@ condition_variable_any::wait_for(_Lock& __lock,
                                  const chrono::duration<_Rep, _Period>& __d,
                                  _Predicate __pred)
 {
-    return wait_until(__lock, chrono::monotonic_clock::now() + __d,
+    return wait_until(__lock, chrono::steady_clock::now() + __d,
                       _STD::move(__pred));
 }
 

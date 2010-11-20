@@ -29,13 +29,13 @@ struct Clock
     typedef duration::rep             rep;
     typedef duration::period          period;
     typedef std::chrono::time_point<Clock> time_point;
-    static const bool is_monotonic =  true;
+    static const bool is_steady =  true;
 
     static time_point now()
     {
         using namespace std::chrono;
         return time_point(duration_cast<duration>(
-                monotonic_clock::now().time_since_epoch()
+                steady_clock::now().time_since_epoch()
                                                  ));
     }
 };

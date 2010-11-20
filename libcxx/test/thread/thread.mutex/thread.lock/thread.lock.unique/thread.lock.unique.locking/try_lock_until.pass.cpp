@@ -36,7 +36,7 @@ mutex m;
 
 int main()
 {
-    typedef std::chrono::monotonic_clock Clock;
+    typedef std::chrono::steady_clock Clock;
     std::unique_lock<mutex> lk(m, std::defer_lock);
     assert(lk.try_lock_until(Clock::now()) == true);
     assert(try_lock_until_called == true);

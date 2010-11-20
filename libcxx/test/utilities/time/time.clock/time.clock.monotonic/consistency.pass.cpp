@@ -9,7 +9,7 @@
 
 // <chrono>
 
-// monotonic_clock
+// steady_clock
 
 // check clock invariants
 
@@ -17,9 +17,9 @@
 
 int main()
 {
-    typedef std::chrono::monotonic_clock C;
+    typedef std::chrono::steady_clock C;
     static_assert((std::is_same<C::rep, C::duration::rep>::value), "");
     static_assert((std::is_same<C::period, C::duration::period>::value), "");
     static_assert((std::is_same<C::duration, C::time_point::duration>::value), "");
-    static_assert(C::is_monotonic, "");
+    static_assert(C::is_steady, "");
 }

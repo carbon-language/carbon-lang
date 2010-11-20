@@ -406,10 +406,10 @@ sleep_until(const chrono::time_point<_Clock, _Duration>& __t)
 template <class _Duration>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-sleep_until(const chrono::time_point<chrono::monotonic_clock, _Duration>& __t)
+sleep_until(const chrono::time_point<chrono::steady_clock, _Duration>& __t)
 {
     using namespace chrono;
-    sleep_for(__t - monotonic_clock::now());
+    sleep_for(__t - steady_clock::now());
 }
 
 inline _LIBCPP_INLINE_VISIBILITY

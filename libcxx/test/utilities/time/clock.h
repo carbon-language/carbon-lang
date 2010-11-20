@@ -9,7 +9,7 @@ class Clock
     typedef duration::rep                            rep;
     typedef duration::period                         period;
     typedef std::chrono::time_point<Clock, duration> time_point;
-    static const bool is_monotonic =                 false;
+    static const bool is_steady =                    false;
 
     static time_point now();
 };

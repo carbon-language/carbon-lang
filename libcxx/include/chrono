@@ -223,26 +223,26 @@ public:
     typedef duration::rep                    rep;
     typedef duration::period                 period;
     typedef chrono::time_point<system_clock> time_point;
-    static const bool is_monotonic =          false;
+    static const bool is_steady =            false;
 
     static time_point now();
     static time_t     to_time_t  (const time_point& __t);
     static time_point from_time_t(time_t __t);
 };
 
-class monotonic_clock
+class steady_clock
 {
 public:
     typedef nanoseconds                                   duration;
     typedef duration::rep                                 rep;
     typedef duration::period                              period;
-    typedef chrono::time_point<monotonic_clock, duration> time_point;
-    static const bool is_monotonic =                       true;
+    typedef chrono::time_point<steady_clock, duration>    time_point;
+    static const bool is_steady =                         true;
 
     static time_point now();
 };
 
-typedef monotonic_clock high_resolution_clock;
+typedef steady_clock high_resolution_clock;
 
 }  // chrono
 
@@ -843,26 +843,26 @@ public:
     typedef duration::rep                    rep;
     typedef duration::period                 period;
     typedef chrono::time_point<system_clock> time_point;
-    static const bool is_monotonic =          false;
+    static const bool is_steady =            false;
 
     static time_point now();
     static time_t     to_time_t  (const time_point& __t);
     static time_point from_time_t(time_t __t);
 };
 
-class _LIBCPP_VISIBLE monotonic_clock
+class _LIBCPP_VISIBLE steady_clock
 {
 public:
     typedef nanoseconds                                   duration;
     typedef duration::rep                                 rep;
     typedef duration::period                              period;
-    typedef chrono::time_point<monotonic_clock, duration> time_point;
-    static const bool is_monotonic =                       true;
+    typedef chrono::time_point<steady_clock, duration>    time_point;
+    static const bool is_steady =                         true;
 
     static time_point now();
 };
 
-typedef monotonic_clock high_resolution_clock;
+typedef steady_clock high_resolution_clock;
 
 } // chrono
 

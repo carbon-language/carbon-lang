@@ -44,7 +44,7 @@ system_clock::from_time_t(time_t t)
     return system_clock::time_point(seconds(t));
 }
 
-// monotonic_clock
+// steady_clock
 
 #if __APPLE__
 //   mach_absolute_time() * MachInfo.numer / MachInfo.denom is the number of
@@ -58,15 +58,15 @@ system_clock::from_time_t(time_t t)
 #pragma GCC visibility push(hidden)
 
 static
-monotonic_clock::rep
-monotonic_simplified()
+steady_clock::rep
+steady_simplified()
 {
     return mach_absolute_time();
 }
 
 static
 double
-compute_monotonic_factor()
+compute_steady_factor()
 {
     mach_timebase_info_data_t MachInfo;
     mach_timebase_info(&MachInfo);
@@ -74,32 +74,32 @@ compute_monotonic_factor()
 }
 
 static
-monotonic_clock::rep
-monotonic_full()
+steady_clock::rep
+steady_full()
 {
-    static const double factor = compute_monotonic_factor();
-    return static_cast<monotonic_clock::rep>(mach_absolute_time() * factor);
+    static const double factor = compute_steady_factor();
+    return static_cast<steady_clock::rep>(mach_absolute_time() * factor);
 }
 
-typedef monotonic_clock::rep (*FP)();
+typedef steady_clock::rep (*FP)();
 
 static
 FP
-init_monotonic_clock()
+init_steady_clock()
 {
     mach_timebase_info_data_t MachInfo;
     mach_timebase_info(&MachInfo);
     if (MachInfo.numer == MachInfo.denom)
-        return &monotonic_simplified;
-    return &monotonic_full;
+        return &steady_simplified;
+    return &steady_full;
 }
 
 #pragma GCC visibility pop
 
-monotonic_clock::time_point
-monotonic_clock::now()
+steady_clock::time_point
+steady_clock::now()
 {
-    static FP fp = init_monotonic_clock();
+    static FP fp = init_steady_clock();
     return time_point(duration(fp()));
 }
 
@@ -109,12 +109,12 @@ monotonic_clock::now()
 // _POSIX_MONOTONIC_CLOCK and fall back to something else if those
 // don't exist.
 
-// Warning:  If this is not truly monotonic, then it is non-conforming.  It is
+// Warning:  If this is not truly steady, then it is non-conforming.  It is
 //  better for it to not exist and have the rest of libc++ use system_clock
 //  instead.
 
-monotonic_clock::time_point
-monotonic_clock::now()
+steady_clock::time_point
+steady_clock::now()
 {
     struct timespec tp;
     if (0 != clock_gettime(CLOCK_MONOTONIC, &tp))

@@ -21,7 +21,7 @@
 
 std::recursive_timed_mutex m;
 
-typedef std::chrono::monotonic_clock Clock;
+typedef std::chrono::steady_clock Clock;
 typedef Clock::time_point time_point;
 typedef Clock::duration duration;
 typedef std::chrono::milliseconds ms;

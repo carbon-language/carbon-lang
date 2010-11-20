@@ -9,7 +9,7 @@
 
 // <chrono>
 
-// monotonic_clock
+// steady_clock
 
 // static time_point now();
 
@@ -18,7 +18,7 @@
 
 int main()
 {
-    typedef std::chrono::monotonic_clock C;
+    typedef std::chrono::steady_clock C;
     C::time_point t1 = C::now();
     C::time_point t2 = C::now();
     assert(t2 >= t1);

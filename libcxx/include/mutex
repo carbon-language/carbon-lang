@@ -221,7 +221,7 @@ public:
     template <class _Rep, class _Period>
         _LIBCPP_INLINE_VISIBILITY
         bool try_lock_for(const chrono::duration<_Rep, _Period>& __d)
-            {return try_lock_until(chrono::monotonic_clock::now() + __d);}
+            {return try_lock_until(chrono::steady_clock::now() + __d);}
     template <class _Clock, class _Duration>
         bool try_lock_until(const chrono::time_point<_Clock, _Duration>& __t);
     void unlock();
@@ -264,7 +264,7 @@ public:
     template <class _Rep, class _Period>
         _LIBCPP_INLINE_VISIBILITY
         bool try_lock_for(const chrono::duration<_Rep, _Period>& __d)
-            {return try_lock_until(chrono::monotonic_clock::now() + __d);}
+            {return try_lock_until(chrono::steady_clock::now() + __d);}
     template <class _Clock, class _Duration>
         bool try_lock_until(const chrono::time_point<_Clock, _Duration>& __t);
     void unlock();

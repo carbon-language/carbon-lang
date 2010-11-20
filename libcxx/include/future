@@ -603,7 +603,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 future_status
 __assoc_sub_state::wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
 {
-    return wait_until(chrono::monotonic_clock::now() + __rel_time);
+    return wait_until(chrono::steady_clock::now() + __rel_time);
 }
 
 template <class _R>
