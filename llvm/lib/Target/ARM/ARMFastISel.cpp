@@ -845,7 +845,6 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
 bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
   unsigned StrOpc;
   bool isFloat = false;
-  bool needReg0Op = false;
   switch (VT.getSimpleVT().SimpleTy) {
     default: return false;
     case MVT::i1: {
@@ -862,7 +861,6 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
       break;
     case MVT::i16:
       StrOpc = isThumb ? ARM::t2STRHi12 : ARM::STRH;
-      needReg0Op = true;
       break;
     case MVT::i32:
       StrOpc = isThumb ? ARM::t2STRi12 : ARM::STRi12;
@@ -886,18 +884,16 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
   if (isFloat)
     Addr.Offset /= 4;
 
-  // FIXME: The 'needReg0Op' bit goes away once STRH is converted to
-  // not use the mega-addrmode stuff.
-  if (!needReg0Op)
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(StrOpc))
-                    .addReg(SrcReg).addReg(Addr.Base.Reg).addImm(Addr.Offset));
-  else
+  // ARM::STRH needs an additional operand.
+  if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
                     .addReg(SrcReg).addReg(Addr.Base.Reg)
                     .addReg(0).addImm(Addr.Offset));
-
+  else
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(StrOpc))
+                    .addReg(SrcReg).addReg(Addr.Base.Reg).addImm(Addr.Offset));
   return true;
 }
 
