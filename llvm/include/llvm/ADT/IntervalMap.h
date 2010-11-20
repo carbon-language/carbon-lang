@@ -170,8 +170,8 @@ typedef std::pair<unsigned,unsigned> IdxPair;
 //---                            Node Storage                              ---//
 //===----------------------------------------------------------------------===//
 //
-// Both leaf and branch nodes store vectors of (key,value) pairs.
-// Leaves store ((KeyT, KeyT), ValT) pairs, branches use (KeyT, NodeRef).
+// Both leaf and branch nodes store vectors of pairs.
+// Leaves store ((KeyT, KeyT), ValT) pairs, branches use (NodeRef, KeyT).
 //
 // Keys and values are stored in separate arrays to avoid padding caused by
 // different object alignments. This also helps improve locality of reference
@@ -184,23 +184,22 @@ typedef std::pair<unsigned,unsigned> IdxPair;
 // These are typical key and value sizes, the node branching factor (N), and
 // wasted space when nodes are sized to fit in three cache lines (192 bytes):
 //
-//   KT  VT   N Waste  Used by
+//   T1  T2   N Waste  Used by
 //    4   4  24   0    Branch<4> (32-bit pointers)
-//    4   8  16   0    Branch<4>
-//    8   4  16   0    Leaf<4,4>
+//    8   4  16   0    Leaf<4,4>, Branch<4>
 //    8   8  12   0    Leaf<4,8>, Branch<8>
 //   16   4   9  12    Leaf<8,4>
 //   16   8   8   0    Leaf<8,8>
 //
 //===----------------------------------------------------------------------===//
 
-template <typename KT, typename VT, unsigned N>
+template <typename T1, typename T2, unsigned N>
 class NodeBase {
 public:
   enum { Capacity = N };
 
-  KT key[N];
-  VT val[N];
+  T1 first[N];
+  T2 second[N];
 
   /// copy - Copy elements from another node.
   /// @param Other Node elements are copied from.
@@ -208,12 +207,12 @@ public:
   /// @param j     Beginning of the destination range in this.
   /// @param Count Number of elements to copy.
   template <unsigned M>
-  void copy(const NodeBase<KT, VT, M> &Other, unsigned i,
+  void copy(const NodeBase<T1, T2, M> &Other, unsigned i,
             unsigned j, unsigned Count) {
     assert(i + Count <= M && "Invalid source range");
     assert(j + Count <= N && "Invalid dest range");
-    std::copy(Other.key + i, Other.key + i + Count, key + j);
-    std::copy(Other.val + i, Other.val + i + Count, val + j);
+    std::copy(Other.first + i, Other.first + i + Count, first + j);
+    std::copy(Other.second + i, Other.second + i + Count, second + j);
   }
 
   /// moveLeft - Move elements to the left.
@@ -232,8 +231,8 @@ public:
   void moveRight(unsigned i, unsigned j, unsigned Count) {
     assert(i <= j && "Use moveLeft shift elements left");
     assert(j + Count <= N && "Invalid range");
-    std::copy_backward(key + i, key + i + Count, key + j + Count);
-    std::copy_backward(val + i, val + i + Count, val + j + Count);
+    std::copy_backward(first + i, first + i + Count, first + j + Count);
+    std::copy_backward(second + i, second + i + Count, second + j + Count);
   }
 
   /// erase - Erase elements [i;j).
@@ -455,13 +454,13 @@ public:
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 class LeafNode : public NodeBase<std::pair<KeyT, KeyT>, ValT, N> {
 public:
-  const KeyT &start(unsigned i) const { return this->key[i].first; }
-  const KeyT &stop(unsigned i) const { return this->key[i].second; }
-  const ValT &value(unsigned i) const { return this->val[i]; }
+  const KeyT &start(unsigned i) const { return this->first[i].first; }
+  const KeyT &stop(unsigned i) const { return this->first[i].second; }
+  const ValT &value(unsigned i) const { return this->second[i]; }
 
-  KeyT &start(unsigned i) { return this->key[i].first; }
-  KeyT &stop(unsigned i) { return this->key[i].second; }
-  ValT &value(unsigned i) { return this->val[i]; }
+  KeyT &start(unsigned i) { return this->first[i].first; }
+  KeyT &stop(unsigned i) { return this->first[i].second; }
+  ValT &value(unsigned i) { return this->second[i]; }
 
   /// findFrom - Find the first interval after i that may contain x.
   /// @param i    Starting index for the search.
@@ -635,14 +634,14 @@ extendStop(unsigned i, unsigned Size, KeyT b) {
 //===----------------------------------------------------------------------===//
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
-class BranchNode : public NodeBase<KeyT, NodeRef<KeyT, ValT, Traits>, N> {
+class BranchNode : public NodeBase<NodeRef<KeyT, ValT, Traits>, KeyT, N> {
   typedef  NodeRef<KeyT, ValT, Traits> NodeRefT;
 public:
-  const KeyT &stop(unsigned i) const { return this->key[i]; }
-  const NodeRefT &subtree(unsigned i) const { return this->val[i]; }
+  const KeyT &stop(unsigned i) const { return this->second[i]; }
+  const NodeRefT &subtree(unsigned i) const { return this->first[i]; }
 
-  KeyT &stop(unsigned i) { return this->key[i]; }
-  NodeRefT &subtree(unsigned i) { return this->val[i]; }
+  KeyT &stop(unsigned i) { return this->second[i]; }
+  NodeRefT &subtree(unsigned i) { return this->first[i]; }
 
   /// findFrom - Find the first subtree after i that may contain x.
   /// @param i    Starting index for the search.
