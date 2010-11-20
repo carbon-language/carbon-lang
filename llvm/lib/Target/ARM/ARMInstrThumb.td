@@ -700,34 +700,69 @@ def tADDi8 : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALUi,
 
 // Add register
 let isCommutable = 1 in
-def tADDrr : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
-                   "add", "\t$dst, $lhs, $rhs",
-                   [(set tGPR:$dst, (add tGPR:$lhs, tGPR:$rhs))]>,
-             T1General<0b01100>;
+def tADDrr : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rn, tGPR:$Rm), IIC_iALUr,
+                   "add", "\t$Rd, $Rn, $Rm",
+                   [(set tGPR:$Rd, (add tGPR:$Rn, tGPR:$Rm))]>,
+             T1General<0b01100> {
+  // A8.6.6 T1
+  bits<3> Rm;
+  bits<3> Rn;
+  bits<3> Rd;
+  let Inst{8-6} = Rm;
+  let Inst{5-3} = Rn;
+  let Inst{2-0} = Rd;
+}
 
 let neverHasSideEffects = 1 in
 def tADDhirr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
                      "add", "\t$dst, $rhs", []>,
-               T1Special<{0,0,?,?}>;
+               T1Special<{0,0,?,?}> {
+  // A8.6.6 T2
+  bits<4> dst;
+  bits<4> rhs;
+  let Inst{6-3} = rhs;
+  let Inst{7}   = dst{3};
+  let Inst{2-0} = dst{2-0};
+}
 
-// And register
+// AND register
 let isCommutable = 1 in
 def tAND : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
                  "and", "\t$dst, $rhs",
                  [(set tGPR:$dst, (and tGPR:$lhs, tGPR:$rhs))]>,
-           T1DataProcessing<0b0000>;
+           T1DataProcessing<0b0000> {
+  // A8.6.12
+  bits<3> rhs;
+  bits<3> dst;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
 // ASR immediate
-def tASRri : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iMOVsi,
-                  "asr", "\t$dst, $lhs, $rhs",
-                  [(set tGPR:$dst, (sra tGPR:$lhs, (i32 imm:$rhs)))]>,
-             T1General<{0,1,0,?,?}>;
+def tASRri : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5), IIC_iMOVsi,
+                  "asr", "\t$Rd, $Rm, $imm5",
+                  [(set tGPR:$Rd, (sra tGPR:$Rm, (i32 imm:$imm5)))]>,
+             T1General<{0,1,0,?,?}> {
+  // A8.6.14
+  bits<3> Rd;
+  bits<3> Rm;
+  bits<5> imm5;
+  let Inst{10-6} = imm5;
+  let Inst{5-3}  = Rm;
+  let Inst{2-0}  = Rd;
+}
 
 // ASR register
 def tASRrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
                    "asr", "\t$dst, $rhs",
                    [(set tGPR:$dst, (sra tGPR:$lhs, tGPR:$rhs))]>,
-             T1DataProcessing<0b0100>;
+             T1DataProcessing<0b0100> {
+  // A8.6.15
+  bits<3> rhs;
+  bits<3> dst;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
 // BIC register
 def tBIC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
