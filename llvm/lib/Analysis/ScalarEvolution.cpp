@@ -5075,13 +5075,13 @@ bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
 
 trivially_true:
   // Return 0 == 0.
-  LHS = RHS = getConstant(Type::getInt1Ty(getContext()), 0);
+  LHS = RHS = getConstant(ConstantInt::getFalse(getContext()));
   Pred = ICmpInst::ICMP_EQ;
   return true;
 
 trivially_false:
   // Return 0 != 0.
-  LHS = RHS = getConstant(Type::getInt1Ty(getContext()), 0);
+  LHS = RHS = getConstant(ConstantInt::getFalse(getContext()));
   Pred = ICmpInst::ICMP_NE;
   return true;
 }

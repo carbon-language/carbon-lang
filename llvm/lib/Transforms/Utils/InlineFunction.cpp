@@ -338,7 +338,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
         Value *CallArgs[] = {
           DestCast, SrcCast, Size,
           ConstantInt::get(Type::getInt32Ty(Context), 1),
-          ConstantInt::get(Type::getInt1Ty(Context), 0)
+          ConstantInt::getFalse(Context) // isVolatile
         };
         CallInst *TheMemCpy =
           CallInst::Create(MemCpyFn, CallArgs, CallArgs+5, "", TheCall);

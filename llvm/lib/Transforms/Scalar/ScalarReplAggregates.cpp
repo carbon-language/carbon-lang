@@ -1477,7 +1477,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
         EltPtr, MI->getArgOperand(1),  // Dest, Value,
         ConstantInt::get(MI->getArgOperand(2)->getType(), EltSize), // Size
         Zero,  // Align
-        ConstantInt::get(Type::getInt1Ty(MI->getContext()), 0) // isVolatile
+        ConstantInt::getFalse(MI->getContext()) // isVolatile
       };
       const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
       Module *M = MI->getParent()->getParent()->getParent();

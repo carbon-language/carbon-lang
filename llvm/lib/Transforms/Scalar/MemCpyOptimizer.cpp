@@ -496,7 +496,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       // align
       ConstantInt::get(Type::getInt32Ty(Context), Alignment),
       // volatile
-      ConstantInt::get(Type::getInt1Ty(Context), 0),
+      ConstantInt::getFalse(Context),
     };
     const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
 

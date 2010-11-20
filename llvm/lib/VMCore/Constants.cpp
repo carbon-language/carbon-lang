@@ -265,20 +265,16 @@ ConstantInt::ConstantInt(const IntegerType *Ty, const APInt& V)
 
 ConstantInt* ConstantInt::getTrue(LLVMContext &Context) {
   LLVMContextImpl *pImpl = Context.pImpl;
-  if (pImpl->TheTrueVal)
-    return pImpl->TheTrueVal;
-  else
-    return (pImpl->TheTrueVal =
-              ConstantInt::get(IntegerType::get(Context, 1), 1));
+  if (!pImpl->TheTrueVal)
+    pImpl->TheTrueVal = ConstantInt::get(Type::getInt1Ty(Context), 1);
+  return pImpl->TheTrueVal;
 }
 
 ConstantInt* ConstantInt::getFalse(LLVMContext &Context) {
   LLVMContextImpl *pImpl = Context.pImpl;
-  if (pImpl->TheFalseVal)
-    return pImpl->TheFalseVal;
-  else
-    return (pImpl->TheFalseVal =
-              ConstantInt::get(IntegerType::get(Context, 1), 0));
+  if (!pImpl->TheFalseVal)
+    pImpl->TheFalseVal = ConstantInt::get(Type::getInt1Ty(Context), 0);
+  return pImpl->TheFalseVal;
 }
 
 
