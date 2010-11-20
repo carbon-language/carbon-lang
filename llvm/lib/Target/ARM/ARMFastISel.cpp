@@ -53,23 +53,23 @@ DisableARMFastISel("disable-arm-fast-isel",
                     cl::init(false), cl::Hidden);
 
 namespace {
-  
+
   // All possible address modes, plus some.
   typedef struct Address {
     enum {
       RegBase,
       FrameIndexBase
     } BaseType;
-    
+
     union {
       unsigned Reg;
       int FI;
     } Base;
-    
+
     int Offset;
     unsigned Scale;
     unsigned PlusReg;
-    
+
     // Innocuous defaults for our address.
     Address()
      : BaseType(RegBase), Offset(0), Scale(0), PlusReg(0) {
@@ -695,12 +695,14 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
     }
     case Instruction::Alloca: {
       const AllocaInst *AI = cast<AllocaInst>(Obj);
-      unsigned Reg = TargetMaterializeAlloca(AI);
-
-      if (Reg == 0) return false;
-
-      Addr.Base.Reg = Reg;
-      return true;
+      DenseMap<const AllocaInst*, int>::iterator SI =
+        FuncInfo.StaticAllocaMap.find(AI);
+      if (SI != FuncInfo.StaticAllocaMap.end()) {
+        Addr.BaseType = Address::FrameIndexBase;
+        Addr.Base.FI = SI->second;
+        return true;
+      }
+      break;
     }
   }
 
@@ -739,6 +741,22 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT) {
       // Floating point operands handle 8-bit offsets.
       needsLowering = ((Addr.Offset & 0xff) != Addr.Offset);
       break;
+  }
+
+  // If this is a stack pointer and the offset needs to be simplified then
+  // put the alloca address into a register, set the base type back to
+  // register and continue. This should almost never happen.
+  if (needsLowering && Addr.BaseType == Address::FrameIndexBase) {
+    TargetRegisterClass *RC = isThumb ? ARM::tGPRRegisterClass :
+                              ARM::GPRRegisterClass;
+    unsigned ResultReg = createResultReg(RC);
+    unsigned Opc = isThumb ? ARM::t2ADDri : ARM::ADDri;
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, *FuncInfo.InsertPt, DL,
+                            TII.get(Opc), ResultReg)
+                            .addFrameIndex(Addr.Base.FI)
+                            .addImm(0));
+    Addr.Base.Reg = ResultReg;
+    Addr.BaseType = Address::RegBase;
   }
 
   // Since the offset is too large for the load/store instruction
@@ -809,6 +827,28 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr) {
   // offset by 4 that it then later multiplies. Do this here as well.
   if (isFloat)
     Addr.Offset /= 4;
+
+  if (Addr.BaseType == Address::FrameIndexBase) {
+    int FI = Addr.Base.FI;
+    int Offset = Addr.Offset;
+    MachineMemOperand *MMO =
+          FuncInfo.MF->getMachineMemOperand(
+                                  MachinePointerInfo::getFixedStack(FI, Offset),
+                                  MachineMemOperand::MOLoad,
+                                  MFI.getObjectSize(FI),
+                                  MFI.getObjectAlignment(FI));
+    // LDRH needs an additional operand.
+    if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16)
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(Opc), ResultReg)
+                      .addFrameIndex(FI).addReg(0).addImm(Offset)
+                      .addMemOperand(MMO));
+    else
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(Opc), ResultReg)
+                      .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO));
+    return true;
+  }
 
   // LDRH needs an additional operand.
   if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16)
@@ -884,7 +924,31 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
   if (isFloat)
     Addr.Offset /= 4;
 
-  // ARM::STRH needs an additional operand.
+  if (Addr.BaseType == Address::FrameIndexBase) {
+    int FI = Addr.Base.FI;
+    int Offset = Addr.Offset;
+    MachineMemOperand *MMO =
+          FuncInfo.MF->getMachineMemOperand(
+                                  MachinePointerInfo::getFixedStack(FI, Offset),
+                                  MachineMemOperand::MOLoad,
+                                  MFI.getObjectSize(FI),
+                                  MFI.getObjectAlignment(FI));
+    // LDRH needs an additional operand.
+    if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16)
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(StrOpc))
+                      .addReg(SrcReg, getKillRegState(true))
+                      .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO));
+    else
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(StrOpc))
+                      .addReg(SrcReg, getKillRegState(true))
+                      .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO));
+
+    return true;
+  }
+
+  // ARM::LDRH needs an additional operand.
   if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
@@ -894,6 +958,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
                     .addReg(SrcReg).addReg(Addr.Base.Reg).addImm(Addr.Offset));
+
   return true;
 }
 
