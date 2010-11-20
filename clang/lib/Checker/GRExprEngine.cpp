@@ -718,6 +718,8 @@ void GRExprEngine::ProcessInitializer(const CFGInitializer Init,
 
 void GRExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
                                        GRStmtNodeBuilder &builder) {
+  Builder = &builder;
+
   switch (D.getDtorKind()) {
   case CFGElement::AutomaticObjectDtor:
     ProcessAutomaticObjDtor(cast<CFGAutomaticObjDtor>(D), builder);
@@ -738,6 +740,17 @@ void GRExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
 
 void GRExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D,
                                            GRStmtNodeBuilder &builder) {
+  ExplodedNode *Pred = builder.getBasePredecessor();
+  const GRState *state = Pred->getState();
+  const VarDecl *VD = D.getVarDecl();
+  const CXXRecordDecl *CD = VD->getType()->getAsCXXRecordDecl();
+  const CXXDestructorDecl *DD = CD->getDestructor();
+
+  Loc Dest = state->getLValue(VD, Pred->getLocationContext());
+
+  ExplodedNodeSet Dst;
+  VisitCXXDestructor(DD, cast<loc::MemRegionVal>(Dest).getRegion(),
+                     D.getTriggerStmt(), Pred, Dst);
 }
 
 void GRExprEngine::ProcessBaseDtor(const CFGBaseDtor D,

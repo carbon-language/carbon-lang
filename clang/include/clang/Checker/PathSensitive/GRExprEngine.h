@@ -428,6 +428,10 @@ public:
   void VisitCXXConstructExpr(const CXXConstructExpr *E, const MemRegion *Dest,
                              ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
+  void VisitCXXDestructor(const CXXDestructorDecl *DD,
+                          const MemRegion *Dest, const Stmt *S,
+                          ExplodedNode *Pred, ExplodedNodeSet &Dst);
+
   void VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, ExplodedNode *Pred,
                               ExplodedNodeSet &Dst);
 

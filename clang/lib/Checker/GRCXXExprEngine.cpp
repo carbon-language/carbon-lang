@@ -143,6 +143,30 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   }
 }
 
+void GRExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
+                                      const MemRegion *Dest,
+                                      const Stmt *S,
+                                      ExplodedNode *Pred, 
+                                      ExplodedNodeSet &Dst) {
+  if (!(DD->isThisDeclarationADefinition() && AMgr.shouldInlineCall()))
+    return;
+  // Create the context for 'this' region.
+  const StackFrameContext *SFC = AMgr.getStackFrame(DD,
+                                                    Pred->getLocationContext(),
+                                                    S, Builder->getBlock(),
+                                                    Builder->getIndex());
+
+  const CXXThisRegion *ThisR = getCXXThisRegion(DD->getParent(), SFC);
+
+  CallEnter PP(S, SFC->getAnalysisContext(), Pred->getLocationContext());
+
+  const GRState *state = Pred->getState();
+  state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
+  ExplodedNode *N = Builder->generateNode(PP, state, Pred);
+  if (N)
+    Dst.Add(N);
+}
+
 void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, 
                                           ExplodedNode *Pred, 
                                           ExplodedNodeSet &Dst) {

@@ -1828,7 +1828,7 @@ Store RegionStoreManager::EnterStackFrame(const GRState *state,
       store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI,frame)),ArgVal);
     }
   } else
-    llvm_unreachable("Unhandled call expression.");
+    assert(isa<CXXDestructorDecl>(frame->getDecl()));
 
   return store;
 }
