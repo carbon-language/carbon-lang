@@ -213,6 +213,7 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
 static bool FunctionCallsSetJmp(const Function *F) {
   const Module *M = F->getParent();
   static const char *ReturnsTwiceFns[] = {
+    "_setjmp",
     "setjmp",
     "sigsetjmp",
     "setjmp_syscall",
