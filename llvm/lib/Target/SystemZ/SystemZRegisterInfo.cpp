@@ -64,28 +64,6 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-int SystemZRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
-                                             int FI) const {
-  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const SystemZMachineFunctionInfo *SystemZMFI =
-    MF.getInfo<SystemZMachineFunctionInfo>();
-  int Offset = MFI->getObjectOffset(FI) + MFI->getOffsetAdjustment();
-  uint64_t StackSize = MFI->getStackSize();
-
-  // Fixed objects are really located in the "previous" frame.
-  if (FI < 0)
-    StackSize -= SystemZMFI->getCalleeSavedFrameSize();
-
-  Offset += StackSize - TFI.getOffsetOfLocalArea();
-
-  // Skip the register save area if we generated the stack frame.
-  if (StackSize || MFI->hasCalls())
-    Offset -= TFI.getOffsetOfLocalArea();
-
-  return Offset;
-}
-
 void
 SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                          int SPAdj, RegScavenger *RS) const {
@@ -113,7 +91,7 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Offset is a either 12-bit unsigned or 20-bit signed integer.
   // FIXME: handle "too long" displacements.
   int Offset =
-    getFrameIndexOffset(MF, FrameIndex) + MI.getOperand(i+1).getImm();
+    TFI->getFrameIndexOffset(MF, FrameIndex) + MI.getOperand(i+1).getImm();
 
   // Check whether displacement is too long to fit into 12 bit zext field.
   MI.setDesc(TII.getMemoryInstr(MI.getOpcode(), Offset));

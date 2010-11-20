@@ -383,3 +383,93 @@ void ARMFrameInfo::emitEpilogue(MachineFunction &MF,
   if (VARegSaveSize)
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, VARegSaveSize);
 }
+
+// Provide a base+offset reference to an FI slot for debug info. It's the
+// same as what we use for resolving the code-gen references for now.
+// FIXME: This can go wrong when references are SP-relative and simple call
+//        frames aren't used.
+int
+ARMFrameInfo::getFrameIndexReference(const MachineFunction &MF, int FI,
+                                     unsigned &FrameReg) const {
+  return ResolveFrameIndexReference(MF, FI, FrameReg, 0);
+}
+
+int
+ARMFrameInfo::ResolveFrameIndexReference(const MachineFunction &MF,
+                                         int FI,
+                                         unsigned &FrameReg,
+                                         int SPAdj) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const ARMBaseRegisterInfo *RegInfo =
+    static_cast<const ARMBaseRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize();
+  int FPOffset = Offset - AFI->getFramePtrSpillOffset();
+  bool isFixed = MFI->isFixedObjectIndex(FI);
+
+  FrameReg = ARM::SP;
+  Offset += SPAdj;
+  if (AFI->isGPRCalleeSavedArea1Frame(FI))
+    return Offset - AFI->getGPRCalleeSavedArea1Offset();
+  else if (AFI->isGPRCalleeSavedArea2Frame(FI))
+    return Offset - AFI->getGPRCalleeSavedArea2Offset();
+  else if (AFI->isDPRCalleeSavedAreaFrame(FI))
+    return Offset - AFI->getDPRCalleeSavedAreaOffset();
+
+  // When dynamically realigning the stack, use the frame pointer for
+  // parameters, and the stack/base pointer for locals.
+  if (RegInfo->needsStackRealignment(MF)) {
+    assert (hasFP(MF) && "dynamic stack realignment without a FP!");
+    if (isFixed) {
+      FrameReg = RegInfo->getFrameRegister(MF);
+      Offset = FPOffset;
+    } else if (MFI->hasVarSizedObjects()) {
+      assert(RegInfo->hasBasePointer(MF) &&
+             "VLAs and dynamic stack alignment, but missing base pointer!");
+      FrameReg = RegInfo->getBaseRegister();
+    }
+    return Offset;
+  }
+
+  // If there is a frame pointer, use it when we can.
+  if (hasFP(MF) && AFI->hasStackFrame()) {
+    // Use frame pointer to reference fixed objects. Use it for locals if
+    // there are VLAs (and thus the SP isn't reliable as a base).
+    if (isFixed || (MFI->hasVarSizedObjects() && !RegInfo->hasBasePointer(MF))) {
+      FrameReg = RegInfo->getFrameRegister(MF);
+      return FPOffset;
+    } else if (MFI->hasVarSizedObjects()) {
+      assert(RegInfo->hasBasePointer(MF) && "missing base pointer!");
+      // Try to use the frame pointer if we can, else use the base pointer
+      // since it's available. This is handy for the emergency spill slot, in
+      // particular.
+      if (AFI->isThumb2Function()) {
+        if (FPOffset >= -255 && FPOffset < 0) {
+          FrameReg = RegInfo->getFrameRegister(MF);
+          return FPOffset;
+        }
+      } else
+        FrameReg = RegInfo->getBaseRegister();
+    } else if (AFI->isThumb2Function()) {
+      // In Thumb2 mode, the negative offset is very limited. Try to avoid
+      // out of range references.
+      if (FPOffset >= -255 && FPOffset < 0) {
+        FrameReg = RegInfo->getFrameRegister(MF);
+        return FPOffset;
+      }
+    } else if (Offset > (FPOffset < 0 ? -FPOffset : FPOffset)) {
+      // Otherwise, use SP or FP, whichever is closer to the stack slot.
+      FrameReg = RegInfo->getFrameRegister(MF);
+      return FPOffset;
+    }
+  }
+  // Use the base pointer if we have one.
+  if (RegInfo->hasBasePointer(MF))
+    FrameReg = RegInfo->getBaseRegister();
+  return Offset;
+}
+
+int ARMFrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
+  unsigned FrameReg;
+  return getFrameIndexReference(MF, FI, FrameReg);
+}

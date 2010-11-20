@@ -137,6 +137,16 @@ public:
   /// on entry to all functions.  Note that LabelID is ignored (assumed to be
   /// the beginning of the function.)
   virtual void getInitialFrameState(std::vector<MachineMove> &Moves) const;
+
+  /// getFrameIndexOffset - Returns the displacement from the frame register to
+  /// the stack frame of the specified index.
+  virtual int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
+
+  /// getFrameIndexReference - This method should return the base register
+  /// and offset used to reference a frame index location. The offset is
+  /// returned directly, and the base register is returned via FrameReg.
+  virtual int getFrameIndexReference(const MachineFunction &MF, int FI,
+                                     unsigned &FrameReg) const;
 };
 
 } // End llvm namespace

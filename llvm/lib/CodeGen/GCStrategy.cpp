@@ -373,12 +373,12 @@ void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
 }
 
 void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
-  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
-  assert(TRI && "TargetRegisterInfo not available!");
+  const TargetFrameInfo *TFI = TM->getFrameInfo();
+  assert(TFI && "TargetRegisterInfo not available!");
   
   for (GCFunctionInfo::roots_iterator RI = FI->roots_begin(),
                                       RE = FI->roots_end(); RI != RE; ++RI)
-    RI->StackOffset = TRI->getFrameIndexOffset(MF, RI->Num);
+    RI->StackOffset = TFI->getFrameIndexOffset(MF, RI->Num);
 }
 
 bool MachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {

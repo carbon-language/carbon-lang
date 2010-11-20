@@ -764,3 +764,38 @@ X86FrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   MachineLocation CSSrc(RI->getRARegister());
   Moves.push_back(MachineMove(0, CSDst, CSSrc));
 }
+
+int X86FrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
+  const X86RegisterInfo *RI =
+    static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  int Offset = MFI->getObjectOffset(FI) - getOffsetOfLocalArea();
+  uint64_t StackSize = MFI->getStackSize();
+
+  if (RI->needsStackRealignment(MF)) {
+    if (FI < 0) {
+      // Skip the saved EBP.
+      Offset += RI->getSlotSize();
+    } else {
+      unsigned Align = MFI->getObjectAlignment(FI);
+      assert((-(Offset + StackSize)) % Align == 0);
+      Align = 0;
+      return Offset + StackSize;
+    }
+    // FIXME: Support tail calls
+  } else {
+    if (!hasFP(MF))
+      return Offset + StackSize;
+
+    // Skip the saved EBP.
+    Offset += RI->getSlotSize();
+
+    // Skip the RETADDR move area
+    const X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+    int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
+    if (TailCallReturnAddrDelta < 0)
+      Offset -= TailCallReturnAddrDelta;
+  }
+
+  return Offset;
+}

@@ -34,8 +34,6 @@ struct SystemZRegisterInfo : public SystemZGenRegisterInfo {
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
-
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;

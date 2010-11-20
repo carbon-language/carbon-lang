@@ -594,8 +594,8 @@ void DwarfDebug::addSourceLine(DIE *Die, DINameSpace NS) {
 void DwarfDebug::addVariableAddress(DbgVariable *&DV, DIE *Die, int64_t FI) {
   MachineLocation Location;
   unsigned FrameReg;
-  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
-  int Offset = RI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
+  const TargetFrameInfo *TFI = Asm->TM.getFrameInfo();
+  int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
   Location.set(FrameReg, Offset);
 
   if (DV->variableHasComplexAddress())

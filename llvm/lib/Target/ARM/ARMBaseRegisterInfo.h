@@ -161,11 +161,6 @@ public:
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
   unsigned getBaseRegister() const { return BasePtr; }
-  int getFrameIndexReference(const MachineFunction &MF, int FI,
-                             unsigned &FrameReg) const;
-  int ResolveFrameIndexReference(const MachineFunction &MF, int FI,
-                                 unsigned &FrameReg, int SPAdj) const;
-  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;

@@ -38,6 +38,12 @@ public:
   bool hasFP(const MachineFunction &MF) const;
   bool hasReservedCallFrame(const MachineFunction &MF) const;
   bool canSimplifyCallFramePseudos(const MachineFunction &MF) const;
+  int getFrameIndexReference(const MachineFunction &MF, int FI,
+                             unsigned &FrameReg) const;
+  int ResolveFrameIndexReference(const MachineFunction &MF, int FI,
+                                 unsigned &FrameReg, int SPAdj) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
+
 };
 
 } // End llvm namespace

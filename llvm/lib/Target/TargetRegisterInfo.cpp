@@ -87,17 +87,6 @@ BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
   return Allocatable;
 }
 
-/// getFrameIndexOffset - Returns the displacement from the frame register to
-/// the stack frame of the specified index. This is the default implementation
-/// which is overridden for some targets.
-int TargetRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
-                                            int FI) const {
-  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->getObjectOffset(FI) + MFI->getStackSize() -
-    TFI.getOffsetOfLocalArea() + MFI->getOffsetAdjustment();
-}
-
 const TargetRegisterClass *
 llvm::getCommonSubClass(const TargetRegisterClass *A,
                         const TargetRegisterClass *B) {

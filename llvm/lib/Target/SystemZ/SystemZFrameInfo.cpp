@@ -176,3 +176,24 @@ void SystemZFrameInfo::emitEpilogue(MachineFunction &MF,
     MI.getOperand(i).ChangeToImmediate(Offset);
   }
 }
+
+int SystemZFrameInfo::getFrameIndexOffset(const MachineFunction &MF,
+                                          int FI) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const SystemZMachineFunctionInfo *SystemZMFI =
+    MF.getInfo<SystemZMachineFunctionInfo>();
+  int Offset = MFI->getObjectOffset(FI) + MFI->getOffsetAdjustment();
+  uint64_t StackSize = MFI->getStackSize();
+
+  // Fixed objects are really located in the "previous" frame.
+  if (FI < 0)
+    StackSize -= SystemZMFI->getCalleeSavedFrameSize();
+
+  Offset += StackSize - getOffsetOfLocalArea();
+
+  // Skip the register save area if we generated the stack frame.
+  if (StackSize || MFI->hasCalls())
+    Offset -= getOffsetOfLocalArea();
+
+  return Offset;
+}

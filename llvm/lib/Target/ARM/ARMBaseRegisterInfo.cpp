@@ -15,6 +15,7 @@
 #include "ARMAddressingModes.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
+#include "ARMFrameInfo.h"
 #include "ARMInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMSubtarget.h"
@@ -924,97 +925,6 @@ ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return ARM::SP;
 }
 
-// Provide a base+offset reference to an FI slot for debug info. It's the
-// same as what we use for resolving the code-gen references for now.
-// FIXME: This can go wrong when references are SP-relative and simple call
-//        frames aren't used.
-int
-ARMBaseRegisterInfo::getFrameIndexReference(const MachineFunction &MF, int FI,
-                                            unsigned &FrameReg) const {
-  return ResolveFrameIndexReference(MF, FI, FrameReg, 0);
-}
-
-int
-ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
-                                                int FI,
-                                                unsigned &FrameReg,
-                                                int SPAdj) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
-  const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize();
-  int FPOffset = Offset - AFI->getFramePtrSpillOffset();
-  bool isFixed = MFI->isFixedObjectIndex(FI);
-
-  FrameReg = ARM::SP;
-  Offset += SPAdj;
-  if (AFI->isGPRCalleeSavedArea1Frame(FI))
-    return Offset - AFI->getGPRCalleeSavedArea1Offset();
-  else if (AFI->isGPRCalleeSavedArea2Frame(FI))
-    return Offset - AFI->getGPRCalleeSavedArea2Offset();
-  else if (AFI->isDPRCalleeSavedAreaFrame(FI))
-    return Offset - AFI->getDPRCalleeSavedAreaOffset();
-
-  // When dynamically realigning the stack, use the frame pointer for
-  // parameters, and the stack/base pointer for locals.
-  if (needsStackRealignment(MF)) {
-    assert (TFI->hasFP(MF) && "dynamic stack realignment without a FP!");
-    if (isFixed) {
-      FrameReg = getFrameRegister(MF);
-      Offset = FPOffset;
-    } else if (MFI->hasVarSizedObjects()) {
-      assert(hasBasePointer(MF) &&
-             "VLAs and dynamic stack alignment, but missing base pointer!");
-      FrameReg = BasePtr;
-    }
-    return Offset;
-  }
-
-  // If there is a frame pointer, use it when we can.
-  if (TFI->hasFP(MF) && AFI->hasStackFrame()) {
-    // Use frame pointer to reference fixed objects. Use it for locals if
-    // there are VLAs (and thus the SP isn't reliable as a base).
-    if (isFixed || (MFI->hasVarSizedObjects() && !hasBasePointer(MF))) {
-      FrameReg = getFrameRegister(MF);
-      return FPOffset;
-    } else if (MFI->hasVarSizedObjects()) {
-      assert(hasBasePointer(MF) && "missing base pointer!");
-      // Try to use the frame pointer if we can, else use the base pointer
-      // since it's available. This is handy for the emergency spill slot, in
-      // particular.
-      if (AFI->isThumb2Function()) {
-        if (FPOffset >= -255 && FPOffset < 0) {
-          FrameReg = getFrameRegister(MF);
-          return FPOffset;
-        }
-      } else
-        FrameReg = BasePtr;
-    } else if (AFI->isThumb2Function()) {
-      // In Thumb2 mode, the negative offset is very limited. Try to avoid
-      // out of range references.
-      if (FPOffset >= -255 && FPOffset < 0) {
-        FrameReg = getFrameRegister(MF);
-        return FPOffset;
-      }
-    } else if (Offset > (FPOffset < 0 ? -FPOffset : FPOffset)) {
-      // Otherwise, use SP or FP, whichever is closer to the stack slot.
-      FrameReg = getFrameRegister(MF);
-      return FPOffset;
-    }
-  }
-  // Use the base pointer if we have one.
-  if (hasBasePointer(MF))
-    FrameReg = BasePtr;
-  return Offset;
-}
-
-int
-ARMBaseRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
-                                         int FI) const {
-  unsigned FrameReg;
-  return getFrameIndexReference(MF, FI, FrameReg);
-}
-
 unsigned ARMBaseRegisterInfo::getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
   return 0;
@@ -1560,6 +1470,8 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const ARMFrameInfo *TFI =
+    static_cast<const ARMFrameInfo*>(MF.getTarget().getFrameInfo());
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   assert(!AFI->isThumb1OnlyFunction() &&
          "This eliminateFrameIndex does not support Thumb1!");
@@ -1572,7 +1484,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FrameIndex = MI.getOperand(i).getIndex();
   unsigned FrameReg;
 
-  int Offset = ResolveFrameIndexReference(MF, FrameIndex, FrameReg, SPAdj);
+  int Offset = TFI->ResolveFrameIndexReference(MF, FrameIndex, FrameReg, SPAdj);
 
   // Special handling of dbg_value instructions.
   if (MI.isDebugValue()) {

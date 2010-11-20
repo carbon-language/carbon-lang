@@ -44,6 +44,7 @@ public:
   bool hasReservedCallFrame(const MachineFunction &MF) const;
 
   void getInitialFrameState(std::vector<MachineMove> &Moves) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 };
 
 } // End llvm namespace

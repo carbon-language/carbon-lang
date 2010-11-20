@@ -135,8 +135,6 @@ public:
   // FIXME: Move to FrameInfok
   unsigned getSlotSize() const { return SlotSize; }
 
-  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
-
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;

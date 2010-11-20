@@ -464,41 +464,6 @@ bool X86RegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
   return false;
 }
 
-int
-X86RegisterInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  int Offset = MFI->getObjectOffset(FI) - TFI->getOffsetOfLocalArea();
-  uint64_t StackSize = MFI->getStackSize();
-
-  if (needsStackRealignment(MF)) {
-    if (FI < 0) {
-      // Skip the saved EBP.
-      Offset += SlotSize;
-    } else {
-      unsigned Align = MFI->getObjectAlignment(FI);
-      assert((-(Offset + StackSize)) % Align == 0);
-      Align = 0;
-      return Offset + StackSize;
-    }
-    // FIXME: Support tail calls
-  } else {
-    if (!TFI->hasFP(MF))
-      return Offset + StackSize;
-
-    // Skip the saved EBP.
-    Offset += SlotSize;
-
-    // Skip the RETADDR move area
-    const X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-    int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
-    if (TailCallReturnAddrDelta < 0)
-      Offset -= TailCallReturnAddrDelta;
-  }
-
-  return Offset;
-}
-
 static unsigned getSUBriOpcode(unsigned is64Bit, int64_t Imm) {
   if (is64Bit) {
     if (isInt<8>(Imm))
@@ -631,7 +596,7 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     const MachineFrameInfo *MFI = MF.getFrameInfo();
     FIOffset = MFI->getObjectOffset(FrameIndex) - TFI->getOffsetOfLocalArea();
   } else
-    FIOffset = getFrameIndexOffset(MF, FrameIndex);
+    FIOffset = TFI->getFrameIndexOffset(MF, FrameIndex);
 
   if (MI.getOperand(i+3).isImm()) {
     // Offset is a 32-bit integer.

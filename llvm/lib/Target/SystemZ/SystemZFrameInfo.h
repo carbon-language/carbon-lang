@@ -37,6 +37,7 @@ public:
 
   bool hasReservedCallFrame(const MachineFunction &MF) const { return true; }
   bool hasFP(const MachineFunction &MF) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 };
 
 } // End llvm namespace
