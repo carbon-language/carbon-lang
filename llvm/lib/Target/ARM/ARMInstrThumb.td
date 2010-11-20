@@ -465,12 +465,13 @@ let isBranch = 1, isTerminator = 1 in {
 // A8.6.218 Supervisor Call (Software Interrupt) -- for disassembly only
 // A8.6.16 B: Encoding T1
 // If Inst{11-8} == 0b1111 then SEE SVC
-let isCall = 1 in {
-def tSVC : T1pI<(outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc", []>,
-           Encoding16 {
+let isCall = 1 in
+def tSVC : T1pI<(outs), (ins i32imm:$imm), IIC_Br,
+                "svc", "\t$imm", []>, Encoding16 {
+  bits<8> imm;
   let Inst{15-12} = 0b1101;
-  let Inst{11-8} = 0b1111;
-}
+  let Inst{11-8}  = 0b1111;
+  let Inst{7-0}   = imm;
 }
 
 // A8.6.16 B: Encoding T1
@@ -479,7 +480,7 @@ let isBarrier = 1, isTerminator = 1 in
 def tTRAP : TI<(outs), (ins), IIC_Br, 
                "trap", [(trap)]>, Encoding16 {
   let Inst{15-12} = 0b1101;
-  let Inst{11-8} = 0b1110;
+  let Inst{11-8}  = 0b1110;
 }
 
 //===----------------------------------------------------------------------===//
@@ -487,10 +488,11 @@ def tTRAP : TI<(outs), (ins), IIC_Br,
 //
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in
-def tLDR : T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoad_r,
-               "ldr", "\t$dst, $addr",
-               [(set tGPR:$dst, (load t_addrmode_s4:$addr))]>,
+def tLDR : T1pI4<(outs tGPR:$Rt), (ins t_addrmode_s4:$addr), IIC_iLoad_r,
+               "ldr", "\t$Rt, $addr",
+               [(set tGPR:$Rt, (load t_addrmode_s4:$addr))]>,
            T1LdSt<0b100>;
+
 def tLDRi: T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoad_r,
                "ldr", "\t$dst, $addr",
                []>,
@@ -604,11 +606,21 @@ multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
   def IA :
     T1I<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
         itin, !strconcat(asm, "ia${p}\t$Rn, $regs"), []>,
-       T1Encoding<T1Enc>;
+       T1Encoding<T1Enc> {
+    bits<3> Rn;
+    bits<8> regs;
+    let Inst{10-8} = Rn;
+    let Inst{7-0}  = regs;
+  }
   def IA_UPD :
     T1It<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          itin_upd, !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []>,
-        T1Encoding<T1Enc>;
+        T1Encoding<T1Enc> {
+    bits<3> Rn;
+    bits<8> regs;
+    let Inst{10-8} = Rn;
+    let Inst{7-0}  = regs;
+  }
 }
 
 // These require base address to be written back or one of the loaded regs.
@@ -630,16 +642,19 @@ def tPOP : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
                "pop${p}\t$regs", []>,
            T1Misc<{1,1,0,?,?,?,?}> {
   bits<16> regs;
-
   let Inst{8}   = regs{15};
   let Inst{7-0} = regs{7-0};
 }
 
 let mayStore = 1, Uses = [SP], Defs = [SP], hasExtraSrcRegAllocReq = 1 in
-def tPUSH : T1I<(outs), (ins pred:$p, reglist:$srcs, variable_ops),
+def tPUSH : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
                 IIC_iStore_m,
-                "push${p}\t$srcs", []>,
-            T1Misc<{0,1,0,?,?,?,?}>;
+                "push${p}\t$regs", []>,
+            T1Misc<{0,1,0,?,?,?,?}> {
+  bits<16> regs;
+  let Inst{8}   = regs{14};
+  let Inst{7-0} = regs{7-0};
+}
 
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions.
