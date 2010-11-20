@@ -795,7 +795,8 @@ void GRCallExitNodeBuilder::GenerateNode(const GRState *state) {
   // Get the callee's location context.
   const StackFrameContext *LocCtx 
                          = cast<StackFrameContext>(Pred->getLocationContext());
-
+  // When exiting an implicit automatic obj dtor call, the callsite is the Stmt
+  // that triggers the dtor.
   PostStmt Loc(LocCtx->getCallSite(), LocCtx->getParent());
   bool isNew;
   ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
