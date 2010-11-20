@@ -3137,6 +3137,15 @@ unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
   return X == Y;
 }
 
+unsigned clang_hashCursor(CXCursor C) {
+  unsigned Index = 0;
+  if (clang_isExpression(C.kind) || clang_isStatement(C.kind))
+    Index = 1;
+  
+  return llvm::DenseMapInfo<std::pair<unsigned, void*> >::getHashValue(
+                                        std::make_pair(C.kind, C.data[Index]));
+}
+
 unsigned clang_isInvalid(enum CXCursorKind K) {
   return K >= CXCursor_FirstInvalid && K <= CXCursor_LastInvalid;
 }

@@ -1351,6 +1351,11 @@ CINDEX_LINKAGE CXCursor clang_getTranslationUnitCursor(CXTranslationUnit);
 CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
 
 /**
+ * \brief Compute a hash value for the given cursor.
+ */
+CINDEX_LINKAGE unsigned clang_hashCursor(CXCursor);
+  
+/**
  * \brief Retrieve the kind of the given cursor.
  */
 CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);

@@ -102,6 +102,7 @@ clang_getTranslationUnitCursor
 clang_getTranslationUnitSpelling
 clang_getTypeDeclaration
 clang_getTypeKindSpelling
+clang_hashCursor
 clang_isCursorDefinition
 clang_isDeclaration
 clang_isExpression
