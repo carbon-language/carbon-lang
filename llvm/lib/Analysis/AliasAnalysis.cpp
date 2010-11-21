@@ -212,6 +212,29 @@ AliasAnalysis::Location AliasAnalysis::getLocation(const VAArgInst *VI) {
                   VI->getMetadata(LLVMContext::MD_tbaa));
 }
 
+
+AliasAnalysis::Location 
+AliasAnalysis::getLocationForSource(const MemTransferInst *MTI) {
+  uint64_t Size = UnknownSize;
+  if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
+    Size = C->getValue().getZExtValue();
+
+  // FIXME: Can memcpy/memmove have TBAA tags?
+  return Location(MTI->getRawSource(), Size, 0);
+}
+
+AliasAnalysis::Location 
+AliasAnalysis::getLocationForDest(const MemTransferInst *MTI) {
+  uint64_t Size = UnknownSize;
+  if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
+    Size = C->getValue().getZExtValue();
+  
+  // FIXME: Can memcpy/memmove have TBAA tags?
+  return Location(MTI->getRawDest(), Size, 0);
+}
+
+
+
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
   // Be conservative in the face of volatile.
