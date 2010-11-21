@@ -6,3 +6,6 @@
 
 @ CHECK: pop    {r1, r2, r4}         @ encoding: [0x16,0xbc]
         pop     {r1, r2, r4}
+
+@ CHECK: trap                        @ encoding: [0xfe,0xde]
+        trap

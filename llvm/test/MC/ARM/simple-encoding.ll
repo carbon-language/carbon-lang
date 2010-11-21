@@ -12,7 +12,7 @@ declare i32 @llvm.ctlz.i32(i32)
 
 define i32 @foo(i32 %a, i32 %b) {
 ; CHECK: foo
-; CHECK: trap                         @ encoding: [0xf0,0x00,0xf0,0x07]
+; CHECK: trap                         @ encoding: [0xfe,0xde,0xff,0xe7]
 ; CHECK: bx lr                        @ encoding: [0x1e,0xff,0x2f,0xe1]
 
   tail call void @llvm.trap()

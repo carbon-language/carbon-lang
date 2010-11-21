@@ -1130,10 +1130,7 @@ let isBarrier = 1, isTerminator = 1 in
 def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
                "trap", [(trap)]>,
            Requires<[IsARM]> {
-  let Inst{27-25} = 0b011;
-  let Inst{24-20} = 0b11111;
-  let Inst{7-5} = 0b111;
-  let Inst{4} = 0b1;
+  let Inst = 0xe7ffdefe;
 }
 
 // Address computation and loads and stores in PIC mode.
