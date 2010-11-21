@@ -4260,15 +4260,15 @@ def VCVTxu2fq : N2VCvtQ<1, 1, 0b1110, 0, 1, "vcvt", "f32.u32",
 //   VREV64   : Vector Reverse elements within 64-bit doublewords
 
 class VREV64D<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
-  : N2V<0b11, 0b11, op19_18, 0b00, 0b00000, 0, 0, (outs DPR:$dst),
-        (ins DPR:$src), IIC_VMOVD,
-        OpcodeStr, Dt, "$dst, $src", "",
-        [(set DPR:$dst, (Ty (NEONvrev64 (Ty DPR:$src))))]>;
+  : N2V<0b11, 0b11, op19_18, 0b00, 0b00000, 0, 0, (outs DPR:$Vd),
+        (ins DPR:$Vm), IIC_VMOVD,
+        OpcodeStr, Dt, "$Vd, $Vm", "",
+        [(set DPR:$Vd, (Ty (NEONvrev64 (Ty DPR:$Vm))))]>;
 class VREV64Q<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
-  : N2V<0b11, 0b11, op19_18, 0b00, 0b00000, 1, 0, (outs QPR:$dst),
-        (ins QPR:$src), IIC_VMOVQ,
-        OpcodeStr, Dt, "$dst, $src", "",
-        [(set QPR:$dst, (Ty (NEONvrev64 (Ty QPR:$src))))]>;
+  : N2V<0b11, 0b11, op19_18, 0b00, 0b00000, 1, 0, (outs QPR:$Vd),
+        (ins QPR:$Vm), IIC_VMOVQ,
+        OpcodeStr, Dt, "$Vd, $Vm", "",
+        [(set QPR:$Vd, (Ty (NEONvrev64 (Ty QPR:$Vm))))]>;
 
 def VREV64d8  : VREV64D<0b00, "vrev64", "8", v8i8>;
 def VREV64d16 : VREV64D<0b01, "vrev64", "16", v4i16>;
@@ -4283,15 +4283,15 @@ def VREV64qf  : VREV64Q<0b10, "vrev64", "32", v4f32>;
 //   VREV32   : Vector Reverse elements within 32-bit words
 
 class VREV32D<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
-  : N2V<0b11, 0b11, op19_18, 0b00, 0b00001, 0, 0, (outs DPR:$dst),
-        (ins DPR:$src), IIC_VMOVD,
-        OpcodeStr, Dt, "$dst, $src", "",
-        [(set DPR:$dst, (Ty (NEONvrev32 (Ty DPR:$src))))]>;
+  : N2V<0b11, 0b11, op19_18, 0b00, 0b00001, 0, 0, (outs DPR:$Vd),
+        (ins DPR:$Vm), IIC_VMOVD,
+        OpcodeStr, Dt, "$Vd, $Vm", "",
+        [(set DPR:$Vd, (Ty (NEONvrev32 (Ty DPR:$Vm))))]>;
 class VREV32Q<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
-  : N2V<0b11, 0b11, op19_18, 0b00, 0b00001, 1, 0, (outs QPR:$dst),
-        (ins QPR:$src), IIC_VMOVQ,
-        OpcodeStr, Dt, "$dst, $src", "",
-        [(set QPR:$dst, (Ty (NEONvrev32 (Ty QPR:$src))))]>;
+  : N2V<0b11, 0b11, op19_18, 0b00, 0b00001, 1, 0, (outs QPR:$Vd),
+        (ins QPR:$Vm), IIC_VMOVQ,
+        OpcodeStr, Dt, "$Vd, $Vm", "",
+        [(set QPR:$Vd, (Ty (NEONvrev32 (Ty QPR:$Vm))))]>;
 
 def VREV32d8  : VREV32D<0b00, "vrev32", "8", v8i8>;
 def VREV32d16 : VREV32D<0b01, "vrev32", "16", v4i16>;
@@ -4302,15 +4302,15 @@ def VREV32q16 : VREV32Q<0b01, "vrev32", "16", v8i16>;
 //   VREV16   : Vector Reverse elements within 16-bit halfwords
 
 class VREV16D<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
-  : N2V<0b11, 0b11, op19_18, 0b00, 0b00010, 0, 0, (outs DPR:$dst),
-        (ins DPR:$src), IIC_VMOVD,
-        OpcodeStr, Dt, "$dst, $src", "",
-        [(set DPR:$dst, (Ty (NEONvrev16 (Ty DPR:$src))))]>;
+  : N2V<0b11, 0b11, op19_18, 0b00, 0b00010, 0, 0, (outs DPR:$Vd),
+        (ins DPR:$Vm), IIC_VMOVD,
+        OpcodeStr, Dt, "$Vd, $Vm", "",
+        [(set DPR:$Vd, (Ty (NEONvrev16 (Ty DPR:$Vm))))]>;
 class VREV16Q<bits<2> op19_18, string OpcodeStr, string Dt, ValueType Ty>
-  : N2V<0b11, 0b11, op19_18, 0b00, 0b00010, 1, 0, (outs QPR:$dst),
-        (ins QPR:$src), IIC_VMOVQ,
-        OpcodeStr, Dt, "$dst, $src", "",
-        [(set QPR:$dst, (Ty (NEONvrev16 (Ty QPR:$src))))]>;
+  : N2V<0b11, 0b11, op19_18, 0b00, 0b00010, 1, 0, (outs QPR:$Vd),
+        (ins QPR:$Vm), IIC_VMOVQ,
+        OpcodeStr, Dt, "$Vd, $Vm", "",
+        [(set QPR:$Vd, (Ty (NEONvrev16 (Ty QPR:$Vm))))]>;
 
 def VREV16d8  : VREV16D<0b00, "vrev16", "8", v8i8>;
 def VREV16q8  : VREV16Q<0b00, "vrev16", "8", v16i8>;
@@ -4320,21 +4320,21 @@ def VREV16q8  : VREV16Q<0b00, "vrev16", "8", v16i8>;
 //   VEXT     : Vector Extract
 
 class VEXTd<string OpcodeStr, string Dt, ValueType Ty>
-  : N3V<0,1,0b11,{?,?,?,?},0,0, (outs DPR:$dst),
-        (ins DPR:$lhs, DPR:$rhs, i32imm:$index), NVExtFrm,
-        IIC_VEXTD, OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
-        [(set DPR:$dst, (Ty (NEONvext (Ty DPR:$lhs),
-                                      (Ty DPR:$rhs), imm:$index)))]> {
+  : N3V<0,1,0b11,{?,?,?,?},0,0, (outs DPR:$Vd),
+        (ins DPR:$Vn, DPR:$Vm, i32imm:$index), NVExtFrm,
+        IIC_VEXTD, OpcodeStr, Dt, "$Vd, $Vn, $Vm, $index", "",
+        [(set DPR:$Vd, (Ty (NEONvext (Ty DPR:$Vn),
+                                      (Ty DPR:$Vm), imm:$index)))]> {
   bits<4> index;
   let Inst{11-8} = index{3-0};
 }
 
 class VEXTq<string OpcodeStr, string Dt, ValueType Ty>
-  : N3V<0,1,0b11,{?,?,?,?},1,0, (outs QPR:$dst),
-        (ins QPR:$lhs, QPR:$rhs, i32imm:$index), NVExtFrm,
-        IIC_VEXTQ, OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
-        [(set QPR:$dst, (Ty (NEONvext (Ty QPR:$lhs),
-                                      (Ty QPR:$rhs), imm:$index)))]> {
+  : N3V<0,1,0b11,{?,?,?,?},1,0, (outs QPR:$Vd),
+        (ins QPR:$Vn, QPR:$Vm, i32imm:$index), NVExtFrm,
+        IIC_VEXTQ, OpcodeStr, Dt, "$Vd, $Vn, $Vm, $index", "",
+        [(set QPR:$Vd, (Ty (NEONvext (Ty QPR:$Vn),
+                                      (Ty QPR:$Vm), imm:$index)))]> {
   bits<4> index;
   let Inst{11-8} = index{3-0};
 }
