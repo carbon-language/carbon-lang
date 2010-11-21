@@ -11,3 +11,12 @@ define void @test1(i32* %Q, i32* %P) {
 ; CHECK-NEXT: ret void
 }
 
+; PR8576 - Should delete store of 10 even though p/q are may aliases.
+define void @test2(i32 *%p, i32 *%q) {
+  store i32 10, i32* %p, align 4
+  store i32 20, i32* %q, align 4
+  store i32 30, i32* %p, align 4
+  ret void
+; CHECK: @test2
+; CHECK-NEXT: store i32 20
+}

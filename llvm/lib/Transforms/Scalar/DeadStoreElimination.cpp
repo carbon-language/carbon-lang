@@ -217,9 +217,28 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       continue;
     }
     
-    // If not a definite must-alias dependency, ignore it.
-    if (!InstDep.isDef())
-      continue;
+    if (!InstDep.isDef()) {
+      // If this is a may-aliased store that is clobbering the store value, we
+      // can keep searching past it for another must-aliased pointer that stores
+      // to the same location.  For example, in:
+      //   store -> P
+      //   store -> Q
+      //   store -> P
+      // we can remove the first store to P even though we don't know if P and Q
+      // alias.
+      if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+        AliasAnalysis::Location Loc =
+          getAnalysis<AliasAnalysis>().getLocation(SI);
+        while (InstDep.isClobber() && isa<StoreInst>(InstDep.getInst()) &&
+               InstDep.getInst() != &BB.front())
+          InstDep = MD.getPointerDependencyFrom(Loc, false, InstDep.getInst(),
+                                                &BB);
+      }
+        
+      // If not a definite must-alias dependency, ignore it.
+      if (!InstDep.isDef())
+        continue;
+    }
     
     // If this is a store-store dependence, then the previous store is dead so
     // long as this store is at least as big as it.

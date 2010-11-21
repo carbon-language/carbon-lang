@@ -409,9 +409,9 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
     if (MemLoc.Ptr) {
       // If we can do a pointer scan, make it happen.
       bool isLoad = !(MR & AliasAnalysis::Mod);
-      if (IntrinsicInst *II = dyn_cast<MemoryUseIntrinsic>(QueryInst)) {
+      if (IntrinsicInst *II = dyn_cast<MemoryUseIntrinsic>(QueryInst))
         isLoad |= II->getIntrinsicID() == Intrinsic::lifetime_end;
-      }
+
       LocalCache = getPointerDependencyFrom(MemLoc, isLoad, ScanPos,
                                             QueryParent);
     } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
