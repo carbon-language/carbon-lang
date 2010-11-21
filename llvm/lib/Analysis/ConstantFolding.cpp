@@ -642,8 +642,8 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
       const IntegerType *IntPtrTy = TD->getIntPtrType(Ty->getContext());
       if (ElemSize == 0)
         // The element size is 0. This may be [0 x Ty]*, so just use a zero
-        // index for this level and procede to the next level to see if it can
-        // accomodate the offset.
+        // index for this level and proceed to the next level to see if it can
+        // accommodate the offset.
         NewIdxs.push_back(ConstantInt::get(IntPtrTy, 0));
       else {
         // The element size is non-zero divide the offset by the element
