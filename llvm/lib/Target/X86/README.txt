@@ -895,6 +895,24 @@ compare:
 
 //===---------------------------------------------------------------------===//
 
+Linux is missing some basic tail call support:
+
+#include <math.h>
+double foo(double a) {    return sin(a); }
+
+This compiles into this on x86-64 Linux (but not darwin):
+foo:
+	subq	$8, %rsp
+	call	sin
+	addq	$8, %rsp
+	ret
+vs:
+
+foo:
+        jmp sin
+
+//===---------------------------------------------------------------------===//
+
 Tail call optimization improvements: Tail call optimization currently
 pushes all arguments on the top of the stack (their normal place for
 non-tail call optimized calls) that source from the callers arguments
