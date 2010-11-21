@@ -902,3 +902,10 @@ mov %gs, (%rsi)  // CHECK: movl	%gs, (%rsi) # encoding: [0x8c,0x2e]
 	idiv	0x7eed,%eax
 	idiv	0xbabecafe,%eax
 	idiv	0x12345678,%eax
+
+// PR8524
+movd	%rax, %mm5 // CHECK: movd %rax, %mm5 # encoding: [0x48,0x0f,0x6e,0xe8]
+movd	%mm5, %rbx // CHECK: movd %mm5, %rbx # encoding: [0x48,0x0f,0x7e,0xeb]
+movq	%rax, %mm5 // CHECK: movd %rax, %mm5 # encoding: [0x48,0x0f,0x6e,0xe8]
+movq	%mm5, %rbx // CHECK: movd %mm5, %rbx # encoding: [0x48,0x0f,0x7e,0xeb]
+

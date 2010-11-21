@@ -1497,6 +1497,10 @@ def : InstAlias<"mov $seg, $mem", (MOV32ms i32mem:$mem, SEGMENT_REG:$seg)>;
 // Match 'movq <largeimm>, <reg>' as an alias for movabsq.
 def : InstAlias<"movq $imm, $reg", (MOV64ri GR64:$reg, i64imm:$imm)>;
 
+// Match 'movq GR64, MMX' as an alias for movd.
+def : InstAlias<"movq $src, $dst", (MMX_MOVD64to64rr VR64:$dst, GR64:$src)>;
+def : InstAlias<"movq $src, $dst", (MMX_MOVD64from64rr GR64:$dst, VR64:$src)>;
+
 // movsd with no operands (as opposed to the SSE scalar move of a double) is an
 // alias for movsl. (as in rep; movsd)
 def : InstAlias<"movsd", (MOVSD)>;
