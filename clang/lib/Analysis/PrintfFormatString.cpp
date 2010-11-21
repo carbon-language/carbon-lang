@@ -501,10 +501,11 @@ bool PrintfSpecifier::hasValidAlternativeForm() const {
   if (!HasAlternativeForm)
     return true;
 
-  // Alternate form flag only valid with the oxaAeEfFgG conversions
+  // Alternate form flag only valid with the oxXaAeEfFgG conversions
   switch (CS.getKind()) {
   case ConversionSpecifier::oArg:
   case ConversionSpecifier::xArg:
+  case ConversionSpecifier::XArg:
   case ConversionSpecifier::aArg:
   case ConversionSpecifier::AArg:
   case ConversionSpecifier::eArg:

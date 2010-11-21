@@ -325,3 +325,8 @@ void rdar8332221(va_list ap, int *x, long *y) {
   rdar8332221_vprintf_scanf("%", ap, "%d", x); // expected-warning{{incomplete format specifier}}
 }
 
+// PR8641
+void pr8641() {
+  printf("%#x\n", 10);
+  printf("%#X\n", 10);
+}
