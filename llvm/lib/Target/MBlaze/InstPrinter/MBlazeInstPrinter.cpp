@@ -56,7 +56,7 @@ void MBlazeInstPrinter::printUnsignedImm(const MCInst *MI, int OpNo,
                                         raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNo);
   if (MO.isImm())
-    O << MO.getImm();
+    O << (uint32_t)MO.getImm();
   else
     printOperand(MI, OpNo, O, NULL);
 }

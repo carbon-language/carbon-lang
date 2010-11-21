@@ -145,7 +145,7 @@ void MBlazeAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     break;
 
   case MachineOperand::MO_Immediate:
-    O << (int)MO.getImm();
+    O << (int32_t)MO.getImm();
     break;
 
   case MachineOperand::MO_FPImmediate: {
@@ -188,7 +188,7 @@ void MBlazeAsmPrinter::printUnsignedImm(const MachineInstr *MI, int opNum,
                                         raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(opNum);
   if (MO.isImm())
-    O << (unsigned int)MO.getImm();
+    O << (uint32_t)MO.getImm();
   else
     printOperand(MI, opNum, O);
 }
