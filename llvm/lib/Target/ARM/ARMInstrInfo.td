@@ -1454,7 +1454,7 @@ let isBranch = 1, isTerminator = 1 in {
       let Inst{24}    = 1; // P bit
       let Inst{27-25} = 0b011;
     }
-    def BR_JTadd : PseudoInst<(outs),
+    def BR_JTadd : ARMPseudoInst<(outs),
                    (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
                    IIC_Br,
                    [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
