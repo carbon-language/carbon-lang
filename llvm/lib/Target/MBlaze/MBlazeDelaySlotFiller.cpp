@@ -77,7 +77,6 @@ static bool hasImmInstruction(MachineBasicBlock::iterator &candidate) {
 
 static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
                            MachineBasicBlock::iterator &slot) {
-
     // Loop over all of the operands in the branch instruction
     // and make sure that none of them are defined by the
     // candidate instruction.
@@ -125,20 +124,35 @@ static bool usedBeforeDelaySlot(MachineBasicBlock::iterator &candidate,
   return false;
 }
 
-static MachineBasicBlock::iterator
-findDelayInstr(MachineBasicBlock &MBB,MachineBasicBlock::iterator &slot) {
-  MachineBasicBlock::iterator found = MBB.end();
-  for (MachineBasicBlock::iterator I = MBB.begin(); I != slot; ++I) {
-      TargetInstrDesc desc = I->getDesc();
-      if (desc.hasDelaySlot() || desc.isBranch() ||
-          desc.mayLoad() || desc.    mayStore() ||
-          hasImmInstruction(I) || delayHasHazard(I,slot) ||
-          usedBeforeDelaySlot(I,slot)) continue;
+static bool isDelayFiller(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator candidate) {
+  if (candidate == MBB.begin())
+    return false;
 
-      found = I;
+  TargetInstrDesc brdesc = (--candidate)->getDesc();
+  return (brdesc.hasDelaySlot());
+}
+
+static MachineBasicBlock::iterator
+findDelayInstr(MachineBasicBlock &MBB,MachineBasicBlock::iterator slot) {
+  MachineBasicBlock::iterator I = slot;
+  while (true) {
+    if (I == MBB.begin())
+      break;
+
+    --I;
+    TargetInstrDesc desc = I->getDesc();
+    if (desc.hasDelaySlot() || desc.isBranch() || isDelayFiller(MBB,I))
+      break;
+
+    if (desc.mayLoad() || desc.mayStore() || hasImmInstruction(I) ||
+        delayHasHazard(I,slot) || usedBeforeDelaySlot(I,slot))
+      continue;
+
+    return I;
   }
 
-  return found;
+  return MBB.end();
 }
 
 /// runOnMachineBasicBlock - Fill in delay slots for the given basic block.
@@ -148,17 +162,16 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I)
     if (I->getDesc().hasDelaySlot()) {
-      MachineBasicBlock::iterator J = I;
       MachineBasicBlock::iterator D = findDelayInstr(MBB,I);
+      MachineBasicBlock::iterator J = I;
 
-      ++J;
       ++FilledSlots;
       Changed = true;
 
       if (D == MBB.end())
-        BuildMI(MBB, J, I->getDebugLoc(), TII->get(MBlaze::NOP));
+        BuildMI(MBB, ++J, I->getDebugLoc(), TII->get(MBlaze::NOP));
       else
-        MBB.splice(J, &MBB, D);
+        MBB.splice(++J, &MBB, D);
     }
   return Changed;
 }
