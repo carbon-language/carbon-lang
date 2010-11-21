@@ -7913,7 +7913,7 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
     FieldDecl *MemberDecl = R.getAsSingle<FieldDecl>();
     IndirectFieldDecl *IndirectMemberDecl = 0;
     if (!MemberDecl) {
-      if (IndirectMemberDecl = R.getAsSingle<IndirectFieldDecl>())
+      if ((IndirectMemberDecl = R.getAsSingle<IndirectFieldDecl>()))
         MemberDecl = IndirectMemberDecl->getAnonField();
     }
 

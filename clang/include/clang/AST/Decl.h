@@ -1799,23 +1799,23 @@ public:
 /// IndirectFieldDecl are always implicit.
 class IndirectFieldDecl : public ValueDecl {
   NamedDecl **Chaining;
-  int ChainingSize;
+  unsigned ChainingSize;
 
   IndirectFieldDecl(DeclContext *DC, SourceLocation L,
                     DeclarationName N, QualType T,
-                    NamedDecl **CH, int CHS)
+                    NamedDecl **CH, unsigned CHS)
     : ValueDecl(IndirectField, DC, L, N, T), Chaining(CH), ChainingSize(CHS) {}
 
 public:
   static IndirectFieldDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
-                                   QualType T, NamedDecl **CH, int CHS);
+                                   QualType T, NamedDecl **CH, unsigned CHS);
   
   typedef NamedDecl * const *chain_iterator;
   chain_iterator chain_begin() const { return Chaining; }
   chain_iterator chain_end() const  { return Chaining+ChainingSize; }
 
-  int getChainingSize() const { return ChainingSize; }
+  unsigned getChainingSize() const { return ChainingSize; }
 
   FieldDecl *getAnonField() const {
     assert(ChainingSize >= 2);

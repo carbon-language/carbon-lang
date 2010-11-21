@@ -2030,9 +2030,10 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
   return new (C) EnumConstantDecl(CD, L, Id, T, E, V);
 }
 
-IndirectFieldDecl *IndirectFieldDecl::Create(ASTContext &C, DeclContext *DC,
-                                          SourceLocation L, IdentifierInfo *Id,
-                                          QualType T, NamedDecl **CH, int CHS) {
+IndirectFieldDecl *
+IndirectFieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+                          IdentifierInfo *Id, QualType T, NamedDecl **CH,
+                          unsigned CHS) {
   return new (C) IndirectFieldDecl(DC, L, Id, T, CH, CHS);
 }
 
