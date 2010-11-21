@@ -1455,7 +1455,9 @@ let isBranch = 1, isTerminator = 1 in {
                    (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
                    IIC_Br,
                    [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
-                     imm:$id)]>;
+                     imm:$id)]> {
+      let SZ = SizeSpecial;
+    }
     } // isNotDuplicable = 1, isIndirectBranch = 1
   } // isBarrier = 1
 
