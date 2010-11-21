@@ -1535,22 +1535,6 @@ the float directly.
 
 //===---------------------------------------------------------------------===//
 
-#include <math.h>
-double foo(double a) {    return sin(a); }
-
-This compiles into this on x86-64 Linux:
-foo:
-	subq	$8, %rsp
-	call	sin
-	addq	$8, %rsp
-	ret
-vs:
-
-foo:
-        jmp sin
-
-//===---------------------------------------------------------------------===//
-
 The arg promotion pass should make use of nocapture to make its alias analysis
 stuff much more precise.
 
