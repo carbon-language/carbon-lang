@@ -948,10 +948,12 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     ELFRelocationEntry entry = Relocs[e - i - 1];
 
-    if (entry.Index < 0)
+    if (!entry.Index)
+      ;
+    else if (entry.Index < 0)
       entry.Index = getSymbolIndexInSymbolTable(Asm, entry.Symbol);
     else
-      entry.Index += LocalSymbolData.size() + 1;
+      entry.Index += LocalSymbolData.size();
     if (Is64Bit) {
       String64(*F, entry.r_offset);
 
@@ -1085,12 +1087,21 @@ bool ELFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
   }
 
   const MCSection *SectionB = 0;
+  const MCSymbol *SymbolB = 0;
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    SectionB = &B->getSymbol().AliasedSymbol().getSection();
+    SymbolB = &B->getSymbol();
+    SectionB = &SymbolB->AliasedSymbol().getSection();
   }
 
   if (!BaseSection)
     return SectionA == SectionB;
+
+  if (SymbolB)
+    return false;
+
+  // Absolute address but PCrel instruction, so we need a relocation.
+  if (!SymbolA)
+    return false;
 
   // FIXME: This is in here just to match gnu as output. If the two ends
   // are in the same section, there is nothing that the linker can do to
@@ -1099,7 +1110,7 @@ bool ELFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
   if (DataA.isExternal())
     return false;
 
-  return !SectionB && BaseSection == SectionA;
+  return BaseSection == SectionA;
 }
 
 void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
@@ -1391,12 +1402,14 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   int64_t Addend = 0;
   int Index = 0;
   int64_t Value = Target.getConstant();
-  const MCSymbol &Symbol = Target.getSymA()->getSymbol();
-  const MCSymbol &ASymbol = Symbol.AliasedSymbol();
-  const MCSymbol *RelocSymbol = SymbolToReloc(Asm, Target, *Fragment);
+  const MCSymbol *RelocSymbol = NULL;
 
   bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
   if (!Target.isAbsolute()) {
+    const MCSymbol &Symbol = Target.getSymA()->getSymbol();
+    const MCSymbol &ASymbol = Symbol.AliasedSymbol();
+    RelocSymbol = SymbolToReloc(Asm, Target, *Fragment);
+
     if (const MCSymbolRefExpr *RefB = Target.getSymB()) {
       const MCSymbol &SymbolB = RefB->getSymbol();
       MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
@@ -1415,7 +1428,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       MCSymbolData &SD = Asm.getSymbolData(ASymbol);
       MCFragment *F = SD.getFragment();
 
-      Index = F->getParent()->getOrdinal();
+      Index = F->getParent()->getOrdinal() + 1;
 
       MCSectionData *FSD = F->getParent();
       // Offset of the symbol in the section
@@ -1437,7 +1450,8 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   // determine the type of the relocation
 
-  MCSymbolRefExpr::VariantKind Modifier = Target.getSymA()->getKind();
+  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
+    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
   unsigned Type;
   if (Is64Bit) {
     if (IsPCRel) {

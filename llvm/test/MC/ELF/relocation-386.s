@@ -98,6 +98,12 @@
 // CHECK-NEXT:  ('r_sym', 0x0000000b)
 // CHECK-NEXT:  ('r_type', 0x00000020)
 // CHECK-NEXT: ),
+// Relocation 12 (calll 4096) is of type R_386_PC32
+// CHECK-NEXT: # Relocation 0x0000000c
+// CHECK-NEXT: (('r_offset', 0x00000048)
+// CHECK-NEXT:  ('r_sym', 0x00000000)
+// CHECK-NEXT:  ('r_type', 0x00000002)
+// CHECK-NEXT: ),
 
         .text
 bar:
@@ -122,6 +128,7 @@ bar2:
         addl foo@GOTNTPOFF(%ebx), %ecx
         leal foo@TLSLDM(%ebx), %eax
         leal foo@DTPOFF(%eax), %edx
+        calll 4096
 
         .section	.rodata.str1.16,"aMS",@progbits,1
 .Lfoo:
