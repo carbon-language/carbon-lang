@@ -832,8 +832,8 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 void CGRecordLayout::print(llvm::raw_ostream &OS) const {
   OS << "<CGRecordLayout\n";
   OS << "  LLVMType:" << *LLVMType << "\n";
-  if (BaseLLVMType)
-    OS << "  BaseLLVMType:" << *BaseLLVMType << "\n"; 
+  if (NonVirtualBaseLLVMType)
+    OS << "  NonVirtualBaseLLVMType:" << *NonVirtualBaseLLVMType << "\n"; 
   OS << "  IsZeroInitializable:" << IsZeroInitializable << "\n";
   OS << "  BitFields:[\n";
 
