@@ -1748,7 +1748,8 @@ static bool CheckAnonMemberRedeclaration(Sema &SemaRef,
 static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
                                                 DeclContext *Owner,
                                                 RecordDecl *AnonRecord,
-                                                AccessSpecifier AS) {
+                                                AccessSpecifier AS,
+                              llvm::SmallVector<NamedDecl*, 2> &Chaining) {
   unsigned diagKind
     = AnonRecord->isUnion() ? diag::err_anonymous_union_member_redecl
                             : diag::err_anonymous_struct_member_redecl;
@@ -1771,20 +1772,37 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
         //   definition, the members of the anonymous union are
         //   considered to have been defined in the scope in which the
         //   anonymous union is declared.
-        Owner->makeDeclVisibleInContext(*F);
-        S->AddDecl(*F);
-        SemaRef.IdResolver.AddDecl(*F);
+        Chaining.push_back(*F);
+        assert(Chaining.size() >= 2);
+        NamedDecl **NamedChain =
+          new (SemaRef.Context)NamedDecl*[Chaining.size()];
+        for (unsigned i = 0; i < Chaining.size(); i++)
+          NamedChain[i] = Chaining[i];
+
+        IndirectFieldDecl* IndirectField =
+          IndirectFieldDecl::Create(SemaRef.Context, Owner, F->getLocation(),
+                                    F->getIdentifier(), F->getType(),
+                                    NamedChain, Chaining.size());
+
+        IndirectField->setAccess(AS);
+        IndirectField->setImplicit();
+        SemaRef.PushOnScopeChains(IndirectField, S);
 
         // That includes picking up the appropriate access specifier.
         if (AS != AS_none) (*F)->setAccess(AS);
+
+        Chaining.pop_back();
       }
     } else if (const RecordType *InnerRecordType
                  = (*F)->getType()->getAs<RecordType>()) {
       RecordDecl *InnerRecord = InnerRecordType->getDecl();
+
+      Chaining.push_back(*F);
       if (InnerRecord->isAnonymousStructOrUnion())
         Invalid = Invalid ||
           InjectAnonymousStructOrUnionMembers(SemaRef, S, Owner,
-                                              InnerRecord, AS);
+                                              InnerRecord, AS, Chaining);
+      Chaining.pop_back();
     }
   }
 
@@ -1999,7 +2017,10 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   // Inject the members of the anonymous struct/union into the owning
   // context and into the identifier resolver chain for name lookup
   // purposes.
-  if (InjectAnonymousStructOrUnionMembers(*this, S, Owner, Record, AS))
+  llvm::SmallVector<NamedDecl*, 2> Chain;
+  Chain.push_back(Anon);
+
+  if (InjectAnonymousStructOrUnionMembers(*this, S, Owner, Record, AS, Chain))
     Invalid = true;
 
   // Mark this as an anonymous struct/union type. Note that we do not

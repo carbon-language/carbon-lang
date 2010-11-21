@@ -139,7 +139,8 @@ namespace clang {
   class VarDecl;
   class VisibilityAttr;
   class VisibleDeclConsumer;
-
+  class IndirectFieldDecl;
+  
 namespace sema {
   class AccessedEntity;
   class BlockScopeInfo;
@@ -1739,11 +1740,9 @@ public:
                               ExprValueKind VK,
                               const DeclarationNameInfo &NameInfo,
                               const CXXScopeSpec *SS = 0);
-  VarDecl *BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
-                                    llvm::SmallVectorImpl<FieldDecl *> &Path);
   ExprResult
   BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
-                                           FieldDecl *Field,
+                                           IndirectFieldDecl *IndirectField,
                                            Expr *BaseObjectExpr = 0,
                                       SourceLocation OpLoc = SourceLocation());
   ExprResult BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,

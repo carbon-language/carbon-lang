@@ -456,6 +456,29 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   return Field;
 }
 
+Decl *TemplateDeclInstantiator::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
+  NamedDecl **NamedChain =
+    new (SemaRef.Context)NamedDecl*[D->getChainingSize()];
+
+  int i = 0;
+  for (IndirectFieldDecl::chain_iterator PI =
+       D->chain_begin(), PE = D->chain_end();
+       PI != PE; ++PI)
+    NamedChain[i++] = (SemaRef.FindInstantiatedDecl(D->getLocation(),
+                                            *PI, TemplateArgs));
+
+  IndirectFieldDecl* IndirectField
+    = IndirectFieldDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                D->getIdentifier(), D->getType(),
+                                NamedChain, D->getChainingSize());
+
+
+  IndirectField->setImplicit(D->isImplicit());
+  IndirectField->setAccess(D->getAccess());
+  Owner->addDecl(IndirectField);
+  return IndirectField;
+}
+
 Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
   // Handle friend type expressions by simply substituting template
   // parameters into the pattern type and checking the result.

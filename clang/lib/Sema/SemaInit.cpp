@@ -1429,6 +1429,11 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       } else if (!KnownField) {
         // Determine whether we found a field at all.
         ReplacementField = dyn_cast<FieldDecl>(*Lookup.first);
+        
+        // Check if ReplacementField is an anonymous field. 
+        if (!ReplacementField)
+          if (IndirectFieldDecl* IField = dyn_cast<IndirectFieldDecl>(*Lookup.first))
+            ReplacementField = IField->getAnonField();
       }
 
       if (!ReplacementField) {

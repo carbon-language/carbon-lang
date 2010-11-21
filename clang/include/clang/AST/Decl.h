@@ -1794,6 +1794,45 @@ public:
   friend class StmtIteratorBase;
 };
 
+/// IndirectFieldDecl - An instance of this class is created to represent a
+/// field injected from an anonymous union/struct into the parent scope.
+/// IndirectFieldDecl are always implicit.
+class IndirectFieldDecl : public ValueDecl {
+  NamedDecl **Chaining;
+  int ChainingSize;
+
+  IndirectFieldDecl(DeclContext *DC, SourceLocation L,
+                    DeclarationName N, QualType T,
+                    NamedDecl **CH, int CHS)
+    : ValueDecl(IndirectField, DC, L, N, T), Chaining(CH), ChainingSize(CHS) {}
+
+public:
+  static IndirectFieldDecl *Create(ASTContext &C, DeclContext *DC,
+                                   SourceLocation L, IdentifierInfo *Id,
+                                   QualType T, NamedDecl **CH, int CHS);
+  
+  typedef NamedDecl * const *chain_iterator;
+  chain_iterator chain_begin() const { return Chaining; }
+  chain_iterator chain_end() const  { return Chaining+ChainingSize; }
+
+  int getChainingSize() const { return ChainingSize; }
+
+  FieldDecl *getAnonField() const {
+    assert(ChainingSize >= 2);
+    return cast<FieldDecl>(Chaining[ChainingSize - 1]);
+  }
+
+  VarDecl *getVarDecl() const {
+    assert(ChainingSize >= 2);
+    return dyn_cast<VarDecl>(*chain_begin());
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classof(const IndirectFieldDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == IndirectField; }
+  friend class ASTDeclReader;
+};
 
 /// TypeDecl - Represents a declaration of a type.
 ///

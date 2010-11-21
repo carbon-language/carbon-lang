@@ -795,59 +795,18 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty,
                                    D, NameInfo, Ty, VK));
 }
 
-/// \brief Given a field that represents a member of an anonymous
-/// struct/union, build the path from that field's context to the
-/// actual member.
-///
-/// Construct the sequence of field member references we'll have to
-/// perform to get to the field in the anonymous union/struct. The
-/// list of members is built from the field outward, so traverse it
-/// backwards to go from an object in the current context to the field
-/// we found.
-///
-/// \returns The variable from which the field access should begin,
-/// for an anonymous struct/union that is not a member of another
-/// class. Otherwise, returns NULL.
-VarDecl *Sema::BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
-                                   llvm::SmallVectorImpl<FieldDecl *> &Path) {
-  assert(Field->getDeclContext()->isRecord() &&
-         cast<RecordDecl>(Field->getDeclContext())->isAnonymousStructOrUnion()
-         && "Field must be stored inside an anonymous struct or union");
-
-  Path.push_back(Field);
-  VarDecl *BaseObject = 0;
-  DeclContext *Ctx = Field->getDeclContext();
-  do {
-    RecordDecl *Record = cast<RecordDecl>(Ctx);
-    ValueDecl *AnonObject = Record->getAnonymousStructOrUnionObject();
-    if (FieldDecl *AnonField = dyn_cast<FieldDecl>(AnonObject))
-      Path.push_back(AnonField);
-    else {
-      BaseObject = cast<VarDecl>(AnonObject);
-      break;
-    }
-    Ctx = Ctx->getParent();
-  } while (Ctx->isRecord() &&
-           cast<RecordDecl>(Ctx)->isAnonymousStructOrUnion());
-
-  return BaseObject;
-}
-
 ExprResult
 Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
-                                               FieldDecl *Field,
+                                            IndirectFieldDecl *IndirectField,
                                                Expr *BaseObjectExpr,
                                                SourceLocation OpLoc) {
-  llvm::SmallVector<FieldDecl *, 4> AnonFields;
-  VarDecl *BaseObject = BuildAnonymousStructUnionMemberPath(Field,
-                                                            AnonFields);
-
   // Build the expression that refers to the base object, from
   // which we will build a sequence of member references to each
   // of the anonymous union objects and, eventually, the field we
   // found via name lookup.
   bool BaseObjectIsPointer = false;
   Qualifiers BaseQuals;
+  VarDecl *BaseObject = IndirectField->getVarDecl();
   if (BaseObject) {
     // BaseObject is an anonymous struct/union variable (and is,
     // therefore, not part of another non-anonymous record).
@@ -877,7 +836,8 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
       if (!MD->isStatic()) {
         QualType AnonFieldType
           = Context.getTagDeclType(
-                     cast<RecordDecl>(AnonFields.back()->getDeclContext()));
+                     cast<RecordDecl>(
+                       (*IndirectField->chain_begin())->getDeclContext()));
         QualType ThisType = Context.getTagDeclType(MD->getParent());
         if ((Context.getCanonicalType(AnonFieldType)
                == Context.getCanonicalType(ThisType)) ||
@@ -890,24 +850,29 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
         }
       } else {
         return ExprError(Diag(Loc,diag::err_invalid_member_use_in_static_method)
-          << Field->getDeclName());
+          << IndirectField->getDeclName());
       }
       BaseQuals = Qualifiers::fromCVRMask(MD->getTypeQualifiers());
     }
 
     if (!BaseObjectExpr)
       return ExprError(Diag(Loc, diag::err_invalid_non_static_member_use)
-        << Field->getDeclName());
+        << IndirectField->getDeclName());
   }
 
   // Build the implicit member references to the field of the
   // anonymous struct/union.
   Expr *Result = BaseObjectExpr;
   Qualifiers ResultQuals = BaseQuals;
-  for (llvm::SmallVector<FieldDecl *, 4>::reverse_iterator
-         FI = AnonFields.rbegin(), FIEnd = AnonFields.rend();
-       FI != FIEnd; ++FI) {
-    FieldDecl *Field = *FI;
+  
+  IndirectFieldDecl::chain_iterator FI = IndirectField->chain_begin(),
+    FEnd = IndirectField->chain_end();
+  
+  // Skip the first VarDecl if present. 
+  if (BaseObject)
+    FI++;    
+  for (; FI != FEnd; FI++) {
+    FieldDecl *Field = cast<FieldDecl>(*FI);
     QualType MemberType = Field->getType();
     Qualifiers MemberTypeQuals =
       Context.getCanonicalType(MemberType).getQualifiers();
@@ -930,8 +895,9 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     MarkDeclarationReferenced(Loc, *FI);
     PerformObjectMemberConversion(Result, /*FIXME:Qualifier=*/0, *FI, *FI);
     // FIXME: Might this end up being a qualified name?
-    Result = new (Context) MemberExpr(Result, BaseObjectIsPointer, *FI,
-                                      OpLoc, MemberType, VK_LValue,
+    Result = new (Context) MemberExpr(Result, BaseObjectIsPointer,
+                                      cast<FieldDecl>(*FI), OpLoc,
+                                      MemberType, VK_LValue,
                                       Field->isBitField() ?
                                         OK_BitField : OK_Ordinary);
     BaseObjectIsPointer = false;
@@ -1048,10 +1014,6 @@ enum IMAKind {
   /// context is not an instance method.
   IMA_Unresolved_StaticContext,
 
-  /// The reference is to a member of an anonymous structure in a
-  /// non-class context.
-  IMA_AnonymousMember,
-
   /// All possible referrents are instance members and the current
   /// context is not an instance method.
   IMA_Error_StaticContext,
@@ -1084,16 +1046,9 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   llvm::SmallPtrSet<CXXRecordDecl*, 4> Classes;
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
     NamedDecl *D = *I;
+
     if (D->isCXXInstanceMember()) {
       CXXRecordDecl *R = cast<CXXRecordDecl>(D->getDeclContext());
-
-      // If this is a member of an anonymous record, move out to the
-      // innermost non-anonymous struct or union.  If there isn't one,
-      // that's a special case.
-      while (R->isAnonymousStructOrUnion()) {
-        R = dyn_cast<CXXRecordDecl>(R->getParent());
-        if (!R) return IMA_AnonymousMember;
-      }
       Classes.insert(R->getCanonicalDecl());
     }
     else
@@ -1577,7 +1532,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
     else if (R.isUnresolvableResult())
       MightBeImplicitMember = true;
     else
-      MightBeImplicitMember = isa<FieldDecl>(R.getFoundDecl());
+      MightBeImplicitMember = isa<FieldDecl>(R.getFoundDecl()) ||
+                              isa<IndirectFieldDecl>(R.getFoundDecl());
 
     if (MightBeImplicitMember)
       return BuildPossibleImplicitMemberExpr(SS, R, TemplateArgs);
@@ -1597,11 +1553,6 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
   switch (ClassifyImplicitMemberAccess(*this, R)) {
   case IMA_Instance:
     return BuildImplicitMemberExpr(SS, R, TemplateArgs, true);
-
-  case IMA_AnonymousMember:
-    assert(R.isSingleResult());
-    return BuildAnonymousStructUnionMemberReference(R.getNameLoc(),
-                                                    R.getAsSingle<FieldDecl>());
 
   case IMA_Mixed:
   case IMA_Mixed_Unrelated:
@@ -1959,9 +1910,9 @@ Sema::BuildImplicitMemberExpr(const CXXScopeSpec &SS,
   // (C++ [class.union]).
   // FIXME: This needs to happen post-isImplicitMemberReference?
   // FIXME: template-ids inside anonymous structs?
-  if (FieldDecl *FD = R.getAsSingle<FieldDecl>())
-    if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
-      return BuildAnonymousStructUnionMemberReference(Loc, FD);
+  if (IndirectFieldDecl *FD = R.getAsSingle<IndirectFieldDecl>())
+    return BuildAnonymousStructUnionMemberReference(Loc, FD);
+
 
   // If this is known to be an instance access, go ahead and build a
   // 'this' expression now.
@@ -2152,6 +2103,10 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   // Only create DeclRefExpr's for valid Decl's.
   if (VD->isInvalidDecl())
     return ExprError();
+
+  // Handle anonymous.
+  if (IndirectFieldDecl *FD = dyn_cast<IndirectFieldDecl>(VD))
+    return BuildAnonymousStructUnionMemberReference(Loc, FD);
 
   ExprValueKind VK = getValueKindForDecl(Context, VD);
 
@@ -3308,12 +3263,6 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
   }
 
   if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
-    // We may have found a field within an anonymous union or struct
-    // (C++ [class.union]).
-    if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion() &&
-        !BaseType->getAs<RecordType>()->getDecl()->isAnonymousStructOrUnion())
-      return BuildAnonymousStructUnionMemberReference(MemberLoc, FD,
-                                                      BaseExpr, OpLoc);
 
     // x.a is an l-value if 'a' has a reference type. Otherwise:
     // x.a is an l-value/x-value/pr-value if the base is (and note
@@ -3355,6 +3304,12 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
                                  FD, FoundDecl, MemberNameInfo,
                                  MemberType, VK, OK));
   }
+
+  if (IndirectFieldDecl *FD = dyn_cast<IndirectFieldDecl>(MemberDecl))
+    // We may have found a field within an anonymous union or struct
+    // (C++ [class.union]).
+    return BuildAnonymousStructUnionMemberReference(MemberLoc, FD,
+                                                     BaseExpr, OpLoc);
 
   if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
     MarkDeclarationReferenced(MemberLoc, Var);
@@ -7956,6 +7911,12 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
     LookupResult R(*this, OC.U.IdentInfo, OC.LocStart, LookupMemberName);
     LookupQualifiedName(R, RD);
     FieldDecl *MemberDecl = R.getAsSingle<FieldDecl>();
+    IndirectFieldDecl *IndirectMemberDecl = 0;
+    if (!MemberDecl) {
+      if (IndirectMemberDecl = R.getAsSingle<IndirectFieldDecl>())
+        MemberDecl = IndirectMemberDecl->getAnonField();
+    }
+
     if (!MemberDecl)
       return ExprError(Diag(BuiltinLoc, diag::err_no_member)
                        << OC.U.IdentInfo << RD << SourceRange(OC.LocStart, 
@@ -7974,12 +7935,8 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
     }
 
     RecordDecl *Parent = MemberDecl->getParent();
-    bool AnonStructUnion = Parent->isAnonymousStructOrUnion();
-    if (AnonStructUnion) {
-      do {
-        Parent = cast<RecordDecl>(Parent->getParent());
-      } while (Parent->isAnonymousStructOrUnion());
-    }
+    if (IndirectMemberDecl)
+      Parent = cast<RecordDecl>(IndirectMemberDecl->getDeclContext());
 
     // If the member was found in a base class, introduce OffsetOfNodes for
     // the base class indirections.
@@ -7992,15 +7949,17 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
         Comps.push_back(OffsetOfNode(B->Base));
     }
 
-    if (AnonStructUnion) {
-      llvm::SmallVector<FieldDecl*, 4> Path;
-      BuildAnonymousStructUnionMemberPath(MemberDecl, Path);
-      unsigned n = Path.size();
-      for (int j = n - 1; j > -1; --j)
-        Comps.push_back(OffsetOfNode(OC.LocStart, Path[j], OC.LocEnd));
-    } else {
+    if (IndirectMemberDecl) {
+      for (IndirectFieldDecl::chain_iterator FI =
+           IndirectMemberDecl->chain_begin(),
+           FEnd = IndirectMemberDecl->chain_end(); FI != FEnd; FI++) {
+        assert(isa<FieldDecl>(*FI));
+        Comps.push_back(OffsetOfNode(OC.LocStart,
+                                     cast<FieldDecl>(*FI), OC.LocEnd));
+      }
+    } else
       Comps.push_back(OffsetOfNode(OC.LocStart, MemberDecl, OC.LocEnd));
-    }
+
     CurrentType = MemberDecl->getType().getNonReferenceType(); 
   }
   

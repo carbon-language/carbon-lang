@@ -98,6 +98,7 @@ namespace {
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
     Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
+    Decl *VisitIndirectFieldDecl(IndirectFieldDecl *D);
     Decl *VisitObjCIvarDecl(ObjCIvarDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitImplicitParamDecl(ImplicitParamDecl *D);
@@ -2018,6 +2019,42 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   Importer.Imported(D, ToField);
   LexicalDC->addDecl(ToField);
   return ToField;
+}
+
+Decl *ASTNodeImporter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
+  // Import the major distinguishing characteristics of a variable.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+
+  // Import the type.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+
+  NamedDecl **NamedChain =
+    new (Importer.getToContext())NamedDecl*[D->getChainingSize()];
+
+  unsigned i = 0;
+  for (IndirectFieldDecl::chain_iterator PI = D->chain_begin(),
+       PE = D->chain_end(); PI != PE; ++PI) {
+    Decl* D = Importer.Import(*PI);
+    if (!D)
+      return 0;
+    NamedChain[i++] = cast<NamedDecl>(D);
+  }
+
+  IndirectFieldDecl *ToIndirectField = IndirectFieldDecl::Create(
+                                         Importer.getToContext(), DC,
+                                         Loc, Name.getAsIdentifierInfo(), T,
+                                         NamedChain, D->getChainingSize());
+  ToIndirectField->setAccess(D->getAccess());
+  ToIndirectField->setLexicalDeclContext(LexicalDC);
+  Importer.Imported(D, ToIndirectField);
+  LexicalDC->addDecl(ToIndirectField);
+  return ToIndirectField;
 }
 
 Decl *ASTNodeImporter::VisitObjCIvarDecl(ObjCIvarDecl *D) {

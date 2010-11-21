@@ -107,6 +107,7 @@ namespace clang {
     void VisitCXXDestructorDecl(CXXDestructorDecl *D);
     void VisitCXXConversionDecl(CXXConversionDecl *D);
     void VisitFieldDecl(FieldDecl *FD);
+    void VisitIndirectFieldDecl(IndirectFieldDecl *FD);
     void VisitVarDecl(VarDecl *VD);
     void VisitImplicitParamDecl(ImplicitParamDecl *PD);
     void VisitParmVarDecl(ParmVarDecl *PD);
@@ -633,6 +634,17 @@ void ASTDeclReader::VisitFieldDecl(FieldDecl *FD) {
     if (Tmpl)
       Reader.getContext()->setInstantiatedFromUnnamedFieldDecl(FD, Tmpl);
   }
+}
+
+void ASTDeclReader::VisitIndirectFieldDecl(IndirectFieldDecl *FD) {
+  VisitValueDecl(FD);
+
+  FD->ChainingSize = Record[Idx++];
+  assert(FD->ChainingSize >= 2 && "Anonymous chaining must be >= 2");
+  FD->Chaining = new (*Reader.getContext())NamedDecl*[FD->ChainingSize];
+
+  for (unsigned I = 0; I != FD->ChainingSize; ++I)
+    FD->Chaining[I] = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
 }
 
 void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
@@ -1474,6 +1486,10 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   case DECL_FIELD:
     D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 0,
                           false);
+    break;
+  case DECL_INDIRECTFIELD:
+    D = IndirectFieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
+                                  0, 0);
     break;
   case DECL_VAR:
     D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,

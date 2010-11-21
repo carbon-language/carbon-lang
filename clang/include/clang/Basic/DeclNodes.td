@@ -29,6 +29,7 @@ def Named : Decl<1>;
   def Value : DDecl<Named, 1>;
     def EnumConstant : DDecl<Value>;
     def UnresolvedUsingValue : DDecl<Value>;
+    def IndirectField : DDecl<Value>;
     def Declarator : DDecl<Value, 1>;
       def Function : DDecl<Declarator>, DeclContext;
         def CXXMethod : DDecl<Function>;

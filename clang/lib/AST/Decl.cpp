@@ -768,7 +768,7 @@ bool NamedDecl::isCXXInstanceMember() const {
   if (isa<UsingShadowDecl>(D))
     D = cast<UsingShadowDecl>(D)->getTargetDecl();
 
-  if (isa<FieldDecl>(D))
+  if (isa<FieldDecl>(D) || isa<IndirectFieldDecl>(D))
     return true;
   if (isa<CXXMethodDecl>(D))
     return cast<CXXMethodDecl>(D)->isInstance();
@@ -2028,6 +2028,12 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
                                            IdentifierInfo *Id, QualType T,
                                            Expr *E, const llvm::APSInt &V) {
   return new (C) EnumConstantDecl(CD, L, Id, T, E, V);
+}
+
+IndirectFieldDecl *IndirectFieldDecl::Create(ASTContext &C, DeclContext *DC,
+                                          SourceLocation L, IdentifierInfo *Id,
+                                          QualType T, NamedDecl **CH, int CHS) {
+  return new (C) IndirectFieldDecl(DC, L, Id, T, CH, CHS);
 }
 
 SourceRange EnumConstantDecl::getSourceRange() const {

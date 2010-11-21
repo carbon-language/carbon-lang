@@ -333,6 +333,7 @@ static Cl::Kinds ClassifyDecl(ASTContext &Ctx, const Decl *D) {
     islvalue = NTTParm->getType()->isReferenceType();
   else
     islvalue = isa<VarDecl>(D) || isa<FieldDecl>(D) ||
+	  isa<IndirectFieldDecl>(D) ||
       (Ctx.getLangOptions().CPlusPlus &&
         (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)));
 

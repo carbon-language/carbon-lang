@@ -249,6 +249,9 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCProperty:
       return IDNS_Ordinary;
 
+    case IndirectField:
+      return IDNS_Ordinary | IDNS_Member;
+
     case ObjCCompatibleAlias:
     case ObjCInterface:
       return IDNS_Ordinary | IDNS_Type;
@@ -524,8 +527,6 @@ bool DeclContext::isTransparentContext() const {
     return !cast<EnumDecl>(this)->isScoped();
   else if (DeclKind == Decl::LinkageSpec)
     return true;
-  else if (DeclKind >= Decl::firstRecord && DeclKind <= Decl::lastRecord)
-    return cast<RecordDecl>(this)->isAnonymousStructOrUnion();
 
   return false;
 }

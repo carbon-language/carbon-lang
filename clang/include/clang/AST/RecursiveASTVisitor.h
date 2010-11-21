@@ -1381,6 +1381,8 @@ DEF_TRAVERSE_DECL(UnresolvedUsingValueDecl, {
     TRY_TO(TraverseNestedNameSpecifier(D->getTargetNestedNameSpecifier()));
   })
 
+DEF_TRAVERSE_DECL(IndirectFieldDecl, {})
+
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseDeclaratorHelper(DeclaratorDecl *D) {
   TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));

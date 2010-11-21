@@ -1067,10 +1067,15 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
     FieldDecl *Member = 0;
     DeclContext::lookup_result Result
       = ClassDecl->lookup(MemberOrBase);
-    if (Result.first != Result.second)
+    if (Result.first != Result.second) {
       Member = dyn_cast<FieldDecl>(*Result.first);
-
-    // FIXME: Handle members of an anonymous union.
+    
+	  // Handle anonymous union case.
+	  if (!Member)
+      if (IndirectFieldDecl* IndirectField
+          = dyn_cast<IndirectFieldDecl>(*Result.first))
+        Member = IndirectField->getAnonField();
+    }
 
     if (Member)
       return BuildMemberInitializer(Member, (Expr**)Args, NumArgs, IdLoc,
@@ -2600,15 +2605,15 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     //   In addition, if class T has a user-declared constructor (12.1), every 
     //   non-static data member of class T shall have a name different from T.
     for (DeclContext::lookup_result R = Record->lookup(Record->getDeclName());
-         R.first != R.second; ++R.first)
-      if (FieldDecl *Field = dyn_cast<FieldDecl>(*R.first)) {
-        if (Record->hasUserDeclaredConstructor() ||
-            !Field->getDeclContext()->Equals(Record)) {
-        Diag(Field->getLocation(), diag::err_member_name_of_class)
-          << Field->getDeclName();
+         R.first != R.second; ++R.first) {
+      NamedDecl *D = *R.first;
+      if ((isa<FieldDecl>(D) && Record->hasUserDeclaredConstructor()) ||
+          isa<IndirectFieldDecl>(D)) {
+        Diag(D->getLocation(), diag::err_member_name_of_class)
+          << D->getDeclName();
         break;
       }
-      }
+    }
   }
 }
 
