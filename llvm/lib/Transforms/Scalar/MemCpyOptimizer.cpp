@@ -688,6 +688,24 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
     return false;
   
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+
+  // Verify that the copied-from memory doesn't change in between the two
+  // transfers.  For example, in:
+  //    memcpy(a <- b)
+  //    *b = 42;
+  //    memcpy(c <- a)
+  // It would be invalid to transform the second memcpy into memcpy(c <- b).
+  //
+  // TODO: If the code between M and MDep is transparent to the destination "c",
+  // then we could still perform the xform by moving M up to the first memcpy.
+  //
+  // NOTE: This is conservative, it will stop on any read from the source loc,
+  // not just the defining memcpy.
+  MemDepResult SourceDep =
+    MD->getPointerDependencyFrom(AA.getLocationForSource(MDep),
+                                 false, M, M->getParent());
+  if (!SourceDep.isClobber() || SourceDep.getInst() != MDep)
+    return false;
   
   // If the dest of the second might alias the source of the first, then the
   // source and dest might overlap.  We still want to eliminate the intermediate
@@ -719,26 +737,9 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
     ConstantInt::get(Type::getInt32Ty(MemCpyFun->getContext()), Align), 
     M->getVolatileCst()
   };
-  CallInst *C = CallInst::Create(MemCpyFun, Args, Args+5, "", M);
-  
-  
-  // Verify that the copied-from memory doesn't change in between the two
-  // transfers.  For example, in:
-  //    memcpy(a <- b)
-  //    *b = 42;
-  //    memcpy(c <- a)
-  // It would be invalid to transform the second memcpy into memcpy(c <- b).
-  //
-  // TODO: If the code between M and MDep is transparent to the destination "c",
-  // then we could still perform the xform by moving M up to the first memcpy.
-  MemDepResult NewDep = MD->getDependency(C);
-  if (!NewDep.isClobber() || NewDep.getInst() != MDep) {
-    MD->removeInstruction(C);
-    C->eraseFromParent();
-    return false;
-  }
+  CallInst::Create(MemCpyFun, Args, Args+5, "", M);
 
-  // Otherwise we're good!  Nuke the instruction we're replacing.
+  // Remove the instruction we're replacing.
   MD->removeInstruction(M);
   M->eraseFromParent();
   ++NumMemCpyInstr;
@@ -814,16 +815,13 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   TargetData *TD = getAnalysisIfAvailable<TargetData>();
   if (!TD) return false;
 
+  // Find out what feeds this byval argument.
   Value *ByValArg = CS.getArgument(ArgNo);
-  
-  // MemDep doesn't have a way to do a local query with a memory location.
-  // Instead, just insert a load and ask for its dependences.
-  LoadInst *TmpLoad = new LoadInst(ByValArg, "", CS.getInstruction());
-  MemDepResult DepInfo = MD->getDependency(TmpLoad);
-  
-  MD->removeInstruction(TmpLoad);
-  TmpLoad->eraseFromParent();
-  
+  uint64_t ByValSize = TD->getTypeAllocSize(ByValArg->getType());
+  MemDepResult DepInfo =
+    MD->getPointerDependencyFrom(AliasAnalysis::Location(ByValArg, ByValSize),
+                                 true, CS.getInstruction(),
+                                 CS.getInstruction()->getParent());
   if (!DepInfo.isClobber())
     return false;
 
@@ -838,8 +836,7 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   // The length of the memcpy must be larger or equal to the size of the byval.
   // must be larger than the following one.
   ConstantInt *C1 = dyn_cast<ConstantInt>(MDep->getLength());
-  if (C1 == 0 ||
-      C1->getValue().getZExtValue() < TD->getTypeAllocSize(ByValArg->getType()))
+  if (C1 == 0 || C1->getValue().getZExtValue() < ByValSize)
     return false;
 
   // Get the alignment of the byval.  If it is greater than the memcpy, then we
@@ -855,26 +852,20 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   //    *b = 42;
   //    foo(*a)
   // It would be invalid to transform the second memcpy into foo(*b).
+  //
+  // NOTE: This is conservative, it will stop on any read from the source loc,
+  // not just the defining memcpy.
+  MemDepResult SourceDep =
+    MD->getPointerDependencyFrom(AliasAnalysis::getLocationForSource(MDep),
+                                 false, CS.getInstruction(), MDep->getParent());
+  if (!SourceDep.isClobber() || SourceDep.getInst() != MDep)
+    return false;
+  
   Value *TmpCast = MDep->getSource();
   if (MDep->getSource()->getType() != ByValArg->getType())
     TmpCast = new BitCastInst(MDep->getSource(), ByValArg->getType(),
                               "tmpcast", CS.getInstruction());
-  Value *TmpVal =
-    UndefValue::get(cast<PointerType>(TmpCast->getType())->getElementType());
-  Instruction *TmpStore = new StoreInst(TmpVal, TmpCast, false,
-                                        CS.getInstruction());
-  DepInfo = MD->getDependency(TmpStore);
-  bool isUnsafe = !DepInfo.isClobber() || DepInfo.getInst() != MDep;
-  MD->removeInstruction(TmpStore);
-  TmpStore->eraseFromParent();
   
-  if (isUnsafe) {
-    // Clean up the inserted cast instruction.
-    if (TmpCast != MDep->getSource())
-      cast<Instruction>(TmpCast)->eraseFromParent();
-    return false;
-  }
-
   DEBUG(dbgs() << "MemCpyOpt: Forwarding memcpy to byval:\n"
                << "  " << *MDep << "\n"
                << "  " << *CS.getInstruction() << "\n");
