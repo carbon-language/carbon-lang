@@ -119,8 +119,7 @@ const FileEntry *DirectoryLookup::LookupFile(llvm::StringRef Filename,
     TmpDir += getDir()->getName();
     TmpDir.push_back('/');
     TmpDir.append(Filename.begin(), Filename.end());
-    return HS.getFileMgr().getFile(TmpDir.begin(), TmpDir.end(),
-                                   HS.getFileSystemOpts());
+    return HS.getFileMgr().getFile(TmpDir.str(), HS.getFileSystemOpts());
   }
 
   if (isFramework())
@@ -187,8 +186,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(llvm::StringRef Filename,
 
   FrameworkName += "Headers/";
   FrameworkName.append(Filename.begin()+SlashPos+1, Filename.end());
-  if (const FileEntry *FE = FileMgr.getFile(FrameworkName.begin(),
-                                            FrameworkName.end(),
+  if (const FileEntry *FE = FileMgr.getFile(FrameworkName.str(),
                                             FileSystemOpts)) {
     return FE;
   }
@@ -197,8 +195,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(llvm::StringRef Filename,
   const char *Private = "Private";
   FrameworkName.insert(FrameworkName.begin()+OrigSize, Private,
                        Private+strlen(Private));
-  return FileMgr.getFile(FrameworkName.begin(), FrameworkName.end(),
-                         FileSystemOpts);
+  return FileMgr.getFile(FrameworkName.str(), FileSystemOpts);
 }
 
 
@@ -335,7 +332,7 @@ LookupSubframeworkHeader(llvm::StringRef Filename,
   FrameworkName += ".framework/";
 
   llvm::StringMapEntry<const DirectoryEntry *> &CacheLookup =
-    FrameworkMap.GetOrCreateValue(Filename.begin(), Filename.begin()+SlashPos);
+    FrameworkMap.GetOrCreateValue(Filename.substr(0, SlashPos));
 
   // Some other location?
   if (CacheLookup.getValue() &&
@@ -349,8 +346,7 @@ LookupSubframeworkHeader(llvm::StringRef Filename,
     ++NumSubFrameworkLookups;
 
     // If the framework dir doesn't exist, we fail.
-    const DirectoryEntry *Dir = FileMgr.getDirectory(FrameworkName.begin(),
-                                                     FrameworkName.end(),
+    const DirectoryEntry *Dir = FileMgr.getDirectory(FrameworkName.str(),
                                                      FileSystemOpts);
     if (Dir == 0) return 0;
 
@@ -365,15 +361,13 @@ LookupSubframeworkHeader(llvm::StringRef Filename,
   llvm::SmallString<1024> HeadersFilename(FrameworkName);
   HeadersFilename += "Headers/";
   HeadersFilename.append(Filename.begin()+SlashPos+1, Filename.end());
-  if (!(FE = FileMgr.getFile(HeadersFilename.begin(),
-                             HeadersFilename.end(), FileSystemOpts))) {
+  if (!(FE = FileMgr.getFile(HeadersFilename.str(), FileSystemOpts))) {
 
     // Check ".../Frameworks/HIToolbox.framework/PrivateHeaders/HIToolbox.h"
     HeadersFilename = FrameworkName;
     HeadersFilename += "PrivateHeaders/";
     HeadersFilename.append(Filename.begin()+SlashPos+1, Filename.end());
-    if (!(FE = FileMgr.getFile(HeadersFilename.begin(), HeadersFilename.end(),
-                               FileSystemOpts)))
+    if (!(FE = FileMgr.getFile(HeadersFilename.str(), FileSystemOpts)))
       return 0;
   }
 

@@ -225,6 +225,6 @@ const FileEntry *HeaderMap::LookupFile(llvm::StringRef Filename,
     llvm::SmallString<1024> DestPath;
     DestPath += getString(B.Prefix);
     DestPath += getString(B.Suffix);
-    return FM.getFile(DestPath.begin(), DestPath.end(), FileSystemOpts);
+    return FM.getFile(DestPath.str(), FileSystemOpts);
   }
 }

@@ -1548,8 +1548,8 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
 
       const char *FullFileNameStart = BlobStart + Record[3];
       const FileEntry *File
-        = PP->getFileManager().getFile(FullFileNameStart,
-                                     FullFileNameStart + (BlobLen - Record[3]),
+      = PP->getFileManager().getFile(llvm::StringRef(FullFileNameStart,
+                                                     BlobLen - Record[3]),
                                      FileSystemOpts);
 
       // FIXME: Stable encoding

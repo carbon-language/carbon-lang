@@ -198,23 +198,12 @@ public:
   ///
   const DirectoryEntry *getDirectory(llvm::StringRef Filename,
                                      const FileSystemOptions &FileSystemOpts);
-  const DirectoryEntry *getDirectory(const char *FileStart,const char *FileEnd,
-                                     const FileSystemOptions &FileSystemOpts) {
-    return getDirectory(llvm::StringRef(FileStart, FileEnd-FileStart),
-                        FileSystemOpts);
-  }
 
   /// getFile - Lookup, cache, and verify the specified file.  This returns null
   /// if the file doesn't exist.
   ///
   const FileEntry *getFile(llvm::StringRef Filename,
                            const FileSystemOptions &FileSystemOpts);
-  const FileEntry *getFile(const char *FilenameStart,
-                           const char *FilenameEnd,
-                           const FileSystemOptions &FileSystemOpts) {
-    return getFile(llvm::StringRef(FilenameStart, FilenameEnd-FilenameStart),
-                   FileSystemOpts);
-  }
 
   /// \brief Retrieve a file entry for a "virtual" file that acts as
   /// if there were a file with the given name on disk. The file
