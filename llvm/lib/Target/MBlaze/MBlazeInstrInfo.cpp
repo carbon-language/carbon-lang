@@ -107,16 +107,133 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 //===----------------------------------------------------------------------===//
 // Branch Analysis
 //===----------------------------------------------------------------------===//
+bool MBlazeInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
+                                    MachineBasicBlock *&TBB,
+                                    MachineBasicBlock *&FBB,
+                                    SmallVectorImpl<MachineOperand> &Cond,
+                                    bool AllowModify) const {
+  // If the block has no terminators, it just falls into the block after it.
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin())
+    return false;
+  --I;
+  while (I->isDebugValue()) {
+    if (I == MBB.begin())
+      return false;
+    --I;
+  }
+  if (!isUnpredicatedTerminator(I))
+    return false;
+
+  // Get the last instruction in the block.
+  MachineInstr *LastInst = I;
+
+  // If there is only one terminator instruction, process it.
+  unsigned LastOpc = LastInst->getOpcode();
+  if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
+    if (MBlaze::isUncondBranchOpcode(LastOpc)) {
+      TBB = LastInst->getOperand(0).getMBB();
+      return false;
+    }
+    if (MBlaze::isCondBranchOpcode(LastOpc)) {
+      // Block ends with fall-through condbranch.
+      TBB = LastInst->getOperand(1).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
+      Cond.push_back(LastInst->getOperand(0));
+      return false;
+    }
+    // Otherwise, don't know what this is.
+    return true;
+  }
+
+  // Get the instruction before it if it's a terminator.
+  MachineInstr *SecondLastInst = I;
+
+  // If there are three terminators, we don't know what sort of block this is.
+  if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
+    return true;
+
+  // If the block ends with something like BEQID then BRID, handle it.
+  if (MBlaze::isCondBranchOpcode(SecondLastInst->getOpcode()) &&
+      MBlaze::isUncondBranchOpcode(LastInst->getOpcode())) {
+    TBB = SecondLastInst->getOperand(1).getMBB();
+    Cond.push_back(MachineOperand::CreateImm(SecondLastInst->getOpcode()));
+    Cond.push_back(SecondLastInst->getOperand(0));
+    FBB = LastInst->getOperand(0).getMBB();
+    return false;
+  }
+
+  // If the block ends with two unconditional branches, handle it.
+  // The second one is not executed, so remove it.
+  if (MBlaze::isUncondBranchOpcode(SecondLastInst->getOpcode()) &&
+      MBlaze::isUncondBranchOpcode(LastInst->getOpcode())) {
+    TBB = SecondLastInst->getOperand(0).getMBB();
+    I = LastInst;
+    if (AllowModify)
+      I->eraseFromParent();
+    return false;
+  }
+
+  // Otherwise, can't handle this.
+  return true;
+}
+
 unsigned MBlazeInstrInfo::
 InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
              MachineBasicBlock *FBB,
              const SmallVectorImpl<MachineOperand> &Cond,
              DebugLoc DL) const {
-  // Can only insert uncond branches so far.
-  assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
-  BuildMI(&MBB, DL, get(MBlaze::BRI)).addMBB(TBB);
-  return 1;
+  // Shouldn't be a fall through.
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert((Cond.size() == 2 || Cond.size() == 0) &&
+         "MBlaze branch conditions have two components!");
+
+  unsigned Opc = MBlaze::BRID;
+  if (!Cond.empty())
+    Opc = (unsigned)Cond[0].getImm();
+
+  if (FBB == 0) {
+    if (Cond.empty()) // Unconditional branch
+      BuildMI(&MBB, DL, get(Opc)).addMBB(TBB);
+    else              // Conditional branch
+      BuildMI(&MBB, DL, get(Opc)).addReg(Cond[1].getReg()).addMBB(TBB);
+    return 1;
+  }
+
+  BuildMI(&MBB, DL, get(Opc)).addReg(Cond[1].getReg()).addMBB(TBB);
+  BuildMI(&MBB, DL, get(MBlaze::BRID)).addMBB(FBB);
+  return 2;
 }
+
+unsigned MBlazeInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin()) return 0;
+  --I;
+  while (I->isDebugValue()) {
+    if (I == MBB.begin())
+      return 0;
+    --I;
+  }
+
+  if (!MBlaze::isUncondBranchOpcode(I->getOpcode()) &&
+      !MBlaze::isCondBranchOpcode(I->getOpcode()))
+    return 0;
+
+  // Remove the branch.
+  I->eraseFromParent();
+
+  I = MBB.end();
+
+  if (I == MBB.begin()) return 1;
+  --I;
+  if (!MBlaze::isCondBranchOpcode(I->getOpcode()))
+    return 1;
+
+  // Remove the branch.
+  I->eraseFromParent();
+  return 2;
+}
+
 
 /// getGlobalBaseReg - Return a virtual register initialized with the
 /// the global base register value. Output instructions required to

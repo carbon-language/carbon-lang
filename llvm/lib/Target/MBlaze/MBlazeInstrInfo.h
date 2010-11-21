@@ -73,59 +73,92 @@ namespace MBlaze {
     FCOND_GT,
 
     // Only integer conditions
-    COND_E,
-    COND_GZ,
-    COND_GEZ,
-    COND_LZ,
-    COND_LEZ,
+    COND_EQ,
+    COND_GT,
+    COND_GE,
+    COND_LT,
+    COND_LE,
     COND_NE,
     COND_INVALID
   };
 
   // Turn condition code into conditional branch opcode.
-  unsigned GetCondBranchFromCond(CondCode CC);
+  inline static unsigned GetCondBranchFromCond(CondCode CC) {
+    switch (CC) {
+    default: llvm_unreachable("Unknown condition code");
+    case COND_EQ: return MBlaze::BEQID;
+    case COND_NE: return MBlaze::BNEID;
+    case COND_GT: return MBlaze::BGTID;
+    case COND_GE: return MBlaze::BGEID;
+    case COND_LT: return MBlaze::BLTID;
+    case COND_LE: return MBlaze::BLEID;
+    }
+  }
 
   /// GetOppositeBranchCondition - Return the inverse of the specified cond,
   /// e.g. turning COND_E to COND_NE.
-  CondCode GetOppositeBranchCondition(MBlaze::CondCode CC);
+  // CondCode GetOppositeBranchCondition(MBlaze::CondCode CC);
 
   /// MBlazeCCToString - Map each FP condition code to its string
-  inline static const char *MBlazeFCCToString(MBlaze::CondCode CC)
-  {
+  inline static const char *MBlazeFCCToString(MBlaze::CondCode CC) {
     switch (CC) {
-      default: llvm_unreachable("Unknown condition code");
-      case FCOND_F:
-      case FCOND_T:   return "f";
-      case FCOND_UN:
-      case FCOND_OR:  return "un";
-      case FCOND_EQ:
-      case FCOND_NEQ: return "eq";
-      case FCOND_UEQ:
-      case FCOND_OGL: return "ueq";
-      case FCOND_OLT:
-      case FCOND_UGE: return "olt";
-      case FCOND_ULT:
-      case FCOND_OGE: return "ult";
-      case FCOND_OLE:
-      case FCOND_UGT: return "ole";
-      case FCOND_ULE:
-      case FCOND_OGT: return "ule";
-      case FCOND_SF:
-      case FCOND_ST:  return "sf";
-      case FCOND_NGLE:
-      case FCOND_GLE: return "ngle";
-      case FCOND_SEQ:
-      case FCOND_SNE: return "seq";
-      case FCOND_NGL:
-      case FCOND_GL:  return "ngl";
-      case FCOND_LT:
-      case FCOND_NLT: return "lt";
-      case FCOND_NGE:
-      case FCOND_GE:  return "ge";
-      case FCOND_LE:
-      case FCOND_NLE: return "nle";
-      case FCOND_NGT:
-      case FCOND_GT:  return "gt";
+    default: llvm_unreachable("Unknown condition code");
+    case FCOND_F:
+    case FCOND_T:   return "f";
+    case FCOND_UN:
+    case FCOND_OR:  return "un";
+    case FCOND_EQ:
+    case FCOND_NEQ: return "eq";
+    case FCOND_UEQ:
+    case FCOND_OGL: return "ueq";
+    case FCOND_OLT:
+    case FCOND_UGE: return "olt";
+    case FCOND_ULT:
+    case FCOND_OGE: return "ult";
+    case FCOND_OLE:
+    case FCOND_UGT: return "ole";
+    case FCOND_ULE:
+    case FCOND_OGT: return "ule";
+    case FCOND_SF:
+    case FCOND_ST:  return "sf";
+    case FCOND_NGLE:
+    case FCOND_GLE: return "ngle";
+    case FCOND_SEQ:
+    case FCOND_SNE: return "seq";
+    case FCOND_NGL:
+    case FCOND_GL:  return "ngl";
+    case FCOND_LT:
+    case FCOND_NLT: return "lt";
+    case FCOND_NGE:
+    case FCOND_GE:  return "ge";
+    case FCOND_LE:
+    case FCOND_NLE: return "nle";
+    case FCOND_NGT:
+    case FCOND_GT:  return "gt";
+    }
+  }
+
+  inline static bool isUncondBranchOpcode(int Opc) {
+    switch (Opc) {
+    default: return false;
+    case MBlaze::BRI:
+    case MBlaze::BRAI:
+    case MBlaze::BRID:
+    case MBlaze::BRAID:
+      return true;
+    }
+  }
+
+  inline static bool isCondBranchOpcode(int Opc) {
+    switch (Opc) {
+    default: return false;
+    case MBlaze::BEQI: case MBlaze::BEQID:
+    case MBlaze::BNEI: case MBlaze::BNEID:
+    case MBlaze::BGTI: case MBlaze::BGTID:
+    case MBlaze::BGEI: case MBlaze::BGEID:
+    case MBlaze::BLTI: case MBlaze::BLTID:
+    case MBlaze::BLEI: case MBlaze::BLEID:
+      return true;
     }
   }
 }
@@ -215,10 +248,15 @@ public:
                                       int &FrameIndex) const;
 
   /// Branch Analysis
+  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                             MachineBasicBlock *&FBB,
+                             SmallVectorImpl<MachineOperand> &Cond,
+                             bool AllowModify) const;
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                                 const SmallVectorImpl<MachineOperand> &Cond,
                                 DebugLoc DL) const;
+  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator I, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,

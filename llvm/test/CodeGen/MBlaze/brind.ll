@@ -68,5 +68,5 @@ finish:
     %tmp.8 = urem i32 %tmp.7, 5
 
     br label %loop
-    ; CHECK:        brid
+    ; CHECK:        brd
 }
