@@ -44,6 +44,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::CXXDestructor:
   case Decl::CXXConversion:
   case Decl::Field:
+  case Decl::IndirectField:
   case Decl::ObjCIvar:
   case Decl::ObjCAtDefsField:      
   case Decl::ParmVar:
