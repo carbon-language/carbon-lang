@@ -834,7 +834,6 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
     return false;
   
   // The length of the memcpy must be larger or equal to the size of the byval.
-  // must be larger than the following one.
   ConstantInt *C1 = dyn_cast<ConstantInt>(MDep->getLength());
   if (C1 == 0 || C1->getValue().getZExtValue() < ByValSize)
     return false;
