@@ -1699,14 +1699,6 @@ This should be optimized to a single compare.  Testcase derived from gcc.
 
 //===---------------------------------------------------------------------===//
 
-Missed instcombine transformation:
-void b();
-void a(int x) { if (((1<<x)&8)==0) b(); }
-
-The shift should be optimized out.  Testcase derived from gcc.
-
-//===---------------------------------------------------------------------===//
-
 Missed instcombine or reassociate transformation:
 int a(int a, int b) { return (a==12)&(b>47)&(b<58); }
 

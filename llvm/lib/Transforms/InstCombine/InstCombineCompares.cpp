@@ -1744,14 +1744,84 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // simplify this comparison.  For example, (x&4) < 8  is always true.
     switch (I.getPredicate()) {
     default: llvm_unreachable("Unknown icmp opcode!");
-    case ICmpInst::ICMP_EQ:
+    case ICmpInst::ICMP_EQ: {
       if (Op0Max.ult(Op1Min) || Op0Min.ugt(Op1Max))
         return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
+        
+      // If all bits are known zero except for one, then we know at most one
+      // bit is set.   If the comparison is against zero, then this is a check
+      // to see if *that* bit is set.
+      APInt Op0KnownZeroInverted = ~Op0KnownZero;
+      if (~Op1KnownZero == 0 && Op0KnownZeroInverted.isPowerOf2()) {
+        // If the LHS is an AND with the same constant, look through it.
+        Value *LHS = 0;
+        ConstantInt *LHSC = 0;
+        if (!match(Op0, m_And(m_Value(LHS), m_ConstantInt(LHSC))) ||
+            LHSC->getValue() != Op0KnownZeroInverted)
+          LHS = Op0;
+        
+        // If the LHS is 1 << x, and we know the result is a power of 2 like 8,
+        // then turn "((1 << x)&8) == 0" into "x == 3".
+        Value *X = 0;
+        if (match(LHS, m_Shl(m_One(), m_Value(X)))) {
+          unsigned CmpVal = Op0KnownZeroInverted.countTrailingZeros();
+          return new ICmpInst(ICmpInst::ICMP_EQ, X,
+                              ConstantInt::get(X->getType(), CmpVal));
+        }
+        
+        // If the LHS is 8 >>u x, and we know the result is a power of 2 like 1,
+        // then turn "((8 >>u x)&1) == 0" into "x == 3".
+        ConstantInt *CI = 0;
+        if (Op0KnownZeroInverted == 1 &&
+            match(LHS, m_LShr(m_ConstantInt(CI), m_Value(X))) &&
+            CI->getValue().isPowerOf2()) {
+          unsigned CmpVal = CI->getValue().countTrailingZeros();
+          return new ICmpInst(ICmpInst::ICMP_EQ, X,
+                              ConstantInt::get(X->getType(), CmpVal));
+        }
+      }
+        
       break;
-    case ICmpInst::ICMP_NE:
+    }
+    case ICmpInst::ICMP_NE: {
       if (Op0Max.ult(Op1Min) || Op0Min.ugt(Op1Max))
         return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
+      
+      // If all bits are known zero except for one, then we know at most one
+      // bit is set.   If the comparison is against zero, then this is a check
+      // to see if *that* bit is set.
+      APInt Op0KnownZeroInverted = ~Op0KnownZero;
+      if (~Op1KnownZero == 0 && Op0KnownZeroInverted.isPowerOf2()) {
+        // If the LHS is an AND with the same constant, look through it.
+        Value *LHS = 0;
+        ConstantInt *LHSC = 0;
+        if (!match(Op0, m_And(m_Value(LHS), m_ConstantInt(LHSC))) ||
+            LHSC->getValue() != Op0KnownZeroInverted)
+          LHS = Op0;
+        
+        // If the LHS is 1 << x, and we know the result is a power of 2 like 8,
+        // then turn "((1 << x)&8) != 0" into "x != 3".
+        Value *X = 0;
+        if (match(LHS, m_Shl(m_One(), m_Value(X)))) {
+          unsigned CmpVal = Op0KnownZeroInverted.countTrailingZeros();
+          return new ICmpInst(ICmpInst::ICMP_NE, X,
+                              ConstantInt::get(X->getType(), CmpVal));
+        }
+        
+        // If the LHS is 8 >>u x, and we know the result is a power of 2 like 1,
+        // then turn "((8 >>u x)&1) != 0" into "x != 3".
+        ConstantInt *CI = 0;
+        if (Op0KnownZeroInverted == 1 &&
+            match(LHS, m_LShr(m_ConstantInt(CI), m_Value(X))) &&
+            CI->getValue().isPowerOf2()) {
+          unsigned CmpVal = CI->getValue().countTrailingZeros();
+          return new ICmpInst(ICmpInst::ICMP_NE, X,
+                              ConstantInt::get(X->getType(), CmpVal));
+        }
+      }
+      
       break;
+    }
     case ICmpInst::ICMP_ULT:
       if (Op0Max.ult(Op1Min))          // A <u B -> true if max(A) < min(B)
         return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
