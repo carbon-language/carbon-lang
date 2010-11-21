@@ -857,41 +857,80 @@ let isCommutable = 1 in
 def tEOR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
                  "eor", "\t$dst, $rhs",
                  [(set tGPR:$dst, (xor tGPR:$lhs, tGPR:$rhs))]>,
-           T1DataProcessing<0b0001>;
+           T1DataProcessing<0b0001> {
+  // A8.6.45
+  bits<3> dst;
+  bits<3> rhs;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
 // LSL immediate
-def tLSLri : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iMOVsi,
-                  "lsl", "\t$dst, $lhs, $rhs",
-                  [(set tGPR:$dst, (shl tGPR:$lhs, (i32 imm:$rhs)))]>,
-             T1General<{0,0,0,?,?}>;
+def tLSLri : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5), IIC_iMOVsi,
+                  "lsl", "\t$Rd, $Rm, $imm5",
+                  [(set tGPR:$Rd, (shl tGPR:$Rm, (i32 imm:$imm5)))]>,
+             T1General<{0,0,0,?,?}> {
+  // A8.6.88
+  bits<3> Rd;
+  bits<3> Rm;
+  bits<5> imm5;
+  let Inst{10-6} = imm5;
+  let Inst{5-3}  = Rm;
+  let Inst{2-0}  = Rd;
+}
 
 // LSL register
 def tLSLrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
                    "lsl", "\t$dst, $rhs",
                    [(set tGPR:$dst, (shl tGPR:$lhs, tGPR:$rhs))]>,
-             T1DataProcessing<0b0010>;
+             T1DataProcessing<0b0010> {
+  // A8.6.89
+  bits<3> dst;
+  bits<3> rhs;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
 // LSR immediate
-def tLSRri : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iMOVsi,
-                  "lsr", "\t$dst, $lhs, $rhs",
-                  [(set tGPR:$dst, (srl tGPR:$lhs, (i32 imm:$rhs)))]>,
-             T1General<{0,0,1,?,?}>;
+def tLSRri : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5), IIC_iMOVsi,
+                  "lsr", "\t$Rd, $Rm, $imm5",
+                  [(set tGPR:$Rd, (srl tGPR:$Rm, (i32 imm:$imm5)))]>,
+             T1General<{0,0,1,?,?}> {
+  // A8.6.90
+  bits<3> Rd;
+  bits<3> Rm;
+  bits<5> imm5;
+  let Inst{10-6} = imm5;
+  let Inst{5-3}  = Rm;
+  let Inst{2-0}  = Rd;
+}
 
 // LSR register
 def tLSRrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
                    "lsr", "\t$dst, $rhs",
                    [(set tGPR:$dst, (srl tGPR:$lhs, tGPR:$rhs))]>,
-             T1DataProcessing<0b0011>;
+             T1DataProcessing<0b0011> {
+  // A8.6.91
+  bits<3> dst;
+  bits<3> rhs;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
-// move register
+// Move register
 let isMoveImm = 1 in
-def tMOVi8 : T1sI<(outs tGPR:$dst), (ins i32imm:$src), IIC_iMOVi,
-                  "mov", "\t$dst, $src",
-                  [(set tGPR:$dst, imm0_255:$src)]>,
-             T1General<{1,0,0,?,?}>;
+def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins i32imm:$imm8), IIC_iMOVi,
+                  "mov", "\t$Rd, $imm8",
+                  [(set tGPR:$Rd, imm0_255:$imm8)]>,
+             T1General<{1,0,0,?,?}> {
+  // A8.6.96
+  bits<3> Rd;
+  bits<8> imm8;
+  let Inst{10-8} = Rd;
+  let Inst{7-0}  = imm8;
+}
 
 // TODO: A7-73: MOV(2) - mov setting flag.
-
 
 let neverHasSideEffects = 1 in {
 // FIXME: Make this predicable.
@@ -921,22 +960,40 @@ let isCommutable = 1 in
 def tMUL : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMUL32,
                  "mul", "\t$dst, $rhs, $dst", /* A8.6.105 MUL Encoding T1 */
                  [(set tGPR:$dst, (mul tGPR:$lhs, tGPR:$rhs))]>,
-           T1DataProcessing<0b1101>;
+           T1DataProcessing<0b1101> {
+  // A8.6.105
+  bits<3> dst;
+  bits<3> rhs;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
 // move inverse register
-def tMVN : T1sI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMVNr,
-                "mvn", "\t$dst, $src",
-                [(set tGPR:$dst, (not tGPR:$src))]>,
-           T1DataProcessing<0b1111>;
+def tMVN : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMVNr,
+                "mvn", "\t$Rd, $Rm",
+                [(set tGPR:$Rd, (not tGPR:$Rm))]>,
+           T1DataProcessing<0b1111> {
+  // A8.6.107
+  bits<3> Rd;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
 
-// bitwise or register
+// Bitwise or register
 let isCommutable = 1 in
 def tORR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),  IIC_iBITr,
                  "orr", "\t$dst, $rhs",
                  [(set tGPR:$dst, (or tGPR:$lhs, tGPR:$rhs))]>,
-           T1DataProcessing<0b1100>;
+           T1DataProcessing<0b1100> {
+  // A8.6.114
+  bits<3> dst;
+  bits<3> rhs;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
-// swaps
+// Swaps
 def tREV : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
                 "rev", "\t$dst, $src",
                 [(set tGPR:$dst, (bswap tGPR:$src))]>,
