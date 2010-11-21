@@ -139,6 +139,7 @@ def tADJCALLSTACKDOWN :
 def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "",
                 [/* For disassembly only; pattern left blank */]>,
            T1Encoding<0b101111> {
+  // A8.6.110
   let Inst{9-8} = 0b11;
   let Inst{7-0} = 0x00;
 } 
@@ -146,6 +147,7 @@ def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "",
 def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "",
                   [/* For disassembly only; pattern left blank */]>,
              T1Encoding<0b101111> {
+  // A8.6.410
   let Inst{9-8} = 0b11;
   let Inst{7-0} = 0x10;
 } 
@@ -153,6 +155,7 @@ def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "",
 def tWFE : T1pI<(outs), (ins), NoItinerary, "wfe", "",
                 [/* For disassembly only; pattern left blank */]>,
            T1Encoding<0b101111> {
+  // A8.6.408
   let Inst{9-8} = 0b11;
   let Inst{7-0} = 0x20;
 } 
@@ -160,6 +163,7 @@ def tWFE : T1pI<(outs), (ins), NoItinerary, "wfe", "",
 def tWFI : T1pI<(outs), (ins), NoItinerary, "wfi", "",
                 [/* For disassembly only; pattern left blank */]>,
            T1Encoding<0b101111> {
+  // A8.6.409
   let Inst{9-8} = 0b11;
   let Inst{7-0} = 0x30;
 } 
@@ -167,6 +171,7 @@ def tWFI : T1pI<(outs), (ins), NoItinerary, "wfi", "",
 def tSEV : T1pI<(outs), (ins), NoItinerary, "sev", "",
                 [/* For disassembly only; pattern left blank */]>,
            T1Encoding<0b101111> {
+  // A8.6.157
   let Inst{9-8} = 0b11;
   let Inst{7-0} = 0x40;
 } 
@@ -174,6 +179,7 @@ def tSEV : T1pI<(outs), (ins), NoItinerary, "sev", "",
 def tSETENDBE : T1I<(outs), (ins), NoItinerary, "setend\tbe",
                     [/* For disassembly only; pattern left blank */]>,
                 T1Encoding<0b101101> {
+  // A8.6.156
   let Inst{9-5} = 0b10010;
   let Inst{4}   = 1;
   let Inst{3}   = 1;            // Big-Endian
@@ -183,6 +189,7 @@ def tSETENDBE : T1I<(outs), (ins), NoItinerary, "setend\tbe",
 def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
                     [/* For disassembly only; pattern left blank */]>,
                 T1Encoding<0b101101> {
+  // A8.6.156
   let Inst{9-5} = 0b10010;
   let Inst{4}   = 1;
   let Inst{3}   = 0;            // Little-Endian
@@ -194,6 +201,7 @@ def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
 def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
                 [/* For disassembly only; pattern left blank */]>,
             T1Encoding<0b101111> {
+  // A8.6.22
   bits<8> val;
   let Inst{9-8} = 0b10;
   let Inst{7-0} = val;
@@ -210,7 +218,7 @@ def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
 // CPS which has more options.
 def tCPS : T1I<(outs), (ins cps_opt:$opt), NoItinerary, "cps$opt",
               [/* For disassembly only; pattern left blank */]>,
-           T1Misc<0b0110011>;
+           T1Misc<0b0110011>;   // A8.6.38
 
 // For both thumb1 and thumb2.
 let isNotDuplicable = 1, isCodeGenOnly = 1 in
@@ -479,8 +487,7 @@ def tSVC : T1pI<(outs), (ins i32imm:$imm), IIC_Br,
 let isBarrier = 1, isTerminator = 1 in
 def tTRAP : TI<(outs), (ins), IIC_Br, 
                "trap", [(trap)]>, Encoding16 {
-  let Inst{15-12} = 0b1101;
-  let Inst{11-8}  = 0b1110;
+  let Inst = 0xdefe;
 }
 
 //===----------------------------------------------------------------------===//
