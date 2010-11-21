@@ -857,8 +857,11 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   }
 
   Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
-  // FIXME: Should only add this operand for predicated instructions
-  Operands.push_back(ARMOperand::CreateCondCode(ARMCC::CondCodes(CC), NameLoc));
+
+  if (Head != "trap")
+    // FIXME: Should only add this operand for predicated instructions
+    Operands.push_back(ARMOperand::CreateCondCode(ARMCC::CondCodes(CC),
+                                                  NameLoc));
 
   // Add the remaining tokens in the mnemonic.
   while (Next != StringRef::npos) {
