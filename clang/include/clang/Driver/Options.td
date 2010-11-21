@@ -270,6 +270,7 @@ def fdiagnostics_parseable_fixits : Flag<"-fdiagnostics-parseable-fixits">, Grou
 def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">, Group<f_Group>;
 def fdiagnostics_show_category_EQ : Joined<"-fdiagnostics-show-category=">, Group<f_Group>;
 def fdollars_in_identifiers : Flag<"-fdollars-in-identifiers">, Group<f_Group>;
+def felide_constructors : Flag<"-felide-constructors">, Group<f_Group>;
 def feliminate_unused_debug_symbols : Flag<"-feliminate-unused-debug-symbols">, Group<f_Group>;
 def femit_all_decls : Flag<"-femit-all-decls">, Group<f_Group>;
 def fencoding_EQ : Joined<"-fencoding=">, Group<f_Group>;
@@ -325,6 +326,7 @@ def fno_constant_cfstrings : Flag<"-fno-constant-cfstrings">, Group<f_Group>;
 def fno_diagnostics_fixit_info : Flag<"-fno-diagnostics-fixit-info">, Group<f_Group>;
 def fno_diagnostics_show_option : Flag<"-fno-diagnostics-show-option">, Group<f_Group>;
 def fno_dollars_in_identifiers : Flag<"-fno-dollars-in-identifiers">, Group<f_Group>;
+def fno_elide_constructors : Flag<"-fno-elide-constructors">, Group<f_Group>;
 def fno_eliminate_unused_debug_symbols : Flag<"-fno-eliminate-unused-debug-symbols">, Group<f_Group>;
 def fno_exceptions : Flag<"-fno-exceptions">, Group<f_Group>;
 def fno_finite_math_only : Flag<"-fno-finite-math-only">, Group<clang_ignored_f_Group>;

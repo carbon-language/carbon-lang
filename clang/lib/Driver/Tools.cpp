@@ -1347,6 +1347,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("-fno-access-control");
 
+  // -felide-constructors is the default.
+  if (Args.hasFlag(options::OPT_fno_elide_constructors,
+                   options::OPT_felide_constructors,
+                   false))
+    CmdArgs.push_back("-fno-elide-constructors");
+
   // -fexceptions=0 is default.
   if (!KernelOrKext &&
       needsExceptions(Args, InputType, getToolChain().getTriple()))
