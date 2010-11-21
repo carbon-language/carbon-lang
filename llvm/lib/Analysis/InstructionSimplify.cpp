@@ -18,6 +18,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -698,11 +699,18 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
   //if (isa<UndefValue>(Ops[0]))
   //  return UndefValue::get(GEP.getType());
 
-  // getelementptr P, 0 -> P.
-  if (NumOps == 2)
+  if (NumOps == 2) {
+    // getelementptr P, 0 -> P.
     if (ConstantInt *C = dyn_cast<ConstantInt>(Ops[1]))
       if (C->isZero())
         return Ops[0];
+    // getelementptr P, N -> P if P points to a type of zero size.
+    if (TD) {
+      const Type *Ty = cast<PointerType>(Ops[0]->getType())->getElementType();
+      if (Ty->isSized() && !TD->getTypeAllocSize(Ty))
+        return Ops[0];
+    }
+  }
 
   // Check to see if this is constant foldable.
   for (unsigned i = 0; i != NumOps; ++i)
