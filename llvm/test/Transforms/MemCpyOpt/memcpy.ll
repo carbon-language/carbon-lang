@@ -62,3 +62,18 @@ define void @test3({ x86_fp80, x86_fp80 }* noalias sret %agg.result) nounwind  {
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret void
 }
+
+
+; PR8644
+define void @test4(i8 *%P) {
+  %A = alloca {i32, i32}
+  %a = bitcast {i32, i32}* %A to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %P, i64 8, i32 4, i1 false)
+  call void @test4a(i8* byval align 1 %a) 
+  ret void
+; CHECK: @test4
+; CHECK-NEXT: call void @test4a(
+}
+
+declare void @test4a(i8* byval align 1)
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind

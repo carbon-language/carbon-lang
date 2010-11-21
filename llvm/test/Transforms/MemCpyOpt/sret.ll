@@ -3,7 +3,7 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i686-apple-darwin9"
 
-define void @ccosl({ x86_fp80, x86_fp80 }* noalias sret  %agg.result, { x86_fp80, x86_fp80 }* byval  %z) nounwind  {
+define void @ccosl({ x86_fp80, x86_fp80 }* noalias sret  %agg.result, { x86_fp80, x86_fp80 }* byval  align 8 %z) nounwind  {
 entry:
 	%iz = alloca { x86_fp80, x86_fp80 }		; <{ x86_fp80, x86_fp80 }*> [#uses=3]
 	%memtmp = alloca { x86_fp80, x86_fp80 }, align 16		; <{ x86_fp80, x86_fp80 }*> [#uses=2]
@@ -16,7 +16,7 @@ entry:
 	%tmp8 = load x86_fp80* %tmp7, align 16		; <x86_fp80> [#uses=1]
 	store x86_fp80 %tmp3, x86_fp80* %real, align 16
 	store x86_fp80 %tmp8, x86_fp80* %tmp4, align 16
-	call void @ccoshl( { x86_fp80, x86_fp80 }* noalias sret  %memtmp, { x86_fp80, x86_fp80 }* byval  %iz ) nounwind 
+	call void @ccoshl( { x86_fp80, x86_fp80 }* noalias sret  %memtmp, { x86_fp80, x86_fp80 }* byval align 8 %iz ) nounwind 
 	%memtmp14 = bitcast { x86_fp80, x86_fp80 }* %memtmp to i8*		; <i8*> [#uses=1]
 	%agg.result15 = bitcast { x86_fp80, x86_fp80 }* %agg.result to i8*		; <i8*> [#uses=1]
 	call void @llvm.memcpy.i32( i8* %agg.result15, i8* %memtmp14, i32 32, i32 16 )

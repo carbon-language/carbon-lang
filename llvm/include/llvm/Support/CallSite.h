@@ -52,11 +52,6 @@ public:
   CallSiteBase(CallTy *CI) : I(CI, true) { assert(CI); }
   CallSiteBase(InvokeTy *II) : I(II, false) { assert(II); }
   CallSiteBase(ValTy *II) { *this = get(II); }
-  CallSiteBase(InstrTy *II) {
-    assert(II && "Null instruction given?");
-    *this = get(II);
-    assert(I.getPointer() && "Not a call?");
-  }
 protected:
   /// CallSiteBase::get - This static method is sort of like a constructor.  It
   /// will create an appropriate call site for a Call or Invoke instruction, but
