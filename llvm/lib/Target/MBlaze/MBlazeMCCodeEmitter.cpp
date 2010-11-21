@@ -58,8 +58,9 @@ public:
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
-      { "reloc_pcrel_4byte", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
-      { "reloc_pcrel_2byte", 0, 2 * 8, MCFixupKindInfo::FKF_IsPCRel } };
+      // name                offset  bits    flags
+      { "reloc_pcrel_4byte", 2,      4 * 8,  MCFixupKindInfo::FKF_IsPCRel },
+      { "reloc_pcrel_2byte", 2,      2 * 8,  MCFixupKindInfo::FKF_IsPCRel } };
 
     if (Kind < FirstTargetFixupKind)
       return MCCodeEmitter::getFixupKindInfo(Kind);
@@ -103,11 +104,9 @@ public:
   }
 
   void EmitIMM(const MCOperand &imm, unsigned &CurByte, raw_ostream &OS) const;
-  void EmitIMM(const MCInst &MI, unsigned op, unsigned &CurByte,
-               raw_ostream &OS) const;
+  void EmitIMM(const MCInst &MI, unsigned &CurByte, raw_ostream &OS) const;
 
-  void EmitImmediate(const MCInst &MI,
-                     unsigned opNo, MCFixupKind FixupKind,
+  void EmitImmediate(const MCInst &MI, unsigned opNo, bool pcrel,
                      unsigned &CurByte, raw_ostream &OS,
                      SmallVectorImpl<MCFixup> &Fixups) const;
 
@@ -155,28 +154,43 @@ EmitIMM(const MCOperand &imm, unsigned &CurByte, raw_ostream &OS) const {
 }
 
 void MBlazeMCCodeEmitter::
-EmitIMM(const MCInst &MI, unsigned op, unsigned &CurByte,
-        raw_ostream &OS) const {
-    MCOperand mcop = MI.getOperand(op);
-    if (mcop.isExpr()) {
-        EmitByte(0x0D, CurByte, OS);
-        EmitByte(0x00, CurByte, OS);
-        EmitRawByte(0, CurByte, OS);
-        EmitRawByte(0, CurByte, OS);
-    }
+EmitIMM(const MCInst &MI, unsigned &CurByte,raw_ostream &OS) const {
+  switch (MI.getOpcode()) {
+  default: break;
+
+  case MBlaze::ADDI32:
+  case MBlaze::ORI32:
+  case MBlaze::BRLID32:
+    EmitByte(0x0D, CurByte, OS);
+    EmitByte(0x00, CurByte, OS);
+    EmitRawByte(0, CurByte, OS);
+    EmitRawByte(0, CurByte, OS);
+  }
 }
 
 void MBlazeMCCodeEmitter::
-EmitImmediate(const MCInst &MI, unsigned opNo, MCFixupKind FixupKind,
-              unsigned &CurByte, raw_ostream &OS,
-              SmallVectorImpl<MCFixup> &Fixups) const {
+EmitImmediate(const MCInst &MI, unsigned opNo, bool pcrel, unsigned &CurByte,
+              raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups) const {
   assert(MI.getNumOperands()>opNo && "Not enought operands for instruction");
 
   MCOperand oper = MI.getOperand(opNo);
+
   if (oper.isImm()) {
-      EmitIMM(oper, CurByte, OS);
+    EmitIMM(oper, CurByte, OS);
   } else if (oper.isExpr()) {
+    MCFixupKind FixupKind;
+    switch (MI.getOpcode()) {
+    default:
+      FixupKind = pcrel ? MCFixupKind(MBlaze::reloc_pcrel_2byte) : FK_Data_2;
       Fixups.push_back(MCFixup::Create(0,oper.getExpr(),FixupKind));
+      break;
+    case MBlaze::ORI32:
+    case MBlaze::ADDI32:
+    case MBlaze::BRLID32:
+      FixupKind = pcrel ? MCFixupKind(MBlaze::reloc_pcrel_4byte) : FK_Data_4;
+      Fixups.push_back(MCFixup::Create(0,oper.getExpr(),FixupKind));
+      break;
+    }
   }
 }
 
@@ -191,56 +205,33 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // Keep track of the current byte being emitted.
   unsigned CurByte = 0;
 
+  // Emit an IMM instruction if the instruction we are encoding requires it
+  EmitIMM(MI,CurByte,OS);
+
   switch ((TSFlags & MBlazeII::FormMask)) {
   default: break;
   case MBlazeII::FPseudo:
     // Pseudo instructions don't get encoded.
     return;
-
   case MBlazeII::FRRI:
-    EmitImmediate(MI, 2, FK_Data_4, CurByte, OS, Fixups);
+    EmitImmediate(MI, 2, false, CurByte, OS, Fixups);
     break;
-
   case MBlazeII::FRIR:
-    EmitImmediate(MI, 1, FK_Data_4, CurByte, OS, Fixups);
+    EmitImmediate(MI, 1, false, CurByte, OS, Fixups);
     break;
-
   case MBlazeII::FCRI:
-    EmitImmediate(MI, 1, MCFixupKind(MBlaze::reloc_pcrel_2byte), CurByte, OS,
-                  Fixups);
+    EmitImmediate(MI, 1, true, CurByte, OS, Fixups);
     break;
-
   case MBlazeII::FRCI:
-    EmitImmediate(MI, 1, MCFixupKind(MBlaze::reloc_pcrel_4byte), CurByte, OS,
-                  Fixups);
-
+    EmitImmediate(MI, 1, true, CurByte, OS, Fixups);
   case MBlazeII::FCCI:
-    EmitImmediate(MI, 0, MCFixupKind(MBlaze::reloc_pcrel_4byte), CurByte, OS,
-                  Fixups);
+    EmitImmediate(MI, 0, true, CurByte, OS, Fixups);
     break;
   }
 
   ++MCNumEmitted;  // Keep track of the # of mi's emitted
   unsigned Value = getBinaryCodeForInstr(MI);
-  switch (Opcode) {
-  default:
-    EmitConstant(Value, 4, CurByte, OS);
-    break;
-
-  case MBlaze::BRLID:
-  case MBlaze::BRALID:
-    EmitIMM(MI,1,CurByte,OS);
-    EmitConstant(Value, 4, CurByte, OS);
-    break;
-
-  case MBlaze::BRI:
-  case MBlaze::BRAI:
-  case MBlaze::BRID:
-  case MBlaze::BRAID:
-    EmitIMM(MI,0,CurByte,OS);
-    EmitConstant(Value, 4, CurByte, OS);
-    break;
-  }
+  EmitConstant(Value, 4, CurByte, OS);
 }
 
 // FIXME: These #defines shouldn't be necessary. Instead, tblgen should

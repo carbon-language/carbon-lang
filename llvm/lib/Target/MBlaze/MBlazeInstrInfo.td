@@ -169,6 +169,11 @@ class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
                 !strconcat(instr_asm, "   $dst, $b, $c"),
                 [(set GPR:$dst, (OpNode GPR:$b, imm_type:$c))], IIAlu>;
 
+class ArithI32<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
+               TB<op, (outs GPR:$dst), (ins GPR:$b, Od:$c),
+                  !strconcat(instr_asm, "   $dst, $b, $c"),
+                  [], IIAlu>;
+
 class ShiftI<bits<6> op, bits<2> flags, string instr_asm, SDNode OpNode,
              Operand Od, PatLeaf imm_type> :
              SHT<op, flags, (outs GPR:$dst), (ins GPR:$b, Od:$c),
@@ -223,6 +228,11 @@ class LogicI<bits<6> op, string instr_asm, SDNode OpNode> :
                 !strconcat(instr_asm, "   $dst, $b, $c"),
                 [(set GPR:$dst, (OpNode GPR:$b, immZExt16:$c))],
                 IIAlu>;
+
+class LogicI32<bits<6> op, string instr_asm> :
+               TB<op, (outs GPR:$dst), (ins GPR:$b, uimm16:$c),
+                  !strconcat(instr_asm, "   $dst, $b, $c"),
+                  [], IIAlu>;
 
 class PatCmp<bits<6> op, bits<11> flags, string instr_asm> :
              TA<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
@@ -578,10 +588,10 @@ let rb = 0 in {
                   "src       $dst, $src", [], IIAlu>;
 }
 
-let opcode=0x08, isCodeGenOnly=1 in {
-  def LEA_ADDI : TB<0x08, (outs GPR:$dst), (ins memri:$addr),
-                    "addi     $dst, ${addr:stackloc}",
-                    [(set GPR:$dst, iaddr:$addr)], IIAlu>;
+let isCodeGenOnly=1 in {
+  def ADDI32  : ArithI32<0x08, "addi   ", simm16, immSExt16>;
+  def ORI32   : LogicI32<0x28, "ori    ">;
+  def BRLID32 : BranchLI<0x2E, 0x14, "brlid  ">;
 }
 
 //===----------------------------------------------------------------------===//

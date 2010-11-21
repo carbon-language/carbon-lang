@@ -263,6 +263,33 @@ enum {
   R_386_NUM           = 43
 };
 
+// MBlaze relocations.
+enum {
+  R_MICROBLAZE_NONE           = 0,
+  R_MICROBLAZE_32             = 1,
+  R_MICROBLAZE_32_PCREL       = 2,
+  R_MICROBLAZE_64_PCREL       = 3,
+  R_MICROBLAZE_32_PCREL_LO    = 4,
+  R_MICROBLAZE_64             = 5,
+  R_MICROBLAZE_32_LO          = 6,
+  R_MICROBLAZE_SRO32          = 7,
+  R_MICROBLAZE_SRW32          = 8,
+  R_MICROBLAZE_64_NONE        = 9,
+  R_MICROBLAZE_32_SYM_OP_SYM  = 10,
+  R_MICROBLAZE_GNU_VTINHERIT  = 11,
+  R_MICROBLAZE_GNU_VTENTRY    = 12,
+  R_MICROBLAZE_GOTPC_64       = 13,
+  R_MICROBLAZE_GOT_64         = 14,
+  R_MICROBLAZE_PLT_64         = 15,
+  R_MICROBLAZE_REL            = 16,
+  R_MICROBLAZE_JUMP_SLOT      = 17,
+  R_MICROBLAZE_GLOB_DAT       = 18,
+  R_MICROBLAZE_GOTOFF_64      = 19,
+  R_MICROBLAZE_GOTOFF_32      = 20,
+  R_MICROBLAZE_COPY           = 21
+};
+
+
 // Section header.
 struct Elf32_Shdr {
   Elf32_Word sh_name;      // Section name (index into string table)
