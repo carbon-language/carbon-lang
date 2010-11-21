@@ -1716,7 +1716,36 @@ entry:
 }
 
 The srem can be transformed to an and because if x is negative, the shift is
-undefined. Testcase derived from gcc.
+undefined.  Here's a more general case that occurs on 64-bit targets:
+
+  %382 = srem i32 %tmp14.i, 64                    ; [#uses=1]
+  %383 = zext i32 %382 to i64                     ; [#uses=1]
+  %384 = shl i64 %381, %383                       ; [#uses=1]
+  %385 = icmp slt i32 %tmp14.i, 64                ; [#uses=1]
+
+Testcase derived from 403.gcc.
+
+//===---------------------------------------------------------------------===//
+
+This is a range comparison on a divided result (from 403.gcc):
+
+  %1337 = sdiv i32 %1336, 8                       ; [#uses=1]
+  %.off.i208 = add i32 %1336, 7                   ; [#uses=1]
+  %1338 = icmp ult i32 %.off.i208, 15             ; [#uses=1]
+  
+We already catch this (removing the sdiv) if there isn't an add, we should
+handle the 'add' as well.  This is a common idiom with it's builtin_alloca code.
+C testcase:
+
+int a(int x) { return (unsigned)(x/16+7) < 15; }
+
+Another similar case involves truncations on 64-bit targets:
+
+  %361 = sdiv i64 %.046, 8                        ; [#uses=1]
+  %362 = trunc i64 %361 to i32                    ; [#uses=2]
+...
+  %367 = icmp eq i32 %362, 0                      ; [#uses=1]
+
 
 //===---------------------------------------------------------------------===//
 
@@ -1729,7 +1758,9 @@ entry:
 }
 
 Should compile to something like x+y*8, but currently compiles to an
-inefficient result.  Testcase derived from gcc.
+inefficient result.  Testcase derived from gcc.  C testcase:
+
+int a(int x, int y) { return y-x*-8; }
 
 //===---------------------------------------------------------------------===//
 
