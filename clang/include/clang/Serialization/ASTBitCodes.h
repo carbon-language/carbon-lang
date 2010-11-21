@@ -720,7 +720,7 @@ namespace clang {
       /// \brief A record containing CXXBaseSpecifiers.
       DECL_CXX_BASE_SPECIFIERS,
       /// \brief A IndirectFieldDecl record.
-      DECL_INDIRECTFIELD,
+      DECL_INDIRECTFIELD
     };
 
     /// \brief Record codes for each kind of statement or expression.
