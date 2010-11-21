@@ -47,7 +47,7 @@ using namespace clang;
 
 #ifdef LLVM_ON_WIN32
 
-#define DIR_SEPARATOR_CHARS "/\\"
+#define IS_DIR_SEPARATOR_CHAR(x) ((x) == '/' || (x) == '\\')
 
 namespace {
   static std::string GetFullPath(const char *relPath) {
@@ -104,7 +104,7 @@ public:
 
 #else
 
-#define DIR_SEPARATOR_CHARS "/"
+#define IS_DIR_SEPARATOR_CHAR(x) ((x) == '/')
 
 class FileManager::UniqueDirContainer {
   /// UniqueDirs - Cache from ID's to existing directories/files.
@@ -203,20 +203,21 @@ static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
   // Figure out what directory it is in.   If the string contains a / in it,
   // strip off everything after it.
   // FIXME: this logic should be in sys::Path.
-  size_t SlashPos = Filename.rfind(DIR_SEPARATOR_CHARS);
-  
+  size_t SlashPos = Filename.size();
+  while (SlashPos != 0 && !IS_DIR_SEPARATOR_CHAR(Filename[SlashPos-1]))
+    --SlashPos;
+
   // Use the current directory if file has no path component.
-  if (SlashPos == llvm::StringRef::npos)
+  if (SlashPos == 0)
     return FileMgr.getDirectory(".", FileSystemOpts);
 
   if (SlashPos == Filename.size()-1)
     return 0;       // If filename ends with a /, it's a directory.
-  
+
   // Ignore repeated //'s.
-  while (SlashPos != 0 &&
-         llvm::StringRef(DIR_SEPARATOR_CHARS).count(Filename[SlashPos-1]))
+  while (SlashPos != 0 && IS_DIR_SEPARATOR_CHAR(Filename[SlashPos-1]))
     --SlashPos;
-  
+
   return FileMgr.getDirectory(Filename.substr(0, SlashPos), FileSystemOpts);
 }
 
@@ -226,8 +227,7 @@ static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
 const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename,
                                       const FileSystemOptions &FileSystemOpts) {
   // stat doesn't like trailing separators (at least on Windows).
-  if (Filename.size() > 1 &&
-      (Filename.back() == '/' || Filename.back() == '\\'))
+  if (Filename.size() > 1 && IS_DIR_SEPARATOR_CHAR(Filename.back()))
     Filename = Filename.substr(0, Filename.size()-1);
 
   ++NumDirLookups;
