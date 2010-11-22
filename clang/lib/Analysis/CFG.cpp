@@ -296,6 +296,7 @@ private:
   CFGBlock *VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E, AddStmtChoice asc);
   CFGBlock *VisitStmtExpr(StmtExpr *S, AddStmtChoice asc);
   CFGBlock *VisitSwitchStmt(SwitchStmt *S);
+  CFGBlock *VisitUnaryOperator(UnaryOperator *U, AddStmtChoice asc);
   CFGBlock *VisitWhileStmt(WhileStmt *W);
 
   CFGBlock *Visit(Stmt *S, AddStmtChoice asc = AddStmtChoice::NotAlwaysAdd);
@@ -886,6 +887,9 @@ tryAgain:
     case Stmt::SwitchStmtClass:
       return VisitSwitchStmt(cast<SwitchStmt>(S));
 
+    case Stmt::UnaryOperatorClass:
+      return VisitUnaryOperator(cast<UnaryOperator>(S), asc);
+
     case Stmt::WhileStmtClass:
       return VisitWhileStmt(cast<WhileStmt>(S));
   }
@@ -920,6 +924,19 @@ CFGBlock *CFGBuilder::VisitAddrLabelExpr(AddrLabelExpr *A,
   }
 
   return Block;
+}
+
+CFGBlock *CFGBuilder::VisitUnaryOperator(UnaryOperator *U,
+					 AddStmtChoice asc) {
+  if (asc.alwaysAdd()) {
+    autoCreateBlock();
+    AppendStmt(Block, U, asc);
+  }
+
+  bool asLVal = U->isIncrementDecrementOp();
+  return Visit(U->getSubExpr(),
+	       asLVal ? AddStmtChoice::AsLValueNotAlwaysAdd :
+	                AddStmtChoice::NotAlwaysAdd);
 }
 
 CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,

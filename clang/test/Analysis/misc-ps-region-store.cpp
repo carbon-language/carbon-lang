@@ -159,6 +159,25 @@ int r8375510(R8375510 x, R8375510 y) {
   for (; ; x++) { }
 }
 
+// PR8419 -- this used to crash.
+
+class String8419 {
+ public:
+  char& get(int n);
+  char& operator[](int n);
+};
+
+char& get8419();
+
+void Test8419() {
+  String8419 s;
+  ++(s.get(0));
+  get8419()--;  // used to crash
+  --s[0];       // used to crash
+  s[0] &= 1;    // used to crash
+  s[0]++;       // used to crash
+}
+
 // PR8426 -- this used to crash.
 
 void Use(void* to);
