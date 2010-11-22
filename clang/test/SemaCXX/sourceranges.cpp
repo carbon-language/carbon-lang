@@ -20,3 +20,8 @@ int main() {
   // CHECK: CXXNewExpr {{0x[0-9a-fA-F]+}} <col:19, col:28> 'foo::C *'
   P<foo::C> pr4 = new foo::C;
 }
+
+foo::A getName() {
+  // CHECK: CXXConstructExpr {{0x[0-9a-fA-F]+}} <col:10, col:17> 'foo::class A'
+  return foo::A();
+}
