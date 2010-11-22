@@ -487,17 +487,16 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
 
 void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
                                                  uint64_t BaseOffset) {
+  // Ignore empty bases.
+  if (BaseDecl->isEmpty())
+    return;
+
+  CheckZeroInitializable(BaseDecl);
+  
   const ASTRecordLayout &Layout = 
     Types.getContext().getASTRecordLayout(BaseDecl);
 
   uint64_t NonVirtualSize = Layout.getNonVirtualSize();
-
-  if (BaseDecl->isEmpty()) {
-    // FIXME: Lay out empty bases.
-    return;
-  }
-
-  CheckZeroInitializable(BaseDecl);
 
   // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
   AppendPadding(BaseOffset / 8, 1);
