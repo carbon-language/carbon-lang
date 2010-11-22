@@ -399,12 +399,12 @@ namespace {
       switch (Kind) {
       default:
         return false;
-      case MBlaze::reloc_pcrel_2byte:
-      case MBlaze::reloc_pcrel_4byte:
+      case ARM::fixup_arm_pcrel_12:
+      case ARM::fixup_arm_vfp_pcrel_12:
+      case ARM::fixup_arm_branch:
         return true;
       }
     }
-
   };
 
   //===- MBlazeELFObjectWriter -------------------------------------------===//
@@ -426,9 +426,8 @@ namespace {
       switch (Kind) {
       default:
         return false;
-      case ARM::fixup_arm_pcrel_12:
-      case ARM::fixup_arm_vfp_pcrel_12:
-      case ARM::fixup_arm_branch:
+      case MBlaze::reloc_pcrel_2byte:
+      case MBlaze::reloc_pcrel_4byte:
         return true;
       }
     }
