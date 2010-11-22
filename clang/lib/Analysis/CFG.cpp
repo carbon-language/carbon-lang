@@ -960,8 +960,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     if (RHSBlock) {
       if (badCFG)
         return 0;
-    }
-    else {
+    } else {
       // Create an empty block for cases where the RHS doesn't require
       // any explicit statements in the CFG.
       RHSBlock = createBlock();
@@ -986,13 +985,15 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     Block = LHSBlock;
     return addStmt(B->getLHS());
   }
-  else if (B->getOpcode() == BO_Comma) { // ,
+
+  if (B->getOpcode() == BO_Comma) { // ,
     autoCreateBlock();
     AppendStmt(Block, B, asc);
     addStmt(B->getRHS());
     return addStmt(B->getLHS());
   }
-  else if (B->isAssignmentOp()) {
+
+  if (B->isAssignmentOp()) {
     if (asc.alwaysAdd()) {
       autoCreateBlock();
       AppendStmt(Block, B, asc);
@@ -1645,13 +1646,13 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   if (Stmt* I = F->getInit()) {
     Block = createBlock();
     return addStmt(I);
-  } else {
-    // There is no loop initialization.  We are thus basically a while loop.
-    // NULL out Block to force lazy block construction.
-    Block = NULL;
-    Succ = EntryConditionBlock;
-    return EntryConditionBlock;
   }
+
+  // There is no loop initialization.  We are thus basically a while loop.
+  // NULL out Block to force lazy block construction.
+  Block = NULL;
+  Succ = EntryConditionBlock;
+  return EntryConditionBlock;
 }
 
 CFGBlock *CFGBuilder::VisitMemberExpr(MemberExpr *M, AddStmtChoice asc) {
@@ -2248,8 +2249,7 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
   if (TopBlock) {
     AddSuccessor(LastBlock, CaseBlock);
     Succ = TopBlock;
-  }
-  else {
+  } else {
     // This block is now the implicit successor of other blocks.
     Succ = CaseBlock;
   }
@@ -2581,7 +2581,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperatorForTemporaryDtors(BinaryOperator *E) {
     return ConfluenceBlock;
   }
 
-  else if (E->isAssignmentOp()) {
+  if (E->isAssignmentOp()) {
     // For assignment operator (=) LHS expression is visited
     // before RHS expression. For destructors visit them in reverse order.
     CFGBlock *RHSBlock = VisitForTemporaryDtors(E->getRHS());
@@ -2792,12 +2792,11 @@ CFG::BlkExprNumTy CFG::getBlkExprNum(const Stmt* S) {
 unsigned CFG::getNumBlkExprs() {
   if (const BlkExprMapTy* M = reinterpret_cast<const BlkExprMapTy*>(BlkExprMap))
     return M->size();
-  else {
-    // We assume callers interested in the number of BlkExprs will want
-    // the map constructed if it doesn't already exist.
-    BlkExprMap = (void*) PopulateBlkExprMap(*this);
-    return reinterpret_cast<BlkExprMapTy*>(BlkExprMap)->size();
-  }
+
+  // We assume callers interested in the number of BlkExprs will want
+  // the map constructed if it doesn't already exist.
+  BlkExprMap = (void*) PopulateBlkExprMap(*this);
+  return reinterpret_cast<BlkExprMapTy*>(BlkExprMap)->size();
 }
 
 //===----------------------------------------------------------------------===//
@@ -2859,7 +2858,7 @@ public:
 
           if (DeclStmt* DS = dyn_cast<DeclStmt>(SE.getStmt())) {
               DeclMap[DS->getSingleDecl()] = P;
-            
+
           } else if (IfStmt* IS = dyn_cast<IfStmt>(SE.getStmt())) {
             if (VarDecl* VD = IS->getConditionVariable())
               DeclMap[VD] = P;
@@ -3053,10 +3052,9 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     S->printPretty(OS, Helper, PrintingPolicy(Helper->getLangOpts()));
 
     if (isa<CXXOperatorCallExpr>(S)) {
-      OS << " (OperatorCall)";    
-    }
-    else if (isa<CXXBindTemporaryExpr>(S)) {
-      OS << " (BindTemporary)";    
+      OS << " (OperatorCall)";
+    } else if (isa<CXXBindTemporaryExpr>(S)) {
+      OS << " (BindTemporary)";
     }
 
     // Expressions need a newline.
