@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetAsmBackend.h"
 
 #include "../Target/X86/X86FixupKinds.h"
+#include "../Target/ARM/ARMFixupKinds.h"
 #include "../Target/MBlaze/MBlazeFixupKinds.h"
 
 #include <vector>
@@ -66,27 +67,6 @@ static unsigned GetVisibility(MCSymbolData &SD) {
   return Visibility;
 }
 
-static bool isFixupKindX86PCRel(unsigned Kind) {
-  switch (Kind) {
-  default:
-    return false;
-  case X86::reloc_pcrel_1byte:
-  case X86::reloc_pcrel_4byte:
-  case X86::reloc_riprel_4byte:
-  case X86::reloc_riprel_4byte_movq_load:
-    return true;
-  }
-}
-
-static bool isFixupKindMBlazePCRel(unsigned Kind) {
-  switch (Kind) {
-  default:
-    return false;
-  case MBlaze::reloc_pcrel_2byte:
-  case MBlaze::reloc_pcrel_4byte:
-    return true;
-  }
-}
 
 static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant) {
   switch (Variant) {
@@ -145,6 +125,15 @@ namespace {
       unsigned Type;
       const MCSymbol *Symbol;
       uint64_t r_addend;
+      
+      ELFRelocationEntry()
+        : r_offset(0), Index(0), Type(0), Symbol(0), r_addend(0) {}
+
+      ELFRelocationEntry(uint64_t RelocOffset, int _Index,
+                         unsigned _Type, const MCSymbol *_Symbol,
+                         uint64_t Addend)
+        : r_offset(RelocOffset), Index(_Index), Type(_Type),
+          Symbol(_Symbol), r_addend(Addend) {}
 
       // Support lexicographic sorting.
       bool operator<(const ELFRelocationEntry &RE) const {
@@ -376,6 +365,18 @@ namespace {
                                   const MCFragment *Fragment,
                                   const MCFixup &Fixup, MCValue Target,
                                   uint64_t &FixedValue);
+
+    static bool isFixupKindPCRel(unsigned Kind) {
+      switch (Kind) {
+      default:
+        return false;
+      case X86::reloc_pcrel_1byte:
+      case X86::reloc_pcrel_4byte:
+      case X86::reloc_riprel_4byte:
+      case X86::reloc_riprel_4byte_movq_load:
+        return true;
+      }
+    }
   };
 
 
@@ -393,6 +394,17 @@ namespace {
                                   const MCFragment *Fragment,
                                   const MCFixup &Fixup, MCValue Target,
                                   uint64_t &FixedValue);
+
+    static bool isFixupKindPCRel(unsigned Kind) {
+      switch (Kind) {
+      default:
+        return false;
+      case MBlaze::reloc_pcrel_2byte:
+      case MBlaze::reloc_pcrel_4byte:
+        return true;
+      }
+    }
+
   };
 
   //===- MBlazeELFObjectWriter -------------------------------------------===//
@@ -409,6 +421,17 @@ namespace {
                                   const MCFragment *Fragment,
                                   const MCFixup &Fixup, MCValue Target,
                                   uint64_t &FixedValue);
+
+    static bool isFixupKindPCRel(unsigned Kind) {
+      switch (Kind) {
+      default:
+        return false;
+      case ARM::fixup_arm_pcrel_12:
+      case ARM::fixup_arm_vfp_pcrel_12:
+      case ARM::fixup_arm_branch:
+        return true;
+      }
+    }
   };
 }
 
@@ -1434,7 +1457,7 @@ void MBlazeELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   const MCSymbol &ASymbol = Symbol.AliasedSymbol();
   const MCSymbol *RelocSymbol = SymbolToReloc(Asm, Target, *Fragment);
 
-  bool IsPCRel = isFixupKindMBlazePCRel(Fixup.getKind());
+  bool IsPCRel = isFixupKindPCRel(Fixup.getKind());
   if (!Target.isAbsolute()) {
     if (const MCSymbolRefExpr *RefB = Target.getSymB()) {
       const MCSymbol &SymbolB = RefB->getSymbol();
@@ -1501,19 +1524,11 @@ void MBlazeELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   if (RelocNeedsGOT(Modifier))
     NeedsGOT = true;
 
-  ELFRelocationEntry ERE;
+  uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) + 
+    Fixup.getOffset();
 
-  ERE.Index = Index;
-  ERE.Type = Type;
-  ERE.Symbol = RelocSymbol;
-
-  ERE.r_offset = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
-
-  if (HasRelocationAddend)
-    ERE.r_addend = Addend;
-  else
-    ERE.r_addend = 0; // Silence compiler warning.
-
+  if (! HasRelocationAddend) Addend = 0;
+  ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend);
   Relocations[Fragment->getParent()].push_back(ERE);
 }
 
@@ -1542,7 +1557,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   int64_t Value = Target.getConstant();
   const MCSymbol *RelocSymbol = NULL;
 
-  bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
+  bool IsPCRel = isFixupKindPCRel(Fixup.getKind());
   if (!Target.isAbsolute()) {
     const MCSymbol &Symbol = Target.getSymA()->getSymbol();
     const MCSymbol &ASymbol = Symbol.AliasedSymbol();
@@ -1720,18 +1735,11 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   if (RelocNeedsGOT(Modifier))
     NeedsGOT = true;
 
-  ELFRelocationEntry ERE;
 
-  ERE.Index = Index;
-  ERE.Type = Type;
-  ERE.Symbol = RelocSymbol;
+  uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) + 
+    Fixup.getOffset();
 
-  ERE.r_offset = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
-
-  if (HasRelocationAddend)
-    ERE.r_addend = Addend;
-  else
-    ERE.r_addend = 0; // Silence compiler warning.
-
+  if (! HasRelocationAddend) Addend = 0;
+  ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend);
   Relocations[Fragment->getParent()].push_back(ERE);
 }
