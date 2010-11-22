@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"

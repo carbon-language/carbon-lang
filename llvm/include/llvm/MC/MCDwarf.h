@@ -16,8 +16,6 @@
 #define LLVM_MC_MCDWARF_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Dwarf.h"
@@ -26,6 +24,8 @@
 namespace llvm {
   class MCContext;
   class MCSection;
+  class MCSectionData;
+  class MCStreamer;
   class MCSymbol;
   class MCObjectStreamer;
   class raw_ostream;
