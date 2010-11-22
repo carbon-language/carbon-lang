@@ -1885,13 +1885,13 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       if (PrevElt > 0 && SrcElt < MaxElts) {
         if ((PrevElt == SrcElt - 1)
             || (PrevElt == MaxElts - 1 && SrcElt == 0)) {
-          rotamt = SrcElt-i;
           PrevElt = SrcElt;
         } else {
           rotate = false;
         }
       } else if (i == 0 || (PrevElt==0 && SrcElt==1)) {
         // First time or after a "wrap around"
+        rotamt = SrcElt-i;
         PrevElt = SrcElt;
       } else {
         // This isn't a rotation, takes elements from vector 2
