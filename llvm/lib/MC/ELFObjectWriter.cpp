@@ -129,11 +129,11 @@ namespace {
       ELFRelocationEntry()
         : r_offset(0), Index(0), Type(0), Symbol(0), r_addend(0) {}
 
-      ELFRelocationEntry(uint64_t RelocOffset, int _Index,
-                         unsigned _Type, const MCSymbol *_Symbol,
+      ELFRelocationEntry(uint64_t RelocOffset, int Idx,
+                         unsigned RelType, const MCSymbol *Sym,
                          uint64_t Addend)
-        : r_offset(RelocOffset), Index(_Index), Type(_Type),
-          Symbol(_Symbol), r_addend(Addend) {}
+        : r_offset(RelocOffset), Index(Idx), Type(RelType),
+          Symbol(Sym), r_addend(Addend) {}
 
       // Support lexicographic sorting.
       bool operator<(const ELFRelocationEntry &RE) const {
@@ -1529,7 +1529,7 @@ void MBlazeELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
 
-  if (! HasRelocationAddend) Addend = 0;
+  if (!HasRelocationAddend) Addend = 0;
   ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend);
   Relocations[Fragment->getParent()].push_back(ERE);
 }
@@ -1741,7 +1741,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
 
-  if (! HasRelocationAddend) Addend = 0;
+  if (!HasRelocationAddend) Addend = 0;
   ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend);
   Relocations[Fragment->getParent()].push_back(ERE);
 }
