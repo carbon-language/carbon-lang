@@ -125,7 +125,7 @@ namespace {
       unsigned Type;
       const MCSymbol *Symbol;
       uint64_t r_addend;
-      
+
       ELFRelocationEntry()
         : r_offset(0), Index(0), Type(0), Symbol(0), r_addend(0) {}
 
@@ -1524,7 +1524,7 @@ void MBlazeELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   if (RelocNeedsGOT(Modifier))
     NeedsGOT = true;
 
-  uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) + 
+  uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
 
   if (! HasRelocationAddend) Addend = 0;
@@ -1736,7 +1736,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     NeedsGOT = true;
 
 
-  uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) + 
+  uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
 
   if (! HasRelocationAddend) Addend = 0;
