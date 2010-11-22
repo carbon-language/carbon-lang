@@ -938,16 +938,6 @@ The expression should optimize to something like
 
 //===---------------------------------------------------------------------===//
 
-void a(int variable)
-{
- if (variable == 4 || variable == 6)
-   bar();
-}
-This should optimize to "if ((variable | 2) == 6)".  Currently not
-optimized with "clang -emit-llvm-bc | opt -std-compile-opts | llc".
-
-//===---------------------------------------------------------------------===//
-
 unsigned int f(unsigned int i, unsigned int n) {++i; if (i == n) ++i; return
 i;}
 unsigned int f2(unsigned int i, unsigned int n) {++i; i += i == n; return i;}

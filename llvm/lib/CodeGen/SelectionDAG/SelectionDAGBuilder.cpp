@@ -1753,10 +1753,56 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
-  // TODO: If any two of the cases has the same destination, and if one value
+  // If any two of the cases has the same destination, and if one value
   // is the same as the other, but has one bit unset that the other has set,
   // use bit manipulation to do two compares at once.  For example:
   // "if (X == 6 || X == 4)" -> "if ((X|2) == 6)"
+  // TODO: This could be extended to merge any 2 cases in switches with 3 cases.
+  // TODO: Handle cases where CR.CaseBB != SwitchBB.
+  if (Size == 2 && CR.CaseBB == SwitchBB) {
+    Case &Small = *CR.Range.first;
+    Case &Big = *(CR.Range.second-1);
+
+    if (Small.Low == Small.High && Big.Low == Big.High && Small.BB == Big.BB) {
+      const APInt& SmallValue = cast<ConstantInt>(Small.Low)->getValue();
+      const APInt& BigValue = cast<ConstantInt>(Big.Low)->getValue();
+
+      // Check that there is only one bit different.
+      if (BigValue.countPopulation() == SmallValue.countPopulation() + 1 &&
+          (SmallValue | BigValue) == BigValue) {
+        // Isolate the common bit.
+        APInt CommonBit = BigValue & ~SmallValue;
+        assert((SmallValue | CommonBit) == BigValue &&
+               CommonBit.countPopulation() == 1 && "Not a common bit?");
+
+        SDValue CondLHS = getValue(SV);
+        EVT VT = CondLHS.getValueType();
+        DebugLoc DL = getCurDebugLoc();
+
+        SDValue Or = DAG.getNode(ISD::OR, DL, VT, CondLHS,
+                                 DAG.getConstant(CommonBit, VT));
+        SDValue Cond = DAG.getSetCC(DL, MVT::i1,
+                                    Or, DAG.getConstant(BigValue, VT),
+                                    ISD::SETEQ);
+
+        // Update successor info.
+        SwitchBB->addSuccessor(Small.BB);
+        SwitchBB->addSuccessor(Default);
+
+        // Insert the true branch.
+        SDValue BrCond = DAG.getNode(ISD::BRCOND, DL, MVT::Other,
+                                     getControlRoot(), Cond,
+                                     DAG.getBasicBlock(Small.BB));
+
+        // Insert the false branch.
+        BrCond = DAG.getNode(ISD::BR, DL, MVT::Other, BrCond,
+                             DAG.getBasicBlock(Default));
+
+        DAG.setRoot(BrCond);
+        return true;
+      }
+    }
+  }
 
   // Rearrange the case blocks so that the last one falls through if possible.
   if (NextBlock && Default != NextBlock && BackCase.BB != NextBlock) {
