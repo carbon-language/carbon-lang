@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 // Options
 
 def OptList : OptionList<[
@@ -46,9 +45,9 @@ def OptList : OptionList<[
  (parameter_option "linker",
     (help "Choose linker (possible values: gcc, g++)")),
  (parameter_option "mtune",
-    (help "Target a specific CPU type"), (hidden), (forward_not_split)),
+    (help "Target a specific CPU type"), (forward_not_split)),
  (parameter_option "march",
-    (help "A synonym for -mtune"), (hidden), (forward_not_split)),
+    (help "Architecture to generate code for"), (forward_not_split)),
  (parameter_option "mcpu",
     (help "A deprecated synonym for -mtune"), (hidden), (forward_not_split)),
  (switch_option "mfix-and-continue",
@@ -203,8 +202,8 @@ class llvm_gcc_based <string cmd, string in_lang, string E_ext, dag out_lang,
          (not_empty "D"), (forward "D"),
          (not_empty "arch"), (forward "arch"),
          (not_empty "march"), (forward "march"),
-         (not_empty "mtune"), (forward "mtune"),
          (not_empty "mcpu"), (forward "mcpu"),
+         (not_empty "mtune"), (forward "mtune"),
          (not_empty "m"), (forward "m"),
          (switch_on "mfix-and-continue"), (forward "mfix-and-continue"),
          (switch_on "m32"), (forward "m32"),
@@ -296,9 +295,10 @@ def llc : Tool<
           (switch_on "fPIC"), (append_cmd "-relocation-model=pic"),
           (switch_on "mdynamic-no-pic"),
                      (append_cmd "-relocation-model=dynamic-no-pic"),
-          (not_empty "march"), (forward_as "march", "-mcpu"),
-          (not_empty "mtune"), (forward_as "mtune", "-mcpu"),
+          (not_empty "march"), (forward "march"),
           (not_empty "mcpu"), (forward "mcpu"),
+          (and (not_empty "mtune"), (empty "mcpu")),
+                     (forward_as "mtune", "-mcpu"),
           (not_empty "m"), (forward_transformed_value "m", "ConvertToMAttr"),
           (not_empty "Wllc,"), (forward_value "Wllc,")))
 ]>;
