@@ -366,6 +366,7 @@ namespace {
                                   const MCFixup &Fixup, MCValue Target,
                                   uint64_t &FixedValue);
 
+  private:
     static bool isFixupKindPCRel(unsigned Kind) {
       switch (Kind) {
       default:
@@ -395,6 +396,7 @@ namespace {
                                   const MCFixup &Fixup, MCValue Target,
                                   uint64_t &FixedValue);
 
+  private:
     static bool isFixupKindPCRel(unsigned Kind) {
       switch (Kind) {
       default:
@@ -422,6 +424,7 @@ namespace {
                                   const MCFixup &Fixup, MCValue Target,
                                   uint64_t &FixedValue);
 
+  private:
     static bool isFixupKindPCRel(unsigned Kind) {
       switch (Kind) {
       default:
