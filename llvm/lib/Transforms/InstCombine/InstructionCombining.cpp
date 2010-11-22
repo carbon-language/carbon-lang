@@ -523,25 +523,35 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   Value *PtrOp = GEP.getOperand(0);
 
-  // Eliminate unneeded casts for indices.
+  // Eliminate unneeded casts for indices, and replace indices which displace
+  // by multiples of a zero size type with zero.
   if (TD) {
     bool MadeChange = false;
-    unsigned PtrSize = TD->getPointerSizeInBits();
-    
+    const Type *IntPtrTy = TD->getIntPtrType(GEP.getContext());
+
     gep_type_iterator GTI = gep_type_begin(GEP);
     for (User::op_iterator I = GEP.op_begin() + 1, E = GEP.op_end();
          I != E; ++I, ++GTI) {
-      if (!isa<SequentialType>(*GTI)) continue;
-      
-      // If we are using a wider index than needed for this platform, shrink it
-      // to what we need.  If narrower, sign-extend it to what we need.  This
-      // explicit cast can make subsequent optimizations more obvious.
-      unsigned OpBits = cast<IntegerType>((*I)->getType())->getBitWidth();
-      if (OpBits == PtrSize)
-        continue;
-      
-      *I = Builder->CreateIntCast(*I, TD->getIntPtrType(GEP.getContext()),true);
-      MadeChange = true;
+      // Skip indices into struct types.
+      const SequentialType *SeqTy = dyn_cast<SequentialType>(*GTI);
+      if (!SeqTy) continue;
+
+      // If the element type has zero size then any index over it is equivalent
+      // to an index of zero, so replace it with zero if it is not zero already.
+      if (SeqTy->getElementType()->isSized() &&
+          TD->getTypeAllocSize(SeqTy->getElementType()) == 0)
+        if (!isa<Constant>(*I) || !cast<Constant>(*I)->isNullValue()) {
+          *I = Constant::getNullValue(IntPtrTy);
+          MadeChange = true;
+        }
+
+      if ((*I)->getType() != IntPtrTy) {
+        // If we are using a wider index than needed for this platform, shrink
+        // it to what we need.  If narrower, sign-extend it to what we need.
+        // This explicit cast can make subsequent optimizations more obvious.
+        *I = Builder->CreateIntCast(*I, IntPtrTy, true);
+        MadeChange = true;
+      }
     }
     if (MadeChange) return &GEP;
   }

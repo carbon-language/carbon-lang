@@ -714,7 +714,7 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
     // getelementptr P, N -> P if P points to a type of zero size.
     if (TD) {
       const Type *Ty = PtrTy->getElementType();
-      if (Ty->isSized() && !TD->getTypeAllocSize(Ty))
+      if (Ty->isSized() && TD->getTypeAllocSize(Ty) == 0)
         return Ops[0];
     }
   }
