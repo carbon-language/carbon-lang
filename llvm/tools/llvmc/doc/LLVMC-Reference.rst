@@ -319,7 +319,8 @@ separate option groups syntactically.
 
    - ``alias_option`` - a special option type for creating aliases. Unlike other
      option types, aliases are not allowed to have any properties besides the
-     aliased option name. Usage example: ``(alias_option "preprocess", "E")``
+     aliased option name.
+     Usage example: ``(alias_option "preprocess", "E")``
 
    - ``switch_list_option`` - like ``switch_option`` with the ``zero_or_more``
      property, but remembers how many times the switch was turned on. Useful
