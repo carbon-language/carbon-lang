@@ -1,6 +1,4 @@
 // RUN: %clang_cc1 -ffreestanding -fsyntax-only -target-feature +ssse3 -verify %s
-// Temporarily xfail this on windows.
-// XFAIL: win32
 
 #include <tmmintrin.h>
 
