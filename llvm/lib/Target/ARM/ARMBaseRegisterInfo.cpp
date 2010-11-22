@@ -694,10 +694,11 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Spill R4 if Thumb2 function requires stack realignment - it will be used as
-  // scratch register.
+  // scratch register. Also spill R4 if Thumb2 function has varsized objects,
+  // since it's always posible to restore sp from fp in a single instruction.
   // FIXME: It will be better just to find spare register here.
-  if (needsStackRealignment(MF) &&
-      AFI->isThumb2Function())
+  if (AFI->isThumb2Function() &&
+      (MFI->hasVarSizedObjects() || needsStackRealignment(MF)))
     MF.getRegInfo().setPhysRegUsed(ARM::R4);
 
   // Spill LR if Thumb1 function uses variable length argument lists.

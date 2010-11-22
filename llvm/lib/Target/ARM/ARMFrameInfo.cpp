@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
@@ -212,15 +213,21 @@ void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes);
-    if (HasFP)
+    if (HasFP && isARM)
+      // Restore from fp only in ARM mode: e.g. sub sp, r7, #24
+      // Note it's not safe to do this in Thumb2 mode because it would have
+      // taken two instructions:
+      // mov sp, r7
+      // sub sp, #24
+      // If an interrupt is taken between the two instructions, then sp is in
+      // an inconsistent state (pointing to the middle of callee-saved area).
+      // The interrupt handler can end up clobbering the registers.
       AFI->setShouldRestoreSPFromFP(true);
   }
 
-  if (STI.isTargetELF() && hasFP(MF)) {
+  if (STI.isTargetELF() && hasFP(MF))
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
                              AFI->getFramePtrSpillOffset());
-    AFI->setShouldRestoreSPFromFP(true);
-  }
 
   AFI->setGPRCalleeSavedArea1Size(GPRCS1Size);
   AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
@@ -275,7 +282,7 @@ void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
 
   // If the frame has variable sized objects then the epilogue must restore
   // the sp from fp.
-  if (!AFI->shouldRestoreSPFromFP() && MFI->hasVarSizedObjects())
+  if (MFI->hasVarSizedObjects())
     AFI->setShouldRestoreSPFromFP(true);
 }
 
@@ -326,9 +333,21 @@ void ARMFrameInfo::emitEpilogue(MachineFunction &MF,
         if (isARM)
           emitARMRegPlusImmediate(MBB, MBBI, dl, ARM::SP, FramePtr, -NumBytes,
                                   ARMCC::AL, 0, TII);
-        else
-          emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::SP, FramePtr, -NumBytes,
+        else {
+          // It's not possible to restore SP from FP in a single instruction.
+          // For Darwin, this looks like:
+          // mov sp, r7
+          // sub sp, #24
+          // This is bad, if an interrupt is taken after the mov, sp is in an
+          // inconsistent state.
+          // Use the first callee-saved register as a scratch register.
+          assert(MF.getRegInfo().isPhysRegUsed(ARM::R4) &&
+                 "No scratch register to restore SP from FP!");
+          emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::R4, FramePtr, -NumBytes,
                                  ARMCC::AL, 0, TII);
+          BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), ARM::SP)
+            .addReg(ARM::R4);
+        }
       } else {
         // Thumb2 or ARM.
         if (isARM)

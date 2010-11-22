@@ -5,6 +5,10 @@
 define internal fastcc i32 @Callee(i32 %i) nounwind {
 entry:
 ; CHECK: Callee:
+; CHECK: push
+; CHECK: mov r4, sp
+; CHECK: sub.w r12, r4, #1000
+; CHECK: mov sp, r12
   %0 = icmp eq i32 %i, 0                          ; <i1> [#uses=1]
   br i1 %0, label %bb2, label %bb
 
@@ -17,9 +21,11 @@ bb:                                               ; preds = %entry
   ret i32 %4
 
 bb2:                                              ; preds = %entry
-; Must restore sp from fp here
-; CHECK: mov sp, r7
-; CHECK: sub sp, #8
+; Must restore sp from fp here. Make sure not to leave sp in a temporarily invalid
+; state though. rdar://8465407
+; CHECK-NOT: mov sp, r7
+; CHECK: sub.w r4, r7, #8
+; CHECK: mov sp, r4
 ; CHECK: pop
   ret i32 0
 }

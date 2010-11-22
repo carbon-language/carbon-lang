@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
 
@@ -117,13 +118,6 @@ void Thumb1FrameInfo::emitPrologue(MachineFunction &MF) const {
       dl = MBBI->getDebugLoc();
   }
 
-  // Adjust FP so it point to the stack slot that contains the previous FP.
-  if (hasFP(MF)) {
-    BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
-      .addFrameIndex(FramePtrSpillFI).addImm(0);
-    AFI->setShouldRestoreSPFromFP(true);
-  }
-
   // Determine starting offsets of spill areas.
   unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
   unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
@@ -132,12 +126,21 @@ void Thumb1FrameInfo::emitPrologue(MachineFunction &MF) const {
   AFI->setGPRCalleeSavedArea1Offset(GPRCS1Offset);
   AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
-
   NumBytes = DPRCSOffset;
-  if (NumBytes) {
+
+  // Adjust FP so it point to the stack slot that contains the previous FP.
+  if (hasFP(MF)) {
+    BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
+      .addFrameIndex(FramePtrSpillFI).addImm(0);
+    if (NumBytes > 7)
+      // If offset is > 7 then sp cannot be adjusted in a single instruction,
+      // try restoring from fp instead.
+      AFI->setShouldRestoreSPFromFP(true);
+  }
+
+  if (NumBytes)
     // Insert it after all the callee-save spills.
     emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes);
-  }
 
   if (STI.isTargetELF() && hasFP(MF))
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
@@ -219,10 +222,14 @@ void Thumb1FrameInfo::emitEpilogue(MachineFunction &MF,
       NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
       // Reset SP based on frame pointer only if the stack frame extends beyond
       // frame pointer stack slot or target is ELF and the function has FP.
-      if (NumBytes)
-        emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, FramePtr, -NumBytes,
+      if (NumBytes) {
+        assert(MF.getRegInfo().isPhysRegUsed(ARM::R4) &&
+               "No scratch register to restore SP from FP!");
+        emitThumbRegPlusImmediate(MBB, MBBI, ARM::R4, FramePtr, -NumBytes,
                                   TII, *RegInfo, dl);
-      else
+        BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::SP)
+          .addReg(ARM::R4);
+      } else
         BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::SP)
           .addReg(FramePtr);
     } else {

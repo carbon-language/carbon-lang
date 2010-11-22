@@ -5,8 +5,13 @@
 define hidden i32 @__gcov_execlp(i8* %path, i8* %arg, ...) nounwind {
 entry:
 ; CHECK: __gcov_execlp:
-; CHECK: mov sp, r7
-; CHECK: sub sp, #4
+; CHECK: sub sp, #8
+; CHECK: push
+; CHECK: add r7, sp, #4
+; CHECK: subs r4, r7, #4
+; CHECK: mov sp, r4
+; CHECK-NOT: mov sp, r7
+; CHECK: add sp, #8
 	call void @__gcov_flush() nounwind
 	br i1 undef, label %bb5, label %bb
 
