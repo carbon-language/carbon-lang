@@ -177,6 +177,14 @@ public:
                                      unsigned Column, unsigned Flags,
                                      unsigned Isa, unsigned Discriminator);
 
+  virtual bool EmitCFIStartProc();
+  virtual bool EmitCFIEndProc();
+  virtual bool EmitCFIDefCfaOffset(int64_t Offset);
+  virtual bool EmitCFIDefCfaRegister(int64_t Register);
+  virtual bool EmitCFIOffset(int64_t Register, int64_t Offset);
+  virtual bool EmitCFIPersonality(const MCSymbol *Sym);
+  virtual bool EmitCFILsda(const MCSymbol *Sym);
+
   virtual void EmitInstruction(const MCInst &Inst);
 
   /// EmitRawText - If this file is backed by an assembly streamer, this dumps
@@ -700,6 +708,76 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
   if (Discriminator)
     OS << "discriminator " << Discriminator;
   EmitEOL();
+}
+
+bool MCAsmStreamer::EmitCFIStartProc() {
+  if (this->MCStreamer::EmitCFIStartProc())
+    return true;
+
+  OS << ".cfi_startproc";
+  EmitEOL();
+
+  return false;
+}
+
+bool MCAsmStreamer::EmitCFIEndProc() {
+  if (this->MCStreamer::EmitCFIEndProc())
+    return true;
+
+  OS << ".cfi_endproc";
+  EmitEOL();
+
+  return false;
+}
+
+bool MCAsmStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
+  if (this->MCStreamer::EmitCFIDefCfaOffset(Offset))
+    return true;
+
+  OS << ".cfi_def_cfa_offset " << Offset;
+  EmitEOL();
+
+  return false;
+}
+
+bool MCAsmStreamer::EmitCFIDefCfaRegister(int64_t Register) {
+  if (this->MCStreamer::EmitCFIDefCfaRegister(Register))
+    return true;
+
+  OS << ".cfi_def_cfa_register " << Register;
+  EmitEOL();
+
+  return false;
+}
+
+bool MCAsmStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
+  if (this->MCStreamer::EmitCFIOffset(Register, Offset))
+    return true;
+
+  OS << ".cfi_offset " << Register << ", " << Offset;
+  EmitEOL();
+
+  return false;
+}
+
+bool MCAsmStreamer::EmitCFIPersonality(const MCSymbol *Sym) {
+  if (this->MCStreamer::EmitCFIPersonality(Sym))
+    return true;
+
+  OS << ".cfi_personality 0, " << *Sym;
+  EmitEOL();
+
+  return false;
+}
+
+bool MCAsmStreamer::EmitCFILsda(const MCSymbol *Sym) {
+  if (this->MCStreamer::EmitCFILsda(Sym))
+    return true;
+
+  OS << ".cfi_lsda 0, " << *Sym;
+  EmitEOL();
+
+  return false;
 }
 
 void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {

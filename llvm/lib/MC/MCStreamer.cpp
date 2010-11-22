@@ -77,6 +77,34 @@ void MCStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                   Discriminator);
 }
 
+bool MCStreamer::EmitCFIStartProc() {
+  return false;
+}
+
+bool MCStreamer::EmitCFIEndProc() {
+  return false;
+}
+
+bool MCStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
+  return false;
+}
+
+bool MCStreamer::EmitCFIDefCfaRegister(int64_t Register) {
+  return false;
+}
+
+bool MCStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
+  return false;
+}
+
+bool MCStreamer::EmitCFIPersonality(const MCSymbol *Sym) {
+  return false;
+}
+
+bool MCStreamer::EmitCFILsda(const MCSymbol *Sym) {
+  return false;
+}
+
 /// EmitRawText - If this file is backed by an assembly streamer, this dumps
 /// the specified string in the output .s file.  This capability is
 /// indicated by the hasRawTextSupport() predicate.

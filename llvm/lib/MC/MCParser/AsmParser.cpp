@@ -2151,13 +2151,13 @@ bool GenericAsmParser::ParseDirectiveStabs(StringRef Directive,
 /// ::= .cfi_startproc
 bool GenericAsmParser::ParseDirectiveCFIStartProc(StringRef,
                                                   SMLoc DirectiveLoc) {
-  return false;
+  return getStreamer().EmitCFIStartProc();
 }
 
 /// ParseDirectiveCFIEndProc
 /// ::= .cfi_endproc
 bool GenericAsmParser::ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc) {
-  return false;
+  return getStreamer().EmitCFIEndProc();
 }
 
 /// ParseDirectiveCFIDefCfaOffset
@@ -2168,7 +2168,7 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfaOffset(StringRef,
   if (getParser().ParseAbsoluteExpression(Offset))
     return true;
 
-  return false;
+  return getStreamer().EmitCFIDefCfaOffset(Offset);
 }
 
 /// ParseDirectiveCFIDefCfaRegister
@@ -2178,7 +2178,8 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfaRegister(StringRef,
   int64_t Register = 0;
   if (getParser().ParseAbsoluteExpression(Register))
     return true;
-  return false;
+
+  return getStreamer().EmitCFIDefCfaRegister(Register);
 }
 
 /// ParseDirectiveCFIOffset
@@ -2196,19 +2197,22 @@ bool GenericAsmParser::ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc) {
   if (getParser().ParseAbsoluteExpression(Offset))
     return true;
 
-  return false;
+  return getStreamer().EmitCFIOffset(Register, Offset);
 }
 
 /// ParseDirectiveCFIPersonalityOrLsda
 /// ::= .cfi_personality encoding, [symbol_name]
 /// ::= .cfi_lsda encoding, [symbol_name]
-bool GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda(StringRef,
+bool GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda(StringRef IDVal,
                                                     SMLoc DirectiveLoc) {
   int64_t Encoding = 0;
   if (getParser().ParseAbsoluteExpression(Encoding))
     return true;
   if (Encoding == 255)
     return false;
+
+  if (Encoding != 0)
+    return TokError("unsupported encoding.");
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");
@@ -2217,7 +2221,15 @@ bool GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda(StringRef,
   StringRef Name;
   if (getParser().ParseIdentifier(Name))
     return TokError("expected identifier in directive");
-  return false;
+
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+
+  if (IDVal == ".cfi_personality")
+    return getStreamer().EmitCFIPersonality(Sym);
+  else {
+    assert(IDVal == ".cfi_lsda");
+    return getStreamer().EmitCFILsda(Sym);
+  }
 }
 
 /// ParseDirectiveMacrosOnOff
