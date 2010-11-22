@@ -1558,7 +1558,7 @@ namespace {
     void VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
       ElaboratedTypeKeyword Keyword
         = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
-      if (Keyword == ETK_Typename) {
+      if (DS.getTypeSpecType() == TST_typename) {
         TypeSourceInfo *TInfo = 0;
         Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         if (TInfo) {
@@ -1576,7 +1576,7 @@ namespace {
     void VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
       ElaboratedTypeKeyword Keyword
         = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
-      if (Keyword == ETK_Typename) {
+      if (DS.getTypeSpecType() == TST_typename) {
         TypeSourceInfo *TInfo = 0;
         Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         if (TInfo) {

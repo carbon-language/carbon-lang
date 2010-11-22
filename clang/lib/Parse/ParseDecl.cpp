@@ -1020,7 +1020,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         ConsumeToken(); // The C++ scope.
         if (Tok.getAnnotationValue()) {
           ParsedType T = getTypeAnnotation(Tok);
-          isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, 
+          isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename,
+                                         Tok.getAnnotationEndLoc(), 
                                          PrevSpec, DiagID, T);
         }
         else
@@ -1082,7 +1083,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::annot_typename: {
       if (Tok.getAnnotationValue()) {
         ParsedType T = getTypeAnnotation(Tok);
-        isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
+        isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename,
+                                       Tok.getAnnotationEndLoc(), PrevSpec,
                                        DiagID, T);
       } else
         DS.SetTypeSpecError();
@@ -1545,7 +1547,8 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   // simple-type-specifier:
   case tok::annot_typename: {
     if (ParsedType T = getTypeAnnotation(Tok)) {
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename,
+                                     Tok.getAnnotationEndLoc(), PrevSpec,
                                      DiagID, T);
     } else
       DS.SetTypeSpecError();

@@ -822,8 +822,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
       const char *PrevSpec = 0;
       unsigned DiagID;
-      DS.SetTypeSpecType(TST_typename, Tok.getLocation(), PrevSpec, DiagID, 
-                         Type);
+      DS.SetTypeSpecType(TST_typename, Tok.getAnnotationEndLoc(),
+                         PrevSpec, DiagID, Type);
       
       Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
       TypeResult Ty = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
