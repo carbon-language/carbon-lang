@@ -265,8 +265,7 @@ namespace {
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                     RenamePassData::ValVector &IncVals,
                     std::vector<RenamePassData> &Worklist);
-    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version,
-                      SmallPtrSet<PHINode*, 16> &InsertedPHINodes);
+    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version);
   };
   
   struct AllocaInfo {
@@ -677,7 +676,6 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
   // Compute the locations where PhiNodes need to be inserted.  Look at the
   // dominance frontier of EACH basic-block we have a write in.
   unsigned CurrentVersion = 0;
-  SmallPtrSet<PHINode*, 16> InsertedPHINodes;
   std::vector<std::pair<unsigned, BasicBlock*> > DFBlocks;
   while (!Info.DefiningBlocks.empty()) {
     BasicBlock *BB = Info.DefiningBlocks.back();
@@ -710,7 +708,7 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
     
     for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
       BasicBlock *BB = DFBlocks[i].second;
-      if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
+      if (QueuePhiNode(BB, AllocaNum, CurrentVersion))
         Info.DefiningBlocks.push_back(BB);
     }
     DFBlocks.clear();
@@ -901,8 +899,7 @@ void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
 // Alloca returns true if there wasn't already a phi-node for that variable
 //
 bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
-                                  unsigned &Version,
-                                  SmallPtrSet<PHINode*, 16> &InsertedPHINodes) {
+                                  unsigned &Version) {
   // Look up the basic-block in question.
   PHINode *&PN = NewPhiNodes[std::make_pair(BB, AllocaNo)];
 
@@ -917,8 +914,6 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   ++NumPHIInsert;
   PhiToAllocaMap[PN] = AllocaNo;
   PN->reserveOperandSpace(getNumPreds(BB));
-  
-  InsertedPHINodes.insert(PN);
 
   if (AST && PN->getType()->isPointerTy())
     AST->copyValue(PointerAllocaValues[AllocaNo], PN);
