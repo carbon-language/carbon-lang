@@ -408,13 +408,13 @@ getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
              dyn_cast<MCSymbolRefExpr>(MO.getExpr())) {
     MCFixupKind Kind;
     switch (Expr->getKind()) {
+    default: assert(0 && "Unsupported ARMFixup");
     case MCSymbolRefExpr::VK_ARM_HI16:
       Kind = MCFixupKind(ARM::fixup_arm_movt_hi16);
       break;
     case MCSymbolRefExpr::VK_ARM_LO16:
       Kind = MCFixupKind(ARM::fixup_arm_movw_lo16);
       break;
-    default: assert(0 && "Unsupported ARMFixup"); break;
     }
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
     return 0;
