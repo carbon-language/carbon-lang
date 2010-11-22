@@ -14,6 +14,7 @@
 #include "X86ELFWriterInfo.h"
 #include "X86Relocations.h"
 #include "llvm/Function.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -35,13 +36,13 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
   if (is64Bit) {
     switch(MachineRelTy) {
     case X86::reloc_pcrel_word:
-      return R_X86_64_PC32;
+      return ELF::R_X86_64_PC32;
     case X86::reloc_absolute_word:
-      return R_X86_64_32;
+      return ELF::R_X86_64_32;
     case X86::reloc_absolute_word_sext:
-      return R_X86_64_32S;
+      return ELF::R_X86_64_32S;
     case X86::reloc_absolute_dword:
-      return R_X86_64_64;
+      return ELF::R_X86_64_64;
     case X86::reloc_picrel_word:
     default:
       llvm_unreachable("unknown x86_64 machine relocation type");
@@ -49,9 +50,9 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
   } else {
     switch(MachineRelTy) {
     case X86::reloc_pcrel_word:
-      return R_386_PC32;
+      return ELF::R_386_PC32;
     case X86::reloc_absolute_word:
-      return R_386_32;
+      return ELF::R_386_32;
     case X86::reloc_absolute_word_sext:
     case X86::reloc_absolute_dword:
     case X86::reloc_picrel_word:
@@ -66,18 +67,18 @@ long int X86ELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
                                                     long int Modifier) const {
   if (is64Bit) {
     switch(RelTy) {
-    case R_X86_64_PC32: return Modifier - 4;
-    case R_X86_64_32:
-    case R_X86_64_32S:
-    case R_X86_64_64:
+    case ELF::R_X86_64_PC32: return Modifier - 4;
+    case ELF::R_X86_64_32:
+    case ELF::R_X86_64_32S:
+    case ELF::R_X86_64_64:
       return Modifier;
     default:
       llvm_unreachable("unknown x86_64 relocation type");
     }
   } else {
     switch(RelTy) {
-      case R_386_PC32: return Modifier - 4;
-      case R_386_32: return Modifier;
+    case ELF::R_386_PC32: return Modifier - 4;
+    case ELF::R_386_32: return Modifier;
     default:
       llvm_unreachable("unknown x86 relocation type");
     }
@@ -88,19 +89,19 @@ long int X86ELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
 unsigned X86ELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
   if (is64Bit) {
     switch(RelTy) {
-      case R_X86_64_PC32:
-      case R_X86_64_32:
-      case R_X86_64_32S:
+    case ELF::R_X86_64_PC32:
+    case ELF::R_X86_64_32:
+    case ELF::R_X86_64_32S:
         return 32;
-      case R_X86_64_64:
+    case ELF::R_X86_64_64:
         return 64;
     default:
       llvm_unreachable("unknown x86_64 relocation type");
     }
   } else {
     switch(RelTy) {
-      case R_386_PC32:
-      case R_386_32:
+    case ELF::R_386_PC32:
+    case ELF::R_386_32:
         return 32;
     default:
       llvm_unreachable("unknown x86 relocation type");
@@ -112,20 +113,20 @@ unsigned X86ELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
 bool X86ELFWriterInfo::isPCRelativeRel(unsigned RelTy) const {
   if (is64Bit) {
     switch(RelTy) {
-      case R_X86_64_PC32:
+    case ELF::R_X86_64_PC32:
         return true;
-      case R_X86_64_32:
-      case R_X86_64_32S:
-      case R_X86_64_64:
+    case ELF::R_X86_64_32:
+    case ELF::R_X86_64_32S:
+    case ELF::R_X86_64_64:
         return false;
     default:
       llvm_unreachable("unknown x86_64 relocation type");
     }
   } else {
     switch(RelTy) {
-      case R_386_PC32:
+    case ELF::R_386_PC32:
         return true;
-      case R_386_32:
+    case ELF::R_386_32:
         return false;
     default:
       llvm_unreachable("unknown x86 relocation type");
@@ -143,7 +144,7 @@ long int X86ELFWriterInfo::computeRelocation(unsigned SymOffset,
                                              unsigned RelOffset,
                                              unsigned RelTy) const {
 
-  if (RelTy == R_X86_64_PC32 || RelTy == R_386_PC32)
+  if (RelTy == ELF::R_X86_64_PC32 || RelTy == ELF::R_386_PC32)
     return SymOffset - (RelOffset + 4);
   else
     assert("computeRelocation unknown for this relocation type");

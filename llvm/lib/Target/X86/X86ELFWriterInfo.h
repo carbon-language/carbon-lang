@@ -20,23 +20,6 @@ namespace llvm {
 
   class X86ELFWriterInfo : public TargetELFWriterInfo {
 
-    // ELF Relocation types for X86
-    enum X86RelocationType {
-      R_386_NONE = 0,
-      R_386_32   = 1,
-      R_386_PC32 = 2
-    };
-
-    // ELF Relocation types for X86_64
-    enum X86_64RelocationType {
-      R_X86_64_NONE = 0,
-      R_X86_64_64   = 1,
-      R_X86_64_PC32 = 2,
-      R_X86_64_32   = 10,
-      R_X86_64_32S  = 11,
-      R_X86_64_PC64 = 24
-    };
-
   public:
     X86ELFWriterInfo(bool is64Bit_, bool isLittleEndian_);
     virtual ~X86ELFWriterInfo();
