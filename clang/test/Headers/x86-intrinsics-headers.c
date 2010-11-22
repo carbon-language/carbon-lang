@@ -1,12 +1,8 @@
-// RUN: %clang -fsyntax-only %s
-// RUN: %clang -fsyntax-only -fno-lax-vector-conversions %s
-// RUN: %clangxx -fsyntax-only -x c++ %s
+// RUN: %clang -fsyntax-only -ffreestanding %s
+// RUN: %clang -fsyntax-only -ffreestanding -fno-lax-vector-conversions %s
+// RUN: %clangxx -fsyntax-only -ffreestanding -x c++ %s
 
 #if defined(i386) || defined(__x86_64__)
-
-#ifdef __MMX__
-#include <mm_malloc.h>
-#endif
 
 #ifdef __SSE4_2__
 // nmmintrin forwards to smmintrin.

@@ -34,7 +34,11 @@ typedef int __v4si __attribute__((__vector_size__(16)));
 typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef float __m128 __attribute__((__vector_size__(16)));
 
+// This header should only be included in a hosted environment as it depends on
+// a standard library to provide allocation routines.
+#if __STDC_HOSTED__
 #include <mm_malloc.h>
+#endif
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_add_ss(__m128 a, __m128 b)
