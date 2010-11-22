@@ -1083,8 +1083,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::annot_typename: {
       if (Tok.getAnnotationValue()) {
         ParsedType T = getTypeAnnotation(Tok);
-        // FIXME: This should probably pass getAnnotationEndLoc() instead of
-        // Loc, but that breaks test/Index/recursive-cxx-member-calls.cpp.
         isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
                                        DiagID, T);
       } else
