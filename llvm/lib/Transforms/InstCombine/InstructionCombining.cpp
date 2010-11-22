@@ -523,9 +523,6 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   Value *PtrOp = GEP.getOperand(0);
 
-  if (isa<UndefValue>(GEP.getOperand(0)))
-    return ReplaceInstUsesWith(GEP, UndefValue::get(GEP.getType()));
-
   // Eliminate unneeded casts for indices.
   if (TD) {
     bool MadeChange = false;

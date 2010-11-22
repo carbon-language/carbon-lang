@@ -691,13 +691,20 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
 /// fold the result.  If not, this returns null.
 Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
                              const TargetData *TD, const DominatorTree *) {
+  // The type of the GEP pointer operand.
+  const PointerType *PtrTy = cast<PointerType>(Ops[0]->getType());
+
   // getelementptr P -> P.
   if (NumOps == 1)
     return Ops[0];
 
-  // TODO.
-  //if (isa<UndefValue>(Ops[0]))
-  //  return UndefValue::get(GEP.getType());
+  if (isa<UndefValue>(Ops[0])) {
+    // Compute the (pointer) type returned by the GEP instruction.
+    const Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, &Ops[1],
+                                                             NumOps-1);
+    const Type *GEPTy = PointerType::get(LastType, PtrTy->getAddressSpace());
+    return UndefValue::get(GEPTy);
+  }
 
   if (NumOps == 2) {
     // getelementptr P, 0 -> P.
@@ -706,7 +713,7 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
         return Ops[0];
     // getelementptr P, N -> P if P points to a type of zero size.
     if (TD) {
-      const Type *Ty = cast<PointerType>(Ops[0]->getType())->getElementType();
+      const Type *Ty = PtrTy->getElementType();
       if (Ty->isSized() && !TD->getTypeAllocSize(Ty))
         return Ops[0];
     }
