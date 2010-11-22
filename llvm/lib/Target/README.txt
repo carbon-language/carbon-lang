@@ -1736,22 +1736,6 @@ Another similar case involves truncations on 64-bit targets:
 ...
   %367 = icmp eq i32 %362, 0                      ; [#uses=1]
 
-
-//===---------------------------------------------------------------------===//
-
-Missed instcombine/dagcombine transformation:
-define i32 @a(i32 %x, i32 %y) nounwind readnone {
-entry:
-  %mul = mul i32 %y, -8
-  %sub = sub i32 %x, %mul
-  ret i32 %sub
-}
-
-Should compile to something like x+y*8, but currently compiles to an
-inefficient result.  Testcase derived from gcc.  C testcase:
-
-int a(int x, int y) { return y-x*-8; }
-
 //===---------------------------------------------------------------------===//
 
 Missed instcombine/dagcombine transformation:

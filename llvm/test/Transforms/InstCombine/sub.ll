@@ -281,3 +281,23 @@ define i32 @test26(i32 %x) {
 ; CHECK-NEXT: ret i32
 }
 
+define i32 @test27(i32 %x, i32 %y) {
+  %mul = mul i32 %y, -8
+  %sub = sub i32 %x, %mul
+  ret i32 %sub
+; CHECK: @test27
+; CHECK-NEXT: shl i32 %y, 3
+; CHECK-NEXT: add i32
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test28(i32 %x, i32 %y, i32 %z) {
+  %neg = sub i32 0, %z
+  %mul = mul i32 %neg, %y
+  %sub = sub i32 %x, %mul
+  ret i32 %sub
+; CHECK: @test28
+; CHECK-NEXT: mul i32 %z, %y
+; CHECK-NEXT: add i32
+; CHECK-NEXT: ret i32
+}

@@ -675,6 +675,15 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
                                              C2);
         return BinaryOperator::CreateMul(Op0, CP1);
       }
+
+      // X - A*-B -> X + A*B
+      // X - -A*B -> X + A*B
+      Value *A, *B;
+      if (match(Op1I, m_Mul(m_Value(A), m_Neg(m_Value(B)))) ||
+          match(Op1I, m_Mul(m_Neg(m_Value(A)), m_Value(B)))) {
+        Value *NewMul = Builder->CreateMul(A, B);
+        return BinaryOperator::CreateAdd(Op0, NewMul);
+      }
     }
   }
 
