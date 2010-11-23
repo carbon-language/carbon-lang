@@ -26,14 +26,14 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <map>
 using namespace llvm;
 
@@ -362,8 +362,8 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
       Instruction *Inst = BI++;
       if (isInstructionTriviallyDead(Inst))
         Inst->eraseFromParent();
-      else if (Constant *C = ConstantFoldInstruction(Inst)) {
-        Inst->replaceAllUsesWith(C);
+      else if (Value *V = SimplifyInstruction(Inst)) {
+        Inst->replaceAllUsesWith(V);
         Inst->eraseFromParent();
       }
     }

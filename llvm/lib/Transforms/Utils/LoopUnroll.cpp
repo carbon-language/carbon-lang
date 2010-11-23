@@ -22,7 +22,7 @@
 #include "llvm/Transforms/Utils/UnrollLoop.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/Debug.h"
@@ -361,10 +361,11 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
 
       if (isInstructionTriviallyDead(Inst))
         (*BB)->getInstList().erase(Inst);
-      else if (Constant *C = ConstantFoldInstruction(Inst)) {
-        Inst->replaceAllUsesWith(C);
-        (*BB)->getInstList().erase(Inst);
-      }
+      else if (Value *V = SimplifyInstruction(Inst))
+        if (LI->replacementPreservesLCSSAForm(Inst, V)) {
+          Inst->replaceAllUsesWith(V);
+          (*BB)->getInstList().erase(Inst);
+        }
     }
 
   NumCompletelyUnrolled += CompletelyUnroll;
