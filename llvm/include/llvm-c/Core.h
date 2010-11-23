@@ -547,6 +547,9 @@ LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
 /* Operations on scalar constants */
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
                           LLVMBool SignExtend);
+LLVMValueRef LLVMConstIntOfArbitraryPrecision(LLVMTypeRef IntTy,
+                                              unsigned NumWords,
+                                              const uint64_t Words[]);
 LLVMValueRef LLVMConstIntOfString(LLVMTypeRef IntTy, const char *Text,
                                   uint8_t Radix);
 LLVMValueRef LLVMConstIntOfStringAndSize(LLVMTypeRef IntTy, const char *Text,

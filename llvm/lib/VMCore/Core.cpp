@@ -547,6 +547,14 @@ LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
   return wrap(ConstantInt::get(unwrap<IntegerType>(IntTy), N, SignExtend != 0));
 }
 
+LLVMValueRef LLVMConstIntOfArbitraryPrecision(LLVMTypeRef IntTy,
+                                              unsigned NumWords,
+                                              const uint64_t Words[]) {
+    IntegerType *Ty = unwrap<IntegerType>(IntTy);
+    return wrap(ConstantInt::get(Ty->getContext(),
+                                 APInt(Ty->getBitWidth(), NumWords, Words)));
+}
+
 LLVMValueRef LLVMConstIntOfString(LLVMTypeRef IntTy, const char Str[],
                                   uint8_t Radix) {
   return wrap(ConstantInt::get(unwrap<IntegerType>(IntTy), StringRef(Str),
