@@ -400,11 +400,24 @@ void FileManager::FixupRelativePath(llvm::sys::Path &path,
 
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
-  llvm::StringRef Filename = Entry->getName();
-  if (FileSystemOpts.WorkingDir.empty())
+  if (FileSystemOpts.WorkingDir.empty()) {
+    const char *Filename = Entry->getName();
+    // If the file is already open, use the open file descriptor.
+    if (Entry->FD != -1) {
+      llvm::MemoryBuffer *Buf =
+        llvm::MemoryBuffer::getOpenFile(Entry->FD, Filename, ErrorStr,
+                                        Entry->getSize());
+      // getOpenFile will have closed the file descriptor, don't reuse or
+      // reclose it.
+      Entry->FD = -1;
+      return Buf;
+    }
+
+    // Otherwise, open the file.
     return llvm::MemoryBuffer::getFile(Filename, ErrorStr, Entry->getSize());
+  }
   
-  llvm::sys::Path FilePath(Filename);
+  llvm::sys::Path FilePath(Entry->getName());
   FixupRelativePath(FilePath, FileSystemOpts);
   return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr,
                                      Entry->getSize());

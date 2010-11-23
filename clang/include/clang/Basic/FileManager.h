@@ -61,7 +61,7 @@ class FileEntry {
   
   /// FD - The file descriptor for the file entry if it is opened and owned
   /// by the FileEntry.  If not, this is set to -1.
-  int FD;
+  mutable int FD;
   friend class FileManager;
   
   void operator=(const FileEntry&); // DO NOT IMPLEMENT.

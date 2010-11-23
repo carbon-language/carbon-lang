@@ -13,6 +13,7 @@
 
 #include "clang/Basic/FileSystemStatCache.h"
 #include "llvm/System/Path.h"
+#include <fcntl.h>
 
 // FIXME: This is terrible, we need this for ::close.
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
@@ -39,18 +40,52 @@ using namespace clang;
 bool FileSystemStatCache::get(const char *Path, struct stat &StatBuf,
                               int *FileDescriptor, FileSystemStatCache *Cache) {
   LookupResult R;
-  
+  bool isForDir = FileDescriptor == 0;
+
+  // If we have a cache, use it to resolve the stat query.
   if (Cache)
     R = Cache->getStat(Path, StatBuf, FileDescriptor);
-  else
+  else if (isForDir) {
+    // If this is a directory and we have no cache, just go to the file system.
     R = ::stat(Path, &StatBuf) != 0 ? CacheMissing : CacheExists;
+  } else {
+    // Otherwise, we have to go to the filesystem.  We can always just use
+    // 'stat' here, but (for files) the client is asking whether the file exists
+    // because it wants to turn around and *open* it.  It is more efficient to
+    // do "open+fstat" on success than it is to do "stat+open".
+    //
+    // Because of this, check to see if the file exists with 'open'.  If the
+    // open succeeds, use fstat to get the stat info.
+    int OpenFlags = O_RDONLY;
+#ifdef O_BINARY
+    OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
+#endif
+    *FileDescriptor = ::open(Path, OpenFlags);
+    
+    if (*FileDescriptor == -1) {
+      // If the open fails, our "stat" fails.
+      R = CacheMissing;
+    } else {
+      // Otherwise, the open succeeded.  Do an fstat to get the information
+      // about the file.  We'll end up returning the open file descriptor to the
+      // client to do what they please with it.
+      if (::fstat(*FileDescriptor, &StatBuf) == 0)
+        R = CacheExists;
+      else {
+        // fstat rarely fails.  If it does, claim the initial open didn't
+        // succeed.
+        R = CacheMissing;
+        ::close(*FileDescriptor);
+        *FileDescriptor = -1;
+      }
+    }
+  }
 
   // If the path doesn't exist, return failure.
   if (R == CacheMissing) return true;
   
   // If the path exists, make sure that its "directoryness" matches the clients
   // demands.
-  bool isForDir = FileDescriptor == 0;
   if (S_ISDIR(StatBuf.st_mode) != isForDir) {
     // If not, close the file if opened.
     if (FileDescriptor && *FileDescriptor != -1) {
