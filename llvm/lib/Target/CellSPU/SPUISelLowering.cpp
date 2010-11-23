@@ -97,8 +97,6 @@ namespace {
 SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()),
     SPUTM(TM) {
-  // Fold away setcc operations if possible.
-  setPow2DivIsCheap();
 
   // Use _setjmp/_longjmp instead of setjmp/longjmp.
   setUseUnderscoreSetJmp(true);
