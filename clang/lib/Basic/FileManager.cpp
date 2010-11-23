@@ -307,7 +307,7 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
   struct stat StatBuf;
   //llvm::errs() << "STATING: " << Filename;
   if (stat_cached(InterndFileName, &StatBuf) ||   // Error stat'ing.
-        S_ISDIR(StatBuf.st_mode)) {           // A directory?
+      S_ISDIR(StatBuf.st_mode)) {                 // A directory?
     // If this file doesn't exist, we leave a null in FileEntries for this path.
     //llvm::errs() << ": Not existing\n";
     return 0;
@@ -389,17 +389,25 @@ void FileManager::FixupRelativePath(llvm::sys::Path &path,
   path = NewPath;
 }
 
-
-
 llvm::MemoryBuffer *FileManager::
-getBufferForFile(llvm::StringRef Filename,
-                 std::string *ErrorStr, int64_t FileSize) {
+getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
+  llvm::StringRef Filename = Entry->getName();
   if (FileSystemOpts.WorkingDir.empty())
-    return llvm::MemoryBuffer::getFile(Filename, ErrorStr, FileSize);
+    return llvm::MemoryBuffer::getFile(Filename, ErrorStr);
   
   llvm::sys::Path FilePath(Filename);
   FixupRelativePath(FilePath, FileSystemOpts);
-  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr, FileSize);
+  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr);
+}
+
+llvm::MemoryBuffer *FileManager::
+getBufferForFile(llvm::StringRef Filename, std::string *ErrorStr) {
+  if (FileSystemOpts.WorkingDir.empty())
+    return llvm::MemoryBuffer::getFile(Filename, ErrorStr);
+  
+  llvm::sys::Path FilePath(Filename);
+  FixupRelativePath(FilePath, FileSystemOpts);
+  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr);
 }
 
 int FileManager::stat_cached(const char *path, struct stat *buf) {

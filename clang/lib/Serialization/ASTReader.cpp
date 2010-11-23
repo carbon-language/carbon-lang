@@ -1262,9 +1262,8 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
       return Failure;
     }
 
-    FileID FID = SourceMgr.createFileID(File,
-                                       ReadSourceLocation(*F, Record[1]),
-                                       (SrcMgr::CharacteristicKind)Record[2],
+    FileID FID = SourceMgr.createFileID(File, ReadSourceLocation(*F, Record[1]),
+                                        (SrcMgr::CharacteristicKind)Record[2],
                                         ID, Record[0]);
     if (Record[3])
       const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(FID).getFile())

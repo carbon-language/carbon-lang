@@ -171,7 +171,7 @@ class FileManager {
   // Caching.
   llvm::OwningPtr<StatSysCallCache> StatCache;
 
-  int stat_cached(const char* path, struct stat* buf);
+  int stat_cached(const char *path, struct stat *buf);
 
 public:
   FileManager(const FileSystemOptions &FileSystemOpts);
@@ -212,12 +212,9 @@ public:
   /// \brief Open the specified file as a MemoryBuffer, returning a new
   /// MemoryBuffer if successful, otherwise returning null.
   llvm::MemoryBuffer *getBufferForFile(const FileEntry *Entry,
-                                       std::string *ErrorStr = 0) {
-    return getBufferForFile(Entry->getName(), ErrorStr, Entry->getSize());
-  }
+                                       std::string *ErrorStr = 0);
   llvm::MemoryBuffer *getBufferForFile(llvm::StringRef Filename,
-                                       std::string *ErrorStr = 0,
-                                       int64_t FileSize = -1);
+                                       std::string *ErrorStr = 0);
 
   /// \brief If path is not absolute and FileSystemOptions set the working
   /// directory, the path is modified to be relative to the given
