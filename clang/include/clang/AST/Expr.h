@@ -1178,7 +1178,7 @@ public:
     return Op == UO_PostInc || Op == UO_PostDec;
   }
 
-  /// isPostfix - Return true if this is a prefix operation, like --x.
+  /// isPrefix - Return true if this is a prefix operation, like --x.
   static bool isPrefix(Opcode Op) {
     return Op == UO_PreInc || Op == UO_PreDec;
   }
