@@ -62,8 +62,8 @@ inline uint64_t SwapByteOrder_64(uint64_t value) {
 #elif defined(_MSC_VER) && !defined(_DEBUG)
   return _byteswap_uint64(value);
 #else
-  uint64_t Hi = SwapByteOrder<uint32_t>(uint32_t(value));
-  uint32_t Lo = SwapByteOrder<uint32_t>(uint32_t(value >> 32));
+  uint64_t Hi = SwapByteOrder(uint32_t(value));
+  uint32_t Lo = SwapByteOrder(uint32_t(value >> 32));
   return (Hi << 32) | Lo;
 #endif
 }
