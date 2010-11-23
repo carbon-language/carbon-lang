@@ -399,15 +399,13 @@ void FileManager::FixupRelativePath(llvm::sys::Path &path,
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(llvm::StringRef Filename,
                  const FileSystemOptions &FileSystemOpts,
-                 std::string *ErrorStr, int64_t FileSize,
-                 struct stat *FileInfo) {
+                 std::string *ErrorStr, int64_t FileSize) {
   if (FileSystemOpts.WorkingDir.empty())
-    return llvm::MemoryBuffer::getFile(Filename, ErrorStr, FileSize, FileInfo);
+    return llvm::MemoryBuffer::getFile(Filename, ErrorStr, FileSize);
   
   llvm::sys::Path FilePath(Filename);
   FixupRelativePath(FilePath, FileSystemOpts);
-  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr,
-                                     FileSize, FileInfo);
+  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr, FileSize);
 }
 
 int FileManager::stat_cached(const char *path, struct stat *buf,

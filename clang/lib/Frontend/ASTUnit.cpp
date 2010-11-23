@@ -457,10 +457,9 @@ const std::string &ASTUnit::getASTFileName() {
 
 llvm::MemoryBuffer *ASTUnit::getBufferForFile(llvm::StringRef Filename,
                                               std::string *ErrorStr,
-                                              int64_t FileSize,
-                                              struct stat *FileInfo) {
+                                              int64_t FileSize) {
   return FileMgr->getBufferForFile(Filename, FileSystemOpts,
-                                   ErrorStr, FileSize, FileInfo);
+                                   ErrorStr, FileSize);
 }
 
 /// \brief Configure the diagnostics object for use with ASTUnit.

@@ -73,10 +73,9 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   // Lazily create the Buffer for ContentCaches that wrap files.
   if (!Buffer.getPointer() && Entry) {
     std::string ErrorStr;
-    struct stat FileInfo;
     Buffer.setPointer(SM.getFileManager().getBufferForFile(Entry,
                                                          SM.getFileSystemOpts(),
-                                                         &ErrorStr, &FileInfo));
+                                                         &ErrorStr));
 
     // If we were unable to open the file, then we are in an inconsistent
     // situation where the content cache referenced a file which no longer
@@ -105,17 +104,9 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
 
       Buffer.setInt(Buffer.getInt() | InvalidFlag);
 
-    // FIXME: This conditionalization is horrible, but we see spurious failures
-    // in the test suite due to this warning and no one has had time to hunt it
-    // down. So for now, we just don't emit this diagnostic on Win32, and hope
-    // nothing bad happens.
-    //
-    // PR6812.
-#if !defined(LLVM_ON_WIN32)
-    } else if (FileInfo.st_size != Entry->getSize() ||
-               FileInfo.st_mtime != Entry->getModificationTime()) {
-      // Check that the file's size and modification time are the same
-      // as in the file entry (which may have come from a stat cache).
+    } else if (getRawBuffer()->getBufferSize() != (size_t)Entry->getSize()) {
+      // Check that the file's size is the same as in the file entry (which may
+      // have come from a stat cache).
       if (Diag.isDiagnosticInFlight())
         Diag.SetDelayedDiagnostic(diag::err_file_modified,
                                   Entry->getName());
@@ -124,7 +115,6 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
           << Entry->getName();
 
       Buffer.setInt(Buffer.getInt() | InvalidFlag);
-#endif
     }
     
     // If the buffer is valid, check to see if it has a UTF Byte Order Mark

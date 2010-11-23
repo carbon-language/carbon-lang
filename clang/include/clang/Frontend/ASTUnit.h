@@ -463,8 +463,7 @@ public:
 
   llvm::MemoryBuffer *getBufferForFile(llvm::StringRef Filename,
                                        std::string *ErrorStr = 0,
-                                       int64_t FileSize = -1,
-                                       struct stat *FileInfo = 0);
+                                       int64_t FileSize = -1);
 
   /// \brief Whether this AST represents a complete translation unit.
   ///

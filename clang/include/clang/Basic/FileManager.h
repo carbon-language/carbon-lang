@@ -216,16 +216,14 @@ public:
   /// MemoryBuffer if successful, otherwise returning null.
   llvm::MemoryBuffer *getBufferForFile(const FileEntry *Entry,
                                        const FileSystemOptions &FileSystemOpts,
-                                       std::string *ErrorStr = 0,
-                                       struct stat *FileInfo = 0) {
+                                       std::string *ErrorStr = 0) {
     return getBufferForFile(Entry->getName(), FileSystemOpts,
-                            ErrorStr, Entry->getSize(), FileInfo);
+                            ErrorStr, Entry->getSize());
   }
   llvm::MemoryBuffer *getBufferForFile(llvm::StringRef Filename,
                                        const FileSystemOptions &FileSystemOpts,
                                        std::string *ErrorStr = 0,
-                                       int64_t FileSize = -1,
-                                       struct stat *FileInfo = 0);
+                                       int64_t FileSize = -1);
 
   /// \brief If path is not absolute and FileSystemOptions set the working
   /// directory, the path is modified to be relative to the given
