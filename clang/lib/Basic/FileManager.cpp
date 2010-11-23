@@ -28,6 +28,14 @@
 #include <map>
 #include <set>
 #include <string>
+
+// FIXME: This is terrible, we need this for ::close.
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#include <sys/uio.h>
+#else
+#include <io.h>
+#endif
 using namespace clang;
 
 // FIXME: Enhance libsystem to support inode and other fields.
