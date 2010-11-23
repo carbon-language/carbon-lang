@@ -53,6 +53,21 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
   if (ConstantInt *CUI = dyn_cast<ConstantInt>(Op1))
     if (Instruction *Res = FoldShiftByConstant(Op0, CUI, I))
       return Res;
+
+  // X shift (A srem B) -> X shift (A urem B) iff B is positive.
+  // Because shifts by negative values are undefined.
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op1))
+    if (BO->getOpcode() == Instruction::SRem && BO->getType()->isIntegerTy()) {
+      // Make sure the divisor's sign bit is zero.
+      APInt Mask = APInt::getSignBit(BO->getType()->getPrimitiveSizeInBits());
+      if (MaskedValueIsZero(BO->getOperand(1), Mask)) {
+        Value *URem = Builder->CreateURem(BO->getOperand(0), BO->getOperand(1),
+                                          BO->getName());
+        I.setOperand(1, URem);
+        return &I;
+      }
+    }
+
   return 0;
 }
 

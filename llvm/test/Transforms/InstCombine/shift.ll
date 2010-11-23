@@ -441,3 +441,14 @@ entry:
 ; CHECK:  %ins = or i128 %tmp23, %A
 ; CHECK:  %tmp46 = trunc i128 %ins to i64
 }
+
+define i32 @test38(i32 %x) nounwind readnone {
+entry:
+  %rem = srem i32 %x, 32
+  %shl = shl i32 1, %rem
+  ret i32 %shl
+; CHECK: @test38
+; CHECK-NOT: srem
+; CHECK: ret i32
+}
+

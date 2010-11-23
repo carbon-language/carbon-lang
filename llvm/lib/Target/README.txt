@@ -1698,22 +1698,14 @@ from gcc.
 //===---------------------------------------------------------------------===//
 
 Missed instcombine transformation:
-define i32 @a(i32 %x) nounwind readnone {
-entry:
-  %rem = srem i32 %x, 32
-  %shl = shl i32 1, %rem
-  ret i32 %shl
-}
-
-The srem can be transformed to an and because if x is negative, the shift is
-undefined.  Here's a more general case that occurs on 64-bit targets:
 
   %382 = srem i32 %tmp14.i, 64                    ; [#uses=1]
   %383 = zext i32 %382 to i64                     ; [#uses=1]
   %384 = shl i64 %381, %383                       ; [#uses=1]
   %385 = icmp slt i32 %tmp14.i, 64                ; [#uses=1]
 
-Testcase derived from 403.gcc.
+The srem can be transformed to an and because if x is negative, the shift is
+undefined.  Testcase derived from 403.gcc.
 
 //===---------------------------------------------------------------------===//
 
