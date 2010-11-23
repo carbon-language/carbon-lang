@@ -984,7 +984,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Value *V = SimplifyAndInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (Instruction *NV = SimplifyDistributed(I)) // (A|B)&(A|C) -> A|(B&C)
+  if (Instruction *NV = SimplifyByFactorizing(I)) // (A|B)&(A|C) -> A|(B&C)
     return NV;
 
   // See if we can simplify any instructions used by the instruction whose sole 
@@ -1695,7 +1695,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (Value *V = SimplifyOrInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (Instruction *NV = SimplifyDistributed(I)) // (A&B)|(A&C) -> A&(B|C)
+  if (Instruction *NV = SimplifyByFactorizing(I)) // (A&B)|(A&C) -> A&(B|C)
     return NV;
 
   // See if we can simplify any instructions used by the instruction whose sole 
@@ -1966,7 +1966,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   if (Value *V = SimplifyXorInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (Instruction *NV = SimplifyDistributed(I)) // (A&B)^(A&C) -> A&(B^C)
+  if (Instruction *NV = SimplifyByFactorizing(I)) // (A&B)^(A&C) -> A&(B^C)
     return NV;
 
   // See if we can simplify any instructions used by the instruction whose sole 

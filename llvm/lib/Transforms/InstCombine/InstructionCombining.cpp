@@ -288,11 +288,11 @@ static bool RightDistributesOverLeft(Instruction::BinaryOps LOp,
   return false;
 }
 
-/// SimplifyDistributed - This tries to simplify binary operations which some
-/// other binary operation distributes over (eg "A*B+A*C" -> "A*(B+C)" since
-/// addition is distributed over by multiplication).  Returns the result of
-/// the simplification, or null if no simplification was performed.
-Instruction *InstCombiner::SimplifyDistributed(BinaryOperator &I) {
+/// SimplifyByFactorizing - This tries to simplify binary operations which
+/// some other binary operation distributes over by factorizing out a common
+/// term (eg "(A*B)+(A*C)" -> "A*(B+C)").  Returns the simplified value, or
+/// null if no simplification was performed.
+Instruction *InstCombiner::SimplifyByFactorizing(BinaryOperator &I) {
   BinaryOperator *Op0 = dyn_cast<BinaryOperator>(I.getOperand(0));
   BinaryOperator *Op1 = dyn_cast<BinaryOperator>(I.getOperand(1));
   if (!Op0 || !Op1 || Op0->getOpcode() != Op1->getOpcode())
