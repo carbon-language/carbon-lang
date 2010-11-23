@@ -443,12 +443,12 @@ entry:
 }
 
 define i32 @test38(i32 %x) nounwind readnone {
-entry:
   %rem = srem i32 %x, 32
   %shl = shl i32 1, %rem
   ret i32 %shl
 ; CHECK: @test38
-; CHECK-NOT: srem
-; CHECK: ret i32
+; CHECK-NEXT: and i32 %x, 31
+; CHECK-NEXT: shl i32 1
+; CHECK-NEXT: ret i32
 }
 

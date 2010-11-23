@@ -1704,8 +1704,8 @@ Missed instcombine transformation:
   %384 = shl i64 %381, %383                       ; [#uses=1]
   %385 = icmp slt i32 %tmp14.i, 64                ; [#uses=1]
 
-The srem can be transformed to an and because if x is negative, the shift is
-undefined.  Testcase derived from 403.gcc.
+The srem can be transformed to an and because if %tmp14.i is negative, the
+shift is undefined.  Testcase derived from 403.gcc.
 
 //===---------------------------------------------------------------------===//
 
