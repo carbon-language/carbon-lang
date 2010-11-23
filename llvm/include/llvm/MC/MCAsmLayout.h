@@ -54,10 +54,9 @@ public:
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() const { return Assembler; }
 
-  /// \brief Update the layout because a fragment has been resized. The
-  /// fragments size should have already been updated, the \arg SlideAmount is
-  /// the delta from the old size.
-  void UpdateForSlide(MCFragment *F, int SlideAmount);
+  /// \brief Invalidate all following fragments because a fragment has been resized. The
+  /// fragments size should have already been updated.
+  void Invalidate(MCFragment *F);
 
   /// \brief Update the layout, replacing Src with Dst. The contents
   /// of Src and Dst are not modified, and must be copied by the caller.

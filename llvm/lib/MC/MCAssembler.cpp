@@ -78,7 +78,7 @@ bool MCAsmLayout::isFragmentUpToDate(const MCFragment *F) const {
           F->getLayoutOrder() <= LastValidFragment->getLayoutOrder());
 }
 
-void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
+void MCAsmLayout::Invalidate(MCFragment *F) {
   // If this fragment wasn't already up-to-date, we don't need to do anything.
   if (!isFragmentUpToDate(F))
     return;
@@ -143,7 +143,7 @@ void MCAsmLayout::CoalesceFragments(MCFragment *Src, MCFragment *Dst) {
     Dst->EffectiveSize += Src->EffectiveSize;
   } else {
     // We don't know the effective size of Src, so we have to invalidate Dst.
-    UpdateForSlide(Dst, 0);
+    Invalidate(Dst);
   }
   // Remove Src, but don't delete it yet.
   Src->getParent()->getFragmentList().remove(Src);
@@ -819,7 +819,6 @@ bool MCAssembler::RelaxInstruction(const MCObjectWriter &Writer,
   VecOS.flush();
 
   // Update the instruction fragment.
-  int SlideAmount = Code.size() - IF.getInstSize();
   IF.setInst(Relaxed);
   IF.getCode() = Code;
   IF.getFixups().clear();
@@ -827,8 +826,6 @@ bool MCAssembler::RelaxInstruction(const MCObjectWriter &Writer,
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
     IF.getFixups().push_back(Fixups[i]);
 
-  // Update the layout, and remember that we relaxed.
-  Layout.UpdateForSlide(&IF, SlideAmount);
   return true;
 }
 
@@ -894,24 +891,29 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
     for (MCSectionData::iterator it2 = SD.begin(),
            ie2 = SD.end(); it2 != ie2; ++it2) {
       // Check if this is an fragment that needs relaxation.
+      bool relaxedFrag = false;
       switch(it2->getKind()) {
       default:
         break;
       case MCFragment::FT_Inst:
-        WasRelaxed |= RelaxInstruction(Writer, Layout,
+        relaxedFrag = RelaxInstruction(Writer, Layout,
                                        *cast<MCInstFragment>(it2));
         break;
       case MCFragment::FT_Org:
-        WasRelaxed |= RelaxOrg(Writer, Layout, *cast<MCOrgFragment>(it2));
+        relaxedFrag = RelaxOrg(Writer, Layout, *cast<MCOrgFragment>(it2));
         break;
       case MCFragment::FT_Dwarf:
-        WasRelaxed |= RelaxDwarfLineAddr(Writer, Layout,
+        relaxedFrag = RelaxDwarfLineAddr(Writer, Layout,
 					 *cast<MCDwarfLineAddrFragment>(it2));
 	break;
       case MCFragment::FT_LEB:
-        WasRelaxed |= RelaxLEB(Writer, Layout, *cast<MCLEBFragment>(it2));
+        relaxedFrag = RelaxLEB(Writer, Layout, *cast<MCLEBFragment>(it2));
         break;
       }
+      // Update the layout, and remember that we relaxed.
+      if (relaxedFrag)
+	Layout.Invalidate(it2);
+      WasRelaxed |= relaxedFrag;
     }
   }
 
