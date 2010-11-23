@@ -15,6 +15,10 @@
 #include "llvm/System/Path.h"
 using namespace clang;
 
+#if defined(_MSC_VER)
+#define S_ISDIR(s) (_S_IFDIR & s)
+#endif
+
 MemorizeStatCalls::LookupResult
 MemorizeStatCalls::getStat(const char *Path, struct stat &StatBuf) {
   LookupResult Result = statChained(Path, StatBuf);
