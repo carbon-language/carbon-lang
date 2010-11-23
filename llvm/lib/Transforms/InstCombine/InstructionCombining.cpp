@@ -304,14 +304,11 @@ Instruction *InstCombiner::SimplifyDistributed(BinaryOperator &I) {
   Instruction::BinaryOps OuterOpcode = I.getOpcode(); // op
   Instruction::BinaryOps InnerOpcode = Op0->getOpcode(); // op'
 
-  // Does "X op' (Y op Z)" always equal "(X op' Y) op (X op' Z)"?
-  bool LeftDistributes = LeftDistributesOverRight(InnerOpcode, OuterOpcode);
-  // Does "(X op Y) op' Z" always equal "(X op' Z) op (Y op' Z)"?
-  bool RightDistributes = RightDistributesOverLeft(OuterOpcode, InnerOpcode);
   // Does "X op' Y" always equal "Y op' X"?
   bool InnerCommutative = Instruction::isCommutative(InnerOpcode);
 
-  if (LeftDistributes)
+  // Does "X op' (Y op Z)" always equal "(X op' Y) op (X op' Z)"?
+  if (LeftDistributesOverRight(InnerOpcode, OuterOpcode))
     // Does the instruction have the form "(A op' B) op (A op' D)" or, in the
     // commutative case, "(A op' B) op (C op' A)"?
     if (A == C || (InnerCommutative && A == D)) {
@@ -328,7 +325,8 @@ Instruction *InstCombiner::SimplifyDistributed(BinaryOperator &I) {
         return BinaryOperator::Create(InnerOpcode, A, RHS);
     }
 
-  if (RightDistributes)
+  // Does "(X op Y) op' Z" always equal "(X op' Z) op (Y op' Z)"?
+  if (RightDistributesOverLeft(OuterOpcode, InnerOpcode))
     // Does the instruction have the form "(A op' B) op (C op' B)" or, in the
     // commutative case, "(A op' B) op (B op' D)"?
     if (B == D || (InnerCommutative && B == C)) {
