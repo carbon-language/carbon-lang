@@ -29,7 +29,7 @@
           <li><a href="#ci_warningerrors">Treat Compiler Warnings Like
               Errors</a></li>
           <li><a href="#ci_portable_code">Write Portable Code</a></li>
-          <li><a href="#ci_class_struct">Use of class/struct Keywords</a></li>
+          <li><a href="#ci_class_struct">Use of <tt>class</tt>/<tt>struct</tt> Keywords</a></li>
         </ol></li>
     </ol></li>
   <li><a href="#styleissues">Style Issues</a>
@@ -38,23 +38,23 @@
         <ol>
           <li><a href="#hl_module">A Public Header File <b>is</b> a
               Module</a></li>
-          <li><a href="#hl_dontinclude">#include as Little as Possible</a></li>
+          <li><a href="#hl_dontinclude"><tt>#include</tt> as Little as Possible</a></li>
           <li><a href="#hl_privateheaders">Keep "internal" Headers
               Private</a></li>
-          <li><a href="#hl_earlyexit">Use Early Exits and 'continue' to Simplify
+          <li><a href="#hl_earlyexit">Use Early Exits and <tt>continue</tt> to Simplify
               Code</a></li>
-          <li><a href="#hl_else_after_return">Don't use "else" after a
-              return</a></li>
+          <li><a href="#hl_else_after_return">Don't use <tt>else</tt> after a
+              <tt>return</tt></a></li>
           <li><a href="#hl_predicateloops">Turn Predicate Loops into Predicate
               Functions</a></li>
         </ol></li>
       <li><a href="#micro">The Low-Level Issues</a>
         <ol>
           <li><a href="#ll_assert">Assert Liberally</a></li>
-          <li><a href="#ll_ns_std">Do not use 'using namespace std'</a></li>
+          <li><a href="#ll_ns_std">Do not use '<tt>using namespace std</tt>'</a></li>
           <li><a href="#ll_virtual_anch">Provide a virtual method anchor for
               classes in headers</a></li>
-          <li><a href="#ll_end">Don't evaluate end() every time through a
+          <li><a href="#ll_end">Don't evaluate <tt>end()</tt> every time through a
               loop</a></li>
           <li><a href="#ll_iostream"><tt>#include &lt;iostream&gt;</tt> is
               <em>forbidden</em></a></li>
@@ -522,7 +522,7 @@ class itself... just make them private (or protected), and all is well.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="hl_earlyexit">Use Early Exits and 'continue' to Simplify Code</a>
+  <a name="hl_earlyexit">Use Early Exits and <tt>continue</tt> to Simplify Code</a>
 </div>
 
 <div class="doc_text">
@@ -531,7 +531,7 @@ class itself... just make them private (or protected), and all is well.</p>
 decisions have to be remembered by the reader to understand a block of code.
 Aim to reduce indentation where possible when it doesn't make it more difficult
 to understand the code.  One great way to do this is by making use of early
-exits and the 'continue' keyword in long loops.  As an example of using an early
+exits and the <tt>continue</tt> keyword in long loops.  As an example of using an early
 exit from a function, consider this "bad" code:</p>
 
 <div class="doc_code">
@@ -623,7 +623,7 @@ structure the loop like this:</p>
 
 <p>This has all the benefits of using early exits from functions: it reduces
 nesting of the loop, it makes it easier to describe why the conditions are true,
-and it makes it obvious to the reader that there is no "else" coming up that
+and it makes it obvious to the reader that there is no <tt>else</tt> coming up that
 they have to push context into their brain for.  If a loop is large, this can
 be a big understandability win.</p>
 
@@ -631,14 +631,14 @@ be a big understandability win.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="hl_else_after_return">Don't use "else" after a return</a>
+  <a name="hl_else_after_return">Don't use <tt>else</tt> after a <tt>return</tt></a>
 </div>
 
 <div class="doc_text">
 
 <p>For similar reasons above (reduction of indentation and easier reading),
-   please do not use "else" or "else if" after something that interrupts
-   control flow like return, break, continue, goto, etc.  For example, this is
+   please do not use <tt>else</tt> or '<tt>else if</tt>' after something that interrupts
+   control flow like <tt>return</tt>, <tt>break</tt>, <tt>continue</tt>, <tt>goto</tt>, etc.  For example, this is
    "bad":</p>
    
 <div class="doc_code">
@@ -943,7 +943,7 @@ increasing link times.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ll_end">Don't evaluate end() every time through a loop</a>
+  <a name="ll_end">Don't evaluate <tt>end()</tt> every time through a loop</a>
 </div>
 
 <div class="doc_text">
