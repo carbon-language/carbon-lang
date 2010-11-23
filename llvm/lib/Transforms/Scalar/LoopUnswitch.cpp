@@ -32,7 +32,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -969,13 +968,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
   while (!Worklist.empty()) {
     Instruction *I = Worklist.back();
     Worklist.pop_back();
-    
-    // Simple constant folding.
-    if (Constant *C = ConstantFoldInstruction(I)) {
-      ReplaceUsesOfWith(I, C, Worklist, L, LPM);
-      continue;
-    }
-    
+
     // Simple DCE.
     if (isInstructionTriviallyDead(I)) {
       DEBUG(dbgs() << "Remove dead instruction '" << *I);
