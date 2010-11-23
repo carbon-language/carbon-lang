@@ -17,6 +17,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/ELF.h"
 
 using namespace llvm;
 
@@ -42,9 +43,9 @@ unsigned ARMELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
   case ARM::reloc_arm_pic_jt:
     assert(0 && "unsupported ARM relocation type"); break;
     
-  case ARM::reloc_arm_branch: return R_ARM_CALL; break;
-  case ARM::reloc_arm_movt:   return R_ARM_MOVT_ABS; break;
-  case ARM::reloc_arm_movw:   return R_ARM_MOVW_ABS_NC; break;
+  case ARM::reloc_arm_branch: return ELF::R_ARM_CALL; break;
+  case ARM::reloc_arm_movt:   return ELF::R_ARM_MOVT_ABS; break;
+  case ARM::reloc_arm_movw:   return ELF::R_ARM_MOVW_ABS_NC; break;
   default:
     llvm_unreachable("unknown ARM relocation type"); break;
   }
