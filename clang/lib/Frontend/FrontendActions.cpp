@@ -209,8 +209,7 @@ void PrintPreambleAction::ExecuteAction() {
   
   CompilerInstance &CI = getCompilerInstance();
   llvm::MemoryBuffer *Buffer
-      = CI.getFileManager().getBufferForFile(getCurrentFile(),
-                                             CI.getFileSystemOpts());
+      = CI.getFileManager().getBufferForFile(getCurrentFile());
   if (Buffer) {
     unsigned Preamble = Lexer::ComputePreamble(Buffer).first;
     llvm::outs().write(Buffer->getBufferStart(), Preamble);

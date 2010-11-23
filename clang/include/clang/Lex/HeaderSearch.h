@@ -23,7 +23,6 @@ namespace clang {
 class ExternalIdentifierLookup;
 class FileEntry;
 class FileManager;
-class FileSystemOptions;
 class IdentifierInfo;
 
 /// HeaderFileInfo - The preprocessor keeps track of this information for each
@@ -72,8 +71,6 @@ struct HeaderFileInfo {
 /// file referenced by a #include or #include_next, (sub-)framework lookup, etc.
 class HeaderSearch {
   FileManager &FileMgr;
-  const FileSystemOptions &FileSystemOpts;
-
   /// #include search path information.  Requests for #include "x" search the
   /// directory of the #including file first, then each directory in SearchDirs
   /// consequtively. Requests for <x> search the current dir first, then each
@@ -120,11 +117,10 @@ class HeaderSearch {
   explicit HeaderSearch(const HeaderSearch&);
   void operator=(const HeaderSearch&);
 public:
-  HeaderSearch(FileManager &FM, const FileSystemOptions &FSOpts);
+  HeaderSearch(FileManager &FM);
   ~HeaderSearch();
 
   FileManager &getFileMgr() const { return FileMgr; }
-  const FileSystemOptions &getFileSystemOpts() const { return FileSystemOpts; }
 
   /// SetSearchPaths - Interface for setting the file search paths.
   ///

@@ -234,11 +234,11 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   
   /// \brief Language options used to adjust source locations.
   LangOptions LangOpts;
-  
-  /// \brief File manager, used for diagnostics.
-  FileManager FileMgr;
 
   FileSystemOptions FileSystemOpts;
+
+  /// \brief File manager, used for diagnostics.
+  FileManager FileMgr;
 
   /// \brief Source manager, used for diagnostics.
   SourceManager SourceMgr;
@@ -263,7 +263,7 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults()
     Diag(new Diagnostic(
                    llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs))),
     FileMgr(FileSystemOpts),
-    SourceMgr(*Diag, FileMgr, FileSystemOpts) { 
+    SourceMgr(*Diag, FileMgr) { 
   if (getenv("LIBCLANG_OBJTRACKING")) {
     ++CodeCompletionResultObjects;
     fprintf(stderr, "+++ %d completion results\n", CodeCompletionResultObjects);

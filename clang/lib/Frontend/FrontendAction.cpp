@@ -133,7 +133,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (!CI.hasFileManager())
     CI.createFileManager();
   if (!CI.hasSourceManager())
-    CI.createSourceManager(CI.getFileManager(), CI.getFileSystemOpts());
+    CI.createSourceManager(CI.getFileManager());
 
   // IR files bypass the rest of initialization.
   if (InputKind == IK_LLVM_IR) {

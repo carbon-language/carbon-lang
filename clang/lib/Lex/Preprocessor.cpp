@@ -53,7 +53,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            IdentifierInfoLookup* IILookup,
                            bool OwnsHeaders)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
-    FileSystemOpts(Headers.getFileSystemOpts()), SourceMgr(SM),
+    SourceMgr(SM),
     HeaderInfo(Headers), ExternalSource(0),
     Identifiers(opts, IILookup), BuiltinInfo(Target), CodeComplete(0),
     CodeCompletionFile(0), SkipMainFilePreamble(0, true), CurPPLexer(0), 

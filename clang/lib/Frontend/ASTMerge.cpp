@@ -51,10 +51,8 @@ void ASTMergeAction::ExecuteAction() {
 
     ASTImporter Importer(CI.getASTContext(), 
                          CI.getFileManager(),
-                         CI.getFileSystemOpts(),
                          Unit->getASTContext(), 
-                         Unit->getFileManager(),
-                         Unit->getFileSystemOpts());
+                         Unit->getFileManager());
 
     TranslationUnitDecl *TU = Unit->getASTContext().getTranslationUnitDecl();
     for (DeclContext::decl_iterator D = TU->decls_begin(), 

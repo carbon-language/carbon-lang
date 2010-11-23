@@ -458,8 +458,8 @@ const std::string &ASTUnit::getASTFileName() {
 llvm::MemoryBuffer *ASTUnit::getBufferForFile(llvm::StringRef Filename,
                                               std::string *ErrorStr,
                                               int64_t FileSize) {
-  return FileMgr->getBufferForFile(Filename, FileSystemOpts,
-                                   ErrorStr, FileSize);
+  assert(FileMgr);
+  return FileMgr->getBufferForFile(Filename, ErrorStr, FileSize);
 }
 
 /// \brief Configure the diagnostics object for use with ASTUnit.
@@ -491,21 +491,17 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->Diagnostics = Diags;
-  AST->FileSystemOpts = FileSystemOpts;
   AST->FileMgr.reset(new FileManager(FileSystemOpts));
   AST->SourceMgr.reset(new SourceManager(AST->getDiagnostics(),
-                                         AST->getFileManager(),
-                                         AST->getFileSystemOpts()));
-  AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager(),
-                                         AST->getFileSystemOpts()));
+                                         AST->getFileManager()));
+  AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
   
   for (unsigned I = 0; I != NumRemappedFiles; ++I) {
     // Create the file entry for the file that we're mapping from.
     const FileEntry *FromFile
       = AST->getFileManager().getVirtualFile(RemappedFiles[I].first,
                                     RemappedFiles[I].second->getBufferSize(),
-                                             0,
-                                             AST->getFileSystemOpts());
+                                             0);
     if (!FromFile) {
       AST->getDiagnostics().Report(diag::err_fe_remap_missing_from_file)
         << RemappedFiles[I].first;
@@ -530,7 +526,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   llvm::OwningPtr<ASTReader> Reader;
 
   Reader.reset(new ASTReader(AST->getSourceManager(), AST->getFileManager(),
-                             AST->getFileSystemOpts(), AST->getDiagnostics()));
+                             AST->getDiagnostics()));
   Reader->setListener(new ASTInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
@@ -753,9 +749,9 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
 
   // Configure the various subsystems.
   // FIXME: Should we retain the previous file manager?
-  FileMgr.reset(new FileManager(Clang.getFileSystemOpts()));
   FileSystemOpts = Clang.getFileSystemOpts();
-  SourceMgr.reset(new SourceManager(getDiagnostics(), *FileMgr, FileSystemOpts));
+  FileMgr.reset(new FileManager(Clang.getFileSystemOpts()));
+  SourceMgr.reset(new SourceManager(getDiagnostics(), *FileMgr));
   TheSema.reset();
   Ctx.reset();
   PP.reset();
@@ -899,8 +895,7 @@ std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> >
 ASTUnit::ComputePreamble(CompilerInvocation &Invocation, 
                          unsigned MaxLines, bool &CreatedBuffer) {
   FrontendOptions &FrontendOpts = Invocation.getFrontendOpts();
-  PreprocessorOptions &PreprocessorOpts
-    = Invocation.getPreprocessorOpts();
+  PreprocessorOptions &PreprocessorOpts = Invocation.getPreprocessorOpts();
   CreatedBuffer = false;
   
   // Try to determine if the main file has been remapped, either from the 
@@ -1249,8 +1244,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   // Create the source manager.
   Clang.setSourceManager(new SourceManager(getDiagnostics(),
-                                           Clang.getFileManager(),
-                                           Clang.getFileSystemOpts()));
+                                           Clang.getFileManager()));
   
   llvm::OwningPtr<PrecompilePreambleAction> Act;
   Act.reset(new PrecompilePreambleAction(*this));
@@ -1477,6 +1471,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
+  
+  AST->FileMgr.reset(new FileManager(FileSystemOptions()));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->CompleteTranslationUnit = CompleteTranslationUnit;
@@ -1486,7 +1482,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->NumStoredDiagnosticsInPreamble = StoredDiagnostics.size();
   AST->StoredDiagnostics.swap(StoredDiagnostics);
   AST->Invocation.reset(CI.take());
-  return AST->LoadFromCompilerInvocation(PrecompilePreamble)? 0 : AST.take();
+  return AST->LoadFromCompilerInvocation(PrecompilePreamble) ? 0 : AST.take();
 }
 
 bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {

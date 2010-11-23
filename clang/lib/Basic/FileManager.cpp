@@ -199,8 +199,7 @@ void FileManager::removeStatCache(StatSysCallCache *statCache) {
 
 /// \brief Retrieve the directory that the given file name resides in.
 static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
-                                                  llvm::StringRef Filename,
-                                      const FileSystemOptions &FileSystemOpts) {
+                                                  llvm::StringRef Filename) {
   // Figure out what directory it is in.   If the string contains a / in it,
   // strip off everything after it.
   // FIXME: this logic should be in sys::Path.
@@ -210,7 +209,7 @@ static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
 
   // Use the current directory if file has no path component.
   if (SlashPos == 0)
-    return FileMgr.getDirectory(".", FileSystemOpts);
+    return FileMgr.getDirectory(".");
 
   if (SlashPos == Filename.size()-1)
     return 0;       // If filename ends with a /, it's a directory.
@@ -219,14 +218,13 @@ static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
   while (SlashPos != 0 && IS_DIR_SEPARATOR_CHAR(Filename[SlashPos-1]))
     --SlashPos;
 
-  return FileMgr.getDirectory(Filename.substr(0, SlashPos), FileSystemOpts);
+  return FileMgr.getDirectory(Filename.substr(0, SlashPos));
 }
 
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
 ///
-const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename,
-                                      const FileSystemOptions &FileSystemOpts) {
+const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename) {
   // stat doesn't like trailing separators (at least on Windows).
   if (Filename.size() > 1 && IS_DIR_SEPARATOR_CHAR(Filename.back()))
     Filename = Filename.substr(0, Filename.size()-1);
@@ -276,8 +274,7 @@ const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename,
 /// getFile - Lookup, cache, and verify the specified file.  This returns null
 /// if the file doesn't exist.
 ///
-const FileEntry *FileManager::getFile(llvm::StringRef Filename,
-                                      const FileSystemOptions &FileSystemOpts) {
+const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
   ++NumFileLookups;
 
   // See if there is already an entry in the map.
@@ -299,8 +296,7 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename,
   // FileEntries map.
   const char *InterndFileName = NamedFileEnt.getKeyData();
 
-  const DirectoryEntry *DirInfo
-    = getDirectoryFromFile(*this, Filename, FileSystemOpts);
+  const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename);
   if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
     return 0;
 
@@ -339,8 +335,7 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename,
 
 const FileEntry *
 FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
-                            time_t ModificationTime,
-                            const FileSystemOptions &FileSystemOpts) {
+                            time_t ModificationTime) {
   ++NumFileLookups;
 
   // See if there is already an entry in the map.
@@ -357,8 +352,7 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   // By default, initialize it to invalid.
   NamedFileEnt.setValue(NON_EXISTENT_FILE);
 
-  const DirectoryEntry *DirInfo
-    = getDirectoryFromFile(*this, Filename, FileSystemOpts);
+  const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename);
   if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
     return 0;
 
@@ -399,7 +393,6 @@ void FileManager::FixupRelativePath(llvm::sys::Path &path,
 
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(llvm::StringRef Filename,
-                 const FileSystemOptions &FileSystemOpts,
                  std::string *ErrorStr, int64_t FileSize) {
   if (FileSystemOpts.WorkingDir.empty())
     return llvm::MemoryBuffer::getFile(Filename, ErrorStr, FileSize);

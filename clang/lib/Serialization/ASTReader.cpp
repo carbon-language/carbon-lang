@@ -1234,7 +1234,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
   case SM_SLOC_FILE_ENTRY: {
     std::string Filename(BlobStart, BlobStart + BlobLen);
     MaybeAddSystemRootToFilename(Filename);
-    const FileEntry *File = FileMgr.getFile(Filename, FileSystemOpts);
+    const FileEntry *File = FileMgr.getFile(Filename);
     if (File == 0) {
       std::string ErrorStr = "could not find file '";
       ErrorStr += Filename;
@@ -1549,8 +1549,7 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       const char *FullFileNameStart = BlobStart + Record[3];
       const FileEntry *File
       = PP->getFileManager().getFile(llvm::StringRef(FullFileNameStart,
-                                                     BlobLen - Record[3]),
-                                     FileSystemOpts);
+                                                     BlobLen - Record[3]));
 
       // FIXME: Stable encoding
       InclusionDirective::InclusionKind Kind
@@ -2273,7 +2272,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
   if (FileName == "-")
     F.Buffer.reset(llvm::MemoryBuffer::getSTDIN(&ErrStr));
   else
-    F.Buffer.reset(FileMgr.getBufferForFile(FileName, FileSystemOpts, &ErrStr));
+    F.Buffer.reset(FileMgr.getBufferForFile(FileName, &ErrStr));
   if (!F.Buffer) {
     Error(ErrStr.c_str());
     return IgnorePCH;
@@ -2478,12 +2477,11 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
 /// file.
 std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
                                              FileManager &FileMgr,
-                                             const FileSystemOptions &FSOpts,
                                              Diagnostic &Diags) {
   // Open the AST file.
   std::string ErrStr;
   llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
-  Buffer.reset(FileMgr.getBufferForFile(ASTFileName, FSOpts, &ErrStr));
+  Buffer.reset(FileMgr.getBufferForFile(ASTFileName, &ErrStr));
   if (!Buffer) {
     Diags.Report(diag::err_fe_unable_to_read_pch_file) << ErrStr;
     return std::string();
@@ -4503,7 +4501,6 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
                      const char *isysroot, bool DisableValidation)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
-    FileSystemOpts(PP.getFileSystemOpts()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
     Consumer(0), isysroot(isysroot), DisableValidation(DisableValidation),
     NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0),
@@ -4517,11 +4514,9 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
 }
 
 ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
-                     const FileSystemOptions &FileSystemOpts,
                      Diagnostic &Diags, const char *isysroot,
                      bool DisableValidation)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
-    FileSystemOpts(FileSystemOpts),
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
     isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
     NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),

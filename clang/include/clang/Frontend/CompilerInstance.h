@@ -515,8 +515,7 @@ public:
   void createFileManager();
 
   /// Create the source manager and replace any existing one with it.
-  void createSourceManager(FileManager &FileMgr,
-                           const FileSystemOptions &FSOpts);
+  void createSourceManager(FileManager &FileMgr);
 
   /// Create the preprocessor, using the invocation, file, and source managers,
   /// and replace any existing one with it.
@@ -534,7 +533,6 @@ public:
                                           const DependencyOutputOptions &,
                                           const TargetInfo &,
                                           const FrontendOptions &,
-                                          const FileSystemOptions &,
                                           SourceManager &, FileManager &);
 
   /// Create the AST context.
@@ -635,7 +633,6 @@ public:
   static bool InitializeSourceManager(llvm::StringRef InputFile,
                                       Diagnostic &Diags,
                                       FileManager &FileMgr,
-                                      const FileSystemOptions &FSOpts,
                                       SourceManager &SourceMgr,
                                       const FrontendOptions &Opts);
 

@@ -67,7 +67,6 @@ class ASTDeclReader;
 class ASTStmtReader;
 class ASTIdentifierLookupTrait;
 class TypeLocReader;
-class FileSystemOptions;
 struct HeaderFileInfo;
 
 struct PCHPredefinesBlock {
@@ -194,7 +193,6 @@ private:
 
   SourceManager &SourceMgr;
   FileManager &FileMgr;
-  const FileSystemOptions &FileSystemOpts;
   Diagnostic &Diags;
 
   /// \brief The semantic analysis object that will be processing the
@@ -808,7 +806,6 @@ public:
   /// of its regular consistency checking, allowing the use of precompiled
   /// headers that cannot be determined to be compatible.
   ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
-            const FileSystemOptions &FileSystemOpts,
             Diagnostic &Diags, const char *isysroot = 0,
             bool DisableValidation = false);
   ~ASTReader();
@@ -841,7 +838,6 @@ public:
   /// the AST file, without actually loading the AST file.
   static std::string getOriginalSourceFile(const std::string &ASTFileName,
                                            FileManager &FileMgr,
-                                           const FileSystemOptions &FSOpts,
                                            Diagnostic &Diags);
 
   /// \brief Returns the suggested contents of the predefines buffer,

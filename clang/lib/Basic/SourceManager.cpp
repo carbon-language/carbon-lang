@@ -73,9 +73,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   // Lazily create the Buffer for ContentCaches that wrap files.
   if (!Buffer.getPointer() && Entry) {
     std::string ErrorStr;
-    Buffer.setPointer(SM.getFileManager().getBufferForFile(Entry,
-                                                         SM.getFileSystemOpts(),
-                                                         &ErrorStr));
+    Buffer.setPointer(SM.getFileManager().getBufferForFile(Entry, &ErrorStr));
 
     // If we were unable to open the file, then we are in an inconsistent
     // situation where the content cache referenced a file which no longer
@@ -332,9 +330,8 @@ LineTableInfo &SourceManager::getLineTable() {
 // Private 'Create' methods.
 //===----------------------------------------------------------------------===//
 
-SourceManager::SourceManager(Diagnostic &Diag, FileManager &FileMgr,
-                             const FileSystemOptions &FSOpts)
-  : Diag(Diag), FileMgr(FileMgr), FileSystemOpts(FSOpts),
+SourceManager::SourceManager(Diagnostic &Diag, FileManager &FileMgr)
+  : Diag(Diag), FileMgr(FileMgr),
     ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
     NumBinaryProbes(0) {
   clearIDTables();

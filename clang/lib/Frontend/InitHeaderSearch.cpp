@@ -102,7 +102,6 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
                                bool IgnoreSysRoot) {
   assert(!Path.isTriviallyEmpty() && "can't handle empty path here");
   FileManager &FM = Headers.getFileMgr();
-  const FileSystemOptions &FSOpts = Headers.getFileSystemOpts();
 
   // Compute the actual path, taking into consideration -isysroot.
   llvm::SmallString<256> MappedPathStorage;
@@ -129,7 +128,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
 
 
   // If the directory exists, add it.
-  if (const DirectoryEntry *DE = FM.getDirectory(MappedPathStr, FSOpts)) {
+  if (const DirectoryEntry *DE = FM.getDirectory(MappedPathStr)) {
     IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
                                                   isFramework));
     return;
@@ -138,7 +137,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   // Check to see if this is an apple-style headermap (which are not allowed to
   // be frameworks).
   if (!isFramework) {
-    if (const FileEntry *FE = FM.getFile(MappedPathStr, FSOpts)) {
+    if (const FileEntry *FE = FM.getFile(MappedPathStr)) {
       if (const HeaderMap *HM = Headers.CreateHeaderMap(FE)) {
         // It is a headermap, add it to the search path.
         IncludeGroup[Group].push_back(DirectoryLookup(HM, Type,isUserSupplied));

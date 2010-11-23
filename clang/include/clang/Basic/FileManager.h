@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FILEMANAGER_H
 #define LLVM_CLANG_FILEMANAGER_H
 
+#include "clang/Basic/FileSystemOptions.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -33,7 +34,6 @@ class Path;
 
 namespace clang {
 class FileManager;
-class FileSystemOptions;
 
 /// DirectoryEntry - Cached information about one directory on the disk.
 ///
@@ -141,7 +141,7 @@ public:
 /// names (e.g. symlinked) will be treated as a single file.
 ///
 class FileManager {
-  const FileSystemOptions &FileSystemOpts;
+  FileSystemOptions FileSystemOpts;
   
   class UniqueDirContainer;
   class UniqueFileContainer;
@@ -196,32 +196,26 @@ public:
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.
   ///
-  const DirectoryEntry *getDirectory(llvm::StringRef Filename,
-                                     const FileSystemOptions &FileSystemOpts);
+  const DirectoryEntry *getDirectory(llvm::StringRef Filename);
 
   /// getFile - Lookup, cache, and verify the specified file.  This returns null
   /// if the file doesn't exist.
   ///
-  const FileEntry *getFile(llvm::StringRef Filename,
-                           const FileSystemOptions &FileSystemOpts);
+  const FileEntry *getFile(llvm::StringRef Filename);
 
   /// \brief Retrieve a file entry for a "virtual" file that acts as
   /// if there were a file with the given name on disk. The file
   /// itself is not accessed.
   const FileEntry *getVirtualFile(llvm::StringRef Filename, off_t Size,
-                                  time_t ModificationTime,
-                                  const FileSystemOptions &FileSystemOpts);
+                                  time_t ModificationTime);
 
   /// \brief Open the specified file as a MemoryBuffer, returning a new
   /// MemoryBuffer if successful, otherwise returning null.
   llvm::MemoryBuffer *getBufferForFile(const FileEntry *Entry,
-                                       const FileSystemOptions &FileSystemOpts,
                                        std::string *ErrorStr = 0) {
-    return getBufferForFile(Entry->getName(), FileSystemOpts,
-                            ErrorStr, Entry->getSize());
+    return getBufferForFile(Entry->getName(), ErrorStr, Entry->getSize());
   }
   llvm::MemoryBuffer *getBufferForFile(llvm::StringRef Filename,
-                                       const FileSystemOptions &FileSystemOpts,
                                        std::string *ErrorStr = 0,
                                        int64_t FileSize = -1);
 

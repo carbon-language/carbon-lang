@@ -1419,7 +1419,6 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
 static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
                                   FileManager &FileMgr,
-                                  const FileSystemOptions &FSOpts,
                                   Diagnostic &Diags) {
   using namespace cc1options;
   Opts.ImplicitPCHInclude = Args.getLastArgValue(OPT_include_pch);
@@ -1474,8 +1473,7 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
     // PCH is handled specially, we need to extra the original include path.
     if (A->getOption().matches(OPT_include_pch)) {
       std::string OriginalFile =
-        ASTReader::getOriginalSourceFile(A->getValue(Args), FileMgr, FSOpts,
-                                         Diags);
+        ASTReader::getOriginalSourceFile(A->getValue(Args), FileMgr, Diags);
       if (OriginalFile.empty())
         continue;
 
@@ -1531,8 +1529,8 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
 //
 
 void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
-                                        const char* const *ArgBegin,
-                                        const char* const *ArgEnd,
+                                        const char *const *ArgBegin,
+                                        const char *const *ArgEnd,
                                         Diagnostic &Diags) {
   // Parse the arguments.
   llvm::OwningPtr<OptTable> Opts(createCC1OptTable());
@@ -1561,11 +1559,10 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
     ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
   // FIXME: ParsePreprocessorArgs uses the FileManager to read the contents of
   // PCH file and find the original header name. Remove the need to do that in
-  // ParsePreprocessorArgs and remove the FileManager & FileSystemOptions
+  // ParsePreprocessorArgs and remove the FileManager 
   // parameters from the function and the "FileManager.h" #include.
   FileManager FileMgr(Res.getFileSystemOpts());
-  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args,
-                        FileMgr, Res.getFileSystemOpts(), Diags);
+  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, FileMgr, Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);
   ParseTargetArgs(Res.getTargetOpts(), *Args);
 }

@@ -28,7 +28,6 @@ namespace clang {
   class Diagnostic;
   class Expr;
   class FileManager;
-  class FileSystemOptions;
   class IdentifierInfo;
   class NestedNameSpecifier;
   class Stmt;
@@ -47,8 +46,6 @@ namespace clang {
     /// \brief The file managers we're importing to and from.
     FileManager &ToFileManager, &FromFileManager;
 
-    const FileSystemOptions &ToFileSystemOpts, &FromFileSystemOpts;
-    
     /// \brief Mapping from the already-imported types in the "from" context
     /// to the corresponding types in the "to" context.
     llvm::DenseMap<Type *, Type *> ImportedTypes;
@@ -75,9 +72,7 @@ namespace clang {
     
   public:
     ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
-                const FileSystemOptions &ToFileSystemOpts,
-                ASTContext &FromContext, FileManager &FromFileManager,
-                const FileSystemOptions &FromFileSystemOpts);
+                ASTContext &FromContext, FileManager &FromFileManager);
     
     virtual ~ASTImporter();
     

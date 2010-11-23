@@ -2584,8 +2584,7 @@ CXFile clang_getFile(CXTranslationUnit tu, const char *file_name) {
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
 
   FileManager &FMgr = CXXUnit->getFileManager();
-  const FileEntry *File = FMgr.getFile(file_name, CXXUnit->getFileSystemOpts());
-  return const_cast<FileEntry *>(File);
+  return const_cast<FileEntry *>(FMgr.getFile(file_name));
 }
 
 } // end: extern "C"
