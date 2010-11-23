@@ -69,13 +69,10 @@ class FileManager::UniqueDirContainer {
 public:
   DirectoryEntry &getDirectory(const char *Name, struct stat &StatBuf) {
     std::string FullPath(GetFullPath(Name));
-    return UniqueDirs.GetOrCreateValue(
-                              FullPath.c_str(),
-                              FullPath.c_str() + FullPath.size()
-                                                                ).getValue();
+    return UniqueDirs.GetOrCreateValue(FullPath).getValue();
   }
 
-  size_t size() { return UniqueDirs.size(); }
+  size_t size() const { return UniqueDirs.size(); }
 };
 
 class FileManager::UniqueFileContainer {
@@ -89,13 +86,10 @@ public:
     
     // LowercaseString because Windows filesystem is case insensitive.
     FullPath = llvm::LowercaseString(FullPath);
-    return UniqueFiles.GetOrCreateValue(
-                               FullPath.c_str(),
-                               FullPath.c_str() + FullPath.size()
-                                                                 ).getValue();
+    return UniqueFiles.GetOrCreateValue(FullPath).getValue();
   }
 
-  size_t size() { return UniqueFiles.size(); }
+  size_t size() const { return UniqueFiles.size(); }
 };
 
 //===----------------------------------------------------------------------===//
@@ -116,7 +110,7 @@ public:
     return UniqueDirs[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   }
 
-  size_t size() { return UniqueDirs.size(); }
+  size_t size() const { return UniqueDirs.size(); }
 };
 
 class FileManager::UniqueFileContainer {
@@ -133,7 +127,7 @@ public:
                                                   StatBuf.st_mode)).first);
   }
 
-  size_t size() { return UniqueFiles.size(); }
+  size_t size() const { return UniqueFiles.size(); }
 };
 
 #endif
@@ -144,8 +138,8 @@ public:
 
 FileManager::FileManager(const FileSystemOptions &FSO)
   : FileSystemOpts(FSO),
-    UniqueDirs(*new UniqueDirContainer),
-    UniqueFiles(*new UniqueFileContainer),
+    UniqueDirs(*new UniqueDirContainer()),
+    UniqueFiles(*new UniqueFileContainer()),
     DirEntries(64), FileEntries(64), NextFileUID(0) {
   NumDirLookups = NumFileLookups = 0;
   NumDirCacheMisses = NumFileCacheMisses = 0;
@@ -154,12 +148,8 @@ FileManager::FileManager(const FileSystemOptions &FSO)
 FileManager::~FileManager() {
   delete &UniqueDirs;
   delete &UniqueFiles;
-  for (llvm::SmallVectorImpl<FileEntry *>::iterator
-         V = VirtualFileEntries.begin(),
-         VEnd = VirtualFileEntries.end();
-       V != VEnd; 
-       ++V)
-    delete *V;
+  for (unsigned i = 0, e = VirtualFileEntries.size(); i != e; ++i)
+    delete VirtualFileEntries[i];
 }
 
 void FileManager::addStatCache(FileSystemStatCache *statCache,
@@ -297,6 +287,12 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
   // FileEntries map.
   const char *InterndFileName = NamedFileEnt.getKeyData();
 
+  
+  // Look up the directory for the file.  When looking up something like
+  // sys/foo.h we'll discover all of the search directories that have a 'sys'
+  // subdirectory.  This will let us avoid having to waste time on known-to-fail
+  // searches when we go to find sys/bar.h, because all the search directories
+  // without a 'sys' subdir will get a cached failure result.
   const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename);
   if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
     return 0;
