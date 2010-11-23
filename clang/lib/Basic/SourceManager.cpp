@@ -67,79 +67,86 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
                                                   const SourceManager &SM,
                                                   SourceLocation Loc,
                                                   bool *Invalid) const {
-  if (Invalid)
-    *Invalid = false;
-      
-  // Lazily create the Buffer for ContentCaches that wrap files.
-  if (!Buffer.getPointer() && Entry) {
-    std::string ErrorStr;
-    Buffer.setPointer(SM.getFileManager().getBufferForFile(Entry, &ErrorStr));
-
-    // If we were unable to open the file, then we are in an inconsistent
-    // situation where the content cache referenced a file which no longer
-    // exists. Most likely, we were using a stat cache with an invalid entry but
-    // the file could also have been removed during processing. Since we can't
-    // really deal with this situation, just create an empty buffer.
-    //
-    // FIXME: This is definitely not ideal, but our immediate clients can't
-    // currently handle returning a null entry here. Ideally we should detect
-    // that we are in an inconsistent situation and error out as quickly as
-    // possible.
-    if (!Buffer.getPointer()) {
-      const llvm::StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
-      Buffer.setPointer(MemoryBuffer::getNewMemBuffer(Entry->getSize(), 
-                                                      "<invalid>"));
-      char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());
-      for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
-        Ptr[i] = FillStr[i % FillStr.size()];
-
-      if (Diag.isDiagnosticInFlight())
-        Diag.SetDelayedDiagnostic(diag::err_cannot_open_file, 
-                                  Entry->getName(), ErrorStr);
-      else 
-        Diag.Report(Loc, diag::err_cannot_open_file)
-          << Entry->getName() << ErrorStr;
-
-      Buffer.setInt(Buffer.getInt() | InvalidFlag);
-
-    } else if (getRawBuffer()->getBufferSize() != (size_t)Entry->getSize()) {
-      // Check that the file's size is the same as in the file entry (which may
-      // have come from a stat cache).
-      if (Diag.isDiagnosticInFlight())
-        Diag.SetDelayedDiagnostic(diag::err_file_modified,
-                                  Entry->getName());
-      else
-        Diag.Report(Loc, diag::err_file_modified)
-          << Entry->getName();
-
-      Buffer.setInt(Buffer.getInt() | InvalidFlag);
-    }
+  // Lazily create the Buffer for ContentCaches that wrap files.  If we already
+  // computed it, jsut return what we have.
+  if (Buffer.getPointer() || Entry == 0) {
+    if (Invalid)
+      *Invalid = isBufferInvalid();
     
-    // If the buffer is valid, check to see if it has a UTF Byte Order Mark
-    // (BOM).  We only support UTF-8 without a BOM right now.  See
-    // http://en.wikipedia.org/wiki/Byte_order_mark for more information.
-    if (!isBufferInvalid()) {
-      llvm::StringRef BufStr = Buffer.getPointer()->getBuffer();
-      const char *BOM = llvm::StringSwitch<const char *>(BufStr)
-        .StartsWith("\xEF\xBB\xBF", "UTF-8")
-        .StartsWith("\xFE\xFF", "UTF-16 (BE)")
-        .StartsWith("\xFF\xFE", "UTF-16 (LE)")
-        .StartsWith("\x00\x00\xFE\xFF", "UTF-32 (BE)")
-        .StartsWith("\xFF\xFE\x00\x00", "UTF-32 (LE)")
-        .StartsWith("\x2B\x2F\x76", "UTF-7")
-        .StartsWith("\xF7\x64\x4C", "UTF-1")
-        .StartsWith("\xDD\x73\x66\x73", "UTF-EBCDIC")
-        .StartsWith("\x0E\xFE\xFF", "SDSU")
-        .StartsWith("\xFB\xEE\x28", "BOCU-1")
-        .StartsWith("\x84\x31\x95\x33", "GB-18030")
-        .Default(0);
+    return Buffer.getPointer();
+  }    
 
-      if (BOM) {
-        Diag.Report(Loc, diag::err_unsupported_bom)
-          << BOM << Entry->getName();
-        Buffer.setInt(1);
-      }
-    }
+  std::string ErrorStr;
+  Buffer.setPointer(SM.getFileManager().getBufferForFile(Entry, &ErrorStr));
+
+  // If we were unable to open the file, then we are in an inconsistent
+  // situation where the content cache referenced a file which no longer
+  // exists. Most likely, we were using a stat cache with an invalid entry but
+  // the file could also have been removed during processing. Since we can't
+  // really deal with this situation, just create an empty buffer.
+  //
+  // FIXME: This is definitely not ideal, but our immediate clients can't
+  // currently handle returning a null entry here. Ideally we should detect
+  // that we are in an inconsistent situation and error out as quickly as
+  // possible.
+  if (!Buffer.getPointer()) {
+    const llvm::StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
+    Buffer.setPointer(MemoryBuffer::getNewMemBuffer(Entry->getSize(), 
+                                                    "<invalid>"));
+    char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());
+    for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
+      Ptr[i] = FillStr[i % FillStr.size()];
+
+    if (Diag.isDiagnosticInFlight())
+      Diag.SetDelayedDiagnostic(diag::err_cannot_open_file, 
+                                Entry->getName(), ErrorStr);
+    else 
+      Diag.Report(Loc, diag::err_cannot_open_file)
+        << Entry->getName() << ErrorStr;
+
+    Buffer.setInt(Buffer.getInt() | InvalidFlag);
+    
+    if (Invalid) *Invalid = true;
+    return Buffer.getPointer();
+  }
+  
+  // Check that the file's size is the same as in the file entry (which may
+  // have come from a stat cache).
+  if (getRawBuffer()->getBufferSize() != (size_t)Entry->getSize()) {
+    if (Diag.isDiagnosticInFlight())
+      Diag.SetDelayedDiagnostic(diag::err_file_modified,
+                                Entry->getName());
+    else
+      Diag.Report(Loc, diag::err_file_modified)
+        << Entry->getName();
+
+    Buffer.setInt(Buffer.getInt() | InvalidFlag);
+    if (Invalid) *Invalid = true;
+    return Buffer.getPointer();
+  }
+  
+  // If the buffer is valid, check to see if it has a UTF Byte Order Mark
+  // (BOM).  We only support UTF-8 without a BOM right now.  See
+  // http://en.wikipedia.org/wiki/Byte_order_mark for more information.
+  llvm::StringRef BufStr = Buffer.getPointer()->getBuffer();
+  const char *BOM = llvm::StringSwitch<const char *>(BufStr)
+    .StartsWith("\xEF\xBB\xBF", "UTF-8")
+    .StartsWith("\xFE\xFF", "UTF-16 (BE)")
+    .StartsWith("\xFF\xFE", "UTF-16 (LE)")
+    .StartsWith("\x00\x00\xFE\xFF", "UTF-32 (BE)")
+    .StartsWith("\xFF\xFE\x00\x00", "UTF-32 (LE)")
+    .StartsWith("\x2B\x2F\x76", "UTF-7")
+    .StartsWith("\xF7\x64\x4C", "UTF-1")
+    .StartsWith("\xDD\x73\x66\x73", "UTF-EBCDIC")
+    .StartsWith("\x0E\xFE\xFF", "SDSU")
+    .StartsWith("\xFB\xEE\x28", "BOCU-1")
+    .StartsWith("\x84\x31\x95\x33", "GB-18030")
+    .Default(0);
+
+  if (BOM) {
+    Diag.Report(Loc, diag::err_unsupported_bom)
+      << BOM << Entry->getName();
+    Buffer.setInt(Buffer.getInt() | InvalidFlag);
   }
   
   if (Invalid)
