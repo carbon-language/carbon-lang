@@ -8,8 +8,10 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements routines for folding instructions into simpler forms
-// that do not require creating new instructions.  For example, this does
-// constant folding, and can handle identities like (X&0)->0.
+// that do not require creating new instructions.  This does constant folding
+// ("add i32 1, 1" -> "2") but can also handle non-constant operands, either
+// returning a constant ("and i32 %x, 0" -> "0") or an already existing value
+// ("and i32 %x, %x" -> "%x").
 //
 //===----------------------------------------------------------------------===//
 
