@@ -787,6 +787,9 @@ public:
                                     AccessSpecifier AS,
                                     RecordDecl *Record);
 
+  Decl *BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS, 
+                                       RecordDecl *Record);
+
   bool isAcceptableTagRedeclaration(const TagDecl *Previous,
                                     TagTypeKind NewTag,
                                     SourceLocation NewTagLoc,

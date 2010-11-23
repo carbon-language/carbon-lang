@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -Wmicrosoft -verify -fms-extensions
+// RUN: %clang_cc1 %s -fsyntax-only -Wno-unused-value -Wmicrosoft -verify -fms-extensions
 
 
 struct A
@@ -27,7 +27,43 @@ enum ENUM1* var2 = 0;
 
 
 enum ENUM2 {
-	ENUM2_a = (enum ENUM2) 4,
-	ENUM2_b = 0x9FFFFFFF, // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
-	ENUM2_c = 0x100000000 // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
+  ENUM2_a = (enum ENUM2) 4,
+  ENUM2_b = 0x9FFFFFFF, // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
+  ENUM2_c = 0x100000000 // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
 };
+
+
+
+
+typedef struct notnested {
+  long bad1;
+  long bad2;
+} NOTNESTED;
+
+
+typedef struct nested1 {
+  long a;
+  struct notnested var1;
+  NOTNESTED var2;
+} NESTED1;
+
+struct nested2 {
+  long b;
+  NESTED1;  // expected-warning {{anonymous structs are a Microsoft extension}}
+};
+
+struct test {
+  int c;
+  struct nested2;   // expected-warning {{anonymous structs are a Microsoft extension}}
+};
+
+void foo()
+{
+  struct test var;
+  var.a;
+  var.b;
+  var.c;
+  var.bad1;   // expected-error {{no member named 'bad1' in 'struct test'}}
+  var.bad2;   // expected-error {{no member named 'bad2' in 'struct test'}}
+}
+

@@ -1646,12 +1646,24 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
         << DS.getSourceRange();
     }
+  }
 
-    // Microsoft allows unnamed struct/union fields. Don't complain
-    // about them.
-    // FIXME: Should we support Microsoft's extensions in this area?
-    if (Record->getDeclName() && getLangOptions().Microsoft)
-      return Tag;
+  // Check for Microsoft C extension: anonymous struct.
+  if (getLangOptions().Microsoft && !getLangOptions().CPlusPlus &&
+      CurContext->isRecord() &&
+      DS.getStorageClassSpec() == DeclSpec::SCS_unspecified) {
+    // Handle 2 kinds of anonymous struct:
+    //   struct STRUCT;
+    // and
+    //   STRUCT_TYPE;  <- where STRUCT_TYPE is a typedef struct.
+    RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag);
+    if ((Record && Record->getDeclName() && !Record->isDefinition()) ||
+        (DS.getTypeSpecType() == DeclSpec::TST_typename &&
+         DS.getRepAsType().get()->isStructureType())) {
+      Diag(DS.getSourceRange().getBegin(), diag::ext_ms_anonymous_struct)
+        << DS.getSourceRange();
+      return BuildMicrosoftCAnonymousStruct(S, DS, Record);
+    }
   }
   
   if (getLangOptions().CPlusPlus && 
@@ -1749,18 +1761,23 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
                                                 DeclContext *Owner,
                                                 RecordDecl *AnonRecord,
                                                 AccessSpecifier AS,
-                              llvm::SmallVector<NamedDecl*, 2> &Chaining) {
+                              llvm::SmallVector<NamedDecl*, 2> &Chaining,
+                                                      bool MSAnonStruct) {
   unsigned diagKind
     = AnonRecord->isUnion() ? diag::err_anonymous_union_member_redecl
                             : diag::err_anonymous_struct_member_redecl;
 
   bool Invalid = false;
-  for (RecordDecl::field_iterator F = AnonRecord->field_begin(),
-                               FEnd = AnonRecord->field_end();
-       F != FEnd; ++F) {
-    if ((*F)->getDeclName()) {
-      if (CheckAnonMemberRedeclaration(SemaRef, S, Owner, (*F)->getDeclName(),
-                                       (*F)->getLocation(), diagKind)) {
+
+  // Look every FieldDecl and IndirectFieldDecl with a name.
+  for (RecordDecl::decl_iterator D = AnonRecord->decls_begin(),
+                               DEnd = AnonRecord->decls_end();
+       D != DEnd; ++D) {
+    if ((isa<FieldDecl>(*D) || isa<IndirectFieldDecl>(*D)) &&
+        cast<NamedDecl>(*D)->getDeclName()) {
+      ValueDecl *VD = cast<ValueDecl>(*D);
+      if (CheckAnonMemberRedeclaration(SemaRef, S, Owner, VD->getDeclName(),
+                                       VD->getLocation(), diagKind)) {
         // C++ [class.union]p2:
         //   The names of the members of an anonymous union shall be
         //   distinct from the names of any other entity in the
@@ -1772,7 +1789,14 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
         //   definition, the members of the anonymous union are
         //   considered to have been defined in the scope in which the
         //   anonymous union is declared.
-        Chaining.push_back(*F);
+        unsigned OldChainingSize = Chaining.size();
+        if (IndirectFieldDecl *IF = dyn_cast<IndirectFieldDecl>(VD))
+          for (IndirectFieldDecl::chain_iterator PI = IF->chain_begin(),
+               PE = IF->chain_end(); PI != PE; ++PI)
+            Chaining.push_back(*PI);
+        else
+          Chaining.push_back(VD);
+
         assert(Chaining.size() >= 2);
         NamedDecl **NamedChain =
           new (SemaRef.Context)NamedDecl*[Chaining.size()];
@@ -1780,8 +1804,8 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
           NamedChain[i] = Chaining[i];
 
         IndirectFieldDecl* IndirectField =
-          IndirectFieldDecl::Create(SemaRef.Context, Owner, F->getLocation(),
-                                    F->getIdentifier(), F->getType(),
+          IndirectFieldDecl::Create(SemaRef.Context, Owner, VD->getLocation(),
+                                    VD->getIdentifier(), VD->getType(),
                                     NamedChain, Chaining.size());
 
         IndirectField->setAccess(AS);
@@ -1789,20 +1813,10 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
         SemaRef.PushOnScopeChains(IndirectField, S);
 
         // That includes picking up the appropriate access specifier.
-        if (AS != AS_none) (*F)->setAccess(AS);
+        if (AS != AS_none) IndirectField->setAccess(AS);
 
-        Chaining.pop_back();
+        Chaining.resize(OldChainingSize);
       }
-    } else if (const RecordType *InnerRecordType
-                 = (*F)->getType()->getAs<RecordType>()) {
-      RecordDecl *InnerRecord = InnerRecordType->getDecl();
-
-      Chaining.push_back(*F);
-      if (InnerRecord->isAnonymousStructOrUnion())
-        Invalid = Invalid ||
-          InjectAnonymousStructOrUnionMembers(SemaRef, S, Owner,
-                                              InnerRecord, AS, Chaining);
-      Chaining.pop_back();
     }
   }
 
@@ -1847,7 +1861,7 @@ StorageClassSpecToFunctionDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
   llvm_unreachable("unknown storage class specifier");
 }
 
-/// ActOnAnonymousStructOrUnion - Handle the declaration of an
+/// BuildAnonymousStructOrUnion - Handle the declaration of an
 /// anonymous structure or union. Anonymous unions are a C++ feature
 /// (C++ [class.union]) and a GNU C extension; anonymous structures
 /// are a GNU C and GNU C++ extension.
@@ -2020,7 +2034,8 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   llvm::SmallVector<NamedDecl*, 2> Chain;
   Chain.push_back(Anon);
 
-  if (InjectAnonymousStructOrUnionMembers(*this, S, Owner, Record, AS, Chain))
+  if (InjectAnonymousStructOrUnionMembers(*this, S, Owner, Record, AS,
+                                          Chain, false))
     Invalid = true;
 
   // Mark this as an anonymous struct/union type. Note that we do not
@@ -2037,6 +2052,57 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   return Anon;
 }
 
+/// BuildMicrosoftCAnonymousStruct - Handle the declaration of an
+/// Microsoft C anonymous structure.
+/// Ref: http://msdn.microsoft.com/en-us/library/z2cx9y4f.aspx
+/// Example:
+///
+/// struct A { int a; };
+/// struct B { struct A; int b; };
+///
+/// void foo() {
+///   B var;
+///   var.a = 3; 
+/// }
+///
+Decl *Sema::BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
+                                           RecordDecl *Record) {
+  
+  // If there is no Record, get the record via the typedef.
+  if (!Record)
+    Record = DS.getRepAsType().get()->getAsStructureType()->getDecl();
+
+  // Mock up a declarator.
+  Declarator Dc(DS, Declarator::TypeNameContext);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(Dc, S);
+  assert(TInfo && "couldn't build declarator info for anonymous struct");
+
+  // Create a declaration for this anonymous struct.
+  NamedDecl* Anon = FieldDecl::Create(Context,
+                             cast<RecordDecl>(CurContext),
+                             DS.getSourceRange().getBegin(),
+                             /*IdentifierInfo=*/0,
+                             Context.getTypeDeclType(Record),
+                             TInfo,
+                             /*BitWidth=*/0, /*Mutable=*/false);
+  Anon->setImplicit();
+
+  // Add the anonymous struct object to the current context.
+  CurContext->addDecl(Anon);
+
+  // Inject the members of the anonymous struct into the current
+  // context and into the identifier resolver chain for name lookup
+  // purposes.
+  llvm::SmallVector<NamedDecl*, 2> Chain;
+  Chain.push_back(Anon);
+
+  if (InjectAnonymousStructOrUnionMembers(*this, S, CurContext,
+                                          Record->getDefinition(),
+                                          AS_none, Chain, true))
+    Anon->setInvalidDecl();
+
+  return Anon;
+}
 
 /// GetNameForDeclarator - Determine the full declaration name for the
 /// given Declarator.
