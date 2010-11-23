@@ -306,14 +306,12 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
 
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
-  //llvm::errs() << "STATING: " << Filename;
   if (getStatValue(InterndFileName, StatBuf) ||    // Error stat'ing.
       S_ISDIR(StatBuf.st_mode)) {                  // A directory?
-    // If this file doesn't exist, we leave a null in FileEntries for this path.
-    //llvm::errs() << ": Not existing\n";
+    // If this file doesn't exist, we leave NON_EXISTENT_FILE in FileEntries for
+    // this path so subsequent queries get the negative result.
     return 0;
   }
-  //llvm::errs() << ": exists\n";
 
   // It exists.  See if we have already opened a file with the same inode.
   // This occurs when one dir is symlinked to another, for example.
@@ -416,28 +414,15 @@ getBufferForFile(llvm::StringRef Filename, std::string *ErrorStr) {
 /// cache to accellerate it if possible.  This returns true if the path does not
 /// exist or false if it exists.
 bool FileManager::getStatValue(const char *Path, struct stat &StatBuf) {
-  FileSystemStatCache::LookupResult Result = FileSystemStatCache::CacheMiss;
-  
   // FIXME: FileSystemOpts shouldn't be passed in here, all paths should be
   // absolute!
-  if (FileSystemOpts.WorkingDir.empty()) {
-    if (StatCache.get())
-      Result = StatCache->getStat(Path, StatBuf);
-    
-    if (Result == FileSystemStatCache::CacheMiss)
-      return ::stat(Path, &StatBuf);
-    return Result == FileSystemStatCache::CacheHitMissing;
-  }
+  if (FileSystemOpts.WorkingDir.empty())
+    return FileSystemStatCache::get(Path, StatBuf, StatCache.get());
   
   llvm::sys::Path FilePath(Path);
   FixupRelativePath(FilePath, FileSystemOpts);
-  
-  if (StatCache.get())
-    Result = StatCache->getStat(FilePath.c_str(), StatBuf);
-  
-  if (Result == FileSystemStatCache::CacheMiss)
-    return ::stat(FilePath.c_str(), &StatBuf);
-  return Result == FileSystemStatCache::CacheHitMissing;
+
+  return FileSystemStatCache::get(FilePath.c_str(), StatBuf, StatCache.get());
 }
 
 

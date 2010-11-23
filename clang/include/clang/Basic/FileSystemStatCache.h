@@ -36,8 +36,21 @@ public:
     CacheHitMissing,  //< We know that the file doesn't exist.
     CacheMiss         //< We don't know anything about the file.
   };
-  
-  virtual LookupResult getStat(const char *Path, struct stat &StatBuf) = 0;
+
+  /// FileSystemStatCache::get - Get the 'stat' information for the specified
+  /// path, using the cache to accellerate it if possible.  This returns true if
+  /// the path does not exist or false if it exists.
+  static bool get(const char *Path, struct stat &StatBuf,
+                  FileSystemStatCache *Cache) {
+    LookupResult R = CacheMiss;
+    
+    if (Cache)
+      R = Cache->getStat(Path, StatBuf);
+    
+    if (R == FileSystemStatCache::CacheMiss)
+      return ::stat(Path, &StatBuf);
+    return R == FileSystemStatCache::CacheHitMissing;
+  }
   
   /// \brief Sets the next stat call cache in the chain of stat caches.
   /// Takes ownership of the given stat cache.
@@ -54,6 +67,8 @@ public:
   FileSystemStatCache *takeNextStatCache() { return NextStatCache.take(); }
   
 protected:
+  virtual LookupResult getStat(const char *Path, struct stat &StatBuf) = 0;
+
   LookupResult statChained(const char *Path, struct stat &StatBuf) {
     if (FileSystemStatCache *Next = getNextStatCache())
       return Next->getStat(Path, StatBuf);
