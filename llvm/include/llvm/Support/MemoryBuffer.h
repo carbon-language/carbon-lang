@@ -17,7 +17,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/DataTypes.h"
 #include <string>
-#include <sys/stat.h>
 
 namespace llvm {
 
@@ -63,12 +62,10 @@ public:
   /// it has the specified size.
   static MemoryBuffer *getFile(StringRef Filename,
                                std::string *ErrStr = 0,
-                               int64_t FileSize = -1,
-                               struct stat *FileInfo = 0);
+                               int64_t FileSize = -1);
   static MemoryBuffer *getFile(const char *Filename,
                                std::string *ErrStr = 0,
-                               int64_t FileSize = -1,
-                               struct stat *FileInfo = 0);
+                               int64_t FileSize = -1);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that InputData must be null terminated.
@@ -104,12 +101,10 @@ public:
   /// in *ErrStr with a reason.
   static MemoryBuffer *getFileOrSTDIN(StringRef Filename,
                                       std::string *ErrStr = 0,
-                                      int64_t FileSize = -1,
-                                      struct stat *FileInfo = 0);
+                                      int64_t FileSize = -1);
   static MemoryBuffer *getFileOrSTDIN(const char *Filename,
                                       std::string *ErrStr = 0,
-                                      int64_t FileSize = -1,
-                                      struct stat *FileInfo = 0);
+                                      int64_t FileSize = -1);
 };
 
 } // end namespace llvm
