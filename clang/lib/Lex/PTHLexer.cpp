@@ -434,7 +434,7 @@ static void InvalidPTH(Diagnostic &Diags, const char *Msg) {
   Diags.Report(Diags.getCustomDiagID(Diagnostic::Error, Msg));
 }
 
-PTHManager* PTHManager::Create(const std::string& file, FileManager &FileMgr,
+PTHManager *PTHManager::Create(const std::string &file, FileManager &FileMgr,
                                const FileSystemOptions &FSOpts,
                                Diagnostic &Diags) {
   // Memory map the PTH file.
@@ -448,11 +448,11 @@ PTHManager* PTHManager::Create(const std::string& file, FileManager &FileMgr,
 
   // Get the buffer ranges and check if there are at least three 32-bit
   // words at the end of the file.
-  const unsigned char* BufBeg = (unsigned char*)File->getBufferStart();
-  const unsigned char* BufEnd = (unsigned char*)File->getBufferEnd();
+  const unsigned char *BufBeg = (unsigned char*)File->getBufferStart();
+  const unsigned char *BufEnd = (unsigned char*)File->getBufferEnd();
 
   // Check the prologue of the file.
-  if ((BufEnd - BufBeg) < (signed) (sizeof("cfe-pth") + 3 + 4) ||
+  if ((BufEnd - BufBeg) < (signed)(sizeof("cfe-pth") + 3 + 4) ||
       memcmp(BufBeg, "cfe-pth", sizeof("cfe-pth") - 1) != 0) {
     Diags.Report(diag::err_invalid_pth_file) << file;
     return 0;
