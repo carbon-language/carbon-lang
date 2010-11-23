@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_BASIC_FILESYSTEMOPTIONS_H
 #define LLVM_CLANG_BASIC_FILESYSTEMOPTIONS_H
 
+#include <string>
+
 namespace clang {
 
 /// \brief Keeps track of options that affect how file operations are performed.
