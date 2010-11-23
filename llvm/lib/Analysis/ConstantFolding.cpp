@@ -695,22 +695,23 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
 // Constant Folding public APIs
 //===----------------------------------------------------------------------===//
 
-
-/// ConstantFoldInstruction - Attempt to constant fold the specified
-/// instruction.  If successful, the constant result is returned, if not, null
-/// is returned.  Note that this function can only fail when attempting to fold
-/// instructions like loads and stores, which have no constant expression form.
-///
+/// ConstantFoldInstruction - Try to constant fold the specified instruction.
+/// If successful, the constant result is returned, if not, null is returned.
+/// Note that this fails if not all of the operands are constant.  Otherwise,
+/// this function can only fail when attempting to fold instructions like loads
+/// and stores, which have no constant expression form.
 Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
-  // Handle PHI nodes specially here...
+  // Handle PHI nodes quickly here...
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     Constant *CommonValue = 0;
 
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
       Value *Incoming = PN->getIncomingValue(i);
-      // If the incoming value is equal to the phi node itself or is undef then
-      // skip it.
-      if (Incoming == PN || isa<UndefValue>(Incoming))
+      // If the incoming value is undef then skip it.  Note that while we could
+      // skip the value if it is equal to the phi node itself we choose not to
+      // because that would break the rule that constant folding only applies if
+      // all operands are constants.
+      if (isa<UndefValue>(Incoming))
         continue;
       // If the incoming value is not a constant, or is a different constant to
       // the one we saw previously, then give up.

@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares routines for folding instructions into constants.
+// This file declares routines for folding instructions into constants when all
+// operands are constants, for example "sub i32 1, 0" -> "1".
 //
 // Also, to supplement the basic VMCore ConstantExpr simplifications,
 // this file declares some additional folding routines that can make use of
@@ -27,11 +28,11 @@ namespace llvm {
   class Function;
   class Type;
 
-/// ConstantFoldInstruction - Attempt to constant fold the specified
-/// instruction.  If successful, the constant result is returned, if not, null
-/// is returned.  Note that this function can only fail when attempting to fold
-/// instructions like loads and stores, which have no constant expression form.
-///
+/// ConstantFoldInstruction - Try to constant fold the specified instruction.
+/// If successful, the constant result is returned, if not, null is returned.
+/// Note that this fails if not all of the operands are constant.  Otherwise,
+/// this function can only fail when attempting to fold instructions like loads
+/// and stores, which have no constant expression form.
 Constant *ConstantFoldInstruction(Instruction *I, const TargetData *TD = 0);
 
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
