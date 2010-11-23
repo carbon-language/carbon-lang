@@ -1,10 +1,10 @@
 //===- TargetSelectionDAG.td - Common code for DAG isels ---*- tablegen -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the target-independent interfaces used by SelectionDAG
@@ -123,10 +123,10 @@ def SDTFPRoundOp  : SDTypeProfile<1, 1, [   // fround
 def SDTFPExtendOp  : SDTypeProfile<1, 1, [  // fextend
   SDTCisFP<0>, SDTCisFP<1>, SDTCisOpSmallerThanOp<1, 0>
 ]>;
-def SDTIntToFPOp : SDTypeProfile<1, 1, [    // [su]int_to_fp 
+def SDTIntToFPOp : SDTypeProfile<1, 1, [    // [su]int_to_fp
   SDTCisFP<0>, SDTCisInt<1>
 ]>;
-def SDTFPToIntOp : SDTypeProfile<1, 1, [    // fp_to_[su]int 
+def SDTFPToIntOp : SDTypeProfile<1, 1, [    // fp_to_[su]int
   SDTCisInt<0>, SDTCisFP<1>
 ]>;
 def SDTExtInreg : SDTypeProfile<1, 2, [     // sext_inreg
@@ -138,7 +138,7 @@ def SDTSetCC : SDTypeProfile<1, 3, [        // setcc
   SDTCisInt<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, OtherVT>
 ]>;
 
-def SDTSelect : SDTypeProfile<1, 3, [       // select 
+def SDTSelect : SDTypeProfile<1, 3, [       // select
   SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>
 ]>;
 
@@ -162,11 +162,11 @@ def SDTBrind : SDTypeProfile<0, 1, [        // brind
 def SDTNone : SDTypeProfile<0, 0, []>;      // ret, trap
 
 def SDTLoad : SDTypeProfile<1, 1, [         // load
-  SDTCisPtrTy<1>  
+  SDTCisPtrTy<1>
 ]>;
 
 def SDTStore : SDTypeProfile<0, 2, [        // store
-  SDTCisPtrTy<1>  
+  SDTCisPtrTy<1>
 ]>;
 
 def SDTIStore : SDTypeProfile<1, 3, [       // indexed store
@@ -235,7 +235,7 @@ class SDPatternOperator;
 // Selection DAG Node definitions.
 //
 class SDNode<string opcode, SDTypeProfile typeprof,
-             list<SDNodeProperty> props = [], string sdclass = "SDNode"> 
+             list<SDNodeProperty> props = [], string sdclass = "SDNode">
              : SDPatternOperator {
   string Opcode  = opcode;
   string SDClass = sdclass;
@@ -319,7 +319,7 @@ def subc       : SDNode<"ISD::SUBC"      , SDTIntBinOp,
                         [SDNPOutFlag]>;
 def sube       : SDNode<"ISD::SUBE"      , SDTIntBinOp,
                         [SDNPOutFlag, SDNPInFlag]>;
-                        
+
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def bswap      : SDNode<"ISD::BSWAP"      , SDTIntUnaryOp>;
 def ctlz       : SDNode<"ISD::CTLZ"       , SDTIntUnaryOp>;
@@ -329,11 +329,11 @@ def sext       : SDNode<"ISD::SIGN_EXTEND", SDTIntExtendOp>;
 def zext       : SDNode<"ISD::ZERO_EXTEND", SDTIntExtendOp>;
 def anyext     : SDNode<"ISD::ANY_EXTEND" , SDTIntExtendOp>;
 def trunc      : SDNode<"ISD::TRUNCATE"   , SDTIntTruncOp>;
-def bitconvert : SDNode<"ISD::BIT_CONVERT", SDTUnaryOp>;
+def bitconvert : SDNode<"ISD::BITCAST"    , SDTUnaryOp>;
 def extractelt : SDNode<"ISD::EXTRACT_VECTOR_ELT", SDTVecExtract>;
 def insertelt  : SDNode<"ISD::INSERT_VECTOR_ELT", SDTVecInsert>;
 
-                        
+
 def fadd       : SDNode<"ISD::FADD"       , SDTFPBinOp, [SDNPCommutative]>;
 def fsub       : SDNode<"ISD::FSUB"       , SDTFPBinOp>;
 def fmul       : SDNode<"ISD::FMUL"       , SDTFPBinOp, [SDNPCommutative]>;
@@ -423,16 +423,16 @@ def vector_extract : SDNode<"ISD::EXTRACT_VECTOR_ELT",
     SDTypeProfile<1, 2, [SDTCisPtrTy<2>]>, []>;
 def vector_insert : SDNode<"ISD::INSERT_VECTOR_ELT",
     SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisPtrTy<3>]>, []>;
-    
+
 // Nodes for intrinsics, you should use the intrinsic itself and let tblgen use
 // these internally.  Don't reference these directly.
-def intrinsic_void : SDNode<"ISD::INTRINSIC_VOID", 
+def intrinsic_void : SDNode<"ISD::INTRINSIC_VOID",
                             SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>,
                             [SDNPHasChain]>;
-def intrinsic_w_chain : SDNode<"ISD::INTRINSIC_W_CHAIN", 
+def intrinsic_w_chain : SDNode<"ISD::INTRINSIC_W_CHAIN",
                                SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>,
                                [SDNPHasChain]>;
-def intrinsic_wo_chain : SDNode<"ISD::INTRINSIC_WO_CHAIN", 
+def intrinsic_wo_chain : SDNode<"ISD::INTRINSIC_WO_CHAIN",
                                 SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>, []>;
 
 // Do not use cvt directly. Use cvt forms below

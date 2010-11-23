@@ -1825,7 +1825,7 @@ register to convert the floating-point value to an integer.
 static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &amp;DAG) {
   assert(Op.getValueType() == MVT::i32);
   Op = DAG.getNode(SPISD::FTOI, MVT::f32, Op.getOperand(0));
-  return DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
+  return DAG.getNode(ISD::BITCAST, MVT::i32, Op);
 }
 </pre>
 </div>    

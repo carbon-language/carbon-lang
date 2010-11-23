@@ -131,8 +131,8 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
         Hi = getCopyFromParts(DAG, DL, Parts + RoundParts / 2,
                               RoundParts / 2, PartVT, HalfVT);
       } else {
-        Lo = DAG.getNode(ISD::BIT_CONVERT, DL, HalfVT, Parts[0]);
-        Hi = DAG.getNode(ISD::BIT_CONVERT, DL, HalfVT, Parts[1]);
+        Lo = DAG.getNode(ISD::BITCAST, DL, HalfVT, Parts[0]);
+        Hi = DAG.getNode(ISD::BITCAST, DL, HalfVT, Parts[1]);
       }
 
       if (TLI.isBigEndian())
@@ -164,8 +164,8 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
       assert(ValueVT == EVT(MVT::ppcf128) && PartVT == EVT(MVT::f64) &&
              "Unexpected split");
       SDValue Lo, Hi;
-      Lo = DAG.getNode(ISD::BIT_CONVERT, DL, EVT(MVT::f64), Parts[0]);
-      Hi = DAG.getNode(ISD::BIT_CONVERT, DL, EVT(MVT::f64), Parts[1]);
+      Lo = DAG.getNode(ISD::BITCAST, DL, EVT(MVT::f64), Parts[0]);
+      Hi = DAG.getNode(ISD::BITCAST, DL, EVT(MVT::f64), Parts[1]);
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);
       Val = DAG.getNode(ISD::BUILD_PAIR, DL, ValueVT, Lo, Hi);
@@ -207,7 +207,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
   }
 
   if (PartVT.getSizeInBits() == ValueVT.getSizeInBits())
-    return DAG.getNode(ISD::BIT_CONVERT, DL, ValueVT, Val);
+    return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
 
   llvm_unreachable("Unknown mismatch!");
   return SDValue();
@@ -284,7 +284,7 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
     }
 
     // Vector/Vector bitcast.
-    return DAG.getNode(ISD::BIT_CONVERT, DL, ValueVT, Val);
+    return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
   }
 
   assert(ValueVT.getVectorElementType() == PartVT &&
@@ -342,7 +342,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc DL,
   } else if (PartBits == ValueVT.getSizeInBits()) {
     // Different types of the same size.
     assert(NumParts == 1 && PartVT != ValueVT);
-    Val = DAG.getNode(ISD::BIT_CONVERT, DL, PartVT, Val);
+    Val = DAG.getNode(ISD::BITCAST, DL, PartVT, Val);
   } else if (NumParts * PartBits < ValueVT.getSizeInBits()) {
     // If the parts cover less bits than value has, truncate the value.
     assert(PartVT.isInteger() && ValueVT.isInteger() &&
@@ -385,7 +385,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc DL,
 
   // The number of parts is a power of 2.  Repeatedly bisect the value using
   // EXTRACT_ELEMENT.
-  Parts[0] = DAG.getNode(ISD::BIT_CONVERT, DL,
+  Parts[0] = DAG.getNode(ISD::BITCAST, DL,
                          EVT::getIntegerVT(*DAG.getContext(),
                                            ValueVT.getSizeInBits()),
                          Val);
@@ -403,8 +403,8 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc DL,
                           ThisVT, Part0, DAG.getIntPtrConstant(0));
 
       if (ThisBits == PartBits && ThisVT != PartVT) {
-        Part0 = DAG.getNode(ISD::BIT_CONVERT, DL, PartVT, Part0);
-        Part1 = DAG.getNode(ISD::BIT_CONVERT, DL, PartVT, Part1);
+        Part0 = DAG.getNode(ISD::BITCAST, DL, PartVT, Part0);
+        Part1 = DAG.getNode(ISD::BITCAST, DL, PartVT, Part1);
       }
     }
   }
@@ -428,7 +428,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
       // Nothing to do.
     } else if (PartVT.getSizeInBits() == ValueVT.getSizeInBits()) {
       // Bitconvert vector->vector case.
-      Val = DAG.getNode(ISD::BIT_CONVERT, DL, PartVT, Val);
+      Val = DAG.getNode(ISD::BITCAST, DL, PartVT, Val);
     } else if (PartVT.isVector() &&
                PartVT.getVectorElementType() == ValueVT.getVectorElementType()&&
                PartVT.getVectorNumElements() > ValueVT.getVectorNumElements()) {
@@ -2579,9 +2579,9 @@ void SelectionDAGBuilder::visitBitCast(const User &I) {
   EVT DestVT = TLI.getValueType(I.getType());
 
   // BitCast assures us that source and destination are the same size so this is
-  // either a BIT_CONVERT or a no-op.
+  // either a BITCAST or a no-op.
   if (DestVT != N.getValueType())
-    setValue(&I, DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(),
+    setValue(&I, DAG.getNode(ISD::BITCAST, getCurDebugLoc(),
                              DestVT, N)); // convert types.
   else
     setValue(&I, N);            // noop cast.
@@ -3021,7 +3021,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
     // Do not serialize non-volatile loads against each other.
     Root = DAG.getRoot();
   }
-  
+
   SmallVector<SDValue, 4> Values(NumValues);
   SmallVector<SDValue, 4> Chains(std::min(unsigned(MaxParallelChains),
                                           NumValues));
@@ -3198,7 +3198,7 @@ void SelectionDAGBuilder::visitTargetIntrinsic(const CallInst &I,
   if (!I.getType()->isVoidTy()) {
     if (const VectorType *PTy = dyn_cast<VectorType>(I.getType())) {
       EVT VT = TLI.getValueType(PTy);
-      Result = DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(), VT, Result);
+      Result = DAG.getNode(ISD::BITCAST, getCurDebugLoc(), VT, Result);
     }
 
     setValue(&I, Result);
@@ -3217,7 +3217,7 @@ GetSignificand(SelectionDAG &DAG, SDValue Op, DebugLoc dl) {
                            DAG.getConstant(0x007fffff, MVT::i32));
   SDValue t2 = DAG.getNode(ISD::OR, dl, MVT::i32, t1,
                            DAG.getConstant(0x3f800000, MVT::i32));
-  return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t2);
+  return DAG.getNode(ISD::BITCAST, dl, MVT::f32, t2);
 }
 
 /// GetExponent - Get the exponent:
@@ -3316,13 +3316,13 @@ SelectionDAGBuilder::visitExp(const CallInst &I) {
       SDValue t4 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t3, X);
       SDValue t5 = DAG.getNode(ISD::FADD, dl, MVT::f32, t4,
                                getF32Constant(DAG, 0x3f7f5e7e));
-      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BIT_CONVERT, dl,MVT::i32, t5);
+      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BITCAST, dl,MVT::i32, t5);
 
       // Add the exponent into the result in integer domain.
       SDValue t6 = DAG.getNode(ISD::ADD, dl, MVT::i32,
                                TwoToFracPartOfX, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t6);
+      result = DAG.getNode(ISD::BITCAST, dl, MVT::f32, t6);
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
       //
@@ -3342,13 +3342,13 @@ SelectionDAGBuilder::visitExp(const CallInst &I) {
       SDValue t6 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t5, X);
       SDValue t7 = DAG.getNode(ISD::FADD, dl, MVT::f32, t6,
                                getF32Constant(DAG, 0x3f7ff8fd));
-      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BIT_CONVERT, dl,MVT::i32, t7);
+      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BITCAST, dl,MVT::i32, t7);
 
       // Add the exponent into the result in integer domain.
       SDValue t8 = DAG.getNode(ISD::ADD, dl, MVT::i32,
                                TwoToFracPartOfX, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t8);
+      result = DAG.getNode(ISD::BITCAST, dl, MVT::f32, t8);
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
       //
@@ -3380,14 +3380,14 @@ SelectionDAGBuilder::visitExp(const CallInst &I) {
       SDValue t12 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t11, X);
       SDValue t13 = DAG.getNode(ISD::FADD, dl, MVT::f32, t12,
                                 getF32Constant(DAG, 0x3f800000));
-      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BIT_CONVERT, dl,
+      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BITCAST, dl,
                                              MVT::i32, t13);
 
       // Add the exponent into the result in integer domain.
       SDValue t14 = DAG.getNode(ISD::ADD, dl, MVT::i32,
                                 TwoToFracPartOfX, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t14);
+      result = DAG.getNode(ISD::BITCAST, dl, MVT::f32, t14);
     }
   } else {
     // No special expansion.
@@ -3409,7 +3409,7 @@ SelectionDAGBuilder::visitLog(const CallInst &I) {
   if (getValue(I.getArgOperand(0)).getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     SDValue Op = getValue(I.getArgOperand(0));
-    SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
+    SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
 
     // Scale the exponent by log(2) [0.69314718f].
     SDValue Exp = GetExponent(DAG, Op1, TLI, dl);
@@ -3519,7 +3519,7 @@ SelectionDAGBuilder::visitLog2(const CallInst &I) {
   if (getValue(I.getArgOperand(0)).getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     SDValue Op = getValue(I.getArgOperand(0));
-    SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
+    SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
 
     // Get the exponent.
     SDValue LogOfExponent = GetExponent(DAG, Op1, TLI, dl);
@@ -3628,7 +3628,7 @@ SelectionDAGBuilder::visitLog10(const CallInst &I) {
   if (getValue(I.getArgOperand(0)).getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     SDValue Op = getValue(I.getArgOperand(0));
-    SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
+    SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
 
     // Scale the exponent by log10(2) [0.30102999f].
     SDValue Exp = GetExponent(DAG, Op1, TLI, dl);
@@ -3756,11 +3756,11 @@ SelectionDAGBuilder::visitExp2(const CallInst &I) {
       SDValue t4 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t3, X);
       SDValue t5 = DAG.getNode(ISD::FADD, dl, MVT::f32, t4,
                                getF32Constant(DAG, 0x3f7f5e7e));
-      SDValue t6 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, t5);
+      SDValue t6 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, t5);
       SDValue TwoToFractionalPartOfX =
         DAG.getNode(ISD::ADD, dl, MVT::i32, t6, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl,
+      result = DAG.getNode(ISD::BITCAST, dl,
                            MVT::f32, TwoToFractionalPartOfX);
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
@@ -3781,11 +3781,11 @@ SelectionDAGBuilder::visitExp2(const CallInst &I) {
       SDValue t6 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t5, X);
       SDValue t7 = DAG.getNode(ISD::FADD, dl, MVT::f32, t6,
                                getF32Constant(DAG, 0x3f7ff8fd));
-      SDValue t8 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, t7);
+      SDValue t8 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, t7);
       SDValue TwoToFractionalPartOfX =
         DAG.getNode(ISD::ADD, dl, MVT::i32, t8, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl,
+      result = DAG.getNode(ISD::BITCAST, dl,
                            MVT::f32, TwoToFractionalPartOfX);
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
@@ -3817,11 +3817,11 @@ SelectionDAGBuilder::visitExp2(const CallInst &I) {
       SDValue t12 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t11, X);
       SDValue t13 = DAG.getNode(ISD::FADD, dl, MVT::f32, t12,
                                 getF32Constant(DAG, 0x3f800000));
-      SDValue t14 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, t13);
+      SDValue t14 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, t13);
       SDValue TwoToFractionalPartOfX =
         DAG.getNode(ISD::ADD, dl, MVT::i32, t14, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl,
+      result = DAG.getNode(ISD::BITCAST, dl,
                            MVT::f32, TwoToFractionalPartOfX);
     }
   } else {
@@ -3889,11 +3889,11 @@ SelectionDAGBuilder::visitPow(const CallInst &I) {
       SDValue t4 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t3, X);
       SDValue t5 = DAG.getNode(ISD::FADD, dl, MVT::f32, t4,
                                getF32Constant(DAG, 0x3f7f5e7e));
-      SDValue t6 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, t5);
+      SDValue t6 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, t5);
       SDValue TwoToFractionalPartOfX =
         DAG.getNode(ISD::ADD, dl, MVT::i32, t6, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl,
+      result = DAG.getNode(ISD::BITCAST, dl,
                            MVT::f32, TwoToFractionalPartOfX);
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
@@ -3914,11 +3914,11 @@ SelectionDAGBuilder::visitPow(const CallInst &I) {
       SDValue t6 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t5, X);
       SDValue t7 = DAG.getNode(ISD::FADD, dl, MVT::f32, t6,
                                getF32Constant(DAG, 0x3f7ff8fd));
-      SDValue t8 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, t7);
+      SDValue t8 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, t7);
       SDValue TwoToFractionalPartOfX =
         DAG.getNode(ISD::ADD, dl, MVT::i32, t8, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl,
+      result = DAG.getNode(ISD::BITCAST, dl,
                            MVT::f32, TwoToFractionalPartOfX);
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
@@ -3950,11 +3950,11 @@ SelectionDAGBuilder::visitPow(const CallInst &I) {
       SDValue t12 = DAG.getNode(ISD::FMUL, dl, MVT::f32, t11, X);
       SDValue t13 = DAG.getNode(ISD::FADD, dl, MVT::f32, t12,
                                 getF32Constant(DAG, 0x3f800000));
-      SDValue t14 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, t13);
+      SDValue t14 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, t13);
       SDValue TwoToFractionalPartOfX =
         DAG.getNode(ISD::ADD, dl, MVT::i32, t14, IntegerPartOfX);
 
-      result = DAG.getNode(ISD::BIT_CONVERT, dl,
+      result = DAG.getNode(ISD::BITCAST, dl,
                            MVT::f32, TwoToFractionalPartOfX);
     }
   } else {
@@ -4072,11 +4072,11 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     if (VMI != FuncInfo.ValueMap.end())
       Reg = VMI->second;
   }
-  
+
   if (!Reg && N.getNode()) {
     // Check if frame index is available.
     if (LoadSDNode *LNode = dyn_cast<LoadSDNode>(N.getNode()))
-      if (FrameIndexSDNode *FINode = 
+      if (FrameIndexSDNode *FINode =
           dyn_cast<FrameIndexSDNode>(LNode->getBasePtr().getNode())) {
         Reg = TRI->getFrameRegister(MF);
         Offset = FINode->getIndex();
@@ -4476,7 +4476,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     ShOps[1] = DAG.getConstant(0, MVT::i32);
     ShAmt =  DAG.getNode(ISD::BUILD_VECTOR, dl, ShAmtVT, &ShOps[0], 2);
     EVT DestVT = TLI.getValueType(I.getType());
-    ShAmt = DAG.getNode(ISD::BIT_CONVERT, dl, DestVT, ShAmt);
+    ShAmt = DAG.getNode(ISD::BITCAST, dl, DestVT, ShAmt);
     Res = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, DestVT,
                        DAG.getConstant(NewIntrinsic, MVT::i32),
                        getValue(I.getArgOperand(0)), ShAmt);
@@ -4713,7 +4713,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     Ops[3] = getValue(I.getArgOperand(2));
     DAG.setRoot(DAG.getMemIntrinsicNode(ISD::PREFETCH, dl,
                                         DAG.getVTList(MVT::Other),
-                                        &Ops[0], 4, 
+                                        &Ops[0], 4,
                                         EVT::getIntegerVT(*Context, 8),
                                         MachinePointerInfo(I.getArgOperand(0)),
                                         0, /* align */
@@ -5119,7 +5119,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
       !MMI.callsExternalVAFunctionWithFloatingPointArguments()) {
     for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
       const Type* T = I.getArgOperand(i)->getType();
-      for (po_iterator<const Type*> i = po_begin(T), e = po_end(T); 
+      for (po_iterator<const Type*> i = po_begin(T), e = po_end(T);
            i != e; ++i) {
         if (!i->isFloatingPointTy()) continue;
         MMI.setCallsExternalVAFunctionWithFloatingPointArguments(true);
@@ -5419,7 +5419,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
       // vector types).
       EVT RegVT = *PhysReg.second->vt_begin();
       if (RegVT.getSizeInBits() == OpInfo.ConstraintVT.getSizeInBits()) {
-        OpInfo.CallOperand = DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(),
+        OpInfo.CallOperand = DAG.getNode(ISD::BITCAST, getCurDebugLoc(),
                                          RegVT, OpInfo.CallOperand);
         OpInfo.ConstraintVT = RegVT;
       } else if (RegVT.isInteger() && OpInfo.ConstraintVT.isFloatingPoint()) {
@@ -5429,7 +5429,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
         // machine.
         RegVT = EVT::getIntegerVT(Context,
                                   OpInfo.ConstraintVT.getSizeInBits());
-        OpInfo.CallOperand = DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(),
+        OpInfo.CallOperand = DAG.getNode(ISD::BITCAST, getCurDebugLoc(),
                                          RegVT, OpInfo.CallOperand);
         OpInfo.ConstraintVT = RegVT;
       }
@@ -5945,7 +5945,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       // not have the same VT as was expected.  Convert it to the right type
       // with bit_convert.
       if (ResultType != Val.getValueType() && Val.getValueType().isVector()) {
-        Val = DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(),
+        Val = DAG.getNode(ISD::BITCAST, getCurDebugLoc(),
                           ResultType, Val);
 
       } else if (ResultType != Val.getValueType() &&

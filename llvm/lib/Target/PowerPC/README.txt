@@ -285,8 +285,8 @@ including having this work sanely.
 Fix Darwin FP-In-Integer Registers ABI
 
 Darwin passes doubles in structures in integer registers, which is very very 
-bad.  Add something like a BIT_CONVERT to LLVM, then do an i-p transformation 
-that percolates these things out of functions.
+bad.  Add something like a BITCAST to LLVM, then do an i-p transformation that
+percolates these things out of functions.
 
 Check out how horrible this is:
 http://gcc.gnu.org/ml/gcc/2005-10/msg01036.html

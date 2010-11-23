@@ -241,14 +241,14 @@ SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
 
   for (unsigned j = 0; j != Op.getNumOperands(); ++j) {
     if (Op.getOperand(j).getValueType().isVector())
-      Operands[j] = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Op.getOperand(j));
+      Operands[j] = DAG.getNode(ISD::BITCAST, dl, NVT, Op.getOperand(j));
     else
       Operands[j] = Op.getOperand(j);
   }
 
   Op = DAG.getNode(Op.getOpcode(), dl, NVT, &Operands[0], Operands.size());
 
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Op);
+  return DAG.getNode(ISD::BITCAST, dl, VT, Op);
 }
 
 SDValue VectorLegalizer::ExpandFNEG(SDValue Op) {

@@ -55,7 +55,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
 #endif
     llvm_unreachable("Do not know how to soften the result of this operator!");
 
-    case ISD::BIT_CONVERT: R = SoftenFloatRes_BIT_CONVERT(N); break;
+    case ISD::BITCAST:     R = SoftenFloatRes_BITCAST(N); break;
     case ISD::BUILD_PAIR:  R = SoftenFloatRes_BUILD_PAIR(N); break;
     case ISD::ConstantFP:
       R = SoftenFloatRes_ConstantFP(cast<ConstantFPSDNode>(N));
@@ -102,7 +102,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     SetSoftenedFloat(SDValue(N, ResNo), R);
 }
 
-SDValue DAGTypeLegalizer::SoftenFloatRes_BIT_CONVERT(SDNode *N) {
+SDValue DAGTypeLegalizer::SoftenFloatRes_BITCAST(SDNode *N) {
   return BitConvertToInteger(N->getOperand(0));
 }
 
@@ -557,7 +557,7 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
 #endif
     llvm_unreachable("Do not know how to soften this operator's operand!");
 
-  case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
+  case ISD::BITCAST:     Res = SoftenFloatOp_BITCAST(N); break;
   case ISD::BR_CC:       Res = SoftenFloatOp_BR_CC(N); break;
   case ISD::FP_ROUND:    Res = SoftenFloatOp_FP_ROUND(N); break;
   case ISD::FP_TO_SINT:  Res = SoftenFloatOp_FP_TO_SINT(N); break;
@@ -669,8 +669,8 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
   }
 }
 
-SDValue DAGTypeLegalizer::SoftenFloatOp_BIT_CONVERT(SDNode *N) {
-  return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(), N->getValueType(0),
+SDValue DAGTypeLegalizer::SoftenFloatOp_BITCAST(SDNode *N) {
+  return DAG.getNode(ISD::BITCAST, N->getDebugLoc(), N->getValueType(0),
                      GetSoftenedFloat(N->getOperand(0)));
 }
 
@@ -815,7 +815,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
   case ISD::SELECT_CC:    SplitRes_SELECT_CC(N, Lo, Hi); break;
 
-  case ISD::BIT_CONVERT:        ExpandRes_BIT_CONVERT(N, Lo, Hi); break;
+  case ISD::BITCAST:            ExpandRes_BITCAST(N, Lo, Hi); break;
   case ISD::BUILD_PAIR:         ExpandRes_BUILD_PAIR(N, Lo, Hi); break;
   case ISD::EXTRACT_ELEMENT:    ExpandRes_EXTRACT_ELEMENT(N, Lo, Hi); break;
   case ISD::EXTRACT_VECTOR_ELT: ExpandRes_EXTRACT_VECTOR_ELT(N, Lo, Hi); break;
@@ -1220,7 +1220,7 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
   #endif
       llvm_unreachable("Do not know how to expand this operator's operand!");
 
-    case ISD::BIT_CONVERT:     Res = ExpandOp_BIT_CONVERT(N); break;
+    case ISD::BITCAST:         Res = ExpandOp_BITCAST(N); break;
     case ISD::BUILD_VECTOR:    Res = ExpandOp_BUILD_VECTOR(N); break;
     case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
 

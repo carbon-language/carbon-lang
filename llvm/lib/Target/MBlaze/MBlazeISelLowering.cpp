@@ -116,8 +116,8 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   }
 
   // Expand unsupported conversions
-  setOperationAction(ISD::BIT_CONVERT, MVT::f32, Expand);
-  setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
+  setOperationAction(ISD::BITCAST, MVT::f32, Expand);
+  setOperationAction(ISD::BITCAST, MVT::i32, Expand);
 
   // Expand SELECT_CC
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
@@ -926,8 +926,8 @@ MBlazeTargetLowering::getSingleConstraintMatchWeight(
   default:
     weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
     break;
-  case 'd':     
-  case 'y': 
+  case 'd':
+  case 'y':
     if (type->isIntegerTy())
       weight = CW_Register;
     break;

@@ -858,7 +858,7 @@ void DAGTypeLegalizer::SetWidenedVector(SDValue Op, SDValue Result) {
 /// BitConvertToInteger - Convert to an integer of the same size.
 SDValue DAGTypeLegalizer::BitConvertToInteger(SDValue Op) {
   unsigned BitWidth = Op.getValueType().getSizeInBits();
-  return DAG.getNode(ISD::BIT_CONVERT, Op.getDebugLoc(),
+  return DAG.getNode(ISD::BITCAST, Op.getDebugLoc(),
                      EVT::getIntegerVT(*DAG.getContext(), BitWidth), Op);
 }
 
@@ -869,7 +869,7 @@ SDValue DAGTypeLegalizer::BitConvertVectorToIntegerVector(SDValue Op) {
   unsigned EltWidth = Op.getValueType().getVectorElementType().getSizeInBits();
   EVT EltNVT = EVT::getIntegerVT(*DAG.getContext(), EltWidth);
   unsigned NumElts = Op.getValueType().getVectorNumElements();
-  return DAG.getNode(ISD::BIT_CONVERT, Op.getDebugLoc(),
+  return DAG.getNode(ISD::BITCAST, Op.getDebugLoc(),
                      EVT::getVectorVT(*DAG.getContext(), EltNVT, NumElts), Op);
 }
 

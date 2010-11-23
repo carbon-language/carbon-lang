@@ -1519,7 +1519,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
         break;
       }
       case CCValAssign::BCvt: {
-        unsigned BC = FastEmit_r(ArgVT, VA.getLocVT(), ISD::BIT_CONVERT, Arg,
+        unsigned BC = FastEmit_r(ArgVT, VA.getLocVT(), ISD::BITCAST, Arg,
                                  /*TODO: Kill=*/false);
         assert(BC != 0 && "Failed to emit a bitcast!");
         Arg = BC;

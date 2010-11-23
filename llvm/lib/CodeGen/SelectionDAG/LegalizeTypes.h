@@ -99,7 +99,7 @@ private:
           return SoftenFloat;
         return ExpandFloat;
       }
-        
+
       if (VT.getVectorNumElements() == 1)
         return ScalarizeVector;
       return SplitVector;
@@ -244,7 +244,7 @@ private:
   SDValue PromoteIntRes_AssertZext(SDNode *N);
   SDValue PromoteIntRes_Atomic1(AtomicSDNode *N);
   SDValue PromoteIntRes_Atomic2(AtomicSDNode *N);
-  SDValue PromoteIntRes_BIT_CONVERT(SDNode *N);
+  SDValue PromoteIntRes_BITCAST(SDNode *N);
   SDValue PromoteIntRes_BSWAP(SDNode *N);
   SDValue PromoteIntRes_BUILD_PAIR(SDNode *N);
   SDValue PromoteIntRes_Constant(SDNode *N);
@@ -278,7 +278,7 @@ private:
   // Integer Operand Promotion.
   bool PromoteIntegerOperand(SDNode *N, unsigned OperandNo);
   SDValue PromoteIntOp_ANY_EXTEND(SDNode *N);
-  SDValue PromoteIntOp_BIT_CONVERT(SDNode *N);
+  SDValue PromoteIntOp_BITCAST(SDNode *N);
   SDValue PromoteIntOp_BUILD_PAIR(SDNode *N);
   SDValue PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo);
@@ -352,7 +352,7 @@ private:
 
   // Integer Operand Expansion.
   bool ExpandIntegerOperand(SDNode *N, unsigned OperandNo);
-  SDValue ExpandIntOp_BIT_CONVERT(SDNode *N);
+  SDValue ExpandIntOp_BITCAST(SDNode *N);
   SDValue ExpandIntOp_BR_CC(SDNode *N);
   SDValue ExpandIntOp_BUILD_VECTOR(SDNode *N);
   SDValue ExpandIntOp_EXTRACT_ELEMENT(SDNode *N);
@@ -387,7 +387,7 @@ private:
 
   // Result Float to Integer Conversion.
   void SoftenFloatResult(SDNode *N, unsigned OpNo);
-  SDValue SoftenFloatRes_BIT_CONVERT(SDNode *N);
+  SDValue SoftenFloatRes_BITCAST(SDNode *N);
   SDValue SoftenFloatRes_BUILD_PAIR(SDNode *N);
   SDValue SoftenFloatRes_ConstantFP(ConstantFPSDNode *N);
   SDValue SoftenFloatRes_EXTRACT_VECTOR_ELT(SDNode *N);
@@ -426,7 +426,7 @@ private:
 
   // Operand Float to Integer Conversion.
   bool SoftenFloatOperand(SDNode *N, unsigned OpNo);
-  SDValue SoftenFloatOp_BIT_CONVERT(SDNode *N);
+  SDValue SoftenFloatOp_BITCAST(SDNode *N);
   SDValue SoftenFloatOp_BR_CC(SDNode *N);
   SDValue SoftenFloatOp_FP_ROUND(SDNode *N);
   SDValue SoftenFloatOp_FP_TO_SINT(SDNode *N);
@@ -515,7 +515,7 @@ private:
   SDValue ScalarizeVecRes_UnaryOp(SDNode *N);
   SDValue ScalarizeVecRes_InregOp(SDNode *N);
 
-  SDValue ScalarizeVecRes_BIT_CONVERT(SDNode *N);
+  SDValue ScalarizeVecRes_BITCAST(SDNode *N);
   SDValue ScalarizeVecRes_CONVERT_RNDSAT(SDNode *N);
   SDValue ScalarizeVecRes_EXTRACT_SUBVECTOR(SDNode *N);
   SDValue ScalarizeVecRes_FPOWI(SDNode *N);
@@ -532,7 +532,7 @@ private:
 
   // Vector Operand Scalarization: <1 x ty> -> ty.
   bool ScalarizeVectorOperand(SDNode *N, unsigned OpNo);
-  SDValue ScalarizeVecOp_BIT_CONVERT(SDNode *N);
+  SDValue ScalarizeVecOp_BITCAST(SDNode *N);
   SDValue ScalarizeVecOp_CONCAT_VECTORS(SDNode *N);
   SDValue ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDValue ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo);
@@ -557,7 +557,7 @@ private:
   void SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_InregOp(SDNode *N, SDValue &Lo, SDValue &Hi);
 
-  void SplitVecRes_BIT_CONVERT(SDNode *N, SDValue &Lo, SDValue &Hi);
+  void SplitVecRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_BUILD_PAIR(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_BUILD_VECTOR(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_CONCAT_VECTORS(SDNode *N, SDValue &Lo, SDValue &Hi);
@@ -577,7 +577,7 @@ private:
   bool SplitVectorOperand(SDNode *N, unsigned OpNo);
   SDValue SplitVecOp_UnaryOp(SDNode *N);
 
-  SDValue SplitVecOp_BIT_CONVERT(SDNode *N);
+  SDValue SplitVecOp_BITCAST(SDNode *N);
   SDValue SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N);
   SDValue SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDValue SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo);
@@ -603,7 +603,7 @@ private:
 
   // Widen Vector Result Promotion.
   void WidenVectorResult(SDNode *N, unsigned ResNo);
-  SDValue WidenVecRes_BIT_CONVERT(SDNode* N);
+  SDValue WidenVecRes_BITCAST(SDNode* N);
   SDValue WidenVecRes_BUILD_VECTOR(SDNode* N);
   SDValue WidenVecRes_CONCAT_VECTORS(SDNode* N);
   SDValue WidenVecRes_CONVERT_RNDSAT(SDNode* N);
@@ -628,7 +628,7 @@ private:
 
   // Widen Vector Operand.
   bool WidenVectorOperand(SDNode *N, unsigned ResNo);
-  SDValue WidenVecOp_BIT_CONVERT(SDNode *N);
+  SDValue WidenVecOp_BITCAST(SDNode *N);
   SDValue WidenVecOp_CONCAT_VECTORS(SDNode *N);
   SDValue WidenVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDValue WidenVecOp_EXTRACT_SUBVECTOR(SDNode *N);
@@ -721,7 +721,7 @@ private:
   }
 
   // Generic Result Expansion.
-  void ExpandRes_BIT_CONVERT       (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandRes_BITCAST           (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandRes_BUILD_PAIR        (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandRes_EXTRACT_ELEMENT   (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo, SDValue &Hi);
@@ -729,7 +729,7 @@ private:
   void ExpandRes_VAARG             (SDNode *N, SDValue &Lo, SDValue &Hi);
 
   // Generic Operand Expansion.
-  SDValue ExpandOp_BIT_CONVERT      (SDNode *N);
+  SDValue ExpandOp_BITCAST          (SDNode *N);
   SDValue ExpandOp_BUILD_VECTOR     (SDNode *N);
   SDValue ExpandOp_EXTRACT_ELEMENT  (SDNode *N);
   SDValue ExpandOp_INSERT_VECTOR_ELT(SDNode *N);

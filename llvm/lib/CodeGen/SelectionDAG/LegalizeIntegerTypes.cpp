@@ -49,7 +49,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
     llvm_unreachable("Do not know how to promote this operator!");
   case ISD::AssertSext:  Res = PromoteIntRes_AssertSext(N); break;
   case ISD::AssertZext:  Res = PromoteIntRes_AssertZext(N); break;
-  case ISD::BIT_CONVERT: Res = PromoteIntRes_BIT_CONVERT(N); break;
+  case ISD::BITCAST:     Res = PromoteIntRes_BITCAST(N); break;
   case ISD::BSWAP:       Res = PromoteIntRes_BSWAP(N); break;
   case ISD::BUILD_PAIR:  Res = PromoteIntRes_BUILD_PAIR(N); break;
   case ISD::Constant:    Res = PromoteIntRes_Constant(N); break;
@@ -162,7 +162,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Atomic2(AtomicSDNode *N) {
   return Res;
 }
 
-SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
+SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
   SDValue InOp = N->getOperand(0);
   EVT InVT = InOp.getValueType();
   EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
@@ -179,8 +179,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   case PromoteInteger:
     if (NOutVT.bitsEq(NInVT))
       // The input promotes to the same size.  Convert the promoted value.
-      return DAG.getNode(ISD::BIT_CONVERT, dl,
-                         NOutVT, GetPromotedInteger(InOp));
+      return DAG.getNode(ISD::BITCAST, dl, NOutVT, GetPromotedInteger(InOp));
     break;
   case SoftenFloat:
     // Promote the integer operand by hand.
@@ -193,7 +192,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
     return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
                        BitConvertToInteger(GetScalarizedVector(InOp)));
   case SplitVector: {
-    // For example, i32 = BIT_CONVERT v2i16 on alpha.  Convert the split
+    // For example, i32 = BITCAST v2i16 on alpha.  Convert the split
     // pieces of the input into integers and reassemble in the final type.
     SDValue Lo, Hi;
     GetSplitVector(N->getOperand(0), Lo, Hi);
@@ -207,12 +206,12 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
                        EVT::getIntegerVT(*DAG.getContext(),
                                          NOutVT.getSizeInBits()),
                        JoinIntegers(Lo, Hi));
-    return DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, InOp);
+    return DAG.getNode(ISD::BITCAST, dl, NOutVT, InOp);
   }
   case WidenVector:
     if (OutVT.bitsEq(NInVT))
       // The input is widened to the same size.  Convert to the widened value.
-      return DAG.getNode(ISD::BIT_CONVERT, dl, OutVT, GetWidenedVector(InOp));
+      return DAG.getNode(ISD::BITCAST, dl, OutVT, GetWidenedVector(InOp));
   }
 
   return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
@@ -631,7 +630,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
     llvm_unreachable("Do not know how to promote this operator's operand!");
 
   case ISD::ANY_EXTEND:   Res = PromoteIntOp_ANY_EXTEND(N); break;
-  case ISD::BIT_CONVERT:  Res = PromoteIntOp_BIT_CONVERT(N); break;
+  case ISD::BITCAST:      Res = PromoteIntOp_BITCAST(N); break;
   case ISD::BR_CC:        Res = PromoteIntOp_BR_CC(N, OpNo); break;
   case ISD::BRCOND:       Res = PromoteIntOp_BRCOND(N, OpNo); break;
   case ISD::BUILD_PAIR:   Res = PromoteIntOp_BUILD_PAIR(N); break;
@@ -713,7 +712,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_ANY_EXTEND(SDNode *N) {
   return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), N->getValueType(0), Op);
 }
 
-SDValue DAGTypeLegalizer::PromoteIntOp_BIT_CONVERT(SDNode *N) {
+SDValue DAGTypeLegalizer::PromoteIntOp_BITCAST(SDNode *N) {
   // This should only occur in unusual situations like bitcasting to an
   // x86_fp80, so just turn it into a store+load
   return CreateStackStoreLoad(N->getOperand(0), N->getValueType(0));
@@ -950,7 +949,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT_CC:    SplitRes_SELECT_CC(N, Lo, Hi); break;
   case ISD::UNDEF:        SplitRes_UNDEF(N, Lo, Hi); break;
 
-  case ISD::BIT_CONVERT:        ExpandRes_BIT_CONVERT(N, Lo, Hi); break;
+  case ISD::BITCAST:            ExpandRes_BITCAST(N, Lo, Hi); break;
   case ISD::BUILD_PAIR:         ExpandRes_BUILD_PAIR(N, Lo, Hi); break;
   case ISD::EXTRACT_ELEMENT:    ExpandRes_EXTRACT_ELEMENT(N, Lo, Hi); break;
   case ISD::EXTRACT_VECTOR_ELT: ExpandRes_EXTRACT_VECTOR_ELT(N, Lo, Hi); break;
@@ -2076,7 +2075,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   #endif
     llvm_unreachable("Do not know how to expand this operator's operand!");
 
-  case ISD::BIT_CONVERT:       Res = ExpandOp_BIT_CONVERT(N); break;
+  case ISD::BITCAST:           Res = ExpandOp_BITCAST(N); break;
   case ISD::BR_CC:             Res = ExpandIntOp_BR_CC(N); break;
   case ISD::BUILD_VECTOR:      Res = ExpandOp_BUILD_VECTOR(N); break;
   case ISD::EXTRACT_ELEMENT:   Res = ExpandOp_EXTRACT_ELEMENT(N); break;
@@ -2320,7 +2319,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
                              N->getMemoryVT(), isVolatile, isNonTemporal,
                              Alignment);
   }
-  
+
   if (TLI.isLittleEndian()) {
     // Little-endian - low bits are at low addresses.
     GetExpandedInteger(N->getValue(), Lo, Hi);
