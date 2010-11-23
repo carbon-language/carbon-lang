@@ -39,13 +39,15 @@ public:
   /// FileSystemStatCache::get - Get the 'stat' information for the specified
   /// path, using the cache to accellerate it if possible.  This returns true if
   /// the path does not exist or false if it exists.
-  static bool get(const char *Path, struct stat &StatBuf,
-                  FileSystemStatCache *Cache) {
-    if (Cache)
-      return Cache->getStat(Path, StatBuf) == CacheMissing;
-    
-    return ::stat(Path, &StatBuf) != 0;
-  }
+  ///
+  /// If FileDescriptor is non-null, then this lookup should only return success
+  /// for files (not directories).  If it is null this lookup should only return
+  /// success for directories (not files).  On a successful file lookup, the
+  /// implementation can optionally fill in FileDescriptor with a valid
+  /// descriptor and the client guarantees that it will close it.
+  static bool get(const char *Path, struct stat &StatBuf, int *FileDescriptor,
+                  FileSystemStatCache *Cache);
+  
   
   /// \brief Sets the next stat call cache in the chain of stat caches.
   /// Takes ownership of the given stat cache.
@@ -62,15 +64,17 @@ public:
   FileSystemStatCache *takeNextStatCache() { return NextStatCache.take(); }
   
 protected:
-  virtual LookupResult getStat(const char *Path, struct stat &StatBuf) = 0;
+  virtual LookupResult getStat(const char *Path, struct stat &StatBuf,
+                               int *FileDescriptor) = 0;
 
-  LookupResult statChained(const char *Path, struct stat &StatBuf) {
+  LookupResult statChained(const char *Path, struct stat &StatBuf,
+                           int *FileDescriptor) {
     if (FileSystemStatCache *Next = getNextStatCache())
-      return Next->getStat(Path, StatBuf);
+      return Next->getStat(Path, StatBuf, FileDescriptor);
     
     // If we hit the end of the list of stat caches to try, just compute and
     // return it without a cache.
-    return get(Path, StatBuf, 0) ? CacheMissing : CacheExists;
+    return get(Path, StatBuf, FileDescriptor, 0) ? CacheMissing : CacheExists;
   }
 };
 
@@ -88,7 +92,8 @@ public:
   iterator begin() const { return StatCalls.begin(); }
   iterator end() const { return StatCalls.end(); }
   
-  virtual LookupResult getStat(const char *Path, struct stat &StatBuf);
+  virtual LookupResult getStat(const char *Path, struct stat &StatBuf,
+                               int *FileDescriptor);
 };
 
 } // end namespace clang

@@ -33,10 +33,6 @@ using namespace clang;
 // FIXME: Enhance libsystem to support inode and other fields.
 #include <sys/stat.h>
 
-#if defined(_MSC_VER)
-#define S_ISDIR(s) (_S_IFDIR & s)
-#endif
-
 /// NON_EXISTENT_DIR - A special value distinct from null that is used to
 /// represent a dir name that doesn't exist on the disk.
 #define NON_EXISTENT_DIR reinterpret_cast<DirectoryEntry*>((intptr_t)-1)
@@ -248,7 +244,7 @@ const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename) {
 
   // Check to see if the directory exists.
   struct stat StatBuf;
-  if (getStatValue(InterndDirName, StatBuf, true))
+  if (getStatValue(InterndDirName, StatBuf, 0/*directory lookup*/))
     return 0;
 
   // It exists.  See if we have already opened a directory with the same inode.
@@ -304,8 +300,9 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
   // FIXME: This will reduce the # syscalls.
 
   // Nope, there isn't.  Check to see if the file exists.
+  int FileDescriptor = -1;
   struct stat StatBuf;
-  if (getStatValue(InterndFileName, StatBuf, false))
+  if (getStatValue(InterndFileName, StatBuf, &FileDescriptor))
     return 0;
 
   // It exists.  See if we have already opened a file with the same inode.
@@ -313,8 +310,13 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
   FileEntry &UFE = UniqueFiles.getFile(InterndFileName, StatBuf);
 
   NamedFileEnt.setValue(&UFE);
-  if (UFE.getName())  // Already have an entry with this inode, return it.
+  if (UFE.getName()) { // Already have an entry with this inode, return it.
+    // If the stat process opened the file, close it to avoid a FD leak.
+    if (FileDescriptor != -1)
+      close(FileDescriptor);
+    
     return &UFE;
+  }
 
   // Otherwise, we don't have this directory yet, add it.
   // FIXME: Change the name to be a char* that points back to the 'FileEntries'
@@ -324,6 +326,7 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
   UFE.ModTime = StatBuf.st_mtime;
   UFE.Dir     = DirInfo;
   UFE.UID     = NextFileUID++;
+  UFE.FD      = FileDescriptor;
   return &UFE;
 }
 
@@ -366,10 +369,12 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   
   // If this virtual file resolves to a file, also map that file to the 
   // newly-created file entry.
+  int FileDescriptor = -1;
   struct stat StatBuf;
-  if (getStatValue(InterndFileName, StatBuf, false))
+  if (getStatValue(InterndFileName, StatBuf, &FileDescriptor))
     return UFE;
-    
+  
+  UFE->FD = FileDescriptor;
   llvm::sys::Path FilePath(UFE->Name);
   FilePath.makeAbsolute();
   FileEntries[FilePath.str()] = UFE;
@@ -414,18 +419,18 @@ getBufferForFile(llvm::StringRef Filename, std::string *ErrorStr) {
 /// The isForDir member indicates whether this is a directory lookup or not.
 /// This will return failure if the lookup isn't the expected kind.
 bool FileManager::getStatValue(const char *Path, struct stat &StatBuf,
-                               bool isForDir) {
+                               int *FileDescriptor) {
   // FIXME: FileSystemOpts shouldn't be passed in here, all paths should be
   // absolute!
   if (FileSystemOpts.WorkingDir.empty())
-    return FileSystemStatCache::get(Path, StatBuf, StatCache.get()) ||
-           S_ISDIR(StatBuf.st_mode) != isForDir;
+    return FileSystemStatCache::get(Path, StatBuf, FileDescriptor,
+                                    StatCache.get());
   
   llvm::sys::Path FilePath(Path);
   FixupRelativePath(FilePath, FileSystemOpts);
 
-  return FileSystemStatCache::get(FilePath.c_str(), StatBuf, StatCache.get()) ||
-         S_ISDIR(StatBuf.st_mode) != isForDir;
+  return FileSystemStatCache::get(FilePath.c_str(), StatBuf, FileDescriptor,
+                                  StatCache.get());
 }
 
 

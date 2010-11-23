@@ -678,13 +678,14 @@ public:
 
   ~PTHStatCache() {}
 
-  LookupResult getStat(const char *Path, struct stat &StatBuf) {
+  LookupResult getStat(const char *Path, struct stat &StatBuf,
+                       int *FileDescriptor) {
     // Do the lookup for the file's data in the PTH file.
     CacheTy::iterator I = Cache.find(Path);
 
     // If we don't get a hit in the PTH file just forward to 'stat'.
     if (I == Cache.end())
-      return statChained(Path, StatBuf);
+      return statChained(Path, StatBuf, FileDescriptor);
 
     const PTHStatData &Data = *I;
 

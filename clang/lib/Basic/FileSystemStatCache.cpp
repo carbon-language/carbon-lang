@@ -19,9 +19,35 @@ using namespace clang;
 #define S_ISDIR(s) (_S_IFDIR & s)
 #endif
 
+/// FileSystemStatCache::get - Get the 'stat' information for the specified
+/// path, using the cache to accellerate it if possible.  This returns true if
+/// the path does not exist or false if it exists.
+///
+/// If FileDescriptor is non-null, then this lookup should only return success
+/// for files (not directories).  If it is null this lookup should only return
+/// success for directories (not files).  On a successful file lookup, the
+/// implementation can optionally fill in FileDescriptor with a valid
+/// descriptor and the client guarantees that it will close it.
+bool FileSystemStatCache::get(const char *Path, struct stat &StatBuf,
+                              int *FileDescriptor, FileSystemStatCache *Cache) {
+  LookupResult R;
+  
+  if (Cache)
+    R = Cache->getStat(Path, StatBuf, FileDescriptor);
+  else
+    R = ::stat(Path, &StatBuf) != 0 ? CacheMissing : CacheExists;
+
+  if (R == CacheMissing) return true;
+  
+  bool isForDir = FileDescriptor == 0;
+  return S_ISDIR(StatBuf.st_mode) != isForDir;
+}
+
+
 MemorizeStatCalls::LookupResult
-MemorizeStatCalls::getStat(const char *Path, struct stat &StatBuf) {
-  LookupResult Result = statChained(Path, StatBuf);
+MemorizeStatCalls::getStat(const char *Path, struct stat &StatBuf,
+                           int *FileDescriptor) {
+  LookupResult Result = statChained(Path, StatBuf, FileDescriptor);
   
   // Do not cache failed stats, it is easy to construct common inconsistent
   // situations if we do, and they are not important for PCH performance (which

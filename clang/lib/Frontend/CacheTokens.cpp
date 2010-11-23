@@ -517,8 +517,9 @@ public:
   StatListener(PTHMap &pm) : PM(pm) {}
   ~StatListener() {}
 
-  LookupResult getStat(const char *Path, struct stat &StatBuf) {
-    LookupResult Result = statChained(Path, StatBuf);
+  LookupResult getStat(const char *Path, struct stat &StatBuf,
+                       int *FileDescriptor) {
+    LookupResult Result = statChained(Path, StatBuf, FileDescriptor);
 
     if (Result == CacheMissing) // Failed 'stat'.
       PM.insert(PTHEntryKeyVariant(Path), PTHEntry());

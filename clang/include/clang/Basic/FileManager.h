@@ -131,7 +131,8 @@ class FileManager {
   // Caching.
   llvm::OwningPtr<FileSystemStatCache> StatCache;
 
-  bool getStatValue(const char *Path, struct stat &StatBuf, bool isForDir);
+  bool getStatValue(const char *Path, struct stat &StatBuf,
+                    int *FileDescriptor);
 public:
   FileManager(const FileSystemOptions &FileSystemOpts);
   ~FileManager();
