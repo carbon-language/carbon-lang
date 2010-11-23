@@ -59,40 +59,40 @@ void foo()
 
 void foo2(struct test* var)
 {
-  // CHECK: alloca %struct.test*, align 4
-  // CHECK-NEXT: store %struct.test* %var, %struct.test** %{{.*}}, align 4
-  // CHECK-NEXT: load %struct.test** %{{.*}}, align 4
+  // CHECK: alloca %struct.test*, align
+  // CHECK-NEXT: store %struct.test* %var, %struct.test** %{{.*}}, align
+  // CHECK-NEXT: load %struct.test** %{{.*}}, align
   // CHECK-NEXT: getelementptr inbounds %struct.test* %{{.*}}, i32 0, i32 1
   // CHECK-NEXT: getelementptr inbounds %struct.nested2* %{{.*}}, i32 0, i32 0
   // CHECK-NEXT: load i32* %{{.*}}, align 4
   var->a;
 
-  // CHECK-NEXT: load %struct.test** %{{.*}}, align 4
+  // CHECK-NEXT: load %struct.test** %{{.*}}, align
   // CHECK-NEXT: getelementptr inbounds %struct.test* %{{.*}}, i32 0, i32 1
   // CHECK-NEXT: getelementptr inbounds %struct.nested2* %{{.*}}, i32 0, i32 2
   // CHECK-NEXT: load i32* %{{.*}}, align 4
   var->b;
 
-  // CHECK-NEXT: load %struct.test** %{{.*}}, align 4
+  // CHECK-NEXT: load %struct.test** %{{.*}}, align
   // CHECK-NEXT: getelementptr inbounds %struct.test* %{{.*}}, i32 0, i32 1
   // CHECK-NEXT: getelementptr inbounds %struct.nested2* %{{.*}}, i32 0, i32 1
   // CHECK-NEXT: getelementptr inbounds %struct.nested1* %{{.*}}, i32 0, i32 0
   // CHECK-NEXT: load i32* %{{.*}}, align 4
   var->a1;
 
-  // CHECK-NEXT: load %struct.test** %{{.*}}, align 4
+  // CHECK-NEXT: load %struct.test** %{{.*}}, align
   // CHECK-NEXT: getelementptr inbounds %struct.test* %{{.*}}, i32 0, i32 1
   // CHECK-NEXT: getelementptr inbounds %struct.nested2* %{{.*}}, i32 0, i32 1
   // CHECK-NEXT: getelementptr inbounds %struct.nested1* %{{.*}}, i32 0, i32 1
   // CHECK-NEXT: load i32* %{{.*}}, align 4
   var->b1;
 
-  // CHECK-NEXT: load %struct.test** %{{.*}}, align 4
+  // CHECK-NEXT: load %struct.test** %{{.*}}, align
   // CHECK-NEXT: getelementptr inbounds %struct.test* %{{.*}}, i32 0, i32 0
   // CHECK-NEXT: load i32* %{{.*}}, align 4
   var->x;
 
-  // CHECK-NEXT: load %struct.test** %{{.*}}, align 4
+  // CHECK-NEXT: load %struct.test** %{{.*}}, align
   // CHECK-NEXT: getelementptr inbounds %struct.test* %{{.*}}, i32 0, i32 2
   // CHECK-NEXT: load i32* %{{.*}}, align 4
   var->y;
