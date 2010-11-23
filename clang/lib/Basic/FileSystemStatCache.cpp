@@ -13,6 +13,14 @@
 
 #include "clang/Basic/FileSystemStatCache.h"
 #include "llvm/System/Path.h"
+
+// FIXME: This is terrible, we need this for ::close.
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#include <sys/uio.h>
+#else
+#include <io.h>
+#endif
 using namespace clang;
 
 #if defined(_MSC_VER)
@@ -37,10 +45,23 @@ bool FileSystemStatCache::get(const char *Path, struct stat &StatBuf,
   else
     R = ::stat(Path, &StatBuf) != 0 ? CacheMissing : CacheExists;
 
+  // If the path doesn't exist, return failure.
   if (R == CacheMissing) return true;
   
+  // If the path exists, make sure that its "directoryness" matches the clients
+  // demands.
   bool isForDir = FileDescriptor == 0;
-  return S_ISDIR(StatBuf.st_mode) != isForDir;
+  if (S_ISDIR(StatBuf.st_mode) != isForDir) {
+    // If not, close the file if opened.
+    if (FileDescriptor && *FileDescriptor != -1) {
+      ::close(*FileDescriptor);
+      *FileDescriptor = -1;
+    }
+    
+    return true;
+  }
+  
+  return false;
 }
 
 
