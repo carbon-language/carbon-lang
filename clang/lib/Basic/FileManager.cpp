@@ -385,20 +385,27 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   return UFE;
 }
 
-llvm::MemoryBuffer *FileManager::
-getBufferForFile(const char *FilenameStart, const char *FilenameEnd,
-                 const FileSystemOptions &FileSystemOpts,
-                 std::string *ErrorStr,
-                 int64_t FileSize,
-                 struct stat *FileInfo) {
-  assert(FilenameEnd[0] == 0);
-  if (FileSystemOpts.WorkingDir.empty())
-    return llvm::MemoryBuffer::getFile(FilenameStart, ErrorStr,
-                                       FileSize, FileInfo);
-  llvm::sys::Path FilePath(llvm::StringRef(FilenameStart,
-                                           FilenameEnd-FilenameStart));
-  FixupRelativePath(FilePath, FileSystemOpts);
+void FileManager::FixupRelativePath(llvm::sys::Path &path,
+                                    const FileSystemOptions &FSOpts) {
+  if (FSOpts.WorkingDir.empty() || path.isAbsolute()) return;
+  
+  llvm::sys::Path NewPath(FSOpts.WorkingDir);
+  NewPath.appendComponent(path.str());
+  path = NewPath;
+}
 
+
+
+llvm::MemoryBuffer *FileManager::
+getBufferForFile(llvm::StringRef Filename,
+                 const FileSystemOptions &FileSystemOpts,
+                 std::string *ErrorStr, int64_t FileSize,
+                 struct stat *FileInfo) {
+  if (FileSystemOpts.WorkingDir.empty())
+    return llvm::MemoryBuffer::getFile(Filename, ErrorStr, FileSize, FileInfo);
+  
+  llvm::sys::Path FilePath(Filename);
+  FixupRelativePath(FilePath, FileSystemOpts);
   return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr,
                                      FileSize, FileInfo);
 }
@@ -413,15 +420,6 @@ int FileManager::stat_cached(const char *path, struct stat *buf,
 
   return StatCache.get() ? StatCache->stat(FilePath.c_str(), buf)
                          : stat(FilePath.c_str(), buf);
-}
-
-void FileManager::FixupRelativePath(llvm::sys::Path &path,
-                                    const FileSystemOptions &FSOpts) {
-  if (!FSOpts.WorkingDir.empty() && !path.isAbsolute()) {
-    llvm::sys::Path NewPath(FSOpts.WorkingDir);
-    NewPath.appendComponent(path.str());
-    path = NewPath;
-  }
 }
 
 void FileManager::PrintStats() const {

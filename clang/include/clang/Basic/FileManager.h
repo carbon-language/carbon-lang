@@ -225,15 +225,6 @@ public:
                                        const FileSystemOptions &FileSystemOpts,
                                        std::string *ErrorStr = 0,
                                        int64_t FileSize = -1,
-                                       struct stat *FileInfo = 0) {
-    return getBufferForFile(Filename.begin(), Filename.end(), FileSystemOpts,
-                            ErrorStr, FileSize, FileInfo);
-  }
-  llvm::MemoryBuffer *getBufferForFile(const char *FilenameStart,
-                                       const char *FilenameEnd,
-                                       const FileSystemOptions &FileSystemOpts,
-                                       std::string *ErrorStr = 0,
-                                       int64_t FileSize = -1,
                                        struct stat *FileInfo = 0);
 
   /// \brief If path is not absolute and FileSystemOptions set the working
@@ -241,7 +232,7 @@ public:
   /// working directory.
   static void FixupRelativePath(llvm::sys::Path &path,
                                 const FileSystemOptions &FSOpts);
-
+  
   void PrintStats() const;
 };
 
