@@ -218,18 +218,22 @@ void X86MCCodeEmitter::
 EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
               unsigned &CurByte, raw_ostream &OS,
               SmallVectorImpl<MCFixup> &Fixups, int ImmOffset) const {
-  // If this is a simple integer displacement that doesn't require a relocation,
-  // emit it now.
+  const MCExpr *Expr = NULL;
   if (DispOp.isImm()) {
-    // FIXME: is this right for pc-rel encoding??  Probably need to emit this as
-    // a fixup if so.
-    EmitConstant(DispOp.getImm()+ImmOffset, Size, CurByte, OS);
-    return;
+    // If this is a simple integer displacement that doesn't require a relocation,
+    // emit it now.
+    if (FixupKind != MCFixupKind(X86::reloc_pcrel_1byte) &&
+	FixupKind != MCFixupKind(X86::reloc_pcrel_2byte) &&
+	FixupKind != MCFixupKind(X86::reloc_pcrel_4byte)) {
+      EmitConstant(DispOp.getImm()+ImmOffset, Size, CurByte, OS);
+      return;
+    }
+    Expr = MCConstantExpr::Create(DispOp.getImm(), Ctx);
+  } else {
+    Expr = DispOp.getExpr();
   }
 
   // If we have an immoffset, add it to the expression.
-  const MCExpr *Expr = DispOp.getExpr();
-
   if (FixupKind == FK_Data_4 && StartsWithGlobalOffsetTable(Expr)) {
     assert(ImmOffset == 0);
 
