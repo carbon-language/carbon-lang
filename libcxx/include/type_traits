@@ -1395,7 +1395,7 @@ public:
 };
 
 template <class _MP, class _Tp, class ..._Args>
-struct __result_of_mp;
+struct __result_of_mp {};
 
 // member function pointer
 

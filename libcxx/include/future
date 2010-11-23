@@ -27,9 +27,9 @@ enum class future_errc
 
 enum class launch
 {
-    any,
-    async,
-    sync
+    async = 1,
+    deferred = 2,
+    any = async | deferred
 };
 
 enum class future_status
@@ -470,9 +470,9 @@ struct _LIBCPP_VISIBLE is_error_code_enum<future_errc> : public true_type {};
 struct _LIBCPP_VISIBLE launch
 {
 enum _ {
-    any,
-    async,
-    sync
+    async = 1,
+    deferred = 2,
+    any = async | deferred
 };
 
     _ __v_;
@@ -2111,16 +2111,16 @@ async(launch __policy, _F&& __f, _Args&&... __args)
 {
     typedef typename result_of<_F(_Args...)>::type _R;
     future<_R> __r;
-    if (__policy == launch::sync)
-        __r = _STD::__make_deferred_assoc_state<_R>(bind(_STD::forward<_F>(__f),
-                                               _STD::forward<_Args>(__args)...));
-    else
+    if (__policy & launch::async)
     {
         packaged_task<_R()> __pk(bind(_STD::forward<_F>(__f),
                                       _STD::forward<_Args>(__args)...));
         __r = __pk.get_future();
         thread(_STD::move(__pk)).detach();
     }
+    else if (__policy & launch::deferred)
+        __r = _STD::__make_deferred_assoc_state<_R>(bind(_STD::forward<_F>(__f),
+                                              _STD::forward<_Args>(__args)...));
     return __r;
 }
 

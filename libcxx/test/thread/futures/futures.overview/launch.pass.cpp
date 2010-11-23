@@ -11,16 +11,16 @@
 
 // enum class launch
 // {
-//     any,
-//     async,
-//     sync
+//     async = 1,
+//     deferred = 2,
+//     any = async | deferred
 // };
 
 #include <future>
 
 int main()
 {
-    static_assert(std::launch::any == 0, "");
+    static_assert(std::launch::any == std::launch::async | std::launch::deferred, "");
     static_assert(std::launch::async == 1, "");
-    static_assert(std::launch::sync == 2, "");
+    static_assert(std::launch::deferred == 2, "");
 }

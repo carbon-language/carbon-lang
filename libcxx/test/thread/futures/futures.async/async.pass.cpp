@@ -82,7 +82,7 @@ int main()
         assert(t1-t0 < ms(100));
     }
     {
-        std::future<int> f = std::async(std::launch::sync, f0);
+        std::future<int> f = std::async(std::launch::deferred, f0);
         std::this_thread::sleep_for(ms(300));
         Clock::time_point t0 = Clock::now();
         assert(f.get() == 3);
@@ -115,7 +115,7 @@ int main()
         assert(t1-t0 < ms(100));
     }
     {
-        std::future<int&> f = std::async(std::launch::sync, f1);
+        std::future<int&> f = std::async(std::launch::deferred, f1);
         std::this_thread::sleep_for(ms(300));
         Clock::time_point t0 = Clock::now();
         assert(&f.get() == &i);
@@ -148,7 +148,7 @@ int main()
         assert(t1-t0 < ms(100));
     }
     {
-        std::future<void> f = std::async(std::launch::sync, f2);
+        std::future<void> f = std::async(std::launch::deferred, f2);
         std::this_thread::sleep_for(ms(300));
         Clock::time_point t0 = Clock::now();
         f.get();
