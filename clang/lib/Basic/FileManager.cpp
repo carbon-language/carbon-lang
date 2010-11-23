@@ -391,6 +391,10 @@ getBufferForFile(const char *FilenameStart, const char *FilenameEnd,
                  std::string *ErrorStr,
                  int64_t FileSize,
                  struct stat *FileInfo) {
+  assert(FilenameEnd[0] == 0);
+  if (FileSystemOpts.WorkingDir.empty())
+    return llvm::MemoryBuffer::getFile(FilenameStart, ErrorStr,
+                                       FileSize, FileInfo);
   llvm::sys::Path FilePath(llvm::StringRef(FilenameStart,
                                            FilenameEnd-FilenameStart));
   FixupRelativePath(FilePath, FileSystemOpts);
@@ -399,8 +403,11 @@ getBufferForFile(const char *FilenameStart, const char *FilenameEnd,
                                      FileSize, FileInfo);
 }
 
-int FileManager::stat_cached(const char* path, struct stat* buf,
+int FileManager::stat_cached(const char *path, struct stat *buf,
                              const FileSystemOptions &FileSystemOpts) {
+  if (FileSystemOpts.WorkingDir.empty())
+    return StatCache.get() ? StatCache->stat(path, buf) : stat(path, buf);
+
   llvm::sys::Path FilePath(path);
   FixupRelativePath(FilePath, FileSystemOpts);
 
