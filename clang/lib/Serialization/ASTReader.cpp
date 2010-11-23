@@ -1005,7 +1005,6 @@ namespace {
 
 class ASTStatData {
 public:
-  const bool hasStat;
   const ino_t ino;
   const dev_t dev;
   const mode_t mode;
@@ -1013,10 +1012,7 @@ public:
   const off_t size;
 
   ASTStatData(ino_t i, dev_t d, mode_t mo, time_t m, off_t s)
-  : hasStat(true), ino(i), dev(d), mode(mo), mtime(m), size(s) {}
-
-  ASTStatData()
-    : hasStat(false), ino(0), dev(0), mode(0), mtime(0), size(0) {}
+    : ino(i), dev(d), mode(mo), mtime(m), size(s) {}
 };
 
 class ASTStatLookupTrait {
@@ -1051,9 +1047,6 @@ class ASTStatLookupTrait {
                             unsigned /*DataLen*/) {
     using namespace clang::io;
 
-    if (*d++ == 1)
-      return data_type();
-
     ino_t ino = (ino_t) ReadUnalignedLE32(d);
     dev_t dev = (dev_t) ReadUnalignedLE32(d);
     mode_t mode = (mode_t) ReadUnalignedLE16(d);
@@ -1073,10 +1066,8 @@ class ASTStatCache : public FileSystemStatCache {
 
   unsigned &NumStatHits, &NumStatMisses;
 public:
-  ASTStatCache(const unsigned char *Buckets,
-               const unsigned char *Base,
-               unsigned &NumStatHits,
-               unsigned &NumStatMisses)
+  ASTStatCache(const unsigned char *Buckets, const unsigned char *Base,
+               unsigned &NumStatHits, unsigned &NumStatMisses)
     : Cache(0), NumStatHits(NumStatHits), NumStatMisses(NumStatMisses) {
     Cache = CacheTy::Create(Buckets, Base);
   }
@@ -1095,9 +1086,6 @@ public:
 
     ++NumStatHits;
     ASTStatData Data = *I;
-
-    if (!Data.hasStat)
-      return CacheHitMissing;
 
     StatBuf.st_ino = Data.ino;
     StatBuf.st_dev = Data.dev;

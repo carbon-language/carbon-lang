@@ -904,8 +904,8 @@ public:
   typedef const char * key_type;
   typedef key_type key_type_ref;
 
-  typedef std::pair<int, struct stat> data_type;
-  typedef const data_type& data_type_ref;
+  typedef struct stat data_type;
+  typedef const data_type &data_type_ref;
 
   static unsigned ComputeHash(const char *path) {
     return llvm::HashString(path);
@@ -916,9 +916,7 @@ public:
                       data_type_ref Data) {
     unsigned StrLen = strlen(path);
     clang::io::Emit16(Out, StrLen);
-    unsigned DataLen = 1; // result value
-    if (Data.first == 0)
-      DataLen += 4 + 4 + 2 + 8 + 8;
+    unsigned DataLen = 4 + 4 + 2 + 8 + 8;
     clang::io::Emit8(Out, DataLen);
     return std::make_pair(StrLen + 1, DataLen);
   }
@@ -927,21 +925,16 @@ public:
     Out.write(path, KeyLen);
   }
 
-  void EmitData(llvm::raw_ostream& Out, key_type_ref,
+  void EmitData(llvm::raw_ostream &Out, key_type_ref,
                 data_type_ref Data, unsigned DataLen) {
     using namespace clang::io;
     uint64_t Start = Out.tell(); (void)Start;
 
-    // Result of stat()
-    Emit8(Out, Data.first? 1 : 0);
-
-    if (Data.first == 0) {
-      Emit32(Out, (uint32_t) Data.second.st_ino);
-      Emit32(Out, (uint32_t) Data.second.st_dev);
-      Emit16(Out, (uint16_t) Data.second.st_mode);
-      Emit64(Out, (uint64_t) Data.second.st_mtime);
-      Emit64(Out, (uint64_t) Data.second.st_size);
-    }
+    Emit32(Out, (uint32_t) Data.st_ino);
+    Emit32(Out, (uint32_t) Data.st_dev);
+    Emit16(Out, (uint16_t) Data.st_mode);
+    Emit64(Out, (uint64_t) Data.st_mtime);
+    Emit64(Out, (uint64_t) Data.st_size);
 
     assert(Out.tell() - Start == DataLen && "Wrong data length");
   }

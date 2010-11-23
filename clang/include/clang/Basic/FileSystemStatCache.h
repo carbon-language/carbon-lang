@@ -67,17 +67,10 @@ protected:
 /// execution of the front end.
 class MemorizeStatCalls : public FileSystemStatCache {
 public:
-  /// \brief The result of a stat() call.
-  ///
-  /// The first member is the result of calling stat(). If stat()
-  /// found something, the second member is a copy of the stat
-  /// structure.
-  typedef std::pair<int, struct stat> StatResult;
+  /// \brief The set of stat() calls that have been seen.
+  llvm::StringMap<struct stat, llvm::BumpPtrAllocator> StatCalls;
   
-  /// \brief The set of stat() calls that have been
-  llvm::StringMap<StatResult, llvm::BumpPtrAllocator> StatCalls;
-  
-  typedef llvm::StringMap<StatResult, llvm::BumpPtrAllocator>::const_iterator
+  typedef llvm::StringMap<struct stat, llvm::BumpPtrAllocator>::const_iterator
   iterator;
   
   iterator begin() const { return StatCalls.begin(); }
