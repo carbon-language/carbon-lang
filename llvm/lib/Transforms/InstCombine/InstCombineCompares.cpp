@@ -1761,22 +1761,22 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           LHS = Op0;
         
         // If the LHS is 1 << x, and we know the result is a power of 2 like 8,
-        // then turn "((1 << x)&8) == 0" into "x == 3".
+        // then turn "((1 << x)&8) == 0" into "x != 3".
         Value *X = 0;
         if (match(LHS, m_Shl(m_One(), m_Value(X)))) {
           unsigned CmpVal = Op0KnownZeroInverted.countTrailingZeros();
-          return new ICmpInst(ICmpInst::ICMP_EQ, X,
+          return new ICmpInst(ICmpInst::ICMP_NE, X,
                               ConstantInt::get(X->getType(), CmpVal));
         }
         
         // If the LHS is 8 >>u x, and we know the result is a power of 2 like 1,
-        // then turn "((8 >>u x)&1) == 0" into "x == 3".
+        // then turn "((8 >>u x)&1) == 0" into "x != 3".
         ConstantInt *CI = 0;
         if (Op0KnownZeroInverted == 1 &&
             match(LHS, m_LShr(m_ConstantInt(CI), m_Value(X))) &&
             CI->getValue().isPowerOf2()) {
           unsigned CmpVal = CI->getValue().countTrailingZeros();
-          return new ICmpInst(ICmpInst::ICMP_EQ, X,
+          return new ICmpInst(ICmpInst::ICMP_NE, X,
                               ConstantInt::get(X->getType(), CmpVal));
         }
       }
@@ -1800,22 +1800,22 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           LHS = Op0;
         
         // If the LHS is 1 << x, and we know the result is a power of 2 like 8,
-        // then turn "((1 << x)&8) != 0" into "x != 3".
+        // then turn "((1 << x)&8) != 0" into "x == 3".
         Value *X = 0;
         if (match(LHS, m_Shl(m_One(), m_Value(X)))) {
           unsigned CmpVal = Op0KnownZeroInverted.countTrailingZeros();
-          return new ICmpInst(ICmpInst::ICMP_NE, X,
+          return new ICmpInst(ICmpInst::ICMP_EQ, X,
                               ConstantInt::get(X->getType(), CmpVal));
         }
         
         // If the LHS is 8 >>u x, and we know the result is a power of 2 like 1,
-        // then turn "((8 >>u x)&1) != 0" into "x != 3".
+        // then turn "((8 >>u x)&1) != 0" into "x == 3".
         ConstantInt *CI = 0;
         if (Op0KnownZeroInverted == 1 &&
             match(LHS, m_LShr(m_ConstantInt(CI), m_Value(X))) &&
             CI->getValue().isPowerOf2()) {
           unsigned CmpVal = CI->getValue().countTrailingZeros();
-          return new ICmpInst(ICmpInst::ICMP_NE, X,
+          return new ICmpInst(ICmpInst::ICMP_EQ, X,
                               ConstantInt::get(X->getType(), CmpVal));
         }
       }

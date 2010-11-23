@@ -161,7 +161,7 @@ define i1 @test17(i32 %x) nounwind {
   %cmp = icmp eq i32 %and, 0
   ret i1 %cmp
 ; CHECK: @test17
-; CHECK-NEXT: %cmp = icmp eq i32 %x, 3
+; CHECK-NEXT: %cmp = icmp ne i32 %x, 3
 }
 
 
@@ -171,7 +171,7 @@ define i1 @test18(i32 %x) nounwind {
   %cmp = icmp eq i32 %and, 0
   ret i1 %cmp
 ; CHECK: @test18
-; CHECK-NEXT: %cmp = icmp eq i32 %x, 3
+; CHECK-NEXT: %cmp = icmp ne i32 %x, 3
 }
 
 define i1 @test19(i32 %x) nounwind {
@@ -180,7 +180,7 @@ define i1 @test19(i32 %x) nounwind {
   %cmp = icmp eq i32 %and, 8
   ret i1 %cmp
 ; CHECK: @test19
-; CHECK-NEXT: %cmp = icmp ne i32 %x, 3
+; CHECK-NEXT: %cmp = icmp eq i32 %x, 3
 }
 
 define i1 @test20(i32 %x) nounwind {
@@ -189,6 +189,6 @@ define i1 @test20(i32 %x) nounwind {
   %cmp = icmp ne i32 %and, 0
   ret i1 %cmp
 ; CHECK: @test20
-; CHECK-NEXT: %cmp = icmp ne i32 %x, 3
+; CHECK-NEXT: %cmp = icmp eq i32 %x, 3
 }
 
