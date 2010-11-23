@@ -6,6 +6,7 @@ add_clang_library(clangBasic
   Diagnostic.cpp
   DiagnosticIDs.cpp
   FileManager.cpp
+  FileSystemStatCache.cpp
   IdentifierTable.cpp
   SourceLocation.cpp
   SourceManager.cpp

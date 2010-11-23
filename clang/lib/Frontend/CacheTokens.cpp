@@ -13,11 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/Utils.h"
-#include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemStatCache.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/OnDiskHashTable.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringExtras.h"
@@ -510,26 +511,31 @@ namespace {
 /// as input to PTH generation.  StatListener populates the PTHWriter's
 /// file map with stat information for directories as well as negative stats.
 /// Stat information for files are populated elsewhere.
-class StatListener : public StatSysCallCache {
+class StatListener : public FileSystemStatCache {
   PTHMap &PM;
 public:
   StatListener(PTHMap &pm) : PM(pm) {}
   ~StatListener() {}
 
-  int stat(const char *path, struct stat *buf) {
-    int result = StatSysCallCache::stat(path, buf);
+  LookupResult getStat(const char *Path, struct stat &StatBuf) {
+    LookupResult Result = FileSystemStatCache::statChained(Path, StatBuf);
 
-    if (result != 0) // Failed 'stat'.
-      PM.insert(PTHEntryKeyVariant(path), PTHEntry());
-    else if (S_ISDIR(buf->st_mode)) {
+    // If the chained cache didn't know anything about the file, do the stat now
+    // so we can record the result.
+    if (Result == CacheMiss)
+      Result = ::stat(Path, &StatBuf) ? CacheHitMissing : CacheHitExists;
+    
+    if (Result == CacheHitMissing) // Failed 'stat'.
+      PM.insert(PTHEntryKeyVariant(Path), PTHEntry());
+    else if (S_ISDIR(StatBuf.st_mode)) {
       // Only cache directories with absolute paths.
-      if (!llvm::sys::Path(path).isAbsolute())
-        return result;
+      if (!llvm::sys::Path(Path).isAbsolute())
+        return Result;
 
-      PM.insert(PTHEntryKeyVariant(buf, path), PTHEntry());
+      PM.insert(PTHEntryKeyVariant(&StatBuf, Path), PTHEntry());
     }
 
-    return result;
+    return Result;
   }
 };
 } // end anonymous namespace

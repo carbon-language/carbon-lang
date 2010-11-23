@@ -19,6 +19,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemStatCache.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
@@ -34,7 +35,7 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
 
   // Install a stat() listener to keep track of all of the stat()
   // calls.
-  StatCalls = new MemorizeStatCalls;
+  StatCalls = new MemorizeStatCalls();
   // If we have a chain, we want new stat calls only, so install the memorizer
   // *after* the already installed ASTReader's stat cache.
   PP.getFileManager().addStatCache(StatCalls,

@@ -31,7 +31,7 @@ namespace clang {
 class FileEntry;
 class PTHLexer;
 class Diagnostic;
-class StatSysCallCache;
+class FileSystemStatCache;
 
 class PTHManager : public IdentifierInfoLookup {
   friend class PTHLexer;
@@ -128,11 +128,11 @@ public:
   ///  It is the responsibility of the caller to 'delete' the returned object.
   PTHLexer *CreateLexer(FileID FID);
 
-  /// createStatCache - Returns a StatSysCallCache object for use with
+  /// createStatCache - Returns a FileSystemStatCache object for use with
   ///  FileManager objects.  These objects use the PTH data to speed up
   ///  calls to stat by memoizing their results from when the PTH file
   ///  was generated.
-  StatSysCallCache *createStatCache();
+  FileSystemStatCache *createStatCache();
 };
 
 }  // end namespace clang

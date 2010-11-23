@@ -13,6 +13,7 @@
 
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemStatCache.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Lex/LexDiagnostic.h"
@@ -667,7 +668,7 @@ public:
   }
 };
 
-class PTHStatCache : public StatSysCallCache {
+class PTHStatCache : public FileSystemStatCache {
   typedef OnDiskChainedHashTable<PTHStatLookupTrait> CacheTy;
   CacheTy Cache;
 
@@ -678,29 +679,29 @@ public:
 
   ~PTHStatCache() {}
 
-  int stat(const char *path, struct stat *buf) {
+  LookupResult getStat(const char *Path, struct stat &StatBuf) {
     // Do the lookup for the file's data in the PTH file.
-    CacheTy::iterator I = Cache.find(path);
+    CacheTy::iterator I = Cache.find(Path);
 
     // If we don't get a hit in the PTH file just forward to 'stat'.
     if (I == Cache.end())
-      return StatSysCallCache::stat(path, buf);
+      return statChained(Path, StatBuf);
 
-    const PTHStatData& Data = *I;
+    const PTHStatData &Data = *I;
 
     if (!Data.hasStat)
-      return 1;
+      return CacheHitMissing;
 
-    buf->st_ino = Data.ino;
-    buf->st_dev = Data.dev;
-    buf->st_mtime = Data.mtime;
-    buf->st_mode = Data.mode;
-    buf->st_size = Data.size;
-    return 0;
+    StatBuf.st_ino = Data.ino;
+    StatBuf.st_dev = Data.dev;
+    StatBuf.st_mtime = Data.mtime;
+    StatBuf.st_mode = Data.mode;
+    StatBuf.st_size = Data.size;
+    return CacheHitExists;
   }
 };
 } // end anonymous namespace
 
-StatSysCallCache *PTHManager::createStatCache() {
+FileSystemStatCache *PTHManager::createStatCache() {
   return new PTHStatCache(*((PTHFileLookup*) FileLookup));
 }

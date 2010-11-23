@@ -23,18 +23,18 @@
 #include "llvm/Config/config.h" // for mode_t
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
-#include <sys/stat.h>
+
+struct stat;
 
 namespace llvm {
 class MemoryBuffer;
-namespace sys {
-class Path;
-}
+namespace sys { class Path; }
 }
 
 namespace clang {
 class FileManager;
-
+class FileSystemStatCache;
+  
 /// DirectoryEntry - Cached information about one directory on the disk.
 ///
 class DirectoryEntry {
@@ -80,61 +80,6 @@ public:
   }
 };
 
-/// \brief Abstract interface for introducing a FileManager cache for 'stat'
-/// system calls, which is used by precompiled and pretokenized headers to
-/// improve performance.
-class StatSysCallCache {
-protected:
-  llvm::OwningPtr<StatSysCallCache> NextStatCache;
-  
-public:
-  virtual ~StatSysCallCache() {}
-  virtual int stat(const char *path, struct stat *buf) {
-    if (getNextStatCache())
-      return getNextStatCache()->stat(path, buf);
-    
-    return ::stat(path, buf);
-  }
-  
-  /// \brief Sets the next stat call cache in the chain of stat caches.
-  /// Takes ownership of the given stat cache.
-  void setNextStatCache(StatSysCallCache *Cache) {
-    NextStatCache.reset(Cache);
-  }
-  
-  /// \brief Retrieve the next stat call cache in the chain.
-  StatSysCallCache *getNextStatCache() { return NextStatCache.get(); }
-
-  /// \brief Retrieve the next stat call cache in the chain, transferring
-  /// ownership of this cache (and, transitively, all of the remaining caches)
-  /// to the caller.
-  StatSysCallCache *takeNextStatCache() { return NextStatCache.take(); }
-};
-
-/// \brief A stat "cache" that can be used by FileManager to keep
-/// track of the results of stat() calls that occur throughout the
-/// execution of the front end.
-class MemorizeStatCalls : public StatSysCallCache {
-public:
-  /// \brief The result of a stat() call.
-  ///
-  /// The first member is the result of calling stat(). If stat()
-  /// found something, the second member is a copy of the stat
-  /// structure.
-  typedef std::pair<int, struct stat> StatResult;
-
-  /// \brief The set of stat() calls that have been
-  llvm::StringMap<StatResult, llvm::BumpPtrAllocator> StatCalls;
-
-  typedef llvm::StringMap<StatResult, llvm::BumpPtrAllocator>::const_iterator
-    iterator;
-
-  iterator begin() const { return StatCalls.begin(); }
-  iterator end() const { return StatCalls.end(); }
-
-  virtual int stat(const char *path, struct stat *buf);
-};
-
 /// FileManager - Implements support for file system lookup, file system
 /// caching, and directory search management.  This also handles more advanced
 /// properties, such as uniquing files based on "inode", so that a file with two
@@ -162,22 +107,21 @@ class FileManager {
   unsigned NextFileUID;
 
   /// \brief The virtual files that we have allocated.
-  llvm::SmallVector<FileEntry *, 4> VirtualFileEntries;
+  llvm::SmallVector<FileEntry*, 4> VirtualFileEntries;
 
   // Statistics.
   unsigned NumDirLookups, NumFileLookups;
   unsigned NumDirCacheMisses, NumFileCacheMisses;
 
   // Caching.
-  llvm::OwningPtr<StatSysCallCache> StatCache;
+  llvm::OwningPtr<FileSystemStatCache> StatCache;
 
-  int stat_cached(const char *path, struct stat *buf);
-
+  bool getStatValue(const char *Path, struct stat &StatBuf);
 public:
   FileManager(const FileSystemOptions &FileSystemOpts);
   ~FileManager();
 
-  /// \brief Installs the provided StatSysCallCache object within
+  /// \brief Installs the provided FileSystemStatCache object within
   /// the FileManager. 
   ///
   /// Ownership of this object is transferred to the FileManager.
@@ -188,10 +132,10 @@ public:
   /// \param AtBeginning whether this new stat cache must be installed at the
   /// beginning of the chain of stat caches. Otherwise, it will be added to
   /// the end of the chain.
-  void addStatCache(StatSysCallCache *statCache, bool AtBeginning = false);
+  void addStatCache(FileSystemStatCache *statCache, bool AtBeginning = false);
 
-  /// \brief Removes the provided StatSysCallCache object from the file manager.
-  void removeStatCache(StatSysCallCache *statCache);
+  /// \brief Removes the specified FileSystemStatCache object from the manager.
+  void removeStatCache(FileSystemStatCache *statCache);
   
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.

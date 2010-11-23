@@ -1,4 +1,4 @@
-///===--- FileManager.cpp - File System Probing and Caching ----------------===//
+//===--- FileManager.cpp - File System Probing and Caching ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,7 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/FileManager.h"
-#include "clang/Basic/FileSystemOptions.h"
+#include "clang/Basic/FileSystemStatCache.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -162,7 +162,8 @@ FileManager::~FileManager() {
     delete *V;
 }
 
-void FileManager::addStatCache(StatSysCallCache *statCache, bool AtBeginning) {
+void FileManager::addStatCache(FileSystemStatCache *statCache,
+                               bool AtBeginning) {
   assert(statCache && "No stat cache provided?");
   if (AtBeginning || StatCache.get() == 0) {
     statCache->setNextStatCache(StatCache.take());
@@ -170,14 +171,14 @@ void FileManager::addStatCache(StatSysCallCache *statCache, bool AtBeginning) {
     return;
   }
   
-  StatSysCallCache *LastCache = StatCache.get();
+  FileSystemStatCache *LastCache = StatCache.get();
   while (LastCache->getNextStatCache())
     LastCache = LastCache->getNextStatCache();
   
   LastCache->setNextStatCache(statCache);
 }
 
-void FileManager::removeStatCache(StatSysCallCache *statCache) {
+void FileManager::removeStatCache(FileSystemStatCache *statCache) {
   if (!statCache)
     return;
   
@@ -188,7 +189,7 @@ void FileManager::removeStatCache(StatSysCallCache *statCache) {
   }
   
   // Find the stat cache in the list.
-  StatSysCallCache *PrevCache = StatCache.get();
+  FileSystemStatCache *PrevCache = StatCache.get();
   while (PrevCache && PrevCache->getNextStatCache() != statCache)
     PrevCache = PrevCache->getNextStatCache();
   if (PrevCache)
@@ -249,8 +250,8 @@ const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename) {
 
   // Check to see if the directory exists.
   struct stat StatBuf;
-  if (stat_cached(InterndDirName, &StatBuf) ||   // Error stat'ing.
-      !S_ISDIR(StatBuf.st_mode))          // Not a directory?
+  if (getStatValue(InterndDirName, StatBuf) ||    // Error stat'ing.
+      !S_ISDIR(StatBuf.st_mode))                  // Not a directory?
     return 0;
 
   // It exists.  See if we have already opened a directory with the same inode.
@@ -306,8 +307,8 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
   //llvm::errs() << "STATING: " << Filename;
-  if (stat_cached(InterndFileName, &StatBuf) ||   // Error stat'ing.
-      S_ISDIR(StatBuf.st_mode)) {                 // A directory?
+  if (getStatValue(InterndFileName, StatBuf) ||    // Error stat'ing.
+      S_ISDIR(StatBuf.st_mode)) {                  // A directory?
     // If this file doesn't exist, we leave a null in FileEntries for this path.
     //llvm::errs() << ": Not existing\n";
     return 0;
@@ -370,7 +371,7 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   // newly-created file entry.
   const char *InterndFileName = NamedFileEnt.getKeyData();
   struct stat StatBuf;
-  if (!stat_cached(InterndFileName, &StatBuf) &&
+  if (!getStatValue(InterndFileName, StatBuf) &&
       !S_ISDIR(StatBuf.st_mode)) {
     llvm::sys::Path FilePath(InterndFileName);
     FilePath.makeAbsolute();
@@ -410,16 +411,35 @@ getBufferForFile(llvm::StringRef Filename, std::string *ErrorStr) {
   return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr);
 }
 
-int FileManager::stat_cached(const char *path, struct stat *buf) {
-  if (FileSystemOpts.WorkingDir.empty())
-    return StatCache.get() ? StatCache->stat(path, buf) : stat(path, buf);
-
-  llvm::sys::Path FilePath(path);
+/// getStatValue - Get the 'stat' information for the specified path, using the
+/// cache to accellerate it if possible.  This returns true if the path does not
+/// exist or false if it exists.
+bool FileManager::getStatValue(const char *Path, struct stat &StatBuf) {
+  FileSystemStatCache::LookupResult Result = FileSystemStatCache::CacheMiss;
+  
+  // FIXME: FileSystemOpts shouldn't be passed in here, all paths should be
+  // absolute!
+  if (FileSystemOpts.WorkingDir.empty()) {
+    if (StatCache.get())
+      Result = StatCache->getStat(Path, StatBuf);
+    
+    if (Result == FileSystemStatCache::CacheMiss)
+      return ::stat(Path, &StatBuf);
+    return Result == FileSystemStatCache::CacheHitMissing;
+  }
+  
+  llvm::sys::Path FilePath(Path);
   FixupRelativePath(FilePath, FileSystemOpts);
-
-  return StatCache.get() ? StatCache->stat(FilePath.c_str(), buf)
-                         : stat(FilePath.c_str(), buf);
+  
+  if (StatCache.get())
+    Result = StatCache->getStat(FilePath.c_str(), StatBuf);
+  
+  if (Result == FileSystemStatCache::CacheMiss)
+    return ::stat(FilePath.c_str(), &StatBuf);
+  return Result == FileSystemStatCache::CacheHitMissing;
 }
+
+
 
 void FileManager::PrintStats() const {
   llvm::errs() << "\n*** File Manager Stats:\n";
@@ -433,19 +453,3 @@ void FileManager::PrintStats() const {
   //llvm::errs() << PagesMapped << BytesOfPagesMapped << FSLookups;
 }
 
-int MemorizeStatCalls::stat(const char *path, struct stat *buf) {
-  int result = StatSysCallCache::stat(path, buf);
-  
-  // Do not cache failed stats, it is easy to construct common inconsistent
-  // situations if we do, and they are not important for PCH performance (which
-  // currently only needs the stats to construct the initial FileManager
-  // entries).
-  if (result != 0)
-    return result;
-
-  // Cache file 'stat' results and directories with absolutely paths.
-  if (!S_ISDIR(buf->st_mode) || llvm::sys::Path(path).isAbsolute())
-    StatCalls[path] = StatResult(result, *buf);
-
-  return result;
-}

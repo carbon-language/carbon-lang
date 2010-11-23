@@ -33,6 +33,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemStatCache.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1066,7 +1067,7 @@ class ASTStatLookupTrait {
 ///
 /// This cache is very similar to the stat cache used by pretokenized
 /// headers.
-class ASTStatCache : public StatSysCallCache {
+class ASTStatCache : public FileSystemStatCache {
   typedef OnDiskChainedHashTable<ASTStatLookupTrait> CacheTy;
   CacheTy *Cache;
 
@@ -1082,28 +1083,28 @@ public:
 
   ~ASTStatCache() { delete Cache; }
 
-  int stat(const char *path, struct stat *buf) {
+  LookupResult getStat(const char *Path, struct stat &StatBuf) {
     // Do the lookup for the file's data in the AST file.
-    CacheTy::iterator I = Cache->find(path);
+    CacheTy::iterator I = Cache->find(Path);
 
     // If we don't get a hit in the AST file just forward to 'stat'.
     if (I == Cache->end()) {
       ++NumStatMisses;
-      return StatSysCallCache::stat(path, buf);
+      return statChained(Path, StatBuf);
     }
 
     ++NumStatHits;
     ASTStatData Data = *I;
 
     if (!Data.hasStat)
-      return 1;
+      return CacheHitMissing;
 
-    buf->st_ino = Data.ino;
-    buf->st_dev = Data.dev;
-    buf->st_mtime = Data.mtime;
-    buf->st_mode = Data.mode;
-    buf->st_size = Data.size;
-    return 0;
+    StatBuf.st_ino = Data.ino;
+    StatBuf.st_dev = Data.dev;
+    StatBuf.st_mtime = Data.mtime;
+    StatBuf.st_mode = Data.mode;
+    StatBuf.st_size = Data.size;
+    return CacheHitExists;
   }
 };
 } // end anonymous namespace
