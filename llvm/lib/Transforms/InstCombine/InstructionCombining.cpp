@@ -238,7 +238,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
 }
 
 /// LeftDistributesOverRight - Whether "X LOp (Y ROp Z)" is always equal to
-/// "(X LOp Y) ROp (Z LOp Z)".
+/// "(X LOp Y) ROp (X LOp Z)".
 static bool LeftDistributesOverRight(Instruction::BinaryOps LOp,
                                      Instruction::BinaryOps ROp) {
   switch (LOp) {
