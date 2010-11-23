@@ -41,6 +41,17 @@ using namespace clang;
 /// represent a dir name that doesn't exist on the disk.
 #define NON_EXISTENT_DIR reinterpret_cast<DirectoryEntry*>((intptr_t)-1)
 
+/// NON_EXISTENT_FILE - A special value distinct from null that is used to
+/// represent a filename that doesn't exist on the disk.
+#define NON_EXISTENT_FILE reinterpret_cast<FileEntry*>((intptr_t)-1)
+
+
+FileEntry::~FileEntry() {
+  // If this FileEntry owns an open file descriptor that never got used, close
+  // it.
+  if (FD != -1) ::close(FD);
+}
+
 //===----------------------------------------------------------------------===//
 // Windows.
 //===----------------------------------------------------------------------===//
@@ -102,7 +113,6 @@ public:
 
 class FileManager::UniqueDirContainer {
   /// UniqueDirs - Cache from ID's to existing directories/files.
-  ///
   std::map<std::pair<dev_t, ino_t>, DirectoryEntry> UniqueDirs;
 
 public:
@@ -115,7 +125,6 @@ public:
 
 class FileManager::UniqueFileContainer {
   /// UniqueFiles - Cache from ID's to existing directories/files.
-  ///
   std::set<FileEntry> UniqueFiles;
 
 public:
@@ -182,10 +191,9 @@ void FileManager::removeStatCache(FileSystemStatCache *statCache) {
   FileSystemStatCache *PrevCache = StatCache.get();
   while (PrevCache && PrevCache->getNextStatCache() != statCache)
     PrevCache = PrevCache->getNextStatCache();
-  if (PrevCache)
-    PrevCache->setNextStatCache(statCache->getNextStatCache());
-  else
-    assert(false && "Stat cache not found for removal");
+  
+  assert(PrevCache && "Stat cache not found for removal");
+  PrevCache->setNextStatCache(statCache->getNextStatCache());
 }
 
 /// \brief Retrieve the directory that the given file name resides in.
@@ -240,8 +248,7 @@ const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename) {
 
   // Check to see if the directory exists.
   struct stat StatBuf;
-  if (getStatValue(InterndDirName, StatBuf) ||    // Error stat'ing.
-      !S_ISDIR(StatBuf.st_mode))                  // Not a directory?
+  if (getStatValue(InterndDirName, StatBuf, true))
     return 0;
 
   // It exists.  See if we have already opened a directory with the same inode.
@@ -257,10 +264,6 @@ const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename) {
   UDE.Name  = InterndDirName;
   return &UDE;
 }
-
-/// NON_EXISTENT_FILE - A special value distinct from null that is used to
-/// represent a filename that doesn't exist on the disk.
-#define NON_EXISTENT_FILE reinterpret_cast<FileEntry*>((intptr_t)-1)
 
 /// getFile - Lookup, cache, and verify the specified file.  This returns null
 /// if the file doesn't exist.
@@ -302,12 +305,8 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
 
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
-  if (getStatValue(InterndFileName, StatBuf) ||    // Error stat'ing.
-      S_ISDIR(StatBuf.st_mode)) {                  // A directory?
-    // If this file doesn't exist, we leave NON_EXISTENT_FILE in FileEntries for
-    // this path so subsequent queries get the negative result.
+  if (getStatValue(InterndFileName, StatBuf, false))
     return 0;
-  }
 
   // It exists.  See if we have already opened a file with the same inode.
   // This occurs when one dir is symlinked to another, for example.
@@ -355,7 +354,11 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   VirtualFileEntries.push_back(UFE);
   NamedFileEnt.setValue(UFE);
 
-  UFE->Name    = NamedFileEnt.getKeyData();
+  // Get the null-terminated file name as stored as the key of the
+  // FileEntries map.
+  const char *InterndFileName = NamedFileEnt.getKeyData();
+   
+  UFE->Name    = InterndFileName;
   UFE->Size    = Size;
   UFE->ModTime = ModificationTime;
   UFE->Dir     = DirInfo;
@@ -363,15 +366,13 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   
   // If this virtual file resolves to a file, also map that file to the 
   // newly-created file entry.
-  const char *InterndFileName = NamedFileEnt.getKeyData();
   struct stat StatBuf;
-  if (!getStatValue(InterndFileName, StatBuf) &&
-      !S_ISDIR(StatBuf.st_mode)) {
-    llvm::sys::Path FilePath(InterndFileName);
-    FilePath.makeAbsolute();
-    FileEntries[FilePath.str()] = UFE;
-  }
-  
+  if (getStatValue(InterndFileName, StatBuf, false))
+    return UFE;
+    
+  llvm::sys::Path FilePath(UFE->Name);
+  FilePath.makeAbsolute();
+  FileEntries[FilePath.str()] = UFE;
   return UFE;
 }
 
@@ -409,16 +410,22 @@ getBufferForFile(llvm::StringRef Filename, std::string *ErrorStr) {
 /// getStatValue - Get the 'stat' information for the specified path, using the
 /// cache to accellerate it if possible.  This returns true if the path does not
 /// exist or false if it exists.
-bool FileManager::getStatValue(const char *Path, struct stat &StatBuf) {
+///
+/// The isForDir member indicates whether this is a directory lookup or not.
+/// This will return failure if the lookup isn't the expected kind.
+bool FileManager::getStatValue(const char *Path, struct stat &StatBuf,
+                               bool isForDir) {
   // FIXME: FileSystemOpts shouldn't be passed in here, all paths should be
   // absolute!
   if (FileSystemOpts.WorkingDir.empty())
-    return FileSystemStatCache::get(Path, StatBuf, StatCache.get());
+    return FileSystemStatCache::get(Path, StatBuf, StatCache.get()) ||
+           S_ISDIR(StatBuf.st_mode) != isForDir;
   
   llvm::sys::Path FilePath(Path);
   FixupRelativePath(FilePath, FileSystemOpts);
 
-  return FileSystemStatCache::get(FilePath.c_str(), StatBuf, StatCache.get());
+  return FileSystemStatCache::get(FilePath.c_str(), StatBuf, StatCache.get()) ||
+         S_ISDIR(StatBuf.st_mode) != isForDir;
 }
 
 

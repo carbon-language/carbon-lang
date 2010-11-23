@@ -45,7 +45,9 @@ public:
   const char *getName() const { return Name; }
 };
 
-/// FileEntry - Cached information about one file on the disk.
+/// FileEntry - Cached information about one file on the disk.  If the 'FD'
+/// member is valid, then this FileEntry has an open file descriptor for the
+/// file.
 ///
 class FileEntry {
   const char *Name;           // Name of the file.
@@ -56,12 +58,25 @@ class FileEntry {
   dev_t Device;               // ID for the device containing the file.
   ino_t Inode;                // Inode number for the file.
   mode_t FileMode;            // The file mode as returned by 'stat'.
+  
+  /// FD - The file descriptor for the file entry if it is opened and owned
+  /// by the FileEntry.  If not, this is set to -1.
+  int FD;
   friend class FileManager;
+  
+  void operator=(const FileEntry&); // DO NOT IMPLEMENT.
 public:
   FileEntry(dev_t device, ino_t inode, mode_t m)
-    : Name(0), Device(device), Inode(inode), FileMode(m) {}
+    : Name(0), Device(device), Inode(inode), FileMode(m), FD(-1) {}
   // Add a default constructor for use with llvm::StringMap
-  FileEntry() : Name(0), Device(0), Inode(0), FileMode(0) {}
+  FileEntry() : Name(0), Device(0), Inode(0), FileMode(0), FD(-1) {}
+
+  FileEntry(const FileEntry &FE) {
+    memcpy(this, &FE, sizeof(FE));
+    assert(FD == -1 && "Cannot copy an file-owning FileEntry");
+  }
+
+  ~FileEntry();
 
   const char *getName() const { return Name; }
   off_t getSize() const { return Size; }
@@ -75,7 +90,7 @@ public:
   ///
   const DirectoryEntry *getDir() const { return Dir; }
 
-  bool operator<(const FileEntry& RHS) const {
+  bool operator<(const FileEntry &RHS) const {
     return Device < RHS.Device || (Device == RHS.Device && Inode < RHS.Inode);
   }
 };
@@ -116,7 +131,7 @@ class FileManager {
   // Caching.
   llvm::OwningPtr<FileSystemStatCache> StatCache;
 
-  bool getStatValue(const char *Path, struct stat &StatBuf);
+  bool getStatValue(const char *Path, struct stat &StatBuf, bool isForDir);
 public:
   FileManager(const FileSystemOptions &FileSystemOpts);
   ~FileManager();
