@@ -60,13 +60,18 @@ public:
   /// MemoryBuffer if successful, otherwise returning null.  If FileSize is
   /// specified, this means that the client knows that the file exists and that
   /// it has the specified size.
-  static MemoryBuffer *getFile(StringRef Filename,
-                               std::string *ErrStr = 0,
+  static MemoryBuffer *getFile(StringRef Filename, std::string *ErrStr = 0,
                                int64_t FileSize = -1);
-  static MemoryBuffer *getFile(const char *Filename,
-                               std::string *ErrStr = 0,
+  static MemoryBuffer *getFile(const char *Filename, std::string *ErrStr = 0,
                                int64_t FileSize = -1);
 
+  /// getOpenFile - Given an already-open file descriptor, read the file and
+  /// return a MemoryBuffer.  This takes ownership of the descriptor,
+  /// immediately closing it after reading the file.
+  static MemoryBuffer *getOpenFile(int FD, const char *Filename,
+                                   std::string *ErrStr = 0,
+                                   int64_t FileSize = -1);
+  
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that InputData must be null terminated.
   static MemoryBuffer *getMemBuffer(StringRef InputData,

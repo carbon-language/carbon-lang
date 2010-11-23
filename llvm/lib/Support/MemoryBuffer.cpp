@@ -187,6 +187,7 @@ public:
 
 MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
                                     int64_t FileSize) {
+  // Ensure the path is null terminated.
   SmallString<256> PathBuf(Filename.begin(), Filename.end());
   return MemoryBuffer::getFile(PathBuf.c_str(), ErrStr, FileSize);
 }
@@ -202,6 +203,12 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
     if (ErrStr) *ErrStr = sys::StrError();
     return 0;
   }
+  
+  return getOpenFile(FD, Filename, ErrStr, FileSize);
+}
+  
+MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
+                                        std::string *ErrStr, int64_t FileSize) {
   FileCloser FC(FD); // Close FD on return.
   
   // If we don't know the file size, use fstat to find out.  fstat on an open
