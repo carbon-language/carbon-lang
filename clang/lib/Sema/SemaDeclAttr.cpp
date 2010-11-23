@@ -197,7 +197,7 @@ static void HandleExtVectorTypeAttr(Scope *scope, Decl *d,
       S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
       return;
     }
-    sizeExpr = static_cast<Expr *>(Attr.getArg(0));
+    sizeExpr = Attr.getArg(0);
   }
 
   // Instantiate/Install the vector type, and let Sema build the type for us.
@@ -342,7 +342,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 
     // The argument must be an integer constant expression.
-    Expr *Ex = static_cast<Expr *>(*I);
+    Expr *Ex = *I;
     llvm::APSInt ArgNum(32);
     if (Ex->isTypeDependent() || Ex->isValueDependent() ||
         !Ex->isIntegerConstantExpr(ArgNum, S.Context)) {
@@ -488,7 +488,7 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
   for (AttributeList::arg_iterator I = AL.arg_begin(), E = AL.arg_end(); I != E;
        ++I) {
 
-    Expr *IdxExpr = static_cast<Expr *>(*I);
+    Expr *IdxExpr = *I;
     llvm::APSInt ArgNum(32);
     if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent()
         || !IdxExpr->isIntegerConstantExpr(ArgNum, S.Context)) {
@@ -532,7 +532,7 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
     case OwnershipAttr::Returns: {
       if (AL.getNumArgs() > 1) {
           // Is the function argument an integer type?
-          Expr *IdxExpr = static_cast<Expr *>(AL.getArg(0));
+          Expr *IdxExpr = AL.getArg(0);
           llvm::APSInt ArgNum(32);
           if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent()
               || !IdxExpr->isIntegerConstantExpr(ArgNum, S.Context)) {
@@ -640,7 +640,7 @@ static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // Should we? How to check that weakref is before or after alias?
 
   if (Attr.getNumArgs() == 1) {
-    Expr *Arg = static_cast<Expr*>(Attr.getArg(0));
+    Expr *Arg = Attr.getArg(0);
     Arg = Arg->IgnoreParenCasts();
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
 
@@ -664,7 +664,7 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  Expr *Arg = static_cast<Expr*>(Attr.getArg(0));
+  Expr *Arg = Attr.getArg(0);
   Arg = Arg->IgnoreParenCasts();
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
 
@@ -890,7 +890,7 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   int priority = 65535; // FIXME: Do not hardcode such constants.
   if (Attr.getNumArgs() > 0) {
-    Expr *E = static_cast<Expr *>(Attr.getArg(0));
+    Expr *E = Attr.getArg(0);
     llvm::APSInt Idx(32);
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
@@ -920,7 +920,7 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   int priority = 65535; // FIXME: Do not hardcode such constants.
   if (Attr.getNumArgs() > 0) {
-    Expr *E = static_cast<Expr *>(Attr.getArg(0));
+    Expr *E = Attr.getArg(0);
     llvm::APSInt Idx(32);
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
@@ -951,7 +951,7 @@ static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // Handle the case where deprecated attribute has a text message.
   StringLiteral *SE;
   if (noArgs == 1) {
-    Expr *ArgExpr = static_cast<Expr *>(Attr.getArg(0));
+    Expr *ArgExpr = Attr.getArg(0);
     SE = dyn_cast<StringLiteral>(ArgExpr);
     if (!SE) {
       S.Diag(ArgExpr->getLocStart(), 
@@ -976,7 +976,7 @@ static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // Handle the case where unavailable attribute has a text message.
   StringLiteral *SE;
   if (noArgs == 1) {
-    Expr *ArgExpr = static_cast<Expr *>(Attr.getArg(0));
+    Expr *ArgExpr = Attr.getArg(0);
     SE = dyn_cast<StringLiteral>(ArgExpr);
     if (!SE) {
       S.Diag(ArgExpr->getLocStart(), 
@@ -997,7 +997,7 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  Expr *Arg = static_cast<Expr*>(Attr.getArg(0));
+  Expr *Arg = Attr.getArg(0);
   Arg = Arg->IgnoreParenCasts();
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
 
@@ -1107,7 +1107,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   int sentinel = 0;
   if (Attr.getNumArgs() > 0) {
-    Expr *E = static_cast<Expr *>(Attr.getArg(0));
+    Expr *E = Attr.getArg(0);
     llvm::APSInt Idx(32);
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
@@ -1126,7 +1126,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   int nullPos = 0;
   if (Attr.getNumArgs() > 1) {
-    Expr *E = static_cast<Expr *>(Attr.getArg(1));
+    Expr *E = Attr.getArg(1);
     llvm::APSInt Idx(32);
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
@@ -1288,7 +1288,7 @@ static void HandleReqdWorkGroupSize(Decl *D, const AttributeList &Attr,
 
   unsigned WGSize[3];
   for (unsigned i = 0; i < 3; ++i) {
-    Expr *E = static_cast<Expr *>(Attr.getArg(i));
+    Expr *E = Attr.getArg(i);
     llvm::APSInt ArgNum(32);
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(ArgNum, S.Context)) {
@@ -1312,7 +1312,7 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Make sure that there is a string literal as the sections's single
   // argument.
-  Expr *ArgExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *ArgExpr = Attr.getArg(0);
   StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
   if (!SE) {
     S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) << "section";
@@ -1445,7 +1445,7 @@ static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned FirstIdx = 1;
 
   // checks for the 2nd argument
-  Expr *IdxExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *IdxExpr = Attr.getArg(0);
   llvm::APSInt Idx(32);
   if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent() ||
       !IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
@@ -1563,7 +1563,7 @@ static void HandleInitPriorityAttr(Decl *d, const AttributeList &Attr,
     Attr.setInvalid();
     return;
   }
-  Expr *priorityExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *priorityExpr = Attr.getArg(0);
   
   llvm::APSInt priority(32);
   if (priorityExpr->isTypeDependent() || priorityExpr->isValueDependent() ||
@@ -1629,7 +1629,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // checks for the 2nd argument
-  Expr *IdxExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *IdxExpr = Attr.getArg(0);
   llvm::APSInt Idx(32);
   if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent() ||
       !IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
@@ -1684,7 +1684,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // check the 3rd argument
-  Expr *FirstArgExpr = static_cast<Expr *>(Attr.getArg(1));
+  Expr *FirstArgExpr = Attr.getArg(1);
   llvm::APSInt FirstArg(32);
   if (FirstArgExpr->isTypeDependent() || FirstArgExpr->isValueDependent() ||
       !FirstArgExpr->isIntegerConstantExpr(FirstArg, S.Context)) {
@@ -1797,7 +1797,7 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
-  Expr *ArgExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *ArgExpr = Attr.getArg(0);
   StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
 
   // Make sure that there is a string literal as the annotation's single
@@ -1825,7 +1825,7 @@ static void HandleAlignedAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  S.AddAlignedAttr(Attr.getLoc(), D, static_cast<Expr *>(Attr.getArg(0)));
+  S.AddAlignedAttr(Attr.getLoc(), D, Attr.getArg(0));
 }
 
 void Sema::AddAlignedAttr(SourceLocation AttrLoc, Decl *D, Expr *E) {
@@ -2140,7 +2140,7 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArg(0));
+  Expr *NumParamsExpr = Attr.getArg(0);
   llvm::APSInt NumParams(32);
   if (NumParamsExpr->isTypeDependent() || NumParamsExpr->isValueDependent() ||
       !NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
