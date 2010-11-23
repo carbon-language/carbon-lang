@@ -577,12 +577,14 @@ class CXXDefaultArgExpr : public Expr {
            param->hasUnparsedDefaultArg()
              ? param->getType().getNonReferenceType()
              : param->getDefaultArg()->getType(),
-           getValueKindForType(param->getType()), OK_Ordinary, false, false),
+           param->getDefaultArg()->getValueKind(),
+           param->getDefaultArg()->getObjectKind(), false, false),
       Param(param, false), Loc(Loc) { }
 
   CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param, 
                     Expr *SubExpr)
-    : Expr(SC, SubExpr->getType(), SubExpr->getValueKind(), OK_Ordinary,
+    : Expr(SC, SubExpr->getType(),
+           SubExpr->getValueKind(), SubExpr->getObjectKind(),
            false, false), Param(param, true), Loc(Loc) {
     *reinterpret_cast<Expr **>(this + 1) = SubExpr;
   }

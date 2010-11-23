@@ -3365,9 +3365,17 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
                                       ClassType.getTypePtr());
       CXXScopeSpec SS;
       SS.setScopeRep(Qualifier);
+
+      // The actual value-ness of this is unimportant, but for
+      // internal consistency's sake, references to instance methods
+      // are r-values.
+      ExprValueKind VK = VK_LValue;
+      if (isa<CXXMethodDecl>(VD) && cast<CXXMethodDecl>(VD)->isInstance())
+        VK = VK_RValue;
+
       ExprResult RefExpr = BuildDeclRefExpr(VD, 
                                             VD->getType().getNonReferenceType(),
-                                            VK_LValue,
+                                            VK,
                                             Loc,
                                             &SS);
       if (RefExpr.isInvalid())

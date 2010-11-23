@@ -795,6 +795,12 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty,
                                    D, NameInfo, Ty, VK));
 }
 
+static ExprResult
+BuildFieldReferenceExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
+                        const CXXScopeSpec &SS, FieldDecl *Field,
+                        DeclAccessPair FoundDecl,
+                        const DeclarationNameInfo &MemberNameInfo);
+
 ExprResult
 Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
                                             IndirectFieldDecl *IndirectField,
@@ -863,45 +869,29 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   // Build the implicit member references to the field of the
   // anonymous struct/union.
   Expr *Result = BaseObjectExpr;
-  Qualifiers ResultQuals = BaseQuals;
-  
+
   IndirectFieldDecl::chain_iterator FI = IndirectField->chain_begin(),
     FEnd = IndirectField->chain_end();
-  
+
   // Skip the first VarDecl if present. 
   if (BaseObject)
     FI++;    
   for (; FI != FEnd; FI++) {
     FieldDecl *Field = cast<FieldDecl>(*FI);
-    QualType MemberType = Field->getType();
-    Qualifiers MemberTypeQuals =
-      Context.getCanonicalType(MemberType).getQualifiers();
 
-    // CVR attributes from the base are picked up by members,
-    // except that 'mutable' members don't pick up 'const'.
-    if (Field->isMutable())
-      ResultQuals.removeConst();
+    // FIXME: the first access can be qualified
+    CXXScopeSpec SS;
 
-    // GC attributes are never picked up by members.
-    ResultQuals.removeObjCGCAttr();
+    // FIXME: these are somewhat meaningless
+    DeclarationNameInfo MemberNameInfo(Field->getDeclName(), Loc);
+    DeclAccessPair FoundDecl = DeclAccessPair::make(Field, Field->getAccess());
 
-    // TR 18037 does not allow fields to be declared with address spaces.
-    assert(!MemberTypeQuals.hasAddressSpace());
+    Result = BuildFieldReferenceExpr(*this, Result, BaseObjectIsPointer,
+                                     SS, Field, FoundDecl, MemberNameInfo)
+      .take();
 
-    Qualifiers NewQuals = ResultQuals + MemberTypeQuals;
-    if (NewQuals != MemberTypeQuals)
-      MemberType = Context.getQualifiedType(MemberType, NewQuals);
-
-    MarkDeclarationReferenced(Loc, *FI);
-    PerformObjectMemberConversion(Result, /*FIXME:Qualifier=*/0, *FI, *FI);
-    // FIXME: Might this end up being a qualified name?
-    Result = new (Context) MemberExpr(Result, BaseObjectIsPointer,
-                                      cast<FieldDecl>(*FI), OpLoc,
-                                      MemberType, VK_LValue,
-                                      Field->isBitField() ?
-                                        OK_BitField : OK_Ordinary);
+    // All the implicit accesses are dot-accesses.
     BaseObjectIsPointer = false;
-    ResultQuals = NewQuals;
   }
 
   return Owned(Result);
@@ -1891,6 +1881,64 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
   return MemberExpr::Create(C, Base, isArrow, Qualifier, QualifierRange,
                             Member, FoundDecl, MemberNameInfo,
                             TemplateArgs, Ty, VK, OK);
+}
+
+static ExprResult
+BuildFieldReferenceExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
+                        const CXXScopeSpec &SS, FieldDecl *Field,
+                        DeclAccessPair FoundDecl,
+                        const DeclarationNameInfo &MemberNameInfo) {
+  // x.a is an l-value if 'a' has a reference type. Otherwise:
+  // x.a is an l-value/x-value/pr-value if the base is (and note
+  //   that *x is always an l-value), except that if the base isn't
+  //   an ordinary object then we must have an rvalue.
+  ExprValueKind VK = VK_LValue;
+  ExprObjectKind OK = OK_Ordinary;
+  if (!IsArrow) {
+    if (BaseExpr->getObjectKind() == OK_Ordinary)
+      VK = BaseExpr->getValueKind();
+    else
+      VK = VK_RValue;
+  }
+  if (VK != VK_RValue && Field->isBitField())
+    OK = OK_BitField;
+
+  // Figure out the type of the member; see C99 6.5.2.3p3, C++ [expr.ref]
+  QualType MemberType = Field->getType();
+  if (const ReferenceType *Ref = MemberType->getAs<ReferenceType>()) {
+    MemberType = Ref->getPointeeType();
+    VK = VK_LValue;
+  } else {
+    QualType BaseType = BaseExpr->getType();
+    if (IsArrow) BaseType = BaseType->getAs<PointerType>()->getPointeeType();
+
+    Qualifiers BaseQuals = BaseType.getQualifiers();
+
+    // GC attributes are never picked up by members.
+    BaseQuals.removeObjCGCAttr();
+
+    // CVR attributes from the base are picked up by members,
+    // except that 'mutable' members don't pick up 'const'.
+    if (Field->isMutable()) BaseQuals.removeConst();
+
+    Qualifiers MemberQuals
+      = S.Context.getCanonicalType(MemberType).getQualifiers();
+
+    // TR 18037 does not allow fields to be declared with address spaces.
+    assert(!MemberQuals.hasAddressSpace());
+
+    Qualifiers Combined = BaseQuals + MemberQuals;
+    if (Combined != MemberQuals)
+      MemberType = S.Context.getQualifiedType(MemberType, Combined);
+  }
+
+  S.MarkDeclarationReferenced(MemberNameInfo.getLoc(), Field);
+  if (S.PerformObjectMemberConversion(BaseExpr, SS.getScopeRep(),
+                                      FoundDecl, Field))
+    return ExprError();
+  return S.Owned(BuildMemberExpr(S.Context, BaseExpr, IsArrow, SS,
+                                 Field, FoundDecl, MemberNameInfo,
+                                 MemberType, VK, OK));
 }
 
 /// Builds an implicit member access expression.  The current context
@@ -3262,48 +3310,9 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
     return ExprError();
   }
 
-  if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
-
-    // x.a is an l-value if 'a' has a reference type. Otherwise:
-    // x.a is an l-value/x-value/pr-value if the base is (and note
-    //   that *x is always an l-value), except that if the base isn't
-    //   an ordinary object then we must have an rvalue.
-    ExprValueKind VK = VK_LValue;
-    ExprObjectKind OK = OK_Ordinary;
-    if (!IsArrow) {
-      if (BaseExpr->getObjectKind() == OK_Ordinary)
-        VK = BaseExpr->getValueKind();
-      else
-        VK = VK_RValue;
-    }
-    if (VK != VK_RValue && FD->isBitField())
-      OK = OK_BitField;
-
-    // Figure out the type of the member; see C99 6.5.2.3p3, C++ [expr.ref]
-    QualType MemberType = FD->getType();
-    if (const ReferenceType *Ref = MemberType->getAs<ReferenceType>()) {
-      MemberType = Ref->getPointeeType();
-      VK = VK_LValue;
-    } else {
-      Qualifiers BaseQuals = BaseType.getQualifiers();
-      BaseQuals.removeObjCGCAttr();
-      if (FD->isMutable()) BaseQuals.removeConst();
-
-      Qualifiers MemberQuals
-        = Context.getCanonicalType(MemberType).getQualifiers();
-
-      Qualifiers Combined = BaseQuals + MemberQuals;
-      if (Combined != MemberQuals)
-        MemberType = Context.getQualifiedType(MemberType, Combined);
-    }
-
-    MarkDeclarationReferenced(MemberLoc, FD);
-    if (PerformObjectMemberConversion(BaseExpr, Qualifier, FoundDecl, FD))
-      return ExprError();
-    return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 FD, FoundDecl, MemberNameInfo,
-                                 MemberType, VK, OK));
-  }
+  if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl))
+    return BuildFieldReferenceExpr(*this, BaseExpr, IsArrow,
+                                   SS, FD, FoundDecl, MemberNameInfo);
 
   if (IndirectFieldDecl *FD = dyn_cast<IndirectFieldDecl>(MemberDecl))
     // We may have found a field within an anonymous union or struct

@@ -64,7 +64,6 @@ Cl Expr::ClassifyImpl(ASTContext &Ctx, SourceLocation *Loc) const {
       kind = Cl::CL_Void;
   }
 
-#if 0
   // Enable this assertion for testing.
   switch (kind) {
   case Cl::CL_LValue: assert(getValueKind() == VK_LValue); break;
@@ -77,7 +76,6 @@ Cl Expr::ClassifyImpl(ASTContext &Ctx, SourceLocation *Loc) const {
   case Cl::CL_ClassTemporary:
   case Cl::CL_PRValue: assert(getValueKind() == VK_RValue); break;
   }
-#endif
 
   Cl::ModifiableType modifiable = Cl::CM_Untested;
   if (Loc)
