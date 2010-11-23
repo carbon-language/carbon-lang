@@ -24,7 +24,6 @@ MemorizeStatCalls::getStat(const char *Path, struct stat &StatBuf) {
   if (Result == CacheMiss)
     Result = ::stat(Path, &StatBuf) ? CacheHitMissing : CacheHitExists;
   
-  
   // Do not cache failed stats, it is easy to construct common inconsistent
   // situations if we do, and they are not important for PCH performance (which
   // currently only needs the stats to construct the initial FileManager

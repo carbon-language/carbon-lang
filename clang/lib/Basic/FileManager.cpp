@@ -394,11 +394,12 @@ llvm::MemoryBuffer *FileManager::
 getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
   llvm::StringRef Filename = Entry->getName();
   if (FileSystemOpts.WorkingDir.empty())
-    return llvm::MemoryBuffer::getFile(Filename, ErrorStr);
+    return llvm::MemoryBuffer::getFile(Filename, ErrorStr, Entry->getSize());
   
   llvm::sys::Path FilePath(Filename);
   FixupRelativePath(FilePath, FileSystemOpts);
-  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr);
+  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr,
+                                     Entry->getSize());
 }
 
 llvm::MemoryBuffer *FileManager::
