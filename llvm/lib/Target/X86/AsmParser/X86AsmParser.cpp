@@ -707,7 +707,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   bool isPrefix =
     Name == "lock" || Name == "rep" ||
     Name == "repe" || Name == "repz" ||
-    Name == "repne" || Name == "repnz";
+    Name == "repne" || Name == "repnz" ||
+    Name == "rex64";
 
 
   // This does the actual operand parsing.  Don't parse any more if we have a
