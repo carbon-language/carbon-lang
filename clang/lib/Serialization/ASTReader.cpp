@@ -1092,7 +1092,7 @@ public:
     StatBuf.st_mtime = Data.mtime;
     StatBuf.st_mode = Data.mode;
     StatBuf.st_size = Data.size;
-    return CacheHitExists;
+    return CacheExists;
   }
 };
 } // end anonymous namespace

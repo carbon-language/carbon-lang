@@ -26,7 +26,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <sys/stat.h>
 using namespace clang;
 using namespace clang::io;
 
@@ -690,14 +689,14 @@ public:
     const PTHStatData &Data = *I;
 
     if (!Data.hasStat)
-      return CacheHitMissing;
+      return CacheMissing;
 
     StatBuf.st_ino = Data.ino;
     StatBuf.st_dev = Data.dev;
     StatBuf.st_mtime = Data.mtime;
     StatBuf.st_mode = Data.mode;
     StatBuf.st_size = Data.size;
-    return CacheHitExists;
+    return CacheExists;
   }
 };
 } // end anonymous namespace

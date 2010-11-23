@@ -518,14 +518,9 @@ public:
   ~StatListener() {}
 
   LookupResult getStat(const char *Path, struct stat &StatBuf) {
-    LookupResult Result = FileSystemStatCache::statChained(Path, StatBuf);
+    LookupResult Result = statChained(Path, StatBuf);
 
-    // If the chained cache didn't know anything about the file, do the stat now
-    // so we can record the result.
-    if (Result == CacheMiss)
-      Result = ::stat(Path, &StatBuf) ? CacheHitMissing : CacheHitExists;
-    
-    if (Result == CacheHitMissing) // Failed 'stat'.
+    if (Result == CacheMissing) // Failed 'stat'.
       PM.insert(PTHEntryKeyVariant(Path), PTHEntry());
     else if (S_ISDIR(StatBuf.st_mode)) {
       // Only cache directories with absolute paths.

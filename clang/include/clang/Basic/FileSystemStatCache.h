@@ -32,9 +32,8 @@ public:
   virtual ~FileSystemStatCache() {}
   
   enum LookupResult {
-    CacheHitExists,   //< We know the file exists and its cached stat data.
-    CacheHitMissing,  //< We know that the file doesn't exist.
-    CacheMiss         //< We don't know anything about the file.
+    CacheExists,   //< We know the file exists and its cached stat data.
+    CacheMissing   //< We know that the file doesn't exist.
   };
 
   /// FileSystemStatCache::get - Get the 'stat' information for the specified
@@ -42,14 +41,10 @@ public:
   /// the path does not exist or false if it exists.
   static bool get(const char *Path, struct stat &StatBuf,
                   FileSystemStatCache *Cache) {
-    LookupResult R = CacheMiss;
-    
     if (Cache)
-      R = Cache->getStat(Path, StatBuf);
+      return Cache->getStat(Path, StatBuf) == CacheMissing;
     
-    if (R == FileSystemStatCache::CacheMiss)
-      return ::stat(Path, &StatBuf);
-    return R == FileSystemStatCache::CacheHitMissing;
+    return ::stat(Path, &StatBuf) != 0;
   }
   
   /// \brief Sets the next stat call cache in the chain of stat caches.
@@ -73,7 +68,9 @@ protected:
     if (FileSystemStatCache *Next = getNextStatCache())
       return Next->getStat(Path, StatBuf);
     
-    return CacheMiss;
+    // If we hit the end of the list of stat caches to try, just compute and
+    // return it without a cache.
+    return get(Path, StatBuf, 0) ? CacheMissing : CacheExists;
   }
 };
 
