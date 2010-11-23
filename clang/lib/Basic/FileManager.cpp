@@ -142,8 +142,9 @@ public:
 // Common logic.
 //===----------------------------------------------------------------------===//
 
-FileManager::FileManager()
-  : UniqueDirs(*new UniqueDirContainer),
+FileManager::FileManager(const FileSystemOptions &FSO)
+  : FileSystemOpts(FSO),
+    UniqueDirs(*new UniqueDirContainer),
     UniqueFiles(*new UniqueFileContainer),
     DirEntries(64), FileEntries(64), NextFileUID(0) {
   NumDirLookups = NumFileLookups = 0;
@@ -250,7 +251,7 @@ const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename,
 
   // Check to see if the directory exists.
   struct stat StatBuf;
-  if (stat_cached(InterndDirName, &StatBuf, FileSystemOpts) ||   // Error stat'ing.
+  if (stat_cached(InterndDirName, &StatBuf) ||   // Error stat'ing.
       !S_ISDIR(StatBuf.st_mode))          // Not a directory?
     return 0;
 
@@ -309,7 +310,7 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename,
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
   //llvm::errs() << "STATING: " << Filename;
-  if (stat_cached(InterndFileName, &StatBuf, FileSystemOpts) ||   // Error stat'ing.
+  if (stat_cached(InterndFileName, &StatBuf) ||   // Error stat'ing.
         S_ISDIR(StatBuf.st_mode)) {           // A directory?
     // If this file doesn't exist, we leave a null in FileEntries for this path.
     //llvm::errs() << ": Not existing\n";
@@ -375,7 +376,7 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   // newly-created file entry.
   const char *InterndFileName = NamedFileEnt.getKeyData();
   struct stat StatBuf;
-  if (!stat_cached(InterndFileName, &StatBuf, FileSystemOpts) &&
+  if (!stat_cached(InterndFileName, &StatBuf) &&
       !S_ISDIR(StatBuf.st_mode)) {
     llvm::sys::Path FilePath(InterndFileName);
     FilePath.makeAbsolute();
@@ -408,8 +409,7 @@ getBufferForFile(llvm::StringRef Filename,
   return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr, FileSize);
 }
 
-int FileManager::stat_cached(const char *path, struct stat *buf,
-                             const FileSystemOptions &FileSystemOpts) {
+int FileManager::stat_cached(const char *path, struct stat *buf) {
   if (FileSystemOpts.WorkingDir.empty())
     return StatCache.get() ? StatCache->stat(path, buf) : stat(path, buf);
 

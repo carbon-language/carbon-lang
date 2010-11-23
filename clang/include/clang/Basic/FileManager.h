@@ -141,7 +141,8 @@ public:
 /// names (e.g. symlinked) will be treated as a single file.
 ///
 class FileManager {
-
+  const FileSystemOptions &FileSystemOpts;
+  
   class UniqueDirContainer;
   class UniqueFileContainer;
 
@@ -170,11 +171,10 @@ class FileManager {
   // Caching.
   llvm::OwningPtr<StatSysCallCache> StatCache;
 
-  int stat_cached(const char* path, struct stat* buf,
-                  const FileSystemOptions &FileSystemOpts);
+  int stat_cached(const char* path, struct stat* buf);
 
 public:
-  FileManager();
+  FileManager(const FileSystemOptions &FileSystemOpts);
   ~FileManager();
 
   /// \brief Installs the provided StatSysCallCache object within

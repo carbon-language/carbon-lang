@@ -1563,7 +1563,7 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   // PCH file and find the original header name. Remove the need to do that in
   // ParsePreprocessorArgs and remove the FileManager & FileSystemOptions
   // parameters from the function and the "FileManager.h" #include.
-  FileManager FileMgr;
+  FileManager FileMgr(Res.getFileSystemOpts());
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args,
                         FileMgr, Res.getFileSystemOpts(), Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);

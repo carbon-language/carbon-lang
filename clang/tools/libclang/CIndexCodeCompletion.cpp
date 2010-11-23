@@ -247,7 +247,8 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   /// with the code-completion results.
   std::vector<llvm::sys::Path> TemporaryFiles;
 
-  /// \brief Temporary buffers that will be deleted once we have finished with the code-completion results.
+  /// \brief Temporary buffers that will be deleted once we have finished with
+  /// the code-completion results.
   llvm::SmallVector<const llvm::MemoryBuffer *, 1> TemporaryBuffers;
 };
 
@@ -261,6 +262,7 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults()
   : CXCodeCompleteResults(),
     Diag(new Diagnostic(
                    llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs))),
+    FileMgr(FileSystemOpts),
     SourceMgr(*Diag, FileMgr, FileSystemOpts) { 
   if (getenv("LIBCLANG_OBJTRACKING")) {
     ++CodeCompletionResultObjects;

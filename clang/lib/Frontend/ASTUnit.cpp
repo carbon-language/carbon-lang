@@ -492,7 +492,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->Diagnostics = Diags;
   AST->FileSystemOpts = FileSystemOpts;
-  AST->FileMgr.reset(new FileManager);
+  AST->FileMgr.reset(new FileManager(FileSystemOpts));
   AST->SourceMgr.reset(new SourceManager(AST->getDiagnostics(),
                                          AST->getFileManager(),
                                          AST->getFileSystemOpts()));
@@ -753,7 +753,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
 
   // Configure the various subsystems.
   // FIXME: Should we retain the previous file manager?
-  FileMgr.reset(new FileManager);
+  FileMgr.reset(new FileManager(Clang.getFileSystemOpts()));
   FileSystemOpts = Clang.getFileSystemOpts();
   SourceMgr.reset(new SourceManager(getDiagnostics(), *FileMgr, FileSystemOpts));
   TheSema.reset();
@@ -1245,7 +1245,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   TopLevelDeclsInPreamble.clear();
   
   // Create a file manager object to provide access to and cache the filesystem.
-  Clang.setFileManager(new FileManager);
+  Clang.setFileManager(new FileManager(Clang.getFileSystemOpts()));
   
   // Create the source manager.
   Clang.setSourceManager(new SourceManager(getDiagnostics(),

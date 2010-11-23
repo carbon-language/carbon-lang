@@ -148,7 +148,7 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
 // File Manager
 
 void CompilerInstance::createFileManager() {
-  FileMgr.reset(new FileManager());
+  FileMgr.reset(new FileManager(getFileSystemOpts()));
 }
 
 // Source Manager
