@@ -14,7 +14,6 @@
 #ifndef LLVM_SUPPORT_MATHEXTRAS_H
 #define LLVM_SUPPORT_MATHEXTRAS_H
 
-#include "llvm/System/DataTypes.h"
 #include "llvm/System/SwapByteOrder.h"
 
 namespace llvm {
@@ -119,19 +118,19 @@ inline bool isPowerOf2_64(uint64_t Value) {
 /// ByteSwap_16 - This function returns a byte-swapped representation of the
 /// 16-bit argument, Value.
 inline uint16_t ByteSwap_16(uint16_t Value) {
-  return sys::SwapByteOrder(Value);
+  return sys::SwapByteOrder_16(Value);
 }
 
 /// ByteSwap_32 - This function returns a byte-swapped representation of the
 /// 32-bit argument, Value.
 inline uint32_t ByteSwap_32(uint32_t Value) {
-  return sys::SwapByteOrder(Value);
+  return sys::SwapByteOrder_32(Value);
 }
 
 /// ByteSwap_64 - This function returns a byte-swapped representation of the
 /// 64-bit argument, Value.
 inline uint64_t ByteSwap_64(uint64_t Value) {
-  return sys::SwapByteOrder(Value);
+  return sys::SwapByteOrder_64(Value);
 }
 
 /// CountLeadingZeros_32 - this function performs the platform optimal form of

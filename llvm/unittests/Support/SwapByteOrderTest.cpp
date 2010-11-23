@@ -92,37 +92,37 @@ TEST(SwapByteOrder, SignedRoundTrip) {
 }
 
 TEST(SwapByteOrder, uint8_t) {
-  EXPECT_EQ(uint8_t(0x11), sys::SwapByteOrder<uint8_t>(0x11));
+  EXPECT_EQ(uint8_t(0x11), sys::SwapByteOrder(uint8_t(0x11)));
 }
 
 TEST(SwapByteOrder, uint16_t) {
-  EXPECT_EQ(uint16_t(0x1122), sys::SwapByteOrder<uint16_t>(0x2211));
+  EXPECT_EQ(uint16_t(0x1122), sys::SwapByteOrder(uint16_t(0x2211)));
 }
 
 TEST(SwapByteOrder, uint32_t) {
-  EXPECT_EQ(uint32_t(0x11223344), sys::SwapByteOrder<uint32_t>(0x44332211));
+  EXPECT_EQ(uint32_t(0x11223344), sys::SwapByteOrder(uint32_t(0x44332211)));
 }
 
 TEST(SwapByteOrder, uint64_t) {
   EXPECT_EQ(uint64_t(0x1122334455667788ULL),
-    sys::SwapByteOrder<uint64_t>(0x8877665544332211ULL));
+    sys::SwapByteOrder(uint64_t(0x8877665544332211ULL)));
 }
 
 TEST(SwapByteOrder, int8_t) {
-  EXPECT_EQ(int8_t(0x11), sys::SwapByteOrder<int8_t>(0x11));
+  EXPECT_EQ(int8_t(0x11), sys::SwapByteOrder(int8_t(0x11)));
 }
 
 TEST(SwapByteOrder, int16_t) {
-  EXPECT_EQ(int16_t(0x1122), sys::SwapByteOrder<int16_t>(0x2211));
+  EXPECT_EQ(int16_t(0x1122), sys::SwapByteOrder(int16_t(0x2211)));
 }
 
 TEST(SwapByteOrder, int32_t) {
-  EXPECT_EQ(int32_t(0x11223344), sys::SwapByteOrder<int32_t>(0x44332211));
+  EXPECT_EQ(int32_t(0x11223344), sys::SwapByteOrder(int32_t(0x44332211)));
 }
 
 TEST(SwapByteOrder, int64_t) {
   EXPECT_EQ(int64_t(0x1122334455667788LL),
-    sys::SwapByteOrder<int64_t>(0x8877665544332211LL));
+    sys::SwapByteOrder(int64_t(0x8877665544332211LL)));
 }
 
 }
