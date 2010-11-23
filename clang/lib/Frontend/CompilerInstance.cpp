@@ -180,7 +180,7 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
   // Create a PTH manager if we are using some form of a token cache.
   PTHManager *PTHMgr = 0;
   if (!PPOpts.TokenCache.empty())
-    PTHMgr = PTHManager::Create(PPOpts.TokenCache, FileMgr, Diags);
+    PTHMgr = PTHManager::Create(PPOpts.TokenCache, Diags);
 
   // Create the Preprocessor.
   HeaderSearch *HeaderInfo = new HeaderSearch(FileMgr);
