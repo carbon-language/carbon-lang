@@ -2,15 +2,15 @@
 
 // CHECK: %struct.nested1 = type { i32, i32 }
 typedef struct nested1 {
-    long a1;
-    long b1;
+    int a1;
+    int b1;
 } NESTED1;
 
 // CHECK: %struct.nested2 = type { i32, %struct.nested1, i32 }
 struct nested2 {
-    long a;
+    int a;
     NESTED1; 
-    long b;
+    int b;
 };
 
 // CHECK: %struct.test = type { i32, %struct.nested2, i32 }
