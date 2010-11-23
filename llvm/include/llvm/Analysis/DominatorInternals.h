@@ -278,9 +278,16 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
       }
     }
 
-    DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
-
     typename GraphT::NodeType* WParent = DT.Vertex[WInfo.Parent];
+
+    // If V is a non-root vertex and sdom(V) = parent(V), then idom(V) is
+    // necessarily parent(V). In this case, set idom(V) here and avoid placing
+    // V into a bucket.
+    if (WInfo.Semi == WInfo.Parent)
+      DT.IDoms[W] = WParent;
+    else
+      DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
+
     Link<GraphT>(DT, WInfo.Parent, W, WInfo);
 
     // Step #3: Implicitly define the immediate dominator of vertices
