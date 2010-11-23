@@ -89,7 +89,7 @@ static char Narrow(const char t) {
       return 'i';
     case 'f':
       return 'h';
-    default: throw "unhandled type in widen!";
+    default: throw "unhandled type in narrow!";
   }
   return '\0';
 }
