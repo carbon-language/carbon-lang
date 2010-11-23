@@ -805,6 +805,9 @@ inline bool operator!=(const error_condition& _x, const error_condition& _y) {
 
 // This needs to stay here for KillTheDoctor.
 #ifdef LLVM_ON_WIN32
+// FIXME: These two headers really really really need to be removed from here.
+//        Not only is it a violation of System, they define the stupid min and
+//        max macros :(.
 #include <Windows.h>
 #include <WinError.h>
 
