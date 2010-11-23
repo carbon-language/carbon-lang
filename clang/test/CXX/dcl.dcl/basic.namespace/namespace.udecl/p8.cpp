@@ -82,7 +82,7 @@ namespace test2 {
   template struct Derived<int>; // expected-note {{in instantiation of template class}}
 }
 
-// Redeclarations are okay in a function.
+// PR8668: redeclarations are not okay in a function.
 namespace test3 {
   namespace N {
     int f(int);
@@ -90,9 +90,18 @@ namespace test3 {
   }
 
   void g() {
-    using N::f;
+    using N::f; // expected-note {{previous using declaration}}
+    using N::f; // expected-error {{redeclaration of using decl}}
+    using N::type; // expected-note {{previous using declaration}}
+    using N::type; // expected-error {{redeclaration of using decl}}
+  }
+
+  void h() {
     using N::f;
     using N::type;
-    using N::type;
+    {
+      using N::f;
+      using N::type;
+    }
   }
 }

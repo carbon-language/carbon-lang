@@ -3961,8 +3961,8 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
   //   repeatedly where (and only where) multiple declarations are
   //   allowed.
   //
-  // That's in non-member contexts.
-  if (!CurContext->getRedeclContext()->isRecord())
+  // That's in file contexts.
+  if (CurContext->isFileContext())
     return false;
 
   NestedNameSpecifier *Qual
