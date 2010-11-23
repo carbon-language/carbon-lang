@@ -290,6 +290,12 @@ private:
   /// operators which are associative or commutative.
   bool SimplifyAssociativeOrCommutative(BinaryOperator &I);
 
+  /// SimplifyDistributed - This tries to simplify binary operations which some
+  /// other binary operation distributes over (eg "A*B+A*C" -> "A*(B+C)" since
+  /// addition is distributed over by multiplication).  Returns the result of
+  /// the simplification, or null if no simplification was performed.
+  Instruction *SimplifyDistributed(BinaryOperator &I);
+
   /// SimplifyDemandedUseBits - Attempts to replace V with a simpler value
   /// based on the demanded bits.
   Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask, 

@@ -984,6 +984,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Value *V = SimplifyAndInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
+  if (Instruction *NV = SimplifyDistributed(I)) // (A|B)&(A|C) -> A|(B&C)
+    return NV;
+
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(I))
@@ -1692,6 +1695,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (Value *V = SimplifyOrInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
+  if (Instruction *NV = SimplifyDistributed(I)) // (A&B)|(A&C) -> A&(B|C)
+    return NV;
+
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(I))
@@ -1766,7 +1772,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   Value *C = 0, *D = 0;
   if (match(Op0, m_And(m_Value(A), m_Value(C))) &&
       match(Op1, m_And(m_Value(B), m_Value(D)))) {
-    Value *V1 = 0, *V2 = 0, *V3 = 0;
+    Value *V1 = 0, *V2 = 0;
     C1 = dyn_cast<ConstantInt>(C);
     C2 = dyn_cast<ConstantInt>(D);
     if (C1 && C2) {  // (A & C1)|(B & C2)
@@ -1822,25 +1828,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                                ConstantInt::get(B->getContext(),
                                                 C1->getValue()|C2->getValue()));
         }
-      }
-    }
-    
-    // Check to see if we have any common things being and'ed.  If so, find the
-    // terms for V1 & (V2|V3).
-    if (Op0->hasOneUse() || Op1->hasOneUse()) {
-      V1 = 0;
-      if (A == B)      // (A & C)|(A & D) == A & (C|D)
-        V1 = A, V2 = C, V3 = D;
-      else if (A == D) // (A & C)|(B & A) == A & (B|C)
-        V1 = A, V2 = B, V3 = C;
-      else if (C == B) // (A & C)|(C & D) == C & (A|D)
-        V1 = C, V2 = A, V3 = D;
-      else if (C == D) // (A & C)|(B & C) == C & (A|B)
-        V1 = C, V2 = A, V3 = B;
-      
-      if (V1) {
-        Value *Or = Builder->CreateOr(V2, V3, "tmp");
-        return BinaryOperator::CreateAnd(V1, Or);
       }
     }
 
@@ -1978,6 +1965,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   if (Value *V = SimplifyXorInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
+
+  if (Instruction *NV = SimplifyDistributed(I)) // (A&B)^(A&C) -> A&(B^C)
+    return NV;
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
@@ -2172,29 +2162,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if ((A == C && B == D) || (A == D && B == C)) 
         return BinaryOperator::CreateXor(A, B);
     }
-    
-    // (A & B)^(C & D)
-    if ((Op0I->hasOneUse() || Op1I->hasOneUse()) &&
-        match(Op0I, m_And(m_Value(A), m_Value(B))) &&
-        match(Op1I, m_And(m_Value(C), m_Value(D)))) {
-      // (X & Y)^(X & Y) -> (Y^Z) & X
-      Value *X = 0, *Y = 0, *Z = 0;
-      if (A == C)
-        X = A, Y = B, Z = D;
-      else if (A == D)
-        X = A, Y = B, Z = C;
-      else if (B == C)
-        X = B, Y = A, Z = D;
-      else if (B == D)
-        X = B, Y = A, Z = C;
-      
-      if (X) {
-        Value *NewOp = Builder->CreateXor(Y, Z, Op0->getName());
-        return BinaryOperator::CreateAnd(NewOp, X);
-      }
-    }
   }
-    
+
   // (icmp1 A, B) ^ (icmp2 A, B) --> (icmp3 A, B)
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
     if (ICmpInst *LHS = dyn_cast<ICmpInst>(I.getOperand(0)))
