@@ -3860,15 +3860,114 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), Val);
 }
 
-/// SkipExtension - For a node that is either a SIGN_EXTEND, ZERO_EXTEND, or
-/// an extending load, return the unextended value.
+/// isExtendedBUILD_VECTOR - Check if N is a constant BUILD_VECTOR where each
+/// element has been zero/sign-extended, depending on the isSigned parameter,
+/// from an integer type half its size.
+static bool isExtendedBUILD_VECTOR(SDNode *N, SelectionDAG &DAG,
+                                   bool isSigned) {
+  // A v2i64 BUILD_VECTOR will have been legalized to a BITCAST from v4i32.
+  EVT VT = N->getValueType(0);
+  if (VT == MVT::v2i64 && N->getOpcode() == ISD::BITCAST) {
+    SDNode *BVN = N->getOperand(0).getNode();
+    if (BVN->getValueType(0) != MVT::v4i32 ||
+        BVN->getOpcode() != ISD::BUILD_VECTOR)
+      return false;
+    unsigned LoElt = DAG.getTargetLoweringInfo().isBigEndian() ? 1 : 0;
+    unsigned HiElt = 1 - LoElt;
+    ConstantSDNode *Lo0 = dyn_cast<ConstantSDNode>(BVN->getOperand(LoElt));
+    ConstantSDNode *Hi0 = dyn_cast<ConstantSDNode>(BVN->getOperand(HiElt));
+    ConstantSDNode *Lo1 = dyn_cast<ConstantSDNode>(BVN->getOperand(LoElt+2));
+    ConstantSDNode *Hi1 = dyn_cast<ConstantSDNode>(BVN->getOperand(HiElt+2));
+    if (!Lo0 || !Hi0 || !Lo1 || !Hi1)
+      return false;
+    if (isSigned) {
+      if (Hi0->getSExtValue() == Lo0->getSExtValue() >> 32 &&
+          Hi1->getSExtValue() == Lo1->getSExtValue() >> 32)
+        return true;
+    } else {
+      if (Hi0->isNullValue() && Hi1->isNullValue())
+        return true;
+    }
+    return false;
+  }
+
+  if (N->getOpcode() != ISD::BUILD_VECTOR)
+    return false;
+
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    SDNode *Elt = N->getOperand(i).getNode();
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt)) {
+      unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+      unsigned HalfSize = EltSize / 2;
+      if (isSigned) {
+        int64_t SExtVal = C->getSExtValue();
+        if ((SExtVal >> HalfSize) != (SExtVal >> EltSize))
+          return false;
+      } else {
+        if ((C->getZExtValue() >> HalfSize) != 0)
+          return false;
+      }
+      continue;
+    }
+    return false;
+  }
+
+  return true;
+}
+
+/// isSignExtended - Check if a node is a vector value that is sign-extended
+/// or a constant BUILD_VECTOR with sign-extended elements.
+static bool isSignExtended(SDNode *N, SelectionDAG &DAG) {
+  if (N->getOpcode() == ISD::SIGN_EXTEND || ISD::isSEXTLoad(N))
+    return true;
+  if (isExtendedBUILD_VECTOR(N, DAG, true))
+    return true;
+  return false;
+}
+
+/// isZeroExtended - Check if a node is a vector value that is zero-extended
+/// or a constant BUILD_VECTOR with zero-extended elements.
+static bool isZeroExtended(SDNode *N, SelectionDAG &DAG) {
+  if (N->getOpcode() == ISD::ZERO_EXTEND || ISD::isZEXTLoad(N))
+    return true;
+  if (isExtendedBUILD_VECTOR(N, DAG, false))
+    return true;
+  return false;
+}
+
+/// SkipExtension - For a node that is a SIGN_EXTEND, ZERO_EXTEND, extending
+/// load, or BUILD_VECTOR with extended elements, return the unextended value.
 static SDValue SkipExtension(SDNode *N, SelectionDAG &DAG) {
   if (N->getOpcode() == ISD::SIGN_EXTEND || N->getOpcode() == ISD::ZERO_EXTEND)
     return N->getOperand(0);
-  LoadSDNode *LD = cast<LoadSDNode>(N);
-  return DAG.getLoad(LD->getMemoryVT(), N->getDebugLoc(), LD->getChain(),
-                     LD->getBasePtr(), LD->getPointerInfo(), LD->isVolatile(),
-                     LD->isNonTemporal(), LD->getAlignment());
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
+    return DAG.getLoad(LD->getMemoryVT(), N->getDebugLoc(), LD->getChain(),
+                       LD->getBasePtr(), LD->getPointerInfo(), LD->isVolatile(),
+                       LD->isNonTemporal(), LD->getAlignment());
+  // Otherwise, the value must be a BUILD_VECTOR.  For v2i64, it will
+  // have been legalized as a BITCAST from v4i32.
+  if (N->getOpcode() == ISD::BITCAST) {
+    SDNode *BVN = N->getOperand(0).getNode();
+    assert(BVN->getOpcode() == ISD::BUILD_VECTOR &&
+           BVN->getValueType(0) == MVT::v4i32 && "expected v4i32 BUILD_VECTOR");
+    unsigned LowElt = DAG.getTargetLoweringInfo().isBigEndian() ? 1 : 0;
+    return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), MVT::v2i32,
+                       BVN->getOperand(LowElt), BVN->getOperand(LowElt+2));
+  }
+  // Construct a new BUILD_VECTOR with elements truncated to half the size.
+  assert(N->getOpcode() == ISD::BUILD_VECTOR && "expected BUILD_VECTOR");
+  EVT VT = N->getValueType(0);
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits() / 2;
+  unsigned NumElts = VT.getVectorNumElements();
+  MVT TruncVT = MVT::getIntegerVT(EltSize);
+  SmallVector<SDValue, 8> Ops;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    ConstantSDNode *C = cast<ConstantSDNode>(N->getOperand(i));
+    const APInt &CInt = C->getAPIntValue();
+    Ops.push_back(DAG.getConstant(APInt(CInt).trunc(EltSize), TruncVT));
+  }
+  return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                     MVT::getVectorVT(TruncVT, NumElts), Ops.data(), NumElts);
 }
 
 static SDValue LowerMUL(SDValue Op, SelectionDAG &DAG) {
@@ -3879,19 +3978,16 @@ static SDValue LowerMUL(SDValue Op, SelectionDAG &DAG) {
   SDNode *N0 = Op.getOperand(0).getNode();
   SDNode *N1 = Op.getOperand(1).getNode();
   unsigned NewOpc = 0;
-  if ((N0->getOpcode() == ISD::SIGN_EXTEND || ISD::isSEXTLoad(N0)) &&
-      (N1->getOpcode() == ISD::SIGN_EXTEND || ISD::isSEXTLoad(N1))) {
+  if (isSignExtended(N0, DAG) && isSignExtended(N1, DAG))
     NewOpc = ARMISD::VMULLs;
-  } else if ((N0->getOpcode() == ISD::ZERO_EXTEND || ISD::isZEXTLoad(N0)) &&
-             (N1->getOpcode() == ISD::ZERO_EXTEND || ISD::isZEXTLoad(N1))) {
+  else if (isZeroExtended(N0, DAG) && isZeroExtended(N1, DAG))
     NewOpc = ARMISD::VMULLu;
-  } else if (VT == MVT::v2i64) {
+  else if (VT == MVT::v2i64)
     // Fall through to expand this.  It is not legal.
     return SDValue();
-  } else {
+  else
     // Other vector multiplications are legal.
     return Op;
-  }
 
   // Legalize to a VMULL instruction.
   DebugLoc DL = Op.getDebugLoc();

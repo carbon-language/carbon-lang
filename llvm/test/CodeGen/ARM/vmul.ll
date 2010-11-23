@@ -267,3 +267,75 @@ entry:
 }
 
 declare <8 x i16>  @llvm.arm.neon.vmullp.v8i16(<8 x i8>, <8 x i8>) nounwind readnone
+
+
+; Radar 8687140
+; VMULL needs to recognize BUILD_VECTORs with sign/zero-extended elements.
+
+define <8 x i16> @vmull_extvec_s8(<8 x i8> %arg) nounwind {
+; CHECK: vmull_extvec_s8
+; CHECK: vmull.s8
+  %tmp3 = sext <8 x i8> %arg to <8 x i16>
+  %tmp4 = mul <8 x i16> %tmp3, <i16 -12, i16 -12, i16 -12, i16 -12, i16 -12, i16 -12, i16 -12, i16 -12>
+  ret <8 x i16> %tmp4
+}
+
+define <8 x i16> @vmull_extvec_u8(<8 x i8> %arg) nounwind {
+; CHECK: vmull_extvec_u8
+; CHECK: vmull.u8
+  %tmp3 = zext <8 x i8> %arg to <8 x i16>
+  %tmp4 = mul <8 x i16> %tmp3, <i16 12, i16 12, i16 12, i16 12, i16 12, i16 12, i16 12, i16 12>
+  ret <8 x i16> %tmp4
+}
+
+define <8 x i16> @vmull_noextvec_s8(<8 x i8> %arg) nounwind {
+; Do not use VMULL if the BUILD_VECTOR element values are too big.
+; CHECK: vmull_noextvec_s8
+; CHECK: vmovl.s8
+; CHECK: vmul.i16
+  %tmp3 = sext <8 x i8> %arg to <8 x i16>
+  %tmp4 = mul <8 x i16> %tmp3, <i16 -999, i16 -999, i16 -999, i16 -999, i16 -999, i16 -999, i16 -999, i16 -999>
+  ret <8 x i16> %tmp4
+}
+
+define <8 x i16> @vmull_noextvec_u8(<8 x i8> %arg) nounwind {
+; Do not use VMULL if the BUILD_VECTOR element values are too big.
+; CHECK: vmull_noextvec_u8
+; CHECK: vmovl.u8
+; CHECK: vmul.i16
+  %tmp3 = zext <8 x i8> %arg to <8 x i16>
+  %tmp4 = mul <8 x i16> %tmp3, <i16 999, i16 999, i16 999, i16 999, i16 999, i16 999, i16 999, i16 999>
+  ret <8 x i16> %tmp4
+}
+
+define <4 x i32> @vmull_extvec_s16(<4 x i16> %arg) nounwind {
+; CHECK: vmull_extvec_s16
+; CHECK: vmull.s16
+  %tmp3 = sext <4 x i16> %arg to <4 x i32>
+  %tmp4 = mul <4 x i32> %tmp3, <i32 -12, i32 -12, i32 -12, i32 -12>
+  ret <4 x i32> %tmp4
+}
+
+define <4 x i32> @vmull_extvec_u16(<4 x i16> %arg) nounwind {
+; CHECK: vmull_extvec_u16
+; CHECK: vmull.u16
+  %tmp3 = zext <4 x i16> %arg to <4 x i32>
+  %tmp4 = mul <4 x i32> %tmp3, <i32 1234, i32 1234, i32 1234, i32 1234>
+  ret <4 x i32> %tmp4
+}
+
+define <2 x i64> @vmull_extvec_s32(<2 x i32> %arg) nounwind {
+; CHECK: vmull_extvec_s32
+; CHECK: vmull.s32
+  %tmp3 = sext <2 x i32> %arg to <2 x i64>
+  %tmp4 = mul <2 x i64> %tmp3, <i64 -1234, i64 -1234>
+  ret <2 x i64> %tmp4
+}
+
+define <2 x i64> @vmull_extvec_u32(<2 x i32> %arg) nounwind {
+; CHECK: vmull_extvec_u32
+; CHECK: vmull.u32
+  %tmp3 = zext <2 x i32> %arg to <2 x i64>
+  %tmp4 = mul <2 x i64> %tmp3, <i64 1234, i64 1234>
+  ret <2 x i64> %tmp4
+}
