@@ -565,7 +565,11 @@ enum _ {
   not_connected                       = ENOTCONN,
   not_enough_memory                   = ENOMEM,
   not_supported                       = ENOTSUP,
+#ifdef ECANCELED
   operation_canceled                  = ECANCELED,
+#else
+  operation_canceled                  = EINVAL,
+#endif
   operation_in_progress               = EINPROGRESS,
   operation_not_permitted             = EPERM,
   operation_not_supported             = EOPNOTSUPP,
