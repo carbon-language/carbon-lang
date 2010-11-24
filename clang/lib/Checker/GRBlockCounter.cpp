@@ -74,12 +74,12 @@ GRBlockCounter
 GRBlockCounter::Factory::IncrementCount(GRBlockCounter BC, 
                                         const StackFrameContext *CallSite,
                                         unsigned BlockID) {
-  return GRBlockCounter(GetFactory(F).Add(GetMap(BC.Data), 
+  return GRBlockCounter(GetFactory(F).add(GetMap(BC.Data), 
                                           CountKey(CallSite, BlockID),
                              BC.getNumVisited(CallSite, BlockID)+1).getRoot());
 }
 
 GRBlockCounter
 GRBlockCounter::Factory::GetEmptyCounter() {
-  return GRBlockCounter(GetFactory(F).GetEmptyMap().getRoot());
+  return GRBlockCounter(GetFactory(F).getEmptyMap().getRoot());
 }

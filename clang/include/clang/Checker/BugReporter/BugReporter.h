@@ -282,11 +282,11 @@ private:
   void FlushReport(BugReportEquivClass& EQ);
 
 protected:
-  BugReporter(BugReporterData& d, Kind k) : BugTypes(F.GetEmptySet()), kind(k),
+  BugReporter(BugReporterData& d, Kind k) : BugTypes(F.getEmptySet()), kind(k),
                                             D(d) {}
 
 public:
-  BugReporter(BugReporterData& d) : BugTypes(F.GetEmptySet()), kind(BaseBRKind),
+  BugReporter(BugReporterData& d) : BugTypes(F.getEmptySet()), kind(BaseBRKind),
                                     D(d) {}
   virtual ~BugReporter();
 
@@ -399,7 +399,7 @@ class BugReporterContext {
   llvm::ImmutableList<BugReporterVisitor*> Callbacks;
   llvm::FoldingSet<BugReporterVisitor> CallbacksSet;
 public:
-  BugReporterContext(GRBugReporter& br) : BR(br), Callbacks(F.GetEmptyList()) {}
+  BugReporterContext(GRBugReporter& br) : BR(br), Callbacks(F.getEmptyList()) {}
   virtual ~BugReporterContext();
 
   void addVisitor(BugReporterVisitor* visitor);

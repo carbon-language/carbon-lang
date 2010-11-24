@@ -64,7 +64,7 @@ const GRState *GRStateManager::MarshalState(const GRState *state,
   GRState State(this,
                 EnvMgr.getInitialEnvironment(),
                 StoreMgr->getInitialStore(InitLoc),
-                GDMFactory.GetEmptyMap());
+                GDMFactory.getEmptyMap());
 
   return getPersistentState(State);
 }
@@ -278,7 +278,7 @@ const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
   GRState State(this,
                 EnvMgr.getInitialEnvironment(),
                 StoreMgr->getInitialStore(InitLoc),
-                GDMFactory.GetEmptyMap());
+                GDMFactory.getEmptyMap());
 
   return getPersistentState(State);
 }
@@ -420,7 +420,7 @@ GRStateManager::FindGDMContext(void* K,
 
 const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
   GRState::GenericDataMap M1 = St->getGDM();
-  GRState::GenericDataMap M2 = GDMFactory.Add(M1, Key, Data);
+  GRState::GenericDataMap M2 = GDMFactory.add(M1, Key, Data);
 
   if (M1 == M2)
     return St;
@@ -432,7 +432,7 @@ const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
 
 const GRState *GRStateManager::removeGDM(const GRState *state, void *Key) {
   GRState::GenericDataMap OldM = state->getGDM();
-  GRState::GenericDataMap NewM = GDMFactory.Remove(OldM, Key);
+  GRState::GenericDataMap NewM = GDMFactory.remove(OldM, Key);
 
   if (NewM == OldM)
     return state;

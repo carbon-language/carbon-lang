@@ -1004,7 +1004,7 @@ const GRState *CStringChecker::EvalRegionChanges(const GRState *state,
 
     // Is this entry for a super-region of a changed region?
     if (SuperRegions.count(MR)) {
-      Entries = F.Remove(Entries, MR);
+      Entries = F.remove(Entries, MR);
       continue;
     }
 
@@ -1013,7 +1013,7 @@ const GRState *CStringChecker::EvalRegionChanges(const GRState *state,
     while (const SubRegion *SR = dyn_cast<SubRegion>(Super)) {
       Super = SR->getSuperRegion();
       if (Invalidated.count(Super)) {
-        Entries = F.Remove(Entries, MR);
+        Entries = F.remove(Entries, MR);
         break;
       }
     }
@@ -1049,7 +1049,7 @@ void CStringChecker::EvalDeadSymbols(CheckerContext &C, SymbolReaper &SR) {
     SVal Len = I.getData();
     if (SymbolRef Sym = Len.getAsSymbol()) {
       if (SR.isDead(Sym))
-        Entries = F.Remove(Entries, I.getKey());
+        Entries = F.remove(Entries, I.getKey());
     }
   }
 

@@ -80,7 +80,7 @@ public:
   ~EnvironmentManager() {}
 
   Environment getInitialEnvironment() {
-    return Environment(F.GetEmptyMap());
+    return Environment(F.getEmptyMap());
   }
 
   /// Bind the value 'V' to the statement 'S'.

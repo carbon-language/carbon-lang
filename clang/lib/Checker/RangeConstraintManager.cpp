@@ -91,7 +91,7 @@ public:
 
   /// Construct a new RangeSet representing '{ [from, to] }'.
   RangeSet(Factory &F, const llvm::APSInt &from, const llvm::APSInt &to)
-    : ranges(F.Add(F.GetEmptySet(), Range(from, to))) {}
+    : ranges(F.add(F.getEmptySet(), Range(from, to))) {}
 
   /// Profile - Generates a hash profile of this RangeSet for use
   ///  by FoldingSet.
@@ -129,17 +129,17 @@ private:
 
       if (i->Includes(Lower)) {
         if (i->Includes(Upper)) {
-          newRanges = F.Add(newRanges, Range(BV.getValue(Lower),
+          newRanges = F.add(newRanges, Range(BV.getValue(Lower),
                                              BV.getValue(Upper)));
           break;
         } else
-          newRanges = F.Add(newRanges, Range(BV.getValue(Lower), i->To()));
+          newRanges = F.add(newRanges, Range(BV.getValue(Lower), i->To()));
       } else {
         if (i->Includes(Upper)) {
-          newRanges = F.Add(newRanges, Range(i->From(), BV.getValue(Upper)));
+          newRanges = F.add(newRanges, Range(i->From(), BV.getValue(Upper)));
           break;
         } else
-          newRanges = F.Add(newRanges, *i);
+          newRanges = F.add(newRanges, *i);
       }
     }
   }
@@ -155,7 +155,7 @@ public:
   RangeSet Intersect(BasicValueFactory &BV, Factory &F,
                      const llvm::APSInt &Lower,
                      const llvm::APSInt &Upper) const {
-    PrimRangeSet newRanges = F.GetEmptySet();
+    PrimRangeSet newRanges = F.getEmptySet();
 
     PrimRangeSet::iterator i = begin(), e = end();
     if (Lower <= Upper)
@@ -274,7 +274,7 @@ RangeConstraintManager::RemoveDeadBindings(const GRState* state,
   for (ConstraintRangeTy::iterator I = CR.begin(), E = CR.end(); I != E; ++I) {
     SymbolRef sym = I.getKey();
     if (SymReaper.maybeDead(sym))
-      CR = CRFactory.Remove(CR, sym);
+      CR = CRFactory.remove(CR, sym);
   }
 
   return state->set<ConstraintRange>(CR);

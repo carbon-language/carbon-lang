@@ -48,11 +48,11 @@ namespace clang {
       return B.lookup(K);
     }
     static data_type Set(data_type B, key_type K, value_type E,context_type F){
-      return F.Add(B, K, E);
+      return F.add(B, K, E);
     }
 
     static data_type Remove(data_type B, key_type K, context_type F) {
-      return F.Remove(B, K);
+      return F.remove(B, K);
     }
 
     static inline context_type MakeContext(void* p) {
@@ -86,11 +86,11 @@ namespace clang {
     }
 
     static data_type Add(data_type B, key_type K, context_type F) {
-      return F.Add(B, K);
+      return F.add(B, K);
     }
 
     static data_type Remove(data_type B, key_type K, context_type F) {
-      return F.Remove(B, K);
+      return F.remove(B, K);
     }
 
     static bool Contains(data_type B, key_type K) {
@@ -119,7 +119,7 @@ namespace clang {
     typedef typename data_type::Factory&      context_type;
 
     static data_type Add(data_type L, key_type K, context_type F) {
-      return F.Add(K, L);
+      return F.add(K, L);
     }
 
     static inline data_type MakeData(void* const* p) {

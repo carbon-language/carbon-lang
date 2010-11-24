@@ -587,7 +587,7 @@ void MallocChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
       }
 
       // Remove the dead symbol from the map.
-      RS = F.Remove(RS, I->first);
+      RS = F.remove(RS, I->first);
     }
   }
 
