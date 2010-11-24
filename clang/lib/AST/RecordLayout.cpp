@@ -48,7 +48,7 @@ ASTRecordLayout::ASTRecordLayout(ASTContext &Ctx,
                                  unsigned nonvirtualalign,
                                  CharUnits SizeOfLargestEmptySubobject,
                                  const CXXRecordDecl *PrimaryBase,
-                                 bool PrimaryBaseIsVirtual,
+                                 bool IsPrimaryBaseVirtual,
                                  const BaseOffsetsMapTy& BaseOffsets,
                                  const BaseOffsetsMapTy& VBaseOffsets)
   : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
@@ -59,7 +59,8 @@ ASTRecordLayout::ASTRecordLayout(ASTContext &Ctx,
     memcpy(FieldOffsets, fieldoffsets, FieldCount * sizeof(*FieldOffsets));
   }
 
-  CXXInfo->PrimaryBase = PrimaryBaseInfo(PrimaryBase, PrimaryBaseIsVirtual);
+  CXXInfo->PrimaryBase.setPointer(PrimaryBase);
+  CXXInfo->PrimaryBase.setInt(IsPrimaryBaseVirtual);
   CXXInfo->NonVirtualSize = nonvirtualsize;
   CXXInfo->NonVirtualAlign = nonvirtualalign;
   CXXInfo->SizeOfLargestEmptySubobject = SizeOfLargestEmptySubobject;

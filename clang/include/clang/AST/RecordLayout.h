@@ -48,58 +48,6 @@ class ASTRecordLayout {
   // FieldCount - Number of fields.
   unsigned FieldCount;
 
-public:
-  /// PrimaryBaseInfo - Contains info about a primary base.
-  struct PrimaryBaseInfo {
-    PrimaryBaseInfo() {}
-
-    PrimaryBaseInfo(const CXXRecordDecl *Base, bool IsVirtual)
-      : Value(Base, Base && IsVirtual) {}
-
-    /// Value - Points to the primary base. The single-bit value
-    /// will be non-zero when the primary base is virtual.
-    llvm::PointerIntPair<const CXXRecordDecl *, 1, bool> Value;
-    
-    /// getBase - Returns the primary base.
-    const CXXRecordDecl *getBase() const { return Value.getPointer(); }
-  
-    /// isVirtual - Returns whether the primary base is virtual or not.
-    bool isVirtual() const { return Value.getInt(); }
-
-    friend bool operator==(const PrimaryBaseInfo &X, const PrimaryBaseInfo &Y) {
-      return X.Value == Y.Value;
-    }
-  }; 
-  
-  /// primary_base_info_iterator - An iterator for iterating the primary base
-  /// class chain.
-  class primary_base_info_iterator {
-    /// Current - The current base class info.
-    PrimaryBaseInfo Current;
-    
-  public:
-    primary_base_info_iterator() {}
-    primary_base_info_iterator(PrimaryBaseInfo Info) : Current(Info) {}
-
-    const PrimaryBaseInfo &operator*() const { return Current; }
-
-    primary_base_info_iterator& operator++() {
-      const CXXRecordDecl *RD = Current.getBase();
-      Current = RD->getASTContext().getASTRecordLayout(RD).getPrimaryBaseInfo();
-      return *this;
-    }
-
-    friend bool operator==(const primary_base_info_iterator &X,
-                           const primary_base_info_iterator &Y) {
-      return X.Current == Y.Current;
-    }
-    friend bool operator!=(const primary_base_info_iterator &X,
-                           const primary_base_info_iterator &Y) {
-      return !(X == Y);
-    }
-  };
-    
-private:
   /// CXXRecordLayoutInfo - Contains C++ specific layout information.
   struct CXXRecordLayoutInfo {
     /// NonVirtualSize - The non-virtual size (in bits) of an object, which is
@@ -116,7 +64,7 @@ private:
     CharUnits SizeOfLargestEmptySubobject;
     
     /// PrimaryBase - The primary base info for this record.
-    PrimaryBaseInfo PrimaryBase;
+    llvm::PointerIntPair<const CXXRecordDecl *, 1, bool> PrimaryBase;
     
     /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
     typedef llvm::DenseMap<const CXXRecordDecl *, CharUnits> BaseOffsetsMapTy;
@@ -146,7 +94,7 @@ private:
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
                   CharUnits SizeOfLargestEmptySubobject,
                   const CXXRecordDecl *PrimaryBase,
-                  bool PrimaryBaseIsVirtual,
+                  bool IsPrimaryBaseVirtual,
                   const BaseOffsetsMapTy& BaseOffsets,
                   const BaseOffsetsMapTy& VBaseOffsets);
 
@@ -196,21 +144,19 @@ public:
     return CXXInfo->NonVirtualAlign;
   }
 
-  /// getPrimaryBaseInfo - Get the primary base info.
-  const PrimaryBaseInfo &getPrimaryBaseInfo() const {
+  /// getPrimaryBase - Get the primary base for this record.
+  const CXXRecordDecl *getPrimaryBase() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
 
-    return CXXInfo->PrimaryBase;
+    return CXXInfo->PrimaryBase.getPointer();
   }
 
-  // FIXME: Migrate off of this function and use getPrimaryBaseInfo directly.
-  const CXXRecordDecl *getPrimaryBase() const {
-    return getPrimaryBaseInfo().getBase();
-  }
-
-  // FIXME: Migrate off of this function and use getPrimaryBaseInfo directly.
+  /// isPrimaryBaseVirtual - Get whether the primary base for this record
+  /// is virtual or not.
   bool isPrimaryBaseVirtual() const {
-    return getPrimaryBaseInfo().isVirtual();
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+
+    return CXXInfo->PrimaryBase.getInt();
   }
 
   /// getBaseClassOffset - Get the offset, in chars, for the given base class.
@@ -252,18 +198,6 @@ public:
   CharUnits getSizeOfLargestEmptySubobject() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
     return CXXInfo->SizeOfLargestEmptySubobject;
-  }
-
-  primary_base_info_iterator primary_base_begin() const {
-    assert(CXXInfo && "Record layout does not have C++ specific info!");
-  
-    return primary_base_info_iterator(getPrimaryBaseInfo());
-  }
-
-  primary_base_info_iterator primary_base_end() const {
-    assert(CXXInfo && "Record layout does not have C++ specific info!");
-    
-    return primary_base_info_iterator();
   }
 };
 
