@@ -729,7 +729,8 @@ const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
   if (&Sec2 != &Section &&
       (Kind == MCSymbolRefExpr::VK_PLT ||
        Kind == MCSymbolRefExpr::VK_GOTPCREL ||
-       Kind == MCSymbolRefExpr::VK_GOTOFF)) {
+       Kind == MCSymbolRefExpr::VK_GOTOFF ||
+       Kind == MCSymbolRefExpr::VK_NTPOFF)) {
     if (Renamed)
       return Renamed;
     return &Symbol;
