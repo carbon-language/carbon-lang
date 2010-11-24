@@ -54,6 +54,12 @@ protected:
                                          llvm::StringRef InFile);
 };
 
+class ASTDumpXMLAction : public ASTFrontendAction {
+protected:
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         llvm::StringRef InFile);
+};
+
 class ASTViewAction : public ASTFrontendAction {
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,

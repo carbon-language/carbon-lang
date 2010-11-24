@@ -622,6 +622,8 @@ public:
                          llvm::raw_ostream &Out, const PrintingPolicy &Policy,
                          unsigned Indentation = 0);
   void dump() const;
+  void dumpXML() const;
+  void dumpXML(llvm::raw_ostream &OS) const;
 
 private:
   const Attr *getAttrsImpl() const;

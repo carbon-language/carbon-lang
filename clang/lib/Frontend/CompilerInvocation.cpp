@@ -319,6 +319,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
     llvm_unreachable("Invalid kind!");
 
   case frontend::ASTDump:                return "-ast-dump";
+  case frontend::ASTDumpXML:             return "-ast-dump-xml";
   case frontend::ASTPrint:               return "-ast-print";
   case frontend::ASTPrintXML:            return "-ast-print-xml";
   case frontend::ASTView:                return "-ast-view";
@@ -1003,6 +1004,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       assert(0 && "Invalid option in group!");
     case OPT_ast_dump:
       Opts.ProgramAction = frontend::ASTDump; break;
+    case OPT_ast_dump_xml:
+      Opts.ProgramAction = frontend::ASTDumpXML; break;
     case OPT_ast_print:
       Opts.ProgramAction = frontend::ASTPrint; break;
     case OPT_ast_print_xml:

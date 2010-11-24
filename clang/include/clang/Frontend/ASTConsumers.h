@@ -48,6 +48,10 @@ ASTConsumer *CreateASTPrinterXML(llvm::raw_ostream *OS);
 // intended for debugging.
 ASTConsumer *CreateASTDumper();
 
+// AST XML-dumper: dumps out the AST to stderr in a very detailed XML
+// format; this is intended for particularly intense debugging.
+ASTConsumer *CreateASTDumperXML(llvm::raw_ostream &OS);
+
 // Graphical AST viewer: for each function definition, creates a graph of
 // the AST and displays it with the graph viewer "dotty".  Also outputs
 // function declarations to stderr.

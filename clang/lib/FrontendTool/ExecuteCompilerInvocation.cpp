@@ -35,6 +35,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
     llvm_unreachable("Invalid program action!");
 
   case ASTDump:                return new ASTDumpAction();
+  case ASTDumpXML:             return new ASTDumpXMLAction();
   case ASTPrint:               return new ASTPrintAction();
   case ASTPrintXML:            return new ASTPrintXMLAction();
   case ASTView:                return new ASTViewAction();

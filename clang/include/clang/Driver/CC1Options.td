@@ -330,6 +330,8 @@ def ast_print_xml : Flag<"-ast-print-xml">,
   HelpText<"Build ASTs and then print them in XML format">;
 def ast_dump : Flag<"-ast-dump">,
   HelpText<"Build ASTs and then debug dump them">;
+def ast_dump_xml : Flag<"-ast-dump-xml">,
+  HelpText<"Build ASTs and then debug dump them in a verbose XML format">;
 def ast_view : Flag<"-ast-view">,
   HelpText<"Build ASTs and view them with GraphViz">;
 def boostcon : Flag<"-boostcon">,

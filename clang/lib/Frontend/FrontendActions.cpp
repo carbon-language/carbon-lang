@@ -59,6 +59,17 @@ ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
   return CreateASTDumper();
 }
 
+ASTConsumer *ASTDumpXMLAction::CreateASTConsumer(CompilerInstance &CI,
+                                                 llvm::StringRef InFile) {
+  llvm::raw_ostream *OS;
+  if (CI.getFrontendOpts().OutputFile.empty())
+    OS = &llvm::outs();
+  else
+    OS = CI.createDefaultOutputFile(false, InFile);
+  if (!OS) return 0;
+  return CreateASTDumperXML(*OS);
+}
+
 ASTConsumer *ASTViewAction::CreateASTConsumer(CompilerInstance &CI,
                                               llvm::StringRef InFile) {
   return CreateASTViewer();
