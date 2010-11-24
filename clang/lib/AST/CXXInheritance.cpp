@@ -674,7 +674,7 @@ AddIndirectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
 
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
        E = RD->bases_end(); I != E; ++I) {
-    assert(!E->getType()->isDependentType() &&
+    assert(!I->getType()->isDependentType() &&
            "Cannot get indirect primary bases for class with dependent bases.");
 
     const CXXRecordDecl *BaseDecl =
@@ -697,7 +697,7 @@ CXXRecordDecl::getIndirectPrimaryBases(CXXIndirectPrimaryBaseSet& Bases) const {
 
   for (CXXRecordDecl::base_class_const_iterator I = bases_begin(),
        E = bases_end(); I != E; ++I) {
-    assert(!E->getType()->isDependentType() &&
+    assert(!I->getType()->isDependentType() &&
            "Cannot get indirect primary bases for class with dependent bases.");
 
     const CXXRecordDecl *BaseDecl =
