@@ -156,7 +156,7 @@ public:
     if (ownsAllocator()) delete &getAllocator();
   }
 
-  ImmutableList<T> Concat(const T& Head, ImmutableList<T> Tail) {
+  ImmutableList<T> concat(const T& Head, ImmutableList<T> Tail) {
     // Profile the new list to see if it already exists in our cache.
     FoldingSetNodeID ID;
     void* InsertPos;
@@ -178,16 +178,16 @@ public:
     return L;
   }
 
-  ImmutableList<T> Add(const T& D, ImmutableList<T> L) {
-    return Concat(D, L);
+  ImmutableList<T> add(const T& D, ImmutableList<T> L) {
+    return concat(D, L);
   }
 
-  ImmutableList<T> GetEmptyList() const {
+  ImmutableList<T> getEmptyList() const {
     return ImmutableList<T>(0);
   }
 
-  ImmutableList<T> Create(const T& X) {
-    return Concat(X, GetEmptyList());
+  ImmutableList<T> create(const T& X) {
+    return Concat(X, getEmptyList());
   }
 };
 

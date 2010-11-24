@@ -37,11 +37,11 @@ char ImmutableSetTest::buffer[10];
 TEST_F(ImmutableSetTest, EmptyIntSetTest) {
   ImmutableSet<int>::Factory f;
 
-  EXPECT_TRUE(f.GetEmptySet() == f.GetEmptySet());
-  EXPECT_FALSE(f.GetEmptySet() != f.GetEmptySet());
-  EXPECT_TRUE(f.GetEmptySet().isEmpty());
+  EXPECT_TRUE(f.getEmptySet() == f.getEmptySet());
+  EXPECT_FALSE(f.getEmptySet() != f.getEmptySet());
+  EXPECT_TRUE(f.getEmptySet().isEmpty());
 
-  ImmutableSet<int> S = f.GetEmptySet();
+  ImmutableSet<int> S = f.getEmptySet();
   EXPECT_EQ(0u, S.getHeight());
   EXPECT_TRUE(S.begin() == S.end());
   EXPECT_FALSE(S.begin() != S.end());
@@ -50,9 +50,9 @@ TEST_F(ImmutableSetTest, EmptyIntSetTest) {
 
 TEST_F(ImmutableSetTest, OneElemIntSetTest) {
   ImmutableSet<int>::Factory f;
-  ImmutableSet<int> S = f.GetEmptySet();
+  ImmutableSet<int> S = f.getEmptySet();
 
-  ImmutableSet<int> S2 = f.Add(S, 3);
+  ImmutableSet<int> S2 = f.add(S, 3);
   EXPECT_TRUE(S.isEmpty());
   EXPECT_FALSE(S2.isEmpty());
   EXPECT_FALSE(S == S2);
@@ -62,7 +62,7 @@ TEST_F(ImmutableSetTest, OneElemIntSetTest) {
   EXPECT_FALSE(S2.begin() == S2.end());
   EXPECT_TRUE(S2.begin() != S2.end());
 
-  ImmutableSet<int> S3 = f.Add(S, 2);
+  ImmutableSet<int> S3 = f.add(S, 2);
   EXPECT_TRUE(S.isEmpty());
   EXPECT_FALSE(S3.isEmpty());
   EXPECT_FALSE(S == S3);
@@ -78,11 +78,11 @@ TEST_F(ImmutableSetTest, OneElemIntSetTest) {
 
 TEST_F(ImmutableSetTest, MultiElemIntSetTest) {
   ImmutableSet<int>::Factory f;
-  ImmutableSet<int> S = f.GetEmptySet();
+  ImmutableSet<int> S = f.getEmptySet();
 
-  ImmutableSet<int> S2 = f.Add(f.Add(f.Add(S, 3), 4), 5);
-  ImmutableSet<int> S3 = f.Add(f.Add(f.Add(S2, 9), 20), 43);
-  ImmutableSet<int> S4 = f.Add(S2, 9);
+  ImmutableSet<int> S2 = f.add(f.add(f.add(S, 3), 4), 5);
+  ImmutableSet<int> S3 = f.add(f.add(f.add(S2, 9), 20), 43);
+  ImmutableSet<int> S4 = f.add(S2, 9);
 
   EXPECT_TRUE(S.isEmpty());
   EXPECT_FALSE(S2.isEmpty());
@@ -116,11 +116,11 @@ TEST_F(ImmutableSetTest, MultiElemIntSetTest) {
 
 TEST_F(ImmutableSetTest, RemoveIntSetTest) {
   ImmutableSet<int>::Factory f;
-  ImmutableSet<int> S = f.GetEmptySet();
+  ImmutableSet<int> S = f.getEmptySet();
 
-  ImmutableSet<int> S2 = f.Add(f.Add(S, 4), 5);
-  ImmutableSet<int> S3 = f.Add(S2, 3);
-  ImmutableSet<int> S4 = f.Remove(S3, 3);
+  ImmutableSet<int> S2 = f.add(f.add(S, 4), 5);
+  ImmutableSet<int> S3 = f.add(S2, 3);
+  ImmutableSet<int> S4 = f.remove(S3, 3);
 
   EXPECT_TRUE(S3.contains(3));
   EXPECT_FALSE(S2.contains(3));
@@ -139,10 +139,10 @@ TEST_F(ImmutableSetTest, RemoveIntSetTest) {
 
 TEST_F(ImmutableSetTest, CallbackCharSetTest) {
   ImmutableSet<char>::Factory f;
-  ImmutableSet<char> S = f.GetEmptySet();
+  ImmutableSet<char> S = f.getEmptySet();
 
-  ImmutableSet<char> S2 = f.Add(f.Add(f.Add(S, 'a'), 'e'), 'i');
-  ImmutableSet<char> S3 = f.Add(f.Add(S2, 'o'), 'u');
+  ImmutableSet<char> S2 = f.add(f.add(f.add(S, 'a'), 'e'), 'i');
+  ImmutableSet<char> S3 = f.add(f.add(S2, 'o'), 'u');
 
   S3.foreach<MyIter>();
 
@@ -151,10 +151,10 @@ TEST_F(ImmutableSetTest, CallbackCharSetTest) {
 
 TEST_F(ImmutableSetTest, Callback2CharSetTest) {
   ImmutableSet<char>::Factory f;
-  ImmutableSet<char> S = f.GetEmptySet();
+  ImmutableSet<char> S = f.getEmptySet();
 
-  ImmutableSet<char> S2 = f.Add(f.Add(f.Add(S, 'b'), 'c'), 'd');
-  ImmutableSet<char> S3 = f.Add(f.Add(f.Add(S2, 'f'), 'g'), 'h');
+  ImmutableSet<char> S2 = f.add(f.add(f.add(S, 'b'), 'c'), 'd');
+  ImmutableSet<char> S3 = f.add(f.add(f.add(S2, 'f'), 'g'), 'h');
 
   MyIter obj;
   S3.foreach<MyIter>(obj);
@@ -174,10 +174,10 @@ TEST_F(ImmutableSetTest, Callback2CharSetTest) {
 
 TEST_F(ImmutableSetTest, IterLongSetTest) {
   ImmutableSet<long>::Factory f;
-  ImmutableSet<long> S = f.GetEmptySet();
+  ImmutableSet<long> S = f.getEmptySet();
 
-  ImmutableSet<long> S2 = f.Add(f.Add(f.Add(S, 0), 1), 2);
-  ImmutableSet<long> S3 = f.Add(f.Add(f.Add(S2, 3), 4), 5);
+  ImmutableSet<long> S2 = f.add(f.add(f.add(S, 0), 1), 2);
+  ImmutableSet<long> S3 = f.add(f.add(f.add(S2, 3), 4), 5);
 
   int i = 0;
   for (ImmutableSet<long>::iterator I = S.begin(), E = S.end(); I != E; ++I) {

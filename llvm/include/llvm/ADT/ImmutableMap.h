@@ -89,16 +89,16 @@ public:
     Factory(BumpPtrAllocator& Alloc, bool canonicalize = true)
       : F(Alloc), Canonicalize(canonicalize) {}
 
-    ImmutableMap GetEmptyMap() { return ImmutableMap(F.GetEmptyTree()); }
+    ImmutableMap getEmptyMap() { return ImmutableMap(F.getEmptyTree()); }
 
-    ImmutableMap Add(ImmutableMap Old, key_type_ref K, data_type_ref D) {
-      TreeTy *T = F.Add(Old.Root, std::make_pair<key_type,data_type>(K,D));
-      return ImmutableMap(Canonicalize ? F.GetCanonicalTree(T): T);
+    ImmutableMap add(ImmutableMap Old, key_type_ref K, data_type_ref D) {
+      TreeTy *T = F.add(Old.Root, std::make_pair<key_type,data_type>(K,D));
+      return ImmutableMap(Canonicalize ? F.getCanonicalTree(T): T);
     }
 
-    ImmutableMap Remove(ImmutableMap Old, key_type_ref K) {
-      TreeTy *T = F.Remove(Old.Root,K);
-      return ImmutableMap(Canonicalize ? F.GetCanonicalTree(T): T);
+    ImmutableMap remove(ImmutableMap Old, key_type_ref K) {
+      TreeTy *T = F.remove(Old.Root,K);
+      return ImmutableMap(Canonicalize ? F.getCanonicalTree(T): T);
     }
 
   private:

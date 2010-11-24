@@ -94,7 +94,7 @@ public:
     : ImutAVLFactory<ImutInfo>(Alloc) {}
 
   TreeTy *Add(TreeTy *T, value_type_ref V) {
-    T = Add_internal(V,T);
+    T = add_internal(V,T);
     this->MarkImmutable(T);
     return T;
   }
@@ -103,20 +103,20 @@ public:
     if (!T)
       return NULL;
 
-    key_type_ref CurrentKey = ImutInfo::KeyOfValue(this->Value(T));
+    key_type_ref CurrentKey = ImutInfo::KeyOfValue(this->getValue(T));
 
     if (ImutInfo::isContainedIn(K, CurrentKey))
       return T;
     else if (ImutInfo::isLess(K, CurrentKey))
-      return Find(this->Left(T), K);
+      return Find(this->getLeft(T), K);
     else
-      return Find(this->Right(T), K);
+      return Find(this->getRight(T), K);
   }
 
 private:
-  TreeTy *Add_internal(value_type_ref V, TreeTy *T) {
+  TreeTy *add_internal(value_type_ref V, TreeTy *T) {
     key_type_ref K = ImutInfo::KeyOfValue(V);
-    T = RemoveAllOverlaps(T, K);
+    T = removeAllOverlaps(T, K);
     if (this->isEmpty(T))
       return this->CreateNode(NULL, V, NULL);
 
@@ -125,38 +125,38 @@ private:
     key_type_ref KCurrent = ImutInfo::KeyOfValue(this->Value(T));
 
     if (ImutInfo::isLess(K, KCurrent))
-      return this->Balance(Add_internal(V, this->Left(T)), this->Value(T), 
+      return this->Balance(add_internal(V, this->Left(T)), this->Value(T), 
                                         this->Right(T));
     else
       return this->Balance(this->Left(T), this->Value(T), 
-                           Add_internal(V, this->Right(T)));
+                           add_internal(V, this->Right(T)));
   }
 
   // Remove all overlaps from T.
-  TreeTy *RemoveAllOverlaps(TreeTy *T, key_type_ref K) {
+  TreeTy *removeAllOverlaps(TreeTy *T, key_type_ref K) {
     bool Changed;
     do {
       Changed = false;
-      T = RemoveOverlap(T, K, Changed);
-      this->MarkImmutable(T);
+      T = removeOverlap(T, K, Changed);
+      this->markImmutable(T);
     } while (Changed);
 
     return T;
   }
 
   // Remove one overlap from T.
-  TreeTy *RemoveOverlap(TreeTy *T, key_type_ref K, bool &Changed) {
+  TreeTy *removeOverlap(TreeTy *T, key_type_ref K, bool &Changed) {
     if (!T)
       return NULL;
     Interval CurrentK = ImutInfo::KeyOfValue(this->Value(T));
 
     // If current key does not overlap the inserted key.
     if (CurrentK.getStart() > K.getEnd())
-      return this->Balance(RemoveOverlap(this->Left(T), K, Changed),
+      return this->Balance(removeOverlap(this->Left(T), K, Changed),
                            this->Value(T), this->Right(T));
     else if (CurrentK.getEnd() < K.getStart())
       return this->Balance(this->Left(T), this->Value(T), 
-                           RemoveOverlap(this->Right(T), K, Changed));
+                           removeOverlap(this->Right(T), K, Changed));
 
     // Current key overlaps with the inserted key.
     // Remove the current key.
@@ -167,18 +167,18 @@ private:
     if (CurrentK.getStart() < K.getStart()) {
       if (CurrentK.getEnd() <= K.getEnd()) {
         Interval NewK(CurrentK.getStart(), K.getStart()-1);
-        return Add_internal(std::make_pair(NewK, OldData), T);
+        return add_internal(std::make_pair(NewK, OldData), T);
       } else {
         Interval NewK1(CurrentK.getStart(), K.getStart()-1);
-        T = Add_internal(std::make_pair(NewK1, OldData), T); 
+        T = add_internal(std::make_pair(NewK1, OldData), T); 
 
         Interval NewK2(K.getEnd()+1, CurrentK.getEnd());
-        return Add_internal(std::make_pair(NewK2, OldData), T);
+        return add_internal(std::make_pair(NewK2, OldData), T);
       }
     } else {
       if (CurrentK.getEnd() > K.getEnd()) {
         Interval NewK(K.getEnd()+1, CurrentK.getEnd());
-        return Add_internal(std::make_pair(NewK, OldData), T);
+        return add_internal(std::make_pair(NewK, OldData), T);
       } else
         return T;
     }
@@ -209,22 +209,22 @@ public:
   public:
     Factory(BumpPtrAllocator& Alloc) : F(Alloc) {}
 
-    ImmutableIntervalMap GetEmptyMap() { 
-      return ImmutableIntervalMap(F.GetEmptyTree()); 
+    ImmutableIntervalMap getEmptyMap() { 
+      return ImmutableIntervalMap(F.getEmptyTree()); 
     }
 
-    ImmutableIntervalMap Add(ImmutableIntervalMap Old, 
+    ImmutableIntervalMap add(ImmutableIntervalMap Old, 
                              key_type_ref K, data_type_ref D) {
-      TreeTy *T = F.Add(Old.Root, std::make_pair<key_type, data_type>(K, D));
-      return ImmutableIntervalMap(F.GetCanonicalTree(T));
+      TreeTy *T = F.add(Old.Root, std::make_pair<key_type, data_type>(K, D));
+      return ImmutableIntervalMap(F.getCanonicalTree(T));
     }
 
-    ImmutableIntervalMap Remove(ImmutableIntervalMap Old, key_type_ref K) {
-      TreeTy *T = F.Remove(Old.Root, K);
-      return ImmutableIntervalMap(F.GetCanonicalTree(T));
+    ImmutableIntervalMap remove(ImmutableIntervalMap Old, key_type_ref K) {
+      TreeTy *T = F.remove(Old.Root, K);
+      return ImmutableIntervalMap(F.getCanonicalTree(T));
     }
 
-    data_type *Lookup(ImmutableIntervalMap M, key_type_ref K) {
+    data_type *lookup(ImmutableIntervalMap M, key_type_ref K) {
       TreeTy *T = F.Find(M.getRoot(), K);
       if (T)
         return &T->getValue().second;

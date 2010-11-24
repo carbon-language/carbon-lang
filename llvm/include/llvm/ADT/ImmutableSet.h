@@ -53,27 +53,25 @@ public:
 
   /// getLeft - Returns a pointer to the left subtree.  This value
   ///  is NULL if there is no left subtree.
-  ImutAVLTree *getLeft() const { return Left; }
+  ImutAVLTree *getLeft() const { return left; }
 
   /// getRight - Returns a pointer to the right subtree.  This value is
   ///  NULL if there is no right subtree.
-  ImutAVLTree *getRight() const { return Right; }
+  ImutAVLTree *getRight() const { return right; }
 
   /// getHeight - Returns the height of the tree.  A tree with no subtrees
   ///  has a height of 1.
-  unsigned getHeight() const { return Height; }
+  unsigned getHeight() const { return height; }
 
   /// getValue - Returns the data value associated with the tree node.
-  const value_type& getValue() const { return Value; }
+  const value_type& getValue() const { return value; }
 
   /// find - Finds the subtree associated with the specified key value.
   ///  This method returns NULL if no matching subtree is found.
   ImutAVLTree* find(key_type_ref K) {
     ImutAVLTree *T = this;
-
     while (T) {
       key_type_ref CurrentKey = ImutInfo::KeyOfValue(T->getValue());
-
       if (ImutInfo::isEqual(K,CurrentKey))
         return T;
       else if (ImutInfo::isLess(K,CurrentKey))
@@ -81,7 +79,6 @@ public:
       else
         T = T->getRight();
     }
-
     return NULL;
   }
   
@@ -90,7 +87,7 @@ public:
   ImutAVLTree* getMaxElement() {
     ImutAVLTree *T = this;
     ImutAVLTree *Right = T->getRight();    
-    while (Right) { T = Right; Right = T->getRight(); }
+    while (Right) { T = right; right = T->getRight(); }
     return T;
   }
 
@@ -98,10 +95,10 @@ public:
   ///  both leaves and non-leaf nodes.
   unsigned size() const {
     unsigned n = 1;
-
-    if (const ImutAVLTree* L = getLeft())  n += L->size();
-    if (const ImutAVLTree* R = getRight()) n += R->size();
-
+    if (const ImutAVLTree* L = getLeft())
+      n += L->size();
+    if (const ImutAVLTree* R = getRight())
+      n += R->size();
     return n;
   }
 
@@ -114,7 +111,7 @@ public:
   ///  inorder traversal.
   iterator end() const { return iterator(); }
 
-  bool ElementEqual(value_type_ref V) const {
+  bool isElementEqual(value_type_ref V) const {
     // Compare the keys.
     if (!ImutInfo::isEqual(ImutInfo::KeyOfValue(getValue()),
                            ImutInfo::KeyOfValue(V)))
@@ -128,8 +125,8 @@ public:
     return true;
   }
 
-  bool ElementEqual(const ImutAVLTree* RHS) const {
-    return ElementEqual(RHS->getValue());
+  bool isElementEqual(const ImutAVLTree* RHS) const {
+    return isElementEqual(RHS->getValue());
   }
 
   /// isEqual - Compares two trees for structural equality and returns true
@@ -144,12 +141,12 @@ public:
 
     while (LItr != LEnd && RItr != REnd) {
       if (*LItr == *RItr) {
-        LItr.SkipSubTree();
-        RItr.SkipSubTree();
+        LItr.skipSubTree();
+        RItr.skipSubTree();
         continue;
       }
 
-      if (!LItr->ElementEqual(*RItr))
+      if (!LItr->isElementEqual(*RItr))
         return false;
 
       ++LItr;
@@ -173,22 +170,24 @@ public:
   ///  Nodes are visited using an inorder traversal.
   template <typename Callback>
   void foreach(Callback& C) {
-    if (ImutAVLTree* L = getLeft()) L->foreach(C);
+    if (ImutAVLTree* L = getLeft())
+      L->foreach(C);
 
-    C(Value);
+    C(value);
 
-    if (ImutAVLTree* R = getRight()) R->foreach(C);
+    if (ImutAVLTree* R = getRight())
+      R->foreach(C);
   }
 
-  /// verify - A utility method that checks that the balancing and
+  /// validateTree - A utility method that checks that the balancing and
   ///  ordering invariants of the tree are satisifed.  It is a recursive
   ///  method that returns the height of the tree, which is then consumed
-  ///  by the enclosing verify call.  External callers should ignore the
+  ///  by the enclosing validateTree call.  External callers should ignore the
   ///  return value.  An invalid tree will cause an assertion to fire in
   ///  a debug build.
-  unsigned verify() const {
-    unsigned HL = getLeft() ? getLeft()->verify() : 0;
-    unsigned HR = getRight() ? getRight()->verify() : 0;
+  unsigned validateTree() const {
+    unsigned HL = getLeft() ? getLeft()->validateTree() : 0;
+    unsigned HR = getRight() ? getRight()->validateTree() : 0;
     (void) HL;
     (void) HR;
 
@@ -214,21 +213,21 @@ public:
 
   /// Profile - Profiling for ImutAVLTree.
   void Profile(llvm::FoldingSetNodeID& ID) {
-    ID.AddInteger(ComputeDigest());
+    ID.AddInteger(computeDigest());
   }
 
   //===----------------------------------------------------===//
-  // Internal Values.
+  // Internal values.
   //===----------------------------------------------------===//
 
 private:
-  ImutAVLTree*     Left;
-  ImutAVLTree*     Right;
-  unsigned         Height       : 28;
-  unsigned         Mutable      : 1;
-  unsigned         CachedDigest : 1;
-  value_type       Value;
-  uint32_t         Digest;
+  ImutAVLTree*     left;
+  ImutAVLTree*     right;
+  unsigned         height         : 28;
+  unsigned         IsMutable      : 1;
+  unsigned         IsDigestCached : 1;
+  value_type       value;
+  uint32_t         digest;
 
   //===----------------------------------------------------===//
   // Internal methods (node manipulation; used by Factory).
@@ -239,8 +238,8 @@ private:
   ///   ImutAVLFactory.
   ImutAVLTree(ImutAVLTree* l, ImutAVLTree* r, value_type_ref v,
               unsigned height)
-    : Left(l), Right(r), Height(height), Mutable(true), CachedDigest(false),
-      Value(v), Digest(0) {}
+    : left(l), right(r), height(height), IsMutable(true),
+      IsDigestCached(false), value(v), digest(0) {}
 
   /// isMutable - Returns true if the left and right subtree references
   ///  (as well as height) can be changed.  If this method returns false,
@@ -248,11 +247,11 @@ private:
   ///  object should always have this method return true.  Further, if this
   ///  method returns false for an instance of ImutAVLTree, all subtrees
   ///  will also have this method return false.  The converse is not true.
-  bool isMutable() const { return Mutable; }
+  bool isMutable() const { return IsMutable; }
   
   /// hasCachedDigest - Returns true if the digest for this tree is cached.
   ///  This can only be true if the tree is immutable.
-  bool hasCachedDigest() const { return CachedDigest; }
+  bool hasCachedDigest() const { return IsDigestCached; }
 
   //===----------------------------------------------------===//
   // Mutating operations.  A tree root can be manipulated as
@@ -265,17 +264,17 @@ private:
   // immutable.
   //===----------------------------------------------------===//
 
-  /// MarkImmutable - Clears the mutable flag for a tree.  After this happens,
+  /// markImmutable - Clears the mutable flag for a tree.  After this happens,
   ///   it is an error to call setLeft(), setRight(), and setHeight().
-  void MarkImmutable() {
+  void markImmutable() {
     assert(isMutable() && "Mutable flag already removed.");
-    Mutable = false;
+    IsMutable = false;
   }
   
-  /// MarkedCachedDigest - Clears the NoCachedDigest flag for a tree.
-  void MarkedCachedDigest() {
+  /// markedCachedDigest - Clears the NoCachedDigest flag for a tree.
+  void markedCachedDigest() {
     assert(!hasCachedDigest() && "NoCachedDigest flag already removed.");
-    CachedDigest = true;
+    IsDigestCached = true;
   }
 
   /// setLeft - Changes the reference of the left subtree.  Used internally
@@ -283,33 +282,33 @@ private:
   void setLeft(ImutAVLTree* NewLeft) {
     assert(isMutable() &&
            "Only a mutable tree can have its left subtree changed.");
-    Left = NewLeft;
-    CachedDigest = false;
+    left = NewLeft;
+    IsDigestCached = false;
   }
 
   /// setRight - Changes the reference of the right subtree.  Used internally
   ///  by ImutAVLFactory.
-  void setRight(ImutAVLTree* NewRight) {
+  void setRight(ImutAVLTree* newRight) {
     assert(isMutable() &&
            "Only a mutable tree can have its right subtree changed.");
 
-    Right = NewRight;
-    CachedDigest = false;
+    right = newRight;
+    IsDigestCached = false;
   }
 
   /// setHeight - Changes the height of the tree.  Used internally by
   ///  ImutAVLFactory.
   void setHeight(unsigned h) {
     assert(isMutable() && "Only a mutable tree can have its height changed.");
-    Height = h;
+    height = h;
   }
 
   static inline
-  uint32_t ComputeDigest(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
+  uint32_t computeDigest(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
     uint32_t digest = 0;
 
     if (L)
-      digest += L->ComputeDigest();
+      digest += L->computeDigest();
 
     // Compute digest of stored data.
     FoldingSetNodeID ID;
@@ -317,20 +316,20 @@ private:
     digest += ID.ComputeHash();
 
     if (R)
-      digest += R->ComputeDigest();
+      digest += R->computeDigest();
 
     return digest;
   }
 
-  inline uint32_t ComputeDigest() {
+  inline uint32_t computeDigest() {
     // Check the lowest bit to determine if digest has actually been
     // pre-computed.
     if (hasCachedDigest())
-      return Digest;
+      return digest;
 
-    uint32_t X = ComputeDigest(getLeft(), getRight(), getValue());
-    Digest = X;
-    MarkedCachedDigest();
+    uint32_t X = computeDigest(getLeft(), getRight(), getValue());
+    digest = X;
+    markedCachedDigest();
     return X;
   }
 };
@@ -373,55 +372,54 @@ public:
     if (ownsAllocator()) delete &getAllocator();
   }
 
-  TreeTy* Add(TreeTy* T, value_type_ref V) {
-    T = Add_internal(V,T);
-    MarkImmutable(T);
+  TreeTy* add(TreeTy* T, value_type_ref V) {
+    T = add_internal(V,T);
+    markImmutable(T);
     return T;
   }
 
-  TreeTy* Remove(TreeTy* T, key_type_ref V) {
-    T = Remove_internal(V,T);
-    MarkImmutable(T);
+  TreeTy* remove(TreeTy* T, key_type_ref V) {
+    T = remove_internal(V,T);
+    markImmutable(T);
     return T;
   }
 
-  TreeTy* GetEmptyTree() const { return NULL; }
+  TreeTy* getEmptyTree() const { return NULL; }
 
+protected:
+  
   //===--------------------------------------------------===//
   // A bunch of quick helper functions used for reasoning
   // about the properties of trees and their children.
   // These have succinct names so that the balancing code
   // is as terse (and readable) as possible.
   //===--------------------------------------------------===//
-protected:
 
-  bool           isEmpty(TreeTy* T) const { return !T; }
-  unsigned Height(TreeTy* T) const { return T ? T->getHeight() : 0; }
-  TreeTy*           Left(TreeTy* T) const { return T->getLeft(); }
-  TreeTy*          Right(TreeTy* T) const { return T->getRight(); }
-  value_type_ref   Value(TreeTy* T) const { return T->Value; }
+  bool            isEmpty(TreeTy* T) const { return !T; }
+  unsigned        getHeight(TreeTy* T) const { return T ? T->getHeight() : 0; }
+  TreeTy*         getLeft(TreeTy* T) const { return T->getLeft(); }
+  TreeTy*         getRight(TreeTy* T) const { return T->getRight(); }
+  value_type_ref  getValue(TreeTy* T) const { return T->value; }
 
-  unsigned IncrementHeight(TreeTy* L, TreeTy* R) const {
-    unsigned hl = Height(L);
-    unsigned hr = Height(R);
+  unsigned incrementHeight(TreeTy* L, TreeTy* R) const {
+    unsigned hl = getHeight(L);
+    unsigned hr = getHeight(R);
     return (hl > hr ? hl : hr) + 1;
   }
 
-  static bool CompareTreeWithSection(TreeTy* T,
+  static bool compareTreeWithSection(TreeTy* T,
                                      typename TreeTy::iterator& TI,
                                      typename TreeTy::iterator& TE) {
-
     typename TreeTy::iterator I = T->begin(), E = T->end();
-
-    for ( ; I!=E ; ++I, ++TI)
-      if (TI == TE || !I->ElementEqual(*TI))
+    for ( ; I!=E ; ++I, ++TI) {
+      if (TI == TE || !I->isElementEqual(*TI))
         return false;
-
+    }
     return true;
   }
 
   //===--------------------------------------------------===//
-  // "CreateNode" is used to generate new tree roots that link
+  // "createNode" is used to generate new tree roots that link
   // to other trees.  The functon may also simply move links
   // in an existing root if that root is still marked mutable.
   // This is necessary because otherwise our balancing code
@@ -430,148 +428,147 @@ protected:
   // returned to the caller.
   //===--------------------------------------------------===//
 
-  TreeTy* CreateNode(TreeTy* L, value_type_ref V, TreeTy* R) {   
+  TreeTy* createNode(TreeTy* L, value_type_ref V, TreeTy* R) {   
     BumpPtrAllocator& A = getAllocator();
     TreeTy* T = (TreeTy*) A.Allocate<TreeTy>();
-    new (T) TreeTy(L, R, V, IncrementHeight(L,R));
+    new (T) TreeTy(L, R, V, incrementHeight(L,R));
     return T;
   }
 
-  TreeTy* CreateNode(TreeTy* L, TreeTy* OldTree, TreeTy* R) {
-    assert(!isEmpty(OldTree));
-
-    if (OldTree->isMutable()) {
-      OldTree->setLeft(L);
-      OldTree->setRight(R);
-      OldTree->setHeight(IncrementHeight(L, R));
-      return OldTree;
+  TreeTy* createNode(TreeTy* newLeft, TreeTy* oldTree, TreeTy* newRight) {
+    assert(!isEmpty(oldTree));
+    if (oldTree->isMutable()) {
+      oldTree->setLeft(newLeft);
+      oldTree->setRight(newRight);
+      oldTree->setHeight(incrementHeight(newLeft, newRight));
+      return oldTree;
     }
     else
-      return CreateNode(L, Value(OldTree), R);
+      return createNode(newLeft, getValue(oldTree), newRight);
   }
 
-  /// Balance - Used by Add_internal and Remove_internal to
+  /// balanceTree - Used by add_internal and remove_internal to
   ///  balance a newly created tree.
-  TreeTy* Balance(TreeTy* L, value_type_ref V, TreeTy* R) {
-
-    unsigned hl = Height(L);
-    unsigned hr = Height(R);
+  TreeTy* balanceTree(TreeTy* L, value_type_ref V, TreeTy* R) {
+    unsigned hl = getHeight(L);
+    unsigned hr = getHeight(R);
 
     if (hl > hr + 2) {
       assert(!isEmpty(L) && "Left tree cannot be empty to have a height >= 2");
 
-      TreeTy* LL = Left(L);
-      TreeTy* LR = Right(L);
+      TreeTy *LL = getLeft(L);
+      TreeTy *LR = getRight(L);
 
-      if (Height(LL) >= Height(LR))
-        return CreateNode(LL, L, CreateNode(LR,V,R));
+      if (getHeight(LL) >= getHeight(LR))
+        return createNode(LL, L, createNode(LR,V,R));
 
       assert(!isEmpty(LR) && "LR cannot be empty because it has a height >= 1");
 
-      TreeTy* LRL = Left(LR);
-      TreeTy* LRR = Right(LR);
+      TreeTy *LRL = getLeft(LR);
+      TreeTy *LRR = getRight(LR);
 
-      return CreateNode(CreateNode(LL,L,LRL), LR, CreateNode(LRR,V,R));
+      return createNode(createNode(LL,L,LRL), LR, createNode(LRR,V,R));
     }
     else if (hr > hl + 2) {
       assert(!isEmpty(R) && "Right tree cannot be empty to have a height >= 2");
 
-      TreeTy* RL = Left(R);
-      TreeTy* RR = Right(R);
+      TreeTy *RL = getLeft(R);
+      TreeTy *RR = getRight(R);
 
-      if (Height(RR) >= Height(RL))
-        return CreateNode(CreateNode(L,V,RL), R, RR);
+      if (getHeight(RR) >= getHeight(RL))
+        return createNode(createNode(L,V,RL), R, RR);
 
       assert(!isEmpty(RL) && "RL cannot be empty because it has a height >= 1");
 
-      TreeTy* RLL = Left(RL);
-      TreeTy* RLR = Right(RL);
+      TreeTy *RLL = getLeft(RL);
+      TreeTy *RLR = getRight(RL);
 
-      return CreateNode(CreateNode(L,V,RLL), RL, CreateNode(RLR,R,RR));
+      return createNode(createNode(L,V,RLL), RL, createNode(RLR,R,RR));
     }
     else
-      return CreateNode(L,V,R);
+      return createNode(L,V,R);
   }
 
-  /// Add_internal - Creates a new tree that includes the specified
+  /// add_internal - Creates a new tree that includes the specified
   ///  data and the data from the original tree.  If the original tree
   ///  already contained the data item, the original tree is returned.
-  TreeTy* Add_internal(value_type_ref V, TreeTy* T) {
+  TreeTy* add_internal(value_type_ref V, TreeTy* T) {
     if (isEmpty(T))
-      return CreateNode(T, V, T);
-
+      return createNode(T, V, T);
     assert(!T->isMutable());
 
     key_type_ref K = ImutInfo::KeyOfValue(V);
-    key_type_ref KCurrent = ImutInfo::KeyOfValue(Value(T));
+    key_type_ref KCurrent = ImutInfo::KeyOfValue(getValue(T));
 
     if (ImutInfo::isEqual(K,KCurrent))
-      return CreateNode(Left(T), V, Right(T));
+      return createNode(getLeft(T), V, getRight(T));
     else if (ImutInfo::isLess(K,KCurrent))
-      return Balance(Add_internal(V,Left(T)), Value(T), Right(T));
+      return balanceTree(add_internal(V, getLeft(T)), getValue(T), getRight(T));
     else
-      return Balance(Left(T), Value(T), Add_internal(V,Right(T)));
+      return balanceTree(getLeft(T), getValue(T), add_internal(V, getRight(T)));
   }
 
-  /// Remove_internal - Creates a new tree that includes all the data
+  /// remove_internal - Creates a new tree that includes all the data
   ///  from the original tree except the specified data.  If the
   ///  specified data did not exist in the original tree, the original
   ///  tree is returned.
-  TreeTy* Remove_internal(key_type_ref K, TreeTy* T) {
+  TreeTy* remove_internal(key_type_ref K, TreeTy* T) {
     if (isEmpty(T))
       return T;
 
     assert(!T->isMutable());
 
-    key_type_ref KCurrent = ImutInfo::KeyOfValue(Value(T));
+    key_type_ref KCurrent = ImutInfo::KeyOfValue(getValue(T));
 
-    if (ImutInfo::isEqual(K,KCurrent))
-      return CombineLeftRightTrees(Left(T),Right(T));
-    else if (ImutInfo::isLess(K,KCurrent))
-      return Balance(Remove_internal(K,Left(T)), Value(T), Right(T));
-    else
-      return Balance(Left(T), Value(T), Remove_internal(K,Right(T)));
-  }
-
-  TreeTy* CombineLeftRightTrees(TreeTy* L, TreeTy* R) {
-    if (isEmpty(L)) return R;
-    if (isEmpty(R)) return L;
-
-    TreeTy* OldNode;
-    TreeTy* NewRight = RemoveMinBinding(R,OldNode);
-    return Balance(L,Value(OldNode),NewRight);
-  }
-
-  TreeTy* RemoveMinBinding(TreeTy* T, TreeTy*& NodeRemoved) {
-    assert(!isEmpty(T));
-
-    if (isEmpty(Left(T))) {
-      NodeRemoved = T;
-      return Right(T);
+    if (ImutInfo::isEqual(K,KCurrent)) {
+      return combineTrees(getLeft(T), getRight(T));
+    } else if (ImutInfo::isLess(K,KCurrent)) {
+      return balanceTree(remove_internal(K, getLeft(T)),
+                                            getValue(T), getRight(T));
+    } else {
+      return balanceTree(getLeft(T), getValue(T),
+                         remove_internal(K, getRight(T)));
     }
-
-    return Balance(RemoveMinBinding(Left(T),NodeRemoved),Value(T),Right(T));
   }
 
-  /// MarkImmutable - Clears the mutable bits of a root and all of its
+  TreeTy* combineTrees(TreeTy* L, TreeTy* R) {
+    if (isEmpty(L))
+      return R;
+    if (isEmpty(R))
+      return L;
+    TreeTy* OldNode;
+    TreeTy* newRight = removeMinBinding(R,OldNode);
+    return balanceTree(L, getValue(OldNode), newRight);
+  }
+
+  TreeTy* removeMinBinding(TreeTy* T, TreeTy*& Noderemoved) {
+    assert(!isEmpty(T));
+    if (isEmpty(getLeft(T))) {
+      Noderemoved = T;
+      return getRight(T);
+    }
+    return balanceTree(removeMinBinding(getLeft(T), Noderemoved),
+                       getValue(T), getRight(T));
+  }
+
+  /// markImmutable - Clears the mutable bits of a root and all of its
   ///  descendants.
-  void MarkImmutable(TreeTy* T) {
+  void markImmutable(TreeTy* T) {
     if (!T || !T->isMutable())
       return;
-
-    T->MarkImmutable();
-    MarkImmutable(Left(T));
-    MarkImmutable(Right(T));
+    T->markImmutable();
+    markImmutable(getLeft(T));
+    markImmutable(getRight(T));
   }
   
 public:
-  TreeTy *GetCanonicalTree(TreeTy *TNew) {
+  TreeTy *getCanonicalTree(TreeTy *TNew) {
     if (!TNew)
       return NULL;    
     
     // Search the FoldingSet bucket for a Tree with the same digest.
     FoldingSetNodeID ID;
-    unsigned digest = TNew->ComputeDigest();
+    unsigned digest = TNew->computeDigest();
     ID.AddInteger(digest);
     unsigned hash = ID.ComputeHash();
     
@@ -581,14 +578,14 @@ public:
     for (; I != E; ++I) {
       TreeTy *T = &*I;
       
-      if (T->ComputeDigest() != digest)
+      if (T->computeDigest() != digest)
         continue;
       
       // We found a collision.  Perform a comparison of Contents('T')
       // with Contents('TNew')
       typename TreeTy::iterator TI = T->begin(), TE = T->end();
       
-      if (!CompareTreeWithSection(TNew, TI, TE))
+      if (!compareTreeWithSection(TNew, TI, TE))
         continue;
       
       if (TI != TE)
@@ -635,19 +632,17 @@ public:
   }
 
 
-  bool AtEnd() const { return stack.empty(); }
+  bool atEnd() const { return stack.empty(); }
 
-  bool AtBeginning() const {
+  bool atBeginning() const {
     return stack.size() == 1 && getVisitState() == VisitedNone;
   }
 
-  void SkipToParent() {
+  void skipToParent() {
     assert(!stack.empty());
     stack.pop_back();
-
     if (stack.empty())
       return;
-
     switch (getVisitState()) {
       case VisitedNone:
         stack.back() |= VisitedLeft;
@@ -663,11 +658,9 @@ public:
   inline bool operator==(const _Self& x) const {
     if (stack.size() != x.stack.size())
       return false;
-
     for (unsigned i = 0 ; i < stack.size(); i++)
       if (stack[i] != x.stack[i])
         return false;
-
     return true;
   }
 
@@ -675,70 +668,52 @@ public:
 
   _Self& operator++() {
     assert(!stack.empty());
-
     TreeTy* Current = reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
     assert(Current);
-
     switch (getVisitState()) {
       case VisitedNone:
         if (TreeTy* L = Current->getLeft())
           stack.push_back(reinterpret_cast<uintptr_t>(L));
         else
           stack.back() |= VisitedLeft;
-
         break;
-
       case VisitedLeft:
         if (TreeTy* R = Current->getRight())
           stack.push_back(reinterpret_cast<uintptr_t>(R));
         else
           stack.back() |= VisitedRight;
-
         break;
-
       case VisitedRight:
-        SkipToParent();
+        skipToParent();
         break;
-
       default:
         assert(false && "Unreachable.");
     }
-
     return *this;
   }
 
   _Self& operator--() {
     assert(!stack.empty());
-
     TreeTy* Current = reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
     assert(Current);
-
     switch (getVisitState()) {
       case VisitedNone:
         stack.pop_back();
         break;
-
       case VisitedLeft:
         stack.back() &= ~Flags; // Set state to "VisitedNone."
-
         if (TreeTy* L = Current->getLeft())
           stack.push_back(reinterpret_cast<uintptr_t>(L) | VisitedRight);
-
         break;
-
       case VisitedRight:
         stack.back() &= ~Flags;
         stack.back() |= VisitedLeft;
-
         if (TreeTy* R = Current->getRight())
           stack.push_back(reinterpret_cast<uintptr_t>(R) | VisitedRight);
-
         break;
-
       default:
         assert(false && "Unreachable.");
     }
-
     return *this;
   }
 };
@@ -769,7 +744,7 @@ public:
 
   inline _Self& operator++() {
     do ++InternalItr;
-    while (!InternalItr.AtEnd() &&
+    while (!InternalItr.atEnd() &&
            InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft);
 
     return *this;
@@ -777,16 +752,16 @@ public:
 
   inline _Self& operator--() {
     do --InternalItr;
-    while (!InternalItr.AtBeginning() &&
+    while (!InternalItr.atBeginning() &&
            InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft);
 
     return *this;
   }
 
-  inline void SkipSubTree() {
-    InternalItr.SkipToParent();
+  inline void skipSubTree() {
+    InternalItr.skipToParent();
 
-    while (!InternalItr.AtEnd() &&
+    while (!InternalItr.atEnd() &&
            InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft)
       ++InternalItr;
   }
@@ -940,33 +915,33 @@ public:
     Factory(BumpPtrAllocator& Alloc, bool canonicalize = true)
       : F(Alloc), Canonicalize(canonicalize) {}
 
-    /// GetEmptySet - Returns an immutable set that contains no elements.
-    ImmutableSet GetEmptySet() {
-      return ImmutableSet(F.GetEmptyTree());
+    /// getEmptySet - Returns an immutable set that contains no elements.
+    ImmutableSet getEmptySet() {
+      return ImmutableSet(F.getEmptyTree());
     }
 
-    /// Add - Creates a new immutable set that contains all of the values
+    /// add - Creates a new immutable set that contains all of the values
     ///  of the original set with the addition of the specified value.  If
     ///  the original set already included the value, then the original set is
     ///  returned and no memory is allocated.  The time and space complexity
     ///  of this operation is logarithmic in the size of the original set.
     ///  The memory allocated to represent the set is released when the
     ///  factory object that created the set is destroyed.
-    ImmutableSet Add(ImmutableSet Old, value_type_ref V) {
-      TreeTy *NewT = F.Add(Old.Root, V);
-      return ImmutableSet(Canonicalize ? F.GetCanonicalTree(NewT) : NewT);
+    ImmutableSet add(ImmutableSet Old, value_type_ref V) {
+      TreeTy *NewT = F.add(Old.Root, V);
+      return ImmutableSet(Canonicalize ? F.getCanonicalTree(NewT) : NewT);
     }
 
-    /// Remove - Creates a new immutable set that contains all of the values
+    /// remove - Creates a new immutable set that contains all of the values
     ///  of the original set with the exception of the specified value.  If
     ///  the original set did not contain the value, the original set is
     ///  returned and no memory is allocated.  The time and space complexity
     ///  of this operation is logarithmic in the size of the original set.
     ///  The memory allocated to represent the set is released when the
     ///  factory object that created the set is destroyed.
-    ImmutableSet Remove(ImmutableSet Old, value_type_ref V) {
-      TreeTy *NewT = F.Remove(Old.Root, V);
-      return ImmutableSet(Canonicalize ? F.GetCanonicalTree(NewT) : NewT);
+    ImmutableSet remove(ImmutableSet Old, value_type_ref V) {
+      TreeTy *NewT = F.remove(Old.Root, V);
+      return ImmutableSet(Canonicalize ? F.getCanonicalTree(NewT) : NewT);
     }
 
     BumpPtrAllocator& getAllocator() { return F.getAllocator(); }
@@ -1049,7 +1024,7 @@ public:
   // For testing.
   //===--------------------------------------------------===//
 
-  void verify() const { if (Root) Root->verify(); }
+  void validateTree() const { if (Root) Root->validateTree(); }
 };
 
 } // end namespace llvm
