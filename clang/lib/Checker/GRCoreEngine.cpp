@@ -715,8 +715,7 @@ void GREndPathNodeBuilder::GenerateCallExitNode(const GRState *state) {
 }
                                                 
 
-void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
-                                          const LocationContext *LocCtx) {
+void GRCallEnterNodeBuilder::GenerateNode(const GRState *state) {
   // Check if the callee is in the same translation unit.
   if (CalleeCtx->getTranslationUnit() != 
       Pred->getLocationContext()->getTranslationUnit()) {
@@ -756,7 +755,7 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
     // Create the new LocationContext.
     AnalysisContext *NewAnaCtx = AMgr.getAnalysisContext(CalleeCtx->getDecl(), 
                                                CalleeCtx->getTranslationUnit());
-    const StackFrameContext *OldLocCtx = cast<StackFrameContext>(LocCtx);
+    const StackFrameContext *OldLocCtx = CalleeCtx;
     const StackFrameContext *NewLocCtx = AMgr.getStackFrame(NewAnaCtx, 
                                                OldLocCtx->getParent(),
                                                OldLocCtx->getCallSite(),
@@ -773,7 +772,7 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
   }
 
   // Get the callee entry block.
-  const CFGBlock *Entry = &(LocCtx->getCFG()->getEntry());
+  const CFGBlock *Entry = &(CalleeCtx->getCFG()->getEntry());
   assert(Entry->empty());
   assert(Entry->succ_size() == 1);
 
@@ -781,7 +780,7 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
   const CFGBlock *SuccB = *(Entry->succ_begin());
 
   // Construct an edge representing the starting location in the callee.
-  BlockEdge Loc(Entry, SuccB, LocCtx);
+  BlockEdge Loc(Entry, SuccB, CalleeCtx);
 
   bool isNew;
   ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);

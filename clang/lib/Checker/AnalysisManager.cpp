@@ -13,7 +13,7 @@
 
 using namespace clang;
 
-const AnalysisContext *
+AnalysisContext *
 AnalysisManager::getAnalysisContextInAnotherTU(const Decl *D) {
   idx::Entity Ent = idx::Entity::get(const_cast<Decl *>(D), 
                                      Idxer->getProgram());

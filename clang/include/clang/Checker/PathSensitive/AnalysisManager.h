@@ -154,7 +154,7 @@ public:
 
   bool hasIndexer() const { return Idxer != 0; }
 
-  const AnalysisContext *getAnalysisContextInAnotherTU(const Decl *D);
+  AnalysisContext *getAnalysisContextInAnotherTU(const Decl *D);
 
   CFG *getCFG(Decl const *D) {
     return AnaCtxMgr.getContext(D)->getCFG();

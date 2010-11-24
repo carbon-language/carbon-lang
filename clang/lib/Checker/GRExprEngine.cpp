@@ -1619,24 +1619,16 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
 }
 
 void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
-  const StackFrameContext *LocCtx 
-    = AMgr.getStackFrame(B.getCalleeContext(),
-                         B.getLocationContext(),
-                         B.getCallExpr(),
-                         B.getBlock(),
-                         B.getIndex());
-
-  const GRState *state = B.getState()->EnterStackFrame(LocCtx);
-
-  B.GenerateNode(state, LocCtx);
+  const GRState *state = B.getState()->EnterStackFrame(B.getCalleeContext());
+  B.GenerateNode(state);
 }
 
 void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
   const GRState *state = B.getState();
   const ExplodedNode *Pred = B.getPredecessor();
-  const StackFrameContext *LocCtx = 
+  const StackFrameContext *calleeCtx = 
                             cast<StackFrameContext>(Pred->getLocationContext());
-  const Stmt *CE = LocCtx->getCallSite();
+  const Stmt *CE = calleeCtx->getCallSite();
 
   // If the callee returns an expression, bind its value to CallExpr.
   const Stmt *ReturnedExpr = state->get<ReturnExpr>();
@@ -1650,7 +1642,7 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
   // Bind the constructed object value to CXXConstructExpr.
   if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(CE)) {
     const CXXThisRegion *ThisR =
-      getCXXThisRegion(CCE->getConstructor()->getParent(), LocCtx);
+      getCXXThisRegion(CCE->getConstructor()->getParent(), calleeCtx);
     // We might not have 'this' region in the binding if we didn't inline
     // the ctor call.
     SVal ThisV = state->getSVal(ThisR);
@@ -2078,8 +2070,12 @@ bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
 
   // Check if the function definition is in the same translation unit.
   if (FD->hasBody(FD)) {
+    const StackFrameContext *stackFrame = 
+      AMgr.getStackFrame(AMgr.getAnalysisContext(FD), 
+                         Pred->getLocationContext(),
+                         CE, Builder->getBlock(), Builder->getIndex());
     // Now we have the definition of the callee, create a CallEnter node.
-    CallEnter Loc(CE, AMgr.getAnalysisContext(FD), Pred->getLocationContext());
+    CallEnter Loc(CE, stackFrame, Pred->getLocationContext());
 
     ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
     Dst.Add(N);
@@ -2088,11 +2084,13 @@ bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
 
   // Check if we can find the function definition in other translation units.
   if (AMgr.hasIndexer()) {
-    const AnalysisContext *C = AMgr.getAnalysisContextInAnotherTU(FD);
+    AnalysisContext *C = AMgr.getAnalysisContextInAnotherTU(FD);
     if (C == 0)
       return false;
-
-    CallEnter Loc(CE, C, Pred->getLocationContext());
+    const StackFrameContext *stackFrame = 
+      AMgr.getStackFrame(C, Pred->getLocationContext(),
+                         CE, Builder->getBlock(), Builder->getIndex());
+    CallEnter Loc(CE, stackFrame, Pred->getLocationContext());
     ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
     Dst.Add(N);
     return true;

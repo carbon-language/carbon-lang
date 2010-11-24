@@ -318,17 +318,16 @@ public:
 
 class CallEnter : public StmtPoint {
 public:
-  // L is caller's location context. AC is callee's AnalysisContext.
-  CallEnter(const Stmt *S, const AnalysisContext *AC, const LocationContext *L)
-    : StmtPoint(S, AC, CallEnterKind, L, 0) {}
+  CallEnter(const Stmt *stmt, const StackFrameContext *calleeCtx, 
+            const LocationContext *callerCtx)
+    : StmtPoint(stmt, calleeCtx, CallEnterKind, callerCtx, 0) {}
 
   const Stmt *getCallExpr() const {
     return static_cast<const Stmt *>(getData1());
   }
 
-  AnalysisContext *getCalleeContext() const {
-    return const_cast<AnalysisContext *>(
-                              static_cast<const AnalysisContext *>(getData2()));
+  const StackFrameContext *getCalleeContext() const {
+    return static_cast<const StackFrameContext *>(getData2());
   }
 
   static bool classof(const ProgramPoint *Location) {

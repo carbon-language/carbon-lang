@@ -482,11 +482,12 @@ class GRCallEnterNodeBuilder {
 
   const ExplodedNode *Pred;
 
-  // The call site.
+  // The call site. For implicit automatic object dtor, this is the trigger 
+  // statement.
   const Stmt *CE;
 
-  // The AnalysisContext of the callee.
-  AnalysisContext *CalleeCtx;
+  // The context of the callee.
+  const StackFrameContext *CalleeCtx;
 
   // The parent block of the CallExpr.
   const CFGBlock *Block;
@@ -496,7 +497,7 @@ class GRCallEnterNodeBuilder {
 
 public:
   GRCallEnterNodeBuilder(GRCoreEngine &eng, const ExplodedNode *pred, 
-                         const Stmt *s, AnalysisContext *callee, 
+                         const Stmt *s, const StackFrameContext *callee, 
                          const CFGBlock *blk, unsigned idx)
     : Eng(eng), Pred(pred), CE(s), CalleeCtx(callee), Block(blk), Index(idx) {}
 
@@ -508,13 +509,13 @@ public:
 
   const Stmt *getCallExpr() const { return CE; }
 
-  AnalysisContext *getCalleeContext() const { return CalleeCtx; }
+  const StackFrameContext *getCalleeContext() const { return CalleeCtx; }
 
   const CFGBlock *getBlock() const { return Block; }
 
   unsigned getIndex() const { return Index; }
 
-  void GenerateNode(const GRState *state, const LocationContext *LocCtx);
+  void GenerateNode(const GRState *state);
 };
 
 class GRCallExitNodeBuilder {

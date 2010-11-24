@@ -130,7 +130,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   const CXXThisRegion *ThisR =getCXXThisRegion(E->getConstructor()->getParent(),
                                                SFC);
 
-  CallEnter Loc(E, SFC->getAnalysisContext(), Pred->getLocationContext());
+  CallEnter Loc(E, SFC, Pred->getLocationContext());
   for (ExplodedNodeSet::iterator NI = ArgsEvaluated.begin(),
                                  NE = ArgsEvaluated.end(); NI != NE; ++NI) {
     const GRState *state = GetState(*NI);
@@ -158,7 +158,7 @@ void GRExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
 
   const CXXThisRegion *ThisR = getCXXThisRegion(DD->getParent(), SFC);
 
-  CallEnter PP(S, SFC->getAnalysisContext(), Pred->getLocationContext());
+  CallEnter PP(S, SFC, Pred->getLocationContext());
 
   const GRState *state = Pred->getState();
   state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
@@ -243,7 +243,7 @@ void GRExprEngine::EvalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
                                                     Builder->getBlock(), 
                                                     Builder->getIndex());
   const CXXThisRegion *ThisR = getCXXThisRegion(MD->getParent(), SFC);
-  CallEnter Loc(MCE, SFC->getAnalysisContext(), Pred->getLocationContext());
+  CallEnter Loc(MCE, SFC, Pred->getLocationContext());
   for (ExplodedNodeSet::iterator I = PreVisitChecks.begin(),
          E = PreVisitChecks.end(); I != E; ++I) {
     // Set up 'this' region.
