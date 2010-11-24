@@ -369,7 +369,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   //   pop();
   void dispatch(Decl *D) {
     push(D->getDeclKindName());
-    XMLDeclVisitor::dispatch(D);
+    XMLDeclVisitor<XMLDumper>::dispatch(D);
     pop();
   }
   void visitDeclAttrs(Decl *D) {
@@ -732,7 +732,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
 
     Type *Ty = const_cast<Type*>(T.getTypePtr());
     push(getTypeKindName(Ty));
-    XMLTypeVisitor::dispatch(const_cast<Type*>(T.getTypePtr()));
+    XMLTypeVisitor<XMLDumper>::dispatch(const_cast<Type*>(T.getTypePtr()));
     pop();
   }
 
