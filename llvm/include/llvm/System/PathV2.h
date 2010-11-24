@@ -122,7 +122,8 @@ error_code remove_filename(SmallVectorImpl<char> &path);
 ///                  prepended.
 /// @returns errc::success if \a path's extension has been replaced, otherwise a
 ///          platform specific error_code.
-error_code replace_extension(SmallVectorImpl<char> &path, const Twine &extension);
+error_code replace_extension(SmallVectorImpl<char> &path,
+                             const Twine &extension);
 
 /// @brief Append to path.
 ///
@@ -794,7 +795,8 @@ error_code has_magic(const Twine &path, const Twine &magic);
 ///               \a path.
 /// @results errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code get_magic(const Twine &path, uint32_t len, SmallVectorImpl<char> &result);
+error_code get_magic(const Twine &path, uint32_t len,
+                     SmallVectorImpl<char> &result);
 
 /// @brief Is file bitcode?
 ///
