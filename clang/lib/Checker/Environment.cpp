@@ -65,11 +65,22 @@ SVal Environment::GetSVal(const Stmt *E, ValueManager& ValMgr) const {
         if (CT->isVoidType())
           return UnknownVal();
 
+        if (C->getCastKind() == CK_NoOp) {
+          E = C->getSubExpr();
+          continue;
+        }
         break;
       }
 
-        // Handle all other Stmt* using a lookup.
+      case Stmt::CXXExprWithTemporariesClass:
+        E = cast<CXXExprWithTemporaries>(E)->getSubExpr();
+        continue;
 
+      case Stmt::CXXBindTemporaryExprClass:
+        E = cast<CXXBindTemporaryExpr>(E)->getSubExpr();
+        continue;
+        
+      // Handle all other Stmt* using a lookup.
       default:
         break;
     };

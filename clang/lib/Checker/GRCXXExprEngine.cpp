@@ -100,7 +100,7 @@ void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
 void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 
                                          const MemRegion *Dest,
                                          ExplodedNode *Pred,
-                                         ExplodedNodeSet &Dst) {
+                                         ExplodedNodeSet &Dst, bool asLValue) {
   if (!Dest)
     Dest = ValMgr.getRegionManager().getCXXObjectRegion(E,
                                                     Pred->getLocationContext());
@@ -125,7 +125,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   // The callee stack frame context used to create the 'this' parameter region.
   const StackFrameContext *SFC = AMgr.getStackFrame(CD, 
                                                     Pred->getLocationContext(),
-                                   E, Builder->getBlock(), Builder->getIndex());
+                        E, asLValue, Builder->getBlock(), Builder->getIndex());
 
   const CXXThisRegion *ThisR =getCXXThisRegion(E->getConstructor()->getParent(),
                                                SFC);
@@ -153,7 +153,7 @@ void GRExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
   // Create the context for 'this' region.
   const StackFrameContext *SFC = AMgr.getStackFrame(DD,
                                                     Pred->getLocationContext(),
-                                                    S, Builder->getBlock(),
+                                                 S, false, Builder->getBlock(),
                                                     Builder->getIndex());
 
   const CXXThisRegion *ThisR = getCXXThisRegion(DD->getParent(), SFC);
@@ -239,7 +239,7 @@ void GRExprEngine::EvalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
 
   const StackFrameContext *SFC = AMgr.getStackFrame(MD, 
                                                     Pred->getLocationContext(),
-                                                    MCE, 
+                                                    MCE, false,
                                                     Builder->getBlock(), 
                                                     Builder->getIndex());
   const CXXThisRegion *ThisR = getCXXThisRegion(MD->getParent(), SFC);

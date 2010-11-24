@@ -53,7 +53,7 @@ void AggExprVisitor::VisitCastExpr(CastExpr *E) {
 }
 
 void AggExprVisitor::VisitCXXConstructExpr(CXXConstructExpr *E) {
-  Eng.VisitCXXConstructExpr(E, Dest, Pred, DstSet);
+  Eng.VisitCXXConstructExpr(E, Dest, Pred, DstSet, false);
 }
 
 void GRExprEngine::VisitAggExpr(const Expr *E, const MemRegion *Dest, 

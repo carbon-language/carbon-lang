@@ -424,9 +424,16 @@ public:
 
   void VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred, 
                         ExplodedNodeSet & Dst);
-  
+
+  void VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *expr,
+                                   ExplodedNode *Pred, ExplodedNodeSet &Dst, 
+                                   bool asLValue) {
+    VisitCXXConstructExpr(expr, 0, Pred, Dst, asLValue);
+  }
+
   void VisitCXXConstructExpr(const CXXConstructExpr *E, const MemRegion *Dest,
-                             ExplodedNode *Pred, ExplodedNodeSet &Dst);
+                             ExplodedNode *Pred, ExplodedNodeSet &Dst, 
+                             bool asLValue);
 
   void VisitCXXDestructor(const CXXDestructorDecl *DD,
                           const MemRegion *Dest, const Stmt *S,

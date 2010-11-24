@@ -918,7 +918,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       const CXXConstructExpr *C = cast<CXXConstructExpr>(S);
       // For block-level CXXConstructExpr, we don't have a destination region.
       // Let VisitCXXConstructExpr() create one.
-      VisitCXXConstructExpr(C, 0, Pred, Dst);
+      VisitCXXConstructExpr(C, 0, Pred, Dst, false);
       break;
     }
 
@@ -1117,7 +1117,6 @@ void GRExprEngine::VisitLValue(const Expr* Ex, ExplodedNode* Pred,
 
   switch (Ex->getStmtClass()) {
     // C++ stuff we don't support yet.
-    case Stmt::CXXExprWithTemporariesClass:
     case Stmt::CXXMemberCallExprClass:
     case Stmt::CXXScalarValueInitExprClass: {
       SaveAndRestore<bool> OldSink(Builder->BuildSinks);
@@ -1144,6 +1143,24 @@ void GRExprEngine::VisitLValue(const Expr* Ex, ExplodedNode* Pred,
       const CallExpr *C = cast<CallExpr>(Ex);
       assert(CalleeReturnsReferenceOrRecord(C));
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, true);
+      break;
+    }
+
+    case Stmt::CXXExprWithTemporariesClass: {
+      const CXXExprWithTemporaries *expr = cast<CXXExprWithTemporaries>(Ex);
+      VisitLValue(expr->getSubExpr(), Pred, Dst);
+      break;
+    }
+
+    case Stmt::CXXBindTemporaryExprClass: {
+      const CXXBindTemporaryExpr *expr = cast<CXXBindTemporaryExpr>(Ex);
+      VisitLValue(expr->getSubExpr(), Pred, Dst);
+      break;
+    }
+
+    case Stmt::CXXTemporaryObjectExprClass: {
+      const CXXTemporaryObjectExpr *expr = cast<CXXTemporaryObjectExpr>(Ex);
+      VisitCXXTemporaryObjectExpr(expr, Pred, Dst, true);
       break;
     }
 
@@ -1643,11 +1660,13 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
   if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(CE)) {
     const CXXThisRegion *ThisR =
       getCXXThisRegion(CCE->getConstructor()->getParent(), calleeCtx);
-    // We might not have 'this' region in the binding if we didn't inline
-    // the ctor call.
+
     SVal ThisV = state->getSVal(ThisR);
-    loc::MemRegionVal *V = dyn_cast<loc::MemRegionVal>(&ThisV);
-    if (V) {
+
+    if (calleeCtx->evalAsLValue()) {
+      state = state->BindExpr(CCE, ThisV);
+    } else {
+      loc::MemRegionVal *V = cast<loc::MemRegionVal>(&ThisV);
       SVal ObjVal = state->getSVal(V->getRegion());
       assert(isa<nonloc::LazyCompoundVal>(ObjVal));
       state = state->BindExpr(CCE, ObjVal);
@@ -2073,7 +2092,7 @@ bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
     const StackFrameContext *stackFrame = 
       AMgr.getStackFrame(AMgr.getAnalysisContext(FD), 
                          Pred->getLocationContext(),
-                         CE, Builder->getBlock(), Builder->getIndex());
+                         CE, false, Builder->getBlock(), Builder->getIndex());
     // Now we have the definition of the callee, create a CallEnter node.
     CallEnter Loc(CE, stackFrame, Pred->getLocationContext());
 
@@ -2089,7 +2108,7 @@ bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
       return false;
     const StackFrameContext *stackFrame = 
       AMgr.getStackFrame(C, Pred->getLocationContext(),
-                         CE, Builder->getBlock(), Builder->getIndex());
+                         CE, false, Builder->getBlock(), Builder->getIndex());
     CallEnter Loc(CE, stackFrame, Pred->getLocationContext());
     ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
     Dst.Add(N);

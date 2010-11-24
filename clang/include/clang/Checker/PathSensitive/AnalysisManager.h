@@ -178,23 +178,24 @@ public:
 
   const StackFrameContext *getStackFrame(AnalysisContext *Ctx,
                                          LocationContext const *Parent,
-                                         Stmt const *S, const CFGBlock *Blk,
-                                         unsigned Idx) {
-    return LocCtxMgr.getStackFrame(Ctx, Parent, S, Blk, Idx);
+                                         const Stmt *S, bool asLValue,
+                                         const CFGBlock *Blk, unsigned Idx) {
+    return LocCtxMgr.getStackFrame(Ctx, Parent, S, asLValue, Blk, Idx);
   }
 
   // Get the top level stack frame.
   const StackFrameContext *getStackFrame(Decl const *D, 
                                          idx::TranslationUnit *TU) {
-    return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D, TU), 0, 0, 0, 0);
+    return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D, TU), 0, 0, 0, 0, 0);
   }
 
   // Get a stack frame with parent.
-  StackFrameContext const *getStackFrame(Decl const *D, 
+  StackFrameContext const *getStackFrame(const Decl *D, 
                                          LocationContext const *Parent,
-                                         Stmt const *S, const CFGBlock *Blk,
-                                         unsigned Idx) {
-    return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D), Parent, S, Blk,Idx);
+                                         const Stmt *S, bool asLValue,
+                                         const CFGBlock *Blk, unsigned Idx) {
+    return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D), Parent, S, asLValue,
+                                   Blk,Idx);
   }
 };
 

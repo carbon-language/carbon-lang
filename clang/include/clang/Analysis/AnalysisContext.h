@@ -198,8 +198,9 @@ public:
 };
 
 class StackFrameContext : public LocationContext {
-  // The callsite where this stack frame is established.
-  const Stmt *CallSite;
+  // The callsite where this stack frame is established. The int bit indicates
+  // whether the call expr should return an l-value when it has reference type.
+  llvm::PointerIntPair<const Stmt *, 1> CallSite;
 
   // The parent block of the callsite.
   const CFGBlock *Block;
@@ -209,14 +210,17 @@ class StackFrameContext : public LocationContext {
 
   friend class LocationContextManager;
   StackFrameContext(AnalysisContext *ctx, const LocationContext *parent,
-                    const Stmt *s, const CFGBlock *blk, unsigned idx)
-    : LocationContext(StackFrame, ctx, parent), CallSite(s), Block(blk),
-      Index(idx) {}
+                    const Stmt *s, bool asLValue, const CFGBlock *blk, 
+                    unsigned idx)
+    : LocationContext(StackFrame, ctx, parent), CallSite(s, asLValue), 
+      Block(blk), Index(idx) {}
 
 public:
   ~StackFrameContext() {}
 
-  const Stmt *getCallSite() const { return CallSite; }
+  const Stmt *getCallSite() const { return CallSite.getPointer(); }
+
+  bool evalAsLValue() const { return CallSite.getInt(); }
 
   const CFGBlock *getCallSiteBlock() const { return Block; }
 
@@ -226,8 +230,9 @@ public:
 
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
                       const LocationContext *parent, const Stmt *s,
-                      const CFGBlock *blk, unsigned idx) {
+                      bool asLValue, const CFGBlock *blk, unsigned idx) {
     ProfileCommon(ID, StackFrame, ctx, parent, s);
+    ID.AddBoolean(asLValue);
     ID.AddPointer(blk);
     ID.AddInteger(idx);
   }
@@ -295,8 +300,8 @@ public:
 
   const StackFrameContext *getStackFrame(AnalysisContext *ctx,
                                          const LocationContext *parent,
-                                         const Stmt *s, const CFGBlock *blk,
-                                         unsigned idx);
+                                         const Stmt *s, bool asLValue,
+                                         const CFGBlock *blk, unsigned idx);
 
   const ScopeContext *getScope(AnalysisContext *ctx,
                                const LocationContext *parent,
