@@ -498,11 +498,9 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const FieldDecl *FD) {
   //   A pointer to data member is an offset from the base address of
   //   the class object containing it, represented as a ptrdiff_t
 
-  QualType ClassType = getContext().getTypeDeclType(FD->getParent());
-  const llvm::StructType *ClassLTy =
-    cast<llvm::StructType>(CGM.getTypes().ConvertType(ClassType));
-
   const CGRecordLayout &RL = CGM.getTypes().getCGRecordLayout(FD->getParent());
+  const llvm::StructType *ClassLTy = RL.getLLVMType();
+
   unsigned FieldNo = RL.getLLVMFieldNo(FD);
   uint64_t Offset = 
     CGM.getTargetData().getStructLayout(ClassLTy)->getElementOffset(FieldNo);
