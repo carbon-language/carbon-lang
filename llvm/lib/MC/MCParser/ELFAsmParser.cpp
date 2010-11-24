@@ -193,6 +193,14 @@ bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
   return false;
 }
 
+static SectionKind computeSectionKind(unsigned Flags) {
+  if (Flags & MCSectionELF::SHF_EXECINSTR)
+    return SectionKind::getText();
+  if (Flags & MCSectionELF::SHF_TLS)
+    return SectionKind::getThreadData();
+  return SectionKind::getDataRel();
+}
+
 // FIXME: This is a work in progress.
 bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   StringRef SectionName;
@@ -322,9 +330,7 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
       return TokError("unknown section type");
   }
 
-  SectionKind Kind = (Flags & MCSectionELF::SHF_EXECINSTR)
-                     ? SectionKind::getText()
-                     : SectionKind::getDataRel();
+  SectionKind Kind = computeSectionKind(Flags);
   getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
                                                          Flags, Kind, Size,
                                                          GroupName));

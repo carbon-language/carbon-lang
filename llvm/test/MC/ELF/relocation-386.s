@@ -114,11 +114,65 @@
 // CHECK-NEXT:  ('r_sym', 0x00000000)
 // CHECK-NEXT:  ('r_type', 0x00000002)
 // CHECK-NEXT: ),
-// Relocation 13 (zed@NTPOFF) is of type R_386_TLS_LE and uses the symbol
+// Relocation 13 (zed@GOT) is of type R_386_GOT32 and uses the symbol
 // CHECK-NEXT: # Relocation 0x0000000d
 // CHECK-NEXT: (('r_offset', 0x0000004e)
 // CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x00000003)
+// CHECK-NEXT: ),
+// Relocation 14 (zed@GOTOFF) is of type R_386_GOTOFF and uses the symbol
+// CHECK-NEXT: # Relocation 0x0000000e
+// CHECK-NEXT: (('r_offset', 0x00000054)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x00000009)
+// CHECK-NEXT: ),
+// Relocation 15 (zed@INDNTPOFF) is of type R_386_TLS_IE and uses the symbol
+// CHECK-NEXT: # Relocation 0x0000000f
+// CHECK-NEXT: (('r_offset', 0x0000005a)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x0000000f)
+// CHECK-NEXT: ),
+// Relocation 16 (zed@NTPOFF) is of type R_386_TLS_LE and uses the symbol
+// CHECK-NEXT: # Relocation 0x00000010
+// CHECK-NEXT: (('r_offset', 0x00000060)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
 // CHECK-NEXT:  ('r_type', 0x00000011)
+// CHECK-NEXT: ),
+// Relocation 17 (zed@GOTNTPOFF) is of type R_386_TLS_GOTIE and uses the symbol
+// CHECK-NEXT: # Relocation 0x00000011
+// CHECK-NEXT: (('r_offset', 0x00000066)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x00000010)
+// CHECK-NEXT: ),
+// Relocation 18 (zed@PLT) is of type R_386_PLT32 and uses the symbol
+// CHECK-NEXT: # Relocation 0x00000012
+// CHECK-NEXT: (('r_offset', 0x0000006b)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x00000004)
+// CHECK-NEXT: ),
+// Relocation 19 (zed@TLSGD) is of type R_386_TLS_GD and uses the symbol
+// CHECK-NEXT: # Relocation 0x00000013
+// CHECK-NEXT: (('r_offset', 0x00000071)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x00000012)
+// CHECK-NEXT: ),
+// Relocation 20 (zed@TLSLDM) is of type R_386_TLS_LDM and uses the symbol
+// CHECK-NEXT: # Relocation 0x00000014
+// CHECK-NEXT: (('r_offset', 0x00000077)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x00000013)
+// CHECK-NEXT: ),
+// Relocation 21 (zed@TPOFF) is of type R_386_TLS_LE_32 and uses the symbol
+// CHECK-NEXT:# Relocation 0x00000015
+// CHECK-NEXT: (('r_offset', 0x0000007d)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x00000022)
+// CHECK-NEXT: ),
+// Relocation 22 (zed@DTPOFF) is of type R_386_TLS_LDO_32 and uses the symbol
+// CHECK-NEXT: Relocation 0x00000016
+// CHECK-NEXT: (('r_offset', 0x00000083)
+// CHECK-NEXT:  ('r_sym', 0x00000004)
+// CHECK-NEXT:  ('r_type', 0x00000020)
 // CHECK-NEXT: ),
 
         .text
@@ -145,7 +199,16 @@ bar2:
         leal foo@TLSLDM(%ebx), %eax
         leal foo@DTPOFF(%eax), %edx
         calll 4096
+        movl zed@GOT(%eax), %eax
+        movl zed@GOTOFF(%eax), %eax
+        movl zed@INDNTPOFF(%eax), %eax
         movl zed@NTPOFF(%eax), %eax
+        movl zed@GOTNTPOFF(%eax), %eax
+        call zed@PLT
+        movl zed@TLSGD(%eax), %eax
+        movl zed@TLSLDM(%eax), %eax
+        movl zed@TPOFF(%eax), %eax
+        movl zed@DTPOFF(%eax), %eax
 
         .section        zedsec,"awT",@progbits
 zed:
