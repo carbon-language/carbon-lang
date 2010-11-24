@@ -3,7 +3,7 @@
 struct A {
   int x;
   A(int a) { x = a; }
-  int getx() { return x; }
+  int getx() const { return x; }
 };
 
 void f1() {

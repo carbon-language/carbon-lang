@@ -462,6 +462,9 @@ public:
   const CXXThisRegion *getCXXThisRegion(const CXXRecordDecl *RD,
                                         const StackFrameContext *SFC);
 
+  const CXXThisRegion *getCXXThisRegion(const CXXMethodDecl *decl,
+                                        const StackFrameContext *frameCtx);
+
   /// Evaluate arguments with a work list algorithm.
   void EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
                      const FunctionProtoType *FnType, 

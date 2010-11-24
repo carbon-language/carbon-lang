@@ -77,6 +77,12 @@ const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
   return ValMgr.getRegionManager().getCXXThisRegion(PT, SFC);
 }
 
+const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXMethodDecl *decl,
+                                            const StackFrameContext *frameCtx) {
+  return ValMgr.getRegionManager().
+                    getCXXThisRegion(decl->getThisType(getContext()), frameCtx);
+}
+
 void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
                                             ExplodedNodeSet &Dst) {
   ExplodedNodeSet Tmp;
@@ -242,7 +248,7 @@ void GRExprEngine::EvalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
                                                     MCE, false,
                                                     Builder->getBlock(), 
                                                     Builder->getIndex());
-  const CXXThisRegion *ThisR = getCXXThisRegion(MD->getParent(), SFC);
+  const CXXThisRegion *ThisR = getCXXThisRegion(MD, SFC);
   CallEnter Loc(MCE, SFC, Pred->getLocationContext());
   for (ExplodedNodeSet::iterator I = PreVisitChecks.begin(),
          E = PreVisitChecks.end(); I != E; ++I) {
