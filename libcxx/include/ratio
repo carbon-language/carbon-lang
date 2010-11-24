@@ -23,13 +23,14 @@ class ratio
 public:
     static const intmax_t num;
     static const intmax_t den;
+    typedef ratio<num, den> type;
 };
 
 // ratio arithmetic
-template <class R1, class R2> struct ratio_add;
-template <class R1, class R2> struct ratio_subtract;
-template <class R1, class R2> struct ratio_multiply;
-template <class R1, class R2> struct ratio_divide;
+template <class R1, class R2> using ratio_add = ...;
+template <class R1, class R2> using ratio_subtract = ...;
+template <class R1, class R2> using ratio_multiply = ...;
+template <class R1, class R2> using ratio_divide = ...;
 
 // ratio comparison
 template <class R1, class R2> struct ratio_equal;
@@ -260,7 +261,7 @@ typedef ratio<   1000000000000000LL, 1LL> peta;
 typedef ratio<1000000000000000000LL, 1LL> exa;
 
 template <class _R1, class _R2>
-struct _LIBCPP_VISIBLE ratio_multiply
+struct __ratio_multiply
 {
 private:
     static const intmax_t __gcd_n1_d2 = __static_gcd<_R1::num, _R2::den>::value;
@@ -274,7 +275,14 @@ public:
 };
 
 template <class _R1, class _R2>
-struct _LIBCPP_VISIBLE ratio_divide
+struct _LIBCPP_VISIBLE ratio_multiply
+    : public __ratio_multiply<_R1, _R2>::type
+{
+    typedef typename __ratio_multiply<_R1, _R2>::type type;
+};
+
+template <class _R1, class _R2>
+struct __ratio_divide
 {
 private:
     static const intmax_t __gcd_n1_n2 = __static_gcd<_R1::num, _R2::num>::value;
@@ -288,7 +296,14 @@ public:
 };
 
 template <class _R1, class _R2>
-struct _LIBCPP_VISIBLE ratio_add
+struct _LIBCPP_VISIBLE ratio_divide
+    : public __ratio_divide<_R1, _R2>::type
+{
+    typedef typename __ratio_divide<_R1, _R2>::type type;
+};
+
+template <class _R1, class _R2>
+struct __ratio_add
 {
 private:
     static const intmax_t __gcd_n1_n2 = __static_gcd<_R1::num, _R2::num>::value;
@@ -310,7 +325,14 @@ public:
 };
 
 template <class _R1, class _R2>
-struct _LIBCPP_VISIBLE ratio_subtract
+struct _LIBCPP_VISIBLE ratio_add
+    : public __ratio_add<_R1, _R2>::type
+{
+    typedef typename __ratio_add<_R1, _R2>::type type;
+};
+
+template <class _R1, class _R2>
+struct __ratio_subtract
 {
 private:
     static const intmax_t __gcd_n1_n2 = __static_gcd<_R1::num, _R2::num>::value;
@@ -329,6 +351,13 @@ public:
                 _R2::den
             >
         >::type type;
+};
+
+template <class _R1, class _R2>
+struct _LIBCPP_VISIBLE ratio_subtract
+    : public __ratio_subtract<_R1, _R2>::type
+{
+    typedef typename __ratio_subtract<_R1, _R2>::type type;
 };
 
 // ratio_equal
