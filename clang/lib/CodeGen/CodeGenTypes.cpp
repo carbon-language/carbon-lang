@@ -524,11 +524,5 @@ bool CodeGenTypes::isZeroInitializable(QualType T) {
 }
 
 bool CodeGenTypes::isZeroInitializable(const CXXRecordDecl *RD) {
-  
-  // FIXME: It would be better if there was a way to explicitly compute the
-  // record layout instead of converting to a type.
-  ConvertTagDeclType(RD);
-  
-  const CGRecordLayout &Layout = getCGRecordLayout(RD);
-  return Layout.isZeroInitializable();
+  return getCGRecordLayout(RD).isZeroInitializable();
 }

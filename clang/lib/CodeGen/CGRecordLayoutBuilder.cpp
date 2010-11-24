@@ -140,9 +140,6 @@ private:
 
   unsigned getTypeAlignment(const llvm::Type *Ty) const;
 
-  /// getCGRecordLayout - Return the CGRecordLayout for the given record.
-  const CGRecordLayout &getCGRecordLayout(const CXXRecordDecl *RD);
-
   /// CheckZeroInitializable - Check if the given type contains a pointer
   /// to data member.
   void CheckZeroInitializable(QualType T);
@@ -689,15 +686,6 @@ unsigned CGRecordLayoutBuilder::getTypeAlignment(const llvm::Type *Ty) const {
   return Types.getTargetData().getABITypeAlignment(Ty);
 }
 
-const CGRecordLayout &
-CGRecordLayoutBuilder::getCGRecordLayout(const CXXRecordDecl *RD) {
-  // FIXME: It would be better if there was a way to explicitly compute the
-  // record layout instead of converting to a type.
-  Types.ConvertTagDeclType(RD);
-
-  return Types.getCGRecordLayout(RD);
-}
-
 void CGRecordLayoutBuilder::CheckZeroInitializable(QualType T) {
   // This record already contains a member pointer.
   if (!IsZeroInitializable)
@@ -723,7 +711,7 @@ void CGRecordLayoutBuilder::CheckZeroInitializable(const CXXRecordDecl *RD) {
   if (!IsZeroInitializable)
     return;
 
-  const CGRecordLayout &Layout = getCGRecordLayout(RD);
+  const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
   if (!Layout.isZeroInitializable())
     IsZeroInitializable = false;
 }
