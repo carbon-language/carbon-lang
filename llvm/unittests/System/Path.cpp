@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+// For now, just test that the header file parses.
+#include "llvm/System/PathV2.h"
+
 #include "gtest/gtest.h"
 
 namespace {
