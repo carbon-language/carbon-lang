@@ -2240,6 +2240,19 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
   
 }
 
+static void 
+CollectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
+                    VTableBuilder::PrimaryBasesSetVectorTy &PrimaryBases) {
+  while (RD) {
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+    if (PrimaryBase)
+      PrimaryBases.insert(PrimaryBase);
+
+    RD = PrimaryBase;
+  }
+}
+
 void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   
   // Itanium C++ ABI 2.5.2:
@@ -2268,10 +2281,7 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   // Collect all the primary bases, so we can check whether methods override
   // a method from the base.
   VTableBuilder::PrimaryBasesSetVectorTy PrimaryBases;
-  for (ASTRecordLayout::primary_base_info_iterator
-       I = Layout.primary_base_begin(), E = Layout.primary_base_end();
-       I != E; ++I)
-    PrimaryBases.insert((*I).getBase());
+  CollectPrimaryBases(RD, CGM.getContext(), PrimaryBases);
 
   const CXXDestructorDecl *ImplicitVirtualDtor = 0;
   
