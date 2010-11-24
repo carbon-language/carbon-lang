@@ -3065,6 +3065,9 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
       OS << " (BindTemporary)";
     }
 
+    if (CS.asLValue())
+        OS << " (asLValue)";
+
     // Expressions need a newline.
     if (isa<Expr>(S))
       OS << '\n';
