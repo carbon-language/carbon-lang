@@ -501,10 +501,20 @@ unsigned SPUTargetLowering::getFunctionAlignment(const Function *) const {
 //===----------------------------------------------------------------------===//
 
 MVT::SimpleValueType SPUTargetLowering::getSetCCResultType(EVT VT) const {
-  // i16 and i32 are valid SETCC result types
-  return ((VT == MVT::i8 || VT == MVT::i16 || VT == MVT::i32) ?
-    VT.getSimpleVT().SimpleTy :
-    MVT::i32);
+  // i8, i16 and i32 are valid SETCC result types
+  MVT::SimpleValueType retval;
+
+  switch(VT.getSimpleVT().SimpleTy){
+    case MVT::i1:
+    case MVT::i8:
+      retval = MVT::i8; break;
+    case MVT::i16:
+      retval = MVT::i16; break;
+    case MVT::i32:
+    default:
+      retval = MVT::i32;
+  }
+  return retval;
 }
 
 //===----------------------------------------------------------------------===//
