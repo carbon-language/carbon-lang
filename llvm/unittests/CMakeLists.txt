@@ -17,6 +17,9 @@ add_custom_target(UnitTests)
 
 include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
 add_definitions(-DGTEST_HAS_RTTI=0)
+if (NOT LLVM_ENABLE_THREADS)
+  add_definitions(-DGTEST_HAS_PTHREAD=0)
+endif()
 
 set(LLVM_LINK_COMPONENTS
   jit
@@ -33,6 +36,7 @@ set(LLVM_LINK_COMPONENTS
 set(LLVM_USED_LIBS
   gtest
   gtest_main
+  LLVMSupport # gtest needs it for raw_ostream.
   )
 
 add_llvm_unittest(ADT
@@ -117,7 +121,15 @@ add_llvm_unittest(Support
   Support/raw_ostream_test.cpp
   Support/RegexTest.cpp
   Support/SwapByteOrderTest.cpp
-  Support/System.cpp
   Support/TypeBuilderTest.cpp
   Support/ValueHandleTest.cpp
+  )
+
+set(LLVM_LINK_COMPONENTS
+  System
+  )
+
+add_llvm_unittest(System
+  System/Path.cpp
+  System/TimeValue.cpp
   )
