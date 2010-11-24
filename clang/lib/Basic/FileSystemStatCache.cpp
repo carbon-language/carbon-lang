@@ -25,7 +25,7 @@
 using namespace clang;
 
 #if defined(_MSC_VER)
-#define S_ISDIR(s) (_S_IFDIR & s)
+#define S_ISDIR(s) ((_S_IFDIR & s) !=0)
 #endif
 
 /// FileSystemStatCache::get - Get the 'stat' information for the specified

@@ -64,7 +64,6 @@ class FileEntry {
   mutable int FD;
   friend class FileManager;
   
-  void operator=(const FileEntry&); // DO NOT IMPLEMENT.
 public:
   FileEntry(dev_t device, ino_t inode, mode_t m)
     : Name(0), Device(device), Inode(inode), FileMode(m), FD(-1) {}
