@@ -3903,7 +3903,7 @@ def FCGTf32 :
       "fcgt\t$rT, $rA, $rB", SPrecFP,
       [(set R32C:$rT, (setugt R32FP:$rA, R32FP:$rB))]>;
 
-def : Pat<(setugt R32FP:$rA, R32FP:$rB),
+def : Pat<(setogt R32FP:$rA, R32FP:$rB),
           (FCGTf32 R32FP:$rA, R32FP:$rB)>;
 
 def FCMGTf32 :
@@ -3911,7 +3911,7 @@ def FCMGTf32 :
       "fcmgt\t$rT, $rA, $rB", SPrecFP,
       [(set R32C:$rT, (setugt (fabs R32FP:$rA), (fabs R32FP:$rB)))]>;
 
-def : Pat<(setugt (fabs R32FP:$rA), (fabs R32FP:$rB)),
+def : Pat<(setogt (fabs R32FP:$rA), (fabs R32FP:$rB)),
           (FCMGTf32 R32FP:$rA, R32FP:$rB)>;
 
 //--------------------------------------------------------------------------
