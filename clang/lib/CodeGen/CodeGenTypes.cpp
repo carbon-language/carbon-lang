@@ -486,12 +486,14 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
 const CGRecordLayout &
 CodeGenTypes::getCGRecordLayout(const RecordDecl *TD) {
-  const Type *Key = Context.getTagDeclType(TD).getTypePtr();
+  QualType T = Context.getTagDeclType(TD);
+  const Type *Key = T.getTypePtr();
 
   const CGRecordLayout *Layout = CGRecordLayouts.lookup(Key);
   if (!Layout) {
-    // Compute the type information.
-    ConvertTagDeclType(TD);
+    // Compute the type information. We use ConvertType here so that we'll
+    // get a name for the type.
+    ConvertType(T);
 
     // Now try again.
     Layout = CGRecordLayouts.lookup(Key);
