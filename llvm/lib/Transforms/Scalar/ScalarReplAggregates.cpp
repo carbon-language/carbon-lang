@@ -1783,7 +1783,7 @@ static bool PointsToConstantGlobal(Value *V) {
 /// see any stores or other unknown uses.  If we see pointer arithmetic, keep
 /// track of whether it moves the pointer (with isOffset) but otherwise traverse
 /// the uses.  If we see a memcpy/memmove that targets an unoffseted pointer to
-/// the alloca, and if the source pointer is a pointer to a constant  global, we
+/// the alloca, and if the source pointer is a pointer to a constant global, we
 /// can optimize this.
 static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
                                            bool isOffset) {
@@ -1815,6 +1815,11 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       // If this is a readonly/readnone call site, then we know it is just a
       // load and we can ignore it.
       if (CS.onlyReadsMemory())
+        continue;
+
+      // If this is the function being called then we treat it like a load and
+      // ignore it.
+      if (CS.isCallee(UI))
         continue;
       
       // If this is being passed as a byval argument, the caller is making a
