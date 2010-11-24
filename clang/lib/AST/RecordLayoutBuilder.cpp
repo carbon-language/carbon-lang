@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Attr.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -600,7 +601,7 @@ protected:
 
   /// IndirectPrimaryBases - Virtual base classes, direct or indirect, that are
   /// primary base classes for some other direct or indirect base class.
-  llvm::SmallSet<const CXXRecordDecl*, 32> IndirectPrimaryBases;
+  CXXIndirectPrimaryBaseSet IndirectPrimaryBases;
 
   /// FirstNearlyEmptyVBase - The first nearly empty virtual base class in
   /// inheritance graph order. Used for determining the primary base class.
@@ -666,11 +667,6 @@ protected:
 
   virtual uint64_t GetVirtualPointersSize(const CXXRecordDecl *RD) const;
 
-  /// IdentifyPrimaryBases - Identify all virtual base classes, direct or
-  /// indirect, that are primary base classes for some other direct or indirect
-  /// base class.
-  void IdentifyPrimaryBases(const CXXRecordDecl *RD);
-
   virtual bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
 
   /// LayoutNonVirtualBases - Determines the primary base class (if any) and
@@ -733,30 +729,6 @@ bool RecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
   return false;
 }
 
-void RecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
-  const ASTRecordLayout::PrimaryBaseInfo &BaseInfo =
-    Context.getASTRecordLayout(RD).getPrimaryBaseInfo();
-
-  // If the record has a primary base class that is virtual, add it to the set
-  // of primary bases.
-  if (BaseInfo.isVirtual())
-    IndirectPrimaryBases.insert(BaseInfo.getBase());
-
-  // Now traverse all bases and find primary bases for them.
-  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-         e = RD->bases_end(); i != e; ++i) {
-    assert(!i->getType()->isDependentType() &&
-           "Cannot layout class with dependent bases.");
-    const CXXRecordDecl *Base =
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-
-    // Only bases with virtual bases participate in computing the
-    // indirect primary virtual base classes.
-    if (Base->getNumVBases())
-      IdentifyPrimaryBases(Base);
-  }
-}
-
 void
 RecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
@@ -801,14 +773,7 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
 
   // Compute all the primary virtual bases for all of our direct and
   // indirect bases, and record all their primary virtual base classes.
-  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-         e = RD->bases_end(); i != e; ++i) {
-    assert(!i->getType()->isDependentType() &&
-           "Cannot lay out class with dependent bases.");
-    const CXXRecordDecl *Base =
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    IdentifyPrimaryBases(Base);
-  }
+  RD->getIndirectPrimaryBases(IndirectPrimaryBases);
 
   // If the record has a dynamic base class, attempt to choose a primary base
   // class. It is the first (in direct base class order) non-virtual dynamic
