@@ -1,4 +1,4 @@
-//== GRState*h - Path-Sens. "State" for tracking valuues -----*- C++ -*--==//
+//== GRState.h - Path-sensitive "State" for tracking values -----*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SymbolRef, ExprBindKey, and GRState*
+//  This file defines SymbolRef, ExprBindKey, and GRState*.
 //
 //===----------------------------------------------------------------------===//
 
@@ -52,16 +52,19 @@ template <typename T> struct GRStateTrait {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// GRState- An ImmutableMap type Stmt*/Decl*/Symbols to SVals.
-//===----------------------------------------------------------------------===//
-
 class GRStateManager;
 
-/// GRState - This class encapsulates the actual data values for
-///  for a "state" in our symbolic value tracking.  It is intended to be
-///  used as a functional object; that is once it is created and made
-///  "persistent" in a FoldingSet its values will never change.
+/// GRState - This class encapsulates:
+///
+///    1. A mapping from expressions to values (Environment)
+///    2. A mapping from locations to values (Store)
+///    3. Constraints on symbolic values (GenericDataMap)
+///
+///  Together these represent the "abstract state" of a program.
+///
+///  GRState is intended to be used as a functional object; that is,
+///  once it is created and made "persistent" in a FoldingSet, its
+///  values will never change.
 class GRState : public llvm::FoldingSetNode {
 public:
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
@@ -73,9 +76,9 @@ private:
   friend class GRStateManager;
 
   GRStateManager *StateMgr;
-  Environment Env;
-  Store St;
-  GenericDataMap   GDM;
+  Environment Env;           // Maps a Stmt to its current SVal.
+  Store St;                  // Maps a location to its current value.
+  GenericDataMap   GDM;      // Custom data stored by a client of this class.
 
   /// makeWithStore - Return a GRState with the same values as the current
   ///  state with the exception of using the specified Store.
@@ -120,8 +123,9 @@ public:
 
   void setGDM(GenericDataMap gdm) { GDM = gdm; }
 
-  /// Profile - Profile the contents of a GRState object for use
-  ///  in a FoldingSet.
+  /// Profile - Profile the contents of a GRState object for use in a
+  ///  FoldingSet.  Two GRState objects are considered equal if they
+  ///  have the same Environment, Store, and GenericDataMap.
   static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {
     V->Env.Profile(ID);
     ID.AddPointer(V->St);
@@ -163,19 +167,15 @@ public:
   //  (3) A binary value "Assumption" that indicates whether the constraint is
   //      assumed to be true or false.
   //
-  // The output of "Assume" are two values:
-  //
-  //  (a) "isFeasible" is set to true or false to indicate whether or not
-  //      the assumption is feasible.
-  //
-  //  (b) A new GRState object with the added constraints.
-  //
-  // FIXME: (a) should probably disappear since it is redundant with (b).
-  //  (i.e., (b) could just be set to NULL).
+  // The output of "Assume*" is a new GRState object with the added constraints.
+  // If no new state is feasible, NULL is returned.
   //
 
   const GRState *Assume(DefinedOrUnknownSVal cond, bool assumption) const;
-  
+
+  /// This method assumes both "true" and "false" for 'cond', and
+  ///  returns both corresponding states.  It's shorthand for doing
+  ///  'Assume' twice.
   std::pair<const GRState*, const GRState*>
   Assume(DefinedOrUnknownSVal cond) const;
 
@@ -194,9 +194,7 @@ public:
   //==---------------------------------------------------------------------==//
 
   /// BindCompoundLiteral - Return the state that has the bindings currently
-  ///  in 'state' plus the bindings for the CompoundLiteral.  'R' is the region
-  ///  for the compound literal and 'BegInit' and 'EndInit' represent an
-  ///  array of initializer values.
+  ///  in this state plus the bindings for the CompoundLiteral.
   const GRState *bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                      const LocationContext *LC,
                                      SVal V) const;

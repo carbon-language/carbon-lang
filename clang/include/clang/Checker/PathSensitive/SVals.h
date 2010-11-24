@@ -39,13 +39,26 @@ class MemRegionManager;
 class GRStateManager;
 class ValueManager;
 
+/// SVal - This represents a symbolic expression, which can be either
+///  an L-value or an R-value.
+///
 class SVal {
 public:
-  enum BaseKind { UndefinedKind, UnknownKind, LocKind, NonLocKind };
+  enum BaseKind {
+    // The enumerators must be representable using 2 bits.
+    UndefinedKind = 0,  // for subclass UndefinedVal (an uninitialized value)
+    UnknownKind = 1,    // for subclass UnknownVal (a void value)
+    LocKind = 2,        // for subclass Loc (an L-value)
+    NonLocKind = 3      // for subclass NonLoc (an R-value that's not
+                        //   an L-value)
+  };
   enum { BaseBits = 2, BaseMask = 0x3 };
 
 protected:
   const void* Data;
+
+  /// The lowest 2 bits are a BaseKind (0 -- 3).
+  ///  The higher bits are an unsigned "kind" value.
   unsigned Kind;
 
 protected:
@@ -200,7 +213,7 @@ public:
     return V->getBaseKind() == UnknownKind;
   }
 };
-  
+
 class DefinedSVal : public DefinedOrUnknownSVal {
 private:
   // Do not implement.  We want calling these methods to be a compiler

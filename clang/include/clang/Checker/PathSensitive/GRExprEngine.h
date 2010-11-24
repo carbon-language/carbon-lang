@@ -517,6 +517,10 @@ protected:
 public:
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
+  // FIXME: Comment on the meaning of the arguments, when 'St' may not
+  // be the same as Pred->state, and when 'location' may not be the
+  // same as state->getLValue(Ex).
+  /// Simulate a read of the result of Ex.
   void EvalLoad(ExplodedNodeSet& Dst, const Expr* Ex, ExplodedNode* Pred,
                 const GRState* St, SVal location, const void *tag = 0,
                 QualType LoadTy = QualType());
@@ -526,7 +530,7 @@ public:
   void EvalStore(ExplodedNodeSet& Dst, const Expr* AssignE, const Expr* StoreE,
                  ExplodedNode* Pred, const GRState* St, SVal TargetLV, SVal Val,
                  const void *tag = 0);
-private:  
+private:
   void EvalLoadCommon(ExplodedNodeSet& Dst, const Expr* Ex, ExplodedNode* Pred,
                       const GRState* St, SVal location, const void *tag,
                       QualType LoadTy);

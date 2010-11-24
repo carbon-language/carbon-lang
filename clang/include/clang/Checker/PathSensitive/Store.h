@@ -22,6 +22,10 @@
 
 namespace clang {
 
+/// Store - This opaque type encapsulates an immutable mapping from
+///  locations to values.  At a high-level, it represents the symbolic
+///  memory model.  Different subclasses of StoreManager may choose
+///  different types to represent the locations and values.
 typedef const void* Store;
 
 class GRState;

@@ -27,7 +27,9 @@ class EnvironmentManager;
 class ValueManager;
 class LiveVariables;
 
-
+/// Environment - An immutable map from Stmts to their current
+///  symbolic values (SVals).
+///
 class Environment {
 private:
   friend class EnvironmentManager;
@@ -51,6 +53,8 @@ public:
     return X ? *X : UnknownVal();
   }
 
+  /// GetSVal - Fetches the current binding of the expression in the
+  ///  Environment.
   SVal GetSVal(const Stmt* Ex, ValueManager& ValMgr) const;
 
   /// Profile - Profile the contents of an Environment object for use
