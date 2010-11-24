@@ -36,20 +36,52 @@ static SourceLocation GetEndLoc(Decl* D) {
   return D->getLocation();
 }
 
+/// The CFG builder uses a recursive algorithm to build the CFG.  When
+///  we process an expression, sometimes we know that we must add the
+///  subexpressions as block-level expressions.  For example:
+///
+///    exp1 || exp2
+///
+///  When processing the '||' expression, we know that exp1 and exp2
+///  need to be added as block-level expressions, even though they
+///  might not normally need to be.  AddStmtChoice records this
+///  contextual information.  If AddStmtChoice is 'NotAlwaysAdd', then
+///  the builder has an option not to add a subexpression as a
+///  block-level expression.
+///
+///  The lvalue bit captures whether or not a subexpression needs to
+///  be processed as an lvalue.  That information needs to be recorded
+///  in the CFG for block-level expressions so that analyses do the
+///  right thing when traversing the CFG (since such subexpressions
+///  will be seen before their parent expression is processed).
 class AddStmtChoice {
 public:
   enum Kind { NotAlwaysAdd = 0,
               AlwaysAdd = 1,
               AsLValueNotAlwaysAdd = 2,
-              AlwaysAddAsLValue = 3 };
+              AsLValueAlwaysAdd = 3 };
 
-  AddStmtChoice(Kind kind) : k(kind) {}
+  AddStmtChoice(Kind a_kind = NotAlwaysAdd) : kind(a_kind) {}
 
-  bool alwaysAdd() const { return (unsigned)k & 0x1; }
-  bool asLValue() const { return k >= AsLValueNotAlwaysAdd; }
+  bool alwaysAdd() const { return kind & AlwaysAdd; }
+  bool asLValue() const { return kind >= AsLValueNotAlwaysAdd; }
+
+  /// Return a copy of this object, except with the 'always-add' bit
+  ///  set as specified.
+  AddStmtChoice withAlwaysAdd(bool alwaysAdd) const {
+    return AddStmtChoice(alwaysAdd ? Kind(kind | AlwaysAdd) :
+                                     Kind(kind & ~AlwaysAdd));
+  }
+
+  /// Return a copy of this object, except with the 'as-lvalue' bit
+  ///  set as specified.
+  AddStmtChoice withAsLValue(bool asLVal) const {
+    return AddStmtChoice(asLVal ? Kind(kind | AsLValueNotAlwaysAdd) :
+                                  Kind(kind & ~AsLValueNotAlwaysAdd));
+  }
 
 private:
-  Kind k;
+  Kind kind;
 };
 
 /// LocalScope - Node in tree of local scopes created for C++ implicit
@@ -536,9 +568,7 @@ CFGBlock *CFGBuilder::addInitializer(CXXBaseOrMemberInitializer *I) {
   appendInitializer(Block, I);
 
   if (Init) {
-    AddStmtChoice asc = IsReference
-        ? AddStmtChoice::AsLValueNotAlwaysAdd
-        : AddStmtChoice::NotAlwaysAdd;
+    AddStmtChoice asc = AddStmtChoice().withAsLValue(IsReference);
     if (HasTemporaries)
       // For expression with temporaries go directly to subexpression to omit
       // generating destructors for the second time.
@@ -934,9 +964,7 @@ CFGBlock *CFGBuilder::VisitUnaryOperator(UnaryOperator *U,
   }
 
   bool asLVal = U->isIncrementDecrementOp();
-  return Visit(U->getSubExpr(),
-	       asLVal ? AddStmtChoice::AsLValueNotAlwaysAdd :
-	                AddStmtChoice::NotAlwaysAdd);
+  return Visit(U->getSubExpr(), AddStmtChoice().withAsLValue(asLVal));
 }
 
 CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
@@ -1087,12 +1115,8 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
   if (!CanThrow(C->getCallee()))
     AddEHEdge = false;
 
-  if (!NoReturn && !AddEHEdge) {
-    if (asc.asLValue())
-      return VisitStmt(C, AddStmtChoice::AlwaysAddAsLValue);
-    else
-      return VisitStmt(C, AddStmtChoice::AlwaysAdd);
-  }
+  if (!NoReturn && !AddEHEdge)
+    return VisitStmt(C, asc.withAlwaysAdd(true));
 
   if (Block) {
     Succ = Block;
@@ -1125,18 +1149,16 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C,
   if (badCFG)
     return 0;
 
-  asc = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
-                       : AddStmtChoice::AlwaysAdd;
-
+  AddStmtChoice alwaysAdd = asc.withAlwaysAdd(true);
   Succ = ConfluenceBlock;
   Block = NULL;
-  CFGBlock* LHSBlock = Visit(C->getLHS(), asc);
+  CFGBlock* LHSBlock = Visit(C->getLHS(), alwaysAdd);
   if (badCFG)
     return 0;
 
   Succ = ConfluenceBlock;
   Block = NULL;
-  CFGBlock* RHSBlock = Visit(C->getRHS(), asc);
+  CFGBlock* RHSBlock = Visit(C->getRHS(), alwaysAdd);
   if (badCFG)
     return 0;
 
@@ -1177,8 +1199,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
   if (badCFG)
     return 0;
 
-  asc = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
-                       : AddStmtChoice::AlwaysAdd;
+  AddStmtChoice alwaysAdd = asc.withAlwaysAdd(true);
 
   // Create a block for the LHS expression if there is an LHS expression.  A
   // GCC extension allows LHS to be NULL, causing the condition to be the
@@ -1188,7 +1209,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
   Block = NULL;
   CFGBlock* LHSBlock = NULL;
   if (C->getLHS()) {
-    LHSBlock = Visit(C->getLHS(), asc);
+    LHSBlock = Visit(C->getLHS(), alwaysAdd);
     if (badCFG)
       return 0;
     Block = NULL;
@@ -1196,7 +1217,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
 
   // Create the block for the RHS expression.
   Succ = ConfluenceBlock;
-  CFGBlock* RHSBlock = Visit(C->getRHS(), asc);
+  CFGBlock* RHSBlock = Visit(C->getRHS(), alwaysAdd);
   if (badCFG)
     return 0;
 
@@ -1297,9 +1318,7 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt* DS) {
   AppendStmt(Block, DS);
 
   if (Init) {
-    AddStmtChoice asc = IsReference
-          ? AddStmtChoice::AsLValueNotAlwaysAdd
-          : AddStmtChoice::NotAlwaysAdd;
+    AddStmtChoice asc = AddStmtChoice().withAsLValue(IsReference);
     if (HasTemporaries)
       // For expression with temporaries go directly to subexpression to omit
       // generating destructors for the second time.
@@ -1661,8 +1680,7 @@ CFGBlock *CFGBuilder::VisitMemberExpr(MemberExpr *M, AddStmtChoice asc) {
     AppendStmt(Block, M, asc);
   }
   return Visit(M->getBase(),
-               M->isArrow() ? AddStmtChoice::NotAlwaysAdd
-                            : AddStmtChoice::AsLValueNotAlwaysAdd);
+               AddStmtChoice().withAsLValue(!M->isArrow()));
 }
 
 CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
@@ -2385,9 +2403,7 @@ CFGBlock *CFGBuilder::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E,
 
     // Full expression has to be added as CFGStmt so it will be sequenced
     // before destructors of it's temporaries.
-    asc = asc.asLValue()
-        ? AddStmtChoice::AlwaysAddAsLValue
-        : AddStmtChoice::AlwaysAdd;
+    asc = asc.withAlwaysAdd(true);
   }
   return Visit(E->getSubExpr(), asc);
 }
@@ -2399,19 +2415,17 @@ CFGBlock *CFGBuilder::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E,
     AppendStmt(Block, E, asc);
 
     // We do not want to propagate the AlwaysAdd property.
-    asc = AddStmtChoice(asc.asLValue() ? AddStmtChoice::AsLValueNotAlwaysAdd
-                                       : AddStmtChoice::NotAlwaysAdd);
+    asc = asc.withAlwaysAdd(false);
   }
   return Visit(E->getSubExpr(), asc);
 }
 
 CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
                                             AddStmtChoice asc) {
-  AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
-                                         : AddStmtChoice::AlwaysAdd;
   autoCreateBlock();
   if (!C->isElidable())
-    AppendStmt(Block, C, AddStmtChoice(K));
+    AppendStmt(Block, C, asc.withAlwaysAdd(true));
+
   return VisitChildren(C);
 }
 
@@ -2421,27 +2435,22 @@ CFGBlock *CFGBuilder::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E,
     autoCreateBlock();
     AppendStmt(Block, E, asc);
     // We do not want to propagate the AlwaysAdd property.
-    asc = AddStmtChoice(asc.asLValue() ? AddStmtChoice::AsLValueNotAlwaysAdd
-                                       : AddStmtChoice::NotAlwaysAdd);
+    asc = asc.withAlwaysAdd(false);
   }
   return Visit(E->getSubExpr(), asc);
 }
 
 CFGBlock *CFGBuilder::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *C,
                                                   AddStmtChoice asc) {
-  AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
-                                         : AddStmtChoice::AlwaysAdd;
   autoCreateBlock();
-  AppendStmt(Block, C, AddStmtChoice(K));
+  AppendStmt(Block, C, asc.withAlwaysAdd(true));
   return VisitChildren(C);
 }
 
 CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C,
                                              AddStmtChoice asc) {
-  AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
-                                         : AddStmtChoice::AlwaysAdd;
   autoCreateBlock();
-  AppendStmt(Block, C, AddStmtChoice(K));
+  AppendStmt(Block, C, asc.withAlwaysAdd(true));
   return VisitChildren(C);
 }
 
@@ -2451,8 +2460,7 @@ CFGBlock *CFGBuilder::VisitImplicitCastExpr(ImplicitCastExpr *E,
     autoCreateBlock();
     AppendStmt(Block, E, asc);
     // We do not want to propagate the AlwaysAdd property.
-    asc = AddStmtChoice(asc.asLValue() ? AddStmtChoice::AsLValueNotAlwaysAdd
-                                       : AddStmtChoice::NotAlwaysAdd);
+    asc = asc.withAlwaysAdd(false);
   }
   return Visit(E->getSubExpr(), asc);
 }
