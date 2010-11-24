@@ -60,6 +60,15 @@ namespace {
       return "MBlaze Assembly Printer";
     }
 
+    void printSavedRegsBitmask(raw_ostream &O);
+    void emitFrameDirective();
+    virtual void EmitFunctionBodyStart();
+    virtual void EmitFunctionBodyEnd();
+    virtual void EmitFunctionEntryLabel();
+
+    virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB)
+      const;
+
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode,
                          raw_ostream &O);
@@ -106,6 +115,79 @@ namespace {
 //
 //===----------------------------------------------------------------------===//
 
+// Print a 32 bit hex number with all numbers.
+static void printHex32(unsigned int Value, raw_ostream &O) {
+  O << "0x";
+  for (int i = 7; i >= 0; i--)
+    O << utohexstr((Value & (0xF << (i*4))) >> (i*4));
+}
+
+// Create a bitmask with all callee saved registers for CPU or Floating Point
+// registers. For CPU registers consider RA, GP and FP for saving if necessary.
+void MBlazeAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
+  const TargetFrameInfo *TFI = TM.getFrameInfo();
+  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
+  const MBlazeFunctionInfo *MBlazeFI = MF->getInfo<MBlazeFunctionInfo>();
+
+  // CPU Saved Registers Bitmasks
+  unsigned int CPUBitmask = 0;
+
+  // Set the CPU Bitmasks
+  const MachineFrameInfo *MFI = MF->getFrameInfo();
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    unsigned RegNum = MBlazeRegisterInfo::getRegisterNumbering(Reg);
+    if (MBlaze::GPRRegisterClass->contains(Reg))
+      CPUBitmask |= (1 << RegNum);
+  }
+
+  // Return Address and Frame registers must also be set in CPUBitmask.
+  if (TFI->hasFP(*MF))
+    CPUBitmask |= (1 << MBlazeRegisterInfo::
+                getRegisterNumbering(RI.getFrameRegister(*MF)));
+
+  if (MFI->adjustsStack())
+    CPUBitmask |= (1 << MBlazeRegisterInfo::
+                getRegisterNumbering(RI.getRARegister()));
+
+  // Print CPUBitmask
+  O << "\t.mask \t"; printHex32(CPUBitmask, O); O << ','
+    << MBlazeFI->getCPUTopSavedRegOff() << '\n';
+}
+
+/// Frame Directive
+void MBlazeAsmPrinter::emitFrameDirective() {
+  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
+
+  unsigned stkReg = RI.getFrameRegister(*MF);
+  unsigned retReg = RI.getRARegister();
+  unsigned stkSze = MF->getFrameInfo()->getStackSize();
+
+  OutStreamer.EmitRawText("\t.frame\t" +
+                          Twine(MBlazeInstPrinter::getRegisterName(stkReg)) +
+                          "," + Twine(stkSze) + "," +
+                          Twine(MBlazeInstPrinter::getRegisterName(retReg)));
+}
+
+void MBlazeAsmPrinter::EmitFunctionEntryLabel() {
+  OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
+  AsmPrinter::EmitFunctionEntryLabel();
+}
+
+void MBlazeAsmPrinter::EmitFunctionBodyStart() {
+  emitFrameDirective();
+
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  printSavedRegsBitmask(OS);
+  OutStreamer.EmitRawText(OS.str());
+}
+
+void MBlazeAsmPrinter::EmitFunctionBodyEnd() {
+  OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
+}
+
 //===----------------------------------------------------------------------===//
 void MBlazeAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MBlazeMCInstLower MCInstLowering(OutContext, *Mang, *this);
@@ -114,14 +196,6 @@ void MBlazeAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MCInstLowering.Lower(MI, TmpInst);
   OutStreamer.EmitInstruction(TmpInst);
 }
-
-// Print a 32 bit hex number with all numbers.
-static void printHex32(unsigned int Value, raw_ostream &O) {
-  O << "0x";
-  for (int i = 7; i >= 0; i--)
-    O << utohexstr((Value & (0xF << (i*4))) >> (i*4));
-}
-
 
 // Print out an operand for an inline asm expression.
 bool MBlazeAsmPrinter::
@@ -208,6 +282,39 @@ printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
   printOperand(MI, opNum, O);
   O << ", ";
   printOperand(MI, opNum+1, O);
+}
+
+/// isBlockOnlyReachableByFallthough - Return true if the basic block has
+/// exactly one predecessor and the control transfer mechanism between
+/// the predecessor and this block is a fall-through.
+bool MBlazeAsmPrinter::
+isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
+  // If this is a landing pad, it isn't a fall through.  If it has no preds,
+  // then nothing falls through to it.
+  if (MBB->isLandingPad() || MBB->pred_empty())
+    return false;
+
+  // If there isn't exactly one predecessor, it can't be a fall through.
+  MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(), PI2 = PI;
+  ++PI2;
+  if (PI2 != MBB->pred_end())
+    return false;
+
+  // The predecessor has to be immediately before this block.
+  const MachineBasicBlock *Pred = *PI;
+
+  if (!Pred->isLayoutSuccessor(MBB))
+    return false;
+
+  // If the block is completely empty, then it definitely does fall through.
+  if (Pred->empty())
+    return true;
+
+  // Check if the last terminator is an unconditional branch.
+  MachineBasicBlock::const_iterator I = Pred->end();
+  while (I != Pred->begin() && !(--I)->getDesc().isTerminator())
+    ; // Noop
+  return I == Pred->end() || !I->getDesc().isBarrier();
 }
 
 static MCInstPrinter *createMBlazeMCInstPrinter(const Target &T,

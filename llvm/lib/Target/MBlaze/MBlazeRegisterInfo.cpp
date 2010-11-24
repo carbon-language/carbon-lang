@@ -242,9 +242,8 @@ unsigned MBlazeRegisterInfo::getEHHandlerRegister() const {
   return 0;
 }
 
-int MBlazeRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  llvm_unreachable("What is the dwarf register number");
-  return -1;
+int MBlazeRegisterInfo::getDwarfRegNum(unsigned RegNo, bool isEH) const {
+  return MBlazeGenRegisterInfo::getDwarfRegNumFull(RegNo,0);
 }
 
 #include "MBlazeGenRegisterInfo.inc"

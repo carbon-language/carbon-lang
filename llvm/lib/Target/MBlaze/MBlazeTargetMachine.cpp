@@ -43,7 +43,7 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   case Triple::MinGW64:
   case Triple::Cygwin:
   case Triple::Win32:
-    llvm_unreachable("ARM does not support Windows COFF format");
+    llvm_unreachable("MBlaze does not support Windows COFF format");
     return NULL;
   default:
     return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);

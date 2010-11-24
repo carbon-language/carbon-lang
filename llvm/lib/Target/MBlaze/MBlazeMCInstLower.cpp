@@ -32,10 +32,8 @@ using namespace llvm;
 MCSymbol *MBlazeMCInstLower::
 GetGlobalAddressSymbol(const MachineOperand &MO) const {
   switch (MO.getTargetFlags()) {
-  default:
-      llvm_unreachable("Unknown target flag on GV operand");
-
-  case 0: break;
+  default: llvm_unreachable("Unknown target flag on GV operand");
+  case 0:  break;
   }
 
   return Printer.Mang->getSymbol(MO.getGlobal());
@@ -44,10 +42,8 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
 MCSymbol *MBlazeMCInstLower::
 GetExternalSymbolSymbol(const MachineOperand &MO) const {
   switch (MO.getTargetFlags()) {
-  default:
-      assert(0 && "Unknown target flag on GV operand");
-
-  case 0: break;
+  default: llvm_unreachable("Unknown target flag on GV operand");
+  case 0:  break;
   }
 
   return Printer.GetExternalSymbolSymbol(MO.getSymbolName());
@@ -59,12 +55,9 @@ GetJumpTableSymbol(const MachineOperand &MO) const {
   raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "JTI"
                             << Printer.getFunctionNumber() << '_'
                             << MO.getIndex();
-
   switch (MO.getTargetFlags()) {
-  default:
-      llvm_unreachable("Unknown target flag on GV operand");
-
-  case 0: break;
+  default: llvm_unreachable("Unknown target flag on GV operand");
+  case 0:  break;
   }
 
   // Create a symbol for the name.
@@ -129,8 +122,7 @@ void MBlazeMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
     MCOperand MCOp;
     switch (MO.getType()) {
-    default:
-      assert(0 && "unknown operand type");
+    default: llvm_unreachable("unknown operand type");
     case MachineOperand::MO_Register:
       // Ignore all implicit register operands.
       if (MO.isImplicit()) continue;
