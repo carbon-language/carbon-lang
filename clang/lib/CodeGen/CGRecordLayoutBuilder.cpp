@@ -14,6 +14,7 @@
 #include "CGRecordLayout.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
@@ -63,7 +64,11 @@ public:
 
   typedef std::pair<const CXXRecordDecl *, unsigned> LLVMBaseInfo;
   llvm::SmallVector<LLVMBaseInfo, 16> LLVMNonVirtualBases;
-  
+
+  /// IndirectPrimaryBases - Virtual base classes, direct or indirect, that are
+  /// primary base classes for some other direct or indirect base class.
+  CXXIndirectPrimaryBaseSet IndirectPrimaryBases;
+
   /// IsZeroInitializable - Whether this struct can be C++
   /// zero-initialized with an LLVM zeroinitializer.
   bool IsZeroInitializable;

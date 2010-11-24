@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/AST/CXXInheritance.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/DeclCXX.h"
 #include <algorithm>
 #include <set>
@@ -662,3 +663,50 @@ CXXRecordDecl::getFinalOverriders(CXXFinalOverriderMap &FinalOverriders) const {
     }
   }
 }
+
+static void 
+AddIndirectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
+                        CXXIndirectPrimaryBaseSet& Bases) {
+  // If the record has a virtual primary base class, add it to our set.
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+  if (Layout.getPrimaryBaseWasVirtual())
+    Bases.insert(Layout.getPrimaryBase());
+
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    assert(!E->getType()->isDependentType() &&
+           "Cannot get indirect primary bases for class with dependent bases.");
+
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    // Only bases with virtual bases participate in computing the
+    // indirect primary virtual base classes.
+    if (BaseDecl->getNumVBases())
+      AddIndirectPrimaryBases(BaseDecl, Context, Bases);
+  }
+
+}
+
+void 
+CXXRecordDecl::getIndirectPrimaryBases(CXXIndirectPrimaryBaseSet& Bases) const {
+  ASTContext &Context = getASTContext();
+
+  if (!getNumVBases())
+    return;
+
+  for (CXXRecordDecl::base_class_const_iterator I = bases_begin(),
+       E = bases_end(); I != E; ++I) {
+    assert(!E->getType()->isDependentType() &&
+           "Cannot get indirect primary bases for class with dependent bases.");
+
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    // Only bases with virtual bases participate in computing the
+    // indirect primary virtual base classes.
+    if (BaseDecl->getNumVBases())
+      AddIndirectPrimaryBases(BaseDecl, Context, Bases);
+  }
+}
+

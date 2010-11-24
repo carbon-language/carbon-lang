@@ -35,6 +35,7 @@ class CXXMethodDecl;
 class CXXRecordDecl;
 class CXXMemberLookupCriteria;
 class CXXFinalOverriderMap;
+class CXXIndirectPrimaryBaseSet;
 class FriendDecl;
   
 /// \brief Represents any kind of function declaration, whether it is a
@@ -954,6 +955,9 @@ public:
   /// function in the class hierarchy where this class is the
   /// most-derived class in the class hierarchy.
   void getFinalOverriders(CXXFinalOverriderMap &FinaOverriders) const;
+
+  /// \brief Get the indirect primary bases for this class.
+  void getIndirectPrimaryBases(CXXIndirectPrimaryBaseSet& Bases) const;
 
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using

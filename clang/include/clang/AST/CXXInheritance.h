@@ -20,6 +20,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <list>
 #include <map>
@@ -359,7 +360,11 @@ public:
 /// subobjects of that type.
 class CXXFinalOverriderMap 
   : public llvm::DenseMap<const CXXMethodDecl *, OverridingMethods> { };
-  
+
+/// \brief A set of all the primary bases for a class.
+class CXXIndirectPrimaryBaseSet
+  : public llvm::SmallSet<const CXXRecordDecl*, 32> { };
+
 } // end namespace clang
 
 #endif
