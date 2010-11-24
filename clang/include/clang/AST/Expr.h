@@ -127,19 +127,25 @@ public:
   bool isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
                               SourceRange &R2, ASTContext &Ctx) const;
 
-  /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
-  /// incomplete type other than void. Nonarray expressions that can be lvalues:
-  ///  - name, where name must be a variable
-  ///  - e[i]
-  ///  - (e), where e must be an lvalue
-  ///  - e.name, where e must be an lvalue
-  ///  - e->name
-  ///  - *e, the type of e cannot be a function type
-  ///  - string-constant
-  ///  - reference type [C++ [expr]]
-  ///  - b ? x : y, where x and y are lvalues of suitable types [C++]
+  /// isLValue - True if this expression is an "l-value" according to
+  /// the rules of the current language.  C and C++ give somewhat
+  /// different rules for this concept, but in general, the result of
+  /// an l-value expression identifies a specific object whereas the
+  /// result of an r-value expression is a value detached from any
+  /// specific storage.
   ///
-  enum isLvalueResult {
+  /// C++0x divides the concept of "r-value" into pure r-values
+  /// ("pr-values") and so-called expiring values ("x-values"), which
+  /// identify specific objects that can be safely cannibalized for
+  /// their resources.  This is an unfortunate abuse of terminology on
+  /// the part of the C++ committee.  In Clang, when we say "r-value",
+  /// we generally mean a pr-value.
+  bool isLValue() const { return getValueKind() == VK_LValue; }
+  bool isRValue() const { return getValueKind() == VK_RValue; }
+  bool isXValue() const { return getValueKind() == VK_XValue; }
+  bool isGLValue() const { return getValueKind() != VK_RValue; }
+
+  enum LValueClassification {
     LV_Valid,
     LV_NotObjectType,
     LV_IncompleteVoidType,
@@ -149,7 +155,8 @@ public:
     LV_SubObjCPropertySetting,
     LV_ClassTemporary
   };
-  isLvalueResult isLvalue(ASTContext &Ctx) const;
+  /// Reasons why an expression might not be an l-value.
+  LValueClassification ClassifyLValue(ASTContext &Ctx) const;
 
   /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
   /// does not have an incomplete type, does not have a const-qualified type,

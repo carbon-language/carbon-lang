@@ -375,7 +375,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       return;
     }
   } else if (DestReference->isLValueReferenceType()) {
-    if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
+    if (!SrcExpr->isLValue()) {
       Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
         << CT_Dynamic << OrigSrcType << OrigDestType << OpRange;
     }
@@ -698,7 +698,7 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   if (!R)
     return TC_NotApplicable;
 
-  if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid)
+  if (!SrcExpr->isLValue())
     return TC_NotApplicable;
 
   // Because we try the reference downcast before this function, from now on
@@ -739,7 +739,7 @@ TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr, QualType DestType,
     return TC_NotApplicable;
   }
   bool RValueRef = DestReference->isRValueReferenceType();
-  if (!RValueRef && SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
+  if (!RValueRef && !SrcExpr->isLValue()) {
     // We know the left side is an lvalue reference, so we can suggest a reason.
     msg = diag::err_bad_cxx_cast_rvalue;
     return TC_NotApplicable;
@@ -1049,7 +1049,7 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   QualType SrcType = SrcExpr->getType();
   if (const LValueReferenceType *DestTypeTmp =
         DestType->getAs<LValueReferenceType>()) {
-    if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
+    if (!SrcExpr->isLValue()) {
       // Cannot const_cast non-lvalue to lvalue reference type. But if this
       // is C-style, static_cast might find a way, so we simply suggest a
       // message and tell the parent to keep searching.
@@ -1152,7 +1152,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
 
   if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {
     bool LValue = DestTypeTmp->isLValueReferenceType();
-    if (LValue && SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
+    if (LValue && !SrcExpr->isLValue()) {
       // Cannot cast non-lvalue to reference type. See the similar comment in
       // const_cast.
       msg = diag::err_bad_cxx_cast_rvalue;

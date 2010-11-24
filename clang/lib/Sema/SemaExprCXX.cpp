@@ -2460,7 +2460,7 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
   //   can be converted to match an operand expression E2 of type T2 is defined
   //   as follows:
   //   -- If E2 is an lvalue:
-  bool ToIsLvalue = (To->isLvalue(Self.Context) == Expr::LV_Valid);
+  bool ToIsLvalue = To->isLValue();
   if (ToIsLvalue) {
     //   E1 can be converted to match E2 if E1 can be implicitly converted to
     //   type "lvalue reference to T2", subject to the constraint that in the

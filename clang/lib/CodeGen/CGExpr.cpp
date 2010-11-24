@@ -192,7 +192,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
   }
 
   RValue RV;
-  if (E->isLvalue(CGF.getContext()) == Expr::LV_Valid) {
+  if (E->isLValue()) {
     // Emit the expression as an lvalue.
     LValue LV = CGF.EmitLValue(E);
     if (LV.isPropertyRef() || LV.isKVCRef()) {
@@ -235,8 +235,8 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
           continue;
         }
       } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-        if (ME->getBase()->isLvalue(CGF.getContext()) != Expr::LV_Valid &&
-            ME->getBase()->getType()->isRecordType()) {
+        if (!ME->isArrow() && ME->getBase()->isRValue()) {
+          assert(ME->getBase()->getType()->isRecordType());
           if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
             E = ME->getBase();
             Adjustments.push_back(SubobjectAdjustment(Field));
@@ -1515,7 +1515,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     const PointerType *PT = E->getBase()->getType()->getAs<PointerType>();
     Base = MakeAddrLValue(Ptr, PT->getPointeeType());
     Base.getQuals().removeObjCGCAttr();
-  } else if (E->getBase()->isLvalue(getContext()) == Expr::LV_Valid) {
+  } else if (E->getBase()->isGLValue()) {
     // Otherwise, if the base is an lvalue ( as in the case of foo.x.x),
     // emit the base as an lvalue.
     assert(E->getBase()->getType()->isVectorType());
@@ -1711,7 +1711,7 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr *E){
 
 LValue 
 CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator *E) {
-  if (E->isLvalue(getContext()) == Expr::LV_Valid) {
+  if (E->isGLValue()) {
     if (int Cond = ConstantFoldsToSimpleInteger(E->getCond())) {
       Expr *Live = Cond == 1 ? E->getLHS() : E->getRHS();
       if (Live)

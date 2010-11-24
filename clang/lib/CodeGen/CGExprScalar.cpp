@@ -1474,7 +1474,7 @@ Value *ScalarExprEmitter::VisitUnaryReal(const UnaryOperator *E) {
     // If it's an l-value, load through the appropriate subobject l-value.
     // Note that we have to ask E because Op might be an l-value that
     // this won't work for, e.g. an Obj-C property.
-    if (E->isLvalue(CGF.getContext()) == Expr::LV_Valid)
+    if (E->isGLValue())
       return CGF.EmitLoadOfLValue(CGF.EmitLValue(E), E->getType())
                 .getScalarVal();
 
@@ -1491,7 +1491,7 @@ Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
     // If it's an l-value, load through the appropriate subobject l-value.
     // Note that we have to ask E because Op might be an l-value that
     // this won't work for, e.g. an Obj-C property.
-    if (Op->isLvalue(CGF.getContext()) == Expr::LV_Valid)
+    if (Op->isGLValue())
       return CGF.EmitLoadOfLValue(CGF.EmitLValue(E), E->getType())
                 .getScalarVal();
 
@@ -2548,7 +2548,7 @@ LValue CodeGenFunction::EmitObjCIsaExpr(const ObjCIsaExpr *E) {
   const llvm::Type *ClassPtrTy = ConvertType(E->getType());
 
   Expr *BaseExpr = E->getBase();
-  if (BaseExpr->isLvalue(getContext()) != Expr::LV_Valid) {
+  if (BaseExpr->isRValue()) {
     V = CreateTempAlloca(ClassPtrTy, "resval");
     llvm::Value *Src = EmitScalarExpr(BaseExpr);
     Builder.CreateStore(Src, V);

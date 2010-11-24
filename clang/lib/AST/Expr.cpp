@@ -1460,7 +1460,7 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
 bool Expr::isBoundMemberFunction(ASTContext &Ctx) const {
   if (isTypeDependent())
     return false;
-  return isLvalue(Ctx) == Expr::LV_MemberFunction;
+  return ClassifyLValue(Ctx) == Expr::LV_MemberFunction;
 }
 
 static Expr::CanThrowResult MergeCanThrow(Expr::CanThrowResult CT1,

@@ -1003,8 +1003,8 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   // Lvalue-to-rvalue conversion (C++ 4.1):
   //   An lvalue (3.10) of a non-function, non-array type T can be
   //   converted to an rvalue.
-  Expr::isLvalueResult argIsLvalue = From->isLvalue(S.Context);
-  if (argIsLvalue == Expr::LV_Valid &&
+  bool argIsLValue = From->isLValue();
+  if (argIsLValue &&
       !FromType->isFunctionType() && !FromType->isArrayType() &&
       S.Context.getCanonicalType(FromType) != S.Context.OverloadTy) {
     SCS.First = ICK_Lvalue_To_Rvalue;
@@ -1036,7 +1036,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
       SCS.setAllToTypes(FromType);
       return true;
     }
-  } else if (FromType->isFunctionType() && argIsLvalue == Expr::LV_Valid) {
+  } else if (FromType->isFunctionType() && argIsLValue) {
     // Function-to-pointer conversion (C++ 4.3).
     SCS.First = ICK_Function_To_Pointer;
 

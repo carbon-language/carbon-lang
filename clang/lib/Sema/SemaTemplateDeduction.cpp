@@ -1757,7 +1757,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
       //   type deduction.
       if (ParamRefType->isRValueReferenceType() &&
           ParamRefType->getAs<TemplateTypeParmType>() &&
-          Args[I]->isLvalue(Context) == Expr::LV_Valid)
+          Args[I]->isLValue())
         ArgType = Context.getLValueReferenceType(ArgType);
     } else {
       // C++ [temp.deduct.call]p2:

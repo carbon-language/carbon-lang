@@ -2378,7 +2378,7 @@ static QualType getDecltypeForExpr(const Expr *e, ASTContext &Context) {
 
   // Otherwise, where T is the type of e, if e is an lvalue, decltype(e) is
   // defined as T&, otherwise decltype(e) is defined as T.
-  if (e->isLvalue(Context) == Expr::LV_Valid)
+  if (e->isLValue())
     T = Context.getLValueReferenceType(T);
 
   return T;

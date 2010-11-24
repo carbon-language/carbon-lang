@@ -4173,7 +4173,7 @@ bool InitializationSequence::Diagnose(Sema &S,
   case FK_ReferenceInitFailed:
     S.Diag(Kind.getLocation(), diag::err_reference_bind_failed)
       << DestType.getNonReferenceType()
-      << (Args[0]->isLvalue(S.Context) == Expr::LV_Valid)
+      << Args[0]->isLValue()
       << Args[0]->getType()
       << Args[0]->getSourceRange();
     break;
@@ -4182,7 +4182,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     S.Diag(Kind.getLocation(), diag::err_init_conversion_failed)
       << (int)Entity.getKind()
       << DestType
-      << (Args[0]->isLvalue(S.Context) == Expr::LV_Valid)
+      << Args[0]->isLValue()
       << Args[0]->getType()
       << Args[0]->getSourceRange();
     break;

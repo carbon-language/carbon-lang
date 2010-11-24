@@ -977,8 +977,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
                               diag::err_non_variable_decl_in_for));
     } else {
       Expr *FirstE = cast<Expr>(First);
-      if (!FirstE->isTypeDependent() &&
-          FirstE->isLvalue(Context) != Expr::LV_Valid)
+      if (!FirstE->isTypeDependent() && !FirstE->isLValue())
         return StmtError(Diag(First->getLocStart(),
                    diag::err_selector_element_not_lvalue)
           << First->getSourceRange());
@@ -1312,13 +1311,13 @@ static bool CheckAsmLValue(const Expr *E, Sema &S) {
   if (E->isTypeDependent())
     return false;
   
-  if (E->isLvalue(S.Context) == Expr::LV_Valid)
+  if (E->isLValue())
     return false;  // Cool, this is an lvalue.
 
   // Okay, this is not an lvalue, but perhaps it is the result of a cast that we
   // are supposed to allow.
   const Expr *E2 = E->IgnoreParenNoopCasts(S.Context);
-  if (E != E2 && E2->isLvalue(S.Context) == Expr::LV_Valid) {
+  if (E != E2 && E2->isLValue()) {
     if (!S.getLangOptions().HeinousExtensions)
       S.Diag(E2->getLocStart(), diag::err_invalid_asm_cast_lvalue)
         << E->getSourceRange();

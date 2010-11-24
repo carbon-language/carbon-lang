@@ -529,7 +529,7 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
   return Cl::CM_Modifiable;
 }
 
-Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
+Expr::LValueClassification Expr::ClassifyLValue(ASTContext &Ctx) const {
   Classification VC = Classify(Ctx);
   switch (VC.getKind()) {
   case Cl::CL_LValue: return LV_Valid;

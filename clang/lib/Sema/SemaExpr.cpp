@@ -238,8 +238,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
     // An lvalue or rvalue of type "array of N T" or "array of unknown bound of
     // T" can be converted to an rvalue of type "pointer to T".
     //
-    if (getLangOptions().C99 || getLangOptions().CPlusPlus ||
-        E->isLvalue(Context) == Expr::LV_Valid)
+    if (getLangOptions().C99 || getLangOptions().CPlusPlus || E->isLValue())
       ImpCastExprToType(E, Context.getArrayDecayedType(Ty),
                         CK_ArrayToPointerDecay);
   }
@@ -252,7 +251,7 @@ void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
   assert(!Ty.isNull() && "DefaultFunctionArrayLvalueConversion - missing type");
   if (!Ty->isDependentType() && Ty.hasQualifiers() &&
       (!getLangOptions().CPlusPlus || !Ty->isRecordType()) &&
-      E->isLvalue(Context) == Expr::LV_Valid) {
+      E->isLValue()) {
     // C++ [conv.lval]p1:
     //   [...] If T is a non-class type, the type of the rvalue is the
     //   cv-unqualified version of T. Otherwise, the type of the
@@ -789,10 +788,16 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty,
 
   MarkDeclarationReferenced(NameInfo.getLoc(), D);
 
-  return Owned(DeclRefExpr::Create(Context,
+  Expr *E = DeclRefExpr::Create(Context,
                               SS? (NestedNameSpecifier *)SS->getScopeRep() : 0,
-                                   SS? SS->getRange() : SourceRange(),
-                                   D, NameInfo, Ty, VK));
+                                SS? SS->getRange() : SourceRange(),
+                                D, NameInfo, Ty, VK);
+
+  // Just in case we're building an illegal pointer-to-member.
+  if (isa<FieldDecl>(D) && cast<FieldDecl>(D)->getBitWidth())
+    E->setObjectKind(OK_BitField);
+
+  return Owned(E);
 }
 
 static ExprResult
@@ -7045,7 +7050,7 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
     // expressions here, but the result of one is always an lvalue anyway.
   }
   NamedDecl *dcl = getPrimaryDecl(op);
-  Expr::isLvalueResult lval = op->isLvalue(S.Context);
+  Expr::LValueClassification lval = op->ClassifyLValue(S.Context);
 
   if (lval == Expr::LV_ClassTemporary) {
     bool sfinae = S.isSFINAEContext();
@@ -7091,25 +7096,21 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
         << op->getSourceRange();
       return QualType();
     }
-  } else if (op->getBitField()) { // C99 6.5.3.2p1
+  } else if (op->getObjectKind() == OK_BitField) { // C99 6.5.3.2p1
     // The operand cannot be a bit-field
     S.Diag(OpLoc, diag::err_typecheck_address_of)
       << "bit-field" << op->getSourceRange();
         return QualType();
-  } else if (op->refersToVectorElement()) {
+  } else if (op->getObjectKind() == OK_VectorComponent) {
     // The operand cannot be an element of a vector
     S.Diag(OpLoc, diag::err_typecheck_address_of)
       << "vector element" << op->getSourceRange();
     return QualType();
-  } else if (isa<ObjCPropertyRefExpr>(op)) {
+  } else if (op->getObjectKind() == OK_ObjCProperty) {
     // cannot take address of a property expression.
     S.Diag(OpLoc, diag::err_typecheck_address_of)
       << "property expression" << op->getSourceRange();
     return QualType();
-  } else if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(op)) {
-    // FIXME: Can LHS ever be null here?
-    if (!CheckAddressOfOperand(S, CO->getTrueExpr(), OpLoc).isNull())
-      return CheckAddressOfOperand(S, CO->getFalseExpr(), OpLoc);
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared
     // with the register storage-class specifier.
