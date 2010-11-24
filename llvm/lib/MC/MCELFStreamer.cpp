@@ -467,12 +467,20 @@ void  MCELFStreamer::fixSymbolsInTLSFixups(const MCExpr *expr) {
 
   case MCExpr::SymbolRef: {
     const MCSymbolRefExpr &symRef = *cast<MCSymbolRefExpr>(expr);
-    MCSymbolRefExpr::VariantKind kind = symRef.getKind();
-    if (kind != MCSymbolRefExpr::VK_TLSGD &&
-	kind != MCSymbolRefExpr::VK_TLSLD &&
-	kind != MCSymbolRefExpr::VK_TLSLDM &&
-	kind != MCSymbolRefExpr::VK_ARM_TLSGD)
+    switch (symRef.getKind()) {
+    default:
       return;
+    case MCSymbolRefExpr::VK_NTPOFF:
+    case MCSymbolRefExpr::VK_GOTNTPOFF:
+    case MCSymbolRefExpr::VK_TLSGD:
+    case MCSymbolRefExpr::VK_TLSLDM:
+    case MCSymbolRefExpr::VK_TPOFF:
+    case MCSymbolRefExpr::VK_DTPOFF:
+    case MCSymbolRefExpr::VK_GOTTPOFF:
+    case MCSymbolRefExpr::VK_TLSLD:
+    case MCSymbolRefExpr::VK_ARM_TLSGD:
+      break;
+    }
     MCSymbolData &SD = getAssembler().getOrCreateSymbolData(symRef.getSymbol());
     SetType(SD, ELF::STT_TLS);
     break;
