@@ -270,7 +270,7 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
       BaseOffset = 
         Base.getBaseOffset() + Layout.getBaseClassOffsetInBits(BaseDecl);
       
-      if (!Layout.getPrimaryBaseWasVirtual() &&
+      if (!Layout.isPrimaryBaseVirtual() &&
           Layout.getPrimaryBase() == BaseDecl)
         BaseDeclIsNonVirtualPrimaryBase = true;
     }

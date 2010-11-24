@@ -793,7 +793,7 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
   // (Since we're emitting the vcall and vbase offsets in reverse order, we'll
   // emit them for the primary base first).
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
-    bool PrimaryBaseIsVirtual = Layout.getPrimaryBaseWasVirtual();
+    bool PrimaryBaseIsVirtual = Layout.isPrimaryBaseVirtual();
 
     uint64_t PrimaryBaseOffset;
     
@@ -849,7 +849,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   // Handle the primary base first.
   // We only want to add vcall offsets if the base is non-virtual; a virtual
   // primary base will have its vcall and vbase offsets emitted already.
-  if (PrimaryBase && !Layout.getPrimaryBaseWasVirtual()) {
+  if (PrimaryBase && !Layout.isPrimaryBaseVirtual()) {
     // Get the base offset of the primary base.
     assert(Layout.getBaseClassOffsetInBits(PrimaryBase) == 0 &&
            "Primary base should have a zero offset!");
@@ -1520,7 +1520,7 @@ VTableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
     if (!PrimaryBase)
       break;
     
-    if (Layout.getPrimaryBaseWasVirtual()) {
+    if (Layout.isPrimaryBaseVirtual()) {
       assert(Layout.getVBaseClassOffsetInBits(PrimaryBase) == 0 && 
              "Primary base should always be at offset 0!");
 
@@ -1586,7 +1586,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
     uint64_t PrimaryBaseOffset;
     uint64_t PrimaryBaseOffsetInLayoutClass;
-    if (Layout.getPrimaryBaseWasVirtual()) {
+    if (Layout.isPrimaryBaseVirtual()) {
       assert(Layout.getVBaseClassOffsetInBits(PrimaryBase) == 0 &&
              "Primary vbase should have a zero offset!");
       
@@ -1788,7 +1788,7 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
     if (!PrimaryBase)
       break;
     
-    if (Layout.getPrimaryBaseWasVirtual()) {
+    if (Layout.isPrimaryBaseVirtual()) {
       // Check if this virtual primary base is a primary base in the layout
       // class. If it's not, we don't want to add it.
       const ASTRecordLayout &LayoutClassLayout =
@@ -1875,7 +1875,7 @@ VTableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
 
     // Check if it's virtual.
-    if (Layout.getPrimaryBaseWasVirtual()) {
+    if (Layout.isPrimaryBaseVirtual()) {
       bool IsPrimaryVirtualBase = true;
 
       if (isBuildingConstructorVTable()) {

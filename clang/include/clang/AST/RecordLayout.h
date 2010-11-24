@@ -209,7 +209,7 @@ public:
   }
 
   // FIXME: Migrate off of this function and use getPrimaryBaseInfo directly.
-  bool getPrimaryBaseWasVirtual() const {
+  bool isPrimaryBaseVirtual() const {
     return getPrimaryBaseInfo().isVirtual();
   }
 

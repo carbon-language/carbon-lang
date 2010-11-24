@@ -669,7 +669,7 @@ AddIndirectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
                         CXXIndirectPrimaryBaseSet& Bases) {
   // If the record has a virtual primary base class, add it to our set.
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-  if (Layout.getPrimaryBaseWasVirtual())
+  if (Layout.isPrimaryBaseVirtual())
     Bases.insert(Layout.getPrimaryBase());
 
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),

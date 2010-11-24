@@ -857,7 +857,7 @@ RecordLayoutBuilder::ComputeBaseSubobjectInfo(const CXXRecordDecl *RD,
   // Check if this base has a primary virtual base.
   if (RD->getNumVBases()) {
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-    if (Layout.getPrimaryBaseWasVirtual()) {
+    if (Layout.isPrimaryBaseVirtual()) {
       // This base does have a primary virtual base.
       PrimaryVirtualBase = Layout.getPrimaryBase();
       assert(PrimaryVirtualBase && "Didn't have a primary virtual base!");
@@ -1045,7 +1045,7 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
   } else {
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
     PrimaryBase = Layout.getPrimaryBase();
-    PrimaryBaseIsVirtual = Layout.getPrimaryBaseWasVirtual();
+    PrimaryBaseIsVirtual = Layout.isPrimaryBaseVirtual();
   }
 
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),

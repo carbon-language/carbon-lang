@@ -1045,7 +1045,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
       while (1) {
         const ASTRecordLayout &BRL = CGM.getContext().getASTRecordLayout(PBase);
         const CXXRecordDecl *PBT = BRL.getPrimaryBase();
-        if (PBT && !BRL.getPrimaryBaseWasVirtual())
+        if (PBT && !BRL.isPrimaryBaseVirtual())
           PBase = PBT;
         else 
           break;

@@ -527,7 +527,7 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
       AppendField(NextFieldOffsetInBytes, VTableTy->getPointerTo());
     } else {
       // FIXME: Handle a virtual primary base.
-      if (!Layout.getPrimaryBaseWasVirtual())
+      if (!Layout.isPrimaryBaseVirtual())
         LayoutNonVirtualBase(PrimaryBase, 0);
     }
   }
@@ -542,7 +542,7 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     // We've already laid out the primary base.
-    if (BaseDecl == PrimaryBase && !Layout.getPrimaryBaseWasVirtual())
+    if (BaseDecl == PrimaryBase && !Layout.isPrimaryBaseVirtual())
       continue;
 
     LayoutNonVirtualBase(BaseDecl, Layout.getBaseClassOffsetInBits(BaseDecl));
