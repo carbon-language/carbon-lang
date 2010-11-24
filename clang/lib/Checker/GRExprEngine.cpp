@@ -1957,10 +1957,11 @@ void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
     EvalBind(Dst, StoreE, *NI, GetState(*NI), location, Val);
 }
 
-void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, const Expr *Ex, 
+void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
                             ExplodedNode* Pred,
                             const GRState* state, SVal location,
                             const void *tag, QualType LoadTy) {
+  assert(!isa<NonLoc>(location) && "location cannot be a NonLoc.");
 
   // Are we loading from a region?  This actually results in two loads; one
   // to fetch the address of the referenced value and one to fetch the
