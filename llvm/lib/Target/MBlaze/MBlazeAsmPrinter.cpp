@@ -60,7 +60,7 @@ namespace {
       return "MBlaze Assembly Printer";
     }
 
-    void printSavedRegsBitmask(raw_ostream &O);
+    void printSavedRegsBitmask();
     void emitFrameDirective();
     virtual void EmitFunctionBodyStart();
     virtual void EmitFunctionBodyEnd();
@@ -124,10 +124,9 @@ static void printHex32(unsigned int Value, raw_ostream &O) {
 
 // Create a bitmask with all callee saved registers for CPU or Floating Point
 // registers. For CPU registers consider RA, GP and FP for saving if necessary.
-void MBlazeAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
+void MBlazeAsmPrinter::printSavedRegsBitmask() {
   const TargetFrameInfo *TFI = TM.getFrameInfo();
   const TargetRegisterInfo &RI = *TM.getRegisterInfo();
-  const MBlazeFunctionInfo *MBlazeFI = MF->getInfo<MBlazeFunctionInfo>();
 
   // CPU Saved Registers Bitmasks
   unsigned int CPUBitmask = 0;
@@ -152,17 +151,19 @@ void MBlazeAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
                 getRegisterNumbering(RI.getRARegister()));
 
   // Print CPUBitmask
-  O << "\t.mask \t"; printHex32(CPUBitmask, O); O << ','
-    << MBlazeFI->getCPUTopSavedRegOff() << '\n';
+  OutStreamer.EmitRawText("\t.mask\t0x" + Twine::utohexstr(CPUBitmask));
 }
 
 /// Frame Directive
 void MBlazeAsmPrinter::emitFrameDirective() {
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
+  if (!OutStreamer.hasRawTextSupport())
+    return;
 
+  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   unsigned stkReg = RI.getFrameRegister(*MF);
   unsigned retReg = RI.getRARegister();
   unsigned stkSze = MF->getFrameInfo()->getStackSize();
+  if (stkSze < 28 && MF->getFrameInfo()->adjustsStack()) stkSze = 28;
 
   OutStreamer.EmitRawText("\t.frame\t" +
                           Twine(MBlazeInstPrinter::getRegisterName(stkReg)) +
@@ -171,21 +172,27 @@ void MBlazeAsmPrinter::emitFrameDirective() {
 }
 
 void MBlazeAsmPrinter::EmitFunctionEntryLabel() {
-  OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
+  if (OutStreamer.hasRawTextSupport())
+    OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
   AsmPrinter::EmitFunctionEntryLabel();
 }
 
 void MBlazeAsmPrinter::EmitFunctionBodyStart() {
-  emitFrameDirective();
+  if (!OutStreamer.hasRawTextSupport())
+    return;
 
-  SmallString<128> Str;
-  raw_svector_ostream OS(Str);
-  printSavedRegsBitmask(OS);
-  OutStreamer.EmitRawText(OS.str());
+  emitFrameDirective();
+  printSavedRegsBitmask();
+
+  // SmallString<128> Str;
+  // raw_svector_ostream OS(Str);
+  // printSavedRegsBitmask(OS);
+  // OutStreamer.EmitRawText(OS.str());
 }
 
 void MBlazeAsmPrinter::EmitFunctionBodyEnd() {
-  OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
+  if (OutStreamer.hasRawTextSupport())
+    OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
 }
 
 //===----------------------------------------------------------------------===//
