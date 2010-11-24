@@ -384,16 +384,15 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         OS << TD->getQualifiedNameAsString();
       else
         TD->printName(OS);
-    } else if (const TypedefType *TdT = dyn_cast<TypedefType>(T)) {
+    } else if (const TypedefDecl *TDD = TD->getTypedefForAnonDecl()) {
       // FIXME: We should not have to check for a null decl context here.
       // Right now we do it because the implicit Obj-C decls don't have one.
-      if (TdT->getDecl()->getDeclContext())
-        OS << TdT->getDecl()->getQualifiedNameAsString();
+      if (TDD->getDeclContext())
+        OS << TDD->getQualifiedNameAsString();
       else
-        TdT->getDecl()->printName(OS);
-    } else {
+        TDD->printName(OS);
+    } else
       OS << "anon";
-    }
 
     TheModule.addTypeName(OS.str(), Res);
     return Res;

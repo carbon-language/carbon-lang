@@ -11,7 +11,7 @@ typedef union {
 void f0(transp_t0 obj);
 
 // CHECK: define void @f1_0(i32* %a0) 
-// CHECK:  call void @f0(%union.anon* byval %{{.*}})
+// CHECK:  call void @f0(%union.transp_t0* byval %{{.*}})
 // CHECK:  call void %{{.*}}(i8* %{{[a-z0-9]*}})
 // CHECK: }
 void f1_0(int *a0) {
