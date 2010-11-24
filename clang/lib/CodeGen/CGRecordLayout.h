@@ -14,7 +14,7 @@
 #include "clang/AST/Decl.h"
 namespace llvm {
   class raw_ostream;
-  class Type;
+  class StructType;
 }
 
 namespace clang {
@@ -173,11 +173,11 @@ class CGRecordLayout {
 
 private:
   /// The LLVM type corresponding to this record layout.
-  const llvm::Type *LLVMType;
+  const llvm::StructType *LLVMType;
 
   /// The LLVM type for the non-virtual part of this record layout, used for
   /// laying out the record as a base.
-  const llvm::Type *NonVirtualBaseLLVMType;
+  const llvm::StructType *NonVirtualBaseLLVMType;
 
   /// Map from (non-bit-field) struct field to the corresponding llvm struct
   /// type field no. This info is populated by record builder.
@@ -196,18 +196,18 @@ private:
   bool IsZeroInitializable : 1;
 
 public:
-  CGRecordLayout(const llvm::Type *LLVMType,
-                 const llvm::Type *NonVirtualBaseLLVMType,
+  CGRecordLayout(const llvm::StructType *LLVMType,
+                 const llvm::StructType *NonVirtualBaseLLVMType,
                  bool IsZeroInitializable)
     : LLVMType(LLVMType), NonVirtualBaseLLVMType(NonVirtualBaseLLVMType), 
     IsZeroInitializable(IsZeroInitializable) {}
 
   /// \brief Return the LLVM type associated with this record.
-  const llvm::Type *getLLVMType() const {
+  const llvm::StructType *getLLVMType() const {
     return LLVMType;
   }
 
-  const llvm::Type *getNonVirtualBaseLLVMType() const {
+  const llvm::StructType *getNonVirtualBaseLLVMType() const {
       return NonVirtualBaseLLVMType;
   }
 

@@ -733,11 +733,11 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 
   Builder.Layout(D);
 
-  const llvm::Type *Ty = llvm::StructType::get(getLLVMContext(),
-                                               Builder.FieldTypes,
-                                               Builder.Packed);
+  const llvm::StructType *Ty = llvm::StructType::get(getLLVMContext(),
+                                                     Builder.FieldTypes,
+                                                     Builder.Packed);
 
-  const llvm::Type *BaseTy = 0;
+  const llvm::StructType *BaseTy = 0;
   if (isa<CXXRecordDecl>(D)) {
     if (Builder.NonVirtualBaseTypeIsSameAsCompleteType)
       BaseTy = Ty;
