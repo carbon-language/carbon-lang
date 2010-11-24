@@ -488,6 +488,14 @@ const CGRecordLayout &
 CodeGenTypes::getCGRecordLayout(const RecordDecl *TD) const {
   const Type *Key = Context.getTagDeclType(TD).getTypePtr();
   const CGRecordLayout *Layout = CGRecordLayouts.lookup(Key);
+  if (!Layout) {
+    // Compute the type information.
+    ConvertTagDeclType(TD);
+
+    // Now try again.
+    Layout = CGRecordLayouts.lookup(Key);
+  }
+
   assert(Layout && "Unable to find record layout information for type");
   return *Layout;
 }
