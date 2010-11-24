@@ -1020,6 +1020,7 @@ splitRoot(unsigned Position) {
     rootBranch().subtree(n) = Node[n];
   }
   rootSize = Nodes;
+  ++height;
   return NewOffset;
 }
 
@@ -1489,8 +1490,8 @@ class IntervalMap<KeyT, ValT, N, Traits>::iterator : public const_iterator {
 
   void setNodeSize(unsigned Level, unsigned Size);
   void setNodeStop(unsigned Level, KeyT Stop);
-  void insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop);
-  void overflowLeaf();
+  bool insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop);
+  template <typename NodeT> bool overflow(unsigned Level);
   void treeInsert(KeyT a, KeyT b, ValT y);
 
 public:
@@ -1528,19 +1529,26 @@ iterator::setNodeStop(unsigned Level, KeyT Stop) {
 
 /// insertNode - insert a node before the current path at level.
 /// Leave the current path pointing at the new node.
+/// @param Level path index of the node to be inserted.
+/// @param Node The node to be inserted.
+/// @param Stop The last index in the new node.
+/// @return True if the tree height was increased.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
-void IntervalMap<KeyT, ValT, N, Traits>::
+bool IntervalMap<KeyT, ValT, N, Traits>::
 iterator::insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop) {
+  bool SplitRoot = false;
+
   if (!Level) {
     // Insert into the root branch node.
     IntervalMap &IM = *this->map;
     if (IM.rootSize < RootBranch::Capacity) {
       IM.rootBranch().insert(this->rootOffset, IM.rootSize, Node, Stop);
       ++IM.rootSize;
-      return;
+      return SplitRoot;
     }
 
     // We need to split the root while keeping our position.
+    SplitRoot = true;
     IdxPair Offset = IM.splitRoot(this->rootOffset);
     this->rootOffset = Offset.first;
     this->path.insert(this->path.begin(),std::make_pair(
@@ -1555,11 +1563,16 @@ iterator::insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop) {
   }
 
   // Insert into the branch node at level-1.
+  if (this->pathNode(Level-1).size() == Branch::Capacity) {
+    assert(!SplitRoot && "Cannot overflow after splitting the root");
+    SplitRoot = overflow<Branch>(Level - 1);
+    Level += SplitRoot;
+  }
   IntervalMapImpl::NodeRef NR = this->pathNode(Level-1);
   unsigned Offset = this->pathOffset(Level-1);
-  assert(NR.size() < Branch::Capacity && "Branch overflow");
   NR.get<Branch>().insert(Offset, NR.size(), Node, Stop);
   setNodeSize(Level - 1, NR.size() + 1);
+  return SplitRoot;
 }
 
 // insert
@@ -1603,7 +1616,7 @@ iterator::treeInsert(KeyT a, KeyT b, ValT y) {
     return;
   }
   // Leaf node has no space.
-  overflowLeaf();
+  overflow<Leaf>(this->map->height - 1);
   IP = this->treeLeaf().insertFrom(this->treeLeafOffset(),
                                    this->treeLeafSize(), a, b, y);
   this->treeLeafOffset() = IP.first;
@@ -1614,52 +1627,57 @@ iterator::treeInsert(KeyT a, KeyT b, ValT y) {
   // FIXME: Handle cross-node coalescing.
 }
 
-// overflowLeaf - Distribute entries of the current leaf node evenly among
-// its siblings and ensure that the current node is not full.
-// This may require allocating a new node.
+/// overflow - Distribute entries of the current node evenly among
+/// its siblings and ensure that the current node is not full.
+/// This may require allocating a new node.
+/// @param NodeT The type of node at Level (Leaf or Branch).
+/// @param Level path index of the overflowing node.
+/// @return True when the tree height was changed.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
-void IntervalMap<KeyT, ValT, N, Traits>::
-iterator::overflowLeaf() {
+template <typename NodeT>
+bool IntervalMap<KeyT, ValT, N, Traits>::
+iterator::overflow(unsigned Level) {
   using namespace IntervalMapImpl;
   unsigned CurSize[4];
-  Leaf *Node[4];
+  NodeT *Node[4];
   unsigned Nodes = 0;
   unsigned Elements = 0;
-  unsigned Offset = this->treeLeafOffset();
+  unsigned Offset = this->pathOffset(Level);
 
   // Do we have a left sibling?
-  NodeRef LeftSib = this->leftSibling(this->map->height-1);
+  NodeRef LeftSib = this->leftSibling(Level);
   if (LeftSib) {
     Offset += Elements = CurSize[Nodes] = LeftSib.size();
-    Node[Nodes++] = &LeftSib.get<Leaf>();
+    Node[Nodes++] = &LeftSib.get<NodeT>();
   }
 
-  // Current leaf node.
-  Elements += CurSize[Nodes] = this->treeLeafSize();
-  Node[Nodes++] = &this->treeLeaf();
+  // Current node.
+  NodeRef CurNode = this->pathNode(Level);
+  Elements += CurSize[Nodes] = CurNode.size();
+  Node[Nodes++] = &CurNode.get<NodeT>();
 
   // Do we have a right sibling?
-  NodeRef RightSib = this->rightSibling(this->map->height-1);
+  NodeRef RightSib = this->rightSibling(Level);
   if (RightSib) {
     Offset += Elements = CurSize[Nodes] = RightSib.size();
-    Node[Nodes++] = &RightSib.get<Leaf>();
+    Node[Nodes++] = &RightSib.get<NodeT>();
   }
 
   // Do we need to allocate a new node?
   unsigned NewNode = 0;
-  if (Elements + 1 > Nodes * Leaf::Capacity) {
+  if (Elements + 1 > Nodes * NodeT::Capacity) {
     // Insert NewNode at the penultimate position, or after a single node.
     NewNode = Nodes == 1 ? 1 : Nodes - 1;
     CurSize[Nodes] = CurSize[NewNode];
     Node[Nodes] = Node[NewNode];
     CurSize[NewNode] = 0;
-    Node[NewNode] = this->map->allocLeaf();
+    Node[NewNode] = new(this->map->allocator.template Allocate<NodeT>())NodeT();
     ++Nodes;
   }
 
   // Compute the new element distribution.
   unsigned NewSize[4];
-  IdxPair NewOffset = distribute(Nodes, Elements, Leaf::Capacity,
+  IdxPair NewOffset = distribute(Nodes, Elements, NodeT::Capacity,
                                  CurSize, NewSize, Offset, true);
 
   // Move current location to the leftmost node.
@@ -1702,14 +1720,16 @@ iterator::overflowLeaf() {
 #endif
 
   // Elements have been rearranged, now update node sizes and stops.
+  bool SplitRoot = false;
   unsigned Pos = 0;
   for (;;) {
     KeyT Stop = Node[Pos]->stop(NewSize[Pos]-1);
-    if (NewNode && Pos == NewNode)
-      insertNode(this->map->height - 1, NodeRef(Node[Pos], NewSize[Pos]), Stop);
-    else {
-      setNodeSize(this->map->height - 1, NewSize[Pos]);
-      setNodeStop(this->map->height - 1, Stop);
+    if (NewNode && Pos == NewNode) {
+      SplitRoot = insertNode(Level, NodeRef(Node[Pos], NewSize[Pos]), Stop);
+      Level += SplitRoot;
+    } else {
+      setNodeSize(Level, NewSize[Pos]);
+      setNodeStop(Level, Stop);
     }
     if (Pos + 1 == Nodes)
       break;
@@ -1722,7 +1742,8 @@ iterator::overflowLeaf() {
     this->treeDecrement();
     --Pos;
   }
-  this->treeLeafOffset() = NewOffset.second;
+  this->pathOffset(Level) = NewOffset.second;
+  return SplitRoot;
 }
 
 } // namespace llvm
