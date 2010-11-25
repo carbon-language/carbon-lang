@@ -222,7 +222,7 @@ void PPCInstPrinter::printMemRegReg(const MCInst *MI, unsigned OpNo,
 
 /// stripRegisterPrefix - This method strips the character prefix from a
 /// register name so that only the number is left.  Used by for linux asm.
-const char *stripRegisterPrefix(const char *RegName) {
+static const char *stripRegisterPrefix(const char *RegName) {
   switch (RegName[0]) {
   case 'r':
   case 'f':

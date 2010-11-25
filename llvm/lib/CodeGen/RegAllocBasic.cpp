@@ -56,14 +56,14 @@ static cl::opt<bool>
 VerifyRegAlloc("verify-regalloc",
                cl::desc("Verify live intervals before renaming"));
 
+namespace {
+
 class PhysicalRegisterDescription : public AbstractRegisterDescription {
   const TargetRegisterInfo *tri_;
 public:
   PhysicalRegisterDescription(const TargetRegisterInfo *tri): tri_(tri) {}
   virtual const char *getName(unsigned reg) const { return tri_->getName(reg); }
 };
-
-namespace {
 
 /// RABasic provides a minimal implementation of the basic register allocation
 /// algorithm. It prioritizes live virtual registers by spill weight and spills
