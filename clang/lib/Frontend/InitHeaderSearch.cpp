@@ -708,6 +708,13 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
                                 "i586-suse-linux", "", "", triple);
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
                                 "x86_64-suse-linux", "", "", triple);
+
+    // openSUSE 11.4
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5",
+                                "i586-suse-linux", "", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5",
+                                "x86_64-suse-linux", "", "", triple);
+
     // Arch Linux 2008-06-24
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.1",
                                 "i686-pc-linux-gnu", "", "", triple);
