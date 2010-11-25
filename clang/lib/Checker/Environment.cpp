@@ -53,8 +53,7 @@ SVal Environment::GetSVal(const Stmt *E, ValueManager& ValMgr) const {
           return ValMgr.makeIntVal(cast<IntegerLiteral>(E));
       }
 
-      // Casts where the source and target type are the same
-      // are no-ops.  We blast through these to get the descendant
+      // We blast through no-op casts to get the descendant
       // subexpression that has a value.
 
       case Stmt::ImplicitCastExprClass:
