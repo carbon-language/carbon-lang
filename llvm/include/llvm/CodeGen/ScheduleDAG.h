@@ -221,6 +221,9 @@ namespace llvm {
     }
   };
 
+  template <>
+  struct isPodLike<SDep> { static const bool value = true; };
+
   /// SUnit - Scheduling unit. This is a node in the scheduling DAG.
   class SUnit {
   private:
@@ -242,11 +245,11 @@ namespace llvm {
 
     unsigned NodeNum;                   // Entry # of node in the node vector.
     unsigned NodeQueueId;               // Queue id of node.
-    unsigned short Latency;             // Node latency.
     unsigned NumPreds;                  // # of SDep::Data preds.
     unsigned NumSuccs;                  // # of SDep::Data sucss.
     unsigned NumPredsLeft;              // # of preds not scheduled.
     unsigned NumSuccsLeft;              // # of succs not scheduled.
+    unsigned short Latency;             // Node latency.
     bool isCall           : 1;          // Is a function call.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isCommutable     : 1;          // Is a commutable instruction.
@@ -273,8 +276,8 @@ namespace llvm {
     /// an SDNode and any nodes flagged to it.
     SUnit(SDNode *node, unsigned nodenum)
       : Node(node), Instr(0), OrigNode(0), NodeNum(nodenum),
-        NodeQueueId(0),  Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
-        NumSuccsLeft(0),
+        NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
+        NumSuccsLeft(0), Latency(0),
         isCall(false), isTwoAddress(false), isCommutable(false),
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
@@ -287,8 +290,8 @@ namespace llvm {
     /// a MachineInstr.
     SUnit(MachineInstr *instr, unsigned nodenum)
       : Node(0), Instr(instr), OrigNode(0), NodeNum(nodenum),
-        NodeQueueId(0), Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
-        NumSuccsLeft(0),
+        NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
+        NumSuccsLeft(0), Latency(0),
         isCall(false), isTwoAddress(false), isCommutable(false),
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
@@ -300,8 +303,8 @@ namespace llvm {
     /// SUnit - Construct a placeholder SUnit.
     SUnit()
       : Node(0), Instr(0), OrigNode(0), NodeNum(~0u),
-        NodeQueueId(0), Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
-        NumSuccsLeft(0),
+        NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
+        NumSuccsLeft(0), Latency(0),
         isCall(false), isTwoAddress(false), isCommutable(false),
         hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
