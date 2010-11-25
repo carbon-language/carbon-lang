@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -S -emit-llvm %s -o - | grep nounwind | count 4
+// RUN: %llvmgxx -S %s -o - | grep nounwind | count 4
 int c(void) __attribute__((const));
 int p(void) __attribute__((pure));
 int t(void);

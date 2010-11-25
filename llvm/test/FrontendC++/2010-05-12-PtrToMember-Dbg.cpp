@@ -1,4 +1,4 @@
-//RUN: %llvmgxx -O0 -emit-llvm -S -g -o - %s | grep DW_TAG_auto_variable
+//RUN: %llvmgxx -O0 -S -g -o - %s | grep DW_TAG_auto_variable
 class Foo
 {
  public:

@@ -1,6 +1,6 @@
 // Make sure unbounded arrays compile with debug information.
 // 
-// RUN: %llvmgcc -O0 -c -g %s
+// RUN: %llvmgcc -O0 -S -g %s
 
 // PR1068
 

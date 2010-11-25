@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -c -emit-llvm %s -o - | llvm-dis | grep noalias
+// RUN: %llvmgxx -S %s -o - | grep noalias
 
 
 class foo {

@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -emit-llvm -S -o -
+// RUN: %llvmgxx %s -S -o -
 // PR1084
 
 extern "C"

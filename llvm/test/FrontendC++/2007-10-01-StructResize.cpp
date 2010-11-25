@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -c %s -o /dev/null
+// RUN: %llvmgxx -S %s -o /dev/null
 
 #pragma pack(4)
 

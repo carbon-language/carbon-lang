@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -c -o /dev/null
+// RUN: %llvmgxx %s -S -o /dev/null
 // PR2917
 
 #include <complex>

@@ -1,5 +1,5 @@
-// RUN: %llvmgxx -xc++ %s -c -o - | llvm-dis | not grep ZN12basic_stringIcEC1Ev
-// RUN: %llvmgxx -xc++ %s -c -o - | llvm-dis | grep ZN12basic_stringIcED1Ev | count 2
+// RUN: %llvmgxx -xc++ %s -S -o - | not grep ZN12basic_stringIcEC1Ev
+// RUN: %llvmgxx -xc++ %s -S -o - | grep ZN12basic_stringIcED1Ev | count 2
 
 template<class charT> 
 class basic_string

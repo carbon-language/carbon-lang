@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -S -emit-llvm -O0 -o - 
+// RUN: %llvmgxx %s -S -O0 -o - 
 // PR1378
 
 typedef float v4sf __attribute__((vector_size(16)));

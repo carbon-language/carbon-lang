@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -c -emit-llvm %s -o /dev/null -g
+// RUN: %llvmgxx -S %s -o /dev/null -g
 // XTARGET: darwin,linux
 // XFAIL: *
 template <typename T1,typename T2>

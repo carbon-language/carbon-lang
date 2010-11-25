@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S -g --emit-llvm %s -o - | grep "\~A"
+// RUN: %llvmgcc -S -g %s -o - | grep "\~A"
 class A {
   int i;
 public:

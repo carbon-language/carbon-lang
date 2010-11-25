@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -S -emit-llvm %s -o - | grep byval | count 2
+// RUN: %llvmgxx -S %s -o - | grep byval | count 2
 // XTARGET: x86
 // PR4242
 // (PR 4242 bug is on 64-bit only, test passes on x86-32 as well)

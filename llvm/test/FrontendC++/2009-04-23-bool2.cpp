@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -c -emit-llvm %s -o /dev/null
+// RUN: %llvmgxx -S %s -o /dev/null
 // g++.old-deja/g++.jason/bool2.C from gcc testsuite.
 // Crashed before 67975 went in.
 struct F {

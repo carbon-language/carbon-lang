@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -emit-llvm -S -o -
+// RUN: %llvmgxx %s -S -o -
 // PR954
 
 struct _Refcount_Base   {

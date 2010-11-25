@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -S -emit-llvm %s -o - -O2 | FileCheck %s
+// RUN: %llvmgxx -S %s -o - -O2 | FileCheck %s
 namespace boost {
   namespace detail {
     template <typename T> struct cv_traits_imp {};

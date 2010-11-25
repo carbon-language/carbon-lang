@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -S -m32 -emit-llvm %s -o /dev/null
+// RUN: %llvmgxx -S -m32 %s -o /dev/null
 class X { 
  public:
   virtual ~X();

@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -emit-llvm -S -g %s -o - | FileCheck %s
+// RUN: %llvmgxx -S -g %s -o - | FileCheck %s
 // Require the template function declaration refer to the correct filename.
 // First, locate the function decl in metadata, and pluck out the file handle:
 // CHECK: {{extract_dwarf_data_from_header.*extract_dwarf_data_from_header.*extract_dwarf_data_from_header.*[^ ]+", metadata !}}[[filehandle:[0-9]+]],

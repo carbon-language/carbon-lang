@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -emit-llvm -S -o -
+// RUN: %llvmgxx %s -S -o -
 
 #pragma reverse_bitfields on
 typedef unsigned long UINT32;

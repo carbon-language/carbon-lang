@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %llvmgxx -S %s -o - | FileCheck %s
 // rdar://7309675
 // PR4678
 

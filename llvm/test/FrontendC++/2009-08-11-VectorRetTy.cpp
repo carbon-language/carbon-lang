@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -c -o /dev/null
+// RUN: %llvmgxx %s -S -o /dev/null
 // <rdar://problem/7096460>
 typedef void (*Func) ();
 typedef long long m64 __attribute__((__vector_size__(8), __may_alias__));

@@ -1,6 +1,6 @@
 // PR1602
-// RUN: %llvmgxx -c -emit-llvm %s -o - -O3 | llvm-dis | not grep ptrtoint
-// RUN: %llvmgxx -c -emit-llvm %s -o - -O3 | llvm-dis | grep getelementptr | count 1
+// RUN: %llvmgxx -S %s -o - -O3 | not grep ptrtoint
+// RUN: %llvmgxx -S %s -o - -O3 | grep getelementptr | count 1
 
 
 struct S { virtual void f(); };

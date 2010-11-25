@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -S -emit-llvm -O2 -o - | not grep {_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag}
+// RUN: %llvmgxx %s -S -O2 -o - | not grep {_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag}
 // PR4262
 
 // The "basic_string" extern template instantiation declaration is supposed to

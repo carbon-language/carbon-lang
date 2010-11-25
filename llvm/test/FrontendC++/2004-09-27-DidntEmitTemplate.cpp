@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -xc++ %s -c -o - | llvm-dis | grep callDefaultCtor | \
+// RUN: %llvmgxx -xc++ %s -S -o - | grep callDefaultCtor | \
 // RUN:   not grep declare
 
 // This is a testcase for LLVM PR445, which was a problem where the 

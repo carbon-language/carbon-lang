@@ -1,5 +1,5 @@
-// RUN: %llvmgxx %s -emit-llvm -S -o - | not grep eprintf1
-// RUN: %llvmgxx %s -emit-llvm -S -o - | grep eprintf
+// RUN: %llvmgxx %s -S -o - | not grep eprintf1
+// RUN: %llvmgxx %s -S -o - | grep eprintf
 
 // Only one eprintf should exist in the output
 
