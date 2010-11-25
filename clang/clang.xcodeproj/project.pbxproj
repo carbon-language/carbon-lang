@@ -849,10 +849,10 @@
 		BF9FEDFA1225E6A9003A8B71 /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = lib/Sema/AttributeList.cpp; sourceTree = "<group>"; };
 		BF9FEDFC1225E6C6003A8B71 /* DeclSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSpec.cpp; path = lib/Sema/DeclSpec.cpp; sourceTree = "<group>"; };
 		BF9FEDFE1225E6DD003A8B71 /* TargetAttributesSema.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TargetAttributesSema.cpp; path = lib/Sema/TargetAttributesSema.cpp; sourceTree = "<group>"; };
-		BF9FEE001225E718003A8B71 /* CXXABI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CXXABI.h; sourceTree = "<group>"; };
-		BF9FEE011225E73F003A8B71 /* ExprClassification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExprClassification.cpp; sourceTree = "<group>"; };
-		BF9FEE031225E759003A8B71 /* ItaniumCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ItaniumCXXABI.cpp; sourceTree = "<group>"; };
-		BF9FEE051225E770003A8B71 /* MicrosoftCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MicrosoftCXXABI.cpp; sourceTree = "<group>"; };
+		BF9FEE001225E718003A8B71 /* CXXABI.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = CXXABI.h; sourceTree = "<group>"; tabWidth = 2; };
+		BF9FEE011225E73F003A8B71 /* ExprClassification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = ExprClassification.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		BF9FEE031225E759003A8B71 /* ItaniumCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = ItaniumCXXABI.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		BF9FEE051225E770003A8B71 /* MicrosoftCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = MicrosoftCXXABI.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		BF9FEE2B1225E7EA003A8B71 /* BackendUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BackendUtil.cpp; path = lib/CodeGen/BackendUtil.cpp; sourceTree = "<group>"; };
 		BF9FEE2D1225E80F003A8B71 /* CGCXXABI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGCXXABI.h; path = lib/CodeGen/CGCXXABI.h; sourceTree = "<group>"; };
 		BF9FEE2E1225E82D003A8B71 /* CGException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGException.h; path = lib/CodeGen/CGException.h; sourceTree = "<group>"; };
