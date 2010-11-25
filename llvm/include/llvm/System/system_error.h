@@ -506,7 +506,11 @@ enum _ {
   argument_out_of_domain              = EDOM,
   bad_address                         = EFAULT,
   bad_file_descriptor                 = EBADF,
+#ifdef EBADMSG
   bad_message                         = EBADMSG,
+#else
+  bad_message                         = EINVAL,
+#endif
   broken_pipe                         = EPIPE,
   connection_aborted                  = ECONNABORTED,
   connection_already_in_progress      = EALREADY,
@@ -536,7 +540,11 @@ enum _ {
   network_unreachable                 = ENETUNREACH,
   no_buffer_space                     = ENOBUFS,
   no_child_process                    = ECHILD,
+#ifdef ENOLINK
   no_link                             = ENOLINK,
+#else
+  no_link                             = EINVAL,
+#endif
   no_lock_available                   = ENOLCK,
 #ifdef ENODATA
   no_message_available                = ENODATA,
@@ -580,7 +588,11 @@ enum _ {
   owner_dead                          = EINVAL,
 #endif
   permission_denied                   = EACCES,
+#ifdef EPROTO
   protocol_error                      = EPROTO,
+#else
+  protocol_error                      = EINVAL,
+#endif
   protocol_not_supported              = EPROTONOSUPPORT,
   read_only_file_system               = EROFS,
   resource_deadlock_would_occur       = EDEADLK,
