@@ -201,6 +201,46 @@ static SectionKind computeSectionKind(unsigned Flags) {
   return SectionKind::getDataRel();
 }
 
+static int parseSectionFlags(StringRef flagsStr) {
+  int flags = 0;
+
+  for (unsigned i = 0; i < flagsStr.size(); i++) {
+    switch (flagsStr[i]) {
+    case 'a':
+      flags |= MCSectionELF::SHF_ALLOC;
+      break;
+    case 'x':
+      flags |= MCSectionELF::SHF_EXECINSTR;
+      break;
+    case 'w':
+      flags |= MCSectionELF::SHF_WRITE;
+      break;
+    case 'M':
+      flags |= MCSectionELF::SHF_MERGE;
+      break;
+    case 'S':
+      flags |= MCSectionELF::SHF_STRINGS;
+      break;
+    case 'T':
+      flags |= MCSectionELF::SHF_TLS;
+      break;
+    case 'c':
+      flags |= MCSectionELF::XCORE_SHF_CP_SECTION;
+      break;
+    case 'd':
+      flags |= MCSectionELF::XCORE_SHF_DP_SECTION;
+      break;
+    case 'G':
+      flags |= MCSectionELF::SHF_GROUP;
+      break;
+    default:
+      return -1;
+    }
+  }
+
+  return flags;
+}
+
 // FIXME: This is a work in progress.
 bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   StringRef SectionName;
@@ -208,21 +248,34 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   if (ParseSectionName(SectionName))
     return TokError("expected identifier in directive");
 
-  StringRef FlagsStr;
   StringRef TypeName;
   int64_t Size = 0;
   StringRef GroupName;
+  unsigned Flags = 0;
+
+  // Set the defaults first.
+  if (SectionName == ".fini" || SectionName == ".init" ||
+      SectionName == ".rodata")
+    Flags |= MCSectionELF::SHF_ALLOC;
+  if (SectionName == ".fini" || SectionName == ".init")
+    Flags |= MCSectionELF::SHF_EXECINSTR;
+
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
 
     if (getLexer().isNot(AsmToken::String))
       return TokError("expected string in directive");
 
-    FlagsStr = getTok().getStringContents();
+    StringRef FlagsStr = getTok().getStringContents();
     Lex();
 
-    bool Mergeable = FlagsStr.find('M') != StringRef::npos;
-    bool Group = FlagsStr.find('G') != StringRef::npos;
+    int extraFlags = parseSectionFlags(FlagsStr);
+    if (extraFlags < 0)
+      return TokError("unknown flag");
+    Flags |= extraFlags;
+
+    bool Mergeable = Flags & MCSectionELF::SHF_MERGE;
+    bool Group = Flags & MCSectionELF::SHF_GROUP;
 
     if (getLexer().isNot(AsmToken::Comma)) {
       if (Mergeable)
@@ -269,51 +322,7 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");
 
-  unsigned Flags = 0;
-  unsigned Type = MCSectionELF::SHT_NULL;
-
-  // Set the defaults first.
-  if (SectionName == ".fini" || SectionName == ".init" || SectionName == ".rodata") {
-    Type = MCSectionELF::SHT_PROGBITS;
-    Flags |= MCSectionELF::SHF_ALLOC;
-  }
-  if (SectionName == ".fini" || SectionName == ".init") {
-    Flags |= MCSectionELF::SHF_EXECINSTR;
-  }
-
-  for (unsigned i = 0; i < FlagsStr.size(); i++) {
-    switch (FlagsStr[i]) {
-    case 'a':
-      Flags |= MCSectionELF::SHF_ALLOC;
-      break;
-    case 'x':
-      Flags |= MCSectionELF::SHF_EXECINSTR;
-      break;
-    case 'w':
-      Flags |= MCSectionELF::SHF_WRITE;
-      break;
-    case 'M':
-      Flags |= MCSectionELF::SHF_MERGE;
-      break;
-    case 'S':
-      Flags |= MCSectionELF::SHF_STRINGS;
-      break;
-    case 'T':
-      Flags |= MCSectionELF::SHF_TLS;
-      break;
-    case 'c':
-      Flags |= MCSectionELF::XCORE_SHF_CP_SECTION;
-      break;
-    case 'd':
-      Flags |= MCSectionELF::XCORE_SHF_DP_SECTION;
-      break;
-    case 'G':
-      Flags |= MCSectionELF::SHF_GROUP;
-      break;
-    default:
-      return TokError("unknown flag");
-    }
-  }
+  unsigned Type = MCSectionELF::SHT_PROGBITS;
 
   if (!TypeName.empty()) {
     if (TypeName == "init_array")

@@ -17,6 +17,7 @@
 .section	.init
 .section	.fini
 .section	.rodata
+.section	zed, ""
 
 // CHECK:      (('sh_name', 0x00000049) # '.init'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
@@ -45,6 +46,18 @@
 // CHECK-NEXT: (('sh_name', 0x00000055) # '.rodata'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000002)
+// CHECK-NEXT:  ('sh_addr', 0x00000000)
+// CHECK-NEXT:  ('sh_offset', 0x00000050)
+// CHECK-NEXT:  ('sh_size', 0x00000000)
+// CHECK-NEXT:  ('sh_link', 0x00000000)
+// CHECK-NEXT:  ('sh_info', 0x00000000)
+// CHECK-NEXT:  ('sh_addralign', 0x00000001)
+// CHECK-NEXT:  ('sh_entsize', 0x00000000)
+// CHECK-NEXT: ),
+// CHECK-NEXT: # Section 0x0000000d
+// CHECK-NEXT: (('sh_name', 0x0000005d) # 'zed'
+// CHECK-NEXT:  ('sh_type', 0x00000001)
+// CHECK-NEXT:  ('sh_flags', 0x00000000)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
 // CHECK-NEXT:  ('sh_offset', 0x00000050)
 // CHECK-NEXT:  ('sh_size', 0x00000000)
