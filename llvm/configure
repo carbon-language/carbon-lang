@@ -20586,10 +20586,9 @@ if test "${llvm_cv_llvmgcc_dragonegg+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   llvm_cv_llvmgcc_dragonegg="no"
-if test -x "$LLVMGCC" ; then
+if test -n "$LLVMGCC" ; then
   cp /dev/null conftest.c
-  "$LLVMGCC" -fplugin-arg-dragonegg-emit-ir -S -o - conftest.c | \
-  grep 'target datalayout =' > /dev/null 2>&1
+  $LLVMGCC -fplugin-arg-dragonegg-emit-ir -S -o - conftest.c > /dev/null 2>&1
   if test $? -eq 0 ; then
     llvm_cv_llvmgcc_dragonegg="yes"
   fi
@@ -20615,9 +20614,9 @@ if test "${llvm_cv_llvmgcc_sanity+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   llvm_cv_llvmgcc_sanity="no"
-if test -x "$LLVMGCC" ; then
+if test -n "$LLVMGCC" ; then
   cp /dev/null conftest.c
-  "$LLVMGCC" "$LLVMCC_EMITIR_FLAG" -S -o - conftest.c | \
+  $LLVMGCC "$LLVMCC_EMITIR_FLAG" -S -o - conftest.c | \
       grep 'target datalayout =' > /dev/null 2>&1
   if test $? -eq 0 ; then
     llvm_cv_llvmgcc_sanity="yes"
@@ -20631,16 +20630,16 @@ echo "${ECHO_T}$llvm_cv_llvmgcc_sanity" >&6; }
 if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   { echo "$as_me:$LINENO: checking llvm-gcc component support" >&5
 echo $ECHO_N "checking llvm-gcc component support... $ECHO_C" >&6; }
-  llvmcc1path=`"$LLVMGCC" --print-prog-name=cc1`
+  llvmcc1path=`$LLVMGCC --print-prog-name=cc1`
   LLVMCC1=$llvmcc1path
 
-  llvmcc1pluspath=`"$LLVMGCC" --print-prog-name=cc1plus`
+  llvmcc1pluspath=`$LLVMGCC --print-prog-name=cc1plus`
   LLVMCC1PLUS=$llvmcc1pluspath
 
   llvmgccdir=`echo "$llvmcc1path" | sed 's,/libexec/.*,,'`
   LLVMGCCDIR=$llvmgccdir
 
-  llvmgcclangs=`"$LLVMGCC" -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ ]*\).*/\1/'`
+  llvmgcclangs=`$LLVMGCC -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ ]*\).*/\1/'`
   LLVMGCC_LANGS=$llvmgcclangs
 
   LLVMGCC_DRAGONEGG=$llvm_cv_llvmgcc_dragonegg
