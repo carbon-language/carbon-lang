@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -c %s
+-- RUN: %llvmgcc -S %s
 function Switch (N : Integer) return Integer is
 begin
    case N is

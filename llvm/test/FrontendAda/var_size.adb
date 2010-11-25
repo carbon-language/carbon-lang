@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -c %s -I%p/Support
+-- RUN: %llvmgcc -S %s -I%p/Support
 package body Var_Size is
    function A (X : T) return String is
    begin

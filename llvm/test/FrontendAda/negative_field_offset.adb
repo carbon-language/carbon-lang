@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -c %s
+-- RUN: %llvmgcc -S %s
 with System;
 procedure Negative_Field_Offset (N : Integer) is
    type String_Pointer is access String;

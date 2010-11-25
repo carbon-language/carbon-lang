@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -c %s
+-- RUN: %llvmgcc -S %s
 package Init_Size is
    type T (B : Boolean := False) is record
       case B is

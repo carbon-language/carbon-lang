@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -c %s
+-- RUN: %llvmgcc -S %s
 procedure VCE is
   S : String (1 .. 2);
   B : Character := 'B';

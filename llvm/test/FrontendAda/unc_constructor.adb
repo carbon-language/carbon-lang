@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -c %s -I%p/Support
+-- RUN: %llvmgcc -S %s -I%p/Support
 package body Unc_Constructor is
    procedure P (X : A) is
    begin

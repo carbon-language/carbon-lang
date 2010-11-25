@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -c %s
+-- RUN: %llvmgcc -S %s
 procedure VCE_LV is
    type P is access String ;
    type T is new P (5 .. 7);

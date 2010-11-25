@@ -1,5 +1,5 @@
--- RUN: %llvmgcc -c %s -I%p/Support
--- RUN: %llvmgcc -c %s -I%p/Support -O2
+-- RUN: %llvmgcc -S %s -I%p/Support
+-- RUN: %llvmgcc -S %s -I%p/Support -O2
 package body Fat_Fields is
    procedure Proc is
    begin
