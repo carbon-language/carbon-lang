@@ -1158,6 +1158,18 @@ void GRExprEngine::VisitLValue(const Expr* Ex, ExplodedNode* Pred,
       break;
     }
 
+    case Stmt::CXXConstructExprClass: {
+      const CXXConstructExpr *expr = cast<CXXConstructExpr>(Ex);
+      VisitCXXConstructExpr(expr, 0, Pred, Dst, true);
+      break;
+    }
+
+    case Stmt::CXXFunctionalCastExprClass: {
+      const CXXFunctionalCastExpr *expr = cast<CXXFunctionalCastExpr>(Ex);
+      VisitLValue(expr->getSubExpr(), Pred, Dst);
+      break;
+    }
+
     case Stmt::CXXTemporaryObjectExprClass: {
       const CXXTemporaryObjectExpr *expr = cast<CXXTemporaryObjectExpr>(Ex);
       VisitCXXTemporaryObjectExpr(expr, Pred, Dst, true);

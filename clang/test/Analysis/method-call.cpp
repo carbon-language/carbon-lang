@@ -17,3 +17,14 @@ void f1() {
   }
 }
 
+void f2() {
+  const A &x = A(3);
+  if (x.getx() == 3) {
+    int *p = 0;
+    *p = 3;  // expected-warning{{Dereference of null pointer}}
+  } else {
+    int *p = 0;
+    *p = 3;  // no-warning
+  }
+}
+

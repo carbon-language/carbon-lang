@@ -78,6 +78,10 @@ SVal Environment::GetSVal(const Stmt *E, ValueManager& ValMgr) const {
       case Stmt::CXXBindTemporaryExprClass:
         E = cast<CXXBindTemporaryExpr>(E)->getSubExpr();
         continue;
+
+      case Stmt::CXXFunctionalCastExprClass:
+        E = cast<CXXFunctionalCastExpr>(E)->getSubExpr();
+        continue;
         
       // Handle all other Stmt* using a lookup.
       default:
