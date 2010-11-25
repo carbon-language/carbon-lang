@@ -13,10 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "CXXABI.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Type.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/RecordLayout.h"
+#include "clang/AST/Type.h"
+#include "clang/Basic/TargetInfo.h"
 
 using namespace clang;
 
@@ -34,6 +35,18 @@ public:
     else
       return CC_C;
   }
+
+  bool isNearlyEmpty(const CXXRecordDecl *RD) const {
+    // FIXME: Audit the corners
+    if (!RD->isDynamicClass())
+      return false;
+
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    
+    // In the Microsoft ABI, classes can have one or two vtable pointers.
+    return Layout.getNonVirtualSize() == Context.Target.getPointerWidth(0) ||
+      Layout.getNonVirtualSize() == Context.Target.getPointerWidth(0) * 2;
+  }    
 };
 }
 

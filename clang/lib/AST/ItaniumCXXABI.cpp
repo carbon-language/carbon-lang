@@ -19,7 +19,10 @@
 
 #include "CXXABI.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/RecordLayout.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/TargetInfo.h"
 
 using namespace clang;
 
@@ -38,6 +41,18 @@ public:
 
   CallingConv getDefaultMethodCallConv() const {
     return CC_C;
+  }
+
+  // We cheat and just check that the class has a vtable pointer, and that it's
+  // only big enough to have a vtable pointer and nothing more (or less).
+  bool isNearlyEmpty(const CXXRecordDecl *RD) const {
+
+    // Check that the class has a vtable pointer.
+    if (!RD->isDynamicClass())
+      return false;
+
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    return Layout.getNonVirtualSize() == Context.Target.getPointerWidth(0);
   }
 };
 

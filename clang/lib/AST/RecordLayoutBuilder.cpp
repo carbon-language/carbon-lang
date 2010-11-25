@@ -667,8 +667,6 @@ protected:
 
   virtual uint64_t GetVirtualPointersSize(const CXXRecordDecl *RD) const;
 
-  virtual bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
-
   /// LayoutNonVirtualBases - Determines the primary base class (if any) and
   /// lays it out. Will then proceed to lay out all non-virtual base clasess.
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
@@ -717,18 +715,6 @@ public:
 };
 } // end anonymous namespace
 
-/// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
-/// no other data.
-bool RecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
-  // FIXME: Audit the corners
-  if (!RD->isDynamicClass())
-    return false;
-  const ASTRecordLayout &BaseInfo = Context.getASTRecordLayout(RD);
-  if (BaseInfo.getNonVirtualSize() == Context.Target.getPointerWidth(0))
-    return true;
-  return false;
-}
-
 void
 RecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
@@ -740,7 +726,7 @@ RecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     // Check if this is a nearly empty virtual base.
-    if (I->isVirtual() && IsNearlyEmpty(Base)) {
+    if (I->isVirtual() && Context.isNearlyEmpty(Base)) {
       // If it's not an indirect primary base, then we've found our primary
       // base.
       if (!IndirectPrimaryBases.count(Base)) {
@@ -1608,21 +1594,8 @@ namespace {
     MSRecordLayoutBuilder(ASTContext& Ctx, EmptySubobjectMap *EmptySubobjects) :
       RecordLayoutBuilder(Ctx, EmptySubobjects) {}
 
-    virtual bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
     virtual uint64_t GetVirtualPointersSize(const CXXRecordDecl *RD) const;
   };
-}
-
-bool MSRecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
-  // FIXME: Audit the corners
-  if (!RD->isDynamicClass())
-    return false;
-  const ASTRecordLayout &BaseInfo = Context.getASTRecordLayout(RD);
-  // In the Microsoft ABI, classes can have one or two vtable pointers.
-  if (BaseInfo.getNonVirtualSize() == Context.Target.getPointerWidth(0) ||
-      BaseInfo.getNonVirtualSize() == Context.Target.getPointerWidth(0) * 2)
-    return true;
-  return false;
 }
 
 uint64_t

@@ -1040,6 +1040,8 @@ public:
   /// of class definition.
   const CXXMethodDecl *getKeyFunction(const CXXRecordDecl *RD);
 
+  bool isNearlyEmpty(const CXXRecordDecl *RD);
+
   void ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
   

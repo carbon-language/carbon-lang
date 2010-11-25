@@ -33,6 +33,10 @@ public:
 
   /// Returns the default calling convention for C++ methods.
   virtual CallingConv getDefaultMethodCallConv() const = 0;
+
+  // Returns whether the given class is nearly empty, with just virtual pointers
+  // and no data except possibly virtual bases.
+  virtual bool isNearlyEmpty(const CXXRecordDecl *RD) const = 0;
 };
 
 /// Creates an instance of a C++ ABI class.

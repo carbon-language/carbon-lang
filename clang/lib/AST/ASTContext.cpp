@@ -5716,4 +5716,9 @@ CallingConv ASTContext::getDefaultMethodCallConv() {
   return ABI->getDefaultMethodCallConv();
 }
 
+bool ASTContext::isNearlyEmpty(const CXXRecordDecl *RD) {
+  // Pass through to the C++ ABI object
+  return ABI->isNearlyEmpty(RD);
+}
+
 CXXABI::~CXXABI() {}
