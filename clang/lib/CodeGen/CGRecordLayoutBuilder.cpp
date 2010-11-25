@@ -107,6 +107,9 @@ private:
   /// Returns false if the operation failed because the struct is not packed.
   bool LayoutFields(const RecordDecl *D);
 
+  /// LayoutVirtualBase - layout a single virtual base.
+  void LayoutVirtualBase(const CXXRecordDecl *BaseDecl, uint64_t BaseOffset);
+
   /// LayoutNonVirtualBase - layout a single non-virtual base.
   void LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
                             uint64_t BaseOffset);
@@ -487,6 +490,29 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     AppendPadding(Layout.getSize() / 8, Align);
 }
 
+void
+CGRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *BaseDecl,
+                                         uint64_t BaseOffset) {
+  // Ignore empty bases.
+  if (BaseDecl->isEmpty())
+    return;
+
+  CheckZeroInitializable(BaseDecl);
+
+  const ASTRecordLayout &Layout = 
+    Types.getContext().getASTRecordLayout(BaseDecl);
+
+  uint64_t NonVirtualSize = Layout.getNonVirtualSize();
+
+  // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
+  AppendPadding(BaseOffset / 8, 1);
+  
+  // FIXME: Add the vbase field info.
+
+  AppendBytes(NonVirtualSize / 8);
+
+}
+
 void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
                                                  uint64_t BaseOffset) {
   // Ignore empty bases.
@@ -526,9 +552,10 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
              "VTable pointer must come first!");
       AppendField(NextFieldOffsetInBytes, VTableTy->getPointerTo());
     } else {
-      // FIXME: Handle a virtual primary base.
       if (!Layout.isPrimaryBaseVirtual())
         LayoutNonVirtualBase(PrimaryBase, 0);
+      else
+        LayoutVirtualBase(PrimaryBase, 0);
     }
   }
 
@@ -608,6 +635,10 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   if (RD)
     ComputeNonVirtualBaseType(RD);
   
+  if (RD) {
+    RD->getIndirectPrimaryBases(IndirectPrimaryBases);
+  }
+
   // FIXME: Lay out the virtual bases instead of just treating them as tail
   // padding.
   
