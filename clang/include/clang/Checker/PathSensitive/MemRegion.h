@@ -841,6 +841,8 @@ public:
     return Ex->getType();
   }
 
+  void dumpToStream(llvm::raw_ostream& os) const;
+
   void Profile(llvm::FoldingSetNodeID &ID) const;
 
   static bool classof(const MemRegion* R) {

@@ -407,6 +407,10 @@ void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "{ " << (void*) CL <<  " }";
 }
 
+void CXXObjectRegion::dumpToStream(llvm::raw_ostream &os) const {
+  os << "temp_object";
+}
+
 void CXXThisRegion::dumpToStream(llvm::raw_ostream &os) const {
   os << "this";
 }
