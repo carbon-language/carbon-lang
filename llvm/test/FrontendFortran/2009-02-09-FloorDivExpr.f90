@@ -1,4 +1,4 @@
-! RUN: %llvmgcc -c %s
+! RUN: %llvmgcc -S %s
 ! PR2437
 program main
   implicit none

@@ -1,4 +1,4 @@
-! RUN: %llvmgcc -c %s
+! RUN: %llvmgcc -S %s
 ! PR2443
 
 ! Program to test the power (**) operator
