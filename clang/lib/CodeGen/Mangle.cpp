@@ -2291,8 +2291,8 @@ static bool isCharSpecialization(QualType T, const char *Name) {
 }
 
 template <std::size_t StrLen>
-bool isStreamCharSpecialization(const ClassTemplateSpecializationDecl *SD,
-                                const char (&Str)[StrLen]) {
+static bool isStreamCharSpecialization(const ClassTemplateSpecializationDecl*SD,
+                                       const char (&Str)[StrLen]) {
   if (!SD->getIdentifier()->isStr(Str))
     return false;
 

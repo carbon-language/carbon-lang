@@ -149,12 +149,14 @@ bool PCHValidator::ReadTargetTriple(llvm::StringRef Triple) {
   return true;
 }
 
-struct EmptyStringRef {
-  bool operator ()(llvm::StringRef r) const { return r.empty(); }
-};
-struct EmptyBlock {
-  bool operator ()(const PCHPredefinesBlock &r) const { return r.Data.empty(); }
-};
+namespace {
+  struct EmptyStringRef {
+    bool operator ()(llvm::StringRef r) const { return r.empty(); }
+  };
+  struct EmptyBlock {
+    bool operator ()(const PCHPredefinesBlock &r) const {return r.Data.empty();}
+  };
+}
 
 static bool EqualConcatenations(llvm::SmallVector<llvm::StringRef, 2> L,
                                 PCHPredefinesBlocks R) {

@@ -121,34 +121,34 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
   }
 }
 
+namespace {
 /// \brief An adjustment to be made to the temporary created when emitting a
 /// reference binding, which accesses a particular subobject of that temporary.
-struct SubobjectAdjustment {
-  enum { DerivedToBaseAdjustment, FieldAdjustment } Kind;
-  
-  union {
-    struct {
-      const CastExpr *BasePath;
-      const CXXRecordDecl *DerivedClass;
-    } DerivedToBase;
-    
-    FieldDecl *Field;
+  struct SubobjectAdjustment {
+    enum { DerivedToBaseAdjustment, FieldAdjustment } Kind;
+
+    union {
+      struct {
+        const CastExpr *BasePath;
+        const CXXRecordDecl *DerivedClass;
+      } DerivedToBase;
+
+      FieldDecl *Field;
+    };
+
+    SubobjectAdjustment(const CastExpr *BasePath,
+                        const CXXRecordDecl *DerivedClass)
+      : Kind(DerivedToBaseAdjustment) {
+      DerivedToBase.BasePath = BasePath;
+      DerivedToBase.DerivedClass = DerivedClass;
+    }
+
+    SubobjectAdjustment(FieldDecl *Field)
+      : Kind(FieldAdjustment) {
+      this->Field = Field;
+    }
   };
-  
-  SubobjectAdjustment(const CastExpr *BasePath, 
-                      const CXXRecordDecl *DerivedClass)
-    : Kind(DerivedToBaseAdjustment) 
-  {
-    DerivedToBase.BasePath = BasePath;
-    DerivedToBase.DerivedClass = DerivedClass;
-  }
-  
-  SubobjectAdjustment(FieldDecl *Field)
-    : Kind(FieldAdjustment)
-  { 
-    this->Field = Field;
-  }
-};
+}
 
 static llvm::Value *
 CreateReferenceTemporary(CodeGenFunction& CGF, QualType Type,
