@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -w -x objective-c++ -c %s -o /dev/null
+// RUN: %llvmgcc -w -x objective-c++ -S %s -o /dev/null
 
 @class NSImage;
 void bork() {

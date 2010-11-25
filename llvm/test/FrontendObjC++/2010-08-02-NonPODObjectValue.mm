@@ -1,4 +1,4 @@
-// RUN: not %llvmgcc %s -S -emit-llvm -o - |& FileCheck %s
+// RUN: not %llvmgcc %s -S -o - |& FileCheck %s
 // This tests for a specific diagnostic in LLVM-GCC.
 // Clang compiles this correctly with no diagnostic,
 // ergo this test will fail with a Clang-based front-end.
