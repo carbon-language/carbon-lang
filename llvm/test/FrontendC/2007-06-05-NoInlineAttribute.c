@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -O2 -c -emit-llvm %s -o - | llvm-dis | grep call
+// RUN: %llvmgcc -O2 -S %s -o - | grep call
 
 static int bar(int x, int y) __attribute__((noinline));
 

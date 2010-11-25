@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc -std=c99 %s -c -o - | llvm-dis | grep -v llvm.isunordered | not grep call
+// RUN: %llvmgcc -xc -std=c99 %s -S -o - | grep -v llvm.isunordered | not grep call
 
 #include <math.h>
 

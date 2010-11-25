@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep {= internal global} | count 4
+// RUN: %llvmgcc %s -S -O0 -o - | grep {= internal global} | count 4
 // PR 3518
 // Some of the objects were coming out as unintialized (external) before 3518
 // was fixed.  Internal names are different between llvm-gcc and clang so they

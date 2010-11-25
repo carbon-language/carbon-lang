@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -O3 -S -o - -emit-llvm %s | grep {volatile store}
+// RUN: %llvmgcc -O3 -S -o - %s | grep {volatile store}
 // PR1352
 
 struct foo {

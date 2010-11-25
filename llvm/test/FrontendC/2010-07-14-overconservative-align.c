@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -emit-llvm -S -o - | FileCheck %s
+// RUN: %llvmgcc %s -S -o - | FileCheck %s
 // PR 5995
 struct s {
     int word;

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -O3 -xc %s -c -o - | llvm-dis | not grep builtin
+// RUN: %llvmgcc -O3 -xc %s -S -o - | not grep builtin
 
 #include <math.h>
 

@@ -1,4 +1,4 @@
-/* RUN: %llvmgcc %s -S -o - -emit-llvm -O3 | grep {call.*memcpy}
+/* RUN: %llvmgcc %s -S -o - -O3 | grep {call.*memcpy}
 
  This should compile into a memcpy from a global, not 128 stores. */
 

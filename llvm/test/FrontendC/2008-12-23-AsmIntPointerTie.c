@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O1 -o - 
+// RUN: %llvmgcc %s -S -O1 -o - 
 
 #include <stdint.h>
 

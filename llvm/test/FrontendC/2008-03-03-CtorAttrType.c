@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -o - | grep llvm.global_ctors
+// RUN: %llvmgcc %s -S -o - | grep llvm.global_ctors
 int __attribute__((constructor)) foo(void) {
   return 0;
 }

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -O3 -S -o - -emit-llvm
+// RUN: %llvmgcc %s -O3 -S -o -
 // PR1175
 
 struct empty { };

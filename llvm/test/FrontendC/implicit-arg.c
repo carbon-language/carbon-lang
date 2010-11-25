@@ -1,5 +1,5 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o -
-// RUN: %llvmgcc %s -S -emit-llvm -O1 -o -
+// RUN: %llvmgcc %s -S -O0 -o -
+// RUN: %llvmgcc %s -S -O1 -o -
 // rdar://6518089
 
 static int bar();

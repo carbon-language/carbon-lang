@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -o - | FileCheck %s
+// RUN: %llvmgcc %s -S -o - | FileCheck %s
 // XFAIL: sparc
 // rdar://7536390
 

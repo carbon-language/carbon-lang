@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -Werror -c %s -o /dev/null
+// RUN: %llvmgcc -Werror -S %s -o /dev/null
 #pragma mark LLVM's world
 #ifdef DO_ERROR
 #error LLVM's world

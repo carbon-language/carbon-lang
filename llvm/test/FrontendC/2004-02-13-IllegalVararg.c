@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc %s -w -c -o - | llc
+// RUN: %llvmgcc -xc %s -w -S -o - | llc
 // XFAIL: *
 // See PR2452
 

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -c %s
+// RUN: %llvmgcc -S %s
 // PR2987
 struct S2045
 {

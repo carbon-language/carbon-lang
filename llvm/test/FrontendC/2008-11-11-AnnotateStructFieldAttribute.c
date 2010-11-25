@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -c -emit-llvm %s -o - | llvm-dis | grep llvm.ptr.annotation | count 3
+// RUN: %llvmgcc -S %s -o - | grep llvm.ptr.annotation | count 3
 
 #include <stdio.h>
 

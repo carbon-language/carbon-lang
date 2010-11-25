@@ -1,5 +1,5 @@
-// RUN: %llvmgcc -O3 -S -o - -emit-llvm %s | grep extern_weak
-// RUN: %llvmgcc -O3 -S -o - -emit-llvm %s | llc
+// RUN: %llvmgcc -O3 -S -o - %s | grep extern_weak
+// RUN: %llvmgcc -O3 -S -o - %s | llc
 
 #if !defined(__linux__) && !defined(__FreeBSD__) && \
     !defined(__OpenBSD__) && !defined(__CYGWIN__) && !defined(__DragonFly__)

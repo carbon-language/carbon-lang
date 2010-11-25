@@ -1,17 +1,17 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep define | grep xglobWeak | \
+// RUN: %llvmgcc %s -S -O0 -o - | grep define | grep xglobWeak | \
 // RUN:   grep weak | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep define | grep xextWeak | \
+// RUN: %llvmgcc %s -S -O0 -o - | grep define | grep xextWeak | \
 // RUN:   grep weak | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep define | \
+// RUN: %llvmgcc %s -S -O0 -o - | grep define | \
 // RUN:   grep xWeaknoinline | grep weak | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep define | \
+// RUN: %llvmgcc %s -S -O0 -o - | grep define | \
 // RUN:   grep xWeakextnoinline | grep weak | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep define | \
+// RUN: %llvmgcc %s -S -O0 -o - | grep define | \
 // RUN:   grep xglobnoWeak | grep -v internal | grep -v weak | \
 // RUN:   grep -v linkonce | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep define | \
+// RUN: %llvmgcc %s -S -O0 -o - | grep define | \
 // RUN:   grep xstatnoWeak | grep internal | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep define | \
+// RUN: %llvmgcc %s -S -O0 -o - | grep define | \
 // RUN:   grep xextnoWeak | grep available_externally | grep -v weak | \
 // RUN:   grep -v linkonce | count 1
 inline int xglobWeak(int) __attribute__((weak));

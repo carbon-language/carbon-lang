@@ -1,5 +1,5 @@
-// RUN: %llvmgcc -O3 -S -o - -emit-llvm %s | not grep readonly
-// RUN: %llvmgcc -O3 -S -o - -emit-llvm %s | not grep readnone
+// RUN: %llvmgcc -O3 -S -o - %s | not grep readonly
+// RUN: %llvmgcc -O3 -S -o - %s | not grep readnone
 
 
 // The struct being passed byval means that we cannot mark the

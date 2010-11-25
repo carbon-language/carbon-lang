@@ -1,5 +1,5 @@
-// RUN: %llvmgcc -c -emit-llvm %s -o - | \
-// RUN:   opt -std-compile-opts | llvm-dis | not grep {declare i32.*func}
+// RUN: %llvmgcc -S %s -o - | \
+// RUN:   opt -std-compile-opts -S | not grep {declare i32.*func}
 
 // There should not be an unresolved reference to func here.  Believe it or not,
 // the "expected result" is a function named 'func' which is internal and 

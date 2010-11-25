@@ -1,6 +1,6 @@
-// RUN: %llvmgcc -S -emit-llvm %s -o - | grep llvm.gcroot
-// RUN: %llvmgcc -S -emit-llvm %s -o - | grep llvm.gcroot | count 6
-// RUN: %llvmgcc -S -emit-llvm %s -o - | llvm-as
+// RUN: %llvmgcc -S %s -o - | grep llvm.gcroot
+// RUN: %llvmgcc -S %s -o - | grep llvm.gcroot | count 6
+// RUN: %llvmgcc -S %s -o - | llvm-as
 
 typedef struct foo_s
 {

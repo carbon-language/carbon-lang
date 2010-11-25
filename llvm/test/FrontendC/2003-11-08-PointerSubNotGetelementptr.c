@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc %s -c -o - | llvm-dis | grep getelementptr
+// RUN: %llvmgcc -xc %s -S -o - | grep getelementptr
 
 char *test(char* C) {
   return C-1;   // Should turn into a GEP

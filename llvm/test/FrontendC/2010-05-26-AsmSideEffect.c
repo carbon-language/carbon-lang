@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -o - | FileCheck %s
+// RUN: %llvmgcc %s -S -o - | FileCheck %s
 // Radar 8026855
 
 int test (void *src) {

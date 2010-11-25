@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O2 -o %t.s
+// RUN: %llvmgcc %s -S -O2 -o %t.s
 // RUN: grep {call i32 .*printf.*argc} %t.s | count 3
 // RUN: not grep __block_holder_tmp %t.s
 // rdar://5865221

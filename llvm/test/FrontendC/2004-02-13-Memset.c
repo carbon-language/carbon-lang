@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc %s -c -o - | llvm-dis | grep llvm.memset | count 3
+// RUN: %llvmgcc -xc %s -S -o - | grep llvm.memset | count 3
 
 void *memset(void*, int, long);
 void bzero(void*, long);

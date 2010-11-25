@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -emit-llvm -o - | grep "signext" | count 4
+// RUN: %llvmgcc -S %s -o - | grep "signext" | count 4
 
 signed char foo1() { return 1; }
 

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O2 -o -
+// RUN: %llvmgcc %s -S -O2 -o -
 // PR3028
 
 int g_187;

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -o - | grep llvm.atomic
+// RUN: %llvmgcc %s -S -o - | grep llvm.atomic
 // XFAIL: sparc-sun-solaris2|arm
 // Feature currently implemented only for x86, alpha, powerpc.
 

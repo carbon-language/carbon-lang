@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -o - | llc
+// RUN: %llvmgcc %s -S -o - | llc
 
 union U { int x; float p; };
 void foo() {

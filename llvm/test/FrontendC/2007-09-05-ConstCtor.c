@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc -Os -c %s -o /dev/null
+// RUN: %llvmgcc -xc -Os -S %s -o /dev/null
 // PR1641
 
 struct A {

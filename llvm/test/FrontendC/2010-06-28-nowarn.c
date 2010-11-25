@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -c -m32 -fasm-blocks -o /dev/null
+// RUN: %llvmgcc %s -S -m32 -fasm-blocks -o /dev/null
 // This should not warn about unreferenced label. 7729514.
 // XFAIL: *
 // XTARGET: x86,i386,i686

@@ -1,5 +1,5 @@
-// RUN: %llvmgcc -O3 -S -o - -emit-llvm %s | grep {align 1} | count 2
-// RUN: %llvmgcc -O3 -S -o - -emit-llvm %s | llc
+// RUN: %llvmgcc -O3 -S -o - %s | grep {align 1} | count 2
+// RUN: %llvmgcc -O3 -S -o - %s | llc
 
 struct p {
   char a;

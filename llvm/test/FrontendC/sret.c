@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep sret | count 5
+// RUN: %llvmgcc %s -S -O0 -o - | grep sret | count 5
 
 struct abc {
  long a;

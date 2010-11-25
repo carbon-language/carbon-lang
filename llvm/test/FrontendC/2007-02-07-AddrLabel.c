@@ -1,5 +1,5 @@
 // PR947
-// RUN: %llvmgcc %s -c -o - 
+// RUN: %llvmgcc %s -S -o - 
 
 void foo() {
     void *ptr;

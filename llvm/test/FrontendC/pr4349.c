@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | FileCheck %s
+// RUN: %llvmgcc %s -S -O0 -o - | FileCheck %s
 // PR 4349
 
 union reg

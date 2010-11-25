@@ -1,4 +1,4 @@
-/* RUN: %llvmgcc -xc %s -c -o - | llvm-dis | not grep __builtin_
+/* RUN: %llvmgcc -xc %s -S -o - | not grep __builtin_
  *
  * __builtin_longjmp/setjmp should get transformed into llvm.setjmp/longjmp 
  * just like explicit setjmp/longjmp calls are.

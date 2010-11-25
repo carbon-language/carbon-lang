@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -O0 -S -o - -emit-llvm -fno-inline -fno-unit-at-a-time %s | \
+// RUN: %llvmgcc -O0 -S -o - -fno-inline -fno-unit-at-a-time %s | \
 // RUN:   grep {call float @foo}
 
 // Make sure the call to foo is compiled as:

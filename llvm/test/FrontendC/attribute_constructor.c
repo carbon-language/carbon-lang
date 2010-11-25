@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -c -o - | llvm-dis | grep llvm.global_ctors
+// RUN: %llvmgcc %s -S -o - | grep llvm.global_ctors
 
 void foo() __attribute__((constructor));
 void foo() {

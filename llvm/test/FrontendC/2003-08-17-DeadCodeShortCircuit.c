@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc %s -c -o %t.o
+// RUN: %llvmgcc -xc %s -S -o %t.o
 
 int test(_Bool pos, _Bool color) {
   return 0;

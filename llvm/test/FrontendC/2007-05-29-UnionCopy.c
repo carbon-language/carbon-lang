@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S -o - -emit-llvm %s | grep memcpy
+// RUN: %llvmgcc -S -o - %s | grep memcpy
 // PR1421
 
 struct A {
