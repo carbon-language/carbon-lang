@@ -106,6 +106,9 @@ namespace llvm {
     }
     enum { NumLowBitsAvailable = 0 };
   };
+
+  template <class T>
+  struct isPodLike<clang::OpaquePtr<T> > { static const bool value = true; };
 }
 
 
