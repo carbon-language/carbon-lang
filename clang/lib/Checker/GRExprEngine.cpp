@@ -738,19 +738,26 @@ void GRExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
   }
 }
 
-void GRExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D,
+void GRExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor dtor,
                                            GRStmtNodeBuilder &builder) {
-  ExplodedNode *Pred = builder.getBasePredecessor();
-  const GRState *state = Pred->getState();
-  const VarDecl *VD = D.getVarDecl();
-  const CXXRecordDecl *CD = VD->getType()->getAsCXXRecordDecl();
-  const CXXDestructorDecl *DD = CD->getDestructor();
+  ExplodedNode *pred = builder.getBasePredecessor();
+  const GRState *state = pred->getState();
+  const VarDecl *varDecl = dtor.getVarDecl();
 
-  Loc Dest = state->getLValue(VD, Pred->getLocationContext());
+  QualType varType = varDecl->getType();
 
-  ExplodedNodeSet Dst;
-  VisitCXXDestructor(DD, cast<loc::MemRegionVal>(Dest).getRegion(),
-                     D.getTriggerStmt(), Pred, Dst);
+  if (const ReferenceType *refType = varType->getAs<ReferenceType>())
+    varType = refType->getPointeeType();
+
+  const CXXRecordDecl *recordDecl = varType->getAsCXXRecordDecl();
+  assert(recordDecl && "get CXXRecordDecl fail");
+  const CXXDestructorDecl *dtorDecl = recordDecl->getDestructor();
+
+  Loc dest = state->getLValue(varDecl, pred->getLocationContext());
+
+  ExplodedNodeSet dstSet;
+  VisitCXXDestructor(dtorDecl, cast<loc::MemRegionVal>(dest).getRegion(),
+                     dtor.getTriggerStmt(), pred, dstSet);
 }
 
 void GRExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
