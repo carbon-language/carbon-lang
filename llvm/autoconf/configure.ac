@@ -1438,10 +1438,10 @@ dnl Set the flags needed to emit LLVM IR and to disable optimizations
 dnl in llvmgcc
 if test "$llvm_cv_llvmgcc_dragonegg" = "yes" ; then
   LLVMCC_EMITIR_FLAG="-fplugin-arg-dragonegg-emit-ir"
-  LLVMGCC_DISABLEOPT_FLAGS="-fplugin-arg-dragonegg-disable-llvm-optzns"
+  LLVMCC_DISABLEOPT_FLAGS="-fplugin-arg-dragonegg-disable-llvm-optzns"
 else
   LLVMCC_EMITIR_FLAG="-emit-llvm"
-  LLVMGCC_DISABLEOPT_FLAGS="-mllvm -disable-llvm-optzns"
+  LLVMCC_DISABLEOPT_FLAGS="-mllvm -disable-llvm-optzns"
 fi
 
 AC_SUBST(LLVMCC_EMITIR_FLAG)
@@ -1472,7 +1472,7 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   llvmgcclangs=[`$LLVMGCC -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ ]*\).*/\1/'`]
   AC_SUBST(LLVMGCC_LANGS,$llvmgcclangs)
   AC_SUBST(LLVMGCC_DRAGONEGG,$llvm_cv_llvmgcc_dragonegg)
-  AC_SUBST(LLVMGCC_DISABLEOPT_FLAGS)
+  AC_SUBST(LLVMCC_DISABLEOPT_FLAGS)
   AC_MSG_RESULT([ok])
 fi
 
