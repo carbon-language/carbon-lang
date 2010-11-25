@@ -1,4 +1,4 @@
-/* RUN: %llvmgcc -w -x objective-c -c %s -o /dev/null -pedantic-errors
+/* RUN: %llvmgcc -w -x objective-c -S %s -o /dev/null -pedantic-errors
    rdar://6551276 */
 
 void foo(const unsigned short *);

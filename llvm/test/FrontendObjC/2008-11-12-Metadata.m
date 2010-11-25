@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -x objective-c -m64 -c %s -o /dev/null
+// RUN: %llvmgcc -x objective-c -m64 -S %s -o /dev/null
 
 @interface A
 @end

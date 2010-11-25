@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -x objective-c -c %s -o /dev/null
+// RUN: %llvmgcc -x objective-c -S %s -o /dev/null
 @protocol O
 @end
 @interface O < O > {

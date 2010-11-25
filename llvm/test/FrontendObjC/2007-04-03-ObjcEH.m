@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -c %s -o /dev/null
+// RUN: %llvmgcc -S %s -o /dev/null
 
 @interface B 
 -(int)bar;

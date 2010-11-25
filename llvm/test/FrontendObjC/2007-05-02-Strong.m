@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -c %s -fobjc-gc -o /dev/null
+// RUN: %llvmgcc -S %s -fobjc-gc -o /dev/null
 typedef int NSInteger;
 typedef struct _NSRect {
   int origin;

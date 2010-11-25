@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -x objective-c -c %s -o /dev/null -fobjc-gc
+// RUN: %llvmgcc -x objective-c -S %s -o /dev/null -fobjc-gc
 // rdar://5541393
 
 typedef unsigned int NSUInteger;

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -c %s -o /dev/null
+// RUN: %llvmgcc -S %s -o /dev/null
 // rdar://6394879
 
 @interface bork
