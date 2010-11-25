@@ -284,26 +284,24 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
 void Sema::ActOnEndOfTranslationUnit() {
   // At PCH writing, implicit instantiations and VTable handling info are
   // stored and performed when the PCH is included.
-  if (CompleteTranslationUnit)
-    while (1) {
-      // C++: Perform implicit template instantiations.
-      //
-      // FIXME: When we perform these implicit instantiations, we do not
-      // carefully keep track of the point of instantiation (C++ [temp.point]).
-      // This means that name lookup that occurs within the template
-      // instantiation will always happen at the end of the translation unit,
-      // so it will find some names that should not be found. Although this is
-      // common behavior for C++ compilers, it is technically wrong. In the
-      // future, we either need to be able to filter the results of name lookup
-      // or we need to perform template instantiations earlier.
-      PerformPendingInstantiations();
+  if (CompleteTranslationUnit) {
+    // If DefinedUsedVTables ends up marking any virtual member functions it
+    // might lead to more pending template instantiations, which we then need
+    // to instantiate.
+    DefineUsedVTables();
 
-      /// If DefinedUsedVTables ends up marking any virtual member
-      /// functions it might lead to more pending template
-      /// instantiations, which is why we need to loop here.
-      if (!DefineUsedVTables())
-        break;
-    }
+    // C++: Perform implicit template instantiations.
+    //
+    // FIXME: When we perform these implicit instantiations, we do not
+    // carefully keep track of the point of instantiation (C++ [temp.point]).
+    // This means that name lookup that occurs within the template
+    // instantiation will always happen at the end of the translation unit,
+    // so it will find some names that should not be found. Although this is
+    // common behavior for C++ compilers, it is technically wrong. In the
+    // future, we either need to be able to filter the results of name lookup
+    // or we need to perform template instantiations earlier.
+    PerformPendingInstantiations();
+  }
   
   // Remove file scoped decls that turned out to be used.
   UnusedFileScopedDecls.erase(std::remove_if(UnusedFileScopedDecls.begin(),

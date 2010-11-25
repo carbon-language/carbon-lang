@@ -2108,9 +2108,12 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // If we're performing recursive template instantiation, create our own
   // queue of pending implicit instantiations that we will instantiate later,
   // while we're still within our own instantiation context.
+  llvm::SmallVector<VTableUse, 16> SavedVTableUses;
   std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
-  if (Recursive)
+  if (Recursive) {
+    VTableUses.swap(SavedVTableUses);
     PendingInstantiations.swap(SavedPendingInstantiations);
+  }
 
   EnterExpressionEvaluationContext EvalContext(*this, 
                                                Sema::PotentiallyEvaluated);
@@ -2173,9 +2176,15 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   Scope.Exit();
 
   if (Recursive) {
+    // Define any pending vtables.
+    DefineUsedVTables();
+
     // Instantiate any pending implicit instantiations found during the
     // instantiation of this template.
     PerformPendingInstantiations();
+
+    // Restore the set of pending vtables.
+    VTableUses.swap(SavedVTableUses);
 
     // Restore the set of pending implicit instantiations.
     PendingInstantiations.swap(SavedPendingInstantiations);

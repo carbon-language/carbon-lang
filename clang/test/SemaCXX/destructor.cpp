@@ -100,11 +100,11 @@ namespace test6 {
       T::deleteIt(p); // expected-error {{type 'int' cannot be used prior to '::'}}
     }
 
-    virtual ~A() {} // expected-note {{in instantiation of member function 'test6::A<int>::operator delete' requested here}}
+    virtual ~A() {}
   };
 
-  class B : A<int> { B(); };
-  B::B() {} // expected-note {{in instantiation of member function 'test6::A<int>::~A' requested here}}
+  class B : A<int> { B(); }; // expected-note {{in instantiation of member function 'test6::A<int>::operator delete' requested here}}
+  B::B() {}
 }
 
 // Make sure classes are marked invalid when they have invalid

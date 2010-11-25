@@ -2557,8 +2557,11 @@ public:
   /// \brief The list of classes whose vtables have been used within
   /// this translation unit, and the source locations at which the
   /// first use occurred.
-  llvm::SmallVector<std::pair<CXXRecordDecl *, SourceLocation>, 16> 
-    VTableUses;
+  typedef std::pair<CXXRecordDecl*, SourceLocation> VTableUse;
+
+  /// \brief The list of vtables that are required but have not yet been
+  /// materialized.
+  llvm::SmallVector<VTableUse, 16> VTableUses;
 
   /// \brief The set of classes whose vtables have been used within
   /// this translation unit, and a bit that will be true if the vtable is
