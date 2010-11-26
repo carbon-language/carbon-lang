@@ -48,19 +48,16 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
  
   SVal V = state->getSVal(RetE);
   const MemRegion *R = V.getAsRegion();
-  if (!R)
-    return;
-
-  R = R->StripCasts();
-  if (!R)
-    return;
 
   const ElementRegion *ER = dyn_cast_or_null<ElementRegion>(R);
   if (!ER)
     return;
 
   DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
-
+  // Zero index is always in bound, this also passes ElementRegions created for
+  // pointer casts.
+  if (Idx.isZeroConstant())
+    return;
   // FIXME: All of this out-of-bounds checking should eventually be refactored
   // into a common place.
 
