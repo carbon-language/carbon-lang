@@ -1038,11 +1038,15 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
 
   // Collect all the declaring classes of instance members we find.
   bool hasNonInstance = false;
+  bool hasField = false;
   llvm::SmallPtrSet<CXXRecordDecl*, 4> Classes;
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
     NamedDecl *D = *I;
 
     if (D->isCXXInstanceMember()) {
+      if (dyn_cast<FieldDecl>(D))
+        hasField = true;
+
       CXXRecordDecl *R = cast<CXXRecordDecl>(D->getDeclContext());
       Classes.insert(R->getCanonicalDecl());
     }
@@ -1057,8 +1061,24 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
 
   // If the current context is not an instance method, it can't be
   // an implicit member reference.
-  if (isStaticContext)
-    return (hasNonInstance ? IMA_Mixed_StaticContext : IMA_Error_StaticContext);
+  if (isStaticContext) {
+    if (hasNonInstance)
+        return IMA_Mixed_StaticContext;
+        
+    if (SemaRef.getLangOptions().CPlusPlus0x && hasField) {
+      // C++0x [expr.prim.general]p10:
+      //   An id-expression that denotes a non-static data member or non-static
+      //   member function of a class can only be used:
+      //   (...)
+      //   - if that id-expression denotes a non-static data member and it appears in an unevaluated operand.
+      const Sema::ExpressionEvaluationContextRecord& record = SemaRef.ExprEvalContexts.back();
+      bool isUnevaluatedExpression = record.Context == Sema::Unevaluated;
+      if (isUnevaluatedExpression)
+        return IMA_Mixed_StaticContext;
+    }
+    
+    return IMA_Error_StaticContext;
+  }
 
   // If we can prove that the current context is unrelated to all the
   // declaring classes, it can't be an implicit member reference (in
