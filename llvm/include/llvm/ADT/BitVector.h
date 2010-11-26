@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cassert>
 #include <climits>
+#include <cstdlib>
 #include <cstring>
 
 namespace llvm {
@@ -77,7 +78,7 @@ public:
   /// bits are initialized to the specified value.
   explicit BitVector(unsigned s, bool t = false) : Size(s) {
     Capacity = NumBitWords(s);
-    Bits = new BitWord[Capacity];
+    Bits = (BitWord *)std::malloc(Capacity * sizeof(BitWord));
     init_words(Bits, Capacity, t);
     if (t)
       clear_unused_bits();
@@ -92,12 +93,12 @@ public:
     }
 
     Capacity = NumBitWords(RHS.size());
-    Bits = new BitWord[Capacity];
-    std::copy(RHS.Bits, &RHS.Bits[Capacity], Bits);
+    Bits = (BitWord *)std::malloc(Capacity * sizeof(BitWord));
+    std::memcpy(Bits, RHS.Bits, Capacity * sizeof(BitWord));
   }
 
   ~BitVector() {
-    delete[] Bits;
+    std::free(Bits);
   }
 
   /// empty - Tests whether there are no bits in this bitvector.
@@ -341,18 +342,18 @@ public:
     unsigned RHSWords = NumBitWords(Size);
     if (Size <= Capacity * BITWORD_SIZE) {
       if (Size)
-        std::copy(RHS.Bits, &RHS.Bits[RHSWords], Bits);
+        std::memcpy(Bits, RHS.Bits, RHSWords * sizeof(BitWord));
       clear_unused_bits();
       return *this;
     }
 
     // Grow the bitvector to have enough elements.
     Capacity = RHSWords;
-    BitWord *NewBits = new BitWord[Capacity];
-    std::copy(RHS.Bits, &RHS.Bits[RHSWords], NewBits);
+    BitWord *NewBits = (BitWord *)std::malloc(Capacity * sizeof(BitWord));
+    std::memcpy(NewBits, RHS.Bits, Capacity * sizeof(BitWord));
 
     // Destroy the old bits.
-    delete[] Bits;
+    std::free(Bits);
     Bits = NewBits;
 
     return *this;
@@ -390,17 +391,8 @@ private:
   }
 
   void grow(unsigned NewSize) {
-    unsigned OldCapacity = Capacity;
-    Capacity = NumBitWords(NewSize);
-    BitWord *NewBits = new BitWord[Capacity];
-
-    // Copy the old bits over.
-    if (OldCapacity != 0)
-      std::copy(Bits, &Bits[OldCapacity], NewBits);
-
-    // Destroy the old bits.
-    delete[] Bits;
-    Bits = NewBits;
+    Capacity = std::max(NumBitWords(NewSize), Capacity * 2);
+    Bits = (BitWord *)std::realloc(Bits, Capacity * sizeof(BitWord));
 
     clear_unused_bits();
   }
