@@ -437,6 +437,10 @@ namespace llvm {
 
   /// @}
 
+  // StringRefs can be treated like a POD type.
+  template <typename T> struct isPodLike;
+  template <> struct isPodLike<StringRef> { static const bool value = true; };
+
 }
 
 #endif
