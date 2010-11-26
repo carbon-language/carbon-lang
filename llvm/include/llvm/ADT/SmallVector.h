@@ -88,7 +88,7 @@ protected:
   }
 
   /// grow_pod - This is an implementation of the grow() method which only works
-  /// on POD-like datatypes and is out of line to reduce code duplication.
+  /// on POD-like data types and is out of line to reduce code duplication.
   void grow_pod(size_t MinSizeInBytes, size_t TSize);
 
 public:

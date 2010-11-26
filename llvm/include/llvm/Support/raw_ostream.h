@@ -165,7 +165,7 @@ public:
   }
 
   raw_ostream &operator<<(const char *Str) {
-    // Inline fast path, particulary for constant strings where a sufficiently
+    // Inline fast path, particularly for constant strings where a sufficiently
     // smart compiler will simplify strlen.
 
     return this->operator<<(StringRef(Str));
@@ -358,7 +358,7 @@ public:
   void close();
 
   /// seek - Flushes the stream and repositions the underlying file descriptor
-  /// positition to the offset specified from the beginning of the file.
+  /// position to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
 
   virtual raw_ostream &changeColor(enum Colors colors, bool bold=false,
