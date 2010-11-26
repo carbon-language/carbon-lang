@@ -161,6 +161,9 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
       << Ex->getSourceRange();
 
   ExprValueKind VK = VK_RValue;
+  if (TypeDependent)
+    VK = Expr::getValueKindForType(DestType);
+
   switch (Kind) {
   default: llvm_unreachable("Unknown C++ cast!");
 
