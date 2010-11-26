@@ -53,6 +53,7 @@ DefinedOrUnknownSVal SValuator::EvalEQ(const GRState *ST,
                                               ValMgr.getContext().IntTy));
 }
 
+// FIXME: should rewrite according to the cast kind.
 SVal SValuator::EvalCast(SVal val, QualType castTy, QualType originalTy) {
   if (val.isUnknownOrUndef() || castTy == originalTy)
     return val;
