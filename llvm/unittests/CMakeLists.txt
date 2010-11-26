@@ -82,6 +82,10 @@ endif()
 
 add_llvm_unittest(JIT ${JITTestsSources})
 
+if(MINGW)
+  set_property(TARGET JITTests PROPERTY LINK_FLAGS -Wl,--export-all-symbols)
+endif()
+
 add_llvm_unittest(Transforms
   Transforms/Utils/Cloning.cpp
   )

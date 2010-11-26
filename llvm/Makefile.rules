@@ -392,6 +392,17 @@ endif
   LD.Flags += -Wl,--no-relax
 endif
 
+# GNU ld/PECOFF accepts but ignores them below;
+#   --version-script
+#   --export-dynamic
+#   --rpath
+# FIXME: autoconf should be aware of them.
+ifneq (,$(filter $(HOST_OS),Cygwin MingW))
+  HAVE_LINK_VERSION_SCRIPT := 0
+  RPATH :=
+  RDYNAMIC := -Wl,--export-all-symbols
+endif
+
 #--------------------------------------------------------------------
 # Directory locations
 #--------------------------------------------------------------------
@@ -948,11 +959,6 @@ ifdef EXPORTED_SYMBOL_FILE
 
 # First, set up the native export file, which may differ from the source
 # export file.
-
-# The option --version-script is not effective on GNU ld win32.
-ifneq (,$(filter $(HOST_OS),Cygwin MingW))
-  HAVE_LINK_VERSION_SCRIPT := 0
-endif
 
 ifeq ($(HOST_OS),Darwin)
 # Darwin convention prefixes symbols with underscores.
