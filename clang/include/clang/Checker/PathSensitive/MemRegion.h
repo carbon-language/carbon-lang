@@ -96,7 +96,7 @@ public:
     END_DECL_REGIONS = ObjCIvarRegionKind,
     CXXObjectRegionKind,
     CXXBaseObjectRegionKind,
-    END_TYPED_REGIONS = END_DECL_REGIONS
+    END_TYPED_REGIONS = CXXBaseObjectRegionKind
   };
     
 private:
