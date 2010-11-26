@@ -130,6 +130,11 @@ public:
   ///  conversions between arrays and pointers.
   virtual SVal ArrayToPointer(Loc Array) = 0;
 
+  /// Evaluates DerivedToBase casts.
+  virtual SVal evalDerivedToBase(SVal derived, QualType basePtrType) {
+    return UnknownVal();
+  }
+
   class CastResult {
     const GRState *state;
     const MemRegion *region;

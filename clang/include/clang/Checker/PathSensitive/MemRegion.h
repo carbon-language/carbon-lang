@@ -93,8 +93,9 @@ public:
     VarRegionKind = BEG_DECL_REGIONS,
     FieldRegionKind,
     ObjCIvarRegionKind,
+    END_DECL_REGIONS = ObjCIvarRegionKind,
     CXXObjectRegionKind,
-    END_DECL_REGIONS = CXXObjectRegionKind,
+    CXXBaseObjectRegionKind,
     END_TYPED_REGIONS = END_DECL_REGIONS
   };
     
@@ -850,6 +851,31 @@ public:
   }
 };
 
+// CXXBaseObjectRegion represents a base object within a C++ object. It is 
+// identified by the base class declaration and the region of its parent object.
+class CXXBaseObjectRegion : public TypedRegion {
+  friend class MemRegionManager;
+
+  const CXXRecordDecl *decl;
+
+  CXXBaseObjectRegion(const CXXRecordDecl *d, const MemRegion *sReg)
+    : TypedRegion(sReg, CXXBaseObjectRegionKind), decl(d) {}
+
+  static void ProfileRegion(llvm::FoldingSetNodeID &ID,
+                            const CXXRecordDecl *decl, const MemRegion *sReg);
+
+public:
+  QualType getValueType() const;
+
+  void dumpToStream(llvm::raw_ostream& os) const;
+
+  void Profile(llvm::FoldingSetNodeID &ID) const;
+
+  static bool classof(const MemRegion *region) {
+    return region->getKind() == CXXBaseObjectRegionKind;
+  }
+};
+
 template<typename RegionTy>
 const RegionTy* MemRegion::getAs() const {
   if (const RegionTy* RT = dyn_cast<RegionTy>(this))
@@ -975,6 +1001,9 @@ public:
 
   const CXXObjectRegion *getCXXObjectRegion(Expr const *Ex,
                                             LocationContext const *LC);
+
+  const CXXBaseObjectRegion *getCXXBaseObjectRegion(const CXXRecordDecl *decl,
+                                                  const MemRegion *superRegion);
 
   const FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
   const BlockTextRegion *getBlockTextRegion(const BlockDecl *BD,

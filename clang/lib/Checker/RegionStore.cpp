@@ -224,6 +224,9 @@ public:
   ///  casts from arrays to pointers.
   SVal ArrayToPointer(Loc Array);
 
+  /// For DerivedToBase casts, create a CXXBaseObjectRegion and return it.
+  virtual SVal evalDerivedToBase(SVal derived, QualType basePtrType);
+
   SVal EvalBinOp(BinaryOperator::Opcode Op,Loc L, NonLoc R, QualType resultTy);
 
   Store getInitialStore(const LocationContext *InitLoc) {
@@ -804,6 +807,14 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR, Ctx));
 }
 
+SVal RegionStoreManager::evalDerivedToBase(SVal derived, QualType basePtrType) {
+  const CXXRecordDecl *baseDecl = basePtrType->getCXXRecordDeclForPointerType();
+  assert(baseDecl && "not a CXXRecordDecl?");
+  loc::MemRegionVal &derivedRegVal = cast<loc::MemRegionVal>(derived);
+  const MemRegion *baseReg = 
+    MRMgr.getCXXBaseObjectRegion(baseDecl, derivedRegVal.getRegion());
+  return loc::MemRegionVal(baseReg);
+}
 //===----------------------------------------------------------------------===//
 // Pointer arithmetic.
 //===----------------------------------------------------------------------===//
@@ -869,6 +880,7 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCIvarRegionKind:
     case MemRegion::CXXObjectRegionKind:
+    case MemRegion::CXXBaseObjectRegionKind:
       return UnknownVal();
 
     case MemRegion::FunctionTextRegionKind:

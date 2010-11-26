@@ -218,6 +218,10 @@ DefinedOrUnknownSVal StringRegion::getExtent(ValueManager& ValMgr) const {
   return ValMgr.makeIntVal(getStringLiteral()->getByteLength()+1, SizeTy);
 }
 
+QualType CXXBaseObjectRegion::getValueType() const {
+  return QualType(decl->getTypeForDecl(), 0);
+}
+
 //===----------------------------------------------------------------------===//
 // FoldingSet profiling.
 //===----------------------------------------------------------------------===//
@@ -367,6 +371,17 @@ void CXXObjectRegion::Profile(llvm::FoldingSetNodeID &ID) const {
   ProfileRegion(ID, Ex, getSuperRegion());
 }
 
+void CXXBaseObjectRegion::ProfileRegion(llvm::FoldingSetNodeID &ID,
+                                        const CXXRecordDecl *decl,
+                                        const MemRegion *sReg) {
+  ID.AddPointer(decl);
+  ID.AddPointer(sReg);
+}
+
+void CXXBaseObjectRegion::Profile(llvm::FoldingSetNodeID &ID) const {
+  ProfileRegion(ID, decl, superRegion);
+}
+
 //===----------------------------------------------------------------------===//
 // Region pretty-printing.
 //===----------------------------------------------------------------------===//
@@ -409,6 +424,10 @@ void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
 
 void CXXObjectRegion::dumpToStream(llvm::raw_ostream &os) const {
   os << "temp_object";
+}
+
+void CXXBaseObjectRegion::dumpToStream(llvm::raw_ostream &os) const {
+  os << "base " << decl->getName();
 }
 
 void CXXThisRegion::dumpToStream(llvm::raw_ostream &os) const {
@@ -685,6 +704,12 @@ MemRegionManager::getCXXObjectRegion(Expr const *E,
   const StackFrameContext *SFC = LC->getCurrentStackFrame();
   assert(SFC);
   return getSubRegion<CXXObjectRegion>(E, getStackLocalsRegion(SFC));
+}
+
+const CXXBaseObjectRegion *
+MemRegionManager::getCXXBaseObjectRegion(const CXXRecordDecl *decl,
+                                         const MemRegion *superRegion) {
+  return getSubRegion<CXXBaseObjectRegion>(decl, superRegion);
 }
 
 const CXXThisRegion*

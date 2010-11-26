@@ -2688,8 +2688,7 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   case CK_IntegralComplexToFloatingComplex:
   case CK_AnyPointerToObjCPointerCast:
   case CK_AnyPointerToBlockPointerCast:
-  case CK_DerivedToBase:
-  case CK_UncheckedDerivedToBase:
+  
   case CK_ObjCObjectLValueCast: {
     // Delegate to SValuator to process.
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
@@ -2702,7 +2701,20 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
     }
     return;
   }
-  
+
+  case CK_DerivedToBase:
+  case CK_UncheckedDerivedToBase:
+    // For DerivedToBase cast, delegate to the store manager.
+    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
+      ExplodedNode *node = *I;
+      const GRState *state = GetState(node);
+      SVal val = state->getSVal(Ex);
+      val = getStoreManager().evalDerivedToBase(val, T);
+      state = state->BindExpr(CastE, val);
+      MakeNode(Dst, CastE, node, state);
+    }
+    return;
+
   // Various C++ casts that are not handled yet.
   case CK_Dynamic:  
   case CK_ToUnion:
