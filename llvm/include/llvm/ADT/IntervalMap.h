@@ -294,6 +294,91 @@ public:
   }
 };
 
+/// adjustSiblingSizes - Move elements between sibling nodes.
+/// @param Node  Array of pointers to sibling nodes.
+/// @param Nodes Number of nodes.
+/// @param CurSize Array of current node sizes, will be overwritten.
+/// @param NewSize Array of desired node sizes.
+template <typename NodeT>
+void adjustSiblingSizes(NodeT *Node[], unsigned Nodes,
+                        unsigned CurSize[], const unsigned NewSize[]) {
+  // Move elements right.
+  for (int n = Nodes - 1; n; --n) {
+    if (CurSize[n] == NewSize[n]) {
+      --Nodes;
+      continue;
+    }
+    for (int m = n - 1; m != -1; --m) {
+      int d = Node[n]->adjustFromLeftSib(CurSize[n], *Node[m], CurSize[m],
+                                         NewSize[n] - CurSize[n]);
+      CurSize[m] -= d;
+      CurSize[n] += d;
+      // Keep going if the current node was exhausted.
+      if (CurSize[n] >= NewSize[n])
+          break;
+    }
+  }
+
+  if (Nodes == 0)
+    return;
+
+  // Move elements left.
+  for (unsigned n = 0; n != Nodes - 1; ++n) {
+    if (CurSize[n] == NewSize[n])
+      continue;
+    for (unsigned m = n + 1; m != Nodes; ++m) {
+      int d = Node[m]->adjustFromLeftSib(CurSize[m], *Node[n], CurSize[n],
+                                        CurSize[n] -  NewSize[n]);
+      CurSize[m] += d;
+      CurSize[n] -= d;
+      // Keep going if the current node was exhausted.
+      if (CurSize[n] >= NewSize[n])
+          break;
+    }
+  }
+
+#ifndef NDEBUG
+  for (unsigned n = 0; n != Nodes; n++)
+    assert(CurSize[n] == NewSize[n] && "Insufficient element shuffle");
+#endif
+}
+
+/// distribute - Compute a new distribution of node elements after an overflow
+/// or underflow. Reserve space for a new element at Position, and compute the
+/// node that will hold Position after redistributing node elements.
+///
+/// It is required that
+///
+///   Elements == sum(CurSize), and
+///   Elements + Grow <= Nodes * Capacity.
+///
+/// NewSize[] will be filled in such that:
+///
+///   sum(NewSize) == Elements, and
+///   NewSize[i] <= Capacity.
+///
+/// The returned index is the node where Position will go, so:
+///
+///   sum(NewSize[0..idx-1]) <= Position
+///   sum(NewSize[0..idx])   >= Position
+///
+/// The last equality, sum(NewSize[0..idx]) == Position, can only happen when
+/// Grow is set and NewSize[idx] == Capacity-1. The index points to the node
+/// before the one holding the Position'th element where there is room for an
+/// insertion.
+///
+/// @param Nodes    The number of nodes.
+/// @param Elements Total elements in all nodes.
+/// @param Capacity The capacity of each node.
+/// @param CurSize  Array[Nodes] of current node sizes, or NULL.
+/// @param NewSize  Array[Nodes] to receive the new node sizes.
+/// @param Position Insert position.
+/// @param Grow     Reserve space for a new element at Position.
+/// @return         (node, offset) for Position.
+IdxPair distribute(unsigned Nodes, unsigned Elements, unsigned Capacity,
+                   const unsigned *CurSize, unsigned NewSize[],
+                   unsigned Position, bool Grow);
+
 
 //===----------------------------------------------------------------------===//
 //---                             NodeSizer                                ---//
@@ -1417,46 +1502,6 @@ const_iterator::treeFind(KeyT x) {
 //---                                iterator                             ----//
 //===----------------------------------------------------------------------===//
 
-namespace IntervalMapImpl {
-
-  /// distribute - Compute a new distribution of node elements after an overflow
-  /// or underflow. Reserve space for a new element at Position, and compute the
-  /// node that will hold Position after redistributing node elements.
-  ///
-  /// It is required that
-  ///
-  ///   Elements == sum(CurSize), and
-  ///   Elements + Grow <= Nodes * Capacity.
-  ///
-  /// NewSize[] will be filled in such that:
-  ///
-  ///   sum(NewSize) == Elements, and
-  ///   NewSize[i] <= Capacity.
-  ///
-  /// The returned index is the node where Position will go, so:
-  ///
-  ///   sum(NewSize[0..idx-1]) <= Position
-  ///   sum(NewSize[0..idx])   >= Position
-  ///
-  /// The last equality, sum(NewSize[0..idx]) == Position, can only happen when
-  /// Grow is set and NewSize[idx] == Capacity-1. The index points to the node
-  /// before the one holding the Position'th element where there is room for an
-  /// insertion.
-  ///
-  /// @param Nodes    The number of nodes.
-  /// @param Elements Total elements in all nodes.
-  /// @param Capacity The capacity of each node.
-  /// @param CurSize  Array[Nodes] of current node sizes, or NULL.
-  /// @param NewSize  Array[Nodes] to receive the new node sizes.
-  /// @param Position Insert position.
-  /// @param Grow     Reserve space for a new element at Position.
-  /// @return         (node, offset) for Position.
-  IdxPair distribute(unsigned Nodes, unsigned Elements, unsigned Capacity,
-                     const unsigned *CurSize, unsigned NewSize[],
-                     unsigned Position, bool Grow);
-
-}
-
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 class IntervalMap<KeyT, ValT, N, Traits>::iterator : public const_iterator {
   friend class IntervalMap;
@@ -1646,45 +1691,11 @@ iterator::overflow(unsigned Level) {
   unsigned NewSize[4];
   IdxPair NewOffset = distribute(Nodes, Elements, NodeT::Capacity,
                                  CurSize, NewSize, Offset, true);
+  adjustSiblingSizes(Node, Nodes, CurSize, NewSize);
 
   // Move current location to the leftmost node.
   if (LeftSib)
     P.moveLeft(Level);
-
-  // Move elements right.
-  for (int n = Nodes - 1; n; --n) {
-    if (CurSize[n] == NewSize[n])
-      continue;
-    for (int m = n - 1; m != -1; --m) {
-      int d = Node[n]->adjustFromLeftSib(CurSize[n], *Node[m], CurSize[m],
-                                        NewSize[n] - CurSize[n]);
-      CurSize[m] -= d;
-      CurSize[n] += d;
-      // Keep going if the current node was exhausted.
-      if (CurSize[n] >= NewSize[n])
-          break;
-    }
-  }
-
-  // Move elements left.
-  for (unsigned n = 0; n != Nodes - 1; ++n) {
-    if (CurSize[n] == NewSize[n])
-      continue;
-    for (unsigned m = n + 1; m != Nodes; ++m) {
-      int d = Node[m]->adjustFromLeftSib(CurSize[m], *Node[n], CurSize[n],
-                                        CurSize[n] -  NewSize[n]);
-      CurSize[m] += d;
-      CurSize[n] -= d;
-      // Keep going if the current node was exhausted.
-      if (CurSize[n] >= NewSize[n])
-          break;
-    }
-  }
-
-#ifndef NDEBUG
-  for (unsigned n = 0; n != Nodes; n++)
-    assert(CurSize[n] == NewSize[n] && "Insufficient element shuffle");
-#endif
 
   // Elements have been rearranged, now update node sizes and stops.
   bool SplitRoot = false;
