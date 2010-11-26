@@ -42,7 +42,7 @@ namespace llvm {
   /// Twines support a special 'null' value, which always concatenates to form
   /// itself, and renders as an empty string. This can be returned from APIs to
   /// effectively nullify any concatenations performed on the result.
-  /// 
+  ///
   /// \b Implementation \n
   ///
   /// Given the nature of a Twine, it is not possible for the Twine's
@@ -99,7 +99,7 @@ namespace llvm {
       /// A pointer to a StringRef instance.
       StringRefKind,
 
-      /// An unsigned int value reinterpreted as a pointer, to render as an 
+      /// An unsigned int value reinterpreted as a pointer, to render as an
       /// unsigned decimal integer.
       DecUIKind,
 
@@ -260,32 +260,32 @@ namespace llvm {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    explicit Twine(unsigned Val) 
+    explicit Twine(unsigned Val)
       : LHS((void*)(intptr_t)Val), LHSKind(DecUIKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as a signed decimal integer.
-    explicit Twine(int Val) 
+    explicit Twine(int Val)
       : LHS((void*)(intptr_t)Val), LHSKind(DecIKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    explicit Twine(const unsigned long &Val) 
+    explicit Twine(const unsigned long &Val)
       : LHS(&Val), LHSKind(DecULKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as a signed decimal integer.
-    explicit Twine(const long &Val) 
+    explicit Twine(const long &Val)
       : LHS(&Val), LHSKind(DecLKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    explicit Twine(const unsigned long long &Val) 
+    explicit Twine(const unsigned long long &Val)
       : LHS(&Val), LHSKind(DecULLKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as a signed decimal integer.
-    explicit Twine(const long long &Val) 
+    explicit Twine(const long long &Val)
       : LHS(&Val), LHSKind(DecLLKind), RHSKind(EmptyKind) {
     }
 
@@ -330,12 +330,12 @@ namespace llvm {
     bool isTriviallyEmpty() const {
       return isNullary();
     }
-    
+
     /// isSingleStringRef - Return true if this twine can be dynamically
     /// accessed as a single StringRef value with getSingleStringRef().
     bool isSingleStringRef() const {
       if (getRHSKind() != EmptyKind) return false;
-      
+
       switch (getLHSKind()) {
       case EmptyKind:
       case CStringKind:

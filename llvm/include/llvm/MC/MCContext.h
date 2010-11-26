@@ -57,8 +57,8 @@ namespace llvm {
     /// GetInstance() gets the current instance of the directional local label
     /// for the LocalLabelVal and adds it to the map if needed.
     unsigned GetInstance(int64_t LocalLabelVal);
-    
-    /// The file name of the log file from the enviromment variable
+
+    /// The file name of the log file from the environment variable
     /// AS_SECURE_LOG_FILE.  Which must be set before the .secure_log_unique
     /// directive is used or it is an error.
     char *SecureLogFile;
@@ -89,23 +89,23 @@ namespace llvm {
     /// We use a bump pointer allocator to avoid the need to track all allocated
     /// objects.
     BumpPtrAllocator Allocator;
-    
+
     void *MachOUniquingMap, *ELFUniquingMap, *COFFUniquingMap;
   public:
     explicit MCContext(const MCAsmInfo &MAI);
     ~MCContext();
-    
+
     const MCAsmInfo &getAsmInfo() const { return MAI; }
 
-    /// @name Symbol Managment
+    /// @name Symbol Management
     /// @{
-    
+
     /// CreateTempSymbol - Create and return a new assembler temporary symbol
     /// with a unique but unspecified name.
     MCSymbol *CreateTempSymbol();
 
-    /// CreateDirectionalLocalSymbol - Create the defintion of a directional
-    /// local symbol for numbered label (used for "1:" defintions).
+    /// CreateDirectionalLocalSymbol - Create the definition of a directional
+    /// local symbol for numbered label (used for "1:" definitions).
     MCSymbol *CreateDirectionalLocalSymbol(int64_t LocalLabelVal);
 
     /// GetDirectionalLocalSymbol - Create and return a directional local
@@ -124,8 +124,8 @@ namespace llvm {
     MCSymbol *LookupSymbol(StringRef Name) const;
 
     /// @}
-    
-    /// @name Section Managment
+
+    /// @name Section Management
     /// @{
 
     /// getMachOSection - Return the MCSection for the specified mach-o section.
@@ -159,10 +159,10 @@ namespace llvm {
       return getCOFFSection (Section, Characteristics, 0, Kind);
     }
 
-    
+
     /// @}
 
-    /// @name Dwarf Managment
+    /// @name Dwarf Management
     /// @{
 
     /// GetDwarfFile - creates an entry in the dwarf file and directory tables.

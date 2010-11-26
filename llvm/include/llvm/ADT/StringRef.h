@@ -132,7 +132,7 @@ namespace llvm {
     /// numbers.
     int compare_numeric(StringRef RHS) const;
 
-    /// \brief Determine the edit distance between this string and another 
+    /// \brief Determine the edit distance between this string and another
     /// string.
     ///
     /// \param Other the string to compare this string against.

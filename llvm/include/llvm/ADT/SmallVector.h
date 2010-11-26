@@ -263,7 +263,7 @@ public:
 template <typename T>
 class SmallVectorImpl : public SmallVectorTemplateBase<T, isPodLike<T>::value> {
   typedef SmallVectorTemplateBase<T, isPodLike<T>::value > SuperClass;
-  
+
   SmallVectorImpl(const SmallVectorImpl&); // DISABLED.
 public:
   typedef typename SuperClass::iterator iterator;
