@@ -45,7 +45,7 @@ namespace {
 class MBlazeAsmBackend : public TargetAsmBackend {
 public:
   MBlazeAsmBackend(const Target &T)
-    : TargetAsmBackend(T) {
+    : TargetAsmBackend() {
   }
 
   bool MayNeedRelaxation(const MCInst &Inst) const;

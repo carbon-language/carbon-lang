@@ -29,18 +29,13 @@ class TargetAsmBackend {
   TargetAsmBackend(const TargetAsmBackend &);   // DO NOT IMPLEMENT
   void operator=(const TargetAsmBackend &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetAsmBackend(const Target &);
-
-  /// TheTarget - The Target that this machine was created for.
-  const Target &TheTarget;
+  TargetAsmBackend();
 
   unsigned HasReliableSymbolDifference : 1;
   unsigned HasScatteredSymbols : 1;
 
 public:
   virtual ~TargetAsmBackend();
-
-  const Target &getTarget() const { return TheTarget; }
 
   virtual const MCObjectFormat &getObjectFormat() const = 0;
 

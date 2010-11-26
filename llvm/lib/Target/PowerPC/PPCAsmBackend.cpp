@@ -19,8 +19,9 @@ using namespace llvm;
 
 namespace {
   class PPCAsmBackend : public TargetAsmBackend {
+  const Target &TheTarget;
   public:
-    PPCAsmBackend(const Target &T) : TargetAsmBackend(T) {}
+    PPCAsmBackend(const Target &T) : TargetAsmBackend(), TheTarget(T) {}
     
     bool MayNeedRelaxation(const MCInst &Inst) const {
       // FIXME.

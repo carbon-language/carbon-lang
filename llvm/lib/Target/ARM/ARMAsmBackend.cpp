@@ -27,7 +27,7 @@ using namespace llvm;
 namespace {
 class ARMAsmBackend : public TargetAsmBackend {
 public:
-  ARMAsmBackend(const Target &T) : TargetAsmBackend(T) {}
+  ARMAsmBackend(const Target &T) : TargetAsmBackend() {}
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
 

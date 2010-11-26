@@ -48,7 +48,7 @@ namespace {
 class X86AsmBackend : public TargetAsmBackend {
 public:
   X86AsmBackend(const Target &T)
-    : TargetAsmBackend(T) {}
+    : TargetAsmBackend() {}
 
   void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                   uint64_t Value) const {
