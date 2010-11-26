@@ -585,11 +585,11 @@ public:
   unsigned extendStop(unsigned i, unsigned Size, KeyT b);
 
 #ifndef NDEBUG
-  void dump(unsigned Size) {
-    errs() << "  N" << this << " [shape=record label=\"{ " << Size << '/' << N;
+  void dump(raw_ostream &OS, unsigned Size) {
+    OS << "  N" << this << " [shape=record label=\"{ " << Size << '/' << N;
     for (unsigned i = 0; i != Size; ++i)
-      errs() << " | {" << start(i) << '-' << stop(i) << "|" << value(i) << '}';
-    errs() << "}\"];\n";
+      OS << " | {" << start(i) << '-' << stop(i) << "|" << value(i) << '}';
+    OS << "}\"];\n";
   }
 #endif
 
@@ -771,14 +771,14 @@ public:
   }
 
 #ifndef NDEBUG
-  void dump(unsigned Size) {
-    errs() << "  N" << this << " [shape=record label=\"" << Size << '/' << N;
+  void dump(raw_ostream &OS, unsigned Size) {
+    OS << "  N" << this << " [shape=record label=\"" << Size << '/' << N;
     for (unsigned i = 0; i != Size; ++i)
-      errs() << " | <s" << i << "> " << stop(i);
-    errs() << "\"];\n";
+      OS << " | <s" << i << "> " << stop(i);
+    OS << "\"];\n";
     for (unsigned i = 0; i != Size; ++i)
-      errs() << "  N" << this << ":s" << i << " -> N"
-             << &subtree(i).template get<BranchNode>() << ";\n";
+      OS << "  N" << this << ":s" << i << " -> N"
+         << &subtree(i).template get<BranchNode>() << ";\n";
   }
 #endif
 
@@ -849,6 +849,12 @@ public:
   /// @param Level 0..height-1. The leaves have no subtrees.
   NodeRef &subtree(unsigned Level) const {
     return path[Level].subtree(path[Level].offset);
+  }
+
+  /// reset - Reset cached information about node(Level) from subtree(Level -1).
+  /// @param Level 1..height. THe node to update after parent node changed.
+  void reset(unsigned Level) {
+    path[Level] = Entry(subtree(Level - 1), offset(Level));
   }
 
   /// push - Add entry to path.
@@ -1167,6 +1173,7 @@ public:
   }
 
 #ifndef NDEBUG
+  raw_ostream *OS;
   void dump();
   void dumpNode(IntervalMapImpl::NodeRef Node, unsigned Height);
 #endif
@@ -1316,21 +1323,24 @@ template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 dumpNode(IntervalMapImpl::NodeRef Node, unsigned Height) {
   if (Height)
-    Node.get<Branch>().dump(Node.size());
+    Node.get<Branch>().dump(*OS, Node.size());
   else
-    Node.get<Leaf>().dump(Node.size());
+    Node.get<Leaf>().dump(*OS, Node.size());
 }
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 dump() {
-  errs() << "digraph {\n";
+  std::string errors;
+  raw_fd_ostream ofs("tree.dot", errors);
+  OS = &ofs;
+  ofs << "digraph {\n";
   if (branched())
-    rootBranch().dump(rootSize);
+    rootBranch().dump(ofs, rootSize);
   else
-    rootLeaf().dump(rootSize);
+    rootLeaf().dump(ofs, rootSize);
   visitNodes(&IntervalMap::dumpNode);
-  errs() << "}\n";
+  ofs << "}\n";
 }
 #endif
 
@@ -1557,6 +1567,7 @@ iterator::insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop) {
     if (IM.rootSize < RootBranch::Capacity) {
       IM.rootBranch().insert(P.offset(0), IM.rootSize, Node, Stop);
       P.setSize(0, ++IM.rootSize);
+      P.reset(Level);
       return SplitRoot;
     }
 
@@ -1581,6 +1592,9 @@ iterator::insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop) {
   }
   P.node<Branch>(Level).insert(P.offset(Level), P.size(Level), Node, Stop);
   P.setSize(Level, P.size(Level) + 1);
+  if (P.atLastBranch(Level))
+    setNodeStop(Level, Stop);
+  P.reset(Level + 1);
   return SplitRoot;
 }
 

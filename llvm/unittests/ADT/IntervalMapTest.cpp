@@ -15,6 +15,7 @@ using namespace llvm;
 namespace {
 
 typedef IntervalMap<unsigned, unsigned> UUMap;
+typedef IntervalMap<unsigned, unsigned, 4> UU4Map;
 
 // Empty map tests
 TEST(IntervalMapTest, EmptyMap) {
@@ -359,6 +360,56 @@ TEST(IntervalMapTest, Branched) {
 
   // Backwards iteration.
   for (unsigned i = 99; i; --i) {
+    --I;
+    ASSERT_TRUE(I.valid());
+    EXPECT_EQ(10*i, I.start());
+    EXPECT_EQ(10*i+5, I.stop());
+    EXPECT_EQ(i, *I);
+  }
+  EXPECT_TRUE(I == map.begin());
+
+  // Test clear() on branched map.
+  map.clear();
+  EXPECT_TRUE(map.empty());
+  EXPECT_TRUE(map.begin() == map.end());
+}
+
+// Branched, high, non-coalescing tests.
+TEST(IntervalMapTest, Branched2) {
+  UU4Map::Allocator allocator;
+  UU4Map map(allocator);
+
+  // Insert enough intervals to force a height >= 2 tree.
+  for (unsigned i = 1; i < 1000; ++i)
+    map.insert(10*i, 10*i+5, i);
+
+  // Tree limits.
+  EXPECT_FALSE(map.empty());
+  EXPECT_EQ(10u, map.start());
+  EXPECT_EQ(9995u, map.stop());
+
+  // Tree lookup.
+  for (unsigned i = 1; i < 1000; ++i) {
+    EXPECT_EQ(0u, map.lookup(10*i-1));
+    EXPECT_EQ(i, map.lookup(10*i));
+    EXPECT_EQ(i, map.lookup(10*i+5));
+    EXPECT_EQ(0u, map.lookup(10*i+6));
+  }
+
+  // Forward iteration.
+  UU4Map::iterator I = map.begin();
+  for (unsigned i = 1; i < 1000; ++i) {
+    ASSERT_TRUE(I.valid());
+    EXPECT_EQ(10*i, I.start());
+    EXPECT_EQ(10*i+5, I.stop());
+    EXPECT_EQ(i, *I);
+    ++I;
+  }
+  EXPECT_FALSE(I.valid());
+  EXPECT_TRUE(I == map.end());
+
+  // Backwards iteration.
+  for (unsigned i = 999; i; --i) {
     --I;
     ASSERT_TRUE(I.valid());
     EXPECT_EQ(10*i, I.start());
