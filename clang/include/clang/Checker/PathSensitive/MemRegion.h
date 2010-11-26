@@ -94,7 +94,7 @@ public:
     FieldRegionKind,
     ObjCIvarRegionKind,
     END_DECL_REGIONS = ObjCIvarRegionKind,
-    CXXObjectRegionKind,
+    CXXTempObjectRegionKind,
     CXXBaseObjectRegionKind,
     END_TYPED_REGIONS = CXXBaseObjectRegionKind
   };
@@ -826,13 +826,13 @@ public:
 };
 
 // C++ temporary object associated with an expression.
-class CXXObjectRegion : public TypedRegion {
+class CXXTempObjectRegion : public TypedRegion {
   friend class MemRegionManager;
 
   Expr const *Ex;
 
-  CXXObjectRegion(Expr const *E, MemRegion const *sReg) 
-    : TypedRegion(sReg, CXXObjectRegionKind), Ex(E) {}
+  CXXTempObjectRegion(Expr const *E, MemRegion const *sReg) 
+    : TypedRegion(sReg, CXXTempObjectRegionKind), Ex(E) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID &ID,
                             Expr const *E, const MemRegion *sReg);
@@ -847,7 +847,7 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID) const;
 
   static bool classof(const MemRegion* R) {
-    return R->getKind() == CXXObjectRegionKind;
+    return R->getKind() == CXXTempObjectRegionKind;
   }
 };
 
@@ -999,8 +999,8 @@ public:
   const ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                           const MemRegion* superRegion);
 
-  const CXXObjectRegion *getCXXObjectRegion(Expr const *Ex,
-                                            LocationContext const *LC);
+  const CXXTempObjectRegion *getCXXTempObjectRegion(Expr const *Ex,
+                                                    LocationContext const *LC);
 
   const CXXBaseObjectRegion *getCXXBaseObjectRegion(const CXXRecordDecl *decl,
                                                   const MemRegion *superRegion);

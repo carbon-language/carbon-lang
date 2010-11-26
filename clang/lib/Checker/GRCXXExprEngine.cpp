@@ -95,7 +95,7 @@ void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
     SVal V = state->getSVal(Ex);
 
     const MemRegion *R =
-      ValMgr.getRegionManager().getCXXObjectRegion(Ex,
+      ValMgr.getRegionManager().getCXXTempObjectRegion(Ex,
                                                    Pred->getLocationContext());
 
     state = state->bindLoc(loc::MemRegionVal(R), V);
@@ -108,7 +108,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
                                          ExplodedNode *Pred,
                                          ExplodedNodeSet &Dst, bool asLValue) {
   if (!Dest)
-    Dest = ValMgr.getRegionManager().getCXXObjectRegion(E,
+    Dest = ValMgr.getRegionManager().getCXXTempObjectRegion(E,
                                                     Pred->getLocationContext());
 
   if (E->isElidable()) {

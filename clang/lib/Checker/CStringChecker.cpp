@@ -629,8 +629,8 @@ bool CStringChecker::SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
     os << "a block";
     return true;
   case MemRegion::CXXThisRegionKind:
-  case MemRegion::CXXObjectRegionKind:
-    os << "a C++ object of type " << TR->getValueType().getAsString();
+  case MemRegion::CXXTempObjectRegionKind:
+    os << "a C++ temp object of type " << TR->getValueType().getAsString();
     return true;
   case MemRegion::VarRegionKind:
     os << "a variable of type" << TR->getValueType().getAsString();

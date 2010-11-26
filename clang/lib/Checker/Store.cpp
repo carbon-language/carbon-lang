@@ -113,7 +113,8 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCIvarRegionKind:
     case MemRegion::VarRegionKind:
-    case MemRegion::CXXObjectRegionKind:
+    case MemRegion::CXXTempObjectRegionKind:
+    case MemRegion::CXXBaseObjectRegionKind:
       return MakeElementRegion(R, PointeeTy);
 
     case MemRegion::ElementRegionKind: {

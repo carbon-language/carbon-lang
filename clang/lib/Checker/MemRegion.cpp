@@ -360,14 +360,14 @@ void BlockDataRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   BlockDataRegion::ProfileRegion(ID, BC, LC, getSuperRegion());
 }
 
-void CXXObjectRegion::ProfileRegion(llvm::FoldingSetNodeID &ID,
-                                    Expr const *Ex,
-                                    const MemRegion *sReg) {
+void CXXTempObjectRegion::ProfileRegion(llvm::FoldingSetNodeID &ID,
+                                        Expr const *Ex,
+                                        const MemRegion *sReg) {
   ID.AddPointer(Ex);
   ID.AddPointer(sReg);
 }
 
-void CXXObjectRegion::Profile(llvm::FoldingSetNodeID &ID) const {
+void CXXTempObjectRegion::Profile(llvm::FoldingSetNodeID &ID) const {
   ProfileRegion(ID, Ex, getSuperRegion());
 }
 
@@ -422,7 +422,7 @@ void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "{ " << (void*) CL <<  " }";
 }
 
-void CXXObjectRegion::dumpToStream(llvm::raw_ostream &os) const {
+void CXXTempObjectRegion::dumpToStream(llvm::raw_ostream &os) const {
   os << "temp_object";
 }
 
@@ -698,12 +698,12 @@ MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
   return getSubRegion<ObjCIvarRegion>(d, superRegion);
 }
 
-const CXXObjectRegion*
-MemRegionManager::getCXXObjectRegion(Expr const *E,
-                                     LocationContext const *LC) {
+const CXXTempObjectRegion*
+MemRegionManager::getCXXTempObjectRegion(Expr const *E,
+                                         LocationContext const *LC) {
   const StackFrameContext *SFC = LC->getCurrentStackFrame();
   assert(SFC);
-  return getSubRegion<CXXObjectRegion>(E, getStackLocalsRegion(SFC));
+  return getSubRegion<CXXTempObjectRegion>(E, getStackLocalsRegion(SFC));
 }
 
 const CXXBaseObjectRegion *
@@ -870,7 +870,7 @@ RegionOffset MemRegion::getAsOffset() const {
     case CXXThisRegionKind:
     case StringRegionKind:
     case VarRegionKind:
-    case CXXObjectRegionKind:
+    case CXXTempObjectRegionKind:
       goto Finish;
     case ElementRegionKind: {
       const ElementRegion *ER = cast<ElementRegion>(R);
