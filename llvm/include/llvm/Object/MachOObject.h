@@ -11,6 +11,7 @@
 #define LLVM_OBJECT_MACHOOBJECT_H
 
 #include <string>
+#include "llvm/ADT/InMemoryStruct.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Object/MachOFormat.h"
 
@@ -88,6 +89,7 @@ public:
   /// @{
 
   bool isLittleEndian() const { return IsLittleEndian; }
+  bool isSwappedEndian() const { return IsSwappedEndian; }
   bool is64Bit() const { return Is64Bit; }
 
   unsigned getHeaderSize() const {
@@ -110,6 +112,13 @@ public:
 
   /// \brief Retrieve the information for the given load command.
   const LoadCommandInfo &getLoadCommandInfo(unsigned Index) const;
+
+  void ReadSegmentLoadCommand(
+    const LoadCommandInfo &LCI,
+    InMemoryStruct<macho::SegmentLoadCommand> &Res) const;
+  void ReadSegment64LoadCommand(
+    const LoadCommandInfo &LCI,
+    InMemoryStruct<macho::Segment64LoadCommand> &Res) const;
 
   /// @}
 };

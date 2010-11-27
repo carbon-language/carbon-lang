@@ -65,20 +65,73 @@ static int DumpHeader(MachOObject &Obj) {
   return 0;
 }
 
+static void DumpSegmentCommandData(StringRef Name,
+                                   uint64_t VMAddr, uint64_t VMSize,
+                                   uint64_t FileOffset, uint64_t FileSize,
+                                   uint32_t MaxProt, uint32_t InitProt,
+                                   uint32_t NumSections, uint32_t Flags) {
+  outs() << "  ('segment_name', '";
+  outs().write_escaped(Name, /*UseHexEscapes=*/true) << "')\n";
+  outs() << "  ('vm_addr', " << VMAddr << ")\n";
+  outs() << "  ('vm_size', " << VMSize << ")\n";
+  outs() << "  ('file_offset', " << FileOffset << ")\n";
+  outs() << "  ('file_size', " << FileSize << ")\n";
+  outs() << "  ('maxprot', " << MaxProt << ")\n";
+  outs() << "  ('initprot', " << InitProt << ")\n";
+  outs() << "  ('num_sections', " << NumSections << ")\n";
+  outs() << "  ('flags', " << Flags << ")\n";
+}
+
+static int DumpSegmentCommand(MachOObject &Obj,
+                               const MachOObject::LoadCommandInfo &LCI) {
+  InMemoryStruct<macho::SegmentLoadCommand> SLC;
+  Obj.ReadSegmentLoadCommand(LCI, SLC);
+  if (!SLC)
+    return Error("unable to read segment load command");
+
+  DumpSegmentCommandData(StringRef(SLC->Name, 16), SLC->VMAddress, SLC->VMSize,
+                         SLC->FileOffset, SLC->FileSize,
+                         SLC->MaxVMProtection, SLC->InitialVMProtection,
+                         SLC->NumSections, SLC->Flags);
+
+  return 0;
+}
+static int DumpSegment64Command(MachOObject &Obj,
+                               const MachOObject::LoadCommandInfo &LCI) {
+  InMemoryStruct<macho::Segment64LoadCommand> SLC;
+  Obj.ReadSegment64LoadCommand(LCI, SLC);
+  if (!SLC)
+    return Error("unable to read segment load command");
+
+  DumpSegmentCommandData(StringRef(SLC->Name, 16), SLC->VMAddress, SLC->VMSize,
+                         SLC->FileOffset, SLC->FileSize,
+                         SLC->MaxVMProtection, SLC->InitialVMProtection,
+                         SLC->NumSections, SLC->Flags);
+
+  return 0;
+}
+
 static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
   const MachOObject::LoadCommandInfo &LCI = Obj.getLoadCommandInfo(Index);
+  int Res = 0;
 
   outs() << "  # Load Command " << Index << "\n"
          << " (('command', " << LCI.Command.Type << ")\n"
          << "  ('size', " << LCI.Command.Size << ")\n";
   switch (LCI.Command.Type) {
+  case macho::LCT_Segment:
+    Res = DumpSegmentCommand(Obj, LCI);
+    break;
+  case macho::LCT_Segment64:
+    Res = DumpSegment64Command(Obj, LCI);
+    break;
   default:
     Warning("unknown load command: " + Twine(LCI.Command.Type));
     break;
   }
   outs() << " ),\n";
 
-  return 0;
+  return Res;
 }
 
 int main(int argc, char **argv) {
@@ -104,10 +157,12 @@ int main(int argc, char **argv) {
     return Res;
 
   // Print the load commands.
+  int Res = 0;
   outs() << "('load_commands', [\n";
   for (unsigned i = 0; i != InputObject->getHeader().NumLoadCommands; ++i)
-    DumpLoadCommand(*InputObject, i);
+    if ((Res = DumpLoadCommand(*InputObject, i)))
+      break;
   outs() << "])\n";
 
-  return 0;
+  return Res;
 }

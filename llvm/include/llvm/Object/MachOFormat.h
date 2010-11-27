@@ -146,6 +146,39 @@ namespace macho {
     uint32_t Size;
   };
 
+  /// @name Load Command Structures
+  /// @{
+
+  struct SegmentLoadCommand {
+    uint32_t Type;
+    uint32_t Size;
+    char Name[16];
+    uint32_t VMAddress;
+    uint32_t VMSize;
+    uint32_t FileOffset;
+    uint32_t FileSize;
+    uint32_t MaxVMProtection;
+    uint32_t InitialVMProtection;
+    uint32_t NumSections;
+    uint32_t Flags;
+  };
+
+  struct Segment64LoadCommand {
+    uint32_t Type;
+    uint32_t Size;
+    char Name[16];
+    uint64_t VMAddress;
+    uint64_t VMSize;
+    uint64_t FileOffset;
+    uint64_t FileSize;
+    uint32_t MaxVMProtection;
+    uint32_t InitialVMProtection;
+    uint32_t NumSections;
+    uint32_t Flags;
+  };
+
+  /// @}
+
   // See <mach-o/nlist.h>.
   enum SymbolTypeType {
     STT_Undefined = 0x00,

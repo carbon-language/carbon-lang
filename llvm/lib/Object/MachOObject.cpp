@@ -16,10 +16,42 @@
 using namespace llvm;
 using namespace llvm::object;
 
+/* Translation Utilities */
+
 template<typename T>
 static void SwapValue(T &Value) {
   Value = sys::SwapByteOrder(Value);
 }
+
+template<typename T>
+static void SwapStruct(T &Value);
+
+template<typename T>
+static void ReadInMemoryStruct(const MachOObject &MOO,
+                               StringRef Buffer, uint64_t Base,
+                               InMemoryStruct<T> &Res) {
+  typedef T struct_type;
+  uint64_t Size = sizeof(struct_type);
+
+  // Check that the buffer contains the expected data.
+  if (Base + Size >  Buffer.size()) {
+    Res = 0;
+    return;
+  }
+
+  // Check whether we can return a direct pointer.
+  struct_type *Ptr = (struct_type *) (Buffer.data() + Base);
+  if (!MOO.isSwappedEndian()) {
+    Res = Ptr;
+    return;
+  }
+
+  // Otherwise, copy the struct and translate the values.
+  Res = *Ptr;
+  SwapStruct(*Res);
+}
+
+/* *** */
 
 MachOObject::MachOObject(MemoryBuffer *Buffer_, bool IsLittleEndian_,
                          bool Is64Bit_)
@@ -119,4 +151,40 @@ MachOObject::getLoadCommandInfo(unsigned Index) const {
   }
 
   return LoadCommands[Index];
+}
+
+template<>
+static void SwapStruct(macho::SegmentLoadCommand &Value) {
+  SwapValue(Value.Type);
+  SwapValue(Value.Size);
+  SwapValue(Value.VMAddress);
+  SwapValue(Value.VMSize);
+  SwapValue(Value.FileOffset);
+  SwapValue(Value.FileSize);
+  SwapValue(Value.MaxVMProtection);
+  SwapValue(Value.InitialVMProtection);
+  SwapValue(Value.NumSections);
+  SwapValue(Value.Flags);
+}
+void MachOObject::ReadSegmentLoadCommand(const LoadCommandInfo &LCI,
+                         InMemoryStruct<macho::SegmentLoadCommand> &Res) const {
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), LCI.Offset, Res);
+}
+
+template<>
+static void SwapStruct(macho::Segment64LoadCommand &Value) {
+  SwapValue(Value.Type);
+  SwapValue(Value.Size);
+  SwapValue(Value.VMAddress);
+  SwapValue(Value.VMSize);
+  SwapValue(Value.FileOffset);
+  SwapValue(Value.FileSize);
+  SwapValue(Value.MaxVMProtection);
+  SwapValue(Value.InitialVMProtection);
+  SwapValue(Value.NumSections);
+  SwapValue(Value.Flags);
+}
+void MachOObject::ReadSegment64LoadCommand(const LoadCommandInfo &LCI,
+                       InMemoryStruct<macho::Segment64LoadCommand> &Res) const {
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), LCI.Offset, Res);
 }
