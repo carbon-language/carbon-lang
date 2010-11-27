@@ -83,13 +83,13 @@ static void DumpSegmentCommandData(StringRef Name,
   outs() << "  ('flags', " << Flags << ")\n";
 }
 
-static void DumpSectionData(unsigned Index, StringRef Name,
-                            StringRef SegmentName, uint64_t Address,
-                            uint64_t Size, uint32_t Offset,
-                            uint32_t Align, uint32_t RelocationTableOffset,
-                            uint32_t NumRelocationTableEntries,
-                            uint32_t Flags, uint32_t Reserved1,
-                            uint32_t Reserved2, uint64_t Reserved3 = ~0ULL) {
+static int DumpSectionData(MachOObject &Obj, unsigned Index, StringRef Name,
+                           StringRef SegmentName, uint64_t Address,
+                           uint64_t Size, uint32_t Offset,
+                           uint32_t Align, uint32_t RelocationTableOffset,
+                           uint32_t NumRelocationTableEntries,
+                           uint32_t Flags, uint32_t Reserved1,
+                           uint32_t Reserved2, uint64_t Reserved3 = ~0ULL) {
   outs() << "    # Section " << Index << "\n";
   outs() << "   (('section_name', '";
   outs().write_escaped(Name, /*UseHexEscapes=*/true) << "')\n";
@@ -106,6 +106,26 @@ static void DumpSectionData(unsigned Index, StringRef Name,
   outs() << "    ('reserved2', " << Reserved2 << ")\n";
   if (Reserved3 != ~0ULL)
     outs() << "    ('reserved3', " << Reserved3 << ")\n";
+  outs() << "   ),\n";
+
+  // Dump the relocation entries.
+  int Res = 0;
+  outs() << "  ('_relocations', [\n";
+  for (unsigned i = 0; i != NumRelocationTableEntries; ++i) {
+    InMemoryStruct<macho::RelocationEntry> RE;
+    Obj.ReadRelocationEntry(RelocationTableOffset, i, RE);
+    if (!RE) {
+      Res = Error("unable to read relocation table entry '" + Twine(i) + "'");
+      break;
+    }
+    
+    outs() << "    # Relocation " << i << "\n";
+    outs() << "    (('word-0', " << format("%#x", RE->Word0) << "),\n";
+    outs() << "     ('word-1', " << format("%#x", RE->Word1) << ")),\n";
+  }
+  outs() << "  ])\n";
+
+  return Res;
 }
 
 static int DumpSegmentCommand(MachOObject &Obj,
@@ -131,12 +151,13 @@ static int DumpSegmentCommand(MachOObject &Obj,
       break;
     }
 
-    DumpSectionData(i, StringRef(Sect->Name, 16),
-                    StringRef(Sect->SegmentName, 16), Sect->Address, Sect->Size,
-                    Sect->Offset, Sect->Align, Sect->RelocationTableOffset,
-                    Sect->NumRelocationTableEntries, Sect->Flags,
-                    Sect->Reserved1, Sect->Reserved2);
-    outs() << "   ),\n";
+    if ((Res = DumpSectionData(Obj, i, StringRef(Sect->Name, 16),
+                               StringRef(Sect->SegmentName, 16), Sect->Address,
+                               Sect->Size, Sect->Offset, Sect->Align,
+                               Sect->RelocationTableOffset,
+                               Sect->NumRelocationTableEntries, Sect->Flags,
+                               Sect->Reserved1, Sect->Reserved2)))
+      break;
   }
   outs() << "  ])\n";
 
@@ -166,12 +187,14 @@ static int DumpSegment64Command(MachOObject &Obj,
       break;
     }
 
-    DumpSectionData(i, StringRef(Sect->Name, 16),
-                    StringRef(Sect->SegmentName, 16), Sect->Address, Sect->Size,
-                    Sect->Offset, Sect->Align, Sect->RelocationTableOffset,
-                    Sect->NumRelocationTableEntries, Sect->Flags,
-                    Sect->Reserved1, Sect->Reserved2, Sect->Reserved3);
-    outs() << "   ),\n";
+    if ((Res = DumpSectionData(Obj, i, StringRef(Sect->Name, 16),
+                               StringRef(Sect->SegmentName, 16), Sect->Address,
+                               Sect->Size, Sect->Offset, Sect->Align,
+                               Sect->RelocationTableOffset,
+                               Sect->NumRelocationTableEntries, Sect->Flags,
+                               Sect->Reserved1, Sect->Reserved2,
+                               Sect->Reserved3)))
+      break;
   }
   outs() << "  ])\n";
 

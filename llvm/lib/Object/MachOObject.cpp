@@ -289,3 +289,16 @@ void MachOObject::ReadSection64(const LoadCommandInfo &LCI,
                      Index * sizeof(macho::Section64));
   ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
 }
+
+template<>
+void SwapStruct(macho::RelocationEntry &Value) {
+  SwapValue(Value.Word0);
+  SwapValue(Value.Word1);
+}
+void MachOObject::ReadRelocationEntry(uint64_t RelocationTableOffset,
+                                      unsigned Index,
+                            InMemoryStruct<macho::RelocationEntry> &Res) const {
+  uint64_t Offset = (RelocationTableOffset +
+                     Index * sizeof(macho::RelocationEntry));
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
+}

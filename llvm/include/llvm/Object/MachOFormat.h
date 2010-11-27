@@ -259,6 +259,15 @@ namespace macho {
   };
 
   /// @}
+  /// @name Relocation Data
+  /// @{
+
+  struct RelocationEntry {
+    uint32_t Word0;
+    uint32_t Word1;
+  };
+
+  /// @}
 
   // See <mach-o/nlist.h>.
   enum SymbolTypeType {

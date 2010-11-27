@@ -177,13 +177,8 @@ class MachObjectWriter : public MCObjectWriter {
   /// @name Relocation Data
   /// @{
 
-  struct MachRelocationEntry {
-    uint32_t Word0;
-    uint32_t Word1;
-  };
-
   llvm::DenseMap<const MCSectionData*,
-                 std::vector<MachRelocationEntry> > Relocations;
+                 std::vector<macho::RelocationEntry> > Relocations;
   llvm::DenseMap<const MCSectionData*, unsigned> IndirectSymBase;
 
   /// @}
@@ -551,7 +546,7 @@ public:
       }
       Type = macho::RIT_X86_64_Unsigned;
 
-      MachRelocationEntry MRE;
+      macho::RelocationEntry MRE;
       MRE.Word0 = FixupOffset;
       MRE.Word1 = ((Index     <<  0) |
                    (IsPCRel   << 24) |
@@ -676,7 +671,7 @@ public:
     FixedValue = Value;
 
     // struct relocation_info (8 bytes)
-    MachRelocationEntry MRE;
+    macho::RelocationEntry MRE;
     MRE.Word0 = FixupOffset;
     MRE.Word1 = ((Index     <<  0) |
                  (IsPCRel   << 24) |
@@ -726,7 +721,7 @@ public:
 
     // Relocations are written out in reverse order, so the PAIR comes first.
     if (Type == macho::RIT_Difference || Type == macho::RIT_LocalDifference) {
-      MachRelocationEntry MRE;
+      macho::RelocationEntry MRE;
       MRE.Word0 = ((0         <<  0) |
                    (macho::RIT_Pair  << 24) |
                    (Log2Size  << 28) |
@@ -736,7 +731,7 @@ public:
       Relocations[Fragment->getParent()].push_back(MRE);
     }
 
-    MachRelocationEntry MRE;
+    macho::RelocationEntry MRE;
     MRE.Word0 = ((FixupOffset <<  0) |
                  (Type        << 24) |
                  (Log2Size    << 28) |
@@ -781,7 +776,7 @@ public:
     }
 
     // struct relocation_info (8 bytes)
-    MachRelocationEntry MRE;
+    macho::RelocationEntry MRE;
     MRE.Word0 = Value;
     MRE.Word1 = ((Index     <<  0) |
                  (IsPCRel   << 24) |
@@ -861,7 +856,7 @@ public:
     }
 
     // struct relocation_info (8 bytes)
-    MachRelocationEntry MRE;
+    macho::RelocationEntry MRE;
     MRE.Word0 = FixupOffset;
     MRE.Word1 = ((Index     <<  0) |
                  (IsPCRel   << 24) |
@@ -1138,7 +1133,7 @@ public:
     uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
     for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it) {
-      std::vector<MachRelocationEntry> &Relocs = Relocations[it];
+      std::vector<macho::RelocationEntry> &Relocs = Relocations[it];
       unsigned NumRelocs = Relocs.size();
       uint64_t SectionStart = SectionDataStart + Layout.getSectionAddress(it);
       WriteSection(Asm, Layout, *it, SectionStart, RelocTableEnd, NumRelocs);
@@ -1192,7 +1187,7 @@ public:
            ie = Asm.end(); it != ie; ++it) {
       // Write the section relocation entries, in reverse order to match 'as'
       // (approximately, the exact algorithm is more complicated than this).
-      std::vector<MachRelocationEntry> &Relocs = Relocations[it];
+      std::vector<macho::RelocationEntry> &Relocs = Relocations[it];
       for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
         Write32(Relocs[e - i - 1].Word0);
         Write32(Relocs[e - i - 1].Word1);

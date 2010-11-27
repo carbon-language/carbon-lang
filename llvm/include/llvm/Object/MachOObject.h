@@ -137,6 +137,9 @@ public:
     const LoadCommandInfo &LCI,
     unsigned Index,
     InMemoryStruct<macho::Section64> &Res) const;
+  void ReadRelocationEntry(
+    uint64_t RelocationTableOffset, unsigned Index,
+    InMemoryStruct<macho::RelocationEntry> &Res) const;
 
   /// @}
 };
