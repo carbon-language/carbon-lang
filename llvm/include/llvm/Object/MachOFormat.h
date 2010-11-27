@@ -22,6 +22,8 @@
 #ifndef LLVM_OBJECT_MACHOFORMAT_H
 #define LLVM_OBJECT_MACHOFORMAT_H
 
+#include "llvm/System/DataTypes.h"
+
 namespace llvm {
 namespace object {
 
@@ -83,13 +85,6 @@ namespace mach {
 
 /// Format information for Mach object files.
 namespace macho {
-  /// \brief Constants for header magic field.
-  enum HeaderMagic {
-    HM_Object32 = 0xFEEDFACE,  ///< 32-bit mach object file
-    HM_Object64 = 0xFEEDFACF,  ///< 64-bit mach object file
-    HM_Universal = 0xCAFEBABE  ///< Universal object file
-  };
-
   /// \brief Constants for structure sizes.
   enum StructureSizes {
     Header32Size = 28,
@@ -105,6 +100,29 @@ namespace macho {
     RelocationInfoSize = 8
   };
 
+  /// \brief Constants for header magic field.
+  enum HeaderMagic {
+    HM_Object32 = 0xFEEDFACE,  ///< 32-bit mach object file
+    HM_Object64 = 0xFEEDFACF,  ///< 64-bit mach object file
+    HM_Universal = 0xCAFEBABE  ///< Universal object file
+  };
+
+  /// \brief Header common to all Mach object files.
+  struct Header {
+    uint32_t Magic;
+    uint32_t CPUType;
+    uint32_t CPUSubtype;
+    uint32_t FileType;
+    uint32_t NumLoadCommands;
+    uint32_t SizeOfLoadCommands;
+    uint32_t Flags;
+  };
+
+  /// \brief Extended header for 64-bit object files.
+  struct Header64Ext {
+    uint32_t Reserved;
+  };
+
   // See <mach-o/loader.h>.
   enum HeaderFileType {
     HFT_Object = 0x1
@@ -118,7 +136,14 @@ namespace macho {
     LCT_Segment = 0x1,
     LCT_Symtab = 0x2,
     LCT_Dysymtab = 0xb,
-    LCT_Segment64 = 0x19
+    LCT_Segment64 = 0x19,
+    LCT_UUID = 0x1b
+  };
+
+  /// \brief Load command structure.
+  struct LoadCommand {
+    uint32_t Type;
+    uint32_t Size;
   };
 
   // See <mach-o/nlist.h>.

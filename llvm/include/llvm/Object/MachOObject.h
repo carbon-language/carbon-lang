@@ -12,6 +12,7 @@
 
 #include <string>
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Object/MachOFormat.h"
 
 namespace llvm {
 
@@ -40,6 +41,13 @@ namespace object {
 // objects which are in the current address space.
 class MachOObject {
 public:
+  struct LoadCommandInfo {
+    /// The load command information.
+    macho::LoadCommand Command;
+
+    /// The offset to the start of the load command in memory.
+    uint64_t Offset;
+  };
 
 private:
   OwningPtr<MemoryBuffer> Buffer;
@@ -48,11 +56,23 @@ private:
   bool IsLittleEndian;
   /// Whether the object is 64-bit.
   bool Is64Bit;
+  /// Whether the object is swapped endianness from the host.
+  bool IsSwappedEndian;
+
+  /// The cached information on the load commands.
+  LoadCommandInfo *LoadCommands;
+  mutable unsigned NumLoadedCommands;
+
+  /// The cached copy of the header.
+  macho::Header Header;
+  macho::Header64Ext Header64Ext;
 
 private:
   MachOObject(MemoryBuffer *Buffer, bool IsLittleEndian, bool Is64Bit);
 
 public:
+  ~MachOObject();
+
   /// \brief Load a Mach-O object from a MemoryBuffer object.
   ///
   /// \param Buffer - The buffer to load the object from. This routine takes
@@ -64,8 +84,33 @@ public:
   static MachOObject *LoadFromBuffer(MemoryBuffer *Buffer,
                                      std::string *ErrorStr = 0);
 
-  /// @name Object Header Information
+  /// @name File Information
   /// @{
+
+  bool isLittleEndian() const { return IsLittleEndian; }
+  bool is64Bit() const { return Is64Bit; }
+
+  unsigned getHeaderSize() const {
+    return Is64Bit ? macho::Header64Size : macho::Header32Size;
+  }
+
+  /// @}
+  /// @name Object Header Access
+  /// @{
+
+  const macho::Header &getHeader() const { return Header; }
+  const macho::Header64Ext &getHeader64Ext() const {
+    assert(is64Bit() && "Invalid access!");
+    return Header64Ext;
+  }
+
+  /// @}
+  /// @name Object Structure Access
+  /// @{
+
+  /// \brief Retrieve the information for the given load command.
+  const LoadCommandInfo &getLoadCommandInfo(unsigned Index) const;
+
   /// @}
 };
 
