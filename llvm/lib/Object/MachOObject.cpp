@@ -154,7 +154,7 @@ MachOObject::getLoadCommandInfo(unsigned Index) const {
 }
 
 template<>
-static void SwapStruct(macho::SegmentLoadCommand &Value) {
+void SwapStruct(macho::SegmentLoadCommand &Value) {
   SwapValue(Value.Type);
   SwapValue(Value.Size);
   SwapValue(Value.VMAddress);
@@ -172,7 +172,7 @@ void MachOObject::ReadSegmentLoadCommand(const LoadCommandInfo &LCI,
 }
 
 template<>
-static void SwapStruct(macho::Segment64LoadCommand &Value) {
+void SwapStruct(macho::Segment64LoadCommand &Value) {
   SwapValue(Value.Type);
   SwapValue(Value.Size);
   SwapValue(Value.VMAddress);
@@ -190,7 +190,7 @@ void MachOObject::ReadSegment64LoadCommand(const LoadCommandInfo &LCI,
 }
 
 template<>
-static void SwapStruct(macho::SymtabLoadCommand &Value) {
+void SwapStruct(macho::SymtabLoadCommand &Value) {
   SwapValue(Value.Type);
   SwapValue(Value.Size);
   SwapValue(Value.SymbolTableOffset);
@@ -204,7 +204,7 @@ void MachOObject::ReadSymtabLoadCommand(const LoadCommandInfo &LCI,
 }
 
 template<>
-static void SwapStruct(macho::DysymtabLoadCommand &Value) {
+void SwapStruct(macho::DysymtabLoadCommand &Value) {
   SwapValue(Value.Type);
   SwapValue(Value.Size);
   SwapValue(Value.LocalSymbolIndex);
