@@ -162,8 +162,6 @@ def VSTMQDB
                     IIC_fpStore_m, "",
                    [(store (v2f64 QPR:$src), GPR:$Rn)]>;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
-
 // Classes for VLD* pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
 class VLDQPseudo<InstrItinClass itin>
@@ -182,6 +180,8 @@ class VLDQQQQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs QQQQPR:$dst, GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset, QQQQPR:$src), itin,
                 "$addr.addr = $wb, $src = $dst">;
+
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
 //   VLD1     : Vector Load (multiple single elements)
 class VLD1D<bits<4> op7_4, string Dt>
@@ -790,7 +790,79 @@ def VLD4LNq32_UPD : VLD4LNWB<0b1011, {?,1,?,?}, "32"> {
 def VLD4LNq16Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4lnu>;
 def VLD4LNq32Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4lnu>;
 
+} // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
+
 //   VLD1DUP  : Vector Load (single element to all lanes)
+class VLD1DUP<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
+              PatFrag LoadOp>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$Vd), (ins addrmode6:$Rn),
+          IIC_VLD1dup, "vld1", Dt, "\\{$Vd[]\\}, $Rn", "",
+          [(set DPR:$Vd, (Ty (NEONvdup (i32 (LoadOp addrmode6:$Rn)))))]> {
+  let Rm = 0b1111;
+}
+class VLD1QDUPPseudo<ValueType Ty, PatFrag LoadOp> : VLDQPseudo<IIC_VLD1dup> {
+  let Pattern = [(set QPR:$dst,
+                      (Ty (NEONvdup (i32 (LoadOp addrmode6:$addr)))))];
+}
+
+def VLD1DUPd8  : VLD1DUP<0b1100, {0,0,0,?}, "8", v8i8, extloadi8> {
+  let Inst{4} = Rn{4};
+}
+def VLD1DUPd16 : VLD1DUP<0b1100, {0,1,0,?}, "16", v4i16, extloadi16> {
+  let Inst{4} = Rn{4};
+}
+def VLD1DUPd32 : VLD1DUP<0b1100, {1,0,0,?}, "32", v2i32, load> {
+  let Inst{4} = Rn{4};
+}
+
+def VLD1DUPq8Pseudo  : VLD1QDUPPseudo<v16i8, extloadi8>;
+def VLD1DUPq16Pseudo : VLD1QDUPPseudo<v8i16, extloadi16>;
+def VLD1DUPq32Pseudo : VLD1QDUPPseudo<v4i32, load>;
+
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
+
+class VLD1QDUP<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
+               PatFrag LoadOp>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$Vd, DPR:$dst2),
+          (ins addrmode6:$Rn), IIC_VLD1dup,
+          "vld1", Dt, "\\{$Vd[], $dst2[]\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+}
+
+def VLD1DUPq8  : VLD1QDUP<0b1100, {0,0,1,0}, "8", v16i8, extloadi8>;
+def VLD1DUPq16 : VLD1QDUP<0b1100, {0,1,1,?}, "16", v8i16, extloadi16> {
+  let Inst{4} = Rn{4};
+}
+def VLD1DUPq32 : VLD1QDUP<0b1100, {1,0,1,?}, "32", v4i32, load> {
+  let Inst{4} = Rn{4};
+}
+
+// ...with address register writeback:
+class VLD1DUPWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$Vd, GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1dupu,
+          "vld1", Dt, "\\{$Vd[]\\}, $Rn$Rm", "$Rn.addr = $wb", []>;
+class VLD1QDUPWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$Vd, DPR:$dst2, GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1dupu,
+          "vld1", Dt, "\\{$Vd[], $dst2[]\\}, $Rn$Rm", "$Rn.addr = $wb", []>;
+
+def VLD1DUPd8_UPD  : VLD1DUPWB<0b1100, {0,0,0,0}, "8">;
+def VLD1DUPd16_UPD : VLD1DUPWB<0b1100, {0,1,0,?}, "16"> { let Inst{4} = Rn{4}; }
+def VLD1DUPd32_UPD : VLD1DUPWB<0b1100, {1,0,0,?}, "32"> { let Inst{4} = Rn{4}; }
+
+def VLD1DUPq8_UPD  : VLD1QDUPWB<0b1100, {0,0,1,0}, "8">;
+def VLD1DUPq16_UPD : VLD1QDUPWB<0b1100, {0,1,1,?}, "16"> {
+  let Inst{4} = Rn{4};
+}
+def VLD1DUPq32_UPD : VLD1QDUPWB<0b1100, {1,0,1,?}, "32"> {
+  let Inst{4} = Rn{4};
+}
+
+def VLD1DUPq8Pseudo_UPD  : VLDQWBPseudo<IIC_VLD1dupu>;
+def VLD1DUPq16Pseudo_UPD : VLDQWBPseudo<IIC_VLD1dupu>;
+def VLD1DUPq32Pseudo_UPD : VLDQWBPseudo<IIC_VLD1dupu>;
+
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
 //   VLD3DUP  : Vector Load (single 3-element structure to all lanes)
 //   VLD4DUP  : Vector Load (single 4-element structure to all lanes)
