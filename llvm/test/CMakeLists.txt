@@ -50,20 +50,14 @@ if(PYTHONINTERP_FOUND)
 
   MAKE_DIRECTORY(${CMAKE_CURRENT_BINARY_DIR}/Unit)
 
+  # Configuration-time: See Unit/lit.site.cfg.in
+  set(LLVM_BUILD_MODE "%(build_mode)s")
+
   set(LLVM_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
   set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
-  set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
+  set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_config)s")
   set(LLVMGCCDIR "")
   set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE})
-  if (CMAKE_CONFIGURATION_TYPES)
-    # FIXME: We have no idea. It could be any of them... So just output all of
-    # them.
-    set(LLVM_BUILD_MODE "${CMAKE_CONFIGURATION_TYPES}")
-  elseif (CMAKE_BUILD_TYPE)
-    set(LLVM_BUILD_MODE "${CMAKE_BUILD_TYPE}")
-  else()
-    set(LLVM_BUILD_MODE "None")
-  endif()
   set(ENABLE_SHARED ${LLVM_SHARED_LIBS_ENABLED})
   set(SHLIBPATH_VAR ${SHLIBPATH_VAR})
 
@@ -81,6 +75,8 @@ if(PYTHONINTERP_FOUND)
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 --param llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                 --param llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+                --param build_config=${CMAKE_CFG_INTDIR}
+                --param build_mode=${RUNTIME_BUILD_MODE}
                 ${LIT_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 DEPENDS

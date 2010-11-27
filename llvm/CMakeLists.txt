@@ -27,6 +27,20 @@ This process created the file `CMakeCache.txt' and the directory `CMakeFiles'.
 Please delete them.")
 endif()
 
+# Run-time build mode; It is used for unittests.
+if(MSVC_IDE)
+  # Expect "$(Configuration)", "$(OutDir)", etc.
+  # It is expanded by msbuild or similar.
+  set(RUNTIME_BUILD_MODE "${CMAKE_CFG_INTDIR}")
+elseif(NOT CMAKE_BUILD_TYPE STREQUAL "")
+  # Expect "Release" "Debug", etc.
+  # Or unittests could not run.
+  set(RUNTIME_BUILD_MODE ${CMAKE_BUILD_TYPE})
+else()
+  # It might be "."
+  set(RUNTIME_BUILD_MODE "${CMAKE_CFG_INTDIR}")
+endif()
+
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
 
 set(LLVM_MAIN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
