@@ -75,15 +75,6 @@ public:
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo *TRI) const;
 
-  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                        MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                         const TargetRegisterInfo *TRI) const;
-  
-  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                         MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                           const TargetRegisterInfo *TRI) const;
 
   virtual bool ReverseBranchCondition(
                             SmallVectorImpl<MachineOperand> &Cond) const;

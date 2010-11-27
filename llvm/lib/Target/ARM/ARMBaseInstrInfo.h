@@ -206,25 +206,6 @@ public:
   virtual const ARMBaseRegisterInfo &getRegisterInfo() const =0;
   const ARMSubtarget &getSubtarget() const { return Subtarget; }
 
-  bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                 MachineBasicBlock::iterator MI,
-                                 const std::vector<CalleeSavedInfo> &CSI,
-                                 const TargetRegisterInfo *TRI) const;
-
-  bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MI,
-                                   const std::vector<CalleeSavedInfo> &CSI,
-                                   const TargetRegisterInfo *TRI) const;
-
-private:
-  void emitPopInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                   const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,
-                   bool isVarArg, bool(*Func)(unsigned, bool)) const;
-  void emitPushInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                    const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,
-                    bool(*Func)(unsigned, bool)) const;
-  
-  
 public:
   // Branch analysis.
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,

@@ -384,74 +384,10 @@ void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     .addImm(0);
 }
 
-bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                               MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                          const TargetRegisterInfo *TRI) const {
-  if (CSI.empty()) {
-    return true;
-  }
-  MachineFunction *MF = MBB.getParent();
-  XCoreFunctionInfo *XFI = MF->getInfo<XCoreFunctionInfo>();
-  
-  bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(*MF);
-
-  DebugLoc DL;
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
-  
-  for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
-                                                    it != CSI.end(); ++it) {
-    // Add the callee-saved register as live-in. It's killed at the spill.
-    MBB.addLiveIn(it->getReg());
-
-    unsigned Reg = it->getReg();
-    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    storeRegToStackSlot(MBB, MI, Reg, true,
-                        it->getFrameIdx(), RC, &RI);
-    if (emitFrameMoves) {
-      MCSymbol *SaveLabel = MF->getContext().CreateTempSymbol();
-      BuildMI(MBB, MI, DL, get(XCore::PROLOG_LABEL)).addSym(SaveLabel);
-      XFI->getSpillLabels().push_back(std::make_pair(SaveLabel, *it));
-    }
-  }
-  return true;
-}
-
-bool XCoreInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                         MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                            const TargetRegisterInfo *TRI) const
-{
-  bool AtStart = MI == MBB.begin();
-  MachineBasicBlock::iterator BeforeI = MI;
-  if (!AtStart)
-    --BeforeI;
-  for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
-                                                    it != CSI.end(); ++it) {
-    unsigned Reg = it->getReg();
-    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    loadRegFromStackSlot(MBB, MI, it->getReg(),
-                                  it->getFrameIdx(),
-                         RC, &RI);
-    assert(MI != MBB.begin() &&
-           "loadRegFromStackSlot didn't insert any code!");
-    // Insert in reverse order.  loadRegFromStackSlot can insert multiple
-    // instructions.
-    if (AtStart)
-      MI = MBB.begin();
-    else {
-      MI = BeforeI;
-      ++MI;
-    }
-  }
-  return true;
-}
-
 /// ReverseBranchCondition - Return the inverse opcode of the 
 /// specified Branch instruction.
 bool XCoreInstrInfo::
-ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const 
-{
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert((Cond.size() == 2) && 
           "Invalid XCore branch condition!");
   Cond[0].setImm(GetOppositeBranchCondition((XCore::CondCode)Cond[0].getImm()));

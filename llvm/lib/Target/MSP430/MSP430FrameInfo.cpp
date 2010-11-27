@@ -174,3 +174,50 @@ void MSP430FrameInfo::emitEpilogue(MachineFunction &MF,
     }
   }
 }
+
+// FIXME: Can we eleminate these in favour of generic code?
+bool
+MSP430FrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
+                                        const std::vector<CalleeSavedInfo> &CSI,
+                                        const TargetRegisterInfo *TRI) const {
+  if (CSI.empty())
+    return false;
+
+  DebugLoc DL;
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  MachineFunction &MF = *MBB.getParent();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  MSP430MachineFunctionInfo *MFI = MF.getInfo<MSP430MachineFunctionInfo>();
+  MFI->setCalleeSavedFrameSize(CSI.size() * 2);
+
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    // Add the callee-saved register as live-in. It's killed at the spill.
+    MBB.addLiveIn(Reg);
+    BuildMI(MBB, MI, DL, TII.get(MSP430::PUSH16r))
+      .addReg(Reg, RegState::Kill);
+  }
+  return true;
+}
+
+bool
+MSP430FrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                             MachineBasicBlock::iterator MI,
+                                        const std::vector<CalleeSavedInfo> &CSI,
+                                        const TargetRegisterInfo *TRI) const {
+  if (CSI.empty())
+    return false;
+
+  DebugLoc DL;
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  MachineFunction &MF = *MBB.getParent();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i)
+    BuildMI(MBB, MI, DL, TII.get(MSP430::POP16r), CSI[i].getReg());
+
+  return true;
+}

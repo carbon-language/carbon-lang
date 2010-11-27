@@ -742,17 +742,6 @@ public:
                                MachineInstr::mmo_iterator MMOBegin,
                                MachineInstr::mmo_iterator MMOEnd,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const;
-  
-  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                         MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                         const TargetRegisterInfo *TRI) const;
-
-  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                           const TargetRegisterInfo *TRI) const;
-  
   virtual
   MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
                                          int FrameIx, uint64_t Offset,

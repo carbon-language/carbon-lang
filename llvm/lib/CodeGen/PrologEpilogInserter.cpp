@@ -295,13 +295,14 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
     return;
 
   const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
+  const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   MachineBasicBlock::iterator I;
 
   if (! ShrinkWrapThisFunction) {
     // Spill using target interface.
     I = EntryBlock->begin();
-    if (!TII.spillCalleeSavedRegisters(*EntryBlock, I, CSI, TRI)) {
+    if (!TFI->spillCalleeSavedRegisters(*EntryBlock, I, CSI, TRI)) {
       for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
         // Add the callee-saved register as live-in.
         // It's killed at the spill.
@@ -333,7 +334,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
 
       // Restore all registers immediately before the return and any
       // terminators that preceed it.
-      if (!TII.restoreCalleeSavedRegisters(*MBB, I, CSI, TRI)) {
+      if (!TFI->restoreCalleeSavedRegisters(*MBB, I, CSI, TRI)) {
         for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
           unsigned Reg = CSI[i].getReg();
           const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);

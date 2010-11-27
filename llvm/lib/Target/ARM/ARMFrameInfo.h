@@ -35,6 +35,16 @@ public:
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
+  bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MI,
+                                 const std::vector<CalleeSavedInfo> &CSI,
+                                 const TargetRegisterInfo *TRI) const;
+
+  bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   const std::vector<CalleeSavedInfo> &CSI,
+                                   const TargetRegisterInfo *TRI) const;
+
   bool hasFP(const MachineFunction &MF) const;
   bool hasReservedCallFrame(const MachineFunction &MF) const;
   bool canSimplifyCallFramePseudos(const MachineFunction &MF) const;
@@ -44,6 +54,13 @@ public:
                                  unsigned &FrameReg, int SPAdj) const;
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 
+ private:
+  void emitPopInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                   const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,
+                   bool isVarArg, bool(*Func)(unsigned, bool)) const;
+  void emitPushInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                    const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,
+                    bool(*Func)(unsigned, bool)) const;
 };
 
 } // End llvm namespace

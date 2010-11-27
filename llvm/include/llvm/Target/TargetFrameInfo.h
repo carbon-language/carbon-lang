@@ -14,10 +14,13 @@
 #ifndef LLVM_TARGET_TARGETFRAMEINFO_H
 #define LLVM_TARGET_TARGETFRAMEINFO_H
 
+#include "llvm/CodeGen/MachineBasicBlock.h"
+
 #include <utility>
 #include <vector>
 
 namespace llvm {
+  class CalleeSavedInfo;
   class MachineFunction;
   class MachineBasicBlock;
   class MachineMove;
@@ -107,6 +110,28 @@ public:
   virtual void emitPrologue(MachineFunction &MF) const = 0;
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const = 0;
+
+  /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee
+  /// saved registers and returns true if it isn't possible / profitable to do
+  /// so by issuing a series of store instructions via
+  /// storeRegToStackSlot(). Returns false otherwise.
+  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator MI,
+                                        const std::vector<CalleeSavedInfo> &CSI,
+                                         const TargetRegisterInfo *TRI) const {
+    return false;
+  }
+
+  /// restoreCalleeSavedRegisters - Issues instruction(s) to restore all callee
+  /// saved registers and returns true if it isn't possible / profitable to do
+  /// so by issuing a series of load instructions via loadRegToStackSlot().
+  /// Returns false otherwise.
+  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
+                                        const std::vector<CalleeSavedInfo> &CSI,
+                                        const TargetRegisterInfo *TRI) const {
+    return false;
+  }
 
   /// hasFP - Return true if the specified function should have a dedicated
   /// frame pointer register. For most targets this is true only if the function

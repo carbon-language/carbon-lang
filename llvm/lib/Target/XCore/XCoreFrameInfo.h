@@ -31,6 +31,15 @@ namespace llvm {
     void emitPrologue(MachineFunction &MF) const;
     void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
+    bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   const std::vector<CalleeSavedInfo> &CSI,
+                                   const TargetRegisterInfo *TRI) const;
+    bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MI,
+                                     const std::vector<CalleeSavedInfo> &CSI,
+                                     const TargetRegisterInfo *TRI) const;
+
     bool hasFP(const MachineFunction &MF) const;
 
     void getInitialFrameState(std::vector<MachineMove> &Moves) const;
