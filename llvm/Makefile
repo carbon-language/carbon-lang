@@ -99,6 +99,11 @@ ifeq ($(MAKECMDGOALS),install)
   OPTIONAL_DIRS := $(filter bindings, $(OPTIONAL_DIRS))
 endif
 
+# Don't build unittests when ONLY_TOOLS is set.
+ifneq ($(ONLY_TOOLS),)
+  DIRS := $(filter-out unittests, $(DIRS))
+endif
+
 # If we're cross-compiling, build the build-hosted tools first
 ifeq ($(LLVM_CROSS_COMPILING),1)
 all:: cross-compile-build-tools
