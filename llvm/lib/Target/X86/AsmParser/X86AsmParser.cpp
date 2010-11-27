@@ -708,7 +708,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Name == "lock" || Name == "rep" ||
     Name == "repe" || Name == "repz" ||
     Name == "repne" || Name == "repnz" ||
-    Name == "rex64";
+    Name == "rex64" || Name == "data16";
 
 
   // This does the actual operand parsing.  Don't parse any more if we have a
