@@ -11,13 +11,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Object/MachOObject.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+using namespace llvm::object;
 
 static cl::opt<std::string>
 InputFile(cl::Positional, cl::desc("<input file>"), cl::init("-"));
+
+static cl::opt<bool>
+DumpSectionData("dump-section-data", cl::desc("Dump the contents of sections"),
+                cl::init(false));
 
 int main(int argc, char **argv) {
   const char *ProgramName = argv[0];
@@ -25,6 +32,25 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "llvm Mach-O dumping tool\n");
 
-  errs() << ProgramName << ": " << "not yet implemented!" << "\n";
-  return 1;
+  // Load the input file.
+  std::string ErrorStr;
+  OwningPtr<MemoryBuffer> InputBuffer(
+    MemoryBuffer::getFileOrSTDIN(InputFile, &ErrorStr));
+  if (!InputBuffer) {
+    errs() << ProgramName << ": " << "unable to read input: '"
+           << ErrorStr << "'\n";
+    return 1;
+  }
+
+  // Construct the Mach-O wrapper object.
+  OwningPtr<MachOObject> InputObject(
+    MachOObject::LoadFromBuffer(InputBuffer.take(), &ErrorStr));
+  if (!InputObject) {
+    errs() << ProgramName << ": " << "unable to load object: '"
+           << ErrorStr << "'\n";
+    return 1;
+  }
+
+  errs() << "ok\n";
+  return 0;
 }
