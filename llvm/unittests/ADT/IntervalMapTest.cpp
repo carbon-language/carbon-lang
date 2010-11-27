@@ -90,6 +90,10 @@ TEST(IntervalMapTest, SingleEntryMap) {
   EXPECT_EQ(1u, I.value());
   EXPECT_TRUE(I == map.begin());
   EXPECT_FALSE(I == map.end());
+
+  I.erase();
+  EXPECT_TRUE(map.empty());
+  EXPECT_EQ(0, std::distance(map.begin(), map.end()));
 }
 
 // Flat coalescing tests.
@@ -160,6 +164,18 @@ TEST(IntervalMapTest, RootCoalescing) {
   EXPECT_EQ(210u, map.stop());
   EXPECT_EQ(2u, map.lookup(201));
   EXPECT_EQ(1u, map.lookup(200));
+
+  // Erase from the left.
+  map.begin().erase();
+  EXPECT_EQ(2, std::distance(map.begin(), map.end()));
+  EXPECT_EQ(70u, map.start());
+  EXPECT_EQ(210u, map.stop());
+
+  // Erase from the right.
+  (--map.end()).erase();
+  EXPECT_EQ(1, std::distance(map.begin(), map.end()));
+  EXPECT_EQ(70u, map.start());
+  EXPECT_EQ(200u, map.stop());
 }
 
 // Flat multi-coalescing tests.
@@ -330,8 +346,11 @@ TEST(IntervalMapTest, Branched) {
 
   // Insert enough intervals to force a branched tree.
   // This creates 9 leaf nodes with 11 elements each, tree height = 1.
-  for (unsigned i = 1; i < 100; ++i)
+  for (unsigned i = 1; i < 100; ++i) {
     map.insert(10*i, 10*i+5, i);
+    EXPECT_EQ(10u, map.start());
+    EXPECT_EQ(10*i+5, map.stop());
+  }
 
   // Tree limits.
   EXPECT_FALSE(map.empty());
@@ -367,6 +386,15 @@ TEST(IntervalMapTest, Branched) {
     EXPECT_EQ(i, *I);
   }
   EXPECT_TRUE(I == map.begin());
+
+  // Erase from the front.
+  for (unsigned i = 0; i != 20; ++i) {
+    I.erase();
+    EXPECT_TRUE(I == map.begin());
+    EXPECT_FALSE(map.empty());
+    EXPECT_EQ(I.start(), map.start());
+    EXPECT_EQ(995u, map.stop());
+  }
 
   // Test clear() on branched map.
   map.clear();

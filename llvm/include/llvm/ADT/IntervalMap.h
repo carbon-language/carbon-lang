@@ -922,6 +922,14 @@ public:
   /// @param Level Move node(Level).
   void moveRight(unsigned Level);
 
+  /// atBegin - Return true if path is at begin().
+  bool atBegin() const {
+    for (unsigned i = 0, e = path.size(); i != e; ++i)
+      if (path[i].offset != 0)
+        return false;
+    return true;
+  }
+
   /// atLastBranch - Return true if the path is at the last branch of the node
   /// at Level.
   /// @param Level Node to examine.
@@ -1523,13 +1531,36 @@ class IntervalMap<KeyT, ValT, N, Traits>::iterator : public const_iterator {
   template <typename NodeT> bool overflow(unsigned Level);
   void treeInsert(KeyT a, KeyT b, ValT y);
   void eraseNode(unsigned Level);
-  void treeErase();
+  void treeErase(bool UpdateRoot = true);
 public:
   /// insert - Insert mapping [a;b] -> y before the current position.
   void insert(KeyT a, KeyT b, ValT y);
 
   /// erase - Erase the current interval.
   void erase();
+
+  iterator &operator++() {
+    const_iterator::operator++();
+    return *this;
+  }
+
+  iterator operator++(int) {
+    iterator tmp = *this;
+    operator++();
+    return tmp;
+  }
+
+  iterator &operator--() {
+    const_iterator::operator--();
+    return *this;
+  }
+
+  iterator operator--(int) {
+    iterator tmp = *this;
+    operator--();
+    return tmp;
+  }
+
 };
 
 /// setNodeStop - Update the stop key of the current node at level and above.
@@ -1660,7 +1691,7 @@ iterator::treeInsert(KeyT a, KeyT b, ValT y) {
           // We have both left and right coalescing. Erase the old SibLeaf entry
           // and continue inserting the larger interval.
           a = SibLeaf.start(SibOfs);
-          erase();
+          treeErase(/* UpdateRoot= */false);
         }
       }
     } else {
@@ -1704,7 +1735,7 @@ iterator::erase() {
 /// treeErase - erase() for a branched tree.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
-iterator::treeErase() {
+iterator::treeErase(bool UpdateRoot) {
   IntervalMap &IM = *this->map;
   IntervalMapImpl::Path &P = this->path;
   Leaf &Node = P.leaf<Leaf>();
@@ -1713,6 +1744,9 @@ iterator::treeErase() {
   if (P.leafSize() == 1) {
     IM.deleteNode(&Node);
     eraseNode(IM.height);
+    // Update rootBranchStart if we erased begin().
+    if (UpdateRoot && IM.branched() && P.valid() && P.atBegin())
+      IM.rootBranchStart() = P.leaf<Leaf>().start(0);
     return;
   }
 
@@ -1724,7 +1758,8 @@ iterator::treeErase() {
   if (P.leafOffset() == NewSize) {
     setNodeStop(IM.height, Node.stop(NewSize - 1));
     P.moveRight(IM.height);
-  }
+  } else if (UpdateRoot && P.atBegin())
+    IM.rootBranchStart() = P.leaf<Leaf>().start(0);
 }
 
 /// eraseNode - Erase the current node at Level from its parent and move path to
