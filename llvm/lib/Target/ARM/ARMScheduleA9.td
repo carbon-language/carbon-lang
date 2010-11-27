@@ -800,7 +800,7 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsN],   0, Required>,
                                InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<3, [A9_NPipe], 1>,
+                               InstrStage<3, [A9_NPipe], 0>,
                                InstrStage<3, [A9_LSUnit]>],
                               [4, 1, 1, 1]>,
   //
@@ -809,7 +809,7 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsN],   0, Required>,
                                InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<3, [A9_NPipe], 1>,
+                               InstrStage<3, [A9_NPipe], 0>,
                                InstrStage<3, [A9_LSUnit]>],
                               [4, 2, 1, 1, 1, 1]>,
   //
@@ -1018,7 +1018,7 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsN],   0, Required>,
                                InstrStage<2, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<2, [A9_NPipe], 1>,
+                               InstrStage<2, [A9_NPipe], 0>,
                                InstrStage<2, [A9_LSUnit]>],
                               [1, 1, 1]>,
   //
@@ -1027,7 +1027,7 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsN],   0, Required>,
                                InstrStage<3, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<3, [A9_NPipe], 1>,
+                               InstrStage<3, [A9_NPipe], 0>,
                                InstrStage<3, [A9_LSUnit]>],
                               [2, 1, 1, 1, 1]>,
   //

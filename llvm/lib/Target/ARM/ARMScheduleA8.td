@@ -465,13 +465,13 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VLD1ln
   InstrItinData<IIC_VLD1ln,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_NLSPipe], 0>,
                                InstrStage<3, [A8_LSPipe]>],
                               [3, 1, 1, 1]>,
   //
   // VLD1lnu
   InstrItinData<IIC_VLD1lnu,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<3, [A8_NLSPipe], 1>,
+                               InstrStage<3, [A8_NLSPipe], 0>,
                                InstrStage<3, [A8_LSPipe]>],
                               [3, 2, 1, 1, 1, 1]>,
   //
@@ -609,13 +609,13 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VST1ln
   InstrItinData<IIC_VST1ln,   [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_NLSPipe], 0>,
                                InstrStage<2, [A8_LSPipe]>],
                               [1, 1, 1]>,
   //
   // VST1lnu
   InstrItinData<IIC_VST1lnu,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
-                               InstrStage<2, [A8_NLSPipe], 1>,
+                               InstrStage<2, [A8_NLSPipe], 0>,
                                InstrStage<2, [A8_LSPipe]>],
                               [2, 1, 1, 1, 1]>,
   //
