@@ -188,3 +188,45 @@ void MachOObject::ReadSegment64LoadCommand(const LoadCommandInfo &LCI,
                        InMemoryStruct<macho::Segment64LoadCommand> &Res) const {
   ReadInMemoryStruct(*this, Buffer->getBuffer(), LCI.Offset, Res);
 }
+
+template<>
+static void SwapStruct(macho::SymtabLoadCommand &Value) {
+  SwapValue(Value.Type);
+  SwapValue(Value.Size);
+  SwapValue(Value.SymbolTableOffset);
+  SwapValue(Value.NumSymbolTableEntries);
+  SwapValue(Value.StringTableOffset);
+  SwapValue(Value.StringTableSize);
+}
+void MachOObject::ReadSymtabLoadCommand(const LoadCommandInfo &LCI,
+                          InMemoryStruct<macho::SymtabLoadCommand> &Res) const {
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), LCI.Offset, Res);
+}
+
+template<>
+static void SwapStruct(macho::DysymtabLoadCommand &Value) {
+  SwapValue(Value.Type);
+  SwapValue(Value.Size);
+  SwapValue(Value.LocalSymbolIndex);
+  SwapValue(Value.NumLocalSymbols);
+  SwapValue(Value.ExternalSymbolsIndex);
+  SwapValue(Value.NumExternalSymbols);
+  SwapValue(Value.UndefinedSymbolsIndex);
+  SwapValue(Value.NumUndefinedSymbols);
+  SwapValue(Value.TOCOffset);
+  SwapValue(Value.NumTOCEntries);
+  SwapValue(Value.ModuleTableOffset);
+  SwapValue(Value.NumModuleTableEntries);
+  SwapValue(Value.ReferenceSymbolTableOffset);
+  SwapValue(Value.NumReferencedSymbolTableEntries);
+  SwapValue(Value.IndirectSymbolTableOffset);
+  SwapValue(Value.NumIndirectSymbolTableEntries);
+  SwapValue(Value.ExternalRelocationTableOffset);
+  SwapValue(Value.NumExternalRelocationTableEntries);
+  SwapValue(Value.LocalRelocationTableOffset);
+  SwapValue(Value.NumLocalRelocationTableEntries);
+}
+void MachOObject::ReadDysymtabLoadCommand(const LoadCommandInfo &LCI,
+                        InMemoryStruct<macho::DysymtabLoadCommand> &Res) const {
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), LCI.Offset, Res);
+}

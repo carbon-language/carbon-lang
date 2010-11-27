@@ -177,6 +177,47 @@ namespace macho {
     uint32_t Flags;
   };
 
+  struct SymtabLoadCommand {
+    uint32_t Type;
+    uint32_t Size;
+    uint32_t SymbolTableOffset;
+    uint32_t NumSymbolTableEntries;
+    uint32_t StringTableOffset;
+    uint32_t StringTableSize;
+  };
+
+  struct DysymtabLoadCommand {
+    uint32_t Type;
+    uint32_t Size;
+
+    uint32_t LocalSymbolIndex;
+    uint32_t NumLocalSymbols;
+
+    uint32_t ExternalSymbolsIndex;
+    uint32_t NumExternalSymbols;
+
+    uint32_t UndefinedSymbolsIndex;
+    uint32_t NumUndefinedSymbols;
+
+    uint32_t TOCOffset;
+    uint32_t NumTOCEntries;
+
+    uint32_t ModuleTableOffset;
+    uint32_t NumModuleTableEntries;
+
+    uint32_t ReferenceSymbolTableOffset;
+    uint32_t NumReferencedSymbolTableEntries;
+
+    uint32_t IndirectSymbolTableOffset;
+    uint32_t NumIndirectSymbolTableEntries;
+
+    uint32_t ExternalRelocationTableOffset;
+    uint32_t NumExternalRelocationTableEntries;
+
+    uint32_t LocalRelocationTableOffset;
+    uint32_t NumLocalRelocationTableEntries;
+  };
+
   /// @}
 
   // See <mach-o/nlist.h>.

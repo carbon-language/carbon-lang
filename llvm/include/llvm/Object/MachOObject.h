@@ -119,6 +119,12 @@ public:
   void ReadSegment64LoadCommand(
     const LoadCommandInfo &LCI,
     InMemoryStruct<macho::Segment64LoadCommand> &Res) const;
+  void ReadSymtabLoadCommand(
+    const LoadCommandInfo &LCI,
+    InMemoryStruct<macho::SymtabLoadCommand> &Res) const;
+  void ReadDysymtabLoadCommand(
+    const LoadCommandInfo &LCI,
+    InMemoryStruct<macho::DysymtabLoadCommand> &Res) const;
 
   /// @}
 };

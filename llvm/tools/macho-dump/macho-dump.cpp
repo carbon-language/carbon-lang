@@ -111,6 +111,52 @@ static int DumpSegment64Command(MachOObject &Obj,
   return 0;
 }
 
+static int DumpSymtabCommand(MachOObject &Obj,
+                             const MachOObject::LoadCommandInfo &LCI) {
+  InMemoryStruct<macho::SymtabLoadCommand> SLC;
+  Obj.ReadSymtabLoadCommand(LCI, SLC);
+  if (!SLC)
+    return Error("unable to read segment load command");
+
+  outs() << "  ('symoff', " << SLC->SymbolTableOffset << ")\n";
+  outs() << "  ('nsyms', " << SLC->NumSymbolTableEntries << ")\n";
+  outs() << "  ('stroff', " << SLC->StringTableOffset << ")\n";
+  outs() << "  ('strsize', " << SLC->StringTableSize << ")\n";
+
+  return 0;
+}
+
+static int DumpDysymtabCommand(MachOObject &Obj,
+                             const MachOObject::LoadCommandInfo &LCI) {
+  InMemoryStruct<macho::DysymtabLoadCommand> DLC;
+  Obj.ReadDysymtabLoadCommand(LCI, DLC);
+  if (!DLC)
+    return Error("unable to read segment load command");
+
+  outs() << "  ('ilocalsym', " << DLC->LocalSymbolIndex << ")\n";
+  outs() << "  ('nlocalsym', " << DLC->NumLocalSymbols << ")\n";
+  outs() << "  ('iextdefsym', " << DLC->ExternalSymbolsIndex << ")\n";
+  outs() << "  ('nextdefsym', " << DLC->NumExternalSymbols << ")\n";
+  outs() << "  ('iundefsym', " << DLC->UndefinedSymbolsIndex << ")\n";
+  outs() << "  ('nundefsym', " << DLC->NumUndefinedSymbols << ")\n";
+  outs() << "  ('tocoff', " << DLC->TOCOffset << ")\n";
+  outs() << "  ('ntoc', " << DLC->NumTOCEntries << ")\n";
+  outs() << "  ('modtaboff', " << DLC->ModuleTableOffset << ")\n";
+  outs() << "  ('nmodtab', " << DLC->NumModuleTableEntries << ")\n";
+  outs() << "  ('extrefsymoff', " << DLC->ReferenceSymbolTableOffset << ")\n";
+  outs() << "  ('nextrefsyms', "
+         << DLC->NumReferencedSymbolTableEntries << ")\n";
+  outs() << "  ('indirectsymoff', " << DLC->IndirectSymbolTableOffset << ")\n";
+  outs() << "  ('nindirectsyms', "
+         << DLC->NumIndirectSymbolTableEntries << ")\n";
+  outs() << "  ('extreloff', " << DLC->ExternalRelocationTableOffset << ")\n";
+  outs() << "  ('nextrel', " << DLC->NumExternalRelocationTableEntries << ")\n";
+  outs() << "  ('locreloff', " << DLC->LocalRelocationTableOffset << ")\n";
+  outs() << "  ('nlocrel', " << DLC->NumLocalRelocationTableEntries << ")\n";
+
+  return 0;
+}
+
 static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
   const MachOObject::LoadCommandInfo &LCI = Obj.getLoadCommandInfo(Index);
   int Res = 0;
@@ -124,6 +170,12 @@ static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
     break;
   case macho::LCT_Segment64:
     Res = DumpSegment64Command(Obj, LCI);
+    break;
+  case macho::LCT_Symtab:
+    Res = DumpSymtabCommand(Obj, LCI);
+    break;
+  case macho::LCT_Dysymtab:
+    Res = DumpDysymtabCommand(Obj, LCI);
     break;
   default:
     Warning("unknown load command: " + Twine(LCI.Command.Type));
