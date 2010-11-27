@@ -111,6 +111,11 @@ public:
     return StringTable;
   }
 
+  StringRef getStringAtIndex(unsigned Index) const {
+    size_t End = getStringTableData().find('\0', Index);
+    return getStringTableData().slice(Index, End);
+  }
+
   void RegisterStringTable(macho::SymtabLoadCommand &SLC);
 
   /// @}
@@ -157,6 +162,12 @@ public:
   void ReadRelocationEntry(
     uint64_t RelocationTableOffset, unsigned Index,
     InMemoryStruct<macho::RelocationEntry> &Res) const;
+  void ReadSymbolTableEntry(
+    uint64_t SymbolTableOffset, unsigned Index,
+    InMemoryStruct<macho::SymbolTableEntry> &Res) const;
+  void ReadSymbol64TableEntry(
+    uint64_t SymbolTableOffset, unsigned Index,
+    InMemoryStruct<macho::Symbol64TableEntry> &Res) const;
 
   /// @}
 };

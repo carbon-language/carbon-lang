@@ -308,3 +308,31 @@ void MachOObject::ReadRelocationEntry(uint64_t RelocationTableOffset,
                      Index * sizeof(macho::RelocationEntry));
   ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
 }
+
+template<>
+void SwapStruct(macho::SymbolTableEntry &Value) {
+  SwapValue(Value.StringIndex);
+  SwapValue(Value.Flags);
+  SwapValue(Value.Value);
+}
+void MachOObject::ReadSymbolTableEntry(uint64_t SymbolTableOffset,
+                                       unsigned Index,
+                           InMemoryStruct<macho::SymbolTableEntry> &Res) const {
+  uint64_t Offset = (SymbolTableOffset +
+                     Index * sizeof(macho::SymbolTableEntry));
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
+}
+
+template<>
+void SwapStruct(macho::Symbol64TableEntry &Value) {
+  SwapValue(Value.StringIndex);
+  SwapValue(Value.Flags);
+  SwapValue(Value.Value);
+}
+void MachOObject::ReadSymbol64TableEntry(uint64_t SymbolTableOffset,
+                                       unsigned Index,
+                         InMemoryStruct<macho::Symbol64TableEntry> &Res) const {
+  uint64_t Offset = (SymbolTableOffset +
+                     Index * sizeof(macho::Symbol64TableEntry));
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
+}

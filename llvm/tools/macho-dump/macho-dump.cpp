@@ -201,6 +201,20 @@ static int DumpSegment64Command(MachOObject &Obj,
   return 0;
 }
 
+static void DumpSymbolTableEntryData(MachOObject &Obj,
+                                     unsigned Index, uint32_t StringIndex,
+                                     uint8_t Type, uint8_t SectionIndex,
+                                     uint16_t Flags, uint64_t Value) {
+  outs() << "    # Symbol " << Index << "\n";
+  outs() << "   (('n_strx', " << StringIndex << ")\n";
+  outs() << "    ('n_type', " << format("%#x", Type) << ")\n";
+  outs() << "    ('n_sect', " << uint32_t(SectionIndex) << ")\n";
+  outs() << "    ('n_desc', " << Flags << ")\n";
+  outs() << "    ('n_value', " << Value << ")\n";
+  outs() << "    ('_string', '" << Obj.getStringAtIndex(StringIndex) << "')\n";
+  outs() << "   ),\n";
+}
+
 static int DumpSymtabCommand(MachOObject &Obj,
                              const MachOObject::LoadCommandInfo &LCI) {
   InMemoryStruct<macho::SymtabLoadCommand> SLC;
@@ -221,7 +235,35 @@ static int DumpSymtabCommand(MachOObject &Obj,
   outs().write_escaped(Obj.getStringTableData(),
                        /*UseHexEscapes=*/true) << "')\n";
 
-  return 0;
+  // Dump the symbol table.
+  int Res = 0;
+  outs() << "  ('_symbols', [\n";
+  for (unsigned i = 0; i != SLC->NumSymbolTableEntries; ++i) {
+    if (Obj.is64Bit()) {
+      InMemoryStruct<macho::Symbol64TableEntry> STE;
+      Obj.ReadSymbol64TableEntry(SLC->SymbolTableOffset, i, STE);
+      if (!STE) {
+        Res = Error("unable to read symbol: '" + Twine(i) + "'");
+        break;
+      }
+
+      DumpSymbolTableEntryData(Obj, i, STE->StringIndex, STE->Type,
+                               STE->SectionIndex, STE->Flags, STE->Value);
+    } else {
+      InMemoryStruct<macho::SymbolTableEntry> STE;
+      Obj.ReadSymbolTableEntry(SLC->SymbolTableOffset, i, STE);
+      if (!SLC) {
+        Res = Error("unable to read symbol: '" + Twine(i) + "'");
+        break;
+      }
+
+      DumpSymbolTableEntryData(Obj, i, STE->StringIndex, STE->Type,
+                               STE->SectionIndex, STE->Flags, STE->Value);
+    }
+  }
+  outs() << "  ])\n";
+
+  return Res;
 }
 
 static int DumpDysymtabCommand(MachOObject &Obj,

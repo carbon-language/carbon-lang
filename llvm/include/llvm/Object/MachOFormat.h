@@ -251,6 +251,25 @@ namespace macho {
   };
 
   /// @}
+  /// @name Symbol Table Entries
+  /// @{
+
+  struct SymbolTableEntry {
+    uint32_t StringIndex;
+    uint8_t Type;
+    uint8_t SectionIndex;
+    uint16_t Flags;
+    uint32_t Value;
+  };
+  struct Symbol64TableEntry {
+    uint32_t StringIndex;
+    uint8_t Type;
+    uint8_t SectionIndex;
+    uint16_t Flags;
+    uint64_t Value;
+  };
+
+  /// @}
   /// @name Indirect Symbol Table
   /// @{
 
