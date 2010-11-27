@@ -160,74 +160,6 @@ static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
 namespace {
 
 class MachObjectWriter : public MCObjectWriter {
-  // See <mach-o/loader.h>.
-  enum HeaderFileType {
-    HFT_Object = 0x1
-  };
-
-  enum HeaderFlags {
-    HF_SubsectionsViaSymbols = 0x2000
-  };
-
-  enum LoadCommandType {
-    LCT_Segment = 0x1,
-    LCT_Symtab = 0x2,
-    LCT_Dysymtab = 0xb,
-    LCT_Segment64 = 0x19
-  };
-
-  // See <mach-o/nlist.h>.
-  enum SymbolTypeType {
-    STT_Undefined = 0x00,
-    STT_Absolute  = 0x02,
-    STT_Section   = 0x0e
-  };
-
-  enum SymbolTypeFlags {
-    // If any of these bits are set, then the entry is a stab entry number (see
-    // <mach-o/stab.h>. Otherwise the other masks apply.
-    STF_StabsEntryMask = 0xe0,
-
-    STF_TypeMask       = 0x0e,
-    STF_External       = 0x01,
-    STF_PrivateExtern  = 0x10
-  };
-
-  /// IndirectSymbolFlags - Flags for encoding special values in the indirect
-  /// symbol entry.
-  enum IndirectSymbolFlags {
-    ISF_Local    = 0x80000000,
-    ISF_Absolute = 0x40000000
-  };
-
-  /// RelocationFlags - Special flags for addresses.
-  enum RelocationFlags {
-    RF_Scattered = 0x80000000
-  };
-
-  enum RelocationInfoType {
-    RIT_Vanilla             = 0,
-    RIT_Pair                = 1,
-    RIT_Difference          = 2,
-    RIT_PreboundLazyPointer = 3,
-    RIT_LocalDifference     = 4,
-    RIT_TLV                 = 5
-  };
-
-  /// X86_64 uses its own relocation types.
-  enum RelocationInfoTypeX86_64 {
-    RIT_X86_64_Unsigned   = 0,
-    RIT_X86_64_Signed     = 1,
-    RIT_X86_64_Branch     = 2,
-    RIT_X86_64_GOTLoad    = 3,
-    RIT_X86_64_GOT        = 4,
-    RIT_X86_64_Subtractor = 5,
-    RIT_X86_64_Signed1    = 6,
-    RIT_X86_64_Signed2    = 7,
-    RIT_X86_64_Signed4    = 8,
-    RIT_X86_64_TLV        = 9
-  };
-
   /// MachSymbolData - Helper struct for containing some precomputed information
   /// on symbols.
   struct MachSymbolData {
@@ -283,7 +215,7 @@ public:
     uint32_t Flags = 0;
 
     if (SubsectionsViaSymbols)
-      Flags |= HF_SubsectionsViaSymbols;
+      Flags |= macho::HF_SubsectionsViaSymbols;
 
     // struct mach_header (28 bytes) or
     // struct mach_header_64 (32 bytes)
@@ -296,7 +228,7 @@ public:
     Write32(CPUType);
     Write32(CPUSubtype);
 
-    Write32(HFT_Object);
+    Write32(macho::HFT_Object);
     Write32(NumLoadCommands);    // Object files have a single load command, the
                                  // segment.
     Write32(LoadCommandsSize);
@@ -324,7 +256,7 @@ public:
 
     unsigned SegmentLoadCommandSize = Is64Bit ? macho::SegmentLoadCommand64Size:
       macho::SegmentLoadCommand32Size;
-    Write32(Is64Bit ? LCT_Segment64 : LCT_Segment);
+    Write32(Is64Bit ? macho::LCT_Segment64 : macho::LCT_Segment);
     Write32(SegmentLoadCommandSize +
             NumSections * (Is64Bit ? macho::Section64Size :
                            macho::Section32Size));
@@ -404,7 +336,7 @@ public:
     uint64_t Start = OS.tell();
     (void) Start;
 
-    Write32(LCT_Symtab);
+    Write32(macho::LCT_Symtab);
     Write32(macho::SymtabLoadCommandSize);
     Write32(SymbolOffset);
     Write32(NumSymbols);
@@ -427,7 +359,7 @@ public:
     uint64_t Start = OS.tell();
     (void) Start;
 
-    Write32(LCT_Dysymtab);
+    Write32(macho::LCT_Dysymtab);
     Write32(macho::DysymtabLoadCommandSize);
     Write32(FirstLocalSymbol);
     Write32(NumLocalSymbols);
@@ -462,20 +394,20 @@ public:
     //
     // FIXME: Are the prebound or indirect fields possible here?
     if (Symbol.isUndefined())
-      Type = STT_Undefined;
+      Type = macho::STT_Undefined;
     else if (Symbol.isAbsolute())
-      Type = STT_Absolute;
+      Type = macho::STT_Absolute;
     else
-      Type = STT_Section;
+      Type = macho::STT_Section;
 
     // FIXME: Set STAB bits.
 
     if (Data.isPrivateExtern())
-      Type |= STF_PrivateExtern;
+      Type |= macho::STF_PrivateExtern;
 
     // Set external bit.
     if (Data.isExternal() || Symbol.isUndefined())
-      Type |= STF_External;
+      Type |= macho::STF_External;
 
     // Compute the symbol address.
     if (Symbol.isDefined()) {
@@ -561,7 +493,7 @@ public:
 
     if (Target.isAbsolute()) { // constant
       // SymbolNum of 0 indicates the absolute section.
-      Type = RIT_X86_64_Unsigned;
+      Type = macho::RIT_X86_64_Unsigned;
       Index = 0;
 
       // FIXME: I believe this is broken, I don't think the linker can
@@ -571,7 +503,7 @@ public:
       // yet).
       if (IsPCRel) {
         IsExtern = 1;
-        Type = RIT_X86_64_Branch;
+        Type = macho::RIT_X86_64_Branch;
       }
     } else if (Target.getSymB()) { // A - B + constant
       const MCSymbol *A = &Target.getSymA()->getSymbol();
@@ -618,7 +550,7 @@ public:
         Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
         IsExtern = 0;
       }
-      Type = RIT_X86_64_Unsigned;
+      Type = macho::RIT_X86_64_Unsigned;
 
       MachRelocationEntry MRE;
       MRE.Word0 = FixupOffset;
@@ -637,7 +569,7 @@ public:
         Index = B_SD.getFragment()->getParent()->getOrdinal() + 1;
         IsExtern = 0;
       }
-      Type = RIT_X86_64_Subtractor;
+      Type = macho::RIT_X86_64_Subtractor;
     } else {
       const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
       MCSymbolData &SD = Asm.getSymbolData(*Symbol);
@@ -685,15 +617,15 @@ public:
             // rewrite the movq to an leaq at link time if the symbol ends up in
             // the same linkage unit.
             if (unsigned(Fixup.getKind()) == X86::reloc_riprel_4byte_movq_load)
-              Type = RIT_X86_64_GOTLoad;
+              Type = macho::RIT_X86_64_GOTLoad;
             else
-              Type = RIT_X86_64_GOT;
+              Type = macho::RIT_X86_64_GOT;
           }  else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
-            Type = RIT_X86_64_TLV;
+            Type = macho::RIT_X86_64_TLV;
           }  else if (Modifier != MCSymbolRefExpr::VK_None) {
             report_fatal_error("unsupported symbol modifier in relocation");
           } else {
-            Type = RIT_X86_64_Signed;
+            Type = macho::RIT_X86_64_Signed;
 
             // The Darwin x86_64 relocation format has a problem where it cannot
             // encode an address (L<foo> + <constant>) which is outside the atom
@@ -710,9 +642,9 @@ public:
             // (the additional bias), but instead appear to just look at the
             // final offset.
             switch (-(Target.getConstant() + (1LL << Log2Size))) {
-            case 1: Type = RIT_X86_64_Signed1; break;
-            case 2: Type = RIT_X86_64_Signed2; break;
-            case 4: Type = RIT_X86_64_Signed4; break;
+            case 1: Type = macho::RIT_X86_64_Signed1; break;
+            case 2: Type = macho::RIT_X86_64_Signed2; break;
+            case 4: Type = macho::RIT_X86_64_Signed4; break;
             }
           }
         } else {
@@ -720,24 +652,24 @@ public:
             report_fatal_error("unsupported symbol modifier in branch "
                               "relocation");
 
-          Type = RIT_X86_64_Branch;
+          Type = macho::RIT_X86_64_Branch;
         }
       } else {
         if (Modifier == MCSymbolRefExpr::VK_GOT) {
-          Type = RIT_X86_64_GOT;
+          Type = macho::RIT_X86_64_GOT;
         } else if (Modifier == MCSymbolRefExpr::VK_GOTPCREL) {
           // GOTPCREL is allowed as a modifier on non-PCrel instructions, in
           // which case all we do is set the PCrel bit in the relocation entry;
           // this is used with exception handling, for example. The source is
           // required to include any necessary offset directly.
-          Type = RIT_X86_64_GOT;
+          Type = macho::RIT_X86_64_GOT;
           IsPCRel = 1;
         } else if (Modifier == MCSymbolRefExpr::VK_TLVP) {
           report_fatal_error("TLVP symbol modifier should have been rip-rel");
         } else if (Modifier != MCSymbolRefExpr::VK_None)
           report_fatal_error("unsupported symbol modifier in relocation");
         else
-          Type = RIT_X86_64_Unsigned;
+          Type = macho::RIT_X86_64_Unsigned;
       }
     }
 
@@ -763,7 +695,7 @@ public:
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
     unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
     unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
-    unsigned Type = RIT_Vanilla;
+    unsigned Type = macho::RIT_Vanilla;
 
     // See <reloc.h>.
     const MCSymbol *A = &Target.getSymA()->getSymbol();
@@ -788,18 +720,19 @@ public:
       // Note that there is no longer any semantic difference between these two
       // relocation types from the linkers point of view, this is done solely
       // for pedantic compatibility with 'as'.
-      Type = A_SD->isExternal() ? RIT_Difference : RIT_LocalDifference;
+      Type = A_SD->isExternal() ? macho::RIT_Difference :
+        macho::RIT_LocalDifference;
       Value2 = Layout.getSymbolAddress(B_SD);
     }
 
     // Relocations are written out in reverse order, so the PAIR comes first.
-    if (Type == RIT_Difference || Type == RIT_LocalDifference) {
+    if (Type == macho::RIT_Difference || Type == macho::RIT_LocalDifference) {
       MachRelocationEntry MRE;
       MRE.Word0 = ((0         <<  0) |
-                   (RIT_Pair  << 24) |
+                   (macho::RIT_Pair  << 24) |
                    (Log2Size  << 28) |
                    (IsPCRel   << 30) |
-                   RF_Scattered);
+                   macho::RF_Scattered);
       MRE.Word1 = Value2;
       Relocations[Fragment->getParent()].push_back(MRE);
     }
@@ -809,7 +742,7 @@ public:
                  (Type        << 24) |
                  (Log2Size    << 28) |
                  (IsPCRel     << 30) |
-                 RF_Scattered);
+                 macho::RF_Scattered);
     MRE.Word1 = Value;
     Relocations[Fragment->getParent()].push_back(MRE);
   }
@@ -855,7 +788,7 @@ public:
                  (IsPCRel   << 24) |
                  (Log2Size  << 25) |
                  (1         << 27) | // Extern
-                 (RIT_TLV   << 28)); // Type
+                 (macho::RIT_TLV   << 28)); // Type
     Relocations[Fragment->getParent()].push_back(MRE);
   }
 
@@ -909,7 +842,7 @@ public:
       //
       // FIXME: Currently, these are never generated (see code below). I cannot
       // find a case where they are actually emitted.
-      Type = RIT_Vanilla;
+      Type = macho::RIT_Vanilla;
     } else {
       // Check whether we need an external or internal relocation.
       if (doesSymbolRequireExternRelocation(SD)) {
@@ -925,7 +858,7 @@ public:
         Index = SD->getFragment()->getParent()->getOrdinal() + 1;
       }
 
-      Type = RIT_Vanilla;
+      Type = macho::RIT_Vanilla;
     }
 
     // struct relocation_info (8 bytes)
@@ -1275,9 +1208,9 @@ public:
           // If this symbol is defined and internal, mark it as such.
           if (it->Symbol->isDefined() &&
               !Asm.getSymbolData(*it->Symbol).isExternal()) {
-            uint32_t Flags = ISF_Local;
+            uint32_t Flags = macho::ISF_Local;
             if (it->Symbol->isAbsolute())
-              Flags |= ISF_Absolute;
+              Flags |= macho::ISF_Absolute;
             Write32(Flags);
             continue;
           }

@@ -104,6 +104,75 @@ namespace macho {
     Nlist64Size = 16,
     RelocationInfoSize = 8
   };
+
+  // See <mach-o/loader.h>.
+  enum HeaderFileType {
+    HFT_Object = 0x1
+  };
+
+  enum HeaderFlags {
+    HF_SubsectionsViaSymbols = 0x2000
+  };
+
+  enum LoadCommandType {
+    LCT_Segment = 0x1,
+    LCT_Symtab = 0x2,
+    LCT_Dysymtab = 0xb,
+    LCT_Segment64 = 0x19
+  };
+
+  // See <mach-o/nlist.h>.
+  enum SymbolTypeType {
+    STT_Undefined = 0x00,
+    STT_Absolute  = 0x02,
+    STT_Section   = 0x0e
+  };
+
+  enum SymbolTypeFlags {
+    // If any of these bits are set, then the entry is a stab entry number (see
+    // <mach-o/stab.h>. Otherwise the other masks apply.
+    STF_StabsEntryMask = 0xe0,
+
+    STF_TypeMask       = 0x0e,
+    STF_External       = 0x01,
+    STF_PrivateExtern  = 0x10
+  };
+
+  /// IndirectSymbolFlags - Flags for encoding special values in the indirect
+  /// symbol entry.
+  enum IndirectSymbolFlags {
+    ISF_Local    = 0x80000000,
+    ISF_Absolute = 0x40000000
+  };
+
+  /// RelocationFlags - Special flags for addresses.
+  enum RelocationFlags {
+    RF_Scattered = 0x80000000
+  };
+
+  enum RelocationInfoType {
+    RIT_Vanilla             = 0,
+    RIT_Pair                = 1,
+    RIT_Difference          = 2,
+    RIT_PreboundLazyPointer = 3,
+    RIT_LocalDifference     = 4,
+    RIT_TLV                 = 5
+  };
+
+  /// X86_64 uses its own relocation types.
+  enum RelocationInfoTypeX86_64 {
+    RIT_X86_64_Unsigned   = 0,
+    RIT_X86_64_Signed     = 1,
+    RIT_X86_64_Branch     = 2,
+    RIT_X86_64_GOTLoad    = 3,
+    RIT_X86_64_GOT        = 4,
+    RIT_X86_64_Subtractor = 5,
+    RIT_X86_64_Signed1    = 6,
+    RIT_X86_64_Signed2    = 7,
+    RIT_X86_64_Signed4    = 8,
+    RIT_X86_64_TLV        = 9
+  };
+
 } // end namespace macho
 
 } // end namespace object
