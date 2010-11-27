@@ -21,7 +21,7 @@ define void @leaf() nounwind {
 ; CHECK: leaf:
 ; CHECK-NOT: -8(%rsp)
 ; CHECK: leaq link_ptr@TLSGD
-; CHECK: call __tls_get_addr@PLT
+; CHECK: callq __tls_get_addr@PLT
 "file foo2.c, line 14, bb1":
   %p = alloca %test*, align 8                     ; <%test**> [#uses=4]
   br label %"file foo2.c, line 14, bb2"

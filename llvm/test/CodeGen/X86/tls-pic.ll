@@ -11,11 +11,11 @@ entry:
 
 ; X32: f1:
 ; X32:   leal i@TLSGD(,%ebx), %eax
-; X32:   call ___tls_get_addr@PLT
+; X32:   calll ___tls_get_addr@PLT
 
 ; X64: f1:
 ; X64:   leaq i@TLSGD(%rip), %rdi
-; X64:   call __tls_get_addr@PLT
+; X64:   callq __tls_get_addr@PLT
 
 
 @i2 = external thread_local global i32
@@ -27,11 +27,11 @@ entry:
 
 ; X32: f2:
 ; X32:   leal i@TLSGD(,%ebx), %eax
-; X32:   call ___tls_get_addr@PLT
+; X32:   calll ___tls_get_addr@PLT
 
 ; X64: f2:
 ; X64:   leaq i@TLSGD(%rip), %rdi
-; X64:   call __tls_get_addr@PLT
+; X64:   callq __tls_get_addr@PLT
 
 
 
@@ -43,11 +43,11 @@ entry:
 
 ; X32: f3:
 ; X32:   leal	i@TLSGD(,%ebx), %eax
-; X32:   call ___tls_get_addr@PLT
+; X32:   calll ___tls_get_addr@PLT
 
 ; X64: f3:
 ; X64:   leaq i@TLSGD(%rip), %rdi
-; X64:   call __tls_get_addr@PLT
+; X64:   callq __tls_get_addr@PLT
 
 
 define i32* @f4() nounwind {
@@ -57,11 +57,11 @@ entry:
 
 ; X32: f4:
 ; X32:   leal	i@TLSGD(,%ebx), %eax
-; X32:   call ___tls_get_addr@PLT
+; X32:   calll ___tls_get_addr@PLT
 
 ; X64: f4:
 ; X64:   leaq i@TLSGD(%rip), %rdi
-; X64:   call __tls_get_addr@PLT
+; X64:   callq __tls_get_addr@PLT
 
 
 
