@@ -43,10 +43,16 @@ public:
 
 private:
   OwningPtr<MemoryBuffer> Buffer;
-  
-public:
-  MachOObject(MemoryBuffer *Buffer);
 
+  /// Whether the object is little endian.
+  bool IsLittleEndian;
+  /// Whether the object is 64-bit.
+  bool Is64Bit;
+
+private:
+  MachOObject(MemoryBuffer *Buffer, bool IsLittleEndian, bool Is64Bit);
+
+public:
   /// \brief Load a Mach-O object from a MemoryBuffer object.
   ///
   /// \param Buffer - The buffer to load the object from. This routine takes
