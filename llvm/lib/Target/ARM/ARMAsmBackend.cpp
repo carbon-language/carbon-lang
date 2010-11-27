@@ -17,8 +17,8 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ELF.h"
-#include "llvm/Support/MachO.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -115,8 +115,9 @@ public:
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     // FIXME: Subtarget info should be derived. Force v7 for now.
-    return createMachObjectWriter(OS, /*Is64Bit=*/false, MachO::CPUTypeARM,
-                                  MachO::CPUSubType_ARM_V7,
+    return createMachObjectWriter(OS, /*Is64Bit=*/false,
+                                  object::mach::CTM_ARM,
+                                  object::mach::CSARM_V7,
                                   /*IsLittleEndian=*/true);
   }
 

@@ -18,14 +18,13 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ELF.h"
-#include "llvm/Support/MachO.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
-
 
 static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
@@ -360,8 +359,9 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMachObjectWriter(OS, /*Is64Bit=*/false, MachO::CPUTypeI386,
-                                  MachO::CPUSubType_I386_ALL,
+    return createMachObjectWriter(OS, /*Is64Bit=*/false,
+                                  object::mach::CTM_i386,
+                                  object::mach::CSX86_ALL,
                                   /*IsLittleEndian=*/true);
   }
 };
@@ -378,8 +378,9 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMachObjectWriter(OS, /*Is64Bit=*/true, MachO::CPUTypeX86_64,
-                                  MachO::CPUSubType_I386_ALL,
+    return createMachObjectWriter(OS, /*Is64Bit=*/true,
+                                  object::mach::CTM_x86_64,
+                                  object::mach::CSX86_ALL,
                                   /*IsLittleEndian=*/true);
   }
 
