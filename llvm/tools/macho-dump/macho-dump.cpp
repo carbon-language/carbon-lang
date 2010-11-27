@@ -213,6 +213,14 @@ static int DumpSymtabCommand(MachOObject &Obj,
   outs() << "  ('stroff', " << SLC->StringTableOffset << ")\n";
   outs() << "  ('strsize', " << SLC->StringTableSize << ")\n";
 
+  // Cache the string table data.
+  Obj.RegisterStringTable(*SLC);
+
+  // Dump the string data.
+  outs() << "  ('_string_data', '";
+  outs().write_escaped(Obj.getStringTableData(),
+                       /*UseHexEscapes=*/true) << "')\n";
+
   return 0;
 }
 

@@ -57,7 +57,7 @@ MachOObject::MachOObject(MemoryBuffer *Buffer_, bool IsLittleEndian_,
                          bool Is64Bit_)
   : Buffer(Buffer_), IsLittleEndian(IsLittleEndian_), Is64Bit(Is64Bit_),
     IsSwappedEndian(IsLittleEndian != sys::isLittleEndianHost()),
-    LoadCommands(0), NumLoadedCommands(0) {
+    HasStringTable(false), LoadCommands(0), NumLoadedCommands(0) {
   // Load the common header.
   memcpy(&Header, Buffer->getBuffer().data(), sizeof(Header));
   if (IsSwappedEndian) {
@@ -123,6 +123,12 @@ MachOObject *MachOObject::LoadFromBuffer(MemoryBuffer *Buffer,
 
   if (ErrorStr) *ErrorStr = "";
   return Object.take();
+}
+
+void MachOObject::RegisterStringTable(macho::SymtabLoadCommand &SLC) {
+  HasStringTable = true;
+  StringTable = Buffer->getBuffer().substr(SLC.StringTableOffset,
+                                           SLC.StringTableSize);
 }
 
 const MachOObject::LoadCommandInfo &

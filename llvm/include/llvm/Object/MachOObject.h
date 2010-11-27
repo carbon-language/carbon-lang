@@ -13,6 +13,7 @@
 #include <string>
 #include "llvm/ADT/InMemoryStruct.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Object/MachOFormat.h"
 
 namespace llvm {
@@ -59,6 +60,8 @@ private:
   bool Is64Bit;
   /// Whether the object is swapped endianness from the host.
   bool IsSwappedEndian;
+  /// Whether the string table has been registered.
+  bool HasStringTable;
 
   /// The cached information on the load commands.
   LoadCommandInfo *LoadCommands;
@@ -67,6 +70,9 @@ private:
   /// The cached copy of the header.
   macho::Header Header;
   macho::Header64Ext Header64Ext;
+
+  /// Cache string table information.
+  StringRef StringTable;
 
 private:
   MachOObject(MemoryBuffer *Buffer, bool IsLittleEndian, bool Is64Bit);
@@ -95,6 +101,17 @@ public:
   unsigned getHeaderSize() const {
     return Is64Bit ? macho::Header64Size : macho::Header32Size;
   }
+
+  /// @}
+  /// @name String Table Data
+  /// @{
+
+  StringRef getStringTableData() const {
+    assert(HasStringTable && "String table has not been registered!");
+    return StringTable;
+  }
+
+  void RegisterStringTable(macho::SymtabLoadCommand &SLC);
 
   /// @}
   /// @name Object Header Access
