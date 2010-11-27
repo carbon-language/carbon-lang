@@ -196,7 +196,7 @@ public:
 
   /// write_escaped - Output \arg Str, turning '\\', '\t', '\n', '"', and
   /// anything that doesn't satisfy std::isprint into an escape sequence.
-  raw_ostream &write_escaped(StringRef Str);
+  raw_ostream &write_escaped(StringRef Str, bool UseHexEscapes = false);
 
   raw_ostream &write(unsigned char C);
   raw_ostream &write(const char *Ptr, size_t Size);
