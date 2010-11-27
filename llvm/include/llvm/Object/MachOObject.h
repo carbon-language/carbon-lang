@@ -129,6 +129,14 @@ public:
     const macho::DysymtabLoadCommand &DLC,
     unsigned Index,
     InMemoryStruct<macho::IndirectSymbolTableEntry> &Res) const;
+  void ReadSection(
+    const LoadCommandInfo &LCI,
+    unsigned Index,
+    InMemoryStruct<macho::Section> &Res) const;
+  void ReadSection64(
+    const LoadCommandInfo &LCI,
+    unsigned Index,
+    InMemoryStruct<macho::Section64> &Res) const;
 
   /// @}
 };

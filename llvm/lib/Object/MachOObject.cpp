@@ -243,3 +243,49 @@ MachOObject::ReadIndirectSymbolTableEntry(const macho::DysymtabLoadCommand &DLC,
                      Index * sizeof(macho::IndirectSymbolTableEntry));
   ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
 }
+
+
+template<>
+void SwapStruct(macho::Section &Value) {
+  SwapValue(Value.Address);
+  SwapValue(Value.Size);
+  SwapValue(Value.Offset);
+  SwapValue(Value.Align);
+  SwapValue(Value.RelocationTableOffset);
+  SwapValue(Value.NumRelocationTableEntries);
+  SwapValue(Value.Flags);
+  SwapValue(Value.Reserved1);
+  SwapValue(Value.Reserved2);
+}
+void MachOObject::ReadSection(const LoadCommandInfo &LCI,
+                              unsigned Index,
+                              InMemoryStruct<macho::Section> &Res) const {
+  assert(LCI.Command.Type == macho::LCT_Segment &&
+         "Unexpected load command info!");
+  uint64_t Offset = (LCI.Offset + sizeof(macho::SegmentLoadCommand) +
+                     Index * sizeof(macho::Section));
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
+}
+
+template<>
+void SwapStruct(macho::Section64 &Value) {
+  SwapValue(Value.Address);
+  SwapValue(Value.Size);
+  SwapValue(Value.Offset);
+  SwapValue(Value.Align);
+  SwapValue(Value.RelocationTableOffset);
+  SwapValue(Value.NumRelocationTableEntries);
+  SwapValue(Value.Flags);
+  SwapValue(Value.Reserved1);
+  SwapValue(Value.Reserved2);
+  SwapValue(Value.Reserved3);
+}
+void MachOObject::ReadSection64(const LoadCommandInfo &LCI,
+                                unsigned Index,
+                                InMemoryStruct<macho::Section64> &Res) const {
+  assert(LCI.Command.Type == macho::LCT_Segment64 &&
+         "Unexpected load command info!");
+  uint64_t Offset = (LCI.Offset + sizeof(macho::Segment64LoadCommand) +
+                     Index * sizeof(macho::Section64));
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
+}

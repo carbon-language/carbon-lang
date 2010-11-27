@@ -25,7 +25,7 @@ static cl::opt<std::string>
 InputFile(cl::Positional, cl::desc("<input file>"), cl::init("-"));
 
 static cl::opt<bool>
-DumpSectionData("dump-section-data", cl::desc("Dump the contents of sections"),
+ShowSectionData("dump-section-data", cl::desc("Dump the contents of sections"),
                 cl::init(false));
 
 ///
@@ -83,6 +83,31 @@ static void DumpSegmentCommandData(StringRef Name,
   outs() << "  ('flags', " << Flags << ")\n";
 }
 
+static void DumpSectionData(unsigned Index, StringRef Name,
+                            StringRef SegmentName, uint64_t Address,
+                            uint64_t Size, uint32_t Offset,
+                            uint32_t Align, uint32_t RelocationTableOffset,
+                            uint32_t NumRelocationTableEntries,
+                            uint32_t Flags, uint32_t Reserved1,
+                            uint32_t Reserved2, uint64_t Reserved3 = ~0ULL) {
+  outs() << "    # Section " << Index << "\n";
+  outs() << "   (('section_name', '";
+  outs().write_escaped(Name, /*UseHexEscapes=*/true) << "')\n";
+  outs() << "    ('segment_name', '";
+  outs().write_escaped(SegmentName, /*UseHexEscapes=*/true) << "')\n";
+  outs() << "    ('address', " << Address << ")\n";
+  outs() << "    ('size', " << Size << ")\n";
+  outs() << "    ('offset', " << Offset << ")\n";
+  outs() << "    ('alignment', " << Align << ")\n";
+  outs() << "    ('reloc_offset', " << RelocationTableOffset << ")\n";
+  outs() << "    ('num_reloc', " << NumRelocationTableEntries << ")\n";
+  outs() << "    ('flags', " << format("%#x", Flags) << ")\n";
+  outs() << "    ('reserved1', " << Reserved1 << ")\n";
+  outs() << "    ('reserved2', " << Reserved2 << ")\n";
+  if (Reserved3 != ~0ULL)
+    outs() << "    ('reserved3', " << Reserved3 << ")\n";
+}
+
 static int DumpSegmentCommand(MachOObject &Obj,
                                const MachOObject::LoadCommandInfo &LCI) {
   InMemoryStruct<macho::SegmentLoadCommand> SLC;
@@ -90,13 +115,34 @@ static int DumpSegmentCommand(MachOObject &Obj,
   if (!SLC)
     return Error("unable to read segment load command");
 
-  DumpSegmentCommandData(StringRef(SLC->Name, 16), SLC->VMAddress, SLC->VMSize,
-                         SLC->FileOffset, SLC->FileSize,
+  DumpSegmentCommandData(StringRef(SLC->Name, 16), SLC->VMAddress,
+                         SLC->VMSize, SLC->FileOffset, SLC->FileSize,
                          SLC->MaxVMProtection, SLC->InitialVMProtection,
                          SLC->NumSections, SLC->Flags);
 
-  return 0;
+  // Dump the sections.
+  int Res = 0;
+  outs() << "  ('sections', [\n";
+  for (unsigned i = 0; i != SLC->NumSections; ++i) {
+    InMemoryStruct<macho::Section> Sect;
+    Obj.ReadSection(LCI, i, Sect);
+    if (!SLC) {
+      Res = Error("unable to read section '" + Twine(i) + "'");
+      break;
+    }
+
+    DumpSectionData(i, StringRef(Sect->Name, 16),
+                    StringRef(Sect->SegmentName, 16), Sect->Address, Sect->Size,
+                    Sect->Offset, Sect->Align, Sect->RelocationTableOffset,
+                    Sect->NumRelocationTableEntries, Sect->Flags,
+                    Sect->Reserved1, Sect->Reserved2);
+    outs() << "   ),\n";
+  }
+  outs() << "  ])\n";
+
+  return Res;
 }
+
 static int DumpSegment64Command(MachOObject &Obj,
                                const MachOObject::LoadCommandInfo &LCI) {
   InMemoryStruct<macho::Segment64LoadCommand> SLC;
@@ -104,10 +150,30 @@ static int DumpSegment64Command(MachOObject &Obj,
   if (!SLC)
     return Error("unable to read segment load command");
 
-  DumpSegmentCommandData(StringRef(SLC->Name, 16), SLC->VMAddress, SLC->VMSize,
-                         SLC->FileOffset, SLC->FileSize,
+  DumpSegmentCommandData(StringRef(SLC->Name, 16), SLC->VMAddress,
+                         SLC->VMSize, SLC->FileOffset, SLC->FileSize,
                          SLC->MaxVMProtection, SLC->InitialVMProtection,
                          SLC->NumSections, SLC->Flags);
+
+  // Dump the sections.
+  int Res = 0;
+  outs() << "  ('sections', [\n";
+  for (unsigned i = 0; i != SLC->NumSections; ++i) {
+    InMemoryStruct<macho::Section64> Sect;
+    Obj.ReadSection64(LCI, i, Sect);
+    if (!SLC) {
+      Res = Error("unable to read section '" + Twine(i) + "'");
+      break;
+    }
+
+    DumpSectionData(i, StringRef(Sect->Name, 16),
+                    StringRef(Sect->SegmentName, 16), Sect->Address, Sect->Size,
+                    Sect->Offset, Sect->Align, Sect->RelocationTableOffset,
+                    Sect->NumRelocationTableEntries, Sect->Flags,
+                    Sect->Reserved1, Sect->Reserved2, Sect->Reserved3);
+    outs() << "   ),\n";
+  }
+  outs() << "  ])\n";
 
   return 0;
 }

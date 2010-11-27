@@ -219,7 +219,38 @@ namespace macho {
   };
 
   /// @}
+  /// @name Section Data
+  /// @{
 
+  struct Section {
+    char Name[16];
+    char SegmentName[16];
+    uint32_t Address;
+    uint32_t Size;
+    uint32_t Offset;
+    uint32_t Align;
+    uint32_t RelocationTableOffset;
+    uint32_t NumRelocationTableEntries;
+    uint32_t Flags;
+    uint32_t Reserved1;
+    uint32_t Reserved2;
+  };
+  struct Section64 {
+    char Name[16];
+    char SegmentName[16];
+    uint64_t Address;
+    uint64_t Size;
+    uint32_t Offset;
+    uint32_t Align;
+    uint32_t RelocationTableOffset;
+    uint32_t NumRelocationTableEntries;
+    uint32_t Flags;
+    uint32_t Reserved1;
+    uint32_t Reserved2;
+    uint32_t Reserved3;
+  };
+
+  /// @}
   /// @name Indirect Symbol Table
   /// @{
 
