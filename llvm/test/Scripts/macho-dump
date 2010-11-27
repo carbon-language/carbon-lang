@@ -82,7 +82,7 @@ def dumpmacho(path, opts):
    print "('filetype', %r)" % filetype
    
    numLoadCommands = f.read32()
-   print "('num_load_commands', %r)" % filetype
+   print "('num_load_commands', %r)" % numLoadCommands
 
    loadCommandsSize = f.read32()
    print "('load_commands_size', %r)" % loadCommandsSize

@@ -20,7 +20,7 @@ Lsym_asm_temp:
 // CHECK-X86_32: ('cputype', 7)
 // CHECK-X86_32: ('cpusubtype', 3)
 // CHECK-X86_32: ('filetype', 1)
-// CHECK-X86_32: ('num_load_commands', 1)
+// CHECK-X86_32: ('num_load_commands', 3)
 // CHECK-X86_32: ('load_commands_size', 228)
 // CHECK-X86_32: ('flag', 0)
 // CHECK-X86_32: ('load_commands', [
@@ -164,7 +164,7 @@ Lsym_asm_temp:
 // CHECK-X86_64: ('cputype', 16777223)
 // CHECK-X86_64: ('cpusubtype', 3)
 // CHECK-X86_64: ('filetype', 1)
-// CHECK-X86_64: ('num_load_commands', 1)
+// CHECK-X86_64: ('num_load_commands', 3)
 // CHECK-X86_64: ('load_commands_size', 256)
 // CHECK-X86_64: ('flag', 0)
 // CHECK-X86_64: ('reserved', 0)

@@ -50,7 +50,7 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 1)
+// CHECK: ('num_load_commands', 3)
 // CHECK: ('load_commands_size', 296)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [

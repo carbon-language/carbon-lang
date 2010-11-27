@@ -10,7 +10,7 @@ _a:
 // CHECK: ('cputype', 16777223)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 1)
+// CHECK: ('num_load_commands', 3)
 // CHECK: ('load_commands_size', 336)
 // CHECK: ('flag', 0)
 // CHECK: ('reserved', 0)
