@@ -53,7 +53,6 @@ public:
     mips,    // MIPS: mips, mipsallegrex
     mipsel,  // MIPSEL: mipsel, mipsallegrexel, psp
     msp430,  // MSP430: msp430
-    pic16,   // PIC16: pic16
     ppc,     // PPC: powerpc
     ppc64,   // PPC64: powerpc64, ppu
     sparc,   // Sparc: sparc
