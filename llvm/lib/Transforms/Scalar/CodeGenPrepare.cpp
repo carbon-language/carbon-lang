@@ -618,37 +618,68 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
                                         const Type *AccessTy,
                                         DenseMap<Value*,Value*> &SunkAddrs) {
+  Value *Repl = Addr;
+  
   // Try to collapse single-value PHI nodes.  This is necessary to undo 
   // unprofitable PRE transformations.
-  Value *Repl = Addr;
-  if (isa<PHINode>(Addr) && MemoryInst->hasOneUse()) {
-    PHINode *P = cast<PHINode>(Addr);
-    Instruction *Consensus = 0;
-    unsigned NumUses = 0;
-    for (unsigned i = 0, e = P->getNumIncomingValues(); i != e; ++i) {
-      Instruction *Incoming = dyn_cast<Instruction>(P->getIncomingValue(i));
-      if (!Incoming || (Consensus && !Incoming->isIdenticalTo(Consensus))) {
-        Consensus = 0;
-        break;
-      }
-      
-      if (!Consensus || Incoming->isIdenticalTo(Consensus)) {
-        if (Incoming->getNumUses() > NumUses) {
-          Consensus = Incoming;
-          NumUses = Incoming->getNumUses();
-        }
-        continue;
-      }
+  std::vector<Value*> worklist;
+  SmallPtrSet<Value*, 4> Visited;
+  worklist.push_back(Addr);
+  
+  // Use a worklist to iteratively look through PHI nodes, and ensure that
+  // the addressing mode obtained from the non-PHI roots of the graph
+  // are equivalent.
+  Value *Consensus = 0;
+  unsigned NumUses = 0;
+  SmallVector<Instruction*, 16> AddrModeInsts;
+  ExtAddrMode AddrMode;
+  while (!worklist.empty()) {
+    Value *V = worklist.back();
+    worklist.pop_back();
+    
+    // Break use-def graph loops.
+    if (Visited.count(V)) {
+      Consensus = 0;
+      break;
     }
     
-    if (Consensus) Addr = Consensus;
+    Visited.insert(V);
+    
+    // For a PHI node, push all of its incoming values.
+    if (PHINode *P = dyn_cast<PHINode>(V)) {
+      for (unsigned i = 0, e = P->getNumIncomingValues(); i != e; ++i)
+        worklist.push_back(P->getIncomingValue(i));
+      continue;
+    }
+    
+    // For non-PHIs, determine the addressing mode being computed.
+    SmallVector<Instruction*, 16> NewAddrModeInsts;
+    ExtAddrMode NewAddrMode =
+      AddressingModeMatcher::Match(V, AccessTy,MemoryInst,
+                                   NewAddrModeInsts, *TLI);
+    
+    // Ensure that the obtained addressing mode is equivalent to that obtained
+    // for all other roots of the PHI traversal.  Also, when choosing one
+    // such root as representative, select the one with the most uses in order
+    // to keep the cost modeling heuristics in AddressingModeMatcher applicable.
+    if (!Consensus || NewAddrMode == AddrMode) {
+      if (V->getNumUses() > NumUses) {
+        Consensus = V;
+        NumUses = V->getNumUses();
+        AddrMode = NewAddrMode;
+        AddrModeInsts = NewAddrModeInsts;
+      }
+      continue;
+    }
+    
+    Consensus = 0;
+    break;
   }
   
-  // Figure out what addressing mode will be built up for this operation.
-  SmallVector<Instruction*, 16> AddrModeInsts;
-  ExtAddrMode AddrMode = AddressingModeMatcher::Match(Addr, AccessTy,MemoryInst,
-                                                      AddrModeInsts, *TLI);
-
+  // If the addressing mode couldn't be determined, or if multiple different
+  // ones were determined, bail out now.
+  if (!Consensus) return false;
+  
   // Check to see if any of the instructions supersumed by this addr mode are
   // non-local to I's BB.
   bool AnyNonLocal = false;
