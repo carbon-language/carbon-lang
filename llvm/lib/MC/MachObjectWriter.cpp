@@ -229,8 +229,7 @@ public:
     Write32(CPUSubtype);
 
     Write32(macho::HFT_Object);
-    Write32(NumLoadCommands);    // Object files have a single load command, the
-                                 // segment.
+    Write32(NumLoadCommands);
     Write32(LoadCommandsSize);
     Write32(Flags);
     if (Is64Bit)
