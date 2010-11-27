@@ -125,6 +125,10 @@ public:
   void ReadDysymtabLoadCommand(
     const LoadCommandInfo &LCI,
     InMemoryStruct<macho::DysymtabLoadCommand> &Res) const;
+  void ReadIndirectSymbolTableEntry(
+    const macho::DysymtabLoadCommand &DLC,
+    unsigned Index,
+    InMemoryStruct<macho::IndirectSymbolTableEntry> &Res) const;
 
   /// @}
 };

@@ -230,3 +230,16 @@ void MachOObject::ReadDysymtabLoadCommand(const LoadCommandInfo &LCI,
                         InMemoryStruct<macho::DysymtabLoadCommand> &Res) const {
   ReadInMemoryStruct(*this, Buffer->getBuffer(), LCI.Offset, Res);
 }
+
+template<>
+void SwapStruct(macho::IndirectSymbolTableEntry &Value) {
+  SwapValue(Value.Index);
+}
+void
+MachOObject::ReadIndirectSymbolTableEntry(const macho::DysymtabLoadCommand &DLC,
+                                          unsigned Index,
+                   InMemoryStruct<macho::IndirectSymbolTableEntry> &Res) const {
+  uint64_t Offset = (DLC.IndirectSymbolTableOffset +
+                     Index * sizeof(macho::IndirectSymbolTableEntry));
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
+}

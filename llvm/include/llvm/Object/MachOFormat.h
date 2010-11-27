@@ -220,6 +220,15 @@ namespace macho {
 
   /// @}
 
+  /// @name Indirect Symbol Table
+  /// @{
+
+  struct IndirectSymbolTableEntry {
+    uint32_t Index;
+  };
+
+  /// @}
+
   // See <mach-o/nlist.h>.
   enum SymbolTypeType {
     STT_Undefined = 0x00,

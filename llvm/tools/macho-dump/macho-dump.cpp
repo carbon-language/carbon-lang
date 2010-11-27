@@ -14,6 +14,7 @@
 #include "llvm/Object/MachOObject.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -154,7 +155,24 @@ static int DumpDysymtabCommand(MachOObject &Obj,
   outs() << "  ('locreloff', " << DLC->LocalRelocationTableOffset << ")\n";
   outs() << "  ('nlocrel', " << DLC->NumLocalRelocationTableEntries << ")\n";
 
-  return 0;
+  // Dump the indirect symbol table.
+  int Res = 0;
+  outs() << "  ('_indirect_symbols', [\n";
+  for (unsigned i = 0; i != DLC->NumIndirectSymbolTableEntries; ++i) {
+    InMemoryStruct<macho::IndirectSymbolTableEntry> ISTE;
+    Obj.ReadIndirectSymbolTableEntry(*DLC, i, ISTE);
+    if (!ISTE) {
+      Res = Error("unable to read segment load command");
+      break;
+    }
+
+    outs() << "    # Indirect Symbol " << i << "\n";
+    outs() << "    (('symbol_index', "
+           << format("%#x", ISTE->Index) << "),),\n";
+  }
+  outs() << "  ])\n";
+
+  return Res;
 }
 
 static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
