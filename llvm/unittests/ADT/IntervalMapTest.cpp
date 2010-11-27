@@ -424,4 +424,28 @@ TEST(IntervalMapTest, Branched2) {
   EXPECT_TRUE(map.begin() == map.end());
 }
 
+// Random insertions, coalescing to a single interval.
+TEST(IntervalMapTest, RandomCoalescing) {
+  UU4Map::Allocator allocator;
+  UU4Map map(allocator);
+
+  // This is a poor PRNG with maximal period:
+  // x_n = 5 x_{n-1} + 1 mod 2^N
+
+  unsigned x = 100;
+  for (unsigned i = 0; i != 4096; ++i) {
+    map.insert(10*x, 10*x+9, 1);
+    EXPECT_GE(10*x, map.start());
+    EXPECT_LE(10*x+9, map.stop());
+    x = (5*x+1)%4096;
+  }
+
+  // Map should be fully coalesced after that exercise.
+  EXPECT_FALSE(map.empty());
+  EXPECT_EQ(0u, map.start());
+  EXPECT_EQ(40959u, map.stop());
+  EXPECT_EQ(1, std::distance(map.begin(), map.end()));
+
+}
+
 } // namespace

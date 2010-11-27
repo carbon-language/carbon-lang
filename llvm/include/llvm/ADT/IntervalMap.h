@@ -243,6 +243,13 @@ public:
     moveLeft(j, i, Size - j);
   }
 
+  /// erase - Erase element at i.
+  /// @param i    Index of element to erase.
+  /// @param Size Number of elements in node.
+  void erase(unsigned i, unsigned Size) {
+    erase(i, i+1, Size);
+  }
+
   /// shift - Shift elements [i;size) 1 position to the right.
   /// @param i    Beginning of the range to move.
   /// @param Size Number of elements in node.
@@ -304,10 +311,8 @@ void adjustSiblingSizes(NodeT *Node[], unsigned Nodes,
                         unsigned CurSize[], const unsigned NewSize[]) {
   // Move elements right.
   for (int n = Nodes - 1; n; --n) {
-    if (CurSize[n] == NewSize[n]) {
-      --Nodes;
+    if (CurSize[n] == NewSize[n])
       continue;
-    }
     for (int m = n - 1; m != -1; --m) {
       int d = Node[n]->adjustFromLeftSib(CurSize[n], *Node[m], CurSize[m],
                                          NewSize[n] - CurSize[n]);
@@ -1042,22 +1047,14 @@ private:
   KeyT rootBranchStart() const { return rootBranchData().start; }
   KeyT &rootBranchStart()      { return rootBranchData().start; }
 
-  Leaf *allocLeaf()  {
-    return new(allocator.template Allocate<Leaf>()) Leaf();
-  }
-  void deleteLeaf(Leaf *P) {
-    P->~Leaf();
-    allocator.Deallocate(P);
+  template <typename NodeT> NodeT *newNode() {
+    return new(allocator.template Allocate<NodeT>()) NodeT();
   }
 
-  Branch *allocBranch() {
-    return new(allocator.template Allocate<Branch>()) Branch();
-  }
-  void deleteBranch(Branch *P) {
-    P->~Branch();
+  template <typename NodeT> void deleteNode(NodeT *P) {
+    P->~NodeT();
     allocator.Deallocate(P);
   }
-
 
   IdxPair branchRoot(unsigned Position);
   IdxPair splitRoot(unsigned Position);
@@ -1217,8 +1214,9 @@ branchRoot(unsigned Position) {
   unsigned pos = 0;
   NodeRef node[Nodes];
   for (unsigned n = 0; n != Nodes; ++n) {
-    node[n] = NodeRef(allocLeaf(), size[n]);
-    node[n].template get<Leaf>().copy(rootLeaf(), pos, 0, size[n]);
+    Leaf *L = newNode<Leaf>();
+    L->copy(rootLeaf(), pos, 0, size[n]);
+    node[n] = NodeRef(L, size[n]);
     pos += size[n];
   }
 
@@ -1257,8 +1255,9 @@ splitRoot(unsigned Position) {
   unsigned Pos = 0;
   NodeRef Node[Nodes];
   for (unsigned n = 0; n != Nodes; ++n) {
-    Node[n] = NodeRef(allocBranch(), Size[n]);
-    Node[n].template get<Branch>().copy(rootBranch(), Pos, 0, Size[n]);
+    Branch *B = newNode<Branch>();
+    B->copy(rootBranch(), Pos, 0, Size[n]);
+    Node[n] = NodeRef(B, Size[n]);
     Pos += Size[n];
   }
 
@@ -1303,9 +1302,9 @@ template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 deleteNode(IntervalMapImpl::NodeRef Node, unsigned Level) {
   if (Level)
-    deleteBranch(&Node.get<Branch>());
+    deleteNode(&Node.get<Branch>());
   else
-    deleteLeaf(&Node.get<Leaf>());
+    deleteNode(&Node.get<Leaf>());
 }
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
@@ -1523,11 +1522,14 @@ class IntervalMap<KeyT, ValT, N, Traits>::iterator : public const_iterator {
   bool insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop);
   template <typename NodeT> bool overflow(unsigned Level);
   void treeInsert(KeyT a, KeyT b, ValT y);
-
+  void eraseNode(unsigned Level);
+  void treeErase();
 public:
   /// insert - Insert mapping [a;b] -> y before the current position.
   void insert(KeyT a, KeyT b, ValT y);
 
+  /// erase - Erase the current interval.
+  void erase();
 };
 
 /// setNodeStop - Update the stop key of the current node at level and above.
@@ -1629,8 +1631,43 @@ iterator::insert(KeyT a, KeyT b, ValT y) {
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 iterator::treeInsert(KeyT a, KeyT b, ValT y) {
+  using namespace IntervalMapImpl;
   IntervalMap &IM = *this->map;
-  IntervalMapImpl::Path &P = this->path;
+  Path &P = this->path;
+
+  // Check if this insertion will extend the node to the left.
+  if (P.valid() && P.leafOffset() == 0 &&
+      Traits::startLess(a, P.leaf<Leaf>().start(0))) {
+    // Node is growing to the left, will it affect a left sibling node?
+    if (NodeRef Sib = P.getLeftSibling(IM.height)) {
+      Leaf &SibLeaf = Sib.get<Leaf>();
+      unsigned SibOfs = Sib.size() - 1;
+      if (SibLeaf.value(SibOfs) == y &&
+          Traits::adjacent(SibLeaf.stop(SibOfs), a)) {
+        // This insertion will coalesce with the last entry in SibLeaf. We can
+        // handle it in two ways:
+        //  1. Extend SibLeaf.stop to b and be done, or
+        //  2. Extend a to SibLeaf, erase the SibLeaf entry and continue.
+        // We prefer 1., but need 2 when coalescing to the right as well.
+        Leaf &CurLeaf = P.leaf<Leaf>();
+        P.moveLeft(IM.height);
+        if (Traits::stopLess(b, CurLeaf.start(0)) &&
+            (y != CurLeaf.value(0) || !Traits::adjacent(b, CurLeaf.start(0)))) {
+          // Easy, just extend SibLeaf and we're done.
+          setNodeStop(IM.height, SibLeaf.stop(SibOfs) = b);
+          return;
+        } else {
+          // We have both left and right coalescing. Erase the old SibLeaf entry
+          // and continue inserting the larger interval.
+          a = SibLeaf.start(SibOfs);
+          erase();
+        }
+      }
+    } else {
+      // No left sibling means we are at begin(). Update cached bound.
+      IM.rootBranchStart() = a;
+    }
+  }
 
   P.legalizeForInsert(IM.height);
   IdxPair IP = P.leaf<Leaf>().insertFrom(P.leafOffset(), P.leafSize(), a, b, y);
@@ -1649,8 +1686,91 @@ iterator::treeInsert(KeyT a, KeyT b, ValT y) {
   // Insert was the last node entry, update stops.
   if (IP.first == IP.second - 1)
     setNodeStop(IM.height, P.leaf<Leaf>().stop(IP.first));
+}
 
-  // FIXME: Handle cross-node coalescing.
+/// erase - erase the current interval and move to the next position.
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+iterator::erase() {
+  IntervalMap &IM = *this->map;
+  IntervalMapImpl::Path &P = this->path;
+  assert(P.valid() && "Cannot erase end()");
+  if (this->branched())
+    return treeErase();
+  IM.rootLeaf().erase(P.leafOffset(), IM.rootSize);
+  P.setSize(0, --IM.rootSize);
+}
+
+/// treeErase - erase() for a branched tree.
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+iterator::treeErase() {
+  IntervalMap &IM = *this->map;
+  IntervalMapImpl::Path &P = this->path;
+  Leaf &Node = P.leaf<Leaf>();
+
+  // Nodes are not allowed to become empty.
+  if (P.leafSize() == 1) {
+    IM.deleteNode(&Node);
+    eraseNode(IM.height);
+    return;
+  }
+
+  // Erase current entry.
+  Node.erase(P.leafOffset(), P.leafSize());
+  unsigned NewSize = P.leafSize() - 1;
+  P.setSize(IM.height, NewSize);
+  // When we erase the last entry, update stop and move to a legal position.
+  if (P.leafOffset() == NewSize) {
+    setNodeStop(IM.height, Node.stop(NewSize - 1));
+    P.moveRight(IM.height);
+  }
+}
+
+/// eraseNode - Erase the current node at Level from its parent and move path to
+/// the first entry of the next sibling node.
+/// The node must be deallocated by the caller.
+/// @param Level 1..height, the root node cannot be erased.
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+iterator::eraseNode(unsigned Level) {
+  assert(Level && "Cannot erase root node");
+  IntervalMap &IM = *this->map;
+  IntervalMapImpl::Path &P = this->path;
+
+  if (--Level == 0) {
+    IM.rootBranch().erase(P.offset(0), IM.rootSize);
+    P.setSize(0, --IM.rootSize);
+    // If this cleared the root, switch to height=0.
+    if (IM.empty()) {
+      IM.switchRootToLeaf();
+      this->setRoot(0);
+      return;
+    }
+  } else {
+    // Remove node ref from branch node at Level.
+    Branch &Parent = P.node<Branch>(Level);
+    if (P.size(Level) == 1) {
+      // Branch node became empty, remove it recursively.
+      IM.deleteNode(&Parent);
+      eraseNode(Level);
+    } else {
+      // Branch node won't become empty.
+      Parent.erase(P.offset(Level), P.size(Level));
+      unsigned NewSize = P.size(Level) - 1;
+      P.setSize(Level, NewSize);
+      // If we removed the last branch, update stop and move to a legal pos.
+      if (P.offset(Level) == NewSize) {
+        setNodeStop(Level, Parent.stop(NewSize - 1));
+        P.moveRight(Level);
+      }
+    }
+  }
+  // Update path cache for the new right sibling position.
+  if (P.valid()) {
+    P.reset(Level + 1);
+    P.offset(Level + 1) = 0;
+  }
 }
 
 /// overflow - Distribute entries of the current node evenly among
@@ -1685,7 +1805,7 @@ iterator::overflow(unsigned Level) {
   // Do we have a right sibling?
   NodeRef RightSib = P.getRightSibling(Level);
   if (RightSib) {
-    Offset += Elements = CurSize[Nodes] = RightSib.size();
+    Elements += CurSize[Nodes] = RightSib.size();
     Node[Nodes++] = &RightSib.get<NodeT>();
   }
 
@@ -1697,7 +1817,7 @@ iterator::overflow(unsigned Level) {
     CurSize[Nodes] = CurSize[NewNode];
     Node[Nodes] = Node[NewNode];
     CurSize[NewNode] = 0;
-    Node[NewNode] = new(this->map->allocator.template Allocate<NodeT>())NodeT();
+    Node[NewNode] = this->map->newNode<NodeT>();
     ++Nodes;
   }
 
