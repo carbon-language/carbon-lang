@@ -17,8 +17,8 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCMachOSymbolFlags.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MachO.h"
 #include "llvm/Target/TargetAsmBackend.h"
 
 // FIXME: Gross.
@@ -26,6 +26,7 @@
 
 #include <vector>
 using namespace llvm;
+using namespace llvm::object;
 
 // FIXME: this has been copied from (or to) X86AsmBackend.cpp
 static unsigned getFixupKindLog2Size(unsigned Kind) {
@@ -160,25 +161,6 @@ namespace {
 
 class MachObjectWriter : public MCObjectWriter {
   // See <mach-o/loader.h>.
-  enum {
-    Header_Magic32 = 0xFEEDFACE,
-    Header_Magic64 = 0xFEEDFACF
-  };
-
-  enum {
-    Header32Size = 28,
-    Header64Size = 32,
-    SegmentLoadCommand32Size = 56,
-    SegmentLoadCommand64Size = 72,
-    Section32Size = 68,
-    Section64Size = 80,
-    SymtabLoadCommandSize = 24,
-    DysymtabLoadCommandSize = 80,
-    Nlist32Size = 12,
-    Nlist64Size = 16,
-    RelocationInfoSize = 8
-  };
-
   enum HeaderFileType {
     HFT_Object = 0x1
   };
@@ -309,7 +291,7 @@ public:
     uint64_t Start = OS.tell();
     (void) Start;
 
-    Write32(Is64Bit ? Header_Magic64 : Header_Magic32);
+    Write32(Is64Bit ? macho::HM_Object64 : macho::HM_Object32);
 
     Write32(CPUType);
     Write32(CPUSubtype);
@@ -322,7 +304,8 @@ public:
     if (Is64Bit)
       Write32(0); // reserved
 
-    assert(OS.tell() - Start == Is64Bit ? Header64Size : Header32Size);
+    assert(OS.tell() - Start == Is64Bit ? 
+           macho::Header64Size : macho::Header32Size);
   }
 
   /// WriteSegmentLoadCommand - Write a segment load command.
@@ -339,11 +322,12 @@ public:
     uint64_t Start = OS.tell();
     (void) Start;
 
-    unsigned SegmentLoadCommandSize = Is64Bit ? SegmentLoadCommand64Size :
-      SegmentLoadCommand32Size;
+    unsigned SegmentLoadCommandSize = Is64Bit ? macho::SegmentLoadCommand64Size:
+      macho::SegmentLoadCommand32Size;
     Write32(Is64Bit ? LCT_Segment64 : LCT_Segment);
     Write32(SegmentLoadCommandSize +
-            NumSections * (Is64Bit ? Section64Size : Section32Size));
+            NumSections * (Is64Bit ? macho::Section64Size :
+                           macho::Section32Size));
 
     WriteBytes("", 16);
     if (Is64Bit) {
@@ -408,7 +392,8 @@ public:
     if (Is64Bit)
       Write32(0); // reserved3
 
-    assert(OS.tell() - Start == Is64Bit ? Section64Size : Section32Size);
+    assert(OS.tell() - Start == Is64Bit ? macho::Section64Size :
+           macho::Section32Size);
   }
 
   void WriteSymtabLoadCommand(uint32_t SymbolOffset, uint32_t NumSymbols,
@@ -420,13 +405,13 @@ public:
     (void) Start;
 
     Write32(LCT_Symtab);
-    Write32(SymtabLoadCommandSize);
+    Write32(macho::SymtabLoadCommandSize);
     Write32(SymbolOffset);
     Write32(NumSymbols);
     Write32(StringTableOffset);
     Write32(StringTableSize);
 
-    assert(OS.tell() - Start == SymtabLoadCommandSize);
+    assert(OS.tell() - Start == macho::SymtabLoadCommandSize);
   }
 
   void WriteDysymtabLoadCommand(uint32_t FirstLocalSymbol,
@@ -443,7 +428,7 @@ public:
     (void) Start;
 
     Write32(LCT_Dysymtab);
-    Write32(DysymtabLoadCommandSize);
+    Write32(macho::DysymtabLoadCommandSize);
     Write32(FirstLocalSymbol);
     Write32(NumLocalSymbols);
     Write32(FirstExternalSymbol);
@@ -463,7 +448,7 @@ public:
     Write32(0); // locreloff
     Write32(0); // nlocrel
 
-    assert(OS.tell() - Start == DysymtabLoadCommandSize);
+    assert(OS.tell() - Start == macho::DysymtabLoadCommandSize);
   }
 
   void WriteNlist(MachSymbolData &MSD, const MCAsmLayout &Layout) {
@@ -1164,21 +1149,22 @@ public:
     // section headers) and the symbol table.
     unsigned NumLoadCommands = 1;
     uint64_t LoadCommandsSize = Is64Bit ?
-      SegmentLoadCommand64Size + NumSections * Section64Size :
-      SegmentLoadCommand32Size + NumSections * Section32Size;
+      macho::SegmentLoadCommand64Size + NumSections * macho::Section64Size :
+      macho::SegmentLoadCommand32Size + NumSections * macho::Section32Size;
 
     // Add the symbol table load command sizes, if used.
     unsigned NumSymbols = LocalSymbolData.size() + ExternalSymbolData.size() +
       UndefinedSymbolData.size();
     if (NumSymbols) {
       NumLoadCommands += 2;
-      LoadCommandsSize += SymtabLoadCommandSize + DysymtabLoadCommandSize;
+      LoadCommandsSize += (macho::SymtabLoadCommandSize +
+                           macho::DysymtabLoadCommandSize);
     }
 
     // Compute the total size of the section data, as well as its file size and
     // vm size.
-    uint64_t SectionDataStart = (Is64Bit ? Header64Size : Header32Size)
-      + LoadCommandsSize;
+    uint64_t SectionDataStart = (Is64Bit ? macho::Header64Size :
+                                 macho::Header32Size) + LoadCommandsSize;
     uint64_t SectionDataSize = 0;
     uint64_t SectionDataFileSize = 0;
     uint64_t VMSize = 0;
@@ -1218,7 +1204,7 @@ public:
       unsigned NumRelocs = Relocs.size();
       uint64_t SectionStart = SectionDataStart + Layout.getSectionAddress(it);
       WriteSection(Asm, Layout, *it, SectionStart, RelocTableEnd, NumRelocs);
-      RelocTableEnd += NumRelocs * RelocationInfoSize;
+      RelocTableEnd += NumRelocs * macho::RelocationInfoSize;
     }
 
     // Write the symbol table load command, if used.
@@ -1244,8 +1230,8 @@ public:
 
       // The string table is written after symbol table.
       uint64_t StringTableOffset =
-        SymbolTableOffset + NumSymTabSymbols * (Is64Bit ? Nlist64Size :
-                                                Nlist32Size);
+        SymbolTableOffset + NumSymTabSymbols * (Is64Bit ? macho::Nlist64Size :
+                                                macho::Nlist32Size);
       WriteSymtabLoadCommand(SymbolTableOffset, NumSymTabSymbols,
                              StringTableOffset, StringTable.size());
 
