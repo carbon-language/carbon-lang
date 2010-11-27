@@ -154,9 +154,6 @@ public:
 
   bool cannotEliminateFrame(const MachineFunction &MF) const;
 
-  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                            RegScavenger *RS = NULL) const;
-
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
@@ -198,8 +195,6 @@ public:
                                    int SPAdj, RegScavenger *RS = NULL) const;
 
 private:
-  unsigned estimateRSStackSizeLimit(MachineFunction &MF) const;
-
   unsigned getRegisterPairEven(unsigned Reg, const MachineFunction &MF) const;
 
   unsigned getRegisterPairOdd(unsigned Reg, const MachineFunction &MF) const;

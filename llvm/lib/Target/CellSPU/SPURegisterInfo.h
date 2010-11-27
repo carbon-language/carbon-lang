@@ -64,9 +64,6 @@ namespace llvm {
     void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                              RegScavenger *RS = NULL) const;
 
-    void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                              RegScavenger *RS = NULL) const;
-
     //! Get return address register (LR, aka R0)
     unsigned getRARegister() const;
     //! Get the stack frame register (SP, aka R1)

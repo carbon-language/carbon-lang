@@ -24,6 +24,7 @@ namespace llvm {
   class MachineFunction;
   class MachineBasicBlock;
   class MachineMove;
+  class RegScavenger;
 
 /// Information about stack frame layout on the target.  It holds the direction
 /// of stack growth, the known stack alignment on entry to each function, and
@@ -172,6 +173,22 @@ public:
   /// returned directly, and the base register is returned via FrameReg.
   virtual int getFrameIndexReference(const MachineFunction &MF, int FI,
                                      unsigned &FrameReg) const;
+
+  /// processFunctionBeforeCalleeSavedScan - This method is called immediately
+  /// before PrologEpilogInserter scans the physical registers used to determine
+  /// what callee saved registers should be spilled. This method is optional.
+  virtual void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                RegScavenger *RS = NULL) const {
+
+  }
+
+  /// processFunctionBeforeFrameFinalized - This method is called immediately
+  /// before the specified function's frame layout (MF.getFrameInfo()) is
+  /// finalized.  Once the frame is finalized, MO_FrameIndex operands are
+  /// replaced with direct constants.  This method is optional.
+  ///
+  virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+  }
 };
 
 } // End llvm namespace

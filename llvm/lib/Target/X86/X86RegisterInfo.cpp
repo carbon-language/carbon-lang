@@ -609,46 +609,6 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 }
 
-void
-X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                      RegScavenger *RS) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
-
-  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  int32_t TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
-
-  if (TailCallReturnAddrDelta < 0) {
-    // create RETURNADDR area
-    //   arg
-    //   arg
-    //   RETADDR
-    //   { ...
-    //     RETADDR area
-    //     ...
-    //   }
-    //   [EBP]
-    MFI->CreateFixedObject(-TailCallReturnAddrDelta,
-                           (-1U*SlotSize)+TailCallReturnAddrDelta, true);
-  }
-
-  if (TFI->hasFP(MF)) {
-    assert((TailCallReturnAddrDelta <= 0) &&
-           "The Delta should always be zero or negative");
-    const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
-
-    // Create a frame entry for the EBP register that must be saved.
-    int FrameIdx = MFI->CreateFixedObject(SlotSize,
-                                          -(int)SlotSize +
-                                          TFI.getOffsetOfLocalArea() +
-                                          TailCallReturnAddrDelta,
-                                          true);
-    assert(FrameIdx == MFI->getObjectIndexBegin() &&
-           "Slot for EBP register must be last in order to be found!");
-    FrameIdx = 0;
-  }
-}
-
 unsigned X86RegisterInfo::getRARegister() const {
   return Is64Bit ? X86::RIP     // Should have dwarf #16.
                  : X86::EIP;    // Should have dwarf #8.

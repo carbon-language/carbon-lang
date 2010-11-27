@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
@@ -695,4 +696,262 @@ void PPCFrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(PPC::R1, 0);
   Moves.push_back(MachineMove(0, Dst, Src));
+}
+
+static bool spillsCR(const MachineFunction &MF) {
+  const PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  return FuncInfo->isCRSpilled();
+}
+
+/// MustSaveLR - Return true if this function requires that we save the LR
+/// register onto the stack in the prolog and restore it in the epilog of the
+/// function.
+static bool MustSaveLR(const MachineFunction &MF, unsigned LR) {
+  const PPCFunctionInfo *MFI = MF.getInfo<PPCFunctionInfo>();
+
+  // We need a save/restore of LR if there is any def of LR (which is
+  // defined by calls, including the PIC setup sequence), or if there is
+  // some use of the LR stack slot (e.g. for builtin_return_address).
+  // (LR comes in 32 and 64 bit versions.)
+  MachineRegisterInfo::def_iterator RI = MF.getRegInfo().def_begin(LR);
+  return RI !=MF.getRegInfo().def_end() || MFI->isLRStoreRequired();
+}
+
+void
+PPCFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                   RegScavenger *RS) const {
+  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
+
+  //  Save and clear the LR state.
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  unsigned LR = RegInfo->getRARegister();
+  FI->setMustSaveLR(MustSaveLR(MF, LR));
+  MF.getRegInfo().setPhysRegUnused(LR);
+
+  //  Save R31 if necessary
+  int FPSI = FI->getFramePointerSaveIndex();
+  bool isPPC64 = Subtarget.isPPC64();
+  bool isDarwinABI  = Subtarget.isDarwinABI();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+
+  // If the frame pointer save index hasn't been defined yet.
+  if (!FPSI && hasFP(MF)) {
+    // Find out what the fix offset of the frame pointer save area.
+    int FPOffset = getFramePointerSaveOffset(isPPC64, isDarwinABI);
+    // Allocate the frame index for frame pointer save area.
+    FPSI = MF.getFrameInfo()->CreateFixedObject(isPPC64? 8 : 4, FPOffset, true);
+    // Save the result.
+    FI->setFramePointerSaveIndex(FPSI);
+  }
+
+  // Reserve stack space to move the linkage area to in case of a tail call.
+  int TCSPDelta = 0;
+  if (GuaranteedTailCallOpt && (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
+    MF.getFrameInfo()->CreateFixedObject(-1 * TCSPDelta, TCSPDelta, true);
+  }
+
+  // Reserve a slot closest to SP or frame pointer if we have a dynalloc or
+  // a large stack, which will require scavenging a register to materialize a
+  // large offset.
+  // FIXME: this doesn't actually check stack size, so is a bit pessimistic
+  // FIXME: doesn't detect whether or not we need to spill vXX, which requires
+  //        r0 for now.
+
+  if (RegInfo->requiresRegisterScavenging(MF)) // FIXME (64-bit): Enable.
+    if (hasFP(MF) || spillsCR(MF)) {
+      const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+      const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+      const TargetRegisterClass *RC = isPPC64 ? G8RC : GPRC;
+      RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                         RC->getAlignment(),
+                                                         false));
+    }
+}
+
+void PPCFrameInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
+                                                                        const {
+  // Early exit if not using the SVR4 ABI.
+  if (!Subtarget.isSVR4ABI())
+    return;
+
+  // Get callee saved register information.
+  MachineFrameInfo *FFI = MF.getFrameInfo();
+  const std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
+
+  // Early exit if no callee saved registers are modified!
+  if (CSI.empty() && !hasFP(MF)) {
+    return;
+  }
+
+  unsigned MinGPR = PPC::R31;
+  unsigned MinG8R = PPC::X31;
+  unsigned MinFPR = PPC::F31;
+  unsigned MinVR = PPC::V31;
+
+  bool HasGPSaveArea = false;
+  bool HasG8SaveArea = false;
+  bool HasFPSaveArea = false;
+  bool HasCRSaveArea = false;
+  bool HasVRSAVESaveArea = false;
+  bool HasVRSaveArea = false;
+
+  SmallVector<CalleeSavedInfo, 18> GPRegs;
+  SmallVector<CalleeSavedInfo, 18> G8Regs;
+  SmallVector<CalleeSavedInfo, 18> FPRegs;
+  SmallVector<CalleeSavedInfo, 18> VRegs;
+
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    if (PPC::GPRCRegisterClass->contains(Reg)) {
+      HasGPSaveArea = true;
+
+      GPRegs.push_back(CSI[i]);
+
+      if (Reg < MinGPR) {
+        MinGPR = Reg;
+      }
+    } else if (PPC::G8RCRegisterClass->contains(Reg)) {
+      HasG8SaveArea = true;
+
+      G8Regs.push_back(CSI[i]);
+
+      if (Reg < MinG8R) {
+        MinG8R = Reg;
+      }
+    } else if (PPC::F8RCRegisterClass->contains(Reg)) {
+      HasFPSaveArea = true;
+
+      FPRegs.push_back(CSI[i]);
+
+      if (Reg < MinFPR) {
+        MinFPR = Reg;
+      }
+// FIXME SVR4: Disable CR save area for now.
+    } else if (PPC::CRBITRCRegisterClass->contains(Reg)
+               || PPC::CRRCRegisterClass->contains(Reg)) {
+//      HasCRSaveArea = true;
+    } else if (PPC::VRSAVERCRegisterClass->contains(Reg)) {
+      HasVRSAVESaveArea = true;
+    } else if (PPC::VRRCRegisterClass->contains(Reg)) {
+      HasVRSaveArea = true;
+
+      VRegs.push_back(CSI[i]);
+
+      if (Reg < MinVR) {
+        MinVR = Reg;
+      }
+    } else {
+      llvm_unreachable("Unknown RegisterClass!");
+    }
+  }
+
+  PPCFunctionInfo *PFI = MF.getInfo<PPCFunctionInfo>();
+
+  int64_t LowerBound = 0;
+
+  // Take into account stack space reserved for tail calls.
+  int TCSPDelta = 0;
+  if (GuaranteedTailCallOpt && (TCSPDelta = PFI->getTailCallSPDelta()) < 0) {
+    LowerBound = TCSPDelta;
+  }
+
+  // The Floating-point register save area is right below the back chain word
+  // of the previous stack frame.
+  if (HasFPSaveArea) {
+    for (unsigned i = 0, e = FPRegs.size(); i != e; ++i) {
+      int FI = FPRegs[i].getFrameIdx();
+
+      FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
+    }
+
+    LowerBound -= (31 - PPCRegisterInfo::getRegisterNumbering(MinFPR) + 1) * 8;
+  }
+
+  // Check whether the frame pointer register is allocated. If so, make sure it
+  // is spilled to the correct offset.
+  if (hasFP(MF)) {
+    HasGPSaveArea = true;
+
+    int FI = PFI->getFramePointerSaveIndex();
+    assert(FI && "No Frame Pointer Save Slot!");
+
+    FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
+  }
+
+  // General register save area starts right below the Floating-point
+  // register save area.
+  if (HasGPSaveArea || HasG8SaveArea) {
+    // Move general register save area spill slots down, taking into account
+    // the size of the Floating-point register save area.
+    for (unsigned i = 0, e = GPRegs.size(); i != e; ++i) {
+      int FI = GPRegs[i].getFrameIdx();
+
+      FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
+    }
+
+    // Move general register save area spill slots down, taking into account
+    // the size of the Floating-point register save area.
+    for (unsigned i = 0, e = G8Regs.size(); i != e; ++i) {
+      int FI = G8Regs[i].getFrameIdx();
+
+      FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
+    }
+
+    unsigned MinReg =
+      std::min<unsigned>(PPCRegisterInfo::getRegisterNumbering(MinGPR),
+                         PPCRegisterInfo::getRegisterNumbering(MinG8R));
+
+    if (Subtarget.isPPC64()) {
+      LowerBound -= (31 - MinReg + 1) * 8;
+    } else {
+      LowerBound -= (31 - MinReg + 1) * 4;
+    }
+  }
+
+  // The CR save area is below the general register save area.
+  if (HasCRSaveArea) {
+    // FIXME SVR4: Is it actually possible to have multiple elements in CSI
+    //             which have the CR/CRBIT register class?
+    // Adjust the frame index of the CR spill slot.
+    for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+      unsigned Reg = CSI[i].getReg();
+
+      if (PPC::CRBITRCRegisterClass->contains(Reg) ||
+          PPC::CRRCRegisterClass->contains(Reg)) {
+        int FI = CSI[i].getFrameIdx();
+
+        FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
+      }
+    }
+
+    LowerBound -= 4; // The CR save area is always 4 bytes long.
+  }
+
+  if (HasVRSAVESaveArea) {
+    // FIXME SVR4: Is it actually possible to have multiple elements in CSI
+    //             which have the VRSAVE register class?
+    // Adjust the frame index of the VRSAVE spill slot.
+    for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+      unsigned Reg = CSI[i].getReg();
+
+      if (PPC::VRSAVERCRegisterClass->contains(Reg)) {
+        int FI = CSI[i].getFrameIdx();
+
+        FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
+      }
+    }
+
+    LowerBound -= 4; // The VRSAVE save area is always 4 bytes long.
+  }
+
+  if (HasVRSaveArea) {
+    // Insert alignment padding, we need 16-byte alignment.
+    LowerBound = (LowerBound - 15) & ~(15);
+
+    for (unsigned i = 0, e = VRegs.size(); i != e; ++i) {
+      int FI = VRegs[i].getFrameIdx();
+
+      FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
+    }
+  }
 }

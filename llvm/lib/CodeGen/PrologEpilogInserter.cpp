@@ -65,6 +65,8 @@ FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   const Function* F = Fn.getFunction();
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
+  const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
+
   RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
 
@@ -75,7 +77,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
   // Allow the target machine to make some adjustments to the function
   // e.g. UsedPhysRegs before calculateCalleeSavedRegisters.
-  TRI->processFunctionBeforeCalleeSavedScan(Fn, RS);
+  TFI->processFunctionBeforeCalleeSavedScan(Fn, RS);
 
   // Scan the function for modified callee saved registers and insert spill code
   // for any callee saved registers that are modified.
@@ -95,7 +97,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
   // Allow the target machine to make final modifications to the function
   // before the frame layout is finalized.
-  TRI->processFunctionBeforeFrameFinalized(Fn);
+  TFI->processFunctionBeforeFrameFinalized(Fn);
 
   // Calculate actual frame offsets for all abstract stack objects...
   calculateFrameObjectOffsets(Fn);

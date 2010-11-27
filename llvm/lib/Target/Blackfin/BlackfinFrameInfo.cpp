@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
@@ -104,4 +105,20 @@ void BlackfinFrameInfo::emitEpilogue(MachineFunction &MF,
 
   // emit an UNLINK instruction
   BuildMI(MBB, MBBI, dl, TII.get(BF::UNLINK));
+}
+
+void BlackfinFrameInfo::
+processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                     RegScavenger *RS) const {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const BlackfinRegisterInfo *RegInfo =
+    static_cast<const BlackfinRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  const TargetRegisterClass *RC = BF::DPRegisterClass;
+
+  if (RegInfo->requiresRegisterScavenging(MF)) {
+    // Reserve a slot close to SP or frame pointer.
+    RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                       RC->getAlignment(),
+                                                       false));
+  }
 }

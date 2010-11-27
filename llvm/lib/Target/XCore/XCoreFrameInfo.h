@@ -44,6 +44,11 @@ namespace llvm {
 
     void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 
+    void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                              RegScavenger *RS = NULL) const;
+
+    void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
+
     //! Stack slot size (4 bytes)
     static int stackSlotSize() {
       return 4;

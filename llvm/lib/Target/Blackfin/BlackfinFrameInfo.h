@@ -36,6 +36,9 @@ public:
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   bool hasFP(const MachineFunction &MF) const;
+
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS) const;
 };
 
 } // End llvm namespace

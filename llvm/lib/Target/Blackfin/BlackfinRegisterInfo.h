@@ -52,9 +52,6 @@ namespace llvm {
     void eliminateFrameIndex(MachineBasicBlock::iterator II,
                              int SPAdj, RegScavenger *RS = NULL) const;
 
-    void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                              RegScavenger *RS) const;
-
     unsigned getFrameRegister(const MachineFunction &MF) const;
     unsigned getRARegister() const;
 

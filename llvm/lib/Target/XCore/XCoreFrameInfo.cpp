@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -335,4 +336,47 @@ bool XCoreFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     }
   }
   return true;
+}
+
+void
+XCoreFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                     RegScavenger *RS) const {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
+  bool LRUsed = MF.getRegInfo().isPhysRegUsed(XCore::LR);
+  const TargetRegisterClass *RC = XCore::GRRegsRegisterClass;
+  XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
+  if (LRUsed) {
+    MF.getRegInfo().setPhysRegUnused(XCore::LR);
+
+    bool isVarArg = MF.getFunction()->isVarArg();
+    int FrameIdx;
+    if (! isVarArg) {
+      // A fixed offset of 0 allows us to save / restore LR using entsp / retsp.
+      FrameIdx = MFI->CreateFixedObject(RC->getSize(), 0, true);
+    } else {
+      FrameIdx = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(),
+                                        false);
+    }
+    XFI->setUsesLR(FrameIdx);
+    XFI->setLRSpillSlot(FrameIdx);
+  }
+  if (RegInfo->requiresRegisterScavenging(MF)) {
+    // Reserve a slot close to SP or frame pointer.
+    RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                       RC->getAlignment(),
+                                                       false));
+  }
+  if (hasFP(MF)) {
+    // A callee save register is used to hold the FP.
+    // This needs saving / restoring in the epilogue / prologue.
+    XFI->setFPSpillSlot(MFI->CreateStackObject(RC->getSize(),
+                                               RC->getAlignment(),
+                                               false));
+  }
+}
+
+void XCoreFrameInfo::
+processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+
 }

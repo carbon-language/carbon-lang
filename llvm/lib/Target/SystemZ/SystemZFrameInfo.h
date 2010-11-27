@@ -44,6 +44,9 @@ public:
                                    const std::vector<CalleeSavedInfo> &CSI,
                                    const TargetRegisterInfo *TRI) const;
 
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS) const;
+
   bool hasReservedCallFrame(const MachineFunction &MF) const { return true; }
   bool hasFP(const MachineFunction &MF) const;
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;

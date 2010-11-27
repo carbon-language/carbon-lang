@@ -40,6 +40,10 @@ public:
   bool hasFP(const MachineFunction &MF) const;
   void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS = NULL) const;
+  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
+
   /// targetHandlesStackFrameRounding - Returns true if the target is
   /// responsible for rounding up the stack frame (probably at emitPrologue
   /// time).

@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
@@ -254,4 +255,21 @@ void SPUFrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(SPU::R1, 0);
   Moves.push_back(MachineMove(0, Dst, Src));
+}
+
+void SPUFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                        RegScavenger *RS) const{
+  // Mark LR and SP unused, since the prolog spills them to stack and
+  // we don't want anyone else to spill them for us.
+  //
+  // Also, unless R2 is really used someday, don't spill it automatically.
+  MF.getRegInfo().setPhysRegUnused(SPU::R0);
+  MF.getRegInfo().setPhysRegUnused(SPU::R1);
+  MF.getRegInfo().setPhysRegUnused(SPU::R2);
+
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetRegisterClass *RC = &SPU::R32CRegClass;
+  RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                     RC->getAlignment(),
+                                                     false));
 }

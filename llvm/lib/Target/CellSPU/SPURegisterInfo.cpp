@@ -310,24 +310,6 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   }
 }
 
-void SPURegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                           RegScavenger *RS)
-  const {
-  // Mark LR and SP unused, since the prolog spills them to stack and
-  // we don't want anyone else to spill them for us.
-  //
-  // Also, unless R2 is really used someday, don't spill it automatically.
-  MF.getRegInfo().setPhysRegUnused(SPU::R0);
-  MF.getRegInfo().setPhysRegUnused(SPU::R1);
-  MF.getRegInfo().setPhysRegUnused(SPU::R2);
-
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetRegisterClass *RC = &SPU::R32CRegClass;
-  RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                     RC->getAlignment(),
-                                                     false));
-}
-
 unsigned
 SPURegisterInfo::getRARegister() const
 {

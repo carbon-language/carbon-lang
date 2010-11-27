@@ -55,11 +55,6 @@ public:
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;
 
-  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                RegScavenger *RS = NULL) const;
-
-  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
-
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;

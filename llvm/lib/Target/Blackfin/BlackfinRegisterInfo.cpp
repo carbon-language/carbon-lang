@@ -325,19 +325,6 @@ BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 }
 
-void BlackfinRegisterInfo::
-processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                     RegScavenger *RS) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetRegisterClass *RC = BF::DPRegisterClass;
-  if (requiresRegisterScavenging(MF)) {
-    // Reserve a slot close to SP or frame pointer.
-    RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                       RC->getAlignment(),
-                                                       false));
-  }
-}
-
 unsigned BlackfinRegisterInfo::getRARegister() const {
   return BF::RETS;
 }

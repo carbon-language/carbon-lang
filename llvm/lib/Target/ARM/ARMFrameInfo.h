@@ -54,6 +54,9 @@ public:
                                  unsigned &FrameReg, int SPAdj) const;
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS) const;
+
  private:
   void emitPopInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                    const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,

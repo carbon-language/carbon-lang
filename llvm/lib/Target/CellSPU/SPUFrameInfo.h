@@ -40,6 +40,9 @@ namespace llvm {
     //! Prediate: Target has dedicated frame pointer
     bool hasFP(const MachineFunction &MF) const;
 
+    void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                              RegScavenger *RS = NULL) const;
+
     //! Perform target-specific stack frame setup.
     void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 

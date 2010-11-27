@@ -295,49 +295,6 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MBB.erase(II);
 }
 
-void
-XCoreRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                      RegScavenger *RS) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
-  bool LRUsed = MF.getRegInfo().isPhysRegUsed(XCore::LR);
-  const TargetRegisterClass *RC = XCore::GRRegsRegisterClass;
-  XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
-  if (LRUsed) {
-    MF.getRegInfo().setPhysRegUnused(XCore::LR);
-    
-    bool isVarArg = MF.getFunction()->isVarArg();
-    int FrameIdx;
-    if (! isVarArg) {
-      // A fixed offset of 0 allows us to save / restore LR using entsp / retsp.
-      FrameIdx = MFI->CreateFixedObject(RC->getSize(), 0, true);
-    } else {
-      FrameIdx = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(),
-                                        false);
-    }
-    XFI->setUsesLR(FrameIdx);
-    XFI->setLRSpillSlot(FrameIdx);
-  }
-  if (requiresRegisterScavenging(MF)) {
-    // Reserve a slot close to SP or frame pointer.
-    RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                       RC->getAlignment(),
-                                                       false));
-  }
-  if (TFI->hasFP(MF)) {
-    // A callee save register is used to hold the FP.
-    // This needs saving / restoring in the epilogue / prologue.
-    XFI->setFPSpillSlot(MFI->CreateStackObject(RC->getSize(),
-                                               RC->getAlignment(),
-                                               false));
-  }
-}
-
-void XCoreRegisterInfo::
-processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
-  
-}
-
 void XCoreRegisterInfo::
 loadConstant(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
             unsigned DstReg, int64_t Value, DebugLoc dl) const {
