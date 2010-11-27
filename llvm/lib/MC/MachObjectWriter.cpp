@@ -1050,29 +1050,35 @@ public:
                             const MCValue Target,
                             bool IsPCRel,
                             const MCFragment *DF) const {
-    // If we are using scattered symbols, determine whether this value is
-    // actually resolved; scattering may cause atoms to move.
-    if (Asm.getBackend().hasScatteredSymbols()) {
-      if (Asm.getBackend().hasReliableSymbolDifference()) {
-        // If this is a PCrel relocation, find the base atom (identified by its
-        // symbol) that the fixup value is relative to.
-        const MCSymbolData *BaseSymbol = 0;
-        if (IsPCRel) {
-          BaseSymbol = DF->getAtom();
-          if (!BaseSymbol)
-            return false;
-        }
+    // If we aren't using scattered symbols, the fixup is fully resolved.
+    if (!Asm.getBackend().hasScatteredSymbols())
+      return true;
 
-        return isScatteredFixupFullyResolved(Asm, Target, BaseSymbol);
-      } else {
-        const MCSection *BaseSection = 0;
-        if (IsPCRel)
-          BaseSection = &DF->getParent()->getSection();
+    // Otherwise, determine whether this value is actually resolved; scattering
+    // may cause atoms to move.
 
-        return isScatteredFixupFullyResolvedSimple(Asm, Target, BaseSection);
-      }
+    // Check if we are using the "simple" resolution algorithm (e.g.,
+    // i386).
+    if (!Asm.getBackend().hasReliableSymbolDifference()) {
+      const MCSection *BaseSection = 0;
+      if (IsPCRel)
+        BaseSection = &DF->getParent()->getSection();
+
+      return isScatteredFixupFullyResolvedSimple(Asm, Target, BaseSection);
     }
-    return true;
+
+    // Otherwise, compute the proper answer as reliably as possible.
+
+    // If this is a PCrel relocation, find the base atom (identified by its
+    // symbol) that the fixup value is relative to.
+    const MCSymbolData *BaseSymbol = 0;
+    if (IsPCRel) {
+      BaseSymbol = DF->getAtom();
+      if (!BaseSymbol)
+        return false;
+    }
+
+    return isScatteredFixupFullyResolved(Asm, Target, BaseSymbol);
   }
 
   void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) {
