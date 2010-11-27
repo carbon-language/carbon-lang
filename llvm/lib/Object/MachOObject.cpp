@@ -125,6 +125,10 @@ MachOObject *MachOObject::LoadFromBuffer(MemoryBuffer *Buffer,
   return Object.take();
 }
 
+StringRef MachOObject::getData(size_t Offset, size_t Size) const {
+  return Buffer->getBuffer().substr(Offset,Size);
+}
+
 void MachOObject::RegisterStringTable(macho::SymtabLoadCommand &SLC) {
   HasStringTable = true;
   StringTable = Buffer->getBuffer().substr(SLC.StringTableOffset,

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/MachOObject.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
@@ -101,7 +102,7 @@ static int DumpSectionData(MachOObject &Obj, unsigned Index, StringRef Name,
   outs() << "    ('alignment', " << Align << ")\n";
   outs() << "    ('reloc_offset', " << RelocationTableOffset << ")\n";
   outs() << "    ('num_reloc', " << NumRelocationTableEntries << ")\n";
-  outs() << "    ('flags', " << format("%#x", Flags) << ")\n";
+  outs() << "    ('flags', " << format("0x%x", Flags) << ")\n";
   outs() << "    ('reserved1', " << Reserved1 << ")\n";
   outs() << "    ('reserved2', " << Reserved2 << ")\n";
   if (Reserved3 != ~0ULL)
@@ -120,10 +121,23 @@ static int DumpSectionData(MachOObject &Obj, unsigned Index, StringRef Name,
     }
     
     outs() << "    # Relocation " << i << "\n";
-    outs() << "    (('word-0', " << format("%#x", RE->Word0) << "),\n";
-    outs() << "     ('word-1', " << format("%#x", RE->Word1) << ")),\n";
+    outs() << "    (('word-0', " << format("0x%x", RE->Word0) << "),\n";
+    outs() << "     ('word-1', " << format("0x%x", RE->Word1) << ")),\n";
   }
   outs() << "  ])\n";
+
+  // Dump the section data, if requested.
+  if (ShowSectionData) {
+    outs() << "  ('_section_data', '";
+    StringRef Data = Obj.getData(Offset, Size);
+    for (unsigned i = 0; i != Data.size(); ++i) {
+      if (i && (i % 4) == 0)
+        outs() << ' ';
+      outs() << hexdigit((Data[i] >> 4) & 0xF, /*LowerCase=*/true);
+      outs() << hexdigit((Data[i] >> 0) & 0xF, /*LowerCase=*/true);
+    }
+    outs() << "')\n";
+  }
 
   return Res;
 }
@@ -207,7 +221,7 @@ static void DumpSymbolTableEntryData(MachOObject &Obj,
                                      uint16_t Flags, uint64_t Value) {
   outs() << "    # Symbol " << Index << "\n";
   outs() << "   (('n_strx', " << StringIndex << ")\n";
-  outs() << "    ('n_type', " << format("%#x", Type) << ")\n";
+  outs() << "    ('n_type', " << format("0x%x", Type) << ")\n";
   outs() << "    ('n_sect', " << uint32_t(SectionIndex) << ")\n";
   outs() << "    ('n_desc', " << Flags << ")\n";
   outs() << "    ('n_value', " << Value << ")\n";
@@ -307,7 +321,7 @@ static int DumpDysymtabCommand(MachOObject &Obj,
 
     outs() << "    # Indirect Symbol " << i << "\n";
     outs() << "    (('symbol_index', "
-           << format("%#x", ISTE->Index) << "),),\n";
+           << format("0x%x", ISTE->Index) << "),),\n";
   }
   outs() << "  ])\n";
 

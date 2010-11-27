@@ -102,6 +102,8 @@ public:
     return Is64Bit ? macho::Header64Size : macho::Header32Size;
   }
 
+  StringRef getData(size_t Offset, size_t Size) const;
+
   /// @}
   /// @name String Table Data
   /// @{
