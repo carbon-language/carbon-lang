@@ -1340,7 +1340,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   } else if (Arch == llvm::Triple::x86) {
     if (llvm::sys::Path("/usr/lib/gcc/i686-linux-gnu").exists())
       GccTriple = "i686-linux-gnu";
-    if (llvm::sys::Path("/usr/lib/gcc/i686-pc-linux-gnu").exists())
+    else if (llvm::sys::Path("/usr/lib/gcc/i686-pc-linux-gnu").exists())
       GccTriple = "i686-pc-linux-gnu";
     else if (llvm::sys::Path("/usr/lib/gcc/i486-linux-gnu").exists())
       GccTriple = "i486-linux-gnu";
