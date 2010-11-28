@@ -31,7 +31,6 @@
 
 #include "../Target/X86/X86FixupKinds.h"
 #include "../Target/ARM/ARMFixupKinds.h"
-#include "../Target/MBlaze/MBlazeFixupKinds.h"
 
 #include <vector>
 using namespace llvm;
@@ -371,8 +370,9 @@ namespace {
       switch (Kind) {
       default:
         return false;
-      case X86::reloc_pcrel_1byte:
-      case X86::reloc_pcrel_4byte:
+      case FK_PCRel_1:
+      case FK_PCRel_2:
+      case FK_PCRel_4:
       case X86::reloc_riprel_4byte:
       case X86::reloc_riprel_4byte_movq_load:
         return true;
@@ -401,6 +401,9 @@ namespace {
       switch (Kind) {
       default:
         return false;
+      case FK_PCRel_1:
+      case FK_PCRel_2:
+      case FK_PCRel_4:
       case ARM::fixup_arm_pcrel_12:
       case ARM::fixup_arm_vfp_pcrel_12:
       case ARM::fixup_arm_branch:
@@ -429,8 +432,9 @@ namespace {
       switch (Kind) {
       default:
         return false;
-      case MBlaze::reloc_pcrel_2byte:
-      case MBlaze::reloc_pcrel_4byte:
+      case FK_PCRel_1:
+      case FK_PCRel_2:
+      case FK_PCRel_4:
         return true;
       }
     }
@@ -1509,10 +1513,10 @@ void MBlazeELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     switch ((unsigned)Fixup.getKind()) {
     default:
       llvm_unreachable("Unimplemented");
-    case MBlaze::reloc_pcrel_4byte:
+    case FK_PCRel_4:
       Type = ELF::R_MICROBLAZE_64_PCREL;
       break;
-    case MBlaze::reloc_pcrel_2byte:
+    case FK_PCRel_2:
       Type = ELF::R_MICROBLAZE_32_PCREL;
       break;
     }
@@ -1644,7 +1648,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       default: llvm_unreachable("invalid fixup kind!");
       case FK_Data_8: Type = ELF::R_X86_64_64; break;
       case X86::reloc_signed_4byte:
-      case X86::reloc_pcrel_4byte:
+      case FK_PCRel_4:
         assert(isInt<32>(Target.getConstant()));
         switch (Modifier) {
         default:
@@ -1670,7 +1674,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
         Type = ELF::R_X86_64_32;
         break;
       case FK_Data_2: Type = ELF::R_X86_64_16; break;
-      case X86::reloc_pcrel_1byte:
+      case FK_PCRel_1:
       case FK_Data_1: Type = ELF::R_X86_64_8; break;
       }
     }
@@ -1697,7 +1701,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       // FIXME: Should we avoid selecting reloc_signed_4byte in 32 bit mode
       // instead?
       case X86::reloc_signed_4byte:
-      case X86::reloc_pcrel_4byte:
+      case FK_PCRel_4:
       case FK_Data_4:
         switch (Modifier) {
         default:
@@ -1735,7 +1739,7 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
         }
         break;
       case FK_Data_2: Type = ELF::R_386_16; break;
-      case X86::reloc_pcrel_1byte:
+      case FK_PCRel_1:
       case FK_Data_1: Type = ELF::R_386_8; break;
       }
     }

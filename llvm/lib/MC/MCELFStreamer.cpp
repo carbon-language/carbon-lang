@@ -398,7 +398,7 @@ void MCELFStreamer::EmitValue(const MCExpr *Value, unsigned Size,
       DF->getContents().push_back(uint8_t(AbsValue >> (i * 8)));
   } else {
     DF->addFixup(MCFixup::Create(DF->getContents().size(), AddValueSymbols(Value),
-                                 MCFixup::getKindForSize(Size)));
+                                 MCFixup::getKindForSize(Size, false)));
     DF->getContents().resize(DF->getContents().size() + Size, 0);
   }
 }

@@ -10,7 +10,6 @@
 #include "llvm/Target/TargetAsmBackend.h"
 #include "MBlaze.h"
 #include "MBlazeELFWriterInfo.h"
-#include "MBlazeFixupKinds.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
@@ -32,9 +31,9 @@ static unsigned getFixupKindSize(unsigned Kind) {
   switch (Kind) {
   default: assert(0 && "invalid fixup kind!");
   case FK_Data_1: return 1;
-  case MBlaze::reloc_pcrel_2byte:
+  case FK_PCRel_2:
   case FK_Data_2: return 2;
-  case MBlaze::reloc_pcrel_4byte:
+  case FK_PCRel_4:
   case FK_Data_4: return 4;
   case FK_Data_8: return 8;
   }

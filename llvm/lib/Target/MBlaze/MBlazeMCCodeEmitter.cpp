@@ -14,7 +14,6 @@
 #define DEBUG_TYPE "mccodeemitter"
 #include "MBlaze.h"
 #include "MBlazeInstrInfo.h"
-#include "MBlazeFixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -54,22 +53,6 @@ public:
 
   unsigned getNumFixupKinds() const {
     return 2;
-  }
-
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
-    const static MCFixupKindInfo Infos[] = {
-      // name                offset  bits    flags
-      { "reloc_pcrel_4byte", 2,      4 * 8,  MCFixupKindInfo::FKF_IsPCRel },
-      { "reloc_pcrel_2byte", 2,      2 * 8,  MCFixupKindInfo::FKF_IsPCRel } };
-
-    if (Kind < FirstTargetFixupKind)
-      return MCCodeEmitter::getFixupKindInfo(Kind);
-
-    if (unsigned(Kind-FirstTargetFixupKind) < getNumFixupKinds())
-      return Infos[Kind - FirstTargetFixupKind];
-
-    assert(0 && "Invalid fixup kind.");
-    return Infos[0];
   }
 
   static unsigned GetMBlazeRegNum(const MCOperand &MO) {
@@ -181,13 +164,13 @@ EmitImmediate(const MCInst &MI, unsigned opNo, bool pcrel, unsigned &CurByte,
     MCFixupKind FixupKind;
     switch (MI.getOpcode()) {
     default:
-      FixupKind = pcrel ? MCFixupKind(MBlaze::reloc_pcrel_2byte) : FK_Data_2;
+      FixupKind = pcrel ? FK_PCRel_2 : FK_Data_2;
       Fixups.push_back(MCFixup::Create(0,oper.getExpr(),FixupKind));
       break;
     case MBlaze::ORI32:
     case MBlaze::ADDI32:
     case MBlaze::BRLID32:
-      FixupKind = pcrel ? MCFixupKind(MBlaze::reloc_pcrel_4byte) : FK_Data_4;
+      FixupKind = pcrel ? FK_PCRel_4 : FK_Data_4;
       Fixups.push_back(MCFixup::Create(0,oper.getExpr(),FixupKind));
       break;
     }

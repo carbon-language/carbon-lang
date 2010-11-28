@@ -363,7 +363,7 @@ void WinCOFFStreamer::EmitValue(const MCExpr *Value, unsigned Size,
   } else {
     DF->addFixup(MCFixup::Create(DF->getContents().size(),
                                  AddValueSymbols(Value),
-                                 MCFixup::getKindForSize(Size)));
+                                 MCFixup::getKindForSize(Size, false)));
     DF->getContents().resize(DF->getContents().size() + Size, 0);
   }
 }
