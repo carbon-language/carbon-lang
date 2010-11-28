@@ -149,8 +149,6 @@ public:
 
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
 
-  virtual void EmitIntValue(uint64_t Value, unsigned Size, unsigned AddrSpace);
-
   virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
 
   virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
@@ -496,10 +494,8 @@ void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   EmitEOL();
 }
 
-/// EmitIntValue - Special case of EmitValue that avoids the client having
-/// to pass in a MCExpr for constant integers.
-void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
-                                 unsigned AddrSpace) {
+void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
+                              unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
   const char *Directive = 0;
   switch (Size) {
@@ -511,31 +507,17 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
     Directive = MAI.getData64bitsDirective(AddrSpace);
     // If the target doesn't support 64-bit data, emit as two 32-bit halves.
     if (Directive) break;
+    int64_t IntValue;
+    if (!Value->EvaluateAsAbsolute(IntValue))
+      report_fatal_error("Don't know how to emit this value.");
     if (isLittleEndian()) {
-      EmitIntValue((uint32_t)(Value >> 0 ), 4, AddrSpace);
-      EmitIntValue((uint32_t)(Value >> 32), 4, AddrSpace);
+      EmitIntValue((uint32_t)(IntValue >> 0 ), 4, AddrSpace);
+      EmitIntValue((uint32_t)(IntValue >> 32), 4, AddrSpace);
     } else {
-      EmitIntValue((uint32_t)(Value >> 32), 4, AddrSpace);
-      EmitIntValue((uint32_t)(Value >> 0 ), 4, AddrSpace);
+      EmitIntValue((uint32_t)(IntValue >> 32), 4, AddrSpace);
+      EmitIntValue((uint32_t)(IntValue >> 0 ), 4, AddrSpace);
     }
     return;
-  }
-
-  assert(Directive && "Invalid size for machine code value!");
-  OS << Directive << truncateToSize(Value, Size);
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                              unsigned AddrSpace) {
-  assert(CurSection && "Cannot emit contents before setting section!");
-  const char *Directive = 0;
-  switch (Size) {
-  default: break;
-  case 1: Directive = MAI.getData8bitsDirective(AddrSpace); break;
-  case 2: Directive = MAI.getData16bitsDirective(AddrSpace); break;
-  case 4: Directive = MAI.getData32bitsDirective(AddrSpace); break;
-  case 8: Directive = MAI.getData64bitsDirective(AddrSpace); break;
   }
 
   assert(Directive && "Invalid size for machine code value!");

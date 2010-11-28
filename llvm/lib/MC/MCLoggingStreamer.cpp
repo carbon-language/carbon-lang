@@ -152,11 +152,6 @@ public:
     return Child->EmitValue(Value, Size, AddrSpace);
   }
 
-  virtual void EmitIntValue(uint64_t Value, unsigned Size, unsigned AddrSpace) {
-    LogCall("EmitIntValue");
-    return Child->EmitIntValue(Value, Size, AddrSpace);
-  }
-
   virtual void EmitULEB128Value(const MCExpr *Value,
                                 unsigned AddrSpace = 0) {
     LogCall("EmitULEB128Value");
