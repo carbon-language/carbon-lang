@@ -525,6 +525,66 @@ ReSimplify:
   }
 }
 
+static void LowerTlsAddr(MCStreamer &OutStreamer,
+                         X86MCInstLower &MCInstLowering,
+                         const MachineInstr &MI) {
+  bool is64Bits = MI.getOpcode() == X86::TLS_addr64;
+  MCContext &context = OutStreamer.getContext();
+
+  if (is64Bits) {
+    MCInst prefix;
+    prefix.setOpcode(X86::DATA16_PREFIX);
+    OutStreamer.EmitInstruction(prefix);
+  }
+  MCSymbol *sym = MCInstLowering.GetSymbolFromOperand(MI.getOperand(3));
+  const MCSymbolRefExpr *symRef =
+    MCSymbolRefExpr::Create(sym, MCSymbolRefExpr::VK_TLSGD, context);
+
+  MCInst LEA;
+  if (is64Bits) {
+    LEA.setOpcode(X86::LEA64r);
+    LEA.addOperand(MCOperand::CreateReg(X86::RDI)); // dest
+    LEA.addOperand(MCOperand::CreateReg(X86::RIP)); // base
+    LEA.addOperand(MCOperand::CreateImm(1));        // scale
+    LEA.addOperand(MCOperand::CreateReg(0));        // index
+    LEA.addOperand(MCOperand::CreateExpr(symRef));  // disp
+    LEA.addOperand(MCOperand::CreateReg(0));        // seg
+  } else {
+    LEA.setOpcode(X86::LEA32r);
+    LEA.addOperand(MCOperand::CreateReg(X86::EAX)); // dest
+    LEA.addOperand(MCOperand::CreateReg(0));        // base
+    LEA.addOperand(MCOperand::CreateImm(1));        // scale
+    LEA.addOperand(MCOperand::CreateReg(X86::EBX)); // index
+    LEA.addOperand(MCOperand::CreateExpr(symRef));  // disp
+    LEA.addOperand(MCOperand::CreateReg(0));        // seg
+  }
+  OutStreamer.EmitInstruction(LEA);
+
+  if (is64Bits) {
+    MCInst prefix;
+    prefix.setOpcode(X86::DATA16_PREFIX);
+    OutStreamer.EmitInstruction(prefix);
+    prefix.setOpcode(X86::DATA16_PREFIX);
+    OutStreamer.EmitInstruction(prefix);
+    prefix.setOpcode(X86::REX64_PREFIX);
+    OutStreamer.EmitInstruction(prefix);
+  }
+
+  MCInst call;
+  if (is64Bits)
+    call.setOpcode(X86::CALL64pcrel32);
+  else
+    call.setOpcode(X86::CALLpcrel32);
+  StringRef name = is64Bits ? "__tls_get_addr" : "___tls_get_addr";
+  MCSymbol *tlsGetAddr = context.GetOrCreateSymbol(name);
+  const MCSymbolRefExpr *tlsRef =
+    MCSymbolRefExpr::Create(tlsGetAddr,
+                            MCSymbolRefExpr::VK_PLT,
+                            context);
+
+  call.addOperand(MCOperand::CreateExpr(tlsRef));
+  OutStreamer.EmitInstruction(call);
+}
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(Mang, *MF, *this);
@@ -559,7 +619,11 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Lower these as normal, but add some comments.
     OutStreamer.AddComment("TAILCALL");
     break;
-      
+
+  case X86::TLS_addr32:
+  case X86::TLS_addr64:
+    return LowerTlsAddr(OutStreamer, MCInstLowering, *MI);
+
   case X86::MOVPC32r: {
     MCInst TmpInst;
     // This is a pseudo op for a two instruction sequence with a label, which

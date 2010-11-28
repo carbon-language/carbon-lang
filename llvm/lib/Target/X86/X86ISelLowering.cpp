@@ -9923,44 +9923,6 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
 }
 
 MachineBasicBlock *
-X86TargetLowering::emitLoweredTLSAddr(MachineInstr *MI,
-                                      MachineBasicBlock *BB) const {
-  const X86InstrInfo *TII
-    = static_cast<const X86InstrInfo*>(getTargetMachine().getInstrInfo());
-  DebugLoc DL = MI->getDebugLoc();
-  if (Subtarget->is64Bit()) {
-    BuildMI(*BB, MI, DL, TII->get(X86::DATA16_PREFIX));
-    MachineInstrBuilder MIB = BuildMI(*BB, MI, DL, TII->get(X86::LEA64r),
-                                      X86::RDI);
-    X86AddressMode Addr;
-    Addr.GV = MI->getOperand(3).getGlobal();
-    Addr.GVOpFlags = MI->getOperand(3).getTargetFlags();
-    Addr.Base.Reg = X86::RIP;
-    addFullAddress(MIB, Addr);
-    BuildMI(*BB, MI, DL, TII->get(X86::DATA16_PREFIX));
-    BuildMI(*BB, MI, DL, TII->get(X86::DATA16_PREFIX));
-    BuildMI(*BB, MI, DL, TII->get(X86::REX64_PREFIX));
-    BuildMI(*BB, MI, DL, TII->get(X86::CALL64pcrel32))
-      .addExternalSymbol("__tls_get_addr",  X86II::MO_PLT)
-      .addReg(X86::RDI, RegState::Implicit);
-  } else {
-    MachineInstrBuilder MIB = BuildMI(*BB, MI, DL, TII->get(X86::LEA32r),
-                                      X86::EAX);
-    X86AddressMode Addr;
-    Addr.GV = MI->getOperand(3).getGlobal();
-    Addr.GVOpFlags = MI->getOperand(3).getTargetFlags();
-    Addr.IndexReg = X86::EBX;
-    addFullAddress(MIB, Addr);
-    BuildMI(*BB, MI, DL, TII->get(X86::CALLpcrel32))
-      .addExternalSymbol("___tls_get_addr",  X86II::MO_PLT)
-      .addReg(X86::EAX, RegState::Implicit);
-  }
-
-  MI->eraseFromParent(); // The pseudo instruction is gone now.
-  return BB;
-}
-
-MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
   switch (MI->getOpcode()) {
@@ -9970,9 +9932,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::TLSCall_32:
   case X86::TLSCall_64:
     return EmitLoweredTLSCall(MI, BB);
-  case X86::TLS_addr32:
-  case X86::TLS_addr64:
-    return emitLoweredTLSAddr(MI, BB);
   case X86::CMOV_GR8:
   case X86::CMOV_FR32:
   case X86::CMOV_FR64:
