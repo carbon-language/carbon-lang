@@ -206,6 +206,17 @@ TEST(IntervalMapTest, RootMultiCoalescing) {
   ++I;
   EXPECT_FALSE(I.valid());
 
+  // Test advanceTo on flat tree.
+  I = map.begin();
+  I.advanceTo(135);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(140u, I.start());
+  EXPECT_EQ(150u, I.stop());
+
+  I.advanceTo(145);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(140u, I.start());
+  EXPECT_EQ(150u, I.stop());
 
   // Coalesce left with followers.
   // [100;110] [120;130] [140;150] [160;170]
@@ -387,7 +398,20 @@ TEST(IntervalMapTest, Branched) {
   }
   EXPECT_TRUE(I == map.begin());
 
+  // Test advanceTo in same node.
+  I.advanceTo(20);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(20u, I.start());
+  EXPECT_EQ(25u, I.stop());
+
+  // advanceTo another node.
+  I.advanceTo(200);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(200u, I.start());
+  EXPECT_EQ(205u, I.stop());
+
   // Erase from the front.
+  I = map.begin();
   for (unsigned i = 0; i != 20; ++i) {
     I.erase();
     EXPECT_TRUE(I == map.begin());
@@ -445,6 +469,24 @@ TEST(IntervalMapTest, Branched2) {
     EXPECT_EQ(i, *I);
   }
   EXPECT_TRUE(I == map.begin());
+
+  // Test advanceTo in same node.
+  I.advanceTo(20);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(20u, I.start());
+  EXPECT_EQ(25u, I.stop());
+
+  // advanceTo sibling leaf node.
+  I.advanceTo(200);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(200u, I.start());
+  EXPECT_EQ(205u, I.stop());
+
+  // advanceTo further.
+  I.advanceTo(2000);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(2000u, I.start());
+  EXPECT_EQ(2005u, I.stop());
 
   // Test clear() on branched map.
   map.clear();

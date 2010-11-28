@@ -869,6 +869,11 @@ public:
     path.push_back(Entry(Node, Offset));
   }
 
+  /// pop - Remove the last path entry.
+  void pop() {
+    path.pop_back();
+  }
+
   /// setSize - Set the size of a node both in the path and in the tree.
   /// @param Level 0..height. Note that setting the root size won't change
   ///              map->rootSize.
@@ -1389,6 +1394,7 @@ protected:
 
   void pathFillFind(KeyT x);
   void treeFind(KeyT x);
+  void treeAdvanceTo(KeyT x);
 
 public:
   /// valid - Return true if the current position is valid, false for end().
@@ -1497,7 +1503,8 @@ public:
 
 };
 
-// pathFillFind - Complete path by searching for x.
+/// pathFillFind - Complete path by searching for x.
+/// @param x Key to search for.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 const_iterator::pathFillFind(KeyT x) {
@@ -1510,7 +1517,8 @@ const_iterator::pathFillFind(KeyT x) {
   path.push(NR, NR.get<Leaf>().safeFind(0, x));
 }
 
-// treeFind - Find in a branched tree.
+/// treeFind - Find in a branched tree.
+/// @param x Key to search for.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 const_iterator::treeFind(KeyT x) {
@@ -1519,6 +1527,43 @@ const_iterator::treeFind(KeyT x) {
     pathFillFind(x);
 }
 
+/// treeAdvanceTo - Find position after the current one.
+/// @param x Key to search for.
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+const_iterator::treeAdvanceTo(KeyT x) {
+  // Can we stay on the same leaf node?
+  if (!Traits::stopLess(path.leaf<Leaf>().stop(path.leafSize() - 1), x)) {
+    path.leafOffset() = path.leaf<Leaf>().safeFind(path.leafOffset(), x);
+    return;
+  }
+
+  // Drop the current leaf.
+  path.pop();
+
+  // Search towards the root for a usable subtree.
+  if (path.height()) {
+    for (unsigned l = path.height() - 1; l; --l) {
+      if (!Traits::stopLess(path.node<Branch>(l).stop(path.offset(l)), x)) {
+        // The branch node at l+1 is usable
+        path.offset(l + 1) =
+          path.node<Branch>(l + 1).safeFind(path.offset(l + 1), x);
+        return pathFillFind(x);
+      }
+      path.pop();
+    }
+    // Is the level-1 Branch usable?
+    if (!Traits::stopLess(map->rootBranch().stop(path.offset(0)), x)) {
+      path.offset(1) = path.node<Branch>(1).safeFind(path.offset(1), x);
+      return pathFillFind(x);
+    }
+  }
+
+  // We reached the root.
+  setRoot(map->rootBranch().findFrom(path.offset(0), map->rootSize, x));
+  if (valid())
+    pathFillFind(x);
+}
 
 //===----------------------------------------------------------------------===//
 //---                                iterator                             ----//
