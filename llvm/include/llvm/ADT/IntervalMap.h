@@ -586,8 +586,7 @@ public:
     return Traits::startLess(x, start(i)) ? NotFound : value(i);
   }
 
-  IdxPair insertFrom(unsigned i, unsigned Size, KeyT a, KeyT b, ValT y);
-  unsigned extendStop(unsigned i, unsigned Size, KeyT b);
+  unsigned insertFrom(unsigned &Pos, unsigned Size, KeyT a, KeyT b, ValT y);
 
 #ifndef NDEBUG
   void dump(raw_ostream &OS, unsigned Size) {
@@ -610,91 +609,58 @@ public:
 /// @param y    Value be mapped.
 /// @return     (insert position, new size), or (i, Capacity+1) on overflow.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
-IdxPair LeafNode<KeyT, ValT, N, Traits>::
-insertFrom(unsigned i, unsigned Size, KeyT a, KeyT b, ValT y) {
+unsigned LeafNode<KeyT, ValT, N, Traits>::
+insertFrom(unsigned &Pos, unsigned Size, KeyT a, KeyT b, ValT y) {
+  unsigned i = Pos;
   assert(i <= Size && Size <= N && "Invalid index");
   assert(!Traits::stopLess(b, a) && "Invalid interval");
 
   // Verify the findFrom invariant.
   assert((i == 0 || Traits::stopLess(stop(i - 1), a)));
   assert((i == Size || !Traits::stopLess(stop(i), a)));
+  assert((i == Size || Traits::stopLess(b, start(i))) && "Overlapping insert");
 
   // Coalesce with previous interval.
-  if (i && value(i - 1) == y && Traits::adjacent(stop(i - 1), a))
-    return IdxPair(i - 1, extendStop(i - 1, Size, b));
+  if (i && value(i - 1) == y && Traits::adjacent(stop(i - 1), a)) {
+    Pos = i - 1;
+    // Also coalesce with next interval?
+    if (i != Size && value(i) == y && Traits::adjacent(b, start(i))) {
+      stop(i - 1) = stop(i);
+      this->erase(i, Size);
+      return Size - 1;
+    }
+    stop(i - 1) = b;
+    return Size;
+  }
 
   // Detect overflow.
   if (i == N)
-    return IdxPair(i, N + 1);
+    return N + 1;
 
   // Add new interval at end.
   if (i == Size) {
     start(i) = a;
     stop(i) = b;
     value(i) = y;
-    return IdxPair(i, Size + 1);
-  }
-
-  // Overlapping intervals?
-  if (!Traits::stopLess(b, start(i))) {
-    assert(value(i) == y && "Inconsistent values in overlapping intervals");
-    if (Traits::startLess(a, start(i)))
-      start(i) = a;
-    return IdxPair(i, extendStop(i, Size, b));
+    return Size + 1;
   }
 
   // Try to coalesce with following interval.
   if (value(i) == y && Traits::adjacent(b, start(i))) {
     start(i) = a;
-    return IdxPair(i, Size);
+    return Size;
   }
 
   // We must insert before i. Detect overflow.
   if (Size == N)
-    return IdxPair(i, N + 1);
+    return N + 1;
 
   // Insert before i.
   this->shift(i, Size);
   start(i) = a;
   stop(i) = b;
   value(i) = y;
-  return IdxPair(i, Size + 1);
-}
-
-/// extendStop - Extend stop(i) to b, coalescing with following intervals.
-/// @param i    Interval to extend.
-/// @param Size Number of elements in node.
-/// @param b    New interval end point.
-/// @return     New node size after coalescing.
-template <typename KeyT, typename ValT, unsigned N, typename Traits>
-unsigned LeafNode<KeyT, ValT, N, Traits>::
-extendStop(unsigned i, unsigned Size, KeyT b) {
-  assert(i < Size && Size <= N && "Bad indices");
-
-  // Are we even extending the interval?
-  if (Traits::startLess(b, stop(i)))
-    return Size;
-
-  // Find the first interval that may be preserved.
-  unsigned j = findFrom(i + 1, Size, b);
-  if (j < Size) {
-    // Would key[i] overlap key[j] after the extension?
-    if (Traits::stopLess(b, start(j))) {
-      // Not overlapping. Perhaps adjacent and coalescable?
-      if (value(i) == value(j) && Traits::adjacent(b, start(j)))
-        b = stop(j++);
-    } else {
-      // Overlap. Include key[j] in the new interval.
-      assert(value(i) == value(j) && "Overlapping values");
-      b = stop(j++);
-    }
-  }
-  stop(i) =  b;
-
-  // Entries [i+1;j) were coalesced.
-  if (i + 1 < j && j < Size)
-    this->erase(i + 1, j, Size);
-  return Size - (j - (i + 1));
+  return Size + 1;
 }
 
 
@@ -1138,7 +1104,7 @@ public:
 
     // Easy insert into root leaf.
     unsigned p = rootLeaf().findFrom(0, rootSize, a);
-    rootSize = rootLeaf().insertFrom(p, rootSize, a, b, y).second;
+    rootSize = rootLeaf().insertFrom(p, rootSize, a, b, y);
   }
 
   /// clear - Remove all entries.
@@ -1697,12 +1663,11 @@ iterator::insert(KeyT a, KeyT b, ValT y) {
   IntervalMapImpl::Path &P = this->path;
 
   // Try simple root leaf insert.
-  IdxPair IP = IM.rootLeaf().insertFrom(P.leafOffset(), IM.rootSize, a, b, y);
+  unsigned Size = IM.rootLeaf().insertFrom(P.leafOffset(), IM.rootSize, a, b, y);
 
   // Was the root node insert successful?
-  if (IP.second <= RootLeaf::Capacity) {
-    P.leafOffset() = IP.first;
-    P.setSize(0, IM.rootSize = IP.second);
+  if (Size <= RootLeaf::Capacity) {
+    P.setSize(0, IM.rootSize = Size);
     return;
   }
 
@@ -1719,14 +1684,15 @@ template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
 iterator::treeInsert(KeyT a, KeyT b, ValT y) {
   using namespace IntervalMapImpl;
-  IntervalMap &IM = *this->map;
   Path &P = this->path;
 
+  if (!P.valid())
+    P.legalizeForInsert(this->map->height);
+
   // Check if this insertion will extend the node to the left.
-  if (P.valid() && P.leafOffset() == 0 &&
-      Traits::startLess(a, P.leaf<Leaf>().start(0))) {
+  if (P.leafOffset() == 0 && Traits::startLess(a, P.leaf<Leaf>().start(0))) {
     // Node is growing to the left, will it affect a left sibling node?
-    if (NodeRef Sib = P.getLeftSibling(IM.height)) {
+    if (NodeRef Sib = P.getLeftSibling(P.height())) {
       Leaf &SibLeaf = Sib.get<Leaf>();
       unsigned SibOfs = Sib.size() - 1;
       if (SibLeaf.value(SibOfs) == y &&
@@ -1737,11 +1703,11 @@ iterator::treeInsert(KeyT a, KeyT b, ValT y) {
         //  2. Extend a to SibLeaf, erase the SibLeaf entry and continue.
         // We prefer 1., but need 2 when coalescing to the right as well.
         Leaf &CurLeaf = P.leaf<Leaf>();
-        P.moveLeft(IM.height);
+        P.moveLeft(P.height());
         if (Traits::stopLess(b, CurLeaf.start(0)) &&
             (y != CurLeaf.value(0) || !Traits::adjacent(b, CurLeaf.start(0)))) {
           // Easy, just extend SibLeaf and we're done.
-          setNodeStop(IM.height, SibLeaf.stop(SibOfs) = b);
+          setNodeStop(P.height(), SibLeaf.stop(SibOfs) = b);
           return;
         } else {
           // We have both left and right coalescing. Erase the old SibLeaf entry
@@ -1752,27 +1718,29 @@ iterator::treeInsert(KeyT a, KeyT b, ValT y) {
       }
     } else {
       // No left sibling means we are at begin(). Update cached bound.
-      IM.rootBranchStart() = a;
+      this->map->rootBranchStart() = a;
     }
   }
 
-  P.legalizeForInsert(IM.height);
-  IdxPair IP = P.leaf<Leaf>().insertFrom(P.leafOffset(), P.leafSize(), a, b, y);
+  // When we are inserting at the end of a leaf node, we must update stops.
+  unsigned Size = P.leafSize();
+  bool Grow = P.leafOffset() == Size;
+  Size = P.leaf<Leaf>().insertFrom(P.leafOffset(), Size, a, b, y);
 
   // Leaf insertion unsuccessful? Overflow and try again.
-  if (IP.second > Leaf::Capacity) {
-    overflow<Leaf>(IM.height);
-    IP = P.leaf<Leaf>().insertFrom(P.leafOffset(), P.leafSize(), a, b, y);
-    assert(IP.second <= Leaf::Capacity && "overflow() didn't make room");
+  if (Size > Leaf::Capacity) {
+    overflow<Leaf>(P.height());
+    Grow = P.leafOffset() == P.leafSize();
+    Size = P.leaf<Leaf>().insertFrom(P.leafOffset(), P.leafSize(), a, b, y);
+    assert(Size <= Leaf::Capacity && "overflow() didn't make room");
   }
 
   // Inserted, update offset and leaf size.
-  P.leafOffset() = IP.first;
-  P.setSize(IM.height, IP.second);
+  P.setSize(P.height(), Size);
 
   // Insert was the last node entry, update stops.
-  if (IP.first == IP.second - 1)
-    setNodeStop(IM.height, P.leaf<Leaf>().stop(IP.first));
+  if (Grow)
+    setNodeStop(P.height(), b);
 }
 
 /// erase - erase the current interval and move to the next position.

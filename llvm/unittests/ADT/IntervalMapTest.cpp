@@ -116,50 +116,26 @@ TEST(IntervalMapTest, RootCoalescing) {
   EXPECT_EQ(90u, map.start());
   EXPECT_EQ(150u, map.stop());
 
-  // Overlap left.
-  map.insert(80, 100, 1);
-  EXPECT_EQ(1, std::distance(map.begin(), map.end()));
-  EXPECT_EQ(80u, map.start());
-  EXPECT_EQ(150u, map.stop());
-
-  // Inside.
-  map.insert(100, 130, 1);
-  EXPECT_EQ(1, std::distance(map.begin(), map.end()));
-  EXPECT_EQ(80u, map.start());
-  EXPECT_EQ(150u, map.stop());
-
-  // Overlap both.
-  map.insert(70, 160, 1);
-  EXPECT_EQ(1, std::distance(map.begin(), map.end()));
-  EXPECT_EQ(70u, map.start());
-  EXPECT_EQ(160u, map.stop());
-
-  // Overlap right.
-  map.insert(80, 170, 1);
-  EXPECT_EQ(1, std::distance(map.begin(), map.end()));
-  EXPECT_EQ(70u, map.start());
-  EXPECT_EQ(170u, map.stop());
-
   // Coalesce from the right.
-  map.insert(170, 200, 1);
+  map.insert(151, 200, 1);
   EXPECT_EQ(1, std::distance(map.begin(), map.end()));
-  EXPECT_EQ(70u, map.start());
+  EXPECT_EQ(90u, map.start());
   EXPECT_EQ(200u, map.stop());
 
   // Non-coalesce from the left.
-  map.insert(60, 69, 2);
+  map.insert(60, 89, 2);
   EXPECT_EQ(2, std::distance(map.begin(), map.end()));
   EXPECT_EQ(60u, map.start());
   EXPECT_EQ(200u, map.stop());
-  EXPECT_EQ(2u, map.lookup(69));
-  EXPECT_EQ(1u, map.lookup(70));
+  EXPECT_EQ(2u, map.lookup(89));
+  EXPECT_EQ(1u, map.lookup(90));
 
   UUMap::iterator I = map.begin();
   EXPECT_EQ(60u, I.start());
-  EXPECT_EQ(69u, I.stop());
+  EXPECT_EQ(89u, I.stop());
   EXPECT_EQ(2u, I.value());
   ++I;
-  EXPECT_EQ(70u, I.start());
+  EXPECT_EQ(90u, I.start());
   EXPECT_EQ(200u, I.stop());
   EXPECT_EQ(1u, I.value());
   ++I;
@@ -176,13 +152,13 @@ TEST(IntervalMapTest, RootCoalescing) {
   // Erase from the left.
   map.begin().erase();
   EXPECT_EQ(2, std::distance(map.begin(), map.end()));
-  EXPECT_EQ(70u, map.start());
+  EXPECT_EQ(90u, map.start());
   EXPECT_EQ(210u, map.stop());
 
   // Erase from the right.
   (--map.end()).erase();
   EXPECT_EQ(1, std::distance(map.begin(), map.end()));
-  EXPECT_EQ(70u, map.start());
+  EXPECT_EQ(90u, map.start());
   EXPECT_EQ(200u, map.stop());
 }
 
@@ -285,70 +261,6 @@ TEST(IntervalMapTest, RootMultiCoalescing) {
   ASSERT_TRUE(I.valid());
   EXPECT_EQ(160u, I.start());
   EXPECT_EQ(170u, I.stop());
-  ++I;
-  EXPECT_FALSE(I.valid());
-
-  // Coalesce multiple with overlap right.
-  // [100;115] [120;150] [160;170]
-  map.insert(116, 165, 1);
-  I = map.begin();
-  ASSERT_TRUE(I.valid());
-  EXPECT_EQ(100u, I.start());
-  EXPECT_EQ(170u, I.stop());
-  ++I;
-  EXPECT_FALSE(I.valid());
-
-  // Coalesce multiple with overlap left
-  // [100;170]
-  map.insert(180, 190, 1);
-  map.insert(200, 210, 1);
-  map.insert(220, 230, 1);
-  // [100;170] [180;190] [200;210] [220;230]
-  map.insert(160, 199, 1);
-  I = map.begin();
-  ASSERT_TRUE(I.valid());
-  EXPECT_EQ(100u, I.start());
-  EXPECT_EQ(210u, I.stop());
-  ++I;
-  ASSERT_TRUE(I.valid());
-  EXPECT_EQ(220u, I.start());
-  EXPECT_EQ(230u, I.stop());
-  ++I;
-  EXPECT_FALSE(I.valid());
-
-  // Overwrite 2 from gap to gap.
-  // [100;210] [220;230]
-  map.insert(50, 250, 1);
-  I = map.begin();
-  ASSERT_TRUE(I.valid());
-  EXPECT_EQ(50u, I.start());
-  EXPECT_EQ(250u, I.stop());
-  ++I;
-  EXPECT_FALSE(I.valid());
-
-  // Coalesce at end of full root.
-  // [50;250]
-  map.insert(260, 270, 1);
-  map.insert(280, 290, 1);
-  map.insert(300, 310, 1);
-  // [50;250] [260;270] [280;290] [300;310]
-  map.insert(311, 320, 1);
-  I = map.begin();
-  ASSERT_TRUE(I.valid());
-  EXPECT_EQ(50u, I.start());
-  EXPECT_EQ(250u, I.stop());
-  ++I;
-  ASSERT_TRUE(I.valid());
-  EXPECT_EQ(260u, I.start());
-  EXPECT_EQ(270u, I.stop());
-  ++I;
-  ASSERT_TRUE(I.valid());
-  EXPECT_EQ(280u, I.start());
-  EXPECT_EQ(290u, I.stop());
-  ++I;
-  ASSERT_TRUE(I.valid());
-  EXPECT_EQ(300u, I.start());
-  EXPECT_EQ(320u, I.stop());
   ++I;
   EXPECT_FALSE(I.valid());
 
