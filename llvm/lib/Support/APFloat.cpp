@@ -3258,14 +3258,12 @@ APFloat::APFloat(const APInt& api, bool isIEEE)
 
 APFloat::APFloat(float f)
 {
-  APInt api = APInt(32, 0);
-  initFromAPInt(api.floatToBits(f));
+  initFromAPInt(APInt::floatToBits(f));
 }
 
 APFloat::APFloat(double d)
 {
-  APInt api = APInt(64, 0);
-  initFromAPInt(api.doubleToBits(d));
+  initFromAPInt(APInt::doubleToBits(d));
 }
 
 namespace {

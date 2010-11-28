@@ -1060,11 +1060,9 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
     Dest.PointerVal = Src.PointerVal;
   } else if (DstTy->isIntegerTy()) {
     if (SrcTy->isFloatTy()) {
-      Dest.IntVal.zext(sizeof(Src.FloatVal) * CHAR_BIT);
-      Dest.IntVal.floatToBits(Src.FloatVal);
+      Dest.IntVal = APInt::floatToBits(Src.FloatVal);
     } else if (SrcTy->isDoubleTy()) {
-      Dest.IntVal.zext(sizeof(Src.DoubleVal) * CHAR_BIT);
-      Dest.IntVal.doubleToBits(Src.DoubleVal);
+      Dest.IntVal = APInt::doubleToBits(Src.DoubleVal);
     } else if (SrcTy->isIntegerTy()) {
       Dest.IntVal = Src.IntVal;
     } else 

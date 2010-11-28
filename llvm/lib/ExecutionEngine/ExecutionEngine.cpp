@@ -637,11 +637,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
           break;
         case Type::FloatTyID:
           assert(DestTy->isIntegerTy(32) && "Invalid bitcast");
-          GV.IntVal.floatToBits(GV.FloatVal);
+          GV.IntVal = APInt::floatToBits(GV.FloatVal);
           break;
         case Type::DoubleTyID:
           assert(DestTy->isIntegerTy(64) && "Invalid bitcast");
-          GV.IntVal.doubleToBits(GV.DoubleVal);
+          GV.IntVal = APInt::doubleToBits(GV.DoubleVal);
           break;
         case Type::PointerTyID:
           assert(DestTy->isPointerTy() && "Invalid bitcast");
