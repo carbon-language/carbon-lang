@@ -275,12 +275,6 @@ public:
   ///  objects, into FoldingSets.
   void Profile(FoldingSetNodeID& id) const;
 
-  /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
-  void Emit(Serializer& S) const;
-
-  /// @brief Used by the Bitcode deserializer to deserialize APInts.
-  void Read(Deserializer& D);
-
   /// @}
   /// @name Value Tests
   /// @{
