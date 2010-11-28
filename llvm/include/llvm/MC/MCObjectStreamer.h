@@ -60,7 +60,6 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
