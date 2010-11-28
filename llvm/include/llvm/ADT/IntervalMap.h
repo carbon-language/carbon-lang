@@ -1128,7 +1128,12 @@ public:
   /// It is assumed that no key in the interval is mapped to another value, but
   /// overlapping intervals already mapped to y will be coalesced.
   void insert(KeyT a, KeyT b, ValT y) {
-    find(a).insert(a, b, y);
+    if (branched() || rootSize == RootLeaf::Capacity)
+      return find(a).insert(a, b, y);
+
+    // Easy insert into root leaf.
+    unsigned p = rootLeaf().findFrom(0, rootSize, a);
+    rootSize = rootLeaf().insertFrom(p, rootSize, a, b, y).second;
   }
 
   /// clear - Remove all entries.
