@@ -822,7 +822,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FMAX:          return "ARMISD::FMAX";
   case ARMISD::FMIN:          return "ARMISD::FMIN";
   case ARMISD::BFI:           return "ARMISD::BFI";
-  case ARMISD::VORRIMM:        return "ARMISD::VORRIMM";
+  case ARMISD::VORRIMM:       return "ARMISD::VORRIMM";
+  case ARMISD::VBICIMM:       return "ARMISD::VBICIMM";
   }
 }
 
