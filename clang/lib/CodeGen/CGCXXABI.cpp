@@ -17,7 +17,7 @@
 using namespace clang;
 using namespace CodeGen;
 
-void CGCXXABI::_anchor() {}
+CGCXXABI::~CGCXXABI() { }
 
 static void ErrorUnsupportedABI(CodeGenFunction &CGF,
                                 llvm::StringRef S) {

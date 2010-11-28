@@ -69,11 +69,9 @@ protected:
 
   ASTContext &getContext() const { return CGM.getContext(); }
 
-  virtual void _anchor();
-
 public:
 
-  virtual ~CGCXXABI() {}
+  virtual ~CGCXXABI();
 
   /// Gets the mangle context.
   virtual MangleContext &getMangleContext() = 0;
