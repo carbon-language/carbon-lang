@@ -172,7 +172,12 @@ namespace llvm {
       // Vector OR with immediate
       VORRIMM,
       // Vector AND with NOT of immediate
-      VBICIMM
+      VBICIMM,
+
+      // Vector load N-element structure to all lanes:
+      VLD2DUP = ISD::FIRST_TARGET_MEMORY_OPCODE,
+      VLD3DUP,
+      VLD4DUP
     };
   }
 

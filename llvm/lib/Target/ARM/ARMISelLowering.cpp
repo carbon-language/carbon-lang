@@ -824,6 +824,9 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::BFI:           return "ARMISD::BFI";
   case ARMISD::VORRIMM:       return "ARMISD::VORRIMM";
   case ARMISD::VBICIMM:       return "ARMISD::VBICIMM";
+  case ARMISD::VLD2DUP:       return "ARMISD::VLD2DUP";
+  case ARMISD::VLD3DUP:       return "ARMISD::VLD3DUP";
+  case ARMISD::VLD4DUP:       return "ARMISD::VLD4DUP";
   }
 }
 
@@ -4836,15 +4839,100 @@ static SDValue PerformVECTOR_SHUFFLECombine(SDNode *N, SelectionDAG &DAG) {
                               DAG.getUNDEF(VT), NewMask.data());
 }
 
+/// CombineVLDDUP - For a VDUPLANE node N, check if its source operand is a
+/// vldN-lane (N > 1) intrinsic, and if all the other uses of that intrinsic
+/// are also VDUPLANEs.  If so, combine them to a vldN-dup operation and
+/// return true.
+static bool CombineVLDDUP(SDNode *N, TargetLowering::DAGCombinerInfo &DCI) {
+  SelectionDAG &DAG = DCI.DAG;
+  EVT VT = N->getValueType(0);
+  // vldN-dup instructions only support 64-bit vectors for N > 1.
+  if (!VT.is64BitVector())
+    return false;
+
+  // Check if the VDUPLANE operand is a vldN-dup intrinsic.
+  SDNode *VLD = N->getOperand(0).getNode();
+  if (VLD->getOpcode() != ISD::INTRINSIC_W_CHAIN)
+    return false;
+  unsigned NumVecs = 0;
+  unsigned NewOpc = 0;
+  unsigned IntNo = cast<ConstantSDNode>(VLD->getOperand(1))->getZExtValue();
+  if (IntNo == Intrinsic::arm_neon_vld2lane) {
+    NumVecs = 2;
+    NewOpc = ARMISD::VLD2DUP;
+  } else if (IntNo == Intrinsic::arm_neon_vld3lane) {
+    NumVecs = 3;
+    NewOpc = ARMISD::VLD3DUP;
+  } else if (IntNo == Intrinsic::arm_neon_vld4lane) {
+    NumVecs = 4;
+    NewOpc = ARMISD::VLD4DUP;
+  } else {
+    return false;
+  }
+
+  // First check that all the vldN-lane uses are VDUPLANEs and that the lane
+  // numbers match the load.
+  unsigned VLDLaneNo =
+    cast<ConstantSDNode>(VLD->getOperand(NumVecs+3))->getZExtValue();
+  for (SDNode::use_iterator UI = VLD->use_begin(), UE = VLD->use_end();
+       UI != UE; ++UI) {
+    // Ignore uses of the chain result.
+    if (UI.getUse().getResNo() == NumVecs)
+      continue;
+    SDNode *User = *UI;
+    if (User->getOpcode() != ARMISD::VDUPLANE ||
+        VLDLaneNo != cast<ConstantSDNode>(User->getOperand(1))->getZExtValue())
+      return false;
+  }
+
+  // Create the vldN-dup node.
+  EVT Tys[5];
+  unsigned n;
+  for (n = 0; n < NumVecs; ++n)
+    Tys[n] = VT;
+  Tys[n] = MVT::Other;
+  SDVTList SDTys = DAG.getVTList(Tys, NumVecs+1);
+  SDValue Ops[] = { VLD->getOperand(0), VLD->getOperand(2) };
+  MemIntrinsicSDNode *VLDMemInt = cast<MemIntrinsicSDNode>(VLD);
+  SDValue VLDDup = DAG.getMemIntrinsicNode(NewOpc, VLD->getDebugLoc(), SDTys,
+                                           Ops, 2, VLDMemInt->getMemoryVT(),
+                                           VLDMemInt->getMemOperand());
+
+  // Update the uses.
+  for (SDNode::use_iterator UI = VLD->use_begin(), UE = VLD->use_end();
+       UI != UE; ++UI) {
+    unsigned ResNo = UI.getUse().getResNo();
+    // Ignore uses of the chain result.
+    if (ResNo == NumVecs)
+      continue;
+    SDNode *User = *UI;
+    DCI.CombineTo(User, SDValue(VLDDup.getNode(), ResNo));
+  }
+
+  // Now the vldN-lane intrinsic is dead except for its chain result.
+  // Update uses of the chain.
+  std::vector<SDValue> VLDDupResults;
+  for (unsigned n = 0; n < NumVecs; ++n)
+    VLDDupResults.push_back(SDValue(VLDDup.getNode(), n));
+  VLDDupResults.push_back(SDValue(VLDDup.getNode(), NumVecs));
+  DCI.CombineTo(VLD, VLDDupResults);
+
+  return true;
+}
+
 /// PerformVDUPLANECombine - Target-specific dag combine xforms for
 /// ARMISD::VDUPLANE.
-static SDValue PerformVDUPLANECombine(SDNode *N, SelectionDAG &DAG) {
-  // If the source is already a VMOVIMM or VMVNIMM splat, the VDUPLANE is
-  // redundant.
+static SDValue PerformVDUPLANECombine(SDNode *N,
+                                      TargetLowering::DAGCombinerInfo &DCI) {
   SDValue Op = N->getOperand(0);
-  EVT VT = N->getValueType(0);
 
-  // Ignore bit_converts.
+  // If the source is a vldN-lane (N > 1) intrinsic, and all the other uses
+  // of that intrinsic are also VDUPLANEs, combine them to a vldN-dup operation.
+  if (CombineVLDDUP(N, DCI))
+    return SDValue(N, 0);
+
+  // If the source is already a VMOVIMM or VMVNIMM splat, the VDUPLANE is
+  // redundant.  Ignore bit_converts for now; element sizes are checked below.
   while (Op.getOpcode() == ISD::BITCAST)
     Op = Op.getOperand(0);
   if (Op.getOpcode() != ARMISD::VMOVIMM && Op.getOpcode() != ARMISD::VMVNIMM)
@@ -4857,10 +4945,11 @@ static SDValue PerformVDUPLANECombine(SDNode *N, SelectionDAG &DAG) {
   unsigned EltBits;
   if (ARM_AM::decodeNEONModImm(Imm, EltBits) == 0)
     EltSize = 8;
+  EVT VT = N->getValueType(0);
   if (EltSize > VT.getVectorElementType().getSizeInBits())
     return SDValue();
 
-  return DAG.getNode(ISD::BITCAST, N->getDebugLoc(), VT, Op);
+  return DCI.DAG.getNode(ISD::BITCAST, N->getDebugLoc(), VT, Op);
 }
 
 /// getVShiftImm - Check if this is a valid build_vector for the immediate
@@ -5248,7 +5337,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ARMISD::VMOVDRR: return PerformVMOVDRRCombine(N, DCI.DAG);
   case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DCI.DAG);
   case ISD::VECTOR_SHUFFLE: return PerformVECTOR_SHUFFLECombine(N, DCI.DAG);
-  case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI.DAG);
+  case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
   case ISD::SHL:
   case ISD::SRA:

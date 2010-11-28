@@ -197,6 +197,11 @@ private:
   SDNode *SelectVLDSTLane(SDNode *N, bool IsLoad, unsigned NumVecs,
                           unsigned *DOpcodes, unsigned *QOpcodes);
 
+  /// SelectVLDDup - Select NEON load-duplicate intrinsics.  NumVecs
+  /// should be 2, 3 or 4.  The opcode array specifies the instructions used
+  /// for loading D registers.  (Q registers are not supported.)
+  SDNode *SelectVLDDup(SDNode *N, unsigned NumVecs, unsigned *Opcodes);
+
   /// SelectVTBL - Select NEON VTBL and VTBX intrinsics.  NumVecs should be 2,
   /// 3 or 4.  These are custom-selected so that a REG_SEQUENCE can be
   /// generated to force the table registers to be consecutive.
@@ -1643,6 +1648,62 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   return NULL;
 }
 
+SDNode *ARMDAGToDAGISel::SelectVLDDup(SDNode *N, unsigned NumVecs,
+                                      unsigned *Opcodes) {
+  assert(NumVecs >=2 && NumVecs <= 4 && "VLDDup NumVecs out-of-range");
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue MemAddr, Align;
+  if (!SelectAddrMode6(N, N->getOperand(1), MemAddr, Align))
+    return NULL;
+
+  SDValue Chain = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  unsigned Alignment = 0;
+  if (NumVecs != 3) {
+    Alignment = cast<ConstantSDNode>(Align)->getZExtValue();
+    unsigned NumBytes = NumVecs * VT.getVectorElementType().getSizeInBits()/8;
+    if (Alignment > NumBytes)
+      Alignment = NumBytes;
+    // Alignment must be a power of two; make sure of that.
+    Alignment = (Alignment & -Alignment);
+    if (Alignment == 1)
+      Alignment = 0;
+  }
+  Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
+
+  unsigned OpcodeIndex;
+  switch (VT.getSimpleVT().SimpleTy) {
+  default: llvm_unreachable("unhandled vld-dup type");
+  case MVT::v8i8:  OpcodeIndex = 0; break;
+  case MVT::v4i16: OpcodeIndex = 1; break;
+  case MVT::v2f32:
+  case MVT::v2i32: OpcodeIndex = 2; break;
+  }
+
+  SDValue Pred = getAL(CurDAG);
+  SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
+  SDValue SuperReg;
+  unsigned Opc = Opcodes[OpcodeIndex];
+  const SDValue Ops[] = { MemAddr, Align, Pred, Reg0, Chain };
+
+  unsigned ResTyElts = (NumVecs == 3) ? 4 : NumVecs;
+  EVT ResTy = EVT::getVectorVT(*CurDAG->getContext(), MVT::i64, ResTyElts);
+  SDNode *VLdDup = CurDAG->getMachineNode(Opc, dl, ResTy, MVT::Other, Ops, 5);
+  SuperReg = SDValue(VLdDup, 0);
+  Chain = SDValue(VLdDup, 1);
+
+  // Extract the subregisters.
+  assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
+  unsigned SubIdx = ARM::dsub_0;
+  for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+    ReplaceUses(SDValue(N, Vec),
+                CurDAG->getTargetExtractSubreg(SubIdx+Vec, dl, VT, SuperReg));
+  ReplaceUses(SDValue(N, NumVecs), Chain);
+  return NULL;
+}
+
 SDNode *ARMDAGToDAGISel::SelectVTBL(SDNode *N, bool IsExt, unsigned NumVecs,
                                     unsigned Opc) {
   assert(NumVecs >= 2 && NumVecs <= 4 && "VTBL NumVecs out-of-range");
@@ -2292,6 +2353,12 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     assert(NumElts == 4 && "unexpected type for BUILD_VECTOR");
     return QuadSRegs(VecVT, N->getOperand(0), N->getOperand(1),
                      N->getOperand(2), N->getOperand(3));
+  }
+
+  case ARMISD::VLD2DUP: {
+    unsigned Opcodes[] = { ARM::VLD2DUPd8Pseudo, ARM::VLD2DUPd16Pseudo,
+                           ARM::VLD2DUPd32Pseudo };
+    return SelectVLDDup(N, 2, Opcodes);
   }
 
   case ISD::INTRINSIC_VOID:
