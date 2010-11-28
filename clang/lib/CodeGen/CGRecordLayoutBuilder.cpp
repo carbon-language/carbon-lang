@@ -88,10 +88,6 @@ private:
   // FIXME: This is not needed and should be removed.
   unsigned Alignment;
 
-  /// AlignmentAsLLVMStruct - Will contain the maximum alignment of all the
-  /// LLVM types.
-  unsigned AlignmentAsLLVMStruct;
-
   /// BitsAvailableInLastField - If a bit field spans only part of a LLVM field,
   /// this will have the number of bits still available in the field.
   char BitsAvailableInLastField;
@@ -156,6 +152,10 @@ private:
 
   unsigned getTypeAlignment(const llvm::Type *Ty) const;
 
+  /// getAlignmentAsLLVMStruct - Returns the maximum alignment of all the
+  /// LLVM element types.
+  unsigned getAlignmentAsLLVMStruct() const;
+
   /// CheckZeroInitializable - Check if the given type contains a pointer
   /// to data member.
   void CheckZeroInitializable(QualType T);
@@ -164,8 +164,8 @@ private:
 public:
   CGRecordLayoutBuilder(CodeGenTypes &Types)
     : NonVirtualBaseTypeIsSameAsCompleteType(false), IsZeroInitializable(true),
-      Packed(false), Types(Types), Alignment(0), AlignmentAsLLVMStruct(1),
-      BitsAvailableInLastField(0), NextFieldOffsetInBytes(0) { }
+    Packed(false), Types(Types), Alignment(0), BitsAvailableInLastField(0),
+    NextFieldOffsetInBytes(0) { }
 
   /// Layout - Will layout a RecordDecl.
   void Layout(const RecordDecl *D);
@@ -188,7 +188,6 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
 
   // We weren't able to layout the struct. Try again with a packed struct
   Packed = true;
-  AlignmentAsLLVMStruct = 1;
   NextFieldOffsetInBytes = 0;
   FieldTypes.clear();
   LLVMFields.clear();
@@ -632,7 +631,8 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
 
   // Check if we need padding.
   uint64_t AlignedNextFieldOffset =
-    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, AlignmentAsLLVMStruct);
+    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, 
+                             getAlignmentAsLLVMStruct());
 
   assert(AlignedNextFieldOffset <= AlignedNonVirtualTypeSize && 
          "Size mismatch!");
@@ -692,7 +692,8 @@ void CGRecordLayoutBuilder::AppendTailPadding(uint64_t RecordSize) {
   assert(NextFieldOffsetInBytes <= RecordSizeInBytes && "Size mismatch!");
 
   uint64_t AlignedNextFieldOffset =
-    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, AlignmentAsLLVMStruct);
+    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, 
+                             getAlignmentAsLLVMStruct());
 
   if (AlignedNextFieldOffset == RecordSizeInBytes) {
     // We don't need any padding.
@@ -705,9 +706,6 @@ void CGRecordLayoutBuilder::AppendTailPadding(uint64_t RecordSize) {
 
 void CGRecordLayoutBuilder::AppendField(uint64_t FieldOffsetInBytes,
                                         const llvm::Type *FieldTy) {
-  AlignmentAsLLVMStruct = std::max(AlignmentAsLLVMStruct,
-                                   getTypeAlignment(FieldTy));
-
   uint64_t FieldSizeInBytes = Types.getTargetData().getTypeAllocSize(FieldTy);
 
   FieldTypes.push_back(FieldTy);
@@ -757,6 +755,17 @@ unsigned CGRecordLayoutBuilder::getTypeAlignment(const llvm::Type *Ty) const {
     return 1;
 
   return Types.getTargetData().getABITypeAlignment(Ty);
+}
+
+unsigned CGRecordLayoutBuilder::getAlignmentAsLLVMStruct() const {
+  if (Packed)
+    return 1;
+
+  unsigned MaxAlignment = 1;
+  for (size_t i = 0; i != FieldTypes.size(); ++i)
+    MaxAlignment = std::max(MaxAlignment, getTypeAlignment(FieldTypes[i]));
+
+  return MaxAlignment;
 }
 
 void CGRecordLayoutBuilder::CheckZeroInitializable(QualType T) {
