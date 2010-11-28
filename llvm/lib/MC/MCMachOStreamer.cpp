@@ -74,7 +74,6 @@ public:
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                               uint64_t Size, unsigned ByteAlignment = 0);
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
-  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
                                     unsigned MaxBytesToEmit = 0);
@@ -305,26 +304,6 @@ void MCMachOStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
   // MCObjectStreamer.
   getOrCreateDataFragment()->getContents().append(Data.begin(), Data.end());
-}
-
-void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                                unsigned AddrSpace) {
-  // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
-  // MCObjectStreamer.
-  MCDataFragment *DF = getOrCreateDataFragment();
-
-  // Avoid fixups when possible.
-  int64_t AbsValue;
-  if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue)) {
-    // FIXME: Endianness assumption.
-    for (unsigned i = 0; i != Size; ++i)
-      DF->getContents().push_back(uint8_t(AbsValue >> (i * 8)));
-  } else {
-    DF->addFixup(MCFixup::Create(DF->getContents().size(),
-                                 AddValueSymbols(Value),
-                                 MCFixup::getKindForSize(Size, false)));
-    DF->getContents().resize(DF->getContents().size() + Size, 0);
-  }
 }
 
 void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,

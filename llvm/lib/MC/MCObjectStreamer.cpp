@@ -76,6 +76,25 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
   return Value;
 }
 
+void MCObjectStreamer::EmitValue(const MCExpr *Value, unsigned Size,
+                                 unsigned AddrSpace) {
+  assert(AddrSpace == 0 && "Address space must be 0!");
+  MCDataFragment *DF = getOrCreateDataFragment();
+
+  // Avoid fixups when possible.
+  int64_t AbsValue;
+  if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue)) {
+    // FIXME: Endianness assumption.
+    for (unsigned i = 0; i != Size; ++i)
+      DF->getContents().push_back(uint8_t(AbsValue >> (i * 8)));
+  } else {
+    DF->addFixup(MCFixup::Create(DF->getContents().size(),
+                                 AddValueSymbols(Value),
+                                 MCFixup::getKindForSize(Size, false)));
+    DF->getContents().resize(DF->getContents().size() + Size, 0);
+  }
+}
+
 void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(CurSection && "Cannot emit before setting section!");
