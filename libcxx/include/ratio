@@ -276,10 +276,7 @@ public:
 
 template <class _R1, class _R2>
 struct _LIBCPP_VISIBLE ratio_multiply
-    : public __ratio_multiply<_R1, _R2>::type
-{
-    typedef typename __ratio_multiply<_R1, _R2>::type type;
-};
+    : public __ratio_multiply<_R1, _R2>::type {};
 
 template <class _R1, class _R2>
 struct __ratio_divide
@@ -297,10 +294,7 @@ public:
 
 template <class _R1, class _R2>
 struct _LIBCPP_VISIBLE ratio_divide
-    : public __ratio_divide<_R1, _R2>::type
-{
-    typedef typename __ratio_divide<_R1, _R2>::type type;
-};
+    : public __ratio_divide<_R1, _R2>::type {};
 
 template <class _R1, class _R2>
 struct __ratio_add
@@ -326,10 +320,7 @@ public:
 
 template <class _R1, class _R2>
 struct _LIBCPP_VISIBLE ratio_add
-    : public __ratio_add<_R1, _R2>::type
-{
-    typedef typename __ratio_add<_R1, _R2>::type type;
-};
+    : public __ratio_add<_R1, _R2>::type {};
 
 template <class _R1, class _R2>
 struct __ratio_subtract
@@ -355,10 +346,7 @@ public:
 
 template <class _R1, class _R2>
 struct _LIBCPP_VISIBLE ratio_subtract
-    : public __ratio_subtract<_R1, _R2>::type
-{
-    typedef typename __ratio_subtract<_R1, _R2>::type type;
-};
+    : public __ratio_subtract<_R1, _R2>::type {};
 
 // ratio_equal
 

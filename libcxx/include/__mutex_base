@@ -18,6 +18,16 @@
 
 #pragma GCC system_header
 
+#ifdef _LIBCPP_SHARED_LOCK
+
+namespace ting {
+template <class> class shared_lock;
+template <class> class upgrade_lock;
+}
+
+#endif  // _LIBCPP_SHARED_LOCK
+
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 class _LIBCPP_VISIBLE mutex
@@ -143,6 +153,28 @@ public:
             __u.__owns_ = false;
             return *this;
         }
+
+#ifdef _LIBCPP_SHARED_LOCK
+
+    unique_lock(ting::shared_lock<mutex_type>&&, try_to_lock_t);
+    template <class _Clock, class _Duration>
+        unique_lock(ting::shared_lock<mutex_type>&&,
+                    const chrono::time_point<_Clock, _Duration>&);
+    template <class _Rep, class _Period>
+        unique_lock(ting::shared_lock<mutex_type>&&,
+                    const chrono::duration<_Rep, _Period>&);
+
+    explicit unique_lock(ting::upgrade_lock<mutex_type>&&);
+    unique_lock(ting::upgrade_lock<mutex_type>&&, try_to_lock_t);
+    template <class _Clock, class _Duration>
+        unique_lock(ting::upgrade_lock<mutex_type>&&,
+                    const chrono::time_point<_Clock, _Duration>&);
+    template <class _Rep, class _Period>
+        unique_lock(ting::upgrade_lock<mutex_type>&&,
+                    const chrono::duration<_Rep, _Period>&);
+
+#endif  // _LIBCPP_SHARED_LOCK
+
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     void lock();
