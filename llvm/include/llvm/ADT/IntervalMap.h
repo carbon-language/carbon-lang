@@ -167,7 +167,7 @@ typedef std::pair<unsigned,unsigned> IdxPair;
 
 
 //===----------------------------------------------------------------------===//
-//---                            Node Storage                              ---//
+//---                    IntervalMapImpl::NodeBase                         ---//
 //===----------------------------------------------------------------------===//
 //
 // Both leaf and branch nodes store vectors of pairs.
@@ -301,7 +301,7 @@ public:
   }
 };
 
-/// adjustSiblingSizes - Move elements between sibling nodes.
+/// IntervalMapImpl::adjustSiblingSizes - Move elements between sibling nodes.
 /// @param Node  Array of pointers to sibling nodes.
 /// @param Nodes Number of nodes.
 /// @param CurSize Array of current node sizes, will be overwritten.
@@ -348,9 +348,10 @@ void adjustSiblingSizes(NodeT *Node[], unsigned Nodes,
 #endif
 }
 
-/// distribute - Compute a new distribution of node elements after an overflow
-/// or underflow. Reserve space for a new element at Position, and compute the
-/// node that will hold Position after redistributing node elements.
+/// IntervalMapImpl::distribute - Compute a new distribution of node elements
+/// after an overflow or underflow. Reserve space for a new element at Position,
+/// and compute the node that will hold Position after redistributing node
+/// elements.
 ///
 /// It is required that
 ///
@@ -386,7 +387,7 @@ IdxPair distribute(unsigned Nodes, unsigned Elements, unsigned Capacity,
 
 
 //===----------------------------------------------------------------------===//
-//---                             NodeSizer                                ---//
+//---                   IntervalMapImpl::NodeSizer                         ---//
 //===----------------------------------------------------------------------===//
 //
 // Compute node sizes from key and value types.
@@ -442,7 +443,7 @@ struct NodeSizer {
 
 
 //===----------------------------------------------------------------------===//
-//---                              NodeRef                                 ---//
+//---                     IntervalMapImpl::NodeRef                         ---//
 //===----------------------------------------------------------------------===//
 //
 // B+-tree nodes can be leaves or branches, so we need a polymorphic node
@@ -462,13 +463,12 @@ struct NodeSizer {
 //
 //===----------------------------------------------------------------------===//
 
-struct CacheAlignedPointerTraits {
-  static inline void *getAsVoidPointer(void *P) { return P; }
-  static inline void *getFromVoidPointer(void *P) { return P; }
-  enum { NumLowBitsAvailable = Log2CacheLine };
-};
-
 class NodeRef {
+  struct CacheAlignedPointerTraits {
+    static inline void *getAsVoidPointer(void *P) { return P; }
+    static inline void *getFromVoidPointer(void *P) { return P; }
+    enum { NumLowBitsAvailable = Log2CacheLine };
+  };
   PointerIntPair<void*, Log2CacheLine, unsigned, CacheAlignedPointerTraits> pip;
 
 public:
@@ -516,7 +516,7 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-//---                            Leaf nodes                                ---//
+//---                      IntervalMapImpl::LeafNode                       ---//
 //===----------------------------------------------------------------------===//
 //
 // Leaf nodes store up to N disjoint intervals with corresponding values.
@@ -699,7 +699,7 @@ extendStop(unsigned i, unsigned Size, KeyT b) {
 
 
 //===----------------------------------------------------------------------===//
-//---                             Branch nodes                             ---//
+//---                   IntervalMapImpl::BranchNode                        ---//
 //===----------------------------------------------------------------------===//
 //
 // A branch node stores references to 1--N subtrees all of the same height.
@@ -790,7 +790,7 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-//---                                  Path                                ---//
+//---                         IntervalMapImpl::Path                        ---//
 //===----------------------------------------------------------------------===//
 //
 // A Path is used by iterators to represent a position in a B+-tree, and the
@@ -1362,7 +1362,7 @@ dump() {
 #endif
 
 //===----------------------------------------------------------------------===//
-//---                             const_iterator                          ----//
+//---                   IntervalMap::const_iterator                       ----//
 //===----------------------------------------------------------------------===//
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
@@ -1569,7 +1569,7 @@ const_iterator::treeAdvanceTo(KeyT x) {
 }
 
 //===----------------------------------------------------------------------===//
-//---                                iterator                             ----//
+//---                       IntervalMap::iterator                         ----//
 //===----------------------------------------------------------------------===//
 
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
