@@ -72,7 +72,12 @@ public:
 
   FileEntry(const FileEntry &FE) {
     memcpy(this, &FE, sizeof(FE));
-    assert(FD == -1 && "Cannot copy an file-owning FileEntry");
+    assert(FD == -1 && "Cannot copy a file-owning FileEntry");
+  }
+  
+  void operator=(const FileEntry &FE) {
+    memcpy(this, &FE, sizeof(FE));
+    assert(FD == -1 && "Cannot assign a file-owning FileEntry");
   }
 
   ~FileEntry();
