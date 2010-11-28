@@ -105,30 +105,18 @@ void MCMachOStreamer::InitSections() {
 }
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
-  // TODO: This is almost exactly the same as WinCOFFStreamer. Consider merging
-  // into MCObjectStreamer.
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-  assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(CurSection && "Cannot emit before setting section!");
 
+  // isSymbolLinkerVisible uses the section.
   Symbol->setSection(*CurSection);
-
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
-
   // We have to create a new fragment if this is an atom defining symbol,
   // fragments cannot span atoms.
-  if (getAssembler().isSymbolLinkerVisible(SD.getSymbol()))
+  if (getAssembler().isSymbolLinkerVisible(*Symbol))
     new MCDataFragment(getCurrentSectionData());
 
-  // FIXME: This is wasteful, we don't necessarily need to create a data
-  // fragment. Instead, we should mark the symbol as pointing into the data
-  // fragment if it exists, otherwise we should just queue the label and set its
-  // fragment pointer when we emit the next fragment.
-  MCDataFragment *F = getOrCreateDataFragment();
-  assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
-  SD.setFragment(F);
-  SD.setOffset(F->getContents().size());
+  MCObjectStreamer::EmitLabel(Symbol);
 
+  MCSymbolData &SD = getAssembler().getSymbolData(*Symbol);
   // This causes the reference type flag to be cleared. Darwin 'as' was "trying"
   // to clear the weak reference and weak definition bits too, but the
   // implementation was buggy. For now we just try to match 'as', for
