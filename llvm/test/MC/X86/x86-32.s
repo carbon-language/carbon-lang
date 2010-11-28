@@ -543,7 +543,10 @@ popfl
 	setng	%bl
 	setnle	%bl
 
-
+// PR8686
+        setneb  %cl // CHECK: setne %cl
+	setcb	%bl // CHECK: setb %bl
+	setnaeb	%bl // CHECK: setb %bl
 
 
 // CHECK: lcalll	$31438, $31438

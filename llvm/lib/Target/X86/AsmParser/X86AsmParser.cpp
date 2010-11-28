@@ -622,6 +622,11 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   StringRef PatchedName = Name;
 
+  // FIXME: Hack to recognize setneb as setne.
+  if (PatchedName.startswith("set") && PatchedName.endswith("b") &&
+      PatchedName != "setb" && PatchedName != "setnb")
+    PatchedName = PatchedName.substr(0, Name.size()-1);
+  
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
   const MCExpr *ExtraImmOp = 0;
   if ((PatchedName.startswith("cmp") || PatchedName.startswith("vcmp")) &&
