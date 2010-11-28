@@ -3438,7 +3438,7 @@ static bool ExtendUsesToFormExtLoad(SDNode *N, SDValue N0,
     }
     if (BothLiveOut)
       // Both unextended and extended values are live out. There had better be
-      // good a reason for the transformation.
+      // a good reason for the transformation.
       return ExtendNodes.size();
   }
   return true;
