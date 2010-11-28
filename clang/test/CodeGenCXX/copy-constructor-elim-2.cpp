@@ -31,3 +31,25 @@ namespace no_elide_base {
     // CHECK: ret void
   }
 }
+
+// PR8683.
+
+namespace PR8683 {
+
+struct A {
+  A();
+  A(const A&);
+  A& operator=(const A&);
+};
+
+struct B {
+  A a;
+};
+
+void f() {
+  // Verify that we don't mark the copy constructor in this expression as elidable.
+  // CHECK: call void @_ZN6PR86831AC1ERKS0_
+  A a = (B().a);
+}
+
+}

@@ -1804,7 +1804,7 @@ bool Expr::isDefaultArgument() const {
 
 /// \brief Skip over any no-op casts and any temporary-binding
 /// expressions.
-static const Expr *skipTemporaryBindingsAndNoOpCasts(const Expr *E) {
+static const Expr *skipTemporaryBindingsNoOpCastsAndParens(const Expr *E) {
   while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
     if (ICE->getCastKind() == CK_NoOp)
       E = ICE->getSubExpr();
@@ -1821,8 +1821,8 @@ static const Expr *skipTemporaryBindingsAndNoOpCasts(const Expr *E) {
     else
       break;
   }
-  
-  return E;
+
+  return E->IgnoreParens();
 }
 
 /// isTemporaryObject - Determines if this expression produces a
@@ -1831,7 +1831,7 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
   if (!C.hasSameUnqualifiedType(getType(), C.getTypeDeclType(TempTy)))
     return false;
 
-  const Expr *E = skipTemporaryBindingsAndNoOpCasts(this);
+  const Expr *E = skipTemporaryBindingsNoOpCastsAndParens(this);
 
   // Temporaries are by definition pr-values of class type.
   if (!E->Classify(C).isPRValue()) {
