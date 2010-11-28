@@ -1498,7 +1498,7 @@ public:
   llvm::Value *BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
                                 const llvm::Type *Ty);
   llvm::Value *BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
-                                llvm::Value *&This, const llvm::Type *Ty);
+                                llvm::Value *This, const llvm::Type *Ty);
 
   RValue EmitCXXMemberCall(const CXXMethodDecl *MD,
                            llvm::Value *Callee,

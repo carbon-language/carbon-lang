@@ -308,7 +308,7 @@ CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
 
 llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type, 
-                                  llvm::Value *&This, const llvm::Type *Ty) {
+                                  llvm::Value *This, const llvm::Type *Ty) {
   DD = cast<CXXDestructorDecl>(DD->getCanonicalDecl());
   uint64_t VTableIndex = 
     CGM.getVTables().getMethodVTableIndex(GlobalDecl(DD, Type));
