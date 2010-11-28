@@ -41,6 +41,14 @@ TEST(IntervalMapTest, EmptyMap) {
   UUMap::iterator I = map.begin();
   EXPECT_FALSE(I.valid());
   EXPECT_TRUE(I == map.end());
+
+  // Default constructor and cross-constness compares.
+  UUMap::const_iterator CI;
+  CI = map.begin();
+  EXPECT_TRUE(CI == I);
+  UUMap::iterator I2;
+  I2 = map.end();
+  EXPECT_TRUE(I2 == CI);
 }
 
 // Single entry map tests

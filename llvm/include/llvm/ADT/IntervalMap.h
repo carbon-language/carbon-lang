@@ -1397,6 +1397,9 @@ protected:
   void treeAdvanceTo(KeyT x);
 
 public:
+  /// const_iterator - Create an iterator that isn't pointing anywhere.
+  const_iterator() : map(0) {}
+
   /// valid - Return true if the current position is valid, false for end().
   bool valid() const { return path.valid(); }
 
@@ -1583,6 +1586,9 @@ class IntervalMap<KeyT, ValT, N, Traits>::iterator : public const_iterator {
   void eraseNode(unsigned Level);
   void treeErase(bool UpdateRoot = true);
 public:
+  /// iterator - Create null iterator.
+  iterator() {}
+
   /// insert - Insert mapping [a;b] -> y before the current position.
   void insert(KeyT a, KeyT b, ValT y);
 
