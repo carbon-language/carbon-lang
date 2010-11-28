@@ -329,6 +329,9 @@ void LLVMDumpModule(LLVMModuleRef M);
 /** See Module::setModuleInlineAsm. */
 void LLVMSetModuleInlineAsm(LLVMModuleRef M, const char *Asm);
 
+/** See Module::getContext. */
+LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M);
+
 /*===-- Types -------------------------------------------------------------===*/
 
 /* LLVM types conform to the following hierarchy:

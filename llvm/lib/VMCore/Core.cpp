@@ -138,6 +138,12 @@ void LLVMSetModuleInlineAsm(LLVMModuleRef M, const char *Asm) {
 }
 
 
+/*--.. Operations on module contexts ......................................--*/
+LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M) {
+  return wrap(&unwrap(M)->getContext());
+}
+
+
 /*===-- Operations on types -----------------------------------------------===*/
 
 /*--.. Operations on all types (mostly) ....................................--*/
