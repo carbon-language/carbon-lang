@@ -103,7 +103,6 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/RecyclingAllocator.h"
-#include <limits>
 #include <iterator>
 
 // FIXME: Remove debugging code.
@@ -211,8 +210,10 @@ public:
             unsigned j, unsigned Count) {
     assert(i + Count <= M && "Invalid source range");
     assert(j + Count <= N && "Invalid dest range");
-    std::copy(Other.first + i, Other.first + i + Count, first + j);
-    std::copy(Other.second + i, Other.second + i + Count, second + j);
+    for (unsigned e = i + Count; i != e; ++i, ++j) {
+      first[j]  = Other.first[i];
+      second[j] = Other.second[i];
+    }
   }
 
   /// moveLeft - Move elements to the left.
@@ -231,8 +232,10 @@ public:
   void moveRight(unsigned i, unsigned j, unsigned Count) {
     assert(i <= j && "Use moveLeft shift elements left");
     assert(j + Count <= N && "Invalid range");
-    std::copy_backward(first + i, first + i + Count, first + j + Count);
-    std::copy_backward(second + i, second + i + Count, second + j + Count);
+    while (Count--) {
+      first[j + Count]  = first[i + Count];
+      second[j + Count] = second[i + Count];
+    }
   }
 
   /// erase - Erase elements [i;j).
