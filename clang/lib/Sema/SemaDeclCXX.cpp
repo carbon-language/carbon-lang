@@ -131,7 +131,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
                                                            EqualLoc);
   InitializationSequence InitSeq(*this, Entity, Kind, &Arg, 1);
   ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                            MultiExprArg(*this, &Arg, 1));
+                                      MultiExprArg(*this, &Arg, 1));
   if (Result.isInvalid())
     return true;
   Arg = Result.takeAs<Expr>();

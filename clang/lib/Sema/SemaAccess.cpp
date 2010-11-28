@@ -134,7 +134,7 @@ struct EffectiveContext {
   bool Dependent;
 };
 
-/// Like sema:;AccessedEntity, but kindly lets us scribble all over
+/// Like sema::AccessedEntity, but kindly lets us scribble all over
 /// it.
 struct AccessTarget : public AccessedEntity {
   AccessTarget(const AccessedEntity &Entity)

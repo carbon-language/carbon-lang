@@ -2271,7 +2271,7 @@ void Sema::InstantiateStaticDataMemberDefinition(
 
   VarDecl *OldVar = Var;
   Var = cast_or_null<VarDecl>(SubstDecl(Def, Var->getDeclContext(),
-                                          getTemplateInstantiationArgs(Var)));
+                                        getTemplateInstantiationArgs(Var)));
   CurContext = PreviousContext;
 
   if (Var) {
