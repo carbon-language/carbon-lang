@@ -3839,8 +3839,8 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
 }
 
 ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
-                                        FunctionDecl *FD,
-                                        ParmVarDecl *Param) {
+                                                    FunctionDecl *FD,
+                                                    ParmVarDecl *Param) {
   if (Param->hasUnparsedDefaultArg()) {
     Diag(CallLoc,
           diag::err_use_of_default_argument_to_function_declared_later) <<
@@ -3857,20 +3857,12 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
     MultiLevelTemplateArgumentList ArgList
       = getTemplateInstantiationArgs(FD, 0, /*RelativeToPrimary=*/true);
 
-    std::pair<const TemplateArgument *, unsigned> Innermost
+    std::pair<const TemplateArgument *, unsigned> Innermost 
       = ArgList.getInnermost();
     InstantiatingTemplate Inst(*this, CallLoc, Param, Innermost.first,
                                Innermost.second);
 
-    ExprResult Result;
-    {
-      // C++ [dcl.fct.default]p5:
-      //   The names in the [default argument] expression are bound, and
-      //   the semantic constraints are checked, at the point where the
-      //   default argument expression appears.
-      ContextRAII SavedContext(*this, FD->getDeclContext());
-      Result = SubstExpr(UninstExpr, ArgList);
-    }
+    ExprResult Result = SubstExpr(UninstExpr, ArgList);
     if (Result.isInvalid())
       return ExprError();
 
