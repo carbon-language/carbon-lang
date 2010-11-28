@@ -69,6 +69,10 @@ public:
   /// primary base classes for some other direct or indirect base class.
   CXXIndirectPrimaryBaseSet IndirectPrimaryBases;
 
+  /// LaidOutVirtualBases - A set of all laid out virtual bases, used to avoid
+  /// avoid laying out virtual bases more than once.
+  llvm::SmallPtrSet<const CXXRecordDecl *, 4> LaidOutVirtualBases;
+  
   /// IsZeroInitializable - Whether this struct can be C++
   /// zero-initialized with an LLVM zeroinitializer.
   bool IsZeroInitializable;
@@ -110,11 +114,15 @@ private:
   /// LayoutVirtualBase - layout a single virtual base.
   void LayoutVirtualBase(const CXXRecordDecl *BaseDecl, uint64_t BaseOffset);
 
+  /// LayoutVirtualBases - layout the virtual bases of a record decl.
+  void LayoutVirtualBases(const CXXRecordDecl *RD,
+                          const ASTRecordLayout &Layout);
+  
   /// LayoutNonVirtualBase - layout a single non-virtual base.
   void LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
                             uint64_t BaseOffset);
   
-  /// LayoutNonVirtualBases - layout the non-virtual bases of a record decl.
+  /// LayoutNonVirtualBases - layout the virtual bases of a record decl.
   void LayoutNonVirtualBases(const CXXRecordDecl *RD, 
                              const ASTRecordLayout &Layout);
 
@@ -513,6 +521,35 @@ CGRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *BaseDecl,
 
 }
 
+/// LayoutVirtualBases - layout the non-virtual bases of a record decl.
+void
+CGRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
+                                          const ASTRecordLayout &Layout) {
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    // We only want to lay out virtual bases that aren't indirect primary bases
+    // of some other base.
+    if (I->isVirtual() && !IndirectPrimaryBases.count(BaseDecl)) {
+      // Only lay out the base once.
+      if (!LaidOutVirtualBases.insert(BaseDecl))
+        continue;
+
+      uint64_t VBaseOffset = Layout.getVBaseClassOffsetInBits(BaseDecl);
+      LayoutVirtualBase(BaseDecl, VBaseOffset);
+    }
+
+    if (!BaseDecl->getNumVBases()) {
+      // This base isn't interesting since it doesn't have any virtual bases.
+      continue;
+    }
+    
+    LayoutVirtualBases(BaseDecl, Layout);
+  }
+}
+
 void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
                                                  uint64_t BaseOffset) {
   // Ignore empty bases.
@@ -630,17 +667,17 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     }
   }
 
-  // We've laid out the non-virtual bases and the fields, now compute the
-  // non-virtual base field types.
-  if (RD)
-    ComputeNonVirtualBaseType(RD);
-  
   if (RD) {
-    RD->getIndirectPrimaryBases(IndirectPrimaryBases);
-  }
+    // We've laid out the non-virtual bases and the fields, now compute the
+    // non-virtual base field types.
+    ComputeNonVirtualBaseType(RD);
 
-  // FIXME: Lay out the virtual bases instead of just treating them as tail
-  // padding.
+    // And lay out the virtual bases.
+    RD->getIndirectPrimaryBases(IndirectPrimaryBases);
+    if (Layout.isPrimaryBaseVirtual())
+      IndirectPrimaryBases.insert(Layout.getPrimaryBase());
+    LayoutVirtualBases(RD, Layout);
+  }
   
   // Append tail padding if necessary.
   AppendTailPadding(Layout.getSize());
