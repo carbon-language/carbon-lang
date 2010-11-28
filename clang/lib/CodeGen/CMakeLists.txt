@@ -9,6 +9,7 @@ add_clang_library(clangCodeGen
   CGCall.cpp
   CGClass.cpp
   CGCXX.cpp
+  CGCXXABI.cpp
   CGDebugInfo.cpp
   CGDecl.cpp
   CGDeclCXX.cpp
