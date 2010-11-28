@@ -189,26 +189,13 @@ void MCELFStreamer::InitSections() {
 }
 
 void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
-  assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-
-  Symbol->setSection(*CurSection);
-
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  MCObjectStreamer::EmitLabel(Symbol);
 
   const MCSectionELF &Section =
     static_cast<const MCSectionELF&>(Symbol->getSection());
+  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
   if (Section.getFlags() & MCSectionELF::SHF_TLS)
     SetType(SD, ELF::STT_TLS);
-
-  // FIXME: This is wasteful, we don't necessarily need to create a data
-  // fragment. Instead, we should mark the symbol as pointing into the data
-  // fragment if it exists, otherwise we should just queue the label and set its
-  // fragment pointer when we emit the next fragment.
-  MCDataFragment *F = getOrCreateDataFragment();
-
-  assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
-  SD.setFragment(F);
-  SD.setOffset(F->getContents().size());
 }
 
 void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {

@@ -49,7 +49,6 @@ public:
   // MCStreamer interface
 
   virtual void InitSections();
-  virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
@@ -173,28 +172,6 @@ void WinCOFFStreamer::InitSections() {
   SetSectionData();
   SetSectionBSS();
   SetSectionText();
-}
-
-void WinCOFFStreamer::EmitLabel(MCSymbol *Symbol) {
-  // TODO: This is copied almost exactly from the MachOStreamer. Consider
-  // merging into MCObjectStreamer?
-  assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-  assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(CurSection && "Cannot emit before setting section!");
-
-  Symbol->setSection(*CurSection);
-
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
-
-  // FIXME: This is wasteful, we don't necessarily need to create a data
-  // fragment. Instead, we should mark the symbol as pointing into the data
-  // fragment if it exists, otherwise we should just queue the label and set its
-  // fragment pointer when we emit the next fragment.
-  MCDataFragment *DF = getOrCreateDataFragment();
-
-  assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
-  SD.setFragment(DF);
-  SD.setOffset(DF->getContents().size());
 }
 
 void WinCOFFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
