@@ -91,9 +91,6 @@ public:
   virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {
     report_fatal_error("unsupported directive in pure streamer");
   }
-  virtual void EmitGPRel32Value(const MCExpr *Value) {
-    report_fatal_error("unsupported directive in pure streamer");
-  }
   virtual void EmitFileDirective(StringRef Filename) {
     report_fatal_error("unsupported directive in pure streamer");
   }

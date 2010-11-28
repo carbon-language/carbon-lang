@@ -55,6 +55,10 @@ void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
   EmitValue(MCSymbolRefExpr::Create(Sym, getContext()), Size, AddrSpace);
 }
 
+void MCStreamer::EmitGPRel32Value(const MCExpr *Value) {
+  report_fatal_error("unsupported directive in streamer");
+}
+
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
 void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,

@@ -274,7 +274,7 @@ namespace llvm {
     ///
     /// This is used to implement assembler directives such as .gprel32 on
     /// targets that support them.
-    virtual void EmitGPRel32Value(const MCExpr *Value) = 0;
+    virtual void EmitGPRel32Value(const MCExpr *Value);
 
     /// EmitFill - Emit NumBytes bytes worth of the value specified by
     /// FillValue.  This implements directives such as '.space'.

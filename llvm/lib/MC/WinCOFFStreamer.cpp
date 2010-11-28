@@ -70,7 +70,6 @@ public:
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
   virtual void EmitValue(const MCExpr *Value, unsigned Size,
                          unsigned AddrSpace);
-  virtual void EmitGPRel32Value(const MCExpr *Value);
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
                                    unsigned ValueSize, unsigned MaxBytesToEmit);
   virtual void EmitCodeAlignment(unsigned ByteAlignment,
@@ -366,10 +365,6 @@ void WinCOFFStreamer::EmitValue(const MCExpr *Value, unsigned Size,
                                  MCFixup::getKindForSize(Size, false)));
     DF->getContents().resize(DF->getContents().size() + Size, 0);
   }
-}
-
-void WinCOFFStreamer::EmitGPRel32Value(const MCExpr *Value) {
-  llvm_unreachable("not implemented");
 }
 
 void WinCOFFStreamer::EmitValueToAlignment(unsigned ByteAlignment,
