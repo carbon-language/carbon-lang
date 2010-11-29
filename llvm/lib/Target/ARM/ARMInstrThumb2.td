@@ -3045,6 +3045,26 @@ def t2CPS : T2XI<(outs),(ins cps_opt:$opt), NoItinerary, "cps$opt",
   let Inst{25-20} = 0b111010;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
+  
+  bits<11> opt;
+  
+  // mode number
+  let Inst{4-0} = opt{4-0};
+  
+  // M flag
+  let Inst{8} = opt{5};
+  
+  // F flag
+  let Inst{5} = opt{6};
+  
+  // I flag
+  let Inst{6} = opt{7};
+  
+  // A flag
+  let Inst{7} = opt{8};
+  
+  // imod flag
+  let Inst{10-9} = opt{10-9};
 }
 
 // A6.3.4 Branches and miscellaneous control
@@ -3082,53 +3102,75 @@ def t2SMC : T2I<(outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
   let Inst{31-27} = 0b11110;
   let Inst{26-20} = 0b1111111;
   let Inst{15-12} = 0b1000;
+  
+  bits<4> opt;
+  let Inst{19-16} = opt{3-0};
+}
+
+class T2SRS<dag oops, dag iops, InstrItinClass itin,
+          string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<5> mode;
+  let Inst{4-0} = mode{4-0};
 }
 
 // Store Return State is a system instruction -- for disassembly only
-def t2SRSDBW : T2I<(outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp!, $mode",
+def t2SRSDBW : T2SRS<
+                   (outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp!, $mode",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000010; // W = 1
 }
 
-def t2SRSDB  : T2I<(outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp, $mode",
+def t2SRSDB  : T2SRS<
+                   (outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp, $mode",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000000; // W = 0
 }
 
-def t2SRSIAW : T2I<(outs),(ins i32imm:$mode),NoItinerary,"srsia","\tsp!, $mode",
+def t2SRSIAW : T2SRS<
+                   (outs),(ins i32imm:$mode),NoItinerary,"srsia","\tsp!, $mode",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0011010; // W = 1
 }
 
-def t2SRSIA  : T2I<(outs), (ins i32imm:$mode),NoItinerary,"srsia","\tsp, $mode",
+def t2SRSIA  : T2SRS<
+                   (outs), (ins i32imm:$mode),NoItinerary,"srsia","\tsp, $mode",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0011000; // W = 0
 }
 
 // Return From Exception is a system instruction -- for disassembly only
-def t2RFEDBW : T2I<(outs), (ins rGPR:$base), NoItinerary, "rfedb", "\t$base!",
+
+class T2RFE<dag oops, dag iops, InstrItinClass itin,
+          string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rn;
+  let Inst{19-16} = Rn{3-0};
+}
+
+def t2RFEDBW : T2RFE<(outs), (ins rGPR:$Rn), NoItinerary, "rfedb", "\t$Rn!",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000011; // W = 1
 }
 
-def t2RFEDB  : T2I<(outs), (ins rGPR:$base), NoItinerary, "rfeab", "\t$base",
+def t2RFEDB  : T2RFE<(outs), (ins rGPR:$Rn), NoItinerary, "rfeab", "\t$Rn",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000001; // W = 0
 }
 
-def t2RFEIAW : T2I<(outs), (ins rGPR:$base), NoItinerary, "rfeia", "\t$base!",
+def t2RFEIAW : T2RFE<(outs), (ins rGPR:$Rn), NoItinerary, "rfeia", "\t$Rn!",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0011011; // W = 1
 }
 
-def t2RFEIA  : T2I<(outs), (ins rGPR:$base), NoItinerary, "rfeia", "\t$base",
+def t2RFEIA  : T2RFE<(outs), (ins rGPR:$Rn), NoItinerary, "rfeia", "\t$Rn",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0011001; // W = 0
