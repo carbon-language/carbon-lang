@@ -1033,9 +1033,11 @@ DWARFExpression::Evaluate
                             case 2: ptr = ptr & 0xffff; break;
                             case 3: ptr = ptr & 0xffffff; break;
                             case 4: ptr = ptr & 0xffffffff; break;
-                            case 5: ptr = ptr & 0xffffffffff; break;
-                            case 6: ptr = ptr & 0xffffffffffff; break;
-                            case 7: ptr = ptr & 0xffffffffffffff; break;
+                            // the casts are added to work around the case where intptr_t is a 32 bit quantity;
+                            // presumably we won't hit the 5..7 cases if (void*) is 32-bits in this program.
+                            case 5: ptr = (intptr_t) ptr & 0xffffffffffULL; break;
+                            case 6: ptr = (intptr_t) ptr & 0xffffffffffffULL; break;
+                            case 7: ptr = (intptr_t) ptr & 0xffffffffffffffULL; break;
                             default: break;
                         }
                         stack.back().GetScalar() = ptr;
