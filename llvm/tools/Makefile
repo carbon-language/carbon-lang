@@ -35,8 +35,6 @@ include $(LEVEL)/Makefile.config
 # These libraries build as dynamic libraries (.dylib /.so), they can only be
 # built if ENABLE_PIC is set.
 ifeq ($(ENABLE_PIC),1)
-  # No support for dynamic libraries on windows targets.
-  ifneq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
     # gold only builds if binutils is around.  It requires "lto" to build before
     # it so it is added to DIRS.
     ifdef BINUTILS_INCDIR
@@ -54,11 +52,18 @@ ifeq ($(ENABLE_PIC),1)
       PARALLEL_DIRS += edis
     endif
     endif
-  endif
 endif
 
 ifdef LLVM_HAS_POLLY
   PARALLEL_DIRS += polly
+endif
+
+# On Win32, loadable modules can be built with ENABLE_SHARED.
+ifneq ($(ENABLE_SHARED),1)
+  ifneq (,$(filter $(TARGET_OS), Cygwin MingW))
+    PARALLEL_DIRS := $(filter-out bugpoint-passes, \
+                        $(PARALLEL_DIRS))
+  endif
 endif
 
 include $(LEVEL)/Makefile.common
