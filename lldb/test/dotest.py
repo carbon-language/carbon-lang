@@ -757,6 +757,9 @@ for ia in range(len(archs) if iterArchs else 1):
             result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
                                               resultclass=LLDBTestResult).run(suite)
         else:
+            # We are invoking the same test suite more than once.  In this case,
+            # mark __ignore_singleton__ flag as True so the signleton pattern is
+            # not enforced.
             LLDBTestResult.__ignore_singleton__ = True
             for i in range(count):
                 result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
