@@ -1210,12 +1210,24 @@ let usesCustomInserter = 1 in  // Expanded after instruction selection.
 let neverHasSideEffects = 1 in {
 def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
                     "mov", "\t$dst, $rhs", []>,
-              T1Special<{1,0,?,?}>;
+              T1Special<{1,0,?,?}> {
+  bits<4> rhs;
+  bits<4> dst;
+  let Inst{7}   = dst{3};
+  let Inst{6-3} = rhs;
+  let Inst{2-0} = dst{2-0};
+}
 
 let isMoveImm = 1 in
 def tMOVCCi : T1pIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
                     "mov", "\t$dst, $rhs", []>,
-              T1General<{1,0,0,?,?}>;
+              T1General<{1,0,0,?,?}> {
+  bits<8> rhs;
+  bits<3> dst;
+  let Inst{10-8} = dst;
+  let Inst{7-0}  = rhs;
+}
+
 } // neverHasSideEffects
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
