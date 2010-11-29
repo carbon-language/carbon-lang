@@ -60,7 +60,7 @@ endif
 
 # On Win32, loadable modules can be built with ENABLE_SHARED.
 ifneq ($(ENABLE_SHARED),1)
-  ifneq (,$(filter $(TARGET_OS), Cygwin MingW))
+  ifneq (,$(filter $(HOST_OS), Cygwin MingW))
     PARALLEL_DIRS := $(filter-out bugpoint-passes, \
                         $(PARALLEL_DIRS))
   endif
