@@ -4,10 +4,10 @@
 ; together
 declare void @bar({i32, i32} %a)
 
-define i32 @foo() {
+define i32 @foo(i32 %a, i32 %b) {
         ; Build a simple struct and pull values out again
-        %s1.1 = insertvalue {i32, i32} undef, i32 0, 0
-        %s1 = insertvalue {i32, i32} %s1.1, i32 1, 1
+        %s1.1 = insertvalue {i32, i32} undef, i32 %a, 0
+        %s1 = insertvalue {i32, i32} %s1.1, i32 %b, 1
         %v1 = extractvalue {i32, i32} %s1, 0
         %v2 = extractvalue {i32, i32} %s1, 1
         
