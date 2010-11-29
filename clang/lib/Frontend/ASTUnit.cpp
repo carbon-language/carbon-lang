@@ -1841,11 +1841,12 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   
   // Use the code completion consumer we were given, but adding any cached
   // code-completion results.
-  AugmentedCodeCompleteConsumer 
-  AugmentedConsumer(*this, Consumer, FrontendOpts.ShowMacrosInCodeCompletion,
-                    FrontendOpts.ShowCodePatternsInCodeCompletion,
-                    FrontendOpts.ShowGlobalSymbolsInCodeCompletion);
-  Clang.setCodeCompletionConsumer(&AugmentedConsumer);
+  AugmentedCodeCompleteConsumer *AugmentedConsumer
+    = new AugmentedCodeCompleteConsumer(*this, Consumer, 
+                                        FrontendOpts.ShowMacrosInCodeCompletion,
+                                FrontendOpts.ShowCodePatternsInCodeCompletion,
+                                FrontendOpts.ShowGlobalSymbolsInCodeCompletion);
+  Clang.setCodeCompletionConsumer(AugmentedConsumer);
 
   // If we have a precompiled preamble, try to use it. We only allow
   // the use of the precompiled preamble if we're if the completion
@@ -1906,7 +1907,6 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   Clang.takeFileManager();
   Clang.takeSourceManager();
   Clang.takeInvocation();
-  Clang.takeCodeCompletionConsumer();
 }
 
 bool ASTUnit::Save(llvm::StringRef File) {
