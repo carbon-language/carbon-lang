@@ -298,7 +298,7 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Op0;
 
   // A & ~A  =  ~A & A  =  0
-  Value *A, *B;
+  Value *A = 0, *B = 0;
   if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
       (match(Op1, m_Not(m_Value(A))) && A == Op0))
     return Constant::getNullValue(Op0->getType());
@@ -377,7 +377,7 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Op1;
 
   // A | ~A  =  ~A | A  =  -1
-  Value *A, *B;
+  Value *A = 0, *B = 0;
   if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
       (match(Op1, m_Not(m_Value(A))) && A == Op0))
     return Constant::getAllOnesValue(Op0->getType());
@@ -452,7 +452,7 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Constant::getNullValue(Op0->getType());
 
   // A ^ ~A  =  ~A ^ A  =  -1
-  Value *A, *B;
+  Value *A = 0, *B = 0;
   if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
       (match(Op1, m_Not(m_Value(A))) && A == Op0))
     return Constant::getAllOnesValue(Op0->getType());
