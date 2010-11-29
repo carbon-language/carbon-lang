@@ -1028,30 +1028,48 @@ def tORR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),  IIC_iBITr,
 }
 
 // Swaps
-def tREV : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
-                "rev", "\t$dst, $src",
-                [(set tGPR:$dst, (bswap tGPR:$src))]>,
+def tREV : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
+                "rev", "\t$Rd, $Rm",
+                [(set tGPR:$Rd, (bswap tGPR:$Rm))]>,
                 Requires<[IsThumb, IsThumb1Only, HasV6]>,
-           T1Misc<{1,0,1,0,0,0,?}>;
+           T1Misc<{1,0,1,0,0,0,?}> {
+  // A8.6.134
+  bits<3> Rm;
+  bits<3> Rd;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
 
-def tREV16 : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
-                  "rev16", "\t$dst, $src",
-             [(set tGPR:$dst,
-                   (or (and (srl tGPR:$src, (i32 8)), 0xFF),
-                       (or (and (shl tGPR:$src, (i32 8)), 0xFF00),
-                           (or (and (srl tGPR:$src, (i32 8)), 0xFF0000),
-                               (and (shl tGPR:$src, (i32 8)), 0xFF000000)))))]>,
+def tREV16 : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
+                  "rev16", "\t$Rd, $Rm",
+             [(set tGPR:$Rd,
+                   (or (and (srl tGPR:$Rm, (i32 8)), 0xFF),
+                       (or (and (shl tGPR:$Rm, (i32 8)), 0xFF00),
+                           (or (and (srl tGPR:$Rm, (i32 8)), 0xFF0000),
+                               (and (shl tGPR:$Rm, (i32 8)), 0xFF000000)))))]>,
                 Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{1,0,1,0,0,1,?}>;
+             T1Misc<{1,0,1,0,0,1,?}> {
+  // A8.6.135
+  bits<3> Rm;
+  bits<3> Rd;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
 
-def tREVSH : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
-                  "revsh", "\t$dst, $src",
-                  [(set tGPR:$dst,
+def tREVSH : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
+                  "revsh", "\t$Rd, $Rm",
+                  [(set tGPR:$Rd,
                         (sext_inreg
-                          (or (srl (and tGPR:$src, 0xFF00), (i32 8)),
-                              (shl tGPR:$src, (i32 8))), i16))]>,
+                          (or (srl (and tGPR:$Rm, 0xFF00), (i32 8)),
+                              (shl tGPR:$Rm, (i32 8))), i16))]>,
                   Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{1,0,1,0,1,1,?}>;
+             T1Misc<{1,0,1,0,1,1,?}> {
+  // A8.6.135
+  bits<3> Rm;
+  bits<3> Rd;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
 
 // rotate right register
 def tROR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
