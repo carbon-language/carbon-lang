@@ -489,8 +489,12 @@ bool Type::isSignedIntegerType() const {
            BT->getKind() <= BuiltinType::Int128;
   }
 
-  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
-    return ET->getDecl()->getIntegerType()->isSignedIntegerType();
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType)) {
+    // Incomplete enum types are not treated as integer types.
+    // FIXME: In C++, enum types are never integer types.
+    if (ET->getDecl()->isComplete())
+      return ET->getDecl()->getIntegerType()->isSignedIntegerType();
+  }
 
   return false;
 }
@@ -511,8 +515,12 @@ bool Type::isUnsignedIntegerType() const {
            BT->getKind() <= BuiltinType::UInt128;
   }
 
-  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
-    return ET->getDecl()->getIntegerType()->isUnsignedIntegerType();
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType)) {
+    // Incomplete enum types are not treated as integer types.
+    // FIXME: In C++, enum types are never integer types.
+    if (ET->getDecl()->isComplete())
+      return ET->getDecl()->getIntegerType()->isUnsignedIntegerType();
+  }
 
   return false;
 }
