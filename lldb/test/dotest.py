@@ -718,9 +718,10 @@ for ia in range(len(archs) if iterArchs else 1):
             to a log file for easier human inspection of test failres/errors.
             """
             __singleton__ = None
+            __ignore_singleton__ = False
 
             def __init__(self, *args):
-                if LLDBTestResult.__singleton__:
+                if not LLDBTestResult.__ignore_singleton__ and LLDBTestResult.__singleton__:
                     raise Exception("LLDBTestResult instantiated more than once")
                 super(LLDBTestResult, self).__init__(*args)
                 LLDBTestResult.__singleton__ = self
@@ -756,8 +757,10 @@ for ia in range(len(archs) if iterArchs else 1):
             result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
                                               resultclass=LLDBTestResult).run(suite)
         else:
+            LLDBTestResult.__ignore_singleton__ = True
             for i in range(count):
-                result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose).run(suite)
+                result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
+                                                  resultclass=LLDBTestResult).run(suite)
         
 
 if sdir_has_content:
