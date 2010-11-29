@@ -416,7 +416,7 @@ multiclass ImmLoadAddress
   def lo: ILARegInst<R32C, symbolLo, imm18>;
 
   def lsa: ILAInst<(outs R32C:$rT), (ins symbolLSA:$val),
-                   [/* no pattern */]>;
+                   [(set R32C:$rT, imm18:$val)]>;
 }
 
 defm ILA : ImmLoadAddress;

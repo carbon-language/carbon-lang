@@ -181,6 +181,14 @@ namespace llvm {
 
     virtual bool isLegalAddressingMode(const AddrMode &AM, 
                                        const Type *Ty) const;
+ 
+    /// After allocating this many registers, the allocator should feel
+    /// register pressure. The value is a somewhat random guess, based on the
+    /// number of non callee saved registers in the C calling convention.
+    virtual unsigned getRegPressureLimit( const TargetRegisterClass *RC,
+                                          MachineFunction &MF) const{
+      return 50;
+    }
   };
 }
 
