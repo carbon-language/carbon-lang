@@ -9,3 +9,6 @@
 
 @ CHECK: trap                        @ encoding: [0xfe,0xde]
         trap
+
+@ CHECK: blx	r9                   @ encoding: [0xc8,0x47]
+	blx	r9
