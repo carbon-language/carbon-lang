@@ -21,7 +21,7 @@ bar:
 // CHECK:   # Symbol 0x00000002
 // CHECK: (('st_name', 0x00000000) # ''
 // CHECK:  ('st_bind', 0x00000000)
-// CHECK   ('st_type', 0x00000003)
+// CHECK:  ('st_type', 0x00000003)
 // CHECK:  ('st_other', 0x00000000)
 // CHECK:  ('st_shndx', 0x00000001)
 

@@ -112,7 +112,7 @@ entry:
 define void @test2(i32 addrspace(256)* nocapture %P) nounwind {
 entry:
 ; CHECK: lock
-; CEHCK:	cmpxchgl	%{{.*}}, %gs:(%{{.*}})
+; CHECK:	cmpxchgl	%{{.*}}, %gs:(%{{.*}})
 
   %0 = tail call i32 @llvm.atomic.cmp.swap.i32.p256i32(i32 addrspace(256)* %P, i32 0, i32 1)
   ret void

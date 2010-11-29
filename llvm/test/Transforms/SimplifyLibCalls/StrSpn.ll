@@ -19,7 +19,7 @@ define i64 @testspn(i8* %s1, i8* %s2) {
 	%test4 = call i64 @strspn(i8* %s1, i8* %s2)
 ; CHECK: call i64 @strspn(i8* %s1, i8* %s2)
 	ret i64 %test3
-; CHECK ret i64 5
+; CHECK: ret i64 5
 }
 
 declare i64 @strcspn(i8*, i8*)

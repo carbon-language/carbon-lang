@@ -27,7 +27,7 @@ define void @test2(i32 *%p, i32 *%q) {
 
 define i32 @test3(i32* %g_addr) nounwind {
 ; CHECK: @test3
-; CHEcK: load i32* %g_addr
+; CHECK: load i32* %g_addr
   %g_value = load i32* %g_addr, align 4
   store i32 -1, i32* @g, align 4
   store i32 %g_value, i32* %g_addr, align 4
