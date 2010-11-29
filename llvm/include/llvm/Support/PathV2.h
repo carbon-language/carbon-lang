@@ -1,4 +1,4 @@
-//===- llvm/Support/PathV2.h - Path Operating System Concept -----*- C++ -*-===//
+//===- llvm/Support/PathV2.h - Path Operating System Concept ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the llvm::sys::path namespace. It is designed after
+// This file declares the llvm::sys::{path,fs} namespaces. It is designed after
 // TR2/boost filesystem (v3), but modified to remove exception handling and the
 // path class.
 //
