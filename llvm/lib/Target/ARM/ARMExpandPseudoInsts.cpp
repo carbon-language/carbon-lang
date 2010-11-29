@@ -172,6 +172,13 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD2q8Pseudo,        ARM::VLD2q8,       true,  false, SingleSpc,  4, 8 },
 { ARM::VLD2q8Pseudo_UPD,    ARM::VLD2q8_UPD,   true,  true,  SingleSpc,  4, 8 },
 
+{ ARM::VLD3DUPd16Pseudo,     ARM::VLD3DUPd16,     true, false, SingleSpc, 3, 4},
+{ ARM::VLD3DUPd16Pseudo_UPD, ARM::VLD3DUPd16_UPD, true, true,  SingleSpc, 3, 4},
+{ ARM::VLD3DUPd32Pseudo,     ARM::VLD3DUPd32,     true, false, SingleSpc, 3, 2},
+{ ARM::VLD3DUPd32Pseudo_UPD, ARM::VLD3DUPd32_UPD, true, true,  SingleSpc, 3, 2},
+{ ARM::VLD3DUPd8Pseudo,      ARM::VLD3DUPd8,      true, false, SingleSpc, 3, 8},
+{ ARM::VLD3DUPd8Pseudo_UPD,  ARM::VLD3DUPd8_UPD,  true, true,  SingleSpc, 3, 8},
+
 { ARM::VLD3LNd16Pseudo,     ARM::VLD3LNd16,     true, false, SingleSpc,  3, 4 },
 { ARM::VLD3LNd16Pseudo_UPD, ARM::VLD3LNd16_UPD, true, true,  SingleSpc,  3, 4 },
 { ARM::VLD3LNd32Pseudo,     ARM::VLD3LNd32,     true, false, SingleSpc,  3, 2 },
@@ -946,6 +953,12 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
     case ARM::VLD2DUPd8Pseudo_UPD:
     case ARM::VLD2DUPd16Pseudo_UPD:
     case ARM::VLD2DUPd32Pseudo_UPD:
+    case ARM::VLD3DUPd8Pseudo:
+    case ARM::VLD3DUPd16Pseudo:
+    case ARM::VLD3DUPd32Pseudo:
+    case ARM::VLD3DUPd8Pseudo_UPD:
+    case ARM::VLD3DUPd16Pseudo_UPD:
+    case ARM::VLD3DUPd32Pseudo_UPD:
       ExpandVLD(MBBI);
       break;
 

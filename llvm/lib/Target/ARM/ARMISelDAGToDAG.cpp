@@ -2361,6 +2361,12 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     return SelectVLDDup(N, 2, Opcodes);
   }
 
+  case ARMISD::VLD3DUP: {
+    unsigned Opcodes[] = { ARM::VLD3DUPd8Pseudo, ARM::VLD3DUPd16Pseudo,
+                           ARM::VLD3DUPd32Pseudo };
+    return SelectVLDDup(N, 3, Opcodes);
+  }
+
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN: {
     unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();

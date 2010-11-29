@@ -71,3 +71,23 @@ define <2 x i32> @vld2dupi32(i32* %A) nounwind {
 
 declare %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8*, <8 x i8>, <8 x i8>, i32, i32) nounwind readonly
 declare %struct.__neon_int2x32x2_t @llvm.arm.neon.vld2lane.v2i32(i32*, <2 x i32>, <2 x i32>, i32, i32) nounwind readonly
+
+%struct.__neon_int16x4x3_t = type { <4 x i16>, <4 x i16>, <4 x i16> }
+
+define <4 x i16> @vld3dupi16(i16* %A) nounwind {
+;CHECK: vld3dupi16:
+;Check the (default) alignment value. VLD3 does not support alignment.
+;CHECK: vld3.16 {d16[], d17[], d18[]}, [r0]
+	%tmp0 = tail call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i16* %A, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, i32 0, i32 8)
+	%tmp1 = extractvalue %struct.__neon_int16x4x3_t %tmp0, 0
+	%tmp2 = shufflevector <4 x i16> %tmp1, <4 x i16> undef, <4 x i32> zeroinitializer
+	%tmp3 = extractvalue %struct.__neon_int16x4x3_t %tmp0, 1
+	%tmp4 = shufflevector <4 x i16> %tmp3, <4 x i16> undef, <4 x i32> zeroinitializer
+	%tmp5 = extractvalue %struct.__neon_int16x4x3_t %tmp0, 2
+	%tmp6 = shufflevector <4 x i16> %tmp5, <4 x i16> undef, <4 x i32> zeroinitializer
+        %tmp7 = add <4 x i16> %tmp2, %tmp4
+        %tmp8 = add <4 x i16> %tmp7, %tmp6
+        ret <4 x i16> %tmp8
+}
+
+declare %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i16*, <4 x i16>, <4 x i16>, <4 x i16>, i32, i32) nounwind readonly

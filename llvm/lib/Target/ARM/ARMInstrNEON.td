@@ -896,6 +896,48 @@ def VLD2DUPd16Pseudo_UPD : VLDQWBPseudo<IIC_VLD2dupu>;
 def VLD2DUPd32Pseudo_UPD : VLDQWBPseudo<IIC_VLD2dupu>;
 
 //   VLD3DUP  : Vector Load (single 3-element structure to all lanes)
+class VLD3DUP<bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, 0b1110, op7_4, (outs DPR:$Vd, DPR:$dst2, DPR:$dst3),
+          (ins addrmode6:$Rn), IIC_VLD3dup,
+          "vld3", Dt, "\\{$Vd[], $dst2[], $dst3[]\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+  let Inst{4} = Rn{4};
+}
+
+def VLD3DUPd8  : VLD3DUP<{0,0,0,?}, "8">;
+def VLD3DUPd16 : VLD3DUP<{0,1,0,?}, "16">;
+def VLD3DUPd32 : VLD3DUP<{1,0,0,?}, "32">;
+
+def VLD3DUPd8Pseudo  : VLDQQPseudo<IIC_VLD3dup>;
+def VLD3DUPd16Pseudo : VLDQQPseudo<IIC_VLD3dup>;
+def VLD3DUPd32Pseudo : VLDQQPseudo<IIC_VLD3dup>;
+
+// ...with double-spaced registers (not used for codegen):
+def VLD3DUPd8T  : VLD3DUP<{0,0,1,?}, "8">;
+def VLD3DUPd16T : VLD3DUP<{0,1,1,?}, "16">;
+def VLD3DUPd32T : VLD3DUP<{1,0,1,?}, "32">;
+
+// ...with address register writeback:
+class VLD3DUPWB<bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, 0b1110, op7_4, (outs DPR:$Vd, DPR:$dst2, DPR:$dst3, GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD3dupu,
+          "vld3", Dt, "\\{$Vd[], $dst2[], $dst3[]\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
+  let Inst{4} = Rn{4};
+}
+
+def VLD3DUPd8_UPD  : VLD3DUPWB<{0,0,0,0}, "8">;
+def VLD3DUPd16_UPD : VLD3DUPWB<{0,1,0,?}, "16">;
+def VLD3DUPd32_UPD : VLD3DUPWB<{1,0,0,?}, "32">;
+
+def VLD3DUPd8T_UPD  : VLD3DUPWB<{0,0,1,0}, "8">;
+def VLD3DUPd16T_UPD : VLD3DUPWB<{0,1,1,?}, "16">;
+def VLD3DUPd32T_UPD : VLD3DUPWB<{1,0,1,?}, "32">;
+
+def VLD3DUPd8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD3dupu>;
+def VLD3DUPd16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3dupu>;
+def VLD3DUPd32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3dupu>;
+
 //   VLD4DUP  : Vector Load (single 4-element structure to all lanes)
 //   FIXME: Not yet implemented.
 } // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1

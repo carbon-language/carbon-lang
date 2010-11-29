@@ -941,6 +941,24 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<5, [A9_LSUnit]>],
                               [5, 5, 6, 2, 1, 1, 1, 1, 1, 2]>,
   //
+  // VLD3dup
+  InstrItinData<IIC_VLD3dup,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<1, [A9_DRegsN],   0, Required>,
+                               InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<3, [A9_NPipe], 0>,
+                               InstrStage<3, [A9_LSUnit]>],
+                              [3, 3, 4, 1]>,
+  //
+  // VLD3dupu
+  InstrItinData<IIC_VLD3dupu, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<1, [A9_DRegsN],   0, Required>,
+                               InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<3, [A9_NPipe], 0>,
+                               InstrStage<3, [A9_LSUnit]>],
+                              [3, 3, 4, 2, 1, 1]>,
+  //
   // VLD4
   InstrItinData<IIC_VLD4,     [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
