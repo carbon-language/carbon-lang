@@ -73,15 +73,19 @@ TEST(Support, Path) {
 
     StringRef res;
     SmallString<16> temp_store;
-    if (error_code ec = sys::path::root_path(*i, res)) ASSERT_FALSE(ec.message().c_str());
+    if (error_code ec = sys::path::root_path(*i, res))
+      ASSERT_FALSE(ec.message().c_str());
     outs() << "    root_path: " << res << '\n';
-    if (error_code ec = sys::path::root_name(*i, res)) ASSERT_FALSE(ec.message().c_str());
+    if (error_code ec = sys::path::root_name(*i, res))
+      ASSERT_FALSE(ec.message().c_str());
     outs() << "    root_name: " << res << '\n';
-    if (error_code ec = sys::path::root_directory(*i, res)) ASSERT_FALSE(ec.message().c_str());
+    if (error_code ec = sys::path::root_directory(*i, res))
+      ASSERT_FALSE(ec.message().c_str());
     outs() << "    root_directory: " << res << '\n';
 
     temp_store = *i;
-    if (error_code ec = sys::path::make_absolute(temp_store)) ASSERT_FALSE(ec.message().c_str());
+    if (error_code ec = sys::path::make_absolute(temp_store))
+      ASSERT_FALSE(ec.message().c_str());
     outs() << "    make_absolute: " << temp_store << '\n';
 
     outs().flush();
