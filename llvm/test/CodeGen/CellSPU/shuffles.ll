@@ -1,4 +1,4 @@
-; RUN: llc --march=cellspu < %s | FileCheck %s
+; RUN: llc -O1  --march=cellspu < %s | FileCheck %s
 
 define <4 x float> @shuffle(<4 x float> %param1, <4 x float> %param2) {
   ; CHECK: cwd {{\$.}}, 0($sp)

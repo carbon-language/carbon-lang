@@ -84,6 +84,10 @@ namespace llvm {
              "-i16:16:128-i8:8:128-i1:8:128-a:0:128-v64:64:128-v128:128:128"
              "-s:128:128-n32:64";
     }
+
+    bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                               TargetSubtarget::AntiDepBreakMode& Mode,
+                               RegClassVector& CriticalPathRCs) const;
   };
 } // End llvm namespace
 
