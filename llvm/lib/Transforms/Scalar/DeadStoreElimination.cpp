@@ -235,8 +235,10 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
                                                 &BB);
       }
         
-      // If not a definite must-alias dependency, ignore it.
-      if (!InstDep.isDef())
+      // If not a definite must-alias store dependency, ignore it.  If this is a
+      // load from the same pointer, we don't want to transform load+store into
+      // a noop.
+      if (!InstDep.isDef() || !isa<StoreInst>(InstDep.getInst()))
         continue;
     }
     
