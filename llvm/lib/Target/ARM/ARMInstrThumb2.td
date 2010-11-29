@@ -2925,11 +2925,10 @@ def t2B   : T2XI<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{10-0} = target{10-0};
 }
 
-let isNotDuplicable = 1, isIndirectBranch = 1,
-    isCodeGenOnly = 1 in { // $id doesn't exist in asmstring, should be lowered.
+let isNotDuplicable = 1, isIndirectBranch = 1 in {
 def t2BR_JT : tPseudoInst<(outs),
           (ins GPR:$target, GPR:$index, i32imm:$jt, i32imm:$id),
-           SizeSpecial, IIC_Br,// "mov\tpc, $target$jt",
+           SizeSpecial, IIC_Br,
           [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]>;
 
 // FIXME: Add a non-pc based case that can be predicated.
