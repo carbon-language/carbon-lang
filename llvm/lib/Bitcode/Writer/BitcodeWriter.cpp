@@ -1642,9 +1642,12 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
 /// WriteBitcodeToStream - Write the specified module to the specified output
 /// stream.
 void llvm::WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream) {
-  // If this is darwin, emit a file header and trailer if needed.
-  bool isDarwin = M->getTargetTriple().find("-darwin") != std::string::npos;
-  if (isDarwin)
+  // If this is darwin or another generic macho target, emit a file header and
+  // trailer if needed.
+  bool isMacho =
+    M->getTargetTriple().find("-darwin") != std::string::npos ||
+    M->getTargetTriple().find("-macho") != std::string::npos;
+  if (isMacho)
     EmitDarwinBCHeader(Stream, M->getTargetTriple());
 
   // Emit the file header.
@@ -1658,6 +1661,6 @@ void llvm::WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream) {
   // Emit the module.
   WriteModule(M, Stream);
 
-  if (isDarwin)
+  if (isMacho)
     EmitDarwinBCTrailer(Stream, Stream.getBuffer().size());
 }
