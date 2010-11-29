@@ -2921,6 +2921,13 @@ def t2B   : T2XI<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{31-27} = 0b11110;
   let Inst{15-14} = 0b10;
   let Inst{12} = 1;
+
+  bits<20> target;
+  let Inst{26} = target{19};
+  let Inst{11} = target{18};
+  let Inst{13} = target{17};
+  let Inst{21-16} = target{16-11};
+  let Inst{10-0} = target{10-0};
 }
 
 let isNotDuplicable = 1, isIndirectBranch = 1,
@@ -3004,6 +3011,11 @@ def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
   // 16-bit instruction.
   let Inst{31-16} = 0x0000;
   let Inst{15-8} = 0b10111111;
+
+  bits<4> cc;
+  bits<4> mask;
+  let Inst{7-4} = cc{3-0};
+  let Inst{3-0} = mask{3-0};
 }
 
 // Branch and Exchange Jazelle -- for disassembly only
@@ -3015,6 +3027,9 @@ def t2BXJ : T2I<(outs), (ins rGPR:$func), NoItinerary, "bxj", "\t$func",
   let Inst{25-20} = 0b111100;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
+  
+  bits<4> func;
+  let Inst{19-16} = func{3-0};
 }
 
 // Change Processor State is a system instruction -- for disassembly only.
