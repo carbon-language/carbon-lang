@@ -108,6 +108,7 @@ class StaticVariableTestCase(TestBase):
             if name == 'g_points':
                 self.assertTrue(val.GetNumChildren() == 2)
             elif name == 'A::g_points' and self.getCompiler() in ['clang', 'llvm-gcc']:
+                # On Mac OS X, gcc 4.2 emits the wrong debug info for A::g_points.        
                 self.assertTrue(val.GetNumChildren() == 2)
                 child1 = val.GetChildAtIndex(1)
                 self.DebugSBValue(frame, child1)
