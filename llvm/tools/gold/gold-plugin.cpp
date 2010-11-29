@@ -18,9 +18,9 @@
 #include "llvm-c/lto.h"
 
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/System/Errno.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/Errno.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/Program.h"
 
 #include <cerrno>
 #include <cstdlib>

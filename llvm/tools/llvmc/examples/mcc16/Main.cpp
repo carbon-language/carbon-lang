@@ -16,7 +16,7 @@
 #include "llvm/CompilerDriver/BuiltinOptions.h"
 #include "llvm/CompilerDriver/Main.h"
 
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Config/config.h"
 
 #include <iostream>

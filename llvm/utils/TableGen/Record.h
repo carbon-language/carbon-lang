@@ -16,7 +16,7 @@
 #define RECORD_H
 
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 

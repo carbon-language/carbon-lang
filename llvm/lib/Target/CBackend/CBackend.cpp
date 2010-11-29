@@ -47,7 +47,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/System/Host.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
 // Some ms header decided to define setjmp as _setjmp, undo this for this file.

@@ -22,7 +22,7 @@
 #include "CodeGenTarget.h"
 #include "Record.h"
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {

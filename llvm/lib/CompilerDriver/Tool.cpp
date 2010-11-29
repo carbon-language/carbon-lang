@@ -15,7 +15,7 @@
 #include "llvm/CompilerDriver/Tool.h"
 
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 
 #include <algorithm>
 

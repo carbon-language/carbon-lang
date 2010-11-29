@@ -18,8 +18,8 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SystemUtils.h"
-#include "llvm/System/Program.h"
-#include "llvm/System/TimeValue.h"
+#include "llvm/Support/Program.h"
+#include "llvm/Support/TimeValue.h"
 
 #include <stdexcept>
 #include <string>

@@ -17,7 +17,7 @@
 #include "llvm/CompilerDriver/Error.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 
 #include <sstream>
 #include <string>

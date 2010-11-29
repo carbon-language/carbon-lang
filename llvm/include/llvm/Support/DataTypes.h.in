@@ -63,7 +63,7 @@
 #endif
 
 #ifdef _AIX
-#include "llvm/System/AIXDataTypesFix.h"
+#include "llvm/Support/AIXDataTypesFix.h"
 #endif
 
 /* Handle incorrect definition of uint64_t as u_int64_t */

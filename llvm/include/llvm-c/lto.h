@@ -18,7 +18,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 #define LTO_API_VERSION 4
 

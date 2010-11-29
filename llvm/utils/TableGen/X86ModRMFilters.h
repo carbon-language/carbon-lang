@@ -18,7 +18,7 @@
 #ifndef X86MODRMFILTERS_H
 #define X86MODRMFILTERS_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
