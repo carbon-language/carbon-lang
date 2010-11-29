@@ -336,11 +336,16 @@ def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
   let Inst{7-0} = regs{7-0};
 }
 
+// All calls clobber the non-callee saved registers. SP is marked as
+// a use to prevent stack-pointer assignments that appear immediately
+// before calls from potentially appearing dead.
 let isCall = 1,
+  // On non-Darwin platforms R9 is callee-saved.
   Defs = [R0,  R1,  R2,  R3,  R12, LR,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
-          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
+          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR],
+  Uses = [SP] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
                   (outs), (ins i32imm:$func, variable_ops), IIC_Br,
@@ -371,12 +376,15 @@ let isCall = 1,
             Requires<[IsThumb, IsThumb1Only, IsNotDarwin]>;
 }
 
-// On Darwin R9 is call-clobbered.
 let isCall = 1,
+  // On Darwin R9 is call-clobbered.
+  // R7 is marked as a use to prevent frame-pointer assignments from being
+  // moved above / below calls.
   Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
-          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
+          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR],
+  Uses = [R7, SP] in {
   // Also used for Thumb2
   def tBLr9 : TIx2<0b11110, 0b11, 1,
                    (outs), (ins pred:$p, i32imm:$func, variable_ops), IIC_Br,
@@ -469,7 +477,7 @@ let isBranch = 1, isTerminator = 1 in {
 // A8.6.218 Supervisor Call (Software Interrupt) -- for disassembly only
 // A8.6.16 B: Encoding T1
 // If Inst{11-8} == 0b1111 then SEE SVC
-let isCall = 1 in
+let isCall = 1, Uses = [SP] in
 def tSVC : T1pI<(outs), (ins i32imm:$imm), IIC_Br,
                 "svc", "\t$imm", []>, Encoding16 {
   bits<8> imm;
@@ -1250,7 +1258,7 @@ def tLEApcrelJT : T1I<(outs tGPR:$dst),
 
 // __aeabi_read_tp preserves the registers r1-r3.
 let isCall = 1,
-  Defs = [R0, LR] in {
+  Defs = [R0, LR], Uses = [SP] in {
   def tTPsoft : TIx2<0b11110, 0b11, 1, (outs), (ins), IIC_Br,
                      "bl\t__aeabi_read_tp",
                      [(set R0, ARMthread_pointer)]>;

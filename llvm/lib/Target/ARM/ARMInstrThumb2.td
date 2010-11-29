@@ -2836,7 +2836,7 @@ def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "",
 
 // __aeabi_read_tp preserves the registers r1-r3.
 let isCall = 1,
-  Defs = [R0, R12, LR, CPSR] in {
+  Defs = [R0, R12, LR, CPSR], Uses = [SP] in {
   def t2TPsoft : T2XI<(outs), (ins), IIC_Br,
                      "bl\t__aeabi_read_tp",
                      [(set R0, ARMthread_pointer)]> {

@@ -1232,12 +1232,16 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   }
 }
 
-// On non-Darwin platforms R9 is callee-saved.
+// All calls clobber the non-callee saved registers. SP is marked as
+// a use to prevent stack-pointer assignments that appear immediately
+// before calls from potentially appearing dead.
 let isCall = 1,
+  // On non-Darwin platforms R9 is callee-saved.
   Defs = [R0,  R1,  R2,  R3,  R12, LR,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
-          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
+          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR],
+  Uses = [SP] in {
   def BL  : ABXI<0b1011, (outs), (ins bltarget:$func, variable_ops),
                 IIC_Br, "bl\t$func",
                 [(ARMcall tglobaladdr:$func)]>,
@@ -1288,12 +1292,15 @@ let isCall = 1,
   }
 }
 
-// On Darwin R9 is call-clobbered.
 let isCall = 1,
+  // On Darwin R9 is call-clobbered.
+  // R7 is marked as a use to prevent frame-pointer assignments from being
+  // moved above / below calls.
   Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
-          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
+          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR],
+  Uses = [R7, SP] in {
   def BLr9  : ABXI<0b1011, (outs), (ins bltarget:$func, variable_ops),
                 IIC_Br, "bl\t$func",
                 [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]> {
@@ -1473,7 +1480,7 @@ def SMC : ABI<0b0001, (outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
 }
 
 // Supervisor Call (Software Interrupt) -- for disassembly only
-let isCall = 1 in {
+let isCall = 1, Uses = [SP] in {
 def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
               [/* For disassembly only; pattern left blank */]> {
   bits<24> svc;
@@ -3241,7 +3248,7 @@ def SWPB : AIswp<1, (outs GPR:$Rt), (ins GPR:$Rt2, GPR:$Rn), "swpb",
 // FIXME: This needs to be a pseudo of some sort so that we can get the
 // encoding right, complete with fixup for the aeabi_read_tp function.
 let isCall = 1,
-  Defs = [R0, R12, LR, CPSR] in {
+  Defs = [R0, R12, LR, CPSR], Uses = [SP] in {
   def TPsoft : ABXI<0b1011, (outs), (ins), IIC_Br,
                "bl\t__aeabi_read_tp",
                [(set R0, ARMthread_pointer)]>;
