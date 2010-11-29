@@ -1944,6 +1944,13 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                                            NameInfo, T, TInfo,
                                            D->isInlineSpecified(),
                                            FromConversion->isExplicit());
+  } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+    ToFunction = CXXMethodDecl::Create(Importer.getToContext(), 
+                                       cast<CXXRecordDecl>(DC),
+                                       NameInfo, T, TInfo,
+                                       Method->isStatic(),
+                                       Method->getStorageClassAsWritten(),
+                                       Method->isInlineSpecified());
   } else {
     ToFunction = FunctionDecl::Create(Importer.getToContext(), DC,
                                       NameInfo, T, TInfo, D->getStorageClass(),
