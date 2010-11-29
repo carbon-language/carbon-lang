@@ -439,14 +439,11 @@ let isBranch = 1, isTerminator = 1 in {
   def tBfar : TIx2<0b11110, 0b11, 1, (outs), (ins brtarget:$target), IIC_Br,
                     "bl\t$target",[]>;
 
-  let isCodeGenOnly = 1 in
-  def tBR_JTr : T1JTI<(outs),
-                      (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
-                      IIC_Br, "mov\tpc, $target\n\t.align\t2$jt",
-                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>,
-                Encoding16 {
-    let Inst{15-7} = 0b010001101;
-    let Inst{2-0} = 0b111;
+  def tBR_JTr : tPseudoInst<(outs),
+                      (ins tGPR:$target, i32imm:$jt, i32imm:$id),
+                      Size2Bytes, IIC_Br,
+                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]> {
+    list<Predicate> Predicates = [IsThumb, IsThumb1Only];
   }
   }
 }

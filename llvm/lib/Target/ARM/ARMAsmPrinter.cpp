@@ -936,29 +936,23 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     EmitJump2Table(MI);
     return;
   }
-  case ARM::tBR_JTr: {
-    // Lower and emit the instruction itself, then the jump table following it.
-    MCInst TmpInst;
-    // FIXME: The branch instruction is really a pseudo. We should xform it
-    // explicitly.
-    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
-    OutStreamer.EmitInstruction(TmpInst);
-
-    // Output the data for the jump table itself
-    EmitJumpTable(MI);
-    return;
-  }
+  case ARM::tBR_JTr:
   case ARM::BR_JTr: {
     // Lower and emit the instruction itself, then the jump table following it.
     // mov pc, target
     MCInst TmpInst;
-    TmpInst.setOpcode(ARM::MOVr);
+    unsigned Opc = MI->getOpcode() == ARM::BR_JTr ? ARM::MOVr : ARM::tMOVr;
+    TmpInst.setOpcode(Opc);
     TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     // Add predicate operands.
     TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
     TmpInst.addOperand(MCOperand::CreateReg(0));
     OutStreamer.EmitInstruction(TmpInst);
+
+    // Make sure the Thumb jump table is 4-byte aligned.
+    if (Opc == ARM::tMOVr)
+      EmitAlignment(2);
 
     // Output the data for the jump table itself
     EmitJumpTable(MI);

@@ -333,9 +333,6 @@ def cpinst_operand : Operand<i32> {
   let PrintMethod = "printCPInstOperand";
 }
 
-def jtblock_operand : Operand<i32> {
-  let PrintMethod = "printJTBlockOperand";
-}
 def jt2block_operand : Operand<i32> {
   let PrintMethod = "printJT2BlockOperand";
 }
