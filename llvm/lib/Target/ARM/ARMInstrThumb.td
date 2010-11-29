@@ -1064,7 +1064,7 @@ def tREVSH : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
                               (shl tGPR:$Rm, (i32 8))), i16))]>,
                   Requires<[IsThumb, IsThumb1Only, HasV6]>,
              T1Misc<{1,0,1,0,1,1,?}> {
-  // A8.6.135
+  // A8.6.136
   bits<3> Rm;
   bits<3> Rd;
   let Inst{5-3} = Rm;
@@ -1075,53 +1075,105 @@ def tREVSH : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
 def tROR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
                  "ror", "\t$dst, $rhs",
                  [(set tGPR:$dst, (rotr tGPR:$lhs, tGPR:$rhs))]>,
-           T1DataProcessing<0b0111>;
+           T1DataProcessing<0b0111> {
+  // A8.6.139
+  bits<3> rhs;
+  bits<3> dst;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
 // negate register
-def tRSB : T1sI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iALUi,
-                "rsb", "\t$dst, $src, #0",
-                [(set tGPR:$dst, (ineg tGPR:$src))]>,
-           T1DataProcessing<0b1001>;
+def tRSB : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rn), IIC_iALUi,
+                "rsb", "\t$Rd, $Rn, #0",
+                [(set tGPR:$Rd, (ineg tGPR:$Rn))]>,
+           T1DataProcessing<0b1001> {
+  // A8.6.141
+  bits<3> Rn;
+  bits<3> Rd;
+  let Inst{5-3} = Rn;
+  let Inst{2-0} = Rd;
+}
 
 // Subtract with carry register
 let Uses = [CPSR] in
 def tSBC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
                  "sbc", "\t$dst, $rhs",
                  [(set tGPR:$dst, (sube tGPR:$lhs, tGPR:$rhs))]>,
-           T1DataProcessing<0b0110>;
+           T1DataProcessing<0b0110> {
+  // A8.6.151
+  bits<3> rhs;
+  bits<3> dst;
+  let Inst{5-3} = rhs;
+  let Inst{2-0} = dst;
+}
 
 // Subtract immediate
-def tSUBi3 : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALUi,
-                  "sub", "\t$dst, $lhs, $rhs",
-                  [(set tGPR:$dst, (add tGPR:$lhs, imm0_7_neg:$rhs))]>,
-             T1General<0b01111>;
+def tSUBi3 : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rn, i32imm:$imm3), IIC_iALUi,
+                  "sub", "\t$Rd, $Rn, $imm3",
+                  [(set tGPR:$Rd, (add tGPR:$Rn, imm0_7_neg:$imm3))]>,
+             T1General<0b01111> {
+  // A8.6.210 T1
+  bits<3> imm3;
+  bits<3> Rn;
+  bits<3> Rd;
+  let Inst{8-6} = imm3;
+  let Inst{5-3} = Rn;
+  let Inst{2-0} = Rd;
+}
 
 def tSUBi8 : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALUi,
                    "sub", "\t$dst, $rhs",
                    [(set tGPR:$dst, (add tGPR:$lhs, imm8_255_neg:$rhs))]>,
-             T1General<{1,1,1,?,?}>;
+             T1General<{1,1,1,?,?}> {
+  // A8.6.210 T2
+  bits<8> rhs;
+  bits<3> dst;
+  let Inst{10-8} = dst;
+  let Inst{7-0} = rhs;
+}
 
 // subtract register
-def tSUBrr : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
-                  "sub", "\t$dst, $lhs, $rhs",
-                  [(set tGPR:$dst, (sub tGPR:$lhs, tGPR:$rhs))]>,
-             T1General<0b01101>;
+def tSUBrr : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rn, tGPR:$Rm), IIC_iALUr,
+                  "sub", "\t$Rd, $Rn, $Rm",
+                  [(set tGPR:$Rd, (sub tGPR:$Rn, tGPR:$Rm))]>,
+             T1General<0b01101> {
+  // A8.6.212
+  bits<3> Rm;
+  bits<3> Rn;
+  bits<3> Rd;
+  let Inst{8-6} = Rm;
+  let Inst{5-3} = Rn;
+  let Inst{2-0} = Rd;
+}
 
 // TODO: A7-96: STMIA - store multiple.
 
 // sign-extend byte
-def tSXTB  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
-                  "sxtb", "\t$dst, $src",
-                  [(set tGPR:$dst, (sext_inreg tGPR:$src, i8))]>,
+def tSXTB  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
+                  "sxtb", "\t$Rd, $Rm",
+                  [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i8))]>,
                   Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{0,0,1,0,0,1,?}>;
+             T1Misc<{0,0,1,0,0,1,?}> {
+  // A8.6.222
+  bits<3> Rm;
+  bits<3> Rd;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
 
 // sign-extend short
-def tSXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
-                  "sxth", "\t$dst, $src",
-                  [(set tGPR:$dst, (sext_inreg tGPR:$src, i16))]>,
+def tSXTH  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
+                  "sxth", "\t$Rd, $Rm",
+                  [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i16))]>,
                   Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{0,0,1,0,0,0,?}>;
+             T1Misc<{0,0,1,0,0,0,?}> {
+  // A8.6.224
+  bits<3> Rm;
+  bits<3> Rd;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
 
 // test
 let isCompare = 1, isCommutable = 1, Defs = [CPSR] in

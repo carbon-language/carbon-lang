@@ -19,3 +19,8 @@
         rev     r2, r3
         rev16   r3, r4
         revsh   r5, r6
+
+@ CHECK: sxtb	r2, r3               @ encoding: [0x5a,0xb2]
+@ CHECK: sxth	r2, r3               @ encoding: [0x1a,0xb2]
+	sxtb	r2, r3
+	sxth	r2, r3
