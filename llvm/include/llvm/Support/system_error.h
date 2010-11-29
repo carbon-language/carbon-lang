@@ -230,129 +230,127 @@ template <> struct hash<std::error_code>;
 // This must be here instead of a .inc file because it is used in the definition
 // of the enum values below.
 #ifdef LLVM_ON_WIN32
-  // VS 2008 needs this for some of the defines below.
-# include <WinSock2.h>
 
   // The following numbers were taken from VS2010.
 # ifndef EAFNOSUPPORT
-#   define EAFNOSUPPORT WSAEAFNOSUPPORT
+#   define EAFNOSUPPORT 102
 # endif
 # ifndef EADDRINUSE
-#   define EADDRINUSE WSAEADDRINUSE
+#   define EADDRINUSE 100
 # endif
 # ifndef EADDRNOTAVAIL
-#   define EADDRNOTAVAIL WSAEADDRNOTAVAIL
+#   define EADDRNOTAVAIL 101
 # endif
 # ifndef EISCONN
-#   define EISCONN WSAEISCONN
+#   define EISCONN 113
 # endif
 # ifndef E2BIG
-#   define E2BIG WSAE2BIG
+#   define E2BIG 7
 # endif
 # ifndef EDOM
-#   define EDOM WSAEDOM
+#   define EDOM 33
 # endif
 # ifndef EFAULT
-#   define EFAULT WSAEFAULT
+#   define EFAULT 14
 # endif
 # ifndef EBADF
-#   define EBADF WSAEBADF
+#   define EBADF 9
 # endif
 # ifndef EBADMSG
 #   define EBADMSG 104
 # endif
 # ifndef EPIPE
-#   define EPIPE WSAEPIPE
+#   define EPIPE 32
 # endif
 # ifndef ECONNABORTED
-#   define ECONNABORTED WSAECONNABORTED
+#   define ECONNABORTED 106
 # endif
 # ifndef EALREADY
-#   define EALREADY WSAEALREADY
+#   define EALREADY 103
 # endif
 # ifndef ECONNREFUSED
-#   define ECONNREFUSED WSAECONNREFUSED
+#   define ECONNREFUSED 107
 # endif
 # ifndef ECONNRESET
-#   define ECONNRESET WSAECONNRESET
+#   define ECONNRESET 108
 # endif
 # ifndef EXDEV
-#   define EXDEV WSAEXDEV
+#   define EXDEV 18
 # endif
 # ifndef EDESTADDRREQ
-#   define EDESTADDRREQ WSAEDESTADDRREQ
+#   define EDESTADDRREQ 109
 # endif
 # ifndef EBUSY
-#   define EBUSY WSAEBUSY
+#   define EBUSY 16
 # endif
 # ifndef ENOTEMPTY
-#   define ENOTEMPTY WSAENOTEMPTY
+#   define ENOTEMPTY 41
 # endif
 # ifndef ENOEXEC
-#   define ENOEXEC WSAENOEXEC
+#   define ENOEXEC 8
 # endif
 # ifndef EEXIST
-#   define EEXIST WSAEEXIST
+#   define EEXIST 17
 # endif
 # ifndef EFBIG
-#   define EFBIG WSAEFBIG
+#   define EFBIG 27
 # endif
 # ifndef ENAMETOOLONG
-#   define ENAMETOOLONG WSAENAMETOOLONG
+#   define ENAMETOOLONG 38
 # endif
 # ifndef ENOSYS
-#   define ENOSYS WSAENOSYS
+#   define ENOSYS 40
 # endif
 # ifndef EHOSTUNREACH
-#   define EHOSTUNREACH WSAEHOSTUNREACH
+#   define EHOSTUNREACH 110
 # endif
 # ifndef EIDRM
 #   define EIDRM 111
 # endif
 # ifndef EILSEQ
-#   define EILSEQ WSAEILSEQ
+#   define EILSEQ 42
 # endif
 # ifndef ENOTTY
-#   define ENOTTY WSAENOTTY
+#   define ENOTTY 25
 # endif
 # ifndef EINTR
-#   define EINTR WSAEINTR
+#   define EINTR 4
 # endif
 # ifndef EINVAL
-#   define EINVAL WSAEINVAL
+#   define EINVAL 22
 # endif
 # ifndef ESPIPE
-#   define ESPIPE WSAESPIPE
+#   define ESPIPE 29
 # endif
 # ifndef EIO
-#   define EIO WSAEIO
+#   define EIO 5
 # endif
 # ifndef EISDIR
-#   define EISDIR WSAEISDIR
+#   define EISDIR 21
 # endif
 # ifndef EMSGSIZE
-#   define EMSGSIZE WSAEMSGSIZE
+#   define EMSGSIZE 115
 # endif
 # ifndef ENETDOWN
-#   define ENETDOWN WSAENETDOWN
+#   define ENETDOWN 116
 # endif
 # ifndef ENETRESET
-#   define ENETRESET WSAENETRESET
+#   define ENETRESET 117
 # endif
 # ifndef ENETUNREACH
-#   define ENETUNREACH WSAENETUNREACH
+#   define ENETUNREACH 118
 # endif
 # ifndef ENOBUFS
-#   define ENOBUFS WSAENOBUFS
+#   define ENOBUFS 119
 # endif
 # ifndef ECHILD
-#   define ECHILD WSAECHILD
+#   define ECHILD 10
 # endif
 # ifndef ENOLINK
 #   define ENOLINK 121
 # endif
 # ifndef ENOLCK
-#   define ENOLCK WSAENOLCK
+#   define ENOLCK 39
 # endif
 # ifndef ENODATA
 #   define ENODATA 120
@@ -361,40 +359,40 @@ template <> struct hash<std::error_code>;
 #   define ENOMSG 122
 # endif
 # ifndef ENOPROTOOPT
-#   define ENOPROTOOPT WSAENOPROTOOPT
+#   define ENOPROTOOPT 123
 # endif
 # ifndef ENOSPC
-#   define ENOSPC WSAENOSPC
+#   define ENOSPC 28
 # endif
 # ifndef ENOSR
 #   define ENOSR 124
 # endif
 # ifndef ENXIO
-#   define ENXIO WSAENXIO
+#   define ENXIO 6
 # endif
 # ifndef ENODEV
-#   define ENODEV WSAENODEV
+#   define ENODEV 19
 # endif
 # ifndef ENOENT
-#   define ENOENT WSAENOENT
+#   define ENOENT 2
 # endif
 # ifndef ESRCH
-#   define ESRCH WSAESRCH
+#   define ESRCH 3
 # endif
 # ifndef ENOTDIR
-#   define ENOTDIR WSAENOTDIR
+#   define ENOTDIR 20
 # endif
 # ifndef ENOTSOCK
-#   define ENOTSOCK WSAENOTSOCK
+#   define ENOTSOCK 128
 # endif
 # ifndef ENOSTR
 #   define ENOSTR 125
 # endif
 # ifndef ENOTCONN
-#   define ENOTCONN WSAENOTCONN
+#   define ENOTCONN 126
 # endif
 # ifndef ENOMEM
-#   define ENOMEM WSAENOMEM
+#   define ENOMEM 12
 # endif
 # ifndef ENOTSUP
 #   define ENOTSUP 129
@@ -403,40 +401,40 @@ template <> struct hash<std::error_code>;
 #   define ECANCELED 105
 # endif
 # ifndef EINPROGRESS
-#   define EINPROGRESS WSAEINPROGRESS
+#   define EINPROGRESS 112
 # endif
 # ifndef EPERM
-#   define EPERM WSAEPERM
+#   define EPERM 1
 # endif
 # ifndef EOPNOTSUPP
-#   define EOPNOTSUPP WSAEOPNOTSUPP
+#   define EOPNOTSUPP 130
 # endif
 # ifndef EWOULDBLOCK
-#   define EWOULDBLOCK WSAEWOULDBLOCK
+#   define EWOULDBLOCK 140
 # endif
 # ifndef EOWNERDEAD
 #   define EOWNERDEAD 133
 # endif
 # ifndef EACCES
-#   define EACCES WSAEACCES
+#   define EACCES 13
 # endif
 # ifndef EPROTO
 #   define EPROTO 134
 # endif
 # ifndef EPROTONOSUPPORT
-#   define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#   define EPROTONOSUPPORT 135
 # endif
 # ifndef EROFS
-#   define EROFS WSAEROFS
+#   define EROFS 30
 # endif
 # ifndef EDEADLK
-#   define EDEADLK WSAEDEADLK
+#   define EDEADLK 36
 # endif
 # ifndef EAGAIN
-#   define EAGAIN WSAEAGAIN
+#   define EAGAIN 11
 # endif
 # ifndef ERANGE
-#   define ERANGE WSAERANGE
+#   define ERANGE 34
 # endif
 # ifndef ENOTRECOVERABLE
 #   define ENOTRECOVERABLE 127
@@ -448,25 +446,25 @@ template <> struct hash<std::error_code>;
 #   define ETXTBSY 139
 # endif
 # ifndef ETIMEDOUT
-#   define ETIMEDOUT WSAETIMEDOUT
+#   define ETIMEDOUT 138
 # endif
 # ifndef ENFILE
-#   define ENFILE WSAENFILE
+#   define ENFILE 23
 # endif
 # ifndef EMFILE
-#   define EMFILE WSAEMFILE
+#   define EMFILE 24
 # endif
 # ifndef EMLINK
-#   define EMLINK WSAEMLINK
+#   define EMLINK 31
 # endif
 # ifndef ELOOP
-#   define ELOOP WSAELOOP
+#   define ELOOP 114
 # endif
 # ifndef EOVERFLOW
 #   define EOVERFLOW 132
 # endif
 # ifndef EPROTOTYPE
-#   define EPROTOTYPE WSAEPROTOTYPE
+#   define EPROTOTYPE 136
 # endif
 #endif
 
@@ -815,19 +813,7 @@ inline bool operator!=(const error_condition& _x, const error_condition& _y) {
   return !(_x == _y);
 }
 
-// system_error
-
-} // end namespace llvm
-
-// This needs to stay here for KillTheDoctor.
-#ifdef LLVM_ON_WIN32
-// FIXME: These two headers really really really need to be removed from here.
-//        Not only is it a violation of System, they define the stupid min and
-//        max macros :(.
-#include <Windows.h>
-#include <WinError.h>
-
-namespace llvm {
+// Windows errors.
 
 //  To construct an error_code after an API error:
 //
@@ -835,63 +821,65 @@ namespace llvm {
 struct windows_error {
 enum _ {
   success = 0,
-  // These names and values are based on Windows winerror.h
-  // This is not a complete list.
-  invalid_function        = ERROR_INVALID_FUNCTION,
-  file_not_found          = ERROR_FILE_NOT_FOUND,
-  path_not_found          = ERROR_PATH_NOT_FOUND,
-  too_many_open_files     = ERROR_TOO_MANY_OPEN_FILES,
-  access_denied           = ERROR_ACCESS_DENIED,
-  invalid_handle          = ERROR_INVALID_HANDLE,
-  arena_trashed           = ERROR_ARENA_TRASHED,
-  not_enough_memory       = ERROR_NOT_ENOUGH_MEMORY,
-  invalid_block           = ERROR_INVALID_BLOCK,
-  bad_environment         = ERROR_BAD_ENVIRONMENT,
-  bad_format              = ERROR_BAD_FORMAT,
-  invalid_access          = ERROR_INVALID_ACCESS,
-  outofmemory             = ERROR_OUTOFMEMORY,
-  invalid_drive           = ERROR_INVALID_DRIVE,
-  current_directory       = ERROR_CURRENT_DIRECTORY,
-  not_same_device         = ERROR_NOT_SAME_DEVICE,
-  no_more_files           = ERROR_NO_MORE_FILES,
-  write_protect           = ERROR_WRITE_PROTECT,
-  bad_unit                = ERROR_BAD_UNIT,
-  not_ready               = ERROR_NOT_READY,
-  bad_command             = ERROR_BAD_COMMAND,
-  crc                     = ERROR_CRC,
-  bad_length              = ERROR_BAD_LENGTH,
-  seek                    = ERROR_SEEK,
-  not_dos_disk            = ERROR_NOT_DOS_DISK,
-  sector_not_found        = ERROR_SECTOR_NOT_FOUND,
-  out_of_paper            = ERROR_OUT_OF_PAPER,
-  write_fault             = ERROR_WRITE_FAULT,
-  read_fault              = ERROR_READ_FAULT,
-  gen_failure             = ERROR_GEN_FAILURE,
-  sharing_violation       = ERROR_SHARING_VIOLATION,
-  lock_violation          = ERROR_LOCK_VIOLATION,
-  wrong_disk              = ERROR_WRONG_DISK,
-  sharing_buffer_exceeded = ERROR_SHARING_BUFFER_EXCEEDED,
-  handle_eof              = ERROR_HANDLE_EOF,
-  handle_disk_full        = ERROR_HANDLE_DISK_FULL,
-  rem_not_list            = ERROR_REM_NOT_LIST,
-  dup_name                = ERROR_DUP_NAME,
-  bad_net_path            = ERROR_BAD_NETPATH,
-  network_busy            = ERROR_NETWORK_BUSY,
-  file_exists             = ERROR_FILE_EXISTS,
-  cannot_make             = ERROR_CANNOT_MAKE,
-  broken_pipe             = ERROR_BROKEN_PIPE,
-  open_failed             = ERROR_OPEN_FAILED,
-  buffer_overflow         = ERROR_BUFFER_OVERFLOW,
-  disk_full               = ERROR_DISK_FULL,
-  lock_failed             = ERROR_LOCK_FAILED,
-  busy                    = ERROR_BUSY,
-  cancel_violation        = ERROR_CANCEL_VIOLATION,
-  already_exists          = ERROR_ALREADY_EXISTS
+  // These names and values are based on Windows WinError.h
+  // This is not a complete list. Add to this list if you need to explicitly
+  // check for it.
+  invalid_function        = 1, // ERROR_INVALID_FUNCTION,
+  file_not_found          = 2, // ERROR_FILE_NOT_FOUND,
+  path_not_found          = 3, // ERROR_PATH_NOT_FOUND,
+  too_many_open_files     = 4, // ERROR_TOO_MANY_OPEN_FILES,
+  access_denied           = 5, // ERROR_ACCESS_DENIED,
+  invalid_handle          = 6, // ERROR_INVALID_HANDLE,
+  arena_trashed           = 7, // ERROR_ARENA_TRASHED,
+  not_enough_memory       = 8, // ERROR_NOT_ENOUGH_MEMORY,
+  invalid_block           = 9, // ERROR_INVALID_BLOCK,
+  bad_environment         = 10, // ERROR_BAD_ENVIRONMENT,
+  bad_format              = 11, // ERROR_BAD_FORMAT,
+  invalid_access          = 12, // ERROR_INVALID_ACCESS,
+  outofmemory             = 14, // ERROR_OUTOFMEMORY,
+  invalid_drive           = 15, // ERROR_INVALID_DRIVE,
+  current_directory       = 16, // ERROR_CURRENT_DIRECTORY,
+  not_same_device         = 17, // ERROR_NOT_SAME_DEVICE,
+  no_more_files           = 18, // ERROR_NO_MORE_FILES,
+  write_protect           = 19, // ERROR_WRITE_PROTECT,
+  bad_unit                = 20, // ERROR_BAD_UNIT,
+  not_ready               = 21, // ERROR_NOT_READY,
+  bad_command             = 22, // ERROR_BAD_COMMAND,
+  crc                     = 23, // ERROR_CRC,
+  bad_length              = 24, // ERROR_BAD_LENGTH,
+  seek                    = 25, // ERROR_SEEK,
+  not_dos_disk            = 26, // ERROR_NOT_DOS_DISK,
+  sector_not_found        = 27, // ERROR_SECTOR_NOT_FOUND,
+  out_of_paper            = 28, // ERROR_OUT_OF_PAPER,
+  write_fault             = 29, // ERROR_WRITE_FAULT,
+  read_fault              = 30, // ERROR_READ_FAULT,
+  gen_failure             = 31, // ERROR_GEN_FAILURE,
+  sharing_violation       = 32, // ERROR_SHARING_VIOLATION,
+  lock_violation          = 33, // ERROR_LOCK_VIOLATION,
+  wrong_disk              = 34, // ERROR_WRONG_DISK,
+  sharing_buffer_exceeded = 36, // ERROR_SHARING_BUFFER_EXCEEDED,
+  handle_eof              = 38, // ERROR_HANDLE_EOF,
+  handle_disk_full        = 39, // ERROR_HANDLE_DISK_FULL,
+  rem_not_list            = 51, // ERROR_REM_NOT_LIST,
+  dup_name                = 52, // ERROR_DUP_NAME,
+  bad_net_path            = 53, // ERROR_BAD_NETPATH,
+  network_busy            = 54, // ERROR_NETWORK_BUSY,
+  file_exists             = 80, // ERROR_FILE_EXISTS,
+  cannot_make             = 82, // ERROR_CANNOT_MAKE,
+  broken_pipe             = 109, // ERROR_BROKEN_PIPE,
+  open_failed             = 110, // ERROR_OPEN_FAILED,
+  buffer_overflow         = 111, // ERROR_BUFFER_OVERFLOW,
+  disk_full               = 112, // ERROR_DISK_FULL,
+  insufficient_buffer     = 122, // ERROR_INSUFFICIENT_BUFFER,
+  lock_failed             = 167, // ERROR_LOCK_FAILED,
+  busy                    = 170, // ERROR_BUSY,
+  cancel_violation        = 173, // ERROR_CANCEL_VIOLATION,
+  already_exists          = 183  // ERROR_ALREADY_EXISTS
 };
   _ v_;
 
   windows_error(_ v) : v_(v) {}
-  explicit windows_error(DWORD v) : v_(_(v)) {}
+  explicit windows_error(int v) : v_(_(v)) {}
   operator int() const {return v_;}
 };
 
@@ -905,7 +893,5 @@ inline error_code make_error_code(windows_error e) {
 }
 
 } // end namespace llvm
-
-#endif // LLVM_ON_WINDOWS
 
 #endif
