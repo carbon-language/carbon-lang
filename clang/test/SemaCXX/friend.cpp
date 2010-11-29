@@ -79,3 +79,36 @@ namespace test5 {
 
   struct B { friend void B(); };
 }
+
+// PR8479
+namespace test6_1 {
+  class A {
+   public:
+   private:
+    friend class vectorA;
+    A() {}
+  };
+  class vectorA {
+   public:
+    vectorA(int i, const A& t = A()) {}
+  };
+  void f() {
+    vectorA v(1);
+  }
+}
+namespace test6_2 {
+  template<class T>
+  class vector {
+   public:
+    vector(int i, const T& t = T()) {}
+  };
+  class A {
+   public:
+   private:
+    friend class vector<A>;
+    A() {}
+  };
+  void f() {
+    vector<A> v(1);
+  }
+}
