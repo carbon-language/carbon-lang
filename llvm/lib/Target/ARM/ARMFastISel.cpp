@@ -1740,7 +1740,9 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
     CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLXi_r9 : ARM::tBLXi;
   else
     CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
-  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CallOpc))
+  // Explicitly adding the predicate here.
+  MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                       TII.get(CallOpc)))
         .addExternalSymbol(TLI.getLibcallName(Call));
 
   // Add implicit physical register uses to the call.
@@ -1849,8 +1851,10 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
     CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLXi_r9 : ARM::tBLXi;
   else
     CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
-  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CallOpc))
-              .addGlobalAddress(GV, 0, 0);
+  // Explicitly adding the predicate here.
+  MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                               TII.get(CallOpc)))
+        .addGlobalAddress(GV, 0, 0);
 
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
