@@ -1429,22 +1429,22 @@ let isBranch = 1, isTerminator = 1 in {
 
     let isNotDuplicable = 1, isIndirectBranch = 1 in {
     def BR_JTr : ARMPseudoInst<(outs),
-                      (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
-                      IIC_Br,// "mov\tpc, $target$jt",
+                      (ins GPR:$target, i32imm:$jt, i32imm:$id),
+                      IIC_Br,
                       [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
       let SZ = SizeSpecial;
     }
     // FIXME: This shouldn't use the generic "addrmode2," but rather be split
     // into i12 and rs suffixed versions.
     def BR_JTm : ARMPseudoInst<(outs),
-                     (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
+                     (ins addrmode2:$target, i32imm:$jt, i32imm:$id),
                      IIC_Br,
                      [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
                        imm:$id)]> {
       let SZ = SizeSpecial;
     }
     def BR_JTadd : ARMPseudoInst<(outs),
-                   (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
+                   (ins GPR:$target, GPR:$idx, i32imm:$jt, i32imm:$id),
                    IIC_Br,
                    [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
                      imm:$id)]> {
