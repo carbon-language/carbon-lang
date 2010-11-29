@@ -32,7 +32,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace clang;
 using namespace clang::CodeGen;

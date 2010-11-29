@@ -18,7 +18,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/AnalysisContext.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseSet.h"
 

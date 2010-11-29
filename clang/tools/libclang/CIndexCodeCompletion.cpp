@@ -28,7 +28,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/Program.h"
 #include <cstdlib>
 #include <cstdio>
 

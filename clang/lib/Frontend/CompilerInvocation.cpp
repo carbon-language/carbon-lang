@@ -26,8 +26,8 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/System/Host.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/Path.h"
 using namespace clang;
 
 static const char *getAnalysisName(Analyses Kind) {

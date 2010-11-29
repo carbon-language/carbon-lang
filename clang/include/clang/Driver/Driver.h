@@ -17,7 +17,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/System/Path.h" // FIXME: Kill when CompilationInfo
+#include "llvm/Support/Path.h" // FIXME: Kill when CompilationInfo
                               // lands.
 #include <list>
 #include <set>

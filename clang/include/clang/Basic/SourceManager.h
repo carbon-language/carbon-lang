@@ -16,7 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"

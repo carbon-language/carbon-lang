@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_AST_LAYOUTINFO_H
 #define LLVM_CLANG_AST_LAYOUTINFO_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclCXX.h"

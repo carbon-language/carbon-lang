@@ -40,10 +40,10 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/System/Mutex.h"
-#include "llvm/System/Program.h"
-#include "llvm/System/Signals.h"
-#include "llvm/System/Threading.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/Program.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/Threading.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace clang;

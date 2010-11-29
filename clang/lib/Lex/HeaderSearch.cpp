@@ -15,7 +15,7 @@
 #include "clang/Lex/HeaderMap.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "llvm/ADT/SmallString.h"
 #include <cstdio>
 using namespace clang;

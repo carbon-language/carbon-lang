@@ -20,7 +20,7 @@
 #include "clang/Rewrite/Rewriters.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

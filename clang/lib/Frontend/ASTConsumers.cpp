@@ -24,7 +24,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

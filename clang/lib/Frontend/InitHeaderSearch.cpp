@@ -23,7 +23,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Config/config.h"
 #ifdef _MSC_VER
   #define WIN32_LEAN_AND_MEAN 1

@@ -15,7 +15,7 @@
 #define LLVM_CLANG_AST_CHARUNITS_H
 
 #include "llvm/ADT/DenseMapInfo.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace clang {
   

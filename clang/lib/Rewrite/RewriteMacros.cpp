@@ -17,7 +17,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <cstdio>
 

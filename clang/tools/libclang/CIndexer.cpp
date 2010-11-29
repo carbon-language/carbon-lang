@@ -25,7 +25,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/Program.h"
 
 #include <cstdio>
 #include <vector>

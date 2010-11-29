@@ -30,8 +30,8 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/Program.h"
 
 #include "InputInfo.h"
 

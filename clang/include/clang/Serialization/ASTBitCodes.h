@@ -19,7 +19,7 @@
 
 #include "clang/AST/Type.h"
 #include "llvm/Bitcode/BitCodes.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace clang {

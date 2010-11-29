@@ -27,8 +27,8 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Host.h"
-#include "llvm/System/Process.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/Process.h"
 
 #include "InputInfo.h"
 #include "ToolChains.h"

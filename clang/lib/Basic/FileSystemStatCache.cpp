@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/FileSystemStatCache.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include <fcntl.h>
 
 // FIXME: This is terrible, we need this for ::close.

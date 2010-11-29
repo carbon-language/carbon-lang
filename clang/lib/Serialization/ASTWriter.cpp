@@ -41,7 +41,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include <cstdio>
 using namespace clang;
 using namespace clang::serialization;

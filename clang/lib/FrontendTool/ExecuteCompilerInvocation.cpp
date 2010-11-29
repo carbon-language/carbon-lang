@@ -24,7 +24,7 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/Rewrite/FrontendActions.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/System/DynamicLibrary.h"
+#include "llvm/Support/DynamicLibrary.h"
 using namespace clang;
 
 static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {

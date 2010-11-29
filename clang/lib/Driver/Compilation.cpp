@@ -17,7 +17,7 @@
 #include "clang/Driver/ToolChain.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/Program.h"
 #include <sys/stat.h>
 #include <errno.h>
 using namespace clang::driver;

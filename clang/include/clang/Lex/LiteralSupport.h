@@ -18,7 +18,7 @@
 #include <string>
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace clang {
 

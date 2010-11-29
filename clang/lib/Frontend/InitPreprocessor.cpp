@@ -23,7 +23,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 using namespace clang;
 
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,

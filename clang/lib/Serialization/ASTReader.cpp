@@ -40,7 +40,7 @@
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include <algorithm>
 #include <iterator>
 #include <cstdio>

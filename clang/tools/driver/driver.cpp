@@ -29,10 +29,10 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Host.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Program.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/Program.h"
+#include "llvm/Support/Signals.h"
 using namespace clang;
 using namespace clang::driver;
 
