@@ -15,7 +15,7 @@
 #ifndef LLVM_TARGET_TARGETINSTRDESC_H
 #define LLVM_TARGET_TARGETINSTRDESC_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

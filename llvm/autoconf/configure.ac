@@ -319,7 +319,7 @@ AC_SUBST(LINKALL,$llvm_cv_link_all_option)
 AC_SUBST(NOLINKALL,$llvm_cv_no_link_all_option)
 
 dnl Set the "LLVM_ON_*" variables based on llvm_cv_platform_type
-dnl This is used by lib/System to determine the basic kind of implementation
+dnl This is used by lib/Support to determine the basic kind of implementation
 dnl to use.
 case $llvm_cv_platform_type in
   Unix)
@@ -1625,7 +1625,7 @@ AC_CONFIG_FILES([include/llvm/Config/Targets.def])
 AC_CONFIG_FILES([include/llvm/Config/AsmPrinters.def])
 AC_CONFIG_FILES([include/llvm/Config/AsmParsers.def])
 AC_CONFIG_FILES([include/llvm/Config/Disassemblers.def])
-AC_CONFIG_HEADERS([include/llvm/System/DataTypes.h])
+AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
 
 dnl Configure the makefile's configuration data
 AC_CONFIG_FILES([Makefile.config])

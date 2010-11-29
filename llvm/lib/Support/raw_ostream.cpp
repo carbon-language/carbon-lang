@@ -13,8 +13,8 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
-#include "llvm/System/Program.h"
-#include "llvm/System/Process.h"
+#include "llvm/Support/Program.h"
+#include "llvm/Support/Process.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"

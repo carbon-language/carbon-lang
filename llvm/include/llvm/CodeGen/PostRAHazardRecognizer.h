@@ -17,7 +17,7 @@
 #define LLVM_CODEGEN_EXACTHAZARDRECOGNIZER_H
 
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 #include <cassert>
 #include <cstring>

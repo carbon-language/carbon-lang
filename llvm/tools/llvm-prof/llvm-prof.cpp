@@ -29,7 +29,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/Signals.h"
 #include <algorithm>
 #include <iomanip>
 #include <map>

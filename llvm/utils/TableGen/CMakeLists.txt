@@ -41,7 +41,7 @@ add_executable(tblgen
   X86RecognizableInstr.cpp
   )
 
-target_link_libraries(tblgen LLVMSupport LLVMSystem)
+target_link_libraries(tblgen LLVMSupport)
 if( MINGW )
   target_link_libraries(tblgen imagehlp psapi)
 endif( MINGW )

@@ -15,7 +15,7 @@
 #ifndef LLVM_ANALYSIS_DIBUILDER_H
 #define LLVM_ANALYSIS_DIBUILDER_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace llvm {

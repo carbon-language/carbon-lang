@@ -15,7 +15,7 @@
 #ifndef LLVM_SUPPORT_FILEUTILITIES_H
 #define LLVM_SUPPORT_FILEUTILITIES_H
 
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 
 namespace llvm {
 

@@ -39,7 +39,7 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"

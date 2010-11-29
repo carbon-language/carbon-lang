@@ -41,8 +41,8 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/type_traits.h"
-#include "llvm/System/Signals.h"
-#include "llvm/System/system_error.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>

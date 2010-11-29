@@ -16,8 +16,8 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Process.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/Signals.h"
 #include <fstream>
 #include <ostream>
 #include <iomanip>

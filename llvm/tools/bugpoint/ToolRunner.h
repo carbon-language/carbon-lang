@@ -21,7 +21,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SystemUtils.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include <exception>
 #include <vector>
 

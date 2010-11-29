@@ -22,7 +22,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/System/Mutex.h"
+#include "llvm/Support/Mutex.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {

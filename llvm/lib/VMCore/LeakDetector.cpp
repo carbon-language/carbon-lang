@@ -16,8 +16,8 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/System/Mutex.h"
-#include "llvm/System/Threading.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/Threading.h"
 #include "llvm/Value.h"
 using namespace llvm;
 

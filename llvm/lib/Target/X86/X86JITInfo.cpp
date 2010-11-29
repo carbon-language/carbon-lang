@@ -19,7 +19,7 @@
 #include "llvm/Function.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/System/Valgrind.h"
+#include "llvm/Support/Valgrind.h"
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;

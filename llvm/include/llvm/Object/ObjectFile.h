@@ -15,7 +15,7 @@
 #define LLVM_OBJECT_OBJECT_FILE_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

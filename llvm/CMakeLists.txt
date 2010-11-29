@@ -276,7 +276,7 @@ endif( MSVC )
 include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
 
 if( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
-   SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-include llvm/System/Solaris.h")
+   SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-include llvm/Support/Solaris.h")
 endif( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
 
 include(AddLLVM)
@@ -292,9 +292,8 @@ if( MINGW )
 endif()
 
 add_subdirectory(lib/Support)
-add_subdirectory(lib/System)
 
-# Everything else depends on Support and System:
+# Everything else depends on Support:
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
 
 set(LLVM_TABLEGEN "tblgen" CACHE
@@ -346,7 +345,7 @@ foreach(t ${LLVM_TARGETS_TO_BUILD})
   set( td ${LLVM_MAIN_SRC_DIR}/lib/Target/${t} )
   file(GLOB asmp_file "${td}/*AsmPrinter.cpp")
   if( asmp_file )
-    set(LLVM_ENUM_ASM_PRINTERS 
+    set(LLVM_ENUM_ASM_PRINTERS
       "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
   endif()
   if( EXISTS ${td}/InstPrinter/CMakeLists.txt )
@@ -354,7 +353,7 @@ foreach(t ${LLVM_TARGETS_TO_BUILD})
   endif()
   if( EXISTS ${td}/AsmParser/CMakeLists.txt )
     add_subdirectory(lib/Target/${t}/AsmParser)
-    set(LLVM_ENUM_ASM_PARSERS 
+    set(LLVM_ENUM_ASM_PARSERS
       "${LLVM_ENUM_ASM_PARSERS}LLVM_ASM_PARSER(${t})\n")
   endif()
   if( EXISTS ${td}/Disassembler/CMakeLists.txt )

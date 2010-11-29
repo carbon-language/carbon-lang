@@ -10,7 +10,7 @@
 LEVEL := .
 
 # Top-Level LLVM Build Stages:
-#   1. Build lib/System and lib/Support, which are used by utils (tblgen).
+#   1. Build lib/Support, which is used by utils (tblgen).
 #   2. Build utils, which is used by VMCore.
 #   3. Build VMCore, which builds the Intrinsics.inc file used by libs.
 #   4. Build libs, which are needed by llvm-config.
@@ -27,10 +27,10 @@ LEVEL := .
 ifneq ($(findstring llvmCore, $(RC_ProjectName)),llvmCore)  # Normal build (not "Apple-style").
 
 ifeq ($(BUILD_DIRS_ONLY),1)
-  DIRS := lib/System lib/Support utils
+  DIRS := lib/Support utils
   OPTIONAL_DIRS :=
 else
-  DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-shlib \
+  DIRS := lib/Support utils lib/VMCore lib tools/llvm-shlib \
           tools/llvm-config tools runtime docs unittests
   OPTIONAL_DIRS := projects bindings
 endif
@@ -159,7 +159,7 @@ dist-hook::
 	$(Echo) Eliminating files constructed by configure
 	$(Verb) $(RM) -f \
 	  $(TopDistDir)/include/llvm/Config/config.h  \
-	  $(TopDistDir)/include/llvm/System/DataTypes.h
+	  $(TopDistDir)/include/llvm/Support/DataTypes.h
 
 clang-only: all
 tools-only: all
@@ -178,7 +178,7 @@ FilesToConfig := \
   include/llvm/Config/AsmPrinters.def \
   include/llvm/Config/AsmParsers.def \
   include/llvm/Config/Disassemblers.def \
-  include/llvm/System/DataTypes.h \
+  include/llvm/Support/DataTypes.h \
   tools/llvmc/src/Base.td
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 

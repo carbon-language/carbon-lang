@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-#include "llvm/System/TimeValue.h"
+#include "llvm/Support/TimeValue.h"
 #include <time.h>
 
 using namespace llvm;

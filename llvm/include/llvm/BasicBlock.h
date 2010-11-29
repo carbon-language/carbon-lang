@@ -18,7 +18,7 @@
 #include "llvm/SymbolTableListTraits.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
@@ -58,9 +58,9 @@ private:
 /// tables. The type of a BasicBlock is "Type::LabelTy" because the basic block
 /// represents a label to which a branch can jump.
 ///
-/// A well formed basic block is formed of a list of non-terminating 
-/// instructions followed by a single TerminatorInst instruction.  
-/// TerminatorInst's may not occur in the middle of basic blocks, and must 
+/// A well formed basic block is formed of a list of non-terminating
+/// instructions followed by a single TerminatorInst instruction.
+/// TerminatorInst's may not occur in the middle of basic blocks, and must
 /// terminate the blocks. The BasicBlock class allows malformed basic blocks to
 /// occur because it may be useful in the intermediate stage of constructing or
 /// modifying a program. However, the verifier will ensure that basic blocks
@@ -90,7 +90,7 @@ private:
 public:
   /// getContext - Get the context in which this basic block lives.
   LLVMContext &getContext() const;
-  
+
   /// Instruction iterators...
   typedef InstListType::iterator                              iterator;
   typedef InstListType::const_iterator                  const_iterator;
@@ -98,7 +98,7 @@ public:
   /// Create - Creates a new BasicBlock. If the Parent parameter is specified,
   /// the basic block is automatically inserted at either the end of the
   /// function (if InsertBefore is 0), or before the specified basic block.
-  static BasicBlock *Create(LLVMContext &Context, const Twine &Name = "", 
+  static BasicBlock *Create(LLVMContext &Context, const Twine &Name = "",
                             Function *Parent = 0,BasicBlock *InsertBefore = 0) {
     return new BasicBlock(Context, Name, Parent, InsertBefore);
   }
@@ -114,15 +114,15 @@ public:
   /// and BlockAddress's).
   User       *use_back()       { return cast<User>(*use_begin());}
   const User *use_back() const { return cast<User>(*use_begin());}
-  
+
   /// getTerminator() - If this is a well formed basic block, then this returns
   /// a pointer to the terminator instruction.  If it is not, then you get a
   /// null pointer back.
   ///
   TerminatorInst *getTerminator();
   const TerminatorInst *getTerminator() const;
-  
-  /// Returns a pointer to the first instructon in this block that is not a 
+
+  /// Returns a pointer to the first instructon in this block that is not a
   /// PHINode instruction. When adding instruction to the beginning of the
   /// basic block, they should be added before the returned value, not before
   /// the first instruction, which might be PHI.
@@ -137,7 +137,7 @@ public:
   const Instruction* getFirstNonPHIOrDbg() const {
     return const_cast<BasicBlock*>(this)->getFirstNonPHIOrDbg();
   }
-  
+
   /// removeFromParent - This method unlinks 'this' from the containing
   /// function, but does not delete it.
   ///
@@ -147,15 +147,15 @@ public:
   /// and deletes it.
   ///
   void eraseFromParent();
-  
+
   /// moveBefore - Unlink this basic block from its current function and
   /// insert it into the function that MovePos lives in, right before MovePos.
   void moveBefore(BasicBlock *MovePos);
-  
+
   /// moveAfter - Unlink this basic block from its current function and
   /// insert it into the function that MovePos lives in, right after MovePos.
   void moveAfter(BasicBlock *MovePos);
-  
+
 
   /// getSinglePredecessor - If this basic block has a single predecessor block,
   /// return the block, otherwise return a null pointer.
@@ -166,8 +166,8 @@ public:
 
   /// getUniquePredecessor - If this basic block has a unique predecessor block,
   /// return the block, otherwise return a null pointer.
-  /// Note that unique predecessor doesn't mean single edge, there can be 
-  /// multiple edges from the unique predecessor to this block (for example 
+  /// Note that unique predecessor doesn't mean single edge, there can be
+  /// multiple edges from the unique predecessor to this block (for example
   /// a switch statement with multiple cases having the same destination).
   BasicBlock *getUniquePredecessor();
   const BasicBlock *getUniquePredecessor() const {
@@ -247,7 +247,7 @@ public:
   /// hasAddressTaken - returns true if there are any uses of this basic block
   /// other than direct branches, switches, etc. to it.
   bool hasAddressTaken() const { return getSubclassDataFromValue() != 0; }
-                     
+
 private:
   /// AdjustBlockAddressRefCount - BasicBlock stores the number of BlockAddress
   /// objects using it.  This is almost always 0, sometimes one, possibly but

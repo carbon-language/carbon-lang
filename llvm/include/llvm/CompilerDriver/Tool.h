@@ -18,7 +18,7 @@
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 
 #include <string>
 #include <vector>

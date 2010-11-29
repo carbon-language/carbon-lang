@@ -19,7 +19,7 @@
 #define LLVM_BITCODE_BITCODES_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 
 namespace llvm {

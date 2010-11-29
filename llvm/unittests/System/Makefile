@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = System
-LINK_COMPONENTS := system support
+LINK_COMPONENTS := support
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

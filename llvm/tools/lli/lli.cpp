@@ -31,8 +31,8 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Process.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Target/TargetSelect.h"
 #include <cerrno>
 

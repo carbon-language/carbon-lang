@@ -17,7 +17,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <vector> // FIXME: Shouldn't be needed.
 
 namespace llvm {

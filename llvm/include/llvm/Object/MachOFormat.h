@@ -22,7 +22,7 @@
 #ifndef LLVM_OBJECT_MACHOFORMAT_H
 #define LLVM_OBJECT_MACHOFORMAT_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 namespace object {

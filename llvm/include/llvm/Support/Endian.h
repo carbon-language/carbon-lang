@@ -15,8 +15,8 @@
 #define LLVM_SUPPORT_ENDIAN_H
 
 #include "llvm/Config/config.h"
-#include "llvm/System/Host.h"
-#include "llvm/System/SwapByteOrder.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/type_traits.h"
 
 namespace llvm {

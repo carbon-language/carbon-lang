@@ -17,7 +17,7 @@
 #ifndef EE_MACHINE_CODE_INFO_H
 #define EE_MACHINE_CODE_INFO_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

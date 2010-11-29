@@ -41,7 +41,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/Signals.h"
 #include <algorithm>
 #include <cstdio>
 using namespace llvm;

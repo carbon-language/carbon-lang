@@ -27,7 +27,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Threading.h"
+#include "llvm/Support/Threading.h"
 #include <algorithm>
 #include <cstdarg>
 using namespace llvm;

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/System/IncludeFile.h"
+#include "llvm/Support/IncludeFile.h"
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/ADT/SmallPtrSet.h"
 

@@ -10,7 +10,7 @@
 #ifndef LLVM_TARGET_TARGETASMBACKEND_H
 #define LLVM_TARGET_TARGETASMBACKEND_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 class MCDataFragment;

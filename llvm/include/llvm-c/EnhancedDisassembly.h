@@ -19,7 +19,7 @@
 #ifndef LLVM_C_ENHANCEDDISASSEMBLY_H
 #define LLVM_C_ENHANCEDDISASSEMBLY_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = tblgen
-USEDLIBS = LLVMSupport.a LLVMSystem.a
+USEDLIBS = LLVMSupport.a
 REQUIRES_EH := 1
 REQUIRES_RTTI := 1
 

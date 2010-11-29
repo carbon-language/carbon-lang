@@ -26,7 +26,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Errno.h"
+#include "llvm/Support/Errno.h"
 #include "llvm/Config/config.h"
 #include <stddef.h>
 using namespace llvm;

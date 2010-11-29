@@ -30,8 +30,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/Signals.h"
 #include <set>
 using namespace llvm;
 

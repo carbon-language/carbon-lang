@@ -26,7 +26,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/Signals.h"
 #include <memory>
 using namespace llvm;
 

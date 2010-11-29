@@ -14,8 +14,8 @@
 #ifndef LLVM_SUPPORT_MANAGED_STATIC_H
 #define LLVM_SUPPORT_MANAGED_STATIC_H
 
-#include "llvm/System/Atomic.h"
-#include "llvm/System/Threading.h"
+#include "llvm/Support/Atomic.h"
+#include "llvm/Support/Threading.h"
 
 namespace llvm {
 

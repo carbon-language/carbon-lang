@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <cstdlib>
 #include <ctime>
 using namespace llvm;

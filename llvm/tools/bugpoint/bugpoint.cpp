@@ -23,9 +23,9 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/StandardPasses.h"
-#include "llvm/System/Process.h"
-#include "llvm/System/Signals.h"
-#include "llvm/System/Valgrind.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/Valgrind.h"
 #include "llvm/LinkAllVMCore.h"
 using namespace llvm;
 

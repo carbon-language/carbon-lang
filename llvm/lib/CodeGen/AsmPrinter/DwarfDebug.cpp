@@ -39,7 +39,7 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 using namespace llvm;
 
 static cl::opt<bool> PrintDbgScope("print-dbgscope", cl::Hidden,

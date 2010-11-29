@@ -634,11 +634,11 @@ else
 endif
 
 ifeq ($(HOST_OS),SunOS)
-CPP.BaseFlags += -include llvm/System/Solaris.h
+CPP.BaseFlags += -include llvm/Support/Solaris.h
 endif
 
 ifeq ($(HOST_OS),AuroraUX)
-CPP.BaseFlags += -include llvm/System/Solaris.h
+CPP.BaseFlags += -include llvm/Support/Solaris.h
 endif # !HOST_OS - AuroraUX.
 
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir)

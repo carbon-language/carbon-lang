@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/Signals.h"
 using namespace llvm;
 
 tool_output_file::CleanupInstaller::CleanupInstaller(const char *filename)

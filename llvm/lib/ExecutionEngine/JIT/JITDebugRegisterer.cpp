@@ -25,7 +25,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Mutex.h"
+#include "llvm/Support/Mutex.h"
 #include <string>
 #include <vector>
 

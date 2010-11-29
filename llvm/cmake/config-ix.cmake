@@ -277,7 +277,7 @@ configure_file(
   )
 
 configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/System/DataTypes.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/System/DataTypes.h
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support/DataTypes.h.cmake
+  ${LLVM_BINARY_DIR}/include/llvm/Support/DataTypes.h
   )
 

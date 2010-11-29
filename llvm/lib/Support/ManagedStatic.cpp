@@ -13,7 +13,7 @@
 
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Config/config.h"
-#include "llvm/System/Atomic.h"
+#include "llvm/Support/Atomic.h"
 #include <cassert>
 using namespace llvm;
 

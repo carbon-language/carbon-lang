@@ -16,7 +16,7 @@
 #define LLVM_CODEGEN_BINARYOBJECT_H
 
 #include "llvm/CodeGen/MachineRelocation.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 #include <string>
 #include <vector>

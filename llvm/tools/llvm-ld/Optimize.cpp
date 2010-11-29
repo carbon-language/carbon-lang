@@ -16,7 +16,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/DynamicLibrary.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/PassNameParser.h"

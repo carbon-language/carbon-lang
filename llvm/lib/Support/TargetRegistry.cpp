@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/System/Host.h"
+#include "llvm/Support/Host.h"
 #include <cassert>
 using namespace llvm;
 

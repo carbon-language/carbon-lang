@@ -15,7 +15,7 @@
 #define LIB_ARCHIVE_ARCHIVEINTERNALS_H
 
 #include "llvm/Bitcode/Archive.h"
-#include "llvm/System/TimeValue.h"
+#include "llvm/Support/TimeValue.h"
 #include "llvm/ADT/StringExtras.h"
 
 #include <cstring>

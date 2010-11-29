@@ -24,10 +24,10 @@
 #include "llvm/Module.h"
 #include "llvm/Config/config.h"     // Detect libffi
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/System/DynamicLibrary.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/System/Mutex.h"
+#include "llvm/Support/Mutex.h"
 #include <csignal>
 #include <cstdio>
 #include <map>

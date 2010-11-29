@@ -10,8 +10,8 @@
 #include "llvm/Object/MachOObject.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Host.h"
-#include "llvm/System/SwapByteOrder.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/SwapByteOrder.h"
 
 using namespace llvm;
 using namespace llvm::object;

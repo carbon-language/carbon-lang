@@ -15,10 +15,10 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/System/Errno.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Process.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/Errno.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/Program.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -203,14 +203,14 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
     if (ErrStr) *ErrStr = sys::StrError();
     return 0;
   }
-  
+
   return getOpenFile(FD, Filename, ErrStr, FileSize);
 }
-  
+
 MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                         std::string *ErrStr, int64_t FileSize) {
   FileCloser FC(FD); // Close FD on return.
-  
+
   // If we don't know the file size, use fstat to find out.  fstat on an open
   // file descriptor is cheaper than stat on a random path.
   if (FileSize == -1) {
@@ -222,8 +222,8 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
     }
     FileSize = FileInfo.st_size;
   }
-  
-  
+
+
   // If the file is large, try to use mmap to read it in.  We don't use mmap
   // for small files, because this can severely fragment our address space. Also
   // don't try to map files that are exactly a multiple of the system page size,

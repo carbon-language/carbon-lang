@@ -29,7 +29,6 @@ set(LLVM_LINK_COMPONENTS
   BitReader
   AsmParser
   Core
-  System
   Support
   )
 
@@ -109,7 +108,6 @@ endif()
 add_llvm_unittest(VMCore ${VMCoreSources})
 
 set(LLVM_LINK_COMPONENTS
-  System
   Support
   Core
   )
@@ -130,7 +128,7 @@ add_llvm_unittest(Support
   )
 
 set(LLVM_LINK_COMPONENTS
-  System
+  Support
   )
 
 add_llvm_unittest(System

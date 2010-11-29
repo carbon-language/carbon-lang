@@ -20920,7 +20920,7 @@ ac_config_files="$ac_config_files include/llvm/Config/AsmParsers.def"
 
 ac_config_files="$ac_config_files include/llvm/Config/Disassemblers.def"
 
-ac_config_headers="$ac_config_headers include/llvm/System/DataTypes.h"
+ac_config_headers="$ac_config_headers include/llvm/Support/DataTypes.h"
 
 
 ac_config_files="$ac_config_files Makefile.config"
@@ -21546,7 +21546,7 @@ do
     "include/llvm/Config/AsmPrinters.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/AsmPrinters.def" ;;
     "include/llvm/Config/AsmParsers.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/AsmParsers.def" ;;
     "include/llvm/Config/Disassemblers.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/Disassemblers.def" ;;
-    "include/llvm/System/DataTypes.h") CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/System/DataTypes.h" ;;
+    "include/llvm/Support/DataTypes.h") CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Support/DataTypes.h" ;;
     "Makefile.config") CONFIG_FILES="$CONFIG_FILES Makefile.config" ;;
     "llvm.spec") CONFIG_FILES="$CONFIG_FILES llvm.spec" ;;
     "tools/llvmc/src/Base.td") CONFIG_FILES="$CONFIG_FILES tools/llvmc/src/Base.td" ;;

@@ -14,7 +14,7 @@
 #ifndef LLVM_SUPPORT_MATHEXTRAS_H
 #define LLVM_SUPPORT_MATHEXTRAS_H
 
-#include "llvm/System/SwapByteOrder.h"
+#include "llvm/Support/SwapByteOrder.h"
 
 namespace llvm {
 

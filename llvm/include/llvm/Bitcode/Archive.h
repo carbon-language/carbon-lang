@@ -19,7 +19,7 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 #include <map>
 #include <set>
 

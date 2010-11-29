@@ -16,7 +16,7 @@
 #ifndef LLVM_EDOPERAND_H
 #define LLVM_EDOPERAND_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

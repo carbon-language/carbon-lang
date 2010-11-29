@@ -31,7 +31,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 
-#include "llvm/System/TimeValue.h"
+#include "llvm/Support/TimeValue.h"
 
 #include "../Target/X86/X86FixupKinds.h"
 

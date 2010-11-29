@@ -26,8 +26,8 @@
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/DynamicLibrary.h"
-#include "llvm/System/Host.h"
+#include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Target/TargetData.h"
 #include <cmath>
 #include <cstring>

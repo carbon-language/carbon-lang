@@ -22,7 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Memory.h"
+#include "llvm/Support/Memory.h"
 #include <vector>
 #include <cassert>
 #include <climits>

@@ -10,8 +10,8 @@
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Config/config.h"
-#include "llvm/System/Mutex.h"
-#include "llvm/System/ThreadLocal.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/ThreadLocal.h"
 #include <setjmp.h>
 #include <cstdio>
 using namespace llvm;

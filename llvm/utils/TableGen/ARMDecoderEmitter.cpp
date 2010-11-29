@@ -1826,7 +1826,7 @@ void ARMDecoderEmitter::ARMDEBackend::emit(raw_ostream &o) {
     assert(0 && "Unreachable code!");
   }
 
-  o << "#include \"llvm/System/DataTypes.h\"\n";
+  o << "#include \"llvm/Support/DataTypes.h\"\n";
   o << "#include <assert.h>\n";
   o << '\n';
   o << "namespace llvm {\n\n";

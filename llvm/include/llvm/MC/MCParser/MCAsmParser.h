@@ -10,7 +10,7 @@
 #ifndef LLVM_MC_MCASMPARSER_H
 #define LLVM_MC_MCASMPARSER_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 class AsmToken;

@@ -23,7 +23,7 @@
 #ifndef LLVM_SUPPORT_WIN_COFF_H
 #define LLVM_SUPPORT_WIN_COFF_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <cstring>
 
 namespace llvm {

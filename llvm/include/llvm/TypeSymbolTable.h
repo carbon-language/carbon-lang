@@ -16,7 +16,7 @@
 
 #include "llvm/Type.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <map>
 
 namespace llvm {

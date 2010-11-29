@@ -17,8 +17,8 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
-#include "llvm/System/Mutex.h"
-#include "llvm/System/Process.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/Process.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 using namespace llvm;
