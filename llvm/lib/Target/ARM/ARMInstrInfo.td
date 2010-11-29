@@ -1128,40 +1128,40 @@ def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
 
 // Address computation and loads and stores in PIC mode.
 let isNotDuplicable = 1 in {
-def PICADD : ARMPseudoInst<(outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
-                           IIC_iALUr,
-                           [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
+def PICADD  : ARMPseudoInst<(outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
+                            Size4Bytes, IIC_iALUr,
+                            [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
 
 let AddedComplexity = 10 in {
 def PICLDR  : ARMPseudoInst<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_r,
+                            Size4Bytes, IIC_iLoad_r,
                             [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
 def PICLDRH : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_bh_r,
+                            Size4Bytes, IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (zextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_bh_r,
+                            Size4Bytes, IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (zextloadi8 addrmodepc:$addr))]>;
 
 def PICLDRSH : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_bh_r,
+                            Size4Bytes, IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (sextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRSB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            IIC_iLoad_bh_r,
+                            Size4Bytes, IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
 def PICSTR  : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               IIC_iStore_r, [(store GPR:$src, addrmodepc:$addr)]>;
+      Size4Bytes, IIC_iStore_r, [(store GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRH : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               IIC_iStore_bh_r, [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
+      Size4Bytes, IIC_iStore_bh_r, [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRB : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               IIC_iStore_bh_r, [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
+      Size4Bytes, IIC_iStore_bh_r, [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
 } // isNotDuplicable = 1
 
@@ -1430,26 +1430,20 @@ let isBranch = 1, isTerminator = 1 in {
     let isNotDuplicable = 1, isIndirectBranch = 1 in {
     def BR_JTr : ARMPseudoInst<(outs),
                       (ins GPR:$target, i32imm:$jt, i32imm:$id),
-                      IIC_Br,
-                      [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
-      let SZ = SizeSpecial;
-    }
+                      SizeSpecial, IIC_Br,
+                      [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>;
     // FIXME: This shouldn't use the generic "addrmode2," but rather be split
     // into i12 and rs suffixed versions.
     def BR_JTm : ARMPseudoInst<(outs),
                      (ins addrmode2:$target, i32imm:$jt, i32imm:$id),
-                     IIC_Br,
+                     SizeSpecial, IIC_Br,
                      [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
-                       imm:$id)]> {
-      let SZ = SizeSpecial;
-    }
+                       imm:$id)]>;
     def BR_JTadd : ARMPseudoInst<(outs),
                    (ins GPR:$target, GPR:$idx, i32imm:$jt, i32imm:$id),
-                   IIC_Br,
+                   SizeSpecial, IIC_Br,
                    [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
-                     imm:$id)]> {
-      let SZ = SizeSpecial;
-    }
+                     imm:$id)]>;
     } // isNotDuplicable = 1, isIndirectBranch = 1
   } // isBarrier = 1
 
