@@ -1177,24 +1177,42 @@ def tSXTH  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
 
 // test
 let isCompare = 1, isCommutable = 1, Defs = [CPSR] in
-def tTST  : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iTSTr,
-                 "tst", "\t$lhs, $rhs",
-                 [(ARMcmpZ (and_su tGPR:$lhs, tGPR:$rhs), 0)]>,
-            T1DataProcessing<0b1000>;
+def tTST  : T1pI<(outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iTSTr,
+                 "tst", "\t$Rn, $Rm",
+                 [(ARMcmpZ (and_su tGPR:$Rn, tGPR:$Rm), 0)]>,
+            T1DataProcessing<0b1000> {
+  // A8.6.230
+  bits<3> Rm;
+  bits<3> Rn;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rn;
+}
 
 // zero-extend byte
-def tUXTB  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
-                  "uxtb", "\t$dst, $src",
-                  [(set tGPR:$dst, (and tGPR:$src, 0xFF))]>,
+def tUXTB  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
+                  "uxtb", "\t$Rd, $Rm",
+                  [(set tGPR:$Rd, (and tGPR:$Rm, 0xFF))]>,
                   Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{0,0,1,0,1,1,?}>;
+             T1Misc<{0,0,1,0,1,1,?}> {
+  // A8.6.262
+  bits<3> Rm;
+  bits<3> Rd;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
 
 // zero-extend short
-def tUXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
-                  "uxth", "\t$dst, $src",
-                  [(set tGPR:$dst, (and tGPR:$src, 0xFFFF))]>,
+def tUXTH  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
+                  "uxth", "\t$Rd, $Rm",
+                  [(set tGPR:$Rd, (and tGPR:$Rm, 0xFFFF))]>,
                   Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{0,0,1,0,1,0,?}>;
+             T1Misc<{0,0,1,0,1,0,?}> {
+  // A8.6.264
+  bits<3> Rm;
+  bits<3> Rd;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
 
 
 // Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC operation.

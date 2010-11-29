@@ -24,3 +24,11 @@
 @ CHECK: sxth	r2, r3               @ encoding: [0x1a,0xb2]
 	sxtb	r2, r3
 	sxth	r2, r3
+
+@ CHECK: tst	r4, r5               @ encoding: [0x2c,0x42]
+	tst	r4, r5
+
+@ CHECK: uxtb	r3, r6               @ encoding: [0xf3,0xb2]
+@ CHECK: uxth	r3, r6               @ encoding: [0xb3,0xb2]
+	uxtb	r3, r6
+	uxth	r3, r6
