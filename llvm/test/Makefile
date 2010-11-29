@@ -176,6 +176,7 @@ lit.site.cfg: site.exp
 	     -e "s#@LLVM_BINARY_DIR@#$(LLVM_OBJ_ROOT)#g" \
 	     -e "s#@LLVM_TOOLS_DIR@#$(ToolDir)#g" \
 	     -e "s#@LLVMGCCDIR@#$(LLVMGCCDIR)#g" \
+	     -e "s#@ENABLE_SHARED@#$(ENABLE_SHARED)#g" \
 	     $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 
 Unit/lit.site.cfg: $(PROJ_OBJ_DIR)/Unit/.dir FORCE
