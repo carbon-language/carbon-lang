@@ -24,6 +24,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_SYSTEM_PATHV2_H
+#define LLVM_SYSTEM_PATHV2_H
+
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
@@ -64,13 +67,20 @@ namespace path {
 ///
 class const_iterator {
   StringRef Path;      //< The entire path.
-  StringRef Component; //< The current component.
+  StringRef Component; //< The current component. Not necessarily in Path.
+  size_t    Position;  //< The iterators current position within Path.
+
+  // An end iterator has Position = Path.size() + 1.
+  friend const_iterator begin(const StringRef &path);
+  friend const_iterator end(const StringRef &path);
 
 public:
   typedef const StringRef value_type;
+  typedef ptrdiff_t difference_type;
   typedef value_type &reference;
   typedef value_type *pointer;
   typedef std::bidirectional_iterator_tag iterator_category;
+
   reference operator*() const;
   pointer   operator->() const;
   const_iterator &operator++();    // preincrement
@@ -79,10 +89,17 @@ public:
   const_iterator &operator--(int); // postdecrement
   bool operator==(const const_iterator &RHS) const;
   bool operator!=(const const_iterator &RHS) const;
-
-  const_iterator(); //< Default construct end iterator.
-  const_iterator(const StringRef &path);
 };
+
+/// @brief Get begin iterator over \a path.
+/// @param path Input path.
+/// @returns Iterator initialized with the first component of \a path.
+const_iterator begin(const StringRef &path);
+
+/// @brief Get end iterator over \a path.
+/// @param path Input path.
+/// @returns Iterator initialized to the end of \a path.
+const_iterator end(const StringRef &path);
 
 /// @}
 /// @name Lexical Modifiers
@@ -136,7 +153,10 @@ error_code replace_extension(SmallVectorImpl<char> &path,
 /// @param component The component to be appended to \a path.
 /// @returns errc::success if \a component has been appended to \a path,
 ///          otherwise a platform specific error_code.
-error_code append(SmallVectorImpl<char> &path, const Twine &component);
+error_code append(SmallVectorImpl<char> &path, const Twine &a,
+                                               const Twine &b = "",
+                                               const Twine &c = "",
+                                               const Twine &d = "");
 
 /// @brief Append to path.
 ///
@@ -978,3 +998,5 @@ public:
 } // end namespace fs
 } // end namespace sys
 } // end namespace llvm
+
+#endif
