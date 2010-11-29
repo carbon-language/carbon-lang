@@ -521,7 +521,7 @@ ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   SMLoc E = RCurlyTok.getLoc();
   Parser.Lex(); // Eat right curly brace token.
- 
+
   // Verify the register list.
   SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
     RI = Registers.begin(), RE = Registers.end();
@@ -605,7 +605,7 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     E = RBracTok.getLoc();
     Parser.Lex(); // Eat right bracket token.
 
-    
+
     const AsmToken &ExclaimTok = Parser.getTok();
     ARMOperand *WBOp = 0;
     if (ExclaimTok.is(AsmToken::Exclaim)) {
@@ -639,7 +639,7 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     const MCExpr *Offset = 0;
 
     const AsmToken &NextTok = Parser.getTok();
-    
+
     if (NextTok.isNot(AsmToken::EndOfStatement)) {
       Postindexed = true;
       Writeback = true;
