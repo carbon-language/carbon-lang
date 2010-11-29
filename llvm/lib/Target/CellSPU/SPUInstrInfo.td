@@ -2727,6 +2727,8 @@ multiclass RotateMaskQuadByBitCount
   def v8i16: ROTQMBYBIVecInst<v8i16>;
   def v4i32: ROTQMBYBIVecInst<v4i32>;
   def v2i64: ROTQMBYBIVecInst<v2i64>;
+  def r128: ROTQMBYBIInst<(outs GPRC:$rT), (ins GPRC:$rA, R32C:$rB),
+                           [/*no pattern*/]>;
 }
 
 defm ROTQMBYBI: RotateMaskQuadByBitCount;
@@ -2762,8 +2764,9 @@ multiclass RotateMaskQuadByBits
 defm ROTQMBI: RotateMaskQuadByBits;
 
 def : Pat<(srl GPRC:$rA, R32C:$rB),
-          (ROTQMBIr128  GPRC:$rA, 
-                        (SFIr32 R32C:$rB, 0))>;
+          (ROTQMBYBIr128 (ROTQMBIr128  GPRC:$rA, 
+                                       (SFIr32 R32C:$rB, 0)),
+                         (SFIr32 R32C:$rB, 0))>;
 
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~

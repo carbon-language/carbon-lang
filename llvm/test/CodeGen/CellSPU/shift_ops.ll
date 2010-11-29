@@ -10,11 +10,12 @@
 ; RUN: grep {rotqmbyi	}  %t1.s | count 1
 ; RUN: grep {rotqmbii	}  %t1.s | count 2
 ; RUN: grep {rotqmby	}  %t1.s | count 1
-; RUN: grep {rotqmbi	}  %t1.s | count 1
+; RUN: grep {rotqmbi	}  %t1.s | count 2
 ; RUN: grep {rotqbyi	}  %t1.s | count 1
 ; RUN: grep {rotqbii	}  %t1.s | count 2
 ; RUN: grep {rotqbybi	}  %t1.s | count 1
-; RUN: grep {sfi	}  %t1.s | count 3
+; RUN: grep {sfi	}  %t1.s | count 4
+; RUN: cat %t1.s | FileCheck %s
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
@@ -280,4 +281,15 @@ define i32 @hi32_i64(i64 %arg) {
 	%1 = lshr i64 %arg, 32
 	%2 = trunc i64 %1 to i32
 	ret i32 %2
+}
+
+; some random tests
+define i128 @test_lshr_i128( i128 %val ) {
+ 	;CHECK: test_lshr_i128
+	;CHECK: sfi
+	;CHECK: rotqmbi
+	;CHECK: rotqmbybi
+	;CHECK: bi $lr
+	%rv = lshr i128 %val, 64
+	ret i128 %rv
 }
