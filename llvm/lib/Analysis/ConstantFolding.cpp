@@ -740,7 +740,18 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
   
   if (const LoadInst *LI = dyn_cast<LoadInst>(I))
     return ConstantFoldLoadInst(LI, TD);
-  
+
+  if (InsertValueInst *IVI = dyn_cast<InsertValueInst>(I))
+    return ConstantExpr::getInsertValue(
+                                cast<Constant>(IVI->getAggregateOperand()),
+                                cast<Constant>(IVI->getInsertedValueOperand()),
+                                IVI->idx_begin(), IVI->getNumIndices());
+
+  if (ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(I))
+    return ConstantExpr::getExtractValue(
+                                    cast<Constant>(EVI->getAggregateOperand()),
+                                    EVI->idx_begin(), EVI->getNumIndices());
+
   return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
                                   Ops.data(), Ops.size(), TD);
 }
