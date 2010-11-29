@@ -1,8 +1,7 @@
 ; Test that bugpoint can narrow down the testcase to the important function
-; FIXME: This likely fails on windows
 ;
-; RUN: bugpoint -load %llvmlibsdir/BugpointPasses%shlibext %s -output-prefix %t -bugpoint-crashcalls -silence-passes > /dev/null
-; XFAIL: mingw
+; RUN: bugpoint -load %llvmshlibdir/BugpointPasses%shlibext %s -output-prefix %t -bugpoint-crashcalls -silence-passes > /dev/null
+; REQUIRES: loadable_module
 
 define i32 @foo() { ret i32 1 }
 

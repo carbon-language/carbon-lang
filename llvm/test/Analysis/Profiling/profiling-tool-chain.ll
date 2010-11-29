@@ -9,8 +9,8 @@
 
 ; Test the creation, reading and displaying of profile
 ; RUX: rm -f llvmprof.out
-; RUX: lli -load %llvmlibsdir/profile_rt%shlibext %t2
-; RUX: lli -load %llvmlibsdir/profile_rt%shlibext %t2 1 2
+; RUX: lli -load %llvmshlibdir/profile_rt%shlibext %t2
+; RUX: lli -load %llvmshlibdir/profile_rt%shlibext %t2 1 2
 ; RUX: llvm-prof -print-all-code %t1 | FileCheck --check-prefix=PROF %s
 
 ; Test the loaded profile also with verifier.

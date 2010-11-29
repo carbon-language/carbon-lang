@@ -1,7 +1,6 @@
-; FIXME: This likely fails on windows
-; RUN: bugpoint -load %llvmlibsdir/BugpointPasses%shlibext %s -output-prefix %t -bugpoint-crashcalls -silence-passes
+; RUN: bugpoint -load %llvmshlibdir/BugpointPasses%shlibext %s -output-prefix %t -bugpoint-crashcalls -silence-passes
 ; RUN: llvm-dis %t-reduced-simplified.bc -o - | FileCheck %s
-; XFAIL: mingw
+; REQUIRES: loadable_module
 
 ; Test to make sure that arguments are removed from the function if they are 
 ; unnecessary. And clean up any types that that frees up too.
