@@ -101,4 +101,17 @@
 @ CHECK: dmb	ish                     @ encoding: [0x5b,0x8f,0xbf,0xf3]
   dmb	ish
 
-  
+@ CHECK: str.w	r0, [r1, #4092]         @ encoding: [0xfc,0x0f,0xc1,0xf8]
+  str.w	r0, [r1, #4092]
+@ CHECK: str	r0, [r1, #-128]         @ encoding: [0x80,0x0c,0x41,0xf8]
+  str	r0, [r1, #-128]
+@ CHECK: str.w	r0, [r1, r2, lsl #2]    @ encoding: [0x22,0x00,0x41,0xf8
+  str.w	r0, [r1, r2, lsl #2]
+
+@ CHECK: ldr.w	r0, [r0, #4092]         @ encoding: [0xfc,0x0f,0xd0,0xf8]
+  ldr.w	r0, [r0, #4092]
+@ CHECK: ldr	r0, [r0, #-128]         @ encoding: [0x80,0x0c,0x50,0xf8]
+  ldr	r0, [r0, #-128]
+@ CHECK: ldr.w	r0, [r0, r1, lsl #2]    @ encoding: [0x21,0x00,0x50,0xf8]
+  ldr.w	r0, [r0, r1, lsl #2]
+

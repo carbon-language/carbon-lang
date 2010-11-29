@@ -127,6 +127,7 @@ def imm0_255_not : PatLeaf<(i32 imm), [{
 def t2addrmode_imm12 : Operand<i32>,
                        ComplexPattern<i32, 2, "SelectT2AddrModeImm12", []> {
   let PrintMethod = "printAddrModeImm12Operand";
+  string EncoderMethod = "getT2AddrModeImm12OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -134,6 +135,7 @@ def t2addrmode_imm12 : Operand<i32>,
 def t2addrmode_imm8 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
   let PrintMethod = "printT2AddrModeImm8Operand";
+  string EncoderMethod = "getT2AddrModeImm8OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -157,6 +159,7 @@ def t2am_imm8s4_offset : Operand<i32> {
 def t2addrmode_so_reg : Operand<i32>,
                         ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
   let PrintMethod = "printT2AddrModeSoRegOperand";
+  string EncoderMethod = "getT2AddrModeSORegOpValue";
   let MIOperandInfo = (ops GPR:$base, rGPR:$offsreg, i32imm:$offsimm);
 }
 
@@ -823,19 +826,26 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
 /// T2I_ld - Defines a set of (op r, {imm12|imm8|so_reg}) load patterns.
 multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
                   InstrItinClass iii, InstrItinClass iis, PatFrag opnode> {
-  def i12 : T2Ii12<(outs GPR:$dst), (ins t2addrmode_imm12:$addr), iii,
-                   opc, ".w\t$dst, $addr",
-                   [(set GPR:$dst, (opnode t2addrmode_imm12:$addr))]> {
+  def i12 : T2Ii12<(outs GPR:$Rt), (ins t2addrmode_imm12:$addr), iii,
+                   opc, ".w\t$Rt, $addr",
+                   [(set GPR:$Rt, (opnode t2addrmode_imm12:$addr))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
     let Inst{24} = signed;
     let Inst{23} = 1;
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
+    
+    bits<4> Rt;
+    let Inst{15-12} = Rt{3-0};
+    
+    bits<16> addr;
+    let Inst{19-16} = addr{15-12}; // Rn
+    let Inst{11-0}   = addr{11-0};  // imm
   }
-  def i8  : T2Ii8 <(outs GPR:$dst), (ins t2addrmode_imm8:$addr), iii,
-                   opc, "\t$dst, $addr",
-                   [(set GPR:$dst, (opnode t2addrmode_imm8:$addr))]> {
+  def i8  : T2Ii8 <(outs GPR:$Rt), (ins t2addrmode_imm8:$addr), iii,
+                   opc, "\t$Rt, $addr",
+                   [(set GPR:$Rt, (opnode t2addrmode_imm8:$addr))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
     let Inst{24} = signed;
@@ -846,10 +856,18 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     // Offset: index==TRUE, wback==FALSE
     let Inst{10} = 1; // The P bit.
     let Inst{8} = 0; // The W bit.
+    
+    bits<4> Rt;
+    let Inst{15-12} = Rt{3-0};
+    
+    bits<13> addr;
+    let Inst{19-16} = addr{12-9}; // Rn
+    let Inst{9}     = addr{8};    // U
+    let Inst{7-0}   = addr{7-0};  // imm
   }
-  def s   : T2Iso <(outs GPR:$dst), (ins t2addrmode_so_reg:$addr), iis,
-                   opc, ".w\t$dst, $addr",
-                   [(set GPR:$dst, (opnode t2addrmode_so_reg:$addr))]> {
+  def s   : T2Iso <(outs GPR:$Rt), (ins t2addrmode_so_reg:$addr), iis,
+                   opc, ".w\t$Rt, $addr",
+                   [(set GPR:$Rt, (opnode t2addrmode_so_reg:$addr))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
     let Inst{24} = signed;
@@ -857,12 +875,20 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
     let Inst{11-6} = 0b000000;
+    
+    bits<4> Rt;
+    let Inst{15-12} = Rt{3-0};
+    
+    bits<10> addr;
+    let Inst{19-16} = addr{9-6}; // Rn
+    let Inst{3-0}   = addr{5-2}; // Rm
+    let Inst{5-4}   = addr{1-0}; // imm
   }
 
   // FIXME: Is the pci variant actually needed?
-  def pci : T2Ipc <(outs GPR:$dst), (ins i32imm:$addr), iii,
-                   opc, ".w\t$dst, $addr",
-                   [(set GPR:$dst, (opnode (ARMWrapper tconstpool:$addr)))]> {
+  def pci : T2Ipc <(outs GPR:$Rt), (ins i32imm:$addr), iii,
+                   opc, ".w\t$Rt, $addr",
+                   [(set GPR:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]> {
     let isReMaterializable = 1;
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
@@ -871,23 +897,35 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
     let Inst{19-16} = 0b1111; // Rn
+    
+    bits<4> Rt;
+    bits<12> addr;
+    let Inst{15-12} = Rt{3-0};
+    let Inst{11-0}  = addr{11-0};
   }
 }
 
 /// T2I_st - Defines a set of (op r, {imm12|imm8|so_reg}) store patterns.
 multiclass T2I_st<bits<2> opcod, string opc,
                   InstrItinClass iii, InstrItinClass iis, PatFrag opnode> {
-  def i12 : T2Ii12<(outs), (ins GPR:$src, t2addrmode_imm12:$addr), iii,
-                   opc, ".w\t$src, $addr",
-                   [(opnode GPR:$src, t2addrmode_imm12:$addr)]> {
+  def i12 : T2Ii12<(outs), (ins GPR:$Rt, t2addrmode_imm12:$addr), iii,
+                   opc, ".w\t$Rt, $addr",
+                   [(opnode GPR:$Rt, t2addrmode_imm12:$addr)]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0001;
     let Inst{22-21} = opcod;
     let Inst{20} = 0; // !load
+    
+    bits<4> Rt;
+    let Inst{19-16} = Rt{3-0};
+    
+    bits<16> addr;
+    let Inst{19-16} = addr{15-12}; // Rn
+    let Inst{11-0}   = addr{11-0};  // imm
   }
-  def i8  : T2Ii8 <(outs), (ins GPR:$src, t2addrmode_imm8:$addr), iii,
-                   opc, "\t$src, $addr",
-                   [(opnode GPR:$src, t2addrmode_imm8:$addr)]> {
+  def i8  : T2Ii8 <(outs), (ins GPR:$Rt, t2addrmode_imm8:$addr), iii,
+                   opc, "\t$Rt, $addr",
+                   [(opnode GPR:$Rt, t2addrmode_imm8:$addr)]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0000;
     let Inst{22-21} = opcod;
@@ -896,15 +934,31 @@ multiclass T2I_st<bits<2> opcod, string opc,
     // Offset: index==TRUE, wback==FALSE
     let Inst{10} = 1; // The P bit.
     let Inst{8} = 0; // The W bit.
+    
+    bits<4> Rt;
+    let Inst{19-16} = Rt{3-0};
+    
+    bits<13> addr;
+    let Inst{19-16} = addr{12-9}; // Rn
+    let Inst{9}     = addr{8};    // U
+    let Inst{7-0}   = addr{7-0};  // imm
   }
-  def s   : T2Iso <(outs), (ins GPR:$src, t2addrmode_so_reg:$addr), iis,
-                   opc, ".w\t$src, $addr",
-                   [(opnode GPR:$src, t2addrmode_so_reg:$addr)]> {
+  def s   : T2Iso <(outs), (ins GPR:$Rt, t2addrmode_so_reg:$addr), iis,
+                   opc, ".w\t$Rt, $addr",
+                   [(opnode GPR:$Rt, t2addrmode_so_reg:$addr)]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0000;
     let Inst{22-21} = opcod;
     let Inst{20} = 0; // !load
     let Inst{11-6} = 0b000000;
+    
+    bits<4> Rt;
+    let Inst{15-12} = Rt{3-0};
+    
+    bits<10> addr;
+    let Inst{19-16}   = addr{9-6}; // Rn
+    let Inst{3-0} = addr{5-2}; // Rm
+    let Inst{5-4}   = addr{1-0}; // imm
   }
 }
 

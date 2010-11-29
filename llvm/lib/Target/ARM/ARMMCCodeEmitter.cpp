@@ -173,6 +173,13 @@ public:
     return Encoded;
   }
 
+  unsigned getT2AddrModeSORegOpValue(const MCInst &MI, unsigned OpNum,
+    SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getT2AddrModeImm8OpValue(const MCInst &MI, unsigned OpNum,
+    SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getT2AddrModeImm12OpValue(const MCInst &MI, unsigned OpNum,
+    SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getSORegOpValue - Return an encoded so_reg shifted register value.
   unsigned getSORegOpValue(const MCInst &MI, unsigned Op,
                            SmallVectorImpl<MCFixup> &Fixups) const;
@@ -630,6 +637,54 @@ getSORegOpValue(const MCInst &MI, unsigned OpIdx,
 
   // Encode shift_imm bit[11:7].
   return Binary | ARM_AM::getSORegOffset(MO2.getImm()) << 7;
+}
+
+unsigned ARMMCCodeEmitter::
+getT2AddrModeSORegOpValue(const MCInst &MI, unsigned OpNum,
+                SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO1 = MI.getOperand(OpNum);
+  const MCOperand &MO2 = MI.getOperand(OpNum+1);
+  const MCOperand &MO3 = MI.getOperand(OpNum+2);                 
+  
+  // Encoded as [Rn, Rm, imm].
+  // FIXME: Needs fixup support.
+  unsigned Value = getARMRegisterNumbering(MO1.getReg());
+  Value <<= 4;
+  Value |= getARMRegisterNumbering(MO2.getReg());
+  Value <<= 2;
+  Value |= MO3.getImm();
+  
+  return Value;
+}
+
+unsigned ARMMCCodeEmitter::
+getT2AddrModeImm8OpValue(const MCInst &MI, unsigned OpNum,
+                         SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO1 = MI.getOperand(OpNum);
+  const MCOperand &MO2 = MI.getOperand(OpNum+1);
+
+  // FIXME: Needs fixup support.
+  unsigned Value = getARMRegisterNumbering(MO1.getReg());
+  
+  // Even though the immediate is 8 bits long, we need 9 bits in order
+  // to represent the (inverse of the) sign bit.
+  Value <<= 9;
+  Value |= ((int32_t)MO2.getImm()) & 511;
+  Value ^= 256; // Invert the sign bit.
+  return Value;
+}
+
+unsigned ARMMCCodeEmitter::
+getT2AddrModeImm12OpValue(const MCInst &MI, unsigned OpNum,
+                         SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO1 = MI.getOperand(OpNum);
+  const MCOperand &MO2 = MI.getOperand(OpNum+1);
+
+  // FIXME: Needs fixup support.
+  unsigned Value = getARMRegisterNumbering(MO1.getReg());
+  Value <<= 12;
+  Value |= MO2.getImm() & 4095;
+  return Value;
 }
 
 unsigned ARMMCCodeEmitter::
