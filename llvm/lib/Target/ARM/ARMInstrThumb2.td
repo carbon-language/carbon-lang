@@ -2947,7 +2947,7 @@ def t2BR_JT :
 
 // FIXME: Add a non-pc based case that can be predicated.
 let isCodeGenOnly = 1 in  // $id doesn't exist in asm string, should be lowered.
-def t2TBB :
+def t2TBB_JT :
     T2JTI<(outs),
         (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
          IIC_Br, "tbb\t$index$jt", []> {
@@ -2959,7 +2959,7 @@ def t2TBB :
 }
 
 let isCodeGenOnly = 1 in  // $id doesn't exist in asm string, should be lowered.
-def t2TBH :
+def t2TBH_JT :
     T2JTI<(outs),
         (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
          IIC_Br, "tbh\t$index$jt", []> {

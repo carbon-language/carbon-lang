@@ -531,7 +531,7 @@ void ARMInstPrinter::printThumbAddrModeSPOperand(const MCInst *MI, unsigned Op,
 void ARMInstPrinter::printTBAddrMode(const MCInst *MI, unsigned OpNum,
                                      raw_ostream &O) {
   O << "[pc, " << getRegisterName(MI->getOperand(OpNum).getReg());
-  if (MI->getOpcode() == ARM::t2TBH)
+  if (MI->getOpcode() == ARM::t2TBH_JT)
     O << ", lsl #1";
   O << ']';
 }

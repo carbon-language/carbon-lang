@@ -740,9 +740,9 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
   unsigned OffsetWidth = 4;
-  if (MI->getOpcode() == ARM::t2TBB)
+  if (MI->getOpcode() == ARM::t2TBB_JT)
     OffsetWidth = 1;
-  else if (MI->getOpcode() == ARM::t2TBH)
+  else if (MI->getOpcode() == ARM::t2TBH_JT)
     OffsetWidth = 2;
 
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
@@ -777,7 +777,7 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
 
   // Make sure the instruction that follows TBB is 2-byte aligned.
   // FIXME: Constant island pass should insert an "ALIGN" instruction instead.
-  if (MI->getOpcode() == ARM::t2TBB)
+  if (MI->getOpcode() == ARM::t2TBB_JT)
     EmitAlignment(1);
 }
 
@@ -924,8 +924,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     return;
   }
-  case ARM::t2TBB:
-  case ARM::t2TBH:
+  case ARM::t2TBB_JT:
+  case ARM::t2TBH_JT:
   case ARM::t2BR_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;

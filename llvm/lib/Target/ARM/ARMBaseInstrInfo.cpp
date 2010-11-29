@@ -518,13 +518,13 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     case ARM::BR_JTadd:
     case ARM::tBR_JTr:
     case ARM::t2BR_JT:
-    case ARM::t2TBB:
-    case ARM::t2TBH: {
+    case ARM::t2TBB_JT:
+    case ARM::t2TBH_JT: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries. For TBB, each
       // entry is one byte; TBH two byte each.
-      unsigned EntrySize = (Opc == ARM::t2TBB)
-        ? 1 : ((Opc == ARM::t2TBH) ? 2 : 4);
+      unsigned EntrySize = (Opc == ARM::t2TBB_JT)
+        ? 1 : ((Opc == ARM::t2TBH_JT) ? 2 : 4);
       unsigned NumOps = TID.getNumOperands();
       MachineOperand JTOP =
         MI->getOperand(NumOps - (TID.isPredicable() ? 3 : 2));
@@ -542,7 +542,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       // alignment issue.
       unsigned InstSize = (Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT) ? 2 : 4;
       unsigned NumEntries = getNumJTEntries(JT, JTI);
-      if (Opc == ARM::t2TBB && (NumEntries & 1))
+      if (Opc == ARM::t2TBB_JT && (NumEntries & 1))
         // Make sure the instruction that follows TBB is 2-byte aligned.
         // FIXME: Constant island pass should insert an "ALIGN" instruction
         // instead.

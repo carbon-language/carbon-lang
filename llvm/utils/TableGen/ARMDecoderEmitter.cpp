@@ -1719,7 +1719,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
       return false;
 
     // Ignore t2TBB, t2TBH and prefer the generic t2TBBgen, t2TBHgen.
-    if (Name == "t2TBB" || Name == "t2TBH")
+    if (Name == "t2TBB_JT" || Name == "t2TBH_JT")
       return false;
 
     // Resolve conflicts:
