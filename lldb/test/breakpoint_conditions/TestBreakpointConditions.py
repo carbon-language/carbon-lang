@@ -56,7 +56,7 @@ class BreakpointConditionsTestCase(TestBase):
         # Now run the program.
         self.runCmd("run", RUN_SUCCEEDED)
 
-        # The process should be stopped.
+        # The process should be stopped at this point.
         self.expect("process status", PROCESS_STOPPED,
             patterns = ['Process .* stopped'])
 
