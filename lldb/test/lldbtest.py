@@ -151,6 +151,8 @@ BREAKPOINT_HIT_THRICE = "Breakpoint resolved with hit cout = 3"
 
 STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
 
+PROCESS_STOPPED = "Process status should be stopped"
+
 STOPPED_DUE_TO_BREAKPOINT = "Process should be stopped due to breakpoint"
 
 STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS = "%s, %s" % (

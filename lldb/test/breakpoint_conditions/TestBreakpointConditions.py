@@ -56,6 +56,10 @@ class BreakpointConditionsTestCase(TestBase):
         # Now run the program.
         self.runCmd("run", RUN_SUCCEEDED)
 
+        # The process should be stopped.
+        self.expect("process status", PROCESS_STOPPED,
+            patterns = ['Process .* stopped'])
+
         # 'frame variable -t val' should return 3 due to breakpoint condition.
         self.expect("frame variable -t val", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) val = 3')
