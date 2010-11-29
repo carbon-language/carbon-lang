@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"     // Get autoconf configuration settings
-#include "llvm/System/Errno.h"
+#include "llvm/Support/Errno.h"
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
