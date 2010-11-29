@@ -3107,74 +3107,53 @@ def t2SMC : T2I<(outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
   let Inst{19-16} = opt{3-0};
 }
 
-class T2SRS<dag oops, dag iops, InstrItinClass itin,
+class T2SRS<bits<12> op31_20, 
+           dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
+  let Inst{31-20} = op31_20{11-0};
+  
   bits<5> mode;
   let Inst{4-0} = mode{4-0};
 }
 
 // Store Return State is a system instruction -- for disassembly only
-def t2SRSDBW : T2SRS<
+def t2SRSDBW : T2SRS<0b111010000010,
                    (outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp!, $mode",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0000010; // W = 1
-}
-
-def t2SRSDB  : T2SRS<
+                   [/* For disassembly only; pattern left blank */]>;
+def t2SRSDB  : T2SRS<0b111010000000,
                    (outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp, $mode",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0000000; // W = 0
-}
-
-def t2SRSIAW : T2SRS<
+                   [/* For disassembly only; pattern left blank */]>;
+def t2SRSIAW : T2SRS<0b111010011010,
                    (outs),(ins i32imm:$mode),NoItinerary,"srsia","\tsp!, $mode",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0011010; // W = 1
-}
-
-def t2SRSIA  : T2SRS<
+                   [/* For disassembly only; pattern left blank */]>;
+def t2SRSIA  : T2SRS<0b111010011000,
                    (outs), (ins i32imm:$mode),NoItinerary,"srsia","\tsp, $mode",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0011000; // W = 0
-}
+                   [/* For disassembly only; pattern left blank */]>;
 
 // Return From Exception is a system instruction -- for disassembly only
 
-class T2RFE<dag oops, dag iops, InstrItinClass itin,
+class T2RFE<bits<12> op31_20, dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
+  let Inst{31-20} = op31_20{11-0};
+  
   bits<4> Rn;
   let Inst{19-16} = Rn{3-0};
 }
 
-def t2RFEDBW : T2RFE<(outs), (ins rGPR:$Rn), NoItinerary, "rfedb", "\t$Rn!",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0000011; // W = 1
-}
-
-def t2RFEDB  : T2RFE<(outs), (ins rGPR:$Rn), NoItinerary, "rfeab", "\t$Rn",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0000001; // W = 0
-}
-
-def t2RFEIAW : T2RFE<(outs), (ins rGPR:$Rn), NoItinerary, "rfeia", "\t$Rn!",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0011011; // W = 1
-}
-
-def t2RFEIA  : T2RFE<(outs), (ins rGPR:$Rn), NoItinerary, "rfeia", "\t$Rn",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0011001; // W = 0
-}
+def t2RFEDBW : T2RFE<0b111010000011,
+                   (outs), (ins rGPR:$Rn), NoItinerary, "rfedb", "\t$Rn!",
+                   [/* For disassembly only; pattern left blank */]>;
+def t2RFEDB  : T2RFE<0b111010000001,
+                   (outs), (ins rGPR:$Rn), NoItinerary, "rfeab", "\t$Rn",
+                   [/* For disassembly only; pattern left blank */]>;
+def t2RFEIAW : T2RFE<0b111010011011,
+                   (outs), (ins rGPR:$Rn), NoItinerary, "rfeia", "\t$Rn!",
+                   [/* For disassembly only; pattern left blank */]>;
+def t2RFEIA  : T2RFE<0b111010011001,
+                   (outs), (ins rGPR:$Rn), NoItinerary, "rfeia", "\t$Rn",
+                   [/* For disassembly only; pattern left blank */]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
@@ -3212,62 +3191,45 @@ def t2LDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
 // Move between special register and ARM core register -- for disassembly only
 //
 
-class T2MRS<dag oops, dag iops, InstrItinClass itin,
+class T2SpecialReg<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
+          dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
+  let Inst{31-20} = op31_20{11-0};
+  let Inst{15-14} = op15_14{1-0};
+  let Inst{12} = op12{0};
+}
+
+class T2MRS<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
+          dag oops, dag iops, InstrItinClass itin,
+          string opc, string asm, list<dag> pattern>
+  : T2SpecialReg<op31_20, op15_14, op12, oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   let Inst{11-8} = Rd{3-0};
 }
 
-def t2MRS : T2MRS<(outs rGPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, cpsr",
-                [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11110;
-  let Inst{26} = 0;
-  let Inst{25-21} = 0b11111;
-  let Inst{20} = 0; // The R bit.
-  let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
-}
-
-def t2MRSsys : T2MRS<
+def t2MRS : T2MRS<0b111100111110, 0b10, 0,
+                (outs rGPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, cpsr",
+                [/* For disassembly only; pattern left blank */]>;
+def t2MRSsys : T2MRS<0b111100111111, 0b10, 0,
                    (outs rGPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11110;
-  let Inst{26} = 0;
-  let Inst{25-21} = 0b11111;
-  let Inst{20} = 1; // The R bit.
-  let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
-}
+                   [/* For disassembly only; pattern left blank */]>;
 
-class T2MSR<dag oops, dag iops, InstrItinClass itin,
+class T2MSR<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
+            dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> {
+  : T2SpecialReg<op31_20, op15_14, op12, oops, iops, itin, opc, asm, pattern> {
   bits<4> Rn;
   bits<4> mask;
   let Inst{19-16} = Rn{3-0};
   let Inst{11-8} = mask{3-0};
 }
 
-def t2MSR : T2MSR<(outs), (ins rGPR:$Rn, msr_mask:$mask), NoItinerary, "msr",
+def t2MSR : T2MSR<0b111100111000, 0b10, 0,
+                (outs), (ins rGPR:$Rn, msr_mask:$mask), NoItinerary, "msr",
                 "\tcpsr$mask, $Rn",
-                [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11110;
-  let Inst{26} = 0;
-  let Inst{25-21} = 0b11100;
-  let Inst{20} = 0; // The R bit.
-  let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
-}
-
-def t2MSRsys : T2MSR<
+                [/* For disassembly only; pattern left blank */]>;
+def t2MSRsys : T2MSR<0b111100111001, 0b10, 0,
                    (outs), (ins rGPR:$Rn, msr_mask:$mask), NoItinerary, "msr",
                    "\tspsr$mask, $Rn",
-                   [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11110;
-  let Inst{26} = 0;
-  let Inst{25-21} = 0b11100;
-  let Inst{20} = 1; // The R bit.
-  let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
-}
+                   [/* For disassembly only; pattern left blank */]>;
