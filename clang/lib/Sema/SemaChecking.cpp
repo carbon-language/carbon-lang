@@ -1787,11 +1787,35 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
         << ALE->getSourceRange();
 
   } else if (lhsType->isReferenceType()) {
+    // Perform checking for local temporaries returned by reference.
+    if (RetValExp->Classify(Context).isPRValue()) {
+      Diag(RetValExp->getLocStart(), diag::warn_ret_local_temp_ref)
+        << RetValExp->getSourceRange();
+      return;
+    }
+
     // Perform checking for stack values returned by reference.
     // Check for a reference to the stack
-    if (DeclRefExpr *DR = EvalVal(RetValExp))
+    if (DeclRefExpr *DR = EvalVal(RetValExp)) {
+      const VarDecl *VD = cast<VarDecl>(DR->getDecl());
+      // Check for returning reference variable that binds to temporary.
+      if (VD->getType()->isReferenceType()) {
+        if (const Expr *init = VD->getInit())
+          if (init->Classify(Context).isPRValue()) {
+            Diag(DR->getLocStart(), diag::warn_ret_local_temp_var_ref)
+              << VD->getDeclName() << RetValExp->getSourceRange();
+            Diag(VD->getLocation(), diag::note_local_temp_var_ref)
+              << VD->getDeclName() << VD->getInit()->getSourceRange();
+          }
+
+        // When returning a reference variable that doesn't bind to temporary,
+        // no warning.
+        return;
+      }
+
       Diag(DR->getLocStart(), diag::warn_ret_stack_ref)
-        << DR->getDecl()->getDeclName() << RetValExp->getSourceRange();
+        << VD->getDeclName() << RetValExp->getSourceRange();
+    }
   }
 }
 
@@ -1953,7 +1977,7 @@ do {
     DeclRefExpr *DR = cast<DeclRefExpr>(E);
 
     if (VarDecl *V = dyn_cast<VarDecl>(DR->getDecl()))
-      if (V->hasLocalStorage() && !V->getType()->isReferenceType()) return DR;
+      if (V->hasLocalStorage()) return DR;
 
     return NULL;
   }
