@@ -136,45 +136,41 @@ def tADJCALLSTACKDOWN :
             Requires<[IsThumb, IsThumb1Only]>;
 }
 
+class T1Disassembly<bits<2> op1, bits<8> op2>
+  : T1Encoding<0b101111> {
+  let Inst{9-8} = op1;
+  let Inst{7-0} = op2;
+}
+
 def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "",
                 [/* For disassembly only; pattern left blank */]>,
-           T1Encoding<0b101111> {
-  // A8.6.110
-  let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0x00;
-} 
+           T1Disassembly<0b11, 0x00>; // A8.6.110
 
 def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "",
                   [/* For disassembly only; pattern left blank */]>,
-             T1Encoding<0b101111> {
-  // A8.6.410
-  let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0x10;
-} 
+           T1Disassembly<0b11, 0x10>; // A8.6.410
 
 def tWFE : T1pI<(outs), (ins), NoItinerary, "wfe", "",
                 [/* For disassembly only; pattern left blank */]>,
-           T1Encoding<0b101111> {
-  // A8.6.408
-  let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0x20;
-} 
+           T1Disassembly<0b11, 0x20>; // A8.6.408
 
 def tWFI : T1pI<(outs), (ins), NoItinerary, "wfi", "",
                 [/* For disassembly only; pattern left blank */]>,
-           T1Encoding<0b101111> {
-  // A8.6.409
-  let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0x30;
-} 
+           T1Disassembly<0b11, 0x30>; // A8.6.409
 
 def tSEV : T1pI<(outs), (ins), NoItinerary, "sev", "",
                 [/* For disassembly only; pattern left blank */]>,
-           T1Encoding<0b101111> {
-  // A8.6.157
-  let Inst{9-8} = 0b11;
-  let Inst{7-0} = 0x40;
-} 
+           T1Disassembly<0b11, 0x40>; // A8.6.157
+
+// The i32imm operand $val can be used by a debugger to store more information
+// about the breakpoint.
+def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
+                [/* For disassembly only; pattern left blank */]>,
+           T1Disassembly<0b10, {?,?,?,?,?,?,?,?}> {
+  // A8.6.22
+  bits<8> val;
+  let Inst{7-0} = val;
+}
 
 def tSETENDBE : T1I<(outs), (ins), NoItinerary, "setend\tbe",
                     [/* For disassembly only; pattern left blank */]>,
@@ -194,17 +190,6 @@ def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
   let Inst{4}   = 1;
   let Inst{3}   = 0;            // Little-Endian
   let Inst{2-0} = 0b000;
-}
-
-// The i32imm operand $val can be used by a debugger to store more information
-// about the breakpoint.
-def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
-                [/* For disassembly only; pattern left blank */]>,
-            T1Encoding<0b101111> {
-  // A8.6.22
-  bits<8> val;
-  let Inst{9-8} = 0b10;
-  let Inst{7-0} = val;
 }
 
 // Change Processor State is a system instruction -- for disassembly only.
