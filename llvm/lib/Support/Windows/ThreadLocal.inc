@@ -1,4 +1,4 @@
-//= llvm/System/Win32/ThreadLocal.inc - Win32 Thread Local Data -*- C++ -*-===//
+//= llvm/Support/Win32/ThreadLocal.inc - Win32 Thread Local Data -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

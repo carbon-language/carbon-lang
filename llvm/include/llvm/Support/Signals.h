@@ -1,4 +1,4 @@
-//===- llvm/System/Signals.h - Signal Handling support ----------*- C++ -*-===//
+//===- llvm/Support/Signals.h - Signal Handling support ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

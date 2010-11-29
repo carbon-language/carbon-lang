@@ -1,4 +1,4 @@
-//===- llvm/System/Path.h - Path Operating System Concept -------*- C++ -*-===//
+//===- llvm/Support/Path.h - Path Operating System Concept -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

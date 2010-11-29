@@ -1,4 +1,4 @@
-//===- llvm/System/Atomic.h - Atomic Operations -----------------*- C++ -*-===//
+//===- llvm/Support/Atomic.h - Atomic Operations -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- llvm/System/Win32/Host.inc -------------------------------*- C++ -*-===//
+//===- llvm/Support/Win32/Host.inc -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

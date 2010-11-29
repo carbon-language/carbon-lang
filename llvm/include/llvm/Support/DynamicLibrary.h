@@ -1,4 +1,4 @@
-//===-- llvm/System/DynamicLibrary.h - Portable Dynamic Library -*- C++ -*-===//
+//===-- llvm/Support/DynamicLibrary.h - Portable Dynamic Library -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

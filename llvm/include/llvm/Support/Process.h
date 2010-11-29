@@ -1,4 +1,4 @@
-//===- llvm/System/Process.h ------------------------------------*- C++ -*-===//
+//===- llvm/Support/Process.h ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

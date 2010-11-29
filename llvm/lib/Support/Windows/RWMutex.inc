@@ -1,4 +1,4 @@
-//= llvm/System/Win32/Mutex.inc - Win32 Reader/Writer Mutual Exclusion Lock  =//
+//= llvm/Support/Win32/Mutex.inc - Win32 Reader/Writer Mutual Exclusion Lock  =//
 //
 //                     The LLVM Compiler Infrastructure
 //

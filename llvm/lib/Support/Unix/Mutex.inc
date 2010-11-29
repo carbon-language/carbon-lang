@@ -1,4 +1,4 @@
-//===- llvm/System/Unix/Mutex.inc - Unix Mutex Implementation ---*- C++ -*-===//
+//===- llvm/Support/Unix/Mutex.inc - Unix Mutex Implementation ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

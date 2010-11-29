@@ -1,4 +1,4 @@
-//===-- llvm/System/Threading.cpp- Control multithreading mode --*- C++ -*-==//
+//===-- llvm/Support/Threading.cpp- Control multithreading mode --*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //

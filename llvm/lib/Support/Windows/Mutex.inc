@@ -1,4 +1,4 @@
-//===- llvm/System/Win32/Mutex.inc - Win32 Mutex Implementation -*- C++ -*-===//
+//===- llvm/Support/Win32/Mutex.inc - Win32 Mutex Implementation -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

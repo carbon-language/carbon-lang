@@ -1,4 +1,4 @@
-//===- llvm/System/Alarm.h - Alarm Generation support  ----------*- C++ -*-===//
+//===- llvm/Support/Alarm.h - Alarm Generation support  ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

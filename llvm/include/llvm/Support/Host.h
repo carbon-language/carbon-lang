@@ -1,4 +1,4 @@
-//===- llvm/System/Host.h - Host machine characteristics --------*- C++ -*-===//
+//===- llvm/Support/Host.h - Host machine characteristics --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

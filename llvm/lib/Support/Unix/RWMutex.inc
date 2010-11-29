@@ -1,4 +1,4 @@
-//= llvm/System/Unix/RWMutex.inc - Unix Reader/Writer Mutual Exclusion Lock  =//
+//= llvm/Support/Unix/RWMutex.inc - Unix Reader/Writer Mutual Exclusion Lock  =//
 //
 //                     The LLVM Compiler Infrastructure
 //

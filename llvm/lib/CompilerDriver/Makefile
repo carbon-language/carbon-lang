@@ -13,7 +13,7 @@ LEVEL = ../..
 # name doesn't start with "LLVM" and NO_LLVM_CONFIG is set.
 
 LIBRARYNAME = CompilerDriver
-LINK_COMPONENTS = support system
+LINK_COMPONENTS = support
 NO_LLVM_CONFIG = 1
 
 

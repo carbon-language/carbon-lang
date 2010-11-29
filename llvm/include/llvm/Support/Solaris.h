@@ -1,4 +1,4 @@
-/*===- llvm/System/Solaris.h ------------------------------------*- C++ -*-===*
+/*===- llvm/Support/Solaris.h ------------------------------------*- C++ -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *

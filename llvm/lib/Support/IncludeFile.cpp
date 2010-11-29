@@ -16,5 +16,5 @@
 using namespace llvm;
 
 // This constructor is used to ensure linking of other modules. See the
-// llvm/System/IncludeFile.h header for details.
+// llvm/Support/IncludeFile.h header for details.
 IncludeFile::IncludeFile(const void*) {}

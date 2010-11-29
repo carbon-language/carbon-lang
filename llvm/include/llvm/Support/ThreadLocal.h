@@ -1,4 +1,4 @@
-//===- llvm/System/ThreadLocal.h - Thread Local Data ------------*- C++ -*-===//
+//===- llvm/Support/ThreadLocal.h - Thread Local Data ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
