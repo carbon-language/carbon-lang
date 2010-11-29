@@ -3212,8 +3212,14 @@ def t2LDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
 // Move between special register and ARM core register -- for disassembly only
 //
 
-// Rd = Instr{11-8}
-def t2MRS : T2I<(outs rGPR:$dst), (ins), NoItinerary, "mrs", "\t$dst, cpsr",
+class T2MRS<dag oops, dag iops, InstrItinClass itin,
+          string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rd;
+  let Inst{11-8} = Rd{3-0};
+}
+
+def t2MRS : T2MRS<(outs rGPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, cpsr",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
@@ -3223,8 +3229,8 @@ def t2MRS : T2I<(outs rGPR:$dst), (ins), NoItinerary, "mrs", "\t$dst, cpsr",
   let Inst{12} = 0;
 }
 
-// Rd = Instr{11-8}
-def t2MRSsys : T2I<(outs rGPR:$dst), (ins), NoItinerary, "mrs", "\t$dst, spsr",
+def t2MRSsys : T2MRS<
+                   (outs rGPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
@@ -3234,9 +3240,17 @@ def t2MRSsys : T2I<(outs rGPR:$dst), (ins), NoItinerary, "mrs", "\t$dst, spsr",
   let Inst{12} = 0;
 }
 
-// Rn = Inst{19-16}
-def t2MSR : T2I<(outs), (ins rGPR:$src, msr_mask:$mask), NoItinerary, "msr",
-                "\tcpsr$mask, $src",
+class T2MSR<dag oops, dag iops, InstrItinClass itin,
+          string opc, string asm, list<dag> pattern>
+  : T2I<oops, iops, itin, opc, asm, pattern> {
+  bits<4> Rn;
+  bits<4> mask;
+  let Inst{19-16} = Rn{3-0};
+  let Inst{11-8} = mask{3-0};
+}
+
+def t2MSR : T2MSR<(outs), (ins rGPR:$Rn, msr_mask:$mask), NoItinerary, "msr",
+                "\tcpsr$mask, $Rn",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
@@ -3246,9 +3260,9 @@ def t2MSR : T2I<(outs), (ins rGPR:$src, msr_mask:$mask), NoItinerary, "msr",
   let Inst{12} = 0;
 }
 
-// Rn = Inst{19-16}
-def t2MSRsys : T2I<(outs), (ins rGPR:$src, msr_mask:$mask), NoItinerary, "msr",
-                   "\tspsr$mask, $src",
+def t2MSRsys : T2MSR<
+                   (outs), (ins rGPR:$Rn, msr_mask:$mask), NoItinerary, "msr",
+                   "\tspsr$mask, $Rn",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
