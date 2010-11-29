@@ -529,7 +529,7 @@ define <16 x i8> @v_orrimmQ(<16 x i8>* %A) nounwind {
 define <8 x i8> @v_bicimm(<8 x i8>* %A) nounwind {
 ; CHECK: v_bicimm:
 ; CHECK-NOT: vmov
-; CHECK-NOT vmvn
+; CHECK-NOT: vmvn
 ; CHECK: vbic
 	%tmp1 = load <8 x i8>* %A
 	%tmp3 = and <8 x i8> %tmp1, < i8 -1, i8 -1, i8 -1, i8 0, i8 -1, i8 -1, i8 -1, i8 0 >
