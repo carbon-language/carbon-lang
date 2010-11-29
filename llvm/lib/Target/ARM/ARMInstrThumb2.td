@@ -21,11 +21,6 @@ def it_mask : Operand<i32> {
   let PrintMethod = "printThumbITMask";
 }
 
-// Table branch address
-def tb_addrmode : Operand<i32> {
-  let PrintMethod = "printTBAddrMode";
-}
-
 // Shifted operands. No register controlled shifts for Thumb2.
 // Note: We do not support rrx shifted operands yet.
 def t2_so_reg : Operand<i32>,    // reg imm
@@ -2933,59 +2928,40 @@ def t2B   : T2XI<(outs), (ins brtarget:$target), IIC_Br,
 let isNotDuplicable = 1, isIndirectBranch = 1,
     isCodeGenOnly = 1 in { // $id doesn't exist in asmstring, should be lowered.
 def t2BR_JT :
-    T2JTI<(outs),
-          (ins GPR:$target, GPR:$index, jt2block_operand:$jt, i32imm:$id),
-           IIC_Br, "mov\tpc, $target$jt",
-          [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0100100;
-  let Inst{19-16} = 0b1111;
-  let Inst{14-12} = 0b000;
-  let Inst{11-8} = 0b1111; // Rd = pc
-  let Inst{7-4} = 0b0000;
-}
+    tPseudoInst<(outs),
+          (ins GPR:$target, GPR:$index, i32imm:$jt, i32imm:$id),
+           SizeSpecial, IIC_Br,// "mov\tpc, $target$jt",
+          [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]>;
 
 // FIXME: Add a non-pc based case that can be predicated.
-let isCodeGenOnly = 1 in  // $id doesn't exist in asm string, should be lowered.
-def t2TBB_JT :
-    T2JTI<(outs),
-        (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
-         IIC_Br, "tbb\t$index$jt", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0001101;
-  let Inst{19-16} = 0b1111; // Rn = pc (table follows this instruction)
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-4} = 0b0000; // B form
+def t2TBB_JT : tPseudoInst<(outs),
+        (ins GPR:$index, i32imm:$jt, i32imm:$id),
+         SizeSpecial, IIC_Br, []>;
+
+def t2TBH_JT : tPseudoInst<(outs),
+        (ins GPR:$index, i32imm:$jt, i32imm:$id),
+         SizeSpecial, IIC_Br, []>;
+
+def t2TBB : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
+                    "tbb", "\t[$Rn, $Rm]", []> {
+  bits<4> Rn;
+  bits<4> Rm;
+  let Inst{27-20} = 0b10001101;
+  let Inst{19-16} = Rn;
+  let Inst{15-5} = 0b11110000000;
+  let Inst{4} = 0; // B form
+  let Inst{3-0} = Rm;
 }
 
-let isCodeGenOnly = 1 in  // $id doesn't exist in asm string, should be lowered.
-def t2TBH_JT :
-    T2JTI<(outs),
-        (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
-         IIC_Br, "tbh\t$index$jt", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0001101;
-  let Inst{19-16} = 0b1111; // Rn = pc (table follows this instruction)
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-4} = 0b0001; // H form
-}
-
-// Generic versions of the above two instructions, for disassembly only
-
-def t2TBBgen : T2I<(outs), (ins GPR:$a, GPR:$b), IIC_Br,
-                    "tbb", "\t[$a, $b]", []>{
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0001101;
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-4} = 0b0000; // B form
-}
-
-def t2TBHgen : T2I<(outs), (ins GPR:$a, GPR:$b), IIC_Br,
-                   "tbh", "\t[$a, $b, lsl #1]", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-20} = 0b0001101;
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-4} = 0b0001; // H form
+def t2TBH : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
+                   "tbh", "\t[$Rn, $Rm, lsl #1]", []> {
+  bits<4> Rn;
+  bits<4> Rm;
+  let Inst{27-20} = 0b10001101;
+  let Inst{19-16} = Rn;
+  let Inst{15-5} = 0b11110000000;
+  let Inst{4} = 1; // H form
+  let Inst{3-0} = Rm;
 }
 } // isNotDuplicable, isIndirectBranch
 

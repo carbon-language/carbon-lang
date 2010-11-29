@@ -1718,10 +1718,6 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     if (Name == "t2LDRDpci")
       return false;
 
-    // Ignore t2TBB, t2TBH and prefer the generic t2TBBgen, t2TBHgen.
-    if (Name == "t2TBB_JT" || Name == "t2TBH_JT")
-      return false;
-
     // Resolve conflicts:
     //
     //   tBfar conflicts with tBLr9
@@ -1729,7 +1725,6 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     //   tPOP_RET/t2LDMIA_RET conflict with tPOP/t2LDM (ditto)
     //   tMOVCCi conflicts with tMOVi8
     //   tMOVCCr conflicts with tMOVgpr2gpr
-    //   tBR_JTr conflicts with tBRIND
     //   tSpill conflicts with tSTRspi
     //   tLDRcp conflicts with tLDRspi
     //   tRestore conflicts with tLDRspi
@@ -1740,7 +1735,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
         Name == "tCMPzhir" || /* Name == "t2CMNzrr" || Name == "t2CMNzrs" ||
         Name == "t2CMNzri" || */ Name == "t2CMPzrr" || Name == "t2CMPzrs" ||
         Name == "t2CMPzri" || Name == "tPOP_RET" || Name == "t2LDMIA_RET" ||
-        Name == "tMOVCCi" || Name == "tMOVCCr" || Name == "tBR_JTr" ||
+        Name == "tMOVCCi" || Name == "tMOVCCr" ||
         Name == "tSpill" || Name == "tLDRcp" || Name == "tRestore" ||
         Name == "t2LEApcrelJT" || Name == "t2MOVCCi16")
       return false;

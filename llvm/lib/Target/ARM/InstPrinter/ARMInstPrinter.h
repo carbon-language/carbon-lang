@@ -94,10 +94,6 @@ public:
   void printSBitModifierOperand(const MCInst *MI, unsigned OpNum,
                                 raw_ostream &O);
   void printRegisterList(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  // The jump table instructions have custom handling in ARMAsmPrinter
-  // to output the jump table. Nothing further is necessary here.
-  void printJT2BlockOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O) {}
-  void printTBAddrMode(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printNoHashImmediate(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVFPf32ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);

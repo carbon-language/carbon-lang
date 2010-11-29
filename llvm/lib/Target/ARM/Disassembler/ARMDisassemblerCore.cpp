@@ -789,7 +789,6 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 }
 
 // Misc. Branch Instructions.
-// BR_JTadd, BR_JTr, BR_JTm
 // BLXr9, BXr9
 // BRIND, BX_RET
 static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
@@ -813,72 +812,6 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
     OpIdx = 1;
-    return true;
-  }
-
-  // BR_JTadd is an ADD with Rd = PC, (Rn, Rm) as the target and index regs.
-  if (Opcode == ARM::BR_JTadd) {
-    // InOperandList with GPR:$target and GPR:$idx regs.
-
-    assert(NumOps == 4 && "Expect 4 operands");
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                       decodeRn(insn))));
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                       decodeRm(insn))));
-
-    // Fill in the two remaining imm operands to signify build completion.
-    MI.addOperand(MCOperand::CreateImm(0));
-    MI.addOperand(MCOperand::CreateImm(0));
-
-    OpIdx = 4;
-    return true;
-  }
-
-  // BR_JTr is a MOV with Rd = PC, and Rm as the source register.
-  if (Opcode == ARM::BR_JTr) {
-    // InOperandList with GPR::$target reg.
-
-    assert(NumOps == 3 && "Expect 3 operands");
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                       decodeRm(insn))));
-
-    // Fill in the two remaining imm operands to signify build completion.
-    MI.addOperand(MCOperand::CreateImm(0));
-    MI.addOperand(MCOperand::CreateImm(0));
-
-    OpIdx = 3;
-    return true;
-  }
-
-  // BR_JTm is an LDR with Rt = PC.
-  if (Opcode == ARM::BR_JTm) {
-    // This is the reg/reg form, with base reg followed by +/- reg shop imm.
-    // See also ARMAddressingModes.h (Addressing Mode #2).
-
-    assert(NumOps == 5 && getIBit(insn) == 1 && "Expect 5 operands && I-bit=1");
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                       decodeRn(insn))));
-
-    ARM_AM::AddrOpc AddrOpcode = getUBit(insn) ? ARM_AM::add : ARM_AM::sub;
-
-    // Disassemble the offset reg (Rm), shift type, and immediate shift length.
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                       decodeRm(insn))));
-    // Inst{6-5} encodes the shift opcode.
-    ARM_AM::ShiftOpc ShOp = getShiftOpcForBits(slice(insn, 6, 5));
-    // Inst{11-7} encodes the imm5 shift amount.
-    unsigned ShImm = slice(insn, 11, 7);
-
-    // A8.4.1.  Possible rrx or shift amount of 32...
-    getImmShiftSE(ShOp, ShImm);
-    MI.addOperand(MCOperand::CreateImm(
-                    ARM_AM::getAM2Opc(AddrOpcode, ShImm, ShOp)));
-
-    // Fill in the two remaining imm operands to signify build completion.
-    MI.addOperand(MCOperand::CreateImm(0));
-    MI.addOperand(MCOperand::CreateImm(0));
-
-    OpIdx = 5;
     return true;
   }
 

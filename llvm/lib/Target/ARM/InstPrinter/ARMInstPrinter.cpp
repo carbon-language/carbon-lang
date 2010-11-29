@@ -528,14 +528,6 @@ void ARMInstPrinter::printThumbAddrModeSPOperand(const MCInst *MI, unsigned Op,
   O << "]";
 }
 
-void ARMInstPrinter::printTBAddrMode(const MCInst *MI, unsigned OpNum,
-                                     raw_ostream &O) {
-  O << "[pc, " << getRegisterName(MI->getOperand(OpNum).getReg());
-  if (MI->getOpcode() == ARM::t2TBH_JT)
-    O << ", lsl #1";
-  O << ']';
-}
-
 // Constant shifts t2_so_reg is a 2-operand unit corresponding to the Thumb2
 // register with shift forms.
 // REG 0   0           - e.g. R5

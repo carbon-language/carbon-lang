@@ -774,11 +774,6 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
                                    OutContext);
     OutStreamer.EmitValue(Expr, OffsetWidth);
   }
-
-  // Make sure the instruction that follows TBB is 2-byte aligned.
-  // FIXME: Constant island pass should insert an "ALIGN" instruction instead.
-  if (MI->getOpcode() == ARM::t2TBB_JT)
-    EmitAlignment(1);
 }
 
 void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
@@ -924,15 +919,49 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     return;
   }
-  case ARM::t2TBB_JT:
-  case ARM::t2TBH_JT:
   case ARM::t2BR_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
-    // FIXME: The branch instruction is really a pseudo. We should xform it
-    // explicitly.
-    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
+    TmpInst.setOpcode(ARM::tMOVgpr2gpr);
+    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
     OutStreamer.EmitInstruction(TmpInst);
+    // Output the data for the jump table itself
+    EmitJump2Table(MI);
+    return;
+  }
+  case ARM::t2TBB_JT: {
+    // Lower and emit the instruction itself, then the jump table following it.
+    MCInst TmpInst;
+
+    TmpInst.setOpcode(ARM::t2TBB);
+    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
+    // Output the data for the jump table itself
+    EmitJump2Table(MI);
+    // Make sure the next instruction is 2-byte aligned.
+    EmitAlignment(1);
+    return;
+  }
+  case ARM::t2TBH_JT: {
+    // Lower and emit the instruction itself, then the jump table following it.
+    MCInst TmpInst;
+
+    TmpInst.setOpcode(ARM::t2TBH);
+    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
+    // Output the data for the jump table itself
     EmitJump2Table(MI);
     return;
   }
@@ -941,7 +970,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Lower and emit the instruction itself, then the jump table following it.
     // mov pc, target
     MCInst TmpInst;
-    unsigned Opc = MI->getOpcode() == ARM::BR_JTr ? ARM::MOVr : ARM::tMOVr;
+    unsigned Opc = MI->getOpcode() == ARM::BR_JTr ?
+      ARM::MOVr : ARM::tMOVgpr2gpr;
     TmpInst.setOpcode(Opc);
     TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
