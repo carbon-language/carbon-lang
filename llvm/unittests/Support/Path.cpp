@@ -1,4 +1,4 @@
-//===- llvm/unittest/System/Path.cpp - Path tests -------------------------===//
+//===- llvm/unittest/Support/Path.cpp - Path tests ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,7 +15,7 @@ using namespace llvm;
 
 namespace {
 
-TEST(System, Path) {
+TEST(Support, Path) {
   SmallVector<StringRef, 40> paths;
   paths.push_back("");
   paths.push_back(".");

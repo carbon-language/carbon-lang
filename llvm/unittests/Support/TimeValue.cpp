@@ -1,4 +1,4 @@
-//===- llvm/unittest/System/TimeValue.cpp - Time Vlaue tests --------------===//
+//===- llvm/unittest/Support/TimeValue.cpp - Time Value tests -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,7 +14,7 @@
 using namespace llvm;
 namespace {
 
-TEST(System, TimeValue) {
+TEST(Support, TimeValue) {
   sys::TimeValue now = sys::TimeValue::now();
   time_t now_t = time(NULL);
   EXPECT_TRUE(abs(static_cast<long>(now_t - now.toEpochTime())) < 2);
