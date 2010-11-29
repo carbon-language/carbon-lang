@@ -3230,12 +3230,6 @@ def warn_ret_stack_addr : Warning<
   "address of stack memory associated with local variable %0 returned">;
 def warn_ret_stack_ref : Warning<
   "reference to stack memory associated with local variable %0 returned">;
-def warn_ret_local_temp_ref : Warning<
-  "returning reference to local temporary">;
-def warn_ret_local_temp_var_ref : Warning<
-  "reference to temporary associated with local variable %0 returned">;
-def note_local_temp_var_ref : Note<
-  "binding variable %0 to temporary here">;
 def warn_ret_addr_label : Warning<
   "returning address of label, which is local">;
 def err_ret_local_block : Error<

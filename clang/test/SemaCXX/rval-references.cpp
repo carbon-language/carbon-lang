@@ -6,7 +6,7 @@ typedef int& ilr;
 typedef ilr&& ilr_c2; // Collapses to int&
 
 irr ret_irr() {
-  return 0; // expected-warning {{returning reference to local temporary}}
+  return 0;
 }
 
 struct not_int {};
