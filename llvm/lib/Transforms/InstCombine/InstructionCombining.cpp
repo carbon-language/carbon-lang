@@ -1171,10 +1171,37 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       }
     }
   }
-  // Can't simplify extracts from other values. Note that nested extracts are
-  // already simplified implicitely by the above (extract ( extract (insert) )
+  if (LoadInst *L = dyn_cast<LoadInst>(Agg))
+    // If the (non-volatile) load only has one use, we can rewrite this to a
+    // load from a GEP. This reduces the size of the load.
+    // FIXME: If a load is used only by extractvalue instructions then this
+    //        could be done regardless of having multiple uses.
+    if (!L->isVolatile() && L->hasOneUse()) {
+      // extractvalue has integer indices, getelementptr has Value*s. Convert.
+      SmallVector<Value*, 4> Indices;
+      // Prefix an i32 0 since we need the first element.
+      Indices.push_back(Builder->getInt32(0));
+      for (ExtractValueInst::idx_iterator I = EV.idx_begin(), E = EV.idx_end();
+            I != E; ++I)
+        Indices.push_back(Builder->getInt32(*I));
+
+      // We need to insert these at the location of the old load, not at that of
+      // the extractvalue.
+      Builder->SetInsertPoint(L->getParent(), L);
+      Value *GEP = Builder->CreateInBoundsGEP(L->getPointerOperand(),
+                                              Indices.begin(), Indices.end());
+      // Returning the load directly will cause the main loop to insert it in
+      // the wrong spot, so use ReplaceInstUsesWith().
+      return ReplaceInstUsesWith(EV, Builder->CreateLoad(GEP));
+    }
+  // We could simplify extracts from other values. Note that nested extracts may
+  // already be simplified implicitly by the above: extract (extract (insert) )
   // will be translated into extract ( insert ( extract ) ) first and then just
-  // the value inserted, if appropriate).
+  // the value inserted, if appropriate. Similarly for extracts from single-use
+  // loads: extract (extract (load)) will be translated to extract (load (gep))
+  // and if again single-use then via load (gep (gep)) to load (gep).
+  // However, double extracts from e.g. function arguments or return values
+  // aren't handled yet.
   return 0;
 }
 
