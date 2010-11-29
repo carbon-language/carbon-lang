@@ -936,32 +936,74 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     EmitJump2Table(MI);
     return;
   }
-  case ARM::tBR_JTr:
-  case ARM::BR_JTr:
-  case ARM::BR_JTm: {
+  case ARM::tBR_JTr: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
     // FIXME: The branch instruction is really a pseudo. We should xform it
     // explicitly.
     LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
     OutStreamer.EmitInstruction(TmpInst);
+
+    // Output the data for the jump table itself
+    EmitJumpTable(MI);
+    return;
+  }
+  case ARM::BR_JTr: {
+    // Lower and emit the instruction itself, then the jump table following it.
+    // mov pc, target
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::MOVr);
+    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
+
+    // Output the data for the jump table itself
+    EmitJumpTable(MI);
+    return;
+  }
+  case ARM::BR_JTm: {
+    // Lower and emit the instruction itself, then the jump table following it.
+    // ldr pc, target
+    MCInst TmpInst;
+    if (MI->getOperand(1).getReg() == 0) {
+      // literal offset
+      TmpInst.setOpcode(ARM::LDRi12);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+      TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
+    } else {
+      TmpInst.setOpcode(ARM::LDRrs);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+      TmpInst.addOperand(MCOperand::CreateImm(0));
+    }
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
+
+    // Output the data for the jump table itself
     EmitJumpTable(MI);
     return;
   }
   case ARM::BR_JTadd: {
     // Lower and emit the instruction itself, then the jump table following it.
     // add pc, target, idx
-    MCInst AddInst;
-    AddInst.setOpcode(ARM::ADDrr);
-    AddInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::ADDrr);
+    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
     // Add predicate operands.
-    AddInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    AddInst.addOperand(MCOperand::CreateReg(0));
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
     // Add 's' bit operand (always reg0 for this)
-    AddInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(AddInst);
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
 
     // Output the data for the jump table itself
     EmitJumpTable(MI);

@@ -508,6 +508,24 @@ class AI3ldstidx<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
   let Inst{15-12} = Rt;           // Rt
   let Inst{7-4}   = op;
 }
+class AI3stridx<bits<4> op, bit isByte, bit isPre, dag oops, dag iops,
+                IndexMode im, Format f, InstrItinClass itin, string opc,
+                string asm, string cstr, list<dag> pattern>
+  : AI2ldstidx<0, isByte, isPre, oops, iops, im, f, itin, opc, asm, cstr,
+               pattern> {
+  // AM3 store w/ two operands: (GPR, am3offset)
+  bits<14> offset;
+  bits<4> Rt;
+  bits<4> Rn;
+  let Inst{27-25} = 0b000;
+  let Inst{23}    = offset{8};
+  let Inst{22}    = offset{9};
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rt;           // Rt
+  let Inst{11-8}  = offset{7-4};  // imm7_4/zero
+  let Inst{7-4}   = op;
+  let Inst{3-0}   = offset{3-0};  // imm3_0/Rm
+}
 
 // stores
 class AI3str<bits<4> op, dag oops, dag iops, Format f, InstrItinClass itin,

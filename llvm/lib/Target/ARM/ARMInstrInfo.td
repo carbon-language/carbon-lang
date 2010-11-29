@@ -1427,29 +1427,21 @@ let isBranch = 1, isTerminator = 1 in {
       let Inst{23-0} = target;
     }
 
-    let isNotDuplicable = 1, isIndirectBranch = 1,
-        // FIXME: $imm field is not specified by asm string.  Mark as cgonly.
-        isCodeGenOnly = 1 in {
-    def BR_JTr : JTI<(outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
-                      IIC_Br, "mov\tpc, $target$jt",
+    let isNotDuplicable = 1, isIndirectBranch = 1 in {
+    def BR_JTr : ARMPseudoInst<(outs),
+                      (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
+                      IIC_Br,// "mov\tpc, $target$jt",
                       [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
-      let Inst{11-4}  = 0b00000000;
-      let Inst{15-12} = 0b1111;
-      let Inst{20}    = 0; // S Bit
-      let Inst{24-21} = 0b1101;
-      let Inst{27-25} = 0b000;
+      let SZ = SizeSpecial;
     }
-    def BR_JTm : JTI<(outs),
+    // FIXME: This shouldn't use the generic "addrmode2," but rather be split
+    // into i12 and rs suffixed versions.
+    def BR_JTm : ARMPseudoInst<(outs),
                      (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
-                     IIC_Br, "ldr\tpc, $target$jt",
+                     IIC_Br,
                      [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
                        imm:$id)]> {
-      let Inst{15-12} = 0b1111;
-      let Inst{20}    = 1; // L bit
-      let Inst{21}    = 0; // W bit
-      let Inst{22}    = 0; // B bit
-      let Inst{24}    = 1; // P bit
-      let Inst{27-25} = 0b011;
+      let SZ = SizeSpecial;
     }
     def BR_JTadd : ARMPseudoInst<(outs),
                    (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
@@ -1730,19 +1722,19 @@ def STRB_POST: AI2stridx<1, 0, (outs GPR:$Rn_wb),
                      [(set GPR:$Rn_wb, (post_truncsti8 GPR:$Rt,
                                         GPR:$Rn, am2offset:$offset))]>;
 
-def STRH_PRE : AI3sthpr<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am3offset:$offset),
-                     StMiscFrm, IIC_iStore_ru,
-                     "strh", "\t$src, [$base, $offset]!", "$base = $base_wb",
-                     [(set GPR:$base_wb,
-                      (pre_truncsti16 GPR:$src, GPR:$base,am3offset:$offset))]>;
+def STRH_PRE : AI3stridx<0b1011, 0, 1, (outs GPR:$Rn_wb),
+                     (ins GPR:$Rt, GPR:$Rn, am3offset:$offset),
+                     IndexModePre, StMiscFrm, IIC_iStore_ru,
+                     "strh", "\t$Rt, [$Rn, $offset]!", "$Rn = $Rn_wb",
+                     [(set GPR:$Rn_wb,
+                      (pre_truncsti16 GPR:$Rt, GPR:$Rn, am3offset:$offset))]>;
 
-def STRH_POST: AI3sthpo<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am3offset:$offset),
-                     StMiscFrm, IIC_iStore_bh_ru,
-                     "strh", "\t$src, [$base], $offset", "$base = $base_wb",
-                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
-                                          GPR:$base, am3offset:$offset))]>;
+def STRH_POST: AI3stridx<0b1011, 0, 0, (outs GPR:$Rn_wb),
+                     (ins GPR:$Rt, GPR:$Rn, am3offset:$offset),
+                     IndexModePost, StMiscFrm, IIC_iStore_bh_ru,
+                     "strh", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
+                     [(set GPR:$Rn_wb, (post_truncsti16 GPR:$Rt,
+                                        GPR:$Rn, am3offset:$offset))]>;
 
 // For disassembly only
 def STRD_PRE : AI3stdpr<(outs GPR:$base_wb),
