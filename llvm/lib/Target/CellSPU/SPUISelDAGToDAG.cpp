@@ -596,6 +596,9 @@ SDValue SPUDAGToDAGISel::getRC( MVT VT ) {
   case MVT::i64:
     return CurDAG->getTargetConstant(SPU::R64CRegClass.getID(), MVT::i32);
     break;
+  case MVT::i128:
+    return CurDAG->getTargetConstant(SPU::GPRCRegClass.getID(), MVT::i32);
+    break;
   case MVT::v16i8:
   case MVT::v8i16:
   case MVT::v4i32:
