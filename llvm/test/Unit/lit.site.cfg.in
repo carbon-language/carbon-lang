@@ -6,6 +6,7 @@ config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.llvmgcc_dir = "@LLVMGCCDIR@"
 config.llvm_build_mode = "@LLVM_BUILD_MODE@"
 config.enable_shared = @ENABLE_SHARED@
+config.shlibdir = "@SHLIBDIR@"
 config.shlibpath_var = "@SHLIBPATH_VAR@"
 
 # Support substitution of the tools_dir and build_mode with user parameters.
