@@ -16,7 +16,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
@@ -39,8 +38,6 @@ STATISTIC(NumMoveToCpy,   "Number of memmoves converted to memcpy");
 /// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
 /// byte store (e.g. i16 0x1234), return null.
 static Value *isBytewiseValue(Value *V) {
-  LLVMContext &Context = V->getContext();
-  
   // All byte-wide stores are splatable, even of arbitrary variables.
   if (V->getType()->isIntegerTy(8)) return V;
   
@@ -48,9 +45,9 @@ static Value *isBytewiseValue(Value *V) {
   // corresponding integer value is "byteable".  An important case is 0.0. 
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
     if (CFP->getType()->isFloatTy())
-      V = ConstantExpr::getBitCast(CFP, Type::getInt32Ty(Context));
+      V = ConstantExpr::getBitCast(CFP, Type::getInt32Ty(V->getContext()));
     if (CFP->getType()->isDoubleTy())
-      V = ConstantExpr::getBitCast(CFP, Type::getInt64Ty(Context));
+      V = ConstantExpr::getBitCast(CFP, Type::getInt64Ty(V->getContext()));
     // Don't handle long double formats, which have strange constraints.
   }
   
@@ -73,7 +70,7 @@ static Value *isBytewiseValue(Value *V) {
         if (Val != Val2)
           return 0;
       }
-      return ConstantInt::get(Context, Val);
+      return ConstantInt::get(V->getContext(), Val);
     }
   }
   
