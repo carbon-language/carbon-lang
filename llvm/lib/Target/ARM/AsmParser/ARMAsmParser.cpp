@@ -634,8 +634,8 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
     int OffsetRegNum = 0;
     bool OffsetRegShifted = false;
-    enum ShiftType ShiftType;
-    const MCExpr *ShiftAmount;
+    enum ShiftType ShiftType = Lsl;
+    const MCExpr *ShiftAmount = 0;
     const MCExpr *Offset = 0;
 
     const AsmToken &NextTok = Parser.getTok();
