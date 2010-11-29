@@ -2927,8 +2927,7 @@ def t2B   : T2XI<(outs), (ins brtarget:$target), IIC_Br,
 
 let isNotDuplicable = 1, isIndirectBranch = 1,
     isCodeGenOnly = 1 in { // $id doesn't exist in asmstring, should be lowered.
-def t2BR_JT :
-    tPseudoInst<(outs),
+def t2BR_JT : tPseudoInst<(outs),
           (ins GPR:$target, GPR:$index, i32imm:$jt, i32imm:$id),
            SizeSpecial, IIC_Br,// "mov\tpc, $target$jt",
           [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]>;
