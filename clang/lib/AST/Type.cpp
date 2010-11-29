@@ -957,7 +957,6 @@ const char *Type::getTypeClassName() const {
 
 const char *BuiltinType::getName(const LangOptions &LO) const {
   switch (getKind()) {
-  default: assert(0 && "Unknown builtin type!");
   case Void:              return "void";
   case Bool:              return LO.Bool ? "bool" : "_Bool";
   case Char_S:            return "char";
