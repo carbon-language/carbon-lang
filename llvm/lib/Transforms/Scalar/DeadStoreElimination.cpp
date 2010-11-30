@@ -91,9 +91,9 @@ INITIALIZE_PASS_END(DSE, "dse", "Dead Store Elimination", false, false)
 
 FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 
-/// doesClobberMemory - Does this instruction clobber (write without reading)
-/// some memory?
-static bool doesClobberMemory(Instruction *I) {
+/// hasMemoryWrite - Does this instruction write some memory?  This only returns
+/// true for things that we can analyze with other helpers below.
+static bool hasMemoryWrite(Instruction *I) {
   if (isa<StoreInst>(I))
     return true;
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
@@ -114,7 +114,7 @@ static bool doesClobberMemory(Instruction *I) {
 /// isElidable - If the value of this instruction and the memory it writes to is
 /// unused, may we delete this instrtction?
 static bool isElidable(Instruction *I) {
-  assert(doesClobberMemory(I));
+  assert(hasMemoryWrite(I));
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
     return II->getIntrinsicID() != Intrinsic::lifetime_end;
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
@@ -124,7 +124,7 @@ static bool isElidable(Instruction *I) {
 
 /// getPointerOperand - Return the pointer that is being written to.
 static Value *getPointerOperand(Instruction *I) {
-  assert(doesClobberMemory(I));
+  assert(hasMemoryWrite(I));
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return SI->getPointerOperand();
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
@@ -143,7 +143,7 @@ static Value *getPointerOperand(Instruction *I) {
 /// getStoreSize - Return the length in bytes of the write by the clobbering
 /// instruction. If variable or unknown, returns AliasAnalysis::UnknownSize.
 static uint64_t getStoreSize(Instruction *I, const TargetData *TD) {
-  assert(doesClobberMemory(I));
+  assert(hasMemoryWrite(I));
   if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     if (!TD) return AliasAnalysis::UnknownSize;
     return TD->getTypeStoreSize(SI->getOperand(0)->getType());
@@ -206,8 +206,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       continue;
     }
     
-    // If we find a store, get its memory dependence.
-    if (!doesClobberMemory(Inst))
+    // If we find something that writes memory, get its memory dependence.
+    if (!hasMemoryWrite(Inst))
       continue;
 
     MemDepResult InstDep = MD.getDependency(Inst);
@@ -264,7 +264,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     
     // If this is a store-store dependence, then the previous store is dead so
     // long as this store is at least as big as it.
-    if (InstDep.isDef() && doesClobberMemory(InstDep.getInst())) {
+    if (InstDep.isDef() && hasMemoryWrite(InstDep.getInst())) {
       Instruction *DepStore = InstDep.getInst();
       if (isStoreAtLeastAsWideAs(Inst, DepStore, TD) && isElidable(DepStore)) {
         // Delete the store and now-dead instructions that feed it.
@@ -301,7 +301,7 @@ bool DSE::HandleFree(CallInst *F) {
     if (Dep.isNonLocal()) return false;
     
     Instruction *Dependency = Dep.getInst();
-    if (!doesClobberMemory(Dependency) || !isElidable(Dependency))
+    if (!hasMemoryWrite(Dependency) || !isElidable(Dependency))
       return false;
   
     Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
@@ -358,7 +358,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     --BBI;
     
     // If we find a store whose pointer is dead.
-    if (doesClobberMemory(BBI)) {
+    if (hasMemoryWrite(BBI)) {
       if (isElidable(BBI)) {
         // See through pointer-to-pointer bitcasts
         Value *pointerOperand = getPointerOperand(BBI)->getUnderlyingObject();
