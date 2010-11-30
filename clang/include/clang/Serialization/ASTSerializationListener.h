@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_FRONTEND_AST_SERIALIZATION_LISTENER_H
 #define LLVM_CLANG_FRONTEND_AST_SERIALIZATION_LISTENER_H
 
-#include "llvm/System/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace clang {
 
