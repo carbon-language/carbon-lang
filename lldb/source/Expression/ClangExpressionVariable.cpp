@@ -47,7 +47,8 @@ ClangExpressionVariable::DisableDataVars()
 ClangExpressionVariable::ClangExpressionVariable(const ClangExpressionVariable &rhs) :
     m_name(rhs.m_name),
     m_user_type(rhs.m_user_type),
-    m_store(rhs.m_store),
+    m_store(rhs.m_store),  
+    m_register_info(rhs.m_register_info),
     m_index(rhs.m_index)
 {
     if (rhs.m_parser_vars.get())
