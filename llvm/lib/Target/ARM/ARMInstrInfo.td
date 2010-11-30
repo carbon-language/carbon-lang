@@ -1359,6 +1359,9 @@ let isCall = 1,
 
 // FIXME: These should probably be xformed into the non-TC versions of the
 // instructions as part of MC lowering.
+// FIXME: These seem to be used for both Thumb and ARM instruction selection.
+// Thumb should have its own version since the instruction is actually
+// different, even though the mnemonic is the same.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Darwin versions.
   let Defs = [R0, R1, R2, R3, R9, R12,
@@ -1366,21 +1369,19 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
               D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26,
               D27, D28, D29, D30, D31, PC],
       Uses = [SP] in {
-    def TCRETURNdi : AInoP<(outs), (ins i32imm:$dst, variable_ops),
-                       Pseudo, IIC_Br,
-                       "@TC_RETURN","\t$dst", []>, Requires<[IsDarwin]>;
+    def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
+                       IIC_Br, []>, Requires<[IsDarwin]>;
 
-    def TCRETURNri : AInoP<(outs), (ins tcGPR:$dst, variable_ops),
-                       Pseudo, IIC_Br,
-                       "@TC_RETURN","\t$dst", []>, Requires<[IsDarwin]>;
+    def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                       IIC_Br, []>, Requires<[IsDarwin]>;
 
     def TAILJMPd : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
                    IIC_Br, "b\t$dst  @ TAILCALL",
-                   []>, Requires<[IsDarwin]>;
+                   []>, Requires<[IsARM, IsDarwin]>;
 
     def TAILJMPdt: ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
                    IIC_Br, "b.w\t$dst  @ TAILCALL",
-                   []>, Requires<[IsDarwin]>;
+                   []>, Requires<[IsThumb, IsDarwin]>;
 
     def TAILJMPr : AXI<(outs), (ins tcGPR:$dst, variable_ops),
                      BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
@@ -1397,13 +1398,11 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
               D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26,
               D27, D28, D29, D30, D31, PC],
       Uses = [SP] in {
-    def TCRETURNdiND : AInoP<(outs), (ins i32imm:$dst, variable_ops),
-                       Pseudo, IIC_Br,
-                       "@TC_RETURN","\t$dst", []>, Requires<[IsNotDarwin]>;
+    def TCRETURNdiND : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
+                       IIC_Br, []>, Requires<[IsNotDarwin]>;
 
-    def TCRETURNriND : AInoP<(outs), (ins tcGPR:$dst, variable_ops),
-                       Pseudo, IIC_Br,
-                       "@TC_RETURN","\t$dst", []>, Requires<[IsNotDarwin]>;
+    def TCRETURNriND : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                       IIC_Br, []>, Requires<[IsNotDarwin]>;
 
     def TAILJMPdND : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
                    IIC_Br, "b\t$dst  @ TAILCALL",
