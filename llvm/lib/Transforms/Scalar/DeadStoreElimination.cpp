@@ -204,10 +204,10 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // If we find a store or a free, get its memory dependence.
     if (!doesClobberMemory(Inst) && !isFreeCall(Inst))
       continue;
-    
+
     MemDepResult InstDep = MD.getDependency(Inst);
     
-    // Ignore non-local stores.
+    // Ignore non-local store liveness.
     // FIXME: cross-block DSE would be fun. :)
     if (InstDep.isNonLocal()) continue;
   
@@ -216,55 +216,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       MadeChange |= handleFreeWithNonTrivialDependency(F, Inst, InstDep);
       continue;
     }
-    
-    if (!InstDep.isDef()) {
-      // If this is a may-aliased store that is clobbering the store value, we
-      // can keep searching past it for another must-aliased pointer that stores
-      // to the same location.  For example, in:
-      //   store -> P
-      //   store -> Q
-      //   store -> P
-      // we can remove the first store to P even though we don't know if P and Q
-      // alias.
-      if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-        AliasAnalysis::Location Loc =
-          getAnalysis<AliasAnalysis>().getLocation(SI);
-        while (InstDep.isClobber() && isa<StoreInst>(InstDep.getInst()) &&
-               InstDep.getInst() != &BB.front())
-          InstDep = MD.getPointerDependencyFrom(Loc, false, InstDep.getInst(),
-                                                &BB);
-      }
-        
-      // If not a definite must-alias store dependency, ignore it.  If this is a
-      // load from the same pointer, we don't want to transform load+store into
-      // a noop.
-      if (!InstDep.isDef() || !isa<StoreInst>(InstDep.getInst()))
-        continue;
-    }
-    
-    // If this is a store-store dependence, then the previous store is dead so
-    // long as this store is at least as big as it.
-    if (doesClobberMemory(InstDep.getInst())) {
-      Instruction *DepStore = InstDep.getInst();
-      if (isStoreAtLeastAsWideAs(Inst, DepStore, TD) &&
-          isElidable(DepStore)) {
-        // Delete the store and now-dead instructions that feed it.
-        DeleteDeadInstruction(DepStore);
-        ++NumFastStores;
-        MadeChange = true;
 
-        // DeleteDeadInstruction can delete the current instruction in loop
-        // cases, reset BBI.
-        BBI = Inst;
-        if (BBI != BB.begin())
-          --BBI;
-        continue;
-      }
-    }
-    
-    if (!isElidable(Inst))
-      continue;
-    
     // If we're storing the same value back to a pointer that we just
     // loaded from, then the store can be removed.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
@@ -287,23 +239,41 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
         }
       }
     }
+     
+    if (!InstDep.isDef()) {
+      // If this is a may-aliased store that is clobbering the store value, we
+      // can keep searching past it for another must-aliased pointer that stores
+      // to the same location.  For example, in:
+      //   store -> P
+      //   store -> Q
+      //   store -> P
+      // we can remove the first store to P even though we don't know if P and Q
+      // alias.
+      if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+        AliasAnalysis::Location Loc =
+          getAnalysis<AliasAnalysis>().getLocation(SI);
+        while (InstDep.isClobber() && isa<StoreInst>(InstDep.getInst()) &&
+               InstDep.getInst() != &BB.front())
+          InstDep = MD.getPointerDependencyFrom(Loc, false, InstDep.getInst(),
+                                                &BB);
+      }
+    }
     
-    // If this is a lifetime end marker, we can throw away the store.
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(InstDep.getInst())) {
-      if (II->getIntrinsicID() == Intrinsic::lifetime_end) {
+    // If this is a store-store dependence, then the previous store is dead so
+    // long as this store is at least as big as it.
+    if (InstDep.isDef() && doesClobberMemory(InstDep.getInst())) {
+      Instruction *DepStore = InstDep.getInst();
+      if (isStoreAtLeastAsWideAs(Inst, DepStore, TD) && isElidable(DepStore)) {
         // Delete the store and now-dead instructions that feed it.
-        // DeleteDeadInstruction can delete the current instruction.  Save BBI
-        // in case we need it.
-        WeakVH NextInst(BBI);
-        
-        DeleteDeadInstruction(Inst);
-        
-        if (NextInst == 0)  // Next instruction deleted.
-          BBI = BB.begin();
-        else if (BBI != BB.begin())  // Revisit this instruction if possible.
-          --BBI;
+        DeleteDeadInstruction(DepStore);
         ++NumFastStores;
         MadeChange = true;
+
+        // DeleteDeadInstruction can delete the current instruction in loop
+        // cases, reset BBI.
+        BBI = Inst;
+        if (BBI != BB.begin())
+          --BBI;
         continue;
       }
     }
