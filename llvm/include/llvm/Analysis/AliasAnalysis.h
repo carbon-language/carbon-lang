@@ -108,8 +108,7 @@ public:
     /// the location, or null if there is no known unique tag.
     const MDNode *TBAATag;
 
-    explicit Location(const Value *P = 0,
-                      uint64_t S = UnknownSize,
+    explicit Location(const Value *P = 0, uint64_t S = UnknownSize,
                       const MDNode *N = 0)
       : Ptr(P), Size(S), TBAATag(N) {}
 
