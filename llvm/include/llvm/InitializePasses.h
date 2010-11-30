@@ -117,6 +117,7 @@ void initializeLICMPass(PassRegistry&);
 void initializeLazyValueInfoPass(PassRegistry&);
 void initializeLibCallAliasAnalysisPass(PassRegistry&);
 void initializeLintPass(PassRegistry&);
+void initializeLiveDebugVariablesPass(PassRegistry&);
 void initializeLiveIntervalsPass(PassRegistry&);
 void initializeLiveStacksPass(PassRegistry&);
 void initializeLiveValuesPass(PassRegistry&);

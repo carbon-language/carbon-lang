@@ -23,6 +23,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeDeadMachineInstructionElimPass(Registry);
   initializeGCModuleInfoPass(Registry);
   initializeIfConverterPass(Registry);
+  initializeLiveDebugVariablesPass(Registry);
   initializeLiveIntervalsPass(Registry);
   initializeLiveStacksPass(Registry);
   initializeLiveVariablesPass(Registry);
