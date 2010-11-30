@@ -1339,7 +1339,7 @@ bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
   }
 }
 
-void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
+PreprocessedEntity *ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
   assert(PP && "Forgot to set Preprocessor ?");
   llvm::BitstreamCursor &Stream = F.MacroCursor;
 
@@ -1356,14 +1356,14 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
     unsigned Code = Stream.ReadCode();
     switch (Code) {
     case llvm::bitc::END_BLOCK:
-      return;
+      return 0;
 
     case llvm::bitc::ENTER_SUBBLOCK:
       // No known subblocks, always skip them.
       Stream.ReadSubBlockID();
       if (Stream.SkipBlock()) {
         Error("malformed block record in AST file");
-        return;
+        return 0;
       }
       continue;
 
@@ -1387,12 +1387,12 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       // of the definition of the macro we were looking for. We're
       // done.
       if (Macro)
-        return;
+        return 0;
 
       IdentifierInfo *II = DecodeIdentifierInfo(Record[0]);
       if (II == 0) {
         Error("macro must have a name in AST file");
-        return;
+        return 0;
       }
       SourceLocation Loc = ReadSourceLocation(F, Record[1]);
       bool isUsed = Record[2];
@@ -1459,16 +1459,16 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       // of the definition of the macro we were looking for. We're
       // done.
       if (Macro)
-        return;
+        return 0;
 
       if (!PP->getPreprocessingRecord()) {
         Error("missing preprocessing record in AST file");
-        return;
+        return 0;
       }
 
       PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
-      if (PPRec.getPreprocessedEntity(Record[0]))
-        return;
+      if (PreprocessedEntity *PE = PPRec.getPreprocessedEntity(Record[0]))
+        return PE;
 
       MacroInstantiation *MI
         = new (PPRec) MacroInstantiation(DecodeIdentifierInfo(Record[3]),
@@ -1476,7 +1476,7 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
                                            ReadSourceLocation(F, Record[2])),
                                          getMacroDefinition(Record[4]));
       PPRec.SetPreallocatedEntity(Record[0], MI);
-      return;
+      return MI;
     }
 
     case PP_MACRO_DEFINITION: {
@@ -1484,20 +1484,20 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       // of the definition of the macro we were looking for. We're
       // done.
       if (Macro)
-        return;
+        return 0;
 
       if (!PP->getPreprocessingRecord()) {
         Error("missing preprocessing record in AST file");
-        return;
+        return 0;
       }
 
       PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
-      if (PPRec.getPreprocessedEntity(Record[0]))
-        return;
+      if (PreprocessedEntity *PE = PPRec.getPreprocessedEntity(Record[0]))
+        return PE;
 
       if (Record[1] > MacroDefinitionsLoaded.size()) {
         Error("out-of-bounds macro definition record");
-        return;
+        return 0;
       }
 
       // Decode the identifier info and then check again; if the macro is
@@ -1518,7 +1518,7 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
           DeserializationListener->MacroDefinitionRead(Record[1], MD);
       }
 
-      return;
+      return MacroDefinitionsLoaded[Record[1] - 1];
     }
 
     case PP_INCLUSION_DIRECTIVE: {
@@ -1526,21 +1526,21 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
       // of the definition of the macro we were looking for. We're
       // done.
       if (Macro)
-        return;
+        return 0;
 
       if (!PP->getPreprocessingRecord()) {
         Error("missing preprocessing record in AST file");
-        return;
+        return 0;
       }
 
       PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
-      if (PPRec.getPreprocessedEntity(Record[0]))
-        return;
+      if (PreprocessedEntity *PE = PPRec.getPreprocessedEntity(Record[0]))
+        return PE;
 
       const char *FullFileNameStart = BlobStart + Record[3];
       const FileEntry *File
-      = PP->getFileManager().getFile(llvm::StringRef(FullFileNameStart,
-                                                     BlobLen - Record[3]));
+        = PP->getFileManager().getFile(llvm::StringRef(FullFileNameStart,
+                                                       BlobLen - Record[3]));
 
       // FIXME: Stable encoding
       InclusionDirective::InclusionKind Kind
@@ -1553,10 +1553,12 @@ void ASTReader::ReadMacroRecord(PerFileData &F, uint64_t Offset) {
                                  SourceRange(ReadSourceLocation(F, Record[1]),
                                              ReadSourceLocation(F, Record[2])));
       PPRec.SetPreallocatedEntity(Record[0], ID);
-      return;
+      return ID;
     }
     }
   }
+  
+  return 0;
 }
 
 void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, PerFileData &F,
@@ -2636,6 +2638,25 @@ bool ASTReader::ParseLanguageOptions(
 
 void ASTReader::ReadPreprocessedEntities() {
   ReadDefinedMacros();
+}
+
+PreprocessedEntity *ASTReader::ReadPreprocessedEntity(uint64_t Offset) {
+  PerFileData *F = 0;  
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    if (Offset < Chain[I]->SizeInBits) {
+      F = Chain[I];
+      break;
+    }
+    
+    Offset -= Chain[I]->SizeInBits;
+  }
+  
+  if (!F) {
+    Error("Malformed preprocessed entity offset");
+    return 0;
+  }
+
+  return ReadMacroRecord(*F, Offset);
 }
 
 void ASTReader::ReadUserDiagnosticMappings(Diagnostic &Diag) {

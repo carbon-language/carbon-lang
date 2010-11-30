@@ -23,6 +23,7 @@
 #include "clang/Sema/SemaConsumer.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include <map>
 #include <queue>
@@ -37,6 +38,7 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
+class ASTSerializationListener;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXBaseOrMemberInitializer;
@@ -44,6 +46,7 @@ class LabelStmt;
 class MacroDefinition;
 class MemorizeStatCalls;
 class ASTReader;
+class PreprocessedEntity;
 class Preprocessor;
 class Sema;
 class SourceManager;
@@ -70,6 +73,10 @@ private:
   /// \brief The reader of existing AST files, if we're chaining.
   ASTReader *Chain;
 
+  /// \brief A listener object that receives notifications when certain 
+  /// entities are serialized.                    
+  ASTSerializationListener *SerializationListener;
+                    
   /// \brief Stores a declaration or a type to be written to the AST file.
   class DeclOrType {
   public:
@@ -334,6 +341,12 @@ public:
   /// the given bitstream.
   ASTWriter(llvm::BitstreamWriter &Stream);
 
+  /// \brief Set the listener that will receive notification of serialization
+  /// events.
+  void SetSerializationListener(ASTSerializationListener *Listener) {
+    SerializationListener = Listener;
+  }
+                    
   /// \brief Write a precompiled header for the given semantic analysis.
   ///
   /// \param SemaRef a reference to the semantic analysis object that processed
@@ -573,6 +586,7 @@ public:
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
   virtual ASTMutationListener *GetASTMutationListener();
+  virtual ASTSerializationListener *GetASTSerializationListener();
   virtual ASTDeserializationListener *GetASTDeserializationListener();
 };
 

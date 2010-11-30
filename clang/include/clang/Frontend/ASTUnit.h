@@ -110,6 +110,14 @@ private:
   // more scalable search mechanisms.
   std::vector<Decl*> TopLevelDecls;
 
+  /// \brief The list of preprocessed entities which appeared when the ASTUnit
+  /// was loaded.
+  ///
+  /// FIXME: This is just an optimization hack to avoid deserializing large
+  /// parts of a PCH file while performing a walk or search. In the long term,
+  /// we should provide more scalable search mechanisms.
+  std::vector<PreprocessedEntity *> PreprocessedEntities;
+  
   /// The name of the original source file used to generate this ASTUnit.
   std::string OriginalSourceFile;
 
@@ -215,6 +223,10 @@ private:
   /// declarations parsed within the precompiled preamble.
   std::vector<serialization::DeclID> TopLevelDeclsInPreamble;
 
+  /// \brief A list of the offsets into the precompiled preamble which
+  /// correspond to preprocessed entities.
+  std::vector<uint64_t> PreprocessedEntitiesInPreamble;
+  
   /// \brief Whether we should be caching code-completion results.
   bool ShouldCacheCodeCompletionResults;
   
@@ -317,7 +329,8 @@ private:
                                                      bool AllowRebuild = true,
                                                         unsigned MaxLines = 0);
   void RealizeTopLevelDeclsFromPreamble();
-
+  void RealizePreprocessedEntitiesFromPreamble();
+  
 public:
   class ConcurrencyCheck {
     volatile ASTUnit &Self;
@@ -426,6 +439,17 @@ public:
     TopLevelDeclsInPreamble.push_back(D);
   }
 
+  typedef std::vector<PreprocessedEntity *>::iterator pp_entity_iterator;
+  
+  pp_entity_iterator pp_entity_begin();
+  pp_entity_iterator pp_entity_end();
+  
+  /// \brief Add a new preprocessed entity that's stored at the given offset
+  /// in the precompiled preamble.
+  void addPreprocessedEntityFromPreamble(uint64_t Offset) {
+    PreprocessedEntitiesInPreamble.push_back(Offset);
+  }
+  
   /// \brief Retrieve the mapping from File IDs to the preprocessed entities
   /// within that file.
   PreprocessedEntitiesByFileMap &getPreprocessedEntitiesByFile() {

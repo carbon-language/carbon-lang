@@ -248,6 +248,9 @@ namespace clang {
     /// \brief Read any preallocated preprocessed entities from the external
     /// source.
     virtual void ReadPreprocessedEntities() = 0;
+    
+    /// \brief Read the preprocessed entity at the given offset.
+    virtual PreprocessedEntity *ReadPreprocessedEntity(uint64_t Offset) = 0;
   };
   
   /// \brief A record of the steps taken while preprocessing a source file,
@@ -302,6 +305,11 @@ namespace clang {
     void SetExternalSource(ExternalPreprocessingRecordSource &Source,
                            unsigned NumPreallocatedEntities);
 
+    /// \brief Retrieve the external source for preprocessed entities.
+    ExternalPreprocessingRecordSource *getExternalSource() const {
+      return ExternalSource;
+    }
+    
     unsigned getNumPreallocatedEntities() const {
       return NumPreallocatedEntities;
     }

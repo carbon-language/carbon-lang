@@ -845,8 +845,11 @@ public:
   /// build prior to including the precompiled header.
   const std::string &getSuggestedPredefines() { return SuggestedPredefines; }
       
-  /// \brief Read preprocessed entities into the 
+  /// \brief Read preprocessed entities into the preprocessing record.
   virtual void ReadPreprocessedEntities();
+
+  /// \brief Read the preprocessed entity at the given offset.
+  virtual PreprocessedEntity *ReadPreprocessedEntity(uint64_t Offset);
 
   void ReadUserDiagnosticMappings(Diagnostic &Diag);
 
@@ -1154,7 +1157,7 @@ public:
   Expr *ReadSubExpr();
 
   /// \brief Reads the macro record located at the given offset.
-  void ReadMacroRecord(PerFileData &F, uint64_t Offset);
+  PreprocessedEntity *ReadMacroRecord(PerFileData &F, uint64_t Offset);
 
   /// \brief Note that the identifier is a macro whose record will be loaded
   /// from the given AST file at the given (file-local) offset.
