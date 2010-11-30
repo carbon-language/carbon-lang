@@ -86,7 +86,7 @@ define void @test3a(i8* %P, i8 %X) {
   
   %P2 = getelementptr i8* %P, i32 2
   store i8 %Y, i8* %P2  ;; FIXME: Killed by llvm.lifetime.end, should be zapped.
-; CHECK: store i8 %Y, i8* %P2
+; CHECK-NOT: store
   call void @llvm.lifetime.end(i64 10, i8* %P)
   ret void
 ; CHECK: ret void
