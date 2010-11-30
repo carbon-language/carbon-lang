@@ -76,7 +76,23 @@ public:
   /// should use a Factory object to create maps instead of directly
   /// invoking the constructor, but there are cases where make this
   /// constructor public is useful.
-  explicit ImmutableMap(const TreeTy* R) : Root(const_cast<TreeTy*>(R)) {}
+  explicit ImmutableMap(const TreeTy* R) : Root(const_cast<TreeTy*>(R)) {
+    if (Root) { Root->retain(); }
+  }
+  ImmutableMap(const ImmutableMap &X) : Root(X.Root) {
+    if (Root) { Root->retain(); }
+  }
+  ImmutableMap &operator=(const ImmutableMap &X) {
+    if (Root != X.Root) {
+      if (X.Root) { X.Root->retain(); }
+      if (Root) { Root->release(); }
+      Root = X.Root;
+    }
+    return *this;
+  }
+  ~ImmutableMap() {
+    if (Root) { Root->release(); }
+  }
 
   class Factory {
     typename TreeTy::Factory F;
@@ -110,15 +126,18 @@ public:
     return Root ? Root->contains(K) : false;
   }
 
-  bool operator==(ImmutableMap RHS) const {
+  bool operator==(const ImmutableMap &RHS) const {
     return Root && RHS.Root ? Root->isEqual(*RHS.Root) : Root == RHS.Root;
   }
 
-  bool operator!=(ImmutableMap RHS) const {
+  bool operator!=(const ImmutableMap &RHS) const {
     return Root && RHS.Root ? Root->isNotEqual(*RHS.Root) : Root != RHS.Root;
   }
 
-  TreeTy* getRoot() const { return Root; }
+  TreeTy* getRoot() const {
+    if (Root) { Root->retain(); }
+    return Root;
+  }
 
   bool isEmpty() const { return !Root; }
 
