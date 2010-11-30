@@ -47,6 +47,9 @@ namespace llvm {
       /// pair holds the instruction that clobbers the memory.  For example,
       /// this occurs when we see a may-aliased store to the memory location we
       /// care about.
+      ///
+      /// A dependence query on the first instruction of the entry block will
+      /// return a clobber(self) result.
       Clobber,
 
       /// Def - This is a dependence on the specified instruction which

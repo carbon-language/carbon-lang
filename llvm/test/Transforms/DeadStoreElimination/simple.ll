@@ -177,3 +177,36 @@ define void @test14(i32* %Q) {
 ; CHECK-NEXT: ret void
 }
 
+
+; PR8701
+
+;; Fully dead overwrite of memcpy.
+define void @test15(i8* %P, i8* %Q) nounwind ssp {
+  tail call void @llvm.memcpy.i64(i8* %P, i8* %Q, i64 12, i32 1)
+  tail call void @llvm.memcpy.i64(i8* %P, i8* %Q, i64 12, i32 1)
+  ret void
+; CHECK: @test15
+; CHECK-NEXT: call void @llvm.memcpy
+; CHECK-NEXT: ret
+}
+
+;; Full overwrite of smaller memcpy.
+define void @test16(i8* %P, i8* %Q) nounwind ssp {
+  tail call void @llvm.memcpy.i64(i8* %P, i8* %Q, i64 8, i32 1)
+  tail call void @llvm.memcpy.i64(i8* %P, i8* %Q, i64 12, i32 1)
+  ret void
+; CHECK: @test16
+; CHECK-NEXT: call void @llvm.memcpy
+; CHECK-NEXT: ret
+}
+
+;; Overwrite of memset by memcpy.
+define void @test17(i8* %P, i8* %Q) nounwind ssp {
+  tail call void @llvm.memset.i64(i8* %P, i8 42, i64 8, i32 1)
+  tail call void @llvm.memcpy.i64(i8* %P, i8* %Q, i64 12, i32 1)
+  ret void
+; CHECK: @test17
+; CHECK-NEXT: call void @llvm.memcpy
+; CHECK-NEXT: ret
+}
+

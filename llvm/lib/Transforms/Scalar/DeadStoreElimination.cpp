@@ -111,6 +111,44 @@ static bool hasMemoryWrite(Instruction *I) {
   return false;
 }
 
+/// getLocForWrite - Return a Location stored to by the specified instruction.
+static AliasAnalysis::Location
+getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
+  if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+    return AA.getLocation(SI);
+  
+  if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(Inst)) {
+    // memcpy/memmove/memset.
+    AliasAnalysis::Location Loc = AA.getLocationForDest(MI);
+    // If we don't have target data around, an unknown size in Location means
+    // that we should use the size of the pointee type.  This isn't valid for
+    // memset/memcpy, which writes more than an i8.
+    if (Loc.Size == AliasAnalysis::UnknownSize && AA.getTargetData() == 0)
+      return AliasAnalysis::Location();
+    return Loc;
+  }
+  
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst);
+  if (II == 0) return AliasAnalysis::Location();
+  
+  switch (II->getIntrinsicID()) {
+  default: return AliasAnalysis::Location(); // Unhandled intrinsic.
+  case Intrinsic::init_trampoline:
+    // If we don't have target data around, an unknown size in Location means
+    // that we should use the size of the pointee type.  This isn't valid for
+    // init.trampoline, which writes more than an i8.
+    if (AA.getTargetData() == 0) return AliasAnalysis::Location();
+      
+    // FIXME: We don't know the size of the trampoline, so we can't really
+    // handle it here.
+    return AliasAnalysis::Location(II->getArgOperand(0));
+  case Intrinsic::lifetime_end: {
+    uint64_t Len = cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
+    return AliasAnalysis::Location(II->getArgOperand(1), Len);
+  }
+  }
+}
+
 /// isRemovable - If the value of this instruction and the memory it writes to
 /// is unused, may we delete this instruction?
 static bool isRemovable(Instruction *I) {
@@ -140,55 +178,31 @@ static Value *getPointerOperand(Instruction *I) {
   }
 }
 
-/// getStoreSize - Return the length in bytes of the write by the clobbering
-/// instruction. If variable or unknown, returns AliasAnalysis::UnknownSize.
-static uint64_t getStoreSize(Instruction *I, const TargetData *TD) {
-  assert(hasMemoryWrite(I));
-  if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-    if (!TD) return AliasAnalysis::UnknownSize;
-    return TD->getTypeStoreSize(SI->getOperand(0)->getType());
-  }
+/// isCompleteOverwrite - Return true if a store to the 'Later' location
+/// completely overwrites a store to the 'Earlier' location.
+static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
+                                const AliasAnalysis::Location &Earlier,
+                                AliasAnalysis &AA, const TargetData *TD) {
+  const Value *P1 = Later.Ptr->stripPointerCasts();
+  const Value *P2 = Earlier.Ptr->stripPointerCasts();
+  
+  // Make sure that the start pointers are the same.
+  if (P1 != P2)
+    return false;
 
-  Value *Len;
-  if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I)) {
-    Len = MI->getLength();
-  } else {
-    IntrinsicInst *II = cast<IntrinsicInst>(I);
-    switch (II->getIntrinsicID()) {
-    default: assert(false && "Unexpected intrinsic!");
-    case Intrinsic::init_trampoline:
-      return AliasAnalysis::UnknownSize;
-    case Intrinsic::lifetime_end:
-      Len = II->getArgOperand(0);
-      break;
-    }
-  }
-  if (ConstantInt *LenCI = dyn_cast<ConstantInt>(Len))
-    if (!LenCI->isAllOnesValue())
-      return LenCI->getZExtValue();
-  return AliasAnalysis::UnknownSize;
+  // If we have no TargetData information around, then the size of the store is
+  // inferrable from the pointee type.  If they are the same type, then we know
+  // that the store is safe.
+  if (TD == 0)
+    return Later.Ptr->getType() == Earlier.Ptr->getType();
+  
+  
+  // Make sure that the Later size is >= the Earlier size.
+  if (Later.Size < Earlier.Size)
+    return false;
+  
+  return true;
 }
-
-/// isStoreAtLeastAsWideAs - Return true if the size of the store in I1 is
-/// greater than or equal to the store in I2.  This returns false if we don't
-/// know.
-///
-static bool isStoreAtLeastAsWideAs(Instruction *I1, Instruction *I2,
-                                   const TargetData *TD) {
-  const Type *I1Ty = getPointerOperand(I1)->getType();
-  const Type *I2Ty = getPointerOperand(I2)->getType();
-  
-  // Exactly the same type, must have exactly the same size.
-  if (I1Ty == I2Ty) return true;
-  
-  uint64_t I1Size = getStoreSize(I1, TD);
-  uint64_t I2Size = getStoreSize(I2, TD);
-  
-  return I1Size != AliasAnalysis::UnknownSize &&
-         I2Size != AliasAnalysis::UnknownSize &&
-         I1Size >= I2Size;
-}
-
 
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
@@ -215,7 +229,11 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     
     // Ignore non-local store liveness.
     // FIXME: cross-block DSE would be fun. :)
-    if (InstDep.isNonLocal()) continue;
+    if (InstDep.isNonLocal() || 
+        // Ignore self dependence, which happens in the entry block of the
+        // function.
+        InstDep.getInst() == Inst)
+      continue;
      
     // If we're storing the same value back to a pointer that we just
     // loaded from, then the store can be removed.
@@ -240,7 +258,43 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       }
     }
     
-    if (!InstDep.isDef()) {
+    // Figure out what location is being stored to.
+    AliasAnalysis::Location Loc = getLocForWrite(Inst, AA);
+
+    // If we didn't get a useful location, fail.
+    if (Loc.Ptr == 0)
+      continue;
+    
+    while (!InstDep.isNonLocal()) {
+      // Get the memory clobbered by the instruction we depend on.  MemDep will
+      // skip any instructions that 'Loc' clearly doesn't interact with.  If we
+      // end up depending on a may- or must-aliased load, then we can't optimize
+      // away the store and we bail out.  However, if we depend on on something
+      // that overwrites the memory location we *can* potentially optimize it.
+      //
+      // Find out what memory location the dependant instruction stores.
+      Instruction *DepWrite = InstDep.getInst();
+      AliasAnalysis::Location DepLoc = getLocForWrite(DepWrite, AA);
+      // If we didn't get a useful location, or if it isn't a size, bail out.
+      if (DepLoc.Ptr == 0)
+        break;
+
+      // If we find a removable write that is completely obliterated by the
+      // store to 'Loc' then we can remove it.
+      if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, AA, TD)) {
+        // Delete the store and now-dead instructions that feed it.
+        DeleteDeadInstruction(DepWrite);
+        ++NumFastStores;
+        MadeChange = true;
+        
+        // DeleteDeadInstruction can delete the current instruction in loop
+        // cases, reset BBI.
+        BBI = Inst;
+        if (BBI != BB.begin())
+          --BBI;
+        break;
+      }
+      
       // If this is a may-aliased store that is clobbering the store value, we
       // can keep searching past it for another must-aliased pointer that stores
       // to the same location.  For example, in:
@@ -249,38 +303,13 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       //   store -> P
       // we can remove the first store to P even though we don't know if P and Q
       // alias.
-      if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-        AliasAnalysis::Location Loc = AA.getLocation(SI);
-        while (InstDep.isClobber() && InstDep.getInst() != &BB.front()) {
-          // Can't look past this instruction if it might read 'Loc'.
-          if (AA.getModRefInfo(InstDep.getInst(), Loc) & AliasAnalysis::Ref)
-            break;
-          
-          InstDep = MD.getPointerDependencyFrom(Loc, false,
-                                                InstDep.getInst(), &BB);
-        }
-      }
-    }
-    
-    // If this is a store-store dependence, then the previous store is dead so
-    // long as this store is at least as big as it.
-    if (InstDep.isDef() && hasMemoryWrite(InstDep.getInst())) {
-      Instruction *DepStore = InstDep.getInst();
-      if (!isRemovable(DepStore) ||
-          !isStoreAtLeastAsWideAs(Inst, DepStore, TD))
-        continue;
+      if (DepWrite == &BB.front()) break;
+      
+      // Can't look past this instruction if it might read 'Loc'.
+      if (AA.getModRefInfo(DepWrite, Loc) & AliasAnalysis::Ref)
+        break;
         
-      // Delete the store and now-dead instructions that feed it.
-      DeleteDeadInstruction(DepStore);
-      ++NumFastStores;
-      MadeChange = true;
-
-      // DeleteDeadInstruction can delete the current instruction in loop
-      // cases, reset BBI.
-      BBI = Inst;
-      if (BBI != BB.begin())
-        --BBI;
-      continue;
+      InstDep = MD.getPointerDependencyFrom(Loc, false, DepWrite, &BB);
     }
   }
   
