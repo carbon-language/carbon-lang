@@ -1,4 +1,4 @@
-; Test that the PutsCatOptimizer works correctly
+; Test that the FPutsOptimizer works correctly
 ; RUN: opt < %s -simplify-libcalls -S | \
 ; RUN:   not grep {call.*fputs}
 
