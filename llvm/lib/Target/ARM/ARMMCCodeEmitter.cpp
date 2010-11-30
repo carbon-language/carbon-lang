@@ -324,7 +324,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     unsigned Reg = MO.getReg();
     unsigned RegNo = getARMRegisterNumbering(Reg);
 
-    // Q registers are encodes as 2x their register number.
+    // Q registers are encoded as 2x their register number.
     switch (Reg) {
     default:
       return RegNo;
