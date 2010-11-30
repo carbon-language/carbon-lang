@@ -28,8 +28,7 @@
 using namespace clang;
 using namespace CodeGen;
 
-namespace clang {
-namespace CodeGen {
+namespace {
 
 class CGRecordLayoutBuilder {
 public:
@@ -171,7 +170,6 @@ public:
   void Layout(const RecordDecl *D);
 };
 
-}
 }
 
 void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
