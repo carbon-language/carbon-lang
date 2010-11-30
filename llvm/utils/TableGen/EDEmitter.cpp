@@ -606,6 +606,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("addrmode5", "kOperandTypeARMAddrMode5");                  // R, I
   MISC("addrmode6", "kOperandTypeARMAddrMode6");                  // R, R, I, I
   MISC("am6offset", "kOperandTypeARMAddrMode6Offset");            // R, I, I
+  MISC("addrmode6dup", "kOperandTypeARMAddrMode6");               // R, R, I, I
   MISC("addrmodepc", "kOperandTypeARMAddrModePC");                // R, I
   MISC("reglist", "kOperandTypeARMRegisterList");                 // I, R, ...
   MISC("dpr_reglist", "kOperandTypeARMDPRRegisterList");          // I, R, ...

@@ -540,6 +540,15 @@ def am6offset : Operand<i32> {
   let EncoderMethod = "getAddrMode6OffsetOpValue";
 }
 
+// Special version of addrmode6 to handle alignment encoding for VLD-dup
+// instructions, specifically VLD4-dup.
+def addrmode6dup : Operand<i32>,
+                ComplexPattern<i32, 2, "SelectAddrMode6", [], [SDNPWantParent]>{
+  let PrintMethod = "printAddrMode6Operand";
+  let MIOperandInfo = (ops GPR:$addr, i32imm);
+  let EncoderMethod = "getAddrMode6DupAddressOpValue";
+}
+
 // addrmodepc := pc + reg
 //
 def addrmodepc : Operand<i32>,
