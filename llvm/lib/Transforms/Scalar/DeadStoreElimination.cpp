@@ -64,8 +64,8 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB);
     bool HandleFree(CallInst *F);
     bool handleEndBlock(BasicBlock &BB);
-    void RemoveAccessedObjects(Value *Ptr, uint64_t killPointerSize,
-                               SmallPtrSet<Value*, 16> &deadPointers);
+    void RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
+                               SmallPtrSet<Value*, 16> &DeadStackObjects);
     void DeleteDeadInstruction(Instruction *I,
                                SmallPtrSet<Value*, 16> *deadPointers = 0);
     
@@ -494,18 +494,15 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       continue;
     }
     
-    Value *KillPointer = 0;
-    uint64_t KillPointerSize = AliasAnalysis::UnknownSize;
+    AliasAnalysis::Location LoadedLoc;
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
-      KillPointer = L->getPointerOperand();
+      LoadedLoc = AA->getLocation(L);
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(BBI)) {
-      KillPointer = V->getOperand(0);
+      LoadedLoc = AA->getLocation(V);
     } else if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(BBI)) {
-      KillPointer = cast<MemTransferInst>(BBI)->getSource();
-      if (ConstantInt *Len = dyn_cast<ConstantInt>(MTI->getLength()))
-        KillPointerSize = Len->getZExtValue();
+      LoadedLoc = AA->getLocationForSource(MTI);
     } else {
       // Not a loading instruction.
       continue;
@@ -513,7 +510,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
     // Remove any allocas from the DeadPointer set that are loaded, as this
     // makes any stores above the access live.
-    RemoveAccessedObjects(KillPointer, KillPointerSize, DeadStackObjects);
+    RemoveAccessedObjects(LoadedLoc, DeadStackObjects);
 
     // If all of the allocas were clobbered by the access then we're not going
     // to find anything else to process.
@@ -527,9 +524,9 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 /// RemoveAccessedObjects - Check to see if the specified location may alias any
 /// of the stack objects in the DeadStackObjects set.  If so, they become live
 /// because the location is being loaded.
-void DSE::RemoveAccessedObjects(Value *KillPointer, uint64_t KillPointerSize,
+void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
                                 SmallPtrSet<Value*, 16> &DeadStackObjects) {
-  Value *UnderlyingPointer = KillPointer->getUnderlyingObject();
+  const Value *UnderlyingPointer = LoadedLoc.Ptr->getUnderlyingObject();
 
   // A constant can't be in the dead pointer set.
   if (isa<Constant>(UnderlyingPointer))
@@ -538,17 +535,16 @@ void DSE::RemoveAccessedObjects(Value *KillPointer, uint64_t KillPointerSize,
   // If the kill pointer can be easily reduced to an alloca, don't bother doing
   // extraneous AA queries.
   if (isa<AllocaInst>(UnderlyingPointer) || isa<Argument>(UnderlyingPointer)) {
-    DeadStackObjects.erase(UnderlyingPointer);
+    DeadStackObjects.erase(const_cast<Value*>(UnderlyingPointer));
     return;
   }
   
   SmallVector<Value*, 16> NowLive;
   for (SmallPtrSet<Value*, 16>::iterator I = DeadStackObjects.begin(),
        E = DeadStackObjects.end(); I != E; ++I) {
-    // See if this pointer could alias it
-    AliasAnalysis::AliasResult A = AA->alias(*I, getPointerSize(*I, *AA),
-                                             KillPointer, KillPointerSize);
-    if (A != AliasAnalysis::NoAlias)
+    // See if the loaded location could alias the stack location.
+    AliasAnalysis::Location StackLoc(*I, getPointerSize(*I, *AA));
+    if (!AA->isNoAlias(StackLoc, LoadedLoc))
       NowLive.push_back(*I);
   }
 
