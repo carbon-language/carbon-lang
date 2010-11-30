@@ -37,21 +37,27 @@ STATISTIC(NumFastOther , "Number of other instrs removed");
 
 namespace {
   struct DSE : public FunctionPass {
+    AliasAnalysis *AA;
+    MemoryDependenceAnalysis *MD;
+
     static char ID; // Pass identification, replacement for typeid
-    DSE() : FunctionPass(ID) {
+    DSE() : FunctionPass(ID), AA(0), MD(0) {
       initializeDSEPass(*PassRegistry::getPassRegistry());
     }
 
     virtual bool runOnFunction(Function &F) {
-      bool Changed = false;
-      
+      AA = &getAnalysis<AliasAnalysis>();
+      MD = &getAnalysis<MemoryDependenceAnalysis>();
       DominatorTree &DT = getAnalysis<DominatorTree>();
       
+      bool Changed = false;
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
         // Only check non-dead blocks.  Dead blocks may have strange pointer
         // cycles that will confuse alias analysis.
         if (DT.isReachableFromEntry(I))
           Changed |= runOnBasicBlock(*I);
+      
+      AA = 0; MD = 0;
       return Changed;
     }
     
@@ -72,11 +78,10 @@ namespace {
       AU.addRequired<DominatorTree>();
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<MemoryDependenceAnalysis>();
+      AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
-
-    uint64_t getPointerSize(Value *V, AliasAnalysis &AA) const;
   };
 }
 
@@ -191,6 +196,24 @@ static Value *getPointerOperand(Instruction *I) {
   }
 }
 
+static uint64_t getPointerSize(Value *V, AliasAnalysis &AA) {
+  const TargetData *TD = AA.getTargetData();
+  if (TD == 0)
+    return AliasAnalysis::UnknownSize;
+  
+  if (AllocaInst *A = dyn_cast<AllocaInst>(V)) {
+    // Get size information for the alloca
+    if (ConstantInt *C = dyn_cast<ConstantInt>(A->getArraySize()))
+      return C->getZExtValue() * TD->getTypeAllocSize(A->getAllocatedType());
+    return AliasAnalysis::UnknownSize;
+  }
+  
+  assert(isa<Argument>(V) && "Expected AllocaInst or Argument!");
+  const PointerType *PT = cast<PointerType>(V->getType());
+  return TD->getTypeAllocSize(PT->getElementType());
+}
+
+
 /// isCompleteOverwrite - Return true if a store to the 'Later' location
 /// completely overwrites a store to the 'Earlier' location.
 static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
@@ -222,9 +245,6 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
 }
 
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
-  MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-
   bool MadeChange = false;
   
   // Do a top-down walk on the BB.
@@ -241,7 +261,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (!hasMemoryWrite(Inst))
       continue;
 
-    MemDepResult InstDep = MD.getDependency(Inst);
+    MemDepResult InstDep = MD->getDependency(Inst);
     
     // Ignore non-local store liveness.
     // FIXME: cross-block DSE would be fun. :)
@@ -275,7 +295,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     }
     
     // Figure out what location is being stored to.
-    AliasAnalysis::Location Loc = getLocForWrite(Inst, AA);
+    AliasAnalysis::Location Loc = getLocForWrite(Inst, *AA);
 
     // If we didn't get a useful location, fail.
     if (Loc.Ptr == 0)
@@ -290,14 +310,14 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       //
       // Find out what memory location the dependant instruction stores.
       Instruction *DepWrite = InstDep.getInst();
-      AliasAnalysis::Location DepLoc = getLocForWrite(DepWrite, AA);
+      AliasAnalysis::Location DepLoc = getLocForWrite(DepWrite, *AA);
       // If we didn't get a useful location, or if it isn't a size, bail out.
       if (DepLoc.Ptr == 0)
         break;
 
       // If we find a removable write that is completely obliterated by the
       // store to 'Loc' then we can remove it.
-      if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, AA)) {
+      if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, *AA)) {
         // Delete the store and now-dead instructions that feed it.
         DeleteDeadInstruction(DepWrite);
         ++NumFastStores;
@@ -322,10 +342,10 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       if (DepWrite == &BB.front()) break;
       
       // Can't look past this instruction if it might read 'Loc'.
-      if (AA.getModRefInfo(DepWrite, Loc) & AliasAnalysis::Ref)
+      if (AA->getModRefInfo(DepWrite, Loc) & AliasAnalysis::Ref)
         break;
         
-      InstDep = MD.getPointerDependencyFrom(Loc, false, DepWrite, &BB);
+      InstDep = MD->getPointerDependencyFrom(Loc, false, DepWrite, &BB);
     }
   }
   
@@ -340,10 +360,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 /// HandleFree - Handle frees of entire structures whose dependency is a store
 /// to a field of that structure.
 bool DSE::HandleFree(CallInst *F) {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
-
-  MemDepResult Dep = MD.getDependency(F);
+  MemDepResult Dep = MD->getDependency(F);
   do {
     if (Dep.isNonLocal()) return false;
     
@@ -354,7 +371,7 @@ bool DSE::HandleFree(CallInst *F) {
     Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
 
     // Check for aliasing.
-    if (AA.alias(F->getArgOperand(0), 1, DepPointer, 1) !=
+    if (AA->alias(F->getArgOperand(0), 1, DepPointer, 1) !=
           AliasAnalysis::MustAlias)
       return false;
   
@@ -367,7 +384,7 @@ bool DSE::HandleFree(CallInst *F) {
     //    s[0] = 0;
     //    s[1] = 0; // This has just been deleted.
     //    free(s);
-    Dep = MD.getDependency(F);
+    Dep = MD->getDependency(F);
   } while (!Dep.isNonLocal());
   
   return true;
@@ -380,8 +397,6 @@ bool DSE::HandleFree(CallInst *F) {
 /// store i32 1, i32* %A
 /// ret void
 bool DSE::handleEndBlock(BasicBlock &BB) {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  
   bool MadeChange = false;
   
   // Pointers alloca'd in this function are dead in the end block
@@ -467,7 +482,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     } else if (CallSite CS = cast<Value>(BBI)) {
       // If this call does not access memory, it can't
       // be undeadifying any of our pointers.
-      if (AA.doesNotAccessMemory(CS))
+      if (AA->doesNotAccessMemory(CS))
         continue;
       
       unsigned modRef = 0;
@@ -488,7 +503,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
         
         // See if the call site touches it
         AliasAnalysis::ModRefResult A = 
-          AA.getModRefInfo(CS, *I, getPointerSize(*I, AA));
+          AA->getModRefInfo(CS, *I, getPointerSize(*I, *AA));
         
         if (A == AliasAnalysis::ModRef)
           ++modRef;
@@ -532,8 +547,6 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
                                BasicBlock::iterator &BBI,
                                SmallPtrSet<Value*, 64> &deadPointers) {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-
   // If the kill pointer can be easily reduced to an alloca,
   // don't bother doing extraneous AA queries.
   if (deadPointers.count(killPointer)) {
@@ -552,8 +565,8 @@ bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
   for (SmallPtrSet<Value*, 64>::iterator I = deadPointers.begin(),
        E = deadPointers.end(); I != E; ++I) {
     // See if this pointer could alias it
-    AliasAnalysis::AliasResult A = AA.alias(*I, getPointerSize(*I, AA),
-                                            killPointer, killPointerSize);
+    AliasAnalysis::AliasResult A = AA->alias(*I, getPointerSize(*I, *AA),
+                                             killPointer, killPointerSize);
 
     // If it must-alias and a store, we can delete it
     if (isa<StoreInst>(BBI) && A == AliasAnalysis::MustAlias) {
@@ -593,7 +606,6 @@ void DSE::DeleteDeadInstruction(Instruction *I,
   --NumFastOther;
 
   // Before we touch this instruction, remove it from memdep!
-  MemoryDependenceAnalysis &MDA = getAnalysis<MemoryDependenceAnalysis>();
   do {
     Instruction *DeadInst = NowDeadInsts.pop_back_val();
     
@@ -602,7 +614,7 @@ void DSE::DeleteDeadInstruction(Instruction *I,
     // This instruction is dead, zap it, in stages.  Start by removing it from
     // MemDep, which needs to know the operands and needs it to be in the
     // function.
-    MDA.removeInstruction(DeadInst);
+    MD->removeInstruction(DeadInst);
     
     for (unsigned op = 0, e = DeadInst->getNumOperands(); op != e; ++op) {
       Value *Op = DeadInst->getOperand(op);
@@ -622,19 +634,3 @@ void DSE::DeleteDeadInstruction(Instruction *I,
   } while (!NowDeadInsts.empty());
 }
 
-uint64_t DSE::getPointerSize(Value *V, AliasAnalysis &AA) const {
-  const TargetData *TD = AA.getTargetData();
-  if (TD == 0)
-    return AliasAnalysis::UnknownSize;
-
-  if (AllocaInst *A = dyn_cast<AllocaInst>(V)) {
-    // Get size information for the alloca
-    if (ConstantInt *C = dyn_cast<ConstantInt>(A->getArraySize()))
-      return C->getZExtValue() * TD->getTypeAllocSize(A->getAllocatedType());
-    return AliasAnalysis::UnknownSize;
-  }
-  
-  assert(isa<Argument>(V) && "Expected AllocaInst or Argument!");
-  const PointerType *PT = cast<PointerType>(V->getType());
-  return TD->getTypeAllocSize(PT->getElementType());
-}
