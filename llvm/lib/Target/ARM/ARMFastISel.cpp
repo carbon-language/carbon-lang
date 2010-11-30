@@ -933,12 +933,13 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
                                   MachineMemOperand::MOLoad,
                                   MFI.getObjectSize(FI),
                                   MFI.getObjectAlignment(FI));
-    // LDRH needs an additional operand.
+    // ARM::STRH needs an additional operand.
     if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16)
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(StrOpc))
                       .addReg(SrcReg, getKillRegState(true))
-                      .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO));
+                      .addFrameIndex(FI).addReg(0).addImm(Offset)
+		      .addMemOperand(MMO));
     else
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(StrOpc))
@@ -948,7 +949,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
     return true;
   }
 
-  // ARM::LDRH needs an additional operand.
+  // ARM::STRH needs an additional operand.
   if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(StrOpc))
