@@ -849,8 +849,10 @@ TypeWithKeyword::getTagTypeKindForTypeSpec(unsigned TypeSpec) {
   case TST_struct: return TTK_Struct;
   case TST_union: return TTK_Union;
   case TST_enum: return TTK_Enum;
-  default: llvm_unreachable("Type specifier is not a tag type kind.");
   }
+  
+  llvm_unreachable("Type specifier is not a tag type kind.");
+  return TTK_Union;
 }
 
 ElaboratedTypeKeyword
@@ -896,7 +898,6 @@ TypeWithKeyword::KeywordIsTagTypeKind(ElaboratedTypeKeyword Keyword) {
 const char*
 TypeWithKeyword::getKeywordName(ElaboratedTypeKeyword Keyword) {
   switch (Keyword) {
-  default: llvm_unreachable("Unknown elaborated type keyword.");
   case ETK_None: return "";
   case ETK_Typename: return "typename";
   case ETK_Class:  return "class";
@@ -904,6 +905,9 @@ TypeWithKeyword::getKeywordName(ElaboratedTypeKeyword Keyword) {
   case ETK_Union:  return "union";
   case ETK_Enum:   return "enum";
   }
+
+  llvm_unreachable("Unknown elaborated type keyword.");
+  return "";
 }
 
 ElaboratedType::~ElaboratedType() {}
@@ -956,11 +960,13 @@ bool Type::isElaboratedTypeSpecifier() const {
 
 const char *Type::getTypeClassName() const {
   switch (TypeBits.TC) {
-  default: assert(0 && "Type class not in TypeNodes.def!");
 #define ABSTRACT_TYPE(Derived, Base)
 #define TYPE(Derived, Base) case Derived: return #Derived;
 #include "clang/AST/TypeNodes.def"
   }
+  
+  llvm_unreachable("Invalid type class.");
+  return 0;
 }
 
 const char *BuiltinType::getName(const LangOptions &LO) const {
@@ -995,6 +1001,7 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case ObjCClass:         return "Class";
   case ObjCSel:           return "SEL";
   }
+  
   llvm_unreachable("Invalid builtin type.");
   return 0;
 }
@@ -1019,8 +1026,9 @@ QualType QualType::getNonLValueExprType(ASTContext &Context) const {
 
 llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   switch (CC) {
-  case CC_Default: llvm_unreachable("no name for default cc");
-  default: return "";
+  case CC_Default: 
+    llvm_unreachable("no name for default cc");
+    return "";
 
   case CC_C: return "cdecl";
   case CC_X86StdCall: return "stdcall";
@@ -1028,6 +1036,9 @@ llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   case CC_X86ThisCall: return "thiscall";
   case CC_X86Pascal: return "pascal";
   }
+
+  llvm_unreachable("Invalid calling convention.");
+  return "";
 }
 
 FunctionProtoType::FunctionProtoType(QualType Result, const QualType *ArgArray,
