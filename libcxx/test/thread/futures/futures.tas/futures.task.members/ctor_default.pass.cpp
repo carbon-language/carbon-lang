@@ -21,5 +21,5 @@ struct A {};
 int main()
 {
     std::packaged_task<A(int, char)> p;
-    assert(!p);
+    assert(!p.valid());
 }

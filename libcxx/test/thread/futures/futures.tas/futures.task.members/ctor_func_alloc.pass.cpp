@@ -43,7 +43,7 @@ int main()
         std::packaged_task<double(int, char)> p(std::allocator_arg,
                                                 test_allocator<A>(), A(5));
         assert(test_alloc_base::count > 0);
-        assert(p);
+        assert(p.valid());
         std::future<double> f = p.get_future();
         p(3, 'a');
         assert(f.get() == 105.0);
@@ -58,7 +58,7 @@ int main()
         std::packaged_task<double(int, char)> p(std::allocator_arg,
                                                 test_allocator<A>(), a);
         assert(test_alloc_base::count > 0);
-        assert(p);
+        assert(p.valid());
         std::future<double> f = p.get_future();
         p(3, 'a');
         assert(f.get() == 105.0);

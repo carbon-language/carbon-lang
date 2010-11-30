@@ -9,9 +9,9 @@
 
 // <future>
 
-// class atomic_future<R>
+// class future<R>
 
-// atomic_future(future<R>&& rhs);
+// shared_future<R> share() &&;
 
 #include <future>
 #include <cassert>
@@ -22,14 +22,14 @@ int main()
         typedef int T;
         std::promise<T> p;
         std::future<T> f0 = p.get_future();
-        std::atomic_future<T> f = std::move(f0);
+        std::shared_future<T> f = std::move(f0.share());
         assert(!f0.valid());
         assert(f.valid());
     }
     {
         typedef int T;
         std::future<T> f0;
-        std::atomic_future<T> f = std::move(f0);
+        std::shared_future<T> f = std::move(f0.share());
         assert(!f0.valid());
         assert(!f.valid());
     }
@@ -37,14 +37,14 @@ int main()
         typedef int& T;
         std::promise<T> p;
         std::future<T> f0 = p.get_future();
-        std::atomic_future<T> f = std::move(f0);
+        std::shared_future<T> f = std::move(f0.share());
         assert(!f0.valid());
         assert(f.valid());
     }
     {
         typedef int& T;
         std::future<T> f0;
-        std::atomic_future<T> f = std::move(f0);
+        std::shared_future<T> f = std::move(f0.share());
         assert(!f0.valid());
         assert(!f.valid());
     }
@@ -52,14 +52,14 @@ int main()
         typedef void T;
         std::promise<T> p;
         std::future<T> f0 = p.get_future();
-        std::atomic_future<T> f = std::move(f0);
+        std::shared_future<T> f = std::move(f0.share());
         assert(!f0.valid());
         assert(f.valid());
     }
     {
         typedef void T;
         std::future<T> f0;
-        std::atomic_future<T> f = std::move(f0);
+        std::shared_future<T> f = std::move(f0.share());
         assert(!f0.valid());
         assert(!f.valid());
     }

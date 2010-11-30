@@ -156,6 +156,7 @@ public:
     ~future();
     future& operator=(const future& rhs) = delete;
     future& operator=(future&&);
+    shared_future<R> share() &&;
 
     // retrieving the value
     R get();
@@ -182,6 +183,7 @@ public:
     ~future();
     future& operator=(const future& rhs) = delete;
     future& operator=(future&&);
+    shared_future<R&> share() &&;
 
     // retrieving the value
     R& get();
@@ -208,6 +210,7 @@ public:
     ~future();
     future& operator=(const future& rhs) = delete;
     future& operator=(future&&);
+    shared_future<void> share() &&;
 
     // retrieving the value
     void get();
@@ -305,81 +308,6 @@ public:
         wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
 };
 
-template <class R>
-class atomic_future
-{
-public:
-    atomic_future();
-    atomic_future(const atomic_future& rhs);
-    atomic_future(future<R>&&);
-    ~atomic_future();
-    atomic_future& operator=(const atomic_future& rhs);
-
-    // retrieving the value
-    const R& get() const;
-
-    // functions to check state
-    bool valid() const;
-
-    void wait() const;
-    template <class Rep, class Period>
-        future_status
-        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
-    template <class Clock, class Duration>
-        future_status
-        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
-};
-
-template <class R>
-class atomic_future<R&>
-{
-public:
-    atomic_future();
-    atomic_future(const atomic_future& rhs);
-    atomic_future(future<R>&&);
-    ~atomic_future();
-    atomic_future& operator=(const atomic_future& rhs);
-
-    // retrieving the value
-    R& get() const;
-
-    // functions to check state
-    bool valid() const;
-
-    void wait() const;
-    template <class Rep, class Period>
-        future_status
-        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
-    template <class Clock, class Duration>
-        future_status
-        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
-};
-
-template <>
-class atomic_future<void>
-{
-public:
-    atomic_future();
-    atomic_future(const atomic_future& rhs);
-    atomic_future(future<R>&&);
-    ~atomic_future();
-    atomic_future& operator=(const atomic_future& rhs);
-
-    // retrieving the value
-    void get() const;
-
-    // functions to check state
-    bool valid() const;
-
-    void wait() const;
-    template <class Rep, class Period>
-        future_status
-        wait_for(const chrono::duration<Rep, Period>& rel_time) const;
-    template <class Clock, class Duration>
-        future_status
-        wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
-};
-
 template <class F, class... Args>
   future<typename result_of<F(Args...)>::type>
   async(F&& f, Args&&... args);
@@ -413,7 +341,7 @@ public:
     packaged_task& operator=(packaged_task&& other);
     void swap(packaged_task& other);
 
-    explicit operator bool() const;
+    bool valid() const;
 
     // result retrieval
     future<R> get_future();
@@ -986,6 +914,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
+    shared_future<_R> share();
 
     // retrieving the value
     _R get();
@@ -1083,6 +1012,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
+    shared_future<_R&> share();
 
     // retrieving the value
     _R& get();
@@ -1175,6 +1105,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
+    shared_future<void> share();
 
     // retrieving the value
     void get();
@@ -1893,8 +1824,7 @@ public:
     }
 
     _LIBCPP_INLINE_VISIBILITY
-    //explicit
-        operator bool() const {return __p_.__state_ != nullptr;}
+    bool valid() const {return __p_.__state_ != nullptr;}
 
     // result retrieval
     _LIBCPP_INLINE_VISIBILITY
@@ -1956,7 +1886,7 @@ void
 packaged_task<_R(_ArgTypes...)>::reset()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    if (!(*this))
+    if (!valid())
         throw future_error(make_error_code(future_errc::no_state));
 #endif  // _LIBCPP_NO_EXCEPTIONS
     __p_ = promise<result_type>();
@@ -2009,8 +1939,7 @@ public:
     }
 
     _LIBCPP_INLINE_VISIBILITY
-    //explicit
-        operator bool() const {return __p_.__state_ != nullptr;}
+    bool valid() const {return __p_.__state_ != nullptr;}
 
     // result retrieval
     _LIBCPP_INLINE_VISIBILITY
@@ -2074,7 +2003,7 @@ void
 packaged_task<void(_ArgTypes...)>::reset()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    if (!(*this))
+    if (!valid())
         throw future_error(make_error_code(future_errc::no_state));
 #endif  // _LIBCPP_NO_EXCEPTIONS
     __p_ = promise<result_type>();
@@ -2352,222 +2281,27 @@ swap(shared_future<_R>& __x, shared_future<_R>& __y)
     __x.swap(__y);
 }
 
-// atomic_future
-
 template <class _R>
-class _LIBCPP_VISIBLE atomic_future
+inline _LIBCPP_INLINE_VISIBILITY
+shared_future<_R>
+future<_R>::share()
 {
-    __assoc_state<_R>* __state_;
-    mutable mutex __mut_;
-
-public:
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future() : __state_(nullptr) {}
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
-        {if (__state_) __state_->__add_shared();}
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future(future<_R>&& __f) : __state_(__f.__state_)
-        {__f.__state_ = nullptr;}
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    ~atomic_future();
-    atomic_future& operator=(const atomic_future& __rhs);
-
-    // retrieving the value
-    _LIBCPP_INLINE_VISIBILITY
-    const _R& get() const {return __state_->copy();}
-
-    void swap(atomic_future& __rhs);
-
-    // functions to check state
-    _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
-
-    _LIBCPP_INLINE_VISIBILITY
-    void wait() const {__state_->wait();}
-    template <class _Rep, class _Period>
-        _LIBCPP_INLINE_VISIBILITY
-        future_status
-        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
-            {return __state_->wait_for(__rel_time);}
-    template <class _Clock, class _Duration>
-        _LIBCPP_INLINE_VISIBILITY
-        future_status
-        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
-            {return __state_->wait_until(__abs_time);}
-};
-
-template <class _R>
-atomic_future<_R>::~atomic_future()
-{
-    if (__state_)
-        __state_->__release_shared();
+    return shared_future<_R>(_STD::move(*this));
 }
-
-template <class _R>
-atomic_future<_R>&
-atomic_future<_R>::operator=(const atomic_future& __rhs)
-{
-    if (this != &__rhs)
-    {
-        unique_lock<mutex> __this(__mut_, defer_lock);
-        unique_lock<mutex> __that(__rhs.__mut_, defer_lock);
-        _STD::lock(__this, __that);
-        if (__rhs.__state_)
-            __rhs.__state_->__add_shared();
-        if (__state_)
-            __state_->__release_shared();
-        __state_ = __rhs.__state_;
-    }
-    return *this;
-}
-
-template <class _R>
-void
-atomic_future<_R>::swap(atomic_future& __rhs)
-{
-    if (this != &__rhs)
-    {
-        unique_lock<mutex> __this(__mut_, defer_lock);
-        unique_lock<mutex> __that(__rhs.__mut_, defer_lock);
-        _STD::lock(__this, __that);
-        _STD::swap(__state_, __rhs.__state_);
-    }
-}
-
-template <class _R>
-class _LIBCPP_VISIBLE atomic_future<_R&>
-{
-    __assoc_state<_R&>* __state_;
-    mutable mutex __mut_;
-
-public:
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future() : __state_(nullptr) {}
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
-        {if (__state_) __state_->__add_shared();}
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future(future<_R&>&& __f) : __state_(__f.__state_)
-        {__f.__state_ = nullptr;}
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    ~atomic_future();
-    atomic_future& operator=(const atomic_future& __rhs);
-
-    // retrieving the value
-    _LIBCPP_INLINE_VISIBILITY
-    _R& get() const {return __state_->copy();}
-
-    void swap(atomic_future& __rhs);
-
-    // functions to check state
-    _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
-
-    _LIBCPP_INLINE_VISIBILITY
-    void wait() const {__state_->wait();}
-    template <class _Rep, class _Period>
-        _LIBCPP_INLINE_VISIBILITY
-        future_status
-        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
-            {return __state_->wait_for(__rel_time);}
-    template <class _Clock, class _Duration>
-        _LIBCPP_INLINE_VISIBILITY
-        future_status
-        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
-            {return __state_->wait_until(__abs_time);}
-};
-
-template <class _R>
-atomic_future<_R&>::~atomic_future()
-{
-    if (__state_)
-        __state_->__release_shared();
-}
-
-template <class _R>
-atomic_future<_R&>&
-atomic_future<_R&>::operator=(const atomic_future& __rhs)
-{
-    if (this != &__rhs)
-    {
-        unique_lock<mutex> __this(__mut_, defer_lock);
-        unique_lock<mutex> __that(__rhs.__mut_, defer_lock);
-        _STD::lock(__this, __that);
-        if (__rhs.__state_)
-            __rhs.__state_->__add_shared();
-        if (__state_)
-            __state_->__release_shared();
-        __state_ = __rhs.__state_;
-    }
-    return *this;
-}
-
-template <class _R>
-void
-atomic_future<_R&>::swap(atomic_future& __rhs)
-{
-    if (this != &__rhs)
-    {
-        unique_lock<mutex> __this(__mut_, defer_lock);
-        unique_lock<mutex> __that(__rhs.__mut_, defer_lock);
-        _STD::lock(__this, __that);
-        _STD::swap(__state_, __rhs.__state_);
-    }
-}
-
-template <>
-class _LIBCPP_VISIBLE atomic_future<void>
-{
-    __assoc_sub_state* __state_;
-    mutable mutex __mut_;
-
-public:
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future() : __state_(nullptr) {}
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future(const atomic_future& __rhs) : __state_(__rhs.__state_)
-        {if (__state_) __state_->__add_shared();}
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_future(future<void>&& __f) : __state_(__f.__state_)
-        {__f.__state_ = nullptr;}
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    ~atomic_future();
-    atomic_future& operator=(const atomic_future& __rhs);
-
-    // retrieving the value
-    _LIBCPP_INLINE_VISIBILITY
-    void get() const {__state_->copy();}
-
-    void swap(atomic_future& __rhs);
-
-    // functions to check state
-    _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
-
-    _LIBCPP_INLINE_VISIBILITY
-    void wait() const {__state_->wait();}
-    template <class _Rep, class _Period>
-        _LIBCPP_INLINE_VISIBILITY
-        future_status
-        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
-            {return __state_->wait_for(__rel_time);}
-    template <class _Clock, class _Duration>
-        _LIBCPP_INLINE_VISIBILITY
-        future_status
-        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
-            {return __state_->wait_until(__abs_time);}
-};
 
 template <class _R>
 inline _LIBCPP_INLINE_VISIBILITY
-void
-swap(atomic_future<_R>& __x, atomic_future<_R>& __y)
+shared_future<_R&>
+future<_R&>::share()
 {
-    __x.swap(__y);
+    return shared_future<_R&>(_STD::move(*this));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+shared_future<void>
+future<void>::share()
+{
+    return shared_future<void>(_STD::move(*this));
 }
 
 _LIBCPP_END_NAMESPACE_STD

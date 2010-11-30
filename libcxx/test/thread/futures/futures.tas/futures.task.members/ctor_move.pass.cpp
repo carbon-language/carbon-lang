@@ -31,8 +31,8 @@ int main()
     {
         std::packaged_task<double(int, char)> p0(A(5));
         std::packaged_task<double(int, char)> p = std::move(p0);
-        assert(!p0);
-        assert(p);
+        assert(!p0.valid());
+        assert(p.valid());
         std::future<double> f = p.get_future();
         p(3, 'a');
         assert(f.get() == 105.0);
@@ -40,7 +40,7 @@ int main()
     {
         std::packaged_task<double(int, char)> p0;
         std::packaged_task<double(int, char)> p = std::move(p0);
-        assert(!p0);
-        assert(!p);
+        assert(!p0.valid());
+        assert(!p.valid());
     }
 }

@@ -39,7 +39,7 @@ int main()
 {
     {
         std::packaged_task<double(int, char)> p(A(5));
-        assert(p);
+        assert(p.valid());
         std::future<double> f = p.get_future();
         p(3, 'a');
         assert(f.get() == 105.0);
@@ -51,7 +51,7 @@ int main()
     {
         A a(5);
         std::packaged_task<double(int, char)> p(a);
-        assert(p);
+        assert(p.valid());
         std::future<double> f = p.get_future();
         p(3, 'a');
         assert(f.get() == 105.0);
