@@ -20,6 +20,7 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "lldb/lldb-types.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Symbol/TaggedASTType.h"
@@ -89,9 +90,11 @@ struct ClangExpressionVariable
     //----------------------------------------------------------------------
     /// The following values should stay valid for the life of the variable
     //----------------------------------------------------------------------
-    ConstString             m_name;         ///< The name of the variable
-    TypeFromUser            m_user_type;    ///< The type of the variable according to some LLDB context; 
-                                            ///< NULL if the type hasn't yet been migrated to one
+    ConstString                 m_name;             ///< The name of the variable
+    TypeFromUser                m_user_type;        ///< The type of the variable according to some LLDB context; 
+                                                    ///< NULL if the type hasn't yet been migrated to one
+    
+    const lldb::RegisterInfo   *m_register_info;    ///< if non-NULL, LLDB's information for the register this value is stored in.  Only used for register values
     
     //----------------------------------------------------------------------
     /// The following values indicate where the variable originally came from

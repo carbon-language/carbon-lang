@@ -491,6 +491,18 @@ private:
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
+    /// register.
+    ///
+    /// @param[in] context
+    ///     The NameSearchContext to use when constructing the Decl.
+    ///
+    /// @param[in] reg_info
+    ///     The information corresponding to that register.
+    //------------------------------------------------------------------
+    void AddOneRegister(NameSearchContext &context, const lldb::RegisterInfo *reg_info);
+    
+    //------------------------------------------------------------------
+    /// Use the NameSearchContext to generate a Decl for the given
     /// type.  (Types are not placed in the Tuple list.)
     ///
     /// @param[in] context
@@ -601,6 +613,40 @@ private:
                                   const SymbolContext &sym_ctx,
                                   const ConstString &name,
                                   TypeFromUser type,
+                                  lldb::addr_t addr, 
+                                  Error &err);
+    
+    //------------------------------------------------------------------
+    /// Actually do the task of materializing or dematerializing a 
+    /// register variable.
+    ///
+    /// @param[in] dematerialize
+    ///     True if the variable is to be dematerialized; false if it is to
+    ///     be materialized.
+    ///
+    /// @param[in] exe_ctx
+    ///     The execution context to use.
+    ///
+    /// @param[in] reg_ctx
+    ///     The register context to use.
+    ///
+    /// @param[in] reg_info
+    ///     The information for the register to read/write.
+    ///
+    /// @param[in] addr
+    ///     The address at which to materialize the variable.
+    ///
+    /// @param[in] err
+    ///     An Error to populate with any messages related to
+    ///     (de)materializing the persistent variable.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    bool DoMaterializeOneRegister(bool dematerialize,
+                                  ExecutionContext &exe_ctx,
+                                  RegisterContext &reg_ctx,
+                                  const lldb::RegisterInfo &reg_info,
                                   lldb::addr_t addr, 
                                   Error &err);
     

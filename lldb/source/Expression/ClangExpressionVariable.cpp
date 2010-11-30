@@ -29,6 +29,7 @@ ClangExpressionVariable::ClangExpressionVariable() :
     m_name(),
     m_user_type (TypeFromUser(NULL, NULL)),
     m_store (NULL),
+    m_register_info (NULL),
     m_index (0),
     m_parser_vars(),
     m_jit_vars (),

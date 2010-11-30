@@ -132,6 +132,8 @@ clang::ASTContext *NameSearchContext::GetASTContext() {
 
 clang::NamedDecl *NameSearchContext::AddVarDecl(void *type) {
     IdentifierInfo *ii = m_decl_name.getAsIdentifierInfo();
+    
+    assert (type && "Type for variable must be non-NULL!");
         
     clang::NamedDecl *Decl = VarDecl::Create(m_ast_source.m_ast_context, 
                                              const_cast<DeclContext*>(m_decl_context), 

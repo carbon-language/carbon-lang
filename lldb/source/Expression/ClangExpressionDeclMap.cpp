@@ -584,11 +584,26 @@ ClangExpressionDeclMap::DoMaterialize
         
         if (entity)
         {
-            if (!member.m_jit_vars.get())
-                return false;
-            
-            if (!DoMaterializeOneVariable(dematerialize, *exe_ctx, sym_ctx, member.m_name, member.m_user_type, m_materialized_location + member.m_jit_vars->m_offset, err))
-                return false;
+            if (entity->m_register_info)
+            {
+                // This is a register variable
+                
+                RegisterContext *reg_ctx = exe_ctx->GetRegisterContext();
+                
+                if (!reg_ctx)
+                    return false;
+                
+                if (!DoMaterializeOneRegister(dematerialize, *exe_ctx, *reg_ctx, *entity->m_register_info, m_materialized_location + member.m_jit_vars->m_offset, err))
+                    return false;
+            }
+            else
+            {
+                if (!member.m_jit_vars.get())
+                    return false;
+                
+                if (!DoMaterializeOneVariable(dematerialize, *exe_ctx, sym_ctx, member.m_name, member.m_user_type, m_materialized_location + member.m_jit_vars->m_offset, err))
+                    return false;
+            }
         }
         else if (persistent_variable)
         {
@@ -917,6 +932,72 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     return true;
 }
 
+bool 
+ClangExpressionDeclMap::DoMaterializeOneRegister
+(
+    bool dematerialize,
+    ExecutionContext &exe_ctx,
+    RegisterContext &reg_ctx,
+    const lldb::RegisterInfo &reg_info,
+    lldb::addr_t addr, 
+    Error &err
+)
+{
+    uint32_t register_number = reg_info.kinds[lldb::eRegisterKindLLDB];
+    uint32_t register_byte_size = reg_info.byte_size;
+    
+    Error error;
+    
+    if (dematerialize)
+    {
+        DataBufferHeap register_data (register_byte_size, 0);
+        
+        Error error;
+        if (exe_ctx.process->ReadMemory (addr, register_data.GetBytes(), register_byte_size, error) != register_byte_size)
+        {
+            err.SetErrorStringWithFormat ("Couldn't read %s from the target: %s", reg_info.name, error.AsCString());
+            return false;
+        }
+        
+        DataExtractor register_extractor (register_data.GetBytes(), register_byte_size, exe_ctx.process->GetByteOrder(), exe_ctx.process->GetAddressByteSize());
+        
+        if (!reg_ctx.WriteRegisterBytes(register_number, register_extractor, 0))
+        {
+            err.SetErrorStringWithFormat("Couldn't read %s", reg_info.name);
+            return false;
+        }
+    }
+    else
+    {
+        DataExtractor register_extractor;
+        
+        if (!reg_ctx.ReadRegisterBytes(register_number, register_extractor))
+        {
+            err.SetErrorStringWithFormat("Couldn't read %s", reg_info.name);
+            return false;
+        }
+        
+        uint32_t register_offset = 0;
+        
+        const void *register_data = register_extractor.GetData(&register_offset, register_byte_size);
+        
+        if (!register_data)
+        {
+            err.SetErrorStringWithFormat("Read but couldn't extract data for %s", reg_info.name);
+            return false;
+        }
+        
+        Error error;
+        if (exe_ctx.process->WriteMemory (addr, register_data, register_byte_size, error) != register_byte_size)
+        {
+            err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", error.AsCString());
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 Variable *
 ClangExpressionDeclMap::FindVariableInScope
 (
@@ -1121,7 +1202,20 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         ClangExpressionVariable *pvar(m_persistent_vars->GetVariable(name));
     
         if (pvar)
+        {
             AddOneVariable(context, pvar);
+            return;
+        }
+        
+        const char *reg_name(&name.GetCString()[1]);
+        
+        if (m_exe_ctx.GetRegisterContext())
+        {
+            const lldb::RegisterInfo *reg_info(m_exe_ctx.GetRegisterContext()->GetRegisterInfoByName(reg_name));
+            
+            if (reg_info)
+                AddOneRegister(context, reg_info);
+        }
     }
     
     lldb::TypeSP type_sp (m_sym_ctx.FindTypeByName (name));
@@ -1335,6 +1429,49 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
         var_decl_print_stream.flush();
         
         log->Printf("Added pvar %s, returned %s", pvar->m_name.GetCString(), var_decl_print_string.c_str());
+    }
+}
+
+void
+ClangExpressionDeclMap::AddOneRegister(NameSearchContext &context,
+                                       const RegisterInfo *reg_info)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    void *ast_type = ClangASTContext::GetBuiltinTypeForEncodingAndBitSize(context.GetASTContext(),
+                                                                          reg_info->encoding,
+                                                                          reg_info->byte_size * 8);
+    
+    if (!ast_type)
+    {
+        log->Printf("Tried to add a type for %s, but couldn't get one", context.m_decl_name.getAsString().c_str());
+        return;
+    }
+    
+    TypeFromParser parser_type(ast_type,
+                               context.GetASTContext());
+    
+    NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
+    
+    ClangExpressionVariable &entity(m_found_entities.VariableAtIndex(m_found_entities.CreateVariable()));
+    std::string decl_name(context.m_decl_name.getAsString());
+    entity.m_name.SetCString (decl_name.c_str());
+    entity.m_register_info = reg_info;
+    
+    entity.EnableParserVars();
+    entity.m_parser_vars->m_parser_type = parser_type;
+    entity.m_parser_vars->m_named_decl  = var_decl;
+    entity.m_parser_vars->m_llvm_value  = NULL;
+    entity.m_parser_vars->m_lldb_value  = NULL;
+    
+    if (log)
+    {
+        std::string var_decl_print_string;
+        llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
+        var_decl->print(var_decl_print_stream);
+        var_decl_print_stream.flush();
+        
+        log->Printf("Added register %s, returned %s", context.m_decl_name.getAsString().c_str(), var_decl_print_string.c_str());
     }
 }
 
