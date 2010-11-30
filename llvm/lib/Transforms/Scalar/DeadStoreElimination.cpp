@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
@@ -255,6 +256,17 @@ static uint64_t getPointerSize(Value *V, AliasAnalysis &AA) {
   return TD->getTypeAllocSize(PT->getElementType());
 }
 
+/// isObjectPointerWithTrustworthySize - Return true if the specified Value* is
+/// pointing to an object with a pointer size we can trust.
+static bool isObjectPointerWithTrustworthySize(const Value *V) {
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(V))
+    return !AI->isArrayAllocation();
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+    return !GV->isWeakForLinker();
+  if (const Argument *A = dyn_cast<Argument>(V))
+    return A->hasByValAttr();
+  return false;
+}
 
 /// isCompleteOverwrite - Return true if a store to the 'Later' location
 /// completely overwrites a store to the 'Earlier' location.
@@ -289,11 +301,28 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
   // larger than the earlier one.
   if (Later.Size == AliasAnalysis::UnknownSize ||
       Earlier.Size == AliasAnalysis::UnknownSize ||
-      Later.Size <= Earlier.Size ||
-      AA.getTargetData() == 0)
+      Later.Size <= Earlier.Size || AA.getTargetData() == 0)
     return false;
   
+  // Check to see if the later store is to the entire object (either a global,
+  // an alloca, or a byval argument).  If so, then it clearly overwrites any
+  // other store to the same object.
   const TargetData &TD = *AA.getTargetData();
+  
+  const Value *UO1 = P1->getUnderlyingObject(), *UO2 = P2->getUnderlyingObject();
+  
+  // If we can't resolve the same pointers to the same object, then we can't
+  // analyze them at all.
+  if (UO1 != UO2)
+    return false;
+  
+  // If the "Later" store is to a recognizable object, get its size.
+  if (isObjectPointerWithTrustworthySize(UO2)) {
+    uint64_t ObjectSize =
+      TD.getTypeAllocSize(cast<PointerType>(UO2->getType())->getElementType());
+    if (ObjectSize == Later.Size)
+      return true;
+  }
   
   // Okay, we have stores to two completely different pointers.  Try to
   // decompose the pointer into a "base + constant_offset" form.  If the base

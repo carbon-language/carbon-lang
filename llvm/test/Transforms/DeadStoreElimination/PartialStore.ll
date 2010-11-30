@@ -52,3 +52,20 @@ define void @test4(i8* %P) {
   store double 0.0, double* %Q
   ret void
 }
+
+; PR8657
+declare void @test5a(i32*)
+define void @test5(i32 %i) nounwind ssp {
+  %A = alloca i32
+  %B = bitcast i32* %A to i8*
+  %C = getelementptr i8* %B, i32 %i
+  store i8 10, i8* %C        ;; Dead store to variable index.
+  store i32 20, i32* %A
+  
+  call void @test5a(i32* %A)
+  ret void
+; CHECK: @test5(
+; CHECK-NEXT: alloca
+; CHECK-NEXT: store i32 20
+; CHECK-NEXT: call void @test5a
+}
