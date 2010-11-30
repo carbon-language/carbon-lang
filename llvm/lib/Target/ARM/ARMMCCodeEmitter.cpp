@@ -46,8 +46,8 @@ public:
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
       // name                     offset  bits  flags
-      { "fixup_arm_pcrel_12",     2,      12,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_vfp_pcrel_12", 3,      8,    MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_pcrel_12",     1,      24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_vfp_pcrel_12", 1,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
     };
 
@@ -395,6 +395,7 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   if (!MO.isReg()) {
     Reg = getARMRegisterNumbering(ARM::PC);   // Rn is PC.
     Imm12 = 0;
+    isAdd = false ; // 'U' bit is set as part of the fixup.
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
@@ -574,11 +575,13 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
   // {8}    = (U)nsigned (add == '1', sub == '0')
   // {7-0}  = imm8
   unsigned Reg, Imm8;
+  bool isAdd;
   // If The first operand isn't a register, we have a label reference.
   const MCOperand &MO = MI.getOperand(OpIdx);
   if (!MO.isReg()) {
     Reg = getARMRegisterNumbering(ARM::PC);   // Rn is PC.
     Imm8 = 0;
+    isAdd = false; // 'U' bit is handled as part of the fixup.
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
@@ -586,12 +589,14 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
-  } else
+  } else {
     EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm8, Fixups);
+    isAdd = ARM_AM::getAM5Op(Imm8) == ARM_AM::add;
+  }
 
   uint32_t Binary = ARM_AM::getAM5Offset(Imm8);
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
-  if (ARM_AM::getAM5Op(Imm8) == ARM_AM::add)
+  if (isAdd)
     Binary |= (1 << 8);
   Binary |= (Reg << 9);
   return Binary;

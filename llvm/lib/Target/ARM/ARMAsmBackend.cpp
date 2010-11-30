@@ -131,8 +131,8 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
   default: llvm_unreachable("Unknown fixup kind!");
   case FK_Data_4: return 4;
-  case ARM::fixup_arm_pcrel_12: return 2;
-  case ARM::fixup_arm_vfp_pcrel_12: return 1;
+  case ARM::fixup_arm_pcrel_12: return 3;
+  case ARM::fixup_arm_vfp_pcrel_12: return 3;
   case ARM::fixup_arm_branch: return 3;
   }
 }
@@ -143,14 +143,36 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     llvm_unreachable("Unknown fixup kind!");
   case FK_Data_4:
     return Value;
-  case ARM::fixup_arm_pcrel_12:
+  case ARM::fixup_arm_pcrel_12: {
+    bool isAdd = true;
     // ARM PC-relative values are offset by 8.
-    return Value - 8;
+    Value -= 8;
+    if ((int64_t)Value < 0) {
+      Value = -Value;
+      isAdd = false;
+    }
+    assert ((Value < 4096) && "Out of range pc-relative fixup value!");
+    Value |= isAdd << 23;
+    return Value;
+  }
   case ARM::fixup_arm_branch:
-  case ARM::fixup_arm_vfp_pcrel_12:
     // These values don't encode the low two bits since they're always zero.
     // Offset by 8 just as above.
     return (Value - 8) >> 2;
+  case ARM::fixup_arm_vfp_pcrel_12: {
+    // Offset by 8 just as above.
+    Value = Value - 8;
+    bool isAdd = true;
+    if ((int64_t)Value < 0) {
+      Value = -Value;
+      isAdd = false;
+    }
+    // These values don't encode the low two bits since they're always zero.
+    Value >>= 2;
+    assert ((Value < 256) && "Out of range pc-relative fixup value!");
+    Value |= isAdd << 23;
+    return Value;
+  }
   }
 }
 
