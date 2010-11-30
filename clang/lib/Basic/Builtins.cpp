@@ -14,12 +14,14 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/LangOptions.h"
 using namespace clang;
 
 static const Builtin::Info BuiltinInfo[] = {
-  { "not a builtin function", 0, 0, 0, false },
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, false },
-#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER, false },
+  { "not a builtin function", 0, 0, 0, ALL_LANGUAGES, false },
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES, false },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER, BUILTIN_LANG) { #ID, TYPE, ATTRS, HEADER,\
+                                                            BUILTIN_LANG, false },
 #include "clang/Basic/Builtins.def"
 };
 
@@ -41,17 +43,20 @@ Builtin::Context::Context(const TargetInfo &Target) {
 /// appropriate builtin ID # and mark any non-portable builtin identifiers as
 /// such.
 void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
-                                          bool NoBuiltins) {
+                                          const LangOptions& LangOpts) {
   // Step #1: mark all target-independent builtins with their ID's.
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
     if (!BuiltinInfo[i].Suppressed &&
-        (!NoBuiltins || !strchr(BuiltinInfo[i].Attributes, 'f')))
-      Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
+        (!LangOpts.NoBuiltin || !strchr(BuiltinInfo[i].Attributes, 'f'))) {
+      if (LangOpts.ObjC1 || 
+          BuiltinInfo[i].builtin_lang != clang::OBJC_LANG)
+        Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
+    }
 
   // Step #2: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
     if (!TSRecords[i].Suppressed &&
-        (!NoBuiltins ||
+        (!LangOpts.NoBuiltin ||
          (TSRecords[i].Attributes &&
           !strchr(TSRecords[i].Attributes, 'f'))))
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);

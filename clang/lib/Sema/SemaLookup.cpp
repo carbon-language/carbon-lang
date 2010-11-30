@@ -484,12 +484,7 @@ static bool LookupBuiltin(Sema &S, LookupResult &R) {
         if (S.getLangOptions().CPlusPlus &&
             S.Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
           return false;
-        // When not in Objective-C mode, there is no builtin 'id' type.
-        // We won't have pre-defined library functions which use this type.
-        if (!S.getLangOptions().ObjC1 &&
-            S.Context.BuiltinInfo.GetTypeString(BuiltinID)[0] == 'G')
-          return false;
-
+        
         NamedDecl *D = S.LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
                                              S.TUScope, R.isForRedeclaration(),
                                              R.getNameLoc());

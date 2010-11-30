@@ -202,7 +202,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (!CI.hasASTContext() || !CI.getASTContext().getExternalSource()) {
     Preprocessor &PP = CI.getPreprocessor();
     PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
-                                           PP.getLangOptions().NoBuiltin);
+                                           PP.getLangOptions());
   }
 
   return true;

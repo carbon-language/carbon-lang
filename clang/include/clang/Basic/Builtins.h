@@ -30,7 +30,15 @@ namespace clang {
   class IdentifierTable;
   class ASTContext;
   class QualType;
-
+  class LangOptions;
+  
+  enum LANGUAGEID {
+    C_LANG = 0x1,     // builtin for c only.
+    CXX_LANG = 0x2,   // builtin for cplusplus only.
+    OBJC_LANG = 0x4,  // builtin for objective-c and objective-c++
+    ALL_LANGUAGES = (C_LANG|CXX_LANG|OBJC_LANG) //builtin is for all languages.
+  };
+  
 namespace Builtin {
 enum ID {
   NotBuiltin  = 0,      // This is not a builtin function.
@@ -41,6 +49,7 @@ enum ID {
 
 struct Info {
   const char *Name, *Type, *Attributes, *HeaderName;
+  LANGUAGEID builtin_lang;
   bool Suppressed;
 
   bool operator==(const Info &RHS) const {
@@ -62,7 +71,7 @@ public:
   /// InitializeBuiltins - Mark the identifiers for all the builtins with their
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.
-  void InitializeBuiltins(IdentifierTable &Table, bool NoBuiltins = false);
+  void InitializeBuiltins(IdentifierTable &Table, const LangOptions& LangOpts);
 
   /// \brief Popular the vector with the names of all of the builtins.
   void GetBuiltinNames(llvm::SmallVectorImpl<const char *> &Names,
