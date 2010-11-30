@@ -1375,13 +1375,16 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
     return false;
   }
 
+  // Make sure we determine the value kind before we bail out for
+  // dependent types.
+  VK = Expr::getValueKindForType(CastTy);
+
   // If the type is dependent, we won't do any other semantic analysis now.
   if (CastTy->isDependentType() || CastExpr->isTypeDependent()) {
     Kind = CK_Dependent;
     return false;
   }
 
-  VK = Expr::getValueKindForType(CastTy);
   if (VK == VK_RValue && !CastTy->isRecordType())
     DefaultFunctionArrayLvalueConversion(CastExpr);
 

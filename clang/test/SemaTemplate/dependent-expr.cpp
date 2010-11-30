@@ -52,3 +52,12 @@ namespace test4 {
              &const_cast<char&>(reinterpret_cast<const volatile char &>(v)));
   }
 }
+
+namespace test5 {
+  template <typename T> class chained_map {
+    int k;
+    void lookup() const {
+      int &v = (int &)k;
+    }
+  };
+}
