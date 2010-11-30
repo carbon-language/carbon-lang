@@ -8,7 +8,6 @@ import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
-@unittest2.skip("rdar://problem/8710994 Assertion failed: (reg_info) GDBRemoteRegisterContext.cpp, line 199")
 class BreakpointConditionsTestCase(TestBase):
 
     mydir = "breakpoint_conditions"

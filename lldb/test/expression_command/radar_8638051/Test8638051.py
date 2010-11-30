@@ -7,7 +7,6 @@ import unittest2
 import lldb
 from lldbtest import *
 
-@unittest2.skip("rdar://problem/8710994 Assertion failed: (reg_info) GDBRemoteRegisterContext.cpp, line 199")
 class Radar8638051TestCase(TestBase):
 
     mydir = os.path.join("expression_command", "radar_8638051")

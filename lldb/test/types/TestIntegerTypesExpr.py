@@ -7,7 +7,6 @@ import unittest2
 import lldb
 import sys
 
-@unittest2.skip("rdar://problem/8710994 Assertion failed: (reg_info) GDBRemoteRegisterContext.cpp, line 199")
 class IntegerTypesExprTestCase(AbstractBase.GenericTester):
 
     mydir = "types"
