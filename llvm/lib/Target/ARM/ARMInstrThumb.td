@@ -1265,11 +1265,13 @@ def tLEApcrelJT : T1I<(outs tGPR:$Rd),
 //
 
 // __aeabi_read_tp preserves the registers r1-r3.
-let isCall = 1,
-  Defs = [R0, LR], Uses = [SP] in {
+let isCall = 1, Defs = [R0, LR], Uses = [SP] in {
   def tTPsoft : TIx2<0b11110, 0b11, 1, (outs), (ins), IIC_Br,
                      "bl\t__aeabi_read_tp",
-                     [(set R0, ARMthread_pointer)]>;
+                     [(set R0, ARMthread_pointer)]> {
+    // Encoding is 0xf7fffffe.
+    let Inst = 0xf7fffffe;
+  }
 }
 
 // SJLJ Exception handling intrinsics
