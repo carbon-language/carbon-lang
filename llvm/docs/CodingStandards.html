@@ -29,6 +29,7 @@
           <li><a href="#ci_warningerrors">Treat Compiler Warnings Like
               Errors</a></li>
           <li><a href="#ci_portable_code">Write Portable Code</a></li>
+          <li><a href="#ci_rtti_exceptions">Do not use RTTI or Exceptions</a></li>
           <li><a href="#ci_class_struct">Use of <tt>class</tt>/<tt>struct</tt> Keywords</a></li>
         </ol></li>
     </ol></li>
@@ -401,6 +402,28 @@ compiler, and Visual Studio tends to be the lowest common denominator.
 If advanced features are used, they should only be an implementation detail of 
 a library which has a simple exposed API, and preferably be buried in 
 libSystem.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+<a name="ci_rtti_exceptions">Do not use RTTI or Exceptions</a>
+</div>
+<div class="doc_text">
+
+<p>LLVM does not use RTTI (e.g. dynamic_cast&lt;&gt;) or exceptions, in an
+effort to reduce code and executable size.  These two language features violate
+the general C++ principle of "you only pay for what you use", causing executable
+bloat even if exceptions are never used in a code base, or if RTTI is never used
+for a class.  Because of this, we turn them off globally in the code.
+</p>
+
+<p>
+That said, LLVM does make extensive use of a hand-rolled form of RTTI that use
+templates like <a href="ProgrammersManual.html#isa">isa&lt;&gt;, cast&lt;&gt;,
+and dyn_cast&lt;&gt;</a>.  This form of RTTI is opt-in and can be added to any
+class.  It is also substantially more efficient than dynamic_cast&lt;&gt;.
+</p>
 
 </div>
 
