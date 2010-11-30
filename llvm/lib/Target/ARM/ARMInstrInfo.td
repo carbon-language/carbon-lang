@@ -1221,7 +1221,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   // ARMV4T and above
-  def BRIND : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "bx\t$dst",
+  def BX : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "bx\t$dst",
                   [(brind GPR:$dst)]>,
               Requires<[IsARM, HasV4T]> {
     bits<4> dst;
@@ -1279,7 +1279,7 @@ let isCall = 1,
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
   // FIXME: x2 insn patterns like this need to be pseudo instructions.
-  def BX : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
+  def BX_CALL : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
            Requires<[IsARM, HasV4T, IsNotDarwin]> {
@@ -1289,7 +1289,7 @@ let isCall = 1,
   }
 
   // ARMv4
-  def BMOVPCRX : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
+  def BMOVPCRX_CALL : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                  IIC_Br, "mov\tlr, pc\n\tmov\tpc, $func",
                  [(ARMcall_nolink tGPR:$func)]>,
            Requires<[IsARM, NoV4T, IsNotDarwin]> {
@@ -1335,7 +1335,7 @@ let isCall = 1,
 
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
-  def BXr9 : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
+  def BXr9_CALL : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
              Requires<[IsARM, HasV4T, IsDarwin]> {
@@ -1345,7 +1345,7 @@ let isCall = 1,
   }
 
   // ARMv4
-  def BMOVPCRXr9 : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
+  def BMOVPCRXr9_CALL : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                  IIC_Br, "mov\tlr, pc\n\tmov\tpc, $func",
                  [(ARMcall_nolink tGPR:$func)]>,
            Requires<[IsARM, NoV4T, IsDarwin]> {
