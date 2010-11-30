@@ -1345,6 +1345,34 @@ struct FPrintFOpt : public LibCallOptimization {
   }
 };
 
+//===---------------------------------------===//
+// 'puts' Optimizations
+
+struct PutsOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Require one fixed pointer argument and an integer/void result.
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||
+        !(FT->getReturnType()->isIntegerTy() ||
+          FT->getReturnType()->isVoidTy()))
+      return 0;
+
+    // Check for a constant string.
+    std::string Str;
+    if (!GetConstantStringInfo(CI->getArgOperand(0), Str))
+      return 0;
+
+    if (Str.empty()) {
+      // puts("") -> putchar('\n')
+      Value *Res = EmitPutChar(B.getInt32('\n'), B, TD);
+      if (CI->use_empty()) return CI;
+      return B.CreateIntCast(Res, CI->getType(), true);
+    }
+
+    return 0;
+  }
+};
+
 } // end anonymous namespace.
 
 //===----------------------------------------------------------------------===//
@@ -1370,6 +1398,7 @@ namespace {
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
+    PutsOpt Puts;
 
     bool Modified;  // This is only used by doInitialization.
   public:
@@ -1484,6 +1513,7 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["fwrite"] = &FWrite;
   Optimizations["fputs"] = &FPuts;
   Optimizations["fprintf"] = &FPrintF;
+  Optimizations["puts"] = &Puts;
 }
 
 
@@ -2297,9 +2327,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 //   * pow(exp(x),y)  -> exp(x*y)
 //   * pow(sqrt(x),y) -> pow(x,y*0.5)
 //   * pow(pow(x,y),z)-> pow(x,y*z)
-//
-// puts:
-//   * puts("") -> putchar('\n')
 //
 // round, roundf, roundl:
 //   * round(cnst) -> cnst'
