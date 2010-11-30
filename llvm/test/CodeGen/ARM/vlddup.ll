@@ -91,3 +91,26 @@ define <4 x i16> @vld3dupi16(i16* %A) nounwind {
 }
 
 declare %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i16*, <4 x i16>, <4 x i16>, <4 x i16>, i32, i32) nounwind readonly
+
+%struct.__neon_int32x2x4_t = type { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> }
+
+define <2 x i32> @vld4dupi32(i32* %A) nounwind {
+;CHECK: vld4dupi32:
+;Check the alignment value.  Max for this instruction is 128 bits:
+;CHECK: vld4.32 {d16[], d17[], d18[], d19[]}, [r0, :128]
+	%tmp0 = tail call %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4lane.v2i32(i32* %A, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, i32 0, i32 32)
+	%tmp1 = extractvalue %struct.__neon_int32x2x4_t %tmp0, 0
+	%tmp2 = shufflevector <2 x i32> %tmp1, <2 x i32> undef, <2 x i32> zeroinitializer
+	%tmp3 = extractvalue %struct.__neon_int32x2x4_t %tmp0, 1
+	%tmp4 = shufflevector <2 x i32> %tmp3, <2 x i32> undef, <2 x i32> zeroinitializer
+	%tmp5 = extractvalue %struct.__neon_int32x2x4_t %tmp0, 2
+	%tmp6 = shufflevector <2 x i32> %tmp5, <2 x i32> undef, <2 x i32> zeroinitializer
+	%tmp7 = extractvalue %struct.__neon_int32x2x4_t %tmp0, 3
+	%tmp8 = shufflevector <2 x i32> %tmp7, <2 x i32> undef, <2 x i32> zeroinitializer
+        %tmp9 = add <2 x i32> %tmp2, %tmp4
+        %tmp10 = add <2 x i32> %tmp6, %tmp8
+        %tmp11 = add <2 x i32> %tmp9, %tmp10
+        ret <2 x i32> %tmp11
+}
+
+declare %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4lane.v2i32(i32*, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, i32, i32) nounwind readonly

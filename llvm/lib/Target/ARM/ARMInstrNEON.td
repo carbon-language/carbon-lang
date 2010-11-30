@@ -939,7 +939,59 @@ def VLD3DUPd16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3dupu>;
 def VLD3DUPd32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3dupu>;
 
 //   VLD4DUP  : Vector Load (single 4-element structure to all lanes)
-//   FIXME: Not yet implemented.
+class VLD4DUP<bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, 0b1111, op7_4,
+          (outs DPR:$Vd, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+          (ins addrmode6:$Rn), IIC_VLD4dup,
+          "vld4", Dt, "\\{$Vd[], $dst2[], $dst3[], $dst4[]\\}, $Rn", "", []> {
+  let Rm = 0b1111;
+}
+
+def VLD4DUPd8  : VLD4DUP<{0,0,0,?}, "8"> { let Inst{4} = Rn{4}; }
+def VLD4DUPd16 : VLD4DUP<{0,1,0,?}, "16"> { let Inst{4} = Rn{4}; }
+def VLD4DUPd32 : VLD4DUP<{1,?,0,?}, "32"> {
+  let Inst{6} = Rn{5};
+  let Inst{4} = Rn{5};
+}
+
+def VLD4DUPd8Pseudo  : VLDQQPseudo<IIC_VLD4dup>;
+def VLD4DUPd16Pseudo : VLDQQPseudo<IIC_VLD4dup>;
+def VLD4DUPd32Pseudo : VLDQQPseudo<IIC_VLD4dup>;
+
+// ...with double-spaced registers (not used for codegen):
+def VLD4DUPd8x2  : VLD4DUP<{0,0,1,?}, "8"> { let Inst{4} = Rn{4}; }
+def VLD4DUPd16x2 : VLD4DUP<{0,1,1,?}, "16"> { let Inst{4} = Rn{4}; }
+def VLD4DUPd32x2 : VLD4DUP<{1,?,1,?}, "32"> {
+  let Inst{6} = Rn{5};
+  let Inst{4} = Rn{5};
+}
+
+// ...with address register writeback:
+class VLD4DUPWB<bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, 0b1111, op7_4,
+          (outs DPR:$Vd, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
+          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD4dupu,
+          "vld4", Dt, "\\{$Vd[], $dst2[], $dst3[], $dst4[]\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []>;
+
+def VLD4DUPd8_UPD  : VLD4DUPWB<{0,0,0,0}, "8"> { let Inst{4} = Rn{4}; }
+def VLD4DUPd16_UPD : VLD4DUPWB<{0,1,0,?}, "16"> { let Inst{4} = Rn{4}; }
+def VLD4DUPd32_UPD : VLD4DUPWB<{1,?,0,?}, "32"> {
+  let Inst{6} = Rn{5};
+  let Inst{4} = Rn{5};
+}
+
+def VLD4DUPd8x2_UPD  : VLD4DUPWB<{0,0,1,0}, "8"> { let Inst{4} = Rn{4}; }
+def VLD4DUPd16x2_UPD : VLD4DUPWB<{0,1,1,?}, "16"> { let Inst{4} = Rn{4}; }
+def VLD4DUPd32x2_UPD : VLD4DUPWB<{1,?,1,?}, "32"> {
+  let Inst{6} = Rn{5};
+  let Inst{4} = Rn{5};
+}
+
+def VLD4DUPd8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD4dupu>;
+def VLD4DUPd16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD4dupu>;
+def VLD4DUPd32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD4dupu>;
+
 } // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {

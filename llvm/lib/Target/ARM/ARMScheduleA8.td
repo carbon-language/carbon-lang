@@ -595,6 +595,18 @@ def CortexA8Itineraries : ProcessorItineraries<
                                InstrStage<5, [A8_LSPipe]>],
                               [4, 4, 5, 5, 2, 1, 1, 1, 1, 1, 2, 2]>,
   //
+  // VLD4dup
+  InstrItinData<IIC_VLD4dup,  [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 0>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [2, 2, 3, 3, 1]>,
+  //
+  // VLD4dupu
+  InstrItinData<IIC_VLD4dupu, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<3, [A8_NLSPipe], 0>,
+                               InstrStage<3, [A8_LSPipe]>],
+                              [2, 2, 3, 3, 2, 1, 1]>,
+  //
   // VST1
   InstrItinData<IIC_VST1,     [InstrStage<1, [A8_Pipe0, A8_Pipe1], 0>,
                                InstrStage<2, [A8_NLSPipe], 0>,
