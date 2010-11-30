@@ -80,5 +80,20 @@ def note_odr_objc_method_here : Note<
 def err_odr_objc_property_type_inconsistent : Error<
   "property %0 declared with incompatible types in different "
   "translation units (%1 vs. %2)">;
+def err_odr_different_num_template_parameters : Error<
+  "template parameter lists have a different number of parameters (%0 vs %1)">;
+def note_odr_template_parameter_list : Note<
+  "template parameter list also declared here">;
+def err_odr_different_template_parameter_kind : Error<
+  "template parameter has different kinds in different translation units">;
+def note_odr_template_parameter_here : Note<
+  "template parameter declared here">;
+def err_odr_parameter_pack_non_pack : Error<
+  "parameter kind mismatch; parameter is %select{not a|a}0 parameter pack">;
+def note_odr_parameter_pack_non_pack : Note<
+  "%select{parameter|parameter pack}0 declared here">;
+def err_odr_non_type_parameter_type_inconsistent : Error<
+  "non-type template parameter declared with incompatible types in different "
+  "translation units (%0 vs. %1)">;
 def err_unsupported_ast_node: Error<"cannot import unsupported AST node %0">;
 }

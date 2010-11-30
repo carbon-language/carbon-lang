@@ -84,8 +84,11 @@ namespace {
     void ImportDeclarationNameLoc(const DeclarationNameInfo &From,
                                   DeclarationNameInfo& To);
     void ImportDeclContext(DeclContext *FromDC);
+    TemplateParameterList *ImportTemplateParameterList(
+                                                 TemplateParameterList *Params);
     bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
     bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToRecord);
+    bool IsStructuralMatch(ClassTemplateDecl *From, ClassTemplateDecl *To);
     Decl *VisitDecl(Decl *D);
     Decl *VisitNamespaceDecl(NamespaceDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
@@ -110,6 +113,10 @@ namespace {
     Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     Decl *VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
     Decl *VisitObjCClassDecl(ObjCClassDecl *D);
+    Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
+    Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
+    Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
+    Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
                             
     // Importing statements
     Stmt *VisitStmt(Stmt *S);
@@ -706,11 +713,11 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     if (CXXRecordDecl *D2CXX = dyn_cast<CXXRecordDecl>(D2)) {
       if (D1CXX->getNumBases() != D2CXX->getNumBases()) {
         Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
-        << Context.C2.getTypeDeclType(D2);
+          << Context.C2.getTypeDeclType(D2);
         Context.Diag2(D2->getLocation(), diag::note_odr_number_of_bases)
-        << D2CXX->getNumBases();
+          << D2CXX->getNumBases();
         Context.Diag1(D1->getLocation(), diag::note_odr_number_of_bases)
-        << D1CXX->getNumBases();
+          << D1CXX->getNumBases();
         return false;
       }
       
@@ -889,7 +896,112 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
   
   return true;
 }
+
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     TemplateParameterList *Params1,
+                                     TemplateParameterList *Params2) {
+  if (Params1->size() != Params2->size()) {
+    Context.Diag2(Params2->getTemplateLoc(), 
+                  diag::err_odr_different_num_template_parameters)
+      << Params1->size() << Params2->size();
+    Context.Diag1(Params1->getTemplateLoc(), 
+                  diag::note_odr_template_parameter_list);
+    return false;
+  }
   
+  for (unsigned I = 0, N = Params1->size(); I != N; ++I) {
+    if (Params1->getParam(I)->getKind() != Params2->getParam(I)->getKind()) {
+      Context.Diag2(Params2->getParam(I)->getLocation(), 
+                    diag::err_odr_different_template_parameter_kind);
+      Context.Diag1(Params1->getParam(I)->getLocation(),
+                    diag::note_odr_template_parameter_here);
+      return false;
+    }
+    
+    if (!Context.IsStructurallyEquivalent(Params1->getParam(I),
+                                          Params2->getParam(I))) {
+      
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     TemplateTypeParmDecl *D1,
+                                     TemplateTypeParmDecl *D2) {
+  if (D1->isParameterPack() != D2->isParameterPack()) {
+    Context.Diag2(D2->getLocation(), diag::err_odr_parameter_pack_non_pack)
+      << D2->isParameterPack();
+    Context.Diag1(D1->getLocation(), diag::note_odr_parameter_pack_non_pack)
+      << D1->isParameterPack();
+    return false;
+  }
+  
+  return true;
+}
+
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     NonTypeTemplateParmDecl *D1,
+                                     NonTypeTemplateParmDecl *D2) {
+  // FIXME: Enable once we have variadic templates.
+#if 0
+  if (D1->isParameterPack() != D2->isParameterPack()) {
+    Context.Diag2(D2->getLocation(), diag::err_odr_parameter_pack_non_pack)
+      << D2->isParameterPack();
+    Context.Diag1(D1->getLocation(), diag::note_odr_parameter_pack_non_pack)
+      << D1->isParameterPack();
+    return false;
+  }
+#endif
+  
+  // Check types.
+  if (!Context.IsStructurallyEquivalent(D1->getType(), D2->getType())) {
+    Context.Diag2(D2->getLocation(), 
+                  diag::err_odr_non_type_parameter_type_inconsistent)
+      << D2->getType() << D1->getType();
+    Context.Diag1(D1->getLocation(), diag::note_odr_value_here)
+      << D1->getType();
+    return false;
+  }
+  
+  return true;
+}
+
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     TemplateTemplateParmDecl *D1,
+                                     TemplateTemplateParmDecl *D2) {
+  // FIXME: Enable once we have variadic templates.
+#if 0
+  if (D1->isParameterPack() != D2->isParameterPack()) {
+    Context.Diag2(D2->getLocation(), diag::err_odr_parameter_pack_non_pack)
+    << D2->isParameterPack();
+    Context.Diag1(D1->getLocation(), diag::note_odr_parameter_pack_non_pack)
+    << D1->isParameterPack();
+    return false;
+  }
+#endif
+  
+  // Check template parameter lists.
+  return IsStructurallyEquivalent(Context, D1->getTemplateParameters(),
+                                  D2->getTemplateParameters());
+}
+
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     ClassTemplateDecl *D1, 
+                                     ClassTemplateDecl *D2) {
+  // Check template parameters.
+  if (!IsStructurallyEquivalent(Context,
+                                D1->getTemplateParameters(),
+                                D2->getTemplateParameters()))
+    return false;
+  
+  // Check the templated declaration.
+  return Context.IsStructurallyEquivalent(D1->getTemplatedDecl(), 
+                                          D2->getTemplatedDecl());
+}
+
 /// \brief Determine structural equivalence of two declarations.
 static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                      Decl *D1, Decl *D2) {
@@ -985,8 +1097,47 @@ bool StructuralEquivalenceContext::Finish() {
         // Typedef/non-typedef mismatch.
         Equivalent = false;
       }
-    } 
-
+    } else if (ClassTemplateDecl *ClassTemplate1 
+                                           = dyn_cast<ClassTemplateDecl>(D1)) {
+      if (ClassTemplateDecl *ClassTemplate2 = dyn_cast<ClassTemplateDecl>(D2)) {
+        if (!::IsStructurallyEquivalent(ClassTemplate1->getIdentifier(),
+                                        ClassTemplate2->getIdentifier()) ||
+            !::IsStructurallyEquivalent(*this, ClassTemplate1, ClassTemplate2))
+          Equivalent = false;
+      } else {
+        // Class template/non-class-template mismatch.
+        Equivalent = false;
+      }
+    } else if (TemplateTypeParmDecl *TTP1= dyn_cast<TemplateTypeParmDecl>(D1)) {
+      if (TemplateTypeParmDecl *TTP2 = dyn_cast<TemplateTypeParmDecl>(D2)) {
+        if (!::IsStructurallyEquivalent(*this, TTP1, TTP2))
+          Equivalent = false;
+      } else {
+        // Kind mismatch.
+        Equivalent = false;
+      }
+    } else if (NonTypeTemplateParmDecl *NTTP1
+                                     = dyn_cast<NonTypeTemplateParmDecl>(D1)) {
+      if (NonTypeTemplateParmDecl *NTTP2
+                                      = dyn_cast<NonTypeTemplateParmDecl>(D2)) {
+        if (!::IsStructurallyEquivalent(*this, NTTP1, NTTP2))
+          Equivalent = false;
+      } else {
+        // Kind mismatch.
+        Equivalent = false;
+      }
+    } else if (TemplateTemplateParmDecl *TTP1
+                                  = dyn_cast<TemplateTemplateParmDecl>(D1)) {
+      if (TemplateTemplateParmDecl *TTP2
+                                    = dyn_cast<TemplateTemplateParmDecl>(D2)) {
+        if (!::IsStructurallyEquivalent(*this, TTP1, TTP2))
+          Equivalent = false;
+      } else {
+        // Kind mismatch.
+        Equivalent = false;
+      }
+    }
+    
     if (!Equivalent) {
       // Note that these two declarations are not equivalent (and we already
       // know about it).
@@ -1425,6 +1576,27 @@ void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC) {
     Importer.Import(*From);
 }
 
+TemplateParameterList *ASTNodeImporter::ImportTemplateParameterList(
+                                                TemplateParameterList *Params) {
+  llvm::SmallVector<NamedDecl *, 4> ToParams;
+  ToParams.reserve(Params->size());
+  for (TemplateParameterList::iterator P = Params->begin(), 
+                                    PEnd = Params->end();
+       P != PEnd; ++P) {
+    Decl *To = Importer.Import(*P);
+    if (!To)
+      return 0;
+    
+    ToParams.push_back(cast<NamedDecl>(To));
+  }
+  
+  return TemplateParameterList::Create(Importer.getToContext(),
+                                       Importer.Import(Params->getTemplateLoc()),
+                                       Importer.Import(Params->getLAngleLoc()),
+                                       ToParams.data(), ToParams.size(),
+                                       Importer.Import(Params->getRAngleLoc()));
+}
+
 bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
                                         RecordDecl *ToRecord) {
   StructuralEquivalenceContext Ctx(Importer.getFromContext(),
@@ -1438,6 +1610,14 @@ bool ASTNodeImporter::IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum) {
                                    Importer.getToContext(),
                                    Importer.getNonEquivalentDecls());
   return Ctx.IsStructurallyEquivalent(FromEnum, ToEnum);
+}
+
+bool ASTNodeImporter::IsStructuralMatch(ClassTemplateDecl *From, 
+                                        ClassTemplateDecl *To) {
+  StructuralEquivalenceContext Ctx(Importer.getFromContext(),
+                                   Importer.getToContext(),
+                                   Importer.getNonEquivalentDecls());
+  return Ctx.IsStructurallyEquivalent(From, To);  
 }
 
 Decl *ASTNodeImporter::VisitDecl(Decl *D) {
@@ -2810,6 +2990,180 @@ Decl *ASTNodeImporter::VisitObjCClassDecl(ObjCClassDecl *D) {
   LexicalDC->addDecl(ToClass);
   Importer.Imported(D, ToClass);
   return ToClass;
+}
+
+Decl *ASTNodeImporter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
+  // For template arguments, we adopt the translation unit as our declaration
+  // context. This context will be fixed when the actual template declaration
+  // is created.
+  
+  // FIXME: Import default argument.
+  return TemplateTypeParmDecl::Create(Importer.getToContext(),
+                              Importer.getToContext().getTranslationUnitDecl(),
+                                      Importer.Import(D->getLocation()),
+                                      D->getDepth(),
+                                      D->getIndex(), 
+                                      Importer.Import(D->getIdentifier()),
+                                      D->wasDeclaredWithTypename(),
+                                      D->isParameterPack());
+}
+
+Decl *
+ASTNodeImporter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
+  // Import the name of this declaration.
+  DeclarationName Name = Importer.Import(D->getDeclName());
+  if (D->getDeclName() && !Name)
+    return 0;
+  
+  // Import the location of this declaration.
+  SourceLocation Loc = Importer.Import(D->getLocation());
+
+  // Import the type of this declaration.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+  
+  // Import type-source information.
+  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+  if (D->getTypeSourceInfo() && !TInfo)
+    return 0;
+  
+  // FIXME: Import default argument.
+  
+  return NonTypeTemplateParmDecl::Create(Importer.getToContext(),
+                               Importer.getToContext().getTranslationUnitDecl(),
+                                         Loc, D->getDepth(), D->getPosition(),
+                                         Name.getAsIdentifierInfo(),
+                                         T, TInfo);
+}
+
+Decl *
+ASTNodeImporter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
+  // Import the name of this declaration.
+  DeclarationName Name = Importer.Import(D->getDeclName());
+  if (D->getDeclName() && !Name)
+    return 0;
+  
+  // Import the location of this declaration.
+  SourceLocation Loc = Importer.Import(D->getLocation());
+  
+  // Import template parameters.
+  TemplateParameterList *TemplateParams
+    = ImportTemplateParameterList(D->getTemplateParameters());
+  if (!TemplateParams)
+    return 0;
+  
+  // FIXME: Import default argument.
+  
+  return TemplateTemplateParmDecl::Create(Importer.getToContext(), 
+                              Importer.getToContext().getTranslationUnitDecl(), 
+                                          Loc, D->getDepth(), D->getPosition(),
+                                          Name.getAsIdentifierInfo(), 
+                                          TemplateParams);
+}
+
+Decl *ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  // If this record has a definition in the translation unit we're coming from,
+  // but this particular declaration is not that definition, import the
+  // definition and map to that.
+  CXXRecordDecl *Definition 
+    = cast_or_null<CXXRecordDecl>(D->getTemplatedDecl()->getDefinition());
+  if (Definition && Definition != D->getTemplatedDecl()) {
+    Decl *ImportedDef
+      = Importer.Import(Definition->getDescribedClassTemplate());
+    if (!ImportedDef)
+      return 0;
+    
+    return Importer.Imported(D, ImportedDef);
+  }
+  
+  // Import the major distinguishing characteristics of this class template.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  // We may already have a template of the same name; try to find and match it.
+  if (!DC->isFunctionOrMethod()) {
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(Decl::IDNS_Ordinary))
+        continue;
+      
+      Decl *Found = *Lookup.first;
+      if (ClassTemplateDecl *FoundTemplate 
+                                        = dyn_cast<ClassTemplateDecl>(Found)) {
+        if (IsStructuralMatch(D, FoundTemplate)) {
+          // The class templates structurally match; call it the same template.
+          // FIXME: We may be filling in a forward declaration here. Handle
+          // this case!
+          Importer.Imported(D->getTemplatedDecl(), 
+                            FoundTemplate->getTemplatedDecl());
+          return Importer.Imported(D, FoundTemplate);
+        }         
+      }
+      
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+    
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, Decl::IDNS_Ordinary,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+    }
+    
+    if (!Name)
+      return 0;
+  }
+
+  CXXRecordDecl *DTemplated = D->getTemplatedDecl();
+  
+  // Create the declaration that is being templated.
+  CXXRecordDecl *D2Templated = CXXRecordDecl::Create(Importer.getToContext(),
+                                                     DTemplated->getTagKind(),
+                                                     DC, 
+                                     Importer.Import(DTemplated->getLocation()),
+                                                     Name.getAsIdentifierInfo(),                                                       
+                               Importer.Import(DTemplated->getTagKeywordLoc()));
+  D2Templated->setAccess(DTemplated->getAccess());
+  
+  
+  // Import the qualifier, if any.
+  if (DTemplated->getQualifier()) {
+    NestedNameSpecifier *NNS = Importer.Import(DTemplated->getQualifier());
+    SourceRange NNSRange = Importer.Import(DTemplated->getQualifierRange());
+    D2Templated->setQualifierInfo(NNS, NNSRange);
+  }
+  D2Templated->setLexicalDeclContext(LexicalDC);
+  
+  // Create the class template declaration itself.
+  TemplateParameterList *TemplateParams
+    = ImportTemplateParameterList(D->getTemplateParameters());
+  if (!TemplateParams)
+    return 0;
+  
+  ClassTemplateDecl *D2 = ClassTemplateDecl::Create(Importer.getToContext(), DC, 
+                                                    Loc, Name, TemplateParams, 
+                                                    D2Templated, 
+  /*PrevDecl=*/0);
+  D2Templated->setDescribedClassTemplate(D2);    
+  
+  D2->setAccess(D->getAccess());
+  D2->setLexicalDeclContext(LexicalDC);
+  LexicalDC->addDecl(D2);
+  
+  // Note the relationship between the class templates.
+  Importer.Imported(D, D2);
+  Importer.Imported(DTemplated, D2Templated);
+
+  if (DTemplated->isDefinition() && !D2Templated->isDefinition()) {
+    // FIXME: Import definition!
+  }
+  
+  return D2;
 }
 
 //----------------------------------------------------------------------------
