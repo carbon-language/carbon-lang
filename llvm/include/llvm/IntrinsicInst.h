@@ -55,7 +55,7 @@ namespace llvm {
       return isa<CallInst>(V) && classof(cast<CallInst>(V));
     }
   };
-
+  
   /// DbgInfoIntrinsic - This is the common base class for debug info intrinsics
   ///
   class DbgInfoIntrinsic : public IntrinsicInst {
@@ -291,29 +291,6 @@ namespace llvm {
     static inline bool classof(const EHSelectorInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::eh_selector;
-    }
-    static inline bool classof(const Value *V) {
-      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
-    }
-  };
-
-  /// MemoryUseIntrinsic - This is the common base class for the memory use
-  /// marker intrinsics.
-  ///
-  class MemoryUseIntrinsic : public IntrinsicInst {
-  public:
-
-    // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const MemoryUseIntrinsic *) { return true; }
-    static inline bool classof(const IntrinsicInst *I) {
-      switch (I->getIntrinsicID()) {
-      case Intrinsic::lifetime_start:
-      case Intrinsic::lifetime_end:
-      case Intrinsic::invariant_start:
-      case Intrinsic::invariant_end:
-        return true;
-      default: return false;
-      }
     }
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
