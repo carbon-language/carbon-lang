@@ -32,7 +32,7 @@ namespace clang {
   class QualType;
   class LangOptions;
   
-  enum LANGUAGEID {
+  enum LanguageID {
     C_LANG = 0x1,     // builtin for c only.
     CXX_LANG = 0x2,   // builtin for cplusplus only.
     OBJC_LANG = 0x4,  // builtin for objective-c and objective-c++
@@ -49,7 +49,7 @@ enum ID {
 
 struct Info {
   const char *Name, *Type, *Attributes, *HeaderName;
-  LANGUAGEID builtin_lang;
+  LanguageID builtin_lang;
   bool Suppressed;
 
   bool operator==(const Info &RHS) const {

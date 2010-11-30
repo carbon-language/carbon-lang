@@ -569,6 +569,8 @@ LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h", ALL_LANGUAGES)
 //   id objc_msgSend(id, SEL, ...)
 LIBBUILTIN(objc_msgSend, "GGH.",   "f",     "objc/message.h", OBJC_LANG)
+//   id objc_getClass(const char *name)
+LIBBUILTIN(objc_getClass, "GcC*",   "f",     "objc/runtime.h", OBJC_LANG)
 BUILTIN(__builtin_objc_memmove_collectable, "v*v*vC*z", "nF")
 
 // Builtin math library functions
