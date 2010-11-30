@@ -182,16 +182,13 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
               XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
       Uses = [ESP] in {
-  def TCRETURNdi : I<0, Pseudo, (outs), 
-                     (ins i32imm_pcrel:$dst, i32imm:$offset, variable_ops),
-                   "#TC_RETURN $dst $offset", []>;
-  def TCRETURNri : I<0, Pseudo, (outs), 
-                     (ins GR32_TC:$dst, i32imm:$offset, variable_ops),
-                     "#TC_RETURN $dst $offset", []>;
+  def TCRETURNdi : PseudoI<(outs), 
+                     (ins i32imm_pcrel:$dst, i32imm:$offset, variable_ops), []>;
+  def TCRETURNri : PseudoI<(outs), 
+                     (ins GR32_TC:$dst, i32imm:$offset, variable_ops), []>;
   let mayLoad = 1 in
-  def TCRETURNmi : I<0, Pseudo, (outs), 
-                     (ins i32mem_TC:$dst, i32imm:$offset, variable_ops),
-                     "#TC_RETURN $dst $offset", []>;
+  def TCRETURNmi : PseudoI<(outs), 
+                     (ins i32mem_TC:$dst, i32imm:$offset, variable_ops), []>;
 
   // FIXME: The should be pseudo instructions that are lowered when going to
   // mcinst.
@@ -259,7 +256,8 @@ let isCall = 1, isCodeGenOnly = 1 in
     def WINCALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
                              "call{q}\t{*}$dst",
                              [(X86call GR64:$dst)]>, Requires<[IsWin64]>;
-    def WINCALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst,variable_ops),
+    def WINCALL64m       : I<0xFF, MRM2m, (outs), 
+                              (ins i64mem:$dst,variable_ops),
                              "call{q}\t{*}$dst",
                              [(X86call (loadi64 addr:$dst))]>, 
                            Requires<[IsWin64]>;
@@ -274,16 +272,14 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
               XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
       Uses = [RSP] in {
-  def TCRETURNdi64 : I<0, Pseudo, (outs),
-                         (ins i64i32imm_pcrel:$dst, i32imm:$offset, variable_ops),
-                       "#TC_RETURN $dst $offset", []>;
-  def TCRETURNri64 : I<0, Pseudo, (outs), (ins GR64_TC:$dst, i32imm:$offset,
-                                           variable_ops),
-                       "#TC_RETURN $dst $offset", []>;
+  def TCRETURNdi64 : PseudoI<(outs),
+                      (ins i64i32imm_pcrel:$dst, i32imm:$offset, variable_ops),
+                      []>;
+  def TCRETURNri64 : PseudoI<(outs),
+                      (ins GR64_TC:$dst, i32imm:$offset, variable_ops), []>;
   let mayLoad = 1 in
-  def TCRETURNmi64 : I<0, Pseudo, (outs), 
-                       (ins i64mem_TC:$dst, i32imm:$offset, variable_ops),
-                       "#TC_RETURN $dst $offset", []>;
+  def TCRETURNmi64 : PseudoI<(outs), 
+                       (ins i64mem_TC:$dst, i32imm:$offset, variable_ops), []>;
 
   def TAILJMPd64 : Ii32PCRel<0xE9, RawFrm, (outs),
                                       (ins i64i32imm_pcrel:$dst, variable_ops),
