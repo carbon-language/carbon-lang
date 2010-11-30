@@ -37,8 +37,6 @@ STATISTIC(NumFastOther , "Number of other instrs removed");
 
 namespace {
   struct DSE : public FunctionPass {
-    TargetData *TD;
-
     static char ID; // Pass identification, replacement for typeid
     DSE() : FunctionPass(ID) {
       initializeDSEPass(*PassRegistry::getPassRegistry());
@@ -78,7 +76,7 @@ namespace {
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
 
-    uint64_t getPointerSize(Value *V) const;
+    uint64_t getPointerSize(Value *V, AliasAnalysis &AA) const;
   };
 }
 
@@ -197,7 +195,7 @@ static Value *getPointerOperand(Instruction *I) {
 /// completely overwrites a store to the 'Earlier' location.
 static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
                                 const AliasAnalysis::Location &Earlier,
-                                AliasAnalysis &AA, const TargetData *TD) {
+                                AliasAnalysis &AA) {
   const Value *P1 = Later.Ptr->stripPointerCasts();
   const Value *P2 = Earlier.Ptr->stripPointerCasts();
   
@@ -205,12 +203,16 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
   if (P1 != P2)
     return false;
 
-  // If we have no TargetData information around, then the size of the store is
-  // inferrable from the pointee type.  If they are the same type, then we know
-  // that the store is safe.
-  if (TD == 0)
-    return Later.Ptr->getType() == Earlier.Ptr->getType();
-  
+  // If we don't know the sizes of either access, then we can't do a comparison.
+  if (Later.Size == AliasAnalysis::UnknownSize ||
+      Earlier.Size == AliasAnalysis::UnknownSize) {
+    // If we have no TargetData information around, then the size of the store
+    // is inferrable from the pointee type.  If they are the same type, then we
+    // know that the store is safe.
+    if (AA.getTargetData() == 0)
+      return Later.Ptr->getType() == Earlier.Ptr->getType();
+    return false;
+  }
   
   // Make sure that the Later size is >= the Earlier size.
   if (Later.Size < Earlier.Size)
@@ -222,7 +224,6 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  TD = getAnalysisIfAvailable<TargetData>();
 
   bool MadeChange = false;
   
@@ -296,7 +297,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
       // If we find a removable write that is completely obliterated by the
       // store to 'Loc' then we can remove it.
-      if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, AA, TD)) {
+      if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, AA)) {
         // Delete the store and now-dead instructions that feed it.
         DeleteDeadInstruction(DepWrite);
         ++NumFastStores;
@@ -486,8 +487,8 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
         }
         
         // See if the call site touches it
-        AliasAnalysis::ModRefResult A = AA.getModRefInfo(CS, *I,
-                                                         getPointerSize(*I));
+        AliasAnalysis::ModRefResult A = 
+          AA.getModRefInfo(CS, *I, getPointerSize(*I, AA));
         
         if (A == AliasAnalysis::ModRef)
           ++modRef;
@@ -551,7 +552,7 @@ bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
   for (SmallPtrSet<Value*, 64>::iterator I = deadPointers.begin(),
        E = deadPointers.end(); I != E; ++I) {
     // See if this pointer could alias it
-    AliasAnalysis::AliasResult A = AA.alias(*I, getPointerSize(*I),
+    AliasAnalysis::AliasResult A = AA.alias(*I, getPointerSize(*I, AA),
                                             killPointer, killPointerSize);
 
     // If it must-alias and a store, we can delete it
@@ -573,7 +574,7 @@ bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
 
   for (SmallVector<Value*, 16>::iterator I = undead.begin(), E = undead.end();
        I != E; ++I)
-      deadPointers.erase(*I);
+    deadPointers.erase(*I);
   
   return MadeChange;
 }
@@ -621,17 +622,19 @@ void DSE::DeleteDeadInstruction(Instruction *I,
   } while (!NowDeadInsts.empty());
 }
 
-uint64_t DSE::getPointerSize(Value *V) const {
-  if (TD) {
-    if (AllocaInst *A = dyn_cast<AllocaInst>(V)) {
-      // Get size information for the alloca
-      if (ConstantInt *C = dyn_cast<ConstantInt>(A->getArraySize()))
-        return C->getZExtValue() * TD->getTypeAllocSize(A->getAllocatedType());
-    } else {
-      assert(isa<Argument>(V) && "Expected AllocaInst or Argument!");
-      const PointerType *PT = cast<PointerType>(V->getType());
-      return TD->getTypeAllocSize(PT->getElementType());
-    }
+uint64_t DSE::getPointerSize(Value *V, AliasAnalysis &AA) const {
+  const TargetData *TD = AA.getTargetData();
+  if (TD == 0)
+    return AliasAnalysis::UnknownSize;
+
+  if (AllocaInst *A = dyn_cast<AllocaInst>(V)) {
+    // Get size information for the alloca
+    if (ConstantInt *C = dyn_cast<ConstantInt>(A->getArraySize()))
+      return C->getZExtValue() * TD->getTypeAllocSize(A->getAllocatedType());
+    return AliasAnalysis::UnknownSize;
   }
-  return AliasAnalysis::UnknownSize;
+  
+  assert(isa<Argument>(V) && "Expected AllocaInst or Argument!");
+  const PointerType *PT = cast<PointerType>(V->getType());
+  return TD->getTypeAllocSize(PT->getElementType());
 }
