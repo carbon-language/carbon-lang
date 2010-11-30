@@ -224,7 +224,7 @@ AliasAnalysis::getLocationForSource(const MemTransferInst *MTI) {
 }
 
 AliasAnalysis::Location 
-AliasAnalysis::getLocationForDest(const MemTransferInst *MTI) {
+AliasAnalysis::getLocationForDest(const MemIntrinsic *MTI) {
   uint64_t Size = UnknownSize;
   if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
     Size = C->getValue().getZExtValue();

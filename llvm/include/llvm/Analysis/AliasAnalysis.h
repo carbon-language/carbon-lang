@@ -49,6 +49,7 @@ class TargetData;
 class Pass;
 class AnalysisUsage;
 class MemTransferInst;
+class MemIntrinsic;
 
 class AliasAnalysis {
 protected:
@@ -137,7 +138,7 @@ public:
   Location getLocation(const StoreInst *SI);
   Location getLocation(const VAArgInst *VI);
   static Location getLocationForSource(const MemTransferInst *MTI);
-  static Location getLocationForDest(const MemTransferInst *MTI);
+  static Location getLocationForDest(const MemIntrinsic *MI);
 
   /// Alias analysis result - Either we know for sure that it does not alias, we
   /// know for sure it must alias, or we don't know anything: The two pointers
