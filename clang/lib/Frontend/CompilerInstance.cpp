@@ -474,8 +474,11 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
                                                FileManager &FileMgr,
                                                SourceManager &SourceMgr,
                                                const FrontendOptions &Opts) {
-  // Figure out where to get and map in the main file.
-  if (InputFile != "-") {
+  // Figure out where to get and map in the main file, unless it's already
+  // been created (e.g., by a precompiled preamble).
+  if (!SourceMgr.getMainFileID().isInvalid()) {
+    // Do nothing: the main file has already been set.
+  } else if (InputFile != "-") {
     const FileEntry *File = FileMgr.getFile(InputFile);
     if (!File) {
       Diags.Report(diag::err_fe_error_reading) << InputFile;

@@ -2239,6 +2239,18 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   if (DeserializationListener)
     DeserializationListener->ReaderInitialized(this);
 
+  // If this AST file is a precompiled preamble, then set the main file ID of 
+  // the source manager to the file source file from which the preamble was
+  // built. This is the only valid way to use a precompiled preamble.
+  if (Type == Preamble) {
+    SourceLocation Loc
+      = SourceMgr.getLocation(FileMgr.getFile(getOriginalSourceFile()), 1, 1);
+    if (Loc.isValid()) {
+      std::pair<FileID, unsigned> Decomposed = SourceMgr.getDecomposedLoc(Loc);
+      SourceMgr.SetPreambleFileID(Decomposed.first);
+    }
+  }
+  
   return Success;
 }
 
