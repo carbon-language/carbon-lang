@@ -66,9 +66,9 @@ namespace {
     bool handleEndBlock(BasicBlock &BB);
     bool RemoveUndeadPointers(Value *Ptr, uint64_t killPointerSize,
                               BasicBlock::iterator &BBI,
-                              SmallPtrSet<Value*, 64> &deadPointers);
+                              SmallPtrSet<Value*, 16> &deadPointers);
     void DeleteDeadInstruction(Instruction *I,
-                               SmallPtrSet<Value*, 64> *deadPointers = 0);
+                               SmallPtrSet<Value*, 16> *deadPointers = 0);
     
 
     // getAnalysisUsage - We require post dominance frontiers (aka Control
@@ -400,7 +400,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
   bool MadeChange = false;
   
   // Pointers alloca'd in this function are dead in the end block
-  SmallPtrSet<Value*, 64> DeadPointers;
+  SmallPtrSet<Value*, 16> DeadPointers;
   
   // Find all of the alloca'd pointers in the entry block.
   BasicBlock *Entry = BB.getParent()->begin();
@@ -450,6 +450,49 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       continue;
     }
     
+    if (CallSite CS = cast<Value>(BBI)) {
+      // If this call does not access memory, it can't be loading any of our
+      // pointers.
+      if (AA->doesNotAccessMemory(CS))
+        continue;
+      
+      unsigned NumModRef = 0, NumOther = 0;
+      
+      // If the call might load from any of our allocas, then any store above
+      // the call is live.
+      SmallVector<Value*, 8> LiveAllocas;
+      for (SmallPtrSet<Value*, 16>::iterator I = DeadPointers.begin(),
+           E = DeadPointers.end(); I != E; ++I) {
+        // If we detect that our AA is imprecise, it's not worth it to scan the
+        // rest of the DeadPointers set.  Just assume that the AA will return
+        // ModRef for everything, and go ahead and bail out.
+        if (NumModRef >= 16 && NumOther == 0)
+          return MadeChange;
+
+        // See if the call site touches it.
+        AliasAnalysis::ModRefResult A = 
+          AA->getModRefInfo(CS, *I, getPointerSize(*I, *AA));
+        
+        if (A == AliasAnalysis::ModRef)
+          ++NumModRef;
+        else
+          ++NumOther;
+        
+        if (A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref)
+          LiveAllocas.push_back(*I);
+      }
+      
+      for (SmallVector<Value*, 8>::iterator I = LiveAllocas.begin(),
+           E = LiveAllocas.end(); I != E; ++I)
+        DeadPointers.erase(*I);
+      
+      // If all of the allocas were clobbered by the call then we're not going
+      // to find anything else to process.
+      if (DeadPointers.empty())
+        return MadeChange;
+      
+      continue;
+    }
     
     Value *KillPointer = 0;
     uint64_t KillPointerSize = AliasAnalysis::UnknownSize;
@@ -463,46 +506,6 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       KillPointer = cast<MemTransferInst>(BBI)->getSource();
       if (ConstantInt *Len = dyn_cast<ConstantInt>(MTI->getLength()))
         KillPointerSize = Len->getZExtValue();
-    } else if (CallSite CS = cast<Value>(BBI)) {
-      // If this call does not access memory, it can't be loading any of our
-      // pointers.
-      if (AA->doesNotAccessMemory(CS))
-        continue;
-      
-      unsigned NumModRef = 0;
-      unsigned NumOther = 0;
-      
-      // Remove any pointers made undead by the call from the dead set
-      std::vector<Value*> dead;
-      for (SmallPtrSet<Value*, 64>::iterator I = DeadPointers.begin(),
-           E = DeadPointers.end(); I != E; ++I) {
-        // HACK: if we detect that our AA is imprecise, it's not
-        // worth it to scan the rest of the deadPointers set.  Just
-        // assume that the AA will return ModRef for everything, and
-        // go ahead and bail.
-        if (NumModRef >= 16 && NumOther == 0) {
-          DeadPointers.clear();
-          return MadeChange;
-        }
-        
-        // See if the call site touches it
-        AliasAnalysis::ModRefResult A = 
-          AA->getModRefInfo(CS, *I, getPointerSize(*I, *AA));
-        
-        if (A == AliasAnalysis::ModRef)
-          ++NumModRef;
-        else
-          ++NumOther;
-        
-        if (A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref)
-          dead.push_back(*I);
-      }
-
-      for (std::vector<Value*>::iterator I = dead.begin(), E = dead.end();
-           I != E; ++I)
-        DeadPointers.erase(*I);
-      
-      continue;
     } else {
       // Not a loading instruction.
       continue;
@@ -522,7 +525,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 /// undead when scanning for dead stores to alloca's.
 bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
                                BasicBlock::iterator &BBI,
-                               SmallPtrSet<Value*, 64> &DeadPointers) {
+                               SmallPtrSet<Value*, 16> &DeadPointers) {
   // If the kill pointer can be easily reduced to an alloca,
   // don't bother doing extraneous AA queries.
   if (DeadPointers.count(killPointer)) {
@@ -575,7 +578,7 @@ bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
 /// If ValueSet is non-null, remove any deleted instructions from it as well.
 ///
 void DSE::DeleteDeadInstruction(Instruction *I,
-                                SmallPtrSet<Value*, 64> *ValueSet) {
+                                SmallPtrSet<Value*, 16> *ValueSet) {
   SmallVector<Instruction*, 32> NowDeadInsts;
   
   NowDeadInsts.push_back(I);
