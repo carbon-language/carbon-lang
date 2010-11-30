@@ -1396,8 +1396,8 @@ def t2LDRSH_POST : T2Iidxld<1, 0b01, 0, (outs GPR:$dst, GPR:$Rn),
 // for disassembly only.
 // Ref: A8.6.57 LDR (immediate, Thumb) Encoding T4
 class T2IldT<bit signed, bits<2> type, string opc, InstrItinClass ii>
-  : T2Ii8<(outs GPR:$dst), (ins t2addrmode_imm8:$addr), ii, opc,
-          "\t$dst, $addr", []> {
+  : T2Ii8<(outs GPR:$Rt), (ins t2addrmode_imm8:$addr), ii, opc,
+          "\t$Rt, $addr", []> {
   let Inst{31-27} = 0b11111;
   let Inst{26-25} = 0b00;
   let Inst{24} = signed;
@@ -1406,6 +1406,12 @@ class T2IldT<bit signed, bits<2> type, string opc, InstrItinClass ii>
   let Inst{20} = 1; // load
   let Inst{11} = 1;
   let Inst{10-8} = 0b110; // PUW.
+  
+  bits<4> Rt;
+  bits<13> addr;
+  let Inst{15-12} = Rt{3-0};
+  let Inst{19-16} = addr{12-9};
+  let Inst{7-0}   = addr{7-0};
 }
 
 def t2LDRT   : T2IldT<0, 0b10, "ldrt", IIC_iLoad_i>;
@@ -1476,8 +1482,8 @@ def t2STRB_POST : T2Iidxst<0, 0b00, 0, (outs GPR:$base_wb),
 // only.
 // Ref: A8.6.193 STR (immediate, Thumb) Encoding T4
 class T2IstT<bits<2> type, string opc, InstrItinClass ii>
-  : T2Ii8<(outs GPR:$src), (ins t2addrmode_imm8:$addr), ii, opc,
-          "\t$src, $addr", []> {
+  : T2Ii8<(outs GPR:$Rt), (ins t2addrmode_imm8:$addr), ii, opc,
+          "\t$Rt, $addr", []> {
   let Inst{31-27} = 0b11111;
   let Inst{26-25} = 0b00;
   let Inst{24} = 0; // not signed
@@ -1486,6 +1492,12 @@ class T2IstT<bits<2> type, string opc, InstrItinClass ii>
   let Inst{20} = 0; // store
   let Inst{11} = 1;
   let Inst{10-8} = 0b110; // PUW
+  
+  bits<4> Rt;
+  bits<13> addr;
+  let Inst{15-12} = Rt{3-0};
+  let Inst{19-16} = addr{12-9};
+  let Inst{7-0}   = addr{7-0};
 }
 
 def t2STRT   : T2IstT<0b10, "strt", IIC_iStore_i>;
