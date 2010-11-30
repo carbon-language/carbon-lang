@@ -11,11 +11,11 @@
 // register allocation algorithm and interface for extending it. It provides the
 // building blocks on which to construct other experimental allocators and test
 // the validity of two principles:
-// 
+//
 // - If virtual and physical register liveness is modeled using intervals, then
 // on-the-fly interference checking is cheap. Furthermore, interferences can be
 // lazily cached and reused.
-// 
+//
 // - Register allocation complexity, and generated code performance is
 // determined by the effectiveness of live range splitting rather than optimal
 // coloring.
@@ -52,8 +52,8 @@ class Spiller;
 // The default is to simply compare spill weights.
 struct LessSpillWeightPriority
   : public std::binary_function<LiveInterval,LiveInterval, bool> {
-  bool operator()(const LiveInterval *left, const LiveInterval *right) const {
-    return left->weight < right->weight;
+  bool operator()(const LiveInterval *Left, const LiveInterval *Right) const {
+    return Left->weight < Right->weight;
   }
 };
 
@@ -65,41 +65,40 @@ class LiveVirtRegQueue;
 /// RegAllocBase provides the register allocation driver and interface that can
 /// be extended to add interesting heuristics.
 ///
-/// More sophisticated allocators must override the selectOrSplit() method to
-/// implement live range splitting and must specify a comparator to determine
-/// register assignment priority. LessSpillWeightPriority is provided as a
-/// standard comparator.
+/// Register allocators must override the selectOrSplit() method to implement
+/// live range splitting. LessSpillWeightPriority is provided as a standard
+/// comparator, but we may add an interface to override it if necessary.
 class RegAllocBase {
 protected:
   // Array of LiveIntervalUnions indexed by physical register.
-  class LIUArray {
-    unsigned nRegs_;
-    OwningArrayPtr<LiveIntervalUnion> array_;
+  class LiveUnionArray {
+    unsigned NumRegs;
+    OwningArrayPtr<LiveIntervalUnion> Array;
   public:
-    LIUArray(): nRegs_(0) {}
+    LiveUnionArray(): NumRegs(0) {}
 
-    unsigned numRegs() const { return nRegs_; }
+    unsigned numRegs() const { return NumRegs; }
 
-    void init(unsigned nRegs);
+    void init(unsigned NRegs);
 
     void clear();
-    
-    LiveIntervalUnion& operator[](unsigned physReg) {
-      assert(physReg <  nRegs_ && "physReg out of bounds");
-      return array_[physReg];
+
+    LiveIntervalUnion& operator[](unsigned PhysReg) {
+      assert(PhysReg <  NumRegs && "physReg out of bounds");
+      return Array[PhysReg];
     }
   };
-  
-  const TargetRegisterInfo *tri_;
-  VirtRegMap *vrm_;
-  LiveIntervals *lis_;
-  LIUArray physReg2liu_;
+
+  const TargetRegisterInfo *TRI;
+  VirtRegMap *VRM;
+  LiveIntervals *LIS;
+  LiveUnionArray PhysReg2LiveUnion;
 
   // Current queries, one per physreg. They must be reinitialized each time we
   // query on a new live virtual register.
-  OwningArrayPtr<LiveIntervalUnion::Query> queries_;
+  OwningArrayPtr<LiveIntervalUnion::Query> Queries;
 
-  RegAllocBase(): tri_(0), vrm_(0), lis_(0) {}
+  RegAllocBase(): TRI(0), VRM(0), LIS(0) {}
 
   virtual ~RegAllocBase() {}
 
@@ -108,13 +107,13 @@ protected:
 
   // Get an initialized query to check interferences between lvr and preg.  Note
   // that Query::init must be called at least once for each physical register
-  // before querying a new live virtual register. This ties queries_ and
-  // physReg2liu_ together.
-  LiveIntervalUnion::Query &query(LiveInterval &lvr, unsigned preg) {
-    queries_[preg].init(&lvr, &physReg2liu_[preg]);
-    return queries_[preg];
+  // before querying a new live virtual register. This ties Queries and
+  // PhysReg2LiveUnion together.
+  LiveIntervalUnion::Query &query(LiveInterval &VirtReg, unsigned PhysReg) {
+    Queries[PhysReg].init(&VirtReg, &PhysReg2LiveUnion[PhysReg]);
+    return Queries[PhysReg];
   }
-  
+
   // The top-level driver. The output is a VirtRegMap that us updated with
   // physical register assignments.
   //
@@ -125,12 +124,12 @@ protected:
 
   // Get a temporary reference to a Spiller instance.
   virtual Spiller &spiller() = 0;
-  
+
   // A RegAlloc pass should override this to provide the allocation heuristics.
   // Each call must guarantee forward progess by returning an available PhysReg
   // or new set of split live virtual registers. It is up to the splitter to
   // converge quickly toward fully spilled live ranges.
-  virtual unsigned selectOrSplit(LiveInterval &lvr,
+  virtual unsigned selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &splitLVRs) = 0;
 
   // A RegAlloc pass should call this when PassManager releases its memory.
@@ -139,24 +138,24 @@ protected:
   // Helper for checking interference between a live virtual register and a
   // physical register, including all its register aliases. If an interference
   // exists, return the interfering register, which may be preg or an alias.
-  unsigned checkPhysRegInterference(LiveInterval& lvr, unsigned preg);
+  unsigned checkPhysRegInterference(LiveInterval& VirtReg, unsigned PhysReg);
 
   // Helper for spilling all live virtual registers currently unified under preg
   // that interfere with the most recently queried lvr.  Return true if spilling
   // was successful, and append any new spilled/split intervals to splitLVRs.
-  bool spillInterferences(LiveInterval &lvr, unsigned preg,
-                          SmallVectorImpl<LiveInterval*> &splitLVRs);
+  bool spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
+                          SmallVectorImpl<LiveInterval*> &SplitVRegs);
 
 #ifndef NDEBUG
   // Verify each LiveIntervalUnion.
   void verify();
 #endif
-  
-private:
-  void seedLiveVirtRegs(LiveVirtRegQueue &lvrQ);
 
-  void spillReg(LiveInterval &lvr, unsigned reg,
-                SmallVectorImpl<LiveInterval*> &splitLVRs);
+private:
+  void seedLiveVirtRegs(LiveVirtRegQueue &VirtRegQ);
+
+  void spillReg(LiveInterval &VirtReg, unsigned PhysReg,
+                SmallVectorImpl<LiveInterval*> &SplitVRegs);
 };
 
 } // end namespace llvm
