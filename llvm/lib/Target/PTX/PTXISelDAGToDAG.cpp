@@ -14,6 +14,7 @@
 #include "PTX.h"
 #include "PTXTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/DerivedTypes.h"
 
 using namespace llvm;
 
@@ -30,9 +31,16 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
 
     SDNode *Select(SDNode *Node);
 
+    // Complex Pattern Selectors.
+    bool SelectADDRri(SDValue &Addr, SDValue &Base, SDValue &Offset);
+    bool SelectADDRii(SDValue &Addr, SDValue &Base, SDValue &Offset);
+
     // Include the pieces auto'gened from the target description
 #include "PTXGenDAGISel.inc"
 
+  private:
+    bool isImm (const SDValue &operand);
+    bool SelectImm (const SDValue &operand, SDValue &imm);
 }; // class PTXDAGToDAGISel
 } // namespace
 
@@ -50,4 +58,55 @@ PTXDAGToDAGISel::PTXDAGToDAGISel(PTXTargetMachine &TM,
 SDNode *PTXDAGToDAGISel::Select(SDNode *Node) {
   // SelectCode() is auto'gened
   return SelectCode(Node);
+}
+
+// Match memory operand of the form [reg+reg] and [reg+imm]
+bool PTXDAGToDAGISel::SelectADDRri(SDValue &Addr, SDValue &Base,
+                                   SDValue &Offset) {
+  if (Addr.getNumOperands() >= 2 &&
+      isImm(Addr.getOperand(0)) && isImm(Addr.getOperand(1)))
+    return false; // let SelectADDRii handle the [imm+imm] case
+
+  // try [reg+imm] and [imm+reg]
+  if (Addr.getOpcode() == ISD::ADD)
+    for (int i = 0; i < 2; i ++)
+      if (SelectImm(Addr.getOperand(1-i), Offset)) {
+        Base = Addr.getOperand(i);
+        return true;
+      }
+
+  // okay, it's [reg+reg]
+  Base = Addr;
+  Offset = CurDAG->getTargetConstant(0, MVT::i32);
+  return true;
+}
+
+// Match memory operand of the form [imm+imm] and [imm]
+bool PTXDAGToDAGISel::SelectADDRii(SDValue &Addr, SDValue &Base,
+                                   SDValue &Offset) {
+  if (Addr.getOpcode() == ISD::ADD) {
+    return SelectImm(Addr.getOperand(0), Base) &&
+           SelectImm(Addr.getOperand(1), Offset);
+  }
+
+  if (SelectImm(Addr, Base)) {
+    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
+
+  return false;
+}
+
+bool PTXDAGToDAGISel::isImm(const SDValue &operand) {
+  return ConstantSDNode::classof(operand.getNode());
+}
+
+bool PTXDAGToDAGISel::SelectImm(const SDValue &operand, SDValue &imm) {
+  SDNode *node = operand.getNode();
+  if (!ConstantSDNode::classof(node))
+    return false;
+
+  ConstantSDNode *CN = cast<ConstantSDNode>(node);
+  imm = CurDAG->getTargetConstant(*CN->getConstantIntValue(), MVT::i32);
+  return true;
 }
