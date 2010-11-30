@@ -125,6 +125,10 @@ public:
   /// srl/add/sra.
   bool isPow2DivCheap() const { return Pow2DivIsCheap; }
 
+  /// isJumpExpensive() - Return true if Flow Control is an expensive operation
+  /// that should be avoided.
+  bool isJumpExpensive() const { return JumpIsExpensive; }
+
   /// getSetCCResultType - Return the ValueType of the result of SETCC
   /// operations.  Also used to obtain the target's preferred type for
   /// the condition operand of SELECT and BRCOND nodes.  In the case of
@@ -1013,7 +1017,16 @@ protected:
 
   /// SelectIsExpensive - Tells the code generator not to expand operations
   /// into sequences that use the select operations if possible.
-  void setSelectIsExpensive() { SelectIsExpensive = true; }
+  void setSelectIsExpensive(bool isExpensive = true) { 
+    SelectIsExpensive = isExpensive; 
+  }
+
+  /// JumpIsExpensive - Tells the code generator not to expand sequence of 
+  /// operations into a seperate sequences that increases the amount of 
+  /// flow control.
+  void setJumpIsExpensive(bool isExpensive = true) {
+    JumpIsExpensive = isExpensive;
+  }
 
   /// setIntDivIsCheap - Tells the code generator that integer divide is
   /// expensive, and if possible, should be replaced by an alternate sequence
@@ -1596,6 +1609,11 @@ private:
   /// srl/add/sra for a signed divide by power of two, and let the target handle
   /// it.
   bool Pow2DivIsCheap;
+
+  /// JumpIsExpensive - Tells the code generator that it shouldn't generate
+  /// extra flow control instructions and should attempt to combine flow
+  /// control instructions via predication.
+  bool JumpIsExpensive;
 
   /// UseUnderscoreSetJmp - This target prefers to use _setjmp to implement
   /// llvm.setjmp.  Defaults to false.
