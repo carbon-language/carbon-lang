@@ -9405,15 +9405,12 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
 MachineBasicBlock *
 X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
                             unsigned numArgs, bool memArg) const {
-
   assert((Subtarget->hasSSE42() || Subtarget->hasAVX()) &&
          "Target must have SSE4.2 or AVX features enabled");
 
   DebugLoc dl = MI->getDebugLoc();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-
   unsigned Opc;
-
   if (!Subtarget->hasAVX()) {
     if (memArg)
       Opc = numArgs == 3 ? X86::PCMPISTRM128rm : X86::PCMPESTRM128rm;
@@ -9426,20 +9423,16 @@ X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
       Opc = numArgs == 3 ? X86::VPCMPISTRM128rr : X86::VPCMPESTRM128rr;
   }
 
-  MachineInstrBuilder MIB = BuildMI(BB, dl, TII->get(Opc));
-
+  MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(Opc));
   for (unsigned i = 0; i < numArgs; ++i) {
     MachineOperand &Op = MI->getOperand(i+1);
-
     if (!(Op.isReg() && Op.isImplicit()))
       MIB.addOperand(Op);
   }
-
-  BuildMI(BB, dl, TII->get(X86::MOVAPSrr), MI->getOperand(0).getReg())
+  BuildMI(*BB, MI, dl, TII->get(X86::MOVAPSrr), MI->getOperand(0).getReg())
     .addReg(X86::XMM0);
 
   MI->eraseFromParent();
-
   return BB;
 }
 
