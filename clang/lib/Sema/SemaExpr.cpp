@@ -3843,10 +3843,10 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
                                         ParmVarDecl *Param) {
   if (Param->hasUnparsedDefaultArg()) {
     Diag(CallLoc,
-          diag::err_use_of_default_argument_to_function_declared_later) <<
+         diag::err_use_of_default_argument_to_function_declared_later) <<
       FD << cast<CXXRecordDecl>(FD->getDeclContext())->getDeclName();
     Diag(UnparsedDefaultArgLocs[Param],
-          diag::note_default_argument_declared_here);
+         diag::note_default_argument_declared_here);
     return ExprError();
   }
   
@@ -3868,7 +3868,7 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
       //   The names in the [default argument] expression are bound, and
       //   the semantic constraints are checked, at the point where the
       //   default argument expression appears.
-      ContextRAII SavedContext(*this, FD->getDeclContext());
+      ContextRAII SavedContext(*this, FD);
       Result = SubstExpr(UninstExpr, ArgList);
     }
     if (Result.isInvalid())

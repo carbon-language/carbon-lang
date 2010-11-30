@@ -112,3 +112,21 @@ namespace test6_2 {
     vector<A> v(1);
   }
 }
+namespace test6_3 {
+  template<class T>
+  class vector {
+   public:
+    vector(int i) {}
+    void f(const T& t = T()) {}
+  };
+  class A {
+   public:
+   private:
+    friend void vector<A>::f(const A&);
+    A() {}
+  };
+  void f() {
+    vector<A> v(1);
+    v.f();
+  }
+}
