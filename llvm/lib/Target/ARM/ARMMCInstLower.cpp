@@ -41,13 +41,13 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
     Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_PLT, Ctx);
     break;
   }
-  
+
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,
                                    MCConstantExpr::Create(MO.getOffset(), Ctx),
                                    Ctx);
   return MCOperand::CreateExpr(Expr);
-  
+
 }
 
 void llvm::LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
@@ -79,7 +79,7 @@ void llvm::LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
       MCOp = GetSymbolRef(MO, AP.Mang->getSymbol(MO.getGlobal()), AP);
       break;
     case MachineOperand::MO_ExternalSymbol:
-      MCOp = GetSymbolRef(MO, 
+      MCOp = GetSymbolRef(MO,
                           AP.GetExternalSymbolSymbol(MO.getSymbolName()), AP);
       break;
     case MachineOperand::MO_JumpTableIndex:
