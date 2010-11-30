@@ -169,7 +169,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>
-  : X86Inst<0, Pseudo, NoImm, oops, iops, "", GenericDomain> {
+  : X86Inst<0, Pseudo, NoImm, oops, iops, ""> {
   let Pattern = pattern;
 }
 
