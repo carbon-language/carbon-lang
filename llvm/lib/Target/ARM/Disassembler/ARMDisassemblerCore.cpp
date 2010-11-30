@@ -790,7 +790,7 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
 // Misc. Branch Instructions.
 // BLXr9, BXr9
-// BRIND, BX_RET
+// BX, BX_RET
 static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
@@ -805,8 +805,8 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (Opcode == ARM::BX_RET)
     return true;
 
-  // BLXr9 and BRIND take one GPR reg.
-  if (Opcode == ARM::BLXr9 || Opcode == ARM::BRIND) {
+  // BLXr9 and BX take one GPR reg.
+  if (Opcode == ARM::BLXr9 || Opcode == ARM::BX) {
     assert(NumOps >= 1 && OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
            "Reg operand expected");
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,

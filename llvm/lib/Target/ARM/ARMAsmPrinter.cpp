@@ -1260,7 +1260,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     {
       MCInst TmpInst;
-      TmpInst.setOpcode(ARM::BRIND);
+      TmpInst.setOpcode(ARM::BX);
       TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
