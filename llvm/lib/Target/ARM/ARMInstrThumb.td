@@ -579,10 +579,15 @@ def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
 // Load tconstpool
 // FIXME: Use ldr.n to work around a Darwin assembler bug.
 let canFoldAsLoad = 1, isReMaterializable = 1 in
-def tLDRpci : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoad_i,
-                  "ldr", ".n\t$dst, $addr",
-                  [(set tGPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>,
-              T1Encoding<{0,1,0,0,1,?}>; // A6.2 & A8.6.59
+def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins i32imm:$addr), IIC_iLoad_i,
+                  "ldr", ".n\t$Rt, $addr",
+                  [(set tGPR:$Rt, (load (ARMWrapper tconstpool:$addr)))]>,
+              T1Encoding<{0,1,0,0,1,?}> {
+  // A6.2 & A8.6.59
+  bits<3> Rt;
+  let Inst{10-8} = Rt;
+  // FIXME: Finish for the addr.
+}
 
 // Special LDR for loads from non-pc-relative constpools.
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
@@ -632,13 +637,12 @@ def tSTRspi : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
                    [(store tGPR:$src, t_addrmode_sp:$addr)]>,
               T1LdStSP<{0,?,?}>;
 
-let mayStore = 1, neverHasSideEffects = 1 in {
-// Special instruction for spill. It cannot clobber condition register
-// when it's expanded by eliminateCallFramePseudoInstr().
+let mayStore = 1, neverHasSideEffects = 1 in
+// Special instruction for spill. It cannot clobber condition register when it's
+// expanded by eliminateCallFramePseudoInstr().
 def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
                   "str", "\t$src, $addr", []>,
              T1LdStSP<{0,?,?}>;
-}
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
@@ -706,15 +710,15 @@ def tPUSH : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
 
 // Add with carry register
 let isCommutable = 1, Uses = [CPSR] in
-def tADC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
-                 "adc", "\t$dst, $rhs",
-                 [(set tGPR:$dst, (adde tGPR:$lhs, tGPR:$rhs))]>,
+def tADC : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iALUr,
+                 "adc", "\t$Rdn, $Rm",
+                 [(set tGPR:$Rdn, (adde tGPR:$Rn, tGPR:$Rm))]>,
            T1DataProcessing<0b0101> {
   // A8.6.2
-  bits<3> lhs;
-  bits<3> rhs;
-  let Inst{5-3} = lhs;
-  let Inst{2-0} = rhs;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rdn;
+  let Inst{2-0} = Rm;
 }
 
 // Add immediate
@@ -731,15 +735,15 @@ def tADDi3 : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rn, i32imm:$imm3), IIC_iALUi,
   let Inst{2-0} = Rd;
 }
 
-def tADDi8 : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALUi,
-                   "add", "\t$dst, $rhs",
-                   [(set tGPR:$dst, (add tGPR:$lhs, imm8_255:$rhs))]>,
+def tADDi8 : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, i32imm:$imm8), IIC_iALUi,
+                   "add", "\t$Rdn, $imm8",
+                   [(set tGPR:$Rdn, (add tGPR:$Rn, imm8_255:$imm8))]>,
              T1General<{1,1,0,?,?}> {
   // A8.6.4 T2
-  bits<3> lhs;
-  bits<8> rhs;
-  let Inst{10-8} = lhs;
-  let Inst{7-0}  = rhs;
+  bits<3> Rdn;
+  bits<8> imm8;
+  let Inst{10-8} = Rdn;
+  let Inst{7-0}  = imm8;
 }
 
 // Add register
@@ -771,15 +775,15 @@ def tADDhirr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
 
 // AND register
 let isCommutable = 1 in
-def tAND : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
-                 "and", "\t$dst, $rhs",
-                 [(set tGPR:$dst, (and tGPR:$lhs, tGPR:$rhs))]>,
+def tAND : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iBITr,
+                 "and", "\t$Rdn, $Rm",
+                 [(set tGPR:$Rdn, (and tGPR:$Rn, tGPR:$Rm))]>,
            T1DataProcessing<0b0000> {
   // A8.6.12
-  bits<3> rhs;
-  bits<3> dst;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // ASR immediate
@@ -797,27 +801,27 @@ def tASRri : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5), IIC_iMOVsi,
 }
 
 // ASR register
-def tASRrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
-                   "asr", "\t$dst, $rhs",
-                   [(set tGPR:$dst, (sra tGPR:$lhs, tGPR:$rhs))]>,
+def tASRrr : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iMOVsr,
+                   "asr", "\t$Rdn, $Rm",
+                   [(set tGPR:$Rdn, (sra tGPR:$Rn, tGPR:$Rm))]>,
              T1DataProcessing<0b0100> {
   // A8.6.15
-  bits<3> rhs;
-  bits<3> dst;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // BIC register
-def tBIC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
-                 "bic", "\t$dst, $rhs",
-                 [(set tGPR:$dst, (and tGPR:$lhs, (not tGPR:$rhs)))]>,
+def tBIC : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iBITr,
+                 "bic", "\t$Rdn, $Rm",
+                 [(set tGPR:$Rdn, (and tGPR:$Rn, (not tGPR:$Rm)))]>,
            T1DataProcessing<0b1110> {
   // A8.6.20
-  bits<3> dst;
-  bits<3> rhs;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // CMN register
@@ -911,15 +915,15 @@ def tCMPzhir : T1pI<(outs), (ins GPR:$lhs, GPR:$rhs), IIC_iCMPr,
 
 // XOR register
 let isCommutable = 1 in
-def tEOR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iBITr,
-                 "eor", "\t$dst, $rhs",
-                 [(set tGPR:$dst, (xor tGPR:$lhs, tGPR:$rhs))]>,
+def tEOR : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iBITr,
+                 "eor", "\t$Rdn, $Rm",
+                 [(set tGPR:$Rdn, (xor tGPR:$Rn, tGPR:$Rm))]>,
            T1DataProcessing<0b0001> {
   // A8.6.45
-  bits<3> dst;
-  bits<3> rhs;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // LSL immediate
@@ -937,15 +941,15 @@ def tLSLri : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5), IIC_iMOVsi,
 }
 
 // LSL register
-def tLSLrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
-                   "lsl", "\t$dst, $rhs",
-                   [(set tGPR:$dst, (shl tGPR:$lhs, tGPR:$rhs))]>,
+def tLSLrr : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iMOVsr,
+                   "lsl", "\t$Rdn, $Rm",
+                   [(set tGPR:$Rdn, (shl tGPR:$Rn, tGPR:$Rm))]>,
              T1DataProcessing<0b0010> {
   // A8.6.89
-  bits<3> dst;
-  bits<3> rhs;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // LSR immediate
@@ -963,15 +967,15 @@ def tLSRri : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5), IIC_iMOVsi,
 }
 
 // LSR register
-def tLSRrr : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
-                   "lsr", "\t$dst, $rhs",
-                   [(set tGPR:$dst, (srl tGPR:$lhs, tGPR:$rhs))]>,
+def tLSRrr : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iMOVsr,
+                   "lsr", "\t$Rdn, $Rm",
+                   [(set tGPR:$Rdn, (srl tGPR:$Rn, tGPR:$Rm))]>,
              T1DataProcessing<0b0011> {
   // A8.6.91
-  bits<3> dst;
-  bits<3> rhs;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // Move register
@@ -1014,15 +1018,15 @@ def tMOVgpr2gpr  : T1I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
 
 // multiply register
 let isCommutable = 1 in
-def tMUL : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMUL32,
-                 "mul", "\t$dst, $rhs, $dst", /* A8.6.105 MUL Encoding T1 */
-                 [(set tGPR:$dst, (mul tGPR:$lhs, tGPR:$rhs))]>,
+def tMUL : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iMUL32,
+                 "mul", "\t$Rdn, $Rm, $Rdn", /* A8.6.105 MUL Encoding T1 */
+                 [(set tGPR:$Rdn, (mul tGPR:$Rn, tGPR:$Rm))]>,
            T1DataProcessing<0b1101> {
   // A8.6.105
-  bits<3> dst;
-  bits<3> rhs;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // move inverse register
@@ -1039,15 +1043,15 @@ def tMVN : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMVNr,
 
 // Bitwise or register
 let isCommutable = 1 in
-def tORR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),  IIC_iBITr,
-                 "orr", "\t$dst, $rhs",
-                 [(set tGPR:$dst, (or tGPR:$lhs, tGPR:$rhs))]>,
+def tORR : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),  IIC_iBITr,
+                 "orr", "\t$Rdn, $Rm",
+                 [(set tGPR:$Rdn, (or tGPR:$Rn, tGPR:$Rm))]>,
            T1DataProcessing<0b1100> {
   // A8.6.114
-  bits<3> dst;
-  bits<3> rhs;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // Swaps
@@ -1095,15 +1099,15 @@ def tREVSH : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
 }
 
 // rotate right register
-def tROR : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMOVsr,
-                 "ror", "\t$dst, $rhs",
-                 [(set tGPR:$dst, (rotr tGPR:$lhs, tGPR:$rhs))]>,
+def tROR : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iMOVsr,
+                 "ror", "\t$Rdn, $Rm",
+                 [(set tGPR:$Rdn, (rotr tGPR:$Rn, tGPR:$Rm))]>,
            T1DataProcessing<0b0111> {
   // A8.6.139
-  bits<3> rhs;
-  bits<3> dst;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // negate register
@@ -1120,15 +1124,15 @@ def tRSB : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rn), IIC_iALUi,
 
 // Subtract with carry register
 let Uses = [CPSR] in
-def tSBC : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
-                 "sbc", "\t$dst, $rhs",
-                 [(set tGPR:$dst, (sube tGPR:$lhs, tGPR:$rhs))]>,
+def tSBC : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iALUr,
+                 "sbc", "\t$Rdn, $Rm",
+                 [(set tGPR:$Rdn, (sube tGPR:$Rn, tGPR:$Rm))]>,
            T1DataProcessing<0b0110> {
   // A8.6.151
-  bits<3> rhs;
-  bits<3> dst;
-  let Inst{5-3} = rhs;
-  let Inst{2-0} = dst;
+  bits<3> Rdn;
+  bits<3> Rm;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rdn;
 }
 
 // Subtract immediate
@@ -1145,15 +1149,15 @@ def tSUBi3 : T1sI<(outs tGPR:$Rd), (ins tGPR:$Rn, i32imm:$imm3), IIC_iALUi,
   let Inst{2-0} = Rd;
 }
 
-def tSUBi8 : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALUi,
-                   "sub", "\t$dst, $rhs",
-                   [(set tGPR:$dst, (add tGPR:$lhs, imm8_255_neg:$rhs))]>,
+def tSUBi8 : T1sIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, i32imm:$imm8), IIC_iALUi,
+                   "sub", "\t$Rdn, $imm8",
+                   [(set tGPR:$Rdn, (add tGPR:$Rn, imm8_255_neg:$imm8))]>,
              T1General<{1,1,1,?,?}> {
   // A8.6.210 T2
-  bits<8> rhs;
-  bits<3> dst;
-  let Inst{10-8} = dst;
-  let Inst{7-0} = rhs;
+  bits<3> Rdn;
+  bits<8> imm8;
+  let Inst{10-8} = Rdn;
+  let Inst{7-0} = imm8;
 }
 
 // subtract register

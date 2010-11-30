@@ -839,7 +839,7 @@ class T1sI<dag oops, dag iops, InstrItinClass itin,
 class T1sIt<dag oops, dag iops, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
   : Thumb1sI<oops, iops, AddrModeNone, Size2Bytes, itin, opc, asm,
-             "$lhs = $dst", pattern>;
+             "$Rn = $Rdn", pattern>;
 
 // Thumb1 instruction that can be predicated.
 class Thumb1pI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
@@ -902,7 +902,7 @@ class T1LoadStore<bits<4> opA, bits<3> opB> : Encoding16 {
 class T1LdStSP<bits<3> opB>   : T1LoadStore<0b1001, opB>; // SP relative
 
 // Helper classes to encode Thumb1 loads and stores. For immediates, the
-// following bits are used for "opA":
+// following bits are used for "opA" (see A6.2.4):
 // 
 //   0b0110 => Immediate, 4 bytes
 //   0b1000 => Immediate, 2 bytes
