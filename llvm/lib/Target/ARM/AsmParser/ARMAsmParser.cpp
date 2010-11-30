@@ -323,7 +323,7 @@ public:
     if (Mem.Offset) {
       const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
       assert(CE && "Non-constant mode offset operand!");
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
+      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
       Inst.addOperand(MCOperand::CreateReg(0));
     } else {
       Inst.addOperand(MCOperand::CreateImm(0));

@@ -241,6 +241,10 @@ namespace {
       const { return 0; }
     uint32_t getAddrModeS4OpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
+    uint32_t getAddrModeS2OpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
+    uint32_t getAddrModeS1OpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
     uint32_t getAddrMode5OpValue(const MachineInstr &MI, unsigned Op) const {
       // {17-13} = reg
       // {12}    = (U)nsigned (add == '1', sub == '0')

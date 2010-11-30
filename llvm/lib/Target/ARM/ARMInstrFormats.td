@@ -863,15 +863,6 @@ class T1pIt<dag oops, dag iops, InstrItinClass itin,
   : Thumb1pI<oops, iops, AddrModeNone, Size2Bytes, itin, opc, asm,
              "$lhs = $dst", pattern>;
 
-class T1pI1<dag oops, dag iops, InstrItinClass itin,
-            string opc, string asm, list<dag> pattern>
-  : Thumb1pI<oops, iops, AddrModeT1_1, Size2Bytes, itin, opc, asm, "", pattern>;
-class T1pI2<dag oops, dag iops, InstrItinClass itin,
-            string opc, string asm, list<dag> pattern>
-  : Thumb1pI<oops, iops, AddrModeT1_2, Size2Bytes, itin, opc, asm, "", pattern>;
-class T1pI4<dag oops, dag iops, InstrItinClass itin,
-            string opc, string asm, list<dag> pattern>
-  : Thumb1pI<oops, iops, AddrModeT1_4, Size2Bytes, itin, opc, asm, "", pattern>;
 class T1pIs<dag oops, dag iops,
             InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : Thumb1pI<oops, iops, AddrModeT1_s, Size2Bytes, itin, opc, asm, "", pattern>;
@@ -909,10 +900,38 @@ class T1LoadStore<bits<4> opA, bits<3> opB> : Encoding16 {
   let Inst{11-9}  = opB;
 }
 class T1LdSt<bits<3> opB>     : T1LoadStore<0b0101, opB>;
-class T1LdSt4Imm<bits<3> opB> : T1LoadStore<0b0110, opB>; // Immediate, 4 bytes
-class T1LdSt1Imm<bits<3> opB> : T1LoadStore<0b0111, opB>; // Immediate, 1 byte
-class T1LdSt2Imm<bits<3> opB> : T1LoadStore<0b1000, opB>; // Immediate, 2 bytes
 class T1LdStSP<bits<3> opB>   : T1LoadStore<0b1001, opB>; // SP relative
+
+// Helper classes to encode Thumb1 loads and stores. For immediates, the
+// following bits are used for "opA":
+// 
+//   0b0110 => Immediate, 4 bytes
+//   0b1000 => Immediate, 2 bytes
+//   0b0111 => Immediate, 1 byte
+class T1LdStImm<bits<4> opA, bits<3> opB> : T1LoadStore<opA, opB>;
+
+class T1pIEncode<bits<3> opcode, dag oops, dag iops, AddrMode am,
+                 InstrItinClass itin, string opc, string asm,
+                 list<dag> pattern>
+  : Thumb1pI<oops, iops, am, Size2Bytes, itin, opc, asm, "", pattern>,
+    T1LdSt<opcode> {
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{8-6} = addr{5-3};    // Rm
+  let Inst{5-3} = addr{2-0};    // Rn
+  let Inst{2-0} = Rt;
+}
+class T1pIEncodeImm<bits<4> opA, bit opB, dag oops, dag iops, AddrMode am,
+                    InstrItinClass itin, string opc, string asm,
+                    list<dag> pattern>
+  : Thumb1pI<oops, iops, am, Size2Bytes, itin, opc, asm, "", pattern>,
+    T1LdStImm<opA, {opB,?,?}> {
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-6} = addr{7-3};   // imm5
+  let Inst{5-3}  = addr{2-0};   // Rn
+  let Inst{2-0}  = Rt;
+}
 
 // A6.2.5 Miscellaneous 16-bit instructions encoding.
 class T1Misc<bits<7> opcode> : Encoding16 {
