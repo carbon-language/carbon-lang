@@ -136,6 +136,8 @@ def tADJCALLSTACKDOWN :
             Requires<[IsThumb, IsThumb1Only]>;
 }
 
+// T1Disassembly - A simple class to make encoding some disassembly patterns
+// easier and less verbose.
 class T1Disassembly<bits<2> op1, bits<8> op2>
   : T1Encoding<0b101111> {
   let Inst{9-8} = op1;
@@ -205,7 +207,8 @@ def tCPS : T1I<(outs), (ins cps_opt:$opt), NoItinerary, "cps$opt",
               [/* For disassembly only; pattern left blank */]>,
            T1Misc<0b0110011> {
   // A8.6.38 & B6.1.1
-  let Inst{3} = 0;              // FIXME: Finish encoding.
+  let Inst{3} = 0;
+  // FIXME: Finish encoding.
 }
 
 // For both thumb1 and thumb2.
@@ -213,13 +216,13 @@ let isNotDuplicable = 1, isCodeGenOnly = 1 in
 def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
                   [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>,
               T1Special<{0,0,?,?}> {
-  // A8.6.6 Rm = pc
+  // A8.6.6
   bits<3> dst;
-  let Inst{6-3} = 0b1111;
+  let Inst{6-3} = 0b1111; // Rm = pc
   let Inst{2-0} = dst;
 }
 
-// PC relative add.
+// PC relative add (ADR).
 def tADDrPCi : T1I<(outs tGPR:$dst), (ins t_imm_s4:$rhs), IIC_iALUi,
                    "add\t$dst, pc, $rhs", []>,
                T1Encoding<{1,0,1,0,0,?}> {
@@ -1265,13 +1268,12 @@ def tLEApcrelJT : T1I<(outs tGPR:$Rd),
 //
 
 // __aeabi_read_tp preserves the registers r1-r3.
-let isCall = 1, Defs = [R0, LR], Uses = [SP] in {
-  def tTPsoft : TIx2<0b11110, 0b11, 1, (outs), (ins), IIC_Br,
-                     "bl\t__aeabi_read_tp",
-                     [(set R0, ARMthread_pointer)]> {
-    // Encoding is 0xf7fffffe.
-    let Inst = 0xf7fffffe;
-  }
+let isCall = 1, Defs = [R0, LR], Uses = [SP] in
+def tTPsoft : TIx2<0b11110, 0b11, 1, (outs), (ins), IIC_Br,
+                   "bl\t__aeabi_read_tp",
+                   [(set R0, ARMthread_pointer)]> {
+  // Encoding is 0xf7fffffe.
+  let Inst = 0xf7fffffe;
 }
 
 // SJLJ Exception handling intrinsics
@@ -1286,23 +1288,20 @@ let isCall = 1, Defs = [R0, LR], Uses = [SP] in {
 //   doing so, we also cause the prologue/epilogue code to actively preserve
 //   all of the callee-saved resgisters, which is exactly what we want.
 //   $val is a scratch register for our use.
-let Defs =
-  [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ], hasSideEffects = 1,
-   isBarrier = 1, isCodeGenOnly = 1 in {
-  def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
-                              AddrModeNone, SizeSpecial, NoItinerary, "", "",
-                   [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>;
-}
+let Defs = [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ],
+    hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in
+def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
+                                  AddrModeNone, SizeSpecial, NoItinerary, "","",
+                          [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>;
 
 // FIXME: Non-Darwin version(s)
 let isBarrier = 1, hasSideEffects = 1, isTerminator = 1, isCodeGenOnly = 1,
-    Defs = [ R7, LR, SP ] in {
+    Defs = [ R7, LR, SP ] in
 def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
-                             AddrModeNone, SizeSpecial, IndexModeNone,
-                             Pseudo, NoItinerary, "", "",
-                         [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
-                                Requires<[IsThumb, IsDarwin]>;
-}
+                              AddrModeNone, SizeSpecial, IndexModeNone,
+                              Pseudo, NoItinerary, "", "",
+                              [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
+                             Requires<[IsThumb, IsDarwin]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
