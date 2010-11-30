@@ -255,6 +255,9 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   }
 
   void setName(DeclarationName Name) {
+    if (!Name)
+      return set("name", "");
+
     // Common case.
     if (Name.isIdentifier())
       return set("name", Name.getAsIdentifierInfo()->getName());
