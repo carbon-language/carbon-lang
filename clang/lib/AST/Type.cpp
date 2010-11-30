@@ -995,6 +995,8 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case ObjCClass:         return "Class";
   case ObjCSel:           return "SEL";
   }
+  llvm_unreachable("Invalid builtin type.");
+  return 0;
 }
 
 void FunctionType::ANCHOR() {} // Key function for FunctionType.
