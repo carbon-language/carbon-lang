@@ -1100,7 +1100,8 @@ int inspect_cursor_at(int argc, const char **argv) {
   CXCursor Cursor;
   CursorSourceLocation *Locations = 0;
   unsigned NumLocations = 0, Loc;
-
+  unsigned Repeats = 1;
+  
   /* Count the number of locations. */
   while (strstr(argv[NumLocations+1], "-cursor-at=") == argv[NumLocations+1])
     ++NumLocations;
@@ -1121,30 +1122,48 @@ int inspect_cursor_at(int argc, const char **argv) {
                            &num_unsaved_files))
     return -1;
 
-  CIdx = clang_createIndex(0, 1);
-  TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
+  if (getenv("CINDEXTEST_EDITING"))
+    Repeats = 5;
+
+  /* Parse the translation unit. When we're testing clang_getCursor() after
+     reparsing, don't remap unsaved files until the second parse. */
+  CIdx = clang_createIndex(1, 1);
+  TU = clang_parseTranslationUnit(CIdx, argv[argc - 1],
+                                  argv + num_unsaved_files + 1 + NumLocations,
                                   argc - num_unsaved_files - 2 - NumLocations,
-                                   argv + num_unsaved_files + 1 + NumLocations,
-                                                 num_unsaved_files,
-                                                 unsaved_files);
+                                  unsaved_files,
+                                  Repeats > 1? 0 : num_unsaved_files,
+                                  getDefaultParsingOptions());
+                                                 
   if (!TU) {
     fprintf(stderr, "unable to parse input\n");
     return -1;
   }
 
-  for (Loc = 0; Loc < NumLocations; ++Loc) {
-    CXFile file = clang_getFile(TU, Locations[Loc].filename);
-    if (!file)
-      continue;
+  for (unsigned I = 0; I != Repeats; ++I) {
+    if (Repeats > 1 &&
+        clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files, 
+                                     clang_defaultReparseOptions(TU))) {
+      clang_disposeTranslationUnit(TU);
+      return 1;
+    }
+    
+    for (Loc = 0; Loc < NumLocations; ++Loc) {
+      CXFile file = clang_getFile(TU, Locations[Loc].filename);
+      if (!file)
+        continue;
 
-    Cursor = clang_getCursor(TU,
-                             clang_getLocation(TU, file, Locations[Loc].line,
-                                               Locations[Loc].column));
-    PrintCursor(Cursor);
-    printf("\n");
-    free(Locations[Loc].filename);
+      Cursor = clang_getCursor(TU,
+                               clang_getLocation(TU, file, Locations[Loc].line,
+                                                 Locations[Loc].column));
+      if (I + 1 == Repeats) {
+        PrintCursor(Cursor);
+        printf("\n");
+        free(Locations[Loc].filename);
+      }
+    }
   }
-
+  
   PrintDiagnostics(TU);
   clang_disposeTranslationUnit(TU);
   clang_disposeIndex(CIdx);
