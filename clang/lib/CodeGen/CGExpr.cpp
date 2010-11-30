@@ -1789,8 +1789,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     llvm_unreachable("dependent cast kind in IR gen!");
 
   case CK_NoOp:
-    if (E->getSubExpr()->Classify(getContext()).getKind() 
-                                          != Expr::Classification::CL_PRValue) {
+    if (!E->getSubExpr()->isRValue()) {
       LValue LV = EmitLValue(E->getSubExpr());
       if (LV.isPropertyRef() || LV.isKVCRef()) {
         QualType QT = E->getSubExpr()->getType();
@@ -1805,6 +1804,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     }
     // Fall through to synthesize a temporary.
 
+  case CK_LValueToRValue:
   case CK_BitCast:
   case CK_ArrayToPointerDecay:
   case CK_FunctionToPointerDecay:

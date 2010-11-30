@@ -250,8 +250,6 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   }
 
   switch (E->getCastKind()) {
-  default: assert(0 && "Unhandled cast kind!");
-
   case CK_Dynamic: {
     assert(isa<CXXDynamicCastExpr>(E) && "CK_Dynamic without a dynamic_cast?");
     LValue LV = CGF.EmitCheckedLValue(E->getSubExpr());
@@ -286,6 +284,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   }
 
   case CK_NoOp:
+  case CK_LValueToRValue:
   case CK_UserDefinedConversion:
   case CK_ConstructorConversion:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
@@ -293,10 +292,45 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
            "Implicit cast types must be compatible");
     Visit(E->getSubExpr());
     break;
-
+      
   case CK_LValueBitCast:
-    llvm_unreachable("there are no lvalue bit-casts on aggregates");
+    llvm_unreachable("should not be emitting lvalue bitcast as rvalue");
     break;
+      
+  case CK_Dependent:
+  case CK_BitCast:
+  case CK_ArrayToPointerDecay:
+  case CK_FunctionToPointerDecay:
+  case CK_NullToPointer:
+  case CK_NullToMemberPointer:
+  case CK_BaseToDerivedMemberPointer:
+  case CK_DerivedToBaseMemberPointer:
+  case CK_MemberPointerToBoolean:
+  case CK_IntegralToPointer:
+  case CK_PointerToIntegral:
+  case CK_PointerToBoolean:
+  case CK_ToVoid:
+  case CK_VectorSplat:
+  case CK_IntegralCast:
+  case CK_IntegralToBoolean:
+  case CK_IntegralToFloating:
+  case CK_FloatingToIntegral:
+  case CK_FloatingToBoolean:
+  case CK_FloatingCast:
+  case CK_AnyPointerToObjCPointerCast:
+  case CK_AnyPointerToBlockPointerCast:
+  case CK_ObjCObjectLValueCast:
+  case CK_FloatingRealToComplex:
+  case CK_FloatingComplexToReal:
+  case CK_FloatingComplexToBoolean:
+  case CK_FloatingComplexCast:
+  case CK_FloatingComplexToIntegralComplex:
+  case CK_IntegralRealToComplex:
+  case CK_IntegralComplexToReal:
+  case CK_IntegralComplexToBoolean:
+  case CK_IntegralComplexCast:
+  case CK_IntegralComplexToFloatingComplex:
+    llvm_unreachable("cast kind invalid for aggregate types");
   }
 }
 

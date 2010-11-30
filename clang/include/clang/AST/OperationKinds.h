@@ -43,6 +43,11 @@ enum CastKind {
   /// reinterpret_casts of l-value expressions to reference types.
   ///    bool b; reinterpret_cast<char&>(b) = 'a';
   CK_LValueBitCast,
+  
+  /// CK_LValueToRValue - A conversion which causes the extraction of
+  /// an r-value from the operand gl-value.  The result of an r-value
+  /// conversion is always unqualified.
+  CK_LValueToRValue,
     
   /// CK_NoOp - A conversion which does not affect the type other than
   /// (possibly) adding qualifiers.

@@ -2055,6 +2055,7 @@ private:
       // fallthrough to check for null base path
 
     case CK_Dependent:
+    case CK_LValueToRValue:
     case CK_NoOp:
     case CK_PointerToBoolean:
     case CK_IntegralToBoolean:

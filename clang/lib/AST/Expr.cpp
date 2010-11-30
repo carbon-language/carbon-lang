@@ -822,6 +822,8 @@ const char *CastExpr::getCastKindName() const {
     return "BitCast";
   case CK_LValueBitCast:
     return "LValueBitCast";
+  case CK_LValueToRValue:
+    return "LValueToRValue";
   case CK_NoOp:
     return "NoOp";
   case CK_BaseToDerived:
