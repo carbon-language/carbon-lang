@@ -165,3 +165,15 @@ define i32* @test13() {
 
 declare noalias i8* @malloc(i32)
 
+
+
+define void @test14(i32* %Q) {
+        %P = alloca i32
+        %DEAD = load i32* %Q
+        store i32 %DEAD, i32* %P
+        ret void
+
+; CHECK: @test14
+; CHECK-NEXT: ret void
+}
+
